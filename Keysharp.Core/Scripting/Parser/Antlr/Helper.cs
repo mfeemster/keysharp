@@ -39,7 +39,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
 
         public CompilationUnitSyntax compilationUnit;
         public NamespaceDeclarationSyntax namespaceDeclaration;
-        public ClassDeclarationSyntax mainClass;
+        public Class mainClass;
         public Function mainFunc;
         public Function autoExecFunc;
         public Function currentFunc;
@@ -116,14 +116,15 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
 
             public MethodDeclarationSyntax Method = null;
             public string Name = null;
-            public BlockSyntax Body = SyntaxFactory.Block();
-            public ParameterListSyntax Params = SyntaxFactory.ParameterList(SyntaxFactory.SeparatedList<ParameterSyntax>());
-            public HashSet<string> Locals = new HashSet<string>();
+            public List<StatementSyntax> Body = new();
+            public List<ParameterSyntax> Params = new();
+            public Dictionary<string, StatementSyntax> Locals = new();
             public HashSet<string> Globals = new HashSet<string>();
             public HashSet<string> Statics = new HashSet<string>();
             public HashSet<string> VarRefs = new HashSet<string>();
             public Scope Scope = Scope.Local;
 
+            public bool Void = false;
             public bool Async = false;
 
             public Function(string name, TypeSyntax returnType = null)
@@ -137,6 +138,43 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                 Name = name;
                 Method = SyntaxFactory.MethodDeclaration(returnType, name);
             }
+
+            public BlockSyntax AssembleBody()
+            {
+                var statements = Locals.Values.Concat(Body).ToList();
+
+                if (!Void)
+                {
+                    bool hasReturn = statements.OfType<ReturnStatementSyntax>().Any();
+
+                    if (!hasReturn)
+                    {
+                        // Append a default return ""; statement
+                        var defaultReturn = SyntaxFactory.ReturnStatement(
+                            SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(""))
+                        );
+
+                        statements.Add(defaultReturn);
+                    }
+                }
+
+                return SyntaxFactory.Block(statements);
+            }
+
+            public ParameterListSyntax AssembleParams() => SyntaxFactory.ParameterList(SyntaxFactory.SeparatedList<ParameterSyntax>(Params));
+
+            public MethodDeclarationSyntax Assemble(SyntaxTokenList? modifiers = null)
+            {
+                return Method
+                .WithParameterList(AssembleParams())
+                .WithBody(SyntaxFactory.Block(AssembleBody()))
+                .WithModifiers(
+                    modifiers ?? SyntaxFactory.TokenList(
+                        SyntaxFactory.Token(SyntaxKind.PublicKeyword),
+                        SyntaxFactory.Token(SyntaxKind.StaticKeyword)
+                    )
+                );
+            }
         }
 
         public class Class
@@ -149,21 +187,22 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             public readonly List<(string FieldName, ExpressionSyntax Initializer)> deferredInitializations = new();
             public readonly List<(string FieldName, ExpressionSyntax Initializer)> deferredStaticInitializations = new();
 
-            public Class(string name)
+            public Class(string name, string baseName = "KeysharpObject")
             {
                 if (string.IsNullOrWhiteSpace(name))
                     throw new ArgumentException("Name cannot be null or empty.", nameof(name));
 
                 Name = name;
                 Declaration = SyntaxFactory.ClassDeclaration(name)
-                .WithModifiers(SyntaxFactory.TokenList(SyntaxFactory.Token(SyntaxKind.PublicKeyword)))
-                .WithBaseList(
-                    SyntaxFactory.BaseList(
-                        SyntaxFactory.SingletonSeparatedList<BaseTypeSyntax>(
-                            SyntaxFactory.SimpleBaseType(CreateQualifiedName("KeysharpObject"))
+                .WithModifiers(SyntaxFactory.TokenList(SyntaxFactory.Token(SyntaxKind.PublicKeyword)));
+                if (baseName != null)
+                    Declaration = Declaration.WithBaseList(
+                        SyntaxFactory.BaseList(
+                            SyntaxFactory.SingletonSeparatedList<BaseTypeSyntax>(
+                                SyntaxFactory.SimpleBaseType(CreateQualifiedName(baseName))
+                            )
                         )
-                    )
-                );
+                    );
             }
 
             public bool ContainsMethod(string methodName, bool searchStatic = false, bool caseSensitive = false)
@@ -434,12 +473,12 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
         {
             if (caseSense)
             {
-                if (currentFunc.Locals.Contains(name) || currentFunc.Statics.Contains(name))
+                if (currentFunc.Locals.ContainsKey(name) || currentFunc.Statics.Contains(name))
                     return name;
             }
             else
             {
-                string match = currentFunc.Locals.FirstOrDefault(v => v.Equals(name, StringComparison.InvariantCultureIgnoreCase));
+                string match = currentFunc.Locals.Keys.FirstOrDefault(v => v.Equals(name, StringComparison.InvariantCultureIgnoreCase));
                 if (match != null)
                     return match;
                 match = currentFunc.Statics.FirstOrDefault(v => v.Equals(name, StringComparison.InvariantCultureIgnoreCase));
@@ -466,14 +505,14 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
 
             if (currentFunc.Params != null)
             {
-                var parameterMatch = currentFunc.Params.Parameters.FirstOrDefault(param =>
+                var parameterMatch = currentFunc.Params.FirstOrDefault(param =>
                     caseSense ? param.Identifier.Text == name
                               : param.Identifier.Text.Equals(name, StringComparison.InvariantCultureIgnoreCase));
                 if (parameterMatch != null)
                     return parameterMatch.Identifier.Text;
             }
 
-            var variableDeclarations = currentFunc.Body.DescendantNodes().OfType<LocalDeclarationStatementSyntax>();
+            var variableDeclarations = currentFunc.Body.OfType<LocalDeclarationStatementSyntax>();
             if (variableDeclarations != null)
             {
                 foreach (var declaration in variableDeclarations)
@@ -518,7 +557,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             var builtIn = IsBuiltInProperty(name, caseSense);
             if (builtIn != null) return builtIn;
 
-            var variableDeclarations = mainClass.ChildNodes().OfType<FieldDeclarationSyntax>();
+            var variableDeclarations = mainClass.Declaration.ChildNodes().OfType<FieldDeclarationSyntax>();
             if (variableDeclarations != null)
             {
                 foreach (var declaration in variableDeclarations)
@@ -571,7 +610,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                     SyntaxFactory.Token(SyntaxKind.PublicKeyword),
                     SyntaxFactory.Token(SyntaxKind.StaticKeyword));
 
-            mainClass = mainClass.AddMembers(fieldDeclaration);
+            mainClass.Declaration = mainClass.Declaration.AddMembers(fieldDeclaration);
 
             return name;
         }
@@ -628,7 +667,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             if (currentFunc.Scope == Scope.Local)
             {
                 var localDeclaration = SyntaxFactory.LocalDeclarationStatement(variableDeclaration);
-                currentFunc.Body = currentFunc.Body.AddStatements(localDeclaration);
+                currentFunc.Locals[name] = (StatementSyntax)localDeclaration;
                 return name;
             }
 
@@ -637,7 +676,10 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                     SyntaxFactory.Token(SyntaxKind.PublicKeyword),
                     SyntaxFactory.Token(SyntaxKind.StaticKeyword));
 
-            mainClass = mainClass.AddMembers(fieldDeclaration);
+            if (currentFunc.Scope == Scope.Static) { 
+                state.currentClass.Declaration = state.currentClass.Declaration.AddMembers(fieldDeclaration);
+            }else
+                mainClass.Declaration = mainClass.Declaration.AddMembers(fieldDeclaration);
 
             return name;
         }
@@ -656,6 +698,35 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             functionName = mph.mi.Name;
 
             return AddGlobalFuncObjVariable(functionName, caseSense);
+        }
+
+        public static VariableDeclarationSyntax CreateNullObjectVariable(string variableName)
+        {
+            return SyntaxFactory.VariableDeclaration(SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword)))
+                .WithVariables(
+                    SyntaxFactory.SingletonSeparatedList(
+                        SyntaxFactory.VariableDeclarator(SyntaxFactory.Identifier(variableName))
+                        .WithInitializer(
+                            SyntaxFactory.EqualsValueClause(
+                                SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression)
+                            )
+                        )
+                    )
+                );
+        }
+
+        public static ExpressionSyntax CreateFuncObjAssignment(string variableName, string functionName)
+        {
+            return SyntaxFactory.AssignmentExpression(
+                SyntaxKind.SimpleAssignmentExpression,
+                SyntaxFactory.IdentifierName(variableName),
+                CreateFuncObj(
+                    SyntaxFactory.CastExpression(
+                        SyntaxFactory.IdentifierName("Delegate"),
+                        SyntaxFactory.IdentifierName(functionName)
+                    )
+                )
+            );
         }
 
         public static VariableDeclarationSyntax CreateFuncObjDelegateVariable(string functionName)
@@ -731,7 +802,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                 )
             );
 
-            mainClass = mainClass.AddMembers(funcObjVariable);
+            mainClass.Declaration = mainClass.Declaration.AddMembers(funcObjVariable);
             return functionName;
         }
 
@@ -903,7 +974,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
 
         public static string NormalizeFunctionIdentifier(string name, NameCase nameCase = NameCase.Lower)
         {
-            if (state.currentFunc != null && state.currentFunc.Statics.Contains(name))
+            if (state.currentFunc != null && state.currentFunc.Statics.Contains(name.ToLowerInvariant()))
                 return state.currentFunc.Name.ToUpperInvariant() + "_" + name.ToLowerInvariant();
 
             var builtin = state.IsBuiltInProperty(name);
@@ -917,7 +988,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             name = name.Trim('"');
 
             if (nameCase == NameCase.Lower)
-                return ToValidIdentifier(name);
+                return ToValidIdentifier(name).ToLowerInvariant();
             else if (nameCase == NameCase.Title)
                 return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(name);
             else
@@ -926,10 +997,9 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
 
         public static string ToValidIdentifier(string text)
         {
-            var name = text.ToLowerInvariant();
-            if (SyntaxFacts.IsKeywordKind(SyntaxFactory.ParseToken(name).Kind()))
-                name = "@" + name;
-            return name;
+            if (SyntaxFacts.IsKeywordKind(SyntaxFactory.ParseToken(text).Kind()))
+                return "@" + text;
+            return text;
         }
 
         public static string PropertyExistsInBuiltinBase(string name)
@@ -1037,14 +1107,14 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
 
         public bool RemoveGlobalVariable(string variableName, bool local)
         {
-            var fieldDeclaration = mainClass.DescendantNodes()
+            var fieldDeclaration = mainClass.Declaration.DescendantNodes()
                 .OfType<FieldDeclarationSyntax>()
                 .FirstOrDefault(declaration =>
                     declaration.Declaration.Variables.Any(v => v.Identifier.Text == variableName));
 
             if (fieldDeclaration != null)
             {
-                mainClass = mainClass.RemoveNode(fieldDeclaration, SyntaxRemoveOptions.KeepNoTrivia);
+                mainClass.Declaration = mainClass.Declaration.RemoveNode(fieldDeclaration, SyntaxRemoveOptions.KeepNoTrivia);
                 return true;
             }
 
@@ -1110,9 +1180,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             if (initializationStatement != null)
             {
                 // Add the initialization statement to the beginning of the function body
-                currentFunc.Body = currentFunc.Body.WithStatements(
-                    currentFunc.Body.Statements.Insert(0, initializationStatement)
-                );
+                currentFunc.Body.Insert(0, initializationStatement);
             }
 
             // Add the attributes for Optional and DefaultParameterValue

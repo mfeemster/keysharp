@@ -208,27 +208,31 @@
 												excludeTitle,
 												excludeText);
 
-		public static object ControlGetPos([Optional()][DefaultParameterValue(0)] ref object outX,
-										   [Optional()][DefaultParameterValue(0)] ref object outY,
-										   [Optional()][DefaultParameterValue(0)] ref object outWidth,
-										   [Optional()][DefaultParameterValue(0)] ref object outHeight,
+		public static object ControlGetPos([Optional()][DefaultParameterValue(null)] object outX,
+										   [Optional()][DefaultParameterValue(null)] object outY,
+										   [Optional()][DefaultParameterValue(null)] object outWidth,
+										   [Optional()][DefaultParameterValue(null)] object outHeight,
 										   object ctrl = null,
 										   object title = null,
 										   object text = null,
 										   object excludeTitle = null,
 										   object excludeText = null)
 		{
-			ControlProvider.Manager.ControlGetPos(
-				ref outX,
-				ref outY,
-				ref outWidth,
-				ref outHeight,
+			outX ??= Misc.EmptyVarRef; outY ??= Misc.EmptyVarRef; outWidth ??= Misc.EmptyVarRef; outHeight ??= Misc.EmptyVarRef;
+			object valX = Script.GetPropertyValue(outX, "__Value"), valY = Script.GetPropertyValue(outY, "__Value"), valWidth = Script.GetPropertyValue(outWidth, "__Value"), valHeight = Script.GetPropertyValue(outHeight, "__Value");
+
+            ControlProvider.Manager.ControlGetPos(
+				ref valX,
+				ref valY,
+				ref valWidth,
+				ref valHeight,
 				ctrl,
 				title,
 				text,
 				excludeTitle,
 				excludeText);
-			return null;
+			Script.SetPropertyValue(outX, "__Value", valX); Script.SetPropertyValue(outY, "__Value", valY); Script.SetPropertyValue(outWidth, "__Value", valWidth); Script.SetPropertyValue(outHeight, "__Value", valHeight);
+            return null;
 		}
 
 		public static long ControlGetStyle(object control,

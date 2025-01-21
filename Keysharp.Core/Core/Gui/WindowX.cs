@@ -291,14 +291,21 @@ namespace Keysharp.Core
 		/// <param name="obj">String or integers 1, 2, 3, or string RegEx to set TitleMatchMode, else strings fast/slow to set TitleMatchModeSpeed.</param>
 		public static object SetTitleMatchMode(object matchModeSpeed)
 		{
+			object oldVal = null;
 			var val = matchModeSpeed.As();
 
 			if (string.Compare(val, "fast", true) == 0 || string.Compare(val, "slow", true) == 0)
+			{
+				oldVal = Accessors.A_TitleMatchModeSpeed;
 				Accessors.A_TitleMatchModeSpeed = val;
+			}
 			else
+			{
+				oldVal = Accessors.A_TitleMatchMode;
 				Accessors.A_TitleMatchMode = val;
+			}
 
-			return null;
+			return oldVal;
 		}
 
 		public static object SetWinDelay(object delay)
@@ -633,17 +640,21 @@ namespace Keysharp.Core
 									   object excludeText = null) =>
 		DoDelayedFunc(() => SearchWindow(winTitle, winText, excludeTitle, excludeText, true) is WindowItem win ? win.PID : 0L);
 
-		public static object WinGetPos([Optional()][DefaultParameterValue(0)] ref object outX,
-									   [Optional()][DefaultParameterValue(0)] ref object outY,
-									   [Optional()][DefaultParameterValue(0)] ref object outWidth,
-									   [Optional()][DefaultParameterValue(0)] ref object outHeight,
+		public static object WinGetPos([Optional()][DefaultParameterValue(null)] object outX,
+									   [Optional()][DefaultParameterValue(null)] object outY,
+									   [Optional()][DefaultParameterValue(null)] object outWidth,
+									   [Optional()][DefaultParameterValue(null)] object outHeight,
 									   object winTitle = null,
 									   object winText = null,
 									   object excludeTitle = null,
 									   object excludeText = null)
 		{
-			WinPosHelper(false, ref outX, ref outY, ref outWidth, ref outHeight, winTitle, winText, excludeTitle, excludeText);
-			return null;
+            outX ??= Misc.EmptyVarRef; outY ??= Misc.EmptyVarRef; outWidth ??= Misc.EmptyVarRef; outHeight ??= Misc.EmptyVarRef;
+            object valX = Script.GetPropertyValue(outX, "__Value"), valY = Script.GetPropertyValue(outY, "__Value"), valWidth = Script.GetPropertyValue(outWidth, "__Value"), valHeight = Script.GetPropertyValue(outHeight, "__Value");
+
+            WinPosHelper(false, ref outX, ref outY, ref outWidth, ref outHeight, winTitle, winText, excludeTitle, excludeText);
+            Script.SetPropertyValue(outX, "__Value", valX); Script.SetPropertyValue(outY, "__Value", valY); Script.SetPropertyValue(outWidth, "__Value", valWidth); Script.SetPropertyValue(outHeight, "__Value", valHeight);
+            return null;
 		}
 
 		public static string WinGetProcessName(object winTitle = null,

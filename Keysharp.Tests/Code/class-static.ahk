@@ -88,7 +88,7 @@ else
 
 ; test static member initialized in a complex way.
 class TypeSizeMapper {
-	static NumTypeSize := MapInit()
+	static NumTypeSize := this.MapInit()
 	
 	static MapInit()
 	{
@@ -135,14 +135,14 @@ If (val == A_PtrSize)
 else
 	FileAppend "fail", "*"
 
-; do the same, but using __StaticInit()
+; do the same, but using static __Init()
 class TypeSizeMapper2 {
 	static NumTypeSize := ""
 	
-	static __StaticInit()
+	static __Init()
 	{
 global
-		NumTypeSize := Map()
+		this.NumTypeSize := Map()
 		for t in [
 			[1,         'Int8' ,   'char'  ],
 			[1,         'UInt8' ,  'uchar' ],
@@ -157,7 +157,7 @@ global
 			[A_PtrSize, 'IntPtr',  'ptr'   ],
 			[A_PtrSize, 'UIntPtr', 'uptr'  ]
 		] {
-			NumTypeSize[t[3]] := t[1]
+			this.NumTypeSize[t[3]] := t[1]
 		}
 	}
 }
@@ -179,6 +179,28 @@ else
 val := TypeSizeMapper2.NumTypeSize["ptr"]
 
 If (val == A_PtrSize)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+
+class sclass1
+{
+	static c2 := sclass2()
+}
+
+class sclass2
+{
+	x := 1
+}
+
+sc1 := sclass1()
+
+If (sc1.c2.x == 1)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+
+If (sclass1.c2.x == 1)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"

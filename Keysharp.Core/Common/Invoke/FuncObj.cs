@@ -24,18 +24,20 @@
 	{
 		internal object[] boundargs;
 
+		public new (Type, object) super => (typeof(BoundFunc), this);
+
 		internal BoundFunc(MethodInfo m, object[] ba, object o = null)
 			: base(m, o)
 		{
 			boundargs = ba;
 		}
 
-		public override object Call(params object[] obj) => base.Call(CreateArgs(obj).ToArray());
+		public override object Call(params object[] args) => base.Call(CreateArgs(args).ToArray());
 
-        public override object CallWithRefs(params object[] obj)
+        public override object CallWithRefs(params object[] args)
 		{
-			var argsList = CreateArgs(obj);
-			var refs = new List<RefHolder>(obj.Length);
+			var argsList = CreateArgs(args);
+			var refs = new List<RefHolder>(args.Length);
 
 			for (var i = 0; i < argsList.Count; i++)
 			{
@@ -59,7 +61,7 @@
 			return val;
 		}
 
-		private List<object> CreateArgs(params object[] obj)
+		private List<object> CreateArgs(params object[] args)
 		{
 			int i = 0, argsused = 0;
 			var argsList = new List<object>(mph.parameters.Length);
@@ -70,9 +72,9 @@
 				{
 					argsList.Add(boundargs[i]);
 				}
-				else if (argsused < obj.Length)
+				else if (argsused < args.Length)
 				{
-					argsList.Add(obj[argsused]);
+					argsList.Add(args[argsused]);
 					argsused++;
 				}
 				else
@@ -81,13 +83,13 @@
 
 			if (mph.IsVariadic)
 			{
-				for (; argsused < obj.Length; argsused++)
-					argsList.Add(obj[argsused]);
+				for (; argsused < args.Length; argsused++)
+					argsList.Add(args[argsused]);
 			}
 			else
 			{
-				for (; argsused < obj.Length && argsused < mph.parameters.Length; argsused++)
-					argsList.Add(obj[argsused]);
+				for (; argsused < args.Length && argsused < mph.parameters.Length; argsused++)
+					argsList.Add(args[argsused]);
 			}
 
 			while (argsList.Count < mph.parameters.Length)
@@ -129,6 +131,8 @@
 
 		internal long MinParams => 0;//All functions in keysharp are variadic so this property doesn't apply.
 		internal MethodPropertyHolder Mph => mph;
+
+		public new (Type, object) super => (typeof(FuncObj), this);
 
 		internal FuncObj(string s, object o = null, object paramCount = null)
 			: this(GetMethodInfo(s, o, paramCount), o)
@@ -186,8 +190,8 @@
 				Init();
 		}
 
-		public IFuncObj Bind(params object[] obj)
-		=> new BoundFunc(mi, obj, inst);
+		public IFuncObj Bind(params object[] args)
+		=> new BoundFunc(mi, args, inst);
 
 		public virtual object Call(params object[] obj)
 		{
@@ -224,27 +228,27 @@
 		}
 		*/
 
-        public virtual object CallWithRefs(params object[] obj)
+        public virtual object CallWithRefs(params object[] args)
 		{
-			var refs = new List<RefHolder>(obj.Length);
+			var refs = new List<RefHolder>(args.Length);
 
-			for (var i = 0; i < obj.Length; i++)
+			for (var i = 0; i < args.Length; i++)
 			{
-				object p = obj[i];
+				object p = args[i];
 
 				if (p is RefHolder rh)
 				{
 					refs.Add(rh);
-					obj[i] = rh.val;
+					args[i] = rh.val;
 				}
 			}
 
-			var val = mph.callFunc(inst, obj);
+			var val = mph.callFunc(inst, args);
 
 			for (var i = 0; i < refs.Count; i++)
 			{
 				var rh = refs[i];
-				rh.reassign(obj[rh.index]);
+				rh.reassign(args[rh.index]);
 			}
 
 			return val;
@@ -314,7 +318,7 @@
 
 	public delegate void SimpleDelegate();
 
-	public delegate void VariadicAction(params object[] o);
+	public delegate void VariadicAction(params object[] args);
 
 	public delegate object VariadicFunction(params object[] args);
 }

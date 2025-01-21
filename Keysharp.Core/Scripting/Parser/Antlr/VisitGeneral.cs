@@ -16,6 +16,7 @@ using System.Collections;
 using static System.Windows.Forms.AxHost;
 using System.Xml.Linq;
 using Keysharp.Scripting;
+using System.Reflection;
 
 namespace Keysharp.Core.Scripting.Parser.Antlr
 {
@@ -63,7 +64,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                     );
 
                 // Add the function declaration to the main class
-                state.mainClass = state.mainClass.AddMembers(hotIfFunction);
+                state.mainClass.Declaration = state.mainClass.Declaration.AddMembers(hotIfFunction);
 
                 // Add the function call to state.DHHR
                 state.DHHR.Add(
@@ -206,11 +207,9 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                 var hotkeyStatement = Visit(context.statement());
 
                 if (hotkeyStatement is BlockSyntax bs)
-                    state.currentFunc.Body = state.currentFunc.Body.AddStatements(bs.Statements.ToArray());
+                    state.currentFunc.Body.AddRange(bs.Statements);
                 else
-                    state.currentFunc.Body = state.currentFunc.Body.AddStatements((StatementSyntax)hotkeyStatement);
-
-                state.currentFunc.Body = EnsureReturnStatement(state.currentFunc.Body);
+                    state.currentFunc.Body.Add((StatementSyntax)hotkeyStatement);
 
                 // Create the hotkey function
                 hotkeyFunction = SyntaxFactory.MethodDeclaration(
@@ -233,14 +232,14 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                             )
                         )
                     )
-                    .WithBody(state.currentFunc.Body);
+                    .WithBody(state.currentFunc.AssembleBody());
 
                 PopFunction();
 
             }
 
             // Add the hotkey function to the main class
-            state.mainClass = state.mainClass.AddMembers(hotkeyFunction);
+            state.mainClass.Declaration = state.mainClass.Declaration.AddMembers(hotkeyFunction);
 
             // Generate a HotkeyDefinition.AddHotkey call for each trigger
             foreach (var hotkeyTriggerContext in context.HotkeyTrigger())
@@ -292,12 +291,12 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             state.isPersistent = true;
             // Extract the hotstring triggers
             var triggers = context.HotstringTrigger()
-                .Select(triggerContext => triggerContext.GetText()[..^2])
+                .Select(triggerContext => EscapedString(triggerContext.GetText()[..^2], true))
                 .ToList();
 
             // Check if it's an expansion or a statement
             bool hasExpansion = context.HotstringExpansion() != null;
-            string expansionText = hasExpansion ? context.HotstringExpansion().GetText() : "";
+            string expansionText = hasExpansion ? EscapedString(context.HotstringExpansion().GetText(), true) : "";
 
             // Generate the function if there's a statement
             string functionName = null;
@@ -310,12 +309,9 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                 // Visit the statement to generate the function body
                 var statementNode = Visit(context.statement());
                 if (statementNode is BlockSyntax bs)
-                    state.currentFunc.Body = state.currentFunc.Body.AddStatements(bs.Statements.ToArray());
+                    state.currentFunc.Body.AddRange(bs.Statements);
                 else
-                    state.currentFunc.Body = state.currentFunc.Body.AddStatements((StatementSyntax)statementNode);
-
-                // Ensure the function body ends with a return statement
-                state.currentFunc.Body = EnsureReturnStatement(state.currentFunc.Body);
+                    state.currentFunc.Body.Add((StatementSyntax)statementNode);
 
                 // Create the hotstring function
                 var hotstringFunction = SyntaxFactory.MethodDeclaration(
@@ -338,10 +334,10 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                             )
                         )
                     )
-                    .WithBody(state.currentFunc.Body);
+                    .WithBody(state.currentFunc.AssembleBody());
 
                 // Add the function to the main class
-                state.mainClass = state.mainClass.AddMembers(hotstringFunction);
+                state.mainClass.Declaration = state.mainClass.Declaration.AddMembers(hotstringFunction);
 
                 PopFunction();
             }
@@ -412,8 +408,8 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             state.isPersistent = true;
             // Extract the source and target keys
             var sourceKey = context.HotkeyTrigger().GetText();
-            sourceKey = sourceKey.Substring(0, sourceKey.Length - 2);
-            var targetKey = context.RemapKey().GetText();
+            sourceKey = EscapedString(sourceKey.Substring(0, sourceKey.Length - 2), true);
+            var targetKey = EscapedString(context.RemapKey().GetText(), true);
 
             // Generate function names
             var downFunctionName = $"_ks_Hotkey_{++state.hotkeyCount}";
@@ -437,11 +433,15 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             var remapDestSc = 0u;
             var remapName = targetKey;
             var hotName = sourceKey;
+            uint? modLR = null;
 
             string tempcp1, remapSource, remapDest, remapDestModifiers; // Must fit the longest key name (currently Browser_Favorites [17]), but buffer overflow is checked just in case.
             bool remapSourceIsCombo, remapSourceIsMouse, remapDestIsMouse, remapKeybdToMouse, remapWheel;
             var ht = Script.HookThread;
             var kbLayout = PlatformProvider.Manager.GetKeyboardLayout(0);
+
+            ht.TextToVKandSC(remapName = HotkeyDefinition.TextToModifiers(remapName, null), ref remapDestVk, ref remapDestSc, ref modLR, kbLayout);
+
             // These will be ignored in other stages if it turns out not to be a remap later below:
             remapSourceVk = ht.TextToVK(tempcp1 = HotkeyDefinition.TextToModifiers(hotName, null), ref modifiersLR, false, true, kbLayout);//An earlier stage verified that it's a valid hotkey, though VK could be zero.
             remapSourceIsCombo = tempcp1.Contains(HotkeyDefinition.COMPOSITE_DELIMITER);
@@ -458,7 +458,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             else
                 remapDest = remapName;// But exclude modifiers here; they're wanted separately.
 
-            remapDestModifiers = HotkeyDefinition.TextToModifiers(remapName, null);
+            remapDestModifiers = targetKey.Substring(0, targetKey.IndexOf(remapName));
             var remapDestKey = (Keys)remapDestVk;
             var remapSourceKey = (Keys)remapSourceVk;
 
@@ -616,7 +616,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                 );
 
             // Add the functions to the main class
-            state.mainClass = state.mainClass.AddMembers(downFunction, upFunction);
+            state.mainClass.Declaration = state.mainClass.Declaration.AddMembers(downFunction, upFunction);
 
             // Add the "down" hotkey
             state.DHHR.Add(
@@ -637,7 +637,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                                 SyntaxFactory.Argument(
                                     SyntaxFactory.LiteralExpression(
                                         SyntaxKind.StringLiteralExpression,
-                                        SyntaxFactory.Literal($"*{remapSource}")
+                                        SyntaxFactory.Literal($"{remapSource}")
                                     )
                                 )
                             })

@@ -56,11 +56,11 @@
 
 		public OwnPropsMap(KeysharpObject kso, Map map) : base(skipLogic: true) => __New(kso, map);
 
-		public object __New(params object[] values)
+		public object __New(params object[] args)
 		{
-			if (values.Length == 0) return null;
-			var kso = (KeysharpObject)values[0];
-			var map = (Map)values[1];
+			if (args.Length == 0) return null;
+			var kso = (KeysharpObject)args[0];
+			var map = (Map)args[1];
 			Parent = kso;
 			Default = map.Default;
 			Capacity = map.Capacity;

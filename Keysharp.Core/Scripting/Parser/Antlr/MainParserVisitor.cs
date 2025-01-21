@@ -803,13 +803,6 @@ public interface IMainParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitLogicalOrExpression([NotNull] MainParser.LogicalOrExpressionContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>OptionalChainExpression</c>
-	/// labeled alternative in <see cref="MainParser.singleExpression"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitOptionalChainExpression([NotNull] MainParser.OptionalChainExpressionContext context);
-	/// <summary>
 	/// Visit a parse tree produced by the <c>NotExpression</c>
 	/// labeled alternative in <see cref="MainParser.singleExpression"/>.
 	/// </summary>
@@ -1069,11 +1062,11 @@ public interface IMainParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitCoalesceExpression([NotNull] MainParser.CoalesceExpressionContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="MainParser.variableAssignment"/>.
+	/// Visit a parse tree produced by <see cref="MainParser.memberIdentifier"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitVariableAssignment([NotNull] MainParser.VariableAssignmentContext context);
+	Result VisitMemberIdentifier([NotNull] MainParser.MemberIdentifierContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="MainParser.dynamicIdentifier"/>.
 	/// </summary>
@@ -1099,6 +1092,13 @@ public interface IMainParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitObjectLiteral([NotNull] MainParser.ObjectLiteralContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>NamedLambdaFunction</c>
+	/// labeled alternative in <see cref="MainParser.lambdaFunction"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitNamedLambdaFunction([NotNull] MainParser.NamedLambdaFunctionContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>AnonymousLambdaFunction</c>
 	/// labeled alternative in <see cref="MainParser.lambdaFunction"/>.
 	/// </summary>
@@ -1112,13 +1112,6 @@ public interface IMainParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitAnonymousFatArrowLambdaFunction([NotNull] MainParser.AnonymousFatArrowLambdaFunctionContext context);
-	/// <summary>
-	/// Visit a parse tree produced by the <c>NamedLambdaFunction</c>
-	/// labeled alternative in <see cref="MainParser.lambdaFunction"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitNamedLambdaFunction([NotNull] MainParser.NamedLambdaFunctionContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="MainParser.lambdaFunctionBody"/>.
 	/// </summary>

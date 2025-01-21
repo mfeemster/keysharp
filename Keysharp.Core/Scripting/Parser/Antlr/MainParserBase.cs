@@ -184,6 +184,10 @@ public abstract class MainParserBase : Antlr4.Runtime.Parser
         return nextTokenType != OpenBrace;
     }
 
+    protected bool isPrevCloseParen()
+    {
+        return ((ITokenStream)this.InputStream).LT(-1).Type == CloseParen;
+    }
     protected bool closeBrace()
     {
         return ((ITokenStream)this.InputStream).LT(1).Type == CloseBrace;

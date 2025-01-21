@@ -74,10 +74,21 @@ namespace Keysharp.Scripting
                         Statics[typeof(FuncObj)].DefineProp("base", Collections.Map("value", Variables.Statics[typeof(KeysharpObject)]));
 
                         var typesToRemoveSet = new HashSet<Type>(new[] { typeof(Any), typeof(FuncObj), typeof(KeysharpObject) });
-                        foreach (var t in types.Where(type => !typesToRemoveSet.Contains(type)).OrderBy(GetInheritanceDepth))
+						var orderedTypes = types.Where(type => !typesToRemoveSet.Contains(type)).OrderBy(GetInheritanceDepth);
+                        foreach (var t in orderedTypes)
 						{
 							Script.InitStaticInstance(t);
                         }
+
+						// Now that the static objects are created, loop the types again and call __Init and __New for all built-in classes
+						foreach (var t in orderedTypes)
+						{
+                            if (t.Namespace.Equals("Keysharp.CompiledMain", StringComparison.InvariantCultureIgnoreCase))
+							{
+								Script.Invoke(Script.Variables.Statics[t], "__Init");
+								Script.Invoke(Script.Variables.Statics[t], "__New");
+							}
+						}
 
                         var fields = type.GetFields(BindingFlags.Static |
 													BindingFlags.NonPublic |

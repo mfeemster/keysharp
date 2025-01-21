@@ -111,11 +111,13 @@ namespace Keysharp.Scripting
 			if (t != typeof(FuncObj) && t != typeof(Any))
 				staticInst.DefineProp("base", Collections.MapWithoutBase("value", Variables.Statics[t.BaseType]));
 
+			/*
 			if (!isBuiltin)
 			{
                 Script.Invoke(Script.Variables.Statics[t], "__Init");
                 Script.Invoke(Script.Variables.Statics[t], "__New");
             }
+			*/
         }
         public static object Index(object item, params object[] index) => item == null ? null : IndexAt(item, index);
 

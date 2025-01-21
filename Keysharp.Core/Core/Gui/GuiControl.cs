@@ -87,6 +87,8 @@ namespace Keysharp.Core
 			}
 		}
 
+		public new (Type, object) super => (typeof(GuiControl), this);
+
 		public object Text
 		{
 			get
@@ -383,15 +385,15 @@ namespace Keysharp.Core
 
 		internal Control Ctrl => _control;
 
-		public GuiControl(params object[] obj) => _ = __New(obj);
+		public GuiControl(params object[] args) => _ = __New(args);
 
-		public object __New(params object[] obj)
+		public object __New(params object[] args)
 		{
-			if (obj.Length == 0) return null;
-			var gui = obj[0] as Gui;
-			var control = obj[1] as Control;
-			var name = obj[2].ToString();
-			var wrap = obj.Length > 3 ? obj[3].Ab() : false;
+			if (args.Length == 0) return null;
+			var gui = args[0] as Gui;
+			var control = args[1] as Control;
+			var name = args[2].ToString();
+			var wrap = args.Length > 3 ? args[3].Ab() : false;
 			Gui = gui;
 			typename = name;
 			_control = control;
@@ -713,12 +715,12 @@ namespace Keysharp.Core
 			return 0L;
 		}
 
-		public object GetClientPos([Optional()][DefaultParameterValue(0)] ref object x,
-								   [Optional()][DefaultParameterValue(0)] ref object y,
-								   [Optional()][DefaultParameterValue(0)] ref object width,
-								   [Optional()][DefaultParameterValue(0)] ref object height)
+		public object GetClientPos([Optional()][DefaultParameterValue(null)] object outX,
+								   [Optional()][DefaultParameterValue(null)] object outY,
+								   [Optional()][DefaultParameterValue(null)] object outWidth,
+								   [Optional()][DefaultParameterValue(null)] object outHeight)
 		{
-			GetClientPos(_control, dpiscaling, ref x, ref y, ref width, ref height);
+			GetClientPos(_control, dpiscaling, outX, outY, outWidth, outHeight);
 			return null;
 		}
 
@@ -828,13 +830,13 @@ namespace Keysharp.Core
 			return 0L;
 		}
 
-		public object GetPos([Optional()][DefaultParameterValue(0)] ref object x,
-							 [Optional()][DefaultParameterValue(0)] ref object y,
-							 [Optional()][DefaultParameterValue(0)] ref object width,
-							 [Optional()][DefaultParameterValue(0)] ref object height)
+		public object GetPos([Optional()][DefaultParameterValue(null)] object outX,
+							 [Optional()][DefaultParameterValue(null)] object outY,
+							 [Optional()][DefaultParameterValue(null)] object outWidth,
+							 [Optional()][DefaultParameterValue(null)] object outHeight)
 		{
-			GetPos(_control, dpiscaling, ref x, ref y, ref width, ref height);
-			return null;
+            GetPos(_control, dpiscaling, outX, outY, outWidth, outHeight);
+            return null;
 		}
 
 		public long GetPrev(object itemID)
@@ -1780,28 +1782,29 @@ namespace Keysharp.Core
 			return null;
 		}
 
-		internal static void GetClientPos(Control control, bool scaling, ref object x, ref object y, ref object w, ref object h) => GetPosHelper(control, scaling, true, ref x, ref y, ref w, ref h);
+		internal static void GetClientPos(Control control, bool scaling, object outX, object outY, object outWidth, object outHeight) => GetPosHelper(control, scaling, true, outX, outY, outWidth, outHeight);
 
-		internal static void GetPos(Control control, bool scaling, ref object x, ref object y, ref object w, ref object h) => GetPosHelper(control, scaling, false, ref x, ref y, ref w, ref h);
+		internal static void GetPos(Control control, bool scaling, object outX, object outY, object outWidth, object outHeight) => GetPosHelper(control, scaling, false, outX, outY, outWidth, outHeight);
 
-		internal static void GetPosHelper(Control control, bool scaling, bool client, ref object x, ref object y, ref object w, ref object h)
+		internal static void GetPosHelper(Control control, bool scaling, bool client, object outX, object outY, object outWidth, object outHeight)
 		{
-			var rect = client ? control.ClientRectangle : control.Bounds;
+            outX ??= Misc.EmptyVarRef; outY ??= Misc.EmptyVarRef; outWidth ??= Misc.EmptyVarRef; outHeight ??= Misc.EmptyVarRef;
+            var rect = client ? control.ClientRectangle : control.Bounds;
 
 			if (!scaling)
 			{
-				x = (long)rect.X;
-				y = (long)rect.Y;
-				w = (long)rect.Width;
-				h = (long)rect.Height;
+				Script.SetPropertyValue(outX, "__Value", (long)rect.X);
+                Script.SetPropertyValue(outY, "__Value", (long)rect.Y);
+                Script.SetPropertyValue(outWidth, "__Value", (long)rect.Width);
+                Script.SetPropertyValue(outHeight, "__Value", (long)rect.Height);
 			}
 			else
 			{
 				var scale = Accessors.A_ScaledScreenDPI;
-				x = (long)(rect.X * scale);
-				y = (long)(rect.Y * scale);
-				w = (long)(rect.Width * scale);
-				h = (long)(rect.Height * scale);
+                Script.SetPropertyValue(outX, "__Value", (long)(rect.X * scale));
+                Script.SetPropertyValue(outY, "__Value", (long)(rect.Y * scale));
+                Script.SetPropertyValue(outWidth, "__Value", (long)(rect.Width * scale));
+                Script.SetPropertyValue(outHeight, "__Value", (long)(rect.Height * scale));
 			}
 		}
 

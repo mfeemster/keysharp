@@ -16,12 +16,12 @@ class myclass
 
 	static classfuncstatic()
 	{
-		return s1
+		return this.s1
 	}
 
 	classfuncusesstatic()
 	{
-		return s1 * x
+		return this.s1 * x
 	}
 
 	classfuncwithlocalvars()
@@ -119,8 +119,8 @@ class myclass
 	ClassFuncCaseSensitive()
 	{
 		this.a := 1000
-		ClassFuncCaseSensitive2()
-		classfunccasesensitive2()
+		this.ClassFuncCaseSensitive2()
+		this.classfunccasesensitive2()
 	}
 
 	ClassFuncCaseSensitive2()
@@ -130,8 +130,8 @@ class myclass
 
 	static ClassFuncCaseSensitiveStatic()
 	{
-		ClassFuncCaseSensitiveStatic2()
-		classfunccasesensitivestatic2()
+		this.ClassFuncCaseSensitiveStatic2()
+		this.classfunccasesensitivestatic2()
 	}
 
 	static ClassFuncCaseSensitiveStatic2()
@@ -307,7 +307,7 @@ if (val == 200)
 else
 	FileAppend "fail", "*"
 
-funcadd := FuncObj("classfuncstaticwithparams", classobj)
+funcadd := FuncObj("classfuncstaticwithparams", myclass)
 
 val := funcadd(10, 10)
 
@@ -325,7 +325,7 @@ if (val == 12)
 else
 	FileAppend "fail", "*"
 
-funcadd := FuncObj("classvarfuncstatic", classobj)
+funcadd := FuncObj("classvarfuncstatic", myclass)
 
 val := funcadd(1, 2, 3)
 

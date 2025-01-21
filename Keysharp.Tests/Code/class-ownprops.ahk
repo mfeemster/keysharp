@@ -87,7 +87,7 @@ o1.DefineProp("getsetprop", {
 		get: (this) => 456,
 		set: (this) => this.b := 789
 	})
-
+	
 b := true
 
 try
@@ -189,7 +189,7 @@ else
 	
 o1 := testclass()
 
-if (ObjOwnPropCount(o1) == 2) ; Count all declared properties.
+if (ObjOwnPropCount(o1) == 3) ; Count all declared properties.
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -208,6 +208,8 @@ o1 := extclass2()
 
 if (ObjOwnPropCount(o1) == 3) ; Count all declared properties in base and derived class.
 	FileAppend "pass", "*"
+if (ObjOwnPropCount(o1) == 5) ; Count all declared properties in base and derived class.
+	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
 
@@ -215,7 +217,7 @@ o1.DefineProp("d", {
 		call : () => 123
 	})
 
-if (ObjOwnPropCount(o1) == 4) ; Count all declared and dynamic properties in base and derived class.
+if (ObjOwnPropCount(o1) == 6) ; Count all declared and dynamic properties in base and derived class.
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -223,6 +225,8 @@ else
 if (ObjHasOwnProp(o1, "a") && o1.HasOwnProp("b") && o1.HasOwnProp("c") && o1.HasOwnProp("d"))
 	FileAppend "pass", "*"
 else
+	FileAppend "fail", "*"
+	
 	FileAppend "fail", "*"
 
 o1 := { one : 1}
@@ -281,13 +285,15 @@ For Name, Value in o1.OwnProps() ; Enumerator inline with a for loop. Retrieve v
 		b := true
 	else if (name == "c" && value == 123)
 		b := true
+	else if (name == "super")
+		b := true
 	else
 		b := false
 
 	i++
 }
 
-If (b && i == 3)
+If (b && i == 4)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -306,13 +312,15 @@ For Name,Value in op ; Enumerator variable with a for loop.
 		b := true
 	else if (name == "c" && value == 123)
 		b := true
+	else if (name == "super")
+		b := true
 	else
 		b := false
 
 	i++
 }
 
-If (b && i == 3)
+If (b && i == 4)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -339,7 +347,7 @@ If (b && i == 3 && o1.a == 0) ; Ensure the last prop didn't get called.
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
-	
+
 testfunc(testclassobj)
 {
 	testclassobj.DefineProp("prop", { ; Dynamically defined property with getter.

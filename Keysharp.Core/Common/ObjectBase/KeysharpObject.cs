@@ -55,9 +55,11 @@ namespace Keysharp.Core.Common.ObjectBase
             SkipConstructorLogic = skipLogic;
         }
 
-        public object __New(params object[] obj) => "";
+		public object __New(params object[] args) => "";
 
-		public object Super
+        public new (Type, object) super => (typeof(Any), this);
+
+        public object Super
 		{
 			get
 			{

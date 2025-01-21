@@ -393,7 +393,8 @@ namespace Keysharp.Core.Common.Invoke
 					if (type.IsClass && type.IsPublic && type.Namespace != null && (!ignoreMainAssembly || (ignoreMainAssembly && type.Name != Parser.mainClassName)) &&
                             (type.Namespace.StartsWith("Keysharp.Core", StringComparison.OrdinalIgnoreCase) ||
 							 type.Namespace.StartsWith("Keysharp.CompiledMain", StringComparison.OrdinalIgnoreCase) ||
-							 type.Namespace.StartsWith("Keysharp.Tests", StringComparison.OrdinalIgnoreCase)))//Allow tests so we can use function objects inside of unit tests.
+							 type.Namespace.StartsWith("Keysharp.Scripting", StringComparison.OrdinalIgnoreCase) ||
+                             type.Namespace.StartsWith("Keysharp.Tests", StringComparison.OrdinalIgnoreCase)))//Allow tests so we can use function objects inside of unit tests.
 					{
 						_ = FindAndCacheInstanceMethod(type, "", -1);
 						_ = FindAndCacheStaticMethod(type, "", -1);

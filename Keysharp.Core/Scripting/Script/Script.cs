@@ -210,9 +210,9 @@
 			return sbuf.sb.ToString();
 		}
 
-		public static bool HandleSingleInstance(string name, eScriptInstance inst)
+		public static bool HandleSingleInstance(string title, eScriptInstance inst)
 		{
-			if (name.Length == 0 || name == "*")//Happens when running in Keyview.
+			if (title.Length == 0 || title == "*")//Happens when running in Keyview.
 				return false;
 
 			if (Env.FindCommandLineArg("force") != null || Env.FindCommandLineArg("f") != null)
@@ -221,19 +221,21 @@
 			if (Env.FindCommandLineArg("restart") != null || Env.FindCommandLineArg("r") != null)
 				inst = eScriptInstance.Force;
 
+			title = MakeTitleWithVersion(title);
 			var exit = false;
 			var oldDetect = WindowX.DetectHiddenWindows(true);
+			var oldMatchMode = WindowX.SetTitleMatchMode(3);//Require exact match.
 
 			switch (inst)
 			{
 				case eScriptInstance.Force:
 				{
-					_ = WindowX.WinClose(name, "", 2);
+					_ = WindowX.WinClose(title, "", 2);
 				}
 				break;
 
 				case eScriptInstance.Ignore:
-					if (WindowX.WinExist(name) != 0)
+					if (WindowX.WinExist(title) != 0)
 						exit = true;
 
 					break;
@@ -243,7 +245,7 @@
 
 				case eScriptInstance.Prompt:
 				default:
-					var hwnd = WindowX.WinExist(name);
+					var hwnd = WindowX.WinExist(title);
 
 					if (hwnd != 0)
 					{
@@ -256,6 +258,7 @@
 					break;
 			}
 
+			_ = WindowX.SetTitleMatchMode(oldMatchMode);
 			_ = WindowX.DetectHiddenWindows(oldDetect);
 			return exit;
 		}
@@ -358,7 +361,7 @@
 			mainWindow = new MainWindow();
 
 			if (!string.IsNullOrEmpty(title))
-				mainWindow.Text = title + " - Keysharp " + Accessors.A_AhkVersion;
+				mainWindow.Text = MakeTitleWithVersion(title);
 
 			mainWindow.ClipboardUpdate += PrivateClipboardUpdate;
 			mainWindow.Icon = Core.Properties.Resources.Keysharp_ico;
@@ -626,6 +629,8 @@
 			lastPeekTime = tick_now;
 			return ResultType.Ok;
 		}
+
+		internal static string MakeTitleWithVersion(string title) => title + " - Keysharp " + Accessors.A_AhkVersion;
 
 		internal static int[] ParseVersionToInts(string ver)
 		{

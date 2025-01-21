@@ -117,7 +117,7 @@ public abstract class MainLexerBase : Lexer
     }
 
     protected bool IsHotstringLiteral() {
-        int intermediate = _processHotstringOptions(base.Text.TrimStart(':'));
+        int intermediate = _processHotstringOptions(base.Text.Substring(1));
         return intermediate == -1 ? _hotstringIsLiteral : intermediate == 0;
     }
 
@@ -228,10 +228,12 @@ public abstract class MainLexerBase : Lexer
             && _lastToken.Channel != Hidden 
             && !lineContinuationOperators.Contains(_lastToken.Type)
             && !unaryOperators.Contains(_lastToken.Type)
-            && (Regex.IsMatch(_lastToken.Text, @"^[a-zA-Z0-9_%]+$") || _lastToken.Type == DerefEnd || _lastToken.Type == CloseBracket || _lastToken.Type == CloseParen))
+            && (_lastToken.Type == Identifier || _lastToken.Type == DerefEnd 
+                || _lastToken.Type == CloseBracket || _lastToken.Type == CloseParen))
             //&& Regex.IsMatch(_lastToken.Text, @"^[a-zA-Z0-9_%]+$"))
             this.Type = MainLexer.OpenParenNoWS;
     }
+
     protected void ProcessHotstringOpenBrace()
     {
         this.Type = MainLexer.OpenBrace;
@@ -286,19 +288,13 @@ public abstract class MainLexerBase : Lexer
     }
 
     protected bool IsValidRemap() {
-        if (!(_lastVisibleToken != null && _lastVisibleToken.Type == MainLexer.HotkeyTrigger))
+        if (_lastVisibleToken == null || _lastVisibleToken.Type != MainLexer.HotkeyTrigger)
+            return false;
+        if (this.Text == ";" && _lastToken != null && _lastToken.Channel == Hidden)
             return false;
         if (this.Text == "{")
             return false;
-        for (var i = 1; true; i++) {
-            var next = _input.LA(i);
-            if (next == '\r' || next == '\n' || next == Eof || next == ';')
-                return true;
-            else if (next == ' ' || next == '\t')
-                continue;
-            else
-                return false;
-        }
+        return true;
     }
 
     protected bool IsCommentPossible() {

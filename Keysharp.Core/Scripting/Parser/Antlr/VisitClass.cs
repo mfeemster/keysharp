@@ -13,6 +13,7 @@ using Antlr4.Runtime;
 using System.IO;
 using System.Collections;
 using System.Reflection;
+using static System.Windows.Forms.AxHost;
 
 namespace Keysharp.Core.Scripting.Parser.Antlr
 {
@@ -76,7 +77,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                 SyntaxFactory.Token(SyntaxKind.StaticKeyword)
             );
 
-            state.mainClass = state.mainClass.AddMembers(fieldDeclaration);
+            state.mainClass.Declaration = state.mainClass.Declaration.AddMembers(fieldDeclaration);
 
             // Add the constructor
             state.currentClass.Body.Add(CreateConstructor(state.currentClass.Name));
@@ -107,7 +108,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
 
             var newClass = state.currentClass.Declaration
                 .WithBaseList(baseList)
-                .WithMembers(SyntaxFactory.List(state.currentClass.Body));
+                .WithMembers(SyntaxFactory.List(state.currentClass.Declaration.Members.Concat(state.currentClass.Body)));
             state.currentClass = prevClass;
             return newClass;
         }
@@ -156,17 +157,17 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             {
                 PushFunction("get_" + propertyNameSyntax.identifier().GetText());
                 var getterBody = (BlockSyntax)Visit(propertyDefinition.propertyGetterDefinition(0));
-                state.currentFunc.Body = EnsureReturnStatement(state.currentFunc.Body.AddStatements(getterBody.Statements.ToArray()));
+                state.currentFunc.Body.AddRange(getterBody.Statements.ToArray());
                 getter = SyntaxFactory.AccessorDeclaration(SyntaxKind.GetAccessorDeclaration)
-                    .WithBody(state.currentFunc.Body);
+                    .WithBody(state.currentFunc.AssembleBody());
                 PopFunction();
             } else if (propertyDefinition.singleExpression() != null)
             {
                 PushFunction("get_" + propertyNameSyntax.identifier().GetText());
                 var getterBody = SyntaxFactory.Block(SyntaxFactory.ReturnStatement((ExpressionSyntax)Visit(propertyDefinition.singleExpression())));
-                state.currentFunc.Body = state.currentFunc.Body.AddStatements(getterBody.Statements.ToArray());
+                state.currentFunc.Body.AddRange(getterBody.Statements);
                 getter = SyntaxFactory.AccessorDeclaration(SyntaxKind.GetAccessorDeclaration)
-                    .WithBody(state.currentFunc.Body);
+                    .WithBody(state.currentFunc.AssembleBody());
                 PopFunction();
             }
 
@@ -175,10 +176,11 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             if (propertyDefinition.propertySetterDefinition().Length != 0)
             {
                 PushFunction("set_" + propertyNameSyntax.identifier().GetText());
+                state.currentFunc.Void = true;
                 var setterBody = (BlockSyntax)Visit(propertyDefinition.propertySetterDefinition(0));
-                state.currentFunc.Body = state.currentFunc.Body.AddStatements(setterBody.Statements.ToArray());
+                state.currentFunc.Body.AddRange(setterBody.Statements);
                 setter = SyntaxFactory.AccessorDeclaration(SyntaxKind.SetAccessorDeclaration)
-                    .WithBody(state.currentFunc.Body);
+                    .WithBody(state.currentFunc.AssembleBody());
                 PopFunction();
             }
 
@@ -311,7 +313,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
 
             // Visit method body
             BlockSyntax methodBody = (BlockSyntax)Visit(methodDefinition.lambdaFunctionBody());
-            methodBody = EnsureReturnStatement(methodBody);
+            state.currentFunc.Body.AddRange(methodBody.Statements);
 
             // Create method declaration
             var methodDeclaration = SyntaxFactory.MethodDeclaration(
@@ -327,7 +329,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                     )
                 )
                 .WithParameterList(parameters)
-            .WithBody(methodBody);
+            .WithBody(state.currentFunc.AssembleBody());
 
             PopFunction();
 

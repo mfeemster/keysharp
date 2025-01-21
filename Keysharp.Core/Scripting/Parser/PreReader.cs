@@ -636,7 +636,8 @@ namespace Keysharp.Scripting
 
 									var str = buf.ToString();
 									var result = MultilineString(str, lineNumber, name);
-									var lastlistitem = list[list.Count - 1];
+									result = result.Replace("\n", "`n").Replace("\r", "`r");
+                                    var lastlistitem = list[list.Count - 1];
 
 									if (lastlistitem.Code.EndsWith('\''))
 										lastlistitem.Code = lastlistitem.Code.Substring(0, lastlistitem.Code.Length - 1) + '\"';

@@ -139,6 +139,16 @@ namespace Keysharp.Scripting
 
 		public static BoolResult IfTest(object result) => new (ForceBool(result), result);
 
+		public static object PrefixIncDec(Operator op, object left, object val) => Operate(op, left, val);
+
+		public static object PostfixIncDecProp(object obj, object prop, object val)
+		{
+			var orig = GetPropertyValue(obj, prop);
+			var newval = Operate(Operator.Add, orig, val);
+			SetPropertyValue(obj, prop, newval);
+			return orig;
+		}
+
 		public static object Operate(Operator op, object left, object right)
 		{
 			Error err;
@@ -606,7 +616,15 @@ namespace Keysharp.Scripting
 
 		public static object MultiStatement(params object[] args) => args[ ^ 1];
 
-		public static object OperateUnary(Operator op, object right)
+        public static void InitStaticVariable(ref object variable, string name, Func<object> initFunc)
+        {
+            if (Flow.initializedUserStaticVariables.Contains(name))
+                return;
+            Flow.initializedUserStaticVariables.Add(name);
+            variable = initFunc();
+        }
+
+        public static object OperateUnary(Operator op, object right)
 		{
 			Error err;
 

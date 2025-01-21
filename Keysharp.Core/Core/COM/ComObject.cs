@@ -48,9 +48,13 @@ namespace Keysharp.Core.COM
 			}
 		}
 
+		public new (Type, object) super => (typeof(ComObject), this);
+
 		public int VarType { get; set; }
 
-		public ComObject(object varType, object value, object flags = null) => __New(varType, value, flags);
+		public ComObject(params object[] args) => _ = __New(args);
+
+		internal ComObject(object varType, object value, object flags = null) => _ = __New(varType, value, flags);
 
 		internal ComObject() : base(skipLogic: true)
 		{
@@ -66,11 +70,11 @@ namespace Keysharp.Core.COM
 				_ = Marshal.Release(ip);
 		}
 
-		public object __New(params object[] values)
+		public object __New(params object[] args)
 		{
-			var varType = values[0];
-			var value = values[1];
-			var flags = values.Length > 2 ? values[2] : null;
+			var varType = args[0];
+			var value = args[1];
+			var flags = args.Length > 2 ? args[2] : null;
 			var vt = (int)varType.Al();
 			var co = ValueToVarType(value, vt, true);
 			VarType = vt;

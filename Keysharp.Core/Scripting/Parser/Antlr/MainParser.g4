@@ -127,7 +127,7 @@ statement
 //    | exportStatement
     //| functionDeclaration eos   // required for nested functions
     | classDeclaration eos
-    | functionStatement eos     // requires OpenBrace or LineTerminator before it
+    //| functionStatement eos     // requires OpenBrace or LineTerminator before it
     | variableStatement eos
     | expressionStatement eos   // requires OpenBrace or LineTerminator before it
     | ifStatement // always followed by a statement which requires eos
@@ -256,7 +256,7 @@ variableDeclaration
     ;
 
 functionStatement
-    : {this.isNextWS()}? identifier arguments?
+    : {this.isBOS()}? singleExpression {!this.isPrevCloseParen()}? arguments?
     ;
 
 expressionStatement
@@ -269,10 +269,10 @@ ifStatement
 
 iterationStatement
     : Loop singleExpression? EOL? statement (Until singleExpression EOL)? (Else statement)?      # LoopStatement
-    | Loop Files singleExpression (',' singleExpression)? statement (Until singleExpression EOL)? (Else statement)?  # LoopFilesStatement
-    | Loop Read singleExpression (',' singleExpression)? statement (Until singleExpression EOL)? (Else statement)?  # LoopReadStatement
-    | Loop Reg singleExpression (',' singleExpression)? statement (Until singleExpression EOL)? (Else statement)?    # LoopRegStatement
-    | Loop Parse singleExpression (',' singleExpression?)* statement (Until singleExpression EOL)? (Else statement)? # LoopParseStatement
+    | Loop Files singleExpression (',' singleExpression)? EOL? statement (Until singleExpression EOL)? (Else statement)?  # LoopFilesStatement
+    | Loop Read singleExpression (',' singleExpression)? EOL? statement (Until singleExpression EOL)? (Else statement)?  # LoopReadStatement
+    | Loop Reg singleExpression (',' singleExpression)? EOL? statement (Until singleExpression EOL)? (Else statement)?    # LoopRegStatement
+    | Loop Parse singleExpression (',' singleExpression?)* EOL? statement (Until singleExpression EOL)? (Else statement)? # LoopParseStatement
     | While singleExpression EOL? statement (Until singleExpression EOL)? (Else statement)?      # WhileStatement
     | For forInParameters EOL? statement (Until singleExpression EOL)? (Else statement)?         # ForInStatement
     ;
@@ -342,8 +342,9 @@ catchProduction
     ;
 
 catchAssignable
-    : assignable (As identifier)?
-    | openParen assignable (As identifier)? ')'
+    : As identifier
+    | assignable (As? identifier)?
+    | openParen assignable (As? identifier)? ')'
     ;
 
 elseProduction
@@ -493,7 +494,7 @@ argument
 
 // NOTE: this allows implicit concatenation because it must only be used inside parentheses/brackets
 expressionSequence
-    : singleExpression (',' singleExpression)*
+    : singleExpression ((',' singleExpression?)* ',' singleExpression)?
     ;
 
 /*
@@ -525,10 +526,9 @@ memberIndexArguments
 singleExpression
     : Class Identifier classTail                                           # ClassExpression // nested class
     | lambdaFunction                                                       # FunctionExpression
-    | singleExpression '?.' singleExpression                               # OptionalChainExpression
-    | singleExpression '?.'? memberIndexArguments                          # MemberIndexExpression
     | singleExpression functionCallArguments                               # FunctionCallExpression
-    | singleExpression '?'? '.' dynamicPropertyName                        # MemberDotExpression
+    | singleExpression '?'? '.' memberIdentifier                           # MemberDotExpression
+    | singleExpression '?.'? memberIndexArguments                          # MemberIndexExpression
     | singleExpression '++'                                                # PostIncrementExpression
     | singleExpression '--'                                                # PostDecreaseExpression
     | Delete singleExpression                                              # DeleteExpression
@@ -555,25 +555,27 @@ singleExpression
     | singleExpression Is singleExpression                                 # IsExpression
     | singleExpression In singleExpression                                 # InExpression
     | singleExpression Contains singleExpression                           # ContainsExpression
-    | ('!' | VerbalNot) EOL? singleExpression                                   # NotExpression
+    | ('!' | VerbalNot) EOL? singleExpression                              # NotExpression
     | singleExpression ('&&' | VerbalAnd) singleExpression                 # LogicalAndExpression
     | singleExpression ('||' | VerbalOr) singleExpression                  # LogicalOrExpression
     | singleExpression '??' singleExpression                               # CoalesceExpression
-    | singleExpression '?' singleExpression EOL? ':' EOL? singleExpression           # TernaryExpression
+    | singleExpression '?' singleExpression EOL? ':' EOL? singleExpression # TernaryExpression
     | <assoc = right> singleExpression assignmentOperator singleExpression # AssignmentOperatorExpression
-    | openParen expressionSequence ')'                                           # ParenthesizedExpression
     | This                                                                 # ThisExpression
     | Super                                                                # SuperExpression
     | Base                                                                 # BaseExpression
     | dynamicIdentifier                                                    # DynamicIdentifierExpression
-    | identifier                                                       # IdentifierExpression
+    | identifier                                                           # IdentifierExpression
     | literal                                                              # LiteralExpression
     | arrayLiteral                                                         # ArrayLiteralExpression
     | objectLiteral                                                        # ObjectLiteralExpression
+    | '(' expressionSequence ')'                                           # ParenthesizedExpression
     ;
 
-variableAssignment
-    :
+memberIdentifier
+    : identifier
+    | dynamicIdentifier
+    | reservedWord
     ;
 
 dynamicIdentifier
@@ -597,9 +599,9 @@ objectLiteral
     ;
 
 lambdaFunction
-    : Async? openParen formalParameterList? ')' lambdaFunctionBody                     # AnonymousLambdaFunction
+    : functionDeclaration                                                                       # NamedLambdaFunction
+    | Async? '(' formalParameterList? ')' lambdaFunctionBody                                    # AnonymousLambdaFunction
     | Async? (assignable? Multiply | BitAnd? assignable QuestionMark?) '=>' singleExpression    # AnonymousFatArrowLambdaFunction
-    | functionDeclaration                                                        # NamedLambdaFunction
     ;
 
 lambdaFunctionBody
@@ -730,6 +732,7 @@ keyword
     | Enum
     | Extends
     | Super
+    | Base
     | Export
     | Import
     | Static

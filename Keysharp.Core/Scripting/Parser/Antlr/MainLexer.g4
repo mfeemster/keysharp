@@ -70,7 +70,7 @@ HotstringLiteralTrigger
     ;
 // These two are separated because I couldn't figure out how to conditionally pushMode(HOTSTRING_MODE)
 HotstringTrigger
-    : HotstringTriggerPart
+    : HotstringTriggerPart {!this.IsHotstringLiteral()}?
     ;
 
 // If no hotstring is matchable, try matching a remap
@@ -324,8 +324,8 @@ fragment SingleStringCharacter: ~['`] | '`' EscapeSequence;
 fragment NonColonStringCharacter: ~[;:`\r\n] | '`' EscapeSequence;
 
 fragment RawStringCharacter
-    : ~[\t\n\r\u2028\u2029\f ] ';'         // Match semicolon only if not preceded by whitespace
-    | ~[;\r\n\u2028\u2029]                 // Match any character except semicolon, newline, or carriage return
+    : ~[`\t\n\r\u2028\u2029\f ] ';'         // Match semicolon only if not preceded by whitespace
+    | ~[;`\r\n\u2028\u2029]                 // Match any character except semicolon, newline, or carriage return
     | '`' EscapeSequence       // Match escape sequences starting with backtick
     ;
 
@@ -517,7 +517,8 @@ fragment HotkeyCharacter
     | 'Launch_App2'
     | 'AltTab'
     | 'ShiftAltTab'
-    | RawStringCharacter
+    | ~[`\r\n\u2028\u2029 ]   // Match any character except semicolon, newline, carriage return, or whitespace
+    | '`' EscapeSequence       // Match escape sequences starting with backtick
     ;
 
 fragment HotkeyCombinatorCharacter: '&';

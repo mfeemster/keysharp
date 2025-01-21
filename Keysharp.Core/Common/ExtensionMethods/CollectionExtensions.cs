@@ -9,8 +9,9 @@
 		/// V2 version name of Enum().
 		/// </summary>
 		/// <param name="obj">The object to retrieve an enumerator for.</param>
+		/// <param name="args">Ignored.</param>
 		/// <returns>The enumerator for obj.</returns>
-		public static IEnumerator __Enum(this IEnumerable obj, params object[] values) => obj.GetEnumerator();
+		public static IEnumerator __Enum(this IEnumerable obj, params object[] args) => obj.GetEnumerator();
 
 		/// <summary>
 		/// Converts an element of an <see cref="IList"/> to a boolean.<br/>
@@ -312,9 +313,9 @@
 		/// <summary>
 		/// Returns a recursively flattened array of objects as an <see cref="IList"/>.
 		/// </summary>
-		/// <param name="obj">The array of objects to flatten.</param>
+		/// <param name="args">The array of objects to flatten.</param>
 		/// <returns>The recursively flattened array as an <see cref="IList"/>.</returns>
-		public static IList L(this object[] obj) => obj.Flatten(true).Cast<object>().ToList();
+		public static IList L(this object[] args) => args.Flatten(true).Cast<object>().ToList();
 
 		/// <summary>
 		/// Returns a recursively flattened <see cref="IEnumerable"/> of objects as an <see cref="IList"/>.
@@ -496,9 +497,9 @@
 		/// <summary>
 		/// Returns an array of objects as an <see cref="IList"/>.
 		/// </summary>
-		/// <param name="obj">The array of objects to convert to an <see cref="IList"/>.</param>
+		/// <param name="args">The array of objects to convert to an <see cref="IList"/>.</param>
 		/// <returns>A new <see cref="IList"/> which contains the elements from obj.</returns>
-		//public static IList Pl(this object[] obj) => obj.Select(x => x).ToList();
+		//public static IList Pl(this object[] args) => args.Select(x => x).ToList();
 
 		/// <summary>
 		/// Converts the first element of an <see cref="IList"/> to a string.

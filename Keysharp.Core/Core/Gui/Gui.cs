@@ -306,7 +306,9 @@
 
 		internal StatusStrip StatusBar { get; set; }
 
-		public Gui(object obj0 = null, object obj1 = null, object obj2 = null) => __New(obj0, obj1, obj2);
+		public new (Type, object) super => (typeof(Gui), this);
+
+		public Gui(params object[] args) => _ = __New(args);
 
 		internal Gui(object obj0 = null, object obj1 = null, object obj2 = null, object obj3 = null)//The last parameter is hidden and is only for internal use for when we wrap the main window in a Gui object.
 		{
@@ -1493,20 +1495,20 @@
 			return null;
 		}
 
-		public object GetClientPos([Optional()][DefaultParameterValue(0)] ref object x,
-								   [Optional()][DefaultParameterValue(0)] ref object y,
-								   [Optional()][DefaultParameterValue(0)] ref object width,
-								   [Optional()][DefaultParameterValue(0)] ref object height)
+		public object GetClientPos([Optional()][DefaultParameterValue(null)] object outX,
+								   [Optional()][DefaultParameterValue(null)] object outY,
+								   [Optional()][DefaultParameterValue(null)] object outWidth,
+								   [Optional()][DefaultParameterValue(null)] object outHeight)
 		{
-			GuiControl.GetClientPos(form, dpiscaling, ref x, ref y, ref width, ref height);
+			GuiControl.GetClientPos(form, dpiscaling, outX, outY, outWidth, outHeight);
 			return null;
 		}
 
 		public IEnumerator<(object, object)> GetEnumerator() => new MapKeyValueIterator(controls, 2);
 
-		public object GetPos([Optional()][DefaultParameterValue(0)] ref object x, [Optional()][DefaultParameterValue(0)] ref object y, [Optional()][DefaultParameterValue(0)] ref object width, [Optional()][DefaultParameterValue(0)] ref object height)
+		public object GetPos([Optional()][DefaultParameterValue(null)] object outX, [Optional()][DefaultParameterValue(null)] object outY, [Optional()][DefaultParameterValue(null)] object outWidth, [Optional()][DefaultParameterValue(null)] object outHeight)
 		{
-			GuiControl.GetPos(form, dpiscaling, ref x, ref y, ref width, ref height);
+			GuiControl.GetPos(form, dpiscaling, outX, outY, outWidth, outHeight);
 			return null;
 		}
 

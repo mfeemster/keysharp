@@ -1,5 +1,5 @@
 using static Keysharp.Core.Errors;
-using Timer = System.Timers.Timer;
+using Timer = Keysharp.Core.Common.Threading.TimerWithTag;
 
 namespace Keysharp.Core
 {
@@ -15,7 +15,9 @@ namespace Keysharp.Core
 		internal static Timer mainTimer;
 		internal static int NoSleep = -1;
 		internal static bool persistentValueSetByUser;
-		internal static ConcurrentDictionary<ICallable, System.Windows.Forms.Timer> timers = new ();
+        internal static HashSet<object> initializedUserStaticVariables = new();
+
+        internal static ConcurrentDictionary<ICallable, Timer> timers = new ();
 
 		/// <summary>
 		/// Whether a thread can be interrupted/preempted by subsequent thread.
@@ -31,7 +33,8 @@ namespace Keysharp.Core
 		public static void ResetState()
 		{
 			cachedFuncObj = new ();
-			callingCritical = false;
+			initializedUserStaticVariables = new(); // Technically belongs in Scripting.Script.Operate, but putting it here makes clearing it between test runs more maintainable
+            callingCritical = false;
 			hasExited = false;
 			IntervalUnspecified = int.MinValue + 303;// Use some negative value unlikely to ever be passed explicitly:
 			mainTimer = null;
@@ -317,7 +320,7 @@ namespace Keysharp.Core
 			var pri = priority.Al();
 			var once = p < 0;
 			ICallable func = null;
-			System.Windows.Forms.Timer timer = null;
+			Timer timer = null;
 
 			if (once)
 				p = -p;
@@ -385,20 +388,21 @@ namespace Keysharp.Core
 				if (p == long.MaxValue)//Period omitted and timer didn't exist, so create one with a 250ms interval.
 					p = 250;
 
-				_ = timers.TryAdd(func, timer = new System.Windows.Forms.Timer());
+				_ = timers.TryAdd(func, timer = new ());
 				timer.Tag = (int)pri;
 				timer.Interval = (int)p;
 			}
 			else//They tried to stop a timer that didn't exist
 				return null;
 
-			timer.Tick += (ss, ee) =>
+			//timer.Tick += (ss, ee) =>
+			timer.Elapsed += (ss, ee) =>
 			{
 				if ((!Accessors.A_AllowTimers.Ab() && Script.totalExistingThreads > 0)
 						|| !Threads.AnyThreadsAvailable() || !Threads.IsInterruptible())
 					return;
 
-				if (ss is System.Windows.Forms.Timer t)
+				if (ss is Timer t)
 				{
 					if (!t.Enabled)//A way of checking to make sure the timer is not already executing.
 						return;

@@ -286,7 +286,7 @@ class class1
 {
 	sum := 0
 
-	__New()
+	__New(args*)
 	{
 		global sum
 		local temp := 0

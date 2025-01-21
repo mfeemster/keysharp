@@ -40,6 +40,7 @@ namespace Keysharp.Scripting
 			internal static MethodReference OperateTernary => new (typeof(Script), "OperateTernary");
 			internal static MethodReference OperateUnary => new (typeof(Script), "OperateUnary");
 			internal static MethodReference OperateZero => new (typeof(Script), "OperateZero");
+			internal static MethodReference PostfixIncDecProp => new (typeof(Script), "PostfixIncDecProp");
 			internal static MethodReference OrMaybe => new (typeof(Script), "OrMaybe");
 			internal static MethodReference Parameter => new (typeof(Script), "Parameter");
 			internal static MethodReference Parameters => new (typeof(Script), "Parameters");

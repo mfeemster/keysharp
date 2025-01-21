@@ -198,3 +198,51 @@ func5()
 }
 
 func5()
+
+class class1 {
+	func6() {
+		static i := 2
+		return ++i
+	}
+}
+
+func6() {
+	static i := 2
+	return ++i
+}
+
+t1 := class1()
+x := t1.func6()
+if (x == 3)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+
+x := unset
+x := t1.func6()
+if (x == 4)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+
+t2 := class1()
+x := unset
+x := t2.func6()
+if (x == 5)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+
+x := unset
+x := t2.func6()
+if (x == 6)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+
+x := unset
+x := func6()
+if (x == 3)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
