@@ -295,11 +295,6 @@ namespace Keysharp.Scripting
 
 								switch (upper)
 								{
-									case "INCLUDE":
-										includeOnce = true;
-
-									goto case "INCLUDEAGAIN";
-
 									case "DLLLOAD":
 									{
 										var silent = false;
@@ -318,6 +313,65 @@ namespace Keysharp.Scripting
 										//The generated code for this is handled in Parser.Parse() because it must come before the InitGlobalVars();
 									}
 									break;
+
+									case "HOTIF":
+										if (parts.Length > 1 && !string.IsNullOrEmpty(parts[1]))
+										{
+											var hotiffuncname = $"_ks_HotIf_{NextHotIfCount}";
+											extralines.Add(new CodeLine(name, lineNumber, $"{hotiffuncname}(thehotkey)"));
+											extralines.Add(new CodeLine(name, lineNumber, "{"));
+											extralines.Add(new CodeLine(name, lineNumber, $"return {parts[1]}"));
+											extralines.Add(new CodeLine(name, lineNumber, "}"));
+											var tempcl = new CodeLine(name, lineNumber, "HotIf(FuncObj(\"" + hotiffuncname + "\"))");//Can't use interpolated string here because the AStyle formatter misinterprets it.
+
+											if (lineNumber < list.Count)
+											{
+												list.Insert(lineNumber, tempcl);
+											}
+											else
+											{
+												list.Add(tempcl);
+											}
+										}
+										else
+											list.Add(new CodeLine(name, lineNumber, "HotIf(\"\")"));
+
+										break;
+
+									case "HOTSTRING":
+									{
+										if (sub.Length > 1)
+										{
+											var splits = sub[1].Split(' ', 2);
+
+											if (splits.Length > 0)
+											{
+												p1 = splits[0].ToUpperInvariant();
+
+												switch (p1.ToUpperInvariant())
+												{
+													case "NOMOUSE":
+														list.Add(new CodeLine(name, lineNumber, span.ToString()));
+														break;
+
+													case "ENDCHARS":
+														list.Add(new CodeLine(name, lineNumber, span.ToString()));
+														break;
+
+													default:
+														list.Add(new CodeLine(name, lineNumber, "HotstringOptions(\"" + sub[1] + "\")"));//Can't use interpolated string here because the AStyle formatter misinterprets it.
+														next = false;
+														break;
+												}
+											}
+										}
+									}
+									break;
+
+									case "INCLUDE":
+										includeOnce = true;
+
+									goto case "INCLUDEAGAIN";
 
 									case "INCLUDEAGAIN":
 									{
@@ -424,6 +478,14 @@ namespace Keysharp.Scripting
 									}
 									break;
 
+									case "NODYNAMICVARS":
+										parser.DynamicVars = false;
+										break;
+
+									case "PERSISTENT":
+										parser.Persistent = true;
+										break;
+
 									case "REQUIRES":
 									{
 										var reqAhk = p1.StartsWith("AutoHotkey");
@@ -459,42 +521,6 @@ namespace Keysharp.Scripting
 									}
 									break;
 
-									case "HOTIF":
-										if (parts.Length > 1 && !string.IsNullOrEmpty(parts[1]))
-										{
-											var hotiffuncname = $"_ks_HotIf_{NextHotIfCount}";
-											extralines.Add(new CodeLine(name, lineNumber, $"{hotiffuncname}(thehotkey)"));
-											extralines.Add(new CodeLine(name, lineNumber, "{"));
-											extralines.Add(new CodeLine(name, lineNumber, $"return {parts[1]}"));
-											extralines.Add(new CodeLine(name, lineNumber, "}"));
-											var tempcl = new CodeLine(name, lineNumber, "HotIf(FuncObj(\"" + hotiffuncname + "\"))");//Can't use interpolated string here because the AStyle formatter misinterprets it.
-
-											if (lineNumber < list.Count)
-											{
-												list.Insert(lineNumber, tempcl);
-											}
-											else
-											{
-												list.Add(tempcl);
-											}
-										}
-										else
-											list.Add(new CodeLine(name, lineNumber, "HotIf(\"\")"));
-
-										break;
-
-									case "NODYNAMICVARS":
-										parser.DynamicVars = false;
-										break;
-
-									//case "NOENV":
-									//  NoEnv = true;
-									//  break;
-
-									case "PERSISTENT":
-										parser.Persistent = true;
-										break;
-
 									case "SINGLEINSTANCE":
 									{
 										switch (p1.ToUpperInvariant())
@@ -518,36 +544,6 @@ namespace Keysharp.Scripting
 											default:
 												SingleInstance = eScriptInstance.Force;
 												break;
-										}
-									}
-									break;
-
-									case "HOTSTRING":
-									{
-										if (sub.Length > 1)
-										{
-											var splits = sub[1].Split(' ', 2);
-
-											if (splits.Length > 0)
-											{
-												p1 = splits[0].ToUpperInvariant();
-
-												switch (p1.ToUpperInvariant())
-												{
-													case "NOMOUSE":
-														list.Add(new CodeLine(name, lineNumber, span.ToString()));
-														break;
-
-													case "ENDCHARS":
-														list.Add(new CodeLine(name, lineNumber, span.ToString()));
-														break;
-
-													default:
-														list.Add(new CodeLine(name, lineNumber, "HotstringOptions(\"" + sub[1] + "\")"));//Can't use interpolated string here because the AStyle formatter misinterprets it.
-														next = false;
-														break;
-												}
-											}
 										}
 									}
 									break;
@@ -576,9 +572,8 @@ namespace Keysharp.Scripting
 									case "ERRORSTDOUT":
 									case "USEHOOK":
 									case "MAXTHREADS":
-
-									//case "MAXTHREADSBUFFER":
-									//case "MAXTHREADSPERHOTKEY":
+									case "MAXTHREADSBUFFER":
+									case "MAXTHREADSPERHOTKEY":
 									case "NOTRAYICON":
 									case "SUSPENDEXEMPT":
 									case "WINACTIVATEFORCE":

@@ -163,7 +163,7 @@ namespace Keysharp.Scripting
 		internal static FrozenSet<string>.AlternateLookup<ReadOnlySpan<char>> propKeywordsAlt = propKeywords.GetAlternateLookup<ReadOnlySpan<char>>();
 
 		internal bool ErrorStdOut;
-		internal CodeStatementCollection initial = [];
+		internal CodeStatementCollection initial = [];//These are placed at the very beginning of Main().
 		internal string name = string.Empty;
 		internal bool NoTrayIcon;
 		internal bool Persistent;
@@ -219,7 +219,6 @@ namespace Keysharp.Scripting
 		private readonly CodeNamespace mainNs = new ("Keysharp.CompiledMain");
 		private readonly Dictionary<CodeTypeDeclaration, Dictionary<string, CodeMemberMethod>> methods = [];
 		private readonly char[] ops = [Equal, Not, Greater, Less];
-		private readonly CodeStatementCollection prepend = [];
 		private readonly Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMemberProperty>>> properties = [];
 		private readonly tsmd setPropertyValueCalls = [];
 		private readonly Stack<CodeBlock> singleLoops = new ();
@@ -230,7 +229,7 @@ namespace Keysharp.Scripting
 		private readonly CodeTypeDeclaration targetClass;
 		private readonly List<CodeSnippetExpression> ternaries = new ();
 		private readonly Stack<CodeTypeDeclaration> typeStack = new ();
-		private readonly List<CodeMethodInvokeExpression> hotkeyHotstringCreations = new ();
+		private readonly CodeStatementCollection topStatements = new ();
 		private bool blockOpen;
 		private uint caseCount;
 		private List<CodeLine> codeLines = [];
@@ -307,16 +306,6 @@ namespace Keysharp.Scripting
 			AddAssemblyAttribute(typeof(AssemblyBuildVersionAttribute), Accessors.A_AhkVersion);
 			unit.AssemblyCustomAttributes.AddRange(assemblyAttributes);
 			assemblyAttributes.Clear();
-
-			foreach (var p in prepend)
-				if (!(p is CodeMethodReturnStatement))
-				{
-					if (p is CodeStatement cs)
-						_ = main.Statements.Add(cs);
-					else if (p is CodeExpression ce)
-						_ = main.Statements.Add(ce);
-				}
-
 			var inv = (CodeMethodInvokeExpression)InternalMethods.RunMainWindow;
 			_ = inv.Parameters.Add(new CodeSnippetExpression("name"));
 			_ = inv.Parameters.Add(new CodeSnippetExpression("_ks_UserMainCode"));
@@ -1041,15 +1030,15 @@ namespace Keysharp.Scripting
 				new CodeMethodReferenceExpression(
 					new CodeTypeReferenceExpression("Keysharp.Core.Common.Keyboard.HotkeyDefinition"), "ManifestAllHotkeysHotstringsHooks"));
 
-			if (hotkeyHotstringCreations.Count > 0)
+			if (topStatements.Count > 0)
 			{
 				//Readd rather than insert;
 				var userCodeStatements = new CodeStatementCollection
 				{
-					Capacity = hotkeyHotstringCreations.Count + userMainMethod.Statements.Count
+					Capacity = topStatements.Count + userMainMethod.Statements.Count
 				};
 
-				foreach (var hkc in hotkeyHotstringCreations)
+				foreach (CodeStatement hkc in topStatements)
 					_ = userCodeStatements.Add(hkc);
 
 				_ = userCodeStatements.Add(hotkeyInitCmie);

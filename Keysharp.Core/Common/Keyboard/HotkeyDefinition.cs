@@ -606,6 +606,15 @@ namespace Keysharp.Core.Common.Keyboard
 			if (Keysharp.Core.Keyboard.blockMouseMove || (HotstringManager.hsResetUponMouseClick && HotstringManager.enabledCount != 0))
 				whichHookNeeded |= HookType.Mouse;
 
+			//Anything not a mouse or joystick should start the keyboard hook because even hotkeys
+			//which are received in MainWindow.WndProc() need to be forwarded on to the hook thread.
+			foreach (var hk in shk)
+				if (hk.type < HotkeyTypeEnum.MouseHook)
+				{
+					whichHookNeeded |= HookType.Keyboard;
+					break;
+				}
+
 			// Install or deinstall either or both hooks, if necessary, based on these param values.
 			ht.ChangeHookState(shk, whichHookNeeded, whichHookAlways);
 

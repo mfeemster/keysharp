@@ -136,6 +136,45 @@
 			}
 		}
 
+
+		/// <summary>
+		/// Recursively traverses the elements of an <see cref="object[]"/> and returns each element.
+		/// Note this should only ever be used internally because it's just for dynamically invoking variadic functions.
+		/// </summary>
+		/// <param name="enumerable">The <see cref="object[]"/> to traverse.</param>
+		/// <param name="recurse">True to recursively traverse through every nested element that is a collection, else false to traverse only the elements of <paramref name="enumerable"/>.</param>
+		/// <returns>Each element of the <see cref="object[]"/>, including nested elements.</returns>
+		
+		public static IEnumerable<object> FlattenNativeArray(this object[] enumerable, bool recurse)
+		{
+			if (enumerable is object[] ie)
+			{
+				foreach (var element in ie)
+				{
+					if (recurse && element is object[] candidate)
+					{
+						foreach (var nested in FlattenNativeArray(candidate, recurse))
+							yield return nested;
+					}
+					else
+						yield return element;
+				}
+			}
+			else
+			{
+				foreach (var element in enumerable)
+				{
+					if (recurse && element is object[] candidate)
+					{
+						foreach (var nested in FlattenNativeArray(candidate, recurse))
+							yield return nested;
+					}
+					else
+						yield return element;
+				}
+			}
+		}
+
 		/// <summary>
 		/// Converts the first element of an <see cref="IList"/> to an integer.
 		/// </summary>

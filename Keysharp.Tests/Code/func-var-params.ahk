@@ -223,3 +223,24 @@ If (val == 9)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
+varfunc6(args*)
+{
+    local temp := 0
+
+    for n in args
+    {
+        temp += n
+    }
+
+    return temp
+}
+
+arr := [1, 2, 3]
+ ; Test dynamic call passing two non variadic args plus a variadic arg passed to a func that takes one variadic param.
+val := Func("varfunc6").Call(1, 2, arr*)
+
+If (val == 9)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
