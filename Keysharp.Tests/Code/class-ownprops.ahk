@@ -446,7 +446,7 @@ testfunc(testclassobj)
 		get: (*) => ((this, p*) => this.a := p.Length)
 	})
 
-	testclassobj.prop() ; Retrieve value from get, which will be a FuncObj(), then call it using ().
+	testclassobj.prop() ; Retrieve value from get, which will be a FuncObj, then call it using ().
 
 	If (testclassobj.a == 0)
 		FileAppend, "pass", "*"

@@ -321,24 +321,19 @@ namespace Keysharp.Scripting
 				{
 					var hso = invoke.Method.MethodName == "HotstringOptions";
 
-					if (hso || invoke.Method.MethodName == "HotIf")
+					if (hso)
 					{
 						//Note that in addition to adding this to the beginning, we also leave it
 						//in place for HotstringOptions() (#Hotstring xyz) in parts, because we need to call it in both places.
 						//This is because the position must be kept consistent with hotkey/string declarations,
 						//but also kept in place for other usage of global hotstring settings like A_DefaultHotstring*.
 						topStatements.Add(invoke);
-
-						if (hso)
-						{
-							//Because we've encountered #Hotstring options, we must actually parse the options now (and later in the script)
-							//to find out which defaults should be in place for subsequently parsed hotstrings.
-							HotstringDefinition.ParseOptions(Ch.CodeToString(invoke.Parameters[0]).Trim('\"')//Will be quoted, so remove here.
-															 , ref HotstringManager.hsPriority, ref HotstringManager.hsKeyDelay, ref HotstringManager.hsSendMode, ref HotstringManager.hsCaseSensitive
-															 , ref HotstringManager.hsConformToCase, ref HotstringManager.hsDoBackspace, ref HotstringManager.hsOmitEndChar, ref HotstringManager.hsSendRaw, ref HotstringManager.hsEndCharRequired
-															 , ref HotstringManager.hsDetectWhenInsideWord, ref HotstringManager.hsDoReset, ref HotstringManager.hsSameLineAction, ref HotstringManager.hsSuspendExempt);
-						}
-
+						//Because we've encountered #Hotstring options, we must actually parse the options now (and later in the script)
+						//to find out which defaults should be in place for subsequently parsed hotstrings.
+						HotstringDefinition.ParseOptions(Ch.CodeToString(invoke.Parameters[0]).Trim('\"')//Will be quoted, so remove here.
+														 , ref HotstringManager.hsPriority, ref HotstringManager.hsKeyDelay, ref HotstringManager.hsSendMode, ref HotstringManager.hsCaseSensitive
+														 , ref HotstringManager.hsConformToCase, ref HotstringManager.hsDoBackspace, ref HotstringManager.hsOmitEndChar, ref HotstringManager.hsSendRaw, ref HotstringManager.hsEndCharRequired
+														 , ref HotstringManager.hsDetectWhenInsideWord, ref HotstringManager.hsDoReset, ref HotstringManager.hsSameLineAction, ref HotstringManager.hsSuspendExempt);
 						parts[i] = new CodeSnippetExpression("//#directive replaced by function call");
 					}
 				}
@@ -755,7 +750,7 @@ namespace Keysharp.Scripting
 
 						//Special processing is needed to convert an expression passed to a HotIf() to a separate function, then pass it with FuncObj().
 						//Do not do this if a FuncObj is already being passed, which will be the case when #HotIf is found in the preprocessing stage.
-						if (name == "HotIf" && paren.Count > 1 && !paren[0].ToString().StartsWith("FuncObj"))
+						if (name == "HotIf" && paren.Count > 1 && !paren[0].ToString().StartsWith("Func"))
 						{
 							var hotiffuncname = $"_ks_HotIf_{PreReader.NextHotIfCount}";
 							var hotifexpr = ParseExpression(codeLine, code, paren, false);
@@ -763,7 +758,8 @@ namespace Keysharp.Scripting
 							_ = hotifmethod.Statements.Add(new CodeMethodReturnStatement(hotifexpr));
 							methods[targetClass].Add(hotiffuncname, hotifmethod);
 							invoke = LocalMethodInvoke(name);
-							_ = invoke.Parameters.Add(new CodeSnippetExpression("FuncObj(\"" + hotiffuncname + "\")"));//Can't use interpolated string here because the AStyle formatter misinterprets it.
+							var funccmie = new CodeMethodInvokeExpression((CodeMethodReferenceExpression)InternalMethods.Func, new CodePrimitiveExpression(hotiffuncname));
+							_ = invoke.Parameters.Add(funccmie);//Can't use interpolated string here because the AStyle formatter misinterprets it.
 						}
 						else//Any other function call aside from HotIf().
 						{
@@ -811,8 +807,13 @@ namespace Keysharp.Scripting
 									if ((i == 0 || parts[i - 1] is not CodeBinaryOperatorType cbot || cbot != CodeBinaryOperatorType.Assign)
 											&& argExpr is CodeVariableReferenceExpression cvre)
 									{
-										if (!VarExistsAtCurrentOrParentScope(typeStack.Peek(), scope, cvre.VariableName)
-												&& !Reflections.flatPublicStaticProperties.TryGetValue(cvre.VariableName, out _))
+										var tp = typeStack.Peek();
+
+										if (!VarExistsAtCurrentOrParentScope(tp, scope, cvre.VariableName)
+												&& !Reflections.flatPublicStaticProperties.TryGetValue(cvre.VariableName, out _)
+												&& MethodExistsInTypeOrBase(tp.Name, cvre.VariableName) == null
+												&& Reflections.FindBuiltInMethod(cvre.VariableName, -1) == null
+										   )
 											allVars[typeStack.Peek()].GetOrAdd(scope)[cvre.VariableName] = emptyStringPrimitive;
 									}
 
@@ -999,7 +1000,7 @@ namespace Keysharp.Scripting
 						{
 							var extracted = ExtractRange(parts, assignIndex + 1, parts.Count);//This works even when assignIndex is -1.
 							//var extracted = ExtractRange(parts, i - 1, parts.Count);//Start at the parameters collection which should be right before parts[i] which is "=>".
-							parts.Add("FuncObj(");
+							parts.Add("Func(");
 							parts.Add("\"" + cmd.Name + "\"");
 							parts.Add(",");
 							//parts.Add(InClassDefinition() ? new CodeThisReferenceExpression() : "null");

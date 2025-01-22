@@ -317,7 +317,7 @@ else
 	FileAppend, "fail", "*"
 
 ; test with a ternary element which will be a code snippet, to ensure it gets reevaluated.
-fo := FuncObj("func")
+fo := Func("func")
 x := !a ? (fo("") ? 2 : 3) : 4
 
 if (x == 3)

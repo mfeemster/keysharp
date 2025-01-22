@@ -73,18 +73,39 @@ namespace Keysharp.Scripting
 
 						var expr = isparam ? VarRef(toplevelvar, false) : VarRef(!isstatic ? toplevelvar : staticscopedvar, false);
 
-						//Must take special action to case correct all global varaible references inside of classes.
+						//Must take special action to case correct all global variable references inside of classes.
 						//Because if they are referring to a property in a base class, which is a built-in class, then
 						//the case will not match.
 						//User defined base types don't need this because all of their properties are lowercase.
-						if (InClassDefinition() && allglobal && expr is CodeVariableReferenceExpression cvre)// && !create
+						if (expr is CodeVariableReferenceExpression cvre)
 						{
-							if (currType.BaseTypes.Count > 0)//Every class should derive from something.
+							if (InClassDefinition() && allglobal)// && !create
 							{
-								var bpi = PropExistsInBuiltInClass(currType.BaseTypes[0].BaseType, cvre.VariableName, 0);//Determine if the variable name matched a property defined in a base class that was a built-in type.
+								if (currType.BaseTypes.Count > 0)//Every class should derive from something.
+								{
+									var bpi = PropExistsInBuiltInClass(currType.BaseTypes[0].BaseType, cvre.VariableName, 0);//Determine if the variable name matched a property defined in a base class that was a built-in type.
 
-								if (bpi.Item1)
-									cvre.VariableName = bpi.Item2.Name;
+									if (bpi.Item1)
+										cvre.VariableName = bpi.Item2.Name;
+								}
+							}
+
+							//This is an attempt to allow direct assignments to methods by just using their name.
+							//They are case corrected and passed to FuncObj().
+							if (!create && !isparam && !islocal && !explicitLocal)
+							{
+								if (MethodExistsInTypeOrBase(currType.Name, cvre.VariableName) is CodeMemberMethod cmm)
+								{
+									cvre.VariableName = cmm.Name;
+									var tempfunc = (CodeMethodReferenceExpression)InternalMethods.Func;
+									expr = new CodeMethodInvokeExpression(tempfunc, cvre);
+								}
+								else if (Reflections.FindBuiltInMethod(cvre.VariableName, -1) is MethodPropertyHolder mph)
+								{
+									cvre.VariableName = mph.mi.DeclaringType.FullName + "." + mph.mi.Name;
+									var tempfunc = (CodeMethodReferenceExpression)InternalMethods.Func;
+									expr = new CodeMethodInvokeExpression(tempfunc, cvre);
+								}
 							}
 						}
 
@@ -115,7 +136,6 @@ namespace Keysharp.Scripting
 
 			var id = false;
 			var sub = new StringBuilder();
-
 			//var parts = new List<CodeExpression>();
 			var exprs = new List<CodeExpressionStatement>();
 			var parts = new List<string>();

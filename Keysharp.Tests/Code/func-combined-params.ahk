@@ -14,7 +14,7 @@ else
 
 val1 := ""
 val2 := ""
-fo := FuncObj("optreffunc")
+fo := Func("optreffunc")
 fo(,&val2)
 
 if (val2 == unset)
@@ -111,7 +111,7 @@ x := 1
 y := 2
 z := 3
 
-fo := FuncObj("optrefvarfunc")
+fo := Func("optrefvarfunc")
 val := fo(x, &y, z, z, z)
 
 If (y == 10)

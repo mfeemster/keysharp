@@ -327,7 +327,7 @@ namespace Keysharp.Core
 				if (cachedFuncObj.TryGetValue(s, out var tempfunc))
 					func = tempfunc;
 				else
-					cachedFuncObj[s] = func = Functions.FuncObj(s);
+					cachedFuncObj[s] = func = Functions.Func(s);
 			}
 
 			if (f != null && func == null)

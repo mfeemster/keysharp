@@ -140,6 +140,11 @@
 		{
 		}
 
+		internal FuncObj(Delegate d, object o = null)
+			: this(d.Method, o)
+		{
+		}
+
 		internal FuncObj(MethodInfo m, object o = null)
 		{
 			mi = m;

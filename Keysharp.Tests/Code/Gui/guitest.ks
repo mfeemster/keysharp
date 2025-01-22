@@ -1801,7 +1801,7 @@ RealFn(a, b, c:="c") {
 	
 DoTricks() {
 	global boundText
-	RealFn := FuncObj("RealFn")
+	RealFn := Func("RealFn")
 
 	fn := RealFn.Bind(1)  ; Bind first parameter only
 	boundText := "Bind 1 to first param, call (2), shows 1, 2"
@@ -1842,7 +1842,7 @@ RealFn2(TheMessage) {
 }
 
 FuncObjTest() {
-	RealFn2 := FuncObj("RealFn2")
+	RealFn2 := Func("RealFn2")
 	fn2 := RealFn2.Bind("AltTab")
 	fn2()
 }

@@ -315,28 +315,32 @@ namespace Keysharp.Scripting
 									break;
 
 									case "HOTIF":
+									{
+										string hotiffuncname;
+
+										//Generate the function here, then replace the hotif directive statement with the name of the function
+										//so it can be placed in the proper positional order later on by the parser.
 										if (parts.Length > 1 && !string.IsNullOrEmpty(parts[1]))
 										{
-											var hotiffuncname = $"_ks_HotIf_{NextHotIfCount}";
+											hotiffuncname = $"_ks_HotIf_{NextHotIfCount}";
 											extralines.Add(new CodeLine(name, lineNumber, $"{hotiffuncname}(thehotkey)"));
 											extralines.Add(new CodeLine(name, lineNumber, "{"));
 											extralines.Add(new CodeLine(name, lineNumber, $"return {parts[1]}"));
 											extralines.Add(new CodeLine(name, lineNumber, "}"));
-											var tempcl = new CodeLine(name, lineNumber, "HotIf(FuncObj(\"" + hotiffuncname + "\"))");//Can't use interpolated string here because the AStyle formatter misinterprets it.
-
-											if (lineNumber < list.Count)
-											{
-												list.Insert(lineNumber, tempcl);
-											}
-											else
-											{
-												list.Add(tempcl);
-											}
 										}
 										else
-											list.Add(new CodeLine(name, lineNumber, "HotIf(\"\")"));
+											hotiffuncname = "";
 
-										break;
+										//Leave the directive in place with the generated function name instead.
+										//It will be reparsed later in Directive.cs
+										var tempLine = new CodeLine(name, lineNumber, $"#HotIf{(hotiffuncname != "" ? $" {hotiffuncname}" : "")}");
+
+										if (lineNumber < list.Count)
+											list.Insert(lineNumber, tempLine);
+										else
+											list.Add(tempLine);
+									}
+									break;
 
 									case "HOTSTRING":
 									{

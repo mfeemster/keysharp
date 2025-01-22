@@ -11,7 +11,7 @@ namespace Keysharp.Scripting
 			if (i == 0 || i == code.Length)
 				return false;
 
-			while (IsSpace(code[i])) i++;
+			while (i < code.Length && IsSpace(code[i])) i++;
 
 			if (i < code.Length && code[i] == Equal)
 				return true;
