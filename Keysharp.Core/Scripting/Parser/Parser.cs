@@ -1145,7 +1145,7 @@ namespace Keysharp.Scripting
 
 			foreach (var (p, s) in reader.PreloadedDlls)//Add after InitGlobalVars() call above, because the statements will be added in reverse order.
 			{
-				var cmie = new CodeMethodInvokeExpression(new CodeTypeReferenceExpression("Keysharp.Scripting.Variables"), "AddPreLoadedDll");
+				var cmie = new CodeMethodInvokeExpression(new CodeTypeReferenceExpression("Keysharp.Scripting.Script.Variables"), "AddPreLoadedDll");
 				_ = cmie.Parameters.Add(new CodePrimitiveExpression(p));
 				_ = cmie.Parameters.Add(new CodePrimitiveExpression(s));
 				initial.Add(new CodeExpressionStatement(cmie));
