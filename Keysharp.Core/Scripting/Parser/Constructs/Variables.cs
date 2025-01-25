@@ -72,6 +72,7 @@ namespace Keysharp.Scripting
 						}
 
 						var expr = isparam ? VarRef(toplevelvar, false) : VarRef(!isstatic ? toplevelvar : staticscopedvar, false);
+						expr.UserData["origtypescope"] = currType;//Needed later when properly casing direct function references.
 
 						//Must take special action to case correct all global variable references inside of classes.
 						//Because if they are referring to a property in a base class, which is a built-in class, then

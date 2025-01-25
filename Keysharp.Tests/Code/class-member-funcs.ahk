@@ -19,6 +19,11 @@ class myclass
 		return s1
 	}
 
+	static classfuncstatic2()
+	{
+		return 456
+	}
+
 	classfuncusesstatic()
 	{
 		return s1 * x
@@ -149,6 +154,24 @@ else
 	FileAppend, "fail", "*"
 
 val := myclass.classfuncstatic()
+
+If (val == 10)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+; Test directly referring to static class methods
+val := 0
+fo := myclass.classfuncstatic
+val := fo()
+
+If (val == 10)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+fo := true ? myclass.classfuncstatic : myclass.classfuncstatic2
+val := fo()
 
 If (val == 10)
 	FileAppend, "pass", "*"

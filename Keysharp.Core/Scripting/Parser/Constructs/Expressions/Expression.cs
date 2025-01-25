@@ -43,6 +43,20 @@ namespace Keysharp.Scripting
 		{
 			var orig = cse.UserData["orig"] as CodeExpression;
 			var cboe = orig as CodeBinaryOperatorExpression;
+
+			//Properly case all direct function references.
+			if (cboe.Right is CodeVariableReferenceExpression cvre)
+			{
+				var type = cvre.UserData["origtypescope"] is CodeTypeDeclaration ctd ? ctd.Name : "program";
+
+				if (MethodExistsInTypeOrBase(type, cvre.VariableName) is CodeMemberMethod cmm)
+				{
+					cvre.VariableName = cmm.Name;
+					var tempfunc = (CodeMethodReferenceExpression)InternalMethods.Func;
+					cboe.Right = new CodeMethodInvokeExpression(tempfunc, cvre);
+				}
+			}
+
 			var c2s = Ch.CodeToString(orig);
 			c2s = c2s.Substring(1, c2s.Length - 2);
 

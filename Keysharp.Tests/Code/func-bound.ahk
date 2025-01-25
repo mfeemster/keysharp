@@ -174,18 +174,6 @@ If (z == 123)
 else
 	FileAppend, "fail", "*"
 
-boundvarfunc0(theparams*)
-{
-	temp := 0
-
-	for n in theparams
-	{
-		temp += theparams[A_Index]
-	}
-
-	return temp
-}
-
 fo := Func(boundvarfunc0) ; Try without quotes.
 bf := fo.Bind(10)
 val := bf(20)
@@ -205,7 +193,7 @@ If (val == 6)
 else
 	FileAppend, "fail", "*"
 
-fo := boundvarfunc0 ; Try referring to a local function by name, without using Func().
+fo := BoundVarFunc0 ; Try referring to an improperly cased local function by name, without using Func().
 bf := fo.Bind(10)
 val := bf(20)
 
@@ -224,6 +212,18 @@ If (val == 6)
 else
 	FileAppend, "fail", "*"
 	
+boundvarfunc0(theparams*) ; Purposely define this *after* it's used above.
+{
+	temp := 0
+
+	for n in theparams
+	{
+		temp += theparams[A_Index]
+	}
+
+	return temp
+}
+
 fo := String ; Try referring to a built-in function by name, without using Func().
 val := fo(123)
 
@@ -253,6 +253,44 @@ If (val == 50)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
+val := funcretcall(Func123)
+
+If (val == 123)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+funcretcall(xx)
+{
+	return xx()
+}
+
+func123()
+{
+	return 123
+}
+
+newfunc := true ? func123 : func456
+val := newfunc()
+
+If (val == 123)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+newfunc := false ? func123 : Func456
+val := newfunc()
+
+If (val == 456)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+func456()
+{
+	return 456
+}
 
 arr1 := Array()
 arr2 := [10, 20, 30]

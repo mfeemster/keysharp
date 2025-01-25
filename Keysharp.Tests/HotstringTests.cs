@@ -33,7 +33,7 @@ namespace Keysharp.Tests
 				var split0 = splits[0].Substring(splits[0].IndexOf('(') + 1).Trim('"');
 				var split3 = splits[3].Trim('"');
 				hs1 = HotstringManager.AddHotstring(split0, null, splits[2].Trim('"'), split3, splits[4].Trim('"'), false);
-				Debug.WriteLine(split0);
+				System.Diagnostics.Debug.WriteLine(split0);
 
 				if (!split0.Contains('*'))
 					val = split3 + " ";

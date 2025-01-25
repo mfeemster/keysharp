@@ -188,7 +188,7 @@
 			{
 				"Theme", (f, o) =>
 				{
-					Script.OutputDebug("Themes are not supported", false);
+					Debug.OutputDebug("Themes are not supported", false);
 				}
 			},
 			{
