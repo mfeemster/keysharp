@@ -801,16 +801,17 @@ namespace Keysharp.Scripting
 									//both are seen the same, and b will get created as a variable at this scope for both cases, when it should only be done for the bottom case.
 									hardCreateOverride = false;
 									var argExpr = ParseExpression(codeLine, tempParamCode, arg, false);//Override the value of create with false because the arguments passed into a function should never be created automatically.
+									var cboe = argExpr.WasCboe();
 									hardCreateOverride = true;//Restore the hack flag.
 
-									//If an assignment was passed to a function for a reference parameter, separate it out like so:
-									//func(&x := 123) ; becomes...
-									//x := 123
-									//func(&x)
 									if (refIndexes.Contains(i1)//Only needed if it's a reference argument.
-											&& argExpr.WasCboe() is CodeBinaryOperatorExpression cboe
+											&& cboe != null
 											&& cboe.Operator == CodeBinaryOperatorType.Assign)
 									{
+										//If an assignment was passed to a function for a reference parameter, separate it out like so:
+										//func(&x := 123) ; becomes...
+										//x := 123
+										//func(&x)
 										_ = parent.Add(argExpr);
 										argExpr = cboe.Left;
 									}
@@ -818,17 +819,30 @@ namespace Keysharp.Scripting
 									//Allow for the declaration of a variable at the same time it's passed to a function call.
 									//But ensure it wasn't an assignment/declaration statement of a named lambda like:
 									//lam := lambdafunc(a, b) => a * b
-									if ((i == 0 || parts[i - 1] is not CodeBinaryOperatorType cbot || cbot != CodeBinaryOperatorType.Assign)
-											&& argExpr is CodeVariableReferenceExpression cvre)
+									if (i == 0
+											|| i == args.Count - 1//Allows for assigning simple function result: val := func(x := 123)
+											|| parts[i - 1] is not CodeBinaryOperatorType cbot
+											|| cbot != CodeBinaryOperatorType.Assign
+									   )
 									{
 										var tp = typeStack.Peek();
+										CodeVariableReferenceExpression cvre = null;
 
-										if (!VarExistsAtCurrentOrParentScope(tp, scope, cvre.VariableName)
-												&& !Reflections.flatPublicStaticProperties.TryGetValue(cvre.VariableName, out _)
-												&& MethodExistsInTypeOrBase(tp.Name, cvre.VariableName) == null
-												&& Reflections.FindBuiltInMethod(cvre.VariableName, -1) == null
-										   )
-											allVars[typeStack.Peek()].GetOrAdd(scope)[cvre.VariableName] = emptyStringPrimitive;
+										if (argExpr is CodeVariableReferenceExpression cvre2)
+											cvre = cvre2;
+										else if (cboe != null && cboe.Left is CodeVariableReferenceExpression cvre3)
+											cvre = cvre3;
+
+										//If it was an assignment, and not a reference, the variable needs to be created.
+										if (cvre != null)
+										{
+											if (!VarExistsAtCurrentOrParentScope(tp, scope, cvre.VariableName)
+													&& !Reflections.flatPublicStaticProperties.TryGetValue(cvre.VariableName, out _)
+													&& MethodExistsInTypeOrBase(tp.Name, cvre.VariableName) == null
+													&& Reflections.FindBuiltInMethod(cvre.VariableName, -1) == null
+											   )
+												allVars[typeStack.Peek()].GetOrAdd(scope)[cvre.VariableName] = emptyStringPrimitive;
+										}
 									}
 
 									passed.Add(argExpr);
