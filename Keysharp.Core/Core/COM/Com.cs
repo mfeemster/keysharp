@@ -199,8 +199,8 @@ namespace Keysharp.Core.COM
 
 				return new ComObject()
 				{
-					Ptr = inst,
-					VarType = id == IID_IDispatch ? vt_dispatch : vt_unknown
+					VarType = id == IID_IDispatch ? vt_dispatch : vt_unknown,
+					Ptr = inst
 				};
 			}
 

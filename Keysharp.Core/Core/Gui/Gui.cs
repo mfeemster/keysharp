@@ -1058,6 +1058,8 @@
 
 				case Keyword_ActiveX:
 				{
+					var ax = new KeysharpActiveX(text);
+					ctrl = ax;
 				}
 				break;
 
@@ -1389,6 +1391,9 @@
 			{
 				LastContainer.TagAndAdd(holder);
 			}
+
+			if (ctrl is KeysharpActiveX kax)
+				kax.Init();
 
 			if (ctrl is KeysharpPictureBox pbox)
 			{

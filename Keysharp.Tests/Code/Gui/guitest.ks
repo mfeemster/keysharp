@@ -2403,6 +2403,12 @@ comDllRunWordBtn.OnEvent("Click", "ComRunWord")
 comDllRunWordListenerBtn := MyGui.Add("Button", "x10 y+10", "COM run MS Word with event listener")
 comDllRunWordListenerBtn.OnEvent("Click", "ComRunWordEventListener")
 
+_ := MyGui.Add("Text", "x10 y+10 cBlue S10", "An animated Odie should appear below using ActiveX.")
+
+axPic := "http://www.animatedgif.net/cartoons/A_5odie_e0.gif"
+axText := "mshtml:<img src='" . axPic . "' />"
+MyGui.AddActiveX("w100 h150 x10 y+10", axText)
+
 DllMsgBox()
 {
 	WhichButton := DllCall("MessageBox", "Int", 0, "Str", "Press Yes or No", "Str", "Title of box", "Int", 4)
