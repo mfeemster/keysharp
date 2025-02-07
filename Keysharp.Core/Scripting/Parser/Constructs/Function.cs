@@ -41,6 +41,12 @@ namespace Keysharp.Scripting
 			if (!InClassDefinition() && IsLocalMethodReference(name))
 				throw new ParseException("Duplicate function: \"" + name + "\".", codeLine);
 
+			//Sometimes a function reference can be misinterpreted as a new variable.
+			//It will be properly interpreted later, so to avoid a duplicate symbol error,
+			//delete the existing variable here if one is found.
+			if (VarExistsAtCurrentOrParentScope(typeStack.Peek(), Scope, name))
+				allVars[typeStack.Peek()][Scope].Remove(name);
+
 			var blockType = CodeBlock.BlockType.Expect;
 			var str = false;
 			var stop = false;

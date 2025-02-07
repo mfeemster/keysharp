@@ -815,7 +815,7 @@ namespace Keysharp.Scripting
 				{
 					tryCount++;
 					var tcf = new CodeTryCatchFinallyStatement();
-					var ctch = new CodeCatchClause($"ex{exCount++}", new CodeTypeReference("Keysharp.Core.Error"));
+					var ctch = new CodeCatchClause($"ex{exCount++}", new CodeTypeReference(typeof(Error)));
 					_ = tcf.CatchClauses.Add(ctch);
 					var type = parts.Length > 1 && parts[1][0] == BlockOpen ? CodeBlock.BlockType.Within : CodeBlock.BlockType.Expect;
 
@@ -842,22 +842,53 @@ namespace Keysharp.Scripting
 					{
 						var excname = "";
 						var exctypename = "Keysharp.Core.Error";
+						var extraExceptions = new List<string>(8);
 
 						if (parts.Length > 1)
 						{
-							var rest = StripCommentSingle(parts[1]).RemoveAll(Parens).Split(Spaces);
+							var rest = StripCommentSingle(parts[1]).RemoveAll(Parens).Split(SpaceTabComma);
 
 							if (rest.Length > 0 && rest[0] != "as" && rest[0] != "{")
 							{
-								var exctype = rest[0];
+								for (var exi = 0; exi < rest.Length; ++exi)
+								{
+									var exctype = rest[exi];
 
-								if (Reflections.stringToTypes.TryGetValue(exctype, out var t))
-									exctypename = t.FullName;
-								else//This should never happen, but keep in case.
-									exctypename = "Keysharp.Core." + exctype;
+									if (exi == 0)
+									{
+										if (Reflections.stringToTypes.TryGetValue(exctype, out var t))
+										{
+											if (t == typeof(Any))//Catch Any means all exceptions. So catch not only Error, but basic Exceptions too.
+												exctypename = typeof(Exception).FullName;
+											else if (typeof(KeysharpException).IsAssignableFrom(t))
+											{
+												if (!extraExceptions.Contains(t.FullName))
+													exctypename = t.FullName;
+											}
+											else
+												throw new ParseException($"Exception type of '{t.FullName}' was not derived from Error.", codeLine);
+										}
+										else//This should never happen, but keep in case.
+											exctypename = "Keysharp.Core." + exctype;
+									}
+									else
+									{
+										if (Reflections.stringToTypes.TryGetValue(exctype, out var t))
+										{
+											if (typeof(KeysharpException).IsAssignableFrom(t))
+											{
+												if (!extraExceptions.Contains(t.FullName))
+													extraExceptions.Add(t.FullName);
+											}
+											else
+												throw new ParseException($"Exception type of '{t.FullName}' was not derived from Error.", codeLine);
+										}
+									}
+								}
 							}
 
-							var tokenCount = rest[rest.Length - 1] == "{" ? 4 : 3;
+							var excCount = extraExceptions.Count + 1;
+							var tokenCount = rest[rest.Length - 1] == "{" ? excCount + 3 : excCount + 2;
 
 							//Possible scenarios:
 							//Error as errorname {
@@ -869,21 +900,21 @@ namespace Keysharp.Scripting
 
 							if (rest.Length == tokenCount)
 							{
-								if (string.Compare(rest[1], "as", true) != 0)
+								if (string.Compare(rest[excCount], "as", true) != 0)
 									throw new ParseException($"Unrecognized token '{rest[1]}' between exception type and name.", codeLine);
 
-								excname = rest[2];
+								excname = rest[excCount + 1];
 							}
 							else if (rest.Length == tokenCount - 1)
-								excname = rest[1];
-							else if (rest.Length > 2)//No variable name declared. So either Error or Error {
+								excname = rest[excCount];
+							else if (rest.Length > excCount + 1)//No variable name declared. So either Error or Error {
 								throw new ParseException($"Invalid number of tokens ({rest.Length}) in catch statement", codeLine);
 						}
 
 						CodeCatchClause ctch;
 
 						if (tcf.CatchClauses.Count == 1 &&
-								tcf.CatchClauses[0].CatchExceptionType.BaseType == "Keysharp.Core.Error" &&
+								tcf.CatchClauses[0].CatchExceptionType.BaseType == typeof(Error).FullName &&
 								tcf.CatchClauses[0].Statements.Count == 0)//Check for the implicit catch.
 						{
 							ctch = tcf.CatchClauses[0];
@@ -910,7 +941,10 @@ namespace Keysharp.Scripting
 						var left = VarId(codeLine, excname, false);
 						ctch.LocalName = excname;
 						ctch.CatchExceptionType = new CodeTypeReference(exctypename);
-						//ctch.Statements.Insert(0, cas);
+
+						foreach (var extra in extraExceptions)
+							tcf.CatchClauses.Add(new CodeCatchClause("", new CodeTypeReference(extra), new CodeExpressionStatement(new CodeSnippetExpression("throw"))));
+
 						var catches = tcf.CatchClauses.Cast<CodeCatchClause>().ToArray();
 						//Types must be sorted from most derived to least derived.
 						System.Array.Sort(catches,

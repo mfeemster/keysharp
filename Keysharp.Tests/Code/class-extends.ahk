@@ -366,7 +366,7 @@ else
 	FileAppend, "fail", "*"
 
 testclass.c := 101
-myfunc := FuncObj("basecasesensitivefuncstatic", testsubclassobj)
+myfunc := Func("basecasesensitivefuncstatic", testsubclassobj)
 
 myfunc()
 
@@ -376,7 +376,7 @@ else
 	FileAppend, "fail", "*"
 
 testclass.c := 101
-myfunc := FuncObj("subcasesensitivefuncstatic", testsubclassobj)
+myfunc := Func("subcasesensitivefuncstatic", testsubclassobj)
 
 myfunc()
 
@@ -386,7 +386,7 @@ else
 	FileAppend, "fail", "*"
 
 testsubclassobj.a := 0
-myfunc := FuncObj("basecasesensitivefunc", testsubclassobj)
+myfunc := Func("basecasesensitivefunc", testsubclassobj)
 myfunc()
 
 if (testsubclassobj.a == 1212)
@@ -395,7 +395,7 @@ else
 	FileAppend, "fail", "*"
 	
 testsubclassobj.a := 0
-myfunc := FuncObj("SubCaseSensitiveFunc", testsubclassobj)
+myfunc := Func("SubCaseSensitiveFunc", testsubclassobj)
 myfunc()
 
 if (testsubclassobj.a == 1212)

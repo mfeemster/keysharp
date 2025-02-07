@@ -19,6 +19,11 @@ class myclass
 		return s1
 	}
 
+	static classfuncstatic2()
+	{
+		return 456
+	}
+
 	classfuncusesstatic()
 	{
 		return s1 * x
@@ -149,6 +154,24 @@ else
 	FileAppend, "fail", "*"
 
 val := myclass.classfuncstatic()
+
+If (val == 10)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+; Test directly referring to static class methods
+val := 0
+fo := myclass.classfuncstatic
+val := fo()
+
+If (val == 10)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+fo := true ? myclass.classfuncstatic : myclass.classfuncstatic2
+val := fo()
 
 If (val == 10)
 	FileAppend, "pass", "*"
@@ -298,7 +321,7 @@ if (myclass.s1 == 999)
 else
 	FileAppend, "fail", "*"
 
-funcadd := FuncObj("classfuncwithparams", classobj)
+funcadd := Func("classfuncwithparams", classobj)
 
 val := funcadd(10, 20)
 
@@ -307,7 +330,7 @@ if (val == 200)
 else
 	FileAppend, "fail", "*"
 
-funcadd := FuncObj("classfuncstaticwithparams", classobj)
+funcadd := Func("classfuncstaticwithparams", classobj)
 
 val := funcadd(10, 10)
 
@@ -316,7 +339,7 @@ if (val == 100)
 else
 	FileAppend, "fail", "*"
 
-funcadd := FuncObj("classvarfunc", classobj)
+funcadd := Func("classvarfunc", classobj)
 
 val := funcadd(1, 2, 3)
 
@@ -325,7 +348,7 @@ if (val == 12)
 else
 	FileAppend, "fail", "*"
 
-funcadd := FuncObj("classvarfuncstatic", classobj)
+funcadd := Func("classvarfuncstatic", classobj)
 
 val := funcadd(1, 2, 3)
 
@@ -478,7 +501,7 @@ if (val == 0)
 else
 	FileAppend, "fail", "*"
 
-fo := FuncObj("classfunc0", class2obj)
+fo := Func("classfunc0", class2obj)
 a := ""
 val := fo()
 
@@ -487,7 +510,7 @@ if (val == 0 && a == 0)
 else
 	FileAppend, "fail", "*"
 
-fo := FuncObj("classfunc1", class2obj)
+fo := Func("classfunc1", class2obj)
 a := ""
 val := fo(123)
 
@@ -496,7 +519,7 @@ if (val == 123 && a == 123)
 else
 	FileAppend, "fail", "*"
 
-fo := FuncObj("classfunc2", class2obj)
+fo := Func("classfunc2", class2obj)
 a := ""
 val := fo(123)
 
@@ -505,7 +528,7 @@ if (val == 128 && a == 128)
 else
 	FileAppend, "fail", "*"
 
-fo := FuncObj("classfunc3", class2obj)
+fo := Func("classfunc3", class2obj)
 a := ""
 val := fo(1)
 
@@ -522,7 +545,7 @@ if (val == 18 && a == 18)
 else
 	FileAppend, "fail", "*"
 
-fo := FuncObj("classfuncimplicit", class2obj)
+fo := Func("classfuncimplicit", class2obj)
 a := ""
 val := fo()
 

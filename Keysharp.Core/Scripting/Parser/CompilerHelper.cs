@@ -413,7 +413,7 @@ using static Keysharp.Scripting.Script;
 		public void PrintCompilerErrors(string s)
 		{
 			if (parser.ErrorStdOut || Env.FindCommandLineArg("errorstdout") != null)
-				Script.OutputDebug(s);//For this to show on the command line, they need to pipe to more like: | more
+				Core.Debug.OutputDebug(s);//For this to show on the command line, they need to pipe to more like: | more
 			else
 				_ = MessageBox.Show(s, "Keysharp", MessageBoxButtons.OK, MessageBoxIcon.Error);
 		}

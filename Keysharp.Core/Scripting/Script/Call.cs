@@ -174,6 +174,10 @@
 				{
 					return mph.callFunc(null, null);
 				}
+				else if (name is Delegate d)
+				{
+					return Functions.Func(d);
+				}
 			}
 			catch (Exception e)
 			{

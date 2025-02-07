@@ -130,7 +130,7 @@
 				return pressed[key];
 			else
 			{
-				Debug.Fail("Thre should'nt be any key not in this table...");
+				System.Diagnostics.Debug.Fail("Thre should'nt be any key not in this table...");
 				return false;
 			}
 		}

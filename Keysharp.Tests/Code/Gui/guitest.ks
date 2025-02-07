@@ -1801,7 +1801,7 @@ RealFn(a, b, c:="c") {
 	
 DoTricks() {
 	global boundText
-	RealFn := FuncObj("RealFn")
+	RealFn := Func("RealFn")
 
 	fn := RealFn.Bind(1)  ; Bind first parameter only
 	boundText := "Bind 1 to first param, call (2), shows 1, 2"
@@ -1842,7 +1842,7 @@ RealFn2(TheMessage) {
 }
 
 FuncObjTest() {
-	RealFn2 := FuncObj("RealFn2")
+	RealFn2 := Func("RealFn2")
 	fn2 := RealFn2.Bind("AltTab")
 	fn2()
 }
@@ -2402,6 +2402,12 @@ comDllRunWordBtn.OnEvent("Click", "ComRunWord")
 
 comDllRunWordListenerBtn := MyGui.Add("Button", "x10 y+10", "COM run MS Word with event listener")
 comDllRunWordListenerBtn.OnEvent("Click", "ComRunWordEventListener")
+
+_ := MyGui.Add("Text", "x10 y+10 cBlue S10", "An animated Odie should appear below using ActiveX.")
+
+axPic := "http://www.animatedgif.net/cartoons/A_5odie_e0.gif"
+axText := "mshtml:<img src='" . axPic . "' />"
+MyGui.AddActiveX("w100 h150 x10 y+10", axText)
 
 DllMsgBox()
 {

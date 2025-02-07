@@ -82,6 +82,9 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 * Closures are not supported. The current behaviour is that a nested function (including anonymous functions) is automatically converted to a normal top-level function.
 * Exception classes aren't, and can't be, derived from `KeysharpObject`.
 	+ That is because for the exception mechanics to work in C#, all exception objects must be derived from the base `System.Exception` class, and multiple inheritance is not allowed.
+	+ User-defined exception classes must derive from `Error`.
+	+ Catch statements with multiple exception classes listed on a single line will parse, but will not generate the expected functionality.
+		+ List each exception type separately to work around this.
 * `CallbackCreate()` does not support the `CDecl/C` option because the program will be run in 64-bit mode.
 	+ The `paramCount` parameter is unused. The callback that gets created supports passing up to 31 parameters and the number that actually gets passed is adjusted internally.
 	+ Passing string pointers to `DllCall()` when passing a created callback is strongly recommended against. This is because the string pointer cannot remain pinned, and is likely to crash the program if the pointer gets moved by the GC.

@@ -14,7 +14,7 @@ rtfunc1(obj)
 	LockRun(lockit, (o) => rtAddTot(o), obj)
 }
 
-fo := FuncObj("rtfunc1")
+fo := Func("rtfunc1")
 
 Loop 100
 {
@@ -54,7 +54,7 @@ rtfunc2()
 	return rtSumTot()
 }
 
-fo := FuncObj("rtfunc2")
+fo := Func("rtfunc2")
 
 Loop 100
 {

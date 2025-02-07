@@ -33,7 +33,7 @@ namespace Keysharp.Tests
 				var split0 = splits[0].Substring(splits[0].IndexOf('(') + 1).Trim('"');
 				var split3 = splits[3].Trim('"');
 				hs1 = HotstringManager.AddHotstring(split0, null, splits[2].Trim('"'), split3, splits[4].Trim('"'), false);
-				Debug.WriteLine(split0);
+				System.Diagnostics.Debug.WriteLine(split0);
 
 				if (!split0.Contains('*'))
 					val = split3 + " ";
@@ -329,7 +329,7 @@ namespace Keysharp.Tests
 			HotstringManager.ClearHotstrings();
 			HotstringManager.RestoreDefaults(true);
 			_ = Keyboard.Hotstring("Reset");
-			_ = HotstringManager.AddHotstring("::btw", Functions.FuncObj("label_9F201721", null), ":btw", "btw", "", false);
+			_ = HotstringManager.AddHotstring("::btw", Functions.Func("label_9F201721", null), ":btw", "btw", "", false);
 			HotkeyDefinition.ManifestAllHotkeysHotstringsHooks();
 			Assert.IsTrue(Accessors.A_KeybdHookInstalled == 1);
 			Assert.IsTrue(Accessors.A_MouseHookInstalled == 1);//Because there is a hotstring and mouse reset is true by default, the mouse hook gets installed.

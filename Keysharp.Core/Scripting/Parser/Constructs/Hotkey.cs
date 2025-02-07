@@ -16,7 +16,7 @@ namespace Keysharp.Scripting
 
 			Persistent = true;
 			var invoke = (CodeMethodInvokeExpression)InternalMethods.AddHotkey;
-			_ = invoke.Parameters.Add(lastHotkeyFunc != "" ? new CodeSnippetExpression("FuncObj(\"" + lastHotkeyFunc + "\", null)") : nullPrimitive);//Can't use interpolated string here because the AStyle formatter misinterprets it.
+			_ = invoke.Parameters.Add(lastHotkeyFunc != "" ? new CodeSnippetExpression("Func(\"" + lastHotkeyFunc + "\", null)") : nullPrimitive);//Can't use interpolated string here because the AStyle formatter misinterprets it.
 			_ = invoke.Parameters.Add(new CodePrimitiveExpression(hook_action));
 			_ = invoke.Parameters.Add(new CodePrimitiveExpression(hotkeyName));
 			//_ = invoke.Parameters.Add(new CodePrimitiveExpression(suffixHasTilde));
@@ -554,7 +554,7 @@ namespace Keysharp.Scripting
 							methods[targetClass].Add(method.Name, method);
 
 							foreach (var stacked in stackedHotstrings)//Go back through all stacked hotstrings that were parsed, and reset their function object to the one that was just created to handle X execute mode.
-								stacked.Parameters[1] = new CodeSnippetExpression("FuncObj(\"" + funcname + "\", null)");//Can't use interpolated string here because the AStyle formatter misinterprets it.
+								stacked.Parameters[1] = new CodeSnippetExpression("Func(\"" + funcname + "\", null)");//Can't use interpolated string here because the AStyle formatter misinterprets it.
 
 							ClearParserHotstringState();
 						}
@@ -566,7 +566,7 @@ namespace Keysharp.Scripting
 							funcname = ParseFunctionName(codeLine, nextBuf);
 
 							foreach (var stacked in stackedHotstrings)//Go back through all stacked hotstrings that were parsed, and reset their function object to the one that was just parsed.
-								stacked.Parameters[1] = new CodeSnippetExpression("FuncObj(\"" + funcname + "\", null)");//Can't use interpolated string here because the AStyle formatter misinterprets it.
+								stacked.Parameters[1] = new CodeSnippetExpression("Func(\"" + funcname + "\", null)");//Can't use interpolated string here because the AStyle formatter misinterprets it.
 
 							ClearParserHotstringState();
 						}
@@ -630,7 +630,7 @@ namespace Keysharp.Scripting
 					var hasContinuationSection = replacement.AsSpan().IndexOfAny(CrLfSv) != -1;//Not a perfect detection, but will be correct most of the time.
 					var invoke = (CodeMethodInvokeExpression)InternalMethods.AddHotstring;
 					_ = invoke.Parameters.Add(new CodePrimitiveExpression(hotName));
-					_ = invoke.Parameters.Add(funcname != "" ? new CodeSnippetExpression("FuncObj(\"" + funcname + "\", null)") : nullPrimitive);//Can't use interpolated string here because the AStyle formatter misinterprets it.
+					_ = invoke.Parameters.Add(funcname != "" ? new CodeSnippetExpression("Func(\"" + funcname + "\", null)") : nullPrimitive);//Can't use interpolated string here because the AStyle formatter misinterprets it.
 					_ = invoke.Parameters.Add(new CodePrimitiveExpression(options));
 					_ = invoke.Parameters.Add(new CodePrimitiveExpression(hotstring));
 					_ = invoke.Parameters.Add(new CodePrimitiveExpression(hotstringExecute || hotkeyUsesOtb ? "" : replacement));
@@ -711,7 +711,7 @@ namespace Keysharp.Scripting
 							lastHotkeyFunc = ParseFunctionName(codeLine, nextBuf);
 
 							foreach (var stacked in stackedHotkeys)//Go back through all stacked hotstrings that were parsed, and reset their function object to the one that was just parsed.
-								stacked.Parameters[0] = new CodeSnippetExpression("FuncObj(\"" + lastHotkeyFunc + "\", null)");//Can't use interpolated string here because the AStyle formatter misinterprets it.
+								stacked.Parameters[0] = new CodeSnippetExpression("Func(\"" + lastHotkeyFunc + "\", null)");//Can't use interpolated string here because the AStyle formatter misinterprets it.
 
 							stackedHotkeys.Clear();
 

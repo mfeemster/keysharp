@@ -233,7 +233,7 @@ reffunc3(a, &b, &c, theparams*)
 {
 }
 
-reffuncobj := FuncObj("reffunc3")
+reffuncobj := Func("reffunc3")
 
 If (reffuncobj.IsByRef(1) == false)
 	FileAppend, "pass", "*"
@@ -537,7 +537,7 @@ func_bound(a, &b, c)
 	global z := c
 }
 
-fo := FuncObj("func_bound")
+fo := Func("func_bound")
 bf := fo.Bind(5, ,7)
 bf(&y)
 

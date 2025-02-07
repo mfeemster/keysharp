@@ -409,14 +409,29 @@ namespace Keysharp.Scripting
 					{
 						if (cmie.Parameters[0] is CodeVariableReferenceExpression cvre)
 						{
+							var propname = "";
+
+							if (cmie.Parameters.Count > 1 && cmie.Parameters[1] is CodePrimitiveExpression cpe)
+								propname = cpe.Value.ToString();
+
 							var name = cvre.VariableName;
 
 							if (!VarExistsAtCurrentOrParentScope(cmietype.Key, cmietypefunc.Key, name)
 									&& TypeExistsAtCurrentOrParentScope(cmietype.Key, cmietypefunc.Key, name))
 							{
-								cmie.Method = new CodeMethodReferenceExpression(new CodeTypeReferenceExpression(typeof(Script)), "GetStaticMemberValueT");
-								cmie.Method.TypeArguments.Add(name);
-								cmie.Parameters.RemoveAt(0);
+								if (MethodExistsInTypeOrBase(name, propname) is CodeMemberMethod cmm)
+								{
+									cmie.Method = new CodeMethodReferenceExpression(new CodeTypeReferenceExpression(typeof(Script)), "GetStaticMemberValueT");
+									cmie.Method.TypeArguments.Add(name);
+									cmie.Parameters[0] = new CodeSnippetExpression($"{name}.{propname}");
+									cmie.Parameters.RemoveAt(1);
+								}
+								else
+								{
+									cmie.Method = new CodeMethodReferenceExpression(new CodeTypeReferenceExpression(typeof(Script)), "GetStaticMemberValueT");
+									cmie.Method.TypeArguments.Add(name);
+									cmie.Parameters.RemoveAt(0);
+								}
 							}
 						}
 					}
@@ -737,6 +752,23 @@ namespace Keysharp.Scripting
 				{
 					foreach (var cmie in cmietypefunc.Value)
 					{
+						for (int i = 0; i < cmie.Parameters.Count; i++)//Convert function arguments which were direct function references.
+						{
+							var funcparam = cmie.Parameters[i];
+
+							if (funcparam is CodeVariableReferenceExpression cvreparam)
+							{
+								var type = cvreparam.UserData["origtypescope"] is CodeTypeDeclaration ctd ? ctd.Name : "program";
+
+								if (MethodExistsInTypeOrBase(type, cvreparam.VariableName) is CodeMemberMethod cmm)
+								{
+									cvreparam.VariableName = cmm.Name;
+									var tempfunc = (CodeMethodReferenceExpression)InternalMethods.Func;
+									cmie.Parameters[i] = new CodeMethodInvokeExpression(tempfunc, cvreparam);
+								}
+							}
+						}
+
 						//Handle changing myfuncobj() to myfuncobj.Call().
 						if (VarExistsAtCurrentOrParentScope(cmietype.Key, cmietypefunc.Key, cmie.Method.MethodName))
 						{
@@ -756,7 +788,8 @@ namespace Keysharp.Scripting
 							}
 
 							HandleAllVariadicParams(cmie);
-							cmie.Method = new CodeMethodReferenceExpression(new CodeSnippetExpression($"/*preventtrim*/((IFuncObj){cmie.Method.MethodName})"), callFuncName);
+							var funccmie = new CodeMethodInvokeExpression((CodeMethodReferenceExpression)InternalMethods.Func, new CodeVariableReferenceExpression(cmie.Method.MethodName));
+							cmie.Method = new CodeMethodReferenceExpression(funccmie, callFuncName);
 						}
 						else if (GetUserDefinedTypename(cmie.Method.MethodName) is CodeTypeDeclaration ctd && ctd.Name.Length > 0)//Convert myclass() to myclass.Call().
 						{
@@ -1112,7 +1145,7 @@ namespace Keysharp.Scripting
 
 			foreach (var (p, s) in reader.PreloadedDlls)//Add after InitGlobalVars() call above, because the statements will be added in reverse order.
 			{
-				var cmie = new CodeMethodInvokeExpression(new CodeTypeReferenceExpression("Keysharp.Scripting.Variables"), "AddPreLoadedDll");
+				var cmie = new CodeMethodInvokeExpression(new CodeTypeReferenceExpression("Keysharp.Scripting.Script.Variables"), "AddPreLoadedDll");
 				_ = cmie.Parameters.Add(new CodePrimitiveExpression(p));
 				_ = cmie.Parameters.Add(new CodePrimitiveExpression(s));
 				initial.Add(new CodeExpressionStatement(cmie));
