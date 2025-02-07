@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Reflection;
-using Keysharp.Core.Scripting.Parser.Antlr;
 
 namespace Keysharp.Scripting
 {

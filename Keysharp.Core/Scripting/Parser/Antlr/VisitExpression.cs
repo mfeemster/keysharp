@@ -4,13 +4,12 @@ using Antlr4.Runtime.Tree;
 using static MainParser;
 using static Keysharp.Scripting.Parser;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using static Keysharp.Core.Scripting.Parser.Antlr.Helper;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Security.AccessControl;
 using System.Configuration;
 
-namespace Keysharp.Core.Scripting.Parser.Antlr
+namespace Keysharp.Scripting
 {
     public partial class MainVisitor : MainParserBaseVisitor<SyntaxNode>
     {
@@ -23,7 +22,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
 
             foreach (var child in context.children)
             {
-                if (child is ITerminalNode || child is IdentifierContext)
+                if (child is PropertyNameContext)
                     parts.Add(SyntaxFactory.LiteralExpression(
                         SyntaxKind.StringLiteralExpression,
                         SyntaxFactory.Literal(child.GetText().Trim())
@@ -76,26 +75,20 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             return combinedExpression;
         }
 
-        public override SyntaxNode VisitDerefContinuation([NotNull] DerefContinuationContext context)
-        {
-            if (context.singleExpression() != null)
-                return Visit(context.singleExpression());
-            else
-                return SyntaxFactory.LiteralExpression(
-                        SyntaxKind.StringLiteralExpression,
-                        SyntaxFactory.Literal(context.GetText())
-                    );
-        }
-
         public override SyntaxNode VisitDereference([NotNull] DereferenceContext context)
         {
-            return Visit(context.singleExpression());
+            return Visit(context.expression());
         }
 
         public override SyntaxNode VisitMemberIdentifier([NotNull] MemberIdentifierContext context)
         {
             if (context.dynamicIdentifier() == null)
-                return SyntaxFactory.IdentifierName(context.GetText().ToLowerInvariant());
+            {
+                var text = context.GetText();
+                if (context.literal()?.StringLiteral() != null)
+                    text = text.Substring(1, text.Length - 2); // Trim quotes
+                return SyntaxFactory.IdentifierName(text);
+            }
             return base.VisitMemberIdentifier(context);
         }
 
@@ -117,33 +110,40 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
         {
             ExpressionSyntax targetExpression = null;
             // Visit the singleExpression (the method to be called)
-            string methodName = context.singleExpression().GetText();
-            if (!state.UserFuncs.Contains(methodName) && Reflections.FindBuiltInMethod(methodName, -1) is MethodPropertyHolder mph && mph.mi != null)
+            string methodName = context.primaryExpression().GetText();
+            if (!parser.UserFuncs.Contains(methodName) && Reflections.FindBuiltInMethod(methodName, -1) is MethodPropertyHolder mph && mph.mi != null)
                 targetExpression = CreateQualifiedName($"{mph.mi.DeclaringType}.{mph.mi.Name}");
             else
             {
-                targetExpression = (ExpressionSyntax)Visit(context.singleExpression());
+                targetExpression = (ExpressionSyntax)Visit(context.primaryExpression());
                 methodName = ExtractMethodName(targetExpression);
             }
 
             // Get the argument list
             ArgumentListSyntax argumentList;
-            if (context.functionCallArguments()?.arguments() != null)
-                argumentList = (ArgumentListSyntax)VisitArguments(context.functionCallArguments().arguments());
+            if (context.arguments() != null)
+                argumentList = (ArgumentListSyntax)VisitArguments(context.arguments());
             else
                 argumentList = SyntaxFactory.ArgumentList();
 
-            return state.GenerateFunctionInvocation(targetExpression, argumentList, methodName);
+            return parser.GenerateFunctionInvocation(targetExpression, argumentList, methodName);
         }
 
-        private ExpressionSyntax GenerateMemberIndexAccess(SingleExpressionContext singleExpression, MemberIndexArgumentsContext memberIndexArguments, bool isOptional = false)
+        private ExpressionSyntax GenerateMemberIndexAccess(PrimaryExpressionContext singleExpression, MemberIndexArgumentsContext memberIndexArguments, bool isOptional = false)
         {
             // Visit the main expression (e.g., c in c[1])
             var targetExpression = (ExpressionSyntax)Visit(singleExpression);
 
             // Visit the expressionSequence to generate an ArgumentListSyntax
-            var exprArgSeqContext = memberIndexArguments.expressionSequence();
-            var argumentList = exprArgSeqContext == null ? SyntaxFactory.ArgumentList() : (ArgumentListSyntax)VisitExpressionSequence(exprArgSeqContext);
+            var exprArgSeqContext = memberIndexArguments.arrayElementList();
+            var argumentList = exprArgSeqContext == null 
+                ? SyntaxFactory.ArgumentList() 
+                : SyntaxFactory.ArgumentList(
+                    SyntaxFactory.SeparatedList(
+                        ((InitializerExpressionSyntax)Visit(exprArgSeqContext)).Expressions
+                        .Select(expr => SyntaxFactory.Argument(expr))
+                    )
+                );
 
             // Prepend the targetExpression as the first argument
             var fullArgumentList = argumentList.WithArguments(
@@ -179,11 +179,16 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
 
         public override SyntaxNode VisitMemberIndexExpression([NotNull] MemberIndexExpressionContext context)
         {
-            return GenerateMemberIndexAccess(context.singleExpression(), context.memberIndexArguments(), context.GetChild(1)?.GetText() == "?");
+            return GenerateMemberIndexAccess(context.primaryExpression(), context.memberIndexArguments(), context.GetChild(1)?.GetText() == "?");
         }
 
         public override SyntaxNode VisitExpressionStatement([Antlr4.Runtime.Misc.NotNull] ExpressionStatementContext context)
         {
+            var sequence = context.expressionSequence();
+            if (parser.currentFunc.Name == "_ks_UserMainCode" && sequence.ChildCount == 1 && (sequence.expression(0) is FunctionExpressionContext || sequence.expression(0) is FatArrowExpressionContext))
+            {
+                return (MethodDeclarationSyntax)Visit(sequence.expression(0));
+            }
             var argumentList = (ArgumentListSyntax)base.VisitExpressionStatement(context);
             ExpressionSyntax singleExpression = null;
             ExpressionSyntax functionTargetExpression = null;
@@ -191,48 +196,6 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                 throw new Error("Expression count can't be 0");
 
             singleExpression = argumentList.Arguments[0].Expression;
-
-            // Check whether this might qualify for a function call statement, and if yes then turn it into an invocation instead
-            if ((singleExpression is IdentifierNameSyntax || singleExpression is IdentifierNameSyntax
-                || singleExpression is MemberAccessExpressionSyntax) && singleExpression.GetAnnotatedNodes("FunctionDeclaration").FirstOrDefault() == null)
-            {
-                // The first argument matches a function call statement pattern, so extract the method name
-                string methodName = ExtractMethodName(singleExpression);
-                // Also, if the original expression list contains more arguments then the first argument will be null
-                // For example the input might have been `MsgBox , "world"`
-                argumentList = argumentList.Arguments.Count == 1 
-                    ? SyntaxFactory.ArgumentList() 
-                    : SyntaxFactory.ArgumentList(SyntaxFactory.SeparatedList(new[] { SyntaxFactory.Argument(SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression)) }.Concat(argumentList.Arguments))); 
-
-                return SyntaxFactory.ExpressionStatement(state.GenerateFunctionInvocation(singleExpression, argumentList, methodName));
-            }
-            // The other function call case is a Concat expression in cases like `MsgBox "hello"`, so check for that
-            else if (singleExpression is InvocationExpressionSyntax invocation)
-            {
-                // Get the argument list of the invocation
-                var invocationArgumentList = invocation.ArgumentList;
-                if (invocationArgumentList.Arguments.Count >= 3)
-                {
-                    // Check if the first argument is "Concat"
-                    var firstArgument = invocationArgumentList.Arguments[0].Expression as QualifiedNameSyntax;
-                    if (firstArgument != null && firstArgument.Right is IdentifierNameSyntax identifier && identifier.Identifier.Text == "Concat")
-                    {
-                        // Extract the second and third arguments
-                        var secondArgument = invocationArgumentList.Arguments[1].Expression;
-                        var thirdArgument = invocationArgumentList.Arguments[2].Expression;
-
-                        // The first expression in the Concat call matches a function call expression
-                        if (secondArgument is IdentifierNameSyntax || secondArgument is IdentifierNameSyntax
-                            || secondArgument is MemberAccessExpressionSyntax)
-                        {
-                            string methodName = ExtractMethodName(secondArgument);
-                            argumentList = SyntaxFactory.ArgumentList(SyntaxFactory.SeparatedList(new[] { SyntaxFactory.Argument(thirdArgument) }.Concat(argumentList.Arguments.Skip(1))));
-
-                            return SyntaxFactory.ExpressionStatement(state.GenerateFunctionInvocation(secondArgument, argumentList, methodName));
-                        }
-                    }
-                }
-            }
 
             if (argumentList.Arguments.Count == 1)
             {
@@ -291,44 +254,40 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
         {
             var arguments = new List<ArgumentSyntax>();
 
-            var lastChildText = ",";
+            bool isComma;
+            bool lastWasComma = true;
             for (var i = 0; i < context.ChildCount; i++)
             {
                 var child = context.GetChild(i);
-                if (child is ITerminalNode node && node.Symbol.Type == EOL)
-                    continue;
-                var childText = child.GetText();
-
-                if (childText == ",")
+                if (child is ITerminalNode node)
                 {
-                    if (lastChildText == ",")
+                    if (node.Symbol.Type == EOL)
+                        continue;
+                    isComma = node.Symbol.Type == MainLexer.Comma;
+                }
+                else
+                    isComma = false;
+
+                if (isComma)
+                {
+                    if (lastWasComma)
                         arguments.Add(SyntaxFactory.Argument(SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression)));
 
                     goto ShouldVisitNextChild;
                 }
-                arguments.Add(SyntaxFactory.Argument((ExpressionSyntax)Visit((SingleExpressionContext)child)));
+                SyntaxNode expr = Visit((ExpressionContext)child);
+                if (expr is MethodDeclarationSyntax)
+                    return expr;
+                arguments.Add(SyntaxFactory.Argument((ExpressionSyntax)expr));
 
                 ShouldVisitNextChild:
-                lastChildText = childText;
+                lastWasComma = isComma;
             }
 
             return SyntaxFactory.ArgumentList(SyntaxFactory.SeparatedList(arguments));
         }
 
-        public override SyntaxNode VisitImplicitConcatenateExpression([NotNull] ImplicitConcatenateExpressionContext context)
-        {
-            if (context.singleExpressionConcatenation().Length == 0)
-                return Visit(context.singleExpression());
-            var arguments = new List<ExpressionSyntax> { 
-                (ExpressionSyntax)Visit(context.singleExpression()) 
-            };
-
-            foreach (var expr in context.singleExpressionConcatenation())
-            {
-                arguments.Add((ExpressionSyntax)Visit(expr));
-            }
-            return ConcatenateExpressions(arguments);
-        }
+        private int counter = 0;
 
         /*
         public override SyntaxNode VisitConcatenateExpression([NotNull] ConcatenateExpressionContext context)
@@ -356,25 +315,25 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
 
         public override SyntaxNode VisitPreIncrementExpression([NotNull] PreIncrementExpressionContext context)
         {
-            var expression = (ExpressionSyntax)Visit(context.singleExpression());
+            var expression = (ExpressionSyntax)Visit(context.operatorExpression());
             return HandleCompoundAssignment(expression, SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(1L)), "+=");
         }
 
         public override SyntaxNode VisitPreDecreaseExpression([NotNull] PreDecreaseExpressionContext context)
         {
-            var expression = (ExpressionSyntax)Visit(context.singleExpression());
+            var expression = (ExpressionSyntax)Visit(context.operatorExpression());
             return HandleCompoundAssignment(expression, SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(1L)), "-=");
         }
 
         public override SyntaxNode VisitPostIncrementExpression([NotNull] PostIncrementExpressionContext context)
         {
-            var expression = (ExpressionSyntax)Visit(context.singleExpression());
+            var expression = (ExpressionSyntax)Visit(context.operatorExpression());
             return HandleCompoundAssignment(expression, SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(1L)), "+=", isPostFix: true);
         }
 
         public override SyntaxNode VisitPostDecreaseExpression([NotNull] PostDecreaseExpressionContext context)
         {
-            var expression = (ExpressionSyntax)Visit(context.singleExpression());
+            var expression = (ExpressionSyntax)Visit(context.operatorExpression());
             return HandleCompoundAssignment(expression, SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(1L)), "-=", isPostFix: true);
         }
 
@@ -403,22 +362,23 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             List<IParseTree> rules = new List<IParseTree>();
             foreach (var child in context.children)
             {
-                if (child is ITerminalNode childNode && childNode != null && childNode.Symbol.Type == EOL)
+                if (child is ITerminalNode childNode && childNode != null && (childNode.Symbol.Type == EOL || childNode.Symbol.Type == WS))
                     continue;
                 rules.Add(child);
-            } 
+            }
+            
             if (rules[1] is ITerminalNode node && node != null)
             {
                 return CreateBinaryOperatorExpression(node.Symbol.Type, (ExpressionSyntax)Visit(rules[0]), (ExpressionSyntax)Visit(rules[2]));
             }
-            throw new ValueError("Invalid operand: " + context.GetChild(2).GetText());
+            throw new ValueError("Invalid operand: " + rules[1].GetText());
         }
 
         public SyntaxNode HandlePureBinaryExpressionVisit([NotNull] ParserRuleContext context)
         {
             if (context.GetChild(1) is ITerminalNode node && node != null)
                 return SyntaxFactory.BinaryExpression(
-                    Helper.pureBinaryOperators[node.Symbol.Type],
+                    pureBinaryOperators[node.Symbol.Type],
                     (ExpressionSyntax)Visit(context.GetChild(0)),
                     (ExpressionSyntax)Visit(context.GetChild(2)));
             throw new ValueError("Invalid operand: " + context.GetChild(1).GetText());
@@ -454,9 +414,14 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             return HandleBinaryExpressionVisit(context);
         }
 
-        public override SyntaxNode VisitDotConcatenateExpression([NotNull] DotConcatenateExpressionContext context)
+        public override SyntaxNode VisitConcatenateExpression([NotNull] ConcatenateExpressionContext context)
         {
-            return HandleBinaryExpressionVisit(context);
+            var arguments = new List<ExpressionSyntax> {
+                (ExpressionSyntax)Visit(context.left),
+                (ExpressionSyntax)Visit(context.right)
+            };
+
+            return ConcatenateExpressions(arguments);
         }
 
         public override SyntaxNode VisitRegExMatchExpression([NotNull] RegExMatchExpressionContext context)
@@ -474,38 +439,39 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             return HandleBinaryExpressionVisit(context);
         }
 
-        public override SyntaxNode VisitIsExpression([NotNull] IsExpressionContext context)
+        public override SyntaxNode VisitContainExpression([NotNull] ContainExpressionContext context)
         {
-            var leftExpression = (ExpressionSyntax)Visit(context.singleExpression(0));
-            // Ensure the classExpression is treated as a string (e.g., "KeysharpObject")
-            var classAsRawString = context.singleExpression(1).GetText().Trim();
+            switch (context.op.Type) {
+                case MainLexer.Is:
+                    var leftExpression = (ExpressionSyntax)Visit(context.left);
+                    // Ensure the classExpression is treated as a string (e.g., "KeysharpObject")
+                    var classAsRawString = context.right.GetText().Trim();
 
-            if (classAsRawString == "unset" || classAsRawString == "null")
-            {
-                var nullComparison = SyntaxFactory.BinaryExpression(
-                    SyntaxKind.EqualsExpression,
-                    leftExpression,
-                    SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression)
-                );
-                return nullComparison;
+                    if (classAsRawString == "unset" || classAsRawString == "null")
+                    {
+                        var nullComparison = SyntaxFactory.BinaryExpression(
+                            SyntaxKind.EqualsExpression,
+                            leftExpression,
+                            SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression)
+                        );
+                        return nullComparison;
+                    }
+
+                    var classAsString = SyntaxFactory.LiteralExpression(
+                        SyntaxKind.StringLiteralExpression,
+                        SyntaxFactory.Literal(classAsRawString) // Convert class to its string representation
+                    );
+
+                    return CreateBinaryOperatorExpression(
+                        MainLexer.Is,
+                        leftExpression,
+                        classAsString);
             }
-
-            var classAsString = SyntaxFactory.LiteralExpression(
-                SyntaxKind.StringLiteralExpression,
-                SyntaxFactory.Literal(classAsRawString) // Convert class to its string representation
-            );
-
-            return CreateBinaryOperatorExpression(
-                MainLexer.Is,
-                leftExpression,
-                classAsString);
+            throw new NotImplementedException();
         }
 
-        public override SyntaxNode VisitLogicalAndExpression([NotNull] LogicalAndExpressionContext context)
+        private SyntaxNode HandleLogicalAndExpression(ExpressionSyntax left, ExpressionSyntax right)
         {
-            var left = (ExpressionSyntax)Visit(context.singleExpression(0));
-            var right = (ExpressionSyntax)Visit(context.singleExpression(1));
-
             return SyntaxFactory.ConditionalExpression(
                 SyntaxFactory.InvocationExpression(
                     SyntaxFactory.MemberAccessExpression(
@@ -521,12 +487,8 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                 left    // If left is falsy, return left
             );
         }
-
-        public override SyntaxNode VisitLogicalOrExpression([NotNull] LogicalOrExpressionContext context)
+        private SyntaxNode HandleLogicalOrExpression(ExpressionSyntax left, ExpressionSyntax right)
         {
-            var left = (ExpressionSyntax)Visit(context.singleExpression(0));
-            var right = (ExpressionSyntax)Visit(context.singleExpression(1));
-
             return SyntaxFactory.ConditionalExpression(
                 SyntaxFactory.InvocationExpression(
                     SyntaxFactory.MemberAccessExpression(
@@ -538,15 +500,42 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                         SyntaxFactory.SingletonSeparatedList(SyntaxFactory.Argument(left))
                     )
                 ),
-                left,   // If left is truthy, return left
-                right   // If left is falsy, return right
+                left,  // If left is truthy, return left
+                right    // If left is falsy, return right
             );
+        }
+        public override SyntaxNode VisitLogicalAndExpression([NotNull] LogicalAndExpressionContext context)
+        {
+            return HandleLogicalAndExpression((ExpressionSyntax)Visit(context.left), (ExpressionSyntax)Visit(context.right));
+        }
+        public override SyntaxNode VisitLogicalAndExpressionDuplicate([NotNull] LogicalAndExpressionDuplicateContext context)
+        {
+            return HandleLogicalAndExpression((ExpressionSyntax)Visit(context.left), (ExpressionSyntax)Visit(context.right));
+        }
+
+        public override SyntaxNode VisitLogicalOrExpression([NotNull] LogicalOrExpressionContext context)
+        {
+            return HandleLogicalOrExpression((ExpressionSyntax)Visit(context.left), (ExpressionSyntax)Visit(context.right));
+        }
+        public override SyntaxNode VisitLogicalOrExpressionDuplicate([NotNull] LogicalOrExpressionDuplicateContext context)
+        {
+            return HandleLogicalOrExpression((ExpressionSyntax)Visit(context.left), (ExpressionSyntax)Visit(context.right));
         }
 
         public override SyntaxNode VisitCoalesceExpression([NotNull] CoalesceExpressionContext context)
         {
-            var left = (ExpressionSyntax)Visit(context.singleExpression(0));
-            var right = (ExpressionSyntax)Visit(context.singleExpression(1));
+            var left = (ExpressionSyntax)Visit(context.left);
+            var right = (ExpressionSyntax)Visit(context.right);
+            return SyntaxFactory.BinaryExpression(
+                SyntaxKind.CoalesceExpression,
+                left,
+                right
+            );
+        }
+        public override SyntaxNode VisitCoalesceExpressionDuplicate([NotNull] CoalesceExpressionDuplicateContext context)
+        {
+            var left = (ExpressionSyntax)Visit(context.left);
+            var right = (ExpressionSyntax)Visit(context.right);
             return SyntaxFactory.BinaryExpression(
                 SyntaxKind.CoalesceExpression,
                 left,
@@ -559,18 +548,22 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             if (context.GetChild(0) is ITerminalNode node && node != null)
             {
                 var arguments = new List<ExpressionSyntax>() {
-                CreateQualifiedName("Keysharp.Scripting.Script.Operator." + Helper.unaryOperators[node.Symbol.Type]),
+                CreateQualifiedName("Keysharp.Scripting.Script.Operator." + unaryOperators[node.Symbol.Type]),
                 (ExpressionSyntax)Visit(context.GetChild(1))
             };
                 var argumentList = SyntaxFactory.ArgumentList(
                     SyntaxFactory.SeparatedList(arguments.Select(arg => SyntaxFactory.Argument(arg)))
                 );
-                return SyntaxFactory.InvocationExpression(Helper.ScriptOperateUnaryName, argumentList);
+                return SyntaxFactory.InvocationExpression(ScriptOperateUnaryName, argumentList);
             }
             throw new ValueError("Invalid operand: " + context.GetChild(1).GetText());
         }
 
         public override SyntaxNode VisitNotExpression([NotNull] NotExpressionContext context)
+        {
+            return HandleUnaryExpressionVisit(context);
+        }
+        public override SyntaxNode VisitNotExpressionDuplicate([NotNull] NotExpressionDuplicateContext context)
         {
             return HandleUnaryExpressionVisit(context);
         }
@@ -580,16 +573,22 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             return base.VisitArrayLiteralExpression(context);
         }
 
-        public override SyntaxNode VisitAssignmentOperatorExpression([NotNull] AssignmentOperatorExpressionContext context)
+        private SyntaxNode HandleAssignmentExpression(IParseTree left, IParseTree right, string assignmentOperator)
         {
-            // Visit the left-hand side of the assignment
-            var leftExpression = (ExpressionSyntax)Visit(context.singleExpression(0));
+            var leftExpression = (ExpressionSyntax)Visit(left);
             if (leftExpression is IdentifierNameSyntax name)
-                state.MaybeAddVariableDeclaration(name.Identifier.Text);
-            var rightExpression = (ExpressionSyntax)Visit(context.singleExpression(1));
-            string assignmentOperator = context.assignmentOperator().GetText();
+                parser.MaybeAddVariableDeclaration(name.Identifier.Text);
+            var rightExpression = (ExpressionSyntax)Visit(right);
 
             return HandleAssignment(leftExpression, rightExpression, assignmentOperator);
+        }
+        public override SyntaxNode VisitAssignmentExpression([NotNull] AssignmentExpressionContext context)
+        {
+            return HandleAssignmentExpression(context.left, context.right, context.assignmentOperator().GetText());
+        }
+        public override SyntaxNode VisitAssignmentExpressionDuplicate([NotNull] AssignmentExpressionDuplicateContext context)
+        {
+            return HandleAssignmentExpression(context.left, context.right, context.assignmentOperator().GetText());
         }
 
         private ExpressionSyntax HandleAssignment(ExpressionSyntax leftExpression, ExpressionSyntax rightExpression, string assignmentOperator)
@@ -623,7 +622,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                 && objectName.Identifier.Text == "VarRef")
                 {
                     var varRefExpression = leftExpression;
-                    leftExpression = state.PushTempVar();
+                    leftExpression = parser.PushTempVar();
                     var result = ((InvocationExpressionSyntax)InternalMethods.MultiStatement)
                         .WithArgumentList(
                             SyntaxFactory.ArgumentList(
@@ -656,7 +655,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                                 })
                             )
                         );
-                    state.PopTempVar();
+                    parser.PopTempVar();
                     return result;
                 }
                 if (leftExpression is InvocationExpressionSyntax getPropertyInvocation &&
@@ -671,7 +670,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                 }
                 else if (leftExpression is IdentifierNameSyntax identifierNameSyntax)
                 {
-                    state.MaybeAddVariableDeclaration(identifierNameSyntax.Identifier.Text);
+                    parser.MaybeAddVariableDeclaration(identifierNameSyntax.Identifier.Text);
                     leftExpression = identifierNameSyntax;
                     return SyntaxFactory.AssignmentExpression(
                         assignmentKind,
@@ -714,7 +713,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
 
             // Handle compound assignments (e.g., "+=", "-=")
             string binaryOperator = MapAssignmentOperatorToBinaryOperator(assignmentOperator);
-            var binaryOperation = Helper.CreateBinaryOperatorExpression(
+            var binaryOperation = CreateBinaryOperatorExpression(
                 GetOperatorToken(binaryOperator),
                 staticMemberInvocation,
                 rightExpression
@@ -762,7 +761,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
 
             // Handle compound assignments
             string binaryOperator = MapAssignmentOperatorToBinaryOperator(assignmentOperator);
-            var binaryOperation = Helper.CreateBinaryOperatorExpression(
+            var binaryOperation = CreateBinaryOperatorExpression(
                 GetOperatorToken(binaryOperator),
                 CreateElementAccessGetterInvocation(elementAccess),
                 rightExpression
@@ -830,7 +829,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
 
             // Handle compound assignments
             string binaryOperator = MapAssignmentOperatorToBinaryOperator(assignmentOperator);
-            var binaryOperation = Helper.CreateBinaryOperatorExpression(
+            var binaryOperation = CreateBinaryOperatorExpression(
                 GetOperatorToken(binaryOperator),
                 SyntaxFactory.InvocationExpression(
                     SyntaxFactory.MemberAccessExpression(
@@ -927,8 +926,8 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             // In the case of member or index access, buffer the base and member and then get+set to avoid multiple evaluations
             if (!(leftExpression is IdentifierNameSyntax))
             {
-                var baseTemp = state.PushTempVar();
-                var memberTemp = state.PushTempVar();
+                var baseTemp = parser.PushTempVar();
+                var memberTemp = parser.PushTempVar();
                 IdentifierNameSyntax resultTemp = null;
                 IdentifierNameSyntax varRefTemp = null;
                 ExpressionSyntax assignmentExpression = null;
@@ -940,7 +939,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                     && objectExpression.Type is IdentifierNameSyntax objectName
                     && objectName.Identifier.Text == "VarRef")
                 {
-                    varRefTemp = state.PushTempVar();
+                    varRefTemp = parser.PushTempVar();
                     varRefExpression = leftExpression;
                     leftExpression = SyntaxFactory.MemberAccessExpression(
                             SyntaxKind.SimpleMemberAccessExpression,
@@ -972,8 +971,8 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
 
                     if (isPostFix)
                     {
-                        resultTemp = state.PushTempVar();
-                        binaryOperation = Helper.CreateBinaryOperatorExpression(
+                        resultTemp = parser.PushTempVar();
+                        binaryOperation = CreateBinaryOperatorExpression(
                             GetOperatorToken(binaryOperator),
                             SyntaxFactory.AssignmentExpression(
                                 SyntaxKind.SimpleAssignmentExpression,
@@ -982,11 +981,11 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                             ),
                             rightExpression
                         );
-                        state.PopTempVar();
+                        parser.PopTempVar();
                     }
                     else
                     {
-                        binaryOperation = Helper.CreateBinaryOperatorExpression(
+                        binaryOperation = CreateBinaryOperatorExpression(
                             GetOperatorToken(binaryOperator),
                                 propValue,
                             rightExpression
@@ -1024,8 +1023,8 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
 
                     if (isPostFix)
                     {
-                        resultTemp = state.PushTempVar();
-                        binaryOperation = Helper.CreateBinaryOperatorExpression(
+                        resultTemp = parser.PushTempVar();
+                        binaryOperation = CreateBinaryOperatorExpression(
                             GetOperatorToken(binaryOperator),
                             SyntaxFactory.AssignmentExpression(
                                 SyntaxKind.SimpleAssignmentExpression,
@@ -1033,10 +1032,10 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                                 propValue),
                             rightExpression
                         );
-                        state.PopTempVar();
+                        parser.PopTempVar();
                     } else
                     {
-                        binaryOperation = Helper.CreateBinaryOperatorExpression(
+                        binaryOperation = CreateBinaryOperatorExpression(
                             GetOperatorToken(binaryOperator),
                             propValue,
                             rightExpression
@@ -1060,12 +1059,12 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                     baseExpression = elementAccess.Expression;
                     var indices = elementAccess.ArgumentList.Arguments;
 
-                    resultTemp = state.PushTempVar();
+                    resultTemp = parser.PushTempVar();
 
                     // Assign each index to a temporary variable to avoid repeated evaluation
                     var indexTemps = new List<IdentifierNameSyntax>();
                     foreach (var _ in indices)
-                        indexTemps.Add(state.PushTempVar());
+                        indexTemps.Add(parser.PushTempVar());
                     // Create assignment expressions for each index and tempIndex
                     var indexTempAssigns = indices.Zip(indexTemps, (indexArg, tempIndex) =>
                         SyntaxFactory.Argument(
@@ -1087,7 +1086,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                         .WithArgumentList(SyntaxFactory.BracketedArgumentList(SyntaxFactory.SeparatedList(indexTemps.Select(index => SyntaxFactory.Argument(index)).ToList())));
 
                     // Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.Add, _ks_temp1, rightExpression)
-                    binaryOperation = Helper.CreateBinaryOperatorExpression(
+                    binaryOperation = CreateBinaryOperatorExpression(
                         GetOperatorToken(binaryOperator),
                         resultTemp,
                         rightExpression
@@ -1126,16 +1125,16 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                     // Clean up pushed temporaries for indices
                     foreach (var temp in indexTemps)
                     {
-                        state.PopTempVar();
+                        parser.PopTempVar();
                     }
 
-                    state.PopTempVar(); // For the resultTemp variable
+                    parser.PopTempVar(); // For the resultTemp variable
                 }
                 else
                     throw new Error("Unknown compound assignment left operand");
 
-                state.PopTempVar();
-                state.PopTempVar();
+                parser.PopTempVar();
+                parser.PopTempVar();
 
                 if (result == null)
                 result = ((InvocationExpressionSyntax)InternalMethods.MultiStatement)
@@ -1179,7 +1178,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                             )
                         )
                     );
-                    state.PopTempVar();
+                    parser.PopTempVar();
                 }
 
                 if (isPostFix && resultTemp != null)
@@ -1196,7 +1195,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                 return result;
             }
 
-            binaryOperation = Helper.CreateBinaryOperatorExpression(
+            binaryOperation = CreateBinaryOperatorExpression(
                 GetOperatorToken(binaryOperator),
                 leftExpression,
                 rightExpression
@@ -1204,7 +1203,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
 
             if (isPostFix)
             {
-                var tempVar = state.PushTempVar(); // Create a temporary variable
+                var tempVar = parser.PushTempVar(); // Create a temporary variable
 
                 // Create a MultiStatement:
                 // temp = x, x = x + 1, temp
@@ -1231,7 +1230,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                             })
                         )
                     );
-                state.PopTempVar();
+                parser.PopTempVar();
                 return result;
             }
 
@@ -1317,10 +1316,10 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
         // Helper function to map binary operator names to tokens
         private int GetOperatorToken(string binaryOperator)
         {
-            return Helper.binaryOperators.FirstOrDefault(kvp => kvp.Value == binaryOperator).Key;
+            return binaryOperators.FirstOrDefault(kvp => kvp.Value == binaryOperator).Key;
         }
 
-        private InvocationExpressionSyntax GenerateMemberDotAccess(SingleExpressionContext baseIdentifier, MemberIdentifierContext memberIdentifier)
+        private InvocationExpressionSyntax GenerateMemberDotAccess(PrimaryExpressionContext baseIdentifier, MemberIdentifierContext memberIdentifier)
         {
             // Visit the base expression (e.g., `arr` in `arr.Length`)
             var baseExpression = (ExpressionSyntax)Visit(baseIdentifier);
@@ -1364,7 +1363,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                     );
                 }
                 else
-                    state.MaybeAddGlobalFuncObjVariable(identifierName.Identifier.Text);
+                    parser.MaybeAddGlobalFuncObjVariable(identifierName.Identifier.Text);
             }
 
             // Generate the call to Keysharp.Scripting.Script.GetPropertyValue(base, member)
@@ -1386,31 +1385,12 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
 
         public override SyntaxNode VisitMemberDotExpression([Antlr4.Runtime.Misc.NotNull] MemberDotExpressionContext context)
         {
-            return GenerateMemberDotAccess(context.singleExpression(), context.memberIdentifier());
+            return GenerateMemberDotAccess(context.primaryExpression(), context.memberIdentifier());
         }
 
         public override SyntaxNode VisitObjectLiteralExpression([NotNull] ObjectLiteralExpressionContext context)
         {
             return base.VisitObjectLiteralExpression(context);
         }
-
-        public override SyntaxNode VisitThisExpression([NotNull] ThisExpressionContext context)
-        {
-            return state.currentClass == null ? SyntaxFactory.IdentifierName("@this") : SyntaxFactory.ThisExpression();
-        }
-
-        public override SyntaxNode VisitBaseExpression([NotNull] BaseExpressionContext context)
-        {
-            return state.currentClass == null ? SyntaxFactory.IdentifierName("@base") : SyntaxFactory.BaseExpression();
-        }
-
-        public override SyntaxNode VisitSuperExpression([NotNull] SuperExpressionContext context)
-        {
-            return SyntaxFactory.CastExpression(
-                            SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword)), 
-                            SyntaxFactory.IdentifierName("Super")
-                   );
-        }
-
     }
 }

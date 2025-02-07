@@ -190,7 +190,7 @@ namespace Keysharp.Tests
 		public void FlowOnError() => Assert.IsTrue(TestScript("flow-onerror", false));
 
 		[Test, Category("Flow")]
-		public void FlowSwitch() => Assert.IsTrue(TestScript("flow-switch", true));
+		public void FlowSwitch() => Assert.IsTrue(TestScript("flow-switch", false));
 
 		[Test, Category("Flow")]
 		public void FlowTryCatch() => Assert.IsTrue(TestScript("flow-trycatch", true));

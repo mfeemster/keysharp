@@ -167,7 +167,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             {
                 return Method
                 .WithParameterList(AssembleParams())
-                .WithBody(SyntaxFactory.Block(AssembleBody()))
+                .WithBody(AssembleBody())
                 .WithModifiers(
                     modifiers ?? SyntaxFactory.TokenList(
                         SyntaxFactory.Token(SyntaxKind.PublicKeyword),
@@ -678,7 +678,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
 
             if (currentFunc.Scope == Scope.Static) { 
                 state.currentClass.Declaration = state.currentClass.Declaration.AddMembers(fieldDeclaration);
-            }else
+            } else
                 mainClass.Declaration = mainClass.Declaration.AddMembers(fieldDeclaration);
 
             return name;
@@ -972,10 +972,28 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             return NormalizeIdentifier(name, nameCase);
         }
 
+        public static string IsStaticDefinedInThisOrParent(string name)
+        {
+            if (state.currentFunc == null) return null;
+            name = name.ToLowerInvariant();
+            string staticName = state.currentFunc.Name.ToUpper() + "_" + name;
+
+            if (state.currentFunc.Statics.Contains(name)) return staticName;
+            if (state.currentFunc.Locals.ContainsKey(name)) return null;
+
+            foreach (var (f, _) in state.FunctionStack.Reverse())
+            {
+                staticName = f.Name.ToUpper() + "_" + name;
+                if (f.Statics.Contains(name)) return staticName;
+                if (f.Locals.ContainsKey(name)) return null;
+            }
+            return null;
+        }
+
         public static string NormalizeFunctionIdentifier(string name, NameCase nameCase = NameCase.Lower)
         {
-            if (state.currentFunc != null && state.currentFunc.Statics.Contains(name.ToLowerInvariant()))
-                return state.currentFunc.Name.ToUpperInvariant() + "_" + name.ToLowerInvariant();
+            if (IsStaticDefinedInThisOrParent(name) is string staticName && staticName != null)
+                return staticName;
 
             var builtin = state.IsBuiltInProperty(name);
             if (builtin != null) return builtin;

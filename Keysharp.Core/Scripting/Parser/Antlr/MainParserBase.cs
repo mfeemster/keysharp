@@ -1,11 +1,9 @@
 using Antlr4.Runtime;
-using Keysharp.Scripting;
 using System.Collections.Generic;
 using System.IO;
 using static MainParser;
-using static Keysharp.Core.Scripting.Parser.Antlr.Helper;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.TextBox;
 using Antlr4.Runtime.Atn;
+using System.Threading.Channels;
 
 public class MainParserErrorListener : IAntlrErrorListener<IToken>
 {
@@ -18,14 +16,11 @@ public class MainParserErrorListener : IAntlrErrorListener<IToken>
         string msg,
         RecognitionException e)
     {
-        var codeLine = state.codeLines[line-1];
-
         // Handle syntax errors here
-#if DEBUG
-        Console.Error.WriteLine($"Syntax error at line {codeLine.LineNumber}, column {charPositionInLine}: {offendingSymbol.Text} msg: {msg}");
-#endif
+        Console.Error.WriteLine($"Syntax error at line {line}, column {charPositionInLine}: {offendingSymbol.Text} msg: {msg}");
+        
         // Optionally, throw an exception to stop parsing
-        throw new ParseException($"Syntax error at line {codeLine.LineNumber}:{charPositionInLine} - {msg}", codeLine);
+        throw new InvalidOperationException($"Syntax error at line {line}:{charPositionInLine} - {msg}", e);
     }
 }
 
@@ -37,9 +32,26 @@ public abstract class MainParserBase : Antlr4.Runtime.Parser
 {
     private readonly Stack<string> _tagNames = new Stack<string>();
     private uint _derefDepth = 0;
+
+    public static HashSet<int> flowKeywords = new HashSet<int> {
+        MainLexer.If,
+        MainLexer.Try,
+        MainLexer.Loop,
+        MainLexer.LoopFiles,
+        MainLexer.LoopParse,
+        MainLexer.LoopRead,
+        MainLexer.LoopReg,
+        MainLexer.For,
+        MainLexer.In,
+        MainLexer.Switch,
+        MainLexer.While,
+        MainLexer.Until
+    };
+    public ITokenStream _input;
     public MainParserBase(ITokenStream input)
         : base(input)
     {
+        _input = input;
     }
 
         public void EnableProfiling()
@@ -88,11 +100,32 @@ public abstract class MainParserBase : Antlr4.Runtime.Parser
         return ((ITokenStream)this.InputStream).LT(1).Text.Equals(str, StringComparison.InvariantCultureIgnoreCase);
     }
 
-    protected bool notEOL()
-    {
-        return !EOLAhead();
+    protected bool second(int token) {
+        return _input.LA(2) == token;
     }
 
+    protected int nextVisible() {
+        int i = 0, token;
+        do {
+            token = InputStream.LA(++i);
+        } while ((token == WS || token == EOL) && (token != Eof));
+        return token;
+    }
+
+    protected bool noBlockAhead() {
+        int i = 0, token;
+        do {
+            token = InputStream.LA(++i);
+            if (token == Eof) return true;
+        } while (token != EOL);
+        return InputStream.LA(++i) != OpenBrace;
+    }
+
+    protected bool isValidExpressionStatement(ParserRuleContext ctx) {
+        return !(ctx is ConcatenateExpressionContext || ctx is PrimaryExpressionContext);
+    }
+
+/*
     protected bool isEOS() {
         for (int i = CurrentToken.TokenIndex + 1; i < InputStream.Size; i++)
         {
@@ -113,26 +146,13 @@ public abstract class MainParserBase : Antlr4.Runtime.Parser
         }
         return true;
     }
+    */
 
     protected bool isBOS() {
-        for (int i = CurrentToken.TokenIndex - 1; i >= 0; i--)
-        {
-            var prevToken = TokenStream.Get(i);
-            if (prevToken.Channel != Lexer.Hidden) {
-                if (prevToken.Type == OpenBrace || prevToken.Type == EOL)
-                    return true;
-                return false;
-            }
-
-            if (prevToken.Type == MainLexer.EOL)
-                return true;
-
-            if (prevToken.Type == MultiLineComment) {
-                if (prevToken.Text.Contains("\r") || prevToken.Text.Contains("\n"))
-                    return true;
-            }
-        }
-        return true;
+        if (CurrentToken.TokenIndex == 0)
+            return true;
+        var prevToken = TokenStream.LA(-1);
+        return prevToken == OpenBrace || prevToken == EOL;
     }
 
     protected bool isPrevWS() {
@@ -145,7 +165,6 @@ public abstract class MainParserBase : Antlr4.Runtime.Parser
     protected bool isPrevWSDebug() {
         if (CurrentToken.TokenIndex < 1) return true;
         IToken prev = ((ITokenStream)InputStream).Get(CurrentToken.TokenIndex-1);
-        Debug.WriteLine($"isPrevWSDebug: current token: {CurrentToken.Text}, prev: {prev?.Text}, result: {prev.Channel == Lexer.Hidden}");
         return prev.Channel == Lexer.Hidden;
     }
 
@@ -193,16 +212,19 @@ public abstract class MainParserBase : Antlr4.Runtime.Parser
         return ((ITokenStream)this.InputStream).LT(1).Type == CloseBrace;
     }
 
-    protected bool noWhitespaceAhead()
-    {
-        if (CurrentToken.TokenIndex < 1) return true;
-        if (CurrentToken.TokenIndex == (this.InputStream.Size - 1))
-            return false;
-        IToken ahead = ((ITokenStream)this.InputStream).Get(CurrentToken.TokenIndex+1);
+    protected bool isFuncExprAllowed() {
+        if (_input.Index == 0) return true;
+        return !flowKeywords.Contains(_input.LA(-1));
+    }
 
-        if (ahead.Channel == Lexer.Hidden && (ahead.Type == EOL || ahead.Type == WhiteSpaces))
+    protected bool isFunctionDeclarationExpressionAllowed() {
+        if (isBOS())
+            return true;
+        var prevTokenType = ((ITokenStream)this.InputStream).LT(-1)?.Type;
+        if (prevTokenType == null)
+            return true;
+        if (flowKeywords.Contains(prevTokenType ?? -1))
             return false;
-
         return true;
     }
 
@@ -215,7 +237,7 @@ public abstract class MainParserBase : Antlr4.Runtime.Parser
         if (behind.Channel == Lexer.Hidden) {
             if (behind.Type == EOL)
                 return false;
-            if (behind.Type == WhiteSpaces && CurrentToken.TokenIndex > 1) {
+            if (behind.Type == WS && CurrentToken.TokenIndex > 1) {
                 var possibleIndexEosToken = CurrentToken.TokenIndex - 2;
                 if (possibleIndexEosToken < 1) return false;
                 var beforeWS = ((ITokenStream)this.InputStream).Get(possibleIndexEosToken);
@@ -226,48 +248,6 @@ public abstract class MainParserBase : Antlr4.Runtime.Parser
         }
 
         return false;
-    }
-
-    /// <summary>
-    /// Returns true if on the current index of the parser's
-    /// token stream a token exists on the Hidden channel which
-    /// either is a line terminator, or is a multi line comment that
-    /// contains a line terminator.
-    /// </summary>
-    protected bool EOLAhead()
-    {
-        // Get the token ahead of the current index.
-        int possibleIndexEosToken = CurrentToken.TokenIndex - 1;
-        if (possibleIndexEosToken < 0) return false;
-        IToken ahead = ((ITokenStream)this.InputStream).Get(possibleIndexEosToken);
-
-        if (ahead.Channel != Lexer.Hidden)
-        {
-            // We're only interested in tokens on the Hidden channel.
-            return false;
-        }
-
-        if (ahead.Type == EOL)
-        {
-            // There is definitely a line terminator ahead.
-            return true;
-        }
-
-        if (ahead.Type == WhiteSpaces)
-        {
-            // Get the token ahead of the current whitespaces.
-            possibleIndexEosToken = CurrentToken.TokenIndex - 2;
-            if (possibleIndexEosToken < 0) return false;
-            ahead = ((ITokenStream)this.InputStream).Get(possibleIndexEosToken);
-        }
-
-        // Get the token's text and type.
-        string text = ahead.Text;
-        int type = ahead.Type;
-
-        // Check if the token is, or contains a line terminator.
-        return (type == MultiLineComment && (text.Contains("\r") || text.Contains("\n"))) ||
-                (type == EOL);
     }
     protected bool validateDeref()
     {
@@ -288,6 +268,16 @@ public abstract class MainParserBase : Antlr4.Runtime.Parser
 
     protected void endDeref() {
         _derefDepth--;
+    }
+
+    protected bool isParenthesizedExpressionAllowed() {
+        if (CurrentToken.TokenIndex < 1) return true;
+        var prevToken = TokenStream.Get(CurrentToken.TokenIndex - 1);
+        return prevToken.Channel != TokenConstants.DefaultChannel || MainLexerBase.lineContinuationOperators.Contains(prevToken.Type);
+    }
+
+    protected bool isFunctionExpressionAllowed() {
+        return !flowKeywords.Contains(TokenStream.LA(-1));
     }
 
     protected bool hasNoLinebreaks(ParserRuleContext context)

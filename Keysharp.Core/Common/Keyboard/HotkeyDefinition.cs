@@ -606,6 +606,15 @@ namespace Keysharp.Core.Common.Keyboard
 			if (Keysharp.Core.Keyboard.blockMouseMove || (HotstringManager.hsResetUponMouseClick && HotstringManager.enabledCount != 0))
 				whichHookNeeded |= HookType.Mouse;
 
+			//Anything not a mouse or joystick should start the keyboard hook because even hotkeys
+			//which are received in MainWindow.WndProc() need to be forwarded on to the hook thread.
+			foreach (var hk in shk)
+				if (hk.type < HotkeyTypeEnum.MouseHook)
+				{
+					whichHookNeeded |= HookType.Keyboard;
+					break;
+				}
+
 			// Install or deinstall either or both hooks, if necessary, based on these param values.
 			ht.ChangeHookState(shk, whichHookNeeded, whichHookAlways);
 
@@ -1503,7 +1512,7 @@ namespace Keysharp.Core.Common.Keyboard
 			var ht = Script.HookThread;
 			var kbdMouseSender = ht.kbdMsSender;//This should always be non-null if any hotkeys/strings are present.
 			// Previous steps should make it unnecessary to call omit_leading_whitespace(aText).
-			var keynameEndIndex = text.FindIdentifierEnd();
+			var keynameEndIndex = text.FindHotkeyIdentifierEnd();
 
 			if (keynameEndIndex == 0 && text.Length > 0) // Any single character except '\0' can be a key name.
 				keynameEndIndex = 1;

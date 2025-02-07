@@ -308,7 +308,7 @@
 
 		public new (Type, object) super => (typeof(Gui), this);
 
-		public Gui(params object[] args) => _ = __New(args);
+		public Gui(params object[] args) : base(args) { }
 
 		internal Gui(object obj0 = null, object obj1 = null, object obj2 = null, object obj3 = null)//The last parameter is hidden and is only for internal use for when we wrap the main window in a Gui object.
 		{
@@ -330,7 +330,7 @@
 
 		public IEnumerator<(object, object)> __Enum(object count) => new MapKeyValueIterator(controls, count.Ai());
 
-		public object __New(params object[] obj)
+		public override object __New(params object[] obj)
 		{
 			if (form == null)//Don't allow derived classes to init twice.
 			{

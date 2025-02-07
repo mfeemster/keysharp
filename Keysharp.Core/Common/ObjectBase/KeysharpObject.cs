@@ -35,16 +35,22 @@ namespace Keysharp.Core.Common.ObjectBase
         public KeysharpObject(params object[] args)
 		{
 			var t = GetType();
-            // Skip Map and OwnPropsMap because SetPropertyValue will cause recursive stack overflow
+			// Skip Map and OwnPropsMap because SetPropertyValue will cause recursive stack overflow
 			// (if the property doesn't exist then a new Map is created which calls this function again)
-            if (Script.Variables.Prototypes == null || SkipConstructorLogic) // || !GetType().Namespace.Equals("Keysharp.CompiledMain", StringComparison.InvariantCultureIgnoreCase))
+			if (Script.Variables.Prototypes == null || SkipConstructorLogic
+                // Hack way to check that Prototypes/Statics are initialized
+                || Script.Variables.Statics.Count < 20)
+            {
+				__New(args);
 				return;
-			// Hack way to check that Prototypes/Statics are initialized
-            if (Script.Variables.Statics.Count < 20)
-                return;
+			}
+
             Script.Variables.Statics.TryGetValue(t, out KeysharpObject value);
 			if (value == null)
-				return;
+			{
+				__New(args);
+                return;
+			}
             Script.SetPropertyValue(this, "base", Script.GetPropertyValue(value, "prototype"));
             Script.Invoke(this, "__Init");
             Script.Invoke(this, "__New", args);
@@ -55,7 +61,7 @@ namespace Keysharp.Core.Common.ObjectBase
             SkipConstructorLogic = skipLogic;
         }
 
-		public object __New(params object[] args) => "";
+		public virtual object __New(params object[] args) => "";
 
         public new (Type, object) super => (typeof(Any), this);
 

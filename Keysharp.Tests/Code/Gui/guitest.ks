@@ -1809,13 +1809,16 @@
 		boundText := "Bind 1 to first param, call (3), shows 1, 3"
 		fn.Call(3) ; Shows "1, 3"
 
-		fn := RealFn.Bind( , 1)  ; Bind second parameter only
-		boundText := "Bind 1 to second param, call (2), shows 2, 1"
-		fn(2)      ; Shows "2, 1"
-		boundText := "Bind 1 to second param, call (3), shows 3, 1"
-		fn.Call(3) ; Shows "3, 1"
-		;fn(, 4)    ; Error: 'a' was omitted
-	}
+	fn := RealFn.Bind( , 1)  ; Bind second parameter only
+	boundText := "Bind 1 to second param, call (2), shows 2, 1"
+	fn(2)      ; Shows "2, 1"
+	boundText := "Bind 1 to second param, call (3), shows 3, 1"
+	fn.Call(3) ; Shows "3, 1"
+	boundText := "Chained bind, call (), shows 1, 2"
+	fn := RealFn.Bind(1).Bind(2)
+	fn.Call()
+	;fn(, 4)    ; Error: 'a' was omitted
+}
 
 	StupidTrickTwo() {
 		Hotkey("RCtrl & RShift", "AltTab")

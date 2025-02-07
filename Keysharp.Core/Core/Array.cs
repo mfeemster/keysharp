@@ -114,7 +114,7 @@
 		/// Initializes a new instance of the <see cref="Array"/> class.
 		/// See <see cref="__New(object[])"/>.
 		/// </summary>
-		public Array(params object[] args) => _ = __New(args);
+		public Array(params object[] args) : base(args) { }
 
 		/// <summary>
 		/// Gets the enumerator object which returns a position,value tuple for each element
@@ -137,7 +137,7 @@
 		///     <see cref="ICollection"/>: adds each element to the underlying list.
 		/// </param>
 		/// <returns>Empty string, unused.</returns>
-		public object __New(params object[] args)
+		public override object __New(params object[] args)
 		{
 			array = new List<object>(capacity);
 

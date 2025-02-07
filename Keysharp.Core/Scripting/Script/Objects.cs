@@ -1,5 +1,4 @@
 using System.Reflection;
-using Keysharp.Core.Scripting.Parser.Antlr;
 
 namespace Keysharp.Scripting
 {
@@ -20,9 +19,9 @@ namespace Keysharp.Scripting
             foreach (var method in methods)
             {
                 var methodName = method.Name;
-                if (!isBuiltin && methodName.StartsWith(Helper.Keywords.ClassStaticPrefix))
+                if (!isBuiltin && methodName.StartsWith(Keywords.ClassStaticPrefix))
                 {
-					methodName = methodName.Substring(Helper.Keywords.ClassStaticPrefix.Length);
+					methodName = methodName.Substring(Keywords.ClassStaticPrefix.Length);
                     staticInst.DefineProp(methodName, Collections.MapWithoutBase("call", new FuncObj(method)));
 					continue;
                 }
@@ -44,9 +43,9 @@ namespace Keysharp.Scripting
             {
                 var propertyName = prop.Name;
 				OwnPropsMap propertyMap = null;
-                if (!isBuiltin && propertyName.StartsWith(Helper.Keywords.ClassStaticPrefix))
+                if (!isBuiltin && propertyName.StartsWith(Keywords.ClassStaticPrefix))
 				{
-                    propertyName = propertyName.Substring(Helper.Keywords.ClassStaticPrefix.Length);
+                    propertyName = propertyName.Substring(Keywords.ClassStaticPrefix.Length);
                     propertyMap = staticInst.op.TryGetValue(propertyName, out OwnPropsMap staticPropDesc) ? staticPropDesc : new OwnPropsMap(null, Collections.Map());
 
                     if (prop.GetMethod != null)

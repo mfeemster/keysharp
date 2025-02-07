@@ -1,4 +1,6 @@
 using static Keysharp.Scripting.Parser;
+using Antlr4.Runtime;
+using System.Linq;
 
 namespace Keysharp.Scripting
 {
@@ -40,9 +42,402 @@ namespace Keysharp.Scripting
 		private CompilerHelper tempCompiler = null;
 		internal static int NextHotIfCount => ++hotifcount;
 		internal List<(string, bool)> PreloadedDlls { get; } = [];
+		
 		internal eScriptInstance SingleInstance { get; private set; } = eScriptInstance.Prompt;
 
 		internal PreReader(Parser p) => parser = p;
+
+		internal List<IToken> ReadScriptTokens(TextReader source, string name)
+		{
+			parser.codeTokens.AddRange(ReadTokens(source, name));
+			return parser.codeTokens;
+		}
+
+		internal List<IToken> ReadTokens(TextReader source, string name)
+		{
+            AntlrInputStream inputStream = new AntlrInputStream(source.ReadToEnd() + "\n");
+			inputStream.name = name;
+            MainLexer preprocessorLexer = new MainLexer(inputStream);
+
+            List<IToken> codeTokens = new List<IToken>();
+            List<IToken> commentTokens = new List<IToken>();
+
+            var tokens = preprocessorLexer.GetAllTokens();
+            var directiveTokens = new List<IToken>();
+            var directiveTokenSource = new ListTokenSource(directiveTokens);
+            var directiveTokenStream = new CommonTokenStream(directiveTokenSource, MainLexer.DIRECTIVE);
+            PreprocessorParser preprocessorParser = new PreprocessorParser(directiveTokenStream);
+
+            int index = 0;
+            bool compiliedTokens = true;
+            int parenthesisDepth = 0;
+            int enclosableDepth = 0;
+            int funcStatPossible = 0;
+            while (index < tokens.Count && tokens[index].Type == MainLexer.WS)
+                index++;
+            while (index < tokens.Count)
+            {
+                var token = tokens[index];
+                if (token.Type == MainLexer.Hashtag)
+                {
+                    directiveTokens.Clear();
+                    int directiveTokenIndex = index + 1;
+                    // Collect all preprocessor directive tokens.
+                    while (directiveTokenIndex < tokens.Count &&
+                        tokens[directiveTokenIndex].Type != MainLexer.Eof &&
+                        tokens[directiveTokenIndex].Type != MainLexer.DirectiveNewline &&
+                        tokens[directiveTokenIndex].Type != MainLexer.Hashtag)
+                    {
+                        if (tokens[directiveTokenIndex].Channel != Lexer.Hidden)
+                        {
+                            directiveTokens.Add(tokens[directiveTokenIndex]);
+                        }
+                        directiveTokenIndex++;
+                    }
+
+                    directiveTokenSource = new ListTokenSource(directiveTokens);
+                    directiveTokenStream = new CommonTokenStream(directiveTokenSource, MainLexer.DIRECTIVE);
+                    preprocessorParser.TokenStream = directiveTokenStream;
+
+                    //preprocessorParser.SetInputStream(directiveTokenStream);
+                    preprocessorParser.Reset();
+
+                    // Parse condition in preprocessor directive (based on CSharpPreprocessorParser.g4 grammar).
+                    PreprocessorParser.Preprocessor_directiveContext directive = preprocessorParser.preprocessor_directive();
+                    // if true than next code is valid and not ignored.
+                    compiliedTokens = directive.value;
+                    String directiveStr = tokens[index + 1].Text.Trim();
+                    if ("line".Equals(directiveStr) || "error".Equals(directiveStr) || "warning".Equals(directiveStr) || "define".Equals(directiveStr) || "endregion".Equals(directiveStr) || "endif".Equals(directiveStr) || "pragma".Equals(directiveStr))
+                    {
+                        compiliedTokens = true;
+                    }
+                    String conditionalSymbol = null;
+                    if ("define".Equals(tokens[index + 1].Text))
+                    {
+                        // add to the conditional symbols 
+                        conditionalSymbol = tokens[index + 2].Text;
+                        preprocessorParser.ConditionalSymbols.Add(conditionalSymbol);
+                    }
+                    if ("undef".Equals(tokens[index + 1].Text))
+                    {
+                        conditionalSymbol = tokens[index + 2].Text;
+                        preprocessorParser.ConditionalSymbols.Remove(conditionalSymbol);
+                    }
+                    index = directiveTokenIndex - 1;
+                    // if true than next code is valid and not ignored.
+                    compiliedTokens = directive.value;
+                    index = directiveTokenIndex - 1;
+                }
+                else if (token.Channel == Lexer.DefaultTokenChannel && compiliedTokens)
+                {
+                    int i;
+                    switch (token.Type)
+                    {
+                        /*
+                        case MainLexer.OpenBrace:
+                            if (parenthesisDepth != 0)
+                                break;
+                            //PopWhitespaces(codeTokens.Count);
+                            i = codeTokens.Count - 1;
+                            if (i < 0 || codeTokens[i].Type != MainLexer.EOL)
+                                break;
+                            if (--i < 0 || codeTokens[i].Type != MainLexer.CloseParen)
+                                break;
+                            int parenDepth = 0;
+                            while (--i > -1) {
+                                var codeToken = codeTokens[i];
+                                if (codeToken.Type == MainLexer.CloseParen)
+                                    parenDepth++;
+                                if (codeToken.Type == MainLexer.OpenParen) {
+                                    if (parenDepth == 0)
+                                        break;
+                                    parenDepth--;
+                                }
+                            } 
+                            if (i > 0) {
+                                char lastChar = codeTokens[i - 1].Text[^1];
+                                bool matches = char.IsLetter(lastChar) ||    // Matches \p{L} (any letter)
+                                    lastChar == '_' ||            // Matches _ (underscore)
+                                    char.GetUnicodeCategory(lastChar) == System.Globalization.UnicodeCategory.NonSpacingMark || // Matches \p{Mn}
+                                    char.IsDigit(lastChar) ||      // Matches \p{Nd} (any digit)
+                                    lastChar == '%' ||             // Matches %
+                                    lastChar == ')' ||             // Matches )
+                                    lastChar == ']';               // Matches ]
+                                if (matches)
+                                    codeTokens.RemoveAt(codeTokens.Count - 1);
+                            }
+                            break;
+                            */
+                        case MainLexer.OpenBrace:
+                            if (enclosableDepth == 0)
+                                funcStatPossible = -1;
+							if (codeTokens.Count > 1 && codeTokens[^1].Type == MainLexer.EOL && codeTokens[^2].Type == MainLexer.CloseParen)
+								codeTokens.RemoveAt(codeTokens.Count - 1);
+                            break;
+                        case MainLexer.OpenBracket:
+                        case MainLexer.DerefStart:
+                            enclosableDepth++;
+                            break;
+                        case MainLexer.CloseBracket:
+                        case MainLexer.DerefEnd:
+                            enclosableDepth--;
+                            break;
+                        case MainLexer.OpenParen:
+                            parenthesisDepth++;
+                            enclosableDepth++;
+                            if (codeTokens.Count != 0 && enclosableDepth == 1)
+                            {
+                                switch (codeTokens[^1].Type)
+                                {
+                                    case MainLexer.EOL:
+                                    case MainLexer.WS:
+                                        break;
+                                    default:
+                                        if (codeTokens[^1].Channel == Lexer.DefaultTokenChannel)
+                                        {
+                                            funcStatPossible = -1;
+                                        }
+                                        break;
+                                }
+                            }
+                            break;
+                        case MainLexer.CloseParen:
+                            parenthesisDepth--;
+                            enclosableDepth--;
+                            PopWhitespaces(codeTokens.Count, true);
+                            break;
+                        case MainLexer.EOL:
+                        case MainLexer.Comma:
+						case MainLexer.Dot:
+                        case MainLexer.Assign:
+                        case MainLexer.Divide:
+                        case MainLexer.IntegerDivide:
+                        case MainLexer.NullCoalesce:
+                        case MainLexer.RightShiftArithmetic:
+                        case MainLexer.LeftShiftArithmetic:
+                        case MainLexer.RightShiftLogical:
+                        case MainLexer.Plus:
+                        case MainLexer.Minus:
+                        case MainLexer.LessThan:
+                        case MainLexer.MoreThan:
+                        case MainLexer.LessThanEquals:
+                        case MainLexer.GreaterThanEquals:
+                        case MainLexer.Equals_:
+                        case MainLexer.NotEquals:
+                        case MainLexer.IdentityEquals:
+                        case MainLexer.IdentityNotEquals:
+                        case MainLexer.RegExMatch:
+                        case MainLexer.BitXOr:
+                        case MainLexer.BitOr:
+                        case MainLexer.And:
+                        case MainLexer.Or:
+                        case MainLexer.VerbalAnd:
+                        case MainLexer.VerbalOr:
+                        case MainLexer.MultiplyAssign:
+                        case MainLexer.DivideAssign:
+                        case MainLexer.ModulusAssign:
+                        case MainLexer.PlusAssign:
+                        case MainLexer.MinusAssign:
+                        case MainLexer.LeftShiftArithmeticAssign:
+                        case MainLexer.RightShiftArithmeticAssign:
+                        case MainLexer.RightShiftLogicalAssign:
+                        case MainLexer.IntegerDivideAssign:
+                        case MainLexer.ConcatenateAssign:
+                        case MainLexer.BitAndAssign:
+                        case MainLexer.BitXorAssign:
+                        case MainLexer.BitOrAssign:
+                        case MainLexer.PowerAssign:
+                        case MainLexer.NullishCoalescingAssign:
+                        case MainLexer.QuestionMarkDot:
+                        case MainLexer.Arrow:
+                        case MainLexer.Instanceof:
+                        case MainLexer.Is:
+                        case MainLexer.In:
+                        case MainLexer.Contains:
+                            if (enclosableDepth == 0)
+                                funcStatPossible = -1;
+                            PopWhitespaces(codeTokens.Count, true);
+                            i = index;
+                            while (++i < tokens.Count)
+                            {
+                                if (tokens[i].Channel == MainLexer.DIRECTIVE)
+                                    break;
+                                if (tokens[i].Channel != Lexer.DefaultTokenChannel)
+                                    index++;
+                                else if (tokens[i].Type == MainLexer.WS || tokens[i].Type == MainLexer.EOL)
+                                    index++;
+                                else
+                                    break;
+                            }
+                            break;
+                        case MainLexer.Try:
+                        case MainLexer.If:
+                        case MainLexer.Catch:
+                        case MainLexer.Finally:
+                        case MainLexer.As:
+                        case MainLexer.Loop:
+                        case MainLexer.LoopFiles:
+                        case MainLexer.LoopParse:
+                        case MainLexer.LoopRead:
+                        case MainLexer.LoopReg:
+                        case MainLexer.For:
+                        case MainLexer.Switch:
+                        case MainLexer.Case:
+                        case MainLexer.Default:
+                        case MainLexer.While:
+                        case MainLexer.Until:
+                        case MainLexer.Else:
+                        case MainLexer.Goto:
+                        case MainLexer.Throw:
+                        case MainLexer.Async:
+                        case MainLexer.Static:
+						case MainLexer.Not:
+                        case MainLexer.VerbalNot:
+                            funcStatPossible = -1;
+                            i = index;
+                            while (++i < tokens.Count)
+                            {
+                                if (tokens[i].Channel == MainLexer.DIRECTIVE)
+                                    break;
+                                if (tokens[i].Channel != Lexer.DefaultTokenChannel)
+                                    index++;
+                                else if (tokens[i].Type == MainLexer.WS || (tokens[i].Type == MainLexer.EOL && (token.Type == MainLexer.Not || token.Type == MainLexer.VerbalNot)))
+                                    index++;
+                                else
+                                    break;
+                            }
+                            break;
+                        case MainLexer.CloseBrace:
+                            i = PopWhitespaces(codeTokens.Count);
+                            var eolToken = new CommonToken(MainLexer.EOL)
+                            {
+                                Line = token.Line,
+                                Column = token.Column
+                            };
+                            if (i >= 0 && codeTokens[i].Type != MainLexer.EOL)
+                            {
+                                codeTokens.Add(eolToken);
+                            }
+                            codeTokens.Add(token);
+                            i = index;
+                            bool eolPresent = false;
+                            while (++i < tokens.Count)
+                            {
+                                if (tokens[i].Channel == MainLexer.DIRECTIVE)
+                                    break;
+                                if (tokens[i].Channel != Lexer.DefaultTokenChannel)
+                                    continue;
+                                if (tokens[i].Type == MainLexer.WS)
+                                    index++;
+                                else if (tokens[i].Type == MainLexer.EOL)
+                                {
+                                    eolPresent = true;
+                                    break;
+                                }
+                                else
+                                    break;
+                            }
+                            if (!eolPresent)
+                                codeTokens.Add(eolToken);
+                            goto SkipAdd;
+                        case MainLexer.WS:
+                            break;
+                        default:
+                            if (enclosableDepth == 0 && !(token.Type == MainLexer.Identifier || token.Type == MainLexer.Dot))
+                                funcStatPossible = -1;
+                            break;
+                            //case MainLexer.MultilineStringLiteral:
+                            // TODO!!!
+                            //var result = MultilineString(str, lineNumber, name);
+                            //result = result.Replace("\n", "`n").Replace("\r", "`r");
+                            //break;
+                    }
+                    if (enclosableDepth == 0
+                            && funcStatPossible != -1
+                            && (funcStatPossible != (codeTokens.Count + 1))
+                            && (token.Type == MainLexer.WS || token.Type == MainLexer.EOL))
+                    {
+                        i = index;
+
+                        if (token.Type == MainLexer.WS)
+                        {
+                            funcStatPossible = -1;
+                            while (++i < tokens.Count)
+                            {
+                                var nextToken = tokens[i];
+                                if (nextToken.Channel == MainLexer.DIRECTIVE)
+                                {
+                                    goto AddToken;
+                                }
+                                else if (nextToken.Channel != Lexer.DefaultTokenChannel)
+                                    continue;
+                                else if (nextToken.Type == MainLexer.EOL)
+                                {
+                                    break;
+                                }
+                                else if ((MainLexer.lineContinuationOperators.Contains(nextToken.Type) || nextToken.Type == MainLexer.Colon) && nextToken.Type != MainLexer.Comma && nextToken.Type != MainLexer.Minus)
+                                {
+                                    if (!(nextToken.Type == MainLexer.BitAnd && tokens[++i].Type != MainLexer.WS && tokens[i].Channel == Lexer.DefaultTokenChannel))
+                                        goto AddToken;
+                                }
+                                break;
+                            }
+                            token = new CommonToken(MainLexer.StartFunctionStatement)
+                            {
+                                Line = token.Line,
+                                Column = token.Column
+                            };
+
+                        }
+                        else
+                        {
+                            var startFuncToken = new CommonToken(MainLexer.StartFunctionStatement)
+                            {
+                                Line = token.Line,
+                                Column = token.Column
+                            };
+                            codeTokens.Add(startFuncToken);
+                            funcStatPossible = codeTokens.Count + 1;
+                        }
+                    }
+                AddToken:
+                    codeTokens.Add(token); // Collect code tokens.
+
+                    if (enclosableDepth == 0 && (token.Type == MainLexer.EOL || (token.Type == MainLexer.Try && (codeTokens.Count == 1 || codeTokens[^2].Type == MainLexer.EOL))))
+                        funcStatPossible = codeTokens.Count + 1;
+                }
+            SkipAdd:
+                index++;
+            }
+
+            for (int i = 0; i < codeTokens.Count; i++)
+            {
+                if (codeTokens[i].Type == MainLexer.WS || codeTokens[i].Type == MainLexer.EOL)
+                {
+                    codeTokens.RemoveAt(i);
+                    i--;
+                }
+                else
+                    break;
+            }
+
+            int PopWhitespaces(int i, bool linebreaks = false)
+            {
+                while (--i > 0 && codeTokens.Count > 0)
+                {
+                    if (codeTokens[i].Channel != Lexer.DefaultTokenChannel)
+                        continue;
+                    if (codeTokens[i].Type == MainLexer.WS || (linebreaks && codeTokens[i].Type == MainLexer.EOL))
+                        codeTokens.RemoveAt(codeTokens.Count - 1);
+                    else
+                        break;
+                }
+                return i;
+            }
+
+            return codeTokens;
+
+        }
 
 		internal List<CodeLine> Read(TextReader source, string name)
 		{
@@ -126,17 +521,17 @@ namespace Keysharp.Scripting
 			while ((code = source.ReadLine()) != null)
 			{
 				lineNumber++;
+				var trimmedStartSpan = code.AsSpan().TrimStart();
 
-				if (code.Length == 0)
+				if (trimmedStartSpan.Length == 0)
+					continue;
+
+				if (trimmedStartSpan[0] == ';')
 					continue;
 
 				var isHotkeyString = IsHotkeyLabel(code) || IsHotstringLabel(code);
-
-				if (code[0] == ';' && !isHotkeyString)//Hotkey/string could have started with a ;
-					continue;
-
 				var commentIgnore = false;
-				var noCommentCode = isHotkeyString && code[0] == ';' ? ";" + StripComment(code.Substring(1)) : StripComment(code);
+				var noCommentCode = StripComment(code);
 				var span = noCommentCode.AsSpan().Trim(Spaces);
 
 				if (span.Length == 0)
@@ -295,11 +690,6 @@ namespace Keysharp.Scripting
 
 								switch (upper)
 								{
-									case "INCLUDE":
-										includeOnce = true;
-
-									goto case "INCLUDEAGAIN";
-
 									case "DLLLOAD":
 									{
 										var silent = false;
@@ -318,6 +708,69 @@ namespace Keysharp.Scripting
 										//The generated code for this is handled in Parser.Parse() because it must come before the InitGlobalVars();
 									}
 									break;
+
+									case "HOTIF":
+                                        list.Add(new CodeLine(name, lineNumber, span.ToString()));
+										/*
+                                        if (parts.Length > 1 && !string.IsNullOrEmpty(parts[1]))
+										{
+											var hotiffuncname = $"_ks_HotIf_{NextHotIfCount}";
+											extralines.Add(new CodeLine(name, lineNumber, $"{hotiffuncname}(thehotkey)"));
+											extralines.Add(new CodeLine(name, lineNumber, "{"));
+											extralines.Add(new CodeLine(name, lineNumber, $"return {parts[1]}"));
+											extralines.Add(new CodeLine(name, lineNumber, "}"));
+											var tempcl = new CodeLine(name, lineNumber, "HotIf(FuncObj(\"" + hotiffuncname + "\"))");//Can't use interpolated string here because the AStyle formatter misinterprets it.
+
+											if (lineNumber < list.Count)
+											{
+												list.Insert(lineNumber, tempcl);
+											}
+											else
+											{
+												list.Add(tempcl);
+											}
+										}
+										else
+											list.Add(new CodeLine(name, lineNumber, "HotIf(\"\")"));
+										*/
+
+										break;
+
+									case "HOTSTRING":
+									{
+										if (sub.Length > 1)
+										{
+											var splits = sub[1].Split(' ', 2);
+
+											if (splits.Length > 0)
+											{
+												p1 = splits[0].ToUpperInvariant();
+
+												switch (p1.ToUpperInvariant())
+												{
+													case "NOMOUSE":
+														list.Add(new CodeLine(name, lineNumber, span.ToString()));
+														break;
+
+													case "ENDCHARS":
+														list.Add(new CodeLine(name, lineNumber, span.ToString()));
+														break;
+
+													default:
+                                                        list.Add(new CodeLine(name, lineNumber, span.ToString()));
+                                                        //list.Add(new CodeLine(name, lineNumber, "HotstringOptions(\"" + sub[1] + "\")"));//Can't use interpolated string here because the AStyle formatter misinterprets it.
+                                                        next = false;
+														break;
+												}
+											}
+										}
+									}
+									break;
+
+									case "INCLUDE":
+										includeOnce = true;
+
+									goto case "INCLUDEAGAIN";
 
 									case "INCLUDEAGAIN":
 									{
@@ -424,6 +877,14 @@ namespace Keysharp.Scripting
 									}
 									break;
 
+									case "NODYNAMICVARS":
+										parser.DynamicVars = false;
+										break;
+
+									case "PERSISTENT":
+										parser.Persistent = true;
+										break;
+
 									case "REQUIRES":
 									{
 										var reqAhk = p1.StartsWith("AutoHotkey");
@@ -459,46 +920,6 @@ namespace Keysharp.Scripting
 									}
 									break;
 
-									case "HOTIF":
-                                        list.Add(new CodeLine(name, lineNumber, span.ToString()));
-
-										/*
-                                        if (parts.Length > 1 && !string.IsNullOrEmpty(parts[1]))
-										{
-											var hotiffuncname = $"_ks_HotIf_{NextHotIfCount}";
-											extralines.Add(new CodeLine(name, lineNumber, $"{hotiffuncname}(thehotkey)"));
-											extralines.Add(new CodeLine(name, lineNumber, "{"));
-											extralines.Add(new CodeLine(name, lineNumber, $"return {parts[1]}"));
-											extralines.Add(new CodeLine(name, lineNumber, "}"));
-											var tempcl = new CodeLine(name, lineNumber, "HotIf(FuncObj(\"" + hotiffuncname + "\"))");//Can't use interpolated string here because the AStyle formatter misinterprets it.
-
-											if (lineNumber < list.Count)
-											{
-												list.Insert(lineNumber, tempcl);
-											}
-											else
-											{
-												list.Add(tempcl);
-											}
-										}
-										else
-											list.Add(new CodeLine(name, lineNumber, "HotIf(\"\")"));
-										*/
-
-										break;
-
-									case "NODYNAMICVARS":
-										parser.DynamicVars = false;
-										break;
-
-									//case "NOENV":
-									//  NoEnv = true;
-									//  break;
-
-									case "PERSISTENT":
-										parser.Persistent = true;
-										break;
-
 									case "SINGLEINSTANCE":
 									{
 										switch (p1.ToUpperInvariant())
@@ -522,37 +943,6 @@ namespace Keysharp.Scripting
 											default:
 												SingleInstance = eScriptInstance.Force;
 												break;
-										}
-									}
-									break;
-
-									case "HOTSTRING":
-									{
-										if (sub.Length > 1)
-										{
-											var splits = sub[1].Split(' ', 2);
-
-											if (splits.Length > 0)
-											{
-												p1 = splits[0].ToUpperInvariant();
-
-												switch (p1.ToUpperInvariant())
-												{
-													case "NOMOUSE":
-														list.Add(new CodeLine(name, lineNumber, span.ToString()));
-														break;
-
-													case "ENDCHARS":
-														list.Add(new CodeLine(name, lineNumber, span.ToString()));
-														break;
-
-													default:
-                                                        list.Add(new CodeLine(name, lineNumber, span.ToString()));
-                                                        //list.Add(new CodeLine(name, lineNumber, "HotstringOptions(\"" + sub[1] + "\")"));//Can't use interpolated string here because the AStyle formatter misinterprets it.
-														next = false;
-														break;
-												}
-											}
 										}
 									}
 									break;
@@ -581,9 +971,8 @@ namespace Keysharp.Scripting
 									case "ERRORSTDOUT":
 									case "USEHOOK":
 									case "MAXTHREADS":
-
-									//case "MAXTHREADSBUFFER":
-									//case "MAXTHREADSPERHOTKEY":
+									case "MAXTHREADSBUFFER":
+									case "MAXTHREADSPERHOTKEY":
 									case "NOTRAYICON":
 									case "SUSPENDEXEMPT":
 									case "WINACTIVATEFORCE":

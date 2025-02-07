@@ -58,11 +58,21 @@
 		internal const string DirvIncludeAgain = "includeagain";
 		internal const char Divide = '/';
 
-		//internal const string BitShiftLeft = "<<";
-		//internal const string BitShiftRight = ">>";
-		//internal const string GreaterOrEqual = ">=";
-		//internal const string LessOrEqual = "<=";
-		internal const char Equal = '=';
+        internal const string ClassStaticPrefix = "static";
+        internal const string TempVariablePrefix = "_ks_temp";
+        internal const string AnonymousLambdaPrefix = "_ks_AnonLambda_";
+        internal const string AnonymousFatArrowLambdaPrefix = "_ks_AnonFatArrowLambda_";
+
+        internal static HashSet<string> ClassReservedKeywords = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
+            {
+                "Call", "__New", "__Init", "__Get", "__Set", "__Item", "__Class", "__StaticInit"
+            };
+
+        //internal const string BitShiftLeft = "<<";
+        //internal const string BitShiftRight = ">>";
+        //internal const string GreaterOrEqual = ">=";
+        //internal const string LessOrEqual = "<=";
+        internal const char Equal = '=';
 
 		internal const string ErrorLevelStr = "ErrorLevel";
 		internal const string ExCommand = "Invalid command name";

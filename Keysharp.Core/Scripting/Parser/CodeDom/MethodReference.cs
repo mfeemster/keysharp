@@ -22,7 +22,7 @@ namespace Keysharp.Scripting
 
 		public static explicit operator InvocationExpressionSyntax(MethodReference source)
 		{
-			return SyntaxFactory.InvocationExpression(Keysharp.Core.Scripting.Parser.Antlr.Helper.CreateQualifiedName(source.TargetObject.FullName + "." + source.MethodName));
+			return SyntaxFactory.InvocationExpression(Parser.CreateQualifiedName(source.TargetObject.FullName + "." + source.MethodName));
         }
 
 

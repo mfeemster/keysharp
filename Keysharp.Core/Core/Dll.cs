@@ -1,5 +1,4 @@
 #if WINDOWS
-using Keysharp.Core.Scripting.Parser.Antlr;
 
 namespace Keysharp.Core
 {

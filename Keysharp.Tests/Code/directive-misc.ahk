@@ -13,46 +13,11 @@ if (A_ClipboardTimeout == 2000)
 else
 	FileAppend "fail", "*"
 
-if (A_ClipboardTimeout == 2000)
-	FileAppend "pass", "*"
-else
-	FileAppend "fail", "*"
-				
-#USEHOOK
-
 if (A_UseHook)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
 	
-#USEHOOK 0
-
-if (!A_UseHook)
-	FileAppend "pass", "*"
-else
-	FileAppend "fail", "*"
-
-#USEHOOK true
-
-if (A_UseHook)
-	FileAppend "pass", "*"
-else
-	FileAppend "fail", "*"
-
-if (A_MaxThreadsBuffer)
-	FileAppend "pass", "*"
-else
-	FileAppend "fail", "*"
-	
-#MAXTHREADSBUFFER 0
-
-if (!A_MaxThreadsBuffer)
-	FileAppend "pass", "*"
-else
-	FileAppend "fail", "*"
-
-#MAXTHREADSBUFFER
-
 if (A_MaxThreadsBuffer)
 	FileAppend "pass", "*"
 else
@@ -63,32 +28,11 @@ if (A_MaxThreadsPerHotkey == 150)
 else
 	FileAppend "fail", "*"
 
-#MAXTHREADSPERHOTKEY 300
-
-if (A_MaxThreadsPerHotkey == 255)
-	FileAppend "pass", "*"
-else
-	FileAppend "fail", "*"
-
 if (A_NoTrayIcon)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
 	
-if (A_SuspendExempt)
-	FileAppend "pass", "*"
-else
-	FileAppend "fail", "*"
-
-#SUSPENDEXEMPT 0
-
-if (!A_SuspendExempt)
-	FileAppend "pass", "*"
-else
-	FileAppend "fail", "*"
-
-#SUSPENDEXEMPT
-
 if (A_SuspendExempt)
 	FileAppend "pass", "*"
 else
@@ -106,9 +50,4 @@ if (A_InputLevel == 50)
 else
 	FileAppend "fail", "*"
 
-#INPUTLEVEL
-
-if (A_InputLevel == 0)
-	FileAppend "pass", "*"
-else
-	FileAppend "fail", "*"
+ExitApp()

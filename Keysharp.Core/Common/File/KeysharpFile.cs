@@ -62,9 +62,9 @@
 
 		public new (Type, object) super => (typeof(KeysharpFile), this);
 
-		public KeysharpFile(params object[] args) => _ = __New(args);
+		public KeysharpFile(params object[] args) : base(args) { }
 
-		public object __New(params object[] args)
+        public override object __New(params object[] args)
 		{
 			if (args == null || args.Length == 0)
 				return "";
@@ -151,7 +151,7 @@
 			return "";
 		}
 
-		internal KeysharpFile(string filename, FileMode mode, FileAccess access, FileShare share, Encoding encoding, long eol) => _ = __New(filename, mode, access, share, encoding, eol);
+		internal KeysharpFile(string filename, FileMode mode, FileAccess access, FileShare share, Encoding encoding, long eol) : base(filename, mode, access, share, encoding, eol) { }
 
 		~KeysharpFile() => Dispose(false);
 

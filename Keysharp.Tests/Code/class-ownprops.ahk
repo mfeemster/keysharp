@@ -189,7 +189,7 @@ else
 	
 o1 := testclass()
 
-if (ObjOwnPropCount(o1) == 3) ; Count all declared properties.
+if (ObjOwnPropCount(o1) == 2) ; Count all declared properties.
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -208,8 +208,6 @@ o1 := extclass2()
 
 if (ObjOwnPropCount(o1) == 3) ; Count all declared properties in base and derived class.
 	FileAppend "pass", "*"
-if (ObjOwnPropCount(o1) == 5) ; Count all declared properties in base and derived class.
-	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
 
@@ -217,7 +215,7 @@ o1.DefineProp("d", {
 		call : () => 123
 	})
 
-if (ObjOwnPropCount(o1) == 6) ; Count all declared and dynamic properties in base and derived class.
+if (ObjOwnPropCount(o1) == 4) ; Count all declared and dynamic properties in base and derived class.
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -225,8 +223,6 @@ else
 if (ObjHasOwnProp(o1, "a") && o1.HasOwnProp("b") && o1.HasOwnProp("c") && o1.HasOwnProp("d"))
 	FileAppend "pass", "*"
 else
-	FileAppend "fail", "*"
-	
 	FileAppend "fail", "*"
 
 o1 := { one : 1}

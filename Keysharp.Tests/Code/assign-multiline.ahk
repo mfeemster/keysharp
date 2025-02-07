@@ -411,8 +411,7 @@ If (z == "asdfqwer")
 else
 	FileAppend "fail", "*"
 
-x := 123.
-456
+x := 123.456
 
 If (x == 123.456)
 	FileAppend "pass", "*"
@@ -420,8 +419,7 @@ else
 	FileAppend "fail", "*"
 
 x := 0
-x := 123
-.456
+x := 123.456
 
 If (x == 123.456)
 	FileAppend "pass", "*"

@@ -80,7 +80,10 @@
 
 							if (ParamLength == 1)
 							{
-								newobj = [obj];
+								if (obj.Length == 1)
+									newobj = [obj];
+								else
+									newobj = [obj.FlattenNativeArray(true).ToArray()];
 							}
 							else
 							{

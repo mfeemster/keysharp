@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Antlr4.Runtime.Misc;
 using static Keysharp.Scripting.Parser;
-using static Keysharp.Core.Scripting.Parser.Antlr.Helper;
 using static MainParser;
 using Microsoft.CodeAnalysis;
 using System.Drawing.Imaging;
@@ -18,7 +17,7 @@ using System.Xml.Linq;
 using Keysharp.Scripting;
 using System.Reflection;
 
-namespace Keysharp.Core.Scripting.Parser.Antlr
+namespace Keysharp.Scripting
 {
     public partial class MainVisitor : MainParserBaseVisitor<SyntaxNode>
     {
@@ -26,7 +25,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
         {
             if (context.singleExpression() == null)
             {
-                state.DHHR.Add(SyntaxFactory.ExpressionStatement(
+                parser.DHHR.Add(SyntaxFactory.ExpressionStatement(
                     ((InvocationExpressionSyntax)InternalMethods.HotIf)
                     .WithArgumentList(
                         SyntaxFactory.ArgumentList(
@@ -41,7 +40,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                 ));
             } else
             {
-                var hotIfFunctionName = $"_ks_HotIf_{++state.hotIfCount}";
+                var hotIfFunctionName = $"_ks_HotIf_{++parser.hotIfCount}";
 
                 // Visit the singleExpression and wrap it in an anonymous function
                 var conditionExpression = (ExpressionSyntax)Visit(context.singleExpression());
@@ -64,10 +63,10 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                     );
 
                 // Add the function declaration to the main class
-                state.mainClass.Declaration = state.mainClass.Declaration.AddMembers(hotIfFunction);
+                parser.mainClass.Declaration = parser.mainClass.Declaration.AddMembers(hotIfFunction);
 
-                // Add the function call to state.DHHR
-                state.DHHR.Add(
+                // Add the function call to parser.DHHR
+                parser.DHHR.Add(
                     SyntaxFactory.ExpressionStatement(
                         ((InvocationExpressionSyntax)InternalMethods.HotIf)
                         .WithArgumentList(
@@ -107,7 +106,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                 );
             if (content.StartsWith("NoMouse", StringComparison.InvariantCultureIgnoreCase))
             {
-                state.DHHR.Insert(0,
+                parser.DHHR.Insert(0,
                     SyntaxFactory.ExpressionStatement(
                         invocation
                         .WithArgumentList(
@@ -128,7 +127,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             } else if (content.StartsWith("EndChars", StringComparison.InvariantCultureIgnoreCase))
             {
                 var endchars = EscapedString(content.Substring("EndChars ".Length), false);
-                state.DHHR.Insert(0,
+                parser.DHHR.Insert(0,
                     SyntaxFactory.ExpressionStatement(
                         invocation
                         .WithArgumentList(
@@ -148,7 +147,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                 );
             } else
             {
-                state.DHHR.Add(
+                parser.DHHR.Add(
                     SyntaxFactory.ExpressionStatement(
                         SyntaxFactory.InvocationExpression(
                             SyntaxFactory.MemberAccessExpression(
@@ -176,7 +175,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
         {
             var value = Math.Clamp(context.ChildCount < 3 ? 0 : int.Parse(context.GetChild(1).GetText()), 0, 100);
             var expr = SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(value));
-            state.DHHR.Add(SyntaxFactory.ExpressionStatement(
+            parser.DHHR.Add(SyntaxFactory.ExpressionStatement(
                 SyntaxFactory.AssignmentExpression(
                     SyntaxKind.SimpleAssignmentExpression,
                     CreateQualifiedName("Keysharp.Core.Accessors.A_UseHook"),
@@ -188,10 +187,10 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
 
         public override SyntaxNode VisitHotkey([NotNull] HotkeyContext context)
         {
-            state.isPersistent = true;
-            state.isHotkeyDefinition = true;
+            parser.isPersistent = true;
+            parser.isHotkeyDefinition = true;
             // Generate a unique function name
-            var hotkeyFunctionName = $"_ks_Hotkey_{++state.hotkeyCount}";
+            var hotkeyFunctionName = $"_ks_Hotkey_{++parser.hotkeyCount}";
             MethodDeclarationSyntax hotkeyFunction = null;
 
             if (context.functionDeclaration() != null)
@@ -207,9 +206,9 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                 var hotkeyStatement = Visit(context.statement());
 
                 if (hotkeyStatement is BlockSyntax bs)
-                    state.currentFunc.Body.AddRange(bs.Statements);
+                    parser.currentFunc.Body.AddRange(bs.Statements);
                 else
-                    state.currentFunc.Body.Add((StatementSyntax)hotkeyStatement);
+                    parser.currentFunc.Body.Add((StatementSyntax)hotkeyStatement);
 
                 // Create the hotkey function
                 hotkeyFunction = SyntaxFactory.MethodDeclaration(
@@ -232,14 +231,14 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                             )
                         )
                     )
-                    .WithBody(state.currentFunc.AssembleBody());
+                    .WithBody(parser.currentFunc.AssembleBody());
 
                 PopFunction();
 
             }
 
             // Add the hotkey function to the main class
-            state.mainClass.Declaration = state.mainClass.Declaration.AddMembers(hotkeyFunction);
+            parser.mainClass.Declaration = parser.mainClass.Declaration.AddMembers(hotkeyFunction);
 
             // Generate a HotkeyDefinition.AddHotkey call for each trigger
             foreach (var hotkeyTriggerContext in context.HotkeyTrigger())
@@ -278,17 +277,17 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                 );
 
                 // Add the generated statement to the DHHR list
-                state.DHHR.Add(addHotkeyCall);
+                parser.DHHR.Add(addHotkeyCall);
             }
 
-            state.isHotkeyDefinition = false;
+            parser.isHotkeyDefinition = false;
 
             return null; // No syntax node is returned
         }
 
         public override SyntaxNode VisitHotstring([NotNull] HotstringContext context)
         {
-            state.isPersistent = true;
+            parser.isPersistent = true;
             // Extract the hotstring triggers
             var triggers = context.HotstringTrigger()
                 .Select(triggerContext => EscapedString(triggerContext.GetText()[..^2], true))
@@ -302,16 +301,16 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             string functionName = null;
             if (!hasExpansion)
             {
-                functionName = $"_ks_Hotstring_{++state.hotstringCount}";
+                functionName = $"_ks_Hotstring_{++parser.hotstringCount}";
 
                 PushFunction(functionName);
 
                 // Visit the statement to generate the function body
                 var statementNode = Visit(context.statement());
                 if (statementNode is BlockSyntax bs)
-                    state.currentFunc.Body.AddRange(bs.Statements);
+                    parser.currentFunc.Body.AddRange(bs.Statements);
                 else
-                    state.currentFunc.Body.Add((StatementSyntax)statementNode);
+                    parser.currentFunc.Body.Add((StatementSyntax)statementNode);
 
                 // Create the hotstring function
                 var hotstringFunction = SyntaxFactory.MethodDeclaration(
@@ -334,10 +333,10 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                             )
                         )
                     )
-                    .WithBody(state.currentFunc.AssembleBody());
+                    .WithBody(parser.currentFunc.AssembleBody());
 
                 // Add the function to the main class
-                state.mainClass.Declaration = state.mainClass.Declaration.AddMembers(hotstringFunction);
+                parser.mainClass.Declaration = parser.mainClass.Declaration.AddMembers(hotstringFunction);
 
                 PopFunction();
             }
@@ -396,24 +395,50 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                 );
 
                 // Add the generated statement to the DHHR list
-                state.DHHR.Add(addHotstringCall);
+                parser.DHHR.Add(addHotstringCall);
             }
 
             return null;
         }
 
+        void ParseRemapKey(string remapKey, out string sourceKey, out string targetKey)
+        {
+            int index = -1;
+            bool escape = false;
+
+            for (int i = 0; i < remapKey.Length - 1; i++)
+            {
+                if (remapKey[i] == '`') // Detect escape character
+                {
+                    escape = !escape; // Toggle escape mode
+                }
+                else if (remapKey[i] == ':' && remapKey[i + 1] == ':' && !escape && i != 0)
+                {
+                    index = i;
+                    break;
+                }
+                else
+                {
+                    escape = false;
+                }
+            }
+
+            sourceKey = remapKey.Substring(0, index);
+            targetKey = remapKey.Substring(index + 2);
+        }
 
         public override SyntaxNode VisitRemap([NotNull] RemapContext context)
         {
-            state.isPersistent = true;
+            parser.isPersistent = true;
             // Extract the source and target keys
-            var sourceKey = context.HotkeyTrigger().GetText();
-            sourceKey = EscapedString(sourceKey.Substring(0, sourceKey.Length - 2), true);
-            var targetKey = EscapedString(context.RemapKey().GetText(), true);
+            var remapKey = context.RemapKey();
+            ParseRemapKey(remapKey.GetText(), out string sourceKey, out string targetKey);
+            sourceKey = EscapedString(sourceKey, true);
+            targetKey = EscapedString(targetKey, true);
 
             // Generate function names
-            var downFunctionName = $"_ks_Hotkey_{++state.hotkeyCount}";
-            var upFunctionName = $"_ks_Hotkey_{++state.hotkeyCount}";
+            var downFunctionName = $"_ks_Hotkey_{++parser.hotkeyCount}";
+            var upFunctionName = $"_ks_Hotkey_{++parser.hotkeyCount}";
 
             // Fix for v1.0.44.07: Set remap_dest_vk to 0xFF if hotkey_flag's length is only 1 because:
             // 1) It allows a destination key that doesn't exist in the keyboard layout (such as 6::ð in
@@ -616,10 +641,10 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                 );
 
             // Add the functions to the main class
-            state.mainClass.Declaration = state.mainClass.Declaration.AddMembers(downFunction, upFunction);
+            parser.mainClass.Declaration = parser.mainClass.Declaration.AddMembers(downFunction, upFunction);
 
             // Add the "down" hotkey
-            state.DHHR.Add(
+            parser.DHHR.Add(
                 SyntaxFactory.ExpressionStatement(
                     SyntaxFactory.InvocationExpression(
                         SyntaxFactory.MemberAccessExpression(
@@ -647,7 +672,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             );
 
             // Add the "up" hotkey
-            state.DHHR.Add(
+            parser.DHHR.Add(
                 SyntaxFactory.ExpressionStatement(
                     ((InvocationExpressionSyntax)InternalMethods.AddHotkey)
                     .WithArgumentList(
@@ -739,16 +764,16 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             var assemblyName = context.GetChild(0).GetText().ToLowerInvariant().Substring("#assembly".Length);
             assemblyName = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(assemblyName);
 
-            state.AddAssembly($"System.Reflection.Assembly{assemblyName}Attribute", context.DirectiveContent().GetText());
+            parser.AddAssembly($"System.Reflection.Assembly{assemblyName}Attribute", context.DirectiveContent().GetText());
             if (assemblyName == "Version")
-                state.AddAssembly($"System.Reflection.AssemblyFileVersionAttribute", context.DirectiveContent().GetText());
+                parser.AddAssembly($"System.Reflection.AssemblyFileVersionAttribute", context.DirectiveContent().GetText());
             return null;
         }
 
         public override SyntaxNode VisitClipboardTimeoutDirective([NotNull] ClipboardTimeoutDirectiveContext context)
         {
             var timeoutValue = context.numericLiteral().GetText();
-            state.generalDirectives.Add(SyntaxFactory.ExpressionStatement(
+            parser.generalDirectives.Add(SyntaxFactory.ExpressionStatement(
                 SyntaxFactory.AssignmentExpression(
                     SyntaxKind.SimpleAssignmentExpression,
                     CreateQualifiedName("Keysharp.Core.Accessors.A_ClipboardTimeout"),
@@ -761,7 +786,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
         public override SyntaxNode VisitDllLoadDirective([NotNull] DllLoadDirectiveContext context)
         {
             var dllName = context.DirectiveContent().GetText();
-            state.generalDirectives.Add(SyntaxFactory.ExpressionStatement(
+            parser.generalDirectives.Add(SyntaxFactory.ExpressionStatement(
                 SyntaxFactory.InvocationExpression(
                     SyntaxFactory.MemberAccessExpression(
                         SyntaxKind.SimpleMemberAccessExpression,
@@ -788,14 +813,14 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
 
         public override SyntaxNode VisitErrorStdOutDirective([NotNull] ErrorStdOutDirectiveContext context)
         {
-            state.ErrorStdOut = context.DirectiveContent()?.GetText() ?? "CP0";
+            parser.ErrorStdOut = true; // context.DirectiveContent()?.GetText() ?? "CP0";
             return null;
         }
 
         public override SyntaxNode VisitMaxThreadsDirective([NotNull] MaxThreadsDirectiveContext context)
         {
             var threadCount = context.numericLiteral().GetText();
-            state.generalDirectives.Add(SyntaxFactory.ExpressionStatement(
+            parser.generalDirectives.Add(SyntaxFactory.ExpressionStatement(
                 SyntaxFactory.AssignmentExpression(
                     SyntaxKind.SimpleAssignmentExpression,
                     CreateQualifiedName("Keysharp.Scripting.Script.MaxThreadsTotal"),
@@ -811,7 +836,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                 ? SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(1))
                 : Visit(context.GetChild(1));
 
-            state.generalDirectives.Add(SyntaxFactory.ExpressionStatement(
+            parser.generalDirectives.Add(SyntaxFactory.ExpressionStatement(
                 SyntaxFactory.AssignmentExpression(
                     SyntaxKind.SimpleAssignmentExpression,
                     CreateQualifiedName("Keysharp.Core.Accessors.A_MaxThreadsBuffer"),
@@ -826,7 +851,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             var threadCountValue = int.Parse(context.numericLiteral().GetText());
             // Clamp the value between 1 and 255
             var clampedValue = Math.Clamp(threadCountValue, 1, 255);
-            state.generalDirectives.Add(SyntaxFactory.ExpressionStatement(
+            parser.generalDirectives.Add(SyntaxFactory.ExpressionStatement(
                 SyntaxFactory.AssignmentExpression(
                     SyntaxKind.SimpleAssignmentExpression,
                     CreateQualifiedName("Keysharp.Core.Accessors.A_MaxThreadsPerHotkey"),
@@ -838,7 +863,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
 
         public override SyntaxNode VisitNoTrayIconDirective([NotNull] NoTrayIconDirectiveContext context)
         {
-            state.generalDirectives.Add(SyntaxFactory.ExpressionStatement(
+            parser.generalDirectives.Add(SyntaxFactory.ExpressionStatement(
                 SyntaxFactory.AssignmentExpression(
                     SyntaxKind.SimpleAssignmentExpression,
                     CreateQualifiedName("Keysharp.Scripting.Script.NoTrayIcon"),
@@ -850,7 +875,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
 
         public override SyntaxNode VisitWinActivateForceDirective([NotNull] WinActivateForceDirectiveContext context)
         {
-            state.generalDirectives.Add(SyntaxFactory.ExpressionStatement(
+            parser.generalDirectives.Add(SyntaxFactory.ExpressionStatement(
                 SyntaxFactory.AssignmentExpression(
                     SyntaxKind.SimpleAssignmentExpression,
                     CreateQualifiedName("Keysharp.Scripting.Script.WinActivateForce"),
@@ -865,7 +890,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             var value = context.ChildCount < 3
                 ? SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(1))
                 : Visit(context.GetChild(1));
-            state.DHHR.Add(SyntaxFactory.ExpressionStatement(
+            parser.DHHR.Add(SyntaxFactory.ExpressionStatement(
                 SyntaxFactory.AssignmentExpression(
                     SyntaxKind.SimpleAssignmentExpression,
                     CreateQualifiedName("Keysharp.Core.Accessors.A_SuspendExempt"),
@@ -880,7 +905,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             var value = context.ChildCount < 3 
                 ? SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(0))
                 : Visit(context.GetChild(1));
-            state.DHHR.Add(SyntaxFactory.ExpressionStatement(
+            parser.DHHR.Add(SyntaxFactory.ExpressionStatement(
                 SyntaxFactory.AssignmentExpression(
                     SyntaxKind.SimpleAssignmentExpression,
                     CreateQualifiedName("Keysharp.Core.Accessors.A_UseHook"),
@@ -893,7 +918,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
         public override SyntaxNode VisitHotIfTimeoutDirective([NotNull] HotIfTimeoutDirectiveContext context)
         {
             var value = Visit(context.GetChild(1));
-            state.generalDirectives.Add(SyntaxFactory.ExpressionStatement(
+            parser.generalDirectives.Add(SyntaxFactory.ExpressionStatement(
                 SyntaxFactory.AssignmentExpression(
                     SyntaxKind.SimpleAssignmentExpression,
                     CreateQualifiedName("Keysharp.Core.Accessors.A_HotIfTimeout"),

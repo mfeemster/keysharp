@@ -29,12 +29,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-// $antlr-format alignTrailingComments true, columnLimit 150, minEmptyLines 1, maxEmptyLinesToKeep 1, reflowComments false, useTab false
-// $antlr-format allowShortRulesOnASingleLine false, allowShortBlocksOnASingleLine true, alignSemicolons hanging, alignColons hanging
-
 parser grammar MainParser;
-
-// Insert here @header for C++ parser.
 
 options {
     tokenVocab = MainLexer;
@@ -43,39 +38,40 @@ options {
 
 program
     : sourceElements EOF
+    | EOF
     ;
 
 sourceElements
     : sourceElement+
     ;
 
+// Function declarations are handled as expressions
 sourceElement
-    : classDeclaration
-    | functionDeclaration // required for auto-execute section function declarations
-    | generalDirective
-    | positionalDirective
-    | remap
-    | hotstring
-    | hotkey
-    | statement
+    : classDeclaration eos
+    | generalDirective eos
+    | positionalDirective eos
+    | remap eos
+    | hotstring eos
+    | hotkey eos
+    | statement eos
+    | WS
     | EOL
     ;
 
-
 generalDirective
-    : ClipboardTimeout numericLiteral eos   # ClipboardTimeoutDirective
-    | DllLoad DirectiveContent eos          # DllLoadDirective
-    | ErrorStdOut DirectiveContent? eos     # ErrorStdOutDirective
-    | HotIfTimeout numericLiteral eos       # HotIfTimeoutDirective
-    | Include DirectiveContent eos          # IncludeDirective
-    | IncludeAgain DirectiveContent eos     # IncludeAgainDirective
-    | MaxThreads numericLiteral eos         # MaxThreadsDirective
-    | MaxThreadsBuffer (numericLiteral | boolean)? eos    # MaxThreadsBufferDirective
-    | MaxThreadsPerHotkey numericLiteral eos # MaxThreadsPerHotkeyDirective
-    | NoTrayIcon eos                        # NoTrayIconDirective
-    | Requires DirectiveContent eos         # RequiresDirective
-    | SingleInstance DirectiveContent eos   # SingleInstanceDirective
-    | WinActivateForce eos                  # WinActivateForceDirective
+    : ClipboardTimeout numericLiteral   # ClipboardTimeoutDirective
+    | DllLoad DirectiveContent          # DllLoadDirective
+    | ErrorStdOut DirectiveContent?     # ErrorStdOutDirective
+    | HotIfTimeout numericLiteral       # HotIfTimeoutDirective
+    | Include DirectiveContent          # IncludeDirective
+    | IncludeAgain DirectiveContent     # IncludeAgainDirective
+    | MaxThreads numericLiteral         # MaxThreadsDirective
+    | MaxThreadsBuffer (numericLiteral | boolean)?    # MaxThreadsBufferDirective
+    | MaxThreadsPerHotkey numericLiteral # MaxThreadsPerHotkeyDirective
+    | NoTrayIcon                        # NoTrayIconDirective
+    | Requires DirectiveContent         # RequiresDirective
+    | SingleInstance DirectiveContent   # SingleInstanceDirective
+    | WinActivateForce                  # WinActivateForceDirective
     | (AssemblyTitle
         | AssemblyDescription
         | AssemblyConfiguration
@@ -83,104 +79,75 @@ generalDirective
         | AssemblyProduct
         | AssemblyCopyright
         | AssemblyTrademark
-        | AssemblyVersion) DirectiveContent eos # AssemblyDirective
+        | AssemblyVersion) DirectiveContent # AssemblyDirective
     ;
-/*
-        : ClipboardTimeout WhiteSpaces IntegerLiteral
-    | DllLoad WhiteSpaces RawString
-    | ErrorStdOut WhiteSpaces RawString
-    | HotIfTimeout WhiteSpaces IntegerLiteral
-    | Hotstring WhiteSpaces ('nomouse' | 'endchars' WhiteSpaces RawString)
-    | Include WhiteSpaces RawString
-    | IncludeAgain WhiteSpaces RawString
-    | MaxThreads WhiteSpaces IntegerLiteral
-    | MaxThreadsBuffer WhiteSpaces (BooleanLiteral | IntegerLiteral)?
-    | NoTrayIcon
-    | Requires WhiteSpaces RawString
-    | SingleInstance // WhiteSpaces ('force' | 'ignore' | 'prompt' | 'off')
-    | WinActivateForce
-     */
 
 positionalDirective
-    : HotIf singleExpression? eos       # HotIfDirective
-    | HotstringOptions eos              # HotstringDirective
-    | InputLevel numericLiteral? eos     # InputLevelDirective
-    | UseHook (numericLiteral | boolean)? eos          # UseHookDirective
-    | SuspendExempt (numericLiteral | boolean)? eos    # SuspendExemptDirective
+    : HotIf singleExpression?       # HotIfDirective
+    | HotstringOptions              # HotstringDirective
+    | InputLevel numericLiteral?     # InputLevelDirective
+    | UseHook (numericLiteral | boolean)?          # UseHookDirective
+    | SuspendExempt (numericLiteral | boolean)?    # SuspendExemptDirective
     ;
 
 remap
-    : HotkeyTrigger RemapKey eos
+    : RemapKey
     ;
 
 hotstring
-    : HotstringTrigger (EOL HotstringTrigger)* (HotstringExpansion eos | functionDeclaration eos | statement)
+    : HotstringTrigger (HotstringTrigger)* (HotstringExpansion | functionDeclaration | statement)
     ;
 
 hotkey
-    : HotkeyTrigger (EOL HotkeyTrigger)* EOL? (functionDeclaration eos | statement)
+    : HotkeyTrigger (EOL HotkeyTrigger)* s* (functionDeclaration | statement)
     ;
 
 statement
-    : block eos?
-//    | importStatement
-//    | exportStatement
-    //| functionDeclaration eos   // required for nested functions
-    | classDeclaration eos
-    //| functionStatement eos     // requires OpenBrace or LineTerminator before it
-    | variableStatement eos
-    | expressionStatement eos   // requires OpenBrace or LineTerminator before it
-    | ifStatement // always followed by a statement which requires eos
-    | (labelledStatement EOL)? iterationStatement
-    | continueStatement eos
-    | breakStatement eos
-    | returnStatement eos
-//    | yieldStatement
-    | labelledStatement eos
-    | gotoStatement eos
-    | switchStatement eos
-    | throwStatement eos
-    | tryStatement  // always followed by a statement which requires eos
-    ;
-
-/*
-statement
-    : block
+    : functionStatement
     | variableStatement
-    | importStatement
-    | exportStatement
-    | classDeclaration
-    | functionDeclaration
-    | expressionStatement
     | ifStatement
-    | iterationStatement
+    | (labelledStatement s*)? iterationStatement
+    | expressionStatement
     | continueStatement
     | breakStatement
     | returnStatement
     | yieldStatement
-    | withStatement
     | labelledStatement
+    | gotoStatement
     | switchStatement
     | throwStatement
-    | tryStatement
-    | debuggerStatement
+    | tryStatement  // always followed by a statement which requires eos */
+    | awaitStatement
+    | deleteStatement
+    | block
+//    | importStatement
+//    | exportStatement
+//    | withStatement
     ;
-*/
 
 block
-    : EOL? '{' statementList? EOL? '}'
+    : '{' s* statementList? '}'
     ;
 
+// Only to be used inside something, cannot meet EOF
 statementList
-    : statement+
+    : (statement EOL)+
     ;
 
 variableStatement
-    : (Global | Local | Static) variableDeclarationList?
+    : (Global | Local | Static) (WS* variableDeclarationList)?
+    ;
+
+awaitStatement
+    : Await WS* singleExpression
+    ;
+    
+deleteStatement
+    : Delete WS* singleExpression
     ;
 
 importStatement
-    : Import importFromBlock
+    : Import WS* importFromBlock
     ;
 
 importFromBlock
@@ -201,7 +168,6 @@ moduleExportName
     | StringLiteral
     ;
 
-// yield and await are permitted as BindingIdentifier in the grammar
 importedBinding
     : Identifier
     | Yield
@@ -252,60 +218,72 @@ variableDeclarationList
     ;
 
 variableDeclaration
-    : assignable (assignmentOperator singleExpression)? // Should only be used with Local, Global, Static keywords
+    : assignable (assignmentOperator expression)? // Should only be used with Local, Global, Static keywords
     ;
 
 functionStatement
-    : {this.isBOS()}? singleExpression {!this.isPrevCloseParen()}? arguments?
+    : primaryExpression StartFunctionStatement arguments? // This is ambiguous with expressionStatements first expression. I don't know how to resolve it.
     ;
 
 expressionStatement
-    : /*{this.notOpenBraceAndNotFunction()}?*/ expressionSequence
+    : expressionSequence
     ;
 
 ifStatement
-    : If singleExpression EOL? statement (EOL? Else EOL? statement)?
+    : If singleExpression WS* flowBlock elseProduction
+    ;
+
+flowBlock
+    : EOL+ statement
+    | block // OTB block, other one is handled with statement
+    ;
+
+untilProduction
+    : EOL Until EOL? singleExpression 
+    ;
+
+elseProduction
+    : EOL Else EOL? statement 
+    | {!this.second(Else)}? // This can be used to reduce the ambiguity in SLL mode, but has a negative effect on performance
     ;
 
 iterationStatement
-    : Loop singleExpression? EOL? statement (Until singleExpression EOL)? (Else statement)?      # LoopStatement
-    | Loop Files singleExpression (',' singleExpression)? EOL? statement (Until singleExpression EOL)? (Else statement)?  # LoopFilesStatement
-    | Loop Read singleExpression (',' singleExpression)? EOL? statement (Until singleExpression EOL)? (Else statement)?  # LoopReadStatement
-    | Loop Reg singleExpression (',' singleExpression)? EOL? statement (Until singleExpression EOL)? (Else statement)?    # LoopRegStatement
-    | Loop Parse singleExpression (',' singleExpression?)* EOL? statement (Until singleExpression EOL)? (Else statement)? # LoopParseStatement
-    | While singleExpression EOL? statement (Until singleExpression EOL)? (Else statement)?      # WhileStatement
-    | For forInParameters EOL? statement (Until singleExpression EOL)? (Else statement)?         # ForInStatement
+    : Loop (singleExpression WS*)? flowBlock untilProduction? elseProduction      # LoopStatement
+    | LoopFiles singleExpression WS* (',' singleExpression WS*)? flowBlock untilProduction? elseProduction  # LoopFilesStatement
+    | LoopRead singleExpression WS* (',' singleExpression WS*)? flowBlock untilProduction? elseProduction  # LoopReadStatement
+    | LoopReg singleExpression WS* (',' singleExpression WS*)? flowBlock untilProduction? elseProduction    # LoopRegStatement
+    | LoopParse singleExpression WS* (',' (singleExpression WS*)?)* flowBlock untilProduction? elseProduction # LoopParseStatement
+    | While singleExpression WS* flowBlock untilProduction? elseProduction      # WhileStatement
+    | For WS* forInParameters WS* flowBlock untilProduction? elseProduction          # ForInStatement
     ;
 
 forInParameters
-    : assignable? (',' assignable?)* In singleExpression
-    | openParen assignable? (',' assignable?)* In singleExpression ')'
+    : assignable? (',' assignable?)* WS* In WS* singleExpression
+    | '(' assignable? (',' assignable?)* WS* In WS* singleExpression ')'
     ;
 
 continueStatement
-    : Continue propertyName?
-    | Continue (openParen propertyName ')')?
+    : Continue WS* (propertyName | '(' propertyName ')')?
     ;
 
 breakStatement
-    : Break propertyName?
-    | Break (openParen propertyName ')')?
+    : Break WS* ('(' propertyName ')' | propertyName)?
     ;
 
 returnStatement
-    : Return singleExpression?
+    : Return WS* expression?
     ;
 
 yieldStatement
-    : Yield ({this.notEOL()}? singleExpression)?
+    : Yield WS* expression?
     ;
 
 switchStatement
-    : Switch singleExpression? (',' literal)? EOL? caseBlock
+    : Switch singleExpression? (',' literal)? s* caseBlock
     ;
 
 caseBlock
-    : '{' caseClauses? (EOL? defaultClause EOL? caseClauses?)? EOL? '}'
+    : '{' s* caseClauses? (defaultClause caseClauses?)? '}'
     ;
 
 caseClauses
@@ -313,11 +291,11 @@ caseClauses
     ;
 
 caseClause
-    : Case expressionSequence ':' EOL? statementList? EOL?
+    : Case WS* expressionSequence WS* ':' (s* statementList | EOL)
     ;
 
 defaultClause
-    : Default ':' EOL? statementList?
+    : Default WS* ':' (s* statementList | EOL)
     ;
 
 labelledStatement
@@ -326,40 +304,39 @@ labelledStatement
 
 gotoStatement
     : Goto propertyName
-    | Goto openParen propertyName ')'
+    | Goto '(' propertyName ')'
     ;
 
 throwStatement
-    : Throw {this.notEOL()}? singleExpression
+    : Throw singleExpression?
     ;
 
 tryStatement
-    : Try EOL? statement EOL? catchProduction* elseProduction? finallyProduction?
+    : Try EOL? statement catchProduction* elseProduction finallyProduction?
     ;
 
 catchProduction
-    : Catch catchAssignable? EOL? statement EOL?
+    : EOL Catch WS* (catchAssignable WS*)? flowBlock
     ;
 
 catchAssignable
-    : As identifier
-    | assignable (As? identifier)?
-    | openParen assignable (As? identifier)? ')'
+    : catchClasses (WS* As)? (WS* identifier)?
+    | '(' catchClasses (WS* As)? (WS* identifier)? ')'
     ;
 
-elseProduction
-    : Else statement EOL?
+catchClasses
+    : identifier (',' identifier)*
     ;
 
 finallyProduction
-    : Finally statement EOL?
+    : EOL Finally flowBlock
     ;
 
 functionDeclaration
-    : Async? identifier OpenParenNoWS formalParameterList? ')' lambdaFunctionBody
+    : functionHead functionBody
     ;
 
-/*
+/*L
 hotkeyDeclaration
     : (HotkeyLiteral+) (singleExpression eos | functionBody)
     ;
@@ -371,116 +348,108 @@ hotstringDeclaration
 */
 
 classDeclaration
-    : Class identifier classTail
+    : Class WS* identifier (WS+ Extends WS+ classExtensionName)? s* classTail
+    ;
+
+classExtensionName
+    : identifier ('.' identifier)*
     ;
 
 classTail
-    : (Extends identifier ('.' identifier)*)? EOL? '{' classElement* EOL? '}' EOL?
+    : '{' (classElement EOL | EOL)* '}'
     ;
 
 classElement
-    : Static? methodDefinition EOL   # ClassMethodDeclaration
-    | Static? propertyDefinition EOL # ClassPropertyDeclaration
-    | Static? fieldDefinition EOL    # ClassFieldDeclaration
-    | classDeclaration EOL           # NestedClassDeclaration
+    : Static? methodDefinition   # ClassMethodDeclaration
+    | Static? propertyDefinition # ClassPropertyDeclaration
+    | Static? fieldDefinition (',' fieldDefinition)*    # ClassFieldDeclaration
+    | classDeclaration           # NestedClassDeclaration
     ;
 
 methodDefinition
-    : Async? propertyName OpenParenNoWS formalParameterList? ')' lambdaFunctionBody
+    : functionHead functionBody
     ;
 
 propertyDefinition
-    : classPropertyName '=>' singleExpression
-    | classPropertyName EOL? '{' (propertyGetterDefinition | propertySetterDefinition)* '}' EOL?
+    : classPropertyName '=>' expression
+    | classPropertyName s* '{' (propertyGetterDefinition EOL | propertySetterDefinition EOL | EOL)+ '}'
     ;
 
 classPropertyName
     : identifier
-    | identifier '[' formalParameterList ']'
+    | identifier '[' formalParameterList? s* ']'
     ;
 
 propertyGetterDefinition
-    : {this.n("get")}? identifier lambdaFunctionBody EOL?
+    : Get functionBody
     ;
 
 propertySetterDefinition
-    : {this.n("set")}? identifier lambdaFunctionBody EOL?
+    : Set functionBody
     ;
 
 fieldDefinition
-    : propertyName ((':=' propertyName)* EOL? initializer)?
+    : propertyName ':=' expression
     ;
 
 formalParameterList
-    : (formalParameterArg? ',')* lastFormalParameterArg
+    : (formalParameterArg ',')* lastFormalParameterArg
     ;
 
 formalParameterArg
-    : BitAnd? assignable (':=' singleExpression | QuestionMark)? // singleLineExpression not needed because is always enclosed in parenthesis
+    : BitAnd? identifier (':=' expression | QuestionMark)? // singleLineExpression not needed because is always enclosed in parenthesis
     ;
 
 lastFormalParameterArg
-    : formalParameterArg Multiply? // Spread
-    | Multiply
-    ;
-
-functionBody
-    : EOL? '{' statementList? '}'
+    : formalParameterArg
+    | identifier? Multiply
     ;
 
 arrayLiteral
-    : (OpenBracketWithWS arrayElementList ']')
+    : '[' (WS | EOL)* (arrayElementList (WS | EOL)*)? ']'
     ;
 
 // Keysharp supports arrays like [,,1,2,,].
 arrayElementList
-    : (arrayElement? ',')* arrayElement?
+    : (',' arrayElement?)+
+    | arrayElement (',' arrayElement?)*
     ;
 
 arrayElement
-    : singleExpression Multiply? // Spread
+    : expression Multiply? // Spread
     ;
 
 mapLiteral
-    : ('[' mapElementList ']')
+    : ('[' mapElementList? ']')
     ;
 
 // Keysharp supports arrays like [,,1,2,,].
 mapElementList
-    : (mapElement? ',')*
+    : (mapElement? ',')+
     ;
 
 mapElement
-    : singleExpression Multiply? // Spread
-    | singleExpression EOL? ':' EOL? singleExpression // Map element
+    : expression Multiply? // Spread
+    | expression ':' expression // Map element
     ;
 
 propertyAssignment
-    : dynamicPropertyName EOL? ':' EOL? singleExpression                           # PropertyExpressionAssignment
-    | Async? '*'? propertyName OpenParenNoWS formalParameterList? ')' functionBody # FunctionProperty
-    | getter OpenParenNoWS ')' functionBody                                        # PropertyGetter
-    | setter OpenParenNoWS formalParameterArg ')' functionBody                     # PropertySetter
+    : memberIdentifier (WS | EOL)* ':' (WS | EOL)* expression                           # PropertyExpressionAssignment
+    | Async? '*'? propertyName '(' formalParameterList? ')' functionBody # FunctionProperty
+    | getter '(' ')' functionBody                                        # PropertyGetter
+    | setter '(' formalParameterArg ')' functionBody                     # PropertySetter
     //| Ellipsis? singleExpression                                         # PropertyShorthand
     ;
 
-dynamicPropertyName
-    : (propertyName | dereference) derefContinuation*
-    ;
-
 propertyName
-    : Identifier
+    : identifier
     | reservedWord
     | StringLiteral
     | numericLiteral
     ;
 
-derefContinuation
-    : DerefContinuation singleExpression DerefEnd
-    | IdentifierContinuation
-    ;
-
 dereference
-    : DerefStart singleExpression DerefEnd
+    : DerefStart expression DerefEnd
     ;
 
 arguments
@@ -489,128 +458,132 @@ arguments
     ;
 
 argument
-    : singleExpression Multiply?
+    : expression
+    | primaryExpression (Multiply | QuestionMark)
     ;
 
-// NOTE: this allows implicit concatenation because it must only be used inside parentheses/brackets
 expressionSequence
-    : singleExpression ((',' singleExpression?)* ',' singleExpression)?
-    ;
-
-/*
-    Explanation: 
-    In AHK there is a problem with expression concatenation ambiguity when omitting the dot operator.
-    For example, `FileAppend "hello" "world"` is valid, but "hello" on the next line is not. 
-    This is different if surrounded by parenthesis, because then there is no ambiguity about when the
-    expression ends, thus `FileAppend ("hello" "world")` is allowed even on the next line. 
-    With other expressions there should be no ambiguity because, for example with
-    `FileAppend a := \n"hello"` "hello" is allowed because the assignment operation requires an expression.
-
-    So, singleExpressionConcatenation is a single expression that does *not* start on a new line.
-    singleLineExpressionSequence might start on a new line but continues on the same (or is continued
-    explicitly with the comma operator).
-*/
-
-singleExpressionConcatenation
-    : {!this.isBOS()}? singleExpression
-    ;
-
-functionCallArguments
-    : OpenParenNoWS arguments? ')'
+    : expression (',' expression)*
     ;
 
 memberIndexArguments
-    : {!this.isPrevWS()}? '[' expressionSequence? ']'
+    : '[' s* arrayElementList? ']'
+    ;
+
+// ifStatement and loops require that they don't contain a bodied function expression.
+// The only way I could solve this was to duplicate some of the expressions with and without function expressions.
+expression
+    : (op = '!' | op = VerbalNot) right = expression                                  # NotExpression
+    | left = expression (op = '&&' | op = VerbalAnd) right = expression  # LogicalAndExpression
+    | left = expression (op = '||' | op = VerbalOr) right = expression   # LogicalOrExpression
+    | <assoc = right> left = expression op = '??' right = expression                               # CoalesceExpression
+    | ternCond = expression (WS | EOL)* '?' (WS | EOL)* ternTrue = expression (WS | EOL)* ':' (WS | EOL)* ternFalse = expression # TernaryExpression 
+    | <assoc = right> left = expression op = assignmentOperator right = expression # AssignmentExpression
+    | fatArrowExpressionHead '=>' expression             # FatArrowExpression // Not sure why, but this needs to be lower than coalesce expression
+    | functionExpressionHead (WS | EOL)* block           # FunctionExpression
+    | operatorExpression                                 # ExpressionDummy  
     ;
 
 singleExpression
-    : Class Identifier classTail                                           # ClassExpression // nested class
-    | lambdaFunction                                                       # FunctionExpression
-    | singleExpression functionCallArguments                               # FunctionCallExpression
-    | singleExpression '?'? '.' memberIdentifier                           # MemberDotExpression
-    | singleExpression '?.'? memberIndexArguments                          # MemberIndexExpression
-    | singleExpression '++'                                                # PostIncrementExpression
-    | singleExpression '--'                                                # PostDecreaseExpression
-    | Delete singleExpression                                              # DeleteExpression
-    | '++' singleExpression                                                # PreIncrementExpression
-    | '--' singleExpression                                                # PreDecreaseExpression
-    | <assoc = right> singleExpression '**' singleExpression               # PowerExpression
-    | BitAnd singleExpression                                              # VarRefExpression
-    | '-' singleExpression                                                 # UnaryMinusExpression
-    | '+' singleExpression                                                 # UnaryPlusExpression
-    | '~' singleExpression                                                 # BitNotExpression
-    | Await singleExpression                                               # AwaitExpression
-    | singleExpression ('*' | '/' | '//') singleExpression                 # MultiplicativeExpression
-    | singleExpression ('+' | '-') singleExpression                        # AdditiveExpression
-    | singleExpression ('<<' | '>>' | '>>>') singleExpression              # BitShiftExpression
-    | singleExpression '&' singleExpression                                # BitAndExpression
-    | singleExpression '^' singleExpression                                # BitXOrExpression
-    | singleExpression '|' singleExpression                                # BitOrExpression
-    | singleExpression DotConcat singleExpression                          # DotConcatenateExpression
-    | singleExpression singleExpressionConcatenation+                      # ImplicitConcatenateExpression
-    | singleExpression '~=' singleExpression                               # RegExMatchExpression
-    | singleExpression ('<' | '>' | '<=' | '>=') singleExpression          # RelationalExpression
-    | singleExpression ('=' | '!=' | '==' | '!==') singleExpression        # EqualityExpression
-    | singleExpression Instanceof singleExpression                         # InstanceofExpression
-    | singleExpression Is singleExpression                                 # IsExpression
-    | singleExpression In singleExpression                                 # InExpression
-    | singleExpression Contains singleExpression                           # ContainsExpression
-    | ('!' | VerbalNot) EOL? singleExpression                              # NotExpression
-    | singleExpression ('&&' | VerbalAnd) singleExpression                 # LogicalAndExpression
-    | singleExpression ('||' | VerbalOr) singleExpression                  # LogicalOrExpression
-    | singleExpression '??' singleExpression                               # CoalesceExpression
-    | singleExpression '?' singleExpression EOL? ':' EOL? singleExpression # TernaryExpression
-    | <assoc = right> singleExpression assignmentOperator singleExpression # AssignmentOperatorExpression
-    | This                                                                 # ThisExpression
-    | Super                                                                # SuperExpression
-    | Base                                                                 # BaseExpression
-    | dynamicIdentifier                                                    # DynamicIdentifierExpression
+    : operatorExpression                                            # SingleExpressionDummy
+    | op = ('!' | VerbalNot) right = singleExpression                       # NotExpressionDuplicate
+    | left = singleExpression op = ('&&' | VerbalAnd) right = singleExpression     # LogicalAndExpressionDuplicate
+    | left = singleExpression op = ('||' | VerbalOr) right = singleExpression      # LogicalOrExpressionDuplicate
+    | left = singleExpression op = '??' right = singleExpression                   # CoalesceExpressionDuplicate
+    | ternCond = singleExpression (WS | EOL)* '?' (WS | EOL)* ternTrue = singleExpression (WS | EOL)* ':' (WS | EOL)* ternFalse = singleExpression # TernaryExpressionDuplicate
+    | <assoc = right> left = singleExpression assignmentOperator right = singleExpression  # AssignmentExpressionDuplicate
+    ;
+
+operatorExpression
+    : primaryExpression                                                              # OperatorExpressionDummy
+    | left = operatorExpression '++'                                                 # PostIncrementExpression
+    | left = operatorExpression '--'                                                 # PostDecreaseExpression
+    | '++' right = operatorExpression                                                # PreIncrementExpression
+    | '--' right = operatorExpression                                                # PreDecreaseExpression
+    | <assoc = right> left = operatorExpression '**' right = operatorExpression             # PowerExpression
+    | '-' right = operatorExpression                                                 # UnaryMinusExpression
+    | '+' right = operatorExpression                                                 # UnaryPlusExpression
+    | '~' right = operatorExpression                                                 # BitNotExpression
+    | left = operatorExpression ((WS | EOL)* op = ('*' | '/' | '//') (WS | EOL)*) right = operatorExpression  # MultiplicativeExpression
+    | left = operatorExpression op = ('+' | '-') right = operatorExpression                        # AdditiveExpression
+    | left = operatorExpression op = ('<<' | '>>' | '>>>') right = operatorExpression              # BitShiftExpression
+    | left = operatorExpression ((WS | EOL)* op = '&' (WS | EOL)*) right = operatorExpression        # BitAndExpression
+    | left = operatorExpression op = '^' right = operatorExpression                                # BitXOrExpression
+    | left = operatorExpression op = '|' right = operatorExpression                                # BitOrExpression
+    | left = operatorExpression (ConcatDot | WS+) right = operatorExpression                       # ConcatenateExpression
+    | left = operatorExpression op = '~=' right = operatorExpression                               # RegExMatchExpression
+    | left = operatorExpression op = ('<' | '>' | '<=' | '>=') right = operatorExpression          # RelationalExpression
+    | left = operatorExpression op = ('=' | '!=' | '==' | '!==') right = operatorExpression        # EqualityExpression
+    | left = operatorExpression op = (Instanceof | Is | In | Contains) right = operatorExpression # ContainExpression
+    ;
+
+primaryExpression
+    : primaryExpression ('.' | '?.') memberIdentifier                      # MemberDotExpression
+    | primaryExpression '(' arguments? ')'                                 # FunctionCallExpression
+    | primaryExpression '?.'? memberIndexArguments                         # MemberIndexExpression
+    | BitAnd primaryExpression                                             # VarRefExpression
     | identifier                                                           # IdentifierExpression
+    | dynamicIdentifier                                                    # DynamicIdentifierExpression
     | literal                                                              # LiteralExpression
     | arrayLiteral                                                         # ArrayLiteralExpression
     | objectLiteral                                                        # ObjectLiteralExpression
     | '(' expressionSequence ')'                                           # ParenthesizedExpression
     ;
 
+memberDot
+    : (WS | EOL)+ '.'
+    | '.' (WS | EOL)*
+    | (WS | EOL)* '?.' (WS | EOL)*
+    ;
+
 memberIdentifier
     : identifier
     | dynamicIdentifier
     | reservedWord
+    | literal
     ;
 
 dynamicIdentifier
-    : identifier derefContinuation+ 
-    | dereference derefContinuation*
+    : propertyName dereference (propertyName | dereference)*
+    | dereference (propertyName | dereference)*
     ;
 
 initializer
-    : ':=' singleExpression
+    : ':=' expression
     ;
 
 assignable
     : identifier
-    | keyword
     | arrayLiteral
     | objectLiteral
     ;
 
 objectLiteral
-    : '{' (propertyAssignment (',' propertyAssignment)* EOL?)? '}'
+    : '{' s* (propertyAssignment (',' propertyAssignment)* s*)? '}'
     ;
 
-lambdaFunction
-    : functionDeclaration                                                                       # NamedLambdaFunction
-    | Async? '(' formalParameterList? ')' lambdaFunctionBody                                    # AnonymousLambdaFunction
-    | Async? (assignable? Multiply | BitAnd? assignable QuestionMark?) '=>' singleExpression    # AnonymousFatArrowLambdaFunction
+functionHead
+    : Async? identifier '(' formalParameterList? ')'
     ;
 
-lambdaFunctionBody
-    : '=>' singleExpression
-    | functionBody
+functionExpressionHead
+    : functionHead
+    | Async? '(' formalParameterList? ')'
+    ;
+
+fatArrowExpressionHead
+    : (Async? identifier)? Multiply 
+    | Async? BitAnd? identifier QuestionMark?
+    | functionExpressionHead
+    ;
+
+functionBody
+    : '=>' expression
+    | (WS | EOL)* '{' s* statementList? '}'
     ;
 
 assignmentOperator
-    : ':='
+    : (':='
     | '%='
     | '+='
     | '-='
@@ -625,62 +598,45 @@ assignmentOperator
     | '<<='
     | '>>>='
     | '**='
-    | '??='
+    | '??=')
     ;
 
 literal
-    : NullLiteral
-    | Unset
-    | boolean
-    | MultilineStringLiteral
-    | StringLiteral
-    | RegularExpressionLiteral
+    : boolean
     | numericLiteral
     | bigintLiteral
+    | (NullLiteral
+    | Unset
+    | StringLiteral
+    | RegularExpressionLiteral)
     ;
 
-boolean : BooleanLiteral;
+boolean : 
+    (True
+    | False);
 
 numericLiteral
-    : DecimalLiteral
+    : (DecimalLiteral
     | HexIntegerLiteral
     | OctalIntegerLiteral
     | OctalIntegerLiteral2
-    | BinaryIntegerLiteral
+    | BinaryIntegerLiteral)
     ;
 
 bigintLiteral
-    : BigDecimalIntegerLiteral
+    : (BigDecimalIntegerLiteral
     | BigHexIntegerLiteral
     | BigOctalIntegerLiteral
-    | BigBinaryIntegerLiteral
+    | BigBinaryIntegerLiteral)
     ;
 
 getter
-    : {this.n("get")}? identifier propertyName
+    : Get propertyName
     ;
 
 setter
-    : {this.n("set")}? identifier propertyName
+    : Set propertyName
     ;
-/*
-directive
-    : generalDirective
-    | positionalDirective
-    ;
-
-positionalDirective
-    : HotIf singleExpression
-    | HotstringOptions
-    | InputLevel numericLiteral
-    | MaxThreadsPerHotkey numericLiteral
-    | SuspendExempt (BooleanLiteral | numericLiteral)?
-    | UseHook (BooleanLiteral | numericLiteral)?
-    | Warn ((identifier) (Comma (identifier))?)?
-    ;
-
-generalDirective : GeneralDirective;
-*/
 
 identifierName
     : identifier
@@ -688,10 +644,17 @@ identifierName
     ;
 
 identifier
-    : Identifier
-    | Async
-    | Yield
+    : (Identifier
     | Default
+    | This
+//    | Class
+    | Enum
+    | Extends
+    | Super
+    | Base
+    | From
+    | Get
+    | Set)
     ;
 
 reservedWord
@@ -701,53 +664,52 @@ reservedWord
     | boolean
     ;
 
-openParen
-    : OpenParen
-    | OpenParenNoWS
-    ;
-
 keyword
-    : Break
-    | Do
-    | Instanceof
-    | Case
+    : (Local
+    | Global
+    | Static
+    | Class
+    | If
     | Else
+    | Loop
+    | For
+    | Do
+    | While
+    | Until
+    | Break
+    | Continue
+    | Goto
+    | Return
+    | Switch
+    | Case
+    | Try
     | Catch
     | Finally
-    | Return
-    | Continue
-    | For
-    | Switch
-    | While
-    | Loop
-    | Until
-    | This
-    | If
     | Throw
-    | Delete
+    | As
+    | VerbalAnd
+    | Contains
     | In
     | Is
-    | Try
-    | Class
-    | Enum
-    | Extends
+    | VerbalNot
+    | VerbalOr
     | Super
-    | Base
-    | Export
+    | Unset
+    | Instanceof
     | Import
-    | Static
-    | Global
-    | Local
+    | Export
+    | Delete
     | Yield  
     | Async
-    | Await
-    | Default
-    | VerbalAnd
-    | VerbalOr
-    | VerbalNot
+    | Await)
+    ;
+
+s
+    : WS
+    | EOL
     ;
 
 eos
-    : EOL
-    | EOF
+    : EOF
+    | EOL
     ;

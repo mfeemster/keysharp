@@ -480,8 +480,6 @@ namespace Keysharp.Scripting
 							var arr = new object[2];
 							arr[0] = item;//Special logic here: this was called on an OwnProps map, so it uses its parent as the object.
 							arr[1] = value;
-							if (ifo.Mph.IsStaticFunc)
-								return ifo.Call(value);
 							return ifo.Call(inst, value);
 						}
 					}

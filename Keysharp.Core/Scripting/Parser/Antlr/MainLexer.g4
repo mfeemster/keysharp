@@ -36,7 +36,8 @@
 lexer grammar MainLexer;
 
 channels {
-    ERROR
+    ERROR,
+    DIRECTIVE
 }
 
 options {
@@ -47,14 +48,12 @@ options {
 tokens {
     DerefStart,
     DerefEnd,
-    OpenParenNoWS,
-    DerefContinuation,
-    IdentifierContinuation,
-    OpenBracketWithWS
+    StartFunctionStatement
 }
 
-MultiLineComment  : '/*' .*? '*/'             -> channel(HIDDEN);
-SingleLineComment : ';' ~[\r\n\u2028\u2029]* {this.IsCommentPossible()}? -> channel(HIDDEN);
+SingleLineBlockComment  : '/*' ~[\r\n\u2028\u2029]*? '*/' -> skip;
+MultiLineComment  : '/*' .*? '*/' -> type(EOL);
+SingleLineComment : ';' ~[\r\n\u2028\u2029]* [\r\n\u2028\u2029] {this.IsCommentPossible()}? -> type(EOL);
 RegularExpressionLiteral:
     '/' RegularExpressionFirstChar RegularExpressionChar* {this.IsRegexPossible()}? '/' IdentifierPart*
 ;
@@ -64,7 +63,8 @@ HotstringLiteral:
     HotstringTrigger {this.IsHotstringLiteral()}? (LineBreak HotstringTrigger)* RawString;  //| LineBreak '(' ~[\r\n]+ LineBreak (EscapeCharacter | .)*? LineBreak ')');
 */
 
-// First try consuming a hotstring trigger
+// First try consuming a hotstring 
+
 HotstringLiteralTrigger
     : HotstringTriggerPart {this.IsHotstringLiteral()}? -> pushMode(HOTSTRING_MODE), type(HotstringTrigger)
     ;
@@ -75,11 +75,11 @@ HotstringTrigger
 
 // If no hotstring is matchable, try matching a remap
 RemapKey:
-    HotkeyModifier* HotkeyCharacter {this.IsValidRemap()}?;
+    HotkeyModifier* HotkeyCharacter '::' HotkeyModifier* HotkeyCharacter;
 
 // Otherwise just match a hotkey trigger
 HotkeyTrigger:
-    HotkeyModifier* HotkeyCharacter (WS+ '&' WS+ HotkeyCharacter)? (WS+ 'up')? '::' {this.IsBOS()}?;
+    HotkeyModifier* HotkeyCharacter (WhiteSpace+ '&' WhiteSpace+ HotkeyCharacter)? (WhiteSpace+ 'up')? '::' {this.IsBOS()}?;
 
 /*
 HotkeyLiteral:
@@ -101,8 +101,8 @@ QuestionMarkDot            : '?.';
 Colon                      : ':';
 DoubleColon                : '::';
 Ellipsis                   : '...';
-DotConcat                  : (WhiteSpaces | LineBreak)+ '.' (WhiteSpaces | LineBreak)+;
 Dot                        : '.';
+ConcatDot                  : (WS | EOL)+ '.' (WS | EOL)+;
 PlusPlus                   : '++';
 MinusMinus                 : '--';
 Plus                       : '+';
@@ -115,7 +115,7 @@ IntegerDivide              : '//';
 Modulus                    : '%' {ProcessDeref();};
 Power                      : '**';
 NullCoalesce               : '??';
-Hashtag                    : '#';
+Hashtag                    : '#' -> mode(PREPROCESSOR_DIRECTIVE_MODE), channel(DIRECTIVE);
 RightShiftArithmetic       : '>>';
 LeftShiftArithmetic        : '<<';
 RightShiftLogical          : '>>>';
@@ -156,14 +156,14 @@ NullLiteral: 'null';
 Unset: 'unset';
 
 /// Boolean Literals
-
-BooleanLiteral: 'true' | 'false';
+True: 'true';
+False: 'false';
 
 /// Numeric Literals
 
 DecimalLiteral:
     DecimalIntegerLiteral '.' [0-9] [0-9_]* ExponentPart?
-    | '.' [0-9] [0-9_]* ExponentPart?
+    | '.' [0-9] [0-9_]* ExponentPart? {this.IsValidDotDecimal()}?
     | DecimalIntegerLiteral ExponentPart?
 ;
 
@@ -194,12 +194,12 @@ Return     : 'return';
 Continue   : 'continue';
 For        : 'for';
 While      : 'while';
-Loop       : 'loop';
+LoopParse  : 'loop parse' ','?;
+LoopReg    : 'loop reg' ','?;
+LoopRead   : 'loop read' ','?;
+LoopFiles  : 'loop files' ','?;
+Loop       : 'loop' ','?;
 Until      : 'until';
-Files      : 'files';
-Read       : 'read';
-Reg        : 'reg';
-Parse      : 'parse';
 This       : 'this';
 If         : 'if';
 Throw      : 'throw';
@@ -212,8 +212,9 @@ Contains   : 'contains';
 VerbalAnd  : 'and';
 VerbalNot  : 'not';
 VerbalOr   : 'or';
-
 Goto       : 'goto';
+Get        : 'get';
+Set        : 'set';
 
 /// Future Reserved Words
 
@@ -252,7 +253,7 @@ SuspendExempt : '#suspendexempt';
 UseHook : '#usehook';
 Warn : '#warn';
 WinActivateForce : '#winactivateforce';
-HotstringOptions : '#hotstring' WS+ RawString {this.ProcessHotstringOptions();};
+HotstringOptions : '#hotstring' WhiteSpace+ RawString {this.ProcessHotstringOptions();};
 AssemblyTitle : '#assemblytitle' -> pushMode(DIRECTIVE_MODE);
 AssemblyDescription : '#assemblydescription' -> pushMode(DIRECTIVE_MODE);
 AssemblyConfiguration : '#assemblyconfiguration' -> pushMode(DIRECTIVE_MODE);
@@ -268,12 +269,73 @@ AssemblyVersion : '#assemblyversion' -> pushMode(DIRECTIVE_MODE);
 Identifier: IdentifierStart IdentifierPart*;
 /// String Literals
 MultilineStringLiteral:
-    ('"' ~[\r\n]* LineBreak '(' .*? LineBreak WhiteSpaces? ')"' 
-    | '\'' ~[\r\n]* LineBreak '(' .*? LineBreak WhiteSpaces? ')\'') {this.ProcessStringLiteral();}
+    ('"' (WhiteSpace ';' ~[\r\n]* | ~["\r\n]*) (LineBreak WhiteSpace? '(' .*? LineBreak WhiteSpace? ')' WhiteSpace?)+ '"' 
+    | '\'' (WhiteSpace ';' ~[\r\n]* | ~['\r\n]*)  (LineBreak WhiteSpace? '(' .*? LineBreak WhiteSpace? ')' WhiteSpace?)+ '\'') {this.ProcessStringLiteral();} -> type(StringLiteral)
 ;
 StringLiteral:
     ('"' DoubleStringCharacter* '"' | '\'' SingleStringCharacter* '\'') {this.ProcessStringLiteral();}
 ;
+
+EOL: LineBreak {this.ProcessEOL();};
+WS: WhiteSpace {this.ProcessWS();};
+
+UnexpectedCharacter : .                     -> channel(ERROR);
+
+mode HOTSTRING_MODE;
+HotstringEOL: LineBreak -> type(EOL), popMode;
+HotstringOpenBrace: '{' {this.ProcessHotstringOpenBrace();} -> type(OpenBrace), popMode;
+HotstringWhitespaces: WhiteSpace+ -> channel(HIDDEN);
+HotstringExpansion: (~[;`\r\n {] | '`' EscapeSequence) RawString?;
+HotstringUnexpectedCharacter: . -> channel(ERROR);
+
+mode DIRECTIVE_MODE;
+DirectiveEOL: LineBreak -> type(EOL), popMode;
+DirectiveWhitespaces: WhiteSpace+ -> channel(HIDDEN);
+DirectiveContent: (~[;`\r\n ] | '`' EscapeSequence) RawString?;
+DirectiveUnexpectedCharacter: . -> channel(ERROR);
+
+mode PREPROCESSOR_DIRECTIVE_MODE;
+PreprocessorDirectiveWS: WhiteSpace              -> skip;
+Digits                 : [0-9]+                  -> channel(DIRECTIVE);
+DirectiveTrue          : 'true'                  -> channel(DIRECTIVE), type(True);
+DirectiveFalse         : 'false'                 -> channel(DIRECTIVE), type(False);
+Define                 : 'define'                -> channel(DIRECTIVE);
+Undef                  : 'undef'                 -> channel(DIRECTIVE);
+DirectiveIf            : 'if'                    -> channel(DIRECTIVE), type(If);
+ElIf                   : 'elif'                  -> channel(DIRECTIVE);
+DirectiveElse          : 'else'                  -> channel(DIRECTIVE), type(Else);
+EndIf                  : 'endif'                 -> channel(DIRECTIVE);
+Line                   : 'line'                  -> channel(DIRECTIVE);
+Error                  : 'error' WhiteSpace      -> channel(DIRECTIVE), mode(DIRECTIVE_TEXT);
+Warning                : 'warning' WhiteSpace    -> channel(DIRECTIVE), mode(DIRECTIVE_TEXT);
+Region                 : 'region' WhiteSpace?    -> channel(DIRECTIVE), mode(DIRECTIVE_TEXT);
+EndRegion              : 'endregion' WhiteSpace? -> channel(DIRECTIVE), mode(DIRECTIVE_TEXT);
+Pragma                 : 'pragma' WhiteSpace     -> channel(DIRECTIVE), mode(DIRECTIVE_TEXT);
+Nullable               : 'nullable' WhiteSpace   -> channel(DIRECTIVE), mode(DIRECTIVE_TEXT);
+DirectiveDefault       : 'default'               -> channel(DIRECTIVE), type(Default);
+DirectiveHidden        : 'hidden'                -> channel(DIRECTIVE);
+DirectiveOpenParen     : '('                     -> channel(DIRECTIVE), type(OpenParen);
+DirectiveCloseParen    : ')'                     -> channel(DIRECTIVE), type(CloseParen);
+DirectiveNot           : '!'                     -> channel(DIRECTIVE), type(Not);
+DirectiveEquals        : '=='                    -> channel(DIRECTIVE), type(IdentityEquals);
+DirectiveNotEquals     : '!='                    -> channel(DIRECTIVE), type(NotEquals);
+DirectiveAnd           : '&&'                    -> channel(DIRECTIVE), type(And);
+DirectiveOr            : '||'                    -> channel(DIRECTIVE), type(Or);
+DirectiveString:
+    '"' ~('"' | [\r\n\u0085\u2028\u2029])* '"' -> channel(DIRECTIVE), type(StringLiteral)
+;
+ConditionalSymbol: Identifier -> channel(DIRECTIVE);
+DirectiveSingleLineComment:
+    ';' ~[\r\n\u0085\u2028\u2029]* -> skip
+;
+DirectiveNewline: LineBreak WhiteSpace? -> channel(DIRECTIVE), mode(DEFAULT_MODE);
+
+mode DIRECTIVE_TEXT;
+
+Text          : ~[\r\n\u0085\u2028\u2029]+ -> channel(DIRECTIVE);
+TextNewline   : LineBreak WhiteSpace?       -> channel(DIRECTIVE), type(DirectiveNewline), mode(DEFAULT_MODE);
+
+// Fragment rules
 
 fragment HotstringTriggerPart:
     Colon Options? Colon Trigger DoubleColon;
@@ -290,32 +352,7 @@ fragment Options:
 fragment Trigger:
     NonColonStringCharacter+;
 
-WhiteSpaces: WS+ -> channel(HIDDEN);
-
-IgnoreEOL: LineBreak+ {this.IgnoreEOL()}? -> channel(HIDDEN);
-EOL: LineBreak+ {!this.IgnoreEOL()}?;
-
-/// Comments
-
-UnexpectedCharacter : .                     -> channel(ERROR);
-
-mode HOTSTRING_MODE;
-HotstringEOL: LineBreak -> type(EOL), popMode;
-HotstringOpenBrace: '{' {this.ProcessHotstringOpenBrace();} -> type(OpenBrace), popMode;
-HotstringWhitespaces: WS+ -> channel(HIDDEN);
-HotstringExpansion: (~[;`\r\n {] | '`' EscapeSequence) RawString?;
-HotstringUnexpectedCharacter: . -> channel(ERROR);
-
-mode DIRECTIVE_MODE;
-DirectiveEOL: LineBreak -> type(EOL), popMode;
-DirectiveWhitespaces: WS+ -> channel(HIDDEN);
-DirectiveContent: (~[;`\r\n ] | '`' EscapeSequence) RawString?;
-DirectiveUnexpectedCharacter: . -> channel(ERROR);
-
-
-// Fragment rules
-
-fragment WS: [\t\u000B\u000C\u0020\u00A0];
+fragment WhiteSpace: [\t\u000B\u000C\u0020\u00A0]+;
 
 fragment DoubleStringCharacter: ~["`] | '`' EscapeSequence;
 
@@ -358,8 +395,7 @@ fragment NonEscapeCharacter: ~[`;:'"bfnrtvsa0-9xu\r\n];
 
 fragment EscapeCharacter: SingleEscapeCharacter | [0-9] | [xu];
 
-fragment LineBreak: [\r\n\u2028\u2029];
-fragment LineBreaks: [\r\n\u2028\u2029]+;
+fragment LineBreak: [\r\n\u2028\u2029]+;
 
 fragment HexDigit: [_0-9a-f];
 

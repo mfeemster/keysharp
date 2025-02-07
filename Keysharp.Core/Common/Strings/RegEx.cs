@@ -7,14 +7,13 @@
 		public object Mark => match.Groups.Count > 0 ? match.Groups[ ^ 1].Name : "";
 		public object Success => match.Success;
 
-		public RegExResults(params object[] args) : base(args) {
-		}
+		public RegExResults(params object[] args) : base(args) { }
 
         public new (Type, object) super => (typeof(RegExResults), this);
 
         public static implicit operator long(RegExResults r) => r.Pos();
 
-		public object __New(params object[] args)
+		public override object __New(params object[] args)
 		{
 			match = args[0] as Match;
 			return "";

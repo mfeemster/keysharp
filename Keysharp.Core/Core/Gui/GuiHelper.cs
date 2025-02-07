@@ -16,7 +16,7 @@
 			set => Threads.GetThreadVariables().dialogOwner = value;
 		}
 
-		public static Gui Gui(object obj0 = null, object obj1 = null, object obj2 = null) => new (obj0, obj1, obj2);
+		public static Gui Gui(object obj0 = null, object obj1 = null, object obj2 = null) => new ([obj0, obj1, obj2]);
 
 		public static object GuiCtrlFromHwnd(object obj)
 		{

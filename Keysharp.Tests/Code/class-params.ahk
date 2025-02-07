@@ -7,9 +7,9 @@ class testclass
 	__New(_a, _b, _c)
 	{
 		global
-		a := _a
-		b := _b
-		c := _c
+		this.a := _a
+		this.b := _b
+		this.c := _c
 	}
 }
 
@@ -24,10 +24,10 @@ class testsubclass extends testclass
 	{
 		global
 		super.__New(p1, p2, p3)
-		x := p1 * 10
-		y := p2 * 10
-		z := p3 * 10
-		zz := p4 * 10
+		this.x := p1 * 10
+		this.y := p2 * 10
+		this.z := p3 * 10
+		this.zz := p4 * 10
 	}
 }
 
@@ -113,9 +113,9 @@ class testclassnoargs
 	__New()
 	{
 		global
-		a := 1
-		b := 2
-		c := 3
+		this.a := 1
+		this.b := 2
+		this.c := 3
 	}
 }
 
@@ -128,8 +128,8 @@ class testsubclassfourargs extends testclassnoargs
 	{
 		global
 		super.__New()
-		x := p1 * 10
-		y := p2 * 10
+		this.x := p1 * 10
+		this.y := p2 * 10
 	}
 }
 
@@ -180,9 +180,9 @@ class testclassthreeargs
 	__New(_a, _b, _c)
 	{
 		global
-		a := _a
-		b := _b
-		c := _c
+		this.a := _a
+		this.b := _b
+		this.c := _c
 	}
 }
 
@@ -191,17 +191,17 @@ class testsubclassnoargs extends testclassthreeargs
 	x := ""
 	y := ""
 	
-	__New()
+	__New(a, b, c)
 	{
 		global
-		super.__New()
-		x := 100
-		y := 200
+		super.__New(a, b, c)
+		this.x := 100
+		this.y := 200
 	}
 }
 
 testclassobj := testclassthreeargs(4, 5, 6)
-testsubclassobj := testsubclassnoargs()
+testsubclassobj := testsubclassnoargs(1, 2, 3)
 
 val := testclassobj.a
 
@@ -240,21 +240,21 @@ else
 
 val := testsubclassobj.a
 
-If (val == unset)
+If (IsSet(val))
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
 
 val := testsubclassobj.b
 
-If (val == unset)
+If (IsSet(val))
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
 
 val := testsubclassobj.c
 
-If (val == unset)
+If (IsSet(val))
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -296,7 +296,7 @@ class class1
 			temp += n
 		}
 
-		sum := temp
+		this.sum := temp
 	}
 }
 
@@ -335,7 +335,7 @@ class class2
 {
 	sum := 0
 
-	__New(*)
+	__New(args*)
 	{
 		global sum
 		local temp := 0
@@ -345,7 +345,7 @@ class class2
 			temp += n
 		}
 
-		sum := temp
+		this.sum := temp
 	}
 }
 
@@ -393,7 +393,7 @@ class class3
 			temp += n
 		}
 
-		sum := temp
+		this.sum := temp
 	}
 }
 
@@ -429,7 +429,7 @@ class class4
 		global sum
 		local temp := p1 + p2
 
-		if (theparams != unset)
+		if (theparams.Length)
 		{
 			for n in theparams
 			{
@@ -437,7 +437,7 @@ class class4
 			}
 		}
 
-		sum := temp
+		this.sum := temp
 	}
 }
 

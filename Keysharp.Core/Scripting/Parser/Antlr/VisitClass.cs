@@ -5,7 +5,6 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Antlr4.Runtime.Misc;
-using static Keysharp.Core.Scripting.Parser.Antlr.Helper;
 using static MainParser;
 using Microsoft.CodeAnalysis;
 using System.Drawing.Imaging;
@@ -14,29 +13,41 @@ using System.IO;
 using System.Collections;
 using System.Reflection;
 using static System.Windows.Forms.AxHost;
+using static Keysharp.Scripting.Parser;
 
-namespace Keysharp.Core.Scripting.Parser.Antlr
+namespace Keysharp.Scripting
 {
     public partial class MainVisitor : MainParserBaseVisitor<SyntaxNode>
     {
+        public ParameterSyntax VariadicParam = SyntaxFactory.Parameter(SyntaxFactory.Identifier("args")) // Default name for spread argument
+        .WithType(SyntaxFactory.ArrayType(
+            SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword)), // object[]
+            SyntaxFactory.SingletonList(SyntaxFactory.ArrayRankSpecifier(
+                SyntaxFactory.SingletonSeparatedList<ExpressionSyntax>(
+                    SyntaxFactory.OmittedArraySizeExpression()
+                )
+            ))
+        ))
+        .WithModifiers(SyntaxFactory.TokenList(SyntaxFactory.Token(SyntaxKind.ParamsKeyword)));
+
         public override SyntaxNode VisitClassDeclaration([NotNull] ClassDeclarationContext context)
         {
-            var prevClass = state.currentClass;
-            state.currentClass = new Class(NormalizeIdentifier(context.identifier().GetText(), NameCase.Title));
+            var prevClass = parser.currentClass;
+            parser.currentClass = new Parser.Class(Parser.NormalizeIdentifier(context.identifier().GetText(), eNameCase.Title));
 
             // Determine the base class (Extends clause)
             BaseListSyntax baseList;
-            if (context.classTail().Extends() != null)
+            if (context.Extends() != null)
             {
-                var extendsParts = context.classTail().identifier();
-                var baseClassName = NormalizeClassIdentifier(extendsParts[0].GetText(), NameCase.Title);
+                var extendsParts = context.classExtensionName().identifier();
+                var baseClassName = parser.NormalizeClassIdentifier(extendsParts[0].GetText(), eNameCase.Title);
                 if (Reflections.stringToTypes.ContainsKey(baseClassName)) {
                     baseClassName = Reflections.stringToTypes.First(pair =>  pair.Key.Equals(baseClassName, StringComparison.InvariantCultureIgnoreCase)).Key;
-                    state.currentClass.Base = baseClassName;
+                    parser.currentClass.Base = baseClassName;
                 }
                 for (int i = 1; i < extendsParts.Length; i++)
                 {
-                    baseClassName += "." + NormalizeClassIdentifier(extendsParts[i].GetText(), NameCase.Title);
+                    baseClassName += "." + parser.NormalizeClassIdentifier(extendsParts[i].GetText(), eNameCase.Title);
                 }
                 baseList = SyntaxFactory.BaseList(
                     SyntaxFactory.SingletonSeparatedList<BaseTypeSyntax>(
@@ -59,12 +70,12 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                 SyntaxFactory.VariableDeclaration(
                     SyntaxFactory.ParseTypeName("object"),
                     SyntaxFactory.SingletonSeparatedList(
-                        SyntaxFactory.VariableDeclarator(state.currentClass.Name.ToLower())
+                        SyntaxFactory.VariableDeclarator(parser.currentClass.Name.ToLower())
                             .WithInitializer(
                                 SyntaxFactory.EqualsValueClause(
                                     SyntaxFactory.MemberAccessExpression(
                                         SyntaxKind.SimpleMemberAccessExpression,
-                                        SyntaxFactory.IdentifierName(state.currentClass.Name),
+                                        SyntaxFactory.IdentifierName(parser.currentClass.Name),
                                         SyntaxFactory.IdentifierName("__Static")
                                     )
                                 )
@@ -77,10 +88,10 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                 SyntaxFactory.Token(SyntaxKind.StaticKeyword)
             );
 
-            state.mainClass.Declaration = state.mainClass.Declaration.AddMembers(fieldDeclaration);
+            parser.mainClass.Declaration = parser.mainClass.Declaration.AddMembers(fieldDeclaration);
 
             // Add the constructor
-            state.currentClass.Body.Add(CreateConstructor(state.currentClass.Name));
+            parser.currentClass.Body.Add(CreateConstructor(parser.currentClass.Name));
 
             // Add __Class and __Static
             AddClassProperties(context.identifier().GetText());
@@ -93,23 +104,23 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                     var member = Visit(element) as MemberDeclarationSyntax;
                     if (member != null)
                     {
-                        state.currentClass.Body.Add(member);
+                        parser.currentClass.Body.Add(member);
                     }
                 }
             }
 
             // Add static__Init, __Init, and static constructor method (must be after processing the elements for proper field assignments)
-            AddInitMethods(state.currentClass.Name);
-            state.currentClass.Body.Add(CreateStaticConstructor(state.currentClass.Name));
+            AddInitMethods(parser.currentClass.Name);
+            parser.currentClass.Body.Add(CreateStaticConstructor(parser.currentClass.Name));
 
             // Add the Call factory method
-            if (!state.currentClass.ContainsMethod(Helper.Keywords.ClassStaticPrefix + "Call"))
-                state.currentClass.Body.Add(CreateCallFactoryMethod(state.currentClass.Name));
+            if (!parser.currentClass.ContainsMethod(Keywords.ClassStaticPrefix + "Call"))
+                parser.currentClass.Body.Add(CreateCallFactoryMethod(parser.currentClass.Name));
 
-            var newClass = state.currentClass.Declaration
+            var newClass = parser.currentClass.Declaration
                 .WithBaseList(baseList)
-                .WithMembers(SyntaxFactory.List(state.currentClass.Declaration.Members.Concat(state.currentClass.Body)));
-            state.currentClass = prevClass;
+                .WithMembers(SyntaxFactory.List(parser.currentClass.Declaration.Members.Concat(parser.currentClass.Body)));
+            parser.currentClass = prevClass;
             return newClass;
         }
 
@@ -117,11 +128,6 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
         public override SyntaxNode VisitClassTail([NotNull] ClassTailContext context)
         {
             return base.VisitClassTail(context);
-        }
-
-        public override SyntaxNode VisitClassExpression([NotNull] ClassExpressionContext context)
-        {
-            return base.VisitClassExpression(context);
         }
 
         public override SyntaxNode VisitClassPropertyDeclaration([NotNull] ClassPropertyDeclarationContext context)
@@ -148,7 +154,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             else
             {
                 // Handle regular property
-                propertyName = NormalizeClassIdentifier(propertyNameSyntax.identifier().GetText());
+                propertyName = parser.NormalizeClassIdentifier(propertyNameSyntax.identifier().GetText());
             }
 
             // Visit getter
@@ -157,17 +163,17 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             {
                 PushFunction("get_" + propertyNameSyntax.identifier().GetText());
                 var getterBody = (BlockSyntax)Visit(propertyDefinition.propertyGetterDefinition(0));
-                state.currentFunc.Body.AddRange(getterBody.Statements.ToArray());
+                parser.currentFunc.Body.AddRange(getterBody.Statements.ToArray());
                 getter = SyntaxFactory.AccessorDeclaration(SyntaxKind.GetAccessorDeclaration)
-                    .WithBody(state.currentFunc.AssembleBody());
+                    .WithBody(parser.currentFunc.AssembleBody());
                 PopFunction();
-            } else if (propertyDefinition.singleExpression() != null)
+            } else if (propertyDefinition.expression() != null)
             {
                 PushFunction("get_" + propertyNameSyntax.identifier().GetText());
-                var getterBody = SyntaxFactory.Block(SyntaxFactory.ReturnStatement((ExpressionSyntax)Visit(propertyDefinition.singleExpression())));
-                state.currentFunc.Body.AddRange(getterBody.Statements);
+                var getterBody = SyntaxFactory.Block(SyntaxFactory.ReturnStatement((ExpressionSyntax)Visit(propertyDefinition.expression())));
+                parser.currentFunc.Body.AddRange(getterBody.Statements);
                 getter = SyntaxFactory.AccessorDeclaration(SyntaxKind.GetAccessorDeclaration)
-                    .WithBody(state.currentFunc.AssembleBody());
+                    .WithBody(parser.currentFunc.AssembleBody());
                 PopFunction();
             }
 
@@ -176,11 +182,11 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
             if (propertyDefinition.propertySetterDefinition().Length != 0)
             {
                 PushFunction("set_" + propertyNameSyntax.identifier().GetText());
-                state.currentFunc.Void = true;
+                parser.currentFunc.Void = true;
                 var setterBody = (BlockSyntax)Visit(propertyDefinition.propertySetterDefinition(0));
-                state.currentFunc.Body.AddRange(setterBody.Statements);
+                parser.currentFunc.Body.AddRange(setterBody.Statements);
                 setter = SyntaxFactory.AccessorDeclaration(SyntaxKind.SetAccessorDeclaration)
-                    .WithBody(state.currentFunc.AssembleBody());
+                    .WithBody(parser.currentFunc.AssembleBody());
                 PopFunction();
             }
 
@@ -233,49 +239,42 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
 
         public override SyntaxNode VisitClassFieldDeclaration([NotNull] ClassFieldDeclarationContext context)
         {
-            var fieldDefinition = context.fieldDefinition();
-
             var fieldNames = new HashSet<string> { };
-
-            foreach (var property in fieldDefinition.propertyName())
-                fieldNames.Add(NormalizeClassIdentifier(property.GetText()));
+            var fieldDeclarations = new List<PropertyDeclarationSyntax>();
 
             var isStatic = context.Static() != null;
 
-            // Visit initializer if present
             EqualsValueClauseSyntax initializer = null;
             ExpressionSyntax initializerValue = null;
-            if (fieldDefinition.initializer() != null)
-            {
-                initializerValue = (ExpressionSyntax)Visit(fieldDefinition.initializer().singleExpression());
 
-                if (IsLiteralOrConstant(initializerValue))
-                {
-                    initializer = SyntaxFactory.EqualsValueClause(initializerValue);
-                }
-            }
-
-            // Create property declarations for all fields
-            var fieldDeclarations = new List<PropertyDeclarationSyntax>();
-            foreach (var fieldName in fieldNames)
+            foreach (var fieldDefinition in context.fieldDefinition())
             {
-                // Defer initialization to __Init
-                if (initializerValue != null)
+                var fieldName = fieldDefinition.propertyName().GetText();
+                fieldNames.Add(parser.NormalizeClassIdentifier(fieldName));
+
+                if (fieldDefinition.expression() != null)
                 {
+                    initializerValue = (ExpressionSyntax)Visit(fieldDefinition.expression());
+
+                    if (IsLiteralOrConstant(initializerValue))
+                    {
+                        initializer = SyntaxFactory.EqualsValueClause(initializerValue);
+                    }
+
                     if (isStatic)
-                        state.currentClass.deferredStaticInitializations.Add((fieldName, initializerValue));
+                        parser.currentClass.deferredStaticInitializations.Add((fieldName, initializerValue));
                     else
-                        state.currentClass.deferredInitializations.Add((fieldName, initializerValue));
+                        parser.currentClass.deferredInitializations.Add((fieldName, initializerValue));
                 }
 
-                if (PropertyExistsInBuiltinBase(fieldName) != null)
+                if (parser.PropertyExistsInBuiltinBase(fieldName) != null)
                     continue;
 
                 var propertyDeclaration = CreateFieldDeclaration(fieldName, isStatic);
 
-                state.currentClass.Body.Add(propertyDeclaration);
-                //fieldDeclarations.Add(propertyDeclaration);
+                parser.currentClass.Body.Add(propertyDeclaration);
             }
+
             return null;
         }
 
@@ -283,37 +282,30 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
         public override SyntaxNode VisitPropertyGetterDefinition([Antlr4.Runtime.Misc.NotNull] PropertyGetterDefinitionContext context)
         {
             //Console.WriteLine("PropertyGetterDefinition: " + context.GetText());
-            return VisitLambdaFunctionBody(context.lambdaFunctionBody());
+            return VisitFunctionBody(context.functionBody());
         }
 
         public override SyntaxNode VisitPropertySetterDefinition([NotNull] PropertySetterDefinitionContext context)
         {
-            return EnsureNoReturnStatement((BlockSyntax)VisitLambdaFunctionBody(context.lambdaFunctionBody()));
+            return EnsureNoReturnStatement((BlockSyntax)VisitFunctionBody(context.functionBody()));
         }
 
         public override SyntaxNode VisitClassMethodDeclaration([NotNull] ClassMethodDeclarationContext context)
         {
             var methodDefinition = context.methodDefinition();
-            var rawMethodName = methodDefinition.propertyName().GetText();
-            var methodName = NormalizeClassIdentifier(rawMethodName, NameCase.Title);
-            PushFunction(CultureInfo.CurrentCulture.TextInfo.ToTitleCase(rawMethodName));
+            Visit(methodDefinition.functionHead());
+            var rawMethodName = methodDefinition.functionHead().identifier().GetText();
+            var methodName = parser.currentFunc.Name = parser.NormalizeClassIdentifier(rawMethodName, eNameCase.Title);
+
             var fieldName = methodName.ToLowerInvariant();
             var isStatic = context.Static() != null;
-            var isAsync = methodDefinition.Async() != null;
 
             if (isStatic)
-                methodName = Helper.Keywords.ClassStaticPrefix + methodName;
-
-            // Visit formal parameters
-            ParameterListSyntax parameters = SyntaxFactory.ParameterList();
-            if (methodDefinition.formalParameterList() != null)
-            {
-                parameters = (ParameterListSyntax)Visit(methodDefinition.formalParameterList());
-            }
+                methodName = Keywords.ClassStaticPrefix + methodName;
 
             // Visit method body
-            BlockSyntax methodBody = (BlockSyntax)Visit(methodDefinition.lambdaFunctionBody());
-            state.currentFunc.Body.AddRange(methodBody.Statements);
+            BlockSyntax methodBody = (BlockSyntax)Visit(methodDefinition.functionBody());
+            parser.currentFunc.Body.AddRange(methodBody.Statements);
 
             // Create method declaration
             var methodDeclaration = SyntaxFactory.MethodDeclaration(
@@ -323,13 +315,13 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                 .WithModifiers(
                     SyntaxFactory.TokenList(
                         new List<SyntaxToken> {
-                            isAsync ? SyntaxFactory.Token(SyntaxKind.AsyncKeyword) : default,
+                            parser.currentFunc.Async ? SyntaxFactory.Token(SyntaxKind.AsyncKeyword) : default,
                             SyntaxFactory.Token(SyntaxKind.PublicKeyword)}
                         .Where(token => token != default)
                     )
                 )
-                .WithParameterList(parameters)
-            .WithBody(state.currentFunc.AssembleBody());
+                .WithParameterList(parser.currentFunc.AssembleParams())
+            .WithBody(parser.currentFunc.AssembleBody());
 
             PopFunction();
 
@@ -429,7 +421,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
         {
             // Check if instance __Init method already exists
             var instanceInitName = "__Init";
-            if (!state.currentClass.ContainsMethod(instanceInitName, default, true))
+            if (!parser.currentClass.ContainsMethod(instanceInitName, default, true))
             {
                 // Instance __Init method
                 var instanceInitMethod = SyntaxFactory.MethodDeclaration(
@@ -464,7 +456,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                         )
                     )
                         }.Concat(
-                            state.currentClass.deferredInitializations.Select(deferred =>
+                            parser.currentClass.deferredInitializations.Select(deferred =>
                                 SyntaxFactory.ExpressionStatement(
                                     SyntaxFactory.AssignmentExpression(
                                         SyntaxKind.SimpleAssignmentExpression,
@@ -477,21 +469,21 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                     )
                 );
 
-                state.currentClass.Body.Add(instanceInitMethod);
+                parser.currentClass.Body.Add(instanceInitMethod);
             }
 
             // Check if static __Init method already exists
-            if (!state.currentClass.ContainsMethod(Helper.Keywords.ClassStaticPrefix + "__Init", default, true))
+            if (!parser.currentClass.ContainsMethod(Keywords.ClassStaticPrefix + "__Init", default, true))
             {
                 // Static __Init method
                 var staticInitMethod = SyntaxFactory.MethodDeclaration(
                     SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.VoidKeyword)),
-                    Helper.Keywords.ClassStaticPrefix + "__Init"
+                    Keywords.ClassStaticPrefix + "__Init"
                 )
                 .WithModifiers(SyntaxFactory.TokenList(SyntaxFactory.Token(SyntaxKind.PublicKeyword)))
                 .WithBody(
                     SyntaxFactory.Block(
-                        state.currentClass.deferredStaticInitializations.Select(deferred =>
+                        parser.currentClass.deferredStaticInitializations.Select(deferred =>
                             SyntaxFactory.ExpressionStatement(
                                 SyntaxFactory.AssignmentExpression(
                                     SyntaxKind.SimpleAssignmentExpression,
@@ -503,13 +495,13 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                     )
                 );
 
-                state.currentClass.Body.Add(staticInitMethod);
+                parser.currentClass.Body.Add(staticInitMethod);
             }
         }
 
         private void AddClassProperties(string className)
         {
-            state.currentClass.Body.Add(
+            parser.currentClass.Body.Add(
                 SyntaxFactory.PropertyDeclaration(
                     SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.StringKeyword)),
                     "__Class"
@@ -531,7 +523,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
                 )
             );
 
-            state.currentClass.Body.Add(
+            parser.currentClass.Body.Add(
                 SyntaxFactory.PropertyDeclaration(
                     SyntaxFactory.ParseTypeName("object"), // Type of the property
                     "__Static" // Property name
@@ -561,7 +553,7 @@ namespace Keysharp.Core.Scripting.Parser.Antlr
         {
             return SyntaxFactory.MethodDeclaration(
                     SyntaxFactory.IdentifierName(className),
-                    Helper.Keywords.ClassStaticPrefix + "Call"
+                    Keywords.ClassStaticPrefix + "Call"
                 )
                 .WithModifiers(
                     SyntaxFactory.TokenList(

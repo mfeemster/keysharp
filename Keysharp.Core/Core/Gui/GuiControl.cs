@@ -385,9 +385,9 @@ namespace Keysharp.Core
 
 		internal Control Ctrl => _control;
 
-		public GuiControl(params object[] args) => _ = __New(args);
+		public GuiControl(params object[] args) : base(args) { }
 
-		public object __New(params object[] args)
+        public override object __New(params object[] args)
 		{
 			if (args.Length == 0) return null;
 			var gui = args[0] as Gui;

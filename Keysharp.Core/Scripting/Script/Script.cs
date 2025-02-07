@@ -3,7 +3,6 @@
 	public partial class Script
 	{
 		public static bool ForceKeybdHook;
-		public static uint MaxThreadsPerHotkey = 1u;
 		public static uint MaxThreadsTotal = 12u;
 		public static bool NoTrayIcon = false;
 		public static bool ValidateThenExit;

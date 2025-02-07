@@ -826,9 +826,9 @@ namespace Keysharp.Core
 			}
 		}
 
-		public ClipboardAll() => _ = __New();
+		public ClipboardAll(params object[] args) : base(args) { }
 
-		public object __New(params object[] args)
+		public override object __New(params object[] args)
 		{
 			Save();
 			return "";
@@ -856,11 +856,11 @@ namespace Keysharp.Core
 	}
 #elif WINDOWS
 
-	/// <summary>
-	/// A class that represents clipboard data.
-	/// This is just a thin derivation of <see cref="Buffer"/>.
-	/// </summary>
-	public class ClipboardAll : Buffer
+    /// <summary>
+    /// A class that represents clipboard data.
+    /// This is just a thin derivation of <see cref="Buffer"/>.
+    /// </summary>
+    public class ClipboardAll : Buffer
 	{
 		/// <summary>
 		/// Constructor that just passes the data to the base.
@@ -876,8 +876,8 @@ namespace Keysharp.Core
 		/// </summary>
 		public new (Type, object) super => (typeof(ClipboardAll), this);
 
-		public ClipboardAll(params object[] args) => _ = __New(args);
-	}
+		public ClipboardAll(params object[] args) : base(args) { }
+    }
 
 #endif
 }

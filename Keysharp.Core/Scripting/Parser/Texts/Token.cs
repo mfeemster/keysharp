@@ -297,6 +297,7 @@ namespace Keysharp.Scripting
 					case '*':
 					case '~':
 					case '$':
+					case ';':
 						break;
 
 					case '&':
@@ -1030,7 +1031,24 @@ namespace Keysharp.Scripting
 		private bool IsDirective(string code) => code.Length > 2 && code[0] == Directive;
 
 		private bool IsGetOrSet(ReadOnlySpan<char> code, string name)
-		=> code.StartsWith(name, StringComparison.OrdinalIgnoreCase) && code.IndexOfAny(ParensSv) == -1 && InClassDefinition() && Scope.Length > 0;
+		{
+			if (code.StartsWith(name, StringComparison.OrdinalIgnoreCase))
+			{
+				var parensIndex = code.IndexOfAny(ParensSv);
+
+				if (parensIndex >= 0)//If there are parens, ensure they are preceded by a =>
+				{
+					var fatArrowIndex = code.IndexOf("=>");
+
+					if (fatArrowIndex == -1 || fatArrowIndex > parensIndex)
+						return false;
+				}
+
+				return InClassDefinition() && Scope.Length > 0;
+			}
+
+			return false;
+		}
 
 		private bool IsProperty(CodeLine codeLine)
 		{

@@ -1,5 +1,4 @@
 using Antlr4.Runtime;
-using Keysharp.Core.Scripting.Parser.Antlr;
 
 namespace Keysharp.Scripting
 {
@@ -330,7 +329,7 @@ namespace Keysharp.Scripting
 						//in place for HotstringOptions() (#Hotstring xyz) in parts, because we need to call it in both places.
 						//This is because the position must be kept consistent with hotkey/string declarations,
 						//but also kept in place for other usage of global hotstring settings like A_DefaultHotstring*.
-						hotkeyHotstringCreations.Add(invoke);
+						topStatements.Add(invoke);
 
 						if (hso)
 						{
@@ -342,7 +341,6 @@ namespace Keysharp.Scripting
 															 , ref HotstringManager.hsDetectWhenInsideWord, ref HotstringManager.hsDoReset, ref HotstringManager.hsSameLineAction, ref HotstringManager.hsSuspendExempt);
 						}
 
-						//else//#HotIf doesn't need to be kept at the same place, it's fine if they run at the beginning as long as their relative position remains.
 						parts[i] = new CodeSnippetExpression("//#directive replaced by function call");
 					}
 				}
@@ -799,7 +797,7 @@ namespace Keysharp.Scripting
 							for (var child_i = 0; child_i < exprContext.ChildCount; child_i++) {
 								var child = exprContext.GetChild(child_i);
 								List<string> childList = [];
-								Helper.FlattenContext(child, ref childList);
+								FlattenContext(child, ref childList);
 								if (childList.Count != 0) {
 									if (childList[^1] == "*")
 										childList.RemoveAt(childList.Count - 1);

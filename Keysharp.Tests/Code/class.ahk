@@ -3,6 +3,7 @@ class myclass
 	a := ""
 	b :=
 	c := "asdf"
+	d := c
 	x := 123
 	y := x
 }
@@ -19,7 +20,7 @@ If (classobj.b == "asdf")
 else
 	FileAppend "fail", "*"
 	
-If (classobj.c == "asdf")
+If (classobj.d == "asdf")
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"

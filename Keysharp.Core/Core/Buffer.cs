@@ -69,12 +69,12 @@
 		/// Calls <see cref="__New"/> to initialize a new instance of the <see cref="Buffer"/> class.
 		/// </summary>
 		/// <param name="args">The data to initially store in the buffer</param>
-		public Buffer(params object[] args) => _ = __New(args);
+		public Buffer(params object[] args) : base(args) { }
 
-		/// <summary>
-		/// Destructor that manually calls <see cref="Dispose"/> to free the raw memory contained in the buffer.
-		/// </summary>
-		~Buffer()
+        /// <summary>
+        /// Destructor that manually calls <see cref="Dispose"/> to free the raw memory contained in the buffer.
+        /// </summary>
+        ~Buffer()
 		{
 			Dispose(true);
 		}
@@ -89,7 +89,7 @@
 		///     Integer[, Integer]: Sets length to the first value and optionally sets each byte to the second value.
 		/// </param>
 		/// <returns>Empty string, unused.</returns>
-		public object __New(params object[] obj)
+		public override object __New(params object[] obj)
 		{
 			if (obj == null || obj.Length == 0)
 			{

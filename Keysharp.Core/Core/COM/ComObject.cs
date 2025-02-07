@@ -52,9 +52,9 @@ namespace Keysharp.Core.COM
 
 		public int VarType { get; set; }
 
-		public ComObject(params object[] args) => _ = __New(args);
+		public ComObject(params object[] args) : base(args) { }
 
-		internal ComObject(object varType, object value, object flags = null) => _ = __New(varType, value, flags);
+		internal ComObject(object varType, object value, object flags = null) : base(varType, value, flags) { }
 
 		internal ComObject() : base(skipLogic: true)
 		{
@@ -70,7 +70,7 @@ namespace Keysharp.Core.COM
 				_ = Marshal.Release(ip);
 		}
 
-		public object __New(params object[] args)
+		public override object __New(params object[] args)
 		{
 			var varType = args[0];
 			var value = args[1];

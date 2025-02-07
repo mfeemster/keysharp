@@ -108,12 +108,14 @@ GroupAdd("AltTabWindow", "ahk_class MultitaskingViewFrame")  ; Windows 10
     MsgBox("hello")
 }
 
-`;::{
+^;::{
     MsgBox("hello")
 }
 
 ::btw::by the way
 ::`/`*::abcd`*`/
+::bt;w::by the; way
+;::omg::oh no
 
 a := 123
 testfunc(p1)

@@ -302,15 +302,17 @@
 
 		/// <summary>
 		/// Returns the index of the first occurrence of a character that is not an valid identifier character (var, func, or obj.key name).
+		/// This can only be used for hotkeys because it includes ';' which can be a hotkey trigger, but otherwise
+		/// wouldn't be part of a valid variable name.
 		/// </summary>
 		/// <param name="str">The string to examine.</param>
 		/// <returns>The index after an identifier is found.</returns>
-		internal static int FindIdentifierEnd(this string str)
+		internal static int FindHotkeyIdentifierEnd(this string str)
 		{
 			var i = 0;
 
 			for (; i < str.Length; i++)
-				if (!str[i].IsIdentifierChar())
+				if (!str[i].IsIdentifierChar() && str[i] != ';')//Hotkey triggers can contain a ;
 					return i;
 
 			return i;

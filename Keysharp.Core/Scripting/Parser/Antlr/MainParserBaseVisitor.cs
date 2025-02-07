@@ -344,6 +344,26 @@ public partial class MainParserBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// <return>The visitor result.</return>
 	public virtual Result VisitVariableStatement([NotNull] MainParser.VariableStatementContext context) { return VisitChildren(context); }
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="MainParser.awaitStatement"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitAwaitStatement([NotNull] MainParser.AwaitStatementContext context) { return VisitChildren(context); }
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="MainParser.deleteStatement"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitDeleteStatement([NotNull] MainParser.DeleteStatementContext context) { return VisitChildren(context); }
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="MainParser.importStatement"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
@@ -555,6 +575,36 @@ public partial class MainParserBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	public virtual Result VisitIfStatement([NotNull] MainParser.IfStatementContext context) { return VisitChildren(context); }
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="MainParser.flowBlock"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitFlowBlock([NotNull] MainParser.FlowBlockContext context) { return VisitChildren(context); }
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="MainParser.untilProduction"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitUntilProduction([NotNull] MainParser.UntilProductionContext context) { return VisitChildren(context); }
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="MainParser.elseProduction"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitElseProduction([NotNull] MainParser.ElseProductionContext context) { return VisitChildren(context); }
 	/// <summary>
 	/// Visit a parse tree produced by the <c>LoopStatement</c>
 	/// labeled alternative in <see cref="MainParser.iterationStatement"/>.
@@ -793,7 +843,7 @@ public partial class MainParserBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// <return>The visitor result.</return>
 	public virtual Result VisitCatchAssignable([NotNull] MainParser.CatchAssignableContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="MainParser.elseProduction"/>.
+	/// Visit a parse tree produced by <see cref="MainParser.catchClasses"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -801,7 +851,7 @@ public partial class MainParserBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitElseProduction([NotNull] MainParser.ElseProductionContext context) { return VisitChildren(context); }
+	public virtual Result VisitCatchClasses([NotNull] MainParser.CatchClassesContext context) { return VisitChildren(context); }
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="MainParser.finallyProduction"/>.
 	/// <para>
@@ -832,6 +882,16 @@ public partial class MainParserBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	public virtual Result VisitClassDeclaration([NotNull] MainParser.ClassDeclarationContext context) { return VisitChildren(context); }
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="MainParser.classExtensionName"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitClassExtensionName([NotNull] MainParser.ClassExtensionNameContext context) { return VisitChildren(context); }
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="MainParser.classTail"/>.
 	/// <para>
@@ -977,16 +1037,6 @@ public partial class MainParserBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// <return>The visitor result.</return>
 	public virtual Result VisitLastFormalParameterArg([NotNull] MainParser.LastFormalParameterArgContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="MainParser.functionBody"/>.
-	/// <para>
-	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
-	/// on <paramref name="context"/>.
-	/// </para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	public virtual Result VisitFunctionBody([NotNull] MainParser.FunctionBodyContext context) { return VisitChildren(context); }
-	/// <summary>
 	/// Visit a parse tree produced by <see cref="MainParser.arrayLiteral"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
@@ -1091,16 +1141,6 @@ public partial class MainParserBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// <return>The visitor result.</return>
 	public virtual Result VisitPropertySetter([NotNull] MainParser.PropertySetterContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="MainParser.dynamicPropertyName"/>.
-	/// <para>
-	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
-	/// on <paramref name="context"/>.
-	/// </para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	public virtual Result VisitDynamicPropertyName([NotNull] MainParser.DynamicPropertyNameContext context) { return VisitChildren(context); }
-	/// <summary>
 	/// Visit a parse tree produced by <see cref="MainParser.propertyName"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
@@ -1110,16 +1150,6 @@ public partial class MainParserBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	public virtual Result VisitPropertyName([NotNull] MainParser.PropertyNameContext context) { return VisitChildren(context); }
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="MainParser.derefContinuation"/>.
-	/// <para>
-	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
-	/// on <paramref name="context"/>.
-	/// </para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	public virtual Result VisitDerefContinuation([NotNull] MainParser.DerefContinuationContext context) { return VisitChildren(context); }
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="MainParser.dereference"/>.
 	/// <para>
@@ -1161,26 +1191,6 @@ public partial class MainParserBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// <return>The visitor result.</return>
 	public virtual Result VisitExpressionSequence([NotNull] MainParser.ExpressionSequenceContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="MainParser.singleExpressionConcatenation"/>.
-	/// <para>
-	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
-	/// on <paramref name="context"/>.
-	/// </para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	public virtual Result VisitSingleExpressionConcatenation([NotNull] MainParser.SingleExpressionConcatenationContext context) { return VisitChildren(context); }
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="MainParser.functionCallArguments"/>.
-	/// <para>
-	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
-	/// on <paramref name="context"/>.
-	/// </para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	public virtual Result VisitFunctionCallArguments([NotNull] MainParser.FunctionCallArgumentsContext context) { return VisitChildren(context); }
-	/// <summary>
 	/// Visit a parse tree produced by <see cref="MainParser.memberIndexArguments"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
@@ -1191,19 +1201,8 @@ public partial class MainParserBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// <return>The visitor result.</return>
 	public virtual Result VisitMemberIndexArguments([NotNull] MainParser.MemberIndexArgumentsContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by the <c>BaseExpression</c>
-	/// labeled alternative in <see cref="MainParser.singleExpression"/>.
-	/// <para>
-	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
-	/// on <paramref name="context"/>.
-	/// </para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	public virtual Result VisitBaseExpression([NotNull] MainParser.BaseExpressionContext context) { return VisitChildren(context); }
-	/// <summary>
 	/// Visit a parse tree produced by the <c>TernaryExpression</c>
-	/// labeled alternative in <see cref="MainParser.singleExpression"/>.
+	/// labeled alternative in <see cref="MainParser.expression"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -1214,7 +1213,7 @@ public partial class MainParserBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	public virtual Result VisitTernaryExpression([NotNull] MainParser.TernaryExpressionContext context) { return VisitChildren(context); }
 	/// <summary>
 	/// Visit a parse tree produced by the <c>LogicalAndExpression</c>
-	/// labeled alternative in <see cref="MainParser.singleExpression"/>.
+	/// labeled alternative in <see cref="MainParser.expression"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -1224,140 +1223,8 @@ public partial class MainParserBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// <return>The visitor result.</return>
 	public virtual Result VisitLogicalAndExpression([NotNull] MainParser.LogicalAndExpressionContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by the <c>PowerExpression</c>
-	/// labeled alternative in <see cref="MainParser.singleExpression"/>.
-	/// <para>
-	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
-	/// on <paramref name="context"/>.
-	/// </para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	public virtual Result VisitPowerExpression([NotNull] MainParser.PowerExpressionContext context) { return VisitChildren(context); }
-	/// <summary>
-	/// Visit a parse tree produced by the <c>PreIncrementExpression</c>
-	/// labeled alternative in <see cref="MainParser.singleExpression"/>.
-	/// <para>
-	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
-	/// on <paramref name="context"/>.
-	/// </para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	public virtual Result VisitPreIncrementExpression([NotNull] MainParser.PreIncrementExpressionContext context) { return VisitChildren(context); }
-	/// <summary>
-	/// Visit a parse tree produced by the <c>ObjectLiteralExpression</c>
-	/// labeled alternative in <see cref="MainParser.singleExpression"/>.
-	/// <para>
-	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
-	/// on <paramref name="context"/>.
-	/// </para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	public virtual Result VisitObjectLiteralExpression([NotNull] MainParser.ObjectLiteralExpressionContext context) { return VisitChildren(context); }
-	/// <summary>
-	/// Visit a parse tree produced by the <c>DynamicIdentifierExpression</c>
-	/// labeled alternative in <see cref="MainParser.singleExpression"/>.
-	/// <para>
-	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
-	/// on <paramref name="context"/>.
-	/// </para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	public virtual Result VisitDynamicIdentifierExpression([NotNull] MainParser.DynamicIdentifierExpressionContext context) { return VisitChildren(context); }
-	/// <summary>
-	/// Visit a parse tree produced by the <c>InExpression</c>
-	/// labeled alternative in <see cref="MainParser.singleExpression"/>.
-	/// <para>
-	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
-	/// on <paramref name="context"/>.
-	/// </para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	public virtual Result VisitInExpression([NotNull] MainParser.InExpressionContext context) { return VisitChildren(context); }
-	/// <summary>
-	/// Visit a parse tree produced by the <c>LogicalOrExpression</c>
-	/// labeled alternative in <see cref="MainParser.singleExpression"/>.
-	/// <para>
-	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
-	/// on <paramref name="context"/>.
-	/// </para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	public virtual Result VisitLogicalOrExpression([NotNull] MainParser.LogicalOrExpressionContext context) { return VisitChildren(context); }
-	/// <summary>
-	/// Visit a parse tree produced by the <c>NotExpression</c>
-	/// labeled alternative in <see cref="MainParser.singleExpression"/>.
-	/// <para>
-	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
-	/// on <paramref name="context"/>.
-	/// </para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	public virtual Result VisitNotExpression([NotNull] MainParser.NotExpressionContext context) { return VisitChildren(context); }
-	/// <summary>
-	/// Visit a parse tree produced by the <c>RegExMatchExpression</c>
-	/// labeled alternative in <see cref="MainParser.singleExpression"/>.
-	/// <para>
-	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
-	/// on <paramref name="context"/>.
-	/// </para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	public virtual Result VisitRegExMatchExpression([NotNull] MainParser.RegExMatchExpressionContext context) { return VisitChildren(context); }
-	/// <summary>
-	/// Visit a parse tree produced by the <c>PreDecreaseExpression</c>
-	/// labeled alternative in <see cref="MainParser.singleExpression"/>.
-	/// <para>
-	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
-	/// on <paramref name="context"/>.
-	/// </para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	public virtual Result VisitPreDecreaseExpression([NotNull] MainParser.PreDecreaseExpressionContext context) { return VisitChildren(context); }
-	/// <summary>
-	/// Visit a parse tree produced by the <c>FunctionCallExpression</c>
-	/// labeled alternative in <see cref="MainParser.singleExpression"/>.
-	/// <para>
-	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
-	/// on <paramref name="context"/>.
-	/// </para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	public virtual Result VisitFunctionCallExpression([NotNull] MainParser.FunctionCallExpressionContext context) { return VisitChildren(context); }
-	/// <summary>
-	/// Visit a parse tree produced by the <c>AwaitExpression</c>
-	/// labeled alternative in <see cref="MainParser.singleExpression"/>.
-	/// <para>
-	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
-	/// on <paramref name="context"/>.
-	/// </para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	public virtual Result VisitAwaitExpression([NotNull] MainParser.AwaitExpressionContext context) { return VisitChildren(context); }
-	/// <summary>
-	/// Visit a parse tree produced by the <c>ThisExpression</c>
-	/// labeled alternative in <see cref="MainParser.singleExpression"/>.
-	/// <para>
-	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
-	/// on <paramref name="context"/>.
-	/// </para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	public virtual Result VisitThisExpression([NotNull] MainParser.ThisExpressionContext context) { return VisitChildren(context); }
-	/// <summary>
 	/// Visit a parse tree produced by the <c>FunctionExpression</c>
-	/// labeled alternative in <see cref="MainParser.singleExpression"/>.
+	/// labeled alternative in <see cref="MainParser.expression"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -1367,8 +1234,8 @@ public partial class MainParserBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// <return>The visitor result.</return>
 	public virtual Result VisitFunctionExpression([NotNull] MainParser.FunctionExpressionContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by the <c>UnaryMinusExpression</c>
-	/// labeled alternative in <see cref="MainParser.singleExpression"/>.
+	/// Visit a parse tree produced by the <c>AssignmentExpression</c>
+	/// labeled alternative in <see cref="MainParser.expression"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -1376,10 +1243,10 @@ public partial class MainParserBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitUnaryMinusExpression([NotNull] MainParser.UnaryMinusExpressionContext context) { return VisitChildren(context); }
+	public virtual Result VisitAssignmentExpression([NotNull] MainParser.AssignmentExpressionContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by the <c>PostDecreaseExpression</c>
-	/// labeled alternative in <see cref="MainParser.singleExpression"/>.
+	/// Visit a parse tree produced by the <c>FatArrowExpression</c>
+	/// labeled alternative in <see cref="MainParser.expression"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -1387,10 +1254,10 @@ public partial class MainParserBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitPostDecreaseExpression([NotNull] MainParser.PostDecreaseExpressionContext context) { return VisitChildren(context); }
+	public virtual Result VisitFatArrowExpression([NotNull] MainParser.FatArrowExpressionContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by the <c>InstanceofExpression</c>
-	/// labeled alternative in <see cref="MainParser.singleExpression"/>.
+	/// Visit a parse tree produced by the <c>LogicalOrExpression</c>
+	/// labeled alternative in <see cref="MainParser.expression"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -1398,10 +1265,10 @@ public partial class MainParserBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitInstanceofExpression([NotNull] MainParser.InstanceofExpressionContext context) { return VisitChildren(context); }
+	public virtual Result VisitLogicalOrExpression([NotNull] MainParser.LogicalOrExpressionContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by the <c>UnaryPlusExpression</c>
-	/// labeled alternative in <see cref="MainParser.singleExpression"/>.
+	/// Visit a parse tree produced by the <c>ExpressionDummy</c>
+	/// labeled alternative in <see cref="MainParser.expression"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -1409,10 +1276,10 @@ public partial class MainParserBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitUnaryPlusExpression([NotNull] MainParser.UnaryPlusExpressionContext context) { return VisitChildren(context); }
+	public virtual Result VisitExpressionDummy([NotNull] MainParser.ExpressionDummyContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by the <c>DeleteExpression</c>
-	/// labeled alternative in <see cref="MainParser.singleExpression"/>.
+	/// Visit a parse tree produced by the <c>NotExpression</c>
+	/// labeled alternative in <see cref="MainParser.expression"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -1420,10 +1287,10 @@ public partial class MainParserBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitDeleteExpression([NotNull] MainParser.DeleteExpressionContext context) { return VisitChildren(context); }
+	public virtual Result VisitNotExpression([NotNull] MainParser.NotExpressionContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by the <c>BitXOrExpression</c>
-	/// labeled alternative in <see cref="MainParser.singleExpression"/>.
+	/// Visit a parse tree produced by the <c>CoalesceExpression</c>
+	/// labeled alternative in <see cref="MainParser.expression"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -1431,9 +1298,9 @@ public partial class MainParserBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitBitXOrExpression([NotNull] MainParser.BitXOrExpressionContext context) { return VisitChildren(context); }
+	public virtual Result VisitCoalesceExpression([NotNull] MainParser.CoalesceExpressionContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by the <c>DotConcatenateExpression</c>
+	/// Visit a parse tree produced by the <c>NotExpressionDuplicate</c>
 	/// labeled alternative in <see cref="MainParser.singleExpression"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
@@ -1442,9 +1309,9 @@ public partial class MainParserBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitDotConcatenateExpression([NotNull] MainParser.DotConcatenateExpressionContext context) { return VisitChildren(context); }
+	public virtual Result VisitNotExpressionDuplicate([NotNull] MainParser.NotExpressionDuplicateContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by the <c>EqualityExpression</c>
+	/// Visit a parse tree produced by the <c>LogicalOrExpressionDuplicate</c>
 	/// labeled alternative in <see cref="MainParser.singleExpression"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
@@ -1453,9 +1320,9 @@ public partial class MainParserBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitEqualityExpression([NotNull] MainParser.EqualityExpressionContext context) { return VisitChildren(context); }
+	public virtual Result VisitLogicalOrExpressionDuplicate([NotNull] MainParser.LogicalOrExpressionDuplicateContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by the <c>SuperExpression</c>
+	/// Visit a parse tree produced by the <c>SingleExpressionDummy</c>
 	/// labeled alternative in <see cref="MainParser.singleExpression"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
@@ -1464,9 +1331,9 @@ public partial class MainParserBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitSuperExpression([NotNull] MainParser.SuperExpressionContext context) { return VisitChildren(context); }
+	public virtual Result VisitSingleExpressionDummy([NotNull] MainParser.SingleExpressionDummyContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by the <c>MultiplicativeExpression</c>
+	/// Visit a parse tree produced by the <c>AssignmentExpressionDuplicate</c>
 	/// labeled alternative in <see cref="MainParser.singleExpression"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
@@ -1475,9 +1342,9 @@ public partial class MainParserBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitMultiplicativeExpression([NotNull] MainParser.MultiplicativeExpressionContext context) { return VisitChildren(context); }
+	public virtual Result VisitAssignmentExpressionDuplicate([NotNull] MainParser.AssignmentExpressionDuplicateContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by the <c>BitShiftExpression</c>
+	/// Visit a parse tree produced by the <c>TernaryExpressionDuplicate</c>
 	/// labeled alternative in <see cref="MainParser.singleExpression"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
@@ -1486,9 +1353,9 @@ public partial class MainParserBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitBitShiftExpression([NotNull] MainParser.BitShiftExpressionContext context) { return VisitChildren(context); }
+	public virtual Result VisitTernaryExpressionDuplicate([NotNull] MainParser.TernaryExpressionDuplicateContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by the <c>ParenthesizedExpression</c>
+	/// Visit a parse tree produced by the <c>LogicalAndExpressionDuplicate</c>
 	/// labeled alternative in <see cref="MainParser.singleExpression"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
@@ -1497,10 +1364,21 @@ public partial class MainParserBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitParenthesizedExpression([NotNull] MainParser.ParenthesizedExpressionContext context) { return VisitChildren(context); }
+	public virtual Result VisitLogicalAndExpressionDuplicate([NotNull] MainParser.LogicalAndExpressionDuplicateContext context) { return VisitChildren(context); }
+	/// <summary>
+	/// Visit a parse tree produced by the <c>CoalesceExpressionDuplicate</c>
+	/// labeled alternative in <see cref="MainParser.singleExpression"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitCoalesceExpressionDuplicate([NotNull] MainParser.CoalesceExpressionDuplicateContext context) { return VisitChildren(context); }
 	/// <summary>
 	/// Visit a parse tree produced by the <c>AdditiveExpression</c>
-	/// labeled alternative in <see cref="MainParser.singleExpression"/>.
+	/// labeled alternative in <see cref="MainParser.operatorExpression"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -1511,7 +1389,7 @@ public partial class MainParserBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	public virtual Result VisitAdditiveExpression([NotNull] MainParser.AdditiveExpressionContext context) { return VisitChildren(context); }
 	/// <summary>
 	/// Visit a parse tree produced by the <c>RelationalExpression</c>
-	/// labeled alternative in <see cref="MainParser.singleExpression"/>.
+	/// labeled alternative in <see cref="MainParser.operatorExpression"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -1522,7 +1400,7 @@ public partial class MainParserBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	public virtual Result VisitRelationalExpression([NotNull] MainParser.RelationalExpressionContext context) { return VisitChildren(context); }
 	/// <summary>
 	/// Visit a parse tree produced by the <c>PostIncrementExpression</c>
-	/// labeled alternative in <see cref="MainParser.singleExpression"/>.
+	/// labeled alternative in <see cref="MainParser.operatorExpression"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -1532,8 +1410,8 @@ public partial class MainParserBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// <return>The visitor result.</return>
 	public virtual Result VisitPostIncrementExpression([NotNull] MainParser.PostIncrementExpressionContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by the <c>ContainsExpression</c>
-	/// labeled alternative in <see cref="MainParser.singleExpression"/>.
+	/// Visit a parse tree produced by the <c>PowerExpression</c>
+	/// labeled alternative in <see cref="MainParser.operatorExpression"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -1541,10 +1419,32 @@ public partial class MainParserBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitContainsExpression([NotNull] MainParser.ContainsExpressionContext context) { return VisitChildren(context); }
+	public virtual Result VisitPowerExpression([NotNull] MainParser.PowerExpressionContext context) { return VisitChildren(context); }
+	/// <summary>
+	/// Visit a parse tree produced by the <c>ContainExpression</c>
+	/// labeled alternative in <see cref="MainParser.operatorExpression"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitContainExpression([NotNull] MainParser.ContainExpressionContext context) { return VisitChildren(context); }
+	/// <summary>
+	/// Visit a parse tree produced by the <c>PreIncrementExpression</c>
+	/// labeled alternative in <see cref="MainParser.operatorExpression"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitPreIncrementExpression([NotNull] MainParser.PreIncrementExpressionContext context) { return VisitChildren(context); }
 	/// <summary>
 	/// Visit a parse tree produced by the <c>BitNotExpression</c>
-	/// labeled alternative in <see cref="MainParser.singleExpression"/>.
+	/// labeled alternative in <see cref="MainParser.operatorExpression"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -1554,8 +1454,173 @@ public partial class MainParserBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// <return>The visitor result.</return>
 	public virtual Result VisitBitNotExpression([NotNull] MainParser.BitNotExpressionContext context) { return VisitChildren(context); }
 	/// <summary>
+	/// Visit a parse tree produced by the <c>RegExMatchExpression</c>
+	/// labeled alternative in <see cref="MainParser.operatorExpression"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitRegExMatchExpression([NotNull] MainParser.RegExMatchExpressionContext context) { return VisitChildren(context); }
+	/// <summary>
+	/// Visit a parse tree produced by the <c>PreDecreaseExpression</c>
+	/// labeled alternative in <see cref="MainParser.operatorExpression"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitPreDecreaseExpression([NotNull] MainParser.PreDecreaseExpressionContext context) { return VisitChildren(context); }
+	/// <summary>
+	/// Visit a parse tree produced by the <c>UnaryMinusExpression</c>
+	/// labeled alternative in <see cref="MainParser.operatorExpression"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitUnaryMinusExpression([NotNull] MainParser.UnaryMinusExpressionContext context) { return VisitChildren(context); }
+	/// <summary>
+	/// Visit a parse tree produced by the <c>BitAndExpression</c>
+	/// labeled alternative in <see cref="MainParser.operatorExpression"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitBitAndExpression([NotNull] MainParser.BitAndExpressionContext context) { return VisitChildren(context); }
+	/// <summary>
+	/// Visit a parse tree produced by the <c>PostDecreaseExpression</c>
+	/// labeled alternative in <see cref="MainParser.operatorExpression"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitPostDecreaseExpression([NotNull] MainParser.PostDecreaseExpressionContext context) { return VisitChildren(context); }
+	/// <summary>
+	/// Visit a parse tree produced by the <c>BitOrExpression</c>
+	/// labeled alternative in <see cref="MainParser.operatorExpression"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitBitOrExpression([NotNull] MainParser.BitOrExpressionContext context) { return VisitChildren(context); }
+	/// <summary>
+	/// Visit a parse tree produced by the <c>UnaryPlusExpression</c>
+	/// labeled alternative in <see cref="MainParser.operatorExpression"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitUnaryPlusExpression([NotNull] MainParser.UnaryPlusExpressionContext context) { return VisitChildren(context); }
+	/// <summary>
+	/// Visit a parse tree produced by the <c>ConcatenateExpression</c>
+	/// labeled alternative in <see cref="MainParser.operatorExpression"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitConcatenateExpression([NotNull] MainParser.ConcatenateExpressionContext context) { return VisitChildren(context); }
+	/// <summary>
+	/// Visit a parse tree produced by the <c>OperatorExpressionDummy</c>
+	/// labeled alternative in <see cref="MainParser.operatorExpression"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitOperatorExpressionDummy([NotNull] MainParser.OperatorExpressionDummyContext context) { return VisitChildren(context); }
+	/// <summary>
+	/// Visit a parse tree produced by the <c>BitXOrExpression</c>
+	/// labeled alternative in <see cref="MainParser.operatorExpression"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitBitXOrExpression([NotNull] MainParser.BitXOrExpressionContext context) { return VisitChildren(context); }
+	/// <summary>
+	/// Visit a parse tree produced by the <c>EqualityExpression</c>
+	/// labeled alternative in <see cref="MainParser.operatorExpression"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitEqualityExpression([NotNull] MainParser.EqualityExpressionContext context) { return VisitChildren(context); }
+	/// <summary>
+	/// Visit a parse tree produced by the <c>MultiplicativeExpression</c>
+	/// labeled alternative in <see cref="MainParser.operatorExpression"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitMultiplicativeExpression([NotNull] MainParser.MultiplicativeExpressionContext context) { return VisitChildren(context); }
+	/// <summary>
+	/// Visit a parse tree produced by the <c>BitShiftExpression</c>
+	/// labeled alternative in <see cref="MainParser.operatorExpression"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitBitShiftExpression([NotNull] MainParser.BitShiftExpressionContext context) { return VisitChildren(context); }
+	/// <summary>
+	/// Visit a parse tree produced by the <c>ParenthesizedExpression</c>
+	/// labeled alternative in <see cref="MainParser.primaryExpression"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitParenthesizedExpression([NotNull] MainParser.ParenthesizedExpressionContext context) { return VisitChildren(context); }
+	/// <summary>
+	/// Visit a parse tree produced by the <c>ObjectLiteralExpression</c>
+	/// labeled alternative in <see cref="MainParser.primaryExpression"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitObjectLiteralExpression([NotNull] MainParser.ObjectLiteralExpressionContext context) { return VisitChildren(context); }
+	/// <summary>
 	/// Visit a parse tree produced by the <c>VarRefExpression</c>
-	/// labeled alternative in <see cref="MainParser.singleExpression"/>.
+	/// labeled alternative in <see cref="MainParser.primaryExpression"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -1565,8 +1630,19 @@ public partial class MainParserBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// <return>The visitor result.</return>
 	public virtual Result VisitVarRefExpression([NotNull] MainParser.VarRefExpressionContext context) { return VisitChildren(context); }
 	/// <summary>
+	/// Visit a parse tree produced by the <c>DynamicIdentifierExpression</c>
+	/// labeled alternative in <see cref="MainParser.primaryExpression"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitDynamicIdentifierExpression([NotNull] MainParser.DynamicIdentifierExpressionContext context) { return VisitChildren(context); }
+	/// <summary>
 	/// Visit a parse tree produced by the <c>LiteralExpression</c>
-	/// labeled alternative in <see cref="MainParser.singleExpression"/>.
+	/// labeled alternative in <see cref="MainParser.primaryExpression"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -1577,7 +1653,7 @@ public partial class MainParserBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	public virtual Result VisitLiteralExpression([NotNull] MainParser.LiteralExpressionContext context) { return VisitChildren(context); }
 	/// <summary>
 	/// Visit a parse tree produced by the <c>ArrayLiteralExpression</c>
-	/// labeled alternative in <see cref="MainParser.singleExpression"/>.
+	/// labeled alternative in <see cref="MainParser.primaryExpression"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -1588,7 +1664,7 @@ public partial class MainParserBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	public virtual Result VisitArrayLiteralExpression([NotNull] MainParser.ArrayLiteralExpressionContext context) { return VisitChildren(context); }
 	/// <summary>
 	/// Visit a parse tree produced by the <c>MemberDotExpression</c>
-	/// labeled alternative in <see cref="MainParser.singleExpression"/>.
+	/// labeled alternative in <see cref="MainParser.primaryExpression"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -1598,19 +1674,8 @@ public partial class MainParserBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// <return>The visitor result.</return>
 	public virtual Result VisitMemberDotExpression([NotNull] MainParser.MemberDotExpressionContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by the <c>ClassExpression</c>
-	/// labeled alternative in <see cref="MainParser.singleExpression"/>.
-	/// <para>
-	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
-	/// on <paramref name="context"/>.
-	/// </para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	public virtual Result VisitClassExpression([NotNull] MainParser.ClassExpressionContext context) { return VisitChildren(context); }
-	/// <summary>
 	/// Visit a parse tree produced by the <c>MemberIndexExpression</c>
-	/// labeled alternative in <see cref="MainParser.singleExpression"/>.
+	/// labeled alternative in <see cref="MainParser.primaryExpression"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -1620,8 +1685,19 @@ public partial class MainParserBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// <return>The visitor result.</return>
 	public virtual Result VisitMemberIndexExpression([NotNull] MainParser.MemberIndexExpressionContext context) { return VisitChildren(context); }
 	/// <summary>
+	/// Visit a parse tree produced by the <c>FunctionCallExpression</c>
+	/// labeled alternative in <see cref="MainParser.primaryExpression"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitFunctionCallExpression([NotNull] MainParser.FunctionCallExpressionContext context) { return VisitChildren(context); }
+	/// <summary>
 	/// Visit a parse tree produced by the <c>IdentifierExpression</c>
-	/// labeled alternative in <see cref="MainParser.singleExpression"/>.
+	/// labeled alternative in <see cref="MainParser.primaryExpression"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -1631,8 +1707,7 @@ public partial class MainParserBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// <return>The visitor result.</return>
 	public virtual Result VisitIdentifierExpression([NotNull] MainParser.IdentifierExpressionContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by the <c>IsExpression</c>
-	/// labeled alternative in <see cref="MainParser.singleExpression"/>.
+	/// Visit a parse tree produced by <see cref="MainParser.memberDot"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -1640,62 +1715,7 @@ public partial class MainParserBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitIsExpression([NotNull] MainParser.IsExpressionContext context) { return VisitChildren(context); }
-	/// <summary>
-	/// Visit a parse tree produced by the <c>BitAndExpression</c>
-	/// labeled alternative in <see cref="MainParser.singleExpression"/>.
-	/// <para>
-	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
-	/// on <paramref name="context"/>.
-	/// </para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	public virtual Result VisitBitAndExpression([NotNull] MainParser.BitAndExpressionContext context) { return VisitChildren(context); }
-	/// <summary>
-	/// Visit a parse tree produced by the <c>ImplicitConcatenateExpression</c>
-	/// labeled alternative in <see cref="MainParser.singleExpression"/>.
-	/// <para>
-	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
-	/// on <paramref name="context"/>.
-	/// </para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	public virtual Result VisitImplicitConcatenateExpression([NotNull] MainParser.ImplicitConcatenateExpressionContext context) { return VisitChildren(context); }
-	/// <summary>
-	/// Visit a parse tree produced by the <c>BitOrExpression</c>
-	/// labeled alternative in <see cref="MainParser.singleExpression"/>.
-	/// <para>
-	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
-	/// on <paramref name="context"/>.
-	/// </para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	public virtual Result VisitBitOrExpression([NotNull] MainParser.BitOrExpressionContext context) { return VisitChildren(context); }
-	/// <summary>
-	/// Visit a parse tree produced by the <c>AssignmentOperatorExpression</c>
-	/// labeled alternative in <see cref="MainParser.singleExpression"/>.
-	/// <para>
-	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
-	/// on <paramref name="context"/>.
-	/// </para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	public virtual Result VisitAssignmentOperatorExpression([NotNull] MainParser.AssignmentOperatorExpressionContext context) { return VisitChildren(context); }
-	/// <summary>
-	/// Visit a parse tree produced by the <c>CoalesceExpression</c>
-	/// labeled alternative in <see cref="MainParser.singleExpression"/>.
-	/// <para>
-	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
-	/// on <paramref name="context"/>.
-	/// </para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	public virtual Result VisitCoalesceExpression([NotNull] MainParser.CoalesceExpressionContext context) { return VisitChildren(context); }
+	public virtual Result VisitMemberDot([NotNull] MainParser.MemberDotContext context) { return VisitChildren(context); }
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="MainParser.memberIdentifier"/>.
 	/// <para>
@@ -1747,8 +1767,7 @@ public partial class MainParserBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// <return>The visitor result.</return>
 	public virtual Result VisitObjectLiteral([NotNull] MainParser.ObjectLiteralContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by the <c>NamedLambdaFunction</c>
-	/// labeled alternative in <see cref="MainParser.lambdaFunction"/>.
+	/// Visit a parse tree produced by <see cref="MainParser.functionHead"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -1756,10 +1775,9 @@ public partial class MainParserBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitNamedLambdaFunction([NotNull] MainParser.NamedLambdaFunctionContext context) { return VisitChildren(context); }
+	public virtual Result VisitFunctionHead([NotNull] MainParser.FunctionHeadContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by the <c>AnonymousLambdaFunction</c>
-	/// labeled alternative in <see cref="MainParser.lambdaFunction"/>.
+	/// Visit a parse tree produced by <see cref="MainParser.functionExpressionHead"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -1767,10 +1785,9 @@ public partial class MainParserBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitAnonymousLambdaFunction([NotNull] MainParser.AnonymousLambdaFunctionContext context) { return VisitChildren(context); }
+	public virtual Result VisitFunctionExpressionHead([NotNull] MainParser.FunctionExpressionHeadContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by the <c>AnonymousFatArrowLambdaFunction</c>
-	/// labeled alternative in <see cref="MainParser.lambdaFunction"/>.
+	/// Visit a parse tree produced by <see cref="MainParser.fatArrowExpressionHead"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -1778,9 +1795,9 @@ public partial class MainParserBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitAnonymousFatArrowLambdaFunction([NotNull] MainParser.AnonymousFatArrowLambdaFunctionContext context) { return VisitChildren(context); }
+	public virtual Result VisitFatArrowExpressionHead([NotNull] MainParser.FatArrowExpressionHeadContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="MainParser.lambdaFunctionBody"/>.
+	/// Visit a parse tree produced by <see cref="MainParser.functionBody"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -1788,7 +1805,7 @@ public partial class MainParserBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitLambdaFunctionBody([NotNull] MainParser.LambdaFunctionBodyContext context) { return VisitChildren(context); }
+	public virtual Result VisitFunctionBody([NotNull] MainParser.FunctionBodyContext context) { return VisitChildren(context); }
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="MainParser.assignmentOperator"/>.
 	/// <para>
@@ -1890,16 +1907,6 @@ public partial class MainParserBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// <return>The visitor result.</return>
 	public virtual Result VisitReservedWord([NotNull] MainParser.ReservedWordContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="MainParser.openParen"/>.
-	/// <para>
-	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
-	/// on <paramref name="context"/>.
-	/// </para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	public virtual Result VisitOpenParen([NotNull] MainParser.OpenParenContext context) { return VisitChildren(context); }
-	/// <summary>
 	/// Visit a parse tree produced by <see cref="MainParser.keyword"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
@@ -1909,6 +1916,16 @@ public partial class MainParserBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	public virtual Result VisitKeyword([NotNull] MainParser.KeywordContext context) { return VisitChildren(context); }
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="MainParser.s"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitS([NotNull] MainParser.SContext context) { return VisitChildren(context); }
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="MainParser.eos"/>.
 	/// <para>

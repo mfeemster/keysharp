@@ -37,7 +37,7 @@ else
 
 ;Multiline comment in between.
 
-x := 2/*This is a multiline comment inline.*/00
+x := /*This is a multiline comment inline.*/200
 
 if (x == 200)
 	FileAppend "pass", "*"

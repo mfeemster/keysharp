@@ -24,7 +24,7 @@ namespace Keysharp.Scripting
 			if (replacement.Length == 0 && lastHotkeyFunc.Length > 0)//Detect if this was part of a stack, in which case add this hotkey for later reference in case a named function handler is encountered.
 				stackedHotkeys.Add(invoke);
 
-			hotkeyHotstringCreations.Add(invoke);
+			topStatements.Add(invoke);
 			return invoke;
 		}
 
@@ -641,7 +641,7 @@ namespace Keysharp.Scripting
 					if (replacement.Length == 0 && lastHotstringFunc.Length > 0)
 						stackedHotstrings.Add(invoke);
 
-					hotkeyHotstringCreations.Add(invoke);
+					topStatements.Add(invoke);
 					lastHotkeyFunc = "";//After adding a hotstring, we must clear any hotkey state.
 					return invoke;
 				}

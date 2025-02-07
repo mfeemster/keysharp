@@ -4,7 +4,6 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Antlr4.Runtime;
-using Keysharp.Core.Scripting.Parser.Antlr;
 using static System.Net.Mime.MediaTypeNames;
 using System;
 using System.Reflection.Metadata;
@@ -14,7 +13,19 @@ using Antlr4.Runtime.Atn;
 
 namespace Keysharp.Scripting
 {
-	public partial class Parser
+    public enum eScope
+    {
+        Local,
+        Global,
+        Static
+    }
+    public enum eNameCase
+    {
+        Lower,
+        Upper,
+        Title
+    };
+    public partial class Parser
 	{
         public static readonly CultureInfo culture = CultureInfo.CreateSpecificCulture("en-US");
 		public static readonly CultureInfo inv = CultureInfo.InvariantCulture;
@@ -174,7 +185,7 @@ namespace Keysharp.Scripting
 		internal static FrozenSet<string>.AlternateLookup<ReadOnlySpan<char>> propKeywordsAlt = propKeywords.GetAlternateLookup<ReadOnlySpan<char>>();
 
 		internal bool ErrorStdOut;
-		internal CodeStatementCollection initial = [];
+		internal CodeStatementCollection initial = [];//These are placed at the very beginning of Main().
 		internal string name = string.Empty;
 		internal bool NoTrayIcon;
 		internal bool Persistent;
@@ -229,8 +240,7 @@ namespace Keysharp.Scripting
 
 		private readonly CodeNamespace mainNs = new ("Keysharp.CompiledMain");
 		private readonly Dictionary<CodeTypeDeclaration, Dictionary<string, CodeMemberMethod>> methods = [];
-		private readonly char[] ops = [Equal, Keywords.Not, Greater, Less];
-		private readonly CodeStatementCollection prepend = [];
+		private readonly char[] ops = [Equal, Not, Greater, Less];
 		private readonly Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMemberProperty>>> properties = [];
 		private readonly tsmd setPropertyValueCalls = [];
 		private readonly Stack<CodeBlock> singleLoops = new ();
@@ -241,12 +251,14 @@ namespace Keysharp.Scripting
 		private readonly CodeTypeDeclaration targetClass;
 		private readonly List<CodeSnippetExpression> ternaries = new ();
 		private readonly Stack<CodeTypeDeclaration> typeStack = new ();
-		private readonly List<CodeMethodInvokeExpression> hotkeyHotstringCreations = new ();
+		private readonly CodeStatementCollection topStatements = new ();
 		private bool blockOpen;
 		private uint caseCount;
+		public List<IToken> codeTokens = [];
+
 		private List<CodeLine> codeLines = [];
 		private uint exCount;
-		private string fileName;
+		internal string fileName;
 		private bool hardCreateOverride = true;
 		private int internalID;
 		private int labelCount;
@@ -258,7 +270,192 @@ namespace Keysharp.Scripting
 		private uint switchCount;
 		private uint tryCount;
 
-		public Parser(CompilerHelper ch)
+        public CompilationUnitSyntax compilationUnit;
+        public NamespaceDeclarationSyntax namespaceDeclaration;
+        public Class mainClass;
+        public Function mainFunc;
+        public Function autoExecFunc;
+        public Function currentFunc;
+        public List<StatementSyntax> generalDirectives = new();
+        public SeparatedSyntaxList<AttributeSyntax> assemblies = new();
+        public List<StatementSyntax> DHHR = new(); // positional directives, hotkeys, hotstrings, remaps
+        public uint hotIfCount = 0;
+        public uint hotkeyCount = 0;
+        public uint hotstringCount = 0;
+        public bool isHotkeyDefinition = false;
+
+        internal PreReader reader;
+
+        public bool isPersistent = false;
+
+        public Stack<(Function, HashSet<string>)> FunctionStack = new();
+
+        public Class currentClass;
+
+        public HashSet<string> globalVars = [];
+        public HashSet<string> accessibleVars = [];
+
+        public Dictionary<string, string> AllTypes = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        public Dictionary<string, string> UserTypes = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        public HashSet<string> UserFuncs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        public uint loopDepth = 0;
+        public string loopLabel = null;
+        public uint functionDepth = 0;
+        public uint tryDepth = 0;
+        public uint tempVarCount = 0;
+
+		public uint lambdaCount = 0;
+
+        public const string LoopEnumeratorBaseName = "_ks_e";
+
+        public static NameSyntax ScriptOperateName = CreateQualifiedName("Keysharp.Scripting.Script.Operate");
+        public static NameSyntax ScriptOperateUnaryName = CreateQualifiedName("Keysharp.Scripting.Script.OperateUnary");
+
+        public static class PredefinedTypes
+        {
+            public static TypeSyntax Object = SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword));
+
+            public static TypeSyntax ObjectArray = SyntaxFactory.ArrayType(
+                    SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword)))
+                .WithRankSpecifiers(
+                    SyntaxFactory.SingletonList(
+                        SyntaxFactory.ArrayRankSpecifier(
+                            SyntaxFactory.SingletonSeparatedList<ExpressionSyntax>(
+                                SyntaxFactory.OmittedArraySizeExpression()))));
+
+            public static TypeSyntax StringArray = SyntaxFactory.ArrayType(
+                    SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.StringKeyword)))
+                .WithRankSpecifiers(
+                    SyntaxFactory.SingletonList(
+                        SyntaxFactory.ArrayRankSpecifier(
+                            SyntaxFactory.SingletonSeparatedList<ExpressionSyntax>(
+                                SyntaxFactory.OmittedArraySizeExpression()))));
+        }
+
+        public class Function
+        {
+
+            public MethodDeclarationSyntax Method = null;
+            public string Name = null;
+            public List<StatementSyntax> Body = new();
+            public List<ParameterSyntax> Params = new();
+            public Dictionary<string, StatementSyntax> Locals = new();
+            public HashSet<string> Globals = new HashSet<string>();
+            public HashSet<string> Statics = new HashSet<string>();
+            public HashSet<string> VarRefs = new HashSet<string>();
+            public eScope Scope = eScope.Local;
+
+            public bool Void = false;
+            public bool Async = false;
+
+            public Function(string name, TypeSyntax returnType = null)
+            {
+                if (string.IsNullOrWhiteSpace(name))
+                    throw new ArgumentException("Name cannot be null or empty.", nameof(name));
+
+                if (returnType == null)
+                    returnType = SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword));
+
+                Name = name;
+                Method = SyntaxFactory.MethodDeclaration(returnType, name);
+            }
+
+            public BlockSyntax AssembleBody()
+            {
+                var statements = Locals.Values.Concat(Body).ToList();
+
+                if (!Void)
+                {
+                    bool hasReturn = statements.OfType<ReturnStatementSyntax>().Any();
+
+                    if (!hasReturn)
+                    {
+                        // Append a default return ""; statement
+                        var defaultReturn = SyntaxFactory.ReturnStatement(
+                            SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(""))
+                        );
+
+                        statements.Add(defaultReturn);
+                    }
+                }
+
+                return SyntaxFactory.Block(statements);
+            }
+
+            public ParameterListSyntax AssembleParams() => SyntaxFactory.ParameterList(SyntaxFactory.SeparatedList<ParameterSyntax>(Params));
+
+            public MethodDeclarationSyntax Assemble(SyntaxTokenList? modifiers = null)
+            {
+                return Method
+                .WithParameterList(AssembleParams())
+                .WithBody(AssembleBody())
+                .WithModifiers(
+                    modifiers ?? SyntaxFactory.TokenList(
+                        SyntaxFactory.Token(SyntaxKind.PublicKeyword),
+                        SyntaxFactory.Token(SyntaxKind.StaticKeyword)
+                    )
+                );
+            }
+        }
+
+        public class Class
+        {
+            public string Name = null;
+            public string Base = "KeysharpObject";
+            public List<MemberDeclarationSyntax> Body = new List<MemberDeclarationSyntax>();
+            public ClassDeclarationSyntax Declaration = null;
+
+            public readonly List<(string FieldName, ExpressionSyntax Initializer)> deferredInitializations = new();
+            public readonly List<(string FieldName, ExpressionSyntax Initializer)> deferredStaticInitializations = new();
+
+            public Class(string name, string baseName = "KeysharpObject")
+            {
+                if (string.IsNullOrWhiteSpace(name))
+                    throw new ArgumentException("Name cannot be null or empty.", nameof(name));
+
+                Name = name;
+                Declaration = SyntaxFactory.ClassDeclaration(name)
+                .WithModifiers(SyntaxFactory.TokenList(SyntaxFactory.Token(SyntaxKind.PublicKeyword)));
+                if (baseName != null)
+                    Declaration = Declaration.WithBaseList(
+                        SyntaxFactory.BaseList(
+                            SyntaxFactory.SingletonSeparatedList<BaseTypeSyntax>(
+                                SyntaxFactory.SimpleBaseType(CreateQualifiedName(baseName))
+                            )
+                        )
+                    );
+            }
+
+            public bool ContainsMethod(string methodName, bool searchStatic = false, bool caseSensitive = false)
+            {
+                if (Body == null) throw new ArgumentNullException(nameof(Body));
+                if (string.IsNullOrEmpty(methodName)) throw new ArgumentException("Method name cannot be null or empty", nameof(methodName));
+
+                // Adjust string comparison based on case-sensitivity
+                var stringComparison = caseSensitive ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
+
+                // Search for methods
+                foreach (var member in Body)
+                {
+                    if (member is MethodDeclarationSyntax method)
+                    {
+                        // Check method name
+                        if (string.Equals(method.Identifier.Text, methodName, stringComparison))
+                        {
+                            // Check if static or instance
+                            bool isStatic = method.Modifiers.Any(SyntaxKind.StaticKeyword);
+                            if (isStatic == searchStatic) return true;
+                        }
+                    }
+                }
+
+                return false;
+            }
+        }
+
+
+        public Parser(CompilerHelper ch)
 		{
 			Ch = ch;
 			main.ReturnType = new CodeTypeReference(typeof(int));
@@ -318,16 +515,6 @@ namespace Keysharp.Scripting
 			AddAssemblyAttribute(typeof(AssemblyBuildVersionAttribute), Accessors.A_AhkVersion);
 			unit.AssemblyCustomAttributes.AddRange(assemblyAttributes);
 			assemblyAttributes.Clear();
-
-			foreach (var p in prepend)
-				if (!(p is CodeMethodReturnStatement))
-				{
-					if (p is CodeStatement cs)
-						_ = main.Statements.Add(cs);
-					else if (p is CodeExpression ce)
-						_ = main.Statements.Add(ce);
-				}
-
 			var inv = (CodeMethodInvokeExpression)InternalMethods.RunMainWindow;
 			_ = inv.Parameters.Add(new CodeSnippetExpression("name"));
 			_ = inv.Parameters.Add(new CodeSnippetExpression("_ks_UserMainCode"));
@@ -1072,15 +1259,15 @@ namespace Keysharp.Scripting
 				new CodeMethodReferenceExpression(
 					new CodeTypeReferenceExpression("Keysharp.Core.Common.Keyboard.HotkeyDefinition"), "ManifestAllHotkeysHotstringsHooks"));
 
-			if (hotkeyHotstringCreations.Count > 0)
+			if (topStatements.Count > 0)
 			{
 				//Readd rather than insert;
 				var userCodeStatements = new CodeStatementCollection
 				{
-					Capacity = hotkeyHotstringCreations.Count + userMainMethod.Statements.Count
+					Capacity = topStatements.Count + userMainMethod.Statements.Count
 				};
 
-				foreach (var hkc in hotkeyHotstringCreations)
+				foreach (CodeStatement hkc in topStatements)
 					_ = userCodeStatements.Add(hkc);
 
 				_ = userCodeStatements.Add(hotkeyInitCmie);
@@ -1128,53 +1315,43 @@ namespace Keysharp.Scripting
 			return unit;
         }
 
-        internal SyntaxTree GenerateSyntaxTree(List<CodeLine> codeLines, PreReader reader)
+        internal SyntaxTree GenerateSyntaxTree(List<IToken> codeTokens)
 		{
-			Helper.state = new Helper();
+            //Console.WriteLine("Start");
 
-            Helper.state.codeLines = codeLines; // Necessary for correct error reporting
-            Helper.state.fileName = Script.scriptName ?? "*";
-			Helper.state.reader = reader;
+            var codeTokenSource = new ListTokenSource(codeTokens);
+            var codeTokenStream = new CommonTokenStream(codeTokenSource);
+            //Console.WriteLine("Lexed");
 
-            var code = "";
-			foreach (CodeLine line in codeLines)
-			{
-				code += line.Code + "\n";
-			}
-			code = code.Remove(code.Length - 1);
-
-            AntlrInputStream inputStream = new AntlrInputStream(code);
-            MainLexer mainLexer = new MainLexer(inputStream);
-            CommonTokenStream commonTokenStream = new CommonTokenStream(mainLexer);
-			
-			/*
-            foreach (var token in mainLexer.GetAllTokens())
+            /*
+            foreach (var token in codeTokens)
             {
                 Debug.WriteLine($"Token: {mainLexer.Vocabulary.GetSymbolicName(token.Type)}, Text: '{token.Text}'");
             }
 			*/
 
-            MainParser mainParser = new MainParser(commonTokenStream);
-			/*
-             mainParser.EnableProfiling();
+            MainParser mainParser = new MainParser(codeTokenStream);
 
-            mainParser.Trace = true;
-            var listener = new TraceListener();
-            mainParser.AddParseListener(listener);
-			*/
+            //mainParser.EnableProfiling();
+
+            //mainParser.Trace = true;
+            //var listener = new TraceListener();
+            //mainParser.AddParseListener(listener);
 
 
-			//mainParser.ErrorHandler = new BailErrorStrategy();
-			//mainParser.AddErrorListener(new DiagnosticErrorListener());
-			//mainParser.Interpreter.PredictionMode = PredictionMode.LL_EXACT_AMBIG_DETECTION;
 
-			//var profilingATNSimulator = new ProfilingATNSimulator(mainParser);
+            //mainParser.ErrorHandler = new BailErrorStrategy();
+            //mainParser.AddErrorListener(new DiagnosticErrorListener());
+            //mainParser.Interpreter.PredictionMode = PredictionMode.LL_EXACT_AMBIG_DETECTION;
+
+            //var profilingATNSimulator = new ProfilingATNSimulator(mainParser);
 
             MainParser.ProgramContext programContext = mainParser.program();
 
             //ProfileParser(mainParser);
+            //Console.WriteLine("End");
 
-            MainVisitor visitor = new MainVisitor();
+            MainVisitor visitor = new MainVisitor(this);
 
             //var profilingATNSimulator = new ProfilingATNSimulator(mainParser);
 
@@ -1196,15 +1373,13 @@ namespace Keysharp.Scripting
 		public T Parse<T>(TextReader codeStream, string nm)
 		{
 			name = nm;
-			var reader = new PreReader(this);
-			codeLines = reader.Read(codeStream, name);
-#if DEBUG
-			//File.WriteAllLines("./finalscriptcode.txt", codeLines.Select((cl) => $"{cl.LineNumber}: {cl.Code}"));
-#endif
+            reader = new PreReader(this);
 
-			if (typeof(T) == typeof(SyntaxTree))
-			{
-                var st = GenerateSyntaxTree(codeLines, reader);
+            if (typeof(T) == typeof(SyntaxTree))
+            {
+				fileName = name;
+                codeTokens = reader.ReadTokens(codeStream, name);
+                var st = GenerateSyntaxTree(codeTokens);
                 return (T)(object)st;
 
                 /*
@@ -1243,6 +1418,10 @@ namespace Keysharp.Scripting
 				*/
             }
 
+			codeLines = reader.Read(codeStream, name);
+#if DEBUG
+			//File.WriteAllLines("./finalscriptcode.txt", codeLines.Select((cl) => $"{cl.LineNumber}: {cl.Code}"));
+#endif
 
             Statements();
 
@@ -1285,21 +1464,10 @@ namespace Keysharp.Scripting
 							if (name == "this")//Never create a "this" variable inside of a class definition.
 								continue;
 
-                            if (methods[typekv.Key].Any(n => n.Key.Equals(name, StringComparison.InvariantCultureIgnoreCase)) || (Reflections.FindBuiltInMethod(name, -1) is MethodPropertyHolder mph && mph != null))
-                            {
-								AddGlobalFuncObj(name);
-                                continue;
-                            }
-
-                            if (GetUserDefinedTypename(name) != null)
-                                continue;
-
-                            name = Ch.CreateEscapedIdentifier(name);
-							//var init = globalvar.Value is CodeExpression ce ? Ch.CodeToString(ce) : "\"\"";
+							name = Ch.CreateEscapedIdentifier(name);
 							_ = typekv.Key.Members.Add(new CodeSnippetTypeMember()
 							{
 								Name = name,
-								//Text = $"\t\tpublic static object {name} = {init};"
 								Text = $"\t\tpublic static object {name};"
 							});
 						}
@@ -1787,6 +1955,10 @@ namespace Keysharp.Scripting
 						return true;
 				}
 			}
+
+			if (excCatchVars.TryPeek(out var exc))
+				if (exc.Contains(varName))
+					return true;
 
 			if (currentFuncParams.TryPeek(out var pl))
 				if (pl.Contains(varName))
