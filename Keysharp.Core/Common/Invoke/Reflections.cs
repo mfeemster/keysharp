@@ -288,8 +288,9 @@ namespace Keysharp.Core.Common.Invoke
 
 					if (typeToStringProperties.TryGetValue(t, out var dkt))
 					{
-						if (dkt.TryGetValue(name, out var prop))
-							return true;
+						if (name != "__Class" && name != "super")
+							if (dkt.TryGetValue(name, out var prop))
+								return true;
 					}
 
 					t = t.BaseType;
@@ -317,7 +318,7 @@ namespace Keysharp.Core.Common.Invoke
 					if (typeToStringProperties.TryGetValue(t, out var dkt))
 					{
 						foreach (var kv in dkt)
-							if (kv.Key != "__Class" && kv.Value.Count > 0)
+							if (kv.Value.Count > 0 && kv.Key != "__Class" && kv.Key != "super")
 							{
 								var mph = kv.Value.First().Value;
 
@@ -349,7 +350,15 @@ namespace Keysharp.Core.Common.Invoke
 						break;
 
 					if (typeToStringProperties.TryGetValue(t, out var dkt))
-						ct += dkt.Count - 1;//Subtract 1 because of the auto generated __Class property.
+					{
+						ct += dkt.Count;//Subtract 1 because of the auto generated __Class property.
+
+						if (dkt.ContainsKey("super"))
+							--ct;
+
+						if (dkt.ContainsKey("__Class"))
+							--ct;
+					}
 
 					t = t.BaseType;
 				}

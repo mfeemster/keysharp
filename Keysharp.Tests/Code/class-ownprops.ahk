@@ -27,7 +27,7 @@ If (o1.b == 100)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
-
+	
 o1.DefineProp("a", { ; Redefine a dynamic property over previously declared dynamic property on a class with a declared property of the same name.
 		set: (this, v) => this.b := v
 	})
@@ -189,7 +189,7 @@ else
 	
 o1 := testclass()
 
-if (ObjOwnPropCount(o1) == 3) ; Count all declared properties.
+if (ObjOwnPropCount(o1) == 2) ; Count all declared properties.
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
@@ -206,7 +206,7 @@ class extclass2 extends testclass
 
 o1 := extclass2()
 
-if (ObjOwnPropCount(o1) == 5) ; Count all declared properties in base and derived class.
+if (ObjOwnPropCount(o1) == 3) ; Count all declared properties in base and derived class.
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
@@ -214,8 +214,8 @@ else
 o1.DefineProp("d", {
 		call : () => 123
 	})
-
-if (ObjOwnPropCount(o1) == 6) ; Count all declared and dynamic properties in base and derived class.
+	
+if (ObjOwnPropCount(o1) == 4) ; Count all declared and dynamic properties in base and derived class.
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
@@ -264,7 +264,7 @@ else
 	FileAppend, "fail", "*"
 	
 o1 := testclass()
-o1.DefineProp("c", { ; Dynamically property with getter and setter.
+o1.DefineProp("c", { ; Dynamically create property with getter and setter.
 		get: (this) => 123,
 		set: (this, v) => this.b := v
 	})
@@ -281,15 +281,13 @@ For Name, Value in o1.OwnProps() ; Enumerator inline with a for loop. Retrieve v
 		b := true
 	else if (name == "c" && value == 123)
 		b := true
-	else if (name == "super")
-		b := true
 	else
 		b := false
 
 	i++
 }
 
-If (b && i == 4)
+If (b && i == 3)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
@@ -308,15 +306,13 @@ For Name,Value in op ; Enumerator variable with a for loop.
 		b := true
 	else if (name == "c" && value == 123)
 		b := true
-	else if (name == "super")
-		b := true
 	else
 		b := false
 
 	i++
 }
 
-If (b && i == 4)
+If (b && i == 3)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
