@@ -426,9 +426,15 @@ namespace Keysharp.Core
 		public static IEnumerator<(object, object)> MakeEnumerator(object obj, object count)
 		{
 			Error err;
+			var ct = count.Ai();
 
 			if (obj is I__Enum ienum)
-				return ienum.__Enum(count.Ai());
+				return ienum.__Enum(ct);
+			else if (obj is OwnPropsIterator opi)
+			{
+				opi.GetVal = ct != 1;
+				return opi;
+			}
 			else if (obj is object[] oa)
 				return new Array(oa).__Enum(count.Ai());
 			else if (obj is IEnumerable<(object, object)> ie0)

@@ -2,7 +2,6 @@
 {
 	public class OwnPropsIterator : IEnumerator<(object, object)>
 	{
-		private readonly bool getVal;
 		private readonly Dictionary<object, object> map;
 		private readonly KeysharpObject obj;
 		private IEnumerator<KeyValuePair<object, object>> iter;
@@ -13,7 +12,7 @@
 			{
 				var kv = iter.Current;
 
-				if (getVal)
+				if (GetVal)
 				{
 					if (kv.Value is MethodPropertyHolder mph)
 						return (kv.Key, mph.callFunc(obj, null));
@@ -27,13 +26,15 @@
 			}
 		}
 
+		internal bool GetVal { get; set; }
+
 		object IEnumerator.Current => Current;
 
 		public OwnPropsIterator(KeysharpObject o, Dictionary<object, object> m, bool gv)
 		{
 			obj = o;
 			map = m;
-			getVal = gv;
+			GetVal = gv;
 			iter = map.GetEnumerator();
 		}
 
