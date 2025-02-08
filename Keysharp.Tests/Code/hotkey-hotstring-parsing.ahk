@@ -132,5 +132,6 @@ else
 FileAppend, "pass", "*"
 
 `;:::
+`::;
 
 ExitApp()
