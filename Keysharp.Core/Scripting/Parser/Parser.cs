@@ -186,6 +186,7 @@ namespace Keysharp.Scripting
 
 		internal bool ErrorStdOut;
 		internal CodeStatementCollection initial = [];//These are placed at the very beginning of Main().
+		internal List<string> mainFuncInitial = new();
 		internal string name = string.Empty;
 		internal bool NoTrayIcon;
 		internal bool Persistent;
@@ -276,7 +277,6 @@ namespace Keysharp.Scripting
         public Function mainFunc;
         public Function autoExecFunc;
         public Function currentFunc;
-        public List<StatementSyntax> generalDirectives = new();
         public SeparatedSyntaxList<AttributeSyntax> assemblies = new();
         public List<StatementSyntax> DHHR = new(); // positional directives, hotkeys, hotstrings, remaps
         public uint hotIfCount = 0;
@@ -311,6 +311,27 @@ namespace Keysharp.Scripting
 
         public static NameSyntax ScriptOperateName = CreateQualifiedName("Keysharp.Scripting.Script.Operate");
         public static NameSyntax ScriptOperateUnaryName = CreateQualifiedName("Keysharp.Scripting.Script.OperateUnary");
+
+		public List<StatementSyntax> generalDirectiveStatements = new();
+		public Dictionary<string, string> generalDirectives = new(StringComparer.InvariantCultureIgnoreCase) 
+		{
+			{ "ClipboardTimeout", null },
+            { "ErrorStdOut", null },
+            { "HotIfTimeout", null },
+            { "MaxThreads", null },
+            { "MaxThreadsBuffer", null },
+            { "MaxThreadsPerHotkey", null },
+            { "NoTrayIcon", null },
+            { "WinActivateForce", null },
+            { "AssemblyTitle", null },
+            { "AssemblyDescription", null },
+            { "AssemblyConfiguration", null },
+            { "AssemblyCompany", null },
+            { "AssemblyProduct", null },
+            { "AssemblyCopyright", null },
+            { "AssemblyTrademark", null },
+			{ "AssemblyVersion", null }
+        };
 
         public static class PredefinedTypes
         {
@@ -618,24 +639,31 @@ namespace Keysharp.Scripting
 					{
 						if (cmie.Parameters[0] is CodeVariableReferenceExpression cvre)
 						{
+							var propname = "";
+
+							if (cmie.Parameters.Count > 1 && cmie.Parameters[1] is CodePrimitiveExpression cpe)
+								propname = cpe.Value.ToString();
+
 							var name = cvre.VariableName;
 
-                            if (!VarExistsAtCurrentOrParentScope(cmietype.Key, cmietypefunc.Key, name))
-                            {
-                                if (TypeExistsAtCurrentOrParentScope(cmietype.Key, cmietypefunc.Key, name))
-                                {
-                                    cmie.Method = new CodeMethodReferenceExpression(new CodeTypeReferenceExpression(typeof(Script)), "GetStaticMemberValueT");
-                                    cmie.Method.TypeArguments.Add(name);
-                                    cmie.Parameters.RemoveAt(0);
-                                }
-                                else if (GetUserDefinedTypename(name) == null)
-                                {
-                                    var mph = Reflections.FindMethod(name, -1);
-                                    if (mph != null)
-                                        AddGlobalFuncObj(mph.mi.Name.ToLower());
-                                }
-                            }
-                        }
+							if (!VarExistsAtCurrentOrParentScope(cmietype.Key, cmietypefunc.Key, name)
+									&& TypeExistsAtCurrentOrParentScope(cmietype.Key, cmietypefunc.Key, name))
+							{
+								if (MethodExistsInTypeOrBase(name, propname) is CodeMemberMethod cmm)
+								{
+									cmie.Method = new CodeMethodReferenceExpression(new CodeTypeReferenceExpression(typeof(Script)), "GetStaticMemberValueT");
+									cmie.Method.TypeArguments.Add(name);
+									cmie.Parameters[0] = new CodeSnippetExpression($"{name}.{propname}");
+									cmie.Parameters.RemoveAt(1);
+								}
+								else
+								{
+									cmie.Method = new CodeMethodReferenceExpression(new CodeTypeReferenceExpression(typeof(Script)), "GetStaticMemberValueT");
+									cmie.Method.TypeArguments.Add(name);
+									cmie.Parameters.RemoveAt(0);
+								}
+							}
+						}
 					}
 				}
 			}
@@ -954,9 +982,25 @@ namespace Keysharp.Scripting
 				{
 					foreach (var cmie in cmietypefunc.Value)
 					{
-                        AddGlobalFuncObj(cmie.Method.MethodName);
-                        //Handle changing myfuncobj() to myfuncobj.Call().
-                        if (VarExistsAtCurrentOrParentScope(cmietype.Key, cmietypefunc.Key, CultureInfo.CurrentCulture.TextInfo.ToTitleCase(cmie.Method.MethodName)))
+						for (int i = 0; i < cmie.Parameters.Count; i++)//Convert function arguments which were direct function references.
+						{
+							var funcparam = cmie.Parameters[i];
+
+							if (funcparam is CodeVariableReferenceExpression cvreparam)
+							{
+								var type = cvreparam.UserData["origtypescope"] is CodeTypeDeclaration ctd ? ctd.Name : "program";
+
+								if (MethodExistsInTypeOrBase(type, cvreparam.VariableName) is CodeMemberMethod cmm)
+								{
+									cvreparam.VariableName = cmm.Name;
+									var tempfunc = (CodeMethodReferenceExpression)InternalMethods.Func;
+									cmie.Parameters[i] = new CodeMethodInvokeExpression(tempfunc, cvreparam);
+								}
+							}
+						}
+
+						//Handle changing myfuncobj() to myfuncobj.Call().
+						if (VarExistsAtCurrentOrParentScope(cmietype.Key, cmietypefunc.Key, cmie.Method.MethodName))
 						{
 							var refIndexes = ParseArguments(cmie.Parameters);
 							var callFuncName = "";
@@ -974,7 +1018,8 @@ namespace Keysharp.Scripting
 							}
 
 							HandleAllVariadicParams(cmie);
-							cmie.Method = new CodeMethodReferenceExpression(new CodeSnippetExpression($"/*preventtrim*/((ICallable){cmie.Method.MethodName})"), callFuncName);
+							var funccmie = new CodeMethodInvokeExpression((CodeMethodReferenceExpression)InternalMethods.Func, new CodeVariableReferenceExpression(cmie.Method.MethodName));
+							cmie.Method = new CodeMethodReferenceExpression(funccmie, callFuncName);
 						}
 						else if (GetUserDefinedTypename(cmie.Method.MethodName) is CodeTypeDeclaration ctd && ctd.Name.Length > 0)//Convert myclass() to myclass.Call().
 						{
@@ -1439,7 +1484,7 @@ namespace Keysharp.Scripting
 
 			foreach (var (p, s) in reader.PreloadedDlls)//Add after InitGlobalVars() call above, because the statements will be added in reverse order.
 			{
-				var cmie = new CodeMethodInvokeExpression(new CodeTypeReferenceExpression("Keysharp.Scripting.Variables"), "AddPreLoadedDll");
+				var cmie = new CodeMethodInvokeExpression(new CodeTypeReferenceExpression("Keysharp.Scripting.Script.Variables"), "AddPreLoadedDll");
 				_ = cmie.Parameters.Add(new CodePrimitiveExpression(p));
 				_ = cmie.Parameters.Add(new CodePrimitiveExpression(s));
 				initial.Add(new CodeExpressionStatement(cmie));
@@ -1571,7 +1616,7 @@ namespace Keysharp.Scripting
                 "Rule", "Time", "Invocations", "Lookahead", "Lookahead(Max)", "Ambiguities", "Errors"));
 
             var ruleNames = parser.RuleNames;
-            Debug.WriteLine(string.Format("{0,-35}{1,-15}{2,-15}{3,-15}{4,-15}{5,-15}{6,-15}",
+            System.Diagnostics.Debug.WriteLine(string.Format("{0,-35}{1,-15}{2,-15}{3,-15}{4,-15}{5,-15}{6,-15}",
 				"Rule",
 				"TimeInPrediction",
 				"Invocations",
@@ -1587,7 +1632,7 @@ namespace Keysharp.Scripting
 
                 if (decisionInfo.timeInPrediction > 0)
                 {
-                    Debug.WriteLine(string.Format("{0,-35}{1,-15}{2,-15}{3,-15}{4,-15}{5,-15}{6,-15}",
+                    System.Diagnostics.Debug.WriteLine(string.Format("{0,-35}{1,-15}{2,-15}{3,-15}{4,-15}{5,-15}{6,-15}",
                         ruleName,
                         decisionInfo.timeInPrediction,
                         decisionInfo.invocations,
@@ -2009,7 +2054,7 @@ namespace Keysharp.Scripting
                 _ = targetClass.Members.Add(new CodeSnippetTypeMember()
                 {
                     Name = lowername,
-                    Text = $"\t\tpublic static object {name} = FuncObj(\"{lowername}\");"
+                    Text = $"\t\tpublic static object {name} = Func(\"{lowername}\");"
                 });
             }
 			return (!found);

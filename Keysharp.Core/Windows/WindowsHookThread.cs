@@ -5178,11 +5178,11 @@ namespace Keysharp.Core.Windows
 						}
 					}
 
-					Debug.WriteLine("Exiting reader channel.");
+					System.Diagnostics.Debug.WriteLine("Exiting reader channel.");
 				}
 				catch (Exception ex)
 				{
-					Script.OutputDebug($"Windows hook thread exited unexpectedly: {ex}");
+					Core.Debug.OutputDebug($"Windows hook thread exited unexpectedly: {ex}");
 				}
 				finally
 				{

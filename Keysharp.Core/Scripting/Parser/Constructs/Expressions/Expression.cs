@@ -45,6 +45,20 @@ namespace Keysharp.Scripting
 		{
 			var orig = cse.UserData["orig"] as CodeExpression;
 			var cboe = orig as CodeBinaryOperatorExpression;
+
+			//Properly case all direct function references.
+			if (cboe.Right is CodeVariableReferenceExpression cvre)
+			{
+				var type = cvre.UserData["origtypescope"] is CodeTypeDeclaration ctd ? ctd.Name : "program";
+
+				if (MethodExistsInTypeOrBase(type, cvre.VariableName) is CodeMemberMethod cmm)
+				{
+					cvre.VariableName = cmm.Name;
+					var tempfunc = (CodeMethodReferenceExpression)InternalMethods.Func;
+					cboe.Right = new CodeMethodInvokeExpression(tempfunc, cvre);
+				}
+			}
+
 			var c2s = Ch.CodeToString(orig);
 			c2s = c2s.Substring(1, c2s.Length - 2);
 
@@ -323,24 +337,19 @@ namespace Keysharp.Scripting
 				{
 					var hso = invoke.Method.MethodName == "HotstringOptions";
 
-					if (hso || invoke.Method.MethodName == "HotIf")
+					if (hso)
 					{
 						//Note that in addition to adding this to the beginning, we also leave it
 						//in place for HotstringOptions() (#Hotstring xyz) in parts, because we need to call it in both places.
 						//This is because the position must be kept consistent with hotkey/string declarations,
 						//but also kept in place for other usage of global hotstring settings like A_DefaultHotstring*.
 						topStatements.Add(invoke);
-
-						if (hso)
-						{
-							//Because we've encountered #Hotstring options, we must actually parse the options now (and later in the script)
-							//to find out which defaults should be in place for subsequently parsed hotstrings.
-							HotstringDefinition.ParseOptions(Ch.CodeToString(invoke.Parameters[0]).Trim('\"')//Will be quoted, so remove here.
-															 , ref HotstringManager.hsPriority, ref HotstringManager.hsKeyDelay, ref HotstringManager.hsSendMode, ref HotstringManager.hsCaseSensitive
-															 , ref HotstringManager.hsConformToCase, ref HotstringManager.hsDoBackspace, ref HotstringManager.hsOmitEndChar, ref HotstringManager.hsSendRaw, ref HotstringManager.hsEndCharRequired
-															 , ref HotstringManager.hsDetectWhenInsideWord, ref HotstringManager.hsDoReset, ref HotstringManager.hsSameLineAction, ref HotstringManager.hsSuspendExempt);
-						}
-
+						//Because we've encountered #Hotstring options, we must actually parse the options now (and later in the script)
+						//to find out which defaults should be in place for subsequently parsed hotstrings.
+						HotstringDefinition.ParseOptions(Ch.CodeToString(invoke.Parameters[0]).Trim('\"')//Will be quoted, so remove here.
+														 , ref HotstringManager.hsPriority, ref HotstringManager.hsKeyDelay, ref HotstringManager.hsSendMode, ref HotstringManager.hsCaseSensitive
+														 , ref HotstringManager.hsConformToCase, ref HotstringManager.hsDoBackspace, ref HotstringManager.hsOmitEndChar, ref HotstringManager.hsSendRaw, ref HotstringManager.hsEndCharRequired
+														 , ref HotstringManager.hsDetectWhenInsideWord, ref HotstringManager.hsDoReset, ref HotstringManager.hsSameLineAction, ref HotstringManager.hsSuspendExempt);
 						parts[i] = new CodeSnippetExpression("//#directive replaced by function call");
 					}
 				}
@@ -765,7 +774,7 @@ namespace Keysharp.Scripting
 
 						//Special processing is needed to convert an expression passed to a HotIf() to a separate function, then pass it with FuncObj().
 						//Do not do this if a FuncObj is already being passed, which will be the case when #HotIf is found in the preprocessing stage.
-						if (name == "HotIf" && paren.Count > 1 && !paren[0].ToString().StartsWith("FuncObj"))
+						if (name == "HotIf" && paren.Count > 1 && !paren[0].ToString().StartsWith("Func"))
 						{
 							var hotiffuncname = $"_ks_HotIf_{PreReader.NextHotIfCount}";
 							var hotifexpr = ParseExpression(codeLine, code, paren, false);
@@ -773,7 +782,8 @@ namespace Keysharp.Scripting
 							_ = hotifmethod.Statements.Add(new CodeMethodReturnStatement(hotifexpr));
 							methods[targetClass].Add(hotiffuncname, hotifmethod);
 							invoke = LocalMethodInvoke(name);
-							_ = invoke.Parameters.Add(new CodeSnippetExpression("FuncObj(\"" + hotiffuncname + "\")"));//Can't use interpolated string here because the AStyle formatter misinterprets it.
+							var funccmie = new CodeMethodInvokeExpression((CodeMethodReferenceExpression)InternalMethods.Func, new CodePrimitiveExpression(hotiffuncname));
+							_ = invoke.Parameters.Add(funccmie);//Can't use interpolated string here because the AStyle formatter misinterprets it.
 						}
 						else//Any other function call aside from HotIf().
 						{
@@ -831,16 +841,17 @@ namespace Keysharp.Scripting
 									//both are seen the same, and b will get created as a variable at this scope for both cases, when it should only be done for the bottom case.
 									hardCreateOverride = false;
 									var argExpr = ParseExpression(codeLine, tempParamCode, arg, false);//Override the value of create with false because the arguments passed into a function should never be created automatically.
+									var cboe = argExpr.WasCboe();
 									hardCreateOverride = true;//Restore the hack flag.
 
-									//If an assignment was passed to a function for a reference parameter, separate it out like so:
-									//func(&x := 123) ; becomes...
-									//x := 123
-									//func(&x)
 									if (refIndexes.Contains(i1)//Only needed if it's a reference argument.
-											&& argExpr.WasCboe() is CodeBinaryOperatorExpression cboe
+											&& cboe != null
 											&& cboe.Operator == CodeBinaryOperatorType.Assign)
 									{
+										//If an assignment was passed to a function for a reference parameter, separate it out like so:
+										//func(&x := 123) ; becomes...
+										//x := 123
+										//func(&x)
 										_ = parent.Add(argExpr);
 										argExpr = cboe.Left;
 									}
@@ -848,12 +859,30 @@ namespace Keysharp.Scripting
 									//Allow for the declaration of a variable at the same time it's passed to a function call.
 									//But ensure it wasn't an assignment/declaration statement of a named lambda like:
 									//lam := lambdafunc(a, b) => a * b
-									if ((i == 0 || parts[i - 1] is not CodeBinaryOperatorType cbot || cbot != CodeBinaryOperatorType.Assign)
-											&& argExpr is CodeVariableReferenceExpression cvre)
+									if (i == 0
+											|| i == args.Count - 1//Allows for assigning simple function result: val := func(x := 123)
+											|| parts[i - 1] is not CodeBinaryOperatorType cbot
+											|| cbot != CodeBinaryOperatorType.Assign
+									   )
 									{
-										if (!VarExistsAtCurrentOrParentScope(typeStack.Peek(), scope, cvre.VariableName)
-												&& !Reflections.flatPublicStaticProperties.TryGetValue(cvre.VariableName, out _))
-											allVars[typeStack.Peek()].GetOrAdd(scope)[cvre.VariableName] = emptyStringPrimitive;
+										var tp = typeStack.Peek();
+										CodeVariableReferenceExpression cvre = null;
+
+										if (argExpr is CodeVariableReferenceExpression cvre2)
+											cvre = cvre2;
+										else if (cboe != null && cboe.Left is CodeVariableReferenceExpression cvre3)
+											cvre = cvre3;
+
+										//If it was an assignment, and not a reference, the variable needs to be created.
+										if (cvre != null)
+										{
+											if (!VarExistsAtCurrentOrParentScope(tp, scope, cvre.VariableName)
+													&& !Reflections.flatPublicStaticProperties.TryGetValue(cvre.VariableName, out _)
+													&& MethodExistsInTypeOrBase(tp.Name, cvre.VariableName) == null
+													&& Reflections.FindBuiltInMethod(cvre.VariableName, -1) == null
+											   )
+												allVars[typeStack.Peek()].GetOrAdd(scope)[cvre.VariableName] = emptyStringPrimitive;
+										}
 									}
 
 									passed.Add(argExpr);
@@ -1039,7 +1068,7 @@ namespace Keysharp.Scripting
 						{
 							var extracted = ExtractRange(parts, assignIndex + 1, parts.Count);//This works even when assignIndex is -1.
 							//var extracted = ExtractRange(parts, i - 1, parts.Count);//Start at the parameters collection which should be right before parts[i] which is "=>".
-							parts.Add("FuncObj(");
+							parts.Add("Func(");
 							parts.Add("\"" + cmd.Name + "\"");
 							parts.Add(",");
 							//parts.Add(InClassDefinition() ? new CodeThisReferenceExpression() : "null");

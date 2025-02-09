@@ -11,7 +11,7 @@ else
 	FileAppend "fail", "*"
 
 val := ""
-fo := FuncObj("optfunc1")
+fo := Func("optfunc1")
 val := fo()
 
 if (val == unset)
@@ -32,7 +32,7 @@ else
 	FileAppend "fail", "*"
 
 val := ""
-fo := FuncObj("optfunc2")
+fo := Func("optfunc2")
 val := fo(123)
 
 if (val == unset)
@@ -79,7 +79,7 @@ ga :=
 gb :=
 gc :=
 val := ""
-fo := FuncObj("optfunc3")
+fo := Func("optfunc3")
 val := fo(123, 456)
 
 if (ga == 123)
@@ -132,7 +132,7 @@ ga :=
 gb :=
 gc :=
 val := ""
-fo := FuncObj("optfunc3")
+fo := Func("optfunc3")
 val := fo(123, 456, 789)
 
 if (ga == 123)

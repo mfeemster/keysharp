@@ -264,7 +264,7 @@ else
 	FileAppend "fail", "*"
 
 o1 := testclass()
-o1.DefineProp("c", { ; Dynamically property with getter and setter.
+o1.DefineProp("c", { ; Dynamically create property with getter and setter.
 		get: (this) => 123,
 		set: (this, v) => this.b := v
 	})
@@ -281,15 +281,13 @@ For Name, Value in o1.OwnProps() ; Enumerator inline with a for loop. Retrieve v
 		b := true
 	else if (name == "c" && value == 123)
 		b := true
-	else if (name == "super")
-		b := true
 	else
 		b := false
 
 	i++
 }
 
-If (b && i == 4)
+If (b && i == 3)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -308,15 +306,13 @@ For Name,Value in op ; Enumerator variable with a for loop.
 		b := true
 	else if (name == "c" && value == 123)
 		b := true
-	else if (name == "super")
-		b := true
 	else
 		b := false
 
 	i++
 }
 
-If (b && i == 4)
+If (b && i == 3)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -446,7 +442,7 @@ testfunc(testclassobj)
 		get: (*) => ((this, p*) => this.a := p.Length)
 	})
 
-	testclassobj.prop() ; Retrieve value from get, which will be a FuncObj(), then call it using ().
+	testclassobj.prop() ; Retrieve value from get, which will be a FuncObj, then call it using ().
 
 	If (testclassobj.a == 0)
 		FileAppend "pass", "*"

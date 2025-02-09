@@ -123,6 +123,15 @@ namespace Keysharp.Scripting
 				}
 				break;
 
+				case "HOTIF":
+				{
+					if (!string.IsNullOrEmpty(parts[1]))
+						topStatements.Add(new CodeMethodInvokeExpression((CodeMethodReferenceExpression)InternalMethods.HotIf, new CodePrimitiveExpression(parts[1])));
+					else
+						topStatements.Add(new CodeMethodInvokeExpression((CodeMethodReferenceExpression)InternalMethods.HotIf));
+				}
+				break;
+
 				case "HOTIFTIMEOUT":
 				{
 					if (numeric)

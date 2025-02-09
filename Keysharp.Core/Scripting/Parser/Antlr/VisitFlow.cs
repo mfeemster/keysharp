@@ -808,7 +808,12 @@ namespace Keysharp.Scripting
             var catchAssignable = context.catchAssignable();
             if (catchAssignable != null)
             {
-                SyntaxToken exceptionIdentifier;
+                // Handle optional `As` and `identifier`
+                if (catchAssignable.identifier() != null)
+                    exceptionIdentifierName = parser.NormalizeFunctionIdentifier(catchAssignable.identifier().GetText());
+                
+                SyntaxToken exceptionIdentifier = SyntaxFactory.Identifier(exceptionIdentifierName);
+
                 TypeSyntax exceptionType = SyntaxFactory.ParseTypeName("Keysharp.Core.Error");
                 var typeConditions = new List<ExpressionSyntax>();
 
@@ -834,12 +839,6 @@ namespace Keysharp.Scripting
                     if (typeConditions.Count == 1)
                         exceptionType = SyntaxFactory.ParseTypeName(catchClassText);
                 }
-
-                // Handle optional `As` and `identifier`
-                if (catchAssignable.identifier() != null)
-                    exceptionIdentifier = SyntaxFactory.Identifier(parser.NormalizeFunctionIdentifier(catchAssignable.identifier().GetText()));
-                else
-                    exceptionIdentifier = SyntaxFactory.Identifier(exceptionIdentifierName);
 
                 ExpressionSyntax conditionExpression = typeConditions[0];
 

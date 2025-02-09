@@ -533,8 +533,8 @@ namespace Keysharp.Scripting
 
         public static InvocationExpressionSyntax CreateFuncObj(ExpressionSyntax funcArg)
         {
-            return SyntaxFactory.InvocationExpression(
-                SyntaxFactory.IdentifierName("FuncObj"),
+            return ((InvocationExpressionSyntax)InternalMethods.Func)
+                .WithArgumentList(
                     SyntaxFactory.ArgumentList(
                         SyntaxFactory.SingletonSeparatedList(
                             SyntaxFactory.Argument(

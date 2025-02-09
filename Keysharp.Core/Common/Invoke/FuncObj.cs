@@ -187,7 +187,7 @@
 			this.Inst = m.Target;
         }
 
-        internal FuncObj(MethodInfo m, object o = null)
+		internal FuncObj(MethodInfo m, object o = null)
 		{
 			mi = m;
 			inst = o;

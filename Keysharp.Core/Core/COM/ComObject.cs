@@ -25,6 +25,124 @@ namespace Keysharp.Core.COM
 				else
 					return item;
 			}
+
+			
+			    set
+			    {
+			    object temp = null;
+			    var longVal = 0L;
+			    var wasObj = false;
+
+			    if (value is IntPtr ip)
+			        longVal = ip.ToInt64();
+			    else if (value is long l)
+			        longVal = l;
+
+			    if ((VarType & Com.vt_byref) == Com.vt_byref)
+			    {
+			        item = longVal;
+			        return;
+			    }
+			    else
+			    {
+			        switch (VarType)
+			        {
+			            case Com.vt_empty://No value
+			                break;
+
+			            case Com.vt_null://SQL-style Null
+			                temp = null;
+			                break;
+
+			            case Com.vt_i2://16-bit signed int
+			            case Com.vt_ui2://16-bit unsigned int
+			                temp = longVal & 0xFFFF;
+			                break;
+
+			            case Com.vt_i4://32-bit signed int
+			            case Com.vt_r4://32-bit floating-point number
+			            case Com.vt_ui4://32-bit unsigned int
+			            case Com.vt_error://Error code(32-bit integer)
+			                temp = longVal & 0xFFFFFFFF;
+			                break;
+
+			            case Com.vt_r8://64-bit floating-point number
+			            case Com.vt_cy://Currency
+			            case Com.vt_i8://64-bit signed int
+			            case Com.vt_ui8://64-bit unsigned int
+			            case Com.vt_date://Date
+			            case Com.vt_int://Signed machine int
+			            case Com.vt_uint://Unsigned machine int
+			                temp = longVal;
+			                break;
+
+			            case Com.vt_bool://Boolean True(-1) or False(0)
+			                temp = value.Ab() ? -1L : 0L;//The true value for a variant is actually -1.
+			                break;
+
+			            case Com.vt_bstr://COM string (Unicode string with length prefix)
+			            case Com.vt_dispatch://COM object
+			            case Com.vt_variant://VARIANT(must be combined with VT_ARRAY or VT_BYREF)
+			            case Com.vt_unknown://IUnknown interface pointer
+			                wasObj = true;
+			                temp = longVal != 0L ? longVal : value;
+			                break;
+
+			            case Com.vt_decimal://(not supported)
+			                temp = longVal;
+			                break;
+
+			            case Com.vt_i1://8-bit signed int
+			            case Com.vt_ui1://8-bit unsigned int
+			                temp = longVal & 0x0F;
+			                break;
+
+			            case Com.vt_record://User-defined type -- NOT SUPPORTED
+			                break;
+
+			            case Com.vt_array://SAFEARRAY
+			                wasObj = true;
+			                temp = longVal;
+			                break;
+			                //case Com.vt_byref    ://Pointer to another type of value (0x4000)
+			                //  break;
+			        }
+			    }
+
+			    if (wasObj)
+			    {
+			        if (longVal != 0L)
+			        {
+			            temp = Marshal.GetObjectForIUnknown(new nint(longVal));
+			        }
+
+			        //else if (value is long l && l > 0)// && Marshal.IsComObject(value))
+			        //{
+			        //  try
+			        //  {
+			        //      temp = Marshal.GetObjectForIUnknown(new IntPtr(l));//This can just be a pointer to memory, in which case it'll throw.
+			        //  }
+			        //  catch (Exception)
+			        //  {
+			        //  }
+			        //}
+			        //else
+			        //  temp = value;
+			    }
+
+			    if (temp != null && Marshal.IsComObject(temp))
+			    {
+			        if (temp is IDispatch id)
+			        {
+			            item = id;
+			            return;
+			        }
+			    }
+
+			    item = temp;
+			    }
+			
+			/*
 			set
 			{
 				object temp;
@@ -46,6 +164,7 @@ namespace Keysharp.Core.COM
 				else
 					item = value;
 			}
+			*/
 		}
 
 		public new (Type, object) super => (typeof(ComObject), this);
@@ -103,35 +222,44 @@ namespace Keysharp.Core.COM
 		{
 			if (val is string s)
 			{
-				variant.Ptr = s.Clone();
 				variant.VarType = Com.vt_bstr;
+				variant.Ptr = s.Clone();
+				return;
 			}
 			else if (val is long l)
 			{
+				variant.VarType = (l == (int)l) ? Com.vt_i4 : Com.vt_i8;
 				variant.Ptr = l;
-				variant.VarType = Com.vt_i8;
+				return;
 			}
 			else if (val is int i)
 			{
-				variant.Ptr = i;
 				variant.VarType = Com.vt_i4;
+				variant.Ptr = i;
+				return;
 			}
 			else if (val is double d)
 			{
-				variant.Ptr = d;
 				variant.VarType = Com.vt_r8;
+				variant.Ptr = d;
+				return;
 			}
 			else if (val is IntPtr ptr)
 			{
-				variant.Ptr = ptr;
 				variant.VarType = Com.vt_i8;
+				variant.Ptr = ptr;
+				return;
 			}
 			else if (val is ComObject co)
 			{
-				variant.Ptr = co.Ptr;
 				variant.VarType = co.VarType;
+				variant.Ptr = co.Ptr;
 
-				if ((co.Flags & F_OWNVALUE) == F_OWNVALUE)
+				if (co.VarType == Com.vt_dispatch || co.VarType == Com.vt_unknown)
+				{
+					Com.ObjAddRef(co);
+				}
+				else if ((co.Flags & F_OWNVALUE) == F_OWNVALUE)
 				{
 					if ((variant.VarType & ~Com.vt_typemask) == Com.vt_array && co.Ptr is ComObjArray coa)
 					{
@@ -147,7 +275,7 @@ namespace Keysharp.Core.COM
 			}
 
 			variant.VarType = Com.vt_dispatch;
-			variant.Ptr = val;
+			variant.Ptr = val is IDispatch id ? id : val;
 		}
 
 		internal static ComObject ValueToVarType(object val, int varType, bool callerIsComValue)
@@ -165,8 +293,9 @@ namespace Keysharp.Core.COM
 			{
 				return new ComObject()
 				{
-					Ptr = val.Ab() ? -1 : 0,//The true value for a variant is actual -1. Not sure if this should be short, int or long?//TODO.
-					VarType = varType
+					VarType = varType,
+					//Ptr = val.Ab() ? -1L : 0L
+					Ptr = val.Ab() ? -1 : 0
 				};
 			}
 
@@ -175,10 +304,10 @@ namespace Keysharp.Core.COM
 
 			if (val is long l)
 			{
-				co = new ComObject()
+				co = new ComObject
 				{
-					Ptr = l,
-					VarType = Com.vt_i8
+					VarType = Com.vt_i8,
+					Ptr = l
 				};
 
 				switch (varType)
@@ -203,14 +332,6 @@ namespace Keysharp.Core.COM
 						return co;
 				}
 			}
-			//else if (val is IntPtr ptr)
-			//{
-			//  return co = new ComObject()
-			//  {
-			//      Ptr = ptr,
-			//      VarType = Com.vt_i8
-			//  };
-			//}
 			else
 				ValueToVariant(val, co = new ComObject());
 

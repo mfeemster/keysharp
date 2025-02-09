@@ -288,8 +288,9 @@ namespace Keysharp.Core.Common.Invoke
 
 					if (typeToStringProperties.TryGetValue(t, out var dkt))
 					{
-						if (dkt.TryGetValue(name, out var prop))
-							return true;
+						if (name != "__Class" && name != "__Static" && name != "super")
+							if (dkt.TryGetValue(name, out var prop))
+								return true;
 					}
 
 					t = t.BaseType;
@@ -349,7 +350,18 @@ namespace Keysharp.Core.Common.Invoke
 						break;
 
 					if (typeToStringProperties.TryGetValue(t, out var dkt))
-						ct += dkt.Count - 2; // Subtract 2 because of the auto generated __Class and __Static properties.
+					{
+						ct += dkt.Count;
+
+						if (dkt.ContainsKey("super"))
+							--ct;
+
+                        if (dkt.ContainsKey("__Static"))
+                            --ct;
+
+                        if (dkt.ContainsKey("__Class"))
+							--ct;
+					}
 
 					t = t.BaseType;
 				}
@@ -480,7 +492,7 @@ namespace Keysharp.Core.Common.Invoke
 				}
 				catch (Exception ex)
 				{
-					Script.OutputDebug(ex.Message);
+					Debug.OutputDebug(ex.Message);
 				}
 			}
 

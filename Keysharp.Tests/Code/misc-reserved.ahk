@@ -5,12 +5,12 @@ if (char == 123)
 else
 	FileAppend "fail", "*"
 
-func(short, float, double)
+resfunc(short, float, double)
 {
 	return short + float + double
 }
 
-int := func(1, 2, 3)
+int := resfunc(1, 2, 3)
 
 if (int == 6)
 	FileAppend "pass", "*"
@@ -42,6 +42,19 @@ mc := myclass(4, 5, 6)
 sbyte := mc.GetSum()
 
 if (sbyte == 15)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+
+resfunc2()
+{
+	string := 123
+	return string
+}
+
+xx := resfunc2()
+
+if (xx == 123)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"

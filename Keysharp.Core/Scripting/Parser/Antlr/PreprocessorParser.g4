@@ -27,7 +27,21 @@ preprocessor_directive
     | EndRegion Text? directive_new_line_or_sharp { this.OnPreprocessorDirectiveEndregion(); }                               # preprocessorRegion
     | Pragma Text directive_new_line_or_sharp { this.OnPreprocessorDirectivePragma(); }                                      # preprocessorPragma
     | Nullable Text directive_new_line_or_sharp { this.OnPreprocessorDirectiveNullable(); }                                  # preprocessorNullable
-    | SingleInstance Text directive_new_line_or_sharp                                                                        # preprocessorSingleInstance
+    // The following directives are handled in PreReader.cs, because it's easier that way
+    | ( Include
+      | IncludeAgain
+      | DllLoad
+      | Requires
+      | SingleInstance
+      | Assembly ) Text directive_new_line_or_sharp                                                                          # preprocessorTextualDirective
+    | Persistent (True | False | Digits)? directive_new_line_or_sharp                                                        # preprocessorPersistent
+    | NoDynamicVars directive_new_line_or_sharp                                                                              # preprocessorNoDynamicVars
+    | ErrorStdOut directive_new_line_or_sharp                                                                                # preprocessorErrorStdOut
+    | ( HotIfTimeout
+      | MaxThreads
+      | MaxThreadsBuffer
+      | MaxThreadsPerHotkey
+      | ClipboardTimeout) Digits directive_new_line_or_sharp                                                                 # preprocessorNumericDirective
     ;
 
 directive_new_line_or_sharp

@@ -234,34 +234,13 @@ Await : 'await';
 Static : 'static';
 Global : 'global';
 Local  : 'local';
-
-Include : '#include' -> pushMode(DIRECTIVE_MODE);
-IncludeAgain : '#includeagain' -> pushMode(DIRECTIVE_MODE);
+ 
 HotIf : '#hotif';
-HotIfTimeout : '#hotiftimeout';
-ClipboardTimeout : '#clipboardtimeout';
-DllLoad : '#dllload' -> pushMode(DIRECTIVE_MODE);
-ErrorStdOut : '#errorstdout' -> pushMode(DIRECTIVE_MODE);
 InputLevel : '#inputlevel';
-MaxThreads : '#maxthreads';
-MaxThreadsBuffer : '#maxthreadsbuffer';
-MaxThreadsPerHotkey : '#maxthreadsperhotkey';
-NoTrayIcon : '#notrayicon';
-Requires : '#requires' -> pushMode(DIRECTIVE_MODE);
-SingleInstance : '#singleinstance' -> pushMode(DIRECTIVE_MODE);
 SuspendExempt : '#suspendexempt';
 UseHook : '#usehook';
 Warn : '#warn';
-WinActivateForce : '#winactivateforce';
 HotstringOptions : '#hotstring' WhiteSpace+ RawString {this.ProcessHotstringOptions();};
-AssemblyTitle : '#assemblytitle' -> pushMode(DIRECTIVE_MODE);
-AssemblyDescription : '#assemblydescription' -> pushMode(DIRECTIVE_MODE);
-AssemblyConfiguration : '#assemblyconfiguration' -> pushMode(DIRECTIVE_MODE);
-AssemblyCompany : '#assemblycompany' -> pushMode(DIRECTIVE_MODE);
-AssemblyProduct : '#assemblyproduct' -> pushMode(DIRECTIVE_MODE);
-AssemblyCopyright : '#assemblycopyright' -> pushMode(DIRECTIVE_MODE);
-AssemblyTrademark : '#assemblytrademark' -> pushMode(DIRECTIVE_MODE);
-AssemblyVersion : '#assemblyversion' -> pushMode(DIRECTIVE_MODE);
 
 
 /// Identifier Names and Identifiers
@@ -312,6 +291,27 @@ Region                 : 'region' WhiteSpace?    -> channel(DIRECTIVE), mode(DIR
 EndRegion              : 'endregion' WhiteSpace? -> channel(DIRECTIVE), mode(DIRECTIVE_TEXT);
 Pragma                 : 'pragma' WhiteSpace     -> channel(DIRECTIVE), mode(DIRECTIVE_TEXT);
 Nullable               : 'nullable' WhiteSpace   -> channel(DIRECTIVE), mode(DIRECTIVE_TEXT);
+Include                : 'include' WhiteSpace    -> channel(DIRECTIVE), mode(DIRECTIVE_TEXT);
+IncludeAgain           : 'includeagain' WhiteSpace         -> channel(DIRECTIVE), mode(DIRECTIVE_TEXT);
+DllLoad                : 'dllload' WhiteSpace    -> channel(DIRECTIVE), mode(DIRECTIVE_TEXT);
+Requires               : 'requires' WhiteSpace   -> channel(DIRECTIVE), mode(DIRECTIVE_TEXT);
+SingleInstance         : 'singleinstance' WhiteSpace       -> channel(DIRECTIVE), mode(DIRECTIVE_TEXT);
+Persistent             : 'persistent' WhiteSpace?          -> channel(DIRECTIVE);
+NoDynamicVars          : 'nodynamicvars'         -> channel(DIRECTIVE);
+ErrorStdOut            : 'errorstdout'           -> channel(DIRECTIVE);
+ClipboardTimeout       : 'clipboardtimeout' WhiteSpace     -> channel(DIRECTIVE);
+HotIfTimeout           : 'hotiftimeout' WhiteSpace         -> channel(DIRECTIVE);
+MaxThreads             : 'maxthreads' WhiteSpace           -> channel(DIRECTIVE);
+MaxThreadsBuffer       : 'maxthreadsbuffer' WhiteSpace     -> channel(DIRECTIVE);
+MaxThreadsPerHotkey    : 'maxthreadsperhotkey' WhiteSpace  -> channel(DIRECTIVE);
+Assembly               : 'assembly' ('title'
+                                    | 'description'
+                                    | 'configuration'
+                                    | 'company'
+                                    | 'product'
+                                    | 'copyright'
+                                    | 'trademark'
+                                    | 'version') WhiteSpace -> channel(DIRECTIVE), mode(DIRECTIVE_TEXT);
 DirectiveDefault       : 'default'               -> channel(DIRECTIVE), type(Default);
 DirectiveHidden        : 'hidden'                -> channel(DIRECTIVE);
 DirectiveOpenParen     : '('                     -> channel(DIRECTIVE), type(OpenParen);
@@ -554,7 +554,7 @@ fragment HotkeyCharacter
     | 'AltTab'
     | 'ShiftAltTab'
     | ~[`\r\n\u2028\u2029 ]   // Match any character except semicolon, newline, carriage return, or whitespace
-    | '`' EscapeSequence       // Match escape sequences starting with backtick
+    | '`' EscapeSequence?       // Match escape sequences starting with backtick (or just backtick)
     ;
 
 fragment HotkeyCombinatorCharacter: '&';

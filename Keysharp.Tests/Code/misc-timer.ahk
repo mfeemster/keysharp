@@ -1,6 +1,6 @@
 x := 0
 
-fo1 := FuncObj("TimerHandler")
+fo1 := Func("TimerHandler")
 SetTimer(fo1, 100)
 
 TimerHandler()
@@ -22,7 +22,7 @@ else
 	FileAppend "fail", "*"
 
 x := 0
-fo1 := FuncObj("TimerHandler2")
+fo1 := Func("TimerHandler2")
 SetTimer(fo1, 1000)
 
 TimerHandler2(thefo)

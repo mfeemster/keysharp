@@ -112,7 +112,7 @@ public partial class PreprocessorParserBaseVisitor<Result> : AbstractParseTreeVi
 	/// <return>The visitor result.</return>
 	public virtual Result VisitPreprocessorNullable([NotNull] PreprocessorParser.PreprocessorNullableContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by the <c>preprocessorSingleInstance</c>
+	/// Visit a parse tree produced by the <c>preprocessorTextualDirective</c>
 	/// labeled alternative in <see cref="PreprocessorParser.preprocessor_directive"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
@@ -121,7 +121,51 @@ public partial class PreprocessorParserBaseVisitor<Result> : AbstractParseTreeVi
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitPreprocessorSingleInstance([NotNull] PreprocessorParser.PreprocessorSingleInstanceContext context) { return VisitChildren(context); }
+	public virtual Result VisitPreprocessorTextualDirective([NotNull] PreprocessorParser.PreprocessorTextualDirectiveContext context) { return VisitChildren(context); }
+	/// <summary>
+	/// Visit a parse tree produced by the <c>preprocessorPersistent</c>
+	/// labeled alternative in <see cref="PreprocessorParser.preprocessor_directive"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitPreprocessorPersistent([NotNull] PreprocessorParser.PreprocessorPersistentContext context) { return VisitChildren(context); }
+	/// <summary>
+	/// Visit a parse tree produced by the <c>preprocessorNoDynamicVars</c>
+	/// labeled alternative in <see cref="PreprocessorParser.preprocessor_directive"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitPreprocessorNoDynamicVars([NotNull] PreprocessorParser.PreprocessorNoDynamicVarsContext context) { return VisitChildren(context); }
+	/// <summary>
+	/// Visit a parse tree produced by the <c>preprocessorErrorStdOut</c>
+	/// labeled alternative in <see cref="PreprocessorParser.preprocessor_directive"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitPreprocessorErrorStdOut([NotNull] PreprocessorParser.PreprocessorErrorStdOutContext context) { return VisitChildren(context); }
+	/// <summary>
+	/// Visit a parse tree produced by the <c>preprocessorNumericDirective</c>
+	/// labeled alternative in <see cref="PreprocessorParser.preprocessor_directive"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitPreprocessorNumericDirective([NotNull] PreprocessorParser.PreprocessorNumericDirectiveContext context) { return VisitChildren(context); }
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="PreprocessorParser.directive_new_line_or_sharp"/>.
 	/// <para>

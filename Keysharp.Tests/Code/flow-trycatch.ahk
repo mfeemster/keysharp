@@ -544,3 +544,18 @@ if (xx == 3)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
+
+; Just test parsing but not functionality since we're not implementing this for now.
+try
+{
+}
+catch (OSError,MethodError,MemoryError as osmmex) {
+}
+catch (KeyError,IndexError,ValueError as kivex)
+{
+}
+catch (UnsetItemError,Error,ZeroDivisionError) {
+}
+catch (UnsetError,TimeoutError,TargetError)
+{
+}

@@ -1,0 +1,225 @@
+﻿using Keysharp.Scripting;
+
+namespace Keysharp.Core
+{
+	public static class Debug
+	{
+		public static void Edit()
+		{
+			if (Accessors.A_IsCompiled)
+			{
+				_ = Dialogs.MsgBox("Cannot edit a compiled script.");
+				return;
+			}
+
+			var title = Script.mainWindow != null ? Script.mainWindow.Text : "";
+			var tv = Threads.GetThreadVariables();
+			var mm = tv.titleMatchMode;
+			tv.titleMatchMode = 2L;//Match anywhere.
+			var hwnd = WindowX.WinExist(Accessors.A_ScriptName, "", title, "");
+			tv.titleMatchMode = mm;
+			var wi = new WindowItem(new IntPtr(hwnd));
+			var classname = wi.ClassName;//Logic taken from AHK.
+
+			if (classname == "#32770" || classname == "AutoHotkey" || classname == "Keysharp")//MessageBox(), InputBox(), FileSelect(), or GUI/script-owned window.
+				hwnd = 0;
+
+			if (hwnd == 0)
+			{
+#if LINUX
+				_ = $"$EDITOR {Accessors.A_ScriptFullPath}".Bash(false);
+#elif WINDOWS
+				var ed = "";
+
+				try
+				{
+					ed = Registrys.RegRead(@"HKCR\KeysharpScript\Shell\Edit\Command") as string;
+				}
+				catch
+				{
+				}
+
+				//try
+				//{
+				//  if (string.IsNullOrEmpty(ed))
+				//      ed = Registrys.RegRead(@"HKCR\AutoHotkeyScript\Shell\Edit\Command") as string;
+				//}
+				//catch
+				//{
+				//}
+				object pid = null;
+
+				if (!string.IsNullOrEmpty(ed))
+				{
+					var prcIndex = ed.IndexOf('%');
+					ed = prcIndex != -1 ? ed.Substring(0, prcIndex) : ed;
+					_ = Processes.Run(ed, Accessors.A_ScriptDir, "", pid, Accessors.A_ScriptFullPath);
+				}
+				else
+					_ = Processes.Run($"Notepad.exe", Accessors.A_ScriptDir, "", pid, Accessors.A_ScriptFullPath);
+
+#endif
+			}
+			else
+			{
+				wi.Active = true;
+			}
+		}
+
+		public static string GetVars(object obj = null)
+		{
+			var tabLevel = 0;
+			var doInternal = obj.Ab(true);
+			var sbuf = new StringBuffer();
+			var sb = sbuf.sb;
+			var typesToProps = new SortedDictionary<string, List<PropertyInfo>>();
+			_ = sb.AppendLine($"**User defined**\r\n");
+
+			foreach (var typeKv in Reflections.staticFields.Where(tkv => tkv.Key.Name.StartsWith("program", StringComparison.OrdinalIgnoreCase)))
+			{
+				foreach (var fieldKv in typeKv.Value.OrderBy(f => f.Key))
+				{
+					var val = fieldKv.Value.GetValue(null);
+					var fieldType = val != null ? val.GetType().Name : fieldKv.Value.FieldType.Name;
+					_ = Misc.PrintProps(val, fieldKv.Key, sbuf, ref tabLevel);
+				}
+			}
+
+			_ = sb.AppendLine("\r\n--------------------------------------------------\r\n**Internal**\r\n");
+
+			if (doInternal)
+			{
+				foreach (var propKv in Reflections.flatPublicStaticProperties)
+				{
+					var list = typesToProps.GetOrAdd(propKv.Value.DeclaringType.Name);
+
+					if (list.Count == 0)
+						list.Capacity = 200;
+
+					list.Add(propKv.Value);
+				}
+
+				foreach (var t2pKv in typesToProps)
+				{
+					var typeName = t2pKv.Key;
+					_ = sb.AppendLine($"{typeName}:");
+
+					foreach (var prop in t2pKv.Value.OrderBy(p => p.Name))
+					{
+						try
+						{
+							//OutputDebug($"GetVars(): getting prop: {prop.Name}");
+							var val = prop.GetValue(null);
+							var proptype = val != null ? val.GetType().Name : prop.PropertyType.Name;
+							_ = Misc.PrintProps(val, prop.Name, sbuf, ref tabLevel);
+						}
+						catch (Exception ex)
+						{
+							OutputDebug($"GetVars(): exception thrown inside of nested loop inside of second internal loop: {ex.Message}");
+						}
+					}
+
+					_ = sb.AppendLine("--------------------------------------------------");
+					_ = sb.AppendLine();
+				}
+			}
+
+			return sbuf.sb.ToString();
+		}
+
+		public static string ListKeyHistory()
+		{
+			var sb = new StringBuilder(2048);
+			var target_window = WindowProvider.Manager.ActiveWindow;
+			var win_title = target_window.IsSpecified ? target_window.Title : "";
+			var enabledTimers = 0;
+			var ht = Script.HookThread;
+
+			foreach (var timer in Flow.timers)
+			{
+				if (timer.Value.Enabled)
+				{
+					enabledTimers++;
+					_ = sb.Append($"{timer.Key.ToString()} ");
+				}
+			}
+
+			if (sb.Length > 123)
+			{
+				var tempstr = sb.ToString(0, 123).TrimEnd() + "...";
+				_ = sb.Clear();
+				_ = sb.Append(tempstr);
+			}
+			else if (sb.Length > 0)
+			{
+				if (sb[sb.Length - 1] == ' ')
+				{
+					var tempstr = sb.ToString().TrimEnd();
+					_ = sb.Clear();
+					_ = sb.Append(tempstr);
+				}
+			}
+
+			var timerlist = sb.ToString();
+			var mod = "";
+			var hookstatus = "";
+			var cont = "Key History has been disabled via KeyHistory(0).";
+			_ = sb.Clear();
+
+			if (ht != null)
+			{
+				mod = ht.kbdMsSender.ModifiersLRToText(ht.kbdMsSender.GetModifierLRState(true));
+				hookstatus = ht.GetHookStatus();
+
+				if (ht.keyHistory != null && ht.keyHistory.Size > 0)
+					cont = "Press [F5] to refresh.";
+			}
+
+			_ = sb.AppendLine($"Window: {win_title}");
+			_ = sb.AppendLine($"Keybd hook: {(ht != null && ht.HasKbdHook() ? "yes" : "no")}");
+			_ = sb.AppendLine($"Mouse hook: {(ht != null && ht.HasMouseHook() ? "yes" : "no")}");
+			_ = sb.AppendLine($"Enabled timers: {enabledTimers} of {Flow.timers.Count} ({timerlist})");
+			_ = sb.AppendLine($"Threads: {Script.totalExistingThreads}");
+			_ = sb.AppendLine($"Modifiers (GetKeyState() now) = {mod}");
+			_ = sb.AppendLine(hookstatus);
+			_ = sb.Append(cont);
+			return sb.ToString();
+		}
+
+		public static void ListLines(params object[] obj)
+		{
+			Error err;
+			_ = Errors.ErrorOccurred(err = new Error("ListLines() is not supported in Keysharp because it's a compiled program, not an interpreted one.")) ? throw err : "";
+		}
+
+		public static void ListVars() => Script.mainWindow?.ShowInternalVars(true);
+
+		/// <summary>
+		/// Sends a string to the debugger (if any) for display.
+		/// </summary>
+		/// <param name="obj0">The text to send to the debugger for display.</param>
+		/// <param name="obj1">True to first clear the display, else false to append.</param>
+		public static void OutputDebug(object obj0, object obj1 = null)
+		{
+			var text = obj0.As();
+			var clear = obj1.Ab();
+			System.Diagnostics.Debug.WriteLine(text);//Will print only in debug mode.
+
+			//This will throw when running tests.
+			try
+			{
+				Console.Out.WriteLine(text);//Will print to the console when piped to | more, even though this is a windows application.
+			}
+			catch
+			{
+			}
+
+			if (!Script.IsMainWindowClosing)
+				if (clear)
+					Script.mainWindow.SetText(text, MainWindow.MainFocusedTab.Debug, false);
+				else
+					Script.mainWindow.AddText(text, MainWindow.MainFocusedTab.Debug, false);
+		}
+
+	}
+}

@@ -48,7 +48,6 @@ sourceElements
 // Function declarations are handled as expressions
 sourceElement
     : classDeclaration eos
-    | generalDirective eos
     | positionalDirective eos
     | remap eos
     | hotstring eos
@@ -56,30 +55,6 @@ sourceElement
     | statement eos
     | WS
     | EOL
-    ;
-
-generalDirective
-    : ClipboardTimeout numericLiteral   # ClipboardTimeoutDirective
-    | DllLoad DirectiveContent          # DllLoadDirective
-    | ErrorStdOut DirectiveContent?     # ErrorStdOutDirective
-    | HotIfTimeout numericLiteral       # HotIfTimeoutDirective
-    | Include DirectiveContent          # IncludeDirective
-    | IncludeAgain DirectiveContent     # IncludeAgainDirective
-    | MaxThreads numericLiteral         # MaxThreadsDirective
-    | MaxThreadsBuffer (numericLiteral | boolean)?    # MaxThreadsBufferDirective
-    | MaxThreadsPerHotkey numericLiteral # MaxThreadsPerHotkeyDirective
-    | NoTrayIcon                        # NoTrayIconDirective
-    | Requires DirectiveContent         # RequiresDirective
-    | SingleInstance DirectiveContent   # SingleInstanceDirective
-    | WinActivateForce                  # WinActivateForceDirective
-    | (AssemblyTitle
-        | AssemblyDescription
-        | AssemblyConfiguration
-        | AssemblyCompany
-        | AssemblyProduct
-        | AssemblyCopyright
-        | AssemblyTrademark
-        | AssemblyVersion) DirectiveContent # AssemblyDirective
     ;
 
 positionalDirective
@@ -420,17 +395,16 @@ arrayElement
     ;
 
 mapLiteral
-    : ('[' mapElementList? ']')
+    : '[' (WS | EOL)* mapElementList (WS | EOL)* ']'
     ;
 
 // Keysharp supports arrays like [,,1,2,,].
 mapElementList
-    : (mapElement? ',')+
+    : ','* mapElement (',' mapElement?)*
     ;
 
 mapElement
-    : expression Multiply? // Spread
-    | expression ':' expression // Map element
+    : key = expression ':' value = expression // Map element
     ;
 
 propertyAssignment
@@ -526,6 +500,7 @@ primaryExpression
     | dynamicIdentifier                                                    # DynamicIdentifierExpression
     | literal                                                              # LiteralExpression
     | arrayLiteral                                                         # ArrayLiteralExpression
+    | mapLiteral                                                           # MapLiteralExpression
     | objectLiteral                                                        # ObjectLiteralExpression
     | '(' expressionSequence ')'                                           # ParenthesizedExpression
     ;

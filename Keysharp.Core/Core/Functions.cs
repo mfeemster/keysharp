@@ -1,4 +1,6 @@
-﻿namespace Keysharp.Core
+﻿using System;
+
+namespace Keysharp.Core
 {
 	/// <summary>
 	/// Public interface for function object and function reflection-related functions.
@@ -15,30 +17,34 @@
 		/// <param name="paramCount">The number of parameters the method has. Default: use the first method found.</param>
 		/// <returns>An <see cref="IFuncObj"/> which can later be called like a function.</returns>
 		/// <exception cref="MethodError">A <see cref="MethodError"/> exception is thrown if the method cannot be found.</exception>
-		public static IFuncObj Func(object funcName, object obj = null, object paramCount = null)
-		{
-			Error err;
-			var name = funcName.As();
-			var fo = new FuncObj(name, obj, paramCount);
+		//public static IFuncObj Func(object funcName, object obj = null, object paramCount = null)
+		//{
+		//  Error err;
+		//  var name = funcName.As();
+		//  var fo = new FuncObj(name, obj, paramCount);
 
-			if (fo.Name != "")
-				return fo;
+		//  if (fo.Name != "")
+		//      return fo;
 
-			return Errors.ErrorOccurred(err = new MethodError($"Unable to retrieve method {name} from object of type {(obj != null ? obj.GetType() : "")} with parameter count {paramCount.Ai(-1)}.")) ? throw err : null;
-		}
+		//  return Errors.ErrorOccurred(err = new MethodError($"Unable to retrieve method {name} from object of type {(obj != null ? obj.GetType() : "")} with parameter count {paramCount.Ai(-1)}.")) ? throw err : null;
+		//}
 
 		/// <summary>
-		/// Same as Func(), but does not throw an exception if the method is not found.
+		/// Creates a function object by searching for a method within the script if funcName was a string.
+		/// The search is done by matching the object type, name and parameter count.
+		/// If funcName was a delegate, then a new <see cref="FuncObj"/> is returned using delegate.Method.
+		/// If funcName was already an <see cref="IFuncObj"/>, then it's just casted and returned.
+		/// Static functions use null for the object.
 		/// </summary>
-		/// <param name="funcName">The name of the method.</param>
+		/// <param name="funcName">The name, delegate or IFuncObj of the method.</param>
 		/// <param name="obj">The object to call the method on. Default: null for static functions.</param>
 		/// <param name="paramCount">The number of parameters the method has. Default: use the first method found.</param>
-		/// <returns>An <see cref="IFuncObj"/> which can later be called like a method.</returns>
-		public static IFuncObj FuncObj(object funcName, object obj = null, object paramCount = null) => new FuncObj(funcName.As(), obj, paramCount);
+		/// <returns>An <see cref="IFuncObj"/> which can later be called like a function.</returns>
+		public static IFuncObj Func(object funcName, object obj = null, object paramCount = null) => GetFuncObj(funcName, obj, paramCount);
 
-        public static IFuncObj FuncObj(object funcName, Type t, object paramCount = null) => new FuncObj(funcName.As(), t, paramCount);
+        public static IFuncObj Func(object funcName, Type t, object paramCount = null) => new FuncObj(funcName.As(), t, paramCount);
 
-        public static IFuncObj FuncObj(Delegate del, object obj = null) => new FuncObj(del, obj ?? del.Target);
+        public static IFuncObj Func(Delegate del, object obj = null) => new FuncObj(del, obj ?? del.Target);
 
         /// <summary>
         /// Gets a method of an object.
@@ -148,7 +154,7 @@
 		/// <returns>An <see cref="IFuncObj"/> which may be a newly recreated one, or h if it was already one.</returns>
 		/// <exception cref="MethodError">A <see cref="MethodError"/> exception is thrown if a function object couldn't be created</exception>
 		/// <exception cref="TypeError">A <see cref="TypeError"/> exception is thrown if h was not a string or existing function object.</exception>
-		internal static IFuncObj GetFuncObj(object h, object eventObj, bool throwIfBad = false)
+		public static IFuncObj GetFuncObj(object h, object eventObj, object paramCount = null, bool throwIfBad = false)
 		{
 			Error err;
 			IFuncObj del = null;
@@ -157,7 +163,7 @@
 			{
 				if (s.Length > 0)
 				{
-					var tempdel = new FuncObj(s, eventObj);
+					var tempdel = new FuncObj(s, eventObj, paramCount);
 
 					if (tempdel.IsValid)
 						del = tempdel;

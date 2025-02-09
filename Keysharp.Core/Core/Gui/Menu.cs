@@ -180,7 +180,7 @@
 			{
 				var editfunc = new Func<object>(() =>
 				{
-					Script.Edit();
+					Debug.Edit();
 					return "";
 				});
 				_ = Add("&Edit Script", new FuncObj(editfunc.Method, editfunc.Target));

@@ -28,6 +28,7 @@ using static System.Net.Mime.MediaTypeNames;
 using static System.Windows.Forms.AxHost;
 using System.Reflection;
 using static Keysharp.Scripting.Parser;
+using System.Reflection.PortableExecutable;
 
 namespace Keysharp.Scripting
 {
@@ -109,7 +110,7 @@ namespace Keysharp.Scripting
 			{
 					try
 					{
-						string name = SCRIPT_NAME_PLACEHOLDER;
+                        MAIN_INIT_PLACEHOLDER
 						Keysharp.Scripting.Script.Variables.InitGlobalVars();
 						Keysharp.Scripting.Script.SetName(name);
 						if (Keysharp.Scripting.Script.HandleSingleInstance(name, eScriptInstance.SINGLEINSTANCE_PLACEHOLDER))
@@ -155,8 +156,16 @@ namespace Keysharp.Scripting
 					}
 				return Environment.ExitCode;
 			}
-		";
-            mainBodyCode = mainBodyCode.ReplaceFirst("SCRIPT_NAME_PLACEHOLDER", "@\"" + Path.GetFullPath(parser.fileName) + "\"");
+		"
+            ;
+
+            parser.mainFuncInitial.Add($"string name = @\"{Path.GetFullPath(parser.fileName)}\";");
+            foreach (var (p, s) in parser.reader.PreloadedDlls)//Add after InitGlobalVars() call above, because the statements will be added in reverse order.
+            {
+                parser.mainFuncInitial.Add($"Keysharp.Scripting.Script.Variables.AddPreLoadedDll(\"{p}\", {s.ToString().ToLower()});");
+            }
+
+            mainBodyCode = mainBodyCode.ReplaceFirst("MAIN_INIT_PLACEHOLDER", String.Join(Environment.NewLine, parser.mainFuncInitial));
             mainBodyCode = mainBodyCode.ReplaceFirst("SINGLEINSTANCE_PLACEHOLDER", System.Enum.GetName(typeof(eScriptInstance), parser.reader.SingleInstance));
 
             var mainBodyBlock = SyntaxFactory.ParseStatement(mainBodyCode) as BlockSyntax;
@@ -191,9 +200,11 @@ namespace Keysharp.Scripting
             if (context.sourceElements() != null)
                 VisitSourceElements(context.sourceElements());
 
+            GenerateGeneralDirectiveStatements();
+
             // Merge positional directives, hotkeys, hotstrings to the beginning of the auto-execute section
             parser.autoExecFunc.Body = 
-                parser.generalDirectives.Concat(parser.DHHR)
+                parser.generalDirectiveStatements.Concat(parser.DHHR)
                 .Concat(parser.autoExecFunc.Body)
                 .Append(
                     SyntaxFactory.ExpressionStatement(
@@ -257,7 +268,6 @@ namespace Keysharp.Scripting
                 {
                     switch (ruleNode.RuleContext.RuleIndex)
                     {
-                        case RULE_generalDirective:
                         case RULE_positionalDirective:
                         case RULE_remap:
                         case RULE_hotkey:
@@ -1466,9 +1476,9 @@ namespace Keysharp.Scripting
                     .WithParameterList(methodDeclaration.ParameterList)
                     .WithBlock(methodDeclaration.Body);
 
-                // Return the FuncObj invocation
+                // Return the Func invocation
                 return SyntaxFactory.InvocationExpression(
-                    SyntaxFactory.IdentifierName("FuncObj"),
+                    SyntaxFactory.IdentifierName("Func"),
                     SyntaxFactory.ArgumentList(
                         SyntaxFactory.SingletonSeparatedList(SyntaxFactory.Argument(lambdaExpression))
                     )
@@ -1733,6 +1743,36 @@ namespace Keysharp.Scripting
 
             // Return the element as is
             return element;
+        }
+
+        public override SyntaxNode VisitMapLiteral([NotNull] MapLiteralContext context)
+        {
+            ArgumentListSyntax argumentList = (ArgumentListSyntax)Visit(context.mapElementList());
+
+            return SyntaxFactory.InvocationExpression(
+                CreateQualifiedName("Keysharp.Core.Collections.Map"),
+                argumentList
+            );
+        }
+
+        public override SyntaxNode VisitMapElementList([NotNull] MapElementListContext context)
+        {
+            var expressions = new List<ArgumentSyntax>();
+
+            if (context == null || context.ChildCount == 0)
+            {
+                return SyntaxFactory.ArgumentList();
+            }
+            foreach (var mapElementContext in context.mapElement())
+            {
+                expressions.Add(SyntaxFactory.Argument((ExpressionSyntax)(Visit(mapElementContext.key))));
+                expressions.Add(SyntaxFactory.Argument((ExpressionSyntax)(Visit(mapElementContext.value))));
+            }
+
+            // Wrap the expressions in an InitializerExpressionSyntax
+            return SyntaxFactory.ArgumentList(
+                SyntaxFactory.SeparatedList(expressions)
+            );
         }
     }
 }

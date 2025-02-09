@@ -729,7 +729,7 @@ namespace Keysharp.Core
                 if (cachedFuncObj.TryGetValue(s, out var tempfunc))
                     func = tempfunc;
                 else
-                    cachedFuncObj[s] = func = Functions.FuncObj(s);
+                    cachedFuncObj[s] = func = Functions.Func(s);
             }
             else if (f is Delegate del) // This could happen if a string is dereferenced to a built-in function name.
             {

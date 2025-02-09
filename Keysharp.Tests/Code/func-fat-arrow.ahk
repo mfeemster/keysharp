@@ -379,9 +379,9 @@ func2__(x) ; This can't be named func2() because it'll conflict with another fun
 	global tot += x
 }
 
-f := FuncObj("func2__")
+f := Func("func2__")
 
-func(a, b, c)
+testfunc(a, b, c)
 {
 	global tot
 	tot += a(1)
@@ -390,7 +390,7 @@ func(a, b, c)
 	f(10)
 }
 
-func((o) => o * 1, (o) => o * 2, (o) => o * 3)
+testfunc((o) => o * 1, (o) => o * 2, (o) => o * 3)
 ; MsgBox(tot)
 
 If (tot == 24)
@@ -400,7 +400,7 @@ else
 
 class myclass2
 {
-	func(a, b, c)
+	testfunc(a, b, c)
 	{
 		global tot
 		tot += a(1)
@@ -412,7 +412,7 @@ class myclass2
 
 tot := 0
 class2obj := myclass2()
-class2obj.func((o) => o * 1, (o) => o * 2, (o) => o * 3)
+class2obj.testfunc((o) => o * 1, (o) => o * 2, (o) => o * 3)
 
 If (tot == 34)
 	FileAppend "pass", "*"

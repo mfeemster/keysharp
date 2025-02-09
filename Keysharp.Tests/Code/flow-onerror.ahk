@@ -36,7 +36,7 @@ else
 
 x := 0
 
-fo1 := FuncObj("TimerHandler")
+fo1 := Func("TimerHandler")
 SetTimer(fo1, 100)
 
 TimerHandler()

@@ -96,7 +96,7 @@
 			_ = this.BeginInvoke(() =>
 			{
 				ShowIfNeeded();
-				SetTextInternal(Script.ListKeyHistory(), MainFocusedTab.History, txtHistory, true);
+				SetTextInternal(Core.Debug.ListKeyHistory(), MainFocusedTab.History, txtHistory, true);
 			});
 		}
 
@@ -108,7 +108,7 @@
 				try
 				{
 					ShowIfNeeded();
-					SetTextInternal(Script.GetVars(), MainFocusedTab.Vars, txtVars, showTab);
+					SetTextInternal(Core.Debug.GetVars(), MainFocusedTab.Vars, txtVars, showTab);
 				}
 				finally
 				{
@@ -182,7 +182,7 @@
 
 		private void clearDebugLogToolStripMenuItem_Click(object sender, EventArgs e) => txtDebug.Text = "";
 
-		private void editScriptToolStripMenuItem_Click(object sender, EventArgs e) => Script.Edit();
+		private void editScriptToolStripMenuItem_Click(object sender, EventArgs e) => Core.Debug.Edit();
 
 		private void exitToolStripMenuItem_Click(object sender, EventArgs e) => Flow.ExitAppInternal(Flow.ExitReasons.Exit);
 

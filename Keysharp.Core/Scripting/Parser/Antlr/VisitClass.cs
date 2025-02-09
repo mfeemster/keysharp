@@ -113,6 +113,29 @@ namespace Keysharp.Scripting
             AddInitMethods(parser.currentClass.Name);
             parser.currentClass.Body.Add(CreateStaticConstructor(parser.currentClass.Name));
 
+            if (parser.currentClass.ContainsMethod("__Delete"))
+            {
+                parser.currentClass.Body.Add(
+                    SyntaxFactory.DestructorDeclaration(SyntaxFactory.Identifier(parser.currentClass.Name))
+                        .WithBody(SyntaxFactory.Block(
+                            SyntaxFactory.SingletonList<StatementSyntax>(
+                                SyntaxFactory.ExpressionStatement(
+                                    ((InvocationExpressionSyntax)InternalMethods.Invoke)
+                                    .WithArgumentList(SyntaxFactory.ArgumentList(
+                                        SyntaxFactory.SeparatedList(new[] {
+                                            SyntaxFactory.Argument(SyntaxFactory.ThisExpression()),
+                                            SyntaxFactory.Argument(
+                                                SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal("__Delete"))
+                                               )
+                                            }
+                                        )
+                                    ))
+                                )
+                            )
+                        ))
+                    );
+            }
+
             // Add the Call factory method
             if (!parser.currentClass.ContainsMethod(Keywords.ClassStaticPrefix + "Call"))
                 parser.currentClass.Body.Add(CreateCallFactoryMethod(parser.currentClass.Name));
@@ -270,9 +293,11 @@ namespace Keysharp.Scripting
                 if (parser.PropertyExistsInBuiltinBase(fieldName) != null)
                     continue;
 
-                var propertyDeclaration = CreateFieldDeclaration(fieldName, isStatic);
-
-                parser.currentClass.Body.Add(propertyDeclaration);
+                if (!isStatic)
+                {
+                    var propertyDeclaration = CreateFieldDeclaration(fieldName, isStatic);
+                    parser.currentClass.Body.Add(propertyDeclaration);
+                }
             }
 
             return null;
@@ -485,10 +510,15 @@ namespace Keysharp.Scripting
                     SyntaxFactory.Block(
                         parser.currentClass.deferredStaticInitializations.Select(deferred =>
                             SyntaxFactory.ExpressionStatement(
-                                SyntaxFactory.AssignmentExpression(
-                                    SyntaxKind.SimpleAssignmentExpression,
-                                    SyntaxFactory.IdentifierName(deferred.Item1),
-                                    deferred.Item2
+                                ((InvocationExpressionSyntax)InternalMethods.SetPropertyValue)
+                                .WithArgumentList(
+                                    SyntaxFactory.ArgumentList(
+                                        SyntaxFactory.SeparatedList(new[] {
+                                            SyntaxFactory.Argument(SyntaxFactory.IdentifierName(parser.currentClass.Name.ToLowerInvariant())),
+                                            SyntaxFactory.Argument(SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(deferred.Item1))),
+                                            SyntaxFactory.Argument(deferred.Item2)
+                                        })
+                                    )
                                 )
                             )
                         )

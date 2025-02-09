@@ -36,7 +36,7 @@ namespace Keysharp.Core.COM
 				if (methodMapper.Count > 0)
 					dispatcher.EventReceived += Dispatcher_EventReceivedGlobalFunc;
 				else
-					Script.OutputDebug($"No suitable global methods were found with the prefix {prefix} which could be used as COM event handlers. No COM event handlers will be triggered.");
+					Debug.OutputDebug($"No suitable global methods were found with the prefix {prefix} which could be used as COM event handlers. No COM event handlers will be triggered.");
 			}
 			else if (sink is KeysharpObject ko)
 			{
@@ -62,7 +62,7 @@ namespace Keysharp.Core.COM
 				if (methodMapper.Count > 0)
 					dispatcher.EventReceived += Dispatcher_EventReceivedObjectMethod;
 				else
-					Script.OutputDebug($"No suitable methods were found on the passed in object of type {sink.GetType()} which could be used as COM event handlers. No COM event handlers will be triggered.");
+					Debug.OutputDebug($"No suitable methods were found on the passed in object of type {sink.GetType()} which could be used as COM event handlers. No COM event handlers will be triggered.");
 			}
 			else
 				_ = Errors.ErrorOccurred(err = new ValueError($"The passed in sink object of type {sink.GetType()} was not either a string or a Keysharp object.")) ? throw err : "";
@@ -106,7 +106,7 @@ namespace Keysharp.Core.COM
 		private void Dispatcher_EventReceivedGlobalFunc(object sender, DispatcherEventArgs e)
 		{
 			if (logAll)
-				Script.OutputDebug($"Dispatch ID {e.DispId}: {e.Name} received to be dispatched to a global function with {e.Arguments.Length} + 1 args.");
+				Debug.OutputDebug($"Dispatch ID {e.DispId}: {e.Name} received to be dispatched to a global function with {e.Arguments.Length} + 1 args.");
 
 			var thisObj = thisArg[0];
 
@@ -125,7 +125,7 @@ namespace Keysharp.Core.COM
 		private void Dispatcher_EventReceivedObjectMethod(object sender, DispatcherEventArgs e)
 		{
 			if (logAll)
-				Script.OutputDebug($"Dispatch ID {e.DispId}: {e.Name} received to be dispatched to an object method with {e.Arguments.Length} + 1 args.");
+				Debug.OutputDebug($"Dispatch ID {e.DispId}: {e.Name} received to be dispatched to an object method with {e.Arguments.Length} + 1 args.");
 
 			var thisObj = thisArg[0];
 

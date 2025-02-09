@@ -81,12 +81,40 @@ public interface IPreprocessorParserVisitor<Result> : IParseTreeVisitor<Result> 
 	/// <return>The visitor result.</return>
 	Result VisitPreprocessorNullable([NotNull] PreprocessorParser.PreprocessorNullableContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>preprocessorSingleInstance</c>
+	/// Visit a parse tree produced by the <c>preprocessorTextualDirective</c>
 	/// labeled alternative in <see cref="PreprocessorParser.preprocessor_directive"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitPreprocessorSingleInstance([NotNull] PreprocessorParser.PreprocessorSingleInstanceContext context);
+	Result VisitPreprocessorTextualDirective([NotNull] PreprocessorParser.PreprocessorTextualDirectiveContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>preprocessorPersistent</c>
+	/// labeled alternative in <see cref="PreprocessorParser.preprocessor_directive"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitPreprocessorPersistent([NotNull] PreprocessorParser.PreprocessorPersistentContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>preprocessorNoDynamicVars</c>
+	/// labeled alternative in <see cref="PreprocessorParser.preprocessor_directive"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitPreprocessorNoDynamicVars([NotNull] PreprocessorParser.PreprocessorNoDynamicVarsContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>preprocessorErrorStdOut</c>
+	/// labeled alternative in <see cref="PreprocessorParser.preprocessor_directive"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitPreprocessorErrorStdOut([NotNull] PreprocessorParser.PreprocessorErrorStdOutContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>preprocessorNumericDirective</c>
+	/// labeled alternative in <see cref="PreprocessorParser.preprocessor_directive"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitPreprocessorNumericDirective([NotNull] PreprocessorParser.PreprocessorNumericDirectiveContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="PreprocessorParser.directive_new_line_or_sharp"/>.
 	/// </summary>

@@ -50,104 +50,6 @@ public interface IMainParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitSourceElement([NotNull] MainParser.SourceElementContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>ClipboardTimeoutDirective</c>
-	/// labeled alternative in <see cref="MainParser.generalDirective"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitClipboardTimeoutDirective([NotNull] MainParser.ClipboardTimeoutDirectiveContext context);
-	/// <summary>
-	/// Visit a parse tree produced by the <c>DllLoadDirective</c>
-	/// labeled alternative in <see cref="MainParser.generalDirective"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitDllLoadDirective([NotNull] MainParser.DllLoadDirectiveContext context);
-	/// <summary>
-	/// Visit a parse tree produced by the <c>ErrorStdOutDirective</c>
-	/// labeled alternative in <see cref="MainParser.generalDirective"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitErrorStdOutDirective([NotNull] MainParser.ErrorStdOutDirectiveContext context);
-	/// <summary>
-	/// Visit a parse tree produced by the <c>HotIfTimeoutDirective</c>
-	/// labeled alternative in <see cref="MainParser.generalDirective"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitHotIfTimeoutDirective([NotNull] MainParser.HotIfTimeoutDirectiveContext context);
-	/// <summary>
-	/// Visit a parse tree produced by the <c>IncludeDirective</c>
-	/// labeled alternative in <see cref="MainParser.generalDirective"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitIncludeDirective([NotNull] MainParser.IncludeDirectiveContext context);
-	/// <summary>
-	/// Visit a parse tree produced by the <c>IncludeAgainDirective</c>
-	/// labeled alternative in <see cref="MainParser.generalDirective"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitIncludeAgainDirective([NotNull] MainParser.IncludeAgainDirectiveContext context);
-	/// <summary>
-	/// Visit a parse tree produced by the <c>MaxThreadsDirective</c>
-	/// labeled alternative in <see cref="MainParser.generalDirective"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitMaxThreadsDirective([NotNull] MainParser.MaxThreadsDirectiveContext context);
-	/// <summary>
-	/// Visit a parse tree produced by the <c>MaxThreadsBufferDirective</c>
-	/// labeled alternative in <see cref="MainParser.generalDirective"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitMaxThreadsBufferDirective([NotNull] MainParser.MaxThreadsBufferDirectiveContext context);
-	/// <summary>
-	/// Visit a parse tree produced by the <c>MaxThreadsPerHotkeyDirective</c>
-	/// labeled alternative in <see cref="MainParser.generalDirective"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitMaxThreadsPerHotkeyDirective([NotNull] MainParser.MaxThreadsPerHotkeyDirectiveContext context);
-	/// <summary>
-	/// Visit a parse tree produced by the <c>NoTrayIconDirective</c>
-	/// labeled alternative in <see cref="MainParser.generalDirective"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitNoTrayIconDirective([NotNull] MainParser.NoTrayIconDirectiveContext context);
-	/// <summary>
-	/// Visit a parse tree produced by the <c>RequiresDirective</c>
-	/// labeled alternative in <see cref="MainParser.generalDirective"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitRequiresDirective([NotNull] MainParser.RequiresDirectiveContext context);
-	/// <summary>
-	/// Visit a parse tree produced by the <c>SingleInstanceDirective</c>
-	/// labeled alternative in <see cref="MainParser.generalDirective"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitSingleInstanceDirective([NotNull] MainParser.SingleInstanceDirectiveContext context);
-	/// <summary>
-	/// Visit a parse tree produced by the <c>WinActivateForceDirective</c>
-	/// labeled alternative in <see cref="MainParser.generalDirective"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitWinActivateForceDirective([NotNull] MainParser.WinActivateForceDirectiveContext context);
-	/// <summary>
-	/// Visit a parse tree produced by the <c>AssemblyDirective</c>
-	/// labeled alternative in <see cref="MainParser.generalDirective"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitAssemblyDirective([NotNull] MainParser.AssemblyDirectiveContext context);
-	/// <summary>
 	/// Visit a parse tree produced by the <c>HotIfDirective</c>
 	/// labeled alternative in <see cref="MainParser.positionalDirective"/>.
 	/// </summary>
@@ -1004,6 +906,13 @@ public interface IMainParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitParenthesizedExpression([NotNull] MainParser.ParenthesizedExpressionContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>MapLiteralExpression</c>
+	/// labeled alternative in <see cref="MainParser.primaryExpression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitMapLiteralExpression([NotNull] MainParser.MapLiteralExpressionContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>ObjectLiteralExpression</c>
 	/// labeled alternative in <see cref="MainParser.primaryExpression"/>.

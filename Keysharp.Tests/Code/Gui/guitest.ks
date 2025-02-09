@@ -1799,9 +1799,9 @@
 		MsgBox(boundText . "`n" . a . ", " . b, "A bound function test")
 	}
 	
-	DoTricks() {
-		global boundText
-		RealFn := FuncObj("RealFn")
+DoTricks() {
+	global boundText
+	RealFn := Func("RealFn")
 
 		fn := RealFn.Bind(1)  ; Bind first parameter only
 		boundText := "Bind 1 to first param, call (2), shows 1, 2"
@@ -1841,11 +1841,11 @@
 		MsgBox(TheMessage)
 	}
 
-	FuncObjTest() {
-		RealFn2 := FuncObj("RealFn2")
-		fn2 := RealFn2.Bind("AltTab")
-		fn2()
-	}
+FuncObjTest() {
+	RealFn2 := Func("RealFn2")
+	fn2 := RealFn2.Bind("AltTab")
+	fn2()
+}
 
 	ToggleHotkey() {
 		Try 
@@ -2403,11 +2403,17 @@
 	comDllRunWordListenerBtn := MyGui.Add("Button", "x10 y+10", "COM run MS Word with event listener")
 	comDllRunWordListenerBtn.OnEvent("Click", "ComRunWordEventListener")
 
-	DllMsgBox()
-	{
-		WhichButton := DllCall("MessageBox", "Int", 0, "Str", "Press Yes or No", "Str", "Title of box", "Int", 4)
-		MsgBox "You pressed button #" WhichButton
-	}
+_ := MyGui.Add("Text", "x10 y+10 cBlue S10", "An animated Odie should appear below using ActiveX.")
+
+axPic := "http://www.animatedgif.net/cartoons/A_5odie_e0.gif"
+axText := "mshtml:<img src='" . axPic . "' />"
+MyGui.AddActiveX("w100 h150 x10 y+10", axText)
+
+DllMsgBox()
+{
+	WhichButton := DllCall("MessageBox", "Int", 0, "Str", "Press Yes or No", "Str", "Title of box", "Int", 4)
+	MsgBox "You pressed button #" WhichButton
+}
 
 	DllIsWindowVisible()
 	{

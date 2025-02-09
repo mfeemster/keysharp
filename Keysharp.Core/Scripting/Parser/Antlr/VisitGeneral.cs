@@ -73,7 +73,7 @@ namespace Keysharp.Scripting
                             SyntaxFactory.ArgumentList(
                                 SyntaxFactory.SingletonSeparatedList(
                                     SyntaxFactory.Argument(
-                                        ((InvocationExpressionSyntax)InternalMethods.FuncObj)
+                                        ((InvocationExpressionSyntax)InternalMethods.Func)
                                         .WithArgumentList(
                                             SyntaxFactory.ArgumentList(
                                                 SyntaxFactory.SingletonSeparatedList(
@@ -184,6 +184,35 @@ namespace Keysharp.Scripting
             ));
             return null;
         }
+        public override SyntaxNode VisitSuspendExemptDirective([NotNull] SuspendExemptDirectiveContext context)
+        {
+            var value = context.ChildCount < 3
+                ? SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(1))
+                : Visit(context.GetChild(1));
+            parser.DHHR.Add(SyntaxFactory.ExpressionStatement(
+                SyntaxFactory.AssignmentExpression(
+                    SyntaxKind.SimpleAssignmentExpression,
+                    CreateQualifiedName("Keysharp.Core.Accessors.A_SuspendExempt"),
+                    (LiteralExpressionSyntax)value
+                )
+            ));
+            return null;
+        }
+
+        public override SyntaxNode VisitUseHookDirective([NotNull] UseHookDirectiveContext context)
+        {
+            var value = context.ChildCount < 3
+                ? SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(0))
+                : Visit(context.GetChild(1));
+            parser.DHHR.Add(SyntaxFactory.ExpressionStatement(
+                SyntaxFactory.AssignmentExpression(
+                    SyntaxKind.SimpleAssignmentExpression,
+                    CreateQualifiedName("Keysharp.Core.Accessors.A_UseHook"),
+                    (LiteralExpressionSyntax)value
+                )
+            ));
+            return null;
+        }
 
         public override SyntaxNode VisitHotkey([NotNull] HotkeyContext context)
         {
@@ -244,6 +273,10 @@ namespace Keysharp.Scripting
             foreach (var hotkeyTriggerContext in context.HotkeyTrigger())
             {
                 var triggerText = hotkeyTriggerContext.GetText();
+                triggerText = triggerText.Substring(0, triggerText.Length - 2);
+                if (triggerText[^1] == '`' && (triggerText.Length < 2 || triggerText[^2] != '`'))
+                    triggerText += '`';
+                triggerText = EscapedString(triggerText, true);
 
                 var addHotkeyCall = SyntaxFactory.ExpressionStatement(
                     ((InvocationExpressionSyntax)InternalMethods.AddHotkey)
@@ -252,7 +285,7 @@ namespace Keysharp.Scripting
                             SyntaxFactory.SeparatedList(new[]
                             {
                         SyntaxFactory.Argument(
-                            ((InvocationExpressionSyntax)InternalMethods.FuncObj)
+                            ((InvocationExpressionSyntax)InternalMethods.Func)
                             .WithArgumentList(
                                 SyntaxFactory.ArgumentList(
                                     SyntaxFactory.SingletonSeparatedList(
@@ -269,7 +302,7 @@ namespace Keysharp.Scripting
                         SyntaxFactory.Argument(
                             SyntaxFactory.LiteralExpression(
                                 SyntaxKind.StringLiteralExpression,
-                                SyntaxFactory.Literal(triggerText.Substring(0, triggerText.Length - 2)) // Trim trailing ::
+                                SyntaxFactory.Literal(triggerText) // Trim trailing ::
                             ))
                             })
                         )
@@ -366,7 +399,7 @@ namespace Keysharp.Scripting
                         SyntaxFactory.Argument(
                             hasExpansion
                                 ? SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression)
-                                : ((InvocationExpressionSyntax)InternalMethods.FuncObj)
+                                : ((InvocationExpressionSyntax)InternalMethods.Func)
                                 .WithArgumentList(
                                     SyntaxFactory.ArgumentList(
                                         SyntaxFactory.SingletonSeparatedList(
@@ -408,7 +441,7 @@ namespace Keysharp.Scripting
 
             for (int i = 0; i < remapKey.Length - 1; i++)
             {
-                if (remapKey[i] == '`') // Detect escape character
+                if (remapKey[i] == '`' && remapKey[i + 1] != ':') // Detect escape character
                 {
                     escape = !escape; // Toggle escape mode
                 }
@@ -424,6 +457,8 @@ namespace Keysharp.Scripting
             }
 
             sourceKey = remapKey.Substring(0, index);
+            if (sourceKey[^1] == '`' && (sourceKey.Length < 2 || sourceKey[^2] != '`'))
+                sourceKey += '`';
             targetKey = remapKey.Substring(index + 2);
         }
 
@@ -746,7 +781,7 @@ namespace Keysharp.Scripting
         private ArgumentSyntax GenerateFuncObjArgument(string functionName)
         {
             return SyntaxFactory.Argument(
-                ((InvocationExpressionSyntax)InternalMethods.FuncObj)
+                ((InvocationExpressionSyntax)InternalMethods.Func)
                 .WithArgumentList(
                     SyntaxFactory.ArgumentList(
                         SyntaxFactory.SingletonSeparatedList(
@@ -759,179 +794,97 @@ namespace Keysharp.Scripting
             );
         }
 
-        public override SyntaxNode VisitAssemblyDirective([NotNull] AssemblyDirectiveContext context)
+        public void GenerateGeneralDirectiveStatements()
         {
-            var assemblyName = context.GetChild(0).GetText().ToLowerInvariant().Substring("#assembly".Length);
-            assemblyName = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(assemblyName);
+            foreach (var item in parser.generalDirectives)
+            {
+                if (item.Value == null)
+                    continue;
 
-            parser.AddAssembly($"System.Reflection.Assembly{assemblyName}Attribute", context.DirectiveContent().GetText());
-            if (assemblyName == "Version")
-                parser.AddAssembly($"System.Reflection.AssemblyFileVersionAttribute", context.DirectiveContent().GetText());
-            return null;
+                if (item.Key.Substring(0, "assembly".Length).ToLowerInvariant() == "assembly")
+                {
+                    var assemblyName = item.Key.ToLowerInvariant().Substring("assembly".Length);
+                    assemblyName = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(assemblyName);
+
+                    parser.AddAssembly($"System.Reflection.Assembly{assemblyName}Attribute", item.Value);
+                    if (assemblyName == "Version")
+                        parser.AddAssembly($"System.Reflection.AssemblyFileVersionAttribute", item.Value);
+
+                    continue;
+                }
+                switch (item.Key.ToUpper())
+                {
+                    case "CLIPBOARDTIMEOUT":
+                        parser.generalDirectiveStatements.Add(SyntaxFactory.ExpressionStatement(
+                            SyntaxFactory.AssignmentExpression(
+                                SyntaxKind.SimpleAssignmentExpression,
+                                CreateQualifiedName("Keysharp.Core.Accessors.A_ClipboardTimeout"),
+                                SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(uint.Parse(item.Value)))
+                            )
+                        ));
+                        break;
+                    case "HOTIFTIMEOUT":
+                        parser.generalDirectiveStatements.Add(SyntaxFactory.ExpressionStatement(
+                            SyntaxFactory.AssignmentExpression(
+                                SyntaxKind.SimpleAssignmentExpression,
+                                CreateQualifiedName("Keysharp.Core.Accessors.A_HotIfTimeout"),
+                                SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(uint.Parse(item.Value)))
+                            )
+                        ));
+                        break;
+                    case "MAXTHREADS":
+                        parser.generalDirectiveStatements.Add(SyntaxFactory.ExpressionStatement(
+                            SyntaxFactory.AssignmentExpression(
+                                SyntaxKind.SimpleAssignmentExpression,
+                                CreateQualifiedName("Keysharp.Scripting.Script.MaxThreadsTotal"),
+                                SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(uint.Parse(item.Value)))
+                            )
+                        ));
+                        break;
+                    case "MAXTHREADSBUFFER":
+                        var argument = (item.Value.ToLower() == "false" || item.Value == "0") ? 0 : 1;
+
+                        parser.generalDirectiveStatements.Add(SyntaxFactory.ExpressionStatement(
+                            SyntaxFactory.AssignmentExpression(
+                                SyntaxKind.SimpleAssignmentExpression,
+                                CreateQualifiedName("Keysharp.Core.Accessors.A_MaxThreadsBuffer"),
+                                SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(argument))
+                            )
+                        ));
+                        break;
+                    case "MAXTHREADSPERHOTKEY":
+                        var threadCountValue = int.Parse(item.Value);
+                        // Clamp the value between 1 and 255
+                        var clampedValue = Math.Clamp(threadCountValue, 1, 255);
+                        parser.generalDirectiveStatements.Add(SyntaxFactory.ExpressionStatement(
+                            SyntaxFactory.AssignmentExpression(
+                                SyntaxKind.SimpleAssignmentExpression,
+                                CreateQualifiedName("Keysharp.Core.Accessors.A_MaxThreadsPerHotkey"),
+                                SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(clampedValue))
+                            )
+                        ));
+                        break;
+                    case "NOTRAYICON":
+                        parser.generalDirectiveStatements.Add(SyntaxFactory.ExpressionStatement(
+                            SyntaxFactory.AssignmentExpression(
+                                SyntaxKind.SimpleAssignmentExpression,
+                                CreateQualifiedName("Keysharp.Scripting.Script.NoTrayIcon"),
+                                SyntaxFactory.LiteralExpression(SyntaxKind.TrueLiteralExpression)
+                            )
+                        ));
+                        break;
+                    case "WINACTIVATEFORCE":
+                        parser.generalDirectiveStatements.Add(SyntaxFactory.ExpressionStatement(
+                            SyntaxFactory.AssignmentExpression(
+                                SyntaxKind.SimpleAssignmentExpression,
+                                CreateQualifiedName("Keysharp.Scripting.Script.WinActivateForce"),
+                                SyntaxFactory.LiteralExpression(SyntaxKind.TrueLiteralExpression)
+                            )
+                        ));
+                        break;
+                }
+
+            }
         }
-
-        public override SyntaxNode VisitClipboardTimeoutDirective([NotNull] ClipboardTimeoutDirectiveContext context)
-        {
-            var timeoutValue = context.numericLiteral().GetText();
-            parser.generalDirectives.Add(SyntaxFactory.ExpressionStatement(
-                SyntaxFactory.AssignmentExpression(
-                    SyntaxKind.SimpleAssignmentExpression,
-                    CreateQualifiedName("Keysharp.Core.Accessors.A_ClipboardTimeout"),
-                    SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(uint.Parse(timeoutValue)))
-                )
-            ));
-            return null;
-        }
-
-        public override SyntaxNode VisitDllLoadDirective([NotNull] DllLoadDirectiveContext context)
-        {
-            var dllName = context.DirectiveContent().GetText();
-            parser.generalDirectives.Add(SyntaxFactory.ExpressionStatement(
-                SyntaxFactory.InvocationExpression(
-                    SyntaxFactory.MemberAccessExpression(
-                        SyntaxKind.SimpleMemberAccessExpression,
-                        CreateQualifiedName("Keysharp.Scripting.Script.Variables"),
-                        SyntaxFactory.IdentifierName("AddPreLoadedDll")
-                    )
-                )
-                .WithArgumentList(
-                    SyntaxFactory.ArgumentList(
-                        SyntaxFactory.SeparatedList(new[]
-                        {
-                    SyntaxFactory.Argument(
-                        SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(dllName))
-                    ),
-                    SyntaxFactory.Argument(
-                        SyntaxFactory.LiteralExpression(SyntaxKind.FalseLiteralExpression) // Assuming no async load
-                    )
-                        })
-                    )
-                )
-            ));
-            return null;
-        }
-
-        public override SyntaxNode VisitErrorStdOutDirective([NotNull] ErrorStdOutDirectiveContext context)
-        {
-            parser.ErrorStdOut = true; // context.DirectiveContent()?.GetText() ?? "CP0";
-            return null;
-        }
-
-        public override SyntaxNode VisitMaxThreadsDirective([NotNull] MaxThreadsDirectiveContext context)
-        {
-            var threadCount = context.numericLiteral().GetText();
-            parser.generalDirectives.Add(SyntaxFactory.ExpressionStatement(
-                SyntaxFactory.AssignmentExpression(
-                    SyntaxKind.SimpleAssignmentExpression,
-                    CreateQualifiedName("Keysharp.Scripting.Script.MaxThreadsTotal"),
-                    SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(uint.Parse(threadCount)))
-                )
-            ));
-            return null;
-        }
-
-        public override SyntaxNode VisitMaxThreadsBufferDirective([NotNull] MaxThreadsBufferDirectiveContext context)
-        {
-            var argument = context.ChildCount < 3
-                ? SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(1))
-                : Visit(context.GetChild(1));
-
-            parser.generalDirectives.Add(SyntaxFactory.ExpressionStatement(
-                SyntaxFactory.AssignmentExpression(
-                    SyntaxKind.SimpleAssignmentExpression,
-                    CreateQualifiedName("Keysharp.Core.Accessors.A_MaxThreadsBuffer"),
-                    (LiteralExpressionSyntax)argument
-                )
-            ));
-            return null;
-        }
-
-        public override SyntaxNode VisitMaxThreadsPerHotkeyDirective([NotNull] MaxThreadsPerHotkeyDirectiveContext context)
-        {
-            var threadCountValue = int.Parse(context.numericLiteral().GetText());
-            // Clamp the value between 1 and 255
-            var clampedValue = Math.Clamp(threadCountValue, 1, 255);
-            parser.generalDirectives.Add(SyntaxFactory.ExpressionStatement(
-                SyntaxFactory.AssignmentExpression(
-                    SyntaxKind.SimpleAssignmentExpression,
-                    CreateQualifiedName("Keysharp.Core.Accessors.A_MaxThreadsPerHotkey"),
-                    SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(clampedValue))
-                )
-            ));
-            return null;
-        }
-
-        public override SyntaxNode VisitNoTrayIconDirective([NotNull] NoTrayIconDirectiveContext context)
-        {
-            parser.generalDirectives.Add(SyntaxFactory.ExpressionStatement(
-                SyntaxFactory.AssignmentExpression(
-                    SyntaxKind.SimpleAssignmentExpression,
-                    CreateQualifiedName("Keysharp.Scripting.Script.NoTrayIcon"),
-                    SyntaxFactory.LiteralExpression(SyntaxKind.TrueLiteralExpression)
-                )
-            ));
-            return null;
-        }
-
-        public override SyntaxNode VisitWinActivateForceDirective([NotNull] WinActivateForceDirectiveContext context)
-        {
-            parser.generalDirectives.Add(SyntaxFactory.ExpressionStatement(
-                SyntaxFactory.AssignmentExpression(
-                    SyntaxKind.SimpleAssignmentExpression,
-                    CreateQualifiedName("Keysharp.Scripting.Script.WinActivateForce"),
-                    SyntaxFactory.LiteralExpression(SyntaxKind.TrueLiteralExpression)
-                )
-            ));
-            return null;
-        }
-
-        public override SyntaxNode VisitSuspendExemptDirective([NotNull] SuspendExemptDirectiveContext context)
-        {
-            var value = context.ChildCount < 3
-                ? SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(1))
-                : Visit(context.GetChild(1));
-            parser.DHHR.Add(SyntaxFactory.ExpressionStatement(
-                SyntaxFactory.AssignmentExpression(
-                    SyntaxKind.SimpleAssignmentExpression,
-                    CreateQualifiedName("Keysharp.Core.Accessors.A_SuspendExempt"),
-                    (LiteralExpressionSyntax)value
-                )
-            ));
-            return null;
-        }
-
-        public override SyntaxNode VisitUseHookDirective([NotNull] UseHookDirectiveContext context)
-        {
-            var value = context.ChildCount < 3 
-                ? SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(0))
-                : Visit(context.GetChild(1));
-            parser.DHHR.Add(SyntaxFactory.ExpressionStatement(
-                SyntaxFactory.AssignmentExpression(
-                    SyntaxKind.SimpleAssignmentExpression,
-                    CreateQualifiedName("Keysharp.Core.Accessors.A_UseHook"),
-                    (LiteralExpressionSyntax)value
-                )
-            ));
-            return null;
-        }
-
-        public override SyntaxNode VisitHotIfTimeoutDirective([NotNull] HotIfTimeoutDirectiveContext context)
-        {
-            var value = Visit(context.GetChild(1));
-            parser.generalDirectives.Add(SyntaxFactory.ExpressionStatement(
-                SyntaxFactory.AssignmentExpression(
-                    SyntaxKind.SimpleAssignmentExpression,
-                    CreateQualifiedName("Keysharp.Core.Accessors.A_HotIfTimeout"),
-                    (LiteralExpressionSyntax)value
-                )
-            ));
-            return null;
-        }
-
-        public override SyntaxNode VisitSingleInstanceDirective([NotNull] SingleInstanceDirectiveContext context)
-        {
-            return null; // This is implemented in PreReader.cs
-        }
-
     }
 }

@@ -233,6 +233,8 @@ namespace Keysharp.Core
 					return ss.Text;//Unsure if this is what's intended.
 				else if (_control is KeysharpPictureBox pic)
 					return pic.Filename;
+				else if (_control is KeysharpActiveX kax)
+					return kax.Iid;
 
 				return "";
 			}
