@@ -2,7 +2,7 @@
 {
 	internal interface I__Enum
 	{
-		public IEnumerator<(object, object)> __Enum(object count);
+		public KeysharpEnumerator __Enum(object count);
 	}
 
 	public class KeysharpObject : Any
@@ -166,9 +166,8 @@
 
 						if (prop != null)
 						{
-							if (!vals
-									|| prop is not FuncObj fo
-									|| (fo.Mph.mi != null && fo.Mph.ParamLength <= 1))
+							if (prop is not FuncObj fo
+								|| (fo.Mph.mi != null && fo.Mph.ParamLength <= 1))
 								props[kv.Key] = prop;
 						}
 					}
@@ -179,7 +178,7 @@
 			var valProps = Reflections.GetOwnProps(GetType(), user);
 
 			foreach (var mph in valProps)
-				if (!vals || (mph.pi != null && mph.ParamLength == 0))
+				if (mph.pi != null && mph.ParamLength == 0)
 					props[mph.pi.Name] = mph;
 
 			return new OwnPropsIterator(this, props, vals);

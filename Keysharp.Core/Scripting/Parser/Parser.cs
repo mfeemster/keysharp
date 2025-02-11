@@ -535,46 +535,49 @@ namespace Keysharp.Scripting
 							method.Name = "__Delete";
 							_ = typeMethods.Key.Members.Add(new CodeSnippetTypeMember($"\t\t\t~{typeMethods.Key.Name}() {{ __Delete(); }}") { Name = typeMethods.Key.Name });
 						}
-						else if (string.Compare(method.Name, "__Enum", true) == 0)
-						{
-							var getEnumMeth = new CodeMemberMethod();
-							method.Name = "__Enum";
-							getEnumMeth.Name = "IEnumerable.GetEnumerator";
-							getEnumMeth.Attributes = MemberAttributes.Final;
-							getEnumMeth.ReturnType = new CodeTypeReference("IEnumerator");
-							_ = getEnumMeth.Statements.Add(new CodeSnippetExpression("return MakeBaseEnumerator(__Enum())"));
-							_ = typeMethods.Key.Members.Add(getEnumMeth);
-							var paramVal = 1;
 
-							if (method.Parameters.Count > 0)
-							{
-								var methParam = method.Parameters[0];
-								var val = methParam.Name.ParseInt(false);
+						/*
+						    else if (string.Compare(method.Name, "__Enum", true) == 0)
+						    {
+						    var getEnumMeth = new CodeMemberMethod();
+						    method.Name = "__Enum";
+						    getEnumMeth.Name = "IEnumerable.GetEnumerator";
+						    getEnumMeth.Attributes = MemberAttributes.Final;
+						    getEnumMeth.ReturnType = new CodeTypeReference("IEnumerator");
+						    _ = getEnumMeth.Statements.Add(new CodeSnippetExpression("return MakeBaseEnumerator(__Enum())"));
+						    _ = typeMethods.Key.Members.Add(getEnumMeth);
+						    var paramVal = 1;
 
-								if (val.HasValue && val.Value > 0)
-									paramVal = val.Value;
+						    if (method.Parameters.Count > 0)
+						    {
+						        var methParam = method.Parameters[0];
+						        var val = methParam.Name.ParseInt(false);
 
-								method.Parameters.Clear();
-							}
+						        if (val.HasValue && val.Value > 0)
+						            paramVal = val.Value;
 
-							var leftParen = paramVal > 1 ? "(" : "";
-							var rightParen = paramVal > 1 ? ")" : "";
-							var objTypes = string.Join(',', Enumerable.Repeat("object", paramVal).ToArray());
-							var baseTypeStr = $"IEnumerable<{leftParen}{objTypes}{rightParen}>";
-							var returnTypeStr = $"IEnumerator<{leftParen}{objTypes}{rightParen}>";
-							var baseCtr = new CodeTypeReference(baseTypeStr);
-							var returnCtr = new CodeTypeReference(returnTypeStr);
-							_ = typeMethods.Key.BaseTypes.Add(baseCtr);
-							//
-							getEnumMeth = new CodeMemberMethod
-							{
-								Name = "GetEnumerator",
-								Attributes = MemberAttributes.Public | MemberAttributes.Final,
-								ReturnType = returnCtr
-							};
-							_ = getEnumMeth.Statements.Add(new CodeSnippetExpression($"return ({returnTypeStr})MakeBaseEnumerator(__Enum())"));
-							_ = typeMethods.Key.Members.Add(getEnumMeth);
-						}
+						        method.Parameters.Clear();
+						    }
+
+						    var leftParen = paramVal > 1 ? "(" : "";
+						    var rightParen = paramVal > 1 ? ")" : "";
+						    var objTypes = string.Join(',', Enumerable.Repeat("object", paramVal).ToArray());
+						    var baseTypeStr = $"IEnumerable<{leftParen}{objTypes}{rightParen}>";
+						    var returnTypeStr = $"IEnumerator<{leftParen}{objTypes}{rightParen}>";
+						    var baseCtr = new CodeTypeReference(baseTypeStr);
+						    var returnCtr = new CodeTypeReference(returnTypeStr);
+						    _ = typeMethods.Key.BaseTypes.Add(baseCtr);
+						    //
+						    getEnumMeth = new CodeMemberMethod
+						    {
+						        Name = "GetEnumerator",
+						        Attributes = MemberAttributes.Public | MemberAttributes.Final,
+						        ReturnType = returnCtr
+						    };
+						    _ = getEnumMeth.Statements.Add(new CodeSnippetExpression($"return ({returnTypeStr})MakeBaseEnumerator(__Enum())"));
+						    _ = typeMethods.Key.Members.Add(getEnumMeth);
+						    }
+						*/
 					}
 
 					var thisconstructor = typeMethods.Key.Members.Cast<CodeTypeMember>().FirstOrDefault(ctm => ctm is CodeConstructor cc && !cc.Attributes.HasFlag(MemberAttributes.Static)) as CodeConstructor;
@@ -1165,6 +1168,9 @@ namespace Keysharp.Scripting
 					{
 						foreach (var globalvar in scopekv.Value)
 						{
+							if (globalvar.Value == null)
+								continue;
+
 							var name = globalvar.Key.Replace(scopeChar[0], '_');
 
 							if (name == "this")//Never create a "this" variable inside of a class definition.

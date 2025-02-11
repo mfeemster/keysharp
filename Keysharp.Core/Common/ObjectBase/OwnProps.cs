@@ -1,10 +1,11 @@
 ﻿namespace Keysharp.Core.Common.ObjectBase
 {
-	public class OwnPropsIterator : IEnumerator<(object, object)>
+	public class OwnPropsIterator : KeysharpEnumerator, IEnumerator<(object, object)>
 	{
 		private readonly Dictionary<object, object> map;
 		private readonly KeysharpObject obj;
 		private IEnumerator<KeyValuePair<object, object>> iter;
+		public int Count => GetVal ? 2 : 1;
 
 		public (object, object) Current
 		{
@@ -31,16 +32,45 @@
 		object IEnumerator.Current => Current;
 
 		public OwnPropsIterator(KeysharpObject o, Dictionary<object, object> m, bool gv)
+			: base(null, gv ? 2 : 1)
 		{
+			Error err;
 			obj = o;
 			map = m;
 			GetVal = gv;
 			iter = map.GetEnumerator();
+			var fo = new FuncObj("Call", this, Count);
+
+			if (fo.IsValid)
+				CallFunc = fo;
+			else
+				_ = Errors.ErrorOccurred(err = new MethodError($"Existing function object was invalid.")) ? throw err : "";
 		}
 
-		public void Call(ref object obj0) => (obj0, _) = Current;
+		public override object Call(ref object obj0)
+		{
+			if (MoveNext())
+			{
+				GetVal = false;
+				(obj0, _) = Current;
+				return true;
+			}
 
-		public void Call(ref object obj0, ref object obj1) => (obj0, obj1) = Current;
+			return false;
+		}
+
+
+		public override object Call(ref object obj0, ref object obj1)
+		{
+			if (MoveNext())
+			{
+				GetVal = true;
+				(obj0, obj1) = Current;
+				return true;
+			}
+
+			return false;
+		}
 
 		public void Dispose() => Reset();
 

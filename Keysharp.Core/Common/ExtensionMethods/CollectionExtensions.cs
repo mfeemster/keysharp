@@ -107,11 +107,10 @@
 			if (enumerable is I__Enum ie)//Iterators for array, gui and map will be this.
 			{
 				var en = ie.__Enum(1);
+				object element = null;
 
-				while (en.MoveNext())
+				while (en.Call(ref element).Ab())
 				{
-					var element = en.Current.Item1;
-
 					if (recurse && element is IEnumerable candidate && !(element is string))
 					{
 						foreach (var nested in Flatten(candidate, recurse))
@@ -144,7 +143,7 @@
 		/// <param name="enumerable">The <see cref="object[]"/> to traverse.</param>
 		/// <param name="recurse">True to recursively traverse through every nested element that is a collection, else false to traverse only the elements of <paramref name="enumerable"/>.</param>
 		/// <returns>Each element of the <see cref="object[]"/>, including nested elements.</returns>
-		
+
 		public static IEnumerable<object> FlattenNativeArray(this object[] enumerable, bool recurse)
 		{
 			if (enumerable is object[] ie)
