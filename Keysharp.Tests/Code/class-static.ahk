@@ -1,15 +1,17 @@
 class myclass
 {
-	static a :=
+	static a := unset
 	static b := ""
 	static c := "asdf"
 	static x := 123
 	static y := x
+	static arr := [1, 2, 3]
+	static m := {one : 1, two : 2, three : 3}
 }
 
 classobj := myclass.Call()
 
-If (myclass.a == "")
+If (myclass.a == unset)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
@@ -62,7 +64,7 @@ else
 
 a := 1
 
-If (myclass.a == "")
+If (myclass.a == unset)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
@@ -74,6 +76,16 @@ If (a == 1)
 else
 	FileAppend, "fail", "*"
 	
+if (myclass.arr is Array && myclass.arr.Length == 3)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+	
+if (myclass.m is KeysharpObject && myclass.m.one == 1 && myclass.m.two == 2 && myclass.m.three == 3)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
 ; test static member initialized in a complex way.
 class TypeSizeMapper {
 	static NumTypeSize := MapInit()
@@ -167,6 +179,28 @@ else
 val := TypeSizeMapper2.NumTypeSize["ptr"]
 
 If (val == A_PtrSize)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+class sclass1
+{
+	static c2 := sclass2()
+}
+
+class sclass2
+{
+	x := 1
+}
+
+sc1 := sclass1()
+
+If (sc1.c2.x == 1)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+If (sclass1.c2.x == 1)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"

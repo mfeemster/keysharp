@@ -99,6 +99,11 @@
 		bool ICollection.IsSynchronized => ((ICollection)array).IsSynchronized;
 
 		/// <summary>
+		/// The implementation for <see cref="KeysharpObject.super"/> for this class to return this type.
+		/// </summary>
+		public new (Type, object) super => (typeof(Array), this);
+
+		/// <summary>
 		/// The implementation for <see cref="ICollection.SyncRoot"/> which returns array.SyncRoot.
 		/// </summary>
 		object ICollection.SyncRoot => ((ICollection)array).SyncRoot;
@@ -107,7 +112,7 @@
 		/// Initializes a new instance of the <see cref="Array"/> class.
 		/// See <see cref="__New(object[])"/>.
 		/// </summary>
-		public Array(params object[] values) => _ = __New(values);
+		public Array(params object[] args) => _ = __New(args);
 
 		/// <summary>
 		/// Gets the enumerator object which returns a position,value tuple for each element
@@ -116,13 +121,13 @@
 		///     1: Return the value in the first element, with the second being null.<br/>
 		///     2: Return the index in the first element, and the value in the second.
 		/// </param>
-		/// <returns><see cref="IEnumerator{(object, object)}"/></returns>
-		public IEnumerator<(object, object)> __Enum(object count) => new ArrayIndexValueIterator(array, count.Ai());
+		/// <returns><see cref="KeysharpEnumerator"/></returns>
+		public KeysharpEnumerator __Enum(object count) => new ArrayIndexValueIterator(array, count.Ai());
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="Array"/> class.
 		/// </summary>
-		/// <param name="values">An array of values to initialize the array with.<br/>
+		/// <param name="args">An array of values to initialize the array with.<br/>
 		/// This can be one of several values:<br/>
 		///     null: creates an empty array.<br/>
 		///     object[]: adds each element to the underlying list.<br/>
@@ -130,28 +135,28 @@
 		///     <see cref="ICollection"/>: adds each element to the underlying list.
 		/// </param>
 		/// <returns>Empty string, unused.</returns>
-		public object __New(params object[] values)
+		public object __New(params object[] args)
 		{
 			array = new List<object>(capacity);
 
-			if (values == null || values.Length == 0)
+			if (args == null || args.Length == 0)
 			{
 			}
-			else if (values.Length == 1 && values[0] is object[] objarr)
+			else if (args.Length == 1 && args[0] is object[] objarr)
 			{
 				array.AddRange(objarr);
 			}
-			else if (values.Length == 1 && values[0] is List<object> objlist)
+			else if (args.Length == 1 && args[0] is List<object> objlist)
 			{
 				array.AddRange(objlist);
 			}
-			else if (values.Length == 1 && values[0] is ICollection c)
+			else if (args.Length == 1 && args[0] is ICollection c)
 			{
 				array.AddRange(c.Cast<object>().ToList());
 			}
 			else
 			{
-				Push(values);
+				Push(args);
 			}
 
 			return "";
@@ -209,6 +214,7 @@
 		/// <exception cref="ValueError">A <see cref="ValueError"/> exception is thrown if Index is out of range.</exception>
 		public object Delete(object index)
 		{
+			Error err;
 			var i = index.Ai() - 1;
 
 			if (i < array.Count)
@@ -218,7 +224,7 @@
 				return ob;
 			}
 			else
-				throw new ValueError($"Invalid deletion index of {index.Ai()}.");
+				return Errors.ErrorOccurred(err = new ValueError($"Invalid deletion index of {index.Ai()}.")) ? throw err : null;
 		}
 
 		/// <summary>
@@ -230,38 +236,36 @@
 		/// If the value is negative, the array is iterated from the end toward the beginning. Default: 1.
 		/// </param>
 		/// <returns>A new <see cref="Array"/> object consisting of all elements for which the filter callback returned true.</returns>
-		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if callback is not of type <see cref="FuncObj"/> or if startIndex is out of bounds.</exception>
+		/// <exception cref="ValueError">A <see cref="ValueError"/> exception is thrown if startIndex is out of bounds.</exception>
+		/// <exception cref="TypeError">A <see cref="TypeError"/> exception is thrown if callback is not of type <see cref="FuncObj"/>.</exception>
 		public Array Filter(object callback, object startIndex = null)
 		{
+			Error err;
 			var index = startIndex.Ai(1);
 
 			if (callback is IFuncObj ifo)
 			{
-				List<object> list;
-
 				if (index < 0)
 				{
 					var i = array.Count + index + 1;
 
 					if (i >= 0 && i <= array.Count)
-						list = ((IEnumerable<object>)array).Reverse().Skip(Math.Abs(index + 1)).Where(x => Script.ForceBool(ifo.Call(x, i--))).ToList();
+						return new Array(((IEnumerable<object>)array).Reverse().Skip(Math.Abs(index + 1)).Where(x => Script.ForceBool(ifo.Call(x, i--))).ToList());
 					else
-						throw new ValueError($"Invalid find start index of {index}.");
+						return Errors.ErrorOccurred(err = new ValueError($"Invalid find start index of {index}.")) ? throw err : null;
 				}
 				else
 				{
 					var i = index - 1;
 
 					if (i >= 0 && i < array.Count)
-						list = array.Skip(i).Where(x => Script.ForceBool(ifo.Call(x, ++i))).ToList();
+						return new Array(array.Skip(i).Where(x => Script.ForceBool(ifo.Call(x, ++i))).ToList());
 					else
-						throw new ValueError($"Invalid find start index of {index}.");
+						return Errors.ErrorOccurred(err = new ValueError($"Invalid find start index of {index}.")) ? throw err : null;
 				}
-
-				return new Array(list);
 			}
 
-			throw new Error($"Passed in object of type {callback.GetType()} was not a FuncObj.");
+			return Errors.ErrorOccurred(err = new TypeError($"Passed in object of type {callback.GetType()} was not a FuncObj.")) ? throw err : null;
 		}
 
 		/// <summary>
@@ -271,10 +275,11 @@
 		/// <param name="callback">The callback to apply to each element, which takes the form of (value, index) => bool.</param>
 		/// <param name="startIndex">The start index to begin the search at. Default: 1.</param>
 		/// <returns>The index of the first element for which callback returned true, else -1 if not found.</returns>
-		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if callback is not of type <see cref="FuncObj"/>.</exception>
-		/// <exception cref="ValueError">An <see cref="ValueError"/> exception is thrown if startIndex is out of bounds.</exception>
+		/// <exception cref="IndexError">An <see cref="IndexError"/> exception is thrown if startIndex is out of bounds.</exception>
+		/// <exception cref="TypeError">A <see cref="TypeError"/> exception is thrown if callback is not of type <see cref="FuncObj"/>.</exception>
 		public long FindIndex(object callback, object startIndex = null)
 		{
+			Error err;
 			var index = startIndex.Ai(1);
 
 			if (callback is IFuncObj ifo)
@@ -298,7 +303,7 @@
 						return 0L;
 					}
 					else
-						throw new ValueError($"Invalid find start index of {startIndex.Ai(1)}.");
+						return Errors.ErrorOccurred(err = new IndexError($"Invalid find start index of {startIndex.Ai(1)}.")) ? throw err : 0L;
 				}
 				else
 				{
@@ -310,11 +315,11 @@
 						return found != -1L ? found + 1L : 0L;
 					}
 					else
-						throw new ValueError($"Invalid find start index of {index}.");
+						return Errors.ErrorOccurred(err = new IndexError($"Invalid find start index of {index}.")) ? throw err : 0L;
 				}
 			}
 
-			throw new Error($"Passed in object of type {callback.GetType()} was not a FuncObj.");
+			return Errors.ErrorOccurred(err = new TypeError($"Passed in object of type {callback.GetType()} was not a FuncObj.")) ? throw err : 0L;
 		}
 
 		/// <summary>
@@ -332,13 +337,14 @@
 		/// <exception cref="UnsetItemError">An <see cref="UnsetItemError"/> exception is thrown if the item is null and no defaults were supplied.</exception>
 		public object Get(object index, object @default = null)
 		{
-			object val;
+			Error err;
+			object val = null;
 			var i = index.Ai(1);
 
 			if ((i = TranslateIndex(i)) != -1)
 				val = array[i];
 			else
-				throw new IndexError($"Invalid retrieval index of {i}.");
+				_ = Errors.ErrorOccurred(err = new IndexError($"Invalid retrieval index of {i}.")) ? throw err : "";
 
 			if (val != null)
 				return val;
@@ -347,13 +353,13 @@
 			else if (Default != null)
 				return Default;
 			else
-				throw new UnsetItemError($"array[{i}], default and Array.Default were all unset/null.");
+				return Errors.ErrorOccurred(err = new UnsetItemError($"array[{i}], default and Array.Default were all unset/null.")) ? throw err : null;
 		}
 
 		/// <summary>
 		/// The implementation for <see cref="IEnumerable{(object, object)}.GetEnumerator()"/> which returns an <see cref="ArrayIndexValueIterator"/>.
 		/// </summary>
-		/// <returns>An <see cref="IEnumerable{(object, object)}"/> which is an <see cref="ArrayIndexValueIterator"/>.</returns>
+		/// <returns>An <see cref="IEnumerator{(object, object)}"/> which is an <see cref="ArrayIndexValueIterator"/>.</returns>
 		public IEnumerator<(object, object)> GetEnumerator() => new ArrayIndexValueIterator(array, 2);
 
 		/// <summary>
@@ -408,15 +414,16 @@
 		/// Inserts one or more values at a given position.
 		/// </summary>
 		/// <param name="index">The index to insert at. Specifying an index of 0 is the same as specifying Length + 1.</param>
-		/// <param name="values">The values to insert at the given index.</param>
+		/// <param name="args">The values to insert at the given index.</param>
 		/// <exception cref="ValueError">A <see cref="ValueError"/> exception is thrown if index is out of bounds.</exception>
-		public void InsertAt(params object[] values)
+		public void InsertAt(params object[] args)
 		{
-			var o = values;
+			Error err;
+			var o = args;
 
 			if (o.Length > 1)
 			{
-				int index;
+				var index = 0;
 				var i = o.I1();
 
 				if (i == 0)//Can't use TranslateIndex() here because the index is slightly different for inserting.
@@ -426,10 +433,13 @@
 				else if (i < 0 && i >= -array.Count)
 					index = array.Count + i;
 				else
-					throw new ValueError($"Invalid insertion index of {i}.");
+				{
+					_ = Errors.ErrorOccurred(err = new ValueError($"Invalid insertion index of {i}.")) ? throw err : "";
+					return;
+				}
 
-				for (i = 1; i < values.Length; i++)//Need to use values here and not o because the enumerator will make the elements into Tuples because of the special enumerator.
-					array.Insert(index++, values[i]);
+				for (i = 1; i < args.Length; i++)//Need to use values here and not o because the enumerator will make the elements into Tuples because of the special enumerator.
+					array.Insert(index++, args[i]);
 			}
 		}
 
@@ -446,10 +456,12 @@
 		/// <param name="callback">The callback to apply to each element, which takes the form of (value, index) => newValue.</param>
 		/// <param name="startIndex">The index to start iterating at. Default: 1.</param>
 		/// <returns>A new <see cref="Array"/> object consisting of the output of callback applied to all elements starting at startIndex.</returns>
-		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if callback is not of type <see cref="FuncObj"/>.</exception>
-		/// <exception cref="ValueError">A <see cref="ValueError"/> exception is thrown if startIndex is out of bounds.</exception>
+		/// <exception cref="IndexError">An <see cref="IndexError"/> exception is thrown if startIndex is out of bounds.</exception>
+		/// <exception cref="TypeError">A <see cref="TypeError"/> exception is thrown if callback is not of type <see cref="FuncObj"/>.</exception>
 		public Array MapTo(object callback, object startIndex = null)
 		{
+			Error err;
+
 			if (callback is IFuncObj ifo)
 			{
 				var index = TranslateIndex(startIndex.Ai(1));
@@ -462,10 +474,10 @@
 					return new Array(list);
 				}
 				else
-					throw new ValueError($"Invalid mapping start index of {startIndex.Ai(1)}.");
+					return Errors.ErrorOccurred(err = new IndexError($"Invalid mapping start index of {startIndex.Ai(1)}.")) ? throw err : null;
 			}
 
-			throw new Error($"Passed in object of type {callback.GetType()} was not a FuncObj.");
+			return Errors.ErrorOccurred(err = new TypeError($"Passed in object of type {callback.GetType()} was not a FuncObj.")) ? throw err : null;
 		}
 
 		/// <summary>
@@ -514,7 +526,10 @@
 		public object Pop()
 		{
 			if (array.Count < 1)
-				throw new Error($"Cannot pop an empty array.");
+			{
+				Error err;
+				return Errors.ErrorOccurred(err = new Error($"Cannot pop an empty array.")) ? throw err : null;
+			}
 
 			var index = array.Count - 1;
 			var val = array[index];
@@ -612,8 +627,8 @@
 		/// <summary>
 		/// Appends values to the end of an array.
 		/// </summary>
-		/// <param name="values">One or more values to append.</param>
-		public void Push(params object[] values) => array.AddRange(values);
+		/// <param name="args">One or more values to append.</param>
+		public void Push(params object[] args) => array.AddRange(args);
 
 		/// <summary>
 		/// Implementation of <see cref="IList.Remove"/> which removes the first occurrence of value
@@ -630,9 +645,10 @@
 		/// <param name="length">The number of items to remove. Default: 1.</param>
 		/// <returns>The item removed if length equals 1, else unset.</returns>
 		/// <exception cref="ValueError">A <see cref="ValueError"/> exception is thrown if index or index + length is out of bounds.</exception>
-		public object RemoveAt(params object[] values)
+		public object RemoveAt(params object[] args)
 		{
-			var o = values;
+			Error err;
+			var o = args;
 
 			if (array.Count > 0 && o.Length > 0)
 			{
@@ -640,7 +656,7 @@
 				int i;
 
 				if ((i = TranslateIndex(index)) == -1)
-					throw new ValueError($"Invalid removal index of {index}.");
+					return Errors.ErrorOccurred(err = new ValueError($"Invalid removal index of {index}.")) ? throw err : null;
 
 				if (o.Length > 1 && o[1] != null)
 				{
@@ -649,7 +665,7 @@
 					if (i + len <= array.Count)
 						array.RemoveRange(i, len);
 					else
-						throw new ValueError($"Invalid removal index of and range of {index} and {len} exceeds array length of {array.Count}.");
+						_ =  Errors.ErrorOccurred(err = new ValueError($"Invalid removal index of and range of {index} and {len} exceeds array length of {array.Count}.")) ? throw err : "";
 				}
 				else if (i < array.Count)
 				{
@@ -669,16 +685,18 @@
 		/// It must return -1 if left is less than right, 0 if left equals right, otherwise 1.
 		/// </param>
 		/// <returns>this.</returns>
-		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if callback is not of type <see cref="FuncObj"/>.</exception>
+		/// <exception cref="TypeError">A <see cref="TypeError"/> exception is thrown if callback is not of type <see cref="FuncObj"/>.</exception>
 		public Array Sort(object callback)
 		{
+			Error err;
+
 			if (callback is IFuncObj ifo)
 			{
 				array.Sort(new FuncObjComparer(ifo));
 				return this;
 			}
 			else
-				throw new Error($"Passed in object of type {callback.GetType()} was not a FuncObj.");
+				return Errors.ErrorOccurred(err = new TypeError($"Passed in object of type {callback.GetType()} was not a FuncObj.")) ? throw err : null;
 		}
 
 		/// <summary>
@@ -718,8 +736,8 @@
 		/// <summary>
 		/// The implementation for <see cref="IEnumerable.GetEnumerator"/> which just calls <see cref="__Enum"/>.
 		/// </summary>
-		/// <returns><see cref="IEnumerator{(object, object)}"/></returns>
-		IEnumerator IEnumerable.GetEnumerator() => __Enum(2);
+		/// <returns><see cref="ArrayIndexValueIterator"/></returns>
+		IEnumerator IEnumerable.GetEnumerator() => new ArrayIndexValueIterator(array, 2);
 
 		/// <summary>
 		/// The implementation for <see cref="IList.RemoveAt"/> which just calls <see cref="RemoveAt"/>.<br/>
@@ -754,21 +772,23 @@
 		{
 			get
 			{
+				Error err;
 				var i = index.Ai();
 
 				if ((i = TranslateIndex(i)) != -1)
 					return array[i];
 				else
-					throw new IndexError($"Invalid retrieval index of {i}.");
+					return Errors.ErrorOccurred(err = new IndexError($"Invalid retrieval index of {i}.")) ? throw err : null;
 			}
 			set
 			{
+				Error err;
 				var i = index.Ai();
 
 				if ((i = TranslateIndex(i)) != -1)
 					array[i] = value;
 				else
-					throw new IndexError($"Invalid set index of {i}.");
+					_ = Errors.ErrorOccurred(err = new IndexError($"Invalid set index of {i}.")) ? throw err : "";
 			}
 		}
 
@@ -794,15 +814,8 @@
 	/// A two component iterator for <see cref="Array"/> which returns the value and the 1-based index the
 	/// value was at as a tuple.
 	/// </summary>
-	internal class ArrayIndexValueIterator : IEnumerator<(object, object)>
+	internal class ArrayIndexValueIterator : KeysharpEnumerator, IEnumerator<(object, object)>
 	{
-		/// <summary>
-		/// The number of items to return for each iteration. Allowed values are 1 and 2:
-		/// 1: return just the value in the first position
-		/// 2: return the index in the first position and the value in the second.
-		/// </summary>
-		private readonly int count;
-
 		/// <summary>
 		/// The internal array to be iterated over.
 		/// </summary>
@@ -822,14 +835,14 @@
 			{
 				try
 				{
-					if (count == 1)
+					if (Count == 1)
 						return (arr[position], null);
 					else
 						return ((long)position + 1, arr[position]);
 				}
 				catch (IndexOutOfRangeException)
 				{
-					throw new InvalidOperationException();
+					throw new InvalidOperationException();//Should never happen when using regular loops.
 				}
 			}
 		}
@@ -845,23 +858,50 @@
 		/// <param name="a">The <see cref="List{object}"/> to iterate over.</param>
 		/// <param name="c">The number of items to return for each iteration.</param>
 		public ArrayIndexValueIterator(List<object> a, int c)
+			: base(null, c)
 		{
 			arr = a;
-			count = c;
+			Error err;
+			var fo = new FuncObj("Call", this, Count);
+
+			if (fo.IsValid)
+				CallFunc = fo;
+			else
+				_ = Errors.ErrorOccurred(err = new MethodError($"Existing function object was invalid.")) ? throw err : "";
 		}
 
 		/// <summary>
 		/// Calls <see cref="Current"/> and places the position value in the passed in object reference.
 		/// </summary>
 		/// <param name="pos">A reference to the position value.</param>
-		public void Call(ref object pos) => (pos, _) = Current;
+		/// <returns>True if the iterator position has not moved past the last element, else false.</returns>
+		public override object Call(ref object pos)
+		{
+			if (MoveNext())
+			{
+				(pos, _) = Current;
+				return true;
+			}
+
+			return false;
+		}
 
 		/// <summary>
 		/// Calls <see cref="Current"/> and places the position value in pos and the value in val.
 		/// </summary>
 		/// <param name="pos">A reference to the position value.</param>
 		/// <param name="val">A reference to the object value.</param>
-		public void Call(ref object pos, ref object val) => (pos, val) = Current;
+		/// <returns>True if the iterator position has not moved past the last element, else false.</returns>
+		public override object Call(ref object pos, ref object val)
+		{
+			if (MoveNext())
+			{
+				(pos, val) = Current;
+				return true;
+			}
+
+			return false;
+		}
 
 		/// <summary>
 		/// The implementation for <see cref="IComparer.Dispose"/> which internally resets the iterator.

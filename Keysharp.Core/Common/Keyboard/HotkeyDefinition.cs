@@ -606,6 +606,15 @@ namespace Keysharp.Core.Common.Keyboard
 			if (Keysharp.Core.Keyboard.blockMouseMove || (HotstringManager.hsResetUponMouseClick && HotstringManager.enabledCount != 0))
 				whichHookNeeded |= HookType.Mouse;
 
+			//Anything not a mouse or joystick should start the keyboard hook because even hotkeys
+			//which are received in MainWindow.WndProc() need to be forwarded on to the hook thread.
+			foreach (var hk in shk)
+				if (hk.type < HotkeyTypeEnum.MouseHook)
+				{
+					whichHookNeeded |= HookType.Keyboard;
+					break;
+				}
+
 			// Install or deinstall either or both hooks, if necessary, based on these param values.
 			ht.ChangeHookState(shk, whichHookNeeded, whichHookAlways);
 
@@ -630,6 +639,7 @@ namespace Keysharp.Core.Common.Keyboard
 		/// </summary>
 		internal static HotkeyDefinition AddHotkey(IFuncObj _callback, uint _hookAction, string _name, ref uint _noSuppress)
 		{
+			Error err;
 			HotkeyDefinition hk;
 			var hookIsMandatory = false;
 
@@ -650,10 +660,7 @@ namespace Keysharp.Core.Common.Keyboard
 				{
 					// Detect duplicate hotkey variants to help spot bugs in scripts.
 					if (hk.FindVariant() != null) // See if there's already a variant matching the current criteria (suffix_has_tilde does not make variants distinct form each other because it would require firing two hotkey IDs in response to pressing one hotkey, which currently isn't in the design).
-					{
-						//mCurrLine = NULL;  // Prevents showing unhelpful vicinity lines.
-						throw new Error($"Duplicate hotkey: {_name}");
-					}
+						return Errors.ErrorOccurred(err = new Error($"Duplicate hotkey: {_name}")) ? throw err : null;
 
 					if (hk.AddVariant(_callback, _noSuppress) == null)
 						return null;// ScriptError(ERR_OUTOFMEM, buf);
@@ -1505,7 +1512,7 @@ namespace Keysharp.Core.Common.Keyboard
 			var ht = Script.HookThread;
 			var kbdMouseSender = ht.kbdMsSender;//This should always be non-null if any hotkeys/strings are present.
 			// Previous steps should make it unnecessary to call omit_leading_whitespace(aText).
-			var keynameEndIndex = text.FindIdentifierEnd();
+			var keynameEndIndex = text.FindHotkeyIdentifierEnd();
 
 			if (keynameEndIndex == 0 && text.Length > 0) // Any single character except '\0' can be a key name.
 				keynameEndIndex = 1;
@@ -2129,7 +2136,6 @@ namespace Keysharp.Core.Common.Keyboard
 				var ok = Flow.TryCatch(() =>
 				{
 					ret = variant.callback.Call(o);
-					//throw new Error("ASDf");
 				}, false);
 
 				if (!ok)

@@ -3,7 +3,6 @@
 	public partial class Script
 	{
 		public static bool ForceKeybdHook;
-		public static uint MaxThreadsPerHotkey = 1u;
 		public static uint MaxThreadsTotal = 12u;
 		public static bool NoTrayIcon = false;
 		public static bool ValidateThenExit;
@@ -79,68 +78,6 @@
 			_ = InitHook();//Why is this always being initialized even when there are no hooks? This is very inefficient.//TODO
 		}
 
-		public static void Edit()
-		{
-			if (Accessors.A_IsCompiled)
-			{
-				_ = Dialogs.MsgBox("Cannot edit a compiled script.");
-				return;
-			}
-
-			var title = mainWindow != null ? mainWindow.Text : "";
-			var tv = Threads.GetThreadVariables();
-			var mm = tv.titleMatchMode;
-			tv.titleMatchMode = 2L;//Match anywhere.
-			var hwnd = WindowX.WinExist(Accessors.A_ScriptName, "", title, "");
-			tv.titleMatchMode = mm;
-			var wi = new WindowItem(new IntPtr(hwnd));
-			var classname = wi.ClassName;//Logic taken from AHK.
-
-			if (classname == "#32770" || classname == "AutoHotkey" || classname == "Keysharp")//MessageBox(), InputBox(), FileSelect(), or GUI/script-owned window.
-				hwnd = 0;
-
-			if (hwnd == 0)
-			{
-#if LINUX
-				_ = $"$EDITOR {Accessors.A_ScriptFullPath}".Bash(false);
-#elif WINDOWS
-				var ed = "";
-
-				try
-				{
-					ed = Registrys.RegRead(@"HKCR\KeysharpScript\Shell\Edit\Command") as string;
-				}
-				catch
-				{
-				}
-
-				//try
-				//{
-				//  if (string.IsNullOrEmpty(ed))
-				//      ed = Registrys.RegRead(@"HKCR\AutoHotkeyScript\Shell\Edit\Command") as string;
-				//}
-				//catch
-				//{
-				//}
-				object pid = null;
-
-				if (!string.IsNullOrEmpty(ed))
-				{
-					var prcIndex = ed.IndexOf('%');
-					ed = prcIndex != -1 ? ed.Substring(0, prcIndex) : ed;
-					_ = Processes.Run(ed, Accessors.A_ScriptDir, "", ref pid, Accessors.A_ScriptFullPath);
-				}
-				else
-					_ = Processes.Run($"Notepad.exe", Accessors.A_ScriptDir, "", ref pid, Accessors.A_ScriptFullPath);
-
-#endif
-			}
-			else
-			{
-				wi.Active = true;
-			}
-		}
-
 		public static string GetPublicStaticPropertyNames()
 		{
 			var l1 = Reflections.flatPublicStaticMethods.Keys.ToList();
@@ -149,70 +86,9 @@
 			return string.Join(' ', hs);
 		}
 
-		public static string GetVars(object obj = null)
+		public static bool HandleSingleInstance(string title, eScriptInstance inst)
 		{
-			var tabLevel = 0;
-			var doInternal = obj.Ab(true);
-			var sbuf = new StringBuffer();
-			var sb = sbuf.sb;
-			var typesToProps = new SortedDictionary<string, List<PropertyInfo>>();
-			_ = sb.AppendLine($"**User defined**\r\n");
-
-			foreach (var typeKv in Reflections.staticFields.Where(tkv => tkv.Key.Name.StartsWith("program", StringComparison.OrdinalIgnoreCase)))
-			{
-				foreach (var fieldKv in typeKv.Value.OrderBy(f => f.Key))
-				{
-					var val = fieldKv.Value.GetValue(null);
-					var fieldType = val != null ? val.GetType().Name : fieldKv.Value.FieldType.Name;
-					_ = Misc.PrintProps(val, fieldKv.Key, sbuf, ref tabLevel);
-				}
-			}
-
-			_ = sb.AppendLine("\r\n--------------------------------------------------\r\n**Internal**\r\n");
-
-			if (doInternal)
-			{
-				foreach (var propKv in Reflections.flatPublicStaticProperties)
-				{
-					var list = typesToProps.GetOrAdd(propKv.Value.DeclaringType.Name);
-
-					if (list.Count == 0)
-						list.Capacity = 200;
-
-					list.Add(propKv.Value);
-				}
-
-				foreach (var t2pKv in typesToProps)
-				{
-					var typeName = t2pKv.Key;
-					_ = sb.AppendLine($"{typeName}:");
-
-					foreach (var prop in t2pKv.Value.OrderBy(p => p.Name))
-					{
-						try
-						{
-							//OutputDebug($"GetVars(): getting prop: {prop.Name}");
-							var val = prop.GetValue(null);
-							var proptype = val != null ? val.GetType().Name : prop.PropertyType.Name;
-							_ = Misc.PrintProps(val, prop.Name, sbuf, ref tabLevel);
-						}
-						catch (Exception ex)
-						{
-							OutputDebug($"GetVars(): exception thrown inside of nested loop inside of second internal loop: {ex.Message}");
-						}
-					}
-
-					_ = sb.AppendLine("--------------------------------------------------");
-					_ = sb.AppendLine();
-				}
-			}
-
-			return sbuf.sb.ToString();
-		}
-
-		public static bool HandleSingleInstance(string name, eScriptInstance inst)
-		{
-			if (name.Length == 0 || name == "*")//Happens when running in Keyview.
+			if (title.Length == 0 || title == "*")//Happens when running in Keyview.
 				return false;
 
 			if (Env.FindCommandLineArg("force") != null || Env.FindCommandLineArg("f") != null)
@@ -221,19 +97,21 @@
 			if (Env.FindCommandLineArg("restart") != null || Env.FindCommandLineArg("r") != null)
 				inst = eScriptInstance.Force;
 
+			title = MakeTitleWithVersion(title);
 			var exit = false;
 			var oldDetect = WindowX.DetectHiddenWindows(true);
+			var oldMatchMode = WindowX.SetTitleMatchMode(3);//Require exact match.
 
 			switch (inst)
 			{
 				case eScriptInstance.Force:
 				{
-					_ = WindowX.WinClose(name, "", 2);
+					_ = WindowX.WinClose(title, "", 2);
 				}
 				break;
 
 				case eScriptInstance.Ignore:
-					if (WindowX.WinExist(name) != 0)
+					if (WindowX.WinExist(title) != 0)
 						exit = true;
 
 					break;
@@ -243,7 +121,7 @@
 
 				case eScriptInstance.Prompt:
 				default:
-					var hwnd = WindowX.WinExist(name);
+					var hwnd = WindowX.WinExist(title);
 
 					if (hwnd != 0)
 					{
@@ -256,97 +134,9 @@
 					break;
 			}
 
+			_ = WindowX.SetTitleMatchMode(oldMatchMode);
 			_ = WindowX.DetectHiddenWindows(oldDetect);
 			return exit;
-		}
-
-		public static string ListKeyHistory()
-		{
-			var sb = new StringBuilder(2048);
-			var target_window = WindowProvider.Manager.ActiveWindow;
-			var win_title = target_window.IsSpecified ? target_window.Title : "";
-			var enabledTimers = 0;
-
-			foreach (var timer in Flow.timers)
-			{
-				if (timer.Value.Enabled)
-				{
-					enabledTimers++;
-					_ = sb.Append($"{timer.Key.Name} ");
-				}
-			}
-
-			if (sb.Length > 123)
-			{
-				var tempstr = sb.ToString(0, 123).TrimEnd() + "...";
-				_ = sb.Clear();
-				_ = sb.Append(tempstr);
-			}
-			else if (sb.Length > 0)
-			{
-				if (sb[sb.Length - 1] == ' ')
-				{
-					var tempstr = sb.ToString().TrimEnd();
-					_ = sb.Clear();
-					_ = sb.Append(tempstr);
-				}
-			}
-
-			var timerlist = sb.ToString();
-			var mod = "";
-			var hookstatus = "";
-			var cont = "Key History has been disabled via KeyHistory(0).";
-			_ = sb.Clear();
-
-			if (HookThread != null)
-			{
-				mod = HookThread.kbdMsSender.ModifiersLRToText(HookThread.kbdMsSender.GetModifierLRState(true));
-				hookstatus = HookThread.GetHookStatus();
-
-				if (HookThread.keyHistory != null && HookThread.keyHistory.Size > 0)
-					cont = "Press [F5] to refresh.";
-			}
-
-			_ = sb.AppendLine($"Window: {win_title}");
-			_ = sb.AppendLine($"Keybd hook: {(HookThread != null && HookThread.HasKbdHook() ? "yes" : "no")}");
-			_ = sb.AppendLine($"Mouse hook: {(HookThread != null && HookThread.HasMouseHook() ? "yes" : "no")}");
-			_ = sb.AppendLine($"Enabled timers: {enabledTimers} of {Flow.timers.Count} ({timerlist})");
-			_ = sb.AppendLine($"Threads: {totalExistingThreads}");
-			_ = sb.AppendLine($"Modifiers (GetKeyState() now) = {mod}");
-			_ = sb.AppendLine(hookstatus);
-			_ = sb.Append(cont);
-			return sb.ToString();
-		}
-
-		public static void ListLines(params object[] obj) => throw new Error("ListLines() is not supported in Keysharp because it's a compiled program, not an interpreted one.");
-
-		public static void ListVars() => mainWindow?.ShowInternalVars(true);
-
-		/// <summary>
-		/// Sends a string to the debugger (if any) for display.
-		/// </summary>
-		/// <param name="obj0">The text to send to the debugger for display.</param>
-		/// <param name="obj1">True to first clear the display, else false to append.</param>
-		public static void OutputDebug(object obj0, object obj1 = null)
-		{
-			var text = obj0.As();
-			var clear = obj1.Ab();
-			Debug.WriteLine(text);//Will print only in debug mode.
-
-			//This will throw when running tests.
-			try
-			{
-				Console.Out.WriteLine(text);//Will print to the console when piped to | more, even though this is a windows application.
-			}
-			catch
-			{
-			}
-
-			if (!IsMainWindowClosing)
-				if (clear)
-					mainWindow.SetText(text, MainWindow.MainFocusedTab.Debug, false);
-				else
-					mainWindow.AddText(text, MainWindow.MainFocusedTab.Debug, false);
 		}
 
 		public static void RunMainWindow(string title, Func<object> userInit, bool persistent)
@@ -354,7 +144,7 @@
 			mainWindow = new MainWindow();
 
 			if (!string.IsNullOrEmpty(title))
-				mainWindow.Text = title + " - Keysharp " + Accessors.A_AhkVersion;
+				mainWindow.Text = MakeTitleWithVersion(title);
 
 			mainWindow.ClipboardUpdate += PrivateClipboardUpdate;
 			mainWindow.Icon = Core.Properties.Resources.Keysharp_ico;
@@ -378,7 +168,7 @@
 				{
 					if (!Script.persistent)//An exception was thrown so the generated ExitApp() call in _ks_UserMainCode() will not have been called, so call it here.
 					{
-						_ = Keysharp.Core.Flow.ExitApp(0);
+						_ = Keysharp.Core.Flow.ExitApp(1);
 					}
 				}
 			});
@@ -402,7 +192,7 @@
 		//  var val = "*w100 *h200 *icon2 C:\a filename.jpg";
 
 		//  //for (var i = 0; i < splits.Length - 1; i++)
-		//  foreach (Range r in val.AsSpan().SplitAny(Keywords.SpaceTabSv))
+		//  foreach (Range r in val.AsSpan().SplitAny(SpaceTabSv))
 		//  {
 		//      var opt = val.AsSpan(r).Trim();
 
@@ -503,6 +293,7 @@
 		    }
 		*/
 
+		[PublicForTestOnly]
 		public static void SimulateKeyPress(uint key) => HookThread.SimulateKeyPress(key);
 
 		public static void VerifyVersion(string ver, bool plus, int line, string code)
@@ -622,6 +413,8 @@
 			lastPeekTime = tick_now;
 			return ResultType.Ok;
 		}
+
+		internal static string MakeTitleWithVersion(string title) => title + " - Keysharp " + Accessors.A_AhkVersion;
 
 		internal static int[] ParseVersionToInts(string ver)
 		{

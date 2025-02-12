@@ -12,9 +12,11 @@ namespace Keysharp.Scripting
 			internal static MethodReference ExitApp => new (typeof(Flow), "ExitApp");
 			internal static MethodReference ExtendArray => new (typeof(Script), "ExtendArray");
 			internal static MethodReference ForceBool => new (typeof(Script), "ForceBool");
+			internal static MethodReference Func => new (typeof(Functions), "Func");
 			internal static MethodReference GetMethodOrProperty => new (typeof(Script), "GetMethodOrProperty");
 			internal static MethodReference GetPropertyValue => new (typeof(Script), "GetPropertyValue");
 			internal static MethodReference HandleSingleInstance => new (typeof(Script), "HandleSingleInstance");
+			internal static MethodReference HotIf => new (typeof(HotkeyDefinition), "HotIf");
 			internal static MethodReference Hotkey => new (typeof(Keyboard), "Hotkey");
 			internal static MethodReference Hotstring => new (typeof(Keyboard), "Hotstring");
 			internal static MethodReference IfElse => new (typeof(Script), "IfTest");
@@ -38,6 +40,7 @@ namespace Keysharp.Scripting
 			internal static MethodReference OperateTernary => new (typeof(Script), "OperateTernary");
 			internal static MethodReference OperateUnary => new (typeof(Script), "OperateUnary");
 			internal static MethodReference OperateZero => new (typeof(Script), "OperateZero");
+			internal static MethodReference PostfixIncDecProp => new (typeof(Script), "PostfixIncDecProp");
 			internal static MethodReference OrMaybe => new (typeof(Script), "OrMaybe");
 			internal static MethodReference Parameter => new (typeof(Script), "Parameter");
 			internal static MethodReference Parameters => new (typeof(Script), "Parameters");

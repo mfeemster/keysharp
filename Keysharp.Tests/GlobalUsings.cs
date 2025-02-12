@@ -28,3 +28,6 @@ global using global::Keysharp.Core.Common.Strings;
 #endif
 
 global using global::Keysharp.Scripting;
+
+//Static
+global using static global::Keysharp.Scripting.Keywords;

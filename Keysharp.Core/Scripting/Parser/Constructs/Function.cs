@@ -41,6 +41,12 @@ namespace Keysharp.Scripting
 			if (!InClassDefinition() && IsLocalMethodReference(name))
 				throw new ParseException("Duplicate function: \"" + name + "\".", codeLine);
 
+			//Sometimes a function reference can be misinterpreted as a new variable.
+			//It will be properly interpreted later, so to avoid a duplicate symbol error,
+			//delete the existing variable here if one is found.
+			if (VarExistsAtCurrentOrParentScope(typeStack.Peek(), Scope, name))
+				allVars[typeStack.Peek()][Scope].Remove(name);
+
 			var blockType = CodeBlock.BlockType.Expect;
 			var str = false;
 			var stop = false;
@@ -55,7 +61,7 @@ namespace Keysharp.Scripting
 					case StringBoundVerbatim:
 					{
 						var origi = i;
-						var rest = ParseString(codeLine, code, ref i);
+						var rest = ParseString(codeLine, code, ref i, false);
 						//rest = rest.Substring(1, rest.Length - 2);
 						_ = buf.Append(code.Substring(origi, (i - origi) + 1));
 						continue;
@@ -313,7 +319,7 @@ namespace Keysharp.Scripting
 						{
 							if (code[i] == StringBound || code[i] == StringBoundVerbatim)
 							{
-								_ = ParseString(codeLine, code, ref i);
+								_ = ParseString(codeLine, code, ref i, false);
 								wasstr = true;
 							}
 
@@ -378,7 +384,7 @@ namespace Keysharp.Scripting
 			if (code[0] == StringBound || code[0] == StringBoundVerbatim)
 			{
 				var i = 0;
-				code = ParseString(codeLine, code, ref i);
+				code = ParseString(codeLine, code, ref i, false);
 				code = code.Substring(1, code.Length - 2);
 				//code = EscapedString(code.Substring(1, code.Length - 2), false);
 				//var str = true;

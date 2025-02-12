@@ -42,7 +42,8 @@
 			}
 			catch (Exception ex)
 			{
-				throw new OSError(ex, $"Error creating directory {dirName}");
+				Error err;
+				return Errors.ErrorOccurred(err = new OSError(ex, $"Error creating directory {dirName}")) ? throw err : null;
 			}
 		}
 
@@ -64,7 +65,8 @@
 			}
 			catch (Exception ex)
 			{
-				throw new OSError(ex, $"Error creating directory {dirName}");
+				Error err;
+				return Errors.ErrorOccurred(err = new OSError(ex, $"Error creating directory {dirName}")) ? throw err : null;
 			}
 		}
 
@@ -120,6 +122,7 @@
 		/// <exception cref="OSError">An <see cref="OSError"/> exception is thrown if any failure happens while attempting to perform the operation.</exception>
 		public static object DirMove(object source, object dest, object overwriteOrRename = null)
 		{
+			Error err;
 			var s = source.As();
 			var d = dest.As();
 			var flag = overwriteOrRename.As();
@@ -128,7 +131,7 @@
 
 			//If dest exists as a file, never copy.
 			if (File.Exists(d))
-				throw new OSError("", $"Cannot move {s} to {d} because destination is a file.");
+				return Errors.ErrorOccurred(err = new OSError("", $"Cannot move {s} to {d} because destination is a file.")) ? throw err : null;
 
 			switch (flag.ToUpperInvariant())
 			{
@@ -152,10 +155,10 @@
 			}
 
 			if (rename && Directory.Exists(d))
-				throw new OSError("", $"Cannot rename {s} to {d} because it already exists.");
+				return Errors.ErrorOccurred(err = new OSError("", $"Cannot rename {s} to {d} because it already exists.")) ? throw err : null;
 
 			if (!Directory.Exists(s))
-				throw new OSError("", $"Cannot move {s} to {d} because source does not exist.");
+				return Errors.ErrorOccurred(err = new OSError("", $"Cannot move {s} to {d} because source does not exist.")) ? throw err : null;
 
 			if (movein && Directory.Exists(d))
 				d = Path.Combine(d, Path.GetFileName(s.TrimEnd(Path.DirectorySeparatorChar)));
@@ -369,8 +372,11 @@
 		/// <param name="source">The folder to copy from.</param>
 		/// <param name="dest">The folder to copy to.</param>
 		/// <param name="overwrite">Whether to overwrite the contents of dest.</param>
+		/// <exception cref="OSError">An <see cref="OSError"/> exception is thrown if any failure happens while attempting to perform the operation.</exception>
 		private static void CopyDirectory(string source, string dest, bool overwrite)
 		{
+			Error err;
+
 			try
 			{
 				if (!overwrite && Directory.Exists(dest))
@@ -381,7 +387,10 @@
 			catch (IOException ioe)
 			{
 				if (!overwrite)
-					throw new OSError("", $"Failed to create directory {dest}: {ioe.Message}");
+				{
+					_ = Errors.ErrorOccurred(err = new OSError(ioe, $"Failed to create directory {dest}: {ioe.Message}")) ? throw err : "";
+					return;
+				}
 			}
 
 			try
@@ -421,9 +430,9 @@
 					}
 				}
 			}
-			catch (Exception e)
+			catch (Exception ex)
 			{
-				throw new OSError("", $"Failed to copy directory {source} to {dest}: {e.Message}");
+				_ = Errors.ErrorOccurred(err = new OSError(ex, $"Failed to copy directory {source} to {dest}: {ex.Message}")) ? throw err : "";
 			}
 		}
 
@@ -434,10 +443,13 @@
 		/// <param name="source">Source folder to copy</param>
 		/// <param name="dest">Destination to copy source to</param>
 		/// <param name="del">True to delete the source after copying if on different drives, else false to keep both copies.</param>
+		/// <exception cref="OSError">An <see cref="OSError"/> exception is thrown if any failure happens while attempting to perform the operation.</exception>
 		private static void MoveDirectory(string source, string dest, bool del = true)
 		{
 			if (Directory.Exists(source))
 			{
+				Error err;
+
 				if (Directory.GetDirectoryRoot(source) == Directory.GetDirectoryRoot(dest))
 				{
 					try
@@ -446,7 +458,7 @@
 					}
 					catch (Exception ex)
 					{
-						throw new Error($"Failed to move directory {source} to {dest}: {ex.Message}");
+						_ = Errors.ErrorOccurred(err = new OSError(ex, $"Failed to move directory {source} to {dest}: {ex.Message}")) ? throw err : "";
 					}
 				}
 				else
@@ -460,7 +472,7 @@
 					}
 					catch (Exception ex)
 					{
-						throw new Exception($"Failed to copy directory {source} to {dest}: {ex.Message}");
+						_ = Errors.ErrorOccurred(err = new OSError(ex, $"Failed to copy directory {source} to {dest}: {ex.Message}")) ? throw err : "";
 					}
 				}
 			}

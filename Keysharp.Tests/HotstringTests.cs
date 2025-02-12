@@ -33,7 +33,7 @@ namespace Keysharp.Tests
 				var split0 = splits[0].Substring(splits[0].IndexOf('(') + 1).Trim('"');
 				var split3 = splits[3].Trim('"');
 				hs1 = HotstringManager.AddHotstring(split0, null, splits[2].Trim('"'), split3, splits[4].Trim('"'), false);
-				Debug.WriteLine(split0);
+				System.Diagnostics.Debug.WriteLine(split0);
 
 				if (!split0.Contains('*'))
 					val = split3 + " ";
@@ -329,7 +329,7 @@ namespace Keysharp.Tests
 			HotstringManager.ClearHotstrings();
 			HotstringManager.RestoreDefaults(true);
 			_ = Keyboard.Hotstring("Reset");
-			_ = HotstringManager.AddHotstring("::btw", Functions.FuncObj("label_9F201721", null), ":btw", "btw", "", false);
+			_ = HotstringManager.AddHotstring("::btw", Functions.Func("label_9F201721", null), ":btw", "btw", "", false);
 			HotkeyDefinition.ManifestAllHotkeysHotstringsHooks();
 			Assert.IsTrue(Accessors.A_KeybdHookInstalled == 1);
 			Assert.IsTrue(Accessors.A_MouseHookInstalled == 1);//Because there is a hotstring and mouse reset is true by default, the mouse hook gets installed.
@@ -344,38 +344,18 @@ namespace Keysharp.Tests
 		[Test, Category("Hotstring"), NonParallelizable]
 		public void HotstringDirectives()
 		{
-			//First reset everything back to the default state because other tests will have changed them.
-			_ = Keyboard.Hotstring("*0");
-			_ = Keyboard.Hotstring("C0");
-			_ = Keyboard.Hotstring("?0");
-			_ = Keyboard.Hotstring("B");
-			_ = Keyboard.Hotstring("O0");
-			_ = Keyboard.Hotstring("R0");
-			_ = Keyboard.Hotstring("T0");
-			_ = Keyboard.Hotstring("S0");
-			_ = Keyboard.Hotstring("SI");
-			_ = Keyboard.Hotstring("Z0");
-			_ = Keyboard.Hotstring("K0");
-			_ = Keyboard.Hotstring("P0");
-			_ = Keyboard.Hotstring("EndChars", "-()[]{}:;'\"/\\,.?!\r\n \t");
-			HotstringManager.RestoreDefaults(true);
 			Assert.IsTrue(TestScript("hotstring-directives", false));
 		}
 
 		[Test, Category("Hotstring"), NonParallelizable]
 		public void HotstringParsing()
 		{
-			HotstringManager.ClearHotstrings();
-			HotstringManager.RestoreDefaults(true);
 			Assert.IsTrue(TestScript("hotkey-hotstring-parsing", false));
-			HotstringManager.ClearHotstrings();
 		}
 
 		[Test, Category("Hotstring"), NonParallelizable]
 		public void HotstringParsing2()
 		{
-			HotstringManager.ClearHotstrings();
-			HotstringManager.RestoreDefaults(true);
 			var filename = string.Format("hotstring-parsing2", Path.DirectorySeparatorChar);
 			_ = TestScript(filename, false);
 			//After the script exits, the hotstrings are still kept in memory in the global list.
@@ -504,8 +484,6 @@ namespace Keysharp.Tests
 		[Test, Category("Hotstring"), NonParallelizable]
 		public void ResetInputBuffer()
 		{
-			HotstringManager.RestoreDefaults(true);
-			_ = Keyboard.Hotstring("Reset");
 			HotstringManager.AddChars("asdf");
 			var origVal = HotstringManager.CurrentInputBuffer;
 			Assert.AreEqual(origVal, "asdf");
@@ -529,6 +507,26 @@ namespace Keysharp.Tests
 			Assert.AreEqual(origVal.Ab(), !oldVal.Ab());
 			//Reset to what it was for the sake of other tests in this class.
 			_ = Keyboard.Hotstring("MouseReset", true);
+		}
+
+		[SetUp, Category("Hotstring")]
+		public void Setup()
+		{
+			_ = Keyboard.Hotstring("*0");
+			_ = Keyboard.Hotstring("C0");
+			_ = Keyboard.Hotstring("?0");
+			_ = Keyboard.Hotstring("B");
+			_ = Keyboard.Hotstring("O0");
+			_ = Keyboard.Hotstring("R0");
+			_ = Keyboard.Hotstring("T0");
+			_ = Keyboard.Hotstring("S0");
+			//_ = Keyboard.Hotstring("SI");
+			_ = Keyboard.Hotstring("Z0");
+			_ = Keyboard.Hotstring("K0");
+			_ = Keyboard.Hotstring("P0");
+			_ = Keyboard.Hotstring("EndChars", "-()[]{}:;'\"/\\,.?!\r\n \t");
+			HotstringManager.RestoreDefaults(true);
+			HotstringManager.ClearHotstrings();
 		}
 	}
 }

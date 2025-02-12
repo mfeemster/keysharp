@@ -1,4 +1,6 @@
-﻿namespace Keysharp.Core
+﻿using System;
+
+namespace Keysharp.Core
 {
 	/// <summary>
 	/// Public interface for function object and function reflection-related functions.
@@ -15,22 +17,30 @@
 		/// <param name="paramCount">The number of parameters the method has. Default: use the first method found.</param>
 		/// <returns>An <see cref="IFuncObj"/> which can later be called like a function.</returns>
 		/// <exception cref="MethodError">A <see cref="MethodError"/> exception is thrown if the method cannot be found.</exception>
-		public static IFuncObj Func(object funcName, object obj = null, object paramCount = null)
-		{
-			var name = funcName.As();
-			var fo = new FuncObj(name, obj, paramCount);
-			return fo.Name != "" ? fo
-				   : throw new MethodError($"Unable to retrieve method {name} from object of type {(obj != null ? obj.GetType() : "")} with parameter count {paramCount.Ai(-1)}.");
-		}
+		//public static IFuncObj Func(object funcName, object obj = null, object paramCount = null)
+		//{
+		//  Error err;
+		//  var name = funcName.As();
+		//  var fo = new FuncObj(name, obj, paramCount);
+
+		//  if (fo.Name != "")
+		//      return fo;
+
+		//  return Errors.ErrorOccurred(err = new MethodError($"Unable to retrieve method {name} from object of type {(obj != null ? obj.GetType() : "")} with parameter count {paramCount.Ai(-1)}.")) ? throw err : null;
+		//}
 
 		/// <summary>
-		/// Same as Func(), but does not throw an exception if the method is not found.
+		/// Creates a function object by searching for a method within the script if funcName was a string.
+		/// The search is done by matching the object type, name and parameter count.
+		/// If funcName was a delegate, then a new <see cref="FuncObj"/> is returned using delegate.Method.
+		/// If funcName was already an <see cref="IFuncObj"/>, then it's just casted and returned.
+		/// Static functions use null for the object.
 		/// </summary>
-		/// <param name="funcName">The name of the method.</param>
+		/// <param name="funcName">The name, delegate or IFuncObj of the method.</param>
 		/// <param name="obj">The object to call the method on. Default: null for static functions.</param>
 		/// <param name="paramCount">The number of parameters the method has. Default: use the first method found.</param>
-		/// <returns>An <see cref="IFuncObj"/> which can later be called like a method.</returns>
-		public static IFuncObj FuncObj(object funcName, object obj = null, object paramCount = null) => new FuncObj(funcName.As(), obj, paramCount);
+		/// <returns>An <see cref="IFuncObj"/> which can later be called like a function.</returns>
+		public static IFuncObj Func(object funcName, object obj = null, object paramCount = null) => GetFuncObj(funcName, obj, paramCount);
 
 		/// <summary>
 		/// Gets a method of an object.
@@ -40,16 +50,20 @@
 		/// Otherwise, specify the name of the method to retrieve.
 		/// </param>
 		/// <param name="paramCount">The number of parameters the method has. Default: use the first method found.</param>
-		/// <exception cref="MethodError">A <see cref="MethodError"/> exception is thrown if the method cannot be found.</exception>
 		/// <returns>An <see cref="IFuncObj"/> which can later be called like a method.</returns>
+		/// <exception cref="MethodError">A <see cref="MethodError"/> exception is thrown if the method cannot be found.</exception>
 		public static IFuncObj GetMethod(object value, object name = null, object paramCount = null)
 		{
+			Error err;
 			var v = value;
 			var n = name.As();
 			var count = paramCount.Ai(-1);
 			var mph = Reflections.FindAndCacheMethod(v.GetType(), n.Length > 0 ? n : "Call", count);
-			return mph != null && mph.mi != null ? new FuncObj(mph.mi, v)
-				   : throw new MethodError($"Unable to retrieve method {n} from object of type {v.GetType()} with parameter count {count}.");
+
+			if (mph != null && mph.mi != null)
+				return new FuncObj(mph.mi, v);
+
+			return Errors.ErrorOccurred(err = new MethodError($"Unable to retrieve method {n} from object of type {v.GetType()} with parameter count {count}.")) ? throw err : null;
 		}
 
 		/// <summary>
@@ -89,10 +103,6 @@
 			{
 				if (kso.op != null && kso.op.ContainsKey(n))
 					return 1L;
-
-				if (value is Map map)
-					if (map.map.ContainsKey(n))
-						return 1L;
 			}
 
 			var mph = Reflections.FindAndCacheProperty(val.GetType(), n, count);
@@ -129,26 +139,47 @@
 		/// <returns>An <see cref="IFuncObj"/> which may be a newly recreated one, or h if it was already one.</returns>
 		/// <exception cref="MethodError">A <see cref="MethodError"/> exception is thrown if a function object couldn't be created</exception>
 		/// <exception cref="TypeError">A <see cref="TypeError"/> exception is thrown if h was not a string or existing function object.</exception>
-		internal static IFuncObj GetFuncObj(object h, object eventObj, bool throwIfBad = false)
+		public static IFuncObj GetFuncObj(object h, object eventObj, object paramCount = null, bool throwIfBad = false)
 		{
+			Error err;
 			IFuncObj del = null;
 
 			if (h is string s)
 			{
 				if (s.Length > 0)
 				{
-					var tempdel = new FuncObj(s, eventObj);
+					var tempdel = new FuncObj(s, eventObj, paramCount);
 
 					if (tempdel.IsValid)
 						del = tempdel;
 					else if (throwIfBad)
-						throw new MethodError($"Unable to retrieve method {s} when creating a function object.");
+						return Errors.ErrorOccurred(err = new MethodError($"Unable to retrieve method {s} when creating a function object.")) ? throw err : null;
 				}//Empty string will just return null, which is a valid value in some cases.
 			}
 			else if (h is IFuncObj fo)
-				del = fo;
+			{
+				var tempdel = fo;
+
+				if (tempdel.IsValid)
+					del = tempdel;
+				else if (throwIfBad)
+					return Errors.ErrorOccurred(err = new MethodError($"Existing function object was invalid.")) ? throw err : null;
+			}
+			else if (h is Delegate d)
+			{
+				var tempdel = new FuncObj(d, eventObj);
+
+				if (tempdel.IsValid)
+					del = tempdel;
+				else if (throwIfBad)
+					return Errors.ErrorOccurred(err = new MethodError($"Unable to retrieve method info for {d.Method.Name} when creating a function object from delegate.")) ? throw err : null;
+			}
+			else if (h is KeysharpEnumerator ke)
+			{
+				del = ke.CallFunc;
+			}
 			else if (throwIfBad)
-				throw new TypeError($"Improper value of {h} was supplied for a function object.");
+				return Errors.ErrorOccurred(err = new TypeError($"Improper value of {h} was supplied for a function object.")) ? throw err : null;
 
 			return del;
 		}

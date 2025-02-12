@@ -261,7 +261,7 @@
 			return hotCriterion == _hotCriterion // Same #HotIf criterion.
 				   && caseSensitive == _caseSensitive // ::BTW:: and :C:BTW:: can co-exist.
 				   && detectWhenInsideWord == _detectWhenInsideWord // :?:ion:: and ::ion:: can co-exist.
-				   && (_caseSensitive ? _hotstring.SequenceEqual(str.AsSpan()) : MemoryExtensions.Equals(str.AsSpan(), _hotstring, StringComparison.OrdinalIgnoreCase));// :C:BTW:: and :C:btw:: can co-exist, but not ::BTW:: and ::btw::.
+				   && (_caseSensitive ? _hotstring.SequenceEqual(str.AsSpan()) : str.AsSpan().Equals(_hotstring, StringComparison.OrdinalIgnoreCase));// :C:BTW:: and :C:btw:: can co-exist, but not ::BTW:: and ::btw::.
 		}
 
 		internal void DoReplace(CaseConformModes caseMode, char endChar)
@@ -426,7 +426,6 @@
 				var ok = Flow.TryCatch(() =>
 				{
 					ret = funcObj.Call(o);
-					//throw new Error("ASDf");
 				}, false);
 				_ = Interlocked.Decrement(ref existingThreads);
 				return ret;

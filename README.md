@@ -82,6 +82,9 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 * Closures are not supported. The current behaviour is that a nested function (including anonymous functions) is automatically converted to a normal top-level function.
 * Exception classes aren't, and can't be, derived from `KeysharpObject`.
 	+ That is because for the exception mechanics to work in C#, all exception objects must be derived from the base `System.Exception` class, and multiple inheritance is not allowed.
+	+ User-defined exception classes must derive from `Error`.
+	+ Catch statements with multiple exception classes listed on a single line will parse, but will not generate the expected functionality.
+		+ List each exception type separately to work around this.
 * `CallbackCreate()` does not support the `CDecl/C` option because the program will be run in 64-bit mode.
 	+ The `paramCount` parameter is unused. The callback that gets created supports passing up to 31 parameters and the number that actually gets passed is adjusted internally.
 	+ Passing string pointers to `DllCall()` when passing a created callback is strongly recommended against. This is because the string pointer cannot remain pinned, and is likely to crash the program if the pointer gets moved by the GC.
@@ -128,7 +131,7 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 	class myclass
 	{
 		static simplevar := 123
-		static complexvar :=
+		static complexvar := ""
 						
 		static __StaticInit()
 		{
@@ -139,18 +142,30 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 		}
 	}
 ```
-	+ If static variables are initialized in `__New()` instead of inline, then they won't contain valid values until an instance of the class is created. Further, they will be reinitialized for every instance of the class created.
+	+ If static variables are initialized in `__New()` instead of inline, they won't contain valid values until an instance of the class is created. Further, they will be reinitialized for every instance of the class created.
 * The parameters for `__New()` in a class definition will be not be automatically passed to the base class.
 	+ To pass the values as is to the base, change the values passed, or the order they are passed in, call `super.__New(arg1, arg2, ...)` in `__New()` with the arguments in the needed order.
 	+ This is not needed for classes derived from built-in types.
+* Because `__Init()`, `__New()` and `Call()` are auto-generated methods, users must not also define functions with these same names.
+	+ This also applies to the auto-generated `__Class` property and constructors with the same name as the class they are defined in.
 * Function objects are much slower than direct function calls due to the need to use reflection. So for repeated function calls, such as those involving math, it's best to use the functions directly.
 * The `File` object is internally named `KeysharpFile` so that it doesn't conflict with `System.IO.File`.
-* When creating a reference to an enumerator with a call to `obj.OwnProps()`, you must pass `true` to the call to make it return both the name and value of each returned property.
-	+ This is done implicitly when calling `obj.OwnProps()` in a `for` loop declaration based on the number of variables declared. i.e. `Name` is name only, `Name,Val` is name and value.
-	+ `obj.OwnProps()/ObjOwnProps()` take an optional second/third parameter as a boolean (default: `True`). Pass `True` to only return the properties defined by the user, else `False` to also return properties defined internally by Keysharp.
+* `obj.OwnProps()/ObjOwnProps()` take an optional second/third parameter as a boolean (default: `True`). Pass `True` to only return the properties defined by the user, else `False` to also return properties defined internally by Keysharp.
 * In `SetTimer()`, the priority is not in the range -2147483648 and 2147483647, instead it is only 0-4.
 * If a `ComObject` with `VarType` of `VT_DISPATCH` and a null pointer value is assinged a non-null pointer value, its type does not change. The Ptr member remains available.
 * `A_LineNumber` is not a reliable indicator of the line number because the preprocessor condenses the code before parsing and compiling it.
+* Loop counter variables for `for in` loops declared inside of a function cannot have the same name as a local variable declared inside of that same function.
+```
+testfunc()
+{
+    arr := [10, 20, 30]
+    loopvar := 0 ; Either change the name of this variable, the loop variable, or move this declaration outside of the function.
+
+    for (loopvar in arr)
+    {
+    }
+}
+```
 * Threads are not resumable once an exception has been thrown.
 	+ Callbacks set by `OnError()` will properly run, but execution of the current thread will not resume regardless of the exception type or the return value of the callback.
 	+ Errors of type `ExitApp` will exit the script as usual.
@@ -457,6 +472,7 @@ class class1
 			+ The only properties which can have parameters are the `__Item[]` indexer properties.
 	+ This is needed to resolve the proper overloaded method.
 	+ Omit `paramCount` or pass -1 to just use the first encountered method on the specified object with the specified name.
+* `KeysharpObject` has a new method `OwnPropCount()` which corresponds to the global function `ObjOwnPropCount()`.
 * `ComObjConnect()` takes an optional third parameter as a boolean (default: `false`) which specifies whether to write additional information to the debug output tab when events are received.
 * New function `Mail(recipients, subject, message, options)` to send an email.
 	+ `recipients`: A list of receivers of the message.

@@ -32,9 +32,9 @@ class enumclass
 {
 	arr := [1, 2, 3]
 
-	__Enum(2)
+	__Enum(ct)
 	{
-		return arr
+		return arr.__Enum(ct)
 	}
 }
 
@@ -55,9 +55,9 @@ class subenumclass extends enumclass
 {
 	subarr := [4, 5, 6]
 
-	__Enum(2)
+	__Enum(ct)
 	{
-		return subarr
+		return subarr.__Enum(ct)
 	}
 }
 
@@ -131,18 +131,18 @@ else
 ; this prevents an instance of this class from every being created.
 class TestWithCustomStaticCall
 {
-    static Call()
-    {
-        return 123
-    }
+	static Call()
+	{
+		return 123
+	}
 }
 
 class TestWithCustomInstanceCall
 {
-    Call()
-    {
-        return 123
-    }
+	Call()
+	{
+		return 123
+	}
 }
 
 obj := TestWithCustomInstanceCall() ; creates an instance of the class.

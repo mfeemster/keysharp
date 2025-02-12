@@ -16,10 +16,15 @@
 
 		internal ConcurrentStackPool<ThreadVariables> threadVarsPool = new ((int)Script.MaxThreadsTotal); //Will start off with this many fully created/initialized objects.
 
-		internal ThreadVariables GetThreadVariables() => threadVars.TryPeek() ?? throw new Error("Tried to get an existing thread variable object but there were none. This should never happen.");
+		internal ThreadVariables GetThreadVariables()
+		{
+			Error err;
+			return threadVars.TryPeek() ?? (Errors.ErrorOccurred(err = new Error("Severe threading error: Tried to get an existing thread variable object but there were none. This should never happen."), Keyword_ExitApp) ? throw err : null);
+		}
 
 		internal void PopThreadVariables(bool pushed, bool checkThread = true)
 		{
+			Error err;
 			var ctid = Thread.CurrentThread.ManagedThreadId;
 
 			//Do not check threadVars for null, because it should have always been created with a call to PushThreadVariables() before this.
@@ -30,7 +35,10 @@
 				if (pushed && threadVars.TryPop(out var tv))
 				{
 					if (checkThread && ctid != tv.threadId)
-						throw new Error($"Severe threading error. ThreadVariables.threadId {tv.threadId} did not match the current thread id {ctid}.");
+					{
+						_ = Errors.ErrorOccurred(err = new Error($"Severe threading error: ThreadVariables.threadId {tv.threadId} did not match the current thread id {ctid}. This should never happen."), Keyword_ExitApp) ? throw err : "";
+						return;
+					}
 
 					_ = threadVarsPool.Return(tv);
 				}

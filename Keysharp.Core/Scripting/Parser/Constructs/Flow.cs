@@ -248,9 +248,10 @@ namespace Keysharp.Scripting
 					var blockOpen = trimmed.EndsWith(BlockOpen);
 
 					if (blockOpen)
-						parts[parts.Length - 1] = trimmed.Trim(new char[] { BlockOpen, ' ' });
-					//var checkBrace = true;
+						parts[parts.Length - 1] = trimmed.Trim([BlockOpen, ' ']);
+
 					CodeMethodInvokeExpression iterator;
+					var lt = LoopType.Normal;
 
 					if (parts.Length > 1 && parts.Last() != string.Empty)//If the last char was a {, then it was trimmed and replaced with a "".
 					{
@@ -264,25 +265,30 @@ namespace Keysharp.Scripting
 						switch (sub[0].ToUpperInvariant())
 						{
 							case "READ":
+								lt = LoopType.File;
 								iterator = (CodeMethodInvokeExpression)InternalMethods.LoopRead;
 								break;
 
 							case "PARSE":
+								lt = LoopType.Parse;
 								iterator = (CodeMethodInvokeExpression)InternalMethods.LoopParse;
 								break;
 #if WINDOWS
 
 							case "REG":
+								lt = LoopType.Registry;
 								iterator = (CodeMethodInvokeExpression)InternalMethods.LoopRegistry;
 								break;
 #endif
 
 							case "FILES":
+								lt = LoopType.Directory;
 								iterator = (CodeMethodInvokeExpression)InternalMethods.LoopFile;
 								break;
 
 							default:
 								skip = false;
+								lt = LoopType.Normal;
 								iterator = (CodeMethodInvokeExpression)InternalMethods.Loop;
 								break;
 						}
@@ -330,6 +336,9 @@ namespace Keysharp.Scripting
 					blocks.Push(block);
 					var tcf = new CodeTryCatchFinallyStatement();
 					var pop = new CodeExpressionStatement((CodeMethodInvokeExpression)InternalMethods.Pop);
+					var push = (CodeMethodInvokeExpression)InternalMethods.Push;
+					push.Parameters.Add(new CodeFieldReferenceExpression(new CodeTypeReferenceExpression(typeof(LoopType)), lt.ToString()));
+					tcf.TryStatements.Add(new CodeExpressionStatement(push));
 					tcf.TryStatements.Add(loop);
 					tcf.FinallyStatements.Add(pop);
 					return [tcf, new CodeLabeledStatement(block.ExitLabel, new CodeSnippetStatement(";"))];//End labels seem to need a semicolon.
@@ -352,7 +361,11 @@ namespace Keysharp.Scripting
 						var testid = InternalID;
 						var id = InternalID;
 						var expr = ParseSingleExpression(codeLine, temp.Last(), false);
-						var varsplits = temp[0].Split(',', StringSplitOptions.TrimEntries).ToList();
+						var varsplits = temp[0] == "" ? [] : temp[0].ToLower().Split(',', StringSplitOptions.TrimEntries).ToList();
+
+						for (var vari = 0; vari < varsplits.Count; ++vari)
+							if (varsplits[vari] == "")
+								varsplits[vari] = $"_ks_forvar{vari}";
 
 						//Extreme hack to tell the enumerator whether to return 1 or 2 values which changes
 						//the behavior when dealing with OwnProps().
@@ -365,66 +378,61 @@ namespace Keysharp.Scripting
 								&& cmieGetMeth.Parameters[1] is CodePrimitiveExpression cpe
 								&& cpe.Value.ToString() == "OwnProps")
 						{
-							if (varsplits.Count == 2 && varsplits[1] != "_")
+							if (varsplits.Count > 1)
 								_ = cmieInvoke.Parameters.Add(new CodePrimitiveExpression(true));
-							else if (varsplits.Count == 1)
-								varsplits.Add("_");
 						}
-
-						var varlist = new List<string>(varsplits.Count);
-						var enumlist = new List<string>(varsplits.Count);
-						var varCount = varsplits.Count;
-
-						if (varCount == 1)//If only one present, use the first because it's the value for arrays and keys for maps.
-							varsplits.Add("");
 
 						//If only one is present, it actually means discard the first one, and use the second.
 						//So in the case of a map, it would mean get the key, not the value.
 						//In the case of an array, it would mean get the value, not the index.
 						foreach (var split in varsplits)
 						{
-							enumlist.Add("object");
-
 							if (split != "")
 							{
 								//Don't create iteration loop variables as global/local function variables, they have to be specially created manually below.
 								var loopvarexpr = ParseSingleExpression(codeLine, split, false);
 								var loopvarstr = Ch.CodeToString(loopvarexpr);
-								varlist.Add(split?.Length == 0 ? "_" : loopvarstr);
-								//If this loop is inside of a class method that had declared all variables within it to be global,
-								//then the call to ParseSingleExpression() will not have created the iteration variable because it
-								//wrongly assumes it's global.
-								//So manually do it here.
+								//Create entries in the allVars map so these don't get recreated if they are used, such
+								//as being passed to a function. However, set the Value to null to prevent them from actually
+								//being created because we create them manually with a snippet below.
+								//See: case BlockClose and AddPropStatements() in Statements.cs.
 								var dkt = allVars[typeStack.Peek()].GetOrAdd(Scope);
 
 								if (!dkt.ContainsKey(loopvarstr))
-									dkt[loopvarstr] = nullPrimitive;
+									dkt[loopvarstr] = null;
 							}
-							else
-								varlist.Add(split?.Length == 0 ? "_" : split);
 						}
 
-						while (varlist.Count < 2)
-							varlist.Add("_");
-
 						var col = Ch.CodeToString(expr);
-						var vars = string.Join(',', varlist);
-						var enums = string.Join(',', enumlist);
 						var coldecl = new CodeExpressionStatement(new CodeSnippetExpression($"var {coldeclid} = {col}"));
-						var iterdecl = new CodeExpressionStatement(new CodeSnippetExpression($"var {id} = MakeEnumerator({coldeclid}, {varCount})"));
+						var iterdecl = new CodeExpressionStatement(new CodeSnippetExpression($"var {id} = MakeEnumerator({coldeclid}, {varsplits.Count})"));
 						_ = parent.Add(coldecl);
 						_ = parent.Add(iterdecl);
 						var condition = new CodeMethodInvokeExpression();
 						condition.Method.TargetObject = new CodeVariableReferenceExpression(id);
-						condition.Method.MethodName = "MoveNext";
+						condition.Method.MethodName = "Call";
+						var initSb = new StringBuilder(64);
+
+						for (var vi = 0; vi < varsplits.Count; ++vi)
+						{
+							var v = varsplits[vi];
+
+							if (vi > 0)
+								initSb.Append(", ");
+							else
+								initSb.Append("object ");
+
+							initSb.Append($"{v} = null");
+							condition.Parameters.Add(new CodeSnippetExpression($"ref {v}"));
+						}
+
 						var loop = new CodeIterationStatement
 						{
-							InitStatement = new CodeSnippetStatement(string.Empty),
+							InitStatement = new CodeSnippetStatement(initSb.ToString()),
 							TestExpression = new CodeMethodInvokeExpression(null, "IsTrueAndRunning", condition),
 							IncrementStatement = new CodeSnippetStatement(string.Empty)
 						};
 						loop.Statements.Insert(0, new CodeExpressionStatement((CodeMethodInvokeExpression)InternalMethods.Inc));
-						_ = loop.Statements.Add(new CodeSnippetExpression($"/*preventtrim*/({vars}) = {id}.Current"));
 						var block = new CodeBlock(codeLine, Scope, loop.Statements, CodeBlock.BlockKind.Loop, blocks.PeekOrNull(), InternalID, InternalID)
 						{
 							Type = blockOpen ? CodeBlock.BlockType.Within : CodeBlock.BlockType.Expect
@@ -461,9 +469,10 @@ namespace Keysharp.Scripting
 					var push = new CodeExpressionStatement((CodeMethodInvokeExpression)InternalMethods.Push);
 					var pop = new CodeExpressionStatement((CodeMethodInvokeExpression)InternalMethods.Pop);
 					var tcf = new CodeTryCatchFinallyStatement();
+					tcf.TryStatements.Add(push);
 					tcf.TryStatements.Add(loop);
 					tcf.FinallyStatements.Add(pop);
-					return [push, tcf, new CodeLabeledStatement(block.ExitLabel, new CodeSnippetStatement(";"))];//End labels seem to need a semicolon.
+					return [tcf, new CodeLabeledStatement(block.ExitLabel, new CodeSnippetStatement(";"))];//End labels seem to need a semicolon.
 				}
 
 				case FlowUntil:
@@ -805,7 +814,7 @@ namespace Keysharp.Scripting
 				{
 					tryCount++;
 					var tcf = new CodeTryCatchFinallyStatement();
-					var ctch = new CodeCatchClause($"ex{exCount++}", new CodeTypeReference("Keysharp.Core.Error"));
+					var ctch = new CodeCatchClause($"ex{exCount++}", new CodeTypeReference(typeof(Error)));
 					_ = tcf.CatchClauses.Add(ctch);
 					var type = parts.Length > 1 && parts[1][0] == BlockOpen ? CodeBlock.BlockType.Within : CodeBlock.BlockType.Expect;
 
@@ -832,31 +841,79 @@ namespace Keysharp.Scripting
 					{
 						var excname = "";
 						var exctypename = "Keysharp.Core.Error";
+						var extraExceptions = new List<string>(8);
 
 						if (parts.Length > 1)
 						{
-							var rest = StripCommentSingle(parts[1]).RemoveAll(Parens).Split(Spaces);
+							var rest = StripCommentSingle(parts[1]).RemoveAll(Parens).Split(SpaceTabComma);
 
 							if (rest.Length > 0 && rest[0] != "as" && rest[0] != "{")
 							{
-								var exctype = rest[0];
+								for (var exi = 0; exi < rest.Length; ++exi)
+								{
+									var exctype = rest[exi];
 
-								if (Reflections.stringToTypes.TryGetValue(exctype, out var t))
-									exctypename = t.FullName;
-								else//This should never happen, but keep in case.
-									exctypename = "Keysharp.Core." + exctype;
+									if (exi == 0)
+									{
+										if (Reflections.stringToTypes.TryGetValue(exctype, out var t))
+										{
+											if (t == typeof(Any))//Catch Any means all exceptions. So catch not only Error, but basic Exceptions too.
+												exctypename = typeof(Exception).FullName;
+											else if (typeof(KeysharpException).IsAssignableFrom(t))
+											{
+												if (!extraExceptions.Contains(t.FullName))
+													exctypename = t.FullName;
+											}
+											else
+												throw new ParseException($"Exception type of '{t.FullName}' was not derived from Error.", codeLine);
+										}
+										else//This should never happen, but keep in case.
+											exctypename = "Keysharp.Core." + exctype;
+									}
+									else
+									{
+										if (Reflections.stringToTypes.TryGetValue(exctype, out var t))
+										{
+											if (typeof(KeysharpException).IsAssignableFrom(t))
+											{
+												if (!extraExceptions.Contains(t.FullName))
+													extraExceptions.Add(t.FullName);
+											}
+											else
+												throw new ParseException($"Exception type of '{t.FullName}' was not derived from Error.", codeLine);
+										}
+									}
+								}
 							}
 
-							var subtract = rest[rest.Length - 1] == "{" ? 3 : 2;
+							var excCount = extraExceptions.Count + 1;
+							var tokenCount = rest[rest.Length - 1] == "{" ? excCount + 3 : excCount + 2;
 
-							if (rest.Length >= subtract && rest[rest.Length - subtract] == "as")
-								excname = rest[rest.Length - (subtract - 1)];
+							//Possible scenarios:
+							//Error as errorname {
+							//Error as errorname
+							//Error errorname {
+							//Error errorname
+							//Error {
+							//Error
+
+							if (rest.Length == tokenCount)
+							{
+								if (string.Compare(rest[excCount], "as", true) != 0)
+									throw new ParseException($"Unrecognized token '{rest[1]}' between exception type and name.", codeLine);
+
+								excname = rest[excCount + 1];
+							}
+							else if (rest.Length == tokenCount - 1)
+								excname = rest[excCount];
+							else if (rest.Length > excCount + 1)//No variable name declared. So either Error or Error {
+								throw new ParseException($"Invalid number of tokens ({rest.Length}) in catch statement", codeLine);
 						}
 
 						CodeCatchClause ctch;
 
 						if (tcf.CatchClauses.Count == 1 &&
-								tcf.CatchClauses[0].CatchExceptionType.BaseType == "Keysharp.Core.Error" &&
+								tcf.CatchClauses[0].CatchExceptionType.BaseType == typeof(Error).FullName &&
 								tcf.CatchClauses[0].Statements.Count == 0)//Check for the implicit catch.
 						{
 							ctch = tcf.CatchClauses[0];
@@ -873,7 +930,7 @@ namespace Keysharp.Scripting
 							tcf.CatchClauses.Insert(0, ctch);
 						}
 
-						var catchVars = new HashSet<string>();
+						var catchVars = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
 						_ = catchVars.Add(excname);
 						excCatchVars.Push(catchVars);
 						var type = parts.Length > 1 && parts[1].EndsWith(BlockOpen) ? CodeBlock.BlockType.Within : CodeBlock.BlockType.Expect;
@@ -881,11 +938,12 @@ namespace Keysharp.Scripting
 						_ = CloseTopSingleBlock();
 						blocks.Push(block);
 						var left = VarId(codeLine, excname, false);
-						var result = new CodeSnippetExpression(excname);
-						//var cas = new CodeAssignStatement(left, result);
 						ctch.LocalName = excname;
 						ctch.CatchExceptionType = new CodeTypeReference(exctypename);
-						//ctch.Statements.Insert(0, cas);
+
+						foreach (var extra in extraExceptions)
+							tcf.CatchClauses.Add(new CodeCatchClause("", new CodeTypeReference(extra), new CodeExpressionStatement(new CodeSnippetExpression("throw"))));
+
 						var catches = tcf.CatchClauses.Cast<CodeCatchClause>().ToArray();
 						//Types must be sorted from most derived to least derived.
 						System.Array.Sort(catches,

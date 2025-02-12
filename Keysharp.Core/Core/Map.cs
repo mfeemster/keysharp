@@ -86,6 +86,7 @@
 
 			set
 			{
+				Error err;
 				var oldVal = caseSense;
 				var str = value.ToString().ToLower();
 				var val = Options.OnOff(str);
@@ -99,7 +100,10 @@
 					return;
 
 				if (Count > 0)
-					throw new PropertyError("Attempted to change case sensitivity of a map which was not empty.");
+				{
+					_ = Errors.ErrorOccurred(err = new PropertyError("Attempted to change case sensitivity of a map which was not empty.")) ? throw err : "";
+					return;
+				}
 
 				if (caseSense != oldVal)
 					map = new Dictionary<object, object>(new CaseEqualityComp(caseSense));
@@ -122,6 +126,11 @@
 		bool ICollection.IsSynchronized => ((ICollection)map).IsSynchronized;
 
 		/// <summary>
+		/// The implementation for <see cref="KeysharpObject.super"/> for this class to return this type.
+		/// </summary>
+		public new (Type, object) super => (typeof(Map), this);
+
+		/// <summary>
 		/// The implementation for <see cref="ICollection.SyncRoot"/> which just calls map.SyncRoot.
 		/// </summary>
 		object ICollection.SyncRoot => ((ICollection)map).SyncRoot;
@@ -130,7 +139,7 @@
 		/// Initializes a new instance of the <see cref="Map"/> class.
 		/// See <see cref="__New(object[])"/>.
 		/// </summary>
-		public Map(params object[] obj) => _ = __New(obj);
+		public Map(params object[] args) => _ = __New(args);
 
 		/// <summary>
 		/// Gets the enumerator object which returns a key,value tuple for each element
@@ -139,13 +148,14 @@
 		///     1: Return the key in the first element, with the second being null.<br/>
 		///     2: Return the key in the first element, and the value in the second.
 		/// </param>
-		/// <returns><see cref="IEnumerator{(object, object)}"/></returns>
-		public IEnumerator<(object, object)> __Enum(object count) => new MapKeyValueIterator(map, count.Ai());
+		/// <returns><see cref="KeysharpEnumerator"/></returns>
+		public KeysharpEnumerator __Enum(object count) => new MapKeyValueIterator(map, count.Ai());
+
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="Map"/> class.
 		/// </summary>
-		/// <param name="values">An array of values to initialize the map with.<br/>
+		/// <param name="args">An array of values to initialize the map with.<br/>
 		/// This can be one of several values:<br/>
 		///     null: creates an empty map.<br/>
 		///     object[] or <see cref="Array"/>: adds every two elements as a key,value pair to the underlying map.<br/>
@@ -153,9 +163,9 @@
 		///     <see cref="Dictionary{object, object}"/>: assigns the dictionary directly to the underlying dictionary.
 		/// </param>
 		/// <returns>Empty string, unused.</returns>
-		public object __New(params object[] values)
+		public object __New(params object[] args)
 		{
-			Set(values);
+			Set(args);
 			return "";
 		}
 
@@ -200,9 +210,12 @@
 		/// <exception cref="KeyError">An <see cref="KeyError"/> exception is thrown if they key was not found.</exception>
 		public object Delete(object key)
 		{
-			return map.Remove(key, out var val)
-				   ? val
-				   : throw new KeyError($"Key {key} was not present in the map.");
+			Error err;
+
+			if (map.Remove(key, out var val))
+				return val;
+
+			return Errors.ErrorOccurred(err = new KeyError($"Key {key} was not present in the map.")) ? throw err : null;
 		}
 
 		/// <summary>
@@ -218,6 +231,7 @@
 		/// <exception cref="UnsetItemError">Throws an <see cref="UnsetItemError"/> if key is not found and no defaults are supplied.</exception>
 		public object Get(object key, object @default = null)
 		{
+			Error err;
 			var k = key;
 			var def = @default;
 
@@ -230,13 +244,13 @@
 			if (Default != null)
 				return Default;
 
-			throw new UnsetItemError($"Key {k} was not present in the map.");
+			return Errors.ErrorOccurred(err = new UnsetItemError($"Key {k} was not present in the map.")) ? throw err : null;
 		}
 
 		/// <summary>
 		/// The implementation for <see cref="IEnumerable{(object, object)}.GetEnumerator()"/> which returns an <see cref="MapKeyValueIterator"/>.
 		/// </summary>
-		/// <returns>An <see cref="IEnumerable{(object, object)}"/> which is an <see cref="MapKeyValueIterator"/>.</returns>
+		/// <returns>An <see cref="IEnumerator{(object, object)}"/> which is a <see cref="MapKeyValueIterator"/>.</returns>
 		public IEnumerator<(object, object)> GetEnumerator() => new MapKeyValueIterator(map, 2);
 
 		/// <summary>
@@ -359,7 +373,7 @@
 				else
 					_ = sb.AppendLine($"{indent}{name}: {{}} ({GetType().Name})");
 			}
-			var opi = (OwnPropsIterator)OwnProps(true, false, true);
+			var opi = (OwnPropsIterator)OwnProps(true, false);
 			tabLevel++;
 			indent = new string('\t', tabLevel);
 
@@ -392,11 +406,11 @@
 		/// Sets zero or more items.
 		/// The items can be either an <see cref="Array"/>, a <see cref="DictionaryBase{object,object}"/>, or an object[].
 		/// </summary>
-		/// <param name="values">The values to set, arranged as key,value,key2,value2,etc...</param>
+		/// <param name="args">The values to set, arranged as key,value,key2,value2,etc...</param>
 		/// <exception cref="ValueError">A <see cref="ValueError"/> exception is thrown if values was not of a supported type.</exception>
-		public void Set(params object[] values)
+		public void Set(params object[] args)
 		{
-			if (values == null || values.Length == 0)
+			if (args == null || args.Length == 0)
 			{
 				if (map == null)
 					map = new Dictionary<object, object>(new CaseEqualityComp(caseSense));
@@ -405,19 +419,21 @@
 			}
 			else
 			{
-				if (values.Length == 1)
+				Error err;
+
+				if (args.Length == 1)
 				{
-					if (values[0] is Map m)
+					if (args[0] is Map m)
 					{
 						map = m.map;
 						caseSense = m.caseSense;
 						return;
 					}
-					else if (values[0] is Dictionary<object, object> dkt)
+					else if (args[0] is Dictionary<object, object> dkt)
 					{
 						map = dkt;
 					}
-					else if (values[0] is Array temp)
+					else if (args[0] is Array temp)
 					{
 						var count = (temp.Count / 2) * 2;//Do not flatten here because the caller may want a map of maps, or a map of arrays.
 
@@ -429,7 +445,7 @@
 						for (var i = 0; i < count - 1; i += 2)
 							Insert(temp.array[i], temp.array[i + 1]);//Access the underlying ArrayList directly for performance.
 					}
-					else if (values[0] is Dictionary<string, object> tempm)
+					else if (args[0] is Dictionary<string, object> tempm)
 					{
 						if (map == null)
 							map = new Dictionary<object, object>(new CaseEqualityComp(caseSense));
@@ -440,17 +456,20 @@
 							Insert(kv.Key, kv.Value);
 					}
 					else
-						throw new ValueError($"Improper object type of {values[0].GetType()} passed to Map constructor.");
+					{
+						_ = Errors.ErrorOccurred(err = new ValueError($"Improper object type of {args[0].GetType()} passed to Map constructor.")) ? throw err : "";
+						return;
+					}
 				}
 				else
 				{
-					var count = (values.Length / 2) * 2;
+					var count = (args.Length / 2) * 2;
 
 					if (map == null)
 						map = new Dictionary<object, object>(new CaseEqualityComp(caseSense));
 
 					for (var i = 0; i < count; i += 2)
-						Insert(values[i], values[i + 1]);
+						Insert(args[i], args[i + 1]);
 				}
 			}
 		}
@@ -499,8 +518,9 @@
 		/// <summary>
 		/// The implementation for <see cref="IEnumerable.GetEnumerator"/> which just calls <see cref="__Enum"/>.
 		/// </summary>
-		/// <returns><see cref="IEnumerator{(object, object)}"/></returns>
-		IEnumerator IEnumerable.GetEnumerator() => __Enum(2);
+		/// <returns><see cref="MapKeyValueIterator"/></returns>
+		IEnumerator IEnumerable.GetEnumerator() => new MapKeyValueIterator(map, 2);
+		
 		/// <summary>
 		/// Internal helper to insert a key,value pair into the map.
 		/// </summary>
@@ -536,10 +556,12 @@
 		{
 			get
 			{
+				Error err;
+
 				if (TryGetValue(key, out var val))
 					return val;
 
-				return Default ?? throw new UnsetItemError($"Key {key} was not present in the map.");
+				return Default ?? (Errors.ErrorOccurred(err = new UnsetItemError($"Key {key} was not present in the map.")) ? throw err : null);
 			}
 
 			set => Insert(key, value);
@@ -549,15 +571,8 @@
 	/// <summary>
 	/// A two component iterator for <see cref="Map"/> which returns the key and the value as a tuple.
 	/// </summary>
-	internal class MapKeyValueIterator : IEnumerator<(object, object)>
+	internal class MapKeyValueIterator : KeysharpEnumerator, IEnumerator<(object, object)>
 	{
-		/// <summary>
-		/// The number of items to return for each iteration. Allowed values are 1 and 2:
-		/// 1: return just the key in the first position
-		/// 2: return the key in the first position and the value in the second.
-		/// </summary>
-		private readonly int count;
-
 		/// <summary>
 		/// The internal map to be iterated over.
 		/// </summary>
@@ -579,14 +594,14 @@
 				{
 					var kv = iter.Current;
 
-					if (count == 1)
+					if (Count == 1)
 						return (kv.Key, null);
 					else
 						return (kv.Key, kv.Value);
 				}
 				catch (IndexOutOfRangeException)
 				{
-					throw new InvalidOperationException();
+					throw new InvalidOperationException();//Should never happen when using regular loops.
 				}
 			}
 		}
@@ -602,24 +617,51 @@
 		/// <param name="m">The <see cref="Dictionary{object,object}"/> to iterate over.</param>
 		/// <param name="c">The number of items to return for each iteration.</param>
 		public MapKeyValueIterator(Dictionary<object, object> m, int c)
+			: base(null, c)
 		{
-			count = c;
 			map = m;
 			iter = map.GetEnumerator();
+			Error err;
+			var fo = new FuncObj("Call", this, Count);
+
+			if (fo.IsValid)
+				CallFunc = fo;
+			else
+				_ = Errors.ErrorOccurred(err = new MethodError($"Existing function object was invalid.")) ? throw err : "";
 		}
 
 		/// <summary>
 		/// Calls <see cref="Current"/> and places the key value in the passed in object reference.
 		/// </summary>
 		/// <param name="pos">A reference to the key value.</param>
-		public void Call(ref object obj0) => (obj0, _) = Current;
+		/// <returns>True if the iterator position has not moved past the last element, else false.</returns>
+		public override object Call(ref object key)
+		{
+			if (MoveNext())
+			{
+				(key, _) = Current;
+				return true;
+			}
+
+			return false;
+		}
 
 		/// <summary>
 		/// Calls <see cref="Current"/> and places the key and value in the passed in object references.
 		/// </summary>
 		/// <param name="key">A reference to the key value.</param>
 		/// <param name="value">A reference to the object value.</param>
-		public void Call(ref object key, ref object value) => (key, value) = Current;
+		/// <returns>True if the iterator position has not moved past the last element, else false.</returns>
+		public override object Call(ref object key, ref object value)
+		{
+			if (MoveNext())
+			{
+				(key, value) = Current;
+				return true;
+			}
+
+			return false;
+		}
 
 		/// <summary>
 		/// The implementation for <see cref="IComparer.Dispose"/> which internally resets the iterator.

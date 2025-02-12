@@ -67,6 +67,7 @@ namespace Keysharp.CompiledMain
 	using System.Text;
 	using System.Threading.Tasks;
 	using System.Windows.Forms;
+
 	using Keysharp.Core;
 	using Keysharp.Core.Common;
 	using Keysharp.Core.Common.File;
@@ -75,6 +76,7 @@ namespace Keysharp.CompiledMain
 	using Keysharp.Core.Common.Strings;
 	using Keysharp.Core.Common.Threading;
 	using Keysharp.Scripting;
+
 	using Array = Keysharp.Core.Array;
 	using Buffer = Keysharp.Core.Buffer;
 
@@ -100,11 +102,16 @@ namespace Keysharp.CompiledMain
 				Keysharp.Scripting.Script.CreateTrayMenu();
 				Keysharp.Scripting.Script.RunMainWindow(name, _ks_UserMainCode, false);
 				Keysharp.Scripting.Script.WaitThreads();
-				return 0;
+				return Environment.ExitCode;
 			}
 			catch (Keysharp.Core.Error kserr)
 			{
-				if (ErrorOccurred(kserr))
+				if (!kserr.Processed)
+				{
+					_ = ErrorOccurred(kserr, kserr.ExcType);
+				}
+
+				if (!kserr.Handled)
 				{
 					var (_ks_pushed, _ks_btv) = Keysharp.Core.Common.Threading.Threads.BeginThread();
 					MsgBox("Uncaught Keysharp exception:\r\n" + kserr, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
@@ -112,7 +119,7 @@ namespace Keysharp.CompiledMain
 				}
 
 				Keysharp.Core.Flow.ExitApp(1);
-				return 1;
+				return Environment.ExitCode;
 			}
 			catch (System.Exception mainex)
 			{
@@ -120,7 +127,10 @@ namespace Keysharp.CompiledMain
 
 				if (ex is Keysharp.Core.Error kserr)
 				{
-					if (ErrorOccurred(kserr))
+					if (!kserr.Processed)
+						_ = ErrorOccurred(kserr, kserr.ExcType);
+
+					if (!kserr.Handled)
 					{
 						var (_ks_pushed, _ks_btv) = Keysharp.Core.Common.Threading.Threads.BeginThread();
 						MsgBox("Uncaught Keysharp exception:\r\n" + kserr, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
@@ -138,12 +148,16 @@ namespace Keysharp.CompiledMain
 
 				Keysharp.Core.Flow.ExitApp(1);
 
-				return 1;
+				return Environment.ExitCode;
 			}
 		}
 
+		public static object x;
+
 		public static object _ks_UserMainCode()
 		{
+			x = 123L;
+			Keysharp.Core.Common.Keyboard.HotkeyDefinition.ManifestAllHotkeysHotstringsHooks();
 			Keysharp.Core.Flow.ExitApp(0);
 			return "";
 		}

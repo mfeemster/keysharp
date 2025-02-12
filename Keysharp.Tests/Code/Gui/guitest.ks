@@ -1801,7 +1801,7 @@ RealFn(a, b, c:="c") {
 	
 DoTricks() {
 	global boundText
-	RealFn := FuncObj("RealFn")
+	RealFn := Func("RealFn")
 
 	fn := RealFn.Bind(1)  ; Bind first parameter only
 	boundText := "Bind 1 to first param, call (2), shows 1, 2"
@@ -1814,6 +1814,9 @@ DoTricks() {
 	fn(2)      ; Shows "2, 1"
 	boundText := "Bind 1 to second param, call (3), shows 3, 1"
 	fn.Call(3) ; Shows "3, 1"
+	boundText := "Chained bind, call (), shows 1, 2"
+	fn := RealFn.Bind(1).Bind(2)
+	fn.Call()
 	;fn(, 4)    ; Error: 'a' was omitted
 }
 
@@ -1839,7 +1842,7 @@ RealFn2(TheMessage) {
 }
 
 FuncObjTest() {
-	RealFn2 := FuncObj("RealFn2")
+	RealFn2 := Func("RealFn2")
 	fn2 := RealFn2.Bind("AltTab")
 	fn2()
 }
@@ -2296,7 +2299,7 @@ MoveGui() {
 	MyGui.UseGroup(gb2_TabTwo)
 	guiToUse := MoveEdit.Text != "" ? MoveEdit.Text : MyGui ; Either search for the text the user entered, or just use this Gui directly.
 	WinGetPos(&winposx, &winposy, &winposw, &winposh, guiToUse)
-	WinMove(100, 100, 200, 200, guiToUse)
+	WinMove(100, 100, , , guiToUse)
 	; MyGui.Move(100, 100, 200, 200)
 }
 
@@ -2399,6 +2402,12 @@ comDllRunWordBtn.OnEvent("Click", "ComRunWord")
 
 comDllRunWordListenerBtn := MyGui.Add("Button", "x10 y+10", "COM run MS Word with event listener")
 comDllRunWordListenerBtn.OnEvent("Click", "ComRunWordEventListener")
+
+_ := MyGui.Add("Text", "x10 y+10 cBlue S10", "An animated Odie should appear below using ActiveX.")
+
+axPic := "http://www.animatedgif.net/cartoons/A_5odie_e0.gif"
+axText := "mshtml:<img src='" . axPic . "' />"
+MyGui.AddActiveX("w100 h150 x10 y+10", axText)
 
 DllMsgBox()
 {

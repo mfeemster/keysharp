@@ -62,7 +62,7 @@ if (arr[2] == "item 2")
 else
 	FileAppend, "fail", "*"
 
-if (arr[3] == "")
+if (arr[3] == unset)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"

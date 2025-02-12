@@ -233,7 +233,7 @@
 				{
 #if WINDOWS
 
-					if (WindowsAPI.OpenClipboard((long)A_ClipboardTimeout))//Will need a cross platform version of this.//TODO
+					if (WindowsAPI.OpenClipboard(A_ClipboardTimeout.Al()))//Will need a cross platform version of this.//TODO
 					{
 						_ = WindowsAPI.CloseClipboard();//Need to close it for it to work
 #endif
@@ -290,7 +290,7 @@
 
 #elif WINDOWS
 
-					if (WindowsAPI.OpenClipboard((long)A_ClipboardTimeout))
+					if (WindowsAPI.OpenClipboard(A_ClipboardTimeout.Al()))
 					{
 						_ = WindowsAPI.CloseClipboard();//Need to close it for it to work
 
@@ -387,20 +387,25 @@
 		/// <summary>
 		/// The coordinate mode for positioning the caret.
 		/// </summary>
+		/// <exception cref="ValueError">A <see cref="ValueError"/> exception is thrown if the value couldn't be converted to a <see cref="CoordModeType"/>.</exception>
 		public static object A_CoordModeCaret
 		{
 			get => Mouse.Coords.Caret.ToString();
 
 			set
 			{
-				CoordModeType val;
+				Error err;
+				var val = CoordModeType.Client;
 
 				if (value is CoordModeType cmt)
 					val = cmt;
 				else if (Enum.TryParse(value.As(), out cmt))
 					val = cmt;
 				else
-					throw new ValueError($"{value} was not in the correct format for coordinate modes.");
+				{
+					_ = Errors.ErrorOccurred(err = new ValueError($"{value} was not in the correct format for coordinate modes.")) ? throw err : "";
+					return;
+				}
 
 				if (!Script.IsReadyToExecute)
 					coordModeCaretDefault = val;
@@ -412,20 +417,25 @@
 		/// <summary>
 		/// The coordinate mode for positioning menus.
 		/// </summary>
+		/// <exception cref="ValueError">A <see cref="ValueError"/> exception is thrown if the value couldn't be converted to a <see cref="CoordModeType"/>.</exception>
 		public static object A_CoordModeMenu
 		{
 			get => Mouse.Coords.Menu.ToString();
 
 			set
 			{
-				CoordModeType val;
+				Error err;
+				var val = CoordModeType.Client;
 
 				if (value is CoordModeType cmt)
 					val = cmt;
 				else if (Enum.TryParse(value.As(), out cmt))
 					val = cmt;
 				else
-					throw new ValueError($"{value} was not in the correct format for coordinate modes.");
+				{
+					_ = Errors.ErrorOccurred(err = new ValueError($"{value} was not in the correct format for coordinate modes.")) ? throw err : "";
+					return;
+				}
 
 				if (!Script.IsReadyToExecute)
 					coordModeMenuDefault = val;
@@ -437,20 +447,25 @@
 		/// <summary>
 		/// The coordinate mode for positioning the mouse.
 		/// </summary>
+		/// <exception cref="ValueError">A <see cref="ValueError"/> exception is thrown if the value couldn't be converted to a <see cref="CoordModeType"/>.</exception>
 		public static object A_CoordModeMouse
 		{
 			get => Mouse.Coords.Mouse.ToString();
 
 			set
 			{
-				CoordModeType val;
+				Error err;
+				var val = CoordModeType.Client;
 
 				if (value is CoordModeType cmt)
 					val = cmt;
 				else if (Enum.TryParse(value.As(), out cmt))
 					val = cmt;
 				else
-					throw new ValueError($"{value} was not in the correct format for coordinate modes.");
+				{
+					_ = Errors.ErrorOccurred(err = new ValueError($"{value} was not in the correct format for coordinate modes.")) ? throw err : "";
+					return;
+				}
 
 				if (!Script.IsReadyToExecute)
 					coordModeMouseDefault = val;
@@ -462,20 +477,25 @@
 		/// <summary>
 		/// The coordinate mode for positioning pixels.
 		/// </summary>
+		/// <exception cref="ValueError">A <see cref="ValueError"/> exception is thrown if the value couldn't be converted to a <see cref="CoordModeType"/>.</exception>
 		public static object A_CoordModePixel
 		{
 			get => Mouse.Coords.Pixel.ToString();
 
 			set
 			{
-				CoordModeType val;
+				Error err;
+				var val = CoordModeType.Client;
 
 				if (value is CoordModeType cmt)
 					val = cmt;
 				else if (Enum.TryParse(value.As(), out cmt))
 					val = cmt;
 				else
-					throw new ValueError($"{value} was not in the correct format for coordinate modes.");
+				{
+					_ = Errors.ErrorOccurred(err = new ValueError($"{value} was not in the correct format for coordinate modes.")) ? throw err : "";
+					return;
+				}
 
 				if (!Script.IsReadyToExecute)
 					coordModePixelDefault = val;
@@ -487,20 +507,25 @@
 		/// <summary>
 		/// The coordinate mode for positioning tooltips.
 		/// </summary>
+		/// <exception cref="ValueError">A <see cref="ValueError"/> exception is thrown if the value couldn't be converted to a <see cref="CoordModeType"/>.</exception>
 		public static object A_CoordModeToolTip
 		{
 			get => Mouse.Coords.Tooltip.ToString();
 
 			set
 			{
-				CoordModeType val;
+				Error err;
+				var val = CoordModeType.Client;
 
 				if (value is CoordModeType cmt)
 					val = cmt;
 				else if (Enum.TryParse(value.As(), out cmt))
 					val = cmt;
 				else
-					throw new ValueError($"{value} was not in the correct format for coordinate modes.");
+				{
+					_ = Errors.ErrorOccurred(err = new ValueError($"{value} was not in the correct format for coordinate modes.")) ? throw err : "";
+					return;
+				}
 
 				if (!Script.IsReadyToExecute)
 					coordModeToolTipDefault = val;
@@ -518,7 +543,7 @@
 		public static string A_Cursor =>
 		Cursor.Current is Cursor cur ?
 #if LINUX
-		cur.ToString().Trim(Keywords.BothBrackets).Split(':', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)[1]
+		cur.ToString().Trim(BothBrackets).Split(':', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)[1]
 #elif WINDOWS
 		cur.ToString().Trim(BothBrackets).Split(' ', StringSplitOptions.RemoveEmptyEntries)[1].Replace("Cursor", "")
 #endif
@@ -1020,11 +1045,6 @@
 		/// <see cref="A_AhkPath"/>.
 		/// </summary>
 		public static string A_KeysharpPath => A_AhkPath;
-
-		/// <summary>
-		/// The system's default language code.
-		/// </summary>
-		public static long A_Language => Thread.CurrentThread.CurrentCulture.LCID;
 
 		/// <summary>
 		/// The result from the Windows GetLastError() function.
@@ -1916,29 +1936,17 @@
 		/// If the keyboard hook is installed, this is the number of milliseconds that have elapsed since the system last received physical keyboard input.<br/>
 		/// Otherwise, this variable is equivalent to <see cref="A_TimeIdle"/>.
 		/// </summary>
-		public static long A_TimeIdleKeyboard
-		{
-			get
-			{
-				return Script.HookThread is HookThread ht && ht.HasKbdHook()
-					   ? (long)(DateTime.Now - Script.timeLastInputKeyboard).TotalMilliseconds
-					   : A_TimeIdle;
-			}
-		}
+		public static long A_TimeIdleKeyboard => Script.HookThread is HookThread ht && ht.HasKbdHook()
+		? (long)(DateTime.Now - Script.timeLastInputKeyboard).TotalMilliseconds
+		: A_TimeIdle;
 
 		/// <summary>
 		/// If the mouse hook is installed, this is the number of milliseconds that have elapsed since the system last received physical mouse input.<br/>
 		/// Otherwise, this variable is equivalent to <see cref="A_TimeIdle"/>.
 		/// </summary>
-		public static long A_TimeIdleMouse
-		{
-			get
-			{
-				return Script.HookThread is HookThread ht && ht.HasMouseHook()
-					   ? (long)(DateTime.Now - Script.timeLastInputMouse).TotalMilliseconds
-					   : A_TimeIdle;
-			}
-		}
+		public static long A_TimeIdleMouse => Script.HookThread is HookThread ht && ht.HasMouseHook()
+		? (long)(DateTime.Now - Script.timeLastInputMouse).TotalMilliseconds
+		: A_TimeIdle;
 
 		/// <summary>
 		/// Similar to above but ignores artificial keystrokes and/or mouse clicks whenever the corresponding hook (keyboard or mouse) is installed;<br/>
@@ -1946,15 +1954,9 @@
 		/// If neither hook is installed, this variable is equivalent to <see cref="A_TimeIdle"/>.<br/>
 		/// If only one hook is installed, only its type of physical input affects A_TimeIdlePhysical (the other/non-installed hook's input, both physical and artificial, has no effect).
 		/// </summary>
-		public static long A_TimeIdlePhysical
-		{
-			get
-			{
-				return Script.HookThread is HookThread ht && ht.HasEitherHook()
-					   ? (long)(DateTime.Now - Script.timeLastInputPhysical).TotalMilliseconds
-					   : A_TimeIdle;
-			}
-		}
+		public static long A_TimeIdlePhysical => Script.HookThread is HookThread ht && ht.HasEitherHook()
+		? (long)(DateTime.Now - Script.timeLastInputPhysical).TotalMilliseconds
+		: A_TimeIdle;
 
 		/// <summary>
 		/// Time in ms that have elapsed since <see cref="A_PriorHotkey"/> was pressed. It will be -1 whenever <see cref="A_PriorHotkey"/> is blank.
@@ -2025,7 +2027,7 @@
 		/// <summary>
 		/// The value specified by #UseHook.
 		/// </summary>
-		public static object A_UseHook { get; set; }
+		public static object A_UseHook => Script.ForceKeybdHook;
 
 		/// <summary>
 		/// The logon name of the current user.

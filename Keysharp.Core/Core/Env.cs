@@ -7,9 +7,9 @@ namespace Keysharp.Core
 	/// </summary>
 	public static class Env
 	{
-        public static string[] KeysharpArgs = [];
+		public static string[] KeysharpArgs = [];
 
-        private static readonly IEnumerable<string> dataFormats = typeof(DataFormats).GetFields(BindingFlags.Public | BindingFlags.Static)
+		private static readonly IEnumerable<string> dataFormats = typeof(DataFormats).GetFields(BindingFlags.Public | BindingFlags.Static)
 				.Select(f => f.Name);
 
 		/// <summary>
@@ -161,6 +161,7 @@ namespace Keysharp.Core
 		/// </summary>
 		/// <param name="name">The name of the environment variable.</param>
 		/// <param name="value">If omitted, the environment variable will be deleted. Otherwise, specify the value to write.</param>
+		/// <exception cref="OSError">An <see cref="OSError"/> exception is thrown if any failure is detected.</exception>
 		public static object EnvSet(object name, object value = null)
 		{
 			try
@@ -170,13 +171,15 @@ namespace Keysharp.Core
 			}
 			catch (Exception ex)
 			{
-				throw new OSError(ex, $@"Error setting environment variable {name} to value ""{value}"".");
+				Error err;
+				return Errors.ErrorOccurred(err = new OSError(ex, $@"Error setting environment variable {name} to value ""{value}"".")) ? throw err : null;
 			}
 		}
 
 		/// <summary>
 		/// Notifies the operating system and all running applications that environment variables have changed.
 		/// </summary>
+		/// <exception cref="OSError">An <see cref="OSError"/> exception is thrown on Windows if any failure is detected.</exception>
 		public static object EnvUpdate()
 		{
 #if LINUX
@@ -185,7 +188,11 @@ namespace Keysharp.Core
 
 			//SendMessage() freezes when running in a unit test. PostMessage seems to work. Use SendMessageTimeout().
 			try { _ = WindowsAPI.SendMessageTimeout(new IntPtr(WindowsAPI.HWND_BROADCAST), WindowsAPI.WM_SETTINGCHANGE, 0u, IntPtr.Zero, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 1000, out var result); }
-			catch (Exception ex) { throw new OSError(ex, "Error updating environment variables."); }
+			catch (Exception ex)
+			{
+				Error err;
+				return Errors.ErrorOccurred(err = new OSError(ex, "Error updating environment variables.")) ? throw err : null;
+			}
 
 #endif
 			return null;
@@ -224,7 +231,7 @@ namespace Keysharp.Core
 		/// -1: Call the callback before any previously registered callbacks.<br/>
 		///  0: Do not call the callback.
 		/// </param>
-		/// <exception cref="TypeError"></exception>
+		/// <exception cref="TypeError">A <see cref="TypeError"/> exception is thrown if callback is not of type <see cref="FuncObj"/>.</exception>
 		public static object OnClipboardChange(object callback, object addRemove = null)
 		{
 			if (callback is IFuncObj fo)
@@ -233,7 +240,10 @@ namespace Keysharp.Core
 				return null;
 			}
 			else
-				throw new TypeError("Object passed to OnClipboardChange() was not a function object.");
+			{
+				Error err;
+				return Errors.ErrorOccurred(err = new TypeError($"Passed in object of type {callback.GetType()} was not a FuncObj.")) ? throw err : null;
+			}
 		}
 
 		/// <summary>
@@ -572,10 +582,10 @@ namespace Keysharp.Core
 		{
 			if (startsWith)
 				return KeysharpArgs.FirstOrDefault(x => (x.StartsWith('-')
-						|| x.StartsWith('/')) && x.Trim(Keywords.DashSlash).StartsWith(arg, StringComparison.OrdinalIgnoreCase));
+												   || x.StartsWith('/')) && x.Trim(DashSlash).StartsWith(arg, StringComparison.OrdinalIgnoreCase));
 			else
 				return KeysharpArgs.FirstOrDefault(x => (x.StartsWith('-')
-						|| x.StartsWith('/')) && x.Trim(Keywords.DashSlash).Contains(arg, StringComparison.OrdinalIgnoreCase));
+												   || x.StartsWith('/')) && x.Trim(DashSlash).Contains(arg, StringComparison.OrdinalIgnoreCase));
 		}
 
 		/// <summary>
@@ -591,7 +601,7 @@ namespace Keysharp.Core
 
 			for (var i = 0; i < args.Length; i++)
 			{
-				if ((args[i].StartsWith('-') || args[i].StartsWith('/')) && (startsWith ? args[i].TrimStart(Keywords.DashSlash).StartsWith(arg, StringComparison.OrdinalIgnoreCase) : args[i].Contains(arg, StringComparison.OrdinalIgnoreCase)))
+				if ((args[i].StartsWith('-') || args[i].StartsWith('/')) && (startsWith ? args[i].TrimStart(DashSlash).StartsWith(arg, StringComparison.OrdinalIgnoreCase) : args[i].Contains(arg, StringComparison.OrdinalIgnoreCase)))
 					if (i < args.Length - 1)
 						return args[i + 1];
 			}
@@ -612,7 +622,7 @@ namespace Keysharp.Core
 		{
 			if (format != 0)
 			{
-				if (WindowsAPI.OpenClipboard((long)Accessors.A_ClipboardTimeout))
+				if (WindowsAPI.OpenClipboard(Accessors.A_ClipboardTimeout.Al()))
 				{
 					byte[] buf;
 					var gLock = IntPtr.Zero;
@@ -655,7 +665,7 @@ namespace Keysharp.Core
 			var count = long.MaxValue;
 			var inputStr = "xinput list --long".Bash();
 
-			foreach (Range r in inputStr.AsSpan().SplitAny(Keywords.CrLf))
+			foreach (Range r in inputStr.AsSpan().SplitAny(CrLf))
 			{
 				var split = inputStr.AsSpan(r).Trim();
 
@@ -713,7 +723,7 @@ namespace Keysharp.Core
 					if (!deviceNames[i].Contains("xtest", StringComparison.OrdinalIgnoreCase))
 					{
 						var buttonStr = $"xinput get-button-map {deviceIds[i]}".Bash();
-						var buttonStrSplits = buttonStr.Split(Keywords.SpaceTab, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+						var buttonStrSplits = buttonStr.Split(SpaceTab, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
 						if (buttonStrSplits.All(sp => int.TryParse(sp, out var _)))
 						{
@@ -759,7 +769,7 @@ namespace Keysharp.Core
 
 				try
 				{
-					if (WindowsAPI.OpenClipboard((long)Accessors.A_ClipboardTimeout))//Need to leave it open for it to work when using the Windows API.
+					if (WindowsAPI.OpenClipboard(Accessors.A_ClipboardTimeout.Al()))//Need to leave it open for it to work when using the Windows API.
 					{
 						wasOpened = true;
 						var ptr = clip.Ptr;
@@ -808,9 +818,17 @@ namespace Keysharp.Core
 		IDataObject dataObject = Clipboard.GetDataObject();
 		string[] formats;
 
-		public ClipboardAll() => __New();
+		public new (Type, object) super
+		{
+			get
+			{
+				return (typeof(ClipboardAll), this);
+			}
+		}
 
-		public object __New(params object[] values)
+		public ClipboardAll(params object[] args) => _ = __New(args);
+
+		public object __New(params object[] args)
 		{
 			Save();
 			return "";
@@ -848,10 +866,17 @@ namespace Keysharp.Core
 		/// Constructor that just passes the data to the base.
 		/// </summary>
 		/// <param name="obj">The data to pass to the base.</param>
-		public ClipboardAll(byte[] obj)
-			: base(obj)
-		{
-		}
+		//public ClipboardAll(byte[] obj)
+		//  : base(obj)
+		//{
+		//}
+
+		/// <summary>
+		/// The implementation for <see cref="KeysharpObject.super"/> for this class to return this type.
+		/// </summary>
+		public new (Type, object) super => (typeof(ClipboardAll), this);
+
+		public ClipboardAll(params object[] args) => _ = __New(args);
 	}
 
 #endif

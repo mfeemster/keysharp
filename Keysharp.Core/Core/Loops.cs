@@ -42,7 +42,7 @@ namespace Keysharp.Core
 			if (!(obj is string ss) || ss != string.Empty)
 			{
 				var n = obj.Al();
-				var info = Push();
+				var info = Peek(LoopType.Normal);//The calling code must have called Push() with this type.
 
 				if (n != -1)
 				{
@@ -84,7 +84,7 @@ namespace Keysharp.Core
 		public static IEnumerable LoopFile(object filePattern, object mode = null)
 		{
 			bool d = false, f = true, r = false;
-			var info = Push(LoopType.Directory);
+			var info = Peek(LoopType.Directory);//The calling code must have called Push() with this type.
 			var path = filePattern.As();
 			var m = mode.As();
 			//Dialogs.MsgBox(Path.GetFullPath(path));
@@ -150,9 +150,9 @@ namespace Keysharp.Core
 			var i = input.As();
 			var delimiters = delimiterChars.As();
 			var omit = omitChars.As();
-			var info = Push(LoopType.Parse);
+			var info = Peek(LoopType.Parse);//The calling code must have called Push() with this type.
 
-			if (delimiters.ToLowerInvariant() == Keywords.Keyword_CSV)
+			if (delimiters.ToLowerInvariant() == Keyword_CSV)
 			{
 				var reader = new StringReader(i);
 				var part = new StringBuilder();
@@ -255,7 +255,7 @@ namespace Keysharp.Core
 		{
 			var input = inputFile.As();
 			var output = outputFile.As();
-			var info = Push(LoopType.File);
+			var info = Peek(LoopType.File);//The calling code must have called Push() with this type.
 			//Dialogs.MsgBox(Path.GetFullPath(input));
 
 			if (output.Length > 0)
@@ -311,7 +311,7 @@ namespace Keysharp.Core
 			if (!k && !v)
 				v = true;
 
-			var info = Push(LoopType.Registry);
+			var info = Peek(LoopType.Registry);//The calling code must have called Push() with this type.
 			var (reg, compname, key) = Conversions.ToRegRootKey(keyname);
 
 			if (reg != null)
@@ -319,7 +319,7 @@ namespace Keysharp.Core
 				info.regVal = string.Empty;
 				info.regName = reg.Name;
 				info.regKeyName = keyname;
-				info.regType = Keywords.Keyword_Key;
+				info.regType = Keyword_Key;
 				var subkey = reg.OpenSubKey(key, false);
 				var l = QueryInfoKey(subkey);
 				var dt = DateTime.FromFileTimeUtc(l);
@@ -369,7 +369,7 @@ namespace Keysharp.Core
 								info.regVal = string.Empty;
 								info.regName = subKeyName.Substring(subKeyName.LastIndexOf('\\') + 1);
 								info.regKeyName = tempKey.Name;//The full key path.
-								info.regType = Keywords.Keyword_Key;
+								info.regType = Keyword_Key;
 								l = QueryInfoKey(tempKey);
 								dt = DateTime.FromFileTimeUtc(l);
 								info.regDate = Conversions.ToYYYYMMDDHH24MISS(dt);
@@ -397,12 +397,14 @@ namespace Keysharp.Core
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if the object is not an <see cref="IEnumerable"/> or an <see cref="IEnumerator"/>.</exception>
 		public static IEnumerator MakeBaseEnumerator(object obj)
 		{
+			Error err;
+
 			if (obj is IEnumerable ie)
 				return ie.GetEnumerator();
 			else if (obj is IEnumerator ie2)
 				return ie2;
 			else
-				throw new Error($"Object of type {obj.GetType()} was not of a type that could be converted to an IEnumerator.");
+				return Errors.ErrorOccurred(err = new Error($"Object of type {obj.GetType()} was not of a type that could be converted to an IEnumerator.")) ? throw err : null;
 		}
 
 		/// <summary>
@@ -413,29 +415,74 @@ namespace Keysharp.Core
 		/// <param name="obj">The object to get the enumerator for.</param>
 		/// <param name="obj">The number of items the enumerator should return, 1 or 2.</param>
 		/// <returns>An <see cref="IEnumerator{object,object}"/> for the object.</returns>
-		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if the object is null or is not any of:<br/>
+		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if the object is not any of:<br/>
 		///     <see cref="IEnumerable{object,object}"/><br/>
 		///     <see cref="IEnumerator{object,object}"/><br/>
 		///     <see cref="I__Enum"/><br/>
 		///     <see cref="object[]"/><br/>
 		///     <see cref="IEnumerable"/><br/>
 		/// </exception>
-		public static IEnumerator<(object, object)> MakeEnumerator(object obj, object count)
+		/// <exception cref="UnsetError">An <see cref="UnsetError"/> exception is thrown if the object is null.</exception>
+		public static KeysharpEnumerator MakeEnumerator(object obj, object count)
 		{
+			Error err;
+			var ct = count.Ai();
+
 			if (obj is I__Enum ienum)
-				return ienum.__Enum(count.Ai());
+				return ienum.__Enum(ct);
+			else if (obj is OwnPropsIterator opi)
+			{
+				opi.GetVal = ct != 1;
+				return opi;
+			}
+			else if (obj is KeysharpEnumerator kse)
+				return kse;
+			//else if (obj is object[] oa)
+			//  return new Array(oa).__Enum(count.Ai());
+			//else if (obj is IEnumerable<(object, object)> ie0)
+			//  return ie0.GetEnumerator();
+			//else if (obj is IEnumerator<(object, object)> ie1)
+			//  return ie1;
+			//else if (obj is IEnumerable ie)
+			//  return ie.Cast<object>().Select(o => (o, o)).GetEnumerator();
+			//if (obj is Array arr)
+			//  return arr.__Enum(ct);
+			//else if (obj is Map m)
+			//  return m.__Enum(ct.Ai());
 			else if (obj is object[] oa)
 				return new Array(oa).__Enum(count.Ai());
-			else if (obj is IEnumerable<(object, object)> ie0)
-				return ie0.GetEnumerator();
-			else if (obj is IEnumerator<(object, object)> ie1)
-				return ie1;
-			else if (obj is IEnumerable ie)
-				return ie.Cast<object>().Select(o => (o, o)).GetEnumerator();
+			else if (Functions.GetFuncObj(obj, null) is FuncObj fo)
+				return new KeysharpEnumerator(fo, ct);
+			else if (Reflections.FindAndCacheMethod(obj.GetType(), "__Enum", 1) is MethodPropertyHolder mph)
+			{
+				var tempEnum = mph.callFunc(obj, [count]);
+
+				if (tempEnum is KeysharpEnumerator kse2)
+					return kse2;
+				else
+					return MakeEnumerator(tempEnum, count);
+			}
+			else if (obj is KeysharpObject kso)
+			{
+				if (kso.op.TryGetValue("__Enum", out var map))
+				{
+					if (map.map.TryGetValue("call", out var callval) && callval is IFuncObj ifocall)
+					{
+						var tempEnum = ifocall.Call(obj, count);
+
+						if (tempEnum is KeysharpEnumerator kse3)
+							return kse3;
+						else
+							return MakeEnumerator(tempEnum, count);
+					}
+				}
+
+				return Errors.ErrorOccurred(err = new UnsetError($"__Enum() could not be located on the object.")) ? throw err : null;
+			}
 			else if (obj is null)
-				throw new Error($"Object was null and could not be converted to an IEnumerator<object, object>.");
+				return Errors.ErrorOccurred(err = new UnsetError($"Object was null and could not be converted to a KeysharpEnumerator.")) ? throw err : null;
 			else
-				throw new Error($"Object of type {obj.GetType()} was not of a type that could be converted to an IEnumerator<object, object>.");
+				return Errors.ErrorOccurred(err = new Error($"Object of type {obj.GetType()} was not of a type that could be converted to a KeysharpEnumerator.")) ? throw err : null;
 		}
 
 		/// <summary>
@@ -607,7 +654,7 @@ namespace Keysharp.Core
 					}
 					catch (Exception ex)
 					{
-						Script.OutputDebug(ex);
+						Debug.OutputDebug(ex);
 					}
 
 					if (subdirs != null)
@@ -630,7 +677,7 @@ namespace Keysharp.Core
 					}
 					catch (Exception ex)
 					{
-						Script.OutputDebug(ex);
+						Debug.OutputDebug(ex);
 					}
 
 					if (files != null)
@@ -683,7 +730,7 @@ namespace Keysharp.Core
 									info.regVal = string.Empty;
 									info.regName = key2.Name.Substring(key2.Name.LastIndexOf('\\') + 1);
 									info.regKeyName = key2.Name;//The full key path.
-									info.regType = Keywords.Keyword_Key;
+									info.regType = Keyword_Key;
 									var l = QueryInfoKey(key2);
 									var dt = DateTime.FromFileTimeUtc(l);
 									info.regDate = Conversions.ToYYYYMMDDHH24MISS(dt);

@@ -99,7 +99,7 @@ else
 
 x := 1
 y := 5
-str :=
+str := ""
 
 Loop %y%
 {
@@ -108,7 +108,7 @@ Loop %y%
 	If A_Index = 5
 		break
 }
-Until (str !=)
+Until (str != "")
 
 if (x == 6)
 	FileAppend, "pass", "*"
@@ -142,7 +142,7 @@ else
 arr := [10, 20, 30]
 x := 0
 
-for in arr
+for , in arr
 {
 	x++
 }

@@ -89,9 +89,9 @@ else
 	FileAppend, "fail", "*"
 
 x = 0
-str :=
+str := ""
 
-while (str =) {
+while (str = "") {
 	x++
 	
 	if (x > 4)

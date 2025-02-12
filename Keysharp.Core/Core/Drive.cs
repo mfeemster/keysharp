@@ -139,9 +139,10 @@ namespace Keysharp.Core
 				var val = drv.DriveFormat;//Will throw DriveNotFoundException on invalid paths.
 				return drv.IsReady ? "Ready" : "NotReady";
 			}
-			catch (Exception e)
+			catch (Exception ex)
 			{
-				throw new Error($"Failed to get drive status: {e.Message}.");
+				Error err;
+				return Errors.ErrorOccurred(err = new Error($"Failed to get drive status: {ex.Message}.")) ? throw err : null;
 			}
 		}
 
@@ -167,7 +168,8 @@ namespace Keysharp.Core
 			}
 			catch (Exception e)
 			{
-				throw new Error($"Failed to get CD drive status: {e.Message}.");
+				Error err;
+				return Errors.ErrorOccurred(err = new Error($"Failed to get CD drive status: {e.Message}.")) ? throw err : null;
 			}
 		}
 
@@ -265,10 +267,13 @@ namespace Keysharp.Core
 
 			if (dr.Length == 0)
 			{
+				Error err;
 				var allDrives = DriveInfo.GetDrives().Where(drive => drive.DriveType == DriveType.CDRom || drive.DriveType == DriveType.Removable).ToList();
-				drive = allDrives.Count > 0
-						? DriveProvider.CreateDrive(new DriveInfo(allDrives[0].Name))
-						: throw new Error("Failed to find any CDROM or DVD drives.");
+
+				if (allDrives.Count > 0)
+					drive = DriveProvider.CreateDrive(new DriveInfo(allDrives[0].Name));
+
+				return Errors.ErrorOccurred(err = new Error("Failed to find any CDROM or DVD drives.")) ? throw err : null;
 			}
 			else
 				drive = DriveProvider.CreateDrive(new DriveInfo(dr));

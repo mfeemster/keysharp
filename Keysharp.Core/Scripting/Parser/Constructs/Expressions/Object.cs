@@ -53,7 +53,7 @@ namespace Keysharp.Scripting
 					}
 				}
 
-				if (ch == Keywords.Escape.ToString())
+				if (ch == Escape.ToString())
 					escape = !escape;
 				else
 					escape = false;

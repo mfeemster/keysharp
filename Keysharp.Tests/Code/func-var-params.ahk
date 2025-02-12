@@ -39,7 +39,7 @@ If (x == true)
 else
 	FileAppend, "fail", "*"
 
-varfo1 := FuncObj("varfunc1")
+varfo1 := Func("varfunc1")
 
 x := false
 varfo1()
@@ -100,7 +100,7 @@ If (val == 0)
 else
 	FileAppend, "fail", "*"
 
-fo := FuncObj("varfuncimplicit")
+fo := Func("varfuncimplicit")
 val := fo(arr*)
 
 If (val == 6)
@@ -108,7 +108,7 @@ If (val == 6)
 else
 	FileAppend, "fail", "*"
 
-fo := FuncObj("varfuncimplicit")
+fo := Func("varfuncimplicit")
 val := fo()
 
 If (val == 0)
@@ -200,7 +200,7 @@ If (val == 9)
 else
 	FileAppend, "fail", "*"
 
-fo := FuncObj("varfunc3")
+fo := Func("varfunc3")
 val := fo(1, arr*)
 
 If (val == 7)
@@ -208,7 +208,7 @@ If (val == 7)
 else
 	FileAppend, "fail", "*"
 
-fo := FuncObj("varfunc4")
+fo := Func("varfunc4")
 val := fo(arr*)
 
 If (val == 6)
@@ -216,8 +216,29 @@ If (val == 6)
 else
 	FileAppend, "fail", "*"
 
-fo := FuncObj("varfunc5")
+fo := Func("varfunc5")
 val := fo(1, 2, arr*)
+
+If (val == 9)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+varfunc6(args*)
+{
+    local temp := 0
+
+    for n in args
+    {
+        temp += n
+    }
+
+    return temp
+}
+
+arr := [1, 2, 3]
+ ; Test dynamic call passing two non variadic args plus a variadic arg passed to a func that takes one variadic param.
+val := Func("varfunc6").Call(1, 2, arr*)
 
 If (val == 9)
 	FileAppend, "pass", "*"

@@ -1,4 +1,5 @@
 ﻿#if LINUX
+//#define DPI
 using WindowStyles = System.Windows.Forms.WindowStyles;
 using WindowExStyles = System.Windows.Forms.WindowExStyles;
 
@@ -160,10 +161,14 @@ namespace Keysharp.Core.Linux
 				{
 					var attr = xwindow.Attributes;
 					var pt = ClientToScreen();
+#if DPI
 					var scale = 1.0 / Accessors.A_ScaledScreenDPI;
 					//Width and height do not include the border.
 					//pt is already scaled.
 					return new Rectangle(pt.X, pt.Y, (int)(scale * attr.width), (int)(scale * attr.height));
+#else
+					return new Rectangle(pt.X, pt.Y, attr.width, attr.height);
+#endif
 				}
 				else
 					return new Rectangle();
@@ -227,15 +232,19 @@ namespace Keysharp.Core.Linux
 				if (Control.FromHandle((IntPtr)xwindow.ID) is Control ctrl)
 					return ctrl.Bounds;
 
-				var scale = 1.0 / Accessors.A_ScaledScreenDPI;
 				Xlib.XTranslateCoordinates(xwindow.XDisplay.Handle, xwindow.ID, xwindow.XDisplay.Root.ID, 0, 0, out var x, out var y, out var dummy);
 				//Adjust for the title bar. This appears to work at least for GTK apps. Revisit if it doesn't work for other GUI toolkits.
 				var frame = FrameExtents();
 				x -= frame.Left;
 				y -= frame.Top;
+#if DPI
+				var scale = 1.0 / Accessors.A_ScaledScreenDPI;
 				//return new Rectangle((int)(scale * attr.x), (int)(scale * attr.y), (int)(scale * (attr.width + attr.border_width)), (int)(scale * (attr.height + attr.border_width)));
 				//Unsure if we should use the attr border with or the width and height from FrameExtents()? Also, where/when to scale?//TODO
 				return new Rectangle((int)(scale * x), (int)(scale * y), (int)(scale * (attr.width + attr.border_width)), (int)(scale * (attr.height + attr.border_width)));
+#else
+				return new Rectangle(x, y, attr.width + attr.border_width, attr.height + attr.border_width);
+#endif
 			}
 			set
 			{
@@ -330,18 +339,28 @@ namespace Keysharp.Core.Linux
 			get
 			{
 				var attr = xwindow.Attributes;
-				var scale = 1.0 / Accessors.A_ScaledScreenDPI;
 
 				if (Control.FromHandle((IntPtr)xwindow.ID) is Control ctrl)
+				{
 					return ctrl.Size;
+				}
 				else
+				{
+#if DPI
+					var scale = 1.0 / Accessors.A_ScaledScreenDPI;
 					return new Size((int)(scale * (attr.width + attr.border_width)), (int)(scale * (attr.height + attr.border_width)));
+#else
+					return new Size(attr.width + attr.border_width, attr.height + attr.border_width);
+#endif
+				}
 			}
 			set
 			{
 				if (IsSpecified)
 				{
-					var scale = 1.0 / Accessors.A_ScaledScreenDPI;
+#if DPI
+					var scale = 1.0 / Accessors.A_ScaledScreenDPI;//Unsure if we need to use this.
+#endif
 
 					if (Control.FromHandle((IntPtr)xwindow.ID) is Control ctrl)
 						ctrl.Size = new Size(value.Width, value.Height);
@@ -703,9 +722,11 @@ namespace Keysharp.Core.Linux
 					_ = Xlib.XTranslateCoordinates(xwindow.XDisplay.Handle, xwindow.ID, xwindow.XDisplay.Root.ID, 0, 0, out x, out y, out var dummy);
 
 				var pt = new System.Drawing.Point(x, y);
+#if DPI
 				var scale = 1.0 / Accessors.A_ScaledScreenDPI;
 				pt.X = (int)(scale * pt.X);
 				pt.Y = (int)(scale * pt.Y);
+#endif
 				return pt;
 			}
 			else

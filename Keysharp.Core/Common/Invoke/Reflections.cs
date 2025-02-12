@@ -52,10 +52,10 @@ namespace Keysharp.Core.Common.Invoke
 		/// when the script actually runs. On the second time, there will be an extra assembly loaded, which is the compiled script itself. More system assemblies will also be loaded.
 		/// </summary>
 		[PublicForTestOnly]
-		public static void Initialize()
+		public static void Initialize(bool ignoreMainAssembly = false)
 		{
 			loadedAssemblies = GetLoadedAssemblies();
-			CacheAllMethods();
+			CacheAllMethods(ignoreMainAssembly);
 			CacheAllPropertiesAndFields();
 			var types = loadedAssemblies.Values.Where(asm => asm.FullName.StartsWith("Keysharp.Core,"))
 						.SelectMany(t => t.GetTypes())
@@ -288,8 +288,9 @@ namespace Keysharp.Core.Common.Invoke
 
 					if (typeToStringProperties.TryGetValue(t, out var dkt))
 					{
-						if (dkt.TryGetValue(name, out var prop))
-							return true;
+						if (name != "__Class" && name != "super")
+							if (dkt.TryGetValue(name, out var prop))
+								return true;
 					}
 
 					t = t.BaseType;
@@ -317,7 +318,7 @@ namespace Keysharp.Core.Common.Invoke
 					if (typeToStringProperties.TryGetValue(t, out var dkt))
 					{
 						foreach (var kv in dkt)
-							if (kv.Key != "__Class" && kv.Value.Count > 0)
+							if (kv.Value.Count > 0 && kv.Key != "__Class" && kv.Key != "super")
 							{
 								var mph = kv.Value.First().Value;
 
@@ -349,7 +350,15 @@ namespace Keysharp.Core.Common.Invoke
 						break;
 
 					if (typeToStringProperties.TryGetValue(t, out var dkt))
-						ct += dkt.Count - 1;//Subtract 1 because of the auto generated __Class property.
+					{
+						ct += dkt.Count;//Subtract 1 because of the auto generated __Class property.
+
+						if (dkt.ContainsKey("super"))
+							--ct;
+
+						if (dkt.ContainsKey("__Class"))
+							--ct;
+					}
 
 					t = t.BaseType;
 				}
@@ -364,11 +373,11 @@ namespace Keysharp.Core.Common.Invoke
 
 		internal static T SafeGetProperty<T>(object item, string name) => (T)item.GetType().GetProperty(name, typeof(T))?.GetValue(item);
 
-		internal static bool SafeHasProperty(object item, string name) => item.GetType().GetProperties().Where(prop => prop.Name == name).Count() > 0;
+		internal static bool SafeHasProperty(object item, string name) => item.GetType().GetProperties().Where(prop => prop.Name == name).Any();
 
 		internal static void SafeSetProperty(object item, string name, object value) => item.GetType().GetProperty(name, value.GetType())?.SetValue(item, value, null);
 
-		private static void CacheAllMethods()
+		private static void CacheAllMethods(bool ignoreMainAssembly = false)
 		{
 			List<Assembly> assemblies;
 			var loadedAssembliesList = loadedAssemblies.Values;
@@ -390,7 +399,7 @@ namespace Keysharp.Core.Common.Invoke
 
 			foreach (var asm in assemblies)
 				foreach (var type in asm.GetTypes())
-					if (type.IsClass && type.IsPublic && type.Namespace != null &&
+					if (type.IsClass && type.IsPublic && type.Namespace != null && (!ignoreMainAssembly || type.Name != Parser.mainClassName) &&
 							(type.Namespace.StartsWith("Keysharp.Core", StringComparison.OrdinalIgnoreCase) ||
 							 type.Namespace.StartsWith("Keysharp.CompiledMain", StringComparison.OrdinalIgnoreCase) ||
 							 type.Namespace.StartsWith("Keysharp.Tests", StringComparison.OrdinalIgnoreCase)))//Allow tests so we can use function objects inside of unit tests.
@@ -479,7 +488,7 @@ namespace Keysharp.Core.Common.Invoke
 				}
 				catch (Exception ex)
 				{
-					Script.OutputDebug(ex.Message);
+					Debug.OutputDebug(ex.Message);
 				}
 			}
 

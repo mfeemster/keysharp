@@ -75,16 +75,19 @@ namespace Keysharp.Core
 					return Strings.NormalizeEol(rtf.Rtf);
 
 				return "";
-				//throw new Error($"Can only get RichText from a RichEdit control. Attempted on a {_control.GetType().Name} control.");
 			}
 			set
 			{
+				Error err;
+
 				if (_control is RichTextBox rtf)
 					rtf.Rtf = Strings.NormalizeEol(value);
 				else
-					throw new Error($"Can only set RichText on a RichEdit control. Attempted on a {_control.GetType().Name} control.");
+					_ = Errors.ErrorOccurred(err = new Error($"Can only set RichText on a RichEdit control. Attempted on a {_control.GetType().Name} control.")) ? throw err : "";
 			}
 		}
+
+		public new (Type, object) super => (typeof(GuiControl), this);
 
 		public object Text
 		{
@@ -230,6 +233,8 @@ namespace Keysharp.Core
 					return ss.Text;//Unsure if this is what's intended.
 				else if (_control is KeysharpPictureBox pic)
 					return pic.Filename;
+				else if (_control is KeysharpActiveX kax)
+					return kax.Iid;
 
 				return "";
 			}
@@ -382,14 +387,14 @@ namespace Keysharp.Core
 
 		internal Control Ctrl => _control;
 
-		public GuiControl(params object[] obj) => _ = __New(obj);
+		public GuiControl(params object[] args) => _ = __New(args);
 
-		public object __New(params object[] obj)
+		public object __New(params object[] args)
 		{
-			var gui = obj[0] as Gui;
-			var control = obj[1] as Control;
-			var name = obj[2].ToString();
-			var wrap = obj.Length > 3 ? obj[3].Ab() : false;
+			var gui = args[0] as Gui;
+			var control = args[1] as Control;
+			var name = args[2].ToString();
+			var wrap = args.Length > 3 ? args[3].Ab() : false;
 			Gui = gui;
 			typename = name;
 			_control = control;

@@ -188,7 +188,7 @@
 			{
 				"Theme", (f, o) =>
 				{
-					Script.OutputDebug("Themes are not supported", false);
+					Debug.OutputDebug("Themes are not supported", false);
 				}
 			},
 			{
@@ -306,7 +306,9 @@
 
 		internal StatusStrip StatusBar { get; set; }
 
-		public Gui(object obj0 = null, object obj1 = null, object obj2 = null) => __New(obj0, obj1, obj2);
+		public new (Type, object) super => (typeof(Gui), this);
+
+		public Gui(params object[] args) => _ = __New(args);
 
 		internal Gui(object obj0 = null, object obj1 = null, object obj2 = null, object obj3 = null)//The last parameter is hidden and is only for internal use for when we wrap the main window in a Gui object.
 		{
@@ -326,7 +328,7 @@
 				Script.HwndLastUsed = Hwnd;
 		}
 
-		public IEnumerator<(object, object)> __Enum(object count) => new MapKeyValueIterator(controls, count.Ai());
+		public KeysharpEnumerator __Enum(object count) => new MapKeyValueIterator(controls, count.Ai());
 
 		public object __New(params object[] obj)
 		{
@@ -1056,6 +1058,8 @@
 
 				case Keyword_ActiveX:
 				{
+					var ax = new KeysharpActiveX(text);
+					ctrl = ax;
 				}
 				break;
 
@@ -1387,6 +1391,9 @@
 			{
 				LastContainer.TagAndAdd(holder);
 			}
+
+			if (ctrl is KeysharpActiveX kax)
+				kax.Init();
 
 			if (ctrl is KeysharpPictureBox pbox)
 			{
@@ -1923,7 +1930,7 @@
 			return null;
 		}
 
-		IEnumerator IEnumerable.GetEnumerator() => __Enum(2);
+		IEnumerator IEnumerable.GetEnumerator() => new MapKeyValueIterator(controls, 2);
 
 		internal static bool AnyExistingVisibleWindows() => allGuiHwnds.Values.Any(g => g.form != Script.mainWindow && g.form.Visible);
 
@@ -2252,6 +2259,7 @@
 		{
 			get
 			{
+				Error err;
 				var handle = controlname.ParseLong(false);
 
 				if (handle.HasValue)
@@ -2294,7 +2302,7 @@
 					}
 				}
 
-				throw new Error($"No controls matched the handle, name, text, ClassNN or NetClassNN {controlname}.");
+				return Errors.ErrorOccurred(err = new Error($"No controls matched the handle, name, text, ClassNN or NetClassNN {controlname}.")) ? throw err : null;
 			}
 		}
 

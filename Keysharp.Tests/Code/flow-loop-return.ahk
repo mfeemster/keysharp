@@ -189,3 +189,34 @@ ffu3()
 		return A_Index := 0
 	until false
 }
+
+; test this here because this test is run outside of a function. 
+arr := [10, 20, 30]
+loopvar := 0 ; Test global var having the same name as the loop var. Ensure they are separate.
+
+for (loopvar in arr)
+{
+}
+
+if (loopvar == 0)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+aglobalvar := 0
+
+testglobalvarfunc()
+{
+	global aglobalvar
+
+	for (aglobalvar in arr)
+	{
+	}
+
+	if (aglobalvar == 0)
+		FileAppend, "pass", "*"
+	else
+		FileAppend, "fail", "*"
+}
+
+testglobalvarfunc()

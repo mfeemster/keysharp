@@ -357,7 +357,7 @@ else
 	FileAppend, "fail", "*"
 	
 gval := 0
-lam := () => gval += 123
+lam := () => local gval, gval := 0, gval += 123
 x := lam()
 
 If (x == 123)
@@ -377,9 +377,9 @@ func2__(x) ; This can't be named func2() because it'll conflict with another fun
 	global tot += x
 }
 
-f := FuncObj("func2__")
+f := Func("func2__")
 
-func(a, b, c)
+testfunc(a, b, c)
 {
 	global tot
 	tot += a(1)
@@ -388,7 +388,7 @@ func(a, b, c)
 	f(10)
 }
 
-func((o) => o * 1, (o) => o * 2, (o) => o * 3)
+testfunc((o) => o * 1, (o) => o * 2, (o) => o * 3)
 ; MsgBox(tot)
 
 If (tot == 24)
@@ -398,7 +398,7 @@ else
 
 class myclass2
 {
-	func(a, b, c)
+	testfunc(a, b, c)
 	{
 		global tot
 		tot += a(1)
@@ -410,7 +410,7 @@ class myclass2
 
 tot := 0
 class2obj := myclass2()
-class2obj.func((o) => o * 1, (o) => o * 2, (o) => o * 3)
+class2obj.testfunc((o) => o * 1, (o) => o * 2, (o) => o * 3)
 
 If (tot == 34)
 	FileAppend, "pass", "*"
@@ -546,6 +546,54 @@ else
 x := myclassobj.member6(1, ,&z := 11)
 
 If (x == 17 && z == 17)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+; Test fat arrow properties with parens in them.
+class propclass
+{
+	m := {b:1}
+
+	myfunc(xx)
+	{
+		return xx
+	}
+
+	a
+	{
+		get => (123)
+	}
+
+	b
+	{
+		get => (true ? 456 : 789)
+	}
+	
+	c
+	{
+		get => (1 ? (myfunc("eval"), this.m) : (myfunc("eval"), this.m)).b *= 2
+	}
+}
+
+pc := propclass()
+x := pc.a
+
+If (x == 123)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+x := pc.b
+
+If (x == 456)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+x := pc.c
+
+If (x == 2)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"

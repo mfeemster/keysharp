@@ -56,7 +56,8 @@
 			}
 			catch (Exception ex)
 			{
-				throw new ValueError(ex.Message);
+				Error err;
+				return Errors.ErrorOccurred(err = new ValueError(ex.Message)) ? throw err : null;
 			}
 		}
 
@@ -89,6 +90,7 @@
 
 		private static void DecodeObject(ref Dictionary<string, object> parent, string node)
 		{
+			Error err;
 			var key = string.Empty;
 			bool expectVal = false, next = true;
 
@@ -132,7 +134,10 @@
 							if (IsNumber(token))
 								_ = ExtractNumber(ref node, ref i, out value);
 							else if (!ExtractBoolean(ref node, ref i, ref value))
-								throw new Exception(ErrorMessage(ExNoMemberVal, i));
+							{
+								_ = Errors.ErrorOccurred(err = new Error(ErrorMessage(ExNoMemberVal, i))) ? throw err : "";
+								return;
+							}
 
 							break;
 					}
@@ -165,7 +170,10 @@
 						} while (i < node.Length);
 
 						if (keyip.Length == 0)
-							throw new Exception(ErrorMessage(ExNoKeyPair, i));
+						{
+							_ = Errors.ErrorOccurred(err = new Error(ErrorMessage(ExNoKeyPair, i))) ? throw err : "";
+							return;
+						}
 						else
 						{
 							key = keyip.ToString();
@@ -181,7 +189,10 @@
 					next = true;
 				}
 				else
-					throw new Exception(ErrorMessage(ExUnexpectedToken, i));
+				{
+					_ = Errors.ErrorOccurred(err = new Error(ErrorMessage(ExUnexpectedToken, i))) ? throw err : "";
+					return;
+				}
 			}
 
 			Value(ref parent, ref key);
@@ -308,6 +319,7 @@
 
 		private static object[] ParseArray(string node)
 		{
+			Error err;
 			var list = new List<object>();
 			object value = null;
 
@@ -347,7 +359,7 @@
 						if (IsNumber(token))
 							_ = ExtractNumber(ref node, ref i, out value);
 						else if (!ExtractBoolean(ref node, ref i, ref value))
-							throw new Exception(ErrorMessage(ExNoMemberVal, i));
+							return Errors.ErrorOccurred(err = new Error(ErrorMessage(ExNoMemberVal, i))) ? throw err : null;
 
 						break;
 				}
@@ -361,6 +373,7 @@
 
 		private static string Scan(string node, ref int i, char anchor)
 		{
+			Error err;
 			int start = i + 1, skip = 1;
 			var inStr = false;
 
@@ -380,7 +393,7 @@
 						break;
 
 				if (i == node.Length)
-					throw new Exception(ErrorMessage(ExUntermField, i));
+					return Errors.ErrorOccurred(err = new Error(ErrorMessage(ExUntermField, i))) ? throw err : null;
 			}
 
 			return node.Substring(start, i - start);

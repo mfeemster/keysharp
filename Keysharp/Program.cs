@@ -181,7 +181,7 @@ namespace Keysharp.Main
 					return Message($"Could not find the script file {script}.", true);
 
 #if DEBUG
-				Script.OutputDebug($"Creating DOM from {script}");
+				Core.Debug.OutputDebug($"Creating DOM from {script}");
 #endif
 				var (domunits, domerrs) = ch.CreateDomFromFile(script);
 				string namenoext, path, scriptdir;
@@ -203,7 +203,7 @@ namespace Keysharp.Main
 					return HandleCompilerErrors(domerrs, script, path, "Compiling script to DOM");
 
 #if DEBUG
-				Script.OutputDebug("Creating code from DOM.");
+				Core.Debug.OutputDebug("Creating code from DOM.");
 #endif
 				var (code, exc) = ch.CreateCodeFromDom(domunits);
 
@@ -236,7 +236,7 @@ namespace Keysharp.Main
 				//If they want to write out the code, place it in the same folder as the script, with the same name, and .exe extension.
 				//Message($"Before compiling, setting current dir to {Environment.CurrentDirectory}", false);
 #if DEBUG
-				Script.OutputDebug("Compiling code.");
+				Core.Debug.OutputDebug("Compiling code.");
 #endif
 				var (results, ms, compileexc) = ch.Compile(code, namenoext, exeDir);
 
@@ -318,9 +318,9 @@ namespace Keysharp.Main
 				var program = CompilerHelper.compiledasm.GetType("Keysharp.CompiledMain.program");
 				var main = program.GetMethod("Main");
 #if DEBUG
-				Script.OutputDebug("Running compiled code.");
+				Core.Debug.OutputDebug("Running compiled code.");
 #endif
-				_ = main.Invoke(null, [scriptArgs]);
+				Environment.ExitCode = main.Invoke(null, [scriptArgs]).Ai();
 			}
 			catch (Exception ex)
 			{
@@ -351,12 +351,12 @@ namespace Keysharp.Main
 					writeCodeTask?.Wait();
 				}
 
-				return Message(msg, true);
+				Environment.ExitCode = Message(msg, true);
 			}
 
 			writeExeTask?.Wait();
 			writeCodeTask?.Wait();
-			return 0;
+			return Environment.ExitCode;
 		}
 
 		internal static string GetLatestDotNetVersion()
@@ -448,7 +448,7 @@ namespace Keysharp.Main
 			else
 			{
 				_ = MessageBox.Show(text, "Keysharp", MessageBoxButtons.OK, MessageBoxIcon.Information);
-				Script.OutputDebug(text);
+				Core.Debug.OutputDebug(text);
 			}
 
 			return error ? 1 : 0;

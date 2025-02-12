@@ -5,6 +5,8 @@
 		private readonly bool disposeHandle = true;
 		private readonly IntPtr handle;
 
+		public new (Type, object) super => (typeof(GdiHandleHolder), this);
+
 		internal GdiHandleHolder(IntPtr h, bool d)
 		{
 			handle = h;

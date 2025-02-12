@@ -1,4 +1,5 @@
 ﻿#if WINDOWS
+//#define DPI
 namespace Keysharp.Core.Windows
 {
 	/// <summary>
@@ -107,8 +108,12 @@ namespace Keysharp.Core.Windows
 				if (!IsSpecified || !WindowsAPI.GetClientRect(Handle, out var rect))
 					return Rectangle.Empty;
 
+#if DPI
 				var scale = 1.0 / Accessors.A_ScaledScreenDPI;
 				return new Rectangle((int)(scale * rect.Left), (int)(scale * rect.Top), (int)(scale * (rect.Right - rect.Left)), (int)(scale * (rect.Bottom - rect.Top)));
+#else
+				return new Rectangle(rect.Left, rect.Top, rect.Right - rect.Left, rect.Bottom - rect.Top);
+#endif
 			}
 		}
 
@@ -148,8 +153,12 @@ namespace Keysharp.Core.Windows
 				if (!IsSpecified || !WindowsAPI.GetWindowRect(Handle, out var rect))
 					return Rectangle.Empty;
 
+#if DPI
 				var scale = 1.0 / Accessors.A_ScaledScreenDPI;
 				return new Rectangle((int)(scale * rect.Left), (int)(scale * rect.Top), (int)(scale * (rect.Right - rect.Left)), (int)(scale * (rect.Bottom - rect.Top)));
+#else
+				return new Rectangle(rect.Left, rect.Top, rect.Right - rect.Left, rect.Bottom - rect.Top);
+#endif
 			}
 			set
 			{
@@ -186,7 +195,11 @@ namespace Keysharp.Core.Windows
 				var scale = 1.0 / Accessors.A_ScaledScreenDPI;
 				return !IsSpecified || !WindowsAPI.GetWindowRect(Handle, out var rect)
 					   ? Size.Empty
+#if DPI
 					   : new Size((int)(scale * (rect.Right - rect.Left)), (int)(scale * (rect.Bottom - rect.Top)));
+#else
+					   : new Size(rect.Right - rect.Left, rect.Bottom - rect.Top);
+#endif
 			}
 			set
 			{
@@ -263,11 +276,12 @@ namespace Keysharp.Core.Windows
 				}
 				else
 				{
+					Error err;
 					var alpha = Math.Clamp((int)value.Al(), 0, 255);
 
 					if (WindowsAPI.SetWindowLongPtr(Handle, WindowsAPI.GWL_EXSTYLE, new IntPtr(exstyle | WindowsAPI.WS_EX_LAYERED)) == IntPtr.Zero ||
 							!WindowsAPI.SetLayeredWindowAttributes(Handle, 0, (byte)alpha, WindowsAPI.LWA_ALPHA))
-						throw new OSError("", $"Could not assign transparency with alpha value of {alpha}.");
+						_ = Errors.ErrorOccurred(err = new OSError("", $"Could not assign transparency with alpha value of {alpha}.")) ? throw err : "";
 				}
 			}
 		}
@@ -284,6 +298,7 @@ namespace Keysharp.Core.Windows
 			}
 			set
 			{
+				Error err;
 				var splits = value.As().Split(SpaceTab, StringSplitOptions.RemoveEmptyEntries);
 				var colorstr = splits[0];
 				var exstyle = WindowsAPI.GetWindowLongPtr(Handle, WindowsAPI.GWL_EXSTYLE);
@@ -291,7 +306,7 @@ namespace Keysharp.Core.Windows
 				if (colorstr.ToLower() == "off")
 				{
 					if (WindowsAPI.SetWindowLongPtr(Handle, WindowsAPI.GWL_EXSTYLE, new IntPtr(exstyle.ToInt64() & ~WindowsAPI.WS_EX_LAYERED)) == IntPtr.Zero)
-						throw new OSError("", $"Could not turn transparency off.");
+						_ = Errors.ErrorOccurred(err = new OSError("", $"Could not turn transparency off.")) ? throw err : "";
 				}
 				else
 				{
@@ -311,10 +326,10 @@ namespace Keysharp.Core.Windows
 							color = Color.FromArgb(color.A, color.B, color.G, color.R);//Flip RGB to BGR.
 
 							if (!WindowsAPI.SetLayeredWindowAttributes(Handle, (uint)color.ToArgb() & 0x00FFFFFF, (byte)val, (uint)flags))//Make top byte of color zero.
-								throw new OSError("", $"Could not assign transparency color {color} with alpha value of {val}.");
+								_ = Errors.ErrorOccurred(err = new OSError("", $"Could not assign transparency color {color} with alpha value of {val}.")) ? throw err : "";
 						}
 						else
-							throw new OSError("", $"Could not assign transparency color {color} with alpha value of {val}.");
+							_ = Errors.ErrorOccurred(err = new OSError("", $"Could not assign transparency color {color} with alpha value of {val}.")) ? throw err : "";
 					}
 				}
 			}
@@ -627,9 +642,11 @@ namespace Keysharp.Core.Windows
 		{
 			var pt = new Point();
 			_ = WindowsAPI.ClientToScreen(Handle, ref pt);
+#if DPI
 			var scale = 1.0 / Accessors.A_ScaledScreenDPI;
 			pt.X = (int)(scale * pt.X);
 			pt.Y = (int)(scale * pt.Y);
+#endif
 			return pt;
 		}
 

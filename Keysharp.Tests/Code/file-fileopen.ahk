@@ -309,7 +309,7 @@ b := false
 try
 {
 	f := FileOpen(path, "r -r")
-	handle = f.Handle;
+	handle := f.Handle
 	FileOpen(handle, "r h")
 }
 catch

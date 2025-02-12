@@ -61,10 +61,15 @@
 		}
 
 		/// <summary>
+		/// The implementation for <see cref="KeysharpObject.super"/> for this class to return this type.
+		/// </summary>
+		public new (Type, object) super => (typeof(Buffer), this);
+
+		/// <summary>
 		/// Calls <see cref="__New"/> to initialize a new instance of the <see cref="Buffer"/> class.
 		/// </summary>
-		/// <param name="obj">The data to initially store in the buffer</param>
-		public Buffer(params object[] obj) => __New(obj);
+		/// <param name="args">The data to initially store in the buffer</param>
+		public Buffer(params object[] args) => _ = __New(args);
 
 		/// <summary>
 		/// Destructor that manually calls <see cref="Dispose"/> to free the raw memory contained in the buffer.
@@ -84,7 +89,7 @@
 		///     Integer[, Integer]: Sets length to the first value and optionally sets each byte to the second value.
 		/// </param>
 		/// <returns>Empty string, unused.</returns>
-		public object __New(params object[] obj)
+		public unsafe object __New(params object[] obj)
 		{
 			if (obj == null || obj.Length == 0)
 			{
@@ -96,10 +101,10 @@
 
 				if (obj0 is byte[] bytearray)//This will sometimes be passed internally within the library.
 				{
-					Size = bytearray.Length;
+					Size = bytearray.Length;//Performs the allocation.
 
-					for (var i = 0; i < bytearray.Length; i++)
-						Marshal.WriteByte(Ptr, i, bytearray[i]);
+					if (size > 0)
+						Marshal.Copy(bytearray, 0, Ptr, Math.Min((int)size, bytearray.Length));
 				}
 				else if (obj0 is Array array)
 				{
@@ -107,20 +112,19 @@
 					Size = ct;
 
 					for (var i = 0; i < ct; i++)
-						Marshal.WriteByte(Ptr, i, (byte)Script.ForceLong(array.array[i]));//Access the underlying ArrayList directly for performance.
+						Marshal.WriteByte(Ptr, i, (byte)Script.ForceLong(array.array[i]));//Access the underlying array[] directly for performance.
 				}
 				else//This will be called by the user.
 				{
 					var bytecount = obj0.Al(0);
 					var fill = obj.Length > 1 ? obj[1].Al(long.MinValue) : long.MinValue;
-					Size = bytecount;//Performs the allocation.
+					Size = bytecount;
+					var ptr = Ptr.ToPointer();
 
-					if (fill != long.MinValue && bytecount > 0)
+					if (bytecount > 0)
 					{
-						var val = (byte)(fill & 255);
-
-						for (var i = 0; i < bytecount; i++)
-							Marshal.WriteByte(Ptr, i, val);
+						byte val = fill != long.MinValue ? (byte)(fill & 255) : (byte)0;
+						Unsafe.InitBlockUnaligned(ptr, val, (uint)bytecount);
 					}
 				}
 			}
@@ -162,6 +166,8 @@
 		{
 			get
 			{
+				Error err;
+
 				if (index > 0 && index <= size)
 				{
 					unsafe
@@ -171,7 +177,7 @@
 					}
 				}
 				else
-					throw new IndexError($"Invalid index of {index} for buffer of size {Size}.");
+					return Errors.ErrorOccurred(err = new IndexError($"Invalid index of {index} for buffer of size {Size}.")) ? throw err : 0L;
 			}
 		}
 	}

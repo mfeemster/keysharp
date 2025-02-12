@@ -86,15 +86,9 @@
 
 		public string Input => input.buffer;
 
-		public string Match
-		{
-			get
-			{
-				return input.status == InputStatusType.TerminatedByMatch && input.endingMatchIndex < input.match.Count
-					   ? input.match[input.endingMatchIndex]
-					   : "";
-			}
-		}
+		public string Match => input.status == InputStatusType.TerminatedByMatch && input.endingMatchIndex < input.match.Count
+		? input.match[input.endingMatchIndex]
+		: "";
 
 		public object MinSendLevel
 		{
@@ -141,6 +135,8 @@
 			set => onKeyUp = Functions.GetFuncObj(value, null, true);
 		}
 
+		public new (Type, object) super => (typeof(InputObject), this);
+
 		public object Timeout
 		{
 			get => input.timeout / 1000.0;
@@ -172,13 +168,13 @@
 			set => input.visibleText = value.Ab();
 		}
 
-		public InputObject(params object[] obj) => _ = __New(obj);
+		public InputObject(params object[] args) => _ = __New(args);
 
-		public object __New(params object[] obj)
+		public object __New(params object[] args)
 		{
-			var options = obj[0].ToString();
-			var endKeys = obj[1].ToString();
-			var matchList = obj[2].ToString();
+			var options = args[0].ToString();
+			var endKeys = args[1].ToString();
+			var matchList = args[2].ToString();
 			input = new InputType(this, options, endKeys, matchList);
 			return "";
 		}

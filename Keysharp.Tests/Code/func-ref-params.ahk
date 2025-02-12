@@ -116,9 +116,9 @@ else
 
 m := { "one" : 1, "two" : 2, "three" : 3 }
 
-reffunc1(&m["one"])
+reffunc1(&m.one)
 
-If (m["one"] == 100)
+If (m.one == 100)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
@@ -177,6 +177,8 @@ If (arr[1] == 999)
 else
 	FileAppend, "fail", "*"
 
+m := Map("one", 1, "two", 2, "three", 3)
+
 m["one"] := 1
 myclassobj.myclassreffunc2(&m["one"])
 
@@ -231,7 +233,7 @@ reffunc3(a, &b, &c, theparams*)
 {
 }
 
-reffuncobj := FuncObj("reffunc3")
+reffuncobj := Func("reffunc3")
 
 If (reffuncobj.IsByRef(1) == false)
 	FileAppend, "pass", "*"
@@ -361,19 +363,19 @@ else
 	FileAppend, "fail", "*"
 
 m := { "one" : 1, "two" : 2, "three" : 3 }
-val := myclassobj.member1(m["one"], &m["two"])
+val := myclassobj.member1(m.one, &m.two)
 
 If (val == 4)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
 	
-If (m["one"] == 1)
+If (m.one == 1)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
 
-If (m["two"] == 4)
+If (m.two == 4)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
@@ -435,19 +437,19 @@ else
 	FileAppend, "fail", "*"
 
 m := { "one" : 1, "two" : 2, "three" : 3 }
-val := myclassobj.member2(&m["one"], m["two"])
+val := myclassobj.member2(&m.one, m.two)
 
 If (val == 4)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
 
-If (m["one"] == 4)
+If (m.one == 4)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
 	
-If (m["two"] == 2)
+If (m.two == 2)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
@@ -498,14 +500,14 @@ else
 	FileAppend, "fail", "*"
 	
 m := { "one" : 1, "two" : 2, "three" : 3 }
-val := myclassobj.member3(&m["one"])
+val := myclassobj.member3(&m.one)
 
 If (val == 2)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
 
-If (m["one"] == 2)
+If (m.one == 2)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
@@ -535,7 +537,7 @@ func_bound(a, &b, c)
 	global z := c
 }
 
-fo := FuncObj("func_bound")
+fo := Func("func_bound")
 bf := fo.Bind(5, ,7)
 bf(&y)
 

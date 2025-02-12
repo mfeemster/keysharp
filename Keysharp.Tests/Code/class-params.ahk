@@ -170,7 +170,7 @@ If (val == 20)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
-	
+
 class testclassthreeargs
 {
 	a := 1
@@ -240,21 +240,21 @@ else
 
 val := testsubclassobj.a
 
-If (val == "")
+If (val == unset)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
 
 val := testsubclassobj.b
 
-If (val == "")
+If (val == unset)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
 
 val := testsubclassobj.c
 
-If (val == "")
+If (val == unset)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"

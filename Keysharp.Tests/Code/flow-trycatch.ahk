@@ -54,7 +54,7 @@ if (b == true)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
-
+	
 b := false
 
 try
@@ -300,7 +300,7 @@ try
 {
 	throw PropertyError("tester")
 }
-catch PropertyError as errex
+catch PropertyError As errex
 {
 	b := true
 }
@@ -316,7 +316,7 @@ try
 {
 	throw TargetError("tester")
 }
-catch TargetError as errex
+catch TargetError aS errex
 {
 	b := true
 }
@@ -332,7 +332,7 @@ try
 {
 	throw TimeoutError("tester")
 }
-catch TimeoutError as errex
+catch TimeoutError AS errex
 {
 	b := true
 }
@@ -347,7 +347,7 @@ b := false
 try {
 	throw TypeError("tester")
 }
-catch TypeError as errex
+catch TypeError errex ; Test named exception without "as".
 {
 	b := true
 }
@@ -362,7 +362,7 @@ b := false
 try {
 	throw ValueError("tester")
 }
-catch ValueError as errex {
+catch ValueError errex {
 	b := true
 }
 
@@ -544,3 +544,18 @@ if (xx == 3)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
+; Just test parsing but not functionality since we're not implementing this for now.
+try
+{
+}
+catch (OSError,MethodError,MemoryError as osmmex) {
+}
+catch (KeyError,IndexError,ValueError as kivex)
+{
+}
+catch (UnsetItemError,Error,ZeroDivisionError) {
+}
+catch (UnsetError,TimeoutError,TargetError)
+{
+}

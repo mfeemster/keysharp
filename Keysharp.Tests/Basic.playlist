@@ -627,6 +627,24 @@
                         <Property Name="DisplayName" Value="FlowMultiStatement" />
                       </Rule>
                     </Rule>
+                    <Rule Match="All">
+                      <Property Name="TestWithNormalizedFullyQualifiedName" Value="Keysharp.Tests.FlowTests.FlowLoopReturn" />
+                      <Rule Match="Any">
+                        <Property Name="DisplayName" Value="FlowLoopReturn" />
+                      </Rule>
+                    </Rule>
+                    <Rule Match="All">
+                      <Property Name="TestWithNormalizedFullyQualifiedName" Value="Keysharp.Tests.FlowTests.FlowLoopThrow" />
+                      <Rule Match="Any">
+                        <Property Name="DisplayName" Value="FlowLoopThrow" />
+                      </Rule>
+                    </Rule>
+                    <Rule Match="All">
+                      <Property Name="TestWithNormalizedFullyQualifiedName" Value="Keysharp.Tests.FlowTests.FlowOnError" />
+                      <Rule Match="Any">
+                        <Property Name="DisplayName" Value="FlowOnError" />
+                      </Rule>
+                    </Rule>
                   </Rule>
                 </Rule>
                 <Rule Match="All">

@@ -291,14 +291,21 @@ namespace Keysharp.Core
 		/// <param name="obj">String or integers 1, 2, 3, or string RegEx to set TitleMatchMode, else strings fast/slow to set TitleMatchModeSpeed.</param>
 		public static object SetTitleMatchMode(object matchModeSpeed)
 		{
+			object oldVal = null;
 			var val = matchModeSpeed.As();
 
 			if (string.Compare(val, "fast", true) == 0 || string.Compare(val, "slow", true) == 0)
+			{
+				oldVal = Accessors.A_TitleMatchModeSpeed;
 				Accessors.A_TitleMatchModeSpeed = val;
+			}
 			else
+			{
+				oldVal = Accessors.A_TitleMatchMode;
 				Accessors.A_TitleMatchMode = val;
+			}
 
-			return null;
+			return oldVal;
 		}
 
 		public static object SetWinDelay(object delay)
@@ -312,8 +319,17 @@ namespace Keysharp.Core
 		/// Retrieves the text from a standard status bar control.
 		/// </summary>
 		/// <param name="Part">Which part number of the bar to retrieve. Default 1, which is usually the part that contains the text of interest.</param>
-		/// <param name="WinTitle">The title or partial title of the target window (the matching behavior is determined by SetTitleMatchMode). If this and the other 3 window parameters are blank or omitted, the Last Found Window will be used. If this is the letter A and the other 3 window parameters are blank or omitted, the active window will be used. To use a window class, specify ahk_class ExactClassName (shown by Window Spy). To use a process identifier (PID), specify ahk_pid %VarContainingPID%. To use a window group, specify ahk_group GroupName. To use a window's unique ID number, specify ahk_id %VarContainingID%. The search can be narrowed by specifying multiple criteria. For example: My File.txt ahk_class Notepad</param>
-		/// <param name="WinText">If present, this parameter must be a substring from a single text element of the target window (as revealed by the included Window Spy utility). Hidden text elements are detected if DetectHiddenText is ON.</param>
+		/// <param name="WinTitle">The title or partial title of the target window (the matching behavior is determined by SetTitleMatchMode).<br/>
+		/// If this and the other 3 window parameters are blank or omitted, the Last Found Window will be used.<br/>
+		/// If this is the letter A and the other 3 window parameters are blank or omitted, the active window will be used.<br/>
+		/// To use a window class, specify ahk_class ExactClassName (shown by Window Spy).<br/>
+		/// To use a process identifier (PID), specify ahk_pid %VarContainingPID%. To use a window group, specify ahk_group GroupName.<br/>
+		/// To use a window's unique ID number, specify ahk_id %VarContainingID%.<br/>
+		/// The search can be narrowed by specifying multiple criteria. For example: My File.txt ahk_class Notepad
+		/// </param>
+		/// <param name="WinText">If present, this parameter must be a substring from a single text element of the target window (as revealed by the included Window Spy utility).<br/>
+		/// Hidden text elements are detected if DetectHiddenText is ON.
+		/// </param>
 		/// <param name="ExcludeTitle">Windows whose titles include this value will not be considered.</param>
 		/// <param name="ExcludeText">Windows whose text include this value will not be considered.</param>
 		/// <returns>The retrieved text</returns>
@@ -480,11 +496,12 @@ namespace Keysharp.Core
 									  object excludeTitle = null,
 									  object excludeText = null)
 		{
+			Error err;
 			var seconds = secondsToWait.Ad(double.MinValue);
 			var (windows, crit) = WindowProvider.Manager.FindWindowGroup(winTitle, winText, excludeTitle, excludeText);
 
 			if (crit == null && string.IsNullOrEmpty(crit.Group) && windows.Count == 0 && !IsMainWindowClosing)
-				throw new TargetError($"Could not find window with criteria: title: {winTitle}, text: {winText}, exclude title: {excludeTitle}, exclude text: {excludeText}");
+				return Errors.ErrorOccurred(err = new TargetError($"Could not find window with criteria: title: {winTitle}, text: {winText}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : null;
 
 			foreach (var win in windows)
 			{
@@ -573,6 +590,7 @@ namespace Keysharp.Core
 										object excludeTitle = null,
 										object excludeText = null)
 		{
+			Error err;
 			var (windows, criteria) = WindowProvider.Manager.FindWindowGroup(winTitle, winText, excludeTitle, excludeText);
 
 			if (windows != null && windows.Count > 0)
@@ -581,7 +599,7 @@ namespace Keysharp.Core
 				return windows[ ^ 1].Handle.ToInt64();
 			}
 			else if (!IsMainWindowClosing)
-				throw new TargetError($"Could not find window with criteria: title: {winTitle}, text: {winText}, exclude title: {excludeTitle}, exclude text: {excludeText}");
+				return Errors.ErrorOccurred(err = new TargetError($"Could not find window with criteria: title: {winTitle}, text: {winText}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : 0L;
 
 			return 0L;
 		}
@@ -712,11 +730,12 @@ namespace Keysharp.Core
 									 object excludeTitle = null,
 									 object excludeText = null)
 		{
+			Error err;
 			var seconds = secondsToWait.Ad(double.MinValue);
 			var (windows, crit) = WindowProvider.Manager.FindWindowGroup(winTitle, winText, excludeTitle, excludeText);
 
 			if (crit == null && string.IsNullOrEmpty(crit.Group) && windows.Count == 0 && !IsMainWindowClosing)
-				throw new TargetError($"Could not find window with criteria: title: {winTitle}, text: {winText}, exclude title: {excludeTitle}, exclude text: {excludeText}");
+				return Errors.ErrorOccurred(err = new TargetError($"Could not find window with criteria: title: {winTitle}, text: {winText}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : null;
 
 			foreach (var win in windows)
 			{
@@ -879,6 +898,7 @@ namespace Keysharp.Core
 										  object excludeTitle = null,
 										  object excludeText = null)
 		{
+			Error err;
 			var opts = options.As();
 
 			if (!(SearchWindow(winTitle, winText, excludeTitle, excludeText, true) is WindowItem win))
@@ -927,7 +947,7 @@ namespace Keysharp.Core
 			if (points.Count == 0)
 			{
 				if (WindowsAPI.SetWindowRgn(win.Handle, IntPtr.Zero, true) == 0)
-					throw new OSError("", $"Could not reset window region with criteria: title: {winTitle}, text: {winText}, exclude title: {excludeTitle}, exclude text: {excludeText}");
+					return Errors.ErrorOccurred(err = new OSError("", $"Could not reset window region with criteria: title: {winTitle}, text: {winText}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : null;
 
 				WindowItemBase.DoWinDelay();
 				return null;
@@ -952,11 +972,11 @@ namespace Keysharp.Core
 				if (WindowsAPI.SetWindowRgn(win.Handle, hrgn, true) == 0)
 				{
 					_ = WindowsAPI.DeleteObject(hrgn);
-					throw new OSError("", $"Could not set region for window with criteria: title: {winTitle}, text: {winText}, exclude title: {excludeTitle}, exclude text: {excludeText}");
+					return Errors.ErrorOccurred(err = new OSError("", $"Could not set region for window with criteria: title: {winTitle}, text: {winText}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : null;
 				}
 			}
 			else
-				throw new ValueError($"Could not create region for window with criteria: title: {winTitle}, text: {winText}, exclude title: {excludeTitle}, exclude text: {excludeText}");
+				return Errors.ErrorOccurred(err = new ValueError($"Could not create region for window with criteria: title: {winTitle}, text: {winText}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : null;
 
 			WindowItemBase.DoWinDelay();
 			return null;

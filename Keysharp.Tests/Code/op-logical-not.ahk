@@ -1,7 +1,5 @@
-
-
 x := true
-y :=
+y := unset
 
 If (!x = false)
 	FileAppend, "pass", "*"

@@ -8,6 +8,7 @@ namespace Keysharp.Scripting
 		public static object SetObject(object value, object item, params object[] index)
 		{
 			object key = null;
+			Error err;
 			Type typetouse;
 
 			try
@@ -71,9 +72,7 @@ namespace Keysharp.Scripting
 						return value;
 					}
 					else
-					{
-						throw new ValueError($"{il1} arguments were passed to a set indexer which only accepts {mph2.ParamLength}.");
-					}
+						return Errors.ErrorOccurred(err = new ValueError($"{il1} arguments were passed to a set indexer which only accepts {mph2.ParamLength}.")) ? throw err : null;
 				}
 			}
 			catch (Exception e)
@@ -84,11 +83,12 @@ namespace Keysharp.Scripting
 					throw;
 			}
 
-			throw new MemberError($"Attempting to set index {key} of object {item} to value {value} failed.");
+			return Errors.ErrorOccurred(err = new Error($"Attempting to set index {key} of object {item} to value {value} failed.")) ? throw err : null;
 		}
 
 		private static object IndexAt(object item, params object[] index)
 		{
+			Error err;
 			int len;
 			object key = null;
 
@@ -179,7 +179,7 @@ namespace Keysharp.Scripting
 					if (len == mph.ParamLength || mph.IsVariadic)
 						return mph.callFunc(item, index);
 					else
-						throw new ValueError($"{len} arguments were passed to a get indexer which only accepts {mph.ParamLength}.");
+						return Errors.ErrorOccurred(err = new ValueError($"{len} arguments were passed to a get indexer which only accepts {mph.ParamLength}.")) ? throw err : null;
 				}
 			}
 			catch (Exception e)
@@ -190,7 +190,7 @@ namespace Keysharp.Scripting
 					throw;
 			}
 
-			throw new IndexError($"Attempting to get index of {key} on item {item} failed.");
+			return Errors.ErrorOccurred(err = new Error($"Attempting to get index of {key} on item {item} failed.")) ? throw err : null;
 		}
 	}
 }

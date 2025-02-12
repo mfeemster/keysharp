@@ -55,15 +55,6 @@ namespace Keysharp.Tests
 		[Test, Category("Function"), NonParallelizable]
 		public void ReturnFunc() => Assert.IsTrue(TestScript("func-return", false));
 
-		[SetUp]
-		public void Setup()
-		{
-			//For some reason, RefParamsInFunc() will not succeed on linux without these when run with all other tests in the group.
-			//It runs fine on its own though. Add these two statements to make group testing succeed.
-			Reflections.Clear();
-			Reflections.Initialize();
-		}
-
 		[Test, Category("Function"), NonParallelizable]
 		public void VarParamsInFunc() => Assert.IsTrue(TestScript("func-var-params", false));
 	}

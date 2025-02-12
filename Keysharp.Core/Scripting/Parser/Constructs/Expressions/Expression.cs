@@ -42,15 +42,39 @@ namespace Keysharp.Scripting
 		internal void ReevaluateSnippet(CodeSnippetExpression cse)
 		{
 			var orig = cse.UserData["orig"] as CodeExpression;
+			var cboe = orig as CodeBinaryOperatorExpression;
+
+			//Properly case all direct function references.
+			if (cboe.Right is CodeVariableReferenceExpression cvre)
+			{
+				var type = cvre.UserData["origtypescope"] is CodeTypeDeclaration ctd ? ctd.Name : "program";
+
+				if (MethodExistsInTypeOrBase(type, cvre.VariableName) is CodeMemberMethod cmm)
+				{
+					cvre.VariableName = cmm.Name;
+					var tempfunc = (CodeMethodReferenceExpression)InternalMethods.Func;
+					cboe.Right = new CodeMethodInvokeExpression(tempfunc, cvre);
+				}
+			}
+
 			var c2s = Ch.CodeToString(orig);
 			c2s = c2s.Substring(1, c2s.Length - 2);
 
-			if (orig is CodeBinaryOperatorExpression cboe)
+			if (cboe != null)
 			{
 				if (cboe.Operator == CodeBinaryOperatorType.Assign)
-					cse.Value = $"{c2s}";
+					cse.Value = c2s;
 				else
 					cse.Value = $"_ = ({c2s})";
+			}
+		}
+
+		internal void ReevaluateStaticProperties(CodeSnippetTypeMember cstm)
+		{
+			if (cstm.UserData["orig"] is CodeExpression ce)
+			{
+				var init = Ch.CodeToString(ce);
+				cstm.Text = $"\t\t\tpublic static object {cstm.Name} {{ get; set; }} = {init};";
 			}
 		}
 
@@ -188,7 +212,7 @@ namespace Keysharp.Scripting
 							continue;
 						}
 						else
-							throw new Error("Cannot create a reference to a value returned from a function call.");
+							throw new ParseException("Cannot create a reference to a value returned from a function call.");
 					}
 
 					_ = newParams.Add(new CodeSnippetExpression($"Mrh({i1}, {c2s}, v => {c2s} = v)"));
@@ -311,25 +335,19 @@ namespace Keysharp.Scripting
 				{
 					var hso = invoke.Method.MethodName == "HotstringOptions";
 
-					if (hso || invoke.Method.MethodName == "HotIf")
+					if (hso)
 					{
 						//Note that in addition to adding this to the beginning, we also leave it
 						//in place for HotstringOptions() (#Hotstring xyz) in parts, because we need to call it in both places.
 						//This is because the position must be kept consistent with hotkey/string declarations,
 						//but also kept in place for other usage of global hotstring settings like A_DefaultHotstring*.
-						hotkeyHotstringCreations.Add(invoke);
-
-						if (hso)
-						{
-							//Because we've encountered #Hotstring options, we must actually parse the options now (and later in the script)
-							//to find out which defaults should be in place for subsequently parsed hotstrings.
-							HotstringDefinition.ParseOptions(Ch.CodeToString(invoke.Parameters[0]).Trim('\"')//Will be quoted, so remove here.
-															 , ref HotstringManager.hsPriority, ref HotstringManager.hsKeyDelay, ref HotstringManager.hsSendMode, ref HotstringManager.hsCaseSensitive
-															 , ref HotstringManager.hsConformToCase, ref HotstringManager.hsDoBackspace, ref HotstringManager.hsOmitEndChar, ref HotstringManager.hsSendRaw, ref HotstringManager.hsEndCharRequired
-															 , ref HotstringManager.hsDetectWhenInsideWord, ref HotstringManager.hsDoReset, ref HotstringManager.hsSameLineAction, ref HotstringManager.hsSuspendExempt);
-						}
-
-						//else//#HotIf doesn't need to be kept at the same place, it's fine if they run at the beginning as long as their relative position remains.
+						topStatements.Add(invoke);
+						//Because we've encountered #Hotstring options, we must actually parse the options now (and later in the script)
+						//to find out which defaults should be in place for subsequently parsed hotstrings.
+						HotstringDefinition.ParseOptions(Ch.CodeToString(invoke.Parameters[0]).Trim('\"')//Will be quoted, so remove here.
+														 , ref HotstringManager.hsPriority, ref HotstringManager.hsKeyDelay, ref HotstringManager.hsSendMode, ref HotstringManager.hsCaseSensitive
+														 , ref HotstringManager.hsConformToCase, ref HotstringManager.hsDoBackspace, ref HotstringManager.hsOmitEndChar, ref HotstringManager.hsSendRaw, ref HotstringManager.hsEndCharRequired
+														 , ref HotstringManager.hsDetectWhenInsideWord, ref HotstringManager.hsDoReset, ref HotstringManager.hsSameLineAction, ref HotstringManager.hsSuspendExempt);
 						parts[i] = new CodeSnippetExpression("//#directive replaced by function call");
 					}
 				}
@@ -448,7 +466,7 @@ namespace Keysharp.Scripting
 													continue;
 												}
 												else
-													throw new Error("Cannot create a reference to a value returned from a function call.");
+													throw new ParseException("Cannot create a reference to a value returned from a function call.", codeLine);
 											}
 
 											invoke.Parameters[ri] = new CodeSnippetExpression($"Mrh({ri}, {c2s}, v => {c2s} = v)");
@@ -746,7 +764,7 @@ namespace Keysharp.Scripting
 
 						//Special processing is needed to convert an expression passed to a HotIf() to a separate function, then pass it with FuncObj().
 						//Do not do this if a FuncObj is already being passed, which will be the case when #HotIf is found in the preprocessing stage.
-						if (name == "HotIf" && paren.Count > 1 && !paren[0].ToString().StartsWith("FuncObj"))
+						if (name == "HotIf" && paren.Count > 1 && !paren[0].ToString().StartsWith("Func"))
 						{
 							var hotiffuncname = $"_ks_HotIf_{PreReader.NextHotIfCount}";
 							var hotifexpr = ParseExpression(codeLine, code, paren, false);
@@ -754,7 +772,8 @@ namespace Keysharp.Scripting
 							_ = hotifmethod.Statements.Add(new CodeMethodReturnStatement(hotifexpr));
 							methods[targetClass].Add(hotiffuncname, hotifmethod);
 							invoke = LocalMethodInvoke(name);
-							_ = invoke.Parameters.Add(new CodeSnippetExpression("FuncObj(\"" + hotiffuncname + "\")"));//Can't use interpolated string here because the AStyle formatter misinterprets it.
+							var funccmie = new CodeMethodInvokeExpression((CodeMethodReferenceExpression)InternalMethods.Func, new CodePrimitiveExpression(hotiffuncname));
+							_ = invoke.Parameters.Add(funccmie);//Can't use interpolated string here because the AStyle formatter misinterprets it.
 						}
 						else//Any other function call aside from HotIf().
 						{
@@ -782,16 +801,17 @@ namespace Keysharp.Scripting
 									//both are seen the same, and b will get created as a variable at this scope for both cases, when it should only be done for the bottom case.
 									hardCreateOverride = false;
 									var argExpr = ParseExpression(codeLine, tempParamCode, arg, false);//Override the value of create with false because the arguments passed into a function should never be created automatically.
+									var cboe = argExpr.WasCboe();
 									hardCreateOverride = true;//Restore the hack flag.
 
-									//If an assignment was passed to a function for a reference parameter, separate it out like so:
-									//func(&x := 123) ; becomes...
-									//x := 123
-									//func(&x)
 									if (refIndexes.Contains(i1)//Only needed if it's a reference argument.
-											&& argExpr.WasCboe() is CodeBinaryOperatorExpression cboe
+											&& cboe != null
 											&& cboe.Operator == CodeBinaryOperatorType.Assign)
 									{
+										//If an assignment was passed to a function for a reference parameter, separate it out like so:
+										//func(&x := 123) ; becomes...
+										//x := 123
+										//func(&x)
 										_ = parent.Add(argExpr);
 										argExpr = cboe.Left;
 									}
@@ -799,12 +819,30 @@ namespace Keysharp.Scripting
 									//Allow for the declaration of a variable at the same time it's passed to a function call.
 									//But ensure it wasn't an assignment/declaration statement of a named lambda like:
 									//lam := lambdafunc(a, b) => a * b
-									if ((i == 0 || parts[i - 1] is not CodeBinaryOperatorType cbot || cbot != CodeBinaryOperatorType.Assign)
-											&& argExpr is CodeVariableReferenceExpression cvre)
+									if (i == 0
+											|| i == args.Count - 1//Allows for assigning simple function result: val := func(x := 123)
+											|| parts[i - 1] is not CodeBinaryOperatorType cbot
+											|| cbot != CodeBinaryOperatorType.Assign
+									   )
 									{
-										if (!VarExistsAtCurrentOrParentScope(typeStack.Peek(), scope, cvre.VariableName)
-												&& !Reflections.flatPublicStaticProperties.TryGetValue(cvre.VariableName, out _))
-											allVars[typeStack.Peek()].GetOrAdd(scope)[cvre.VariableName] = emptyStringPrimitive;
+										var tp = typeStack.Peek();
+										CodeVariableReferenceExpression cvre = null;
+
+										if (argExpr is CodeVariableReferenceExpression cvre2)
+											cvre = cvre2;
+										else if (cboe != null && cboe.Left is CodeVariableReferenceExpression cvre3)
+											cvre = cvre3;
+
+										//If it was an assignment, and not a reference, the variable needs to be created.
+										if (cvre != null)
+										{
+											if (!VarExistsAtCurrentOrParentScope(tp, scope, cvre.VariableName)
+													&& !Reflections.flatPublicStaticProperties.TryGetValue(cvre.VariableName, out _)
+													&& MethodExistsInTypeOrBase(tp.Name, cvre.VariableName) == null
+													&& Reflections.FindBuiltInMethod(cvre.VariableName, -1) == null
+											   )
+												allVars[typeStack.Peek()].GetOrAdd(scope)[cvre.VariableName] = emptyStringPrimitive;
+										}
 									}
 
 									passed.Add(argExpr);
@@ -905,7 +943,7 @@ namespace Keysharp.Scripting
 						// (x += y) => (x = x + y)
 						parts[i] = CodeBinaryOperatorType.Assign;
 
-						if (part[0] != AssignPre && part.Length != 1)
+						if (part[0] != AssignPre && part.Length != 1)//Compound assignment.
 						{
 							parts.Insert(++i, ParenOpen.ToString());
 							parts.Insert(++i, parts[i - 3]);
@@ -932,11 +970,26 @@ namespace Keysharp.Scripting
 							{
 								var propobj = cmie.Parameters[0];
 								var propname = cmie.Parameters[1];
+								var tempprop = $"{InternalID}";
+								var temppropdec = new CodeVariableDeclarationStatement(typeof(object), tempprop, propobj);
+								var temppropref = new CodeVariableReferenceExpression(tempprop);
+								parent.Add(temppropdec);
 								var invoke = (CodeMethodInvokeExpression)InternalMethods.SetPropertyValue;
-								_ = invoke.Parameters.Add(propobj);
+								_ = invoke.Parameters.Add(temppropref);
 								_ = invoke.Parameters.Add(propname);
 								var extract = ExtractRange(parts, 2, parts.Count);
 								var val = ParseMultiExpression(codeLine, code, extract.ToArray(), create);
+
+								if (val[0] is CodeMethodInvokeExpression cmie2
+										&& cmie2.Parameters.Count > 1
+										&& cmie2.Parameters[1] is CodeMethodInvokeExpression cmie3
+										&& cmie3.Method.MethodName == "GetPropertyValue"
+										&& cmie3.Parameters.Count > 0
+								   )
+								{
+									cmie3.Parameters[0] = temppropref;
+								}
+
 								_ = invoke.Parameters.Add(val[0]);
 								parts[0] = invoke;
 								setPropertyValueCalls[typeStack.Peek()].GetOrAdd(Scope.ToLower()).Add(invoke);
@@ -975,7 +1028,7 @@ namespace Keysharp.Scripting
 						{
 							var extracted = ExtractRange(parts, assignIndex + 1, parts.Count);//This works even when assignIndex is -1.
 							//var extracted = ExtractRange(parts, i - 1, parts.Count);//Start at the parameters collection which should be right before parts[i] which is "=>".
-							parts.Add("FuncObj(");
+							parts.Add("Func(");
 							parts.Add("\"" + cmd.Name + "\"");
 							parts.Add(",");
 							//parts.Add(InClassDefinition() ? new CodeThisReferenceExpression() : "null");
@@ -1094,7 +1147,7 @@ namespace Keysharp.Scripting
 							}
 						}
 						else
-							throw new Exception($"Unsupported tokens surrounding a fat arrow function definition at line {codeLine}");
+							throw new ParseException($"Unsupported tokens surrounding a fat arrow function definition.", codeLine);
 					}
 					else if (i == parts.Count - 1 || (i < parts.Count - 1 && parts[i + 1] as string != "=>"))//Allow for a single no parentheses fat arrow function variadic parameter declaration: x := a* => 123.
 					{
@@ -1126,25 +1179,43 @@ namespace Keysharp.Scripting
 						else if (opValid && (ops == Script.Operator.Increment || ops == Script.Operator.Decrement))
 						{
 							int z = -1, x = i - 1, y = i + 1;
-							var d = 1L;
+							var d = ops == Script.Operator.Increment ? 1L : -1L;
+							var dl = $"{d}L";
 							CodeMethodInvokeExpression shadow = null;
 
-							if (x > -1 && parts[x] is CodeMethodInvokeExpression)
+							if (x > -1 && parts[x] is CodeMethodInvokeExpression cmie)
 							{
-								var sub = new List<object>(5)
+								CodeMethodInvokeExpression leftSide;
+
+								if (cmie.Method.MethodName == "GetPropertyValue"
+										&& cmie.Parameters.Count > 1)
 								{
-									parts[x],
-										  CodeBinaryOperatorType.Assign,
-										  parts[x],
-										  Script.Operator.Add,
-										  d
-								};
-								parts.RemoveAt(i);
-								parts[x] = ParseExpression(codeLine, code, sub, create);
+									leftSide = (CodeMethodInvokeExpression)InternalMethods.PostfixIncDecProp;
+									leftSide.Parameters.Add(cmie.Parameters[0]);
+									leftSide.Parameters.Add(cmie.Parameters[1]);
+									leftSide.Parameters.Add(new CodeSnippetExpression(dl));
+									parts.RemoveAt(i);
+									parts[x] = leftSide;
+								}
+								else
+								{
+									var sub = new List<object>(5)//Unsure if this ever gets called.
+									{
+										parts[x],
+											  CodeBinaryOperatorType.Assign,
+											  parts[x],
+											  Script.Operator.Add,
+											  d
+									};
+									parts.RemoveAt(i);
+									parts[x] = ParseExpression(codeLine, code, sub, create);
+								}
+
 								i = x;
 								continue;
 							}
 
+							//Unsure what anything does from here...
 							if (LaxExpressions)
 							{
 								while (y < parts.Count)
@@ -1183,6 +1254,10 @@ namespace Keysharp.Scripting
 							{
 								if (z != -1)
 								{
+									//Previous element will be caie if a postfix was done on a dynamic variable like: y%x%++
+									if (parts[z] is CodeArrayIndexerExpression)
+										goto keepgoing;
+
 									if (LaxExpressions)
 									{
 										parts.Insert(y, Script.Operator.Concat);
@@ -1217,6 +1292,8 @@ namespace Keysharp.Scripting
 									}
 								}
 							}
+
+							keepgoing:
 
 							if (z == -1)
 							{
@@ -1263,12 +1340,25 @@ namespace Keysharp.Scripting
 								}
 							}
 
-							var list = new List<object>(9)
+							//...to here.
+							//Attempting to determine whether this was prefix is difficult and uncertain.
+							//This seems to work though.
+							var list = new List<object>(9);
+							var wasPrefix = i == 0 || parts[i - 1] is CodeBinaryOperatorType || parts[i - 1].ToString() == "(";
+
+							if (wasPrefix)
 							{
-								parts[z],
-									  "+=",
-									  new CodeSnippetExpression($"{(ops == Script.Operator.Increment ? d : -d)}L")
-							};
+								var tempRange = parts.Skip(z).TakeWhile((element) => element.ToString() != ")").ToList();
+								list.AddRange(tempRange);
+								parts.RemoveRange(z, tempRange.Count);
+							}
+							else
+							{
+								list.Add(parts[z]);
+							}
+
+							list.Add("+=");
+							list.Add(new CodeSnippetExpression(dl));
 
 							if (shadow != null)
 							{
@@ -1276,19 +1366,28 @@ namespace Keysharp.Scripting
 								list.Add(shadow);
 							}
 
-							if (z < i) // postfix, so adjust
+							if (!wasPrefix)//Postfix, so adjust.
 							{
 								list.Insert(0, ParenOpen.ToString());
 								list.Add(ParenClose.ToString());
-								list.Add(ops == Script.Operator.Increment ? Script.Operator.Minus : Script.Operator.Add);
-								list.Add(new CodePrimitiveExpression(d));
+								list.Add(Script.Operator.Add);
+								list.Add(new CodeSnippetExpression($"{-d}L"));
 							}
 
-							x = Math.Min(i, z);
-							y = Math.Max(i, z);
-							parts[x] = ParseExpression(codeLine, code, list, create);
-							parts.RemoveAt(y);
-							i = x;
+							var tempExpr = ParseMultiExpressionWithoutTokenizing(codeLine, code, list.ToArray(), create);
+
+							if (wasPrefix)
+							{
+								parts[i] = tempExpr[0].Expression;
+							}
+							else
+							{
+								x = Math.Min(i, z);
+								y = Math.Max(i, z);
+								parts[x] = tempExpr[0].Expression;
+								parts.RemoveAt(y);
+								i = x;
+							}
 						}
 						else if (part == "&" && i > 0 && parts[i - 1] is CodeBinaryOperatorType op && op == CodeBinaryOperatorType.Assign &&
 								 i < parts.Count - 1 && parts[i + 1] is string s2)
@@ -1437,11 +1536,11 @@ namespace Keysharp.Scripting
 			var scan = true;
 			var level = -1;
 
-			//Support implicit comparison to empty string statements such as if (x !=)
+			//Disallow implicit comparison to empty string statements such as if (x !=)
 			//by detecting that the last token was an operator with nothing following it.
 			if (parts[parts.Count - 1] is Script.Operator opend)
 			{
-				parts.Add(emptyStringPrimitive);
+				throw new ParseException("Implicit comparisons not supported.", codeLine);
 			}
 
 			//Unsure what this final loop actually does.
@@ -1734,7 +1833,8 @@ namespace Keysharp.Scripting
 			var fatArrow = false;
 			var sub = new List<object>();
 			var expr = new List<CodeExpression>();
-			memberVarsStatic = false;
+			var firstTokIndex = codeLine.Code.IndexOfAny(SpaceTab);
+			memberVarsStatic = firstTokIndex != -1 && codeLine.Code.AsSpan(0, firstTokIndex).Equals("static", StringComparison.OrdinalIgnoreCase);
 
 			for (var i = 0; i < parts.Length; i++)
 			{
@@ -1748,7 +1848,6 @@ namespace Keysharp.Scripting
 
 				if (i == 0 && part == FunctionStatic)
 				{
-					memberVarsStatic = true;
 					continue;
 				}
 

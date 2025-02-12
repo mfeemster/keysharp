@@ -163,13 +163,13 @@ namespace Keysharp.Scripting
 		internal static FrozenSet<string>.AlternateLookup<ReadOnlySpan<char>> propKeywordsAlt = propKeywords.GetAlternateLookup<ReadOnlySpan<char>>();
 
 		internal bool ErrorStdOut;
-		internal CodeStatementCollection initial = [];
+		internal CodeStatementCollection initial = [];//These are placed at the very beginning of Main().
 		internal string name = string.Empty;
 		internal bool NoTrayIcon;
 		internal bool Persistent;
 		private const string args = "args";
 		private const string initParams = "initparams";
-		private const string mainClassName = "program";
+		public const string mainClassName = "program";
 		private const string mainScope = "";
 		private static readonly char[] directiveDelims = Spaces.Concat([Multicast]);
 
@@ -202,7 +202,7 @@ namespace Keysharp.Scripting
 		private readonly Stack<List<string>> globalFuncVars = new ();
 		private readonly Dictionary<CodeGotoStatement, CodeBlock> gotos = [];
 		private readonly Stack<List<string>> localFuncVars = new ();
-
+		private readonly List<CodeSnippetTypeMember> codeSnippetTypeMembers = new ();
 		private readonly CodeMemberMethod main = new ()
 		{
 			Attributes = MemberAttributes.Public | MemberAttributes.Static,
@@ -219,7 +219,6 @@ namespace Keysharp.Scripting
 		private readonly CodeNamespace mainNs = new ("Keysharp.CompiledMain");
 		private readonly Dictionary<CodeTypeDeclaration, Dictionary<string, CodeMemberMethod>> methods = [];
 		private readonly char[] ops = [Equal, Not, Greater, Less];
-		private readonly CodeStatementCollection prepend = [];
 		private readonly Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMemberProperty>>> properties = [];
 		private readonly tsmd setPropertyValueCalls = [];
 		private readonly Stack<CodeBlock> singleLoops = new ();
@@ -230,7 +229,7 @@ namespace Keysharp.Scripting
 		private readonly CodeTypeDeclaration targetClass;
 		private readonly List<CodeSnippetExpression> ternaries = new ();
 		private readonly Stack<CodeTypeDeclaration> typeStack = new ();
-		private readonly List<CodeMethodInvokeExpression> hotkeyHotstringCreations = new ();
+		private readonly CodeStatementCollection topStatements = new ();
 		private bool blockOpen;
 		private uint caseCount;
 		private List<CodeLine> codeLines = [];
@@ -307,16 +306,6 @@ namespace Keysharp.Scripting
 			AddAssemblyAttribute(typeof(AssemblyBuildVersionAttribute), Accessors.A_AhkVersion);
 			unit.AssemblyCustomAttributes.AddRange(assemblyAttributes);
 			assemblyAttributes.Clear();
-
-			foreach (var p in prepend)
-				if (!(p is CodeMethodReturnStatement))
-				{
-					if (p is CodeStatement cs)
-						_ = main.Statements.Add(cs);
-					else if (p is CodeExpression ce)
-						_ = main.Statements.Add(ce);
-				}
-
 			var inv = (CodeMethodInvokeExpression)InternalMethods.RunMainWindow;
 			_ = inv.Parameters.Add(new CodeSnippetExpression("name"));
 			_ = inv.Parameters.Add(new CodeSnippetExpression("_ks_UserMainCode"));
@@ -332,17 +321,20 @@ namespace Keysharp.Scripting
 			var tcf = new CodeTryCatchFinallyStatement();
 			//
 			var ctch2 = new CodeCatchClause("kserr", new CodeTypeReference("Keysharp.Core.Error"));
-			var cse = new CodeSnippetExpression("ErrorOccurred(kserr)");
 			var pushcse = new CodeSnippetExpression("var (_ks_pushed, _ks_btv) = Keysharp.Core.Common.Threading.Threads.BeginThread()");
 			var msg = new CodeSnippetExpression("MsgBox(\"Uncaught Keysharp exception:\\r\\n\" + kserr, $\"{Accessors.A_ScriptName}: Unhandled exception\", \"iconx\")");
 			var popcse = new CodeSnippetExpression("Keysharp.Core.Common.Threading.Threads.EndThread(_ks_pushed)");
-			var ccs = new CodeConditionStatement(cse);
-			_ = ccs.TrueStatements.Add(pushcse);
-			_ = ccs.TrueStatements.Add(msg);
-			_ = ccs.TrueStatements.Add(popcse);
-			_ = ctch2.Statements.Add(ccs);
+			var ccsHandled = new CodeConditionStatement(new CodeSnippetExpression("!kserr.Handled"));
+			var ccsProcessed = new CodeConditionStatement(new CodeSnippetExpression("!kserr.Processed"));
+			ccsProcessed.TrueStatements.Add(new CodeSnippetExpression("_ = ErrorOccurred(kserr, kserr.ExcType)"));
+			var cmrsexit = new CodeMethodReturnStatement(new CodeSnippetExpression("Environment.ExitCode"));
+			_ = ccsHandled.TrueStatements.Add(pushcse);
+			_ = ccsHandled.TrueStatements.Add(msg);
+			_ = ccsHandled.TrueStatements.Add(popcse);
+			_ = ctch2.Statements.Add(ccsProcessed);
+			_ = ctch2.Statements.Add(ccsHandled);
 			_ = ctch2.Statements.Add(new CodeExpressionStatement(exit1));
-			_ = ctch2.Statements.Add(new CodeMethodReturnStatement(new CodePrimitiveExpression(1)));//Add a failure return statement at the end of the catch block.
+			_ = ctch2.Statements.Add(cmrsexit);
 			_ = tcf.CatchClauses.Add(ctch2);
 			//
 			var ctch = new CodeCatchClause("mainex", new CodeTypeReference("System.Exception"));
@@ -350,7 +342,10 @@ namespace Keysharp.Scripting
 
 				if (ex is Keysharp.Core.Error kserr)
 				{
-					if (ErrorOccurred(kserr))
+					if (!kserr.Processed)
+						_ = ErrorOccurred(kserr, kserr.ExcType);
+
+					if (!kserr.Handled)
 					{
 						var (_ks_pushed, _ks_btv) = Keysharp.Core.Common.Threading.Threads.BeginThread();
 						MsgBox(""Uncaught Keysharp exception:\r\n"" + kserr, $""{Accessors.A_ScriptName}: Unhandled exception"", ""iconx"");
@@ -366,11 +361,11 @@ namespace Keysharp.Scripting
 "));
 			//_ = ctch.Statements.Add(new CodeSnippetExpression("MsgBox(\"Uncaught exception:\\r\\n\" + \"Message: \" + mainex.Message + \"\\r\\nStack: \" + mainex.StackTrace)"));
 			_ = ctch.Statements.Add(new CodeExpressionStatement(exit1));
-			_ = ctch.Statements.Add(new CodeMethodReturnStatement(new CodePrimitiveExpression(1)));//Add a failure return statement at the end of the catch block.
+			_ = ctch.Statements.Add(cmrsexit);
 			_ = tcf.CatchClauses.Add(ctch);
 			var tempstatements = main.Statements;
 			tcf.TryStatements.AddRange(tempstatements);
-			_ = tcf.TryStatements.Add(new CodeMethodReturnStatement(new CodePrimitiveExpression(0)));//Add a successful return statement at the end of the try block.
+			_ = tcf.TryStatements.Add(cmrsexit);
 			main.Statements.Clear();
 			_ = main.Statements.Add(tcf);
 
@@ -414,14 +409,29 @@ namespace Keysharp.Scripting
 					{
 						if (cmie.Parameters[0] is CodeVariableReferenceExpression cvre)
 						{
+							var propname = "";
+
+							if (cmie.Parameters.Count > 1 && cmie.Parameters[1] is CodePrimitiveExpression cpe)
+								propname = cpe.Value.ToString();
+
 							var name = cvre.VariableName;
 
 							if (!VarExistsAtCurrentOrParentScope(cmietype.Key, cmietypefunc.Key, name)
 									&& TypeExistsAtCurrentOrParentScope(cmietype.Key, cmietypefunc.Key, name))
 							{
-								cmie.Method = new CodeMethodReferenceExpression(new CodeTypeReferenceExpression(typeof(Script)), "GetStaticMemberValueT");
-								cmie.Method.TypeArguments.Add(name);
-								cmie.Parameters.RemoveAt(0);
+								if (MethodExistsInTypeOrBase(name, propname) is CodeMemberMethod cmm)
+								{
+									cmie.Method = new CodeMethodReferenceExpression(new CodeTypeReferenceExpression(typeof(Script)), "GetStaticMemberValueT");
+									cmie.Method.TypeArguments.Add(name);
+									cmie.Parameters[0] = new CodeSnippetExpression($"{name}.{propname}");
+									cmie.Parameters.RemoveAt(1);
+								}
+								else
+								{
+									cmie.Method = new CodeMethodReferenceExpression(new CodeTypeReferenceExpression(typeof(Script)), "GetStaticMemberValueT");
+									cmie.Method.TypeArguments.Add(name);
+									cmie.Parameters.RemoveAt(0);
+								}
 							}
 						}
 					}
@@ -525,46 +535,49 @@ namespace Keysharp.Scripting
 							method.Name = "__Delete";
 							_ = typeMethods.Key.Members.Add(new CodeSnippetTypeMember($"\t\t\t~{typeMethods.Key.Name}() {{ __Delete(); }}") { Name = typeMethods.Key.Name });
 						}
-						else if (string.Compare(method.Name, "__Enum", true) == 0)
-						{
-							var getEnumMeth = new CodeMemberMethod();
-							method.Name = "__Enum";
-							getEnumMeth.Name = "IEnumerable.GetEnumerator";
-							getEnumMeth.Attributes = MemberAttributes.Final;
-							getEnumMeth.ReturnType = new CodeTypeReference("IEnumerator");
-							_ = getEnumMeth.Statements.Add(new CodeSnippetExpression("return MakeBaseEnumerator(__Enum())"));
-							_ = typeMethods.Key.Members.Add(getEnumMeth);
-							var paramVal = 1;
 
-							if (method.Parameters.Count > 0)
-							{
-								var methParam = method.Parameters[0];
-								var val = methParam.Name.ParseInt(false);
+						/*
+						    else if (string.Compare(method.Name, "__Enum", true) == 0)
+						    {
+						    var getEnumMeth = new CodeMemberMethod();
+						    method.Name = "__Enum";
+						    getEnumMeth.Name = "IEnumerable.GetEnumerator";
+						    getEnumMeth.Attributes = MemberAttributes.Final;
+						    getEnumMeth.ReturnType = new CodeTypeReference("IEnumerator");
+						    _ = getEnumMeth.Statements.Add(new CodeSnippetExpression("return MakeBaseEnumerator(__Enum())"));
+						    _ = typeMethods.Key.Members.Add(getEnumMeth);
+						    var paramVal = 1;
 
-								if (val.HasValue && val.Value > 0)
-									paramVal = val.Value;
+						    if (method.Parameters.Count > 0)
+						    {
+						        var methParam = method.Parameters[0];
+						        var val = methParam.Name.ParseInt(false);
 
-								method.Parameters.Clear();
-							}
+						        if (val.HasValue && val.Value > 0)
+						            paramVal = val.Value;
 
-							var leftParen = paramVal > 1 ? "(" : "";
-							var rightParen = paramVal > 1 ? ")" : "";
-							var objTypes = string.Join(',', Enumerable.Repeat("object", paramVal).ToArray());
-							var baseTypeStr = $"IEnumerable<{leftParen}{objTypes}{rightParen}>";
-							var returnTypeStr = $"IEnumerator<{leftParen}{objTypes}{rightParen}>";
-							var baseCtr = new CodeTypeReference(baseTypeStr);
-							var returnCtr = new CodeTypeReference(returnTypeStr);
-							_ = typeMethods.Key.BaseTypes.Add(baseCtr);
-							//
-							getEnumMeth = new CodeMemberMethod
-							{
-								Name = "GetEnumerator",
-								Attributes = MemberAttributes.Public | MemberAttributes.Final,
-								ReturnType = returnCtr
-							};
-							_ = getEnumMeth.Statements.Add(new CodeSnippetExpression($"return ({returnTypeStr})MakeBaseEnumerator(__Enum())"));
-							_ = typeMethods.Key.Members.Add(getEnumMeth);
-						}
+						        method.Parameters.Clear();
+						    }
+
+						    var leftParen = paramVal > 1 ? "(" : "";
+						    var rightParen = paramVal > 1 ? ")" : "";
+						    var objTypes = string.Join(',', Enumerable.Repeat("object", paramVal).ToArray());
+						    var baseTypeStr = $"IEnumerable<{leftParen}{objTypes}{rightParen}>";
+						    var returnTypeStr = $"IEnumerator<{leftParen}{objTypes}{rightParen}>";
+						    var baseCtr = new CodeTypeReference(baseTypeStr);
+						    var returnCtr = new CodeTypeReference(returnTypeStr);
+						    _ = typeMethods.Key.BaseTypes.Add(baseCtr);
+						    //
+						    getEnumMeth = new CodeMemberMethod
+						    {
+						        Name = "GetEnumerator",
+						        Attributes = MemberAttributes.Public | MemberAttributes.Final,
+						        ReturnType = returnCtr
+						    };
+						    _ = getEnumMeth.Statements.Add(new CodeSnippetExpression($"return ({returnTypeStr})MakeBaseEnumerator(__Enum())"));
+						    _ = typeMethods.Key.Members.Add(getEnumMeth);
+						    }
+						*/
 					}
 
 					var thisconstructor = typeMethods.Key.Members.Cast<CodeTypeMember>().FirstOrDefault(ctm => ctm is CodeConstructor cc && !cc.Attributes.HasFlag(MemberAttributes.Static)) as CodeConstructor;
@@ -664,10 +677,10 @@ namespace Keysharp.Scripting
 						_ = thisStaticConstructor.Statements.Add(new CodeSnippetExpression($"__StaticInit()"));
 					}
 
-					if (baseType != "KeysharpObject" && thisconstructor != null)
-					{
-						var rawBaseTypeName = "";
+					var rawBaseTypeName = typeof(KeysharpObject).Name;
 
+					if (baseType != rawBaseTypeName && thisconstructor != null)
+					{
 						if (userDefinedBase != null)
 						{
 							rawBaseTypeName = userDefinedBase.Name;
@@ -717,6 +730,17 @@ namespace Keysharp.Scripting
 						if (rawBaseTypeName.Length != 0)
 							typeMethods.Key.BaseTypes[0].BaseType = rawBaseTypeName;//Make sure it's properly cased, so we can, for example, derive from map or Map.
 					}
+
+					//Once we have the properly cased base type, add a super property to every class.
+					//This is done because we can't just do it once in Any because GetType() always resolves to the most derived type which is not what we want.
+					var superprop = new CodeMemberProperty
+					{
+						Name = "super",
+						Type = new CodeTypeReference(typeof((Type, object))),
+						Attributes = MemberAttributes.Public | MemberAttributes.New | MemberAttributes.Final
+					};
+					_ = superprop.GetStatements.Add(new CodeSnippetExpression($"return (typeof({rawBaseTypeName}), this)"));
+					_ = typeMethods.Key.Members.Add(superprop);
 				}
 				else
 				{
@@ -731,6 +755,23 @@ namespace Keysharp.Scripting
 				{
 					foreach (var cmie in cmietypefunc.Value)
 					{
+						for (int i = 0; i < cmie.Parameters.Count; i++)//Convert function arguments which were direct function references.
+						{
+							var funcparam = cmie.Parameters[i];
+
+							if (funcparam is CodeVariableReferenceExpression cvreparam)
+							{
+								var type = cvreparam.UserData["origtypescope"] is CodeTypeDeclaration ctd ? ctd.Name : "program";
+
+								if (MethodExistsInTypeOrBase(type, cvreparam.VariableName) is CodeMemberMethod cmm)
+								{
+									cvreparam.VariableName = cmm.Name;
+									var tempfunc = (CodeMethodReferenceExpression)InternalMethods.Func;
+									cmie.Parameters[i] = new CodeMethodInvokeExpression(tempfunc, cvreparam);
+								}
+							}
+						}
+
 						//Handle changing myfuncobj() to myfuncobj.Call().
 						if (VarExistsAtCurrentOrParentScope(cmietype.Key, cmietypefunc.Key, cmie.Method.MethodName))
 						{
@@ -750,10 +791,12 @@ namespace Keysharp.Scripting
 							}
 
 							HandleAllVariadicParams(cmie);
-							cmie.Method = new CodeMethodReferenceExpression(new CodeSnippetExpression($"/*preventtrim*/((IFuncObj){cmie.Method.MethodName})"), callFuncName);
+							var funccmie = new CodeMethodInvokeExpression((CodeMethodReferenceExpression)InternalMethods.Func, new CodeVariableReferenceExpression(cmie.Method.MethodName));
+							cmie.Method = new CodeMethodReferenceExpression(funccmie, callFuncName);
 						}
 						else if (GetUserDefinedTypename(cmie.Method.MethodName) is CodeTypeDeclaration ctd && ctd.Name.Length > 0)//Convert myclass() to myclass.Call().
 						{
+							//This is also done below when snippets are reevaluated because property initializers are implemented as snippets.
 							var callMeth = ctd.Members.Cast<CodeTypeMember>().First(ctm => ctm is CodeMemberMethod cmm && cmm.Name == "Call") as CodeMemberMethod;
 							cmie.Method = new CodeMethodReferenceExpression(new CodeSnippetExpression(ctd.Name), "Call");
 							HandlePartialVariadicParams(cmie, callMeth);
@@ -1023,15 +1066,15 @@ namespace Keysharp.Scripting
 				new CodeMethodReferenceExpression(
 					new CodeTypeReferenceExpression("Keysharp.Core.Common.Keyboard.HotkeyDefinition"), "ManifestAllHotkeysHotstringsHooks"));
 
-			if (hotkeyHotstringCreations.Count > 0)
+			if (topStatements.Count > 0)
 			{
 				//Readd rather than insert;
 				var userCodeStatements = new CodeStatementCollection
 				{
-					Capacity = hotkeyHotstringCreations.Count + userMainMethod.Statements.Count
+					Capacity = topStatements.Count + userMainMethod.Statements.Count
 				};
 
-				foreach (var hkc in hotkeyHotstringCreations)
+				foreach (CodeStatement hkc in topStatements)
 					_ = userCodeStatements.Add(hkc);
 
 				_ = userCodeStatements.Add(hotkeyInitCmie);
@@ -1070,6 +1113,10 @@ namespace Keysharp.Scripting
 			foreach (var assign in assignSnippets)
 				ReevaluateSnippet(assign);
 
+			//Static member properties need to be reevaluated.
+			foreach (var member in codeSnippetTypeMembers)
+				ReevaluateStaticProperties(member);
+
 			//Some hotstring directives may have been parsed, which could have changed settings. So restore before building and running.
 			HotstringManager.RestoreDefaults(true);
 			return unit;
@@ -1101,7 +1148,7 @@ namespace Keysharp.Scripting
 
 			foreach (var (p, s) in reader.PreloadedDlls)//Add after InitGlobalVars() call above, because the statements will be added in reverse order.
 			{
-				var cmie = new CodeMethodInvokeExpression(new CodeTypeReferenceExpression("Keysharp.Scripting.Variables"), "AddPreLoadedDll");
+				var cmie = new CodeMethodInvokeExpression(new CodeTypeReferenceExpression("Keysharp.Scripting.Script.Variables"), "AddPreLoadedDll");
 				_ = cmie.Parameters.Add(new CodePrimitiveExpression(p));
 				_ = cmie.Parameters.Add(new CodePrimitiveExpression(s));
 				initial.Add(new CodeExpressionStatement(cmie));
@@ -1121,17 +1168,18 @@ namespace Keysharp.Scripting
 					{
 						foreach (var globalvar in scopekv.Value)
 						{
+							if (globalvar.Value == null)
+								continue;
+
 							var name = globalvar.Key.Replace(scopeChar[0], '_');
 
 							if (name == "this")//Never create a "this" variable inside of a class definition.
 								continue;
 
 							name = Ch.CreateEscapedIdentifier(name);
-							//var init = globalvar.Value is CodeExpression ce ? Ch.CodeToString(ce) : "\"\"";
 							_ = typekv.Key.Members.Add(new CodeSnippetTypeMember()
 							{
 								Name = name,
-								//Text = $"\t\tpublic static object {name} = {init};"
 								Text = $"\t\tpublic static object {name};"
 							});
 						}
@@ -1145,14 +1193,18 @@ namespace Keysharp.Scripting
 
 						foreach (var globalvar in scopekv.Value)
 						{
+							if (globalvar.Value == null)
+								continue;
+
+							var ce = globalvar.Value;
 							var name = globalvar.Key.Replace(scopeChar[0], '_');
 
 							if (name == "this")//Never create a "this" variable inside of a class definition.
 								continue;
 
 							name = Ch.CreateEscapedIdentifier(name);
-							var isstatic = globalvar.Value.UserData.Contains("isstatic");
-							var init = globalvar.Value is CodeExpression ce ? Ch.CodeToString(ce) : "\"\"";
+							var isstatic = ce.UserData.Contains("isstatic");
+							var init = Ch.CodeToString(ce);
 							//If the property existed in a base class and is a simple assignment in this class, then assume
 							//they meant to reference the base property rather than create a new one.
 							(bool, string) bn;
@@ -1165,12 +1217,21 @@ namespace Keysharp.Scripting
 							}
 							else
 							{
-								_ = typekv.Key.Members.Add(new CodeSnippetTypeMember()
+								var cstm = new CodeSnippetTypeMember()
 								{
-									Name = name,
-									Text = isstatic ? $"\t\t\tpublic static object {name} {{ get; set; }} = {init};"
-										   : $"\t\t\tpublic object {name} {{ get; set; }}"
-								});
+									Name = name
+								};
+
+								if (isstatic)
+								{
+									cstm.UserData["orig"] = ce;
+									cstm.Text = $"\t\t\tpublic static object {name} {{ get; set; }} = {init};";
+									codeSnippetTypeMembers.Add(cstm);
+								}
+								else
+									cstm.Text = $"\t\t\tpublic object {name} {{ get; set; }}";
+
+								_ = typekv.Key.Members.Add(cstm);
 							}
 
 							if (init.Length > 0 && !isstatic)
@@ -1190,9 +1251,17 @@ namespace Keysharp.Scripting
 								if (initcmm != null)
 								{
 									if (string.Compare(init, "null", true) != 0)
-										_ = initcmm.Statements.Add(new CodeSnippetExpression($"{name} = {init}"));
+									{
+										var tempcboe = new CodeBinaryOperatorExpression(new CodeVariableReferenceExpression(name),
+												CodeBinaryOperatorType.Assign,
+												ce);
+										var tempsnippet = BinOpToSnippet(tempcboe);//Snippet is needed here and elsewhere because a CBOE generates too many parens which causes a compile error.
+										//This will get reevaluated at the end of GenerateCompileUnit() which will convert any calls like
+										//classname() to classname.Call().
+										_ = initcmm.Statements.Add(tempsnippet);
+									}
 
-									foreach (DictionaryEntry kv in globalvar.Value.UserData)
+									foreach (DictionaryEntry kv in ce.UserData)
 										if (kv.Key is CodeExpressionStatement ces2)
 											_ = initcmm.Statements.Add(ces2);
 								}
@@ -1427,30 +1496,6 @@ namespace Keysharp.Scripting
 			return false;
 		}
 
-		private void HandleVariadicParams()
-		{
-			//var lastisstar =
-			//After all arguments were parsed, we need to take one last special action if the last argument was using the * spread operator.
-			//The entire list must be converted into an array, with the last argument being preceeded by a C# .. spread operator.
-			//CodeDOM has no support for such so it must all be done via snippets.
-			//if (lastisstar)
-			//{
-			//  var argi = 0;
-			//  var oldArgs = invoke.Parameters;
-			//  //var skip = oldArgs.Count
-			//  var argStrings = new List<string>(oldArgs.Count);
-			//  var pces = invoke.Parameters.Cast<CodeExpression>();
-			//  argStrings = pces.Select(ce => ce == pces.Last() ? $"..{Ch.CodeToString(ce)}" : Ch.CodeToString(ce)).ToList();
-			//  var finalArgStr = $"[{string.Join(',', argStrings)}]";
-			//  invoke.Parameters.Clear();
-			//  invoke.Parameters.Add(new CodeSnippetExpression(finalArgStr));
-			//  //for (var argi = 0; argi < oldArgs.Count; i++)
-			//  //{
-			//  //  var argStr = Ch.CodeToString(oldArgs[i]);
-			//  //  sb.Append(argStr);
-			//  //}
-			//}
-		}
 		private void HandleAllVariadicParams(CodeMethodInvokeExpression cmie)
 		{
 			var pces = cmie.Parameters.Cast<CodeExpression>();
@@ -1468,6 +1513,7 @@ namespace Keysharp.Scripting
 				_ = cmie.Parameters.Add(new CodeSnippetExpression(finalArgStr));
 			}
 		}
+
 		private void HandleAllVariadicParams(CodeMethodInvokeExpression cmie, CodeMemberMethod cmm)
 		{
 			//Method that was declared.
@@ -1584,6 +1630,10 @@ namespace Keysharp.Scripting
 						return true;
 				}
 			}
+
+			if (excCatchVars.TryPeek(out var exc))
+				if (exc.Contains(varName))
+					return true;
 
 			if (currentFuncParams.TryPeek(out var pl))
 				if (pl.Contains(varName))

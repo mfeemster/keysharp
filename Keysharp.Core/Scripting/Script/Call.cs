@@ -2,19 +2,10 @@
 {
 	public partial class Script
 	{
-		//[ThreadStatic]
-		//private static object lastItem = null;
-
-		//[ThreadStatic]
-		//private static string lastKey = null;
-
-		//[ThreadStatic]
-		//private static (object, object) lastMph = (null, null);
-
-		//[ThreadStatic]
-		//private static int lastParamCount = 0;
 		public static object FindObjectForMethod(object obj, string name, int paramCount)
 		{
+			Error err;
+
 			if (Reflections.FindAndCacheInstanceMethod(obj.GetType(), name, paramCount) is MethodPropertyHolder mph)
 				return obj;
 
@@ -24,13 +15,11 @@
 			if (Reflections.FindMethod(name, paramCount) is MethodPropertyHolder mph3)
 				return null;
 
-			throw new Error($"Could not find a class, global or built-in method for {name} with param count of {paramCount}.");
+			return Errors.ErrorOccurred(err = new Error($"Could not find a class, global or built-in method for {name} with param count of {paramCount}.")) ? throw err : null;
 		}
-
 		public static (object, object) GetMethodOrProperty(object item, string key, int paramCount)//This has to be public because the script will emit it in Main().
 		{
-			//if (ReferenceEquals(item, lastItem) && ReferenceEquals(key, lastKey) && paramCount == lastParamCount)
-			//  return lastMph;
+			Error err;
 			Type typetouse = null;
 
 			try
@@ -46,58 +35,33 @@
 				if (item == null)
 				{
 					if (Reflections.FindMethod(key, paramCount) is MethodPropertyHolder mph0)
-					{
-						//lastItem = item;
-						//lastKey = key;
-						//lastParamCount = paramCount;
-						return /*lastMph = */ (item, mph0);
-					}
+						return (item, mph0);
 				}
 				else if (item is KeysharpObject kso && kso.op != null)
 				{
 					if (kso.op.TryGetValue(key, out var val) && val is OwnPropsMap map)
 					{
 						//Pass the ownprops map so that Invoke() knows to pass the parent object (item) as the first argument.
-						if (map.map.TryGetValue("call", out var callval) && callval is IFuncObj ifo1)//Call must come first.
-						{
-							//lastItem = item;
-							//lastKey = key;
-							//lastParamCount = paramCount;
-							return /*lastMph = */ (map, ifo1);
-						}
-						else if (map.map.TryGetValue("get", out var getval) && getval is IFuncObj ifo3)
-						{
-							//lastItem = item;
-							//lastKey = key;
-							//lastParamCount = paramCount;
-							var getret = ifo3.Call();//No params passed in, just call as is.
-							return /*lastMph =*/ (map, getret);
-						}
-						else if (map.map.TryGetValue("value", out var valval) && valval is IFuncObj ifo2)
-						{
-							//lastItem = item;
-							//lastKey = key;
-							//lastParamCount = paramCount;
-							return /*lastMph = */ (map, ifo2);
-						}
+						if (map.map.TryGetValue("call", out var callval) && callval is IFuncObj ifocall)//Call must come first.
+							return (map, ifocall);
+						else if (map.map.TryGetValue("get", out var getval) && getval is IFuncObj ifoget)
+							return (map, ifoget.Call());//No params passed in, just call as is.
+						else if (map.map.TryGetValue("value", out var valval) && valval is IFuncObj ifoval)
+							return (map, ifoval);
+						else if (map.map.TryGetValue("set", out var setval) && setval is IFuncObj ifoset)
+							return (map, ifoset);
 
-						throw new MemberError($"Attempting to get method or property {key} on object {map} failed.");
+						return Errors.ErrorOccurred(err = new Error($"Attempting to get method or property {key} on object {map} failed.")) ? throw err : (null, null);
 					}
 				}
 
 				if (Reflections.FindAndCacheInstanceMethod(typetouse, key, paramCount) is MethodPropertyHolder mph1)
 				{
-					//lastItem = item;
-					//lastKey = key;
-					//lastParamCount = paramCount;
-					return /*lastMph = */ (item, mph1);
+					return (item, mph1);
 				}
 				else if (Reflections.FindAndCacheProperty(typetouse, key, paramCount) is MethodPropertyHolder mph2)
 				{
-					//lastItem = item;
-					//lastKey = key;
-					//lastParamCount = paramCount;
-					return /*lastMph = */ (item, mph2);
+					return (item, mph2);
 				}
 
 #if WINDOWS
@@ -127,11 +91,12 @@
 					throw;
 			}
 
-			throw new MemberError($"Attempting to get method or property {key} on object {item} failed.");
+			return Errors.ErrorOccurred(err = new Error($"Attempting to get method or property {key} on object {item} failed.")) ? throw err : (null, null);
 		}
 
 		public static object GetPropertyValue(object item, object name, bool throwOnError = true)//Always assume these are not index properties, which we instead handle via method call with get_Item and set_Item.
 		{
+			Error err;
 			Type typetouse = null;
 			var namestr = name.ToString();
 
@@ -161,13 +126,13 @@
 				{
 					return mph.callFunc(item, null);
 				}
+
 				//This is for the case where a Map accesses a key within the Map as if it were a property, so we try to get the indexer property, then pass the name of the passed in property as the key/index.
 				//We check for a param length of 1 so we don't accidentally grab properties named Item which have no parameters, such as is the case with ComObject.
-				else if (Reflections.FindAndCacheInstanceMethod(typetouse, "get_Item", 1) is MethodPropertyHolder mph1 && mph1.ParamLength == 1)
-				{
-					return mph1.callFunc(item, [namestr]);
-				}
-
+				//else if (Reflections.FindAndCacheInstanceMethod(typetouse, "get_Item", 1) is MethodPropertyHolder mph1 && mph1.ParamLength == 1)
+				//{
+				//  return mph1.callFunc(item, [namestr]);
+				//}
 #if WINDOWS
 				else if (item is ComObject co)
 				{
@@ -189,13 +154,14 @@
 			}
 
 			if (throwOnError)
-				throw new PropertyError($"Attempting to get property {namestr} on object {item} failed.");
+				return Errors.ErrorOccurred(err = new Error($"Attempting to get property {namestr} on object {item} failed.")) ? throw err : null;
 			else
 				return null;
 		}
 
 		public static object GetStaticMemberValueT<T>(object name)
 		{
+			Error err;
 			var namestr = name.ToString();
 
 			try
@@ -208,6 +174,10 @@
 				{
 					return mph.callFunc(null, null);
 				}
+				else if (name is Delegate d)
+				{
+					return Functions.Func(d);
+				}
 			}
 			catch (Exception e)
 			{
@@ -217,14 +187,23 @@
 					throw;
 			}
 
-			throw new PropertyError($"Attempting to get static property or field {namestr} failed.");
+			return Errors.ErrorOccurred(err = new Error($"Attempting to get static property or field {namestr} failed.")) ? throw err : null;
 		}
-		public static (object, MethodPropertyHolder) GetStaticMethodT<T>(object name, int paramCount) => Reflections.FindAndCacheStaticMethod(typeof(T), name.ToString(), paramCount) is MethodPropertyHolder mph&& mph.mi != null&& mph.IsStaticFunc
-		? (null, mph)
-		: throw new MethodError($"Attempting to get static method {name} failed.");
+
+		public static (object, MethodPropertyHolder) GetStaticMethodT<T>(object name, int paramCount)
+		{
+			Error err;
+
+			if (Reflections.FindAndCacheStaticMethod(typeof(T), name.ToString(), paramCount) is MethodPropertyHolder mph && mph.mi != null && mph.IsStaticFunc)
+				return (null, mph);
+
+			return Errors.ErrorOccurred(err = new Error($"Attempting to get static method {name} failed.")) ? throw err : (null, null);
+		}
 
 		public static object Invoke((object, object) mitup, params object[] parameters)
 		{
+			Error err;
+
 			try
 			{
 				object ret = null;
@@ -283,11 +262,13 @@
 					throw;
 			}
 
-			throw new MemberError($"Attempting to invoke method or property {mitup.Item1},{mitup.Item2} failed.");
+			return Errors.ErrorOccurred(err = new Error($"Attempting to invoke method or property {mitup.Item1},{mitup.Item2} failed.")) ? throw err : null;
 		}
 
 		public static object InvokeWithRefs((object, object) mitup, params object[] parameters)
 		{
+			Error err;
+
 			try
 			{
 				var refs = new List<RefHolder>(parameters.Length);
@@ -364,13 +345,14 @@
 					throw;
 			}
 
-			throw new MemberError($"Attempting to invoke method or property {mitup.Item1},{mitup.Item2} with references failed.");
+			return Errors.ErrorOccurred(err = new Error($"Attempting to invoke method or property {mitup.Item1},{mitup.Item2} with references failed.")) ? throw err : null;
 		}
 
 		public static (object, object) MakeObjectTuple(object obj0, object obj1) => (obj0, obj1);
 
 		public static object SetPropertyValue(object item, object name, object value)//Always assume these are not index properties, which we instead handle via method call with get_Item and set_Item.
 		{
+			Error err;
 			Type typetouse = null;
 			var namestr = name.ToString();
 
@@ -427,10 +409,10 @@
 				}
 
 #endif
-				else if (Reflections.FindAndCacheInstanceMethod(typetouse, "set_Item", 2) is MethodPropertyHolder mph1 && mph1.ParamLength == 2)
-				{
-					return mph1.callFunc(item, [namestr, value]);
-				}
+				//else if (kso is Map m && Reflections.FindAndCacheInstanceMethod(typetouse, "set_Item", 2) is MethodPropertyHolder mph1 && mph1.ParamLength == 2)
+				//{
+				//  return mph1.callFunc(item, [namestr, value]);
+				//}
 				else if (kso != null)//No property was present, so create one and assign the value to it.
 				{
 					_ = kso.DefineProp(namestr, Collections.Map("value", value));
@@ -445,11 +427,12 @@
 					throw;
 			}
 
-			throw new PropertyError($"Attempting to set property {namestr} on object {item} to value {value} failed.");
+			return Errors.ErrorOccurred(err = new Error($"Attempting to set property {namestr} on object {item} to value {value} failed.")) ? throw err : null;
 		}
 
 		public static void SetStaticMemberValueT<T>(object name, object value)
 		{
+			Error err;
 			var namestr = name.ToString();
 
 			try
@@ -473,7 +456,7 @@
 					throw;
 			}
 
-			throw new PropertyError($"Attempting to set static property or field {namestr} to value {value} failed.");
+			_ = Errors.ErrorOccurred(err = new Error($"Attempting to set static property or field {namestr} to value {value} failed.")) ? throw err : "";
 		}
 	}
 }

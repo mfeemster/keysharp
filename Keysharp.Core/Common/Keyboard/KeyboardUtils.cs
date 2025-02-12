@@ -34,7 +34,7 @@ namespace Keysharp.Core.Common.Keyboard
 #if LINUX
 			var inputStr = "xinput".Bash();
 
-			foreach (Range r in inputStr.AsSpan().SplitAny(Keywords.CrLf))
+			foreach (Range r in inputStr.AsSpan().SplitAny(CrLf))
 			{
 				var split = inputStr.AsSpan(r).Trim();
 
@@ -46,7 +46,7 @@ namespace Keysharp.Core.Common.Keyboard
 
 					if (mouse || kb)//The two spaces are intentional.
 					{
-						foreach (Range r2 in split.SplitAny(Keywords.SpaceTab))
+						foreach (Range r2 in split.SplitAny(SpaceTab))
 						{
 							var lineSplit = split[r2].Trim();
 							//Keysharp.Scripting.Script.OutputDebug($"Examining {(mouse ? "mouse" : "kb")} line split: {lineSplit}");
