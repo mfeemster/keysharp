@@ -342,6 +342,12 @@ namespace Keysharp.Tests
 		}
 
 		[Test, Category("Hotstring"), NonParallelizable]
+		public void GetKey()
+		{
+			Assert.IsTrue(Keysharp.Core.Keyboard.GetKeySC("Esc") == 1L);
+		}
+
+		[Test, Category("Hotstring"), NonParallelizable]
 		public void HotstringDirectives()
 		{
 			Assert.IsTrue(TestScript("hotstring-directives", false));
