@@ -345,6 +345,7 @@ namespace Keysharp.Tests
 		public void GetKey()
 		{
 			Assert.IsTrue(Keysharp.Core.Keyboard.GetKeySC("Esc") == 1L);
+			Assert.IsTrue(Keysharp.Core.Keyboard.GetKeyVK("Esc") == 27L);
 		}
 
 		[Test, Category("Hotstring"), NonParallelizable]
