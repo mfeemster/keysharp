@@ -116,7 +116,7 @@ namespace Keysharp.Scripting
             else
             {
                 targetExpression = (ExpressionSyntax)Visit(context.primaryExpression());
-                methodName = ExtractMethodName(targetExpression);
+                methodName = ExtractMethodName(targetExpression) ?? methodName;
             }
 
             // Get the argument list
@@ -125,6 +125,12 @@ namespace Keysharp.Scripting
                 argumentList = (ArgumentListSyntax)VisitArguments(context.arguments());
             else
                 argumentList = SyntaxFactory.ArgumentList();
+
+            if (methodName.Equals("IsSet", StringComparison.InvariantCultureIgnoreCase) 
+                && argumentList.Arguments.First().Expression is IdentifierNameSyntax identifierName)
+            {
+                parser.MaybeAddVariableDeclaration(identifierName.Identifier.Text);
+            }
 
             return parser.GenerateFunctionInvocation(targetExpression, argumentList, methodName);
         }
@@ -563,10 +569,6 @@ namespace Keysharp.Scripting
         {
             return HandleUnaryExpressionVisit(context);
         }
-        public override SyntaxNode VisitNotExpressionDuplicate([NotNull] NotExpressionDuplicateContext context)
-        {
-            return HandleUnaryExpressionVisit(context);
-        }
 
         public override SyntaxNode VisitArrayLiteralExpression([NotNull] ArrayLiteralExpressionContext context)
         {
@@ -586,10 +588,13 @@ namespace Keysharp.Scripting
         {
             return HandleAssignmentExpression(context.left, context.right, context.assignmentOperator().GetText());
         }
+
+        /*
         public override SyntaxNode VisitAssignmentExpressionDuplicate([NotNull] AssignmentExpressionDuplicateContext context)
         {
             return HandleAssignmentExpression(context.left, context.right, context.assignmentOperator().GetText());
         }
+        */
 
         private ExpressionSyntax HandleAssignment(ExpressionSyntax leftExpression, ExpressionSyntax rightExpression, string assignmentOperator)
         {
@@ -1342,7 +1347,9 @@ namespace Keysharp.Scripting
 
             if (baseExpression is IdentifierNameSyntax identifierName)
             {
-                if (Reflections.stringToTypes.ContainsKey(identifierName.Identifier.Text) || identifierName.Identifier.Text.ToLower() == "program")
+                var name = Parser.NormalizeIdentifier(identifierName.Identifier.Text);
+                if ((Reflections.stringToTypes.ContainsKey(name) || name.ToLower() == "program")
+                    && parser.IsVarDeclaredGlobally(name) == null && parser.IsVarDeclaredLocally(name) == null && parser.IsVarDeclaredInClass(parser.currentClass, name) == null)
                 {
                     // Generate Keysharp.Scripting.Script.GetStaticMemberValueT<baseExpression>(memberExpression)
                     return SyntaxFactory.InvocationExpression(
@@ -1351,7 +1358,7 @@ namespace Keysharp.Scripting
                             CreateQualifiedName("Keysharp.Scripting.Script"),
                             SyntaxFactory.GenericName("GetStaticMemberValueT")
                                 .WithTypeArgumentList(SyntaxFactory.TypeArgumentList(
-                                    SyntaxFactory.SingletonSeparatedList<TypeSyntax>(SyntaxFactory.IdentifierName(identifierName.Identifier.Text))
+                                    SyntaxFactory.SingletonSeparatedList<TypeSyntax>(SyntaxFactory.IdentifierName(name))
                                 ))
                         ),
                         SyntaxFactory.ArgumentList(

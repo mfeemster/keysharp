@@ -1051,6 +1051,15 @@
 		/// </summary>
 		public static long A_LastError => Marshal.GetLastWin32Error();//This apparently works on linux too.
 
+        /// <summary>
+        /// ListLines is never true.
+        /// </summary>
+        public static object A_ListLines
+		{
+			get => 0L;
+			set { }
+		}
+
 		/// <summary>
 		/// The current element of a loop.
 		/// </summary>

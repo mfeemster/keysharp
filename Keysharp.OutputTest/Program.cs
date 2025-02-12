@@ -71,13 +71,14 @@ namespace Keysharp.CompiledMain
 
     public class program
     {
+        public static object s = null;
+        public static object fileappend = Keysharp.Core.Functions.Func("fileappend");
         [System.STAThreadAttribute()]
         public static int Main(string[] args)
         {
             try
             {
                 string name = @"C:\Users\minip\Source\Repos\Keysharp_clone\bin\debug\net9.0-windows\Keysharp.ks";
-                Keysharp.Scripting.Script.Variables.AddPreLoadedDll("oleacc", false);
                 Keysharp.Scripting.Script.Variables.InitGlobalVars();
                 Keysharp.Scripting.Script.SetName(name);
                 if (Keysharp.Scripting.Script.HandleSingleInstance(name, eScriptInstance.Prompt))
@@ -127,6 +128,176 @@ namespace Keysharp.CompiledMain
 
         public static object _ks_UserMainCode()
         {
+            s = Keysharp.Core.Strings.Format("{1}", 123L);
+            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, s, "123")))
+            {
+                Keysharp.Core.Files.FileAppend("pass", "*");
+            }
+            else
+            {
+                Keysharp.Core.Files.FileAppend("fail", "*");
+            }
+
+            s = Keysharp.Core.Strings.Format("{1:08d}", 123L);
+            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, s, "00000123")))
+            {
+                Keysharp.Core.Files.FileAppend("pass", "*");
+            }
+            else
+            {
+                Keysharp.Core.Files.FileAppend("fail", "*");
+            }
+
+            s = Keysharp.Core.Strings.Format("{1:+d}", 123L);
+            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, s, "+123")))
+            {
+                Keysharp.Core.Files.FileAppend("pass", "*");
+            }
+            else
+            {
+                Keysharp.Core.Files.FileAppend("fail", "*");
+            }
+
+            s = Keysharp.Core.Strings.Format("{1:+d}", Keysharp.Scripting.Script.OperateUnary(Keysharp.Scripting.Script.Operator.Minus, 123L));
+            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, s, "-123")))
+            {
+                Keysharp.Core.Files.FileAppend("pass", "*");
+            }
+            else
+            {
+                Keysharp.Core.Files.FileAppend("fail", "*");
+            }
+
+            s = Keysharp.Core.Strings.Format("{1:x}", 255L);
+            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, s, "ff")))
+            {
+                Keysharp.Core.Files.FileAppend("pass", "*");
+            }
+            else
+            {
+                Keysharp.Core.Files.FileAppend("fail", "*");
+            }
+
+            s = Keysharp.Core.Strings.Format("{1:#x}", 255L);
+            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, s, "0xff")))
+            {
+                Keysharp.Core.Files.FileAppend("pass", "*");
+            }
+            else
+            {
+                Keysharp.Core.Files.FileAppend("fail", "*");
+            }
+
+            s = Keysharp.Core.Strings.Format("{1}", "Hello");
+            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, s, "Hello")))
+            {
+                Keysharp.Core.Files.FileAppend("pass", "*");
+            }
+            else
+            {
+                Keysharp.Core.Files.FileAppend("fail", "*");
+            }
+
+            s = Keysharp.Core.Strings.Format("{{}}");
+            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, s, "{}")))
+            {
+                Keysharp.Core.Files.FileAppend("pass", "*");
+            }
+            else
+            {
+                Keysharp.Core.Files.FileAppend("fail", "*");
+            }
+
+            s = Keysharp.Core.Strings.Format("{} {}", 1L, 2L);
+            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, s, "1 2")))
+            {
+                Keysharp.Core.Files.FileAppend("pass", "*");
+            }
+            else
+            {
+                Keysharp.Core.Files.FileAppend("fail", "*");
+            }
+
+            s = Keysharp.Core.Strings.Format("{1:U}", "test");
+            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, s, "TEST")))
+            {
+                Keysharp.Core.Files.FileAppend("pass", "*");
+            }
+            else
+            {
+                Keysharp.Core.Files.FileAppend("fail", "*");
+            }
+
+            s = Keysharp.Core.Strings.Format("{1:T}", "hello world");
+            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, s, "Hello World")))
+            {
+                Keysharp.Core.Files.FileAppend("pass", "*");
+            }
+            else
+            {
+                Keysharp.Core.Files.FileAppend("fail", "*");
+            }
+
+            s = Keysharp.Core.Strings.Format("{1:-10}", 123L);
+            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, s, "123       ")))
+            {
+                Keysharp.Core.Files.FileAppend("pass", "*");
+            }
+            else
+            {
+                Keysharp.Core.Files.FileAppend("fail", "*");
+            }
+
+            s = Keysharp.Core.Strings.Format("{1:.2f}", 1.2345);
+            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, s, "1.23")))
+            {
+                Keysharp.Core.Files.FileAppend("pass", "*");
+            }
+            else
+            {
+                Keysharp.Core.Files.FileAppend("fail", "*");
+            }
+
+            s = Keysharp.Core.Strings.Format("{1:.3s}", "abcdef");
+            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, s, "abc")))
+            {
+                Keysharp.Core.Files.FileAppend("pass", "*");
+            }
+            else
+            {
+                Keysharp.Core.Files.FileAppend("fail", "*");
+            }
+
+            s = Keysharp.Core.Strings.Format("{:a}", 255L);
+            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, s, "0x1.fe00000000000p+7")))
+            {
+                Keysharp.Core.Files.FileAppend("pass", "*");
+            }
+            else
+            {
+                Keysharp.Core.Files.FileAppend("fail", "*");
+            }
+
+            s = Keysharp.Core.Strings.Format("{:A}", 255L);
+            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, s, "0x1.fe00000000000P+7")))
+            {
+                Keysharp.Core.Files.FileAppend("pass", "*");
+            }
+            else
+            {
+                Keysharp.Core.Files.FileAppend("fail", "*");
+            }
+
+            s = Keysharp.Core.Strings.Format("{:p}", 255L);
+            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, s, "00000000000000FF")))
+            {
+                Keysharp.Core.Files.FileAppend("pass", "*");
+            }
+            else
+            {
+                Keysharp.Core.Files.FileAppend("fail", "*");
+            }
+
             Keysharp.Core.Common.Keyboard.HotkeyDefinition.ManifestAllHotkeysHotstringsHooks();
             Keysharp.Core.Flow.ExitApp(0L);
             return "";

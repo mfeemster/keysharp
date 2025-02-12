@@ -291,6 +291,9 @@ namespace Keysharp.Scripting
                     return parameterMatch.Identifier.Text;
             }
 
+            var localMatch = IsLocalVar(name, caseSense);
+            if (localMatch != null) return localMatch;
+
             var variableDeclarations = currentFunc.Body.OfType<LocalDeclarationStatementSyntax>();
             if (variableDeclarations != null)
             {
@@ -330,12 +333,12 @@ namespace Keysharp.Scripting
             return null;
         }
 
-        public string IsVarDeclaredGlobally(string name, bool caseSense = true)
+        public string IsVarDeclaredInClass(Class cls, string name, bool caseSense = true)
         {
             var builtIn = IsBuiltInProperty(name, caseSense);
             if (builtIn != null) return builtIn;
 
-            var variableDeclarations = mainClass.Declaration.ChildNodes().OfType<FieldDeclarationSyntax>();
+            var variableDeclarations = cls.Declaration.ChildNodes().OfType<FieldDeclarationSyntax>();
             if (variableDeclarations != null)
             {
                 foreach (var declaration in variableDeclarations)
@@ -350,6 +353,11 @@ namespace Keysharp.Scripting
                 }
             }
             return null;
+        }
+
+        public string IsVarDeclaredGlobally(string name, bool caseSense = true)
+        {
+            return IsVarDeclaredInClass(mainClass, name, caseSense);
         }
 
         public string IsBuiltInProperty(string name, bool caseSense = false)
@@ -398,7 +406,7 @@ namespace Keysharp.Scripting
             string match;
             if (currentFunc.Scope == eScope.Static)
             {
-                match = IsVarDeclaredGlobally(name);
+                match = IsVarDeclaredInClass(currentClass, name);
                 if (match != null) return match;
             }
             else if (currentFunc.Scope == eScope.Local || currentFunc.Scope == eScope.Static)
@@ -454,7 +462,7 @@ namespace Keysharp.Scripting
             SyntaxFactory.Token(SyntaxKind.PublicKeyword),
             SyntaxFactory.Token(SyntaxKind.StaticKeyword));
 
-            if (currentFunc.Scope == eScope.Static)
+            if (currentFunc.Statics.Contains(name) || currentFunc.Scope == eScope.Static)
             {
                 currentClass.Declaration = currentClass.Declaration.AddMembers(fieldDeclaration);
             }
@@ -783,7 +791,7 @@ namespace Keysharp.Scripting
             name = name.Trim('"');
 
             if (nameCase == eNameCase.Lower)
-                return ToValidIdentifier(name).ToLowerInvariant();
+                return ToValidIdentifier(name.ToLowerInvariant());
             else if (nameCase == eNameCase.Title)
                 return CultureInfo.CurrentCulture.TextInfo.ToTitleCase(name);
             else

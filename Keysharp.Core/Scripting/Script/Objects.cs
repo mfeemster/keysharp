@@ -15,10 +15,20 @@ namespace Keysharp.Scripting
             var proto = Variables.Prototypes[t];
 
             // Get all instance methods
-            var methods = t.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly);
+            MethodInfo[] methods;
+
+            if (isBuiltin && Reflections.typeToStringMethods.ContainsKey(t))
+                methods = Reflections.typeToStringMethods[t]
+                    .Values // Get Dictionary<string, Dictionary<int, MethodPropertyHolder>>
+                    .SelectMany(m => m.Values) // Flatten to IEnumerable<Dictionary<int, MethodPropertyHolder>>
+                    .Select(mph => mph.mi) // Flatten to IEnumerable<MethodPropertyHolder>
+                    .ToArray();
+            else
+                methods = t.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly);
+
             foreach (var method in methods)
             {
-                var methodName = method.Name;
+				var methodName = method.Name;
                 if (!isBuiltin && methodName.StartsWith(Keywords.ClassStaticPrefix))
                 {
 					methodName = methodName.Substring(Keywords.ClassStaticPrefix.Length);
@@ -30,22 +40,43 @@ namespace Keysharp.Scripting
                 proto.DefineProp(methodName, Collections.MapWithoutBase("call", new FuncObj(method)));
             }
 
-            // Get all static methods
+			// Get all static methods
+            if (isBuiltin && Reflections.typeToStringStaticMethods.ContainsKey(t))
+                methods = Reflections.typeToStringStaticMethods[t]
+                    .Values // Get Dictionary<string, Dictionary<int, MethodPropertyHolder>>
+					.SelectMany(m => m.Values) // Flatten to IEnumerable<Dictionary<int, MethodPropertyHolder>>
+					.Select(mph => mph.mi) // Flatten to IEnumerable<MethodPropertyHolder>
+					.ToArray();
+            else
+                methods = t.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.DeclaredOnly);
+
             methods = t.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.DeclaredOnly);
             foreach (var method in methods)
 			{
                 SetPropertyValue(staticInst, method.Name, new FuncObj(method));
             }
 
-            // Get all instance properties
-            var properties = t.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly);
+            // Get all instance and static properties
+
+            PropertyInfo[] properties;
+
+            if (isBuiltin && Reflections.typeToStringProperties.ContainsKey(t))
+                properties = Reflections.typeToStringProperties[t]
+                    .Values
+                    .SelectMany(m => m.Values) 
+                    .Select(mph => mph.pi)
+                    .ToArray();
+            else
+                properties = t.GetProperties(BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.DeclaredOnly);
+
             foreach (var prop in properties)
             {
                 var propertyName = prop.Name;
 				OwnPropsMap propertyMap = null;
-                if (!isBuiltin && propertyName.StartsWith(Keywords.ClassStaticPrefix))
+                if (prop.GetMethod.IsStatic || (!isBuiltin && propertyName.StartsWith(Keywords.ClassStaticPrefix)))
 				{
-                    propertyName = propertyName.Substring(Keywords.ClassStaticPrefix.Length);
+					if (propertyName.StartsWith(Keywords.ClassStaticPrefix))
+						propertyName = propertyName.Substring(Keywords.ClassStaticPrefix.Length);
                     propertyMap = staticInst.op.TryGetValue(propertyName, out OwnPropsMap staticPropDesc) ? staticPropDesc : new OwnPropsMap(null, Collections.Map());
 
                     if (prop.GetMethod != null)
@@ -78,28 +109,6 @@ namespace Keysharp.Scripting
 
                 if (propertyMap.Count > 0)
                     proto.op[propertyName] = propertyMap;
-            }
-
-
-            // Get all static properties
-            properties = t.GetProperties(BindingFlags.Static | BindingFlags.Public | BindingFlags.DeclaredOnly);
-            foreach (var prop in properties)
-            {
-                var propertyName = prop.Name;
-                var propertyMap = staticInst.op.TryGetValue(propertyName, out OwnPropsMap propDesc) ? propDesc : new OwnPropsMap(null, Collections.Map());
-
-                if (prop.GetMethod != null)
-                {
-                    propertyMap["get"] = new FuncObj(prop.GetMethod);
-                }
-
-                if (prop.SetMethod != null)
-                {
-                    propertyMap["set"] = new FuncObj(prop.SetMethod);
-                }
-
-				if (propertyMap.Count > 0)
-					staticInst.op[propertyName] = propertyMap;
             }
 
             if (!(t == typeof(Any) || t == typeof(FuncObj)))

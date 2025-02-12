@@ -12,6 +12,7 @@ using System.Drawing.Imaging;
 using Antlr4.Runtime;
 using System.IO;
 using System.Collections;
+using System.Xml.Linq;
 
 namespace Keysharp.Scripting
 {
@@ -26,6 +27,7 @@ namespace Keysharp.Scripting
             string loopEnumeratorName,
             string enumeratorType,
             string enumeratorMethodName,
+            List<string> backupVariableNames,
             params ExpressionSyntax[] enumeratorArguments)
         {
             // Generate the enumerator initialization
@@ -176,11 +178,96 @@ namespace Keysharp.Scripting
                     elseBody
                 );
             }
+            else
+                elseClause = popStatement;
+
+            LocalDeclarationStatementSyntax backupDeclaration = null;
+            ExpressionStatementSyntax restoreBackupVariables = null;
+
+            if (backupVariableNames != null)
+            {
+                var uniqueVariableNames = backupVariableNames.Distinct().ToList();
+                var backupIdentifier = SyntaxFactory.IdentifierName(loopEnumeratorName + "_backup");
+
+                backupDeclaration = SyntaxFactory.LocalDeclarationStatement(
+                    SyntaxFactory.VariableDeclaration(
+                        SyntaxFactory.ArrayType(
+                            SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword)), // object[]
+                            SyntaxFactory.SingletonList(
+                                SyntaxFactory.ArrayRankSpecifier(
+                                    SyntaxFactory.SingletonSeparatedList<ExpressionSyntax>(
+                                        SyntaxFactory.OmittedArraySizeExpression() // Allow dynamic array initialization
+                                    )
+                                )
+                            )
+                        )
+                    ).WithVariables(
+                        SyntaxFactory.SingletonSeparatedList(
+                            SyntaxFactory.VariableDeclarator(backupIdentifier.Identifier)
+                            .WithInitializer(
+                                SyntaxFactory.EqualsValueClause(
+                                    SyntaxFactory.ArrayCreationExpression(
+                                        SyntaxFactory.ArrayType(
+                                            SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword)),
+                                            SyntaxFactory.SingletonList(
+                                                SyntaxFactory.ArrayRankSpecifier(
+                                                    SyntaxFactory.SingletonSeparatedList<ExpressionSyntax>(
+                                                        SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(uniqueVariableNames.Count))
+                                                    )
+                                                )
+                                            )
+                                        )
+                                    ).WithInitializer(
+                                        SyntaxFactory.InitializerExpression(
+                                            SyntaxKind.ArrayInitializerExpression,
+                                            SyntaxFactory.SeparatedList<ExpressionSyntax>(
+                                                uniqueVariableNames.Select(name => SyntaxFactory.IdentifierName(name))
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                    )
+                );
+
+                restoreBackupVariables = SyntaxFactory.ExpressionStatement(
+                    SyntaxFactory.AssignmentExpression(
+                        SyntaxKind.SimpleAssignmentExpression,
+                        SyntaxFactory.TupleExpression(
+                            SyntaxFactory.SeparatedList<ArgumentSyntax>(
+                                uniqueVariableNames.Select(name =>
+                                    SyntaxFactory.Argument(SyntaxFactory.IdentifierName(name))
+                                )
+                            )
+                        ),
+                        SyntaxFactory.TupleExpression(
+                            SyntaxFactory.SeparatedList<ArgumentSyntax>(
+                                uniqueVariableNames.Select((_, index) =>
+                                    SyntaxFactory.Argument(
+                                        SyntaxFactory.ElementAccessExpression(backupIdentifier)
+                                        .WithArgumentList(
+                                            SyntaxFactory.BracketedArgumentList(
+                                                SyntaxFactory.SingletonSeparatedList(
+                                                    SyntaxFactory.Argument(
+                                                        SyntaxFactory.LiteralExpression(
+                                                            SyntaxKind.NumericLiteralExpression,
+                                                            SyntaxFactory.Literal(index)
+                                                        )
+                                                    )
+                                                )
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                    )
+                );
+            }
 
             // Create the finally block with Pop() and end label
-            var finallyBlock = elseClause == null 
-                ? SyntaxFactory.Block(popStatement)
-                : SyntaxFactory.Block(elseClause);
+            var finallyBlock = backupVariableNames == null ? SyntaxFactory.Block(elseClause) : SyntaxFactory.Block(restoreBackupVariables, elseClause);
 
             // Wrap the loop in a try-finally statement
             var tryFinallyStatement = SyntaxFactory.TryStatement(
@@ -189,12 +276,20 @@ namespace Keysharp.Scripting
                 SyntaxFactory.FinallyClause(finallyBlock) // Finally block
             );
 
-            return SyntaxFactory.Block(
-                SyntaxFactory.LocalDeclarationStatement(enumeratorDeclaration),
-                pushStatement,
-                tryFinallyStatement,
-                endLabel
-            );
+            return backupDeclaration == null 
+                ? SyntaxFactory.Block(
+                    SyntaxFactory.LocalDeclarationStatement(enumeratorDeclaration),
+                    pushStatement,
+                    tryFinallyStatement,
+                    endLabel
+                )
+                : SyntaxFactory.Block(
+                    SyntaxFactory.LocalDeclarationStatement(enumeratorDeclaration),
+                    backupDeclaration,
+                    pushStatement,
+                    tryFinallyStatement,
+                    endLabel
+                );
         }
 
         public override SyntaxNode VisitElseProduction([NotNull] ElseProductionContext context)
@@ -244,6 +339,7 @@ namespace Keysharp.Scripting
                 loopEnumeratorName,
                 "System.Collections.IEnumerator",
                 "Loop",
+                null,
                 loopExpression
             );
         }
@@ -280,6 +376,7 @@ namespace Keysharp.Scripting
                 loopEnumeratorName,
                 "System.Collections.IEnumerator",
                 "LoopParse",
+                null, 
                 String, DelimiterChars, OmitChars
             );
         }
@@ -308,6 +405,7 @@ namespace Keysharp.Scripting
                 loopEnumeratorName,
                 "System.Collections.IEnumerator",
                 "LoopFile",
+                null,
                 FilePattern, Mode
             );
         }
@@ -336,6 +434,7 @@ namespace Keysharp.Scripting
                 loopEnumeratorName,
                 "System.Collections.IEnumerator",
                 "LoopRead",
+                null,
                 InputFile, OutputFile
             );
         }
@@ -364,6 +463,7 @@ namespace Keysharp.Scripting
                 loopEnumeratorName,
                 "System.Collections.IEnumerator",
                 "LoopRegistry",
+                null,
                 KeyName, Mode
             );
         }
@@ -394,28 +494,32 @@ namespace Keysharp.Scripting
                 {
                     if (lastParamText == ",")
                         variableNames.Add("_");
-                } else
-                    variableNames.Add(NormalizeIdentifier(paramText));
+                }
+                else
+                {
+                    var variableName = NormalizeIdentifier(paramText);
+                    parser.MaybeAddVariableDeclaration(variableName);
+                    variableNames.Add(variableName);
+                }
                 lastParamText = paramText;
             }
             var variableNameCount = variableNames.Count;
             while (variableNames.Count < 2)
                 variableNames.Add("_");
 
+            if (variableNames.Any(name => name == "_"))
+                parser.MaybeAddVariableDeclaration("_");
+
             // Ensure the loop body is a block
             BlockSyntax loopBody = (BlockSyntax)Visit(context.flowBlock());
-
+            
             var currentAssignment = SyntaxFactory.ExpressionStatement(
                 SyntaxFactory.AssignmentExpression(
                     SyntaxKind.SimpleAssignmentExpression,
-                    SyntaxFactory.DeclarationExpression(
-                        SyntaxFactory.IdentifierName("var"),
-                        SyntaxFactory.ParenthesizedVariableDesignation(
-                            SyntaxFactory.SeparatedList<VariableDesignationSyntax>(
-                                variableNames.Select<string, VariableDesignationSyntax>(name =>
-                                    name == "_"
-                                    ? SyntaxFactory.DiscardDesignation()
-                                    : SyntaxFactory.SingleVariableDesignation(SyntaxFactory.Identifier(name)))
+                    SyntaxFactory.TupleExpression(
+                        SyntaxFactory.SeparatedList(
+                            variableNames.Select<string, ArgumentSyntax>(name =>
+                                SyntaxFactory.Argument(SyntaxFactory.IdentifierName(name))
                             )
                         )
                     ),
@@ -461,12 +565,12 @@ namespace Keysharp.Scripting
                 loopEnumeratorName,
                 "var",
                 "MakeEnumerator",
+                variableNames,
                 loopExpression,
                 SyntaxFactory.LiteralExpression(
                     SyntaxKind.NumericLiteralExpression,
                     SyntaxFactory.Literal(Math.Max(variableNameCount, 1))
                 )
-
             );
 
             return loopSyntax;

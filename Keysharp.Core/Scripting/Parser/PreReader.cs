@@ -351,7 +351,7 @@ namespace Keysharp.Scripting
                                     var reqvers = Script.ParseVersionToInts(ver);
 
                                     //If it's AHK v2.x, then we support it, so don't check.
-                                    if (reqAhk && ver.StartsWith("2."))
+                                    if (reqAhk && (ver.StartsWith("2.") || ver == "2"))
                                         break;
 
                                     if (!reqvers.Any(x => x != 0))
@@ -550,7 +550,7 @@ namespace Keysharp.Scripting
                         case MainLexer.Is:
                         case MainLexer.In:
                         case MainLexer.Contains:
-                            if (enclosableDepth == 0)
+                            if (enclosableDepth == 0 && token.Type != MainLexer.EOL)
                                 funcStatPossible = -1;
                             PopWhitespaces(codeTokens.Count, true);
                             i = index;
@@ -604,6 +604,7 @@ namespace Keysharp.Scripting
                             }
                             break;
                         case MainLexer.CloseBrace:
+							funcStatPossible = -1;
                             i = PopWhitespaces(codeTokens.Count);
                             var eolToken = new CommonToken(MainLexer.EOL)
                             {
@@ -642,14 +643,9 @@ namespace Keysharp.Scripting
                             if (enclosableDepth == 0 && !(token.Type == MainLexer.Identifier || token.Type == MainLexer.Dot))
                                 funcStatPossible = -1;
                             break;
-                            //case MainLexer.MultilineStringLiteral:
-                            // TODO!!!
-                            //var result = MultilineString(str, lineNumber, name);
-                            //result = result.Replace("\n", "`n").Replace("\r", "`r");
-                            //break;
                     }
                     if (enclosableDepth == 0
-                            && funcStatPossible != -1
+                            && funcStatPossible > -1
                             && (funcStatPossible != (codeTokens.Count + 1))
                             && (token.Type == MainLexer.WS || token.Type == MainLexer.EOL))
                     {

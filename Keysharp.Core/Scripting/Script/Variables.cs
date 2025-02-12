@@ -55,40 +55,6 @@ namespace Keysharp.Scripting
 
 					if (type != null && type.FullName.StartsWith("Keysharp.CompiledMain", StringComparison.OrdinalIgnoreCase))
 					{
-						// Initialize prototypes 
-						Dictionary<Type, KeysharpObject> protos = new();
-
-                        var anyType = typeof(Any);
-                        var types = AppDomain.CurrentDomain.GetAssemblies()
-                            .SelectMany(assembly => assembly.GetTypes())
-                            .Where(type => type.IsClass && !type.IsAbstract && anyType.IsAssignableFrom(type));
-
-						// Initiate necessary base types in specific order
-                        InitStaticInstance(typeof(Any), typeof(KeysharpObject));
-                        InitStaticInstance(typeof(FuncObj));
-                        InitStaticInstance(typeof(KeysharpObject));
-						Statics[typeof(KeysharpObject)] = (KeysharpObject)Prototypes[typeof(KeysharpObject)].Clone();
-                        Statics[typeof(KeysharpObject)].DefineProp("prototype", Collections.Map("value", Variables.Prototypes[typeof(KeysharpObject)]));
-                        Prototypes[typeof(FuncObj)].DefineProp("base", Collections.Map("value", Variables.Prototypes[typeof(KeysharpObject)]));
-                        Statics[typeof(FuncObj)].DefineProp("base", Collections.Map("value", Variables.Statics[typeof(KeysharpObject)]));
-
-                        var typesToRemoveSet = new HashSet<Type>(new[] { typeof(Any), typeof(FuncObj), typeof(KeysharpObject) });
-						var orderedTypes = types.Where(type => !typesToRemoveSet.Contains(type)).OrderBy(GetInheritanceDepth);
-                        foreach (var t in orderedTypes)
-						{
-							Script.InitStaticInstance(t);
-                        }
-
-						// Now that the static objects are created, loop the types again and call __Init and __New for all built-in classes
-						foreach (var t in orderedTypes)
-						{
-                            if (t.Namespace.Equals("Keysharp.CompiledMain", StringComparison.InvariantCultureIgnoreCase))
-							{
-								Script.Invoke(Script.Variables.Statics[t], "__Init");
-								Script.Invoke(Script.Variables.Statics[t], "__New");
-							}
-						}
-
                         var fields = type.GetFields(BindingFlags.Static |
 													BindingFlags.NonPublic |
 													BindingFlags.Public);
@@ -156,7 +122,46 @@ namespace Keysharp.Scripting
 				}
 
 				Reflections.Initialize();//For some reason, the program will crash if these are delay initialized, so do them now.
-				SetInitialFloatFormat();//This must be done intially and not just when A_FormatFloat is referenced for the first time.
+
+                // Initialize prototypes 
+                Dictionary<Type, KeysharpObject> protos = new();
+
+                var anyType = typeof(Any);
+				var types = Reflections.stringToTypes.Values
+                    .Where(type => type.IsClass && !type.IsAbstract && anyType.IsAssignableFrom(type));
+				/*
+                var types = AppDomain.CurrentDomain.GetAssemblies()
+                    .SelectMany(assembly => assembly.GetTypes())
+                    .Where(type => type.IsClass && !type.IsAbstract && anyType.IsAssignableFrom(type));
+				*/
+
+                // Initiate necessary base types in specific order
+                InitStaticInstance(typeof(Any), typeof(KeysharpObject));
+                InitStaticInstance(typeof(FuncObj));
+                InitStaticInstance(typeof(KeysharpObject));
+                Statics[typeof(KeysharpObject)] = (KeysharpObject)Prototypes[typeof(KeysharpObject)].Clone();
+                Statics[typeof(KeysharpObject)].DefineProp("prototype", Collections.Map("value", Variables.Prototypes[typeof(KeysharpObject)]));
+                Prototypes[typeof(FuncObj)].DefineProp("base", Collections.Map("value", Variables.Prototypes[typeof(KeysharpObject)]));
+                Statics[typeof(FuncObj)].DefineProp("base", Collections.Map("value", Variables.Statics[typeof(KeysharpObject)]));
+
+                var typesToRemoveSet = new HashSet<Type>(new[] { typeof(Any), typeof(FuncObj), typeof(KeysharpObject) });
+                var orderedTypes = types.Where(type => !typesToRemoveSet.Contains(type)).OrderBy(GetInheritanceDepth);
+                foreach (var t in orderedTypes)
+                {
+                    Script.InitStaticInstance(t);
+                }
+
+                // Now that the static objects are created, loop the types again and call __Init and __New for all built-in classes
+                foreach (var t in orderedTypes)
+                {
+                    if (t.Namespace.Equals("Keysharp.CompiledMain", StringComparison.InvariantCultureIgnoreCase))
+                    {
+                        Script.Invoke(Script.Variables.Statics[t], "__Init");
+                        Script.Invoke(Script.Variables.Statics[t], "__New");
+                    }
+                }
+
+                SetInitialFloatFormat();//This must be done intially and not just when A_FormatFloat is referenced for the first time.
 				Application.AddMessageFilter(new MessageFilter());
 			}
 

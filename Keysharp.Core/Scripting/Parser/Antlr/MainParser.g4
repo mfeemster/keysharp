@@ -347,7 +347,7 @@ methodDefinition
 
 propertyDefinition
     : classPropertyName '=>' expression
-    | classPropertyName s* '{' (propertyGetterDefinition EOL | propertySetterDefinition EOL | EOL)+ '}'
+    | classPropertyName StartFunctionStatement? s* '{' (propertyGetterDefinition EOL | propertySetterDefinition EOL | EOL)+ '}'
     ;
 
 classPropertyName
@@ -447,25 +447,21 @@ memberIndexArguments
 // ifStatement and loops require that they don't contain a bodied function expression.
 // The only way I could solve this was to duplicate some of the expressions with and without function expressions.
 expression
-    : (op = '!' | op = VerbalNot) right = expression                                  # NotExpression
-    | left = expression (op = '&&' | op = VerbalAnd) right = expression  # LogicalAndExpression
+    : left = expression (op = '&&' | op = VerbalAnd) right = expression  # LogicalAndExpression
     | left = expression (op = '||' | op = VerbalOr) right = expression   # LogicalOrExpression
     | <assoc = right> left = expression op = '??' right = expression                               # CoalesceExpression
     | ternCond = expression (WS | EOL)* '?' (WS | EOL)* ternTrue = expression (WS | EOL)* ':' (WS | EOL)* ternFalse = expression # TernaryExpression 
-    | <assoc = right> left = expression op = assignmentOperator right = expression # AssignmentExpression
     | fatArrowExpressionHead '=>' expression             # FatArrowExpression // Not sure why, but this needs to be lower than coalesce expression
     | functionExpressionHead (WS | EOL)* block           # FunctionExpression
     | operatorExpression                                 # ExpressionDummy  
     ;
 
 singleExpression
-    : operatorExpression                                            # SingleExpressionDummy
-    | op = ('!' | VerbalNot) right = singleExpression                       # NotExpressionDuplicate
-    | left = singleExpression op = ('&&' | VerbalAnd) right = singleExpression     # LogicalAndExpressionDuplicate
+    : left = singleExpression op = ('&&' | VerbalAnd) right = singleExpression     # LogicalAndExpressionDuplicate
     | left = singleExpression op = ('||' | VerbalOr) right = singleExpression      # LogicalOrExpressionDuplicate
     | left = singleExpression op = '??' right = singleExpression                   # CoalesceExpressionDuplicate
     | ternCond = singleExpression (WS | EOL)* '?' (WS | EOL)* ternTrue = singleExpression (WS | EOL)* ':' (WS | EOL)* ternFalse = singleExpression # TernaryExpressionDuplicate
-    | <assoc = right> left = singleExpression assignmentOperator right = singleExpression  # AssignmentExpressionDuplicate
+    | operatorExpression                                            # SingleExpressionDummy
     ;
 
 operatorExpression
@@ -474,21 +470,23 @@ operatorExpression
     | left = operatorExpression '--'                                                 # PostDecreaseExpression
     | '++' right = operatorExpression                                                # PreIncrementExpression
     | '--' right = operatorExpression                                                # PreDecreaseExpression
-    | <assoc = right> left = operatorExpression '**' right = operatorExpression             # PowerExpression
+    | <assoc = right> left = operatorExpression '**' right = operatorExpression      # PowerExpression
     | '-' right = operatorExpression                                                 # UnaryMinusExpression
+    | (op = '!' | op = VerbalNot) right = operatorExpression                         # NotExpression
     | '+' right = operatorExpression                                                 # UnaryPlusExpression
     | '~' right = operatorExpression                                                 # BitNotExpression
     | left = operatorExpression ((WS | EOL)* op = ('*' | '/' | '//') (WS | EOL)*) right = operatorExpression  # MultiplicativeExpression
     | left = operatorExpression op = ('+' | '-') right = operatorExpression                        # AdditiveExpression
     | left = operatorExpression op = ('<<' | '>>' | '>>>') right = operatorExpression              # BitShiftExpression
-    | left = operatorExpression ((WS | EOL)* op = '&' (WS | EOL)*) right = operatorExpression        # BitAndExpression
+    | left = operatorExpression ((WS | EOL)* op = '&' (WS | EOL)*) right = operatorExpression      # BitAndExpression
     | left = operatorExpression op = '^' right = operatorExpression                                # BitXOrExpression
     | left = operatorExpression op = '|' right = operatorExpression                                # BitOrExpression
     | left = operatorExpression (ConcatDot | WS+) right = operatorExpression                       # ConcatenateExpression
     | left = operatorExpression op = '~=' right = operatorExpression                               # RegExMatchExpression
     | left = operatorExpression op = ('<' | '>' | '<=' | '>=') right = operatorExpression          # RelationalExpression
     | left = operatorExpression op = ('=' | '!=' | '==' | '!==') right = operatorExpression        # EqualityExpression
-    | left = operatorExpression op = (Instanceof | Is | In | Contains) right = operatorExpression # ContainExpression
+    | left = operatorExpression op = (Instanceof | Is | In | Contains) right = operatorExpression  # ContainExpression
+    | <assoc = right> left = primaryExpression op = assignmentOperator right = expression          # AssignmentExpression
     ;
 
 primaryExpression
@@ -582,8 +580,7 @@ literal
     | bigintLiteral
     | (NullLiteral
     | Unset
-    | StringLiteral
-    | RegularExpressionLiteral)
+    | StringLiteral)
     ;
 
 boolean : 

@@ -148,7 +148,7 @@ namespace Keysharp.Core
 		/// or a combination of VK and SC (in that order) such as vk1Bsc001.Note that these codes must be in hexadecimal.
 		/// </param>
 		/// <returns>Returns the scan code of the specified key, or 0 if the key is invalid or has no scan code.</returns>
-		public static long GetKeySC(object keyName) => (long)GetKeyNamePrivate(keyName.As(), 1);
+		public static long GetKeySC(object keyName) => Convert.ToInt64((uint)GetKeyNamePrivate(keyName.As(), 1));
 
 
 		/// <summary>
@@ -208,7 +208,7 @@ namespace Keysharp.Core
 		/// Note that these codes must be in hexadecimal.
 		/// </param>
 		/// <returns>The virtual key code of the specified key, or 0 if the key is invalid or has no virtual key code.</returns>
-		public static long GetKeyVK(object keyName) => (long)GetKeyNamePrivate(keyName.As(), 2);
+		public static long GetKeyVK(object keyName) => Convert.ToInt64((uint)GetKeyNamePrivate(keyName.As(), 2));
 
 		/// <summary>
 		/// Creates, modifies, enables, or disables a hotkey while the script is running.
