@@ -190,6 +190,8 @@ namespace Keysharp.Scripting
 		private readonly tsmd allMethodCalls = [];
 		private readonly Stack<bool> allStaticVars = new ();
 		private readonly Dictionary<CodeTypeDeclaration, Dictionary<string, OrderedDictionary<string, CodeExpression>>> allVars = [];//Needs to be ordered so that code variables are generated in the order they were declared.
+		private readonly Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeVariableReferenceExpression>>> allVarRefs = [];
+
 		private readonly CodeAttributeDeclarationCollection assemblyAttributes = [];
 		private readonly HashSet<CodeSnippetExpression> assignSnippets = [];
 		private readonly Stack<CodeBlock> blocks = new ();
@@ -502,7 +504,11 @@ namespace Keysharp.Scripting
 							else
 							{
 								for (var i = method.Parameters.Count - 1; i >= 0; i--)
-									method.Statements.Insert(0, new CodeExpressionStatement(new CodeSnippetExpression($"object {Ch.CreateEscapedIdentifier(method.Parameters[i].Name)} = args.Length > {i} ? args[{i}] : null")));
+								{
+									var varName = Ch.CreateEscapedIdentifier(method.Parameters[i].Name);
+									method.Statements.Insert(0, new CodeExpressionStatement(new CodeSnippetExpression($"object {varName} = args.Length > {i} ? args[{i}] : null")));
+									allVars.GetOrAdd(typeMethods.Key).GetOrAdd(method.Name).Add(varName, new CodeVariableReferenceExpression(varName));//More of a declaration than a reference, but it works.
+								}
 							}
 
 							origNewParams = method.Parameters.Cast<CodeParameterDeclarationExpression>().ToList();
@@ -1097,6 +1103,27 @@ namespace Keysharp.Scripting
 			methods.GetOrAdd(targetClass)[userMainMethod.Name] = userMainMethod;
 			_ = targetClass.Members.Add(userMainMethod);
 
+			foreach (var cvreType in allVarRefs)
+			{
+				foreach (var cvreScope in cvreType.Value)
+				{
+					foreach (var cvreVar in cvreScope.Value)
+					{
+						string str = null;
+
+						if (MethodExistsInTypeOrBase(cvreType.Key.Name, cvreVar.VariableName) is CodeMemberMethod cmm)
+							str = cmm.Name;
+						else if (Reflections.FindBuiltInMethod(cvreVar.VariableName, -1) is MethodPropertyHolder mph)
+							str = mph.mi.DeclaringType.FullName + "." + mph.mi.Name;
+
+						//Can't transform this in a call to Func(), but hopefully it's ok.
+						if (str != null)
+							if (!VarExistsAtCurrentOrParentScope(cvreType.Key, cvreScope.Key, Ch.CreateEscapedIdentifier(cvreVar.VariableName)))
+								cvreVar.VariableName = str;
+					}
+				}
+			}
+
 			//Ternaries need to be re-evaluated because they are handled as snippets.
 			foreach (var tern in ternaries)
 			{
@@ -1294,6 +1321,7 @@ namespace Keysharp.Scripting
 			methods[ctd] = new Dictionary<string, CodeMemberMethod>(StringComparer.OrdinalIgnoreCase);
 			properties[ctd] = new Dictionary<string, List<CodeMemberProperty>>(StringComparer.OrdinalIgnoreCase);
 			allVars[ctd] = new Dictionary<string, OrderedDictionary<string, CodeExpression>>(StringComparer.OrdinalIgnoreCase);
+			allVarRefs[ctd] = new Dictionary<string, List<CodeVariableReferenceExpression>>(StringComparer.OrdinalIgnoreCase);
 			staticFuncVars[ctd] = new Stack<Dictionary<string, CodeExpression>>();
 			setPropertyValueCalls[ctd] = [];
 			getPropertyValueCalls[ctd] = [];
