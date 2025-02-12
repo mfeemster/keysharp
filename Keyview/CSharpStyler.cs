@@ -42,7 +42,7 @@
 								  " using virtual while volatile yield var async await" +
 								  " object bool byte char class const decimal double enum float int long sbyte short" +
 								  " static string struct uint ulong ushort void dynamic ");
-			var builtInTypeNames = typeof(string).Assembly.GetTypes()
+			var builtInTypeNames = typeof(string).Assembly.GetExportedTypes()
 								   .Where(t => t.IsPublic && t.IsVisible)
 			.Select(t => new { t.Name, Length = t.Name.IndexOf('`') }) // remove generic type from "List`1"
 			.Select(x => x.Length == -1 ? x.Name : x.Name.Substring(0, x.Length))
