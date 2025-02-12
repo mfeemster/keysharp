@@ -213,7 +213,7 @@ if (arr[3] = "(`"")
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
-
+	
 arr := Array()
 
 arr.Push(10)
@@ -322,7 +322,7 @@ if (arr[1] == 1 && arr[2] == 2 && arr.Length == 2 && arr.Capacity == 2)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
-
+	
 arr := Array(400, 500, 2, 1000, 10000)
 minin := arr.MinIndex()
 maxin := arr.MaxIndex()
@@ -396,7 +396,7 @@ if (arr3.c == "ghi")
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
-
+	
 arr.Clear()
 len := arr.Length
 
@@ -462,7 +462,7 @@ if (filtered.Length == 1 && filtered[1] == 10)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
-
+	
 lam := (x) => Mod(x, 5) == 0
 arr := [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 filtered := arr.Filter(lam, -2)
@@ -562,7 +562,7 @@ if (arr2.Length == 2 && arr2[1] == 40 && arr2[2] == 90)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
-
+	
 lam := (l, r) => l < r ? -1 : (l > r ? 1 : 0)
 arr := [99, 3, 100, -5, -5, 0]
 arr.Sort(lam)
@@ -759,7 +759,7 @@ if (val is unset && arr.Length == 0)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
-
+	
 sumarray(arr)
 {
 	temp := 0

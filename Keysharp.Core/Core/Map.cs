@@ -148,8 +148,9 @@
 		///     1: Return the key in the first element, with the second being null.<br/>
 		///     2: Return the key in the first element, and the value in the second.
 		/// </param>
-		/// <returns><see cref="IEnumerator{(object, object)}"/></returns>
-		public IEnumerator<(object, object)> __Enum(object count) => new MapKeyValueIterator(map, count.Ai());
+		/// <returns><see cref="KeysharpEnumerator"/></returns>
+		public KeysharpEnumerator __Enum(object count) => new MapKeyValueIterator(map, count.Ai());
+
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="Map"/> class.
@@ -249,7 +250,7 @@
 		/// <summary>
 		/// The implementation for <see cref="IEnumerable{(object, object)}.GetEnumerator()"/> which returns an <see cref="MapKeyValueIterator"/>.
 		/// </summary>
-		/// <returns>An <see cref="IEnumerable{(object, object)}"/> which is an <see cref="MapKeyValueIterator"/>.</returns>
+		/// <returns>An <see cref="IEnumerator{(object, object)}"/> which is a <see cref="MapKeyValueIterator"/>.</returns>
 		public IEnumerator<(object, object)> GetEnumerator() => new MapKeyValueIterator(map, 2);
 
 		/// <summary>
@@ -517,8 +518,9 @@
 		/// <summary>
 		/// The implementation for <see cref="IEnumerable.GetEnumerator"/> which just calls <see cref="__Enum"/>.
 		/// </summary>
-		/// <returns><see cref="IEnumerator{(object, object)}"/></returns>
-		IEnumerator IEnumerable.GetEnumerator() => __Enum(2);
+		/// <returns><see cref="MapKeyValueIterator"/></returns>
+		IEnumerator IEnumerable.GetEnumerator() => new MapKeyValueIterator(map, 2);
+		
 		/// <summary>
 		/// Internal helper to insert a key,value pair into the map.
 		/// </summary>
@@ -569,15 +571,8 @@
 	/// <summary>
 	/// A two component iterator for <see cref="Map"/> which returns the key and the value as a tuple.
 	/// </summary>
-	internal class MapKeyValueIterator : IEnumerator<(object, object)>
+	internal class MapKeyValueIterator : KeysharpEnumerator, IEnumerator<(object, object)>
 	{
-		/// <summary>
-		/// The number of items to return for each iteration. Allowed values are 1 and 2:
-		/// 1: return just the key in the first position
-		/// 2: return the key in the first position and the value in the second.
-		/// </summary>
-		private readonly int count;
-
 		/// <summary>
 		/// The internal map to be iterated over.
 		/// </summary>
@@ -599,7 +594,7 @@
 				{
 					var kv = iter.Current;
 
-					if (count == 1)
+					if (Count == 1)
 						return (kv.Key, null);
 					else
 						return (kv.Key, kv.Value);
@@ -622,24 +617,51 @@
 		/// <param name="m">The <see cref="Dictionary{object,object}"/> to iterate over.</param>
 		/// <param name="c">The number of items to return for each iteration.</param>
 		public MapKeyValueIterator(Dictionary<object, object> m, int c)
+			: base(null, c)
 		{
-			count = c;
 			map = m;
 			iter = map.GetEnumerator();
+			Error err;
+			var fo = new FuncObj("Call", this, Count);
+
+			if (fo.IsValid)
+				CallFunc = fo;
+			else
+				_ = Errors.ErrorOccurred(err = new MethodError($"Existing function object was invalid.")) ? throw err : "";
 		}
 
 		/// <summary>
 		/// Calls <see cref="Current"/> and places the key value in the passed in object reference.
 		/// </summary>
 		/// <param name="pos">A reference to the key value.</param>
-		public void Call(ref object obj0) => (obj0, _) = Current;
+		/// <returns>True if the iterator position has not moved past the last element, else false.</returns>
+		public override object Call(ref object key)
+		{
+			if (MoveNext())
+			{
+				(key, _) = Current;
+				return true;
+			}
+
+			return false;
+		}
 
 		/// <summary>
 		/// Calls <see cref="Current"/> and places the key and value in the passed in object references.
 		/// </summary>
 		/// <param name="key">A reference to the key value.</param>
 		/// <param name="value">A reference to the object value.</param>
-		public void Call(ref object key, ref object value) => (key, value) = Current;
+		/// <returns>True if the iterator position has not moved past the last element, else false.</returns>
+		public override object Call(ref object key, ref object value)
+		{
+			if (MoveNext())
+			{
+				(key, value) = Current;
+				return true;
+			}
+
+			return false;
+		}
 
 		/// <summary>
 		/// The implementation for <see cref="IComparer.Dispose"/> which internally resets the iterator.

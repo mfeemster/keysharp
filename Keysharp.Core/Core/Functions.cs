@@ -174,6 +174,10 @@ namespace Keysharp.Core
 				else if (throwIfBad)
 					return Errors.ErrorOccurred(err = new MethodError($"Unable to retrieve method info for {d.Method.Name} when creating a function object from delegate.")) ? throw err : null;
 			}
+			else if (h is KeysharpEnumerator ke)
+			{
+				del = ke.CallFunc;
+			}
 			else if (throwIfBad)
 				return Errors.ErrorOccurred(err = new TypeError($"Improper value of {h} was supplied for a function object.")) ? throw err : null;
 

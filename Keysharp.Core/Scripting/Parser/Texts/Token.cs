@@ -749,7 +749,7 @@ namespace Keysharp.Scripting
 				}
 				else if (sym == StringBound || sym == StringBoundVerbatim)
 				{
-					list.Add(ParseString(codeLine, code, ref i));
+					list.Add(ParseString(codeLine, code, ref i, true));
 				}
 				else
 				{
@@ -937,7 +937,7 @@ namespace Keysharp.Scripting
 			return list;
 		}
 
-		private static string ParseString(CodeLine codeLine, string code, ref int i)
+		private static string ParseString(CodeLine codeLine, string code, ref int i, bool prependVerbatimEscape)
 		{
 			var escape = false;
 			var sym = code[i];
@@ -962,6 +962,9 @@ namespace Keysharp.Scripting
 						_ = str.Append(StringBound);
 						break;
 					}
+
+					if (prependVerbatimEscape && sym == StringBound)
+						_ = str.Append(Escape);
 
 					_ = str.Append(sym);
 

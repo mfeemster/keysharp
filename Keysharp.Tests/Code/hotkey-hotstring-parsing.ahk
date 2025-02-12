@@ -130,4 +130,8 @@ else
 	FileAppend, "fail", "*"
 
 FileAppend, "pass", "*"
+
+`;:::
+`::;
+
 ExitApp()

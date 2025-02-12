@@ -203,6 +203,9 @@ namespace Keysharp.Scripting
 					hotstringStartIndex = -1;  // Indicate that this isn't a hotstring after all.
 			}
 
+			var nameParsed = false;
+			var tempName = "";
+
 			if (hotstringStartIndex <= 0) // Not a hotstring (hotstring_start is checked *again* in case above block changed it; otherwise hotkeys like ": & x" aren't recognized).
 			{
 				hotkeyFlagIndex = buf.IndexOf(HotkeySignal);
@@ -222,8 +225,9 @@ namespace Keysharp.Scripting
 					// to contain a double-colon somewhere.  This avoids the need to escape double colons in scripts.
 					// Note: Hotstrings can't suffer from this type of ambiguity because a leading colon or pair of
 					// colons makes them easier to detect.
-					var temp = buf.OmitTrailingWhitespace(hotkeyFlagIndex); // For maintainability.
-					var hotkeyValidity = HotkeyDefinition.TextInterpret(temp.TrimStart(SpaceTab), null);
+					var temp = buf.OmitTrailingWhitespaceSpan(hotkeyFlagIndex).TrimStart(SpaceTab); // For maintainability.
+					tempName = temp.Length == 1 ? temp[0].ToString() : EscapedString(temp, false);
+					var hotkeyValidity = HotkeyDefinition.TextInterpret(tempName, null);
 
 					switch (hotkeyValidity)
 					{
@@ -238,6 +242,8 @@ namespace Keysharp.Scripting
 							// so that the section below handles it as a hotkey.  This allows it to end the auto-exec
 							// section and register the appropriate label even though it won't be an active hotkey.
 					}
+
+					nameParsed = true;
 				}
 			}
 
@@ -262,7 +268,13 @@ namespace Keysharp.Scripting
 				*/
 				//This is extremely messy because it tries to mimic what AHK did, which is usually the least intuitive, and most complex way to do something.
 				//If we could some day determine the exact components of the string we are looking for, we could probably reduce this to 2 or 3 lines using Split().
-				var hotName = buf.Substring(0, hotkeyFlagIndex);
+				if (!nameParsed)
+				{
+					var temp = buf.OmitTrailingWhitespaceSpan(hotkeyFlagIndex).TrimStart(SpaceTab); // For maintainability.
+					tempName = temp.Length == 1 ? temp[0].ToString() : EscapedString(temp, false);
+				}
+
+				var hotName = tempName;
 				var options = buf.Substring(hotstringOptionsIndex, hotkeyFlagIndex - hotstringOptionsIndex);
 				var hotstring = hotstringStartIndex >= 0 ? buf.Substring(hotstringStartIndex, hotkeyFlagIndex - hotstringStartIndex) : "";
 				hotkeyFlagIndex += HotkeySignal.Length;  // Now hotkey_flag is the hotkey's action, if any.

@@ -423,24 +423,66 @@ namespace Keysharp.Core
 		///     <see cref="IEnumerable"/><br/>
 		/// </exception>
 		/// <exception cref="UnsetError">An <see cref="UnsetError"/> exception is thrown if the object is null.</exception>
-		public static IEnumerator<(object, object)> MakeEnumerator(object obj, object count)
+		public static KeysharpEnumerator MakeEnumerator(object obj, object count)
 		{
 			Error err;
+			var ct = count.Ai();
 
 			if (obj is I__Enum ienum)
-				return ienum.__Enum(count.Ai());
+				return ienum.__Enum(ct);
+			else if (obj is OwnPropsIterator opi)
+			{
+				opi.GetVal = ct != 1;
+				return opi;
+			}
+			else if (obj is KeysharpEnumerator kse)
+				return kse;
+			//else if (obj is object[] oa)
+			//  return new Array(oa).__Enum(count.Ai());
+			//else if (obj is IEnumerable<(object, object)> ie0)
+			//  return ie0.GetEnumerator();
+			//else if (obj is IEnumerator<(object, object)> ie1)
+			//  return ie1;
+			//else if (obj is IEnumerable ie)
+			//  return ie.Cast<object>().Select(o => (o, o)).GetEnumerator();
+			//if (obj is Array arr)
+			//  return arr.__Enum(ct);
+			//else if (obj is Map m)
+			//  return m.__Enum(ct.Ai());
 			else if (obj is object[] oa)
 				return new Array(oa).__Enum(count.Ai());
-			else if (obj is IEnumerable<(object, object)> ie0)
-				return ie0.GetEnumerator();
-			else if (obj is IEnumerator<(object, object)> ie1)
-				return ie1;
-			else if (obj is IEnumerable ie)
-				return ie.Cast<object>().Select(o => (o, o)).GetEnumerator();
+			else if (Functions.GetFuncObj(obj, null) is FuncObj fo)
+				return new KeysharpEnumerator(fo, ct);
+			else if (Reflections.FindAndCacheMethod(obj.GetType(), "__Enum", 1) is MethodPropertyHolder mph)
+			{
+				var tempEnum = mph.callFunc(obj, [count]);
+
+				if (tempEnum is KeysharpEnumerator kse2)
+					return kse2;
+				else
+					return MakeEnumerator(tempEnum, count);
+			}
+			else if (obj is KeysharpObject kso)
+			{
+				if (kso.op.TryGetValue("__Enum", out var map))
+				{
+					if (map.map.TryGetValue("call", out var callval) && callval is IFuncObj ifocall)
+					{
+						var tempEnum = ifocall.Call(obj, count);
+
+						if (tempEnum is KeysharpEnumerator kse3)
+							return kse3;
+						else
+							return MakeEnumerator(tempEnum, count);
+					}
+				}
+
+				return Errors.ErrorOccurred(err = new UnsetError($"__Enum() could not be located on the object.")) ? throw err : null;
+			}
 			else if (obj is null)
-				return Errors.ErrorOccurred(err = new UnsetError($"Object was null and could not be converted to an IEnumerator<object, object>.")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new UnsetError($"Object was null and could not be converted to a KeysharpEnumerator.")) ? throw err : null;
 			else
-				return Errors.ErrorOccurred(err = new Error($"Object of type {obj.GetType()} was not of a type that could be converted to an IEnumerator<object, object>.")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new Error($"Object of type {obj.GetType()} was not of a type that could be converted to a KeysharpEnumerator.")) ? throw err : null;
 		}
 
 		/// <summary>
