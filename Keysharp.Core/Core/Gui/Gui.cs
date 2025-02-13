@@ -334,6 +334,7 @@
 		{
 			if (form == null)//Don't allow derived classes to init twice.
 			{
+				Init__Item();
 				var options = obj.Length > 0 ? obj[0].As() : null;
 				var caption = obj.Length > 1 ? obj[1].As() : null;
 				var eventObj = obj.Length > 2 ? obj[2] : null;

@@ -1019,6 +1019,8 @@ namespace Keysharp.Scripting
 			{
 				if (typeProperties.Key != targetClass)
 				{
+					var didItem = false;
+
 					foreach (var propkv in typeProperties.Value.ToArray())
 					{
 						var propList = propkv.Value;
@@ -1031,6 +1033,15 @@ namespace Keysharp.Scripting
 								//prop.Attributes = MemberAttributes.Public;//Make virtual at a minimum, which might get converted to override below.
 								_ = typeProperties.Value.Remove("__item"); //Was stored as lowercase.
 								typeProperties.Value.GetOrAdd("Item").Add(prop);
+
+								if (!didItem)
+								{
+									didItem = true;
+									var ctors = typeProperties.Key.Members.Cast<CodeTypeMember>().Where(ctm => ctm is CodeConstructor cc && !cc.Attributes.HasFlag(MemberAttributes.Static)).Cast<CodeConstructor>();
+
+									foreach (var ctor in ctors)
+										ctor.Statements.Insert(0, new CodeExpressionStatement(new CodeSnippetExpression("Init__Item()")));
+								}
 							}
 						}
 					}
@@ -1048,9 +1059,20 @@ namespace Keysharp.Scripting
 
 						foreach (var prop in propList)
 						{
-							//if (typeProperties.Key.BaseTypes.Count > 0)
-							//  if (PropExistsInTypeOrBase(typeProperties.Key.BaseTypes[0].BaseType, "Item", prop.Parameters.Count))
-							//      prop.Attributes = MemberAttributes.Public | MemberAttributes.Override;
+							//Virtual can never work because resolution is wrong when super is used.
+							//if (prop.Name == "Item" && typeProperties.Key.BaseTypes.Count > 0)
+							//{
+							//  var bpi = PropExistsInTypeOrBase(typeProperties.Key.BaseTypes[0].BaseType, "Item", prop.Parameters.Count);
+							//  if (bpi.Item1 && prop.Parameters.Count == bpi.Item3.Count)
+							//  {
+							//      var ipindex = 0;
+							//      if (bpi.Item3.All(ip => ip.Equals(new CommonParameterInfo(
+							//                                            prop.Parameters[ipindex].IsVariadic(),
+							//                                            prop.Parameters[ipindex].Direction == FieldDirection.Ref,
+							//                                            prop.Parameters[ipindex++].Type.BaseType))))
+							//          prop.Attributes = MemberAttributes.Public | MemberAttributes.Override;
+							//  }
+							//}
 							_ = typeProperties.Key.Members.Add(prop);
 						}
 					}
@@ -1234,7 +1256,7 @@ namespace Keysharp.Scripting
 							var init = Ch.CodeToString(ce);
 							//If the property existed in a base class and is a simple assignment in this class, then assume
 							//they meant to reference the base property rather than create a new one.
-							(bool, string) bn;
+							(bool, string, List<CommonParameterInfo>) bn;
 
 							//Determine if the variable name matched a property defined in a base class.
 							//Note this is not done for static variables because those are always assumed to be new declarations.
@@ -1417,7 +1439,7 @@ namespace Keysharp.Scripting
 			return (false, null);
 		}
 
-		private (bool, string) PropExistsInTypeOrBase(string t, string p, int paramCount)
+		private (bool, string, List<CommonParameterInfo>) PropExistsInTypeOrBase(string t, string p, int paramCount)
 		{
 			if (properties.Count > 0)
 			{
@@ -1434,7 +1456,11 @@ namespace Keysharp.Scripting
 							if (typekv.Value.TryGetValue(p, out var tempList))//If the property existed in the type, return.
 								foreach (var prop in tempList)
 									if (prop.Parameters.Count == paramCount)
-										return (true, prop.Name);
+										return (true, prop.Name, prop.Parameters.Cast<CodeParameterDeclarationExpression>().Select(cpde => new CommonParameterInfo(
+											cpde.IsVariadic(),
+											cpde.Direction == FieldDirection.Ref,
+											cpde.Type.BaseType
+										)).ToList());
 
 							//Wasn't found in fully declared properties, but simple assignments at the class namespace level are later treated as properties, so check those.
 							var ctd = allVars.FirstOrDefault(kv => kv.Key.Name == t);
@@ -1445,7 +1471,7 @@ namespace Keysharp.Scripting
 								{
 									if (scopekv.Value.TryGetValue(p, out var ce))
 									{
-										return (true, p);
+										return (true, p, []);//These types aren't relevant for the code that calls this function.
 									}
 								}
 							}
@@ -1459,12 +1485,16 @@ namespace Keysharp.Scripting
 								var bpi = PropExistsInBuiltInClass(t, p, paramCount);
 
 								if (bpi.Item1)
-									return (bpi.Item1, bpi.Item2.Name);
+									return (bpi.Item1, bpi.Item2.Name, bpi.Item2.GetIndexParameters().Select(ipi => new CommonParameterInfo(
+										ipi.IsVariadic(),
+										ipi.ParameterType.IsByRef,
+										ipi.ParameterType.FullName
+									)).ToList());
 
 								break;//Either the property was not found, or the base was not a built in type, so try again with base class.
 							}
 							else
-								return (false, null);
+								return (false, null, []);
 						}
 					}
 
@@ -1475,14 +1505,18 @@ namespace Keysharp.Scripting
 						var bpi = PropExistsInBuiltInClass(t, p, paramCount);
 
 						if (bpi.Item1)
-							return (bpi.Item1, bpi.Item2.Name);
+							return (bpi.Item1, bpi.Item2.Name, bpi.Item2.GetIndexParameters().Select(ipi => new CommonParameterInfo(
+								ipi.IsVariadic(),
+								ipi.ParameterType.IsByRef,
+								ipi.ParameterType.FullName
+							)).ToList());
 						else
 							break;
 					}
 				}
 			}
 
-			return (false, "");
+			return (false, "", []);
 		}
 
 		private (bool, PropertyInfo) PropExistsInTypeOrBase(Type t, string p, int paramCount)
@@ -1691,6 +1725,26 @@ namespace Keysharp.Scripting
 			}
 
 			return false;
+		}
+
+		internal class CommonParameterInfo
+		{
+			internal bool IsVariadic { get; private set; }
+			internal bool IsRef { get; private set; }
+			internal string Type { get; private set; }
+
+			internal CommonParameterInfo(bool isVariadic, bool isRef, string type)
+			{
+				IsVariadic = isVariadic;
+				IsRef = isRef;
+				Type = type;
+			}
+
+			public bool Equals(CommonParameterInfo other) => IsVariadic == other.IsVariadic
+			&& IsRef == other.IsRef
+			&& Type == other.Type;
+
+			public override bool Equals(object other) => other is CommonParameterInfo cpi && this == cpi;
 		}
 	}
 }

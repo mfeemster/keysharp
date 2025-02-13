@@ -253,7 +253,7 @@ else
 
 o1 := [1, 2, 3]
 
-if (o1.OwnPropCount(o1) == 0 && ObjOwnPropCount(o1) == 0) ; Declared properties for built in types are not counted.
+if (o1.OwnPropCount(o1) == 1 && ObjOwnPropCount(o1) == 1) ; Declared properties for built in types are not counted. __Item is the only ownprop.
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
@@ -262,7 +262,19 @@ if (!ObjHasOwnProp(o1, "capacity") && !o1.HasOwnProp("Count") && !o1.HasOwnProp(
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
+if (ObjHasOwnProp(o1, "__Item") && o1.HasOwnProp("__Item"))
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
 	
+m := Map("one", 1, "two", 2, "three", 3)
+
+if (ObjHasOwnProp(m, "__Item") && m.HasOwnProp("__Item"))
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
 o1 := testclass()
 o1.DefineProp("c", { ; Dynamically create property with getter and setter.
 		get: (this) => 123,

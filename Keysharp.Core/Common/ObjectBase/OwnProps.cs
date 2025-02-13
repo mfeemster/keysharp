@@ -85,7 +85,11 @@
 	{
 		public KeysharpObject Parent { get; private set; }
 
-		public OwnPropsMap(KeysharpObject kso, Map map) => _ = __New(kso, map);
+		public OwnPropsMap(KeysharpObject kso, Map map)
+			: base(false)
+		{
+			_ = __New(kso, map);
+		}
 
 		public object __New(params object[] args)
 		{
