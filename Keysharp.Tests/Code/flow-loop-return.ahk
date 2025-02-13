@@ -198,7 +198,7 @@ for (loopvar in arr)
 {
 }
 
-if (loopvar == 0)
+if (loopvar == 30)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
@@ -213,7 +213,7 @@ testglobalvarfunc()
 	{
 	}
 
-	if (aglobalvar == 0)
+	if (aglobalvar == 30)
 		FileAppend, "pass", "*"
 	else
 		FileAppend, "fail", "*"
