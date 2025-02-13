@@ -46,13 +46,13 @@ if (a == 6)
 else
     FileAppend "fail", "*"
 
-enum1(&x) {
+Enum1(&x) {
     static i := 0
     x := Mod(++i, 4) * 2
     return x // 2
 }
 
-enum2(&x, &y) {
+Enum2(&x, &y) {
     static i := 0
     x := Mod(++i, 4), y := x * 2
     return x

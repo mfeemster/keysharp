@@ -152,6 +152,15 @@
 		/// <exception cref="IndexError">An <see cref="IndexError"/> exception is thrown if the offset exceeds the bounds of the memory or if it couldn't be determined.</exception>
 		public static long NumPut(params object[] obj)
 		{
+			byte[] ConvertToInt(object input)
+			{
+				if (input is IntPtr ip)
+					return BitConverter.GetBytes(ip.ToInt64());
+				else if (input is ulong ul)
+					return BitConverter.GetBytes(ul);
+				else
+					return BitConverter.GetBytes(Convert.ToUInt64(input.Al()));
+			}
 			Error err;
 			IntPtr addr = IntPtr.Zero;
 			Buffer buf;
@@ -193,54 +202,54 @@
 				switch (type.ToLower())
 				{
 					case "int":
-						bytes = BitConverter.GetBytes((int)Convert.ToInt64(number));
+						bytes = BitConverter.GetBytes(number.Ai());
 						inc = 4;
 						break;
 
 					case "uint":
-						bytes = BitConverter.GetBytes((uint)Convert.ToUInt64(number));
+						bytes = BitConverter.GetBytes(number.Aui());
 						inc = 4;
 						break;
 
 					case "float":
-						bytes = BitConverter.GetBytes(Convert.ToSingle(number));
+						bytes = BitConverter.GetBytes(number.Af());
 						inc = 4;
 						break;
 
 					case "short":
-						bytes = BitConverter.GetBytes((short)Convert.ToInt64(number));
+						bytes = BitConverter.GetBytes((short)number.Ai());
 						inc = 2;
 						break;
 
 					case "ushort":
-						bytes = BitConverter.GetBytes((ushort)Convert.ToUInt64(number));
+						bytes = BitConverter.GetBytes((ushort)number.Aui());
 						inc = 2;
 						break;
 
 					case "char":
-						bytes = [(byte)Convert.ToInt32(number)];
+						bytes = [(byte)number.Ai()];
 						inc = 1;
 						break;
 
 					case "uchar":
-						bytes = [(byte)Convert.ToInt32(number)];
+						bytes = [(byte)number.Ai()];
 						inc = 1;
 						break;
 
 					case "double":
-						bytes = BitConverter.GetBytes(Convert.ToDouble(number));
+						bytes = BitConverter.GetBytes(number.Ad());
 						inc = 8;
 						break;
 
 					case "int64":
-						bytes = BitConverter.GetBytes(Convert.ToInt64(number));
+						bytes = BitConverter.GetBytes(number.Al());
 						inc = 8;
 						break;
 
 					case "uint64":
 					case "ptr":
 					case "uptr":
-						bytes = BitConverter.GetBytes(Convert.ToUInt64(number));
+						bytes = ConvertToInt(number);
 						inc = 8;
 						break;
 

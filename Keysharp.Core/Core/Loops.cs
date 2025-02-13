@@ -453,7 +453,7 @@ namespace Keysharp.Core
 				return new Array(oa).__Enum(count.Ai());
 			else if (Functions.GetFuncObj(obj, null) is FuncObj fo)
 				return new KeysharpEnumerator(fo, ct);
-			else if (Reflections.FindAndCacheMethod(obj.GetType(), "__Enum", 1) is MethodPropertyHolder mph)
+			else if (Reflections.FindAndCacheMethod(obj.GetType(), "__Enum", -1) is MethodPropertyHolder mph)
 			{
 				var tempEnum = mph.callFunc(obj, [count]);
 
