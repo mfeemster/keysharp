@@ -158,3 +158,108 @@ if (val == 123)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
+Gfunc123()
+{
+	return 123
+}
+
+Gfunc456()
+{
+	return 456
+}
+
+; Sort of a combination of instance, static, and intializiation funcs with direct function references to global functions.
+class foclass
+{
+    static sg123 := true ? gfunc123 : gfunc456
+	static sg456 := true ? gfunc456 : gfunc123
+	static stestmemberfunc := sclassfunc789
+
+	ig123 := true ? gfunc123 : gfunc456
+	ig456 := true ? gfunc456 : gfunc123
+	iginit123 := classfunc123
+
+	classfunc()
+	{
+		lg123 := true ? gfunc123 : gfunc456
+		lg456 := true ? gfunc456 : gfunc123
+
+		val := lg123()
+		
+		if (val == 123)
+			FileAppend, "pass", "*"
+		else
+			FileAppend, "fail", "*"
+
+		val := lg456()
+		
+		if (val == 456)
+			FileAppend, "pass", "*"
+		else
+			FileAppend, "fail", "*"
+
+		testfunc := classfunc123
+		val := testfunc()
+		
+		if (val == 123)
+			FileAppend, "pass", "*"
+		else
+			FileAppend, "fail", "*"
+	}
+
+	ClassFunc123()
+	{
+		return 123
+	}
+	
+	static sClassFunc789()
+	{
+		return 789
+	}
+}
+
+fc := foclass()
+fc.classfunc()
+
+val := fc.ig123()
+
+if (val == 123)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+val := fc.ig456()
+
+if (val == 456)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+	
+val := fc.iginit123()
+
+if (val == 123)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+val := foclass.sg123.Call()
+
+if (val == 123)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+val := foclass.sg456.Call()
+
+if (val == 456)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+val := foclass.stestmemberfunc.Call()
+
+if (val == 789)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"

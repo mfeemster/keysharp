@@ -54,7 +54,7 @@
 						if (op.TryGetValue(name, out var currProp))
 							currProp.map[kv.Key] = kv.Value[kv.Key];//Merge.
 						else
-							op[name] = new OwnPropsMap(this, new Map(kv.Value.map));//Create new.
+							op[name] = new OwnPropsMap(this, new Map(false, kv.Value.map));//Create new.
 					}
 
 					kso.op.Clear();
@@ -167,7 +167,7 @@
 						if (prop != null)
 						{
 							if (prop is not FuncObj fo
-								|| (fo.Mph.mi != null && fo.Mph.ParamLength <= 1))
+									|| (fo.Mph.mi != null && fo.Mph.ParamLength <= 1))
 								props[kv.Key] = prop;
 						}
 					}
@@ -240,6 +240,25 @@
 		public object Wrap(object obj) => obj;
 
 		protected static object __StaticInit() => "";
+
+		protected internal void Init__Item()
+		{
+			DefineProp("__Item",
+					   Keysharp.Core.Objects.Object(
+						   [
+							   "get",
+							   Keysharp.Core.Functions.GetFuncObj("ItemWrapper", this, 1, true),
+							   "set",
+							   Keysharp.Core.Functions.GetFuncObj("ItemWrapper", this, 1, true)
+						   ]));
+		}
+
+		/// <summary>
+		/// Wrapper so that querying for the __Item property will succeed.
+		/// </summary>
+		/// <param name="obj">Unused.</param>
+		/// <returns>this</returns>
+		public object ItemWrapper(object obj) => this;
 
 		/// <summary>
 		/// Placeholder for property initialization code that derived classes will call *before* __New() gets called.

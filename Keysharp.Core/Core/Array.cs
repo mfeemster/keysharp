@@ -138,6 +138,7 @@
 		public object __New(params object[] args)
 		{
 			array = new List<object>(capacity);
+			Init__Item();
 
 			if (args == null || args.Length == 0)
 			{
@@ -778,7 +779,7 @@
 				if ((i = TranslateIndex(i)) != -1)
 					return array[i];
 				else
-					return Errors.ErrorOccurred(err = new IndexError($"Invalid retrieval index of {i}.")) ? throw err : null;
+					return Errors.ErrorOccurred(err = new IndexError($"Invalid retrieval index of {index} on an array with length {array.Count}.")) ? throw err : null;
 			}
 			set
 			{
@@ -788,7 +789,7 @@
 				if ((i = TranslateIndex(i)) != -1)
 					array[i] = value;
 				else
-					_ = Errors.ErrorOccurred(err = new IndexError($"Invalid set index of {i}.")) ? throw err : "";
+					_ = Errors.ErrorOccurred(err = new IndexError($"Invalid set index of {index} on an array with length {array.Count}.")) ? throw err : "";
 			}
 		}
 

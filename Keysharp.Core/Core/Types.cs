@@ -237,6 +237,25 @@
 		/// </summary>
 		/// <param name="value">The object to examine.</param>
 		/// <returns>The class name of value.</returns>
-		public static string Type(object value) => value != null ? value.GetType().Name : "unset";
+		public static string Type(object value)
+		{
+			if (value != null)
+			{
+				var type = value.GetType().Name;
+
+				switch (type)
+				{
+					case "Int64":
+						return "Integer";
+
+					case "KeysharpObject":
+						return "Object";
+				}
+
+				return type;
+			}
+			else
+				return "unset";
+		}
 	}
 }

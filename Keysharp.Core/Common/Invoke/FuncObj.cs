@@ -41,25 +41,32 @@
 		public override object CallWithRefs(params object[] args)
 		{
 			var argsList = CreateArgs(args);
-			var refs = new List<RefHolder>(args.Length);
+			var argsArray = new object[argsList.Count];
+
+			for (var i = 0; i < argsList.Count; i++)
+			{
+				var p = argsList[i];
+
+				if (p is RefHolder rh)
+				{
+					rh.index = i;//Must change the index since the array has changed.
+					argsArray[i] = rh.val;
+				}
+				else
+					argsArray[i] = p;
+			}
+
+			var val = base.Call(argsArray);
 
 			for (var i = 0; i < argsList.Count; i++)
 			{
 				if (argsList[i] is RefHolder rh)
-				{
-					rh.index = i;//Must change the index since the array has changed.
-					refs.Add(rh);
-					argsList[i] = rh.val;
-				}
-			}
-
-			var argsArray = argsList.ToArray();
-			var val = base.Call(argsArray);
-
-			for (var i = 0; i < refs.Count; i++)
-			{
-				var rh = refs[i];
-				rh.reassign(argsArray[rh.index]);//Use value from new array.
+					rh.reassign(argsArray[rh.index]);//Use value from new array.
+				//args.Length could exceed parameters.Length if the last param was variadic.
+				//So don't assign back because variadic parameters aren't expected to be reference params, even though
+				//they might technically be able to be called that way with reflection.
+				else if (i < args.Length && i < mph.parameters.Length && mph.parameters[i].ParameterType.IsByRef)
+					args[i] = argsArray[i];//Reassign all the way back to the original.
 			}
 
 			return val;
@@ -92,7 +99,7 @@
 			}
 			else
 			{
-				for (; argsused < args.Length && argsused < mph.parameters.Length; argsused++)
+				for (; argsused < args.Length && argsList.Count < mph.parameters.Length; argsused++)
 					argsList.Add(args[argsused]);
 			}
 
@@ -161,25 +168,32 @@
 
 		public virtual object CallWithRefs(params object[] args)
 		{
-			var refs = new List<RefHolder>(args.Length);
+			var argsArray = new object[args.Length];
 
 			for (var i = 0; i < args.Length; i++)
 			{
-				object p = args[i];
+				var p = args[i];
 
 				if (p is RefHolder rh)
 				{
-					refs.Add(rh);
-					args[i] = rh.val;
+					rh.index = i;//Might not be needed here, but just to be safe.
+					argsArray[i] = rh.val;
 				}
+				else
+					argsArray[i] = p;
 			}
 
-			var val = mph.callFunc(inst, args);
+			var val = mph.callFunc(inst, argsArray);
 
-			for (var i = 0; i < refs.Count; i++)
+			for (var i = 0; i < args.Length; i++)
 			{
-				var rh = refs[i];
-				rh.reassign(args[rh.index]);
+				if (args[i] is RefHolder rh)
+					rh.reassign(argsArray[rh.index]);
+				//args.Length could exceed parameters.Length if the last param was variadic.
+				//So don't assign back because variadic parameters aren't expected to be reference params, even though
+				//they might technically be able to be called that way with reflection.
+				else if (i < args.Length && i < mph.parameters.Length && mph.parameters[i].ParameterType.IsByRef)
+					args[i] = argsArray[i];//Reassign all the way back to the original.
 			}
 
 			return val;

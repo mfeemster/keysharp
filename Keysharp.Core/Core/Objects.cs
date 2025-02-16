@@ -27,7 +27,7 @@
 
 			for (var i = 0; i < count; i += 2)
 			{
-				var map = new Map
+				var map = new Map(false)
 				{
 					CaseSense = false
 				};

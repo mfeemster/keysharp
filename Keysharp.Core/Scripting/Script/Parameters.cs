@@ -19,6 +19,16 @@ namespace Keysharp.Scripting
 
 				return l.ToArray();
 			}
+			else if (Loops.MakeEnumerator(obj, 1L) is KeysharpEnumerator ke)
+			{
+				var l = new List<object>();
+				object v1 = null;
+
+				while (ke.Call(ref v1).IsCallbackResultNonEmpty())
+					l.Add(v1);
+
+				return l.ToArray();
+			}
 			else
 				return [obj];
 		}

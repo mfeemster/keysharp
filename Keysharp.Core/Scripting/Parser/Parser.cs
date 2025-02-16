@@ -190,10 +190,8 @@ namespace Keysharp.Scripting
 		private readonly tsmd allMethodCalls = [];
 		private readonly Stack<bool> allStaticVars = new ();
 		private readonly Dictionary<CodeTypeDeclaration, Dictionary<string, OrderedDictionary<string, CodeExpression>>> allVars = [];//Needs to be ordered so that code variables are generated in the order they were declared.
-		private readonly Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeVariableReferenceExpression>>> allVarRefs = [];
-
 		private readonly CodeAttributeDeclarationCollection assemblyAttributes = [];
-		private readonly HashSet<CodeSnippetExpression> assignSnippets = [];
+		private readonly Dictionary<CodeExpression, CodeSnippetExpression> assignSnippets = [];
 		private readonly Stack<CodeBlock> blocks = new ();
 		private readonly CompilerHelper Ch;
 		private readonly Stack<List<string>> currentFuncParams = new ();
@@ -229,7 +227,6 @@ namespace Keysharp.Scripting
 		private readonly Dictionary<CodeTypeDeclaration, Stack<Dictionary<string, CodeExpression>>> staticFuncVars = [];
 		private readonly Stack<CodeSwitchStatement> switches = new ();
 		private readonly CodeTypeDeclaration targetClass;
-		private readonly List<CodeSnippetExpression> ternaries = new ();
 		private readonly Stack<CodeTypeDeclaration> typeStack = new ();
 		private readonly CodeStatementCollection topStatements = new ();
 		private bool blockOpen;
@@ -767,14 +764,8 @@ namespace Keysharp.Scripting
 
 							if (funcparam is CodeVariableReferenceExpression cvreparam)
 							{
-								var type = cvreparam.UserData["origtypescope"] is CodeTypeDeclaration ctd ? ctd.Name : "program";
-
-								if (MethodExistsInTypeOrBase(type, cvreparam.VariableName) is CodeMemberMethod cmm)
-								{
-									cvreparam.VariableName = cmm.Name;
-									var tempfunc = (CodeMethodReferenceExpression)InternalMethods.Func;
-									cmie.Parameters[i] = new CodeMethodInvokeExpression(tempfunc, cvreparam);
-								}
+								var type = cvreparam.UserData["origtype"] is CodeTypeDeclaration ctd ? ctd : targetClass;
+								cmie.Parameters[i] = ReevaluateCodeVariableReference(type, cmietypefunc.Key, cvreparam);
 							}
 						}
 
@@ -1019,6 +1010,8 @@ namespace Keysharp.Scripting
 			{
 				if (typeProperties.Key != targetClass)
 				{
+					var didItem = false;
+
 					foreach (var propkv in typeProperties.Value.ToArray())
 					{
 						var propList = propkv.Value;
@@ -1029,8 +1022,17 @@ namespace Keysharp.Scripting
 							{
 								prop.Name = "Item";
 								//prop.Attributes = MemberAttributes.Public;//Make virtual at a minimum, which might get converted to override below.
-								_ = typeProperties.Value.Remove("__item"); //Was stored as lowercase.
+								_ = typeProperties.Value.Remove("__item");//Was stored as lowercase.
 								typeProperties.Value.GetOrAdd("Item").Add(prop);
+
+								if (!didItem)
+								{
+									didItem = true;
+									var ctors = typeProperties.Key.Members.Cast<CodeTypeMember>().Where(ctm => ctm is CodeConstructor cc && !cc.Attributes.HasFlag(MemberAttributes.Static)).Cast<CodeConstructor>();
+
+									foreach (var ctor in ctors)
+										ctor.Statements.Insert(0, new CodeExpressionStatement(new CodeSnippetExpression("Init__Item()")));
+								}
 							}
 						}
 					}
@@ -1048,9 +1050,20 @@ namespace Keysharp.Scripting
 
 						foreach (var prop in propList)
 						{
-							//if (typeProperties.Key.BaseTypes.Count > 0)
-							//  if (PropExistsInTypeOrBase(typeProperties.Key.BaseTypes[0].BaseType, "Item", prop.Parameters.Count))
-							//      prop.Attributes = MemberAttributes.Public | MemberAttributes.Override;
+							//Virtual can never work because resolution is wrong when super is used.
+							//if (prop.Name == "Item" && typeProperties.Key.BaseTypes.Count > 0)
+							//{
+							//  var bpi = PropExistsInTypeOrBase(typeProperties.Key.BaseTypes[0].BaseType, "Item", prop.Parameters.Count);
+							//  if (bpi.Item1 && prop.Parameters.Count == bpi.Item3.Count)
+							//  {
+							//      var ipindex = 0;
+							//      if (bpi.Item3.All(ip => ip.Equals(new CommonParameterInfo(
+							//                                            prop.Parameters[ipindex].IsVariadic(),
+							//                                            prop.Parameters[ipindex].Direction == FieldDirection.Ref,
+							//                                            prop.Parameters[ipindex++].Type.BaseType))))
+							//          prop.Attributes = MemberAttributes.Public | MemberAttributes.Override;
+							//  }
+							//}
 							_ = typeProperties.Key.Members.Add(prop);
 						}
 					}
@@ -1103,42 +1116,11 @@ namespace Keysharp.Scripting
 			methods.GetOrAdd(targetClass)[userMainMethod.Name] = userMainMethod;
 			_ = targetClass.Members.Add(userMainMethod);
 
-			foreach (var cvreType in allVarRefs)
-			{
-				foreach (var cvreScope in cvreType.Value)
-				{
-					foreach (var cvreVar in cvreScope.Value)
-					{
-						string str = null;
-
-						if (MethodExistsInTypeOrBase(cvreType.Key.Name, cvreVar.VariableName) is CodeMemberMethod cmm)
-							str = cmm.Name;
-						else if (Reflections.FindBuiltInMethod(cvreVar.VariableName, -1) is MethodPropertyHolder mph)
-							str = mph.mi.DeclaringType.FullName + "." + mph.mi.Name;
-
-						//Can't transform this in a call to Func(), but hopefully it's ok.
-						if (str != null)
-							if (!VarExistsAtCurrentOrParentScope(cvreType.Key, cvreScope.Key, Ch.CreateEscapedIdentifier(cvreVar.VariableName)))
-								cvreVar.VariableName = str;
-					}
-				}
-			}
-
-			//Ternaries need to be re-evaluated because they are handled as snippets.
-			foreach (var tern in ternaries)
-			{
-				if (tern.UserData["orig"] is CodeTernaryOperatorExpression ctoe)
-				{
-					var ctse = MakeTernarySnippet(ctoe.Condition, ctoe.TrueBranch, ctoe.FalseBranch);
-					tern.Value = ctse.Value;
-				}
-			}
-
 			//Assignments as snippets need to be reevaluated.
 			//Despite having to compile code again, this took < 1ms in debug mode for over 100 assignments,
 			//so it shouldn't matter.
 			foreach (var assign in assignSnippets)
-				ReevaluateSnippet(assign);
+				ReevaluateSnippets(assign.Value);
 
 			//Static member properties need to be reevaluated.
 			foreach (var member in codeSnippetTypeMembers)
@@ -1234,7 +1216,7 @@ namespace Keysharp.Scripting
 							var init = Ch.CodeToString(ce);
 							//If the property existed in a base class and is a simple assignment in this class, then assume
 							//they meant to reference the base property rather than create a new one.
-							(bool, string) bn;
+							(bool, string, List<CommonParameterInfo>) bn;
 
 							//Determine if the variable name matched a property defined in a base class.
 							//Note this is not done for static variables because those are always assumed to be new declarations.
@@ -1321,7 +1303,6 @@ namespace Keysharp.Scripting
 			methods[ctd] = new Dictionary<string, CodeMemberMethod>(StringComparer.OrdinalIgnoreCase);
 			properties[ctd] = new Dictionary<string, List<CodeMemberProperty>>(StringComparer.OrdinalIgnoreCase);
 			allVars[ctd] = new Dictionary<string, OrderedDictionary<string, CodeExpression>>(StringComparer.OrdinalIgnoreCase);
-			allVarRefs[ctd] = new Dictionary<string, List<CodeVariableReferenceExpression>>(StringComparer.OrdinalIgnoreCase);
 			staticFuncVars[ctd] = new Stack<Dictionary<string, CodeExpression>>();
 			setPropertyValueCalls[ctd] = [];
 			getPropertyValueCalls[ctd] = [];
@@ -1417,7 +1398,7 @@ namespace Keysharp.Scripting
 			return (false, null);
 		}
 
-		private (bool, string) PropExistsInTypeOrBase(string t, string p, int paramCount)
+		private (bool, string, List<CommonParameterInfo>) PropExistsInTypeOrBase(string t, string p, int paramCount)
 		{
 			if (properties.Count > 0)
 			{
@@ -1434,7 +1415,11 @@ namespace Keysharp.Scripting
 							if (typekv.Value.TryGetValue(p, out var tempList))//If the property existed in the type, return.
 								foreach (var prop in tempList)
 									if (prop.Parameters.Count == paramCount)
-										return (true, prop.Name);
+										return (true, prop.Name, prop.Parameters.Cast<CodeParameterDeclarationExpression>().Select(cpde => new CommonParameterInfo(
+											cpde.IsVariadic(),
+											cpde.Direction == FieldDirection.Ref,
+											cpde.Type.BaseType
+										)).ToList());
 
 							//Wasn't found in fully declared properties, but simple assignments at the class namespace level are later treated as properties, so check those.
 							var ctd = allVars.FirstOrDefault(kv => kv.Key.Name == t);
@@ -1445,7 +1430,7 @@ namespace Keysharp.Scripting
 								{
 									if (scopekv.Value.TryGetValue(p, out var ce))
 									{
-										return (true, p);
+										return (true, p, []);//These types aren't relevant for the code that calls this function.
 									}
 								}
 							}
@@ -1459,12 +1444,16 @@ namespace Keysharp.Scripting
 								var bpi = PropExistsInBuiltInClass(t, p, paramCount);
 
 								if (bpi.Item1)
-									return (bpi.Item1, bpi.Item2.Name);
+									return (bpi.Item1, bpi.Item2.Name, bpi.Item2.GetIndexParameters().Select(ipi => new CommonParameterInfo(
+										ipi.IsVariadic(),
+										ipi.ParameterType.IsByRef,
+										ipi.ParameterType.FullName
+									)).ToList());
 
 								break;//Either the property was not found, or the base was not a built in type, so try again with base class.
 							}
 							else
-								return (false, null);
+								return (false, null, []);
 						}
 					}
 
@@ -1475,14 +1464,18 @@ namespace Keysharp.Scripting
 						var bpi = PropExistsInBuiltInClass(t, p, paramCount);
 
 						if (bpi.Item1)
-							return (bpi.Item1, bpi.Item2.Name);
+							return (bpi.Item1, bpi.Item2.Name, bpi.Item2.GetIndexParameters().Select(ipi => new CommonParameterInfo(
+								ipi.IsVariadic(),
+								ipi.ParameterType.IsByRef,
+								ipi.ParameterType.FullName
+							)).ToList());
 						else
 							break;
 					}
 				}
 			}
 
-			return (false, "");
+			return (false, "", []);
 		}
 
 		private (bool, PropertyInfo) PropExistsInTypeOrBase(Type t, string p, int paramCount)
@@ -1522,6 +1515,47 @@ namespace Keysharp.Scripting
 						return true;
 
 			return false;
+		}
+
+		private CodeExpression ReevaluateCodeVariableReference(CodeTypeDeclaration ctd, string scope, CodeVariableReferenceExpression cvre)
+		{
+			var doThis = false;
+			string str = null;
+			var varName = cvre.VariableName.TrimStart('@');
+
+			if (MethodExistsInTypeOrBase(targetClass.Name, varName) is CodeMemberMethod cmm)
+				str = cmm.Name;
+			else if (targetClass != ctd && MethodExistsInTypeOrBase(ctd.Name, varName) is CodeMemberMethod cmm2)
+			{
+				if (!cvre.UserData["isstatic"].Ab()
+						&&
+						(scope == "" //Was a class property declaration and assignment.
+						 ||
+						 //Or was inside of a non-static class method.
+						 ctd.Members.Cast<CodeTypeMember>().Any(ctm => ctm is CodeMemberMethod cmm
+								 && string.Compare(cmm.Name, scope, true) == 0
+								 && !ctm.Attributes.HasFlag(MemberAttributes.Static))
+						))
+					doThis = true;
+
+				str = cmm2.Name;
+			}
+			else if (Reflections.FindBuiltInMethod(varName, -1) is MethodPropertyHolder mph)
+				str = mph.mi.DeclaringType.FullName + "." + mph.mi.Name;
+
+			if (str != null)
+				if (/*scope == "" ||*/ !VarExistsAtCurrentOrParentScope(ctd, scope, Ch.CreateEscapedIdentifier(cvre.VariableName)))
+				{
+					cvre.VariableName = str;
+					var tempfunc = (CodeMethodReferenceExpression)InternalMethods.Func;
+
+					if (doThis)
+						return new CodeMethodInvokeExpression(tempfunc, cvre, new CodeThisReferenceExpression());
+					else
+						return new CodeMethodInvokeExpression(tempfunc, cvre);
+				}
+
+			return cvre;
 		}
 
 		private void HandleAllVariadicParams(CodeMethodInvokeExpression cmie)
@@ -1637,9 +1671,9 @@ namespace Keysharp.Scripting
 		{
 			if (allVars.TryGetValue(currentType, out var typeFuncs))
 			{
-				foreach (CodeTypeMember typemember in currentType.Members)//First, check if the type contains the variable.
+				foreach (CodeTypeMember typemember in currentType.Members)//Check if the type contains the variable.
 				{
-					if (typemember is CodeSnippetTypeMember cstm && string.Compare(cstm.Name, varName, true) == 0)
+					if (typemember is CodeSnippetTypeMember cstm && string.Compare(Ch.CreateEscapedIdentifier(cstm.Name), varName, true) == 0)
 						return true;
 				}
 
@@ -1654,7 +1688,7 @@ namespace Keysharp.Scripting
 			{
 				if (t.TryGetValue(currentScope, out var method))
 				{
-					if (method.Parameters.Cast<CodeParameterDeclarationExpression>().Any(p => string.Compare(p.Name, varName, true) == 0))
+					if (method.Parameters.Cast<CodeParameterDeclarationExpression>().Any(p => string.Compare(Ch.CreateEscapedIdentifier(p.Name), varName, true) == 0))
 						return true;
 				}
 			}
@@ -1672,18 +1706,18 @@ namespace Keysharp.Scripting
 					if (stat.TryGetValue(varName, out var sv))
 						return true;
 
-			if (currentType != targetClass)//Last attempt, check if it's a global variable.
+			if (currentType != targetClass)//Check if it's a property in the current class.
 			{
 				foreach (CodeTypeMember typemember in targetClass.Members)
 				{
-					if (typemember is CodeSnippetTypeMember cstm && string.Compare(cstm.Name, varName, true) == 0)
+					if (typemember is CodeSnippetTypeMember cstm && string.Compare(Ch.CreateEscapedIdentifier(cstm.Name), varName, true) == 0)
 						return true;
 				}
 			}
 
 			if (allVars.TryGetValue(targetClass, out var globalTypeFuncs))
 			{
-				if (globalTypeFuncs.TryGetValue("", out var scopeVars))//The type didn't contain the variable, so check if the local function scope contains it.
+				if (globalTypeFuncs.TryGetValue("", out var scopeVars))//The type didn't contain the variable, so check if the global scope contains it.
 				{
 					if (scopeVars.ContainsKey(varName))
 						return true;
@@ -1691,6 +1725,26 @@ namespace Keysharp.Scripting
 			}
 
 			return false;
+		}
+
+		internal class CommonParameterInfo
+		{
+			internal bool IsVariadic { get; private set; }
+			internal bool IsRef { get; private set; }
+			internal string Type { get; private set; }
+
+			internal CommonParameterInfo(bool isVariadic, bool isRef, string type)
+			{
+				IsVariadic = isVariadic;
+				IsRef = isRef;
+				Type = type;
+			}
+
+			public bool Equals(CommonParameterInfo other) => IsVariadic == other.IsVariadic
+			&& IsRef == other.IsRef
+			&& Type == other.Type;
+
+			public override bool Equals(object other) => other is CommonParameterInfo cpi && this == cpi;
 		}
 	}
 }

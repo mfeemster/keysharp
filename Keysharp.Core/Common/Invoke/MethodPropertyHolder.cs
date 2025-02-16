@@ -9,6 +9,7 @@
 		internal readonly Action<object, object> setPropFunc;
 		protected readonly ConcurrentStackArrayPool<object> paramsPool;
 		private readonly bool isGuiType;
+		private readonly bool anyOptional;
 		private readonly int startVarIndex = -1;
 		private readonly int stopVarIndexDistanceFromEnd;
 
@@ -27,6 +28,7 @@
 				parameters = mi.GetParameters();
 				ParamLength = parameters.Length;
 				isGuiType = Gui.IsGuiType(mi.DeclaringType);
+				anyOptional = parameters.Any(p => p.IsOptional);
 
 				for (var i = 0; i < parameters.Length; i++)
 				{
@@ -126,9 +128,10 @@
 									}
 								}
 
-								for (; pi < ParamLength; pi++)
-									if (parameters[pi].IsOptional)
-										newobj[pi] = parameters[pi].DefaultValue;
+								if (anyOptional)
+									for (; pi < ParamLength; pi++)
+										if (parameters[pi].IsOptional)
+											newobj[pi] = parameters[pi].DefaultValue;
 							}
 
 							//Any remaining items in newobj are null by default.
@@ -198,9 +201,10 @@
 
 							if (ParamLength == objLength)
 							{
-								for (var i = 0; i < ParamLength; i++)
-									if (obj[i] == null && parameters[i].IsOptional)
-										obj[i] = parameters[i].DefaultValue;
+								if (anyOptional)
+									for (var i = 0; i < ParamLength; i++)
+										if (obj[i] == null && parameters[i].IsOptional)
+											obj[i] = parameters[i].DefaultValue;
 
 								if (!isGuiType)
 								{
@@ -232,9 +236,10 @@
 									else
 										newobj[i] = obj[i];
 
-								for (; i < ParamLength; i++)
-									if (parameters[i].IsOptional)
-										newobj[i] = parameters[i].DefaultValue;
+								if (anyOptional)
+									for (; i < ParamLength; i++)
+										if (parameters[i].IsOptional)
+											newobj[i] = parameters[i].DefaultValue;
 
 								//Any remaining items in newobj are null by default.
 								if (!isGuiType)

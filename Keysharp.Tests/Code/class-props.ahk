@@ -40,6 +40,12 @@ class testclass
 }
 
 testclassobj := testclass()
+
+if (ObjHasOwnProp(testclassobj, "__Item") && testclassobj.HasOwnProp("__Item"))
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+	
 val := testclassobj.a
 
 If (val == 123)
@@ -94,6 +100,12 @@ class PropTestOTB
 }
 
 otb := PropTestOTB()
+
+if (ObjHasOwnProp(otb, "__Item") && otb.HasOwnProp("__Item"))
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+	
 otb[999] := 123
 val := otb[777]
 
@@ -117,6 +129,12 @@ class PropTestThis
 }
 
 ptt := PropTestThis()
+
+if (!ObjHasOwnProp(ptt, "__Item") && !ptt.HasOwnProp("__Item"))
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+	
 ptt.xprop := 123
 val := ptt.xprop
 
@@ -129,23 +147,23 @@ else
 x := 0
 
 class Test1 extends Test2 {
-    Meth1()
-     {
-        global x++
-        return super.Meth1()
-    }
+	Meth1()
+	 {
+		global x++
+		return super.Meth1()
+	}
 }
 
 class Test2 extends Test3 {
-    Meth1()
-    {
-        global x++
-        return super.Meth1()
-    }
+	Meth1()
+	{
+		global x++
+		return super.Meth1()
+	}
 }
 
 class Test3 {
-    Meth1()
+	Meth1()
 	{
 		global x
 		return x++
@@ -161,6 +179,11 @@ else
 	FileAppend, "fail", "*"
 
 if (x == 3)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+	
+if (!ObjHasOwnProp(t1, "__Item") && !t1.HasOwnProp("__Item"))
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"

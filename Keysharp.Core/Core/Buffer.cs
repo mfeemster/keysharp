@@ -91,6 +91,8 @@
 		/// <returns>Empty string, unused.</returns>
 		public unsafe object __New(params object[] obj)
 		{
+			Init__Item();
+
 			if (obj == null || obj.Length == 0)
 			{
 				Size = 0;
