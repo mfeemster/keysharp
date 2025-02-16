@@ -788,7 +788,7 @@ namespace Keysharp.Scripting
 							}
 
 							HandleAllVariadicParams(cmie);
-							var funccmie = new CodeMethodInvokeExpression((CodeMethodReferenceExpression)InternalMethods.Func, new CodeVariableReferenceExpression(cmie.Method.MethodName));
+							var funccmie = new CodeMethodInvokeExpression((CodeMethodReferenceExpression)InternalMethods.Func, new CodeVariableReferenceExpression(cmie.Method.MethodName.ToLower()));
 							cmie.Method = new CodeMethodReferenceExpression(funccmie, callFuncName);
 						}
 						else if (GetUserDefinedTypename(cmie.Method.MethodName) is CodeTypeDeclaration ctd && ctd.Name.Length > 0)//Convert myclass() to myclass.Call().

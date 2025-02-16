@@ -225,7 +225,7 @@ boundvarfunc0(theparams*) ; Purposely define this *after* it's used above.
 }
 
 fo := String ; Try referring to a built-in function by name, without using Func().
-val := fo(123)
+val := Fo(123)
 
 If (val == "123")
 	FileAppend, "pass", "*"
@@ -272,7 +272,7 @@ func123()
 }
 
 newfunc := true ? func123 : func456
-val := newfunc()
+val := NEWFUNC()
 
 If (val == 123)
 	FileAppend, "pass", "*"
@@ -350,7 +350,7 @@ else
 	FileAppend, "pass", "*"
 
 pcount := 0
-boundfunc5(1, 2, 3)
+Boundfunc5(1, 2, 3)
 
 if (pcount == 3)
 	FileAppend, "fail", "*"
