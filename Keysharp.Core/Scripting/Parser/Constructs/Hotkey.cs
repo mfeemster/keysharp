@@ -28,6 +28,28 @@ namespace Keysharp.Scripting
 			return invoke;
 		}
 
+		[PublicForTestOnly]
+		public static string EscapeHotkeyTrigger(ReadOnlySpan<char> s)
+		{
+			var escaped = false;
+			var sb = new StringBuilder(s.Length);
+			char ch = (char)0;
+
+			for (var i = 0; i < s.Length; ++i)
+			{
+				ch = s[i];
+				escaped = i == 0 && ch == '`';
+
+				if (!escaped)
+					sb.Append(ch);
+			}
+
+			if (escaped)
+				sb.Append(ch);
+
+			return sb.ToString();
+		}
+
 		private CodeMethodInvokeExpression ParseHotkey(List<CodeLine> lines, int index)
 		{
 			var codeLine = lines[index];
@@ -226,7 +248,7 @@ namespace Keysharp.Scripting
 					// Note: Hotstrings can't suffer from this type of ambiguity because a leading colon or pair of
 					// colons makes them easier to detect.
 					var temp = buf.OmitTrailingWhitespaceSpan(hotkeyFlagIndex).TrimStart(SpaceTab); // For maintainability.
-					tempName = temp.Length == 1 ? temp[0].ToString() : EscapedString(temp, false);
+					tempName = EscapeHotkeyTrigger(temp);
 					var hotkeyValidity = HotkeyDefinition.TextInterpret(tempName, null);
 
 					switch (hotkeyValidity)
@@ -271,7 +293,7 @@ namespace Keysharp.Scripting
 				if (!nameParsed)
 				{
 					var temp = buf.OmitTrailingWhitespaceSpan(hotkeyFlagIndex).TrimStart(SpaceTab); // For maintainability.
-					tempName = temp.Length == 1 ? temp[0].ToString() : EscapedString(temp, false);
+					tempName = EscapeHotkeyTrigger(temp);
 				}
 
 				var hotName = tempName;
@@ -293,7 +315,7 @@ namespace Keysharp.Scripting
 
 					var remapDestVk = 0u;
 					var remapDestSc = 0u;
-					var remapName = buf.Substring(hotkeyFlagIndex);//Default.
+					var remapName = EscapeHotkeyTrigger(buf.AsSpan(hotkeyFlagIndex));//Default.
 					uint? modifiersLR = null;
 					uint? modLR = null;
 
@@ -323,7 +345,7 @@ namespace Keysharp.Scripting
 							remapDestVk = 0xFF;//Way to do what the original did, but with using TextToVKandSC() above.
 
 						uint remapSourceVk;
-						string tempcp1, remapSource, remapDest, remapDestModifiers; // Must fit the longest key name (currently Browser_Favorites [17]), but buffer overflow is checked just in case.
+						string tempcp1, remapSource, remapDest; // Must fit the longest key name (currently Browser_Favorites [17]), but buffer overflow is checked just in case.
 						bool remapSourceIsCombo, remapSourceIsMouse, remapDestIsMouse, remapKeybdToMouse, remapWheel;
 						// These will be ignored in other stages if it turns out not to be a remap later below:
 						remapSourceVk = ht.TextToVK(tempcp1 = HotkeyDefinition.TextToModifiers(hotName, null), ref modifiersLR, false, true, kbLayout);//An earlier stage verified that it's a valid hotkey, though VK could be zero.
@@ -336,13 +358,16 @@ namespace Keysharp.Scripting
 									  (tempcp1.Length == 1 && char.IsUpper(tempcp1[0]) ? "+" : "") +// Allow A::b to be different than a::b.
 									  hotName;// Include any modifiers too, e.g. ^b::c.
 
-						if (remapName[0] == '"' || remapName[0] == Escape) // Need to escape these.
-							remapDest = $"{Escape}{remapName[0]}";
+						//Escaping is done differently here than in AHK.
+						//There, the generated code is escaped, then has to be unescaped every time the hotkey is processed.
+						//Instead, we only escape quotes, and we do so in the C# way, not the AHK way.
+						if (remapName[0] == '"')
+							remapDest = "\"";
 						else
 							remapDest = remapName;// But exclude modifiers here; they're wanted separately.
 
 						var tempindex = buf.IndexOf(remapName[0], hotkeyFlagIndex);
-						remapDestModifiers = buf.Substring(hotkeyFlagIndex, tempindex - hotkeyFlagIndex);
+						var remapDestModifiers = buf.AsSpan(hotkeyFlagIndex, tempindex - hotkeyFlagIndex).TrimStart('`');//Remove any escape chars from the start.
 						var remapDestKey = (Keys)remapDestVk;
 						var remapSourceKey = (Keys)remapSourceVk;
 
@@ -663,7 +688,7 @@ namespace Keysharp.Scripting
 					var hook_action = HotkeyDefinition.ConvertAltTab(sub, false);
 					var funcname = "";
 					var nextIndex = index + 1;
-					replacement = !hotkeyUsesOtb && sub.Length > 0 ? sub : "";
+					replacement = !hotkeyUsesOtb && sub.Length > 0 ? EscapeHotkeyTrigger(sub.AsSpan()) : "";
 
 					if (replacement.Length > 0)//For hotkeys, there is no 'X' for treating the replacement as an execute. Instead, if any replacement exists on the same line, it's an execute.
 					{
