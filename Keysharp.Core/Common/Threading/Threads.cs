@@ -83,7 +83,7 @@
 
 								if (func is VariadicFunction vf)
 									ret = vf(o);
-								else if (func is ICallable ifo)
+								else if (func is IFuncObj ifo)
 									ret = ifo.Call(o);
 								else
 									ret = "";

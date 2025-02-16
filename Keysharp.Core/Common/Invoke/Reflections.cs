@@ -58,7 +58,7 @@ namespace Keysharp.Core.Common.Invoke
 			CacheAllMethods(ignoreMainAssembly);
 			CacheAllPropertiesAndFields();
 			var types = loadedAssemblies.Values.Where(asm => asm.FullName.StartsWith("Keysharp.Core,"))
-						.SelectMany(t => t.GetTypes())
+						.SelectMany(t => t.GetExportedTypes())
 						.Where(t => t.GetCustomAttribute<PublicForTestOnly>() == null && t.Namespace != null && t.Namespace.StartsWith("Keysharp.Core")
 							   && t.Namespace != "Keysharp.Core.Properties"
 							   && t.IsClass && t.IsPublic);
@@ -401,9 +401,9 @@ namespace Keysharp.Core.Common.Invoke
 			//_ = MessageBox.Show(string.Join('\n', assemblies.Select(assy => assy.FullName)));
 
 			foreach (var asm in assemblies)
-				foreach (var type in asm.GetTypes())
-					if (type.IsClass && type.IsPublic && type.Namespace != null && (!ignoreMainAssembly || (ignoreMainAssembly && type.Name != Parser.mainClassName)) &&
-                            (type.Namespace.StartsWith("Keysharp.Core", StringComparison.OrdinalIgnoreCase) ||
+				foreach (var type in asm.GetExportedTypes())
+					if (type.IsClass && type.IsPublic && type.Namespace != null && (!ignoreMainAssembly || type.Name != Parser.mainClassName) &&
+							(type.Namespace.StartsWith("Keysharp.Core", StringComparison.OrdinalIgnoreCase) ||
 							 type.Namespace.StartsWith("Keysharp.CompiledMain", StringComparison.OrdinalIgnoreCase) ||
 							 type.Namespace.StartsWith("Keysharp.Scripting", StringComparison.OrdinalIgnoreCase) ||
                              type.Namespace.StartsWith("Keysharp.Tests", StringComparison.OrdinalIgnoreCase)))//Allow tests so we can use function objects inside of unit tests.
@@ -444,7 +444,7 @@ namespace Keysharp.Core.Common.Invoke
 			//The compiled and running output of a script will have the name of the script file without the extension.
 			//So we can't just use "Keysharp" to identify it.
 			foreach (var item in loadedAssemblies.Values.Where(assy => assy.FullName.StartsWith("Keysharp") || exeAssembly == assy))
-				foreach (var type in item.GetTypes())
+				foreach (var type in item.GetExportedTypes())
 					if (type.IsClass && type.IsPublic && type.Namespace != null &&
 							(type.Namespace.StartsWith("Keysharp.Core", StringComparison.OrdinalIgnoreCase) ||
 							 type.Namespace.StartsWith("Keysharp.CompiledMain", StringComparison.OrdinalIgnoreCase)))

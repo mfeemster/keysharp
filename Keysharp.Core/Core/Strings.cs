@@ -141,7 +141,7 @@
                     pos++; // skip ':'
                     int specStart = pos;
                     // First: skip any flags (valid flags: - + 0 space #)
-                    while (pos < formatStr.Length && "-+0 #".IndexOf(formatStr[pos]) >= 0)
+                    while (pos < formatStr.Length && "-+0 #".Contains(formatStr[pos]))
                         pos++;
                     // Then: width digits
                     while (pos < formatStr.Length && char.IsDigit(formatStr[pos]))
@@ -160,7 +160,7 @@
                     if (pos < formatStr.Length)
                     {
                         char c = formatStr[pos];
-                        if ("diouxXeEfgGaAcCps".IndexOf(c) >= 0)
+                        if ("diouxXeEfgGaAcCps".Contains(c))
                         {
                             typeChar = c;
                             pos++;
@@ -173,7 +173,7 @@
                     // For string values, check for an optional case transformation specifier:
                     // U (upper‐case), L (lower‐case) or T (title case). (Also accept lower–case letters.)
                     char customFormat = '\0';
-                    if (typeChar == 's' && pos < formatStr.Length && "ULlTt".IndexOf(formatStr[pos]) >= 0)
+                    if (typeChar == 's' && pos < formatStr.Length && "ULlTt".Contains(formatStr[pos]))
                     {
                         customFormat = char.ToUpperInvariant(formatStr[pos]);
                         pos++;
@@ -247,7 +247,7 @@
             spec.Type = typeChar;
             int pos = 0;
             // Parse any flags.
-            while (pos < specCore.Length && "-+0 #".IndexOf(specCore[pos]) >= 0)
+            while (pos < specCore.Length && "-+0 #".Contains(specCore[pos]))
             {
                 switch (specCore[pos])
                 {

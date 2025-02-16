@@ -130,5 +130,9 @@ if (a == "::")
 else
 	FileAppend "fail", "*"
 
-FileAppend "pass", "*"
+FileAppend, "pass", "*"
+
+`;:::
+`::;
+
 ExitApp()

@@ -5121,7 +5121,7 @@ namespace Keysharp.Core.Windows
 												&& it.InputRelease() is InputType inputHook
 												&& inputHook.scriptObject is InputObject so)
 										{
-											if (so.OnEnd is ICallable ifo)
+											if (so.OnEnd is IFuncObj ifo)
 											{
 												Threads.LaunchInThread(0, false, false, ifo, [so], true);
 											}
@@ -5151,7 +5151,7 @@ namespace Keysharp.Core.Windows
 
 									if ((msg.message == (uint)UserMessages.AHK_INPUT_KEYDOWN ? input_hook.scriptObject.OnKeyDown
 											: msg.message == (uint)UserMessages.AHK_INPUT_KEYUP ? input_hook.scriptObject.OnKeyUp
-											: input_hook.scriptObject.OnChar) is ICallable ifo
+											: input_hook.scriptObject.OnChar) is IFuncObj ifo
 											&& Threads.AnyThreadsAvailable())
 									{
 										var args = msg.message == (uint)UserMessages.AHK_INPUT_CHAR ?//AHK_INPUT_CHAR passes the chars as a string, whereas the rest pass them individually.

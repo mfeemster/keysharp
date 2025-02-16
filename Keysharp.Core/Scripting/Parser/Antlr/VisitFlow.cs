@@ -13,6 +13,7 @@ using Antlr4.Runtime;
 using System.IO;
 using System.Collections;
 using System.Xml.Linq;
+using System.Data.Common;
 
 namespace Keysharp.Scripting
 {
@@ -32,17 +33,17 @@ namespace Keysharp.Scripting
         {
             // Generate the enumerator initialization
             var loopFunction = SyntaxFactory.InvocationExpression(
-                                        SyntaxFactory.MemberAccessExpression(
-                                            SyntaxKind.SimpleMemberAccessExpression,
-                                            CreateQualifiedName("Keysharp.Core.Loops"),
-                                            SyntaxFactory.IdentifierName(enumeratorMethodName)
-                                        ),
-                                        SyntaxFactory.ArgumentList(
-                                            SyntaxFactory.SeparatedList(
-                                                enumeratorArguments.Select(SyntaxFactory.Argument)
-                                            )
-                                        )
-                                    );
+                    SyntaxFactory.MemberAccessExpression(
+                        SyntaxKind.SimpleMemberAccessExpression,
+                        CreateQualifiedName("Keysharp.Core.Loops"),
+                        SyntaxFactory.IdentifierName(enumeratorMethodName)
+                    ),
+                    SyntaxFactory.ArgumentList(
+                        SyntaxFactory.SeparatedList(
+                            enumeratorArguments.Select(SyntaxFactory.Argument)
+                        )
+                    )
+                );
             var enumeratorVariable = SyntaxFactory.IdentifierName(loopEnumeratorName);
             var enumeratorDeclaration = SyntaxFactory.VariableDeclaration(
                 CreateQualifiedName(enumeratorType),
@@ -512,24 +513,6 @@ namespace Keysharp.Scripting
 
             // Ensure the loop body is a block
             BlockSyntax loopBody = (BlockSyntax)Visit(context.flowBlock());
-            
-            var currentAssignment = SyntaxFactory.ExpressionStatement(
-                SyntaxFactory.AssignmentExpression(
-                    SyntaxKind.SimpleAssignmentExpression,
-                    SyntaxFactory.TupleExpression(
-                        SyntaxFactory.SeparatedList(
-                            variableNames.Select<string, ArgumentSyntax>(name =>
-                                SyntaxFactory.Argument(SyntaxFactory.IdentifierName(name))
-                            )
-                        )
-                    ),
-                    SyntaxFactory.MemberAccessExpression(
-                        SyntaxKind.SimpleMemberAccessExpression,
-                        SyntaxFactory.IdentifierName(loopEnumeratorName),
-                        SyntaxFactory.IdentifierName("Current")
-                    )
-                )
-            );
 
             var incStatement = SyntaxFactory.ExpressionStatement(
                 SyntaxFactory.InvocationExpression(
@@ -545,8 +528,8 @@ namespace Keysharp.Scripting
             loopBody = loopBody.WithStatements(
                 SyntaxFactory.List(
                     new StatementSyntax[] { 
-                        incStatement, 
-                        currentAssignment }
+                        incStatement
+                    }
                     .Concat(loopBody.Statements))
             );
 
@@ -554,6 +537,49 @@ namespace Keysharp.Scripting
 
             // Handle the `Else` clause, if present
             SyntaxNode elseNode = Visit(context.elseProduction());
+
+            List<ExpressionSyntax> argsList = new List<ExpressionSyntax>();
+            argsList.Add(loopExpression);
+
+            foreach (string variableName in variableNames)
+            {
+                ExpressionSyntax varRefExpr = SyntaxFactory.InvocationExpression(
+                    SyntaxFactory.MemberAccessExpression(
+                        SyntaxKind.SimpleMemberAccessExpression,
+                        SyntaxFactory.IdentifierName("Misc"),
+                        SyntaxFactory.IdentifierName("MakeVarRef")
+                    ),
+                    SyntaxFactory.ArgumentList(
+                        SyntaxFactory.SeparatedList(new[]
+                        {
+                            // Getter lambda: () => variableName
+                            SyntaxFactory.Argument(
+                                SyntaxFactory.ParenthesizedLambdaExpression(
+                                    SyntaxFactory.ParameterList(),
+                                    SyntaxFactory.IdentifierName(variableName)
+                                )
+                            ),
+                            // Setter lambda: (Val) => variableName = Val
+                            SyntaxFactory.Argument(
+                                SyntaxFactory.ParenthesizedLambdaExpression(
+                                    SyntaxFactory.ParameterList(
+                                        SyntaxFactory.SingletonSeparatedList(
+                                            SyntaxFactory.Parameter(SyntaxFactory.Identifier("Val"))
+                                        )
+                                    ),
+                                    SyntaxFactory.AssignmentExpression(
+                                        SyntaxKind.SimpleAssignmentExpression,
+                                        SyntaxFactory.IdentifierName(variableName),
+                                        SyntaxFactory.IdentifierName("Val")
+                                    )
+                                )
+                            )
+                        })
+                    )
+                );
+
+                argsList.Add(varRefExpr);
+            }
 
             // Generate the final loop structure using `VisitLoopGeneric`
             BlockSyntax loopSyntax = (BlockSyntax)VisitLoopGeneric(
@@ -564,13 +590,9 @@ namespace Keysharp.Scripting
                 null,
                 loopEnumeratorName,
                 "var",
-                "MakeEnumerator",
+                "MakeEnumerable",
                 variableNames,
-                loopExpression,
-                SyntaxFactory.LiteralExpression(
-                    SyntaxKind.NumericLiteralExpression,
-                    SyntaxFactory.Literal(Math.Max(variableNameCount, 1))
-                )
+                argsList.ToArray()
             );
 
             return loopSyntax;
@@ -987,7 +1009,6 @@ namespace Keysharp.Scripting
         private bool switchValueExists = true;
         public override SyntaxNode VisitSwitchStatement([NotNull] SwitchStatementContext context)
         {
-            caseClauseCount = 0;
             // Extract the switch value (SwitchValue)
             switchValueExists = context.singleExpression() != null;
             var switchValue = switchValueExists

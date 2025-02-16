@@ -591,27 +591,6 @@ public interface IMainParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitPropertyExpressionAssignment([NotNull] MainParser.PropertyExpressionAssignmentContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>FunctionProperty</c>
-	/// labeled alternative in <see cref="MainParser.propertyAssignment"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitFunctionProperty([NotNull] MainParser.FunctionPropertyContext context);
-	/// <summary>
-	/// Visit a parse tree produced by the <c>PropertyGetter</c>
-	/// labeled alternative in <see cref="MainParser.propertyAssignment"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitPropertyGetter([NotNull] MainParser.PropertyGetterContext context);
-	/// <summary>
-	/// Visit a parse tree produced by the <c>PropertySetter</c>
-	/// labeled alternative in <see cref="MainParser.propertyAssignment"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitPropertySetter([NotNull] MainParser.PropertySetterContext context);
-	/// <summary>
 	/// Visit a parse tree produced by <see cref="MainParser.propertyName"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

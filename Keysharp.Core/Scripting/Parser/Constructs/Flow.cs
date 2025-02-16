@@ -361,7 +361,11 @@ namespace Keysharp.Scripting
 						var testid = InternalID;
 						var id = InternalID;
 						var expr = ParseSingleExpression(codeLine, temp.Last(), false);
-						var varsplits = temp[0].Split(',', StringSplitOptions.TrimEntries).ToList();
+						var varsplits = temp[0] == "" ? [] : temp[0].ToLower().Split(',', StringSplitOptions.TrimEntries).ToList();
+
+						for (var vari = 0; vari < varsplits.Count; ++vari)
+							if (varsplits[vari] == "")
+								varsplits[vari] = $"_ks_forvar{vari}";
 
 						//Extreme hack to tell the enumerator whether to return 1 or 2 values which changes
 						//the behavior when dealing with OwnProps().
@@ -374,66 +378,61 @@ namespace Keysharp.Scripting
 								&& cmieGetMeth.Parameters[1] is CodePrimitiveExpression cpe
 								&& cpe.Value.ToString() == "OwnProps")
 						{
-							if (varsplits.Count == 2 && varsplits[1] != "_")
+							if (varsplits.Count > 1)
 								_ = cmieInvoke.Parameters.Add(new CodePrimitiveExpression(true));
-							else if (varsplits.Count == 1)
-								varsplits.Add("_");
 						}
-
-						var varlist = new List<string>(varsplits.Count);
-						var enumlist = new List<string>(varsplits.Count);
-						var varCount = varsplits.Count;
-
-						if (varCount == 1)//If only one present, use the first because it's the value for arrays and keys for maps.
-							varsplits.Add("");
 
 						//If only one is present, it actually means discard the first one, and use the second.
 						//So in the case of a map, it would mean get the key, not the value.
 						//In the case of an array, it would mean get the value, not the index.
 						foreach (var split in varsplits)
 						{
-							enumlist.Add("object");
-
 							if (split != "")
 							{
 								//Don't create iteration loop variables as global/local function variables, they have to be specially created manually below.
 								var loopvarexpr = ParseSingleExpression(codeLine, split, false);
 								var loopvarstr = Ch.CodeToString(loopvarexpr);
-								varlist.Add(split?.Length == 0 ? "_" : loopvarstr);
 								//Create entries in the allVars map so these don't get recreated if they are used, such
 								//as being passed to a function. However, set the Value to null to prevent them from actually
 								//being created because we create them manually with a snippet below.
-								//See: case BlockClose and dAddPropStatements() in Statements.cs.
+								//See: case BlockClose and AddPropStatements() in Statements.cs.
 								var dkt = allVars[typeStack.Peek()].GetOrAdd(Scope);
 
 								if (!dkt.ContainsKey(loopvarstr))
 									dkt[loopvarstr] = null;
 							}
-							else
-								varlist.Add("_");
 						}
 
-						while (varlist.Count < 2)
-							varlist.Add("_");
-
 						var col = Ch.CodeToString(expr);
-						var vars = string.Join(',', varlist);
-						var enums = string.Join(',', enumlist);
 						var coldecl = new CodeExpressionStatement(new CodeSnippetExpression($"var {coldeclid} = {col}"));
-						var iterdecl = new CodeExpressionStatement(new CodeSnippetExpression($"var {id} = MakeEnumerator({coldeclid}, {varCount})"));
+						var iterdecl = new CodeExpressionStatement(new CodeSnippetExpression($"var {id} = MakeEnumerator({coldeclid}, {varsplits.Count})"));
 						_ = parent.Add(coldecl);
 						_ = parent.Add(iterdecl);
 						var condition = new CodeMethodInvokeExpression();
 						condition.Method.TargetObject = new CodeVariableReferenceExpression(id);
-						condition.Method.MethodName = "MoveNext";
+						condition.Method.MethodName = "Call";
+						var initSb = new StringBuilder(64);
+
+						for (var vi = 0; vi < varsplits.Count; ++vi)
+						{
+							var v = varsplits[vi];
+
+							if (vi > 0)
+								initSb.Append(", ");
+							else
+								initSb.Append("object ");
+
+							initSb.Append($"{v} = null");
+							condition.Parameters.Add(new CodeSnippetExpression($"ref {v}"));
+						}
+
 						var loop = new CodeIterationStatement
 						{
-							InitStatement = new CodeSnippetStatement(string.Empty),
+							InitStatement = new CodeSnippetStatement(initSb.ToString()),
 							TestExpression = new CodeMethodInvokeExpression(null, "IsTrueAndRunning", condition),
 							IncrementStatement = new CodeSnippetStatement(string.Empty)
 						};
 						loop.Statements.Insert(0, new CodeExpressionStatement((CodeMethodInvokeExpression)InternalMethods.Inc));
-						_ = loop.Statements.Add(new CodeSnippetExpression($"/*preventtrim*/var ({vars}) = {id}.Current"));
 						var block = new CodeBlock(codeLine, Scope, loop.Statements, CodeBlock.BlockKind.Loop, blocks.PeekOrNull(), InternalID, InternalID)
 						{
 							Type = blockOpen ? CodeBlock.BlockType.Within : CodeBlock.BlockType.Expect

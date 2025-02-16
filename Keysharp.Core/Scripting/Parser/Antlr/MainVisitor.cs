@@ -446,6 +446,13 @@ namespace Keysharp.Scripting
                             SyntaxFactory.IdentifierName(parser.currentFunc.VarRefs.First(item => string.Equals(item, text, StringComparison.InvariantCultureIgnoreCase))))), // Identifier name
                     SyntaxFactory.IdentifierName("__Value")       // Member access
                 );
+            } else if (parser.currentFunc.ArrayType.Contains(text))
+            {
+                return SyntaxFactory.ParenthesizedExpression(
+                    SyntaxFactory.CastExpression(
+                        SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword)),
+                        SyntaxFactory.IdentifierName(text)
+                    ));
             }
 
             return SyntaxFactory.IdentifierName(text);
@@ -1273,6 +1280,7 @@ namespace Keysharp.Scripting
                 parameter = SyntaxFactory.Parameter(SyntaxFactory.Identifier(parameterName))
                     .WithType(PredefinedTypes.ObjectArray)
                     .WithModifiers(SyntaxFactory.TokenList(SyntaxFactory.Token(SyntaxKind.ParamsKeyword)));
+                parser.currentFunc.ArrayType.Add(parameterName);
             }
             else if (context.formalParameterArg() != null)
             {

@@ -5,7 +5,7 @@ class myclass
 	c := "asdf"
 	d := c
 	x := 123
-	y := x
+	y := this.x
 }
 
 classobj := myclass.Call()
@@ -76,7 +76,7 @@ else
 class membersrefeachother
 {
 	zz := 8080
-	ii := zz * 2
+	ii := this.zz * 2
 }
 
 classobj := membersrefeachother()

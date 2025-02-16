@@ -328,7 +328,7 @@
 				Script.HwndLastUsed = Hwnd;
 		}
 
-		public IEnumerator<(object, object)> __Enum(object count) => new MapKeyValueIterator(controls, count.Ai());
+		public KeysharpEnumerator __Enum(object count) => new MapKeyValueIterator(controls, count.Ai());
 
 		public override object __New(params object[] obj)
 		{
@@ -1930,7 +1930,7 @@
 			return null;
 		}
 
-		IEnumerator IEnumerable.GetEnumerator() => __Enum(2);
+		IEnumerator IEnumerable.GetEnumerator() => new MapKeyValueIterator(controls, 2);
 
 		internal static bool AnyExistingVisibleWindows() => allGuiHwnds.Values.Any(g => g.form != Script.mainWindow && g.form.Visible);
 

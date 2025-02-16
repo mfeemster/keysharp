@@ -479,6 +479,7 @@
 		/// <param name="index">The index after which trimming will occur.</param>
 		/// <returns>The trimmed string.</returns>
 		internal static string OmitTrailingWhitespace(this string str, int index) => str.AsSpan(0, index).TrimEnd(SpaceTab).ToString();
+		internal static ReadOnlySpan<char> OmitTrailingWhitespaceSpan(this string str, int index) => str.AsSpan(0, index).TrimEnd(SpaceTab);
 
 		//internal static string RemoveAfter(this string str, string token)
 		//{

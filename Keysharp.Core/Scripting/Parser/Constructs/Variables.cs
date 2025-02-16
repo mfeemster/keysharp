@@ -47,6 +47,10 @@ namespace Keysharp.Scripting
 					if (blocks.PeekOrNull() is CodeBlock block && block.Kind == CodeBlock.BlockKind.PropSet && string.Compare(toplevelvar, "value", true) == 0)
 						create = false;
 
+					var isDefault = string.Compare(toplevelvar, "default", true) == 0;
+					var escapedName = !isDefault ? Ch.CreateEscapedIdentifier(toplevelvar) : toplevelvar;
+					var doResetName = !isstatic && !isDefault;
+
 					if (!dyn)
 					{
 						if (create)
@@ -59,15 +63,15 @@ namespace Keysharp.Scripting
 							{
 								var dkt = allVars[currType].GetOrAdd(tempscope);
 
-								if (!dkt.ContainsKey(toplevelvar))//Ensure it hasn't been declared and initialized yet.
-									dkt[toplevelvar] = nullPrimitive;
+								if (!dkt.ContainsKey(escapedName))//Ensure it hasn't been declared and initialized yet.
+									dkt[escapedName] = nullPrimitive;
 							}
 							else if (!isparam && allglobal)
 							{
 								var dkt = allVars[currType].GetOrAdd("");
 
-								if (!dkt.ContainsKey(toplevelvar))
-									dkt[toplevelvar] = nullPrimitive;
+								if (!dkt.ContainsKey(escapedName))
+									dkt[escapedName] = nullPrimitive;
 							}
 						}
 
@@ -87,12 +91,17 @@ namespace Keysharp.Scripting
 									var bpi = PropExistsInBuiltInClass(currType.BaseTypes[0].BaseType, cvre.VariableName, 0);//Determine if the variable name matched a property defined in a base class that was a built-in type.
 
 									if (bpi.Item1)
+									{
 										cvre.VariableName = bpi.Item2.Name;
+										doResetName = false;
+									}
 								}
 							}
 
 							//This is an attempt to allow direct assignments to methods by just using their name.
 							//They are case corrected and passed to FuncObj().
+							//This will only detect functions which have been defined before the current line being parsed.
+							//Some of this work is duplicated in Parser.
 							if (!create && !isparam && !islocal && !explicitLocal)
 							{
 								if (MethodExistsInTypeOrBase(currType.Name, cvre.VariableName) is CodeMemberMethod cmm)
@@ -107,7 +116,13 @@ namespace Keysharp.Scripting
 									var tempfunc = (CodeMethodReferenceExpression)InternalMethods.Func;
 									expr = new CodeMethodInvokeExpression(tempfunc, cvre);
 								}
+								else if (doResetName)
+									cvre.VariableName = escapedName;
 							}
+							else if (doResetName)
+								cvre.VariableName = escapedName;
+
+							allVarRefs.GetOrAdd(currType).GetOrAdd(Scope).Add(cvre);
 						}
 
 						return expr;

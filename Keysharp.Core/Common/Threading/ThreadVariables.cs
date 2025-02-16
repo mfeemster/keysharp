@@ -18,7 +18,7 @@ namespace Keysharp.Core.Common.Threading
 		internal object eventInfo;
 		internal Encoding fileEncoding = Encoding.Default;
 		internal string formatNumeric;
-		internal ICallable hotCriterion;
+		internal IFuncObj hotCriterion;
 		internal IntPtr hwndLastUsed = IntPtr.Zero;
 		internal bool isCritical = false;
 		internal long keyDelay = 10L;

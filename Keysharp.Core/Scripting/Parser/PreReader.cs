@@ -136,7 +136,7 @@ namespace Keysharp.Scripting
             bool compiliedTokens = true;
             int parenthesisDepth = 0;
             int enclosableDepth = 0;
-            int funcStatPossible = 0;
+            int funcStatPossible = 1;
             while (index < tokens.Count && tokens[index].Type == MainLexer.WS)
                 index++;
             while (index < tokens.Count)
@@ -323,7 +323,7 @@ namespace Keysharp.Scripting
 
                                         _ = includes.AddUnique(path);
                                         using var pathReader = new StreamReader(path);
-                                        parser.codeTokens.AddRange(ReadTokens(pathReader, path));
+                                        codeTokens.AddRange(ReadTokens(pathReader, path));
                                     }
                                     else
                                     {
@@ -508,6 +508,7 @@ namespace Keysharp.Scripting
                         case MainLexer.Assign:
                         case MainLexer.Divide:
                         case MainLexer.IntegerDivide:
+                        case MainLexer.Power:
                         case MainLexer.NullCoalesce:
                         case MainLexer.RightShiftArithmetic:
                         case MainLexer.LeftShiftArithmetic:

@@ -123,8 +123,8 @@
 		///     1: Return the value in the first element, with the second being null.<br/>
 		///     2: Return the index in the first element, and the value in the second.
 		/// </param>
-		/// <returns><see cref="IEnumerator{(object, object)}"/></returns>
-		public IEnumerator<(object, object)> __Enum(object count) => new ArrayIndexValueIterator(array, count.Ai());
+		/// <returns><see cref="KeysharpEnumerator"/></returns>
+		public KeysharpEnumerator __Enum(object count) => new ArrayIndexValueIterator(array, count.Ai());
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="Array"/> class.
@@ -245,7 +245,7 @@
 			Error err;
 			var index = startIndex.Ai(1);
 
-			if (callback is ICallable ifo)
+			if (callback is IFuncObj ifo)
 			{
 				if (index < 0)
 				{
@@ -361,7 +361,7 @@
 		/// <summary>
 		/// The implementation for <see cref="IEnumerable{(object, object)}.GetEnumerator()"/> which returns an <see cref="ArrayIndexValueIterator"/>.
 		/// </summary>
-		/// <returns>An <see cref="IEnumerable{(object, object)}"/> which is an <see cref="ArrayIndexValueIterator"/>.</returns>
+		/// <returns>An <see cref="IEnumerator{(object, object)}"/> which is an <see cref="ArrayIndexValueIterator"/>.</returns>
 		public IEnumerator<(object, object)> GetEnumerator() => new ArrayIndexValueIterator(array, 2);
 
 		/// <summary>
@@ -527,13 +527,13 @@
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if the array is empty.</exception>
 		public object Pop()
 		{
-			if (array.Count < 1)
+            var index = array.Count - 1;
+            if (index < 0)
 			{
 				Error err;
 				return Errors.ErrorOccurred(err = new Error($"Cannot pop an empty array.")) ? throw err : null;
 			}
 
-			var index = array.Count - 1;
 			var val = array[index];
 			array.RemoveAt(index);
 			return val;
@@ -738,8 +738,8 @@
 		/// <summary>
 		/// The implementation for <see cref="IEnumerable.GetEnumerator"/> which just calls <see cref="__Enum"/>.
 		/// </summary>
-		/// <returns><see cref="IEnumerator{(object, object)}"/></returns>
-		IEnumerator IEnumerable.GetEnumerator() => __Enum(2);
+		/// <returns><see cref="ArrayIndexValueIterator"/></returns>
+		IEnumerator IEnumerable.GetEnumerator() => new ArrayIndexValueIterator(array, 2);
 
 		/// <summary>
 		/// The implementation for <see cref="IList.RemoveAt"/> which just calls <see cref="RemoveAt"/>.<br/>
@@ -816,15 +816,8 @@
 	/// A two component iterator for <see cref="Array"/> which returns the value and the 1-based index the
 	/// value was at as a tuple.
 	/// </summary>
-	internal class ArrayIndexValueIterator : IEnumerator<(object, object)>
+	internal class ArrayIndexValueIterator : KeysharpEnumerator, IEnumerator<(object, object)>
 	{
-		/// <summary>
-		/// The number of items to return for each iteration. Allowed values are 1 and 2:
-		/// 1: return just the value in the first position
-		/// 2: return the index in the first position and the value in the second.
-		/// </summary>
-		private readonly int count;
-
 		/// <summary>
 		/// The internal array to be iterated over.
 		/// </summary>
@@ -844,7 +837,7 @@
 			{
 				try
 				{
-					if (count == 1)
+					if (Count == 1)
 						return (arr[position], null);
 					else
 						return ((long)position + 1, arr[position]);
@@ -867,28 +860,85 @@
 		/// <param name="a">The <see cref="List{object}"/> to iterate over.</param>
 		/// <param name="c">The number of items to return for each iteration.</param>
 		public ArrayIndexValueIterator(List<object> a, int c)
+			: base(null, c)
 		{
 			arr = a;
-			count = c;
+			Error err;
+			var fo = new FuncObj("Call", this, Count);
+
+			if (fo.IsValid)
+				CallFunc = fo;
+			else
+				_ = Errors.ErrorOccurred(err = new MethodError($"Existing function object was invalid.")) ? throw err : "";
 		}
 
 		/// <summary>
 		/// Calls <see cref="Current"/> and places the position value in the passed in object reference.
 		/// </summary>
 		/// <param name="pos">A reference to the position value.</param>
-		public void Call(ref object pos) => (pos, _) = Current;
+		/// <returns>True if the iterator position has not moved past the last element, else false.</returns>
+		public override object Call(ref object pos)
+		{
+			if (MoveNext())
+			{
+				(pos, _) = Current;
+				return true;
+			}
+
+			return false;
+		}
 
 		/// <summary>
 		/// Calls <see cref="Current"/> and places the position value in pos and the value in val.
 		/// </summary>
 		/// <param name="pos">A reference to the position value.</param>
 		/// <param name="val">A reference to the object value.</param>
-		public void Call(ref object pos, ref object val) => (pos, val) = Current;
+		/// <returns>True if the iterator position has not moved past the last element, else false.</returns>
+		public override object Call(ref object pos, ref object val)
+		{
+			if (MoveNext())
+			{
+				(pos, val) = Current;
+				return true;
+			}
 
-		/// <summary>
-		/// The implementation for <see cref="IComparer.Dispose"/> which internally resets the iterator.
-		/// </summary>
-		public void Dispose() => Reset();
+			return false;
+		}
+
+        public override object Call(params object[] args)
+        {
+            if (MoveNext())
+            {
+                // If only one variable is passed, return just the value.
+                if (args.Length == 1)
+                {
+                    if (args[0] is Misc.VarRef arg2)
+                        arg2.__Value = Current.Item2;
+                    else
+                        Script.SetPropertyValue(args[0], "__Value", Current.Item2);
+                }
+                // Otherwise return the index (1-based) and the value.
+                else
+                {
+                    var (pos, val) = Current;
+                    if (args[0] is Misc.VarRef arg1)
+						arg1.__Value = pos;
+					else
+                        Script.SetPropertyValue(args[0], "__Value", pos);
+					if (args[1] is Misc.VarRef arg2)
+						arg2.__Value = val;
+					else
+                        Script.SetPropertyValue(args[1], "__Value", val);
+                }
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// The implementation for <see cref="IComparer.Dispose"/> which internally resets the iterator.
+        /// </summary>
+        public void Dispose() => Reset();
 
 		/// <summary>
 		/// The implementation for <see cref="IEnumerator.MoveNext"/> which moves the iterator to the next position.
@@ -912,11 +962,11 @@
 		private IEnumerator<(object, object)> GetEnumerator() => this;
 	}
 
-	/// <summary>
-	/// A comparer which uses an <see cref="IFuncObj"/> to compare two objects.
-	/// This is used in <see cref="Array.Sort"/>.
-	/// </summary>
-	internal class FuncObjComparer : IComparer<object>
+    /// <summary>
+    /// A comparer which uses an <see cref="IFuncObj"/> to compare two objects.
+    /// This is used in <see cref="Array.Sort"/>.
+    /// </summary>
+    internal class FuncObjComparer : IComparer<object>
 	{
 		/// <summary>
 		/// The function object to use in the comparison.

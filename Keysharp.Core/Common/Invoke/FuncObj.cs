@@ -1,12 +1,6 @@
 ﻿namespace Keysharp.Core.Common.Invoke
 {
-    public interface ICallable
-    {
-        public object Call(params object[] obj);
-
-        public object CallWithRefs(params object[] obj);
-    }
-    public interface IFuncObj : ICallable
+    public interface IFuncObj
     {
         public object Inst { get; set; }
 		public bool IsBuiltIn { get; }
@@ -15,7 +9,11 @@
 
 		public IFuncObj Bind(params object[] obj);
 
-		public bool IsByRef(object obj = null);
+        public object Call(params object[] obj);
+
+        public object CallWithRefs(params object[] obj);
+
+        public bool IsByRef(object obj = null);
 
 		public bool IsOptional(object obj = null);
 	}
@@ -209,13 +207,32 @@
 				return mph.callFunc(inst, obj);
 			// `this` is required but not present
 			else if (inst == null)
-				return mph.callFunc(obj[0], obj.Skip(1).ToArray());
+			{
+				if (obj.Length == 1)
+					return mph.callFunc(obj[0], System.Array.Empty<object>());
+				else
+				{
+					var args = new object[obj.Length - 1];
+					// Use Array.Copy which is fast and optimized.
+					System.Array.Copy(obj, 1, args, 0, args.Length);
+					return mph.callFunc(obj[0], args);
+				}
+			}
 			// `this` is present in FuncObj but the user-provided `this` does not match the required type
 			else if (!DeclaringType.IsAssignableFrom(obj[0].GetType()))
-                return mph.callFunc(inst, obj.ToArray());
+				return mph.callFunc(inst, obj);
 			// Not sure if this should use `obj[0]` or `inst`
-            else
-				return mph.callFunc(obj[0], obj.Skip(1).ToArray());
+			else
+			{
+                if (obj.Length == 1)
+                    return mph.callFunc(obj[0], System.Array.Empty<object>());
+                else
+                {
+                    var args = new object[obj.Length - 1];
+                    System.Array.Copy(obj, 1, args, 0, args.Length);
+                    return mph.callFunc(obj[0], args);
+                }
+            }
         }
 
 		/*

@@ -144,7 +144,7 @@ else
 arr := [10, 20, 30]
 x := 0
 
-for in arr
+for , in arr
 {
 	x++
 }

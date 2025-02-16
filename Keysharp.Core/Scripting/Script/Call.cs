@@ -39,8 +39,6 @@ namespace Keysharp.Scripting
                         inst = k; item = ob; typetouse = item.GetType();
                     }
                 }
-                if (typetouse == null)
-                    typetouse = item.GetType();
 
                 if (item == null)
 				{
@@ -53,24 +51,27 @@ namespace Keysharp.Scripting
                     object Base = kso;
 					do
 					{
-						if (Base != null && ((KeysharpObject)Base).op.TryGetValue(key, out var val) && val is OwnPropsMap map)
+						if (Base != null && ((KeysharpObject)Base).op.TryGetValue(key, out var val))
 						{
 							//Pass the ownprops map so that Invoke() knows to pass the parent object (item) as the first argument.
-							if (map.map.TryGetValue("call", out var callval) && callval is IFuncObj ifocall)//Call must come first.
-								return (map, ifocall);
-							else if (map.map.TryGetValue("get", out var getval) && getval is IFuncObj ifoget)
-								return (map, ifoget.Call(inst));//No params passed in, just call as is.
-							else if (map.map.TryGetValue("value", out var valval) && valval is IFuncObj ifoval)
-								return (map, ifoval);
-							else if (map.map.TryGetValue("set", out var setval) && setval is IFuncObj ifoset)
-								return (map, ifoset);
+							if (val.Call != null && val.Call is IFuncObj ifocall)//Call must come first.
+								return (Base, ifocall);
+							else if (val.Get != null && val.Get is IFuncObj ifoget)
+								return (Base, ifoget.Call(inst));//No params passed in, just call as is.
+							else if (val.Value != null && val.Value is IFuncObj ifoval)
+								return (Base, ifoval);
+							else if (val.Set != null && val.Set is IFuncObj ifoset)
+								return (Base, ifoset);
 
-							return Errors.ErrorOccurred(err = new Error($"Attempting to get method or property {key} on object {map} failed.")) ? throw err : (null, null);
+							return Errors.ErrorOccurred(err = new Error($"Attempting to get method or property {key} on object {val} failed.")) ? throw err : (null, null);
 						}
 					} while (GetObjectPropertyValue(inst, Base, "base", out Base) && Base != null);
 				}
 
-				if (Reflections.FindAndCacheInstanceMethod(typetouse, key, paramCount) is MethodPropertyHolder mph1)
+                if (typetouse == null)
+                    typetouse = item.GetType();
+
+                if (Reflections.FindAndCacheInstanceMethod(typetouse, key, paramCount) is MethodPropertyHolder mph1)
 				{
 					return (item, mph1);
 				}
@@ -119,7 +120,10 @@ namespace Keysharp.Scripting
 
 			try
 			{
-				if (item is ITuple otup && otup.Length > 1)
+                if (namestr.Equals("__Value", StringComparison.InvariantCultureIgnoreCase) && item is Misc.VarRef vr)
+					return vr.__Value;
+
+                if (item is ITuple otup && otup.Length > 1)
 				{
 					if (otup[0] is Type t && otup[1] is object o)
 					{
@@ -196,16 +200,16 @@ namespace Keysharp.Scripting
         public static bool GetObjectPropertyValue(object inst, object obj, string namestr, out object returnValue)
 		{
 			returnValue = null;
-			if (!(obj is KeysharpObject kso))
+			if (!(obj is KeysharpObject kso) || kso.op == null)
 				return false;
-			if (kso.op == null)
-				return false;
-			if (kso.op.TryGetValue(namestr, out var val) && val is OwnPropsMap map)
+			if (kso.op.TryGetValue(namestr, out var val))
 			{
-				if (map.map.TryGetValue("value", out var valval))
-					returnValue = valval;
-				else if (map.map.TryGetValue("get", out var getval) && getval is IFuncObj ifo && ifo != null)
+				if (val.Value != null)
+					returnValue = val.Value;
+				else if (val.Get != null && val.Get is IFuncObj ifo && ifo != null)
 					returnValue = ifo.Call(inst);
+				else if (val.Call != null && val.Call is IFuncObj ifo2 && ifo2 != null)
+					returnValue = ifo2;
 				else
 					return false;
 				return true;
@@ -254,27 +258,28 @@ namespace Keysharp.Scripting
 			return Errors.ErrorOccurred(err = new Error($"Attempting to get static method {name} failed.")) ? throw err : (null, null);
 		}
 
-		public static object Invoke(object obj, object meth, params object[] parameters)
+        public static object Invoke(object obj, object meth, params object[] parameters)
 		{
             try
             {
 				(object, object) mitup = (null, null);
                 IFuncObj f;
+				var methName = (string)meth;
 				if (meth is IFuncObj fo1)
 					mitup = (obj, fo1);
 				else if (obj is ITuple otup && otup.Length > 1)
 				{
-					mitup = GetMethodOrProperty(otup, (string)meth, -1);
+					mitup = GetMethodOrProperty(otup, methName, -1);
 					if (otup[0] is object o && !(o is ComObject))
 						mitup.Item1 = o;
 				}
-				else if (meth is string methName && methName.Equals("Call", StringComparison.InvariantCultureIgnoreCase) && obj is IFuncObj fo2)
+				else if (obj is IFuncObj fo2 && methName.Equals("Call", StringComparison.OrdinalIgnoreCase))
 				{
 					return fo2.Call(fo2.Inst == null ? parameters : new object[] { fo2.Inst }.Concat(parameters));
 				}
 				else
 				{
-					mitup = GetMethodOrProperty(obj, (string)meth, -1);
+					mitup = GetMethodOrProperty(obj, methName, -1);
 					if (!(obj is ComObject))
 						mitup.Item1 = obj;
 				}
@@ -328,9 +333,7 @@ namespace Keysharp.Scripting
 
 						if (lenIsZero)
 						{
-							var arr = new object[2];
-							arr[0] = mitup.Item1 is OwnPropsMap opm ? opm.Parent : mitup.Item1;
-							return ifo2.Call(arr[0]);
+							return ifo2.Call(mitup.Item1 is OwnPropsMap opm ? opm.Parent : mitup.Item1);
 						}
 						else
 						{
@@ -343,7 +346,13 @@ namespace Keysharp.Scripting
 						}
 					}
 					else
-						return ifo2.Call(new[] { mitup.Item1 }.Concat(parameters));
+					{
+                        int count = parameters.Length;
+                        object[] args = new object[count + 1];
+                        args[0] = mitup.Item1;
+						System.Array.Copy(parameters, 0, args, 1, count);
+                        return ifo2.Call(args);
+                    }
 				}
 			}
 			catch (Exception e)
@@ -442,7 +451,7 @@ namespace Keysharp.Scripting
 
 		public static (object, object) MakeObjectTuple(object obj0, object obj1) => (obj0, obj1);
 
-		public static object SetPropertyValue(object item, object name, object value)//Always assume these are not index properties, which we instead handle via method call with get_Item and set_Item.
+        public static object SetPropertyValue(object item, object name, object value)//Always assume these are not index properties, which we instead handle via method call with get_Item and set_Item.
 		{
 			Error err;
 			Type typetouse = null;
@@ -451,7 +460,12 @@ namespace Keysharp.Scripting
 
 			try
 			{
-				if (item is ITuple otup && otup.Length > 1)
+				if (item is Misc.VarRef vr && namestr.Equals("__Value", StringComparison.InvariantCultureIgnoreCase))
+				{
+					vr.__Value = value;
+					return value;
+				}
+				else if (item is ITuple otup && otup.Length > 1)
 				{
 					if (otup[0] is Type t && otup[1] is object o)
 					{
@@ -471,15 +485,15 @@ namespace Keysharp.Scripting
 
 				if ((kso = item as KeysharpObject) != null && kso.op != null)
 				{
-					if (kso.op.TryGetValue(namestr, out var val) && val is OwnPropsMap opm)
+					if (kso.op.TryGetValue(namestr, out var val))
 					{
-						if (opm.map.ContainsKey("value"))
+						if (val.Value != null)
 						{
-							opm.map["value"] = value;
+							val.Value = value;
 							return value;
 						}
 
-						if (opm.map.TryGetValue("set", out var setval) && setval is FuncObj ifo)
+						if (val.Set != null && val.Set is IFuncObj ifo)
 						{
 							var arr = new object[2];
 							arr[0] = item;//Special logic here: this was called on an OwnProps map, so it uses its parent as the object.

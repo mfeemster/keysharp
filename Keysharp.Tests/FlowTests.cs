@@ -6,6 +6,9 @@ namespace Keysharp.Tests
 	public partial class FlowTests : TestRunner
 	{
 		[Test, Category("Flow")]
+		public void FlowEnum() => Assert.IsTrue(TestScript("flow-enum", false));
+
+		[Test, Category("Flow")]
 		public void FlowForIn() => Assert.IsTrue(TestScript("flow-for-in", true));
 
 		[Test, Category("Flow")]

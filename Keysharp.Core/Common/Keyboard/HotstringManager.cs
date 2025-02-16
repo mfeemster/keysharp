@@ -212,7 +212,7 @@ namespace Keysharp.Core.Common.Keyboard
 
 		internal static void ClearBuf() => hsBuf.Clear();
 
-		internal static HotstringDefinition FindHotstring(string _hotstring, bool _caseSensitive, bool _detectWhenInsideWord, ICallable _hotCriterion)
+		internal static HotstringDefinition FindHotstring(string _hotstring, bool _caseSensitive, bool _detectWhenInsideWord, IFuncObj _hotCriterion)
 		{
 			if (shsDkt.TryGetValue(_hotstring[0], out var possibleHotstrings))
 				foreach (var hs in possibleHotstrings)

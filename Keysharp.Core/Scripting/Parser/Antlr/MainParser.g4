@@ -409,9 +409,9 @@ mapElement
 
 propertyAssignment
     : memberIdentifier (WS | EOL)* ':' (WS | EOL)* expression                           # PropertyExpressionAssignment
-    | Async? '*'? propertyName '(' formalParameterList? ')' functionBody # FunctionProperty
-    | getter '(' ')' functionBody                                        # PropertyGetter
-    | setter '(' formalParameterArg ')' functionBody                     # PropertySetter
+    //| Async? '*'? propertyName '(' formalParameterList? ')' functionBody # FunctionProperty
+    //| getter '(' ')' functionBody                                        # PropertyGetter
+    //| setter '(' formalParameterArg ')' functionBody                     # PropertySetter
     //| Ellipsis? singleExpression                                         # PropertyShorthand
     ;
 

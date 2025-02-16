@@ -32,8 +32,7 @@ namespace Keysharp.Scripting
 
         public override SyntaxNode VisitClassDeclaration([NotNull] ClassDeclarationContext context)
         {
-            var prevClass = parser.currentClass;
-            parser.currentClass = new Parser.Class(Parser.NormalizeIdentifier(context.identifier().GetText(), eNameCase.Title));
+            PushClass(Parser.NormalizeIdentifier(context.identifier().GetText(), eNameCase.Title));
 
             // Determine the base class (Extends clause)
             BaseListSyntax baseList;
@@ -75,7 +74,13 @@ namespace Keysharp.Scripting
                                 SyntaxFactory.EqualsValueClause(
                                     SyntaxFactory.MemberAccessExpression(
                                         SyntaxKind.SimpleMemberAccessExpression,
-                                        SyntaxFactory.IdentifierName(parser.currentClass.Name),
+                                        CreateQualifiedName(
+                                            string.Join(".",
+                                                parser.ClassStack
+                                                .Reverse()               // reverse to get outer-to-inner order
+                                                .Select(cls => cls.Name) // extract the Name property
+                                            ) + "." + parser.currentClass.Name
+                                        ),
                                         SyntaxFactory.IdentifierName("__Static")
                                     )
                                 )
@@ -143,7 +148,8 @@ namespace Keysharp.Scripting
             var newClass = parser.currentClass.Declaration
                 .WithBaseList(baseList)
                 .WithMembers(SyntaxFactory.List(parser.currentClass.Declaration.Members.Concat(parser.currentClass.Body)));
-            parser.currentClass = prevClass;
+
+            PopClass();
             return newClass;
         }
 
@@ -272,8 +278,10 @@ namespace Keysharp.Scripting
 
             foreach (var fieldDefinition in context.fieldDefinition())
             {
-                var fieldName = fieldDefinition.propertyName().GetText();
-                fieldNames.Add(parser.NormalizeClassIdentifier(fieldName));
+                // Convert field names to title-case so they don't conflict with global variables
+                var fieldName = parser.NormalizeClassIdentifier(fieldDefinition.propertyName().GetText());
+                fieldName = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(fieldName);
+                fieldNames.Add(fieldName);
 
                 if (fieldDefinition.expression() != null)
                 {
@@ -514,7 +522,7 @@ namespace Keysharp.Scripting
                                 .WithArgumentList(
                                     SyntaxFactory.ArgumentList(
                                         SyntaxFactory.SeparatedList(new[] {
-                                            SyntaxFactory.Argument(SyntaxFactory.IdentifierName(parser.currentClass.Name.ToLowerInvariant())),
+                                            SyntaxFactory.Argument(SyntaxFactory.ThisExpression()),
                                             SyntaxFactory.Argument(SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(deferred.Item1))),
                                             SyntaxFactory.Argument(deferred.Item2)
                                         })
@@ -643,5 +651,18 @@ namespace Keysharp.Scripting
             );
         }
 
+
+        private void PushClass(string className, string baseName = "KeysharpObject")
+        {
+            parser.ClassStack.Push(parser.currentClass);
+            parser.classDepth++;
+            parser.currentClass = new Class(className, baseName);
+        }
+
+        private void PopClass()
+        {
+            parser.currentClass = parser.ClassStack.Pop();
+            parser.functionDepth--;
+        }
     }
 }

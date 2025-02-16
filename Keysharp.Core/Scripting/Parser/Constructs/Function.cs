@@ -61,7 +61,7 @@ namespace Keysharp.Scripting
 					case StringBoundVerbatim:
 					{
 						var origi = i;
-						var rest = ParseString(codeLine, code, ref i);
+						var rest = ParseString(codeLine, code, ref i, false);
 						//rest = rest.Substring(1, rest.Length - 2);
 						_ = buf.Append(code.Substring(origi, (i - origi) + 1));
 						continue;
@@ -319,7 +319,7 @@ namespace Keysharp.Scripting
 						{
 							if (code[i] == StringBound || code[i] == StringBoundVerbatim)
 							{
-								_ = ParseString(codeLine, code, ref i);
+								_ = ParseString(codeLine, code, ref i, false);
 								wasstr = true;
 							}
 
@@ -384,7 +384,7 @@ namespace Keysharp.Scripting
 			if (code[0] == StringBound || code[0] == StringBoundVerbatim)
 			{
 				var i = 0;
-				code = ParseString(codeLine, code, ref i);
+				code = ParseString(codeLine, code, ref i, false);
 				code = code.Substring(1, code.Length - 2);
 				//code = EscapedString(code.Substring(1, code.Length - 2), false);
 				//var str = true;

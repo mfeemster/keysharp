@@ -559,7 +559,7 @@ namespace Keysharp.Scripting
                 .WithVariables(
                     SyntaxFactory.SingletonSeparatedList(
                         SyntaxFactory.VariableDeclarator(
-                            SyntaxFactory.Identifier(functionName)
+                            SyntaxFactory.Identifier(Parser.ToValidIdentifier(functionName))
                         )
                         .WithInitializer(
                             SyntaxFactory.EqualsValueClause(
@@ -591,7 +591,7 @@ namespace Keysharp.Scripting
             );
 
             mainClass.Declaration = mainClass.Declaration.AddMembers(funcObjVariable);
-            return functionName;
+            return ToValidIdentifier(functionName);
         }
 
         public ExpressionSyntax GenerateFunctionInvocation(
@@ -717,13 +717,13 @@ namespace Keysharp.Scripting
                 SyntaxFactory.ArgumentList(
                     SyntaxFactory.SeparatedList(new[]
                     {
-                                        SyntaxFactory.Argument(targetExpression),
-                                        SyntaxFactory.Argument(
-                                            SyntaxFactory.LiteralExpression(
-                                                SyntaxKind.StringLiteralExpression,
-                                                SyntaxFactory.Literal("Call")
-                                            )
-                                        )
+                        SyntaxFactory.Argument(targetExpression),
+                        SyntaxFactory.Argument(
+                            SyntaxFactory.LiteralExpression(
+                                SyntaxKind.StringLiteralExpression,
+                                SyntaxFactory.Literal("Call")
+                            )
+                        )
                     }.Concat(argumentList.Arguments)) // Include additional arguments
                 )
             );

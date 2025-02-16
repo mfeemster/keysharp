@@ -10,6 +10,7 @@ using System.Reflection.Metadata;
 using System.Security.AccessControl;
 using System.Diagnostics.Metrics;
 using Antlr4.Runtime.Atn;
+using Keysharp.Core;
 
 namespace Keysharp.Scripting
 {
@@ -213,6 +214,8 @@ namespace Keysharp.Scripting
 		private readonly tsmd allMethodCalls = [];
 		private readonly Stack<bool> allStaticVars = new ();
 		private readonly Dictionary<CodeTypeDeclaration, Dictionary<string, OrderedDictionary<string, CodeExpression>>> allVars = [];//Needs to be ordered so that code variables are generated in the order they were declared.
+		private readonly Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeVariableReferenceExpression>>> allVarRefs = [];
+
 		private readonly CodeAttributeDeclarationCollection assemblyAttributes = [];
 		private readonly HashSet<CodeSnippetExpression> assignSnippets = [];
 		private readonly Stack<CodeBlock> blocks = new ();
@@ -289,6 +292,7 @@ namespace Keysharp.Scripting
         public bool isPersistent = false;
 
         public Stack<(Function, HashSet<string>)> FunctionStack = new();
+		public Stack<Class> ClassStack = new();
 
         public Class currentClass;
 
@@ -302,6 +306,7 @@ namespace Keysharp.Scripting
         public uint loopDepth = 0;
         public string loopLabel = null;
         public uint functionDepth = 0;
+		public uint classDepth = 0;
         public uint tryDepth = 0;
         public uint tempVarCount = 0;
 
@@ -365,6 +370,7 @@ namespace Keysharp.Scripting
             public HashSet<string> Globals = new HashSet<string>();
             public HashSet<string> Statics = new HashSet<string>();
             public HashSet<string> VarRefs = new HashSet<string>();
+			public HashSet<string> ArrayType = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             public eScope Scope = eScope.Local;
 
             public bool Void = false;
@@ -732,7 +738,11 @@ namespace Keysharp.Scripting
 							else
 							{
 								for (var i = method.Parameters.Count - 1; i >= 0; i--)
-									method.Statements.Insert(0, new CodeExpressionStatement(new CodeSnippetExpression($"object {Ch.CreateEscapedIdentifier(method.Parameters[i].Name)} = args.Length > {i} ? args[{i}] : null")));
+								{
+									var varName = Ch.CreateEscapedIdentifier(method.Parameters[i].Name);
+									method.Statements.Insert(0, new CodeExpressionStatement(new CodeSnippetExpression($"object {varName} = args.Length > {i} ? args[{i}] : null")));
+									allVars.GetOrAdd(typeMethods.Key).GetOrAdd(method.Name).Add(varName, new CodeVariableReferenceExpression(varName));//More of a declaration than a reference, but it works.
+								}
 							}
 
 							origNewParams = method.Parameters.Cast<CodeParameterDeclarationExpression>().ToList();
@@ -765,46 +775,49 @@ namespace Keysharp.Scripting
 							method.Name = "__Delete";
 							_ = typeMethods.Key.Members.Add(new CodeSnippetTypeMember($"\t\t\t~{typeMethods.Key.Name}() {{ __Delete(); }}") { Name = typeMethods.Key.Name });
 						}
-						else if (string.Compare(method.Name, "__Enum", true) == 0)
-						{
-							var getEnumMeth = new CodeMemberMethod();
-							method.Name = "__Enum";
-							getEnumMeth.Name = "IEnumerable.GetEnumerator";
-							getEnumMeth.Attributes = MemberAttributes.Final;
-							getEnumMeth.ReturnType = new CodeTypeReference("IEnumerator");
-							_ = getEnumMeth.Statements.Add(new CodeSnippetExpression("return MakeBaseEnumerator(__Enum())"));
-							_ = typeMethods.Key.Members.Add(getEnumMeth);
-							var paramVal = 1;
 
-							if (method.Parameters.Count > 0)
-							{
-								var methParam = method.Parameters[0];
-								var val = methParam.Name.ParseInt(false);
+						/*
+						    else if (string.Compare(method.Name, "__Enum", true) == 0)
+						    {
+						    var getEnumMeth = new CodeMemberMethod();
+						    method.Name = "__Enum";
+						    getEnumMeth.Name = "IEnumerable.GetEnumerator";
+						    getEnumMeth.Attributes = MemberAttributes.Final;
+						    getEnumMeth.ReturnType = new CodeTypeReference("IEnumerator");
+						    _ = getEnumMeth.Statements.Add(new CodeSnippetExpression("return MakeBaseEnumerator(__Enum())"));
+						    _ = typeMethods.Key.Members.Add(getEnumMeth);
+						    var paramVal = 1;
 
-								if (val.HasValue && val.Value > 0)
-									paramVal = val.Value;
+						    if (method.Parameters.Count > 0)
+						    {
+						        var methParam = method.Parameters[0];
+						        var val = methParam.Name.ParseInt(false);
 
-								method.Parameters.Clear();
-							}
+						        if (val.HasValue && val.Value > 0)
+						            paramVal = val.Value;
 
-							var leftParen = paramVal > 1 ? "(" : "";
-							var rightParen = paramVal > 1 ? ")" : "";
-							var objTypes = string.Join(',', Enumerable.Repeat("object", paramVal).ToArray());
-							var baseTypeStr = $"IEnumerable<{leftParen}{objTypes}{rightParen}>";
-							var returnTypeStr = $"IEnumerator<{leftParen}{objTypes}{rightParen}>";
-							var baseCtr = new CodeTypeReference(baseTypeStr);
-							var returnCtr = new CodeTypeReference(returnTypeStr);
-							_ = typeMethods.Key.BaseTypes.Add(baseCtr);
-							//
-							getEnumMeth = new CodeMemberMethod
-							{
-								Name = "GetEnumerator",
-								Attributes = MemberAttributes.Public | MemberAttributes.Final,
-								ReturnType = returnCtr
-							};
-							_ = getEnumMeth.Statements.Add(new CodeSnippetExpression($"return ({returnTypeStr})MakeBaseEnumerator(__Enum())"));
-							_ = typeMethods.Key.Members.Add(getEnumMeth);
-						}
+						        method.Parameters.Clear();
+						    }
+
+						    var leftParen = paramVal > 1 ? "(" : "";
+						    var rightParen = paramVal > 1 ? ")" : "";
+						    var objTypes = string.Join(',', Enumerable.Repeat("object", paramVal).ToArray());
+						    var baseTypeStr = $"IEnumerable<{leftParen}{objTypes}{rightParen}>";
+						    var returnTypeStr = $"IEnumerator<{leftParen}{objTypes}{rightParen}>";
+						    var baseCtr = new CodeTypeReference(baseTypeStr);
+						    var returnCtr = new CodeTypeReference(returnTypeStr);
+						    _ = typeMethods.Key.BaseTypes.Add(baseCtr);
+						    //
+						    getEnumMeth = new CodeMemberMethod
+						    {
+						        Name = "GetEnumerator",
+						        Attributes = MemberAttributes.Public | MemberAttributes.Final,
+						        ReturnType = returnCtr
+						    };
+						    _ = getEnumMeth.Statements.Add(new CodeSnippetExpression($"return ({returnTypeStr})MakeBaseEnumerator(__Enum())"));
+						    _ = typeMethods.Key.Members.Add(getEnumMeth);
+						    }
+						*/
 					}
 
 					var thisconstructor = typeMethods.Key.Members.Cast<CodeTypeMember>().FirstOrDefault(ctm => ctm is CodeConstructor cc && !cc.Attributes.HasFlag(MemberAttributes.Static)) as CodeConstructor;
@@ -1335,6 +1348,27 @@ namespace Keysharp.Scripting
 			methods.GetOrAdd(targetClass)[userMainMethod.Name] = userMainMethod;
 			_ = targetClass.Members.Add(userMainMethod);
 
+			foreach (var cvreType in allVarRefs)
+			{
+				foreach (var cvreScope in cvreType.Value)
+				{
+					foreach (var cvreVar in cvreScope.Value)
+					{
+						string str = null;
+
+						if (MethodExistsInTypeOrBase(cvreType.Key.Name, cvreVar.VariableName) is CodeMemberMethod cmm)
+							str = cmm.Name;
+						else if (Reflections.FindBuiltInMethod(cvreVar.VariableName, -1) is MethodPropertyHolder mph)
+							str = mph.mi.DeclaringType.FullName + "." + mph.mi.Name;
+
+						//Can't transform this in a call to Func(), but hopefully it's ok.
+						if (str != null)
+							if (!VarExistsAtCurrentOrParentScope(cvreType.Key, cvreScope.Key, Ch.CreateEscapedIdentifier(cvreVar.VariableName)))
+								cvreVar.VariableName = str;
+					}
+				}
+			}
+
 			//Ternaries need to be re-evaluated because they are handled as snippets.
 			foreach (var tern in ternaries)
 			{
@@ -1504,6 +1538,9 @@ namespace Keysharp.Scripting
 					{
 						foreach (var globalvar in scopekv.Value)
 						{
+							if (globalvar.Value == null)
+								continue;
+
 							var name = globalvar.Key.Replace(scopeChar[0], '_');
 
 							if (name == "this")//Never create a "this" variable inside of a class definition.
@@ -1664,6 +1701,7 @@ namespace Keysharp.Scripting
 			methods[ctd] = new Dictionary<string, CodeMemberMethod>(StringComparer.OrdinalIgnoreCase);
 			properties[ctd] = new Dictionary<string, List<CodeMemberProperty>>(StringComparer.OrdinalIgnoreCase);
 			allVars[ctd] = new Dictionary<string, OrderedDictionary<string, CodeExpression>>(StringComparer.OrdinalIgnoreCase);
+			allVarRefs[ctd] = new Dictionary<string, List<CodeVariableReferenceExpression>>(StringComparer.OrdinalIgnoreCase);
 			staticFuncVars[ctd] = new Stack<Dictionary<string, CodeExpression>>();
 			setPropertyValueCalls[ctd] = [];
 			getPropertyValueCalls[ctd] = [];

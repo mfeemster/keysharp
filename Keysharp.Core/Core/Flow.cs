@@ -8,7 +8,7 @@ namespace Keysharp.Core
 	/// </summary>
 	public static class Flow
 	{
-		internal static ConcurrentDictionary<string, ICallable> cachedFuncObj = new ();
+		internal static ConcurrentDictionary<string, IFuncObj> cachedFuncObj = new ();
 		internal static bool callingCritical;
 		internal static volatile bool hasExited;
 		internal static int IntervalUnspecified = int.MinValue + 303;// Use some negative value unlikely to ever be passed explicitly:
@@ -17,7 +17,7 @@ namespace Keysharp.Core
 		internal static bool persistentValueSetByUser;
         internal static HashSet<object> initializedUserStaticVariables = new();
 
-        internal static ConcurrentDictionary<ICallable, Timer> timers = new ();
+        internal static ConcurrentDictionary<IFuncObj, Timer> timers = new ();
 
 		/// <summary>
 		/// Whether a thread can be interrupted/preempted by subsequent thread.
@@ -319,7 +319,7 @@ namespace Keysharp.Core
 			var p = period.Al(long.MaxValue);
 			var pri = priority.Al();
 			var once = p < 0;
-			ICallable func = null;
+			IFuncObj func = null;
 			Timer timer = null;
 
 			if (once)
@@ -717,10 +717,10 @@ namespace Keysharp.Core
 				return false;
 			}
 		}
-        public static ICallable TryGetCallable(object f)
+        public static IFuncObj TryGetCallable(object f)
         {
-            ICallable func = null;
-            if (f is ICallable fc)
+            IFuncObj func = null;
+            if (f is IFuncObj fc)
             {
                 func = fc;
             }

@@ -51,7 +51,27 @@ namespace Keysharp.Core.COM
 
 		public void Call(ref object obj0, ref object obj1) => (obj0, obj1) = Current;
 
-		public void Dispose() => Reset();
+        public object Call(params object[] args)
+        {
+            if (MoveNext())
+            {
+                // If only one variable is passed, return just the value.
+                if (args.Length == 1)
+                {
+                    Script.SetPropertyValue(args[0], "__Value", Current.Item1);
+                }
+                // Otherwise return the index (1-based) and the value.
+                else if (args.Length >= 2)
+                {
+                    Script.SetPropertyValue(args[0], "__Value", Current.Item1);
+                    Script.SetPropertyValue(args[1], "__Value", Current.Item2);
+                }
+                return true;
+            }
+            return false;
+        }
+
+        public void Dispose() => Reset();
 
 		public bool MoveNext()
 		{

@@ -1,62 +1,51 @@
 ﻿namespace Keysharp.Core
 {
-	/// <summary>
-	/// A comparer which allows the caller to specify the case comparison mode for comparing strings.
-	/// This is used in <see cref="Map"/>.
-	/// </summary>
-	public class CaseEqualityComp : IEqualityComparer<object>
-	{
-		/// <summary>
-		/// The comparison type.
-		/// </summary>
-		private readonly StringComparison compType;
+    /// <summary>
+    /// A comparer which allows the caller to specify the case comparison mode for comparing strings.
+    /// This is used in <see cref="Map"/>.
+    /// </summary>
+    public class CaseEqualityComp : IEqualityComparer<object>
+    {
+        private readonly StringComparer stringComparer;
 
-		/// <summary>
-		/// Constructor that takes a case comparison mode.
-		/// </summary>
-		/// <param name="caseSense">The case comparison mode to use.</param>
-		public CaseEqualityComp(eCaseSense caseSense)
-		{
-			if (caseSense == eCaseSense.On)
-				compType = StringComparison.Ordinal;
-			else if (caseSense == eCaseSense.Off)
-				compType = StringComparison.OrdinalIgnoreCase;
-			else
-				compType = StringComparison.CurrentCultureIgnoreCase;
-		}
+        public CaseEqualityComp(eCaseSense caseSense)
+        {
+            // Choose an appropriate built-in StringComparer.
+            switch (caseSense)
+            {
+                case eCaseSense.On:
+                    stringComparer = StringComparer.Ordinal;
+                    break;
+                case eCaseSense.Off:
+                    stringComparer = StringComparer.OrdinalIgnoreCase;
+                    break;
+                default:
+                    stringComparer = StringComparer.CurrentCultureIgnoreCase;
+                    break;
+            }
+        }
 
-		/// <summary>
-		/// The implementation for <see cref="IEqualityComparer.Equals"/> which compares two objects.
-		/// If both objects are strings, then the case sensitivity mode specified in the constructor is used.
-		/// </summary>
-		/// <param name="x">The first object to compare.</param>
-		/// <param name="y">The second object to compare.</param>
-		/// <returns>True if the two objects are equal, else false.</returns>
-		public new bool Equals(object x, object y)
-		{
-			if (x is string ls && y is string rs)
-				return string.Compare(ls, rs, compType) == 0;
+        public bool Equals(object x, object y)
+        {
+            // If both are strings, use the built-in comparer.
+            if (x is string s1 && y is string s2)
+                return stringComparer.Equals(s1, s2);
+            // Otherwise, use default equality.
+            return object.Equals(x, y);
+        }
 
-			if (ReferenceEquals(x, y))
-				return true;
+        public int GetHashCode(object obj)
+        {
+            if (obj is string s)
+                return stringComparer.GetHashCode(s);
+            return obj?.GetHashCode() ?? 0;
+        }
+    }
 
-			return x.Equals(y);
-		}
-
-		/// <summary>
-		/// The implementation for <see cref="IEqualityComparer.GetHashCode(object)"/>.
-		/// If the object is a string, a hash code for its lowercase version is returned.
-		/// Otherwise obj.GetHashCode() is returned.
-		/// </summary>
-		/// <param name="obj">The object to get the hash code for.</param>
-		/// <returns>The hash code for the object.</returns>
-		public int GetHashCode(object obj) => compType != StringComparison.Ordinal && obj is string s ? s.ToLower().GetHashCode() : obj.GetHashCode();
-	}
-
-	/// <summary>
-	/// Map class that wraps a <see cref="Dictionary{object, object}"/>.
-	/// </summary>
-	public class Map : KeysharpObject, I__Enum, IEnumerable<(object, object)>, ICollection
+    /// <summary>
+    /// Map class that wraps a <see cref="Dictionary{object, object}"/>.
+    /// </summary>
+    public class Map : KeysharpObject, I__Enum, IEnumerable<(object, object)>, ICollection
 	{
         /// <summary>
         /// The underlying <see cref="Dictionary"/> that holds the values.
@@ -150,8 +139,9 @@
 		///     1: Return the key in the first element, with the second being null.<br/>
 		///     2: Return the key in the first element, and the value in the second.
 		/// </param>
-		/// <returns><see cref="IEnumerator{(object, object)}"/></returns>
-		public IEnumerator<(object, object)> __Enum(object count) => new MapKeyValueIterator(map, count.Ai());
+		/// <returns><see cref="KeysharpEnumerator"/></returns>
+		public KeysharpEnumerator __Enum(object count) => new MapKeyValueIterator(map, count.Ai());
+
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="Map"/> class.
@@ -251,7 +241,7 @@
 		/// <summary>
 		/// The implementation for <see cref="IEnumerable{(object, object)}.GetEnumerator()"/> which returns an <see cref="MapKeyValueIterator"/>.
 		/// </summary>
-		/// <returns>An <see cref="IEnumerable{(object, object)}"/> which is an <see cref="MapKeyValueIterator"/>.</returns>
+		/// <returns>An <see cref="IEnumerator{(object, object)}"/> which is a <see cref="MapKeyValueIterator"/>.</returns>
 		public IEnumerator<(object, object)> GetEnumerator() => new MapKeyValueIterator(map, 2);
 
 		/// <summary>
@@ -519,8 +509,9 @@
 		/// <summary>
 		/// The implementation for <see cref="IEnumerable.GetEnumerator"/> which just calls <see cref="__Enum"/>.
 		/// </summary>
-		/// <returns><see cref="IEnumerator{(object, object)}"/></returns>
-		IEnumerator IEnumerable.GetEnumerator() => __Enum(2);
+		/// <returns><see cref="MapKeyValueIterator"/></returns>
+		IEnumerator IEnumerable.GetEnumerator() => new MapKeyValueIterator(map, 2);
+		
 		/// <summary>
 		/// Internal helper to insert a key,value pair into the map.
 		/// </summary>
@@ -571,15 +562,8 @@
 	/// <summary>
 	/// A two component iterator for <see cref="Map"/> which returns the key and the value as a tuple.
 	/// </summary>
-	internal class MapKeyValueIterator : IEnumerator<(object, object)>
+	internal class MapKeyValueIterator : KeysharpEnumerator, IEnumerator<(object, object)>
 	{
-		/// <summary>
-		/// The number of items to return for each iteration. Allowed values are 1 and 2:
-		/// 1: return just the key in the first position
-		/// 2: return the key in the first position and the value in the second.
-		/// </summary>
-		private readonly int count;
-
 		/// <summary>
 		/// The internal map to be iterated over.
 		/// </summary>
@@ -601,7 +585,7 @@
 				{
 					var kv = iter.Current;
 
-					if (count == 1)
+					if (Count == 1)
 						return (kv.Key, null);
 					else
 						return (kv.Key, kv.Value);
@@ -624,29 +608,74 @@
 		/// <param name="m">The <see cref="Dictionary{object,object}"/> to iterate over.</param>
 		/// <param name="c">The number of items to return for each iteration.</param>
 		public MapKeyValueIterator(Dictionary<object, object> m, int c)
+			: base(null, c)
 		{
-			count = c;
 			map = m;
 			iter = map.GetEnumerator();
+			Error err;
+			var fo = new FuncObj("Call", this, Count);
+
+			if (fo.IsValid)
+				CallFunc = fo;
+			else
+				_ = Errors.ErrorOccurred(err = new MethodError($"Existing function object was invalid.")) ? throw err : "";
 		}
 
 		/// <summary>
 		/// Calls <see cref="Current"/> and places the key value in the passed in object reference.
 		/// </summary>
 		/// <param name="pos">A reference to the key value.</param>
-		public void Call(ref object obj0) => (obj0, _) = Current;
+		/// <returns>True if the iterator position has not moved past the last element, else false.</returns>
+		public override object Call(ref object key)
+		{
+			if (MoveNext())
+			{
+				(key, _) = Current;
+				return true;
+			}
+
+			return false;
+		}
 
 		/// <summary>
 		/// Calls <see cref="Current"/> and places the key and value in the passed in object references.
 		/// </summary>
 		/// <param name="key">A reference to the key value.</param>
 		/// <param name="value">A reference to the object value.</param>
-		public void Call(ref object key, ref object value) => (key, value) = Current;
+		/// <returns>True if the iterator position has not moved past the last element, else false.</returns>
+		public override object Call(ref object key, ref object value)
+		{
+			if (MoveNext())
+			{
+				(key, value) = Current;
+				return true;
+			}
 
-		/// <summary>
-		/// The implementation for <see cref="IComparer.Dispose"/> which internally resets the iterator.
-		/// </summary>
-		public void Dispose() => Reset();
+			return false;
+		}
+
+        public override object Call(params object[] args)
+        {
+            if (MoveNext())
+            {
+                if (args.Length == 1)
+                {
+                    Script.SetPropertyValue(args[0], "__Value", Current.Item1);
+                }
+                else if (args.Length >= 2)
+                {
+                    Script.SetPropertyValue(args[0], "__Value", Current.Item1);
+                    Script.SetPropertyValue(args[1], "__Value", Current.Item2);
+                }
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// The implementation for <see cref="IComparer.Dispose"/> which internally resets the iterator.
+        /// </summary>
+        public void Dispose() => Reset();
 
 		/// <summary>
 		/// The implementation for <see cref="IEnumerator.MoveNext"/> which moves the iterator to the next position.

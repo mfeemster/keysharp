@@ -186,7 +186,7 @@ namespace Keysharp.Scripting
 						return fi.GetValue(null);
 				}
 
-				var rv = GetReservedVariable(key); // Try reserved variable first, to take precedence over ICallable
+				var rv = GetReservedVariable(key); // Try reserved variable first, to take precedence over IFuncObj
 				if (rv != null)
 					return rv;
 

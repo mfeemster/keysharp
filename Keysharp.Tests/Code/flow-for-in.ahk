@@ -1,7 +1,7 @@
 arr := [10, 20, 30]
 x := 0
 
-for (in arr)
+for (, in arr)
 	x++
 
 if (x == 3)
@@ -160,7 +160,7 @@ else
 m := Map(1, 10, 2, 20, 3, 30)
 x := 0
 
-for ( in m)
+for (, in m)
 	x++
 
 if (x == 3)

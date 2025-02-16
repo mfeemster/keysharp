@@ -4,33 +4,15 @@ namespace Keysharp.Core.Common.ObjectBase
 {
 	internal interface I__Enum
 	{
-		public IEnumerator<(object, object)> __Enum(object count);
+		public KeysharpEnumerator __Enum(object count);
 	}
 
-	public class KeysharpObject : Any, ICallable
+	public class KeysharpObject : Any
 	{
-        protected internal Dictionary<string, OwnPropsMap> op;
+        protected internal Dictionary<string, OwnPropsDesc> op;
 
         MethodInfo mi;
-        private FuncObj _fo;
         protected bool SkipConstructorLogic { get; }
-        FuncObj fo
-        {
-            get
-            {
-                if (_fo == null)
-                {
-                    MethodInfo[] instanceMethods = this.GetType().GetMethods(BindingFlags.Instance | BindingFlags.Public)
-                       .Where(m => m.Name == "Call")
-                       .ToArray();
-                    if (instanceMethods.Length < 2)
-                        throw new NotImplementedException();
-                    mi = instanceMethods[0];
-                    _fo = new FuncObj(mi, this);
-                }
-                return _fo;
-            }
-        }
 
         public KeysharpObject(params object[] args)
 		{
@@ -89,34 +71,6 @@ namespace Keysharp.Core.Common.ObjectBase
             return null;
         }
 
-        public object Call(params object[] args) => fo.Call(args);
-
-        public object CallWithRefs(params object[] obj)
-        {
-            var refs = new List<RefHolder>(obj.Length);
-
-            for (var i = 0; i < obj.Length; i++)
-            {
-                object p = obj[i];
-
-                if (p is RefHolder rh)
-                {
-                    refs.Add(rh);
-                    obj[i] = rh.val;
-                }
-            }
-
-            var val = fo.Call(obj);
-
-            for (var i = 0; i < refs.Count; i++)
-            {
-                var rh = refs[i];
-                rh.reassign(obj[rh.index]);
-            }
-
-            return val;
-        }
-
         /// <summary>
         /// Return a cloned copy of the object.
         /// Just calling MemberwiseClone() is sufficient to clone all of the properties as well
@@ -135,27 +89,22 @@ namespace Keysharp.Core.Common.ObjectBase
 			if (obj1 is Map map)
 			{
 				if (op == null)
-					op = new Dictionary<string, OwnPropsMap>(new CaseEqualityComp(eCaseSense.Off));
+					op = new Dictionary<string, OwnPropsDesc>(StringComparer.OrdinalIgnoreCase);
 
-				op[name] = new OwnPropsMap(this, map);
+				op[name] = new OwnPropsDesc(this, map);
 			}
 			else if (obj1 is KeysharpObject kso)
 			{
 				if (kso.op != null)//&& kso.op.TryGetValue(name, out var opm))
 				{
 					if (op == null)
-						op = new Dictionary<string, OwnPropsMap>(new CaseEqualityComp(eCaseSense.Off));
+						op = new Dictionary<string, OwnPropsDesc>(StringComparer.OrdinalIgnoreCase);
 
 					_ = op.Remove(name);//Clear, but this will prevent defining the property across multiple calls such as first adding value, then get, then set.
 
-					foreach (var kv in kso.op)
+					if (op.TryGetValue(name, out var currProp))
 					{
-						if (kv.Key == "base" && name != "base")
-							continue;
-						if (op.TryGetValue(name, out var currProp))
-							currProp.map[kv.Key] = kv.Value[kv.Key];//Merge.
-						else
-							op[name] = new OwnPropsMap(this, Collections.MapWithoutBase(kv.Value.map));//Create new.
+						currProp.Merge(kso.op);
 					}
 
 					kso.op.Clear();
@@ -195,21 +144,9 @@ namespace Keysharp.Core.Common.ObjectBase
 			{
 				var kso = new KeysharpObject();
 				var list = new List<object>();
-				kso.op = new Dictionary<string, OwnPropsMap>();
+				kso.op = new Dictionary<string, OwnPropsDesc>();
 
-				foreach (var kv in dynProp.map)
-				{
-					list.Add(kv.Key);
-
-					//Must wrap in a function so that when GetMethodOrProperty() unwraps it, it just returns the property and
-					//doesn't actually call get().
-					if (string.Compare(kv.Key.ToString(), "get", true) == 0)
-						list.Add(new FuncObj("Wrap", this).Bind(this, kv.Value));
-					else
-						list.Add(kv.Value);
-				}
-
-				return Keysharp.Core.Objects.Object(list.ToArray());
+				return dynProp.GetDesc();
 			}
 
 			try
@@ -253,7 +190,7 @@ namespace Keysharp.Core.Common.ObjectBase
 
 		public object OwnProps(object getValues = null, object userOnly = null)
 		{
-			var vals = getValues.Ab();
+			var vals = getValues == null || getValues.Ab();
 			var user = userOnly.Ab(true);
 			var props = new Dictionary<object, object>();
 
@@ -264,21 +201,11 @@ namespace Keysharp.Core.Common.ObjectBase
 					if (kv.Key == "base")
 						continue;
 
-					foreach (var propkv in kv.Value.map)
-					{
-						if (propkv.Key.ToString() == "set" || propkv.Key.ToString() == "call")
-							continue;
+					if (kv.Value.Get != null && (kv.Value.Get is not FuncObj fo || (fo.Mph.mi != null && fo.Mph.ParamLength <= 1)))
+                            props[kv.Key] = kv.Value.Get;
 
-						var prop = propkv.Value;
-
-						if (prop != null)
-						{
-							if (!vals
-									|| prop is not FuncObj fo
-									|| (fo.Mph.mi != null && fo.Mph.ParamLength <= 1))
-								props[kv.Key] = prop;
-						}
-					}
+                    if (kv.Value.Value != null && (kv.Value.Value is not FuncObj fo2 || (fo2.Mph.mi != null && fo2.Mph.ParamLength <= 1)))
+                        props[kv.Key] = kv.Value.Value;
 				}
 			}
 
@@ -286,7 +213,7 @@ namespace Keysharp.Core.Common.ObjectBase
 			var valProps = Reflections.GetOwnProps(GetType(), user);
 
 			foreach (var mph in valProps)
-				if (!vals || (mph.pi != null && mph.ParamLength == 0))
+				if (mph.pi != null && mph.ParamLength == 0)
 					props[mph.pi.Name] = mph;
 
 			return new OwnPropsIterator(this, props, vals);

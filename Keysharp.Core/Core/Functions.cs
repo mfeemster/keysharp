@@ -172,12 +172,28 @@ namespace Keysharp.Core
 				}//Empty string will just return null, which is a valid value in some cases.
 			}
 			else if (h is IFuncObj fo)
-				del = fo;
-            else if (h is Delegate d)
-                del = new FuncObj(d.Method);
-            else if (h is MethodInfo mi)
-                del = new FuncObj(mi);
-            else if (throwIfBad)
+			{
+				var tempdel = fo;
+
+				if (tempdel.IsValid)
+					del = tempdel;
+				else if (throwIfBad)
+					return Errors.ErrorOccurred(err = new MethodError($"Existing function object was invalid.")) ? throw err : null;
+			}
+			else if (h is Delegate d)
+			{
+				var tempdel = new FuncObj(d, eventObj);
+
+				if (tempdel.IsValid)
+					del = tempdel;
+				else if (throwIfBad)
+					return Errors.ErrorOccurred(err = new MethodError($"Unable to retrieve method info for {d.Method.Name} when creating a function object from delegate.")) ? throw err : null;
+			}
+			else if (h is KeysharpEnumerator ke)
+			{
+				del = ke.CallFunc;
+			}
+			else if (throwIfBad)
 				return Errors.ErrorOccurred(err = new TypeError($"Improper value of {h} was supplied for a function object.")) ? throw err : null;
 
 			return del;
