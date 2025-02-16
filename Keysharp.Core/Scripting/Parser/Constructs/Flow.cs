@@ -383,8 +383,15 @@ namespace Keysharp.Scripting
 						}
 
 						var col = Ch.CodeToString(expr);
-						var coldecl = new CodeExpressionStatement(new CodeSnippetExpression($"var {coldeclid} = {col}"));
-						var iterdecl = new CodeExpressionStatement(new CodeSnippetExpression($"var {id} = MakeEnumerator({coldeclid}, {varsplits.Count})"));
+						var coldecl = BinOpToSnippet(new CodeBinaryOperatorExpression(new CodeSnippetExpression($"var {coldeclid}"),
+													 CodeBinaryOperatorType.Assign,
+													 expr));
+						var enumCmie = new CodeMethodInvokeExpression(new CodeSnippetExpression("Keysharp.Core.Loops"), "MakeEnumerator",
+								new CodeSnippetExpression(coldeclid),
+								new CodeSnippetExpression($"{varsplits.Count}L"));
+						var iterdecl = BinOpToSnippet(new CodeBinaryOperatorExpression(new CodeSnippetExpression($"var {id}"),
+													  CodeBinaryOperatorType.Assign,
+													  enumCmie));
 						_ = parent.Add(coldecl);
 						_ = parent.Add(iterdecl);
 						var condition = new CodeMethodInvokeExpression();
@@ -572,8 +579,11 @@ namespace Keysharp.Scripting
 					}
 					else
 					{
+						//Required to be a discard assignment statement because the object being returned might be a direct function reference.
+						//This allows funcname to be converted to Func(funcname) later on.
 						var result = parts.Length > 1 ? ParseSingleExpression(codeLine, parts[1], false) : emptyStringPrimitive;
-						return [new CodeMethodReturnStatement(result)];
+						var binop = BinOpToSnippet(new CodeBinaryOperatorExpression(new CodeSnippetExpression("_"), CodeBinaryOperatorType.Assign, result));
+						return [new CodeMethodReturnStatement(binop)];
 					}
 				}
 

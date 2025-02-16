@@ -190,10 +190,8 @@ namespace Keysharp.Scripting
 		private readonly tsmd allMethodCalls = [];
 		private readonly Stack<bool> allStaticVars = new ();
 		private readonly Dictionary<CodeTypeDeclaration, Dictionary<string, OrderedDictionary<string, CodeExpression>>> allVars = [];//Needs to be ordered so that code variables are generated in the order they were declared.
-		private readonly Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeVariableReferenceExpression>>> allVarRefs = [];
-
 		private readonly CodeAttributeDeclarationCollection assemblyAttributes = [];
-		private readonly HashSet<CodeSnippetExpression> assignSnippets = [];
+		private readonly Dictionary<CodeExpression, CodeSnippetExpression> assignSnippets = [];
 		private readonly Stack<CodeBlock> blocks = new ();
 		private readonly CompilerHelper Ch;
 		private readonly Stack<List<string>> currentFuncParams = new ();
@@ -229,7 +227,6 @@ namespace Keysharp.Scripting
 		private readonly Dictionary<CodeTypeDeclaration, Stack<Dictionary<string, CodeExpression>>> staticFuncVars = [];
 		private readonly Stack<CodeSwitchStatement> switches = new ();
 		private readonly CodeTypeDeclaration targetClass;
-		private readonly List<CodeSnippetExpression> ternaries = new ();
 		private readonly Stack<CodeTypeDeclaration> typeStack = new ();
 		private readonly CodeStatementCollection topStatements = new ();
 		private bool blockOpen;
@@ -767,14 +764,8 @@ namespace Keysharp.Scripting
 
 							if (funcparam is CodeVariableReferenceExpression cvreparam)
 							{
-								var type = cvreparam.UserData["origtypescope"] is CodeTypeDeclaration ctd ? ctd.Name : "program";
-
-								if (MethodExistsInTypeOrBase(type, cvreparam.VariableName) is CodeMemberMethod cmm)
-								{
-									cvreparam.VariableName = cmm.Name;
-									var tempfunc = (CodeMethodReferenceExpression)InternalMethods.Func;
-									cmie.Parameters[i] = new CodeMethodInvokeExpression(tempfunc, cvreparam);
-								}
+								var type = cvreparam.UserData["origtype"] is CodeTypeDeclaration ctd ? ctd : targetClass;
+								cmie.Parameters[i] = ReevaluateCodeVariableReference(type, cmietypefunc.Key, cvreparam);
 							}
 						}
 
@@ -1031,7 +1022,7 @@ namespace Keysharp.Scripting
 							{
 								prop.Name = "Item";
 								//prop.Attributes = MemberAttributes.Public;//Make virtual at a minimum, which might get converted to override below.
-								_ = typeProperties.Value.Remove("__item"); //Was stored as lowercase.
+								_ = typeProperties.Value.Remove("__item");//Was stored as lowercase.
 								typeProperties.Value.GetOrAdd("Item").Add(prop);
 
 								if (!didItem)
@@ -1125,42 +1116,11 @@ namespace Keysharp.Scripting
 			methods.GetOrAdd(targetClass)[userMainMethod.Name] = userMainMethod;
 			_ = targetClass.Members.Add(userMainMethod);
 
-			foreach (var cvreType in allVarRefs)
-			{
-				foreach (var cvreScope in cvreType.Value)
-				{
-					foreach (var cvreVar in cvreScope.Value)
-					{
-						string str = null;
-
-						if (MethodExistsInTypeOrBase(cvreType.Key.Name, cvreVar.VariableName) is CodeMemberMethod cmm)
-							str = cmm.Name;
-						else if (Reflections.FindBuiltInMethod(cvreVar.VariableName, -1) is MethodPropertyHolder mph)
-							str = mph.mi.DeclaringType.FullName + "." + mph.mi.Name;
-
-						//Can't transform this in a call to Func(), but hopefully it's ok.
-						if (str != null)
-							if (!VarExistsAtCurrentOrParentScope(cvreType.Key, cvreScope.Key, Ch.CreateEscapedIdentifier(cvreVar.VariableName)))
-								cvreVar.VariableName = str;
-					}
-				}
-			}
-
-			//Ternaries need to be re-evaluated because they are handled as snippets.
-			foreach (var tern in ternaries)
-			{
-				if (tern.UserData["orig"] is CodeTernaryOperatorExpression ctoe)
-				{
-					var ctse = MakeTernarySnippet(ctoe.Condition, ctoe.TrueBranch, ctoe.FalseBranch);
-					tern.Value = ctse.Value;
-				}
-			}
-
 			//Assignments as snippets need to be reevaluated.
 			//Despite having to compile code again, this took < 1ms in debug mode for over 100 assignments,
 			//so it shouldn't matter.
 			foreach (var assign in assignSnippets)
-				ReevaluateSnippet(assign);
+				ReevaluateSnippets(assign.Value);
 
 			//Static member properties need to be reevaluated.
 			foreach (var member in codeSnippetTypeMembers)
@@ -1343,7 +1303,6 @@ namespace Keysharp.Scripting
 			methods[ctd] = new Dictionary<string, CodeMemberMethod>(StringComparer.OrdinalIgnoreCase);
 			properties[ctd] = new Dictionary<string, List<CodeMemberProperty>>(StringComparer.OrdinalIgnoreCase);
 			allVars[ctd] = new Dictionary<string, OrderedDictionary<string, CodeExpression>>(StringComparer.OrdinalIgnoreCase);
-			allVarRefs[ctd] = new Dictionary<string, List<CodeVariableReferenceExpression>>(StringComparer.OrdinalIgnoreCase);
 			staticFuncVars[ctd] = new Stack<Dictionary<string, CodeExpression>>();
 			setPropertyValueCalls[ctd] = [];
 			getPropertyValueCalls[ctd] = [];
@@ -1558,6 +1517,47 @@ namespace Keysharp.Scripting
 			return false;
 		}
 
+		private CodeExpression ReevaluateCodeVariableReference(CodeTypeDeclaration ctd, string scope, CodeVariableReferenceExpression cvre)
+		{
+			var doThis = false;
+			string str = null;
+			var varName = cvre.VariableName.TrimStart('@');
+
+			if (MethodExistsInTypeOrBase(targetClass.Name, varName) is CodeMemberMethod cmm)
+				str = cmm.Name;
+			else if (targetClass != ctd && MethodExistsInTypeOrBase(ctd.Name, varName) is CodeMemberMethod cmm2)
+			{
+				if (!cvre.UserData["isstatic"].Ab()
+						&&
+						(scope == "" //Was a class property declaration and assignment.
+						 ||
+						 //Or was inside of a non-static class method.
+						 ctd.Members.Cast<CodeTypeMember>().Any(ctm => ctm is CodeMemberMethod cmm
+								 && string.Compare(cmm.Name, scope, true) == 0
+								 && !ctm.Attributes.HasFlag(MemberAttributes.Static))
+						))
+					doThis = true;
+
+				str = cmm2.Name;
+			}
+			else if (Reflections.FindBuiltInMethod(varName, -1) is MethodPropertyHolder mph)
+				str = mph.mi.DeclaringType.FullName + "." + mph.mi.Name;
+
+			if (str != null)
+				if (/*scope == "" ||*/ !VarExistsAtCurrentOrParentScope(ctd, scope, Ch.CreateEscapedIdentifier(cvre.VariableName)))
+				{
+					cvre.VariableName = str;
+					var tempfunc = (CodeMethodReferenceExpression)InternalMethods.Func;
+
+					if (doThis)
+						return new CodeMethodInvokeExpression(tempfunc, cvre, new CodeThisReferenceExpression());
+					else
+						return new CodeMethodInvokeExpression(tempfunc, cvre);
+				}
+
+			return cvre;
+		}
+
 		private void HandleAllVariadicParams(CodeMethodInvokeExpression cmie)
 		{
 			var pces = cmie.Parameters.Cast<CodeExpression>();
@@ -1671,9 +1671,9 @@ namespace Keysharp.Scripting
 		{
 			if (allVars.TryGetValue(currentType, out var typeFuncs))
 			{
-				foreach (CodeTypeMember typemember in currentType.Members)//First, check if the type contains the variable.
+				foreach (CodeTypeMember typemember in currentType.Members)//Check if the type contains the variable.
 				{
-					if (typemember is CodeSnippetTypeMember cstm && string.Compare(cstm.Name, varName, true) == 0)
+					if (typemember is CodeSnippetTypeMember cstm && string.Compare(Ch.CreateEscapedIdentifier(cstm.Name), varName, true) == 0)
 						return true;
 				}
 
@@ -1688,7 +1688,7 @@ namespace Keysharp.Scripting
 			{
 				if (t.TryGetValue(currentScope, out var method))
 				{
-					if (method.Parameters.Cast<CodeParameterDeclarationExpression>().Any(p => string.Compare(p.Name, varName, true) == 0))
+					if (method.Parameters.Cast<CodeParameterDeclarationExpression>().Any(p => string.Compare(Ch.CreateEscapedIdentifier(p.Name), varName, true) == 0))
 						return true;
 				}
 			}
@@ -1706,18 +1706,18 @@ namespace Keysharp.Scripting
 					if (stat.TryGetValue(varName, out var sv))
 						return true;
 
-			if (currentType != targetClass)//Last attempt, check if it's a global variable.
+			if (currentType != targetClass)//Check if it's a property in the current class.
 			{
 				foreach (CodeTypeMember typemember in targetClass.Members)
 				{
-					if (typemember is CodeSnippetTypeMember cstm && string.Compare(cstm.Name, varName, true) == 0)
+					if (typemember is CodeSnippetTypeMember cstm && string.Compare(Ch.CreateEscapedIdentifier(cstm.Name), varName, true) == 0)
 						return true;
 				}
 			}
 
 			if (allVars.TryGetValue(targetClass, out var globalTypeFuncs))
 			{
-				if (globalTypeFuncs.TryGetValue("", out var scopeVars))//The type didn't contain the variable, so check if the local function scope contains it.
+				if (globalTypeFuncs.TryGetValue("", out var scopeVars))//The type didn't contain the variable, so check if the global scope contains it.
 				{
 					if (scopeVars.ContainsKey(varName))
 						return true;

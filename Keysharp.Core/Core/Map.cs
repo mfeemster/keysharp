@@ -9,7 +9,7 @@
 		/// <summary>
 		/// The comparison type.
 		/// </summary>
-		private readonly StringComparison compType;
+		private readonly StringComparer stringComparer;
 
 		/// <summary>
 		/// Constructor that takes a case comparison mode.
@@ -17,14 +17,22 @@
 		/// <param name="caseSense">The case comparison mode to use.</param>
 		public CaseEqualityComp(eCaseSense caseSense)
 		{
-			if (caseSense == eCaseSense.On)
-				compType = StringComparison.Ordinal;
-			else if (caseSense == eCaseSense.Off)
-				compType = StringComparison.OrdinalIgnoreCase;
-			else
-				compType = StringComparison.CurrentCultureIgnoreCase;
-		}
+			//Choose an appropriate built-in StringComparer.
+			switch (caseSense)
+			{
+				case eCaseSense.On:
+					stringComparer = StringComparer.Ordinal;
+					break;
 
+				case eCaseSense.Off:
+					stringComparer = StringComparer.OrdinalIgnoreCase;
+					break;
+
+				default:
+					stringComparer = StringComparer.CurrentCultureIgnoreCase;
+					break;
+			}
+		}
 		/// <summary>
 		/// The implementation for <see cref="IEqualityComparer.Equals"/> which compares two objects.
 		/// If both objects are strings, then the case sensitivity mode specified in the constructor is used.
@@ -32,15 +40,14 @@
 		/// <param name="x">The first object to compare.</param>
 		/// <param name="y">The second object to compare.</param>
 		/// <returns>True if the two objects are equal, else false.</returns>
-		public new bool Equals(object x, object y)
+		public bool Equals(object x, object y)
 		{
-			if (x is string ls && y is string rs)
-				return string.Compare(ls, rs, compType) == 0;
+			//If both are strings, use the built-in comparer.
+			if (x is string s1 && y is string s2)
+				return stringComparer.Equals(s1, s2);
 
-			if (ReferenceEquals(x, y))
-				return true;
-
-			return x.Equals(y);
+			//Otherwise, use default equality.
+			return object.Equals(x, y);
 		}
 
 		/// <summary>
@@ -50,7 +57,13 @@
 		/// </summary>
 		/// <param name="obj">The object to get the hash code for.</param>
 		/// <returns>The hash code for the object.</returns>
-		public int GetHashCode(object obj) => compType != StringComparison.Ordinal && obj is string s ? s.ToLower().GetHashCode() : obj.GetHashCode();
+		public int GetHashCode(object obj)
+		{
+			if (obj is string s)
+				return stringComparer.GetHashCode(s);
+
+			return obj?.GetHashCode() ?? 0;
+		}
 	}
 
 	/// <summary>
@@ -152,7 +165,7 @@
 		/// See <see cref="__New(object[])"/>.
 		/// </summary>
 		/// <param name="make__Item">True to create __Item, else false. Always specify false.</param>
-		internal Map(bool make__Item, params object[] args) => 	_ = __New(args);
+		internal Map(bool make__Item, params object[] args) =>  _ = __New(args);
 
 		/// <summary>
 		/// Gets the enumerator object which returns a key,value tuple for each element
@@ -532,7 +545,6 @@
 		/// </summary>
 		/// <returns><see cref="MapKeyValueIterator"/></returns>
 		IEnumerator IEnumerable.GetEnumerator() => new MapKeyValueIterator(map, 2);
-		
 		/// <summary>
 		/// Internal helper to insert a key,value pair into the map.
 		/// </summary>

@@ -846,8 +846,7 @@ else
 	FileAppend, "fail", "*"
 
 a := [1,2,3]
-b := a.__Enum(1)
-c := [b*]
+c := [a.__Enum(1)*] ; This is also testing a difficult to parse statement that ends in the * spread operator inside of an array literal.
 
 if (c[2] == 2)
 	FileAppend, "pass", "*"
