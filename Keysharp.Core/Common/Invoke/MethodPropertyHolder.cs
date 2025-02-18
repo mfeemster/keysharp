@@ -29,7 +29,7 @@
 				parameters = mi.GetParameters();
 				ParamLength = parameters.Length;
 				isGuiType = Gui.IsGuiType(mi.DeclaringType);
-				anyOptional = parameters.Any(p => p.IsOptional);
+				anyOptional = parameters.Any(p => p.IsOptional || p.IsVariadic());
 
 				for (var i = 0; i < parameters.Length; i++)
 				{
@@ -94,7 +94,8 @@
 							}
 							else
 							{
-								//The slowest case: a function is trying to be called with a different number of parameters than it actually has, or it's variadic, so manually create an array of parameters that matches the required size.
+								//The slowest case: a function is trying to be called with a different number of parameters than it actually has, or it's variadic,
+								//so manually create an array of parameters that matches the required size.
 								var oi = 0;
 								var pi = 0;
 								newobj = paramsPool.Rent();
@@ -137,6 +138,8 @@
 									for (; pi < ParamLength; pi++)
 										if (parameters[pi].IsOptional)
 											newobj[pi] = parameters[pi].DefaultValue;
+										else if (parameters[pi].IsVariadic())
+											newobj[pi] = System.Array.Empty<object>();
 							}
 
 							//Any remaining items in newobj are null by default.
@@ -207,9 +210,9 @@
 							if (ParamLength == objLength)
 							{
 								if (anyOptional)
-									for (var i = 0; i < ParamLength; i++)
-										if (obj[i] == null && parameters[i].IsOptional)
-											obj[i] = parameters[i].DefaultValue;
+									for (var pi = 0; pi < ParamLength; ++pi)
+										if (obj[pi] == null && parameters[pi].IsOptional)
+											obj[pi] = parameters[pi].DefaultValue;
 
 								if (!isGuiType)
 								{
@@ -232,19 +235,19 @@
 							}
 							else
 							{
-								var i = 0;//The slower case: a function is trying to be called with a different number of parameters than it actually has, so manually create an array of parameters that matches the required size.
+								var pi = 0;//The slower case: a function is trying to be called with a different number of parameters than it actually has, so manually create an array of parameters that matches the required size.
 								var newobj = paramsPool.Rent();//Using the memory pool in this function seems to help a lot.
 
-								for (; i < objLength && i < ParamLength; i++)
-									if (obj[i] == null && parameters[i].IsOptional)
-										newobj[i] = parameters[i].DefaultValue;
+								for (; pi < objLength && pi < ParamLength; ++pi)
+									if (obj[pi] == null && parameters[pi].IsOptional)
+										newobj[pi] = parameters[pi].DefaultValue;
 									else
-										newobj[i] = obj[i];
+										newobj[pi] = obj[pi];
 
 								if (anyOptional)
-									for (; i < ParamLength; i++)
-										if (parameters[i].IsOptional)
-											newobj[i] = parameters[i].DefaultValue;
+									for (; pi < ParamLength; ++pi)
+										if (parameters[pi].IsOptional)
+											newobj[pi] = parameters[pi].DefaultValue;
 
 								//Any remaining items in newobj are null by default.
 								if (!isGuiType)
