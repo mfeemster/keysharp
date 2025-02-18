@@ -105,14 +105,12 @@ if (a[3] == 3)
     FileAppend "pass", "*"
 else
     FileAppend "fail", "*"
-    /*
+
 a := 0
-; And now the first argument is ignored
-bfo := o.__Enum(2).Bind(&_)
-a := [bfo*]
+; And now the first argument is ignored.
+a := [o.__Enum(2).Bind(&_)*]
 
 if (a[3] == 6)
     FileAppend "pass", "*"
 else
     FileAppend "fail", "*"
-    */

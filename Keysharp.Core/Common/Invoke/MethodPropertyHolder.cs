@@ -15,6 +15,7 @@
 
 		internal bool IsStaticFunc { get; private set; }
 		internal bool IsStaticProp { get; private set; }
+		internal bool IsBind { get; private set; }
 		internal bool IsVariadic => startVarIndex != -1;
 		internal int ParamLength { get; }
 
@@ -39,8 +40,12 @@
 				}
 
 				IsStaticFunc = mi.Attributes.HasFlag(MethodAttributes.Static);
+				var isFuncObj = typeof(IFuncObj).IsAssignableFrom(mi.DeclaringType);
 
-				if (typeof(IFuncObj).IsAssignableFrom(mi.DeclaringType) && mi.Name == "Call")
+				if (isFuncObj && mi.Name == "Bind")
+					IsBind = true;
+
+				if (isFuncObj && mi.Name == "Call")
 				{
 					callFunc = (inst, obj) => ((IFuncObj)inst).Call(obj);
 				}

@@ -271,24 +271,34 @@
 
 			try
 			{
-				var refs = new List<RefHolder>(parameters.Length);
+				var mph = mitup.Item2 as MethodPropertyHolder;
+				var isFuncBind = mph != null && mph.IsBind;
+				List<RefHolder> refs = null;
 
-				for (var i = 0; i < parameters.Length; i++)
+				//This is an extreme hack and I don't know how to get around it.
+				//Bind is a very special function which needs the Mrh objects themselves to be passed.
+				//Rather than the value held by the Mrh.
+				if (!isFuncBind)
 				{
-					if (parameters[i] is RefHolder rh)
+					refs = new (parameters.Length);
+
+					for (var i = 0; i < parameters.Length; i++)
 					{
-						refs.Add(rh);
-						parameters[i] = rh.val;
+						if (parameters[i] is RefHolder rh)
+						{
+							refs.Add(rh);
+							parameters[i] = rh.val;
+						}
 					}
 				}
 
 				object ret = null;
 				var called = false;
 
-				if (mitup.Item2 is MethodPropertyHolder mph)
+				if (mph != null)
 				{
 					called = true;
-					ret = mph.callFunc(mitup.Item1, parameters);
+					ret = mph.callFunc(mitup.Item1, parameters);//parameters won't have been changes in the case of IFuncObj.Bind().
 
 					//The following check is done when accessing a class property that is a function object. The user intended to call it.
 					//Catching this during compilation is impossible when calling it from outside of the class definition.
@@ -312,8 +322,9 @@
 						}
 						else
 						{
-							for (var i = 0; i < refs.Count; i++)
-								refs[i].index++;//Need to move the indices forward by one because of the additional parameter we'll add to the front below.
+							if (refs != null)//Should always be not null here.
+								for (var i = 0; i < refs.Count; i++)
+									refs[i].index++;//Need to move the indices forward by one because of the additional parameter we'll add to the front below.
 
 							var arr = new object[parameters.Length + 1];
 							arr[0] = mitup.Item1 is OwnPropsMap opm ? opm.Parent : mitup.Item1;
@@ -328,10 +339,13 @@
 
 				if (called)
 				{
-					for (var i = 0; i < refs.Count; i++)
+					if (!isFuncBind)
 					{
-						var rh = refs[i];
-						rh.reassign(parameters[rh.index]);
+						for (var i = 0; i < refs.Count; i++)
+						{
+							var rh = refs[i];
+							rh.reassign(parameters[rh.index]);
+						}
 					}
 
 					return ret;
@@ -347,7 +361,6 @@
 
 			return Errors.ErrorOccurred(err = new Error($"Attempting to invoke method or property {mitup.Item1},{mitup.Item2} with references failed.")) ? throw err : null;
 		}
-
 		public static (object, object) MakeObjectTuple(object obj0, object obj1) => (obj0, obj1);
 
 		public static object SetPropertyValue(object item, object name, object value)//Always assume these are not index properties, which we instead handle via method call with get_Item and set_Item.
