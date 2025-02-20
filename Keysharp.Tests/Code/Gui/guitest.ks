@@ -1127,9 +1127,18 @@ FindSecondGuiEdit() {
 }
 
 EnumCtrls() {
-	For ,GuiCtrlObj in MyGui {
-		theNN := ControlGetClassNN(GuiCtrlObj, MyGui)
-		theMsg.= "Control #" A_Index " is " theNN "`n"
+	theMsg := ""
+	For GuiCtrlObj in MyGui {
+        try
+        {
+            theNN := ControlGetClassNN(GuiCtrlObj, MyGui) ; Sometimes it can't find a window and throws and error, so just catch and continue.
+        }
+        catch
+        {
+            continue
+        }
+		
+	theMsg .= "Control #" A_Index " is " theNN "`n"
 	}
 	Gui2Edit.Value := theMsg
 }
