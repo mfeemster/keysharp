@@ -831,9 +831,7 @@ namespace Keysharp.Scripting
 												cmie.Parameters[i] = new CodeSnippetExpression($"ref {refVarName}");
 											}
 											else
-											{
 												cmie.Parameters[i] = new CodeSnippetExpression(defValStr);
-											}
 										}
 										else if (mp.Direction == FieldDirection.Ref)//Ref with no default. Null can't be passed, so just pass a ref to a dummy variable.
 										{

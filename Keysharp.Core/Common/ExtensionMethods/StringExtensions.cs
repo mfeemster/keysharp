@@ -600,5 +600,15 @@
 		//str.StartsWith(trim, ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal)
 		//? str.Substring(trim.Length)
 		//: str;
+
+		/// <summary>
+		/// Trim a string from the start of a string if it exists, else return
+		/// the original string.
+		/// </summary>
+		/// <param name="str">The string to trim from.</param>
+		/// <param name="s">The string to trim from the start.</param>
+		/// <returns>The trimmed string if the search string was found, else the original string.</returns>
+		internal static string TrimStartOf(this string str, string s) =>
+		str.StartsWith(s) ? str.Substring(0, s.Length) : str;
 	}
 }

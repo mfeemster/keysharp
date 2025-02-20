@@ -503,6 +503,20 @@ namespace Keysharp.Scripting
 
 									invoke.Method.MethodName = "InvokeWithRefs";//Change method name to handle refs. This is much less efficient.
 								}
+
+								//Convert the last parameter to an object cast if it was not ref and not null.
+								//The reason for this cast is so that a variadic parameter inside of one function can be
+								//passed as a non-variadic param in another function. It's a very rare corner case, and litters
+								//the generated code with casts, but it makes things technically correct and the same as AHK.
+								if (!lastisstar && invoke.Parameters.Count > 0)
+								{
+									var lastIndex = invoke.Parameters.Count - 1;
+									var p = invoke.Parameters[lastIndex];
+
+									if (!refIndexes.Contains(lastIndex)
+											&& (p is not CodePrimitiveExpression cpe || cpe.Value != null))
+										invoke.Parameters[lastIndex] = new CodeCastExpression(new CodeTypeReference(typeof(object)), p);
+								}
 							}
 
 							invoke.Parameters.Insert(0, (CodeExpression)parts[n]);//Must come after HandleInvokeParams() due to the indexing there assuming param count is 0.
@@ -834,11 +848,11 @@ namespace Keysharp.Scripting
 									hardCreateOverride = false;
 									var argExpr = ParseExpression(codeLine, tempParamCode, arg, false);//Override the value of create with false because the arguments passed into a function should never be created automatically.
 									var cboe = argExpr.WasCboe();
+									var wasAssign = cboe != null && cboe.Operator == CodeBinaryOperatorType.Assign;
+									var wasRef = refIndexes.Contains(i1);
 									hardCreateOverride = true;//Restore the hack flag.
 
-									if (refIndexes.Contains(i1)//Only needed if it's a reference argument.
-											&& cboe != null
-											&& cboe.Operator == CodeBinaryOperatorType.Assign)
+									if (wasRef && wasAssign) //Only needed if it's a reference argument and assignment.
 									{
 										//If an assignment was passed to a function for a reference parameter, separate it out like so:
 										//func(&x := 123) ; becomes...
@@ -866,15 +880,14 @@ namespace Keysharp.Scripting
 											cvre = cvre3;
 
 										//If it was an assignment, and not a reference, the variable needs to be created.
-										if (cvre != null)
-										{
-											if (!VarExistsAtCurrentOrParentScope(tp, scope, cvre.VariableName)
-													&& !Reflections.flatPublicStaticProperties.TryGetValue(cvre.VariableName, out _)
-													&& MethodExistsInTypeOrBase(tp.Name, cvre.VariableName) == null
-													&& Reflections.FindBuiltInMethod(cvre.VariableName, -1) == null
-											   )
-												allVars[typeStack.Peek()].GetOrAdd(scope)[cvre.VariableName] = emptyStringPrimitive;
-										}
+										if (cvre != null
+												&& (wasRef || wasAssign)//Only create the variable if it was a reference and/or and assignment.
+												&& !VarExistsAtCurrentOrParentScope(tp, scope, cvre.VariableName)
+												&& !Reflections.flatPublicStaticProperties.TryGetValue(cvre.VariableName, out _)
+												&& MethodExistsInTypeOrBase(tp.Name, cvre.VariableName) == null
+												&& Reflections.FindBuiltInMethod(cvre.VariableName, -1) == null
+										   )
+											allVars[typeStack.Peek()].GetOrAdd(scope)[cvre.VariableName] = emptyStringPrimitive;
 									}
 
 									passed.Add(argExpr);
@@ -937,7 +950,7 @@ namespace Keysharp.Scripting
 								var gmop = (CodeMethodInvokeExpression)InternalMethods.GetMethodOrProperty;
 								_ = gmop.Parameters.Add(objExpr);
 								_ = gmop.Parameters.Add(new CodePrimitiveExpression(oldInvoke.Method.MethodName));
-								_ = gmop.Parameters.Add(new CodePrimitiveExpression((long)oldInvoke.Parameters.Count));
+								_ = gmop.Parameters.Add(new CodePrimitiveExpression(oldInvoke.Parameters.Count));
 								_ = invoke.Parameters.Add(gmop);
 								invoke.Parameters.AddRange(ConvertDirectParamsToInvoke(oldInvoke.Parameters));
 							}
@@ -1863,6 +1876,7 @@ namespace Keysharp.Scripting
 
 			return p0ce;//Last ditch attempt to return something.
 		}
+
 		private CodeExpressionStatement[] ParseMultiExpression(CodeLine codeLine, string code, bool create, List<List<object>> subs = null)
 		=> ParseMultiExpressionWithoutTokenizing(codeLine, code, SplitTokens(codeLine, code).ToArray(), create, subs);
 		private CodeExpression[] ParseMultiExpression(CodeLine codeLine, string code, object[] parts, bool create, List<List<object>> subs = null)

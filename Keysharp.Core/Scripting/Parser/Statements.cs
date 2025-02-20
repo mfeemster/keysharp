@@ -301,7 +301,7 @@
 
 										foreach (Range r in sub.Split(','))
 										{
-											var p = sub[r].Trim();
+											var p = sub[r].Trim().ToString().ToLower();
 
 											if (p.Length > 0)
 											{
@@ -319,7 +319,7 @@
 													pstr = p.TrimEnd('*');
 												}
 
-												var pdecl = new CodeParameterDeclarationExpression(objTypeRef, pstr.ToString());
+												var pdecl = new CodeParameterDeclarationExpression(objTypeRef, pstr);
 
 												if (variadic)
 												{

@@ -642,68 +642,68 @@ bound := Myfunc.Bind(,)
 Bound(&w, &z) ; nothing was bound, so both get assigned.
 
 if (w == 1)
-    FileAppend "pass", "*"
+	FileAppend "pass", "*"
 else
-    FileAppend "fail", "*"
+	FileAppend "fail", "*"
 
 if (z == 2)
-    FileAppend "pass", "*"
+	FileAppend "pass", "*"
 else
-    FileAppend "fail", "*"
+	FileAppend "fail", "*"
 
 w := 0, z := 0
 bound := Myfunc.Bind(&w)
 Bound(&z)
 
 if (w == 1)
-    FileAppend "pass", "*"
+	FileAppend "pass", "*"
 else
-    FileAppend "fail", "*"
+	FileAppend "fail", "*"
 
 if (z == 2)
-    FileAppend "pass", "*"
+	FileAppend "pass", "*"
 else
-    FileAppend "fail", "*"
+	FileAppend "fail", "*"
 
 w := 0, z := 0
 bound := Myfunc.Bind(&w,)
 Bound(&z)
 
 if (w == 1)
-    FileAppend "pass", "*"
+	FileAppend "pass", "*"
 else
-    FileAppend "fail", "*"
+	FileAppend "fail", "*"
 
 if (z == 2)
-    FileAppend "pass", "*"
+	FileAppend "pass", "*"
 else
-    FileAppend "fail", "*"
+	FileAppend "fail", "*"
 
 w := 0, z := 0
 bound := Myfunc.Bind(, &z)
 Bound(&w)
 
 if (w == 1)
-    FileAppend "pass", "*"
+	FileAppend "pass", "*"
 else
-    FileAppend "fail", "*"
+	FileAppend "fail", "*"
 
 if (z == 2)
-    FileAppend "pass", "*"
+	FileAppend "pass", "*"
 else
-    FileAppend "fail", "*"
+	FileAppend "fail", "*"
 
 w := 0, z := 0
 bound := Myfunc.Bind(&w, &z)
 Bound()
 
 if (w == 1)
-    FileAppend "pass", "*"
+	FileAppend "pass", "*"
 else
-    FileAppend "fail", "*"
+	FileAppend "fail", "*"
 
 if (z == 2)
-    FileAppend "pass", "*"
+	FileAppend "pass", "*"
 else
-    FileAppend "fail", "*"
+	FileAppend "fail", "*"
 	
