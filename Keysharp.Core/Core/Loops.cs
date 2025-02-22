@@ -453,7 +453,14 @@ namespace Keysharp.Core
 			else if (obj is object[] oa)
 				return new Array(oa).__Enum(count.Ai());
 			else if (Functions.GetFuncObj(obj, null) is FuncObj fo)
-				return new Common.Containers.KeysharpEnumerator(fo, ct);
+			{
+				//if (fo is BoundFunc bfo)
+				//return new KeysharpEnumerator(bfo, bfo.boundargs.Length);
+				//else
+				return new KeysharpEnumerator(fo, fo.Mph.parameters.Length);
+				//return new KeysharpEnumerator(fo, ct);
+				//return new KeysharpEnumerator(fo, ct);
+			}
 			else if (Reflections.FindAndCacheMethod(obj.GetType(), "__Enum", -1) is MethodPropertyHolder mph)
 			{
 				var tempEnum = mph.callFunc(obj, [count]);
@@ -501,12 +508,12 @@ namespace Keysharp.Core
 			{
 				object temp = null;
 				args = new object[] { new Misc.VarRef(() => temp, (v) => temp = v) };
-				while (ke.Call(args).Ab())
+				while (ke.Call(args).IsCallbackResultNonEmpty())
 					yield return temp;
 			}
 			else
 			{
-				while (ke.Call(args).Ab())
+				while (ke.Call(args).IsCallbackResultNonEmpty())
 					yield return true;
 			}
         }

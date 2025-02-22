@@ -16,6 +16,11 @@ namespace Keysharp.Scripting
 
             var proto = Variables.Prototypes[t];
 
+            if (proto.op == null)
+            {
+                proto.op = new Dictionary<string, OwnPropsDesc>(StringComparer.OrdinalIgnoreCase);
+            }
+
             // Get all instance methods
             MethodInfo[] methods;
 
@@ -34,23 +39,29 @@ namespace Keysharp.Scripting
 				if (methodName.StartsWith("get_") || methodName.StartsWith("set_"))
 				{
 					var propName = methodName.Substring(4);
-					if (propName == "Item")
+
+					bool isStatic = method.IsStatic;
+					if (!isBuiltin && propName.StartsWith(Keywords.ClassStaticPrefix))
+					{
+						isStatic = true;
+						propName = propName.Substring(Keywords.ClassStaticPrefix.Length);
+					}
+
+                    if (propName == "Item")
 						propName = "__Item";
 
 					OwnPropsDesc propertyMap = new OwnPropsDesc();
 					OwnPropsDesc propDesc;
 
-					if (method.IsStatic)
+					if (isStatic)
 					{
 						if (staticInst.op == null)
 							staticInst.op = new Dictionary<string, OwnPropsDesc>(StringComparer.OrdinalIgnoreCase);
 						if (staticInst.op.TryGetValue(propName, out propDesc))
 							propertyMap = propDesc;
 
-					}
-					else if (proto.op == null)
+					} else
 					{
-						proto.op = new Dictionary<string, OwnPropsDesc>(StringComparer.OrdinalIgnoreCase);
                         if (proto.op.TryGetValue(propName, out propDesc))
                             propertyMap = propDesc;
                     }
@@ -60,7 +71,7 @@ namespace Keysharp.Scripting
                     else
                         propertyMap.Set = new FuncObj(method);
 
-					if (method.IsStatic)
+					if (isStatic)
 						staticInst.op[propName] = propertyMap;
 					else
 						proto.op[propName] = propertyMap;
@@ -110,7 +121,7 @@ namespace Keysharp.Scripting
             {
                 var propertyName = prop.Name;
                 OwnPropsDesc propertyMap = null;
-                if (prop.GetMethod.IsStatic || (!isBuiltin && propertyName.StartsWith(Keywords.ClassStaticPrefix)))
+                if ((prop.GetMethod?.IsStatic ?? false) || (prop.SetMethod?.IsStatic ?? false) || (!isBuiltin && propertyName.StartsWith(Keywords.ClassStaticPrefix)))
 				{
 					if (propertyName.StartsWith(Keywords.ClassStaticPrefix))
 						propertyName = propertyName.Substring(Keywords.ClassStaticPrefix.Length);
@@ -189,6 +200,19 @@ namespace Keysharp.Scripting
 				if (index.Length == 1)
 				{
 					key = index[0];
+
+					//This excludes types derived from Array so that super can be used.
+					if (item.GetType() == typeof(Keysharp.Core.Array))
+					{
+						((Keysharp.Core.Array)item)[key] = value;
+						return value;
+					}
+					else if (item.GetType() == typeof(Keysharp.Core.Map))
+					{
+						((Keysharp.Core.Map)item)[key] = value;
+						return value;
+					}
+
 					var position = (int)ForceLong(key);
 
 					if (item is object[] objarr)
@@ -256,6 +280,7 @@ namespace Keysharp.Scripting
 			Error err;
 			int len;
 			object key = null;
+			object obj = item;
 
 			try
 			{
@@ -268,8 +293,9 @@ namespace Keysharp.Scripting
 					len = 1;
 
 				Type typetouse = null;
+				Type itemType = item.GetType();
 
-				if (item is ITuple otup && otup.Length > 1)
+                if (item is ITuple otup && otup.Length > 1)
 				{
 					if (otup[0] is Type t && otup[1] is object o)
 					{
@@ -281,42 +307,42 @@ namespace Keysharp.Scripting
 					}
 				}
 				else
-					typetouse = item.GetType();
+					typetouse = itemType;
 
 				if (len == 1)
 				{
-                    //This excludes types derived from Array so that super can be used.
-                    if (item.GetType() == typeof(Keysharp.Core.Array))
-                    {
-                        return ((Keysharp.Core.Array)item)[key];
-                    }
-                    else if (item.GetType() == typeof(Keysharp.Core.Map))
-                    {
-                        return ((Keysharp.Core.Map)item)[key];
-                    }
+					//This excludes types derived from Array so that super can be used.
+					if (itemType == typeof(Keysharp.Core.Array))
+					{
+						return ((Keysharp.Core.Array)item)[key];
+					}
+					else if (itemType == typeof(Keysharp.Core.Map))
+					{
+						return ((Keysharp.Core.Map)item)[key];
+					}
 
-                    var position = (int)ForceLong(key);
+					var position = (int)ForceLong(key);
 
-                    //The most common is going to be a string, array, map or buffer.
-                    if (item is string s)
-                    {
-                        var actualindex = position < 0 ? s.Length + position : position - 1;
-                        return s[actualindex];
-                    }
-                    else if (item.GetType() == typeof(Keysharp.Core.Buffer))
-                    {
-                        return ((Keysharp.Core.Buffer)item)[position];
-                    }
-                    else if (item is object[] objarr)//Used for indexing into variadic function params.
-                    {
-                        var actualindex = position < 0 ? objarr.Length + position : position - 1;
-                        return objarr[actualindex];
-                    }
-                    else if (item is System.Array array)
-                    {
-                        var actualindex = position < 0 ? array.Length + position : position - 1;
-                        return array.GetValue(actualindex);
-                    }
+					//The most common is going to be a string, array, map or buffer.
+					if (item is string s)
+					{
+						var actualindex = position < 0 ? s.Length + position : position - 1;
+						return s[actualindex];
+					}
+					else if (itemType == typeof(Keysharp.Core.Buffer))
+					{
+						return ((Keysharp.Core.Buffer)item)[position];
+					}
+					else if (item is object[] objarr)//Used for indexing into variadic function params.
+					{
+						var actualindex = position < 0 ? objarr.Length + position : position - 1;
+						return objarr[actualindex];
+					}
+					else if (item is System.Array array)
+					{
+						var actualindex = position < 0 ? array.Length + position : position - 1;
+						return array.GetValue(actualindex);
+					}
 
 #if WINDOWS
                     else if (item is ComObjArray coa)
@@ -324,32 +350,12 @@ namespace Keysharp.Scripting
 						var actualindex = position < 0 ? coa.array.Length + position : position;
 						return coa.array.GetValue(actualindex);
 					}
-
 #endif
-					//These are probably never used.
-					/*  else if (typeof(IEnumerable).IsAssignableFrom(item.GetType()))
-					    {
-					    var ienum = (IEnumerable)item;
-					    var enumerator = ienum.GetEnumerator();
-					    var i = 0;
-					    var len = 0;
-					    var tempenum = ienum.GetEnumerator();
+				}
 
-					    while (tempenum.MoveNext())
-					        len++;
-
-					    var actualindex = position < 0 ? len + position : position - 1;
-
-					    while (enumerator.MoveNext())
-					    {
-					        if (i == actualindex)
-					            return enumerator.Current;
-
-					        i++;
-					    }
-
-					    return null;
-					    }*/
+				if (item is KeysharpObject kso2 && kso2.HasProp("get___Item") == 1)
+				{
+					return Invoke(obj, "get___Item", index);
 				}
 
 				if (Reflections.FindAndCacheInstanceMethod(typetouse, "get_Item", len) is MethodPropertyHolder mph)

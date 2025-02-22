@@ -9,7 +9,7 @@ namespace Keysharp.Tests
 		public void FlowEnum() => Assert.IsTrue(TestScript("flow-enum", false));
 
 		[Test, Category("Flow")]
-		public void FlowForIn() => Assert.IsTrue(TestScript("flow-for-in", true));
+		public void FlowForIn() => Assert.IsTrue(TestScript("flow-for-in", false));
 
 		[Test, Category("Flow")]
 		public void FlowIf() => Assert.IsTrue(TestScript("flow-if", true));

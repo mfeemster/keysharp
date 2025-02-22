@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Windows.Forms;
 using Keysharp.Core;
 
 namespace Keysharp.Scripting
@@ -20,6 +21,21 @@ namespace Keysharp.Scripting
 
 			return Errors.ErrorOccurred(err = new Error($"Could not find a class, global or built-in method for {name} with param count of {paramCount}.")) ? throw err : null;
 		}
+		public static bool TryGetOwnPropsMap(KeysharpObject Base, string key, out OwnPropsDesc opm, bool searchBase = true)
+		{
+			opm = null;
+			do
+			{
+				if (Base != null && ((KeysharpObject)Base).op.TryGetValue(key, out opm))
+					return true;
+
+				if (Base.op.TryGetValue("base", out var nextBase) && nextBase.Value != null && nextBase.Value is KeysharpObject kso)
+					Base = kso;
+				else
+					return false;
+			} while (searchBase);
+			return false;
+        }
 		public static (object, object) GetMethodOrProperty(object item, string key, int paramCount, bool checkBase = true)//This has to be public because the script will emit it in Main().
 		{
 			Error err;
@@ -47,25 +63,20 @@ namespace Keysharp.Scripting
 				}
 				else if (item is KeysharpObject kso && kso.op != null)
 				{
-                    // If not found in OwnPropsMap, check the base chain
-                    object Base = kso;
-					do
+					if (TryGetOwnPropsMap(kso, key, out var val))
 					{
-						if (Base != null && ((KeysharpObject)Base).op.TryGetValue(key, out var val))
-						{
-							//Pass the ownprops map so that Invoke() knows to pass the parent object (item) as the first argument.
-							if (val.Call != null && val.Call is IFuncObj ifocall)//Call must come first.
-								return (Base, ifocall);
-							else if (val.Get != null && val.Get is IFuncObj ifoget)
-								return (Base, ifoget.Call(inst));//No params passed in, just call as is.
-							else if (val.Value != null && val.Value is IFuncObj ifoval)
-								return (Base, ifoval);
-							else if (val.Set != null && val.Set is IFuncObj ifoset)
-								return (Base, ifoset);
+                        //Pass the ownprops map so that Invoke() knows to pass the parent object (item) as the first argument.
+                        if (val.Call != null && val.Call is IFuncObj ifocall)//Call must come first.
+                            return (val.Parent, ifocall);
+                        else if (val.Get != null && val.Get is IFuncObj ifoget)
+                            return (val.Parent, ifoget.Call(inst));//No params passed in, just call as is.
+                        else if (val.Value != null && val.Value is IFuncObj ifoval)
+                            return (val.Parent, ifoval);
+                        else if (val.Set != null && val.Set is IFuncObj ifoset)
+                            return (val.Parent, ifoset);
 
-							return Errors.ErrorOccurred(err = new Error($"Attempting to get method or property {key} on object {val} failed.")) ? throw err : (null, null);
-						}
-					} while (GetObjectPropertyValue(inst, Base, "base", out Base) && Base != null);
+                        return Errors.ErrorOccurred(err = new Error($"Attempting to get method or property {key} on object {val} failed.")) ? throw err : (null, null);
+                    }
 				}
 
                 if (typetouse == null)
@@ -120,7 +131,7 @@ namespace Keysharp.Scripting
 
 			try
 			{
-                if (namestr.Equals("__Value", StringComparison.InvariantCultureIgnoreCase) && item is Misc.VarRef vr)
+                if (item is Misc.VarRef vr && namestr.Equals("__Value", StringComparison.InvariantCultureIgnoreCase))
 					return vr.__Value;
 
                 if (item is ITuple otup && otup.Length > 1)
@@ -140,23 +151,20 @@ namespace Keysharp.Scripting
 
 				if (item is KeysharpObject kso)
 				{
-					if (GetObjectPropertyValue(inst, kso, namestr, out var value))
-						return value;
+					if (TryGetOwnPropsMap(kso, namestr, out var opm))
+					{
+                        if (opm.Value != null)
+                            return opm.Value;
+                        else if (opm.Get != null && opm.Get is IFuncObj ifo && ifo != null)
+                            return ifo.Call(inst);
+                        else if (opm.Call != null && opm.Call is IFuncObj ifo2 && ifo2 != null)
+                            return ifo2;
+						return null;
+                    }
 
                     if (Reflections.FindAndCacheProperty(typetouse, namestr, 0) is MethodPropertyHolder mph2)
                     {
                         return mph2.callFunc(inst, null);
-                    }
-
-                    // If not found in OwnPropsMap, check the base chain
-                    var Base = kso;
-                    while (GetObjectPropertyValue(inst, Base, "base", out var nextBase) && nextBase != null && nextBase is KeysharpObject)
-                    {
-						Base = (KeysharpObject)nextBase;
-						if (Base != null && GetObjectPropertyValue(kso, Base, namestr, out value))
-						{
-							return value;
-						}
                     }
                 }
 
@@ -485,22 +493,28 @@ namespace Keysharp.Scripting
 
 				if ((kso = item as KeysharpObject) != null && kso.op != null)
 				{
-					if (kso.op.TryGetValue(namestr, out var val))
-					{
-						if (val.Value != null)
-						{
-							val.Value = value;
-							return value;
-						}
-
-						if (val.Set != null && val.Set is IFuncObj ifo)
+					if (kso.op.TryGetValue(namestr, out var own)) {
+						if (own.Set != null && own.Set is IFuncObj ifo)
 						{
 							var arr = new object[2];
 							arr[0] = item;//Special logic here: this was called on an OwnProps map, so it uses its parent as the object.
 							arr[1] = value;
 							return ifo.Call(inst, value);
 						}
-					}
+						else
+							return own.Value = value;
+                    }
+					if (TryGetOwnPropsMap(kso, namestr, out var opm))
+					{
+                        if (opm.Set != null && opm.Set is IFuncObj ifo)
+                        {
+                            var arr = new object[2];
+                            arr[0] = item;//Special logic here: this was called on an OwnProps map, so it uses its parent as the object.
+                            arr[1] = value;
+                            return ifo.Call(inst, value);
+                        }
+
+                    }
 				}
 
 				if (Reflections.FindAndCacheProperty(typetouse, namestr, 0) is MethodPropertyHolder mph && namestr.ToLower() != "base")

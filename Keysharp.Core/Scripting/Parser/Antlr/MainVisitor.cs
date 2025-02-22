@@ -42,8 +42,6 @@ namespace Keysharp.Scripting
 
         public override SyntaxNode VisitProgram([NotNull] ProgramContext context)
         {
-            var t = Keysharp.Core.Common.Invoke.Reflections.stringToTypes["Map"];
-
             // Add CompilationUnit usings 
             var usingSyntaxTree = CSharpSyntaxTree.ParseText(CompilerHelper.UsingStr);
             var root = usingSyntaxTree.GetRoot() as CompilationUnitSyntax;
@@ -405,6 +403,7 @@ namespace Keysharp.Scripting
                    );
             }
 
+            parser.MaybeAddClassStaticVariable(text, false); // This needs to be before FuncObj one, because "object" can be both
             parser.MaybeAddGlobalFuncObjVariable(text, false);
 
             // Handle special built-ins
@@ -446,13 +445,6 @@ namespace Keysharp.Scripting
                             SyntaxFactory.IdentifierName(parser.currentFunc.VarRefs.First(item => string.Equals(item, text, StringComparison.InvariantCultureIgnoreCase))))), // Identifier name
                     SyntaxFactory.IdentifierName("__Value")       // Member access
                 );
-            } else if (parser.currentFunc.ArrayType.Contains(text))
-            {
-                return SyntaxFactory.ParenthesizedExpression(
-                    SyntaxFactory.CastExpression(
-                        SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword)),
-                        SyntaxFactory.IdentifierName(text)
-                    ));
             }
 
             return SyntaxFactory.IdentifierName(text);
@@ -889,17 +881,22 @@ namespace Keysharp.Scripting
         {
 
             var arguments = new List<ArgumentSyntax>();
-            var lastChildText = ",";
+            bool lastIsComma = true;
             for (var i = 0; i < context.ChildCount; i++)
             { 
                 var child = context.GetChild(i);
-                if (child is ITerminalNode node && node.Symbol.Type == EOL)
-                    continue;
-                var childText = child.GetText();
-
-                if (childText == ",")
+                bool isComma = false;
+                if (child is ITerminalNode node)
                 {
-                    if (lastChildText == ",")
+                    if (node.Symbol.Type == EOL)
+                        continue;
+                    else if (node.Symbol.Type == MainParser.Comma)
+                        isComma = true;
+                }
+
+                if (isComma)
+                {
+                    if (lastIsComma)
                         arguments.Add(SyntaxFactory.Argument(SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression)));
 
                     goto ShouldVisitNextChild;
@@ -916,8 +913,11 @@ namespace Keysharp.Scripting
                     throw new Error("Unknown function argument");
 
                 ShouldVisitNextChild:
-                lastChildText = childText;
+                lastIsComma = isComma;
             }
+
+            if (lastIsComma)
+                arguments.Add(SyntaxFactory.Argument(SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression)));
 
             return SyntaxFactory.ArgumentList(SyntaxFactory.SeparatedList(arguments));
         }
@@ -1174,17 +1174,31 @@ namespace Keysharp.Scripting
             }
             else
             {
+                if (parser.currentFunc.Void)
+                    return SyntaxFactory.ReturnStatement();
+
                 returnExpression = SyntaxFactory.LiteralExpression(
                     SyntaxKind.StringLiteralExpression,
                     SyntaxFactory.Literal("")
                 );
             }
 
+            if (parser.currentFunc.Void)
+                return SyntaxFactory.Block(
+                    SyntaxFactory.ExpressionStatement(
+                        EnsureValidStatementExpression(returnExpression)
+                    ),
+                    SyntaxFactory.ReturnStatement()
+                );
+
             return SyntaxFactory.ReturnStatement(returnExpression);
         }
 
         public override SyntaxNode VisitThrowStatement([NotNull] ThrowStatementContext context)
         {
+            if (context.singleExpression() == null)
+                return SyntaxFactory.ThrowStatement();
+
             var expression = (ExpressionSyntax)Visit(context.singleExpression());
 
             if (expression is LiteralExpressionSyntax)
@@ -1280,7 +1294,6 @@ namespace Keysharp.Scripting
                 parameter = SyntaxFactory.Parameter(SyntaxFactory.Identifier(parameterName))
                     .WithType(PredefinedTypes.ObjectArray)
                     .WithModifiers(SyntaxFactory.TokenList(SyntaxFactory.Token(SyntaxKind.ParamsKeyword)));
-                parser.currentFunc.ArrayType.Add(parameterName);
             }
             else if (context.formalParameterArg() != null)
             {
@@ -1310,7 +1323,11 @@ namespace Keysharp.Scripting
             ExpressionSyntax targetExpression = (ExpressionSyntax)Visit(context.primaryExpression());
 
             if (!(targetExpression is IdentifierNameSyntax || targetExpression is IdentifierNameSyntax
-                || targetExpression is MemberAccessExpressionSyntax))
+                || targetExpression is MemberAccessExpressionSyntax 
+                || (targetExpression is InvocationExpressionSyntax ies && 
+                    ((ies.Expression is IdentifierNameSyntax identifier && identifier.Identifier.Text.Equals("GetPropertyValue", StringComparison.OrdinalIgnoreCase))
+                    || ies.Expression is MemberAccessExpressionSyntax memberAccess && memberAccess.Name.Identifier.Text.Equals("GetPropertyValue", StringComparison.OrdinalIgnoreCase)
+                    ))))
                 return SyntaxFactory.ExpressionStatement(EnsureValidStatementExpression(targetExpression));
 
             string methodName = ExtractMethodName(targetExpression);
@@ -1325,7 +1342,7 @@ namespace Keysharp.Scripting
             return SyntaxFactory.ExpressionStatement(parser.GenerateFunctionInvocation(targetExpression, argumentList, methodName));
         }
 
-        private void PushFunction(string funcName)
+        private void PushFunction(string funcName, TypeSyntax returnType = null)
         {
             parser.FunctionStack.Push((parser.currentFunc, parser.UserFuncs));
 
@@ -1334,7 +1351,7 @@ namespace Keysharp.Scripting
 
             parser.functionDepth++;
 
-            parser.currentFunc = new Function(funcName);
+            parser.currentFunc = new Function(funcName, returnType);
         }
 
         private void PopFunction()
@@ -1554,7 +1571,19 @@ namespace Keysharp.Scripting
         {
             Visit(context.fatArrowExpressionHead());
 
-            BlockSyntax functionBody = SyntaxFactory.Block(SyntaxFactory.ReturnStatement((ExpressionSyntax)Visit(context.expression())));
+            var returnExpression = (ExpressionSyntax)Visit(context.expression());
+
+            BlockSyntax functionBody;
+
+            if (parser.currentFunc.Void)
+            {
+                functionBody = SyntaxFactory.Block(
+                    SyntaxFactory.ExpressionStatement(EnsureValidStatementExpression(returnExpression)),
+                    SyntaxFactory.ReturnStatement()
+                 );
+                
+            } else
+                functionBody = SyntaxFactory.Block(SyntaxFactory.ReturnStatement(returnExpression));
 
             parser.currentFunc.Body.AddRange(functionBody.Statements.ToArray());
 
@@ -1583,22 +1612,6 @@ namespace Keysharp.Scripting
             return SyntaxFactory.Block(statements);
         }
 
-        private BlockSyntax EnsureNoReturnStatement(BlockSyntax functionBody)
-        {
-            var updatedStatements = functionBody.Statements.Select(statement =>
-            {
-                if (statement is ReturnStatementSyntax returnStatement && returnStatement.Expression != null)
-                {
-                    // Replace the return statement with its expression
-                    return SyntaxFactory.ExpressionStatement(returnStatement.Expression);
-                }
-
-                return statement;
-            });
-
-            return SyntaxFactory.Block(updatedStatements);
-        }
-
         public override SyntaxNode VisitFormalParameterList([NotNull] FormalParameterListContext context)
         {
             var parameters = new List<ParameterSyntax>();
@@ -1615,6 +1628,41 @@ namespace Keysharp.Scripting
             if (context.lastFormalParameterArg() != null)
             {
                 var parameter = (ParameterSyntax)VisitLastFormalParameterArg(context.lastFormalParameterArg());
+                if (context.lastFormalParameterArg().Multiply() != null)
+                {
+                    var identifier = parameter.Identifier.Text;
+                    var substitute = "_ks_" + identifier.TrimStart('@');
+                    parameter = parameter.WithIdentifier(SyntaxFactory.Identifier(substitute));
+
+                    var statement = SyntaxFactory.LocalDeclarationStatement(
+                    SyntaxFactory.VariableDeclaration(
+                        SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword))
+                    )
+                    .WithVariables(
+                        SyntaxFactory.SingletonSeparatedList(
+                            SyntaxFactory.VariableDeclarator(SyntaxFactory.Identifier(identifier))
+                            .WithInitializer(
+                                SyntaxFactory.EqualsValueClause(
+                                    SyntaxFactory.ObjectCreationExpression(
+                                        SyntaxFactory.IdentifierName("Array")
+                                    )
+                                    .WithArgumentList(
+                                        SyntaxFactory.ArgumentList(
+                                            SyntaxFactory.SingletonSeparatedList(
+                                                SyntaxFactory.Argument(
+                                                    SyntaxFactory.IdentifierName(substitute)
+                                                )
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                    )
+                );
+
+                    parser.currentFunc.Body.Add(statement);
+                }
                 parameters.Add(parameter);
             }
 
@@ -1626,7 +1674,13 @@ namespace Keysharp.Scripting
             VisitVariableStatements(context);
             if (context.expression() != null)
             {
-                return SyntaxFactory.Block(SyntaxFactory.ReturnStatement((ExpressionSyntax)Visit(context.expression())));
+                var expression = (ExpressionSyntax)Visit(context.expression());
+                if (parser.currentFunc.Void)
+                    return SyntaxFactory.Block(
+                        SyntaxFactory.ExpressionStatement(EnsureValidStatementExpression(expression)),
+                        SyntaxFactory.ReturnStatement()
+                    );
+                return SyntaxFactory.Block(SyntaxFactory.ReturnStatement(expression));
             }
             else if (context.statementList() == null || context.statementList().ChildCount == 0)
             {

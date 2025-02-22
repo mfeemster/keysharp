@@ -17,7 +17,7 @@
 		public KeysharpEnumerator(IFuncObj f, int count)
 		{
 			fo = f;
-			Count = count;
+			Count = count;//Unsure what happens when this differs from the number of parameters fo expects. MethodPropertyHolder probably just fills them in.
 			args = new object[count];
 		}
 
@@ -46,7 +46,7 @@
 		    sb.AppendLine(paramsSb.ToString());
 		    sb.AppendLine("{");
 		    sb.Append(assignToArgsSb.ToString());
-		    sb.AppendLine("\tvar ret = fo.Call(args);");
+		    sb.AppendLine("\tvar ret = fo.CallWithRefs(args);");
 		    sb.Append(assignToParamsSb.ToString());
 		    sb.AppendLine("\treturn ret;");
 		    sb.AppendLine("}\n");
@@ -58,7 +58,7 @@
 		public virtual object Call(ref object ovar1)
 		{
 			args[0] = ovar1;
-			var ret = fo.Call(args);
+			var ret = fo.CallWithRefs(args);
 			ovar1 = args[0];
 			return ret;
 		}
@@ -67,7 +67,7 @@
 		{
 			args[0] = ovar1;
 			args[1] = ovar2;
-			var ret = fo.Call(args);
+			var ret = fo.CallWithRefs(args);
 			ovar1 = args[0];
 			ovar2 = args[1];
 			return ret;
@@ -78,7 +78,7 @@
 			args[0] = ovar1;
 			args[1] = ovar2;
 			args[2] = ovar3;
-			var ret = fo.Call(args);
+			var ret = fo.CallWithRefs(args);
 			ovar1 = args[0];
 			ovar2 = args[1];
 			ovar3 = args[2];
@@ -91,7 +91,7 @@
 			args[1] = ovar2;
 			args[2] = ovar3;
 			args[3] = ovar4;
-			var ret = fo.Call(args);
+			var ret = fo.CallWithRefs(args);
 			ovar1 = args[0];
 			ovar2 = args[1];
 			ovar3 = args[2];
@@ -106,7 +106,7 @@
 			args[2] = ovar3;
 			args[3] = ovar4;
 			args[4] = ovar5;
-			var ret = fo.Call(args);
+			var ret = fo.CallWithRefs(args);
 			ovar1 = args[0];
 			ovar2 = args[1];
 			ovar3 = args[2];
@@ -123,7 +123,7 @@
 			args[3] = ovar4;
 			args[4] = ovar5;
 			args[5] = ovar6;
-			var ret = fo.Call(args);
+			var ret = fo.CallWithRefs(args);
 			ovar1 = args[0];
 			ovar2 = args[1];
 			ovar3 = args[2];
@@ -142,7 +142,7 @@
 			args[4] = ovar5;
 			args[5] = ovar6;
 			args[6] = ovar7;
-			var ret = fo.Call(args);
+			var ret = fo.CallWithRefs(args);
 			ovar1 = args[0];
 			ovar2 = args[1];
 			ovar3 = args[2];
@@ -163,7 +163,7 @@
 			args[5] = ovar6;
 			args[6] = ovar7;
 			args[7] = ovar8;
-			var ret = fo.Call(args);
+			var ret = fo.CallWithRefs(args);
 			ovar1 = args[0];
 			ovar2 = args[1];
 			ovar3 = args[2];
@@ -186,7 +186,7 @@
 			args[6] = ovar7;
 			args[7] = ovar8;
 			args[8] = ovar9;
-			var ret = fo.Call(args);
+			var ret = fo.CallWithRefs(args);
 			ovar1 = args[0];
 			ovar2 = args[1];
 			ovar3 = args[2];
@@ -211,7 +211,7 @@
 			args[7] = ovar8;
 			args[8] = ovar9;
 			args[9] = ovar10;
-			var ret = fo.Call(args);
+			var ret = fo.CallWithRefs(args);
 			ovar1 = args[0];
 			ovar2 = args[1];
 			ovar3 = args[2];
@@ -238,7 +238,7 @@
 			args[8] = ovar9;
 			args[9] = ovar10;
 			args[10] = ovar11;
-			var ret = fo.Call(args);
+			var ret = fo.CallWithRefs(args);
 			ovar1 = args[0];
 			ovar2 = args[1];
 			ovar3 = args[2];
@@ -267,7 +267,7 @@
 			args[9] = ovar10;
 			args[10] = ovar11;
 			args[11] = ovar12;
-			var ret = fo.Call(args);
+			var ret = fo.CallWithRefs(args);
 			ovar1 = args[0];
 			ovar2 = args[1];
 			ovar3 = args[2];
@@ -298,7 +298,7 @@
 			args[10] = ovar11;
 			args[11] = ovar12;
 			args[12] = ovar13;
-			var ret = fo.Call(args);
+			var ret = fo.CallWithRefs(args);
 			ovar1 = args[0];
 			ovar2 = args[1];
 			ovar3 = args[2];
@@ -331,7 +331,7 @@
 			args[11] = ovar12;
 			args[12] = ovar13;
 			args[13] = ovar14;
-			var ret = fo.Call(args);
+			var ret = fo.CallWithRefs(args);
 			ovar1 = args[0];
 			ovar2 = args[1];
 			ovar3 = args[2];
@@ -366,7 +366,7 @@
 			args[12] = ovar13;
 			args[13] = ovar14;
 			args[14] = ovar15;
-			var ret = fo.Call(args);
+			var ret = fo.CallWithRefs(args);
 			ovar1 = args[0];
 			ovar2 = args[1];
 			ovar3 = args[2];
@@ -403,7 +403,7 @@
 			args[13] = ovar14;
 			args[14] = ovar15;
 			args[15] = ovar16;
-			var ret = fo.Call(args);
+			var ret = fo.CallWithRefs(args);
 			ovar1 = args[0];
 			ovar2 = args[1];
 			ovar3 = args[2];
@@ -442,7 +442,7 @@
 			args[14] = ovar15;
 			args[15] = ovar16;
 			args[16] = ovar17;
-			var ret = fo.Call(args);
+			var ret = fo.CallWithRefs(args);
 			ovar1 = args[0];
 			ovar2 = args[1];
 			ovar3 = args[2];
@@ -483,7 +483,7 @@
 			args[15] = ovar16;
 			args[16] = ovar17;
 			args[17] = ovar18;
-			var ret = fo.Call(args);
+			var ret = fo.CallWithRefs(args);
 			ovar1 = args[0];
 			ovar2 = args[1];
 			ovar3 = args[2];
@@ -526,7 +526,7 @@
 			args[16] = ovar17;
 			args[17] = ovar18;
 			args[18] = ovar19;
-			var ret = fo.Call(args);
+			var ret = fo.CallWithRefs(args);
 			ovar1 = args[0];
 			ovar2 = args[1];
 			ovar3 = args[2];

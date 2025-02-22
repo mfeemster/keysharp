@@ -218,7 +218,8 @@ namespace Keysharp.Main
 				*/
 				var code = st[0].ToString();
                 //If they want to write out the code, place it in the same folder as the script, with the same name, and .cs extension.
-                if (codeout)
+                
+				if (codeout)
 				{
 					writeCodeTask = Task.Run(() =>
 					{

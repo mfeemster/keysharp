@@ -40,7 +40,7 @@ if (not x is string)
 else
 	FileAppend "fail", "*"
 
-if (x is object)
+if (not x is object)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -87,7 +87,7 @@ if (not x is string)
 else
 	FileAppend "fail", "*"
 
-if (x is object)
+if (not x is object)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -134,7 +134,7 @@ if (not x is string)
 else
 	FileAppend "fail", "*"
 
-if (x is object)
+if (not x is object)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -181,7 +181,7 @@ if (not x is string)
 else
 	FileAppend "fail", "*"
 
-if (x is object)
+if (not x is object)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -228,7 +228,7 @@ if (not x is string)
 else
 	FileAppend "fail", "*"
 
-if (x is object)
+if (not x is object)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"

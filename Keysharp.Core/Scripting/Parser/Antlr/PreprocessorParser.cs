@@ -36,42 +36,42 @@ public partial class PreprocessorParser : PreprocessorParserBase {
 	protected static DFA[] decisionToDFA;
 	protected static PredictionContextCache sharedContextCache = new PredictionContextCache();
 	public const int
-		DerefStart=1, DerefEnd=2, StartFunctionStatement=3, SingleLineBlockComment=4, 
-		HotstringTrigger=5, RemapKey=6, HotkeyTrigger=7, OpenBracket=8, CloseBracket=9, 
-		OpenParen=10, CloseParen=11, OpenBrace=12, CloseBrace=13, SemiColon=14, 
-		Comma=15, Assign=16, QuestionMark=17, QuestionMarkDot=18, Colon=19, DoubleColon=20, 
-		Ellipsis=21, Dot=22, ConcatDot=23, PlusPlus=24, MinusMinus=25, Plus=26, 
-		Minus=27, BitNot=28, Not=29, Multiply=30, Divide=31, IntegerDivide=32, 
-		Modulus=33, Power=34, NullCoalesce=35, Hashtag=36, RightShiftArithmetic=37, 
-		LeftShiftArithmetic=38, RightShiftLogical=39, LessThan=40, MoreThan=41, 
-		LessThanEquals=42, GreaterThanEquals=43, Equals_=44, NotEquals=45, IdentityEquals=46, 
-		IdentityNotEquals=47, RegExMatch=48, BitAnd=49, BitXOr=50, BitOr=51, And=52, 
-		Or=53, MultiplyAssign=54, DivideAssign=55, ModulusAssign=56, PlusAssign=57, 
-		MinusAssign=58, LeftShiftArithmeticAssign=59, RightShiftArithmeticAssign=60, 
-		RightShiftLogicalAssign=61, IntegerDivideAssign=62, ConcatenateAssign=63, 
-		BitAndAssign=64, BitXorAssign=65, BitOrAssign=66, PowerAssign=67, NullishCoalescingAssign=68, 
-		Arrow=69, NullLiteral=70, Unset=71, True=72, False=73, DecimalLiteral=74, 
-		HexIntegerLiteral=75, OctalIntegerLiteral=76, OctalIntegerLiteral2=77, 
-		BinaryIntegerLiteral=78, BigHexIntegerLiteral=79, BigOctalIntegerLiteral=80, 
-		BigBinaryIntegerLiteral=81, BigDecimalIntegerLiteral=82, Break=83, Do=84, 
-		Instanceof=85, Switch=86, Case=87, Default=88, Else=89, Catch=90, Finally=91, 
-		Return=92, Continue=93, For=94, While=95, LoopParse=96, LoopReg=97, LoopRead=98, 
-		LoopFiles=99, Loop=100, Until=101, This=102, If=103, Throw=104, Delete=105, 
-		In=106, Try=107, Yield=108, Is=109, Contains=110, VerbalAnd=111, VerbalNot=112, 
-		VerbalOr=113, Goto=114, Get=115, Set=116, Class=117, Enum=118, Extends=119, 
-		Super=120, Base=121, Export=122, Import=123, From=124, As=125, Async=126, 
-		Await=127, Static=128, Global=129, Local=130, HotIf=131, InputLevel=132, 
-		SuspendExempt=133, UseHook=134, Warn=135, HotstringOptions=136, Identifier=137, 
-		StringLiteral=138, EOL=139, WS=140, UnexpectedCharacter=141, HotstringWhitespaces=142, 
-		HotstringExpansion=143, HotstringUnexpectedCharacter=144, DirectiveWhitespaces=145, 
-		DirectiveContent=146, DirectiveUnexpectedCharacter=147, PreprocessorDirectiveWS=148, 
-		Digits=149, Define=150, Undef=151, ElIf=152, EndIf=153, Line=154, Error=155, 
-		Warning=156, Region=157, EndRegion=158, Pragma=159, Nullable=160, Include=161, 
-		IncludeAgain=162, DllLoad=163, Requires=164, SingleInstance=165, Persistent=166, 
-		NoDynamicVars=167, ErrorStdOut=168, ClipboardTimeout=169, HotIfTimeout=170, 
-		MaxThreads=171, MaxThreadsBuffer=172, MaxThreadsPerHotkey=173, Assembly=174, 
-		DirectiveHidden=175, ConditionalSymbol=176, DirectiveSingleLineComment=177, 
-		DirectiveNewline=178, Text=179;
+		DerefStart=1, DerefEnd=2, SingleLineBlockComment=3, HotstringTrigger=4, 
+		RemapKey=5, HotkeyTrigger=6, OpenBracket=7, CloseBracket=8, OpenParen=9, 
+		CloseParen=10, OpenBrace=11, CloseBrace=12, Comma=13, Assign=14, QuestionMark=15, 
+		QuestionMarkDot=16, Colon=17, DoubleColon=18, Ellipsis=19, Dot=20, ConcatDot=21, 
+		PlusPlus=22, MinusMinus=23, Plus=24, Minus=25, BitNot=26, Not=27, Multiply=28, 
+		Divide=29, IntegerDivide=30, Modulus=31, Power=32, NullCoalesce=33, Hashtag=34, 
+		RightShiftArithmetic=35, LeftShiftArithmetic=36, RightShiftLogical=37, 
+		LessThan=38, MoreThan=39, LessThanEquals=40, GreaterThanEquals=41, Equals_=42, 
+		NotEquals=43, IdentityEquals=44, IdentityNotEquals=45, RegExMatch=46, 
+		BitAnd=47, BitXOr=48, BitOr=49, And=50, Or=51, MultiplyAssign=52, DivideAssign=53, 
+		ModulusAssign=54, PlusAssign=55, MinusAssign=56, LeftShiftArithmeticAssign=57, 
+		RightShiftArithmeticAssign=58, RightShiftLogicalAssign=59, IntegerDivideAssign=60, 
+		ConcatenateAssign=61, BitAndAssign=62, BitXorAssign=63, BitOrAssign=64, 
+		PowerAssign=65, NullishCoalescingAssign=66, Arrow=67, NullLiteral=68, 
+		Unset=69, True=70, False=71, DecimalLiteral=72, HexIntegerLiteral=73, 
+		OctalIntegerLiteral=74, OctalIntegerLiteral2=75, BinaryIntegerLiteral=76, 
+		BigHexIntegerLiteral=77, BigOctalIntegerLiteral=78, BigBinaryIntegerLiteral=79, 
+		BigDecimalIntegerLiteral=80, Break=81, Do=82, Instanceof=83, Switch=84, 
+		Case=85, Default=86, Else=87, Catch=88, Finally=89, Return=90, Continue=91, 
+		For=92, While=93, LoopParse=94, LoopReg=95, LoopRead=96, LoopFiles=97, 
+		Loop=98, Until=99, This=100, If=101, Throw=102, Delete=103, In=104, Try=105, 
+		Yield=106, Is=107, Contains=108, VerbalAnd=109, VerbalNot=110, VerbalOr=111, 
+		Goto=112, Get=113, Set=114, Class=115, Enum=116, Extends=117, Super=118, 
+		Base=119, Export=120, Import=121, From=122, As=123, Async=124, Await=125, 
+		Static=126, Global=127, Local=128, HotIf=129, InputLevel=130, SuspendExempt=131, 
+		UseHook=132, Warn=133, HotstringOptions=134, Identifier=135, StringLiteral=136, 
+		EOL=137, WS=138, UnexpectedCharacter=139, HotstringWhitespaces=140, HotstringMultiLineExpansion=141, 
+		HotstringSingleLineExpansion=142, HotstringUnexpectedCharacter=143, DirectiveWhitespaces=144, 
+		DirectiveContent=145, DirectiveUnexpectedCharacter=146, PreprocessorDirectiveWS=147, 
+		Digits=148, Define=149, Undef=150, ElIf=151, EndIf=152, Line=153, Error=154, 
+		Warning=155, Region=156, EndRegion=157, Pragma=158, Nullable=159, Include=160, 
+		IncludeAgain=161, DllLoad=162, Requires=163, SingleInstance=164, Persistent=165, 
+		NoDynamicVars=166, ErrorStdOut=167, ClipboardTimeout=168, HotIfTimeout=169, 
+		MaxThreads=170, MaxThreadsBuffer=171, MaxThreadsPerHotkey=172, Assembly=173, 
+		DirectiveHidden=174, ConditionalSymbol=175, DirectiveSingleLineComment=176, 
+		DirectiveNewline=177, Text=178;
 	public const int
 		RULE_preprocessor_directive = 0, RULE_directive_new_line_or_sharp = 1, 
 		RULE_preprocessor_expression = 2;
@@ -80,38 +80,38 @@ public partial class PreprocessorParser : PreprocessorParserBase {
 	};
 
 	private static readonly string[] _LiteralNames = {
-		null, null, null, null, null, null, null, null, "'['", "']'", "'('", "')'", 
-		"'{'", "'}'", "';'", "','", "':='", "'?'", "'?.'", "':'", "'::'", "'...'", 
-		"'.'", null, "'++'", "'--'", "'+'", "'-'", "'~'", "'!'", "'*'", "'/'", 
-		"'//'", "'%'", "'**'", "'??'", null, "'>>'", "'<<'", "'>>>'", "'<'", "'>'", 
-		"'<='", "'>='", "'='", "'!='", "'=='", "'!=='", "'~='", "'&'", "'^'", 
-		"'|'", "'&&'", "'||'", "'*='", "'/='", "'%='", "'+='", "'-='", "'<<='", 
-		"'>>='", "'>>>='", "'//='", "'.='", "'&='", "'^='", "'|='", "'**='", "'??='", 
-		"'=>'", "'null'", "'unset'", "'true'", "'false'", null, null, null, null, 
-		null, null, null, null, null, "'break'", "'do'", "'instanceof'", "'switch'", 
-		"'case'", "'default'", "'else'", "'catch'", "'finally'", "'return'", "'continue'", 
-		"'for'", "'while'", null, null, null, null, null, "'until'", "'this'", 
-		"'if'", "'throw'", "'delete'", "'in'", "'try'", "'yield'", "'is'", "'contains'", 
-		"'and'", "'not'", "'or'", "'goto'", "'get'", "'set'", "'class'", "'enum'", 
-		"'extends'", "'super'", "'base'", "'export'", "'import'", "'from'", "'as'", 
-		"'async'", "'await'", "'static'", "'global'", "'local'", "'#hotif'", "'#inputlevel'", 
+		null, null, null, null, null, null, null, "'['", "']'", "'('", "')'", 
+		"'{'", "'}'", "','", "':='", "'?'", "'?.'", "':'", "'::'", "'...'", "'.'", 
+		null, "'++'", "'--'", "'+'", "'-'", "'~'", "'!'", "'*'", "'/'", "'//'", 
+		"'%'", "'**'", "'??'", null, "'>>'", "'<<'", "'>>>'", "'<'", "'>'", "'<='", 
+		"'>='", "'='", "'!='", "'=='", "'!=='", "'~='", "'&'", "'^'", "'|'", "'&&'", 
+		"'||'", "'*='", "'/='", "'%='", "'+='", "'-='", "'<<='", "'>>='", "'>>>='", 
+		"'//='", "'.='", "'&='", "'^='", "'|='", "'**='", "'??='", "'=>'", "'null'", 
+		"'unset'", "'true'", "'false'", null, null, null, null, null, null, null, 
+		null, null, "'break'", "'do'", "'instanceof'", "'switch'", "'case'", "'default'", 
+		"'else'", "'catch'", "'finally'", "'return'", "'continue'", "'for'", "'while'", 
+		null, null, null, null, null, "'until'", "'this'", "'if'", "'throw'", 
+		"'delete'", "'in'", "'try'", "'yield'", "'is'", "'contains'", "'and'", 
+		"'not'", "'or'", "'goto'", "'get'", "'set'", "'class'", "'enum'", "'extends'", 
+		"'super'", "'base'", "'export'", "'import'", "'from'", "'as'", "'async'", 
+		"'await'", "'static'", "'global'", "'local'", "'#hotif'", "'#inputlevel'", 
 		"'#suspendexempt'", "'#usehook'", "'#warn'", null, null, null, null, null, 
-		null, null, null, null, null, null, null, null, null, "'define'", "'undef'", 
-		"'elif'", "'endif'", "'line'", null, null, null, null, null, null, null, 
-		null, null, null, null, null, "'nodynamicvars'", "'errorstdout'", null, 
-		null, null, null, null, null, "'hidden'"
+		null, null, null, null, null, null, null, null, null, null, "'define'", 
+		"'undef'", "'elif'", "'endif'", "'line'", null, null, null, null, null, 
+		null, null, null, null, null, null, null, "'nodynamicvars'", "'errorstdout'", 
+		null, null, null, null, null, null, "'hidden'"
 	};
 	private static readonly string[] _SymbolicNames = {
-		null, "DerefStart", "DerefEnd", "StartFunctionStatement", "SingleLineBlockComment", 
-		"HotstringTrigger", "RemapKey", "HotkeyTrigger", "OpenBracket", "CloseBracket", 
-		"OpenParen", "CloseParen", "OpenBrace", "CloseBrace", "SemiColon", "Comma", 
-		"Assign", "QuestionMark", "QuestionMarkDot", "Colon", "DoubleColon", "Ellipsis", 
-		"Dot", "ConcatDot", "PlusPlus", "MinusMinus", "Plus", "Minus", "BitNot", 
-		"Not", "Multiply", "Divide", "IntegerDivide", "Modulus", "Power", "NullCoalesce", 
-		"Hashtag", "RightShiftArithmetic", "LeftShiftArithmetic", "RightShiftLogical", 
-		"LessThan", "MoreThan", "LessThanEquals", "GreaterThanEquals", "Equals_", 
-		"NotEquals", "IdentityEquals", "IdentityNotEquals", "RegExMatch", "BitAnd", 
-		"BitXOr", "BitOr", "And", "Or", "MultiplyAssign", "DivideAssign", "ModulusAssign", 
+		null, "DerefStart", "DerefEnd", "SingleLineBlockComment", "HotstringTrigger", 
+		"RemapKey", "HotkeyTrigger", "OpenBracket", "CloseBracket", "OpenParen", 
+		"CloseParen", "OpenBrace", "CloseBrace", "Comma", "Assign", "QuestionMark", 
+		"QuestionMarkDot", "Colon", "DoubleColon", "Ellipsis", "Dot", "ConcatDot", 
+		"PlusPlus", "MinusMinus", "Plus", "Minus", "BitNot", "Not", "Multiply", 
+		"Divide", "IntegerDivide", "Modulus", "Power", "NullCoalesce", "Hashtag", 
+		"RightShiftArithmetic", "LeftShiftArithmetic", "RightShiftLogical", "LessThan", 
+		"MoreThan", "LessThanEquals", "GreaterThanEquals", "Equals_", "NotEquals", 
+		"IdentityEquals", "IdentityNotEquals", "RegExMatch", "BitAnd", "BitXOr", 
+		"BitOr", "And", "Or", "MultiplyAssign", "DivideAssign", "ModulusAssign", 
 		"PlusAssign", "MinusAssign", "LeftShiftArithmeticAssign", "RightShiftArithmeticAssign", 
 		"RightShiftLogicalAssign", "IntegerDivideAssign", "ConcatenateAssign", 
 		"BitAndAssign", "BitXorAssign", "BitOrAssign", "PowerAssign", "NullishCoalescingAssign", 
@@ -126,15 +126,15 @@ public partial class PreprocessorParser : PreprocessorParserBase {
 		"Super", "Base", "Export", "Import", "From", "As", "Async", "Await", "Static", 
 		"Global", "Local", "HotIf", "InputLevel", "SuspendExempt", "UseHook", 
 		"Warn", "HotstringOptions", "Identifier", "StringLiteral", "EOL", "WS", 
-		"UnexpectedCharacter", "HotstringWhitespaces", "HotstringExpansion", "HotstringUnexpectedCharacter", 
-		"DirectiveWhitespaces", "DirectiveContent", "DirectiveUnexpectedCharacter", 
-		"PreprocessorDirectiveWS", "Digits", "Define", "Undef", "ElIf", "EndIf", 
-		"Line", "Error", "Warning", "Region", "EndRegion", "Pragma", "Nullable", 
-		"Include", "IncludeAgain", "DllLoad", "Requires", "SingleInstance", "Persistent", 
-		"NoDynamicVars", "ErrorStdOut", "ClipboardTimeout", "HotIfTimeout", "MaxThreads", 
-		"MaxThreadsBuffer", "MaxThreadsPerHotkey", "Assembly", "DirectiveHidden", 
-		"ConditionalSymbol", "DirectiveSingleLineComment", "DirectiveNewline", 
-		"Text"
+		"UnexpectedCharacter", "HotstringWhitespaces", "HotstringMultiLineExpansion", 
+		"HotstringSingleLineExpansion", "HotstringUnexpectedCharacter", "DirectiveWhitespaces", 
+		"DirectiveContent", "DirectiveUnexpectedCharacter", "PreprocessorDirectiveWS", 
+		"Digits", "Define", "Undef", "ElIf", "EndIf", "Line", "Error", "Warning", 
+		"Region", "EndRegion", "Pragma", "Nullable", "Include", "IncludeAgain", 
+		"DllLoad", "Requires", "SingleInstance", "Persistent", "NoDynamicVars", 
+		"ErrorStdOut", "ClipboardTimeout", "HotIfTimeout", "MaxThreads", "MaxThreadsBuffer", 
+		"MaxThreadsPerHotkey", "Assembly", "DirectiveHidden", "ConditionalSymbol", 
+		"DirectiveSingleLineComment", "DirectiveNewline", "Text"
 	};
 	public static readonly IVocabulary DefaultVocabulary = new Vocabulary(_LiteralNames, _SymbolicNames);
 
@@ -605,7 +605,7 @@ public partial class PreprocessorParser : PreprocessorParserBase {
 				{
 				State = 80;
 				_la = TokenStream.LA(1);
-				if ( !(((((_la - 161)) & ~0x3f) == 0 && ((1L << (_la - 161)) & 8223L) != 0)) ) {
+				if ( !(((((_la - 160)) & ~0x3f) == 0 && ((1L << (_la - 160)) & 8223L) != 0)) ) {
 				ErrorHandler.RecoverInline(this);
 				}
 				else {
@@ -675,7 +675,7 @@ public partial class PreprocessorParser : PreprocessorParserBase {
 				{
 				State = 92;
 				_la = TokenStream.LA(1);
-				if ( !(((((_la - 169)) & ~0x3f) == 0 && ((1L << (_la - 169)) & 31L) != 0)) ) {
+				if ( !(((((_la - 168)) & ~0x3f) == 0 && ((1L << (_la - 168)) & 31L) != 0)) ) {
 				ErrorHandler.RecoverInline(this);
 				}
 				else {
@@ -756,6 +756,7 @@ public partial class PreprocessorParser : PreprocessorParserBase {
 		public Preprocessor_expressionContext expr2;
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode True() { return GetToken(PreprocessorParser.True, 0); }
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode False() { return GetToken(PreprocessorParser.False, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode Digits() { return GetToken(PreprocessorParser.Digits, 0); }
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode ConditionalSymbol() { return GetToken(PreprocessorParser.ConditionalSymbol, 0); }
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode OpenParen() { return GetToken(PreprocessorParser.OpenParen, 0); }
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode CloseParen() { return GetToken(PreprocessorParser.CloseParen, 0); }
@@ -765,7 +766,7 @@ public partial class PreprocessorParser : PreprocessorParserBase {
 		[System.Diagnostics.DebuggerNonUserCode] public Preprocessor_expressionContext preprocessor_expression(int i) {
 			return GetRuleContext<Preprocessor_expressionContext>(i);
 		}
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode Hashtag() { return GetToken(PreprocessorParser.Hashtag, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode Not() { return GetToken(PreprocessorParser.Not, 0); }
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode IdentityEquals() { return GetToken(PreprocessorParser.IdentityEquals, 0); }
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode NotEquals() { return GetToken(PreprocessorParser.NotEquals, 0); }
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode And() { return GetToken(PreprocessorParser.And, 0); }
@@ -799,7 +800,7 @@ public partial class PreprocessorParser : PreprocessorParserBase {
 			int _alt;
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 115;
+			State = 117;
 			ErrorHandler.Sync(this);
 			switch (TokenStream.LA(1)) {
 			case True:
@@ -816,38 +817,45 @@ public partial class PreprocessorParser : PreprocessorParserBase {
 				 this.OnPreprocessorExpressionFalse(); 
 				}
 				break;
-			case ConditionalSymbol:
+			case Digits:
 				{
 				State = 104;
+				Match(Digits);
+				 this.OnPreprocessorExpressionDigits(); 
+				}
+				break;
+			case ConditionalSymbol:
+				{
+				State = 106;
 				Match(ConditionalSymbol);
 				 this.OnPreprocessorExpressionConditionalSymbol(); 
 				}
 				break;
 			case OpenParen:
 				{
-				State = 106;
-				Match(OpenParen);
-				State = 107;
-				_localctx.expr = preprocessor_expression(0);
 				State = 108;
+				Match(OpenParen);
+				State = 109;
+				_localctx.expr = preprocessor_expression(0);
+				State = 110;
 				Match(CloseParen);
 				 this.OnPreprocessorExpressionConditionalOpenParens(); 
 				}
 				break;
-			case Hashtag:
+			case Not:
 				{
-				State = 111;
-				Match(Hashtag);
-				State = 112;
+				State = 113;
+				Match(Not);
+				State = 114;
 				_localctx.expr = preprocessor_expression(5);
-				 this.OnPreprocessorExpressionConditionalBang(); 
+				 this.OnPreprocessorExpressionConditionalNot(); 
 				}
 				break;
 			default:
 				throw new NoViableAltException(this);
 			}
 			Context.Stop = TokenStream.LT(-1);
-			State = 139;
+			State = 141;
 			ErrorHandler.Sync(this);
 			_alt = Interpreter.AdaptivePredict(TokenStream,8,Context);
 			while ( _alt!=2 && _alt!=global::Antlr4.Runtime.Atn.ATN.INVALID_ALT_NUMBER ) {
@@ -856,7 +864,7 @@ public partial class PreprocessorParser : PreprocessorParserBase {
 						TriggerExitRuleEvent();
 					_prevctx = _localctx;
 					{
-					State = 137;
+					State = 139;
 					ErrorHandler.Sync(this);
 					switch ( Interpreter.AdaptivePredict(TokenStream,7,Context) ) {
 					case 1:
@@ -864,11 +872,11 @@ public partial class PreprocessorParser : PreprocessorParserBase {
 						_localctx = new Preprocessor_expressionContext(_parentctx, _parentState);
 						_localctx.expr1 = _prevctx;
 						PushNewRecursionContext(_localctx, _startState, RULE_preprocessor_expression);
-						State = 117;
-						if (!(Precpred(Context, 4))) throw new FailedPredicateException(this, "Precpred(Context, 4)");
-						State = 118;
-						Match(IdentityEquals);
 						State = 119;
+						if (!(Precpred(Context, 4))) throw new FailedPredicateException(this, "Precpred(Context, 4)");
+						State = 120;
+						Match(IdentityEquals);
+						State = 121;
 						_localctx.expr2 = preprocessor_expression(5);
 						 this.OnPreprocessorExpressionConditionalEq(); 
 						}
@@ -878,11 +886,11 @@ public partial class PreprocessorParser : PreprocessorParserBase {
 						_localctx = new Preprocessor_expressionContext(_parentctx, _parentState);
 						_localctx.expr1 = _prevctx;
 						PushNewRecursionContext(_localctx, _startState, RULE_preprocessor_expression);
-						State = 122;
-						if (!(Precpred(Context, 3))) throw new FailedPredicateException(this, "Precpred(Context, 3)");
-						State = 123;
-						Match(NotEquals);
 						State = 124;
+						if (!(Precpred(Context, 3))) throw new FailedPredicateException(this, "Precpred(Context, 3)");
+						State = 125;
+						Match(NotEquals);
+						State = 126;
 						_localctx.expr2 = preprocessor_expression(4);
 						 this.OnPreprocessorExpressionConditionalNe(); 
 						}
@@ -892,11 +900,11 @@ public partial class PreprocessorParser : PreprocessorParserBase {
 						_localctx = new Preprocessor_expressionContext(_parentctx, _parentState);
 						_localctx.expr1 = _prevctx;
 						PushNewRecursionContext(_localctx, _startState, RULE_preprocessor_expression);
-						State = 127;
-						if (!(Precpred(Context, 2))) throw new FailedPredicateException(this, "Precpred(Context, 2)");
-						State = 128;
-						Match(And);
 						State = 129;
+						if (!(Precpred(Context, 2))) throw new FailedPredicateException(this, "Precpred(Context, 2)");
+						State = 130;
+						Match(And);
+						State = 131;
 						_localctx.expr2 = preprocessor_expression(3);
 						 this.OnPreprocessorExpressionConditionalAnd(); 
 						}
@@ -906,11 +914,11 @@ public partial class PreprocessorParser : PreprocessorParserBase {
 						_localctx = new Preprocessor_expressionContext(_parentctx, _parentState);
 						_localctx.expr1 = _prevctx;
 						PushNewRecursionContext(_localctx, _startState, RULE_preprocessor_expression);
-						State = 132;
-						if (!(Precpred(Context, 1))) throw new FailedPredicateException(this, "Precpred(Context, 1)");
-						State = 133;
-						Match(Or);
 						State = 134;
+						if (!(Precpred(Context, 1))) throw new FailedPredicateException(this, "Precpred(Context, 1)");
+						State = 135;
+						Match(Or);
+						State = 136;
 						_localctx.expr2 = preprocessor_expression(2);
 						 this.OnPreprocessorExpressionConditionalOr(); 
 						}
@@ -918,7 +926,7 @@ public partial class PreprocessorParser : PreprocessorParserBase {
 					}
 					} 
 				}
-				State = 141;
+				State = 143;
 				ErrorHandler.Sync(this);
 				_alt = Interpreter.AdaptivePredict(TokenStream,8,Context);
 			}
@@ -952,53 +960,54 @@ public partial class PreprocessorParser : PreprocessorParserBase {
 	}
 
 	private static int[] _serializedATN = {
-		4,1,179,143,2,0,7,0,2,1,7,1,2,2,7,2,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,
+		4,1,178,145,2,0,7,0,2,1,7,1,2,2,7,2,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,
 		0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,
 		1,0,1,0,1,0,1,0,1,0,3,0,38,8,0,1,0,1,0,3,0,42,8,0,1,0,1,0,1,0,1,0,1,0,
 		1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,3,0,59,8,0,1,0,1,0,1,0,1,0,1,0,
 		3,0,66,8,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,
 		1,0,1,0,1,0,3,0,86,8,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,3,0,96,8,0,1,1,
-		1,1,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,3,
-		2,116,8,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,
-		1,2,1,2,1,2,1,2,1,2,5,2,138,8,2,10,2,12,2,141,9,2,1,2,0,1,4,3,0,2,4,0,
-		4,2,0,161,165,174,174,2,0,72,73,149,149,1,0,169,173,1,1,178,178,170,0,
-		95,1,0,0,0,2,97,1,0,0,0,4,115,1,0,0,0,6,7,5,150,0,0,7,8,5,176,0,0,8,9,
-		3,2,1,0,9,10,6,0,-1,0,10,96,1,0,0,0,11,12,5,151,0,0,12,13,5,176,0,0,13,
-		14,3,2,1,0,14,15,6,0,-1,0,15,96,1,0,0,0,16,17,5,103,0,0,17,18,3,4,2,0,
-		18,19,3,2,1,0,19,20,6,0,-1,0,20,96,1,0,0,0,21,22,5,152,0,0,22,23,3,4,2,
-		0,23,24,3,2,1,0,24,25,6,0,-1,0,25,96,1,0,0,0,26,27,5,89,0,0,27,28,3,2,
-		1,0,28,29,6,0,-1,0,29,96,1,0,0,0,30,31,5,153,0,0,31,32,3,2,1,0,32,33,6,
-		0,-1,0,33,96,1,0,0,0,34,41,5,154,0,0,35,37,5,149,0,0,36,38,5,138,0,0,37,
-		36,1,0,0,0,37,38,1,0,0,0,38,42,1,0,0,0,39,42,5,88,0,0,40,42,5,175,0,0,
-		41,35,1,0,0,0,41,39,1,0,0,0,41,40,1,0,0,0,42,43,1,0,0,0,43,44,3,2,1,0,
-		44,45,6,0,-1,0,45,96,1,0,0,0,46,47,5,155,0,0,47,48,5,179,0,0,48,49,3,2,
-		1,0,49,50,6,0,-1,0,50,96,1,0,0,0,51,52,5,156,0,0,52,53,5,179,0,0,53,54,
-		3,2,1,0,54,55,6,0,-1,0,55,96,1,0,0,0,56,58,5,157,0,0,57,59,5,179,0,0,58,
-		57,1,0,0,0,58,59,1,0,0,0,59,60,1,0,0,0,60,61,3,2,1,0,61,62,6,0,-1,0,62,
-		96,1,0,0,0,63,65,5,158,0,0,64,66,5,179,0,0,65,64,1,0,0,0,65,66,1,0,0,0,
-		66,67,1,0,0,0,67,68,3,2,1,0,68,69,6,0,-1,0,69,96,1,0,0,0,70,71,5,159,0,
-		0,71,72,5,179,0,0,72,73,3,2,1,0,73,74,6,0,-1,0,74,96,1,0,0,0,75,76,5,160,
-		0,0,76,77,5,179,0,0,77,78,3,2,1,0,78,79,6,0,-1,0,79,96,1,0,0,0,80,81,7,
-		0,0,0,81,82,5,179,0,0,82,96,3,2,1,0,83,85,5,166,0,0,84,86,7,1,0,0,85,84,
-		1,0,0,0,85,86,1,0,0,0,86,87,1,0,0,0,87,96,3,2,1,0,88,89,5,167,0,0,89,96,
-		3,2,1,0,90,91,5,168,0,0,91,96,3,2,1,0,92,93,7,2,0,0,93,94,5,149,0,0,94,
-		96,3,2,1,0,95,6,1,0,0,0,95,11,1,0,0,0,95,16,1,0,0,0,95,21,1,0,0,0,95,26,
-		1,0,0,0,95,30,1,0,0,0,95,34,1,0,0,0,95,46,1,0,0,0,95,51,1,0,0,0,95,56,
-		1,0,0,0,95,63,1,0,0,0,95,70,1,0,0,0,95,75,1,0,0,0,95,80,1,0,0,0,95,83,
-		1,0,0,0,95,88,1,0,0,0,95,90,1,0,0,0,95,92,1,0,0,0,96,1,1,0,0,0,97,98,7,
-		3,0,0,98,3,1,0,0,0,99,100,6,2,-1,0,100,101,5,72,0,0,101,116,6,2,-1,0,102,
-		103,5,73,0,0,103,116,6,2,-1,0,104,105,5,176,0,0,105,116,6,2,-1,0,106,107,
-		5,10,0,0,107,108,3,4,2,0,108,109,5,11,0,0,109,110,6,2,-1,0,110,116,1,0,
-		0,0,111,112,5,36,0,0,112,113,3,4,2,5,113,114,6,2,-1,0,114,116,1,0,0,0,
-		115,99,1,0,0,0,115,102,1,0,0,0,115,104,1,0,0,0,115,106,1,0,0,0,115,111,
-		1,0,0,0,116,139,1,0,0,0,117,118,10,4,0,0,118,119,5,46,0,0,119,120,3,4,
-		2,5,120,121,6,2,-1,0,121,138,1,0,0,0,122,123,10,3,0,0,123,124,5,45,0,0,
-		124,125,3,4,2,4,125,126,6,2,-1,0,126,138,1,0,0,0,127,128,10,2,0,0,128,
-		129,5,52,0,0,129,130,3,4,2,3,130,131,6,2,-1,0,131,138,1,0,0,0,132,133,
-		10,1,0,0,133,134,5,53,0,0,134,135,3,4,2,2,135,136,6,2,-1,0,136,138,1,0,
-		0,0,137,117,1,0,0,0,137,122,1,0,0,0,137,127,1,0,0,0,137,132,1,0,0,0,138,
-		141,1,0,0,0,139,137,1,0,0,0,139,140,1,0,0,0,140,5,1,0,0,0,141,139,1,0,
-		0,0,9,37,41,58,65,85,95,115,137,139
+		1,1,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,
+		2,1,2,3,2,118,8,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,
+		1,2,1,2,1,2,1,2,1,2,1,2,1,2,5,2,140,8,2,10,2,12,2,143,9,2,1,2,0,1,4,3,
+		0,2,4,0,4,2,0,160,164,173,173,2,0,70,71,148,148,1,0,168,172,1,1,177,177,
+		173,0,95,1,0,0,0,2,97,1,0,0,0,4,117,1,0,0,0,6,7,5,149,0,0,7,8,5,175,0,
+		0,8,9,3,2,1,0,9,10,6,0,-1,0,10,96,1,0,0,0,11,12,5,150,0,0,12,13,5,175,
+		0,0,13,14,3,2,1,0,14,15,6,0,-1,0,15,96,1,0,0,0,16,17,5,101,0,0,17,18,3,
+		4,2,0,18,19,3,2,1,0,19,20,6,0,-1,0,20,96,1,0,0,0,21,22,5,151,0,0,22,23,
+		3,4,2,0,23,24,3,2,1,0,24,25,6,0,-1,0,25,96,1,0,0,0,26,27,5,87,0,0,27,28,
+		3,2,1,0,28,29,6,0,-1,0,29,96,1,0,0,0,30,31,5,152,0,0,31,32,3,2,1,0,32,
+		33,6,0,-1,0,33,96,1,0,0,0,34,41,5,153,0,0,35,37,5,148,0,0,36,38,5,136,
+		0,0,37,36,1,0,0,0,37,38,1,0,0,0,38,42,1,0,0,0,39,42,5,86,0,0,40,42,5,174,
+		0,0,41,35,1,0,0,0,41,39,1,0,0,0,41,40,1,0,0,0,42,43,1,0,0,0,43,44,3,2,
+		1,0,44,45,6,0,-1,0,45,96,1,0,0,0,46,47,5,154,0,0,47,48,5,178,0,0,48,49,
+		3,2,1,0,49,50,6,0,-1,0,50,96,1,0,0,0,51,52,5,155,0,0,52,53,5,178,0,0,53,
+		54,3,2,1,0,54,55,6,0,-1,0,55,96,1,0,0,0,56,58,5,156,0,0,57,59,5,178,0,
+		0,58,57,1,0,0,0,58,59,1,0,0,0,59,60,1,0,0,0,60,61,3,2,1,0,61,62,6,0,-1,
+		0,62,96,1,0,0,0,63,65,5,157,0,0,64,66,5,178,0,0,65,64,1,0,0,0,65,66,1,
+		0,0,0,66,67,1,0,0,0,67,68,3,2,1,0,68,69,6,0,-1,0,69,96,1,0,0,0,70,71,5,
+		158,0,0,71,72,5,178,0,0,72,73,3,2,1,0,73,74,6,0,-1,0,74,96,1,0,0,0,75,
+		76,5,159,0,0,76,77,5,178,0,0,77,78,3,2,1,0,78,79,6,0,-1,0,79,96,1,0,0,
+		0,80,81,7,0,0,0,81,82,5,178,0,0,82,96,3,2,1,0,83,85,5,165,0,0,84,86,7,
+		1,0,0,85,84,1,0,0,0,85,86,1,0,0,0,86,87,1,0,0,0,87,96,3,2,1,0,88,89,5,
+		166,0,0,89,96,3,2,1,0,90,91,5,167,0,0,91,96,3,2,1,0,92,93,7,2,0,0,93,94,
+		5,148,0,0,94,96,3,2,1,0,95,6,1,0,0,0,95,11,1,0,0,0,95,16,1,0,0,0,95,21,
+		1,0,0,0,95,26,1,0,0,0,95,30,1,0,0,0,95,34,1,0,0,0,95,46,1,0,0,0,95,51,
+		1,0,0,0,95,56,1,0,0,0,95,63,1,0,0,0,95,70,1,0,0,0,95,75,1,0,0,0,95,80,
+		1,0,0,0,95,83,1,0,0,0,95,88,1,0,0,0,95,90,1,0,0,0,95,92,1,0,0,0,96,1,1,
+		0,0,0,97,98,7,3,0,0,98,3,1,0,0,0,99,100,6,2,-1,0,100,101,5,70,0,0,101,
+		118,6,2,-1,0,102,103,5,71,0,0,103,118,6,2,-1,0,104,105,5,148,0,0,105,118,
+		6,2,-1,0,106,107,5,175,0,0,107,118,6,2,-1,0,108,109,5,9,0,0,109,110,3,
+		4,2,0,110,111,5,10,0,0,111,112,6,2,-1,0,112,118,1,0,0,0,113,114,5,27,0,
+		0,114,115,3,4,2,5,115,116,6,2,-1,0,116,118,1,0,0,0,117,99,1,0,0,0,117,
+		102,1,0,0,0,117,104,1,0,0,0,117,106,1,0,0,0,117,108,1,0,0,0,117,113,1,
+		0,0,0,118,141,1,0,0,0,119,120,10,4,0,0,120,121,5,44,0,0,121,122,3,4,2,
+		5,122,123,6,2,-1,0,123,140,1,0,0,0,124,125,10,3,0,0,125,126,5,43,0,0,126,
+		127,3,4,2,4,127,128,6,2,-1,0,128,140,1,0,0,0,129,130,10,2,0,0,130,131,
+		5,50,0,0,131,132,3,4,2,3,132,133,6,2,-1,0,133,140,1,0,0,0,134,135,10,1,
+		0,0,135,136,5,51,0,0,136,137,3,4,2,2,137,138,6,2,-1,0,138,140,1,0,0,0,
+		139,119,1,0,0,0,139,124,1,0,0,0,139,129,1,0,0,0,139,134,1,0,0,0,140,143,
+		1,0,0,0,141,139,1,0,0,0,141,142,1,0,0,0,142,5,1,0,0,0,143,141,1,0,0,0,
+		9,37,41,58,65,85,95,117,139,141
 	};
 
 	public static readonly ATN _ATN =

@@ -8,12 +8,12 @@ class testclass
 	{
 		get
 		{
-			return _a
+			return this._a
 		}
 
 		set
 		{
-			global _a := value
+			this._a := value
 		}
 	}
 
@@ -21,7 +21,7 @@ class testclass
 	{
 		get
 		{
-			return _b
+			return this._b
 		}
 	}
 
@@ -29,17 +29,23 @@ class testclass
 	{
 		get
 		{
-			return arr[x]
+			return this.arr[x]
 		}
 
 		set
 		{
-			arr[x] := value
+			this.arr[x] := value
 		}
 	}
 }
 
 testclassobj := testclass()
+
+if (HasProp(testclassobj, "__Item") && testclassobj.HasProp("__Item"))
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+	
 val := testclassobj.a
 
 If (val == 123)
@@ -94,6 +100,12 @@ class PropTestOTB
 }
 
 otb := PropTestOTB()
+
+if (HasProp(otb, "__Item") && otb.HasProp("__Item"))
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+	
 otb[999] := 123
 val := otb[777]
 
@@ -117,6 +129,12 @@ class PropTestThis
 }
 
 ptt := PropTestThis()
+
+if (!HasProp(ptt, "__Item") && !ptt.HasProp("__Item"))
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+	
 ptt.xprop := 123
 val := ptt.xprop
 
@@ -129,23 +147,23 @@ else
 x := 0
 
 class Test1 extends Test2 {
-    Meth1()
-     {
-        global x += 1
-        return super.Meth1()
-    }
+	Meth1()
+	 {
+		global x += 1
+		return super.Meth1()
+	}
 }
 
 class Test2 extends Test3 {
-    Meth1()
-    {
-        global x += 1
-        return super.Meth1()
-    }
+	Meth1()
+	{
+		global x += 1
+		return super.Meth1()
+	}
 }
 
 class Test3 {
-    Meth1()
+	Meth1()
 	{
 		global x
 		return x++
@@ -161,6 +179,11 @@ else
 	FileAppend "fail", "*"
 
 if (x == 3)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+	
+if (!HasProp(t1, "__Item") && !t1.HasProp("__Item"))
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"

@@ -121,6 +121,48 @@ public abstract class MainParserBase : Antlr4.Runtime.Parser
         return InputStream.LA(++i) != OpenBrace;
     }
 
+    protected bool isFunctionCallStatement()
+    {
+        var enclosableDepth = 0;
+        var i = 0;
+        while (true)
+        {
+            i++;
+            var nextToken = InputStream.LA(i);
+            switch (nextToken)
+            {
+                case MainLexer.OpenParen:
+                    if (i != 1 && enclosableDepth == 0)
+                        return false;
+                    enclosableDepth++;
+                    break;
+                case MainLexer.OpenBracket:
+                case MainLexer.DerefStart:
+                    enclosableDepth++;
+                    break;
+                case MainLexer.CloseParen:
+                case MainLexer.CloseBracket:
+                case MainLexer.DerefEnd:
+                    enclosableDepth--;
+                    break;
+            }
+            if (enclosableDepth != 0)
+                continue;
+
+            switch (nextToken)
+            {
+                case MainLexer.Identifier:
+                case MainLexer.Dot:
+                    continue;
+                case MainLexer.WS:
+                case MainLexer.EOL:
+                case MainLexer.Eof:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+    }
     protected bool isValidExpressionStatement(ParserRuleContext ctx) {
         return !(ctx is ConcatenateExpressionContext || ctx is PrimaryExpressionContext);
     }

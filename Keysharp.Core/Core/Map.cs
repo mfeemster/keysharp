@@ -1,46 +1,70 @@
 ﻿namespace Keysharp.Core
 {
-    /// <summary>
-    /// A comparer which allows the caller to specify the case comparison mode for comparing strings.
-    /// This is used in <see cref="Map"/>.
-    /// </summary>
-    public class CaseEqualityComp : IEqualityComparer<object>
-    {
-        private readonly StringComparer stringComparer;
+	/// <summary>
+	/// A comparer which allows the caller to specify the case comparison mode for comparing strings.
+	/// This is used in <see cref="Map"/>.
+	/// </summary>
+	public class CaseEqualityComp : IEqualityComparer<object>
+	{
+		/// <summary>
+		/// The comparison type.
+		/// </summary>
+		private readonly StringComparer stringComparer;
 
-        public CaseEqualityComp(eCaseSense caseSense)
-        {
-            // Choose an appropriate built-in StringComparer.
-            switch (caseSense)
-            {
-                case eCaseSense.On:
-                    stringComparer = StringComparer.Ordinal;
-                    break;
-                case eCaseSense.Off:
-                    stringComparer = StringComparer.OrdinalIgnoreCase;
-                    break;
-                default:
-                    stringComparer = StringComparer.CurrentCultureIgnoreCase;
-                    break;
-            }
-        }
+		/// <summary>
+		/// Constructor that takes a case comparison mode.
+		/// </summary>
+		/// <param name="caseSense">The case comparison mode to use.</param>
+		public CaseEqualityComp(eCaseSense caseSense)
+		{
+			//Choose an appropriate built-in StringComparer.
+			switch (caseSense)
+			{
+				case eCaseSense.On:
+					stringComparer = StringComparer.Ordinal;
+					break;
 
-        public bool Equals(object x, object y)
-        {
-            // If both are strings, use the built-in comparer.
-            if (x is string s1 && y is string s2)
-                return stringComparer.Equals(s1, s2);
-            // Otherwise, use default equality.
-            return object.Equals(x, y);
-        }
+				case eCaseSense.Off:
+					stringComparer = StringComparer.OrdinalIgnoreCase;
+					break;
 
-        public int GetHashCode(object obj)
-        {
-            if (obj is string s)
-                return stringComparer.GetHashCode(s);
-            return obj?.GetHashCode() ?? 0;
-        }
-    }
+				default:
+					stringComparer = StringComparer.CurrentCultureIgnoreCase;
+					break;
+			}
+		}
+		/// <summary>
+		/// The implementation for <see cref="IEqualityComparer.Equals"/> which compares two objects.
+		/// If both objects are strings, then the case sensitivity mode specified in the constructor is used.
+		/// </summary>
+		/// <param name="x">The first object to compare.</param>
+		/// <param name="y">The second object to compare.</param>
+		/// <returns>True if the two objects are equal, else false.</returns>
+		public bool Equals(object x, object y)
+		{
+			//If both are strings, use the built-in comparer.
+			if (x is string s1 && y is string s2)
+				return stringComparer.Equals(s1, s2);
+
+			//Otherwise, use default equality.
+			return object.Equals(x, y);
+		}
+
+		/// <summary>
+		/// The implementation for <see cref="IEqualityComparer.GetHashCode(object)"/>.
+		/// If the object is a string, a hash code for its lowercase version is returned.
+		/// Otherwise obj.GetHashCode() is returned.
+		/// </summary>
+		/// <param name="obj">The object to get the hash code for.</param>
+		/// <returns>The hash code for the object.</returns>
+		public int GetHashCode(object obj)
+		{
+			if (obj is string s)
+				return stringComparer.GetHashCode(s);
+
+			return obj?.GetHashCode() ?? 0;
+		}
+	}
 
     /// <summary>
     /// Map class that wraps a <see cref="Dictionary{object, object}"/>.
@@ -128,7 +152,19 @@
 		/// Initializes a new instance of the <see cref="Map"/> class.
 		/// See <see cref="__New(object[])"/>.
 		/// </summary>
-		public Map(params object[] args) => _ = __New(args);
+		public Map(params object[] args)
+		{
+			_ = __New(args);
+		}
+
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="Map"/> class without creating the __Item dynamic property.
+		/// This is needed so Map doesn't enter an infinite recursion loop because dynamic properties themselves have Maps.
+		/// See <see cref="__New(object[])"/>.
+		/// </summary>
+		/// <param name="make__Item">True to create __Item, else false. Always specify false.</param>
+		internal Map(bool make__Item, params object[] args) =>  _ = __New(args);
 
 		public Map(bool skipLogic) : base(skipLogic: skipLogic) => _ = __New();
 
@@ -141,7 +177,6 @@
 		/// </param>
 		/// <returns><see cref="KeysharpEnumerator"/></returns>
 		public KeysharpEnumerator __Enum(object count) => new MapKeyValueIterator(map, count.Ai());
-
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="Map"/> class.
@@ -511,7 +546,6 @@
 		/// </summary>
 		/// <returns><see cref="MapKeyValueIterator"/></returns>
 		IEnumerator IEnumerable.GetEnumerator() => new MapKeyValueIterator(map, 2);
-		
 		/// <summary>
 		/// Internal helper to insert a key,value pair into the map.
 		/// </summary>

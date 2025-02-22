@@ -452,6 +452,8 @@ namespace Keysharp.Scripting
                     var leftExpression = (ExpressionSyntax)Visit(context.left);
                     // Ensure the classExpression is treated as a string (e.g., "KeysharpObject")
                     var classAsRawString = context.right.GetText().Trim();
+                    if (Parser.TypeNameAliases.TryGetValue(classAsRawString, out var alias))
+                        classAsRawString = alias;
 
                     if (classAsRawString == "unset" || classAsRawString == "null")
                     {
@@ -478,6 +480,29 @@ namespace Keysharp.Scripting
 
         private SyntaxNode HandleLogicalAndExpression(ExpressionSyntax left, ExpressionSyntax right)
         {
+            var leftIf = ((InvocationExpressionSyntax)InternalMethods.IfElse)
+                .WithArgumentList(SyntaxFactory.ArgumentList(SyntaxFactory.SingletonSeparatedList(SyntaxFactory.Argument(left))));
+
+            var rightIf = ((InvocationExpressionSyntax)InternalMethods.IfElse)
+                .WithArgumentList(SyntaxFactory.ArgumentList(SyntaxFactory.SingletonSeparatedList(SyntaxFactory.Argument(right))));
+
+            // Create If(left) && If(right)
+            var andExpression = SyntaxFactory.BinaryExpression(
+                SyntaxKind.LogicalAndExpression,
+                leftIf,
+                rightIf
+            );
+
+            // Call .ParseObject()
+            return SyntaxFactory.InvocationExpression(
+                SyntaxFactory.MemberAccessExpression(
+                    SyntaxKind.SimpleMemberAccessExpression,
+                    SyntaxFactory.ParenthesizedExpression(andExpression),
+                    SyntaxFactory.IdentifierName("ParseObject")
+                )
+            );
+
+            /*
             return SyntaxFactory.ConditionalExpression(
                 SyntaxFactory.InvocationExpression(
                     SyntaxFactory.MemberAccessExpression(
@@ -492,9 +517,32 @@ namespace Keysharp.Scripting
                 right,  // If left is truthy, return right
                 left    // If left is falsy, return left
             );
+            */
         }
         private SyntaxNode HandleLogicalOrExpression(ExpressionSyntax left, ExpressionSyntax right)
         {
+            var leftIf = ((InvocationExpressionSyntax)InternalMethods.IfElse)
+                .WithArgumentList(SyntaxFactory.ArgumentList(SyntaxFactory.SingletonSeparatedList(SyntaxFactory.Argument(left))));
+
+            var rightIf = ((InvocationExpressionSyntax)InternalMethods.IfElse)
+                .WithArgumentList(SyntaxFactory.ArgumentList(SyntaxFactory.SingletonSeparatedList(SyntaxFactory.Argument(right))));
+
+            // Create If(left) && If(right)
+            var orExpression = SyntaxFactory.BinaryExpression(
+                SyntaxKind.LogicalOrExpression,
+                leftIf,
+                rightIf
+            );
+
+            // Call .ParseObject()
+            return SyntaxFactory.InvocationExpression(
+                SyntaxFactory.MemberAccessExpression(
+                    SyntaxKind.SimpleMemberAccessExpression,
+                    SyntaxFactory.ParenthesizedExpression(orExpression),
+                    SyntaxFactory.IdentifierName("ParseObject")
+                )
+            );
+            /*
             return SyntaxFactory.ConditionalExpression(
                 SyntaxFactory.InvocationExpression(
                     SyntaxFactory.MemberAccessExpression(
@@ -509,6 +557,7 @@ namespace Keysharp.Scripting
                 left,  // If left is truthy, return left
                 right    // If left is falsy, return right
             );
+            */
         }
         public override SyntaxNode VisitLogicalAndExpression([NotNull] LogicalAndExpressionContext context)
         {
@@ -555,17 +604,22 @@ namespace Keysharp.Scripting
             {
                 var arguments = new List<ExpressionSyntax>() {
                 CreateQualifiedName("Keysharp.Scripting.Script.Operator." + unaryOperators[node.Symbol.Type]),
-                (ExpressionSyntax)Visit(context.GetChild(1))
+                (ExpressionSyntax)Visit(context.GetChild(context.ChildCount - 1))
             };
                 var argumentList = SyntaxFactory.ArgumentList(
                     SyntaxFactory.SeparatedList(arguments.Select(arg => SyntaxFactory.Argument(arg)))
                 );
                 return SyntaxFactory.InvocationExpression(ScriptOperateUnaryName, argumentList);
             }
-            throw new ValueError("Invalid operand: " + context.GetChild(1).GetText());
+            throw new ValueError("Invalid operand: " + context.GetChild(context.ChildCount - 1).GetText());
         }
 
         public override SyntaxNode VisitNotExpression([NotNull] NotExpressionContext context)
+        {
+            return HandleUnaryExpressionVisit(context);
+        }
+
+        public override SyntaxNode VisitVerbalNotExpression([NotNull] VerbalNotExpressionContext context)
         {
             return HandleUnaryExpressionVisit(context);
         }
@@ -1351,23 +1405,37 @@ namespace Keysharp.Scripting
                 if ((Reflections.stringToTypes.ContainsKey(name) || name.ToLower() == "program")
                     && parser.IsVarDeclaredGlobally(name) == null && parser.IsVarDeclaredLocally(name) == null && parser.IsVarDeclaredInClass(parser.currentClass, name) == null)
                 {
+                    //name = Reflections.stringToTypes.SingleOrDefault(kv => kv.Key.Equals(name, StringComparison.OrdinalIgnoreCase)).Key;
                     // Generate Keysharp.Scripting.Script.GetStaticMemberValueT<baseExpression>(memberExpression)
-                    return SyntaxFactory.InvocationExpression(
-                        SyntaxFactory.MemberAccessExpression(
-                            SyntaxKind.SimpleMemberAccessExpression,
-                            CreateQualifiedName("Keysharp.Scripting.Script"),
-                            SyntaxFactory.GenericName("GetStaticMemberValueT")
-                                .WithTypeArgumentList(SyntaxFactory.TypeArgumentList(
-                                    SyntaxFactory.SingletonSeparatedList<TypeSyntax>(SyntaxFactory.IdentifierName(name))
-                                ))
-                        ),
-                        SyntaxFactory.ArgumentList(
-                            SyntaxFactory.SeparatedList(new[]
-                            {
-                                SyntaxFactory.Argument(memberExpression)
-                            })
-                        )
-                    );
+                    if (name.ToLower() == "program")
+                        return SyntaxFactory.InvocationExpression(
+                            SyntaxFactory.MemberAccessExpression(
+                                SyntaxKind.SimpleMemberAccessExpression,
+                                CreateQualifiedName("Keysharp.Scripting.Script"),
+                                SyntaxFactory.GenericName("GetStaticMemberValueT")
+                                    .WithTypeArgumentList(SyntaxFactory.TypeArgumentList(
+                                        SyntaxFactory.SingletonSeparatedList<TypeSyntax>(SyntaxFactory.IdentifierName(name))
+                                    ))
+                            ),
+                                SyntaxFactory.ArgumentList(
+                                    SyntaxFactory.SeparatedList(new[]
+                                    {
+                                        SyntaxFactory.Argument(memberExpression),
+                                        SyntaxFactory.Argument(SyntaxFactory.IdentifierName(name))
+                                    })
+                                )
+                            );
+                    else
+                        return ((InvocationExpressionSyntax)InternalMethods.GetPropertyValue)
+                        .WithArgumentList(
+                            SyntaxFactory.ArgumentList(
+                                SyntaxFactory.SeparatedList(new[]
+                                {
+                                                        SyntaxFactory.Argument(memberExpression),
+                                                        SyntaxFactory.Argument(SyntaxFactory.IdentifierName(name))
+                                })
+                            )
+                        );
                 }
                 else
                     parser.MaybeAddGlobalFuncObjVariable(identifierName.Identifier.Text);

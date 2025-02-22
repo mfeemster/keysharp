@@ -242,15 +242,19 @@
 			if (value != null)
 			{
 				var type = value.GetType().Name;
+
 				switch (type)
 				{
 					case "Int64":
 						return "Integer";
+
 					case "KeysharpObject":
 						return "Object";
 				}
+
 				return type;
-			} else
+			}
+			else
 				return "unset";
 		}
 	}

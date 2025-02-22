@@ -102,30 +102,49 @@
         /// <param name="enumerable">The <see cref="IEnumerable"/> to traverse.</param>
         /// <param name="recurse">True to recursively traverse through every nested element that is a collection, else false to traverse only the elements of <paramref name="enumerable"/>.</param>
         /// <returns>Each element of the <see cref="IEnumerable"/>, including nested elements.</returns>
-        public static IEnumerable Flatten(this IEnumerable enumerable, bool recurse)
-		{
-			foreach (var element in enumerable)
-			{
-				if (recurse && element is IEnumerable candidate && !(element is string))
-				{
-					foreach (var nested in Flatten(candidate, recurse))
-						yield return nested;
-				}
-				else
-					yield return element;
-			}
-		}
+		public static IEnumerable Flatten(this IEnumerable enumerable, bool recurse)
+        {
+            if (enumerable is I__Enum ie)//Iterators for array, gui and map will be this.
+            {
+                var en = ie.__Enum(1);
+                object element = null;
+
+                while (en.Call(ref element).Ab())
+                {
+                    if (recurse && element is IEnumerable candidate && !(element is string))
+                    {
+                        foreach (var nested in Flatten(candidate, recurse))
+                            yield return nested;
+                    }
+                    else
+                        yield return element;
+                }
+            }
+            else
+            {
+                foreach (var element in enumerable)
+                {
+                    if (recurse && element is IEnumerable candidate && !(element is string))
+                    {
+                        foreach (var nested in Flatten(candidate, recurse))
+                            yield return nested;
+                    }
+                    else
+                        yield return element;
+                }
+            }
+        }
 
 
-		/// <summary>
-		/// Recursively traverses the elements of an <see cref="object[]"/> and returns each element.
-		/// Note this should only ever be used internally because it's just for dynamically invoking variadic functions.
-		/// </summary>
-		/// <param name="enumerable">The <see cref="object[]"/> to traverse.</param>
-		/// <param name="recurse">True to recursively traverse through every nested element that is a collection, else false to traverse only the elements of <paramref name="enumerable"/>.</param>
-		/// <returns>Each element of the <see cref="object[]"/>, including nested elements.</returns>
+        /// <summary>
+        /// Recursively traverses the elements of an <see cref="object[]"/> and returns each element.
+        /// Note this should only ever be used internally because it's just for dynamically invoking variadic functions.
+        /// </summary>
+        /// <param name="enumerable">The <see cref="object[]"/> to traverse.</param>
+        /// <param name="recurse">True to recursively traverse through every nested element that is a collection, else false to traverse only the elements of <paramref name="enumerable"/>.</param>
+        /// <returns>Each element of the <see cref="object[]"/>, including nested elements.</returns>
 
-		public static IEnumerable<object> FlattenNativeArray(this object[] enumerable, bool recurse)
+        public static IEnumerable<object> FlattenNativeArray(this object[] enumerable, bool recurse)
 		{
 			if (enumerable is object[] ie)
 			{

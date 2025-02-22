@@ -97,6 +97,12 @@ public interface IMainParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitHotstring([NotNull] MainParser.HotstringContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="MainParser.hotstringExpansion"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitHotstringExpansion([NotNull] MainParser.HotstringExpansionContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="MainParser.hotkey"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
@@ -850,6 +856,13 @@ public interface IMainParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitEqualityExpression([NotNull] MainParser.EqualityExpressionContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>VerbalNotExpression</c>
+	/// labeled alternative in <see cref="MainParser.operatorExpression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitVerbalNotExpression([NotNull] MainParser.VerbalNotExpressionContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>MultiplicativeExpression</c>
 	/// labeled alternative in <see cref="MainParser.operatorExpression"/>.

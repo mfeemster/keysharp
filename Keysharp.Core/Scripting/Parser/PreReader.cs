@@ -135,8 +135,6 @@ namespace Keysharp.Scripting
             int index = 0;
             bool compiliedTokens = true;
             int parenthesisDepth = 0;
-            int enclosableDepth = 0;
-            int funcStatPossible = 1;
             while (index < tokens.Count && tokens[index].Type == MainLexer.WS)
                 index++;
             while (index < tokens.Count)
@@ -465,41 +463,20 @@ namespace Keysharp.Scripting
                             break;
                             */
                         case MainLexer.OpenBrace:
-                            if (enclosableDepth == 0)
-                                funcStatPossible = -1;
 							if (codeTokens.Count > 1 && codeTokens[^1].Type == MainLexer.EOL && codeTokens[^2].Type == MainLexer.CloseParen)
 								codeTokens.RemoveAt(codeTokens.Count - 1);
                             break;
                         case MainLexer.OpenBracket:
                         case MainLexer.DerefStart:
-                            enclosableDepth++;
                             break;
                         case MainLexer.CloseBracket:
                         case MainLexer.DerefEnd:
-                            enclosableDepth--;
                             break;
                         case MainLexer.OpenParen:
                             parenthesisDepth++;
-                            enclosableDepth++;
-                            if (codeTokens.Count != 0 && enclosableDepth == 1)
-                            {
-                                switch (codeTokens[^1].Type)
-                                {
-                                    case MainLexer.EOL:
-                                    case MainLexer.WS:
-                                        break;
-                                    default:
-                                        if (codeTokens[^1].Channel == Lexer.DefaultTokenChannel)
-                                        {
-                                            funcStatPossible = -1;
-                                        }
-                                        break;
-                                }
-                            }
                             break;
                         case MainLexer.CloseParen:
                             parenthesisDepth--;
-                            enclosableDepth--;
                             PopWhitespaces(codeTokens.Count, true);
                             break;
                         case MainLexer.EOL:
@@ -547,12 +524,6 @@ namespace Keysharp.Scripting
                         case MainLexer.NullishCoalescingAssign:
                         case MainLexer.QuestionMarkDot:
                         case MainLexer.Arrow:
-                        case MainLexer.Instanceof:
-                        case MainLexer.Is:
-                        case MainLexer.In:
-                        case MainLexer.Contains:
-                            if (enclosableDepth == 0 && token.Type != MainLexer.EOL)
-                                funcStatPossible = -1;
                             PopWhitespaces(codeTokens.Count, true);
                             i = index;
                             while (++i < tokens.Count)
@@ -590,22 +561,24 @@ namespace Keysharp.Scripting
                         case MainLexer.Static:
 						case MainLexer.Not:
                         case MainLexer.VerbalNot:
-                            funcStatPossible = -1;
                             i = index;
+                            codeTokens.Add(token);
                             while (++i < tokens.Count)
                             {
                                 if (tokens[i].Channel == MainLexer.DIRECTIVE)
                                     break;
-                                if (tokens[i].Channel != Lexer.DefaultTokenChannel)
+								if ((tokens[i].Channel != Lexer.DefaultTokenChannel) || (tokens[i].Type == MainLexer.EOL && (token.Type == MainLexer.Not || token.Type == MainLexer.VerbalNot)))
+									index++;
+								else if (tokens[i].Type == MainLexer.WS)
+								{
+									codeTokens.Add(tokens[i]);
                                     index++;
-                                else if (tokens[i].Type == MainLexer.WS || (tokens[i].Type == MainLexer.EOL && (token.Type == MainLexer.Not || token.Type == MainLexer.VerbalNot)))
-                                    index++;
-                                else
-                                    break;
+								}
+								else
+									break;
                             }
-                            break;
+							goto SkipAdd;
                         case MainLexer.CloseBrace:
-							funcStatPossible = -1;
                             i = PopWhitespaces(codeTokens.Count);
                             var eolToken = new CommonToken(MainLexer.EOL)
                             {
@@ -638,66 +611,30 @@ namespace Keysharp.Scripting
                             if (!eolPresent)
                                 codeTokens.Add(eolToken);
                             goto SkipAdd;
+						case MainLexer.HotIf:
+						case MainLexer.InputLevel:
+						case MainLexer.UseHook:
+						case MainLexer.SuspendExempt:
+							i = index;
+                            while (++i < tokens.Count)
+                            {
+                                if (tokens[i].Channel == MainLexer.DIRECTIVE)
+                                    break;
+                                if (tokens[i].Channel != Lexer.DefaultTokenChannel)
+                                    index++;
+                                else if (tokens[i].Type == MainLexer.WS)
+                                    index++;
+                                else
+                                    break;
+                            }
+							break;
                         case MainLexer.WS:
                             break;
                         default:
-                            if (enclosableDepth == 0 && !(token.Type == MainLexer.Identifier || token.Type == MainLexer.Dot))
-                                funcStatPossible = -1;
                             break;
-                    }
-                    if (enclosableDepth == 0
-                            && funcStatPossible > -1
-                            && (funcStatPossible != (codeTokens.Count + 1))
-                            && (token.Type == MainLexer.WS || token.Type == MainLexer.EOL))
-                    {
-                        i = index;
-
-                        if (token.Type == MainLexer.WS)
-                        {
-                            funcStatPossible = -1;
-                            while (++i < tokens.Count)
-                            {
-                                var nextToken = tokens[i];
-                                if (nextToken.Channel == MainLexer.DIRECTIVE)
-                                {
-                                    goto AddToken;
-                                }
-                                else if (nextToken.Channel != Lexer.DefaultTokenChannel)
-                                    continue;
-                                else if (nextToken.Type == MainLexer.EOL)
-                                {
-                                    break;
-                                }
-                                else if ((MainLexer.lineContinuationOperators.Contains(nextToken.Type) || nextToken.Type == MainLexer.Colon) && nextToken.Type != MainLexer.Comma && nextToken.Type != MainLexer.Minus)
-                                {
-                                    if (!(nextToken.Type == MainLexer.BitAnd && tokens[++i].Type != MainLexer.WS && tokens[i].Channel == Lexer.DefaultTokenChannel))
-                                        goto AddToken;
-                                }
-                                break;
-                            }
-                            token = new CommonToken(MainLexer.StartFunctionStatement)
-                            {
-                                Line = token.Line,
-                                Column = token.Column
-                            };
-
-                        }
-                        else
-                        {
-                            var startFuncToken = new CommonToken(MainLexer.StartFunctionStatement)
-                            {
-                                Line = token.Line,
-                                Column = token.Column
-                            };
-                            codeTokens.Add(startFuncToken);
-                            funcStatPossible = codeTokens.Count + 1;
-                        }
                     }
                 AddToken:
                     codeTokens.Add(token); // Collect code tokens.
-
-                    if (enclosableDepth == 0 && (token.Type == MainLexer.EOL || (token.Type == MainLexer.Try && (codeTokens.Count == 1 || codeTokens[^2].Type == MainLexer.EOL))))
-                        funcStatPossible = codeTokens.Count + 1;
                 }
             SkipAdd:
                 index++;
@@ -727,6 +664,13 @@ namespace Keysharp.Scripting
                 }
                 return i;
             }
+
+			/*
+            foreach (var token in codeTokens)
+            {
+                System.Diagnostics.Debug.WriteLine($"Token: {preprocessorLexer.Vocabulary.GetSymbolicName(token.Type)}, Text: '{token.Text}'" + (token.Channel == MainLexer.Hidden ? " (hidden)" : ""));
+            }
+			*/
 
             return codeTokens;
 

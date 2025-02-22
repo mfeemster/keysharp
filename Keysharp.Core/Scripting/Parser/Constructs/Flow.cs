@@ -382,6 +382,45 @@ namespace Keysharp.Scripting
 								_ = cmieInvoke.Parameters.Add(new CodePrimitiveExpression(true));
 						}
 
+						var col = Ch.CodeToString(expr);
+						var coldecl = BinOpToSnippet(new CodeBinaryOperatorExpression(new CodeSnippetExpression($"var {coldeclid}"),
+													 CodeBinaryOperatorType.Assign,
+													 expr));
+						var enumCmie = new CodeMethodInvokeExpression(new CodeSnippetExpression("Keysharp.Core.Loops"), "MakeEnumerator",
+								new CodeSnippetExpression(coldeclid),
+								new CodeSnippetExpression($"{varsplits.Count}L"));
+						var iterdecl = BinOpToSnippet(new CodeBinaryOperatorExpression(new CodeSnippetExpression($"var {id}"),
+													  CodeBinaryOperatorType.Assign,
+													  enumCmie));
+						_ = parent.Add(coldecl);
+						_ = parent.Add(iterdecl);
+						var condition = new CodeMethodInvokeExpression();
+						condition.Method.TargetObject = new CodeVariableReferenceExpression(id);
+						condition.Method.MethodName = "Call";
+						var initSb = new StringBuilder(64);
+						var splitIndex = 0;
+						var gfList = globalFuncVars.PeekOrNull();
+
+						for (var vi = 0; vi < varsplits.Count; ++vi)
+						{
+							var v = varsplits[vi];
+
+							if ((!allVars[typeStack.Peek()].GetOrAdd(Scope).TryGetValue(v, out var ceVar)//Wasn't a locally declared function variable.
+									|| ceVar == null)
+									&& (gfList == null || !gfList.Contains(v)))//Wasn't a global variable referenced in this function.
+							{
+								if (splitIndex > 0)
+									initSb.Append(", ");
+								else
+									initSb.Append("object ");
+
+								initSb.Append($"{v} = null");
+								splitIndex++;
+							}
+
+							condition.Parameters.Add(new CodeSnippetExpression($"ref {v}"));
+						}
+
 						//If only one is present, it actually means discard the first one, and use the second.
 						//So in the case of a map, it would mean get the key, not the value.
 						//In the case of an array, it would mean get the value, not the index.
@@ -401,29 +440,6 @@ namespace Keysharp.Scripting
 								if (!dkt.ContainsKey(loopvarstr))
 									dkt[loopvarstr] = null;
 							}
-						}
-
-						var col = Ch.CodeToString(expr);
-						var coldecl = new CodeExpressionStatement(new CodeSnippetExpression($"var {coldeclid} = {col}"));
-						var iterdecl = new CodeExpressionStatement(new CodeSnippetExpression($"var {id} = MakeEnumerator({coldeclid}, {varsplits.Count})"));
-						_ = parent.Add(coldecl);
-						_ = parent.Add(iterdecl);
-						var condition = new CodeMethodInvokeExpression();
-						condition.Method.TargetObject = new CodeVariableReferenceExpression(id);
-						condition.Method.MethodName = "Call";
-						var initSb = new StringBuilder(64);
-
-						for (var vi = 0; vi < varsplits.Count; ++vi)
-						{
-							var v = varsplits[vi];
-
-							if (vi > 0)
-								initSb.Append(", ");
-							else
-								initSb.Append("object ");
-
-							initSb.Append($"{v} = null");
-							condition.Parameters.Add(new CodeSnippetExpression($"ref {v}"));
 						}
 
 						var loop = new CodeIterationStatement
@@ -563,8 +579,11 @@ namespace Keysharp.Scripting
 					}
 					else
 					{
+						//Required to be a discard assignment statement because the object being returned might be a direct function reference.
+						//This allows funcname to be converted to Func(funcname) later on.
 						var result = parts.Length > 1 ? ParseSingleExpression(codeLine, parts[1], false) : emptyStringPrimitive;
-						return [new CodeMethodReturnStatement(result)];
+						var binop = BinOpToSnippet(new CodeBinaryOperatorExpression(new CodeSnippetExpression("_"), CodeBinaryOperatorType.Assign, result));
+						return [new CodeMethodReturnStatement(binop)];
 					}
 				}
 

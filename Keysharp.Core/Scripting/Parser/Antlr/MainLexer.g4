@@ -37,7 +37,8 @@ lexer grammar MainLexer;
 
 channels {
     ERROR,
-    DIRECTIVE
+    DIRECTIVE,
+    WHITESPACE
 }
 
 options {
@@ -47,8 +48,7 @@ options {
 
 tokens {
     DerefStart,
-    DerefEnd,
-    StartFunctionStatement
+    DerefEnd
 }
 
 SingleLineBlockComment  : '/*' ~[\r\n\u2028\u2029]*? '*/' -> skip;
@@ -63,16 +63,16 @@ HotstringLiteral:
 // First try consuming a hotstring 
 
 HotstringLiteralTrigger
-    : HotstringTriggerPart {this.IsHotstringLiteral()}? -> pushMode(HOTSTRING_MODE), type(HotstringTrigger)
+    : HotstringTriggerPart {this.IsBOS() && this.IsHotstringLiteral()}? -> pushMode(HOTSTRING_MODE), type(HotstringTrigger)
     ;
 // These two are separated because I couldn't figure out how to conditionally pushMode(HOTSTRING_MODE)
 HotstringTrigger
-    : HotstringTriggerPart {!this.IsHotstringLiteral()}?
+    : HotstringTriggerPart {this.IsBOS() && !this.IsHotstringLiteral()}?
     ;
 
 // If no hotstring is matchable, try matching a remap
 RemapKey:
-    HotkeyModifier* HotkeyCharacter '::' HotkeyModifier* HotkeyCharacter;
+    HotkeyModifier* HotkeyCharacter (WhiteSpace+ '&' WhiteSpace+ HotkeyCharacter)? '::' HotkeyModifierKey* HotkeyCharacter {this.IsBOS() && this.IsValidRemap()}?;
 
 // Otherwise just match a hotkey trigger
 HotkeyTrigger:
@@ -90,7 +90,6 @@ OpenParen                  : '(' {this.ProcessOpenParen();};
 CloseParen                 : ')' {this.ProcessCloseParen();};
 OpenBrace                  : '{'; // {this.ProcessOpenBrace();};
 CloseBrace                 : '}'; // {this.ProcessCloseBrace();};
-SemiColon                  : ';';
 Comma                      : ',';
 Assign                     : ':=';
 QuestionMark               : '?';
@@ -245,8 +244,8 @@ HotstringOptions : '#hotstring' WhiteSpace+ RawString {this.ProcessHotstringOpti
 Identifier: IdentifierStart IdentifierPart*;
 /// String Literals
 MultilineStringLiteral:
-    ('"' (WhiteSpace ';' ~[\r\n]* | ~["\r\n]*) (LineBreak WhiteSpace? '(' .*? LineBreak WhiteSpace? ')' WhiteSpace?)+ '"' 
-    | '\'' (WhiteSpace ';' ~[\r\n]* | ~['\r\n]*)  (LineBreak WhiteSpace? '(' .*? LineBreak WhiteSpace? ')' WhiteSpace?)+ '\'') {this.ProcessStringLiteral();} -> type(StringLiteral)
+    ('"' (WhiteSpace ';' ~[\r\n]* | ~["\r\n]*) ContinuationSection+ '"' 
+    | '\'' (WhiteSpace ';' ~[\r\n]* | ~['\r\n]*)  ContinuationSection+ '\'') {this.ProcessStringLiteral();} -> type(StringLiteral)
 ;
 StringLiteral:
     ('"' DoubleStringCharacter* '"' | '\'' SingleStringCharacter* '\'') {this.ProcessStringLiteral();}
@@ -261,7 +260,8 @@ mode HOTSTRING_MODE;
 HotstringEOL: LineBreak -> type(EOL), popMode;
 HotstringOpenBrace: '{' {this.ProcessHotstringOpenBrace();} -> type(OpenBrace), popMode;
 HotstringWhitespaces: WhiteSpace+ -> channel(HIDDEN);
-HotstringExpansion: (~[;`\r\n {] | '`' EscapeSequence) RawString?;
+HotstringMultiLineExpansion: ContinuationSection -> popMode;
+HotstringSingleLineExpansion:  (~[;`\r\n {] | '`' EscapeSequence) RawString? -> popMode;
 HotstringUnexpectedCharacter: . -> channel(ERROR);
 
 mode DIRECTIVE_MODE;
@@ -323,7 +323,7 @@ DirectiveString:
 ;
 ConditionalSymbol: Identifier -> channel(DIRECTIVE);
 DirectiveSingleLineComment:
-    ';' ~[\r\n\u0085\u2028\u2029]* -> skip
+    ' ;' ~[\r\n\u0085\u2028\u2029]* -> skip
 ;
 DirectiveNewline: LineBreak WhiteSpace? -> channel(DIRECTIVE), mode(DEFAULT_MODE);
 
@@ -347,7 +347,7 @@ fragment HotstringOptionCharacter
 fragment Options:
     HotstringOptionCharacter+;
 fragment Trigger:
-    NonColonStringCharacter+;
+    (NonColonStringCharacter | ';' {_input.Index == 0 || this._input.LA(-1) != ' '}?)+;
 
 fragment WhiteSpace: [\t\u000B\u000C\u0020\u00A0]+;
 
@@ -405,6 +405,8 @@ fragment ExponentPart: 'e' [+-]? [0-9_]+;
 fragment IdentifierPart: IdentifierStart | [\p{Mn}] | [\p{Nd}] | [\p{Pc}] | '\u200C' | '\u200D';
 
 fragment IdentifierStart: [\p{L}] | [$_] | '\\' UnicodeEscapeSequence;
+
+fragment ContinuationSection: LineBreak WhiteSpace? '(' .*? LineBreak WhiteSpace? ')' WhiteSpace?;
 
 fragment HotkeyModifierKey: [#!^+<>];
 

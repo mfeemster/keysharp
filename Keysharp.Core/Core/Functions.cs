@@ -65,7 +65,7 @@ namespace Keysharp.Core
 			var mph = Reflections.FindAndCacheMethod(v.GetType(), n.Length > 0 ? n : "Call", count);
 
 			if (mph != null && mph.mi != null)
-				return new FuncObj(mph.mi, v);
+				return new FuncObj(mph.mi, null);
 
 			return Errors.ErrorOccurred(err = new MethodError($"Unable to retrieve method {n} from object of type {v.GetType()} with parameter count {count}.")) ? throw err : null;
 		}

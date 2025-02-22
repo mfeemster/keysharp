@@ -34,7 +34,7 @@ o1.DefineProp("a", { ; Redefine a dynamic property over previously declared dyna
 
 o1.a := 200
 
-If (o1.a == 0)
+If (o1.a == 123)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -49,8 +49,9 @@ class extestclass extends testclass
 }
 
 eo1 := extestclass()
+eo1_a := eo1.a
 eo1.DefineProp("a", { ; Define dynamic property in a derived class where the base class has a declared property of the same name.
-		set: (this, v) => this.b := v
+		set: (this, v) => this.b := v, get: (this) => eo1_a
 	})
 
 eo1.a := 200
@@ -226,8 +227,10 @@ else
 	FileAppend "fail", "*"
 
 o1 := { one : 1}
+_ObjDefineProp := Object.Prototype.DefineProp
+_ObjDefineProp(Object.Prototype, "OwnPropCount", {call: (this) => ObjOwnPropCount(this)})
 
-if (o1.OwnPropCount(o1) == 1) ; Count all declared properties in object literal.
+if (o1.OwnPropCount() == 1) ; Count all declared properties in object literal.
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -241,7 +244,7 @@ o1.DefineProp("d", {
 		call : () => 123
 	})
 	
-if (o1.OwnPropCount(o1) == 2) ; Count all declared and dynamic properties in object literal.
+if (o1.OwnPropCount() == 2) ; Count all declared and dynamic properties in object literal.
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -253,12 +256,24 @@ else
 
 o1 := [1, 2, 3]
 
-if (o1.OwnPropCount(o1) == 0 && ObjOwnPropCount(o1) == 0) ; Declared properties for built in types are not counted.
+if (o1.OwnPropCount() == 0 && ObjOwnPropCount(o1) == 0) ; Declared properties for built in types are not counted.
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
 	
 if (!ObjHasOwnProp(o1, "capacity") && !o1.HasOwnProp("Count") && !o1.HasOwnProp("Length"))
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+
+if (o1.HasProp("__Item"))
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+	
+m := Map("one", 1, "two", 2, "three", 3)
+
+if (m.HasProp("__Item"))
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -296,7 +311,7 @@ o1.a := 100
 o1.b := 200
 b := false
 i := 0
-op := o1.OwnProps(true) ; Retrieve value must be specified.
+op := o1.OwnProps() ; Retrieve value must be specified.
 
 For Name,Value in op ; Enumerator variable with a for loop.
 {
@@ -389,7 +404,6 @@ testfunc(testclassobj)
 		FileAppend "fail", "*"
 
 	testclassobj.DefineProp("prop", { ; Overwrite previous with dynamically defined call.
-		value: 123,
 		call: (this, p*) => this.a := p.Length
 	})
 
@@ -470,3 +484,4 @@ testfunc(testclassobj)
 	else
 		FileAppend "fail", "*"
 }
+

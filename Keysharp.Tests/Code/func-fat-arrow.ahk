@@ -5,9 +5,9 @@ class myclass
 	member1 := memberfunc(a, b) => a * b * 2
 	member2 := (a, b) => a * b * 2
 	member3 := a => a * 2
-	member4 := a* => (a[1] + a[2]) * 2
+	member4 := (a*) => (a[1] + a[2]) * 2
 	member5 := () => 123
-	member6 := (*) => (args[1] + args[2]) * 2
+	member6 := (args*) => (args[1] + args[2]) * 2
 	member7 := (a) => a * this.x
 	member8 := (a) => (this.x := 100, a * this.x)
 
@@ -18,11 +18,11 @@ class myclass
 		: 0
 
 		set {
-			global x := 10 * value
+			this.x := 10 * value
 		}
 	}
 
-	myclassfunc(a, b) => 10 * x * a * b
+	myclassfunc(a, b) => 10 * this.x * a * b
 	
 	callmember1(a, b)
 	{
@@ -171,7 +171,7 @@ If (x == 4)
 else
 	FileAppend "fail", "*"
 
-myfunc4 := a* => a[1] * a[2] * 2
+myfunc4 := (a*) => a[1] * a[2] * 2
 
 x := myfunc4(3, 4)
 
@@ -197,7 +197,7 @@ If (x == 8)
 else
 	FileAppend "fail", "*"
 
-myfunc7 := (*) =>  args[1] * args[2] * 2
+myfunc7 := (args*) => args[1] * args[2] * 2
 x := myfunc7(1, 2)
 
 If (x == 4)
@@ -206,7 +206,10 @@ else
 	FileAppend "fail", "*"
 
 x := 0
-myfunc8 := () => x := 123
+myfunc8 := () {
+    global x := 123
+    return x
+}
 y := myfunc8()
 
 If (x == 123)
@@ -359,7 +362,10 @@ else
 	FileAppend "fail", "*"
 	
 gval := 0
-lam := () => gval += 123
+lam := () {
+    global gval += 123
+    return gval
+}
 x := lam()
 
 If (x == 123)
@@ -379,7 +385,7 @@ func2__(x) ; This can't be named func2() because it'll conflict with another fun
 	global tot += x
 }
 
-f := Func("func2__")
+f := func2__
 
 testfunc(a, b, c)
 {
@@ -422,7 +428,7 @@ else
 y := false
 
 y := true ? (a) => 1 : (b) => 2
-z := y()
+z := y(3)
 
 If (z == 1)
 	FileAppend "pass", "*"
@@ -574,7 +580,7 @@ class propclass
 	
 	c
 	{
-		get => (1 ? (myfunc("eval"), this.m) : (myfunc("eval"), this.m)).b *= 2
+		get => (1 ? (this.myfunc("eval"), this.m) : (this.myfunc("eval"), this.m)).b *= 2
 	}
 }
 

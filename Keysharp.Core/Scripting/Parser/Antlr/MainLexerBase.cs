@@ -8,7 +8,7 @@ using System.Text.RegularExpressions;
 /// </summary>
 public abstract class MainLexerBase : Lexer
 {
-    private readonly ICharStream _input;
+    protected readonly ICharStream _input;
     private IToken _lastToken = null;
     private IToken _lastVisibleToken = null;
 
@@ -287,13 +287,33 @@ public abstract class MainLexerBase : Lexer
     }
     
     protected bool IsValidRemap() {
-        if (_lastToken == null || _lastToken.Type != MainLexer.HotkeyTrigger)
+        int i = 0;
+        if (_input.LA(-1) == '{' && _input.LA(-2) != '`')
             return false;
-        if (this.Text == ";" && _lastToken.Channel == Hidden)
+        while (true) {
+            i++;
+            var nextToken = _input.LA(i);
+            switch (nextToken) {
+                case Eof:
+                case '\n':
+                case '\r':
+                    return true;
+                case ' ':
+                case '\u2028':
+                case '\u2029':
+                    continue;
+                case ';':
+                    if (i == 1)
+                        return false;
+                    return true;
+                case '/':
+                    if (_input.LA(i+1) == '*') {
+                        return true;
+                    }
+                    return false;
+            }
             return false;
-        if (this.Text == "{")
-            return false;
-        return true;
+        }
     }
 
     protected bool IsValidDotDecimal() {
@@ -305,7 +325,17 @@ public abstract class MainLexerBase : Lexer
     }
 
     protected bool IsCommentPossible() {
-        return _lastToken == null || _lastToken.Type == MainLexer.EOL || _lastToken.Type == MainLexer.DirectiveNewline || _lastToken.Type == MainLexer.WS;
+        int start = this.TokenStartCharIndex;
+        if (start == 0)
+            return true;
+        Antlr4.Runtime.Misc.Interval interval = new(start - 1, start - 1);
+        string prevCharText = _input.GetText(interval);
+        if (string.IsNullOrEmpty(prevCharText)) {
+            return false;
+        }
+        char prevChar = prevCharText[0];
+        return char.IsWhiteSpace(prevChar) || prevChar == '\n' || prevChar == '\r' || 
+            prevChar == '\u2028' || prevChar == '\u2029';
     }
 
     /// <summary>

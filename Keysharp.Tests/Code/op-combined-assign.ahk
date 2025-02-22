@@ -227,14 +227,14 @@ class bclass
 	{
 		get
 		{
-			global ct += 1
-			return _c
+			this.ct += 1
+			return this._c
 		}
 	}
 
 	__New()
 	{
-		global _c := cclass()
+		this._c := cclass()
 	}
 }
 

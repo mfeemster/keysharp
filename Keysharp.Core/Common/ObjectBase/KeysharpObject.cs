@@ -91,7 +91,10 @@ namespace Keysharp.Core.Common.ObjectBase
 				if (op == null)
 					op = new Dictionary<string, OwnPropsDesc>(StringComparer.OrdinalIgnoreCase);
 
-				op[name] = new OwnPropsDesc(this, map);
+				if (!op.ContainsKey(name))
+					op[name] = new OwnPropsDesc(this, map);
+				else
+					op[name].Merge(map);
 			}
 			else if (obj1 is KeysharpObject kso)
 			{
@@ -100,11 +103,14 @@ namespace Keysharp.Core.Common.ObjectBase
 					if (op == null)
 						op = new Dictionary<string, OwnPropsDesc>(StringComparer.OrdinalIgnoreCase);
 
-					_ = op.Remove(name);//Clear, but this will prevent defining the property across multiple calls such as first adding value, then get, then set.
-
 					if (op.TryGetValue(name, out var currProp))
 					{
 						currProp.Merge(kso.op);
+					}
+					else
+					{
+						op[name] = new OwnPropsDesc();
+						op[name].Merge(kso.op);
 					}
 
 					kso.op.Clear();

@@ -6,7 +6,7 @@ class myclass
 	b :=
 	c := "asdf"
 	x := 123
-	y := x
+	y := this.x
 	static s1 := 10
 
 	classfunc()
@@ -26,7 +26,7 @@ class myclass
 
 	classfuncusesstatic()
 	{
-		return this.s1 * x
+		return myclass.s1 * this.x
 	}
 
 	classfuncwithlocalvars()
@@ -38,7 +38,7 @@ class myclass
 
 	classfuncwithreadmembervars()
 	{
-		return x * y
+		return this.x * this.y
 	}
 
 	classfuncwithwritelocalmembervars()
@@ -49,9 +49,8 @@ class myclass
 
 	classfuncwithwritemembervars()
 	{
-		global
-		x := 88
-		y := 99
+		this.x := 88
+		this.y := 99
 	}
 
 	classfuncwithlocalstaticvars()
@@ -62,8 +61,8 @@ class myclass
 
 	classfuncwriteglobalvars()
 	{
-		global a := 0
-		program.a := 1
+		this.a := 0
+		global a := 1
 	}
 	
 	static classfuncstaticwithparams(val1, val2)
@@ -141,7 +140,7 @@ class myclass
 
 	static ClassFuncCaseSensitiveStatic2()
 	{
-		global s1 := 999
+		this.s1 := 999
 	}
 }
 
@@ -163,7 +162,7 @@ else
 ; Test directly referring to static class methods
 val := 0
 fo := myclass.classfuncstatic
-val := fo()
+val := fo(myclass)
 
 If (val == 10)
 	FileAppend "pass", "*"
@@ -171,7 +170,7 @@ else
 	FileAppend "fail", "*"
 
 fo := true ? myclass.classfuncstatic : myclass.classfuncstatic2
-val := fo()
+val := fo(myclass)
 
 If (val == 10)
 	FileAppend "pass", "*"
@@ -246,7 +245,7 @@ if (classobj.a == 0)
 else
 	FileAppend "fail", "*"
 
-if (program.a == 1)
+if (a == 1)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -321,7 +320,7 @@ if (myclass.s1 == 999)
 else
 	FileAppend "fail", "*"
 
-funcadd := Func("classfuncwithparams", classobj)
+funcadd := classobj.classfuncwithparams.Bind(classobj)
 
 val := funcadd(10, 20)
 
@@ -330,7 +329,7 @@ if (val == 200)
 else
 	FileAppend "fail", "*"
 
-funcadd := Func("classfuncstaticwithparams", classobj)
+funcadd := myclass.classfuncstaticwithparams.Bind(myclass)
 
 val := funcadd(10, 10)
 
@@ -339,7 +338,7 @@ if (val == 100)
 else
 	FileAppend "fail", "*"
 
-funcadd := Func("classvarfunc", classobj)
+funcadd := classobj.classvarfunc.Bind(classobj)
 
 val := funcadd(1, 2, 3)
 
@@ -348,7 +347,7 @@ if (val == 12)
 else
 	FileAppend "fail", "*"
 
-funcadd := Func("classvarfuncstatic", classobj)
+funcadd := myclass.classvarfuncstatic.Bind(myclass)
 
 val := funcadd(1, 2, 3)
 
@@ -363,20 +362,20 @@ class myclass2
 {
 	classfunc0()
 	{
-		program.a := 0
+		global a := 0
 		return 0
 	}
 
 	classfunc1(p1)
 	{
-		program.a := p1
+		global a := p1
 		return p1
 	}
 	
 	classfunc2(p1, p2 := 5)
 	{
 		temp := p1 + p2
-		program.a := temp
+		global a := temp
 		return temp
 	}
 
@@ -384,7 +383,7 @@ class myclass2
 	{
 		temp := p1 + p2
 
-		if (p3 != unset)
+		if (p3.Length)
 		{
 			for n in p3
 			{
@@ -392,7 +391,7 @@ class myclass2
 			}
 		}
 	
-		program.a := temp
+		global a := temp
 		return temp
 	}
 	
@@ -401,7 +400,7 @@ class myclass2
 		return p3 := p1 + p2 + p3
 	}
 
-	classfuncimplicit(*)
+	classfuncimplicit(args*)
 	{
 		temp := 0
 
@@ -410,7 +409,7 @@ class myclass2
 			temp += args[A_Index]
 		}
 
-		program.a := temp
+		global a := temp
 		return temp
 	}
 }
@@ -501,7 +500,7 @@ if (val == 0)
 else
 	FileAppend "fail", "*"
 
-fo := Func("classfunc0", class2obj)
+fo := class2obj.classfunc0.Bind(class2obj)
 a := ""
 val := fo()
 
@@ -510,16 +509,16 @@ if (val == 0 && a == 0)
 else
 	FileAppend "fail", "*"
 
-fo := Func("classfunc1", class2obj)
+fo := class2obj.GetMethod("classfunc1")
 a := ""
-val := fo(123)
+val := fo(class2obj, 123)
 
 if (val == 123 && a == 123)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
 
-fo := Func("classfunc2", class2obj)
+fo := class2obj.classfunc2.Bind(class2obj)
 a := ""
 val := fo(123)
 
@@ -528,9 +527,9 @@ if (val == 128 && a == 128)
 else
 	FileAppend "fail", "*"
 
-fo := Func("classfunc3", class2obj)
+fo := class2obj.classfunc3
 a := ""
-val := fo(1)
+val := fo(class2obj, 1)
 
 if (val == 6 && a == 6)
 	FileAppend "pass", "*"
@@ -538,14 +537,14 @@ else
 	FileAppend "fail", "*"
 
 a := ""
-val := fo(1, 2, 4, 5, 6)
+val := fo(class2obj, 1, 2, 4, 5, 6)
 
 if (val == 18 && a == 18)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
 
-fo := Func("classfuncimplicit", class2obj)
+fo := class2obj.classfuncimplicit.Bind(class2obj)
 a := ""
 val := fo()
 

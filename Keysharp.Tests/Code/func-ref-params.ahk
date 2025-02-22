@@ -130,12 +130,12 @@ class myrefclass
 
 	myclassreffunc()
 	{
-		reffunc1(&classarr[3])
+		reffunc1(&this.classarr[3])
 	}
 
 	myclassreffunc2(&a)
 	{
-		a := x
+		a := this.x
 	}
 
 	myclassreffunc3(&a)

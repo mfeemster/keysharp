@@ -112,6 +112,15 @@
 			Parent = null;
 		}
 
+        public OwnPropsDesc(KeysharpObject kso, object set_Value = null, object set_Get = null, object set_Set = null, object set_Call = null)
+        {
+            Parent = kso;
+			Value = set_Value;
+			Get = set_Get;
+			Set = set_Set;
+			Call = set_Call;
+        }
+
 
         public OwnPropsDesc(KeysharpObject kso, Map map)
 		{
@@ -131,16 +140,22 @@
                 switch (kv.Key.ToLower())
                 {
                     case "value":
-                        Value = kv.Value;
+                        Value = kv.Value.Value;
+						Get = null;
+						Set = null;
+						Call = null;
                         break;
                     case "get":
-                        Get = kv.Value;
+                        Get = kv.Value.Get;
+						Value = null;
                         break;
                     case "set":
-                        Set = kv.Value;
+                        Set = kv.Value.Set;
+                        Value = null;
                         break;
                     case "call":
-                        Call = kv.Value;
+                        Call = kv.Value.Call;
+                        Value = null;
                         break;
                 }
             }
@@ -154,15 +169,21 @@
                 {
                     case "value":
                         Value = kv.Value;
+						Get = null;
+						Set = null;
+						Call = null;
                         break;
                     case "get":
                         Get = kv.Value;
+						Value = null;
                         break;
                     case "set":
                         Set = kv.Value;
+                        Value = null;
                         break;
                     case "call":
                         Call = kv.Value;
+                        Value = null;
                         break;
                 }
             }
@@ -170,16 +191,19 @@
 
 		public KeysharpObject GetDesc()
 		{
+            var map = new KeysharpObject();
             var list = new List<object>();
+            map.op = new Dictionary<string, OwnPropsDesc>(StringComparer.OrdinalIgnoreCase);
+
 			if (Value != null)
-				list.Add(Value);
-            if (Get != null)
-                list.Add(Value);
-            if (Set != null)
-                list.Add(Value);
-            if (Call != null)
-                list.Add(Value);
-            return Keysharp.Core.Objects.Object(list.ToArray());
+				map.op["value"] = new OwnPropsDesc(Parent, Value);
+			if (Get != null)
+                map.op["get"] = new OwnPropsDesc(Parent, Get);
+			if (Set != null)
+                map.op["set"] = new OwnPropsDesc(Parent, Set);
+			if (Call != null)
+                map.op["call"] = new OwnPropsDesc(Parent, Call);
+			return map;
         }
     }
 

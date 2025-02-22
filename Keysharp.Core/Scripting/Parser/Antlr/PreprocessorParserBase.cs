@@ -168,6 +168,15 @@ public abstract class PreprocessorParserBase : Antlr4.Runtime.Parser
         d.value = "false";
     }
 
+        protected void OnPreprocessorExpressionDigits()
+    {
+        ParserRuleContext c = this.Context;
+        var d = c as PreprocessorParser.Preprocessor_expressionContext;
+        if (!int.TryParse(d.Digits().GetText(), out int result))
+            result = 1;
+        d.value = result == 0 ? "false" : "true";
+    }
+
     protected void OnPreprocessorExpressionConditionalSymbol()
     {
         ParserRuleContext c = this.Context;
@@ -182,7 +191,7 @@ public abstract class PreprocessorParserBase : Antlr4.Runtime.Parser
         d.value = d.expr.value;
     }
 
-    protected void OnPreprocessorExpressionConditionalBang()
+    protected void OnPreprocessorExpressionConditionalNot()
     {
         ParserRuleContext c = this.Context;
         var d = c as PreprocessorParser.Preprocessor_expressionContext;

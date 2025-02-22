@@ -289,3 +289,18 @@ if (x == 6)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
+
+myfunc() {
+	k := 1
+	i := 0
+	for (k, v in [1, 2, 3]) {
+		++i
+	}
+	
+	if (i == 3)
+		FileAppend "pass", "*"
+	else
+		FileAppend "fail", "*"
+}
+
+myfunc()

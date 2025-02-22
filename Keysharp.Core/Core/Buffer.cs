@@ -89,7 +89,7 @@
 		///     Integer[, Integer]: Sets length to the first value and optionally sets each byte to the second value.
 		/// </param>
 		/// <returns>Empty string, unused.</returns>
-		public unsafe object __New(params object[] obj)
+		public override unsafe object __New(params object[] obj)
 		{
 			if (obj == null || obj.Length == 0)
 			{

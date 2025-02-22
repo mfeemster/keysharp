@@ -45,4 +45,6 @@ myfunc()
 :X:mf7::myfunc
 ::mf8::myfunc
 
+FileAppend "pass", "*"
+
 ExitApp()

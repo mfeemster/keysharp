@@ -19,7 +19,7 @@ namespace Keysharp.Scripting
 						cboe.UserData["snippet"] = cse;
 						cboe.Left.UserData["snippet"] = cse;
 						cboe.Right.UserData["snippet"] = cse;
-						_ = assignSnippets.Add(cse);
+						assignSnippets[expr] = cse;
 						return cse;
 					}
 					else//Unsure if this is even needed anymore.
@@ -30,7 +30,7 @@ namespace Keysharp.Scripting
 						cboe.UserData["snippet"] = cse;
 						cboe.Left.UserData["snippet"] = cse;
 						cboe.Right.UserData["snippet"] = cse;
-						_ = assignSnippets.Add(cse);
+						assignSnippets[expr] = cse;
 						return cse;
 					}
 				}
@@ -41,41 +41,63 @@ namespace Keysharp.Scripting
 			return null;
 		}
 
-		internal void ReevaluateSnippet(CodeSnippetExpression cse)
+		internal CodeExpression ReevaluateSnippets(CodeExpression ce)
 		{
-			var orig = cse.UserData["orig"] as CodeExpression;
-			var cboe = orig as CodeBinaryOperatorExpression;
-
 			//Properly case all direct function references.
-			if (cboe.Right is CodeVariableReferenceExpression cvre)
+			if (ce is CodeVariableReferenceExpression cvre)
 			{
-				var type = cvre.UserData["origtypescope"] is CodeTypeDeclaration ctd ? ctd.Name : "program";
+				var type = cvre.UserData["origtype"] is CodeTypeDeclaration ctd ? ctd : targetClass;
+				var scope = cvre.UserData["origscope"] as string;
+				return ReevaluateCodeVariableReference(type, scope, cvre);
+			}
+			else if (ce is CodeSnippetExpression cse)
+			{
+				var orig = cse.UserData["orig"] as CodeExpression;
 
-				if (MethodExistsInTypeOrBase(type, cvre.VariableName) is CodeMemberMethod cmm)
+				if (orig is CodeBinaryOperatorExpression cboe)
 				{
-					cvre.VariableName = cmm.Name;
-					var tempfunc = (CodeMethodReferenceExpression)InternalMethods.Func;
-					cboe.Right = new CodeMethodInvokeExpression(tempfunc, cvre);
+					cboe.Right = ReevaluateSnippets(cboe.Right);
+					var c2s = Ch.CodeToString(orig);
+					c2s = c2s.Substring(1, c2s.Length - 2);
+
+					if (cboe != null)
+					{
+						if (cboe.Operator == CodeBinaryOperatorType.Assign)
+							cse.Value = c2s;
+						else
+							cse.Value = $"_ = ({c2s})";
+					}
+				}
+				else if (orig is CodeTernaryOperatorExpression ctoe)
+				{
+					var ctse = MakeTernarySnippet(ReevaluateSnippets(ctoe.Condition),
+												  ReevaluateSnippets(ctoe.TrueBranch),
+												  ReevaluateSnippets(ctoe.FalseBranch));
+					cse.Value = ctse.Value;
 				}
 			}
-
-			var c2s = Ch.CodeToString(orig);
-			c2s = c2s.Substring(1, c2s.Length - 2);
-
-			if (cboe != null)
+			else if (ce is CodeMethodInvokeExpression cmie)
 			{
-				if (cboe.Operator == CodeBinaryOperatorType.Assign)
-					cse.Value = c2s;
-				else
-					cse.Value = $"_ = ({c2s})";
+				if (cmie.Method.MethodName != "Func" && (cmie.Method.TargetObject is not CodeTypeReferenceExpression ctr || ctr.Type.BaseType != "Keysharp.Core.Functions"))
+					for (var i = 0; i < cmie.Parameters.Count; ++i)
+						cmie.Parameters[i] = ReevaluateSnippets(cmie.Parameters[i]);
 			}
+			else if (ce is CodeArrayIndexerExpression caie)
+			{
+				for (var i = 0; i < caie.Indices.Count; ++i)
+					caie.Indices[i] = ReevaluateSnippets(caie.Indices[i]);
+			}
+
+			return ce;
 		}
 
 		internal void ReevaluateStaticProperties(CodeSnippetTypeMember cstm)
 		{
 			if (cstm.UserData["orig"] is CodeExpression ce)
 			{
-				var init = Ch.CodeToString(ce);
+				//Would ideally assign this back to UserData, but this is only called once right before the end of parsing,
+				//so save CPU by not doing it.
+				var init = Ch.CodeToString(ReevaluateSnippets(ce));
 				cstm.Text = $"\t\t\tpublic static object {cstm.Name} {{ get; set; }} = {init};";
 			}
 		}
@@ -217,7 +239,10 @@ namespace Keysharp.Scripting
 							throw new ParseException("Cannot create a reference to a value returned from a function call.");
 					}
 
-					_ = newParams.Add(new CodeSnippetExpression($"Mrh({i1}, {c2s}, v => {c2s} = v)"));
+					if (c2s == "_ks_discard")
+						_ = newParams.Add(new CodeSnippetExpression($"Mrh({i1}, {c2s}, v => {c2s} = null)"));
+					else
+						_ = newParams.Add(new CodeSnippetExpression($"Mrh({i1}, {c2s}, v => {c2s} = v)"));
 				}
 				else
 					_ = newParams.Add(p);
@@ -241,7 +266,7 @@ namespace Keysharp.Scripting
 					if (lastisstar)
 					{
 						invoke.Parameters.AddRange(passed.Take(passed.Length - 1).ToArray());
-						var combineExpr = LocalMethodInvoke("FlattenParam");
+						var combineExpr = (CodeMethodInvokeExpression)InternalMethods.FlattenParam;
 						_ = combineExpr.Parameters.Add(passed[passed.Length - 1]);
 						_ = invoke.Parameters.Add(combineExpr);
 					}
@@ -471,7 +496,10 @@ namespace Keysharp.Scripting
 													throw new ParseException("Cannot create a reference to a value returned from a function call.", codeLine);
 											}
 
-											invoke.Parameters[ri] = new CodeSnippetExpression($"Mrh({ri}, {c2s}, v => {c2s} = v)");
+											if (c2s == "_ks_discard")
+												invoke.Parameters[ri] = new CodeSnippetExpression($"Mrh({ri}, {c2s}, v => {c2s} = null)");
+											else
+												invoke.Parameters[ri] = new CodeSnippetExpression($"Mrh({ri}, {c2s}, v => {c2s} = v)");
 										}
 									}
 
@@ -720,10 +748,14 @@ namespace Keysharp.Scripting
 									{
 										var temparr = temprange.ToArray();
 
-										if (temparr.Length == 2 && temparr[1].ToString() == "*")
+										if (temparr[temparr.Length - 1].ToString() == "*")
 										{
 											isVariadic = true;
-											paramExprs.Add(new CodeSnippetExpression($"..FlattenParam({temparr[0]})"));
+											var nostararr = temparr.Take(temparr.Length - 1).ToArray();
+											var nostarcode = string.Join("", nostararr.Select((p) => p.ToString())).TrimEnd('*');
+											var tempexpr = ParseMultiExpression(codeLine, nostarcode, nostararr, create);
+											nostarcode = Ch.CodeToString(tempexpr[0]);
+											paramExprs.Add(new CodeSnippetExpression($"..Keysharp.Scripting.Script.FlattenParam({nostarcode})"));
 										}
 										else
 										{
@@ -1656,8 +1688,12 @@ namespace Keysharp.Scripting
 							var falseBranch = ParseExpression(codeLine, code, branch[1], create);
 							//CodeDOM does not have built in support for ternary operators. So we must manually create the code string for the ternary,
 							//then use a code snippet to hold the string. This is not ideal, but there is no other way.
-							var ctse = MakeTernarySnippet(eval, trueBranch, falseBranch);
-							ternaries.Add(ctse);
+							//Both branches are required to be a discard assignment statement because the object being returned might be a direct function reference.
+							//This allows funcname to be converted to Func(funcname) later on.
+							var evalBinOp = BinOpToSnippet(new CodeBinaryOperatorExpression(new CodeSnippetExpression("_"), CodeBinaryOperatorType.Assign, eval));
+							var trueBinOp = BinOpToSnippet(new CodeBinaryOperatorExpression(new CodeSnippetExpression("_"), CodeBinaryOperatorType.Assign, trueBranch));
+							var falseBinOp = BinOpToSnippet(new CodeBinaryOperatorExpression(new CodeSnippetExpression("_"), CodeBinaryOperatorType.Assign, falseBranch));
+							var ctse = MakeTernarySnippet(evalBinOp, trueBinOp, falseBinOp);
 							parts[x] = ctse;
 							parts.RemoveRange(start, parts.Count - start);
 						}
@@ -1676,8 +1712,9 @@ namespace Keysharp.Scripting
 							var leftExpr = VarMixedExpr(codeLine, parts[x]);
 							var rightSlice = parts.Slice(n, parts.Count - n);
 							var rightExpr = ParseExpression(codeLine, code, rightSlice, create);
+							var falseBinOp = BinOpToSnippet(new CodeBinaryOperatorExpression(new CodeSnippetExpression("_"), CodeBinaryOperatorType.Assign, rightExpr));
 							var xx = MakeTernarySnippet(new CodeBinaryOperatorExpression(leftExpr, CodeBinaryOperatorType.ValueEquality, nullPrimitive)
-														, rightExpr, leftExpr);
+														, falseBinOp, leftExpr);
 							parts[x] = xx;
 							parts.RemoveRange(i, parts.Count - i);
 						}
@@ -1795,7 +1832,7 @@ namespace Keysharp.Scripting
 								else
 									_ = invoke.Parameters.Add(VarMixedExpr(codeLine, py));
 
-								parts[x] = invoke;
+								AddCmie(invoke, parts, x);
 								next:
 								parts.RemoveAt(y);
 							}

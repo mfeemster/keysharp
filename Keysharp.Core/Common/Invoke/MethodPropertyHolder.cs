@@ -9,12 +9,14 @@
 		internal readonly Action<object, object> setPropFunc;
 		protected readonly ConcurrentStackArrayPool<object> paramsPool;
 		private readonly bool isGuiType;
+		private readonly bool anyOptional;
 		private readonly int startVarIndex = -1;
 		private readonly int stopVarIndexDistanceFromEnd;
 
 		internal bool IsStaticFunc { get; private set; }
 		internal bool IsStaticProp { get; private set; }
-		internal bool IsVariadic => startVarIndex != -1;
+        internal bool IsBind { get; private set; }
+        internal bool IsVariadic => startVarIndex != -1;
 		internal int ParamLength { get; }
 
 		public MethodPropertyHolder(MethodInfo m, PropertyInfo p)
@@ -27,8 +29,9 @@
 				parameters = mi.GetParameters();
 				ParamLength = parameters.Length;
 				isGuiType = Gui.IsGuiType(mi.DeclaringType);
+				anyOptional = parameters.Any(p => p.IsOptional || p.IsVariadic());
 
-				for (var i = 0; i < parameters.Length; i++)
+                for (var i = 0; i < parameters.Length; i++)
 				{
 					if (parameters[i].ParameterType == typeof(object[]))
 						startVarIndex = i;
@@ -38,11 +41,16 @@
 
 				IsStaticFunc = mi.Attributes.HasFlag(MethodAttributes.Static);
 
-				if (typeof(IFuncObj).IsAssignableFrom(mi.DeclaringType) && mi.Name == "Call")
-				{
-					callFunc = (inst, obj) => ((IFuncObj)inst).Call(obj);
-				}
-				else if (ParamLength == 0)
+                var isFuncObj = typeof(IFuncObj).IsAssignableFrom(mi.DeclaringType);
+
+                if (isFuncObj && mi.Name == "Bind")
+                    IsBind = true;
+
+                if (isFuncObj && mi.Name == "Call")
+                {
+                    callFunc = (inst, obj) => ((IFuncObj)inst).Call(obj);
+                }
+                else if (ParamLength == 0)
 				{
 					if (isGuiType)
 					{
@@ -125,14 +133,15 @@
 											newobj[pi] = ooi;
 									}
 								}
+                                //newobj[^1] ??= new object[] { };
 
-                                if (objLength < ParamLength)
-                                    newobj[^1] = new object[] { };
-
-                                for (; pi < ParamLength; pi++)
-									if (parameters[pi].IsOptional)
-										newobj[pi] = parameters[pi].DefaultValue;
-							}
+                                if (anyOptional)
+                                    for (; pi < ParamLength; pi++)
+                                        if (parameters[pi].IsOptional)
+                                            newobj[pi] = parameters[pi].DefaultValue;
+                                        else if (parameters[pi].IsVariadic())
+                                            newobj[pi] = System.Array.Empty<object>();
+                            }
 
 							//Any remaining items in newobj are null by default.
 							object ret = null;
@@ -197,17 +206,16 @@
 						callFunc = (inst, obj) =>
 						{
 							object ret = null;
-							if (obj == null)
-								obj = new object[0];
 							var objLength = obj.Length;
 
 							if (ParamLength == objLength)
 							{
-								for (var i = 0; i < ParamLength; i++)
-									if (obj[i] == null && parameters[i].IsOptional)
-										obj[i] = parameters[i].DefaultValue;
+                                if (anyOptional)
+                                    for (var pi = 0; pi < ParamLength; ++pi)
+                                        if (obj[pi] == null && parameters[pi].IsOptional)
+                                            obj[pi] = parameters[pi].DefaultValue;
 
-								if (!isGuiType)
+                                if (!isGuiType)
 								{
 									ret = mi.Invoke(inst, obj);
 								}
@@ -228,21 +236,22 @@
 							}
 							else
 							{
-								var i = 0;//The slower case: a function is trying to be called with a different number of parameters than it actually has, so manually create an array of parameters that matches the required size.
-								var newobj = paramsPool.Rent();//Using the memory pool in this function seems to help a lot.
+                                var pi = 0;//The slower case: a function is trying to be called with a different number of parameters than it actually has, so manually create an array of parameters that matches the required size.
+                                var newobj = paramsPool.Rent();//Using the memory pool in this function seems to help a lot.
 
-								for (; i < objLength && i < ParamLength; i++)
-									if (obj[i] == null && parameters[i].IsOptional)
-										newobj[i] = parameters[i].DefaultValue;
-									else
-										newobj[i] = obj[i];
+                                for (; pi < objLength && pi < ParamLength; ++pi)
+                                    if (obj[pi] == null && parameters[pi].IsOptional)
+                                        newobj[pi] = parameters[pi].DefaultValue;
+                                    else
+                                        newobj[pi] = obj[pi];
 
-								for (; i < ParamLength; i++)
-									if (parameters[i].IsOptional)
-										newobj[i] = parameters[i].DefaultValue;
+                                if (anyOptional)
+                                    for (; pi < ParamLength; ++pi)
+                                        if (parameters[pi].IsOptional)
+                                            newobj[pi] = parameters[pi].DefaultValue;
 
-								//Any remaining items in newobj are null by default.
-								if (!isGuiType)
+                                //Any remaining items in newobj are null by default.
+                                if (!isGuiType)
 								{
 									ret = mi.Invoke(inst, newobj);
 								}

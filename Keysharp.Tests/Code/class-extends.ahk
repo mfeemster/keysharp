@@ -7,13 +7,13 @@ class testclass
 
 	BaseCaseSensitiveFunc()
 	{
-		global a := 999
+        testclass.a := 999
 		this.a := 1212
 	}
 	
 	static BaseCaseSensitiveFuncStatic()
 	{
-		global c := 3131
+		testclass.c := 3131
 	}
 }
 
@@ -25,12 +25,12 @@ class testsubclass extends testclass
 	{
 		get
 		{
-			return _a
+			return this._a
 		}
 
 		set
 		{
-			global _a := value
+			this._a := value
 		}
 	}
 
@@ -42,12 +42,12 @@ class testsubclass extends testclass
 	{
 		get
 		{
-			return _c
+			return this._c
 		}
 
 		set
 		{
-			global _c := value
+			this._c := value
 		}
 	}
 
@@ -55,16 +55,17 @@ class testsubclass extends testclass
 	
 	setbasea()
 	{
-		super.a := 500
+		this.base.a := 500
 	}
 
 	GetBasea()
 	{
-		return super.a
+		return this.base.a
 	}
 
 	SubCaseSensitiveFunc()
 	{
+        this.a := 1212
 		this.basecasesensitivefunc()
 	}
 	
@@ -164,7 +165,7 @@ If (val == 321)
 else
 	FileAppend "fail", "*"
 	
-testsubclassobj.super.a := 777
+testsubclassobj.base.a := 777
 
 val := testsubclassobj.getbasea()
 
@@ -195,11 +196,11 @@ else
 	FileAppend "fail", "*"
 
 testsubclassobj.a := ""
-testsubclassobj.super.a := ""
+testsubclassobj.base.a := ""
 
 testsubclassobj.subcasesensitivefunc()
 
-if (testsubclassobj.super.a == 999)
+if (testsubclass.a == 999)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -366,9 +367,9 @@ else
 	FileAppend "fail", "*"
 
 testclass.c := 101
-myfunc := Func("basecasesensitivefuncstatic", testsubclassobj)
+myfunc := testsubclass.basecasesensitivefuncstatic
 
-myfunc()
+myfunc(testsubclass)
 
 if (testclass.c == 3131)
 	FileAppend "pass", "*"
@@ -376,9 +377,9 @@ else
 	FileAppend "fail", "*"
 
 testclass.c := 101
-myfunc := Func("subcasesensitivefuncstatic", testsubclassobj)
+myfunc := testsubclass.subcasesensitivefuncstatic
 
-myfunc()
+myfunc(testsubclass)
 
 if (testclass.c == 3131)
 	FileAppend "pass", "*"
@@ -386,8 +387,8 @@ else
 	FileAppend "fail", "*"
 
 testsubclassobj.a := 0
-myfunc := Func("basecasesensitivefunc", testsubclassobj)
-myfunc()
+myfunc := testsubclassobj.basecasesensitivefunc
+myfunc(testsubclassobj)
 
 if (testsubclassobj.a == 1212)
 	FileAppend "pass", "*"
@@ -395,8 +396,8 @@ else
 	FileAppend "fail", "*"
 	
 testsubclassobj.a := 0
-myfunc := Func("SubCaseSensitiveFunc", testsubclassobj)
-myfunc()
+myfunc := testsubclassobj.SubCaseSensitiveFunc
+myfunc(testsubclassobj)
 
 if (testsubclassobj.a == 1212)
 	FileAppend "pass", "*"
@@ -462,43 +463,28 @@ else
 
 class mymapclass1 extends map
 {
-	__item[a]
+	__item[a*]
 	{
 		get
 		{
-			return super[a]
+            if (a.Length == 1)
+                return super[a[1]]
+            sum := 0
+            for k in a
+                sum += k
+			return super[sum]
 		}
 
 		set
 		{
-			super[a] := value
-		}
-	}
-
-	__item[a, b]
-	{
-		get
-		{
-			return super[a + b]
-		}
-
-		set
-		{
-			super[a + b] := a + b
-		}
-	}
-
-
-	__item[a, b, c]
-	{
-		get
-		{
-			return super[a + b + c]
-		}
-
-		set
-		{
-			super[a + b + c] := a + b + c
+            if (a.Length == 1) {
+                super[a[1]] := value
+                return
+            }
+            sum := 0
+            for k in a
+                sum += k
+			super[sum] := sum
 		}
 	}
 }
@@ -618,8 +604,7 @@ class myarrayclass6 extends Array
 	{
 		get
 		{
-			global
-			return count * 2 ; Meant to refer to the base Array.Count property.
+			return this.length * 2 ; Meant to refer to the base Array.Count property.
 		}
 	}
 }
@@ -669,7 +654,7 @@ class mybaseclass
 
 	basefunc()
 	{
-		global x := 123
+		this.x := 123
 	}
 }
 
@@ -677,9 +662,8 @@ class mysubclass extends mybaseclass
 {
 	basefunc()
 	{
-		global
 		super.basefunc()
-		x++
+		this.x++
 	}
 }
 
@@ -693,8 +677,8 @@ else
 	FileAppend "fail", "*"
 
 msc := mysubclass()
-msc.super.basefunc()
-val := msc.x
+msc.base.base.basefunc()
+val := msc.base.x
 
 if (val == 123)
 	FileAppend "pass", "*"
@@ -735,10 +719,10 @@ class Mapi extends Map {
 	CaseSense := false
 	DerivedDefault := ""
 
-	__New()
+	__New(args*)
 	{
-		global
-		DerivedDefault := this.Default
+		this.DerivedDefault := unset
+        super.__New(args*)
 	}
 }
 
@@ -772,13 +756,13 @@ class dupepropssub extends dupepropsbase
 
 	a
 	{
-		get => _a
-		set => _a := value
+		get => this._a
+		set => this._a := value
 	}
 
-	getglobala()
+	getlocala()
 	{
-		global
+        a := 1
 		return a
 	}
 
@@ -805,7 +789,7 @@ if (classobj.super.a == 123)
 else
 	FileAppend "fail", "*"
 
-if (classobj.getglobala() == 999)
+if (classobj.getlocala() == 1)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"

@@ -173,12 +173,12 @@ namespace Keysharp.Scripting
 
         public override SyntaxNode VisitInputLevelDirective([NotNull] InputLevelDirectiveContext context)
         {
-            var value = Math.Clamp(context.ChildCount < 3 ? 0 : int.Parse(context.GetChild(1).GetText()), 0, 100);
+            var value = Math.Clamp(context.ChildCount < 2 ? 0 : int.Parse(context.GetChild(1).GetText()), 0, 100);
             var expr = SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(value));
             parser.DHHR.Add(SyntaxFactory.ExpressionStatement(
                 SyntaxFactory.AssignmentExpression(
                     SyntaxKind.SimpleAssignmentExpression,
-                    CreateQualifiedName("Keysharp.Core.Accessors.A_UseHook"),
+                    CreateQualifiedName("Keysharp.Core.Accessors.A_InputLevel"),
                     (LiteralExpressionSyntax)expr
                 )
             ));
@@ -186,7 +186,7 @@ namespace Keysharp.Scripting
         }
         public override SyntaxNode VisitSuspendExemptDirective([NotNull] SuspendExemptDirectiveContext context)
         {
-            var value = context.ChildCount < 3
+            var value = context.ChildCount < 2
                 ? SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(1))
                 : Visit(context.GetChild(1));
             parser.DHHR.Add(SyntaxFactory.ExpressionStatement(
@@ -201,14 +201,23 @@ namespace Keysharp.Scripting
 
         public override SyntaxNode VisitUseHookDirective([NotNull] UseHookDirectiveContext context)
         {
-            var value = context.ChildCount < 3
-                ? SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(0))
-                : Visit(context.GetChild(1));
+            ExpressionSyntax value = context.ChildCount < 2
+                ? SyntaxFactory.LiteralExpression(SyntaxKind.FalseLiteralExpression)
+                : ((InvocationExpressionSyntax)InternalMethods.ForceBool)
+                    .WithArgumentList(
+                        SyntaxFactory.ArgumentList(
+                            SyntaxFactory.SingletonSeparatedList(
+                                SyntaxFactory.Argument(
+                                    (ExpressionSyntax)Visit(context.GetChild(1))
+                                )
+                            )
+                        )
+                    );
             parser.DHHR.Add(SyntaxFactory.ExpressionStatement(
                 SyntaxFactory.AssignmentExpression(
                     SyntaxKind.SimpleAssignmentExpression,
-                    CreateQualifiedName("Keysharp.Core.Accessors.A_UseHook"),
-                    (LiteralExpressionSyntax)value
+                    CreateQualifiedName("Keysharp.Scripting.Script.ForceKeybdHook"),
+                    value
                 )
             ));
             return null;
@@ -327,8 +336,15 @@ namespace Keysharp.Scripting
                 .ToList();
 
             // Check if it's an expansion or a statement
-            bool hasExpansion = context.HotstringExpansion() != null;
-            string expansionText = hasExpansion ? EscapedString(context.HotstringExpansion().GetText(), true) : "";
+            bool hasExpansion = context.hotstringExpansion() != null;
+            string expansionText = hasExpansion ? context.hotstringExpansion().GetText() : "";
+            if (hasExpansion)
+            {
+                if (context.hotstringExpansion().HotstringSingleLineExpansion() != null)
+                    expansionText = EscapedString(expansionText, true);
+                else
+                    expansionText = EscapedString(MultilineString(expansionText.Trim(), context.hotstringExpansion().Start.Line, "TODO"), true);
+            }
 
             // Generate the function if there's a statement
             string functionName = null;
@@ -737,7 +753,7 @@ namespace Keysharp.Scripting
                 SyntaxFactory.InvocationExpression(
                     SyntaxFactory.MemberAccessExpression(
                         SyntaxKind.SimpleMemberAccessExpression,
-                        CreateQualifiedName("Keysharp.Core.Keyboard"),
+                        CreateQualifiedName("Keysharp.Core." + (isMouse ? "Mouse" : "Keyboard")),
                         SyntaxFactory.IdentifierName(isMouse ? "SetMouseDelay" : "SetKeyDelay")
                     )
                 )

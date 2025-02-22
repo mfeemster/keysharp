@@ -62,7 +62,7 @@ else
 	FileAppend "fail", "*"
 
 fo := a.GetMethod("Clear")
-fo()
+fo(a)
 
 if (a.Length == 0)
 	FileAppend "pass", "*"
@@ -71,7 +71,7 @@ else
 
 a := [10, 20, 30]
 fo := GetMethod(a, "Clear")
-fo()
+fo(a)
 
 if (a.Length == 0)
 	FileAppend "pass", "*"
@@ -80,7 +80,7 @@ else
 
 a := [10, 20, 30]
 fo := GetMethod(a, "RemoveAt")
-fo(1)
+fo(a, 1)
 
 if (a.Length == 2)
 	FileAppend "pass", "*"

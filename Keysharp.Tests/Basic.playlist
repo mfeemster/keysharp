@@ -645,6 +645,12 @@
                         <Property Name="DisplayName" Value="FlowOnError" />
                       </Rule>
                     </Rule>
+                    <Rule Match="All">
+                      <Property Name="TestWithNormalizedFullyQualifiedName" Value="Keysharp.Tests.FlowTests.FlowEnum" />
+                      <Rule Match="Any">
+                        <Property Name="DisplayName" Value="FlowEnum" />
+                      </Rule>
+                    </Rule>
                   </Rule>
                 </Rule>
                 <Rule Match="All">

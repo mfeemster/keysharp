@@ -13,6 +13,15 @@ namespace Keysharp.Scripting
 {
     public partial class Parser
     {
+        static Parser()
+        {
+            var anyType = typeof(Any);
+            foreach (var type in Reflections.stringToTypes.Values
+                    .Where(type => type.IsClass && !type.IsAbstract && anyType.IsAssignableFrom(type)))
+            {
+                BuiltinTypes[type.Name] = type;
+            }
+        }
         public void AddAssembly(string assemblyName, string value)
         {
             assemblies = assemblies.Add(SyntaxFactory.Attribute(
@@ -316,8 +325,8 @@ namespace Keysharp.Scripting
 
         public string IsGlobalVar(string name, bool caseSense = true)
         {
-            if (UserFuncs.Contains(name) || UserTypes.ContainsKey(name))
-                return name.ToLowerInvariant();
+            //if (UserFuncs.Contains(name) || UserTypes.ContainsKey(name))
+            //    return name.ToLowerInvariant();
 
             if (caseSense)
             {
@@ -472,10 +481,60 @@ namespace Keysharp.Scripting
             return name;
         }
 
+        public string MaybeAddClassStaticVariable(string className, bool caseSense = false)
+        {
+            className = ToValidIdentifier(className); // Handles conversions like "object" -> "keysharpobject"
+            string name = IsVarDeclaredGlobally(className, caseSense);
+            if (name != null) return name;
+
+            // Only add built-in classes, because user-defined classes are handled in the constructor
+            if (!Parser.BuiltinTypes.ContainsKey(className))
+                return null;
+            string casedName = Parser.BuiltinTypes.SingleOrDefault(kv => kv.Key.Equals(className, StringComparison.OrdinalIgnoreCase)).Key;
+
+            // Add `public static object myclass = Myclass.__Static;` global field
+            var fieldDeclaration = SyntaxFactory.FieldDeclaration(
+                SyntaxFactory.VariableDeclaration(
+                    SyntaxFactory.ParseTypeName("object"),
+                    SyntaxFactory.SingletonSeparatedList(
+                        SyntaxFactory.VariableDeclarator(className.ToLower())
+                            .WithInitializer(
+                                SyntaxFactory.EqualsValueClause(
+                                    SyntaxFactory.ElementAccessExpression(
+                                        SyntaxFactory.MemberAccessExpression(
+                                            SyntaxKind.SimpleMemberAccessExpression,
+                                            SyntaxFactory.IdentifierName("Variables"),
+                                            SyntaxFactory.IdentifierName("Statics")
+                                        ),
+                                        SyntaxFactory.BracketedArgumentList(
+                                            SyntaxFactory.SingletonSeparatedList(
+                                                SyntaxFactory.Argument(
+                                                    SyntaxFactory.TypeOfExpression(
+                                                        SyntaxFactory.IdentifierName(casedName)
+                                                    )
+                                                )
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                    )
+                )
+            )
+            .AddModifiers(
+                SyntaxFactory.Token(SyntaxKind.PublicKeyword),
+                SyntaxFactory.Token(SyntaxKind.StaticKeyword)
+            );
+
+            mainClass.Declaration = mainClass.Declaration.AddMembers(fieldDeclaration);
+
+            return className.ToLower();
+        }
+
         public string MaybeAddGlobalFuncObjVariable(string functionName, bool caseSense = true)
         {
 
-            string name = IsVarDeclaredGlobally(functionName, caseSense);
+            string name = IsVarDeclaredGlobally(ToValidIdentifier(functionName), caseSense);
             if (name != null) return name;
 
             // Only add built-in functions, because user-defined functions are handled in the constructor
@@ -743,10 +802,9 @@ namespace Keysharp.Scripting
             return null;
         }
 
-        public string NormalizeClassIdentifier(string name, eNameCase nameCase = eNameCase.Lower)
+        public string NormalizeClassIdentifier(string name, eNameCase nameCase = eNameCase.Title)
         {
             // Define the reserved keywords that should retain their original case
-
 
             if (nameCase == eNameCase.Title && ClassReservedKeywords.Contains(name))
                 return ClassReservedKeywords.First(keyword => string.Equals(keyword, name, StringComparison.InvariantCultureIgnoreCase));
@@ -790,6 +848,9 @@ namespace Keysharp.Scripting
         {
             name = name.Trim('"');
 
+            if (Parser.TypeNameAliases.ContainsKey(name))
+                name = Parser.TypeNameAliases[name];
+
             if (nameCase == eNameCase.Lower)
                 return ToValidIdentifier(name.ToLowerInvariant());
             else if (nameCase == eNameCase.Title)
@@ -800,6 +861,10 @@ namespace Keysharp.Scripting
 
         public static string ToValidIdentifier(string text)
         {
+            if (Parser.TypeNameAliases.ContainsKey(text))
+            {
+                return Parser.TypeNameAliases[text];
+            }
             if (SyntaxFacts.IsKeywordKind(SyntaxFactory.ParseToken(text).Kind()))
                 return "@" + text;
             return text;

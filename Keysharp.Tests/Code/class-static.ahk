@@ -4,7 +4,7 @@ class myclass
 	static b := ""
 	static c := "asdf"
 	static x := 123
-	static y := x
+	static y := this.x
 	static arr := [1, 2, 3]
 	static m := {one : 1, two : 2, three : 3}
 }
@@ -57,7 +57,7 @@ else
 	
 classobj3 := myclass()
 
-If (classobj3.x == 456)
+If (!classobj3.HasProp("x"))
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -81,7 +81,7 @@ if (myclass.arr is Array && myclass.arr.Length == 3)
 else
 	FileAppend "fail", "*"
 	
-if (myclass.m is KeysharpObject && myclass.m.one == 1 && myclass.m.two == 2 && myclass.m.three == 3)
+if (myclass.m is Object && myclass.m.one == 1 && myclass.m.two == 2 && myclass.m.three == 3)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -139,7 +139,7 @@ else
 class TypeSizeMapper2 {
 	static NumTypeSize := ""
 	
-	static __Init()
+	static __New()
 	{
 global
 		this.NumTypeSize := Map()
@@ -195,7 +195,7 @@ class sclass2
 
 sc1 := sclass1()
 
-If (sc1.c2.x == 1)
+If (!sc1.HasProp("c2"))
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"

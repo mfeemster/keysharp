@@ -70,7 +70,12 @@ remap
     ;
 
 hotstring
-    : HotstringTrigger (HotstringTrigger)* (HotstringExpansion | functionDeclaration | statement)
+    : HotstringTrigger (EOL HotstringTrigger)* WS* (hotstringExpansion | EOL? functionDeclaration | EOL? statement)
+    ;
+
+hotstringExpansion
+    : HotstringSingleLineExpansion
+    | HotstringMultiLineExpansion
     ;
 
 hotkey
@@ -78,11 +83,11 @@ hotkey
     ;
 
 statement
-    : functionStatement
-    | variableStatement
+    : variableStatement
     | ifStatement
     | (labelledStatement s*)? iterationStatement
     | expressionStatement
+    | functionStatement
     | continueStatement
     | breakStatement
     | returnStatement
@@ -197,15 +202,15 @@ variableDeclaration
     ;
 
 functionStatement
-    : primaryExpression StartFunctionStatement arguments? // This is ambiguous with expressionStatements first expression. I don't know how to resolve it.
+    : primaryExpression (WS+ arguments)? // This is ambiguous with expressionStatements first expression. I don't know how to resolve it.
     ;
 
 expressionStatement
-    : expressionSequence
+    : {!this.isFunctionCallStatement()}? expressionSequence
     ;
 
 ifStatement
-    : If singleExpression WS* flowBlock elseProduction
+    : If WS* singleExpression WS* flowBlock elseProduction
     ;
 
 flowBlock
@@ -214,21 +219,21 @@ flowBlock
     ;
 
 untilProduction
-    : EOL Until EOL? singleExpression 
+    : EOL Until s* singleExpression 
     ;
 
 elseProduction
-    : EOL Else EOL? statement 
+    : EOL Else s* statement 
     | {!this.second(Else)}? // This can be used to reduce the ambiguity in SLL mode, but has a negative effect on performance
     ;
 
 iterationStatement
-    : Loop (singleExpression WS*)? flowBlock untilProduction? elseProduction      # LoopStatement
-    | LoopFiles singleExpression WS* (',' singleExpression WS*)? flowBlock untilProduction? elseProduction  # LoopFilesStatement
-    | LoopRead singleExpression WS* (',' singleExpression WS*)? flowBlock untilProduction? elseProduction  # LoopReadStatement
-    | LoopReg singleExpression WS* (',' singleExpression WS*)? flowBlock untilProduction? elseProduction    # LoopRegStatement
-    | LoopParse singleExpression WS* (',' (singleExpression WS*)?)* flowBlock untilProduction? elseProduction # LoopParseStatement
-    | While singleExpression WS* flowBlock untilProduction? elseProduction      # WhileStatement
+    : Loop WS* (singleExpression WS*)? flowBlock untilProduction? elseProduction      # LoopStatement
+    | LoopFiles WS* singleExpression WS* (',' singleExpression WS*)? flowBlock untilProduction? elseProduction  # LoopFilesStatement
+    | LoopRead WS* singleExpression WS* (',' singleExpression WS*)? flowBlock untilProduction? elseProduction  # LoopReadStatement
+    | LoopReg WS* singleExpression WS* (',' singleExpression WS*)? flowBlock untilProduction? elseProduction    # LoopRegStatement
+    | LoopParse WS* singleExpression WS* (',' (singleExpression WS*)?)* flowBlock untilProduction? elseProduction # LoopParseStatement
+    | While WS* singleExpression WS* flowBlock untilProduction? elseProduction      # WhileStatement
     | For WS* forInParameters WS* flowBlock untilProduction? elseProduction          # ForInStatement
     ;
 
@@ -254,7 +259,7 @@ yieldStatement
     ;
 
 switchStatement
-    : Switch singleExpression? (',' literal)? s* caseBlock
+    : Switch WS* singleExpression? (',' literal)? s* caseBlock
     ;
 
 caseBlock
@@ -278,16 +283,16 @@ labelledStatement
     ;
 
 gotoStatement
-    : Goto propertyName
-    | Goto '(' propertyName ')'
+    : Goto WS* propertyName
+    | Goto WS* '(' propertyName ')'
     ;
 
 throwStatement
-    : Throw singleExpression?
+    : Throw WS* singleExpression?
     ;
 
 tryStatement
-    : Try EOL? statement catchProduction* elseProduction finallyProduction?
+    : Try s* statement catchProduction* elseProduction finallyProduction?
     ;
 
 catchProduction
@@ -304,7 +309,7 @@ catchClasses
     ;
 
 finallyProduction
-    : EOL Finally flowBlock
+    : EOL Finally WS* flowBlock
     ;
 
 functionDeclaration
@@ -335,9 +340,9 @@ classTail
     ;
 
 classElement
-    : Static? methodDefinition   # ClassMethodDeclaration
-    | Static? propertyDefinition # ClassPropertyDeclaration
-    | Static? fieldDefinition (',' fieldDefinition)*    # ClassFieldDeclaration
+    : (Static WS*)? methodDefinition   # ClassMethodDeclaration
+    | (Static WS*)? propertyDefinition # ClassPropertyDeclaration
+    | (Static WS*)? fieldDefinition (',' fieldDefinition)*    # ClassFieldDeclaration
     | classDeclaration           # NestedClassDeclaration
     ;
 
@@ -347,7 +352,7 @@ methodDefinition
 
 propertyDefinition
     : classPropertyName '=>' expression
-    | classPropertyName StartFunctionStatement? s* '{' (propertyGetterDefinition EOL | propertySetterDefinition EOL | EOL)+ '}'
+    | classPropertyName s* '{' (propertyGetterDefinition EOL | propertySetterDefinition EOL | EOL)+ '}'
     ;
 
 classPropertyName
@@ -409,7 +414,7 @@ mapElement
 
 propertyAssignment
     : memberIdentifier (WS | EOL)* ':' (WS | EOL)* expression                           # PropertyExpressionAssignment
-    //| Async? '*'? propertyName '(' formalParameterList? ')' functionBody # FunctionProperty
+    //| (Async WS*)? '*'? propertyName '(' formalParameterList? ')' functionBody # FunctionProperty
     //| getter '(' ')' functionBody                                        # PropertyGetter
     //| setter '(' formalParameterArg ')' functionBody                     # PropertySetter
     //| Ellipsis? singleExpression                                         # PropertyShorthand
@@ -472,7 +477,7 @@ operatorExpression
     | '--' right = operatorExpression                                                # PreDecreaseExpression
     | <assoc = right> left = operatorExpression '**' right = operatorExpression      # PowerExpression
     | '-' right = operatorExpression                                                 # UnaryMinusExpression
-    | (op = '!' | op = VerbalNot) right = operatorExpression                         # NotExpression
+    | '!' WS* right = operatorExpression                                             # NotExpression
     | '+' right = operatorExpression                                                 # UnaryPlusExpression
     | '~' right = operatorExpression                                                 # BitNotExpression
     | left = operatorExpression ((WS | EOL)* op = ('*' | '/' | '//') (WS | EOL)*) right = operatorExpression  # MultiplicativeExpression
@@ -485,7 +490,8 @@ operatorExpression
     | left = operatorExpression op = '~=' right = operatorExpression                               # RegExMatchExpression
     | left = operatorExpression op = ('<' | '>' | '<=' | '>=') right = operatorExpression          # RelationalExpression
     | left = operatorExpression op = ('=' | '!=' | '==' | '!==') right = operatorExpression        # EqualityExpression
-    | left = operatorExpression op = (Instanceof | Is | In | Contains) right = operatorExpression  # ContainExpression
+    | left = operatorExpression (s* op = (Instanceof | Is | In | Contains) s*) right = operatorExpression  # ContainExpression
+    | VerbalNot WS* right = operatorExpression                                                         # VerbalNotExpression
     | <assoc = right> left = primaryExpression op = assignmentOperator right = expression          # AssignmentExpression
     ;
 
@@ -536,17 +542,17 @@ objectLiteral
     ;
 
 functionHead
-    : Async? identifier '(' formalParameterList? ')'
+    : (Async WS*)? identifier '(' formalParameterList? ')'
     ;
 
 functionExpressionHead
     : functionHead
-    | Async? '(' formalParameterList? ')'
+    | (Async WS*)? '(' formalParameterList? ')'
     ;
 
 fatArrowExpressionHead
-    : (Async? identifier)? Multiply 
-    | Async? BitAnd? identifier QuestionMark?
+    : ((Async WS*)? identifier)? Multiply 
+    | (Async WS*)? BitAnd? identifier QuestionMark?
     | functionExpressionHead
     ;
 

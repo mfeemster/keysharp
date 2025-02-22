@@ -12,7 +12,7 @@ namespace Keysharp.Core.Common.ObjectBase
 
         private static Type GetCallingType()
         {
-            var frame = new System.Diagnostics.StackTrace().GetFrame(3); // Get the caller two levels up
+            var frame = new System.Diagnostics.StackTrace().GetFrame(2); // Get the caller two levels up
             return frame?.GetMethod()?.DeclaringType;
         }
 

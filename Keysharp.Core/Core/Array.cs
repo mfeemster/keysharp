@@ -780,7 +780,7 @@
 				if ((i = TranslateIndex(i)) != -1)
 					return array[i];
 				else
-					return Errors.ErrorOccurred(err = new IndexError($"Invalid retrieval index of {i}.")) ? throw err : null;
+					return Errors.ErrorOccurred(err = new IndexError($"Invalid retrieval index of {index} on an array with length {array.Count}.")) ? throw err : null;
 			}
 			set
 			{
@@ -790,7 +790,7 @@
 				if ((i = TranslateIndex(i)) != -1)
 					array[i] = value;
 				else
-					_ = Errors.ErrorOccurred(err = new IndexError($"Invalid set index of {i}.")) ? throw err : "";
+					_ = Errors.ErrorOccurred(err = new IndexError($"Invalid set index of {index} on an array with length {array.Count}.")) ? throw err : "";
 			}
 		}
 
@@ -913,9 +913,9 @@
                 if (args.Length == 1)
                 {
                     if (args[0] is Misc.VarRef arg2)
-                        arg2.__Value = Current.Item2;
+                        arg2.__Value = Current.Item1;
                     else
-                        Script.SetPropertyValue(args[0], "__Value", Current.Item2);
+                        Script.SetPropertyValue(args[0], "__Value", Current.Item1);
                 }
                 // Otherwise return the index (1-based) and the value.
                 else

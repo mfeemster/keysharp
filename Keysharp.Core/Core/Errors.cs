@@ -70,12 +70,19 @@
 		/// <returns>An <see cref="KeyError"/> object.</returns>
 		public static KeyError KeyError(params object[] args) => new (args);
 
-		/// <summary>
-		/// Creates and returns a new <see cref="MemberError"/> exception object.
-		/// </summary>
-		/// <param name="args">The the parameters to pass to the constructor.</param>
-		/// <returns>An <see cref="MemberError"/> object.</returns>
-		public static MemberError MemberError(params object[] args) => new (args);
+        /// <summary>
+        /// Creates and returns a new <see cref="UnsetError"/> exception object.
+        /// </summary>
+        /// <param name="args">The the parameters to pass to the constructor.</param>
+        /// <returns>An <see cref="UnsetError"/> object.</returns>
+        public static UnsetError UnsetError(params object[] args) => new(args);
+
+        /// <summary>
+        /// Creates and returns a new <see cref="MemberError"/> exception object.
+        /// </summary>
+        /// <param name="args">The the parameters to pass to the constructor.</param>
+        /// <returns>An <see cref="MemberError"/> object.</returns>
+        public static MemberError MemberError(params object[] args) => new (args);
 
 		/// <summary>
 		/// Creates and returns a new <see cref="MemoryError"/> exception object.

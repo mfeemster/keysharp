@@ -39,14 +39,14 @@ namespace Keysharp.Scripting
             if (context.Extends() != null)
             {
                 var extendsParts = context.classExtensionName().identifier();
-                var baseClassName = parser.NormalizeClassIdentifier(extendsParts[0].GetText(), eNameCase.Title);
+                var baseClassName = parser.NormalizeClassIdentifier(extendsParts[0].GetText());
                 if (Reflections.stringToTypes.ContainsKey(baseClassName)) {
                     baseClassName = Reflections.stringToTypes.First(pair =>  pair.Key.Equals(baseClassName, StringComparison.InvariantCultureIgnoreCase)).Key;
                     parser.currentClass.Base = baseClassName;
                 }
                 for (int i = 1; i < extendsParts.Length; i++)
                 {
-                    baseClassName += "." + parser.NormalizeClassIdentifier(extendsParts[i].GetText(), eNameCase.Title);
+                    baseClassName += "." + parser.NormalizeClassIdentifier(extendsParts[i].GetText());
                 }
                 baseList = SyntaxFactory.BaseList(
                     SyntaxFactory.SingletonSeparatedList<BaseTypeSyntax>(
@@ -65,7 +65,7 @@ namespace Keysharp.Scripting
             }
 
             // Add `public static object myclass = Myclass.__Static;` global field
-            var fieldDeclaration = SyntaxFactory.FieldDeclaration(
+            /*var fieldDeclaration = SyntaxFactory.FieldDeclaration(
                 SyntaxFactory.VariableDeclaration(
                     SyntaxFactory.ParseTypeName("object"),
                     SyntaxFactory.SingletonSeparatedList(
@@ -92,6 +92,31 @@ namespace Keysharp.Scripting
                 SyntaxFactory.Token(SyntaxKind.PublicKeyword),
                 SyntaxFactory.Token(SyntaxKind.StaticKeyword)
             );
+            */
+
+            var fieldDeclaration = SyntaxFactory.PropertyDeclaration(
+                SyntaxFactory.ParseTypeName("object"),
+                parser.currentClass.Name.ToLower()
+            )
+            .AddModifiers(
+                SyntaxFactory.Token(SyntaxKind.PublicKeyword),
+                SyntaxFactory.Token(SyntaxKind.StaticKeyword)
+            )
+            .WithExpressionBody(
+                SyntaxFactory.ArrowExpressionClause(
+                    SyntaxFactory.MemberAccessExpression(
+                        SyntaxKind.SimpleMemberAccessExpression,
+                        CreateQualifiedName(
+                            string.Join(".",
+                                parser.ClassStack.Reverse()               // Outer-to-inner order.
+                                .Select(cls => cls.Name)
+                            ) + "." + parser.currentClass.Name
+                        ),
+                        SyntaxFactory.IdentifierName("__Static")
+                    )
+                )
+            )
+            .WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken));
 
             parser.mainClass.Declaration = parser.mainClass.Declaration.AddMembers(fieldDeclaration);
 
@@ -106,9 +131,10 @@ namespace Keysharp.Scripting
             {
                 foreach (var element in context.classTail().classElement())
                 {
-                    var member = Visit(element) as MemberDeclarationSyntax;
-                    if (member != null)
-                    {
+                    var members = Visit(element);
+                    if (members == null)
+                        continue;
+                    if (members is MemberDeclarationSyntax member) { 
                         parser.currentClass.Body.Add(member);
                     }
                 }
@@ -168,17 +194,12 @@ namespace Keysharp.Scripting
             var propertyNameSyntax = propertyDefinition.classPropertyName();
 
             string propertyName;
-            BracketedParameterListSyntax indexerParameters = null;
+            List<ParameterSyntax> indexerParameters = null;
 
             if (propertyNameSyntax.formalParameterList() != null)
             {
                 // Handle indexer property
-                propertyName = "__Item"; // The name for indexer properties
-                indexerParameters = SyntaxFactory.BracketedParameterList(
-                    SyntaxFactory.SeparatedList<ParameterSyntax>(
-                        ((ParameterListSyntax)Visit(propertyNameSyntax.formalParameterList())).Parameters
-                    )
-                );
+                propertyName = "Item"; // The name for indexer properties
             }
             else
             {
@@ -186,84 +207,113 @@ namespace Keysharp.Scripting
                 propertyName = parser.NormalizeClassIdentifier(propertyNameSyntax.identifier().GetText());
             }
 
-            // Visit getter
-            AccessorDeclarationSyntax getter = null;
-            if (propertyDefinition.propertyGetterDefinition().Length != 0)
+            if (isStatic)
+                propertyName = Keywords.ClassStaticPrefix + propertyName;
+
+            // Generate getter method
+            MethodDeclarationSyntax getterMethod = null;
+            if (propertyDefinition.propertyGetterDefinition().Length != 0 || propertyDefinition.expression() != null)
             {
-                PushFunction("get_" + propertyNameSyntax.identifier().GetText());
-                var getterBody = (BlockSyntax)Visit(propertyDefinition.propertyGetterDefinition(0));
-                parser.currentFunc.Body.AddRange(getterBody.Statements.ToArray());
-                getter = SyntaxFactory.AccessorDeclaration(SyntaxKind.GetAccessorDeclaration)
-                    .WithBody(parser.currentFunc.AssembleBody());
+                PushFunction("get_" + propertyName);
+
+                if (propertyNameSyntax.formalParameterList() != null)
+                {
+                    indexerParameters = ((ParameterListSyntax)Visit(propertyNameSyntax.formalParameterList())).Parameters.ToList();
+                    parser.currentFunc.Params.AddRange(indexerParameters);
+                }
+
+                if (propertyDefinition.propertyGetterDefinition().Length != 0)
+                {
+                    var getterBody = (BlockSyntax)Visit(propertyDefinition.propertyGetterDefinition(0));
+                    parser.currentFunc.Body.AddRange(getterBody.Statements);
+                }
+                else if (propertyDefinition.expression() != null)
+                {
+                    var getterBody = SyntaxFactory.Block(SyntaxFactory.ReturnStatement((ExpressionSyntax)Visit(propertyDefinition.expression())));
+                    parser.currentFunc.Body.AddRange(getterBody.Statements);
+                }
+
+                getterMethod = parser.currentFunc.Assemble(SyntaxFactory.TokenList(SyntaxFactory.Token(SyntaxKind.PublicKeyword)));
                 PopFunction();
-            } else if (propertyDefinition.expression() != null)
-            {
-                PushFunction("get_" + propertyNameSyntax.identifier().GetText());
-                var getterBody = SyntaxFactory.Block(SyntaxFactory.ReturnStatement((ExpressionSyntax)Visit(propertyDefinition.expression())));
-                parser.currentFunc.Body.AddRange(getterBody.Statements);
-                getter = SyntaxFactory.AccessorDeclaration(SyntaxKind.GetAccessorDeclaration)
-                    .WithBody(parser.currentFunc.AssembleBody());
-                PopFunction();
+                parser.currentClass.Body.Add(getterMethod);
+
+                var initializerValue = ((InvocationExpressionSyntax)InternalMethods.Func)
+                .WithArgumentList(
+                    SyntaxFactory.ArgumentList(
+                        SyntaxFactory.SingletonSeparatedList(
+                            SyntaxFactory.Argument(
+                                SyntaxFactory.IdentifierName("get_" + propertyName)
+                            )
+                        )
+                    )
+                );
+
+                /*
+                if (isStatic)
+                    parser.currentClass.deferredStaticInitializations.Add((propertyName, "get", initializerValue));
+                else
+                    parser.currentClass.deferredInitializations.Add((propertyName, "get", initializerValue));
+                */
             }
 
-            // Visit setter
-            AccessorDeclarationSyntax setter = null;
+            // Generate setter method
+            MethodDeclarationSyntax setterMethod = null;
             if (propertyDefinition.propertySetterDefinition().Length != 0)
             {
-                PushFunction("set_" + propertyNameSyntax.identifier().GetText());
+                PushFunction("set_" + propertyName, SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.VoidKeyword)));
+
+                if (propertyNameSyntax.formalParameterList() != null)
+                {
+                    indexerParameters = ((ParameterListSyntax)Visit(propertyNameSyntax.formalParameterList())).Parameters.ToList();
+
+                    var p = indexerParameters[^1];
+
+                    // Check if it's a `params object[]` parameter
+                    if (p.Type is ArrayTypeSyntax arrayType &&
+                        arrayType.ElementType.IsKind(SyntaxKind.PredefinedType) &&
+                        ((PredefinedTypeSyntax)arrayType.ElementType).Keyword.IsKind(SyntaxKind.ObjectKeyword) &&
+                        p.Modifiers.Any(SyntaxKind.ParamsKeyword))
+                    {
+                        // Remove `params` modifier and replace with a normal `object[]`
+                        indexerParameters[^1] = p.WithModifiers(SyntaxFactory.TokenList()); // Remove params
+                    }
+                    // Preserve indexer parameters
+                    parser.currentFunc.Params.AddRange(indexerParameters);
+                }
+
+                // Always add `object value` parameter for setters
+                parser.currentFunc.Params.Add(
+                    SyntaxFactory.Parameter(SyntaxFactory.Identifier("value"))
+                        .WithType(SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword)))
+                );
+
                 parser.currentFunc.Void = true;
                 var setterBody = (BlockSyntax)Visit(propertyDefinition.propertySetterDefinition(0));
                 parser.currentFunc.Body.AddRange(setterBody.Statements);
-                setter = SyntaxFactory.AccessorDeclaration(SyntaxKind.SetAccessorDeclaration)
-                    .WithBody(parser.currentFunc.AssembleBody());
-                PopFunction();
-            }
 
-            // Create property declaration
-            if (indexerParameters != null)
-            {
-                // Create indexer declaration
-                return SyntaxFactory.IndexerDeclaration(
-                        SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword)) // Type is object
-                    )
-                    .WithModifiers(
-                        SyntaxFactory.TokenList(
-                            new List<SyntaxToken> { isStatic ? SyntaxFactory.Token(SyntaxKind.StaticKeyword) : default,
-                    SyntaxFactory.Token(SyntaxKind.PublicKeyword) }
-                            .Where(token => token != default)
-                        )
-                    )
-                    .WithParameterList(indexerParameters)
-                    .WithAccessorList(
-                        SyntaxFactory.AccessorList(
-                            SyntaxFactory.List(
-                                new[] { getter, setter }.Where(accessor => accessor != null)
+                setterMethod = parser.currentFunc.Assemble(SyntaxFactory.TokenList(SyntaxFactory.Token(SyntaxKind.PublicKeyword)));
+                PopFunction();
+                parser.currentClass.Body.Add(setterMethod);
+
+                var initializerValue = ((InvocationExpressionSyntax)InternalMethods.Func)
+                .WithArgumentList(
+                    SyntaxFactory.ArgumentList(
+                        SyntaxFactory.SingletonSeparatedList(
+                            SyntaxFactory.Argument(
+                                SyntaxFactory.IdentifierName("set_" + propertyName)
                             )
                         )
-                    );
-            }
-            else
-            {
-                // Create regular property declaration
-                return SyntaxFactory.PropertyDeclaration(
-                        SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword)), // Type is object
-                        SyntaxFactory.Identifier(propertyName)
                     )
-                    .WithModifiers(
-                        SyntaxFactory.TokenList(
-                            new List<SyntaxToken> { isStatic ? SyntaxFactory.Token(SyntaxKind.StaticKeyword) : default,
-                    SyntaxFactory.Token(SyntaxKind.PublicKeyword) }
-                            .Where(token => token != default)
-                        )
-                    )
-                    .WithAccessorList(
-                        SyntaxFactory.AccessorList(
-                            SyntaxFactory.List(
-                                new[] { getter, setter }.Where(accessor => accessor != null)
-                            )
-                        )
-                    );
+                );
+
+                /*
+                if (isStatic)
+                    parser.currentClass.deferredStaticInitializations.Add((propertyName, "set", initializerValue));
+                else
+                    parser.currentClass.deferredInitializations.Add((propertyName, "set", initializerValue));
+                */
             }
+            return null;
         }
 
         public override SyntaxNode VisitClassFieldDeclaration([NotNull] ClassFieldDeclarationContext context)
@@ -278,9 +328,7 @@ namespace Keysharp.Scripting
 
             foreach (var fieldDefinition in context.fieldDefinition())
             {
-                // Convert field names to title-case so they don't conflict with global variables
                 var fieldName = parser.NormalizeClassIdentifier(fieldDefinition.propertyName().GetText());
-                fieldName = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(fieldName);
                 fieldNames.Add(fieldName);
 
                 if (fieldDefinition.expression() != null)
@@ -293,19 +341,13 @@ namespace Keysharp.Scripting
                     }
 
                     if (isStatic)
-                        parser.currentClass.deferredStaticInitializations.Add((fieldName, initializerValue));
+                        parser.currentClass.deferredStaticInitializations.Add((fieldName, "value", initializerValue));
                     else
-                        parser.currentClass.deferredInitializations.Add((fieldName, initializerValue));
+                        parser.currentClass.deferredInitializations.Add((fieldName, "value", initializerValue));
                 }
 
                 if (parser.PropertyExistsInBuiltinBase(fieldName) != null)
                     continue;
-
-                if (!isStatic)
-                {
-                    var propertyDeclaration = CreateFieldDeclaration(fieldName, isStatic);
-                    parser.currentClass.Body.Add(propertyDeclaration);
-                }
             }
 
             return null;
@@ -320,7 +362,7 @@ namespace Keysharp.Scripting
 
         public override SyntaxNode VisitPropertySetterDefinition([NotNull] PropertySetterDefinitionContext context)
         {
-            return EnsureNoReturnStatement((BlockSyntax)VisitFunctionBody(context.functionBody()));
+            return (BlockSyntax)VisitFunctionBody(context.functionBody());
         }
 
         public override SyntaxNode VisitClassMethodDeclaration([NotNull] ClassMethodDeclarationContext context)
@@ -328,7 +370,7 @@ namespace Keysharp.Scripting
             var methodDefinition = context.methodDefinition();
             Visit(methodDefinition.functionHead());
             var rawMethodName = methodDefinition.functionHead().identifier().GetText();
-            var methodName = parser.currentFunc.Name = parser.NormalizeClassIdentifier(rawMethodName, eNameCase.Title);
+            var methodName = parser.currentFunc.Name = parser.NormalizeClassIdentifier(rawMethodName);
 
             var fieldName = methodName.ToLowerInvariant();
             var isStatic = context.Static() != null;
@@ -491,11 +533,16 @@ namespace Keysharp.Scripting
                         }.Concat(
                             parser.currentClass.deferredInitializations.Select(deferred =>
                                 SyntaxFactory.ExpressionStatement(
-                                    SyntaxFactory.AssignmentExpression(
-                                        SyntaxKind.SimpleAssignmentExpression,
-                                        SyntaxFactory.IdentifierName(deferred.Item1),
-                                        deferred.Item2
+                                ((InvocationExpressionSyntax)InternalMethods.SetPropertyValue)
+                                                .WithArgumentList(
+                                                    SyntaxFactory.ArgumentList(
+                                        SyntaxFactory.SeparatedList(new[] {
+                                            SyntaxFactory.Argument(SyntaxFactory.ThisExpression()),
+                                            SyntaxFactory.Argument(SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(deferred.Item1))),
+                                            SyntaxFactory.Argument(deferred.Item3)
+                                        })
                                     )
+                                )
                                 )
                             )
                         )
@@ -519,12 +566,12 @@ namespace Keysharp.Scripting
                         parser.currentClass.deferredStaticInitializations.Select(deferred =>
                             SyntaxFactory.ExpressionStatement(
                                 ((InvocationExpressionSyntax)InternalMethods.SetPropertyValue)
-                                .WithArgumentList(
-                                    SyntaxFactory.ArgumentList(
+                                                .WithArgumentList(
+                                                    SyntaxFactory.ArgumentList(
                                         SyntaxFactory.SeparatedList(new[] {
                                             SyntaxFactory.Argument(SyntaxFactory.ThisExpression()),
                                             SyntaxFactory.Argument(SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(deferred.Item1))),
-                                            SyntaxFactory.Argument(deferred.Item2)
+                                            SyntaxFactory.Argument(deferred.Item3)
                                         })
                                     )
                                 )
@@ -622,6 +669,8 @@ namespace Keysharp.Scripting
 
         private PropertyDeclarationSyntax CreateFieldDeclaration(string fieldName, bool isStatic)
         {
+            if (isStatic && !fieldName.StartsWith(Keywords.ClassStaticPrefix))
+                fieldName = Keywords.ClassStaticPrefix + fieldName;
             return SyntaxFactory.PropertyDeclaration(
                 SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword)), // Type is object
                 SyntaxFactory.Identifier(fieldName)
@@ -630,8 +679,7 @@ namespace Keysharp.Scripting
                 SyntaxFactory.TokenList(
                     new List<SyntaxToken>
                     {
-                isStatic ? SyntaxFactory.Token(SyntaxKind.StaticKeyword) : default,
-                SyntaxFactory.Token(SyntaxKind.PublicKeyword)
+                        SyntaxFactory.Token(SyntaxKind.PublicKeyword)
                     }
                     .Where(token => token != default)
                 )

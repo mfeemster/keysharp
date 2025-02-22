@@ -12,6 +12,7 @@ namespace Keysharp.Scripting
 			internal static MethodReference ExitApp => new (typeof(Flow), "ExitApp");
 			internal static MethodReference ExtendArray => new (typeof(Script), "ExtendArray");
 			internal static MethodReference ForceBool => new (typeof(Script), "ForceBool");
+			internal static MethodReference FlattenParam => new (typeof(Script), "FlattenParam");
 			internal static MethodReference Func => new (typeof(Functions), "Func");
 			internal static MethodReference GetMethodOrProperty => new (typeof(Script), "GetMethodOrProperty");
 			internal static MethodReference GetPropertyValue => new (typeof(Script), "GetPropertyValue");

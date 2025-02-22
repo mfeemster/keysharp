@@ -14,6 +14,8 @@ using System.IO;
 using System.Collections;
 using System.Xml.Linq;
 using System.Data.Common;
+using System.Reflection;
+using Antlr4.Runtime.Tree;
 
 namespace Keysharp.Scripting
 {
@@ -232,28 +234,50 @@ namespace Keysharp.Scripting
                     )
                 );
 
-                restoreBackupVariables = SyntaxFactory.ExpressionStatement(
-                    SyntaxFactory.AssignmentExpression(
-                        SyntaxKind.SimpleAssignmentExpression,
-                        SyntaxFactory.TupleExpression(
-                            SyntaxFactory.SeparatedList<ArgumentSyntax>(
-                                uniqueVariableNames.Select(name =>
-                                    SyntaxFactory.Argument(SyntaxFactory.IdentifierName(name))
+                if (uniqueVariableNames.Count == 1)
+                    restoreBackupVariables = SyntaxFactory.ExpressionStatement(
+                        SyntaxFactory.AssignmentExpression(
+                            SyntaxKind.SimpleAssignmentExpression,
+                            SyntaxFactory.IdentifierName(uniqueVariableNames[0]),
+                            SyntaxFactory.ElementAccessExpression(backupIdentifier)
+                                .WithArgumentList(
+                                    SyntaxFactory.BracketedArgumentList(
+                                        SyntaxFactory.SingletonSeparatedList(
+                                            SyntaxFactory.Argument(
+                                                SyntaxFactory.LiteralExpression(
+                                                    SyntaxKind.NumericLiteralExpression,
+                                                    SyntaxFactory.Literal(0)
+                                                )
+                                            )
+                                        )
+                                    )
                                 )
                             )
-                        ),
-                        SyntaxFactory.TupleExpression(
-                            SyntaxFactory.SeparatedList<ArgumentSyntax>(
-                                uniqueVariableNames.Select((_, index) =>
-                                    SyntaxFactory.Argument(
-                                        SyntaxFactory.ElementAccessExpression(backupIdentifier)
-                                        .WithArgumentList(
-                                            SyntaxFactory.BracketedArgumentList(
-                                                SyntaxFactory.SingletonSeparatedList(
-                                                    SyntaxFactory.Argument(
-                                                        SyntaxFactory.LiteralExpression(
-                                                            SyntaxKind.NumericLiteralExpression,
-                                                            SyntaxFactory.Literal(index)
+                        );
+                else
+                    restoreBackupVariables = SyntaxFactory.ExpressionStatement(
+                        SyntaxFactory.AssignmentExpression(
+                            SyntaxKind.SimpleAssignmentExpression,
+                            SyntaxFactory.TupleExpression(
+                                SyntaxFactory.SeparatedList<ArgumentSyntax>(
+                                    uniqueVariableNames.Select(name =>
+                                        SyntaxFactory.Argument(SyntaxFactory.IdentifierName(name))
+                                    )
+                                )
+                            ),
+                            SyntaxFactory.TupleExpression(
+                                SyntaxFactory.SeparatedList<ArgumentSyntax>(
+                                    uniqueVariableNames.Select((_, index) =>
+                                        SyntaxFactory.Argument(
+                                            SyntaxFactory.ElementAccessExpression(backupIdentifier)
+                                            .WithArgumentList(
+                                                SyntaxFactory.BracketedArgumentList(
+                                                    SyntaxFactory.SingletonSeparatedList(
+                                                        SyntaxFactory.Argument(
+                                                            SyntaxFactory.LiteralExpression(
+                                                                SyntaxKind.NumericLiteralExpression,
+                                                                SyntaxFactory.Literal(index)
+                                                            )
                                                         )
                                                     )
                                                 )
@@ -263,7 +287,6 @@ namespace Keysharp.Scripting
                                 )
                             )
                         )
-                    )
                 );
             }
 
@@ -479,34 +502,36 @@ namespace Keysharp.Scripting
             // Collect loop variable names (e.g., `x`, `y` in `for x, y in arr`)
             var parameters = context.forInParameters();
             List<string> variableNames = new();
-            var lastParamText = ",";
+            var lastParamType = MainLexer.Comma;
             foreach (var parameter in parameters.children)
             {
-                var paramText = parameter.GetText();
-                if (paramText == "(" || paramText == ")")
+                var paramType = MainLexer.Identifier;
+                if (parameter is ITerminalNode node)
+                    paramType = node.Symbol.Type;
+
+                if (paramType == MainLexer.OpenParen || paramType == MainLexer.CloseParen || paramType == MainLexer.WS)
                     continue;
-                if (paramText.Equals("in", StringComparison.InvariantCultureIgnoreCase))
+                if (paramType == MainLexer.In)
                 {
-                    if (lastParamText == ",")
+                    if (lastParamType == MainLexer.Comma)
                         variableNames.Add("_");
                     break;
                 }
-                if (paramText == ",")
+                if (paramType == MainLexer.Comma)
                 {
-                    if (lastParamText == ",")
+                    if (lastParamType == MainLexer.Comma)
                         variableNames.Add("_");
                 }
                 else
                 {
+                    var paramText = parameter.GetText();
                     var variableName = NormalizeIdentifier(paramText);
                     parser.MaybeAddVariableDeclaration(variableName);
                     variableNames.Add(variableName);
                 }
-                lastParamText = paramText;
+                lastParamType = paramType;
             }
             var variableNameCount = variableNames.Count;
-            while (variableNames.Count < 2)
-                variableNames.Add("_");
 
             if (variableNames.Any(name => name == "_"))
                 parser.MaybeAddVariableDeclaration("_");
@@ -795,6 +820,7 @@ namespace Keysharp.Scripting
         public override SyntaxNode VisitTryStatement([NotNull] TryStatementContext context)
         {
             parser.tryDepth++;
+            var prevExceptionIdentifierName = exceptionIdentifierName;
             var elseClaudeIdentifier = "_ks_trythrew_" + parser.tryDepth.ToString();
             // Generate the try block
             var tryBlock = EnsureBlockSyntax(Visit(context.statement()));
@@ -917,6 +943,7 @@ namespace Keysharp.Scripting
             }
 
             parser.tryDepth--;
+            exceptionIdentifierName = prevExceptionIdentifierName;
 
             if (exceptionVariableDeclaration != null)
             {

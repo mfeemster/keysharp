@@ -53,9 +53,10 @@ preprocessor_expression
     returns[String value]
     : True { this.OnPreprocessorExpressionTrue(); }
     | False { this.OnPreprocessorExpressionFalse(); }
+    | Digits { this.OnPreprocessorExpressionDigits(); }
     | ConditionalSymbol { this.OnPreprocessorExpressionConditionalSymbol(); }
     | OpenParen expr = preprocessor_expression CloseParen { this.OnPreprocessorExpressionConditionalOpenParens(); }
-    | Hashtag expr = preprocessor_expression { this.OnPreprocessorExpressionConditionalBang(); }
+    | Not expr = preprocessor_expression { this.OnPreprocessorExpressionConditionalNot(); }
     | expr1 = preprocessor_expression IdentityEquals expr2 = preprocessor_expression { this.OnPreprocessorExpressionConditionalEq(); }
     | expr1 = preprocessor_expression NotEquals expr2 = preprocessor_expression { this.OnPreprocessorExpressionConditionalNe(); }
     | expr1 = preprocessor_expression And expr2 = preprocessor_expression { this.OnPreprocessorExpressionConditionalAnd(); }
