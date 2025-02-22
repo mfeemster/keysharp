@@ -261,3 +261,14 @@ second(args)
 }
 
 first("hello")
+
+; Test constructing a map with the last parameter being an arry with the spread operator.
+arr := ["one", 1, "two", 2]
+m := Map("three", 3, arr*)
+
+if (m["one"] == 1 &&
+	m["two"] == 2 &&
+	m["three"] == 3)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"

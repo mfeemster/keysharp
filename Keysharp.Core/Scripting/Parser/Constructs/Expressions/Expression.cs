@@ -264,9 +264,10 @@ namespace Keysharp.Scripting
 					if (lastisstar)
 					{
 						invoke.Parameters.AddRange(passed.Take(passed.Length - 1).ToArray());
-						var combineExpr = (CodeMethodInvokeExpression)InternalMethods.FlattenParam;
-						_ = combineExpr.Parameters.Add(passed[passed.Length - 1]);
-						_ = invoke.Parameters.Add(combineExpr);
+						var flatten = (CodeMethodInvokeExpression)InternalMethods.FlattenParam;
+						_ = flatten.Parameters.Add(passed[passed.Length - 1]);
+						_ = invoke.Parameters.Add(flatten);
+						allMethodCalls[typeStack.Peek()].GetOrAdd(Scope.ToLower()).Add(flatten);
 					}
 					else
 						invoke.Parameters.AddRange(passed);
@@ -634,7 +635,6 @@ namespace Keysharp.Scripting
 
 						if (part == "[*")//Special case for accessing a property. This is similar to the array construction one below, but different enough to warrant its own section.
 						{
-							//var closing = parts.FirstIndexOf(ob => ob.ToString() == "*]", n);
 							var closing = parts.FindIndex(n, ob => ob.ToString() == "*]");
 
 							if (closing != -1)
@@ -757,14 +757,15 @@ namespace Keysharp.Scripting
 											isVariadic = true;
 											var nostararr = temparr.Take(temparr.Length - 1).ToArray();
 											var nostarcode = string.Join("", nostararr.Select((p) => p.ToString())).TrimEnd('*');
-											var tempexpr = ParseMultiExpression(codeLine, nostarcode, nostararr, create);
-											nostarcode = Ch.CodeToString(tempexpr[0]);
-											paramExprs.Add(new CodeSnippetExpression($"..Keysharp.Scripting.Script.FlattenParam({nostarcode})"));
+											var tempexpr = ParseMultiExpression(codeLine, nostarcode, nostararr, false);//Don't create variables unless they were explicitly assignments. This allows direct function references, cases corrected later in Parser.cs.
+											var tempexpr0 = tempexpr[0];
+											tempexpr0.UserData["variadic"] = isVariadic;
+											paramExprs.Add(tempexpr0);
 										}
 										else
 										{
 											var tempcode = string.Join("", temparr.Select((p) => p.ToString()));
-											var tempexpr = ParseMultiExpression(codeLine, tempcode, temparr, create);
+											var tempexpr = ParseMultiExpression(codeLine, tempcode, temparr, false);
 											paramExprs.AddRange(tempexpr);
 										}
 									}
@@ -774,17 +775,14 @@ namespace Keysharp.Scripting
 									argi += tempi + 1;//Account for the comma.
 								}
 
-								if (isVariadic)
-								{
-									parts[i] = new CodeObjectCreateExpression(typeof(Core.Array), new CodeSnippetExpression($"[{string.Join<object>(',', paramExprs.Select(pe => Ch.CodeToString(pe)))}]"));
-								}
-								else
-								{
 									if (paren.Count > 0 && paren[paren.Count - 1].ToString() == ",")
 										paramExprs.Add(nullPrimitive);
 
-									parts[i] = new CodeObjectCreateExpression(typeof(Core.Array), new CodeArrayCreateExpression(typeof(object[]), paramExprs.ToArray()));
-								}
+								var coce = new CodeObjectCreateExpression(typeof(Core.Array), [..paramExprs]);
+								coce.UserData["origtype"] = typeStack.Peek();//Needed later when properly casing direct function references.
+								coce.UserData["origscope"] = Scope;
+								arrayCreations.Add(coce);
+								parts[i] = coce;
 							}
 						}
 					}
@@ -865,11 +863,11 @@ namespace Keysharp.Scripting
 									//Allow for the declaration of a variable at the same time it's passed to a function call.
 									//But ensure it wasn't an assignment/declaration statement of a named lambda like:
 									//lam := lambdafunc(a, b) => a * b
-									if (i == 0
-											|| i == args.Count - 1//Allows for assigning simple function result: val := func(x := 123)
-											|| parts[i - 1] is not CodeBinaryOperatorType cbot
-											|| cbot != CodeBinaryOperatorType.Assign
-									   )
+									//if (i == 0
+									//      || i == args.Count - 1//Allows for assigning simple function result: val := func(x := 123)
+									//      || parts[i - 1] is not CodeBinaryOperatorType cbot
+									//      || cbot != CodeBinaryOperatorType.Assign
+									//   )
 									{
 										var tp = typeStack.Peek();
 										CodeVariableReferenceExpression cvre = null;
@@ -879,7 +877,7 @@ namespace Keysharp.Scripting
 										else if (cboe != null && cboe.Left is CodeVariableReferenceExpression cvre3)
 											cvre = cvre3;
 
-										//If it was an assignment, and not a reference, the variable needs to be created.
+										//If it was an assignment or a reference, the variable needs to be created.
 										if (cvre != null
 												&& (wasRef || wasAssign)//Only create the variable if it was a reference and/or and assignment.
 												&& !VarExistsAtCurrentOrParentScope(tp, scope, cvre.VariableName)
@@ -889,7 +887,6 @@ namespace Keysharp.Scripting
 										   )
 											allVars[typeStack.Peek()].GetOrAdd(scope)[cvre.VariableName] = emptyStringPrimitive;
 									}
-
 									passed.Add(argExpr);
 								}
 							}
