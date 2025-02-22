@@ -475,7 +475,7 @@ class mymapclass1 extends map
 		}
 	}
 
-	__item[a, b]
+	__item[A, B] ;Change case on purpose.
 	{
 		get
 		{

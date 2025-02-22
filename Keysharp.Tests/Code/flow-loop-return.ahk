@@ -192,7 +192,7 @@ ffu3()
 
 ; test this here because this test is run outside of a function. 
 arr := [10, 20, 30]
-loopvar := 0 ; Test global var having the same name as the loop var. Ensure they are separate.
+loopvar := 0 ; Test global var having the same name as the loop var. Ensure they are the same variable.
 
 for (loopvar in arr)
 {

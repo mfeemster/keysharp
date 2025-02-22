@@ -25,7 +25,7 @@ class testclass
 		}
 	}
 
-	__Item[x]
+	__Item[X] ;Change case on purpose.
 	{
 		get
 		{

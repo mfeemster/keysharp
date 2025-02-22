@@ -1,4 +1,4 @@
-; Return true to continue enumerating, false to stop
+﻿; Return true to continue enumerating, false to stop
 EnumFunc(&x) {
     static i := 0
     x := ++i
@@ -42,6 +42,15 @@ for i in EnumFunc {
 }
 
 if (a == 6)
+    FileAppend "pass", "*"
+else
+    FileAppend "fail", "*"
+
+a := 0
+; Using the spread operator calls either the enumerator function, or __Enum(1)
+a := [EnumFunc*].Length
+
+if (a == 3)
     FileAppend "pass", "*"
 else
     FileAppend "fail", "*"
@@ -105,14 +114,22 @@ if (a[3] == 3)
     FileAppend "pass", "*"
 else
     FileAppend "fail", "*"
-    /*
+
 a := 0
-; And now the first argument is ignored
-bfo := o.__Enum(2).Bind(&_)
-a := [bfo*]
+; And now the first argument is ignored.
+a := [o.__Enum(2).Bind(&_)*]
 
 if (a[3] == 6)
     FileAppend "pass", "*"
 else
     FileAppend "fail", "*"
-    */
+    
+try {
+    ; Incorrect number of parameters should throw.
+    for i, j in EnumFunc {
+        a += i
+    }
+    FileAppend "fail", "*"
+} catch {
+    FileAppend "pass", "*"
+}

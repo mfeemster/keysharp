@@ -190,6 +190,7 @@ namespace Keysharp.Scripting
 		private readonly tsmd allMethodCalls = [];
 		private readonly Stack<bool> allStaticVars = new ();
 		private readonly Dictionary<CodeTypeDeclaration, Dictionary<string, OrderedDictionary<string, CodeExpression>>> allVars = [];//Needs to be ordered so that code variables are generated in the order they were declared.
+		private readonly List<CodeObjectCreateExpression> arrayCreations = [];
 		private readonly CodeAttributeDeclarationCollection assemblyAttributes = [];
 		private readonly Dictionary<CodeExpression, CodeSnippetExpression> assignSnippets = [];
 		private readonly Stack<CodeBlock> blocks = new ();
@@ -788,7 +789,7 @@ namespace Keysharp.Scripting
 							}
 
 							HandleAllVariadicParams(cmie);
-							var funccmie = new CodeMethodInvokeExpression((CodeMethodReferenceExpression)InternalMethods.Func, new CodeVariableReferenceExpression(cmie.Method.MethodName));
+							var funccmie = new CodeMethodInvokeExpression((CodeMethodReferenceExpression)InternalMethods.Func, new CodeVariableReferenceExpression(cmie.Method.MethodName.ToLower()));
 							cmie.Method = new CodeMethodReferenceExpression(funccmie, callFuncName);
 						}
 						else if (GetUserDefinedTypename(cmie.Method.MethodName) is CodeTypeDeclaration ctd && ctd.Name.Length > 0)//Convert myclass() to myclass.Call().
@@ -831,9 +832,7 @@ namespace Keysharp.Scripting
 												cmie.Parameters[i] = new CodeSnippetExpression($"ref {refVarName}");
 											}
 											else
-											{
 												cmie.Parameters[i] = new CodeSnippetExpression(defValStr);
-											}
 										}
 										else if (mp.Direction == FieldDirection.Ref)//Ref with no default. Null can't be passed, so just pass a ref to a dummy variable.
 										{
@@ -994,6 +993,32 @@ namespace Keysharp.Scripting
 				}
 			}
 
+			foreach (var arrayCreation in arrayCreations)
+			{
+				for (var ai = 0; ai < arrayCreation.Parameters.Count; ++ai)
+				{
+					var p = arrayCreation.Parameters[ai];
+					var isVariadic = p.UserData["variadic"] is bool b && b;
+
+					if (p is CodeVariableReferenceExpression cvre)
+					{
+						var type = cvre.UserData["origtype"] is CodeTypeDeclaration ctd ? ctd : targetClass;
+						var scope = cvre.UserData["origscope"] as string;
+						arrayCreation.Parameters[ai] = ReevaluateCodeVariableReference(type, scope, cvre);
+					}
+
+					if (isVariadic)//Any element can be variadic in an array construction.
+					{
+						var spreadCode = Ch.CodeToString(arrayCreation.Parameters[ai]);
+						arrayCreation.Parameters[ai] = new CodeSnippetExpression($"..Keysharp.Scripting.Script.FlattenParam({spreadCode})");
+					}
+				}
+
+				var paramsSnippet = new CodeSnippetExpression($"[{string.Join<object>(", ", arrayCreation.Parameters.Cast<CodeExpression>().Select(pe => Ch.CodeToString(pe)))}]");
+				arrayCreation.Parameters.Clear();
+				_ = arrayCreation.Parameters.Add(paramsSnippet);
+			}
+
 			if (createDummyRef)
 			{
 				_ = targetClass.Members.Add(new CodeSnippetTypeMember()
@@ -1132,7 +1157,6 @@ namespace Keysharp.Scripting
 		}
 
 		public CodeCompileUnit Parse(TextReader codeStream) => Parse(codeStream, string.Empty);
-
 		public CodeCompileUnit Parse(TextReader codeStream, string nm)
 		{
 			name = nm;
@@ -1282,9 +1306,7 @@ namespace Keysharp.Scripting
 
 			return GenerateCompileUnit();
 		}
-
 		internal bool InClassDefinition() => typeStack.Count > 0 && typeStack.Peek().Name != mainClassName;
-
 		private CodeTypeDeclaration AddType(string typename)
 		{
 			var ctd = new CodeTypeDeclaration(typename)
@@ -1310,7 +1332,6 @@ namespace Keysharp.Scripting
 			allMethodCalls[ctd] = [];
 			return ctd;
 		}
-
 		private void CheckPersistent(string name)
 		{
 			if (Persistent)
@@ -1319,7 +1340,6 @@ namespace Keysharp.Scripting
 			if (persistentTerms.Contains(name))
 				Persistent = true;
 		}
-
 		private CodeTypeDeclaration FindUserDefinedType(string typeName)
 		{
 			foreach (CodeTypeMember type in targetClass.Members)
@@ -1329,7 +1349,6 @@ namespace Keysharp.Scripting
 
 			return null;
 		}
-
 		private CodeTypeDeclaration GetUserDefinedTypename(string typeName)
 		{
 			foreach (CodeTypeMember type in targetClass.Members)
@@ -1339,7 +1358,6 @@ namespace Keysharp.Scripting
 
 			return null;
 		}
-
 		private CodeMemberMethod MethodExistsInTypeOrBase(string t, string m)
 		{
 			if (methods.Count > 0)
@@ -1375,7 +1393,6 @@ namespace Keysharp.Scripting
 
 			return null;
 		}
-
 		private (bool, PropertyInfo) PropExistsInBuiltInClass(string baseType, string p, int paramCount)
 		{
 			if (Reflections.stringToTypeProperties.TryGetValue(p, out var props))
@@ -1397,7 +1414,6 @@ namespace Keysharp.Scripting
 
 			return (false, null);
 		}
-
 		private (bool, string, List<CommonParameterInfo>) PropExistsInTypeOrBase(string t, string p, int paramCount)
 		{
 			if (properties.Count > 0)
@@ -1477,7 +1493,6 @@ namespace Keysharp.Scripting
 
 			return (false, "", []);
 		}
-
 		private (bool, PropertyInfo) PropExistsInTypeOrBase(Type t, string p, int paramCount)
 		{
 			while (t != null)
@@ -1494,7 +1509,6 @@ namespace Keysharp.Scripting
 
 			return (false, null);
 		}
-
 		private void SetLineIndexes()
 		{
 			var i = 0;
@@ -1502,7 +1516,6 @@ namespace Keysharp.Scripting
 			foreach (var line in codeLines)
 				line.LineNumber = i++;
 		}
-
 		private bool TypeExistsAtCurrentOrParentScope(CodeTypeDeclaration currentType, string currentScope, string varName)
 		{
 			foreach (CodeTypeDeclaration type in mainNs.Types)
@@ -1516,7 +1529,6 @@ namespace Keysharp.Scripting
 
 			return false;
 		}
-
 		private CodeExpression ReevaluateCodeVariableReference(CodeTypeDeclaration ctd, string scope, CodeVariableReferenceExpression cvre)
 		{
 			var doThis = false;
@@ -1557,7 +1569,6 @@ namespace Keysharp.Scripting
 
 			return cvre;
 		}
-
 		private void HandleAllVariadicParams(CodeMethodInvokeExpression cmie)
 		{
 			var pces = cmie.Parameters.Cast<CodeExpression>();
@@ -1570,12 +1581,11 @@ namespace Keysharp.Scripting
 			if (lastisstar && pces.Count() > 1)
 			{
 				var argStrings = pces.Select(ce => ce == pces.Last() ? $"..{Ch.CodeToString(ce)}" : Ch.CodeToString(ce)).ToList();
-				var finalArgStr = $"[{string.Join(',', argStrings)}]";
+				var finalArgStr = $"[{string.Join(", ", argStrings)}]";
 				cmie.Parameters.Clear();
 				_ = cmie.Parameters.Add(new CodeSnippetExpression(finalArgStr));
 			}
 		}
-
 		private void HandleAllVariadicParams(CodeMethodInvokeExpression cmie, CodeMemberMethod cmm)
 		{
 			//Method that was declared.
@@ -1593,12 +1603,11 @@ namespace Keysharp.Scripting
 			if (lastDeclIsStar && lastCalledIsStar && pces.Count() > 1)
 			{
 				var argStrings = pces.Select(ce => ce == pces.Last() ? $"..{Ch.CodeToString(ce)}" : Ch.CodeToString(ce)).ToList();
-				var finalArgStr = $"[{string.Join(',', argStrings)}]";
+				var finalArgStr = $"[{string.Join(", ", argStrings)}]";
 				cmie.Parameters.Clear();
 				_ = cmie.Parameters.Add(new CodeSnippetExpression(finalArgStr));
 			}
 		}
-
 		private void HandlePartialVariadicParams(CodeMethodInvokeExpression cmie, CodeMemberMethod cmm)
 		{
 			//Method that was declared.
@@ -1623,7 +1632,7 @@ namespace Keysharp.Scripting
 					var callNonVariadic = pces.SkipLast(indexOfDeclStar);
 					var callVariadic = pces.Skip(indexOfDeclStar);
 					var argStrings = callVariadic.Select(ce => ce == callVariadic.Last() ? $"..{Ch.CodeToString(ce)}" : Ch.CodeToString(ce)).ToList();
-					var finalArgStr = $"[{string.Join(',', argStrings)}]";
+					var finalArgStr = $"[{string.Join(", ", argStrings)}]";
 
 					while (cmie.Parameters.Count > indexOfDeclStar)
 						cmie.Parameters.Remove(cmie.Parameters[cmie.Parameters.Count - 1]);
@@ -1632,7 +1641,6 @@ namespace Keysharp.Scripting
 				}
 			}
 		}
-
 		private void HandlePartialVariadicParams(CodeMethodInvokeExpression cmie, MethodInfo mi)
 		{
 			//Method that was declared.
@@ -1657,7 +1665,7 @@ namespace Keysharp.Scripting
 					var callNonVariadic = pces.SkipLast(indexOfDeclStar);
 					var callVariadic = pces.Skip(indexOfDeclStar);
 					var argStrings = callVariadic.Select(ce => ce == callVariadic.Last() ? $"..{Ch.CodeToString(ce)}" : Ch.CodeToString(ce)).ToList();
-					var finalArgStr = $"[{string.Join(',', argStrings)}]";
+					var finalArgStr = $"[{string.Join(", ", argStrings)}]";
 
 					while (cmie.Parameters.Count > indexOfDeclStar)
 						cmie.Parameters.Remove(cmie.Parameters[cmie.Parameters.Count - 1]);
@@ -1666,7 +1674,6 @@ namespace Keysharp.Scripting
 				}
 			}
 		}
-
 		private bool VarExistsAtCurrentOrParentScope(CodeTypeDeclaration currentType, string currentScope, string varName)
 		{
 			if (allVars.TryGetValue(currentType, out var typeFuncs))
@@ -1726,7 +1733,6 @@ namespace Keysharp.Scripting
 
 			return false;
 		}
-
 		internal class CommonParameterInfo
 		{
 			internal bool IsVariadic { get; private set; }
