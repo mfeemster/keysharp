@@ -152,7 +152,14 @@
 		public static TypeError TypeError(params object[] args) => new (args);
 
 		/// <summary>
-		/// Creates and returns a new <see cref="TypUnsetItemErroreError"/> exception object.
+		/// Creates and returns a new <see cref="UnsetError"/> exception object.
+		/// </summary>
+		/// <param name="args">The the parameters to pass to the constructor.</param>
+		/// <returns>An <see cref="UnsetError"/> object.</returns>
+		public static UnsetItemError UnsetError(params object[] args) => new (args);
+
+		/// <summary>
+		/// Creates and returns a new <see cref="UnsetItemError"/> exception object.
 		/// </summary>
 		/// <param name="args">The the parameters to pass to the constructor.</param>
 		/// <returns>An <see cref="UnsetItemError"/> object.</returns>

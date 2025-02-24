@@ -570,6 +570,8 @@ namespace Keysharp.Scripting
 			return false;
 		}
 
+		internal static bool IsNumericString(ReadOnlySpan<char> str) => long.TryParse(str, out _) || double.TryParse(str, out _);
+
 		internal bool IsVariable(string code) => IsIdentifier(code, true)&& !IsKeyword(code);
 
 		internal List<object> SplitTokens(CodeLine codeLine, string code)
@@ -633,7 +635,7 @@ namespace Keysharp.Scripting
 					{
 						sym = code[i];
 
-						if ((sym == 'e' || sym == 'E') && IsPrimitiveObject(id.ToString()) && id.ToString().IndexOf("0x") != 0 && i + 1 < code.Length)
+						if ((sym == 'e' || sym == 'E') && IsNumericString(id.ToString().AsSpan()) && id.ToString().IndexOf("0x") != 0 && i + 1 < code.Length)//IsPrimitiveObject(id.ToString()) && id.Length == code.Length && id.ToString().IndexOf("0x") != 0 && i + 1 < code.Length)
 						{
 							_ = id.Append(sym);
 							sym = code[++i];
