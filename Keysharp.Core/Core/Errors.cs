@@ -156,7 +156,7 @@
 		/// </summary>
 		/// <param name="args">The the parameters to pass to the constructor.</param>
 		/// <returns>An <see cref="UnsetError"/> object.</returns>
-		public static UnsetItemError UnsetError(params object[] args) => new (args);
+		public static UnsetError UnsetError(params object[] args) => new (args);
 
 		/// <summary>
 		/// Creates and returns a new <see cref="UnsetItemError"/> exception object.
