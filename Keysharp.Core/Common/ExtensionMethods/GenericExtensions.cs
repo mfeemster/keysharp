@@ -189,7 +189,6 @@
 				var inst = obj.Length > 0 ? obj[0].GetControl() : null;
 				//lock (ehLock)
 				{
-					var oldHandle = Script.HwndLastUsed;
 					var oldEventInfo = Accessors.A_EventInfo;
 					var (pushed, tv) = Threads.BeginThread();
 
@@ -215,8 +214,6 @@
 							_ = Threads.EndThread(true);
 						}, true);//Pop on exception because EndThread() above won't be called.
 					}
-
-					Script.HwndLastUsed = oldHandle;
 				}
 			}
 
