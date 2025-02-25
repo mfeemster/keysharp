@@ -141,7 +141,7 @@
 		/// <summary>
 		/// The implementation for <see cref="KeysharpObject.super"/> for this class to return this type.
 		/// </summary>
-		public new (Type, object) super => (typeof(Map), this);
+		public new (Type, object) super => (typeof(KeysharpObject), this);
 
 		/// <summary>
 		/// The implementation for <see cref="ICollection.SyncRoot"/> which just calls map.SyncRoot.

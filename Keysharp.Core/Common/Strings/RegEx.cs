@@ -7,7 +7,7 @@
 		public object Mark => match.Groups.Count > 0 ? match.Groups[ ^ 1].Name : "";
 		public object Success => match.Success;
 
-		public new (Type, object) super => (typeof(RegExResults), this);
+		public new (Type, object) super => (typeof(KeysharpObject), this);
 
 		public RegExResults(params object[] args) => _ = __New(args);
 

@@ -509,7 +509,7 @@ namespace Keysharp.Scripting
 								//The reason for this cast is so that a variadic parameter inside of one function can be
 								//passed as a non-variadic param in another function. It's a very rare corner case, and litters
 								//the generated code with casts, but it makes things technically correct and the same as AHK.
-								//Another benefit is that it allows passing null/unset as the single argument to a dynamically
+								//Another benefit is that it allows passing null/unset as the last argument to a dynamically
 								//invoked function. It does so by casting to an object, which then gets passed as an object[].
 								//Otherwise it would just be a null which wouldn't work.
 								if (!lastisstar && invoke.Parameters.Count > 0)

@@ -306,7 +306,7 @@
 
 		internal StatusStrip StatusBar { get; set; }
 
-		public new (Type, object) super => (typeof(Gui), this);
+		public new (Type, object) super => (typeof(KeysharpObject), this);
 
 		public Gui(params object[] args) => _ = __New(args);
 

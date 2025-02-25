@@ -101,7 +101,7 @@
 		/// <summary>
 		/// The implementation for <see cref="KeysharpObject.super"/> for this class to return this type.
 		/// </summary>
-		public new (Type, object) super => (typeof(Array), this);
+		public new (Type, object) super => (typeof(KeysharpObject), this);
 
 		/// <summary>
 		/// The implementation for <see cref="ICollection.SyncRoot"/> which returns array.SyncRoot.
