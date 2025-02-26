@@ -1,6 +1,33 @@
 ﻿namespace Keysharp.Core
 {
 	/// <summary>
+	/// A comparer which uses an <see cref="IFuncObj"/> to compare two objects.
+	/// This is used in <see cref="Array.Sort"/>.
+	/// </summary>
+	internal class FuncObjComparer : IComparer<object>
+	{
+		/// <summary>
+		/// The function object to use in the comparison.
+		/// </summary>
+		private readonly IFuncObj ifo;
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="FuncObjComparer"/> class.
+		/// </summary>
+		/// <param name="f">The <see cref="IFuncObj"/> to use in the comparison.</param>
+		public FuncObjComparer(IFuncObj f) => ifo = f;
+
+		/// <summary>
+		/// The implementation for <see cref="IComparer.Compare"/> which internally calls the
+		/// underlying <see cref="IFuncObj"/> to do the comparison.
+		/// </summary>
+		/// <param name="left">The left object to compare.</param>
+		/// <param name="right">The right object to compare.</param>
+		/// <returns>An <see cref="int"/>-1 if left is less than right, 0 if left equals right, otherwise 1.</returns>
+		public int Compare(object left, object right) => ifo.Call(left, right).Ai();
+	}
+
+	/// <summary>
 	/// Array class that wraps a <see cref="List{object}"/>.<br/>
 	/// Internally the list uses 0-based indexing, however the public interface expects 1-based indexing.<br/>
 	/// A negative index can be used to address elements in reverse, so -1 is the last element, -2 is the second last element, and so on.
@@ -53,16 +80,6 @@
 		public object Default { get; set; }
 
 		/// <summary>
-		/// The implementation for <see cref="IList.IsFixedSize"/> which returns array.IsFixedSize.
-		/// </summary>
-		bool IList.IsFixedSize => ((IList)array).IsFixedSize;
-
-		/// <summary>
-		/// The implementation for <see cref="IList.IsReadOnly"/> which returns array.IsReadOnly.
-		/// </summary>
-		bool IList.IsReadOnly => ((IList)array).IsReadOnly;
-
-		/// <summary>
 		/// Get or sets the length of an array.<br/>
 		/// The length includes elements which have no value.<br/>
 		/// Increasing the length changes which indices are considered valid,
@@ -94,14 +111,24 @@
 		}
 
 		/// <summary>
-		/// The implementation for <see cref="ICollection.IsSynchronized"/> which returns array.IsSynchronized.
-		/// </summary>
-		bool ICollection.IsSynchronized => ((ICollection)array).IsSynchronized;
-
-		/// <summary>
 		/// The implementation for <see cref="KeysharpObject.super"/> for this class to return this type.
 		/// </summary>
 		public new (Type, object) super => (typeof(KeysharpObject), this);
+
+		/// <summary>
+		/// The implementation for <see cref="IList.IsFixedSize"/> which returns array.IsFixedSize.
+		/// </summary>
+		bool IList.IsFixedSize => ((IList)array).IsFixedSize;
+
+		/// <summary>
+		/// The implementation for <see cref="IList.IsReadOnly"/> which returns array.IsReadOnly.
+		/// </summary>
+		bool IList.IsReadOnly => ((IList)array).IsReadOnly;
+
+		/// <summary>
+		/// The implementation for <see cref="ICollection.IsSynchronized"/> which returns array.IsSynchronized.
+		/// </summary>
+		bool ICollection.IsSynchronized => ((ICollection)array).IsSynchronized;
 
 		/// <summary>
 		/// The implementation for <see cref="ICollection.SyncRoot"/> which returns array.SyncRoot.
@@ -113,6 +140,22 @@
 		/// See <see cref="__New(object[])"/>.
 		/// </summary>
 		public Array(params object[] args) => _ = __New(args);
+
+		/// <summary>
+		/// Translates a 1-based index which allows negative nubmers to a 0-based positive only index.<br/>
+		/// This is used internally to do index conversions.
+		/// </summary>
+		/// <param name="i">The index to translate.</param>
+		/// <returns>The translated index, else -1 if out of bounds.</returns>
+		private int TranslateIndex(int i)
+		{
+			if (i > 0 && i <= array.Count)
+				return i - 1;
+			else if (i < 0 && i >= -array.Count)
+				return array.Count + i;
+			else
+				return -1;
+		}
 
 		/// <summary>
 		/// Gets the enumerator object which returns a position,value tuple for each element
@@ -197,14 +240,6 @@
 		/// <param name="value">The value to search for.</param>
 		/// <returns>True if the value was found, else false.</returns>
 		public bool Contains(object value) => array.Contains(value);
-
-		/// <summary>
-		/// The implementation for <see cref="ICollection.CopyTo"/> which copies the elements<br/>
-		/// of the this array to the passed in <see cref="System.Array"/>, starting at the passed in index.
-		/// </summary>
-		/// <param name="array">The <see cref="System.Array"/> to copy elements to.</param>
-		/// <param name="index">The index to start copying to.</param>
-		void ICollection.CopyTo(System.Array array, int index) => ((ICollection)this.array).CopyTo(array, index);
 
 		/// <summary>
 		/// Removes the value of an array element, leaving the index without a value.<br/>
@@ -735,6 +770,14 @@
 		}
 
 		/// <summary>
+		/// The implementation for <see cref="ICollection.CopyTo"/> which copies the elements<br/>
+		/// of the this array to the passed in <see cref="System.Array"/>, starting at the passed in index.
+		/// </summary>
+		/// <param name="array">The <see cref="System.Array"/> to copy elements to.</param>
+		/// <param name="index">The index to start copying to.</param>
+		void ICollection.CopyTo(System.Array array, int index) => ((ICollection)this.array).CopyTo(array, index);
+
+		/// <summary>
 		/// The implementation for <see cref="IEnumerable.GetEnumerator"/> which just calls <see cref="__Enum"/>.
 		/// </summary>
 		/// <returns><see cref="ArrayIndexValueIterator"/></returns>
@@ -746,22 +789,6 @@
 		/// </summary>
 		/// <param name="index">The index to pass to <see cref="RemoveAt"/>.</param>
 		void IList.RemoveAt(int index) => RemoveAt([index]);
-
-		/// <summary>
-		/// Translates a 1-based index which allows negative nubmers to a 0-based positive only index.<br/>
-		/// This is used internally to do index conversions.
-		/// </summary>
-		/// <param name="i">The index to translate.</param>
-		/// <returns>The translated index, else -1 if out of bounds.</returns>
-		private int TranslateIndex(int i)
-		{
-			if (i > 0 && i <= array.Count)
-				return i - 1;
-			else if (i < 0 && i >= -array.Count)
-				return array.Count + i;
-			else
-				return -1;
-		}
 
 		/// <summary>
 		/// Indexer which retrieves or sets the value of an array element.
@@ -828,6 +855,12 @@
 		private int position = -1;
 
 		/// <summary>
+		/// Cache for iterators with either 1 or 2 parameters.
+		/// This prevents reflection from having to always be done to find the Call method.
+		/// </summary>
+		private static FuncObj[] IteratorCache = new FuncObj[2];
+
+		/// <summary>
 		/// The implementation for <see cref="IEnumerator.Current"/> which gets the index,value tuple at the current iterator position.
 		/// </summary>
 		public (object, object) Current
@@ -863,13 +896,27 @@
 		{
 			arr = a;
 			Error err;
-			var fo = new FuncObj("Call", this, Count);
+			c = c <= 1 ? 0 : 1;
+			var p = IteratorCache[c];
 
-			if (fo.IsValid)
-				CallFunc = fo;
-			else
-				_ = Errors.ErrorOccurred(err = new MethodError($"Existing function object was invalid.")) ? throw err : "";
+			if (p == null)
+			{
+				IteratorCache[c] = p = new FuncObj("Call", this, Count);
+
+				if (!p.IsValid)
+					_ = Errors.ErrorOccurred(err = new MethodError($"Existing function object was invalid.")) ? throw err : "";
+			}
+
+			var fo = (FuncObj)p.Clone();
+			fo.Inst = this;
+			CallFunc = fo;
 		}
+
+		/// <summary>
+		/// Gets the enumerator which is just this.
+		/// </summary>
+		/// <returns>this as an <see cref="IEnumerator{(object, object)}"/>.</returns>
+		private IEnumerator<(object, object)> GetEnumerator() => this;
 
 		/// <summary>
 		/// Calls <see cref="Current"/> and places the position value in the passed in object reference.
@@ -923,38 +970,5 @@
 		/// The implementation for <see cref="IEnumerator.Reset"/> which resets the iterator.
 		/// </summary>
 		public void Reset() => position = -1;
-
-		/// <summary>
-		/// Gets the enumerator which is just this.
-		/// </summary>
-		/// <returns>this as an <see cref="IEnumerator{(object, object)}"/>.</returns>
-		private IEnumerator<(object, object)> GetEnumerator() => this;
-	}
-
-	/// <summary>
-	/// A comparer which uses an <see cref="IFuncObj"/> to compare two objects.
-	/// This is used in <see cref="Array.Sort"/>.
-	/// </summary>
-	internal class FuncObjComparer : IComparer<object>
-	{
-		/// <summary>
-		/// The function object to use in the comparison.
-		/// </summary>
-		private readonly IFuncObj ifo;
-
-		/// <summary>
-		/// Initializes a new instance of the <see cref="FuncObjComparer"/> class.
-		/// </summary>
-		/// <param name="f">The <see cref="IFuncObj"/> to use in the comparison.</param>
-		public FuncObjComparer(IFuncObj f) => ifo = f;
-
-		/// <summary>
-		/// The implementation for <see cref="IComparer.Compare"/> which internally calls the
-		/// underlying <see cref="IFuncObj"/> to do the comparison.
-		/// </summary>
-		/// <param name="left">The left object to compare.</param>
-		/// <param name="right">The right object to compare.</param>
-		/// <returns>An <see cref="int"/>-1 if left is less than right, 0 if left equals right, otherwise 1.</returns>
-		public int Compare(object left, object right) => ifo.Call(left, right).Ai();
 	}
 }

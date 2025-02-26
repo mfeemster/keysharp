@@ -1,86 +1,5 @@
 ﻿namespace Keysharp.Core.Common.ObjectBase
 {
-	public class OwnPropsIterator : KeysharpEnumerator, IEnumerator<(object, object)>
-	{
-		private readonly Dictionary<object, object> map;
-		private readonly KeysharpObject obj;
-		private IEnumerator<KeyValuePair<object, object>> iter;
-		public int Count => GetVal ? 2 : 1;
-
-		public (object, object) Current
-		{
-			get
-			{
-				var kv = iter.Current;
-
-				if (GetVal)
-				{
-					if (kv.Value is MethodPropertyHolder mph)
-						return (kv.Key, mph.callFunc(obj, null));
-					else if (kv.Value is FuncObj fo)//ParamLength was verified when this was created in OwnProps().
-						return (kv.Key, fo.Call(obj));
-					else
-						return (kv.Key, kv.Value);
-				}
-
-				return (kv.Key, null);
-			}
-		}
-
-		internal bool GetVal { get; set; }
-
-		object IEnumerator.Current => Current;
-
-		public OwnPropsIterator(KeysharpObject o, Dictionary<object, object> m, bool gv)
-			: base(null, gv ? 2 : 1)
-		{
-			Error err;
-			obj = o;
-			map = m;
-			GetVal = gv;
-			iter = map.GetEnumerator();
-			var fo = new FuncObj("Call", this, Count);
-
-			if (fo.IsValid)
-				CallFunc = fo;
-			else
-				_ = Errors.ErrorOccurred(err = new MethodError($"Existing function object was invalid.")) ? throw err : "";
-		}
-
-		public override object Call(ref object obj0)
-		{
-			if (MoveNext())
-			{
-				GetVal = false;
-				(obj0, _) = Current;
-				return true;
-			}
-
-			return false;
-		}
-
-
-		public override object Call(ref object obj0, ref object obj1)
-		{
-			if (MoveNext())
-			{
-				GetVal = true;
-				(obj0, obj1) = Current;
-				return true;
-			}
-
-			return false;
-		}
-
-		public void Dispose() => Reset();
-
-		public bool MoveNext() => iter.MoveNext();
-
-		public void Reset() => iter = map.GetEnumerator();
-
-		private IEnumerator<(object, object)> GetEnumerator() => this;
-	}
-
 	public class OwnPropsMap : Map
 	{
 		public KeysharpObject Parent { get; private set; }
@@ -110,5 +29,93 @@
 		{
 			return new OwnPropsMap(Parent, this);
 		}
+	}
+
+	internal class OwnPropsIterator : KeysharpEnumerator, IEnumerator<(object, object)>
+	{
+		private static FuncObj[] IteratorCache = new FuncObj[2];
+		private readonly Dictionary<object, object> map;
+		private readonly KeysharpObject obj;
+		private IEnumerator<KeyValuePair<object, object>> iter;
+
+		public (object, object) Current
+		{
+			get
+			{
+				var kv = iter.Current;
+
+				if (GetVal)
+				{
+					if (kv.Value is MethodPropertyHolder mph)
+						return (kv.Key, mph.callFunc(obj, null));
+					else if (kv.Value is FuncObj fo)//ParamLength was verified when this was created in OwnProps().
+						return (kv.Key, fo.Call(obj));
+					else
+						return (kv.Key, kv.Value);
+				}
+
+				return (kv.Key, null);
+			}
+		}
+
+		object IEnumerator.Current => Current;
+		internal int Count => GetVal ? 2 : 1;
+		internal bool GetVal { get; set; }
+
+		internal OwnPropsIterator(KeysharpObject o, Dictionary<object, object> m, bool gv)
+			: base(null, gv ? 2 : 1)
+		{
+			Error err;
+			obj = o;
+			map = m;
+			GetVal = gv;
+			iter = map.GetEnumerator();
+			var c = Count <= 1 ? 0 : 1;
+			var p = IteratorCache[c];
+
+			if (p == null)
+			{
+				IteratorCache[c] = p = new FuncObj("Call", this, Count);
+
+				if (!p.IsValid)
+					_ = Errors.ErrorOccurred(err = new MethodError($"Existing function object was invalid.")) ? throw err : "";
+			}
+
+			var fo = (FuncObj)p.Clone();
+			fo.Inst = this;
+			CallFunc = fo;
+		}
+
+		public override object Call(ref object obj0)
+		{
+			if (MoveNext())
+			{
+				GetVal = false;
+				(obj0, _) = Current;
+				return true;
+			}
+
+			return false;
+		}
+
+		public override object Call(ref object obj0, ref object obj1)
+		{
+			if (MoveNext())
+			{
+				GetVal = true;
+				(obj0, obj1) = Current;
+				return true;
+			}
+
+			return false;
+		}
+
+		public void Dispose() => Reset();
+
+		public bool MoveNext() => iter.MoveNext();
+
+		public void Reset() => iter = map.GetEnumerator();
+
+		private IEnumerator<(object, object)> GetEnumerator() => this;
 	}
 }

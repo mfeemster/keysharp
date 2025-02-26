@@ -33,6 +33,7 @@
 					break;
 			}
 		}
+
 		/// <summary>
 		/// The implementation for <see cref="IEqualityComparer.Equals"/> which compares two objects.
 		/// If both objects are strings, then the case sensitivity mode specified in the constructor is used.
@@ -134,14 +135,14 @@
 		public object Default { get; set; }
 
 		/// <summary>
-		/// Gets a value indicating whether synchronized.
-		/// </summary>
-		bool ICollection.IsSynchronized => ((ICollection)map).IsSynchronized;
-
-		/// <summary>
 		/// The implementation for <see cref="KeysharpObject.super"/> for this class to return this type.
 		/// </summary>
 		public new (Type, object) super => (typeof(KeysharpObject), this);
+
+		/// <summary>
+		/// Gets a value indicating whether synchronized.
+		/// </summary>
+		bool ICollection.IsSynchronized => ((ICollection)map).IsSynchronized;
 
 		/// <summary>
 		/// The implementation for <see cref="ICollection.SyncRoot"/> which just calls map.SyncRoot.
@@ -158,14 +159,13 @@
 			_ = __New(args);
 		}
 
-
 		/// <summary>
 		/// Initializes a new instance of the <see cref="Map"/> class without creating the __Item dynamic property.
 		/// This is needed so Map doesn't enter an infinite recursion loop because dynamic properties themselves have Maps.
 		/// See <see cref="__New(object[])"/>.
 		/// </summary>
 		/// <param name="make__Item">True to create __Item, else false. Always specify false.</param>
-		internal Map(bool make__Item, params object[] args) =>  _ = __New(args);
+		internal Map(bool make__Item, params object[] args) => _ = __New(args);
 
 		/// <summary>
 		/// Gets the enumerator object which returns a key,value tuple for each element
@@ -322,7 +322,6 @@
 
 			return val != long.MaxValue ? val : string.Empty;
 		}
-
 
 		/// <summary>
 		/// Print every element in the map to the passed in <see cref="StringBuffer"/>.
@@ -598,6 +597,12 @@
 	internal class MapKeyValueIterator : KeysharpEnumerator, IEnumerator<(object, object)>
 	{
 		/// <summary>
+		/// Cache for iterators with either 1 or 2 parameters.
+		/// This prevents reflection from having to always be done to find the Call method.
+		/// </summary>
+		private static FuncObj[] IteratorCache = new FuncObj[2];
+
+		/// <summary>
 		/// The internal map to be iterated over.
 		/// </summary>
 		private readonly Dictionary<object, object> map;
@@ -646,12 +651,20 @@
 			map = m;
 			iter = map.GetEnumerator();
 			Error err;
-			var fo = new FuncObj("Call", this, Count);
+			c = c <= 1 ? 0 : 1;
+			var p = IteratorCache[c];
 
-			if (fo.IsValid)
-				CallFunc = fo;
-			else
-				_ = Errors.ErrorOccurred(err = new MethodError($"Existing function object was invalid.")) ? throw err : "";
+			if (p == null)
+			{
+				IteratorCache[c] = p = new FuncObj("Call", this, Count);
+
+				if (!p.IsValid)
+					_ = Errors.ErrorOccurred(err = new MethodError($"Existing function object was invalid.")) ? throw err : "";
+			}
+
+			var fo = (FuncObj)p.Clone();
+			fo.Inst = this;
+			CallFunc = fo;
 		}
 
 		/// <summary>

@@ -1,5 +1,13 @@
-using sttd = System.Collections.Generic.Dictionary<string, System.Collections.Generic.Dictionary<System.Type, System.Collections.Generic.Dictionary<int, Keysharp.Core.Common.Invoke.MethodPropertyHolder>>>;
-using ttsd = System.Collections.Generic.Dictionary<System.Type, System.Collections.Generic.Dictionary<string, System.Collections.Generic.Dictionary<int, Keysharp.Core.Common.Invoke.MethodPropertyHolder>>>;
+// #define CONCURRENT
+#if CONCURRENT
+
+	using sttd = System.Collections.Concurrent.ConcurrentDictionary<string, System.Collections.Concurrent.ConcurrentDictionary<System.Type, System.Collections.Concurrent.ConcurrentDictionary<int, Keysharp.Core.Common.Invoke.MethodPropertyHolder>>>;
+	using ttsd = System.Collections.Concurrent.ConcurrentDictionary<System.Type, System.Collections.Concurrent.ConcurrentDictionary<string, System.Collections.Concurrent.ConcurrentDictionary<int, Keysharp.Core.Common.Invoke.MethodPropertyHolder>>>;
+
+#else
+	using sttd = System.Collections.Generic.Dictionary<string, System.Collections.Generic.Dictionary<System.Type, System.Collections.Generic.Dictionary<int, Keysharp.Core.Common.Invoke.MethodPropertyHolder>>>;
+	using ttsd = System.Collections.Generic.Dictionary<System.Type, System.Collections.Generic.Dictionary<string, System.Collections.Generic.Dictionary<int, Keysharp.Core.Common.Invoke.MethodPropertyHolder>>>;
+#endif
 
 namespace Keysharp.Core.Common.Invoke
 {
@@ -9,16 +17,31 @@ namespace Keysharp.Core.Common.Invoke
 		internal static Dictionary<string, PropertyInfo> flatPublicStaticProperties = new (200, StringComparer.OrdinalIgnoreCase);
 		internal static Dictionary<string, Assembly> loadedAssemblies;
 		internal static Dictionary<Type, Dictionary<string, FieldInfo>> staticFields = [];
+
+#if CONCURRENT
+		internal static int sttcap = 1000;
+		internal static sttd stringToTypeBuiltInMethods = new (StringComparer.OrdinalIgnoreCase);
+		internal static sttd stringToTypeLocalMethods = new (StringComparer.OrdinalIgnoreCase);
+		internal static sttd stringToTypeMethods = new (StringComparer.OrdinalIgnoreCase);
+		internal static sttd stringToTypeStaticMethods = new (StringComparer.OrdinalIgnoreCase);
+		internal static sttd stringToTypeProperties = new (StringComparer.OrdinalIgnoreCase);
+		internal static Dictionary<string, Type> stringToTypes = new (StringComparer.OrdinalIgnoreCase);
+		internal static ttsd typeToStringMethods = new ();
+		internal static ttsd typeToStringStaticMethods = new ();
+		internal static ttsd typeToStringProperties = new ();
+#else
+		internal static int sttcap = 1000;
 		internal static sttd stringToTypeBuiltInMethods = new (sttcap, StringComparer.OrdinalIgnoreCase);
 		internal static sttd stringToTypeLocalMethods = new (sttcap / 10, StringComparer.OrdinalIgnoreCase);
 		internal static sttd stringToTypeMethods = new (sttcap, StringComparer.OrdinalIgnoreCase);
 		internal static sttd stringToTypeStaticMethods = new (sttcap, StringComparer.OrdinalIgnoreCase);
 		internal static sttd stringToTypeProperties = new (sttcap, StringComparer.OrdinalIgnoreCase);
 		internal static Dictionary<string, Type> stringToTypes = new (sttcap / 4, StringComparer.OrdinalIgnoreCase);
-		internal static int sttcap = 1000;
 		internal static ttsd typeToStringMethods = new (sttcap / 5);
 		internal static ttsd typeToStringStaticMethods = new (sttcap / 5);
 		internal static ttsd typeToStringProperties = new (sttcap / 5);
+#endif
+		private static readonly Lock locker = new ();
 
 		static Reflections() => Initialize();
 
@@ -29,6 +52,16 @@ namespace Keysharp.Core.Common.Invoke
 		public static void Clear()
 		{
 			staticFields = [];
+#if CONCURRENT
+			stringToTypeBuiltInMethods = new sttd(StringComparer.OrdinalIgnoreCase);
+			stringToTypeLocalMethods = new sttd(StringComparer.OrdinalIgnoreCase);
+			stringToTypeMethods = new sttd(StringComparer.OrdinalIgnoreCase);
+			stringToTypeStaticMethods = new sttd(StringComparer.OrdinalIgnoreCase);
+			stringToTypeProperties = new sttd(StringComparer.OrdinalIgnoreCase);
+			typeToStringMethods = new ttsd();
+			typeToStringStaticMethods = new ();
+			typeToStringProperties = new ttsd();
+#else
 			stringToTypeBuiltInMethods = new sttd(sttcap, StringComparer.OrdinalIgnoreCase);
 			stringToTypeLocalMethods = new sttd(sttcap / 10, StringComparer.OrdinalIgnoreCase);
 			stringToTypeMethods = new sttd(sttcap, StringComparer.OrdinalIgnoreCase);
@@ -37,6 +70,7 @@ namespace Keysharp.Core.Common.Invoke
 			typeToStringMethods = new ttsd(sttcap / 5);
 			typeToStringStaticMethods = new (sttcap / 5);
 			typeToStringProperties = new ttsd(sttcap / 5);
+#endif
 			loadedAssemblies = [];
 			flatPublicStaticMethods = new Dictionary<string, MethodInfo>(500, StringComparer.OrdinalIgnoreCase);
 			flatPublicStaticProperties = new Dictionary<string, PropertyInfo>(200, StringComparer.OrdinalIgnoreCase);
@@ -106,20 +140,23 @@ namespace Keysharp.Core.Common.Invoke
 					}
 					else//Field on this type has not been used yet, so get all properties and cache.
 					{
-						var fields = t.GetFields(propType);
+						lock (locker)
+						{
+							var fields = t.GetFields(propType);
 
-						if (fields.Length > 0)
-						{
-							foreach (var field in fields)
-								staticFields.GetOrAdd(field.ReflectedType,
-													  () => new Dictionary<string, FieldInfo>(fields.Length, StringComparer.OrdinalIgnoreCase))
-								[field.Name] = field;
-						}
-						else//Make a dummy entry because this type has no fields. This saves us additional searching later on when we encounter a type derived from this one. It will make the first Dictionary lookup above return true.
-						{
-							staticFields[t] = dkt = new Dictionary<string, FieldInfo>(StringComparer.OrdinalIgnoreCase);
-							t = t.BaseType;
-							continue;
+							if (fields.Length > 0)
+							{
+								foreach (var field in fields)
+									staticFields.GetOrAdd(field.ReflectedType,
+														  () => new Dictionary<string, FieldInfo>(fields.Length, StringComparer.OrdinalIgnoreCase))
+									[field.Name] = field;
+							}
+							else//Make a dummy entry because this type has no fields. This saves us additional searching later on when we encounter a type derived from this one. It will make the first Dictionary lookup above return true.
+							{
+								staticFields[t] = dkt = new Dictionary<string, FieldInfo>(StringComparer.OrdinalIgnoreCase);
+								t = t.BaseType;
+								continue;
+							}
 						}
 					}
 
@@ -170,20 +207,42 @@ namespace Keysharp.Core.Common.Invoke
 				}
 				else
 				{
-					var meths = t.GetMethods(propType);
+					lock (locker)
+					{
+						var meths = t.GetMethods(propType);
+#if CONCURRENT
 
-					if (meths.Length > 0)
-					{
-						foreach (var meth in meths)
-							typeToMethods.GetOrAdd(meth.ReflectedType,
-												   () => new Dictionary<string, Dictionary<int, MethodPropertyHolder>>(meths.Length, StringComparer.OrdinalIgnoreCase))
-							.GetOrAdd(meth.Name)[meth.GetParameters().Length] = new MethodPropertyHolder(meth, null);
-					}
-					else//Make a dummy entry because this type has no methods. This saves us additional searching later on when we encounter a type derived from this one. It will make the first Dictionary lookup above return true.
-					{
-						typeToMethods[t] = dkt = new Dictionary<string, Dictionary<int, MethodPropertyHolder>>(StringComparer.OrdinalIgnoreCase);
-						t = t.BaseType;
-						continue;
+						if (meths.Length > 0)
+						{
+							foreach (var meth in meths)
+								typeToMethods.GetOrAdd(meth.ReflectedType,
+													   (tp) => new ConcurrentDictionary<string, ConcurrentDictionary<int, MethodPropertyHolder>>(StringComparer.OrdinalIgnoreCase))
+								.GetOrAdd(meth.Name)[meth.GetParameters().Length] = new MethodPropertyHolder(meth, null);
+						}
+						else//Make a dummy entry because this type has no methods. This saves us additional searching later on when we encounter a type derived from this one. It will make the first Dictionary lookup above return true.
+						{
+							typeToMethods[t] = dkt = new ConcurrentDictionary<string, ConcurrentDictionary<int, MethodPropertyHolder>>(StringComparer.OrdinalIgnoreCase);
+							t = t.BaseType;
+							continue;
+						}
+
+#else
+
+						if (meths.Length > 0)
+						{
+							foreach (var meth in meths)
+								typeToMethods.GetOrAdd(meth.ReflectedType,
+													   () => new Dictionary<string, Dictionary<int, MethodPropertyHolder>>(meths.Length, StringComparer.OrdinalIgnoreCase))
+								.GetOrAdd(meth.Name)[meth.GetParameters().Length] = new MethodPropertyHolder(meth, null);
+						}
+						else//Make a dummy entry because this type has no methods. This saves us additional searching later on when we encounter a type derived from this one. It will make the first Dictionary lookup above return true.
+						{
+							typeToMethods[t] = dkt = new Dictionary<string, Dictionary<int, MethodPropertyHolder>>(StringComparer.OrdinalIgnoreCase);
+							t = t.BaseType;
+							continue;
+						}
+
+#endif
 					}
 				}
 
@@ -222,20 +281,42 @@ namespace Keysharp.Core.Common.Invoke
 					}
 					else//Property on this type has not been used yet, so get all properties and cache.
 					{
-						var props = t.GetProperties(propType);
+						lock (locker)
+						{
+							var props = t.GetProperties(propType);
+#if CONCURRENT
 
-						if (props.Length > 0)
-						{
-							foreach (var prop in props)
-								typeToStringProperties.GetOrAdd(prop.ReflectedType,
-																() => new Dictionary<string, Dictionary<int, MethodPropertyHolder>>(props.Length, StringComparer.OrdinalIgnoreCase))
-								.GetOrAdd(prop.Name)[prop.GetIndexParameters().Length] = new MethodPropertyHolder(null, prop);
-						}
-						else//Make a dummy entry because this type has no properties. This saves us additional searching later on when we encounter a type derived from this one. It will make the first Dictionary lookup above return true.
-						{
-							typeToStringProperties[t] = dkt = new Dictionary<string, Dictionary<int, MethodPropertyHolder>>(StringComparer.OrdinalIgnoreCase);
-							t = t.BaseType;
-							continue;
+							if (props.Length > 0)
+							{
+								foreach (var prop in props)
+									typeToStringProperties.GetOrAdd(prop.ReflectedType,
+																	(tp) => new ConcurrentDictionary<string, ConcurrentDictionary<int, MethodPropertyHolder>>(StringComparer.OrdinalIgnoreCase))
+									.GetOrAdd(prop.Name)[prop.GetIndexParameters().Length] = new MethodPropertyHolder(null, prop);
+							}
+							else//Make a dummy entry because this type has no properties. This saves us additional searching later on when we encounter a type derived from this one. It will make the first Dictionary lookup above return true.
+							{
+								typeToStringProperties[t] = dkt = new ConcurrentDictionary<string, ConcurrentDictionary<int, MethodPropertyHolder>>(StringComparer.OrdinalIgnoreCase);
+								t = t.BaseType;
+								continue;
+							}
+
+#else
+
+							if (props.Length > 0)
+							{
+								foreach (var prop in props)
+									typeToStringProperties.GetOrAdd(prop.ReflectedType,
+																	() => new Dictionary<string, Dictionary<int, MethodPropertyHolder>>(props.Length, StringComparer.OrdinalIgnoreCase))
+									.GetOrAdd(prop.Name)[prop.GetIndexParameters().Length] = new MethodPropertyHolder(null, prop);
+							}
+							else//Make a dummy entry because this type has no properties. This saves us additional searching later on when we encounter a type derived from this one. It will make the first Dictionary lookup above return true.
+							{
+								typeToStringProperties[t] = dkt = new Dictionary<string, Dictionary<int, MethodPropertyHolder>>(StringComparer.OrdinalIgnoreCase);
+								t = t.BaseType;
+								continue;
+							}
+
+#endif
 						}
 					}
 
