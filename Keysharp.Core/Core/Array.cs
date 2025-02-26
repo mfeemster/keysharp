@@ -858,7 +858,7 @@
 		/// Cache for iterators with either 1 or 2 parameters.
 		/// This prevents reflection from having to always be done to find the Call method.
 		/// </summary>
-		private static FuncObj[] IteratorCache = new FuncObj[2];
+		private static FuncObj p1, p2;
 
 		/// <summary>
 		/// The implementation for <see cref="IEnumerator.Current"/> which gets the index,value tuple at the current iterator position.
@@ -895,21 +895,29 @@
 			: base(null, c)
 		{
 			arr = a;
-			Error err;
-			c = c <= 1 ? 0 : 1;
-			var p = IteratorCache[c];
-
-			if (p == null)
-			{
-				IteratorCache[c] = p = new FuncObj("Call", this, Count);
-
-				if (!p.IsValid)
-					_ = Errors.ErrorOccurred(err = new MethodError($"Existing function object was invalid.")) ? throw err : "";
-			}
-
+			var p = c <= 1 ? p1 : p2;
 			var fo = (FuncObj)p.Clone();
 			fo.Inst = this;
 			CallFunc = fo;
+		}
+
+		/// <summary>
+		/// Static constructor to initialize function objects.
+		/// </summary>
+		static ArrayIndexValueIterator()
+		{
+			Error err;
+			var mi1 = Reflections.FindAndCacheMethod(typeof(ArrayIndexValueIterator), "Call", 1);
+			p1 = new FuncObj(mi1, null);
+
+			if (!p1.IsValid)
+				_ = Errors.ErrorOccurred(err = new MethodError($"Existing function object was invalid.")) ? throw err : "";
+
+			var mi2 = Reflections.FindAndCacheMethod(typeof(ArrayIndexValueIterator), "Call", 2);
+			p2 = new FuncObj(mi2, null);
+
+			if (!p2.IsValid)
+				_ = Errors.ErrorOccurred(err = new MethodError($"Existing function object was invalid.")) ? throw err : "";
 		}
 
 		/// <summary>
