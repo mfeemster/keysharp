@@ -141,15 +141,10 @@ namespace Keysharp.Scripting
             var targetExpression = (ExpressionSyntax)Visit(singleExpression);
 
             // Visit the expressionSequence to generate an ArgumentListSyntax
-            var exprArgSeqContext = memberIndexArguments.arrayElementList();
+            var exprArgSeqContext = memberIndexArguments.arguments();
             var argumentList = exprArgSeqContext == null 
                 ? SyntaxFactory.ArgumentList() 
-                : SyntaxFactory.ArgumentList(
-                    SyntaxFactory.SeparatedList(
-                        ((InitializerExpressionSyntax)Visit(exprArgSeqContext)).Expressions
-                        .Select(expr => SyntaxFactory.Argument(expr))
-                    )
-                );
+                : (ArgumentListSyntax)Visit(exprArgSeqContext);
 
             // Prepend the targetExpression as the first argument
             var fullArgumentList = argumentList.WithArguments(
@@ -1402,19 +1397,19 @@ namespace Keysharp.Scripting
             if (baseExpression is IdentifierNameSyntax identifierName)
             {
                 var name = Parser.NormalizeIdentifier(identifierName.Identifier.Text);
-                if ((Reflections.stringToTypes.ContainsKey(name) || name.ToLower() == "program")
+                if ((Reflections.stringToTypes.ContainsKey(name) || name.Equals(Keywords.MainClassName, StringComparison.OrdinalIgnoreCase))
                     && parser.IsVarDeclaredGlobally(name) == null && parser.IsVarDeclaredLocally(name) == null && parser.IsVarDeclaredInClass(parser.currentClass, name) == null)
                 {
                     //name = Reflections.stringToTypes.SingleOrDefault(kv => kv.Key.Equals(name, StringComparison.OrdinalIgnoreCase)).Key;
                     // Generate Keysharp.Scripting.Script.GetStaticMemberValueT<baseExpression>(memberExpression)
-                    if (name.ToLower() == "program")
+                    if (name.Equals(Keywords.MainClassName, StringComparison.OrdinalIgnoreCase))
                         return SyntaxFactory.InvocationExpression(
                             SyntaxFactory.MemberAccessExpression(
                                 SyntaxKind.SimpleMemberAccessExpression,
                                 CreateQualifiedName("Keysharp.Scripting.Script"),
                                 SyntaxFactory.GenericName("GetStaticMemberValueT")
                                     .WithTypeArgumentList(SyntaxFactory.TypeArgumentList(
-                                        SyntaxFactory.SingletonSeparatedList<TypeSyntax>(SyntaxFactory.IdentifierName(name))
+                                        SyntaxFactory.SingletonSeparatedList<TypeSyntax>(SyntaxFactory.IdentifierName(Keywords.MainClassName))
                                     ))
                             ),
                                 SyntaxFactory.ArgumentList(

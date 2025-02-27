@@ -347,7 +347,8 @@ namespace Keysharp.Scripting
             var builtIn = IsBuiltInProperty(name, caseSense);
             if (builtIn != null) return builtIn;
 
-            var variableDeclarations = cls.Declaration.ChildNodes().OfType<FieldDeclarationSyntax>();
+            var variableDeclarations = cls.Body
+                .OfType<FieldDeclarationSyntax>();
             if (variableDeclarations != null)
             {
                 foreach (var declaration in variableDeclarations)
@@ -405,7 +406,7 @@ namespace Keysharp.Scripting
                     SyntaxFactory.Token(SyntaxKind.PublicKeyword),
                     SyntaxFactory.Token(SyntaxKind.StaticKeyword));
 
-            mainClass.Declaration = mainClass.Declaration.AddMembers(fieldDeclaration);
+            mainClass.Body.Add(fieldDeclaration);
 
             return name;
         }
@@ -473,10 +474,10 @@ namespace Keysharp.Scripting
 
             if (currentFunc.Statics.Contains(name) || currentFunc.Scope == eScope.Static)
             {
-                currentClass.Declaration = currentClass.Declaration.AddMembers(fieldDeclaration);
+                currentClass.Body.Add(fieldDeclaration);
             }
             else
-                mainClass.Declaration = mainClass.Declaration.AddMembers(fieldDeclaration);
+                mainClass.Body.Add(fieldDeclaration);
 
             return name;
         }
@@ -526,7 +527,7 @@ namespace Keysharp.Scripting
                 SyntaxFactory.Token(SyntaxKind.StaticKeyword)
             );
 
-            mainClass.Declaration = mainClass.Declaration.AddMembers(fieldDeclaration);
+            mainClass.Body.Add(fieldDeclaration);
 
             return className.ToLower();
         }
@@ -649,7 +650,7 @@ namespace Keysharp.Scripting
                 )
             );
 
-            mainClass.Declaration = mainClass.Declaration.AddMembers(funcObjVariable);
+            mainClass.Body.Add(funcObjVariable);
             return ToValidIdentifier(functionName);
         }
 
@@ -659,14 +660,27 @@ namespace Keysharp.Scripting
             string methodName)
         {
             // 1. Built-in functions: Directly invoke the built-in method
+            // except in the case of a variadic function call
             if (!string.IsNullOrEmpty(methodName) &&
                 Reflections.FindBuiltInMethod(methodName, -1) is MethodPropertyHolder mph && mph.mi != null && !UserFuncs.Contains(methodName))
             {
-                // Fully qualified method invocation
-                return SyntaxFactory.InvocationExpression(
-                    CreateQualifiedName($"{mph.mi.DeclaringType}.{mph.mi.Name}"),
-                    argumentList
-                );
+                if (argumentList.Arguments.Count > 0 && argumentList.Arguments.First().Expression is CollectionExpressionSyntax)
+                {
+                    targetExpression = ((InvocationExpressionSyntax)InternalMethods.Func)
+                    .WithArgumentList(
+                        SyntaxFactory.ArgumentList(
+                            SyntaxFactory.SeparatedList(new[]
+                            {
+                                SyntaxFactory.Argument(targetExpression)
+                            })
+                        )
+                    );
+                } else
+                    // Fully qualified method invocation
+                    return SyntaxFactory.InvocationExpression(
+                        CreateQualifiedName($"{mph.mi.DeclaringType}.{mph.mi.Name}"),
+                        argumentList
+                    );
             }
 
             // 2. Handle UserTypes
@@ -975,14 +989,14 @@ namespace Keysharp.Scripting
 
         public bool RemoveGlobalVariable(string variableName, bool local)
         {
-            var fieldDeclaration = mainClass.Declaration.DescendantNodes()
+            var fieldDeclaration = mainClass.Body
                 .OfType<FieldDeclarationSyntax>()
                 .FirstOrDefault(declaration =>
                     declaration.Declaration.Variables.Any(v => v.Identifier.Text == variableName));
 
             if (fieldDeclaration != null)
             {
-                mainClass.Declaration = mainClass.Declaration.RemoveNode(fieldDeclaration, SyntaxRemoveOptions.KeepNoTrivia);
+                mainClass.Body.Remove(fieldDeclaration);
                 return true;
             }
 

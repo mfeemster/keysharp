@@ -43,7 +43,7 @@ namespace Keysharp.Main
 				var codeout = false;
 				var exeout = false;
 				var assembly = false;
-				var assemblyType = "Keysharp.CompiledMain.program";
+				var assemblyType = "Keysharp.CompiledMain." + Keywords.MainClassName;
 				var assemblyMethod = "Main";
 				var script = string.Empty;
 				var gotscript = false;
@@ -322,7 +322,7 @@ namespace Keysharp.Main
 				if (CompilerHelper.compiledasm == null)
 					throw new Exception("Compilation failed.");
 
-				var program = CompilerHelper.compiledasm.GetType("Keysharp.CompiledMain.program");
+				var program = CompilerHelper.compiledasm.GetType("Keysharp.CompiledMain." + Keywords.MainClassName);
 				var main = program.GetMethod("Main");
 #if DEBUG
 				Core.Debug.OutputDebug("Running compiled code.");

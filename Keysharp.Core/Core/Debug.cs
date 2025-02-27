@@ -75,7 +75,7 @@ namespace Keysharp.Core
 			var typesToProps = new SortedDictionary<string, List<PropertyInfo>>();
 			_ = sb.AppendLine($"**User defined**\r\n");
 
-			foreach (var typeKv in Reflections.staticFields.Where(tkv => tkv.Key.Name.StartsWith("program", StringComparison.OrdinalIgnoreCase)))
+			foreach (var typeKv in Reflections.staticFields.Where(tkv => tkv.Key.Name.StartsWith(Keywords.MainClassName, StringComparison.OrdinalIgnoreCase)))
 			{
 				foreach (var fieldKv in typeKv.Value.OrderBy(f => f.Key))
 				{

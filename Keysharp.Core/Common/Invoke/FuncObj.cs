@@ -36,6 +36,12 @@
 			return this;
 		}
 
+		/// <summary>
+		/// Even calling with no args might still need ref processing because some of the
+		/// bound args might be refs. So always forward to <see cref="CallWithRefs(object[])"/>
+		/// </summary>
+		/// <param name="args">Forwarded on to <see cref="CallWithRefs(object[])"/></param>
+		/// <returns>The return value of the bound function.</returns>
 		public override object Call(params object[] args) => base.Call(CreateArgs(args).ToArray());
 
         public override object CallWithRefs(params object[] args)
@@ -43,7 +49,7 @@
 			var argsList = CreateArgs(args);
 			var argsArray = new object[argsList.Count];
 
-			for (var i = 0; i < argsList.Count; i++)
+			for (var i = 0; i < argsList.Count; ++i)
 			{
 				var p = argsList[i];
 
@@ -58,15 +64,20 @@
 
 			var val = base.Call(argsArray);
 
-			for (var i = 0; i < argsList.Count; i++)
+			for (int i = 0, argsIndex = 0; i < argsList.Count; ++i)
 			{
+				//If it was a RefHolder, then reassign regardless if it was passed from the bound args or the passed in args.
 				if (argsList[i] is RefHolder rh)
+				{
 					rh.reassign(argsArray[rh.index]);//Use value from new array.
-				//args.Length could exceed parameters.Length if the last param was variadic.
-				//So don't assign back because variadic parameters aren't expected to be reference params, even though
-				//they might technically be able to be called that way with reflection.
-				else if (i < args.Length && i < mph.parameters.Length && mph.parameters[i].ParameterType.IsByRef)
-					args[i] = argsArray[i];//Reassign all the way back to the original.
+				}
+				else if (argsIndex < args.Length
+						 && i < mph.parameters.Length//This seems like it should always be true.
+						 && mph.parameters[i].ParameterType.IsByRef
+						)//It wasn't a RefHolder, so determine where it should go.
+				{
+					args[argsIndex++] = argsArray[i];//Reassign all the way back to the original.
+				}
 			}
 
 			return val;
@@ -135,6 +146,8 @@
 		internal long MinParams => 0;//All functions in keysharp are variadic so this property doesn't apply.
 		internal MethodPropertyHolder Mph => mph;
 
+		public Func<object, object[], object> Delegate => mph.callFunc;
+
 		public new (Type, object) super => (typeof(FuncObj), this);
 
 		internal FuncObj(string s, object o = null, object paramCount = null)
@@ -196,7 +209,8 @@
 		public virtual IFuncObj Bind(params object[] args)
 		=> new BoundFunc(mi, args, inst);
 
-		public virtual object Call(params object[] obj)
+		public virtual object Call(params object[] obj) => mph.callFunc(inst, obj);
+		/*
 		{
 			// No `this` is required
 			if (mph.IsStaticFunc)
@@ -233,6 +247,7 @@
                 }
             }
         }
+		*/
 
 		/*
 		public virtual object CallWithInst(object inst, params object[] obj) {

@@ -687,3 +687,16 @@ if (a.test == 2)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
+
+; Test creating and assigning a map with keys and values created as variables inline.
+a := Map(mkey1 := "one", mval1 := 1, mkey2 := "two", mval2 := 2, mkey3 := "three", mval3 := 3)
+
+if (mkey1 == "one" && mval1 == 1 &&
+	mkey2 == "two" && mval2 == 2 &&
+	mkey3 == "three" && mval3 == 3 &&
+	a["one"] == 1 &&
+	a["two"] == 2 &&
+	a["three"] == 3)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"

@@ -202,12 +202,12 @@ namespace Keysharp.Scripting
 					key = index[0];
 
 					//This excludes types derived from Array so that super can be used.
-					if (item.GetType() == typeof(Keysharp.Core.Array))
+					if (typetouse == typeof(Keysharp.Core.Array))
 					{
 						((Keysharp.Core.Array)item)[key] = value;
 						return value;
 					}
-					else if (item.GetType() == typeof(Keysharp.Core.Map))
+					else if (typetouse == typeof(Keysharp.Core.Map))
 					{
 						((Keysharp.Core.Map)item)[key] = value;
 						return value;

@@ -69,81 +69,44 @@ namespace Keysharp.CompiledMain
     using Array = Keysharp.Core.Array;
     using Buffer = Keysharp.Core.Buffer;
 
-    public class program
+    public class Program
     {
-        public static object func2 = Keysharp.Core.Functions.Func("func2");
-        public static object func3 = Keysharp.Core.Functions.Func("func3");
-        public static object funcdef1 = Keysharp.Core.Functions.Func("funcdef1");
-        public static object funcdef2 = Keysharp.Core.Functions.Func("funcdef2");
-        public static object funcdef3 = Keysharp.Core.Functions.Func("funcdef3");
-        public static object test = Keysharp.Core.Functions.Func("test");
+        public static object logerror1 = Keysharp.Core.Functions.Func("logerror1");
+        public static object logerror2 = Keysharp.Core.Functions.Func("logerror2");
+        public static object logerror3 = Keysharp.Core.Functions.Func("logerror3");
+        public static object timerhandler = Keysharp.Core.Functions.Func("timerhandler");
         public static object x = null;
-        public static object y = null;
-        public static object z = null;
+        public static object Logerror1(object exception, object mode)
+        {
+            x = x = Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.Add, x, 1L);
+            return "";
+        }
+
+        public static object Logerror2(object exception, object mode)
+        {
+            x = x = Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.Add, x, 1L);
+            return "";
+        }
+
+        public static object Logerror3(object exception, object mode)
+        {
+            x = x = Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.Add, x, 1L);
+            return Keysharp.Scripting.Script.OperateUnary(Keysharp.Scripting.Script.Operator.Minus, 1L);
+        }
+
         public static object fileappend = Keysharp.Core.Functions.Func("fileappend");
-        public static object Func2(object a, object b, [Optional, DefaultParameterValue(123L)] object c)
+        public static object fo1 = null;
+        public static object Timerhandler()
         {
-            x = a;
-            y = b;
-            z = c;
+            x = x = Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.Add, x, 1L);
+            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, x, 1L)))
+            {
+                Keysharp.Core.Flow.SetTimer(fo1, 0L);
+            }
+
+            Keysharp.Core.Flow.Exit();
+            x = 123L;
             return "";
-        }
-
-        public static object Func3(object a, object b, [Optional, DefaultParameterValue(null)] object c)
-        {
-            if (Keysharp.Scripting.Script.IfTest(Keysharp.Core.Types.IsSet(c)))
-            {
-                x = true;
-            }
-
-            return "";
-        }
-
-        public static object Funcdef1([Optional, DefaultParameterValue("")] object p)
-        {
-            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, p, "")))
-            {
-                Keysharp.Core.Files.FileAppend("pass", "*");
-            }
-            else
-            {
-                Keysharp.Core.Files.FileAppend("fail", "*");
-            }
-
-            return "";
-        }
-
-        public static object Funcdef2([Optional, DefaultParameterValue("\"")] object p)
-        {
-            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, p, "\"")))
-            {
-                Keysharp.Core.Files.FileAppend("pass", "*");
-            }
-            else
-            {
-                Keysharp.Core.Files.FileAppend("fail", "*");
-            }
-
-            return "";
-        }
-
-        public static object Funcdef3([Optional, DefaultParameterValue("asdf")] object p)
-        {
-            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, p, "asdf")))
-            {
-                Keysharp.Core.Files.FileAppend("pass", "*");
-            }
-            else
-            {
-                Keysharp.Core.Files.FileAppend("fail", "*");
-            }
-
-            return "";
-        }
-
-        public static object Test([Optional, DefaultParameterValue("\r\n\t")] object linebreak)
-        {
-            return linebreak;
         }
 
         [System.STAThreadAttribute()]
@@ -201,14 +164,12 @@ namespace Keysharp.CompiledMain
 
         public static object _ks_UserMainCode()
         {
-            x = 1L;
-            y = 2L;
-            z = 3L;
-            x = 1L;
-            y = 2L;
-            z = 3L;
-            Invoke(func2, "Call", 11L, 22L);
-            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, x, 11L)))
+            Keysharp.Core.Errors.OnError("LogError1");
+            Keysharp.Core.Errors.OnError("LogError2");
+            Keysharp.Core.Errors.OnError("LogError3");
+            x = 0L;
+            Keysharp.Core.WindowX.WinActivate("C3D38B48-B165-4A69-9D8F-020DCD360712");
+            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, x, 3L)))
             {
                 Keysharp.Core.Files.FileAppend("pass", "*");
             }
@@ -217,7 +178,11 @@ namespace Keysharp.CompiledMain
                 Keysharp.Core.Files.FileAppend("fail", "*");
             }
 
-            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, y, 22L)))
+            Keysharp.Core.Errors.OnError("LogError1", 0L);
+            Keysharp.Core.Errors.OnError("LogError2", 0L);
+            x = 0L;
+            Keysharp.Core.WindowX.WinActivate("C3D38B48-B165-4A69-9D8F-020DCD360712");
+            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, x, 1L)))
             {
                 Keysharp.Core.Files.FileAppend("pass", "*");
             }
@@ -226,7 +191,11 @@ namespace Keysharp.CompiledMain
                 Keysharp.Core.Files.FileAppend("fail", "*");
             }
 
-            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, z, 123L)))
+            x = 0L;
+            fo1 = Keysharp.Core.Functions.Func("TimerHandler");
+            Keysharp.Core.Flow.SetTimer(fo1, 100L);
+            Keysharp.Core.Flow.Sleep(1000L);
+            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, x, 1L)))
             {
                 Keysharp.Core.Files.FileAppend("pass", "*");
             }
@@ -235,302 +204,8 @@ namespace Keysharp.CompiledMain
                 Keysharp.Core.Files.FileAppend("fail", "*");
             }
 
-            x = 1L;
-            y = 2L;
-            z = 3L;
-            Invoke(func2, "Call", null);
-            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, x, null)))
-            {
-                Keysharp.Core.Files.FileAppend("pass", "*");
-            }
-            else
-            {
-                Keysharp.Core.Files.FileAppend("fail", "*");
-            }
-
-            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, y, null)))
-            {
-                Keysharp.Core.Files.FileAppend("pass", "*");
-            }
-            else
-            {
-                Keysharp.Core.Files.FileAppend("fail", "*");
-            }
-
-            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, z, 123L)))
-            {
-                Keysharp.Core.Files.FileAppend("pass", "*");
-            }
-            else
-            {
-                Keysharp.Core.Files.FileAppend("fail", "*");
-            }
-
-            x = 1L;
-            y = 2L;
-            z = 3L;
-            Invoke(func2, "Call", 22L, 33L);
-            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, x, null)))
-            {
-                Keysharp.Core.Files.FileAppend("pass", "*");
-            }
-            else
-            {
-                Keysharp.Core.Files.FileAppend("fail", "*");
-            }
-
-            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, y, 22L)))
-            {
-                Keysharp.Core.Files.FileAppend("pass", "*");
-            }
-            else
-            {
-                Keysharp.Core.Files.FileAppend("fail", "*");
-            }
-
-            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, z, 33L)))
-            {
-                Keysharp.Core.Files.FileAppend("pass", "*");
-            }
-            else
-            {
-                Keysharp.Core.Files.FileAppend("fail", "*");
-            }
-
-            x = 1L;
-            y = 2L;
-            z = 3L;
-            Invoke(func2, "Call", 11L, null, 33L);
-            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, x, 11L)))
-            {
-                Keysharp.Core.Files.FileAppend("pass", "*");
-            }
-            else
-            {
-                Keysharp.Core.Files.FileAppend("fail", "*");
-            }
-
-            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, y, null)))
-            {
-                Keysharp.Core.Files.FileAppend("pass", "*");
-            }
-            else
-            {
-                Keysharp.Core.Files.FileAppend("fail", "*");
-            }
-
-            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, z, 33L)))
-            {
-                Keysharp.Core.Files.FileAppend("pass", "*");
-            }
-            else
-            {
-                Keysharp.Core.Files.FileAppend("fail", "*");
-            }
-
-            x = 1L;
-            y = 2L;
-            z = 3L;
-            Invoke(func2, "Call", 11L, null);
-            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, x, 11L)))
-            {
-                Keysharp.Core.Files.FileAppend("pass", "*");
-            }
-            else
-            {
-                Keysharp.Core.Files.FileAppend("fail", "*");
-            }
-
-            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, y, null)))
-            {
-                Keysharp.Core.Files.FileAppend("pass", "*");
-            }
-            else
-            {
-                Keysharp.Core.Files.FileAppend("fail", "*");
-            }
-
-            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, z, 123L)))
-            {
-                Keysharp.Core.Files.FileAppend("pass", "*");
-            }
-            else
-            {
-                Keysharp.Core.Files.FileAppend("fail", "*");
-            }
-
-            x = 1L;
-            y = 2L;
-            z = 3L;
-            Invoke(func2, "Call", 11L, null, null);
-            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, x, 11L)))
-            {
-                Keysharp.Core.Files.FileAppend("pass", "*");
-            }
-            else
-            {
-                Keysharp.Core.Files.FileAppend("fail", "*");
-            }
-
-            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, y, null)))
-            {
-                Keysharp.Core.Files.FileAppend("pass", "*");
-            }
-            else
-            {
-                Keysharp.Core.Files.FileAppend("fail", "*");
-            }
-
-            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, z, 123L)))
-            {
-                Keysharp.Core.Files.FileAppend("pass", "*");
-            }
-            else
-            {
-                Keysharp.Core.Files.FileAppend("fail", "*");
-            }
-
-            x = 1L;
-            y = 2L;
-            z = 3L;
-            Invoke(func2, "Call", 22L, null);
-            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, x, null)))
-            {
-                Keysharp.Core.Files.FileAppend("pass", "*");
-            }
-            else
-            {
-                Keysharp.Core.Files.FileAppend("fail", "*");
-            }
-
-            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, y, 22L)))
-            {
-                Keysharp.Core.Files.FileAppend("pass", "*");
-            }
-            else
-            {
-                Keysharp.Core.Files.FileAppend("fail", "*");
-            }
-
-            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, z, 123L)))
-            {
-                Keysharp.Core.Files.FileAppend("pass", "*");
-            }
-            else
-            {
-                Keysharp.Core.Files.FileAppend("fail", "*");
-            }
-
-            x = 1L;
-            y = 2L;
-            z = 3L;
-            Invoke(func2, "Call", null, null);
-            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, x, null)))
-            {
-                Keysharp.Core.Files.FileAppend("pass", "*");
-            }
-            else
-            {
-                Keysharp.Core.Files.FileAppend("fail", "*");
-            }
-
-            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, y, null)))
-            {
-                Keysharp.Core.Files.FileAppend("pass", "*");
-            }
-            else
-            {
-                Keysharp.Core.Files.FileAppend("fail", "*");
-            }
-
-            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, z, 123L)))
-            {
-                Keysharp.Core.Files.FileAppend("pass", "*");
-            }
-            else
-            {
-                Keysharp.Core.Files.FileAppend("fail", "*");
-            }
-
-            x = false;
-            Invoke(func3, "Call", null);
-            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, x, false)))
-            {
-                Keysharp.Core.Files.FileAppend("pass", "*");
-            }
-            else
-            {
-                Keysharp.Core.Files.FileAppend("fail", "*");
-            }
-
-            x = false;
-            Invoke(func3, "Call", 1L, null);
-            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, x, false)))
-            {
-                Keysharp.Core.Files.FileAppend("pass", "*");
-            }
-            else
-            {
-                Keysharp.Core.Files.FileAppend("fail", "*");
-            }
-
-            x = false;
-            Invoke(func3, "Call", 1L, 2L);
-            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, x, false)))
-            {
-                Keysharp.Core.Files.FileAppend("pass", "*");
-            }
-            else
-            {
-                Keysharp.Core.Files.FileAppend("fail", "*");
-            }
-
-            x = false;
-            Invoke(func3, "Call", 1L, 2L, 3L);
-            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, x, true)))
-            {
-                Keysharp.Core.Files.FileAppend("pass", "*");
-            }
-            else
-            {
-                Keysharp.Core.Files.FileAppend("fail", "*");
-            }
-
-            x = false;
-            Invoke(func3, "Call", null);
-            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, x, false)))
-            {
-                Keysharp.Core.Files.FileAppend("pass", "*");
-            }
-            else
-            {
-                Keysharp.Core.Files.FileAppend("fail", "*");
-            }
-
-            x = false;
-            Invoke(func3, "Call", null, null);
-            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, x, false)))
-            {
-                Keysharp.Core.Files.FileAppend("pass", "*");
-            }
-            else
-            {
-                Keysharp.Core.Files.FileAppend("fail", "*");
-            }
-
-            Invoke(funcdef1, "Call");
-            Invoke(funcdef2, "Call");
-            Invoke(funcdef3, "Call");
-            x = Invoke(test, "Call");
-            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, x, "\r\n\t")))
-            {
-                Keysharp.Core.Files.FileAppend("pass", "*");
-            }
-            else
-            {
-                Keysharp.Core.Files.FileAppend("fail", "*");
-            }
-
+            Keysharp.Core.Errors.OnError("LogError3", 0L);
+            Keysharp.Core.Flow.ExitApp();
             Keysharp.Core.Common.Keyboard.HotkeyDefinition.ManifestAllHotkeysHotstringsHooks();
             Keysharp.Core.Flow.ExitApp(0L);
             return "";

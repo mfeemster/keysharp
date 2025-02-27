@@ -357,6 +357,30 @@ namespace Keysharp.Tests
 		[Test, Category("Hotstring"), NonParallelizable]
 		public void HotstringParsing()
 		{
+			var trigger = "^;";
+			var hk = Parser.EscapeHotkeyTrigger(trigger);
+			Assert.AreEqual("^;", hk);
+			//
+			trigger = "`;";
+			hk = Parser.EscapeHotkeyTrigger(trigger);
+			Assert.AreEqual(";", hk);
+			//
+			trigger = ":";
+			hk = Parser.EscapeHotkeyTrigger(trigger);
+			Assert.AreEqual(":", hk);
+			//
+			trigger = "`";
+			hk = Parser.EscapeHotkeyTrigger(trigger);
+			Assert.AreEqual("`", hk);
+			//
+			trigger = "``";
+			hk = Parser.EscapeHotkeyTrigger(trigger);
+			Assert.AreEqual("`", hk);
+			//
+			trigger = "+`";
+			hk = Parser.EscapeHotkeyTrigger(trigger);
+			Assert.AreEqual("+`", hk);
+			//
 			Assert.IsTrue(TestScript("hotkey-hotstring-parsing", false));
 		}
 

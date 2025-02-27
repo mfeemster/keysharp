@@ -168,28 +168,28 @@
 
 		public Map(bool skipLogic) : base(skipLogic: skipLogic) => _ = __New();
 
-		/// <summary>
-		/// Gets the enumerator object which returns a key,value tuple for each element
-		/// </summary>
-		/// <param name="count">The number of items each element should contain:<br/>
-		///     1: Return the key in the first element, with the second being null.<br/>
-		///     2: Return the key in the first element, and the value in the second.
-		/// </param>
-		/// <returns><see cref="KeysharpEnumerator"/></returns>
+        /// <summary>
+        /// Gets the enumerator object which returns a key,value tuple for each element
+        /// </summary>
+        /// <param name="count">The number of items each element should contain:<br/>
+        ///     1: Return the key in the first element, with the second being null.<br/>
+        ///     2: Return the key in the first element, and the value in the second.
+        /// </param>
+        /// <returns><see cref="KeysharpEnumerator"/></returns>
 		public KeysharpEnumerator __Enum(object count) => new MapKeyValueIterator(map, count.Ai());
 
-		/// <summary>
-		/// Initializes a new instance of the <see cref="Map"/> class.
-		/// </summary>
-		/// <param name="args">An array of values to initialize the map with.<br/>
-		/// This can be one of several values:<br/>
-		///     null: creates an empty map.<br/>
-		///     object[] or <see cref="Array"/>: adds every two elements as a key,value pair to the underlying map.<br/>
-		///     <see cref="Map"/>: assigns the map directly to the underlying dictionary as well as the case sense mode.<br/>
-		///     <see cref="Dictionary{object, object}"/>: assigns the dictionary directly to the underlying dictionary.
-		/// </param>
-		/// <returns>Empty string, unused.</returns>
-		public object __New(params object[] args)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Map"/> class.
+        /// </summary>
+        /// <param name="args">An array of values to initialize the map with.<br/>
+        /// This can be one of several values:<br/>
+        ///     null: creates an empty map.<br/>
+        ///     object[] or <see cref="Array"/>: adds every two elements as a key,value pair to the underlying map.<br/>
+        ///     <see cref="Map"/>: assigns the map directly to the underlying dictionary as well as the case sense mode.<br/>
+        ///     <see cref="Dictionary{object, object}"/>: assigns the dictionary directly to the underlying dictionary.
+        /// </param>
+        /// <returns>Empty string, unused.</returns>
+        public object __New(params object[] args)
 		{
 			Set(args);
 			return "";
@@ -608,6 +608,8 @@
 		/// </summary>
 		private IEnumerator<KeyValuePair<object, object>> iter;
 
+
+
 		/// <summary>
 		/// The implementation for <see cref="IEnumerator.Current"/> which gets the key,value tuple at the current iterator position.
 		/// </summary>
@@ -647,7 +649,11 @@
 			map = m;
 			iter = map.GetEnumerator();
 			Error err;
-			var fo = new FuncObj("Call", this, Count);
+			c = c <= 1 ? 0 : 1;
+			if (iterCache[c] == null)
+                iterCache[c] = new FuncObj("Call", this, Count);
+			var fo = (FuncObj)iterCache[c].Clone();
+			fo.Inst = this;
 
 			if (fo.IsValid)
 				CallFunc = fo;
@@ -655,12 +661,14 @@
 				_ = Errors.ErrorOccurred(err = new MethodError($"Existing function object was invalid.")) ? throw err : "";
 		}
 
-		/// <summary>
-		/// Calls <see cref="Current"/> and places the key value in the passed in object reference.
-		/// </summary>
-		/// <param name="pos">A reference to the key value.</param>
-		/// <returns>True if the iterator position has not moved past the last element, else false.</returns>
-		public override object Call(ref object key)
+		private static FuncObj[] iterCache = new FuncObj[2];
+
+        /// <summary>
+        /// Calls <see cref="Current"/> and places the key value in the passed in object reference.
+        /// </summary>
+        /// <param name="pos">A reference to the key value.</param>
+        /// <returns>True if the iterator position has not moved past the last element, else false.</returns>
+        public override object Call(ref object key)
 		{
 			if (MoveNext())
 			{

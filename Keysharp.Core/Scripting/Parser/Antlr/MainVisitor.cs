@@ -29,6 +29,7 @@ using static System.Windows.Forms.AxHost;
 using System.Reflection;
 using static Keysharp.Scripting.Parser;
 using System.Reflection.PortableExecutable;
+using System.CodeDom;
 
 namespace Keysharp.Scripting
 {
@@ -86,7 +87,7 @@ namespace Keysharp.Scripting
             parser.namespaceDeclaration = SyntaxFactory.NamespaceDeclaration(CreateQualifiedName("Keysharp.CompiledMain"))
                 .AddUsings(usings.ToArray());
 
-            parser.currentClass = new Class("program", null);
+            parser.currentClass = new Class(Keywords.MainClassName, null);
             parser.mainClass = parser.currentClass;
 
             var mainFunc = new Function("Main", SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.IntKeyword)));
@@ -232,8 +233,8 @@ namespace Keysharp.Scripting
             parser.autoExecFunc.Method = parser.autoExecFunc.Assemble();
 
             mainFunc.Method = mainFunc.Assemble().AddAttributeLists(mainMethodAttributeList);
-            parser.mainClass.Declaration = parser.mainClass.Declaration.AddMembers(mainFunc.Method, parser.autoExecFunc.Method).AddMembers(parser.mainClass.Body.ToArray());
-            parser.namespaceDeclaration = parser.namespaceDeclaration.AddMembers(parser.mainClass.Declaration);
+            parser.mainClass.Body.AddRange(mainFunc.Method, parser.autoExecFunc.Method);
+            parser.namespaceDeclaration = parser.namespaceDeclaration.AddMembers(parser.mainClass.Assemble());
 
             var attributeList = SyntaxFactory.AttributeList(parser.assemblies)
                 .WithTarget(SyntaxFactory.AttributeTargetSpecifier(SyntaxFactory.Token(SyntaxKind.AssemblyKeyword)));
@@ -248,7 +249,6 @@ namespace Keysharp.Scripting
 
         public override SyntaxNode VisitSourceElements([NotNull] SourceElementsContext context)
         {
-            List<MemberDeclarationSyntax> memberList = [];
             List<StatementSyntax> autoExecStatements = [];
             HashSet<string> classNames = new();
 
@@ -280,7 +280,7 @@ namespace Keysharp.Scripting
 
                 if (element is MemberDeclarationSyntax)
                 {
-                    memberList.Add((MemberDeclarationSyntax)element);
+                    parser.mainClass.Body.Add((MemberDeclarationSyntax)element);
                     continue;
                 }
 
@@ -303,13 +303,12 @@ namespace Keysharp.Scripting
                         if (element is ClassDeclarationSyntax classDecl)
                             classNames.Add(classDecl.Identifier.Text.ToLowerInvariant());
 
-                        memberList.Add((MemberDeclarationSyntax)element);
+                        parser.mainClass.Body.Add((MemberDeclarationSyntax)element);
                         break;
                 }
             }
 
-            parser.autoExecFunc.Body = parser.autoExecFunc.Body.Concat(autoExecStatements).ToList();
-            parser.mainClass.Declaration = parser.mainClass.Declaration.AddMembers(memberList.ToArray());
+            parser.autoExecFunc.Body.AddRange(autoExecStatements);
             return parser.mainClass.Declaration;
         }
 
@@ -340,7 +339,7 @@ namespace Keysharp.Scripting
                 else if (visited is ClassDeclarationSyntax classDeclarationSyntax)
                 {
                     // In case a class is declared inside a function (such as some unit tests)
-                    parser.mainClass.Declaration = parser.mainClass.Declaration.AddMembers(classDeclarationSyntax);
+                    parser.mainClass.Body.Add(classDeclarationSyntax);
                 } else
                     statements.Add(EnsureStatementSyntax(visited));
             }
@@ -393,13 +392,13 @@ namespace Keysharp.Scripting
             switch (text.ToLowerInvariant())
             {
                 case "this":
-                    return parser.currentClass.Name == "program" ? SyntaxFactory.IdentifierName("@this") : SyntaxFactory.ThisExpression();
+                    return parser.currentClass.Name == Keywords.MainClassName ? SyntaxFactory.IdentifierName("@this") : SyntaxFactory.ThisExpression();
                 case "base":
-                    return parser.currentClass.Name == "program" ? SyntaxFactory.IdentifierName("@base") : SyntaxFactory.BaseExpression();
+                    return parser.currentClass.Name == Keywords.MainClassName ? SyntaxFactory.IdentifierName("@base") : SyntaxFactory.BaseExpression();
                 case "super":
                     return SyntaxFactory.CastExpression(
                         SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword)),
-                        SyntaxFactory.IdentifierName("Super")
+                        SyntaxFactory.IdentifierName("super")
                    );
             }
 
@@ -421,7 +420,7 @@ namespace Keysharp.Scripting
                         return SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(context.Start.InputStream.SourceName));
 
                     case "a_scriptfullpath":
-                        parser.mainClass.Declaration = parser.mainClass.Declaration.AddMembers(CreatePublicConstant("A_ScriptFullPath", typeof(string), Path.GetFullPath(parser.fileName)));
+                        parser.mainClass.Body.Add(CreatePublicConstant("A_ScriptFullPath", typeof(string), Path.GetFullPath(parser.fileName)));
                         break;
                 }
             }
@@ -880,10 +879,12 @@ namespace Keysharp.Scripting
         public override SyntaxNode VisitArguments([NotNull] ArgumentsContext context)
         {
 
-            var arguments = new List<ArgumentSyntax>();
+            var arguments = new List<SyntaxNode>();
             bool lastIsComma = true;
+            bool containsSpread = false;
+            int lastDefinedElement = 0;
             for (var i = 0; i < context.ChildCount; i++)
-            { 
+            {
                 var child = context.GetChild(i);
                 bool isComma = false;
                 if (child is ITerminalNode node)
@@ -897,17 +898,24 @@ namespace Keysharp.Scripting
                 if (isComma)
                 {
                     if (lastIsComma)
-                        arguments.Add(SyntaxFactory.Argument(SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression)));
+                        arguments.Add(SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression));
 
                     goto ShouldVisitNextChild;
                 }
                 SyntaxNode arg = VisitArgument((ArgumentContext)child);
                 if (arg != null)
                 {
-                    if (arg is ArgumentSyntax)
-                        arguments.Add((ArgumentSyntax)arg);
+                    if (arg is ExpressionSyntax)
+                        arguments.Add(arg);
+                    else if (arg is SpreadElementSyntax)
+                    {
+                        arguments.Add(arg);
+                        containsSpread = true;
+                    }
                     else
                         throw new Error("Unknown argument type");
+
+                    lastDefinedElement = arguments.Count;
                 }
                 else
                     throw new Error("Unknown function argument");
@@ -916,10 +924,43 @@ namespace Keysharp.Scripting
                 lastIsComma = isComma;
             }
 
-            if (lastIsComma)
-                arguments.Add(SyntaxFactory.Argument(SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression)));
+            if (arguments.Count > lastDefinedElement)
+                arguments.RemoveRange(lastDefinedElement, arguments.Count - lastDefinedElement);
 
-            return SyntaxFactory.ArgumentList(SyntaxFactory.SeparatedList(arguments));
+            if (!containsSpread)
+            {
+                // No spread elements present, wrap all elements in ArgumentSyntax and return as ArgumentListSyntax
+                var normalArguments = arguments
+                    .Select(expr => SyntaxFactory.Argument((ExpressionSyntax)expr))
+                    .ToList();
+
+                return SyntaxFactory.ArgumentList(SyntaxFactory.SeparatedList(normalArguments));
+            }
+
+            // If spread elements are present, convert all elements into CollectionElements
+            var collectionElements = new List<CollectionElementSyntax>();
+
+            foreach (var node in arguments)
+            {
+                if (node is ExpressionSyntax expr)
+                {
+                    collectionElements.Add(SyntaxFactory.ExpressionElement(expr));
+                }
+                else if (node is SpreadElementSyntax spread)
+                {
+                    collectionElements.Add(spread);
+                }
+            }
+
+            // Create a CollectionExpressionSyntax
+            var collectionExpression = SyntaxFactory.CollectionExpression(SyntaxFactory.SeparatedList(collectionElements));
+
+            // Wrap in a single argument and return
+            return SyntaxFactory.ArgumentList(
+                SyntaxFactory.SingletonSeparatedList(
+                    SyntaxFactory.Argument(collectionExpression)
+                )
+            );
         }
 
         public override SyntaxNode VisitArgument([NotNull] ArgumentContext context)
@@ -933,18 +974,20 @@ namespace Keysharp.Scripting
             if (arg != null)
             {
                 if (context.Multiply() == null)
-                    return SyntaxFactory.Argument(arg);
+                    return arg;
                 else
                 {
-                    InvocationExpressionSyntax flattenedArg = SyntaxFactory.InvocationExpression(
-                        SyntaxFactory.IdentifierName("FlattenParam"),
+                    var invocationExpression = ((InvocationExpressionSyntax)InternalMethods.FlattenParam)
+                        .WithArgumentList(
                         SyntaxFactory.ArgumentList(
                             SyntaxFactory.SingletonSeparatedList(
-                                SyntaxFactory.Argument(arg)
+                                SyntaxFactory.Argument(arg) // Passing `arg` as the function argument
                             )
                         )
                     );
-                    return SyntaxFactory.Argument(flattenedArg);
+
+                    // Add the spread operator `..`
+                    return SyntaxFactory.SpreadElement(invocationExpression);
                 }
             }
 
@@ -1197,7 +1240,11 @@ namespace Keysharp.Scripting
         public override SyntaxNode VisitThrowStatement([NotNull] ThrowStatementContext context)
         {
             if (context.singleExpression() == null)
-                return SyntaxFactory.ThrowStatement();
+                return SyntaxFactory.ThrowStatement(
+                    SyntaxFactory.InvocationExpression(
+                        SyntaxFactory.IdentifierName("Error")
+                    )
+                );
 
             var expression = (ExpressionSyntax)Visit(context.singleExpression());
 
@@ -1434,7 +1481,7 @@ namespace Keysharp.Scripting
             }
             // Case 1: If we are not inside a class declaration OR we are inside a class
             // declaration method declaration then add it as a closure
-            if (parser.currentClass.Name == "program" || parser.currentFunc.Name != "_ks_UserMainCode")
+            if (parser.currentClass.Name == Keywords.MainClassName || parser.currentFunc.Name != "_ks_UserMainCode")
             {
                 var methodName = methodDeclaration.Identifier.Text;
                 var variableName = methodName.ToLowerInvariant();
@@ -1794,99 +1841,24 @@ namespace Keysharp.Scripting
         public override SyntaxNode VisitArrayLiteral(ArrayLiteralContext context)
         {
             // Visit the arrayElementList to get all the elements
-            var elementsInitializer = (InitializerExpressionSyntax)VisitArrayElementList(context.arrayElementList());
+            var elementsArgList = context.arguments() == null
+                ? SyntaxFactory.ArgumentList()
+                : (ArgumentListSyntax)Visit(context.arguments());
+            var elementsInitializer = SyntaxFactory.InitializerExpression(
+                    SyntaxKind.ArrayInitializerExpression,
+                    SyntaxFactory.SeparatedList(
+                        elementsArgList.Arguments.Select(arg => arg.Expression)
+                    )
+                );
 
             // Wrap the array initializer in a call to 'new Keysharp.Core.Array(...)'
             var keysharpArrayCreation = SyntaxFactory.ObjectCreationExpression(
                 CreateQualifiedName("Keysharp.Core.Array"), // Class name: Keysharp.Core.Array
-                SyntaxFactory.ArgumentList(
-                    SyntaxFactory.SingletonSeparatedList(
-                        SyntaxFactory.Argument(
-                            SyntaxFactory.CollectionExpression(
-                            SyntaxFactory.SeparatedList<CollectionElementSyntax>(
-                                elementsInitializer.Expressions.Select(expression =>
-                                {
-                                    return expression is CollectionExpressionSyntax spread
-                                        ? spread.Elements.First()
-                                        : SyntaxFactory.ExpressionElement((ExpressionSyntax)expression);
-                                })
-                            )
-                            )
-                        )
-                    )
-                ),
+                elementsArgList,
                 null // No object initializers
             );
 
             return keysharpArrayCreation;
-        }
-
-        public override SyntaxNode VisitArrayElementList(ArrayElementListContext context)
-        {
-            var expressions = new List<ExpressionSyntax>();
-
-            var lastText = ","; // Initialize to "," to handle leading empty slots (e.g., [,,1])
-            if (context == null || context.ChildCount == 0)
-            {
-                return SyntaxFactory.InitializerExpression(
-                    SyntaxKind.ArrayInitializerExpression,
-                    SyntaxFactory.SeparatedList<ExpressionSyntax>()
-                );
-            }
-            foreach (var child in context.children)
-            {
-                var childText = child.GetText();
-                if (child is ArrayElementContext arrayElementContext)
-                {
-                    // Visit non-empty array elements
-                    var element = VisitArrayElement(arrayElementContext);
-                    expressions.Add((ExpressionSyntax)element);
-                }
-                else if (childText == ",")
-                {
-                    if (lastText == childText)
-                        // Add an empty slot represented by `null`
-                        expressions.Add(SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression));
-                }
-                lastText = childText;
-            }
-            if (context.ChildCount != 0 && lastText == ",")
-                expressions.Add(SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression));
-
-            // Wrap the expressions in an InitializerExpressionSyntax
-            return SyntaxFactory.InitializerExpression(
-                    SyntaxKind.ArrayInitializerExpression,
-                    SyntaxFactory.SeparatedList(expressions)
-                );
-        }
-
-        public override SyntaxNode VisitArrayElement(ArrayElementContext context)
-        {
-            // Visit the single expression
-            var element = (ExpressionSyntax)Visit(context.expression());
-
-            // If the Multiply (*) is present, wrap it with FlattenParam
-            if (context.Multiply() != null)
-            {
-                var flattenInvocation = SyntaxFactory.InvocationExpression(
-                    SyntaxFactory.IdentifierName("FlattenParam"), // FlattenParam function
-                    SyntaxFactory.ArgumentList(
-                        SyntaxFactory.SingletonSeparatedList(
-                            SyntaxFactory.Argument(element) // Pass the visited expression as an argument
-                        )
-                    )
-                );
-
-                // Add the spread operator `..`
-                return SyntaxFactory.CollectionExpression(
-                    SyntaxFactory.SeparatedList(
-                        new[] { (CollectionElementSyntax)SyntaxFactory.SpreadElement(flattenInvocation) }
-                    )
-                );
-            }
-
-            // Return the element as is
-            return element;
         }
 
         public override SyntaxNode VisitMapLiteral([NotNull] MapLiteralContext context)

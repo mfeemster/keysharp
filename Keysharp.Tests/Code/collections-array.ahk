@@ -900,3 +900,26 @@ if (a[1] == unset && a[2] == 2 && a[3] == unset)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
+
+func1()
+{
+	return 1
+}
+
+func2()
+{
+	return 2
+}
+
+func3()
+{
+	return 3
+}
+
+arr := [ func1, func2, func3 ]
+if (arr[1]() == 1 &&
+	arr[2]() == 2 &&
+	arr[3]() == 3)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"

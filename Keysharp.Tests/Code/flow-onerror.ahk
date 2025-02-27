@@ -39,7 +39,7 @@ x := 0
 fo1 := Func("TimerHandler")
 SetTimer(fo1, 100)
 
-TimerHandler()
+TimerHandler(*)
 {
 global
 	 x := ++x

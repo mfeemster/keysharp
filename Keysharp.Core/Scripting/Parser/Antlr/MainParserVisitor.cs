@@ -560,18 +560,6 @@ public interface IMainParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitArrayLiteral([NotNull] MainParser.ArrayLiteralContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="MainParser.arrayElementList"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitArrayElementList([NotNull] MainParser.ArrayElementListContext context);
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="MainParser.arrayElement"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitArrayElement([NotNull] MainParser.ArrayElementContext context);
-	/// <summary>
 	/// Visit a parse tree produced by <see cref="MainParser.mapLiteral"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

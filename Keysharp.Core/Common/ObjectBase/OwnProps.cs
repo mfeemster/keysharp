@@ -161,6 +161,34 @@
             }
         }
 
+        public void MergeOwnPropsValues(Dictionary<string, OwnPropsDesc> map)
+        {
+            foreach (var kv in map)
+            {
+                switch (kv.Key.ToLower())
+                {
+                    case "value":
+                        Value = kv.Value.Value;
+                        Get = null;
+                        Set = null;
+                        Call = null;
+                        break;
+                    case "get":
+                        Get = kv.Value.Value;
+                        Value = null;
+                        break;
+                    case "set":
+                        Set = kv.Value.Value;
+                        Value = null;
+                        break;
+                    case "call":
+                        Call = kv.Value.Value;
+                        Value = null;
+                        break;
+                }
+            }
+        }
+
         public void Merge(Map map)
 		{
             foreach (var kv in map.map)

@@ -386,17 +386,7 @@ lastFormalParameterArg
     ;
 
 arrayLiteral
-    : '[' (WS | EOL)* (arrayElementList (WS | EOL)*)? ']'
-    ;
-
-// Keysharp supports arrays like [,,1,2,,].
-arrayElementList
-    : (',' arrayElement?)+
-    | arrayElement (',' arrayElement?)*
-    ;
-
-arrayElement
-    : expression Multiply? // Spread
+    : '[' (WS | EOL)* (arguments (WS | EOL)*)? ']'
     ;
 
 mapLiteral
@@ -446,7 +436,7 @@ expressionSequence
     ;
 
 memberIndexArguments
-    : '[' s* arrayElementList? ']'
+    : '[' s* (arguments s*)? ']'
     ;
 
 // ifStatement and loops require that they don't contain a bodied function expression.

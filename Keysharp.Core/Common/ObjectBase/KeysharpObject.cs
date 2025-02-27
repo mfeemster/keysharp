@@ -1,6 +1,4 @@
-﻿using Antlr4.Runtime.Misc;
-
-namespace Keysharp.Core.Common.ObjectBase
+﻿namespace Keysharp.Core.Common.ObjectBase
 {
 	internal interface I__Enum
 	{
@@ -9,14 +7,13 @@ namespace Keysharp.Core.Common.ObjectBase
 
 	public class KeysharpObject : Any
 	{
-        protected internal Dictionary<string, OwnPropsDesc> op;
+        protected internal Dictionary<string, OwnPropsDesc> op = new Dictionary<string, OwnPropsDesc>(StringComparer.OrdinalIgnoreCase);
 
         MethodInfo mi;
         protected bool SkipConstructorLogic { get; }
 
         public KeysharpObject(params object[] args)
 		{
-			var t = GetType();
 			// Skip Map and OwnPropsMap because SetPropertyValue will cause recursive stack overflow
 			// (if the property doesn't exist then a new Map is created which calls this function again)
 			if (Script.Variables.Prototypes == null || SkipConstructorLogic
@@ -27,18 +24,20 @@ namespace Keysharp.Core.Common.ObjectBase
 				return;
 			}
 
+            var t = GetType();
             Script.Variables.Statics.TryGetValue(t, out KeysharpObject value);
 			if (value == null)
 			{
 				__New(args);
                 return;
 			}
-            Script.SetPropertyValue(this, "base", Script.GetPropertyValue(value, "prototype"));
+
+			this.op["base"] = new OwnPropsDesc(this, value.op["prototype"].Value);
             Script.Invoke(this, "__Init");
             Script.Invoke(this, "__New", args);
         }
 
-        protected KeysharpObject(bool skipLogic)
+        public KeysharpObject(bool skipLogic)
         {
             SkipConstructorLogic = skipLogic;
         }
@@ -46,30 +45,6 @@ namespace Keysharp.Core.Common.ObjectBase
 		public virtual object __New(params object[] args) => "";
 
         public new (Type, object) super => (typeof(Any), this);
-
-        public object Super
-		{
-			get
-			{
-				var declaringType = GetDeclaringTypeFromStack();
-                return (this, Script.GetPropertyValue(Script.Variables.Prototypes[GetType().IsAssignableTo(declaringType) ? declaringType : GetType()], "base"));
-			}
-		}
-
-        private static Type GetDeclaringTypeFromStack()
-        {
-            var stackTrace = new System.Diagnostics.StackTrace();
-            for (int i = 2; i < stackTrace.FrameCount; i++) // Start at 2 to skip the current property
-            {
-                var frame = stackTrace.GetFrame(i);
-                var method = frame?.GetMethod();
-                if (method?.DeclaringType != null)
-                {
-                    return method.DeclaringType;
-                }
-            }
-            return null;
-        }
 
         /// <summary>
         /// Return a cloned copy of the object.
@@ -105,12 +80,12 @@ namespace Keysharp.Core.Common.ObjectBase
 
 					if (op.TryGetValue(name, out var currProp))
 					{
-						currProp.Merge(kso.op);
+						currProp.MergeOwnPropsValues(kso.op);
 					}
 					else
 					{
 						op[name] = new OwnPropsDesc();
-						op[name].Merge(kso.op);
+						op[name].MergeOwnPropsValues(kso.op);
 					}
 
 					kso.op.Clear();
@@ -204,7 +179,7 @@ namespace Keysharp.Core.Common.ObjectBase
 			{
 				foreach (var kv in op)
 				{
-					if (kv.Key == "base")
+					if (kv.Key == "base" || kv.Key == "super")
 						continue;
 
 					if (kv.Value.Get != null && (kv.Value.Get is not FuncObj fo || (fo.Mph.mi != null && fo.Mph.ParamLength <= 1)))
@@ -219,7 +194,7 @@ namespace Keysharp.Core.Common.ObjectBase
 			var valProps = Reflections.GetOwnProps(GetType(), user);
 
 			foreach (var mph in valProps)
-				if (mph.pi != null && mph.ParamLength == 0)
+				if (mph.pi != null && mph.ParamLength == 0 && mph.pi.Name != "super")
 					props[mph.pi.Name] = mph;
 
 			return new OwnPropsIterator(this, props, vals);

@@ -2,7 +2,7 @@ x := 1
 y := 2
 z := 3
 
-func2(a, b, c := 123)
+func2(a?, b?, c := 123)
 {
 	global x := a
 	global y := b
@@ -171,7 +171,7 @@ else
 	
 x := false
 
-func3(a, b, c := unset)
+func3(a?, b?, c := unset)
 {
 	if (IsSet(c))
 	{

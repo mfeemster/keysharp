@@ -402,7 +402,7 @@ namespace Keysharp.Core.Common.Invoke
 
 			foreach (var asm in assemblies)
 				foreach (var type in asm.GetExportedTypes())
-					if (type.IsClass && type.IsPublic && type.Namespace != null && (!ignoreMainAssembly || type.Name != Parser.mainClassName) &&
+					if (type.IsClass && type.IsPublic && type.Namespace != null && (!ignoreMainAssembly || type.Name != Keywords.MainClassName) &&
 							(type.Namespace.StartsWith("Keysharp.Core", StringComparison.OrdinalIgnoreCase) ||
 							 type.Namespace.StartsWith("Keysharp.CompiledMain", StringComparison.OrdinalIgnoreCase) ||
 							 type.Namespace.StartsWith("Keysharp.Scripting", StringComparison.OrdinalIgnoreCase) ||

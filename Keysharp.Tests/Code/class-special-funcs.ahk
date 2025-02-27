@@ -159,12 +159,12 @@ if (val == 123)
 else
 	FileAppend "fail", "*"
 
-Gfunc123()
+Gfunc123(*)
 {
 	return 123
 }
 
-Gfunc456()
+Gfunc456(*)
 {
 	return 456
 }

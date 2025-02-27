@@ -63,6 +63,8 @@
         internal const string AnonymousLambdaPrefix = "_ks_AnonLambda_";
         internal const string AnonymousFatArrowLambdaPrefix = "_ks_AnonFatArrowLambda_";
 
+		public const string MainClassName = "Program";
+
         internal static HashSet<string> ClassReservedKeywords = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
             {
                 "Call", "__New", "__Init", "__Get", "__Set", "__Item", "__Class", "__StaticInit"

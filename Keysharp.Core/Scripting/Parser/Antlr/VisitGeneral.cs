@@ -63,7 +63,7 @@ namespace Keysharp.Scripting
                     );
 
                 // Add the function declaration to the main class
-                parser.mainClass.Declaration = parser.mainClass.Declaration.AddMembers(hotIfFunction);
+                parser.mainClass.Body.Add(hotIfFunction);
 
                 // Add the function call to parser.DHHR
                 parser.DHHR.Add(
@@ -276,7 +276,7 @@ namespace Keysharp.Scripting
             }
 
             // Add the hotkey function to the main class
-            parser.mainClass.Declaration = parser.mainClass.Declaration.AddMembers(hotkeyFunction);
+            parser.mainClass.Body.Add(hotkeyFunction);
 
             // Generate a HotkeyDefinition.AddHotkey call for each trigger
             foreach (var hotkeyTriggerContext in context.HotkeyTrigger())
@@ -385,7 +385,7 @@ namespace Keysharp.Scripting
                     .WithBody(parser.currentFunc.AssembleBody());
 
                 // Add the function to the main class
-                parser.mainClass.Declaration = parser.mainClass.Declaration.AddMembers(hotstringFunction);
+                parser.mainClass.Body.Add(hotstringFunction);
 
                 PopFunction();
             }
@@ -692,7 +692,7 @@ namespace Keysharp.Scripting
                 );
 
             // Add the functions to the main class
-            parser.mainClass.Declaration = parser.mainClass.Declaration.AddMembers(downFunction, upFunction);
+            parser.mainClass.Body.AddRange(downFunction, upFunction);
 
             // Add the "down" hotkey
             parser.DHHR.Add(

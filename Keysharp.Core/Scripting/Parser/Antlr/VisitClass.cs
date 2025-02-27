@@ -35,33 +35,25 @@ namespace Keysharp.Scripting
             PushClass(Parser.NormalizeIdentifier(context.identifier().GetText(), eNameCase.Title));
 
             // Determine the base class (Extends clause)
-            BaseListSyntax baseList;
             if (context.Extends() != null)
             {
                 var extendsParts = context.classExtensionName().identifier();
                 var baseClassName = parser.NormalizeClassIdentifier(extendsParts[0].GetText());
-                if (Reflections.stringToTypes.ContainsKey(baseClassName)) {
-                    baseClassName = Reflections.stringToTypes.First(pair =>  pair.Key.Equals(baseClassName, StringComparison.InvariantCultureIgnoreCase)).Key;
-                    parser.currentClass.Base = baseClassName;
-                }
                 for (int i = 1; i < extendsParts.Length; i++)
                 {
                     baseClassName += "." + parser.NormalizeClassIdentifier(extendsParts[i].GetText());
                 }
-                baseList = SyntaxFactory.BaseList(
-                    SyntaxFactory.SingletonSeparatedList<BaseTypeSyntax>(
-                        SyntaxFactory.SimpleBaseType(CreateQualifiedName(baseClassName))
-                    )
-                );
+                if (extendsParts.Length == 1 && Reflections.stringToTypes.ContainsKey(baseClassName))
+                {
+                    baseClassName = Reflections.stringToTypes.First(pair => pair.Key.Equals(baseClassName, StringComparison.InvariantCultureIgnoreCase)).Key;
+                }
+                parser.currentClass.Base = baseClassName;
+                parser.currentClass.BaseList.Add(SyntaxFactory.SimpleBaseType(CreateQualifiedName(baseClassName)));
             }
             else
             {
                 // Default base class is KeysharpObject
-                baseList = SyntaxFactory.BaseList(
-                    SyntaxFactory.SingletonSeparatedList<BaseTypeSyntax>(
-                        SyntaxFactory.SimpleBaseType(CreateQualifiedName("KeysharpObject"))
-                    )
-                );
+                parser.currentClass.BaseList.Add(SyntaxFactory.SimpleBaseType(CreateQualifiedName("KeysharpObject")));
             }
 
             // Add `public static object myclass = Myclass.__Static;` global field
@@ -118,7 +110,47 @@ namespace Keysharp.Scripting
             )
             .WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken));
 
-            parser.mainClass.Declaration = parser.mainClass.Declaration.AddMembers(fieldDeclaration);
+            parser.mainClass.Body.Add(fieldDeclaration);
+
+            // Add the super property
+            var superPropertyDeclaration = SyntaxFactory.PropertyDeclaration(
+                SyntaxFactory.TupleType(
+                    SyntaxFactory.SeparatedList<TupleElementSyntax>(
+                        new[]
+                        {
+                            SyntaxFactory.TupleElement(SyntaxFactory.IdentifierName("Type")),
+                            SyntaxFactory.TupleElement(SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword)))
+                        }
+                    )
+                ),
+                SyntaxFactory.Identifier("super") // Property name
+            )
+            .WithModifiers(
+                SyntaxFactory.TokenList(
+                    new[]
+                    {
+                        SyntaxFactory.Token(SyntaxKind.PublicKeyword),
+                        SyntaxFactory.Token(SyntaxKind.NewKeyword)
+                    }
+                )
+            )
+            .WithExpressionBody(
+                SyntaxFactory.ArrowExpressionClause(
+                    SyntaxFactory.TupleExpression(
+                        SyntaxFactory.SeparatedList<ArgumentSyntax>(
+                            new ArgumentSyntax[]
+                            {
+                                SyntaxFactory.Argument(SyntaxFactory.TypeOfExpression(
+                                    CreateQualifiedName(parser.currentClass.Base) // typeof(MyType)
+                                )),
+                                SyntaxFactory.Argument(SyntaxFactory.ThisExpression()) // this
+                            }
+                        )
+                    )
+                )
+            )
+            .WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken));
+            parser.currentClass.Body.Add(superPropertyDeclaration);
 
             // Add the constructor
             parser.currentClass.Body.Add(CreateConstructor(parser.currentClass.Name));
@@ -171,9 +203,7 @@ namespace Keysharp.Scripting
             if (!parser.currentClass.ContainsMethod(Keywords.ClassStaticPrefix + "Call"))
                 parser.currentClass.Body.Add(CreateCallFactoryMethod(parser.currentClass.Name));
 
-            var newClass = parser.currentClass.Declaration
-                .WithBaseList(baseList)
-                .WithMembers(SyntaxFactory.List(parser.currentClass.Declaration.Members.Concat(parser.currentClass.Body)));
+            var newClass = parser.currentClass.Assemble();
 
             PopClass();
             return newClass;
@@ -204,7 +234,7 @@ namespace Keysharp.Scripting
             else
             {
                 // Handle regular property
-                propertyName = parser.NormalizeClassIdentifier(propertyNameSyntax.identifier().GetText());
+                propertyName = propertyNameSyntax.identifier().GetText();
             }
 
             if (isStatic)
@@ -328,7 +358,7 @@ namespace Keysharp.Scripting
 
             foreach (var fieldDefinition in context.fieldDefinition())
             {
-                var fieldName = parser.NormalizeClassIdentifier(fieldDefinition.propertyName().GetText());
+                var fieldName = fieldDefinition.propertyName().GetText();
                 fieldNames.Add(fieldName);
 
                 if (fieldDefinition.expression() != null)
@@ -517,7 +547,7 @@ namespace Keysharp.Scripting
                                     SyntaxFactory.Argument(
                                         SyntaxFactory.CastExpression(
                                             SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword)),
-                                            SyntaxFactory.IdentifierName("Super")
+                                            SyntaxFactory.IdentifierName("super")
                                         )
                                     ),
                                     SyntaxFactory.Argument(
