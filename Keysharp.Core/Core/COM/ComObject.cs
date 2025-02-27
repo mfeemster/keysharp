@@ -25,149 +25,147 @@ namespace Keysharp.Core.COM
 				else
 					return item;
 			}
-
-			
-			    set
-			    {
-			    object temp = null;
-			    var longVal = 0L;
-			    var wasObj = false;
-
-			    if (value is IntPtr ip)
-			        longVal = ip.ToInt64();
-			    else if (value is long l)
-			        longVal = l;
-
-			    if ((VarType & Com.vt_byref) == Com.vt_byref)
-			    {
-			        item = longVal;
-			        return;
-			    }
-			    else
-			    {
-			        switch (VarType)
-			        {
-			            case Com.vt_empty://No value
-			                break;
-
-			            case Com.vt_null://SQL-style Null
-			                temp = null;
-			                break;
-
-			            case Com.vt_i2://16-bit signed int
-			            case Com.vt_ui2://16-bit unsigned int
-			                temp = longVal & 0xFFFF;
-			                break;
-
-			            case Com.vt_i4://32-bit signed int
-			            case Com.vt_r4://32-bit floating-point number
-			            case Com.vt_ui4://32-bit unsigned int
-			            case Com.vt_error://Error code(32-bit integer)
-			                temp = longVal & 0xFFFFFFFF;
-			                break;
-
-			            case Com.vt_r8://64-bit floating-point number
-			            case Com.vt_cy://Currency
-			            case Com.vt_i8://64-bit signed int
-			            case Com.vt_ui8://64-bit unsigned int
-			            case Com.vt_date://Date
-			            case Com.vt_int://Signed machine int
-			            case Com.vt_uint://Unsigned machine int
-			                temp = longVal;
-			                break;
-
-			            case Com.vt_bool://Boolean True(-1) or False(0)
-			                temp = value.Ab() ? -1L : 0L;//The true value for a variant is actually -1.
-			                break;
-
-			            case Com.vt_bstr://COM string (Unicode string with length prefix)
-			            case Com.vt_dispatch://COM object
-			            case Com.vt_variant://VARIANT(must be combined with VT_ARRAY or VT_BYREF)
-			            case Com.vt_unknown://IUnknown interface pointer
-			                wasObj = true;
-			                temp = longVal != 0L ? longVal : value;
-			                break;
-
-			            case Com.vt_decimal://(not supported)
-			                temp = longVal;
-			                break;
-
-			            case Com.vt_i1://8-bit signed int
-			            case Com.vt_ui1://8-bit unsigned int
-			                temp = longVal & 0x0F;
-			                break;
-
-			            case Com.vt_record://User-defined type -- NOT SUPPORTED
-			                break;
-
-			            case Com.vt_array://SAFEARRAY
-			                wasObj = true;
-			                temp = longVal;
-			                break;
-			                //case Com.vt_byref    ://Pointer to another type of value (0x4000)
-			                //  break;
-			        }
-			    }
-
-			    if (wasObj)
-			    {
-			        if (longVal != 0L)
-			        {
-			            temp = Marshal.GetObjectForIUnknown(new nint(longVal));
-			        }
-
-			        //else if (value is long l && l > 0)// && Marshal.IsComObject(value))
-			        //{
-			        //  try
-			        //  {
-			        //      temp = Marshal.GetObjectForIUnknown(new IntPtr(l));//This can just be a pointer to memory, in which case it'll throw.
-			        //  }
-			        //  catch (Exception)
-			        //  {
-			        //  }
-			        //}
-			        //else
-			        //  temp = value;
-			    }
-
-			    if (temp != null && Marshal.IsComObject(temp))
-			    {
-			        if (temp is IDispatch id)
-			        {
-			            item = id;
-			            return;
-			        }
-			    }
-
-			    item = temp;
-			    }
-			
-			/*
 			set
 			{
-				object temp;
+				object temp = null;
+				var longVal = 0L;
+				var wasObj = false;
 
-				if (value is IntPtr ip && ip != IntPtr.Zero)
-					temp = Marshal.GetObjectForIUnknown(ip);
-				else if (value is long l && l > 0)
-					temp = Marshal.GetObjectForIUnknown(new IntPtr(l));
+				if (value is IntPtr ip)
+					longVal = ip.ToInt64();
+				else if (value is long l)
+					longVal = l;
+
+				if ((VarType & Com.vt_byref) == Com.vt_byref)
+				{
+					item = longVal;
+					return;
+				}
 				else
-					temp = value;
+				{
+					switch (VarType)
+					{
+						case Com.vt_empty://No value
+							break;
+
+						case Com.vt_null://SQL-style Null
+							temp = null;
+							break;
+
+						case Com.vt_i2://16-bit signed int
+						case Com.vt_ui2://16-bit unsigned int
+							temp = longVal & 0xFFFF;
+							break;
+
+						case Com.vt_i4://32-bit signed int
+						case Com.vt_r4://32-bit floating-point number
+						case Com.vt_ui4://32-bit unsigned int
+						case Com.vt_error://Error code(32-bit integer)
+							temp = longVal & 0xFFFFFFFF;
+							break;
+
+						case Com.vt_r8://64-bit floating-point number
+						case Com.vt_cy://Currency
+						case Com.vt_i8://64-bit signed int
+						case Com.vt_ui8://64-bit unsigned int
+						case Com.vt_date://Date
+						case Com.vt_int://Signed machine int
+						case Com.vt_uint://Unsigned machine int
+							temp = longVal;
+							break;
+
+						case Com.vt_bool://Boolean True(-1) or False(0)
+							temp = value.Ab() ? -1L : 0L;//The true value for a variant is actually -1.
+							break;
+
+						case Com.vt_bstr://COM string (Unicode string with length prefix)
+						case Com.vt_dispatch://COM object
+						case Com.vt_variant://VARIANT(must be combined with VT_ARRAY or VT_BYREF)
+						case Com.vt_unknown://IUnknown interface pointer
+							wasObj = true;
+							temp = longVal != 0L ? longVal : value;
+							break;
+
+						case Com.vt_decimal://(not supported)
+							temp = longVal;
+							break;
+
+						case Com.vt_i1://8-bit signed int
+						case Com.vt_ui1://8-bit unsigned int
+							temp = longVal & 0x0F;
+							break;
+
+						case Com.vt_record://User-defined type -- NOT SUPPORTED
+							break;
+
+						case Com.vt_array://SAFEARRAY
+							wasObj = true;
+							temp = longVal;
+							break;
+							//case Com.vt_byref    ://Pointer to another type of value (0x4000)
+							//  break;
+					}
+				}
+
+				if (wasObj)
+				{
+					if (longVal != 0L)
+					{
+						temp = Marshal.GetObjectForIUnknown(new nint(longVal));
+					}
+
+					//else if (value is long l && l > 0)// && Marshal.IsComObject(value))
+					//{
+					//  try
+					//  {
+					//      temp = Marshal.GetObjectForIUnknown(new IntPtr(l));//This can just be a pointer to memory, in which case it'll throw.
+					//  }
+					//  catch (Exception)
+					//  {
+					//  }
+					//}
+					//else
+					//  temp = value;
+				}
 
 				if (temp != null && Marshal.IsComObject(temp))
 				{
 					if (temp is IDispatch id)
+					{
 						item = id;
-					else
-						item = temp;
+						return;
+					}
 				}
-				else
-					item = value;
+
+				item = temp;
 			}
+
+			/*
+			    set
+			    {
+			    object temp;
+
+			    if (value is IntPtr ip && ip != IntPtr.Zero)
+			        temp = Marshal.GetObjectForIUnknown(ip);
+			    else if (value is long l && l > 0)
+			        temp = Marshal.GetObjectForIUnknown(new IntPtr(l));
+			    else
+			        temp = value;
+
+			    if (temp != null && Marshal.IsComObject(temp))
+			    {
+			        if (temp is IDispatch id)
+			            item = id;
+			        else
+			            item = temp;
+			    }
+			    else
+			        item = value;
+			    }
 			*/
 		}
 
-		public new (Type, object) super => (typeof(ComObject), this);
+		public new (Type, object) super => (typeof(KeysharpObject), this);
 
 		public int VarType { get; set; }
 

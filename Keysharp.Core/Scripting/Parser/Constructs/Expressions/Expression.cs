@@ -505,17 +505,19 @@ namespace Keysharp.Scripting
 									invoke.Method.MethodName = "InvokeWithRefs";//Change method name to handle refs. This is much less efficient.
 								}
 
-								//Convert the last parameter to an object cast if it was not ref and not null.
+								//Convert the last parameter to an object cast if it was not ref.
 								//The reason for this cast is so that a variadic parameter inside of one function can be
 								//passed as a non-variadic param in another function. It's a very rare corner case, and litters
 								//the generated code with casts, but it makes things technically correct and the same as AHK.
+								//Another benefit is that it allows passing null/unset as the last argument to a dynamically
+								//invoked function. It does so by casting to an object, which then gets passed as an object[].
+								//Otherwise it would just be a null which wouldn't work.
 								if (!lastisstar && invoke.Parameters.Count > 0)
 								{
 									var lastIndex = invoke.Parameters.Count - 1;
 									var p = invoke.Parameters[lastIndex];
 
-									if (!refIndexes.Contains(lastIndex)
-											&& (p is not CodePrimitiveExpression cpe || cpe.Value != null))
+									if (!refIndexes.Contains(lastIndex))
 										invoke.Parameters[lastIndex] = new CodeCastExpression(new CodeTypeReference(typeof(object)), p);
 								}
 							}
@@ -775,8 +777,8 @@ namespace Keysharp.Scripting
 									argi += tempi + 1;//Account for the comma.
 								}
 
-									if (paren.Count > 0 && paren[paren.Count - 1].ToString() == ",")
-										paramExprs.Add(nullPrimitive);
+								if (paren.Count > 0 && paren[paren.Count - 1].ToString() == ",")
+									paramExprs.Add(nullPrimitive);
 
 								var coce = new CodeObjectCreateExpression(typeof(Core.Array), [..paramExprs]);
 								coce.UserData["origtype"] = typeStack.Peek();//Needed later when properly casing direct function references.

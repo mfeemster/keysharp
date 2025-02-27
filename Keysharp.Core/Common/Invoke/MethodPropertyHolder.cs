@@ -59,13 +59,7 @@
 							var ctrl = inst.GetControl();//If it's a gui control, then invoke on the gui thread.
 							ctrl.CheckedInvoke(() =>
 							{
-								var oldHandle = Script.HwndLastUsed;
-
-								if (ctrl != null && ctrl.FindForm() is Form form)
-									Script.HwndLastUsed = form.Handle;
-
 								ret = mi.Invoke(inst, null);
-								Script.HwndLastUsed = oldHandle;
 							}, true);//This can be null if called before a Gui object is fully initialized.
 							return ret;
 						};
@@ -154,13 +148,7 @@
 								var ctrl = inst.GetControl();
 								ctrl.CheckedInvoke(() =>
 								{
-									var oldHandle = Script.HwndLastUsed;
-
-									if (ctrl != null && ctrl.FindForm() is Form form)
-										Script.HwndLastUsed = form.Handle;
-
 									ret = mi.Invoke(inst, newobj);
-									Script.HwndLastUsed = oldHandle;
 								}, true);//This can be null if called before a Gui object is fully initialized.
 							}
 
@@ -223,13 +211,7 @@
 									var ctrl = inst.GetControl();
 									ctrl.CheckedInvoke(() =>
 									{
-										var oldHandle = Script.HwndLastUsed;
-
-										if (ctrl != null && ctrl.FindForm() is Form form)
-											Script.HwndLastUsed = form.Handle;
-
 										ret = mi.Invoke(inst, obj);
-										Script.HwndLastUsed = oldHandle;
 									}, true);//This can be null if called before a Gui object is fully initialized.
 								}
 							}
@@ -259,13 +241,7 @@
 									var ctrl = inst.GetControl();
 									ctrl.CheckedInvoke(() =>
 									{
-										var oldHandle = Script.HwndLastUsed;
-
-										if (ctrl != null && ctrl.FindForm() is Form form)
-											Script.HwndLastUsed = form.Handle;
-
 										ret = mi.Invoke(inst, newobj);
-										Script.HwndLastUsed = oldHandle;
 									}, true);//This can be null if called before a Gui object is fully initialized.
 								}
 
@@ -296,13 +272,7 @@
 							var ctrl = inst.GetControl();//If it's a gui control, then invoke on the gui thread.
 							ctrl.CheckedInvoke(() =>
 							{
-								var oldHandle = Script.HwndLastUsed;
-
-								if (ctrl != null && ctrl.FindForm() is Form form)
-									Script.HwndLastUsed = form.Handle;
-
 								ret = pi.GetValue(null);
-								Script.HwndLastUsed = oldHandle;
 							}, true);//This can be null if called before a Gui object is fully initialized.
 
 							if (ret is int i)
@@ -315,13 +285,7 @@
 							var ctrl = inst.GetControl();//If it's a gui control, then invoke on the gui thread.
 							ctrl.CheckedInvoke(() =>
 							{
-								var oldHandle = Script.HwndLastUsed;
-
-								if (ctrl != null && ctrl.FindForm() is Form form)
-									Script.HwndLastUsed = form.Handle;
-
 								pi.SetValue(null, obj);
-								Script.HwndLastUsed = oldHandle;
 							}, true);//This can be null if called before a Gui object is fully initialized.
 						};
 					}
@@ -355,13 +319,7 @@
 							var ctrl = inst.GetControl();//If it's a gui control, then invoke on the gui thread.
 							ctrl.CheckedInvoke(() =>
 							{
-								var oldHandle = Script.HwndLastUsed;
-
-								if (ctrl != null && ctrl.FindForm() is Form form)
-									Script.HwndLastUsed = form.Handle;
-
 								ret = pi.GetValue(inst);
-								Script.HwndLastUsed = oldHandle;
 							}, true);//This can be null if called before a Gui object is fully initialized.
 
 							if (ret is int i)
@@ -374,13 +332,7 @@
 							var ctrl = inst.GetControl();//If it's a gui control, then invoke on the gui thread.
 							ctrl.CheckedInvoke(() =>
 							{
-								var oldHandle = Script.HwndLastUsed;
-
-								if (ctrl != null && ctrl.FindForm() is Form form)
-									Script.HwndLastUsed = form.Handle;
-
 								pi.SetValue(inst, obj);
-								Script.HwndLastUsed = oldHandle;
 							}, true);//This can be null if called before a Gui object is fully initialized.
 						};
 					}

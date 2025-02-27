@@ -22,7 +22,7 @@
 	{
 		internal object[] boundargs;
 
-		public new (Type, object) super => (typeof(BoundFunc), this);
+		public new (Type, object) super => (typeof(FuncObj), this);
 
 		internal BoundFunc(MethodInfo m, object[] ba, object o = null)
 			: base(m, o)
@@ -131,22 +131,19 @@
 	internal class FuncObj : KeysharpObject, IFuncObj
 	{
 		protected bool anyRef;
-		protected object inst;
 		protected bool isVariadic;
 		protected MethodInfo mi;
 		protected MethodPropertyHolder mph;
-		public object Inst => inst;
+
+		public object Inst { get; internal set; }
 		public bool IsBuiltIn => mi.DeclaringType.Module.Name.StartsWith("keysharp.core", StringComparison.OrdinalIgnoreCase);
 		public bool IsValid => mi != null&& mph != null&& mph.callFunc != null;
 		public string Name => mi != null ? mi.Name : "";
 		internal bool IsVariadic => isVariadic;
-
 		internal long MaxParams => 9999;//All functions in keysharp are variadic so this property doesn't apply.
-
 		internal long MinParams => 0;//All functions in keysharp are variadic so this property doesn't apply.
 		internal MethodPropertyHolder Mph => mph;
-
-		public new (Type, object) super => (typeof(FuncObj), this);
+		public new (Type, object) super => (typeof(KeysharpObject), this);
 
 		internal FuncObj(string s, object o = null, object paramCount = null)
 			: this(o != null ? Reflections.FindAndCacheMethod(o.GetType(), s, paramCount.Ai(-1)) : Reflections.FindMethod(s, paramCount.Ai(-1)), o)
@@ -166,16 +163,16 @@
 		internal FuncObj(MethodInfo m, object o = null)
 		{
 			mi = m;
-			inst = o;
+			Inst = o;
 
 			if (mi != null)
 				Init();
 		}
 
 		public virtual IFuncObj Bind(params object[] args)
-		=> new BoundFunc(mi, args, inst);
+		=> new BoundFunc(mi, args, Inst);
 
-		public virtual object Call(params object[] args) => mph.callFunc(inst, args);
+		public virtual object Call(params object[] args) => mph.callFunc(Inst, args);
 
 		public virtual object CallWithRefs(params object[] args)
 		{
@@ -194,7 +191,7 @@
 					argsArray[i] = p;
 			}
 
-			var val = mph.callFunc(inst, argsArray);
+			var val = mph.callFunc(Inst, argsArray);
 
 			for (var i = 0; i < args.Length; i++)
 			{

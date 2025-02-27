@@ -67,20 +67,41 @@
 		}
 
 		/// <summary>
-		/// Retrieves an element from a <see cref="Dictionary{K,V}"/> if it exists, else adds it and returns
+		/// Retrieves an element from a <see cref="IDictionary{K,V}"/> if it exists, else adds it and returns
 		/// the newly added element.
+		/// This is the non-optimized function for the <see cref="IDictionary{K,V}"/> interface.
 		/// </summary>
 		/// <typeparam name="K">The key type of the <see cref="Dictionary{K,V}"/>.</typeparam>
 		/// <typeparam name="V">The value type of the <see cref="Dictionary{K,V}"/>.</typeparam>
 		/// <param name="dictionary">The <see cref="Dictionary{K,V}"/> to get from or add to.</param>
 		/// <param name="k">The key value to look up.</param>
 		/// <returns>The existing or newly added element.</returns>
-		internal static V GetOrAdd<K, V>(this IDictionary<K, V> dictionary, K k) where V : new ()
+		internal static V GetOrAdd<K, V>(this IDictionary<K, V> dictionary, K k)
+		where K : notnull
+			where V : new ()
 		{
 			if (!dictionary.TryGetValue(k, out var val))
 				dictionary.Add(k, val = new V());
 
 			return val;
+		}
+
+		/// <summary>
+		/// Retrieves an element from a <see cref="Dictionary{K,V}"/> if it exists, else adds it and returns
+		/// the newly added element.
+		/// This is an optimized function for the concrete <see cref="Dictionary{K,V}"/> type.
+		/// </summary>
+		/// <typeparam name="K">The key type of the <see cref="Dictionary{K,V}"/>.</typeparam>
+		/// <typeparam name="V">The value type of the <see cref="Dictionary{K,V}"/>.</typeparam>
+		/// <param name="dictionary">The <see cref="Dictionary{K,V}"/> to get from or add to.</param>
+		/// <param name="k">The key value to look up.</param>
+		/// <returns>The existing or newly added element.</returns>
+		internal static V GetOrAdd<K, V>(this Dictionary<K, V> dictionary, K k)
+		where K : notnull
+			where V : new ()
+		{
+			ref var val = ref CollectionsMarshal.GetValueRefOrAddDefault(dictionary, k, out var exists);
+			return !exists ? val = new V() : val;
 		}
 
 		/// <summary>
@@ -93,15 +114,12 @@
 		/// <param name="k">The key value to look up.</param>
 		/// <param name="v">The value to add if it doesn't exist.</param>
 		/// <returns>The existing or newly added element.</returns>
-		internal static V GetOrAdd<K, V>(this IDictionary<K, V> dictionary, K k, V v)
+		internal static V GetOrAdd<K, V>(this Dictionary<K, V> dictionary, K k, V v)
+		where K : notnull
+			where V : new ()
 		{
-			if (!dictionary.TryGetValue(k, out var val))
-			{
-				dictionary.Add(k, v);
-				return v;
-			}
-
-			return val;
+			ref var val = ref CollectionsMarshal.GetValueRefOrAddDefault(dictionary, k, out var exists);
+			return !exists ? val = v : val;
 		}
 
 		/// <summary>
@@ -117,25 +135,13 @@
 		/// <param name="k">The key value to look up.</param>
 		/// <param name="constructionFunc">The construction function which returns a newly constructed object of type <typeparamref name="V"/>.</param>
 		/// <returns>The existing or newly added element.</returns>
-		internal static V GetOrAdd<K, V>(this IDictionary<K, V> dictionary, K k, Func<V> constructionFunc)
+		internal static V GetOrAdd<K, V>(this Dictionary<K, V> dictionary, K k, Func<V> constructionFunc)
+		where K : notnull
+			where V : new ()
 		{
-			if (!dictionary.TryGetValue(k, out var val))
-				dictionary.Add(k, val = constructionFunc());
-
-			return val;
+			ref var val = ref CollectionsMarshal.GetValueRefOrAddDefault(dictionary, k, out var exists);
+			return !exists ? val = constructionFunc() : val;
 		}
-
-		//internal static V GetOrAdd<K, V>(this OrderedDictionary dictionary, K k) where V : class, new ()
-		//{
-		//  if (!dictionary.Contains(k))
-		//  {
-		//      var v = new V();
-		//      dictionary.Add(k, v);
-		//      return v;
-		//  }
-
-		//  return (V)dictionary[k];
-		//}
 
 		/// <summary>
 		/// Retrieves an element from an <see cref="OrderedDictionary"/> if it exists, else adds it and returns
@@ -149,7 +155,9 @@
 		/// <param name="k">The key value to look up.</param>
 		/// <param name="p1">The parameter to pass to the constructor for a new object of type <typeparamref name="V"/>.</param>
 		/// <returns>The existing or newly added element.</returns>
-		internal static V GetOrAdd<K, V, P1>(this OrderedDictionary dictionary, K k, P1 p1) where V : class
+		internal static V GetOrAdd<K, V, P1>(this OrderedDictionary dictionary, K k, P1 p1)
+		where K : notnull
+			where V : class
 		{
 			if (!dictionary.Contains(k))
 			{
@@ -189,7 +197,6 @@
 				var inst = obj.Length > 0 ? obj[0].GetControl() : null;
 				//lock (ehLock)
 				{
-					var oldHandle = Script.HwndLastUsed;
 					var oldEventInfo = Accessors.A_EventInfo;
 					var (pushed, tv) = Threads.BeginThread();
 
@@ -215,8 +222,6 @@
 							_ = Threads.EndThread(true);
 						}, true);//Pop on exception because EndThread() above won't be called.
 					}
-
-					Script.HwndLastUsed = oldHandle;
 				}
 			}
 
