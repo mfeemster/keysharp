@@ -1398,7 +1398,7 @@
 
 			if (ctrl is KeysharpPictureBox pbox)
 			{
-				if (ImageHelper.LoadImage(text, opts.width, opts.height, opts.iconnumber).Item1 is Bitmap bmp)
+				if (text != null && ImageHelper.LoadImage(text, opts.width, opts.height, opts.iconnumber).Item1 is Bitmap bmp)
 				{
 					if (pbox.SizeMode == PictureBoxSizeMode.Zoom)
 					{

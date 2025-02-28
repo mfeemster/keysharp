@@ -197,8 +197,6 @@ testfunc()
 		+ `StringBuffer` internally uses a `StringBuilder` which is how C# P/Invoke handles string pointers.
 		+ This relieves the caller of having to call `StrGet()` on the new string data.
 	+ Also use `Ptr` and `StringBuffer` for double pointer parameters such as `LPTSTR*`.
-	+ When using type `Str` for string data the function will modify, but not reallocate, the passed in string argument must be passed by `&` reference. `msvcrt.dll\_wcsrev()` is one such example.
-		+ This is also supported for strings passed as `AStr`.
 	+ Passing `GetCommandLine` to `DllCall()` won't work exactly as the examples show. Instead, the type must be `Ptr` and the result must be wrapped in `StrGet()` like:
 		+ `StrGet(DllCall("GetCommandLine", "ptr"))`
 		+ This holds true for any function which returns a pointer to memory which was allocated inside of a Dll.
