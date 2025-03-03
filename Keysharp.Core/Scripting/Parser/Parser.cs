@@ -1731,8 +1731,12 @@ namespace Keysharp.Scripting
 				}
 			}
 
+			if (PropExistsInTypeOrBase(currentType.Name, varName, -1).Item1)//Finally, check the base classes.
+				return true;
+
 			return false;
 		}
+
 		internal class CommonParameterInfo
 		{
 			internal bool IsVariadic { get; private set; }

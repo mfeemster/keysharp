@@ -671,6 +671,11 @@ class mybaseclass
 	{
 		global x := 123
 	}
+
+	retfunc(xx)
+	{
+		return xx
+	}
 }
 
 class mysubclass extends mybaseclass
@@ -678,8 +683,23 @@ class mysubclass extends mybaseclass
 	basefunc()
 	{
 		global
+		local val, temp
 		super.basefunc()
 		x++
+		temp := x
+		val := retfunc((x := 99) / 3) ; Nested assignment within an expression referencing already declared global property.
+		
+		if (x == 99)
+			FileAppend, "pass", "*"
+		else
+			FileAppend, "fail", "*"
+
+		if (val == 33)
+			FileAppend, "pass", "*"
+		else
+			FileAppend, "fail", "*"
+
+		x := temp
 	}
 }
 

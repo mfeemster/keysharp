@@ -718,7 +718,17 @@ namespace Keysharp.Scripting
 										}
 									}
 									else if (ces.Expression is CodeVariableReferenceExpression cvre)
+									{
 										gflist.Add(cvre.VariableName.Trim('%').ToLower());
+									}								
+									else if (ces.Expression is CodeMethodInvokeExpression cmie
+											 && cmie.Parameters.Count > 1
+											 && cmie.Parameters[1] is CodeBinaryOperatorExpression cboe2
+											 && cboe2.Left is CodeVariableReferenceExpression cvre2)
+									{
+										gflist.Add(cvre2.VariableName.ToLower());
+										funcglobalvarinitstatements.Add(expr);
+									}
 									else
 										funcglobalvarinitstatements.Add(expr);
 								}
