@@ -1,5 +1,3 @@
-
-
 x := 10
 y := x / 10
 
@@ -23,7 +21,7 @@ if (y = 1.5)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
-
+	
 x := 5
 y := x // 3
 

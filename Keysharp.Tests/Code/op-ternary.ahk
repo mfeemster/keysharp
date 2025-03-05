@@ -5,6 +5,20 @@ if (z = 1)
 else
 	FileAppend, "fail", "*"
 
+z := "3" > 2 ? 1 : 10
+
+if (z = 1)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+z := "3" > "0x2" ? 1 : 10
+
+if (z = 1)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
 z := 3 > 2 ? -1 : 10
 
 if (z = -1)
@@ -61,8 +75,21 @@ if (z = -1)
 else
 	FileAppend, "fail", "*"
 
-
 z := 3.1 > 2.1 ? 1.5 : 10.3
+
+if (z = 1.5)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+z := "3.1" > 2.1 ? 1.5 : 10.3
+
+if (z = 1.5)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+z := "3.1" > "2.1" ? 1.5 : 10.3
 
 if (z = 1.5)
 	FileAppend, "pass", "*"
@@ -104,6 +131,20 @@ if (z = 1.5)
 else
 	FileAppend, "fail", "*"
 
+z := "-3.1" < 2.1 ? 1.5 : 10.3
+
+if (z = 1.5)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+z := "-3.1" < "2.1" ? 1.5 : 10.3
+
+if (z = 1.5)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
 z := 3.1 > -2.1 ? -1.5 : 10.3
 
 if (z = -1.5)
@@ -124,7 +165,6 @@ if (z = -1.5)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
-
 
 x := 2
 y := 3
@@ -156,7 +196,6 @@ if (z = -10)
 else
 	FileAppend, "fail", "*"
 
-
 z := -y > x ? 1 : 10
 
 if (z = 10)
@@ -184,7 +223,6 @@ if (z = -10)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
-
 
 x := 2
 y := 4
@@ -283,6 +321,34 @@ else
 y := x == 1 ?true:false
 
 if (y)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+y := true ? 1 : 0
+
+if (y)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+y := "true" ? 1 : 0
+
+if (y)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+y := false ? 1 : 0
+
+if (!y)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+y := "false" ? 1 : 0
+
+if (!y)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
