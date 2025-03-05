@@ -235,10 +235,10 @@ namespace Keysharp.Core
 
 	public class KeysharpForm : Form
 	{
+		private bool beenShown = false;
+		private readonly int addStyle, addExStyle, removeStyle, removeExStyle;
 		internal object eventObj;
 		internal bool showWithoutActivation;
-		private bool beenShown = false;
-
 		public bool AllowShowDisplay = true;
 
 		internal bool BeenShown => beenShown;
@@ -246,8 +246,25 @@ namespace Keysharp.Core
 		[Browsable(false)]
 		protected override bool ShowWithoutActivation => showWithoutActivation;
 
-		public KeysharpForm()
+		protected override CreateParams CreateParams
 		{
+			get
+			{
+				var cp = base.CreateParams;
+				cp.Style |= addStyle;
+				cp.ExStyle |= addExStyle;
+				cp.Style &= ~removeStyle;
+				cp.ExStyle &= ~removeExStyle;
+				return cp;
+			}
+		}
+
+		public KeysharpForm(int _addStyle = 0, int _addExStyle = 0, int _removeStyle = 0, int _removeExStyle = 0)
+		{
+			addStyle = _addStyle;
+			addExStyle = _addExStyle;
+			removeStyle = _removeStyle;
+			removeExStyle = _removeExStyle;
 			AutoScaleDimensions = new SizeF(96F, 96F);
 			AutoScaleMode = AutoScaleMode.Dpi;
 			//See Gui.Show() for where the remainder of the properties get set, such as scaling values.
