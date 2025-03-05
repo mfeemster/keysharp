@@ -328,7 +328,7 @@
 				Script.HwndLastUsed = Hwnd;
 		}
 
-		public KeysharpEnumerator __Enum(object count) => new MapKeyValueIterator(controls, count.Ai());
+		public KeysharpEnumerator __Enum(object count) => new GuiControlIterator(controls, count.Ai());
 
 		public object __New(params object[] obj)
 		{
@@ -2455,6 +2455,69 @@
 			internal int yp = int.MinValue;
 			internal int yplus = int.MinValue;
 			internal int ys = int.MinValue;
+		}
+	}
+
+	/// <summary>
+	/// A special two component iterator for <see cref="Gui"/> which returns the key as a Control or
+	/// the key and value as the Handle and Control as a tuple.
+	/// </summary>
+	internal class GuiControlIterator : MapKeyValueIterator
+	{
+		public GuiControlIterator(Dictionary<object, object> m, int c)
+			: base(m, c)
+		{
+		}
+
+		/// <summary>
+		/// Places the control into key.
+		/// </summary>
+		/// <param name="key">A reference to the control value.</param>
+		/// <returns>True if the iterator position has not moved past the last element, else false.</returns>
+		public override object Call(ref object key)
+		{
+			if (MoveNext())
+			{
+				try
+				{
+					key = iter.Current.Value;
+				}
+				catch (IndexOutOfRangeException)
+				{
+					throw new InvalidOperationException();//Should never happen when using regular loops.
+				}
+
+				return true;
+			}
+
+			return false;
+		}
+
+		/// <summary>
+		/// Places the handle in key and the control in value.
+		/// </summary>
+		/// <param name="key">A reference to the handle value.</param>
+		/// <param name="value">A reference to the control value.</param>
+		/// <returns>True if the iterator position has not moved past the last element, else false.</returns>
+		public override object Call(ref object key, ref object value)
+		{
+			if (MoveNext())
+			{
+				try
+				{
+					var kv = iter.Current;
+					key = kv.Key;
+					value = kv.Value;
+				}
+				catch (IndexOutOfRangeException)
+				{
+					throw new InvalidOperationException();
+				}
+
+				return true;
+			}
+
+			return false;
 		}
 	}
 }
