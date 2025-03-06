@@ -5,7 +5,7 @@
 		private readonly bool disposeHandle = true;
 		private readonly IntPtr handle;
 
-		public new (Type, object) super => (typeof(GdiHandleHolder), this);
+		public new (Type, object) super => (typeof(KeysharpObject), this);
 
 		internal GdiHandleHolder(IntPtr h, bool d)
 		{

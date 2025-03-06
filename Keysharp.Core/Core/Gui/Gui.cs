@@ -306,7 +306,7 @@
 
 		internal StatusStrip StatusBar { get; set; }
 
-		public new (Type, object) super => (typeof(Gui), this);
+		public new (Type, object) super => (typeof(KeysharpObject), this);
 
 		public Gui(params object[] args) : base(args) { }
 
@@ -702,7 +702,8 @@
 						SelectionMode = opts.multiline.IsTrue() ? SelectionMode.MultiExtended : SelectionMode.One,
 						Sorted = opts.sort.IsTrue()//Unsure how to make incremental search work.
 					};
-					lb.Items.AddRange(al.Cast<(object, object)>().Select(x => x.Item2).Select(x => opts.lowercase.IsTrue() ? x.Str().ToLower() : opts.uppercase.IsTrue() ? x.Str().ToUpper() : x.Str()).ToArray());
+					if (al != null)
+						lb.Items.AddRange(al.Cast<(object, object)>().Select(x => x.Item2).Select(x => opts.lowercase.IsTrue() ? x.Str().ToLower() : opts.uppercase.IsTrue() ? x.Str().ToUpper() : x.Str()).ToArray());
 
 					if (opts.vscroll.HasValue)
 						lb.ScrollAlwaysVisible = opts.vscroll.Value;
@@ -1397,7 +1398,7 @@
 
 			if (ctrl is KeysharpPictureBox pbox)
 			{
-				if (ImageHelper.LoadImage(text, opts.width, opts.height, opts.iconnumber).Item1 is Bitmap bmp)
+				if (text != null && ImageHelper.LoadImage(text, opts.width, opts.height, opts.iconnumber).Item1 is Bitmap bmp)
 				{
 					if (pbox.SizeMode == PictureBoxSizeMode.Zoom)
 					{

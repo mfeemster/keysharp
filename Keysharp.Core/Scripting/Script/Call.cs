@@ -70,14 +70,15 @@ namespace Keysharp.Scripting
                             return (item, ifocall);
                         else if (val.Get != null && val.Get is IFuncObj ifoget)
                             return (item, ifoget.Call(item));//No params passed in, just call as is.
-                        else if (val.Value != null && val.Value is IFuncObj ifoval)
-                            return (item, ifoval);
+                        else if (val.Value != null)
+                            return (item, val.Value);
                         else if (val.Set != null && val.Set is IFuncObj ifoset)
                             return (item, ifoset);
 
                         return Errors.ErrorOccurred(err = new Error($"Attempting to get method or property {key} on object {val} failed.")) ? throw err : (null, null);
-                    }
-				}
+                    } else if (TryGetOwnPropsMap(kso, "__Call", out var protoCall) && protoCall.Call != null && protoCall.Call is IFuncObj ifoprotocall)
+                        return (null, ifoprotocall.Bind(item, key));
+                }
 
                 if (typetouse == null)
                     typetouse = item.GetType();
@@ -160,6 +161,8 @@ namespace Keysharp.Scripting
                             return ifo2;
 						return null;
                     }
+                    else if (TryGetOwnPropsMap(kso, "__Get", out var protoGet) && protoGet.Call != null && protoGet.Call is IFuncObj ifoprotoget)
+                        return ifoprotoget.Call(item, new Keysharp.Core.Array(), namestr);
 
                     if (Reflections.FindAndCacheProperty(typetouse, namestr, 0) is MethodPropertyHolder mph2)
                     {
@@ -302,28 +305,29 @@ namespace Keysharp.Scripting
 
 					return ret;
 				}
-				else if (mitup.Item2 is FuncObj ifo)
+				else if (mitup.Item2 is IFuncObj ifo2)
 				{
-					return ifo.Delegate(mitup.Item1, parameters);
-				}
-                else if (mitup.Item2 is IFuncObj ifo2)
-                {
-                    if (parameters == null)
-                        return ifo2.Call(mitup.Item1);
+					if (mitup.Item1 == null) // This means __Call was found and should be invoked
+						return ifo2.Call(new Keysharp.Core.Array(parameters));
 
-                    int count = parameters.Length;
-                    object[] args = new object[count + 1];
-                    args[0] = mitup.Item1;
-                    System.Array.Copy(parameters, 0, args, 1, count);
-                    return ifo2.Call(args);
-                }
+					if (parameters == null)
+						return ifo2.Call(mitup.Item1);
+
+					int count = parameters.Length;
+					object[] args = new object[count + 1];
+					args[0] = mitup.Item1;
+					System.Array.Copy(parameters, 0, args, 1, count);
+					return ifo2.Call(args);
+				}
+				else if (mitup.Item2 is KeysharpObject kso && !methName.Equals("Call", StringComparison.OrdinalIgnoreCase))
+					return Invoke(kso, "Call", [obj, ..parameters]);
             }
             catch (Exception e)
             {
-                if (e.InnerException is KeysharpException ke)
-                    throw ke;
-                else
-                    throw;
+				if (e.InnerException is KeysharpException ke)
+					throw ke;
+				else
+					throw;
             }
 
             throw new MemberError($"Attempting to invoke method or property {meth} failed.");
@@ -589,7 +593,9 @@ namespace Keysharp.Scripting
                         }
 
                     }
-				}
+                    else if (TryGetOwnPropsMap(kso, "__Set", out var protoSet) && protoSet.Call != null && protoSet.Call is IFuncObj ifoprotoset)
+                        return ifoprotoset.Call(item, namestr, new Keysharp.Core.Array(), value);
+                }
 
                 if (typetouse == null && item != null)
                     typetouse = item.GetType();

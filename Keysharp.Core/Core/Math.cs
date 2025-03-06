@@ -170,7 +170,7 @@
 		/// </summary>
 		/// <param name="n">A number.</param>
 		/// <returns>The largest integer less than or equal to <paramref name="n"/>.</returns>
-		public static double Floor(object obj) => Math.Floor(obj is double d ? d : obj.Ad());
+		public static long Floor(object obj) => (long) Math.Floor(obj is double d ? d : obj.Ad());
 
 		/// <summary>
 		/// Converts a numeric string or floating-point value to an integer.

@@ -5,7 +5,7 @@
 	/// </summary>
 	public static class RegEx
 	{
-		internal static Lock locker = new ();
+		internal static readonly Lock locker = new ();
 		internal static RegexEntry regdkt = [];
 
 		/// <summary>

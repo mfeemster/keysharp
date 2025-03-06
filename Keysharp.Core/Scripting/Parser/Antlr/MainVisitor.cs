@@ -432,7 +432,8 @@ namespace Keysharp.Scripting
         {
             text = parser.NormalizeFunctionIdentifier(text);
 
-            if (parser.currentFunc.VarRefs.Contains(text))
+            var vr = parser.IsVarRef(text);
+            if (vr != null)
             {
                 var debug = parser.currentFunc;
                 // If it's a VarRef, access the __Value member
@@ -441,7 +442,7 @@ namespace Keysharp.Scripting
                     SyntaxFactory.ParenthesizedExpression(
                         SyntaxFactory.CastExpression(
                             SyntaxFactory.IdentifierName("VarRef"),
-                            SyntaxFactory.IdentifierName(parser.currentFunc.VarRefs.First(item => string.Equals(item, text, StringComparison.InvariantCultureIgnoreCase))))), // Identifier name
+                            SyntaxFactory.IdentifierName(vr))), // Identifier name
                     SyntaxFactory.IdentifierName("__Value")       // Member access
                 );
             }
@@ -475,7 +476,9 @@ namespace Keysharp.Scripting
             if (targetExpression is IdentifierNameSyntax identifierName)
             {
                 // Case: Variable identifier
-                parser.MaybeAddVariableDeclaration(identifierName.Identifier.Text);
+                var addedName = parser.MaybeAddVariableDeclaration(identifierName.Identifier.Text);
+                if (addedName != null && addedName != identifierName.Identifier.Text)
+                    targetExpression = identifierName = SyntaxFactory.IdentifierName(addedName);
                 return SyntaxFactory.ObjectCreationExpression(
                     SyntaxFactory.IdentifierName("VarRef"),
                     SyntaxFactory.ArgumentList(
@@ -1797,17 +1800,20 @@ namespace Keysharp.Scripting
                                     name = normalizedName;
                                 }
 
-                                parser.MaybeAddVariableDeclaration(name);
-
                                 if (parser.currentFunc.Scope == eScope.Global)
                                 {
+                                    parser.MaybeAddVariableDeclaration(name);
                                     parser.currentFunc.Locals.Remove(name);
                                     parser.currentFunc.Globals.Add(name);
                                 }
-                                else if (parser.currentFunc.Scope == eScope.Local)
+                                else
                                 {
-                                    parser.currentFunc.Globals.Remove(name);
-                                    // MaybeAddVariableDeclaration added the Locals entry
+                                    parser.AddVariableDeclaration(name);
+                                    if (parser.currentFunc.Scope == eScope.Local)
+                                    {
+                                        parser.currentFunc.Globals.Remove(name);
+                                        // AddVariableDeclaration added the Locals entry
+                                    }
                                 }
                             }
 

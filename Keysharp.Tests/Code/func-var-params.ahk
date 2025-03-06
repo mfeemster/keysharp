@@ -272,3 +272,16 @@ if (m["one"] == 1 &&
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
+
+funca(a:=1)
+{
+	return a
+}
+
+; Dynamically invoking a function with unset is a special case because it won't work unless unset is cast to object in the generated code.
+val := Func("funca").Call(unset)
+
+If (val == 1)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"

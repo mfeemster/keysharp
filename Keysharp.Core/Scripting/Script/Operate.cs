@@ -614,7 +614,16 @@ namespace Keysharp.Scripting
 
 		public static object OperateTernary(bool result, ExpressionDelegate x, ExpressionDelegate y) => result ? x() : y();
 
-		public static object MultiStatement(params object[] args) => args[ ^ 1];
+		public static object MultiStatement(object arg1) => arg1;
+        public static object MultiStatement(object arg1, object arg2) => arg2;
+        public static object MultiStatement(object arg1, object arg2, object arg3) => arg3;
+        public static object MultiStatement(object arg1, object arg2, object arg3, object arg4) => arg4;
+        public static object MultiStatement(object arg1, object arg2, object arg3, object arg4, object arg5) => arg5;
+        public static object MultiStatement(object arg1, object arg2, object arg3, object arg4, object arg5, object arg6) => arg6;
+        public static object MultiStatement(object arg1, object arg2, object arg3, object arg4, object arg5, object arg6, object arg7) => arg7;
+        public static object MultiStatement(object arg1, object arg2, object arg3, object arg4, object arg5, object arg6, object arg7, object arg8) => arg8;
+
+        public static object MultiStatement(params object[] args) => args[ ^ 1];
 
         public static void InitStaticVariable(ref object variable, string name, Func<object> initFunc)
         {

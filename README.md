@@ -191,6 +191,7 @@ testfunc()
 	+ `x := func, 123 ; not supported`
 	+ `x := func(123) ; supported`
 * The default name for the array of parameters in a variadic function is `args`, instead of `params`. This is due to `params` being a reserved word in C#.
+	+ The array for variadic parameters is read only and cannot be manipulated in the way a normal `Array` can.
 * `DllCall()` has the following caveats:
 	+ An alternative to passing a `Buffer` object with type `Ptr` to a function which will allocate and place string data into the buffer, the caller can instead use a `StringBuffer` object to hold the new string. `wsprintf()` is one such example.
 		+ `StringBuffer` internally uses a `StringBuilder` which is how C# P/Invoke handles string pointers.

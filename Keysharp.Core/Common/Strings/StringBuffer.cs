@@ -4,7 +4,7 @@
 	{
 		internal StringBuilder sb;
 
-		public new (Type, object) super => (typeof(StringBuffer), this);
+		public new (Type, object) super => (typeof(KeysharpObject), this);
 
 		public StringBuffer(params object[] args) : base(args) { }
 

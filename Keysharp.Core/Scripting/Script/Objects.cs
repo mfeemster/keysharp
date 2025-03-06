@@ -242,14 +242,18 @@ namespace Keysharp.Scripting
 						return null;
 					}
 				}
-				else if (index.Length == 0)//Access brackets with no index like item.prop[] := 123.
+
+				if (item is KeysharpObject kso2)
 				{
-					if (Reflections.FindAndCacheInstanceMethod(typetouse, "set_Item", 0) is MethodPropertyHolder mph1)
-					{
-						_ = mph1.callFunc(item, index.Concat([value]));
-						return value;
-					}
-				}
+					if (TryGetOwnPropsMap(kso2, "set___Item", out var opm)) {
+						if (opm.Set != null && opm.Set is IFuncObj ifo)
+							return ifo.Call([kso2, .. index, value]);
+                        else if (opm.Call != null && opm.Call is IFuncObj ifo2)
+                            return ifo2.Call([kso2, .. index, value]);
+                    }
+					else if (TryGetOwnPropsMap(kso2, "__Set", out var opm2) && opm2.Call != null && opm2.Call is IFuncObj ifo2)
+						return ifo2.Call(kso2, new Keysharp.Core.Array(index), value);
+                }
 
 				var il1 = index.Length + 1;
 
@@ -353,10 +357,13 @@ namespace Keysharp.Scripting
 #endif
 				}
 
-				if (item is KeysharpObject kso2 && kso2.HasProp("get___Item") == 1)
+				if (item is KeysharpObject kso2)
 				{
-					return Invoke(obj, "get___Item", index);
-				}
+					if (TryGetOwnPropsMap(kso2, "get___Item", out var opm) && opm.Get != null && opm.Get is IFuncObj ifo)
+						return ifo.Call(obj, index);
+					else if (TryGetOwnPropsMap(kso2, "__Get", out var opm2) && opm2.Call != null && opm2.Call is IFuncObj ifo2)
+						return ifo2.Call(obj, new Keysharp.Core.Array(index));
+                }
 
 				if (Reflections.FindAndCacheInstanceMethod(typetouse, "get_Item", len) is MethodPropertyHolder mph)
 				{

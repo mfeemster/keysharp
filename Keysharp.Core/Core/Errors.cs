@@ -71,13 +71,6 @@
 		public static KeyError KeyError(params object[] args) => new (args);
 
         /// <summary>
-        /// Creates and returns a new <see cref="UnsetError"/> exception object.
-        /// </summary>
-        /// <param name="args">The the parameters to pass to the constructor.</param>
-        /// <returns>An <see cref="UnsetError"/> object.</returns>
-        public static UnsetError UnsetError(params object[] args) => new(args);
-
-        /// <summary>
         /// Creates and returns a new <see cref="MemberError"/> exception object.
         /// </summary>
         /// <param name="args">The the parameters to pass to the constructor.</param>
@@ -159,7 +152,14 @@
 		public static TypeError TypeError(params object[] args) => new (args);
 
 		/// <summary>
-		/// Creates and returns a new <see cref="TypUnsetItemErroreError"/> exception object.
+		/// Creates and returns a new <see cref="UnsetError"/> exception object.
+		/// </summary>
+		/// <param name="args">The the parameters to pass to the constructor.</param>
+		/// <returns>An <see cref="UnsetError"/> object.</returns>
+		public static UnsetError UnsetError(params object[] args) => new (args);
+
+		/// <summary>
+		/// Creates and returns a new <see cref="UnsetItemError"/> exception object.
 		/// </summary>
 		/// <param name="args">The the parameters to pass to the constructor.</param>
 		/// <returns>An <see cref="UnsetItemError"/> object.</returns>
@@ -195,10 +195,10 @@
 		}
 	}
 
-	/// <summary>
-	/// An exception class for indexing errors.
-	/// </summary>
-	public class IndexError : Error
+    /// <summary>
+    /// An exception class for indexing errors.
+    /// </summary>
+    public class IndexError : Error
 	{
 		/// <summary>
 		/// Initializes a new instance of the <see cref="IndexError"/> class.
@@ -308,18 +308,21 @@
 
 			foreach (var tempframe in frames)
 			{
-				var type = tempframe.GetMethod().DeclaringType;
-
-				if (!type.IsSubclassOf(typeof(Exception)))
-				{
-					frame = tempframe;
-					break;
-				}
-			}
+                MethodBase method = tempframe.GetMethod();
+                // Skip if this is a constructor and its declaring type is a subclass of Exception.
+                if (method.IsConstructor &&
+                    method.DeclaringType != null &&
+                    method.DeclaringType.IsSubclassOf(typeof(Exception)))
+                {
+                    continue;
+                }
+                frame = tempframe;
+                break;
+            }
 
 			var meth = frame.GetMethod();
-			var s = $"{meth.DeclaringType.FullName}.{meth.Name}()";
-			message = msg;
+            var s = $"{(meth.DeclaringType != null ? meth.DeclaringType.FullName + "." : "")}{meth.Name}()";
+            message = msg;
 			What = what != "" ? what : s;
 			Extra = extra;
 			//If this is a parsing error, then File and Line need to be set by the calling code.

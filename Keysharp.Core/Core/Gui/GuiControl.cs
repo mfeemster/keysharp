@@ -87,7 +87,7 @@ namespace Keysharp.Core
 			}
 		}
 
-		public new (Type, object) super => (typeof(GuiControl), this);
+		public new (Type, object) super => (typeof(KeysharpObject), this);
 
 		public object Text
 		{

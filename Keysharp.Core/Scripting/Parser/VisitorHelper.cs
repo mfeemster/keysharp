@@ -8,6 +8,7 @@ using Antlr4.Runtime;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using static MainParser;
 using static System.Windows.Forms.AxHost;
+using Keysharp.Core;
 
 namespace Keysharp.Scripting
 {
@@ -273,13 +274,47 @@ namespace Keysharp.Scripting
                 if (match != null)
                     return match;
             }
+
+            // Skip the UserMainFunction function in the stack and check the rest
+            foreach (var (func, _) in FunctionStack.SkipLast(1))
+            {
+                if (caseSense)
+                {
+                    if (func.Locals.ContainsKey(name) || func.Statics.Contains(name))
+                        return name;
+                }
+                else
+                {
+                    string match = func.Locals.Keys.FirstOrDefault(v => v.Equals(name, StringComparison.InvariantCultureIgnoreCase));
+                    if (match != null)
+                        return match;
+                    match = func.Statics.FirstOrDefault(v => v.Equals(name, StringComparison.InvariantCultureIgnoreCase));
+                    if (match != null)
+                        return match;
+                }
+            }
+
+            return null;
+        }
+
+        public string IsVarRef(string name)
+        {
+            string match = null;
+            if (currentFunc.VarRefs.TryGetValue(name, out match))
+                return match;
+
+            foreach (var (func, _) in FunctionStack.SkipLast(1))
+            {
+                if (func.VarRefs.TryGetValue(name, out match))
+                    return match;
+            }
             return null;
         }
 
         public string IsStaticVar(string name)
         {
-            if (currentFunc.Statics.Contains(name))
-                return name;
+            if (currentFunc.Statics.TryGetValue(name, out var match))
+                return match;
             return null;
         }
 
@@ -419,7 +454,7 @@ namespace Keysharp.Scripting
                 match = IsVarDeclaredInClass(currentClass, name);
                 if (match != null) return match;
             }
-            else if (currentFunc.Scope == eScope.Local || currentFunc.Scope == eScope.Static)
+            if (currentFunc.Scope == eScope.Local || currentFunc.Scope == eScope.Static)
             {
                 // If the variable is supposed to be global then don't add a local declaration
                 match = IsGlobalVar(name, caseSense);
@@ -429,7 +464,7 @@ namespace Keysharp.Scripting
                 match = IsVarDeclaredLocally(name, caseSense);
                 if (match != null) return match;
 
-                if (functionDepth == 1 && currentFunc.Name.Contains("_ks_Anon"))
+                if (functionDepth == 1 && currentFunc.Name.StartsWith("_ks_Anon"))
                 {
                     match = IsVarDeclaredGlobally(name, caseSense);
                     if (match != null) return match;
@@ -446,19 +481,32 @@ namespace Keysharp.Scripting
                 if (match != null) return match;
             }
 
+            return AddVariableDeclaration(name, caseSense);
+        }
+
+        public string AddVariableDeclaration(string name, bool caseSense = true)
+        {
             if (!caseSense)
                 name = name.ToLowerInvariant();
 
+            if (currentFunc.Scope == eScope.Static && !currentFunc.Statics.Contains(name))
+            {
+                currentFunc.Statics.Add(name);
+                var normalizedName = NormalizeFunctionIdentifier(name);
+                currentFunc.Statics.Add(normalizedName);
+                name = normalizedName;
+            }
+
             var variableDeclaration = SyntaxFactory.VariableDeclaration(
-                SyntaxFactory.ParseTypeName("object"))
-                .AddVariables(
-                    SyntaxFactory.VariableDeclarator(name)
-                    .WithInitializer(
-                        SyntaxFactory.EqualsValueClause(
-                            SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression)
-                        )
+            SyntaxFactory.ParseTypeName("object"))
+            .AddVariables(
+                SyntaxFactory.VariableDeclarator(name)
+                .WithInitializer(
+                    SyntaxFactory.EqualsValueClause(
+                        SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression)
                     )
-                );
+                )
+            );
 
             if (currentFunc.Scope == eScope.Local)
             {

@@ -1,11 +1,39 @@
 ﻿namespace Keysharp.Core.Common.ObjectBase
 {
-	public class OwnPropsIterator : KeysharpEnumerator, IEnumerator<(object, object)>
+	public class OwnPropsMap : Map
 	{
+		public KeysharpObject Parent { get; private set; }
+
+        public OwnPropsMap(KeysharpObject kso, Map map) : base(skipLogic: true) => __New(kso, map);
+
+        public object __New(params object[] args)
+		{
+            if (args.Length == 0) return null;
+            var kso = (KeysharpObject)args[0];
+			var map = (Map)args[1];
+			Parent = kso;
+			Default = map.Default;
+			Capacity = map.Capacity;
+			CaseSense = "Off";
+
+			foreach (var kv in map.map)
+				this[kv.Key] = kv.Value;
+
+			return "";
+		}
+
+		public override object Clone()
+		{
+			return new OwnPropsMap(Parent, this);
+		}
+	}
+
+	internal class OwnPropsIterator : KeysharpEnumerator, IEnumerator<(object, object)>
+	{
+		private static FuncObj p1, p2;
 		private readonly Dictionary<object, object> map;
 		private readonly KeysharpObject obj;
 		private IEnumerator<KeyValuePair<object, object>> iter;
-		public int Count => GetVal ? 2 : 1;
 
 		public (object, object) Current
 		{
@@ -27,11 +55,11 @@
 			}
 		}
 
+		object IEnumerator.Current => Current;
+		internal int Count => GetVal ? 2 : 1;
 		internal bool GetVal { get; set; }
 
-		object IEnumerator.Current => Current;
-
-		public OwnPropsIterator(KeysharpObject o, Dictionary<object, object> m, bool gv)
+		internal OwnPropsIterator(KeysharpObject o, Dictionary<object, object> m, bool gv)
 			: base(null, gv ? 2 : 1)
 		{
 			Error err;
@@ -39,11 +67,28 @@
 			map = m;
 			GetVal = gv;
 			iter = map.GetEnumerator();
-			var fo = new FuncObj("Call", this, Count);
+			var p = Count <= 1 ? p1 : p2;
+			var fo = (FuncObj)p.Clone();
+			fo.Inst = this;
+			CallFunc = fo;
+		}
 
-			if (fo.IsValid)
-				CallFunc = fo;
-			else
+		/// <summary>
+		/// Static constructor to initialize function objects.
+		/// </summary>
+		static OwnPropsIterator()
+		{
+			Error err;
+			var mi1 = Reflections.FindAndCacheMethod(typeof(OwnPropsIterator), "Call", 1);
+			p1 = new FuncObj(mi1, null);
+
+			if (!p1.IsValid)
+				_ = Errors.ErrorOccurred(err = new MethodError($"Existing function object was invalid.")) ? throw err : "";
+
+			var mi2 = Reflections.FindAndCacheMethod(typeof(OwnPropsIterator), "Call", 2);
+			p2 = new FuncObj(mi2, null);
+
+			if (!p2.IsValid)
 				_ = Errors.ErrorOccurred(err = new MethodError($"Existing function object was invalid.")) ? throw err : "";
 		}
 
@@ -58,7 +103,6 @@
 
 			return false;
 		}
-
 
 		public override object Call(ref object obj0, ref object obj1)
 		{
@@ -234,32 +278,4 @@
 			return map;
         }
     }
-
-    public class OwnPropsMap : Map
-	{
-		public KeysharpObject Parent { get; private set; }
-
-		public OwnPropsMap(KeysharpObject kso, Map map) : base(skipLogic: true) => __New(kso, map);
-
-		public object __New(params object[] args)
-		{
-			if (args.Length == 0) return null;
-			var kso = (KeysharpObject)args[0];
-			var map = (Map)args[1];
-			Parent = kso;
-			Default = map.Default;
-			Capacity = map.Capacity;
-			CaseSense = "Off";
-
-			foreach (var kv in map.map)
-				this[kv.Key] = kv.Value;
-
-			return "";
-		}
-
-		public override object Clone()
-		{
-			return new OwnPropsMap(Parent, this);
-		}
-	}
 }

@@ -47,7 +47,7 @@
 		/// <summary>
 		/// The implementation for <see cref="KeysharpObject.super"/> for this class to return this type.
 		/// </summary>
-		public new (Type, object) super => (typeof(RealThread), this);
+		public new (Type, object) super => (typeof(KeysharpObject), this);
 
 		/// <summary>
 		/// Constructor that takes a task to keep a reference to.

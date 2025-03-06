@@ -129,7 +129,12 @@ namespace Keysharp.Scripting
             if (methodName.Equals("IsSet", StringComparison.InvariantCultureIgnoreCase) 
                 && argumentList.Arguments.First().Expression is IdentifierNameSyntax identifierName)
             {
-                parser.MaybeAddVariableDeclaration(identifierName.Identifier.Text);
+                var addedName = parser.MaybeAddVariableDeclaration(identifierName.Identifier.Text);
+                if (addedName != null && addedName != identifierName.Identifier.Text)
+                {
+                    identifierName = SyntaxFactory.IdentifierName(addedName);
+                    argumentList = SyntaxFactory.ArgumentList(SyntaxFactory.SeparatedList(new[] { SyntaxFactory.Argument(identifierName) }));
+                }
             }
 
             return parser.GenerateFunctionInvocation(targetExpression, argumentList, methodName);
@@ -628,7 +633,11 @@ namespace Keysharp.Scripting
         {
             var leftExpression = (ExpressionSyntax)Visit(left);
             if (leftExpression is IdentifierNameSyntax name)
-                parser.MaybeAddVariableDeclaration(name.Identifier.Text);
+            {
+                var addedName = parser.MaybeAddVariableDeclaration(name.Identifier.Text);
+                if (addedName != null && addedName != name.Identifier.Text)
+                    leftExpression = SyntaxFactory.IdentifierName(addedName);
+            }
             var rightExpression = (ExpressionSyntax)Visit(right);
 
             return HandleAssignment(leftExpression, rightExpression, assignmentOperator);
@@ -724,7 +733,9 @@ namespace Keysharp.Scripting
                 }
                 else if (leftExpression is IdentifierNameSyntax identifierNameSyntax)
                 {
-                    parser.MaybeAddVariableDeclaration(identifierNameSyntax.Identifier.Text);
+                    var addedName = parser.MaybeAddVariableDeclaration(identifierNameSyntax.Identifier.Text);
+                    if (addedName != null && addedName != identifierNameSyntax.Identifier.Text)
+                        identifierNameSyntax = SyntaxFactory.IdentifierName(addedName);
                     leftExpression = identifierNameSyntax;
                     return SyntaxFactory.AssignmentExpression(
                         assignmentKind,

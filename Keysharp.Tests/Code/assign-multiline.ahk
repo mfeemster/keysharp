@@ -62,10 +62,13 @@ if (arr[2] == "item 2")
 else
 	FileAppend "fail", "*"
 
-if (arr[3] == unset)
-	FileAppend "pass", "*"
-else
+try {
+	if (arr[3] == unset)
+		FileAppend "fail", "*"
 	FileAppend "fail", "*"
+} catch {
+	FileAppend "pass", "*"
+}
 
 arr := [
   "item 1",

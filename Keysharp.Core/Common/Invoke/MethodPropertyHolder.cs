@@ -66,13 +66,7 @@ namespace Keysharp.Core.Common.Invoke
                             object ret = null;
                             ctrl.CheckedInvoke(() =>
                             {
-                                var oldHandle = Script.HwndLastUsed;
-
-                                if (ctrl != null && ctrl.FindForm() is Form form)
-                                    Script.HwndLastUsed = form.Handle;
-
-                                object ret = del(inst, obj);
-                                Script.HwndLastUsed = oldHandle;
+                                ret = del(inst, obj);
                             }, true);
                             return ret;
                         };
@@ -92,13 +86,7 @@ namespace Keysharp.Core.Common.Invoke
 							var ctrl = inst.GetControl();//If it's a gui control, then invoke on the gui thread.
 							ctrl.CheckedInvoke(() =>
 							{
-								var oldHandle = Script.HwndLastUsed;
-
-								if (ctrl != null && ctrl.FindForm() is Form form)
-									Script.HwndLastUsed = form.Handle;
-
 								ret = mi.Invoke(inst, null);
-								Script.HwndLastUsed = oldHandle;
 							}, true);//This can be null if called before a Gui object is fully initialized.
 							return ret;
 						};
@@ -188,13 +176,7 @@ namespace Keysharp.Core.Common.Invoke
 								var ctrl = inst.GetControl();
 								ctrl.CheckedInvoke(() =>
 								{
-									var oldHandle = Script.HwndLastUsed;
-
-									if (ctrl != null && ctrl.FindForm() is Form form)
-										Script.HwndLastUsed = form.Handle;
-
 									ret = mi.Invoke(inst, newobj);
-									Script.HwndLastUsed = oldHandle;
 								}, true);//This can be null if called before a Gui object is fully initialized.
 							}
 
@@ -257,13 +239,7 @@ namespace Keysharp.Core.Common.Invoke
 									var ctrl = inst.GetControl();
 									ctrl.CheckedInvoke(() =>
 									{
-										var oldHandle = Script.HwndLastUsed;
-
-										if (ctrl != null && ctrl.FindForm() is Form form)
-											Script.HwndLastUsed = form.Handle;
-
 										ret = mi.Invoke(inst, obj);
-										Script.HwndLastUsed = oldHandle;
 									}, true);//This can be null if called before a Gui object is fully initialized.
 								}
 							}
@@ -293,13 +269,7 @@ namespace Keysharp.Core.Common.Invoke
 									var ctrl = inst.GetControl();
 									ctrl.CheckedInvoke(() =>
 									{
-										var oldHandle = Script.HwndLastUsed;
-
-										if (ctrl != null && ctrl.FindForm() is Form form)
-											Script.HwndLastUsed = form.Handle;
-
 										ret = mi.Invoke(inst, newobj);
-										Script.HwndLastUsed = oldHandle;
 									}, true);//This can be null if called before a Gui object is fully initialized.
 								}
 
@@ -330,13 +300,7 @@ namespace Keysharp.Core.Common.Invoke
 							var ctrl = inst.GetControl();//If it's a gui control, then invoke on the gui thread.
 							ctrl.CheckedInvoke(() =>
 							{
-								var oldHandle = Script.HwndLastUsed;
-
-								if (ctrl != null && ctrl.FindForm() is Form form)
-									Script.HwndLastUsed = form.Handle;
-
 								ret = pi.GetValue(null);
-								Script.HwndLastUsed = oldHandle;
 							}, true);//This can be null if called before a Gui object is fully initialized.
 
 							if (ret is int i)
@@ -349,13 +313,7 @@ namespace Keysharp.Core.Common.Invoke
 							var ctrl = inst.GetControl();//If it's a gui control, then invoke on the gui thread.
 							ctrl.CheckedInvoke(() =>
 							{
-								var oldHandle = Script.HwndLastUsed;
-
-								if (ctrl != null && ctrl.FindForm() is Form form)
-									Script.HwndLastUsed = form.Handle;
-
 								pi.SetValue(null, obj);
-								Script.HwndLastUsed = oldHandle;
 							}, true);//This can be null if called before a Gui object is fully initialized.
 						};
 					}
@@ -389,13 +347,7 @@ namespace Keysharp.Core.Common.Invoke
 							var ctrl = inst.GetControl();//If it's a gui control, then invoke on the gui thread.
 							ctrl.CheckedInvoke(() =>
 							{
-								var oldHandle = Script.HwndLastUsed;
-
-								if (ctrl != null && ctrl.FindForm() is Form form)
-									Script.HwndLastUsed = form.Handle;
-
 								ret = pi.GetValue(inst);
-								Script.HwndLastUsed = oldHandle;
 							}, true);//This can be null if called before a Gui object is fully initialized.
 
 							if (ret is int i)
@@ -408,13 +360,7 @@ namespace Keysharp.Core.Common.Invoke
 							var ctrl = inst.GetControl();//If it's a gui control, then invoke on the gui thread.
 							ctrl.CheckedInvoke(() =>
 							{
-								var oldHandle = Script.HwndLastUsed;
-
-								if (ctrl != null && ctrl.FindForm() is Form form)
-									Script.HwndLastUsed = form.Handle;
-
 								pi.SetValue(inst, obj);
-								Script.HwndLastUsed = oldHandle;
 							}, true);//This can be null if called before a Gui object is fully initialized.
 						};
 					}
@@ -441,7 +387,14 @@ namespace Keysharp.Core.Common.Invoke
 			}
 		}
     }
-	public static class DelegateFactory
+    class ArgumentError : Error
+    {
+        public ArgumentError()
+            : base(new TargetParameterCountException().Message)
+        {
+        }
+    }
+    public static class DelegateFactory
     {
 
         /// <summary>
@@ -454,8 +407,11 @@ namespace Keysharp.Core.Common.Invoke
                 throw new ArgumentNullException(nameof(method));
 
             ParameterInfo[] parameters = method.GetParameters();
+
+            string dynamicMethodName = "DynamicInvoke_" + (method.DeclaringType != null ? method.DeclaringType.Name + "." : "") + method.Name;
+
             DynamicMethod dm = new DynamicMethod(
-                "DynamicInvoke_" + method.Name,
+                dynamicMethodName,
                 typeof(object),
                 new Type[] { typeof(object), typeof(object[]) },
                 method.Module,
@@ -466,6 +422,16 @@ namespace Keysharp.Core.Common.Invoke
             // --- Declare unified locals ---
             LocalBuilder paramOffset = il.DeclareLocal(typeof(int));   // will be 0 for static or for instance when ldarg0 is non-null; 1 for instance if ldarg0 is null.
             LocalBuilder argsLocal = il.DeclareLocal(typeof(object[]));  // the effective arguments array
+
+            // Ensure that the caller-supplied argument array is not null.
+            Label argsNonNull = il.DefineLabel();
+            il.Emit(OpCodes.Ldarg_1);        // load ldarg1
+            il.Emit(OpCodes.Brtrue_S, argsNonNull); // if not null, branch
+                                                    // Otherwise, create an empty object array.
+            il.Emit(OpCodes.Ldc_I4_0);
+            il.Emit(OpCodes.Newarr, typeof(object));
+            il.Emit(OpCodes.Starg_S, 1);       // store the empty array into ldarg1 (or into a local)
+            il.MarkLabel(argsNonNull);
 
             // --- Compute paramOffset and argsLocal ---
             if (!method.IsStatic)
@@ -622,7 +588,7 @@ namespace Keysharp.Core.Common.Invoke
                 il.Emit(OpCodes.Ldc_I4, minRequired);                  // push minRequired
                 Label setItemOkLabel = il.DefineLabel();
                 il.Emit(OpCodes.Bge_S, setItemOkLabel);                // if availableCountLocal >= minRequired, branch
-                il.Emit(OpCodes.Newobj, typeof(TargetParameterCountException)
+                il.Emit(OpCodes.Newobj, typeof(ArgumentError)
                                          .GetConstructor(Type.EmptyTypes));
                 il.Emit(OpCodes.Throw);
                 il.MarkLabel(setItemOkLabel);
@@ -634,7 +600,7 @@ namespace Keysharp.Core.Common.Invoke
                     il.Emit(OpCodes.Ldc_I4, formalCount);
                     Label setItemOkLabel2 = il.DefineLabel();
                     il.Emit(OpCodes.Ble_S, setItemOkLabel2);           // if availableCountLocal <= formalCount, ok
-                    il.Emit(OpCodes.Newobj, typeof(TargetParameterCountException)
+                    il.Emit(OpCodes.Newobj, typeof(ArgumentError)
                                              .GetConstructor(Type.EmptyTypes));
                     il.Emit(OpCodes.Throw);
                     il.MarkLabel(setItemOkLabel2);
@@ -668,7 +634,7 @@ namespace Keysharp.Core.Common.Invoke
                 il.Emit(OpCodes.Ldc_I4, requiredCount);
                 Label normalOkLabel = il.DefineLabel();
                 il.Emit(OpCodes.Bge_S, normalOkLabel);
-                il.Emit(OpCodes.Newobj, typeof(TargetParameterCountException)
+                il.Emit(OpCodes.Newobj, typeof(ArgumentError)
                                          .GetConstructor(Type.EmptyTypes));
                 il.Emit(OpCodes.Throw);
                 il.MarkLabel(normalOkLabel);
@@ -680,7 +646,7 @@ namespace Keysharp.Core.Common.Invoke
                     il.Emit(OpCodes.Ldc_I4, formalCount);
                     Label normalOkLabel2 = il.DefineLabel();
                     il.Emit(OpCodes.Ble_S, normalOkLabel2);  // if availableCountLocal <= formalCount, ok
-                    il.Emit(OpCodes.Newobj, typeof(TargetParameterCountException)
+                    il.Emit(OpCodes.Newobj, typeof(ArgumentError)
                                              .GetConstructor(Type.EmptyTypes));
                     il.Emit(OpCodes.Throw);
                     il.MarkLabel(normalOkLabel2);
@@ -834,7 +800,7 @@ namespace Keysharp.Core.Common.Invoke
                     else
                     {
                         // Not optional: throw exception.
-                        ConstructorInfo exCtor = typeof(TargetParameterCountException)
+                        ConstructorInfo exCtor = typeof(ArgumentError)
                                                     .GetConstructor(Type.EmptyTypes);
                         il.Emit(OpCodes.Newobj, exCtor);
                         il.Emit(OpCodes.Throw);
@@ -870,7 +836,7 @@ namespace Keysharp.Core.Common.Invoke
                     else
                     {
                         // If not optional, throw an exception.
-                        ConstructorInfo exCtor2 = typeof(TargetParameterCountException)
+                        ConstructorInfo exCtor2 = typeof(ArgumentError)
                                                     .GetConstructor(Type.EmptyTypes);
                         il.Emit(OpCodes.Newobj, exCtor2);
                         il.Emit(OpCodes.Throw);
@@ -902,319 +868,6 @@ namespace Keysharp.Core.Common.Invoke
         }
 
         /// <summary>
-        /// Creates a delegate of type Func<object, object[], object></object>that will call the given MethodInfo.
-        /// It will check for missing parameters and if the parameter is optional, it uses its DefaultValue.
-        /// </summary>
-        public static Func<object, object[], object> CreateDelegate2(MethodInfo method)
-        {
-            if (method == null)
-                throw new ArgumentNullException(nameof(method));
-
-            ParameterInfo[] parameters = method.GetParameters();
-            // The dynamic method is associated with the declaring type (if available) so that non-public members can be accessed.
-            DynamicMethod dm = new DynamicMethod(
-                "DynamicInvoke_" + method.Name,
-                typeof(object),
-                new Type[] { typeof(object), typeof(object[]) },
-                method.Module,
-                true);
-
-            ILGenerator il = dm.GetILGenerator();
-
-            // If the method is an instance method, load and cast the first parameter (the instance).
-            if (!method.IsStatic)
-            {
-                il.Emit(OpCodes.Ldarg_0);
-                if (method.DeclaringType.IsValueType)
-                    il.Emit(OpCodes.Unbox_Any, method.DeclaringType);
-                else
-                    il.Emit(OpCodes.Castclass, method.DeclaringType);
-            }
-
-
-            if (method.Name == "set_Item" &&
-			method.GetParameters().Length == 2 &&
-			method.GetParameters()[0].ParameterType.IsArray)
-			{
-				// We expect the caller to supply a flattened argument array,
-				// where the keys are in args[0..n-2] and the value is in args[n-1].
-				// First, compute the number of key arguments: count = args.Length - 1.
-				il.Emit(OpCodes.Ldarg_1);   // load args array
-				il.Emit(OpCodes.Ldlen);     // get its length (native unsigned int)
-				il.Emit(OpCodes.Conv_I4);   // convert to int32
-				il.Emit(OpCodes.Ldc_I4_1);  // constant 1
-				il.Emit(OpCodes.Sub);       // compute args.Length - 1
-											// Allocate a new object[] for the keys.
-				il.Emit(OpCodes.Newarr, typeof(object));
-				// Store the new array in a local for later use.
-				LocalBuilder keysArray = il.DeclareLocal(typeof(object[]));
-				il.Emit(OpCodes.Dup);
-				il.Emit(OpCodes.Stloc, keysArray);
-
-				// Prepare a local for a loop index.
-				LocalBuilder idx = il.DeclareLocal(typeof(int));
-				il.Emit(OpCodes.Ldc_I4_0);
-				il.Emit(OpCodes.Stloc, idx);
-
-                // We'll need a label for the loop check.
-                System.Reflection.Emit.Label loopCheck = il.DefineLabel();
-                System.Reflection.Emit.Label loopBody = il.DefineLabel();
-				il.Emit(OpCodes.Br_S, loopCheck);
-
-				il.MarkLabel(loopBody);
-				// For each index, copy from args[index] to keysArray[index].
-				il.Emit(OpCodes.Ldloc, keysArray); // load keys array
-				il.Emit(OpCodes.Ldloc, idx);       // index into keys array
-
-				il.Emit(OpCodes.Ldarg_1);          // load caller's args array
-				il.Emit(OpCodes.Ldloc, idx);       // use current index
-				il.Emit(OpCodes.Ldelem_Ref);       // load args[idx]
-				il.Emit(OpCodes.Stelem_Ref);       // store into keysArray[idx]
-
-				// Increment index: idx++
-				il.Emit(OpCodes.Ldloc, idx);
-				il.Emit(OpCodes.Ldc_I4_1);
-				il.Emit(OpCodes.Add);
-				il.Emit(OpCodes.Stloc, idx);
-
-				il.MarkLabel(loopCheck);
-				// Compare idx with the length of keysArray.
-				il.Emit(OpCodes.Ldloc, idx);
-				il.Emit(OpCodes.Ldloc, keysArray);
-				il.Emit(OpCodes.Ldlen);
-				il.Emit(OpCodes.Conv_I4);
-				il.Emit(OpCodes.Blt_S, loopBody);
-
-				// Now load the keys array as the first argument.
-				il.Emit(OpCodes.Ldloc, keysArray);
-				// Then load the value: the last element of the original args array.
-				il.Emit(OpCodes.Ldarg_1);
-				il.Emit(OpCodes.Ldarg_1);
-				il.Emit(OpCodes.Ldlen);
-				il.Emit(OpCodes.Conv_I4);
-				il.Emit(OpCodes.Ldc_I4_1);
-				il.Emit(OpCodes.Sub);
-				il.Emit(OpCodes.Ldelem_Ref);
-			}
-			else
-			{
-
-				// For each parameter, load the argument if present; otherwise use the default value if optional.
-				for (int i = 0; i < parameters.Length; i++)
-				{
-					ParameterInfo pi = parameters[i];
-					// Check if this parameter is the params parameter.
-					bool isParams = (i == parameters.Length - 1) &&
-									pi.IsDefined(typeof(ParamArrayAttribute), false) &&
-									pi.ParameterType.IsArray;
-
-					// Define labels for whether an argument was provided.
-					System.Reflection.Emit.Label argPresent = il.DefineLabel();
-					System.Reflection.Emit.Label argLoadDone = il.DefineLabel();
-
-					// Load the length of the object[] args.
-					il.Emit(OpCodes.Ldarg_1); // load args array
-					il.Emit(OpCodes.Ldlen);   // get its length (as native unsigned int)
-					il.Emit(OpCodes.Conv_I4); // convert to int32
-					il.Emit(OpCodes.Ldc_I4, i); // load constant i
-												// If args.Length > i, jump to argPresent.
-					il.Emit(OpCodes.Bgt_S, argPresent);
-
-					// No argument provided for this parameter.
-					if (isParams)
-					{
-						// For a params parameter, create an empty array.
-						// pi.ParameterType is an array type; get its element type.
-						Type elementType = pi.ParameterType.GetElementType();
-						il.Emit(OpCodes.Ldc_I4_0);      // array length 0
-						il.Emit(OpCodes.Newarr, elementType);
-					}
-					else if (pi.IsOptional)
-					{
-						// Load the default value.
-						object defaultValue = pi.DefaultValue;
-						if (defaultValue == null || defaultValue == System.Reflection.Missing.Value)
-						{
-							il.Emit(OpCodes.Ldnull);
-						}
-						else
-						{
-							EmitLoadConstant(il, defaultValue);
-							// If the parameter type is a reference type (like object) but the default constant is a value type, box it.
-							if (!pi.ParameterType.IsValueType && defaultValue.GetType().IsValueType)
-							{
-								il.Emit(OpCodes.Box, defaultValue.GetType());
-							}
-						}
-					}
-					else
-					{
-						// Not enough arguments and parameter is not optional: throw.
-						ConstructorInfo exCtor = typeof(TargetParameterCountException)
-												 .GetConstructor(Type.EmptyTypes);
-						il.Emit(OpCodes.Newobj, exCtor);
-						il.Emit(OpCodes.Throw);
-					}
-					il.Emit(OpCodes.Br_S, argLoadDone);
-
-					// Argument provided: load args[i]
-					il.MarkLabel(argPresent);
-
-					if (isParams)
-					{
-						// Compute remaining argument count: count = args.Length - i.
-						LocalBuilder countLocal = il.DeclareLocal(typeof(int));
-						il.Emit(OpCodes.Ldarg_1);    // args array
-						il.Emit(OpCodes.Ldlen);      // get length
-						il.Emit(OpCodes.Conv_I4);
-						il.Emit(OpCodes.Ldc_I4, i);  // constant i
-						il.Emit(OpCodes.Sub);
-						il.Emit(OpCodes.Stloc, countLocal);
-
-						// We'll use one of two strategies:
-						// Strategy A: If count == 1 and the single argument is already assignable to the params array type, use it.
-						// Strategy B: Otherwise, pack all remaining arguments into a new array.
-
-						LocalBuilder singleArg = il.DeclareLocal(typeof(object));  // to hold the candidate argument
-						System.Reflection.Emit.Label doPack = il.DefineLabel();
-						System.Reflection.Emit.Label useProvided = il.DefineLabel();
-
-						// Check: if (count != 1) goto doPack.
-						il.Emit(OpCodes.Ldloc, countLocal);
-						il.Emit(OpCodes.Ldc_I4_1);
-						il.Emit(OpCodes.Bne_Un_S, doPack);
-
-						// Otherwise, count == 1: load the single argument.
-						il.Emit(OpCodes.Ldarg_1);
-						il.Emit(OpCodes.Ldc_I4, i);
-						il.Emit(OpCodes.Ldelem_Ref);
-						il.Emit(OpCodes.Stloc, singleArg);
-
-						// If singleArg is null, we cannot use it directly—so pack it.
-						il.Emit(OpCodes.Ldloc, singleArg);
-						System.Reflection.Emit.Label notNull = il.DefineLabel();
-						il.Emit(OpCodes.Brtrue_S, notNull);
-						il.Emit(OpCodes.Br_S, doPack);
-
-						il.MarkLabel(notNull);
-						// Check if singleArg is already an instance of the params type.
-						il.Emit(OpCodes.Ldloc, singleArg);
-						il.Emit(OpCodes.Isinst, pi.ParameterType); // pi.ParameterType is object[] (for example)
-						il.Emit(OpCodes.Dup);
-						// If the cast succeeded (non-null), use it.
-						il.Emit(OpCodes.Brtrue_S, useProvided);
-						// Otherwise, fall through to packing.
-						il.Emit(OpCodes.Pop); // remove the null result from isinst
-						il.MarkLabel(doPack);
-
-						// ---- REPACK BLOCK: Pack remaining arguments into a new array.
-						{
-							// newArray = new T[count]
-							Type elementType = pi.ParameterType.GetElementType();
-							LocalBuilder newArray = il.DeclareLocal(pi.ParameterType);
-							il.Emit(OpCodes.Ldloc, countLocal);
-							il.Emit(OpCodes.Newarr, elementType);
-							il.Emit(OpCodes.Stloc, newArray);
-
-							// We'll need a loop index.
-							LocalBuilder loopIndex = il.DeclareLocal(typeof(int));
-							il.Emit(OpCodes.Ldc_I4_0);
-							il.Emit(OpCodes.Stloc, loopIndex);
-
-							System.Reflection.Emit.Label loopCheck = il.DefineLabel();
-							System.Reflection.Emit.Label loopBody = il.DefineLabel();
-
-							il.Emit(OpCodes.Br_S, loopCheck);
-							il.MarkLabel(loopBody);
-							// newArray[loopIndex] = args[i + loopIndex]
-							il.Emit(OpCodes.Ldloc, newArray);       // load newArray
-							il.Emit(OpCodes.Ldloc, loopIndex);        // index
-							il.Emit(OpCodes.Ldarg_1);                 // args array
-							il.Emit(OpCodes.Ldc_I4, i);               // base index i
-							il.Emit(OpCodes.Ldloc, loopIndex);        // current loop index
-							il.Emit(OpCodes.Add);                     // compute i + loopIndex
-							il.Emit(OpCodes.Ldelem_Ref);              // load element at args[i+loopIndex]
-							il.Emit(OpCodes.Stelem_Ref);              // newArray[loopIndex] = that element
-
-							// Increment loopIndex.
-							il.Emit(OpCodes.Ldloc, loopIndex);
-							il.Emit(OpCodes.Ldc_I4_1);
-							il.Emit(OpCodes.Add);
-							il.Emit(OpCodes.Stloc, loopIndex);
-
-							il.MarkLabel(loopCheck);
-							il.Emit(OpCodes.Ldloc, loopIndex);
-							il.Emit(OpCodes.Ldloc, countLocal);
-							il.Emit(OpCodes.Blt_S, loopBody);
-
-							// Finally load the new array onto the stack.
-							il.Emit(OpCodes.Ldloc, newArray);
-							il.Emit(OpCodes.Br_S, useProvided); // use the repacked array
-						}
-						il.MarkLabel(useProvided);
-						// If we took the fast path, singleArg is already on the stack.
-						// If we repacked, our new array is now on the stack.
-					}
-					else
-					{
-
-						il.Emit(OpCodes.Ldarg_1);
-						il.Emit(OpCodes.Ldc_I4, i);
-						il.Emit(OpCodes.Ldelem_Ref);
-
-						// If the parameter is optional, check if the provided value is null.
-						if (pi.IsOptional && pi.DefaultValue != null)
-						{
-							// Duplicate the value so we can test it without losing it.
-							il.Emit(OpCodes.Dup);
-							System.Reflection.Emit.Label nonNull = il.DefineLabel();
-							il.Emit(OpCodes.Brtrue_S, nonNull);
-							// If it’s null: pop the null value and load the default value.
-							il.Emit(OpCodes.Pop);
-
-							object defaultValue = pi.DefaultValue;
-							EmitLoadConstant(il, defaultValue);
-							if (!pi.ParameterType.IsValueType && defaultValue.GetType().IsValueType)
-							{
-								il.Emit(OpCodes.Box, defaultValue.GetType());
-							}
-							il.Emit(OpCodes.Br_S, argLoadDone);
-							il.MarkLabel(nonNull);
-						}
-					}
-
-					il.MarkLabel(argLoadDone);
-
-					// Convert the argument to the parameter type.
-					Type paramType = pi.ParameterType;
-					if (paramType.IsValueType)
-						il.Emit(OpCodes.Unbox_Any, paramType);
-					else
-						il.Emit(OpCodes.Castclass, paramType);
-				}
-			}
-
-            // Call the method.
-            if (method.IsStatic)
-                il.Emit(OpCodes.Call, method);
-            else
-                il.Emit(OpCodes.Callvirt, method);
-
-            // If the method's return type is void, load null; otherwise box the value type result.
-            if (method.ReturnType == typeof(void))
-            {
-                il.Emit(OpCodes.Ldnull);
-            }
-            else if (method.ReturnType.IsValueType)
-            {
-                il.Emit(OpCodes.Box, method.ReturnType);
-            }
-            il.Emit(OpCodes.Ret);
-
-            return (Func<object, object[], object>)dm.CreateDelegate(typeof(Func<object, object[], object>));
-        }
-
-        /// <summary>
         /// Creates a delegate from a PropertyInfo by using its getter method.
         /// </summary>
         public static Func<object, object[], object> CreateDelegate(PropertyInfo property)
@@ -1227,6 +880,41 @@ namespace Keysharp.Core.Common.Invoke
                 throw new ArgumentException("The provided property does not have a getter.", nameof(property));
 
             return CreateDelegate(getter);
+        }
+
+        public static void EmitThrowError(ILGenerator il, string errorMessage, string methodName, LocalBuilder code)
+        {
+            // Create a new object[3]
+            il.Emit(OpCodes.Ldc_I4_3);                  // push constant 3 (array size)
+            il.Emit(OpCodes.Newarr, typeof(object));    // create new object[3]
+
+            // Store errorMessage at index 0
+            il.Emit(OpCodes.Dup);                       // duplicate array reference
+            il.Emit(OpCodes.Ldc_I4_0);                  // index 0
+            il.Emit(OpCodes.Ldstr, errorMessage);       // push errorMessage string
+            il.Emit(OpCodes.Stelem_Ref);                // array[0] = errorMessage
+
+            
+            // Store methodName at index 1
+            il.Emit(OpCodes.Dup);                       // duplicate array reference
+            il.Emit(OpCodes.Ldc_I4_1);                  // index 1
+            il.Emit(OpCodes.Ldstr, methodName);         // push methodName string
+            il.Emit(OpCodes.Stelem_Ref);                // array[1] = methodName
+
+
+            // Store code at index 2
+            il.Emit(OpCodes.Dup);                       // duplicate array reference
+            il.Emit(OpCodes.Ldc_I4_2);                  // index 2
+            il.Emit(OpCodes.Ldloc, code);               // push code (int)
+            il.Emit(OpCodes.Box, typeof(int));          // box the int value
+            il.Emit(OpCodes.Stelem_Ref);                // array[2] = code
+
+            // Get the constructor: Error(object[] args)
+            ConstructorInfo errorCtor = typeof(Error).GetConstructor(new[] { typeof(object[]) });
+            // Create a new Error instance using the array
+            il.Emit(OpCodes.Newobj, errorCtor);
+            // Throw the error.
+            il.Emit(OpCodes.Throw);
         }
 
         /// <summary>

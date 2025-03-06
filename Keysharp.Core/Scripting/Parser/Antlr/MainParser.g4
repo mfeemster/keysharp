@@ -445,7 +445,7 @@ expression
     : left = expression (op = '&&' | op = VerbalAnd) right = expression  # LogicalAndExpression
     | left = expression (op = '||' | op = VerbalOr) right = expression   # LogicalOrExpression
     | <assoc = right> left = expression op = '??' right = expression                               # CoalesceExpression
-    | ternCond = expression (WS | EOL)* '?' (WS | EOL)* ternTrue = expression (WS | EOL)* ':' (WS | EOL)* ternFalse = expression # TernaryExpression 
+    | <assoc = right> ternCond = expression (WS | EOL)* '?' (WS | EOL)* ternTrue = expression (WS | EOL)* ':' (WS | EOL)* ternFalse = expression # TernaryExpression 
     | fatArrowExpressionHead '=>' expression             # FatArrowExpression // Not sure why, but this needs to be lower than coalesce expression
     | functionExpressionHead (WS | EOL)* block           # FunctionExpression
     | operatorExpression                                 # ExpressionDummy  
@@ -455,7 +455,7 @@ singleExpression
     : left = singleExpression op = ('&&' | VerbalAnd) right = singleExpression     # LogicalAndExpressionDuplicate
     | left = singleExpression op = ('||' | VerbalOr) right = singleExpression      # LogicalOrExpressionDuplicate
     | left = singleExpression op = '??' right = singleExpression                   # CoalesceExpressionDuplicate
-    | ternCond = singleExpression (WS | EOL)* '?' (WS | EOL)* ternTrue = singleExpression (WS | EOL)* ':' (WS | EOL)* ternFalse = singleExpression # TernaryExpressionDuplicate
+    | <assoc = right> ternCond = singleExpression (WS | EOL)* '?' (WS | EOL)* ternTrue = singleExpression (WS | EOL)* ':' (WS | EOL)* ternFalse = singleExpression # TernaryExpressionDuplicate
     | operatorExpression                                            # SingleExpressionDummy
     ;
 

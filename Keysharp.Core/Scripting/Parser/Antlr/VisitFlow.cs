@@ -963,7 +963,23 @@ namespace Keysharp.Scripting
             {
                 // Handle optional `As` and `identifier`
                 if (catchAssignable.identifier() != null)
-                    exceptionIdentifierName = parser.NormalizeFunctionIdentifier(catchAssignable.identifier().GetText());
+                {
+                    var catchVarName = parser.NormalizeFunctionIdentifier(catchAssignable.identifier().GetText());
+                    if (parser.IsVarDeclaredLocally(catchVarName) != null)
+                    {
+                        var assignmentStatement = SyntaxFactory.ExpressionStatement(
+                            SyntaxFactory.AssignmentExpression(
+                                SyntaxKind.SimpleAssignmentExpression,
+                                SyntaxFactory.IdentifierName(catchVarName),
+                                SyntaxFactory.IdentifierName(exceptionIdentifierName)
+                            )
+                        );
+                        block = SyntaxFactory.Block(
+                            block.Statements.Insert(0, assignmentStatement)
+                        );
+                    } else
+                        exceptionIdentifierName = catchVarName;
+                }
                 
                 SyntaxToken exceptionIdentifier = SyntaxFactory.Identifier(exceptionIdentifierName);
 

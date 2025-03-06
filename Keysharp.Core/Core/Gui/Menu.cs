@@ -132,8 +132,8 @@
 		public object AddStandard()
 		{
 			var menu = GetMenu();
-			var emptyfunc = new Func<object>(() => "");
-			var openfunc = new Func<object>(() =>
+			var emptyfunc = (params object[] args) => "";
+			var openfunc = (params object[] args) =>
 			{
 				var mainWindow = Script.mainWindow;
 
@@ -146,22 +146,22 @@
 				}
 
 				return "";
-			});
-			var reloadfunc = new Func<object>(() =>
+			};
+			var reloadfunc = (params object[] args) =>
 			{
 				_ = Flow.Reload();
 				return "";
-			});
-			var suspend = new Func<object>(() =>
+			};
+			var suspend = (params object[] args) =>
 			{
 				Script.SuspendHotkeys();
 				return "";
-			});
-			var exitfunc = new Func<object>(() =>
+			};
+			var exitfunc = (params object[] args) =>
 			{
 				_ = Flow.ExitAppInternal(Flow.ExitReasons.Menu);
 				return "";
-			});
+			};
 			//Won't be a gui target, so won't be marked as IsGui internally, but it's ok because it's only ever called on the gui thread in response to gui events.
 			Script.openMenuItem = Add("&Open", new FuncObj(openfunc.Method, openfunc.Target));
 
@@ -178,11 +178,11 @@
 
 			if (!Accessors.A_IsCompiled)
 			{
-				var editfunc = new Func<object>(() =>
+				var editfunc = (params object[] args) =>
 				{
 					Debug.Edit();
 					return "";
-				});
+				};
 				_ = Add("&Edit Script", new FuncObj(editfunc.Method, editfunc.Target));
 			}
 
