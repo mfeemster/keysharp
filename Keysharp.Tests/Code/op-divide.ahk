@@ -5,11 +5,21 @@ if (y = 1)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+	
+if (Type(y) = "Float")
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
 
 x := 10
 y := x / 2.5
 
 if (y = 4)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+	
+if (Type(y) = "Float")
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
@@ -22,6 +32,11 @@ if (y = 1.5)
 else
 	FileAppend, "fail", "*"
 	
+if (Type(y) = "Float")
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
 x := 5
 y := x // 3
 
