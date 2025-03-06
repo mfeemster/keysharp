@@ -8,10 +8,7 @@ namespace Keysharp.Tests
 		//public void Dereference() => Assert.IsTrue(TestScript("op-dereference", true));//Probably will never implement this.
 
 		[Test, Category("Operator")]
-		public void UnaryMinus() => Assert.IsTrue(TestScript("op-unary-minus", true));
-
-		[Test, Category("Operator")]
-		public void MultiStatement() => Assert.IsTrue(TestScript("op-multi-statement", true));
+		public void Add() => Assert.IsTrue(TestScript("op-add", false));
 
 		[Test, Category("Operator")]
 		public void BetweenNumeric() => Assert.IsTrue(TestScript("op-between-numeric", true));
@@ -50,13 +47,16 @@ namespace Keysharp.Tests
 		public void Divide() => Assert.IsTrue(TestScript("op-divide", true));
 
 		[Test, Category("Operator")]
-		public void GreaterLessEqual() => Assert.IsTrue(TestScript("op-greater-less-equal", true));
-
-		[Test, Category("Operator")]
 		public void GreaterLess() => Assert.IsTrue(TestScript("op-greater-less", true));
 
 		[Test, Category("Operator")]
+		public void GreaterLessEqual() => Assert.IsTrue(TestScript("op-greater-less-equal", true));
+
+		[Test, Category("Operator")]
 		public void IncDec() => Assert.IsTrue(TestScript("op-inc-dec", false));
+
+		[Test, Category("Operator"), NonParallelizable]
+		public void Is() => Assert.IsTrue(TestScript("op-is", true));
 
 		[Test, Category("Operator")]
 		public void LeftShift() => Assert.IsTrue(TestScript("op-lsh", true));
@@ -74,18 +74,24 @@ namespace Keysharp.Tests
 		public void Multiply() => Assert.IsTrue(TestScript("op-multiply", true));
 
 		[Test, Category("Operator")]
+		public void MultiStatement() => Assert.IsTrue(TestScript("op-multi-statement", true));
+
+		[Test, Category("Operator"), NonParallelizable]
+		public void NullAssign() => Assert.IsTrue(TestScript("op-null-assign", false));
+
+		[Test, Category("Operator")]
 		public void Power() => Assert.IsTrue(TestScript("op-power", true));
 
 		[Test, Category("Operator")]
 		public void RightShift() => Assert.IsTrue(TestScript("op-rsh", false));
 
 		[Test, Category("Operator")]
+		public void Subtract() => Assert.IsTrue(TestScript("op-subtract", false));
+
+		[Test, Category("Operator")]
 		public void Ternary() => Assert.IsTrue(TestScript("op-ternary", true));
 
-		[Test, Category("Operator"), NonParallelizable]
-		public void NullAssign() => Assert.IsTrue(TestScript("op-null-assign", false));
-
-		[Test, Category("Operator"), NonParallelizable]
-		public void Is() => Assert.IsTrue(TestScript("op-is", true));
+		[Test, Category("Operator")]
+		public void UnaryMinus() => Assert.IsTrue(TestScript("op-unary-minus", true));
 	}
 }

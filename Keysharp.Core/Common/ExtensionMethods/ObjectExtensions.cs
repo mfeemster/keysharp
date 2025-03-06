@@ -209,43 +209,70 @@
 		/// <returns>The converted value as a nullable double.</returns>
 		public static double? ParseDouble(this object obj, bool doconvert = true, bool requiredot = false)
 		{
-			if (obj is double d)
+			var d = 0.0;
+
+			if (obj.ParseDouble(ref d, doconvert, requiredot))
 				return d;
+			else
+				return new double? ();
+		}
+
+		public static bool ParseDouble(this object obj, ref double outvar, bool doconvert = true, bool requiredot = false)
+		{
+			if (obj is double d)
+			{
+				outvar = d;
+				return true;
+			}
 
 			if (obj is long l)
-				return l;
+			{
+				outvar = l;
+				return true;
+			}
 
 			if (obj is BoolResult br)
-				return br.o.ParseDouble(doconvert, requiredot);
+			{
+				return br.o.ParseDouble(ref outvar, doconvert, requiredot);
+			}
 
 			if (obj is int i)//int is seldom used in Keysharp, so check last.
-				return i;
+			{
+				outvar = i;
+				return true;
+			}
 
 			var s = obj.ToString().AsSpan().Trim();
 
 			if (s.Length == 0)
-				return new double? ();
+				return false;
 
 			if (requiredot && !s.Contains('.'))
-				return new double? ();
+				return false;
 
-			if (double.TryParse(s, out d))
-				return d;
+			if (double.TryParse(s, out outvar))
+				return true;
 
 			if (!char.IsNumber(s[s.Length - 1]))//Handle a string specifying a double like "123.0D".
-				if (double.TryParse(s.Slice(0, s.Length - 1), out d))
-					return d;
+				if (double.TryParse(s.Slice(0, s.Length - 1), out outvar))
+					return true;
 
 			Error err;
 
 			try
 			{
-				return doconvert ? Convert.ToDouble(obj) : new double? ();
+				if (doconvert)
+				{
+					outvar = Convert.ToDouble(obj);
+					return true;
+				}
 			}
 			catch
 			{
-				return Errors.ErrorOccurred(err = new IndexError($"Could not convert {obj} to a double.")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new IndexError($"Could not convert {obj} to a double.")) ? throw err : false;
 			}
+
+			return false;
 		}
 
 		/// <summary>
@@ -372,23 +399,39 @@
 		/// <returns>The converted value as a nullable long.</returns>
 		public static long? ParseLong(this object obj, bool doconvert = true, bool donoprefixhex = true)
 		{
-			if (obj is long l)
+			long l = 0;
+
+			if (obj.ParseLong(ref l, doconvert, donoprefixhex))
 				return l;
+			else
+				return new long? ();
+		}
+
+		public static bool ParseLong(this object obj, ref long outvar, bool doconvert = true, bool donoprefixhex = true)
+		{
+			if (obj is long l)
+			{
+				outvar = l;
+				return true;
+			}
 
 			if (obj is BoolResult br)
-				return br.o.ParseLong(doconvert);
+				return br.o.ParseLong(ref outvar, doconvert);
 
 			var s = obj.ToString().AsSpan().Trim();
 
 			if (s.Length == 0)
-				return new long? ();
+				return false;
 
 			if (long.TryParse(s, out l))
-				return l;
+			{
+				outvar = l;
+				return true;
+			}
 
 			if (!char.IsNumber(s[s.Length - 1]))//Handle a string specifying a long like "123L".
-				if (long.TryParse(s.Slice(0, s.Length - 1), out l))
-					return l;
+				if (long.TryParse(s.Slice(0, s.Length - 1), out outvar))
+					return true;
 
 			var neg = false;
 
@@ -399,23 +442,39 @@
 			}
 
 			if (s.StartsWith("0x", StringComparison.OrdinalIgnoreCase) &&
-					long.TryParse(s.Slice(2), NumberStyles.HexNumber, Parser.inv, out var ii))
-				return neg ? -ii : ii;
+					long.TryParse(s.Slice(2), NumberStyles.HexNumber, Parser.inv, out outvar))
+			{
+				if (neg)
+					outvar = -outvar;
 
-			if (donoprefixhex)
-				if (long.TryParse(s, NumberStyles.HexNumber, Parser.inv, out ii))
-					return neg ? -ii : ii;
+				return true;
+			}
+
+			if (donoprefixhex &&
+					long.TryParse(s, NumberStyles.HexNumber, Parser.inv, out outvar))
+			{
+				if (neg)
+					outvar = -outvar;
+
+				return true;
+			}
 
 			Error err;
 
 			try
 			{
-				return doconvert ? Convert.ToInt64(obj) : new long? ();
+				if (doconvert)
+				{
+					outvar = Convert.ToInt64(obj);
+					return true;
+				}
 			}
 			catch
 			{
-				return Errors.ErrorOccurred(err = new IndexError($"Could not convert {obj} to a long.")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new IndexError($"Could not convert {obj} to a long.")) ? throw err : false;
 			}
+
+			return false;
 		}
 
 		/// <summary>

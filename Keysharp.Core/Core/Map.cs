@@ -610,7 +610,7 @@
 		/// <summary>
 		/// The iterator for the map.
 		/// </summary>
-		private IEnumerator<KeyValuePair<object, object>> iter;
+		protected IEnumerator<KeyValuePair<object, object>> iter;
 
 		/// <summary>
 		/// The implementation for <see cref="IEnumerator.Current"/> which gets the key,value tuple at the current iterator position.
@@ -678,7 +678,7 @@
 		/// <summary>
 		/// Calls <see cref="Current"/> and places the key value in the passed in object reference.
 		/// </summary>
-		/// <param name="pos">A reference to the key value.</param>
+		/// <param name="key">A reference to the key value.</param>
 		/// <returns>True if the iterator position has not moved past the last element, else false.</returns>
 		public override object Call(ref object key)
 		{

@@ -65,6 +65,10 @@ namespace Keysharp.Scripting
 					else
 					{
 						result = Script.Operate((Script.Operator)invoke.Parameters[0].UserData[RawData], left, right);
+
+						if (result is long lresult)
+							return new CodeSnippetExpression($"{lresult}L");
+
 						return new CodePrimitiveExpression(result);
 					}
 				}

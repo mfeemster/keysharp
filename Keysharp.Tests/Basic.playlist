@@ -1185,6 +1185,18 @@
                         <Property Name="DisplayName" Value="Is" />
                       </Rule>
                     </Rule>
+                    <Rule Match="All">
+                      <Property Name="TestWithNormalizedFullyQualifiedName" Value="Keysharp.Tests.OperatorTests.Subtract" />
+                      <Rule Match="Any">
+                        <Property Name="DisplayName" Value="Subtract" />
+                      </Rule>
+                    </Rule>
+                    <Rule Match="All">
+                      <Property Name="TestWithNormalizedFullyQualifiedName" Value="Keysharp.Tests.OperatorTests.Add" />
+                      <Rule Match="Any">
+                        <Property Name="DisplayName" Value="Add" />
+                      </Rule>
+                    </Rule>
                   </Rule>
                 </Rule>
                 <Rule Match="All">

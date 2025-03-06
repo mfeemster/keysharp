@@ -328,7 +328,7 @@
 				Script.HwndLastUsed = Hwnd;
 		}
 
-		public KeysharpEnumerator __Enum(object count) => new MapKeyValueIterator(controls, count.Ai());
+		public KeysharpEnumerator __Enum(object count) => new GuiControlIterator(controls, count.Ai());
 
 		public object __New(params object[] obj)
 		{
@@ -339,7 +339,10 @@
 				var caption = obj.Length > 1 ? obj[1].As() : null;
 				var eventObj = obj.Length > 2 ? obj[2] : null;
 				var newCount = Interlocked.Increment(ref windowCount);
-				form = new KeysharpForm
+				//Get numeric creation params first.
+				int addStyle = 0, addExStyle = 0, removeStyle = 0, removeExStyle = 0;
+				Opt(options, ref addStyle, ref addExStyle, ref removeStyle, ref removeExStyle);
+				form = new KeysharpForm(addStyle, addExStyle, removeStyle, removeExStyle)
 				{
 					eventObj = eventObj,
 					FormBorderStyle = FormBorderStyle.FixedSingle,//Default to a non-resizeable window, with the maximize box disabled.
@@ -1398,7 +1401,7 @@
 
 			if (ctrl is KeysharpPictureBox pbox)
 			{
-				if (ImageHelper.LoadImage(text, opts.width, opts.height, opts.iconnumber).Item1 is Bitmap bmp)
+				if (text != null && ImageHelper.LoadImage(text, opts.width, opts.height, opts.iconnumber).Item1 is Bitmap bmp)
 				{
 					if (pbox.SizeMode == PictureBoxSizeMode.Zoom)
 					{
@@ -1644,53 +1647,58 @@
 					{
 						func2(this, true);//No +/- so just assume true.
 					}
-					else//Special style, windows only. Need to figure out how to make this cross platform.//TODO
-					{
-#if WINDOWS
-						var temp = 0;
-						var handle = this.form.Handle;
-
-						if (Options.TryParse(split, "+E", ref temp))
-						{
-							_ = WindowsAPI.SetWindowLongPtr(handle, WindowsAPI.GWL_EXSTYLE, new IntPtr(WindowsAPI.GetWindowLongPtr(handle, WindowsAPI.GWL_EXSTYLE).ToInt64() | (long)temp));
-						}
-						else if (Options.TryParse(split, "E", ref temp))
-						{
-							_ = WindowsAPI.SetWindowLongPtr(handle, WindowsAPI.GWL_EXSTYLE, new IntPtr(WindowsAPI.GetWindowLongPtr(handle, WindowsAPI.GWL_EXSTYLE).ToInt64() | (long)temp));
-						}
-						else if (Options.TryParse(split, "-E", ref temp))
-						{
-							_ = WindowsAPI.SetWindowLongPtr(handle, WindowsAPI.GWL_EXSTYLE, dwNewLong: new IntPtr(WindowsAPI.GetWindowLongPtr(handle, WindowsAPI.GWL_EXSTYLE).ToInt64() & ~temp));
-						}
-						else if (Options.TryParse(split, "-", ref temp))
-						{
-							_ = WindowsAPI.SetWindowLongPtr(handle, WindowsAPI.GWL_STYLE, new IntPtr(WindowsAPI.GetWindowLongPtr(handle, WindowsAPI.GWL_STYLE).ToInt64() & ~temp));
-						}
-						else if (Options.TryParse(split, "+", ref temp))
-						{
-							_ = WindowsAPI.SetWindowLongPtr(handle, WindowsAPI.GWL_STYLE, new IntPtr(WindowsAPI.GetWindowLongPtr(handle, WindowsAPI.GWL_STYLE).ToInt64() | (long)temp));
-						}
-						else if (Options.TryParse(split, "", ref temp))
-						{
-							_ = WindowsAPI.SetWindowLongPtr(handle, WindowsAPI.GWL_STYLE, new IntPtr(WindowsAPI.GetWindowLongPtr(handle, WindowsAPI.GWL_STYLE).ToInt64() | (long)temp));
-						}
-
-#endif
-					}
 				}
 			}
 
 			return null;
 		}
 
-		public object Restore() => form.WindowState = FormWindowState.Normal;
+		private static void Opt(object obj, ref int addStyle, ref int addExStyle, ref int removeStyle, ref int removeExStyle)
+		{
+#if WINDOWS
+			var options = obj.As();
 
+			//Special style, windows only. Need to figure out how to make this cross platform.//TODO
+			foreach (var split in Options.ParseOptions(options))
+			{
+				var str = split.Substring(1);
+
+				if (str.Length > 0)
+				{
+					var temp = 0;
+
+					if (Options.TryParse(split, "+E", ref temp) || Options.TryParse(split, "E", ref temp))
+					{
+						addExStyle |= temp;
+					}
+					else if (Options.TryParse(split, "-E", ref temp))
+					{
+						removeExStyle |= temp;
+					}
+					else if (Options.TryParse(split, "-", ref temp))
+					{
+						removeStyle |= temp;
+					}
+					else if (Options.TryParse(split, "+", ref temp))
+					{
+						addStyle |= temp;
+					}
+					else if (Options.TryParse(split, "", ref temp))
+					{
+						addStyle |= temp;
+					}
+				}
+			}
+
+#endif
+		}
+
+		public object Restore() => form.WindowState = FormWindowState.Normal;
 		public object SetFont(object obj0 = null, object obj1 = null)
 		{
 			form.SetFont(obj0, obj1);
 			return null;
 		}
-
 		public object Show(object obj = null)
 		{
 			var s = obj.As();
@@ -1853,7 +1861,6 @@
 			form.Update();//Required for the very first state of the form to always be displayed.
 			return null;
 		}
-
 		public Map Submit(object obj = null)
 		{
 			var hide = obj.Ab(true);
@@ -1920,7 +1927,6 @@
 
 			return new Map(dkt);
 		}
-
 		public object UseGroup(object obj0 = null)
 		{
 			if (obj0 is GuiControl gctrl && gctrl.Control is GroupBox gb)
@@ -1930,11 +1936,8 @@
 
 			return null;
 		}
-
 		IEnumerator IEnumerable.GetEnumerator() => new MapKeyValueIterator(controls, 2);
-
 		internal static bool AnyExistingVisibleWindows() => allGuiHwnds.Values.Any(g => g.form != Script.mainWindow && g.form.Visible);
-
 		internal static void DestroyAll()
 		{
 			//Destroy everything but the main window, which will destroy itself.
@@ -1951,11 +1954,8 @@
 
 			allGuiHwnds.Clear();
 		}
-
 		internal static float GetFontPixels(Font font) => font.GetHeight((float)Accessors.A_ScreenDPI);
-
 		internal static bool IsGuiType(Type type) => GuiTypes.Any(t => t.IsAssignableFrom(type));
-
 		internal static GuiOptions ParseOpt(string type, string text, string optionsstr)
 		{
 			var options = new GuiOptions();
@@ -2142,19 +2142,16 @@
 
 			return options;
 		}
-
 		internal static void SuppressCtrlAKeyDown(object o, KeyEventArgs e)
 		{
 			if (e.KeyData == (Keys.Control | Keys.A))
 				e.SuppressKeyPress = true;
 		}
-
 		internal static void SuppressCtrlAPreviewKeyDown(object o, PreviewKeyDownEventArgs e)
 		{
 			if (e.KeyData == (Keys.Control | Keys.A))
 				e.IsInputKey = true;
 		}
-
 		internal void CallContextMenuChangeHandlers(bool wasRightClick, int x, int y)
 		{
 			var control = form.ActiveControl;
@@ -2168,7 +2165,6 @@
 			else
 				_ = (contextMenuChangedHandlers?.InvokeEventHandlers(this, control, control != null ? control.Handle.ToInt64().ToString() : "", wasRightClick, x, y));//Unsure what to pass for Item, so just pass handle.
 		}
-
 		internal void Form_DragDrop(object sender, DragEventArgs e)
 		{
 			if (e.Data.GetDataPresent(DataFormats.FileDrop))
@@ -2178,7 +2174,6 @@
 				_ = dropFilesHandlers?.InvokeEventHandlers(this, form.ActiveControl, new Array(files), coords.X, coords.Y);
 			}
 		}
-
 		internal void Form_FormClosing(object sender, FormClosingEventArgs e)
 		{
 			var handle = form.Handle.ToInt64();
@@ -2202,7 +2197,6 @@
 			//If there is nothing else keeping the program alive, and the program is not already exiting, close it.
 			Script.ExitIfNotPersistent();
 		}
-
 		internal void Form_KeyDown(object sender, KeyEventArgs e)
 		{
 			if (e.KeyCode == Keys.Apps || (e.KeyCode == Keys.F10 && ((Control.ModifierKeys & Keys.Shift) == Keys.Shift)))
@@ -2210,13 +2204,11 @@
 			else if (e.KeyCode == Keys.Escape)
 				_ = escapeHandlers?.InvokeEventHandlers(this);
 		}
-
 		internal void Form_MouseDown(object sender, MouseEventArgs e)
 		{
 			if (e.Button == MouseButtons.Right)
 				CallContextMenuChangeHandlers(false, e.X, e.Y);
 		}
-
 		internal void Form_Resize(object sender, EventArgs e)
 		{
 			long state;
@@ -2230,7 +2222,6 @@
 
 			_ = sizeHandlers?.InvokeEventHandlers(this, state, (long)form.Width, (long)form.Height);
 		}
-
 		internal void Tv_Lv_KeyDown(object sender, KeyEventArgs e)
 		{
 			if (e.KeyCode == Keys.F2)
@@ -2241,12 +2232,10 @@
 					lv.SelectedItems[0].BeginEdit();
 			}
 		}
-
 		private void Form_Load(object sender, EventArgs e)
 		{
 			//form.Visible = false;
 		}
-
 		private void ResizeTabControls()
 		{
 			var dpiscale = !dpiscaling ? 1.0 : Accessors.A_ScaledScreenDPI;
@@ -2255,7 +2244,6 @@
 			foreach (var tc in tabControls)
 				tc.AdjustSize(dpiscale);
 		}
-
 		public object this[object controlname]
 		{
 			get
@@ -2306,7 +2294,6 @@
 				return Errors.ErrorOccurred(err = new Error($"No controls matched the handle, name, text, ClassNN or NetClassNN {controlname}.")) ? throw err : null;
 			}
 		}
-
 		internal class GuiOptions
 		{
 			internal int addexstyle = 0;
@@ -2455,6 +2442,69 @@
 			internal int yp = int.MinValue;
 			internal int yplus = int.MinValue;
 			internal int ys = int.MinValue;
+		}
+	}
+
+	/// <summary>
+	/// A special two component iterator for <see cref="Gui"/> which returns the key as a Control or
+	/// the key and value as the Handle and Control as a tuple.
+	/// </summary>
+	internal class GuiControlIterator : MapKeyValueIterator
+	{
+		public GuiControlIterator(Dictionary<object, object> m, int c)
+			: base(m, c)
+		{
+		}
+
+		/// <summary>
+		/// Places the control into key.
+		/// </summary>
+		/// <param name="key">A reference to the control value.</param>
+		/// <returns>True if the iterator position has not moved past the last element, else false.</returns>
+		public override object Call(ref object key)
+		{
+			if (MoveNext())
+			{
+				try
+				{
+					key = iter.Current.Value;
+				}
+				catch (IndexOutOfRangeException)
+				{
+					throw new InvalidOperationException();//Should never happen when using regular loops.
+				}
+
+				return true;
+			}
+
+			return false;
+		}
+
+		/// <summary>
+		/// Places the handle in key and the control in value.
+		/// </summary>
+		/// <param name="key">A reference to the handle value.</param>
+		/// <param name="value">A reference to the control value.</param>
+		/// <returns>True if the iterator position has not moved past the last element, else false.</returns>
+		public override object Call(ref object key, ref object value)
+		{
+			if (MoveNext())
+			{
+				try
+				{
+					var kv = iter.Current;
+					key = kv.Key;
+					value = kv.Value;
+				}
+				catch (IndexOutOfRangeException)
+				{
+					throw new InvalidOperationException();
+				}
+
+				return true;
+			}
+
+			return false;
 		}
 	}
 }

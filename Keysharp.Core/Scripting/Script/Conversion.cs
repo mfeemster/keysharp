@@ -4,12 +4,20 @@ namespace Keysharp.Scripting
 	{
 		internal static bool ForceBool(object input)
 		{
-			if (input is bool b)
-				return b;
-			else if (input == null)
+			var d = 0.0;
+			var l = 0L;
+
+			if (input == null)
 				return false;
-			else if (input is long || input is double || input is decimal || input is float || input is int || input is byte || input is char)
-				return ForceDouble(input) != 0;
+
+			var b = input.ParseBool();
+
+			if (b.HasValue)
+				return b.Value;
+			else if (input.ParseLong(ref l, false, false))
+				return l != 0;
+			else if (input.ParseDouble(ref d, false, true))
+				return d != 0.0;
 			else if (input is string s)
 				return !string.IsNullOrEmpty(s);
 			else if (input is IntPtr ip)
@@ -26,88 +34,21 @@ namespace Keysharp.Scripting
 			return true;//Any non-null, non-empty string is considered true.
 		}
 
-		internal static decimal ForceDecimal(object input)
-		{
-			if (input is decimal m)
-				return m;
-			else if (input is string s)
-			{
-				if (s != "")
-				{
-					if (char.IsLetter(s[ ^ 1]))
-					{
-						var strimmed = s.TrimEndAlpha();
-
-						if (decimal.TryParse(strimmed, out var result))
-							return result;
-					}
-					else
-					{
-						if (decimal.TryParse(s, out var result))
-							return result;
-					}
-				}
-			}
-			else if (input is bool b)
-				return b ? 1m : 0m;
-			else if (input is byte by)
-				return by;
-			else if (input is char c)
-				return c;
-			else if (input.GetType().GetMethods(BindingFlags.Static | BindingFlags.Public) is MethodInfo[] mis)
-			{
-				foreach (var mi in mis)
-					if (mi.Name == "op_Implicit" && mi.ReturnType == typeof(decimal))
-						return (decimal)mi.Invoke(input, [input]);
-			}
-			else if (input is IConvertible)
-				return Convert.ToDecimal(input);
-
-			return 0m;
-		}
-
 		internal static double ForceDouble(object input)
 		{
-			if (input is double d)
-				return d;
-			else if (input is long l)
-				return l;
-			else if (input is string s)
-			{
-				if (s != "")
-				{
-					if (char.IsLetter(s[ ^ 1]))
-					{
-						var strimmed = s.TrimEndAlpha();
+			var d = 0.0;
+			var l = 0L;
 
-						if (double.TryParse(strimmed, out var result))
-							return result;
-					}
-					else
-					{
-						if (double.TryParse(s, out var result))
-							return result;
-					}
-				}
-			}
-			//else if (input is BoolResult br)
-			//return ForceDouble(br.o);
-			else if (input is bool b)
+			if (input == null)
+				return d;
+			else if (input.ParseDouble(ref d, false, true))
+				return d;
+			else if (input.ParseLong(ref l, false, false))
+				return l;
+			else if (input.ParseBool() is bool b)
 				return b ? 1.0 : 0.0;
-			else if (input is byte by)
-				return by;
-			else if (input is char c)
-				return c;
-			else if (input is null)
-				return 0.0;
-			else if (input is int i)//These should never happen.
-				return i;
-			else if (input is float f)
-				return (double)f;
-			else if (input is uint ui)
-				return ui;
-			else if (input is ulong ul)
-				return ul;
+			else if (input is IntPtr ip)
+				return ip.ToInt64();
 			else if (input.GetType().GetMethods(BindingFlags.Static | BindingFlags.Public) is MethodInfo[] mis)
 			{
 				foreach (var mi in mis)
@@ -122,43 +63,17 @@ namespace Keysharp.Scripting
 
 		internal static int ForceInt(object input)
 		{
-			if (input is long l)//The most likely case is for it to be a long.
-				return (int)l;
-			else if (input is int i)
-				return i;
-			else if (input is uint ui)
-				return (int)ui;
-			else if (input is string s)
-			{
-				if (s != "")
-				{
-					if (s.StartsWith("0x", StringComparison.OrdinalIgnoreCase) &&
-							int.TryParse(s.AsSpan(2), NumberStyles.HexNumber, CultureInfo.CurrentCulture, out var ll))
-					{
-						return ll;
-					}
-					else if (char.IsLetter(s[ ^ 1]))
-					{
-						var strimmed = s.TrimEndAlpha();
+			var d = 0.0;
+			var l = 0L;
 
-						if (int.TryParse(strimmed, out var result))
-							return result;
-					}
-					else
-					{
-						if (int.TryParse(s, out var result))
-							return result;
-					}
-				}
-			}
-			else if (input is bool b)
-				return b ? 1 : 0;
-			else if (input is byte by)
-				return by;
-			else if (input is char c)
-				return c;
-			else if (input is null)
+			if (input == null)
 				return 0;
+			else if (input.ParseLong(ref l, false, false))
+				return (int)l;
+			else if (input.ParseDouble(ref d, false, true))
+				return (int)d;
+			else if (input.ParseBool() is bool b)
+				return b ? 1 : 0;
 			else if (input is IntPtr ptr)
 				return ptr.ToInt32();
 			else if (input.GetType().GetMethods(BindingFlags.Static | BindingFlags.Public) is MethodInfo[] mis)
@@ -173,45 +88,19 @@ namespace Keysharp.Scripting
 			return 0;
 		}
 
-		internal static long ForceLong(object input)
+		public static long ForceLong(object input)
 		{
-			if (input is long l)
-				return l;
-			else if (input is int i)
-				return i;
-			else if (input is uint ui)
-				return ui;
-			else if (input is string s)
-			{
-				if (s != "")
-				{
-					if (s.StartsWith("0x", StringComparison.OrdinalIgnoreCase) &&
-							long.TryParse(s.AsSpan(2), NumberStyles.HexNumber, CultureInfo.CurrentCulture, out var ll))
-					{
-						return ll;
-					}
-					else if (char.IsLetter(s[ ^ 1]))
-					{
-						var strimmed = s.TrimEndAlpha();
+			var d = 0.0;
+			var l = 0L;
 
-						if (long.TryParse(strimmed, out var result))
-							return result;
-					}
-					else
-					{
-						if (long.TryParse(s, out var result))
-							return result;
-					}
-				}
-			}
-			else if (input is bool b)
-				return b ? 1 : 0;
-			else if (input is byte by)
-				return by;
-			else if (input is char c)
-				return c;
-			else if (input is null)
-				return 0;
+			if (input == null)
+				return l;
+			else if (input.ParseLong(ref l, false, false))
+				return l;
+			else if (input.ParseDouble(ref d, false, true))
+				return (long)d;
+			else if (input.ParseBool() is bool b)
+				return b ? 1L : 0L;
 			else if (input is IntPtr ptr)
 				return ptr.ToInt64();
 			else if (input.GetType().GetMethods(BindingFlags.Static | BindingFlags.Public) is MethodInfo[] mis)
@@ -223,7 +112,7 @@ namespace Keysharp.Scripting
 			else if (input is IConvertible)
 				return Convert.ToInt64(input);
 
-			return 0;
+			return l;
 		}
 
 		internal static string ForceString(object input)
@@ -346,9 +235,6 @@ namespace Keysharp.Scripting
 		{
 			if (requested == typeof(object) || requested.IsAssignableFrom(value.GetType()))
 				return value;
-
-			if (requested == typeof(decimal))
-				return ForceDecimal(value);
 
 			if (requested == typeof(double))
 				return ForceDouble(value);
