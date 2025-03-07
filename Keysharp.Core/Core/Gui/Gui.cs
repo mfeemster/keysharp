@@ -1447,6 +1447,8 @@
 
 		public GuiControl AddDateTime(object obj0 = null, object obj1 = null) => Add(Keyword_DateTime, obj0, obj1);
 
+		public GuiControl AddDropDDL(object obj0 = null, object obj1 = null) => Add(Keyword_DropDownList, obj0, obj1);
+
 		public GuiControl AddDropDownList(object obj0 = null, object obj1 = null) => Add(Keyword_DropDownList, obj0, obj1);
 
 		public GuiControl AddEdit(object obj0 = null, object obj1 = null) => Add(Keyword_Edit, obj0, obj1);
@@ -1462,6 +1464,8 @@
 		public GuiControl AddListView(object obj0 = null, object obj1 = null) => Add(Keyword_ListView, obj0, obj1);
 
 		public GuiControl AddMonthCal(object obj0 = null, object obj1 = null) => Add(Keyword_MonthCal, obj0, obj1);
+
+		public GuiControl AddPic(object obj0 = null, object obj1 = null) => Add(Keyword_Picture, obj0, obj1);
 
 		public GuiControl AddPicture(object obj0 = null, object obj1 = null) => Add(Keyword_Picture, obj0, obj1);
 
@@ -1513,7 +1517,7 @@
 			return null;
 		}
 
-		public IEnumerator<(object, object)> GetEnumerator() => new MapKeyValueIterator(controls, 2);
+		public IEnumerator<(object, object)> GetEnumerator() => new GuiControlIterator(controls, 2);
 
 		public object GetPos([Optional()][DefaultParameterValue(0)] ref object x, [Optional()][DefaultParameterValue(0)] ref object y, [Optional()][DefaultParameterValue(0)] ref object width, [Optional()][DefaultParameterValue(0)] ref object height)
 		{
@@ -1936,7 +1940,7 @@
 
 			return null;
 		}
-		IEnumerator IEnumerable.GetEnumerator() => new MapKeyValueIterator(controls, 2);
+		IEnumerator IEnumerable.GetEnumerator() => new GuiControlIterator(controls, 2);
 		internal static bool AnyExistingVisibleWindows() => allGuiHwnds.Values.Any(g => g.form != Script.mainWindow && g.form.Visible);
 		internal static void DestroyAll()
 		{
