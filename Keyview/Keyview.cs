@@ -800,13 +800,25 @@
 
 		private void zoom100ToolStripMenuItem_Click(object sender, EventArgs e) => ZoomDefault();
 
-		private void ZoomDefault() => txtIn.Zoom = 0;
+		private void ZoomDefault()
+		{
+			txtIn.Zoom = 0;
+			txtOut.Zoom = 0;
+		}
 
-		private void ZoomIn() => txtIn.ZoomIn();
+		private void ZoomIn()
+		{
+			txtIn.ZoomIn();
+			txtOut.ZoomIn();
+		}
 
 		private void zoomInToolStripMenuItem_Click(object sender, EventArgs e) => ZoomIn();
 
-		private void ZoomOut() => txtIn.ZoomOut();
+		private void ZoomOut()
+		{
+			txtIn.ZoomOut();
+			txtOut.ZoomOut();
+		}
 
 		private void zoomOutToolStripMenuItem_Click(object sender, EventArgs e) => ZoomOut();
 	}

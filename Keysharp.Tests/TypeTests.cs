@@ -36,6 +36,7 @@ namespace Keysharp.Tests
 			Assert.IsTrue(typeof(Keysharp.Core.Map).IsAssignableTo(typeof(Keysharp.Core.Common.ObjectBase.KeysharpObject)));
 			Assert.IsTrue(typeof(Keysharp.Core.Common.File.KeysharpFile).IsAssignableTo(typeof(Keysharp.Core.Common.ObjectBase.KeysharpObject)));
 			Assert.IsTrue(Keysharp.Core.Types.Type(0L) == "Integer");
+			Assert.IsTrue(Keysharp.Core.Types.Type(1.2) == "Float");
 			Assert.IsTrue(Keysharp.Core.Types.Type(new KeysharpObject()) == "Object");
 			Assert.IsTrue(Keysharp.Core.Types.Type(null) == "unset");
 		}
