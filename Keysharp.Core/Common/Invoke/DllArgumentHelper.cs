@@ -13,40 +13,40 @@ namespace Keysharp.Core.Common.Invoke
         {
         }
 
-        protected override void ConvertParameters(object[] parameters)
-        {
-            void SetupPointerArg(int i, int n, object obj = null)
-            {
-                var p = parameters[i];
-                var pm1 = parameters[i - 1].ToString();
-                var gch = GCHandle.Alloc(obj ?? p, GCHandleType.Pinned);
-                _ = gcHandles.Add(gch);
-                var intptr = gch.AddrOfPinnedObject();
+		protected override void ConvertParameters(object[] parameters)
+		{
+			void SetupPointerArg(int i, int n, object obj = null)
+			{
+				var p = parameters[i];
+				var pm1 = parameters[i - 1].ToString();
+				var gch = GCHandle.Alloc(obj ?? p, GCHandleType.Pinned);
+				_ = gcHandles.Add(gch);
+				var intptr = gch.AddrOfPinnedObject();
 
-                //Numbers being passed in will always be of type long or double, however that won't work
-                //when a DLL function expects a pointer to a smaller type. So advance the pointer by the appropriate amount so it
-                //accesses the intended part.
-                if (p is long || p is ulong || p is double)
-                {
-                    var amt = 0;
+				//Numbers being passed in will always be of type long or double, however that won't work
+				//when a DLL function expects a pointer to a smaller type. So advance the pointer by the appropriate amount so it
+				//accesses the intended part.
+				if (p is long || p is ulong || p is double)
+				{
+					var amt = 0;
 
-                    if (pm1.Contains("int", StringComparison.OrdinalIgnoreCase) || pm1.Contains("float", StringComparison.OrdinalIgnoreCase))
-                        amt = 4;
-                    else if (pm1.Contains("short", StringComparison.OrdinalIgnoreCase))
-                        amt = 6;
-                    else if (pm1.Contains("char", StringComparison.OrdinalIgnoreCase))
-                        amt = 7;
+					if (pm1.Contains("int", StringComparison.OrdinalIgnoreCase) || pm1.Contains("float", StringComparison.OrdinalIgnoreCase))
+						amt = 4;
+					else if (pm1.Contains("short", StringComparison.OrdinalIgnoreCase))
+						amt = 6;
+					else if (pm1.Contains("char", StringComparison.OrdinalIgnoreCase))
+						amt = 7;
 
-                    //intptr = IntPtr.Add(intptr, amt);
-                }
+					intptr = IntPtr.Add(intptr, 4);
+				}
 
-                args[n] = intptr;
-            }
-            Error err;
-            types = new Type[parameters.Length / 2];
-            args = new object[types.Length];
-            names = new string[types.Length];
-            hasreturn = (parameters.Length & 1) == 1;
+				args[n] = intptr;
+			}
+			Error err;
+			types = new Type[parameters.Length / 2];
+			args = new object[types.Length];
+			names = new string[types.Length];
+			hasreturn = (parameters.Length & 1) == 1;
 
             for (var i = 0; i < parameters.Length; i++)
             {

@@ -1,95 +1,101 @@
-x := true
-y := unset
+testnot(true, unset)
+testnot(1, 0)
+testnot(1, "0")
+testnot("1", "0")
+; Won't work with hex strings compared against true, but that seems like an odd case.
 
-If (!x = false)
-	FileAppend "pass", "*"
-else
-	FileAppend "fail", "*"
+testnot(x, y?)
+{
+	If (!x = false)
+		FileAppend "pass", "*"
+	else
+		FileAppend "fail", "*"
 
-If (x != true)
-	FileAppend "fail", "*"
-else
-	FileAppend "pass", "*"
+	If (x != true)
+		FileAppend "fail", "*"
+	else
+		FileAppend "pass", "*"
 
-If (!(x) = false)
-	FileAppend "pass", "*"
-else
-	FileAppend "fail", "*"
+	If (!(x) = false)
+		FileAppend "pass", "*"
+	else
+		FileAppend "fail", "*"
 
-If ((x) != true)
-	FileAppend "fail", "*"
-else
-	FileAppend "pass", "*"
+	If ((x) != true)
+		FileAppend "fail", "*"
+	else
+		FileAppend "pass", "*"
 
-If ((!x) = false)
-	FileAppend "pass", "*"
-else
-	FileAppend "fail", "*"
+	If ((!x) = false)
+		FileAppend "pass", "*"
+	else
+		FileAppend "fail", "*"
 
-If (!(x = false))
-	FileAppend "pass", "*"
-else
-	FileAppend "fail", "*"
+	If (!(x = false))
+		FileAppend "pass", "*"
+	else
+		FileAppend "fail", "*"
 
-If ((x != true))
-	FileAppend "fail", "*"
-else
-	FileAppend "pass", "*"
+	If ((x != true))
+		FileAppend "fail", "*"
+	else
+		FileAppend "pass", "*"
 
-If (!y = true)
-	FileAppend "pass", "*"
-else
-	FileAppend "fail", "*"
+	If (!y = true)
+		FileAppend "pass", "*"
+	else
+		FileAppend "fail", "*"
 
-If (y != true)
-	FileAppend "pass", "*"
-else
-	FileAppend "fail", "*"
+	If (y != true)
+		FileAppend "pass", "*"
+	else
+		FileAppend "fail", "*"
 
-If (not x = false)
-	FileAppend "pass", "*"
-else
-	FileAppend "fail", "*"
+	If (not x = false)
+		FileAppend "pass", "*"
+	else
+		FileAppend "fail", "*"
 
-If (not x = true)
-	FileAppend "fail", "*"
-else
-	FileAppend "pass", "*"
+	If (not x = true)
+		FileAppend "fail", "*"
+	else
+		FileAppend "pass", "*"
 
-If (not (x) = false)
-	FileAppend "pass", "*"
-else
-	FileAppend "fail", "*"
+	If (not (x) = false)
+		FileAppend "pass", "*"
+	else
+		FileAppend "fail", "*"
 
-If (not (x) = true)
-	FileAppend "fail", "*"
-else
-	FileAppend "pass", "*"
+	If (not (x) = true)
+		FileAppend "fail", "*"
+	else
+		FileAppend "pass", "*"
 
-If ((not x) = false)
-	FileAppend "pass", "*"
-else
-	FileAppend "fail", "*"
+	If ((not x) = false)
+		FileAppend "pass", "*"
+	else
+		FileAppend "fail", "*"
 
-If (not (x = false))
-	FileAppend "pass", "*"
-else
-	FileAppend "fail", "*"
+	If (not (x = false))
+		FileAppend "pass", "*"
+	else
+		FileAppend "fail", "*"
 
-If (not (x = true))
-	FileAppend "fail", "*"
-else
-	FileAppend "pass", "*"
+	If (not (x = true))
+		FileAppend "fail", "*"
+	else
+		FileAppend "pass", "*"
 
-If (not y = true)
-	FileAppend "pass", "*"
-else
-	FileAppend "fail", "*"
+	If (not y = true)
+		FileAppend "pass", "*"
+	else
+		FileAppend "fail", "*"
 
-If (not (y) = true)
-	FileAppend "pass", "*"
-else
-	FileAppend "fail", "*"
+	If (not (y) = true)
+		FileAppend "pass", "*"
+	else
+		FileAppend "fail", "*"
+}
 
 x := 123
 

@@ -6,7 +6,7 @@ if (y = 123)
 else
 	FileAppend "fail", "*"
 
-nafunc(p)
+nafunc(p?)
 {
 	if ((p ?? 456) == 456)
 		FileAppend "pass", "*"
@@ -34,7 +34,7 @@ nafunc2(a, b, c)
 	tot += c(3)
 }
 
-nafunc2((o) => o ?? 11, (o) => o ?? 22, (o) => o ?? 33)
+nafunc2((o) => o ?? 11, (o?) => o ?? 22, (o?) => o ?? 33)
 
 If (tot == 26)
 	FileAppend "pass", "*"

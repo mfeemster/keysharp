@@ -525,8 +525,8 @@ namespace Keysharp.Scripting
                 else
                 {
                     var paramText = parameter.GetText();
-                    var variableName = NormalizeIdentifier(paramText);
-                    parser.MaybeAddVariableDeclaration(variableName);
+                    var normalizedName = parser.NormalizeFunctionIdentifier(paramText);
+                    var variableName = parser.MaybeAddVariableDeclaration(normalizedName);
                     variableNames.Add(variableName);
                 }
                 lastParamType = paramType;

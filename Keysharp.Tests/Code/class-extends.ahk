@@ -656,6 +656,11 @@ class mybaseclass
 	{
 		this.x := 123
 	}
+
+	retfunc(xx)
+	{
+		return xx
+	}
 }
 
 class mysubclass extends mybaseclass
@@ -663,7 +668,21 @@ class mysubclass extends mybaseclass
 	basefunc()
 	{
 		super.basefunc()
-		this.x++
+		this.x +=1
+		temp := this.x
+		val := this.retfunc((this.x := 99) / 3) ; Nested assignment within an expression referencing already declared global property.
+		
+		if (this.x == 99)
+			FileAppend "pass", "*"
+		else
+			FileAppend "fail", "*"
+
+		if (val == 33)
+			FileAppend "pass", "*"
+		else
+			FileAppend "fail", "*"
+
+		this.x := temp
 	}
 }
 

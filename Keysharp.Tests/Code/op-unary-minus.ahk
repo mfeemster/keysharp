@@ -1,5 +1,3 @@
-
-
 x := 2
 y := -2
 
@@ -84,3 +82,50 @@ If (y != -54)
 	FileAppend "fail", "*"
 else
 	FileAppend "pass", "*"
+
+y := -2.5
+
+If (y = -2.5)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+
+y := 2.5
+y := -y
+
+If (y = -2.5)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+
+y := "2.5"
+y := -y
+
+If (y = -2.5)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+
+y := "-2.5"
+y := -y
+
+If (y = 2.5)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+
+y := "0x0A"
+y := -y
+
+If (y = -10)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+
+y := "-0x0A"
+y := -y
+
+If (y = 10)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"

@@ -39,7 +39,10 @@ namespace Keysharp.Scripting
         {
             tempVarCount++;
             var tempVarName = Keywords.TempVariablePrefix + tempVarCount.ToString();
+            var lastScope = currentFunc.Scope;
+            currentFunc.Scope = eScope.Local;
             MaybeAddVariableDeclaration(tempVarName);
+            currentFunc.Scope = lastScope;
             return SyntaxFactory.IdentifierName(tempVarName);
         }
 
@@ -423,6 +426,14 @@ namespace Keysharp.Scripting
             return match.Key;
         }
 
+        public string IsBuiltInMethod(string name, bool caseSense = false)
+        {
+            MethodPropertyHolder mph = Reflections.FindBuiltInMethod(name, -1);
+            if (mph?.mi == null || (caseSense && mph.mi.Name != name))
+                return null;
+            return mph.mi.Name;
+        }
+
         public string MaybeAddGlobalVariableDeclaration(string name, bool caseSense = true)
         {
             string match = IsVarDeclaredGlobally(name, caseSense);
@@ -492,9 +503,6 @@ namespace Keysharp.Scripting
             if (currentFunc.Scope == eScope.Static && !currentFunc.Statics.Contains(name))
             {
                 currentFunc.Statics.Add(name);
-                var normalizedName = NormalizeFunctionIdentifier(name);
-                currentFunc.Statics.Add(normalizedName);
-                name = normalizedName;
             }
 
             var variableDeclaration = SyntaxFactory.VariableDeclaration(
@@ -587,11 +595,10 @@ namespace Keysharp.Scripting
             if (name != null) return name;
 
             // Only add built-in functions, because user-defined functions are handled in the constructor
-            MethodPropertyHolder mph = Reflections.FindBuiltInMethod(functionName, -1);
-            if (mph?.mi == null || (caseSense && mph.mi.Name != functionName))
-                return caseSense ? functionName : functionName.ToLowerInvariant();
+            name = IsBuiltInMethod(functionName, caseSense);
+            if (name == null) return caseSense ? functionName : functionName.ToLowerInvariant();
 
-            functionName = mph.mi.Name;
+            functionName = name;
 
             return AddGlobalFuncObjVariable(functionName, caseSense);
         }
@@ -877,18 +884,24 @@ namespace Keysharp.Scripting
             return NormalizeIdentifier(name, nameCase);
         }
 
+        public string CreateStaticIdentifier(string name)
+        {
+            if (currentFunc == null) return null;
+            return currentFunc.Name.ToUpper() + "_" + name.ToLowerInvariant().TrimStart('@');
+        }
+
         public string IsStaticDefinedInThisOrParent(string name)
         {
             if (currentFunc == null) return null;
             name = name.ToLowerInvariant();
-            string staticName = currentFunc.Name.ToUpper() + "_" + name;
+            string staticName = CreateStaticIdentifier(name);
 
-            if (currentFunc.Statics.Contains(name)) return staticName;
+            if (currentFunc.Statics.Contains(staticName)) return staticName;
             if (currentFunc.Locals.ContainsKey(name)) return null;
 
             foreach (var (f, _) in FunctionStack.Reverse())
             {
-                staticName = f.Name.ToUpper() + "_" + name;
+                staticName = f.Name.ToUpper() + "_" + name.TrimStart('@');
                 if (f.Statics.Contains(name)) return staticName;
                 if (f.Locals.ContainsKey(name)) return null;
             }
@@ -897,18 +910,33 @@ namespace Keysharp.Scripting
 
         public string NormalizeFunctionIdentifier(string name, eNameCase nameCase = eNameCase.Lower)
         {
-            if (IsStaticDefinedInThisOrParent(name) is string staticName && staticName != null)
-                return staticName;
-
+            name = name.Trim('"', '\'');
             var builtin = IsBuiltInProperty(name);
             if (builtin != null) return builtin;
 
-            return NormalizeIdentifier(name, nameCase);
+            var normalizedName = NormalizeIdentifier(name, nameCase);
+
+            // Normalize before checking these, because method and type identifiers will all be lower-case
+            builtin = IsBuiltInMethod(normalizedName);
+            if (builtin != null) return normalizedName;
+
+            if (UserTypes.ContainsKey(normalizedName) || Reflections.stringToTypes.ContainsKey(normalizedName))
+                return normalizedName;
+
+            // The identifier isn't a built-in method, property, nor a type,
+            // so next check whether it's a static variable or should be a static variable
+
+            if (IsStaticDefinedInThisOrParent(normalizedName) is string staticName && staticName != null)
+                return staticName;
+            else if (currentFunc.Scope == eScope.Static && IsVarDeclaredGlobally(normalizedName, true) == null && IsVarDeclaredLocally(normalizedName, true) == null)
+                return CreateStaticIdentifier(normalizedName);
+
+            return normalizedName;
         }
 
         public static string NormalizeIdentifier(string name, eNameCase nameCase = eNameCase.Lower)
         {
-            name = name.Trim('"');
+            name = name.Trim('"', '\'');
 
             if (Parser.TypeNameAliases.ContainsKey(name))
                 name = Parser.TypeNameAliases[name];

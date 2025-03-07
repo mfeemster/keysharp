@@ -801,15 +801,6 @@ namespace Keysharp.Scripting
 
             var name = identifier.Identifier.Text;
 
-            if (parser.currentFunc.Scope == eScope.Static && !parser.currentFunc.Statics.Contains(name))
-            {
-                parser.currentFunc.Statics.Add(identifier.Identifier.Text);
-                var normalizedName = parser.NormalizeFunctionIdentifier(identifier.Identifier.Text);
-                parser.currentFunc.Statics.Add(normalizedName);
-                identifier = SyntaxFactory.IdentifierName(normalizedName);
-                name = normalizedName;
-            }
-
             parser.MaybeAddVariableDeclaration(name);
 
             if (parser.currentFunc.Scope == eScope.Global)
@@ -1795,9 +1786,6 @@ namespace Keysharp.Scripting
                                 if (parser.currentFunc.Scope == eScope.Static)
                                 {
                                     parser.currentFunc.Statics.Add(name);
-                                    var normalizedName = parser.NormalizeFunctionIdentifier(name);
-                                    parser.currentFunc.Statics.Add(normalizedName);
-                                    name = normalizedName;
                                 }
 
                                 if (parser.currentFunc.Scope == eScope.Global)

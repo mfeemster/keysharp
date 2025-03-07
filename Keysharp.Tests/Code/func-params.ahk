@@ -46,7 +46,7 @@ else
 If (z == 33)
 	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 myfunc(a, b, c)
 {
@@ -56,38 +56,113 @@ myfunc(a, b, c)
 myfunc(xx := 1, yy := 2, zz := 3)
 
 if (xx == 1)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (yy == 2)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (zz == 3)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 val := myfunc(xxx := 1, yyy := 2, zzz := 3)
 
 if (val == 6)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (xxx == 1)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (yyy == 2)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (zzz == 3)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
+
+val := myfunc((x4 := 3) / 2, (y4 := 2) + 2, (z4 := 1) * 2) ; The parsing is a little trickier in nested expressions as arguments.
+
+if (x4 == 3)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+
+if (y4 == 2)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+
+if (z4 == 1)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+
+if (val == 7.5)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+
+; Try nested arguments referring the global, local and static vars.
+
+myfunc2(xx)
+{
+	return xx
+}
+
+x := 10
+
+TestParamFunc() {
+	global x--
+	static yy := 123
+	local ll := 8
+	
+	if (x == 9)
+		FileAppend "pass", "*"
+	else
+		FileAppend "fail", "*"
+
+	val := myfunc2((x := 10) / 5)
+	
+	if (val == 2 && x == 10)
+		FileAppend "pass", "*"
+	else
+		FileAppend "fail", "*"
+		
+	if (yy == 123)
+		FileAppend "pass", "*"
+	else
+		FileAppend "fail", "*"
+
+	val := myfunc2((yy := 9) / 3)
+	
+	if (val == 3 && yy == 9)
+		FileAppend "pass", "*"
+	else
+		FileAppend "fail", "*"
+	
+	if (ll == 8)
+		FileAppend "pass", "*"
+	else
+		FileAppend "fail", "*"
+
+	val := myfunc2((ll := 20) * 5)
+	
+	if (val == 100 && ll == 20)
+		FileAppend "pass", "*"
+	else
+		FileAppend "fail", "*"
+}
+
+TestParamFunc()

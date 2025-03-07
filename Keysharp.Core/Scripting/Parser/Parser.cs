@@ -340,7 +340,8 @@ namespace Keysharp.Scripting
 		public static Dictionary<string, string> TypeNameAliases = new(StringComparer.InvariantCultureIgnoreCase)
 		{
 			{ "int64", "Integer" },
-			{ "object", "KeysharpObject" }
+			{ "object", "KeysharpObject" },
+			{ "double", "Float" }
 		};
 
         public static class PredefinedTypes
@@ -2128,8 +2129,12 @@ namespace Keysharp.Scripting
 				}
 			}
 
+			if (PropExistsInTypeOrBase(currentType.Name, varName, -1).Item1)//Finally, check the base classes.
+				return true;
+
 			return false;
 		}
+
 		internal class CommonParameterInfo
 		{
 			internal bool IsVariadic { get; private set; }

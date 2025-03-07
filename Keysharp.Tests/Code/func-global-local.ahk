@@ -282,3 +282,17 @@ if (x == 999)
 	FileAppend "pass", "*"
 else
   	FileAppend "fail", "*"
+
+func11()
+{
+	global x++ ; Ensure x gets properly added to the list of globals for this function when it's declared within an inc/dec operation. This used to be a parsing bug.
+	x := x * 2 ; This should still refer to the global x.
+}
+
+x := 5
+func11()
+
+if (x == 12)
+	FileAppend "pass", "*"
+else
+  	FileAppend "fail", "*"

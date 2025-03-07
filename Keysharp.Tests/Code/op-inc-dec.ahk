@@ -22,6 +22,30 @@ If (y = 2)
 else
 	FileAppend "fail", "*"
 
+y := "1"
+++y
+
+If (y = 2)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+
+y := "1"
+y++
+
+If (y = 2)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+
+x--
+
+If (x == 1)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+	
+x := "2"
 x--
 
 If (x == 1)
@@ -29,6 +53,14 @@ If (x == 1)
 else
 	FileAppend "fail", "*"
 
+--y
+
+If (y = 1)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+
+y := "2"
 --y
 
 If (y = 1)
@@ -47,7 +79,20 @@ If (y == 2)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
-	
+
+y := "0"
+z := y++
+
+If (z = 0)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+
+If (y == 1)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+
 y := 2
 z := --y
 
@@ -61,6 +106,19 @@ If (y == 1)
 else
 	FileAppend "fail", "*"
 	
+y := "2"
+z := --y
+
+If (z = 1)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+
+If (y == "1")
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+
 x := 11
 y11 := 123
 z := y%x%++

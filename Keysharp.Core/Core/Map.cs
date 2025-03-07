@@ -611,7 +611,7 @@
 		/// <summary>
 		/// The iterator for the map.
 		/// </summary>
-		private IEnumerator<KeyValuePair<object, object>> iter;
+		protected IEnumerator<KeyValuePair<object, object>> iter;
 
 
 
@@ -678,14 +678,12 @@
 				_ = Errors.ErrorOccurred(err = new MethodError($"Existing function object was invalid.")) ? throw err : "";
 		}
 
-		private static FuncObj[] iterCache = new FuncObj[2];
-
-        /// <summary>
-        /// Calls <see cref="Current"/> and places the key value in the passed in object reference.
-        /// </summary>
-        /// <param name="pos">A reference to the key value.</param>
-        /// <returns>True if the iterator position has not moved past the last element, else false.</returns>
-        public override object Call(ref object key)
+		/// <summary>
+		/// Calls <see cref="Current"/> and places the key value in the passed in object reference.
+		/// </summary>
+		/// <param name="key">A reference to the key value.</param>
+		/// <returns>True if the iterator position has not moved past the last element, else false.</returns>
+		public override object Call(ref object key)
 		{
 			if (MoveNext())
 			{
