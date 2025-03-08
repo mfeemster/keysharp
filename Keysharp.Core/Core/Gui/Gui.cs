@@ -217,6 +217,7 @@
 		private bool lastfound = false;
 		private bool owndialogs = false;
 		private bool resizable = false;
+		private bool showCalled = false;
 
 		public object BackColor
 		{
@@ -1723,7 +1724,12 @@
 					{
 						case 'w': select = 0; break;
 
-						case 'h': select = 1; break;
+						case 'h':
+						{
+							//Make sure starting with 'h' isn't confused for "hide".
+							if (!opt.Equals(Keyword_Hide, StringComparison.OrdinalIgnoreCase))
+								select = 1; break;
+						}
 
 						case 'x': select = 2; break;
 
@@ -1805,7 +1811,7 @@
 				return (maxx, maxy);
 			}
 
-			if (auto || (!form.BeenShown && pos[0] == null && pos[1] == null))//The caluclations in this block are not exact, but are as close as we can possibly get in a generic way.
+			if (auto || (!form.BeenShown && !showCalled && pos[0] == null && pos[1] == null))//The calculations in this block are not exact, but are as close as we can possibly get in a generic way.
 			{
 				//AHK always autosizes on first show when no dimensions are specified.
 				KeysharpStatusStrip ss = null;
@@ -1823,7 +1829,7 @@
 			}
 			else
 			{
-				var size = form.BeenShown ? form.Size : new Size(800, 500);//Using this size because PreferredSize is so small it just shows the title bar.
+				var size = (form.BeenShown || showCalled) ? form.Size : new Size(800, 500);//Using this size because PreferredSize is so small it just shows the title bar.
 
 				if (pos[0] != null)//Dimensions must be scaled by DPI.//TODO
 					size.Width = (int)pos[0];
@@ -1834,21 +1840,42 @@
 				form.Size = size;
 			}
 
+			var hadLocation = false;
 			var location = form.BeenShown ? form.Location : new Point();
 			var screen = System.Windows.Forms.Screen.PrimaryScreen.Bounds;
 
+			//We need to check showCalled because the user could have called Show("hide")
+			//Then called WinMove()
+			//Then called Show() again to actually show the window.
+			//So don't set the location if it wasn't specified and Show() has already been called once.
+			//Same above with size.
 			if (pos[2] != null)//Strangely, the position does not need to be scaled by DPI.
+			{
+				hadLocation = true;
 				location.X = (int)pos[2];
-			else if (/*cX || center ||*/ !form.BeenShown)
+			}
+			else if (!showCalled && !form.BeenShown)
+			{
+				hadLocation = true;
 				location.X = ((screen.Width - form.Size.Width) / 2) + screen.X;
+			}
 
 			if (pos[3] != null)
+			{
+				hadLocation = true;
 				location.Y = (int)pos[3];
-			else if (/*cY || center ||*/ !form.BeenShown)
+			}
+			else if (!showCalled && !form.BeenShown)
+			{
+				hadLocation = true;
 				location.Y = ((screen.Height - form.Size.Height) / 2) + screen.Y;
+			}
 
+			showCalled = true;
 			form.StartPosition = FormStartPosition.Manual;
-			form.Location = location;
+
+			if (hadLocation)
+				form.Location = location;
 
 			if (hide)
 				form.Hide();
