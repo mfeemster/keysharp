@@ -1,5 +1,104 @@
 ﻿namespace Keysharp.Core.Common.Strings
 {
+	public class RegExResults : KeysharpObject, I__Enum, IEnumerable<(object, object)>
+	{
+		private Match match;
+		public object Count => match.Groups.Count - 1L;
+		public object Mark => match.Groups.Count > 0 ? match.Groups[ ^ 1].Name : "";
+		public object Success => match.Success;
+
+		public new (Type, object) super => (typeof(KeysharpObject), this);
+
+		public RegExResults(params object[] args) => _ = __New(args);
+
+		public static implicit operator long(RegExResults r) => r.Pos();
+
+		public object __New(params object[] args)
+		{
+			match = args[0] as Match;
+
+			for (int i = 0; i < match.Groups.Count; i++)
+			{
+				var g = match.Groups[i];
+				DefineProp(g.Name,
+						   Keysharp.Core.Objects.Object(
+							   [
+								   "get",
+								   Keysharp.Core.Functions.GetFuncObj("GetWrapper", this, 2, true).Bind(g.Name)
+							   ]));
+
+				if (i.ToString() != g.Name)//No need to add it twice if the name matches the index.
+					DefineProp(i,
+							   Keysharp.Core.Objects.Object(
+								   [
+									   "get",
+									   Keysharp.Core.Functions.GetFuncObj("GetWrapper", this, 2, true).Bind(g.Name)
+								   ]));
+			}
+
+			return "";
+		}
+
+		public KeysharpEnumerator __Enum(object count) => new RegExIterator(match, count.Ai());
+
+		public IEnumerator<(object, object)> GetEnumerator() => new RegExIterator(match, 2);
+
+		IEnumerator IEnumerable.GetEnumerator() => new RegExIterator(match, 2);
+
+
+		public object GetWrapper(object obj1, object obj2) => this[obj1];
+
+		public long Len(object obj)
+		{
+			var g = GetGroup(obj);
+			return g != null && g.Success ? g.Length : 0;
+		}
+
+		public string Name(object obj)
+		{
+			var g = GetGroup(obj);
+			return g != null && g.Success ? g.Name : "";
+		}
+
+		public long Pos(object obj = null)
+		{
+			var g = GetGroup(obj);
+			return g != null && g.Success ? g.Index + 1 : 0;
+		}
+
+		public override string ToString() => Pos().ToString();
+
+		private Group GetGroup(object obj)
+		{
+			var o = obj;
+
+			if (o == null)
+				return match;
+			else if (o is string s)
+				return match.Groups[s];
+			else
+			{
+				var index = Convert.ToInt32(o);
+
+				if (index == 0)
+					return match;
+				else if (index > 0 && index <= match.Groups.Count)
+					return match.Groups[index];
+			}
+
+			return null;
+		}
+
+		public string this[object obj]
+		{
+			get
+			{
+				var g = GetGroup(obj);
+				return g != null && g.Success ? g.Value : "";
+			}
+		}
+	}
+
 	/// <summary>
 	/// A two component iterator for <see cref="RegExResults"/> which returns the name and the value as a tuple.
 	/// </summary>
@@ -138,105 +237,6 @@
 		/// </summary>
 		/// <returns>this as an <see cref="IEnumerator{(object, object)}"/>.</returns>
 		private IEnumerator<(object, object)> GetEnumerator() => this;
-	}
-
-	public class RegExResults : KeysharpObject, I__Enum, IEnumerable<(object, object)>
-	{
-		private Match match;
-		public object Count => match.Groups.Count - 1L;
-		public object Mark => match.Groups.Count > 0 ? match.Groups[ ^ 1].Name : "";
-		public object Success => match.Success;
-
-		public new (Type, object) super => (typeof(KeysharpObject), this);
-
-		public RegExResults(params object[] args) => _ = __New(args);
-
-		public static implicit operator long(RegExResults r) => r.Pos();
-
-		public object __New(params object[] args)
-		{
-			match = args[0] as Match;
-
-			for (int i = 0; i < match.Groups.Count; i++)
-			{
-				var g = match.Groups[i];
-				DefineProp(g.Name,
-						   Keysharp.Core.Objects.Object(
-							   [
-								   "get",
-								   Keysharp.Core.Functions.GetFuncObj("GetWrapper", this, 2, true).Bind(g.Name)
-							   ]));
-
-				if (i.ToString() != g.Name)//No need to add it twice if the name matches the index.
-					DefineProp(i,
-							   Keysharp.Core.Objects.Object(
-								   [
-									   "get",
-									   Keysharp.Core.Functions.GetFuncObj("GetWrapper", this, 2, true).Bind(g.Name)
-								   ]));
-			}
-
-			return "";
-		}
-
-		public KeysharpEnumerator __Enum(object count) => new RegExIterator(match, count.Ai());
-
-		public IEnumerator<(object, object)> GetEnumerator() => new RegExIterator(match, 2);
-
-		IEnumerator IEnumerable.GetEnumerator() => new RegExIterator(match, 2);
-
-
-		public object GetWrapper(object obj1, object obj2) => this[obj1];
-
-		public long Len(object obj)
-		{
-			var g = GetGroup(obj);
-			return g != null && g.Success ? g.Length : 0;
-		}
-
-		public string Name(object obj)
-		{
-			var g = GetGroup(obj);
-			return g != null && g.Success ? g.Name : "";
-		}
-
-		public long Pos(object obj = null)
-		{
-			var g = GetGroup(obj);
-			return g != null && g.Success ? g.Index + 1 : 0;
-		}
-
-		public override string ToString() => Pos().ToString();
-
-		private Group GetGroup(object obj)
-		{
-			var o = obj;
-
-			if (o == null)
-				return match;
-			else if (o is string s)
-				return match.Groups[s];
-			else
-			{
-				var index = Convert.ToInt32(o);
-
-				if (index == 0)
-					return match;
-				else if (index > 0 && index <= match.Groups.Count)
-					return match.Groups[index];
-			}
-
-			return null;
-		}
-
-		public string this[object obj]
-		{
-			get
-			{
-				var g = GetGroup(obj);
-				return g != null && g.Success ? g.Value : "";
-			}
-		}
 	}
 
 	internal class RegexWithTag : Regex
