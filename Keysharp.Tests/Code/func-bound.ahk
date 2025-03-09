@@ -365,3 +365,16 @@ if (pcount == 3)
 	FileAppend, "fail", "*"
 else
 	FileAppend, "pass", "*"
+
+; Ensure functions which are passed as arguments to member methods are properly converted using Func().
+
+F() => 123
+class Test {
+	Meth(v) => v()
+}
+val := Test().Meth(f)
+
+if (val == 123)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"

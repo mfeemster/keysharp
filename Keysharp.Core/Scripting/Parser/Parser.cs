@@ -761,12 +761,27 @@ namespace Keysharp.Scripting
 					{
 						for (int i = 0; i < cmie.Parameters.Count; i++)//Convert function arguments which were direct function references.
 						{
-							var funcparam = cmie.Parameters[i];
+							var wasCast = false;
+							var funcParam = cmie.Parameters[i];
+							var cvreParam = funcParam as CodeVariableReferenceExpression;
 
-							if (funcparam is CodeVariableReferenceExpression cvreparam)
+							if (cvreParam == null)
 							{
-								var type = cvreparam.UserData["origtype"] is CodeTypeDeclaration ctd ? ctd : targetClass;
-								cmie.Parameters[i] = ReevaluateCodeVariableReference(type, cmietypefunc.Key, cvreparam);
+								if (funcParam is CodeCastExpression cce)
+								{
+									if (cce.Expression is CodeVariableReferenceExpression cvre2)
+									{
+										wasCast = true;
+										cvreParam = cvre2;
+									}
+								}
+							}
+
+							if (cvreParam != null)
+							{
+								var type = cvreParam.UserData["origtype"] is CodeTypeDeclaration ctd ? ctd : targetClass;
+								var reEval = ReevaluateCodeVariableReference(type, cmietypefunc.Key, cvreParam);
+								cmie.Parameters[i] = wasCast ? new CodeCastExpression(typeof(object), reEval) : reEval;//Recast to object because it will never have been cast to anything else.
 							}
 						}
 
