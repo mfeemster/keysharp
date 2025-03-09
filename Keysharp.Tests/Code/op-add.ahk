@@ -157,7 +157,7 @@ if (y = 110.0)
 else
 	FileAppend "fail", "*"
 	
-if (Type(y) = "Double")
+if (Type(y) = "Float")
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -170,7 +170,7 @@ if (y = -90.0)
 else
 	FileAppend "fail", "*"
 	
-if (Type(y) = "Double")
+if (Type(y) = "Float")
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -183,7 +183,7 @@ if (y = 90)
 else
 	FileAppend "fail", "*"
 	
-if (Type(y) = "Double")
+if (Type(y) = "Float")
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -196,7 +196,7 @@ if (y = -110.0)
 else
 	FileAppend "fail", "*"
 	
-if (Type(y) = "Double")
+if (Type(y) = "Float")
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -209,7 +209,7 @@ if (y = 90.0)
 else
 	FileAppend "fail", "*"
 	
-if (Type(y) = "Double")
+if (Type(y) = "Float")
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -222,7 +222,7 @@ if (y = 90)
 else
 	FileAppend "fail", "*"
 	
-if (Type(y) = "Double")
+if (Type(y) = "Float")
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -235,7 +235,7 @@ if (y = 100.0)
 else
 	FileAppend "fail", "*"
 	
-if (Type(y) = "Double")
+if (Type(y) = "Float")
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -248,7 +248,7 @@ if (y = 100.0)
 else
 	FileAppend "fail", "*"
 	
-if (Type(y) = "Double")
+if (Type(y) = "Float")
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -261,7 +261,7 @@ if (y = -100.0)
 else
 	FileAppend "fail", "*"
 	
-if (Type(y) = "Double")
+if (Type(y) = "Float")
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -274,7 +274,7 @@ if (y = -100.0)
 else
 	FileAppend "fail", "*"
 	
-if (Type(y) = "Double")
+if (Type(y) = "Float")
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -287,7 +287,7 @@ if (y = 0.0)
 else
 	FileAppend "fail", "*"
 	
-if (Type(y) = "Double")
+if (Type(y) = "Float")
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -451,7 +451,7 @@ if (y = 110.0)
 else
 	FileAppend "fail", "*"
 	
-if (Type(y) = "Double")
+if (Type(y) = "Float")
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -464,7 +464,7 @@ if (y = -90.0)
 else
 	FileAppend "fail", "*"
 	
-if (Type(y) = "Double")
+if (Type(y) = "Float")
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -477,7 +477,7 @@ if (y = 90.0)
 else
 	FileAppend "fail", "*"
 	
-if (Type(y) = "Double")
+if (Type(y) = "Float")
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -490,7 +490,7 @@ if (y = -110.0)
 else
 	FileAppend "fail", "*"
 	
-if (Type(y) = "Double")
+if (Type(y) = "Float")
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -503,7 +503,7 @@ if (y = 90.0)
 else
 	FileAppend "fail", "*"
 	
-if (Type(y) = "Double")
+if (Type(y) = "Float")
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -516,7 +516,7 @@ if (y = 90.0)
 else
 	FileAppend "fail", "*"
 	
-if (Type(y) = "Double")
+if (Type(y) = "Float")
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -529,7 +529,7 @@ if (y = 100.0)
 else
 	FileAppend "fail", "*"
 	
-if (Type(y) = "Double")
+if (Type(y) = "Float")
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -542,7 +542,7 @@ if (y = 100)
 else
 	FileAppend "fail", "*"
 	
-if (Type(y) = "Double")
+if (Type(y) = "Float")
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -555,7 +555,7 @@ if (y = -100)
 else
 	FileAppend "fail", "*"
 	
-if (Type(y) = "Double")
+if (Type(y) = "Float")
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -568,7 +568,7 @@ if (y = -100.0)
 else
 	FileAppend "fail", "*"
 	
-if (Type(y) = "Double")
+if (Type(y) = "Float")
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -581,7 +581,7 @@ if (y = 0.0)
 else
 	FileAppend "fail", "*"
 	
-if (Type(y) = "Double")
+if (Type(y) = "Float")
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -611,7 +611,7 @@ if (y = 110.0)
 else
 	FileAppend "fail", "*"
 	
-if (Type(y) = "Double")
+if (Type(y) = "Float")
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -637,7 +637,7 @@ if (y = -90)
 else
 	FileAppend "fail", "*"
 	
-if (Type(y) = "Double")
+if (Type(y) = "Float")
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -663,7 +663,7 @@ if (y = 90.0)
 else
 	FileAppend "fail", "*"
 	
-if (Type(y) = "Double")
+if (Type(y) = "Float")
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -689,7 +689,7 @@ if (y = -110.0)
 else
 	FileAppend "fail", "*"
 	
-if (Type(y) = "Double")
+if (Type(y) = "Float")
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -715,7 +715,7 @@ if (y = 90)
 else
 	FileAppend "fail", "*"
 	
-if (Type(y) = "Double")
+if (Type(y) = "Float")
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -741,7 +741,7 @@ if (y = 90.0)
 else
 	FileAppend "fail", "*"
 	
-if (Type(y) = "Double")
+if (Type(y) = "Float")
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -767,7 +767,7 @@ if (y = 100.0)
 else
 	FileAppend "fail", "*"
 	
-if (Type(y) = "Double")
+if (Type(y) = "Float")
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -793,7 +793,7 @@ if (y = 10.0)
 else
 	FileAppend "fail", "*"
 	
-if (Type(y) = "Double")
+if (Type(y) = "Float")
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -819,7 +819,7 @@ if (y = -100.0)
 else
 	FileAppend "fail", "*"
 	
-if (Type(y) = "Double")
+if (Type(y) = "Float")
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -845,7 +845,7 @@ if (y = -100.0)
 else
 	FileAppend "fail", "*"
 	
-if (Type(y) = "Double")
+if (Type(y) = "Float")
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"

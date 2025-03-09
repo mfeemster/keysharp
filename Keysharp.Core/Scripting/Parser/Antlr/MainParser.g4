@@ -198,7 +198,7 @@ variableDeclarationList
     ;
 
 variableDeclaration
-    : assignable (assignmentOperator expression)? // Should only be used with Local, Global, Static keywords
+    : assignable (assignmentOperator expression)?
     ;
 
 functionStatement
@@ -523,8 +523,6 @@ initializer
 
 assignable
     : identifier
-    | arrayLiteral
-    | objectLiteral
     ;
 
 objectLiteral

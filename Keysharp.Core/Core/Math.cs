@@ -69,18 +69,18 @@
 		public static double ATan2(object obj0, object obj1) => Math.Atan2(obj0 is double d0 ? d0 : obj0.Ad(), obj1 is double d1 ? d1 : obj1.Ad());
 
 		/// <summary>
-		/// Returns the smallest integer greater than or equal to the specified double number.
+		/// Returns the specified number rounded up to the nearest integer.
 		/// </summary>
 		/// <param name="n">A number.</param>
 		/// <returns>The smallest integer greater than or equal to <paramref name="n"/>.</returns>
-		public static double Ceil(object obj) => Math.Ceiling(obj is double d ? d : obj.Ad());
+		public static long Ceil(object obj) => (long)Math.Ceiling(obj is double d ? d : obj.Ad());
 
 		/// <summary>
 		/// Returns the cosine of the specified angle.
 		/// </summary>
 		/// <param name="n">An angle, measured in radians.</param>
 		/// <returns>The cosine of <paramref name="n"/>.</returns>
-		public static double Cos(object obj) => Math.Cos(obj is double d ? d : obj.ParseDouble().Value);
+		public static double Cos(object obj) => Math.Cos(obj is double d ? d : obj.Ad());
 
 		/// <summary>
 		/// Returns the hyperbolic cosine of the specified angle.
@@ -170,7 +170,7 @@
 		/// </summary>
 		/// <param name="n">A number.</param>
 		/// <returns>The largest integer less than or equal to <paramref name="n"/>.</returns>
-		public static long Floor(object obj) => (long) Math.Floor(obj is double d ? d : obj.Ad());
+		public static long Floor(object obj) => (long)Math.Floor(obj is double d ? d : obj.Ad());
 
 		/// <summary>
 		/// Converts a numeric string or floating-point value to an integer.

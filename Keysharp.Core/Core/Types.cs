@@ -245,6 +245,9 @@
 
 				switch (type)
 				{
+					case "Double":
+						return "Float";
+
 					case "Int64":
 						return "Integer";
 

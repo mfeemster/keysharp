@@ -9,6 +9,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using static MainParser;
 using static System.Windows.Forms.AxHost;
 using Keysharp.Core;
+using System.Text.RegularExpressions;
 
 namespace Keysharp.Scripting
 {
@@ -356,8 +357,8 @@ namespace Keysharp.Scripting
                 }
             }
 
-            var staticName = IsStaticVar(name);
-            if (staticName != null) return name.ToLowerInvariant();
+            var staticMatch = IsVarDeclaredInClass(currentClass, name);
+            if (staticMatch != null) return staticMatch;
             return null;
         }
 
@@ -899,10 +900,10 @@ namespace Keysharp.Scripting
             if (currentFunc.Statics.Contains(staticName)) return staticName;
             if (currentFunc.Locals.ContainsKey(name)) return null;
 
-            foreach (var (f, _) in FunctionStack.Reverse())
+            foreach (var (f, _) in FunctionStack)
             {
                 staticName = f.Name.ToUpper() + "_" + name.TrimStart('@');
-                if (f.Statics.Contains(name)) return staticName;
+                if (f.Statics.Contains(staticName)) return staticName;
                 if (f.Locals.ContainsKey(name)) return null;
             }
             return null;

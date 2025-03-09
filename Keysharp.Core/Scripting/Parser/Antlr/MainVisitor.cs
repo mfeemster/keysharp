@@ -1349,6 +1349,8 @@ namespace Keysharp.Scripting
         {
             //Console.WriteLine("Assignable: " + context.GetText());
             //Console.WriteLine(context.children[0].GetText());
+            if (parser.currentFunc.Scope == eScope.Static)
+                return SyntaxFactory.IdentifierName(parser.CreateStaticIdentifier(context.GetText()));
             return base.VisitAssignable(context);
         }
 

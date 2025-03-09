@@ -268,7 +268,7 @@ namespace Keysharp.Core
 					}
 
                     foreach (var refIndex in helper.refs)
-                        Script.SetPropertyValue(refIndex.Value, "__Value", parameters[refIndex.Key]);
+                        Script.SetPropertyValue(refIndex.Value, "__Value", External.NumGet(helper.args[refIndex.Key / 2], parameters[refIndex.Key - 1].ToString().TrimEnd('*', 'p', 'P')));
 
                     if (value is int i)
 						return (long)i;
