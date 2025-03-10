@@ -49,13 +49,13 @@
 			aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			tcMain = new System.Windows.Forms.TabControl();
 			tpDebug = new System.Windows.Forms.TabPage();
-			txtDebug = new System.Windows.Forms.TextBox();
+			txtDebug = new Keysharp.Scripting.NonFocusTextBox();
 			tpVars = new System.Windows.Forms.TabPage();
-			txtVars = new System.Windows.Forms.TextBox();
+			txtVars = new Keysharp.Scripting.NonFocusTextBox();
 			tpHotkeys = new System.Windows.Forms.TabPage();
-			txtHotkeys = new System.Windows.Forms.TextBox();
+			txtHotkeys = new Keysharp.Scripting.NonFocusTextBox();
 			tpHistory = new System.Windows.Forms.TabPage();
-			txtHistory = new System.Windows.Forms.TextBox();
+			txtHistory = new Keysharp.Scripting.NonFocusTextBox();
 			mainMenu.SuspendLayout();
 			tcMain.SuspendLayout();
 			tpDebug.SuspendLayout();
@@ -365,12 +365,12 @@
 		private System.Windows.Forms.TabControl tcMain;
 		private System.Windows.Forms.TabPage tpDebug;
 		private System.Windows.Forms.TabPage tpVars;
-		private System.Windows.Forms.TextBox txtDebug;
-		private System.Windows.Forms.TextBox txtVars;
+		private Keysharp.Scripting.NonFocusTextBox txtDebug;
+		private Keysharp.Scripting.NonFocusTextBox txtVars;
 		private System.Windows.Forms.TabPage tpHotkeys;
-		private System.Windows.Forms.TextBox txtHotkeys;
+		private Keysharp.Scripting.NonFocusTextBox txtHotkeys;
 		private System.Windows.Forms.TabPage tpHistory;
-		private System.Windows.Forms.TextBox txtHistory;
+		private Keysharp.Scripting.NonFocusTextBox txtHistory;
 		private System.Windows.Forms.ToolStripMenuItem clearDebugLogToolStripMenuItem;
 		private System.Windows.Forms.ToolStripMenuItem aboutToolStripMenuItem;
 	}

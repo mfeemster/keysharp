@@ -316,6 +316,7 @@ namespace Keysharp.Scripting
 			_ = exit0.Parameters.Add(new CodePrimitiveExpression(0));
 			var exit1 = (CodeMethodInvokeExpression)InternalMethods.ExitApp;
 			_ = exit1.Parameters.Add(new CodePrimitiveExpression(1));
+			var exitIfNotPersistent = (CodeMethodInvokeExpression)InternalMethods.ExitIfNotPersistent;
 			//Wrap the entire body of Main() in a try/catch block.
 			//First try to catch our own special exceptions, and if the exception type was not that, then just look for regular system exceptions.
 			var tcf = new CodeTryCatchFinallyStatement();
@@ -1147,11 +1148,7 @@ namespace Keysharp.Scripting
 			else
 				_ = userMainMethod.Statements.Add(hotkeyInitCmie);
 
-			if (!Persistent)
-			{
-				_ = userMainMethod.Statements.Add(exit0);
-			}
-
+			_ = userMainMethod.Statements.Add(Persistent ? exitIfNotPersistent : exit0);
 			_ = userMainMethod.Statements.Add(new CodeMethodReturnStatement(emptyStringPrimitive));
 			methods.GetOrAdd(targetClass)[userMainMethod.Name] = userMainMethod;
 			_ = targetClass.Members.Add(userMainMethod);

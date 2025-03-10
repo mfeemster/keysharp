@@ -14,7 +14,7 @@ Authors:
 	IronAHK developers 2010 - 1015
 
 Testers:
-	Burque505
+	Burque505, Descolada
 
 Acknowledgements:
 	See website above.
