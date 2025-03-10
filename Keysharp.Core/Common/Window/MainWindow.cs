@@ -43,8 +43,6 @@
 			{
 				GetText(tab).AppendText($"{s}\r\n");//This should scroll to the bottom, if not, try this:
 
-				//txt.SelectionStart = txt.TextLength;
-				//txt.ScrollToCaret();
 				if (focus)
 				{
 					var sel = GetTab(tab);
@@ -290,7 +288,7 @@
 			//Cannot call ShowInTaskbar at all here because it causes a full re-creation of the window.
 			//So anything that previously used the window handle, including hotkeys, will no longer work.
 			if (WindowState == FormWindowState.Minimized)
-				this.Hide();
+				Hide();
 			else
 				lastWindowState = WindowState;
 		}
@@ -309,14 +307,23 @@
 
 		private void SetTextInternal(string text, MainFocusedTab tab, TextBox txt, bool focus)
 		{
+			//This can sometimes scroll the textbox on each update due to a fractional line being displayed.
+			//This is an artifact of how the Winforms textbox works. You can see this by sizing the window
+			//such that pressing F5 in the Vars tab keeps scrolling the textbox.
+			//Then, click on the last line of text, you will see it scroll one line each time you click.
 			var lineHeight = TextRenderer.MeasureText("X", txtVars.Font).Height;
-			var linesPerPage = 1.0 * txtVars.ClientSize.Height / lineHeight;
-			var oldCharIndex = txtVars.GetCharIndexFromPosition(new Point(0, 0));//Magic number, it scrolls backward on each update with smaller numbers.
-			var oldLineIndex = txtVars.GetLineFromCharIndex(oldCharIndex);//Magic number, it scrolls backward on each update with smaller numbers.
+			var linesPerPage = (double)txt.ClientSize.Height / lineHeight;
+			var oldCharIndex = txt.GetCharIndexFromPosition(new Point(0, 0));
+			var oldLineIndex = txt.GetLineFromCharIndex(oldCharIndex);
 			SetText(text, tab, focus);
-			var newCharIndex = oldLineIndex == 0 ? 0 : txtVars.GetFirstCharIndexFromLine(Math.Max(0, oldLineIndex + (int)linesPerPage));
-			txt.Select(Math.Max(0, newCharIndex), 0);
-			txt.ScrollToCaret();
+			var newCharIndex = oldLineIndex == 0 ? 0 : txt.GetFirstCharIndexFromLine(Math.Max(0, oldLineIndex + (int)linesPerPage));
+			//txtDebug.Text += $"lineHeight: {lineHeight}, linesPerPage: {linesPerPage}, oldCharIndex: {oldCharIndex}, oldLineIndex: {oldLineIndex}, newCharIndex: {newCharIndex}\r\n";
+			//This must be done with BeginInvoke() or else it won't reposition the scroll bars.
+			_ = this.BeginInvoke(() =>
+			{
+				txt.Select(Math.Max(0, newCharIndex), 0);
+				txt.ScrollToCaret();
+			});
 		}
 
 		private void ShowIfNeeded()
@@ -368,5 +375,20 @@
 		}
 
 		public event VariadicAction ClipboardUpdate;
+	}
+
+	/// <summary>
+	/// Text boxes have a long standing behavior which is undesirable.
+	/// They select all text whenever they get the focus.
+	/// In order to prevent that, make a small derivation to do
+	/// nothing on focus.
+	/// https://github.com/dotnet/winforms/issues/5406
+	/// </summary>
+	internal class NonFocusTextBox : TextBox
+	{
+		protected override void OnGotFocus(EventArgs e)
+		{
+			return;
+		}
 	}
 }

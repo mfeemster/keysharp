@@ -362,11 +362,12 @@
 			return false;
 		}
 
-		internal static void ExitIfNotPersistent(Flow.ExitReasons exitReason = Flow.ExitReasons.Exit)
+		public static void ExitIfNotPersistent(Flow.ExitReasons exitReason = Flow.ExitReasons.Exit)
 		{
 			//Must use BeginInvoke() because this might be called from _ks_UserMainCode(),
 			//so it needs to run after that thread has exited.
-			mainWindow?.CheckedBeginInvoke(new Action(() =>
+			if (!IsMainWindowClosing)
+				mainWindow?.CheckedBeginInvoke(new Action(() =>
 			{
 				if (!IsMainWindowClosing && !AnyPersistent())
 					_ = Flow.ExitApp((int)exitReason);
