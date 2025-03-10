@@ -265,6 +265,8 @@
 
 		public KeysharpForm ParentForm => form.FindParent<KeysharpForm>();
 
+		public new (Type, object) super => (typeof(KeysharpObject), this);
+
 		public object Title
 		{
 			get => form.Text;
@@ -301,14 +303,7 @@
 
 		internal StatusStrip StatusBar { get; set; }
 
-		public new (Type, object) super => (typeof(KeysharpObject), this);
-
 		public Gui(params object[] args) => _ = __New(args);
-
-		~Gui()
-		{
-			Script.ExitIfNotPersistent();//May not be necessary, but try anyway.
-		}
 
 		internal Gui(object obj0 = null, object obj1 = null, object obj2 = null, object obj3 = null)//The last parameter is hidden and is only for internal use for when we wrap the main window in a Gui object.
 		{
@@ -326,6 +321,11 @@
 
 			if (lastfound)
 				Script.HwndLastUsed = Hwnd;
+		}
+
+		~Gui()
+		{
+			Script.ExitIfNotPersistent();//May not be necessary, but try anyway.
 		}
 
 		public KeysharpEnumerator __Enum(object count) => new GuiControlIterator(controls, count.Ai());
@@ -1596,52 +1596,14 @@
 			return null;
 		}
 
-		private static void Opt(object obj, ref int addStyle, ref int addExStyle, ref int removeStyle, ref int removeExStyle)
-		{
-#if WINDOWS
-			var options = obj.As();
-
-			//Special style, windows only. Need to figure out how to make this cross platform.//TODO
-			foreach (var split in Options.ParseOptions(options))
-			{
-				var str = split.Substring(1);
-
-				if (str.Length > 0)
-				{
-					var temp = 0;
-
-					if (Options.TryParse(split, "+E", ref temp) || Options.TryParse(split, "E", ref temp))
-					{
-						addExStyle |= temp;
-					}
-					else if (Options.TryParse(split, "-E", ref temp))
-					{
-						removeExStyle |= temp;
-					}
-					else if (Options.TryParse(split, "-", ref temp))
-					{
-						removeStyle |= temp;
-					}
-					else if (Options.TryParse(split, "+", ref temp))
-					{
-						addStyle |= temp;
-					}
-					else if (Options.TryParse(split, "", ref temp))
-					{
-						addStyle |= temp;
-					}
-				}
-			}
-
-#endif
-		}
-
 		public object Restore() => form.WindowState = FormWindowState.Normal;
+
 		public object SetFont(object obj0 = null, object obj1 = null)
 		{
 			form.SetFont(obj0, obj1);
 			return null;
 		}
+
 		public object Show(object obj = null)
 		{
 			var s = obj.As();
@@ -1830,6 +1792,7 @@
 			form.Update();//Required for the very first state of the form to always be displayed.
 			return null;
 		}
+
 		public Map Submit(object obj = null)
 		{
 			var hide = obj.Ab(true);
@@ -1896,6 +1859,7 @@
 
 			return new Map(dkt);
 		}
+
 		public object UseGroup(object obj0 = null)
 		{
 			if (obj0 is GuiControl gctrl && gctrl.Control is GroupBox gb)
@@ -1905,8 +1869,11 @@
 
 			return null;
 		}
+
 		IEnumerator IEnumerable.GetEnumerator() => new GuiControlIterator(controls, 2);
+
 		internal static bool AnyExistingVisibleWindows() => allGuiHwnds.Values.Any(g => g.form != null && g.form != Script.mainWindow && g.form.Visible);
+
 		internal static void DestroyAll()
 		{
 			//Destroy everything but the main window, which will destroy itself.
@@ -1923,8 +1890,11 @@
 
 			allGuiHwnds.Clear();
 		}
+
 		internal static float GetFontPixels(Font font) => font.GetHeight((float)Accessors.A_ScreenDPI);
+
 		internal static bool IsGuiType(Type type) => GuiTypes.Any(t => t.IsAssignableFrom(type));
+
 		internal static GuiOptions ParseOpt(string type, string text, string optionsstr)
 		{
 			var options = new GuiOptions();
@@ -2111,11 +2081,13 @@
 
 			return options;
 		}
+
 		internal static void SuppressCtrlAKeyDown(object o, KeyEventArgs e)
 		{
 			if (e.KeyData == (Keys.Control | Keys.A))
 				e.SuppressKeyPress = true;
 		}
+
 		internal static void SuppressCtrlAPreviewKeyDown(object o, PreviewKeyDownEventArgs e)
 		{
 			if (e.KeyData == (Keys.Control | Keys.A))
@@ -2133,6 +2105,46 @@
 			}
 		}
 
+		private static void Opt(object obj, ref int addStyle, ref int addExStyle, ref int removeStyle, ref int removeExStyle)
+		{
+#if WINDOWS
+			var options = obj.As();
+
+			//Special style, windows only. Need to figure out how to make this cross platform.//TODO
+			foreach (var split in Options.ParseOptions(options))
+			{
+				var str = split.Substring(1);
+
+				if (str.Length > 0)
+				{
+					var temp = 0;
+
+					if (Options.TryParse(split, "+E", ref temp) || Options.TryParse(split, "E", ref temp))
+					{
+						addExStyle |= temp;
+					}
+					else if (Options.TryParse(split, "-E", ref temp))
+					{
+						removeExStyle |= temp;
+					}
+					else if (Options.TryParse(split, "-", ref temp))
+					{
+						removeStyle |= temp;
+					}
+					else if (Options.TryParse(split, "+", ref temp))
+					{
+						addStyle |= temp;
+					}
+					else if (Options.TryParse(split, "", ref temp))
+					{
+						addStyle |= temp;
+					}
+				}
+			}
+
+#endif
+		}
+
 		private void ResizeTabControls()
 		{
 			var dpiscale = !dpiscaling ? 1.0 : Accessors.A_ScaledScreenDPI;
@@ -2141,6 +2153,7 @@
 			foreach (var tc in tabControls)
 				tc.AdjustSize(dpiscale);
 		}
+
 		public object this[object controlname]
 		{
 			get
@@ -2191,6 +2204,7 @@
 				return Errors.ErrorOccurred(err = new Error($"No controls matched the handle, name, text, ClassNN or NetClassNN {controlname}.")) ? throw err : null;
 			}
 		}
+
 		internal class GuiOptions
 		{
 			internal int addexstyle = 0;

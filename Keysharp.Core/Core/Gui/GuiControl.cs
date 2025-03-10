@@ -9,9 +9,11 @@ namespace Keysharp.Core
 		private readonly List<IFuncObj> doubleClickHandlers = [];
 		private readonly bool dpiscaling = true;
 		private Control _control;
+
 		//Normal event handlers can't be used becaused they need to return a value.
 		//The returned values are then inspected to determine if subsequent handlers should be called or not.
 		private List<IFuncObj> changeHandlers;
+
 		private List<IFuncObj> columnClickHandlers;
 		private Dictionary<int, List<IFuncObj>> commandHandlers;
 		private List<IFuncObj> contextMenuChangedHandlers;
