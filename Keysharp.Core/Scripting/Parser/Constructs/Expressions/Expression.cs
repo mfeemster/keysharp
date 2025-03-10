@@ -498,7 +498,8 @@ namespace Keysharp.Scripting
 									{
 										var arg = args[i1];
 										var temp = codeStrings[i1].TrimStart('&');
-										var expr = ParseExpression(codeLine, temp, arg, true/*create false*/);//Override the value of create with true because reference arguments passed to a function should always be created automatically.
+										var isRef = refIndexes.Contains(i1);
+										var expr = ParseExpression(codeLine, temp, arg, isRef);//Override the value of create with isRef because reference arguments passed to a function should always be created automatically.
 
 										if (expr.WasCboe() is CodeBinaryOperatorExpression cboe)
 										{

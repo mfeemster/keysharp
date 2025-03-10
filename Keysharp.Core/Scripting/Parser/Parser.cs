@@ -380,6 +380,8 @@ namespace Keysharp.Scripting
 
             public bool Void = false;
             public bool Async = false;
+			public bool Public = true;
+			public bool Static = true;
 
             public Function(string name, TypeSyntax returnType = null)
             {
@@ -417,17 +419,20 @@ namespace Keysharp.Scripting
 
             public ParameterListSyntax AssembleParams() => SyntaxFactory.ParameterList(SyntaxFactory.SeparatedList<ParameterSyntax>(Params));
 
-            public MethodDeclarationSyntax Assemble(SyntaxTokenList? modifiers = null)
+            public MethodDeclarationSyntax Assemble()
             {
+                var modifiers = new List<SyntaxToken>();
+				if (Async)
+                    modifiers.Add(SyntaxFactory.Token(SyntaxKind.AsyncKeyword));
+                if (Public)
+                    modifiers.Add(SyntaxFactory.Token(SyntaxKind.PublicKeyword));
+				if (Static)
+                    modifiers.Add(SyntaxFactory.Token(SyntaxKind.StaticKeyword));
+
                 return Method
                 .WithParameterList(AssembleParams())
                 .WithBody(AssembleBody())
-                .WithModifiers(
-                    modifiers ?? SyntaxFactory.TokenList(
-                        SyntaxFactory.Token(SyntaxKind.PublicKeyword),
-                        SyntaxFactory.Token(SyntaxKind.StaticKeyword)
-                    )
-                );
+                .WithModifiers(modifiers.Count == 0 ? default : SyntaxFactory.TokenList(modifiers));
             }
         }
 
@@ -1010,12 +1015,27 @@ namespace Keysharp.Scripting
 					{
 						for (int i = 0; i < cmie.Parameters.Count; i++)//Convert function arguments which were direct function references.
 						{
-							var funcparam = cmie.Parameters[i];
+							var wasCast = false;
+							var funcParam = cmie.Parameters[i];
+							var cvreParam = funcParam as CodeVariableReferenceExpression;
 
-							if (funcparam is CodeVariableReferenceExpression cvreparam)
+							if (cvreParam == null)
 							{
-								var type = cvreparam.UserData["origtype"] is CodeTypeDeclaration ctd ? ctd : targetClass;
-								cmie.Parameters[i] = ReevaluateCodeVariableReference(type, cmietypefunc.Key, cvreparam);
+								if (funcParam is CodeCastExpression cce)
+								{
+									if (cce.Expression is CodeVariableReferenceExpression cvre2)
+									{
+										wasCast = true;
+										cvreParam = cvre2;
+									}
+								}
+							}
+
+							if (cvreParam != null)
+							{
+								var type = cvreParam.UserData["origtype"] is CodeTypeDeclaration ctd ? ctd : targetClass;
+								var reEval = ReevaluateCodeVariableReference(type, cmietypefunc.Key, cvreParam);
+								cmie.Parameters[i] = wasCast ? new CodeCastExpression(typeof(object), reEval) : reEval;//Recast to object because it will never have been cast to anything else.
 							}
 						}
 

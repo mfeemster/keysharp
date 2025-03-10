@@ -217,6 +217,7 @@
 		private bool lastfound = false;
 		private bool owndialogs = false;
 		private bool resizable = false;
+		private bool showCalled = false;
 
 		public object BackColor
 		{
@@ -1447,6 +1448,8 @@
 
 		public GuiControl AddDateTime(object obj0 = null, object obj1 = null) => Add(Keyword_DateTime, obj0, obj1);
 
+		public GuiControl AddDropDDL(object obj0 = null, object obj1 = null) => Add(Keyword_DropDownList, obj0, obj1);
+
 		public GuiControl AddDropDownList(object obj0 = null, object obj1 = null) => Add(Keyword_DropDownList, obj0, obj1);
 
 		public GuiControl AddEdit(object obj0 = null, object obj1 = null) => Add(Keyword_Edit, obj0, obj1);
@@ -1462,6 +1465,8 @@
 		public GuiControl AddListView(object obj0 = null, object obj1 = null) => Add(Keyword_ListView, obj0, obj1);
 
 		public GuiControl AddMonthCal(object obj0 = null, object obj1 = null) => Add(Keyword_MonthCal, obj0, obj1);
+
+		public GuiControl AddPic(object obj0 = null, object obj1 = null) => Add(Keyword_Picture, obj0, obj1);
 
 		public GuiControl AddPicture(object obj0 = null, object obj1 = null) => Add(Keyword_Picture, obj0, obj1);
 
@@ -1513,7 +1518,7 @@
 			return null;
 		}
 
-		public IEnumerator<(object, object)> GetEnumerator() => new MapKeyValueIterator(controls, 2);
+		public IEnumerator<(object, object)> GetEnumerator() => new GuiControlIterator(controls, 2);
 
 		public object GetPos([Optional()][DefaultParameterValue(null)] object outX, [Optional()][DefaultParameterValue(null)] object outY, [Optional()][DefaultParameterValue(null)] object outWidth, [Optional()][DefaultParameterValue(null)] object outHeight)
 		{
@@ -1719,7 +1724,12 @@
 					{
 						case 'w': select = 0; break;
 
-						case 'h': select = 1; break;
+						case 'h':
+						{
+							//Make sure starting with 'h' isn't confused for "hide".
+							if (!opt.Equals(Keyword_Hide, StringComparison.OrdinalIgnoreCase))
+								select = 1; break;
+						}
 
 						case 'x': select = 2; break;
 
@@ -1801,7 +1811,7 @@
 				return (maxx, maxy);
 			}
 
-			if (auto || (!form.BeenShown && pos[0] == null && pos[1] == null))//The caluclations in this block are not exact, but are as close as we can possibly get in a generic way.
+			if (auto || (!form.BeenShown && !showCalled && pos[0] == null && pos[1] == null))//The calculations in this block are not exact, but are as close as we can possibly get in a generic way.
 			{
 				//AHK always autosizes on first show when no dimensions are specified.
 				KeysharpStatusStrip ss = null;
@@ -1819,7 +1829,7 @@
 			}
 			else
 			{
-				var size = form.BeenShown ? form.Size : new Size(800, 500);//Using this size because PreferredSize is so small it just shows the title bar.
+				var size = (form.BeenShown || showCalled) ? form.Size : new Size(800, 500);//Using this size because PreferredSize is so small it just shows the title bar.
 
 				if (pos[0] != null)//Dimensions must be scaled by DPI.//TODO
 					size.Width = (int)pos[0];
@@ -1830,21 +1840,42 @@
 				form.Size = size;
 			}
 
+			var hadLocation = false;
 			var location = form.BeenShown ? form.Location : new Point();
 			var screen = System.Windows.Forms.Screen.PrimaryScreen.Bounds;
 
+			//We need to check showCalled because the user could have called Show("hide")
+			//Then called WinMove()
+			//Then called Show() again to actually show the window.
+			//So don't set the location if it wasn't specified and Show() has already been called once.
+			//Same above with size.
 			if (pos[2] != null)//Strangely, the position does not need to be scaled by DPI.
+			{
+				hadLocation = true;
 				location.X = (int)pos[2];
-			else if (/*cX || center ||*/ !form.BeenShown)
+			}
+			else if (!showCalled && !form.BeenShown)
+			{
+				hadLocation = true;
 				location.X = ((screen.Width - form.Size.Width) / 2) + screen.X;
+			}
 
 			if (pos[3] != null)
+			{
+				hadLocation = true;
 				location.Y = (int)pos[3];
-			else if (/*cY || center ||*/ !form.BeenShown)
+			}
+			else if (!showCalled && !form.BeenShown)
+			{
+				hadLocation = true;
 				location.Y = ((screen.Height - form.Size.Height) / 2) + screen.Y;
+			}
 
+			showCalled = true;
 			form.StartPosition = FormStartPosition.Manual;
-			form.Location = location;
+
+			if (hadLocation)
+				form.Location = location;
 
 			if (hide)
 				form.Hide();
@@ -1936,7 +1967,7 @@
 
 			return null;
 		}
-		IEnumerator IEnumerable.GetEnumerator() => new MapKeyValueIterator(controls, 2);
+		IEnumerator IEnumerable.GetEnumerator() => new GuiControlIterator(controls, 2);
 		internal static bool AnyExistingVisibleWindows() => allGuiHwnds.Values.Any(g => g.form != Script.mainWindow && g.form.Visible);
 		internal static void DestroyAll()
 		{

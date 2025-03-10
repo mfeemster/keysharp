@@ -245,6 +245,7 @@ namespace Keysharp.Scripting
             if (propertyDefinition.propertyGetterDefinition().Length != 0 || propertyDefinition.expression() != null)
             {
                 PushFunction("get_" + propertyName);
+                parser.currentFunc.Static = false;
 
                 if (propertyNameSyntax.formalParameterList() != null)
                 {
@@ -263,7 +264,7 @@ namespace Keysharp.Scripting
                     parser.currentFunc.Body.AddRange(getterBody.Statements);
                 }
 
-                getterMethod = parser.currentFunc.Assemble(SyntaxFactory.TokenList(SyntaxFactory.Token(SyntaxKind.PublicKeyword)));
+                getterMethod = parser.currentFunc.Assemble();
                 PopFunction();
                 parser.currentClass.Body.Add(getterMethod);
 
@@ -291,6 +292,7 @@ namespace Keysharp.Scripting
             if (propertyDefinition.propertySetterDefinition().Length != 0)
             {
                 PushFunction("set_" + propertyName, SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.VoidKeyword)));
+                parser.currentFunc.Static = false;
 
                 if (propertyNameSyntax.formalParameterList() != null)
                 {
@@ -321,7 +323,7 @@ namespace Keysharp.Scripting
                 var setterBody = (BlockSyntax)Visit(propertyDefinition.propertySetterDefinition(0));
                 parser.currentFunc.Body.AddRange(setterBody.Statements);
 
-                setterMethod = parser.currentFunc.Assemble(SyntaxFactory.TokenList(SyntaxFactory.Token(SyntaxKind.PublicKeyword)));
+                setterMethod = parser.currentFunc.Assemble();
                 PopFunction();
                 parser.currentClass.Body.Add(setterMethod);
 
@@ -403,8 +405,9 @@ namespace Keysharp.Scripting
             var methodName = parser.currentFunc.Name = parser.NormalizeClassIdentifier(rawMethodName);
 
             var fieldName = methodName.ToLowerInvariant();
-            var isStatic = context.Static() != null;
+            var isStatic = context.methodDefinition().functionHead().functionHeadPrefix()?.Static() != null;
 
+            // parser.currentFunc.Static can't be used here, because all user-defined class methods must be non-static
             if (isStatic)
                 methodName = Keywords.ClassStaticPrefix + methodName;
 
@@ -740,7 +743,7 @@ namespace Keysharp.Scripting
         private void PopClass()
         {
             parser.currentClass = parser.ClassStack.Pop();
-            parser.functionDepth--;
+            parser.classDepth--;
         }
     }
 }

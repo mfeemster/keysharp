@@ -340,7 +340,7 @@ classTail
     ;
 
 classElement
-    : (Static WS*)? methodDefinition   # ClassMethodDeclaration
+    : methodDefinition   # ClassMethodDeclaration
     | (Static WS*)? propertyDefinition # ClassPropertyDeclaration
     | (Static WS*)? fieldDefinition (',' fieldDefinition)*    # ClassFieldDeclaration
     | classDeclaration           # NestedClassDeclaration
@@ -404,7 +404,7 @@ mapElement
 
 propertyAssignment
     : memberIdentifier (WS | EOL)* ':' (WS | EOL)* expression                           # PropertyExpressionAssignment
-    //| (Async WS*)? '*'? propertyName '(' formalParameterList? ')' functionBody # FunctionProperty
+    //| functionHeadPrefix? '*'? propertyName '(' formalParameterList? ')' functionBody # FunctionProperty
     //| getter '(' ')' functionBody                                        # PropertyGetter
     //| setter '(' formalParameterArg ')' functionBody                     # PropertySetter
     //| Ellipsis? singleExpression                                         # PropertyShorthand
@@ -530,17 +530,21 @@ objectLiteral
     ;
 
 functionHead
-    : (Async WS*)? identifier '(' formalParameterList? ')'
+    : functionHeadPrefix? identifier '(' formalParameterList? ')'
+    ;
+
+functionHeadPrefix
+    : ((Async | Static) WS*)+
     ;
 
 functionExpressionHead
     : functionHead
-    | (Async WS*)? '(' formalParameterList? ')'
+    | functionHeadPrefix? '(' formalParameterList? ')'
     ;
 
 fatArrowExpressionHead
-    : ((Async WS*)? identifier)? Multiply 
-    | (Async WS*)? BitAnd? identifier QuestionMark?
+    : (functionHeadPrefix? identifier)? Multiply 
+    | functionHeadPrefix? BitAnd? identifier QuestionMark?
     | functionExpressionHead
     ;
 

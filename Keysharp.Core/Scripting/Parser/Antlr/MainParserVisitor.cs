@@ -985,6 +985,12 @@ public interface IMainParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitFunctionHead([NotNull] MainParser.FunctionHeadContext context);
 	/// <summary>
+	/// Visit a parse tree produced by <see cref="MainParser.functionHeadPrefix"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitFunctionHeadPrefix([NotNull] MainParser.FunctionHeadPrefixContext context);
+	/// <summary>
 	/// Visit a parse tree produced by <see cref="MainParser.functionExpressionHead"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

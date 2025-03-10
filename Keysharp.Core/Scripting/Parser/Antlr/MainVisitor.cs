@@ -205,7 +205,7 @@ namespace Keysharp.Scripting
             parser.autoExecFunc.Body = 
                 parser.generalDirectiveStatements.Concat(parser.DHHR)
                 .Concat(parser.autoExecFunc.Body)
-                .Append(
+                .Concat([
                     SyntaxFactory.ExpressionStatement(
                         SyntaxFactory.InvocationExpression(
                             SyntaxFactory.MemberAccessExpression(
@@ -214,18 +214,18 @@ namespace Keysharp.Scripting
                                 SyntaxFactory.IdentifierName("ManifestAllHotkeysHotstringsHooks")
                             )
                         )
-                    )
+                    ),
+                    SyntaxFactory.ExpressionStatement(
+                        SyntaxFactory.InvocationExpression(
+                            SyntaxFactory.MemberAccessExpression(
+                                SyntaxKind.SimpleMemberAccessExpression,
+                                CreateQualifiedName("Keysharp.Scripting.Script"),
+                                SyntaxFactory.IdentifierName("ExitIfNotPersistent")
+                            )
+                        )
+                    )]
                 ).ToList();
 
-            if (!parser.isPersistent)
-            {
-                parser.autoExecFunc.Body.Add(
-                    SyntaxFactory.ExpressionStatement(((InvocationExpressionSyntax)InternalMethods.ExitApp)
-                    .WithArgumentList(
-                        SyntaxFactory.ArgumentList(
-                            SyntaxFactory.SeparatedList(new[] {
-                            SyntaxFactory.Argument(NumericLiteralExpression("0")) })))));
-            }
             parser.autoExecFunc.Body.Add(SyntaxFactory.ReturnStatement(
                     SyntaxFactory.LiteralExpression(
                         SyntaxKind.StringLiteralExpression,
@@ -1406,11 +1406,19 @@ namespace Keysharp.Scripting
         public override SyntaxNode VisitFunctionHead([NotNull] FunctionHeadContext context)
         {
             PushFunction(CultureInfo.CurrentCulture.TextInfo.ToTitleCase(context.identifier().GetText()));
-            parser.currentFunc.Async = context.Async() != null;
+            VisitFunctionHeadPrefix(context.functionHeadPrefix());
 
             if (context.formalParameterList() != null)
                 parser.currentFunc.Params.AddRange(((ParameterListSyntax)VisitFormalParameterList(context.formalParameterList())).Parameters);
 
+            return null;
+        }
+
+        public override SyntaxNode VisitFunctionHeadPrefix([NotNull] FunctionHeadPrefixContext context)
+        {
+            parser.currentFunc.Async = context?.Async() != null && context.Async().Length > 0;
+            parser.currentFunc.Public = parser.functionDepth < 2;
+            parser.currentFunc.Static = !(parser.functionDepth > 1 && (context?.Static() == null || context.Static().Length == 0));
             return null;
         }
 
@@ -1421,7 +1429,7 @@ namespace Keysharp.Scripting
 
             PushFunction(Keywords.AnonymousLambdaPrefix + ++parser.lambdaCount);
 
-            parser.currentFunc.Async = context.Async() != null;
+            VisitFunctionHeadPrefix(context.functionHeadPrefix());
 
             if (context.formalParameterList() != null)
                 parser.currentFunc.Params.AddRange(((ParameterListSyntax)VisitFormalParameterList(context.formalParameterList())).Parameters);
@@ -1435,7 +1443,7 @@ namespace Keysharp.Scripting
                 return Visit(context.functionExpressionHead());
 
             PushFunction(Keywords.AnonymousFatArrowLambdaPrefix + ++parser.lambdaCount);
-            parser.currentFunc.Async = context.Async() != null;
+            VisitFunctionHeadPrefix(context.functionHeadPrefix());
 
             var parameterName = ToValidIdentifier(context.identifier()?.GetText().ToLowerInvariant().Trim() ?? "args");
             ParameterSyntax parameter;
@@ -1486,7 +1494,8 @@ namespace Keysharp.Scripting
                         methodDeclaration.ReturnType,
                         methodDeclaration.Identifier)
                     .WithParameterList(methodDeclaration.ParameterList)
-                    .WithBody(methodDeclaration.Body);
+                    .WithBody(methodDeclaration.Body)
+                    .WithModifiers(methodDeclaration.Modifiers);
 
                 InvocationExpressionSyntax funcObj = CreateFuncObj(
                     SyntaxFactory.CastExpression(

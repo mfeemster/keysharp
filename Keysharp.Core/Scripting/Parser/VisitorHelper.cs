@@ -279,22 +279,25 @@ namespace Keysharp.Scripting
                     return match;
             }
 
-            // Skip the UserMainFunction function in the stack and check the rest
-            foreach (var (func, _) in FunctionStack.SkipLast(1))
+            if (!currentFunc.Static)
             {
-                if (caseSense)
+                // Skip the UserMainFunction function in the stack and check the rest
+                foreach (var (func, _) in FunctionStack.SkipLast(1))
                 {
-                    if (func.Locals.ContainsKey(name) || func.Statics.Contains(name))
-                        return name;
-                }
-                else
-                {
-                    string match = func.Locals.Keys.FirstOrDefault(v => v.Equals(name, StringComparison.InvariantCultureIgnoreCase));
-                    if (match != null)
-                        return match;
-                    match = func.Statics.FirstOrDefault(v => v.Equals(name, StringComparison.InvariantCultureIgnoreCase));
-                    if (match != null)
-                        return match;
+                    if (caseSense)
+                    {
+                        if (func.Locals.ContainsKey(name) || func.Statics.Contains(name))
+                            return name;
+                    }
+                    else
+                    {
+                        string match = func.Locals.Keys.FirstOrDefault(v => v.Equals(name, StringComparison.InvariantCultureIgnoreCase));
+                        if (match != null)
+                            return match;
+                        match = func.Statics.FirstOrDefault(v => v.Equals(name, StringComparison.InvariantCultureIgnoreCase));
+                        if (match != null)
+                            return match;
+                    }
                 }
             }
 
@@ -900,11 +903,14 @@ namespace Keysharp.Scripting
             if (currentFunc.Statics.Contains(staticName)) return staticName;
             if (currentFunc.Locals.ContainsKey(name)) return null;
 
-            foreach (var (f, _) in FunctionStack)
+            if (!currentFunc.Static)
             {
-                staticName = f.Name.ToUpper() + "_" + name.TrimStart('@');
-                if (f.Statics.Contains(staticName)) return staticName;
-                if (f.Locals.ContainsKey(name)) return null;
+                foreach (var (f, _) in FunctionStack)
+                {
+                    staticName = f.Name.ToUpper() + "_" + name.TrimStart('@');
+                    if (f.Statics.Contains(staticName)) return staticName;
+                    if (f.Locals.ContainsKey(name)) return null;
+                }
             }
             return null;
         }

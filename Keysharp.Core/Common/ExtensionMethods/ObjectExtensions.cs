@@ -11,7 +11,7 @@
 		/// <param name="obj">The object to convert.</param>
 		/// <param name="def">A default value to use if obj is null or the conversion fails.</param>
 		/// <returns>The object as a bool if conversion succeeded, else def.</returns>
-		public static bool Ab(this object obj, bool def = default) => obj != null ? obj.ParseBool() ?? def : def;
+		public static bool Ab(this object obj, bool def = default) => obj?.ParseBool() ?? def;
 
 		/// <summary>
 		/// Converts an object to a double.
@@ -19,7 +19,7 @@
 		/// <param name="obj">The object to convert.</param>
 		/// <param name="def">A default value to use if obj is null.</param>
 		/// <returns>The object as a double if it was not null, else def.</returns>
-		public static double Ad(this object obj, double def = default) => obj != null ? obj.ParseDouble().Value : def;
+		public static double Ad(this object obj, double def = default) => obj?.ParseDouble() ?? def;
 
 		/// <summary>
 		/// Converts an object to a float.
@@ -27,7 +27,7 @@
 		/// <param name="obj">The object to convert.</param>
 		/// <param name="def">A default value to use if obj is null.</param>
 		/// <returns>The object as a float if it was not null, else def.</returns>
-		public static float Af(this object obj, float def = default) => obj != null ? obj.ParseFloat().Value : def;
+		public static float Af(this object obj, float def = default) => obj?.ParseFloat() ?? def;
 
 		/// <summary>
 		/// Converts an object to an int.
@@ -35,7 +35,7 @@
 		/// <param name="obj">The object to convert.</param>
 		/// <param name="def">A default value to use if obj is null.</param>
 		/// <returns>The object as an int if it was not null, else def.</returns>
-		public static int Ai(this object obj, int def = default) => obj != null ? obj.ParseInt().Value : def;
+		public static int Ai(this object obj, int def = default) => obj?.ParseInt() ?? def;
 
 		/// <summary>
 		/// Converts an object to a long.
@@ -43,7 +43,7 @@
 		/// <param name="obj">The object to convert.</param>
 		/// <param name="def">A default value to use if obj is null.</param>
 		/// <returns>The object as a long if it was not null, else def.</returns>
-		public static long Al(this object obj, long def = default) => obj != null ? obj.ParseLong().Value : def;
+		public static long Al(this object obj, long def = default) => obj?.ParseLong() ?? def;
 
 		/// <summary>
 		/// Converts an object to a string.
@@ -51,7 +51,7 @@
 		/// <param name="obj">The object to convert.</param>
 		/// <param name="def">A default value to use if obj is null.</param>
 		/// <returns>The object as a string if it was not null, else def.</returns>
-		public static string As(this object obj, string def = "") => obj != null ? obj.ToString() : def;
+		public static string As(this object obj, string def = "") => obj?.ToString() ?? def;
 
 		/// <summary>
 		/// Converts an object to an unsigned int.
@@ -59,7 +59,7 @@
 		/// <param name="obj">The object to convert.</param>
 		/// <param name="def">A default value to use if obj is null.</param>
 		/// <returns>The object as an unsigned int if it was not null, else def.</returns>
-		public static uint Aui(this object obj, uint def = default) => obj != null ? obj.ParseUInt().Value : def;
+		public static uint Aui(this object obj, uint def = default) => obj?.ParseUInt() ?? def;
 
 		/// <summary>
 		/// Wrapper around casting an object to a type <typeparamref name="T"/>.
