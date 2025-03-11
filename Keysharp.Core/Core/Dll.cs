@@ -90,7 +90,7 @@ namespace Keysharp.Core
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if there is any problem creating the dynamic assembly/function or calling it.</exception>
 		/// <exception cref="OSError">A <see cref="OSError"/> exception is thrown if the return type was HRESULT and the return value was negative.</exception>
 		/// <exception cref="TypeError">A <see cref="TypeError"/> exception is thrown if any of the arguments was required to have a .Ptr member, but none was found.</exception>
-		public static object DllCall(object function, params object[] parameters)
+		public static unsafe object DllCall(object function, params object[] parameters)
 		{
 			//You should some day add the ability to use this with .NET dlls, exposing some type of reflection to the script.//TODO
 			Error err;
@@ -254,15 +254,79 @@ namespace Keysharp.Core
 							value = Marshal.PtrToStringUni((IntPtr)value);
 					}
 
-					//If they passed in a ComObject with Ptr as an address, make that address into a __ComObject.
-					for (var pi = 0; pi < parameters.Length; pi++)
+					//Ensure arguments passed in are in the proper format when writing back.
+					for (int pi = 0, ai = 0; pi < parameters.Length; pi += 2, ++ai)
 					{
-						var p = parameters[pi];
-
-						if (p is ComObject co)
+						if (pi < parameters.Length - 1)
 						{
-							object obj = co.Ptr;
-							co.Ptr = obj;//Reassign to ensure pointers are properly cast to __ComObject.
+							var p0 = parameters[pi];
+							var p1 = parameters[pi + 1];
+
+							if (p0 is string ps)
+							{
+								if (helper.args[ai] is IntPtr aip && (ps[ ^ 1] == '*' || ps[ ^ 1] == 'p'))
+								{
+									if (ps.EndsWith("uint*") || ps.EndsWith("uintp"))
+									{
+										var tempui = *((uint*)aip.ToPointer());
+										var templ = (long)tempui;
+										parameters[pi + 1] = templ;
+									}
+									else if (ps.EndsWith("int*") || ps.EndsWith("intp"))
+									{
+										var tempi = *((int*)aip.ToPointer());
+										var templ = (long)tempi;
+										parameters[pi + 1] = templ;
+									}
+									else if (ps.EndsWith("int64*") || ps.EndsWith("int64p"))
+									{
+										var templ = *((long*)aip.ToPointer());
+										parameters[pi + 1] = templ;
+									}
+									else if (ps.EndsWith("double*") || ps.EndsWith("doublep"))
+									{
+										var tempd = *((double*)aip.ToPointer());
+										parameters[pi + 1] = tempd;
+									}
+									else if (ps.EndsWith("float*") || ps.EndsWith("floatp"))
+									{
+										var tempf = *((float*)aip.ToPointer());
+										var tempd = (double)tempf;
+										parameters[pi + 1] = tempd;
+									}
+									else if (ps.EndsWith("ushort*") || ps.EndsWith("ushortp"))
+									{
+										var tempus = *((ushort*)aip.ToPointer());
+										var templ = (long)tempus;
+										parameters[pi + 1] = templ;
+									}
+									else if (ps.EndsWith("short*") || ps.EndsWith("shortp"))
+									{
+										var temps = *((short*)aip.ToPointer());
+										var templ = (long)temps;
+										parameters[pi + 1] = templ;
+									}
+									else if (ps.EndsWith("uchar*") || ps.EndsWith("ucharp"))
+									{
+										var tempub = *((byte*)aip.ToPointer());
+										var templ = (long)tempub;
+										parameters[pi + 1] = templ;
+									}
+									else if (ps.EndsWith("char*") || ps.EndsWith("charp"))
+									{
+										var tempb = *((sbyte*)aip.ToPointer());
+										var templ = (long)tempb;
+										parameters[pi + 1] = templ;
+									}
+								}
+							}
+
+							//If they passed in a ComObject with Ptr as an address, make that address into a __ComObject.
+							if (p1 is ComObject co)
+							{
+								object obj = co.Ptr;
+								co.Ptr = obj;//Reassign to ensure pointers are properly cast to __ComObject.
+							}
 						}
 					}
 

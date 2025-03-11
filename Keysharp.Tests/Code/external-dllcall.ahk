@@ -125,6 +125,41 @@ if (val == 5)
 else
 	FileAppend, "fail", "*"
 
+; Ensure int* gets properly written to with a negative number.
+
+src := Buffer(4)
+NumPut("int", -1, src)
+dest := 0
+DllCall("Kernel32\RtlMoveMemory", "int*", &dest, "Ptr", src, "Int", 4)
+
+if (dest == -1)
+    FileAppend "pass", "*"
+else
+    FileAppend "fail", "*"
+
+; Ensure int* gets properly written to and initial bits are cleared.
+
+src := Buffer(4)
+NumPut("int", 1, src)
+dest := 0xFFFFFFFF+1
+DllCall("Kernel32\RtlMoveMemory", "int*", &dest, "Ptr", src, "Int", 4)
+
+if (dest == 1)
+    FileAppend "pass", "*"
+else
+    FileAppend "fail", "*"
+
+; Ensure float* gets properly written to and can be read back as a double.
+
+src := Buffer(4)
+NumPut("float", 1.0, src)
+dest := 1.1
+DllCall("Kernel32\RtlMoveMemory", "float*", &dest, "Ptr", src, "Int", 4)
+if (dest == 1.0)
+    FileAppend "pass", "*"
+else
+    FileAppend "fail", "*"
+
 shell := ComObject("WScript.Shell")
 exec := shell.Exec("Notepad.exe")
 exec := shell.Run("Notepad.exe")
