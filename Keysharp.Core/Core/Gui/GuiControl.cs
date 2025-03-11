@@ -2083,7 +2083,7 @@ namespace Keysharp.Core
 
 	internal class GuiTag
 	{
-		public GuiControl GuiControl { get; set; }
-		public int Index { get; set; }
+		internal GuiControl GuiControl { get; set; }
+		internal int Index { get; set; }
 	}
 }
