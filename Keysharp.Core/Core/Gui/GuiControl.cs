@@ -9,9 +9,11 @@ namespace Keysharp.Core
 		private readonly List<IFuncObj> doubleClickHandlers = [];
 		private readonly bool dpiscaling = true;
 		private Control _control;
+
 		//Normal event handlers can't be used becaused they need to return a value.
 		//The returned values are then inspected to determine if subsequent handlers should be called or not.
 		private List<IFuncObj> changeHandlers;
+
 		private List<IFuncObj> columnClickHandlers;
 		private Dictionary<int, List<IFuncObj>> commandHandlers;
 		private List<IFuncObj> contextMenuChangedHandlers;
@@ -40,7 +42,7 @@ namespace Keysharp.Core
 
 		public object Focused => _control.Focused;
 
-		public Gui Gui { get; private set; }
+		public WeakReference<Gui> Gui { get; private set; }
 
 		public long Hwnd => _control.Handle.ToInt64();
 
@@ -396,7 +398,7 @@ namespace Keysharp.Core
 			var control = args[1] as Control;
 			var name = args[2].ToString();
 			var wrap = args.Length > 3 ? args[3].Ab() : false;
-			Gui = gui;
+			Gui = new WeakReference<Gui>(gui);
 			typename = name;
 			_control = control;
 			_control.Tag = new GuiTag()
@@ -1080,7 +1082,11 @@ namespace Keysharp.Core
 			var e = eventName.As().ToLower();
 			var h = callback;
 			var i = addRemove.Al(1);
-			var del = Functions.GetFuncObj(h, Gui.form.eventObj, true);
+
+			if (Gui == null || !Gui.TryGetTarget(out var gui))
+				return null;
+
+			var del = Functions.GetFuncObj(h, gui.form.eventObj, true);
 
 			if (del != null)
 			{
@@ -1207,7 +1213,10 @@ namespace Keysharp.Core
 
 		public object Opt(object options)
 		{
-			var opts = Gui.ParseOpt(typename, _control.Text, options.As());
+			if (Gui == null || !Gui.TryGetTarget(out var gui))
+				return null;
+
+			var opts = Keysharp.Core.Gui.ParseOpt(typename, _control.Text, options.As());
 
 			if (opts.redraw.HasValue)
 			{
@@ -1237,7 +1246,7 @@ namespace Keysharp.Core
 			if (_control is KeysharpButton)
 			{
 				if (opts.btndef.HasValue)
-					Gui.form.AcceptButton = opts.btndef == true ? (IButtonControl)_control : null;
+					gui.form.AcceptButton = opts.btndef == true ? (IButtonControl)_control : null;
 			}
 			else if (_control is KeysharpListBox lb)
 			{
@@ -1288,13 +1297,13 @@ namespace Keysharp.Core
 
 				if (opts.wantctrla.IsFalse())
 				{
-					txt.PreviewKeyDown += Gui.SuppressCtrlAPreviewKeyDown;
-					txt.KeyDown += Gui.SuppressCtrlAKeyDown;
+					txt.PreviewKeyDown += Keysharp.Core.Gui.SuppressCtrlAPreviewKeyDown;
+					txt.KeyDown += Keysharp.Core.Gui.SuppressCtrlAKeyDown;
 				}
 				else if (opts.wantctrla.IsTrue())
 				{
-					txt.PreviewKeyDown -= Gui.SuppressCtrlAPreviewKeyDown;
-					txt.KeyDown -= Gui.SuppressCtrlAKeyDown;
+					txt.PreviewKeyDown -= Keysharp.Core.Gui.SuppressCtrlAPreviewKeyDown;
+					txt.KeyDown -= Keysharp.Core.Gui.SuppressCtrlAKeyDown;
 				}
 
 				if (opts.vscroll.IsTrue() && opts.hscrollamt != int.MinValue)
@@ -1333,13 +1342,13 @@ namespace Keysharp.Core
 
 				if (opts.wantctrla.IsFalse())
 				{
-					rtxt.PreviewKeyDown += Gui.SuppressCtrlAPreviewKeyDown;
-					rtxt.KeyDown += Gui.SuppressCtrlAKeyDown;
+					rtxt.PreviewKeyDown += Keysharp.Core.Gui.SuppressCtrlAPreviewKeyDown;
+					rtxt.KeyDown += Keysharp.Core.Gui.SuppressCtrlAKeyDown;
 				}
 				else if (opts.wantctrla.IsTrue())
 				{
-					rtxt.PreviewKeyDown -= Gui.SuppressCtrlAPreviewKeyDown;
-					rtxt.KeyDown -= Gui.SuppressCtrlAKeyDown;
+					rtxt.PreviewKeyDown -= Keysharp.Core.Gui.SuppressCtrlAPreviewKeyDown;
+					rtxt.KeyDown -= Keysharp.Core.Gui.SuppressCtrlAKeyDown;
 				}
 
 				if (opts.vscroll.IsTrue() && opts.hscrollamt != int.MinValue)
@@ -1416,9 +1425,9 @@ namespace Keysharp.Core
 
 				if (tv.LabelEdit && opts.wantf2.HasValue)
 					if (opts.wantf2.IsTrue())
-						tv.KeyDown += Gui.Tv_Lv_KeyDown;
+						tv.KeyDown += Keysharp.Core.Gui.Tv_Lv_KeyDown;
 					else
-						tv.KeyDown -= Gui.Tv_Lv_KeyDown;
+						tv.KeyDown -= Keysharp.Core.Gui.Tv_Lv_KeyDown;
 			}
 			else if (_control is KeysharpListView lv)
 			{
@@ -1436,9 +1445,9 @@ namespace Keysharp.Core
 
 				if (lv.LabelEdit && opts.wantf2.HasValue)
 					if (opts.wantf2.IsTrue())
-						lv.KeyDown += Gui.Tv_Lv_KeyDown;
+						lv.KeyDown += Keysharp.Core.Gui.Tv_Lv_KeyDown;
 					else
-						lv.KeyDown -= Gui.Tv_Lv_KeyDown;
+						lv.KeyDown -= Keysharp.Core.Gui.Tv_Lv_KeyDown;
 
 				if (opts.lvview.HasValue)
 					lv.View = opts.lvview.Value;
@@ -1752,6 +1761,9 @@ namespace Keysharp.Core
 		{
 			if (_control is KeysharpTabControl tc)
 			{
+				if (Gui == null || !Gui.TryGetTarget(out var gui))
+					return null;
+
 				var val = value;
 				var exact = exactMatch.Ab();
 
@@ -1759,8 +1771,8 @@ namespace Keysharp.Core
 				{
 					if (s.Length > 0 && tc.FindTab(s, exact) is TabPage tp)
 					{
-						Gui.CurrentTab = tp;
-						Gui.LastContainer = tp;
+						gui.CurrentTab = tp;
+						gui.LastContainer = tp;
 					}
 				}
 				else if (val != null)
@@ -1771,13 +1783,13 @@ namespace Keysharp.Core
 					if (i >= 0 && i < tc.TabPages.Count)
 					{
 						var tp = tc.TabPages[i];
-						Gui.CurrentTab = tp;
-						Gui.LastContainer = tp;
+						gui.CurrentTab = tp;
+						gui.LastContainer = tp;
 					}
 				}
 				else
 				{
-					Gui.LastContainer = tc.Parent;
+					gui.LastContainer = tc.Parent;
 				}
 			}
 
@@ -1907,7 +1919,10 @@ namespace Keysharp.Core
 
 		internal void HandleOnCommandNotify(long code, object callback, long addremove, ref Dictionary<int, List<IFuncObj>> handlers)
 		{
-			var del = Functions.GetFuncObj(callback, Gui.form.eventObj, true);
+			if (Gui == null || !Gui.TryGetTarget(out var gui))
+				return;
+
+			var del = Functions.GetFuncObj(callback, gui.form.eventObj, true);
 
 			if (handlers == null)
 				handlers = [];

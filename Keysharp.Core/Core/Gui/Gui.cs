@@ -14,13 +14,8 @@
 				typeof(Control)//Add native control and form types just to be safe.
 			];
 
-		internal List<IFuncObj> closedHandlers;
-		internal List<IFuncObj> contextMenuChangedHandlers;
 		internal Dictionary<object, object> controls = [];
-		internal List<IFuncObj> dropFilesHandlers;
-		internal List<IFuncObj> escapeHandlers;
 		internal MenuBar menuBar;
-		internal List<IFuncObj> sizeHandlers;
 
 		private static readonly Dictionary<string, Action<Gui, object>> showOptionsDkt = new ()
 		{
@@ -212,7 +207,6 @@
 		};
 
 		private static int windowCount = 0;
-		private bool closingFromDestroy;
 		private bool dpiscaling = true;
 		private bool lastfound = false;
 		private bool owndialogs = false;
@@ -271,6 +265,8 @@
 
 		public KeysharpForm ParentForm => form.FindParent<KeysharpForm>();
 
+		public new (Type, object) super => (typeof(KeysharpObject), this);
+
 		public object Title
 		{
 			get => form.Text;
@@ -307,11 +303,9 @@
 
 		internal StatusStrip StatusBar { get; set; }
 
-		public new (Type, object) super => (typeof(KeysharpObject), this);
-
 		public Gui(params object[] args) : base(args) { }
 
-		internal Gui(object obj0 = null, object obj1 = null, object obj2 = null, object obj3 = null)//The last parameter is hidden and is only for internal use for when we wrap the main window in a Gui object.
+		internal Gui(object obj0 = null, object obj1 = null, object obj2 = null, object obj3 = null) : base(skipLogic:true)//The last parameter is hidden and is only for internal use for when we wrap the main window in a Gui object.
 		{
 			if (obj3 is KeysharpForm kf)
 			{
@@ -323,10 +317,15 @@
 			}
 
 			LastContainer = form;
-			allGuiHwnds[form.Handle.ToInt64()] = this;
+			allGuiHwnds[form.Handle.ToInt64()] = this;//Calling handle forces the creation of the window.
 
 			if (lastfound)
 				Script.HwndLastUsed = Hwnd;
+		}
+
+		~Gui()
+		{
+			Script.ExitIfNotPersistent();//May not be necessary, but try anyway.
 		}
 
 		public KeysharpEnumerator __Enum(object count) => new GuiControlIterator(controls, count.Ai());
@@ -350,24 +349,19 @@
 					Name = $"Keysharp window {newCount}",
 					MaximizeBox = false,
 					SizeGripStyle = SizeGripStyle.Hide,
-					Tag = this,
+					Tag = new WeakReference<Gui>(this, false),
 					Text = caption != "" ? caption : Accessors.A_ScriptName
 				};
 				//Note that we don't do any Suspend/Resume layout calls when creating controls on the form as would normally
 				//be done in designer-generated code. It appears to cause layout problems.
 				_ = Opt(options);
-				//var formHandle = form.Handle;//Force the creation.
-				form.FormClosing += Form_FormClosing;
-				form.KeyDown += Form_KeyDown;
-				form.Resize += Form_Resize;
-				form.MouseDown += Form_MouseDown;
-				form.DragDrop += Form_DragDrop;
-				form.Load += Form_Load;
+				var formHandle = form.Handle;//Force the creation.
+				//Console.WriteLine(formHandle);
 				var x = (int)Math.Round(form.Font.Size * 1.25f);//Not really sure if Size is the same as height, like the documentation says.//TODO
 				var y = (int)Math.Round(form.Font.Size * 0.75f);
 				form.Margin = new Padding(x, y, x, y);
 				LastContainer = form;
-				allGuiHwnds[form.Handle.ToInt64()] = this;
+				//This will be added to allGuiHwnds on show.
 
 				if (lastfound)
 					Script.HwndLastUsed = Hwnd;
@@ -1448,7 +1442,7 @@
 
 		public GuiControl AddDateTime(object obj0 = null, object obj1 = null) => Add(Keyword_DateTime, obj0, obj1);
 
-		public GuiControl AddDropDDL(object obj0 = null, object obj1 = null) => Add(Keyword_DropDownList, obj0, obj1);
+		public GuiControl AddDDL(object obj0 = null, object obj1 = null) => Add(Keyword_DropDownList, obj0, obj1);
 
 		public GuiControl AddDropDownList(object obj0 = null, object obj1 = null) => Add(Keyword_DropDownList, obj0, obj1);
 
@@ -1488,18 +1482,7 @@
 
 		public GuiControl AddWebBrowser(object obj0 = null, object obj1 = null) => Add(Keyword_WebBrowser, obj0, obj1);
 
-		public object Destroy()
-		{
-			closingFromDestroy = true;
-
-			//Do not close the window if the program is already exiting because it will throw
-			//an enumeration modified exception because Winforms is internally already iterating over
-			//all open windows to close them.
-			if (!Script.IsMainWindowClosing)
-				form.Close();
-
-			return null;
-		}
+		public object Destroy() => form?.Destroy();
 
 		public object Flash(object obj)
 		{
@@ -1550,52 +1533,7 @@
 			return null;
 		}
 
-		public object OnEvent(object obj0, object obj1, object obj2 = null)
-		{
-			var e = obj0.As();
-			var h = obj1;
-			var i = obj2.Al(1);
-			e = e.ToLower();
-			var del = Functions.GetFuncObj(h, form.eventObj, true);
-
-			if (e == "close")
-			{
-				if (closedHandlers == null)
-					closedHandlers = [];
-
-				closedHandlers.ModifyEventHandlers(del, i);
-			}
-			else if (e == "contextmenu")
-			{
-				if (contextMenuChangedHandlers == null)
-					contextMenuChangedHandlers = [];
-
-				contextMenuChangedHandlers.ModifyEventHandlers(del, i);
-			}
-			else if (e == "dropfiles")
-			{
-				if (dropFilesHandlers == null)
-					dropFilesHandlers = [];
-
-				dropFilesHandlers.ModifyEventHandlers(del, i);
-			}
-			else if (e == "escape")
-			{
-				if (escapeHandlers == null)
-					escapeHandlers = [];
-
-				escapeHandlers.ModifyEventHandlers(del, i);
-			}
-			else if (e == "size")
-			{
-				if (sizeHandlers == null)
-					sizeHandlers = [];
-
-				sizeHandlers.ModifyEventHandlers(del, i);
-			}
-
-			return null;
-		}
+		public object OnEvent(object obj0, object obj1, object obj2 = null) => form.OnEvent(obj0, obj1, obj2);
 
 		public object Opt(object obj)
 		{
@@ -1658,52 +1596,14 @@
 			return null;
 		}
 
-		private static void Opt(object obj, ref int addStyle, ref int addExStyle, ref int removeStyle, ref int removeExStyle)
-		{
-#if WINDOWS
-			var options = obj.As();
-
-			//Special style, windows only. Need to figure out how to make this cross platform.//TODO
-			foreach (var split in Options.ParseOptions(options))
-			{
-				var str = split.Substring(1);
-
-				if (str.Length > 0)
-				{
-					var temp = 0;
-
-					if (Options.TryParse(split, "+E", ref temp) || Options.TryParse(split, "E", ref temp))
-					{
-						addExStyle |= temp;
-					}
-					else if (Options.TryParse(split, "-E", ref temp))
-					{
-						removeExStyle |= temp;
-					}
-					else if (Options.TryParse(split, "-", ref temp))
-					{
-						removeStyle |= temp;
-					}
-					else if (Options.TryParse(split, "+", ref temp))
-					{
-						addStyle |= temp;
-					}
-					else if (Options.TryParse(split, "", ref temp))
-					{
-						addStyle |= temp;
-					}
-				}
-			}
-
-#endif
-		}
-
 		public object Restore() => form.WindowState = FormWindowState.Normal;
+
 		public object SetFont(object obj0 = null, object obj1 = null)
 		{
 			form.SetFont(obj0, obj1);
 			return null;
 		}
+
 		public object Show(object obj = null)
 		{
 			var s = obj.As();
@@ -1892,6 +1792,7 @@
 			form.Update();//Required for the very first state of the form to always be displayed.
 			return null;
 		}
+
 		public Map Submit(object obj = null)
 		{
 			var hide = obj.Ab(true);
@@ -1958,6 +1859,7 @@
 
 			return new Map(dkt);
 		}
+
 		public object UseGroup(object obj0 = null)
 		{
 			if (obj0 is GuiControl gctrl && gctrl.Control is GroupBox gb)
@@ -1967,8 +1869,11 @@
 
 			return null;
 		}
+
 		IEnumerator IEnumerable.GetEnumerator() => new GuiControlIterator(controls, 2);
-		internal static bool AnyExistingVisibleWindows() => allGuiHwnds.Values.Any(g => g.form != Script.mainWindow && g.form.Visible);
+
+		internal static bool AnyExistingVisibleWindows() => allGuiHwnds.Values.Any(g => g.form != null && g.form != Script.mainWindow && g.form.Visible);
+
 		internal static void DestroyAll()
 		{
 			//Destroy everything but the main window, which will destroy itself.
@@ -1985,8 +1890,11 @@
 
 			allGuiHwnds.Clear();
 		}
+
 		internal static float GetFontPixels(Font font) => font.GetHeight((float)Accessors.A_ScreenDPI);
+
 		internal static bool IsGuiType(Type type) => GuiTypes.Any(t => t.IsAssignableFrom(type));
+
 		internal static GuiOptions ParseOpt(string type, string text, string optionsstr)
 		{
 			var options = new GuiOptions();
@@ -2173,87 +2081,20 @@
 
 			return options;
 		}
+
 		internal static void SuppressCtrlAKeyDown(object o, KeyEventArgs e)
 		{
 			if (e.KeyData == (Keys.Control | Keys.A))
 				e.SuppressKeyPress = true;
 		}
+
 		internal static void SuppressCtrlAPreviewKeyDown(object o, PreviewKeyDownEventArgs e)
 		{
 			if (e.KeyData == (Keys.Control | Keys.A))
 				e.IsInputKey = true;
 		}
-		internal void CallContextMenuChangeHandlers(bool wasRightClick, int x, int y)
-		{
-			var control = form.ActiveControl;
 
-			if (control is ListBox lb)
-				_ = (contextMenuChangedHandlers?.InvokeEventHandlers(this, control, lb.SelectedIndex + 1L, wasRightClick, x, y));
-			else if (control is ListView lv)
-				_ = (contextMenuChangedHandlers?.InvokeEventHandlers(this, control, lv.SelectedIndices.Count > 0 ? lv.SelectedIndices[0] + 1L : 0L, wasRightClick, x, y));
-			else if (control is TreeView tv)
-				_ = (contextMenuChangedHandlers?.InvokeEventHandlers(this, control, tv.SelectedNode.Handle, wasRightClick, x, y));
-			else
-				_ = (contextMenuChangedHandlers?.InvokeEventHandlers(this, control, control != null ? control.Handle.ToInt64().ToString() : "", wasRightClick, x, y));//Unsure what to pass for Item, so just pass handle.
-		}
-		internal void Form_DragDrop(object sender, DragEventArgs e)
-		{
-			if (e.Data.GetDataPresent(DataFormats.FileDrop))
-			{
-				var coords = form.PointToClient(new Point(e.X, e.Y));
-				var files = (string[])e.Data.GetData(DataFormats.FileDrop);
-				_ = dropFilesHandlers?.InvokeEventHandlers(this, form.ActiveControl, new Array(files), coords.X, coords.Y);
-			}
-		}
-		internal void Form_FormClosing(object sender, FormClosingEventArgs e)
-		{
-			var handle = form.Handle.ToInt64();
-			var result = closedHandlers?.InvokeEventHandlers(this);
-
-			if (!closingFromDestroy)
-			{
-				e.Cancel = true;
-
-				if (result.IsCallbackResultNonEmpty())
-					return;
-
-				form.Hide();
-			}
-			else if (form != null)
-			{
-				_ = allGuiHwnds.TryRemove(handle, out _);
-				form = null;
-			}
-
-			//If there is nothing else keeping the program alive, and the program is not already exiting, close it.
-			Script.ExitIfNotPersistent();
-		}
-		internal void Form_KeyDown(object sender, KeyEventArgs e)
-		{
-			if (e.KeyCode == Keys.Apps || (e.KeyCode == Keys.F10 && ((Control.ModifierKeys & Keys.Shift) == Keys.Shift)))
-				CallContextMenuChangeHandlers(true, Cursor.Position.X, Cursor.Position.Y);
-			else if (e.KeyCode == Keys.Escape)
-				_ = escapeHandlers?.InvokeEventHandlers(this);
-		}
-		internal void Form_MouseDown(object sender, MouseEventArgs e)
-		{
-			if (e.Button == MouseButtons.Right)
-				CallContextMenuChangeHandlers(false, e.X, e.Y);
-		}
-		internal void Form_Resize(object sender, EventArgs e)
-		{
-			long state;
-
-			if (form.WindowState == FormWindowState.Maximized)
-				state = 1L;
-			else if (form.WindowState == FormWindowState.Minimized)
-				state = -1L;
-			else
-				state = 0L;
-
-			_ = sizeHandlers?.InvokeEventHandlers(this, state, (long)form.Width, (long)form.Height);
-		}
-		internal void Tv_Lv_KeyDown(object sender, KeyEventArgs e)
+		internal static void Tv_Lv_KeyDown(object sender, KeyEventArgs e)
 		{
 			if (e.KeyCode == Keys.F2)
 			{
@@ -2263,10 +2104,47 @@
 					lv.SelectedItems[0].BeginEdit();
 			}
 		}
-		private void Form_Load(object sender, EventArgs e)
+
+		private static void Opt(object obj, ref int addStyle, ref int addExStyle, ref int removeStyle, ref int removeExStyle)
 		{
-			//form.Visible = false;
+#if WINDOWS
+			var options = obj.As();
+
+			//Special style, windows only. Need to figure out how to make this cross platform.//TODO
+			foreach (var split in Options.ParseOptions(options))
+			{
+				var str = split.Substring(1);
+
+				if (str.Length > 0)
+				{
+					var temp = 0;
+
+					if (Options.TryParse(split, "+E", ref temp) || Options.TryParse(split, "E", ref temp))
+					{
+						addExStyle |= temp;
+					}
+					else if (Options.TryParse(split, "-E", ref temp))
+					{
+						removeExStyle |= temp;
+					}
+					else if (Options.TryParse(split, "-", ref temp))
+					{
+						removeStyle |= temp;
+					}
+					else if (Options.TryParse(split, "+", ref temp))
+					{
+						addStyle |= temp;
+					}
+					else if (Options.TryParse(split, "", ref temp))
+					{
+						addStyle |= temp;
+					}
+				}
+			}
+
+#endif
 		}
+
 		private void ResizeTabControls()
 		{
 			var dpiscale = !dpiscaling ? 1.0 : Accessors.A_ScaledScreenDPI;
@@ -2275,6 +2153,7 @@
 			foreach (var tc in tabControls)
 				tc.AdjustSize(dpiscale);
 		}
+
 		public object this[object controlname]
 		{
 			get
@@ -2325,6 +2204,7 @@
 				return Errors.ErrorOccurred(err = new Error($"No controls matched the handle, name, text, ClassNN or NetClassNN {controlname}.")) ? throw err : null;
 			}
 		}
+
 		internal class GuiOptions
 		{
 			internal int addexstyle = 0;

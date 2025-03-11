@@ -202,30 +202,30 @@ namespace Keysharp.Scripting
             GenerateGeneralDirectiveStatements();
 
             // Merge positional directives, hotkeys, hotstrings to the beginning of the auto-execute section
+            parser.DHHR.Add(SyntaxFactory.ExpressionStatement(
+                SyntaxFactory.InvocationExpression(
+                    SyntaxFactory.MemberAccessExpression(
+                        SyntaxKind.SimpleMemberAccessExpression,
+                        CreateQualifiedName("Keysharp.Core.Common.Keyboard.HotkeyDefinition"),
+                        SyntaxFactory.IdentifierName("ManifestAllHotkeysHotstringsHooks")
+                    )
+                )
+            ));
+
             parser.autoExecFunc.Body = 
                 parser.generalDirectiveStatements.Concat(parser.DHHR)
                 .Concat(parser.autoExecFunc.Body)
-                .Concat([
-                    SyntaxFactory.ExpressionStatement(
-                        SyntaxFactory.InvocationExpression(
-                            SyntaxFactory.MemberAccessExpression(
-                                SyntaxKind.SimpleMemberAccessExpression,
-                                CreateQualifiedName("Keysharp.Core.Common.Keyboard.HotkeyDefinition"),
-                                SyntaxFactory.IdentifierName("ManifestAllHotkeysHotstringsHooks")
-                            )
-                        )
-                    ),
-                    SyntaxFactory.ExpressionStatement(
-                        SyntaxFactory.InvocationExpression(
-                            SyntaxFactory.MemberAccessExpression(
-                                SyntaxKind.SimpleMemberAccessExpression,
-                                CreateQualifiedName("Keysharp.Scripting.Script"),
-                                SyntaxFactory.IdentifierName("ExitIfNotPersistent")
-                            )
-                        )
-                    )]
-                ).ToList();
+                .ToList();
 
+            parser.autoExecFunc.Body.Add(SyntaxFactory.ExpressionStatement(
+                SyntaxFactory.InvocationExpression(
+                    SyntaxFactory.MemberAccessExpression(
+                        SyntaxKind.SimpleMemberAccessExpression,
+                        CreateQualifiedName("Keysharp.Scripting.Script"),
+                        SyntaxFactory.IdentifierName("ExitIfNotPersistent")
+                    )
+                )
+            ));
             parser.autoExecFunc.Body.Add(SyntaxFactory.ReturnStatement(
                     SyntaxFactory.LiteralExpression(
                         SyntaxKind.StringLiteralExpression,

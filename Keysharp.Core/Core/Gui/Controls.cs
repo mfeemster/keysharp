@@ -233,58 +233,6 @@ namespace Keysharp.Core
 #endif
 	}
 
-	public class KeysharpForm : Form
-	{
-		private bool beenShown = false;
-		private readonly int addStyle, addExStyle, removeStyle, removeExStyle;
-		internal object eventObj;
-		internal bool showWithoutActivation;
-		public bool AllowShowDisplay = true;
-
-		internal bool BeenShown => beenShown;
-
-		[Browsable(false)]
-		protected override bool ShowWithoutActivation => showWithoutActivation;
-
-		protected override CreateParams CreateParams
-		{
-			get
-			{
-				var cp = base.CreateParams;
-				cp.Style |= addStyle;
-				cp.ExStyle |= addExStyle;
-				cp.Style &= ~removeStyle;
-				cp.ExStyle &= ~removeExStyle;
-				return cp;
-			}
-		}
-
-		public KeysharpForm(int _addStyle = 0, int _addExStyle = 0, int _removeStyle = 0, int _removeExStyle = 0)
-		{
-			addStyle = _addStyle;
-			addExStyle = _addExStyle;
-			removeStyle = _removeStyle;
-			removeExStyle = _removeExStyle;
-			AutoScaleDimensions = new SizeF(96F, 96F);
-			AutoScaleMode = AutoScaleMode.Dpi;
-			//See Gui.Show() for where the remainder of the properties get set, such as scaling values.
-			Font = MainWindow.OurDefaultFont;
-			StartPosition = FormStartPosition.CenterScreen;
-			KeyPreview = true;
-			DoubleBuffered = true;
-			SetStyle(ControlStyles.StandardClick, true);
-			SetStyle(ControlStyles.StandardDoubleClick, true);
-			Shown += (o, e) =>
-			{
-				beenShown = true;//Will not trigger on initial temporary show/hide in constructor, and instead will only happen after Gui.Show() completes.
-			};
-		}
-		protected override void SetVisibleCore(bool value)
-		{
-			base.SetVisibleCore(AllowShowDisplay ? value : AllowShowDisplay);
-		}
-	}
-
 	public class KeysharpGroupBox : GroupBox
 	{
 		private readonly int addstyle, removestyle;

@@ -742,10 +742,10 @@ namespace Keysharp.Core
             return func;
         }
 
-        /// <summary>
-        /// The various reasons for exiting the script.
-        /// </summary>
-        internal enum ExitReasons
+		/// <summary>
+		/// The various reasons for exiting the script.
+		/// </summary>
+		public enum ExitReasons
 		{
 			Critical = -2, Destroy = -1, None = 0, Error, LogOff, Shutdown, Close, Menu, Exit, Reload, Single
 		}
