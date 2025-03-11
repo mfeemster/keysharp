@@ -223,23 +223,6 @@
 		//}
 
 		/// <summary>
-		/// When adding controls, the z order of all controls will not be properly set.
-		/// So re-sort the z order to match the Index property of the GuiTag stored in control.Tag.
-		/// The reason we use Index, is because it will contain the number of controls in in the collection
-		/// at the time the control was added. So those with smaller values will be lower down in the Z order.
-		/// </summary>
-		/// <param name="control">The control whose controls whose Z order will be re-sorted.</param>
-		internal static void ResortZOrder(this Control control)
-		{
-			var ctm1 = control.Controls.Count - 1;
-
-			//Must copy to list because SetChildIndex() internally moves the controls around.
-			foreach (Control ctrl in control.Controls.Cast<Control>().ToList())
-				if (ctrl.Tag is GuiTag gt)
-					control.Controls.SetChildIndex(ctrl, ctm1 - gt.Index);//0 is the top control, greater numbers are further down.
-		}
-
-		/// <summary>
 		/// Resume drawing of a <see cref="Control"/>.
 		/// </summary>
 		/// <param name="control">The <see cref="Control"/> to resume drawing for.</param>
@@ -446,7 +429,7 @@
 		{
 			add.Tag = new GuiTag { Index = control.Controls.Count };
 			control.Controls.Add(add);
-			control.ResortZOrder();
+			control.Controls.SetChildIndex(add, 0);//Required for proper Z ordering so that this control is on top.
 		}
 
 		/// <summary>
@@ -462,7 +445,7 @@
 		{
 			((GuiTag)add.Control.Tag).Index = control.Controls.Count;//The reference to the control was set in the constructor, so set the index here.
 			control.Controls.Add(add.Control);
-			control.ResortZOrder();
+			control.Controls.SetChildIndex(add.Control, 0);//Required for proper Z ordering so that this control is on top.
 		}
 
 		/// <summary>
