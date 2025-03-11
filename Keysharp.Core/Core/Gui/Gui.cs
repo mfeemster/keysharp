@@ -357,11 +357,12 @@
 				//be done in designer-generated code. It appears to cause layout problems.
 				_ = Opt(options);
 				var formHandle = form.Handle;//Force the creation.
-				Console.WriteLine(formHandle);
+				var handleStr = $"{formHandle}";
 				var x = (int)Math.Round(form.Font.Size * 1.25f);//Not really sure if Size is the same as height, like the documentation says.//TODO
 				var y = (int)Math.Round(form.Font.Size * 0.75f);
 				form.Margin = new Padding(x, y, x, y);
 				LastContainer = form;
+
 				//This will be added to allGuiHwnds on show.
 
 				if (lastfound)
