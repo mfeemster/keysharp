@@ -1044,6 +1044,8 @@ MaximizeAllButton := MyGui.Add("Button", "x10 y+5", "Maximize all")
 MaximizeAllButton.OnEvent("Click", "MaximizeAll")
 MoveAllButton := MyGui.Add("Button", "x10 y+5", "Move me")
 MoveAllButton.OnEvent("Click", "MoveButton")
+CandyProgressButton := MyGui.Add("Button", "x10 y+5", "Candy progress")
+CandyProgressButton.OnEvent("Click", "CandyProgress")
 
 MinimizeAll()
 {
@@ -1068,6 +1070,70 @@ MoveButton()
 	x++
 	y++
 	ControlMove(x, y, w, h, MoveAllButton.Hwnd, MyGui)
+}
+
+candygui := Gui("-DPIScale +E0x02080000", "Candy Progress")
+candygui.OnEvent("Close", "CloseCandy")
+candygui.BackColor := "FFCC00"
+
+CandyText := candygui.Add("Text" ,"x0 y0 w436 h40 Center BackgroundTrans") ; best so far
+CandyText.SetFont("cFFFFFF")
+
+CandyProgress := candygui.Add("Progress", "x20 y30 w436 h36")
+
+Icon1 := candygui.Add("Picture",  "x0 y0 w18  h36  BackgroundTrans", "Icon1.ico")        ;left part
+Icon2 := candygui.Add("Picture","x18 y0 w400 h36  BackgroundTrans", "Icon2.ico" )
+Icon3 := candygui.Add("Picture", "x418 y0 w18 h36 BackgroundTrans", "Icon3.ico")
+
+Icon1.Parent := CandyProgress
+Icon2.Parent := CandyProgress
+Icon3.Parent := CandyProgress
+CandyText.Parent := Icon2
+
+CandyTimerFunc := Func("CandyTimer")
+
+CloseCandy() {
+	global CandyTimerFunc
+	SetTimer(CandyTimerFunc, 0)
+}
+
+CandyProgress()
+{
+	global
+	
+	if (!candygui.Visible)
+	{
+		candygui.Show("w480 h150")
+		SetTimer(CandyTimerFunc, 200)
+	}
+	else
+		candygui.Close()
+}
+
+candyvalue := 0
+
+CandyTimer()
+{
+	global
+	
+	if (candyvalue >= 33) and (candyvalue <= 66) { ; These color changes don't seem to work.
+		CandyProgress.Opt("cPurple")
+	}
+	else if (candyvalue >= 66) {
+		CandyProgress.Opt("cAqua")
+	}       
+	else {
+		CandyProgress.Opt("cBlack")
+	}
+	
+	CandyProgress.Value := candyvalue
+	CandyText.Text := candyvalue . "%"
+	candyvalue := candyvalue + 1
+	if (candyvalue > 100)
+	{
+		Sleep(1000)
+		candyvalue := 0
+	}
 }
 
 #if WINDOWS

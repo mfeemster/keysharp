@@ -273,6 +273,12 @@
 			set => form.Text = value.As();
 		}
 
+		public object Visible
+		{
+			get => form.Visible;
+			set => form.Visible = value.Ab();
+		}
+
 		internal Font Font { get; set; }
 
 		internal Control LastContainer { get; set; }

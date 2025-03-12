@@ -295,9 +295,9 @@ class class1
 			
 	+ PCRE exceptions are not thrown when there is an error, instead C# regex exceptions are thrown.
 	+ To learn more about C# regular expressions, see [here](https://learn.microsoft.com/en-us/dotnet/standard/base-types/regular-expressions).
-				
+
 ###	Additions/Improvements: Keysharp has added/improved the following: ###
-* Buffer includes an `__Item[]` indexer which can be used to read a byte at a 1-based offset.
+* Buffer has an `__Item[]` indexer which can be used to read a byte at a 1-based offset.
 * Add new methods to `Array`:
 	+ `Add(value) => Integer` : Adds a single element to the array.
 		+ This should be more efficient than `Push(values*)` when adding a single item because it's not variadic. It also returns the length of the array after the add completes.
@@ -336,6 +336,7 @@ class class1
 * `TabControl` supports a new method `SetTabIcon(tabIndex, imageIndex)` to relieve the caller of having to use `SendMessage()`.
 * `TreeView` supports a new method `GetNode(nodeIndex) => TreeNode` which retrieves a raw winforms TreeNode object based on a passed in ID.
 * Gui controls support taking a boolean `Autosize` (default: `false`) argument in the `Add()` method to allow them to optimally size themselves.
+* `Gui` has a new property named `Visible` which get/set whether the window is visible or not.
 * A new function `ShowDebug()` to show the main window and focus the debug output tab.
 * `EnvUpdate()` is retained to provide for a cross platform way to update environment variables.
 * The 40 character limit for hotstring abbreviations has been removed. There is no limit to the length.
