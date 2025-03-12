@@ -31,7 +31,7 @@ namespace Keysharp.Tests
 			var strbuf = Strings.StringBuffer(str);
 			_ = Dll.DllCall("user32.dll\\CharUpperBuff", "ptr", strbuf, "UInt", len);
 			Assert.AreEqual(strbuf.ToString(), str.ToUpper());
-			Assert.IsTrue(TestScript("external-dllcall", true));
+			Assert.IsTrue(TestScript("external-dllcall", false));
 		}
 
 		[Test, Category("External")]

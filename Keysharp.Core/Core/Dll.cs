@@ -254,81 +254,7 @@ namespace Keysharp.Core
 							value = Marshal.PtrToStringUni((IntPtr)value);
 					}
 
-					//Ensure arguments passed in are in the proper format when writing back.
-					for (int pi = 0, ai = 0; pi < parameters.Length; pi += 2, ++ai)
-					{
-						if (pi < parameters.Length - 1)
-						{
-							var p0 = parameters[pi];
-							var p1 = parameters[pi + 1];
-
-							if (p0 is string ps)
-							{
-								if (helper.args[ai] is IntPtr aip && (ps[ ^ 1] == '*' || ps[ ^ 1] == 'p'))
-								{
-									if (ps.EndsWith("uint*") || ps.EndsWith("uintp"))
-									{
-										var tempui = *((uint*)aip.ToPointer());
-										var templ = (long)tempui;
-										parameters[pi + 1] = templ;
-									}
-									else if (ps.EndsWith("int*") || ps.EndsWith("intp"))
-									{
-										var tempi = *((int*)aip.ToPointer());
-										var templ = (long)tempi;
-										parameters[pi + 1] = templ;
-									}
-									else if (ps.EndsWith("int64*") || ps.EndsWith("int64p"))
-									{
-										var templ = *((long*)aip.ToPointer());
-										parameters[pi + 1] = templ;
-									}
-									else if (ps.EndsWith("double*") || ps.EndsWith("doublep"))
-									{
-										var tempd = *((double*)aip.ToPointer());
-										parameters[pi + 1] = tempd;
-									}
-									else if (ps.EndsWith("float*") || ps.EndsWith("floatp"))
-									{
-										var tempf = *((float*)aip.ToPointer());
-										var tempd = (double)tempf;
-										parameters[pi + 1] = tempd;
-									}
-									else if (ps.EndsWith("ushort*") || ps.EndsWith("ushortp"))
-									{
-										var tempus = *((ushort*)aip.ToPointer());
-										var templ = (long)tempus;
-										parameters[pi + 1] = templ;
-									}
-									else if (ps.EndsWith("short*") || ps.EndsWith("shortp"))
-									{
-										var temps = *((short*)aip.ToPointer());
-										var templ = (long)temps;
-										parameters[pi + 1] = templ;
-									}
-									else if (ps.EndsWith("uchar*") || ps.EndsWith("ucharp"))
-									{
-										var tempub = *((byte*)aip.ToPointer());
-										var templ = (long)tempub;
-										parameters[pi + 1] = templ;
-									}
-									else if (ps.EndsWith("char*") || ps.EndsWith("charp"))
-									{
-										var tempb = *((sbyte*)aip.ToPointer());
-										var templ = (long)tempb;
-										parameters[pi + 1] = templ;
-									}
-								}
-							}
-
-							//If they passed in a ComObject with Ptr as an address, make that address into a __ComObject.
-							if (p1 is ComObject co)
-							{
-								object obj = co.Ptr;
-								co.Ptr = obj;//Reassign to ensure pointers are properly cast to __ComObject.
-							}
-						}
-					}
+					FixParamTypesAndCopyBack(parameters, helper.args);
 
 					if (value is int i)
 						return (long)i;
@@ -357,7 +283,9 @@ namespace Keysharp.Core
 			else if (function is Delegate del)
 			{
 				var helper = new DllArgumentHelper(parameters);
-				return del.DynamicInvoke(helper.args);
+				var value = del.DynamicInvoke(helper.args);
+				FixParamTypesAndCopyBack(parameters, helper.args);
+				return value;
 			}
 			else
 			{
@@ -384,8 +312,9 @@ namespace Keysharp.Core
 				try
 				{
 					var comHelper = new ComArgumentHelper(parameters);
-					var val = CallDel(address, comHelper.args);
-					return val;
+					var value = CallDel(address, comHelper.args);
+					FixParamTypesAndCopyBack(parameters, [.. comHelper.args.Cast<nint>().Select(x => (object)x)]);
+					return value;
 				}
 				catch (Exception ex)
 				{
@@ -481,6 +410,96 @@ namespace Keysharp.Core
 			}
 
 			return IntPtr.Zero;
+		}
+
+		private static unsafe void FixParamTypesAndCopyBack(object[] parameters, object[] args)
+		{
+			//Ensure arguments passed in are in the proper format when writing back.
+			for (int pi = 0, ai = 0; pi < parameters.Length; pi += 2, ++ai)
+			{
+				if (pi < parameters.Length - 1)
+				{
+					var p0 = parameters[pi];
+					var p1 = parameters[pi + 1];
+
+					if (p0 is string ps)
+					{
+						if (args[ai] is IntPtr aip && (ps[ ^ 1] == '*' || ps[ ^ 1] == 'p'))
+						{
+							if (ps.EndsWith("uint*") || ps.EndsWith("uintp"))
+							{
+								var tempui = *((uint*)aip.ToPointer());
+								var templ = (long)tempui;
+								//Marshal.WriteInt64(aip, templ);//Write back so this works without using a reference. Assume it has at least 8 bytes to store.
+								parameters[pi + 1] = templ;
+							}
+							else if (ps.EndsWith("int*") || ps.EndsWith("intp"))
+							{
+								var tempi = *((int*)aip.ToPointer());
+								var templ = (long)tempi;
+								//Marshal.WriteInt64(aip, templ);
+								parameters[pi + 1] = templ;
+							}
+							else if (ps.EndsWith("int64*") || ps.EndsWith("int64p"))
+							{
+								var templ = *((long*)aip.ToPointer());
+								//Marshal.WriteInt64(aip, templ);
+								parameters[pi + 1] = templ;
+							}
+							else if (ps.EndsWith("double*") || ps.EndsWith("doublep"))
+							{
+								var tempd = *((double*)aip.ToPointer());
+								//var bytes = BitConverter.GetBytes(tempd);
+								//Marshal.Copy(bytes, 0, aip, bytes.Length);
+								parameters[pi + 1] = tempd;
+							}
+							else if (ps.EndsWith("float*") || ps.EndsWith("floatp"))
+							{
+								var tempf = *((float*)aip.ToPointer());
+								var tempd = (double)tempf;
+								//var bytes = BitConverter.GetBytes(tempd);
+								//Marshal.Copy(bytes, 0, aip, bytes.Length);
+								parameters[pi + 1] = tempd;
+							}
+							else if (ps.EndsWith("ushort*") || ps.EndsWith("ushortp"))
+							{
+								var tempus = *((ushort*)aip.ToPointer());
+								var templ = (long)tempus;
+								//Marshal.WriteInt64(aip, templ);
+								parameters[pi + 1] = templ;
+							}
+							else if (ps.EndsWith("short*") || ps.EndsWith("shortp"))
+							{
+								var temps = *((short*)aip.ToPointer());
+								var templ = (long)temps;
+								//Marshal.WriteInt64(aip, templ);
+								parameters[pi + 1] = templ;
+							}
+							else if (ps.EndsWith("uchar*") || ps.EndsWith("ucharp"))
+							{
+								var tempub = *((byte*)aip.ToPointer());
+								var templ = (long)tempub;
+								//Marshal.WriteInt64(aip, templ);
+								parameters[pi + 1] = templ;
+							}
+							else if (ps.EndsWith("char*") || ps.EndsWith("charp"))
+							{
+								var tempb = *((sbyte*)aip.ToPointer());
+								var templ = (long)tempb;
+								//Marshal.WriteInt64(aip, templ);
+								parameters[pi + 1] = templ;
+							}
+						}
+					}
+
+					//If they passed in a ComObject with Ptr as an address, make that address into a __ComObject.
+					if (p1 is ComObject co)
+					{
+						object obj = co.Ptr;
+						co.Ptr = obj;//Reassign to ensure pointers are properly cast to __ComObject.
+					}
+				}
+			}
 		}
 
 		/// <summary>

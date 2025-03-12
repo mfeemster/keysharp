@@ -160,6 +160,55 @@ if (dest == 1.0)
 else
     FileAppend "fail", "*"
 
+; This tests the regular DllCall() and the CallDel() path using ComArgumentHelper.
+; I don't know what it's supposed to be doing or how it works, but it appears to be
+; dynamically invoking assembly code to implement the following C function.
+/*
+void AddOne(int *i)
+{
+    (*i)++;
+    return;
+}
+*/
+
+ptr := MCode('2,x64:gwEBww==')
+
+i := -2
+DllCall(ptr, "int*", &i)
+
+if (i == -1)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+
+i := -1
+DllCall(ptr, "int*", &i)
+
+if (i == 0)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+
+MCode(mcode) {
+	static e := Map('1', 4, '2', 1), c := (A_PtrSize=8) ? "x64" : "x86"
+  
+	if (!regexmatch(mcode, "^([0-9]+),(" c ":|.*?," c ":)([^,]+)", &m))
+		return
+
+	if (!DllCall("crypt32\CryptStringToBinary", "str", m.3, "uint", 0, "uint", e[m.1], "ptr", 0, "uint*", &s := 0, "ptr", 0, "ptr", 0))
+		return
+		
+	p := DllCall("GlobalAlloc", "uint", 0, "ptr", s, "ptr")
+	
+	if (c="x64")
+		DllCall("VirtualProtect", "ptr", p, "ptr", s, "uint", 0x40, "uint*", &op := 0)
+	
+	if (DllCall("crypt32\CryptStringToBinary", "str", m.3, "uint", 0, "uint", e[m.1], "ptr", p, "uint*", &s, "ptr", 0, "ptr", 0))
+		return p
+
+	DllCall("GlobalFree", "ptr", p)
+}
+
 shell := ComObject("WScript.Shell")
 exec := shell.Exec("Notepad.exe")
 exec := shell.Run("Notepad.exe")
