@@ -214,6 +214,43 @@ namespace Keysharp.Core.COM
 			Flags = 0L;
 		}
 
+		internal VARIANT ToVariant()
+		{
+			var v = new VARIANT()
+			{
+				vt = (ushort)VarType
+			};
+
+			if (Ptr is long l)//Put most common first.
+				v.data.llVal = l;
+			else if (Ptr is double d)
+				v.data.dblVal = d;
+			else if (Ptr is string str)
+				v.data.bstrVal = Marshal.StringToBSTR(str);
+			else if (Ptr is IntPtr ip)
+				v.data.pdispVal = ip;//Works for COM interfaces, safearray and other pointer types.
+			else if (Ptr is int i)
+				v.data.lVal = i;
+			else if (Ptr is uint ui)
+				v.data.ulVal = ui;
+			else if (Ptr is ulong ul)
+				v.data.ullVal = ul;
+			else if (Ptr is float f)
+				v.data.fltVal = f;
+			else if (Ptr is byte b)
+				v.data.bVal = b;
+			else if (Ptr is sbyte sb)
+				v.data.cVal = sb;
+			else if (Ptr is short s)
+				v.data.iVal = s;
+			else if (Ptr is ushort us)
+				v.data.uiVal = us;
+			else if (Ptr is bool bl)
+				v.data.boolVal = (short)(bl ? -1 : 0);
+
+			return v;
+		}
+
 		internal static void ValueToVariant(object val, ComObject variant)
 		{
 			if (val is string s)

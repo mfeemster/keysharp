@@ -397,6 +397,8 @@ namespace Keysharp.Core.COM
 				ptr = co.Ptr;
 			else if (ptr is IntPtr ip)
 				ptr = ip;
+			else if (ptr is long l)
+				ptr = new IntPtr(l);
 
 			if (ptr is IntPtr ip2)
 			{
@@ -417,6 +419,8 @@ namespace Keysharp.Core.COM
 				ptr = co.Ptr;
 			else if (ptr is IntPtr ip)
 				ptr = ip;
+			else if (ptr is long l)
+				ptr = new IntPtr(l);
 
 			if (ptr is IntPtr ip2)
 				ptr = Marshal.GetObjectForIUnknown(ip2);
@@ -445,6 +449,8 @@ namespace Keysharp.Core.COM
 				ptr = comObj;
 			else if (comObj is IntPtr ip)
 				ptr = ip;
+			else if (comObj is long l)
+				ptr = new IntPtr(l);
 			else
 				return Errors.ErrorOccurred(err = new ValueError($"The passed in object was not a ComObject or a raw COM interface.")) ? throw err : null;
 
@@ -460,56 +466,27 @@ namespace Keysharp.Core.COM
 			var helper = new ComArgumentHelper(parameters);
 			var ret = CallDel(pUnk, Marshal.ReadIntPtr(IntPtr.Add(pVtbl, idx * sizeof(IntPtr))), helper.args);
 
-			for (int p = 0, a = 0; p < parameters.Length; p += 2, a++)
+			for (int pi = 0, ai = 0; pi < parameters.Length; pi += 2, ++ai)
 			{
-				var ps = parameters[p].ToString().ToLower();
+				if (pi < parameters.Length - 1)
+				{
+					var p0 = parameters[pi];
+					var p1 = parameters[pi + 1];
 
-				if (ps == "float*")
-				{
-					var fptr = (float*)helper.args[a].ToPointer();
-					var f = *fptr;
-					var d = (double)f;
-					parameters[p + 1] = d;
-				}
-				else if (ps == "double*")
-				{
-					var dptr = (double*)helper.args[a].ToPointer();
-					parameters[p + 1] = *dptr;
-				}
-				else if (ps == "int*")
-				{
-					var pp = (int*)helper.args[a].ToPointer();
-					parameters[p + 1] = *pp;
-				}
-				else if (ps == "uint*")
-				{
-					var pp = (uint*)helper.args[a].ToPointer();
-					parameters[p + 1] = *pp;
-				}
-				else if (ps == "short*")
-				{
-					var pp = (short*)helper.args[a].ToPointer();
-					parameters[p + 1] = *pp;
-				}
-				else if (ps == "ushort*")
-				{
-					var pp = (ushort*)helper.args[a].ToPointer();
-					parameters[p + 1] = *pp;
-				}
-				else if (ps == "char*")
-				{
-					var pp = (sbyte*)helper.args[a].ToPointer();
-					parameters[p + 1] = *pp;
-				}
-				else if (ps == "uchar*")
-				{
-					var pp = (byte*)helper.args[a].ToPointer();
-					parameters[p + 1] = *pp;
-				}
-				else if (ps.EndsWith('*') || ps.EndsWith("p"))
-				{
-					var pp = (long*)helper.args[a].ToPointer();
-					parameters[p + 1] = *pp;
+					//If they passed in a ComObject with Ptr as an address, make that address into a __ComObject.
+					/*  if (p1 is ComObject co2)
+					    {
+					    object obj = co2.Ptr;
+					    co2.Ptr = obj;//Reassign to ensure pointers are properly cast to __ComObject.
+					    }
+
+					    else*/ if (p0 is string ps)
+					{
+						var aip = helper.args[ai];
+
+						if (ps[ ^ 1] == '*' || ps[ ^ 1] == 'p')
+							Dll.FixParamTypeAndCopyBack(ref p1, ps, aip);
+					}
 				}
 			}
 
