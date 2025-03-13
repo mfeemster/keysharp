@@ -35,9 +35,20 @@
 			if (Core.Gui.allGuiHwnds.TryGetValue(hwnd, out var gui))
 				return gui;
 
+			foreach (Form f in Application.OpenForms.Cast<Form>())
+				if (f is KeysharpForm ksf)
+					if (ksf.Tag is WeakReference<Gui> wr && wr.TryGetTarget(out var g))
+						if (f.Handle == hwnd)
+							return g;
+
+			//Probably isn't needed because it won't have a different result than the OpenForms check above.
+			if (Control.FromHandle(new nint(hwnd)) is Control ctrl)
+				if (ctrl is KeysharpForm ksf && ksf.Tag is WeakReference<Gui> wr && wr.TryGetTarget(out var g))
+					return g;
+
 			if (recurse)
 			{
-				if (Control.FromHandle(new IntPtr(hwnd)) is Control c)
+				if (Control.FromHandle(new nint(hwnd)) is Control c)
 				{
 					while (c.Parent is Control cp)
 					{

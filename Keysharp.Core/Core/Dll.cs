@@ -90,7 +90,7 @@ namespace Keysharp.Core
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if there is any problem creating the dynamic assembly/function or calling it.</exception>
 		/// <exception cref="OSError">A <see cref="OSError"/> exception is thrown if the return type was HRESULT and the return value was negative.</exception>
 		/// <exception cref="TypeError">A <see cref="TypeError"/> exception is thrown if any of the arguments was required to have a .Ptr member, but none was found.</exception>
-		public static object DllCall(object function, params object[] parameters)
+		public static unsafe object DllCall(object function, params object[] parameters)
 		{
 			//You should some day add the ability to use this with .NET dlls, exposing some type of reflection to the script.//TODO
 			Error err;
@@ -254,17 +254,7 @@ namespace Keysharp.Core
 							value = Marshal.PtrToStringUni((IntPtr)value);
 					}
 
-					//If they passed in a ComObject with Ptr as an address, make that address into a __ComObject.
-					for (var pi = 0; pi < parameters.Length; pi++)
-					{
-						var p = parameters[pi];
-
-						if (p is ComObject co)
-						{
-							object obj = co.Ptr;
-							co.Ptr = obj;//Reassign to ensure pointers are properly cast to __ComObject.
-						}
-					}
+					FixParamTypesAndCopyBack(parameters, helper.args);
 
 					if (value is int i)
 						return (long)i;
@@ -293,7 +283,9 @@ namespace Keysharp.Core
 			else if (function is Delegate del)
 			{
 				var helper = new DllArgumentHelper(parameters);
-				return del.DynamicInvoke(helper.args);
+				var value = del.DynamicInvoke(helper.args);
+				FixParamTypesAndCopyBack(parameters, helper.args);
+				return value;
 			}
 			else
 			{
@@ -320,8 +312,9 @@ namespace Keysharp.Core
 				try
 				{
 					var comHelper = new ComArgumentHelper(parameters);
-					var val = CallDel(address, comHelper.args);
-					return val;
+					var value = CallDel(address, comHelper.args);
+					FixParamTypesAndCopyBack(parameters, [.. comHelper.args.Cast<nint>().Select(x => (object)x)]);
+					return value;
 				}
 				catch (Exception ex)
 				{
@@ -417,6 +410,97 @@ namespace Keysharp.Core
 			}
 
 			return IntPtr.Zero;
+		}
+
+		internal static unsafe void FixParamTypeAndCopyBack(ref object p, string ps, IntPtr aip)
+		{
+			if (ps.EndsWith("uint*", StringComparison.OrdinalIgnoreCase) || ps.EndsWith("uintp", StringComparison.OrdinalIgnoreCase))
+			{
+				var tempui = *(uint*)aip.ToPointer();
+				var templ = (long)tempui;
+				p = templ;
+			}
+			else if (ps.EndsWith("int*", StringComparison.OrdinalIgnoreCase) || ps.EndsWith("intp", StringComparison.OrdinalIgnoreCase))
+			{
+				var tempi = *(int*)aip.ToPointer();
+				var templ = (long)tempi;
+				p = templ;
+			}
+			else if (ps.EndsWith("int64*", StringComparison.OrdinalIgnoreCase) || ps.EndsWith("int64p", StringComparison.OrdinalIgnoreCase))
+			{
+				var templ = *(long*)aip.ToPointer();
+				p = templ;
+			}
+			else if (ps.EndsWith("double*", StringComparison.OrdinalIgnoreCase) || ps.EndsWith("doublep", StringComparison.OrdinalIgnoreCase))
+			{
+				var tempd = *(double*)aip.ToPointer();
+				p = tempd;
+			}
+			else if (ps.EndsWith("float*", StringComparison.OrdinalIgnoreCase) || ps.EndsWith("floatp", StringComparison.OrdinalIgnoreCase))
+			{
+				var tempf = *(float*)aip.ToPointer();
+				var tempd = (double)tempf;
+				p = tempd;
+			}
+			else if (ps.EndsWith("ushort*", StringComparison.OrdinalIgnoreCase) || ps.EndsWith("ushortp", StringComparison.OrdinalIgnoreCase))
+			{
+				var tempus = *(ushort*)aip.ToPointer();
+				var templ = (long)tempus;
+				p = templ;
+			}
+			else if (ps.EndsWith("short*", StringComparison.OrdinalIgnoreCase) || ps.EndsWith("shortp", StringComparison.OrdinalIgnoreCase))
+			{
+				var temps = *(short*)aip.ToPointer();
+				var templ = (long)temps;
+				p = templ;
+			}
+			else if (ps.EndsWith("uchar*", StringComparison.OrdinalIgnoreCase) || ps.EndsWith("ucharp", StringComparison.OrdinalIgnoreCase))
+			{
+				var tempub = *(byte*)aip.ToPointer();
+				var templ = (long)tempub;
+				p = templ;
+			}
+			else if (ps.EndsWith("char*", StringComparison.OrdinalIgnoreCase) || ps.EndsWith("charp", StringComparison.OrdinalIgnoreCase))
+			{
+				var tempb = *(sbyte*)aip.ToPointer();
+				var templ = (long)tempb;
+				p = templ;
+			}
+			else if (ps.EndsWith("str*", StringComparison.OrdinalIgnoreCase))
+			{
+				var s = (long*)aip.ToPointer();
+				p = Strings.StrGet(new IntPtr(*s));
+			}
+			else if (ps.EndsWith('*') || ps.EndsWith("p", StringComparison.OrdinalIgnoreCase))//Last attempt if nothing else worked.
+			{
+				var pp = (long*)aip.ToPointer();
+				p = *pp;
+			}
+		}
+
+		private static unsafe void FixParamTypesAndCopyBack(object[] parameters, object[] args)
+		{
+			//Ensure arguments passed in are in the proper format when writing back.
+			for (int pi = 0, ai = 0; pi < parameters.Length; pi += 2, ++ai)
+			{
+				if (pi < parameters.Length - 1)
+				{
+					var p0 = parameters[pi];
+					//var p1 = parameters[pi + 1];
+
+					//If they passed in a ComObject with Ptr as an address, make that address into a __ComObject.
+					if (parameters[pi + 1] is ComObject co)
+					{
+						object obj = co.Ptr;
+						co.Ptr = obj;//Reassign to ensure pointers are properly cast to __ComObject.
+					}
+					else if (p0 is string ps)
+					{
+						if (args[ai] is IntPtr aip && (ps[ ^ 1] == '*' || ps[ ^ 1] == 'p'))
+							FixParamTypeAndCopyBack(ref parameters[pi + 1], ps, aip);//Must reference directly into the array, not a temp variable.
+					}
+				}
+			}
 		}
 
 		/// <summary>

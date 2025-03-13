@@ -491,7 +491,7 @@ Tab.UseTab("Second")
 ; └───────────────┘
 MyPictureBtn := MyGui.Add("Button", "cBlue s10 xp y+10", "Display a picture")
 MyPictureBtn.OnEvent("Click", "LoadPic")
-SlugLine := MyGui.Add("Text", "cBlue s10 w200 xp y800", "Picture will display above")
+SlugLine := MyGui.Add("Text", "cBlue s10 w200 xp y800", "Pictures will display above")
 
 #if WINDOWS
 DestroyPictureBtn := MyGui.Add("Button", "cBlue s10 xp y+10", "Destroy picture control")
@@ -1044,6 +1044,8 @@ MaximizeAllButton := MyGui.Add("Button", "x10 y+5", "Maximize all")
 MaximizeAllButton.OnEvent("Click", "MaximizeAll")
 MoveAllButton := MyGui.Add("Button", "x10 y+5", "Move me")
 MoveAllButton.OnEvent("Click", "MoveButton")
+CandyProgressButton := MyGui.Add("Button", "x10 y+5", "Candy progress")
+CandyProgressButton.OnEvent("Click", "CandyProgress")
 
 MinimizeAll()
 {
@@ -1068,6 +1070,70 @@ MoveButton()
 	x++
 	y++
 	ControlMove(x, y, w, h, MoveAllButton.Hwnd, MyGui)
+}
+
+candygui := Gui("-DPIScale +E0x02080000", "Candy Progress")
+candygui.OnEvent("Close", "CloseCandy")
+candygui.BackColor := "FFCC00"
+
+CandyText := candygui.Add("Text" ,"x0 y0 w436 h40 Center BackgroundTrans") ; best so far
+CandyText.SetFont("cFFFFFF")
+
+CandyProgress := candygui.Add("Progress", "x20 y30 w436 h36")
+
+Icon1 := candygui.Add("Picture",  "x0 y0 w18  h36  BackgroundTrans", "Icon1.ico")        ;left part
+Icon2 := candygui.Add("Picture","x18 y0 w400 h36  BackgroundTrans", "Icon2.ico" )
+Icon3 := candygui.Add("Picture", "x418 y0 w18 h36 BackgroundTrans", "Icon3.ico")
+
+Icon1.Parent := CandyProgress
+Icon2.Parent := CandyProgress
+Icon3.Parent := CandyProgress
+CandyText.Parent := Icon2
+
+CandyTimerFunc := Func("CandyTimer")
+
+CloseCandy() {
+	global CandyTimerFunc
+	SetTimer(CandyTimerFunc, 0)
+}
+
+CandyProgress()
+{
+	global
+	
+	if (!candygui.Visible)
+	{
+		candygui.Show("w480 h150")
+		SetTimer(CandyTimerFunc, 200)
+	}
+	else
+		candygui.Close()
+}
+
+candyvalue := 0
+
+CandyTimer()
+{
+	global
+	
+	if (candyvalue >= 33) and (candyvalue <= 66) { ; These color changes don't seem to work.
+		CandyProgress.Opt("cPurple")
+	}
+	else if (candyvalue >= 66) {
+		CandyProgress.Opt("cAqua")
+	}       
+	else {
+		CandyProgress.Opt("cBlack")
+	}
+	
+	CandyProgress.Value := candyvalue
+	CandyText.Text := candyvalue . "%"
+	candyvalue := candyvalue + 1
+	if (candyvalue > 100)
+	{
+		Sleep(1000)
+		candyvalue := 0
+	}
 }
 
 #if WINDOWS
@@ -2098,8 +2164,43 @@ GetLineCount()
 ; └───────────┘
 
 MyFirstPic := ""
+MySecondPic := ""
 Monkey := A_ScriptDir . A_DirSeparator . "monkey.ico"
 
+hSecondPic := GetIcon("W")
+GetIcon(Theme, W:=0, H:=0)
+{ ; v1.10
+    Local B64, B64Len, nBytes, Bin
+
+    B64 := ( Theme="W" ? "iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAMAAACdt4HsAAAAXVBMVEXruAD//+KFZEL13HH+/NiPclLsuwr9+c789cH887v46Jj45pP02GbtvhPEt5"
+    . "ruwh/67ar67amii22Zf2Dyz0rxz0nb1LfUyq7MwaSzooTuwiD499rx7tHn4sWrl3l1GphJAAABHUlEQVRYw+2WybLCIBBF3wUyCZmMUfMc/v8zLXeaC0IXW86+T9FAD3+FQiH"
+    . "Gv7NTa0w7WTfKo3vd4YNO96LwWhvsMLpOjz818NCsqfEaAXTa8Q8IckhJ4zOeDdLzy7M4IcIauYDv+38qpa67t6glCVQkiCTRGxY8dgLT/zwAC+6Se+xYUGFP96P+wIIFRLg2"
+    . "nUewgXBBgfUIBhA2KJg8giuIOShoPYIziDYoMB7BA4QRCW4CAadwVBUkKUwsWCC5RMuCIxib/pGeagPj0r/yZbiAGZOLyU8na4iMTm8oZ6WWO7ihJB9hUZ5i0oKmWnkETS1o6"
+    . "5viYlolg+U20DPq3NGWPVwzx3vugpG74uQuWWJGZ+f3mje/17xCoRDhBWODDIHAQPWnAAAAAElFTkSuQmCC" : Theme="I" ? "iVBORw0KGgoAAAANSUhEUgAAAEAAAABAC"
+    . "AMAAACdt4HsAAAAVFBMVEUzmf/w+P8ZRJmSyf/o9P/c5vOks9Pg8P/V6v/P6P/B4f+y2f+u1v+IxP9wuP9Npv9Eof88nv9tg7jH0ue7yOA6nf80VqFKZqmRosrR3O18kL9cdb"
+    . "Au8FSxAAABHElEQVRYw+2WyZaEIAxFO4JhKMSpyp7+/z9bdzYRk2xqxd2/e+AkIXw0Gg2OcUjRW+tjGkZ9ejIBTgQzqeKzsVBgzSzPZwcXuCzNG6hgRPHXA6o8XgLBvzwxKM/"
+    . "f/3bdortFhjNf3c4TzmSmfo4TuFlTANzzm1WUYir7BxH7sqMm+QH03RAkgnAzfyCiPpuDTDBUBQkKfkgVD1JVEKFguxTEqsBDQbfzTQS+KrBXgp4IrFjQHwJQCPyF4BMUV4gy"
+    . "QbwpIxUsVJDEjbQSAdNIo0wwMsPECQIzzqzAMA8KJ7C3S86QKmy67TI70onrE5E8qnUymYWimbJqsSxHfENyAfFq6xFxFa82/XLVr/d3fTD0Xxz9J0v/zWs0Ggx/07kMr8YqP"
+    . "fYAAAAASUVORK5CYII=" : Theme="S" ? "iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAMAAACdt4HsAAAAY1BMVEVCkwDw/+kVVySZyXXo+t/c7dbh9tTS7MHF5K+325yz2"
+    . "ZiQxGl6tktRnBRKmAvG28Jrj24yZzujvaHm9uBaoiDR5MzX78fW78avx62WspWJp4lbg19IdU5IlwlboiG70bd7m3xysmd2AAABTUlEQVRYw+2W226EIBCGOwMqKyqeD6tr+/"
+    . "5PWeO2oSjEsdzyJV5o8v+ZgzDzEQgErlhlKnrOe5HK9r46Zwn8IWH5LXnBOBzgrKDrsxgsxBlVz8ABI8lfD3DyeBEMtN7m4BE/MYsMLsgu+heDFTWVXz+9KP6TwIiIMyWJnIO"
+    . "NqEKsInjD8/sBlIhYk+qYOBMo9Wvi1q9go6kQMQKN+2xKsFEbCWxIp0FqreCmX4wvqdNAgIUnIn4aX4TToHcEUILB4DTgjgAUGHCSQaQDeIIJJ6TQLVh1vy2IwGQgFHFCfDtU"
+    . "5wBAENrYzIg4NzDqClDaKMF0mKDULaD8SOvhBGK9PSMcaWmHSeHOctIn1OM87QY1HGHkC2VBo4f6QqGGoNBWQnbjUu2Uak4DrvC91n0Hi+9o8x6uvuPdf8HwX3H8lyw6rUzFw"
+    . "Pmwr3mBQOCCb5bODse1hzUgAAAAAElFTkSuQmCC" : Theme="E" ? "iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAMAAACdt4HsAAAAS1BMVEXkAAD/7u1yHCTyd3eziovFo"
+    . "6T+5OPlCgqfbW/92dj7y8v6xcT4s7LOr6/2m5rwa2voISHmFRT2oJ/tTU3tTUy8l5ipfH6UXWD2oaDGo2xeAAABGUlEQVRYw+2W3W7DIAyFdyCB8VMIdN32/k+6SZ3SZBSbyr"
+    . "d8d1F0TmxiG79NJhOOLafojfEx5e11ddEBB4IuL8mtNviH0XZcf3V4gvsY1Wt00GPhV3SpI2l8g6AK4h/M4goG5iStA4OzfAKCJMqjfpYLjqzrXlFlKIBFqctRr9Q6EkI4CP4"
+    . "c2sdA9B923pV6fPSmfln2d/3ezHjqsJz1yF2DhNah1SN1DSJah1aP2DXwaB2+Gj1818DgzKe6c8MJM2yARd3TGDXwtAGfQqRT4A8xjR1ioguJ/42ZLmW+kDaymfhSDlQ7t/rW"
+    . "QZMDhW9nU8iRxg8UzQxVbqQ5Kx3r4ouFpYKgii9X4fUuXTCkK45wyRKueZPJhOEHEsMMXLgJ8a8AAAAASUVORK5CYII=" : "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYA"
+    . "AAAfFcSJAAAADUlEQVQImWOor69nBgAEfwGBGWiMoAAAAABJRU5ErkJggg==" )
+
+    nBytes :=  Floor((B64Len := StrLen(B64 := RTrim(B64,"=")))*3/4)
+    Bin    :=  Buffer(nBytes)
+
+    DllCall("Crypt32.dll\CryptStringToBinary", "str",B64, "int",B64Len, "int",1, "ptr",Bin,"uintp",nBytes, "Int",0, "Int",0)
+    Return DllCall("User32.dll\CreateIconFromResourceEx", "ptr",Bin, "int",nBytes, "int",1, "int",0x30000, "Int",W, "Int",H, "Int",0, "ptr")
+}
+
+Icon2 := "HICON:*" . hSecondPic ; The * is important so it can be reused.
 LoadPic() {
 	global
 	local x, y, w, h
@@ -2110,8 +2211,14 @@ LoadPic() {
 	else
 		MyFirstPic.Value := Monkey
 	
+	if (MySecondPic = "")
+		MySecondPic := MyGui.Add("Picture", "x520 y650 w100 h-1 border", Icon2)
+	else
+		MySecondPic.Value := Icon2
+		
 	Sleep(2000)
 	MyFirstPic.Value := ""
+	MySecondPic.Value := ""
 	Tab.UseTab()
 	; MyGui.Opts("+Redraw")
 }
@@ -2119,9 +2226,11 @@ LoadPic() {
 #if WINDOWS
 DestroyPic()
 {
-	global MyFirstPic
+	global MyFirstPic, MySecondPic
 	DllCall("DestroyWindow", "Ptr", MyFirstPic.Hwnd)
+	DllCall("DestroyWindow", "Ptr", MySecondPic.Hwnd)
 	MyFirstPic := ""
+	MySecondPic := ""
 }
 #endif
 

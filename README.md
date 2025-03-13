@@ -68,16 +68,19 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 	+ For example, a file with nothing but the line `x++` in it, will end with a variable named x which has the value of 1.
 * Function objects behave differently in a few ways.
 	+ The underlying function object class is called `FuncObj`. This was named so, instead of `Func`, because C# already contains a built in class named `Func`.
-	+ Function objects will need to be created by passing the name of the function as a string to `Func()`. They are not all created automatically on script startup.
-	+ This can be done by passing the name of the desired function as a string, and optionally an object and a parameter count like so:
+	+ Function objects can be created by passing the name of the function as as a direct reference or as a string to `Func()`.
+	+ This can be done by passing the name of the desired function as a direct reference or as a string, and optionally an object and a parameter count like so:
+		+ `Func(functionName [, object, paramCount])`.
 		+ `Func("functionName" [, object, paramCount])`.
 	+ Each call to these functions returns a new unique function object. For a given function, it's best to create one object and reference that throughout the script.
-	+ For built-in functions which take a function object as a parameter, you can just pass the string name of the function rather than having to call `Func()` like so:
+	+ For built-in functions which take a function object as a parameter, there are four ways to call them:
 ```
 	Func1() {
 	}
-	
-	SetTimer("Func1") ; Just pass the name of the function.
+	SetTimer(Func1) ; Pass a direct reference to the function.
+	SetTimer("Func1") ; Pass the name of the function.
+	SetTimer(Func(Func1)) ; Pass a direct reference to the function as an argument to Func().
+	SetTimer(Func("Func1")) ; Pass the name of the function as an argument to Func().
 ```
 * Closures are not supported. The current behaviour is that a nested function (including anonymous functions) is automatically converted to a normal top-level function.
 * Exception classes aren't, and can't be, derived from `KeysharpObject`.
@@ -292,9 +295,9 @@ class class1
 			
 	+ PCRE exceptions are not thrown when there is an error, instead C# regex exceptions are thrown.
 	+ To learn more about C# regular expressions, see [here](https://learn.microsoft.com/en-us/dotnet/standard/base-types/regular-expressions).
-				
+
 ###	Additions/Improvements: Keysharp has added/improved the following: ###
-* Buffer includes an `__Item[]` indexer which can be used to read a byte at a 1-based offset.
+* Buffer has an `__Item[]` indexer which can be used to read a byte at a 1-based offset.
 * Add new methods to `Array`:
 	+ `Add(value) => Integer` : Adds a single element to the array.
 		+ This should be more efficient than `Push(values*)` when adding a single item because it's not variadic. It also returns the length of the array after the add completes.
@@ -333,6 +336,7 @@ class class1
 * `TabControl` supports a new method `SetTabIcon(tabIndex, imageIndex)` to relieve the caller of having to use `SendMessage()`.
 * `TreeView` supports a new method `GetNode(nodeIndex) => TreeNode` which retrieves a raw winforms TreeNode object based on a passed in ID.
 * Gui controls support taking a boolean `Autosize` (default: `false`) argument in the `Add()` method to allow them to optimally size themselves.
+* `Gui` has a new property named `Visible` which get/set whether the window is visible or not.
 * A new function `ShowDebug()` to show the main window and focus the debug output tab.
 * `EnvUpdate()` is retained to provide for a cross platform way to update environment variables.
 * The 40 character limit for hotstring abbreviations has been removed. There is no limit to the length.
