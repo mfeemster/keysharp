@@ -318,6 +318,12 @@ namespace Keysharp.Core
 			addExStyle = _addExStyle;
 			removeStyle = _removeStyle;
 			removeExStyle = _removeExStyle;
+
+			if ((addExStyle & 0x20) == 0x20)
+			{
+				SetStyle(ControlStyles.Opaque, true);
+				SetStyle(ControlStyles.OptimizedDoubleBuffer, false);
+			}
 		}
 
 #if WINDOWS
@@ -648,6 +654,13 @@ namespace Keysharp.Core
 			addExStyle = _addExStyle;
 			removeStyle = _removeStyle;
 			removeExStyle = _removeExStyle;
+
+			if ((addExStyle & 0x20) == 0x20)
+			{
+				SetStyle(ControlStyles.Opaque, true);
+				SetStyle(ControlStyles.OptimizedDoubleBuffer, false);
+			}
+			
 		}
 
 		protected override void OnPaint(PaintEventArgs pe)
@@ -775,11 +788,11 @@ namespace Keysharp.Core
 				base.OnPaint(e);
 		}
 
-		protected override void OnPaintBackground(PaintEventArgs e)
-		{
-			if (!customColors)
-				base.OnPaintBackground(e);
-		}
+		//protected override void OnPaintBackground(PaintEventArgs e)
+		//{
+		//  if (!customColors)
+		//      base.OnPaintBackground(e);
+		//}
 
 #if WINDOWS
 

@@ -1076,19 +1076,14 @@ candygui := Gui("-DPIScale +E0x02080000", "Candy Progress")
 candygui.OnEvent("Close", "CloseCandy")
 candygui.BackColor := "FFCC00"
 
-CandyText := candygui.Add("Text" ,"x0 y0 w436 h40 Center BackgroundTrans") ; best so far
+CandyProgress := candygui.Add("Progress", "x15 y30 w436 h36 BackgroundSilver")
+
+Icon1 := candygui.Add("Picture", "x15  y30 w18  h36 BackgroundTrans", "Icon1.ico")
+Icon2 := candygui.Add("Picture", "x33  y30 w400 h36 BackgroundTrans", "Icon2.ico")
+Icon3 := candygui.Add("Picture", "x433 y30 w18  h36 BackgroundTrans", "Icon3.ico")
+
+CandyText := candygui.Add("Text" ,"x15 y30 w436 h40 Center BackgroundTrans")
 CandyText.SetFont("cFFFFFF")
-
-CandyProgress := candygui.Add("Progress", "x20 y30 w436 h36")
-
-Icon1 := candygui.Add("Picture",  "x0 y0 w18  h36  BackgroundTrans", "Icon1.ico")        ;left part
-Icon2 := candygui.Add("Picture","x18 y0 w400 h36  BackgroundTrans", "Icon2.ico" )
-Icon3 := candygui.Add("Picture", "x418 y0 w18 h36 BackgroundTrans", "Icon3.ico")
-
-Icon1.Parent := CandyProgress
-Icon2.Parent := CandyProgress
-Icon3.Parent := CandyProgress
-CandyText.Parent := Icon2
 
 CandyTimerFunc := Func("CandyTimer")
 
@@ -1103,8 +1098,8 @@ CandyProgress()
 	
 	if (!candygui.Visible)
 	{
-		candygui.Show("w480 h150")
-		SetTimer(CandyTimerFunc, 200)
+		candygui.Show("w485 h145")
+		SetTimer(CandyTimerFunc, 100)
 	}
 	else
 		candygui.Close()
