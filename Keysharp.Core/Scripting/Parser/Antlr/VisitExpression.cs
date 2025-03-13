@@ -8,6 +8,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Security.AccessControl;
 using System.Configuration;
+using System.Xml.Linq;
 
 namespace Keysharp.Scripting
 {
@@ -94,8 +95,7 @@ namespace Keysharp.Scripting
 
         public override SyntaxNode VisitIdentifierExpression([NotNull] IdentifierExpressionContext context)
         {
-            var result = Visit(context.identifier());
-            return result;
+            return Visit(context.identifier());
         }
 
         public override SyntaxNode VisitPropertyName([NotNull] PropertyNameContext context)
@@ -191,7 +191,7 @@ namespace Keysharp.Scripting
         public override SyntaxNode VisitExpressionStatement([Antlr4.Runtime.Misc.NotNull] ExpressionStatementContext context)
         {
             var sequence = context.expressionSequence();
-            if (parser.currentFunc.Name == "_ks_UserMainCode" && sequence.ChildCount == 1 && (sequence.expression(0) is FunctionExpressionContext || sequence.expression(0) is FatArrowExpressionContext))
+            if (parser.currentFunc.Name == Keywords.AutoExecSectionName && sequence.ChildCount == 1 && (sequence.expression(0) is FunctionExpressionContext || sequence.expression(0) is FatArrowExpressionContext))
             {
                 return (MethodDeclarationSyntax)Visit(sequence.expression(0));
             }
@@ -632,12 +632,6 @@ namespace Keysharp.Scripting
         private SyntaxNode HandleAssignmentExpression(IParseTree left, IParseTree right, string assignmentOperator)
         {
             var leftExpression = (ExpressionSyntax)Visit(left);
-            if (leftExpression is IdentifierNameSyntax name)
-            {
-                var addedName = parser.MaybeAddVariableDeclaration(name.Identifier.Text);
-                if (addedName != null && addedName != name.Identifier.Text)
-                    leftExpression = SyntaxFactory.IdentifierName(addedName);
-            }
             var rightExpression = (ExpressionSyntax)Visit(right);
 
             return HandleAssignment(leftExpression, rightExpression, assignmentOperator);
@@ -1345,7 +1339,8 @@ namespace Keysharp.Scripting
         private bool IsGetPropertyInvocation(InvocationExpressionSyntax invocation)
         {
             return (invocation.Expression is MemberAccessExpressionSyntax memberAccess &&
-                memberAccess.Name.Identifier.Text == "GetPropertyValue");
+                memberAccess.Name.Identifier.Text == "GetPropertyValue")
+                || (invocation.Expression is QualifiedNameSyntax qualifiedName && qualifiedName.Right.Identifier.Text == "GetPropertyValue");
         }
 
         private bool IsIndexAccessInvocation(InvocationExpressionSyntax invocation)
@@ -1387,7 +1382,8 @@ namespace Keysharp.Scripting
         private InvocationExpressionSyntax GenerateMemberDotAccess(PrimaryExpressionContext baseIdentifier, MemberIdentifierContext memberIdentifier)
         {
             // Visit the base expression (e.g., `arr` in `arr.Length`)
-            var baseExpression = (ExpressionSyntax)Visit(baseIdentifier);
+            ExpressionSyntax baseExpression;
+            baseExpression = (ExpressionSyntax)Visit(baseIdentifier);
 
             // Determine the property or method being accessed
             ExpressionSyntax memberExpression = (ExpressionSyntax)Visit(memberIdentifier);

@@ -166,7 +166,7 @@
 					_ = Threads.EndThread(__pushed);
 				}, true))//Pop on exception because EndThread() above won't be called.
 				{
-					if (!Script.persistent)//An exception was thrown so the generated ExitApp() call in _ks_UserMainCode() will not have been called, so call it here.
+					if (!Script.persistent)//An exception was thrown so the generated ExitApp() call in AutoExecSection() will not have been called, so call it here.
 					{
 						_ = Keysharp.Core.Flow.ExitApp(1);
 					}
@@ -364,7 +364,7 @@
 
 		public static void ExitIfNotPersistent(Flow.ExitReasons exitReason = Flow.ExitReasons.None)
 		{
-			//Must use BeginInvoke() because this might be called from _ks_UserMainCode(),
+			//Must use BeginInvoke() because this might be called from AutoExecSection(),
 			//so it needs to run after that thread has exited.
 			if (!IsMainWindowClosing)
 				mainWindow?.CheckedBeginInvoke(new Action(() =>

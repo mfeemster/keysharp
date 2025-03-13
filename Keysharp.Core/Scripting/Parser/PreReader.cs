@@ -463,8 +463,8 @@ namespace Keysharp.Scripting
                             break;
                             */
                         case MainLexer.OpenBrace:
-							if (codeTokens.Count > 1 && codeTokens[^1].Type == MainLexer.EOL && codeTokens[^2].Type == MainLexer.CloseParen)
-								codeTokens.RemoveAt(codeTokens.Count - 1);
+							//if (codeTokens.Count > 1 && codeTokens[^1].Type == MainLexer.EOL && codeTokens[^2].Type == MainLexer.CloseParen)
+							//	codeTokens.RemoveAt(codeTokens.Count - 1);
                             break;
                         case MainLexer.OpenBracket:
                         case MainLexer.DerefStart:
@@ -490,8 +490,6 @@ namespace Keysharp.Scripting
                         case MainLexer.RightShiftArithmetic:
                         case MainLexer.LeftShiftArithmetic:
                         case MainLexer.RightShiftLogical:
-                        case MainLexer.Plus:
-                        case MainLexer.Minus:
                         case MainLexer.LessThan:
                         case MainLexer.MoreThan:
                         case MainLexer.LessThanEquals:

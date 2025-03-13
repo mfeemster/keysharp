@@ -64,6 +64,7 @@
         internal const string AnonymousFatArrowLambdaPrefix = "_ks_AnonFatArrowLambda_";
 
 		public const string MainClassName = "Program";
+		public const string AutoExecSectionName = "AutoExecSection";
 
         internal static HashSet<string> ClassReservedKeywords = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
             {

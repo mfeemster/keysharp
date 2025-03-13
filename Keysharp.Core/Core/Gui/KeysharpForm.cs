@@ -47,7 +47,7 @@
 			SetStyle(ControlStyles.StandardClick, true);
 			SetStyle(ControlStyles.StandardDoubleClick, true);
 
-			if (this is not MainWindow)
+            if (this is not MainWindow)
 			{
 				FormClosing += Form_FormClosing;
 				DragDrop += Form_DragDrop;

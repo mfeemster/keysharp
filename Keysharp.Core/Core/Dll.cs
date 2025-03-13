@@ -326,7 +326,7 @@ namespace Keysharp.Core
 					var comHelper = new ComArgumentHelper(parameters);
 					var val = CallDel(address, comHelper.args);
                     foreach (var refIndex in comHelper.refs)
-                        Script.SetPropertyValue(refIndex.Value, "__Value", parameters[refIndex.Key]);
+                        Script.SetPropertyValue(refIndex.Value, "__Value", External.NumGet(comHelper.args[refIndex.Key / 2], parameters[refIndex.Key - 1].ToString().TrimEnd('*', 'p', 'P')));
                     return val;
 				}
 				catch (Exception ex)

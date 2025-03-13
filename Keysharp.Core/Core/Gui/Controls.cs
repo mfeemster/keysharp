@@ -276,7 +276,7 @@ namespace Keysharp.Core
 				var cp = base.CreateParams;
 				cp.Style |= addstyle;
 				cp.Style &= ~removestyle;
-				return cp;
+                return cp;
 			}
 		}
 
@@ -284,11 +284,11 @@ namespace Keysharp.Core
 		{
 			addstyle = _add;
 			removestyle = _remove;
-		}
+        }
 
 #if WINDOWS
 
-		protected override void WndProc(ref Message m)
+        protected override void WndProc(ref Message m)
 		{
 			if (!GuiHelper.CallMessageHandler(this, ref m))
 				base.WndProc(ref m);

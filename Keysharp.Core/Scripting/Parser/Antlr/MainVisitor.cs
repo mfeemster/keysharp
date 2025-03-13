@@ -118,7 +118,7 @@ namespace Keysharp.Scripting
 						}
 						Keysharp.Core.Env.HandleCommandLineParams(args);
 						Keysharp.Scripting.Script.CreateTrayMenu();
-						Keysharp.Scripting.Script.RunMainWindow(name, _ks_UserMainCode, false);
+						Keysharp.Scripting.Script.RunMainWindow(name, AUTOEXECSECTION_PLACEHOLDER, false);
 						Keysharp.Scripting.Script.WaitThreads();
 					}
 					catch (Keysharp.Core.Error kserr)
@@ -166,11 +166,12 @@ namespace Keysharp.Scripting
 
             mainBodyCode = mainBodyCode.ReplaceFirst("MAIN_INIT_PLACEHOLDER", String.Join(Environment.NewLine, parser.mainFuncInitial));
             mainBodyCode = mainBodyCode.ReplaceFirst("SINGLEINSTANCE_PLACEHOLDER", System.Enum.GetName(typeof(eScriptInstance), parser.reader.SingleInstance));
+            mainBodyCode = mainBodyCode.ReplaceFirst("AUTOEXECSECTION_PLACEHOLDER", Keywords.AutoExecSectionName);
 
             var mainBodyBlock = SyntaxFactory.ParseStatement(mainBodyCode) as BlockSyntax;
             mainFunc.Body = mainBodyBlock.Statements.ToList();
 
-            parser.autoExecFunc = new Function("_ks_UserMainCode", SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword)));
+            parser.autoExecFunc = new Function(Keywords.AutoExecSectionName, SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword)));
             parser.currentFunc = parser.autoExecFunc;
             parser.autoExecFunc.Scope = eScope.Global;
             parser.autoExecFunc.Method = parser.autoExecFunc.Method
@@ -402,9 +403,6 @@ namespace Keysharp.Scripting
                    );
             }
 
-            parser.MaybeAddClassStaticVariable(text, false); // This needs to be before FuncObj one, because "object" can be both
-            parser.MaybeAddGlobalFuncObjVariable(text, false);
-
             // Handle special built-ins
             if (parser.IsVarDeclaredGlobally(text) == null)
             {
@@ -431,6 +429,9 @@ namespace Keysharp.Scripting
         private SyntaxNode HandleIdentifierName(string text)
         {
             text = parser.NormalizeFunctionIdentifier(text);
+
+            parser.MaybeAddClassStaticVariable(text, false); // This needs to be before FuncObj one, because "object" can be both
+            parser.MaybeAddGlobalFuncObjVariable(text, false);
 
             var vr = parser.IsVarRef(text);
             if (vr != null)
@@ -863,6 +864,10 @@ namespace Keysharp.Scripting
                     identifier,
                     initializerValue,
                     context.assignmentOperator().GetText()));
+            }
+            else if (context.op != null)
+            {
+                return SyntaxFactory.ExpressionStatement(HandleCompoundAssignment(identifier, SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(1L)), context.op.Text == "++" ? "+=" : "-=", isPostFix: true));
             }
 
             // Return null if no assignment is needed
@@ -1479,23 +1484,41 @@ namespace Keysharp.Scripting
 
         public SyntaxNode FunctionExpressionCommon(MethodDeclarationSyntax methodDeclaration, ParserRuleContext context)
         {
-            if (context.Parent is ExpressionSequenceContext esc && esc.Parent is ExpressionStatementContext && esc.ChildCount == 1 && parser.currentFunc.Name == "_ks_UserMainCode")
+            if (context.Parent is ExpressionSequenceContext esc && esc.Parent is ExpressionStatementContext && esc.ChildCount == 1 && parser.currentFunc.Name == Keywords.AutoExecSectionName)
             {
                 return methodDeclaration;
             }
             // Case 1: If we are not inside a class declaration OR we are inside a class
             // declaration method declaration then add it as a closure
-            if (parser.currentClass.Name == Keywords.MainClassName || parser.currentFunc.Name != "_ks_UserMainCode")
+            if (parser.currentClass.Name == Keywords.MainClassName || parser.currentFunc.Name != Keywords.AutoExecSectionName)
             {
                 var methodName = methodDeclaration.Identifier.Text;
                 var variableName = methodName.ToLowerInvariant();
+
+                var modifiers = methodDeclaration.Modifiers;
+
+                // Function expressions in AutoExec section should be static
+                if (parser.currentFunc.Name == Keywords.AutoExecSectionName)
+                {
+                    // Remove 'public' from the existing modifiers
+                    var updatedModifiers = modifiers
+                        .Where(m => !m.IsKind(SyntaxKind.PublicKeyword))
+                        .ToList();
+
+                    // Ensure 'static' is included if not already present
+                    if (!updatedModifiers.Any(m => m.IsKind(SyntaxKind.StaticKeyword)))
+                        updatedModifiers.Add(SyntaxFactory.Token(SyntaxKind.StaticKeyword));
+
+                    modifiers = SyntaxFactory.TokenList(updatedModifiers);
+                }
+
                 // Create a delegate or closure and add it to the current function's body
                 var delegateSyntax = SyntaxFactory.LocalFunctionStatement(
                         methodDeclaration.ReturnType,
                         methodDeclaration.Identifier)
                     .WithParameterList(methodDeclaration.ParameterList)
                     .WithBody(methodDeclaration.Body)
-                    .WithModifiers(methodDeclaration.Modifiers);
+                    .WithModifiers(modifiers);
 
                 InvocationExpressionSyntax funcObj = CreateFuncObj(
                     SyntaxFactory.CastExpression(
@@ -1507,8 +1530,8 @@ namespace Keysharp.Scripting
                 parser.currentFunc.Body.Add(delegateSyntax);
 
                 // If we are creating a closure in the auto-execute section then add a global
-                // variable for the delegate and assign it's value at the beginning of _ks_UserMainCode
-                if (parser.currentFunc.Name == "_ks_UserMainCode")
+                // variable for the delegate and assign it's value at the beginning of AutoExecSection
+                if (parser.currentFunc.Name == Keywords.AutoExecSectionName)
                 {
                     parser.MaybeAddGlobalVariableDeclaration(variableName, true);
                     parser.currentFunc.Body.Add(SyntaxFactory.ExpressionStatement(
@@ -1822,6 +1845,12 @@ namespace Keysharp.Scripting
                         VisitVariableStatement(varStmt); // Collect variable statement
                         break;
 
+                    case AssignmentExpressionContext assignStmt:
+                        if (assignStmt.left is IdentifierExpressionContext iec && Visit(iec) is IdentifierNameSyntax ins)
+                        {
+                            parser.MaybeAddVariableDeclaration(ins.Identifier.Text);
+                        }
+                        break;
                     case FunctionStatementContext:
                     case FunctionExpressionContext:
                     case FatArrowExpressionContext:
@@ -1834,6 +1863,12 @@ namespace Keysharp.Scripting
                     case FlowBlockContext:
                     case StatementListContext:
                     case MainParser.StatementContext:
+                    case ExpressionStatementContext:
+                    case ExpressionSequenceContext:
+                    case MainParser.ExpressionDummyContext:
+                    case OperatorExpressionDummyContext:
+                    case ParenthesizedExpressionContext:
+                    case VarRefExpressionContext:
                         VisitVariableStatements((ParserRuleContext)child);
                         break;
 

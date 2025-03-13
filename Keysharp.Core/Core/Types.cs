@@ -241,7 +241,11 @@
 		{
 			if (value != null)
 			{
-				var type = value.GetType().Name;
+				string type = null;
+				if (value is KeysharpObject kso && Script.GetPropertyValue(kso, "__Class", false) is string name && name != null)
+					type = name;
+				else
+					type = value.GetType().Name;
 
 				switch (type)
 				{

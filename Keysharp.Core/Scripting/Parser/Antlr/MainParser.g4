@@ -198,7 +198,7 @@ variableDeclarationList
     ;
 
 variableDeclaration
-    : assignable (assignmentOperator expression)?
+    : assignable (assignmentOperator expression | op = ('++' | '--'))?
     ;
 
 functionStatement
@@ -471,7 +471,7 @@ operatorExpression
     | '+' right = operatorExpression                                                 # UnaryPlusExpression
     | '~' right = operatorExpression                                                 # BitNotExpression
     | left = operatorExpression ((WS | EOL)* op = ('*' | '/' | '//') (WS | EOL)*) right = operatorExpression  # MultiplicativeExpression
-    | left = operatorExpression op = ('+' | '-') right = operatorExpression                        # AdditiveExpression
+    | left = operatorExpression ((WS | EOL)* op = ('+' | '-') (WS | EOL)*) right = operatorExpression   # AdditiveExpression
     | left = operatorExpression op = ('<<' | '>>' | '>>>') right = operatorExpression              # BitShiftExpression
     | left = operatorExpression ((WS | EOL)* op = '&' (WS | EOL)*) right = operatorExpression      # BitAndExpression
     | left = operatorExpression op = '^' right = operatorExpression                                # BitXOrExpression

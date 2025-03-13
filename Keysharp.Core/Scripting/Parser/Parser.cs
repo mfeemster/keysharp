@@ -237,7 +237,7 @@ namespace Keysharp.Scripting
 		private readonly CodeMemberMethod userMainMethod = new ()
 		{
 			Attributes = MemberAttributes.Public | MemberAttributes.Static,
-			Name = "_ks_UserMainCode",
+			Name = Keywords.AutoExecSectionName,
 			ReturnType = objTypeRef
 		};
 
@@ -337,7 +337,7 @@ namespace Keysharp.Scripting
 			{ "AssemblyVersion", null }
         };
 
-		public static Dictionary<string, string> TypeNameAliases = new(StringComparer.InvariantCultureIgnoreCase)
+		public static Dictionary<string, string> TypeNameAliases = new(StringComparer.OrdinalIgnoreCase)
 		{
 			{ "int64", "Integer" },
 			{ "object", "KeysharpObject" },
@@ -562,7 +562,7 @@ namespace Keysharp.Scripting
 			assemblyAttributes.Clear();
 			var inv = (CodeMethodInvokeExpression)InternalMethods.RunMainWindow;
 			_ = inv.Parameters.Add(new CodeSnippetExpression("name"));
-			_ = inv.Parameters.Add(new CodeSnippetExpression("_ks_UserMainCode"));
+			_ = inv.Parameters.Add(new CodeSnippetExpression(Keywords.AutoExecSectionName));
 			_ = inv.Parameters.Add(new CodePrimitiveExpression(Persistent));
 			_ = main.Statements.Add(new CodeExpressionStatement(inv));
 			_ = main.Statements.Add(new CodeExpressionStatement((CodeMethodInvokeExpression)InternalMethods.WaitThreads));

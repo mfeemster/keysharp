@@ -123,14 +123,56 @@ public abstract class MainParserBase : Antlr4.Runtime.Parser
 
     protected bool isFunctionCallStatement()
     {
+        var validateObjectLiteral = false;
+        var objectLiteralWSPassed = false;
+        var objectLiteralIdentifierPassed = false;
         var enclosableDepth = 0;
         var i = 0;
         while (true)
         {
             i++;
             var nextToken = InputStream.LA(i);
+            if (validateObjectLiteral)
+            {
+                switch (nextToken)
+                {
+                    case MainLexer.OpenParen:
+                    case MainLexer.OpenBracket:
+                        return false;
+                    case MainLexer.CloseBrace:
+                        validateObjectLiteral = false;
+                        break;
+                    case MainLexer.WS:
+                    case MainLexer.EOL:
+                        if (objectLiteralIdentifierPassed)
+                            objectLiteralWSPassed = true;
+                        continue;
+                    case MainLexer.Colon:
+                        if (!objectLiteralIdentifierPassed)
+                            return false;
+                        validateObjectLiteral = false;
+                        continue;
+                    default:
+                        if (objectLiteralIdentifierPassed || objectLiteralWSPassed)
+                            return false;
+                        objectLiteralIdentifierPassed = true;
+                        break;
+                }
+            }
             switch (nextToken)
             {
+                case MainLexer.OpenBrace:
+                    if (enclosableDepth == 0)
+                    {
+                        // Only allow function statements *starting* with an object literal
+                        if (i != 1)
+                            return false;
+                        validateObjectLiteral = true;
+                        objectLiteralWSPassed = false;
+                        objectLiteralIdentifierPassed = false;
+                    }
+                    enclosableDepth++;
+                    break;
                 case MainLexer.OpenParen:
                     if (i != 1 && enclosableDepth == 0)
                         return false;
@@ -142,8 +184,11 @@ public abstract class MainParserBase : Antlr4.Runtime.Parser
                     break;
                 case MainLexer.CloseParen:
                 case MainLexer.CloseBracket:
+                case MainLexer.CloseBrace:
                 case MainLexer.DerefEnd:
                     enclosableDepth--;
+                    if (enclosableDepth == 0)
+                        continue;
                     break;
             }
             if (enclosableDepth != 0)

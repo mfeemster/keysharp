@@ -162,6 +162,14 @@ namespace Keysharp.Scripting
             if (!(t == typeof(Any) || t == typeof(FuncObj)))
                 proto.DefineProp("base", Collections.MapWithoutBase("value", Variables.Prototypes[t.BaseType]));
 
+			if (isBuiltin && proto.HasOwnProp("__Class") == 0)
+			{
+				string name = t.Name;
+				if (Parser.TypeNameAliases.ContainsKey(name))
+					name = Parser.TypeNameAliases[name];
+                proto.DefineProp("__Class", Collections.MapWithoutBase("value", name));
+            }
+
             staticInst.DefineProp("prototype", Collections.Map("value", Variables.Prototypes[t]));
 
 			if (t != typeof(FuncObj) && t != typeof(Any))

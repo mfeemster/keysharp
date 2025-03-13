@@ -3,7 +3,7 @@ x := 0
 fo1 := Func("TimerHandler")
 SetTimer(fo1, 100)
 
-TimerHandler()
+TimerHandler(*)
 {
 global
 	x++
@@ -25,7 +25,7 @@ x := 0
 fo1 := Func("TimerHandler2")
 SetTimer(fo1, 1000)
 
-TimerHandler2(thefo)
+TimerHandler2(thefo, *)
 {
 global x
 	x++

@@ -60,5 +60,8 @@ namespace Keysharp.Tests
 
         [Test, Category("Function"), NonParallelizable]
         public void FuncCallable() => Assert.IsTrue(TestScript("func-callable", false));
+
+        [Test, Category("Function"), NonParallelizable]
+        public void FuncClosure() => Assert.IsTrue(TestScript("func-closure", false));
     }
 }

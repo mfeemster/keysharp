@@ -89,11 +89,11 @@
 			return null;
 		}
 
-		public string this[object obj]
+		public string this[params object[] obj]
 		{
 			get
 			{
-				var g = GetGroup(obj);
+				var g = GetGroup(obj.Length == 0 ? null : obj[0]);
 				return g != null && g.Success ? g.Value : "";
 			}
 		}
@@ -183,12 +183,30 @@
 				_ = Errors.ErrorOccurred(err = new MethodError($"Existing function object was invalid.")) ? throw err : "";
 		}
 
-		/// <summary>
-		/// Calls <see cref="Current"/> and places the key value in the passed in object reference.
-		/// </summary>
-		/// <param name="key">A reference to the key value.</param>
-		/// <returns>True if the iterator position has not moved past the last element, else false.</returns>
-		public override object Call(ref object value)
+        public override object Call(params object[] args)
+        {
+            if (MoveNext())
+            {
+                if (args.Length == 1)
+                {
+                    Script.SetPropertyValue(args[0], "__Value", Current.Item1);
+                }
+                else if (args.Length >= 2)
+                {
+                    Script.SetPropertyValue(args[0], "__Value", Current.Item1);
+                    Script.SetPropertyValue(args[1], "__Value", Current.Item2);
+                }
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Calls <see cref="Current"/> and places the key value in the passed in object reference.
+        /// </summary>
+        /// <param name="key">A reference to the key value.</param>
+        /// <returns>True if the iterator position has not moved past the last element, else false.</returns>
+        public override object Call(ref object value)
 		{
 			if (MoveNext())
 			{
