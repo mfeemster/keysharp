@@ -471,21 +471,21 @@ namespace Keysharp.Core.COM
 				if (pi < parameters.Length - 1)
 				{
 					var p0 = parameters[pi];
-					var p1 = parameters[pi + 1];
 
 					//If they passed in a ComObject with Ptr as an address, make that address into a __ComObject.
-					/*  if (p1 is ComObject co2)
+					/*  if (parameters[pi + 1] is ComObject co2)
 					    {
 					    object obj = co2.Ptr;
 					    co2.Ptr = obj;//Reassign to ensure pointers are properly cast to __ComObject.
 					    }
 
-					    else*/ if (p0 is string ps)
+					    else*/
+					if (p0 is string ps)
 					{
 						var aip = helper.args[ai];
 
 						if (ps[ ^ 1] == '*' || ps[ ^ 1] == 'p')
-							Dll.FixParamTypeAndCopyBack(ref p1, ps, aip);
+							Dll.FixParamTypeAndCopyBack(ref parameters[pi + 1], ps, aip);//Must reference directly into the array, not a temp variable.
 					}
 				}
 			}

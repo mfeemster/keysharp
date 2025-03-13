@@ -105,7 +105,7 @@ if (str2 == "dlrow")
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
-
+	
 code := Buffer(64)
 NumPut(
 	'Int64', 0x10ec8348e5894855, 'Int64', 0x00fc45c7104d8948,
@@ -124,7 +124,7 @@ if (val == 5)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
-
+	
 ; Ensure int* gets properly written to with a negative number.
 
 src := Buffer(4)

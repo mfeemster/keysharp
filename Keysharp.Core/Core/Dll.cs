@@ -418,72 +418,52 @@ namespace Keysharp.Core
 			{
 				var tempui = *(uint*)aip.ToPointer();
 				var templ = (long)tempui;
-				//Marshal.WriteInt64(aip, templ);//Write back so this works without using a reference. Assume it has at least 8 bytes to store.
 				p = templ;
-				//parameters[pi + 1] = templ;
 			}
 			else if (ps.EndsWith("int*", StringComparison.OrdinalIgnoreCase) || ps.EndsWith("intp", StringComparison.OrdinalIgnoreCase))
 			{
 				var tempi = *(int*)aip.ToPointer();
 				var templ = (long)tempi;
-				//Marshal.WriteInt64(aip, templ);
-				//parameters[pi + 1] = templ;
 				p = templ;
 			}
 			else if (ps.EndsWith("int64*", StringComparison.OrdinalIgnoreCase) || ps.EndsWith("int64p", StringComparison.OrdinalIgnoreCase))
 			{
 				var templ = *(long*)aip.ToPointer();
-				//Marshal.WriteInt64(aip, templ);
 				p = templ;
-				//parameters[pi + 1] = templ;
 			}
 			else if (ps.EndsWith("double*", StringComparison.OrdinalIgnoreCase) || ps.EndsWith("doublep", StringComparison.OrdinalIgnoreCase))
 			{
 				var tempd = *(double*)aip.ToPointer();
-				//var bytes = BitConverter.GetBytes(tempd);
-				//Marshal.Copy(bytes, 0, aip, bytes.Length);
 				p = tempd;
-				//parameters[pi + 1] = tempd;
 			}
 			else if (ps.EndsWith("float*", StringComparison.OrdinalIgnoreCase) || ps.EndsWith("floatp", StringComparison.OrdinalIgnoreCase))
 			{
 				var tempf = *(float*)aip.ToPointer();
 				var tempd = (double)tempf;
-				//var bytes = BitConverter.GetBytes(tempd);
-				//Marshal.Copy(bytes, 0, aip, bytes.Length);
 				p = tempd;
-				//parameters[pi + 1] = tempd;
 			}
 			else if (ps.EndsWith("ushort*", StringComparison.OrdinalIgnoreCase) || ps.EndsWith("ushortp", StringComparison.OrdinalIgnoreCase))
 			{
 				var tempus = *(ushort*)aip.ToPointer();
 				var templ = (long)tempus;
-				//Marshal.WriteInt64(aip, templ);
-				//parameters[pi + 1] = templ;
 				p = templ;
 			}
 			else if (ps.EndsWith("short*", StringComparison.OrdinalIgnoreCase) || ps.EndsWith("shortp", StringComparison.OrdinalIgnoreCase))
 			{
 				var temps = *(short*)aip.ToPointer();
 				var templ = (long)temps;
-				//Marshal.WriteInt64(aip, templ);
-				//parameters[pi + 1] = templ;
 				p = templ;
 			}
 			else if (ps.EndsWith("uchar*", StringComparison.OrdinalIgnoreCase) || ps.EndsWith("ucharp", StringComparison.OrdinalIgnoreCase))
 			{
 				var tempub = *(byte*)aip.ToPointer();
 				var templ = (long)tempub;
-				//Marshal.WriteInt64(aip, templ);
-				//parameters[pi + 1] = templ;
 				p = templ;
 			}
 			else if (ps.EndsWith("char*", StringComparison.OrdinalIgnoreCase) || ps.EndsWith("charp", StringComparison.OrdinalIgnoreCase))
 			{
 				var tempb = *(sbyte*)aip.ToPointer();
 				var templ = (long)tempb;
-				//Marshal.WriteInt64(aip, templ);
-				//parameters[pi + 1] = templ;
 				p = templ;
 			}
 			else if (ps.EndsWith("str*", StringComparison.OrdinalIgnoreCase))
@@ -506,10 +486,10 @@ namespace Keysharp.Core
 				if (pi < parameters.Length - 1)
 				{
 					var p0 = parameters[pi];
-					var p1 = parameters[pi + 1];
+					//var p1 = parameters[pi + 1];
 
 					//If they passed in a ComObject with Ptr as an address, make that address into a __ComObject.
-					if (p1 is ComObject co)
+					if (parameters[pi + 1] is ComObject co)
 					{
 						object obj = co.Ptr;
 						co.Ptr = obj;//Reassign to ensure pointers are properly cast to __ComObject.
@@ -517,7 +497,7 @@ namespace Keysharp.Core
 					else if (p0 is string ps)
 					{
 						if (args[ai] is IntPtr aip && (ps[ ^ 1] == '*' || ps[ ^ 1] == 'p'))
-							FixParamTypeAndCopyBack(ref p1, ps, aip);
+							FixParamTypeAndCopyBack(ref parameters[pi + 1], ps, aip);//Must reference directly into the array, not a temp variable.
 					}
 				}
 			}
