@@ -660,7 +660,6 @@ namespace Keysharp.Core
 				SetStyle(ControlStyles.Opaque, true);
 				SetStyle(ControlStyles.OptimizedDoubleBuffer, false);
 			}
-			
 		}
 
 		protected override void OnPaint(PaintEventArgs pe)
@@ -715,6 +714,7 @@ namespace Keysharp.Core
 			removeExStyle = _removeExStyle;
 			customColors = _customColors;
 			SetStyle(ControlStyles.UserPaint, customColors);
+			SetStyle(ControlStyles.OptimizedDoubleBuffer, true);
 		}
 
 		protected override void OnPaint(PaintEventArgs e)
