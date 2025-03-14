@@ -115,10 +115,6 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 * `Sleep()` works, but uses `Application.DoEvents()` internally which is not a good programming practice and can lead to hard to solve bugs.
 	+ For this reason, it's recommended that users use timers for repeated execution rather than a loop with calls to `Sleep()`.
 * The Optimization section of the `#HotIf` documentation doesn't apply to Keysharp because it uses compiled code, thus the expressions are never re-evaluated.
-* For transparent controls which are intended to be overlaid over other controls, special steps must be taken.
-	+ Specify `BackgroundTrans` in the options for the transparent control.
-	+ Then set the `.Parent` property of the transparent control to the one it's laid over.
-	+ This makes the x and y coordinates of the control be relative to its parent, which may be different than the overall form if it's a nested control.
 * The `#ErrorStdOut` directive will not print to the console unless piping is used. For example:
 	+ `.\Keysharp.exe .\test.ahk | more`
 	+ `.\Keysharp.exe .\test.ahk | more > out.txt`
