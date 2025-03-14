@@ -435,6 +435,8 @@ namespace Keysharp.Core
 						}
 						else if (timers.TryGetValue(func, out var existing))//They could have disabled it, in which case it wouldn't be in the dictionary.
 							existing.Enabled = true;
+						else
+							Script.ExitIfNotPersistent();//Was somehow removed, such as in a window close handler, so attempt to exit.
 					}
 				}
 			};
