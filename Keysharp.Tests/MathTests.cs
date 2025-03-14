@@ -320,22 +320,51 @@ namespace Keysharp.Tests
 		public void Max()
 		{
 			Assert.AreEqual(-6, Maths.Max(-6, -6));
+			Assert.AreEqual(-6, Maths.Max(-6, "-6"));
 			Assert.AreEqual(-5, Maths.Max(-6, -5));
 			Assert.AreEqual(-4.2, Maths.Max(-4.2, -5.0));
+			Assert.AreEqual(-4.2, Maths.Max("-4.2", -5.0));
+			Assert.AreEqual(-4.2, Maths.Max(-4.2, "-5.0"));
+			Assert.AreEqual(-4.2, Maths.Max("-4.2", "-5.0"));
 			Assert.AreEqual(0, Maths.Max(0, 0));
-			Assert.AreEqual(1, Maths.Max(0, 1));
-			Assert.AreEqual(1, Maths.Max(1, 1));
+			Assert.AreEqual(1, Maths.Max("0", 1L));
+			Assert.AreEqual(1, Maths.Max(1, "0"));
+			Assert.AreEqual(1, Maths.Max("1", "1"));
 			Assert.AreEqual(2.3, Maths.Max(1.5, 2.3));
 			Assert.AreEqual(0.675, Maths.Max([-1.0, 0.675]));
 			Assert.AreEqual(1, Maths.Max([-1.0, -0.5, 0, 0.5, 1, 0.675]));
-			Assert.AreEqual(2, Maths.Max([-1.0, -0.5, 0, 0.5, 1, 0.675, 2.0]));
+			Assert.AreEqual(2, Maths.Max([-1.0, -0.5, 0, 0.5, 1, "0.675", "2.0"]));
 			Assert.AreEqual(0.675, Maths.Max(new Keysharp.Core.Array([-1.0, 0.675])));
 			Assert.AreEqual(1, Maths.Max(new Keysharp.Core.Array([-1.0, -0.5, 0, 0.5, 1, 0.675])));
-			Assert.AreEqual(2, Maths.Max(new Keysharp.Core.Array([-1.0, -0.5, 0, 0.5, 1, 0.675, 2.0])));
-			Assert.AreEqual(1, Maths.Max(-1.0, -0.5, 0, 0.5, 1, 0.675));
-			Assert.AreEqual(2, Maths.Max(-1.0, -0.5, 0, 0.5, 1, 0.675, 2.0));
-			Assert.AreEqual(string.Empty, Maths.Max([-1.0, "asdf"]));
-			Assert.AreEqual(string.Empty, Maths.Max(new Keysharp.Core.Array([-1.0, "asdf"])));
+			Assert.AreEqual(2, Maths.Max(new Keysharp.Core.Array([-1.0, -0.5, 0, 0.5, 1, "0.675", 2.0])));
+			Assert.AreEqual(1, Maths.Max(-1.0, -0.5, 0, "0.5", 1, 0.675));
+			Assert.AreEqual(2, Maths.Max(-1.0, -0.5, 0, "0.5", 1, 0.675, 2.0));
+			Assert.AreEqual(typeof(long), Maths.Max(-1.0, 1L).GetType());
+			Assert.AreEqual(typeof(double), Maths.Max(1.0, -1L).GetType());
+			var caught = false;
+
+			try
+			{
+				Assert.AreEqual(string.Empty, Maths.Max([-1.0, "asdf"]));
+			}
+			catch (Exception)
+			{
+				caught = true;
+			}
+
+			Assert.IsTrue(caught);
+			caught = false;
+
+			try
+			{
+				Assert.AreEqual(string.Empty, Maths.Max(new Keysharp.Core.Array([-1.0, "asdf"])));
+			}
+			catch (Exception)
+			{
+				caught = true;
+			}
+
+			Assert.IsTrue(caught);
 			Assert.IsTrue(TestScript("math-max", true));
 		}
 
@@ -343,22 +372,50 @@ namespace Keysharp.Tests
 		public void Min()
 		{
 			Assert.AreEqual(-6, Maths.Min(-6, -6));
-			Assert.AreEqual(-6, Maths.Min(-6, -5));
+			Assert.AreEqual(-6, Maths.Min(-6, "5"));
 			Assert.AreEqual(-5.0, Maths.Min(-4.2, -5.0));
+			Assert.AreEqual(-5.0, Maths.Min("-4.2", -5.0));
+			Assert.AreEqual(-5.0, Maths.Min(-4.2, "-5.0"));
+			Assert.AreEqual(-5.0, Maths.Min("-4.2", "-5.0"));
 			Assert.AreEqual(0, Maths.Min(0, 0));
-			Assert.AreEqual(0, Maths.Min(0, 1));
-			Assert.AreEqual(1, Maths.Min(1, 1));
+			Assert.AreEqual(0, Maths.Min("0", 1));
+			Assert.AreEqual(0, Maths.Min(0, "1"));
+			Assert.AreEqual(1, Maths.Min("1", "1"));
 			Assert.AreEqual(1.5, Maths.Min(1.5, 2.3));
 			Assert.AreEqual(-1.0, Maths.Min([-1.0, 0.675]));
 			Assert.AreEqual(-1.0, Maths.Min([-1.0, -0.5, 0, 0.5, 1, 0.675]));
-			Assert.AreEqual(-1.0, Maths.Min([-1.0, -0.5, 0, 0.5, 1, 0.675, 2.0]));
+			Assert.AreEqual(-1.0, Maths.Min([-1.0, -0.5, 0, 0.5, 1, "0.675", "2.0"]));
 			Assert.AreEqual(-1.0, Maths.Min(new Keysharp.Core.Array([-1.0, 0.675])));
 			Assert.AreEqual(-1.0, Maths.Min(new Keysharp.Core.Array([-1.0, -0.5, 0, 0.5, 1, 0.675])));
-			Assert.AreEqual(-1.0, Maths.Min(new Keysharp.Core.Array([-1.0, -0.5, 0, 0.5, 1, 0.675, 2.0])));
-			Assert.AreEqual(-1.0, Maths.Min(-1.0, -0.5, 0, 0.5, 1, 0.675));
-			Assert.AreEqual(-1.0, Maths.Min(-1.0, -0.5, 0, 0.5, 1, 0.675, 2.0));
-			Assert.AreEqual(string.Empty, Maths.Min([-1.0, "asdf"]));
-			Assert.AreEqual(string.Empty, Maths.Min(new Keysharp.Core.Array([-1.0, "asdf"])));
+			Assert.AreEqual(-1.0, Maths.Min(new Keysharp.Core.Array([-1.0, -0.5, 0, 0.5, 1, "0.675", 2.0])));
+			Assert.AreEqual(-1.0, Maths.Min(-1.0, -0.5, 0, "0.5", 1, 0.675));
+			Assert.AreEqual(-1.0, Maths.Min(-1.0, -0.5, 0, "0.5", 1, 0.675, 2.0));
+			Assert.AreEqual(typeof(double), Maths.Min(-1.0, 1L).GetType());
+			Assert.AreEqual(typeof(long), Maths.Min(1.0, -1L).GetType());
+			var caught = false;
+
+			try
+			{
+				Assert.AreEqual(string.Empty, Maths.Min([-1.0, "asdf"]));
+			}
+			catch (Exception)
+			{
+				caught = true;
+			}
+
+			Assert.IsTrue(caught);
+			caught = false;
+
+			try
+			{
+				Assert.AreEqual(string.Empty, Maths.Min(new Keysharp.Core.Array([-1.0, "asdf"])));
+			}
+			catch (Exception)
+			{
+				caught = true;
+			}
+
+			Assert.IsTrue(caught);
 			Assert.IsTrue(TestScript("math-min", true));
 		}
 

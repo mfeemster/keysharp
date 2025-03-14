@@ -752,7 +752,7 @@ namespace Keysharp.Scripting
 			}
 		}
 
-		private static bool ParseNumericArgs(object left, object right, string desc, out bool firstIsDouble, out bool secondIsDouble, out double firstd, out long firstl, out double secondd, out long secondl)
+		internal static bool ParseNumericArgs(object left, object right, string desc, out bool firstIsDouble, out bool secondIsDouble, out double firstd, out long firstl, out double secondd, out long secondl)
 		{
 			Error err;
 			firstIsDouble = false;

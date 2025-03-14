@@ -263,22 +263,59 @@
 
 			if (o.Count > 1)
 			{
-				var max = double.MinValue;
+				object max = double.MinValue;
 
-				for (var i = 1; i < o.Count; i++)
+				for (var i = 1; i < o.Count; ++i)
 				{
-					if (!Script.IsNumeric(o[i]) || !Script.IsNumeric(o[i - 1]))
-						return string.Empty;
+					var left = o[i - 1];
+					var right = o[i];
 
-					var x = Convert.ToDouble(o[i]);
-					var y = Convert.ToDouble(o[i - 1]);
-					var z = Math.Max(x, y);
+					if (Script.ParseNumericArgs(left, right, "Max", out var firstIsDouble, out var secondIsDouble, out var firstd, out var firstl, out var secondd, out var secondl))
+					{
+						if (firstIsDouble)
+						{
+							if (secondIsDouble)
+							{
+								var tempd = Math.Max(firstd, secondd);
 
-					if (z is double dz)
-						max = Math.Max(max, dz);
+								if (tempd > max.Ad())
+									max = tempd;
+							}
+							else
+							{
+								if (firstd > secondl)
+								{
+									if (firstd > max.Ad())
+										max = firstd;
+								}
+								else if (secondl > max.Ad())
+									max = secondl;
+							}
+						}
+						else
+						{
+							if (secondIsDouble)
+							{
+								if (firstl > secondd)
+								{
+									if (firstl > max.Ad())
+										max = firstl;
+								}
+								else if (secondd > max.Ad())
+									max = secondd;
+							}
+							else
+							{
+								var templ = Math.Max(firstl, secondl);
+
+								if (templ > max.Ad())
+									max = templ;
+							}
+						}
+					}
 				}
 
-				if (max != double.MinValue)
+				if (max.Ad() != double.MinValue)
 					return max;
 			}
 
@@ -297,22 +334,59 @@
 
 			if (o.Count > 1)
 			{
-				var min = double.MaxValue;
+				object min = double.MaxValue;
 
-				for (var i = 1; i < o.Count; i++)
+				for (var i = 1; i < o.Count; ++i)
 				{
-					if (!Script.IsNumeric(o[i]) || !Script.IsNumeric(o[i - 1]))
-						return string.Empty;
+					var left = o[i - 1];
+					var right = o[i];
 
-					var x = Convert.ToDouble(o[i]);
-					var y = Convert.ToDouble(o[i - 1]);
-					var z = Math.Min(x, y);
+					if (Script.ParseNumericArgs(left, right, "Min", out var firstIsDouble, out var secondIsDouble, out var firstd, out var firstl, out var secondd, out var secondl))
+					{
+						if (firstIsDouble)
+						{
+							if (secondIsDouble)
+							{
+								var tempd = Math.Min(firstd, secondd);
 
-					if (z is double dz)
-						min = Math.Min(min, dz);
+								if (tempd < min.Ad())
+									min = tempd;
+							}
+							else
+							{
+								if (firstd < secondl)
+								{
+									if (firstd < min.Ad())
+										min = firstd;
+								}
+								else if (secondl < min.Ad())
+									min = secondl;
+							}
+						}
+						else
+						{
+							if (secondIsDouble)
+							{
+								if (firstl < secondd)
+								{
+									if (firstl < min.Ad())
+										min = firstl;
+								}
+								else if (secondd < min.Ad())
+									min = secondd;
+							}
+							else
+							{
+								var templ = Math.Min(firstl, secondl);
+
+								if (templ < min.Ad())
+									min = templ;
+							}
+						}
+					}
 				}
 
-				if (min != double.MaxValue)
+				if (min.Ad() != double.MaxValue)
 					return min;
 			}
 
