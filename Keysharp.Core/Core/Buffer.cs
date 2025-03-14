@@ -38,6 +38,7 @@
 
 				if (val > size)
 				{
+					//var newptr = Marshal.AllocCoTaskMem((int)val);
 					var newptr = Marshal.AllocHGlobal((int)val);
 
 					if (Ptr != IntPtr.Zero)
@@ -51,6 +52,7 @@
 						var old = Ptr;
 						Ptr = newptr;
 						Marshal.FreeHGlobal(old);
+						//Marshal.FreeCoTaskMem(old);
 					}
 					else
 						Ptr = newptr;
@@ -141,6 +143,7 @@
 			if (!disposed)
 			{
 				Marshal.FreeHGlobal(Ptr);
+				//Marshal.FreeCoTaskMem(Ptr);
 				Ptr = IntPtr.Zero;
 				Size = 0;
 				disposed = true;

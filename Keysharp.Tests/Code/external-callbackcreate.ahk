@@ -35,7 +35,7 @@ DetectHiddenWindows(True)
 ct := 0
 DllCall("EnumWindows", "Ptr", EnumAddress, "Ptr", 0)
 
-EnumWindowsProc(hwnd, lParam)
+EnumWindowsProc(hwnd, lParam, *)
 {
 	global ct
 	win_title := WinGetTitle(hwnd)

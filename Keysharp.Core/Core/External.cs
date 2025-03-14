@@ -15,7 +15,7 @@
 		/// <param name="type">One of the following strings: UInt, Int, Int64, Short, UShort, Char, UChar, Double, Float, Ptr or UPtr</param>
 		/// <returns>The binary number at the specified address+offset.</returns>
 		/// <exception cref="TypeError">A <see cref="TypeError"/> exception is thrown the address could not be determined.</exception>
-		public static object NumGet(object source, object offset, object type = null)
+		public unsafe static object NumGet(object source, object offset, object type = null)
 		{
 			Error err;
 			int off;
@@ -137,6 +137,8 @@
 						return Errors.ErrorOccurred(err = new IndexError($"Memory access exceeded buffer size. Offset {off} + length 8 > buffer size {(long)buf.Size}.")) ? throw err : null;
 
 					var ipoff = IntPtr.Add(addr, off);
+					//var pp = (long*)ipoff.ToPointer();
+					//return *pp;
 					return Marshal.ReadIntPtr(ipoff).ToInt64();//Dereference here.
 			}
 		}

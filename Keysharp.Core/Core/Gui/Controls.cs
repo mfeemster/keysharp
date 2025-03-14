@@ -4,23 +4,28 @@ namespace Keysharp.Core
 {
 	public class KeysharpButton : Button
 	{
-		private readonly int addstyle, removestyle;
+		private readonly int addStyle, removeStyle;
+		private readonly int addExStyle, removeExStyle;
 
 		protected override CreateParams CreateParams
 		{
 			get
 			{
 				var cp = base.CreateParams;
-				cp.Style |= addstyle;
-				cp.Style &= ~removestyle;
+				cp.Style |= addStyle;
+				cp.Style &= ~removeStyle;
+				cp.ExStyle |= addExStyle;
+				cp.ExStyle &= ~removeExStyle;
 				return cp;
 			}
 		}
 
-		public KeysharpButton(int _add = 0, int _remove = 0)
+		public KeysharpButton(int _addStyle = 0, int _addExStyle = 0, int _removeStyle = 0, int _removeExStyle = 0)
 		{
-			addstyle = _add;
-			removestyle = _remove;
+			addStyle = _addStyle;
+			addExStyle = _addExStyle;
+			removeStyle = _removeStyle;
+			removeExStyle = _removeExStyle;
 #if LINUX
 			FlatStyle = FlatStyle.Flat;
 #endif
@@ -43,28 +48,33 @@ namespace Keysharp.Core
 
 	public class KeysharpCheckBox : CheckBox
 	{
-		private readonly int addstyle, removestyle;
+		private readonly int addStyle, removeStyle;
+		private readonly int addExStyle, removeExStyle;
 
 		protected override CreateParams CreateParams
 		{
 			get
 			{
 				var cp = base.CreateParams;
-				cp.Style |= addstyle;
-				cp.Style &= ~removestyle;
+				cp.Style |= addStyle;
+				cp.Style &= ~removeStyle;
+				cp.ExStyle |= addExStyle;
+				cp.ExStyle &= ~removeExStyle;
 				return cp;
 			}
 		}
 
 		protected override bool ShowFocusCues => false;
 
-		public KeysharpCheckBox(int _add = 0, int _remove = 0)
+		public KeysharpCheckBox(int _addStyle = 0, int _addExStyle = 0, int _removeStyle = 0, int _removeExStyle = 0)
 		{
-			addstyle = _add;
-			removestyle = _remove;
+			addStyle = _addStyle;
+			addExStyle = _addExStyle;
+			removeStyle = _removeStyle;
+			removeExStyle = _removeExStyle;
 #if WINDOWS
 
-			if ((addstyle & WindowsAPI.BS_NOTIFY) == WindowsAPI.BS_NOTIFY)
+			if ((addStyle & WindowsAPI.BS_NOTIFY) == WindowsAPI.BS_NOTIFY)
 				SetStyle(ControlStyles.StandardClick | ControlStyles.StandardDoubleClick, true);
 
 #else
@@ -76,7 +86,7 @@ namespace Keysharp.Core
 
 		protected override void OnMouseUp(MouseEventArgs e)
 		{
-			if ((addstyle & WindowsAPI.BS_NOTIFY) == WindowsAPI.BS_NOTIFY)
+			if ((addStyle & WindowsAPI.BS_NOTIFY) == WindowsAPI.BS_NOTIFY)
 				ResetFlagsandPaint();
 			else
 				base.OnMouseUp(e);
@@ -93,23 +103,28 @@ namespace Keysharp.Core
 
 	public class KeysharpComboBox : ComboBox
 	{
-		private readonly int addstyle, removestyle;
+		private readonly int addStyle, removeStyle;
+		private readonly int addExStyle, removeExStyle;
 
 		protected override CreateParams CreateParams
 		{
 			get
 			{
 				var cp = base.CreateParams;
-				cp.Style |= addstyle;
-				cp.Style &= ~removestyle;
+				cp.Style |= addStyle;
+				cp.Style &= ~removeStyle;
+				cp.ExStyle |= addExStyle;
+				cp.ExStyle &= ~removeExStyle;
 				return cp;
 			}
 		}
 
-		public KeysharpComboBox(int _add = 0, int _remove = 0)
+		public KeysharpComboBox(int _addStyle = 0, int _addExStyle = 0, int _removeStyle = 0, int _removeExStyle = 0)
 		{
-			addstyle = _add;
-			removestyle = _remove;
+			addStyle = _addStyle;
+			addExStyle = _addExStyle;
+			removeStyle = _removeStyle;
+			removeExStyle = _removeExStyle;
 		}
 
 #if WINDOWS
@@ -125,23 +140,28 @@ namespace Keysharp.Core
 
 	public class KeysharpDateTimePicker : DateTimePicker
 	{
-		private readonly int addstyle, removestyle;
+		private readonly int addStyle, removeStyle;
+		private readonly int addExStyle, removeExStyle;
 
 		protected override CreateParams CreateParams
 		{
 			get
 			{
 				var cp = base.CreateParams;
-				cp.Style |= addstyle;
-				cp.Style &= ~removestyle;
+				cp.Style |= addStyle;
+				cp.Style &= ~removeStyle;
+				cp.ExStyle |= addExStyle;
+				cp.ExStyle &= ~removeExStyle;
 				return cp;
 			}
 		}
 
-		public KeysharpDateTimePicker(int _add = 0, int _remove = 0)
+		public KeysharpDateTimePicker(int _addStyle = 0, int _addExStyle = 0, int _removeStyle = 0, int _removeExStyle = 0)
 		{
-			addstyle = _add;
-			removestyle = _remove;
+			addStyle = _addStyle;
+			addExStyle = _addExStyle;
+			removeStyle = _removeStyle;
+			removeExStyle = _removeExStyle;
 		}
 
 #if WINDOWS
@@ -157,28 +177,32 @@ namespace Keysharp.Core
 
 	public class KeysharpEdit : TextBox
 	{
-		private readonly int addstyle, removestyle;
+		private readonly int addStyle, removeStyle;
+		private readonly int addExStyle, removeExStyle;
 
 #if !WINDOWS
 		internal bool IsNumeric { get; set; }
 
 #endif
-
 		protected override CreateParams CreateParams
 		{
 			get
 			{
 				var cp = base.CreateParams;
-				cp.Style |= addstyle;
-				cp.Style &= ~removestyle;
+				cp.Style |= addStyle;
+				cp.Style &= ~removeStyle;
+				cp.ExStyle |= addExStyle;
+				cp.ExStyle &= ~removeExStyle;
 				return cp;
 			}
 		}
 
-		public KeysharpEdit(int _add = 0, int _remove = 0)
+		public KeysharpEdit(int _addStyle = 0, int _addExStyle = 0, int _removeStyle = 0, int _removeExStyle = 0)
 		{
-			addstyle = _add;
-			removestyle = _remove;
+			addStyle = _addStyle;
+			addExStyle = _addExStyle;
+			removeStyle = _removeStyle;
+			removeExStyle = _removeExStyle;
 #if !WINDOWS
 			KeyPress += KeysharpEdit_KeyPress;
 			Validating += KeysharpEdit_Validating;
@@ -235,23 +259,28 @@ namespace Keysharp.Core
 
 	public class KeysharpGroupBox : GroupBox
 	{
-		private readonly int addstyle, removestyle;
+		private readonly int addStyle, removeStyle;
+		private readonly int addExStyle, removeExStyle;
 
 		protected override CreateParams CreateParams
 		{
 			get
 			{
 				var cp = base.CreateParams;
-				cp.Style |= addstyle;
-				cp.Style &= ~removestyle;
+				cp.Style |= addStyle;
+				cp.Style &= ~removeStyle;
+				cp.ExStyle |= addExStyle;
+				cp.ExStyle &= ~removeExStyle;
 				return cp;
 			}
 		}
 
-		public KeysharpGroupBox(int _add = 0, int _remove = 0)
+		public KeysharpGroupBox(int _addStyle = 0, int _addExStyle = 0, int _removeStyle = 0, int _removeExStyle = 0)
 		{
-			addstyle = _add;
-			removestyle = _remove;
+			addStyle = _addStyle;
+			addExStyle = _addExStyle;
+			removeStyle = _removeStyle;
+			removeExStyle = _removeExStyle;
 		}
 
 #if WINDOWS
@@ -267,24 +296,29 @@ namespace Keysharp.Core
 
 	public class KeysharpLabel : Label
 	{
-		private readonly int addstyle, removestyle;
+		private readonly int addStyle, removeStyle;
+		private readonly int addExStyle, removeExStyle;
 
 		protected override CreateParams CreateParams
 		{
 			get
 			{
 				var cp = base.CreateParams;
-				cp.Style |= addstyle;
-				cp.Style &= ~removestyle;
-                return cp;
+				cp.Style |= addStyle;
+				cp.Style &= ~removeStyle;
+				cp.ExStyle |= addExStyle;
+				cp.ExStyle &= ~removeExStyle;
+				return cp;
 			}
 		}
 
-		public KeysharpLabel(int _add = 0, int _remove = 0)
+		public KeysharpLabel(int _addStyle = 0, int _addExStyle = 0, int _removeStyle = 0, int _removeExStyle = 0)
 		{
-			addstyle = _add;
-			removestyle = _remove;
-        }
+			addStyle = _addStyle;
+			addExStyle = _addExStyle;
+			removeStyle = _removeStyle;
+			removeExStyle = _removeExStyle;
+		}
 
 #if WINDOWS
 
@@ -300,23 +334,28 @@ namespace Keysharp.Core
 	public class KeysharpLinkLabel : LinkLabel
 	{
 		internal bool clickSet = false;
-		private readonly int addstyle, removestyle;
+		private readonly int addStyle, removeStyle;
+		private readonly int addExStyle, removeExStyle;
 
 		protected override CreateParams CreateParams
 		{
 			get
 			{
 				var cp = base.CreateParams;
-				cp.Style |= addstyle;
-				cp.Style &= ~removestyle;
+				cp.Style |= addStyle;
+				cp.Style &= ~removeStyle;
+				cp.ExStyle |= addExStyle;
+				cp.ExStyle &= ~removeExStyle;
 				return cp;
 			}
 		}
 
-		public KeysharpLinkLabel(string text, int _add = 0, int _remove = 0)
+		public KeysharpLinkLabel(string text, int _addStyle = 0, int _addExStyle = 0, int _removeStyle = 0, int _removeExStyle = 0)
 		{
-			addstyle = _add;
-			removestyle = _remove;
+			addStyle = _addStyle;
+			addExStyle = _addExStyle;
+			removeStyle = _removeStyle;
+			removeExStyle = _removeExStyle;
 
 			if (text != "")
 			{
@@ -366,23 +405,28 @@ namespace Keysharp.Core
 
 	public class KeysharpListBox : ListBox
 	{
-		private readonly int addstyle, removestyle;
+		private readonly int addStyle, removeStyle;
+		private readonly int addExStyle, removeExStyle;
 
 		protected override CreateParams CreateParams
 		{
 			get
 			{
 				var cp = base.CreateParams;
-				cp.Style |= addstyle;
-				cp.Style &= ~removestyle;
+				cp.Style |= addStyle;
+				cp.Style &= ~removeStyle;
+				cp.ExStyle |= addExStyle;
+				cp.ExStyle &= ~removeExStyle;
 				return cp;
 			}
 		}
 
-		public KeysharpListBox(int _add = 0, int _remove = 0)
+		public KeysharpListBox(int _addStyle = 0, int _addExStyle = 0, int _removeStyle = 0, int _removeExStyle = 0)
 		{
-			addstyle = _add;
-			removestyle = _remove;
+			addStyle = _addStyle;
+			addExStyle = _addExStyle;
+			removeStyle = _removeStyle;
+			removeExStyle = _removeExStyle;
 		}
 
 #if WINDOWS
@@ -400,8 +444,30 @@ namespace Keysharp.Core
 	{
 		public bool uni = false;
 		private int sortColumn = -1;
+		private readonly int addStyle, removeStyle;
+		private readonly int addExStyle, removeExStyle;
 
-		public KeysharpListView() => ColumnClick += KeysharpListView_ColumnClick;
+		protected override CreateParams CreateParams
+		{
+			get
+			{
+				var cp = base.CreateParams;
+				cp.Style |= addStyle;
+				cp.Style &= ~removeStyle;
+				cp.ExStyle |= addExStyle;
+				cp.ExStyle &= ~removeExStyle;
+				return cp;
+			}
+		}
+
+		public KeysharpListView(int _addStyle = 0, int _addExStyle = 0, int _removeStyle = 0, int _removeExStyle = 0)
+		{
+			addStyle = _addStyle;
+			addExStyle = _addExStyle;
+			removeStyle = _removeStyle;
+			removeExStyle = _removeExStyle;
+			ColumnClick += KeysharpListView_ColumnClick;
+		}
 
 #if LINUX
 		//Linux has a bug where it will not draw the headers if the control is not initially shown.
@@ -447,23 +513,28 @@ namespace Keysharp.Core
 
 	public class KeysharpMonthCalendar : MonthCalendar
 	{
-		private readonly int addstyle, removestyle;
+		private readonly int addStyle, removeStyle;
+		private readonly int addExStyle, removeExStyle;
 
 		protected override CreateParams CreateParams
 		{
 			get
 			{
 				var cp = base.CreateParams;
-				cp.Style |= addstyle;
-				cp.Style &= ~removestyle;
+				cp.Style |= addStyle;
+				cp.Style &= ~removeStyle;
+				cp.ExStyle |= addExStyle;
+				cp.ExStyle &= ~removeExStyle;
 				return cp;
 			}
 		}
 
-		public KeysharpMonthCalendar(int _add = 0, int _remove = 0)
+		public KeysharpMonthCalendar(int _addStyle = 0, int _addExStyle = 0, int _removeStyle = 0, int _removeExStyle = 0)
 		{
-			addstyle = _add;
-			removestyle = _remove;
+			addStyle = _addStyle;
+			addExStyle = _addExStyle;
+			removeStyle = _removeStyle;
+			removeExStyle = _removeExStyle;
 		}
 
 #if WINDOWS
@@ -479,23 +550,28 @@ namespace Keysharp.Core
 
 	public class KeysharpNumericUpDown : NumericUpDown
 	{
-		private readonly int addstyle, removestyle;
+		private readonly int addStyle, removeStyle;
+		private readonly int addExStyle, removeExStyle;
 
 		protected override CreateParams CreateParams
 		{
 			get
 			{
 				var cp = base.CreateParams;
-				cp.Style |= addstyle;
-				cp.Style &= ~removestyle;
+				cp.Style |= addStyle;
+				cp.Style &= ~removeStyle;
+				cp.ExStyle |= addExStyle;
+				cp.ExStyle &= ~removeExStyle;
 				return cp;
 			}
 		}
 
-		public KeysharpNumericUpDown(int _add = 0, int _remove = 0)
+		public KeysharpNumericUpDown(int _addStyle = 0, int _addExStyle = 0, int _removeStyle = 0, int _removeExStyle = 0)
 		{
-			addstyle = _add;
-			removestyle = _remove;
+			addStyle = _addStyle;
+			addExStyle = _addExStyle;
+			removeStyle = _removeStyle;
+			removeExStyle = _removeExStyle;
 		}
 
 #if WINDOWS
@@ -515,7 +591,8 @@ namespace Keysharp.Core
 	/// </summary>
 	public class KeysharpPictureBox : PictureBox
 	{
-		private readonly int addstyle, removestyle;
+		private readonly int addStyle, removeStyle;
+		private readonly int addExStyle, removeExStyle;
 		private readonly InterpolationMode interpolationMode = InterpolationMode.NearestNeighbor;
 		private bool scaleHeight;
 		private bool scaleWidth;
@@ -556,17 +633,21 @@ namespace Keysharp.Core
 			get
 			{
 				var cp = base.CreateParams;
-				cp.Style |= addstyle;
-				cp.Style &= ~removestyle;
+				cp.Style |= addStyle;
+				cp.Style &= ~removeStyle;
+				cp.ExStyle |= addExStyle;
+				cp.ExStyle &= ~removeExStyle;
 				return cp;
 			}
 		}
 
-		public KeysharpPictureBox(string filename, int _add = 0, int _remove = 0)
+		public KeysharpPictureBox(string filename, int _addStyle = 0, int _addExStyle = 0, int _removeStyle = 0, int _removeExStyle = 0)
 		{
 			Filename = filename;
-			addstyle = _add;
-			removestyle = _remove;
+			addStyle = _addStyle;
+			addExStyle = _addExStyle;
+			removeStyle = _removeStyle;
+			removeExStyle = _removeExStyle;
 		}
 
 		protected override void OnPaint(PaintEventArgs pe)
@@ -595,24 +676,30 @@ namespace Keysharp.Core
 	public class KeysharpProgressBar : ProgressBar
 	{
 		private readonly bool customColors = false;
-		private readonly int removestyle;
-		public int AddStyle { get; }
+		private readonly int addStyle, removeStyle;
+		private readonly int addExStyle, removeExStyle;
+
+		internal int AddStyle => addStyle;
 
 		protected override CreateParams CreateParams
 		{
 			get
 			{
 				var cp = base.CreateParams;
-				cp.Style |= AddStyle;
-				cp.Style &= ~removestyle;
+				cp.Style |= addStyle;
+				cp.Style &= ~removeStyle;
+				cp.ExStyle |= addExStyle;
+				cp.ExStyle &= ~removeExStyle;
 				return cp;
 			}
 		}
 
-		public KeysharpProgressBar(bool _customColors, int _add = 0, int _remove = 0)
+		public KeysharpProgressBar(bool _customColors, int _addStyle = 0, int _addExStyle = 0, int _removeStyle = 0, int _removeExStyle = 0)
 		{
-			AddStyle = _add;
-			removestyle = _remove;
+			addStyle = _addStyle;
+			addExStyle = _addExStyle;
+			removeStyle = _removeStyle;
+			removeExStyle = _removeExStyle;
 			customColors = _customColors;
 			SetStyle(ControlStyles.UserPaint, customColors);
 		}
@@ -707,26 +794,31 @@ namespace Keysharp.Core
 
 	public class KeysharpRadioButton : RadioButton
 	{
-		private readonly int addstyle, removestyle;
+		private readonly int addStyle, removeStyle;
+		private readonly int addExStyle, removeExStyle;
 
 		protected override CreateParams CreateParams
 		{
 			get
 			{
 				var cp = base.CreateParams;
-				cp.Style |= addstyle;
-				cp.Style &= ~removestyle;
+				cp.Style |= addStyle;
+				cp.Style &= ~removeStyle;
+				cp.ExStyle |= addExStyle;
+				cp.ExStyle &= ~removeExStyle;
 				return cp;
 			}
 		}
 
-		public KeysharpRadioButton(int _add = 0, int _remove = 0)
+		public KeysharpRadioButton(int _addStyle = 0, int _addExStyle = 0, int _removeStyle = 0, int _removeExStyle = 0)
 		{
-			addstyle = _add;
-			removestyle = _remove;
+			addStyle = _addStyle;
+			addExStyle = _addExStyle;
+			removeStyle = _removeStyle;
+			removeExStyle = _removeExStyle;
 #if WINDOWS
 
-			if ((addstyle & WindowsAPI.BS_NOTIFY) == WindowsAPI.BS_NOTIFY)
+			if ((addStyle & WindowsAPI.BS_NOTIFY) == WindowsAPI.BS_NOTIFY)
 				SetStyle(ControlStyles.StandardClick | ControlStyles.StandardDoubleClick, true);
 
 #endif
@@ -745,7 +837,8 @@ namespace Keysharp.Core
 
 	public class KeysharpRichEdit : RichTextBox
 	{
-		private readonly int addstyle, removestyle;
+		private readonly int addStyle, removeStyle;
+		private readonly int addExStyle, removeExStyle;
 
 #if !WINDOWS
 		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
@@ -760,16 +853,20 @@ namespace Keysharp.Core
 			get
 			{
 				var cp = base.CreateParams;
-				cp.Style |= addstyle;
-				cp.Style &= ~removestyle;
+				cp.Style |= addStyle;
+				cp.Style &= ~removeStyle;
+				cp.ExStyle |= addExStyle;
+				cp.ExStyle &= ~removeExStyle;
 				return cp;
 			}
 		}
 
-		public KeysharpRichEdit(int _add = 0, int _remove = 0)
+		public KeysharpRichEdit(int _addStyle = 0, int _addExStyle = 0, int _removeStyle = 0, int _removeExStyle = 0)
 		{
-			addstyle = _add;
-			removestyle = _remove;
+			addStyle = _addStyle;
+			addExStyle = _addExStyle;
+			removeStyle = _removeStyle;
+			removeExStyle = _removeExStyle;
 			KeyPress += KeysharpRichEdit_KeyPress;
 #if !WINDOWS
 			Validating += KeysharpRichEdit_Validating;
@@ -845,23 +942,28 @@ namespace Keysharp.Core
 
 	public class KeysharpStatusStrip : StatusStrip
 	{
-		private readonly int addstyle, removestyle;
+		private readonly int addStyle, removeStyle;
+		private readonly int addExStyle, removeExStyle;
 
 		protected override CreateParams CreateParams
 		{
 			get
 			{
 				var cp = base.CreateParams;
-				cp.Style |= addstyle;
-				cp.Style &= ~removestyle;
+				cp.Style |= addStyle;
+				cp.Style &= ~removeStyle;
+				cp.ExStyle |= addExStyle;
+				cp.ExStyle &= ~removeExStyle;
 				return cp;
 			}
 		}
 
-		public KeysharpStatusStrip(int _add = 0, int _remove = 0)
+		public KeysharpStatusStrip(int _addStyle = 0, int _addExStyle = 0, int _removeStyle = 0, int _removeExStyle = 0)
 		{
-			addstyle = _add;
-			removestyle = _remove;
+			addStyle = _addStyle;
+			addExStyle = _addExStyle;
+			removeStyle = _removeStyle;
+			removeExStyle = _removeExStyle;
 		}
 
 #if WINDOWS
@@ -878,23 +980,28 @@ namespace Keysharp.Core
 	public class KeysharpTabControl : TabControl
 	{
 		internal Color? bgcolor;
-		private readonly int addstyle, removestyle;
+		private readonly int addStyle, removeStyle;
+		private readonly int addExStyle, removeExStyle;
 
 		protected override CreateParams CreateParams
 		{
 			get
 			{
 				var cp = base.CreateParams;
-				cp.Style |= addstyle;
-				cp.Style &= ~removestyle;
+				cp.Style |= addStyle;
+				cp.Style &= ~removeStyle;
+				cp.ExStyle |= addExStyle;
+				cp.ExStyle &= ~removeExStyle;
 				return cp;
 			}
 		}
 
-		public KeysharpTabControl(int _add = 0, int _remove = 0)
+		public KeysharpTabControl(int _addStyle = 0, int _addExStyle = 0, int _removeStyle = 0, int _removeExStyle = 0)
 		{
-			addstyle = _add;
-			removestyle = _remove;
+			addStyle = _addStyle;
+			addExStyle = _addExStyle;
+			removeStyle = _removeStyle;
+			removeExStyle = _removeExStyle;
 			Click += KeysharpTabControl_Click;
 			Enter += KeysharpTabControl_Enter;
 			ControlAdded += KeysharpTabControl_ControlAdded;
@@ -981,7 +1088,6 @@ namespace Keysharp.Core
 	public class KeysharpToolStripStatusLabel : ToolStripStatusLabel
 	{
 		internal readonly List<IFuncObj> doubleClickHandlers = [];
-
 		//No WndProc method to override because TSSL is not a Control.
 
 		public KeysharpToolStripStatusLabel(string text = "")
@@ -997,7 +1103,8 @@ namespace Keysharp.Core
 	public class KeysharpTrackBar : TrackBar
 	{
 		public bool inverted = false;
-		private readonly int addstyle, removestyle;
+		private readonly int addStyle, removeStyle;
+		private readonly int addExStyle, removeExStyle;
 
 		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 		public new int Value
@@ -1011,16 +1118,20 @@ namespace Keysharp.Core
 			get
 			{
 				var cp = base.CreateParams;
-				cp.Style |= addstyle;
-				cp.Style &= ~removestyle;
+				cp.Style |= addStyle;
+				cp.Style &= ~removeStyle;
+				cp.ExStyle |= addExStyle;
+				cp.ExStyle &= ~removeExStyle;
 				return cp;
 			}
 		}
 
-		public KeysharpTrackBar(int _add = 0, int _remove = 0)
+		public KeysharpTrackBar(int _addStyle = 0, int _addExStyle = 0, int _removeStyle = 0, int _removeExStyle = 0)
 		{
-			addstyle = _add;
-			removestyle = _remove;
+			addStyle = _addStyle;
+			addExStyle = _addExStyle;
+			removeStyle = _removeStyle;
+			removeExStyle = _removeExStyle;
 		}
 
 #if WINDOWS
@@ -1036,7 +1147,8 @@ namespace Keysharp.Core
 
 	public class KeysharpTreeView : TreeView
 	{
-		private readonly int addstyle, removestyle;
+		private readonly int addStyle, removeStyle;
+		private readonly int addExStyle, removeExStyle;
 		private readonly Dictionary<TreeNode, bool> expandStates = [];
 
 		protected override CreateParams CreateParams
@@ -1044,16 +1156,20 @@ namespace Keysharp.Core
 			get
 			{
 				var cp = base.CreateParams;
-				cp.Style |= addstyle;
-				cp.Style &= ~removestyle;
+				cp.Style |= addStyle;
+				cp.Style &= ~removeStyle;
+				cp.ExStyle |= addExStyle;
+				cp.ExStyle &= ~removeExStyle;
 				return cp;
 			}
 		}
 
-		public KeysharpTreeView(int _add = 0, int _remove = 0)
+		public KeysharpTreeView(int _addStyle = 0, int _addExStyle = 0, int _removeStyle = 0, int _removeExStyle = 0)
 		{
-			addstyle = _add;
-			removestyle = _remove;
+			addStyle = _addStyle;
+			addExStyle = _addExStyle;
+			removeStyle = _removeStyle;
+			removeExStyle = _removeExStyle;
 		}
 
 		internal void DelayedExpandParent(TreeNode node)

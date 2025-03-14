@@ -22,8 +22,6 @@ namespace Keysharp.Core.Common.Invoke
 				var gch = GCHandle.Alloc(obj ?? p, GCHandleType.Pinned);
 				_ = gcHandles.Add(gch);
 				var intptr = gch.AddrOfPinnedObject();
-
-                External.NumPut(pm1.TrimEnd('*', 'p', 'P'), obj ?? p, intptr);
 				//Numbers being passed in will always be of type long or double, however that won't work
 				//when a DLL function expects a pointer to a smaller type. So advance the pointer by the appropriate amount so it
 				//accesses the intended part.
@@ -83,7 +81,7 @@ namespace Keysharp.Core.Common.Invoke
                 {
                     case "astr":
                     case "wstr":
-                    case "str": type = typeof(string); break;
+                    case "str": type = typeof(string); usePtr = true; break;
 
                     case "int64": type = typeof(long); break;
 

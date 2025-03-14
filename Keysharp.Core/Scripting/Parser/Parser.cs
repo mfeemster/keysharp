@@ -439,6 +439,7 @@ namespace Keysharp.Scripting
         public class Class
         {
             public string Name = null;
+			public string UserDeclaredName = null;
             public string Base = "KeysharpObject";
 			public List<BaseTypeSyntax> BaseList = new();
             public List<MemberDeclarationSyntax> Body = new List<MemberDeclarationSyntax>();

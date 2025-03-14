@@ -429,8 +429,8 @@
 		{
 			add.Tag = new GuiTag { Index = control.Controls.Count };
 			control.Controls.Add(add);
-            control.Controls.SetChildIndex(add, 0);//Required for proper Z ordering so that this control is on top.
-        }
+			control.Controls.SetChildIndex(add, 0);//Required for proper Z ordering so that this control is on top.
+		}
 
 		/// <summary>
 		/// Tags a <see cref="GuiControl"/> by setting the Index property of its Tag property to the current count of child controls
@@ -445,8 +445,8 @@
 		{
 			((GuiTag)add.Control.Tag).Index = control.Controls.Count;//The reference to the control was set in the constructor, so set the index here.
 			control.Controls.Add(add.Control);
-            control.Controls.SetChildIndex(add.Control, 0);//Required for proper Z ordering so that this control is on top.
-        }
+			control.Controls.SetChildIndex(add.Control, 0);//Required for proper Z ordering so that this control is on top.
+		}
 
 		/// <summary>
 		/// Recursively adds all child menu items of a <see cref="ToolStripItem"/> to the passed in list.

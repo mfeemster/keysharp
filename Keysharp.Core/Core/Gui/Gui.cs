@@ -273,6 +273,12 @@
 			set => form.Text = value.As();
 		}
 
+		public object Visible
+		{
+			get => form.Visible;
+			set => form.Visible = value.Ab();
+		}
+
 		internal Font Font { get; set; }
 
 		internal Control LastContainer { get; set; }
@@ -389,8 +395,7 @@
 			{
 				case Keyword_Text:
 				{
-					//var lbl = new KeysharpLabel(0x20)
-					var lbl = new KeysharpLabel
+					var lbl = new KeysharpLabel(opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle)
 					{
 						Font = Conversions.ConvertFont(form.Font)
 					};
@@ -410,7 +415,7 @@
 						opts.remstyle |= WindowsAPI.WS_HSCROLL | WindowsAPI.ES_AUTOHSCROLL;
 
 #endif
-					var txt = new KeysharpEdit(opts.addstyle, opts.remstyle)
+					var txt = new KeysharpEdit(opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle)
 					{
 						AcceptsTab = opts.wanttab ?? false,
 						AcceptsReturn = opts.wantreturn ?? false,
@@ -478,7 +483,7 @@
 						opts.remstyle |= WindowsAPI.WS_HSCROLL | WindowsAPI.ES_AUTOHSCROLL;
 
 #endif
-					var txt = new KeysharpRichEdit(opts.addstyle, opts.remstyle)
+					var txt = new KeysharpRichEdit(opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle)
 					{
 						AcceptsTab = opts.wanttab ?? false,
 						Multiline = ml,
@@ -536,7 +541,7 @@
 					//Min and max can't be swapped.
 					//Increment is made easier to set with the new "Increment" option.
 					//Hex is made easier with the new "Hex" option.
-					var nud = new KeysharpNumericUpDown
+					var nud = new KeysharpNumericUpDown(opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle)
 					{
 						Increment = opts.nudinc ?? 1,
 						ThousandsSeparator = (opts.addstyle & 0x80) != 0x80,
@@ -562,7 +567,8 @@
 				case Keyword_Pic:
 				case Keyword_Picture://No special support for GDI+, instead we just use whatever C# uses under the hood for its PictureBox control. Also, animated gifs do animate.
 				{
-					var pic = new KeysharpPictureBox(text, 0x20);//Attempt to support transparency.
+					opts.addstyle |= 0x20;
+					var pic = new KeysharpPictureBox(text, opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle);//Attempt to support transparency.
 
 					if (opts.width < 0 && opts.height < 0)
 					{
@@ -587,9 +593,9 @@
 				case Keyword_Button:
 				{
 #if WINDOWS
-					opts.addstyle &= WindowsAPI.BS_NOTIFY;//Documentation says BS_NOTIFY will be automatically added in OnEvent(), which is the only time clicks are handled, so add regardless.
+					opts.addstyle |= WindowsAPI.BS_NOTIFY;//Documentation says BS_NOTIFY will be automatically added in OnEvent(), which is the only time clicks are handled, so add regardless.
 #endif
-					ctrl = new KeysharpButton(opts.addstyle, opts.remstyle)
+					ctrl = new KeysharpButton(opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle)
 					{
 						Name = text,
 						AutoSize = opts.width == int.MinValue && opts.wp == int.MinValue && opts.height == int.MinValue && opts.hp == int.MinValue
@@ -602,7 +608,7 @@
 
 				case Keyword_CheckBox:
 				{
-					var chk = new KeysharpCheckBox(opts.addstyle, opts.remstyle)
+					var chk = new KeysharpCheckBox(opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle)
 					{
 						ThreeState = opts.check3
 					};
@@ -626,7 +632,7 @@
 
 				case Keyword_Radio:
 				{
-					var rad = new KeysharpRadioButton(opts.addstyle, opts.remstyle)
+					var rad = new KeysharpRadioButton(opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle)
 					{
 						AutoSize = true,
 						Text = text
@@ -642,15 +648,15 @@
 
 					if (type == Keyword_DropDownList)
 					{
-						ddl = new KeysharpComboBox();
+						ddl = new KeysharpComboBox(opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle);
 						ddl.DropDownStyle = ComboBoxStyle.DropDownList;
 					}
 					else
 					{
 #if WINDOWS
-						ddl = new KeysharpComboBox(0, opts.limit != int.MinValue ? WindowsAPI.CBS_AUTOHSCROLL : 0);
+						ddl = new KeysharpComboBox(opts.addstyle, opts.addexstyle, opts.limit != int.MinValue ? (opts.remstyle | WindowsAPI.CBS_AUTOHSCROLL) : opts.remstyle, opts.remexstyle);
 #else
-						ddl = new KeysharpComboBox(0, 0);
+						ddl = new KeysharpComboBox(opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle);
 #endif
 						ddl.DropDownStyle = opts.cmbsimple.IsTrue() ? ComboBoxStyle.Simple : ComboBoxStyle.DropDown;
 					}
@@ -696,7 +702,7 @@
 						opts.addstyle |= WindowsAPI.LBS_NOSEL;
 
 #endif
-					var lb = new KeysharpListBox(opts.addstyle, opts.remstyle)
+					var lb = new KeysharpListBox(opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle)
 					{
 						SelectionMode = opts.multiline.IsTrue() ? SelectionMode.MultiExtended : SelectionMode.One,
 						Sorted = opts.sort.IsTrue()//Unsure how to make incremental search work.
@@ -740,7 +746,7 @@
 				case Keyword_ListView:
 				{
 					//There is no way to preallocate memory with the "Count" option, so that is ignored.
-					var lv = new KeysharpListView();
+					var lv = new KeysharpListView(opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle);
 					lv.Columns.AddRange(al.Cast<(object, object)>().Select(x => x.Item2).Select(x => new ColumnHeader { Text = x.Str() }).ToArray());
 					lv.CheckBoxes = opts.ischecked.HasValue && opts.ischecked.Value > 0;
 					lv.GridLines = opts.grid.IsTrue();
@@ -785,9 +791,9 @@
 				case Keyword_TreeView:
 				{
 #if WINDOWS
-					var tv = new KeysharpTreeView(!opts.hscroll ? WindowsAPI.TVS_NOHSCROLL : 0, 0);
+					var tv = new KeysharpTreeView(!opts.hscroll ? (opts.addstyle | WindowsAPI.TVS_NOHSCROLL) : opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle);
 #else
-					var tv = new KeysharpTreeView(0, 0);
+					var tv = new KeysharpTreeView(opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle);
 #endif
 
 					if (opts.buttons.HasValue)
@@ -809,7 +815,7 @@
 
 				case Keyword_Link:
 				{
-					var linklabel = new KeysharpLinkLabel(text);
+					var linklabel = new KeysharpLinkLabel(text, opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle);
 					ctrl = linklabel;
 				}
 				break;
@@ -830,7 +836,7 @@
 
 				case Keyword_DateTime:
 				{
-					var dtp = new KeysharpDateTimePicker();
+					var dtp = new KeysharpDateTimePicker(opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle);
 					dtp.SetFormat(text);
 
 					if (opts.rightj.IsTrue())
@@ -876,7 +882,7 @@
 
 				case Keyword_MonthCal:
 				{
-					var cal = new KeysharpMonthCalendar();
+					var cal = new KeysharpMonthCalendar(opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle);
 
 					if (opts.dtlow != DateTime.MinValue)//This causes a crash when you scroll past it.
 						cal.MinDate = opts.dtlow;
@@ -904,17 +910,19 @@
 
 				case Keyword_Slider://Buddy controls are not supported.
 				{
-					var style = 0;
 #if WINDOWS
 
 					if (opts.tooltip)
-						style |= WindowsAPI.TBS_TOOLTIPS;
+						opts.addstyle |= WindowsAPI.TBS_TOOLTIPS;
 
 					if (opts.thick != int.MinValue)
-						style |= WindowsAPI.TBS_FIXEDLENGTH;
+						opts.addstyle |= WindowsAPI.TBS_FIXEDLENGTH;
 
 #endif
-					var slider = new KeysharpTrackBar(style) { Orientation = opts.vertical ? Orientation.Vertical : Orientation.Horizontal };
+					var slider = new KeysharpTrackBar(opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle)
+					{
+						Orientation = opts.vertical ? Orientation.Vertical : Orientation.Horizontal
+					};
 
 					if (opts.nudlow.HasValue && opts.nudhigh.HasValue)
 					{
@@ -964,11 +972,11 @@
 
 				case Keyword_Progress:
 				{
-					var prg = new KeysharpProgressBar(opts.bgcolor.HasValue || opts.c != Control.DefaultForeColor
-#if WINDOWS
-													  , opts.vertical ? 0x04 : 0
-#endif
-													 );
+					if (opts.vertical)
+						opts.addstyle |= 0x04;
+
+					var prg = new KeysharpProgressBar(opts.bgcolor.HasValue || opts.c != Control.DefaultForeColor,
+													  opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle);
 					prg.Style = opts.smooth.IsTrue() ? ProgressBarStyle.Continuous : ProgressBarStyle.Blocks;
 
 					if (opts.nudlow.HasValue)
@@ -995,7 +1003,7 @@
 
 				case Keyword_GroupBox:
 				{
-					ctrl = new KeysharpGroupBox() { };
+					ctrl = new KeysharpGroupBox(opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle) { };
 				}
 				break;
 
@@ -1003,7 +1011,7 @@
 				case Keyword_Tab2:
 				case Keyword_Tab3:
 				{
-					var kstc = new KeysharpTabControl();//This will also support image lists just like TreeView for setting icons on tabs, instead of using SendMessage().
+					var kstc = new KeysharpTabControl(opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle);//This will also support image lists just like TreeView for setting icons on tabs, instead of using SendMessage().
 					kstc.TabPages.AddRange(al.Cast<(object, object)>().Select(x => x.Item2).Select(x => new TabPage(x.Str())).ToArray());
 
 					if (opts.leftj.IsTrue())
@@ -1030,7 +1038,7 @@
 
 				case Keyword_StatusBar:
 				{
-					var ss = new KeysharpStatusStrip();
+					var ss = new KeysharpStatusStrip(opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle);
 					StatusBar = ss;
 					ss.AutoSize = false;
 					ss.ImageScalingSize = new Size((int)Math.Round(28 * dpiscale), (int)Math.Round(28 * dpiscale));
@@ -2002,7 +2010,11 @@
 					else if (Options.TryParse(opt, "HScroll", ref options.hscrollamt, StringComparison.OrdinalIgnoreCase, true)) { }
 					else if (Options.TryParse(opt, "Increment", ref temp)) { options.nudinc = temp; }
 					else if (Options.TryParse(opt, "Hex", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.hex = tempbool; }
-					else if (opt.Equals("BackgroundTrans", StringComparison.OrdinalIgnoreCase)) { options.bgtrans = true; }
+					else if (opt.Equals("BackgroundTrans", StringComparison.OrdinalIgnoreCase))
+					{
+						options.addexstyle |= 0x00000020;
+						options.bgtrans = true;
+					}
 					else if (opt.Equals("-Background", StringComparison.OrdinalIgnoreCase)) { options.bgcolor = Control.DefaultBackColor; }
 					else if (opt.Equals("Background", StringComparison.OrdinalIgnoreCase)) { options.bgcolor = Control.DefaultBackColor; }
 					else if (opt.Equals("BackgroundDefault", StringComparison.OrdinalIgnoreCase)) { options.bgcolor = Control.DefaultBackColor; }

@@ -32,7 +32,9 @@ namespace Keysharp.Scripting
 
         public override SyntaxNode VisitClassDeclaration([NotNull] ClassDeclarationContext context)
         {
-            PushClass(Parser.NormalizeIdentifier(context.identifier().GetText(), eNameCase.Title));
+            string userDeclaredName = context.identifier().GetText();
+            PushClass(Parser.NormalizeIdentifier(userDeclaredName, eNameCase.Title));
+            parser.currentClass.UserDeclaredName = userDeclaredName;
 
             // Determine the base class (Extends clause)
             if (context.Extends() != null)
@@ -156,7 +158,7 @@ namespace Keysharp.Scripting
             parser.currentClass.Body.Add(CreateConstructor(parser.currentClass.Name));
 
             // Add __Class and __Static
-            AddClassProperties(context.identifier().GetText());
+            AddClassProperties(userDeclaredName);
 
             // Process class elements
             if (context.classTail().classElement() != null)
@@ -520,6 +522,47 @@ namespace Keysharp.Scripting
                                     )
                                 )
                             )
+                        ),
+                        // SetPropertyValue(Variables.Prototypes[typeof(ClassName)], "__Class", "UserDeclaredClassname");
+                        SyntaxFactory.ExpressionStatement(
+                            ((InvocationExpressionSyntax)InternalMethods.SetPropertyValue)
+                            .WithArgumentList(
+                                SyntaxFactory.ArgumentList(
+                                    SyntaxFactory.SeparatedList(new[]
+                                    {
+                                        SyntaxFactory.Argument(
+                                            SyntaxFactory.ElementAccessExpression(
+                                                SyntaxFactory.MemberAccessExpression(
+                                                    SyntaxKind.SimpleMemberAccessExpression,
+                                                    SyntaxFactory.IdentifierName("Variables"),
+                                                    SyntaxFactory.IdentifierName("Prototypes")
+                                                ),
+                                                SyntaxFactory.BracketedArgumentList(
+                                                    SyntaxFactory.SingletonSeparatedList(
+                                                        SyntaxFactory.Argument(
+                                                            SyntaxFactory.TypeOfExpression(
+                                                                SyntaxFactory.IdentifierName(className)
+                                                            )
+                                                        )
+                                                    )
+                                                )
+                                            )
+                                        ),
+                                        SyntaxFactory.Argument(
+                                            SyntaxFactory.LiteralExpression(
+                                                SyntaxKind.StringLiteralExpression,
+                                                SyntaxFactory.Literal("__Class")
+                                            )
+                                        ),
+                                        SyntaxFactory.Argument(
+                                            SyntaxFactory.LiteralExpression(
+                                                SyntaxKind.StringLiteralExpression,
+                                                SyntaxFactory.Literal(parser.currentClass.UserDeclaredName)
+                                            )
+                                        )
+                                    })
+                                )
+                            )
                         )
                     )
                 );
@@ -619,6 +662,7 @@ namespace Keysharp.Scripting
 
         private void AddClassProperties(string className)
         {
+            /*
             parser.currentClass.Body.Add(
                 SyntaxFactory.PropertyDeclaration(
                     SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.StringKeyword)),
@@ -640,6 +684,7 @@ namespace Keysharp.Scripting
                     )
                 )
             );
+            */
 
             parser.currentClass.Body.Add(
                 SyntaxFactory.PropertyDeclaration(
