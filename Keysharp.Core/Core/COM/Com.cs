@@ -26,6 +26,9 @@ namespace Keysharp.Core.COM
 		public const int vt_ui8 = 0x15; //64-bit unsigned int
 		public const int vt_int = 0x16; //Signed machine int
 		public const int vt_uint = 0x17; //Unsigned machine int
+		public const int vt_void = 0x18;
+		public const int vt_hresult = 0x19;
+		public const int vt_ptr = 0x001A;
 		public const int vt_record = 0x24; //User-defined type -- NOT SUPPORTED
 		public const int vt_array = 0x2000; //SAFEARRAY
 		public const int vt_byref = 0x4000; //Pointer to another type of value

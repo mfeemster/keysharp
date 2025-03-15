@@ -15,7 +15,7 @@ namespace Keysharp.Core.COM
 	public interface IDispatch
 	{
 		[PreserveSig]
-		int GetTypeInfoCount(out int info);
+		int GetTypeInfoCount(out uint info);
 
 		[PreserveSig]
 		int GetTypeInfo(int iTInfo, int lcid, out ct.ITypeInfo? ppTInfo);
@@ -173,7 +173,7 @@ namespace Keysharp.Core.COM
 		public int GetTypeInfo(int iTInfo, int lcid, out ct.ITypeInfo? ppTInfo)
 		{ ppTInfo = null; return E_NOTIMPL; }
 
-		public int GetTypeInfoCount(out int pctinfo)
+		public int GetTypeInfoCount(out uint pctinfo)
 		{ pctinfo = 0; return 0; }
 
 		//int Invoke(int dispIdMember, Guid riid, int lcid, ct.INVOKEKIND wFlags, ref ct.DISPPARAMS pDispParams, IntPtr pvarResult, IntPtr pExcepInfo, IntPtr puArgErr)
