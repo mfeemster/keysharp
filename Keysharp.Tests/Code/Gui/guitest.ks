@@ -56,6 +56,7 @@ MyGui := Gui(, "KEYSHARP TESTS")
 MyGui.OnEvent("Close", "CloseApp")
 
 CloseApp() {
+	shell := ""
 	ExitApp
 }
 
@@ -2516,6 +2517,12 @@ comDllRunWordBtn.OnEvent("Click", "ComRunWord")
 comDllRunWordListenerBtn := MyGui.Add("Button", "x10 y+10", "COM run MS Word with event listener")
 comDllRunWordListenerBtn.OnEvent("Click", "ComRunWordEventListener")
 
+comShellRunNotepad := MyGui.Add("Button", "x10 y+10", "COM shell Run() Notepad")
+comShellRunNotepad.OnEvent("Click", "ComRunNotepadShell")
+
+comShellExecNotepad := MyGui.Add("Button", "x10 y+10", "COM shell Exec() Notepad")
+comShellExecNotepad.OnEvent("Click", "ComExecNotepadShell")
+
 _ := MyGui.Add("Text", "x10 y+10 cBlue S10", "An animated Odie should appear below using ActiveX.")
 
 axPic := "http://www.animatedgif.net/cartoons/A_5odie_e0.gif"
@@ -2701,6 +2708,28 @@ class mycomhandler
 		OutputDebug("`tReceived Quit event.")
 		ShowDebug()
     }
+}
+
+shell := unset
+
+ComExecNotepadShell()
+{
+	global shell
+	
+	if (shell == unset)
+		shell := ComObject("WScript.Shell")
+		
+	exec := shell.Exec("Notepad.exe")
+}
+
+ComRunNotepadShell()
+{
+	global shell
+
+	if (shell == unset)
+		shell := ComObject("WScript.Shell")
+		
+	exec := shell.Run("Notepad.exe")
 }
 
 OnExit (*) => SystemCursor("Show")  ; Ensure the cursor is made visible when the script exits.

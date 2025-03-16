@@ -68,6 +68,8 @@ namespace Keysharp.Core
 
 		public static string GetVars(object obj = null)
 		{
+			//var sw = new Stopwatch();
+			//sw.Start();
 			var tabLevel = 0;
 			var doInternal = obj.Ab(true);
 			var sbuf = new StringBuffer();
@@ -124,7 +126,10 @@ namespace Keysharp.Core
 				}
 			}
 
-			return sbuf.sb.ToString();
+			var s = sbuf.sb.ToString();
+			//sw.Stop();
+			//OutputDebug($"GetVars(): took {sw.Elapsed.TotalMilliseconds}ms.");
+			return s;
 		}
 
 		public static string ListKeyHistory()

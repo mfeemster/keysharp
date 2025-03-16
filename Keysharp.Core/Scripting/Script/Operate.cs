@@ -802,7 +802,7 @@ namespace Keysharp.Scripting
 			{
 				secondl = rl;
 			}
-			else if (left is IntPtr rip)
+			else if (right is IntPtr rip)
 			{
 				secondl = rip.ToInt64();
 			}

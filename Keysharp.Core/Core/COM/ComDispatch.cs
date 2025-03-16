@@ -21,14 +21,16 @@ namespace Keysharp.Core.COM
 		int GetTypeInfo(int iTInfo, int lcid, out ct.ITypeInfo? ppTInfo);
 
 		[PreserveSig]
-		int GetIDsOfNames([MarshalAs(UnmanagedType.LPStruct)] Guid riid,
-						  [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.LPWStr, SizeParamIndex = 2)] string[] names,
-						  int cNames, int lcid,
-						  [Out, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 2)] int[] rgDispId);
+		int GetIDsOfNames(
+			[In] ref Guid guid,
+			[MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.LPWStr, SizeParamIndex = 2)]
+			string[] names,
+			int cNames, int lcid,
+			[Out, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 2)]
+			int[] rgDispId);
 
 		int Invoke(int dispIdMember,
-				   [MarshalAs(UnmanagedType.LPStruct)]
-				   Guid riid,
+				   [In] ref Guid riid,
 				   int lcid,
 				   ct.INVOKEKIND wFlags,
 				   ref ct.DISPPARAMS pDispParams,
@@ -56,17 +58,6 @@ namespace Keysharp.Core.COM
 			[In] ref Guid riid,
 			[Out] out IntPtr ppvObject);
 	}
-
-	//[StructLayout(LayoutKind.Sequential)]
-	//internal struct VARIANT
-	//{
-	//  public ushort vt;
-	//  public ushort r0;
-	//  public ushort r1;
-	//  public ushort r2;
-	//  public IntPtr ptr0;
-	//  public IntPtr ptr1;
-	//}
 
 	/// <summary>
 	/// Solution for event handling taken from the answer to my post at:
@@ -168,7 +159,14 @@ namespace Keysharp.Core.COM
 			GC.SuppressFinalize(this);
 		}
 
-		public int GetIDsOfNames(Guid riid, string[] names, int cNames, int lcid, int[] rgDispId) => E_NOTIMPL;
+		[PreserveSig]
+		public int GetIDsOfNames(
+			[In] ref Guid guid,
+			[MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.LPWStr, SizeParamIndex = 2)]
+			string[] names,
+			int cNames, int lcid,
+			[Out, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 2)]
+			int[] rgDispId) => E_NOTIMPL;
 
 		public int GetTypeInfo(int iTInfo, int lcid, out ct.ITypeInfo? ppTInfo)
 		{ ppTInfo = null; return E_NOTIMPL; }
@@ -176,10 +174,8 @@ namespace Keysharp.Core.COM
 		public int GetTypeInfoCount(out uint pctinfo)
 		{ pctinfo = 0; return 0; }
 
-		//int Invoke(int dispIdMember, Guid riid, int lcid, ct.INVOKEKIND wFlags, ref ct.DISPPARAMS pDispParams, IntPtr pvarResult, IntPtr pExcepInfo, IntPtr puArgErr)
 		public int Invoke(int dispIdMember,
-						  [MarshalAs(UnmanagedType.LPStruct)]
-						  Guid riid,
+						  [In] ref Guid riid,
 						  int lcid,
 						  ct.INVOKEKIND wFlags,
 						  ref ct.DISPPARAMS pDispParams,

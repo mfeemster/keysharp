@@ -406,7 +406,7 @@
 				var (propName, val) = opi.Current;
 				var fieldType = val != null ? val.GetType().Name : "";
 
-				if (val is KeysharpObject kso2)
+				if (val != this && val is KeysharpObject kso2)
 				{
 					kso2.PrintProps(propName.ToString(), sbuf, ref tabLevel);
 				}

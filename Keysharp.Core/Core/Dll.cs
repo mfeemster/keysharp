@@ -199,7 +199,7 @@ namespace Keysharp.Core
 								pb.SetCustomAttribute(new CustomAttributeBuilder(
 														  typeof(MarshalAsAttribute).GetConstructor([typeof(UnmanagedType)]),
 														  [UnmanagedType.SafeArray],
-														  new FieldInfo[] { typeof(MarshalAsAttribute).GetField("SafeArraySubType") },
+														  [typeof(MarshalAsAttribute).GetField("SafeArraySubType")],
 														  [VarEnum.VT_VARIANT]
 													  ));
 							}

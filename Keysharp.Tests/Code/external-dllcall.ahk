@@ -133,9 +133,9 @@ dest := 0
 DllCall("Kernel32\RtlMoveMemory", "int*", &dest, "Ptr", src, "Int", 4)
 
 if (dest == -1)
-    FileAppend "pass", "*"
+	FileAppend "pass", "*"
 else
-    FileAppend "fail", "*"
+	FileAppend "fail", "*"
 
 ; Ensure int* gets properly written to and initial bits are cleared.
 
@@ -145,9 +145,9 @@ dest := 0xFFFFFFFF+1
 DllCall("Kernel32\RtlMoveMemory", "int*", &dest, "Ptr", src, "Int", 4)
 
 if (dest == 1)
-    FileAppend "pass", "*"
+	FileAppend "pass", "*"
 else
-    FileAppend "fail", "*"
+	FileAppend "fail", "*"
 
 ; Ensure float* gets properly written to and can be read back as a double.
 
@@ -156,20 +156,20 @@ NumPut("float", 1.0, src)
 dest := 1.1
 DllCall("Kernel32\RtlMoveMemory", "float*", &dest, "Ptr", src, "Int", 4)
 if (dest == 1.0)
-    FileAppend "pass", "*"
+	FileAppend "pass", "*"
 else
-    FileAppend "fail", "*"
+	FileAppend "fail", "*"
 
 ; This tests the regular DllCall() and the CallDel() path using ComArgumentHelper.
 ; I don't know what it's supposed to be doing or how it works, but it appears to be
 ; dynamically invoking assembly code to implement the following C function.
-/*
-void AddOne(int *i)
-{
-    (*i)++;
-    return;
-}
-*/
+
+; void AddOne(int *i)
+; {
+;     (*i)++;
+;     return;
+; }
+
 
 ptr := MCode('2,x64:gwEBww==')
 
