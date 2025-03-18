@@ -270,6 +270,33 @@ namespace Keysharp.Core
 		}
 
 		/// <summary>
+		/// Frees an object that was pinned by <see cref="StrPtr"/>.
+		/// </summary>
+		/// <param name="value">The address of the object to free.</param>
+		/// <returns>True if value was found and freed, else false.</returns>
+		/// <exception cref="TypeError">A <see cref="TypeError"/> exception is thrown if value is not of type <see cref="IntPtr"/> or <see cref="long"/>.</exception>
+		public static bool FreeStrPtr(object value)
+		{
+			Error err;
+			nint ip;
+
+			if (value is nint nn)
+				ip = nn;
+			else if (value is long l)
+				ip = (nint)l;
+			else
+				return Errors.ErrorOccurred(err = new TypeError($"Argument of type {value.GetType()} was not a pointer.")) ? throw err : false;
+
+			if (Script.gcHandles.Remove(ip, out var oldGch))
+			{
+				oldGch.Free();
+				return true;
+			}
+			else
+				return false;
+		}
+
+		/// <summary>
 		/// Searches for a given occurrence of a string, from the left or the right.
 		/// </summary>
 		/// <param name="haystack">The string whose content is searched.</param>
@@ -892,15 +919,24 @@ namespace Keysharp.Core
 		public static string StrLower(object str) => str.As().ToLowerInvariant();
 
 		/// <summary>
-		/// Unsupported.
+		/// Returns the current memory address of a string.
+		/// Note, this does not actually point to the string. Instead, it
+		/// points to a copy of the bytes of the string.
+		/// Note, the caller will have to manually free the returned pointer by calling FreeStrPtr.
 		/// </summary>
-		/// <param name="obj">Ignored</param>
-		/// <returns>None</returns>
-		/// <exception cref="Error">An <see cref="Error"/> exception is thrown because this function has no meaning in Keysharp.</exception>
-		public static long StrPtr(object obj)
+		/// <param name="value">The string to return a pointer to.</param>
+		/// <returns>The memory address of a copy of the string bytes.</returns>
+		public static long StrPtr(object value)
 		{
-			Error err;
-			return Errors.ErrorOccurred(err = new Error("Cannot take the address of a string in C#, so just use the string as is.")) ? throw err : 0L;
+			value = Encoding.Unicode.GetBytes(value.ToString());
+			var gch = GCHandle.Alloc(value, GCHandleType.Pinned);
+			var ptr = gch.AddrOfPinnedObject();
+
+			if (Script.gcHandles.Remove(ptr, out var oldGch))
+				oldGch.Free();
+
+			Script.gcHandles.Add(ptr, gch);
+			return ptr;
 		}
 
 		/// <summary>

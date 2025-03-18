@@ -67,7 +67,7 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 	+ Keysharp breaks this and will instead create a variable, initialize it to zero, then increment it.
 	+ For example, a file with nothing but the line `x++` in it, will end with a variable named x which has the value of 1.
 * Function objects behave differently in a few ways.
-	+ The underlying function object class is called `FuncObj`. This was named so, instead of `Func`, because C# already contains a built in class named `Func`.
+	+ The underlying function object class is named `FuncObj`. This was named so, instead of `Func`, because C# already contains a built in class named `Func`.
 	+ Function objects can be created by passing the name of the function as as a direct reference or as a string to `Func()`.
 	+ This can be done by passing the name of the desired function as a direct reference or as a string, and optionally an object and a parameter count like so:
 		+ `Func(functionName [, object, paramCount])`.
@@ -165,6 +165,8 @@ testfunc()
     }
 }
 ```
+* Pointers returnd by `StrPtr()` must be freed by passing the value to a new function named `FreeStrPtr()`.
+	+ `StrPtr()` does not return the address of the string, instead it returns the address of a copy of the bytes of the string.
 * Threads are not resumable once an exception has been thrown.
 	+ Callbacks set by `OnError()` will properly run, but execution of the current thread will not resume regardless of the exception type or the return value of the callback.
 	+ Errors of type `ExitApp` will exit the script as usual.

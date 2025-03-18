@@ -209,6 +209,43 @@ MCode(mcode) {
 	DllCall("GlobalFree", "ptr", p)
 }
 
+/*
+int CallCallbackZeroArgs(void* ptr)
+{
+    int (*func)(void) = (int(*)(void))ptr;
+    return func();
+}
+*/
+
+CallbackZeroArgs() => 3
+CallbackTwoArgs(arg1, arg2) => arg1 + arg2
+
+ptr := MCode('2,x64:SP/h')
+result := 0
+result := DllCall(ptr, "ptr", CallbackCreate(CallbackZeroArgs))
+
+if (result == 3)
+    FileAppend "pass", "*"
+else
+    FileAppend "fail", "*"
+
+/*
+int CallCallbackTwoArgs(void* ptr, int arg1, int arg2)
+{
+    int (*func)(int, int) = (int(*)(int, int))ptr;
+    return func(arg1, arg2);
+}
+*/
+ptr := MCode('2,x64:SInIidFEicJI/+A=')
+
+result := 0
+result := DllCall(ptr, "ptr", CallbackCreate(CallbackTwoArgs), "int", -1, "int", 4)
+
+if (result == 3) ; This is testing the conversion of long back to int.
+    FileAppend "pass", "*"
+else
+    FileAppend "fail", "*"
+
 shell := ComObject("WScript.Shell")
 exec := shell.Exec("Notepad.exe")
 exec := shell.Run("Notepad.exe")

@@ -2523,6 +2523,9 @@ comShellRunNotepad.OnEvent("Click", "ComRunNotepadShell")
 comShellExecNotepad := MyGui.Add("Button", "x10 y+10", "COM shell Exec() Notepad")
 comShellExecNotepad.OnEvent("Click", "ComExecNotepadShell")
 
+comFakeComCall := MyGui.Add("Button", "x10 y+10", "Fake COM call (hello)")
+comFakeComCall.OnEvent("Click", "FakeComCall")
+
 _ := MyGui.Add("Text", "x10 y+10 cBlue S10", "An animated Odie should appear below using ActiveX.")
 
 axPic := "http://www.animatedgif.net/cartoons/A_5odie_e0.gif"
@@ -2730,6 +2733,21 @@ ComRunNotepadShell()
 		shell := ComObject("WScript.Shell")
 		
 	exec := shell.Run("Notepad.exe")
+}
+
+; Try a fake COM call.
+ReturnString() => StrPtr("hello")
+
+FakeComCall()
+{
+	; Create dummy vtable without a defined AddRef, Release etc
+	vtbl := Buffer(4*A_PtrSize)
+	NumPut("ptr", CallbackCreate(ReturnString), vtbl, 3*A_PtrSize)
+	; Add the vtbl to our COM object
+	dummyCOM := Buffer(A_PtrSize, 0)
+	NumPut("ptr", vtbl.Ptr, dummyCOM)
+	val := ComCall(3, dummyCOM.Ptr, "str")
+	MsgBox(val)
 }
 
 OnExit (*) => SystemCursor("Show")  ; Ensure the cursor is made visible when the script exits.

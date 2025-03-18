@@ -248,7 +248,7 @@ namespace Keysharp.Core.COM
 					{
 						inputParameters[i] = Convert.ChangeType(inputParameters[i], expectedTypes[i], CultureInfo.CurrentCulture);
 					}
-					catch (Exception ex)
+					catch (Exception)
 					{
 						return Errors.ErrorOccurred(err = new TypeError($"COM call to '{methodName}()' failed to convert parameter {i} of type {inputParameters[i].GetType()} to type {expectedTypes[i].FullName}.")) ? throw err : null;
 					}

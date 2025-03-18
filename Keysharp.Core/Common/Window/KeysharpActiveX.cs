@@ -60,10 +60,7 @@ namespace Keysharp.Core.Common.Window
 		{
 			if (loadedDll)
 			{
-				var winName = "AtlAxWin";
 				var hInstance = Marshal.GetHINSTANCE(GetType().Module);
-				//var axHandle = CreateWindowEx(0, winName, AxText, 1409286144 //Gotten from AHK.
-				//                            , 0, 0, Width, Height, Handle, ctrlid, hInstance, IntPtr.Zero);
 
 				if (AtlAxCreateControl(AxText, Handle, IntPtr.Zero, out var ob) >= 0)
 					//if (axHandle != IntPtr.Zero)

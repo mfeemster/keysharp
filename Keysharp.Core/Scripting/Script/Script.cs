@@ -39,6 +39,7 @@
 		internal static DateTime timeLastInputPhysical = DateTime.Now;
 		internal static int totalExistingThreads;
 		internal static int uninterruptibleTime = 17;
+		internal static Dictionary<nint, GCHandle> gcHandles = [];
 		private static bool isReadyToExecute;
 		private static IntPtr mainWindowHandle;
 

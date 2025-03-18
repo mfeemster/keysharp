@@ -594,6 +594,9 @@ namespace Keysharp.Core
 			foreach (var kv in timers)
 				kv.Value.Stop();
 
+			foreach (var kv in Script.gcHandles)
+				kv.Value.Free();
+
 			if (!Script.IsMainWindowClosing)
 			{
 				Script.mainWindow.CheckedInvoke(() =>
