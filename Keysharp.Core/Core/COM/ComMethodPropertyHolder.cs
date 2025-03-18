@@ -147,106 +147,99 @@ namespace Keysharp.Core.COM
 						}
 					}
 
-					if (foundFuncDesc == null)
+					if (!foundFuncDesc.HasValue)
 						return Errors.ErrorOccurred(err = new TypeError($"COM call to '{methodName}()' could not be found in any type-info interface.")) ? throw err : null;
 
 					var funcDescFound = foundFuncDesc.Value;
 					paramCount = funcDescFound.cParams;
 					//Prepare expected type array and build a ParameterModifier.
-					expectedTypes = new Type[paramCount];
-					var modifier = new ParameterModifier(paramCount);
-					void ConvertType(int i, short vt)
+
+					if (paramCount != 0)
 					{
-						switch (vt)
+						expectedTypes = new Type[paramCount];
+						var modifier = new ParameterModifier(paramCount);
+
+						//Read each ELEMDESC from lprgelemdescParam.
+						for (int i = 0; i < paramCount; i++)
 						{
-							case Com.vt_i2:
-								expectedTypes[i] = typeof(short);
-								break;
+							var pElemDesc = new IntPtr(funcDescFound.lprgelemdescParam.ToInt64() + (i * Marshal.SizeOf<ELEMDESC>()));
+							var elemDesc = Marshal.PtrToStructure<ELEMDESC>(pElemDesc);
+							//First, check if VT_BYREF is set.
+							var isByRef = (elemDesc.tdesc.vt & Com.vt_byref) != 0;
+							//Mask out VT_BYREF to get the base VARTYPE.
+							var vtBase = (short)(elemDesc.tdesc.vt & ~Com.vt_byref);
 
-							case Com.vt_i4:
-							case Com.vt_int:
-								expectedTypes[i] = typeof(int);
-								break;
-
-							case Com.vt_i8:
-								expectedTypes[i] = typeof(long);
-								break;
-
-							case Com.vt_r4:
-								expectedTypes[i] = typeof(float);
-								break;
-
-							case Com.vt_r8:
-								expectedTypes[i] = typeof(double);
-								break;
-
-							case Com.vt_bool:
-								expectedTypes[i] = typeof(bool);
-								break;
-
-							case Com.vt_bstr:
-								expectedTypes[i] = typeof(string);
-								break;
-
-							case Com.vt_variant:
-								expectedTypes[i] = typeof(object);
-								break;
-
-							default:
-								expectedTypes[i] = typeof(object);
-								break;
-						}
-					}
-
-					//Read each ELEMDESC from lprgelemdescParam.
-					for (int i = 0; i < paramCount; i++)
-					{
-						var pElemDesc = new IntPtr(funcDescFound.lprgelemdescParam.ToInt64() + (i * Marshal.SizeOf<ELEMDESC>()));
-						var elemDesc = Marshal.PtrToStructure<ELEMDESC>(pElemDesc);
-						//First, check if VT_BYREF is set.
-						var isByRef = (elemDesc.tdesc.vt & Com.vt_byref) != 0;
-						//Mask out VT_BYREF to get the base VARTYPE.
-						var vtBase = (short)(elemDesc.tdesc.vt & ~Com.vt_byref);
-
-						//If the base type is VT_PTR (26), then we try to get the pointed-to type.
-						if (vtBase == Com.vt_ptr)
-						{
-							//VT_PTR typically means the parameter is a pointer (i.e. byref).
-							//Mark it as byref.
-							modifier[i] = true;
-
-							if (elemDesc.tdesc.lpValue != IntPtr.Zero)
+							//If the base type is VT_PTR (26), then we try to get the pointed-to type.
+							if (vtBase == Com.vt_ptr)
 							{
-								//Read the pointed-to TYPEDESC.
-								var pointedType = Marshal.PtrToStructure<TYPEDESC>(elemDesc.tdesc.lpValue);
-								var pointedVt = (short)(pointedType.vt & ~Com.vt_byref);
-								ConvertType(i, pointedVt);
+								//VT_PTR typically means the parameter is a pointer (i.e. byref).
+								//Mark it as byref.
+								modifier[i] = true;
+
+								if (elemDesc.tdesc.lpValue != IntPtr.Zero)
+								{
+									//Read the pointed-to TYPEDESC.
+									var pointedType = Marshal.PtrToStructure<TYPEDESC>(elemDesc.tdesc.lpValue);
+									var pointedVt = (short)(pointedType.vt & ~Com.vt_byref);
+									ConvertType(i, pointedVt);
+								}
+								else
+								{
+									//No pointed-to type info; assume object.
+									expectedTypes[i] = typeof(object);
+								}
 							}
 							else
 							{
-								//No pointed-to type info; assume object.
-								expectedTypes[i] = typeof(object);
+								//Otherwise, use the normal mapping.
+								modifier[i] = isByRef;
+								ConvertType(i, vtBase);
 							}
 						}
-						else
-						{
-							//Otherwise, use the normal mapping.
-							modifier[i] = isByRef;
-							ConvertType(i, vtBase);
-						}
-					}
 
-					modifiers = [modifier];
+						modifiers = [modifier];
+					}
 				}
 
-				paramCount = Math.Min(inputParameters.Length, expectedTypes.Length);
+				paramCount = Math.Min(inputParameters.Length, expectedTypes?.Length ?? 0);
 
 				//Convert input parameters to the expected types.
 				for (var i = 0; i < paramCount; i++)
 				{
 					try
 					{
-						inputParameters[i] = Convert.ChangeType(inputParameters[i], expectedTypes[i], CultureInfo.CurrentCulture);
+						var et = expectedTypes[i];
+						var it = inputParameters[i].GetType();
+
+						if (et == it)
+							continue;
+
+						if (et == typeof(string))
+							inputParameters[i] = inputParameters[i].As();
+						else if (et == typeof(int))
+							inputParameters[i] = inputParameters[i].Ai();
+						else if (et == typeof(uint))
+							inputParameters[i] = inputParameters[i].Aui();
+						else if (et == typeof(long))
+							inputParameters[i] = inputParameters[i].Al();
+						else if (et == typeof(ulong))
+							inputParameters[i] = (ulong)inputParameters[i].Al();
+						else if (et == typeof(double))
+							inputParameters[i] = inputParameters[i].Ad();
+						else if (et == typeof(float))
+							inputParameters[i] = (float)inputParameters[i].Ad();
+						else if (et == typeof(short))
+							inputParameters[i] = (short)inputParameters[i].Al();
+						else if (et == typeof(ushort))
+							inputParameters[i] = (ushort)inputParameters[i].Aui();
+						else if (et == typeof(bool))
+							inputParameters[i] = (short)(inputParameters[i].Ab() ? -1 : 0);
+						else if (et == typeof(sbyte))
+							inputParameters[i] = (sbyte)inputParameters[i].Ai();
+						else if (et == typeof(byte))
+							inputParameters[i] = (byte)inputParameters[i].Aui();
+						else
+							inputParameters[i] = Convert.ChangeType(inputParameters[i], expectedTypes[i], CultureInfo.CurrentCulture);
 					}
 					catch (Exception)
 					{
@@ -255,7 +248,17 @@ namespace Keysharp.Core.COM
 				}
 
 				//Invoke the method using InvokeMember.
-				var ret = comObject.GetType().InvokeMember(
+				object ret = null;
+
+				if (modifiers == null)
+					ret = comObject.GetType().InvokeMember(
+							  methodName,
+							  BindingFlags.InvokeMethod,
+							  null,
+							  comObject,
+							  []);
+				else
+					ret = comObject.GetType().InvokeMember(
 							  methodName,
 							  BindingFlags.InvokeMethod,
 							  null,
@@ -263,8 +266,7 @@ namespace Keysharp.Core.COM
 							  inputParameters,
 							  modifiers,
 							  CultureInfo.CurrentCulture,
-							  null
-						  );
+							  null);
 
 				//If no exception thrown and it wasn't cached, cache the info.
 				if (!found)
@@ -277,6 +279,48 @@ namespace Keysharp.Core.COM
 				}
 
 				return ret;
+				void ConvertType(int i, short vt)
+				{
+					switch (vt)
+					{
+						case Com.vt_i2:
+							expectedTypes[i] = typeof(short);
+							break;
+
+						case Com.vt_i4:
+						case Com.vt_int:
+							expectedTypes[i] = typeof(int);
+							break;
+
+						case Com.vt_i8:
+							expectedTypes[i] = typeof(long);
+							break;
+
+						case Com.vt_r4:
+							expectedTypes[i] = typeof(float);
+							break;
+
+						case Com.vt_r8:
+							expectedTypes[i] = typeof(double);
+							break;
+
+						case Com.vt_bool:
+							expectedTypes[i] = typeof(bool);
+							break;
+
+						case Com.vt_bstr:
+							expectedTypes[i] = typeof(string);
+							break;
+
+						case Com.vt_variant:
+							expectedTypes[i] = typeof(object);
+							break;
+
+						default:
+							expectedTypes[i] = typeof(object);
+							break;
+					}
+				}
 			}
 			catch (Exception ex)
 			{
