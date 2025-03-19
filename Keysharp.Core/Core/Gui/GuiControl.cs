@@ -74,7 +74,7 @@ namespace Keysharp.Core
 			get
 			{
 				if (_control is RichTextBox rtf)
-					return Strings.NormalizeEol(rtf.Rtf);
+					return KeysharpEnhancements.NormalizeEol(rtf.Rtf);
 
 				return "";
 			}
@@ -83,7 +83,7 @@ namespace Keysharp.Core
 				Error err;
 
 				if (_control is RichTextBox rtf)
-					rtf.Rtf = Strings.NormalizeEol(value);
+					rtf.Rtf = KeysharpEnhancements.NormalizeEol(value);
 				else
 					_ = Errors.ErrorOccurred(err = new Error($"Can only set RichText on a RichEdit control. Attempted on a {_control.GetType().Name} control.")) ? throw err : "";
 			}
@@ -171,9 +171,9 @@ namespace Keysharp.Core
 				if (_control is Label lbl)
 					return lbl.Text;
 				else if (_control is TextBox txt)
-					return Strings.NormalizeEol(txt.Text);
+					return KeysharpEnhancements.NormalizeEol(txt.Text);
 				else if (_control is RichTextBox rtf)
-					return Strings.NormalizeEol(rtf.Text);
+					return KeysharpEnhancements.NormalizeEol(rtf.Text);
 				else if (_control is HotkeyBox hk)
 					return hk.GetText();
 				else if (_control is NumericUpDown nud)
@@ -249,9 +249,9 @@ namespace Keysharp.Core
 				if (_control is Label lbl)
 					lbl.Text = val;
 				else if (_control is TextBox txt)
-					txt.Text = Strings.NormalizeEol(val);
+					txt.Text = KeysharpEnhancements.NormalizeEol(val);
 				else if (_control is KeysharpRichEdit kre)
-					kre.Text = Strings.NormalizeEol(val);
+					kre.Text = KeysharpEnhancements.NormalizeEol(val);
 				else if (_control is HotkeyBox hk)
 					hk.SetText(val);
 				else if (_control is NumericUpDown nud)
@@ -1052,7 +1052,7 @@ namespace Keysharp.Core
 			var _y = y.Al(long.MinValue);
 			var w = width.Al(long.MinValue);
 			var h = height.Al(long.MinValue);
-			var scale = !dpiscaling ? 1.0 : Accessors.A_ScaledScreenDPI;
+			var scale = !dpiscaling ? 1.0 : A_ScaledScreenDPI;
 			var hasScrollBars = _control is KeysharpEdit || _control is KeysharpRichEdit;//Reflections.SafeHasProperty(_control, "ScrollBars") || Reflections.SafeHasProperty(_control, "HorizontalScrollbar") || Reflections.SafeHasProperty(_control, "Scrollable")
 
 			if (_y != long.MinValue)
@@ -1215,7 +1215,7 @@ namespace Keysharp.Core
 			if (Gui == null || !Gui.TryGetTarget(out var gui))
 				return null;
 
-			var opts = Keysharp.Core.Gui.ParseOpt(typename, _control.Text, options.As());
+			var opts = Core.Gui.ParseOpt(typename, _control.Text, options.As());
 
 			if (opts.redraw.HasValue)
 			{
@@ -1296,13 +1296,13 @@ namespace Keysharp.Core
 
 				if (opts.wantctrla.IsFalse())
 				{
-					txt.PreviewKeyDown += Keysharp.Core.Gui.SuppressCtrlAPreviewKeyDown;
-					txt.KeyDown += Keysharp.Core.Gui.SuppressCtrlAKeyDown;
+					txt.PreviewKeyDown += Core.Gui.SuppressCtrlAPreviewKeyDown;
+					txt.KeyDown += Core.Gui.SuppressCtrlAKeyDown;
 				}
 				else if (opts.wantctrla.IsTrue())
 				{
-					txt.PreviewKeyDown -= Keysharp.Core.Gui.SuppressCtrlAPreviewKeyDown;
-					txt.KeyDown -= Keysharp.Core.Gui.SuppressCtrlAKeyDown;
+					txt.PreviewKeyDown -= Core.Gui.SuppressCtrlAPreviewKeyDown;
+					txt.KeyDown -= Core.Gui.SuppressCtrlAKeyDown;
 				}
 
 				if (opts.vscroll.IsTrue() && opts.hscrollamt != int.MinValue)
@@ -1341,13 +1341,13 @@ namespace Keysharp.Core
 
 				if (opts.wantctrla.IsFalse())
 				{
-					rtxt.PreviewKeyDown += Keysharp.Core.Gui.SuppressCtrlAPreviewKeyDown;
-					rtxt.KeyDown += Keysharp.Core.Gui.SuppressCtrlAKeyDown;
+					rtxt.PreviewKeyDown += Core.Gui.SuppressCtrlAPreviewKeyDown;
+					rtxt.KeyDown += Core.Gui.SuppressCtrlAKeyDown;
 				}
 				else if (opts.wantctrla.IsTrue())
 				{
-					rtxt.PreviewKeyDown -= Keysharp.Core.Gui.SuppressCtrlAPreviewKeyDown;
-					rtxt.KeyDown -= Keysharp.Core.Gui.SuppressCtrlAKeyDown;
+					rtxt.PreviewKeyDown -= Core.Gui.SuppressCtrlAPreviewKeyDown;
+					rtxt.KeyDown -= Core.Gui.SuppressCtrlAKeyDown;
 				}
 
 				if (opts.vscroll.IsTrue() && opts.hscrollamt != int.MinValue)
@@ -1424,9 +1424,9 @@ namespace Keysharp.Core
 
 				if (tv.LabelEdit && opts.wantf2.HasValue)
 					if (opts.wantf2.IsTrue())
-						tv.KeyDown += Keysharp.Core.Gui.Tv_Lv_KeyDown;
+						tv.KeyDown += Core.Gui.Tv_Lv_KeyDown;
 					else
-						tv.KeyDown -= Keysharp.Core.Gui.Tv_Lv_KeyDown;
+						tv.KeyDown -= Core.Gui.Tv_Lv_KeyDown;
 			}
 			else if (_control is KeysharpListView lv)
 			{
@@ -1444,9 +1444,9 @@ namespace Keysharp.Core
 
 				if (lv.LabelEdit && opts.wantf2.HasValue)
 					if (opts.wantf2.IsTrue())
-						lv.KeyDown += Keysharp.Core.Gui.Tv_Lv_KeyDown;
+						lv.KeyDown += Core.Gui.Tv_Lv_KeyDown;
 					else
-						lv.KeyDown -= Keysharp.Core.Gui.Tv_Lv_KeyDown;
+						lv.KeyDown -= Core.Gui.Tv_Lv_KeyDown;
 
 				if (opts.lvview.HasValue)
 					lv.View = opts.lvview.Value;
@@ -1812,7 +1812,7 @@ namespace Keysharp.Core
 			}
 			else
 			{
-				var scale = Accessors.A_ScaledScreenDPI;
+				var scale = A_ScaledScreenDPI;
 				x = (long)(rect.X * scale);
 				y = (long)(rect.Y * scale);
 				w = (long)(rect.Width * scale);

@@ -169,7 +169,7 @@
 				{
 					if (!Script.persistent)//An exception was thrown so the generated ExitApp() call in _ks_UserMainCode() will not have been called, so call it here.
 					{
-						_ = Keysharp.Core.Flow.ExitApp(1);
+						_ = Flow.ExitApp(1);
 					}
 				}
 			});
@@ -299,7 +299,7 @@
 
 		public static void VerifyVersion(string ver, bool plus, int line, string code)
 		{
-			var ahkver = Accessors.A_AhkVersion;
+			var ahkver = A_AhkVersion;
 			var reqvers = ParseVersionToInts(ver);
 			var thisvers = ParseVersionToInts(ahkver);
 
@@ -416,7 +416,7 @@
 			return ResultType.Ok;
 		}
 
-		internal static string MakeTitleWithVersion(string title) => title + " - Keysharp " + Accessors.A_AhkVersion;
+		internal static string MakeTitleWithVersion(string title) => title + " - Keysharp " + A_AhkVersion;
 
 		internal static int[] ParseVersionToInts(string ver)
 		{
@@ -467,7 +467,7 @@
 
 			if (Clipboard.ContainsText() || Clipboard.ContainsFileDropList())
 				while (!b && i < ClipFunctions.Count) b = IfTest(ClipFunctions[i++].Call(1));//Can't use foreach because the collection could be modified by the event.
-			else if (!Env.IsClipboardEmpty())
+			else if (!KeysharpEnhancements.IsClipboardEmpty())
 				while (!b && i < ClipFunctions.Count) b = IfTest(ClipFunctions[i++].Call(2));
 			else
 				while (!b && i < ClipFunctions.Count) b = IfTest(ClipFunctions[i++].Call(0));

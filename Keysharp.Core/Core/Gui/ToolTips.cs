@@ -232,7 +232,7 @@
 				return null;
 
 			if (freeze != null)
-				Accessors.A_IconFrozen = freeze.Ab();
+				A_IconFrozen = freeze.Ab();
 
 			if (filename != "*")
 			{
@@ -254,8 +254,8 @@
 
 						if (icon != null)
 						{
-							Accessors.A_IconFile = filename;
-							Accessors.A_IconNumber = iconNumber;
+							A_IconFile = filename;
+							A_IconNumber = iconNumber;
 							Script.mainWindow.CheckedBeginInvoke(() =>
 							{
 								Script.Tray.Icon = Script.mainWindow.Icon = icon;
@@ -270,8 +270,8 @@
 			}
 			else
 			{
-				Accessors.A_IconFile = "";
-				Accessors.A_IconNumber = 1;
+				A_IconFile = "";
+				A_IconNumber = 1;
 				Script.mainWindow.CheckedBeginInvoke(() =>
 				{
 					Script.Tray.Icon = Script.mainWindow.Icon = Properties.Resources.Keysharp_ico;
@@ -297,7 +297,7 @@
 			if (Script.NoTrayIcon)
 				return null;
 
-			if ((bool)Accessors.A_IconHidden)
+			if ((bool)A_IconHidden)
 				return null;
 
 			if (Script.Tray == null)

@@ -6,7 +6,7 @@ namespace Keysharp.Core
 	{
 		public static void Edit()
 		{
-			if (Accessors.A_IsCompiled)
+			if (A_IsCompiled)
 			{
 				_ = Dialogs.MsgBox("Cannot edit a compiled script.");
 				return;
@@ -16,7 +16,7 @@ namespace Keysharp.Core
 			var tv = Threads.GetThreadVariables();
 			var mm = tv.titleMatchMode;
 			tv.titleMatchMode = 2L;//Match anywhere.
-			var hwnd = WindowX.WinExist(Accessors.A_ScriptName, "", title, "");
+			var hwnd = WindowX.WinExist(A_ScriptName, "", title, "");
 			tv.titleMatchMode = mm;
 			var wi = new WindowItem(new IntPtr(hwnd));
 			var classname = wi.ClassName;//Logic taken from AHK.
@@ -27,7 +27,7 @@ namespace Keysharp.Core
 			if (hwnd == 0)
 			{
 #if LINUX
-				_ = $"$EDITOR {Accessors.A_ScriptFullPath}".Bash(false);
+				_ = $"$EDITOR {A_ScriptFullPath}".Bash(false);
 #elif WINDOWS
 				var ed = "";
 
@@ -53,10 +53,10 @@ namespace Keysharp.Core
 				{
 					var prcIndex = ed.IndexOf('%');
 					ed = prcIndex != -1 ? ed.Substring(0, prcIndex) : ed;
-					_ = Processes.Run(ed, Accessors.A_ScriptDir, "", ref pid, Accessors.A_ScriptFullPath);
+					_ = Processes.Run(ed, A_ScriptDir, "", ref pid, A_ScriptFullPath);
 				}
 				else
-					_ = Processes.Run($"Notepad.exe", Accessors.A_ScriptDir, "", ref pid, Accessors.A_ScriptFullPath);
+					_ = Processes.Run($"Notepad.exe", A_ScriptDir, "", ref pid, A_ScriptFullPath);
 
 #endif
 			}

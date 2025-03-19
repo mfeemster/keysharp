@@ -13,9 +13,9 @@
     <StartupObject>Keyview.Program</StartupObject>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <ApplicationIcon>..\Keysharp.ico</ApplicationIcon>
-    <AssemblyVersion>0.0.0.8</AssemblyVersion>
-    <FileVersion>0.0.0.8</FileVersion>
-    <Version>0.0.0.8</Version>
+    <AssemblyVersion>0.0.0.9</AssemblyVersion>
+    <FileVersion>0.0.0.9</FileVersion>
+    <Version>0.0.0.9</Version>
     <Authors>Matt Feemster</Authors>
     <Description>A viewer which shows the C# code that is generated from compiling Keysharp script code</Description>
     <Company>Keysharp</Company>
@@ -44,7 +44,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Scintilla5.NET" Version="5.6.1" />
+    <PackageReference Include="Scintilla5.NET" Version="5.6.6" />
   </ItemGroup>
 
   <ItemGroup>

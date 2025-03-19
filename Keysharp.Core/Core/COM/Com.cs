@@ -322,7 +322,7 @@ namespace Keysharp.Core.COM
 
 			if (comObj is ComObject co)
 			{
-				System.Runtime.InteropServices.ComTypes.ITypeInfo typeInfo = null;
+				ITypeInfo typeInfo = null;
 
 				if (s.Length == 0)
 				{
@@ -361,10 +361,26 @@ namespace Keysharp.Core.COM
 					else if (s == "iid")
 					{
 						typeInfo.GetTypeAttr(out var typeAttr);
-						System.Runtime.InteropServices.ComTypes.TYPEATTR attr = Marshal.PtrToStructure<TYPEATTR>(typeAttr);
+						var attr = Marshal.PtrToStructure<TYPEATTR>(typeAttr);
 						var guid = attr.guid.ToString("B").ToUpper();
 						typeInfo.ReleaseTypeAttr(typeAttr);
 						return guid;
+					}
+				}
+			}
+			else if (Marshal.IsComObject(comObj))
+			{
+				if (comObj is IDispatch dispatch)
+				{
+					var ret = dispatch.GetTypeInfo(0, 0, out var typeInfo);
+
+					if (typeInfo != null)
+					{
+						typeInfo.GetTypeAttr(out var pTypeAttr);
+						var typeAttr = Marshal.PtrToStructure<TYPEATTR>(pTypeAttr);
+						var vtType = typeAttr.tdescAlias.vt;
+						typeInfo.ReleaseTypeAttr(pTypeAttr);
+						return (long)vtType;
 					}
 				}
 			}

@@ -83,13 +83,6 @@
 		public static double Cos(object obj) => Math.Cos(obj is double d ? d : obj.Ad());
 
 		/// <summary>
-		/// Returns the hyperbolic cosine of the specified angle.
-		/// </summary>
-		/// <param name="n">An angle, measured in radians.</param>
-		/// <returns>The hyperbolic cosine of <paramref name="n"/>.</returns>
-		public static double Cosh(object obj) => Math.Cosh(obj is double d ? d : obj.Ad());
-
-		/// <summary>
 		/// Adds or subtracts time from a date-time value.
 		/// </summary>
 		/// <param name="dateTime">A date-time stamp in the YYYYMMDDHH24MISS format.</param>
@@ -103,7 +96,7 @@
 			var units = timeUnits.As();
 
 			if (s1.Length == 0)
-				s1 = Accessors.A_Now;
+				s1 = A_Now;
 
 			var d1 = Conversions.ToDateTime(s1);
 
@@ -139,10 +132,10 @@
 			var units = timeUnits.As();
 
 			if (s1.Length == 0)
-				s1 = Accessors.A_Now;
+				s1 = A_Now;
 
 			if (s2.Length == 0)
-				s2 = Accessors.A_Now;
+				s2 = A_Now;
 
 			var d1 = Conversions.ToDateTime(s1);
 			var d2 = Conversions.ToDateTime(s2);
@@ -512,16 +505,6 @@
 		}
 
 		/// <summary>
-		/// Reinitializes the random number generator for the current thread with the specified numerical seed.
-		/// </summary>
-		/// <param name="obj">The numerical seed to create the random number generator with.</param>
-		public static object RandomSeed(object obj)
-		{
-			Threads.GetThreadVariables().RandomGenerator = new Random(obj.Ai());
-			return null;
-		}
-
-		/// <summary>
 		/// Rounds a number to a specified number of fractional digits.
 		/// </summary>
 		/// <param name="number">A double number to be rounded.</param>
@@ -541,13 +524,6 @@
 		/// <param name="n">An angle, measured in radians.</param>
 		/// <returns>The sine of <paramref name="n"/>.</returns>
 		public static double Sin(object obj) => Math.Sin(obj is double d ? d : obj.Ad());
-
-		/// <summary>
-		/// Returns the hyperbolic sine of the specified angle.
-		/// </summary>
-		/// <param name="n">An angle, measured in radians.</param>
-		/// <returns>The hyperbolic sine of <paramref name="n"/>.</returns>
-		public static double Sinh(object obj) => Math.Sinh(obj is double d ? d : obj.Ad());
 
 		/// <summary>
 		/// Returns the square root of a specified number.
@@ -574,6 +550,30 @@
 		public static double Tan(object obj) => Math.Tan(obj is double d ? d : obj.Ad());
 
 		/// <summary>
+		/// Calculates the integral part of a specified number.
+		/// </summary>
+		/// <param name="n">A number to truncate.</param>
+		/// <returns>The integral part of <paramref name="n"/>; that is, the number that remains after any fractional digits have been discarded.</returns>
+		public static double Truncate(object obj) => Math.Truncate(obj is double d ? d : obj.Ad());
+	}
+
+	public static partial class KeysharpEnhancements
+	{
+		/// <summary>
+		/// Returns the hyperbolic sine of the specified angle.
+		/// </summary>
+		/// <param name="n">An angle, measured in radians.</param>
+		/// <returns>The hyperbolic sine of <paramref name="n"/>.</returns>
+		public static double Sinh(object obj) => Math.Sinh(obj is double d ? d : obj.Ad());
+
+		/// <summary>
+		/// Returns the hyperbolic cosine of the specified angle.
+		/// </summary>
+		/// <param name="n">An angle, measured in radians.</param>
+		/// <returns>The hyperbolic cosine of <paramref name="n"/>.</returns>
+		public static double Cosh(object obj) => Math.Cosh(obj is double d ? d : obj.Ad());
+
+		/// <summary>
 		/// Returns the hyperbolic tangent of the specified angle.
 		/// </summary>
 		/// <param name="n">An angle, measured in radians.</param>
@@ -581,10 +581,13 @@
 		public static double Tanh(object obj) => Math.Tanh(obj is double d ? d : obj.Ad());
 
 		/// <summary>
-		/// Calculates the integral part of a specified number.
+		/// Reinitializes the random number generator for the current thread with the specified numerical seed.
 		/// </summary>
-		/// <param name="n">A number to truncate.</param>
-		/// <returns>The integral part of <paramref name="n"/>; that is, the number that remains after any fractional digits have been discarded.</returns>
-		public static double Truncate(object obj) => Math.Truncate(obj is double d ? d : obj.Ad());
+		/// <param name="obj">The numerical seed to create the random number generator with.</param>
+		public static object RandomSeed(object obj)
+		{
+			Threads.GetThreadVariables().RandomGenerator = new Random(obj.Ai());
+			return null;
+		}
 	}
 }

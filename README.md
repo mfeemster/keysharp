@@ -320,8 +320,9 @@ class class1
 * New file functions:
 	+ `FileDirName(filename) => String` to return the full path to filename, without the actual filename or trailing directory separator character.
 	+ `FileFullPath(filename) => String` to return the full path to filename.
-* A new function `WinMaximizeAll()` to maximize all windows.
-* A new function `WinGetAlwaysOnTop([winTitle, winText, excludeTitle, excludeText]) => Integer` to determine whether a window will always stay on top of other windows.
+* New window functions:
+	+ `WinMaximizeAll()` to maximize all windows.
+	+ `WinGetAlwaysOnTop([winTitle, winText, excludeTitle, excludeText]) => Integer` to determine whether a window will always stay on top of other windows.
 * `Run/RunWait()` can take an extra string for the argument instead of appending it to the program name string. However, the original functionality still works too.
 	+ The new signature is: `Run/RunWait(target [, workingDir, options, &outputVarPID, args])`.
 * `ListView` supports a new method `DeleteCol(col) => Boolean` to remove a column. The value returned indicates whether the column was found and deleted.
@@ -386,13 +387,13 @@ class class1
 	+ `A_DefaultHotstringEndCharRequired` returns the default hotstring ending character mode.
 	+ `A_DefaultHotstringEndChars` returns the default hotstring ending characters.
 	+ `A_DefaultHotstringKeyDelay` returns the default hotstring key delay length in milliseconds.
+	+ `A_DefaultHotstringNoMouse` returns whether mouse clicks are prevented from resetting the hotstring recognizer because `#Hotstring NoMouse` was specified.
 	+ `A_DefaultHotstringOmitEndChar` returns the default hotstring ending character replacement mode.
 	+ `A_DefaultHotstringPriority` returns the default hotstring priority.
 	+ `A_DefaultHotstringSendMode` returns the default hotstring sending mode.
 	+ `A_DefaultHotstringSendRaw` returns the default hotstring raw sending mode.
 	+ `A_DirSeparator` returns the directory separator character which is `\` on Windows and `/` elsewhere.
 	+ `A_HasExited` returns whether shutdown has been initiated.
-	+ `A_DefaultHotstringNoMouse` returns whether mouse clicks are prevented from resetting the hotstring recognizer because `#Hotstring NoMouse` was specified.
 	+ `A_KeysharpCorePath` provides the full path to the Keysharp.Core.dll file.
 	+ `A_LoopRegValue` which makes it easy to get a registry value when using `Loop Reg`.
 	+ `A_MaxThreads` returns the value `n` specified with `#MaxThreads n`.
@@ -447,10 +448,11 @@ class class1
 		}
 	}
 ```
-* New function to encrypt or decrypt an object using the AES algorithm: `AES(value, key, decrypt := false) => Array`.
-* New functions to generate hash values using various algorithms: `MD5(value) => String`, `SHA1(value) => String`, `SHA256(value) => String`, `SHA384(value) => String`, `SHA512(value) => String`.
-* New function to calculate the CRC32 polynomial of an object: `CRC32(value) => Integer`.
-* New function to generate a secure cryptographic random number: `SecureRandom(min, max) => Decimal`.
+* New functions for encrypting/decrypting an object:
+	+ Encrypt or decrypt an object using the AES algorithm: `AES(value, key, decrypt := false) => Array`.
+	+ Generate hash values using various algorithms: `MD5(value) => String`, `SHA1(value) => String`, `SHA256(value) => String`, `SHA384(value) => String`, `SHA512(value) => String`.
+	+ Calculate the CRC32 polynomial of an object: `CRC32(value) => Integer`.
+	+ Generate a secure cryptographic random number: `SecureRandom(min, max) => Decimal`.
 * New class and functions for managing real threads which are not related to the green threads that are used for the rest of the project.
 	+ A `RealThread` is created by calling `StartRealThread()`.
 ```
@@ -591,8 +593,6 @@ class class1
 * Properties other than `__Item[]` cannot take parameters. If you need to pass a parameter, use a method instead.
 	+ This also applies to properties which have been dynamically defined with `DefineProp()`.
 * Static `__Item[]` properties are not allowed, only instance `__Item[]` properties. This is because C# does not support static indexers.
-* The built in classes `Array` and `Map` do not have a property named `__Item[]` because in C#, the only properties which can have an index passed to them are the `this[]` properties.
-	+ Just use the brackets directly. However, when overriding, using `__Item[]` will work if you derive from `Array` or `Map`.
 * When passing `"Interrupt"` as the first argument to `Thread()`, the third argument for `LineCount` is not supported because Keysharp does not support line level awareness.
 * Tooltips do not automatically disappear when clicking on them.
 

@@ -97,11 +97,6 @@
 		}
 
 		/// <summary>
-		/// Whether timers are allowed to operate in the script. Default: true.
-		/// </summary>
-		public static object A_AllowTimers { get; set; } = true;
-
-		/// <summary>
 		/// The full path and name of the folder containing the current user's application-specific data.<br/>
 		/// For example on Windows: C:\Documents and Settings\Username\Application Data<br/>
 		/// Linux: ~/
@@ -311,46 +306,6 @@
 		/// The time in milliseconds to wait when reading the clipboard before a timeout is triggered.
 		/// </summary>
 		public static object A_ClipboardTimeout { get; set; } = 1000L;
-
-		/// <summary>
-		/// The command line string used to run the script.
-		/// </summary>
-		public static string A_CommandLine
-		{
-			get
-			{
-				var exe = Application.ExecutablePath;
-
-				if (exe.Contains(' '))
-				{
-					if (!exe.StartsWith('"'))
-						exe = '"' + exe;
-
-					if (!exe.EndsWith('"'))
-						exe += '"';
-				}
-
-				var args = new List<string>();
-
-				foreach (var arg in Environment.GetCommandLineArgs().Skip(1))
-				{
-					var quotedArg = arg;
-
-					if (quotedArg.Contains(' '))
-					{
-						if (!quotedArg.StartsWith('"'))
-							quotedArg = '"' + quotedArg;
-
-						if (!quotedArg.EndsWith('"'))
-							quotedArg += '"';
-					}
-
-					args.Add(quotedArg);
-				}
-
-				return args.Count > 0 ? exe + " " + string.Join(' ', args) : exe;
-			}
-		}
 
 		/// <summary>
 		/// The name of the computer as seen on the network.
@@ -565,71 +520,6 @@
 		public static string A_DDDD => DateTime.Now.ToString("dddd");
 
 		/// <summary>
-		/// The default case sensitivity of hotstrings.
-		/// </summary>
-		public static bool A_DefaultHotstringCaseSensitive => HotstringManager.hsCaseSensitive;
-
-		/// <summary>
-		/// The default case conformity of hotstrings.
-		/// </summary>
-		public static bool A_DefaultHotstringConformToCase => HotstringManager.hsConformToCase;
-
-		/// <summary>
-		/// The default inside word detection of hotstrings.
-		/// </summary>
-		public static bool A_DefaultHotstringDetectWhenInsideWord => HotstringManager.hsDetectWhenInsideWord;
-
-		/// <summary>
-		/// The default backspacing of hotstrings.
-		/// </summary>
-		public static bool A_DefaultHotstringDoBackspace => HotstringManager.hsDoBackspace;
-
-		/// <summary>
-		/// The default recognizer reset mode of hotstrings.
-		/// </summary>
-		public static bool A_DefaultHotstringDoReset => HotstringManager.hsDoReset;
-
-		/// <summary>
-		/// The default end char mode of hotstrings.
-		/// </summary>
-		public static bool A_DefaultHotstringEndCharRequired => HotstringManager.hsEndCharRequired;
-
-		/// <summary>
-		/// The default end chars of hotstrings.
-		/// </summary>
-		public static string A_DefaultHotstringEndChars => HotstringManager.defEndChars;
-
-		/// <summary>
-		/// The default end chars of hotstrings.
-		/// </summary>
-		public static long A_DefaultHotstringKeyDelay => HotstringManager.hsKeyDelay;
-
-		/// <summary>
-		/// Whether mouse clicks reset the hotstring recognizer.
-		/// </summary>
-		public static object A_DefaultHotstringNoMouse => !HotstringManager.hsResetUponMouseClick;
-
-		/// <summary>
-		/// The default end char omission mode of hotstrings.
-		/// </summary>
-		public static bool A_DefaultHotstringOmitEndChar => HotstringManager.hsOmitEndChar;
-
-		/// <summary>
-		/// The default priority of hotstrings.
-		/// </summary>
-		public static long A_DefaultHotstringPriority => HotstringManager.hsPriority;
-
-		/// <summary>
-		/// The default send mode of hotstrings.
-		/// </summary>
-		public static string A_DefaultHotstringSendMode => HotstringManager.hsSendMode.ToString();
-
-		/// <summary>
-		/// The default send raw mode of hotstrings.
-		/// </summary>
-		public static string A_DefaultHotstringSendRaw => HotstringManager.hsSendRaw.ToString();
-
-		/// <summary>
 		/// Sets the mouse speed that will be used if unspecified in <see cref="Click"/>.
 		/// </summary>
 		public static object A_DefaultMouseSpeed
@@ -704,11 +594,6 @@
 		}
 
 		/// <summary>
-		/// The native directory separator string, i.e. "/" on linux, "\" on Windows.
-		/// </summary>
-		public static string A_DirSeparator => Path.DirectorySeparatorChar.ToString();
-
-		/// <summary>
 		/// Represents the natural logarithmic base, specified by the constant, e.
 		/// </summary>
 		public static double A_E => Math.E;
@@ -748,11 +633,6 @@
 				ThreadAccessors.A_FileEncoding = val;
 			}
 		}
-
-		/// <summary>
-		/// Whether the script has exited yet.
-		/// </summary>
-		public static bool A_HasExited => Flow.hasExited;
 
 		/// <summary>
 		/// The timeout used for checking if a window exists during a #HotIf check.
@@ -1035,11 +915,6 @@
 				ThreadAccessors.A_KeyDurationPlay = val;
 			}
 		}
-
-		/// <summary>
-		/// The path to Keysharp.Core.Dll
-		/// </summary>
-		public static string A_KeysharpCorePath => Assembly.GetAssembly(typeof(Accessors)).Location;
 
 		/// <summary>
 		/// <see cref="A_AhkPath"/>.
@@ -1459,32 +1334,6 @@
 			}
 		}
 
-		/// <summary>
-		/// The name of the registry loop value being accessed.<br/>
-		/// For remote registry access, this value will not include the computer name.
-		/// </summary>
-		public static object A_LoopRegValue
-		{
-			get
-			{
-				var s = Loops.LoopStack;
-
-				if (s.Count == 0)
-					return "";
-
-				foreach (var l in s)
-				{
-					switch (l.type)
-					{
-						case LoopType.Registry:
-							return l.regVal;
-					}
-				}
-
-				return "";
-			}
-		}
-
 #endif
 
 		/// <summary>
@@ -1495,11 +1344,6 @@
 			get => maxHotkeysPerInterval;
 			set => maxHotkeysPerInterval = value.Al();
 		}
-
-		/// <summary>
-		/// The maximum simultaneously running threads allowed in a script.
-		/// </summary>
-		public static object A_MaxThreads => Script.MaxThreadsTotal;
 
 		/// <summary>
 		/// The value specified by #MaxThreadsBuffer.
@@ -1616,12 +1460,6 @@
 		public static string A_NewLine => Environment.NewLine;
 
 		/// <summary>
-		/// The value specified by #NoTrayIcon.
-		/// Disables the showing of a tray icon.
-		/// </summary>
-		public static bool A_NoTrayIcon => Script.NoTrayIcon;
-
-		/// <summary>
 		/// The current local time in YYYYMMDDHH24MISS format.
 		/// </summary>
 		public static string A_Now => Conversions.ToYYYYMMDDHH24MISS(DateTime.Now);
@@ -1702,6 +1540,7 @@
 		public static long A_PtrSize => 8L;
 
 #if WINDOWS
+
 		/// <summary>
 		/// The current registry view, either 32 or 64.
 		/// </summary>
@@ -1873,15 +1712,6 @@
 		}
 
 		/// <summary>
-		/// Whether the script is exempt from being able to be suspended.
-		/// </summary>
-		public static object A_SuspendExempt
-		{
-			get => HotstringManager.hsSuspendExempt;
-			set => HotstringManager.hsSuspendExempt = value.Ab();
-		}
-
-		/// <summary>
 		/// This variable contains a single tab character.
 		/// </summary>
 		public static string A_Tab => "\t";
@@ -2020,24 +1850,9 @@
 		}
 
 		/// <summary>
-		/// The total height in pixels of the virtual screen.
-		/// </summary>
-		public static long A_TotalScreenHeight => SystemInformation.VirtualScreen.Height;
-
-		/// <summary>
-		/// The total width in pixels of the virtual screen.
-		/// </summary>
-		public static long A_TotalScreenWidth => SystemInformation.VirtualScreen.Width;
-
-		/// <summary>
 		/// The current tray menu object.
 		/// </summary>
 		public static Menu A_TrayMenu => Script.trayMenu;
-
-		/// <summary>
-		/// The value specified by #UseHook.
-		/// </summary>
-		public static object A_UseHook => Script.ForceKeybdHook;
 
 		/// <summary>
 		/// The logon name of the current user.
@@ -2048,11 +1863,6 @@
 		/// Current 1-digit day of the week (1-7). 1 is Sunday in all locales.
 		/// </summary>
 		public static long A_WDay => (int)DateTime.Now.DayOfWeek + 1;
-
-		/// <summary>
-		/// Whether #WinActivateForce was specified.
-		/// </summary>
-		public static object A_WinActivateForce => Script.WinActivateForce;
 
 		/// <summary>
 		/// The current delay set by <see cref="SetWinDelay"/>.
@@ -2080,16 +1890,6 @@
 		public static string A_WinDir => Environment.GetFolderPath(Environment.SpecialFolder.Windows);
 
 #endif
-
-		/// <summary>
-		/// The height of the working area of the primary screen.
-		/// </summary>
-		public static long A_WorkAreaHeight => System.Windows.Forms.Screen.PrimaryScreen.WorkingArea.Height;
-
-		/// <summary>
-		/// The width of the working area of the primary screen.
-		/// </summary>
-		public static long A_WorkAreaWidth => System.Windows.Forms.Screen.PrimaryScreen.WorkingArea.Width;
 
 		/// <summary>
 		/// The script's current working directory, which is where files will be accessed by default.
@@ -2168,12 +1968,13 @@
 		/// Internal helper to provide the DPI as a percentage.
 		/// </summary>
 		internal static double A_ScaledScreenDPI => A_ScreenDPI / 96.0;
+
+		internal static long ControlDelayDefault => controlDelay;
 		internal static CoordModeType CoordModeCaretDefault => coordModeCaretDefault;
 		internal static CoordModeType CoordModeMenuDefault => coordModeMenuDefault;
 		internal static CoordModeType CoordModeMouseDefault => coordModeMouseDefault;
 		internal static CoordModeType CoordModePixelDefault => coordModePixelDefault;
 		internal static CoordModeType CoordModeToolTipDefault => coordModeToolTipDefault;
-		internal static long ControlDelayDefault => controlDelay;
 		internal static long DefaultMouseSpeedDefault => defaultMouseSpeed;
 		internal static bool DetectHiddenTextDefault => detectHiddenText;
 		internal static bool DetectHiddenWindowsDefault => detectHiddenWindows;
@@ -2202,6 +2003,211 @@
 		/// </summary>
 		/// <returns>If compiled, the entry assembly, else the executing assembly.</returns>
 		internal static Assembly GetAssembly() => CompilerHelper.compiledasm ?? Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly();
+	}
+
+	public static partial class KeysharpEnhancements
+	{
+		/// <summary>
+		/// Whether timers are allowed to operate in the script. Default: true.
+		/// </summary>
+		public static object A_AllowTimers { get; set; } = true;
+
+		/// <summary>
+		/// The command line string used to run the script.
+		/// </summary>
+		public static string A_CommandLine
+		{
+			get
+			{
+				var exe = Application.ExecutablePath;
+
+				if (exe.Contains(' '))
+				{
+					if (!exe.StartsWith('"'))
+						exe = '"' + exe;
+
+					if (!exe.EndsWith('"'))
+						exe += '"';
+				}
+
+				var args = new List<string>();
+
+				foreach (var arg in Environment.GetCommandLineArgs().Skip(1))
+				{
+					var quotedArg = arg;
+
+					if (quotedArg.Contains(' '))
+					{
+						if (!quotedArg.StartsWith('"'))
+							quotedArg = '"' + quotedArg;
+
+						if (!quotedArg.EndsWith('"'))
+							quotedArg += '"';
+					}
+
+					args.Add(quotedArg);
+				}
+
+				return args.Count > 0 ? exe + " " + string.Join(' ', args) : exe;
+			}
+		}
+
+		/// <summary>
+		/// The default case sensitivity of hotstrings.
+		/// </summary>
+		public static bool A_DefaultHotstringCaseSensitive => HotstringManager.hsCaseSensitive;
+
+		/// <summary>
+		/// The default case conformity of hotstrings.
+		/// </summary>
+		public static bool A_DefaultHotstringConformToCase => HotstringManager.hsConformToCase;
+
+		/// <summary>
+		/// The default inside word detection of hotstrings.
+		/// </summary>
+		public static bool A_DefaultHotstringDetectWhenInsideWord => HotstringManager.hsDetectWhenInsideWord;
+
+		/// <summary>
+		/// The default backspacing of hotstrings.
+		/// </summary>
+		public static bool A_DefaultHotstringDoBackspace => HotstringManager.hsDoBackspace;
+
+		/// <summary>
+		/// The default recognizer reset mode of hotstrings.
+		/// </summary>
+		public static bool A_DefaultHotstringDoReset => HotstringManager.hsDoReset;
+
+		/// <summary>
+		/// The default end char mode of hotstrings.
+		/// </summary>
+		public static bool A_DefaultHotstringEndCharRequired => HotstringManager.hsEndCharRequired;
+
+		/// <summary>
+		/// The default end chars of hotstrings.
+		/// </summary>
+		public static string A_DefaultHotstringEndChars => HotstringManager.defEndChars;
+
+		/// <summary>
+		/// The default end chars of hotstrings.
+		/// </summary>
+		public static long A_DefaultHotstringKeyDelay => HotstringManager.hsKeyDelay;
+
+		/// <summary>
+		/// Whether mouse clicks reset the hotstring recognizer.
+		/// </summary>
+		public static object A_DefaultHotstringNoMouse => !HotstringManager.hsResetUponMouseClick;
+
+		/// <summary>
+		/// The default end char omission mode of hotstrings.
+		/// </summary>
+		public static bool A_DefaultHotstringOmitEndChar => HotstringManager.hsOmitEndChar;
+
+		/// <summary>
+		/// The default priority of hotstrings.
+		/// </summary>
+		public static long A_DefaultHotstringPriority => HotstringManager.hsPriority;
+
+		/// <summary>
+		/// The default send mode of hotstrings.
+		/// </summary>
+		public static string A_DefaultHotstringSendMode => HotstringManager.hsSendMode.ToString();
+
+		/// <summary>
+		/// The default send raw mode of hotstrings.
+		/// </summary>
+		public static string A_DefaultHotstringSendRaw => HotstringManager.hsSendRaw.ToString();
+
+		/// <summary>
+		/// The native directory separator string, i.e. "/" on linux, "\" on Windows.
+		/// </summary>
+		public static string A_DirSeparator => Path.DirectorySeparatorChar.ToString();
+
+		/// <summary>
+		/// Whether the script has exited yet.
+		/// </summary>
+		public static bool A_HasExited => Flow.hasExited;
+
+		/// <summary>
+		/// The path to Keysharp.Core.Dll
+		/// </summary>
+		public static string A_KeysharpCorePath => Assembly.GetAssembly(typeof(Accessors)).Location;
+
+#if WINDOWS
+		/// <summary>
+		/// The name of the registry loop value being accessed.<br/>
+		/// For remote registry access, this value will not include the computer name.
+		/// </summary>
+		public static object A_LoopRegValue
+		{
+			get
+			{
+				var s = Loops.LoopStack;
+
+				if (s.Count == 0)
+					return "";
+
+				foreach (var l in s)
+				{
+					switch (l.type)
+					{
+						case LoopType.Registry:
+							return l.regVal;
+					}
+				}
+
+				return "";
+			}
+		}
+#endif
+		/// <summary>
+		/// The maximum simultaneously running threads allowed in a script.
+		/// </summary>
+		public static object A_MaxThreads => Script.MaxThreadsTotal;
+
+		/// <summary>
+		/// The value specified by #NoTrayIcon.
+		/// Disables the showing of a tray icon.
+		/// </summary>
+		public static bool A_NoTrayIcon => Script.NoTrayIcon;
+
+		/// <summary>
+		/// Whether the script is exempt from being able to be suspended.
+		/// </summary>
+		public static object A_SuspendExempt
+		{
+			get => HotstringManager.hsSuspendExempt;
+			set => HotstringManager.hsSuspendExempt = value.Ab();
+		}
+
+		/// <summary>
+		/// The total height in pixels of the virtual screen.
+		/// </summary>
+		public static long A_TotalScreenHeight => SystemInformation.VirtualScreen.Height;
+
+		/// <summary>
+		/// The total width in pixels of the virtual screen.
+		/// </summary>
+		public static long A_TotalScreenWidth => SystemInformation.VirtualScreen.Width;
+
+		/// <summary>
+		/// The value specified by #UseHook.
+		/// </summary>
+		public static object A_UseHook => Script.ForceKeybdHook;
+
+		/// <summary>
+		/// Whether #WinActivateForce was specified.
+		/// </summary>
+		public static object A_WinActivateForce => Script.WinActivateForce;
+
+		/// <summary>
+		/// The height of the working area of the primary screen.
+		/// </summary>
+		public static long A_WorkAreaHeight => System.Windows.Forms.Screen.PrimaryScreen.WorkingArea.Height;
+
+		/// <summary>
+		/// The width of the working area of the primary screen.
+		/// </summary>
+		public static long A_WorkAreaWidth => System.Windows.Forms.Screen.PrimaryScreen.WorkingArea.Width;
 	}
 
 	/// <summary>

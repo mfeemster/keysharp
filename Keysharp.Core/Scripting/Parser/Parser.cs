@@ -303,7 +303,7 @@ namespace Keysharp.Scripting
 			mainNs.Imports.Add(new CodeNamespaceImport("Array = Keysharp.Core.Array"));
 			mainNs.Imports.Add(new CodeNamespaceImport("Buffer = Keysharp.Core.Buffer"));
 			_ = unit.Namespaces.Add(mainNs);
-			AddAssemblyAttribute(typeof(AssemblyBuildVersionAttribute), Accessors.A_AhkVersion);
+			AddAssemblyAttribute(typeof(AssemblyBuildVersionAttribute), A_AhkVersion);
 			unit.AssemblyCustomAttributes.AddRange(assemblyAttributes);
 			assemblyAttributes.Clear();
 			var inv = (CodeMethodInvokeExpression)InternalMethods.RunMainWindow;

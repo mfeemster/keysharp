@@ -108,13 +108,13 @@
 						list.Add(kv.Value);
 				}
 
-				return Keysharp.Core.Objects.Object(list.ToArray());
+				return Objects.Object(list.ToArray());
 			}
 
 			try
 			{
 				var val = Script.GetPropertyValue(this, name);
-				return Keysharp.Core.Objects.Object(["value", val]);
+				return Objects.Object(["value", val]);
 			}
 			catch
 			{
@@ -244,12 +244,12 @@
 		protected internal void Init__Item()
 		{
 			DefineProp("__Item",
-					   Keysharp.Core.Objects.Object(
+					   Objects.Object(
 						   [
 							   "get",
-							   Keysharp.Core.Functions.GetFuncObj("ItemWrapper", this, 1, true),
+							   Functions.GetFuncObj("ItemWrapper", this, 1, true),
 							   "set",
-							   Keysharp.Core.Functions.GetFuncObj("ItemWrapper", this, 1, true)
+							   Functions.GetFuncObj("ItemWrapper", this, 1, true)
 						   ]));
 		}
 

@@ -21,18 +21,18 @@
 			{
 				var g = match.Groups[i];
 				DefineProp(g.Name,
-						   Keysharp.Core.Objects.Object(
+						   Objects.Object(
 							   [
 								   "get",
-								   Keysharp.Core.Functions.GetFuncObj("GetWrapper", this, 2, true).Bind(g.Name)
+								   Functions.GetFuncObj("GetWrapper", this, 2, true).Bind(g.Name)
 							   ]));
 
 				if (i.ToString() != g.Name)//No need to add it twice if the name matches the index.
 					DefineProp(i,
-							   Keysharp.Core.Objects.Object(
+							   Objects.Object(
 								   [
 									   "get",
-									   Keysharp.Core.Functions.GetFuncObj("GetWrapper", this, 2, true).Bind(g.Name)
+									   Functions.GetFuncObj("GetWrapper", this, 2, true).Bind(g.Name)
 								   ]));
 			}
 

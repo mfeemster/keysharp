@@ -126,7 +126,7 @@ namespace Keysharp.Tests
 			foreach (var n in new[] { -1, -0.5, 0, -0, 0.5, 1, 0.675 })
 			{
 				var v = n * Math.PI;
-				Assert.AreEqual(Math.Cosh(v), Maths.Cosh(v));
+				Assert.AreEqual(Math.Cosh(v), KeysharpEnhancements.Cosh(v));
 			}
 			Assert.IsTrue(TestScript("math-cosh", true));
 		}
@@ -538,7 +538,7 @@ namespace Keysharp.Tests
 			foreach (var n in new[] { -1, -0.5, 0, -0, 0.5, 1, 0.675 })
 			{
 				var v = n * Math.PI;
-				Assert.AreEqual(Math.Sinh(v), Maths.Sinh(v));
+				Assert.AreEqual(Math.Sinh(v), KeysharpEnhancements.Sinh(v));
 			}
 			Assert.IsTrue(TestScript("math-sinh", true));
 		}
@@ -580,7 +580,7 @@ namespace Keysharp.Tests
 			foreach (var n in new[] { -1, -0.5, 0, -0, 0.5, 1, 0.675 })
 			{
 				var v = n * Math.PI;
-				Assert.AreEqual(Math.Tanh(v), Maths.Tanh(v));
+				Assert.AreEqual(Math.Tanh(v), KeysharpEnhancements.Tanh(v));
 			}
 			Assert.IsTrue(TestScript("math-tanh", true));
 		}

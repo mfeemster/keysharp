@@ -103,7 +103,7 @@ namespace Keysharp.Core.COM
 					_ = dispatch.GetIDsOfNames(ref dummy, names, 1, Com.LOCALE_SYSTEM_DEFAULT, dispIds);
 					//If we get here, this type - info defines the method.
 					var foundDispId = dispIds[0];
-					ti.GetContainingTypeLib(out ITypeLib typeLib, out int pIndex);//This is the only way to properly get all interfaces.
+					ti.GetContainingTypeLib(out var typeLib, out int pIndex);//This is the only way to properly get all interfaces.
 					var typeCount = typeLib.GetTypeInfoCount();
 
 					for (var i = 0; i < typeCount; i++)
@@ -113,19 +113,19 @@ namespace Keysharp.Core.COM
 						try
 						{
 							//Get the type attributes.
-							ti.GetTypeAttr(out IntPtr pTypeAttr);
+							ti.GetTypeAttr(out var pTypeAttr);
 							var typeAttr = Marshal.PtrToStructure<TYPEATTR>(pTypeAttr);
 
 							//If the type has functions, enumerate them.
 							for (int j = 0; j < typeAttr.cFuncs; j++)
 							{
-								ti.GetFuncDesc(j, out IntPtr pFuncDesc);
+								ti.GetFuncDesc(j, out var pFuncDesc);
 								var funcDesc = Marshal.PtrToStructure<FUNCDESC>(pFuncDesc);
 
 								//Get the function's name from its memid.
 								if (foundDispId == funcDesc.memid)
 								{
-									ti.GetDocumentation(funcDesc.memid, out string name, out string docString, out int helpContext, out string helpFile);
+									ti.GetDocumentation(funcDesc.memid, out var name, out var docString, out var helpContext, out var helpFile);
 
 									if (name.Equals(methodName, StringComparison.OrdinalIgnoreCase))
 									{

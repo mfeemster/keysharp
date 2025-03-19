@@ -424,9 +424,9 @@ namespace Keysharp.Tests
 			Assert.IsTrue(s.StartsWith("This ", StringComparison.CurrentCulture));
 			Assert.IsFalse(s.StartsWith("this ", StringComparison.CurrentCulture));
 			Assert.IsTrue(s.StartsWith("tHiS ", StringComparison.CurrentCultureIgnoreCase));
-			Assert.IsTrue(StartsWith(s, "This ", true) == 1L);
-			Assert.IsFalse(StartsWith(s, "this ", true) == 1L);
-			Assert.IsTrue(StartsWith(s, "tHiS ", false) == 1L);
+			Assert.IsTrue(KeysharpEnhancements.StartsWith(s, "This ", true) == 1L);
+			Assert.IsFalse(KeysharpEnhancements.StartsWith(s, "this ", true) == 1L);
+			Assert.IsTrue(KeysharpEnhancements.StartsWith(s, "tHiS ", false) == 1L);
 			//
 			Assert.IsTrue(TestScript("string-startsendswith", true));
 		}
@@ -767,11 +767,11 @@ namespace Keysharp.Tests
 		{
 			var str1 = "Hello, world!";
 			var b64 = "SGVsbG8sIHdvcmxkIQ==";
-			var conv = Base64Decode(b64);
+			var conv = KeysharpEnhancements.Base64Decode(b64);
 			var barr = conv.ToByteArray().ToArray();
 			var str2 = Encoding.UTF8.GetString(barr);
 			Assert.AreEqual(str1, str2);
-			var enc = Base64Encode(conv);
+			var enc = KeysharpEnhancements.Base64Encode(conv);
 			Assert.AreEqual(enc, b64);
 			Assert.IsTrue(TestScript("string-base64", true));
 		}

@@ -12,7 +12,7 @@
     <OutputType>WinExe</OutputType>
     <StartupObject>Keysharp.CompiledMain.program</StartupObject>
     <ApplicationIcon>..\Keysharp.ico</ApplicationIcon>
-    <Version>0.0.0.8</Version>
+    <Version>0.0.0.9</Version>
     <Authors>Matt Feemster</Authors>
     <Company>Keysharp</Company>
     <Description>A simple test program to paste generated code into for debugging</Description>

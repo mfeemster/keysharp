@@ -482,7 +482,7 @@ namespace Keysharp.Core
 			}
 			else if (Marshal.IsComObject(obj))
 			{
-				return new ComIterator(obj);
+				return new ComEnumerator(obj, ct);
 			}
 			else if (obj is null)
 				return Errors.ErrorOccurred(err = new UnsetError($"Object was null and could not be converted to a KeysharpEnumerator.")) ? throw err : null;

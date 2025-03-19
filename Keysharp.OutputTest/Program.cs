@@ -5,6 +5,7 @@ using static Keysharp.Core.Common.Keyboard.HotkeyDefinition;
 using static Keysharp.Core.Common.Keyboard.HotstringDefinition;
 using static Keysharp.Core.Common.Keyboard.HotstringManager;
 using static Keysharp.Core.ControlX;
+using static Keysharp.Core.Debug;
 using static Keysharp.Core.Dialogs;
 using static Keysharp.Core.Dir;
 using static Keysharp.Core.Dll;
@@ -22,6 +23,7 @@ using static Keysharp.Core.Images;
 using static Keysharp.Core.Ini;
 using static Keysharp.Core.Input;
 using static Keysharp.Core.Keyboard;
+using static Keysharp.Core.KeysharpEnhancements;
 using static Keysharp.Core.Loops;
 using static Keysharp.Core.Maths;
 using static Keysharp.Core.Menu;
@@ -30,12 +32,9 @@ using static Keysharp.Core.Monitor;
 using static Keysharp.Core.Mouse;
 using static Keysharp.Core.Network;
 using static Keysharp.Core.Processes;
-using static Keysharp.Core.RealThreads;
 using static Keysharp.Core.RegEx;
 using static Keysharp.Core.Registrys;
 using static Keysharp.Core.Screen;
-using static Keysharp.Core.Security;
-using static Keysharp.Core.SimpleJson;
 using static Keysharp.Core.Sound;
 using static Keysharp.Core.Strings;
 using static Keysharp.Core.ToolTips;
@@ -53,7 +52,7 @@ using static Keysharp.Scripting.Script;
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-[assembly: Keysharp.Scripting.AssemblyBuildVersionAttribute("0.0.0.8")]
+[assembly: Keysharp.Scripting.AssemblyBuildVersionAttribute("0.0.0.9")]
 
 namespace Keysharp.CompiledMain
 {
@@ -67,7 +66,6 @@ namespace Keysharp.CompiledMain
 	using System.Text;
 	using System.Threading.Tasks;
 	using System.Windows.Forms;
-
 	using Keysharp.Core;
 	using Keysharp.Core.Common;
 	using Keysharp.Core.Common.File;
@@ -76,7 +74,6 @@ namespace Keysharp.CompiledMain
 	using Keysharp.Core.Common.Strings;
 	using Keysharp.Core.Common.Threading;
 	using Keysharp.Scripting;
-
 	using Array = Keysharp.Core.Array;
 	using Buffer = Keysharp.Core.Buffer;
 

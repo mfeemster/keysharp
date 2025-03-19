@@ -87,4 +87,6 @@ global using global::Semver.Utility;
 #endif
 
 //Static
+global using static global::Keysharp.Core.Accessors;
+global using static global::Keysharp.Core.KeysharpEnhancements;
 global using static global::Keysharp.Scripting.Keywords;

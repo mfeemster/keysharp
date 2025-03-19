@@ -140,7 +140,7 @@
 
 		internal void Form_KeyDown(object sender, KeyEventArgs e)
 		{
-			if (e.KeyCode == Keys.Apps || (e.KeyCode == Keys.F10 && ((Control.ModifierKeys & Keys.Shift) == Keys.Shift)))
+			if (e.KeyCode == Keys.Apps || (e.KeyCode == Keys.F10 && ((ModifierKeys & Keys.Shift) == Keys.Shift)))
 				CallContextMenuChangeHandlers(true, Cursor.Position.X, Cursor.Position.Y);
 			else if (e.KeyCode == Keys.Escape && Tag is WeakReference<Gui> wrg && wrg.TryGetTarget(out var g))
 				_ = escapeHandlers?.InvokeEventHandlers(g);

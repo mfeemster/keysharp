@@ -44,7 +44,7 @@ namespace Keysharp.Core
 				ShowNewFolderButton = (opts & 1) == 1//The 1, 3 and 5 options seem to not apply to this class and the New Folder button will always be shown.
 			};
 			select.UseDescriptionForTitle = true;
-			select.Description = p != "" ? p : "Select Folder - " + Accessors.A_ScriptName;
+			select.Description = p != "" ? p : "Select Folder - " + A_ScriptName;
 			select.RootFolder = Environment.SpecialFolder.MyComputer;
 
 			if (folder.StartsWith("::"))
@@ -190,7 +190,7 @@ namespace Keysharp.Core
 			if (save)
 			{
 				if (t?.Length == 0)
-					t = $"Select File - {Accessors.A_ScriptName}";
+					t = $"Select File - {A_ScriptName}";
 
 				var saveas = new SaveFileDialog
 				{
@@ -211,7 +211,7 @@ namespace Keysharp.Core
 				if (dir)
 				{
 					if (t?.Length == 0)
-						t = $"Select Folder - {Accessors.A_ScriptName}";
+						t = $"Select Folder - {A_ScriptName}";
 
 					var select = new FolderBrowserDialog()
 					{
@@ -227,7 +227,7 @@ namespace Keysharp.Core
 				else
 				{
 					if (t?.Length == 0)
-						t = $"Select File - {Accessors.A_ScriptName}";
+						t = $"Select File - {A_ScriptName}";
 
 					var open = new OpenFileDialog
 					{
@@ -311,7 +311,7 @@ namespace Keysharp.Core
 			{
 				Default = def,
 				Prompt = p,
-				Title = t?.Length == 0 ? Accessors.A_ScriptName : t
+				Title = t?.Length == 0 ? A_ScriptName : t
 			};
 			object wl = null, wt = null, wr = null, wb = null;
 			var workarea = Monitor.MonitorGetWorkArea(null, ref wl, ref wt, ref wr, ref wb);
@@ -411,7 +411,7 @@ namespace Keysharp.Core
 
 			if (caption?.Length == 0)
 			{
-				caption = Accessors.A_ScriptName;
+				caption = A_ScriptName;
 
 				if (txt?.Length == 0 && options == null)
 					txt = "Press OK to continue.";

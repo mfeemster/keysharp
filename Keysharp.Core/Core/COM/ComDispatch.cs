@@ -103,8 +103,14 @@ namespace Keysharp.Core.COM
 				return;
 			}
 
+			if (ti == null)
+			{
+				_ = Errors.ErrorOccurred(err = new ValueError($"COM TypeInfo was null.")) ? throw err : "";
+				return;
+			}
+
 			ti.GetTypeAttr(out var typeAttr);
-			ct.TYPEATTR attr = (ct.TYPEATTR)Marshal.PtrToStructure(typeAttr, typeof(ct.TYPEATTR));
+			var attr = Marshal.PtrToStructure<TYPEATTR>(typeAttr);
 			var cImplTypes = attr.cImplTypes;
 			ti.ReleaseTypeAttr(typeAttr);
 
@@ -114,14 +120,14 @@ namespace Keysharp.Core.COM
 				{
 					ti.GetImplTypeFlags(j, out var typeFlags);
 
-					if (typeFlags.HasFlag(ct.IMPLTYPEFLAGS.IMPLTYPEFLAG_FDEFAULT) && typeFlags.HasFlag(ct.IMPLTYPEFLAGS.IMPLTYPEFLAG_FSOURCE))
+					if (typeFlags.HasFlag(IMPLTYPEFLAGS.IMPLTYPEFLAG_FDEFAULT) && typeFlags.HasFlag(IMPLTYPEFLAGS.IMPLTYPEFLAG_FSOURCE))
 					{
 						ti.GetRefTypeOfImplType(j, out var href);
 						ti.GetRefTypeInfo(href, out var ppTI);
 						ppTI.GetTypeAttr(out typeAttr);
-						attr = (ct.TYPEATTR)Marshal.PtrToStructure(typeAttr, typeof(ct.TYPEATTR));
+						attr = Marshal.PtrToStructure<TYPEATTR>(typeAttr);
 
-						if (attr.typekind == ct.TYPEKIND.TKIND_DISPATCH)
+						if (attr.typekind == TYPEKIND.TKIND_DISPATCH)
 						{
 							cpContainer.FindConnectionPoint(ref attr.guid, out var con);
 

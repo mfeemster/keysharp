@@ -230,7 +230,7 @@ namespace Keysharp.Core
 
 						return Errors.ErrorOccurred(err = new Error($"An error occurred when calling {name}() in {path}: {e.Message}{inner}")
 						{
-							Extra = "0x" + Accessors.A_LastError.ToString("X")
+							Extra = "0x" + A_LastError.ToString("X")
 						}) ? throw err : null;
 					}
 				}
@@ -272,7 +272,7 @@ namespace Keysharp.Core
 
 					return Errors.ErrorOccurred(err = new Error($"An error occurred when calling {name}() in {path}: {e.Message}{inner}")
 					{
-						Extra = "0x" + Accessors.A_LastError.ToString("X")
+						Extra = "0x" + A_LastError.ToString("X")
 					}) ? throw err : null;
 				}
 			}
@@ -334,7 +334,7 @@ namespace Keysharp.Core
 				{
 					return Errors.ErrorOccurred(err = new Error($"An error occurred when calling {function}(): {ex.Message}")
 					{
-						Extra = "0x" + Accessors.A_LastError.ToString("X")
+						Extra = "0x" + A_LastError.ToString("X")
 					}) ? throw err : null;
 				}
 			}

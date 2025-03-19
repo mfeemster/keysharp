@@ -197,7 +197,7 @@
 				var inst = obj.Length > 0 ? obj[0].GetControl() : null;
 				//lock (ehLock)
 				{
-					var oldEventInfo = Accessors.A_EventInfo;
+					var oldEventInfo = A_EventInfo;
 					var (pushed, tv) = Threads.BeginThread();
 
 					if (pushed)//If we've exceeded the number of allowable threads, then just do nothing.

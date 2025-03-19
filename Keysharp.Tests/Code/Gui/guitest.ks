@@ -2579,8 +2579,8 @@ DllWsprintf()
 {
 	ZeroPaddedNumber := Buffer(20)  ; Ensure the buffer is large enough to accept the new string.
 	DllCall("wsprintf", "Ptr", ZeroPaddedNumber, "Str", "%010d", "Int", 432, "Cdecl")  ; Requires the Cdecl calling convention.
-	strfmt := Format("{1:0000000000}", 432)
-	str := "Value from wsprintf(): " . StrGet(ZeroPaddedNumber) . "`n" . "Value from Format(): " . strfmt . "`n" . "Reference value: 0000000432"
+	strfmt := FormatCs("{1:0000000000}", 432)
+	str := "Value from wsprintf(): " . StrGet(ZeroPaddedNumber) . "`n" . "Value from FormatCs(): " . strfmt . "`n" . "Reference value: 0000000432"
 	MsgBox(str)
 }
 

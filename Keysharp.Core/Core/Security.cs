@@ -3,7 +3,7 @@ namespace Keysharp.Core
 	/// <summary>
 	/// Public interface for security/cryptographic-related functions.
 	/// </summary>
-	public static class Security
+	public static partial class KeysharpEnhancements
 	{
 		/// <summary>
 		/// Encrypt or decrypt data with the AES algorithm.
