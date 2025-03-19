@@ -231,12 +231,6 @@
 		/// The implementation for <see cref="IEnumerator.Reset"/> which resets the iterator.
 		/// </summary>
 		public void Reset() => iter = ((IEnumerable<Group>)match.Groups).GetEnumerator();
-
-		/// <summary>
-		/// Gets the enumerator which is just this.
-		/// </summary>
-		/// <returns>this as an <see cref="IEnumerator{(object, object)}"/>.</returns>
-		private IEnumerator<(object, object)> GetEnumerator() => this;
 	}
 
 	internal class RegexWithTag : Regex

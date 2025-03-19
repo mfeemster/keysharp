@@ -1860,6 +1860,9 @@ FuncBtnSix.OnEvent("Click", "GrabFromIni")
 FuncBtnSeven := MyGui.Add("Button", "x160 yp w150", "Toggle Hotkey from .INI")
 FuncBtnSeven.OnEvent("Click", "ToggleFromIni")
 
+F3HotkeyText := MyGui.Add("Text", "x10 y+30 w250", "Select files in explorer, press F3 to see names")
+F3HotkeyText.SetFont("cBlue s12")
+
 ; ┌────────────────────┐
 ; │  Hotkey functions  │
 ; └────────────────────┘
@@ -1945,6 +1948,30 @@ ToggleFromIni() {
 		MsgBox("Set the .INI hotkeyfirst!", "ERROR", "T2")
 	}
 }
+
+#HotIf WinActive('ahk_class CabinetWClass ahk_exe explorer.exe')
+F3::MsgBox getSelected()
+#HotIf
+
+getSelected() { ; https://www.autohotkey.com/boards/viewtopic.php?style=17&t=60403#p255256 by teadrinker
+	hwnd := WinExist('A'), selection := ''
+
+	If WinGetClass() ~= '(Cabinet|Explore)WClass'
+		For window in ComObject('Shell.Application').Windows
+		{
+			Try
+				val := window.hwnd
+			Catch
+				Return
+		
+			If val = hwnd
+				For item in window.document.SelectedItems
+					selection .= item.Path '`n'
+		}
+		
+	Return Trim(selection, '`n')
+}
+
 #endif
 ; ┌───────────────────────────┐
 ; │  FUNCTIONS AND CALLBACKS  │

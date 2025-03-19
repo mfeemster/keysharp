@@ -124,7 +124,5 @@
 		public bool MoveNext() => iter.MoveNext();
 
 		public void Reset() => iter = map.GetEnumerator();
-
-		private IEnumerator<(object, object)> GetEnumerator() => this;
 	}
 }
