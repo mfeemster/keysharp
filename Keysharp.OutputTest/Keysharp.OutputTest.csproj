@@ -19,10 +19,10 @@
     <Description>A simple test program to paste generated code into for debugging</Description>
     <SignAssembly>False</SignAssembly>
     <DelaySign>False</DelaySign>
-    <ApplicationManifest>Keysharp.OutputTest.manifest</ApplicationManifest>
     <PlatformTarget>x64</PlatformTarget>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <WarningLevel>5</WarningLevel>
+    <NoWin32Manifest>true</NoWin32Manifest>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">

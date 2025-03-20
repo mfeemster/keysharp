@@ -41,8 +41,8 @@ Some general notes about Keysharp's implementation of the [AutoHotkey v2 specifi
 	+ The DOM compiler generates C# code for a single program.
 	+ The C# program code is compiled into an in-memory executable.
 	+ The executable is ran in memory as a new process.
-	+ Optionally output the generated C# code to a .cs file for debugging purposes.
-	+ Optionally output the generated executable to an .exe file for running standalone in the future.
+	+ Optionally output the generated C# code to a .cs file for debugging purposes with the `-codeout` option.
+	+ Optionally output the generated executable to an .exe file for running standalone in the future with the `-exeout` option.
 
 * Keysharp supports files with the `.ahk` extension, however installing it will not register it with that extension. Instead, it will register the other extension it supports, `.ks`.
 

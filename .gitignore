@@ -30,3 +30,5 @@
 /Keysharp.Core/bin
 /Keysharp.OutputTest/bin
 /Keysharp.Tests/bin
+/Keysharp.Tests/Code/Gui/guitest.deps.json
+/Keysharp.Tests/Code/Gui/guitest.runtimeconfig.json

@@ -18,6 +18,12 @@ Add-Type -Assembly 'System.IO.Compression.FileSystem'
 
 # Create the zip file and open it:
 $zfile = ".\Keysharp_$AssemblyVersion.zip"
+
+if (Test-Path $zfile)
+{
+    Remove-Item $zfile
+}
+
 $z = [System.IO.Compression.ZipFile]::Open($zfile, [System.IO.Compression.ZipArchiveMode]::Create)
 
 # Add a compressed file to the zip file:
@@ -27,6 +33,8 @@ $z = [System.IO.Compression.ZipFile]::Open($zfile, [System.IO.Compression.ZipArc
 [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($z, ".\bin\release\$net\Keysharp.Core.dll", "Keysharp.Core.dll")
 [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($z, ".\bin\release\$net\Keysharp.dll", "Keysharp.dll")
 [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($z, ".\bin\release\$net\Keyview.dll", "Keyview.dll")
+[System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($z, ".\bin\release\$net\license.txt", "license.txt")
+[System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($z, ".\README.md", "README.md")
 [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($z, ".\bin\release\$net\Microsoft.CodeAnalysis.CSharp.dll", "Microsoft.CodeAnalysis.CSharp.dll")
 [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($z, ".\bin\release\$net\Microsoft.CodeAnalysis.dll", "Microsoft.CodeAnalysis.dll")
 [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($z, ".\bin\release\$net\Microsoft.CodeDom.Providers.DotNetCompilerPlatform.dll", "Microsoft.CodeDom.Providers.DotNetCompilerPlatform.dll")

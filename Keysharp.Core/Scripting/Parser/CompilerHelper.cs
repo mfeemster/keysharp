@@ -241,6 +241,7 @@ using static Keysharp.Scripting.Script;
 						   new CSharpParseOptions(LanguageVersion.LatestMajor, DocumentationMode.None, SourceCodeKind.Regular));
 				var coreDir = Path.GetDirectoryName(typeof(object).GetTypeInfo().Assembly.Location);
 				var desktopDir = Path.GetDirectoryName(typeof(Form).GetTypeInfo().Assembly.Location);
+				var ksCoreDir = Path.GetDirectoryName(A_KeysharpCorePath);
 				var usings = new List<string>()//These aren't what show up in the output .cs file. See Parser.GenerateCompileUnit() for that.
 				{
 					"System",
@@ -271,9 +272,10 @@ using static Keysharp.Scripting.Script;
 					MetadataReference.CreateFromFile(Path.Combine(desktopDir, "System.Drawing.Common.dll")),
 					MetadataReference.CreateFromFile(Path.Combine(desktopDir, "System.Windows.Forms.dll")),
 					//This will be the build output folder when running from within the debugger, and the install folder when running from an installation.
-					//Note that Keysharp.Core.dll *must* remain in that location for a compiled executable to work.
-					//MetadataReference.CreateFromFile(Path.Combine(Environment.CurrentDirectory, "Keysharp.Core.dll")),
-					MetadataReference.CreateFromFile(Path.Combine(currentDir, "Keysharp.Core.dll")),
+					//Note that Keysharp.Core.dll and System.CodeDom.dll *must* remain in that location for a compiled executable to work.
+					//MetadataReference.CreateFromFile(Path.Combine(currentDir, "Keysharp.Core.dll")),
+					MetadataReference.CreateFromFile(Path.Combine(ksCoreDir, "Keysharp.Core.dll")),
+					MetadataReference.CreateFromFile(Path.Combine(ksCoreDir, "System.CodeDom.dll"))//Even though the .NET desktop install comes with CodeDOM, we reference a special version in Keysharp.Core.
 				};
 				var ms = new MemoryStream();
 				var compilation = CSharpCompilation.Create(outputname)
@@ -281,7 +283,7 @@ using static Keysharp.Scripting.Script;
 									  new CSharpCompilationOptions(OutputKind.WindowsApplication)
 									  .WithUsings(usings)
 									  .WithOptimizationLevel(OptimizationLevel.Release)
-									  .WithPlatform(Platform.AnyCpu)
+									  .WithPlatform(Platform.X64)
 									  .WithConcurrentBuild(true)
 								  )
 								  .AddReferences(references)
