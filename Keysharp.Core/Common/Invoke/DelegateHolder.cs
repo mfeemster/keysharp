@@ -4,16 +4,18 @@
 	{
 		internal PlaceholderFunction delRef;
 		internal IFuncObj funcObj;
-		protected readonly ConcurrentStackArrayPool<IntPtr> paramsPool = new (31);
+		//protected readonly ConcurrentStackArrayPool<IntPtr> paramsPool = new (31);
 		private readonly bool fast;
+		private readonly long paramCount = -1;
 
 		internal bool Reference { get; }
 
-		public DelegateHolder(object obj, bool f, bool r)
+		public DelegateHolder(object obj, bool f, bool r, long pc)
 		{
 			funcObj = Functions.GetFuncObj(obj, null, true);
 			fast = f;
 			Reference = r;
+			paramCount = pc;
 			delRef = (PlaceholderFunction)Delegate.CreateDelegate(typeof(PlaceholderFunction), this, "DelegatePlaceholder");
 		}
 
@@ -24,9 +26,43 @@
 
 		{
 			object val = null;
-			nint[] arr = null;
+			nint[] arr = new nint[31];
+            arr[0] = p1;
+            arr[1] = p2;
+            arr[2] = p3;
+            arr[3] = p4;
+            arr[4] = p5;
+            arr[5] = p6;
+            arr[6] = p7;
+            arr[7] = p8;
+            arr[8] = p9;
+            arr[9] = p10;
+            arr[10] = p11;
+            arr[11] = p12;
+            arr[12] = p13;
+            arr[13] = p14;
+            arr[14] = p15;
+            arr[15] = p16;
+            arr[16] = p17;
+            arr[17] = p18;
+            arr[18] = p19;
+            arr[19] = p20;
+            arr[20] = p21;
+            arr[21] = p22;
+            arr[22] = p23;
+            arr[23] = p24;
+            arr[24] = p25;
+            arr[25] = p26;
+            arr[26] = p27;
+            arr[27] = p28;
+            arr[28] = p29;
+            arr[29] = p30;
+            arr[30] = p31;
 
-			if (delRef != null)
+			System.Array.Resize(ref arr, (int)paramCount);
+
+
+            if (delRef != null)
 			{
 				_ = Flow.TryCatch(() =>
 				{
@@ -37,55 +73,15 @@
 
 					if (Reference)
 					{
-						arr = paramsPool.Rent();
-						arr[0] = p1;
-						arr[1] = p2;
-						arr[2] = p3;
-						arr[3] = p4;
-						arr[4] = p5;
-						arr[5] = p6;
-						arr[6] = p7;
-						arr[7] = p8;
-						arr[8] = p9;
-						arr[9] = p10;
-						arr[10] = p11;
-						arr[11] = p12;
-						arr[12] = p13;
-						arr[13] = p14;
-						arr[14] = p15;
-						arr[15] = p16;
-						arr[16] = p17;
-						arr[17] = p18;
-						arr[18] = p19;
-						arr[19] = p20;
-						arr[20] = p21;
-						arr[21] = p22;
-						arr[22] = p23;
-						arr[23] = p24;
-						arr[24] = p25;
-						arr[25] = p26;
-						arr[26] = p27;
-						arr[27] = p28;
-						arr[28] = p29;
-						arr[29] = p30;
-						arr[30] = p31;
 						val = DelegatePlaceholderArr(arr);
-						_ = paramsPool.Return(arr);
-						arr = null;
 					}
 					else
-						val = funcObj.Call(p1, p2, p3, p4, p5, p6, p7, p8,
-										   p9, p10, p11, p12, p13, p14, p15, p16,
-										   p17, p18, p19, p20, p21, p22, p23, p24,
-										   p25, p26, p27, p28, p29, p30, p31);
+						val = funcObj.Call(System.Array.ConvertAll(arr, p => (object)p));
 
 					if (!fast)
 						_ = Threads.EndThread(btv.Item1);
 				}, !fast);//Pop on exception because EndThread() above won't be called.
 			}
-
-			if (arr != null)
-				_ = paramsPool.Return(arr);
 
 			return ConvertResult(val);
 		}
@@ -177,6 +173,8 @@
 				return 0L;
 			else if (val is null)
 				return 0L;
+			else if (val is IntPtr ip)
+				return (int)ip.ToInt64();
 
 			return 0L;
 		}

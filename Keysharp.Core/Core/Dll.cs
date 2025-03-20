@@ -43,9 +43,16 @@ namespace Keysharp.Core
 		/// This is typically passed to an external function via <see cref="DllCall"/> or placed in a struct using <see cref="NumPut"/>, but can also be called directly by <see cref="DllCall"/>.
 		/// </returns>
 		public static DelegateHolder CallbackCreate(object function, object options = null, object paramCount = null)
-		{
-			var o = options.As();
-			return new DelegateHolder(Functions.GetFuncObj(function, null, true), o.Contains('f', StringComparison.OrdinalIgnoreCase), o.Contains('&'));//paramCount is unused.
+        {
+            var o = options.As();
+			var ifo = Functions.GetFuncObj(function, null, true);
+			long pm = -1;
+			if (paramCount != null)
+				pm = paramCount.Al();
+			else if (ifo is FuncObj fo)
+				pm = fo.MaxParams;
+
+            return new DelegateHolder(ifo, o.Contains('f', StringComparison.OrdinalIgnoreCase), o.Contains('&'), pm);//paramCount is unused.
 		}
 
 		/// <summary>

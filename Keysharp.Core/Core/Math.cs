@@ -267,12 +267,12 @@
 
 				for (var i = 1; i < o.Count; i++)
 				{
-					if (!Script.IsNumeric(o[i]) || !Script.IsNumeric(o[i - 1]))
-						return string.Empty;
+					var x = o[i].ParseDouble();
+					var y = o[i - 1].ParseDouble();
+					if (!x.HasValue || !y.HasValue)
+						throw new TypeError("Received non-numeric value");
 
-					var x = Convert.ToDouble(o[i]);
-					var y = Convert.ToDouble(o[i - 1]);
-					var z = Math.Max(x, y);
+					var z = Math.Max(x.Value, y.Value);
 
 					if (z is double dz)
 						max = Math.Max(max, dz);

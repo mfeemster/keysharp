@@ -1799,10 +1799,10 @@
 				form.WindowState = FormWindowState.Normal;
 
 			form.Update();//Required for the very first state of the form to always be displayed.
-			return null;
+            return null;
 		}
 
-		public Map Submit(object obj = null)
+        public Map Submit(object obj = null)
 		{
 			var hide = obj.Ab(true);
 			var panels = new HashSet<Panel>();

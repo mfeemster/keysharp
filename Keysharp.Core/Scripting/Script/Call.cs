@@ -132,7 +132,7 @@ namespace Keysharp.Scripting
 
 			try
 			{
-                if (item is Misc.VarRef vr && namestr.Equals("__Value", StringComparison.InvariantCultureIgnoreCase))
+                if (item is Misc.VarRef vr && namestr.Equals("__Value", StringComparison.OrdinalIgnoreCase))
 					return vr.__Value;
 
                 if (item is ITuple otup && otup.Length > 1)

@@ -13,7 +13,7 @@
 		/// <summary>
 		/// The internal list used to contain the stack elements.
 		/// </summary>
-		private readonly List<T> list;
+		private readonly T[] array;
 
 		/// <summary>
 		/// The size of the list which is set once during construction and does not change.
@@ -39,24 +39,21 @@
 		{
 			index = 0;
 			size = s;
-			list = new List<T>(size);
+            array = new T[size];
+        }
 
-			for (var i = 0; i < size; i++)
-				list.Add(null);//Empty placeholder slots.
-		}
-
-		/// <summary>
-		/// Pushes a new object onto the stack.
-		/// </summary>
-		/// <param name="obj">The object to push onto the stack.</param>
-		/// <returns>True if the object was pushed, else false if there was no available space.</returns>
-		public bool Push(T obj)
+        /// <summary>
+        /// Pushes a new object onto the stack.
+        /// </summary>
+        /// <param name="obj">The object to push onto the stack.</param>
+        /// <returns>True if the object was pushed, else false if there was no available space.</returns>
+        public bool Push(T obj)
 		{
 			var next = Interlocked.Increment(ref index);
 
 			if (next > 0 && next <= size)
 			{
-				list[next - 1] = obj;
+				array[next - 1] = obj;
 				return true;
 			}
 
@@ -74,7 +71,7 @@
 		public T TryPeek()
 		{
 			var i = index;
-			return i > 0 && i <= list.Count ? list[i - 1] : default;
+			return i > 0 && i <= size ? array[i - 1] : default;
 		}
 
 		/// <summary>
@@ -90,8 +87,8 @@
 
 			if (next >= 0 && next < size)
 			{
-				obj = list[next];
-				list[next] = null;
+				obj = array[next];
+				array[next] = null;
 				return true;
 			}
 			else

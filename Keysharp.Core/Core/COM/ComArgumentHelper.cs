@@ -39,8 +39,6 @@ namespace Keysharp.Core.COM
 
 				_ = gcHandles.Add(gch);
 				var intptr = gch.AddrOfPinnedObject();
-
-                External.NumPut(pm1.TrimEnd('*', 'p', 'P'), obj ?? p, intptr);
                 //Numbers being passed in will always be of type long or double, however that won't work
                 //when a DLL function expects a pointer to a smaller type. So advance the pointer by the appropriate amount so it
                 //accesses the intended part.
@@ -66,7 +64,7 @@ namespace Keysharp.Core.COM
 			for (var i = 0; i < parameters.Length; i++)
 			{
 				var isreturn = hasreturn && i == parameters.Length - 1;
-				var name = parameters[i].ToString().ToLowerInvariant().Trim(Spaces);
+				var name = parameters[i].ToString().ToLower().Trim(Spaces);
 
 				if (isreturn)
 				{
@@ -83,12 +81,6 @@ namespace Keysharp.Core.COM
 				else
 					i++;
 
-                if (parameters[i] is KeysharpObject kso && kso.HasProp("__Value") == 1)
-                {
-                    refs[i] = parameters[i];
-                    parameters[i] = Script.GetPropertyValue(kso, "__Value");
-                }
-
                 Type type = null;
 				var n = i / 2;
 				var p = parameters[i];
@@ -99,7 +91,13 @@ namespace Keysharp.Core.COM
 					case '*':
 					case 'P':
 					case 'p':
-						name = name.TrimEnd(pointerChars);
+                        if (parameters[i] is KeysharpObject kso)
+                        {
+                            refs[i] = parameters[i];
+                            parameters[i] = Script.GetPropertyValue(kso, "__Value");
+                        }
+
+                        name = name.TrimEnd(pointerChars);
 						type = typeof(nint);
 						//usePtr = true;
 						SetupPointerArg(i, n);
@@ -352,6 +350,10 @@ namespace Keysharp.Core.COM
 								var pUnk = Marshal.GetIUnknownForObject(p);
 								args[n] = pUnk;
 								_ = Marshal.Release(pUnk);
+							}
+							else if (p is DelegateHolder delholder)
+							{
+							  args[n] = Marshal.GetFunctionPointerForDelegate(delholder.delRef);
 							}
 							//else if (p is DelegateHolder delholder)
 							//{
