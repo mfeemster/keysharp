@@ -340,6 +340,8 @@ class class1
 * `EnvUpdate()` is retained to provide for a cross platform way to update environment variables.
 * The 40 character limit for hotstring abbreviations has been removed. There is no limit to the length.
 * `FileGetSize()` supports `G` and `T` for gigabytes and terabytes.
+* `DateAdd()` and `DateDiff()` support taking a value of `"L"` for the `TimeUnits` parameter to add miLliseconds or return the ellapsed time in milliseconds, respectively.
+	+ See the new accessors `A_NowMs`/`A_NowUTCMs`.
 * `SubStr()` uses a default of 1 for the second parameter, `startingPos`, to relieve the user of always having to specify it.
 * New string functions:
 	+ `Base64Decode(str) => Array` to convert a Base64 string to a byte array.
@@ -398,6 +400,8 @@ class class1
 	+ `A_LoopRegValue` which makes it easy to get a registry value when using `Loop Reg`.
 	+ `A_MaxThreads` returns the value `n` specified with `#MaxThreads n`.
 	+ `A_NoTrayIcon` returns whether the tray icon was hidden with #NoTrayIcon.
+	+ `A_NowMs`/`A_NowUTCMs` returns the current local/UTC time formatted to include milliseconds like so "YYYYMMDDHH24MISS.ff".
+		+ These can be used with `DateAdd()`/`DateDiff()` using `"L"` for the `TimeUnits` parameter.
 	+ `A_SuspendExempt` returns whether subsequent hotkeys and hotstrings will be exmpt from suspension because `#SuspendExempt true` was specified.
 	+ `A_TotalScreenHeight` returns the total height in pixels of the virtual screen.
 	+ `A_TotalScreenWidth` returns the total width in pixels of the virtual screen.

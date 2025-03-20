@@ -87,16 +87,18 @@
 		/// </summary>
 		/// <param name="dateTime">A date-time stamp in the YYYYMMDDHH24MISS format.</param>
 		/// <param name="time">The amount of time to add, as an integer or floating-point number. Specify a negative number to perform subtraction.</param>
-		/// <param name="timeUnits">The meaning of the Time parameter. TimeUnits may be one of the following strings (or just the first letter): Seconds, Minutes, Hours or Days.</param>
-		/// <returns>The new date-time value as a string of digits in the YYYYMMDDHH24MISS format.</returns>
+		/// <param name="timeUnits">The meaning of the Time parameter. TimeUnits may be one of the following strings (or just the first letter): L (miLliseconds), Seconds, Minutes, Hours or Days.</param>
+		/// <returns>The new date-time value as a string of digits in the YYYYMMDDHH24MISS format if timeUnits was not "L",
+		/// and the YYYYMMDDHH24MISS.FFF format if timeUnits was "L".</returns>
 		public static string DateAdd(object dateTime, object time, object timeUnits)
 		{
+			var wasMs = false;
 			var s1 = dateTime.As();
 			var t = time.Ad();
 			var units = timeUnits.As();
 
 			if (s1.Length == 0)
-				s1 = A_Now;
+				s1 = A_NowMs;
 
 			var d1 = Conversions.ToDateTime(s1);
 
@@ -106,10 +108,12 @@
 				d1 = d1.AddMinutes(t);
 			else if (units.StartsWith("h", StringComparison.OrdinalIgnoreCase))
 				d1 = d1.AddHours(t);
+			else if (wasMs = units.StartsWith("l", StringComparison.OrdinalIgnoreCase))
+				d1 = d1.AddMilliseconds(t);
 			else
 				d1 = d1.AddDays(t);
 
-			return Conversions.ToYYYYMMDDHH24MISS(d1);
+			return  wasMs ? Conversions.ToYYYYMMDDHH24MISSFFF(d1) : Conversions.ToYYYYMMDDHH24MISS(d1);
 		}
 
 		/// <summary>
@@ -120,7 +124,7 @@
 		/// </param>
 		/// <param name="dateTime2">See <paramref name="dateTime1"/>.</param>
 		/// <param name="timeUnits">Units to measure the difference in.<br/>
-		/// timeUnits may be one of the following strings (or just the first letter): Seconds, Minutes, Hours or Days.
+		/// timeUnits may be one of the following strings (or just the first letter): L (miLliseconds), Seconds, Minutes, Hours or Days.
 		/// </param>
 		/// <returns>The difference between the two timestamps, in the units specified by timeUnits.<br/>
 		/// If dateTime1 is earlier than dateTime2, a negative number is returned.
@@ -132,23 +136,25 @@
 			var units = timeUnits.As();
 
 			if (s1.Length == 0)
-				s1 = A_Now;
+				s1 = A_NowMs;
 
 			if (s2.Length == 0)
-				s2 = A_Now;
+				s2 = A_NowMs;
 
 			var d1 = Conversions.ToDateTime(s1);
 			var d2 = Conversions.ToDateTime(s2);
 			var diff = d1 - d2;
 
 			if (units.StartsWith("s", StringComparison.OrdinalIgnoreCase))
-				return diff.Seconds;
+				return (long)diff.TotalSeconds;
 			else if (units.StartsWith("m", StringComparison.OrdinalIgnoreCase))
-				return diff.Minutes;
+				return (long)diff.TotalMinutes;
 			else if (units.StartsWith("h", StringComparison.OrdinalIgnoreCase))
-				return diff.Hours;
+				return (long)diff.TotalHours;
+			else if (units.StartsWith("l", StringComparison.OrdinalIgnoreCase))
+				return (long)diff.TotalMilliseconds;
 			else
-				return diff.Days;
+				return (long)diff.TotalDays;
 		}
 
 		/// <summary>

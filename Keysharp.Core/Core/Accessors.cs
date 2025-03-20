@@ -1467,7 +1467,7 @@
 		/// <summary>
 		/// The current Coordinated Universal Time (UTC) in YYYYMMDDHH24MISS format.
 		/// </summary>
-		public static string A_NowUTC => Conversions.ToYYYYMMDDHH24MISS(DateTime.Now.ToUniversalTime());
+		public static string A_NowUTC => Conversions.ToYYYYMMDDHH24MISS(DateTime.UtcNow);
 
 		/// <summary>
 		/// The type of Operating System being run, e.g. WIN32_WINDOWS for Windows 95/98/ME or WIN32_NT for Windows NT4/2000/XP/2003/Vista.
@@ -2169,6 +2169,16 @@
 		/// Disables the showing of a tray icon.
 		/// </summary>
 		public static bool A_NoTrayIcon => Script.NoTrayIcon;
+
+		/// <summary>
+		/// The current local time in YYYYMMDDHH24MISS.fff format.
+		/// </summary>
+		public static string A_NowMs => Conversions.ToYYYYMMDDHH24MISSFFF(DateTime.Now);
+
+		/// <summary>
+		/// The current Coordinated Universal Time (UTC) in YYYYMMDDHH24MISS.fff format.
+		/// </summary>
+		public static string A_NowUTCMs => Conversions.ToYYYYMMDDHH24MISSFFF(DateTime.UtcNow);
 
 		/// <summary>
 		/// Whether the script is exempt from being able to be suspended.

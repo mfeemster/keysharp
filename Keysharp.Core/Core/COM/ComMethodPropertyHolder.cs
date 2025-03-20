@@ -87,7 +87,6 @@ namespace Keysharp.Core.COM
 				if (!found)
 				{
 					ITypeInfo ti = null;
-					FUNCDESC? foundFuncDesc = null;
 					var dispatch = (IDispatch)comObject;
 
 					if (comObject is IProvideClassInfo ipci)//May not be necessary.
@@ -129,9 +128,11 @@ namespace Keysharp.Core.COM
 
 									if (name.Equals(methodName, StringComparison.OrdinalIgnoreCase))
 									{
-										foundFuncDesc = funcDesc;
-										ti.ReleaseFuncDesc(pFuncDesc);
+										found = true;
+										methodName = name;
+										PopulateModifiers(funcDesc);
 										i = int.MaxValue - 1;
+										ti.ReleaseFuncDesc(pFuncDesc);
 										break;
 									}
 								}
@@ -147,57 +148,59 @@ namespace Keysharp.Core.COM
 						}
 					}
 
-					if (!foundFuncDesc.HasValue)
+					if (!found)
 						return Errors.ErrorOccurred(err = new TypeError($"COM call to '{methodName}()' could not be found in any type-info interface.")) ? throw err : null;
 
-					var funcDescFound = foundFuncDesc.Value;
-					paramCount = funcDescFound.cParams;
-					//Prepare expected type array and build a ParameterModifier.
-
-					if (paramCount != 0)
+					void PopulateModifiers(FUNCDESC funcDesc)
 					{
-						expectedTypes = new Type[paramCount];
-						var modifier = new ParameterModifier(paramCount);
+						paramCount = funcDesc.cParams;
+						//Prepare expected type array and build a ParameterModifier.
 
-						//Read each ELEMDESC from lprgelemdescParam.
-						for (int i = 0; i < paramCount; i++)
+						if (paramCount != 0)
 						{
-							var pElemDesc = new IntPtr(funcDescFound.lprgelemdescParam.ToInt64() + (i * Marshal.SizeOf<ELEMDESC>()));
-							var elemDesc = Marshal.PtrToStructure<ELEMDESC>(pElemDesc);
-							//First, check if VT_BYREF is set.
-							var isByRef = (elemDesc.tdesc.vt & Com.vt_byref) != 0;
-							//Mask out VT_BYREF to get the base VARTYPE.
-							var vtBase = (short)(elemDesc.tdesc.vt & ~Com.vt_byref);
+							expectedTypes = new Type[paramCount];
+							var modifier = new ParameterModifier(paramCount);
 
-							//If the base type is VT_PTR (26), then we try to get the pointed-to type.
-							if (vtBase == Com.vt_ptr)
+							//Read each ELEMDESC from lprgelemdescParam.
+							for (int i = 0; i < paramCount; i++)
 							{
-								//VT_PTR typically means the parameter is a pointer (i.e. byref).
-								//Mark it as byref.
-								modifier[i] = true;
+								var pElemDesc = new IntPtr(funcDesc.lprgelemdescParam.ToInt64() + (i * Marshal.SizeOf<ELEMDESC>()));
+								var elemDesc = Marshal.PtrToStructure<ELEMDESC>(pElemDesc);
+								//First, check if VT_BYREF is set.
+								var isByRef = (elemDesc.tdesc.vt & Com.vt_byref) != 0;
+								//Mask out VT_BYREF to get the base VARTYPE.
+								var vtBase = (short)(elemDesc.tdesc.vt & ~Com.vt_byref);
 
-								if (elemDesc.tdesc.lpValue != IntPtr.Zero)
+								//If the base type is VT_PTR (26), then we try to get the pointed-to type.
+								if (vtBase == Com.vt_ptr)
 								{
-									//Read the pointed-to TYPEDESC.
-									var pointedType = Marshal.PtrToStructure<TYPEDESC>(elemDesc.tdesc.lpValue);
-									var pointedVt = (short)(pointedType.vt & ~Com.vt_byref);
-									ConvertType(i, pointedVt);
+									//VT_PTR typically means the parameter is a pointer (i.e. byref).
+									//Mark it as byref.
+									modifier[i] = true;
+
+									if (elemDesc.tdesc.lpValue != IntPtr.Zero)
+									{
+										//Read the pointed-to TYPEDESC.
+										var pointedType = Marshal.PtrToStructure<TYPEDESC>(elemDesc.tdesc.lpValue);
+										var pointedVt = (short)(pointedType.vt & ~Com.vt_byref);
+										ConvertType(i, pointedVt);
+									}
+									else
+									{
+										//No pointed-to type info; assume object.
+										expectedTypes[i] = typeof(object);
+									}
 								}
 								else
 								{
-									//No pointed-to type info; assume object.
-									expectedTypes[i] = typeof(object);
+									//Otherwise, use the normal mapping.
+									modifier[i] = isByRef;
+									ConvertType(i, vtBase);
 								}
 							}
-							else
-							{
-								//Otherwise, use the normal mapping.
-								modifier[i] = isByRef;
-								ConvertType(i, vtBase);
-							}
-						}
 
-						modifiers = [modifier];
+							modifiers = [modifier];
+						}
 					}
 				}
 
@@ -260,7 +263,7 @@ namespace Keysharp.Core.COM
 				else
 					ret = comObject.GetType().InvokeMember(
 							  methodName,
-							  BindingFlags.InvokeMethod,
+							  BindingFlags.InvokeMethod | BindingFlags.GetProperty,
 							  null,
 							  comObject,
 							  inputParameters,
@@ -328,7 +331,6 @@ namespace Keysharp.Core.COM
 			}
 		}
 	}
-
 }
 
 #endif

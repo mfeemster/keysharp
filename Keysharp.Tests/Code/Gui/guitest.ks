@@ -2589,13 +2589,19 @@ DllPerformanceCounter()
 	freq := 0
 	CounterBefore := 0
 	CounterAfter := 0
-
+	start := A_NowMs
+	startTick := A_TickCount
+	
 	DllCall("QueryPerformanceFrequency", "Int64*", freq)
 	DllCall("QueryPerformanceCounter", "Int64*", &CounterBefore)
 	Sleep(1000)
 	DllCall("QueryPerformanceCounter", "Int64*", &CounterAfter)
+	end := A_NowMs
+	endTick := A_TickCount
 	elapsed := (CounterAfter - CounterBefore) / freq * 1000
-	MsgBox("This value should be near 1000ms: " . elapsed)
+	diff := DateDiff(end, start, "L")
+	elapsedTick := endTick - startTick
+	MsgBox("This value should be near 1000ms: " . elapsed . "`r`nValue using DateDiff(): " . diff . "`r`nValue using A_TickCount: " . elapsedTick)
 }
 
 DllGetWindowRect()
