@@ -1500,7 +1500,7 @@ namespace Keysharp.Core.Windows
 		internal static extern int GetMenuItemCount(IntPtr hMenu);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern int GetMenuString(IntPtr hMenu, uint uIDItem, [Out, MarshalAs(UnmanagedType.LPStr)] StringBuilder lpString, int nMaxCount, uint uFlag);
+		internal static extern int GetMenuString(IntPtr hMenu, uint uIDItem, [Out] StringBuilder lpString, int nMaxCount, uint uFlag);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
 		internal static extern unsafe bool IsDialogMessage(IntPtr hDlg, Msg lpMsg);

@@ -662,14 +662,14 @@ FakeSep.SetFont("cTeal Bold")
 STest() {
 	Loop(MySlider2.Value) {
 		padding := A_Index
-		s := Format("| {1,-" padding "} |`r`n| {2," padding "} |`r`n", "Left  ", "Right")
+		s := FormatCs("| {1,-" padding "} |`r`n| {2," padding "} |`r`n", "Left  ", "Right")
 		ControlSetText(s, HwndMyText)
 		Sleep(5) ; Need time to update Text
 
 	}
 	Loop(MySlider2.Value) {
 		padding := MySlider2.Value-A_Index
-		s := Format("| {1,-" padding "} |`r`n| {2," padding "} |`r`n", "Left  ", "Right")
+		s := FormatCs("| {1,-" padding "} |`r`n| {2," padding "} |`r`n", "Left  ", "Right")
 		ControlSetText(s, HwndMyText)
 		Sleep(5)
 	}

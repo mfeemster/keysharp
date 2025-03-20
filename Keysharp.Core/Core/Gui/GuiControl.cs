@@ -5,6 +5,7 @@ namespace Keysharp.Core
 	public class GuiControl : KeysharpObject
 	{
 		internal string typename;
+		internal WeakReference<Gui> gui;
 		private readonly List<IFuncObj> clickHandlers = [];
 		private readonly List<IFuncObj> doubleClickHandlers = [];
 		private readonly bool dpiscaling = true;
@@ -42,7 +43,16 @@ namespace Keysharp.Core
 
 		public object Focused => _control.Focused;
 
-		public WeakReference<Gui> Gui { get; private set; }
+		public Gui Gui
+		{
+			get
+			{
+				if (gui.TryGetTarget(out var g))
+					return g;
+
+				return null;
+			}
+		}
 
 		public long Hwnd => _control.Handle.ToInt64();
 
@@ -393,11 +403,11 @@ namespace Keysharp.Core
 
 		public object __New(params object[] args)
 		{
-			var gui = args[0] as Gui;
+			var g = args[0] as Gui;
 			var control = args[1] as Control;
 			var name = args[2].ToString();
 			var wrap = args.Length > 3 ? args[3].Ab() : false;
-			Gui = new WeakReference<Gui>(gui);
+			gui = new WeakReference<Gui>(g);
 			typename = name;
 			_control = control;
 			_control.Tag = new GuiTag()
@@ -1082,10 +1092,10 @@ namespace Keysharp.Core
 			var h = callback;
 			var i = addRemove.Al(1);
 
-			if (Gui == null || !Gui.TryGetTarget(out var gui))
+			if (gui == null || !gui.TryGetTarget(out var g))
 				return null;
 
-			var del = Functions.GetFuncObj(h, gui.form.eventObj, true);
+			var del = Functions.GetFuncObj(h, g.form.eventObj, true);
 
 			if (del != null)
 			{
@@ -1212,7 +1222,7 @@ namespace Keysharp.Core
 
 		public object Opt(object options)
 		{
-			if (Gui == null || !Gui.TryGetTarget(out var gui))
+			if (gui == null || !gui.TryGetTarget(out var g))
 				return null;
 
 			var opts = Core.Gui.ParseOpt(typename, _control.Text, options.As());
@@ -1245,7 +1255,7 @@ namespace Keysharp.Core
 			if (_control is KeysharpButton)
 			{
 				if (opts.btndef.HasValue)
-					gui.form.AcceptButton = opts.btndef == true ? (IButtonControl)_control : null;
+					g.form.AcceptButton = opts.btndef == true ? (IButtonControl)_control : null;
 			}
 			else if (_control is KeysharpListBox lb)
 			{
@@ -1760,7 +1770,7 @@ namespace Keysharp.Core
 		{
 			if (_control is KeysharpTabControl tc)
 			{
-				if (Gui == null || !Gui.TryGetTarget(out var gui))
+				if (gui == null || !gui.TryGetTarget(out var g))
 					return null;
 
 				var val = value;
@@ -1770,8 +1780,8 @@ namespace Keysharp.Core
 				{
 					if (s.Length > 0 && tc.FindTab(s, exact) is TabPage tp)
 					{
-						gui.CurrentTab = tp;
-						gui.LastContainer = tp;
+						g.CurrentTab = tp;
+						g.LastContainer = tp;
 					}
 				}
 				else if (val != null)
@@ -1782,13 +1792,13 @@ namespace Keysharp.Core
 					if (i >= 0 && i < tc.TabPages.Count)
 					{
 						var tp = tc.TabPages[i];
-						gui.CurrentTab = tp;
-						gui.LastContainer = tp;
+						g.CurrentTab = tp;
+						g.LastContainer = tp;
 					}
 				}
 				else
 				{
-					gui.LastContainer = tc.Parent;
+					g.LastContainer = tc.Parent;
 				}
 			}
 
@@ -1917,10 +1927,10 @@ namespace Keysharp.Core
 
 		internal void HandleOnCommandNotify(long code, object callback, long addremove, ref Dictionary<int, List<IFuncObj>> handlers)
 		{
-			if (Gui == null || !Gui.TryGetTarget(out var gui))
+			if (gui == null || !gui.TryGetTarget(out var g))
 				return;
 
-			var del = Functions.GetFuncObj(callback, gui.form.eventObj, true);
+			var del = Functions.GetFuncObj(callback, g.form.eventObj, true);
 
 			if (handlers == null)
 				handlers = [];
