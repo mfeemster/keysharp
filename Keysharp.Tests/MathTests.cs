@@ -178,6 +178,10 @@ namespace Keysharp.Tests
 			Assert.AreEqual(d2, val);
 			val = Maths.DateAdd(d2, -0.5, "d");
 			Assert.AreEqual(d1, val);
+			d1 = "20230210023015.100";
+			d2 = "20230210023015.500";
+			val = Maths.DateAdd(d1, 400, "l");
+			Assert.AreEqual(d2, val);
 			Assert.IsTrue(TestScript("math-dateadd", true));
 		}
 
@@ -209,9 +213,15 @@ namespace Keysharp.Tests
 			d1 = "20230210023015";
 			d2 = "20230210022510";
 			val = Maths.DateDiff(d1, d2, "s");
-			Assert.AreEqual(5L, val);
+			Assert.AreEqual(305L, val);
 			val = Maths.DateDiff(d2, d1, "s");
-			Assert.AreEqual(-5L, val);
+			Assert.AreEqual(-305L, val);
+			d1 = "20230210023015.500";
+			d2 = "20230210023015.100";
+			val = Maths.DateDiff(d1, d2, "l");
+			Assert.AreEqual(400L, val);
+			val = Maths.DateDiff(d2, d1, "l");
+			Assert.AreEqual(-400L, val);
 			Assert.IsTrue(TestScript("math-datediff", true));
 		}
 
