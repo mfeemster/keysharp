@@ -120,3 +120,12 @@ if (val == d2)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+	
+d1 := "20230210023015.100"
+d2 := "20230210023016.100"
+val := DateAdd(d1, 1, "s")
+
+if (val == d2)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"

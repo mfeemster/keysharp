@@ -182,6 +182,10 @@ namespace Keysharp.Tests
 			d2 = "20230210023015.500";
 			val = Maths.DateAdd(d1, 400, "l");
 			Assert.AreEqual(d2, val);
+			d1 = "20230210023015.100";
+			d2 = "20230210023016.100";
+			val = Maths.DateAdd(d1, 1, "s");
+			Assert.AreEqual(d2, val);
 			Assert.IsTrue(TestScript("math-dateadd", true));
 		}
 

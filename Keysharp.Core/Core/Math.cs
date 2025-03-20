@@ -92,10 +92,10 @@
 		/// and the YYYYMMDDHH24MISS.FFF format if timeUnits was "L".</returns>
 		public static string DateAdd(object dateTime, object time, object timeUnits)
 		{
-			var wasMs = false;
 			var s1 = dateTime.As();
 			var t = time.Ad();
 			var units = timeUnits.As();
+			var wasMs = s1.Contains('.');
 
 			if (s1.Length == 0)
 				s1 = A_NowMs;
@@ -108,7 +108,7 @@
 				d1 = d1.AddMinutes(t);
 			else if (units.StartsWith("h", StringComparison.OrdinalIgnoreCase))
 				d1 = d1.AddHours(t);
-			else if (wasMs = units.StartsWith("l", StringComparison.OrdinalIgnoreCase))
+			else if (wasMs |= units.StartsWith("l", StringComparison.OrdinalIgnoreCase))
 				d1 = d1.AddMilliseconds(t);
 			else
 				d1 = d1.AddDays(t);
