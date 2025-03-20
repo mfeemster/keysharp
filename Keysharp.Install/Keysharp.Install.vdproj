@@ -333,6 +333,12 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_E833DB755C9742518C24502510D319A8"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_EA4F5B3719EC128EC5CF5BEA50A8B878"
         "OwnerKey" = "8:_4A5DA51D1D28F59D0C01DA0BECBFDFF6"
         "MsmSig" = "8:_UNDEFINED"
@@ -1786,6 +1792,26 @@
             "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_E833DB755C9742518C24502510D319A8"
+            {
+            "SourcePath" = "8:..\\Keysharp\\Keysharp.manifest"
+            "TargetName" = "8:Keysharp.manifest"
+            "Tag" = "8:"
+            "Folder" = "8:_9D47FA67B152413583BC2E00217477E3"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_EA4F5B3719EC128EC5CF5BEA50A8B878"
             {
             "AssemblyRegister" = "3:1"
@@ -2067,7 +2093,7 @@
         "Name" = "8:Microsoft Visual Studio"
         "ProductName" = "8:Keysharp"
         "ProductCode" = "8:{F9019041-8BC8-438F-97AE-C5D84A440EB3}"
-        "PackageCode" = "8:{6EEDD845-5DBF-458E-A350-E0D679911810}"
+        "PackageCode" = "8:{41E20445-E581-43A1-B9C9-31C16A106202}"
         "UpgradeCode" = "8:{E99D4BE3-7101-4C11-8719-A75ED137BD66}"
         "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"

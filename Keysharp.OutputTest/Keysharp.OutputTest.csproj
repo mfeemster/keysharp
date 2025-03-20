@@ -19,6 +19,7 @@
     <Description>A simple test program to paste generated code into for debugging</Description>
     <SignAssembly>False</SignAssembly>
     <DelaySign>False</DelaySign>
+    <ApplicationManifest>Keysharp.OutputTest.manifest</ApplicationManifest>
     <PlatformTarget>x64</PlatformTarget>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <WarningLevel>5</WarningLevel>
@@ -48,6 +49,9 @@
   
   <ItemGroup>
     <Content Include="..\Keysharp.ico" Link="Keysharp.ico" />
+    <Content Include="Keysharp.OutputTest.manifest">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Keysharp.Core\Keysharp.Core.csproj" />
