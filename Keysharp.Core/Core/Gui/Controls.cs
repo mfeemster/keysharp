@@ -755,7 +755,7 @@ namespace Keysharp.Core
 						{
 							rect.Width -= inset * 2;
 							rect.Height = (int)((rect.Height - inset) * scaleFactor);
-							fy = (Height - rect.Height) - inset;
+							fy = Height - rect.Height - inset;
 							bx = inset;
 							by = inset;
 							bw = rect.Width;
@@ -768,7 +768,7 @@ namespace Keysharp.Core
 							rect.Height -= inset * 2;
 							bx = rect.Width + inset;
 							by = inset;
-							bw = (Width - rect.Width) - inset;
+							bw = Width - rect.Width - inset;
 							bh = rect.Height;
 						}
 
@@ -1035,10 +1035,10 @@ namespace Keysharp.Core
 				(Control right, Control bottom) rb = tp.RightBottomMost();
 
 				if (rb.right != null)
-					tempw = Math.Max(tempw, ((this.TabWidth() + rb.right.Right)) + (tp.Margin.Right + Margin.Right));
+					tempw = Math.Max(tempw, this.TabWidth() + rb.right.Right + (tp.Margin.Right + Margin.Right));
 
 				if (rb.bottom != null)
-					temph = Math.Max(temph, ((this.TabHeight() + rb.bottom.Bottom)) + (tp.Margin.Bottom + (Margin.Bottom * dpiscale)));
+					temph = Math.Max(temph, this.TabHeight() + rb.bottom.Bottom + (tp.Margin.Bottom + (Margin.Bottom * dpiscale)));
 			}
 
 			Width  = (int)Math.Round(tempw);
@@ -1122,8 +1122,8 @@ namespace Keysharp.Core
 		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 		public new int Value
 		{
-			get => inverted ? (Maximum - base.Value) + Minimum : base.Value;
-			set => base.Value = inverted ? (Maximum - value) + Minimum : value;
+			get => inverted ? Maximum - base.Value + Minimum : base.Value;
+			set => base.Value = inverted ? Maximum - value + Minimum : value;
 		}
 
 		protected override CreateParams CreateParams

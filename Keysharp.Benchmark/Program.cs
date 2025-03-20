@@ -1,54 +1,55 @@
-﻿
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
+using BenchmarkDotNet.Order;
 
 namespace Keysharp.Benchmark
 {
+	[MemoryDiagnoser]
+	[InProcess]
+	[Orderer(SummaryOrderPolicy.FastestToSlowest)] // Order the result
+	[IterationCount(30)]
+	[InvocationCount(50)]
+	[WarmupCount(15)]
+	[HideColumns("Error", "StdDev", "RatioSD", "Gen0", "Gen1", "Gen2")]
+	public class BaseTest
+	{
+	}
+
 	public sealed class Program
 	{
 		[System.STAThreadAttribute()]
-		//public static void Main(string[] args)
-		//{
-		//  //var ib = new IndexBench();
-		//  //ib.Setup();
-		//  //ib.NativeArray();
-		//  //ib.KeysharpArray();
-		//  //ib.KeysharpArrayIndex();
-		//  //ib.KeysharpArrayIndexNoDefaultIndexer();
-		//  //return;
-		//  //var fb = new FuncBench();
-		//  //fb.Setup();
-		//  //fb.KeysharpNativeLongSimNativeLoopIncrement();
-		//  //return;
-		//  var config = new ManualConfig();
-		//  _ = config.AddColumnProvider(DefaultConfig.Instance.GetColumnProviders().ToArray());
-		//  _ = config.AddExporter(DefaultConfig.Instance.GetExporters().ToArray());
-		//  _ = config.AddDiagnoser(DefaultConfig.Instance.GetDiagnosers().ToArray());
-		//  _ = config.AddAnalyser(DefaultConfig.Instance.GetAnalysers().ToArray());
-		//  _ = config.AddJob(DefaultConfig.Instance.GetJobs().ToArray());
-		//  _ = config.AddValidator(DefaultConfig.Instance.GetValidators().ToArray());
-		//  config.UnionRule = ConfigUnionRule.AlwaysUseGlobal; // Overriding the default
-		//  //var summary = BenchmarkRunner.Run<MapWriteBenchmark>(config);
-		//  //var summary = BenchmarkRunner.Run<MathBench>(config);
-		//  //var summary = BenchmarkRunner.Run<IndexBench>(config);
-		//  var summary = BenchmarkRunner.Run<ListAddBench>(config);
-		//  //var summary = BenchmarkRunner.Run<NestedMapPopulatorBenchmark>(config);
-		//  //var summary = BenchmarkRunner.Run<HexBench>(config);
-		//  //var summary = BenchmarkRunner.Run<HexBench>();
-		//  //var summary = BenchmarkRunner.Run<IndexBench>();
-		//  //var summary = BenchmarkRunner.Run<FuncBench>(config);
-		//  var logger = ConsoleLogger.Default;
-		//  MarkdownExporter.Console.ExportToLog(summary, logger);
-		//  ConclusionHelper.Print(logger, summary.BenchmarksCases.First().Config.GetCompositeAnalyser().Analyse(summary).ToList());
-		//  //summary = BenchmarkRunner.Run<NestedMapRetrieverBenchmark>(config);
-		//  //var summary = BenchmarkRunner.Run<IndexBench>();
-		//  //var summary = BenchmarkRunner.Run<FuncBench>(config);
-		//  MarkdownExporter.Console.ExportToLog(summary, logger);
-		//  ConclusionHelper.Print(logger, summary.BenchmarksCases.First().Config.GetCompositeAnalyser().Analyse(summary).ToList());
-		//}
 		public static void Main(string[] args)
 		{
-			var summary = BenchmarkRunner.Run<Md5VsSha256>();
+			BenchmarkDotNet.Reports.Summary summary = null;
+			var logger = ConsoleLogger.Default;
+			var config = new ManualConfig();
+			_ = config.AddColumnProvider([.. DefaultConfig.Instance.GetColumnProviders()]);
+			_ = config.AddExporter([.. DefaultConfig.Instance.GetExporters()]);
+			_ = config.AddDiagnoser([.. DefaultConfig.Instance.GetDiagnosers()]);
+			_ = config.AddAnalyser([.. DefaultConfig.Instance.GetAnalysers()]);
+			_ = config.AddJob([.. DefaultConfig.Instance.GetJobs()]);
+			_ = config.AddValidator([.. DefaultConfig.Instance.GetValidators()]);
+			config.UnionRule = ConfigUnionRule.AlwaysUseGlobal; // Overriding the default
+			summary = BenchmarkRunner.Run<MapReadBenchmark>(config);
+			MarkdownExporter.Console.ExportToLog(summary, logger);
+			summary = BenchmarkRunner.Run<MapWriteBenchmark>(config);
+			MarkdownExporter.Console.ExportToLog(summary, logger);
+			summary = BenchmarkRunner.Run<IndexBench>(config);
+			MarkdownExporter.Console.ExportToLog(summary, logger);
+			summary = BenchmarkRunner.Run<ListAddBench>(config);
+			MarkdownExporter.Console.ExportToLog(summary, logger);
+			summary = BenchmarkRunner.Run<HexBench>(config);
+			MarkdownExporter.Console.ExportToLog(summary, logger);
+			summary = BenchmarkRunner.Run<MathBench>(config);
+			MarkdownExporter.Console.ExportToLog(summary, logger);
+			summary = BenchmarkRunner.Run<FuncBench>(config);
+			MarkdownExporter.Console.ExportToLog(summary, logger);
+			//ConclusionHelper.Print(logger, summary.BenchmarksCases.First().Config.GetCompositeAnalyser().Analyse(summary).ToList());
+			Console.ReadLine();
 		}
+		//public static void Main(string[] args)
+		//{
+		//  var summary = BenchmarkRunner.Run<Md5VsSha256>();
+		//}
 	}
 
 	public class Md5VsSha256

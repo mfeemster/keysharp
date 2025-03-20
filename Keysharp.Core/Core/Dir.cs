@@ -195,7 +195,7 @@
 		/// Changes the script's current working directory.
 		/// </summary>
 		/// <param name="dirName">The name of the new working directory, which is assumed to be a subfolder of the current <see cref="A_WorkingDir"/> if an absolute path isn't specified.</param>
-		public static object SetWorkingDir(object dirName) => Accessors.A_WorkingDir = dirName.As();
+		public static object SetWorkingDir(object dirName) => A_WorkingDir = dirName.As();
 
 		/// <summary>
 		/// <seealso cref="SplitPath(path, ref outFileName, ref outDir, ref outExtension, ref outNameNoExt, ref outDrive)"/>

@@ -1,7 +1,5 @@
 ﻿using static Keysharp.Scripting.Script;
 
-[assembly: Keysharp.Scripting.AssemblyBuildVersionAttribute("0.0.0.1")]
-
 namespace Keysharp.Benchmark
 {
 	/// <summary>
@@ -18,25 +16,24 @@ namespace Keysharp.Benchmark
 		}
 	}
 
-	[MemoryDiagnoser]
-	public class MapReadBenchmark
+	public class MapReadBenchmark : BaseTest
 	{
 		private Dictionary<object, object> dkt = [];
 		private Map map = Collections.Map(), mapScript = Collections.Map();
 		private List<string> strings = [];
 
-		[Params(10000)]
+		[Params(100000)]
 		public int Size { get; set; }
 
 		[Benchmark]
-		public void Map()
+		public void MapRead()
 		{
 			foreach (var s in strings)
 				_ = map[s];
 		}
 
 		[Benchmark]
-		public void MapScript()
+		public void MapScriptIndexRead()
 		{
 			foreach (var s in strings)
 				_ = Index(mapScript, s);
@@ -69,14 +66,13 @@ namespace Keysharp.Benchmark
 		}
 	}
 
-	[MemoryDiagnoser]
-	public class MapWriteBenchmark
+	public class MapWriteBenchmark : BaseTest
 	{
 		private readonly Dictionary<object, object> dkt = [];
 		private readonly Map map = Collections.Map(), mapScript = Collections.Map();
 		private readonly List<string> strings = [];
 
-		[Params(10000)]
+		[Params(100000)]
 		public int Size { get; set; }
 
 		public MapWriteBenchmark()
@@ -89,7 +85,7 @@ namespace Keysharp.Benchmark
 		}
 
 		[Benchmark]
-		public void Map()
+		public void MapWrite()
 		{
 			map.Clear();
 
@@ -98,7 +94,7 @@ namespace Keysharp.Benchmark
 		}
 
 		[Benchmark]
-		public void MapScript()
+		public void MapScriptSetObjectWrite()
 		{
 			mapScript.Clear();
 
@@ -107,7 +103,7 @@ namespace Keysharp.Benchmark
 		}
 
 		[Benchmark(Baseline = true)]
-		public void NativeDictionary()
+		public void NativeDictionaryWrite()
 		{
 			dkt.Clear();
 
@@ -123,8 +119,7 @@ namespace Keysharp.Benchmark
 		}
 	}
 
-	[MemoryDiagnoser]
-	public class NestedMapPopulatorBenchmark
+	public class NestedMapPopulatorBenchmark : BaseTest
 	{
 		private List<string> strings = [];
 		private Dictionary<string, object> masterDkt = [];
@@ -181,8 +176,7 @@ namespace Keysharp.Benchmark
 		}
 	}
 
-	[MemoryDiagnoser]
-	public class NestedMapRetrieverBenchmark
+	public class NestedMapRetrieverBenchmark : BaseTest
 	{
 		private List<string> strings = [];
 		private Dictionary<string, object> masterDkt = [];

@@ -1,11 +1,9 @@
-﻿using static Keysharp.Core.Loops;
-using static Keysharp.Scripting.Script;
+﻿using static Keysharp.Scripting.Script;
 using Array = Keysharp.Core.Array;
 
 namespace Keysharp.Benchmark
 {
-	[MemoryDiagnoser]
-	public class IndexBench
+	public class IndexBench : BaseTest
 	{
 		private dynamic? dynamickeysharparray;
 		private Array keysharparray = Collections.Array();
@@ -13,11 +11,11 @@ namespace Keysharp.Benchmark
 		private double[] nativedoublearray = System.Array.Empty<double>();
 		private double totalSum;
 
-		[Params(1000000)]
+		[Params(500000)]
 		public int Size { get; set; }
 
 		[Benchmark]
-		public void KeysharpArray()
+		public void KeysharpArrayIndexRead()
 		{
 			var total = 0.0;
 
@@ -29,33 +27,32 @@ namespace Keysharp.Benchmark
 		}
 
 		[Benchmark]
-		public void KeysharpArrayIndexEnumerator()
+		public void KeysharpArrayIndexEnumeratorRead()
 		{
 			var total = 0.0;
 			var e0 = keysharparray;
-			var e2 = MakeEnumerator(e0, 2) as IEnumerator<(object, object)>;
-			_ = Push();
+			var e2 = Loops.MakeEnumerator(e0, 1);
+			_ = Loops.Push();
 
-			for (
-				; e2.MoveNext();
-			)
+			for (object val = null
+							  ; Flow.IsTrueAndRunning(e2.Call(ref val));
+				)
 			{
-				_ = Inc();
-				var (_, val) = e2.Current;
+				Keysharp.Core.Loops.Inc();
 				total += (double)val;
-				//e3:
-				//;
+				e3:
+				;
 			}
 
-			//e4:
-			_ = Pop();
+			e4:
+			_ = Loops.Pop();
 
 			if (!total.IsAlmostEqual(totalSum))
 				throw new Exception($"{total} was not equal to {totalSum}.");
 		}
 
 		[Benchmark]
-		public void KeysharpArrayIndexMethod()
+		public void KeysharpArrayIndexMethodRead()
 		{
 			var total = 0.0;
 
@@ -67,7 +64,7 @@ namespace Keysharp.Benchmark
 		}
 
 		[Benchmark]
-		public void KeysharpDynamicArray()
+		public void KeysharpDynamicArrayIndexRead()
 		{
 			var total = 0.0;
 
@@ -79,7 +76,7 @@ namespace Keysharp.Benchmark
 		}
 
 		[Benchmark]
-		public void NativeDoubleArray()
+		public void NativeDoubleArrayRead()
 		{
 			var total = 0.0;
 
@@ -91,7 +88,7 @@ namespace Keysharp.Benchmark
 		}
 
 		[Benchmark(Baseline = true)]
-		public void NativeObjectArray()
+		public void NativeObjectArrayRead()
 		{
 			var total = 0.0;
 
@@ -103,7 +100,7 @@ namespace Keysharp.Benchmark
 		}
 
 		[Benchmark]
-		public unsafe void NativeUnsafeDoubleArray()
+		public unsafe void NativeUnsafeDoubleArrayRead()
 		{
 			var total = 0.0;
 
@@ -125,8 +122,10 @@ namespace Keysharp.Benchmark
 			Size = 1000000;
 			nativearray = new object[Size];
 			nativedoublearray = new double[Size];
-			keysharparray = new Array(Size);
-			dynamickeysharparray = new Array(Size);
+			keysharparray = new Array();
+			keysharparray.Capacity = Size;
+			dynamickeysharparray = new Array();
+			dynamickeysharparray.Capacity = Size;
 
 			for (var i = 0; i < Size; i++)
 			{
@@ -141,14 +140,13 @@ namespace Keysharp.Benchmark
 		}
 	}
 
-	[MemoryDiagnoser]
-	public class ListAddBench
+	public class ListAddBench : BaseTest
 	{
 		private Keysharp.Core.Array keysharparray = Collections.Array();
 		private List<object> nativelist = [];
 		private readonly object o = 123L;
 
-		[Params(1000000)]
+		[Params(500000)]
 		public int Size { get; set; }
 
 		[Benchmark]
@@ -230,7 +228,7 @@ namespace Keysharp.Benchmark
 		public void Setup()
 		{
 			Variables.InitGlobalVars();
-			Size = 1000000;
+			Size = 500000;
 			nativelist = [];
 			keysharparray = Collections.Array();
 		}

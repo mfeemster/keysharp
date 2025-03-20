@@ -408,14 +408,6 @@
 		}
 
 		/// <summary>
-		/// Returns the full path to the directory of the specified filename.<br/>
-		/// Ex: C:\dir1\dir2\file.txt => C:\dir1\dir2
-		/// </summary>
-		/// <param name="filename">The filename to examine.</param>
-		/// <returns>The full path to the directory of the specified filename, without the trailing directory separator.</returns>
-		public static string FileDirName(object filename) => Path.GetDirectoryName(Path.GetFullPath(filename.As()));
-
-		/// <summary>
 		/// Sets the default encoding for <see cref="FileRead"/>, <see cref="LoopRead"/>, <see cref="FileAppend"/>, and <see cref="FileOpen"/>.
 		/// </summary>
 		/// <param name="encoding">Specify one of the following values:<br/>
@@ -432,7 +424,7 @@
 			var s = encoding.As();
 
 			if (s != "")
-				Accessors.A_FileEncoding = s;
+				A_FileEncoding = s;
 
 			return null;
 		}
@@ -479,13 +471,6 @@
 		}
 
 		/// <summary>
-		/// Returns the full path of a filename which is assumed to be relative to <see cref="A_WorkingDir"/> if an absolute path isn't specified.
-		/// </summary>
-		/// <param name="filename">The filename to examine.</param>
-		/// <returns>The full path to filename.</returns>
-		public static string FileFullPath(object filename) => Path.GetFullPath(filename.As());
-
-		/// <summary>
 		/// Reports whether a file or folder is read-only, hidden, etc.
 		/// </summary>
 		/// <param name="filename">If omitted, the current file of the innermost enclosing file loop will be used.<br/>
@@ -512,7 +497,7 @@
 				if (Directory.Exists(s) || File.Exists(s))
 					return Conversions.FromFileAttribs(File.GetAttributes(s));
 				else if (s?.Length == 0)
-					return Conversions.FromFileAttribs(File.GetAttributes(Accessors.A_LoopFileFullPath));
+					return Conversions.FromFileAttribs(File.GetAttributes(A_LoopFileFullPath));
 			}
 			catch (Exception ex)
 			{
@@ -854,7 +839,7 @@
 			var u = units.As();
 
 			if (file?.Length == 0)
-				file = Accessors.A_LoopFileFullPath;
+				file = A_LoopFileFullPath;
 
 			try
 			{
@@ -921,7 +906,7 @@
 				var time = whichTime.As("M");
 
 				if (file?.Length == 0)
-					file = Accessors.A_LoopFileFullPath;
+					file = A_LoopFileFullPath;
 
 				if (!File.Exists(file))
 					return "";
@@ -972,7 +957,7 @@
 			try
 			{
 				if (file?.Length == 0)
-					file = Accessors.A_LoopFileFullPath;
+					file = A_LoopFileFullPath;
 
 				var info = FileVersionInfo.GetVersionInfo(file);
 				return info.FileVersion;
@@ -1366,7 +1351,7 @@
 		public static object FileSetAttrib(object attributes, object filePattern = null, object mode = null)
 		{
 			var attr = attributes.As();
-			var file = filePattern.As(Accessors.A_LoopFileFullPath);
+			var file = filePattern.As(A_LoopFileFullPath);
 			var m = mode.As();
 			var dodirs = m.Contains('d', StringComparison.OrdinalIgnoreCase);
 			var dofiles = m.Contains('f', StringComparison.OrdinalIgnoreCase);
@@ -1449,7 +1434,7 @@
 				dofiles = true;
 
 			if (file?.Length == 0)
-				file = Accessors.A_LoopFileFullPath;
+				file = A_LoopFileFullPath;
 
 			var time = Conversions.ToDateTime(YYYYMMDDHH24MISS);
 
@@ -1628,6 +1613,24 @@
 				return;
 			}
 		}
+	}
+
+	public static partial class KeysharpEnhancements
+	{
+		/// <summary>
+		/// Returns the full path to the directory of the specified filename.<br/>
+		/// Ex: C:\dir1\dir2\file.txt => C:\dir1\dir2
+		/// </summary>
+		/// <param name="filename">The filename to examine.</param>
+		/// <returns>The full path to the directory of the specified filename, without the trailing directory separator.</returns>
+		public static string FileDirName(object filename) => Path.GetDirectoryName(Path.GetFullPath(filename.As()));
+
+		/// <summary>
+		/// Returns the full path of a filename which is assumed to be relative to <see cref="A_WorkingDir"/> if an absolute path isn't specified.
+		/// </summary>
+		/// <param name="filename">The filename to examine.</param>
+		/// <returns>The full path to filename.</returns>
+		public static string FileFullPath(object filename) => Path.GetFullPath(filename.As());
 	}
 
 #if LINUX

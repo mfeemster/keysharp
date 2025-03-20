@@ -67,7 +67,7 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 	+ Keysharp breaks this and will instead create a variable, initialize it to zero, then increment it.
 	+ For example, a file with nothing but the line `x++` in it, will end with a variable named x which has the value of 1.
 * Function objects behave differently in a few ways.
-	+ The underlying function object class is called `FuncObj`. This was named so, instead of `Func`, because C# already contains a built in class named `Func`.
+	+ The underlying function object class is named `FuncObj`. This was named so, instead of `Func`, because C# already contains a built in class named `Func`.
 	+ Function objects can be created by passing the name of the function as as a direct reference or as a string to `Func()`.
 	+ This can be done by passing the name of the desired function as a direct reference or as a string, and optionally an object and a parameter count like so:
 		+ `Func(functionName [, object, paramCount])`.
@@ -165,6 +165,8 @@ testfunc()
     }
 }
 ```
+* Pointers returnd by `StrPtr()` must be freed by passing the value to a new function named `FreeStrPtr()`.
+	+ `StrPtr()` does not return the address of the string, instead it returns the address of a copy of the bytes of the string.
 * Threads are not resumable once an exception has been thrown.
 	+ Callbacks set by `OnError()` will properly run, but execution of the current thread will not resume regardless of the exception type or the return value of the callback.
 	+ Errors of type `ExitApp` will exit the script as usual.
@@ -318,8 +320,9 @@ class class1
 * New file functions:
 	+ `FileDirName(filename) => String` to return the full path to filename, without the actual filename or trailing directory separator character.
 	+ `FileFullPath(filename) => String` to return the full path to filename.
-* A new function `WinMaximizeAll()` to maximize all windows.
-* A new function `WinGetAlwaysOnTop([winTitle, winText, excludeTitle, excludeText]) => Integer` to determine whether a window will always stay on top of other windows.
+* New window functions:
+	+ `WinMaximizeAll()` to maximize all windows.
+	+ `WinGetAlwaysOnTop([winTitle, winText, excludeTitle, excludeText]) => Integer` to determine whether a window will always stay on top of other windows.
 * `Run/RunWait()` can take an extra string for the argument instead of appending it to the program name string. However, the original functionality still works too.
 	+ The new signature is: `Run/RunWait(target [, workingDir, options, &outputVarPID, args])`.
 * `ListView` supports a new method `DeleteCol(col) => Boolean` to remove a column. The value returned indicates whether the column was found and deleted.
@@ -337,6 +340,8 @@ class class1
 * `EnvUpdate()` is retained to provide for a cross platform way to update environment variables.
 * The 40 character limit for hotstring abbreviations has been removed. There is no limit to the length.
 * `FileGetSize()` supports `G` and `T` for gigabytes and terabytes.
+* `DateAdd()` and `DateDiff()` support taking a value of `"L"` for the `TimeUnits` parameter to add miLliseconds or return the ellapsed time in milliseconds, respectively.
+	+ See the new accessors `A_NowMs`/`A_NowUTCMs`.
 * `SubStr()` uses a default of 1 for the second parameter, `startingPos`, to relieve the user of always having to specify it.
 * New string functions:
 	+ `Base64Decode(str) => Array` to convert a Base64 string to a byte array.
@@ -384,17 +389,19 @@ class class1
 	+ `A_DefaultHotstringEndCharRequired` returns the default hotstring ending character mode.
 	+ `A_DefaultHotstringEndChars` returns the default hotstring ending characters.
 	+ `A_DefaultHotstringKeyDelay` returns the default hotstring key delay length in milliseconds.
+	+ `A_DefaultHotstringNoMouse` returns whether mouse clicks are prevented from resetting the hotstring recognizer because `#Hotstring NoMouse` was specified.
 	+ `A_DefaultHotstringOmitEndChar` returns the default hotstring ending character replacement mode.
 	+ `A_DefaultHotstringPriority` returns the default hotstring priority.
 	+ `A_DefaultHotstringSendMode` returns the default hotstring sending mode.
 	+ `A_DefaultHotstringSendRaw` returns the default hotstring raw sending mode.
 	+ `A_DirSeparator` returns the directory separator character which is `\` on Windows and `/` elsewhere.
 	+ `A_HasExited` returns whether shutdown has been initiated.
-	+ `A_DefaultHotstringNoMouse` returns whether mouse clicks are prevented from resetting the hotstring recognizer because `#Hotstring NoMouse` was specified.
 	+ `A_KeysharpCorePath` provides the full path to the Keysharp.Core.dll file.
 	+ `A_LoopRegValue` which makes it easy to get a registry value when using `Loop Reg`.
 	+ `A_MaxThreads` returns the value `n` specified with `#MaxThreads n`.
 	+ `A_NoTrayIcon` returns whether the tray icon was hidden with #NoTrayIcon.
+	+ `A_NowMs`/`A_NowUTCMs` returns the current local/UTC time formatted to include milliseconds like so "YYYYMMDDHH24MISS.ff".
+		+ These can be used with `DateAdd()`/`DateDiff()` using `"L"` for the `TimeUnits` parameter.
 	+ `A_SuspendExempt` returns whether subsequent hotkeys and hotstrings will be exmpt from suspension because `#SuspendExempt true` was specified.
 	+ `A_TotalScreenHeight` returns the total height in pixels of the virtual screen.
 	+ `A_TotalScreenWidth` returns the total width in pixels of the virtual screen.
@@ -445,10 +452,11 @@ class class1
 		}
 	}
 ```
-* New function to encrypt or decrypt an object using the AES algorithm: `AES(value, key, decrypt := false) => Array`.
-* New functions to generate hash values using various algorithms: `MD5(value) => String`, `SHA1(value) => String`, `SHA256(value) => String`, `SHA384(value) => String`, `SHA512(value) => String`.
-* New function to calculate the CRC32 polynomial of an object: `CRC32(value) => Integer`.
-* New function to generate a secure cryptographic random number: `SecureRandom(min, max) => Decimal`.
+* New functions for encrypting/decrypting an object:
+	+ Encrypt or decrypt an object using the AES algorithm: `AES(value, key, decrypt := false) => Array`.
+	+ Generate hash values using various algorithms: `MD5(value) => String`, `SHA1(value) => String`, `SHA256(value) => String`, `SHA384(value) => String`, `SHA512(value) => String`.
+	+ Calculate the CRC32 polynomial of an object: `CRC32(value) => Integer`.
+	+ Generate a secure cryptographic random number: `SecureRandom(min, max) => Decimal`.
 * New class and functions for managing real threads which are not related to the green threads that are used for the rest of the project.
 	+ A `RealThread` is created by calling `StartRealThread()`.
 ```
@@ -589,8 +597,6 @@ class class1
 * Properties other than `__Item[]` cannot take parameters. If you need to pass a parameter, use a method instead.
 	+ This also applies to properties which have been dynamically defined with `DefineProp()`.
 * Static `__Item[]` properties are not allowed, only instance `__Item[]` properties. This is because C# does not support static indexers.
-* The built in classes `Array` and `Map` do not have a property named `__Item[]` because in C#, the only properties which can have an index passed to them are the `this[]` properties.
-	+ Just use the brackets directly. However, when overriding, using `__Item[]` will work if you derive from `Array` or `Map`.
 * When passing `"Interrupt"` as the first argument to `Thread()`, the third argument for `LineCount` is not supported because Keysharp does not support line level awareness.
 * Tooltips do not automatically disappear when clicking on them.
 

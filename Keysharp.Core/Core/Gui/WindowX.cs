@@ -4,6 +4,21 @@ using static Keysharp.Scripting.Script;
 
 namespace Keysharp.Core
 {
+	public static partial class KeysharpEnhancements
+	{
+
+		public static object WinMaximizeAll()
+		{
+			DoDelayedAction(WindowProvider.Manager.MaximizeAll);
+			return null;
+		}
+
+		public static long WinGetAlwaysOnTop(object winTitle = null,
+											 object winText = null,
+											 object excludeTitle = null,
+											 object excludeText = null) => (SearchWindow(winTitle, winText, excludeTitle, excludeText, true) is WindowItem win && win.AlwaysOnTop) ? 1L : 0L;
+	}
+
 	public static class WindowX
 	{
 		private static bool dpimodeset;
@@ -12,15 +27,15 @@ namespace Keysharp.Core
 
 		public static object DetectHiddenText(object mode)
 		{
-			var oldVal = Accessors.A_DetectHiddenText;
-			Accessors.A_DetectHiddenText = mode;
+			var oldVal = A_DetectHiddenText;
+			A_DetectHiddenText = mode;
 			return oldVal;
 		}
 
 		public static object DetectHiddenWindows(object mode)
 		{
-			var oldVal = Accessors.A_DetectHiddenWindows;
-			Accessors.A_DetectHiddenWindows = mode;
+			var oldVal = A_DetectHiddenWindows;
+			A_DetectHiddenWindows = mode;
 			return oldVal;
 		}
 
@@ -253,8 +268,8 @@ namespace Keysharp.Core
 
 		public static object SetControlDelay(object obj)
 		{
-			var oldVal = Accessors.A_ControlDelay = obj;
-			Accessors.A_ControlDelay = obj;
+			var oldVal = A_ControlDelay = obj;
+			A_ControlDelay = obj;
 			return oldVal;
 		}
 
@@ -296,13 +311,13 @@ namespace Keysharp.Core
 
 			if (string.Compare(val, "fast", true) == 0 || string.Compare(val, "slow", true) == 0)
 			{
-				oldVal = Accessors.A_TitleMatchModeSpeed;
-				Accessors.A_TitleMatchModeSpeed = val;
+				oldVal = A_TitleMatchModeSpeed;
+				A_TitleMatchModeSpeed = val;
 			}
 			else
 			{
-				oldVal = Accessors.A_TitleMatchMode;
-				Accessors.A_TitleMatchMode = val;
+				oldVal = A_TitleMatchMode;
+				A_TitleMatchMode = val;
 			}
 
 			return oldVal;
@@ -310,8 +325,8 @@ namespace Keysharp.Core
 
 		public static object SetWinDelay(object delay)
 		{
-			var oldVal = Accessors.A_WinDelay;
-			Accessors.A_WinDelay = delay;
+			var oldVal = A_WinDelay;
+			A_WinDelay = delay;
 			return oldVal;
 		}
 
@@ -532,11 +547,6 @@ namespace Keysharp.Core
 			return win != null ? win.Handle.ToInt64() : 0;
 		}
 
-		public static long WinGetAlwaysOnTop(object winTitle = null,
-											 object winText = null,
-											 object excludeTitle = null,
-											 object excludeText = null) => (SearchWindow(winTitle, winText, excludeTitle, excludeText, true) is WindowItem win && win.AlwaysOnTop) ? 1L : 0L;
-
 		public static string WinGetClass(object winTitle = null,
 										 object winText = null,
 										 object excludeTitle = null,
@@ -755,12 +765,6 @@ namespace Keysharp.Core
 										 object excludeText = null)
 		{
 			DoDelayedAction(() => SearchWindows(winTitle, winText, excludeTitle, excludeText).ForEach(win => win.WindowState = FormWindowState.Maximized));
-			return null;
-		}
-
-		public static object WinMaximizeAll()
-		{
-			DoDelayedAction(WindowProvider.Manager.MaximizeAll);
 			return null;
 		}
 

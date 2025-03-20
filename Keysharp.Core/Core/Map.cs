@@ -406,7 +406,7 @@
 				var (propName, val) = opi.Current;
 				var fieldType = val != null ? val.GetType().Name : "";
 
-				if (val is KeysharpObject kso2)
+				if (val != this && val is KeysharpObject kso2)
 				{
 					kso2.PrintProps(propName.ToString(), sbuf, ref tabLevel);
 				}
@@ -723,12 +723,6 @@
 		/// The implementation for <see cref="IEnumerator.Reset"/> which resets the iterator.
 		/// </summary>
 		public void Reset() => iter = map.GetEnumerator();
-
-		/// <summary>
-		/// Gets the enumerator which is just this.
-		/// </summary>
-		/// <returns>this as an <see cref="IEnumerator{(object, object)}"/>.</returns>
-		private IEnumerator<(object, object)> GetEnumerator() => this;
 	}
 
 	/// <summary>

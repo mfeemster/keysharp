@@ -4,12 +4,11 @@ namespace Keysharp.Core.COM
 	internal class ComArgumentHelper : ArgumentHelper
 	{
 		internal static char[] pointerChars = [' ', '*', 'p', 'P'];
-		internal nint[] args;
+		internal long[] args;
 		internal HashSet<nint> bstrs;
 		internal ComArgumentHelper(object[] parameters)
 			: base(parameters)
 		{
-			returnType = typeof(int);
 		}
 
 		~ComArgumentHelper()
@@ -31,32 +30,18 @@ namespace Keysharp.Core.COM
 
 				if (obj != null)
 					gch = GCHandle.Alloc(obj ?? p, GCHandleType.Pinned);
-				else if (parameters[i] is ComObject co)
+				else if (p is ComObject co)
 					gch = GCHandle.Alloc(co.Ptr, GCHandleType.Pinned);
 				else
 					gch = GCHandle.Alloc(p, GCHandleType.Pinned);
 
 				_ = gcHandles.Add(gch);
 				var intptr = gch.AddrOfPinnedObject();
-				//Numbers being passed in will always be of type long or double, however that won't work
-				//when a DLL function expects a pointer to a smaller type. So advance the pointer by the appropriate amount so it
-				//accesses the intended part.
-				//if (p is long || p is ulong || p is double)
-				//{
-				//  var amt = 0;
-				//  if (pm1.Contains("int", StringComparison.OrdinalIgnoreCase) || pm1.Contains("float", StringComparison.OrdinalIgnoreCase))
-				//      amt = 4;
-				//  else if (pm1.Contains("short", StringComparison.OrdinalIgnoreCase))
-				//      amt = 6;
-				//  else if (pm1.Contains("char", StringComparison.OrdinalIgnoreCase))
-				//      amt = 7;
-				//  intptr = IntPtr.Add(intptr, amt);
-				//}
 				args[n] = intptr;
 			}
 			Error err;
 			var len = parameters.Length / 2;
-			args = new nint[len];
+			args = new long[len];
 			hasreturn = (parameters.Length & 1) == 1;
 
 			//Done slightly differently than in DllArgumentHelper.
@@ -344,10 +329,10 @@ namespace Keysharp.Core.COM
 								args[n] = pUnk;
 								_ = Marshal.Release(pUnk);
 							}
-							//else if (p is DelegateHolder delholder)
-							//{
-							//  args[n] = delholder.delRef;
-							//}
+							else if (p is DelegateHolder delholder)
+							{
+								args[n] = Marshal.GetFunctionPointerForDelegate(delholder.DelRef);
+							}
 							//else if (p is StringBuffer sb)
 							//{
 							//  args[n] = sb.sb;

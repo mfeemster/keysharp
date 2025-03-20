@@ -1,18 +1,16 @@
-﻿using static Keysharp.Core.Functions;
+﻿using BenchmarkDotNet.Order;
+using static Keysharp.Core.Functions;
 
 namespace Keysharp.Benchmark
 {
-	[MemoryDiagnoser]
-	public class MathBench
+	public class MathBench : BaseTest
 	{
-		private readonly Dictionary<object, object> dkt = [];
-		private IFuncObj fo = Func("Cos");
-		private readonly Map map = Collections.Map(), mapScript = Collections.Map();
-		private List<object> objvals = [];
 		private double totalCos;
+		private IFuncObj fo = Func("Cos");
 		private List<double> vals = [];
+		private List<object> objvals = [];
 
-		[Params(100000)]
+		[Params(500000)]
 		public int Size { get; set; }
 
 		[Benchmark(Baseline = true)]
@@ -28,7 +26,7 @@ namespace Keysharp.Benchmark
 		}
 
 		[Benchmark]
-		public void KeysharpCos()
+		public void KeysharpCosDouble()
 		{
 			var total = 0.0;
 
@@ -39,17 +37,17 @@ namespace Keysharp.Benchmark
 				throw new Exception($"{total} was not equal to {totalCos}.");
 		}
 
-		//[Benchmark]
-		//public void KeysharpCosFunc()
-		//{
-		//  var total = 0.0;
+		[Benchmark]
+		public void KeysharpCosFuncDouble()
+		{
+			var total = 0.0;
 
-		//  for (var i = 0; i < Size; i++)
-		//      total += (double)fo.Call(vals[i]);
+			for (var i = 0; i < Size; i++)
+				total += (double)fo.Call(vals[i]);
 
-		//  if (!total.IsAlmostEqual(totalCos))
-		//      throw new Exception($"{total} was not equal to {totalCos}.");
-		//}
+			if (!total.IsAlmostEqual(totalCos))
+				throw new Exception($"{total} was not equal to {totalCos}.");
+		}
 
 		[Benchmark]
 		public void KeysharpCosObj()
@@ -63,37 +61,11 @@ namespace Keysharp.Benchmark
 				throw new Exception($"{total} was not equal to {totalCos}.");
 		}
 
-		/*
-		            [Benchmark]
-		            public void KeysharpCosDirectPass()
-		            {
-		            var total = 0.0;
-
-		            for (var i = 0; i < Size; i++)
-		                total += Maths.CosDirectPass(vals[i]);
-
-		            if (!total.IsAlmostEqual(totalCos))
-		                throw new Exception($"{total} was not equal to {totalCos}.");
-		            }
-
-		            [Benchmark]
-		            public void KeysharpCosDirectPassObject()
-		            {
-		            var total = 0.0;
-
-		            for (var i = 0; i < Size; i++)
-		                total += Maths.CosDirectPassObject(vals[i]);
-
-		            if (!total.IsAlmostEqual(totalCos))
-		                throw new Exception($"{total} was not equal to {totalCos}.");
-		            }
-		*/
-
 		[GlobalSetup]
 		public void Setup()
 		{
 			Scripting.Script.Variables.InitGlobalVars();
-			totalCos = 0;
+			totalCos = 0.0;
 			vals = new List<double>(Size);
 			objvals = new List<object>(Size);
 			fo = Func("Cos");

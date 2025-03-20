@@ -516,7 +516,7 @@ namespace Keysharp.Core.Common.Invoke
 		{
 			typeToStringProperties.Clear();
 			stringToTypeProperties.Clear();
-			var exeAssembly = Accessors.GetAssembly();
+			var exeAssembly = GetAssembly();
 
 			//The compiled and running output of a script will have the name of the script file without the extension.
 			//So we can't just use "Keysharp" to identify it.

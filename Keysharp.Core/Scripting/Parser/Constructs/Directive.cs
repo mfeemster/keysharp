@@ -107,9 +107,9 @@ namespace Keysharp.Scripting
 				{
 					if (numeric)
 					{
-						Accessors.A_ClipboardTimeout = (long)value;
-						var clipvar = new CodePropertyReferenceExpression(new CodeTypeReferenceExpression("Keysharp.Core.Accessors"), "A_ClipboardTimeout");
-						var clipset = new CodeAssignStatement(clipvar, new CodeSnippetExpression($"{Accessors.A_ClipboardTimeout}L"));
+						A_ClipboardTimeout = (long)value;
+						var clipvar = new CodePropertyReferenceExpression(new CodeTypeReferenceExpression(typeof(Accessors)), nameof(A_ClipboardTimeout));
+						var clipset = new CodeAssignStatement(clipvar, new CodeSnippetExpression($"{A_ClipboardTimeout}L"));
 						initial.Insert(0, clipset);
 					}
 					else
@@ -136,8 +136,8 @@ namespace Keysharp.Scripting
 				{
 					if (numeric)
 					{
-						Accessors.A_HotIfTimeout = value;
-						var prop = new CodePropertyReferenceExpression(new CodeTypeReferenceExpression("Keysharp.Core.Accessors"), "A_HotIfTimeout");
+						A_HotIfTimeout = value;
+						var prop = new CodePropertyReferenceExpression(new CodeTypeReferenceExpression(typeof(Accessors)), nameof(A_HotIfTimeout));
 						var propset = new CodeAssignStatement(prop, new CodeSnippetExpression($"{value}L"));
 						initial.Insert(0, propset);
 					}
@@ -187,9 +187,9 @@ namespace Keysharp.Scripting
 
 				case "INPUTLEVEL":
 				{
-					Accessors.A_InputLevel = numeric ? value : 0L;
-					var prop = new CodePropertyReferenceExpression(new CodeTypeReferenceExpression("Keysharp.Core.Accessors"), "A_InputLevel");
-					var propset = new CodeAssignStatement(prop, new CodeSnippetExpression($"{Accessors.A_InputLevel}L"));
+					A_InputLevel = numeric ? value : 0L;
+					var prop = new CodePropertyReferenceExpression(new CodeTypeReferenceExpression(typeof(Accessors)), nameof(A_InputLevel));
+					var propset = new CodeAssignStatement(prop, new CodeSnippetExpression($"{A_InputLevel}L"));
 					_ = topStatements.Add(propset);
 				}
 				break;
@@ -199,7 +199,7 @@ namespace Keysharp.Scripting
 					if (numeric)
 					{
 						var val = Math.Clamp(value, 1u, 255u);
-						var prop = new CodePropertyReferenceExpression(new CodeTypeReferenceExpression("Keysharp.Scripting.Script"), "MaxThreadsTotal");
+						var prop = new CodePropertyReferenceExpression(new CodeTypeReferenceExpression(typeof(Script)), nameof(Script.MaxThreadsTotal));
 						var propset = new CodeAssignStatement(prop, new CodePrimitiveExpression(val));
 						initial.Insert(0, propset);
 					}
@@ -211,7 +211,7 @@ namespace Keysharp.Scripting
 				case "MAXTHREADSBUFFER":
 				{
 					var val = parts[1].Length > 0 ? (Options.OnOff(parts[1]) ?? false) : true;
-					var prop = new CodePropertyReferenceExpression(new CodeTypeReferenceExpression("Keysharp.Core.Accessors"), "A_MaxThreadsBuffer");
+					var prop = new CodePropertyReferenceExpression(new CodeTypeReferenceExpression(typeof(Accessors)), nameof(A_MaxThreadsBuffer));
 					var propset = new CodeAssignStatement(prop, new CodePrimitiveExpression(val));
 					_ = topStatements.Add(propset);
 				}
@@ -222,7 +222,7 @@ namespace Keysharp.Scripting
 					if (numeric)
 					{
 						var val = Math.Clamp(value, 1u, 255u);
-						var prop = new CodePropertyReferenceExpression(new CodeTypeReferenceExpression("Keysharp.Core.Accessors"), "A_MaxThreadsPerHotkey");
+						var prop = new CodePropertyReferenceExpression(new CodeTypeReferenceExpression(typeof(Accessors)), nameof(A_MaxThreadsPerHotkey));
 						var propset = new CodeAssignStatement(prop, new CodeSnippetExpression($"{val}L"));
 						_ = topStatements.Add(propset);
 					}
@@ -243,7 +243,7 @@ namespace Keysharp.Scripting
 				case "SUSPENDEXEMPT":
 				{
 					var val = parts[1].Length > 0 ? (Options.OnOff(parts[1]) ?? false) : true;
-					var prop = new CodePropertyReferenceExpression(new CodeTypeReferenceExpression("Keysharp.Core.Accessors"), "A_SuspendExempt");
+					var prop = new CodePropertyReferenceExpression(new CodeTypeReferenceExpression(typeof(KeysharpEnhancements)), nameof(A_SuspendExempt));
 					var propset = new CodeAssignStatement(prop, new CodePrimitiveExpression(val));
 					_ = topStatements.Add(propset);
 				}

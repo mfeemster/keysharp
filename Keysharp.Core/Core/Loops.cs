@@ -437,18 +437,12 @@ namespace Keysharp.Core
 			}
 			else if (obj is KeysharpEnumerator kse)
 				return kse;
-			//else if (obj is object[] oa)
-			//  return new Array(oa).__Enum(count.Ai());
 			//else if (obj is IEnumerable<(object, object)> ie0)
 			//  return ie0.GetEnumerator();
 			//else if (obj is IEnumerator<(object, object)> ie1)
 			//  return ie1;
 			//else if (obj is IEnumerable ie)
 			//  return ie.Cast<object>().Select(o => (o, o)).GetEnumerator();
-			//if (obj is Array arr)
-			//  return arr.__Enum(ct);
-			//else if (obj is Map m)
-			//  return m.__Enum(ct.Ai());
 			else if (obj is object[] oa)
 				return new Array(oa).__Enum(count.Ai());
 			else if (Functions.GetFuncObj(obj, null) is FuncObj fo)
@@ -485,6 +479,10 @@ namespace Keysharp.Core
 				}
 
 				return Errors.ErrorOccurred(err = new UnsetError($"__Enum() could not be located on the object.")) ? throw err : null;
+			}
+			else if (Marshal.IsComObject(obj))
+			{
+				return new ComEnumerator(obj, ct);
 			}
 			else if (obj is null)
 				return Errors.ErrorOccurred(err = new UnsetError($"Object was null and could not be converted to a KeysharpEnumerator.")) ? throw err : null;

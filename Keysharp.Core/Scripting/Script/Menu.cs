@@ -9,7 +9,7 @@
 
 		public static void CreateTrayMenu()
 		{
-			var trayIcon = Tray = new NotifyIcon { ContextMenuStrip = new ContextMenuStrip(), Text = Accessors.A_ScriptName.Substring(0, Math.Min(Accessors.A_ScriptName.Length, 64)) };//System tray icon tooltips have a limit of 64 characters.
+			var trayIcon = Tray = new NotifyIcon { ContextMenuStrip = new ContextMenuStrip(), Text = A_ScriptName.Substring(0, Math.Min(A_ScriptName.Length, 64)) };//System tray icon tooltips have a limit of 64 characters.
 			Processes.mainContext = SynchronizationContext.Current;//This must happen after the icon is created.
 
 			if (NoTrayIcon)
@@ -25,7 +25,7 @@
 			icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
 #endif
 
-			if (Accessors.A_IsCompiled || icon == null)//For some reason this is needed when running as a compiled exe.
+			if (A_IsCompiled || icon == null)//For some reason this is needed when running as a compiled exe.
 				icon = Core.Properties.Resources.Keysharp_ico;
 
 			if (icon != null)

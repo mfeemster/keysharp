@@ -18,25 +18,26 @@ namespace Keysharp.Scripting
 		const string GreaterThanOrEqual = "greater than or equal";
 		const string Modulo = "modulo";
 		const string Power = "power";
+		const string Between = "between";
+		const string In = "in";
+		const string Contains = "contains";
+		const string Is = "is";
+		const char Delimiter = ',';
+		const string And = " and ";
+		const string Integer = "integer";
+		const string Float = "float";
+		const string Number = "number";
+		const string Digit = "digit";
+		const string Xdigit = "xdigit";
+		const string Alpha = "alpha";
+		const string Upper = "upper";
+		const string Lower = "lower";
+		const string Alnum = "alnum";
+		const string Space = "space";
+		const string Time = "time";
+		
 		public static bool IfLegacy(object subject, string op, string test, bool not = false)
 		{
-			const string Between = "between";
-			const string In = "in";
-			const string Contains = "contains";
-			const string Is = "is";
-			const char Delimiter = ',';
-			const string And = " and ";
-			const string Integer = "integer";
-			const string Float = "float";
-			const string Number = "number";
-			const string Digit = "digit";
-			const string Xdigit = "xdigit";
-			const string Alpha = "alpha";
-			const string Upper = "upper";
-			const string Lower = "lower";
-			const string Alnum = "alnum";
-			const string Space = "space";
-			const string Time = "time";
 			Error err;
 			var variable = ForceString(subject);
 			var varspan = variable.AsSpan();
@@ -752,7 +753,7 @@ namespace Keysharp.Scripting
 			}
 		}
 
-		private static bool ParseNumericArgs(object left, object right, string desc, out bool firstIsDouble, out bool secondIsDouble, out double firstd, out long firstl, out double secondd, out long secondl)
+		internal static bool ParseNumericArgs(object left, object right, string desc, out bool firstIsDouble, out bool secondIsDouble, out double firstd, out long firstl, out double secondd, out long secondl)
 		{
 			Error err;
 			firstIsDouble = false;
@@ -802,7 +803,7 @@ namespace Keysharp.Scripting
 			{
 				secondl = rl;
 			}
-			else if (left is IntPtr rip)
+			else if (right is IntPtr rip)
 			{
 				secondl = rip.ToInt64();
 			}

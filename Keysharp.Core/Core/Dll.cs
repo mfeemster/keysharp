@@ -44,7 +44,7 @@ namespace Keysharp.Core
 		public static DelegateHolder CallbackCreate(object function, object options = null, object paramCount = null)
 		{
 			var o = options.As();
-			return new DelegateHolder(Functions.GetFuncObj(function, null, true), o.Contains('f', StringComparison.OrdinalIgnoreCase), o.Contains('&'));//paramCount is unused.
+			return new DelegateHolder(function, o.Contains('f', StringComparison.OrdinalIgnoreCase), o.Contains('&'));//paramCount is unused.
 		}
 
 		/// <summary>
@@ -199,7 +199,7 @@ namespace Keysharp.Core
 								pb.SetCustomAttribute(new CustomAttributeBuilder(
 														  typeof(MarshalAsAttribute).GetConstructor([typeof(UnmanagedType)]),
 														  [UnmanagedType.SafeArray],
-														  new FieldInfo[] { typeof(MarshalAsAttribute).GetField("SafeArraySubType") },
+														  [typeof(MarshalAsAttribute).GetField("SafeArraySubType")],
 														  [VarEnum.VT_VARIANT]
 													  ));
 							}
@@ -230,7 +230,7 @@ namespace Keysharp.Core
 
 						return Errors.ErrorOccurred(err = new Error($"An error occurred when calling {name}() in {path}: {e.Message}{inner}")
 						{
-							Extra = "0x" + Accessors.A_LastError.ToString("X")
+							Extra = "0x" + A_LastError.ToString("X")
 						}) ? throw err : null;
 					}
 				}
@@ -272,7 +272,7 @@ namespace Keysharp.Core
 
 					return Errors.ErrorOccurred(err = new Error($"An error occurred when calling {name}() in {path}: {e.Message}{inner}")
 					{
-						Extra = "0x" + Accessors.A_LastError.ToString("X")
+						Extra = "0x" + A_LastError.ToString("X")
 					}) ? throw err : null;
 				}
 			}
@@ -313,14 +313,28 @@ namespace Keysharp.Core
 				{
 					var comHelper = new ComArgumentHelper(parameters);
 					var value = CallDel(address, comHelper.args);
-					FixParamTypesAndCopyBack(parameters, [.. comHelper.args.Cast<nint>().Select(x => (object)x)]);
+					FixParamTypesAndCopyBack(parameters, comHelper.args);
+
+					//Special conversion for the return value.
+					if (comHelper.ReturnType == typeof(int))
+					{
+						int ii = *(int*)&value;
+						value = ii;
+					}
+					else if (comHelper.ReturnType == typeof(string))
+					{
+						var str = Marshal.PtrToStringUni((nint)value);
+						_ = Strings.FreeStrPtr(value);//If this string came from us, it will be freed, else no action.
+						return str;
+					}
+
 					return value;
 				}
 				catch (Exception ex)
 				{
 					return Errors.ErrorOccurred(err = new Error($"An error occurred when calling {function}(): {ex.Message}")
 					{
-						Extra = "0x" + Accessors.A_LastError.ToString("X")
+						Extra = "0x" + A_LastError.ToString("X")
 					}) ? throw err : null;
 				}
 			}
@@ -331,81 +345,81 @@ namespace Keysharp.Core
 		/// This is done because there is no way to dynamically create and COM call in C# at runtime without knowing the COM ID ahead of time.<br/>
 		/// Since it can only be done at compile time, we have to provide specific function signatures from 0 to 16 parameters,<br/>
 		/// then call the appropriate one based on how many arguments are specificed when called.<br/>
-		/// All arguments are considered <see cref="IntPtr"/> internally.
+		/// All arguments are considered <see cref="long"/> internally.
 		/// </summary>
 		/// <param name="vtbl">The vtbl of the COM object.</param>
 		/// <param name="args">The argument list.</param>
 		/// <returns>An <see cref="IntPtr"/> which contains the return value of the COM call.</returns>
-		private static IntPtr CallDel(IntPtr vtbl, IntPtr[] args)
+		private static long CallDel(IntPtr vtbl, long[] args)
 		{
 			switch (args.Length)
 			{
 				case 0:
-					var del0 = (DelNone)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(DelNone));
+					var del0 = Marshal.GetDelegateForFunctionPointer<DelNone>(vtbl);
 					return del0();
 
 				case 1:
-					var del1 = (Del0)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del0));
+					var del1 = Marshal.GetDelegateForFunctionPointer<Del0>(vtbl);
 					return del1(args[0]);
 
 				case 2:
-					var del2 = (Del01)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del01));
+					var del2 = Marshal.GetDelegateForFunctionPointer<Del01>(vtbl);
 					return del2(args[0], args[1]);
 
 				case 3:
-					var del3 = (Del02)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del02));
+					var del3 = Marshal.GetDelegateForFunctionPointer<Del02>(vtbl);
 					return del3(args[0], args[1], args[2]);
 
 				case 4:
-					var del4 = (Del03)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del03));
+					var del4 = Marshal.GetDelegateForFunctionPointer<Del03>(vtbl);
 					return del4(args[0], args[1], args[2], args[3]);
 
 				case 5:
-					var del5 = (Del04)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del04));
+					var del5 = Marshal.GetDelegateForFunctionPointer<Del04>(vtbl);
 					return del5(args[0], args[1], args[2], args[3], args[4]);
 
 				case 6:
-					var del6 = (Del05)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del05));
+					var del6 = Marshal.GetDelegateForFunctionPointer<Del05>(vtbl);
 					return del6(args[0], args[1], args[2], args[3], args[4], args[5]);
 
 				case 7:
-					var del7 = (Del06)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del06));
+					var del7 = Marshal.GetDelegateForFunctionPointer<Del06>(vtbl);
 					return del7(args[0], args[1], args[2], args[3], args[4], args[5], args[6]);
 
 				case 8:
-					var del8 = (Del07)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del07));
+					var del8 = Marshal.GetDelegateForFunctionPointer<Del07>(vtbl);
 					return del8(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7]);
 
 				case 9:
-					var del9 = (Del08)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del08));
+					var del9 = Marshal.GetDelegateForFunctionPointer<Del08>(vtbl);
 					return del9(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8]);
 
 				case 10:
-					var del10 = (Del09)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del09));
+					var del10 = Marshal.GetDelegateForFunctionPointer<Del09>(vtbl);
 					return del10(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9]);
 
 				case 11:
-					var del11 = (Del10)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del10));
+					var del11 = Marshal.GetDelegateForFunctionPointer<Del10>(vtbl);
 					return del11(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10]);
 
 				case 12:
-					var del12 = (Del11)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del11));
+					var del12 = Marshal.GetDelegateForFunctionPointer<Del11>(vtbl);
 					return del12(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11]);
 
 				case 13:
-					var del13 = (Del12)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del12));
+					var del13 = Marshal.GetDelegateForFunctionPointer<Del12>(vtbl);
 					return del13(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11], args[12]);
 
 				case 14:
-					var del14 = (Del13)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del13));
+					var del14 = Marshal.GetDelegateForFunctionPointer<Del13>(vtbl);
 					return del14(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11], args[12], args[13]);
 
 				case 15:
-					var del15 = (Del14)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del14));
+					var del15 = Marshal.GetDelegateForFunctionPointer<Del14>(vtbl);
 					return del15(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11], args[12], args[13], args[14]);
 
 				case 16:
-					var del16 = (Del15)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del15));
+					var del16 = Marshal.GetDelegateForFunctionPointer<Del15>(vtbl);
 					return del16(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11], args[12], args[13], args[14], args[15]);
 			}
 
@@ -478,7 +492,7 @@ namespace Keysharp.Core
 			}
 		}
 
-		private static unsafe void FixParamTypesAndCopyBack(object[] parameters, object[] args)
+		private static unsafe void FixParamTypesAndCopyBack<T>(object[] parameters, T[] args)
 		{
 			//Ensure arguments passed in are in the proper format when writing back.
 			for (int pi = 0, ai = 0; pi < parameters.Length; pi += 2, ++ai)
@@ -496,8 +510,15 @@ namespace Keysharp.Core
 					}
 					else if (p0 is string ps)
 					{
-						if (args[ai] is IntPtr aip && (ps[ ^ 1] == '*' || ps[ ^ 1] == 'p'))
-							FixParamTypeAndCopyBack(ref parameters[pi + 1], ps, aip);//Must reference directly into the array, not a temp variable.
+						if (ps[ ^ 1] == '*' || ps[ ^ 1] == 'p')
+						{
+							var arg = args[ai];
+
+							if (arg is IntPtr aip)
+								FixParamTypeAndCopyBack(ref parameters[pi + 1], ps, aip);//Must reference directly into the array, not a temp variable.
+							else if (arg is long l)
+								FixParamTypeAndCopyBack(ref parameters[pi + 1], ps, (nint)l);
+						}
 					}
 				}
 			}

@@ -56,6 +56,7 @@ MyGui := Gui(, "KEYSHARP TESTS")
 MyGui.OnEvent("Close", "CloseApp")
 
 CloseApp() {
+	shell := ""
 	ExitApp
 }
 
@@ -661,14 +662,14 @@ FakeSep.SetFont("cTeal Bold")
 STest() {
 	Loop(MySlider2.Value) {
 		padding := A_Index
-		s := Format("| {1,-" padding "} |`r`n| {2," padding "} |`r`n", "Left  ", "Right")
+		s := FormatCs("| {1,-" padding "} |`r`n| {2," padding "} |`r`n", "Left  ", "Right")
 		ControlSetText(s, HwndMyText)
 		Sleep(5) ; Need time to update Text
 
 	}
 	Loop(MySlider2.Value) {
 		padding := MySlider2.Value-A_Index
-		s := Format("| {1,-" padding "} |`r`n| {2," padding "} |`r`n", "Left  ", "Right")
+		s := FormatCs("| {1,-" padding "} |`r`n| {2," padding "} |`r`n", "Left  ", "Right")
 		ControlSetText(s, HwndMyText)
 		Sleep(5)
 	}
@@ -1859,6 +1860,9 @@ FuncBtnSix.OnEvent("Click", "GrabFromIni")
 FuncBtnSeven := MyGui.Add("Button", "x160 yp w150", "Toggle Hotkey from .INI")
 FuncBtnSeven.OnEvent("Click", "ToggleFromIni")
 
+F3HotkeyText := MyGui.Add("Text", "x10 y+30 w250", "Select files in explorer, press F3 to see names")
+F3HotkeyText.SetFont("cBlue s12")
+
 ; ┌────────────────────┐
 ; │  Hotkey functions  │
 ; └────────────────────┘
@@ -1944,6 +1948,30 @@ ToggleFromIni() {
 		MsgBox("Set the .INI hotkeyfirst!", "ERROR", "T2")
 	}
 }
+
+#HotIf WinActive('ahk_class CabinetWClass ahk_exe explorer.exe')
+F3::MsgBox getSelected()
+#HotIf
+
+getSelected() { ; https://www.autohotkey.com/boards/viewtopic.php?style=17&t=60403#p255256 by teadrinker
+	hwnd := WinExist('A'), selection := ''
+
+	If WinGetClass() ~= '(Cabinet|Explore)WClass'
+		For window in ComObject('Shell.Application').Windows
+		{
+			Try
+				val := window.hwnd
+			Catch
+				Return
+		
+			If val = hwnd
+				For item in window.document.SelectedItems
+					selection .= item.Path '`n'
+		}
+		
+	Return Trim(selection, '`n')
+}
+
 #endif
 ; ┌───────────────────────────┐
 ; │  FUNCTIONS AND CALLBACKS  │
@@ -2516,6 +2544,15 @@ comDllRunWordBtn.OnEvent("Click", "ComRunWord")
 comDllRunWordListenerBtn := MyGui.Add("Button", "x10 y+10", "COM run MS Word with event listener")
 comDllRunWordListenerBtn.OnEvent("Click", "ComRunWordEventListener")
 
+comShellRunNotepad := MyGui.Add("Button", "x10 y+10", "COM shell Run() Notepad")
+comShellRunNotepad.OnEvent("Click", "ComRunNotepadShell")
+
+comShellExecNotepad := MyGui.Add("Button", "x10 y+10", "COM shell Exec() Notepad")
+comShellExecNotepad.OnEvent("Click", "ComExecNotepadShell")
+
+comFakeComCall := MyGui.Add("Button", "x10 y+10", "Fake COM call (hello)")
+comFakeComCall.OnEvent("Click", "FakeComCall")
+
 _ := MyGui.Add("Text", "x10 y+10 cBlue S10", "An animated Odie should appear below using ActiveX.")
 
 axPic := "http://www.animatedgif.net/cartoons/A_5odie_e0.gif"
@@ -2542,8 +2579,8 @@ DllWsprintf()
 {
 	ZeroPaddedNumber := Buffer(20)  ; Ensure the buffer is large enough to accept the new string.
 	DllCall("wsprintf", "Ptr", ZeroPaddedNumber, "Str", "%010d", "Int", 432, "Cdecl")  ; Requires the Cdecl calling convention.
-	strfmt := Format("{1:0000000000}", 432)
-	str := "Value from wsprintf(): " . StrGet(ZeroPaddedNumber) . "`n" . "Value from Format(): " . strfmt . "`n" . "Reference value: 0000000432"
+	strfmt := FormatCs("{1:0000000000}", 432)
+	str := "Value from wsprintf(): " . StrGet(ZeroPaddedNumber) . "`n" . "Value from FormatCs(): " . strfmt . "`n" . "Reference value: 0000000432"
 	MsgBox(str)
 }
 
@@ -2552,13 +2589,19 @@ DllPerformanceCounter()
 	freq := 0
 	CounterBefore := 0
 	CounterAfter := 0
-
+	start := A_NowMs
+	startTick := A_TickCount
+	
 	DllCall("QueryPerformanceFrequency", "Int64*", freq)
 	DllCall("QueryPerformanceCounter", "Int64*", &CounterBefore)
 	Sleep(1000)
 	DllCall("QueryPerformanceCounter", "Int64*", &CounterAfter)
+	end := A_NowMs
+	endTick := A_TickCount
 	elapsed := (CounterAfter - CounterBefore) / freq * 1000
-	MsgBox("This value should be near 1000ms: " . elapsed)
+	diff := DateDiff(end, start, "L")
+	elapsedTick := endTick - startTick
+	MsgBox("This value should be near 1000ms: " . elapsed . "`r`nValue using DateDiff(): " . diff . "`r`nValue using A_TickCount: " . elapsedTick)
 }
 
 DllGetWindowRect()
@@ -2701,6 +2744,43 @@ class mycomhandler
 		OutputDebug("`tReceived Quit event.")
 		ShowDebug()
     }
+}
+
+shell := unset
+
+ComExecNotepadShell()
+{
+	global shell
+	
+	if (shell == unset)
+		shell := ComObject("WScript.Shell")
+		
+	exec := shell.Exec("Notepad.exe")
+}
+
+ComRunNotepadShell()
+{
+	global shell
+
+	if (shell == unset)
+		shell := ComObject("WScript.Shell")
+		
+	exec := shell.Run("Notepad.exe")
+}
+
+; Try a fake COM call.
+ReturnString() => StrPtr("hello")
+
+FakeComCall()
+{
+	; Create dummy vtable without a defined AddRef, Release etc
+	vtbl := Buffer(4*A_PtrSize)
+	NumPut("ptr", CallbackCreate(ReturnString), vtbl, 3*A_PtrSize)
+	; Add the vtbl to our COM object
+	dummyCOM := Buffer(A_PtrSize, 0)
+	NumPut("ptr", vtbl.Ptr, dummyCOM)
+	val := ComCall(3, dummyCOM.Ptr, "str")
+	MsgBox(val)
 }
 
 OnExit (*) => SystemCursor("Show")  ; Ensure the cursor is made visible when the script exits.

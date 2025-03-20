@@ -75,10 +75,9 @@ global using global::Semver.Utility;
 	global using global::Microsoft.Win32.SafeHandles;
 	global using global::System.Management;
 	global using global::System.Media;
+	global using global::System.Runtime.InteropServices.ComTypes;
 	global using global::Keysharp.Core.COM;
 	global using global::Keysharp.Core.Windows;
-
-
 #endif
 
 #if LINUX
@@ -88,4 +87,6 @@ global using global::Semver.Utility;
 #endif
 
 //Static
+global using static global::Keysharp.Core.Accessors;
+global using static global::Keysharp.Core.KeysharpEnhancements;
 global using static global::Keysharp.Scripting.Keywords;

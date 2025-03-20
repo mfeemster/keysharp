@@ -57,14 +57,30 @@ d1 := "20230210023015"
 d2 := "20230210022510"
 val := DateDiff(d1, d2, "s")
 
-if (val == 5)
+if (val == 305)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
 
 val := DateDiff(d2, d1, "s")
 
-if (val == -5)
+if (val == -305)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+d1 := "20230210023015.500"
+d2 := "20230210023015.100"
+val := DateDiff(d1, d2, "l")
+
+if (val == 400)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+val := DateDiff(d2, d1, "l")
+
+if (val == -400)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"

@@ -5,6 +5,7 @@ namespace Keysharp.Core
 	public class GuiControl : KeysharpObject
 	{
 		internal string typename;
+		internal WeakReference<Gui> gui;
 		private readonly List<IFuncObj> clickHandlers = [];
 		private readonly List<IFuncObj> doubleClickHandlers = [];
 		private readonly bool dpiscaling = true;
@@ -42,7 +43,16 @@ namespace Keysharp.Core
 
 		public object Focused => _control.Focused;
 
-		public WeakReference<Gui> Gui { get; private set; }
+		public Gui Gui
+		{
+			get
+			{
+				if (gui.TryGetTarget(out var g))
+					return g;
+
+				return null;
+			}
+		}
 
 		public long Hwnd => _control.Handle.ToInt64();
 
@@ -74,7 +84,7 @@ namespace Keysharp.Core
 			get
 			{
 				if (_control is RichTextBox rtf)
-					return Strings.NormalizeEol(rtf.Rtf);
+					return KeysharpEnhancements.NormalizeEol(rtf.Rtf);
 
 				return "";
 			}
@@ -83,7 +93,7 @@ namespace Keysharp.Core
 				Error err;
 
 				if (_control is RichTextBox rtf)
-					rtf.Rtf = Strings.NormalizeEol(value);
+					rtf.Rtf = KeysharpEnhancements.NormalizeEol(value);
 				else
 					_ = Errors.ErrorOccurred(err = new Error($"Can only set RichText on a RichEdit control. Attempted on a {_control.GetType().Name} control.")) ? throw err : "";
 			}
@@ -171,9 +181,9 @@ namespace Keysharp.Core
 				if (_control is Label lbl)
 					return lbl.Text;
 				else if (_control is TextBox txt)
-					return Strings.NormalizeEol(txt.Text);
+					return KeysharpEnhancements.NormalizeEol(txt.Text);
 				else if (_control is RichTextBox rtf)
-					return Strings.NormalizeEol(rtf.Text);
+					return KeysharpEnhancements.NormalizeEol(rtf.Text);
 				else if (_control is HotkeyBox hk)
 					return hk.GetText();
 				else if (_control is NumericUpDown nud)
@@ -249,9 +259,9 @@ namespace Keysharp.Core
 				if (_control is Label lbl)
 					lbl.Text = val;
 				else if (_control is TextBox txt)
-					txt.Text = Strings.NormalizeEol(val);
+					txt.Text = KeysharpEnhancements.NormalizeEol(val);
 				else if (_control is KeysharpRichEdit kre)
-					kre.Text = Strings.NormalizeEol(val);
+					kre.Text = KeysharpEnhancements.NormalizeEol(val);
 				else if (_control is HotkeyBox hk)
 					hk.SetText(val);
 				else if (_control is NumericUpDown nud)
@@ -393,11 +403,11 @@ namespace Keysharp.Core
 
 		public object __New(params object[] args)
 		{
-			var gui = args[0] as Gui;
+			var g = args[0] as Gui;
 			var control = args[1] as Control;
 			var name = args[2].ToString();
 			var wrap = args.Length > 3 ? args[3].Ab() : false;
-			Gui = new WeakReference<Gui>(gui);
+			gui = new WeakReference<Gui>(g);
 			typename = name;
 			_control = control;
 			_control.Tag = new GuiTag()
@@ -1052,7 +1062,7 @@ namespace Keysharp.Core
 			var _y = y.Al(long.MinValue);
 			var w = width.Al(long.MinValue);
 			var h = height.Al(long.MinValue);
-			var scale = !dpiscaling ? 1.0 : Accessors.A_ScaledScreenDPI;
+			var scale = !dpiscaling ? 1.0 : A_ScaledScreenDPI;
 			var hasScrollBars = _control is KeysharpEdit || _control is KeysharpRichEdit;//Reflections.SafeHasProperty(_control, "ScrollBars") || Reflections.SafeHasProperty(_control, "HorizontalScrollbar") || Reflections.SafeHasProperty(_control, "Scrollable")
 
 			if (_y != long.MinValue)
@@ -1082,10 +1092,10 @@ namespace Keysharp.Core
 			var h = callback;
 			var i = addRemove.Al(1);
 
-			if (Gui == null || !Gui.TryGetTarget(out var gui))
+			if (gui == null || !gui.TryGetTarget(out var g))
 				return null;
 
-			var del = Functions.GetFuncObj(h, gui.form.eventObj, true);
+			var del = Functions.GetFuncObj(h, g.form.eventObj, true);
 
 			if (del != null)
 			{
@@ -1212,10 +1222,10 @@ namespace Keysharp.Core
 
 		public object Opt(object options)
 		{
-			if (Gui == null || !Gui.TryGetTarget(out var gui))
+			if (gui == null || !gui.TryGetTarget(out var g))
 				return null;
 
-			var opts = Keysharp.Core.Gui.ParseOpt(typename, _control.Text, options.As());
+			var opts = Core.Gui.ParseOpt(typename, _control.Text, options.As());
 
 			if (opts.redraw.HasValue)
 			{
@@ -1245,7 +1255,7 @@ namespace Keysharp.Core
 			if (_control is KeysharpButton)
 			{
 				if (opts.btndef.HasValue)
-					gui.form.AcceptButton = opts.btndef == true ? (IButtonControl)_control : null;
+					g.form.AcceptButton = opts.btndef == true ? (IButtonControl)_control : null;
 			}
 			else if (_control is KeysharpListBox lb)
 			{
@@ -1296,13 +1306,13 @@ namespace Keysharp.Core
 
 				if (opts.wantctrla.IsFalse())
 				{
-					txt.PreviewKeyDown += Keysharp.Core.Gui.SuppressCtrlAPreviewKeyDown;
-					txt.KeyDown += Keysharp.Core.Gui.SuppressCtrlAKeyDown;
+					txt.PreviewKeyDown += Core.Gui.SuppressCtrlAPreviewKeyDown;
+					txt.KeyDown += Core.Gui.SuppressCtrlAKeyDown;
 				}
 				else if (opts.wantctrla.IsTrue())
 				{
-					txt.PreviewKeyDown -= Keysharp.Core.Gui.SuppressCtrlAPreviewKeyDown;
-					txt.KeyDown -= Keysharp.Core.Gui.SuppressCtrlAKeyDown;
+					txt.PreviewKeyDown -= Core.Gui.SuppressCtrlAPreviewKeyDown;
+					txt.KeyDown -= Core.Gui.SuppressCtrlAKeyDown;
 				}
 
 				if (opts.vscroll.IsTrue() && opts.hscrollamt != int.MinValue)
@@ -1341,13 +1351,13 @@ namespace Keysharp.Core
 
 				if (opts.wantctrla.IsFalse())
 				{
-					rtxt.PreviewKeyDown += Keysharp.Core.Gui.SuppressCtrlAPreviewKeyDown;
-					rtxt.KeyDown += Keysharp.Core.Gui.SuppressCtrlAKeyDown;
+					rtxt.PreviewKeyDown += Core.Gui.SuppressCtrlAPreviewKeyDown;
+					rtxt.KeyDown += Core.Gui.SuppressCtrlAKeyDown;
 				}
 				else if (opts.wantctrla.IsTrue())
 				{
-					rtxt.PreviewKeyDown -= Keysharp.Core.Gui.SuppressCtrlAPreviewKeyDown;
-					rtxt.KeyDown -= Keysharp.Core.Gui.SuppressCtrlAKeyDown;
+					rtxt.PreviewKeyDown -= Core.Gui.SuppressCtrlAPreviewKeyDown;
+					rtxt.KeyDown -= Core.Gui.SuppressCtrlAKeyDown;
 				}
 
 				if (opts.vscroll.IsTrue() && opts.hscrollamt != int.MinValue)
@@ -1424,9 +1434,9 @@ namespace Keysharp.Core
 
 				if (tv.LabelEdit && opts.wantf2.HasValue)
 					if (opts.wantf2.IsTrue())
-						tv.KeyDown += Keysharp.Core.Gui.Tv_Lv_KeyDown;
+						tv.KeyDown += Core.Gui.Tv_Lv_KeyDown;
 					else
-						tv.KeyDown -= Keysharp.Core.Gui.Tv_Lv_KeyDown;
+						tv.KeyDown -= Core.Gui.Tv_Lv_KeyDown;
 			}
 			else if (_control is KeysharpListView lv)
 			{
@@ -1444,9 +1454,9 @@ namespace Keysharp.Core
 
 				if (lv.LabelEdit && opts.wantf2.HasValue)
 					if (opts.wantf2.IsTrue())
-						lv.KeyDown += Keysharp.Core.Gui.Tv_Lv_KeyDown;
+						lv.KeyDown += Core.Gui.Tv_Lv_KeyDown;
 					else
-						lv.KeyDown -= Keysharp.Core.Gui.Tv_Lv_KeyDown;
+						lv.KeyDown -= Core.Gui.Tv_Lv_KeyDown;
 
 				if (opts.lvview.HasValue)
 					lv.View = opts.lvview.Value;
@@ -1760,7 +1770,7 @@ namespace Keysharp.Core
 		{
 			if (_control is KeysharpTabControl tc)
 			{
-				if (Gui == null || !Gui.TryGetTarget(out var gui))
+				if (gui == null || !gui.TryGetTarget(out var g))
 					return null;
 
 				var val = value;
@@ -1770,8 +1780,8 @@ namespace Keysharp.Core
 				{
 					if (s.Length > 0 && tc.FindTab(s, exact) is TabPage tp)
 					{
-						gui.CurrentTab = tp;
-						gui.LastContainer = tp;
+						g.CurrentTab = tp;
+						g.LastContainer = tp;
 					}
 				}
 				else if (val != null)
@@ -1782,13 +1792,13 @@ namespace Keysharp.Core
 					if (i >= 0 && i < tc.TabPages.Count)
 					{
 						var tp = tc.TabPages[i];
-						gui.CurrentTab = tp;
-						gui.LastContainer = tp;
+						g.CurrentTab = tp;
+						g.LastContainer = tp;
 					}
 				}
 				else
 				{
-					gui.LastContainer = tc.Parent;
+					g.LastContainer = tc.Parent;
 				}
 			}
 
@@ -1812,7 +1822,7 @@ namespace Keysharp.Core
 			}
 			else
 			{
-				var scale = Accessors.A_ScaledScreenDPI;
+				var scale = A_ScaledScreenDPI;
 				x = (long)(rect.X * scale);
 				y = (long)(rect.Y * scale);
 				w = (long)(rect.Width * scale);
@@ -1917,10 +1927,10 @@ namespace Keysharp.Core
 
 		internal void HandleOnCommandNotify(long code, object callback, long addremove, ref Dictionary<int, List<IFuncObj>> handlers)
 		{
-			if (Gui == null || !Gui.TryGetTarget(out var gui))
+			if (gui == null || !gui.TryGetTarget(out var g))
 				return;
 
-			var del = Functions.GetFuncObj(callback, gui.form.eventObj, true);
+			var del = Functions.GetFuncObj(callback, g.form.eventObj, true);
 
 			if (handlers == null)
 				handlers = [];

@@ -1068,8 +1068,8 @@ namespace Keysharp.Core.Windows
 			}
 
 			// Find dimensions of primary monitor.
-			var screen_width = (int)Accessors.A_ScreenWidth;
-			var screen_height = (int)Accessors.A_ScreenHeight;
+			var screen_width = (int)A_ScreenWidth;
+			var screen_height = (int)A_ScreenHeight;
 			x = MouseCoordToAbs(x, screen_width);
 			y = MouseCoordToAbs(y, screen_height);
 			// x and aY MUST BE SET UNCONDITIONALLY because the output parameters must be updated for caller.
@@ -2159,7 +2159,7 @@ namespace Keysharp.Core.Windows
 				// Even if TickCount has wrapped due to system being up more than about 49 days,
 				// DWORD subtraction still gives the right answer as long as g_script.mThisHotkeyStartTime
 				// itself isn't more than about 49 days ago:
-				if ((DateTime.Now - thisHotkeyStartTime).TotalMilliseconds < Accessors.hotkeyModifierTimeout) // Elapsed time < timeout-value
+				if ((DateTime.Now - thisHotkeyStartTime).TotalMilliseconds < hotkeyModifierTimeout) // Elapsed time < timeout-value
 					modsDownPhysicallyOrig = modsCurrent & thisHotkeyModifiersLR; // Bitwise AND is set intersection.
 				else
 					// Since too much time as passed since the user pressed the hotkey, it seems best,
@@ -2786,8 +2786,8 @@ namespace Keysharp.Core.Windows
 					// but do this only if the timeout period didn't expire (or the user specified that it never
 					// times out; i.e. elapsed time < timeout-value; DWORD subtraction gives the right answer even if
 					// tick-count has wrapped around).
-					modsDownPhysically = (Accessors.hotkeyModifierTimeout < 0 // It never times out or...
-										  || (DateTime.Now - thisHotkeyStartTime).TotalMilliseconds < Accessors.hotkeyModifierTimeout) // It didn't time out.
+					modsDownPhysically = (hotkeyModifierTimeout < 0 // It never times out or...
+										  || (DateTime.Now - thisHotkeyStartTime).TotalMilliseconds < hotkeyModifierTimeout) // It didn't time out.
 										 ? modsDownPhysicallyOrig : 0;
 
 				// Put any modifiers in sModifiersLR_remapped back into effect, as if they were physically down.

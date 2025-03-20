@@ -19,7 +19,7 @@
 #endif
 				var now = DateTime.Now;
 				Script.lastPeekTime = now;
-				Accessors.A_EventInfo = now;//AHK used msg.time, but the C# version does not have a time field.
+				A_EventInfo = now;//AHK used msg.time, but the C# version does not have a time field.
 				monitor.instanceCount++;
 				object res = null;
 

@@ -3,8 +3,9 @@
 	/// <summary>
 	/// Serialize JSON strings.
 	/// </summary>
-	public static partial class SimpleJson
+	public static partial class KeysharpEnhancements
 	{
+
 		private const char ArrayClose = ']';
 
 		private const char ArrayOpen = '[';

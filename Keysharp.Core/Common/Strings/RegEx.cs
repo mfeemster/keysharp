@@ -21,18 +21,18 @@
 			{
 				var g = match.Groups[i];
 				DefineProp(g.Name,
-						   Keysharp.Core.Objects.Object(
+						   Objects.Object(
 							   [
 								   "get",
-								   Keysharp.Core.Functions.GetFuncObj("GetWrapper", this, 2, true).Bind(g.Name)
+								   Functions.GetFuncObj("GetWrapper", this, 2, true).Bind(g.Name)
 							   ]));
 
 				if (i.ToString() != g.Name)//No need to add it twice if the name matches the index.
 					DefineProp(i,
-							   Keysharp.Core.Objects.Object(
+							   Objects.Object(
 								   [
 									   "get",
-									   Keysharp.Core.Functions.GetFuncObj("GetWrapper", this, 2, true).Bind(g.Name)
+									   Functions.GetFuncObj("GetWrapper", this, 2, true).Bind(g.Name)
 								   ]));
 			}
 
@@ -231,12 +231,6 @@
 		/// The implementation for <see cref="IEnumerator.Reset"/> which resets the iterator.
 		/// </summary>
 		public void Reset() => iter = ((IEnumerable<Group>)match.Groups).GetEnumerator();
-
-		/// <summary>
-		/// Gets the enumerator which is just this.
-		/// </summary>
-		/// <returns>this as an <see cref="IEnumerator{(object, object)}"/>.</returns>
-		private IEnumerator<(object, object)> GetEnumerator() => this;
 	}
 
 	internal class RegexWithTag : Regex

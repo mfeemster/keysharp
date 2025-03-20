@@ -122,42 +122,42 @@ namespace Keysharp.Core.Common.Threading
 			allowThreadToBeInterrupted = true;
 			uninterruptibleDuration = Script.uninterruptibleTime;
 			threadStartTime = DateTime.MinValue;
-			controlDelay = Accessors.ControlDelayDefault;
+			controlDelay = ControlDelayDefault;
 			coords = null;
 			currentTimer = null;
 			defaultGui = null;
-			defaultMouseSpeed = Accessors.DefaultMouseSpeedDefault;
-			detectHiddenText = Accessors.DetectHiddenTextDefault;
-			detectHiddenWindows = Accessors.DetectHiddenWindowsDefault;
+			defaultMouseSpeed = DefaultMouseSpeedDefault;
+			detectHiddenText = DetectHiddenTextDefault;
+			detectHiddenWindows = DetectHiddenWindowsDefault;
 			dialogOwner = null;
 			eventInfo = null;
-			fileEncoding = Accessors.FileEncodingDefault;
+			fileEncoding = FileEncodingDefault;
 			hotCriterion = null;
 			hwndLastUsed = IntPtr.Zero;
-			keyDelay = Accessors.KeyDelayDefault;
-			keyDelayPlay = Accessors.KeyDelayPlayDefault;
-			keyDuration = Accessors.KeyDurationDefault;
-			keyDurationPlay = Accessors.KeyDurationPlayDefault;
+			keyDelay = KeyDelayDefault;
+			keyDelayPlay = KeyDelayPlayDefault;
+			keyDuration = KeyDurationDefault;
+			keyDurationPlay = KeyDurationPlayDefault;
 			lastFoundForm = IntPtr.Zero;
-			mouseDelay = Accessors.MouseDelayDefault;
-			mouseDelayPlay = Accessors.MouseDelayPlayDefault;
-			peekFrequency = Accessors.PeekFrequencyDefault;
-			priority = Accessors.A_Priority.Al();
+			mouseDelay = MouseDelayDefault;
+			mouseDelayPlay = MouseDelayPlayDefault;
+			peekFrequency = PeekFrequencyDefault;
+			priority = A_Priority.Al();
 			randomGenerator = null;
 			_ = (regsb?.Clear());
 #if WINDOWS
-			regView = Accessors.RegViewDefault;
+			regView = RegViewDefault;
 #endif
-			sendLevel = Accessors.SendLevelDefault;
+			sendLevel = SendLevelDefault;
 
-			if (Enum.TryParse<SendModes>(Accessors.SendModeDefault.As(), out var temp))
+			if (Enum.TryParse<SendModes>(SendModeDefault.As(), out var temp))
 				sendMode = temp;
 
-			storeCapsLockMode = Accessors.StoreCapsLockModeDefault;
+			storeCapsLockMode = StoreCapsLockModeDefault;
 			threadId = 0;
-			titleMatchMode = Accessors.TitleMatchModeDefault;
-			titleMatchModeSpeed = Accessors.TitleMatchModeSpeedDefault;
-			winDelay = Accessors.WinDelayDefault;
+			titleMatchMode = TitleMatchModeDefault;
+			titleMatchModeSpeed = TitleMatchModeSpeedDefault;
+			winDelay = WinDelayDefault;
 		}
 	}
 }
