@@ -26,3 +26,7 @@
 *.zip
 /Keysharp.Tests/Code/Gui/methpropskeysharp.txt
 /Keysharp.Tests/Code/test-text-file-out.txt
+/Keysharp/bin
+/Keysharp.Core/bin
+/Keysharp.OutputTest/bin
+/Keysharp.Tests/bin

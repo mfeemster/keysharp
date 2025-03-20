@@ -132,11 +132,11 @@
 
 				if (braceIndex < 0)
 				{
-					result.Append(formatStr, pos, formatStr.Length - pos);
+					_ = result.Append(formatStr, pos, formatStr.Length - pos);
 					break;
 				}
 
-				result.Append(formatStr, pos, braceIndex - pos);
+				_ = result.Append(formatStr, pos, braceIndex - pos);
 				pos = braceIndex;
 
 				// Check for literal escaped braces.
@@ -145,7 +145,7 @@
 						(formatStr[pos + 1] == '{' || formatStr[pos + 1] == '}') &&
 						formatStr[pos + 2] == '}')
 				{
-					result.Append(formatStr[pos + 1]);
+					_ = result.Append(formatStr[pos + 1]);
 					pos += 3;
 					continue;
 				}
@@ -163,16 +163,16 @@
 				if (pos > indexStart)
 				{
 					// Convert the (1–based) index from the format string to 0–based.
-					string indexStr = formatStr.Substring(indexStart, pos - indexStart);
+					var indexStr = formatStr.AsSpan(indexStart, pos - indexStart);
 
 					if (!int.TryParse(indexStr, out argIndex))
 					{
 						// On parse error, output the placeholder literally.
-						result.Append(formatStr, placeholderStart, pos - placeholderStart);
+						_ = result.Append(formatStr, placeholderStart, pos - placeholderStart);
 						continue;
 					}
 
-					argIndex = argIndex - 1;
+					argIndex--;
 				}
 				else
 				{
@@ -187,12 +187,12 @@
 
 					if (closingBrace < 0)
 					{
-						result.Append(formatStr, placeholderStart, formatStr.Length - placeholderStart);
+						_ = result.Append(formatStr, placeholderStart, formatStr.Length - placeholderStart);
 						break;
 					}
 					else
 					{
-						result.Append(formatStr, placeholderStart, closingBrace - placeholderStart + 1);
+						_ = result.Append(formatStr, placeholderStart, closingBrace - placeholderStart + 1);
 						pos = closingBrace + 1;
 						continue;
 					}
@@ -227,9 +227,9 @@
 					}
 
 					// The specCore is the substring with flags, width and precision.
-					string specCore = formatStr.Substring(specStart, pos - specStart);
+					var specCore = formatStr.AsSpan(specStart, pos - specStart);
 					// Next comes the conversion type (if any)
-					char typeChar = 's'; // default conversion is to string.
+					var typeChar = 's'; // default conversion is to string.
 
 					if (pos < formatStr.Length)
 					{
@@ -272,7 +272,7 @@
 				if (pos >= formatStr.Length || formatStr[pos] != '}')
 				{
 					// If not, output the placeholder literally.
-					result.Append(formatStr, placeholderStart, pos - placeholderStart);
+					_ = result.Append(formatStr, placeholderStart, pos - placeholderStart);
 					continue;
 				}
 
@@ -299,7 +299,7 @@
 					}
 				}
 
-				result.Append(formattedArg);
+				_ = result.Append(formattedArg);
 			}
 
 			return result.ToString();
@@ -1565,7 +1565,7 @@
 			while (num > 0)
 			{
 				int digit = (int)(num % 8);
-				sb.Insert(0, digit.ToString());
+				_ = sb.Insert(0, digit.ToString());
 				num /= 8;
 			}
 
@@ -1613,7 +1613,7 @@
 						int pad = spec.Width.Value - numberStr.Length;
 
 						if (spec.LeftAlign)
-							numberStr = numberStr + new string(' ', pad);
+							numberStr += new string(' ', pad);
 						else if (spec.ZeroPad)
 						{
 							// If there’s a sign character, insert zeros after it.
@@ -1655,7 +1655,7 @@
 						int pad = spec.Width.Value - unumStr.Length;
 
 						if (spec.LeftAlign)
-							unumStr = unumStr + new string(' ', pad);
+							unumStr += new string(' ', pad);
 						else if (spec.ZeroPad)
 							unumStr = new string('0', pad) + unumStr;
 						else
@@ -1694,7 +1694,7 @@
 						int pad = spec.Width.Value - hexStr.Length;
 
 						if (spec.LeftAlign)
-							hexStr = hexStr + new string(' ', pad);
+							hexStr += new string(' ', pad);
 						else if (spec.ZeroPad)
 							hexStr = new string('0', pad) + hexStr;
 						else
@@ -1728,7 +1728,7 @@
 						int pad = spec.Width.Value - octStr.Length;
 
 						if (spec.LeftAlign)
-							octStr = octStr + new string(' ', pad);
+							octStr += new string(' ', pad);
 						else if (spec.ZeroPad)
 							octStr = new string('0', pad) + octStr;
 						else
@@ -1778,7 +1778,7 @@
 						int pad = spec.Width.Value - floatStr.Length;
 
 						if (spec.LeftAlign)
-							floatStr = floatStr + new string(' ', pad);
+							floatStr += new string(' ', pad);
 						else if (spec.ZeroPad)
 							floatStr = new string('0', pad) + floatStr;
 						else
@@ -1829,7 +1829,7 @@
 						int pad = spec.Width.Value - charStr.Length;
 
 						if (spec.LeftAlign)
-							charStr = charStr + new string(' ', pad);
+							charStr += new string(' ', pad);
 						else
 							charStr = new string(' ', pad) + charStr;
 					}
@@ -1860,7 +1860,7 @@
 						int pad = spec.Width.Value - ptrStr.Length;
 
 						if (spec.LeftAlign)
-							ptrStr = ptrStr + new string(' ', pad);
+							ptrStr += new string(' ', pad);
 						else
 							ptrStr = new string(' ', pad) + ptrStr;
 					}
@@ -1883,7 +1883,7 @@
 						int pad = spec.Width.Value - s.Length;
 
 						if (spec.LeftAlign)
-							s = s + new string(' ', pad);
+							s += new string(' ', pad);
 						else
 							s = new string(' ', pad) + s;
 					}
@@ -1899,9 +1899,9 @@
 		private static string FormatHexFloat(double d, SpecInfo spec)
 		{
 			// Determine if we should use uppercase letters.
-			bool uppercase = (spec.Type == 'A');
+			var uppercase = spec.Type == 'A';
 			// Handle sign.
-			string signStr = "";
+			var signStr = "";
 
 			if (d < 0 || (d == 0 && 1.0 / d < 0))
 			{
@@ -1965,7 +1965,7 @@
 				fracStr = fraction.ToString("x" + fullFractionDigits, CultureInfo.InvariantCulture);
 
 				if (totalHexDigits > fullFractionDigits)
-					fracStr = fracStr + new string('0', totalHexDigits - fullFractionDigits);
+					fracStr += new string('0', totalHexDigits - fullFractionDigits);
 			}
 			else
 			{
@@ -2007,9 +2007,9 @@
 		/// <summary>
 		/// Parses the “specCore” (the flags, width and precision portion) plus the conversion type.
 		/// </summary>
-		private static SpecInfo ParseSpecInfo(string specCore, char typeChar)
+		private static SpecInfo ParseSpecInfo(ReadOnlySpan<char> specCore, char typeChar)
 		{
-			SpecInfo spec = new SpecInfo();
+			var spec = new SpecInfo();
 			spec.Type = typeChar;
 			int pos = 0;
 
@@ -2040,7 +2040,7 @@
 
 			if (pos > startWidth)
 			{
-				if (int.TryParse(specCore.Substring(startWidth, pos - startWidth), out int width))
+				if (int.TryParse(specCore.Slice(startWidth, pos - startWidth), out int width))
 					spec.Width = width;
 			}
 
@@ -2055,7 +2055,7 @@
 
 				if (pos > startPrec)
 				{
-					if (int.TryParse(specCore.Substring(startPrec, pos - startPrec), out int prec))
+					if (int.TryParse(specCore.Slice(startPrec, pos - startPrec), out int prec))
 						spec.Precision = prec;
 					else
 						spec.Precision = 0;

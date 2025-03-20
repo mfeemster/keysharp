@@ -5,18 +5,17 @@ using static Keysharp.Scripting.Script.Operator;
 
 namespace Keysharp.Benchmark
 {
-	[MemoryDiagnoser]
-	public class FuncBench
+	public class FuncBench : BaseTest
 	{
 		private myclass? cl;
 		private long totalSum;
 
-		[Params(1000000)]
-		public static long Size { get; set; }
+		[Params(500000L)]
+		public long Size { get; set; }
 
-		public static object? x { get; set; }
+		public object? x { get; set; }
 
-		public static object IncFunc()
+		public object IncFunc()
 		{
 			x = Operate(Add, x, 1L);
 			return "";
@@ -26,7 +25,7 @@ namespace Keysharp.Benchmark
 		public void KeysharpClassFuncLoopIncrement()
 		{
 			cl.x = 0;
-			_ = cl.ClassIncTestFunc();
+			_ = cl.ClassIncTestFuncScript();
 
 			if ((long)cl.x != totalSum)
 				throw new Exception($"{x} was not equal to {totalSum}.");
@@ -36,16 +35,18 @@ namespace Keysharp.Benchmark
 		public void KeysharpFuncLoopIncrement()
 		{
 			x = 0L;
+			_ = Push(Keysharp.Core.LoopType.Normal);
 
-			for (System.Collections.IEnumerator e3 = Loop(Size).GetEnumerator(); IsTrueAndRunning(e3.MoveNext());
+			for (System.Collections.IEnumerator e0 = Loop(Size).GetEnumerator();
+					IsTrueAndRunning(e0.MoveNext());
 				)
 			{
 				_ = IncFunc();
-				e4:
+				e1:
 				;
 			}
 
-			e5:
+			e2:
 			_ = Pop();
 
 			if ((long)x != totalSum)
@@ -56,13 +57,17 @@ namespace Keysharp.Benchmark
 		public void KeysharpLoopIncrement()
 		{
 			x = 0L;
+			_ = Push(Keysharp.Core.LoopType.Normal);
 
-			for (System.Collections.IEnumerator e0 = Loop(Size).GetEnumerator(); IsTrueAndRunning(e0.MoveNext());
+			for (System.Collections.IEnumerator e0 = Loop(Size).GetEnumerator();
+					IsTrueAndRunning(e0.MoveNext());
 				)
 			{
-				x = Operate(Add, x, 1L);
-				e1:
-				;
+				{
+					x = Operate(Add, x, 1L);
+					e1:
+					;
+				}
 			}
 
 			e2:
@@ -76,16 +81,18 @@ namespace Keysharp.Benchmark
 		public void KeysharpNativeLongLoopIncrement()
 		{
 			var total = 0L;
+			_ = Push(Keysharp.Core.LoopType.Normal);
 
-			for (System.Collections.IEnumerator e3 = Loop(Size).GetEnumerator(); IsTrueAndRunning(e3.MoveNext());
+			for (System.Collections.IEnumerator e0 = Loop(Size).GetEnumerator();
+					IsTrueAndRunning(e0.MoveNext());
 				)
 			{
 				total++;
-				e4:
+				e1:
 				;
 			}
 
-			e5:
+			e2:
 			_ = Pop();
 
 			if (total != totalSum)
@@ -96,16 +103,18 @@ namespace Keysharp.Benchmark
 		public void KeysharpNativeObjectLoopIncrement()
 		{
 			x = 0L;
+			_ = Push(Keysharp.Core.LoopType.Normal);
 
-			for (System.Collections.IEnumerator e3 = Loop(Size).GetEnumerator(); IsTrueAndRunning(e3.MoveNext());
+			for (System.Collections.IEnumerator e0 = Loop(Size).GetEnumerator();
+					IsTrueAndRunning(e0.MoveNext());
 				)
 			{
 				x = (long)x + 1L;
-				e4:
+				e1:
 				;
 			}
 
-			e5:
+			e2:
 			_ = Pop();
 
 			if ((long)x != totalSum)
@@ -117,7 +126,7 @@ namespace Keysharp.Benchmark
 		{
 			var total = 0L;
 
-			for (var i = 0; i < Size; i++)
+			for (var i = 0L; i < Size; i++)
 				total++;
 
 			if (total != totalSum)
@@ -128,13 +137,13 @@ namespace Keysharp.Benchmark
 		public void Setup()
 		{
 			Variables.InitGlobalVars();
-			Size = 1000000;
+			Size = 500000L;
 			totalSum = Size;
 			cl = new myclass();
 		}
 	}
 
-	[MemoryDiagnoser]
+	//[MemoryDiagnoser]
 	public class myclass : KeysharpObject
 	{
 		public static string @__Class
@@ -149,7 +158,7 @@ namespace Keysharp.Benchmark
 
 		public myclass()
 		{
-			__Init();
+			x = 0L;
 		}
 
 		public static myclass Call()
@@ -163,26 +172,24 @@ namespace Keysharp.Benchmark
 			return "";
 		}
 
-		public object ClassIncTestFunc()
+		public object ClassIncTestFuncScript()
 		{
+			var size = 500000L;
 			x = 0L;
+			_ = Push(Keysharp.Core.LoopType.Normal);
 
-			for (System.Collections.IEnumerator e8 = Loop(FuncBench.Size).GetEnumerator(); IsTrueAndRunning(e8.MoveNext());
+			for (System.Collections.IEnumerator e0 = Loop(size).GetEnumerator();
+					IsTrueAndRunning(e0.MoveNext());
 				)
 			{
 				_ = Invoke(GetMethodOrProperty(this, "ClassInc", 0));
-				e9:
+				e1:
 				;
 			}
 
-			e10:
+			e2:
 			_ = Pop();
 			return "";
-		}
-
-		private void @__Init()
-		{
-			x = 0L;
 		}
 	}
 }

@@ -253,7 +253,7 @@ namespace Keysharp.Core.COM
 				if (modifiers == null)
 					ret = comObject.GetType().InvokeMember(
 							  methodName,
-							  BindingFlags.InvokeMethod,
+							  BindingFlags.InvokeMethod | BindingFlags.GetProperty,
 							  null,
 							  comObject,
 							  []);
