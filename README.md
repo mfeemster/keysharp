@@ -1,11 +1,6 @@
 # Keysharp #
 - [Overview](#markdown-header-overview)
-- [Differences](#markdown-header-differences:)
-- [Removals](#Removals:)
-- [Removals](#Removals)
-- [Removals](#removals:)
-- [Removals](#removals)
-- [Removals](#markdown-header-removals:)
+- [Differences](#markdown-header-differences)
 - [Removals](#markdown-header-removals)
 
 ## How do I get set up? ##
