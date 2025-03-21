@@ -1,7 +1,11 @@
 # Keysharp #
-- [Overview](#markdown-header-overview)
-- [Differences](#markdown-header-differences)
-- [Removals](#markdown-header-removals)
+* [Overview](#markdown-header-overview)
+* [Differences](#markdown-header-differences)
+	+ [Behaviors](#markdown-header-behaviors-functionality)
+	+ [Syntax](#markdown-header-syntax)
+	+ [Additions/Improvements](#markdown-header-additions-improvements)
+	+ [Removals](#markdown-header-removals)
+* [Code acknowledgements](#markdown-header-code-acknowledgements)
 
 ## How do I get set up? ##
 * If .NET 9 is not installed on your machine, you need to download and run the x64 ".NET Desktop Runtime" installer from [here](https://dotnet.microsoft.com/en-us/download/dotnet/9.0).
@@ -297,7 +301,7 @@ class class1
 	+ PCRE exceptions are not thrown when there is an error, instead C# regex exceptions are thrown.
 	+ To learn more about C# regular expressions, see [here](https://learn.microsoft.com/en-us/dotnet/standard/base-types/regular-expressions).
 
-###	Additions/Improvements: Keysharp has added/improved the following: ###
+###	Additions/Improvements: ###
 * Buffer has an `__Item[]` indexer which can be used to read a byte at a 1-based offset.
 * Add new methods to `Array`:
 	+ `Add(value) => Integer` : Adds a single element to the array.
