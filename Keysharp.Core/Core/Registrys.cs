@@ -28,18 +28,18 @@ namespace Keysharp.Core
 			try
 			{
 				if (keyname?.Length == 0)
-					if (Accessors.A_LoopRegKey is string k)
+					if (A_LoopRegKey is string k)
 						keyname = k;
 
 				if (valname?.Length == 0)
 				{
-					if (Accessors.A_LoopRegType is string t)
+					if (A_LoopRegType is string t)
 					{
 						if (t == "KEY")
 						{
 						}
 						else if (t != "" && valname?.Length == 0)//Wasn't overridden with passed in parameter.
-							valname = Accessors.A_LoopRegName;
+							valname = A_LoopRegName;
 					}
 				}
 
@@ -74,7 +74,7 @@ namespace Keysharp.Core
 			try
 			{
 				if (keyname?.Length == 0)
-					if (Accessors.A_LoopRegKey is string k)
+					if (A_LoopRegKey is string k)
 						keyname = k;
 
 				var (reg, comp, key) = Conversions.ToRegRootKey(keyname);
@@ -114,18 +114,18 @@ namespace Keysharp.Core
 			try
 			{
 				if (keyname.Length == 0)
-					if (Accessors.A_LoopRegKey is string k)
+					if (A_LoopRegKey is string k)
 						keyname = k;
 
 				if (valname.Length == 0)
 				{
-					if (Accessors.A_LoopRegType is string t)
+					if (A_LoopRegType is string t)
 					{
 						if (t == "KEY")
 						{
 						}
 						else if (t != "" && valname?.Length == 0)//Wasn't overridden with passed in parameter.
-							valname = Accessors.A_LoopRegName;
+							valname = A_LoopRegName;
 					}
 				}
 
@@ -193,7 +193,7 @@ namespace Keysharp.Core
 				{
 					if (valtype?.Length == 0)
 					{
-						if (Accessors.A_LoopRegType is string t)
+						if (A_LoopRegType is string t)
 						{
 							if (t == "KEY")
 							{
@@ -203,13 +203,13 @@ namespace Keysharp.Core
 								valtype = t;//In this case, value type should be gotten from the current loop.
 
 								if (valname?.Length == 0)//Wasn't overridden with passed in parameter.
-									valname = Accessors.A_LoopRegName;
+									valname = A_LoopRegName;
 							}
 						}
 					}
 
-					if (Accessors.A_LoopRegKey is string k)
-						if (Accessors.A_LoopRegType is string t)
+					if (A_LoopRegKey is string k)
+						if (A_LoopRegType is string t)
 							if (t == "KEY")
 								keyname = k;
 				}
@@ -254,8 +254,8 @@ namespace Keysharp.Core
 		/// </param>
 		public static object SetRegView(object regView)
 		{
-			var oldVal = Accessors.A_RegView;
-			Accessors.A_RegView = regView;
+			var oldVal = A_RegView;
+			A_RegView = regView;
 			return oldVal;
 		}
 

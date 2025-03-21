@@ -29,22 +29,6 @@ namespace Keysharp.Core
 		/// </summary>
 		internal static bool Suspended { get; set; }
 
-		[PublicForTestOnly]
-		public static void ResetState()
-		{
-			cachedFuncObj = new ();
-			initializedUserStaticVariables = new(); // Technically belongs in Scripting.Script.Operate, but putting it here makes clearing it between test runs more maintainable
-            callingCritical = false;
-			hasExited = false;
-			IntervalUnspecified = int.MinValue + 303;// Use some negative value unlikely to ever be passed explicitly:
-			mainTimer = null;
-			NoSleep = -1;
-			persistentValueSetByUser = false;
-			timers = new ();
-			AllowInterruption = true;
-			Suspended = false;
-		}
-
 		/// <summary>
 		/// Prevents the current thread from being interrupted by other threads, or enables it to be interrupted.
 		/// </summary>
@@ -126,21 +110,6 @@ namespace Keysharp.Core
 		}
 
 		/// <summary>
-		/// Iterates through all timers in existence and returns the number of them which are enabled.
-		/// </summary>
-		/// <returns>The number of currently enabled timers.</returns>
-		public static long EnabledTimerCount()
-		{
-			var ct = 0L;
-
-			foreach (var kv in timers)
-				if (kv.Value.Enabled)//This won't work if we're enabling and disabling timers in the tick event.//TODO
-					ct++;
-
-			return ct;
-		}
-
-		/// <summary>
 		/// Exits the current thread or the entire script if non-persistent.
 		/// The exit is achieved by throwing an exception which will be caught in the catch
 		/// clause that wraps all threads.
@@ -148,7 +117,7 @@ namespace Keysharp.Core
 		/// <param name="exitCode">An integer that is returned to the caller.</param>
 		public static void Exit(object exitCode = null)
 		{
-			Accessors.A_ExitReason = exitCode.Al();
+			A_ExitReason = exitCode.Al();
 			var err = new Error(Keyword_ExitThread)
 			{
 				Handled = true,//Do not call any error handlers. Just exit the thread.
@@ -279,7 +248,7 @@ namespace Keysharp.Core
 			//so just let the natural chain of closing events handle it.
 			Script.mainWindow.CheckedBeginInvoke(() =>
 			{
-				Accessors.A_ExitReason = ExitReasons.Reload;
+				A_ExitReason = ExitReasons.Reload;
 				Application.Restart();//This will pass the same command line args to the new instance that were passed to this instance.
 			}, true, true);
 			var start = DateTime.Now;
@@ -290,6 +259,21 @@ namespace Keysharp.Core
 			return null;
 		}
 
+		[PublicForTestOnly]
+		public static void ResetState()
+		{
+			cachedFuncObj = new ();
+            initializedUserStaticVariables = new(); // Technically belongs in Scripting.Script.Operate, but putting it here makes clearing it between test runs more maintainable
+            callingCritical = false;
+			hasExited = false;
+			IntervalUnspecified = int.MinValue + 303;// Use some negative value unlikely to ever be passed explicitly:
+			mainTimer = null;
+			NoSleep = -1;
+			persistentValueSetByUser = false;
+			timers = new ();
+			AllowInterruption = true;
+			Suspended = false;
+		}
 
 		/// <summary>
 		/// Causes a function to be called automatically and repeatedly at a specified time interval.
@@ -334,7 +318,7 @@ namespace Keysharp.Core
 				if (func == null)
 				{
 					Error err;
-					_ = Errors.ErrorOccurred(err = new TypeError($"Parameter {f} of type {f.GetType()} was not a string or a function object.")) ? throw err : "";
+					_ = ErrorOccurred(err = new TypeError($"Parameter {f} of type {f.GetType()} was not a string or a function object.")) ? throw err : "";
 				}
 			}
 
@@ -398,7 +382,7 @@ namespace Keysharp.Core
 			//timer.Tick += (ss, ee) =>
 			timer.Elapsed += (ss, ee) =>
 			{
-				if ((!Accessors.A_AllowTimers.Ab() && Script.totalExistingThreads > 0)
+				if ((!A_AllowTimers.Ab() && Script.totalExistingThreads > 0)
 						|| !Threads.AnyThreadsAvailable() || !Threads.IsInterruptible())
 					return;
 
@@ -517,7 +501,7 @@ namespace Keysharp.Core
 			var state = Conversions.ConvertOnOffToggle(newState.As());
 			Suspended = state == ToggleValueType.Toggle ? !Suspended : (state == ToggleValueType.On);
 
-			if (!(bool)Accessors.A_IconFrozen && !Script.NoTrayIcon)
+			if (!(bool)A_IconFrozen && !Script.NoTrayIcon)
 				Script.Tray.Icon = Suspended ? Properties.Resources.Keysharp_s_ico : Properties.Resources.Keysharp_ico;
 
 			return null;
@@ -542,7 +526,7 @@ namespace Keysharp.Core
 			var sf = subFunction.As();
 
 			if (string.Compare(sf, "notimers", true) == 0)
-				Accessors.A_AllowTimers = !(Options.OnOff(value1.As()) ?? false);
+				A_AllowTimers = !(Options.OnOff(value1.As()) ?? false);
 			else if (string.Compare(sf, "priority", true) == 0)
 				Threads.GetThreadVariables().priority = value1.Al();
 			else if (string.Compare(sf, "interrupt", true) == 0)
@@ -564,15 +548,15 @@ namespace Keysharp.Core
 
 			Dialogs.CloseMessageBoxes();
 			var ec = exitCode.Ai();
-			Accessors.A_ExitReason = exitReason.ToString();
+			A_ExitReason = exitReason.ToString();
 			var allowInterruption_prev = AllowInterruption;//Save current setting.
 			AllowInterruption = false;
-			var result = Script.onExitHandlers.InvokeEventHandlers(Accessors.A_ExitReason, exitCode);
+			var result = Script.onExitHandlers.InvokeEventHandlers(A_ExitReason, exitCode);
 
 			//If it wasn't a critical shutdown and any exit handlers returned a non empty value, abort the exit.
 			if (exitReason >= ExitReasons.None && result.IsCallbackResultNonEmpty())
 			{
-				Accessors.A_ExitReason = "";
+				A_ExitReason = "";
 				AllowInterruption = allowInterruption_prev;
 				return true;
 			}
@@ -590,6 +574,9 @@ namespace Keysharp.Core
 
 			foreach (var kv in timers)
 				kv.Value.Stop();
+
+			foreach (var kv in Script.gcHandles)
+				kv.Value.Free();
 
 			if (!Script.IsMainWindowClosing)
 			{
@@ -681,7 +668,7 @@ namespace Keysharp.Core
 				if (!kserr.Handled)
 				{
 					var (__pushed, __btv) = Threads.BeginThread();
-					_ = Dialogs.MsgBox("Uncaught Keysharp exception:\r\n" + kserr, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
+					_ = Dialogs.MsgBox("Uncaught Keysharp exception:\r\n" + kserr, $"{A_ScriptName}: Unhandled exception", "iconx");
 					_ = Threads.EndThread(__pushed);
 				}
 
@@ -702,14 +689,14 @@ namespace Keysharp.Core
 					if (!kserr.Handled)
 					{
 						var (__pushed, __btv) = Threads.BeginThread();
-						_ = Dialogs.MsgBox("Uncaught Keysharp exception:\r\n" + kserr, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
+						_ = Dialogs.MsgBox("Uncaught Keysharp exception:\r\n" + kserr, $"{A_ScriptName}: Unhandled exception", "iconx");
 						_ = Threads.EndThread(__pushed);
 					}
 				}
 				else
 				{
 					var (__pushed, __btv) = Threads.BeginThread();
-					_ = Dialogs.MsgBox("Uncaught exception:\r\n" + "Message: " + ex.Message + "\r\nStack: " + ex.StackTrace, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
+					_ = Dialogs.MsgBox("Uncaught exception:\r\n" + "Message: " + ex.Message + "\r\nStack: " + ex.StackTrace, $"{A_ScriptName}: Unhandled exception", "iconx");
 					_ = Threads.EndThread(__pushed);
 				}
 
@@ -750,6 +737,24 @@ namespace Keysharp.Core
 		public enum ExitReasons
 		{
 			Critical = -2, Destroy = -1, None = 0, Error, LogOff, Shutdown, Close, Menu, Exit, Reload, Single
+		}
+	}
+
+	public static partial class KeysharpEnhancements
+	{
+		/// <summary>
+		/// Iterates through all timers in existence and returns the number of them which are enabled.
+		/// </summary>
+		/// <returns>The number of currently enabled timers.</returns>
+		public static long EnabledTimerCount()
+		{
+			var ct = 0L;
+
+			foreach (var kv in Flow.timers)
+				if (kv.Value.Enabled)//This won't work if we're enabling and disabling timers in the tick event.//TODO
+					ct++;
+
+			return ct;
 		}
 	}
 }

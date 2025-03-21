@@ -57,7 +57,7 @@ namespace Keysharp.Tests
 			Assert.IsTrue(TestScript("process-run-wait-close", false));
 			//Can't really test RunAs() or Shutdown(), but they have been manually tested individually.
 #else
-			_ = Run("xed", "", "max", ref pid);
+			_ = Run("xed", "", "max", pid);
 			_ = ProcessWait(pid);
 
 			//Skip process priority raising on linux, it can't be raised

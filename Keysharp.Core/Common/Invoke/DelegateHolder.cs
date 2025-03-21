@@ -8,25 +8,27 @@
 		private readonly bool fast;
 		private readonly long paramCount = -1;
 
+		public Delegate DelRef => delRef;
+
 		internal bool Reference { get; }
 
-		public DelegateHolder(object obj, bool f, bool r, long pc)
+		public DelegateHolder(object obj, bool f, bool r)
 		{
 			funcObj = Functions.GetFuncObj(obj, null, true);
-			fast = f;
+            if (funcObj is FuncObj fo)
+                paramCount = fo.MaxParams;
+            fast = f;
 			Reference = r;
-			paramCount = pc;
 			delRef = (PlaceholderFunction)Delegate.CreateDelegate(typeof(PlaceholderFunction), this, "DelegatePlaceholder");
 		}
 
-		public long DelegatePlaceholder(IntPtr p1 = new IntPtr(), IntPtr p2 = new IntPtr(), IntPtr p3 = new IntPtr(), IntPtr p4 = new IntPtr(), IntPtr p5 = new IntPtr(), IntPtr p6 = new IntPtr(), IntPtr p7 = new IntPtr(), IntPtr p8 = new IntPtr(),
-		IntPtr p9 = new IntPtr(), IntPtr p10 = new IntPtr(), IntPtr p11 = new IntPtr(), IntPtr p12 = new IntPtr(), IntPtr p13 = new IntPtr(), IntPtr p14 = new IntPtr(), IntPtr p15 = new IntPtr(), IntPtr p16 = new IntPtr(),
-		IntPtr p17 = new IntPtr(), IntPtr p18 = new IntPtr(), IntPtr p19 = new IntPtr(), IntPtr p20 = new IntPtr(), IntPtr p21 = new IntPtr(), IntPtr p22 = new IntPtr(), IntPtr p23 = new IntPtr(), IntPtr p24 = new IntPtr(),
-		IntPtr p25 = new IntPtr(), IntPtr p26 = new IntPtr(), IntPtr p27 = new IntPtr(), IntPtr p28 = new IntPtr(), IntPtr p29 = new IntPtr(), IntPtr p30 = new IntPtr(), IntPtr p31 = new IntPtr())
-
+		public long DelegatePlaceholder(long p1 = 0L, long p2 = 0L, long p3 = 0L, long p4 = 0L, long p5 = 0L, long p6 = 0L, long p7 = 0L, long p8 = 0L,
+										long p9 = 0L, long p10 = 0L, long p11 = 0L, long p12 = 0L, long p13 = 0L, long p14 = 0L, long p15 = 0L, long p16 = 0L,
+										long p17 = 0L, long p18 = 0L, long p19 = 0L, long p20 = 0L, long p21 = 0L, long p22 = 0L, long p23 = 0L, long p24 = 0L,
+										long p25 = 0L, long p26 = 0L, long p27 = 0L, long p28 = 0L, long p29 = 0L, long p30 = 0L, long p31 = 0L)
 		{
 			object val = null;
-			nint[] arr = new nint[31];
+			long[] arr = new long[31];
             arr[0] = p1;
             arr[1] = p2;
             arr[2] = p3;
@@ -86,7 +88,7 @@
 			return ConvertResult(val);
 		}
 
-		public long DelegatePlaceholderArr(IntPtr[] arr)
+		public long DelegatePlaceholderArr(long[] arr)
 		{
 			object val = null;
 
@@ -96,9 +98,9 @@
 				{
 					unsafe
 					{
-						fixed (IntPtr* pin = &arr[0])
+						fixed (long* pin = &arr[0])
 						{
-							var ptr = new IntPtr((long*)pin);
+							var ptr = new IntPtr(pin);
 							val = funcObj.Call(ptr.ToInt64());
 						}
 					}
@@ -132,6 +134,32 @@
 			return ConvertResult(val);
 		}
 
+		internal static long ConvertResult(object val)
+		{
+			if (val is int i)
+				return i;
+			else if (val is long l)
+				return l;
+			else if (val is bool b)
+				return b ? 1L : 0L;
+			else if (val is double d)
+				return (long)d;
+			else if (val is string s && s.Length == 0)
+				return 0L;
+			else if (val is null)
+				return 0L;
+			else if (val is IntPtr ip)
+				return ip.ToInt64();
+
+			return 0L;
+		}
+
+		internal void Clear()
+		{
+			delRef = null;
+			funcObj = null;
+		}
+
 		internal long DirectCall(params object[] parameters)
 		{
 			if (Reference)
@@ -159,35 +187,9 @@
 			}
 		}
 
-		private static long ConvertResult(object val)
-		{
-			if (val is int i)
-				return i;
-			else if (val is long l)
-				return (int)l;
-			else if (val is bool b)
-				return b ? 1 : 0;
-			else if (val is double d)
-				return (int)d;
-			else if (val is string s && s.Length == 0)
-				return 0L;
-			else if (val is null)
-				return 0L;
-			else if (val is IntPtr ip)
-				return (int)ip.ToInt64();
-
-			return 0L;
-		}
-
-		internal void Clear()
-		{
-			delRef = null;
-			funcObj = null;
-		}
-
-		public delegate long PlaceholderFunction(IntPtr p1 = new IntPtr(), IntPtr p2 = new IntPtr(), IntPtr p3 = new IntPtr(), IntPtr p4 = new IntPtr(), IntPtr p5 = new IntPtr(), IntPtr p6 = new IntPtr(), IntPtr p7 = new IntPtr(), IntPtr p8 = new IntPtr(),
-		IntPtr p9 = new IntPtr(), IntPtr p10 = new IntPtr(), IntPtr p11 = new IntPtr(), IntPtr p12 = new IntPtr(), IntPtr p13 = new IntPtr(), IntPtr p14 = new IntPtr(), IntPtr p15 = new IntPtr(), IntPtr p16 = new IntPtr(),
-		IntPtr p17 = new IntPtr(), IntPtr p18 = new IntPtr(), IntPtr p19 = new IntPtr(), IntPtr p20 = new IntPtr(), IntPtr p21 = new IntPtr(), IntPtr p22 = new IntPtr(), IntPtr p23 = new IntPtr(), IntPtr p24 = new IntPtr(),
-		IntPtr p25 = new IntPtr(), IntPtr p26 = new IntPtr(), IntPtr p27 = new IntPtr(), IntPtr p28 = new IntPtr(), IntPtr p29 = new IntPtr(), IntPtr p30 = new IntPtr(), IntPtr p31 = new IntPtr());
-	}
+        public delegate long PlaceholderFunction(long p1 = 0L, long p2 = 0L, long p3 = 0L, long p4 = 0L, long p5 = 0L, long p6 = 0L, long p7 = 0L, long p8 = 0L,
+                long p9 = 0L, long p10 = 0L, long p11 = 0L, long p12 = 0L, long p13 = 0L, long p14 = 0L, long p15 = 0L, long p16 = 0L,
+                long p17 = 0L, long p18 = 0L, long p19 = 0L, long p20 = 0L, long p21 = 0L, long p22 = 0L, long p23 = 0L, long p24 = 0L,
+                long p25 = 0L, long p26 = 0L, long p27 = 0L, long p28 = 0L, long p29 = 0L, long p30 = 0L, long p31 = 0L);
+    }
 }

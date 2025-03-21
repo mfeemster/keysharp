@@ -116,3 +116,21 @@ if (s == "00000000000000FF")
     FileAppend "pass", "*"
 else
     FileAppend "fail", "*"
+
+s := FormatCs("{1}", 123)
+
+; Test 15: Signed hexadecimal double-precision floating-point value.
+s := Format("{:a}", 255)
+if (s == "0x1.fe00000000000p+7")
+    FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+	
+s := FormatCs("{1}", 123.456)
+
+; Test 16: Memory address in hexadecimal digits.
+s := Format("{:p}", 255)
+if (s == "00000000000000FF")
+    FileAppend "pass", "*"
+else
+    FileAppend "fail", "*"

@@ -362,7 +362,7 @@ namespace Keysharp.Core.Common.Keyboard
 			{
 				var hot = shk[i];
 
-				if (hkIsInactive[i] = (Accessors.A_IsSuspended && !hot.IsExemptFromSuspend())
+				if (hkIsInactive[i] = (A_IsSuspended && !hot.IsExemptFromSuspend())
 									  || hot.IsCompletelyDisabled()) // Listed last for short-circuit performance.
 				{
 					// In the cases above, nothing later below can change the fact that this hotkey should
@@ -527,7 +527,7 @@ namespace Keysharp.Core.Common.Keyboard
 						for (hot.type = HotkeyTypeEnum.KeyboardHook, vp = hot.firstVariant; vp != null; vp = vp.nextVariant)
 						{
 							if (vp.hotCriterion == null && vp.enabled // It's a global variant (no criteria) and it's enabled...
-									&& (!Accessors.A_IsSuspended || vp.suspendExempt))
+									&& (!A_IsSuspended || vp.suspendExempt))
 								// ... and this variant isn't suspended (we already know IsCompletelyDisabled()==false from an earlier check).
 							{
 								hot.type = HotkeyTypeEnum.Normal; // Reset back to how it was before this loop started.  Hook not needed.
@@ -596,14 +596,14 @@ namespace Keysharp.Core.Common.Keyboard
 			// But do this part outside of the above block because these values may have changed since
 			// this function was first called.  By design, the Num/Scroll/CapsLock AlwaysOn/Off setting
 			// stays in effect even when Suspend in ON.
-			var ts = Keysharp.Core.Keyboard.toggleStates;
+			var ts = Core.Keyboard.toggleStates;
 
 			if (HotstringManager.enabledCount != 0
 					|| Script.input != null // v1.0.91: Hook is needed for collecting input.
 					|| !(ts.forceNumLock == ToggleValueType.Neutral && ts.forceCapsLock == ToggleValueType.Neutral && ts.forceScrollLock == ToggleValueType.Neutral))
 				whichHookNeeded |= HookType.Keyboard;
 
-			if (Keysharp.Core.Keyboard.blockMouseMove || (HotstringManager.hsResetUponMouseClick && HotstringManager.enabledCount != 0))
+			if (Core.Keyboard.blockMouseMove || (HotstringManager.hsResetUponMouseClick && HotstringManager.enabledCount != 0))
 				whichHookNeeded |= HookType.Mouse;
 
 			//Anything not a mouse or joystick should start the keyboard hook because even hotkeys
@@ -782,7 +782,7 @@ namespace Keysharp.Core.Common.Keyboard
 				// (once in the hook to determine whether the hotkey keystroke should be passed through to the active window,
 				// and again upon receipt of the message for reasons explained there).
 				for (vp = hk.firstVariant; vp != null; vp = vp.nextVariant)
-					if (vp.hotCriterion == null && vp.enabled && (!Accessors.A_IsSuspended || vp.suspendExempt)
+					if (vp.hotCriterion == null && vp.enabled && (!A_IsSuspended || vp.suspendExempt)
 							&& KeyboardMouseSender.HotInputLevelAllowsFiring(vp.inputLevel, extraInfo, ref singleChar))
 					{
 						// Fix for v1.0.47.02: The following section (above "return") was moved into this block
@@ -1315,7 +1315,7 @@ namespace Keysharp.Core.Common.Keyboard
 			object val = null;
 			var task = Task.Run(() => val = criterion.Call(hotkeyName));//Unsure if this will cause problems with GUI threading.
 
-			if (task.Wait(TimeSpan.FromMilliseconds(Accessors.A_HotIfTimeout.Ad())))
+			if (task.Wait(TimeSpan.FromMilliseconds(A_HotIfTimeout.Ad())))
 			{
 				if (val is long l)
 					return l;
@@ -1397,7 +1397,7 @@ namespace Keysharp.Core.Common.Keyboard
 
 				if (hk.hookAction != 0)
 				{
-					if (Accessors.A_IsSuspended)
+					if (A_IsSuspended)
 						// An alt-tab hotkey (non-NULL mHookAction) is always suspended when g_IsSuspended==true because
 						// alt-tab hotkeys have no subroutine capable of making them exempt.  So g_IsSuspended is checked
 						// for alt-tab hotkeys here; and for other types of hotkeys, it's checked further below.
@@ -1422,7 +1422,7 @@ namespace Keysharp.Core.Common.Keyboard
 					// v1.0.42: Fixed to take into account whether the hotkey is suspended (previously it only checked
 					// whether the hotkey was enabled (above), which isn't enough):
 					if (vp.enabled // This particular variant within its parent hotkey is enabled.
-							&& (!Accessors.A_IsSuspended || vp.suspendExempt) // This variant isn't suspended...
+							&& (!A_IsSuspended || vp.suspendExempt) // This variant isn't suspended...
 							&& (vp.hotCriterion == null || (HotCriterionAllowsFiring(vp.hotCriterion, hk.Name) != 0L))) // ... and its criteria allow it to fire.
 					{
 						if ((vp.noSuppress & NO_SUPPRESS_PREFIX) != 0 || suppress)
@@ -1912,11 +1912,11 @@ namespace Keysharp.Core.Common.Keyboard
 				// mPriority (default priority is always 0)
 				callback = _callback,
 				originalCallback = Proc,
-				maxThreads = Accessors.A_MaxThreadsPerHotkey.Aui(),    // The values of these can vary during load-time.
-				maxThreadsBuffer = Accessors.A_MaxThreadsBuffer.Ab(),
-				inputLevel = (uint)Accessors.A_InputLevel,
+				maxThreads = A_MaxThreadsPerHotkey.Aui(),    // The values of these can vary during load-time.
+				maxThreadsBuffer = A_MaxThreadsBuffer.Ab(),
+				inputLevel = (uint)A_InputLevel,
 				hotCriterion = Threads.GetThreadVariables().hotCriterion, // If this hotkey is an alt-tab one (mHookAction), this is stored but ignored until/unless the Hotkey command converts it into a non-alt-tab hotkey.
-				suspendExempt = Accessors.A_SuspendExempt.Ab(),
+				suspendExempt = A_SuspendExempt.Ab(),
 				noSuppress = _noSuppress,
 				enabled = true
 			};
@@ -1996,7 +1996,7 @@ namespace Keysharp.Core.Common.Keyboard
 				// is for maintainability and code size reduction.  Finally, it's unlikely to significantly
 				// impact performance since the vast majority of hotkeys have either one or just a few variants.
 				if (vp.enabled // This particular variant within its parent hotkey is enabled.
-						&& (!Accessors.A_IsSuspended || vp.suspendExempt) // This variant isn't suspended...
+						&& (!A_IsSuspended || vp.suspendExempt) // This variant isn't suspended...
 						&& KeyboardMouseSender.HotInputLevelAllowsFiring(vp.inputLevel, extraInfo, ref singleChar) // ... its #InputLevel allows it to fire...
 						&& (vp.hotCriterion == null || ((foundHwnd = HotCriterionAllowsFiring(vp.hotCriterion, Name)) != 0L))) // ... and its criteria allow it to fire.
 				{
@@ -2085,8 +2085,8 @@ namespace Keysharp.Core.Common.Keyboard
 			// tickcounts itself is greater than about 49 days:
 			timeUntilNow = timeNow - timePrev;
 
-			if (displayWarning = (throttledKeyCount > Accessors.maxHotkeysPerInterval
-								  && timeUntilNow.TotalMilliseconds < Accessors.hotkeyThrottleInterval))
+			if (displayWarning = (throttledKeyCount > maxHotkeysPerInterval
+								  && timeUntilNow.TotalMilliseconds < hotkeyThrottleInterval))
 			{
 				// The moment any dialog is displayed, hotkey processing is halted since this
 				// app currently has only one thread.
@@ -2107,7 +2107,7 @@ namespace Keysharp.Core.Common.Keyboard
 			}
 
 			// The display_warning var is needed due to the fact that there's an OR in this condition:
-			if (displayWarning || timeUntilNow.TotalMilliseconds > Accessors.hotkeyThrottleInterval)
+			if (displayWarning || timeUntilNow.TotalMilliseconds > hotkeyThrottleInterval)
 			{
 				// Reset the sliding interval whenever it expires.  Doing it this way makes the
 				// sliding interval more sensitive than alternate methods might be.
@@ -2126,9 +2126,9 @@ namespace Keysharp.Core.Common.Keyboard
 			VariadicFunction vf = (o) =>
 			{
 				if (ht.IsWheelVK(vk)) // If this is true then also: msg.message==AHK_HOOK_HOTKEY
-					Accessors.A_EventInfo = (long)Conversions.LowWord(lParamVal); // v1.0.43.03: Override the thread default of 0 with the number of notches by which the wheel was turned.
+					A_EventInfo = (long)Conversions.LowWord(lParamVal); // v1.0.43.03: Override the thread default of 0 with the number of notches by which the wheel was turned.
 
-				Accessors.A_SendLevel = variant.inputLevel;
+				A_SendLevel = variant.inputLevel;
 				var tv = Threads.GetThreadVariables();
 				tv.hwndLastUsed = new IntPtr(critFoundHwnd);
 				tv.hotCriterion = variant.hotCriterion;

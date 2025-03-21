@@ -4,7 +4,7 @@
 	/// Public interface for real threads-releated functions.
 	/// These differ than the pseudo-threads used throughout the rest of the library.
 	/// </summary>
-	public static class RealThreads
+	public static partial class KeysharpEnhancements
 	{
 		/// <summary>
 		/// Runs a function object inside of a lock statement.

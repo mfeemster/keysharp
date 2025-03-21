@@ -693,35 +693,35 @@ namespace Keysharp.Scripting
 			bool inString = false, inMlComment = false;
 			var replace = new[,]//These will need to be done differently on linux.//LINUXTODO
 			{
-				{ "%A_AhkPath%", Accessors.A_AhkPath },
+				{ "%A_AhkPath%", A_AhkPath },
 				{ "%A_AppData%", Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData) },
 				{ "%A_AppDataCommon%", Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData) },
-				{ "%A_ComputerName%", Accessors.A_ComputerName },
+				{ "%A_ComputerName%", A_ComputerName },
 #if WINDOWS
-				{ "%A_ComSpec%", Accessors.A_ComSpec },
+				{ "%A_ComSpec%", A_ComSpec },
 #endif
-				{ "%A_Desktop%", Accessors.A_Desktop },
-				{ "%A_DesktopCommon%", Accessors.A_DesktopCommon },
-				{ "%A_IsCompiled%", Accessors.A_IsCompiled.ToString() },
-				{ "%A_KeysharpPath%", Accessors.A_KeysharpPath },
+				{ "%A_Desktop%", A_Desktop },
+				{ "%A_DesktopCommon%", A_DesktopCommon },
+				{ "%A_IsCompiled%", A_IsCompiled.ToString() },
+				{ "%A_KeysharpPath%", A_KeysharpPath },
 				{ "%A_LineFile%", name },
-				{ "%A_MyDocuments%", Accessors.A_MyDocuments },
-				{ "%A_ProgramFiles%", Accessors.A_ProgramFiles },
-				{ "%A_Programs%", Accessors.A_Programs },
-				{ "%A_ProgramsCommon%", Accessors.A_ProgramsCommon },
+				{ "%A_MyDocuments%", A_MyDocuments },
+				{ "%A_ProgramFiles%", A_ProgramFiles },
+				{ "%A_Programs%", A_Programs },
+				{ "%A_ProgramsCommon%", A_ProgramsCommon },
 				{ "%A_ScriptDir%", Path.GetDirectoryName(parser.name) },//Note that Name, with a capital N, is the initial script file, not any of the included files.
 				{ "%A_ScriptFullPath%", parser.name },
-				{ "%A_ScriptName%", Accessors.A_ScriptName },
-				{ "%A_Space%", Accessors.A_Space },
-				{ "%A_StartMenu%", Accessors.A_StartMenu },
-				{ "%A_StartMenuCommon%", Accessors.A_StartMenuCommon },
-				{ "%A_Startup%", Accessors.A_Startup },
-				{ "%A_StartupCommon%", Accessors.A_StartupCommon },
-				{ "%A_Tab%", Accessors.A_Tab },
-				{ "%A_Temp%", Accessors.A_Temp },
-				{ "%A_UserName%", Accessors.A_UserName },
+				{ "%A_ScriptName%", A_ScriptName },
+				{ "%A_Space%", A_Space },
+				{ "%A_StartMenu%", A_StartMenu },
+				{ "%A_StartMenuCommon%", A_StartMenuCommon },
+				{ "%A_Startup%", A_Startup },
+				{ "%A_StartupCommon%", A_StartupCommon },
+				{ "%A_Tab%", A_Tab },
+				{ "%A_Temp%", A_Temp },
+				{ "%A_UserName%", A_UserName },
 #if WINDOWS
-				{ "%A_WinDir%", Accessors.A_WinDir },
+				{ "%A_WinDir%", A_WinDir },
 #endif
 			};
 			includePath = name = File.Exists(name) ? Path.GetFullPath(name) : "./";
@@ -1047,14 +1047,14 @@ namespace Keysharp.Scripting
 											if (Environment.OSVersion.Platform == PlatformID.Win32NT)
 											{
 												paths.Add($"{includePath}\\{p1}");//Folder relative to the script file, or as overridden.
-												paths.Add($"{Accessors.A_MyDocuments}\\AutoHotkey\\{LibDir}\\{p1}");//User library.
-												paths.Add($"{Accessors.A_KeysharpPath}\\{LibDir}\\{p1}");//Executable folder, standard library.
+												paths.Add($"{A_MyDocuments}\\AutoHotkey\\{LibDir}\\{p1}");//User library.
+												paths.Add($"{A_KeysharpPath}\\{LibDir}\\{p1}");//Executable folder, standard library.
 											}
 											else if (Path.DirectorySeparatorChar == '/' && Environment.OSVersion.Platform == PlatformID.Unix)
 											{
 												paths.Add($"{includePath}/{p1}");
 												paths.Add(Path.Combine(Path.Combine(Environment.GetEnvironmentVariable("HOME"), "/AutoHotkey"), p1));
-												paths.Add($"{Accessors.A_KeysharpPath}/{LibDir}/{p1}");//Three ways to get the possible executable folder.
+												paths.Add($"{A_KeysharpPath}/{LibDir}/{p1}");//Three ways to get the possible executable folder.
 												paths.Add($"/usr/{LibDir}/AutoHotkey/{LibDir}/{p1}");
 												paths.Add($"/usr/local/{LibDir}/AutoHotkey/{LibDir}/{p1}");
 											}

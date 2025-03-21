@@ -7,13 +7,16 @@ namespace Keysharp.Scripting
 			var d = 0.0;
 			var l = 0L;
 
+			if (input is bool b)
+				return b;
+
 			if (input == null)
 				return false;
 
-			var b = input.ParseBool();
+			var pb = input.ParseBool();
 
-			if (b.HasValue)
-				return b.Value;
+			if (pb.HasValue)
+				return pb.Value;
 			else if (input.ParseLong(ref l, false, false))
 				return l != 0;
 			else if (input.ParseDouble(ref d, false, true))
@@ -28,7 +31,7 @@ namespace Keysharp.Scripting
 					if (mi.Name == "op_Implicit" && mi.ReturnType == typeof(bool))
 						return (bool)mi.Invoke(input, [input]);
 					else if (mi.Name == "op_Implicit" && mi.ReturnType == typeof(long))
-						return ((long)mi.Invoke(input, [input]) != 0);
+						return (long)mi.Invoke(input, [input]) != 0;
 			}
 
 			return true;//Any non-null, non-empty string is considered true.

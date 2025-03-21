@@ -1,9 +1,6 @@
 ﻿namespace Keysharp.Core
 {
-	/// <summary>
-	/// Public interface for strings-related functions.
-	/// </summary>
-	public static class Strings
+	public static partial class KeysharpEnhancements
 	{
 		private static readonly object[] nullPlaceholder = [null];
 
@@ -36,6 +33,67 @@
 		public static string Base64Encode(object value) => Convert.ToBase64String(Crypt.ToByteArray(value));
 
 		/// <summary>
+		/// Formats a string using the same syntax used by string.Format(), except it uses 1-based indexing.
+		/// This is made available for users who prefer standard C# style formatting over the AHK
+		/// style used in Format().
+		/// <see cref="https://learn.microsoft.com/en-us/dotnet/api/system.string.format"/>
+		/// </summary>
+		/// <param name="str">The format string.</param>
+		/// <param name="args">The arguments to pass to the format string.</param>
+		/// <returns>The newly formatted string.</returns>
+		public static string FormatCs(object str, params object[] args) => string.Format(str.As(), nullPlaceholder.Concat(args));
+
+		/// <summary>
+		/// Joins together the string representation of all array elements, separated by the specified separator.
+		/// </summary>
+		/// <param name="sep">The separator to use between each item.</param>
+		/// <param name="args">The parameters to join together as a string.</param>
+		/// <returns>The newly joined string of all arguments separated by the specified separator.</returns>
+		public static string Join(object sep, params object[] args) => string.Join(sep.ToString(), args);
+
+		/// <summary>
+		/// Makes all line endings in a string match the value passed in, or the default for the current environment.
+		/// </summary>
+		/// <param name="str">The string whose line endings will be normalized.</param>
+		/// <param name="endOfLine">The line ending character to use. Default: newline for the current environment.</param>
+		/// <returns>A new copy of the string with all line endings set to the specified value.</returns>
+		public static string NormalizeEol(object str, object endOfLine = null)
+		{
+			const string CR = "\r", LF = "\n", CRLF = "\r\n";
+			var text = str.As();
+			var eol = endOfLine.As(Environment.NewLine);
+
+			switch (eol)
+			{
+				case CR:
+					return text.Replace(CRLF, CR).Replace(LF, CR);
+
+				case LF:
+					return text.Replace(CRLF, LF).Replace(CR, LF);
+
+				case CRLF:
+					return text.Replace(CR, string.Empty).Replace(LF, CRLF);
+			}
+
+			return text;
+		}
+
+		/// <summary>
+		/// Determines if a string starts with a given string, using the current culture.
+		/// </summary>
+		/// <param name="str">The string to examine the start of.</param>
+		/// <param name="str2">The string to search for.</param>
+		/// <param name="ignoreCase">True to ignore case, else case sensitive. Default: case sensitive.</param>
+		/// <returns>1 if str started with str2, else 0.</returns>
+		public static long StartsWith(object str, object str2, object ignoreCase = null) => str.As().StartsWith(str2.As(), ignoreCase.Ab() ? StringComparison.CurrentCulture : StringComparison.CurrentCultureIgnoreCase) ? 1L : 0L;
+	}
+
+	/// <summary>
+	/// Public interface for strings-related functions.
+	/// </summary>
+	public static class Strings
+	{
+		/// <summary>
 		/// Returns the string corresponding to number.<br/>
 		/// This is always a single Unicode character, but for practical reasons,<br/>
 		/// Unicode supplementary characters (where number is in the range 0x10000 to 0x10FFFF) are counted as two characters.
@@ -53,697 +111,277 @@
 		/// <returns>1 if str ended with str2, else 0.</returns>
 		public static long EndsWith(object str, object str2, object ignoreCase = null) => str.As().EndsWith(str2.As(), ignoreCase.Ab() ? StringComparison.CurrentCulture : StringComparison.CurrentCultureIgnoreCase) ? 1L : 0L;
 
-        /// <summary>
-        /// Formats a string using a format string containing placeholders (e.g. "{1:05d}" or "{}") 
-        /// and a variable number of arguments. (Argument indices are 1–based when specified.)
-        /// </summary>
-        /// <param name="str">The format string.</param>
-        /// <param name="args">The arguments to pass to the format string.</param>
-        /// <returns>The newly formatted string.</returns>
-        public static string Format(object str, params object[] args)
-        {
+		/// <summary>
+		/// Formats a string using a format string containing placeholders (e.g. "{1:05d}" or "{}")
+		/// and a variable number of arguments. (Argument indices are 1–based when specified.)
+		/// <param name="str">The format string.</param>
+		/// <param name="args">The arguments to pass to the format string.</param>
+		/// <returns>The newly formatted string.</returns>
+		/// </summary>
+		public static string Format(object str, params object[] args)
+		{
 			string formatStr = str.As();
-            StringBuilder result = new StringBuilder();
-            int pos = 0;
-            int nextArg = 0; // if no explicit index is given, use the next argument.
-            while (pos < formatStr.Length)
-            {
-                // Append literal text until the next '{'
-                int braceIndex = formatStr.IndexOf('{', pos);
-                if (braceIndex < 0)
-                {
-                    result.Append(formatStr, pos, formatStr.Length - pos);
-                    break;
-                }
-                result.Append(formatStr, pos, braceIndex - pos);
-                pos = braceIndex;
+			StringBuilder result = new StringBuilder();
+			int pos = 0;
+			int nextArg = 0; // if no explicit index is given, use the next argument.
 
-                // Check for literal escaped braces.
-                // According to the spec, use {{} or {}} to output a literal { or }.
-                if (pos + 2 < formatStr.Length &&
-                    (formatStr[pos + 1] == '{' || formatStr[pos + 1] == '}') &&
-                    formatStr[pos + 2] == '}')
-                {
-                    result.Append(formatStr[pos + 1]);
-                    pos += 3;
-                    continue;
-                }
+			while (pos < formatStr.Length)
+			{
+				// Append literal text until the next '{'
+				int braceIndex = formatStr.IndexOf('{', pos);
 
-                int placeholderStart = pos;
-                pos++; // skip the opening '{'
+				if (braceIndex < 0)
+				{
+					_ = result.Append(formatStr, pos, formatStr.Length - pos);
+					break;
+				}
 
-                // --- Parse an optional index (a sequence of digits) ---
-                int indexStart = pos;
-                while (pos < formatStr.Length && char.IsDigit(formatStr[pos]))
-                    pos++;
+				_ = result.Append(formatStr, pos, braceIndex - pos);
+				pos = braceIndex;
 
-                int argIndex;
-                if (pos > indexStart)
-                {
-                    // Convert the (1–based) index from the format string to 0–based.
-                    string indexStr = formatStr.Substring(indexStart, pos - indexStart);
-                    if (!int.TryParse(indexStr, out argIndex))
-                    {
-                        // On parse error, output the placeholder literally.
-                        result.Append(formatStr, placeholderStart, pos - placeholderStart);
-                        continue;
-                    }
-                    argIndex = argIndex - 1;
-                }
-                else
-                {
-                    // No index specified; use next argument.
-                    argIndex = nextArg;
-                }
-                if (argIndex < 0 || argIndex >= args.Length)
-                {
-                    // Invalid index – simply include the entire placeholder text.
-                    int closingBrace = formatStr.IndexOf('}', pos);
-                    if (closingBrace < 0)
-                    {
-                        result.Append(formatStr, placeholderStart, formatStr.Length - placeholderStart);
-                        break;
-                    }
-                    else
-                    {
-                        result.Append(formatStr, placeholderStart, closingBrace - placeholderStart + 1);
-                        pos = closingBrace + 1;
-                        continue;
-                    }
-                }
-                if (pos == indexStart) // no explicit index was provided
-                    nextArg++;
+				// Check for literal escaped braces.
+				// According to the spec, use {{} or {}} to output a literal { or }.
+				if (pos + 2 < formatStr.Length &&
+						(formatStr[pos + 1] == '{' || formatStr[pos + 1] == '}') &&
+						formatStr[pos + 2] == '}')
+				{
+					_ = result.Append(formatStr[pos + 1]);
+					pos += 3;
+					continue;
+				}
 
-                // --- Parse an optional format specifier ---
-                SpecInfo spec;
-                if (pos < formatStr.Length && formatStr[pos] == ':')
-                {
-                    pos++; // skip ':'
-                    int specStart = pos;
-                    // First: skip any flags (valid flags: - + 0 space #)
-                    while (pos < formatStr.Length && "-+0 #".Contains(formatStr[pos]))
-                        pos++;
-                    // Then: width digits
-                    while (pos < formatStr.Length && char.IsDigit(formatStr[pos]))
-                        pos++;
-                    // Optionally: a precision, beginning with a dot.
-                    if (pos < formatStr.Length && formatStr[pos] == '.')
-                    {
-                        pos++; // skip '.'
-                        while (pos < formatStr.Length && char.IsDigit(formatStr[pos]))
-                            pos++;
-                    }
-                    // The specCore is the substring with flags, width and precision.
-                    string specCore = formatStr.Substring(specStart, pos - specStart);
-                    // Next comes the conversion type (if any)
-                    char typeChar = 's'; // default conversion is to string.
-                    if (pos < formatStr.Length)
-                    {
-                        char c = formatStr[pos];
-                        if ("diouxXeEfgGaAcCps".Contains(c))
-                        {
-                            typeChar = c;
-                            pos++;
-                        }
-                        else
-                        {
-                            typeChar = 's';
-                        }
-                    }
-                    // For string values, check for an optional case transformation specifier:
-                    // U (upper‐case), L (lower‐case) or T (title case). (Also accept lower–case letters.)
-                    char customFormat = '\0';
-                    if (typeChar == 's' && pos < formatStr.Length && "ULlTt".Contains(formatStr[pos]))
-                    {
-                        customFormat = char.ToUpperInvariant(formatStr[pos]);
-                        pos++;
-                        if (pos < formatStr.Length && formatStr[pos] == 's')
-                            pos++;
-                    }
-                    spec = ParseSpecInfo(specCore, typeChar);
-                    spec.CustomFormat = customFormat;
-                }
-                else
-                {
-                    // No specifier: default to string conversion.
-                    spec = new SpecInfo { Type = 's' };
-                }
+				int placeholderStart = pos;
+				pos++; // skip the opening '{'
+				// --- Parse an optional index (a sequence of digits) ---
+				int indexStart = pos;
 
-                // The placeholder must end with a closing brace.
-                if (pos >= formatStr.Length || formatStr[pos] != '}')
-                {
-                    // If not, output the placeholder literally.
-                    result.Append(formatStr, placeholderStart, pos - placeholderStart);
-                    continue;
-                }
-                pos++; // skip the closing '}'
+				while (pos < formatStr.Length && char.IsDigit(formatStr[pos]))
+					pos++;
 
-                // --- Format the argument according to the parsed specifier ---
-                string formattedArg = FormatArgument(args[argIndex], spec);
+				int argIndex;
 
-                // If a custom string–transformation was requested (U, L, or T), apply it.
-                if (spec.CustomFormat != '\0' && spec.Type == 's')
-                {
-                    switch (spec.CustomFormat)
-                    {
-                        case 'U':
-                            formattedArg = formattedArg.ToUpperInvariant();
-                            break;
-                        case 'L':
-                            formattedArg = formattedArg.ToLowerInvariant();
-                            break;
-                        case 'T':
-                            formattedArg = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(formattedArg.ToLower());
-                            break;
-                    }
-                }
-                result.Append(formattedArg);
-            }
-            return result.ToString();
-        }
+				if (pos > indexStart)
+				{
+					// Convert the (1–based) index from the format string to 0–based.
+					var indexStr = formatStr.AsSpan(indexStart, pos - indexStart);
 
-        /// <summary>
-        /// Holds the parsed details of a format specifier.
-        /// </summary>
-        class SpecInfo
-        {
-            public bool LeftAlign = false;
-            public bool Plus = false;
-            public bool ZeroPad = false;
-            public bool Space = false;
-            public bool Alternate = false;
-            public int? Width = null;
-            public int? Precision = null;
-            public char Type = 's';
-            public char CustomFormat = '\0';  // For U (upper), L (lower) or T (title) – only for strings.
-        }
+					if (!int.TryParse(indexStr, out argIndex))
+					{
+						// On parse error, output the placeholder literally.
+						_ = result.Append(formatStr, placeholderStart, pos - placeholderStart);
+						continue;
+					}
 
-        /// <summary>
-        /// Parses the “specCore” (the flags, width and precision portion) plus the conversion type.
-        /// </summary>
-        private static SpecInfo ParseSpecInfo(string specCore, char typeChar)
-        {
-            SpecInfo spec = new SpecInfo();
-            spec.Type = typeChar;
-            int pos = 0;
-            // Parse any flags.
-            while (pos < specCore.Length && "-+0 #".Contains(specCore[pos]))
-            {
-                switch (specCore[pos])
-                {
-                    case '-': spec.LeftAlign = true; break;
-                    case '+': spec.Plus = true; break;
-                    case '0': spec.ZeroPad = true; break;
-                    case ' ': spec.Space = true; break;
-                    case '#': spec.Alternate = true; break;
-                }
-                pos++;
-            }
-            // Parse the (optional) width.
-            int startWidth = pos;
-            while (pos < specCore.Length && char.IsDigit(specCore[pos]))
-                pos++;
-            if (pos > startWidth)
-            {
-                if (int.TryParse(specCore.Substring(startWidth, pos - startWidth), out int width))
-                    spec.Width = width;
-            }
-            // Parse an optional precision (after a dot).
-            if (pos < specCore.Length && specCore[pos] == '.')
-            {
-                pos++; // skip dot
-                int startPrec = pos;
-                while (pos < specCore.Length && char.IsDigit(specCore[pos]))
-                    pos++;
-                if (pos > startPrec)
-                {
-                    if (int.TryParse(specCore.Substring(startPrec, pos - startPrec), out int prec))
-                        spec.Precision = prec;
-                    else
-                        spec.Precision = 0;
-                }
-                else
-                    spec.Precision = 0;
-            }
-            return spec;
-        }
+					argIndex--;
+				}
+				else
+				{
+					// No index specified; use next argument.
+					argIndex = nextArg;
+				}
 
-        /// <summary>
-        /// Formats one argument according to the given SpecInfo.
-        /// (This method “emulates” many of the printf–style conversions.)
-        /// </summary>
-        private static string FormatArgument(object arg, SpecInfo spec)
-        {
-            switch (spec.Type)
-            {
-                // Integer formats – d or i.
-                case 'd':
-                case 'i':
-                    {
-                        long num;
-                        try
-                        {
-                            num = Convert.ToInt64(arg, CultureInfo.InvariantCulture);
-                        }
-                        catch
-                        {
-                            num = 0;
-                        }
-                        // Use the precision (if given) as the minimum number of digits.
-                        string numberStr = spec.Precision.HasValue
-                            ? Math.Abs(num).ToString("D" + spec.Precision.Value, CultureInfo.InvariantCulture)
-                            : Math.Abs(num).ToString(CultureInfo.InvariantCulture);
-                        if (num < 0)
-                            numberStr = "-" + numberStr;
-                        else if (spec.Plus)
-                            numberStr = "+" + numberStr;
-                        else if (spec.Space)
-                            numberStr = " " + numberStr;
-                        // Apply padding if a field width was specified.
-                        if (spec.Width.HasValue && numberStr.Length < spec.Width.Value)
-                        {
-                            int pad = spec.Width.Value - numberStr.Length;
-                            if (spec.LeftAlign)
-                                numberStr = numberStr + new string(' ', pad);
-                            else if (spec.ZeroPad)
-                            {
-                                // If there’s a sign character, insert zeros after it.
-                                if (numberStr.StartsWith("-") || numberStr.StartsWith("+") || numberStr.StartsWith(" "))
-                                {
-                                    char sign = numberStr[0];
-                                    numberStr = sign + new string('0', pad) + numberStr.Substring(1);
-                                }
-                                else
-                                    numberStr = new string('0', pad) + numberStr;
-                            }
-                            else
-                                numberStr = new string(' ', pad) + numberStr;
-                        }
-                        return numberStr;
-                    }
-                // Unsigned integer.
-                case 'u':
-                    {
-                        ulong unum;
-                        try
-                        {
-                            unum = Convert.ToUInt64(arg, CultureInfo.InvariantCulture);
-                        }
-                        catch
-                        {
-                            unum = 0;
-                        }
-                        string unumStr = spec.Precision.HasValue
-                            ? unum.ToString("D" + spec.Precision.Value, CultureInfo.InvariantCulture)
-                            : unum.ToString(CultureInfo.InvariantCulture);
-                        if (spec.Width.HasValue && unumStr.Length < spec.Width.Value)
-                        {
-                            int pad = spec.Width.Value - unumStr.Length;
-                            if (spec.LeftAlign)
-                                unumStr = unumStr + new string(' ', pad);
-                            else if (spec.ZeroPad)
-                                unumStr = new string('0', pad) + unumStr;
-                            else
-                                unumStr = new string(' ', pad) + unumStr;
-                        }
-                        return unumStr;
-                    }
-                // Hexadecimal (lowercase or uppercase)
-                case 'x':
-                case 'X':
-                    {
-                        ulong hexnum;
-                        try
-                        {
-                            hexnum = Convert.ToUInt64(arg, CultureInfo.InvariantCulture);
-                        }
-                        catch
-                        {
-                            hexnum = 0;
-                        }
-                        string hexStr = hexnum.ToString(spec.Type == 'x' ? "x" : "X", CultureInfo.InvariantCulture);
-                        if (spec.Precision.HasValue && hexStr.Length < spec.Precision.Value)
-                            hexStr = new string('0', spec.Precision.Value - hexStr.Length) + hexStr;
-                        // If the alternate (#) flag is given and the value is nonzero, prepend 0x or 0X.
-                        if (spec.Alternate && hexnum != 0)
-                            hexStr = (spec.Type == 'x' ? "0x" : "0X") + hexStr;
-                        if (spec.Width.HasValue && hexStr.Length < spec.Width.Value)
-                        {
-                            int pad = spec.Width.Value - hexStr.Length;
-                            if (spec.LeftAlign)
-                                hexStr = hexStr + new string(' ', pad);
-                            else if (spec.ZeroPad)
-                                hexStr = new string('0', pad) + hexStr;
-                            else
-                                hexStr = new string(' ', pad) + hexStr;
-                        }
-                        return hexStr;
-                    }
-                // Octal – not built in, so we convert manually.
-                case 'o':
-                    {
-                        ulong onum;
-                        try
-                        {
-                            onum = Convert.ToUInt64(arg, CultureInfo.InvariantCulture);
-                        }
-                        catch
-                        {
-                            onum = 0;
-                        }
-                        string octStr = ConvertToOctal(onum);
-                        if (spec.Precision.HasValue && octStr.Length < spec.Precision.Value)
-                            octStr = new string('0', spec.Precision.Value - octStr.Length) + octStr;
-                        if (spec.Width.HasValue && octStr.Length < spec.Width.Value)
-                        {
-                            int pad = spec.Width.Value - octStr.Length;
-                            if (spec.LeftAlign)
-                                octStr = octStr + new string(' ', pad);
-                            else if (spec.ZeroPad)
-                                octStr = new string('0', pad) + octStr;
-                            else
-                                octStr = new string(' ', pad) + octStr;
-                        }
-                        return octStr;
-                    }
-                // Floating–point formats (f, e, E, g, G)
-                case 'f':
-                case 'F':
-                case 'e':
-                case 'E':
-                case 'g':
-                case 'G':
-                    {
-                        double d;
-                        try
-                        {
-                            d = Convert.ToDouble(arg, CultureInfo.InvariantCulture);
-                        }
-                        catch
-                        {
-                            d = 0;
-                        }
-                        // Build a .NET numeric format string – e.g. "F2" or "E3".
-                        string formatSpec = spec.Type.ToString();
-                        if (spec.Precision.HasValue)
-                            formatSpec += spec.Precision.Value.ToString();
-                        string floatStr = d.ToString(formatSpec, CultureInfo.InvariantCulture);
-                        if (d >= 0)
-                        {
-                            if (spec.Plus)
-                                floatStr = "+" + floatStr;
-                            else if (spec.Space)
-                                floatStr = " " + floatStr;
-                        }
-                        if (spec.Width.HasValue && floatStr.Length < spec.Width.Value)
-                        {
-                            int pad = spec.Width.Value - floatStr.Length;
-                            if (spec.LeftAlign)
-                                floatStr = floatStr + new string(' ', pad);
-                            else if (spec.ZeroPad)
-                                floatStr = new string('0', pad) + floatStr;
-                            else
-                                floatStr = new string(' ', pad) + floatStr;
-                        }
-                        return floatStr;
-                    }
-                // Hexadecimal floating–point (a or A) – not exactly the same as C’s %a but a best–effort.
-                case 'a':
-                case 'A':
-                    {
-                        double d;
-                        try
-                        {
-                            d = Convert.ToDouble(arg, CultureInfo.InvariantCulture);
-                        }
-                        catch
-                        {
-                            d = 0;
-                        }
-                        return FormatHexFloat(d, spec);
-                    }
-                // Character – treat the argument as an integer (or its numeric value) and convert to char.
-                case 'c':
-                case 'C':
-                    {
-                        int charCode;
-                        try
-                        {
-                            charCode = Convert.ToInt32(arg, CultureInfo.InvariantCulture);
-                        }
-                        catch
-                        {
-                            charCode = 0;
-                        }
-                        char ch = (char)charCode;
-                        string charStr = ch.ToString();
-                        if (spec.Width.HasValue && charStr.Length < spec.Width.Value)
-                        {
-                            int pad = spec.Width.Value - charStr.Length;
-                            if (spec.LeftAlign)
-                                charStr = charStr + new string(' ', pad);
-                            else
-                                charStr = new string(' ', pad) + charStr;
-                        }
-                        return charStr;
-                    }
-                // Pointer – format the numeric value as a pointer in hexadecimal.
-                case 'p':
-                case 'P':
-                    {
-                        ulong ptrVal;
-                        try
-                        {
-                            ptrVal = Convert.ToUInt64(arg, CultureInfo.InvariantCulture);
-                        }
-                        catch
-                        {
-                            ptrVal = 0;
-                        }
-                        // For example, output as 0x followed by 16 hexadecimal digits.
-                        string ptrStr = ptrVal.ToString("x16", CultureInfo.InvariantCulture).ToUpperInvariant();
-                        if (spec.Width.HasValue && ptrStr.Length < spec.Width.Value)
-                        {
-                            int pad = spec.Width.Value - ptrStr.Length;
-                            if (spec.LeftAlign)
-                                ptrStr = ptrStr + new string(' ', pad);
-                            else
-                                ptrStr = new string(' ', pad) + ptrStr;
-                        }
-                        return ptrStr;
-                    }
-                // Default – treat as a string.
-                case 's':
-                default:
-                    {
-                        string s = arg?.ToString() ?? "";
-                        // If a precision is given, use it as the maximum number of characters.
-                        if (spec.Precision.HasValue && s.Length > spec.Precision.Value)
-                            s = s.Substring(0, spec.Precision.Value);
-                        if (spec.Width.HasValue && s.Length < spec.Width.Value)
-                        {
-                            int pad = spec.Width.Value - s.Length;
-                            if (spec.LeftAlign)
-                                s = s + new string(' ', pad);
-                            else
-                                s = new string(' ', pad) + s;
-                        }
-                        return s;
-                    }
-            }
-        }
+				if (argIndex < 0 || argIndex >= args.Length)
+				{
+					// Invalid index – simply include the entire placeholder text.
+					int closingBrace = formatStr.IndexOf('}', pos);
 
-        /// <summary>
-        /// Converts a double value to a hexadecimal floating–point string (using the %a/%A style).
-        /// </summary>
-        private static string FormatHexFloat(double d, SpecInfo spec)
-        {
-            // Determine if we should use uppercase letters.
-            bool uppercase = (spec.Type == 'A');
-            // Handle sign.
-            string signStr = "";
-            if (d < 0 || (d == 0 && 1.0 / d < 0))
-            {
-                signStr = "-";
-                d = -d;
-            }
-            else if (spec.Plus)
-                signStr = "+";
-            else if (spec.Space)
-                signStr = " ";
-            if (double.IsNaN(d))
-                return signStr + (uppercase ? "NAN" : "nan");
-            if (double.IsInfinity(d))
-                return signStr + (uppercase ? "INF" : "inf");
-            if (d == 0.0)
-            {
-                int prec = spec.Precision.HasValue ? spec.Precision.Value : 13;
-                string frac = prec > 0 ? "." + new string('0', prec) : "";
-                return signStr + (uppercase ? "0X0" : "0x0") + frac + (uppercase ? "P+0" : "p+0");
-            }
+					if (closingBrace < 0)
+					{
+						_ = result.Append(formatStr, placeholderStart, formatStr.Length - placeholderStart);
+						break;
+					}
+					else
+					{
+						_ = result.Append(formatStr, placeholderStart, closingBrace - placeholderStart + 1);
+						pos = closingBrace + 1;
+						continue;
+					}
+				}
 
-            // Obtain the raw bits of the double.
-            long bits = BitConverter.DoubleToInt64Bits(d);
-            int exponentBits = (int)((bits >> 52) & 0x7FF);
-            long fractionBits = bits & ((1L << 52) - 1);
-            int exponentUnbiased;
-            bool isSubnormal = false;
-            if (exponentBits == 0)
-            {
-                isSubnormal = true;
-                exponentUnbiased = 1 - 1023;
-            }
-            else
-            {
-                exponentUnbiased = exponentBits - 1023;
-                fractionBits |= (1L << 52); // add the implicit 1 for normalized values
-            }
-            // Determine the desired number of hex digits after the point.
-            int totalHexDigits = spec.Precision.HasValue ? spec.Precision.Value : 13;
-            // For normalized numbers we show the value as “1.[fraction]”; for subnormals, as “0.[fraction]”
-            int intPart = isSubnormal ? 0 : 1;
-            // For a double, the fractional part is 52 bits = exactly 13 hex digits.
-            int fullFractionDigits = 13;
-            long fraction;
-            if (!isSubnormal)
-                fraction = fractionBits - (1L << 52);
-            else
-                fraction = fractionBits; // subnormals have no implicit bit
+				if (pos == indexStart) // no explicit index was provided
+					nextArg++;
 
-            string fracStr;
-            if (totalHexDigits >= fullFractionDigits)
-            {
-                // Format the available 13 hex digits; if more were requested, pad with trailing zeros.
-                fracStr = fraction.ToString("x" + fullFractionDigits, CultureInfo.InvariantCulture);
-                if (totalHexDigits > fullFractionDigits)
-                    fracStr = fracStr + new string('0', totalHexDigits - fullFractionDigits);
-            }
-            else
-            {
-                // When fewer than 13 hex digits are requested, shift right and round.
-                int shift = (fullFractionDigits - totalHexDigits) * 4;
-                long truncated = fraction >> shift;
-                long remainder = fraction & ((1L << shift) - 1);
-                if (shift > 0 && remainder >= (1L << (shift - 1)))
-                {
-                    truncated++;
-                    if (truncated >= (1L << (totalHexDigits * 4)))
-                    {
-                        // Rounding causes carry into the integer part.
-                        intPart++;
-                        truncated = 0;
-                    }
-                }
-                fracStr = truncated.ToString("x").PadLeft(totalHexDigits, '0');
-            }
-            // If rounding caused the integer part to be 2 or more, re–normalize.
-            if (intPart > 1)
-            {
-                intPart = 1;
-                exponentUnbiased++;
-            }
-            string intPartStr = intPart.ToString(uppercase ? "X" : "x");
-            string prefix = uppercase ? "0X" : "0x";
-            string pChar = uppercase ? "P" : "p";
-            string fracPart = (totalHexDigits > 0) ? "." + (uppercase ? fracStr.ToUpperInvariant() : fracStr) : "";
-            string expStr = (exponentUnbiased >= 0 ? "+" : "") + exponentUnbiased.ToString();
-            return signStr + prefix + intPartStr + fracPart + pChar + expStr;
-        }
+				// --- Parse an optional format specifier ---
+				SpecInfo spec;
 
-        /// <summary>
-        /// Converts an unsigned integer to its octal (base‑8) representation.
-        /// </summary>
-        private static string ConvertToOctal(ulong num)
-        {
-            if (num == 0)
-                return "0";
-            StringBuilder sb = new StringBuilder();
-            while (num > 0)
-            {
-                int digit = (int)(num % 8);
-                sb.Insert(0, digit.ToString());
-                num /= 8;
-            }
-            return sb.ToString();
-        }
+				if (pos < formatStr.Length && formatStr[pos] == ':')
+				{
+					pos++; // skip ':'
+					int specStart = pos;
 
-        /// <summary>
-        /// Transforms a YYYYMMDDHH24MISS timestamp into the specified date/time format.
-        /// </summary>
-        /// <param name="stamp">If blank or omitted, it defaults to the current local date and time.<br/>
-        /// Otherwise, specify all or the leading part of a timestamp in the YYYYMMDDHH24MISS format.
-        /// </param>
-        /// <param name="format">
-        /// If blank or omitted, it defaults to the time followed by the long date, both of which will be<br/>
-        /// formatted according to the current user's locale. For example: 4:55 PM Saturday, November 27, 2004.<br/>
-        /// Otherwise, specify one or more of the date-time formats from the tables below, along with any literal spaces<br/>
-        /// and punctuation in between (commas do not need to be escaped; they can be used normally).<br/>
-        /// Date formats:
-        ///     d    : Day of the month without leading zero (1 – 31).<br/>
-        ///     dd   : Day of the month with leading zero(01 – 31).<br/>
-        ///     ddd  : Abbreviated name for the day of the week (e.g.Mon) in the current user's language.<br/>
-        ///     dddd : Full name for the day of the week (e.g.Monday) in the current user's language.<br/>
-        ///     M    : Month without leading zero (1 – 12).<br/>
-        ///     MM   : Month with leading zero (01 – 12).<br/>
-        ///     MMM  : Abbreviated month name (e.g.Jan) in the current user's language.<br/>
-        ///     MMMM : Full month name (e.g.January) in the current user's language.<br/>
-        ///     y    : Year without century, without leading zero (0 – 99).<br/>
-        ///     yy   : Year without century, with leading zero (00 – 99).<br/>
-        ///     yyyy : Year with century.For example: 2005.<br/>
-        ///     gg   : Period/era string for the current user's locale (blank if none).<br/>
-        /// Time formats:
-        ///     h   : Hours without leading zero; 12-hour format (1 – 12).<br/>
-        ///     hh  : Hours with leading zero; 12-hour format (01 – 12).<br/>
-        ///     H   : Hours without leading zero; 24-hour format (0 – 23).<br/>
-        ///     HH  : Hours with leading zero; 24-hour format (00 – 23).<br/>
-        ///     m   : Minutes without leading zero (0 – 59).<br/>
-        ///     mm  : Minutes with leading zero (00 – 59).<br/>
-        ///     s   : Seconds without leading zero (0 – 59).<br/>
-        ///     ss  : Seconds with leading zero (00 – 59).<br/>
-        ///     t   : Single character time marker, such as A or P (depends on locale).<br/>
-        ///     tt  : Multi-character time marker, such as AM or PM (depends on locale).<br/>
-        /// Standalone formats:
-        ///     (Blank)   : Leave Format blank to produce the time followed by the long date. For example, in some locales it might appear as 4:55 PM Saturday, November 27, 2004.<br/>
-        ///     Time      : Time representation for the current user's locale, such as 5:26 PM.<br/>
-        ///     ShortDate : Short date representation for the current user's locale, such as 02/29/04.<br/>
-        ///     LongDate  : Long date representation for the current user's locale, such as Friday, April 23, 2004.<br/>
-        ///     YearMonth : Year and month format for the current user's locale, such as February, 2004.<br/>
-        ///     YDay      : Day of the year without leading zeros(1 – 366).<br/>
-        ///     YDay0     : Day of the year with leading zeros(001 – 366).<br/>
-        ///     WDay      : Day of the week (1 – 7). Sunday is 1.<br/>
-        ///     YWeek     : The ISO 8601 full year and week number.For example: 200453.<br/>
-        ///     If the week containing January 1st has four or more days in the new year, it is considered week 1.<br/>
-        ///     Otherwise, it is the last week of the previous year, and the next week is week 1.<br/>
-        ///     Consequently, both January 4th and the first Thursday of January are always in week 1.<br/>
-        /// Additional options:
-        ///     The following options can appear inside the YYYYMMDDHH24MISS parameter immediately after the timestamp<br/>
-        ///     (if there is no timestamp, they may be used alone).<br/>
-        ///     R: Reverse. Have the date come before the time (meaningful only when Format is blank).<br/>
-        ///     Ln: If this option is not present, the current user's locale is used to format the string.<br/>
-        ///     To use the system's locale instead, specify LSys. To use a specific locale, specify the letter L followed by a<br/>
-        ///     hexadecimal or decimal locale identifier (LCID).<br/>
-        ///     Dn: Date options. Specify for n one of the following numbers:<br/>
-        ///     0          : Force the default options to be used. This also causes the short date to be in effect.<br/>
-        ///     1          : Use short date (meaningful only when Format is blank; not compatible with 2 and 8).<br/>
-        ///     2          : Use long date (meaningful only when Format is blank; not compatible with 1 and 8).<br/>
-        ///     4          : Use alternate calendar (if any).<br/>
-        ///     8          : Use Year-Month format (meaningful only when Format is blank; not compatible with 1 and 2).<br/>
-        ///     0x10       : Add marks for left-to-right reading order layout.<br/>
-        ///     0x20       : Add marks for right-to-left reading order layout.<br/>
-        ///     0x80000000 : Do not obey any overrides the user may have in effect for the system's default date format.<br/>
-        ///     0x40000000 : Use the system ANSI code page for string translation instead of the locale's code page.<br/>
-        /// Tn: Time options. Specify for n one of the following numbers:<br/>
-        ///     0          : Force the default options to be used.This also causes minutes and seconds to be shown.<br/>
-        ///     1          : Omit minutes and seconds.<br/>
-        ///     2          : Omit seconds.<br/>
-        ///     4          : Omit time marker (e.g.AM/PM).<br/>
-        ///     8          : Always use 24-hour time rather than 12-hour time.<br/>
-        ///     12         : Combination of the above two.<br/>
-        ///     0x80000000 : Do not obey any overrides the user may have in effect for the system's default time format.<br/>
-        ///     0x40000000 : Use the system ANSI code page for string translation instead of the locale's code page.
-        /// </param>
-        /// <returns>The formatted date/time string</returns>
-        public static string FormatTime(object stamp = null, object format = null)
+					// First: skip any flags (valid flags: - + 0 space #)
+					while (pos < formatStr.Length && "-+0 #".Contains(formatStr[pos]))
+						pos++;
+
+					// Then: width digits
+					while (pos < formatStr.Length && char.IsDigit(formatStr[pos]))
+						pos++;
+
+					// Optionally: a precision, beginning with a dot.
+					if (pos < formatStr.Length && formatStr[pos] == '.')
+					{
+						pos++; // skip '.'
+
+						while (pos < formatStr.Length && char.IsDigit(formatStr[pos]))
+							pos++;
+					}
+
+					// The specCore is the substring with flags, width and precision.
+					var specCore = formatStr.AsSpan(specStart, pos - specStart);
+					// Next comes the conversion type (if any)
+					var typeChar = 's'; // default conversion is to string.
+
+					if (pos < formatStr.Length)
+					{
+						char c = formatStr[pos];
+
+						if ("diouxXeEfgGaAcCps".Contains(c))
+						{
+							typeChar = c;
+							pos++;
+						}
+						else
+						{
+							typeChar = 's';
+						}
+					}
+
+					// For string values, check for an optional case transformation specifier:
+					// U (upper‐case), L (lower‐case) or T (title case). (Also accept lower–case letters.)
+					char customFormat = '\0';
+
+					if (typeChar == 's' && pos < formatStr.Length && "ULlTt".Contains(formatStr[pos]))
+					{
+						customFormat = char.ToUpperInvariant(formatStr[pos]);
+						pos++;
+
+						if (pos < formatStr.Length && formatStr[pos] == 's')
+							pos++;
+					}
+
+					spec = ParseSpecInfo(specCore, typeChar);
+					spec.CustomFormat = customFormat;
+				}
+				else
+				{
+					// No specifier: default to string conversion.
+					spec = new SpecInfo { Type = 's' };
+				}
+
+				// The placeholder must end with a closing brace.
+				if (pos >= formatStr.Length || formatStr[pos] != '}')
+				{
+					// If not, output the placeholder literally.
+					_ = result.Append(formatStr, placeholderStart, pos - placeholderStart);
+					continue;
+				}
+
+				pos++; // skip the closing '}'
+				// --- Format the argument according to the parsed specifier ---
+				string formattedArg = FormatArgument(args[argIndex], spec);
+
+				// If a custom string–transformation was requested (U, L, or T), apply it.
+				if (spec.CustomFormat != '\0' && spec.Type == 's')
+				{
+					switch (spec.CustomFormat)
+					{
+						case 'U':
+							formattedArg = formattedArg.ToUpperInvariant();
+							break;
+
+						case 'L':
+							formattedArg = formattedArg.ToLowerInvariant();
+							break;
+
+						case 'T':
+							formattedArg = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(formattedArg.ToLower());
+							break;
+					}
+				}
+
+				_ = result.Append(formattedArg);
+			}
+
+			return result.ToString();
+		}
+
+		/// <summary>
+		/// Transforms a YYYYMMDDHH24MISS timestamp into the specified date/time format.
+		/// </summary>
+		/// <param name="stamp">If blank or omitted, it defaults to the current local date and time.<br/>
+		/// Otherwise, specify all or the leading part of a timestamp in the YYYYMMDDHH24MISS format.
+		/// </param>
+		/// <param name="format">
+		/// If blank or omitted, it defaults to the time followed by the long date, both of which will be<br/>
+		/// formatted according to the current user's locale. For example: 4:55 PM Saturday, November 27, 2004.<br/>
+		/// Otherwise, specify one or more of the date-time formats from the tables below, along with any literal spaces<br/>
+		/// and punctuation in between (commas do not need to be escaped; they can be used normally).<br/>
+		/// Date formats:
+		///     d    : Day of the month without leading zero (1 – 31).<br/>
+		///     dd   : Day of the month with leading zero(01 – 31).<br/>
+		///     ddd  : Abbreviated name for the day of the week (e.g.Mon) in the current user's language.<br/>
+		///     dddd : Full name for the day of the week (e.g.Monday) in the current user's language.<br/>
+		///     M    : Month without leading zero (1 – 12).<br/>
+		///     MM   : Month with leading zero (01 – 12).<br/>
+		///     MMM  : Abbreviated month name (e.g.Jan) in the current user's language.<br/>
+		///     MMMM : Full month name (e.g.January) in the current user's language.<br/>
+		///     y    : Year without century, without leading zero (0 – 99).<br/>
+		///     yy   : Year without century, with leading zero (00 – 99).<br/>
+		///     yyyy : Year with century.For example: 2005.<br/>
+		///     gg   : Period/era string for the current user's locale (blank if none).<br/>
+		/// Time formats:
+		///     h   : Hours without leading zero; 12-hour format (1 – 12).<br/>
+		///     hh  : Hours with leading zero; 12-hour format (01 – 12).<br/>
+		///     H   : Hours without leading zero; 24-hour format (0 – 23).<br/>
+		///     HH  : Hours with leading zero; 24-hour format (00 – 23).<br/>
+		///     m   : Minutes without leading zero (0 – 59).<br/>
+		///     mm  : Minutes with leading zero (00 – 59).<br/>
+		///     s   : Seconds without leading zero (0 – 59).<br/>
+		///     ss  : Seconds with leading zero (00 – 59).<br/>
+		///     t   : Single character time marker, such as A or P (depends on locale).<br/>
+		///     tt  : Multi-character time marker, such as AM or PM (depends on locale).<br/>
+		/// Standalone formats:
+		///     (Blank)   : Leave Format blank to produce the time followed by the long date. For example, in some locales it might appear as 4:55 PM Saturday, November 27, 2004.<br/>
+		///     Time      : Time representation for the current user's locale, such as 5:26 PM.<br/>
+		///     ShortDate : Short date representation for the current user's locale, such as 02/29/04.<br/>
+		///     LongDate  : Long date representation for the current user's locale, such as Friday, April 23, 2004.<br/>
+		///     YearMonth : Year and month format for the current user's locale, such as February, 2004.<br/>
+		///     YDay      : Day of the year without leading zeros(1 – 366).<br/>
+		///     YDay0     : Day of the year with leading zeros(001 – 366).<br/>
+		///     WDay      : Day of the week (1 – 7). Sunday is 1.<br/>
+		///     YWeek     : The ISO 8601 full year and week number.For example: 200453.<br/>
+		///     If the week containing January 1st has four or more days in the new year, it is considered week 1.<br/>
+		///     Otherwise, it is the last week of the previous year, and the next week is week 1.<br/>
+		///     Consequently, both January 4th and the first Thursday of January are always in week 1.<br/>
+		/// Additional options:
+		///     The following options can appear inside the YYYYMMDDHH24MISS parameter immediately after the timestamp<br/>
+		///     (if there is no timestamp, they may be used alone).<br/>
+		///     R: Reverse. Have the date come before the time (meaningful only when Format is blank).<br/>
+		///     Ln: If this option is not present, the current user's locale is used to format the string.<br/>
+		///     To use the system's locale instead, specify LSys. To use a specific locale, specify the letter L followed by a<br/>
+		///     hexadecimal or decimal locale identifier (LCID).<br/>
+		///     Dn: Date options. Specify for n one of the following numbers:<br/>
+		///     0          : Force the default options to be used. This also causes the short date to be in effect.<br/>
+		///     1          : Use short date (meaningful only when Format is blank; not compatible with 2 and 8).<br/>
+		///     2          : Use long date (meaningful only when Format is blank; not compatible with 1 and 8).<br/>
+		///     4          : Use alternate calendar (if any).<br/>
+		///     8          : Use Year-Month format (meaningful only when Format is blank; not compatible with 1 and 2).<br/>
+		///     0x10       : Add marks for left-to-right reading order layout.<br/>
+		///     0x20       : Add marks for right-to-left reading order layout.<br/>
+		///     0x80000000 : Do not obey any overrides the user may have in effect for the system's default date format.<br/>
+		///     0x40000000 : Use the system ANSI code page for string translation instead of the locale's code page.<br/>
+		/// Tn: Time options. Specify for n one of the following numbers:<br/>
+		///     0          : Force the default options to be used.This also causes minutes and seconds to be shown.<br/>
+		///     1          : Omit minutes and seconds.<br/>
+		///     2          : Omit seconds.<br/>
+		///     4          : Omit time marker (e.g.AM/PM).<br/>
+		///     8          : Always use 24-hour time rather than 12-hour time.<br/>
+		///     12         : Combination of the above two.<br/>
+		///     0x80000000 : Do not obey any overrides the user may have in effect for the system's default time format.<br/>
+		///     0x40000000 : Use the system ANSI code page for string translation instead of the locale's code page.
+		/// </param>
+		/// <returns>The formatted date/time string</returns>
+		public static string FormatTime(object stamp = null, object format = null)
 		{
 			var s = stamp.As();
 			var f = format.As();
@@ -874,6 +512,33 @@
 		}
 
 		/// <summary>
+		/// Frees an object that was pinned by <see cref="StrPtr"/>.
+		/// </summary>
+		/// <param name="value">The address of the object to free.</param>
+		/// <returns>True if value was found and freed, else false.</returns>
+		/// <exception cref="TypeError">A <see cref="TypeError"/> exception is thrown if value is not of type <see cref="IntPtr"/> or <see cref="long"/>.</exception>
+		public static bool FreeStrPtr(object value)
+		{
+			Error err;
+			nint ip;
+
+			if (value is nint nn)
+				ip = nn;
+			else if (value is long l)
+				ip = (nint)l;
+			else
+				return Errors.ErrorOccurred(err = new TypeError($"Argument of type {value.GetType()} was not a pointer.")) ? throw err : false;
+
+			if (Script.gcHandles.Remove(ip, out var oldGch))
+			{
+				oldGch.Free();
+				return true;
+			}
+			else
+				return false;
+		}
+
+		/// <summary>
 		/// Searches for a given occurrence of a string, from the left or the right.
 		/// </summary>
 		/// <param name="haystack">The string whose content is searched.</param>
@@ -938,14 +603,6 @@
 		}
 
 		/// <summary>
-		/// Joins together the string representation of all array elements, separated by the specified separator.
-		/// </summary>
-		/// <param name="sep">The separator to use between each item.</param>
-		/// <param name="args">The parameters to join together as a string.</param>
-		/// <returns>The newly joined string of all arguments separated by the specified separator.</returns>
-		public static string Join(object sep, params object[] args) => string.Join(sep.ToString(), args);
-
-		/// <summary>
 		/// Trims characters from the beginning of a string.
 		/// </summary>
 		/// <param name="str">Any string value or variable. Numbers are not supported.</param>
@@ -954,33 +611,6 @@
 		/// </param>
 		/// <returns>Returns the trimmed version of the specified string.</returns>
 		public static string LTrim(object str, object omitChars = null) => str.As().TrimStart(omitChars.As(" \t").ToCharArray());
-
-		/// <summary>
-		/// Makes all line endings in a string match the value passed in, or the default for the current environment.
-		/// </summary>
-		/// <param name="str">The string whose line endings will be normalized.</param>
-		/// <param name="endOfLine">The line ending character to use. Default: newline for the current environment.</param>
-		/// <returns>A new copy of the string with all line endings set to the specified value.</returns>
-		public static string NormalizeEol(object str, object endOfLine = null)
-		{
-			const string CR = "\r", LF = "\n", CRLF = "\r\n";
-			var text = str.As();
-			var eol = endOfLine.As(Environment.NewLine);
-
-			switch (eol)
-			{
-				case CR:
-					return text.Replace(CRLF, CR).Replace(LF, CR);
-
-				case LF:
-					return text.Replace(CRLF, LF).Replace(CR, LF);
-
-				case CRLF:
-					return text.Replace(CR, string.Empty).Replace(LF, CRLF);
-			}
-
-			return text;
-		}
 
 		/// <summary>
 		/// Returns the ordinal value (numeric character code) of the first character in the specified string.
@@ -1326,15 +956,6 @@
 		}
 
 		/// <summary>
-		/// Determines if a string starts with a given string, using the current culture.
-		/// </summary>
-		/// <param name="str">The string to examine the start of.</param>
-		/// <param name="str2">The string to search for.</param>
-		/// <param name="ignoreCase">True to ignore case, else case sensitive. Default: case sensitive.</param>
-		/// <returns>1 if str started with str2, else 0.</returns>
-		public static long StartsWith(object str, object str2, object ignoreCase = null) => str.As().StartsWith(str2.As(), ignoreCase.Ab() ? StringComparison.CurrentCulture : StringComparison.CurrentCultureIgnoreCase) ? 1L : 0L;
-
-		/// <summary>
 		/// Compares two strings alphabetically.
 		/// </summary>
 		/// <param name="str1">The first string to be compared.</param>
@@ -1496,15 +1117,24 @@
 		public static string StrLower(object str) => str.As().ToLowerInvariant();
 
 		/// <summary>
-		/// Unsupported.
+		/// Returns the current memory address of a string.
+		/// Note, this does not actually point to the string. Instead, it
+		/// points to a copy of the bytes of the string.
+		/// Note, the caller will have to manually free the returned pointer by calling FreeStrPtr.
 		/// </summary>
-		/// <param name="obj">Ignored</param>
-		/// <returns>None</returns>
-		/// <exception cref="Error">An <see cref="Error"/> exception is thrown because this function has no meaning in Keysharp.</exception>
-		public static long StrPtr(object obj)
+		/// <param name="value">The string to return a pointer to.</param>
+		/// <returns>The memory address of a copy of the string bytes.</returns>
+		public static long StrPtr(object value)
 		{
-			Error err;
-			return Errors.ErrorOccurred(err = new Error("Cannot take the address of a string in C#, so just use the string as is.")) ? throw err : 0L;
+			value = Encoding.Unicode.GetBytes(value.ToString());
+			var gch = GCHandle.Alloc(value, GCHandleType.Pinned);
+			var ptr = gch.AddrOfPinnedObject();
+
+			if (Script.gcHandles.Remove(ptr, out var oldGch))
+				oldGch.Free();
+
+			Script.gcHandles.Add(ptr, gch);
+			return ptr;
 		}
 
 		/// <summary>
@@ -1921,5 +1551,537 @@
 		/// An internal optimized version of StrCompare().
 		/// </summary>
 		internal static int StrCmp(string left, string right, bool caseSensitive) => string.Compare(left, right, caseSensitive ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase);
+
+		/// <summary>
+		/// Converts an unsigned integer to its octal (base‑8) representation.
+		/// </summary>
+		private static string ConvertToOctal(ulong num)
+		{
+			if (num == 0)
+				return "0";
+
+			StringBuilder sb = new StringBuilder();
+
+			while (num > 0)
+			{
+				int digit = (int)(num % 8);
+				_ = sb.Insert(0, digit.ToString());
+				num /= 8;
+			}
+
+			return sb.ToString();
+		}
+
+		/// <summary>
+		/// Formats one argument according to the given SpecInfo.
+		/// (This method “emulates” many of the printf–style conversions.)
+		/// </summary>
+		private static string FormatArgument(object arg, SpecInfo spec)
+		{
+			switch (spec.Type)
+			{
+				// Integer formats – d or i.
+				case 'd':
+				case 'i':
+				{
+					long num;
+
+					try
+					{
+						num = Convert.ToInt64(arg, CultureInfo.InvariantCulture);
+					}
+					catch
+					{
+						num = 0;
+					}
+
+					// Use the precision (if given) as the minimum number of digits.
+					string numberStr = spec.Precision.HasValue
+									   ? Math.Abs(num).ToString("D" + spec.Precision.Value, CultureInfo.InvariantCulture)
+									   : Math.Abs(num).ToString(CultureInfo.InvariantCulture);
+
+					if (num < 0)
+						numberStr = "-" + numberStr;
+					else if (spec.Plus)
+						numberStr = "+" + numberStr;
+					else if (spec.Space)
+						numberStr = " " + numberStr;
+
+					// Apply padding if a field width was specified.
+					if (spec.Width.HasValue && numberStr.Length < spec.Width.Value)
+					{
+						int pad = spec.Width.Value - numberStr.Length;
+
+						if (spec.LeftAlign)
+							numberStr += new string(' ', pad);
+						else if (spec.ZeroPad)
+						{
+							// If there’s a sign character, insert zeros after it.
+							if (numberStr.StartsWith("-") || numberStr.StartsWith("+") || numberStr.StartsWith(" "))
+							{
+								char sign = numberStr[0];
+								numberStr = sign + new string('0', pad) + numberStr.Substring(1);
+							}
+							else
+								numberStr = new string('0', pad) + numberStr;
+						}
+						else
+							numberStr = new string(' ', pad) + numberStr;
+					}
+
+					return numberStr;
+				}
+
+				// Unsigned integer.
+				case 'u':
+				{
+					ulong unum;
+
+					try
+					{
+						unum = Convert.ToUInt64(arg, CultureInfo.InvariantCulture);
+					}
+					catch
+					{
+						unum = 0;
+					}
+
+					string unumStr = spec.Precision.HasValue
+									 ? unum.ToString("D" + spec.Precision.Value, CultureInfo.InvariantCulture)
+									 : unum.ToString(CultureInfo.InvariantCulture);
+
+					if (spec.Width.HasValue && unumStr.Length < spec.Width.Value)
+					{
+						int pad = spec.Width.Value - unumStr.Length;
+
+						if (spec.LeftAlign)
+							unumStr += new string(' ', pad);
+						else if (spec.ZeroPad)
+							unumStr = new string('0', pad) + unumStr;
+						else
+							unumStr = new string(' ', pad) + unumStr;
+					}
+
+					return unumStr;
+				}
+
+				// Hexadecimal (lowercase or uppercase)
+				case 'x':
+				case 'X':
+				{
+					ulong hexnum;
+
+					try
+					{
+						hexnum = Convert.ToUInt64(arg, CultureInfo.InvariantCulture);
+					}
+					catch
+					{
+						hexnum = 0;
+					}
+
+					string hexStr = hexnum.ToString(spec.Type == 'x' ? "x" : "X", CultureInfo.InvariantCulture);
+
+					if (spec.Precision.HasValue && hexStr.Length < spec.Precision.Value)
+						hexStr = new string('0', spec.Precision.Value - hexStr.Length) + hexStr;
+
+					// If the alternate (#) flag is given and the value is nonzero, prepend 0x or 0X.
+					if (spec.Alternate && hexnum != 0)
+						hexStr = (spec.Type == 'x' ? "0x" : "0X") + hexStr;
+
+					if (spec.Width.HasValue && hexStr.Length < spec.Width.Value)
+					{
+						int pad = spec.Width.Value - hexStr.Length;
+
+						if (spec.LeftAlign)
+							hexStr += new string(' ', pad);
+						else if (spec.ZeroPad)
+							hexStr = new string('0', pad) + hexStr;
+						else
+							hexStr = new string(' ', pad) + hexStr;
+					}
+
+					return hexStr;
+				}
+
+				// Octal – not built in, so we convert manually.
+				case 'o':
+				{
+					ulong onum;
+
+					try
+					{
+						onum = Convert.ToUInt64(arg, CultureInfo.InvariantCulture);
+					}
+					catch
+					{
+						onum = 0;
+					}
+
+					string octStr = ConvertToOctal(onum);
+
+					if (spec.Precision.HasValue && octStr.Length < spec.Precision.Value)
+						octStr = new string('0', spec.Precision.Value - octStr.Length) + octStr;
+
+					if (spec.Width.HasValue && octStr.Length < spec.Width.Value)
+					{
+						int pad = spec.Width.Value - octStr.Length;
+
+						if (spec.LeftAlign)
+							octStr += new string(' ', pad);
+						else if (spec.ZeroPad)
+							octStr = new string('0', pad) + octStr;
+						else
+							octStr = new string(' ', pad) + octStr;
+					}
+
+					return octStr;
+				}
+
+				// Floating–point formats (f, e, E, g, G)
+				case 'f':
+				case 'F':
+				case 'e':
+				case 'E':
+				case 'g':
+				case 'G':
+				{
+					double d;
+
+					try
+					{
+						d = Convert.ToDouble(arg, CultureInfo.InvariantCulture);
+					}
+					catch
+					{
+						d = 0;
+					}
+
+					// Build a .NET numeric format string – e.g. "F2" or "E3".
+					string formatSpec = spec.Type.ToString();
+
+					if (spec.Precision.HasValue)
+						formatSpec += spec.Precision.Value.ToString();
+
+					string floatStr = d.ToString(formatSpec, CultureInfo.InvariantCulture);
+
+					if (d >= 0)
+					{
+						if (spec.Plus)
+							floatStr = "+" + floatStr;
+						else if (spec.Space)
+							floatStr = " " + floatStr;
+					}
+
+					if (spec.Width.HasValue && floatStr.Length < spec.Width.Value)
+					{
+						int pad = spec.Width.Value - floatStr.Length;
+
+						if (spec.LeftAlign)
+							floatStr += new string(' ', pad);
+						else if (spec.ZeroPad)
+							floatStr = new string('0', pad) + floatStr;
+						else
+							floatStr = new string(' ', pad) + floatStr;
+					}
+
+					return floatStr;
+				}
+
+				// Hexadecimal floating–point (a or A) – not exactly the same as C’s %a but a best–effort.
+				case 'a':
+				case 'A':
+				{
+					double d;
+
+					try
+					{
+						d = Convert.ToDouble(arg, CultureInfo.InvariantCulture);
+					}
+					catch
+					{
+						d = 0;
+					}
+
+					return FormatHexFloat(d, spec);
+				}
+
+				// Character – treat the argument as an integer (or its numeric value) and convert to char.
+				case 'c':
+				case 'C':
+				{
+					int charCode;
+
+					try
+					{
+						charCode = Convert.ToInt32(arg, CultureInfo.InvariantCulture);
+					}
+					catch
+					{
+						charCode = 0;
+					}
+
+					char ch = (char)charCode;
+					string charStr = ch.ToString();
+
+					if (spec.Width.HasValue && charStr.Length < spec.Width.Value)
+					{
+						int pad = spec.Width.Value - charStr.Length;
+
+						if (spec.LeftAlign)
+							charStr += new string(' ', pad);
+						else
+							charStr = new string(' ', pad) + charStr;
+					}
+
+					return charStr;
+				}
+
+				// Pointer – format the numeric value as a pointer in hexadecimal.
+				case 'p':
+				case 'P':
+				{
+					ulong ptrVal;
+
+					try
+					{
+						ptrVal = Convert.ToUInt64(arg, CultureInfo.InvariantCulture);
+					}
+					catch
+					{
+						ptrVal = 0;
+					}
+
+					// For example, output as 0x followed by 16 hexadecimal digits.
+					string ptrStr = ptrVal.ToString("x16", CultureInfo.InvariantCulture).ToUpperInvariant();
+
+					if (spec.Width.HasValue && ptrStr.Length < spec.Width.Value)
+					{
+						int pad = spec.Width.Value - ptrStr.Length;
+
+						if (spec.LeftAlign)
+							ptrStr += new string(' ', pad);
+						else
+							ptrStr = new string(' ', pad) + ptrStr;
+					}
+
+					return ptrStr;
+				}
+
+				// Default – treat as a string.
+				case 's':
+				default:
+				{
+					string s = arg?.ToString() ?? "";
+
+					// If a precision is given, use it as the maximum number of characters.
+					if (spec.Precision.HasValue && s.Length > spec.Precision.Value)
+						s = s.Substring(0, spec.Precision.Value);
+
+					if (spec.Width.HasValue && s.Length < spec.Width.Value)
+					{
+						int pad = spec.Width.Value - s.Length;
+
+						if (spec.LeftAlign)
+							s += new string(' ', pad);
+						else
+							s = new string(' ', pad) + s;
+					}
+
+					return s;
+				}
+			}
+		}
+
+		/// <summary>
+		/// Converts a double value to a hexadecimal floating–point string (using the %a/%A style).
+		/// </summary>
+		private static string FormatHexFloat(double d, SpecInfo spec)
+		{
+			// Determine if we should use uppercase letters.
+			var uppercase = spec.Type == 'A';
+			// Handle sign.
+			var signStr = "";
+
+			if (d < 0 || (d == 0 && 1.0 / d < 0))
+			{
+				signStr = "-";
+				d = -d;
+			}
+			else if (spec.Plus)
+				signStr = "+";
+			else if (spec.Space)
+				signStr = " ";
+
+			if (double.IsNaN(d))
+				return signStr + (uppercase ? "NAN" : "nan");
+
+			if (double.IsInfinity(d))
+				return signStr + (uppercase ? "INF" : "inf");
+
+			if (d == 0.0)
+			{
+				int prec = spec.Precision.HasValue ? spec.Precision.Value : 13;
+				string frac = prec > 0 ? "." + new string('0', prec) : "";
+				return signStr + (uppercase ? "0X0" : "0x0") + frac + (uppercase ? "P+0" : "p+0");
+			}
+
+			// Obtain the raw bits of the double.
+			long bits = BitConverter.DoubleToInt64Bits(d);
+			int exponentBits = (int)((bits >> 52) & 0x7FF);
+			long fractionBits = bits & ((1L << 52) - 1);
+			int exponentUnbiased;
+			bool isSubnormal = false;
+
+			if (exponentBits == 0)
+			{
+				isSubnormal = true;
+				exponentUnbiased = 1 - 1023;
+			}
+			else
+			{
+				exponentUnbiased = exponentBits - 1023;
+				fractionBits |= (1L << 52); // add the implicit 1 for normalized values
+			}
+
+			// Determine the desired number of hex digits after the point.
+			int totalHexDigits = spec.Precision.HasValue ? spec.Precision.Value : 13;
+			// For normalized numbers we show the value as “1.[fraction]”; for subnormals, as “0.[fraction]”
+			int intPart = isSubnormal ? 0 : 1;
+			// For a double, the fractional part is 52 bits = exactly 13 hex digits.
+			int fullFractionDigits = 13;
+			long fraction;
+
+			if (!isSubnormal)
+				fraction = fractionBits - (1L << 52);
+			else
+				fraction = fractionBits; // subnormals have no implicit bit
+
+			string fracStr;
+
+			if (totalHexDigits >= fullFractionDigits)
+			{
+				// Format the available 13 hex digits; if more were requested, pad with trailing zeros.
+				fracStr = fraction.ToString("x" + fullFractionDigits, CultureInfo.InvariantCulture);
+
+				if (totalHexDigits > fullFractionDigits)
+					fracStr += new string('0', totalHexDigits - fullFractionDigits);
+			}
+			else
+			{
+				// When fewer than 13 hex digits are requested, shift right and round.
+				int shift = (fullFractionDigits - totalHexDigits) * 4;
+				long truncated = fraction >> shift;
+				long remainder = fraction & ((1L << shift) - 1);
+
+				if (shift > 0 && remainder >= (1L << (shift - 1)))
+				{
+					truncated++;
+
+					if (truncated >= (1L << (totalHexDigits * 4)))
+					{
+						// Rounding causes carry into the integer part.
+						intPart++;
+						truncated = 0;
+					}
+				}
+
+				fracStr = truncated.ToString("x").PadLeft(totalHexDigits, '0');
+			}
+
+			// If rounding caused the integer part to be 2 or more, re–normalize.
+			if (intPart > 1)
+			{
+				intPart = 1;
+				exponentUnbiased++;
+			}
+
+			string intPartStr = intPart.ToString(uppercase ? "X" : "x");
+			string prefix = uppercase ? "0X" : "0x";
+			string pChar = uppercase ? "P" : "p";
+			string fracPart = (totalHexDigits > 0) ? "." + (uppercase ? fracStr.ToUpperInvariant() : fracStr) : "";
+			string expStr = (exponentUnbiased >= 0 ? "+" : "") + exponentUnbiased.ToString();
+			return signStr + prefix + intPartStr + fracPart + pChar + expStr;
+		}
+
+		/// <summary>
+		/// Parses the “specCore” (the flags, width and precision portion) plus the conversion type.
+		/// </summary>
+		private static SpecInfo ParseSpecInfo(ReadOnlySpan<char> specCore, char typeChar)
+		{
+			var spec = new SpecInfo();
+			spec.Type = typeChar;
+			int pos = 0;
+
+			// Parse any flags.
+			while (pos < specCore.Length && "-+0 #".Contains(specCore[pos]))
+			{
+				switch (specCore[pos])
+				{
+					case '-': spec.LeftAlign = true; break;
+
+					case '+': spec.Plus = true; break;
+
+					case '0': spec.ZeroPad = true; break;
+
+					case ' ': spec.Space = true; break;
+
+					case '#': spec.Alternate = true; break;
+				}
+
+				pos++;
+			}
+
+			// Parse the (optional) width.
+			int startWidth = pos;
+
+			while (pos < specCore.Length && char.IsDigit(specCore[pos]))
+				pos++;
+
+			if (pos > startWidth)
+			{
+				if (int.TryParse(specCore.Slice(startWidth, pos - startWidth), out int width))
+					spec.Width = width;
+			}
+
+			// Parse an optional precision (after a dot).
+			if (pos < specCore.Length && specCore[pos] == '.')
+			{
+				pos++; // skip dot
+				int startPrec = pos;
+
+				while (pos < specCore.Length && char.IsDigit(specCore[pos]))
+					pos++;
+
+				if (pos > startPrec)
+				{
+					if (int.TryParse(specCore.Slice(startPrec, pos - startPrec), out int prec))
+						spec.Precision = prec;
+					else
+						spec.Precision = 0;
+				}
+				else
+					spec.Precision = 0;
+			}
+
+			return spec;
+		}
+
+		/// <summary>
+		/// Holds the parsed details of a format specifier.
+		/// </summary>
+		private class SpecInfo
+		{
+			public bool Alternate = false;
+			public char CustomFormat = '\0';
+			public bool LeftAlign = false;
+			public bool Plus = false;
+			public int? Precision = null;
+			public bool Space = false;
+			public char Type = 's';
+			public int? Width = null;
+			public bool ZeroPad = false;
+			// For U (upper), L (lower) or T (title) – only for strings.
+		}
 	}
 }

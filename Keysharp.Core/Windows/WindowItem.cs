@@ -192,7 +192,7 @@ namespace Keysharp.Core.Windows
 		{
 			get
 			{
-				var scale = 1.0 / Accessors.A_ScaledScreenDPI;
+				var scale = 1.0 / A_ScaledScreenDPI;
 				return !IsSpecified || !WindowsAPI.GetWindowRect(Handle, out var rect)
 					   ? Size.Empty
 #if DPI

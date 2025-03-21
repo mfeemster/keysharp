@@ -448,7 +448,7 @@ break_twice:;
 
 				var initialSuspendState = (toggle == ToggleValueType.Off) ? HotstringDefinition.HS_TURNED_OFF : 0;
 
-				if (Accessors.A_IsSuspended)
+				if (A_IsSuspended)
 					initialSuspendState |= HotstringDefinition.HS_SUSPENDED;
 
 				if (HotstringManager.AddHotstring(name, ifunc, hotstringOptions, hotstringStart, action, false, initialSuspendState) == null)
@@ -695,8 +695,8 @@ break_twice:;
 		/// <returns>The previous setting; an integer between 0 and 100.</returns>
 		public static object SendLevel(object level)
 		{
-			var old = Accessors.A_SendLevel;
-			Accessors.A_SendLevel = level;
+			var old = A_SendLevel;
+			A_SendLevel = level;
 			return old;
 		}
 
@@ -708,8 +708,8 @@ break_twice:;
 		/// <returns>The previous setting; either Event, Input, InputThenPlay or Play.</returns>
 		public static object SendMode(object mode)
 		{
-			var old = Accessors.A_SendMode;
-			Accessors.A_SendMode = mode;
+			var old = A_SendMode;
+			A_SendMode = mode;
 			return old;
 		}
 
@@ -774,8 +774,8 @@ break_twice:;
 		{
 			var p = play.As().ToLowerInvariant();
 			var isPlay = p == "play";
-			var del = isPlay ? Accessors.A_KeyDelayPlay : Accessors.A_KeyDelay;
-			var dur = isPlay ? Accessors.A_KeyDurationPlay : Accessors.A_KeyDuration;
+			var del = isPlay ? A_KeyDelayPlay : A_KeyDelay;
+			var dur = isPlay ? A_KeyDurationPlay : A_KeyDuration;
 
 			if (delay != null)
 				del = delay.Al();
@@ -785,13 +785,13 @@ break_twice:;
 
 			if (isPlay)
 			{
-				Accessors.A_KeyDelayPlay = del;
-				Accessors.A_KeyDurationPlay = dur;
+				A_KeyDelayPlay = del;
+				A_KeyDurationPlay = dur;
 			}
 			else
 			{
-				Accessors.A_KeyDelay = del;
-				Accessors.A_KeyDuration = dur;
+				A_KeyDelay = del;
+				A_KeyDuration = dur;
 			}
 
 			return null;
@@ -825,8 +825,8 @@ break_twice:;
 		/// </param>
 		public static object SetStoreCapsLockMode(object mode)
 		{
-			var old = Accessors.A_StoreCapsLockMode;
-			Accessors.A_StoreCapsLockMode = mode;
+			var old = A_StoreCapsLockMode;
+			A_StoreCapsLockMode = mode;
 			return old;
 		}
 

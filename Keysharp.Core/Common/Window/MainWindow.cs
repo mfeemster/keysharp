@@ -32,7 +32,7 @@
 			success = WindowsAPI.AddClipboardFormatListener(Handle);//Need a cross platform way to do this.//TODO
 #endif
 			tpVars.HandleCreated += TpVars_HandleCreated;
-			editScriptToolStripMenuItem.Visible = !Accessors.A_IsCompiled;
+			editScriptToolStripMenuItem.Visible = !A_IsCompiled;
 		}
 
 		public void AddText(string s, MainFocusedTab tab, bool focus)
@@ -238,7 +238,7 @@
 		/// <param name="e"></param>
 		private void MainWindow_FormClosing(object sender, FormClosingEventArgs e)
 		{
-			if (string.IsNullOrEmpty(Accessors.A_ExitReason as string) && e.CloseReason == CloseReason.UserClosing)
+			if (string.IsNullOrEmpty(A_ExitReason as string) && e.CloseReason == CloseReason.UserClosing)
 			{
 				e.Cancel = true;
 				Hide();
@@ -354,7 +354,7 @@
 
 		private void windowSpyToolStripMenuItem_Click(object sender, EventArgs e)
 		{
-			var path = Path.GetDirectoryName(Accessors.A_KeysharpPath);
+			var path = Path.GetDirectoryName(A_KeysharpPath);
 #if WINDOWS
 			var exe = path + "/Keysharp.exe";
 #else

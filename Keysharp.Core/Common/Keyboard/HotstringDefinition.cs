@@ -74,7 +74,7 @@
 			funcObj = _funcObj;
 			hotCriterion = Threads.GetThreadVariables().hotCriterion;
 			suspended = _suspend;
-			maxThreads = Accessors.A_MaxThreadsPerHotkey.Aui();  // The value of g_MaxThreadsPerHotkey can vary during load-time.
+			maxThreads = A_MaxThreadsPerHotkey.Aui();  // The value of g_MaxThreadsPerHotkey can vary during load-time.
 			priority = HotstringManager.hsPriority;
 			keyDelay = HotstringManager.hsKeyDelay;
 			sendMode = HotstringManager.hsSendMode;  // And all these can vary too.
@@ -86,8 +86,8 @@
 			endCharRequired = HotstringManager.hsEndCharRequired;
 			detectWhenInsideWord = HotstringManager.hsDetectWhenInsideWord;
 			doReset = HotstringManager.hsDoReset;
-			inputLevel = (uint)Accessors.A_InputLevel;
-			suspendExempt = Accessors.A_SuspendExempt.Ab();
+			inputLevel = (uint)A_InputLevel;
+			suspendExempt = A_SuspendExempt.Ab();
 			constructedOK = false;
 			var unusedX = false; // do not assign  mReplacement if execute_action is true.
 			ParseOptions(_options, ref priority, ref keyDelay, ref sendMode, ref caseSensitive, ref conformToCase, ref doBackspace
@@ -438,7 +438,7 @@
 				// g_script.mThisHotkeyStartTime value to determine whether g_script.mThisHotkeyModifiersLR
 				// is still timely/accurate -- it seems best to set to "no modifiers":
 				KeyboardMouseSender.thisHotkeyModifiersLR = 0;
-				Accessors.A_EndChar = endCharRequired ? endChar : ""; // v1.0.48.04: Explicitly set 0 when hs->mEndCharRequired==false because LOWORD is used for something else in that case.
+				A_EndChar = endCharRequired ? endChar : ""; // v1.0.48.04: Explicitly set 0 when hs->mEndCharRequired==false because LOWORD is used for something else in that case.
 				Script.SetHotNamesAndTimes(Name);
 				_ = Interlocked.Increment(ref existingThreads);//This is the thread count for this particular hotstring only.
 				Threads.LaunchInThread(priority, false, false, vf, [Name], false);

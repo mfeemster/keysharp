@@ -9,9 +9,6 @@ namespace Keysharp.Core
 	{
 		public static string[] KeysharpArgs = [];
 
-		private static readonly IEnumerable<string> dataFormats = typeof(DataFormats).GetFields(BindingFlags.Public | BindingFlags.Static)
-				.Select(f => f.Name);
-
 		/// <summary>
 		/// Creates an object containing everything on the clipboard (such as pictures and formatting).
 		/// Omit both parameters to retrieve the current contents of the clipboard.<br/>
@@ -140,7 +137,7 @@ namespace Keysharp.Core
 #if WINDOWS
 						|| Clipboard.ContainsFileDropList()
 #endif
-						: !IsClipboardEmpty())
+						: !KeysharpEnhancements.IsClipboardEmpty())
 					return true;
 
 				Flow.Sleep(frequency);
@@ -206,17 +203,9 @@ namespace Keysharp.Core
 		/// <param name="args">The command line arguments to process.</param>
 		public static object HandleCommandLineParams(string[] args)
 		{
-			_ = Accessors.A_Args.AddRange(args);
+			_ = A_Args.AddRange(args);
 			return null;
 		}
-
-		/// <summary>
-		/// The clipboard object doesn't provide a way to determine if it's truly empty or not.<br/>
-		/// Gotten from: https://www.codeproject.com/questions/1089557/check-with-csharp-if-the-clipboard-is-really-empty <br/>
-		/// attempts to provide such functionality.
-		/// </summary>
-		/// <returns>True if empty, else false.</returns>
-		public static bool IsClipboardEmpty() => !dataFormats.Any(Clipboard.ContainsData);
 
 		/// <summary>
 		/// Registers a function to be called automatically whenever the clipboard's content changes.
@@ -622,7 +611,7 @@ namespace Keysharp.Core
 		{
 			if (format != 0)
 			{
-				if (WindowsAPI.OpenClipboard(Accessors.A_ClipboardTimeout.Al()))
+				if (WindowsAPI.OpenClipboard(A_ClipboardTimeout.Al()))
 				{
 					byte[] buf;
 					var gLock = IntPtr.Zero;
@@ -769,7 +758,7 @@ namespace Keysharp.Core
 
 				try
 				{
-					if (WindowsAPI.OpenClipboard(Accessors.A_ClipboardTimeout.Al()))//Need to leave it open for it to work when using the Windows API.
+					if (WindowsAPI.OpenClipboard(A_ClipboardTimeout.Al()))//Need to leave it open for it to work when using the Windows API.
 					{
 						wasOpened = true;
 						var ptr = clip.Ptr;

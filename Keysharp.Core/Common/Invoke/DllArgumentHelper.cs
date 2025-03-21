@@ -121,7 +121,7 @@ namespace Keysharp.Core.Common.Invoke
                 }
                 else if (!isreturn && i < parameters.Length)
                 {
-                    if (usePtr && parameters[i] is KeysharpObject kso)
+                    if (usePtr && parameters[i] is KeysharpObject kso && !(kso is ComObject))
                     {
                         refs[i] = kso;
                         parameters[i] = Script.GetPropertyValue(kso, "__Value");

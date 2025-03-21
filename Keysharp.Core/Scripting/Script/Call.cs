@@ -188,7 +188,9 @@ namespace Keysharp.Scripting
 				}
 				else if (Marshal.IsComObject(item))
 				{
-					return item.GetType().InvokeMember(namestr, BindingFlags.GetProperty, null, item, null);
+					//Many COM properties are internally stored as methods with 0 parameters.
+					//So try invoking the member as either a property or a method.
+					return item.GetType().InvokeMember(namestr, BindingFlags.InvokeMethod | BindingFlags.GetProperty, null, item, null);
 				}
 
 #endif

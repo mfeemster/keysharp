@@ -3,72 +3,8 @@ namespace Keysharp.Core
 	/// <summary>
 	/// Public interface for network-related functions.
 	/// </summary>
-	public static class Network
+	public static partial class KeysharpEnhancements
 	{
-		/// <summary>
-		/// Downloads a resource from the internet.
-		/// AHK difference: does not allow specifying flags other than 0.
-		/// </summary>
-		/// <param name="address">URL of the file to download.<br/>
-		/// For example, "https://someorg.org" might retrieve the welcome page for that organization.
-		/// </param>
-		/// <param name="filename">Specify the name of the file to be created locally, which is assumed to be in <see cref="A_WorkingDir"/> if an absolute path isn't specified.<br/>
-		/// Any existing file will be overwritten by the new file.<br/>
-		/// </param>
-		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if any errors occur.</exception>
-		public static object Download(object url, object filename)
-		{
-			var address = url.As();
-			var file = filename.As();
-			var flags = -1;
-
-			if (address.StartsWith('*'))
-			{
-				var splits = address.Split(SpaceTab);
-
-				if (splits.Length == 2)
-				{
-					flags = splits[0].TrimStart('*').Ai();
-					address = splits[1];
-				}
-			}
-
-			var t = Task.Run(async () =>//We explicitly do NOT use Task.Factory.StartNew() here, because it does not understand async delegates.
-			{
-				try
-				{
-					using (var client = new HttpClient())
-					{
-						if (flags != 0)
-						{
-							client.DefaultRequestHeaders.CacheControl = new CacheControlHeaderValue
-							{
-								NoCache = true
-							};
-						}
-
-						var uri = new Uri(address);
-
-						using (var response = await client.GetStreamAsync(address))
-						{
-							using (var fs = new FileStream(file, FileMode.Create))
-							{
-								await response.CopyToAsync(fs);
-								return true;
-							}
-						}
-					}
-				}
-				catch (Exception ex)
-				{
-					Error err;
-					return Errors.ErrorOccurred(err = new Error(ex.Message)) ? throw err : false;
-				}
-			});
-			t.Wait();
-			return null;
-		}
-
 		/// <summary>
 		/// Sends an email.
 		/// </summary>
@@ -198,11 +134,82 @@ namespace Keysharp.Core
 			}
 		}
 
+	}
+
+	/// <summary>
+	/// Public interface for network-related functions.
+	/// </summary>
+	public static class Network
+	{
+		/// <summary>
+		/// Downloads a resource from the internet.
+		/// AHK difference: does not allow specifying flags other than 0.
+		/// </summary>
+		/// <param name="address">URL of the file to download.<br/>
+		/// For example, "https://someorg.org" might retrieve the welcome page for that organization.
+		/// </param>
+		/// <param name="filename">Specify the name of the file to be created locally, which is assumed to be in <see cref="A_WorkingDir"/> if an absolute path isn't specified.<br/>
+		/// Any existing file will be overwritten by the new file.<br/>
+		/// </param>
+		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if any errors occur.</exception>
+		public static object Download(object url, object filename)
+		{
+			var address = url.As();
+			var file = filename.As();
+			var flags = -1;
+
+			if (address.StartsWith('*'))
+			{
+				var splits = address.Split(SpaceTab);
+
+				if (splits.Length == 2)
+				{
+					flags = splits[0].TrimStart('*').Ai();
+					address = splits[1];
+				}
+			}
+
+			var t = Task.Run(async () =>//We explicitly do NOT use Task.Factory.StartNew() here, because it does not understand async delegates.
+			{
+				try
+				{
+					using (var client = new HttpClient())
+					{
+						if (flags != 0)
+						{
+							client.DefaultRequestHeaders.CacheControl = new CacheControlHeaderValue
+							{
+								NoCache = true
+							};
+						}
+
+						var uri = new Uri(address);
+
+						using (var response = await client.GetStreamAsync(address))
+						{
+							using (var fs = new FileStream(file, FileMode.Create))
+							{
+								await response.CopyToAsync(fs);
+								return true;
+							}
+						}
+					}
+				}
+				catch (Exception ex)
+				{
+					Error err;
+					return Errors.ErrorOccurred(err = new Error(ex.Message)) ? throw err : false;
+				}
+			});
+			t.Wait();
+			return null;
+		}
+
 		/// <summary>
 		/// Returns an <see cref="Array"/> of the system's IPv4 addresses.
 		/// </summary>
 		/// <returns>An <see cref="Array"/> where each element is an IPv4 address string such as "192.168.0.1".</returns>
-		public static Array SysGetIPAddresses() => Accessors.A_IPAddress;
+		public static Array SysGetIPAddresses() => A_IPAddress;
 
 		/// <summary>
 		/// Internal helper which resolves a host name or IP address.

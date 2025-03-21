@@ -11,7 +11,7 @@
 		/// <param name="aWhichMode"></param>
 		internal void CoordToScreen(ref int aX, ref int aY, CoordMode modeType)
 		{
-			var coordMode = Keysharp.Core.Mouse.Coords.GetCoordMode(modeType);
+			var coordMode = Core.Mouse.Coords.GetCoordMode(modeType);
 
 			if (coordMode == CoordModeType.Screen)
 				return;

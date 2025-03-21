@@ -83,27 +83,22 @@
 		public static double Cos(object obj) => Math.Cos(obj is double d ? d : obj.Ad());
 
 		/// <summary>
-		/// Returns the hyperbolic cosine of the specified angle.
-		/// </summary>
-		/// <param name="n">An angle, measured in radians.</param>
-		/// <returns>The hyperbolic cosine of <paramref name="n"/>.</returns>
-		public static double Cosh(object obj) => Math.Cosh(obj is double d ? d : obj.Ad());
-
-		/// <summary>
 		/// Adds or subtracts time from a date-time value.
 		/// </summary>
 		/// <param name="dateTime">A date-time stamp in the YYYYMMDDHH24MISS format.</param>
 		/// <param name="time">The amount of time to add, as an integer or floating-point number. Specify a negative number to perform subtraction.</param>
-		/// <param name="timeUnits">The meaning of the Time parameter. TimeUnits may be one of the following strings (or just the first letter): Seconds, Minutes, Hours or Days.</param>
-		/// <returns>The new date-time value as a string of digits in the YYYYMMDDHH24MISS format.</returns>
+		/// <param name="timeUnits">The meaning of the Time parameter. TimeUnits may be one of the following strings (or just the first letter): L (miLliseconds), Seconds, Minutes, Hours or Days.</param>
+		/// <returns>The new date-time value as a string of digits in the YYYYMMDDHH24MISS format if timeUnits was not "L",
+		/// and the YYYYMMDDHH24MISS.FFF format if timeUnits was "L".</returns>
 		public static string DateAdd(object dateTime, object time, object timeUnits)
 		{
 			var s1 = dateTime.As();
 			var t = time.Ad();
 			var units = timeUnits.As();
+			var wasMs = s1.Contains('.');
 
 			if (s1.Length == 0)
-				s1 = Accessors.A_Now;
+				s1 = A_NowMs;
 
 			var d1 = Conversions.ToDateTime(s1);
 
@@ -113,10 +108,12 @@
 				d1 = d1.AddMinutes(t);
 			else if (units.StartsWith("h", StringComparison.OrdinalIgnoreCase))
 				d1 = d1.AddHours(t);
+			else if (wasMs |= units.StartsWith("l", StringComparison.OrdinalIgnoreCase))
+				d1 = d1.AddMilliseconds(t);
 			else
 				d1 = d1.AddDays(t);
 
-			return Conversions.ToYYYYMMDDHH24MISS(d1);
+			return  wasMs ? Conversions.ToYYYYMMDDHH24MISSFFF(d1) : Conversions.ToYYYYMMDDHH24MISS(d1);
 		}
 
 		/// <summary>
@@ -127,7 +124,7 @@
 		/// </param>
 		/// <param name="dateTime2">See <paramref name="dateTime1"/>.</param>
 		/// <param name="timeUnits">Units to measure the difference in.<br/>
-		/// timeUnits may be one of the following strings (or just the first letter): Seconds, Minutes, Hours or Days.
+		/// timeUnits may be one of the following strings (or just the first letter): L (miLliseconds), Seconds, Minutes, Hours or Days.
 		/// </param>
 		/// <returns>The difference between the two timestamps, in the units specified by timeUnits.<br/>
 		/// If dateTime1 is earlier than dateTime2, a negative number is returned.
@@ -139,23 +136,25 @@
 			var units = timeUnits.As();
 
 			if (s1.Length == 0)
-				s1 = Accessors.A_Now;
+				s1 = A_NowMs;
 
 			if (s2.Length == 0)
-				s2 = Accessors.A_Now;
+				s2 = A_NowMs;
 
 			var d1 = Conversions.ToDateTime(s1);
 			var d2 = Conversions.ToDateTime(s2);
 			var diff = d1 - d2;
 
 			if (units.StartsWith("s", StringComparison.OrdinalIgnoreCase))
-				return diff.Seconds;
+				return (long)diff.TotalSeconds;
 			else if (units.StartsWith("m", StringComparison.OrdinalIgnoreCase))
-				return diff.Minutes;
+				return (long)diff.TotalMinutes;
 			else if (units.StartsWith("h", StringComparison.OrdinalIgnoreCase))
-				return diff.Hours;
+				return (long)diff.TotalHours;
+			else if (units.StartsWith("l", StringComparison.OrdinalIgnoreCase))
+				return (long)diff.TotalMilliseconds;
 			else
-				return diff.Days;
+				return (long)diff.TotalDays;
 		}
 
 		/// <summary>
@@ -263,22 +262,59 @@
 
 			if (o.Count > 1)
 			{
-				var max = double.MinValue;
+				object max = double.MinValue;
 
-				for (var i = 1; i < o.Count; i++)
+				for (var i = 1; i < o.Count; ++i)
 				{
-					var x = o[i].ParseDouble();
-					var y = o[i - 1].ParseDouble();
-					if (!x.HasValue || !y.HasValue)
-						throw new TypeError("Received non-numeric value");
+					var left = o[i - 1];
+					var right = o[i];
 
-					var z = Math.Max(x.Value, y.Value);
+					if (Script.ParseNumericArgs(left, right, "Max", out var firstIsDouble, out var secondIsDouble, out var firstd, out var firstl, out var secondd, out var secondl))
+					{
+						if (firstIsDouble)
+						{
+							if (secondIsDouble)
+							{
+								var tempd = Math.Max(firstd, secondd);
 
-					if (z is double dz)
-						max = Math.Max(max, dz);
+								if (tempd > max.Ad())
+									max = tempd;
+							}
+							else
+							{
+								if (firstd > secondl)
+								{
+									if (firstd > max.Ad())
+										max = firstd;
+								}
+								else if (secondl > max.Ad())
+									max = secondl;
+							}
+						}
+						else
+						{
+							if (secondIsDouble)
+							{
+								if (firstl > secondd)
+								{
+									if (firstl > max.Ad())
+										max = firstl;
+								}
+								else if (secondd > max.Ad())
+									max = secondd;
+							}
+							else
+							{
+								var templ = Math.Max(firstl, secondl);
+
+								if (templ > max.Ad())
+									max = templ;
+							}
+						}
+					}
 				}
 
-				if (max != double.MinValue)
+				if (max.Ad() != double.MinValue)
 					return max;
 			}
 
@@ -297,22 +333,59 @@
 
 			if (o.Count > 1)
 			{
-				var min = double.MaxValue;
+				object min = double.MaxValue;
 
-				for (var i = 1; i < o.Count; i++)
+				for (var i = 1; i < o.Count; ++i)
 				{
-					if (!Script.IsNumeric(o[i]) || !Script.IsNumeric(o[i - 1]))
-						return string.Empty;
+					var left = o[i - 1];
+					var right = o[i];
 
-					var x = Convert.ToDouble(o[i]);
-					var y = Convert.ToDouble(o[i - 1]);
-					var z = Math.Min(x, y);
+					if (Script.ParseNumericArgs(left, right, "Min", out var firstIsDouble, out var secondIsDouble, out var firstd, out var firstl, out var secondd, out var secondl))
+					{
+						if (firstIsDouble)
+						{
+							if (secondIsDouble)
+							{
+								var tempd = Math.Min(firstd, secondd);
 
-					if (z is double dz)
-						min = Math.Min(min, dz);
+								if (tempd < min.Ad())
+									min = tempd;
+							}
+							else
+							{
+								if (firstd < secondl)
+								{
+									if (firstd < min.Ad())
+										min = firstd;
+								}
+								else if (secondl < min.Ad())
+									min = secondl;
+							}
+						}
+						else
+						{
+							if (secondIsDouble)
+							{
+								if (firstl < secondd)
+								{
+									if (firstl < min.Ad())
+										min = firstl;
+								}
+								else if (secondd < min.Ad())
+									min = secondd;
+							}
+							else
+							{
+								var templ = Math.Min(firstl, secondl);
+
+								if (templ < min.Ad())
+									min = templ;
+							}
+						}
+					}
 				}
 
-				if (min != double.MaxValue)
+				if (min.Ad() != double.MaxValue)
 					return min;
 			}
 
@@ -438,16 +511,6 @@
 		}
 
 		/// <summary>
-		/// Reinitializes the random number generator for the current thread with the specified numerical seed.
-		/// </summary>
-		/// <param name="obj">The numerical seed to create the random number generator with.</param>
-		public static object RandomSeed(object obj)
-		{
-			Threads.GetThreadVariables().RandomGenerator = new Random(obj.Ai());
-			return null;
-		}
-
-		/// <summary>
 		/// Rounds a number to a specified number of fractional digits.
 		/// </summary>
 		/// <param name="number">A double number to be rounded.</param>
@@ -467,13 +530,6 @@
 		/// <param name="n">An angle, measured in radians.</param>
 		/// <returns>The sine of <paramref name="n"/>.</returns>
 		public static double Sin(object obj) => Math.Sin(obj is double d ? d : obj.Ad());
-
-		/// <summary>
-		/// Returns the hyperbolic sine of the specified angle.
-		/// </summary>
-		/// <param name="n">An angle, measured in radians.</param>
-		/// <returns>The hyperbolic sine of <paramref name="n"/>.</returns>
-		public static double Sinh(object obj) => Math.Sinh(obj is double d ? d : obj.Ad());
 
 		/// <summary>
 		/// Returns the square root of a specified number.
@@ -500,6 +556,30 @@
 		public static double Tan(object obj) => Math.Tan(obj is double d ? d : obj.Ad());
 
 		/// <summary>
+		/// Calculates the integral part of a specified number.
+		/// </summary>
+		/// <param name="n">A number to truncate.</param>
+		/// <returns>The integral part of <paramref name="n"/>; that is, the number that remains after any fractional digits have been discarded.</returns>
+		public static double Truncate(object obj) => Math.Truncate(obj is double d ? d : obj.Ad());
+	}
+
+	public static partial class KeysharpEnhancements
+	{
+		/// <summary>
+		/// Returns the hyperbolic sine of the specified angle.
+		/// </summary>
+		/// <param name="n">An angle, measured in radians.</param>
+		/// <returns>The hyperbolic sine of <paramref name="n"/>.</returns>
+		public static double Sinh(object obj) => Math.Sinh(obj is double d ? d : obj.Ad());
+
+		/// <summary>
+		/// Returns the hyperbolic cosine of the specified angle.
+		/// </summary>
+		/// <param name="n">An angle, measured in radians.</param>
+		/// <returns>The hyperbolic cosine of <paramref name="n"/>.</returns>
+		public static double Cosh(object obj) => Math.Cosh(obj is double d ? d : obj.Ad());
+
+		/// <summary>
 		/// Returns the hyperbolic tangent of the specified angle.
 		/// </summary>
 		/// <param name="n">An angle, measured in radians.</param>
@@ -507,10 +587,13 @@
 		public static double Tanh(object obj) => Math.Tanh(obj is double d ? d : obj.Ad());
 
 		/// <summary>
-		/// Calculates the integral part of a specified number.
+		/// Reinitializes the random number generator for the current thread with the specified numerical seed.
 		/// </summary>
-		/// <param name="n">A number to truncate.</param>
-		/// <returns>The integral part of <paramref name="n"/>; that is, the number that remains after any fractional digits have been discarded.</returns>
-		public static double Truncate(object obj) => Math.Truncate(obj is double d ? d : obj.Ad());
+		/// <param name="obj">The numerical seed to create the random number generator with.</param>
+		public static object RandomSeed(object obj)
+		{
+			Threads.GetThreadVariables().RandomGenerator = new Random(obj.Ai());
+			return null;
+		}
 	}
 }

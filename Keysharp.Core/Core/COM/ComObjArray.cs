@@ -1,18 +1,14 @@
 ﻿#if WINDOWS
-
 namespace Keysharp.Core.COM
 {
-	public class ComArrayIndexValueIterator : IEnumerator<(object, object)>
+	public class ComArrayIndexValueEnumerator : KeysharpEnumerator, IEnumerator<(object, object)>
 	{
+		private static FuncObj p1, p2;
+
 		/// <summary>
 		/// The internal array to be iterated over.
 		/// </summary>
 		private readonly System.Array arr;
-
-		/// <summary>
-		/// The current 0-based position the iterator is at.
-		/// </summary>
-		private int position = -1;
 
 		/// <summary>
 		/// The number of items to return for each iteration. Allowed values are 1 and 2:
@@ -20,6 +16,11 @@ namespace Keysharp.Core.COM
 		/// 2: return the index in the first position and the value in the second.
 		/// </summary>
 		private readonly int count;
+
+		/// <summary>
+		/// The current 0-based position the iterator is at.
+		/// </summary>
+		private int position = -1;
 
 		public (object, object) Current
 		{
@@ -41,15 +42,54 @@ namespace Keysharp.Core.COM
 
 		object IEnumerator.Current => Current;
 
-		public ComArrayIndexValueIterator(System.Array a, int c)
+		static ComArrayIndexValueEnumerator()
+		{
+			Error err;
+			var mi1 = Reflections.FindAndCacheMethod(typeof(ComArrayIndexValueEnumerator), "Call", 1);
+			p1 = new FuncObj(mi1, null);
+
+			if (!p1.IsValid)
+				_ = Errors.ErrorOccurred(err = new MethodError($"Existing function object was invalid.")) ? throw err : "";
+
+			var mi2 = Reflections.FindAndCacheMethod(typeof(ComArrayIndexValueEnumerator), "Call", 2);
+			p2 = new FuncObj(mi2, null);
+
+			if (!p2.IsValid)
+				_ = Errors.ErrorOccurred(err = new MethodError($"Existing function object was invalid.")) ? throw err : "";
+		}
+
+		public ComArrayIndexValueEnumerator(System.Array a, int c)
+			: base(null, c)
 		{
 			arr = a;
 			count = c;
+			var p = c <= 1 ? p1 : p2;
+			var fo = (FuncObj)p.Clone();
+			fo.Inst = this;
+			CallFunc = fo;
 		}
 
-		public void Call(ref object obj0) => (obj0, _) = Current;
+		public override object Call(ref object pos)
+		{
+			if (MoveNext())
+			{
+				(pos, _) = Current;
+				return true;
+			}
 
-		public void Call(ref object obj0, ref object obj1) => (obj0, obj1) = Current;
+			return false;
+		}
+
+		public override object Call(ref object pos, ref object val)
+		{
+			if (MoveNext())
+			{
+				(pos, val) = Current;
+				return true;
+			}
+
+			return false;
+		}
 
         public object Call(params object[] args)
         {
@@ -80,11 +120,9 @@ namespace Keysharp.Core.COM
 		}
 
 		public void Reset() => position = -1;
-
-		private IEnumerator<(object, object)> GetEnumerator() => this;
 	}
 
-	public class ComObjArray : ComObject, IEnumerable<(object, object)>, ICollection, IList
+	public class ComObjArray : ComObject, I__Enum, IEnumerable<(object, object)>, ICollection, IList
 	{
 		public System.Array array;
 
@@ -103,7 +141,7 @@ namespace Keysharp.Core.COM
 			array = arr;
 		}
 
-		public IEnumerator<(object, object)> __Enum(object count) => new ComArrayIndexValueIterator(array, count.Ai());
+		public KeysharpEnumerator __Enum(object count) => new ComArrayIndexValueEnumerator(array, count.Ai());
 
 		public int Add(object value) => ((IList)array).Add(value);
 
@@ -115,7 +153,7 @@ namespace Keysharp.Core.COM
 
 		public void CopyTo(System.Array array, int index) => ((ICollection)this.array).CopyTo(array, index);
 
-		public IEnumerator<(object, object)> GetEnumerator() => new ComArrayIndexValueIterator(array, 2);
+		public IEnumerator<(object, object)> GetEnumerator() => new ComArrayIndexValueEnumerator(array, 2);
 
 		public int IndexOf(object value) => ((IList)array).IndexOf(value);
 
@@ -129,10 +167,9 @@ namespace Keysharp.Core.COM
 
 		public void RemoveAt(int index) => ((IList)array).RemoveAt(index);
 
-		IEnumerator IEnumerable.GetEnumerator() => __Enum(2);
+		IEnumerator IEnumerable.GetEnumerator() => new ComArrayIndexValueEnumerator(array, 2);
 
 		public object this[int index] { get => ((IList)array)[index]; set => ((IList)array)[index] = value; }
 	}
 }
-
 #endif

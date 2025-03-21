@@ -389,45 +389,45 @@ namespace Keysharp.Core.COM
 		}
 	}
 
-	internal delegate IntPtr Del0(IntPtr a);
+	internal delegate long Del0(long a);
 
-	internal delegate IntPtr Del01(IntPtr a, IntPtr a0);
+	internal delegate long Del01(long a, long a0);
 
-	internal delegate IntPtr Del02(IntPtr a, IntPtr a0, IntPtr a1);
+	internal delegate long Del02(long a, long a0, long a1);
 
-	internal delegate IntPtr Del03(IntPtr a, IntPtr a0, IntPtr a1, IntPtr a2);
+	internal delegate long Del03(long a, long a0, long a1, long a2);
 
-	internal delegate IntPtr Del04(IntPtr a, IntPtr a0, IntPtr a1, IntPtr a2, IntPtr a3);
+	internal delegate long Del04(long a, long a0, long a1, long a2, long a3);
 
-	internal delegate IntPtr Del05(IntPtr a, IntPtr a0, IntPtr a1, IntPtr a2, IntPtr a3, IntPtr a4);
+	internal delegate long Del05(long a, long a0, long a1, long a2, long a3, long a4);
 
-	internal delegate IntPtr Del06(IntPtr a, IntPtr a0, IntPtr a1, IntPtr a2, IntPtr a3, IntPtr a4, IntPtr a5);
+	internal delegate long Del06(long a, long a0, long a1, long a2, long a3, long a4, long a5);
 
-	internal delegate IntPtr Del07(IntPtr a, IntPtr a0, IntPtr a1, IntPtr a2, IntPtr a3, IntPtr a4, IntPtr a5, IntPtr a6);
+	internal delegate long Del07(long a, long a0, long a1, long a2, long a3, long a4, long a5, long a6);
 
-	internal delegate IntPtr Del08(IntPtr a, IntPtr a0, IntPtr a1, IntPtr a2, IntPtr a3, IntPtr a4, IntPtr a5, IntPtr a6, IntPtr a7);
+	internal delegate long Del08(long a, long a0, long a1, long a2, long a3, long a4, long a5, long a6, long a7);
 
-	internal delegate IntPtr Del09(IntPtr a, IntPtr a0, IntPtr a1, IntPtr a2, IntPtr a3, IntPtr a4, IntPtr a5, IntPtr a6, IntPtr a7, IntPtr a8);
+	internal delegate long Del09(long a, long a0, long a1, long a2, long a3, long a4, long a5, long a6, long a7, long a8);
 
-	internal delegate IntPtr Del10(IntPtr a, IntPtr a0, IntPtr a1, IntPtr a2, IntPtr a3, IntPtr a4, IntPtr a5, IntPtr a6, IntPtr a7, IntPtr a8, IntPtr a9);
+	internal delegate long Del10(long a, long a0, long a1, long a2, long a3, long a4, long a5, long a6, long a7, long a8, long a9);
 
-	internal delegate IntPtr Del11(IntPtr a, IntPtr a0, IntPtr a1, IntPtr a2, IntPtr a3, IntPtr a4, IntPtr a5, IntPtr a6, IntPtr a7, IntPtr a8, IntPtr a9, IntPtr a10);
+	internal delegate long Del11(long a, long a0, long a1, long a2, long a3, long a4, long a5, long a6, long a7, long a8, long a9, long a10);
 
-	internal delegate IntPtr Del12(IntPtr a, IntPtr a0, IntPtr a1, IntPtr a2, IntPtr a3, IntPtr a4, IntPtr a5, IntPtr a6, IntPtr a7, IntPtr a8, IntPtr a9, IntPtr a10, IntPtr a11);
+	internal delegate long Del12(long a, long a0, long a1, long a2, long a3, long a4, long a5, long a6, long a7, long a8, long a9, long a10, long a11);
 
-	internal delegate IntPtr Del13(IntPtr a, IntPtr a0, IntPtr a1, IntPtr a2, IntPtr a3, IntPtr a4, IntPtr a5, IntPtr a6, IntPtr a7, IntPtr a8, IntPtr a9, IntPtr a10, IntPtr a11, IntPtr a12);
+	internal delegate long Del13(long a, long a0, long a1, long a2, long a3, long a4, long a5, long a6, long a7, long a8, long a9, long a10, long a11, long a12);
 
-	internal delegate IntPtr Del14(IntPtr a, IntPtr a0, IntPtr a1, IntPtr a2, IntPtr a3, IntPtr a4, IntPtr a5, IntPtr a6, IntPtr a7, IntPtr a8, IntPtr a9, IntPtr a10, IntPtr a11, IntPtr a12, IntPtr a13);
+	internal delegate long Del14(long a, long a0, long a1, long a2, long a3, long a4, long a5, long a6, long a7, long a8, long a9, long a10, long a11, long a12, long a13);
 
-	internal delegate IntPtr Del15(IntPtr a, IntPtr a0, IntPtr a1, IntPtr a2, IntPtr a3, IntPtr a4, IntPtr a5, IntPtr a6, IntPtr a7, IntPtr a8, IntPtr a9, IntPtr a10, IntPtr a11, IntPtr a12, IntPtr a13, IntPtr a14);
+	internal delegate long Del15(long a, long a0, long a1, long a2, long a3, long a4, long a5, long a6, long a7, long a8, long a9, long a10, long a11, long a12, long a13, long a14);
 
-	internal delegate IntPtr Del16(IntPtr a, IntPtr a0, IntPtr a1, IntPtr a2, IntPtr a3, IntPtr a4, IntPtr a5, IntPtr a6, IntPtr a7, IntPtr a8, IntPtr a9, IntPtr a10, IntPtr a11, IntPtr a12, IntPtr a13, IntPtr a14, IntPtr a15);
+	internal delegate long Del16(long a, long a0, long a1, long a2, long a3, long a4, long a5, long a6, long a7, long a8, long a9, long a10, long a11, long a12, long a13, long a14, long a15);
 
-	internal delegate IntPtr Del17(IntPtr a, IntPtr a0, IntPtr a1, IntPtr a2, IntPtr a3, IntPtr a4, IntPtr a5, IntPtr a6, IntPtr a7, IntPtr a8, IntPtr a9, IntPtr a10, IntPtr a11, IntPtr a12, IntPtr a13, IntPtr a14, IntPtr a15, IntPtr a16);
+	internal delegate long Del17(long a, long a0, long a1, long a2, long a3, long a4, long a5, long a6, long a7, long a8, long a9, long a10, long a11, long a12, long a13, long a14, long a15, long a16);
 
-	internal delegate IntPtr Del18(IntPtr a, IntPtr a0, IntPtr a1, IntPtr a2, IntPtr a3, IntPtr a4, IntPtr a5, IntPtr a6, IntPtr a7, IntPtr a8, IntPtr a9, IntPtr a10, IntPtr a11, IntPtr a12, IntPtr a13, IntPtr a14, IntPtr a15, IntPtr a16, IntPtr a17);
+	internal delegate long Del18(long a, long a0, long a1, long a2, long a3, long a4, long a5, long a6, long a7, long a8, long a9, long a10, long a11, long a12, long a13, long a14, long a15, long a16, long a17);
 
-	internal delegate IntPtr DelNone();
+	internal delegate long DelNone();
 }
 
 #endif

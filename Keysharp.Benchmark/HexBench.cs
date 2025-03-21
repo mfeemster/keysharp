@@ -11,16 +11,13 @@ namespace Keysharp.Benchmark
 	/// Some benchmarking from https://www.meziantou.net/comparing-implementations-with-benchmarkdotnet.htm
 	/// and https://devblogs.microsoft.com/dotnet/performance-improvements-in-net-9/#strings-arrays-spans
 	/// </summary>
-	[MemoryDiagnoser]
-	//[OrderProvider(SummaryOrderPolicy.FastestToSlowest)] // Order the result
-	public class HexBench
+	public class HexBench : BaseTest
 	{
 		// Initialize the byte array for each run
 		private byte[] _array;
 
 		//[Params(10, 1000, 10000)]
 		[Params(100000)]
-
 		public int Size { get; set; }
 
 		[GlobalSetup]

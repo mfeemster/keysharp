@@ -356,7 +356,7 @@
 					MaximizeBox = false,
 					SizeGripStyle = SizeGripStyle.Hide,
 					Tag = new WeakReference<Gui>(this, false),
-					Text = caption != "" ? caption : Accessors.A_ScriptName
+					Text = caption != "" ? caption : A_ScriptName
 				};
 				//Note that we don't do any Suspend/Resume layout calls when creating controls on the form as would normally
 				//be done in designer-generated code. It appears to cause layout problems.
@@ -386,7 +386,7 @@
 			GuiControl holder = null;
 			var text = o as string;
 			var al = o as Array;
-			var dpiscale = !dpiscaling ? 1.0 : Accessors.A_ScaledScreenDPI;
+			var dpiscale = !dpiscaling ? 1.0 : A_ScaledScreenDPI;
 			var dpiinv = 1.0 / dpiscale;
 			var opts = ParseOpt(type, text, options);
 			Control ctrl = null;
@@ -1534,7 +1534,7 @@
 			var y = obj1.Ai();
 			var width = obj2.Ai();
 			var height = obj3.Ai();
-			var scale = !dpiscaling ? 1.0 : Accessors.A_ScaledScreenDPI;
+			var scale = !dpiscaling ? 1.0 : A_ScaledScreenDPI;
 			form.Top = (int)Math.Round(y * scale);
 			form.Left = (int)Math.Round(x * scale);
 			form.Width = (int)Math.Round(width * scale);
@@ -1618,7 +1618,7 @@
 			var s = obj.As();
 			bool /*center = false, cX = false, cY = false,*/ auto = false, min = false, max = false, restore = false, hide = false;
 			int?[] pos = [null, null, null, null];
-			var dpiscale = !dpiscaling ? 1.0 : Accessors.A_ScaledScreenDPI;
+			var dpiscale = !dpiscaling ? 1.0 : A_ScaledScreenDPI;
 
 			foreach (Range r in s.AsSpan().SplitAny(Spaces))
 			{
@@ -1900,7 +1900,7 @@
 			allGuiHwnds.Clear();
 		}
 
-		internal static float GetFontPixels(Font font) => font.GetHeight((float)Accessors.A_ScreenDPI);
+		internal static float GetFontPixels(Font font) => font.GetHeight((float)A_ScreenDPI);
 
 		internal static bool IsGuiType(Type type) => GuiTypes.Any(t => t.IsAssignableFrom(type));
 
@@ -2160,7 +2160,7 @@
 
 		private void ResizeTabControls()
 		{
-			var dpiscale = !dpiscaling ? 1.0 : Accessors.A_ScaledScreenDPI;
+			var dpiscale = !dpiscaling ? 1.0 : A_ScaledScreenDPI;
 			var tabControls = controls.Values.OfType<GuiControl>().Select(gc => gc.Control).OfType<KeysharpTabControl>().ToHashSet();
 
 			foreach (var tc in tabControls)
@@ -2430,5 +2430,23 @@
 
 			return false;
 		}
-	}
+
+        public override object Call(params object[] args)
+        {
+            if (MoveNext())
+            {
+                if (args.Length == 1)
+                {
+                    Script.SetPropertyValue(args[0], "__Value", iter.Current.Value);
+                }
+                else if (args.Length >= 2)
+                {
+                    Script.SetPropertyValue(args[0], "__Value", iter.Current.Key);
+                    Script.SetPropertyValue(args[1], "__Value", iter.Current.Value);
+                }
+                return true;
+            }
+            return false;
+        }
+    }
 }

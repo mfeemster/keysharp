@@ -922,12 +922,6 @@
 		}
 
 		/// <summary>
-		/// Gets the enumerator which is just this.
-		/// </summary>
-		/// <returns>this as an <see cref="IEnumerator{(object, object)}"/>.</returns>
-		private IEnumerator<(object, object)> GetEnumerator() => this;
-
-		/// <summary>
 		/// Calls <see cref="Current"/> and places the position value in the passed in object reference.
 		/// </summary>
 		/// <param name="pos">A reference to the position value.</param>

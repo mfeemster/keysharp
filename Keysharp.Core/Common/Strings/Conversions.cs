@@ -32,8 +32,14 @@ namespace Keysharp.Core.Common.Strings
 		{
 			switch (time.Length)
 			{
+				case 18:
+					if (DateTime.TryParseExact(time, "yyyyMMddHHmmss.fff", CultureInfo.CurrentCulture, DateTimeStyles.AssumeLocal, out var dt))
+						return dt;
+
+					break;
+
 				case 14:
-					if (DateTime.TryParseExact(time, "yyyyMMddHHmmss", CultureInfo.CurrentCulture, DateTimeStyles.AssumeLocal, out var dt))
+					if (DateTime.TryParseExact(time, "yyyyMMddHHmmss", CultureInfo.CurrentCulture, DateTimeStyles.AssumeLocal, out dt))
 						return dt;
 
 					break;
@@ -708,6 +714,8 @@ namespace Keysharp.Core.Common.Strings
 		}
 
 		internal static string ToYYYYMMDDHH24MISS(DateTime time) => time.ToString("yyyyMMddHHmmss");
+
+		internal static string ToYYYYMMDDHH24MISSFFF(DateTime time) => time.ToString("yyyyMMddHHmmss.fff");
 
 		internal static bool TryParseColor(string name, out Color c)
 		{

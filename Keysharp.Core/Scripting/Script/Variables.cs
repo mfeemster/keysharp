@@ -43,8 +43,8 @@ namespace Keysharp.Scripting
 				//If we're running via passing in a script and are not in a unit test, then set the working directory to that of the script file.
 				var path = Path.GetFileName(Application.ExecutablePath).ToLowerInvariant();
 
-				if (path != "testhost.exe" && path != "testhost.dll" && !Accessors.A_IsCompiled)
-					Dir.SetWorkingDir(Accessors.A_ScriptDir);
+				if (path != "testhost.exe" && path != "testhost.dll" && !A_IsCompiled)
+					Dir.SetWorkingDir(A_ScriptDir);
 
                 Prototypes = new();
 				Statics = new();

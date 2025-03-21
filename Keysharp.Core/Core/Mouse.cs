@@ -96,28 +96,28 @@ namespace Keysharp.Core
 			switch (target.ToLowerInvariant())
 			{
 				case Keyword_ToolTip:
-					prev = Accessors.A_CoordModeToolTip;
-					Accessors.A_CoordModeToolTip = rel;
+					prev = A_CoordModeToolTip;
+					A_CoordModeToolTip = rel;
 					break;
 
 				case Keyword_Pixel:
-					prev = Accessors.A_CoordModePixel;
-					Accessors.A_CoordModePixel = rel;
+					prev = A_CoordModePixel;
+					A_CoordModePixel = rel;
 					break;
 
 				case Keyword_Mouse:
-					prev = Accessors.A_CoordModeMouse;
-					Accessors.A_CoordModeMouse = rel;
+					prev = A_CoordModeMouse;
+					A_CoordModeMouse = rel;
 					break;
 
 				case Keyword_Caret:
-					prev = Accessors.A_CoordModeCaret;
-					Accessors.A_CoordModeCaret = rel;
+					prev = A_CoordModeCaret;
+					A_CoordModeCaret = rel;
 					break;
 
 				case Keyword_Menu:
-					prev = Accessors.A_CoordModeMenu;
-					Accessors.A_CoordModeMenu = rel;
+					prev = A_CoordModeMenu;
+					A_CoordModeMenu = rel;
 					break;
 
 				default:
@@ -310,7 +310,7 @@ namespace Keysharp.Core
 		/// <param name="speed">The speed to move the mouse in the range 0 (fastest) to 100 (slowest). A speed of 0 will move the mouse instantly.</param>
 		public static object SetDefaultMouseSpeed(object speed)
 		{
-			Accessors.A_DefaultMouseSpeed = speed;
+			A_DefaultMouseSpeed = speed;
 			return null;
 		}
 
@@ -327,15 +327,15 @@ namespace Keysharp.Core
 		{
 			var p = play.As().ToLowerInvariant();
 			var isplay = p == "play";
-			var del = isplay ? Accessors.A_MouseDelayPlay : Accessors.A_MouseDelay;
+			var del = isplay ? A_MouseDelayPlay : A_MouseDelay;
 
 			if (delay != null)
 				del = delay.Al();
 
 			if (isplay)
-				Accessors.A_MouseDelayPlay = del;
+				A_MouseDelayPlay = del;
 			else
-				Accessors.A_MouseDelay = del;
+				A_MouseDelay = del;
 
 			return null;
 		}
@@ -504,11 +504,11 @@ namespace Keysharp.Core
 		/// </summary>
 		internal CoordModes()
 		{
-			Caret = Accessors.CoordModeCaretDefault;
-			Menu = Accessors.CoordModeMenuDefault;
-			Mouse = Accessors.CoordModeMouseDefault;
-			Pixel = Accessors.CoordModePixelDefault;
-			Tooltip = Accessors.CoordModeToolTipDefault;
+			Caret = CoordModeCaretDefault;
+			Menu = CoordModeMenuDefault;
+			Mouse = CoordModeMouseDefault;
+			Pixel = CoordModePixelDefault;
+			Tooltip = CoordModeToolTipDefault;
 		}
 
 		/// <summary>

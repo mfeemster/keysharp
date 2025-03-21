@@ -2,6 +2,7 @@
   <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
     <TargetFramework>net9.0-windows</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
+    <Platforms>x64</Platforms>
   </PropertyGroup>
 
   <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Linux'))">
@@ -13,9 +14,9 @@
     <StartupObject>Keyview.Program</StartupObject>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <ApplicationIcon>..\Keysharp.ico</ApplicationIcon>
-    <AssemblyVersion>0.0.0.8</AssemblyVersion>
-    <FileVersion>0.0.0.8</FileVersion>
-    <Version>0.0.0.8</Version>
+    <AssemblyVersion>0.0.0.9</AssemblyVersion>
+    <FileVersion>0.0.0.9</FileVersion>
+    <Version>0.0.0.9</Version>
     <Authors>Matt Feemster</Authors>
     <Description>A viewer which shows the C# code that is generated from compiling Keysharp script code</Description>
     <Company>Keysharp</Company>
@@ -23,13 +24,16 @@
     <ProduceReferenceAssembly>true</ProduceReferenceAssembly>
     <SignAssembly>False</SignAssembly>
     <DelaySign>False</DelaySign>
+    <PlatformTarget>x64</PlatformTarget>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <WarningLevel>5</WarningLevel>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutputPath>..\bin\debug\</OutputPath>
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutputPath>..\bin\release\</OutputPath>
   </PropertyGroup>
 
@@ -44,7 +48,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Scintilla5.NET" Version="5.6.1" />
+    <PackageReference Include="Scintilla5.NET" Version="5.6.6" />
   </ItemGroup>
 
   <ItemGroup>

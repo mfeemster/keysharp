@@ -7,16 +7,6 @@ namespace Keysharp.Core
 	public static class Misc
 	{
 		/// <summary>
-		/// Calls GC.Collect().
-		/// According to .NET design guidelines, this should never be necessary.
-		/// </summary>
-		public static object Collect()
-		{
-			GC.Collect();
-			return null;
-		}
-
-		/// <summary>
 		/// Used by the parser to generate code to handle reference arguments to method calls on objects.
 		/// This is not needed for static function calls with reference arguments.
 		/// This should never be needed to be manually called by a script.
@@ -97,11 +87,5 @@ namespace Keysharp.Core
 
 			return sb.ToString();
 		}
-
-		/// <summary>
-		/// Shows the debug tab in the main window.
-		/// Using this anywhere in the script will also make it persistent.
-		/// </summary>
-		public static void ShowDebug() => Script.mainWindow?.ShowDebug();
 	}
 }

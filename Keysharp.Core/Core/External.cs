@@ -253,7 +253,11 @@
 					case "uint64":
 					case "ptr":
 					case "uptr":
-						bytes = ConvertToInt(number);
+						if (number is DelegateHolder dh)
+							bytes = BitConverter.GetBytes(Marshal.GetFunctionPointerForDelegate(dh.DelRef));
+						else
+							bytes = ConvertToInt(number);
+
 						inc = 8;
 						break;
 

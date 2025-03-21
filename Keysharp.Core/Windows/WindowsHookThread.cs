@@ -839,7 +839,7 @@ namespace Keysharp.Core.Windows
 				// hotkey) don't process it here.  Similarly, if g_IsSuspended is true, we won't include it unless it's
 				// exempt from suspension:
 				if (!HotkeyDefinition.HK_TYPE_IS_HOOK(hk.type)
-						|| (Accessors.A_IsSuspended && !hk.IsExemptFromSuspend())
+						|| (A_IsSuspended && !hk.IsExemptFromSuspend())
 						|| hk.IsCompletelyDisabled()) // Listed last for short-circuit performance.
 					continue;
 
@@ -5182,7 +5182,7 @@ namespace Keysharp.Core.Windows
 				}
 				catch (Exception ex)
 				{
-					Core.Debug.OutputDebug($"Windows hook thread exited unexpectedly: {ex}");
+					Debug.OutputDebug($"Windows hook thread exited unexpectedly: {ex}");
 				}
 				finally
 				{

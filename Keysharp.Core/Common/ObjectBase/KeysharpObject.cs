@@ -133,7 +133,7 @@
 			try
 			{
 				var val = Script.GetPropertyValue(this, name);
-				return Keysharp.Core.Objects.Object(["value", val]);
+				return Objects.Object(["value", val]);
 			}
 			catch
 			{

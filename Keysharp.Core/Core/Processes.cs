@@ -472,8 +472,8 @@ namespace Keysharp.Core
 
 							if (setWorkingDir)
 							{
-								oldDir = Accessors.A_WorkingDir;
-								Accessors.A_WorkingDir = workingDir;
+								oldDir = A_WorkingDir;
+								A_WorkingDir = workingDir;
 							}
 
 							if (System.IO.Path.Exists(temp))
@@ -483,7 +483,7 @@ namespace Keysharp.Core
 							}
 
 							if (setWorkingDir)
-								Accessors.A_WorkingDir = oldDir;
+								A_WorkingDir = oldDir;
 						}
 					}
 
@@ -523,8 +523,8 @@ namespace Keysharp.Core
 
 								if (setWorkingDir)
 								{
-									oldDir = Accessors.A_WorkingDir;
-									Accessors.A_WorkingDir = workingDir;
+									oldDir = A_WorkingDir;
+									A_WorkingDir = workingDir;
 								}
 
 								if (System.IO.Path.Exists(temp))
@@ -535,7 +535,7 @@ namespace Keysharp.Core
 								}
 
 								if (setWorkingDir)
-									Accessors.A_WorkingDir = oldDir;
+									A_WorkingDir = oldDir;
 							}
 						}
 					}

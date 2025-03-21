@@ -354,8 +354,8 @@ public abstract class MainLexerBase : Lexer
         {
             case Identifier:
             case NullLiteral:
-            case True:
-            case False:
+            case MainParser.True:
+            case MainParser.False:
             case This:
             case CloseBracket:
             case CloseParen:

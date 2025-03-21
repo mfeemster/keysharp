@@ -1,6 +1,6 @@
 namespace Keysharp.Core.Common.Cryptography
 {
-	public static class Crypt
+	internal static class Crypt
 	{
 		internal static byte[] Encrypt(object value, object key, bool decrypt, SymmetricAlgorithm alg)
 		{
@@ -32,7 +32,7 @@ namespace Keysharp.Core.Common.Cryptography
 			}
 
 			var iv = new byte[alg.IV.Length];
-			var hash = SHA1.Create().ComputeHash(keyBytes, 0, iv.Length);
+			var hash = System.Security.Cryptography.SHA1.Create().ComputeHash(keyBytes, 0, iv.Length);
 
 			for (var i = 0; i < Math.Min(iv.Length, hash.Length); i++)
 				iv[i] = hash[i];

@@ -26,6 +26,9 @@ namespace Keysharp.Core.COM
 		public const int vt_ui8 = 0x15; //64-bit unsigned int
 		public const int vt_int = 0x16; //Signed machine int
 		public const int vt_uint = 0x17; //Unsigned machine int
+		public const int vt_void = 0x18;
+		public const int vt_hresult = 0x19;
+		public const int vt_ptr = 0x001A;
 		public const int vt_record = 0x24; //User-defined type -- NOT SUPPORTED
 		public const int vt_array = 0x2000; //SAFEARRAY
 		public const int vt_byref = 0x4000; //Pointer to another type of value
@@ -38,6 +41,7 @@ namespace Keysharp.Core.COM
 		internal const int CLSCTX_INPROC_SERVER16 = 0x8;
 		internal const int CLSCTX_REMOTE_SERVER = 0x10;
 		internal const int CLSCTX_SERVER = CLSCTX_INPROC_SERVER | CLSCTX_LOCAL_SERVER | CLSCTX_REMOTE_SERVER; //16;
+		internal const int LOCALE_SYSTEM_DEFAULT = 0x800;
 		internal static HashSet<ComEvent> comEvents = [];
 
 		//private static Dictionary<int,
@@ -318,7 +322,7 @@ namespace Keysharp.Core.COM
 
 			if (comObj is ComObject co)
 			{
-				System.Runtime.InteropServices.ComTypes.ITypeInfo typeInfo = null;
+				ITypeInfo typeInfo = null;
 
 				if (s.Length == 0)
 				{
@@ -357,10 +361,26 @@ namespace Keysharp.Core.COM
 					else if (s == "iid")
 					{
 						typeInfo.GetTypeAttr(out var typeAttr);
-						System.Runtime.InteropServices.ComTypes.TYPEATTR attr = (System.Runtime.InteropServices.ComTypes.TYPEATTR)Marshal.PtrToStructure(typeAttr, typeof(System.Runtime.InteropServices.ComTypes.TYPEATTR));
+						var attr = Marshal.PtrToStructure<TYPEATTR>(typeAttr);
 						var guid = attr.guid.ToString("B").ToUpper();
 						typeInfo.ReleaseTypeAttr(typeAttr);
 						return guid;
+					}
+				}
+			}
+			else if (Marshal.IsComObject(comObj))
+			{
+				if (comObj is IDispatch dispatch)
+				{
+					var ret = dispatch.GetTypeInfo(0, 0, out var typeInfo);
+
+					if (typeInfo != null)
+					{
+						typeInfo.GetTypeAttr(out var pTypeAttr);
+						var typeAttr = Marshal.PtrToStructure<TYPEATTR>(pTypeAttr);
+						var vtType = typeAttr.tdescAlias.vt;
+						typeInfo.ReleaseTypeAttr(pTypeAttr);
+						return (long)vtType;
 					}
 				}
 			}
@@ -464,7 +484,7 @@ namespace Keysharp.Core.COM
 
 			var pVtbl = Marshal.ReadIntPtr(pUnk);
 			var helper = new ComArgumentHelper(parameters);
-			var ret = CallDel(pUnk, Marshal.ReadIntPtr(IntPtr.Add(pVtbl, idx * sizeof(IntPtr))), helper.args);
+			var value = CallDel(pUnk.ToInt64(), Marshal.ReadIntPtr(IntPtr.Add(pVtbl, idx * sizeof(IntPtr))), helper.args);
 
 			for (int pi = 0, ai = 0; pi < parameters.Length; pi += 2, ++ai)
 			{
@@ -485,96 +505,143 @@ namespace Keysharp.Core.COM
 						var aip = helper.args[ai];
 
 						if (ps[ ^ 1] == '*' || ps[ ^ 1] == 'p')
-							Dll.FixParamTypeAndCopyBack(ref parameters[pi + 1], ps, aip);//Must reference directly into the array, not a temp variable.
+							Dll.FixParamTypeAndCopyBack(ref parameters[pi + 1], ps, (IntPtr)aip);//Must reference directly into the array, not a temp variable.
 					}
 				}
 			}
 
-			return ret.ToInt64();
-		}
-
-		internal static IntPtr CallDel(IntPtr objPtr, IntPtr vtbl, IntPtr[] args)
-		{
-			switch (args.Length)
+			if (helper.ReturnType == typeof(int))
 			{
-				case 0:
-					var del0 = (Del0)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del0));
-					return del0(objPtr);
-
-				case 1:
-					var del1 = (Del01)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del01));
-					return del1(objPtr, args[0]);
-
-				case 2:
-					var del2 = (Del02)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del02));
-					return del2(objPtr, args[0], args[1]);
-
-				case 3:
-					var del3 = (Del03)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del03));
-					return del3(objPtr, args[0], args[1], args[2]);
-
-				case 4:
-					var del4 = (Del04)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del04));
-					return del4(objPtr, args[0], args[1], args[2], args[3]);
-
-				case 5:
-					var del5 = (Del05)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del05));
-					return del5(objPtr, args[0], args[1], args[2], args[3], args[4]);
-
-				case 6:
-					var del6 = (Del06)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del06));
-					return del6(objPtr, args[0], args[1], args[2], args[3], args[4], args[5]);
-
-				case 7:
-					var del7 = (Del07)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del07));
-					return del7(objPtr, args[0], args[1], args[2], args[3], args[4], args[5], args[6]);
-
-				case 8:
-					var del8 = (Del08)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del08));
-					return del8(objPtr, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7]);
-
-				case 9:
-					var del9 = (Del09)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del09));
-					return del9(objPtr, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8]);
-
-				case 10:
-					var del10 = (Del10)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del10));
-					return del10(objPtr, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9]);
-
-				case 11:
-					var del11 = (Del11)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del11));
-					return del11(objPtr, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10]);
-
-				case 12:
-					var del12 = (Del12)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del12));
-					return del12(objPtr, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11]);
-
-				case 13:
-					var del13 = (Del13)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del13));
-					return del13(objPtr, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11], args[12]);
-
-				case 14:
-					var del14 = (Del14)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del14));
-					return del14(objPtr, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11], args[12], args[13]);
-
-				case 15:
-					var del15 = (Del15)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del15));
-					return del15(objPtr, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11], args[12], args[13], args[14]);
-
-				case 16:
-					var del16 = (Del16)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del16));
-					return del16(objPtr, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11], args[12], args[13], args[14], args[15]);
-
-				case 17:
-					var del17 = (Del17)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del17));
-					return del17(objPtr, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11], args[12], args[13], args[14], args[15], args[16]);
-
-				case 18:
-					var del18 = (Del18)Marshal.GetDelegateForFunctionPointer(vtbl, typeof(Del18));
-					return del18(objPtr, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11], args[12], args[13], args[14], args[15], args[16], args[17]);
+				int ii = *(int*)&value;
+				value = ii;
+			}
+			else if (helper.ReturnType == typeof(string))
+			{
+				var str = Marshal.PtrToStringUni((nint)value);
+				_ = Strings.FreeStrPtr(value);//If this string came from us, it will be freed, else no action.
+				return str;
 			}
 
-			return IntPtr.Zero;
+			return value;
+		}
+
+		internal static long CallDel(long objPtr, IntPtr vtbl, long[] args)
+		{
+			//First attempt to call the normal way. This will succeed with any normal COM call.
+			//However, it will throw an exception if we've passed a fake COM function using DelegateHolder.
+			//This can be reproduced with the following script.
+			/*
+			    ReturnInt() => 123
+
+			    ; Create dummy vtable without a defined AddRef, Release etc
+			    vtbl := Buffer(4*A_PtrSize)
+			    NumPut("ptr", CallbackCreate(ReturnInt), vtbl, 3*A_PtrSize)
+			    ; Add the vtbl to our COM object
+			    dummyCOM := Buffer(A_PtrSize, 0)
+			    NumPut("ptr", vtbl.Ptr, dummyCOM)
+
+			    MsgBox ComCall(3, dummyCOM.Ptr, "int")
+			*/
+			try
+			{
+				switch (args.Length)
+				{
+					case 0:
+						var del0 = Marshal.GetDelegateForFunctionPointer<Del0>(vtbl);
+						return del0(objPtr);
+
+					case 1:
+						var del1 = Marshal.GetDelegateForFunctionPointer<Del01>(vtbl);
+						return del1(objPtr, args[0]);
+
+					case 2:
+						var del2 = Marshal.GetDelegateForFunctionPointer<Del02>(vtbl);
+						return del2(objPtr, args[0], args[1]);
+
+					case 3:
+						var del3 = Marshal.GetDelegateForFunctionPointer<Del03>(vtbl);
+						return del3(objPtr, args[0], args[1], args[2]);
+
+					case 4:
+						var del4 = Marshal.GetDelegateForFunctionPointer<Del04>(vtbl);
+						return del4(objPtr, args[0], args[1], args[2], args[3]);
+
+					case 5:
+						var del5 = Marshal.GetDelegateForFunctionPointer<Del05>(vtbl);
+						return del5(objPtr, args[0], args[1], args[2], args[3], args[4]);
+
+					case 6:
+						var del6 = Marshal.GetDelegateForFunctionPointer<Del06>(vtbl);
+						return del6(objPtr, args[0], args[1], args[2], args[3], args[4], args[5]);
+
+					case 7:
+						var del7 = Marshal.GetDelegateForFunctionPointer<Del07>(vtbl);
+						return del7(objPtr, args[0], args[1], args[2], args[3], args[4], args[5], args[6]);
+
+					case 8:
+						var del8 = Marshal.GetDelegateForFunctionPointer<Del08>(vtbl);
+						return del8(objPtr, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7]);
+
+					case 9:
+						var del9 = Marshal.GetDelegateForFunctionPointer<Del09>(vtbl);
+						return del9(objPtr, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8]);
+
+					case 10:
+						var del10 = Marshal.GetDelegateForFunctionPointer<Del10>(vtbl);
+						return del10(objPtr, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9]);
+
+					case 11:
+						var del11 = Marshal.GetDelegateForFunctionPointer<Del11>(vtbl);
+						return del11(objPtr, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10]);
+
+					case 12:
+						var del12 = Marshal.GetDelegateForFunctionPointer<Del12>(vtbl);
+						return del12(objPtr, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11]);
+
+					case 13:
+						var del13 = Marshal.GetDelegateForFunctionPointer<Del13>(vtbl);
+						return del13(objPtr, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11], args[12]);
+
+					case 14:
+						var del14 = Marshal.GetDelegateForFunctionPointer<Del14>(vtbl);
+						return del14(objPtr, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11], args[12], args[13]);
+
+					case 15:
+						var del15 = Marshal.GetDelegateForFunctionPointer<Del15>(vtbl);
+						return del15(objPtr, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11], args[12], args[13], args[14]);
+
+					case 16:
+						var del16 = Marshal.GetDelegateForFunctionPointer<Del16>(vtbl);
+						return del16(objPtr, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11], args[12], args[13], args[14], args[15]);
+
+					case 17:
+						var del17 = Marshal.GetDelegateForFunctionPointer<Del17>(vtbl);
+						return del17(objPtr, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11], args[12], args[13], args[14], args[15], args[16]);
+
+					case 18:
+						var del18 = Marshal.GetDelegateForFunctionPointer<Del18>(vtbl);
+						return del18(objPtr, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11], args[12], args[13], args[14], args[15], args[16], args[17]);
+				}
+			}
+			catch (InvalidCastException)
+			{
+			}
+
+			//For faked COM calls, don't pass in the object pointer since there won't be one.
+			var phf = Marshal.GetDelegateForFunctionPointer<DelegateHolder.PlaceholderFunction>(vtbl);
+			var tempargs = new object[31];
+			var ct = Math.Min(tempargs.Length, args.Length);
+
+			for (var i = 0; i < ct; ++i)
+				tempargs[i] = args[i];
+
+			var ret = phf.DynamicInvoke(tempargs);
+
+			//Copy back.
+			for (var i = 0; i < ct; ++i)
+				args[i] = tempargs[i].Al();
+
+			return ret.Al();
 		}
 
 

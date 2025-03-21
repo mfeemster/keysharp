@@ -137,7 +137,7 @@
 			{
 				var mainWindow = Script.mainWindow;
 
-				if (mainWindow != null && Accessors.A_AllowMainWindow.Ab())
+				if (mainWindow != null && A_AllowMainWindow.Ab())
 				{
 					mainWindow.AllowShowDisplay = true;
 					mainWindow.Show();
@@ -165,7 +165,7 @@
 			//Won't be a gui target, so won't be marked as IsGui internally, but it's ok because it's only ever called on the gui thread in response to gui events.
 			Script.openMenuItem = Add("&Open", new FuncObj(openfunc.Method, openfunc.Target));
 
-			if (!Accessors.A_AllowMainWindow.Ab())
+			if (!A_AllowMainWindow.Ab())
 				Script.openMenuItem.Visible = false;
 
 			//Need to fill in the event handlers for help and window spy when the proper functionality is implemented.//TODO
@@ -176,7 +176,7 @@
 			//_ = Add("&Window Spy", new FuncObj(emptyfunc.Method, emptyfunc.Target));
 			_ = Add("&Reload Script", new FuncObj(reloadfunc.Method, reloadfunc.Target));
 
-			if (!Accessors.A_IsCompiled)
+			if (!A_IsCompiled)
 			{
 				var editfunc = (params object[] args) =>
 				{
