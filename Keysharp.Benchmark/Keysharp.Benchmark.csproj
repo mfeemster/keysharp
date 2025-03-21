@@ -10,6 +10,7 @@
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <IsPackable>false</IsPackable>
     <Platforms>x64</Platforms>
+    <NoWin32Manifest>true</NoWin32Manifest>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">

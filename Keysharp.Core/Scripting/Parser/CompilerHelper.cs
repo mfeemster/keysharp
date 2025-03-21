@@ -241,6 +241,7 @@ using static Keysharp.Scripting.Script;
 						   new CSharpParseOptions(LanguageVersion.LatestMajor, DocumentationMode.None, SourceCodeKind.Regular));
 				var coreDir = Path.GetDirectoryName(typeof(object).GetTypeInfo().Assembly.Location);
 				var desktopDir = Path.GetDirectoryName(typeof(Form).GetTypeInfo().Assembly.Location);
+				var ksCoreDir = Path.GetDirectoryName(A_KeysharpCorePath);
 				var usings = new List<string>()//These aren't what show up in the output .cs file. See Parser.GenerateCompileUnit() for that.
 				{
 					"System",
@@ -258,7 +259,6 @@ using static Keysharp.Scripting.Script;
 				};
 				var references = new List<MetadataReference>
 				{
-					MetadataReference.CreateFromFile(Path.Combine(coreDir, "mscorlib.dll")),
 					MetadataReference.CreateFromFile(Path.Combine(coreDir, "System.dll")),
 					MetadataReference.CreateFromFile(Path.Combine(coreDir, "System.Collections.dll")),
 					MetadataReference.CreateFromFile(Path.Combine(coreDir, "System.Data.dll")),
@@ -266,14 +266,13 @@ using static Keysharp.Scripting.Script;
 					MetadataReference.CreateFromFile(Path.Combine(coreDir, "System.Linq.dll")),
 					MetadataReference.CreateFromFile(Path.Combine(coreDir, "System.Reflection.dll")),
 					MetadataReference.CreateFromFile(Path.Combine(coreDir, "System.Runtime.dll")),
-					MetadataReference.CreateFromFile(Path.Combine(coreDir, "netstandard.dll")),//Is this even still needed?//TODO
 					MetadataReference.CreateFromFile(Path.Combine(coreDir, "System.Private.CoreLib.dll")),
 					MetadataReference.CreateFromFile(Path.Combine(desktopDir, "System.Drawing.Common.dll")),
 					MetadataReference.CreateFromFile(Path.Combine(desktopDir, "System.Windows.Forms.dll")),
 					//This will be the build output folder when running from within the debugger, and the install folder when running from an installation.
-					//Note that Keysharp.Core.dll *must* remain in that location for a compiled executable to work.
-					//MetadataReference.CreateFromFile(Path.Combine(Environment.CurrentDirectory, "Keysharp.Core.dll")),
-					MetadataReference.CreateFromFile(Path.Combine(currentDir, "Keysharp.Core.dll")),
+					//Note that Keysharp.Core.dll and System.CodeDom.dll *must* remain in that location for a compiled executable to work.
+					MetadataReference.CreateFromFile(Path.Combine(ksCoreDir, "Keysharp.Core.dll")),
+					MetadataReference.CreateFromFile(Path.Combine(ksCoreDir, "System.CodeDom.dll"))//Even though the .NET desktop install comes with CodeDOM, we reference a special version in Keysharp.Core.
 				};
 				var ms = new MemoryStream();
 				var compilation = CSharpCompilation.Create(outputname)
@@ -281,7 +280,7 @@ using static Keysharp.Scripting.Script;
 									  new CSharpCompilationOptions(OutputKind.WindowsApplication)
 									  .WithUsings(usings)
 									  .WithOptimizationLevel(OptimizationLevel.Release)
-									  .WithPlatform(Platform.AnyCpu)
+									  .WithPlatform(Platform.X64)
 									  .WithConcurrentBuild(true)
 								  )
 								  .AddReferences(references)
@@ -292,22 +291,22 @@ using static Keysharp.Scripting.Script;
 				// Any change in the manifest should be reflected here and in Keysharp app.manifest file.
 				var manifestContents =
 					@"<?xml version=""1.0"" encoding=""UTF-8"" standalone=""yes""?>
-					<assembly xmlns=""urn:schemas-microsoft-com:asm.v1"" manifestVersion=""1.0"">
-						<trustInfo xmlns=""urn:schemas-microsoft-com:asm.v2"">
-							<security>
-								<requestedPrivileges xmlns=""urn:schemas-microsoft-com:asm.v3"">
-									<requestedExecutionLevel level=""asInvoker"" uiAccess=""false"" />
-								</requestedPrivileges>
-							</security>
-						</trustInfo>
-						<asmv3:application xmlns:asmv3=""urn:schemas-microsoft-com:asm.v3"">
-							<asmv3:windowsSettings xmlns=""http://schemas.microsoft.com/SMI/2005/WindowsSettings"">
-								<!-- Extra info: https://learn.microsoft.com/en-us/windows/win32/sbscs/application-manifests -->
-								<disableWindowFiltering xmlns=""http://schemas.microsoft.com/SMI/2011/WindowsSettings"">true</disableWindowFiltering>
-								<longPathAware xmlns=""http://schemas.microsoft.com/SMI/2016/WindowsSettings"">true</longPathAware>
-							</asmv3:windowsSettings>
-						</asmv3:application>
-					</assembly>";
+				    <assembly xmlns=""urn:schemas-microsoft-com:asm.v1"" manifestVersion=""1.0"">
+				        <trustInfo xmlns=""urn:schemas-microsoft-com:asm.v2"">
+				            <security>
+				                <requestedPrivileges xmlns=""urn:schemas-microsoft-com:asm.v3"">
+				                    <requestedExecutionLevel level=""asInvoker"" uiAccess=""false"" />
+				                </requestedPrivileges>
+				            </security>
+				        </trustInfo>
+				        <asmv3:application xmlns:asmv3=""urn:schemas-microsoft-com:asm.v3"">
+				            <asmv3:windowsSettings xmlns=""http://schemas.microsoft.com/SMI/2005/WindowsSettings"">
+				                <!-- Extra info: https://learn.microsoft.com/en-us/windows/win32/sbscs/application-manifests -->
+				                <disableWindowFiltering xmlns=""http://schemas.microsoft.com/SMI/2011/WindowsSettings"">true</disableWindowFiltering>
+				                <longPathAware xmlns=""http://schemas.microsoft.com/SMI/2016/WindowsSettings"">true</longPathAware>
+				            </asmv3:windowsSettings>
+				        </asmv3:application>
+				    </assembly>";
 				var manifestStream = new MemoryStream();
 				var writer = new StreamWriter(manifestStream);
 				writer.Write(manifestContents);
