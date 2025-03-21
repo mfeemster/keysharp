@@ -1,4 +1,12 @@
 # Keysharp #
+- [Overview](#markdown-header-overview)
+- [Differences](#markdown-header-differences:)
+- [Removals](#Removals:)
+- [Removals](#Removals)
+- [Removals](#removals:)
+- [Removals](#removals)
+- [Removals](#markdown-header-removals:)
+- [Removals](#markdown-header-removals)
 
 ## How do I get set up? ##
 * If .NET 9 is not installed on your machine, you need to download and run the x64 ".NET Desktop Runtime" installer from [here](https://dotnet.microsoft.com/en-us/download/dotnet/9.0).
