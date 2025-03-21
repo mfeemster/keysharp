@@ -347,7 +347,7 @@ class class1
 * `EnvUpdate()` is retained to provide for a cross platform way to update environment variables.
 * The 40 character limit for hotstring abbreviations has been removed. There is no limit to the length.
 * `FileGetSize()` supports `G` and `T` for gigabytes and terabytes.
-* `DateAdd()` and `DateDiff()` support taking a value of `"L"` for the `TimeUnits` parameter to add miLliseconds or return the ellapsed time in milliseconds, respectively.
+* `DateAdd()` and `DateDiff()` support taking a value of `"L"` for the `TimeUnits` parameter to add miLliseconds or return the elapsed time in milliseconds, respectively.
 	+ See the new accessors `A_NowMs`/`A_NowUTCMs`.
 * `SubStr()` uses a default of 1 for the second parameter, `startingPos`, to relieve the user of always having to specify it.
 * New string functions:
