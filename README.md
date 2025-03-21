@@ -3,7 +3,7 @@
 * [Differences](#markdown-header-differences)
 	+ [Behaviors](#markdown-header-behaviors-functionality)
 	+ [Syntax](#markdown-header-syntax)
-	+ [Additions/Improvements](#markdown-header-additions/improvements)
+	+ [Additions/Improvements](#markdown-header-additionsimprovements)
 	+ [Removals](#markdown-header-removals)
 * [Code acknowledgements](#markdown-header-code-acknowledgements)
 
