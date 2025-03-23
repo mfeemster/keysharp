@@ -19,56 +19,36 @@
 			switch (op[0])
 			{
 				case Add:
-					switch (op.Length)
-					{
-						case 1:
-							return (true, Script.Operator.Add);
-
-						case 2:
-							return (true, Script.Operator.Increment);
-
-						default:
-							return (false, Script.Operator.Add);
-					}
+					return op.Length switch
+				{
+						1 => (true, Script.Operator.Add),
+							2 => (true, Script.Operator.Increment),
+							_ => (false, Script.Operator.Add),
+					};
 
 				case Minus:
-					switch (op.Length)
-					{
-						case 1:
-							return (true, Script.Operator.Subtract);
-
-						case 2:
-							return (true, Script.Operator.Decrement);
-
-						default:
-							return (false, Script.Operator.Add);
-					}
+					return op.Length switch
+				{
+						1 => (true, Script.Operator.Subtract),
+							2 => (true, Script.Operator.Decrement),
+							_ => (false, Script.Operator.Add),
+					};
 
 				case Multiply:
-					switch (op.Length)
-					{
-						case 1:
-							return (true, Script.Operator.Multiply);
-
-						case 2:
-							return (true, Script.Operator.Power);
-
-						default:
-							return (false, Script.Operator.Add);
-					}
+					return op.Length switch
+				{
+						1 => (true, Script.Operator.Multiply),
+							2 => (true, Script.Operator.Power),
+							_ => (false, Script.Operator.Add),
+					};
 
 				case Divide:
-					switch (op.Length)
-					{
-						case 1:
-							return (true, Script.Operator.Divide);
-
-						case 2:
-							return (true, Script.Operator.FloorDivide);
-
-						default:
-							return (false, Script.Operator.Add);
-					}
+					return op.Length switch
+				{
+						1 => (true, Script.Operator.Divide),
+							2 => (true, Script.Operator.FloorDivide),
+							_ => (false, Script.Operator.Add),
+					};
 
 				case Greater:
 					switch (op.Length)
@@ -128,69 +108,44 @@
 					}
 
 				case BitOR:
-					switch (op.Length)
-					{
-						case 1:
-							return (true, Script.Operator.BitwiseOr);
-
-						case 2:
-							return op[0] == op[1] ? (true, Script.Operator.BooleanOr) : (false, Script.Operator.Add);
-
-						default:
-							return (false, Script.Operator.Add);
-					}
+					return op.Length switch
+				{
+						1 => (true, Script.Operator.BitwiseOr),
+							2 => op[0] == op[1] ? (true, Script.Operator.BooleanOr) : (false, Script.Operator.Add),
+							_ => (false, Script.Operator.Add),
+					};
 
 				case BitXOR:
-					switch (op.Length)
-					{
-						case 1:
-							return (true, Script.Operator.BitwiseXor);
-
-						default:
-							return (false, Script.Operator.Add);
-					}
+					return op.Length switch
+				{
+						1 => (true, Script.Operator.BitwiseXor),
+							_ => (false, Script.Operator.Add),
+					};
 
 				case BitNOT:
-					switch (op.Length)
-					{
-						case 1:
-							return (true, Script.Operator.BitwiseNot);
-
-						case 2:
-							return op[1] == Equal ? (true, Script.Operator.RegEx) : (false, Script.Operator.Add);
-
-						default:
-							return (false, Script.Operator.Add);
-					}
+					return op.Length switch
+				{
+						1 => (true, Script.Operator.BitwiseNot),
+							2 => op[1] == Equal ? (true, Script.Operator.RegEx) : (false, Script.Operator.Add),
+							_ => (false, Script.Operator.Add),
+					};
 
 				case Equal:
-					switch (op.Length)
-					{
-						case 1:
-							return (true, Script.Operator.ValueEquality);
-
-						case 2:
-							return op[1] == op[0] ? (true, Script.Operator.IdentityEquality) : (false, Script.Operator.Add);
-
-						default:
-							return (false, Script.Operator.Add);
-					}
+					return op.Length switch
+				{
+						1 => (true, Script.Operator.ValueEquality),
+							2 => op[1] == op[0] ? (true, Script.Operator.IdentityEquality) : (false, Script.Operator.Add),
+							_ => (false, Script.Operator.Add),
+					};
 
 				case Not:
-					switch (op.Length)
-					{
-						case 1:
-							return (true, Script.Operator.LogicalNot);
-
-						case 2:
-							return op[1] == Equal ? (true, Script.Operator.ValueInequality) : (false, Script.Operator.Add);
-
-						case 3:
-							return op[1] == Equal && op[2] == Equal ? (true, Script.Operator.IdentityInequality) : (false, Script.Operator.Add);
-
-						default:
-							return (false, Script.Operator.Add);
-					}
+					return op.Length switch
+				{
+						1 => (true, Script.Operator.LogicalNot),
+							2 => op[1] == Equal ? (true, Script.Operator.ValueInequality) : (false, Script.Operator.Add),
+							3 => op[1] == Equal && op[2] == Equal ? (true, Script.Operator.IdentityInequality) : (false, Script.Operator.Add),
+							_ => (false, Script.Operator.Add),
+					};
 
 				case AssignPre:
 					return op.Length > 1 && op[1] == Equal ? (true, Script.Operator.Assign) : (true, Script.Operator.TernaryB);
@@ -202,97 +157,39 @@
 					return op.Length > 1 && op[1] == TernaryA ? (true, Script.Operator.NullCoalesce) : (true, Script.Operator.TernaryA);
 
 				default:
-					switch (code.ToLowerInvariant())
-					{
-						case NotTxt:
-							return (true, Script.Operator.LogicalNotEx);
-
-						case AndTxt:
-							return (true, Script.Operator.BooleanAnd);
-
-						case OrTxt:
-							return (true, Script.Operator.BooleanOr);
-
-						case IsTxt:
-							return (true, Script.Operator.Is);
-					}
-
-					return (false, Script.Operator.Add);
+					return code.ToLowerInvariant() switch
+				{
+						NotTxt => (true, Script.Operator.LogicalNotEx),
+							AndTxt => (true, Script.Operator.BooleanAnd),
+							OrTxt => (true, Script.Operator.BooleanOr),
+							IsTxt => (true, Script.Operator.Is),
+							_ => (false, Script.Operator.Add),
+					};
 			}
 		}
 
 		internal static int OperatorPrecedence(Script.Operator op, CodeLine codeLine)
 		{
-			switch (op)
-			{
-				case Script.Operator.Power:
-					return -1;
 
-				case Script.Operator.Minus:
-				case Script.Operator.LogicalNot:
-				case Script.Operator.BitwiseNot:
-				case Script.Operator.Address:
-				case Script.Operator.Dereference:
-					return -2;
-
-				case Script.Operator.Multiply:
-				case Script.Operator.Divide:
-				case Script.Operator.FloorDivide:
-					return -3;
-
-				case Script.Operator.Add:
-				case Script.Operator.Subtract:
-					return -4;
-
-				case Script.Operator.BitShiftLeft:
-				case Script.Operator.BitShiftRight:
-				case Script.Operator.LogicalBitShiftRight:
-					return -5;
-
-				case Script.Operator.BitwiseAnd:
-				case Script.Operator.BitwiseXor:
-				case Script.Operator.BitwiseOr:
-					return -6;
-
-				case Script.Operator.Concat:
-				case Script.Operator.RegEx:
-					return -7;
-
-				case Script.Operator.GreaterThan:
-				case Script.Operator.LessThan:
-				case Script.Operator.GreaterThanOrEqual:
-				case Script.Operator.LessThanOrEqual:
-					return -8;
-
-				case Script.Operator.Is:
-					return -9;
-
-				case Script.Operator.ValueEquality:
-				case Script.Operator.IdentityEquality:
-				case Script.Operator.ValueInequality:
-				case Script.Operator.IdentityInequality:
-					return -10;
-
-				case Script.Operator.LogicalNotEx:
-					return -11;
-
-				case Script.Operator.BooleanAnd:
-					return -12;
-
-				case Script.Operator.BooleanOr:
-					return -13;
-
-				case Script.Operator.TernaryA:
-				case Script.Operator.TernaryB:
-				case Script.Operator.NullCoalesce:
-					return -14;
-
-				case Script.Operator.Assign:
-					return -15;
-
-				default:
-					throw new ParseException($"Operator {op} was not a value which can be used when determining precedence.", codeLine);
-			}
+			return op switch
+		{
+				Script.Operator.Power => -1,
+				Script.Operator.Minus or Script.Operator.LogicalNot or Script.Operator.BitwiseNot or Script.Operator.Address or Script.Operator.Dereference => -2,
+				Script.Operator.Multiply or Script.Operator.Divide or Script.Operator.FloorDivide => -3,
+				Script.Operator.Add or Script.Operator.Subtract => -4,
+				Script.Operator.BitShiftLeft or Script.Operator.BitShiftRight or Script.Operator.LogicalBitShiftRight => -5,
+				Script.Operator.BitwiseAnd or Script.Operator.BitwiseXor or Script.Operator.BitwiseOr => -6,
+				Script.Operator.Concat or Script.Operator.RegEx => -7,
+				Script.Operator.GreaterThan or Script.Operator.LessThan or Script.Operator.GreaterThanOrEqual or Script.Operator.LessThanOrEqual => -8,
+				Script.Operator.Is => -9,
+				Script.Operator.ValueEquality or Script.Operator.IdentityEquality or Script.Operator.ValueInequality or Script.Operator.IdentityInequality => -10,
+				Script.Operator.LogicalNotEx => -11,
+				Script.Operator.BooleanAnd => -12,
+				Script.Operator.BooleanOr => -13,
+				Script.Operator.TernaryA or Script.Operator.TernaryB or Script.Operator.NullCoalesce => -14,
+				Script.Operator.Assign => -15,
+				_ => throw new ParseException($"Operator {op} was not a value which can be used when determining precedence.", codeLine),
+			};
 		}
 
 		/// <summary>

@@ -1131,7 +1131,11 @@
 			else if (opts.rightj.IsTrue())
 				Reflections.SafeSetProperty(ctrl, "TextAlign", ContentAlignment.MiddleRight);
 
-			holder = new GuiControl(this, ctrl, typeo);
+			if (type == Keyword_Button)
+				holder = new Button(this, ctrl, typeo);
+			else
+				holder = new GuiControl(this, ctrl, typeo);
+
 			controls[ctrl.Handle.ToInt64()] = holder;
 			var prevParent = LastContainer;
 			var ctrlIsLabel = ctrl is KeysharpLabel;
@@ -2215,6 +2219,20 @@
 				}
 
 				return Errors.ErrorOccurred(err = new Error($"No controls matched the handle, name, text, ClassNN or NetClassNN {controlname}.")) ? throw err : null;
+			}
+		}
+
+		public class Button : GuiControl
+		{
+			public Button(params object[] args) : base(args)
+			{
+			}
+		}
+
+		public class Edit : GuiControl
+		{
+			public Edit(params object[] args) : base(args)
+			{
 			}
 		}
 

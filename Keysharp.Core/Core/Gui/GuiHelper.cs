@@ -114,25 +114,18 @@
 
 		internal static Bitmap GetScreen(Rectangle rect)
 		{
-			PixelFormat pFormat;
 
-			switch (System.Windows.Forms.Screen.PrimaryScreen.BitsPerPixel)
-			{
-				case 8:
-				case 16:
-					pFormat = PixelFormat.Format16bppRgb565;
-					break;
+			var pFormat = System.Windows.Forms.Screen.PrimaryScreen.BitsPerPixel switch
+		{
+				8 or 16 => PixelFormat.Format16bppRgb565,
+				24 => PixelFormat.Format24bppRgb,
+				32 => PixelFormat.Format32bppArgb,
+				_ => PixelFormat.Format32bppArgb,
+		};
 
-				case 24: pFormat = PixelFormat.Format24bppRgb; break;
-
-				case 32: pFormat = PixelFormat.Format32bppArgb; break;
-
-				default: pFormat = PixelFormat.Format32bppArgb; break;
-			}
-
-			try
-			{
-				var bmp = new Bitmap(rect.Width, rect.Height, pFormat);
+		try
+		{
+			var bmp = new Bitmap(rect.Width, rect.Height, pFormat);
 				var g = Graphics.FromImage(bmp);
 				g.CopyFromScreen(rect.Left, rect.Top, 0, 0, rect.Size);
 				return bmp;

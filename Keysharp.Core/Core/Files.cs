@@ -914,26 +914,14 @@
 				var date = new DateTime();
 				var info = new FileInfo(file);
 
-				switch (time[0])
-				{
-					case 'c':
-					case 'C':
-						date = info.CreationTime;
-						break;
+				date = time[0] switch
+			{
+					'c' or 'C' => info.CreationTime,
+					'a' or 'A' => info.LastAccessTime,
+					_ => info.LastWriteTime,
+			};
 
-					case 'a':
-					case 'A':
-						date = info.LastAccessTime;
-						break;
-
-					case 'm':
-					case 'M':
-					default:
-						date = info.LastWriteTime;
-						break;
-				}
-
-				return Conversions.ToYYYYMMDDHH24MISS(date);
+			return Conversions.ToYYYYMMDDHH24MISS(date);
 			}
 			catch (Exception ex)
 			{

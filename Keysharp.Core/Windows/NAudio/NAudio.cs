@@ -307,57 +307,28 @@ namespace Keysharp.Core.Windows
 				Error err;
 				var ve = DataType;
 
-				switch (ve)
-				{
-					case VarEnum.VT_I1:
-						return bVal;
+				return ve switch
+			{
+					VarEnum.VT_I1 => bVal,
+					VarEnum.VT_I2 => iVal,
+					VarEnum.VT_I4 => lVal,
+					VarEnum.VT_I8 => hVal,
+					VarEnum.VT_INT => iVal,
+					VarEnum.VT_UI4 => ulVal,
+					VarEnum.VT_UI8 => uhVal,
+					VarEnum.VT_LPWSTR => Marshal.PtrToStringUni(pointerValue),
+						VarEnum.VT_BLOB or VarEnum.VT_VECTOR | VarEnum.VT_UI1 => GetBlob(),
+						VarEnum.VT_CLSID => Marshal.PtrToStructure<Guid>(pointerValue),
 
-					case VarEnum.VT_I2:
-						return iVal;
-
-					case VarEnum.VT_I4:
-						return lVal;
-
-					case VarEnum.VT_I8:
-						return hVal;
-
-					case VarEnum.VT_INT:
-						return iVal;
-
-					case VarEnum.VT_UI4:
-						return ulVal;
-
-					case VarEnum.VT_UI8:
-						return uhVal;
-
-					case VarEnum.VT_LPWSTR:
-						return Marshal.PtrToStringUni(pointerValue);
-
-					case VarEnum.VT_BLOB:
-					case VarEnum.VT_VECTOR | VarEnum.VT_UI1:
-						return GetBlob();
-
-					case VarEnum.VT_CLSID:
-						return Marshal.PtrToStructure<Guid>(pointerValue);
-
-					case VarEnum.VT_BOOL:
-						switch (boolVal)
-						{
-							case -1:
-								return true;
-
-							case 0:
-								return false;
-
-							default:
-								return Errors.ErrorOccurred(err = new Error("PropVariant VT_BOOL must be either -1 or 0")) ? throw err : null;
-						}
-
-					case VarEnum.VT_FILETIME:
-						return DateTime.FromFileTime((((long)filetime.dwHighDateTime) << 32) + filetime.dwLowDateTime);
-				}
-
-				return Errors.ErrorOccurred(err = new Error("PropVariant " + ve)) ? throw err : null;
+						VarEnum.VT_BOOL => boolVal switch
+					{
+							-1 => true,
+							0 => false,
+							_ => Errors.ErrorOccurred(err = new Error("PropVariant VT_BOOL must be either -1 or 0")) ? throw err : null,
+						},
+						VarEnum.VT_FILETIME => DateTime.FromFileTime((((long)filetime.dwHighDateTime) << 32) + filetime.dwLowDateTime),
+						_ => Errors.ErrorOccurred(err = new Error("PropVariant " + ve)) ? throw err : null,
+				};
 			}
 		}
 

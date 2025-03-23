@@ -720,7 +720,7 @@ namespace Keysharp.Scripting
 									else if (ces.Expression is CodeVariableReferenceExpression cvre)
 									{
 										gflist.Add(cvre.VariableName.Trim('%').ToLower());
-									}								
+									}
 									else if (ces.Expression is CodeMethodInvokeExpression cmie
 											 && cmie.Parameters.Count > 1
 											 && cmie.Parameters[1] is CodeBinaryOperatorExpression cboe2
@@ -1143,18 +1143,11 @@ namespace Keysharp.Scripting
 			_ = invoke.Parameters.Add(VarId(codeLine, parts[0], false));
 			parts[1] = parts[1].ToLowerInvariant();
 
-			switch (parts[1])
-			{
-				case BetweenTxt:
-				case InTxt:
-				case ContainsTxt:
-				case IsTxt:
-					_ = invoke.Parameters.Add(new CodePrimitiveExpression(parts[1]));
-					break;
-
-				default:
-					throw new ParseException($"Second legacy if token of {code} was not any of: between, in, contains, is.", codeLine);
-			}
+			_ = parts[1] switch
+		{
+				BetweenTxt or InTxt or ContainsTxt or IsTxt => invoke.Parameters.Add(new CodePrimitiveExpression(parts[1])),
+					_ => throw new ParseException($"Second legacy if token of {code} was not any of: between, in, contains, is.", codeLine),
+			};
 
 			_ = invoke.Parameters.Add(ParseCommandParameter(codeLine, parts[2]));
 

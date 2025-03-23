@@ -543,26 +543,15 @@ namespace Keysharp.Core
 		{
 			Error err;
 
-			switch (mode)
-			{
-				case CoordMode.Caret:
-					return Caret;
-
-				case CoordMode.Menu:
-					return Menu;
-
-				case CoordMode.Mouse:
-					return Mouse;
-
-				case CoordMode.Pixel:
-					return Pixel;
-
-				case CoordMode.Tooltip:
-					return Tooltip;
-
-				default:
-					return Errors.ErrorOccurred(err = new ValueError($"Invalid coordinate mode type: {mode}")) ? throw err : CoordModeType.Client;
-			}
+			return mode switch
+		{
+				CoordMode.Caret => Caret,
+				CoordMode.Menu => Menu,
+				CoordMode.Mouse => Mouse,
+				CoordMode.Pixel => Pixel,
+				CoordMode.Tooltip => Tooltip,
+				_ => Errors.ErrorOccurred(err = new ValueError($"Invalid coordinate mode type: {mode}")) ? throw err : CoordModeType.Client,
+			};
 		}
 	}
 
