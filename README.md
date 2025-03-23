@@ -303,7 +303,7 @@ class class1
 
 ###	Additions/Improvements: ###
 * Buffer has an `__Item[]` indexer which can be used to read a byte at a 1-based offset.
-* Add new methods to `Array`:
+* New methods for `Array`:
 	+ `Add(value) => Integer` : Adds a single element to the array.
 		+ This should be more efficient than `Push(values*)` when adding a single item because it's not variadic. It also returns the length of the array after the add completes.
 	+ `Filter(callback: (value [, index]) => Boolean) => Array`: Applies a filter to each element of the array and returns a new array consisting of all elements for which `callback` returned true.
@@ -333,12 +333,17 @@ class class1
 * `Run/RunWait()` can take an extra string for the argument instead of appending it to the program name string. However, the original functionality still works too.
 	+ The new signature is: `Run/RunWait(target [, workingDir, options, &outputVarPID, args])`.
 * `ListView` supports a new method `DeleteCol(col) => Boolean` to remove a column. The value returned indicates whether the column was found and deleted.
-* Add new methods and properties to`Menu`:
+* New methods and properties for `Menu`:
 	+ `HideItem()`, `ShowItem()` and `ToggleItemVis()` which can show, hide or toggle the visibility of a specific menu item.
 	+ `MenuItemName()` to get the name of a menu item, rather than having to use `DllCall()`.
 	+ `SetForeColor()` to set the fore (text) color of a menu item.
 	+ `MenuItemCount` to get the number of sub items within a menu.
 * `Picture` supports clearing the picture by setting the `Value` property to empty.
+* New options for `UpDown`:
+	+ These relieve the caller of having to use native Windows API calls.
+	+ `IncrementXXX` to specify an increment other than 1.
+		+ `MyGui.Add("UpDown", "x5 y55 vMyNud Increment10", 1)`
+	+ `Hex` to show the numeric value in hexadecimal.
 * `TabControl` supports a new method `SetTabIcon(tabIndex, imageIndex)` to relieve the caller of having to use `SendMessage()`.
 * `TreeView` supports a new method `GetNode(nodeIndex) => TreeNode` which retrieves a raw winforms TreeNode object based on a passed in ID.
 * Gui controls support taking a boolean `Autosize` (default: `false`) argument in the `Add()` method to allow them to optimally size themselves.
@@ -349,7 +354,7 @@ class class1
 * `FileGetSize()` supports `G` and `T` for gigabytes and terabytes.
 * `DateAdd()` and `DateDiff()` support taking a value of `"L"` for the `TimeUnits` parameter to add miLliseconds or return the elapsed time in milliseconds, respectively.
 	+ See the new accessors `A_NowMs`/`A_NowUTCMs`.
-* `SubStr()` uses a default of 1 for the second parameter, `startingPos`, to relieve the user of always having to specify it.
+* `SubStr()` uses a default of 1 for the second parameter, `startingPos`, to relieve the caller of always having to specify it.
 * New string functions:
 	+ `Base64Decode(str) => Array` to convert a Base64 string to a byte array.
 	+ `Base64Encode(value) => String` to convert a byte array to a Base64 string.
@@ -566,7 +571,9 @@ class class1
 * `IsAlpha()`, `IsUpper()`, `IsLower()` do not accept a locale parameter because all strings are Unicode.
 * Renaming Keysharp.exe to run a specific script by default will not work.
 * Double click handlers for buttons are not supported.
-* Spin boxes with paired buddy controls are not supported. Just use the regular spin box in C#.
+* UpDown controls with paired buddy controls are not supported. Keysharp just uses the regular NumericUpDown control in C#.
+	+ The options `16`, `Horz` and `Wrap` have no effect.
+	+ The min and max values cannot be swapped.
 * `IL_Create()` only takes one parameter: `largeIcons`. `initialCount` and `growCount` are no longer needed because memory is handled internally.
 * `LoadPicture()` does not accept a `GDI+` argument as an option.
 * For slider events, the second parameter passed to the event handler will always be `0` because it's not possible to retrieve the method by which the slider was moved in C#.

@@ -658,7 +658,6 @@ mybtn.OnEvent("Click", "STest")
 FakeSep := MyGui.Add("Text", "x10 y+10", "__________________________________________________")
 FakeSep.SetFont("cTeal Bold")
 
-
 STest() {
 	Loop(MySlider2.Value) {
 		padding := A_Index
@@ -690,8 +689,26 @@ UpdateHK() {
 	ControlSetText(MyHotkey.Value, MyHkText)
 }
 
-
 MyGui.Add("Text", "x+5 y+5", "_____________________________")
+
+MyGui.Add("Text", "x5 y+5", "UpDown: Range 1-10, \ninc 1 (mouse 8), def 5.")
+nud := MyGui.Add("UpDown", "x5 y+5 h25 vMyNud Range1-10", 5)
+nud.OnEvent("Change", "NudChange")
+
+MyGui.Add("Text", "x5 y+5", "UpDown: Range -2000-2000, def 0,`ninc 100 (mouse 800), no separator.")
+nud2 := MyGui.Add("UpDown", "x5 y+5 h20 vMyNud2 Range-2000-2000 Increment100 0x80", 0)
+nud2.OnEvent("Change", "NudChange")
+
+MyGui.Add("Text", "x5 y+5", "UpDown: Range -1000-1000, def 0,`ninc 10 (mouse 80), hex.")
+nud3 := MyGui.Add("UpDown", "x5 y+5 h20 vMyNud2 Range-1000-1000 Increment10 hex 0x80", 0)
+nud3.OnEvent("Change", "NudChange")
+
+nudTxt := MyGui.Add("Text", "x5 y+5 w200", "Nud values:")
+
+NudChange()
+{
+	nudTxt.Value := "Nud values: " . nud.Value . ", " . nud2.Value . ", " . nud3.Value
+}
 
 ; ┌────────────────────────┐
 ; │  Groupbox Tab Section  │
@@ -1047,6 +1064,8 @@ MoveAllButton := MyGui.Add("Button", "x10 y+5", "Move me")
 MoveAllButton.OnEvent("Click", "MoveButton")
 CandyProgressButton := MyGui.Add("Button", "x10 y+5", "Candy progress")
 CandyProgressButton.OnEvent("Click", "CandyProgress")
+TestTypesButton := MyGui.Add("Button", "x10 y+5", "Test types")
+TestTypesButton.OnEvent("Click", "TestTypes")
 
 MinimizeAll()
 {
@@ -1130,6 +1149,39 @@ CandyTimer()
 		Sleep(1000)
 		candyvalue := 0
 	}
+}
+
+TestTypes()
+{
+	global
+	local s := "All of these should be true`n"
+	
+	s .= "Odie is Gui.ActiveX: " . (activeXOdie is Gui.ActiveX) . "`n"
+	s .= "Add Fuchsia is Gui.Button: " . (CZ_LbBtn1 is Gui.Button) . "`n"
+	s .= "CheckBox test is Gui.CheckBox: " . (CheckBoxOne is Gui.CheckBox) . "`n"
+	s .= "DateTime test is Gui.DateTime: " . (MyDateTime is Gui.DateTime) . "`n"
+	s .= "Edit control testing is Gui.Edit: " . (CZ_Edit1 is Gui.Edit) . "`n"
+	s .= "GroupBox 1 Tab 1 is Gui.GroupBox: " . (gb1_TabOne is Gui.GroupBox) . "`n"
+	s .= "Define hotkey test is Gui.Hotkey: " . (MyHotkey is Gui.Hotkey) . "`n"
+	s .= "Link test is Gui.Link: " . (MyLink is Gui.Link) . "`n" ; Link 
+	; List-derived controls.
+	s .= "ComboBox control tests is Gui.ComboBox and Gui.List: " . (gb2_CZ_CB is Gui.ComboBox and gb2_CZ_CB is Gui.List) . "`n"
+	s .= "Drop-down list with 4 rows is Gui.DDL and Gui.List: " . (MyDDL is Gui.DDL and MyDDL is Gui.List) . "`n"
+	s .= "ListBox test is Gui.ListBox and Gui.List: " . (MyListBox is Gui.ListBox and MyListBox is Gui.List) . "`n"
+	s .= "Tab is Gui.Tab and Gui.List: " . (Tab is Gui.Tab and Tab is Gui.List) . "`n"
+	; Back to regular controls.
+	s .= "MonthCal test is Gui.MonthCal: " . (MyMonthCal is Gui.MonthCal) . "`n"
+	s .= "^ Use top menu is Gui.Pic: " . (SrchPic is Gui.Pic) . "`n"
+	s .= "Progress bar is Gui.Progress: " . (MyProgress is Gui.Progress) . "`n"
+	s .= "Radio group tests (1) is Gui.Radio: " . (RadioOne is Gui.Radio) . "`n"
+	s .= "ControlSetText Test (RichEdit) is Gui.RichEdit: " . (SecondRichEdit is Gui.RichEdit) . "`n"
+	s .= "Sliding test is Gui.Slider: " . (MySlider2 is Gui.Slider) . "`n"
+	s .= "Status bar is Gui.StatusBar: " . (MySB is Gui.StatusBar) . "`n"
+	s .= "Press Win-Z is Gui.Text: " . (Menu_Label is Gui.Text) . "`n"
+	s .= "TreeView test is Gui.TreeView: " . (TV is Gui.TreeView) . "`n"
+	s .= "UpDown test is Gui.UpDown: " . (nud is Gui.UpDown) . "`n"
+	
+	MsgBox(s)
 }
 
 #if WINDOWS
@@ -2557,7 +2609,7 @@ _ := MyGui.Add("Text", "x10 y+10 cBlue S10", "An animated Odie should appear bel
 
 axPic := "http://www.animatedgif.net/cartoons/A_5odie_e0.gif"
 axText := "mshtml:<img src='" . axPic . "' />"
-MyGui.AddActiveX("w100 h150 x10 y+10", axText)
+activeXOdie := MyGui.AddActiveX("w100 h150 x10 y+10", axText)
 
 DllMsgBox()
 {
@@ -2607,15 +2659,15 @@ DllPerformanceCounter()
 DllGetWindowRect()
 {
 	Run "Notepad"
-	WinWait "Untitled - Notepad"  ; This also sets the "last found window" for use with WinExist below.
+	notepadHwnd := WinWait("Untitled - Notepad")  ; This also sets the "last found window" for use with WinExist below.
 	Sleep(1000)
 	Rect := Buffer(16)  ; A RECT is a struct consisting of four 32-bit integers (i.e. 4*4=16).
-	win := WinExist()
-	DllCall("GetWindowRect", "Ptr", win, "Ptr", Rect)  ; WinExist returns an Hwnd.
+	win := WinExist() ; LastFound is unreliable when a timer is running.
+	DllCall("GetWindowRect", "Ptr", notepadHwnd, "Ptr", Rect)  ; WinExist returns an Hwnd.
 	L := NumGet(Rect, 0, "Int"), T := NumGet(Rect, 4, "Int")
 	R := NumGet(Rect, 8, "Int"), B := NumGet(Rect, 12, "Int")
 	MsgBox Format("Left: {1} Top: {2} Right: {3} Bottom: {4}", L, T, R, B)
-	WinClose(win)
+	WinClose(notepadHwnd)
 }
 
 vtable(ptr, n) {

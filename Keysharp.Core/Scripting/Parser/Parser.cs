@@ -266,7 +266,7 @@ namespace Keysharp.Scripting
 				var nameToUse = t1.FullName;
 
 				if (!string.IsNullOrEmpty(t1.Namespace))
-					nameToUse = nameToUse.TrimStartOf($"{t1.Namespace}.").Replace('+', '.');
+					nameToUse = nameToUse.TrimStartOf($"{t1.Namespace}.").Replace('+', '.').TrimStartOf("program.");
 
 				if (string.Compare(nameToUse, t2, true) == 0)
 					return true;

@@ -307,7 +307,7 @@
 
 		internal Point Section { get; set; }
 
-		internal StatusStrip StatusBar { get; set; }
+		internal StatusStrip StatusStrip { get; set; }
 
 		public Gui(params object[] args) => _ = __New(args);
 
@@ -401,6 +401,7 @@
 						Font = Conversions.ConvertFont(form.Font)
 					};
 					ctrl = lbl;
+					holder = new Text(this, ctrl, typeo);
 				}
 				break;
 
@@ -416,7 +417,7 @@
 						opts.remstyle |= WindowsAPI.WS_HSCROLL | WindowsAPI.ES_AUTOHSCROLL;
 
 #endif
-					var txt = new KeysharpEdit(opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle)
+					var txt = new KeysharpTextBox(opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle)
 					{
 						AcceptsTab = opts.wanttab ?? false,
 						AcceptsReturn = opts.wantreturn ?? false,
@@ -469,6 +470,7 @@
 
 #endif
 					ctrl = txt;
+					holder = new Edit(this, ctrl, typeo);
 				}
 				break;
 
@@ -527,12 +529,12 @@
 
 #endif
 					ctrl = txt;
+					holder = new RichEdit(this, ctrl, typeo);
 				}
 				break;
 
 				case Keyword_UpDown:
 				{
-					//TODO
 					//This is done differently than how the documentation says.
 					//There is no such thing as a "buddy". rather, the numeric up down control is entirely self
 					//contained. This is because the buddy style control was a remnant of MFC, and C# doesn't support such a control.
@@ -562,6 +564,7 @@
 						nud.Value = Math.Min(nud.Minimum, 0m);
 
 					ctrl = nud;
+					holder = new UpDown(this, ctrl, typeo);
 				}
 				break;
 
@@ -588,6 +591,7 @@
 						pic.SizeMode = PictureBoxSizeMode.StretchImage;
 
 					ctrl = pic;
+					holder = new Pic(this, ctrl, typeo);
 				}
 				break;
 
@@ -604,6 +608,8 @@
 
 					if (opts.btndef.IsTrue())
 						form.AcceptButton = (IButtonControl)ctrl;
+
+					holder = new Button(this, ctrl, typeo);
 				}
 				break;
 
@@ -628,6 +634,7 @@
 						chk.CheckAlign = ContentAlignment.MiddleRight;
 
 					ctrl = chk;
+					holder = new CheckBox(this, ctrl, typeo);
 				}
 				break;
 
@@ -639,15 +646,17 @@
 						Text = text
 					};
 					ctrl = rad;
+					holder = new Radio(this, ctrl, typeo);
 				}
 				break;
 
 				case Keyword_ComboBox:
 				case Keyword_DropDownList:
 				{
+					bool isCombo = type == Keyword_ComboBox;
 					KeysharpComboBox ddl;
 
-					if (type == Keyword_DropDownList)
+					if (!isCombo)
 					{
 						ddl = new KeysharpComboBox(opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle);
 						ddl.DropDownStyle = ComboBoxStyle.DropDownList;
@@ -666,7 +675,7 @@
 					{
 						ddl.Sorted = true;
 
-						if (type == Keyword_ComboBox)
+						if (isCombo)
 						{
 							ddl.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
 							ddl.AutoCompleteSource = AutoCompleteSource.ListItems;
@@ -692,6 +701,7 @@
 					}
 
 					ctrl = ddl;
+					holder = isCombo ? new ComboBox(this, ctrl, typeo) : new DDL(this, ctrl, typeo);
 				}
 				break;
 
@@ -740,6 +750,7 @@
 						lb.IntegralHeight = false;
 
 					ctrl = lb;
+					holder = new ListBox(this, ctrl, typeo);
 				}
 				break;
 
@@ -785,6 +796,7 @@
 
 					lv.AutoResizeColumns(ColumnHeaderAutoResizeStyle.HeaderSize);
 					ctrl = lv;
+					holder = new ListView(this, ctrl, typeo);
 				}
 				break;
 
@@ -810,6 +822,7 @@
 						tv.ImageList = il;
 
 					ctrl = tv;
+					holder = new TreeView(this, ctrl, typeo);
 				}
 				break;
 
@@ -817,6 +830,7 @@
 				{
 					var linklabel = new KeysharpLinkLabel(text, opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle);
 					ctrl = linklabel;
+					holder = new Link(this, ctrl, typeo);
 				}
 				break;
 
@@ -831,6 +845,7 @@
 						hk.SetText(text);
 
 					ctrl = hk;
+					holder = new Hotkey(this, ctrl, typeo);
 				}
 				break;
 
@@ -845,10 +860,10 @@
 					dtp.ShowUpDown = opts.dtopt1;
 					dtp.CalendarForeColor = opts.c;//This will only have an effect if visual styles are disabled.
 
-					if (opts.dtlow != DateTime.MinValue)
+					if (opts.dtlow != System.DateTime.MinValue)
 						dtp.MinDate = opts.dtlow;
 
-					if (opts.dthigh != DateTime.MaxValue)
+					if (opts.dthigh != System.DateTime.MaxValue)
 						dtp.MaxDate = opts.dthigh;
 
 					if (opts.choosenone)
@@ -877,6 +892,7 @@
 					}
 
 					ctrl = dtp;
+					holder = new DateTime(this, ctrl, typeo);
 				}
 				break;
 
@@ -884,10 +900,10 @@
 				{
 					var cal = new KeysharpMonthCalendar(opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle);
 
-					if (opts.dtlow != DateTime.MinValue)//This causes a crash when you scroll past it.
+					if (opts.dtlow != System.DateTime.MinValue)//This causes a crash when you scroll past it.
 						cal.MinDate = opts.dtlow;
 
-					if (opts.dthigh != DateTime.MaxValue)
+					if (opts.dthigh != System.DateTime.MaxValue)
 						cal.MaxDate = opts.dthigh;
 
 					cal.ShowWeekNumbers = opts.opt4;
@@ -895,7 +911,7 @@
 					cal.ShowToday = !opts.opt16;
 					cal.MaxSelectionCount = opts.datemultisel ? 31 : 1;
 
-					if (opts.dtselstart > DateTime.MinValue && opts.dtselend < DateTime.MaxValue)
+					if (opts.dtselstart > System.DateTime.MinValue && opts.dtselend < System.DateTime.MaxValue)
 						cal.SelectionRange = new SelectionRange(opts.dtselstart, opts.dtselend);
 
 					//Note that colors do not work here is visual styles are enabled.
@@ -905,6 +921,7 @@
 						cal.TitleBackColor = opts.bgcolor.Value;
 
 					ctrl = cal;
+					holder = new MonthCal(this, ctrl, typeo);
 				}
 				break;
 
@@ -967,6 +984,7 @@
 #endif
 					slider.inverted = opts.invert.IsTrue();
 					ctrl = slider;
+					holder = new Slider(this, ctrl, typeo);
 				}
 				break;
 
@@ -998,12 +1016,14 @@
 
 #endif
 					ctrl = prg;
+					holder = new Progress(this, ctrl, typeo);
 				}
 				break;
 
 				case Keyword_GroupBox:
 				{
 					ctrl = new KeysharpGroupBox(opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle) { };
+					holder = new GroupBox(this, ctrl, typeo);
 				}
 				break;
 
@@ -1033,13 +1053,14 @@
 						kstc.Multiline = opts.wordwrap.IsTrue();
 
 					ctrl = kstc;
+					holder = new Tab(this, ctrl, typeo);
 				}
 				break;
 
 				case Keyword_StatusBar:
 				{
 					var ss = new KeysharpStatusStrip(opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle);
-					StatusBar = ss;
+					StatusStrip = ss;
 					ss.AutoSize = false;
 					ss.ImageScalingSize = new Size((int)Math.Round(28 * dpiscale), (int)Math.Round(28 * dpiscale));
 					ss.Dock = DockStyle.Bottom;//Docking must be used and must be on the bottom. Don't ever set form.AutoSize = true with this, they are incompatible.
@@ -1061,6 +1082,7 @@
 					}
 
 					ctrl = ss;
+					holder = new StatusBar(this, ctrl, typeo);
 				}
 				break;
 
@@ -1068,14 +1090,16 @@
 				{
 					var ax = new KeysharpActiveX(text);
 					ctrl = ax;
+					holder = new ActiveX(this, ctrl, typeo);
 				}
 				break;
 
 				case Keyword_WebBrowser:
 				{
-					var web = new WebBrowser();
+					var web = new KeysharpWebBrowser();
 					web.Navigate(text);
 					ctrl = web;
+					holder = new WebBrowser(this, ctrl, typeo);
 				}
 				break;
 
@@ -1100,7 +1124,7 @@
 			if (opts.autosize.HasValue)
 				Reflections.SafeSetProperty(ctrl, "AutoSize", opts.autosize.Value);
 
-			if (text != null && !(ctrl is DateTimePicker) && !(ctrl is HotkeyBox) && !(ctrl is LinkLabel))
+			if (text != null && !(ctrl is KeysharpDateTimePicker) && !(ctrl is HotkeyBox) && !(ctrl is KeysharpLinkLabel))
 				ctrl.Text = text;
 
 			if (!(ctrl is KeysharpStatusStrip))//Don't want status strip to have a margin, so it can be placed at the bottom of the form when autosize is true, and have it look exactly like it would if it were docked when autosize is false.
@@ -1130,11 +1154,6 @@
 				Reflections.SafeSetProperty(ctrl, "TextAlign", ContentAlignment.MiddleLeft);
 			else if (opts.rightj.IsTrue())
 				Reflections.SafeSetProperty(ctrl, "TextAlign", ContentAlignment.MiddleRight);
-
-			if (type == Keyword_Button)
-				holder = new Button(this, ctrl, typeo);
-			else
-				holder = new GuiControl(this, ctrl, typeo);
 
 			controls[ctrl.Handle.ToInt64()] = holder;
 			var prevParent = LastContainer;
@@ -1179,15 +1198,15 @@
 			}
 			else if (ctrl is KeysharpProgressBar kpb && ((kpb.AddStyle & 0x04) == 0x04))
 				w = fontpixels * 2;
-			else if (ctrl is ComboBox || ctrl is HotkeyBox || ctrl is ListBox || ctrl is NumericUpDown || ctrl is ProgressBar || ctrl is TextBox)
+			else if (ctrl is KeysharpComboBox || ctrl is HotkeyBox || ctrl is KeysharpListBox || ctrl is KeysharpNumericUpDown || ctrl is KeysharpProgressBar || ctrl is KeysharpTextBox)
 				w = fontpixels * 15;
-			else if (ctrl is TrackBar trk)
+			else if (ctrl is KeysharpTrackBar trk)
 				w = trk.Orientation == Orientation.Horizontal ? fontpixels * 2 : fontpixels * 15;//Documentation didn't mention a default for vertical trackbars, so just make it the same a vertical progress bar.
-			else if (ctrl is GroupBox)
+			else if (ctrl is KeysharpGroupBox)
 				w = fontpixels * 18;
-			else if (ctrl is TabPage || ctrl is TabControl)
+			else if (ctrl is TabPage || ctrl is KeysharpTabControl)
 				w = (fontpixels * 30) + (3 * ctrl.Margin.Left);
-			else if (ctrl is ListView || ctrl is TreeView || ctrl is DateTimePicker)//Documentaiton doesn't mention these, but IronAHK handled them this way, so leaving this here.
+			else if (ctrl is KeysharpListView || ctrl is KeysharpTreeView || ctrl is KeysharpDateTimePicker)//Documentaiton doesn't mention these, but IronAHK handled them this way, so leaving this here.
 				w = fontpixels * 30;
 
 			ctrl.Width = opts.width != int.MinValue ? (int)Math.Round(w) : Math.Max((int)w, (int)Math.Round(scaledPref));
@@ -1209,43 +1228,43 @@
 
 					if (opts.rows != float.MinValue)
 						r = (int)Math.Round(opts.rows);
-					else if (ctrl is ComboBox || ctrl is ListBox)
+					else if (ctrl is KeysharpComboBox || ctrl is KeysharpListBox)
 						r = 3;
-					else if (ctrl is ListView || ctrl is TreeView || (ctrl is KeysharpProgressBar kpb2 && ((kpb2.AddStyle & 0x04) == 0x04)))
+					else if (ctrl is KeysharpListView || ctrl is KeysharpTreeView || (ctrl is KeysharpProgressBar kpb2 && ((kpb2.AddStyle & 0x04) == 0x04)))
 						r = 5;
-					else if (ctrl is GroupBox || ctrl is ProgressBar)
+					else if (ctrl is KeysharpGroupBox || ctrl is KeysharpProgressBar)
 						r = 2;
-					else if (ctrl is TextBox tb)
+					else if (ctrl is KeysharpTextBox tb)
 						r = tb.Multiline ? 3 : 1;
-					else if (ctrl is DateTimePicker || ctrl is HotkeyBox)
+					else if (ctrl is KeysharpDateTimePicker || ctrl is HotkeyBox)
 						r = 1;
-					else if (ctrl is TabPage || ctrl is TabControl)
+					else if (ctrl is TabPage || ctrl is KeysharpTabControl)
 						r = 10;
 
 					var fontRows = (int)(Math.Round(fontpixels + 0.5) * r);//This is a rough attempt to make text boxes tall enough to show the requested number of lines without having the scrollbars appear unnecessarily.
 					var defheight = fontRows;//AHK used external leading, but just use fontpixels here because it's close enough.
 
-					if (ctrl is ComboBox cmb)
+					if (ctrl is KeysharpComboBox cmb)
 					{
 						cmb.MaxDropDownItems = r;
 					}
-					else if (ctrl is ListBox lb)
+					else if (ctrl is KeysharpListBox lb)
 					{
 						lb.Height = (int)Math.Round(lb.ItemHeight * r * dpiinv) + (lb.Height - lb.ClientSize.Height) + lb.Margin.Bottom;
 					}
-					else if (ctrl is TreeView tv)
+					else if (ctrl is KeysharpTreeView tv)
 					{
 						tv.Height = (int)Math.Round(tv.ItemHeight * r * dpiinv) - tv.Margin.Bottom;//For some reason, TreeView doesn't appear to need to have DPI scaling applied, and also is a bit too large, so we subtract the margin.
 					}
-					else if (ctrl is GroupBox gb)
+					else if (ctrl is KeysharpGroupBox gb)
 					{
 						gb.Height = defheight + ((gb.Margin.Top + gb.Margin.Bottom) * (2 + ((int)(r + 1.5) - 2)));//This odd formula comes straight from the AHK source.
 					}
-					else if (ctrl is ListView lv)
+					else if (ctrl is KeysharpListView lv)
 					{
 						lv.Height = defheight + ((lv.Margin.Top + lv.Margin.Bottom) * (2 + ((int)(r + 1.5) - 2)));//ListView doesn't have an ItemHeight property, so attempt to compute here in the same way GroupBox is done above.
 					}
-					else if (ctrl is TabControl tc2)
+					else if (ctrl is KeysharpTabControl tc2)
 					{
 						tc2.Height = defheight + (int)Math.Round((tc2.Margin.Top + tc2.Margin.Bottom) *  (2.0 + ((int)(r + 1.5) - 1)));//Same here, but -1.
 					}
@@ -1253,7 +1272,7 @@
 					{
 						if (opts.rows == float.MinValue) //Neither r or h were specified.
 						{
-							if (ctrl is TrackBar trk && opts.thick == int.MinValue)//Separate check for TrackBar because the documentation specifies it in pixels. Skip this if thickness has been specified.
+							if (ctrl is KeysharpTrackBar trk && opts.thick == int.MinValue)//Separate check for TrackBar because the documentation specifies it in pixels. Skip this if thickness has been specified.
 							{
 								ctrl.Height = trk.Orientation == Orientation.Horizontal ? 30 : (int)Math.Round(5 * fontpixels);
 								goto heightdone;
@@ -1348,7 +1367,7 @@
 				if (prevParent is Form f && f.MainMenuStrip != null)
 					top += f.MainMenuStrip.Height;
 
-				if (loc.Y == int.MinValue && LastContainer is GroupBox gblast)
+				if (loc.Y == int.MinValue && LastContainer is KeysharpGroupBox gblast)
 				{
 					//Top needs to be manually adjusted when the container is a GroupBox, we're adding the first control, and they haven't explicitly specified a Y coordinate.
 					if (gblast.Controls.Count == 0)
@@ -1359,7 +1378,7 @@
 										  opts.y != int.MinValue ? opts.y : (int)Math.Round(top));
 			}
 
-			if (ctrl is TabControl tc && CurrentTab is TabPage currtp)
+			if (ctrl is KeysharpTabControl tc && CurrentTab is TabPage currtp)
 			{
 				prevParent.TagAndAdd(holder);
 
@@ -1370,7 +1389,7 @@
 			}
 			else if (ctrl is KeysharpRadioButton krb)
 			{
-				if (lastControl == null || !(lastControl is KeysharpRadioButton) || opts.group)
+				if (lastControl == null || lastControl is not KeysharpRadioButton || opts.group)
 				{
 					var panel = new Panel();
 					var parent = LastContainer;
@@ -1390,7 +1409,7 @@
 
 				krb.Checked = opts.ischecked.HasValue && opts.ischecked.Value > 0;
 			}
-			else if (ctrl is GroupBox gb)
+			else if (ctrl is KeysharpGroupBox gb)
 			{
 				LastContainer.TagAndAdd(holder);
 				LastContainer = gb;
@@ -1817,21 +1836,21 @@
 			{
 				if (control.Name != "" && control.GetGuiControl() is GuiControl guictrl)
 				{
-					if (control is TextBox || control is DateTimePicker || control is MonthCalendar)//Just use value because it's the same and consolidates the formatting in one place, despite being slightly slower.
+					if (control is KeysharpTextBox || control is KeysharpDateTimePicker || control is KeysharpMonthCalendar)//Just use value because it's the same and consolidates the formatting in one place, despite being slightly slower.
 						dkt[control.Name] = guictrl.Value;
-					else if (control is RichTextBox)
+					else if (control is KeysharpRichEdit)
 						dkt[control.Name] = !guictrl.AltSubmit ? guictrl.Value : guictrl.RichText;
-					else if (control is NumericUpDown nud)
+					else if (control is KeysharpNumericUpDown nud)
 						dkt[nud.Name] = (double)nud.Value;
-					else if (control is CheckBox cb)
+					else if (control is KeysharpCheckBox cb)
 						dkt[cb.Name] = cb.Checked ? 1L : 0L;
-					else if (control is TabControl tc)
+					else if (control is KeysharpTabControl tc)
 						dkt[tc.Name] = !guictrl.AltSubmit ? tc.SelectedTab != null ? tc.SelectedTab.Text : "" : (long)(tc.SelectedIndex + 1);
-					else if (control is ComboBox cmb)
+					else if (control is KeysharpComboBox cmb)
 						dkt[cmb.Name] = !guictrl.AltSubmit || cmb.Items.IndexOf(cmb.Text) == -1 ? cmb.Text : (long)(cmb.SelectedIndex + 1);
 					else if (control is TrackBar tb)
 						dkt[tb.Name] = tb.Value;
-					else if (control is ListBox lb)
+					else if (control is KeysharpListBox lb)
 					{
 						dkt[lb.Name] = !guictrl.AltSubmit
 									   ? guictrl.Value
@@ -1875,7 +1894,7 @@
 
 		public object UseGroup(object obj0 = null)
 		{
-			if (obj0 is GuiControl gctrl && gctrl.Control is GroupBox gb)
+			if (obj0 is GuiControl gctrl && gctrl.Control is KeysharpGroupBox gb)
 				LastContainer = gb;
 			else
 				LastContainer = form;
@@ -1916,13 +1935,13 @@
 			{
 				Conversions.ParseRange(text, out options.dtselstart, out options.dtselend);
 
-				if (options.dtselstart == DateTime.MinValue)
+				if (options.dtselstart == System.DateTime.MinValue)
 					options.dtselstart = options.dtselend;
 
-				if (options.dtselend == DateTime.MaxValue)
+				if (options.dtselend == System.DateTime.MaxValue)
 					options.dtselend = options.dtselstart;
 
-				if (options.dtselstart != DateTime.MinValue && options.dtselend != DateTime.MaxValue &&
+				if (options.dtselstart != System.DateTime.MinValue && options.dtselend != System.DateTime.MaxValue &&
 						(options.dtselend - options.dtselstart).TotalDays > 1)
 					options.datemultisel = true;
 			}
@@ -2115,9 +2134,9 @@
 		{
 			if (e.KeyCode == Keys.F2)
 			{
-				if (sender is TreeView tv)
+				if (sender is KeysharpTreeView tv)
 					tv.SelectedNode?.BeginEdit();
-				else if (sender is ListView lv && lv.SelectedItems.Count > 0)
+				else if (sender is KeysharpListView lv && lv.SelectedItems.Count > 0)
 					lv.SelectedItems[0].BeginEdit();
 			}
 		}
@@ -2222,19 +2241,58 @@
 			}
 		}
 
-		public class Button : GuiControl
-		{
-			public Button(params object[] args) : base(args)
-			{
-			}
-		}
+		//Create a thin wrapper for each control type so that type checking like:
+		//if (obj is Gui.Edit)
+		//works correctly.
+		public class ActiveX(params object[] args) : GuiControl(args) { }
 
-		public class Edit : GuiControl
-		{
-			public Edit(params object[] args) : base(args)
-			{
-			}
-		}
+		public class Button(params object[] args) : GuiControl(args) { }
+
+		public class CheckBox(params object[] args) : GuiControl(args) { }
+
+		public class DateTime(params object[] args) : GuiControl(args) { }
+
+		public class Edit(params object[] args) : GuiControl(args) { }
+
+		public class GroupBox(params object[] args) : GuiControl(args) { }
+
+		public class Hotkey(params object[] args) : GuiControl(args) { }
+
+		public class Link(params object[] args) : GuiControl(args) { }
+
+		public class List(params object[] args) : GuiControl(args) { }
+
+		public class ComboBox(params object[] args) : Gui.List(args) { }
+
+		public class DDL(params object[] args) : Gui.List(args) { }
+
+		public class ListBox(params object[] args) : Gui.List(args) { }
+
+		public class Tab(params object[] args) : Gui.List(args) { }
+
+		public class ListView(params object[] args) : GuiControl(args) { }
+
+		public class MonthCal(params object[] args) : GuiControl(args) { }
+
+		public class Pic(params object[] args) : GuiControl(args) { }
+
+		public class Progress(params object[] args) : GuiControl(args) { }
+
+		public class Radio(params object[] args) : GuiControl(args) { }
+
+		public class RichEdit(params object[] args) : GuiControl(args) { }
+
+		public class Slider(params object[] args) : GuiControl(args) { }
+
+		public class StatusBar(params object[] args) : GuiControl(args) { }
+
+		public class Text(params object[] args) : GuiControl(args) { }
+
+		public class TreeView(params object[] args) : GuiControl(args) { }
+
+		public class UpDown(params object[] args) : GuiControl(args) { }
+
+		public class WebBrowser(params object[] args) : GuiControl(args) { }
 
 		internal class GuiOptions
 		{
@@ -2276,13 +2334,13 @@
 			//DropDownList
 			internal int ddlchoose = int.MinValue;
 
-			internal DateTime dtChoose = DateTime.Now;
-			internal DateTime dthigh = DateTime.MaxValue;
-			internal DateTime dtlow = DateTime.MinValue;
+			internal System.DateTime dtChoose = System.DateTime.Now;
+			internal System.DateTime dthigh = System.DateTime.MaxValue;
+			internal System.DateTime dtlow = System.DateTime.MinValue;
 			internal bool dtopt1 = false;
 			internal bool dtopt2 = false;
-			internal DateTime dtselend = DateTime.MaxValue;
-			internal DateTime dtselstart = DateTime.MinValue;
+			internal System.DateTime dtselend = System.DateTime.MaxValue;
+			internal System.DateTime dtselstart = System.DateTime.MinValue;
 			internal bool? enabled;
 
 			//ListView.

@@ -651,12 +651,13 @@ namespace Keysharp.Scripting
 						char lastDelim = (char)0;
 						var listCount = list.Count;
 						var idstr = "";
+						var last = list.LastOrDefault().As().ToLower();
 
 						for (var seqi = 0; seqi < seq.Length; seqi++)
 						{
 							var ch = seq[seqi];
 
-							if (ch == Concatenate)
+							if (ch == Concatenate && last != "is")//Need to account for statements like if (ctrl is Gui.Button)
 							{
 								idstr = id.ToString();
 								lastDelim = ch;
