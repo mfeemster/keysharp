@@ -18,30 +18,23 @@
 		public CaseEqualityComp(eCaseSense caseSense)
 		{
 			//Choose an appropriate built-in StringComparer.
-			switch (caseSense)
-			{
-				case eCaseSense.On:
-					stringComparer = StringComparer.Ordinal;
-					break;
 
-				case eCaseSense.Off:
-					stringComparer = StringComparer.OrdinalIgnoreCase;
-					break;
+			stringComparer = caseSense switch
+		{
+				eCaseSense.On => StringComparer.Ordinal,
+				eCaseSense.Off => StringComparer.OrdinalIgnoreCase,
+				_ => StringComparer.CurrentCultureIgnoreCase,
+		};
+	}
 
-				default:
-					stringComparer = StringComparer.CurrentCultureIgnoreCase;
-					break;
-			}
-		}
-
-		/// <summary>
-		/// The implementation for <see cref="IEqualityComparer.Equals"/> which compares two objects.
-		/// If both objects are strings, then the case sensitivity mode specified in the constructor is used.
-		/// </summary>
-		/// <param name="x">The first object to compare.</param>
-		/// <param name="y">The second object to compare.</param>
-		/// <returns>True if the two objects are equal, else false.</returns>
-		public bool Equals(object x, object y)
+	/// <summary>
+	/// The implementation for <see cref="IEqualityComparer.Equals"/> which compares two objects.
+	/// If both objects are strings, then the case sensitivity mode specified in the constructor is used.
+	/// </summary>
+	/// <param name="x">The first object to compare.</param>
+	/// <param name="y">The second object to compare.</param>
+	/// <returns>True if the two objects are equal, else false.</returns>
+	public bool Equals(object x, object y)
 		{
 			//If both are strings, use the built-in comparer.
 			if (x is string s1 && y is string s2)

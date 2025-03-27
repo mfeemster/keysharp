@@ -245,29 +245,22 @@ namespace Keysharp.Core.Common.Threading
 			}
 
 			// If above didn't return, rely on the scan code instead, which is now known to be non-zero.
-			switch (sc)
-			{
-				case ScanCodes.LShift: return MOD_LSHIFT;
 
-				case ScanCodes.RShift: return MOD_RSHIFT;
+			return sc switch
+		{
+				ScanCodes.LShift => MOD_LSHIFT,
+				ScanCodes.RShift => MOD_RSHIFT,
+				ScanCodes.LControl => MOD_LCONTROL,
+				ScanCodes.RControl => MOD_RCONTROL,
+				ScanCodes.LAlt => MOD_LALT,
+				ScanCodes.RAlt => MOD_RALT,
+				ScanCodes.LWin => MOD_LWIN,
+				ScanCodes.RWin => MOD_RWIN,
+				_ => 0,
+		};
+	}
 
-				case ScanCodes.LControl: return MOD_LCONTROL;
-
-				case ScanCodes.RControl: return MOD_RCONTROL;
-
-				case ScanCodes.LAlt: return MOD_LALT;
-
-				case ScanCodes.RAlt: return MOD_RALT;
-
-				case ScanCodes.LWin: return MOD_LWIN;
-
-				case ScanCodes.RWin: return MOD_RWIN;
-			}
-
-			return 0;
-		}
-
-		internal ref uint Kscm(uint i, uint j) => ref kscm[(i * SC_ARRAY_COUNT) + j];
+	internal ref uint Kscm(uint i, uint j) => ref kscm[(i * SC_ARRAY_COUNT) + j];
 
 		internal ref uint Kvkm(uint i, uint j) => ref kvkm[(i * VK_ARRAY_COUNT) + j];
 

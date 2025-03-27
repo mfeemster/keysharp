@@ -65,23 +65,15 @@
 
 		public virtual bool IsBrace(int c)
 		{
-			switch (c)
-			{
-				case '(':
-				case ')':
-				case '[':
-				case ']':
-				case '{':
-				case '}':
-				case '<':
-				case '>':
-					return true;
-			}
 
-			return false;
-		}
+			return c switch
+		{
+				'(' or ')' or '[' or ']' or '{' or '}' or '<' or '>' => true,
+				_ => false,
+		};
+	}
 
-		public abstract void RemoveStyle(ScintillaNET.Scintilla scintilla);
+	public abstract void RemoveStyle(ScintillaNET.Scintilla scintilla);
 
 		public abstract void SetKeywords(ScintillaNET.Scintilla scintilla);
 	}

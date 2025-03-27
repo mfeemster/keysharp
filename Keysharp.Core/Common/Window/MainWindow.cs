@@ -186,47 +186,31 @@
 
 		private TabPage GetTab(MainFocusedTab tab)
 		{
-			switch (tab)
-			{
-				case MainFocusedTab.Debug:
-					return tpDebug;
 
-				case MainFocusedTab.Vars:
-					return tpVars;
-
-				case MainFocusedTab.Hotkeys:
-					return tpHotkeys;
-
-				case MainFocusedTab.History:
-					return tpHistory;
-
-				default:
-					return tpDebug;
-			}
-		}
-
-		private TextBox GetText(MainFocusedTab tab)
+			return tab switch
 		{
-			switch (tab)
-			{
-				case MainFocusedTab.Debug:
-					return txtDebug;
+				MainFocusedTab.Debug => tpDebug,
+				MainFocusedTab.Vars => tpVars,
+				MainFocusedTab.Hotkeys => tpHotkeys,
+				MainFocusedTab.History => tpHistory,
+				_ => tpDebug,
+		};
+	}
 
-				case MainFocusedTab.Vars:
-					return txtVars;
+	private TextBox GetText(MainFocusedTab tab)
+		{
 
-				case MainFocusedTab.Hotkeys:
-					return txtHotkeys;
+			return tab switch
+		{
+				MainFocusedTab.Debug => txtDebug,
+				MainFocusedTab.Vars => txtVars,
+				MainFocusedTab.Hotkeys => txtHotkeys,
+				MainFocusedTab.History => txtHistory,
+				_ => txtDebug,
+		};
+	}
 
-				case MainFocusedTab.History:
-					return txtHistory;
-
-				default:
-					return txtDebug;
-			}
-		}
-
-		private void hotkeysAndTheirMethodsToolStripMenuItem_Click(object sender, EventArgs e) => ListHotkeys();
+	private void hotkeysAndTheirMethodsToolStripMenuItem_Click(object sender, EventArgs e) => ListHotkeys();
 
 		private void keyHistoryAndScriptInfoToolStripMenuItem_Click(object sender, EventArgs e) => ShowHistory();
 

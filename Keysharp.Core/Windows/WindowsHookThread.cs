@@ -3052,18 +3052,15 @@ namespace Keysharp.Core.Windows
 					// then it would never be released properly by the other main prefix/suffix handling
 					// cases of the hook.  Instead, always identify which prefix key (left or right) is
 					// in effect:
-					switch (foundHk.modifierVK)
-					{
-						case VK_SHIFT: prefixKey = kvk[kvk[VK_RSHIFT].isDown ? VK_RSHIFT : VK_LSHIFT]; break;
 
-						case VK_CONTROL: prefixKey = kvk[kvk[VK_RCONTROL].isDown ? VK_RCONTROL : VK_LCONTROL]; break;
-
-						case VK_MENU: prefixKey = kvk[kvk[VK_RMENU].isDown ? VK_RMENU : VK_LMENU]; break;
-
-						case 0: prefixKey = ksc[foundHk.modifierSC]; break;
-
-						default: prefixKey = kvk[foundHk.modifierVK]; break;
-					}
+					prefixKey = foundHk.modifierVK switch
+				{
+						VK_SHIFT => kvk[kvk[VK_RSHIFT].isDown ? VK_RSHIFT : VK_LSHIFT],
+							VK_CONTROL => kvk[kvk[VK_RCONTROL].isDown ? VK_RCONTROL : VK_LCONTROL],
+							VK_MENU => kvk[kvk[VK_RMENU].isDown ? VK_RMENU : VK_LMENU],
+							0 => ksc[foundHk.modifierSC],
+							_ => kvk[foundHk.modifierVK],
+					};
 
 					if (foundHk.hookAction != 0)
 						hotkeyIdWithFlags = foundHk.hookAction;

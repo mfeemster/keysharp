@@ -201,73 +201,41 @@ namespace Keysharp.Core.Common.Strings
 
 		internal static RegistryValueKind GetRegistryType(string val)
 		{
-			switch (val)
-			{
-				case none:
-					return RegistryValueKind.None;
 
-				case unk:
-					return RegistryValueKind.Unknown;
-
-				case regsz:
-					return RegistryValueKind.String;
-
-				case regexpsz:
-					return RegistryValueKind.ExpandString;
-
-				case bin:
-					return RegistryValueKind.Binary;
-
-				case dword:
-					return RegistryValueKind.DWord;
-
-				case multisz:
-					return RegistryValueKind.MultiString;
-
-				case qword:
-					return RegistryValueKind.QWord;
-
-				default:
-					return RegistryValueKind.Unknown;
-			}
-		}
-
-		internal static string GetRegistryTypeName(RegistryValueKind val)
+			return val switch
 		{
-			switch (val)
-			{
-				case RegistryValueKind.None:
-					return none;
+				none => RegistryValueKind.None,
+				unk => RegistryValueKind.Unknown,
+				regsz => RegistryValueKind.String,
+				regexpsz => RegistryValueKind.ExpandString,
+				bin => RegistryValueKind.Binary,
+				dword => RegistryValueKind.DWord,
+				multisz => RegistryValueKind.MultiString,
+				qword => RegistryValueKind.QWord,
+				_ => RegistryValueKind.Unknown,
+		};
+	}
 
-				case RegistryValueKind.Unknown:
-					return unk;
+	internal static string GetRegistryTypeName(RegistryValueKind val)
+		{
 
-				case RegistryValueKind.String:
-					return regsz;
-
-				case RegistryValueKind.ExpandString:
-					return regexpsz;
-
-				case RegistryValueKind.Binary:
-					return bin;
-
-				case RegistryValueKind.DWord:
-					return dword;
-
-				case RegistryValueKind.MultiString:
-					return multisz;
-
-				case RegistryValueKind.QWord:
-					return qword;
-
-				default:
-					return unk;
-			}
-		}
+			return val switch
+		{
+				RegistryValueKind.None => none,
+				RegistryValueKind.Unknown => unk,
+				RegistryValueKind.String => regsz,
+				RegistryValueKind.ExpandString => regexpsz,
+				RegistryValueKind.Binary => bin,
+				RegistryValueKind.DWord => dword,
+				RegistryValueKind.MultiString => multisz,
+				RegistryValueKind.QWord => qword,
+				_ => unk,
+		};
+	}
 
 #endif
 
-		internal static byte HighByte(int i) => (byte)((((ulong)i) >> 8) & 0xff);
+	internal static byte HighByte(int i) => (byte)((((ulong)i) >> 8) & 0xff);
 
 		internal static short HighWord(int i) => (short)((((ulong)i) >> 16) & 0xffff);
 
@@ -277,24 +245,14 @@ namespace Keysharp.Core.Common.Strings
 
 		internal static int MakeInt(int lowPart, int highPart) => (lowPart & 0x0000FFFF) | (highPart << 16);
 
-		internal static StringComparison ParseComparisonOption(object option)
-		{
-			switch (option.ToString().Trim().ToLowerInvariant())
-			{
-				case "1":
-				case TrueTxt:
-				case Keyword_On: return StringComparison.Ordinal;
+		internal static StringComparison ParseComparisonOption(object option) => option.ToString().Trim().ToLowerInvariant() switch
+	{
+			"1" or TrueTxt or Keyword_On => StringComparison.Ordinal,
+			Keyword_Locale => StringComparison.CurrentCulture,
+			_ => StringComparison.OrdinalIgnoreCase,
+	};
 
-				case Keyword_Locale: return StringComparison.CurrentCulture;
-
-				case "0":
-				case FalseTxt:
-				case Keyword_Off:
-				default: return StringComparison.OrdinalIgnoreCase;
-			}
-		}
-
-		internal static Font ParseFont(Font standard, string styles, string family = null)
+	internal static Font ParseFont(Font standard, string styles, string family = null)
 		{
 			family = string.IsNullOrEmpty(family) ? standard.FontFamily.Name : family;
 			var size = standard.Size;
@@ -587,27 +545,21 @@ namespace Keysharp.Core.Common.Strings
 
 		internal static string ToOSType(PlatformID id)
 		{
-			switch (id)
-			{
-				case PlatformID.MacOSX: return "MACOSX";
 
-				case PlatformID.Unix: return "UNIX";
+			return id switch
+		{
+				PlatformID.MacOSX => "MACOSX",
+				PlatformID.Unix => "UNIX",
+				PlatformID.Win32NT => "WIN32_NT",
+				PlatformID.Win32S => "WIN32_S",
+				PlatformID.Win32Windows => "WIN32_WINDOWS",
+				PlatformID.WinCE => "WINCE",
+				PlatformID.Xbox => "XBOX",
+				_ => "UNKNOWN",
+		};
+	}
 
-				case PlatformID.Win32NT: return "WIN32_NT";
-
-				case PlatformID.Win32S: return "WIN32_S";
-
-				case PlatformID.Win32Windows: return "WIN32_WINDOWS";
-
-				case PlatformID.WinCE: return "WINCE";
-
-				case PlatformID.Xbox: return "XBOX";
-
-				default: return "UNKNOWN";
-			}
-		}
-
-		internal static RegexOptions ToRegexOptions(ReadOnlySpan<char> sequence)
+	internal static RegexOptions ToRegexOptions(ReadOnlySpan<char> sequence)
 		{
 			var options = RegexOptions.None;
 
@@ -668,52 +620,31 @@ namespace Keysharp.Core.Common.Strings
 			var root = name.Substring(0, index2).ToLowerInvariant();
 			var key = name.Substring(index2 + 1);
 
-			switch (root)
-			{
-				case Keyword_HKey_Local_Machine:
-				case Keyword_HKLM:
-					return (RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, Registrys.GetRegView()), computername, key);
-
-				case Keyword_HKey_Users:
-				case Keyword_HKU:
-					return (RegistryKey.OpenBaseKey(RegistryHive.Users, Registrys.GetRegView()), computername, key);
-
-				case Keyword_HKey_Current_User:
-				case Keyword_HKCU:
-					return (RegistryKey.OpenBaseKey(RegistryHive.CurrentUser, Registrys.GetRegView()), computername, key);
-
-				case Keyword_HKey_Classes_Root:
-				case Keyword_HKCR:
-					return (RegistryKey.OpenBaseKey(RegistryHive.ClassesRoot, Registrys.GetRegView()), computername, key);
-
-				case Keyword_HKey_Current_Config:
-				case Keyword_HKCC:
-					return (RegistryKey.OpenBaseKey(RegistryHive.CurrentConfig, Registrys.GetRegView()), computername, key);
-
-				case Keyword_HKey_Performance_Data:
-				case Keyword_HKPD:
-					return (RegistryKey.OpenBaseKey(RegistryHive.PerformanceData, Registrys.GetRegView()), computername, key);
-
-				default:
-					return Errors.ErrorOccurred(err = new ValueError($"{root} was not a valid registry type.")) ? throw err : (null, null, null);
-			}
+			return root switch
+		{
+				Keyword_HKey_Local_Machine or Keyword_HKLM => (RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, Registrys.GetRegView()), computername, key),
+					Keyword_HKey_Users or Keyword_HKU => (RegistryKey.OpenBaseKey(RegistryHive.Users, Registrys.GetRegView()), computername, key),
+					Keyword_HKey_Current_User or Keyword_HKCU => (RegistryKey.OpenBaseKey(RegistryHive.CurrentUser, Registrys.GetRegView()), computername, key),
+					Keyword_HKey_Classes_Root or Keyword_HKCR => (RegistryKey.OpenBaseKey(RegistryHive.ClassesRoot, Registrys.GetRegView()), computername, key),
+					Keyword_HKey_Current_Config or Keyword_HKCC => (RegistryKey.OpenBaseKey(RegistryHive.CurrentConfig, Registrys.GetRegView()), computername, key),
+					Keyword_HKey_Performance_Data or Keyword_HKPD => (RegistryKey.OpenBaseKey(RegistryHive.PerformanceData, Registrys.GetRegView()), computername, key),
+					_ => Errors.ErrorOccurred(err = new ValueError($"{root} was not a valid registry type.")) ? throw err : (null, null, null),
+			};
 		}
 #endif
 		internal static string ToStringCaseSense(StringComparison type)
 		{
-			switch (type)
-			{
-				case StringComparison.CurrentCultureIgnoreCase: return Keyword_Locale;
 
-				case StringComparison.Ordinal: return Keyword_On;
+			return type switch
+		{
+				StringComparison.CurrentCultureIgnoreCase => Keyword_Locale,
+				StringComparison.Ordinal => Keyword_On,
+				StringComparison.OrdinalIgnoreCase => Keyword_Off,
+				_ => Keyword_Off,
+		};
+	}
 
-				case StringComparison.OrdinalIgnoreCase: return Keyword_Off;
-
-				default: return Keyword_Off;
-			}
-		}
-
-		internal static string ToYYYYMMDDHH24MISS(DateTime time) => time.ToString("yyyyMMddHHmmss");
+	internal static string ToYYYYMMDDHH24MISS(DateTime time) => time.ToString("yyyyMMddHHmmss");
 
 		internal static string ToYYYYMMDDHH24MISSFFF(DateTime time) => time.ToString("yyyyMMddHHmmss.fff");
 

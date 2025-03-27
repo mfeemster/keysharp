@@ -980,19 +980,13 @@ break_twice:;
 			uint? modLR = null;
 			_ = ht.TextToVKandSC(keyname, ref vk, ref sc, ref modLR, PlatformProvider.Manager.GetKeyboardLayout(0));//Need to make cross platform.
 
-			switch (callid)
-			{
-				case 0:
-					return GetKeyNameHelper(vk, sc, "");
-
-				case 1:
-					return sc != 0 ? sc : ht.MapVkToSc(vk);
-
-				case 2:
-					return vk != 0 ? vk : ht.MapScToVk(sc);
-			}
-
-			return "";
+			return callid switch
+		{
+				0 => GetKeyNameHelper(vk, sc, ""),
+					1 => sc != 0 ? sc : ht.MapVkToSc(vk),
+					2 => vk != 0 ? vk : ht.MapScToVk(sc),
+					_ => "",
+			};
 		}
 
 		/// <summary>

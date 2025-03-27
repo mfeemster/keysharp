@@ -527,62 +527,49 @@ namespace Keysharp.Scripting
 
 									case "SINGLEINSTANCE":
 									{
-										switch (p1.ToUpperInvariant())
-										{
-											case "FORCE":
-												SingleInstance = eScriptInstance.Force;
-												break;
 
-											case "IGNORE":
-												SingleInstance = eScriptInstance.Ignore;
-												break;
+										SingleInstance = p1.ToUpperInvariant() switch
+									{
+											"FORCE" => eScriptInstance.Force,
+											"IGNORE" => eScriptInstance.Ignore,
+											"PROMPT" => eScriptInstance.Prompt,
+											"OFF" => eScriptInstance.Off,
+											_ => eScriptInstance.Force,
+									};
+								}
+								break;
 
-											case "PROMPT":
-												SingleInstance = eScriptInstance.Prompt;
-												break;
-
-											case "OFF":
-												SingleInstance = eScriptInstance.Off;
-												break;
-
-											default:
-												SingleInstance = eScriptInstance.Force;
-												break;
-										}
-									}
+								//Deprecated directives.
+								case "ALLOWSAMELINECOMMENTS":
+								case "HOTKEYINTERVAL":
+								case "HOTKEYMODIFIERTIMEOUT":
+								case "INSTALLKEYBDHOOK":
+								case "INSTALLMOUSEHOOK":
+								case "KEYHISTORY":
+								case "MAXHOTKEYSPERINTERVAL":
+								case "MAXMEM":
 									break;
 
-									//Deprecated directives.
-									case "ALLOWSAMELINECOMMENTS":
-									case "HOTKEYINTERVAL":
-									case "HOTKEYMODIFIERTIMEOUT":
-									case "INSTALLKEYBDHOOK":
-									case "INSTALLMOUSEHOOK":
-									case "KEYHISTORY":
-									case "MAXHOTKEYSPERINTERVAL":
-									case "MAXMEM":
-										break;
-
-									//Directives that will be processed in Statements().
-									case "ASSEMBLYTITLE":
-									case "ASSEMBLYDESCRIPTION":
-									case "ASSEMBLYCONFIGURATION":
-									case "ASSEMBLYCOMPANY":
-									case "ASSEMBLYPRODUCT":
-									case "ASSEMBLYCOPYRIGHT":
-									case "ASSEMBLYTRADEMARK":
-									case "ASSEMBLYVERSION":
-									case "CLIPBOARDTIMEOUT":
-									case "ERRORSTDOUT":
-									case "USEHOOK":
-									case "MAXTHREADS":
-									case "MAXTHREADSBUFFER":
-									case "MAXTHREADSPERHOTKEY":
-									case "NOTRAYICON":
-									case "SUSPENDEXEMPT":
-									case "WINACTIVATEFORCE":
-									case Keyword_IfWin:
-										list.Add(new CodeLine(name, lineNumber, span.ToString()));
+								//Directives that will be processed in Statements().
+								case "ASSEMBLYTITLE":
+								case "ASSEMBLYDESCRIPTION":
+								case "ASSEMBLYCONFIGURATION":
+								case "ASSEMBLYCOMPANY":
+								case "ASSEMBLYPRODUCT":
+								case "ASSEMBLYCOPYRIGHT":
+								case "ASSEMBLYTRADEMARK":
+								case "ASSEMBLYVERSION":
+								case "CLIPBOARDTIMEOUT":
+								case "ERRORSTDOUT":
+								case "USEHOOK":
+								case "MAXTHREADS":
+								case "MAXTHREADSBUFFER":
+								case "MAXTHREADSPERHOTKEY":
+								case "NOTRAYICON":
+								case "SUSPENDEXEMPT":
+								case "WINACTIVATEFORCE":
+								case Keyword_IfWin:
+									list.Add(new CodeLine(name, lineNumber, span.ToString()));
 										break;
 
 									default:

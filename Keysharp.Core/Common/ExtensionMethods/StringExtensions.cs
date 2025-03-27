@@ -609,6 +609,6 @@
 		/// <param name="s">The string to trim from the start.</param>
 		/// <returns>The trimmed string if the search string was found, else the original string.</returns>
 		internal static string TrimStartOf(this string str, string s) =>
-		str.StartsWith(s) ? str.Substring(0, s.Length) : str;
+		str.StartsWith(s) ? str.Substring(s.Length) : str;
 	}
 }

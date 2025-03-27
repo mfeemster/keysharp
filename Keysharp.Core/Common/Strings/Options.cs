@@ -7,24 +7,15 @@ namespace Keysharp.Core.Common.Strings
 			if (mode == null)
 				return false;
 
-			switch (mode.ToString().ToLowerInvariant())
-			{
-				case Keyword_On:
-				case "1":
-				case "true":
-					return true;
+			return mode.ToString().ToLowerInvariant() switch
+		{
+				Keyword_On or "1" or "true" => true,
+				Keyword_Off or "0" or "false" => false,
+				_ => null,
+		};
+	}
 
-				case Keyword_Off:
-				case "0":
-				case "false":
-					return false;
-
-				default:
-					return null;
-			}
-		}
-
-		internal static bool IsOption(string options, string search)
+	internal static bool IsOption(string options, string search)
 		{
 			return string.IsNullOrEmpty(options) || string.IsNullOrEmpty(search)
 				   ? false

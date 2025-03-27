@@ -37,54 +37,43 @@ namespace Keysharp.Scripting
 			{
 				if (code[0] == code[1])
 				{
-					switch (code[0])
-					{
-						case Greater://>>=
-						case Less://<<=
-						case Divide:////=
-						case TernaryA://??=
-							return true;
 
-						default:
-							return false;
-					}
-				}
-				else
-					return false;
+					return code[0] switch
+				{
+						//>>=
+						Greater or Less or Divide or TernaryA => true,
+						_ => false,
+				};
 			}
-			else if (code.Length == 4)
+			else
+				return false;
+		}
+		else if (code.Length == 4)
 			{
 				if (code[0] == code[1] && code[1] == code[2])
 				{
-					switch (code[0])
-					{
-						case Greater:
-							return true;
 
-						default:
-							return false;
-					}
-				}
-				else
-					return false;
+					return code[0] switch
+				{
+						Greater => true,
+						_ => false,
+				};
 			}
 			else
-			{
-				switch (code[0])
-				{
-					case Greater:
-					case Less:
-					case Not:
-					case BitNOT:
-						return false;
-
-					default:
-						return true;
-				}
-			}
+				return false;
 		}
+		else
+		{
 
-		internal static bool IsCommand(string code)
+			return code[0] switch
+			{
+					Greater or Less or Not or BitNOT => false,
+					_ => true,
+			};
+		}
+	}
+
+	internal static bool IsCommand(string code)
 		{
 			var i = 0;
 
@@ -180,19 +169,14 @@ namespace Keysharp.Scripting
 			if (i == 0 || i == code.Length)
 				return false;
 
-			switch (code[i])
-			{
-				case Equal:
-				case Not:
-				case Greater:
-				case Less:
-					return false;
-			}
+			return code[i] switch
+		{
+				Equal or Not or Greater or Less => false,
+				_ => true,
+		};
+	}
 
-			return true;
-		}
-
-		internal static bool IsExpressionParameter(string code)
+	internal static bool IsExpressionParameter(string code)
 		{
 			code = code.TrimStart(Spaces);
 			var z = code.IndexOf(Resolve);
@@ -328,17 +312,15 @@ namespace Keysharp.Scripting
 
 		internal static bool IsKeyword(char symbol)
 		{
-			switch (symbol)
-			{
-				case TernaryA:
-					return true;
 
-				default:
-					return false;
-			}
-		}
+			return symbol switch
+		{
+				TernaryA => true,
+				_ => false,
+		};
+	}
 
-		internal static bool IsLabel(string code)
+	internal static bool IsLabel(string code)
 		{
 			for (var i = 0; i < code.Length; i++)
 			{
@@ -472,27 +454,20 @@ namespace Keysharp.Scripting
 
 		internal static bool IsUnaryOperator(Script.Operator op)
 		{
-			switch (op)
-			{
-				case Script.Operator.Subtract://Minus doesn't seem to be needed here.
-				case Script.Operator.LogicalNot:
-				case Script.Operator.LogicalNotEx:
-				case Script.Operator.BitwiseNot:
-				case Script.Operator.BitwiseAnd:
-				case Script.Operator.Dereference:
-					return true;
 
+			return op switch
+		{
+				//Minus doesn't seem to be needed here.
+				Script.Operator.Subtract or Script.Operator.LogicalNot or Script.Operator.LogicalNotEx or Script.Operator.BitwiseNot or Script.Operator.BitwiseAnd or Script.Operator.Dereference => true,
 				//TODO
 				//This messes up the postfix operator when used in an assignment like y := x++
 				//case Script.Operator.Add:
 				//return true;
+				_ => false,
+		};
+	}
 
-				default:
-					return false;
-			}
-		}
-
-		internal bool IsFlowOperator(string code)
+	internal bool IsFlowOperator(string code)
 		{
 			foreach (Range r in code.AsSpan().SplitAny(FlowDelimiters2))
 			{
@@ -557,20 +532,14 @@ namespace Keysharp.Scripting
 			if (part.Length < 2 || !IsIdentifier(part[0]))
 				return false;
 
-			switch (part[1].ToLowerInvariant())
-			{
-				case NotTxt:
-				case BetweenTxt:
-				case InTxt:
-				case ContainsTxt:
-				case IsTxt:
-					return true;
-			}
+			return part[1].ToLowerInvariant() switch
+		{
+				NotTxt or BetweenTxt or InTxt or ContainsTxt or IsTxt => true,
+				_ => false,
+		};
+	}
 
-			return false;
-		}
-
-		internal static bool IsNumericString(ReadOnlySpan<char> str) => long.TryParse(str, out _) || double.TryParse(str, out _);
+	internal static bool IsNumericString(ReadOnlySpan<char> str) => long.TryParse(str, out _) || double.TryParse(str, out _);
 
 		internal bool IsVariable(string code) => IsIdentifier(code, true)&& !IsKeyword(code);
 
@@ -682,12 +651,13 @@ namespace Keysharp.Scripting
 						char lastDelim = (char)0;
 						var listCount = list.Count;
 						var idstr = "";
+						var last = list.LastOrDefault().As().ToLower();
 
 						for (var seqi = 0; seqi < seq.Length; seqi++)
 						{
 							var ch = seq[seqi];
 
-							if (ch == Concatenate)
+							if (ch == Concatenate && last != "is")//Need to account for statements like if (ctrl is Gui.Button)
 							{
 								idstr = id.ToString();
 								lastDelim = ch;
