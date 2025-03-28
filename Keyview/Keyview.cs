@@ -84,7 +84,6 @@
 			_ = toolStrip1.Items.Add(host);
 			Text += $" {Assembly.GetExecutingAssembly().GetName().Version}";
 			btnRunScript.Text = btnRunScriptText["Run"];
-			btnRunScript.Click += CopyFullCode_Click;
 			btnRunScript.Margin = new Padding(15);
 			host = new ToolStripControlHost(btnRunScript)
 			{

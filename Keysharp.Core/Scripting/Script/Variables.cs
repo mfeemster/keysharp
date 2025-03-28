@@ -154,6 +154,11 @@ namespace Keysharp.Scripting
                 // Now that the static objects are created, loop the types again and call __Init and __New for all built-in classes
                 foreach (var t in orderedTypes)
                 {
+                    var nestedTypes = t.GetNestedTypes(BindingFlags.Public);
+					foreach (var nestedType in nestedTypes)
+					{
+						Script.Variables.Statics[t].DefineProp(nestedType.Name, Collections.Map("value", Variables.Statics[nestedType]));
+                    }
                     if (t.Namespace.Equals("Keysharp.CompiledMain", StringComparison.InvariantCultureIgnoreCase))
                     {
                         Script.Invoke(Script.Variables.Statics[t], "__Init");

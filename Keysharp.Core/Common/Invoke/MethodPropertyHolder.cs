@@ -571,6 +571,7 @@ namespace Keysharp.Core.Common.Invoke
             il.Emit(OpCodes.Stloc, availableCountLocal);
 
             // Determine if the method is a set_Item overload.
+            bool isSetter = method.Name.StartsWith("set_") || method.Name.StartsWith(Keywords.ClassStaticPrefix + "set_");
             bool isSetItem = (method.Name == "set_Item");
  
             // Parameter count pre-check
@@ -636,6 +637,9 @@ namespace Keysharp.Core.Common.Invoke
                     if (!parameters[j].IsOptional)
                         requiredCount++;
                 }
+
+                if (isSetter)
+                    requiredCount--; // Allow value to be null
 
                 // Check that availableCountLocal >= requiredCount.
                 il.Emit(OpCodes.Ldloc, availableCountLocal);
@@ -789,7 +793,7 @@ namespace Keysharp.Core.Common.Invoke
                     il.Emit(OpCodes.Blt_S, argProvided);
 
                     // No argument provided for this parameter.
-                    if (pi.IsOptional)
+                    if (pi.IsOptional || (isSetter && i == (parameters.Length - 1)))
                     {
                         // Load the default value.
                         object defVal = pi.DefaultValue;
@@ -827,7 +831,7 @@ namespace Keysharp.Core.Common.Invoke
 
                     // It is null: remove the null value.
                     il.Emit(OpCodes.Pop);
-                    if (pi.IsOptional)
+                    if (pi.IsOptional || (isSetter && i == (parameters.Length - 1)))
                     {
                         // Load the default value.
                         object defVal = pi.DefaultValue;
@@ -961,6 +965,12 @@ namespace Keysharp.Core.Common.Invoke
             else if (type == typeof(bool))
             {
                 il.Emit((bool)value ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
+            }
+            else if (type == typeof(DBNull))
+            {
+                //FieldInfo dbNullField = typeof(DBNull).GetField("Value", BindingFlags.Public | BindingFlags.Static);
+                //il.Emit(OpCodes.Ldsfld, dbNullField);
+                il.Emit(OpCodes.Ldnull);
             }
             else if (type.IsEnum)
             {

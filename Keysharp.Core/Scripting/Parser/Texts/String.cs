@@ -1,6 +1,8 @@
+using Keysharp.Core.Scripting.Parser.Helpers;
+
 namespace Keysharp.Scripting
 {
-	public partial class Parser
+    public partial class Parser
 	{
 		internal static string EscapedString(string code, bool resolve) => EscapedString(code.AsSpan(), resolve);
 
@@ -354,30 +356,6 @@ namespace Keysharp.Scripting
 			}
 
 			return parts;
-		}
-
-		private CodeExpression StringConcat(params CodeExpression[] parts)
-		{
-			var list = new List<CodeExpression>(parts.Length);
-
-			foreach (var part in parts)
-			{
-				if (part is CodePrimitiveExpression cpe && cpe.Value is string s)
-				{
-					if (string.IsNullOrEmpty(s))
-						continue;
-				}
-
-				list.Add(part);
-			}
-
-			if (list.Count == 1)
-				return list[0];
-
-			var str = typeof(object);// typeof(string);
-			var method = (CodeMethodReferenceExpression)InternalMethods.StringConcat;
-			var all = new CodeArrayCreateExpression(str, list.ToArray());
-			return new CodeMethodInvokeExpression(method, all);
 		}
 
 		//private string Replace(string input, string search, string replace)

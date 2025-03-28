@@ -128,10 +128,11 @@ public abstract class MainParserBase : Antlr4.Runtime.Parser
         var objectLiteralIdentifierPassed = false;
         var enclosableDepth = 0;
         var i = 0;
-        while (true)
+        int nextToken = int.MinValue;
+        while (nextToken != MainLexer.Eof)
         {
             i++;
-            var nextToken = InputStream.LA(i);
+            nextToken = InputStream.LA(i);
             if (validateObjectLiteral)
             {
                 switch (nextToken)
@@ -207,6 +208,7 @@ public abstract class MainParserBase : Antlr4.Runtime.Parser
                     return false;
             }
         }
+        return false;
     }
     protected bool isValidExpressionStatement(ParserRuleContext ctx) {
         return !(ctx is ConcatenateExpressionContext || ctx is PrimaryExpressionContext);

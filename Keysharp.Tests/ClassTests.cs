@@ -30,5 +30,8 @@ namespace Keysharp.Tests
 
         [Test, Category("Class")]
         public void ClassPrototype() => Assert.IsTrue(TestScript("class-prototype", false));
+
+        [Test, Category("Class")]
+        public void ClassNested() => Assert.IsTrue(TestScript("class-nested", false));
     }
 }

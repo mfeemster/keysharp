@@ -153,7 +153,10 @@
 			mainWindowGui = new Gui(null, null, null, mainWindow);
 			mainWindow.AllowShowDisplay = false; // Prevent show on script startup
 			mainWindow.ShowInTaskbar = true; // Without this the main window won't have a taskbar icon
-			_ = mainWindow.BeginInvoke(() =>
+
+            TaskScheduler uiScheduler = TaskScheduler.FromCurrentSynchronizationContext();
+
+            Task.Factory.StartNew(() =>
 			{
 				if (!Flow.TryCatch(() =>
 			{
@@ -172,8 +175,9 @@
 						_ = Flow.ExitApp(1);
 					}
 				}
-			});
-			Application.Run(mainWindow);
+                ExitIfNotPersistent();
+            }, CancellationToken.None, TaskCreationOptions.None, uiScheduler);
+            Application.Run(mainWindow);
 		}
 
 		public static void SetName(string s) => scriptName = s;
@@ -363,16 +367,16 @@
 			return false;
 		}
 
-		public static void ExitIfNotPersistent(Flow.ExitReasons exitReason = Flow.ExitReasons.None)
+		public static void ExitIfNotPersistent()
 		{
-			//Must use BeginInvoke() because this might be called from AutoExecSection(),
-			//so it needs to run after that thread has exited.
+			//Must use Invoke() because ExitApp will throw an UserRequestedExitException and
+			//that must be propagated inside the main thread.
 			if (!IsMainWindowClosing)
-				mainWindow?.CheckedBeginInvoke(new Action(() =>
+				mainWindow?.CheckedInvoke(new Action(() =>
 			{
 				if (!IsMainWindowClosing && !AnyPersistent())
-					_ = Flow.ExitApp((int)exitReason);
-			}), true, true);
+					_ = Flow.ExitApp(Environment.ExitCode);
+			}), true);
 		}
 
 		internal static bool InitHook()

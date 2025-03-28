@@ -151,8 +151,8 @@ public abstract class MainLexerBase : Lexer
     }
 
     protected void ProcessEOL() {
-        if (_currentDepth != 0)
-            this.Type = MainLexer.WS;
+        //if (_currentDepth != 0)
+        //    this.Type = MainLexer.WS;
         //else
             //this.Text = "\n\r";
         if (_lastVisibleToken == null) return;

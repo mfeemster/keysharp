@@ -113,7 +113,7 @@
 				if (param.Attributes.HasFlag(ParameterAttributes.HasDefault))
 					argsList.Add(param.DefaultValue);
 				else
-					argsList.Add(null);
+					break;
 			}
 
 			return argsList;

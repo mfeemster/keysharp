@@ -1,3 +1,4 @@
+using Keysharp.Core.Windows;
 using static Keysharp.Core.Errors;
 using Timer = Keysharp.Core.Common.Threading.TimerWithTag;
 
@@ -109,21 +110,22 @@ namespace Keysharp.Core
 			return ret;
 		}
 
-		/// <summary>
-		/// Exits the current thread or the entire script if non-persistent.
-		/// The exit is achieved by throwing an exception which will be caught in the catch
-		/// clause that wraps all threads.
-		/// </summary>
-		/// <param name="exitCode">An integer that is returned to the caller.</param>
-		public static void Exit(object exitCode = null)
+        public class UserRequestedExitException : Exception
+        {
+            public UserRequestedExitException() { }
+        }
+
+        /// <summary>
+        /// Exits the current thread or the entire script if non-persistent.
+        /// The exit is achieved by throwing an exception which will be caught in the catch
+        /// clause that wraps all threads.
+        /// </summary>
+        /// <param name="exitCode">An integer that is returned to the caller.</param>
+        public static object Exit(object exitCode = null)
 		{
-			A_ExitReason = exitCode.Al();
-			var err = new Error(Keyword_ExitThread)
-			{
-				Handled = true,//Do not call any error handlers. Just exit the thread.
-				Processed = true
-			};
-			throw err;
+			A_ExitReason = ExitReasons.Exit;
+            Environment.ExitCode = exitCode.Ai();
+            throw new UserRequestedExitException();
 		}
 
 		/// <summary>
@@ -137,11 +139,15 @@ namespace Keysharp.Core
 		{
 			if (!hasExited)//This can be called multiple times, so ensure it only runs through once.
 			{
+				bool ret = false;
 				Script.mainWindow.CheckedInvoke(() =>
 				{
-					_ = ExitAppInternal(ExitReasons.Exit, exitCode);
+					ret = ExitAppInternal(ExitReasons.Exit, exitCode, false);
 				}, true);
 				var start = DateTime.Now;
+
+				if (!ret)
+					throw new UserRequestedExitException();
 
 				while (!hasExited && (DateTime.Now - start).TotalSeconds < 5)
 					_ = Sleep(500);
@@ -168,7 +174,7 @@ namespace Keysharp.Core
 		/// <param name="obj">The value to examine.</param>
 		/// <returns>True if the value is true and the script is running, else false.</returns>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static bool IsTrueAndRunning(object obj) => !hasExited&& Script.ForceBool(obj);
+		public static bool IsTrueAndRunning(object obj) => !hasExited && Script.ForceBool(obj);
 
 		/// <summary>
 		/// Registers a function to be called automatically whenever the script exits.
@@ -433,6 +439,9 @@ namespace Keysharp.Core
 		{
 			var d = delay.Al(-1L);
 
+			if (hasExited)
+				throw new UserRequestedExitException();
+
 			//Be careful with Application.DoEvents(), it has caused spurious crashes in my years of programming experience.
 			if (d == 0L)
 			{
@@ -446,7 +455,11 @@ namespace Keysharp.Core
 				{
 					Application.DoEvents();//Can sometimes throw on linux.
 				}
-				catch
+                catch (UserRequestedExitException)
+                {
+                    throw;
+                }
+                catch
 				{
 				}
 			}
@@ -458,7 +471,11 @@ namespace Keysharp.Core
 					{
 						Application.DoEvents();//Can sometimes throw on linux.
 					}
-					catch
+                    catch (UserRequestedExitException)
+                    {
+                        throw;
+                    }
+                    catch
 					{
 					}
 
@@ -475,6 +492,10 @@ namespace Keysharp.Core
 					{
 						//if (System.Threading.Thread.CurrentThread.ManagedThreadId == Processes.ManagedMainThreadID)
 						Application.DoEvents();//Can sometimes throw on linux.
+					}
+					catch (UserRequestedExitException)
+					{
+						throw;
 					}
 					catch
 					{
@@ -541,7 +562,7 @@ namespace Keysharp.Core
 		/// <param name="exitReason">The <see cref="ExitReason"/> for exiting the script.</param>
 		/// <param name="exitCode">The exit code to return from the script when it exits.</param>
 		/// <returns>True if exiting was interrupted by a non empty callback return value, else false.</returns>
-		internal static bool ExitAppInternal(ExitReasons exitReason, object exitCode = null)
+		internal static bool ExitAppInternal(ExitReasons exitReason, object exitCode = null, bool useThrow = true)
 		{
 			if (hasExited)//This can be called multiple times, so ensure it only runs through once.
 				return false;
@@ -598,8 +619,12 @@ namespace Keysharp.Core
 			}
 
 			Environment.ExitCode = ec;
-			//Environment.Exit(exitCode);//This seems too harsh, and also prevents compiled unit tests from properly being run.
-			return false;
+
+			if (useThrow)
+				throw new UserRequestedExitException();
+			else
+            //Environment.Exit(exitCode);//This seems too harsh, and also prevents compiled unit tests from properly being run.
+				return false;
 		}
 
 		/// <summary>
@@ -640,23 +665,29 @@ namespace Keysharp.Core
 			}
 		}
 
-		/// <summary>
-		/// Internal helper to wrap an <see cref="Action"/> within a try/catch block.<br/>
-		/// This is done because the try/catch blocks have a lot of scaffolding code that is needed for handling<br/>
-		/// threads and error conditions and it would be very verbose and unmaintainable to repeat it everywhere.
-		/// </summary>
-		/// <param name="action">The action to perform in the try block.</param>
-		/// <param name="pop">True to pop the current thread by calling <see cref="Threads.EndThread(bool, bool)"/> when an exception is caught.<br/>
-		/// Pass true for this when the action internally calls <see cref="Threads.BeginThread(bool)"/> before executing code that<br/>
-		/// could potentially thrown an exception.
-		/// </param>
-		/// <returns>True if no errors occurred, else false if any catch blocks were reached.</returns>
-		internal static bool TryCatch(Action action, bool pop)
+        /// <summary>
+        /// Internal helper to wrap an <see cref="Action"/> within a try/catch block.<br/>
+        /// This is done because the try/catch blocks have a lot of scaffolding code that is needed for handling<br/>
+        /// threads and error conditions and it would be very verbose and unmaintainable to repeat it everywhere.
+        /// </summary>
+        /// <param name="action">The action to perform in the try block.</param>
+        /// <param name="pop">True to pop the current thread by calling <see cref="Threads.EndThread(bool, bool)"/> when an exception is caught.<br/>
+        /// Pass true for this when the action internally calls <see cref="Threads.BeginThread(bool)"/> before executing code that<br/>
+        /// could potentially thrown an exception.
+        /// </param>
+        /// <returns>True if no errors occurred, else false if any catch blocks were reached.</returns>
+        internal static bool TryCatch(Action action, bool pop)
 		{
 			try
 			{
 				action();
 				return true;
+			}
+			catch (UserRequestedExitException)
+			{
+                if (pop)
+                    _ = Threads.EndThread(true);
+                return true;
 			}
 			catch (Error kserr)
 			{

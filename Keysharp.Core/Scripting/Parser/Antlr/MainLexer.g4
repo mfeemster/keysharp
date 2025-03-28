@@ -347,7 +347,7 @@ fragment HotstringOptionCharacter
 fragment Options:
     HotstringOptionCharacter+;
 fragment Trigger:
-    (NonColonStringCharacter | ';' {_input.Index == 0 || this._input.LA(-1) != ' '}?)+;
+    (':'? NonColonStringCharacter | ';' {_input.Index == 0 || this._input.LA(-1) != ' '}?)+;
 
 fragment WhiteSpace: [\t\u000B\u000C\u0020\u00A0]+;
 

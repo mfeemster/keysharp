@@ -1,8 +1,39 @@
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+
 namespace Keysharp.Scripting
 {
 	public partial class Parser
 	{
-		internal class InternalMethods
+        internal class MethodReference
+        {
+            internal string MethodName { get; set; }
+
+            internal Type TargetObject { get; set; }
+
+            internal Type[] TypeArguments { get; set; }
+
+            internal MethodReference(Type targetObject, string methodName)
+                : this(targetObject, methodName, null) { }
+
+            internal MethodReference(Type targetObject, string methodName, Type[] typeArguments)
+            {
+                TargetObject = targetObject;
+                MethodName = methodName;
+                TypeArguments = typeArguments;
+            }
+
+            public static explicit operator InvocationExpressionSyntax(MethodReference source)
+            {
+                return SyntaxFactory.InvocationExpression(Parser.CreateQualifiedName(source.TargetObject.FullName + "." + source.MethodName));
+            }
+
+            public static explicit operator MethodInfo(MethodReference source)
+            {
+                return source.TypeArguments == null ? source.TargetObject.GetMethod(source.MethodName) : source.TargetObject.GetMethod(source.MethodName, source.TypeArguments);
+            }
+        }
+
+        internal class InternalMethods
 		{
 			internal static MethodReference AddHotkey => new (typeof(HotkeyDefinition), "AddHotkey");
 			internal static MethodReference AddHotstring => new (typeof(HotstringManager), "AddHotstring");

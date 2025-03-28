@@ -136,7 +136,7 @@ importFromBlock
     ;
 
 importModuleItems
-    : '{' (importAliasName ',')* (importAliasName ','?)? '}'
+    : '{' (importAliasName WS* ',')* (importAliasName (WS* ',')?)? '}'
     ;
 
 importAliasName
@@ -155,7 +155,7 @@ importedBinding
     ;
 
 importDefault
-    : aliasName ','
+    : aliasName WS* ','
     ;
 
 importNamespace
@@ -181,7 +181,7 @@ exportFromBlock
     ;
 
 exportModuleItems
-    : '{' (exportAliasName ',')* (exportAliasName ','?)? '}'
+    : '{' (exportAliasName WS* ',')* (exportAliasName (WS* ',')?)? '}'
     ;
 
 exportAliasName
@@ -194,7 +194,7 @@ declaration
     ;
 
 variableDeclarationList
-    : variableDeclaration (',' variableDeclaration)*
+    : variableDeclaration (WS* ',' variableDeclaration)*
     ;
 
 variableDeclaration
@@ -229,17 +229,17 @@ elseProduction
 
 iterationStatement
     : Loop WS* (singleExpression WS*)? flowBlock untilProduction? elseProduction      # LoopStatement
-    | LoopFiles WS* singleExpression WS* (',' singleExpression WS*)? flowBlock untilProduction? elseProduction  # LoopFilesStatement
-    | LoopRead WS* singleExpression WS* (',' singleExpression WS*)? flowBlock untilProduction? elseProduction  # LoopReadStatement
-    | LoopReg WS* singleExpression WS* (',' singleExpression WS*)? flowBlock untilProduction? elseProduction    # LoopRegStatement
-    | LoopParse WS* singleExpression WS* (',' (singleExpression WS*)?)* flowBlock untilProduction? elseProduction # LoopParseStatement
+    | LoopFiles WS* singleExpression (WS* ',' singleExpression)? WS* flowBlock untilProduction? elseProduction  # LoopFilesStatement
+    | LoopRead WS* singleExpression (WS* ',' singleExpression)? WS* flowBlock untilProduction? elseProduction  # LoopReadStatement
+    | LoopReg WS* singleExpression (WS* ',' singleExpression)? WS* flowBlock untilProduction? elseProduction    # LoopRegStatement
+    | LoopParse WS* singleExpression (WS* ',' singleExpression?)* WS* flowBlock untilProduction? elseProduction # LoopParseStatement
     | While WS* singleExpression WS* flowBlock untilProduction? elseProduction      # WhileStatement
     | For WS* forInParameters WS* flowBlock untilProduction? elseProduction          # ForInStatement
     ;
 
 forInParameters
-    : assignable? (',' assignable?)* WS* In WS* singleExpression
-    | '(' assignable? (',' assignable?)* WS* In WS* singleExpression ')'
+    : assignable? (WS* ',' assignable?)* WS* In WS* singleExpression
+    | '(' assignable? (WS* ',' assignable?)* (WS | EOL)* In (WS | EOL)* singleExpression ')'
     ;
 
 continueStatement
@@ -259,7 +259,7 @@ yieldStatement
     ;
 
 switchStatement
-    : Switch WS* singleExpression? (',' literal)? s* caseBlock
+    : Switch WS* singleExpression? (WS* ',' literal)? s* caseBlock
     ;
 
 caseBlock
@@ -302,10 +302,12 @@ catchProduction
 catchAssignable
     : catchClasses (WS* As)? (WS* identifier)?
     | '(' catchClasses (WS* As)? (WS* identifier)? ')'
+    | (WS* As) (WS* identifier)
+    | '(' (WS* As) (WS* identifier) ')'
     ;
 
 catchClasses
-    : identifier (',' identifier)*
+    : identifier (WS* ',' identifier)*
     ;
 
 finallyProduction
@@ -342,7 +344,7 @@ classTail
 classElement
     : methodDefinition   # ClassMethodDeclaration
     | (Static WS*)? propertyDefinition # ClassPropertyDeclaration
-    | (Static WS*)? fieldDefinition (',' fieldDefinition)*    # ClassFieldDeclaration
+    | (Static WS*)? fieldDefinition (WS* ',' fieldDefinition)*    # ClassFieldDeclaration
     | classDeclaration           # NestedClassDeclaration
     ;
 
@@ -373,7 +375,7 @@ fieldDefinition
     ;
 
 formalParameterList
-    : (formalParameterArg ',')* lastFormalParameterArg
+    : (formalParameterArg WS* ',')* lastFormalParameterArg
     ;
 
 formalParameterArg
@@ -395,7 +397,7 @@ mapLiteral
 
 // Keysharp supports arrays like [,,1,2,,].
 mapElementList
-    : ','* mapElement (',' mapElement?)*
+    : (WS* ',')* mapElement (WS* ',' mapElement?)*
     ;
 
 mapElement
@@ -422,8 +424,8 @@ dereference
     ;
 
 arguments
-    : argument (',' argument?)*
-    | (',' argument?)+
+    : argument (WS* ',' argument?)*
+    | (WS* ',' argument?)+
     ;
 
 argument
@@ -432,7 +434,7 @@ argument
     ;
 
 expressionSequence
-    : expression (',' expression)*
+    : expression (WS* ',' expression)*
     ;
 
 memberIndexArguments
@@ -526,7 +528,7 @@ assignable
     ;
 
 objectLiteral
-    : '{' s* (propertyAssignment (',' propertyAssignment)* s*)? '}'
+    : '{' s* (propertyAssignment (WS* ',' propertyAssignment)* s*)? '}'
     ;
 
 functionHead

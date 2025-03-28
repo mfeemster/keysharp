@@ -70,36 +70,12 @@ namespace Keysharp.CompiledMain
 
     public class Program
     {
-        public static object msgbox = Keysharp.Core.Functions.Func("msgbox");
-        public static object exitapp = Keysharp.Core.Functions.Func("exitapp");
-        public static object _ks_Hotkey_1(object thishotkey)
-        {
-            object idobject = null;
-            object iid = null;
-            object oacc = null;
-            object x = null;
-            object y = null;
-            object w = null;
-            object h = null;
-            idobject = 4294967288L;
-            if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.ValueEquality, Keysharp.Core.Dll.DllCall("oleacc\\AccessibleObjectFromWindow", "ptr", Keysharp.Core.WindowX.WinExist("A"), "uint", idobject = Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.BitwiseAnd, idobject, 4294967295L), "ptr", Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.Add, Keysharp.Scripting.Script.OperateUnary(Keysharp.Scripting.Script.Operator.Minus, 16L), Keysharp.Core.External.NumPut("int64", Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, idobject, 4294967280L)) ? 5044031582654955712L : 8186198323179293825L, Keysharp.Core.External.NumPut("int64", Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.IdentityEquality, idobject, 4294967280L)) ? 132096L : 1283310653150803680L, iid = Keysharp.Core.Collections.Buffer(16L)))), "ptr*", oacc = Keysharp.Core.COM.Com.ComValue(9L, 0L)), 0L)))
-            {
-                Keysharp.Scripting.Script.Invoke(oacc, "accLocation", new VarRef(() => x, (value) => x = value), new VarRef(() => y, (value) => y = value), new VarRef(() => w, (value) => w = value), new VarRef(() => h, (value) => h = value), 0L);
-                Keysharp.Core.Dialogs.MsgBox(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.Concat, Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.Concat, x, " "), y));
-                Keysharp.Core.Flow.ExitApp();
-            }
-
-            Keysharp.Core.Dialogs.MsgBox("Failed!");
-            return "";
-        }
-
         [System.STAThreadAttribute()]
         public static int Main(string[] args)
         {
             try
             {
                 string name = @"C:\Users\minip\Source\Repos\Keysharp_clone\bin\debug\net9.0-windows\*";
-                Keysharp.Scripting.Script.Variables.AddPreLoadedDll("oleacc.dll", false);
                 Keysharp.Scripting.Script.Variables.InitGlobalVars();
                 Keysharp.Scripting.Script.SetName(name);
                 if (Keysharp.Scripting.Script.HandleSingleInstance(name, eScriptInstance.Prompt))
@@ -111,6 +87,9 @@ namespace Keysharp.CompiledMain
                 Keysharp.Scripting.Script.CreateTrayMenu();
                 Keysharp.Scripting.Script.RunMainWindow(name, AutoExecSection, false);
                 Keysharp.Scripting.Script.WaitThreads();
+            }
+            catch (Keysharp.Core.Flow.UserRequestedExitException)
+            {
             }
             catch (Keysharp.Core.Error kserr)
             {
@@ -149,9 +128,10 @@ namespace Keysharp.CompiledMain
 
         public static object AutoExecSection()
         {
-            Keysharp.Core.Common.Keyboard.HotkeyDefinition.AddHotkey(Keysharp.Core.Functions.Func(_ks_Hotkey_1), 0U, "F1");
             Keysharp.Core.Common.Keyboard.HotkeyDefinition.ManifestAllHotkeysHotstringsHooks();
-            Keysharp.Scripting.Script.ExitIfNotPersistent();
+            Keysharp.Core.Files.FileAppend("pass", "*");
+            Keysharp.Core.Flow.Exit(2L);
+            Keysharp.Core.Files.FileAppend("fail", "*");
             return "";
         }
     }

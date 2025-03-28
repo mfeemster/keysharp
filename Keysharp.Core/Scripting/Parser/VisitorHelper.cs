@@ -1109,6 +1109,24 @@ namespace Keysharp.Scripting
                    char.IsUpper(identifier.Identifier.Text[0]); // Assume constants are upper-case
         }
 
+        public ExpressionSyntax CreateSuperTuple()
+        {
+            return SyntaxFactory.CastExpression(
+                SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword)),
+                    SyntaxFactory.TupleExpression(
+                        SyntaxFactory.SeparatedList<ArgumentSyntax>(
+                            new ArgumentSyntax[]
+                            {
+                                SyntaxFactory.Argument(SyntaxFactory.TypeOfExpression(
+                                    CreateQualifiedName(currentClass.Base) // typeof(MyType)
+                                )),
+                                SyntaxFactory.Argument(SyntaxFactory.IdentifierName("@this"))
+                            }
+                        )
+                    )
+            );
+        }
+
         public ParameterSyntax AddOptionalParamValue(ParameterSyntax parameter, ExpressionSyntax value)
         {
             // Extract the parameter name

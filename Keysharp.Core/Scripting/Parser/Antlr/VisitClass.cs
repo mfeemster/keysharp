@@ -88,31 +88,34 @@ namespace Keysharp.Scripting
             );
             */
 
-            var fieldDeclaration = SyntaxFactory.PropertyDeclaration(
-                SyntaxFactory.ParseTypeName("object"),
-                parser.currentClass.Name.ToLower()
-            )
-            .AddModifiers(
-                SyntaxFactory.Token(SyntaxKind.PublicKeyword),
-                SyntaxFactory.Token(SyntaxKind.StaticKeyword)
-            )
-            .WithExpressionBody(
-                SyntaxFactory.ArrowExpressionClause(
-                    SyntaxFactory.MemberAccessExpression(
-                        SyntaxKind.SimpleMemberAccessExpression,
-                        CreateQualifiedName(
-                            string.Join(".",
-                                parser.ClassStack.Reverse()               // Outer-to-inner order.
-                                .Select(cls => cls.Name)
-                            ) + "." + parser.currentClass.Name
-                        ),
-                        SyntaxFactory.IdentifierName("__Static")
-                    )
-                )
-            )
-            .WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken));
+            string fieldDeclarationName = parser.currentClass.Name.ToLower();
 
-            parser.mainClass.Body.Add(fieldDeclaration);
+            MemberDeclarationSyntax fieldDeclaration = null;
+            SyntaxToken[] fieldDeclarationModifiers = [SyntaxFactory.Token(SyntaxKind.PublicKeyword), SyntaxFactory.Token(SyntaxKind.StaticKeyword)];
+            var fieldDeclarationArrowClause = SyntaxFactory.ArrowExpressionClause(
+                        SyntaxFactory.MemberAccessExpression(
+                            SyntaxKind.SimpleMemberAccessExpression,
+                            CreateQualifiedName(
+                                string.Join(".",
+                                    parser.ClassStack.Reverse()               // Outer-to-inner order.
+                                    .Select(cls => cls.Name)
+                                ) + "." + parser.currentClass.Name
+                            ),
+                            SyntaxFactory.IdentifierName("__Static")
+                        )
+                    );
+            if (parser.ClassStack.Count == 1)
+            {
+                fieldDeclaration = SyntaxFactory.PropertyDeclaration(
+                    SyntaxFactory.ParseTypeName("object"),
+                    fieldDeclarationName
+                )
+                .AddModifiers(fieldDeclarationModifiers)
+                .WithExpressionBody(fieldDeclarationArrowClause)
+                .WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken));
+
+                parser.ClassStack.Peek().Body.Add(fieldDeclaration);
+            }
 
             // Add the super property
             var superPropertyDeclaration = SyntaxFactory.PropertyDeclaration(
@@ -187,11 +190,10 @@ namespace Keysharp.Scripting
                                 SyntaxFactory.ExpressionStatement(
                                     ((InvocationExpressionSyntax)InternalMethods.Invoke)
                                     .WithArgumentList(SyntaxFactory.ArgumentList(
-                                        SyntaxFactory.SeparatedList(new[] {
-                                            SyntaxFactory.Argument(SyntaxFactory.ThisExpression()),
-                                            SyntaxFactory.Argument(
-                                                SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal("__Delete"))
-                                               )
+                                        SyntaxFactory.SeparatedList(
+                                            new[] {
+                                                SyntaxFactory.Argument(SyntaxFactory.ThisExpression()),
+                                                SyntaxFactory.Argument(SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal("__Delete")))
                                             }
                                         )
                                     ))
@@ -202,7 +204,7 @@ namespace Keysharp.Scripting
             }
 
             // Add the Call factory method
-            if (!parser.currentClass.ContainsMethod(Keywords.ClassStaticPrefix + "Call"))
+            if (!parser.currentClass.ContainsMethod("Call", true))
                 parser.currentClass.Body.Add(CreateCallFactoryMethod(parser.currentClass.Name));
 
             var newClass = parser.currentClass.Assemble();
@@ -239,21 +241,19 @@ namespace Keysharp.Scripting
                 propertyName = propertyNameSyntax.identifier().GetText();
             }
 
-            if (isStatic)
-                propertyName = Keywords.ClassStaticPrefix + propertyName;
-
             // Generate getter method
             MethodDeclarationSyntax getterMethod = null;
             if (propertyDefinition.propertyGetterDefinition().Length != 0 || propertyDefinition.expression() != null)
             {
-                PushFunction("get_" + propertyName);
-                parser.currentFunc.Static = false;
+                PushFunction((isStatic ? Keywords.ClassStaticPrefix : "") + "get_" + propertyName);
 
                 if (propertyNameSyntax.formalParameterList() != null)
                 {
                     indexerParameters = ((ParameterListSyntax)Visit(propertyNameSyntax.formalParameterList())).Parameters.ToList();
                     parser.currentFunc.Params.AddRange(indexerParameters);
                 }
+                else
+                    parser.currentFunc.Params.Add(Parser.ThisParam);
 
                 if (propertyDefinition.propertyGetterDefinition().Length != 0)
                 {
@@ -275,7 +275,7 @@ namespace Keysharp.Scripting
                     SyntaxFactory.ArgumentList(
                         SyntaxFactory.SingletonSeparatedList(
                             SyntaxFactory.Argument(
-                                SyntaxFactory.IdentifierName("get_" + propertyName)
+                                SyntaxFactory.IdentifierName((isStatic ? Keywords.ClassStaticPrefix : "") + "get_" + propertyName)
                             )
                         )
                     )
@@ -293,8 +293,7 @@ namespace Keysharp.Scripting
             MethodDeclarationSyntax setterMethod = null;
             if (propertyDefinition.propertySetterDefinition().Length != 0)
             {
-                PushFunction("set_" + propertyName, SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.VoidKeyword)));
-                parser.currentFunc.Static = false;
+                PushFunction((isStatic ? Keywords.ClassStaticPrefix : "") + "set_" + propertyName, SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.VoidKeyword)));
 
                 if (propertyNameSyntax.formalParameterList() != null)
                 {
@@ -314,6 +313,8 @@ namespace Keysharp.Scripting
                     // Preserve indexer parameters
                     parser.currentFunc.Params.AddRange(indexerParameters);
                 }
+                else
+                    parser.currentFunc.Params.Add(Parser.ThisParam);
 
                 // Always add `object value` parameter for setters
                 parser.currentFunc.Params.Add(
@@ -334,7 +335,7 @@ namespace Keysharp.Scripting
                     SyntaxFactory.ArgumentList(
                         SyntaxFactory.SingletonSeparatedList(
                             SyntaxFactory.Argument(
-                                SyntaxFactory.IdentifierName("set_" + propertyName)
+                                SyntaxFactory.IdentifierName((isStatic ? Keywords.ClassStaticPrefix : "") + "set_" + propertyName)
                             )
                         )
                     )
@@ -352,6 +353,7 @@ namespace Keysharp.Scripting
 
         public override SyntaxNode VisitClassFieldDeclaration([NotNull] ClassFieldDeclarationContext context)
         {
+            parser.currentClass.isInitialization = true;
             var fieldNames = new HashSet<string> { };
             var fieldDeclarations = new List<PropertyDeclarationSyntax>();
 
@@ -383,7 +385,7 @@ namespace Keysharp.Scripting
                 if (parser.PropertyExistsInBuiltinBase(fieldName) != null)
                     continue;
             }
-
+            parser.currentClass.isInitialization = false;
             return null;
         }
 
@@ -426,7 +428,8 @@ namespace Keysharp.Scripting
                     SyntaxFactory.TokenList(
                         new List<SyntaxToken> {
                             parser.currentFunc.Async ? SyntaxFactory.Token(SyntaxKind.AsyncKeyword) : default,
-                            SyntaxFactory.Token(SyntaxKind.PublicKeyword)}
+                            SyntaxFactory.Token(SyntaxKind.PublicKeyword),
+                            SyntaxFactory.Token(SyntaxKind.StaticKeyword) }
                         .Where(token => token != default)
                     )
                 )
@@ -557,7 +560,13 @@ namespace Keysharp.Scripting
                                         SyntaxFactory.Argument(
                                             SyntaxFactory.LiteralExpression(
                                                 SyntaxKind.StringLiteralExpression,
-                                                SyntaxFactory.Literal(parser.currentClass.UserDeclaredName)
+                                                SyntaxFactory.Literal(
+                                                    parser.ClassStack.Count == 1 ? parser.currentClass.UserDeclaredName :
+                                                    string.Join(".",
+                                                        parser.ClassStack.Reverse().Skip(1)
+                                                        .Select(cls => cls.UserDeclaredName)
+                                                    ) + "." + parser.currentClass.UserDeclaredName
+                                                )
                                             )
                                         )
                                     })
@@ -579,22 +588,20 @@ namespace Keysharp.Scripting
                     SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.VoidKeyword)),
                     instanceInitName
                 )
-                .WithModifiers(SyntaxFactory.TokenList(SyntaxFactory.Token(SyntaxKind.PublicKeyword)))
+                .WithModifiers(SyntaxFactory.TokenList(SyntaxFactory.Token(SyntaxKind.PublicKeyword), SyntaxFactory.Token(SyntaxKind.StaticKeyword)))
+                .WithParameterList(SyntaxFactory.ParameterList(SyntaxFactory.SingletonSeparatedList(Parser.ThisParam)))
                 .WithBody(
                     SyntaxFactory.Block(
                         new[] // Add the call to Invoke((object)super, "__Init") as the first statement
                         {
                     SyntaxFactory.ExpressionStatement(
-                        SyntaxFactory.InvocationExpression(
-                            SyntaxFactory.IdentifierName("Invoke"),
+                        ((InvocationExpressionSyntax)InternalMethods.Invoke)
+                        .WithArgumentList(
                             SyntaxFactory.ArgumentList(
                                 SyntaxFactory.SeparatedList(new[]
                                 {
                                     SyntaxFactory.Argument(
-                                        SyntaxFactory.CastExpression(
-                                            SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword)),
-                                            SyntaxFactory.IdentifierName("super")
-                                        )
+                                        parser.CreateSuperTuple()
                                     ),
                                     SyntaxFactory.Argument(
                                         SyntaxFactory.LiteralExpression(
@@ -613,7 +620,7 @@ namespace Keysharp.Scripting
                                                 .WithArgumentList(
                                                     SyntaxFactory.ArgumentList(
                                         SyntaxFactory.SeparatedList(new[] {
-                                            SyntaxFactory.Argument(SyntaxFactory.ThisExpression()),
+                                            SyntaxFactory.Argument(SyntaxFactory.IdentifierName("@this")),
                                             SyntaxFactory.Argument(SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(deferred.Item1))),
                                             SyntaxFactory.Argument(deferred.Item3)
                                         })
@@ -629,14 +636,15 @@ namespace Keysharp.Scripting
             }
 
             // Check if static __Init method already exists
-            if (!parser.currentClass.ContainsMethod(Keywords.ClassStaticPrefix + "__Init", default, true))
+            if (!parser.currentClass.ContainsMethod("__Init", true, true))
             {
                 // Static __Init method
                 var staticInitMethod = SyntaxFactory.MethodDeclaration(
                     SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.VoidKeyword)),
                     Keywords.ClassStaticPrefix + "__Init"
                 )
-                .WithModifiers(SyntaxFactory.TokenList(SyntaxFactory.Token(SyntaxKind.PublicKeyword)))
+                .WithModifiers(SyntaxFactory.TokenList(SyntaxFactory.Token(SyntaxKind.PublicKeyword), SyntaxFactory.Token(SyntaxKind.StaticKeyword)))
+                .WithParameterList(SyntaxFactory.ParameterList(SyntaxFactory.SingletonSeparatedList(Parser.ThisParam)))
                 .WithBody(
                     SyntaxFactory.Block(
                         parser.currentClass.deferredStaticInitializations.Select(deferred =>
@@ -645,7 +653,7 @@ namespace Keysharp.Scripting
                                                 .WithArgumentList(
                                                     SyntaxFactory.ArgumentList(
                                         SyntaxFactory.SeparatedList(new[] {
-                                            SyntaxFactory.Argument(SyntaxFactory.ThisExpression()),
+                                            SyntaxFactory.Argument(SyntaxFactory.IdentifierName("@this")),
                                             SyntaxFactory.Argument(SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(deferred.Item1))),
                                             SyntaxFactory.Argument(deferred.Item3)
                                         })
@@ -720,13 +728,17 @@ namespace Keysharp.Scripting
                 )
                 .WithModifiers(
                     SyntaxFactory.TokenList(
-                        SyntaxFactory.Token(SyntaxKind.PublicKeyword)
+                        SyntaxFactory.Token(SyntaxKind.PublicKeyword),
+                        SyntaxFactory.Token(SyntaxKind.StaticKeyword)
                     )
                 )
                 .WithParameterList(
                     SyntaxFactory.ParameterList(
-                        SyntaxFactory.SingletonSeparatedList(
-                            VariadicParam
+                        SyntaxFactory.SeparatedList(
+                            new[] {
+                                Parser.ThisParam,
+                                VariadicParam
+                            }
                         )
                     )
                 )

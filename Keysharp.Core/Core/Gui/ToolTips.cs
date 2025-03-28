@@ -1,4 +1,6 @@
-﻿namespace Keysharp.Core
+﻿using static Antlr4.Runtime.Atn.SemanticContext;
+
+namespace Keysharp.Core
 {
 	/// <summary>
 	/// Public interface for tooltip-related functions.
@@ -128,7 +130,12 @@
 					temppt.X += 10;
 					temppt.Y += 10;
 
-					if (ttp != null && ttp?.X == temppt.X && ttp?.Y == temppt.Y && tt.GetToolTip(tooltipInvokerForm) == t)
+                    if (_x != int.MinValue)
+                        temppt.X += _x;
+                    if (_y != int.MinValue)
+                        temppt.Y += _y;
+
+                    if (ttp != null && ttp?.X == temppt.X && ttp?.Y == temppt.Y && tt.GetToolTip(tooltipInvokerForm) == t)
 						return;
 
 					persistentTooltipsPositions[id] = new Point(temppt.X, temppt.Y);

@@ -1,4 +1,5 @@
-﻿using static Keysharp.Core.Loops;
+﻿using NUnit.Framework.Interfaces;
+using static Keysharp.Core.Loops;
 using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
 namespace Keysharp.Tests
@@ -228,5 +229,51 @@ namespace Keysharp.Tests
 			Assert.AreEqual(0L, Accessors.A_Index);
 			Assert.IsTrue(TestScript("flow-while", true));
 		}
+
+		[Test, Category("Flow"), NonParallelizable]
+		public void FlowExit()
+		{
+			Assert.IsTrue(HasPassed(RunScript(@"
+				FileAppend('pass', '*')
+				ExitApp(0)
+				FileAppend('fail', '*')
+			", "1", true, false, 0)));
+			Flow.ResetState();
+            Assert.IsTrue(HasPassed(RunScript(@"
+				FileAppend('pass', '*')
+				ExitApp(2)
+				FileAppend('fail', '*')
+			", "2", true, false, 2)));
+            Flow.ResetState();
+            Assert.IsTrue(HasPassed(RunScript(@"
+				FileAppend('pass', '*')
+				Exit(0)
+				FileAppend('fail', '*')
+			", "3", true, false, 0)));
+            Flow.ResetState();
+            Assert.IsTrue(HasPassed(RunScript(@"
+				FileAppend('pass', '*')
+				Exit(2)
+				FileAppend('fail', '*')
+			", "4", true, false, 2)));
+            Flow.ResetState();
+            Assert.IsTrue(HasPassed(RunScript(@"
+				SetTimer((*) => FileAppend('pass', '*'), -1)
+				Exit(1)
+			", "5", true, false, 1)));
+            Flow.ResetState();
+            Assert.IsTrue(HasPassed(RunScript(@"
+				SetTimer((*) => (FileAppend('pass', '*'), Exit(3)), -1)
+				Exit(2)
+				FileAppend('fail', '*')
+			", "6", true, false, 3)));
+            Flow.ResetState();
+            Assert.IsTrue(HasPassed(RunScript(@"
+				SetTimer((*) => (FileAppend('pass', '*'), ExitApp(0)), -1)
+				SomeLabel:
+				Sleep(1)
+				goto SomeLabel
+			", "7", true, false, 0)));
+        }
 	}
 }

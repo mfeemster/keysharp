@@ -509,7 +509,7 @@ namespace Keysharp.Scripting
                 if (parameter is ITerminalNode node)
                     paramType = node.Symbol.Type;
 
-                if (paramType == MainLexer.OpenParen || paramType == MainLexer.CloseParen || paramType == MainLexer.WS)
+                if (paramType == MainLexer.OpenParen || paramType == MainLexer.CloseParen || paramType == MainLexer.EOL || paramType == MainLexer.WS)
                     continue;
                 if (paramType == MainLexer.In)
                 {
@@ -1007,6 +1007,15 @@ namespace Keysharp.Scripting
                     }
                     if (typeConditions.Count == 1)
                         exceptionType = SyntaxFactory.ParseTypeName(catchClassText);
+                } 
+                else
+                {
+                    typeConditions.Add(
+                        SyntaxFactory.IsPatternExpression(
+                            SyntaxFactory.IdentifierName(exceptionIdentifierName),
+                            SyntaxFactory.TypePattern(SyntaxFactory.ParseTypeName("Keysharp.Core.Error"))
+                        )
+                    );
                 }
 
                 ExpressionSyntax conditionExpression = typeConditions[0];

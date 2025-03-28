@@ -1,35 +1,10 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Antlr4.Runtime;
 using Antlr4.Runtime.Misc;
 using Antlr4.Runtime.Tree;
 using static MainParser;
-using Keysharp.Scripting;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using System.Linq.Expressions;
-using System.Xml.Linq;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement;
-using System.ComponentModel.Design.Serialization;
-using System.Collections;
 using System.Data;
-using Keysharp.Scripting;
-using System.Data.Common;
-using System.Windows.Forms;
-using Keysharp.Core.Windows;
-using Keysharp.Scripting;
-using System.ComponentModel;
-using static Keysharp.Core.Misc;
-using System.Reflection.Metadata;
-using System.Security.Cryptography;
-using static System.Net.Mime.MediaTypeNames;
-using static System.Windows.Forms.AxHost;
-using System.Reflection;
 using static Keysharp.Scripting.Parser;
-using System.Reflection.PortableExecutable;
-using System.CodeDom;
 
 namespace Keysharp.Scripting
 {
@@ -121,6 +96,9 @@ namespace Keysharp.Scripting
 						Keysharp.Scripting.Script.RunMainWindow(name, AUTOEXECSECTION_PLACEHOLDER, false);
 						Keysharp.Scripting.Script.WaitThreads();
 					}
+                    catch (Keysharp.Core.Flow.UserRequestedExitException)
+                    {
+                    }
 					catch (Keysharp.Core.Error kserr)
 					{
 						if (ErrorOccurred(kserr))
@@ -218,15 +196,6 @@ namespace Keysharp.Scripting
                 .Concat(parser.autoExecFunc.Body)
                 .ToList();
 
-            parser.autoExecFunc.Body.Add(SyntaxFactory.ExpressionStatement(
-                SyntaxFactory.InvocationExpression(
-                    SyntaxFactory.MemberAccessExpression(
-                        SyntaxKind.SimpleMemberAccessExpression,
-                        CreateQualifiedName("Keysharp.Scripting.Script"),
-                        SyntaxFactory.IdentifierName("ExitIfNotPersistent")
-                    )
-                )
-            ));
             parser.autoExecFunc.Body.Add(SyntaxFactory.ReturnStatement(
                     SyntaxFactory.LiteralExpression(
                         SyntaxKind.StringLiteralExpression,
@@ -234,7 +203,8 @@ namespace Keysharp.Scripting
             parser.autoExecFunc.Method = parser.autoExecFunc.Assemble();
 
             mainFunc.Method = mainFunc.Assemble().AddAttributeLists(mainMethodAttributeList);
-            parser.mainClass.Body.AddRange(mainFunc.Method, parser.autoExecFunc.Method);
+            parser.mainClass.Body.Insert(0, mainFunc.Method);
+            parser.mainClass.Body.Add(parser.autoExecFunc.Method);
             parser.namespaceDeclaration = parser.namespaceDeclaration.AddMembers(parser.mainClass.Assemble());
 
             var attributeList = SyntaxFactory.AttributeList(parser.assemblies)
@@ -243,7 +213,7 @@ namespace Keysharp.Scripting
             parser.compilationUnit = parser.compilationUnit
                 .AddMembers(parser.namespaceDeclaration)
                 .AddAttributeLists(attributeList)
-                .NormalizeWhitespace();
+                .NormalizeWhitespace("\t");
 
             return parser.compilationUnit;
         }
@@ -393,14 +363,11 @@ namespace Keysharp.Scripting
             switch (text.ToLowerInvariant())
             {
                 case "this":
-                    return parser.currentClass.Name == Keywords.MainClassName ? SyntaxFactory.IdentifierName("@this") : SyntaxFactory.ThisExpression();
+                    return SyntaxFactory.IdentifierName("@this");
                 case "base":
                     return parser.currentClass.Name == Keywords.MainClassName ? SyntaxFactory.IdentifierName("@base") : SyntaxFactory.BaseExpression();
                 case "super":
-                    return SyntaxFactory.CastExpression(
-                        SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword)),
-                        SyntaxFactory.IdentifierName("super")
-                   );
+                    return parser.CreateSuperTuple();
             }
 
             // Handle special built-ins
@@ -888,7 +855,7 @@ namespace Keysharp.Scripting
                 bool isComma = false;
                 if (child is ITerminalNode node)
                 {
-                    if (node.Symbol.Type == EOL)
+                    if (node.Symbol.Type == MainParser.EOL || node.Symbol.Type == MainParser.WS)
                         continue;
                     else if (node.Symbol.Type == MainParser.Comma)
                         isComma = true;
@@ -1411,10 +1378,10 @@ namespace Keysharp.Scripting
         public override SyntaxNode VisitFunctionHead([NotNull] FunctionHeadContext context)
         {
             PushFunction(CultureInfo.CurrentCulture.TextInfo.ToTitleCase(context.identifier().GetText()));
+
             VisitFunctionHeadPrefix(context.functionHeadPrefix());
 
-            if (context.formalParameterList() != null)
-                parser.currentFunc.Params.AddRange(((ParameterListSyntax)VisitFormalParameterList(context.formalParameterList())).Parameters);
+            parser.currentFunc.Params.AddRange(((ParameterListSyntax)VisitFormalParameterList(context.formalParameterList())).Parameters);
 
             return null;
         }
@@ -1436,8 +1403,7 @@ namespace Keysharp.Scripting
 
             VisitFunctionHeadPrefix(context.functionHeadPrefix());
 
-            if (context.formalParameterList() != null)
-                parser.currentFunc.Params.AddRange(((ParameterListSyntax)VisitFormalParameterList(context.formalParameterList())).Parameters);
+            parser.currentFunc.Params.AddRange(((ParameterListSyntax)VisitFormalParameterList(context.formalParameterList())).Parameters);
 
             return null;
         }
@@ -1691,16 +1657,24 @@ namespace Keysharp.Scripting
         {
             var parameters = new List<ParameterSyntax>();
 
-            foreach (var formalParameter in context.formalParameterArg())
+            if (parser.currentClass.Name != Keywords.MainClassName && parser.FunctionStack.Count == 1 && !parser.currentClass.isInitialization)
             {
-                var parameter = (ParameterSyntax)VisitFormalParameterArg(formalParameter);
+                parameters.Add(Parser.ThisParam);
+            }
 
-                // Add the parameter to the list
-                parameters.Add(parameter);
+            if (context != null)
+            {
+                foreach (var formalParameter in context.formalParameterArg())
+                {
+                    var parameter = (ParameterSyntax)VisitFormalParameterArg(formalParameter);
+
+                    // Add the parameter to the list
+                    parameters.Add(parameter);
+                }
             }
 
             // Handle the last formal parameter argument if it exists
-            if (context.lastFormalParameterArg() != null)
+            if (context?.lastFormalParameterArg() != null)
             {
                 var parameter = (ParameterSyntax)VisitLastFormalParameterArg(context.lastFormalParameterArg());
                 if (context.lastFormalParameterArg().Multiply() != null)

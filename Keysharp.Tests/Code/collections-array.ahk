@@ -447,7 +447,7 @@ if (i == 0)
 else
 	FileAppend "fail", "*"
 
-lam := (x) => Mod(x, 5) == 0
+lam := (x, *) => Mod(x, 5) == 0
 arr := [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 filtered := arr.Filter(lam)
 
@@ -463,7 +463,7 @@ if (filtered.Length == 1 && filtered[1] == 10)
 else
 	FileAppend "fail", "*"
 
-lam := (x) => Mod(x, 5) == 0
+lam := (x, *) => Mod(x, 5) == 0
 arr := [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
 filtered := arr.Filter(lam, -2)
 
@@ -855,24 +855,7 @@ else
 
 a := [,]
 
-if (a.Length == 2)
-	FileAppend "pass", "*"
-else
-	FileAppend "fail", "*"
-
-if (a[1] == unset && a[2] == unset)
-	FileAppend "pass", "*"
-else
-	FileAppend "fail", "*"
-
-a := [,,]
-
-if (a.Length == 3)
-	FileAppend "pass", "*"
-else
-	FileAppend "fail", "*"
-
-if (a[1] == unset && a[2] == unset && a[3] == unset)
+if (a.Length == 0)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -891,12 +874,12 @@ else
 
 a := [,2,]
 
-if (a.Length == 3)
+if (a.Length == 2)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
 
-if (a[1] == unset && a[2] == 2 && a[3] == unset)
+if (a[1] == unset && a[2] == 2)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"

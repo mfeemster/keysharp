@@ -1,9 +1,11 @@
-﻿namespace Keysharp.Core
+﻿using Keysharp.Core.Scripting.Parser.Helpers;
+
+namespace Keysharp.Core
 {
-	/// <summary>
-	/// Public interface for error-related functions and classes.
-	/// </summary>
-	public static class Errors
+    /// <summary>
+    /// Public interface for error-related functions and classes.
+    /// </summary>
+    public static class Errors
 	{
 		/// <summary>
 		/// Creates and returns a new <see cref="Error"/> exception object.

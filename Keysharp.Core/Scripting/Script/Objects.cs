@@ -31,21 +31,22 @@ namespace Keysharp.Scripting
                     .Select(mph => mph.mi) // Flatten to IEnumerable<MethodPropertyHolder>
                     .ToArray();
             else
-                methods = t.GetMethods(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly);
+                methods = t.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.DeclaredOnly);
 
             foreach (var method in methods)
             {
 				var methodName = method.Name;
-				if (methodName.StartsWith("get_") || methodName.StartsWith("set_"))
+
+                bool isStatic = isBuiltin && method.IsStatic;
+                if (!isBuiltin && methodName.StartsWith(Keywords.ClassStaticPrefix))
+                {
+                    isStatic = true;
+                    methodName = methodName.Substring(Keywords.ClassStaticPrefix.Length);
+                }
+
+                if (methodName.StartsWith("get_") || methodName.StartsWith("set_"))
 				{
 					var propName = methodName.Substring(4);
-
-					bool isStatic = method.IsStatic;
-					if (!isBuiltin && propName.StartsWith(Keywords.ClassStaticPrefix))
-					{
-						isStatic = true;
-						propName = propName.Substring(Keywords.ClassStaticPrefix.Length);
-					}
 
                     if (propName == "Item")
 						propName = "__Item";
@@ -75,11 +76,12 @@ namespace Keysharp.Scripting
 						staticInst.op[propName] = propertyMap;
 					else
 						proto.op[propName] = propertyMap;
+
+					continue;
                 }
 
-                if (!isBuiltin && methodName.StartsWith(Keywords.ClassStaticPrefix))
+                if (!isBuiltin && isStatic)
                 {
-					methodName = methodName.Substring(Keywords.ClassStaticPrefix.Length);
                     staticInst.DefineProp(methodName, Collections.MapWithoutBase("call", new FuncObj(method)));
 					continue;
                 }
@@ -96,9 +98,8 @@ namespace Keysharp.Scripting
 					.Select(mph => mph.mi) // Flatten to IEnumerable<MethodPropertyHolder>
 					.ToArray();
             else
-                methods = t.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.DeclaredOnly);
+                methods = [];
 
-            methods = t.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.DeclaredOnly);
             foreach (var method in methods)
 			{
                 SetPropertyValue(staticInst, method.Name, new FuncObj(method));
@@ -177,6 +178,12 @@ namespace Keysharp.Scripting
 
 			if (!isBuiltin)
 			{
+                var nestedTypes = t.GetNestedTypes(BindingFlags.Public);
+                foreach (var nestedType in nestedTypes)
+                {
+                    RuntimeHelpers.RunClassConstructor(nestedType.TypeHandle);
+                    Script.Variables.Statics[t].DefineProp(nestedType.Name, Collections.Map("value", Variables.Statics[nestedType]));
+                }
                 Script.Invoke(Script.Variables.Statics[t], "__Init");
                 Script.Invoke(Script.Variables.Statics[t], "__New");
             }
@@ -253,7 +260,7 @@ namespace Keysharp.Scripting
 
 				if (item is KeysharpObject kso2)
 				{
-					if (TryGetOwnPropsMap(kso2, "set___Item", out var opm)) {
+					if (TryGetOwnPropsMap(kso2, "__Item", out var opm)) {
 						if (opm.Set != null && opm.Set is IFuncObj ifo)
 							return ifo.Call([kso2, .. index, value]);
                         else if (opm.Call != null && opm.Call is IFuncObj ifo2)
@@ -292,7 +299,6 @@ namespace Keysharp.Scripting
 			Error err;
 			int len;
 			object key = null;
-			object obj = item;
 
 			try
 			{
@@ -318,8 +324,6 @@ namespace Keysharp.Scripting
 						item = kso; typetouse = ob.GetType();
 					}
 				}
-				else
-					typetouse = itemType;
 
 				if (len == 1)
 				{
@@ -367,13 +371,16 @@ namespace Keysharp.Scripting
 
 				if (item is KeysharpObject kso2)
 				{
-					if (TryGetOwnPropsMap(kso2, "get___Item", out var opm) && opm.Get != null && opm.Get is IFuncObj ifo)
-						return ifo.Call(obj, index);
+                    if (typetouse != null && Variables.Prototypes.TryGetValue(typetouse, out var kso3) && kso3.op != null)
+						kso2 = kso3;
+
+                    if (TryGetOwnPropsMap(kso2, "__Item", out var opm) && opm.Get != null && opm.Get is IFuncObj ifo)
+						return ifo.Call([item, ..index]);
 					else if (TryGetOwnPropsMap(kso2, "__Get", out var opm2) && opm2.Call != null && opm2.Call is IFuncObj ifo2)
-						return ifo2.Call(obj, new Keysharp.Core.Array(index));
+						return ifo2.Call(item, new Keysharp.Core.Array(index));
                 }
 
-				if (Reflections.FindAndCacheInstanceMethod(typetouse, "get_Item", len) is MethodPropertyHolder mph)
+				if (Reflections.FindAndCacheInstanceMethod(typetouse ?? itemType, "get_Item", len) is MethodPropertyHolder mph)
 				{
 					if (len == mph.ParamLength || mph.IsVariadic)
 						return mph.callFunc(item, index);

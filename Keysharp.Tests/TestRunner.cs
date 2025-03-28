@@ -50,7 +50,7 @@ namespace Keysharp.Tests
 			return sb.ToString();
 		}
 
-		protected string RunScript(string source, string name, bool execute, bool wrapinfunction, bool exeout) => RunScript(WrapInFunc(File.ReadAllText(source)), name, execute, exeout);
+		protected string RunScript(string source, string name, bool execute, bool wrapinfunction, bool exeout, int? exitCode = null) => RunScript(WrapInFunc(File.ReadAllText(source)), name, execute, exeout, exitCode);
 
 		protected void TestException(Action func)
 		{
@@ -68,7 +68,7 @@ namespace Keysharp.Tests
 			Assert.IsTrue(excthrown);
 		}
 
-		protected string RunScript(string source, string name, bool execute, bool exeout)
+		protected string RunScript(string source, string name, bool execute, bool exeout, int? exitCode = null)
 		{
 			Core.Debug.OutputDebug(Environment.CurrentDirectory);
 			var ch = new CompilerHelper();
@@ -172,7 +172,14 @@ namespace Keysharp.Tests
 						var temp = new string[] { };
 						var result = main.Invoke(null, [temp]);
 
-						if (result is int i && i != 0)//This is for when an exception is thrown in the compiled program, the catch blocks make it return 1.
+						if (exitCode.HasValue)
+						{
+							if (result is int i && i == exitCode.Value)
+								Console.Write("pass");
+							else
+								Console.Write("fail");
+						}
+						else if (result is int i && i != 0)//This is for when an exception is thrown in the compiled program, the catch blocks make it return 1.
 							Console.Write("fail");
 					}
 					catch (Exception ex)

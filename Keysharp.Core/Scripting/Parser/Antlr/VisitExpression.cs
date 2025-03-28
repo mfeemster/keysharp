@@ -267,7 +267,7 @@ namespace Keysharp.Scripting
                 var child = context.GetChild(i);
                 if (child is ITerminalNode node)
                 {
-                    if (node.Symbol.Type == EOL)
+                    if (node.Symbol.Type == EOL || node.Symbol.Type == WS)
                         continue;
                     isComma = node.Symbol.Type == MainLexer.Comma;
                 }
