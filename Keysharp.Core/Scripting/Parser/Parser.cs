@@ -342,8 +342,12 @@ namespace Keysharp.Scripting
 			_ = ctch2.Statements.Add(new CodeExpressionStatement(exit1));
 			_ = ctch2.Statements.Add(cmrsexit);
 			_ = tcf.CatchClauses.Add(ctch2);
-			//
-			var ctch = new CodeCatchClause("mainex", new CodeTypeReference("System.Exception"));
+            //
+            var ctch3 = new CodeCatchClause("exitex", new CodeTypeReference("Keysharp.Core.Flow.UserRequestedExitException"));
+            _ = ctch3.Statements.Add(cmrsexit);
+            _ = tcf.CatchClauses.Add(ctch3);
+
+            var ctch = new CodeCatchClause("mainex", new CodeTypeReference("System.Exception"));
 			_ = ctch.Statements.Add(new CodeSnippetExpression(@"var ex = mainex.InnerException ?? mainex;
 
 				if (ex is Keysharp.Core.Error kserr)
