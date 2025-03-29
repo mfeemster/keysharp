@@ -128,7 +128,9 @@ namespace Keysharp.Scripting
 
                 var anyType = typeof(Any);
 				var types = Reflections.stringToTypes.Values
+					.Concat(Reflections.stringToTypes.Values.SelectMany(t => t.GetNestedTypes(BindingFlags.Public)))
                     .Where(type => type.IsClass && !type.IsAbstract && anyType.IsAssignableFrom(type));
+
 				/*
                 var types = AppDomain.CurrentDomain.GetAssemblies()
                     .SelectMany(assembly => assembly.GetTypes())

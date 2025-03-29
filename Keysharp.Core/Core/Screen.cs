@@ -32,29 +32,17 @@ namespace Keysharp.Core
 			var w = width.Ai();
 			var h = height.Ai();
 			var f = filename.As();
-			PixelFormat format;
 
-			switch (System.Windows.Forms.Screen.PrimaryScreen.BitsPerPixel)
-			{
-				case 8:
-				case 16:
-					format = PixelFormat.Format16bppRgb565;
-					break;
+			var format = System.Windows.Forms.Screen.PrimaryScreen.BitsPerPixel switch
+		{
+				8 or 16 => PixelFormat.Format16bppRgb565,
+				24 => PixelFormat.Format24bppRgb,
+				32 => PixelFormat.Format32bppArgb,
+				_ => PixelFormat.Format32bppArgb,
+		};
 
-				case 24:
-					format = PixelFormat.Format24bppRgb;
-					break;
+		var bmp = new Bitmap(w, h, format);
 
-				case 32:
-					format = PixelFormat.Format32bppArgb;
-					break;
-
-				default:
-					format = PixelFormat.Format32bppArgb;
-					break;
-			}
-
-			var bmp = new Bitmap(w, h, format);
 			Mouse.AdjustPoint(ref x, ref y);
 
 			using (var g = Graphics.FromImage(bmp))
@@ -220,27 +208,16 @@ namespace Keysharp.Core
 
 			try
 			{
-				switch (System.Windows.Forms.Screen.PrimaryScreen.BitsPerPixel)
-				{
-					case 8:
-					case 16:
-						format = PixelFormat.Format16bppRgb565;
-						break;
 
-					case 24:
-						format = PixelFormat.Format24bppRgb;
-						break;
+				format = System.Windows.Forms.Screen.PrimaryScreen.BitsPerPixel switch
+			{
+					8 or 16 => PixelFormat.Format16bppRgb565,
+					24 => PixelFormat.Format24bppRgb,
+					32 => PixelFormat.Format32bppArgb,
+					_ => PixelFormat.Format32bppArgb,
+			};
 
-					case 32:
-						format = PixelFormat.Format32bppArgb;
-						break;
-
-					default:
-						format = PixelFormat.Format32bppArgb;
-						break;
-				}
-
-				using (var bmp = new Bitmap(1, 1, format))
+			using (var bmp = new Bitmap(1, 1, format))
 				{
 					Mouse.AdjustPoint(ref _x, ref _y);
 

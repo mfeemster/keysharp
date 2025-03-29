@@ -63,19 +63,13 @@
 			var text = str.As();
 			var eol = endOfLine.As(Environment.NewLine);
 
-			switch (eol)
-			{
-				case CR:
-					return text.Replace(CRLF, CR).Replace(LF, CR);
-
-				case LF:
-					return text.Replace(CRLF, LF).Replace(CR, LF);
-
-				case CRLF:
-					return text.Replace(CR, string.Empty).Replace(LF, CRLF);
-			}
-
-			return text;
+			return eol switch
+		{
+				CR => text.Replace(CRLF, CR).Replace(LF, CR),
+					LF => text.Replace(CRLF, LF).Replace(CR, LF),
+					CRLF => text.Replace(CR, string.Empty).Replace(LF, CRLF),
+					_ => text,
+			};
 		}
 
 		/// <summary>

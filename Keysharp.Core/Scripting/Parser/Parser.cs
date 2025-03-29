@@ -473,7 +473,12 @@ namespace Keysharp.Scripting
         {
             while (t1 != null)
             {
-                if (string.Compare(t1.Name, t2, true) == 0)
+                var nameToUse = t1.FullName;
+
+                if (!string.IsNullOrEmpty(t1.Namespace))
+                    nameToUse = nameToUse.TrimStartOf($"{t1.Namespace}.").Replace('+', '.').TrimStartOf(Keywords.MainClassName + ".");
+
+                if (string.Compare(nameToUse, t2, true) == 0)
                     return true;
 
                 t1 = t1.BaseType;

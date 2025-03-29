@@ -296,45 +296,19 @@ namespace Keysharp.Core.COM
 				return ret;
 				void ConvertType(int i, short vt)
 				{
-					switch (vt)
-					{
-						case Com.vt_i2:
-							expectedTypes[i] = typeof(short);
-							break;
 
-						case Com.vt_i4:
-						case Com.vt_int:
-							expectedTypes[i] = typeof(int);
-							break;
-
-						case Com.vt_i8:
-							expectedTypes[i] = typeof(long);
-							break;
-
-						case Com.vt_r4:
-							expectedTypes[i] = typeof(float);
-							break;
-
-						case Com.vt_r8:
-							expectedTypes[i] = typeof(double);
-							break;
-
-						case Com.vt_bool:
-							expectedTypes[i] = typeof(bool);
-							break;
-
-						case Com.vt_bstr:
-							expectedTypes[i] = typeof(string);
-							break;
-
-						case Com.vt_variant:
-							expectedTypes[i] = typeof(object);
-							break;
-
-						default:
-							expectedTypes[i] = typeof(object);
-							break;
-					}
+					expectedTypes[i] = vt switch
+				{
+						Com.vt_i2 => typeof(short),
+							Com.vt_i4 or Com.vt_int => typeof(int),
+							Com.vt_i8 => typeof(long),
+							Com.vt_r4 => typeof(float),
+							Com.vt_r8 => typeof(double),
+							Com.vt_bool => typeof(bool),
+							Com.vt_bstr => typeof(string),
+							Com.vt_variant => typeof(object),
+							_ => typeof(object),
+					};
 				}
 			}
 			catch (Exception ex)

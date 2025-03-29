@@ -271,22 +271,16 @@ namespace Keysharp.Core
 				} else
 					type = value.GetType().Name;
 
-				switch (type)
-				{
-					case "Double":
-						return "Float";
-
-					case "Int64":
-						return "Integer";
-
-					case "KeysharpObject":
-						return "Object";
-				}
-
-				return type;
-			}
-			else
-				return "unset";
+				return type switch
+			{
+					"Double" => "Float",
+					"Int64" => "Integer",
+					"KeysharpObject" => "Object",
+					_ => type,
+			};
 		}
+		else
+			return "unset";
 	}
+}
 }

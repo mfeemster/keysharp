@@ -2675,30 +2675,22 @@ namespace Keysharp.Core.Windows
 						if (sub[keyIndex] == '\r' && sub[keyIndex + 1] == '\n') // Translate \r but ignore any trailing \n, since \r\n -> {Enter 2} is counter-intuitive.
 							keyIndex++;
 
-						switch (sub[keyIndex])
-						{
-							case '\n':
-								vk = VK_RETURN; break;
-
-							case '\b':
-								vk = VK_BACK; break;
-
-							case '\t':
-								vk = VK_TAB; break;
-
-							default:
-								vk = 0;
-								break; // Send all other characters via SendKeySpecial()/WM_CHAR.
-						}
-					}
-					else
+						vk = sub[keyIndex] switch
 					{
-						// Best to call this separately, rather than as first arg in SendKey, since it changes the
-						// value of modifiers and the updated value is *not* guaranteed to be passed.
-						// In other words, SendKey(TextToVK(...), modifiers, ...) would often send the old
-						// value for modifiers.
-						vk = ht.CharToVKAndModifiers(sub[keyIndex], ref modsForNextKey, targetKeybdLayout
-													 , (modsForNextKey | persistentModifiersForThisSendKeys) != 0 && sendRaw == SendRawModes.NotRaw); // v1.1.27.00: Disable the a-z to vk41-vk5A fallback translation when modifiers are present since it would produce the wrong printable characters.
+							'\n' => VK_RETURN,
+							'\b' => VK_BACK,
+							'\t' => VK_TAB,
+							_ => 0,
+					};
+				}
+				else
+				{
+					// Best to call this separately, rather than as first arg in SendKey, since it changes the
+					// value of modifiers and the updated value is *not* guaranteed to be passed.
+					// In other words, SendKey(TextToVK(...), modifiers, ...) would often send the old
+					// value for modifiers.
+					vk = ht.CharToVKAndModifiers(sub[keyIndex], ref modsForNextKey, targetKeybdLayout
+												 , (modsForNextKey | persistentModifiersForThisSendKeys) != 0 && sendRaw == SendRawModes.NotRaw); // v1.1.27.00: Disable the a-z to vk41-vk5A fallback translation when modifiers are present since it would produce the wrong printable characters.
 						// CharToVKAndModifiers() takes no measurable time compared to the amount of time SendKey takes.
 					}
 

@@ -18,42 +18,30 @@ namespace Keysharp.Scripting
 			{
 				if (escaped)
 				{
-					switch (sym)
-					{
-						case 'n': _ = buffer.Append('\n'); break;
 
-						case 'r': _ = buffer.Append('\r'); break;
-
-						case 'b': _ = buffer.Append('\b'); break;
-
-						case 't': _ = buffer.Append('\t'); break;
-
-						case 'v': _ = buffer.Append('\v'); break;
-
-						case 'a': _ = buffer.Append('\a'); break;
-
-						case 'f': _ = buffer.Append('\f'); break;
-
-						case 's': _ = buffer.Append(' '); break;
-
-						case '0': _ = buffer.Append('\0'); break;
-
-						//case '"': _ = buffer.Append('"'); break;
-						//
-						//case '\'': _ = buffer.Append('\''); break;
-						//
-						//case ';': _ = buffer.Append(';'); break;
-						//
-						//case ':': _ = buffer.Append(':'); break;
-						//
-						//case '{': _ = buffer.Append('{'); break;
-
-						default:
-							//if (sym == Resolve)//This was likely here to parse legacy style syntax, but makes it impossible to send "'%", so we omit it.
+					_ = sym switch
+				{
+						'n' => buffer.Append('\n'),
+							'r' => buffer.Append('\r'),
+							'b' => buffer.Append('\b'),
+							't' => buffer.Append('\t'),
+							'v' => buffer.Append('\v'),
+							'a' => buffer.Append('\a'),
+							'f' => buffer.Append('\f'),
+							's' => buffer.Append(' '),
+							'0' => buffer.Append('\0'),
+							//case '"': _ = buffer.Append('"'); break;
+							//
+							//case '\'': _ = buffer.Append('\''); break;
+							//
+							//case ';': _ = buffer.Append(';'); break;
+							//
+							//case ':': _ = buffer.Append(':'); break;
+							//
+							//case '{': _ = buffer.Append('{'); break;
+							_ => buffer.Append(sym),//if (sym == Resolve)//This was likely here to parse legacy style syntax, but makes it impossible to send "'%", so we omit it.
 							//_ = buffer.Append(Escape);
-							_ = buffer.Append(sym);
-							break;
-					}
+					};
 
 					escaped = false;
 				}

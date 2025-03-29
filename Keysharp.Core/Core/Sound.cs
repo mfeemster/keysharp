@@ -599,16 +599,12 @@ namespace Keysharp.Core
 				}
 			}
 
-			switch (search.targetControl)
-			{
-				case SoundControlType.Volume:
-					return (double)resultFloat;
-
-				case SoundControlType.Mute:
-					return resultBool;
-			}
-
-			return null;
+			return search.targetControl switch
+		{
+				SoundControlType.Volume => (double)resultFloat,
+					SoundControlType.Mute => resultBool,
+					_ => null,
+			};
 		}
 
 		/// <summary>

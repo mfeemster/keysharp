@@ -1476,7 +1476,7 @@
 		/// <summary>
 		/// The Operating System version, e.g. WIN_VISTA, WIN_2003, WIN_XP, WIN_2000, WIN_NT4, WIN_95, WIN_98, WIN_ME.
 		/// </summary>
-		public static string A_OSVersion => Environment.OSVersion.VersionString;
+		public static string A_OSVersion => $"{Environment.OSVersion.Version.Major}.{Environment.OSVersion.Version.Minor}.{Environment.OSVersion.Version.Build}";
 
 		/// <summary>
 		/// Thread peek frequency in milliseconds.

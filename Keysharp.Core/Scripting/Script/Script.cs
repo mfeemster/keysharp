@@ -369,14 +369,14 @@
 
 		public static void ExitIfNotPersistent()
 		{
-			//Must use Invoke() because ExitApp will throw an UserRequestedExitException and
-			//that must be propagated inside the main thread.
-			if (!IsMainWindowClosing)
-				mainWindow?.CheckedInvoke(new Action(() =>
+            //Must use BeginInvoke() because this might be called from _ks_UserMainCode(),
+            //so it needs to run after that thread has exited.
+            if (!IsMainWindowClosing)
+				mainWindow?.CheckedBeginInvoke(new Action(() =>
 			{
 				if (!IsMainWindowClosing && !AnyPersistent())
-					_ = Flow.ExitApp(Environment.ExitCode);
-			}), true);
+					Flow.ExitAppInternal(Flow.ExitReasons.Exit, Environment.ExitCode, false);
+			}), true, true);
 		}
 
 		internal static bool InitHook()

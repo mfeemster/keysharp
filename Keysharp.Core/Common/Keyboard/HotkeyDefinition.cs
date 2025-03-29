@@ -127,27 +127,19 @@ namespace Keysharp.Core.Common.Keyboard
 						// If mModifiersLR contains only a single modifier key, that is valid
 						// so we convert it here to its corresponding mModifierVK for use by
 						// the hook.
-						switch (modifiersLR)
-						{
-							case MOD_LCONTROL: modifierVK = VK_LCONTROL; break;//Will need to make this cross platform at some point, probably using Keys.//TODO
 
-							case MOD_RCONTROL: modifierVK = VK_RCONTROL; break;
-
-							case MOD_LSHIFT: modifierVK = VK_LSHIFT; break;
-
-							case MOD_RSHIFT: modifierVK = VK_RSHIFT; break;
-
-							case MOD_LALT: modifierVK = VK_LMENU; break;
-
-							case MOD_RALT: modifierVK = VK_RMENU; break;
-
-							case MOD_LWIN: modifierVK = VK_LWIN; break;
-
-							case MOD_RWIN: modifierVK = VK_RWIN; break;
-
-							default:
-								throw new ValueError("This AltTab hotkey must have exactly one modifier/prefix.", _name);
-						}
+						modifierVK = modifiersLR switch
+					{
+							MOD_LCONTROL => VK_LCONTROL,
+							MOD_RCONTROL => VK_RCONTROL,
+							MOD_LSHIFT => VK_LSHIFT,
+							MOD_RSHIFT => VK_RSHIFT,
+							MOD_LALT => VK_LMENU,
+							MOD_RALT => VK_RMENU,
+							MOD_LWIN => VK_LWIN,
+							MOD_RWIN => VK_RWIN,
+							_ => throw new ValueError("This AltTab hotkey must have exactly one modifier/prefix.", _name),
+						};
 
 						// Since above didn't return:
 						modifiersLR = 0;  // Since ModifierVK/SC is now its substitute.
@@ -2247,26 +2239,20 @@ namespace Keysharp.Core.Common.Keyboard
 				existingThreads += vp.existingThreads;
 
 			var existingThreadsStr = existingThreads != 0 ? existingThreads.ToString() : "";
-			string htype;
 
-			switch (type)
-			{
-				case HotkeyTypeEnum.Normal: htype = "reg"; break;
+			string htype = type switch
+		{
+				HotkeyTypeEnum.Normal => "reg",
+				HotkeyTypeEnum.KeyboardHook => "k-hook",
+				HotkeyTypeEnum.MouseHook => "m-hook",
+				HotkeyTypeEnum.BothHook => "2-hooks",
+				HotkeyTypeEnum.Joystick => "joypoll",
+				_ => "",
+		};
 
-				case HotkeyTypeEnum.KeyboardHook: htype = "k-hook"; break;
+		string enabledStr;
 
-				case HotkeyTypeEnum.MouseHook: htype = "m-hook"; break;
-
-				case HotkeyTypeEnum.BothHook: htype = "2-hooks"; break;
-
-				case HotkeyTypeEnum.Joystick: htype = "joypoll"; break;
-
-				default: htype = ""; break;// For maintainability; should never happen.
-			}
-
-			string enabledStr;
-
-			if (IsCompletelyDisabled()) // Takes into account alt-tab vs. non-alt-tab, etc.
+		if (IsCompletelyDisabled()) // Takes into account alt-tab vs. non-alt-tab, etc.
 				enabledStr = "OFF";
 			else if (hookAction != 0 && parentEnabled) // It's completely "on" in this case.
 				enabledStr = "";

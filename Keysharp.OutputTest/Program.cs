@@ -126,12 +126,15 @@ namespace Keysharp.CompiledMain
             return Environment.ExitCode;
         }
 
+        public static object g = null;
+        public static object b = null;
+        public static object msgbox = Keysharp.Core.Functions.Func("msgbox");
         public static object AutoExecSection()
         {
             Keysharp.Core.Common.Keyboard.HotkeyDefinition.ManifestAllHotkeysHotstringsHooks();
-            Keysharp.Core.Files.FileAppend("pass", "*");
-            Keysharp.Core.Flow.Exit(2L);
-            Keysharp.Core.Files.FileAppend("fail", "*");
+            g = Keysharp.Core.GuiHelper.Gui();
+            b = Keysharp.Scripting.Script.Invoke(g, "AddButton", null, "Hello");
+            Keysharp.Core.Dialogs.MsgBox(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.Is, b, "Gui.Button"));
             return "";
         }
     }
