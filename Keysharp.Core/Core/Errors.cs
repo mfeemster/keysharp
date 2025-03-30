@@ -53,7 +53,7 @@ namespace Keysharp.Core
 			}
 
 			if (err.ExcType == Keyword_ExitApp)
-				_ = Flow.ExitAppInternal(Flow.ExitReasons.Critical);
+				_ = Flow.ExitAppInternal(Flow.ExitReasons.Critical, null, false);
 
 			return exitThread;
 		}

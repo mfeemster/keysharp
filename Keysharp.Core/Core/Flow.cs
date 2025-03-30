@@ -139,15 +139,11 @@ namespace Keysharp.Core
 		{
 			if (!hasExited)//This can be called multiple times, so ensure it only runs through once.
 			{
-				bool ret = false;
 				Script.mainWindow.CheckedInvoke(() =>
 				{
-					ret = ExitAppInternal(ExitReasons.Exit, exitCode, false);
+					_ = ExitAppInternal(ExitReasons.Exit, exitCode);
 				}, true);
 				var start = DateTime.Now;
-
-				if (!ret)
-					throw new UserRequestedExitException();
 
 				while (!hasExited && (DateTime.Now - start).TotalSeconds < 5)
 					_ = Sleep(500);
@@ -409,7 +405,8 @@ namespace Keysharp.Core
 							_ = Interlocked.Increment(ref Script.totalExistingThreads);
 							(bool, ThreadVariables) btv = Threads.PushThreadVariables(pri, true, false);
 							tv.currentTimer = timer;
-							var ret = func.Call(func, Conversions.ToYYYYMMDDHH24MISS(DateTime.Now));
+							btv.Item2.eventInfo = Keysharp.Core.Objects.Object(new object[] { "Function", f, "TickCount", Environment.TickCount64 });
+                            var ret = func.Call();
 							_ = Threads.EndThread(btv.Item1);
 						}, true);//Pop on exception because EndThread() above won't be called.
 
@@ -683,12 +680,6 @@ namespace Keysharp.Core
 				action();
 				return true;
 			}
-			catch (UserRequestedExitException)
-			{
-                if (pop)
-                    _ = Threads.EndThread(true);
-                return true;
-			}
 			catch (Error kserr)
 			{
 				//Processed would still be false of the user did a throw statement in the script.
@@ -712,7 +703,13 @@ namespace Keysharp.Core
 			{
 				var ex = mainex.InnerException ?? mainex;
 
-				if (ex is Error kserr)
+                if (mainex is UserRequestedExitException || ex is UserRequestedExitException)
+                {
+                    if (pop)
+                        _ = Threads.EndThread(true);
+                    return true;
+                }
+                else if (ex is Error kserr)
 				{
 					if (!kserr.Processed)
 						_ = ErrorOccurred(kserr, kserr.ExcType);

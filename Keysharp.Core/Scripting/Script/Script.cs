@@ -154,9 +154,7 @@
 			mainWindow.AllowShowDisplay = false; // Prevent show on script startup
 			mainWindow.ShowInTaskbar = true; // Without this the main window won't have a taskbar icon
 
-            TaskScheduler uiScheduler = TaskScheduler.FromCurrentSynchronizationContext();
-
-            Task.Factory.StartNew(() =>
+            mainWindow.BeginInvoke(() =>
 			{
 				if (!Flow.TryCatch(() =>
 			{
@@ -176,7 +174,7 @@
 					}
 				}
                 ExitIfNotPersistent();
-            }, CancellationToken.None, TaskCreationOptions.None, uiScheduler);
+            });
             Application.Run(mainWindow);
 		}
 

@@ -141,7 +141,7 @@
 				break;
 
 				case WindowsAPI.WM_ENDSESSION:
-					_ = Flow.ExitAppInternal((m.Msg & WindowsAPI.ENDSESSION_LOGOFF) != 0 ? Flow.ExitReasons.LogOff : Flow.ExitReasons.Shutdown);
+					_ = Flow.ExitAppInternal((m.Msg & WindowsAPI.ENDSESSION_LOGOFF) != 0 ? Flow.ExitReasons.LogOff : Flow.ExitReasons.Shutdown, null, false);
 					handled = true;
 					break;
 
@@ -231,7 +231,7 @@
 
 			IsClosing = true;
 
-			if (Flow.ExitAppInternal(Flow.ExitReasons.Close))
+			if (Flow.ExitAppInternal(Flow.ExitReasons.Close, null, false))
 			{
 				IsClosing = false;
 				e.Cancel = true;
