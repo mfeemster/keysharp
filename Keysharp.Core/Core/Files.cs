@@ -462,7 +462,10 @@
 				var dir = new DirectoryInfo(path);
 				var filename = Path.GetFileName(s);
 
-				foreach (var file in dir.EnumerateFiles(filename))
+				if (Directory.Exists((string)filePattern))
+					return Conversions.FromFileAttribs(File.GetAttributes((string)filePattern));
+
+                foreach (var file in dir.EnumerateFiles(filename))
 					return Conversions.FromFileAttribs(File.GetAttributes(file.FullName));
 			}
 			catch
