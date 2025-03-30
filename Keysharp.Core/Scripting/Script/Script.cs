@@ -171,7 +171,8 @@
 					{
 						_ = Flow.ExitApp(1);
 					}
-				}
+                }
+				 ExitIfNotPersistent();
 			});
 			Application.Run(mainWindow);
 		}
@@ -371,8 +372,8 @@
 				mainWindow?.CheckedBeginInvoke(new Action(() =>
 			{
 				if (!IsMainWindowClosing && !AnyPersistent())
-					_ = Flow.ExitApp((int)exitReason);
-			}), true, true);
+                    Flow.ExitAppInternal(exitReason, Environment.ExitCode, false);
+            }), true, true);
 		}
 
 		internal static bool InitHook()

@@ -33,9 +33,9 @@
 #endif
 			tpVars.HandleCreated += TpVars_HandleCreated;
 			editScriptToolStripMenuItem.Visible = !A_IsCompiled;
-		}
+        }
 
-		public void AddText(string s, MainFocusedTab tab, bool focus)
+        public void AddText(string s, MainFocusedTab tab, bool focus)
 		{
 			//Use CheckedBeginInvoke() because CheckedInvoke() seems to crash if this is called right as the window is closing.
 			//Such as with a hotkey that prints on mouse click, which will cause a print when the X is clicked to close.
@@ -141,7 +141,7 @@
 				break;
 
 				case WindowsAPI.WM_ENDSESSION:
-					_ = Flow.ExitAppInternal((m.Msg & WindowsAPI.ENDSESSION_LOGOFF) != 0 ? Flow.ExitReasons.LogOff : Flow.ExitReasons.Shutdown);
+					_ = Flow.ExitAppInternal((m.Msg & WindowsAPI.ENDSESSION_LOGOFF) != 0 ? Flow.ExitReasons.LogOff : Flow.ExitReasons.Shutdown, null, false);
 					handled = true;
 					break;
 
@@ -231,7 +231,7 @@
 
 			IsClosing = true;
 
-			if (Flow.ExitAppInternal(Flow.ExitReasons.Close))
+			if (Flow.ExitAppInternal(Flow.ExitReasons.Close, null, false))
 			{
 				IsClosing = false;
 				e.Cancel = true;

@@ -106,23 +106,23 @@ namespace Keysharp.Core
 			callingCritical = false;
 			return ret;
 		}
+        public class UserRequestedExitException : Exception
+        {
+            public UserRequestedExitException() { }
+        }
 
-		/// <summary>
-		/// Exits the current thread or the entire script if non-persistent.
-		/// The exit is achieved by throwing an exception which will be caught in the catch
-		/// clause that wraps all threads.
-		/// </summary>
-		/// <param name="exitCode">An integer that is returned to the caller.</param>
-		public static void Exit(object exitCode = null)
+        /// <summary>
+        /// Exits the current thread or the entire script if non-persistent.
+        /// The exit is achieved by throwing an exception which will be caught in the catch
+        /// clause that wraps all threads.
+        /// </summary>
+        /// <param name="exitCode">An integer that is returned to the caller.</param>
+        public static object Exit(object exitCode = null)
 		{
 			A_ExitReason = exitCode.Al();
-			var err = new Error(Keyword_ExitThread)
-			{
-				Handled = true,//Do not call any error handlers. Just exit the thread.
-				Processed = true
-			};
-			throw err;
-		}
+            Environment.ExitCode = exitCode.Ai();
+            throw new UserRequestedExitException();
+        }
 
 		/// <summary>
 		/// Terminates the script unconditionally.
@@ -141,7 +141,7 @@ namespace Keysharp.Core
 				}, true);
 				var start = DateTime.Now;
 
-				while (!hasExited && (DateTime.Now - start).TotalSeconds < 5)
+                while (!hasExited && (DateTime.Now - start).TotalSeconds < 5)
 					_ = Sleep(500);
 			}
 
@@ -166,7 +166,7 @@ namespace Keysharp.Core
 		/// <param name="obj">The value to examine.</param>
 		/// <returns>True if the value is true and the script is running, else false.</returns>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static bool IsTrueAndRunning(object obj) => !hasExited&& Script.ForceBool(obj);
+		public static bool IsTrueAndRunning(object obj) => !hasExited && Script.ForceBool(obj);
 
 		/// <summary>
 		/// Registers a function to be called automatically whenever the script exits.
@@ -436,8 +436,11 @@ namespace Keysharp.Core
 		{
 			var d = delay.Al(-1L);
 
-			//Be careful with Application.DoEvents(), it has caused spurious crashes in my years of programming experience.
-			if (d == 0L)
+            if (hasExited)
+                throw new UserRequestedExitException();
+
+            //Be careful with Application.DoEvents(), it has caused spurious crashes in my years of programming experience.
+            if (d == 0L)
 			{
 				//0 tells this thread to relinquish the remainder of its time slice to any thread of equal priority that is ready to run.
 				//If there are no other threads of equal priority that are ready to run, execution of the current thread is not suspended.
@@ -449,7 +452,11 @@ namespace Keysharp.Core
 				{
 					Application.DoEvents();//Can sometimes throw on linux.
 				}
-				catch
+                catch (UserRequestedExitException)
+                {
+                    throw;
+                }
+                catch
 				{
 				}
 			}
@@ -461,7 +468,11 @@ namespace Keysharp.Core
 					{
 						Application.DoEvents();//Can sometimes throw on linux.
 					}
-					catch
+                    catch (UserRequestedExitException)
+                    {
+                        throw;
+                    }
+                    catch
 					{
 					}
 
@@ -479,7 +490,11 @@ namespace Keysharp.Core
 						//if (System.Threading.Thread.CurrentThread.ManagedThreadId == Processes.ManagedMainThreadID)
 						Application.DoEvents();//Can sometimes throw on linux.
 					}
-					catch
+                    catch (UserRequestedExitException)
+                    {
+                        throw;
+                    }
+                    catch
 					{
 					}
 
@@ -544,7 +559,7 @@ namespace Keysharp.Core
 		/// <param name="exitReason">The <see cref="ExitReason"/> for exiting the script.</param>
 		/// <param name="exitCode">The exit code to return from the script when it exits.</param>
 		/// <returns>True if exiting was interrupted by a non empty callback return value, else false.</returns>
-		internal static bool ExitAppInternal(ExitReasons exitReason, object exitCode = null)
+		internal static bool ExitAppInternal(ExitReasons exitReason, object exitCode = null, bool useThrow = true)
 		{
 			if (hasExited)//This can be called multiple times, so ensure it only runs through once.
 				return false;
@@ -601,8 +616,11 @@ namespace Keysharp.Core
 			}
 
 			Environment.ExitCode = ec;
-			//Environment.Exit(exitCode);//This seems too harsh, and also prevents compiled unit tests from properly being run.
-			return false;
+            //Environment.Exit(exitCode);//This seems too harsh, and also prevents compiled unit tests from properly being run.
+            if (useThrow)
+                throw new UserRequestedExitException();
+            else
+                return false;
 		}
 
 		/// <summary>
@@ -661,7 +679,7 @@ namespace Keysharp.Core
 				action();
 				return true;
 			}
-			catch (Error kserr)
+            catch (Error kserr)
 			{
 				//Processed would still be false of the user did a throw statement in the script.
 				//But if we're throwing from inside of Keysharp, Processed should always be true.
@@ -684,7 +702,13 @@ namespace Keysharp.Core
 			{
 				var ex = mainex.InnerException ?? mainex;
 
-				if (ex is Error kserr)
+				if (mainex is UserRequestedExitException || ex is UserRequestedExitException)
+                {
+                    if (pop)
+                        _ = Threads.EndThread(true);
+                    return true;
+                }
+				else if (ex is Error kserr)
 				{
 					if (!kserr.Processed)
 						_ = ErrorOccurred(kserr, kserr.ExcType);
