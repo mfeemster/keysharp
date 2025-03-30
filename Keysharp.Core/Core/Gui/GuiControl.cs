@@ -540,7 +540,7 @@ namespace Keysharp.Core
 			{
 				var lvo = obj.Length > 0 && obj[0] is string options && options.Length > 0 ? ListViewHelper.ParseListViewOptions(options) : new ListViewHelper.ListViewOptions();
 				var strs = obj.Cast<object>().Skip(1).Select(x => x.Str()).ToList();
-				ListViewHelper.AddOrInsertListViewItem(lv, lvo, strs, int.MinValue);
+				return ListViewHelper.AddOrInsertListViewItem(lv, lvo, strs, int.MinValue);
 			}
 			else if (_control is KeysharpListBox lb)//Using AddRange() relieves the caller of having to set -Redraw first.
 				lb.Items.AddRange(obj.Cast<object>().Select(x => x.Str()).ToArray());
@@ -892,7 +892,7 @@ namespace Keysharp.Core
 			return "";
 		}
 
-		public object Insert(object rowNumber, params object[] obj)
+		public long Insert(object rowNumber, params object[] obj)
 		{
 			if (_control is KeysharpListView lv)//Note that this index might not actually be where the row is shown, due to sorting.
 			{
@@ -904,10 +904,10 @@ namespace Keysharp.Core
 
 				var lvo = opts is string options ? ListViewHelper.ParseListViewOptions(options) : new ListViewHelper.ListViewOptions();
 				var strs = obj.Length > 1 ? obj.Cast<object>().Skip(1).Select(x => x.Str()).ToList() : [];
-				ListViewHelper.AddOrInsertListViewItem(lv, lvo, strs, rownumber - 1);
+				return ListViewHelper.AddOrInsertListViewItem(lv, lvo, strs, rownumber - 1) + 1;
 			}
 
-			return null;
+			return 0L;
 		}
 
 		public long InsertCol(object columnNumber = null, object options = null, object columnTitle = null)

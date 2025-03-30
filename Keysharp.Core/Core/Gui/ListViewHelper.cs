@@ -2,7 +2,7 @@
 {
 	internal static class ListViewHelper
 	{
-		internal static void AddOrInsertListViewItem(ListView lv, ListViewOptions lvo, List<string> strs, int insert)
+		internal static long AddOrInsertListViewItem(ListView lv, ListViewOptions lvo, List<string> strs, int insert)
 		{
 			var item = new ListViewItem();
 
@@ -12,11 +12,14 @@
 			for (int i = 0, j = lvo.colstart; i < strs.Count && j < item.SubItems.Count; i++, j++)
 				item.SubItems[j].Text = strs[i];
 
-			_ = insert >= 0 ? lv.Items.Insert(Math.Min(insert, lv.Items.Count), item) : lv.Items.Add(item);
+			var row = lv.Items.Count + 1;
+			_ = insert >= 0 ? lv.Items.Insert(row = Math.Min(insert, lv.Items.Count), item) : lv.Items.Add(item);
 			ApplyListViewOptions(lv, item, lvo);
 
 			if (lv.Items.Count == 1)//Resize on the first item, don't do it for subsequent items because it takes too long. It will be done again when setting opts to +Redraw.
 				lv.SetListViewColumnSizes();
+
+			return row;
 		}
 
 		internal static void ApplyListViewOptions(ListView lv, ListViewItem item, ListViewOptions lvo)
