@@ -135,16 +135,11 @@ namespace Keysharp.Core
 		{
 			if (!hasExited)//This can be called multiple times, so ensure it only runs through once.
 			{
-				bool ret = false;
 				Script.mainWindow.CheckedInvoke(() =>
 				{
-					ret = ExitAppInternal(ExitReasons.Exit, exitCode, false);
+					_ = ExitAppInternal(ExitReasons.Exit, exitCode);
 				}, true);
 				var start = DateTime.Now;
-
-                // Throw here instead, because if thrown inside CheckedInvoke then we get an "error not caught in user code" message
-                if (!ret)
-                    throw new UserRequestedExitException();
 
                 while (!hasExited && (DateTime.Now - start).TotalSeconds < 5)
 					_ = Sleep(500);

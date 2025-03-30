@@ -372,7 +372,7 @@
 				mainWindow?.CheckedBeginInvoke(new Action(() =>
 			{
 				if (!IsMainWindowClosing && !AnyPersistent())
-                    Flow.ExitAppInternal(exitReason, Environment.ExitCode);
+                    Flow.ExitAppInternal(exitReason, Environment.ExitCode, false);
             }), true, true);
 		}
 
