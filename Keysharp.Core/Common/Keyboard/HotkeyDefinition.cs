@@ -2092,7 +2092,7 @@ namespace Keysharp.Core.Common.Keyboard
 				Flow.AllowInterruption = false;
 
 				if (Dialogs.MsgBox(error_text, null, "YesNo") == DialogResult.No.ToString())
-					_ = Flow.ExitAppInternal(Flow.ExitReasons.Close);// Might not actually Exit if there's an OnExit function.
+					_ = Flow.ExitAppInternal(Flow.ExitReasons.Close, null, false);// Might not actually Exit if there's an OnExit function.
 
 				Flow.AllowInterruption = true;
 				dialogIsDisplayed = false;

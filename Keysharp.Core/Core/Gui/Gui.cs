@@ -207,7 +207,7 @@
 		};
 
 		private static int windowCount = 0;
-		private bool dpiscaling = true;
+		public bool dpiscaling = true;
 		private bool lastfound = false;
 		private bool owndialogs = false;
 		private bool resizable = false;
@@ -651,7 +651,8 @@
 
 				case Keyword_ComboBox:
 				case Keyword_DropDownList:
-				{
+                case Keyword_DDL:
+                    {
 					bool isCombo = type == Keyword_ComboBox;
 					KeysharpComboBox ddl;
 
@@ -1198,6 +1199,8 @@
 			}
 			else if (ctrl is KeysharpProgressBar kpb && ((kpb.AddStyle & 0x04) == 0x04))
 				w = fontpixels * 2;
+			else if (ctrl is KeysharpNumericUpDown)
+				w = LastControl.Width;
 			else if (ctrl is KeysharpComboBox || ctrl is HotkeyBox || ctrl is KeysharpListBox || ctrl is KeysharpNumericUpDown || ctrl is KeysharpProgressBar || ctrl is KeysharpTextBox)
 				w = fontpixels * 15;
 			else if (ctrl is KeysharpTrackBar trk)
@@ -1262,7 +1265,7 @@
 					}
 					else if (ctrl is KeysharpListView lv)
 					{
-						lv.Height = defheight + ((lv.Margin.Top + lv.Margin.Bottom) * (2 + ((int)(r + 1.5) - 2)));//ListView doesn't have an ItemHeight property, so attempt to compute here in the same way GroupBox is done above.
+                        lv.Height = defheight + (lv.Margin.Top + lv.Margin.Bottom);
 					}
 					else if (ctrl is KeysharpTabControl tc2)
 					{
@@ -1326,10 +1329,10 @@
 					yoffset = form.Margin.Top + (opts.ym * dpiscale);
 				else if (opts.ys != int.MinValue)
 					yoffset = Section.Y + (opts.ys * dpiscale);
-				else
+                else
 					yoffset = int.MinValue;
 
-				loc = new Point((int)Math.Round(xoffset), (int)Math.Round(yoffset));
+                loc = new Point((int)Math.Round(xoffset), (int)Math.Round(yoffset));
 			}
 			else
 				loc = new Point(int.MinValue, int.MinValue);

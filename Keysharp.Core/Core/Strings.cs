@@ -1167,13 +1167,26 @@
 						ptr = buf.Ptr;
 					else if (obj[1] is long l)
 						ptr = new IntPtr(l);
+					else if (obj[1] is IntPtr ip)
+						ptr = ip;
+					else if (obj[1] is string ec)
+					{
+						encoding = Files.GetEncoding(ec);
+						return encoding.GetBytes(s).Length;
+					}
 				}
 
 				if (ptr != IntPtr.Zero && ptr.ToInt64() < 65536)//65536 is the first valid address.
 					return Errors.ErrorOccurred(err = new ValueError($"Address of {ptr.ToInt64()} is less than the minimum allowable address of 65,536.")) ? throw err : 0L;
 
 				if (obj.Length > 2 && !obj[2].IsNullOrEmpty())
-					len = Math.Abs(obj.Al(2));
+				{
+					if (obj[2] is string ec) {
+						encoding = Files.GetEncoding(obj[2]);
+						len = s.Length;
+					} else
+						len = Math.Abs(obj.Al(2));
+				}
 
 				if (obj.Length > 3)
 					encoding = Files.GetEncoding(obj[3]);
@@ -1452,10 +1465,10 @@
 		/// <param name="obj">Ignored</param>
 		/// <returns>None</returns>
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown because this function has no meaning in Keysharp.</exception>
-		public static long VarSetStrCapacity(params object[] obj)
+		public static object VarSetStrCapacity(object targetVar, object requestedCapacity = null)
 		{
-			Error err;
-			return Errors.ErrorOccurred(err = new Error("VarSetStrCapacity() not supported or necessary.")) ? throw err : 0L;
+            Debug.OutputDebug("VarSetStrCapacity() not supported or necessary.");
+			return requestedCapacity == null ? StrLen(Script.GetPropertyValue(targetVar, "__Value")) : requestedCapacity;
 		}
 
 		/// <summary>

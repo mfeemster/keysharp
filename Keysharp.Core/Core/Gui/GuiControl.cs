@@ -8,7 +8,7 @@ namespace Keysharp.Core
 		internal WeakReference<Gui> gui;
 		private readonly List<IFuncObj> clickHandlers = [];
 		private readonly List<IFuncObj> doubleClickHandlers = [];
-		private readonly bool dpiscaling = true;
+		private bool dpiscaling => Gui.dpiscaling;
 		private Control _control;
 
 		//Normal event handlers can't be used becaused they need to return a value.
@@ -541,7 +541,7 @@ namespace Keysharp.Core
 			{
 				var lvo = obj.Length > 0 && obj[0] is string options && options.Length > 0 ? ListViewHelper.ParseListViewOptions(options) : new ListViewHelper.ListViewOptions();
 				var strs = obj.Cast<object>().Skip(1).Select(x => x.Str()).ToList();
-				ListViewHelper.AddOrInsertListViewItem(lv, lvo, strs, int.MinValue);
+				return ListViewHelper.AddOrInsertListViewItem(lv, lvo, strs, int.MinValue);
 			}
 			else if (_control is KeysharpListBox lb)//Using AddRange() relieves the caller of having to set -Redraw first.
 				lb.Items.AddRange(obj.Cast<object>().Select(x => x.Str()).ToArray());
@@ -1063,7 +1063,7 @@ namespace Keysharp.Core
 			var _y = y.Al(long.MinValue);
 			var w = width.Al(long.MinValue);
 			var h = height.Al(long.MinValue);
-			var scale = !dpiscaling ? 1.0 : A_ScaledScreenDPI;
+			var scale = !dpiscaling ? 1.0 : 1.0 / A_ScaledScreenDPI;
 			var hasScrollBars = _control is KeysharpTextBox || _control is KeysharpRichEdit;//Reflections.SafeHasProperty(_control, "ScrollBars") || Reflections.SafeHasProperty(_control, "HorizontalScrollbar") || Reflections.SafeHasProperty(_control, "Scrollable")
 
 			if (_y != long.MinValue)
