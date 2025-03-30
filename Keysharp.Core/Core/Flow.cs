@@ -106,23 +106,19 @@ namespace Keysharp.Core
 			callingCritical = false;
 			return ret;
 		}
-        public class UserRequestedExitException : Exception
-        {
-            public UserRequestedExitException() { }
-        }
 
-        /// <summary>
-        /// Exits the current thread or the entire script if non-persistent.
-        /// The exit is achieved by throwing an exception which will be caught in the catch
-        /// clause that wraps all threads.
-        /// </summary>
-        /// <param name="exitCode">An integer that is returned to the caller.</param>
-        public static object Exit(object exitCode = null)
+		/// <summary>
+		/// Exits the current thread or the entire script if non-persistent.
+		/// The exit is achieved by throwing an exception which will be caught in the catch
+		/// clause that wraps all threads.
+		/// </summary>
+		/// <param name="exitCode">An integer that is returned to the caller.</param>
+		public static object Exit(object exitCode = null)
 		{
 			A_ExitReason = exitCode.Al();
-            Environment.ExitCode = exitCode.Ai();
-            throw new UserRequestedExitException();
-        }
+			Environment.ExitCode = exitCode.Ai();
+			throw new UserRequestedExitException();
+		}
 
 		/// <summary>
 		/// Terminates the script unconditionally.
@@ -141,7 +137,7 @@ namespace Keysharp.Core
 				}, true);
 				var start = DateTime.Now;
 
-                while (!hasExited && (DateTime.Now - start).TotalSeconds < 5)
+				while (!hasExited && (DateTime.Now - start).TotalSeconds < 5)
 					_ = Sleep(500);
 			}
 
@@ -436,11 +432,11 @@ namespace Keysharp.Core
 		{
 			var d = delay.Al(-1L);
 
-            if (hasExited)
-                throw new UserRequestedExitException();
+			if (hasExited)
+				throw new UserRequestedExitException();
 
-            //Be careful with Application.DoEvents(), it has caused spurious crashes in my years of programming experience.
-            if (d == 0L)
+			//Be careful with Application.DoEvents(), it has caused spurious crashes in my years of programming experience.
+			if (d == 0L)
 			{
 				//0 tells this thread to relinquish the remainder of its time slice to any thread of equal priority that is ready to run.
 				//If there are no other threads of equal priority that are ready to run, execution of the current thread is not suspended.
@@ -452,11 +448,11 @@ namespace Keysharp.Core
 				{
 					Application.DoEvents();//Can sometimes throw on linux.
 				}
-                catch (UserRequestedExitException)
-                {
-                    throw;
-                }
-                catch
+				catch (UserRequestedExitException)
+				{
+					throw;
+				}
+				catch
 				{
 				}
 			}
@@ -468,11 +464,11 @@ namespace Keysharp.Core
 					{
 						Application.DoEvents();//Can sometimes throw on linux.
 					}
-                    catch (UserRequestedExitException)
-                    {
-                        throw;
-                    }
-                    catch
+					catch (UserRequestedExitException)
+					{
+						throw;
+					}
+					catch
 					{
 					}
 
@@ -490,11 +486,11 @@ namespace Keysharp.Core
 						//if (System.Threading.Thread.CurrentThread.ManagedThreadId == Processes.ManagedMainThreadID)
 						Application.DoEvents();//Can sometimes throw on linux.
 					}
-                    catch (UserRequestedExitException)
-                    {
-                        throw;
-                    }
-                    catch
+					catch (UserRequestedExitException)
+					{
+						throw;
+					}
+					catch
 					{
 					}
 
@@ -616,11 +612,12 @@ namespace Keysharp.Core
 			}
 
 			Environment.ExitCode = ec;
-            //Environment.Exit(exitCode);//This seems too harsh, and also prevents compiled unit tests from properly being run.
-            if (useThrow)
-                throw new UserRequestedExitException();
-            else
-                return false;
+
+			//Environment.Exit(exitCode);//This seems too harsh, and also prevents compiled unit tests from properly being run.
+			if (useThrow)
+				throw new UserRequestedExitException();
+			else
+				return false;
 		}
 
 		/// <summary>
@@ -679,7 +676,7 @@ namespace Keysharp.Core
 				action();
 				return true;
 			}
-            catch (Error kserr)
+			catch (Error kserr)
 			{
 				//Processed would still be false of the user did a throw statement in the script.
 				//But if we're throwing from inside of Keysharp, Processed should always be true.
@@ -703,11 +700,12 @@ namespace Keysharp.Core
 				var ex = mainex.InnerException ?? mainex;
 
 				if (mainex is UserRequestedExitException || ex is UserRequestedExitException)
-                {
-                    if (pop)
-                        _ = Threads.EndThread(true);
-                    return true;
-                }
+				{
+					if (pop)
+						_ = Threads.EndThread(true);
+
+					return true;
+				}
 				else if (ex is Error kserr)
 				{
 					if (!kserr.Processed)
@@ -732,6 +730,18 @@ namespace Keysharp.Core
 
 				return false;
 			}
+		}
+
+		/// <summary>
+		/// Special exception class to signal that the user has requested exiting the script
+		/// via ExitApp().
+		/// Note this does not derive from Error so that it can be properly distinguished in
+		/// catch statements.
+		/// </summary>
+		public class UserRequestedExitException : Exception
+		{
+			public UserRequestedExitException()
+			{ }
 		}
 
 		/// <summary>

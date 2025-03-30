@@ -8,6 +8,52 @@ namespace Keysharp.Tests
 		[Test, Category("Flow")]
 		public void FlowEnum() => Assert.IsTrue(TestScript("flow-enum", false));
 
+		[Test, Category("Flow"), NonParallelizable]
+		public void FlowExit()
+		{
+			Assert.IsTrue(HasPassed(RunScript(@"
+				FileAppend('pass', '*')
+				ExitApp(0)
+				FileAppend('fail', '*')
+			", "1", true, false, 0)));
+			Flow.ResetState();
+			Assert.IsTrue(HasPassed(RunScript(@"
+				FileAppend('pass', '*')
+				ExitApp(2)
+				FileAppend('fail', '*')
+			", "2", true, false, 2)));
+			Flow.ResetState();
+			Assert.IsTrue(HasPassed(RunScript(@"
+				FileAppend('pass', '*')
+				Exit(0)
+				FileAppend('fail', '*')
+			", "3", true, false, 0)));
+			Flow.ResetState();
+			Assert.IsTrue(HasPassed(RunScript(@"
+				FileAppend('pass', '*')
+				Exit(2)
+				FileAppend('fail', '*')
+			", "4", true, false, 2)));
+			Flow.ResetState();
+			Assert.IsTrue(HasPassed(RunScript(@"
+				SetTimer((*) => FileAppend('pass', '*'), -1)
+				Exit(1)
+			", "5", true, false, 1)));
+			Flow.ResetState();
+			Assert.IsTrue(HasPassed(RunScript(@"
+				SetTimer((*) => (FileAppend('pass', '*'), Exit(3)), -1)
+				Exit(2)
+				FileAppend('fail', '*')
+			", "6", true, false, 3)));
+			Flow.ResetState();
+			Assert.IsTrue(HasPassed(RunScript(@"
+				SetTimer((*) => (FileAppend('pass', '*'), ExitApp(0)), -1)
+				SomeLabel:
+				Sleep(1)
+				goto SomeLabel
+			", "7", true, false, 0)));
+		}
+
 		[Test, Category("Flow")]
 		public void FlowForIn() => Assert.IsTrue(TestScript("flow-for-in", false));
 
@@ -54,12 +100,6 @@ namespace Keysharp.Tests
 
 		[Test, Category("Flow")]
 		public void FlowLoopRead() => Assert.IsTrue(TestScript("flow-loop-read", true));
-
-		[Test, Category("Flow")]
-		public void FlowLoopReturn() => Assert.IsTrue(TestScript("flow-loop-return", false));
-
-		[Test, Category("Flow")]
-		public void FlowLoopThrow() => Assert.IsTrue(TestScript("flow-loop-throw", false));
 
 #if WINDOWS
 		[Test, Category("Flow")]
@@ -187,22 +227,28 @@ namespace Keysharp.Tests
 #endif
 
 		[Test, Category("Flow")]
+		public void FlowLoopReturn() => Assert.IsTrue(TestScript("flow-loop-return", false));
+
+		[Test, Category("Flow")]
 		public void FlowLoopSwitchBreakGoto() => Assert.IsTrue(TestScript("flow-loop-switch-break-goto", true));
 
 		[Test, Category("Flow")]
+		public void FlowLoopThrow() => Assert.IsTrue(TestScript("flow-loop-throw", false));
+
+		[Test, Category("Flow"), NonParallelizable]
+		public void FlowMultiStatement() => Assert.IsTrue(TestScript("flow-multi-statement", false));
+
+		[Test, Category("Flow")]
 		public void FlowOnError() => Assert.IsTrue(TestScript("flow-onerror", false));
+
+		[Test, Category("Flow"), NonParallelizable]
+		public void FlowRealThreads() => Assert.IsTrue(TestScript("flow-realthreads", false));
 
 		[Test, Category("Flow")]
 		public void FlowSwitch() => Assert.IsTrue(TestScript("flow-switch", true));
 
 		[Test, Category("Flow")]
 		public void FlowTryCatch() => Assert.IsTrue(TestScript("flow-trycatch", true));
-
-		[Test, Category("Flow"), NonParallelizable]
-		public void FlowRealThreads() => Assert.IsTrue(TestScript("flow-realthreads", false));
-
-		[Test, Category("Flow"), NonParallelizable]
-		public void FlowMultiStatement() => Assert.IsTrue(TestScript("flow-multi-statement", false));
 
 		//Collections tests already test foreach in C#, so just test the script here.
 		[Test, Category("Flow")]
@@ -228,51 +274,5 @@ namespace Keysharp.Tests
 			Assert.AreEqual(0L, Accessors.A_Index);
 			Assert.IsTrue(TestScript("flow-while", true));
 		}
-
-        [Test, Category("Flow"), NonParallelizable]
-        public void FlowExit()
-        {
-            Assert.IsTrue(HasPassed(RunScript(@"
-				FileAppend('pass', '*')
-				ExitApp(0)
-				FileAppend('fail', '*')
-			", "1", true, false, 0)));
-            Flow.ResetState();
-            Assert.IsTrue(HasPassed(RunScript(@"
-				FileAppend('pass', '*')
-				ExitApp(2)
-				FileAppend('fail', '*')
-			", "2", true, false, 2)));
-            Flow.ResetState();
-            Assert.IsTrue(HasPassed(RunScript(@"
-				FileAppend('pass', '*')
-				Exit(0)
-				FileAppend('fail', '*')
-			", "3", true, false, 0)));
-            Flow.ResetState();
-            Assert.IsTrue(HasPassed(RunScript(@"
-				FileAppend('pass', '*')
-				Exit(2)
-				FileAppend('fail', '*')
-			", "4", true, false, 2)));
-            Flow.ResetState();
-            Assert.IsTrue(HasPassed(RunScript(@"
-				SetTimer((*) => FileAppend('pass', '*'), -1)
-				Exit(1)
-			", "5", true, false, 1)));
-            Flow.ResetState();
-            Assert.IsTrue(HasPassed(RunScript(@"
-				SetTimer((*) => (FileAppend('pass', '*'), Exit(3)), -1)
-				Exit(2)
-				FileAppend('fail', '*')
-			", "6", true, false, 3)));
-            Flow.ResetState();
-            Assert.IsTrue(HasPassed(RunScript(@"
-				SetTimer((*) => (FileAppend('pass', '*'), ExitApp(0)), -1)
-				SomeLabel:
-				Sleep(1)
-				goto SomeLabel
-			", "7", true, false, 0)));
-        }
-    }
+	}
 }

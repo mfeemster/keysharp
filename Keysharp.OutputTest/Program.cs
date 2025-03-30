@@ -118,6 +118,10 @@ namespace Keysharp.CompiledMain
 				Keysharp.Core.Flow.ExitApp(1);
 				return Environment.ExitCode;
 			}
+			catch (Keysharp.Core.Flow.UserRequestedExitException exitex)
+			{
+				return Environment.ExitCode;
+			}
 			catch (System.Exception mainex)
 			{
 				var ex = mainex.InnerException ?? mainex;

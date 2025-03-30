@@ -33,9 +33,9 @@
 #endif
 			tpVars.HandleCreated += TpVars_HandleCreated;
 			editScriptToolStripMenuItem.Visible = !A_IsCompiled;
-        }
+		}
 
-        public void AddText(string s, MainFocusedTab tab, bool focus)
+		public void AddText(string s, MainFocusedTab tab, bool focus)
 		{
 			//Use CheckedBeginInvoke() because CheckedInvoke() seems to crash if this is called right as the window is closing.
 			//Such as with a hotkey that prints on mouse click, which will cause a print when the X is clicked to close.

@@ -11,15 +11,18 @@
 		/// The default item in the menu.
 		/// </summary>
 		internal ToolStripItem defaultItem;
+
 		/// <summary>
 		/// A variable needed to assign <see cref="Handle"/> to once in the constructor
 		/// to ensure the underlying handle is created. Unused otherwise.
 		/// </summary>
 		protected long dummyHandle;
+
 		/// <summary>
 		/// A global counter of all menus in existence within the script.
 		/// </summary>
 		private static int menuCount = 0;
+
 		/// <summary>
 		/// Click handlers for all menu items within this menu.
 		/// Each item can have more than one click handler.
