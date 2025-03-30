@@ -104,7 +104,8 @@ namespace Keysharp.Core.Common.Invoke
 
                     case "double": type = typeof(double); break;
 
-                    case "ptr": type = typeof(IntPtr); break;
+                    case "ptr":
+                    case "uptr": type = typeof(IntPtr); break;
 
                     default:
                         _ = Errors.ErrorOccurred(err = new ValueError($"Arg or return type of {name} is invalid.")) ? throw err : "";
@@ -136,7 +137,7 @@ namespace Keysharp.Core.Common.Invoke
                     {
                         if (type == typeof(IntPtr))
                         {
-                            if (name == "ptr")
+                            if (name == "ptr" || name == "uptr")
                             {
                                 if (p is null)
                                     args[n] = IntPtr.Zero;
