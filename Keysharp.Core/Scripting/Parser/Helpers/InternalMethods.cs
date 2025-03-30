@@ -46,7 +46,8 @@ namespace Keysharp.Scripting
 			internal static MethodReference ForceBool => new (typeof(Script), "ForceBool");
 			internal static MethodReference FlattenParam => new (typeof(Script), "FlattenParam");
 			internal static MethodReference Func => new (typeof(Functions), "Func");
-			internal static MethodReference GetMethodOrProperty => new (typeof(Script), "GetMethodOrProperty");
+            internal static MethodReference Closure => new(typeof(Functions), "Closure");
+            internal static MethodReference GetMethodOrProperty => new (typeof(Script), "GetMethodOrProperty");
 			internal static MethodReference GetPropertyValue => new (typeof(Script), "GetPropertyValue");
 			internal static MethodReference HandleSingleInstance => new (typeof(Script), "HandleSingleInstance");
 			internal static MethodReference HotIf => new (typeof(HotkeyDefinition), "HotIf");
