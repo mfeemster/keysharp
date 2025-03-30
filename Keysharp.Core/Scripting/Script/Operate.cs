@@ -135,8 +135,12 @@ namespace Keysharp.Scripting
 							goto done;
 					}
 
-					//Traverse class hierarchy to see if there is a match.
-					if (subject != null)
+					var alias = Parser.TypeNameAliases.FirstOrDefault(kvp => kvp.Value.Equals(test, StringComparison.OrdinalIgnoreCase)).Key;
+					if (alias != null)
+						test = alias;
+
+                    //Traverse class hierarchy to see if there is a match.
+                    if (subject != null)
 					{
 						var type = subject.GetType();
 

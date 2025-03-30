@@ -292,8 +292,9 @@ namespace Keysharp.Scripting
 		public static Dictionary<string, string> TypeNameAliases = new(StringComparer.OrdinalIgnoreCase)
 		{
 			{ "int64", "Integer" },
-			{ "object", "KeysharpObject" },
-			{ "double", "Float" }
+            { "double", "Float" },
+            { "KeysharpObject", "Object" },
+            { "FuncObj", "Func" }
 		};
 
         public static ParameterSyntax ThisParam = SyntaxFactory.Parameter(SyntaxFactory.Identifier("@this"))

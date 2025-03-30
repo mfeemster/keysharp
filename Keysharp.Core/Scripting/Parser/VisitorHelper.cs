@@ -629,17 +629,12 @@ namespace Keysharp.Scripting
                 );
         }
 
-        public static ExpressionSyntax CreateFuncObjAssignment(string variableName, string functionName)
+        public static ExpressionSyntax CreateSimpleAssignment(string variableName, ExpressionSyntax funcObj)
         {
             return SyntaxFactory.AssignmentExpression(
                 SyntaxKind.SimpleAssignmentExpression,
                 SyntaxFactory.IdentifierName(variableName),
-                CreateFuncObj(
-                    SyntaxFactory.CastExpression(
-                        SyntaxFactory.IdentifierName("Delegate"),
-                        SyntaxFactory.IdentifierName(functionName)
-                    )
-                )
+                funcObj
             );
         }
 
@@ -665,9 +660,9 @@ namespace Keysharp.Scripting
                 );
         }
 
-        public static InvocationExpressionSyntax CreateFuncObj(ExpressionSyntax funcArg)
+        public static InvocationExpressionSyntax CreateFuncObj(ExpressionSyntax funcArg, bool asClosure = false)
         {
-            return ((InvocationExpressionSyntax)InternalMethods.Func)
+            return (asClosure ? (InvocationExpressionSyntax)InternalMethods.Closure : (InvocationExpressionSyntax)InternalMethods.Func)
                 .WithArgumentList(
                     SyntaxFactory.ArgumentList(
                         SyntaxFactory.SingletonSeparatedList(
@@ -963,8 +958,8 @@ namespace Keysharp.Scripting
         {
             name = name.Trim('"', '\'');
 
-            if (Parser.TypeNameAliases.ContainsKey(name) && Reflections.stringToTypes.ContainsKey(Parser.TypeNameAliases[name]))
-                name = Parser.TypeNameAliases[name];
+            //if (Parser.TypeNameAliases.ContainsKey(name) && Reflections.stringToTypes.ContainsKey(Parser.TypeNameAliases[name]))
+            //    name = Parser.TypeNameAliases[name];
 
             if (nameCase == eNameCase.Lower)
                 return ToValidIdentifier(name.ToLowerInvariant());

@@ -46,6 +46,8 @@ namespace Keysharp.Core
 
         public static IFuncObj Func(Delegate del, object obj = null) => new FuncObj(del, obj ?? del.Target);
 
+        public static IFuncObj Closure(Delegate del, object obj = null) => new Closure(del, obj ?? del.Target);
+
         /// <summary>
         /// Gets a method of an object.
         /// </summary>

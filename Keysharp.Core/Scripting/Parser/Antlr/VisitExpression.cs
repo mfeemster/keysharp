@@ -452,6 +452,9 @@ namespace Keysharp.Scripting
                     var leftExpression = (ExpressionSyntax)Visit(context.left);
                     // Ensure the classExpression is treated as a string (e.g., "KeysharpObject")
                     var classAsRawString = context.right.GetText().Trim();
+                    if (classAsRawString.IndexOfAny(Spaces) != -1)
+                        throw new Error("Is expression comparison word cannot contain spaces: " + classAsRawString);
+
                     if (Parser.TypeNameAliases.TryGetValue(classAsRawString, out var alias))
                         classAsRawString = alias;
 

@@ -1490,7 +1490,8 @@ namespace Keysharp.Scripting
                     SyntaxFactory.CastExpression(
                         SyntaxFactory.IdentifierName("Delegate"),
                         SyntaxFactory.IdentifierName(methodName)
-                    )
+                    ),
+                    !modifiers.Any(m => m.IsKind(SyntaxKind.StaticKeyword))
                 );
 
                 parser.currentFunc.Body.Add(delegateSyntax);
@@ -1519,7 +1520,7 @@ namespace Keysharp.Scripting
 
                     // Add the assignment statement to the `statements` list
                     parser.currentFunc.Body.Add(SyntaxFactory.ExpressionStatement(
-                        CreateFuncObjAssignment(methodName.ToLowerInvariant(), methodName)
+                        CreateSimpleAssignment(methodName.ToLowerInvariant(), funcObj)
                     ));
                 }
 

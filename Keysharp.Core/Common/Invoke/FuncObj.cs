@@ -120,23 +120,28 @@
 		}
 	}
 
+	internal class Closure : FuncObj
+	{
+        internal Closure(Delegate m, object o = null) : base(m, o) { }
+    }
+
 	internal class FuncObj : KeysharpObject, IFuncObj
 	{
 		protected bool anyRef;
 		protected bool isVariadic;
 		protected MethodInfo mi;
 		protected MethodPropertyHolder mph;
-        new public static object __Static { get; set; }
-        public object Inst { get; set; }
-        public Type DeclaringType => mi.DeclaringType;
+		new public static object __Static { get; set; }
+		public object Inst { get; set; }
+		public Type DeclaringType => mi.DeclaringType;
 		public bool IsClosure => Inst != null && mi.DeclaringType?.DeclaringType == Inst.GetType();
 
-        public bool IsBuiltIn => mi.DeclaringType.Module.Name.StartsWith("keysharp.core", StringComparison.OrdinalIgnoreCase);
-		public bool IsValid => mi != null&& mph != null&& mph.callFunc != null;
+		public bool IsBuiltIn => mi.DeclaringType.Module.Name.StartsWith("keysharp.core", StringComparison.OrdinalIgnoreCase);
+		public bool IsValid => mi != null && mph != null && mph.callFunc != null;
 		public string Name => mi != null ? mi.Name : "";
 		internal bool IsVariadic => isVariadic;
-		internal long MaxParams = 9999;
-		internal long MinParams = 0;
+		public long MaxParams { get; internal set; } = 9999;
+		public long MinParams { get; internal set; } = 0;
 		internal MethodPropertyHolder Mph => mph;
 		public new (Type, object) super => (typeof(KeysharpObject), this);
 
