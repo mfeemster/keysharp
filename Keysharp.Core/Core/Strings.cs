@@ -1087,6 +1087,15 @@
 		public static string String(object value) => value.As();
 
 		/// <summary>
+		/// Creates a <see cref="StringBuffer"/> object with a capacity of 256.
+		/// This should be used in place of pointers when calling a raw API function that takes a pointer argument
+		/// which will be written to.
+		/// </summary>
+		/// <param name="str">An initial value to place inside of the buffer. Default: empty.</param>
+		/// <returns>The newly created <see cref="StringBuffer"/>.</returns>
+		public static StringBuffer StringBuffer(object str = null) => new (str.As(), 256);
+
+		/// <summary>
 		/// Creates a <see cref="StringBuffer"/> object.
 		/// This should be used in place of pointers when calling a raw API function that takes a pointer argument
 		/// which will be written to.
@@ -1094,7 +1103,7 @@
 		/// <param name="str">An initial value to place inside of the buffer. Default: empty.</param>
 		/// <param name="capacity">An initial capacity for the <see cref="StringBuffer"/>'s internal buffer. Default: 256.</param>
 		/// <returns>The newly created <see cref="StringBuffer"/>.</returns>
-		public static StringBuffer StringBuffer(object str = null, object capacity = null) => new (str.As(), capacity.Ai(256));
+		public static StringBuffer StringBuffer(object str, object capacity) => new (str.As(), capacity.Ai(256));
 
 		/// <summary>
 		/// Retrieves the count of how many characters are in a string.

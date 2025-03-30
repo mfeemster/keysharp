@@ -268,7 +268,7 @@ namespace Keysharp.Core.Common.Strings
 				suffix = opt.Slice(prefix.Length);
 				doit = true;
 			}
-			else if (opt[0] == '+' && opt.Slice(1).StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+			else if (opt.Length > 0 && opt[0] == '+' && opt.Slice(1).StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
 			{
 				suffix = opt.Slice(2);
 				doit = true;
