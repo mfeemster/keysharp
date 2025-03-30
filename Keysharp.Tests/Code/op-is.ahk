@@ -274,3 +274,47 @@ if (not x is string)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
+
+x := {}
+
+if (x is object)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+
+x := []
+
+if (x is array)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+
+if (x is object)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+
+x := (*) => 1
+
+if (x is not Closure)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+
+if (x is Func)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+
+f() => (x := 1, (*) => x)
+x := f()
+
+if (x is Closure)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+
+if (x is Func)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
