@@ -1062,9 +1062,9 @@ MaximizeAllButton := MyGui.Add("Button", "x10 y+5", "Maximize all")
 MaximizeAllButton.OnEvent("Click", "MaximizeAll")
 MoveAllButton := MyGui.Add("Button", "x10 y+5", "Move me")
 MoveAllButton.OnEvent("Click", "MoveButton")
-CandyProgressButton := MyGui.Add("Button", "x10 y+5", "Candy progress")
+CandyProgressButton := MyGui.Add("Button", "y+5", "Candy progress") ; x deliberately omitted to ensure default positioning works when only one dimension is specified.
 CandyProgressButton.OnEvent("Click", "CandyProgress")
-TestTypesButton := MyGui.Add("Button", "x10 y+5", "Test types")
+TestTypesButton := MyGui.Add("Button", "x10", "Test types") ; Same, but for y.
 TestTypesButton.OnEvent("Click", "TestTypes")
 
 	MinimizeAll()

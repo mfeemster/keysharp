@@ -252,7 +252,7 @@
 
 			foreach (Control ctrl in control.Controls)
 			{
-				if (!(ctrl is KeysharpStatusStrip))//Don't count a status strip in the bounds since its placement is handled manually.
+				if (ctrl is not KeysharpStatusStrip)//Don't count a status strip in the bounds since its placement is handled manually.
 				{
 					var temp = ctrl.Right;
 
@@ -270,6 +270,53 @@
 						p.bottom = ctrl;
 					}
 				}
+			}
+
+			return p;
+		}
+
+		/// <summary>
+		/// Finds the right most and bottom most child controls of a <see cref="Control"/> since the specified control was added.<br/>
+		/// The .Right and .Bottom properties of the controls are used to identify the controls.
+		/// If no controls have been added after since, then since will be returned in both elements of the tuple.
+		/// </summary>
+		/// <param name="control">The <see cref="Control"/> whose children will be traversed.</param>
+		/// <param name="since">The <see cref="Control"/> after which children will be considered.</param>
+		/// <returns>A <see cref="Control"/>,<see cref="Control"/> tuple containing the right and bottom most child controls of the <see cref="Control"/> after since was added.
+		/// null,null if none found.
+		/// </returns>
+		internal static (Control, Control) RightBottomMostSince(this Control control, Control since)
+		{
+			var maxx = 0;
+			var maxy = 0;
+			(Control right, Control bottom) p = (null, null);
+			var orderedControls = control.Controls.Cast<Control>().Where(c => c.Tag is GuiTag).OrderBy(c => ((GuiTag)c.Tag).Index);
+
+			for (var i = orderedControls.Count() - 1; i >= 0; i--)
+			{
+				var ctrl = orderedControls.ElementAt(i);
+
+				if (ctrl is not KeysharpStatusStrip)//Don't count a status strip in the bounds since its placement is handled manually.
+				{
+					var temp = ctrl.Right;
+
+					if (temp > maxx)
+					{
+						maxx = temp;
+						p.right = ctrl;
+					}
+
+					temp = ctrl.Bottom;
+
+					if (temp > maxy)
+					{
+						maxy = temp;
+						p.bottom = ctrl;
+					}
+				}
+
+				if (ctrl == since)
+					break;
 			}
 
 			return p;

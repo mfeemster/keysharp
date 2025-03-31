@@ -158,7 +158,7 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 * The `File` object is internally named `KeysharpFile` so that it doesn't conflict with `System.IO.File`.
 * `obj.OwnProps()/ObjOwnProps()` take an optional second/third parameter as a boolean (default: `True`). Pass `True` to only return the properties defined by the user, else `False` to also return properties defined internally by Keysharp.
 * In `SetTimer()`, the priority is not in the range -2147483648 and 2147483647, instead it is only 0-4.
-* If a `ComObject` with `VarType` of `VT_DISPATCH` and a null pointer value is assinged a non-null pointer value, its type does not change. The Ptr member remains available.
+* If a `ComObject` with `VarType` of `VT_DISPATCH` and a null pointer value is assinged a non-null pointer value, its type does not change. The `Ptr` member remains available.
 * `A_LineNumber` is not a reliable indicator of the line number because the preprocessor condenses the code before parsing and compiling it.
 * Loop counter variables for `for in` loops declared inside of a function cannot have the same name as a local variable declared inside of that same function.
 ```
@@ -201,10 +201,7 @@ testfunc()
 * The default name for the array of parameters in a variadic function is `args`, instead of `params`. This is due to `params` being a reserved word in C#.
 	+ The array for variadic parameters is read only and cannot be manipulated in the way a normal `Array` can.
 * `DllCall()` has the following caveats:
-	+ An alternative to passing a `Buffer` object with type `Ptr` to a function which will allocate and place string data into the buffer, the caller can instead use a `StringBuffer` object to hold the new string. `wsprintf()` is one such example.
-		+ `StringBuffer` internally uses a `StringBuilder` which is how C# P/Invoke handles string pointers.
-		+ This relieves the caller of having to call `StrGet()` on the new string data.
-	+ Also use `Ptr` and `StringBuffer` for double pointer parameters such as `LPTSTR*`.
+	+ Use `Ptr` and `StringBuffer` for double pointer parameters such as `LPTSTR*`.
 	+ Passing `GetCommandLine` to `DllCall()` won't work exactly as the examples show. Instead, the type must be `Ptr` and the result must be wrapped in `StrGet()` like:
 		+ `StrGet(DllCall("GetCommandLine", "ptr"))`
 		+ This holds true for any function which returns a pointer to memory which was allocated inside of a Dll.
@@ -303,6 +300,30 @@ class class1
 
 ###	Additions/Improvements: ###
 * Buffer has an `__Item[]` indexer which can be used to read a byte at a 1-based offset.
+* A new class named `StringBuffer` which can be used for passing string memory to `DllCall()` which will be written to inside of the call.
+	+ There are two methods for creating a `StringBuffer`:
+		+ `StringBuffer(str := "") => StringBuffer`: Creates a `StringBuffer` with a string of `str` and a capacity of 256.
+		+ `StringBuffer(str, capacity) => StringBuffer`: Creates a `StringBuffer` with a string of `str` and a capacity of `Max(16, capacity)`.
+	+ `StringBuffer` is implicitly castable to `String`.
+```
+	sb := StringBuffer("hello")
+	MsgBox(sb) ; Shows "hello".
+```
+	+ As an alternative to passing a `Buffer` object with type `Ptr` to a function which will allocate and place string data into the buffer, the caller can instead use a `StringBuffer` object to hold the new string.
+	+ This relieves the caller of having to create a `Buffer` object, then call `StrGet()` on the new string data.
+	+ `wsprintf()` is one such example.
+```
+	; Using a Buffer:	
+	ZeroPaddedNumber := Buffer(20)
+	DllCall("wsprintf", "Ptr", ZeroPaddedNumber, "Str", "%010d", "Int", 432, "Cdecl")
+	MsgBox(StrGet(ZeroPaddedNumber)) ; Shows "0000000432".
+	
+	; Using a StringBuffer:
+	sb := StringBuffer()
+	DllCall("wsprintf", "Ptr", sb, "Str", "%010d", "Int", 432, "Cdecl")
+	MsgBox(sb) ; No need to use StrGet() anymore.
+```
+	+ `StringBuffer` internally uses a `StringBuilder` which is how C# P/Invoke handles string pointers.
 * New methods for `Array`:
 	+ `Add(value) => Integer` : Adds a single element to the array.
 		+ This should be more efficient than `Push(values*)` when adding a single item because it's not variadic. It also returns the length of the array after the add completes.
@@ -323,7 +344,7 @@ class class1
 	+ `Sinh(value) => Double`
 	+ `Cosh(value) => Double`
 	+ `Tanh(value) => Double`
-* New function `RandomSeed(Integer)` to reinitialize the random number generator for the current thread with a specified numerical seed.
+* A New function `RandomSeed(Integer)` to reinitialize the random number generator for the current thread with a specified numerical seed.
 * New file functions:
 	+ `FileDirName(filename) => String` to return the full path to filename, without the actual filename or trailing directory separator character.
 	+ `FileFullPath(filename) => String` to return the full path to filename.

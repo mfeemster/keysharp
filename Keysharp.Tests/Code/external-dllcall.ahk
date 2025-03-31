@@ -48,6 +48,25 @@ if (str == "0000000432" && str == fmtstr)
 else
 	FileAppend "fail", "*"
 
+str := StringBuffer()
+DllCall("wsprintf", "Ptr", str, "Str", "%010d", "Int", 432, "Cdecl")
+fmtstr := Format(str, "0:D10")
+
+if (str == "0000000432" && str == fmtstr)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+MAX_DIR_PATH := 260 - 12 + 1
+folder := A_MyDocuments
+longPath := StringBuffer()
+DllCall("GetLongPathNameW", "Str", folder, "Ptr", longPath, "UInt", MAX_DIR_PATH, "UInt")
+
+if (folder == longPath && longPath == A_MyDocuments)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
 freq := 0
 CounterBefore := 0
 CounterAfter := 0
@@ -212,8 +231,8 @@ MCode(mcode) {
 /*
 int CallCallbackZeroArgs(void* ptr)
 {
-    int (*func)(void) = (int(*)(void))ptr;
-    return func();
+	int (*func)(void) = (int(*)(void))ptr;
+	return func();
 }
 */
 
@@ -225,15 +244,15 @@ result := 0
 result := DllCall(ptr, "ptr", CallbackCreate(CallbackZeroArgs))
 
 if (result == 3)
-    FileAppend "pass", "*"
+	FileAppend "pass", "*"
 else
-    FileAppend "fail", "*"
+	FileAppend "fail", "*"
 
 /*
 int CallCallbackTwoArgs(void* ptr, int arg1, int arg2)
 {
-    int (*func)(int, int) = (int(*)(int, int))ptr;
-    return func(arg1, arg2);
+	int (*func)(int, int) = (int(*)(int, int))ptr;
+	return func(arg1, arg2);
 }
 */
 ptr := MCode('2,x64:SInIidFEicJI/+A=')
@@ -242,9 +261,9 @@ result := 0
 result := DllCall(ptr, "ptr", CallbackCreate(CallbackTwoArgs), "int", -1, "int", 4)
 
 if (result == 3) ; This is testing the conversion of long back to int.
-    FileAppend "pass", "*"
+	FileAppend "pass", "*"
 else
-    FileAppend "fail", "*"
+	FileAppend "fail", "*"
 
 shell := ComObject("WScript.Shell")
 exec := shell.Exec("Notepad.exe")

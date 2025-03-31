@@ -296,7 +296,7 @@
 					{
 						var ctrl = orderedControls.ElementAt(i);
 
-						if (ctrl != null && !(ctrl is KeysharpStatusStrip))//Don't count a status strip as a last control since its placement is handled manually.
+						if (ctrl != null && ctrl is not KeysharpStatusStrip)//Don't count a status strip as a last control since its placement is handled manually.
 							return ctrl;
 					}
 				}
@@ -305,7 +305,7 @@
 			}
 		}
 
-		internal Point Section { get; set; }
+		internal Control Section { get; set; }
 
 		internal StatusStrip StatusStrip { get; set; }
 
@@ -1125,10 +1125,10 @@
 			if (opts.autosize.HasValue)
 				Reflections.SafeSetProperty(ctrl, "AutoSize", opts.autosize.Value);
 
-			if (text != null && !(ctrl is KeysharpDateTimePicker) && !(ctrl is HotkeyBox) && !(ctrl is KeysharpLinkLabel))
+			if (text != null && ctrl is not KeysharpDateTimePicker && ctrl is not HotkeyBox && ctrl is not KeysharpLinkLabel)
 				ctrl.Text = text;
 
-			if (!(ctrl is KeysharpStatusStrip))//Don't want status strip to have a margin, so it can be placed at the bottom of the form when autosize is true, and have it look exactly like it would if it were docked when autosize is false.
+			if (ctrl is not KeysharpStatusStrip)//Don't want status strip to have a margin, so it can be placed at the bottom of the form when autosize is true, and have it look exactly like it would if it were docked when autosize is false.
 				ctrl.Margin = form.Margin;
 
 			//ctrl.Padding = form.Padding;
@@ -1179,7 +1179,7 @@
 			var w = scaledPref;
 			var lastControl = LastControl;
 
-			if (lastControl is KeysharpRadioButton && !(ctrl is KeysharpRadioButton))//Pop container if we've ended a radio group.
+			if (lastControl is KeysharpRadioButton && ctrl is not KeysharpRadioButton)//Pop container if we've ended a radio group.
 			{
 				LastContainer = LastContainer.Parent;
 				lastControl = LastControl;//Will retrieve the last control in the LastContainer we just assigned.
@@ -1265,7 +1265,7 @@
 					}
 					else if (ctrl is KeysharpListView lv)
 					{
-                        lv.Height = defheight + (lv.Margin.Top + lv.Margin.Bottom);
+						lv.Height = defheight + lv.Margin.Top + lv.Margin.Bottom;//ListView doesn't have an ItemHeight property, so attempt to compute it here.
 					}
 					else if (ctrl is KeysharpTabControl tc2)
 					{
@@ -1317,7 +1317,7 @@
 				else if (opts.xm != int.MinValue)
 					xoffset = form.Margin.Left + (opts.xm * dpiscale);
 				else if (opts.xs != int.MinValue)
-					xoffset = Section.X + (opts.xs * dpiscale);
+					xoffset = Section.Location.X + (opts.xs * dpiscale);
 				else
 					xoffset = int.MinValue;
 
@@ -1328,11 +1328,47 @@
 				else if (opts.ym != int.MinValue)
 					yoffset = form.Margin.Top + (opts.ym * dpiscale);
 				else if (opts.ys != int.MinValue)
-					yoffset = Section.Y + (opts.ys * dpiscale);
-                else
+					yoffset = Section.Location.Y + (opts.ys * dpiscale);
+				else
 					yoffset = int.MinValue;
 
-                loc = new Point((int)Math.Round(xoffset), (int)Math.Round(yoffset));
+				//X specified, but Y wasn't.
+				if (xoffset != int.MinValue && yoffset == int.MinValue)
+				{
+					if (opts.xp == 0)//XP or XP+0: Below the previous control (bottom edge plus margin).
+						yoffset += lastControl.Height + form.Margin.Top;
+					else if (opts.xplus != int.MinValue || opts.xp != int.MinValue)//X+n or XP+nonzero (Already checked for xp == 0 above): Same as the previous control's top edge (YP).
+						yoffset = lastControl.Top;
+					else if (opts.xm != int.MinValue || opts.x != int.MinValue)//Xn or XM: Beneath all previous controls (maximum Y extent plus margin).
+					{
+						var (r, b) = lastControl.Parent.RightBottomMost();//Get the bottom-most control in the current container.
+						yoffset = 123; // b.Top; // + b.Height;// + form.Margin.Top;
+					}
+					else if (opts.xs != int.MinValue && Section != null)//XS: Beneath all previous controls since the most recent use of the Section option.
+					{
+						var (r, b) = Section.Parent.RightBottomMostSince(Section);//Get the bottom-most control in the current section.
+						yoffset = b.Top + b.Height + form.Margin.Top;
+					}
+				}
+				else if (xoffset == int.MinValue && yoffset != int.MinValue)//Y, but not X.
+				{
+					if (opts.yp == 0)//YP or YP+0: To the right of the previous control (right edge plus margin)..
+						xoffset += lastControl.Width + form.Margin.Left;
+					else if (opts.yplus != int.MinValue || opts.yp != int.MinValue)//Y+n or YP+nonzero (Already checked for yp == 0 above): Same as the previous control's left edge (XP).
+						xoffset = lastControl.Left;
+					else if (opts.ym != int.MinValue || opts.y != int.MinValue)//Yn or YM: To the right of all previous controls (maximum X extent plus margin).
+					{
+						var (r, b) = lastControl.Parent.RightBottomMost();//Get the right-most control in the current container.
+						xoffset = r.Left + r.Width + form.Margin.Left;
+					}
+					else if (opts.ys != int.MinValue && Section != null)//YS: To the right of all previous controls since the most recent use of the Section option.
+					{
+						var (r, b) = Section.Parent.RightBottomMostSince(Section);//Get the right-most control in the current section.
+						xoffset = r.Left + r.Width + form.Margin.Left;
+					}
+				}
+
+				loc = new Point((int)Math.Round(xoffset), (int)Math.Round(yoffset));
 			}
 			else
 				loc = new Point(int.MinValue, int.MinValue);
@@ -1357,11 +1393,17 @@
 				var templast = opts.group && lastControl.Parent is Panel panel ? panel : lastControl;
 				ctrl.Location = new Point(templast.Location.X, templast.Location.Y + templast.Height + form.Margin.Bottom);
 			}
-			else if (lastControl != null && lastControl.Dock == DockStyle.None && loc.X == int.MinValue)//Depends on loc.Y not being MinValue, but that's not reliable based on the logic changes above.
-				ctrl.Location = new Point(lastControl.Left + lastControl.Width + lastControl.Margin.Right + ctrl.Margin.Left, loc.Y);
+			else if (lastControl != null && lastControl.Dock == DockStyle.None && loc.X == int.MinValue)
+			{
+				//Will only have gotten here if y was specified in absolute coords using Yn with x omitted.
+				var (r, b) = lastControl.Parent.RightBottomMost();//Get the right-most control in the current container.
+				ctrl.Location =  new Point(r.Left + r.Width + r.Margin.Right, loc.Y);
+			}
 			else if (lastControl != null && lastControl.Dock == DockStyle.None && loc.Y == int.MinValue)//Same but for loc.X.
 			{
-				ctrl.Location = new Point(loc.X, lastControl.Top + lastControl.Height + lastControl.Margin.Bottom + ctrl.Margin.Top);
+				//Will only have gotten here if x was specified in absolute coords using Xn with y omitted.
+				var (r, b) = lastControl.Parent.RightBottomMost();//Get the bottom-most control in the current container.
+				ctrl.Location = new Point(loc.X, b.Top + b.Height + b.Margin.Bottom);
 			}
 			else//Final fallback when nothing else has worked.
 			{
@@ -1460,7 +1502,7 @@
 			}
 
 			if (opts.section)
-				Section = ctrl.Location;
+				Section = ctrl;
 
 			return holder;
 		}

@@ -893,7 +893,7 @@ namespace Keysharp.Core
 			return "";
 		}
 
-		public object Insert(object rowNumber, params object[] obj)
+		public long Insert(object rowNumber, params object[] obj)
 		{
 			if (_control is KeysharpListView lv)//Note that this index might not actually be where the row is shown, due to sorting.
 			{
@@ -905,10 +905,10 @@ namespace Keysharp.Core
 
 				var lvo = opts is string options ? ListViewHelper.ParseListViewOptions(options) : new ListViewHelper.ListViewOptions();
 				var strs = obj.Length > 1 ? obj.Cast<object>().Skip(1).Select(x => x.Str()).ToList() : [];
-				ListViewHelper.AddOrInsertListViewItem(lv, lvo, strs, rownumber - 1);
+				return ListViewHelper.AddOrInsertListViewItem(lv, lvo, strs, rownumber - 1) + 1;
 			}
 
-			return null;
+			return 0L;
 		}
 
 		public long InsertCol(object columnNumber = null, object options = null, object columnTitle = null)
