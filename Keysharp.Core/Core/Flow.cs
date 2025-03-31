@@ -402,7 +402,7 @@ namespace Keysharp.Core
 							_ = Interlocked.Increment(ref Script.totalExistingThreads);
 							(bool, ThreadVariables) btv = Threads.PushThreadVariables(pri, true, false);
                             btv.Item2.currentTimer = timer;
-                            btv.Item2.eventInfo = Keysharp.Core.Objects.Object(new object[] { "Function", f, "TickCount", Environment.TickCount64 });
+                            btv.Item2.eventInfo = func;
                             var ret = func.Call();
 							_ = Threads.EndThread(btv.Item1);
 						}, true);//Pop on exception because EndThread() above won't be called.

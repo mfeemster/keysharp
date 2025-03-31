@@ -29,7 +29,7 @@ TimerHandler2()
 {
 global x
 	x++
-	SetTimer(A_EventInfo.Function, 0)
+	SetTimer(A_EventInfo, 0)
 
 }
 
