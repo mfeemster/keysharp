@@ -172,6 +172,7 @@
 						_ = Flow.ExitApp(1);
 					}
 				}
+				ExitIfNotPersistent();
 			});
 			Application.Run(mainWindow);
 		}
@@ -371,7 +372,7 @@
 				mainWindow?.CheckedBeginInvoke(new Action(() =>
 			{
 				if (!IsMainWindowClosing && !AnyPersistent())
-					_ = Flow.ExitApp((int)exitReason);
+					_ = Flow.ExitAppInternal(exitReason, Environment.ExitCode, false);
 			}), true, true);
 		}
 

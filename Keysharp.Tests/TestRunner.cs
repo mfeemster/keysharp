@@ -4,20 +4,8 @@ namespace Keysharp.Tests
 {
 	public class TestRunner
 	{
-		private const string ext = ".ahk";
 		protected string path = string.Format("..{0}..{0}..{0}Keysharp.Tests{0}Code{0}", Path.DirectorySeparatorChar);
-
-		protected bool TestScript(string source, bool testfunc, bool exeout = false)
-		{
-			var scriptPath = string.Concat(path, source, ext);
-			var b2 = true;
-			var b1 = HasPassed(RunScript(scriptPath, source, true, exeout));
-
-			if (testfunc && b1)
-				b2 = HasPassed(RunScript(scriptPath, source + "_func", true, true, exeout));
-
-			return b1 && b2;
-		}
+		private const string ext = ".ahk";
 
 		protected bool HasPassed(string output)
 		{
@@ -31,44 +19,9 @@ namespace Keysharp.Tests
 			return output.Length == 0;
 		}
 
-		protected string WrapInFunc(string source)
-		{
-			var sb = new StringBuilder();
-			_ = sb.AppendLine("TestFunc()");
-			_ = sb.AppendLine("{");
+		protected string RunScript(string source, string name, bool execute, bool wrapinfunction, bool exeout, int? exitCode = null) => RunScript(WrapInFunc(File.ReadAllText(source)), name, execute, exeout, exitCode);
 
-			using (var sr = new StringReader(source))
-			{
-				string line;
-
-				while ((line = sr.ReadLine()) != null)
-					_ = sb.AppendLine("\t" + line);
-			}
-
-			_ = sb.AppendLine("}");
-			_ = sb.AppendLine("testfunc()");//Deliberately change case to always make sure case insensitivity works.
-			return sb.ToString();
-		}
-
-		protected string RunScript(string source, string name, bool execute, bool wrapinfunction, bool exeout) => RunScript(WrapInFunc(File.ReadAllText(source)), name, execute, exeout);
-
-		protected void TestException(Action func)
-		{
-			var excthrown = false;
-
-			try
-			{
-				func();
-			}
-			catch (Exception)
-			{
-				excthrown = true;
-			}
-
-			Assert.IsTrue(excthrown);
-		}
-
-		protected string RunScript(string source, string name, bool execute, bool exeout)
+		protected string RunScript(string source, string name, bool execute, bool exeout, int? exitCode = null)
 		{
 			Core.Debug.OutputDebug(Environment.CurrentDirectory);
 			var ch = new CompilerHelper();
@@ -149,7 +102,14 @@ namespace Keysharp.Tests
 						var temp = new string[] { };
 						var result = main.Invoke(null, [temp]);
 
-						if (result is int i && i != 0)//This is for when an exception is thrown in the compiled program, the catch blocks make it return 1.
+						if (exitCode.HasValue)
+						{
+							if (result is int i && i == exitCode.Value)
+								Console.Write("pass");
+							else
+								Console.Write("fail");
+						}
+						else if (result is int i && i != 0)//This is for when an exception is thrown in the compiled program, the catch blocks make it return 1.
 							Console.Write("fail");
 					}
 					catch (Exception ex)
@@ -183,6 +143,53 @@ namespace Keysharp.Tests
 			}
 
 			return output;
+		}
+
+		protected void TestException(Action func)
+		{
+			var excthrown = false;
+
+			try
+			{
+				func();
+			}
+			catch (Exception)
+			{
+				excthrown = true;
+			}
+
+			Assert.IsTrue(excthrown);
+		}
+
+		protected bool TestScript(string source, bool testfunc, bool exeout = false)
+		{
+			var scriptPath = string.Concat(path, source, ext);
+			var b2 = true;
+			var b1 = HasPassed(RunScript(scriptPath, source, true, exeout));
+
+			if (testfunc && b1)
+				b2 = HasPassed(RunScript(scriptPath, source + "_func", true, true, exeout));
+
+			return b1 && b2;
+		}
+
+		protected string WrapInFunc(string source)
+		{
+			var sb = new StringBuilder();
+			_ = sb.AppendLine("TestFunc()");
+			_ = sb.AppendLine("{");
+
+			using (var sr = new StringReader(source))
+			{
+				string line;
+
+				while ((line = sr.ReadLine()) != null)
+					_ = sb.AppendLine("\t" + line);
+			}
+
+			_ = sb.AppendLine("}");
+			_ = sb.AppendLine("testfunc()");//Deliberately change case to always make sure case insensitivity works.
+			return sb.ToString();
 		}
 	}
 }

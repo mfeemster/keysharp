@@ -5,11 +5,14 @@ namespace Keysharp.Scripting
 {
 	public partial class Parser : ICodeParser
 	{
+		public const string mainClassName = "program";
 		public static readonly CultureInfo culture = CultureInfo.CreateSpecificCulture("en-US");
 		public static readonly CultureInfo inv = CultureInfo.InvariantCulture;
 
 		internal const string scopeChar = "_";
 		internal const string varsPropertyName = "Vars";
+
+		internal static CodeAttributeDeclaration cad;
 
 		/// <summary>
 		/// The order of these is critically important. Items that start with the same character must go from longest to shortest.
@@ -68,6 +71,12 @@ namespace Keysharp.Scripting
 		internal static FrozenSet<string>.AlternateLookup<ReadOnlySpan<char>> contExprOperatorsAlt = contExprOperators.GetAlternateLookup<ReadOnlySpan<char>>();
 
 		internal static List<string> contExprOperatorsList = contExprOperators.ToList();
+
+		internal static CodeTypeReference ctrdva = new (typeof(DefaultValueAttribute));
+
+		internal static CodeTypeReference ctrpaa = new (typeof(ParamArrayAttribute));
+
+		internal static CodePrimitiveExpression emptyStringPrimitive = new ("");
 
 		/// <summary>
 		/// The order of these is critically important. Items that start with the same character must go from longest to shortest.
@@ -149,10 +158,6 @@ namespace Keysharp.Scripting
 		internal static List<string> nonContExprOperatorsList = ["++", "--"];
 		internal static CodePrimitiveExpression nullPrimitive = new (null);
 		internal static CodeTypeReference objTypeRef = new (typeof(object));
-		internal static CodeTypeReference ctrpaa = new (typeof(ParamArrayAttribute));
-		internal static CodeTypeReference ctrdva = new (typeof(DefaultValueAttribute));
-		internal static CodeAttributeDeclaration cad;
-		internal static CodePrimitiveExpression emptyStringPrimitive = new ("");
 
 		internal static FrozenSet<string> propKeywords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
 		{
@@ -169,7 +174,6 @@ namespace Keysharp.Scripting
 		internal bool Persistent;
 		private const string args = "args";
 		private const string initParams = "initparams";
-		public const string mainClassName = "program";
 		private const string mainScope = "";
 		private static readonly char[] directiveDelims = Spaces.Concat([Multicast]);
 
@@ -195,6 +199,7 @@ namespace Keysharp.Scripting
 		private readonly Dictionary<CodeExpression, CodeSnippetExpression> assignSnippets = [];
 		private readonly Stack<CodeBlock> blocks = new ();
 		private readonly CompilerHelper Ch;
+		private readonly List<CodeSnippetTypeMember> codeSnippetTypeMembers = new ();
 		private readonly Stack<List<string>> currentFuncParams = new ();
 		private readonly Stack<CodeStatementCollection> elses = new ();
 		private readonly Stack<HashSet<string>> excCatchVars = new ();
@@ -203,12 +208,38 @@ namespace Keysharp.Scripting
 		private readonly Stack<List<string>> globalFuncVars = new ();
 		private readonly Dictionary<CodeGotoStatement, CodeBlock> gotos = [];
 		private readonly Stack<List<string>> localFuncVars = new ();
-		private readonly List<CodeSnippetTypeMember> codeSnippetTypeMembers = new ();
+
 		private readonly CodeMemberMethod main = new ()
 		{
 			Attributes = MemberAttributes.Public | MemberAttributes.Static,
 			Name = "Main"
 		};
+
+		private readonly CodeNamespace mainNs = new ("Keysharp.CompiledMain");
+
+		private readonly Dictionary<CodeTypeDeclaration, Dictionary<string, CodeMemberMethod>> methods = [];
+
+		private readonly char[] ops = [Equal, Not, Greater, Less];
+
+		private readonly Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMemberProperty>>> properties = [];
+
+		private readonly tsmd setPropertyValueCalls = [];
+
+		private readonly Stack<CodeBlock> singleLoops = new ();
+
+		private readonly List<CodeMethodInvokeExpression> stackedHotkeys = [];
+
+		private readonly List<CodeMethodInvokeExpression> stackedHotstrings = [];
+
+		private readonly Dictionary<CodeTypeDeclaration, Stack<Dictionary<string, CodeExpression>>> staticFuncVars = [];
+
+		private readonly Stack<CodeSwitchStatement> switches = new ();
+
+		private readonly CodeTypeDeclaration targetClass;
+
+		private readonly CodeStatementCollection topStatements = new ();
+
+		private readonly Stack<CodeTypeDeclaration> typeStack = new ();
 
 		private readonly CodeMemberMethod userMainMethod = new ()
 		{
@@ -217,19 +248,6 @@ namespace Keysharp.Scripting
 			ReturnType = objTypeRef
 		};
 
-		private readonly CodeNamespace mainNs = new ("Keysharp.CompiledMain");
-		private readonly Dictionary<CodeTypeDeclaration, Dictionary<string, CodeMemberMethod>> methods = [];
-		private readonly char[] ops = [Equal, Not, Greater, Less];
-		private readonly Dictionary<CodeTypeDeclaration, Dictionary<string, List<CodeMemberProperty>>> properties = [];
-		private readonly tsmd setPropertyValueCalls = [];
-		private readonly Stack<CodeBlock> singleLoops = new ();
-		private readonly List<CodeMethodInvokeExpression> stackedHotkeys = [];
-		private readonly List<CodeMethodInvokeExpression> stackedHotstrings = [];
-		private readonly Dictionary<CodeTypeDeclaration, Stack<Dictionary<string, CodeExpression>>> staticFuncVars = [];
-		private readonly Stack<CodeSwitchStatement> switches = new ();
-		private readonly CodeTypeDeclaration targetClass;
-		private readonly Stack<CodeTypeDeclaration> typeStack = new ();
-		private readonly CodeStatementCollection topStatements = new ();
 		private bool blockOpen;
 		private uint caseCount;
 		private List<CodeLine> codeLines = [];
@@ -343,6 +361,9 @@ namespace Keysharp.Scripting
 			_ = ctch2.Statements.Add(cmrsexit);
 			_ = tcf.CatchClauses.Add(ctch2);
 			//
+			var ctch3 = new CodeCatchClause("exitex", new CodeTypeReference("Keysharp.Core.Flow.UserRequestedExitException"));
+			_ = ctch3.Statements.Add(cmrsexit);
+			_ = tcf.CatchClauses.Add(ctch3);
 			var ctch = new CodeCatchClause("mainex", new CodeTypeReference("System.Exception"));
 			_ = ctch.Statements.Add(new CodeSnippetExpression(@"var ex = mainex.InnerException ?? mainex;
 
@@ -1174,6 +1195,7 @@ namespace Keysharp.Scripting
 		}
 
 		public CodeCompileUnit Parse(TextReader codeStream) => Parse(codeStream, string.Empty);
+
 		public CodeCompileUnit Parse(TextReader codeStream, string nm)
 		{
 			name = nm;
@@ -1323,7 +1345,9 @@ namespace Keysharp.Scripting
 
 			return GenerateCompileUnit();
 		}
+
 		internal bool InClassDefinition() => typeStack.Count > 0 && typeStack.Peek().Name != mainClassName;
+
 		private CodeTypeDeclaration AddType(string typename)
 		{
 			var ctd = new CodeTypeDeclaration(typename)
@@ -1349,6 +1373,7 @@ namespace Keysharp.Scripting
 			allMethodCalls[ctd] = [];
 			return ctd;
 		}
+
 		private void CheckPersistent(string name)
 		{
 			if (Persistent)
@@ -1357,6 +1382,7 @@ namespace Keysharp.Scripting
 			if (persistentTerms.Contains(name))
 				Persistent = true;
 		}
+
 		private CodeTypeDeclaration FindUserDefinedType(string typeName)
 		{
 			foreach (CodeTypeMember type in targetClass.Members)
@@ -1366,6 +1392,7 @@ namespace Keysharp.Scripting
 
 			return null;
 		}
+
 		private CodeTypeDeclaration GetUserDefinedTypename(string typeName)
 		{
 			foreach (CodeTypeMember type in targetClass.Members)
@@ -1375,6 +1402,116 @@ namespace Keysharp.Scripting
 
 			return null;
 		}
+
+		private void HandleAllVariadicParams(CodeMethodInvokeExpression cmie)
+		{
+			var pces = cmie.Parameters.Cast<CodeExpression>();
+			var cmielast = pces.LastOrDefault() as CodeMethodInvokeExpression;
+			var lastisstar = cmielast != null && cmielast.Method.MethodName == "FlattenParam";
+
+			//After all arguments were parsed, we need to take one last special action if the last argument was using the * spread operator.
+			//The entire list must be converted into an array, with the last argument being preceded by a C# .. spread operator.
+			//CodeDOM has no support for such so it must all be done via snippets.
+			if (lastisstar && pces.Count() > 1)
+			{
+				var argStrings = pces.Select(ce => ce == pces.Last() ? $"..{Ch.CodeToString(ce)}" : Ch.CodeToString(ce)).ToList();
+				var finalArgStr = $"[{string.Join(", ", argStrings)}]";
+				cmie.Parameters.Clear();
+				_ = cmie.Parameters.Add(new CodeSnippetExpression(finalArgStr));
+			}
+		}
+
+		private void HandleAllVariadicParams(CodeMethodInvokeExpression cmie, CodeMemberMethod cmm)
+		{
+			//Method that was declared.
+			var pdes = cmm.Parameters.Cast<CodeParameterDeclarationExpression>();
+			var cpde = pdes.LastOrDefault();
+			var lastDeclIsStar = cpde != null && cpde.IsVariadic();
+			//Method as it was called.
+			var pces = cmie.Parameters.Cast<CodeExpression>();
+			var cmielast = pces.LastOrDefault() as CodeMethodInvokeExpression;
+			var lastCalledIsStar = cmielast != null && cmielast.Method.MethodName == "FlattenParam";
+
+			//After all arguments were parsed, we need to take one last special action if the last argument was using the * spread operator.
+			//The entire list must be converted into an array, with the last argument being preceded by a C# .. spread operator.
+			//CodeDOM has no support for such so it must all be done via snippets.
+			if (lastDeclIsStar && lastCalledIsStar && pces.Count() > 1)
+			{
+				var argStrings = pces.Select(ce => ce == pces.Last() ? $"..{Ch.CodeToString(ce)}" : Ch.CodeToString(ce)).ToList();
+				var finalArgStr = $"[{string.Join(", ", argStrings)}]";
+				cmie.Parameters.Clear();
+				_ = cmie.Parameters.Add(new CodeSnippetExpression(finalArgStr));
+			}
+		}
+
+		private void HandlePartialVariadicParams(CodeMethodInvokeExpression cmie, CodeMemberMethod cmm)
+		{
+			//Method that was declared.
+			var pdes = cmm.Parameters.Cast<CodeParameterDeclarationExpression>();
+			var cpde = pdes.LastOrDefault();
+			var lastDeclIsStar = cpde != null && cpde.IsVariadic();
+			//Method as it was called.
+			var pces = cmie.Parameters.Cast<CodeExpression>();
+			var cmielast = pces.LastOrDefault() as CodeMethodInvokeExpression;
+			var lastCalledIsStar = cmielast != null && cmielast.Method.MethodName == "FlattenParam";
+
+			//After all arguments were parsed, we need to take one last special action if the last argument was using the * spread operator.
+			//The entire list must be converted into an array, with the last argument being preceded by a C# .. spread operator.
+			//CodeDOM has no support for such so it must all be done via snippets.
+			if (lastDeclIsStar && lastCalledIsStar)
+			{
+				var indexOfDeclStar = pdes.Count() - 1;
+				var indexOfCalledStar = pces.Count() - 1;
+
+				if ((cmie.Parameters.Count - indexOfDeclStar) > 1)
+				{
+					var callNonVariadic = pces.SkipLast(indexOfDeclStar);
+					var callVariadic = pces.Skip(indexOfDeclStar);
+					var argStrings = callVariadic.Select(ce => ce == callVariadic.Last() ? $"..{Ch.CodeToString(ce)}" : Ch.CodeToString(ce)).ToList();
+					var finalArgStr = $"[{string.Join(", ", argStrings)}]";
+
+					while (cmie.Parameters.Count > indexOfDeclStar)
+						cmie.Parameters.Remove(cmie.Parameters[cmie.Parameters.Count - 1]);
+
+					_ = cmie.Parameters.Add(new CodeSnippetExpression(finalArgStr));
+				}
+			}
+		}
+
+		private void HandlePartialVariadicParams(CodeMethodInvokeExpression cmie, MethodInfo mi)
+		{
+			//Method that was declared.
+			var mip = mi.GetParameters();
+			var pi = mip.LastOrDefault();
+			var lastDeclIsStar = pi.IsVariadic();
+			//Method as it was called.
+			var pces = cmie.Parameters.Cast<CodeExpression>();
+			var cmielast = pces.LastOrDefault() as CodeMethodInvokeExpression;
+			var lastCalledIsStar = cmielast != null && cmielast.Method.MethodName == "FlattenParam";
+
+			//After all arguments were parsed, we need to take one last special action if the last argument was using the * spread operator.
+			//The entire list must be converted into an array, with the last argument being preceded by a C# .. spread operator.
+			//CodeDOM has no support for such so it must all be done via snippets.
+			if (lastDeclIsStar && lastCalledIsStar)
+			{
+				var indexOfDeclStar = mip.Length - 1;
+				var indexOfCalledStar = pces.Count() - 1;
+
+				if ((cmie.Parameters.Count - indexOfDeclStar) > 1)
+				{
+					var callNonVariadic = pces.SkipLast(indexOfDeclStar);
+					var callVariadic = pces.Skip(indexOfDeclStar);
+					var argStrings = callVariadic.Select(ce => ce == callVariadic.Last() ? $"..{Ch.CodeToString(ce)}" : Ch.CodeToString(ce)).ToList();
+					var finalArgStr = $"[{string.Join(", ", argStrings)}]";
+
+					while (cmie.Parameters.Count > indexOfDeclStar)
+						cmie.Parameters.Remove(cmie.Parameters[cmie.Parameters.Count - 1]);
+
+					_ = cmie.Parameters.Add(new CodeSnippetExpression(finalArgStr));
+				}
+			}
+		}
+
 		private CodeMemberMethod MethodExistsInTypeOrBase(string t, string m)
 		{
 			if (methods.Count > 0)
@@ -1410,6 +1547,7 @@ namespace Keysharp.Scripting
 
 			return null;
 		}
+
 		private (bool, PropertyInfo) PropExistsInBuiltInClass(string baseType, string p, int paramCount)
 		{
 			if (Reflections.stringToTypeProperties.TryGetValue(p, out var props))
@@ -1431,6 +1569,7 @@ namespace Keysharp.Scripting
 
 			return (false, null);
 		}
+
 		private (bool, string, List<CommonParameterInfo>) PropExistsInTypeOrBase(string t, string p, int paramCount)
 		{
 			if (properties.Count > 0)
@@ -1510,6 +1649,7 @@ namespace Keysharp.Scripting
 
 			return (false, "", []);
 		}
+
 		private (bool, PropertyInfo) PropExistsInTypeOrBase(Type t, string p, int paramCount)
 		{
 			while (t != null)
@@ -1526,26 +1666,7 @@ namespace Keysharp.Scripting
 
 			return (false, null);
 		}
-		private void SetLineIndexes()
-		{
-			var i = 0;
 
-			foreach (var line in codeLines)
-				line.LineNumber = i++;
-		}
-		private bool TypeExistsAtCurrentOrParentScope(CodeTypeDeclaration currentType, string currentScope, string varName)
-		{
-			foreach (CodeTypeDeclaration type in mainNs.Types)
-				if (string.Compare(type.Name, varName, true) == 0)
-					return true;
-
-			foreach (CodeTypeMember type in targetClass.Members)//Nested types beyond one level are not supported, so this should handle all cases.
-				if (type is CodeTypeDeclaration ctd)
-					if (string.Compare(ctd.Name, varName, true) == 0)
-						return true;
-
-			return false;
-		}
 		private CodeExpression ReevaluateCodeVariableReference(CodeTypeDeclaration ctd, string scope, CodeVariableReferenceExpression cvre)
 		{
 			var doThis = false;
@@ -1586,111 +1707,29 @@ namespace Keysharp.Scripting
 
 			return cvre;
 		}
-		private void HandleAllVariadicParams(CodeMethodInvokeExpression cmie)
+
+		private void SetLineIndexes()
 		{
-			var pces = cmie.Parameters.Cast<CodeExpression>();
-			var cmielast = pces.LastOrDefault() as CodeMethodInvokeExpression;
-			var lastisstar = cmielast != null && cmielast.Method.MethodName == "FlattenParam";
+			var i = 0;
 
-			//After all arguments were parsed, we need to take one last special action if the last argument was using the * spread operator.
-			//The entire list must be converted into an array, with the last argument being preceded by a C# .. spread operator.
-			//CodeDOM has no support for such so it must all be done via snippets.
-			if (lastisstar && pces.Count() > 1)
-			{
-				var argStrings = pces.Select(ce => ce == pces.Last() ? $"..{Ch.CodeToString(ce)}" : Ch.CodeToString(ce)).ToList();
-				var finalArgStr = $"[{string.Join(", ", argStrings)}]";
-				cmie.Parameters.Clear();
-				_ = cmie.Parameters.Add(new CodeSnippetExpression(finalArgStr));
-			}
+			foreach (var line in codeLines)
+				line.LineNumber = i++;
 		}
-		private void HandleAllVariadicParams(CodeMethodInvokeExpression cmie, CodeMemberMethod cmm)
+
+		private bool TypeExistsAtCurrentOrParentScope(CodeTypeDeclaration currentType, string currentScope, string varName)
 		{
-			//Method that was declared.
-			var pdes = cmm.Parameters.Cast<CodeParameterDeclarationExpression>();
-			var cpde = pdes.LastOrDefault();
-			var lastDeclIsStar = cpde != null && cpde.IsVariadic();
-			//Method as it was called.
-			var pces = cmie.Parameters.Cast<CodeExpression>();
-			var cmielast = pces.LastOrDefault() as CodeMethodInvokeExpression;
-			var lastCalledIsStar = cmielast != null && cmielast.Method.MethodName == "FlattenParam";
+			foreach (CodeTypeDeclaration type in mainNs.Types)
+				if (string.Compare(type.Name, varName, true) == 0)
+					return true;
 
-			//After all arguments were parsed, we need to take one last special action if the last argument was using the * spread operator.
-			//The entire list must be converted into an array, with the last argument being preceded by a C# .. spread operator.
-			//CodeDOM has no support for such so it must all be done via snippets.
-			if (lastDeclIsStar && lastCalledIsStar && pces.Count() > 1)
-			{
-				var argStrings = pces.Select(ce => ce == pces.Last() ? $"..{Ch.CodeToString(ce)}" : Ch.CodeToString(ce)).ToList();
-				var finalArgStr = $"[{string.Join(", ", argStrings)}]";
-				cmie.Parameters.Clear();
-				_ = cmie.Parameters.Add(new CodeSnippetExpression(finalArgStr));
-			}
+			foreach (CodeTypeMember type in targetClass.Members)//Nested types beyond one level are not supported, so this should handle all cases.
+				if (type is CodeTypeDeclaration ctd)
+					if (string.Compare(ctd.Name, varName, true) == 0)
+						return true;
+
+			return false;
 		}
-		private void HandlePartialVariadicParams(CodeMethodInvokeExpression cmie, CodeMemberMethod cmm)
-		{
-			//Method that was declared.
-			var pdes = cmm.Parameters.Cast<CodeParameterDeclarationExpression>();
-			var cpde = pdes.LastOrDefault();
-			var lastDeclIsStar = cpde != null && cpde.IsVariadic();
-			//Method as it was called.
-			var pces = cmie.Parameters.Cast<CodeExpression>();
-			var cmielast = pces.LastOrDefault() as CodeMethodInvokeExpression;
-			var lastCalledIsStar = cmielast != null && cmielast.Method.MethodName == "FlattenParam";
 
-			//After all arguments were parsed, we need to take one last special action if the last argument was using the * spread operator.
-			//The entire list must be converted into an array, with the last argument being preceded by a C# .. spread operator.
-			//CodeDOM has no support for such so it must all be done via snippets.
-			if (lastDeclIsStar && lastCalledIsStar)
-			{
-				var indexOfDeclStar = pdes.Count() - 1;
-				var indexOfCalledStar = pces.Count() - 1;
-
-				if ((cmie.Parameters.Count - indexOfDeclStar) > 1)
-				{
-					var callNonVariadic = pces.SkipLast(indexOfDeclStar);
-					var callVariadic = pces.Skip(indexOfDeclStar);
-					var argStrings = callVariadic.Select(ce => ce == callVariadic.Last() ? $"..{Ch.CodeToString(ce)}" : Ch.CodeToString(ce)).ToList();
-					var finalArgStr = $"[{string.Join(", ", argStrings)}]";
-
-					while (cmie.Parameters.Count > indexOfDeclStar)
-						cmie.Parameters.Remove(cmie.Parameters[cmie.Parameters.Count - 1]);
-
-					_ = cmie.Parameters.Add(new CodeSnippetExpression(finalArgStr));
-				}
-			}
-		}
-		private void HandlePartialVariadicParams(CodeMethodInvokeExpression cmie, MethodInfo mi)
-		{
-			//Method that was declared.
-			var mip = mi.GetParameters();
-			var pi = mip.LastOrDefault();
-			var lastDeclIsStar = pi.IsVariadic();
-			//Method as it was called.
-			var pces = cmie.Parameters.Cast<CodeExpression>();
-			var cmielast = pces.LastOrDefault() as CodeMethodInvokeExpression;
-			var lastCalledIsStar = cmielast != null && cmielast.Method.MethodName == "FlattenParam";
-
-			//After all arguments were parsed, we need to take one last special action if the last argument was using the * spread operator.
-			//The entire list must be converted into an array, with the last argument being preceded by a C# .. spread operator.
-			//CodeDOM has no support for such so it must all be done via snippets.
-			if (lastDeclIsStar && lastCalledIsStar)
-			{
-				var indexOfDeclStar = mip.Length - 1;
-				var indexOfCalledStar = pces.Count() - 1;
-
-				if ((cmie.Parameters.Count - indexOfDeclStar) > 1)
-				{
-					var callNonVariadic = pces.SkipLast(indexOfDeclStar);
-					var callVariadic = pces.Skip(indexOfDeclStar);
-					var argStrings = callVariadic.Select(ce => ce == callVariadic.Last() ? $"..{Ch.CodeToString(ce)}" : Ch.CodeToString(ce)).ToList();
-					var finalArgStr = $"[{string.Join(", ", argStrings)}]";
-
-					while (cmie.Parameters.Count > indexOfDeclStar)
-						cmie.Parameters.Remove(cmie.Parameters[cmie.Parameters.Count - 1]);
-
-					_ = cmie.Parameters.Add(new CodeSnippetExpression(finalArgStr));
-				}
-			}
-		}
 		private bool VarExistsAtCurrentOrParentScope(CodeTypeDeclaration currentType, string currentScope, string varName)
 		{
 			if (allVars.TryGetValue(currentType, out var typeFuncs))
@@ -1756,8 +1795,8 @@ namespace Keysharp.Scripting
 
 		internal class CommonParameterInfo
 		{
-			internal bool IsVariadic { get; private set; }
 			internal bool IsRef { get; private set; }
+			internal bool IsVariadic { get; private set; }
 			internal string Type { get; private set; }
 
 			internal CommonParameterInfo(bool isVariadic, bool isRef, string type)

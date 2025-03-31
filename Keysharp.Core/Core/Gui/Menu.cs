@@ -11,15 +11,18 @@
 		/// The default item in the menu.
 		/// </summary>
 		internal ToolStripItem defaultItem;
+
 		/// <summary>
 		/// A variable needed to assign <see cref="Handle"/> to once in the constructor
 		/// to ensure the underlying handle is created. Unused otherwise.
 		/// </summary>
 		protected long dummyHandle;
+
 		/// <summary>
 		/// A global counter of all menus in existence within the script.
 		/// </summary>
 		private static int menuCount = 0;
+
 		/// <summary>
 		/// Click handlers for all menu items within this menu.
 		/// Each item can have more than one click handler.
@@ -159,7 +162,7 @@
 			});
 			var exitfunc = new Func<object>(() =>
 			{
-				_ = Flow.ExitAppInternal(Flow.ExitReasons.Menu);
+				_ = Flow.ExitAppInternal(Flow.ExitReasons.Menu, null, false);
 				return "";
 			});
 			//Won't be a gui target, so won't be marked as IsGui internally, but it's ok because it's only ever called on the gui thread in response to gui events.

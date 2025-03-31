@@ -113,15 +113,11 @@ namespace Keysharp.Core
 		/// clause that wraps all threads.
 		/// </summary>
 		/// <param name="exitCode">An integer that is returned to the caller.</param>
-		public static void Exit(object exitCode = null)
+		public static object Exit(object exitCode = null)
 		{
 			A_ExitReason = exitCode.Al();
-			var err = new Error(Keyword_ExitThread)
-			{
-				Handled = true,//Do not call any error handlers. Just exit the thread.
-				Processed = true
-			};
-			throw err;
+			Environment.ExitCode = exitCode.Ai();
+			throw new UserRequestedExitException();
 		}
 
 		/// <summary>
@@ -166,7 +162,7 @@ namespace Keysharp.Core
 		/// <param name="obj">The value to examine.</param>
 		/// <returns>True if the value is true and the script is running, else false.</returns>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static bool IsTrueAndRunning(object obj) => !hasExited&& Script.ForceBool(obj);
+		public static bool IsTrueAndRunning(object obj) => !hasExited && Script.ForceBool(obj);
 
 		/// <summary>
 		/// Registers a function to be called automatically whenever the script exits.
@@ -436,6 +432,9 @@ namespace Keysharp.Core
 		{
 			var d = delay.Al(-1L);
 
+			if (hasExited)
+				throw new UserRequestedExitException();
+
 			//Be careful with Application.DoEvents(), it has caused spurious crashes in my years of programming experience.
 			if (d == 0L)
 			{
@@ -449,6 +448,10 @@ namespace Keysharp.Core
 				{
 					Application.DoEvents();//Can sometimes throw on linux.
 				}
+				catch (UserRequestedExitException)
+				{
+					throw;
+				}
 				catch
 				{
 				}
@@ -460,6 +463,10 @@ namespace Keysharp.Core
 					try
 					{
 						Application.DoEvents();//Can sometimes throw on linux.
+					}
+					catch (UserRequestedExitException)
+					{
+						throw;
 					}
 					catch
 					{
@@ -478,6 +485,10 @@ namespace Keysharp.Core
 					{
 						//if (System.Threading.Thread.CurrentThread.ManagedThreadId == Processes.ManagedMainThreadID)
 						Application.DoEvents();//Can sometimes throw on linux.
+					}
+					catch (UserRequestedExitException)
+					{
+						throw;
 					}
 					catch
 					{
@@ -544,7 +555,7 @@ namespace Keysharp.Core
 		/// <param name="exitReason">The <see cref="ExitReason"/> for exiting the script.</param>
 		/// <param name="exitCode">The exit code to return from the script when it exits.</param>
 		/// <returns>True if exiting was interrupted by a non empty callback return value, else false.</returns>
-		internal static bool ExitAppInternal(ExitReasons exitReason, object exitCode = null)
+		internal static bool ExitAppInternal(ExitReasons exitReason, object exitCode = null, bool useThrow = true)
 		{
 			if (hasExited)//This can be called multiple times, so ensure it only runs through once.
 				return false;
@@ -601,8 +612,12 @@ namespace Keysharp.Core
 			}
 
 			Environment.ExitCode = ec;
+
 			//Environment.Exit(exitCode);//This seems too harsh, and also prevents compiled unit tests from properly being run.
-			return false;
+			if (useThrow)
+				throw new UserRequestedExitException();
+			else
+				return false;
 		}
 
 		/// <summary>
@@ -684,7 +699,14 @@ namespace Keysharp.Core
 			{
 				var ex = mainex.InnerException ?? mainex;
 
-				if (ex is Error kserr)
+				if (mainex is UserRequestedExitException || ex is UserRequestedExitException)
+				{
+					if (pop)
+						_ = Threads.EndThread(true);
+
+					return true;
+				}
+				else if (ex is Error kserr)
 				{
 					if (!kserr.Processed)
 						_ = ErrorOccurred(kserr, kserr.ExcType);
@@ -708,6 +730,18 @@ namespace Keysharp.Core
 
 				return false;
 			}
+		}
+
+		/// <summary>
+		/// Special exception class to signal that the user has requested exiting the script
+		/// via ExitApp().
+		/// Note this does not derive from Error so that it can be properly distinguished in
+		/// catch statements.
+		/// </summary>
+		public class UserRequestedExitException : Exception
+		{
+			public UserRequestedExitException()
+			{ }
 		}
 
 		/// <summary>
