@@ -86,7 +86,17 @@ namespace Keysharp.Core.Common.Platform
 
 		internal virtual List<WindowItemBase> FindWindowGroup(SearchCriteria criteria, bool forceAll = false)
 		{
-			var found = new List<WindowItemBase>();
+            var found = new List<WindowItemBase>();
+            if (criteria.IsPureID)
+			{
+				if (WindowsAPI.IsWindow(criteria.ID))
+				{
+					var window = new WindowItem(criteria.ID);
+					if (window.Equals(criteria)) // Other criteria may be present such as ExcludeTitle etc
+						found.Add(window);
+				}
+				return found;
+			}
 			//Keysharp.Scripting.Script.OutputDebug($"About to iterate AllWindows in FindWindowGroup()");
 
 			foreach (var window in AllWindows)

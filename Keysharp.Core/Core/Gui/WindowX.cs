@@ -1126,7 +1126,7 @@ namespace Keysharp.Core
 			var b = false;
 			var seconds = timeout.Ad();
 			var start = DateTime.Now;
-			var criteria = SearchCriteria.FromString(winTitle, winText, excludeTitle, excludeText);
+            var criteria = SearchCriteria.FromString(winTitle, winText, excludeTitle, excludeText);
 			var windows = WindowProvider.Manager.FindWindowGroup(criteria);
 
 			foreach (var win in windows)//In the case of WinWaitClose(), this loop won't execute and the function will return 1.
@@ -1135,7 +1135,7 @@ namespace Keysharp.Core
 
 				while (seconds == 0 || (DateTime.Now - start).TotalSeconds < seconds)
 				{
-					if (!win.Exists || (!ThreadAccessors.A_DetectHiddenWindows && !win.Visible))
+					if (!win.Exists || (!criteria.IsPureID && !ThreadAccessors.A_DetectHiddenWindows && !win.Visible))
 					{
 						b = true;
 						break;
