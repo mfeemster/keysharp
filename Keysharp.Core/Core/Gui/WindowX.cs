@@ -1062,7 +1062,7 @@ namespace Keysharp.Core
 
 			do
 			{
-				win = SearchWindow(winTitle, winText, excludeTitle, excludeText, false);
+				win = SearchWindow(winTitle, winText, excludeTitle, excludeText, false, false, true);
 
 				if (win != null || (seconds != 0 && (DateTime.Now - start).TotalSeconds >= seconds))
 					break;
@@ -1122,7 +1122,7 @@ namespace Keysharp.Core
 			var seconds = timeout.Ad();
 			var start = DateTime.Now;
             var criteria = SearchCriteria.FromString(winTitle, winText, excludeTitle, excludeText);
-			var windows = WindowProvider.Manager.FindWindowGroup(criteria);
+			var windows = WindowProvider.Manager.FindWindowGroup(criteria, false, true);
 			if (windows.Count == 0)
 				return 1L;
 

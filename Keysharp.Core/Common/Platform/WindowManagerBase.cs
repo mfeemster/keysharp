@@ -48,13 +48,13 @@ namespace Keysharp.Core.Common.Platform
 			return found;
 		}
 
-		internal WindowItemBase FindWindow(object winTitle, object winText, object excludeTitle, object excludeText, bool last = false)
+		internal WindowItemBase FindWindow(object winTitle, object winText, object excludeTitle, object excludeText, bool last = false, bool ignorePureID = false)
 		{
 			WindowItemBase foundWindow = null;
 			var (parsed, ptr) = WindowHelper.CtrlToIntPtr(winTitle);
 
 			if (parsed)
-				if (IsWindow(ptr))
+				if (!ignorePureID && IsWindow(ptr))
 					return LastFound = WindowProvider.Manager.CreateWindow(ptr);
 
 			var text = winText.As();
@@ -84,10 +84,10 @@ namespace Keysharp.Core.Common.Platform
 			return foundWindow;
 		}
 
-		internal virtual List<WindowItemBase> FindWindowGroup(SearchCriteria criteria, bool forceAll = false)
+		internal virtual List<WindowItemBase> FindWindowGroup(SearchCriteria criteria, bool forceAll = false, bool ignorePureID = false)
 		{
             var found = new List<WindowItemBase>();
-            if (criteria.IsPureID)
+            if (!ignorePureID && criteria.IsPureID)
 			{
 				if (WindowsAPI.IsWindow(criteria.ID))
 				{
@@ -118,7 +118,8 @@ namespace Keysharp.Core.Common.Platform
 				object winText,
 				object excludeTitle,
 				object excludeText,
-				bool forceAll = false)
+				bool forceAll = false,
+				bool ignorePureID = false)
 		{
 			SearchCriteria criteria = null;
 			var foundWindows = new List<WindowItemBase>();

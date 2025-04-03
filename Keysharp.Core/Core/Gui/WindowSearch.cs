@@ -85,10 +85,11 @@ namespace Keysharp.Core
 				object excludeTitle,
 				object excludeText,
 				bool throwifnull,
-				bool last = false)
+				bool last = false,
+				bool ignorePureID = false)
 		{
 			Error err;
-			var win = WindowProvider.Manager.FindWindow(winTitle, winText, excludeTitle, excludeText, last);
+			var win = WindowProvider.Manager.FindWindow(winTitle, winText, excludeTitle, excludeText, last, ignorePureID);
 
 			if (win == null && throwifnull && !IsMainWindowClosing)
 				return Errors.ErrorOccurred(err = new TargetError($"Could not find window with criteria: title: {winTitle}, text: {winText}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : null;
