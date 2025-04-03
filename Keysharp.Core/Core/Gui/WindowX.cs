@@ -1135,7 +1135,7 @@ namespace Keysharp.Core
 
 				while (seconds == 0 || (DateTime.Now - start).TotalSeconds < seconds)
 				{
-					if (!win.Exists)
+					if (!win.Exists || (!ThreadAccessors.A_DetectHiddenWindows && !win.Visible))
 					{
 						b = true;
 						break;
