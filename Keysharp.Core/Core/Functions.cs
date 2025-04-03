@@ -83,10 +83,14 @@ namespace Keysharp.Core
 		/// <returns>1 if the method was found on the object, else 0.</returns>
 		public static long HasMethod(object value, object name = null, object paramCount = null)
 		{
-			var val = value;
 			var n = name.As();
 			var count = paramCount.Ai(-1);
-			var mph = Reflections.FindAndCacheMethod(val.GetType(), n.Length > 0 ? n : "Call", count);
+			if (value is FuncObj)
+				return 1L;
+			else if (value is KeysharpObject kso)
+                return HasProp(value, "Call");
+				
+			var mph = Reflections.FindAndCacheMethod(value.GetType(), n.Length > 0 ? n : "Call", count);
 			return mph != null && mph.mi != null ? 1L : 0L;
 		}
 
