@@ -644,11 +644,47 @@
 		internal static readonly char[] FlowDelimiters2;
 		internal static readonly char[] PlusMinus = ['+', '-'];
 
+        internal static FrozenSet<string> keywords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            AndTxt,
+            OrTxt,
+            NotTxt,
+            TrueTxt,
+            FalseTxt,
+            NullTxt,
+            IsTxt,
+            FlowBreak,
+            FlowContinue,
+            FlowCase,
+            FlowClass,
+            FlowDefault,
+            FlowFor,
+            FlowElse,
+            FlowExtends,
+            FlowGosub,
+            FlowGoto,
+            FlowIf,
+            FlowLoop,
+            FlowReturn,
+            FlowWhile,
+            FunctionLocal,
+            FunctionGlobal,
+            FunctionStatic,
+            FlowTry,
+            FlowCatch,
+            FlowFinally,
+            FlowUntil,
+            FlowSwitch,
+            FlowThrow
+        }.ToFrozenSet(StringComparer.OrdinalIgnoreCase);
+
+        public static string GetKeywords() => string.Join(' ', keywords);
+
 
 #if !LEGACY
 		internal const char LastVar = '$';
 #endif
-		internal static readonly char[] zerochars = ['0'];
+        internal static readonly char[] zerochars = ['0'];
 #if !LEGACY
 		internal const char Escape = DefaultEscape;
 #else

@@ -19,7 +19,7 @@ using System.Reflection;
 
 namespace Keysharp.Scripting
 {
-    public partial class MainVisitor : MainParserBaseVisitor<SyntaxNode>
+    internal partial class MainVisitor : MainParserBaseVisitor<SyntaxNode>
     {
         public override SyntaxNode VisitHotIfDirective([NotNull] HotIfDirectiveContext context)
         {

@@ -12,7 +12,7 @@ using System.Xml.Linq;
 
 namespace Keysharp.Scripting
 {
-    public partial class MainVisitor : MainParserBaseVisitor<SyntaxNode>
+    internal partial class MainVisitor : MainParserBaseVisitor<SyntaxNode>
     {
         // Converts identifiers such as a%b% to
         // Keysharp.Scripting.Script.Vars[string.Concat<object>(new object[] {"a", b)]
@@ -135,6 +135,10 @@ namespace Keysharp.Scripting
                     identifierName = SyntaxFactory.IdentifierName(addedName);
                     argumentList = SyntaxFactory.ArgumentList(SyntaxFactory.SeparatedList(new[] { SyntaxFactory.Argument(identifierName) }));
                 }
+            } else if (methodName.Equals("StrPtr", StringComparison.InvariantCultureIgnoreCase)
+                && argumentList.Arguments.First().Expression is ExpressionSyntax strVar)
+            {
+                argumentList = SyntaxFactory.ArgumentList(SyntaxFactory.SeparatedList(new[] { SyntaxFactory.Argument(parser.ConstructVarRef(strVar)) }));
             }
 
             return parser.GenerateFunctionInvocation(targetExpression, argumentList, methodName);

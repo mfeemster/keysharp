@@ -2,7 +2,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Keysharp.Scripting
 {
-	public partial class Parser
+	internal partial class Parser
 	{
         internal class MethodReference
         {

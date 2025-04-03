@@ -1,6 +1,6 @@
 namespace Keysharp.Scripting
 {
-	public partial class Parser
+	internal partial class Parser
 	{
 		public static int TypeDistance(Type t1, Type t2)
 		{

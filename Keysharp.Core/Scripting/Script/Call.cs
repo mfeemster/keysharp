@@ -47,14 +47,12 @@ namespace Keysharp.Scripting
 
 			try
 			{
-                if (item is ITuple otup && otup.Length > 1)
-                {
-                    if (otup[0] is Type t && otup[1] is object o)
-                    {
-                        typetouse = t; item = o;
-                    }
-                } else if (item is KeysharpObject)
-					kso = (KeysharpObject)item;
+                if (item is KeysharpObject)
+                    kso = (KeysharpObject)item;
+                else if (item is ITuple otup && otup.Length > 1 && otup[0] is Type t)
+				{
+					typetouse = t; item = otup[1];
+				}
 
                 if (item == null)
 				{
@@ -272,6 +270,8 @@ namespace Keysharp.Scripting
 
         public static object Invoke(object obj, object meth, params object[] parameters)
         {
+			if (obj == null)
+				throw new UnsetError("Cannot invoke property on an unset variable");
             try
             {
                 (object, object) mitup = (null, null);
@@ -285,7 +285,7 @@ namespace Keysharp.Scripting
 				else if (obj is ITuple otup && otup.Length > 1)
                 {
                     mitup = GetMethodOrProperty(otup, methName, -1);
-                    if (!(otup[1] is ComObject))
+                    if (otup[1] is not ComObject)
                         mitup.Item1 = otup[1];
                 }
                 else
@@ -322,7 +322,13 @@ namespace Keysharp.Scripting
 					return ifo2.Call(args);
 				}
 				else if (mitup.Item2 is KeysharpObject kso && !methName.Equals("Call", StringComparison.OrdinalIgnoreCase))
-					return Invoke(kso, "Call", [obj, ..parameters]);
+				{
+                    int count = parameters.Length;
+                    object[] args = new object[count + 1];
+                    args[0] = obj;
+                    System.Array.Copy(parameters, 0, args, 1, count);
+                    return Invoke(kso, "Call", args);
+				}
             }
             catch (Exception e)
             {

@@ -519,6 +519,8 @@ namespace Keysharp.Core
 					}
 					else if (p0 is string ps)
 					{
+						if (parameters[pi + 1] is StringBuffer sb)
+							sb.UpdateEntangledStringFromBuffer();
 						if (ps[ ^ 1] == '*' || ps[ ^ 1] == 'p')
 						{
 							var arg = args[ai];

@@ -1,6 +1,6 @@
 ﻿namespace Keysharp.Scripting
 {
-	public partial class Parser
+	internal partial class Parser
 	{
 		internal const string Legacy = "LEGACY";
 

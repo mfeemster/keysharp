@@ -17,7 +17,7 @@ using static Keysharp.Scripting.Parser;
 
 namespace Keysharp.Scripting
 {
-    public partial class MainVisitor : MainParserBaseVisitor<SyntaxNode>
+    internal partial class MainVisitor : MainParserBaseVisitor<SyntaxNode>
     {
         public ParameterSyntax VariadicParam = SyntaxFactory.Parameter(SyntaxFactory.Identifier("args")) // Default name for spread argument
         .WithType(SyntaxFactory.ArrayType(

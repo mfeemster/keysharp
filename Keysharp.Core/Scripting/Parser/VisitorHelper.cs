@@ -14,7 +14,7 @@ using System.IO;
 
 namespace Keysharp.Scripting
 {
-    public partial class Parser
+    internal partial class Parser
     {
         static Parser()
         {
@@ -1093,6 +1093,261 @@ namespace Keysharp.Scripting
             }
 
             return false;
+        }
+
+        public ExpressionSyntax ConstructVarRef(ExpressionSyntax targetExpression)
+        {
+            // Handle the different cases of singleExpression
+            if (targetExpression is IdentifierNameSyntax identifierName)
+            {
+                // Case: Variable identifier
+                var addedName = MaybeAddVariableDeclaration(identifierName.Identifier.Text);
+                if (addedName != null && addedName != identifierName.Identifier.Text)
+                    targetExpression = identifierName = SyntaxFactory.IdentifierName(addedName);
+                return SyntaxFactory.ObjectCreationExpression(
+                    SyntaxFactory.IdentifierName("VarRef"),
+                    SyntaxFactory.ArgumentList(
+                        SyntaxFactory.SeparatedList(new[]
+                        {
+                    // Getter lambda: () => identifier
+                    SyntaxFactory.Argument(
+                        SyntaxFactory.ParenthesizedLambdaExpression(
+                            SyntaxFactory.ParameterList(),
+                            identifierName
+                        )
+                    ),
+                    // Setter lambda: value => identifier = value
+                    SyntaxFactory.Argument(
+                        SyntaxFactory.ParenthesizedLambdaExpression(
+                            SyntaxFactory.ParameterList(
+                                SyntaxFactory.SingletonSeparatedList(
+                                    SyntaxFactory.Parameter(SyntaxFactory.Identifier("value"))
+                                )
+                            ),
+                            SyntaxFactory.AssignmentExpression(
+                                SyntaxKind.SimpleAssignmentExpression,
+                                identifierName,
+                                SyntaxFactory.IdentifierName("value")
+                            )
+                        )
+                    )
+                        })
+                    ),
+                    null
+                );
+            }
+            else if (targetExpression is MemberAccessExpressionSyntax memberAccess)
+            {
+                // Case: MemberDotExpression
+                return SyntaxFactory.ObjectCreationExpression(
+                    SyntaxFactory.IdentifierName("VarRef"),
+                    SyntaxFactory.ArgumentList(
+                        SyntaxFactory.SeparatedList(new[]
+                        {
+                    // Getter lambda: () => obj.property
+                    SyntaxFactory.Argument(
+                        SyntaxFactory.ParenthesizedLambdaExpression(
+                            SyntaxFactory.ParameterList(),
+                            memberAccess
+                        )
+                    ),
+                    // Setter lambda: value => obj.property = value
+                    SyntaxFactory.Argument(
+                        SyntaxFactory.ParenthesizedLambdaExpression(
+                            SyntaxFactory.ParameterList(
+                                SyntaxFactory.SingletonSeparatedList(
+                                    SyntaxFactory.Parameter(SyntaxFactory.Identifier("value"))
+                                )
+                            ),
+                            SyntaxFactory.AssignmentExpression(
+                                SyntaxKind.SimpleAssignmentExpression,
+                                memberAccess,
+                                SyntaxFactory.IdentifierName("value")
+                            )
+                        )
+                    )
+                        })
+                    ),
+                    null
+                );
+            }
+            else if (targetExpression is ElementAccessExpressionSyntax elementAccess)
+            {
+                // Case: MemberIndexExpression
+                var baseExpression = elementAccess.Expression;
+                var indexExpression = elementAccess.ArgumentList.Arguments.First().Expression;
+
+                return SyntaxFactory.ObjectCreationExpression(
+                    SyntaxFactory.IdentifierName("VarRef"),
+                    SyntaxFactory.ArgumentList(
+                        SyntaxFactory.SeparatedList(new[]
+                        {
+                            // Getter lambda: () => obj[index]
+                            SyntaxFactory.Argument(
+                                SyntaxFactory.ParenthesizedLambdaExpression(
+                                    SyntaxFactory.ParameterList(),
+                                    SyntaxFactory.ElementAccessExpression(baseExpression)
+                                        .WithArgumentList(
+                                            SyntaxFactory.BracketedArgumentList(
+                                                SyntaxFactory.SingletonSeparatedList(
+                                                    SyntaxFactory.Argument(indexExpression)
+                                                )
+                                            )
+                                        )
+                                )
+                            ),
+                            // Setter lambda: value => obj[index] = value
+                            SyntaxFactory.Argument(
+                                SyntaxFactory.ParenthesizedLambdaExpression(
+                                    SyntaxFactory.ParameterList(
+                                        SyntaxFactory.SingletonSeparatedList(
+                                            SyntaxFactory.Parameter(SyntaxFactory.Identifier("value"))
+                                        )
+                                    ),
+                                    SyntaxFactory.AssignmentExpression(
+                                        SyntaxKind.SimpleAssignmentExpression,
+                                        SyntaxFactory.ElementAccessExpression(baseExpression)
+                                            .WithArgumentList(
+                                                SyntaxFactory.BracketedArgumentList(
+                                                    SyntaxFactory.SingletonSeparatedList(
+                                                        SyntaxFactory.Argument(indexExpression)
+                                                    )
+                                                )
+                                            ),
+                                        SyntaxFactory.IdentifierName("value")
+                                    )
+                                )
+                            )
+                        })
+                    ),
+                    null
+                );
+            }
+            else if (targetExpression is InvocationExpressionSyntax invocationExpression)
+            {
+                // Handle Keysharp.Scripting.Script.Index(varname, index)
+                if (invocationExpression.Expression is MemberAccessExpressionSyntax invocationMemberAccess &&
+                    invocationMemberAccess.Name.Identifier.Text == "Index" &&
+                    invocationExpression.ArgumentList.Arguments.Count == 2)
+                {
+                    var varName = invocationExpression.ArgumentList.Arguments[0].Expression;
+                    var index = invocationExpression.ArgumentList.Arguments[1].Expression;
+
+                    return SyntaxFactory.ObjectCreationExpression(
+                        SyntaxFactory.IdentifierName("VarRef"),
+                        SyntaxFactory.ArgumentList(
+                            SyntaxFactory.SeparatedList(new[]
+                            {
+                        // Getter lambda: () => Keysharp.Scripting.Script.Index(varname, index)
+                        SyntaxFactory.Argument(
+                            SyntaxFactory.ParenthesizedLambdaExpression(
+                                SyntaxFactory.ParameterList(),
+                                ((InvocationExpressionSyntax)InternalMethods.Index)
+                                .WithArgumentList(
+                                    SyntaxFactory.ArgumentList(
+                                        SyntaxFactory.SeparatedList(new[]
+                                        {
+                                            SyntaxFactory.Argument(varName),
+                                            SyntaxFactory.Argument(index)
+                                        })
+                                    )
+                                )
+                            )
+                        ),
+                        // Setter lambda: value => Keysharp.Scripting.Script.SetObject(value, varname, index)
+                        SyntaxFactory.Argument(
+                            SyntaxFactory.ParenthesizedLambdaExpression(
+                                SyntaxFactory.ParameterList(
+                                    SyntaxFactory.SingletonSeparatedList(
+                                        SyntaxFactory.Parameter(SyntaxFactory.Identifier("value"))
+                                    )
+                                ),
+                                ((InvocationExpressionSyntax)InternalMethods.SetObject)
+                                .WithArgumentList(
+                                    SyntaxFactory.ArgumentList(
+                                        SyntaxFactory.SeparatedList(new[]
+                                        {
+                                            SyntaxFactory.Argument(SyntaxFactory.IdentifierName("value")),
+                                            SyntaxFactory.Argument(varName),
+                                            SyntaxFactory.Argument(index)
+                                        })
+                                    )
+                                )
+                            )
+                        )
+                            })
+                        ),
+                        null
+                    );
+                }
+                // Handle Keysharp.Scripting.Script.GetPropertyValue(obj, field)
+                else if (invocationExpression.Expression is MemberAccessExpressionSyntax getPropertyAccess &&
+                         getPropertyAccess.Name.Identifier.Text == "GetPropertyValue" &&
+                         invocationExpression.ArgumentList.Arguments.Count == 2)
+                {
+                    var obj = invocationExpression.ArgumentList.Arguments[0].Expression;
+                    var field = invocationExpression.ArgumentList.Arguments[1].Expression;
+
+                    return SyntaxFactory.ObjectCreationExpression(
+                        SyntaxFactory.IdentifierName("VarRef"),
+                        SyntaxFactory.ArgumentList(
+                            SyntaxFactory.SeparatedList(new[]
+                            {
+                        // Getter lambda: () => Keysharp.Scripting.Script.GetPropertyValue(obj, field)
+                        SyntaxFactory.Argument(
+                            SyntaxFactory.ParenthesizedLambdaExpression(
+                                SyntaxFactory.ParameterList(),
+                                ((InvocationExpressionSyntax)InternalMethods.GetPropertyValue)
+                                .WithArgumentList(
+                                    SyntaxFactory.ArgumentList(
+                                        SyntaxFactory.SeparatedList(new[]
+                                        {
+                                            SyntaxFactory.Argument(obj),
+                                            SyntaxFactory.Argument(field)
+                                        })
+                                    )
+                                )
+                            )
+                        ),
+                        // Setter lambda: value => Keysharp.Scripting.Script.SetPropertyValue(obj, field, value)
+                        SyntaxFactory.Argument(
+                            SyntaxFactory.ParenthesizedLambdaExpression(
+                                SyntaxFactory.ParameterList(
+                                    SyntaxFactory.SingletonSeparatedList(
+                                        SyntaxFactory.Parameter(SyntaxFactory.Identifier("value"))
+                                    )
+                                ),
+                                ((InvocationExpressionSyntax)InternalMethods.SetPropertyValue)
+                                .WithArgumentList(
+                                    SyntaxFactory.ArgumentList(
+                                        SyntaxFactory.SeparatedList(new[]
+                                        {
+                                            SyntaxFactory.Argument(obj),
+                                            SyntaxFactory.Argument(field),
+                                            SyntaxFactory.Argument(SyntaxFactory.IdentifierName("value"))
+                                        })
+                                    )
+                                )
+                            )
+                        )
+                            })
+                        ),
+                        null
+                    );
+                }
+                else if (invocationExpression.ArgumentList.Arguments.Count == 3 &&
+                         invocationExpression.ArgumentList.Arguments[1].Expression is LiteralExpressionSyntax argumentName &&
+                         argumentName.Token.Text == "\"__Value\"")
+                {
+                    return invocationExpression;
+                }
+            } else if (targetExpression is ObjectCreationExpressionSyntax oces
+                && oces.Type.GetLastToken().ValueText == "VarRef")
+            {
+                return oces;
+            }
+
+            throw new InvalidOperationException("Unsupported singleExpression type for VarRefExpression.");
         }
 
         public static bool IsLiteralOrConstant(ExpressionSyntax expression)

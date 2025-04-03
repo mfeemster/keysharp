@@ -28,7 +28,7 @@ namespace Keysharp.Scripting
         Upper,
         Title
     };
-    public partial class Parser
+    internal partial class Parser
 	{
         public static readonly CultureInfo culture = CultureInfo.CreateSpecificCulture("en-US");
 		public static readonly CultureInfo inv = CultureInfo.InvariantCulture;
@@ -136,40 +136,6 @@ namespace Keysharp.Scripting
 		} .ToFrozenSet(StringComparer.OrdinalIgnoreCase);
 
 		internal static FrozenSet<string>.AlternateLookup<ReadOnlySpan<char>> flowOperatorsAlt = flowOperators.GetAlternateLookup<ReadOnlySpan<char>>();
-
-		internal static FrozenSet<string> keywords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-		{
-			AndTxt,
-			OrTxt,
-			NotTxt,
-			TrueTxt,
-			FalseTxt,
-			NullTxt,
-			IsTxt,
-			FlowBreak,
-			FlowContinue,
-			FlowCase,
-			FlowClass,
-			FlowDefault,
-			FlowFor,
-			FlowElse,
-			FlowExtends,
-			FlowGosub,
-			FlowGoto,
-			FlowIf,
-			FlowLoop,
-			FlowReturn,
-			FlowWhile,
-			FunctionLocal,
-			FunctionGlobal,
-			FunctionStatic,
-			FlowTry,
-			FlowCatch,
-			FlowFinally,
-			FlowUntil,
-			FlowSwitch,
-			FlowThrow
-		} .ToFrozenSet(StringComparer.OrdinalIgnoreCase);
 
 		internal static List<string> nonContExprOperatorsList = ["++", "--"];
 		internal static CodePrimitiveExpression nullPrimitive = new (null);
@@ -467,8 +433,6 @@ namespace Keysharp.Scripting
 		{
 			Ch = ch;
 		}
-
-        public static string GetKeywords() => string.Join(' ', keywords);
 
         public static bool IsTypeOrBase(Type t1, string t2)
         {

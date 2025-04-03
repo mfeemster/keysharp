@@ -19,6 +19,8 @@ namespace Keysharp.Core.Common.Invoke
 		private readonly int startVarIndex = -1;
 		private readonly int stopVarIndexDistanceFromEnd;
 
+        private static ConcurrentDictionary<string, Func<object, object[], object>> delegateCache = new();
+
 		internal bool IsStaticFunc { get; private set; }
 		internal bool IsStaticProp { get; private set; }
 		internal bool IsBind { get; private set; }
@@ -27,7 +29,7 @@ namespace Keysharp.Core.Common.Invoke
         internal int MinParams = 0;
         internal int MaxParams = 9999;
 
-		public MethodPropertyHolder(MethodInfo m, PropertyInfo p)
+		internal MethodPropertyHolder(MethodInfo m, PropertyInfo p)
 		{
 			mi = m;
 			pi = p;
@@ -64,7 +66,7 @@ namespace Keysharp.Core.Common.Invoke
 					callFunc = (inst, obj) => ((IFuncObj)inst).Call(obj);
 				} else
 				{
-                    var del = DelegateFactory.CreateDelegate(mi);
+                    var del = delegateCache.GetOrAdd(GenerateMethodInfoCacheKey(), key => DelegateFactory.CreateDelegate(mi));
 
                     if (isGuiType)
                     {
@@ -393,7 +395,36 @@ namespace Keysharp.Core.Common.Invoke
 					}
 				}
 			}
-		}
+
+            string GenerateMethodInfoCacheKey()
+            {
+                var sb = new StringBuilder();
+
+                sb.Append(mi.DeclaringType.FullName);
+                sb.Append("+");
+                sb.Append(mi.Name);
+                sb.Append("<");
+
+                // For methods, use the return type and parameter list.
+                sb.Append(mi.ReturnType.FullName);
+                foreach (var param in mi.GetParameters())
+                {
+                    sb.Append(",").Append(param.ParameterType.FullName);
+                    if (param.HasDefaultValue)
+                    {
+                        // Append the default value or "null" if it's null.
+                        sb.Append("=").Append(param.DefaultValue == null ? "null" : param.DefaultValue.ToString());
+                    }
+                    else
+                    {
+                        sb.Append("=NoDefault");
+                    }
+                }
+                sb.Append(">");
+
+                return sb.ToString();
+            }
+        }
     }
     class ArgumentError : Error
     {

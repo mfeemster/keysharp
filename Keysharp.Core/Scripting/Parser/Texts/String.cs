@@ -2,7 +2,7 @@ using Keysharp.Core.Scripting.Parser.Helpers;
 
 namespace Keysharp.Scripting
 {
-    public partial class Parser
+    internal partial class Parser
 	{
 		internal static string EscapedString(string code, bool resolve) => EscapedString(code.AsSpan(), resolve);
 

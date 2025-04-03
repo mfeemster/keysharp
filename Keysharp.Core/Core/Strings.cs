@@ -1,4 +1,7 @@
-﻿namespace Keysharp.Core
+﻿using System.Configuration;
+using System.Formats.Tar;
+
+namespace Keysharp.Core
 {
 	public static partial class KeysharpEnhancements
 	{
@@ -1127,8 +1130,18 @@
 		/// </summary>
 		/// <param name="value">The string to return a pointer to.</param>
 		/// <returns>The memory address of a copy of the string bytes.</returns>
-		public static long StrPtr(object value)
+		public static object StrPtr(object value)
 		{
+			if (value is StringBuffer sb) {
+				return sb;
+			} 
+			else if (value is KeysharpObject kso)
+			{
+				var str = Script.GetPropertyValue(kso, "__Value");
+				var sbr = new StringBuffer(str);
+				sbr.EntangledString = kso;
+				return sbr;
+			}
 			value = Encoding.Unicode.GetBytes(value.ToString());
 			var gch = GCHandle.Alloc(value, GCHandleType.Pinned);
 			var ptr = gch.AddrOfPinnedObject();
@@ -1476,9 +1489,43 @@
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown because this function has no meaning in Keysharp.</exception>
 		public static object VarSetStrCapacity(object targetVar, object requestedCapacity = null)
 		{
-            Debug.OutputDebug("VarSetStrCapacity() not supported or necessary.");
-			return requestedCapacity == null ? StrLen(Script.GetPropertyValue(targetVar, "__Value")) : requestedCapacity;
-		}
+			if (!(targetVar is KeysharpObject))
+				throw new TypeError($"Expected argument of type VarRef, but received {targetVar.GetType()}");
+
+			var target = Script.GetPropertyValue(targetVar, "__Value");
+			int capacity;
+			if (target is string targetStr)
+			{
+				if (requestedCapacity == null)
+					return (long)targetStr.Length;
+				capacity = requestedCapacity.Ai();
+				if (capacity < 0)
+					return (long)targetStr.Length;
+                var sbr = new StringBuffer(targetStr, capacity);
+				Script.SetPropertyValue(targetVar, "__Value", sbr);
+				return (long)capacity;
+			}
+			else if (target is StringBuffer sbr)
+			{
+				if (requestedCapacity == null)
+					return sbr.Capacity;
+
+				capacity = requestedCapacity.Ai();
+				if (capacity == -1)
+				{
+					var str = sbr.ToString();
+					Script.SetPropertyValue(targetVar, "__Value", str);
+					return (long)str.Length;
+				}
+				else
+				{
+					sbr.Capacity = capacity;
+					return sbr.Capacity;
+				}
+			}
+
+            throw new TypeError($"Expected referred argument of type string or StringBuffer, but received {target.GetType()}");
+        }
 
 		/// <summary>
 		/// Compares two version strings.

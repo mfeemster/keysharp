@@ -166,6 +166,7 @@ namespace Keysharp.Core.Common.Invoke
                                 }
                                 else if (p is StringBuffer sb)
                                 {
+                                    sb.UpdateBufferFromEntangledString();
                                     args[n] = sb.sb;
                                     types[n] = typeof(StringBuilder);
                                 }

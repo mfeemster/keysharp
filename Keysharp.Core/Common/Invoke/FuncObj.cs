@@ -207,61 +207,6 @@
 		=> new BoundFunc(mi, args, Inst);
 
 		public virtual object Call(params object[] obj) => mph.callFunc(Inst, obj);
-		/*
-		{
-			// No `this` is required
-			if (mph.IsStaticFunc)
-				return mph.callFunc(null, obj);
-			// No other choice but to use `inst`
-			else if (obj.Length == 0)
-				return mph.callFunc(inst, obj);
-			// `this` is required but not present
-			else if (inst == null)
-			{
-				if (obj.Length == 1)
-					return mph.callFunc(obj[0], System.Array.Empty<object>());
-				else
-				{
-					var args = new object[obj.Length - 1];
-					// Use Array.Copy which is fast and optimized.
-					System.Array.Copy(obj, 1, args, 0, args.Length);
-					return mph.callFunc(obj[0], args);
-				}
-			}
-			// `this` is present in FuncObj but the user-provided `this` does not match the required type
-			else if (!DeclaringType.IsAssignableFrom(obj[0].GetType()))
-				return mph.callFunc(inst, obj);
-			// Not sure if this should use `obj[0]` or `inst`
-			else
-			{
-                if (obj.Length == 1)
-                    return mph.callFunc(obj[0], System.Array.Empty<object>());
-                else
-                {
-                    var args = new object[obj.Length - 1];
-                    System.Array.Copy(obj, 1, args, 0, args.Length);
-                    return mph.callFunc(obj[0], args);
-                }
-            }
-        }
-		*/
-
-		/*
-		public virtual object CallWithInst(object inst, params object[] obj) {
-			var decl = mph.mi.DeclaringType;
-			var instt = inst.GetType();
-
-			// If we have a compiler-generated closure *and* its type matches inst, then call it without 
-			// passing inst as `this`
-            if (Inst != null && mph.mi.DeclaringType?.DeclaringType == inst.GetType())
-                return mph.callFunc(Inst, obj);
-            else if (mph.IsStaticFunc || (Inst != null && mph.mi.DeclaringType != inst.GetType()))
-				return mph.callFunc(Inst, new[] { inst }.Concat(obj).ToArray());
-			else 
-				return mph.callFunc(inst, obj);
-		}
-		*/
-
         public virtual object CallWithRefs(params object[] args)
 		{
 			var argsArray = new object[args.Length];
@@ -341,7 +286,7 @@
 
 		private void Init()
 		{
-			mph = new MethodPropertyHolder(mi, null);
+			mph = new MethodPropertyHolder(mi, null); // TODO: find a way to cache these (or at least mph.callFunc delegate)
 			var parameters = mph.parameters;
 			MinParams = mph.MinParams;
 			MaxParams = mph.MaxParams;
