@@ -569,31 +569,31 @@ namespace Keysharp.Core
 											object winText = null,
 											object excludeTitle = null,
 											object excludeText = null) =>
-		WinGetControlsHelper(true, winTitle, winText, excludeTitle, excludeText);
+			WinGetControlsHelper(true, winTitle, winText, excludeTitle, excludeText);
 
 		public static object WinGetControlsHwnd(object winTitle = null,
 												object winText = null,
 												object excludeTitle = null,
 												object excludeText = null) =>
-		WinGetControlsHelper(false, winTitle, winText, excludeTitle, excludeText);
+			WinGetControlsHelper(false, winTitle, winText, excludeTitle, excludeText);
 
 		public static long WinGetCount(object winTitle = null,
 									   object winText = null,
 									   object excludeTitle = null,
 									   object excludeText = null) =>
-		DoDelayedFunc(() => SearchWindows(winTitle, winText, excludeTitle, excludeText).Count);
+			SearchWindows(winTitle, winText, excludeTitle, excludeText).Count;
 
 		public static long WinGetExStyle(object winTitle = null,
 										 object winText = null,
 										 object excludeTitle = null,
 										 object excludeText = null) =>
-		DoDelayedFunc(() => SearchWindow(winTitle, winText, excludeTitle, excludeText, true) is WindowItem win ? win.ExStyle : 0L);
+			SearchWindow(winTitle, winText, excludeTitle, excludeText, true) is WindowItem win ? win.ExStyle : 0L;
 
 		public static object WinGetID(object winTitle = null,
 									  object winText = null,
 									  object excludeTitle = null,
 									  object excludeText = null) =>
-		DoDelayedFunc(() => SearchWindow(winTitle, winText, excludeTitle, excludeText, true) is WindowItem win ? win.Handle.ToInt64() : 0L);
+			SearchWindow(winTitle, winText, excludeTitle, excludeText, true) is WindowItem win ? win.Handle.ToInt64() : 0L;
 
 		public static long WinGetIDLast(object winTitle = null,
 										object winText = null,
@@ -605,7 +605,6 @@ namespace Keysharp.Core
 
 			if (windows != null && windows.Count > 0)
 			{
-				WindowItemBase.DoWinDelay();
 				return windows[ ^ 1].Handle.ToInt64();
 			}
 			else if (!IsMainWindowClosing)
@@ -618,7 +617,7 @@ namespace Keysharp.Core
 									   object winText = null,
 									   object excludeTitle = null,
 									   object excludeText = null) =>
-		DoDelayedFunc(() => new Array(SearchWindows(winTitle, winText, excludeTitle, excludeText).Select(item => item.Handle.ToInt64()).ToList()));
+			new Array(SearchWindows(winTitle, winText, excludeTitle, excludeText).Select(item => item.Handle.ToInt64()).ToList());
 
 		public static long WinGetMinMax(object winTitle = null,
 										object winText = null,
@@ -637,8 +636,6 @@ namespace Keysharp.Core
 					val = -1L;
 				else
 					val = 1L;
-
-				WindowItemBase.DoWinDelay();
 			}
 
 			return val;
@@ -648,7 +645,7 @@ namespace Keysharp.Core
 									   object winText = null,
 									   object excludeTitle = null,
 									   object excludeText = null) =>
-		DoDelayedFunc(() => SearchWindow(winTitle, winText, excludeTitle, excludeText, true) is WindowItem win ? win.PID : 0L);
+			SearchWindow(winTitle, winText, excludeTitle, excludeText, true) is WindowItem win ? win.PID : 0L;
 
 		public static object WinGetPos([Optional()][DefaultParameterValue(0)] ref object outX,
 									   [Optional()][DefaultParameterValue(0)] ref object outY,
@@ -667,31 +664,31 @@ namespace Keysharp.Core
 											   object winText = null,
 											   object excludeTitle = null,
 											   object excludeText = null) =>
-		DoDelayedFunc(() => SearchWindow(winTitle, winText, excludeTitle, excludeText, true) is WindowItem win ? win.ProcessName : "");
+			SearchWindow(winTitle, winText, excludeTitle, excludeText, true) is WindowItem win ? win.ProcessName : "";
 
 		public static string WinGetProcessPath(object winTitle = null,
 											   object winText = null,
 											   object excludeTitle = null,
 											   object excludeText = null) =>
-		DoDelayedFunc(() => SearchWindow(winTitle, winText, excludeTitle, excludeText, true) is WindowItem win ? win.Path : "");
+			SearchWindow(winTitle, winText, excludeTitle, excludeText, true) is WindowItem win ? win.Path : "";
 
 		public static long WinGetStyle(object winTitle = null,
 									   object winText = null,
 									   object excludeTitle = null,
 									   object excludeText = null) =>
-		DoDelayedFunc(() => SearchWindow(winTitle, winText, excludeTitle, excludeText, true) is WindowItem win ? win.Style : 0L);
+			SearchWindow(winTitle, winText, excludeTitle, excludeText, true) is WindowItem win ? win.Style : 0L;
 
 		public static string WinGetText(object winTitle = null,
 										object winText = null,
 										object excludeTitle = null,
 										object excludeText = null) =>
-		DoDelayedFunc(() => string.Join(Keyword_Linefeed, SearchWindow(winTitle, winText, excludeTitle, excludeText, true) is WindowItem win ? win.Text : [""]));
+		string.Join(Keyword_Linefeed, SearchWindow(winTitle, winText, excludeTitle, excludeText, true) is WindowItem win ? win.Text : [""]);
 
 		public static string WinGetTitle(object winTitle = null,
 										 object winText = null,
 										 object excludeTitle = null,
 										 object excludeText = null) =>
-		DoDelayedFunc(() => SearchWindow(winTitle, winText, excludeTitle, excludeText, true) is WindowItem win ? win.Title : "");
+			SearchWindow(winTitle, winText, excludeTitle, excludeText, true) is WindowItem win ? win.Title : "";
 
 		public static string WinGetTransColor(object winTitle = null,
 											  object winText = null,
@@ -703,7 +700,6 @@ namespace Keysharp.Core
 				var color = (int)win.TransparentColor.Al();
 				var tempbgr = Color.FromArgb(color);
 				color = Color.FromArgb(tempbgr.A, tempbgr.B, tempbgr.G, tempbgr.R).ToArgb();
-				WindowItemBase.DoWinDelay();
 				return color != int.MinValue ? $"0x{color:X6}" : "";
 			}
 
@@ -718,7 +714,6 @@ namespace Keysharp.Core
 			if (SearchWindow(winTitle, winText, excludeTitle, excludeText, true) is WindowItem win)
 			{
 				var color = win.Transparency.Al();
-				WindowItemBase.DoWinDelay();
 				return color != -1 ? color : "";
 			}
 
@@ -1128,6 +1123,8 @@ namespace Keysharp.Core
 			var start = DateTime.Now;
             var criteria = SearchCriteria.FromString(winTitle, winText, excludeTitle, excludeText);
 			var windows = WindowProvider.Manager.FindWindowGroup(criteria);
+			if (windows.Count == 0)
+				return 1L;
 
 			foreach (var win in windows)//In the case of WinWaitClose(), this loop won't execute and the function will return 1.
 			{
@@ -1135,7 +1132,7 @@ namespace Keysharp.Core
 
 				while (seconds == 0 || (DateTime.Now - start).TotalSeconds < seconds)
 				{
-					if (!win.Exists || (!criteria.IsPureID && !ThreadAccessors.A_DetectHiddenWindows && !win.Visible))
+					if (!win.Exists || (!ThreadAccessors.A_DetectHiddenWindows && !win.Visible))
 					{
 						b = true;
 						break;
