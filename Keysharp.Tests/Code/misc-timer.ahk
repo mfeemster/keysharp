@@ -23,13 +23,13 @@ else
 
 x := 0
 fo1 := Func("TimerHandler2")
-SetTimer(fo1, 1000)
+SetTimer(fo1, 500)
 
-TimerHandler2(thefo)
+TimerHandler2()
 {
 global x
 	x++
-	SetTimer(thefo, 0)
+	SetTimer(A_EventInfo, 0)
 
 }
 
