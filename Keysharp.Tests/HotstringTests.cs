@@ -358,30 +358,51 @@ namespace Keysharp.Tests
 		public void HotstringParsing()
 		{
 			var trigger = "^;";
-			var hk = Parser.EscapeHotkeyTrigger(trigger);
+			var hk = EscapeHotkeyTrigger(trigger);
 			Assert.AreEqual("^;", hk);
 			//
 			trigger = "`;";
-			hk = Parser.EscapeHotkeyTrigger(trigger);
+			hk = EscapeHotkeyTrigger(trigger);
 			Assert.AreEqual(";", hk);
 			//
 			trigger = ":";
-			hk = Parser.EscapeHotkeyTrigger(trigger);
+			hk = EscapeHotkeyTrigger(trigger);
 			Assert.AreEqual(":", hk);
 			//
 			trigger = "`";
-			hk = Parser.EscapeHotkeyTrigger(trigger);
+			hk = EscapeHotkeyTrigger(trigger);
 			Assert.AreEqual("`", hk);
 			//
 			trigger = "``";
-			hk = Parser.EscapeHotkeyTrigger(trigger);
+			hk = EscapeHotkeyTrigger(trigger);
 			Assert.AreEqual("`", hk);
 			//
 			trigger = "+`";
-			hk = Parser.EscapeHotkeyTrigger(trigger);
+			hk = EscapeHotkeyTrigger(trigger);
 			Assert.AreEqual("+`", hk);
 			//
 			Assert.IsTrue(TestScript("hotkey-hotstring-parsing", false));
+
+			string EscapeHotkeyTrigger(ReadOnlySpan<char> s)
+			{
+				var escaped = false;
+				var sb = new StringBuilder(s.Length);
+				char ch = (char)0;
+
+				for (var i = 0; i < s.Length; ++i)
+				{
+					ch = s[i];
+					escaped = i == 0 && ch == '`';
+
+					if (!escaped)
+						sb.Append(ch);
+				}
+
+				if (escaped)
+					sb.Append(ch);
+
+				return sb.ToString();
+			}
 		}
 
 		[Test, Category("Hotstring"), NonParallelizable]

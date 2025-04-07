@@ -173,9 +173,9 @@
 						_ = Flow.ExitApp(1);
 					}
 				}
-                ExitIfNotPersistent();
-            });
-            Application.Run(mainWindow);
+				ExitIfNotPersistent();
+			});
+			Application.Run(mainWindow);
 		}
 
 		public static void SetName(string s) => scriptName = s;
@@ -365,7 +365,7 @@
 			return false;
 		}
 
-		public static void ExitIfNotPersistent()
+		public static void ExitIfNotPersistent(Flow.ExitReasons exitReason = Flow.ExitReasons.Exit)
 		{
             //Must use BeginInvoke() because this might be called from _ks_UserMainCode(),
             //so it needs to run after that thread has exited.
@@ -373,7 +373,7 @@
 				mainWindow?.CheckedBeginInvoke(new Action(() =>
 			{
 				if (!IsMainWindowClosing && !AnyPersistent())
-					Flow.ExitAppInternal(Flow.ExitReasons.Exit, Environment.ExitCode, false);
+					_ = Flow.ExitAppInternal(exitReason, Environment.ExitCode, false);
 			}), true, true);
 		}
 

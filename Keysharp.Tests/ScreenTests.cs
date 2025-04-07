@@ -37,7 +37,7 @@ namespace Keysharp.Tests
 				for (var j = 0; j < System.Windows.Forms.Screen.PrimaryScreen.Bounds.Width; j++)
 				{
 					var pix = Core.Screen.PixelGetColor(j, i);
-					Assert.IsTrue(int.TryParse(pix.AsSpan(2), NumberStyles.HexNumber, Parser.inv, out var ii));
+					Assert.IsTrue(int.TryParse(pix.AsSpan(2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var ii));
 
 					if (ii != last && ii != white && ii != black)
 						goto pass;
@@ -65,7 +65,7 @@ namespace Keysharp.Tests
 				for (var j = 0; j < System.Windows.Forms.Screen.PrimaryScreen.Bounds.Width; j++)
 				{
 					var pix = Core.Screen.PixelGetColor(j, i);
-					Assert.IsTrue(int.TryParse(pix.AsSpan(2), NumberStyles.HexNumber, Parser.inv, out var ii));
+					Assert.IsTrue(int.TryParse(pix.AsSpan(2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var ii));
 
 					if (ii != last && ii != white && ii != black)
 					{

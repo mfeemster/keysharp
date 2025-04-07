@@ -270,7 +270,7 @@ namespace Keysharp.Core.Common.Strings
 			}
 			else if (opt.Length > 0 && opt[0] == '+' && opt.Slice(1).StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
 			{
-				suffix = opt.Slice(2);
+				suffix = opt.Slice(prefix.Length + 1);
 				doit = true;
 			}
 

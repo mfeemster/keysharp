@@ -8,7 +8,7 @@ namespace Keysharp.Core
 		internal WeakReference<Gui> gui;
 		private readonly List<IFuncObj> clickHandlers = [];
 		private readonly List<IFuncObj> doubleClickHandlers = [];
-		private bool dpiscaling => Gui.dpiscaling;
+		private bool DpiScaling => Gui.dpiscaling;
 		private Control _control;
 
 		//Normal event handlers can't be used becaused they need to return a value.
@@ -734,7 +734,7 @@ namespace Keysharp.Core
 								   [Optional()][DefaultParameterValue(null)] object outWidth,
 								   [Optional()][DefaultParameterValue(null)] object outHeight)
 		{
-			GetClientPos(_control, dpiscaling, outX, outY, outWidth, outHeight);
+			GetClientPos(_control, DpiScaling, outX, outY, outWidth, outHeight);
 			return null;
 		}
 
@@ -849,7 +849,7 @@ namespace Keysharp.Core
 							 [Optional()][DefaultParameterValue(null)] object outWidth,
 							 [Optional()][DefaultParameterValue(null)] object outHeight)
 		{
-            GetPos(_control, dpiscaling, outX, outY, outWidth, outHeight);
+            GetPos(_control, DpiScaling, outX, outY, outWidth, outHeight);
             return null;
 		}
 
@@ -1063,7 +1063,7 @@ namespace Keysharp.Core
 			var _y = y.Al(long.MinValue);
 			var w = width.Al(long.MinValue);
 			var h = height.Al(long.MinValue);
-			var scale = !dpiscaling ? 1.0 : 1.0 / A_ScaledScreenDPI;
+			var scale = !DpiScaling ? 1.0 : 1.0 / A_ScaledScreenDPI;
 			var hasScrollBars = _control is KeysharpTextBox || _control is KeysharpRichEdit;//Reflections.SafeHasProperty(_control, "ScrollBars") || Reflections.SafeHasProperty(_control, "HorizontalScrollbar") || Reflections.SafeHasProperty(_control, "Scrollable")
 
 			if (_y != long.MinValue)

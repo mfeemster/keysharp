@@ -255,6 +255,13 @@ namespace Keysharp.Core
 		public string File { get; internal set; }
 
 		/// <summary>
+		/// Whether this exception has been handled yet.
+		/// If true, further error messages will not be shown.
+		/// This should only ever be used internally or by the generated script code.
+		/// </summary>
+		public bool Handled { get; set; }
+
+		/// <summary>
 		/// Gets or sets the line the exception occured on.
 		/// </summary>
 		public long Line { get; internal set; }
@@ -264,6 +271,15 @@ namespace Keysharp.Core
 		/// Must be done this way, else the reflection dictionary sees it as a dupe from the base.
 		/// </summary>
 		public override string Message => ToString();
+
+		/// <summary>
+		/// Whether the global error event handlers have been called as a result
+		/// of this exception yet.
+		/// If true, they won't be called again for this error.
+		/// Note, this is separate from Handled above.
+		/// This should only ever be used internally or by the generated script code.
+		/// </summary>
+		public bool Processed { get; set; }
 
 		/// <summary>
 		/// Gets or sets the raw message.
@@ -279,22 +295,6 @@ namespace Keysharp.Core
 		/// Gets or sets the description of the error that happened.
 		/// </summary>
 		public string What { get; set; }
-
-		/// <summary>
-		/// Whether this exception has been handled yet.
-		/// If true, further error messages will not be shown.
-		/// This should only ever be used internally or by the generated script code.
-		/// </summary>
-		public bool Handled { get; set; }
-
-		/// <summary>
-		/// Whether the global error event handlers have been called as a result
-		/// of this exception yet.
-		/// If true, they won't be called again for this error.
-		/// Note, this is separate from Handled above.
-		/// This should only ever be used internally or by the generated script code.
-		/// </summary>
-		public bool Processed { get; set; }
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="KeysharpException"/> class.

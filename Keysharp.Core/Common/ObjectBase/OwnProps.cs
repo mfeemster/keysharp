@@ -62,7 +62,6 @@
 		internal OwnPropsIterator(KeysharpObject o, Dictionary<object, object> m, bool gv)
 			: base(null, gv ? 2 : 1)
 		{
-			Error err;
 			obj = o;
 			map = m;
 			GetVal = gv;

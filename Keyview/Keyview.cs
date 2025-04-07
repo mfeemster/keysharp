@@ -38,7 +38,7 @@
 		/// </summary>
 		private const int NUMBER_MARGIN = 1;
 
-		private static readonly string keywords1 = "true false this thishotkey super unset isset " + Parser.GetKeywords();
+		private static readonly string keywords1 = "true false this thishotkey super unset isset " + Keywords.GetKeywords();
 		private static readonly string keywords2 = Script.GetPublicStaticPropertyNames();
 		private readonly Button btnCopyFullCode = new ();
 		private readonly CheckBox chkFullCode = new ();

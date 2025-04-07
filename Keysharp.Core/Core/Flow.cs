@@ -110,22 +110,17 @@ namespace Keysharp.Core
 			return ret;
 		}
 
-        public class UserRequestedExitException : Exception
-        {
-            public UserRequestedExitException() { }
-        }
-
-        /// <summary>
-        /// Exits the current thread or the entire script if non-persistent.
-        /// The exit is achieved by throwing an exception which will be caught in the catch
-        /// clause that wraps all threads.
-        /// </summary>
-        /// <param name="exitCode">An integer that is returned to the caller.</param>
-        public static object Exit(object exitCode = null)
+		/// <summary>
+		/// Exits the current thread or the entire script if non-persistent.
+		/// The exit is achieved by throwing an exception which will be caught in the catch
+		/// clause that wraps all threads.
+		/// </summary>
+		/// <param name="exitCode">An integer that is returned to the caller.</param>
+		public static object Exit(object exitCode = null)
 		{
-			A_ExitReason = ExitReasons.Exit;
-            Environment.ExitCode = exitCode.Ai();
-            throw new UserRequestedExitException();
+			A_ExitReason = exitCode.Al();
+			Environment.ExitCode = exitCode.Ai();
+			throw new UserRequestedExitException();
 		}
 
 		/// <summary>
@@ -405,7 +400,7 @@ namespace Keysharp.Core
 							_ = Interlocked.Increment(ref Script.totalExistingThreads);
 							(bool, ThreadVariables) btv = Threads.PushThreadVariables(pri, true, false);
                             btv.Item2.currentTimer = timer;
-							btv.Item2.eventInfo = f;
+                            btv.Item2.eventInfo = func;
                             var ret = func.Call();
 							_ = Threads.EndThread(btv.Item1);
 						}, true);//Pop on exception because EndThread() above won't be called.
@@ -452,11 +447,11 @@ namespace Keysharp.Core
 				{
 					Application.DoEvents();//Can sometimes throw on linux.
 				}
-                catch (UserRequestedExitException)
-                {
-                    throw;
-                }
-                catch
+				catch (UserRequestedExitException)
+				{
+					throw;
+				}
+				catch
 				{
 				}
 			}
@@ -468,11 +463,11 @@ namespace Keysharp.Core
 					{
 						Application.DoEvents();//Can sometimes throw on linux.
 					}
-                    catch (UserRequestedExitException)
-                    {
-                        throw;
-                    }
-                    catch
+					catch (UserRequestedExitException)
+					{
+						throw;
+					}
+					catch
 					{
 					}
 
@@ -617,10 +612,10 @@ namespace Keysharp.Core
 
 			Environment.ExitCode = ec;
 
+			//Environment.Exit(exitCode);//This seems too harsh, and also prevents compiled unit tests from properly being run.
 			if (useThrow)
 				throw new UserRequestedExitException();
 			else
-            //Environment.Exit(exitCode);//This seems too harsh, and also prevents compiled unit tests from properly being run.
 				return false;
 		}
 
@@ -703,13 +698,14 @@ namespace Keysharp.Core
 			{
 				var ex = mainex.InnerException ?? mainex;
 
-                if (mainex is UserRequestedExitException || ex is UserRequestedExitException)
-                {
-                    if (pop)
-                        _ = Threads.EndThread(true);
-                    return true;
-                }
-                else if (ex is Error kserr)
+				if (mainex is UserRequestedExitException || ex is UserRequestedExitException)
+				{
+					if (pop)
+						_ = Threads.EndThread(true);
+
+					return true;
+				}
+				else if (ex is Error kserr)
 				{
 					if (!kserr.Processed)
 						_ = ErrorOccurred(kserr, kserr.ExcType);
@@ -734,6 +730,7 @@ namespace Keysharp.Core
 				return false;
 			}
 		}
+
         public static IFuncObj TryGetCallable(object f)
         {
             IFuncObj func = null;
@@ -758,6 +755,18 @@ namespace Keysharp.Core
             }
             return func;
         }
+
+        /// <summary>
+        /// Special exception class to signal that the user has requested exiting the script
+        /// via ExitApp().
+        /// Note this does not derive from Error so that it can be properly distinguished in
+        /// catch statements.
+        /// </summary>
+        public class UserRequestedExitException : Exception
+		{
+			public UserRequestedExitException()
+			{ }
+		}
 
 		/// <summary>
 		/// The various reasons for exiting the script.

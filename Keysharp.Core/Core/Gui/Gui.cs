@@ -15,6 +15,7 @@
 			];
 
 		internal Dictionary<object, object> controls = [];
+		internal bool dpiscaling = true;
 		internal MenuBar menuBar;
 
 		private static readonly Dictionary<string, Action<Gui, object>> showOptionsDkt = new ()
@@ -207,7 +208,6 @@
 		};
 
 		private static int windowCount = 0;
-		public bool dpiscaling = true;
 		private bool lastfound = false;
 		private bool owndialogs = false;
 		private bool resizable = false;

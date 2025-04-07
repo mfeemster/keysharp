@@ -201,7 +201,6 @@ namespace Keysharp.Scripting
             }
             var argumentList = (ArgumentListSyntax)base.VisitExpressionStatement(context);
             ExpressionSyntax singleExpression = null;
-            ExpressionSyntax functionTargetExpression = null;
             if (argumentList.Arguments.Count == 0)
                 throw new Error("Expression count can't be 0");
 

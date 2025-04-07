@@ -651,6 +651,12 @@
                         <Property Name="DisplayName" Value="FlowEnum" />
                       </Rule>
                     </Rule>
+                    <Rule Match="All">
+                      <Property Name="TestWithNormalizedFullyQualifiedName" Value="Keysharp.Tests.FlowTests.FlowExit" />
+                      <Rule Match="Any">
+                        <Property Name="DisplayName" Value="FlowExit" />
+                      </Rule>
+                    </Rule>
                   </Rule>
                 </Rule>
                 <Rule Match="All">

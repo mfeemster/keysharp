@@ -100,28 +100,35 @@ namespace Keysharp.CompiledMain
                     Keysharp.Core.Common.Threading.Threads.EndThread(_ks_pushed);
                 }
 
-                Keysharp.Core.Flow.ExitApp(1);
-            }
-            catch (System.Exception mainex)
-            {
-                var ex = mainex.InnerException ?? mainex;
-                if (ex is Keysharp.Core.Error kserr)
-                {
-                    if (ErrorOccurred(kserr))
-                    {
-                        var (_ks_pushed, _ks_btv) = Keysharp.Core.Common.Threading.Threads.BeginThread();
-                        MsgBox("Uncaught Keysharp exception:\r\n" + kserr, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
-                        Keysharp.Core.Common.Threading.Threads.EndThread(_ks_pushed);
-                    }
-                }
-                else
-                {
-                    var (_ks_pushed, _ks_btv) = Keysharp.Core.Common.Threading.Threads.BeginThread();
-                    MsgBox("Uncaught exception:\r\n" + "Message: " + ex.Message + "\r\nStack: " + ex.StackTrace, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
-                    Keysharp.Core.Common.Threading.Threads.EndThread(_ks_pushed);
-                };
-                Keysharp.Core.Flow.ExitApp(1);
-            }
+				Keysharp.Core.Flow.ExitApp(1);
+				return Environment.ExitCode;
+			}
+			catch (Keysharp.Core.Flow.UserRequestedExitException exitex)
+			{
+				return Environment.ExitCode;
+			}
+			catch (System.Exception mainex)
+			{
+				var ex = mainex.InnerException ?? mainex;
+
+				if (ex is Keysharp.Core.Error kserr)
+				{
+					if (!kserr.Processed)
+						_ = ErrorOccurred(kserr, kserr.ExcType);
+
+					if (!kserr.Handled)
+					{
+						var (_ks_pushed, _ks_btv) = Keysharp.Core.Common.Threading.Threads.BeginThread();
+						MsgBox("Uncaught Keysharp exception:\r\n" + kserr, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
+						Keysharp.Core.Common.Threading.Threads.EndThread(_ks_pushed);
+					}
+				}
+				else
+				{
+					var (_ks_pushed, _ks_btv) = Keysharp.Core.Common.Threading.Threads.BeginThread();
+					MsgBox("Uncaught exception:\r\n" + "Message: " + ex.Message + "\r\nStack: " + ex.StackTrace, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
+					Keysharp.Core.Common.Threading.Threads.EndThread(_ks_pushed);
+				}
 
             return Environment.ExitCode;
         }
