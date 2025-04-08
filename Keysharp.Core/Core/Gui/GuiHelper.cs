@@ -217,7 +217,7 @@
 		/// </summary>
 		/// <param name="icon"></param>
 		/// <returns></returns>
-		internal static List<Icon> SplitIcon(Icon icon)
+		internal static List<(Icon, Bitmap)> SplitIcon(Icon icon)
 		{
 			Error err;
 
@@ -226,7 +226,7 @@
 
 			try
 			{
-				// Get an .ico file in memory, then split it into separate icons.
+				//Get an .ico file in memory, then split it into separate icons and bitmaps.
 				byte[] src = null;
 
 				using (var stream = new MemoryStream())
@@ -235,13 +235,13 @@
 					src = stream.ToArray();
 				}
 
-				int count = BitConverter.ToUInt16(src, 4);
-				var splitIcons = new List<Icon>(count);
-				//var sb = new StringBuilder(1024 * 1024);
+				int count = BitConverter.ToInt16(src, 4);
+				var splitIcons = new List<(Icon, Bitmap)>(count);
 
 				for (var i = 0; i < count; i++)
 				{
-					var length = BitConverter.ToInt32(src, 6 + (16 * i) + 8); //ICONDIRENTRY.dwBytesInRes
+					var bpp = BitConverter.ToInt16(src, 6 + (16 * i) + 6);//ICONDIRENTRY.wBitCount
+					var length = BitConverter.ToInt32(src, 6 + (16 * i) + 8);//ICONDIRENTRY.dwBytesInRes
 					var offset = BitConverter.ToInt32(src, 6 + (16 * i) + 12);//ICONDIRENTRY.dwImageOffset
 
 					using (var dst = new BinaryWriter(new MemoryStream(6 + 16 + length)))
@@ -250,31 +250,32 @@
 						dst.Write((short)1);
 						//Copy ICONDIRENTRY and set dwImageOffset to 22.
 						dst.Write(src, 6 + (16 * i), 12);//ICONDIRENTRY except dwImageOffset.
-						dst.Write(22);                 //ICONDIRENTRY.dwImageOffset.
-						//var pixindex = 0;
-						var start = dst.BaseStream.Position + 40;
-						var end = dst.BaseStream.Position + length;
+						dst.Write(22);
+						dst.Write(src, offset, length);//Copy the image data. This can either be in uncompressed ARGB bitmap format with no header, or compressed PNG with a header.
+						_ = dst.BaseStream.Seek(0, SeekOrigin.Begin);//Create an icon from the in-memory file.
+						var icon2 = new Icon(dst.BaseStream);
+						var bmp = icon2.ToBitmap();
 
-						for (var ii = start; ii < end; ii += 4)
+						//If there is an alpha channel on this icon, it needs to be applied here,
+						//because to mimic the behavior of raw Windows API calls, alpha must be pre-multiplied.
+						if (bpp == 32)
 						{
-							//sb.AppendLine($"{pixindex}: a: {src[ii + 3]}");
-							//sb.AppendLine($"{pixindex}: r: {src[ii + 2]}");
-							//sb.AppendLine($"{pixindex}: g: {src[ii + 1]}");
-							//sb.AppendLine($"{pixindex}: b: {src[ii]}");
-							var adouble = src[ii + 3] / 255.0;
-							src[ii + 2] = (byte)Math.Round(adouble * src[ii + 2]);
-							src[ii + 1] = (byte)Math.Round(adouble * src[ii + 1]);
-							src[ii] = (byte)Math.Round(adouble * src[ii]);
-							//pixindex++;
+							for (var y = 0; y < bmp.Height; ++y)
+							{
+								for (var x = 0; x < bmp.Width; ++x)
+								{
+									var originalColor = bmp.GetPixel(x, y);
+									var alpha = originalColor.A / 255.0;
+									var newColor = Color.FromArgb(originalColor.A, (int)Math.Round(alpha * originalColor.R), (int)Math.Round(alpha * originalColor.G), (int)Math.Round(alpha * originalColor.B));
+									bmp.SetPixel(x, y, newColor);
+								}
+							}
 						}
 
-						dst.Write(src, offset, length);//Copy an image.
-						_ = dst.BaseStream.Seek(0, SeekOrigin.Begin);//Create an icon from the in-memory file.
-						splitIcons.Add(new Icon(dst.BaseStream));
+						splitIcons.Add((icon2, bmp));
 					}
 				}
 
-				//System.IO.File.WriteAllText($"./file{imageindex++}out.txt", sb.ToString());
 				return splitIcons;
 			}
 			catch (Exception e)
