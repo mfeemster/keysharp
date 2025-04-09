@@ -136,7 +136,8 @@ namespace Keysharp.Scripting
                     argumentList = SyntaxFactory.ArgumentList(SyntaxFactory.SeparatedList(new[] { SyntaxFactory.Argument(identifierName) }));
                 }
             } else if (methodName.Equals("StrPtr", StringComparison.InvariantCultureIgnoreCase)
-                && argumentList.Arguments.First().Expression is ExpressionSyntax strVar)
+                && argumentList.Arguments.First().Expression is ExpressionSyntax strVar
+                && strVar is not LiteralExpressionSyntax)
             {
                 argumentList = SyntaxFactory.ArgumentList(SyntaxFactory.SeparatedList(new[] { SyntaxFactory.Argument(parser.ConstructVarRef(strVar)) }));
             }
