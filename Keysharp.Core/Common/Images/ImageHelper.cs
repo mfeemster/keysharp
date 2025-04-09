@@ -165,27 +165,30 @@
 
 						if (w > 0 && h > 0)
 						{
-							var tempico = icos.FirstOrDefault(tempico => tempico.Width == w && tempico.Height == h);
+							var tempIcoBmp = icos.FirstOrDefault(tempico => tempico.Item1.Width == w && tempico.Item1.Height == h);
+							var tempIco = tempIcoBmp.Item1;
 
-							if (tempico == null)
-								tempico = icos[0];
+							if (tempIco == null)
+								tempIco = icos[0].Item1;
 
-							temp = tempico;
-							bmp = tempico?.ToBitmap();
+							temp = tempIco;
+							bmp = tempIcoBmp.Item2;
 						}
 						else if (iconindex.Ai() is int iconint)
 						{
 							if (iconint < icos.Count)
 							{
-								temp = icos[iconint];
-								bmp = icos[iconint].ToBitmap();
+								var tempIcoBmp = icos[iconint];
+								temp = tempIcoBmp.Item1;
+								bmp = tempIcoBmp.Item2;
 							}
 						}
 
 						if (bmp == null)
 						{
-							temp = icos[0];
-							bmp = icos[0].ToBitmap();
+							var tempIcoBmp = icos[0];
+							temp = tempIcoBmp.Item1;
+							bmp = tempIcoBmp.Item2;
 						}
 
 						if (w > 0 || h > 0)
