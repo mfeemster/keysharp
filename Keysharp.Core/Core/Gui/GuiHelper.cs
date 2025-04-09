@@ -94,7 +94,21 @@
 				}
 			}
 
-			return false;
+            const int PBM_SETBKCOLOR = 0x2001;
+            if (m.Msg == PBM_SETBKCOLOR)
+            {
+                int colorValue = m.LParam.ToInt32();
+                Color requestedColor = Color.FromArgb(
+                    (colorValue & 0xFF),
+                    (colorValue >> 8) & 0xFF,
+                    (colorValue >> 16) & 0xFF);
+
+                control.BackColor = requestedColor;
+                m.Result = new IntPtr(colorValue);
+				return true;
+            }
+
+            return false;
 		}
 
 		internal static Icon GetIcon(string source, int n)
@@ -252,6 +266,9 @@
 						dst.Write(src, 6 + (16 * i), 12);//ICONDIRENTRY except dwImageOffset.
 						dst.Write(22);                 //ICONDIRENTRY.dwImageOffset.
 						//var pixindex = 0;
+						
+						// I don't understand what this does, but commenting it out makes loading icons from .ico work properly
+						/*
 						var start = dst.BaseStream.Position + 40;
 						var end = dst.BaseStream.Position + length;
 
@@ -267,6 +284,7 @@
 							src[ii] = (byte)Math.Round(adouble * src[ii]);
 							//pixindex++;
 						}
+						*/
 
 						dst.Write(src, offset, length);//Copy an image.
 						_ = dst.BaseStream.Seek(0, SeekOrigin.Begin);//Create an icon from the in-memory file.

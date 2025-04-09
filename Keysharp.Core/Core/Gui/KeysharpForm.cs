@@ -1,4 +1,6 @@
-﻿namespace Keysharp.Core
+﻿using System.Windows.Forms;
+
+namespace Keysharp.Core
 {
 	public class KeysharpForm : Form
 	{
@@ -63,7 +65,7 @@
 			};
 		}
 
-		internal void CallContextMenuChangeHandlers(bool wasRightClick, int x, int y)
+        internal void CallContextMenuChangeHandlers(bool wasRightClick, int x, int y)
 		{
 			if (Tag is WeakReference<Gui> wrg && wrg.TryGetTarget(out var g))
 			{
@@ -221,7 +223,7 @@
 			base.SetVisibleCore(AllowShowDisplay ? value : AllowShowDisplay);
 		}
 
-		private void Form_VisibleChanged(object sender, EventArgs e)
+        private void Form_VisibleChanged(object sender, EventArgs e)
 		{
 			if (Visible)
 			{
