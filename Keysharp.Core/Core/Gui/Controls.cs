@@ -993,7 +993,7 @@ namespace Keysharp.Core
 	public class KeysharpTabControl : TabControl
 	{
 		internal Color? bgcolor;
-		private readonly int addStyle, removeStyle;
+        private readonly int addStyle, removeStyle;
 		private readonly int addExStyle, removeExStyle;
 
 		protected override CreateParams CreateParams
@@ -1025,8 +1025,14 @@ namespace Keysharp.Core
 			//SetStyle(ControlStyles.SupportsTransparentBackColor, true);
 		}
 
-		internal void AdjustSize(double dpiscale)
+		internal void AdjustSize(double dpiscale, Size requestedSize)
 		{
+			if (requestedSize.Width != int.MinValue && requestedSize.Height != int.MinValue)
+			{
+				Width = requestedSize.Width;
+				Height = requestedSize.Height;
+				return;
+			}
 			var tempw = 0.0;
 			var temph = 0.0;
 
@@ -1041,13 +1047,14 @@ namespace Keysharp.Core
 					temph = Math.Max(temph, this.TabHeight() + rb.bottom.Bottom + (tp.Margin.Bottom + (Margin.Bottom * dpiscale)));
 			}
 
-			Width  = (int)Math.Round(tempw);
-			Height = (int)Math.Round(temph);
-		}
+			Width  = requestedSize.Width == int.MinValue ? (int)Math.Round(tempw) : requestedSize.Width;
+			Height = requestedSize.Height == int.MinValue ? (int)Math.Round(temph) : requestedSize.Height;
+        }
 
 		internal void SetColor(Color color)
 		{
 			bgcolor = color;
+			//((Control)this).BackColor = color;
 			DrawMode = TabDrawMode.OwnerDrawFixed;
 
 			foreach (TabPage tp in TabPages)
@@ -1058,17 +1065,33 @@ namespace Keysharp.Core
 		{
 			if (bgcolor.HasValue)
 			{
-				e.Graphics.FillRectangle(new SolidBrush(bgcolor.Value), ClientRectangle);
+				using (var brush = new SolidBrush(bgcolor.Value)) 
+				{ 
+					var rect = DisplayRectangle;
+					rect.Offset(1, 1);
+					e.Graphics.FillRectangle(brush, rect);
 
-				for (var i = 0; i < TabPages.Count; i++)
-				{
-					var page = TabPages[i];
-					var paddedTabBounds = GetTabRect(i);
-					var yOffset = (e.Index == i) ? -2 : 1;
-					paddedTabBounds.Offset(1, yOffset);
-					TextRenderer.DrawText(e.Graphics, page.Text, page.Font, paddedTabBounds, page.ForeColor);
+					Rectangle paddedTabBounds = DisplayRectangle;
+
+					for (var i = 0; i < TabPages.Count; i++)
+					{
+						var page = TabPages[i];
+						paddedTabBounds = GetTabRect(i);
+						paddedTabBounds.Offset(2, 2);
+						paddedTabBounds.Width -= 4;
+						paddedTabBounds.Height -= 2;
+						Rectangle fillBounds = paddedTabBounds;
+						if (this.SelectedIndex == i)
+							fillBounds.Height += 4;
+
+						e.Graphics.FillRectangle(brush, fillBounds);
+						TextRenderer.DrawText(e.Graphics, page.Text, page.Font, paddedTabBounds, page.ForeColor);
+					}
+					Rectangle headerArea = new Rectangle(paddedTabBounds.Right + 2, 0, this.Width - paddedTabBounds.Right, this.DisplayRectangle.Top - 2);
+					e.Graphics.FillRectangle(brush, headerArea);
 				}
-			}
+
+            }
 			else
 				base.OnDrawItem(e);
 		}

@@ -796,7 +796,9 @@ namespace Keysharp.Core.Windows
 		internal const int BST_PUSHED = 0x0004;
 		internal const int BST_FOCUS = 0x0008;
 
-		internal const int CBN_ERRSPACE = -1;
+		internal const int PBM_SETBKCOLOR = 0x2001;
+
+        internal const int CBN_ERRSPACE = -1;
 		internal const int CBN_SELCHANGE = 1;
 		internal const int CBN_DBLCLK = 2;
 		internal const int CBN_SETFOCUS = 3;
