@@ -35,6 +35,7 @@ preprocessor_directive
       | SingleInstance
       | Assembly ) Text directive_new_line_or_sharp                                                                          # preprocessorTextualDirective
     | Persistent (True | False | Digits)? directive_new_line_or_sharp                                                        # preprocessorPersistent
+    | Warn Text? directive_new_line_or_sharp                                                                                 # preprocessorWarn
     | NoDynamicVars directive_new_line_or_sharp                                                                              # preprocessorNoDynamicVars
     | ErrorStdOut directive_new_line_or_sharp                                                                                # preprocessorErrorStdOut
     | ( HotIfTimeout

@@ -95,6 +95,13 @@ public interface IPreprocessorParserVisitor<Result> : IParseTreeVisitor<Result> 
 	/// <return>The visitor result.</return>
 	Result VisitPreprocessorPersistent([NotNull] PreprocessorParser.PreprocessorPersistentContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>preprocessorWarn</c>
+	/// labeled alternative in <see cref="PreprocessorParser.preprocessor_directive"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitPreprocessorWarn([NotNull] PreprocessorParser.PreprocessorWarnContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>preprocessorNoDynamicVars</c>
 	/// labeled alternative in <see cref="PreprocessorParser.preprocessor_directive"/>.
 	/// </summary>

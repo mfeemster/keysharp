@@ -418,6 +418,9 @@ namespace Keysharp.Scripting
                         case "NOTRAYICON":
 							parser.generalDirectives[directiveStr] = "1";
 							break;
+                        case "WARN":
+                            Console.WriteLine("Not implemented");
+                            break;
                     }
                     index = directiveTokenIndex - 1;
                 }

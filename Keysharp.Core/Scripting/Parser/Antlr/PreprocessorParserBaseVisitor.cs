@@ -134,6 +134,17 @@ public partial class PreprocessorParserBaseVisitor<Result> : AbstractParseTreeVi
 	/// <return>The visitor result.</return>
 	public virtual Result VisitPreprocessorPersistent([NotNull] PreprocessorParser.PreprocessorPersistentContext context) { return VisitChildren(context); }
 	/// <summary>
+	/// Visit a parse tree produced by the <c>preprocessorWarn</c>
+	/// labeled alternative in <see cref="PreprocessorParser.preprocessor_directive"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitPreprocessorWarn([NotNull] PreprocessorParser.PreprocessorWarnContext context) { return VisitChildren(context); }
+	/// <summary>
 	/// Visit a parse tree produced by the <c>preprocessorNoDynamicVars</c>
 	/// labeled alternative in <see cref="PreprocessorParser.preprocessor_directive"/>.
 	/// <para>

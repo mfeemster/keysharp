@@ -235,7 +235,6 @@ HotIf : '#hotif';
 InputLevel : '#inputlevel';
 SuspendExempt : '#suspendexempt';
 UseHook : '#usehook';
-Warn : '#warn';
 HotstringOptions : '#hotstring' WhiteSpace+ RawString {this.ProcessHotstringOptions();};
 
 
@@ -294,6 +293,7 @@ DllLoad                : 'dllload' WhiteSpace    -> channel(DIRECTIVE), mode(DIR
 Requires               : 'requires' WhiteSpace   -> channel(DIRECTIVE), mode(DIRECTIVE_TEXT);
 SingleInstance         : 'singleinstance' WhiteSpace       -> channel(DIRECTIVE), mode(DIRECTIVE_TEXT);
 Persistent             : 'persistent' WhiteSpace?          -> channel(DIRECTIVE);
+Warn                   : 'warn' WhiteSpace?                -> channel(DIRECTIVE), mode(DIRECTIVE_TEXT);
 NoDynamicVars          : 'nodynamicvars'         -> channel(DIRECTIVE);
 ErrorStdOut            : 'errorstdout'           -> channel(DIRECTIVE);
 ClipboardTimeout       : 'clipboardtimeout' WhiteSpace     -> channel(DIRECTIVE);
