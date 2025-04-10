@@ -246,12 +246,12 @@ namespace Keysharp.Core.Windows
 
 		internal override string Title
 		{
-			get => !IsSpecified ? string.Empty : WindowsAPI.GetWindowTextTimeout(Handle, 2000);
+			get => IsSpecified ? WindowsAPI.GetWindowText(Handle) : string.Empty;
 
 			set
 			{
 				if (IsSpecified)
-					_ = WindowsAPI.SendMessageTimeout(Handle, WindowsAPI.WM_SETTEXT, 0, value ?? string.Empty, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 5000, out _);
+					WindowsAPI.SetWindowText(Handle, value ?? string.Empty);
 			}
 		}
 

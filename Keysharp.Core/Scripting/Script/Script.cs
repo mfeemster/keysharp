@@ -87,60 +87,60 @@
 			return string.Join(' ', hs);
 		}
 
-		public static bool HandleSingleInstance(string title, eScriptInstance inst)
-		{
-			if (title.Length == 0 || title == "*")//Happens when running in Keyview.
-				return false;
+        public static bool HandleSingleInstance(string title, eScriptInstance inst)
+        {
+            if (title.Length == 0 || title == "*")//Happens when running in Keyview.
+                return false;
 
-			if (Env.FindCommandLineArg("force") != null || Env.FindCommandLineArg("f") != null)
-				inst = eScriptInstance.Off;
+            if (Env.FindCommandLineArg("force") != null || Env.FindCommandLineArg("f") != null)
+                inst = eScriptInstance.Off;
 
-			if (Env.FindCommandLineArg("restart") != null || Env.FindCommandLineArg("r") != null)
-				inst = eScriptInstance.Force;
+            if (Env.FindCommandLineArg("restart") != null || Env.FindCommandLineArg("r") != null)
+                inst = eScriptInstance.Force;
 
-			title = MakeTitleWithVersion(title);
-			var exit = false;
-			var oldDetect = WindowX.DetectHiddenWindows(true);
-			var oldMatchMode = WindowX.SetTitleMatchMode(3);//Require exact match.
+            title = MakeTitleWithVersion(title);
+            var exit = false;
+            var oldDetect = WindowX.DetectHiddenWindows(true);
+            var oldMatchMode = WindowX.SetTitleMatchMode(3);//Require exact match.
 
-			switch (inst)
-			{
-				case eScriptInstance.Force:
-				{
-					_ = WindowX.WinClose(title, "", 2);
-				}
-				break;
+            switch (inst)
+            {
+                case eScriptInstance.Force:
+                    {
+                        _ = WindowX.WinClose(title, "", 2);
+                    }
+                    break;
 
-				case eScriptInstance.Ignore:
-					if (WindowX.WinExist(title) != 0)
-						exit = true;
+                case eScriptInstance.Ignore:
+                    if (WindowX.WinExist(title) != 0)
+                        exit = true;
 
-					break;
+                    break;
 
-				case eScriptInstance.Off:
-					break;
+                case eScriptInstance.Off:
+                    break;
 
-				case eScriptInstance.Prompt:
-				default:
-					var hwnd = WindowX.WinExist(title);
+                case eScriptInstance.Prompt:
+                default:
+                    var hwnd = WindowX.WinExist(title);
 
-					if (hwnd != 0)
-					{
-						if (Dialogs.MsgBox("Do you want to close the existing instance before running this one?\nYes to exit that instance, No to exit this instance.", "", "YesNo") == "Yes")
-							_ = WindowX.WinClose(hwnd, "", 2);
-						else
-							exit = true;
-					}
+                    if (hwnd != 0)
+                    {
+                        if (Dialogs.MsgBox("Do you want to close the existing instance before running this one?\nYes to exit that instance, No to exit this instance.", "", "YesNo") == "Yes")
+                            _ = WindowX.WinClose(hwnd, "", 2);
+                        else
+                            exit = true;
+                    }
 
-					break;
-			}
+                    break;
+            }
 
-			_ = WindowX.SetTitleMatchMode(oldMatchMode);
-			_ = WindowX.DetectHiddenWindows(oldDetect);
-			return exit;
-		}
+            _ = WindowX.SetTitleMatchMode(oldMatchMode);
+            _ = WindowX.DetectHiddenWindows(oldDetect);
+            return exit;
+        }
 
-		public static void RunMainWindow(string title, Func<object> userInit, bool persistent)
+        public static void RunMainWindow(string title, Func<object> userInit, bool persistent)
 		{
 			mainWindow = new MainWindow();
 

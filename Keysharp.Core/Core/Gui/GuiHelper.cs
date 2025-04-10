@@ -94,6 +94,23 @@
 				}
 			}
 
+#if WINDOWS
+
+			// WinForms controls don't respond to window messages, so handle some of them here
+			switch (m.Msg)
+			{
+				case WindowsAPI.PBM_SETBKCOLOR:
+					int colorValue = m.LParam.ToInt32();
+					Color requestedColor = Color.FromArgb(
+											   (colorValue & 0xFF),
+											   (colorValue >> 8) & 0xFF,
+											   (colorValue >> 16) & 0xFF);
+					control.BackColor = requestedColor;
+					m.Result = new IntPtr(colorValue);
+					return true;
+			}
+
+#endif
 			return false;
 		}
 
