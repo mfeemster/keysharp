@@ -215,7 +215,7 @@
 
 		public object BackColor
 		{
-			get => form.BackColor.ToArgb().ToString("X").Substring(2, 6);
+			get => (form.BackColor.ToArgb() & 0x00FFFFFF).ToString("X6");
 
 			set
 			{

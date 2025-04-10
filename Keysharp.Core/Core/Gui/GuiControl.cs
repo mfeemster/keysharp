@@ -398,7 +398,7 @@
 
 		public object BackColor
 		{
-			get => _control.BackColor.ToArgb().ToString("X").Substring(2, 6);
+			get => (_control.BackColor.ToArgb() & 0x00FFFFFF).ToString("X6");
 
 			set
 			{
