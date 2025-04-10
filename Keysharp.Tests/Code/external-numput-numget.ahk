@@ -292,7 +292,7 @@ catch
 if (val == true)
 	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 buf := Buffer(100, 0)
 ret := NumPut("ptr", buf.Ptr, buf)
@@ -300,20 +300,20 @@ ret := NumPut("ptr", buf.Ptr, buf)
 b1 := NumGet(buf, 0, "ptr")
 
 if (b1 == buf.Ptr)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 b1 := NumGet(buf, 0, "uptr")
 
 if (b1 == buf.Ptr)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 b1 := NumGet(buf, 0, "int64")
 
 if (b1 == buf.Ptr)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"

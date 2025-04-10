@@ -53,9 +53,9 @@ DllCall("wsprintf", "Ptr", str, "Str", "%010d", "Int", 432, "Cdecl")
 fmtstr := Format(str, "0:D10")
 
 if (str == "0000000432" && str == fmtstr)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 MAX_DIR_PATH := 260 - 12 + 1
 folder := A_MyDocuments
@@ -63,9 +63,9 @@ longPath := StringBuffer()
 DllCall("GetLongPathNameW", "Str", folder, "Ptr", longPath, "UInt", MAX_DIR_PATH, "UInt")
 
 if (folder == longPath && longPath == A_MyDocuments)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 freq := 0
 CounterBefore := 0

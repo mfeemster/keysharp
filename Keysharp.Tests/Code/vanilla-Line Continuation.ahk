@@ -427,7 +427,7 @@ if Var <> test`ntest2
 	MsgBox %A_LineFile%:`n%Var%
 
 SetWorkingDir %A_ScriptDir%
-FileAppend,  ; Must have comma.
+FileAppend  ; Must have comma.
 	(
 	Paragraph1: Test.
 Commas,,Test
@@ -669,7 +669,7 @@ MsgBox This line should never execute (if it does, above was incorrectly seen as
 ; . & enter . "::"
 
 ; Test syntax error of line too long.  Can't use a var-ref since that wouldn't count toward the line limit.
-FileAppend,  ; Comment
+FileAppend  ; Comment
 (  ; Comment
 0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789
 0123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789

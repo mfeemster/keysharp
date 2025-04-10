@@ -200,7 +200,7 @@ else
 if (x[1] == Chr(12))
 	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 ; There was once a bug where certain verbatim strings being passed as function arguments wasn't parsing.
 strargfunc(x)
@@ -217,14 +217,14 @@ value := 123
 xx := strargfunc('"' value "'")
 
 if (xx == "`"123'" )
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 xx := ""
 xx := strargfunc2('"' value "'", -1)
 
 if (xx == "`"123'" )
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"

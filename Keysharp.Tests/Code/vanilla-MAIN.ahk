@@ -476,14 +476,14 @@ if (Str <> "9 ABC")
 TargetDir = C:\A-Source\AutoHotkey\Test\Test Folder\This folder used by MAIN battery
 FileCreateDir %TargetDir%
 IfNotExist %TargetDir%\File1
-	FileAppend, Test, %TargetDir%\File1
+	FileAppend Test, %TargetDir%\File1
 IfNotExist %TargetDir%\File2
-	FileAppend, Test, %TargetDir%\File2
+	FileAppend Test, %TargetDir%\File2
 FileCreateDir %TargetDir%\Sub1
 IfNotExist %TargetDir%\Sub1\File1
-	FileAppend, Test, %TargetDir%\Sub1\File1
+	FileAppend Test, %TargetDir%\Sub1\File1
 IfNotExist %TargetDir%\Sub2\File2
-	FileAppend, Test, %TargetDir%\Sub1\File2
+	FileAppend Test, %TargetDir%\Sub1\File2
 
 ; Brief test of file-copy:
 FileCreateDir %TargetDir%\DestOfCopy
@@ -617,10 +617,10 @@ if (Var <> "1122")  ; Buggy versions prior to v1.0.44.14 yielded "1424".
 colors = Red|Green|Blue
 
 FileCreateDir LoopFolder\A\B
-FileAppend, 1, LoopFolder\1
-FileAppend, 2, LoopFolder\A\2
-FileAppend, 3, LoopFolder\A\3
-FileAppend, 4, LoopFolder\A\B\4
+FileAppend 1, LoopFolder\1
+FileAppend 2, LoopFolder\A\2
+FileAppend 3, LoopFolder\A\3
+FileAppend 4, LoopFolder\A\B\4
 
 a = 0
 str3 =
@@ -707,7 +707,7 @@ if (A_Index <> a)
 	MsgBox LoopA %a%
 if (A_LoopFileName = "3")
 	Loop, Read, %A_LoopFileFullPath%, LoopWriteTest.txt
-		FileAppend, Extra`n
+		FileAppend Extra`n
 }
 if (a <> 6)
 		MsgBox a <> 6
@@ -3179,13 +3179,13 @@ Loop, read, C:\A-Source\AutoHotkey\Test\File-read loop test file.txt, *C:\A-Sour
 {
 	IfInString, A_LoopReadLine, family
 	{
-		FileAppend, %A_LoopReadLine%`n
+		FileAppend %A_LoopReadLine%`n
 		if ErrorLevel <> 0
 			MsgBox, FileAppend problem
 		else
 		{
 			Loop, parse, A_LoopReadLine, %A_Space%
-				FileAppend, %A_LoopField%`n
+				FileAppend %A_LoopField%`n
 		}
 	}
 }
@@ -3604,7 +3604,7 @@ if var3<>1000
 
 targetfile = c:\script-test-file.txt
 filedelete, %targetfile%
-fileappend, test1`ntest2`ntest3`n, %targetfile%
+FileAppend test1`ntest2`ntest3`n, %targetfile%
 if errorlevel <> 0
 {
 	msgbox, fileappend error
@@ -4162,7 +4162,7 @@ return
 ClipSaveAndRestoreFromFile:
 ClipOrig = %Clipboard%
 
-FileAppend, %ClipboardAll%, ClipboardSaved.bin    ; #1
+FileAppend %ClipboardAll%, ClipboardSaved.bin    ; #1
 if ErrorLevel
 {
 	MsgBox FileAppend Error
@@ -4170,7 +4170,7 @@ if ErrorLevel
 }
 
 ClipSaved = %ClipboardAll%
-FileAppend, %ClipSaved%, ClipboardSaved2.bin    ; #2
+FileAppend %ClipSaved%, ClipboardSaved2.bin    ; #2
 if ErrorLevel
 {
 	MsgBox FileAppend Error
