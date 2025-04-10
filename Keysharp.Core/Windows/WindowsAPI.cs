@@ -1,5 +1,4 @@
 ﻿#if WINDOWS
-using System.Reflection.Metadata;
 
 namespace Keysharp.Core.Windows
 {
