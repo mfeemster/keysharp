@@ -620,7 +620,13 @@ namespace Keysharp.Core
 									   object winText = null,
 									   object excludeTitle = null,
 									   object excludeText = null) =>
-			new Array(SearchWindows(winTitle, winText, excludeTitle, excludeText).Select(item => item.Handle.ToInt64()).ToList());
+			new Array((
+				winTitle.IsNullOrEmpty() 
+				&& winText.IsNullOrEmpty() 
+				&& excludeTitle.IsNullOrEmpty() 
+				&& excludeText.IsNullOrEmpty() 
+					? WindowProvider.Manager.AllWindows
+                    : SearchWindows(winTitle, winText, excludeTitle, excludeText)).Select(item => item.Handle.ToInt64()).ToList());
 
 		public static long WinGetMinMax(object winTitle = null,
 										object winText = null,

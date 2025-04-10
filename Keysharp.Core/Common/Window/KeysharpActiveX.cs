@@ -10,11 +10,19 @@ namespace Keysharp.Core.Common.Window
 		/// </summary>
 		private System.ComponentModel.IContainer components = null;
 
+		/// <summary>
+		/// Required reference so that accessing the underlying __ComObject does not throw an exception
+		/// about the runtime callable wrapper being disconnected from its underlying
+		/// COM object.
+		/// </summary>
+		private object ob;
+
 		[DesignerSerializationVisibility(DesignerSerializationVisibility.Visible)]
 		public string AxText { get; set; }
 
 		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 		internal ComObject Iid { get; private set; }
+
 
 		protected override CreateParams CreateParams
 		{
@@ -62,7 +70,7 @@ namespace Keysharp.Core.Common.Window
 			{
 				var hInstance = Marshal.GetHINSTANCE(GetType().Module);
 
-				if (AtlAxCreateControl(AxText, Handle, IntPtr.Zero, out var ob) >= 0)
+				if (AtlAxCreateControl(AxText, Handle, IntPtr.Zero, out ob) >= 0)
 					//if (axHandle != IntPtr.Zero)
 				{
 					Console.WriteLine("AtlAxCreateControl() succeeded.");

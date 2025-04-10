@@ -11,10 +11,11 @@
 
 Authors:
 	Matt Feemster 2020 - present
+	Descolada 2024 - present
 	IronAHK developers 2010 - 1015
 
 Testers:
-	Burque505, Descolada
+	Burque505
 
 Acknowledgements:
 	See website above.

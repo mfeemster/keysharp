@@ -353,18 +353,18 @@
 			if (string.IsNullOrEmpty(a))
 				return false;
 
-			switch (Threads.GetThreadVariables().titleMatchMode.ToString().ToLowerInvariant())
+			switch (Threads.GetThreadVariables().titleMatchMode.ParseLong(false))
 			{
-				case "1":
+				case 1:
 					return a.StartsWith(b, comp);
 
-				case "2":
+				case 2:
 					return a.Contains(b, comp);
 
-				case "3":
+				case 3:
 					return a.Equals(b, comp);
 
-				case Keyword_RegEx:
+				case 4:
 				{
                     Misc.VarRef outvar = new Misc.VarRef(null);
 					_ = RegEx.RegExMatch(a, b, outvar, 1);

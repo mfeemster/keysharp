@@ -1,8 +1,4 @@
-﻿using System;
-using System.Windows.Forms;
-using Label = System.Windows.Forms.Label;
-
-namespace Keysharp.Core
+﻿namespace Keysharp.Core
 {
 	public class GuiControl : KeysharpObject
 	{
@@ -30,7 +26,7 @@ namespace Keysharp.Core
 		private Dictionary<int, List<IFuncObj>> notifyHandlers;
 		private long parenthandle;
 		private List<IFuncObj> selectedItemChangedHandlers;
-        internal Size requestedSize = new(int.MinValue, int.MinValue);
+		internal Size requestedSize = new (int.MinValue, int.MinValue);
 
         public bool AltSubmit { get; internal set; } = false;
 
@@ -400,21 +396,21 @@ namespace Keysharp.Core
 			set => _control.Visible = Options.OnOff(value) ?? false;
 		}
 
-        public object BackColor
-        {
-            get => _control.BackColor.ToArgb().ToString("X").Substring(2, 6);
+		public object BackColor
+		{
+			get => (_control.BackColor.ToArgb() & 0x00FFFFFF).ToString("X6");
 
-            set
-            {
-                if (value is string s)
-                {
-                    if (Conversions.TryParseColor(s, out var c))
-                        _control.BackColor = c;
-                }
-                else
-                    _control.BackColor = Color.FromArgb((int)(value.Al() | 0xFF000000));
-            }
-        }
+			set
+			{
+				if (value is string s)
+				{
+					if (Conversions.TryParseColor(s, out var c))
+						_control.BackColor = c;
+				}
+				else
+					_control.BackColor = Color.FromArgb((int)(value.Al() | 0xFF000000));
+			}
+		}
 
         internal Control Ctrl => _control;
 
@@ -1814,12 +1810,12 @@ namespace Keysharp.Core
 						var tp = tc.TabPages[i];
 						g.CurrentTab = tp;
 						g.LastContainer = tp;
-                    }
-                }
-                else
-                {
+					}
+				}
+				else
+				{
 					tc.AdjustSize(!DpiScaling ? 1.0 : A_ScaledScreenDPI, requestedSize);
-                    g.LastContainer = tc.Parent;
+					g.LastContainer = tc.Parent;
 				}
 			}
 

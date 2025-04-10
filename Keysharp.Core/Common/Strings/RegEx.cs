@@ -3,7 +3,7 @@
 	public class RegExResults : KeysharpObject, I__Enum, IEnumerable<(object, object)>
 	{
 		private Match match;
-		public object Count => match.Groups.Count - 1L;
+		public object Count => match.Groups.Count;
 		public object Mark => match.Groups.Count > 0 ? match.Groups[ ^ 1].Name : "";
 		public object Success => match.Success;
 
