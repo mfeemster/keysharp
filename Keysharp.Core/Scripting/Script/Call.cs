@@ -315,11 +315,7 @@ namespace Keysharp.Scripting
 					if (parameters == null)
 						return ifo2.Call(mitup.Item1);
 
-					int count = parameters.Length;
-					object[] args = new object[count + 1];
-					args[0] = mitup.Item1;
-					System.Array.Copy(parameters, 0, args, 1, count);
-					return ifo2.Call(args);
+					return ifo2.CallInst(mitup.Item1, parameters);
 				}
 				else if (mitup.Item2 is KeysharpObject kso && !methName.Equals("Call", StringComparison.OrdinalIgnoreCase))
 				{

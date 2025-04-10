@@ -39,7 +39,6 @@ namespace Keysharp.Scripting
 				Processes.MainThreadID = mgr.CurrentThreadId();
 				Processes.ManagedMainThreadID = Thread.CurrentThread.ManagedThreadId;//Figure out how to do this on linux.//TODO
 				_ = Threads.PushThreadVariables(0, true, false, true);//Ensure there is always one thread in existence for reference purposes, but do not increment the actual thread counter.
-				var stack = new StackTrace(false).GetFrames();
 				//If we're running via passing in a script and are not in a unit test, then set the working directory to that of the script file.
 				var path = Path.GetFileName(Application.ExecutablePath).ToLowerInvariant();
 
@@ -49,28 +48,22 @@ namespace Keysharp.Scripting
                 Prototypes = new();
 				Statics = new();
 
-				for (var i = stack.Length - 1; i >= 0; i--)
+				var type = Type.GetType("Keysharp.CompiledMain.Program");
+				if (type != null && type.FullName.StartsWith("Keysharp.CompiledMain", StringComparison.OrdinalIgnoreCase))
 				{
-					var type = stack[i].GetMethod().DeclaringType;
-
-					if (type != null && type.FullName.StartsWith("Keysharp.CompiledMain", StringComparison.OrdinalIgnoreCase))
-					{
-                        var fields = type.GetFields(BindingFlags.Static |
+                    var fields = type.GetFields(BindingFlags.Static |
+												BindingFlags.NonPublic |
+												BindingFlags.Public);
+					var props = type.GetProperties(BindingFlags.Static |
 													BindingFlags.NonPublic |
 													BindingFlags.Public);
-						var props = type.GetProperties(BindingFlags.Static |
-													   BindingFlags.NonPublic |
-													   BindingFlags.Public);
-						_ = globalVars.EnsureCapacity(fields.Length + props.Length);
+					_ = globalVars.EnsureCapacity(fields.Length + props.Length);
 
-						foreach (var field in fields)
-							globalVars[field.Name] = field;
+					foreach (var field in fields)
+						globalVars[field.Name] = field;
 
-						foreach (var prop in props)
-							globalVars[prop.Name] = prop;
-
-						break;
-					}
+					foreach (var prop in props)
+						globalVars[prop.Name] = prop;
 				}
 
 				foreach (var dll in preloadedDlls)

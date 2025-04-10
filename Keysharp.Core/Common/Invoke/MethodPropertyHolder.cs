@@ -19,7 +19,7 @@ namespace Keysharp.Core.Common.Invoke
 		private readonly int startVarIndex = -1;
 		private readonly int stopVarIndexDistanceFromEnd;
 
-        private static ConcurrentDictionary<string, Func<object, object[], object>> delegateCache = new();
+        internal static ConcurrentDictionary<string, Func<object, object[], object>> delegateCache = new();
 
 		internal bool IsStaticFunc { get; private set; }
 		internal bool IsStaticProp { get; private set; }

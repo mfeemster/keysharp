@@ -10,6 +10,7 @@
 		public IFuncObj Bind(params object[] obj);
 
         public object Call(params object[] obj);
+		public object CallInst(object inst, params object[] obj);
 
         public object CallWithRefs(params object[] obj);
 
@@ -43,6 +44,7 @@
 		/// <param name="args">Forwarded on to <see cref="CallWithRefs(object[])"/></param>
 		/// <returns>The return value of the bound function.</returns>
 		public override object Call(params object[] args) => base.Call(CreateArgs(args).ToArray());
+		public override object CallInst(object inst, params object[] args) => base.Call(inst, CreateArgs(args).ToArray());
 
         public override object CallWithRefs(params object[] args)
 		{
@@ -207,6 +209,7 @@
 		=> new BoundFunc(mi, args, Inst);
 
 		public virtual object Call(params object[] obj) => mph.callFunc(Inst, obj);
+		public virtual object CallInst(object inst, params object[] obj) => mph.callFunc(inst, obj);
         public virtual object CallWithRefs(params object[] args)
 		{
 			var argsArray = new object[args.Length];
