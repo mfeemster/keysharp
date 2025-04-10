@@ -494,7 +494,7 @@ Tab.UseTab("Second")
 ; └───────────────┘
 MyPictureBtn := MyGui.Add("Button", "cBlue s10 xp y+10", "Display a picture")
 MyPictureBtn.OnEvent("Click", "LoadPic")
-SlugLine := MyGui.Add("Text", "cBlue s10 w200 xp yc+800", "Pictures will display above")
+SlugLine := MyGui.Add("Text", "cBlue s10 w200 xp y810", "Pictures will display above")
 
 #if WINDOWS
 DestroyPictureBtn := MyGui.Add("Button", "cBlue s10 xp y+10", "Destroy picture control")
@@ -614,7 +614,7 @@ ThirdText6 := MyGui.Add("Text", "xc+10 cBlue s10", "Progress bar - click buttons
 MyProgress := MyGui.Add("Progress", "xc+10 y+10 cRed BackgroundGreen Smooth", 50)
 #if WINDOWS
 	MyProgress.GetPos(&px, &py, &pw, &ph)
-	MyVertProgress := MyGui.Add("Progress", "cRed BackgroundGreen x+10 yp-" . (pw - ph) . " Vertical w" . ph . " h" . pw, 50) ; Swap width and height.
+	MyVertProgress := MyGui.Add("Progress", "cRed BackgroundGreen x+70 yp-" . (pw - ph) . " Vertical w" . ph . " h" . pw, 50) ; Swap width and height.
 #endif
 Pbtn1 := MyGui.Add("Button", "s8 xc+10 y+5", "Lower")
 Pbtn2 := MyGui.Add("Button", "s8 xc+100 yp", "Higher")
