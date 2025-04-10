@@ -1,4 +1,8 @@
-﻿namespace Keysharp.Core
+﻿using System;
+using System.Windows.Forms;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.TextBox;
+
+namespace Keysharp.Core
 {
 	public class Gui : KeysharpObject, I__Enum, IEnumerable<(object, object)>
 	{
@@ -289,17 +293,25 @@
 			{
 				if (LastContainer != null)
 				{
-					//These must be sorted by tag because the built in Control.Controls collection doesn't keep items in the order they were added.
-					var orderedControls = LastContainer.Controls.Cast<Control>().Where(c => c.Tag is GuiTag).OrderBy(c => ((GuiTag)c.Tag).Index);
+                    Control lastControl = null;
+                    int maxIndex = int.MinValue;
+                    foreach (Control ctrl in LastContainer.Controls)
+                    {
+                        if (ctrl is KeysharpStatusStrip)
+                            continue;
 
-					for (var i = orderedControls.Count() - 1; i >= 0; i--)
-					{
-						var ctrl = orderedControls.ElementAt(i);
+                        if (ctrl.Tag is GuiTag tag)
+                        {
+                            if (tag.Index > maxIndex)
+                            {
+                                maxIndex = tag.Index;
+                                lastControl = ctrl;
+                            }
+                        }
+                    }
 
-						if (ctrl != null && ctrl is not KeysharpStatusStrip)//Don't count a status strip as a last control since its placement is handled manually.
-							return ctrl;
-					}
-				}
+                    return lastControl;
+                }
 
 				return null;
 			}
@@ -423,8 +435,9 @@
 						AcceptsReturn = opts.wantreturn ?? false,
 						Multiline = ml,
 						ReadOnly = opts.rdonly ?? false,
-						WordWrap = ml
-					};
+						WordWrap = ml,
+                        Font = Conversions.ConvertFont(form.Font)
+                    };
 #if !WINDOWS
 
 					if (opts.number)
@@ -490,8 +503,9 @@
 					{
 						AcceptsTab = opts.wanttab ?? false,
 						Multiline = ml,
-						ReadOnly = opts.rdonly ?? false
-					};
+						ReadOnly = opts.rdonly ?? false,
+                        Font = Conversions.ConvertFont(form.Font)
+                    };
 #if !WINDOWS
 
 					if (opts.number)
@@ -549,8 +563,9 @@
 						Increment = opts.nudinc ?? 1,
 						ThousandsSeparator = (opts.addstyle & 0x80) != 0x80,
 						UpDownAlign = opts.leftj.IsTrue() ? LeftRightAlignment.Left : LeftRightAlignment.Right,
-						Hexadecimal = opts.hex.IsTrue()
-					};
+						Hexadecimal = opts.hex.IsTrue(),
+                        Font = Conversions.ConvertFont(form.Font)
+                    };
 
 					if (opts.nudlow.HasValue)
 						nud.Minimum = opts.nudlow.Value;
@@ -572,7 +587,10 @@
 				case Keyword_Picture://No special support for GDI+, instead we just use whatever C# uses under the hood for its PictureBox control. Also, animated gifs do animate.
 				{
 					opts.addstyle |= 0x20;
-					var pic = new KeysharpPictureBox(text, opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle);//Attempt to support transparency.
+					var pic = new KeysharpPictureBox(text, opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle)
+					{
+						Font = Conversions.ConvertFont(form.Font)
+					};//Attempt to support transparency.
 
 					if (opts.width < 0 && opts.height < 0)
 					{
@@ -603,8 +621,9 @@
 					ctrl = new KeysharpButton(opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle)
 					{
 						Name = text,
-						AutoSize = opts.width == int.MinValue && opts.wp == int.MinValue && opts.height == int.MinValue && opts.hp == int.MinValue
-					};
+						AutoSize = opts.width == int.MinValue && opts.wp == int.MinValue && opts.height == int.MinValue && opts.hp == int.MinValue,
+                        Font = Conversions.ConvertFont(form.Font)
+                    };
 
 					if (opts.btndef.IsTrue())
 						form.AcceptButton = (IButtonControl)ctrl;
@@ -617,8 +636,9 @@
 				{
 					var chk = new KeysharpCheckBox(opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle)
 					{
-						ThreeState = opts.check3
-					};
+						ThreeState = opts.check3,
+                        Font = Conversions.ConvertFont(form.Font)
+                    };
 
 					if (opts.ischecked.HasValue)
 					{
@@ -643,8 +663,9 @@
 					var rad = new KeysharpRadioButton(opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle)
 					{
 						AutoSize = true,
-						Text = text
-					};
+						Text = text,
+                        Font = Conversions.ConvertFont(form.Font)
+                    };
 					ctrl = rad;
 					holder = new Radio(this, ctrl, typeo);
 				}
@@ -659,13 +680,18 @@
 
 					if (!isCombo)
 					{
-						ddl = new KeysharpComboBox(opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle);
+						ddl = new KeysharpComboBox(opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle) {
+							Font = Conversions.ConvertFont(form.Font)
+						};
 						ddl.DropDownStyle = ComboBoxStyle.DropDownList;
 					}
 					else
 					{
 #if WINDOWS
-						ddl = new KeysharpComboBox(opts.addstyle, opts.addexstyle, opts.limit != int.MinValue ? (opts.remstyle | WindowsAPI.CBS_AUTOHSCROLL) : opts.remstyle, opts.remexstyle);
+						ddl = new KeysharpComboBox(opts.addstyle, opts.addexstyle, opts.limit != int.MinValue ? (opts.remstyle | WindowsAPI.CBS_AUTOHSCROLL) : opts.remstyle, opts.remexstyle)
+						{
+							Font = Conversions.ConvertFont(form.Font)
+						};
 #else
 						ddl = new KeysharpComboBox(opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle);
 #endif
@@ -717,9 +743,11 @@
 					var lb = new KeysharpListBox(opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle)
 					{
 						SelectionMode = opts.multiline.IsTrue() ? SelectionMode.MultiExtended : SelectionMode.One,
-						Sorted = opts.sort.IsTrue()//Unsure how to make incremental search work.
-					};
-					lb.Items.AddRange(al.Cast<(object, object)>().Select(x => x.Item2).Select(x => opts.lowercase.IsTrue() ? x.Str().ToLower() : opts.uppercase.IsTrue() ? x.Str().ToUpper() : x.Str()).ToArray());
+						Sorted = opts.sort.IsTrue(),//Unsure how to make incremental search work.
+                        Font = Conversions.ConvertFont(form.Font)
+                    };
+					if (al != null)
+						lb.Items.AddRange(al.Cast<(object, object)>().Select(x => x.Item2).Select(x => opts.lowercase.IsTrue() ? x.Str().ToLower() : opts.uppercase.IsTrue() ? x.Str().ToUpper() : x.Str()).ToArray());
 
 					if (opts.vscroll.HasValue)
 						lb.ScrollAlwaysVisible = opts.vscroll.Value;
@@ -758,7 +786,10 @@
 				case Keyword_ListView:
 				{
 					//There is no way to preallocate memory with the "Count" option, so that is ignored.
-					var lv = new KeysharpListView(opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle);
+					var lv = new KeysharpListView(opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle)
+					{
+						Font = Conversions.ConvertFont(form.Font)
+					};
 					lv.Columns.AddRange(al.Cast<(object, object)>().Select(x => x.Item2).Select(x => new ColumnHeader { Text = x.Str() }).ToArray());
 					lv.CheckBoxes = opts.ischecked.HasValue && opts.ischecked.Value > 0;
 					lv.GridLines = opts.grid.IsTrue();
@@ -796,7 +827,7 @@
 						lv.HeaderStyle = opts.sortheader.IsFalse() ? ColumnHeaderStyle.Nonclickable : ColumnHeaderStyle.Clickable;
 
 					lv.AutoResizeColumns(ColumnHeaderAutoResizeStyle.HeaderSize);
-					ctrl = lv;
+                    ctrl = lv;
 					holder = new ListView(this, ctrl, typeo);
 				}
 				break;
@@ -808,8 +839,9 @@
 #else
 					var tv = new KeysharpTreeView(opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle);
 #endif
+					tv.Font = Conversions.ConvertFont(form.Font);
 
-					if (opts.buttons.HasValue)
+                    if (opts.buttons.HasValue)
 						tv.ShowPlusMinus = opts.buttons.Value;
 
 					tv.CheckBoxes = opts.ischecked.HasValue && opts.ischecked.Value != 0;
@@ -829,7 +861,10 @@
 
 				case Keyword_Link:
 				{
-					var linklabel = new KeysharpLinkLabel(text, opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle);
+					var linklabel = new KeysharpLinkLabel(text, opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle)
+					{
+						Font = Conversions.ConvertFont(form.Font)
+					};
 					ctrl = linklabel;
 					holder = new Link(this, ctrl, typeo);
 				}
@@ -837,7 +872,10 @@
 
 				case Keyword_Hotkey:
 				{
-					var hk = new HotkeyBox();
+					var hk = new HotkeyBox()
+					{
+						Font = Conversions.ConvertFont(form.Font)
+					};
 
 					if (opts.limit != int.MinValue)
 						hk.Limit = (HotkeyBox.Limits)opts.limit;
@@ -852,7 +890,10 @@
 
 				case Keyword_DateTime:
 				{
-					var dtp = new KeysharpDateTimePicker(opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle);
+					var dtp = new KeysharpDateTimePicker(opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle)
+					{
+						Font = Conversions.ConvertFont(form.Font)
+					};
 					dtp.SetFormat(text);
 
 					if (opts.rightj.IsTrue())
@@ -899,7 +940,10 @@
 
 				case Keyword_MonthCal:
 				{
-					var cal = new KeysharpMonthCalendar(opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle);
+					var cal = new KeysharpMonthCalendar(opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle)
+					{
+						Font = Conversions.ConvertFont(form.Font)
+					};
 
 					if (opts.dtlow != System.DateTime.MinValue)//This causes a crash when you scroll past it.
 						cal.MinDate = opts.dtlow;
@@ -939,8 +983,9 @@
 #endif
 					var slider = new KeysharpTrackBar(opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle)
 					{
-						Orientation = opts.vertical ? Orientation.Vertical : Orientation.Horizontal
-					};
+						Orientation = opts.vertical ? Orientation.Vertical : Orientation.Horizontal,
+                        Font = Conversions.ConvertFont(form.Font)
+                    };
 
 					if (opts.nudlow.HasValue && opts.nudhigh.HasValue)
 					{
@@ -995,7 +1040,10 @@
 						opts.addstyle |= 0x04;
 
 					var prg = new KeysharpProgressBar(opts.bgcolor.HasValue || opts.c != Control.DefaultForeColor,
-													  opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle);
+														opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle)
+					{
+						Font = Conversions.ConvertFont(form.Font)
+					};
 					prg.Style = opts.smooth.IsTrue() ? ProgressBarStyle.Continuous : ProgressBarStyle.Blocks;
 
 					if (opts.nudlow.HasValue)
@@ -1023,7 +1071,9 @@
 
 				case Keyword_GroupBox:
 				{
-					ctrl = new KeysharpGroupBox(opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle) { };
+					ctrl = new KeysharpGroupBox(opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle) {
+                        Font = Conversions.ConvertFont(form.Font)
+                    };
 					holder = new GroupBox(this, ctrl, typeo);
 				}
 				break;
@@ -1032,9 +1082,11 @@
 				case Keyword_Tab2:
 				case Keyword_Tab3:
 				{
-					var kstc = new KeysharpTabControl(opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle);//This will also support image lists just like TreeView for setting icons on tabs, instead of using SendMessage().
+					var kstc = new KeysharpTabControl(opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle)
+					{
+						Font = Conversions.ConvertFont(form.Font)
+					};//This will also support image lists just like TreeView for setting icons on tabs, instead of using SendMessage().
 					kstc.TabPages.AddRange(al.Cast<(object, object)>().Select(x => x.Item2).Select(x => new TabPage(x.Str())).ToArray());
-
 					if (opts.leftj.IsTrue())
 						kstc.Alignment = TabAlignment.Left;
 					else if (opts.rightj.IsTrue())
@@ -1053,14 +1105,20 @@
 					if (opts.wordwrap.HasValue)
 						kstc.Multiline = opts.wordwrap.IsTrue();
 
-					ctrl = kstc;
-					holder = new Tab(this, ctrl, typeo);
+					if (opts.bgcolor.HasValue)
+						kstc.SetColor(opts.bgcolor.Value);
+
+                    ctrl = kstc;
+                    holder = new Tab(this, ctrl, typeo);
 				}
 				break;
 
 				case Keyword_StatusBar:
 				{
-					var ss = new KeysharpStatusStrip(opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle);
+					var ss = new KeysharpStatusStrip(opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle)
+					{
+						Font = Conversions.ConvertFont(form.Font)
+					};
 					StatusStrip = ss;
 					ss.AutoSize = false;
 					ss.ImageScalingSize = new Size((int)Math.Round(28 * dpiscale), (int)Math.Round(28 * dpiscale));
@@ -1073,8 +1131,9 @@
 						{
 							ForeColor = opts.c,//Contrary to the documentation, the foreground *can* be set.
 							AutoSize = true,
-							Name = $"AutoToolStripLabel{ss.Items.Count}"
-						};
+							Name = $"AutoToolStripLabel{ss.Items.Count}",
+                            Font = Conversions.ConvertFont(form.Font)
+                        };
 
 						if (opts.bgcolor.HasValue)
 							tsl.BackColor = opts.bgcolor.Value;
@@ -1089,7 +1148,10 @@
 
 				case Keyword_ActiveX:
 				{
-					var ax = new KeysharpActiveX(text);
+					var ax = new KeysharpActiveX(text)
+					{
+						Font = Conversions.ConvertFont(form.Font)
+					};
 					ctrl = ax;
 					holder = new ActiveX(this, ctrl, typeo);
 				}
@@ -1097,7 +1159,10 @@
 
 				case Keyword_WebBrowser:
 				{
-					var web = new KeysharpWebBrowser();
+					var web = new KeysharpWebBrowser()
+					{
+						Font = Conversions.ConvertFont(form.Font)
+					};
 					web.Navigate(text);
 					ctrl = web;
 					holder = new WebBrowser(this, ctrl, typeo);
@@ -1160,17 +1225,6 @@
 			var prevParent = LastContainer;
 			var ctrlIsLabel = ctrl is KeysharpLabel;
 
-			if (ctrl is KeysharpTabControl ktc)
-			{
-				if (ktc.TabPages.Count >= 0)
-					holder.UseTab(1);//Will set this object's CurrentTab value, as well as the LastContainer values.
-
-				if (opts.bgtrans)
-					ktc.SetColor(Color.Transparent);
-				else if (opts.bgcolor.HasValue)
-					ktc.SetColor(opts.bgcolor.Value);
-			}
-
 			if (opts.altsubmit.HasValue)
 				holder.AltSubmit = opts.altsubmit.Value;
 
@@ -1179,7 +1233,18 @@
 			var w = scaledPref;
 			var lastControl = LastControl;
 
-			if (lastControl is KeysharpRadioButton && ctrl is not KeysharpRadioButton)//Pop container if we've ended a radio group.
+            if (ctrl is KeysharpTabControl ktc)
+            {
+                if (ktc.TabPages.Count >= 0)
+                    holder.UseTab(1);//Will set this object's CurrentTab value, as well as the LastContainer values.
+
+                if (opts.bgtrans)
+                    ktc.SetColor(Color.Transparent);
+                else if (opts.bgcolor.HasValue)
+                    ktc.SetColor(opts.bgcolor.Value);
+            }
+
+            if (lastControl is KeysharpRadioButton && ctrl is not KeysharpRadioButton)//Pop container if we've ended a radio group.
 			{
 				LastContainer = LastContainer.Parent;
 				lastControl = LastControl;//Will retrieve the last control in the LastContainer we just assigned.
@@ -1199,6 +1264,8 @@
 			}
 			else if (ctrl is KeysharpProgressBar kpb && ((kpb.AddStyle & 0x04) == 0x04))
 				w = fontpixels * 2;
+			else if (ctrl is KeysharpNumericUpDown)
+				w = lastControl.Width;
 			else if (ctrl is KeysharpComboBox || ctrl is HotkeyBox || ctrl is KeysharpListBox || ctrl is KeysharpNumericUpDown || ctrl is KeysharpProgressBar || ctrl is KeysharpTextBox)
 				w = fontpixels * 15;
 			else if (ctrl is KeysharpTrackBar trk)
@@ -1210,7 +1277,12 @@
 			else if (ctrl is KeysharpListView || ctrl is KeysharpTreeView || ctrl is KeysharpDateTimePicker)//Documentaiton doesn't mention these, but IronAHK handled them this way, so leaving this here.
 				w = fontpixels * 30;
 
-			ctrl.Width = opts.width != int.MinValue ? (int)Math.Round(w) : Math.Max((int)w, (int)Math.Round(scaledPref));
+			if (opts.width == int.MinValue)
+				ctrl.Width = Math.Max((int)w, (int)Math.Round(scaledPref));
+			else
+			{
+                ctrl.Width = holder.requestedSize.Width = (int)Math.Round(w);
+            }
 
 			if (opts.hp != int.MinValue)
 			{
@@ -1221,7 +1293,7 @@
 				if (opts.height != int.MinValue)
 				{
 					if (opts.height != -1)
-						ctrl.Height = (int)Math.Round(dpiscale * opts.height);
+						ctrl.Height = holder.requestedSize.Height = (int)Math.Round(dpiscale * opts.height);
 				}
 				else
 				{
@@ -1251,11 +1323,11 @@
 					}
 					else if (ctrl is KeysharpListBox lb)
 					{
-						lb.Height = (int)Math.Round(lb.ItemHeight * r * dpiinv) + (lb.Height - lb.ClientSize.Height) + lb.Margin.Bottom;
+						lb.Height = lb.ItemHeight * r + (lb.Height - lb.ClientSize.Height) + lb.Margin.Bottom;
 					}
 					else if (ctrl is KeysharpTreeView tv)
 					{
-						tv.Height = (int)Math.Round(tv.ItemHeight * r * dpiinv) - tv.Margin.Bottom;//For some reason, TreeView doesn't appear to need to have DPI scaling applied, and also is a bit too large, so we subtract the margin.
+						tv.Height = tv.ItemHeight * r - tv.Margin.Bottom;//For some reason, TreeView doesn't appear to need to have DPI scaling applied, and also is a bit too large, so we subtract the margin.
 					}
 					else if (ctrl is KeysharpGroupBox gb)
 					{
@@ -1300,83 +1372,97 @@
 				}
 			}
 
-			heightdone:
+		heightdone:
 			Point loc;
 
+			int lcLeft = 0, lcTop = 0, lcBottom = 0, lcRight = 0, lcWidth = 0, lcHeight = 0;
 			if (lastControl != null)
 			{
-				var xoffset = (double)lastControl.Left;
-				var yoffset = (double)lastControl.Top;
-
-				if (opts.xplus != int.MinValue)
-					xoffset += lastControl.Width + (opts.xplus * dpiscale);
-				else if (opts.xp != int.MinValue)
-					xoffset += opts.xp * dpiscale;
-				else if (opts.xm != int.MinValue)
-					xoffset = form.Margin.Left + (opts.xm * dpiscale);
-				else if (opts.xs != int.MinValue)
-					xoffset = Section.Location.X + (opts.xs * dpiscale);
-				else
-					xoffset = int.MinValue;
-
-				if (opts.yplus != int.MinValue)
-					yoffset += lastControl.Height + (opts.yplus * dpiscale);
-				else if (opts.yp != int.MinValue)
-					yoffset += opts.yp * dpiscale;
-				else if (opts.ym != int.MinValue)
-					yoffset = form.Margin.Top + (opts.ym * dpiscale);
-				else if (opts.ys != int.MinValue)
-					yoffset = Section.Location.Y + (opts.ys * dpiscale);
-				else
-					yoffset = int.MinValue;
-
-				//X specified, but Y wasn't.
-				if (xoffset != int.MinValue && yoffset == int.MinValue)
-				{
-					if (opts.xp == 0)//XP or XP+0: Below the previous control (bottom edge plus margin).
-						yoffset += lastControl.Height + form.Margin.Top;
-					else if (opts.xplus != int.MinValue || opts.xp != int.MinValue)//X+n or XP+nonzero (Already checked for xp == 0 above): Same as the previous control's top edge (YP).
-						yoffset = lastControl.Top;
-					else if (opts.xm != int.MinValue || opts.x != int.MinValue)//Xn or XM: Beneath all previous controls (maximum Y extent plus margin).
-					{
-						var (r, b) = lastControl.Parent.RightBottomMost();//Get the bottom-most control in the current container.
-						yoffset = 123; // b.Top; // + b.Height;// + form.Margin.Top;
-					}
-					else if (opts.xs != int.MinValue && Section != null)//XS: Beneath all previous controls since the most recent use of the Section option.
-					{
-						var (r, b) = Section.Parent.RightBottomMostSince(Section);//Get the bottom-most control in the current section.
-						yoffset = b.Top + b.Height + form.Margin.Top;
-					}
-				}
-				else if (xoffset == int.MinValue && yoffset != int.MinValue)//Y, but not X.
-				{
-					if (opts.yp == 0)//YP or YP+0: To the right of the previous control (right edge plus margin)..
-						xoffset += lastControl.Width + form.Margin.Left;
-					else if (opts.yplus != int.MinValue || opts.yp != int.MinValue)//Y+n or YP+nonzero (Already checked for yp == 0 above): Same as the previous control's left edge (XP).
-						xoffset = lastControl.Left;
-					else if (opts.ym != int.MinValue || opts.y != int.MinValue)//Yn or YM: To the right of all previous controls (maximum X extent plus margin).
-					{
-						var (r, b) = lastControl.Parent.RightBottomMost();//Get the right-most control in the current container.
-						xoffset = r.Left + r.Width + form.Margin.Left;
-					}
-					else if (opts.ys != int.MinValue && Section != null)//YS: To the right of all previous controls since the most recent use of the Section option.
-					{
-						var (r, b) = Section.Parent.RightBottomMostSince(Section);//Get the right-most control in the current section.
-						xoffset = r.Left + r.Width + form.Margin.Left;
-					}
-				}
-
-				loc = new Point((int)Math.Round(xoffset), (int)Math.Round(yoffset));
+				lcLeft = lastControl.Left; lcTop = lastControl.Top; lcBottom = lastControl.Bottom; lcRight = lastControl.Right; lcWidth = lastControl.Width; lcHeight = lastControl.Height;
 			}
+
+			var xoffset = (double)lcLeft;
+			var yoffset = (double)lcTop;
+
+            if ((opts.xpos == GuiOptions.Positioning.Absolute || opts.ypos == GuiOptions.Positioning.Absolute) && LastContainer != null)
+            {
+                Point controlLoc = form.PointToScreen(LastContainer.Location);
+				if (opts.xpos == GuiOptions.Positioning.Absolute)
+					xoffset = controlLoc.X - form.Location.X; 
+				if (opts.ypos == GuiOptions.Positioning.Absolute)
+					yoffset = controlLoc.Y - form.Location.Y;
+            }
+
+			if (opts.xpos == GuiOptions.Positioning.Absolute)
+				xoffset = opts.x * dpiscale - (LastContainer == null ? 0 : xoffset);
+			else if (opts.xpos == GuiOptions.Positioning.PreviousBottomRight)
+				xoffset += lcWidth + (opts.x * dpiscale);
+			else if (opts.xpos == GuiOptions.Positioning.PreviousTopLeft)
+				xoffset += opts.x * dpiscale;
+			else if (opts.xpos == GuiOptions.Positioning.Margin)
+				xoffset = form.Margin.Left + (opts.x * dpiscale);
+			else if (opts.xpos == GuiOptions.Positioning.Section)
+				xoffset = (Section?.Location.X ?? 0) + (opts.x * dpiscale);
+			else if (opts.xpos == GuiOptions.Positioning.Container)
+				xoffset = opts.x * dpiscale;
 			else
-				loc = new Point(int.MinValue, int.MinValue);
+				xoffset = int.MinValue;
 
-			//Explicitly positioned values override everything.
-			if (opts.x != int.MinValue)
-				loc.X = (int)Math.Round(opts.x * dpiscale);
+            if (opts.ypos == GuiOptions.Positioning.Absolute)
+                yoffset = opts.y * dpiscale - (LastContainer == null ? 0 : yoffset);
+            else if (opts.ypos == GuiOptions.Positioning.PreviousBottomRight)
+				yoffset += lcHeight + (opts.y * dpiscale);
+			else if (opts.ypos == GuiOptions.Positioning.PreviousTopLeft)
+				yoffset += opts.y * dpiscale;
+			else if (opts.ypos == GuiOptions.Positioning.Margin)
+				yoffset = form.Margin.Top + (opts.y * dpiscale);
+			else if (opts.ypos == GuiOptions.Positioning.Section)
+				yoffset = (Section?.Location.Y ?? 0) + (opts.y * dpiscale);
+            else if (opts.xpos == GuiOptions.Positioning.Container)
+                yoffset = opts.y * dpiscale;
+            else
+				yoffset = int.MinValue;
 
-			if (opts.y != int.MinValue)
-				loc.Y = (int)Math.Round(opts.y * dpiscale);
+			//X specified, but Y wasn't.
+			if (xoffset != int.MinValue && yoffset == int.MinValue)
+			{
+				if (opts.xpos == GuiOptions.Positioning.PreviousTopLeft && opts.x == 0)//XP or XP+0: Below the previous control (bottom edge plus margin).
+					yoffset = lcBottom + form.Margin.Top;
+				else if (opts.xpos == GuiOptions.Positioning.PreviousBottomRight || opts.xpos == GuiOptions.Positioning.PreviousTopLeft)//X+n or XP+nonzero (Already checked for xp == 0 above): Same as the previous control's top edge (YP).
+					yoffset = lcTop;
+				else if (opts.xpos == GuiOptions.Positioning.Absolute || opts.xpos == GuiOptions.Positioning.Container || opts.xpos == GuiOptions.Positioning.Margin)//Xn or XM: Beneath all previous controls (maximum Y extent plus margin).
+				{
+					var (r, b) = (lastControl?.Parent ?? LastContainer).RightBottomMost();//Get the bottom-most control in the current container.
+					yoffset = (b?.Top ?? 0) + (b?.Height ?? 0) + form.Margin.Top;
+				}
+				else if (opts.xpos == GuiOptions.Positioning.Section && Section != null)//XS: Beneath all previous controls since the most recent use of the Section option.
+				{
+					var (r, b) = Section.Parent.RightBottomMostSince(Section);//Get the bottom-most control in the current section.
+					yoffset = (b?.Bottom ?? 0) + form.Margin.Top;
+				}
+			}
+			else if (xoffset == int.MinValue && yoffset != int.MinValue)//Y, but not X.
+			{
+				if (opts.ypos == GuiOptions.Positioning.PreviousTopLeft && opts.y == 0)//YP or YP+0: To the right of the previous control (right edge plus margin)..
+					xoffset = lcRight + form.Margin.Left;
+				else if (opts.ypos == GuiOptions.Positioning.PreviousBottomRight || opts.ypos == GuiOptions.Positioning.PreviousTopLeft)//Y+n or YP+nonzero (Already checked for yp == 0 above): Same as the previous control's left edge (XP).
+					xoffset = lcLeft;
+				else if (opts.ypos == GuiOptions.Positioning.Absolute || opts.ypos == GuiOptions.Positioning.Container || opts.ypos == GuiOptions.Positioning.Margin)//Yn or YM: To the right of all previous controls (maximum X extent plus margin).
+				{
+					var (r, b) = (lastControl?.Parent ?? LastContainer).RightBottomMost();//Get the right-most control in the current container.
+					xoffset = (r?.Right ?? 0) + form.Margin.Left;
+				}
+				else if (opts.ypos == GuiOptions.Positioning.Section && Section != null)//YS: To the right of all previous controls since the most recent use of the Section option.
+				{
+					var (r, b) = Section.Parent.RightBottomMostSince(Section);//Get the right-most control in the current section.
+					xoffset = (r?.Right ?? 0) + form.Margin.Left;
+				}
+			} else if (xoffset == int.MinValue && yoffset == int.MinValue && ctrl is KeysharpNumericUpDown)
+			{
+				xoffset = lcLeft; yoffset = lcTop;
+			}
+
+			loc = new Point((int)Math.Round(xoffset), (int)Math.Round(yoffset));
 
 			//Note we check DockStyle here because if the previous control was docked to a side, then we can't really use its location as a reference to base this control's location off of.
 			if (ctrl is KeysharpStatusStrip ksss)//Need to figure out how to do this without resizing all tab controls on every add. Maybe at the end before show(), and also on every add after show()?//TODO
@@ -1388,8 +1474,7 @@
 			}
 			else if (lastControl != null && lastControl.Dock == DockStyle.None && loc.X == int.MinValue && loc.Y == int.MinValue)
 			{
-				var templast = opts.group && lastControl.Parent is Panel panel ? panel : lastControl;
-				ctrl.Location = new Point(templast.Location.X, templast.Location.Y + templast.Height + form.Margin.Bottom);
+				ctrl.Location = new Point(lastControl.Location.X, lastControl.Location.Y + lastControl.Height + form.Margin.Bottom);
 			}
 			else if (lastControl != null && lastControl.Dock == DockStyle.None && loc.X == int.MinValue)
 			{
@@ -1455,7 +1540,8 @@
 			else if (ctrl is KeysharpGroupBox gb)
 			{
 				LastContainer.TagAndAdd(holder);
-				LastContainer = gb;
+				if (opts.group)
+					LastContainer = gb;
 			}
 			else if (ctrl is KeysharpStatusStrip ksss2)
 			{
@@ -1496,7 +1582,7 @@
 				//If it's been shown and is contained anywhere within the hierarchy of a TabControl, then resize
 				//every TabControl in the chain.
 				foreach (var partc in ctrl.FindParents<KeysharpTabControl>())
-					partc.AdjustSize(dpiscale);
+					partc.AdjustSize(dpiscale, new Size(int.MinValue, int.MinValue));
 			}
 
 			if (opts.section)
@@ -1786,19 +1872,23 @@
 				return (maxx, maxy);
 			}
 
+			int maxx = 0, maxy = 0, ssHeight = 0;
+			if (auto || pos[0] == null || pos[1] == null)
+			{
+                KeysharpStatusStrip ss = null;
+
+                if (status.Length > 0)
+                {
+                    ss = status[0];
+                    ssHeight = ss.Height;
+                }
+
+                (maxx, maxy) = FixStatusStrip(ss);
+            }
+
 			if (auto || (!form.BeenShown && !showCalled && pos[0] == null && pos[1] == null))//The calculations in this block are not exact, but are as close as we can possibly get in a generic way.
 			{
 				//AHK always autosizes on first show when no dimensions are specified.
-				KeysharpStatusStrip ss = null;
-				var ssHeight = 0;
-
-				if (status.Length > 0)
-				{
-					ss = status[0];
-					ssHeight = ss.Height;
-				}
-
-				var (maxx, maxy) = FixStatusStrip(ss);
 				form.ClientSize = new Size(maxx + form.Margin.Left,
 										   maxy + ssHeight + form.Margin.Bottom);//Need to manually include the height of the status strip when it's docked.
 			}
@@ -1806,13 +1896,17 @@
 			{
 				var size = (form.BeenShown || showCalled) ? form.Size : new Size(800, 500);//Using this size because PreferredSize is so small it just shows the title bar.
 
-				if (pos[0] != null)//Dimensions must be scaled by DPI.//TODO
-					size.Width = (int)pos[0];
+                if (pos[0] != null)//Dimensions must be scaled by DPI.//TODO
+					size.Width = (int)Math.Ceiling(pos[0].Value * dpiscale);
+                else
+                    size.Width = (int)(maxx + MarginX);
 
-				if (pos[1] != null)
-					size.Height = (int)pos[1];
+                if (pos[1] != null)
+					size.Height = (int)Math.Ceiling(pos[1].Value * dpiscale);
+                else
+                    size.Height = (int)(maxy + ssHeight + MarginY);
 
-				form.Size = size;
+				form.ClientSize = size;
 			}
 
 			var hadLocation = false;
@@ -2018,12 +2112,12 @@
 					if (Options.TryParse(opt, "r", ref options.rows)) { }
 					else if (Options.TryParse(opt, "w", ref options.width)) { }
 					else if (Options.TryParse(opt, "h", ref options.height)) { }
-					else if (Options.TryParse(opt, "x+", ref options.xplus)) { }
-					else if (Options.TryParse(opt, "y+", ref options.yplus)) { }
+					else if (Options.TryParse(opt, "x+", ref options.x)) { options.xpos = GuiOptions.Positioning.PreviousBottomRight; }
+					else if (Options.TryParse(opt, "y+", ref options.y)) { options.ypos = GuiOptions.Positioning.PreviousBottomRight; }
 					//else if (string.Compare(opt, "x+m", true) == 0) { options.xplusm = true; }
 					//else if (string.Compare(opt, "y+m", true) == 0) { options.yplusm = true; }
-					else if (Options.TryParse(opt, "x", ref options.x)) { }
-					else if (Options.TryParse(opt, "y", ref options.y)) { }
+					else if (Options.TryParse(opt, "x", ref options.x)) { options.xpos = GuiOptions.Positioning.Absolute; }
+					else if (Options.TryParse(opt, "y", ref options.y)) { options.ypos = GuiOptions.Positioning.Absolute; }
 					else if (Options.TryParse(opt, "t", ref options.t)) { options.tabstops.Add(options.t); }
 					else if (Options.TryParse(opt, "Redraw", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.redraw = tempbool; }
 					//Checkbox.
@@ -2052,20 +2146,22 @@
 					else if (Options.TryParse(opt, "Choose", ref options.ddlchoose)) { options.ddlchoose--; options.choose.Add(options.ddlchoose); }
 					//
 					else if (Options.TryParse(opt, "c", ref options.c)) { }
-					else if (opt.Equals("Vertical", StringComparison.OrdinalIgnoreCase)) { options.vertical = true; }
+					else if (Options.TryParse(opt, "Vertical", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.vertical = tempbool; }
 					else if (Options.TryParseString(opt, "v", ref options.name)) { }
 					else if (Options.TryParse(opt, "Disabled", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.enabled = !tempbool; }
 					else if (Options.TryParse(opt, "Hidden", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.visible = !tempbool; }
 					else if (Options.TryParse(opt, "Autosize", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.autosize = tempbool; }
 					else if (Options.TryParse(opt, "wp", ref options.wp, StringComparison.OrdinalIgnoreCase, true)) { }
 					else if (Options.TryParse(opt, "hp", ref options.hp, StringComparison.OrdinalIgnoreCase, true)) { }
-					else if (Options.TryParse(opt, "xp", ref options.xp, StringComparison.OrdinalIgnoreCase, true)) { }
-					else if (Options.TryParse(opt, "yp", ref options.yp, StringComparison.OrdinalIgnoreCase, true)) { }
-					else if (Options.TryParse(opt, "xm", ref options.xm, StringComparison.OrdinalIgnoreCase, true)) { }
-					else if (Options.TryParse(opt, "ym", ref options.ym, StringComparison.OrdinalIgnoreCase, true)) { }
-					else if (Options.TryParse(opt, "xs", ref options.xs, StringComparison.OrdinalIgnoreCase, true)) { }
-					else if (Options.TryParse(opt, "ys", ref options.ys, StringComparison.OrdinalIgnoreCase, true)) { }
-					else if (Options.TryParse(opt, "AltSubmit", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.altsubmit = tempbool; }
+					else if (Options.TryParse(opt, "xp", ref options.x, StringComparison.OrdinalIgnoreCase, true)) { options.xpos = GuiOptions.Positioning.PreviousTopLeft; }
+					else if (Options.TryParse(opt, "yp", ref options.y, StringComparison.OrdinalIgnoreCase, true)) { options.ypos = GuiOptions.Positioning.PreviousTopLeft; }
+					else if (Options.TryParse(opt, "xm", ref options.x, StringComparison.OrdinalIgnoreCase, true)) { options.xpos = GuiOptions.Positioning.Margin; }
+					else if (Options.TryParse(opt, "ym", ref options.y, StringComparison.OrdinalIgnoreCase, true)) { options.ypos = GuiOptions.Positioning.Margin; }
+					else if (Options.TryParse(opt, "xs", ref options.x, StringComparison.OrdinalIgnoreCase, true)) { options.xpos = GuiOptions.Positioning.Section; }
+					else if (Options.TryParse(opt, "ys", ref options.y, StringComparison.OrdinalIgnoreCase, true)) { options.ypos = GuiOptions.Positioning.Section; }
+                    else if (Options.TryParse(opt, "xc", ref options.x, StringComparison.OrdinalIgnoreCase, true)) { options.xpos = GuiOptions.Positioning.Container; }
+                    else if (Options.TryParse(opt, "yc", ref options.y, StringComparison.OrdinalIgnoreCase, true)) { options.ypos = GuiOptions.Positioning.Container; }
+                    else if (Options.TryParse(opt, "AltSubmit", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.altsubmit = tempbool; }
 					else if (Options.TryParse(opt, "Left", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.leftj = tempbool; }
 					else if (Options.TryParse(opt, "Right", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.rightj = tempbool; }
 					else if (opt.Equals("Section", StringComparison.OrdinalIgnoreCase)) { options.section = true; }
@@ -2227,10 +2323,10 @@
 		private void ResizeTabControls()
 		{
 			var dpiscale = !dpiscaling ? 1.0 : A_ScaledScreenDPI;
-			var tabControls = controls.Values.OfType<GuiControl>().Select(gc => gc.Control).OfType<KeysharpTabControl>().ToHashSet();
+			var tabControls = controls.Values.OfType<GuiControl>().Where(gc => gc.Control is KeysharpTabControl).ToHashSet();
 
 			foreach (var tc in tabControls)
-				tc.AdjustSize(dpiscale);
+				((KeysharpTabControl)tc.Control).AdjustSize(dpiscale, tc.requestedSize);
 		}
 
 		public object this[object controlname]
@@ -2476,15 +2572,20 @@
 			internal bool? wordwrap;
 			internal int wp = int.MinValue;
 			internal int x = int.MinValue;
-			internal int xm = int.MinValue;
-			internal int xp = int.MinValue;
-			internal int xplus = int.MinValue;
-			internal int xs = int.MinValue;
-			internal int y = int.MinValue;
-			internal int ym = int.MinValue;
-			internal int yp = int.MinValue;
-			internal int yplus = int.MinValue;
-			internal int ys = int.MinValue;
+            internal int y = int.MinValue;
+            internal Positioning xpos = Positioning.None;
+			internal Positioning ypos = Positioning.None;
+
+			internal enum Positioning
+			{
+				None,
+				Absolute,
+				PreviousBottomRight,
+				PreviousTopLeft,
+				Container,
+				Margin,
+				Section,
+			}
 		}
 	}
 
