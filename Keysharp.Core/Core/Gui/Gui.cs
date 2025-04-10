@@ -1,8 +1,4 @@
-﻿using System;
-using System.Windows.Forms;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.TextBox;
-
-namespace Keysharp.Core
+﻿namespace Keysharp.Core
 {
 	public class Gui : KeysharpObject, I__Enum, IEnumerable<(object, object)>
 	{
@@ -293,25 +289,26 @@ namespace Keysharp.Core
 			{
 				if (LastContainer != null)
 				{
-                    Control lastControl = null;
-                    int maxIndex = int.MinValue;
-                    foreach (Control ctrl in LastContainer.Controls)
-                    {
-                        if (ctrl is KeysharpStatusStrip)
-                            continue;
+					Control lastControl = null;
+					int maxIndex = int.MinValue;
 
-                        if (ctrl.Tag is GuiTag tag)
-                        {
-                            if (tag.Index > maxIndex)
-                            {
-                                maxIndex = tag.Index;
-                                lastControl = ctrl;
-                            }
-                        }
-                    }
+					foreach (Control ctrl in LastContainer.Controls)
+					{
+						if (ctrl is KeysharpStatusStrip)
+							continue;
 
-                    return lastControl;
-                }
+						if (ctrl.Tag is GuiTag tag)
+						{
+							if (tag.Index > maxIndex)
+							{
+								maxIndex = tag.Index;
+								lastControl = ctrl;
+							}
+						}
+					}
+
+					return lastControl;
+				}
 
 				return null;
 			}
@@ -436,8 +433,8 @@ namespace Keysharp.Core
 						Multiline = ml,
 						ReadOnly = opts.rdonly ?? false,
 						WordWrap = ml,
-                        Font = Conversions.ConvertFont(form.Font)
-                    };
+						Font = Conversions.ConvertFont(form.Font)
+					};
 #if !WINDOWS
 
 					if (opts.number)
@@ -504,8 +501,8 @@ namespace Keysharp.Core
 						AcceptsTab = opts.wanttab ?? false,
 						Multiline = ml,
 						ReadOnly = opts.rdonly ?? false,
-                        Font = Conversions.ConvertFont(form.Font)
-                    };
+						Font = Conversions.ConvertFont(form.Font)
+					};
 #if !WINDOWS
 
 					if (opts.number)
@@ -564,8 +561,8 @@ namespace Keysharp.Core
 						ThousandsSeparator = (opts.addstyle & 0x80) != 0x80,
 						UpDownAlign = opts.leftj.IsTrue() ? LeftRightAlignment.Left : LeftRightAlignment.Right,
 						Hexadecimal = opts.hex.IsTrue(),
-                        Font = Conversions.ConvertFont(form.Font)
-                    };
+						Font = Conversions.ConvertFont(form.Font)
+					};
 
 					if (opts.nudlow.HasValue)
 						nud.Minimum = opts.nudlow.Value;
@@ -622,8 +619,8 @@ namespace Keysharp.Core
 					{
 						Name = text,
 						AutoSize = opts.width == int.MinValue && opts.wp == int.MinValue && opts.height == int.MinValue && opts.hp == int.MinValue,
-                        Font = Conversions.ConvertFont(form.Font)
-                    };
+						Font = Conversions.ConvertFont(form.Font)
+					};
 
 					if (opts.btndef.IsTrue())
 						form.AcceptButton = (IButtonControl)ctrl;
@@ -637,8 +634,8 @@ namespace Keysharp.Core
 					var chk = new KeysharpCheckBox(opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle)
 					{
 						ThreeState = opts.check3,
-                        Font = Conversions.ConvertFont(form.Font)
-                    };
+						Font = Conversions.ConvertFont(form.Font)
+					};
 
 					if (opts.ischecked.HasValue)
 					{
@@ -664,8 +661,8 @@ namespace Keysharp.Core
 					{
 						AutoSize = true,
 						Text = text,
-                        Font = Conversions.ConvertFont(form.Font)
-                    };
+						Font = Conversions.ConvertFont(form.Font)
+					};
 					ctrl = rad;
 					holder = new Radio(this, ctrl, typeo);
 				}
@@ -680,7 +677,8 @@ namespace Keysharp.Core
 
 					if (!isCombo)
 					{
-						ddl = new KeysharpComboBox(opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle) {
+						ddl = new KeysharpComboBox(opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle)
+						{
 							Font = Conversions.ConvertFont(form.Font)
 						};
 						ddl.DropDownStyle = ComboBoxStyle.DropDownList;
@@ -744,8 +742,9 @@ namespace Keysharp.Core
 					{
 						SelectionMode = opts.multiline.IsTrue() ? SelectionMode.MultiExtended : SelectionMode.One,
 						Sorted = opts.sort.IsTrue(),//Unsure how to make incremental search work.
-                        Font = Conversions.ConvertFont(form.Font)
-                    };
+						Font = Conversions.ConvertFont(form.Font)
+					};
+
 					if (al != null)
 						lb.Items.AddRange(al.Cast<(object, object)>().Select(x => x.Item2).Select(x => opts.lowercase.IsTrue() ? x.Str().ToLower() : opts.uppercase.IsTrue() ? x.Str().ToUpper() : x.Str()).ToArray());
 
@@ -827,7 +826,7 @@ namespace Keysharp.Core
 						lv.HeaderStyle = opts.sortheader.IsFalse() ? ColumnHeaderStyle.Nonclickable : ColumnHeaderStyle.Clickable;
 
 					lv.AutoResizeColumns(ColumnHeaderAutoResizeStyle.HeaderSize);
-                    ctrl = lv;
+					ctrl = lv;
 					holder = new ListView(this, ctrl, typeo);
 				}
 				break;
@@ -841,7 +840,7 @@ namespace Keysharp.Core
 #endif
 					tv.Font = Conversions.ConvertFont(form.Font);
 
-                    if (opts.buttons.HasValue)
+					if (opts.buttons.HasValue)
 						tv.ShowPlusMinus = opts.buttons.Value;
 
 					tv.CheckBoxes = opts.ischecked.HasValue && opts.ischecked.Value != 0;
@@ -984,8 +983,8 @@ namespace Keysharp.Core
 					var slider = new KeysharpTrackBar(opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle)
 					{
 						Orientation = opts.vertical ? Orientation.Vertical : Orientation.Horizontal,
-                        Font = Conversions.ConvertFont(form.Font)
-                    };
+						Font = Conversions.ConvertFont(form.Font)
+					};
 
 					if (opts.nudlow.HasValue && opts.nudhigh.HasValue)
 					{
@@ -1040,7 +1039,7 @@ namespace Keysharp.Core
 						opts.addstyle |= 0x04;
 
 					var prg = new KeysharpProgressBar(opts.bgcolor.HasValue || opts.c != Control.DefaultForeColor,
-														opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle)
+													  opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle)
 					{
 						Font = Conversions.ConvertFont(form.Font)
 					};
@@ -1071,9 +1070,10 @@ namespace Keysharp.Core
 
 				case Keyword_GroupBox:
 				{
-					ctrl = new KeysharpGroupBox(opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle) {
-                        Font = Conversions.ConvertFont(form.Font)
-                    };
+					ctrl = new KeysharpGroupBox(opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle)
+					{
+						Font = Conversions.ConvertFont(form.Font)
+					};
 					holder = new GroupBox(this, ctrl, typeo);
 				}
 				break;
@@ -1087,6 +1087,7 @@ namespace Keysharp.Core
 						Font = Conversions.ConvertFont(form.Font)
 					};//This will also support image lists just like TreeView for setting icons on tabs, instead of using SendMessage().
 					kstc.TabPages.AddRange(al.Cast<(object, object)>().Select(x => x.Item2).Select(x => new TabPage(x.Str())).ToArray());
+
 					if (opts.leftj.IsTrue())
 						kstc.Alignment = TabAlignment.Left;
 					else if (opts.rightj.IsTrue())
@@ -1108,8 +1109,8 @@ namespace Keysharp.Core
 					if (opts.bgcolor.HasValue)
 						kstc.SetColor(opts.bgcolor.Value);
 
-                    ctrl = kstc;
-                    holder = new Tab(this, ctrl, typeo);
+					ctrl = kstc;
+					holder = new Tab(this, ctrl, typeo);
 				}
 				break;
 
@@ -1132,8 +1133,8 @@ namespace Keysharp.Core
 							ForeColor = opts.c,//Contrary to the documentation, the foreground *can* be set.
 							AutoSize = true,
 							Name = $"AutoToolStripLabel{ss.Items.Count}",
-                            Font = Conversions.ConvertFont(form.Font)
-                        };
+							Font = Conversions.ConvertFont(form.Font)
+						};
 
 						if (opts.bgcolor.HasValue)
 							tsl.BackColor = opts.bgcolor.Value;
@@ -1233,18 +1234,18 @@ namespace Keysharp.Core
 			var w = scaledPref;
 			var lastControl = LastControl;
 
-            if (ctrl is KeysharpTabControl ktc)
-            {
-                if (ktc.TabPages.Count >= 0)
-                    holder.UseTab(1);//Will set this object's CurrentTab value, as well as the LastContainer values.
+			if (ctrl is KeysharpTabControl ktc)
+			{
+				if (ktc.TabPages.Count >= 0)
+					holder.UseTab(1);//Will set this object's CurrentTab value, as well as the LastContainer values.
 
-                if (opts.bgtrans)
-                    ktc.SetColor(Color.Transparent);
-                else if (opts.bgcolor.HasValue)
-                    ktc.SetColor(opts.bgcolor.Value);
-            }
+				if (opts.bgtrans)
+					ktc.SetColor(Color.Transparent);
+				else if (opts.bgcolor.HasValue)
+					ktc.SetColor(opts.bgcolor.Value);
+			}
 
-            if (lastControl is KeysharpRadioButton && ctrl is not KeysharpRadioButton)//Pop container if we've ended a radio group.
+			if (lastControl is KeysharpRadioButton && ctrl is not KeysharpRadioButton)//Pop container if we've ended a radio group.
 			{
 				LastContainer = LastContainer.Parent;
 				lastControl = LastControl;//Will retrieve the last control in the LastContainer we just assigned.
@@ -1277,12 +1278,7 @@ namespace Keysharp.Core
 			else if (ctrl is KeysharpListView || ctrl is KeysharpTreeView || ctrl is KeysharpDateTimePicker)//Documentaiton doesn't mention these, but IronAHK handled them this way, so leaving this here.
 				w = fontpixels * 30;
 
-			if (opts.width == int.MinValue)
-				ctrl.Width = Math.Max((int)w, (int)Math.Round(scaledPref));
-			else
-			{
-                ctrl.Width = holder.requestedSize.Width = (int)Math.Round(w);
-            }
+			ctrl.Width = opts.width == int.MinValue ? Math.Max((int)w, (int)Math.Round(scaledPref)) : (holder.requestedSize.Width = (int)Math.Round(w));
 
 			if (opts.hp != int.MinValue)
 			{
@@ -1372,10 +1368,10 @@ namespace Keysharp.Core
 				}
 			}
 
-		heightdone:
+			heightdone:
 			Point loc;
-
 			int lcLeft = 0, lcTop = 0, lcBottom = 0, lcRight = 0, lcWidth = 0, lcHeight = 0;
+
 			if (lastControl != null)
 			{
 				lcLeft = lastControl.Left; lcTop = lastControl.Top; lcBottom = lastControl.Bottom; lcRight = lastControl.Right; lcWidth = lastControl.Width; lcHeight = lastControl.Height;
@@ -1384,14 +1380,16 @@ namespace Keysharp.Core
 			var xoffset = (double)lcLeft;
 			var yoffset = (double)lcTop;
 
-            if ((opts.xpos == GuiOptions.Positioning.Absolute || opts.ypos == GuiOptions.Positioning.Absolute) && LastContainer != null)
-            {
-                Point controlLoc = form.PointToScreen(LastContainer.Location);
+			if ((opts.xpos == GuiOptions.Positioning.Absolute || opts.ypos == GuiOptions.Positioning.Absolute) && LastContainer != null)
+			{
+				Point controlLoc = form.PointToScreen(LastContainer.Location);
+
 				if (opts.xpos == GuiOptions.Positioning.Absolute)
-					xoffset = controlLoc.X - form.Location.X; 
+					xoffset = controlLoc.X - form.Location.X;
+
 				if (opts.ypos == GuiOptions.Positioning.Absolute)
 					yoffset = controlLoc.Y - form.Location.Y;
-            }
+			}
 
 			if (opts.xpos == GuiOptions.Positioning.Absolute)
 				xoffset = opts.x * dpiscale - (LastContainer == null ? 0 : xoffset);
@@ -1408,9 +1406,9 @@ namespace Keysharp.Core
 			else
 				xoffset = int.MinValue;
 
-            if (opts.ypos == GuiOptions.Positioning.Absolute)
-                yoffset = opts.y * dpiscale - (LastContainer == null ? 0 : yoffset);
-            else if (opts.ypos == GuiOptions.Positioning.PreviousBottomRight)
+			if (opts.ypos == GuiOptions.Positioning.Absolute)
+				yoffset = opts.y * dpiscale - (LastContainer == null ? 0 : yoffset);
+			else if (opts.ypos == GuiOptions.Positioning.PreviousBottomRight)
 				yoffset += lcHeight + (opts.y * dpiscale);
 			else if (opts.ypos == GuiOptions.Positioning.PreviousTopLeft)
 				yoffset += opts.y * dpiscale;
@@ -1418,9 +1416,9 @@ namespace Keysharp.Core
 				yoffset = form.Margin.Top + (opts.y * dpiscale);
 			else if (opts.ypos == GuiOptions.Positioning.Section)
 				yoffset = (Section?.Location.Y ?? 0) + (opts.y * dpiscale);
-            else if (opts.xpos == GuiOptions.Positioning.Container)
-                yoffset = opts.y * dpiscale;
-            else
+			else if (opts.xpos == GuiOptions.Positioning.Container)
+				yoffset = opts.y * dpiscale;
+			else
 				yoffset = int.MinValue;
 
 			//X specified, but Y wasn't.
@@ -1457,7 +1455,8 @@ namespace Keysharp.Core
 					var (r, b) = Section.Parent.RightBottomMostSince(Section);//Get the right-most control in the current section.
 					xoffset = (r?.Right ?? 0) + form.Margin.Left;
 				}
-			} else if (xoffset == int.MinValue && yoffset == int.MinValue && ctrl is KeysharpNumericUpDown)
+			}
+			else if (xoffset == int.MinValue && yoffset == int.MinValue && ctrl is KeysharpNumericUpDown)
 			{
 				xoffset = lcLeft; yoffset = lcTop;
 			}
@@ -1540,6 +1539,7 @@ namespace Keysharp.Core
 			else if (ctrl is KeysharpGroupBox gb)
 			{
 				LastContainer.TagAndAdd(holder);
+
 				if (opts.group)
 					LastContainer = gb;
 			}
@@ -1871,20 +1871,20 @@ namespace Keysharp.Core
 
 				return (maxx, maxy);
 			}
-
 			int maxx = 0, maxy = 0, ssHeight = 0;
+
 			if (auto || pos[0] == null || pos[1] == null)
 			{
-                KeysharpStatusStrip ss = null;
+				KeysharpStatusStrip ss = null;
 
-                if (status.Length > 0)
-                {
-                    ss = status[0];
-                    ssHeight = ss.Height;
-                }
+				if (status.Length > 0)
+				{
+					ss = status[0];
+					ssHeight = ss.Height;
+				}
 
-                (maxx, maxy) = FixStatusStrip(ss);
-            }
+				(maxx, maxy) = FixStatusStrip(ss);
+			}
 
 			if (auto || (!form.BeenShown && !showCalled && pos[0] == null && pos[1] == null))//The calculations in this block are not exact, but are as close as we can possibly get in a generic way.
 			{
@@ -1896,15 +1896,15 @@ namespace Keysharp.Core
 			{
 				var size = (form.BeenShown || showCalled) ? form.Size : new Size(800, 500);//Using this size because PreferredSize is so small it just shows the title bar.
 
-                if (pos[0] != null)//Dimensions must be scaled by DPI.//TODO
+				if (pos[0] != null)
 					size.Width = (int)Math.Ceiling(pos[0].Value * dpiscale);
-                else
-                    size.Width = (int)(maxx + MarginX);
+				else
+					size.Width = (int)(maxx + MarginX);
 
-                if (pos[1] != null)
+				if (pos[1] != null)
 					size.Height = (int)Math.Ceiling(pos[1].Value * dpiscale);
-                else
-                    size.Height = (int)(maxy + ssHeight + MarginY);
+				else
+					size.Height = (int)(maxy + ssHeight + MarginY);
 
 				form.ClientSize = size;
 			}
@@ -2159,9 +2159,9 @@ namespace Keysharp.Core
 					else if (Options.TryParse(opt, "ym", ref options.y, StringComparison.OrdinalIgnoreCase, true)) { options.ypos = GuiOptions.Positioning.Margin; }
 					else if (Options.TryParse(opt, "xs", ref options.x, StringComparison.OrdinalIgnoreCase, true)) { options.xpos = GuiOptions.Positioning.Section; }
 					else if (Options.TryParse(opt, "ys", ref options.y, StringComparison.OrdinalIgnoreCase, true)) { options.ypos = GuiOptions.Positioning.Section; }
-                    else if (Options.TryParse(opt, "xc", ref options.x, StringComparison.OrdinalIgnoreCase, true)) { options.xpos = GuiOptions.Positioning.Container; }
-                    else if (Options.TryParse(opt, "yc", ref options.y, StringComparison.OrdinalIgnoreCase, true)) { options.ypos = GuiOptions.Positioning.Container; }
-                    else if (Options.TryParse(opt, "AltSubmit", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.altsubmit = tempbool; }
+					else if (Options.TryParse(opt, "xc", ref options.x, StringComparison.OrdinalIgnoreCase, true)) { options.xpos = GuiOptions.Positioning.Container; }
+					else if (Options.TryParse(opt, "yc", ref options.y, StringComparison.OrdinalIgnoreCase, true)) { options.ypos = GuiOptions.Positioning.Container; }
+					else if (Options.TryParse(opt, "AltSubmit", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.altsubmit = tempbool; }
 					else if (Options.TryParse(opt, "Left", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.leftj = tempbool; }
 					else if (Options.TryParse(opt, "Right", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.rightj = tempbool; }
 					else if (opt.Equals("Section", StringComparison.OrdinalIgnoreCase)) { options.section = true; }
@@ -2572,8 +2572,8 @@ namespace Keysharp.Core
 			internal bool? wordwrap;
 			internal int wp = int.MinValue;
 			internal int x = int.MinValue;
-            internal int y = int.MinValue;
-            internal Positioning xpos = Positioning.None;
+			internal int y = int.MinValue;
+			internal Positioning xpos = Positioning.None;
 			internal Positioning ypos = Positioning.None;
 
 			internal enum Positioning

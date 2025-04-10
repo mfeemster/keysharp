@@ -121,7 +121,7 @@ MyGui.UseGroup(gb1_TabOne)
 ; │  Listview testing                │
 ; │  Double-click activates tooltip  │
 ; └──────────────────────────────────┘
-LV_Label := MyGui.Add("Text", "w400 xc+10 y+10","Create listview with tooltip - double-click row")
+LV_Label := MyGui.Add("Text", "w400 xc+10 y+20","Create listview with tooltip - double-click row")
 LV_Label.SetFont("cBlue s10")
 ; Create the ListView with two columns, Name and Size:
 LV := MyGui.Add("ListView", "r15 w300 xc+10 y+5 BackgroundTeal", ["Name","Size (KB)"])
