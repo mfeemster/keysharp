@@ -100,19 +100,26 @@
 
 			title = MakeTitleWithVersion(title);
 			var exit = false;
-			var oldDetect = WindowX.DetectHiddenWindows(true);
-			var oldMatchMode = WindowX.SetTitleMatchMode(3);//Require exact match.
+
+			nint hwnd = 0;
+
+			if (inst != eScriptInstance.Off)
+			{
+				hwnd = WindowsAPI.FindWindow(null, title);
+				if (hwnd != 0 && !WindowX.WinGetTitle(hwnd).Equals(title))
+					hwnd = 0;
+			}
 
 			switch (inst)
 			{
 				case eScriptInstance.Force:
 				{
-					_ = WindowX.WinClose(title, "", 2);
+					_ = WindowX.WinClose(hwnd.Al(), "", 2);
 				}
 				break;
 
 				case eScriptInstance.Ignore:
-					if (WindowX.WinExist(title) != 0)
+					if (hwnd != 0)
 						exit = true;
 
 					break;
@@ -122,8 +129,6 @@
 
 				case eScriptInstance.Prompt:
 				default:
-					var hwnd = WindowX.WinExist(title);
-
 					if (hwnd != 0)
 					{
 						if (Dialogs.MsgBox("Do you want to close the existing instance before running this one?\nYes to exit that instance, No to exit this instance.", "", "YesNo") == "Yes")
@@ -134,9 +139,6 @@
 
 					break;
 			}
-
-			_ = WindowX.SetTitleMatchMode(oldMatchMode);
-			_ = WindowX.DetectHiddenWindows(oldDetect);
 			return exit;
 		}
 

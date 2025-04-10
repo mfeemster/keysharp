@@ -1,4 +1,6 @@
 ﻿#if WINDOWS
+using System.Reflection.Metadata;
+
 namespace Keysharp.Core.Windows
 {
 	internal enum GetAncestorFlags
@@ -1605,11 +1607,13 @@ namespace Keysharp.Core.Windows
 
 		internal static string GetWindowText(IntPtr hwnd)
 		{
-			var length = SendMessage(hwnd, WM_GETTEXTLENGTH, IntPtr.Zero, IntPtr.Zero).ToInt32();
-			var buf = new StringBuilder(length + 1);
-			_ = SendMessage(hwnd, WM_GETTEXT, buf.Capacity, buf);
-			return buf.ToString();
-		}
+            int textLength = WindowsAPI.GetWindowTextLength(hwnd);
+            if (textLength == 0)
+                return string.Empty;
+            StringBuilder outText = new StringBuilder(textLength + 1);
+            int a = GetWindowText(hwnd, outText, outText.Capacity);
+            return outText.ToString();
+        }
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
 		internal static extern int GetWindowTextLength(IntPtr hWnd);

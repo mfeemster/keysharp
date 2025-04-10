@@ -34,6 +34,22 @@ namespace Keysharp.Core.Common.Platform
 			if (criteria.IsEmpty)
 				return found;
 
+			if (!criteria.ClassName.IsNullOrEmpty())
+			{
+				var mm = Threads.GetThreadVariables().titleMatchMode.ParseLong(false);
+                string title = criteria.Title.IsNullOrEmpty() || mm != 3 ? null : criteria.Title;
+				var hwnd = WindowsAPI.FindWindow(criteria.ClassName, title);
+				if (hwnd == 0)
+					return found;
+				if (mm == 3 || criteria.Title.IsNullOrEmpty())
+				{
+					found = new WindowItem(hwnd);
+					if ((criteria.Title.IsNullOrEmpty() || criteria.Title.Equals(found.Title)) && criteria.ClassName.Equals(found.ClassName))
+						return found;
+					found = null;
+				}
+			}
+
 			foreach (var window in AllWindows)
 			{
 				if (window.Equals(criteria))
