@@ -1054,7 +1054,6 @@ namespace Keysharp.Core
 		internal void SetColor(Color color)
 		{
 			bgcolor = color;
-			//((Control)this).BackColor = color;
 			DrawMode = TabDrawMode.OwnerDrawFixed;
 
 			foreach (TabPage tp in TabPages)
