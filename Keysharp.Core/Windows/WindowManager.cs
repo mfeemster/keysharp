@@ -115,6 +115,43 @@ namespace Keysharp.Core.Windows
 
 			return null;
 		}
+
+		internal override WindowItemBase FindWindow(SearchCriteria criteria, bool last = false)
+		{
+			WindowItemBase found = null;
+
+			if (criteria.IsEmpty)
+				return found;
+
+            var mm = Threads.GetThreadVariables().titleMatchMode.ParseLong(false);
+			var hasTitle = !criteria.Title.IsNullOrEmpty();
+            if (!criteria.ClassName.IsNullOrEmpty() || (mm == 3 && hasTitle))
+			{
+				var hwnd = WindowsAPI.FindWindow(criteria.ClassName == "" ? null : criteria.ClassName, !hasTitle || mm != 3 ? null : criteria.Title);
+				if (hwnd == 0)
+					return found;
+				if (mm == 3 || !hasTitle)
+				{
+					found = new WindowItem(hwnd);
+					if ((!hasTitle || criteria.Title.Equals(found.Title)) && criteria.ClassName.Equals(found.ClassName))
+						return found;
+					found = null;
+				}
+			}
+
+			foreach (var window in AllWindows)
+			{
+				if (window.Equals(criteria))
+				{
+					found = window;
+
+					if (!last)
+						break;
+				}
+			}
+
+			return found;
+		}
 	}
 }
 
