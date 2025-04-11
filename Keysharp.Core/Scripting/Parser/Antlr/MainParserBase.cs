@@ -16,11 +16,8 @@ public class MainParserErrorListener : IAntlrErrorListener<IToken>
         string msg,
         RecognitionException e)
     {
-        // Handle syntax errors here
-        Console.Error.WriteLine($"Syntax error at line {line}, column {charPositionInLine}: {offendingSymbol.Text} msg: {msg}");
-        
-        // Optionally, throw an exception to stop parsing
-        throw new InvalidOperationException($"Syntax error at line {line}:{charPositionInLine} - {msg}", e);
+        // Throw an exception to stop parsing
+        throw new InvalidOperationException($"Syntax error at line {line}:{charPositionInLine} \"{offendingSymbol.Text}\" - {msg}", e);
     }
 }
 
@@ -204,6 +201,12 @@ public abstract class MainParserBase : Antlr4.Runtime.Parser
                 case MainLexer.EOL:
                 case MainLexer.Eof:
                     return true;
+                case MainLexer.Comma:
+                    if (i == 2) {
+                        IToken token = TokenStream.Get(InputStream.Index + 1);
+                        throw new InvalidOperationException($"Syntax error at line {token.Line}:{token.Column} - Function calls require a space or \"(\".  Use comma only between parameters.");
+                    }
+                    return false;
                 default:
                     return false;
             }

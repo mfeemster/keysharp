@@ -8,10 +8,10 @@ using static Keysharp.Scripting.Parser;
 
 namespace Keysharp.Scripting
 {
-    internal partial class MainVisitor : MainParserBaseVisitor<SyntaxNode>
+    internal partial class VisitMain : MainParserBaseVisitor<SyntaxNode>
     {
         Keysharp.Scripting.Parser parser;
-        public MainVisitor(Keysharp.Scripting.Parser _parser) : base()
+        public VisitMain(Keysharp.Scripting.Parser _parser) : base()
         {
             parser = _parser;
         }
@@ -80,20 +80,26 @@ namespace Keysharp.Scripting
 
             mainFunc.Params.Add(mainFuncParam);
 
-            string mainBodyCode = @"
+            parser.mainFuncInitial.Add($"string name = @\"{Path.GetFullPath(parser.fileName)}\";");
+            foreach (var (p, s) in parser.reader.PreloadedDlls)
+            {
+                parser.mainFuncInitial.Add($"Keysharp.Scripting.Script.Variables.AddPreLoadedDll(\"{p}\", {s.ToString().ToLower()});");
+            }
+
+            string mainBodyCode = $$"""
 			{
 					try
 					{
-                        MAIN_INIT_PLACEHOLDER
+						{{String.Join(Environment.NewLine, parser.mainFuncInitial)}}
 						Keysharp.Scripting.Script.Variables.InitGlobalVars();
 						Keysharp.Scripting.Script.SetName(name);
-						if (Keysharp.Scripting.Script.HandleSingleInstance(name, eScriptInstance.SINGLEINSTANCE_PLACEHOLDER))
+						if (Keysharp.Scripting.Script.HandleSingleInstance(name, eScriptInstance.{{System.Enum.GetName(typeof(eScriptInstance), parser.reader.SingleInstance)}}))
 						{
 							return 0;
 						}
 						Keysharp.Core.Env.HandleCommandLineParams(args);
 						Keysharp.Scripting.Script.CreateTrayMenu();
-						Keysharp.Scripting.Script.RunMainWindow(name, AUTOEXECSECTION_PLACEHOLDER, false);
+						Keysharp.Scripting.Script.RunMainWindow(name, {{Keywords.AutoExecSectionName}}, false);
 						Keysharp.Scripting.Script.WaitThreads();
 					}
                     catch (Keysharp.Core.Flow.UserRequestedExitException)
@@ -104,7 +110,7 @@ namespace Keysharp.Scripting
 						if (ErrorOccurred(kserr))
 						{
 							var (_ks_pushed, _ks_btv) = Keysharp.Core.Common.Threading.Threads.BeginThread();
-							MsgBox(""Uncaught Keysharp exception:\r\n"" + kserr, $""{Accessors.A_ScriptName}: Unhandled exception"", ""iconx"");
+							MsgBox("Uncaught Keysharp exception:\r\n" + kserr, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
 							Keysharp.Core.Common.Threading.Threads.EndThread(_ks_pushed);
 						}
 						Keysharp.Core.Flow.ExitApp(1);
@@ -118,33 +124,21 @@ namespace Keysharp.Scripting
 							if (ErrorOccurred(kserr))
 							{
 								var (_ks_pushed, _ks_btv) = Keysharp.Core.Common.Threading.Threads.BeginThread();
-								MsgBox(""Uncaught Keysharp exception:\r\n"" + kserr, $""{Accessors.A_ScriptName}: Unhandled exception"", ""iconx"");
+								MsgBox("Uncaught Keysharp exception:\r\n" + kserr, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
 								Keysharp.Core.Common.Threading.Threads.EndThread(_ks_pushed);
 							}
 						}
 						else
 						{
 							var (_ks_pushed, _ks_btv) = Keysharp.Core.Common.Threading.Threads.BeginThread();
-							MsgBox(""Uncaught exception:\r\n"" + ""Message: "" + ex.Message + ""\r\nStack: "" + ex.StackTrace, $""{Accessors.A_ScriptName}: Unhandled exception"", ""iconx"");
+							MsgBox("Uncaught exception:\r\n" + "Message: " + ex.Message + "\r\nStack: " + ex.StackTrace, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
 							Keysharp.Core.Common.Threading.Threads.EndThread(_ks_pushed);
 						}
-		;
 						Keysharp.Core.Flow.ExitApp(1);
 					}
 				return Environment.ExitCode;
 			}
-		"
-            ;
-
-            parser.mainFuncInitial.Add($"string name = @\"{Path.GetFullPath(parser.fileName)}\";");
-            foreach (var (p, s) in parser.reader.PreloadedDlls)//Add after InitGlobalVars() call above, because the statements will be added in reverse order.
-            {
-                parser.mainFuncInitial.Add($"Keysharp.Scripting.Script.Variables.AddPreLoadedDll(\"{p}\", {s.ToString().ToLower()});");
-            }
-
-            mainBodyCode = mainBodyCode.ReplaceFirst("MAIN_INIT_PLACEHOLDER", String.Join(Environment.NewLine, parser.mainFuncInitial));
-            mainBodyCode = mainBodyCode.ReplaceFirst("SINGLEINSTANCE_PLACEHOLDER", System.Enum.GetName(typeof(eScriptInstance), parser.reader.SingleInstance));
-            mainBodyCode = mainBodyCode.ReplaceFirst("AUTOEXECSECTION_PLACEHOLDER", Keywords.AutoExecSectionName);
+""";
 
             var mainBodyBlock = SyntaxFactory.ParseStatement(mainBodyCode) as BlockSyntax;
             mainFunc.Body = mainBodyBlock.Statements.ToList();
@@ -155,6 +149,7 @@ namespace Keysharp.Scripting
             parser.autoExecFunc.Method = parser.autoExecFunc.Method
                 .AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword), SyntaxFactory.Token(SyntaxKind.StaticKeyword));
 
+            // Map out all user class types and also any built-in types they derive from
             var allClassDeclarations = GetClassDeclarationsRecursive(context);
             foreach (var classDeclaration in allClassDeclarations)
             {
@@ -168,6 +163,8 @@ namespace Keysharp.Scripting
                 }
             }
 
+            // Create global FuncObj variables for all functions here, because otherwise during parsing
+            // we might not know how to case the name.
             var scopeFunctionDeclarations = GetScopeFunctions(context);
             foreach (var funcName in scopeFunctionDeclarations)
             {
@@ -195,7 +192,8 @@ namespace Keysharp.Scripting
                 parser.generalDirectiveStatements.Concat(parser.DHHR)
                 .Concat(parser.autoExecFunc.Body)
                 .ToList();
-
+    
+            // Return "" by default
             parser.autoExecFunc.Body.Add(SyntaxFactory.ReturnStatement(
                     SyntaxFactory.LiteralExpression(
                         SyntaxKind.StringLiteralExpression,
@@ -203,6 +201,7 @@ namespace Keysharp.Scripting
             parser.autoExecFunc.Method = parser.autoExecFunc.Assemble();
 
             mainFunc.Method = mainFunc.Assemble().AddAttributeLists(mainMethodAttributeList);
+            // Add the Main function to the beginning, and AutoExecSection to the end. Keyview requires Main to be at the beginning
             parser.mainClass.Body.Insert(0, mainFunc.Method);
             parser.mainClass.Body.Add(parser.autoExecFunc.Method);
             parser.namespaceDeclaration = parser.namespaceDeclaration.AddMembers(parser.mainClass.Assemble());
@@ -210,6 +209,8 @@ namespace Keysharp.Scripting
             var attributeList = SyntaxFactory.AttributeList(parser.assemblies)
                 .WithTarget(SyntaxFactory.AttributeTargetSpecifier(SyntaxFactory.Token(SyntaxKind.AssemblyKeyword)));
 
+            // Using tabs as indentation rather than spaces seems to be more performant.
+            // Not normalizing whitespaces is even faster though.
             parser.compilationUnit = parser.compilationUnit
                 .AddMembers(parser.namespaceDeclaration)
                 .AddAttributeLists(attributeList)
@@ -227,8 +228,8 @@ namespace Keysharp.Scripting
             {
                 var child = context.GetChild(i).GetChild(0);
 
-                if (!(child is IRuleNode ruleNode))
-                    continue; // EOL
+                if (child is not IRuleNode ruleNode)
+                    continue; // EOL or WS
 
                 //var txt = child.GetText();
                 SyntaxNode element = Visit(child);

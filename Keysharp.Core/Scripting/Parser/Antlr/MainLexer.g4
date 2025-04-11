@@ -1,6 +1,10 @@
 /*
  * The MIT License (MIT)
  *
+ * This file is based on the ANTLR4 grammar for Javascript (https://github.com/antlr/grammars-v4/tree/master/javascript/javascript),
+ * but very heavily modified by Descolada (modified for Keysharp use). 
+ * 
+ * List of authors and contributors for the Javascript grammar:
  * Copyright (c) 2014 by Bart Kiers (original author) and Alexandre Vitorelli (contributor -> ported to CSharp)
  * Copyright (c) 2017-2020 by Ivan Kochurkin (Positive Technologies):
     added ECMAScript 6 support, cleared and transformed to the universal grammar.
@@ -29,10 +33,6 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-// $antlr-format alignTrailingComments true, columnLimit 150, maxEmptyLinesToKeep 1, reflowComments false, useTab false
-// $antlr-format allowShortRulesOnASingleLine true, allowShortBlocksOnASingleLine true, minEmptyLines 0, alignSemicolons ownLine
-// $antlr-format alignColons trailing, singleLineOverrulesHangingColon true, alignLexerCommands true, alignLabels true, alignTrailers true
-
 lexer grammar MainLexer;
 
 channels {
@@ -55,11 +55,6 @@ SingleLineBlockComment  : '/*' ~[\r\n\u2028\u2029]*? '*/' -> skip;
 MultiLineComment  : '/*' .*? '*/' -> type(EOL);
 SingleLineComment : ';' ~[\r\n\u2028\u2029]* [\r\n\u2028\u2029] {this.IsCommentPossible()}? -> type(EOL);
 
-/*
-HotstringLiteral:
-    HotstringTrigger {this.IsHotstringLiteral()}? (LineBreak HotstringTrigger)* RawString;  //| LineBreak '(' ~[\r\n]+ LineBreak (EscapeCharacter | .)*? LineBreak ')');
-*/
-
 // First try consuming a hotstring 
 
 HotstringLiteralTrigger
@@ -78,12 +73,6 @@ RemapKey:
 HotkeyTrigger:
     HotkeyModifier* HotkeyCharacter (WhiteSpace+ '&' WhiteSpace+ HotkeyCharacter)? (WhiteSpace+ 'up')? '::' {this.IsBOS()}?;
 
-/*
-HotkeyLiteral:
-    NonColonStringCharacter+ DoubleColon;
-*/
-
-
 OpenBracket                : '[' {this.ProcessOpenBracket();};
 CloseBracket               : ']' {this.ProcessCloseBracket();};
 OpenParen                  : '(' {this.ProcessOpenParen();};
@@ -98,7 +87,7 @@ Colon                      : ':';
 DoubleColon                : '::';
 Ellipsis                   : '...';
 Dot                        : '.';
-ConcatDot                  : (WS | EOL)+ '.' (WS | EOL)+;
+ConcatDot                  : (WS | EOL)+ '.' (WS | EOL)+; // Keep Dot and ConcatDot separate for easier parsing
 PlusPlus                   : '++';
 MinusMinus                 : '--';
 Plus                       : '+';
@@ -147,7 +136,6 @@ NullishCoalescingAssign    : '??=';
 Arrow                      : '=>';
 
 /// Null Literals
-
 NullLiteral: 'null';
 Unset: 'unset';
 
@@ -162,21 +150,16 @@ DecimalLiteral:
     | '.' [0-9] [0-9_]* ExponentPart? {this.IsValidDotDecimal()}?
     | DecimalIntegerLiteral ExponentPart?
 ;
-
-/// Numeric Literals
-
 HexIntegerLiteral    : '0x' [0-9a-f] HexDigit*;
 OctalIntegerLiteral  : '0' [0-7]+;
 OctalIntegerLiteral2 : '0o' [0-7] [_0-7]*;
 BinaryIntegerLiteral : '0b' [01] [_01]*;
-
 BigHexIntegerLiteral     : '0x' [0-9a-f] HexDigit* 'n';
 BigOctalIntegerLiteral   : '0o' [0-7] [_0-7]* 'n';
 BigBinaryIntegerLiteral  : '0b' [01] [_01]* 'n';
 BigDecimalIntegerLiteral : DecimalIntegerLiteral 'n';
 
 /// Keywords
-
 Break      : 'break';
 Do         : 'do';
 Instanceof : 'instanceof';
@@ -190,6 +173,7 @@ Return     : 'return';
 Continue   : 'continue';
 For        : 'for';
 While      : 'while';
+// For Loop keywords allow optional trailing commas because AHK allows it
 LoopParse  : 'loop parse' ','?;
 LoopReg    : 'loop reg' ','?;
 LoopRead   : 'loop read' ','?;
@@ -212,8 +196,7 @@ Goto       : 'goto';
 Get        : 'get';
 Set        : 'set';
 
-/// Future Reserved Words
-
+/// Reserved Words
 Class   : 'class';
 Enum    : 'enum';
 Extends : 'extends';
@@ -230,7 +213,8 @@ Await : 'await';
 Static : 'static';
 Global : 'global';
 Local  : 'local';
- 
+
+// Positional Directives
 HotIf : '#hotif';
 InputLevel : '#inputlevel';
 SuspendExempt : '#suspendexempt';
@@ -239,8 +223,8 @@ HotstringOptions : '#hotstring' WhiteSpace+ RawString {this.ProcessHotstringOpti
 
 
 /// Identifier Names and Identifiers
-
 Identifier: IdentifierStart IdentifierPart*;
+
 /// String Literals
 MultilineStringLiteral:
     ('"' (WhiteSpace ';' ~[\r\n]* | ~["\r\n]*) ContinuationSection+ '"' 
@@ -253,7 +237,7 @@ StringLiteral:
 EOL: LineBreak {this.ProcessEOL();};
 WS: WhiteSpace {this.ProcessWS();};
 
-UnexpectedCharacter : .                     -> channel(ERROR);
+UnexpectedCharacter : . -> channel(ERROR);
 
 mode HOTSTRING_MODE;
 HotstringEOL: LineBreak -> type(EOL), popMode;

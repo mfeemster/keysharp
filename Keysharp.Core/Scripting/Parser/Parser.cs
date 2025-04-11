@@ -493,7 +493,7 @@ namespace Keysharp.Scripting
             //ProfileParser(mainParser);
             //Console.WriteLine("End");
 
-            MainVisitor visitor = new MainVisitor(this);
+            VisitMain visitor = new VisitMain(this);
 
             //var profilingATNSimulator = new ProfilingATNSimulator(mainParser);
 

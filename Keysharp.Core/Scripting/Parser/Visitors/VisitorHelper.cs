@@ -1,21 +1,75 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Antlr4.Runtime.Tree;
+﻿using Antlr4.Runtime.Tree;
 using Antlr4.Runtime;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using static MainParser;
-using static System.Windows.Forms.AxHost;
-using Keysharp.Core;
-using System.Text.RegularExpressions;
-using System.IO;
 
 namespace Keysharp.Scripting
 {
     internal partial class Parser
     {
+        internal static Dictionary<int, SyntaxKind> pureBinaryOperators = new Dictionary<int, SyntaxKind>()
+        {
+            {MainParser.Plus, SyntaxKind.AddExpression},
+            {MainParser.Minus, SyntaxKind.SubtractExpression},
+            {MainParser.Multiply, SyntaxKind.MultiplyExpression},
+            {MainParser.Divide, SyntaxKind.DivideExpression},
+            {MainParser.Modulus, SyntaxKind.ModuloExpression},
+            {MainParser.LeftShiftArithmetic, SyntaxKind.LeftShiftExpression},
+            {MainParser.RightShiftArithmetic, SyntaxKind.RightShiftExpression},
+            {MainParser.RightShiftLogical, SyntaxKind.UnsignedRightShiftExpression},
+            {MainParser.BitAnd, SyntaxKind.BitwiseAndExpression},
+            {MainParser.BitOr, SyntaxKind.BitwiseOrExpression},
+            {MainParser.BitXOr, SyntaxKind.ExclusiveOrExpression},
+            {MainParser.LessThan, SyntaxKind.LessThanExpression},
+            {MainParser.MoreThan, SyntaxKind.GreaterThanExpression},
+            {MainParser.IdentityEquals, SyntaxKind.EqualsEqualsToken},
+            {MainParser.NotEquals, SyntaxKind.NotEqualsExpression},
+            {MainParser.And, SyntaxKind.LogicalAndExpression},
+            {MainParser.VerbalAnd, SyntaxKind.LogicalAndExpression},
+            {MainParser.Or, SyntaxKind.LogicalOrExpression},
+            {MainParser.VerbalOr, SyntaxKind.LogicalOrExpression}
+        };
+
+        internal static Dictionary<int, string> binaryOperators = new Dictionary<int, string>()
+        {
+            {MainParser.Plus, "Add"},
+            {MainParser.Minus, "Minus"},
+            {MainParser.Multiply, "Multiply"},
+            {MainParser.Divide, "Divide"},
+            {MainParser.IntegerDivide, "FloorDivide"},
+            {MainParser.Modulus, "Modulus"},
+            {MainParser.LeftShiftArithmetic, "BitShiftLeft"},
+            {MainParser.RightShiftArithmetic, "BitShiftRight"},
+            {MainParser.RightShiftLogical, "LogicalBitShiftRight"},
+            {MainParser.BitAnd, "BitwiseAnd"},
+            {MainParser.BitOr, "BitwiseOr"},
+            {MainParser.BitXOr, "BitwiseXor"},
+            {MainParser.LessThan, "LessThan"},
+            {MainParser.LessThanEquals, "LessThanOrEqual"},
+            {MainParser.MoreThan, "GreaterThan"},
+            {MainParser.GreaterThanEquals, "GreaterThanOrEqual"},
+            {MainParser.IdentityEquals, "IdentityEquality"},
+            {MainParser.IdentityNotEquals, "IdentityInequality"},
+            {MainParser.NotEquals, "ValueInequality"},
+            {MainParser.Equals_, "ValueEquality"},
+            {MainParser.And, "BooleanAnd"},
+            {MainParser.VerbalAnd, "BooleanAnd"},
+            {MainParser.Or, "BooleanOr"},
+            {MainParser.VerbalOr, "BooleanOr"},
+            {MainParser.Dot, "Concat"},
+            {MainParser.RegExMatch, "RegEx"},
+            {MainParser.Power, "Power"},
+            {MainParser.Is, "Is"}
+        };
+
+        internal static Dictionary<int, string> unaryOperators = new Dictionary<int, string>()
+        {
+            {MainParser.Minus, "Minus"},
+            {MainParser.Not, "LogicalNot"},
+            {MainParser.VerbalNot, "LogicalNot"},
+            {MainParser.BitNot, "BitwiseNot"}
+        };
+
         static Parser()
         {
             var anyType = typeof(Any);
@@ -25,7 +79,7 @@ namespace Keysharp.Scripting
                 BuiltinTypes[type.Name] = type;
             }
         }
-        public void AddAssembly(string assemblyName, string value)
+        internal void AddAssembly(string assemblyName, string value)
         {
             assemblies = assemblies.Add(SyntaxFactory.Attribute(
                 CreateQualifiedName(assemblyName))
@@ -37,7 +91,8 @@ namespace Keysharp.Scripting
             return;
         }
 
-        public IdentifierNameSyntax PushTempVar()
+        // Used to create temporary variables (eg for-loop vars) which can also be reused later
+        internal IdentifierNameSyntax PushTempVar()
         {
             tempVarCount++;
             var tempVarName = Keywords.TempVariablePrefix + tempVarCount.ToString();
@@ -48,9 +103,9 @@ namespace Keysharp.Scripting
             return SyntaxFactory.IdentifierName(tempVarName);
         }
 
-        public void PopTempVar() => tempVarCount--;
+        internal void PopTempVar() => tempVarCount--;
 
-        public static List<ClassDeclarationContext> GetClassDeclarationsRecursive(ParserRuleContext context)
+        internal static List<ClassDeclarationContext> GetClassDeclarationsRecursive(ParserRuleContext context)
         {
             if (context == null || context.children == null) return new List<ClassDeclarationContext>();
             return context.children
@@ -63,7 +118,7 @@ namespace Keysharp.Scripting
                 .ToList();
         }
 
-        public static List<string> GetScopeFunctions(ParserRuleContext context)
+        internal static List<string> GetScopeFunctions(ParserRuleContext context)
         {
             var result = new List<string>();
 
@@ -98,7 +153,9 @@ namespace Keysharp.Scripting
             return result;
         }
 
-        public static NameSyntax CreateQualifiedName(string qualifiedString)
+        // Creating an identifier for something like "Keysharp.Program" results in a single identifier,
+        // not a namespace/class access. This function splits the name by "." and then joins it one-by-one.
+        internal static NameSyntax CreateQualifiedName(string qualifiedString)
         {
             NameSyntax qualifiedName = null;
 
@@ -118,7 +175,7 @@ namespace Keysharp.Scripting
 
             return qualifiedName;
         }
-        public UsingDirectiveSyntax CreateUsingDirective(string usingName)
+        internal UsingDirectiveSyntax CreateUsingDirective(string usingName)
         {
             string alias = null;
 
@@ -138,7 +195,7 @@ namespace Keysharp.Scripting
             return SyntaxFactory.UsingDirective(qualifiedName);
         }
 
-        public static LiteralExpressionSyntax NumericLiteralExpression(string value)
+        internal static LiteralExpressionSyntax NumericLiteralExpression(string value)
         {
             if (value.Contains("."))
             {
@@ -162,80 +219,7 @@ namespace Keysharp.Scripting
             }
         }
 
-        public static ExpressionStatementSyntax MethodCallExpression(string name, params ExpressionSyntax[] args)
-        {
-            var identifier = CreateQualifiedName(name);
-            var argumentList = SyntaxFactory.ArgumentList(
-                SyntaxFactory.SeparatedList(args.Select(arg => SyntaxFactory.Argument(arg)))
-            );
-            var invocation = SyntaxFactory.InvocationExpression(identifier, argumentList);
-            return SyntaxFactory.ExpressionStatement(invocation);
-        }
-
-        public static Dictionary<int, SyntaxKind> pureBinaryOperators = new Dictionary<int, SyntaxKind>()
-        {
-            {MainParser.Plus, SyntaxKind.AddExpression},
-            {MainParser.Minus, SyntaxKind.SubtractExpression},
-            {MainParser.Multiply, SyntaxKind.MultiplyExpression},
-            {MainParser.Divide, SyntaxKind.DivideExpression},
-            {MainParser.Modulus, SyntaxKind.ModuloExpression},
-            {MainParser.LeftShiftArithmetic, SyntaxKind.LeftShiftExpression},
-            {MainParser.RightShiftArithmetic, SyntaxKind.RightShiftExpression},
-            {MainParser.RightShiftLogical, SyntaxKind.UnsignedRightShiftExpression},
-            {MainParser.BitAnd, SyntaxKind.BitwiseAndExpression},
-            {MainParser.BitOr, SyntaxKind.BitwiseOrExpression},
-            {MainParser.BitXOr, SyntaxKind.ExclusiveOrExpression},
-            {MainParser.LessThan, SyntaxKind.LessThanExpression},
-            {MainParser.MoreThan, SyntaxKind.GreaterThanExpression},
-            {MainParser.IdentityEquals, SyntaxKind.EqualsEqualsToken},
-            {MainParser.NotEquals, SyntaxKind.NotEqualsExpression},
-            {MainParser.And, SyntaxKind.LogicalAndExpression},
-            {MainParser.VerbalAnd, SyntaxKind.LogicalAndExpression},
-            {MainParser.Or, SyntaxKind.LogicalOrExpression},
-            {MainParser.VerbalOr, SyntaxKind.LogicalOrExpression}
-        };
-
-        public static Dictionary<int, string> binaryOperators = new Dictionary<int, string>()
-        {
-            {MainParser.Plus, "Add"},
-            {MainParser.Minus, "Minus"},
-            {MainParser.Multiply, "Multiply"},
-            {MainParser.Divide, "Divide"},
-            {MainParser.IntegerDivide, "FloorDivide"},
-            {MainParser.Modulus, "Modulus"},
-            {MainParser.LeftShiftArithmetic, "BitShiftLeft"},
-            {MainParser.RightShiftArithmetic, "BitShiftRight"},
-            {MainParser.RightShiftLogical, "LogicalBitShiftRight"},
-            {MainParser.BitAnd, "BitwiseAnd"},
-            {MainParser.BitOr, "BitwiseOr"},
-            {MainParser.BitXOr, "BitwiseXor"},
-            {MainParser.LessThan, "LessThan"},
-            {MainParser.LessThanEquals, "LessThanOrEqual"},
-            {MainParser.MoreThan, "GreaterThan"},
-            {MainParser.GreaterThanEquals, "GreaterThanOrEqual"},
-            {MainParser.IdentityEquals, "IdentityEquality"},
-            {MainParser.IdentityNotEquals, "IdentityInequality"},
-            {MainParser.NotEquals, "ValueInequality"},
-            {MainParser.Equals_, "ValueEquality"},
-            {MainParser.And, "BooleanAnd"},
-            {MainParser.VerbalAnd, "BooleanAnd"},
-            {MainParser.Or, "BooleanOr"},
-            {MainParser.VerbalOr, "BooleanOr"},
-            {MainParser.Dot, "Concat"},
-            {MainParser.RegExMatch, "RegEx"},
-            {MainParser.Power, "Power"},
-            {MainParser.Is, "Is"}
-        };
-
-        public static Dictionary<int, string> unaryOperators = new Dictionary<int, string>()
-        {
-            {MainParser.Minus, "Minus"},
-            {MainParser.Not, "LogicalNot"},
-            {MainParser.VerbalNot, "LogicalNot"},
-            {MainParser.BitNot, "BitwiseNot"}
-        };
-
-        public static InvocationExpressionSyntax CreateBinaryOperatorExpression(int op, ExpressionSyntax exprL, ExpressionSyntax exprR)
+        internal static InvocationExpressionSyntax CreateBinaryOperatorExpression(int op, ExpressionSyntax exprL, ExpressionSyntax exprR)
         {
             return SyntaxFactory.InvocationExpression(
                 ScriptOperateName,
@@ -250,20 +234,9 @@ namespace Keysharp.Scripting
             );
         }
 
-        public static void FlattenContext(IParseTree context, ref List<string> list)
-        {
-            if (context.ChildCount == 0)
-                list.Add(((ITerminalNode)context).Symbol.Text);
-            else
-            {
-                for (var i = 0; i < context.ChildCount; i++)
-                {
-                    FlattenContext(context.GetChild(i), ref list);
-                }
-            }
-        }
-
-        public string IsLocalVar(string name, bool caseSense = true)
+        // Checks whether a local or static variable is in the current function or any parent functions.
+        // See also: IsVarDeclaredLocally
+        internal string IsLocalVar(string name, bool caseSense = true)
         {
             if (caseSense)
             {
@@ -305,7 +278,8 @@ namespace Keysharp.Scripting
             return null;
         }
 
-        public string IsVarRef(string name)
+        // Whether the variable was a by-reference parameter
+        internal string IsVarRef(string name)
         {
             string match = null;
             if (currentFunc.VarRefs.TryGetValue(name, out match))
@@ -319,14 +293,15 @@ namespace Keysharp.Scripting
             return null;
         }
 
-        public string IsStaticVar(string name)
+        internal string IsStaticVar(string name)
         {
             if (currentFunc.Statics.TryGetValue(name, out var match))
                 return match;
             return null;
         }
 
-        public string IsVarDeclaredLocally(string name, bool caseSense = true)
+        // Checks whether a local or static variable has been declared in the C# function body
+        internal string IsVarDeclaredLocally(string name, bool caseSense = true)
         {
             if (currentFunc.Body == null)
                 return null;
@@ -364,11 +339,30 @@ namespace Keysharp.Scripting
             return null;
         }
 
-        public string IsGlobalVar(string name, bool caseSense = true)
+        internal string IsStaticDefinedInThisOrParent(string name)
         {
-            //if (UserFuncs.Contains(name) || UserTypes.ContainsKey(name))
-            //    return name.ToLowerInvariant();
+            if (currentFunc == null) return null;
+            name = name.ToLowerInvariant();
+            string staticName = CreateStaticIdentifier(name);
 
+            if (currentFunc.Statics.Contains(staticName)) return staticName;
+            if (currentFunc.Locals.ContainsKey(name)) return null;
+
+            if (!currentFunc.Static)
+            {
+                foreach (var (f, _) in FunctionStack)
+                {
+                    staticName = f.Name.ToUpper() + "_" + name.TrimStart('@');
+                    if (f.Statics.Contains(staticName)) return staticName;
+                    if (f.Locals.ContainsKey(name)) return null;
+                }
+            }
+            return null;
+        }
+
+        // Checks whether the variable has been declared as global 
+        internal string IsGlobalVar(string name, bool caseSense = true)
+        {
             if (caseSense)
             {
                 if (currentFunc.Globals.Contains(name))
@@ -383,7 +377,8 @@ namespace Keysharp.Scripting
             return null;
         }
 
-        public string IsVarDeclaredInClass(Class cls, string name, bool caseSense = true)
+        // Checks for a field declaration in a specific class
+        internal string IsVarDeclaredInClass(Class cls, string name, bool caseSense = true)
         {
             var variableDeclarations = cls.Body
                 .OfType<FieldDeclarationSyntax>();
@@ -403,12 +398,12 @@ namespace Keysharp.Scripting
             return null;
         }
 
-        public string IsVarDeclaredGlobally(string name, bool caseSense = true)
+        internal string IsVarDeclaredGlobally(string name, bool caseSense = true)
         {
             return IsVarDeclaredInClass(mainClass, name, caseSense);
         }
 
-        public string IsBuiltIn(string name, bool caseSense = false)
+        internal string IsBuiltIn(string name, bool caseSense = false)
         {
             var builtin = IsBuiltInMethod(name, caseSense);
             if (builtin != null) return builtin;
@@ -422,25 +417,33 @@ namespace Keysharp.Scripting
             return null;
         }
 
-        public string IsBuiltInProperty(string name, bool caseSense = false)
+        internal string IsBuiltInProperty(string name, bool caseSense = false)
         {
             KeyValuePair<string, PropertyInfo> match;
             if (caseSense && Reflections.flatPublicStaticProperties.ContainsKey(name))
                 return name;
             else
-                match = Reflections.flatPublicStaticProperties.FirstOrDefault(v => v.Key.Equals(name, StringComparison.InvariantCultureIgnoreCase));
+                match = Reflections.flatPublicStaticProperties.FirstOrDefault(v => v.Key.Equals(name, StringComparison.OrdinalIgnoreCase));
 
             if (match.Key == null
                 && currentClass != null
-                && Reflections.stringToTypeProperties.ContainsKey(name)
-                && Reflections.stringToTypeProperties[name].Keys.Any(item => item.Name == currentClass.Base || item.Name == "KeysharpObject"))
+                && Reflections.stringToTypeProperties.ContainsKey(name))
             {
-                return Reflections.stringToTypeProperties.FirstOrDefault(item => item.Key.Equals(name, StringComparison.InvariantCultureIgnoreCase)).Key;
+                var baseName = currentClass.Base;
+                while (UserTypes.ContainsKey(baseName))
+                {
+                    if (baseName == UserTypes[baseName])
+                        break;
+                    baseName = UserTypes[baseName];
+                }
+
+                if (Reflections.stringToTypeProperties[name].Keys.Any(item => item.Name.Equals(baseName, StringComparison.OrdinalIgnoreCase)))
+                    return Reflections.stringToTypeProperties.FirstOrDefault(item => item.Key.Equals(name, StringComparison.OrdinalIgnoreCase)).Key;
             }
             return match.Key;
         }
 
-        public string IsBuiltInMethod(string name, bool caseSense = false)
+        internal string IsBuiltInMethod(string name, bool caseSense = false)
         {
             MethodPropertyHolder mph = Reflections.FindBuiltInMethod(name, -1);
             if (mph?.mi == null || (caseSense && mph.mi.Name != name))
@@ -448,7 +451,8 @@ namespace Keysharp.Scripting
             return mph.mi.Name;
         }
 
-        public string MaybeAddGlobalVariableDeclaration(string name, bool caseSense = true)
+        // Either adds a new global variable declaration, or returns a previously declared ones name
+        internal string MaybeAddGlobalVariableDeclaration(string name, bool caseSense = true)
         {
             string match = IsVarDeclaredGlobally(name, caseSense);
             if (match != null)
@@ -471,7 +475,9 @@ namespace Keysharp.Scripting
             return name;
         }
 
-        public string MaybeAddVariableDeclaration(string name, bool caseSense = true)
+        // Either adds a new local, static, or global variable declaration (depending on scope),
+        // or returns a previously declared variable name
+        internal string MaybeAddVariableDeclaration(string name, bool caseSense = true)
         {
             string match;
             if (currentFunc.Scope == eScope.Static)
@@ -506,7 +512,8 @@ namespace Keysharp.Scripting
             return AddVariableDeclaration(name, caseSense);
         }
 
-        public string AddVariableDeclaration(string name, bool caseSense = true)
+        // Unconditionally adds a static, local, or global variable declaration
+        internal string AddVariableDeclaration(string name, bool caseSense = true)
         {
             if (!caseSense)
                 name = name.ToLowerInvariant();
@@ -549,7 +556,8 @@ namespace Keysharp.Scripting
             return name;
         }
 
-        public string MaybeAddClassStaticVariable(string className, bool caseSense = false)
+        // // Adds `public static object myclass = Myclass.__Static;` as a global variable (the class static instance declaration)
+        internal string MaybeAddClassStaticVariable(string className, bool caseSense = false)
         {
             className = className.TrimStart('@');
             string name = IsVarDeclaredGlobally(className, caseSense);
@@ -560,7 +568,7 @@ namespace Keysharp.Scripting
                 return null;
             string casedName = Parser.BuiltinTypes.SingleOrDefault(kv => kv.Key.Equals(className, StringComparison.OrdinalIgnoreCase)).Key;
 
-            // Add `public static object myclass = Myclass.__Static;` global field
+            // Add `internal static object myclass = Myclass.__Static;` global field
             var fieldDeclaration = SyntaxFactory.FieldDeclaration(
                 SyntaxFactory.VariableDeclaration(
                     SyntaxFactory.ParseTypeName("object"),
@@ -599,7 +607,9 @@ namespace Keysharp.Scripting
             return className.ToLower();
         }
 
-        public string MaybeAddGlobalFuncObjVariable(string functionName, bool caseSense = true)
+        // Adds a global FuncObj variable if one is not already present,
+        // eg `public static object msgbox = FuncObj(MsgBox);`
+        internal string MaybeAddGlobalFuncObjVariable(string functionName, bool caseSense = true)
         {
             functionName = functionName.TrimStart('@');
             string name = IsVarDeclaredGlobally(ToValidIdentifier(functionName), caseSense);
@@ -614,31 +624,28 @@ namespace Keysharp.Scripting
             return AddGlobalFuncObjVariable(functionName, caseSense);
         }
 
-        public static VariableDeclarationSyntax CreateNullObjectVariable(string variableName)
+        internal string AddGlobalFuncObjVariable(string functionName, bool caseSense = false)
         {
-            return SyntaxFactory.VariableDeclaration(SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword)))
-                .WithVariables(
-                    SyntaxFactory.SingletonSeparatedList(
-                        SyntaxFactory.VariableDeclarator(SyntaxFactory.Identifier(variableName))
-                        .WithInitializer(
-                            SyntaxFactory.EqualsValueClause(
-                                SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression)
-                            )
-                        )
-                    )
-                );
-        }
+            if (!caseSense)
+                functionName = functionName.ToLowerInvariant();
 
-        public static ExpressionSyntax CreateSimpleAssignment(string variableName, ExpressionSyntax funcObj)
-        {
-            return SyntaxFactory.AssignmentExpression(
-                SyntaxKind.SimpleAssignmentExpression,
-                SyntaxFactory.IdentifierName(variableName),
-                funcObj
+            var funcObjVariable = SyntaxFactory.FieldDeclaration(
+                CreateFuncObjVariable(functionName)
+            )
+            .WithModifiers(
+                SyntaxFactory.TokenList(
+                    SyntaxFactory.Token(SyntaxKind.PublicKeyword),
+                    SyntaxFactory.Token(SyntaxKind.StaticKeyword)
+                )
             );
+
+            mainClass.Body.Add(funcObjVariable);
+            return ToValidIdentifier(functionName);
         }
 
-        public static VariableDeclarationSyntax CreateFuncObjDelegateVariable(string functionName)
+        // Used to create function object variables for closures. The closure is cast to a Delegate
+        // and then the FuncObj is assigned to a lower-cased variable of the closure name.
+        internal static VariableDeclarationSyntax CreateFuncObjDelegateVariable(string functionName)
         {
             return SyntaxFactory.VariableDeclaration(SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword)))
                 .WithVariables(
@@ -660,7 +667,7 @@ namespace Keysharp.Scripting
                 );
         }
 
-        public static InvocationExpressionSyntax CreateFuncObj(ExpressionSyntax funcArg, bool asClosure = false)
+        internal static InvocationExpressionSyntax CreateFuncObj(ExpressionSyntax funcArg, bool asClosure = false)
         {
             return (asClosure ? (InvocationExpressionSyntax)InternalMethods.Closure : (InvocationExpressionSyntax)InternalMethods.Func)
                 .WithArgumentList(
@@ -674,7 +681,7 @@ namespace Keysharp.Scripting
                 );
         }
 
-        public static VariableDeclarationSyntax CreateFuncObjVariable(string functionName)
+        internal static VariableDeclarationSyntax CreateFuncObjVariable(string functionName)
         {
             return SyntaxFactory.VariableDeclaration(SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword)))
                 .WithVariables(
@@ -696,25 +703,40 @@ namespace Keysharp.Scripting
                 );
         }
 
-        public string AddGlobalFuncObjVariable(string functionName, bool caseSense = false)
+        // Creates a VariableDeclarationSyntax for `object var = null;`
+        internal static VariableDeclarationSyntax CreateNullObjectVariable(string variableName)
         {
-            if (!caseSense)
-                functionName = functionName.ToLowerInvariant();
-
-            var funcObjVariable = SyntaxFactory.FieldDeclaration(
-                CreateFuncObjVariable(functionName)
-            )
-            .WithModifiers(
-                SyntaxFactory.TokenList(
-                    SyntaxFactory.Token(SyntaxKind.PublicKeyword),
-                    SyntaxFactory.Token(SyntaxKind.StaticKeyword)
-                )
-            );
-
-            mainClass.Body.Add(funcObjVariable);
-            return ToValidIdentifier(functionName);
+            return SyntaxFactory.VariableDeclaration(SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword)))
+                .WithVariables(
+                    SyntaxFactory.SingletonSeparatedList(
+                        SyntaxFactory.VariableDeclarator(SyntaxFactory.Identifier(variableName))
+                        .WithInitializer(
+                            SyntaxFactory.EqualsValueClause(
+                                SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression)
+                            )
+                        )
+                    )
+                );
         }
 
+        internal static ExpressionSyntax CreateSimpleAssignment(string variableName, ExpressionSyntax value)
+        {
+            return SyntaxFactory.AssignmentExpression(
+                SyntaxKind.SimpleAssignmentExpression,
+                SyntaxFactory.IdentifierName(variableName),
+                value
+            );
+        }
+
+        /*
+        Converts an ExpressionSyntax to a function InvocationExpressionSyntax. 
+        1. Built-in functions get called with the fully qualified name, eg MsgBox -> Keysharp.Core.Dialogs.MsgBox
+        EXCEPT if the argument list contains variadic arguments, in which case Invoke is used.
+        2. User-declared classes are converted to Invoke(targetExpression, "Call", arguments)
+        3. Property access such as `obj.propName()` is converted to Invoke(obj, propName, args)
+        4. GetStaticMemberValueT gets converted to Invoke(GetStaticMethodT<typeName>(methodName, -1))
+        5. Anything else is converted to Invoke(targetExpression, "Call", arguments)
+        */
         public ExpressionSyntax GenerateFunctionInvocation(
             ExpressionSyntax targetExpression,
             ArgumentListSyntax argumentList,
@@ -864,7 +886,7 @@ namespace Keysharp.Scripting
         }
 
 
-        public static string ExtractMethodName(ExpressionSyntax expression)
+        internal static string ExtractMethodName(ExpressionSyntax expression)
         {
             if (expression is IdentifierNameSyntax identifierName)
             {
@@ -877,7 +899,7 @@ namespace Keysharp.Scripting
             return null;
         }
 
-        public string NormalizeClassIdentifier(string name, eNameCase nameCase = eNameCase.Title)
+        internal string NormalizeClassIdentifier(string name, eNameCase nameCase = eNameCase.Title)
         {
             // Define the reserved keywords that should retain their original case
 
@@ -890,34 +912,14 @@ namespace Keysharp.Scripting
             return NormalizeIdentifier(name, nameCase);
         }
 
-        public string CreateStaticIdentifier(string name)
+        // A static variable is named "UPPERCASEFUNCTIONNAME_lowercasevariablename"
+        internal string CreateStaticIdentifier(string name)
         {
             if (currentFunc == null) return null;
             return currentFunc.Name.ToUpper() + "_" + name.ToLowerInvariant().TrimStart('@');
         }
 
-        public string IsStaticDefinedInThisOrParent(string name)
-        {
-            if (currentFunc == null) return null;
-            name = name.ToLowerInvariant();
-            string staticName = CreateStaticIdentifier(name);
-
-            if (currentFunc.Statics.Contains(staticName)) return staticName;
-            if (currentFunc.Locals.ContainsKey(name)) return null;
-
-            if (!currentFunc.Static)
-            {
-                foreach (var (f, _) in FunctionStack)
-                {
-                    staticName = f.Name.ToUpper() + "_" + name.TrimStart('@');
-                    if (f.Statics.Contains(staticName)) return staticName;
-                    if (f.Locals.ContainsKey(name)) return null;
-                }
-            }
-            return null;
-        }
-
-        public string NormalizeFunctionIdentifier(string name, eNameCase nameCase = eNameCase.Lower)
+        internal string NormalizeFunctionIdentifier(string name, eNameCase nameCase = eNameCase.Lower)
         {
             name = name.Trim('"', '\'');
             var normalizedName = NormalizeIdentifier(name, nameCase);
@@ -954,7 +956,7 @@ namespace Keysharp.Scripting
             return normalizedName;
         }
 
-        public static string NormalizeIdentifier(string name, eNameCase nameCase = eNameCase.Lower)
+        internal static string NormalizeIdentifier(string name, eNameCase nameCase = eNameCase.Lower)
         {
             name = name.Trim('"', '\'');
 
@@ -969,14 +971,15 @@ namespace Keysharp.Scripting
                 return name.ToUpperInvariant();
         }
 
-        public static string ToValidIdentifier(string text)
+        // Escapes keyword identifiers with @
+        internal static string ToValidIdentifier(string text)
         {
             if (SyntaxFacts.IsKeywordKind(SyntaxFactory.ParseToken(text).Kind()))
                 return "@" + text;
             return text;
         }
 
-        public string PropertyExistsInBuiltinBase(string name)
+        internal string PropertyExistsInBuiltinBase(string name)
         {
             if (Reflections.stringToTypeProperties.TryGetValue(name, out var dttp))
             {
@@ -992,7 +995,7 @@ namespace Keysharp.Scripting
             return null;
         }
 
-        public static BlockSyntax EnsureBlockSyntax(SyntaxNode node)
+        internal static BlockSyntax EnsureBlockSyntax(SyntaxNode node)
         {
             if (node is BlockSyntax block)
                 return block;
@@ -1004,7 +1007,7 @@ namespace Keysharp.Scripting
                 throw new InvalidOperationException("Unsupported SyntaxNode type for loop body.");
         }
 
-        public static StatementSyntax EnsureStatementSyntax(SyntaxNode node)
+        internal static StatementSyntax EnsureStatementSyntax(SyntaxNode node)
         {
             if (node is StatementSyntax statement)
                 return statement;
@@ -1014,7 +1017,7 @@ namespace Keysharp.Scripting
                 throw new InvalidOperationException("Unsupported node type in statement list.");
         }
 
-        public static StatementSyntax EnsureBreakStatement(StatementSyntax statements)
+        internal static StatementSyntax EnsureBreakStatement(StatementSyntax statements)
         {
             if (statements is BlockSyntax blockSyntax)
             {
@@ -1039,7 +1042,7 @@ namespace Keysharp.Scripting
         }
 
 
-        public static FieldDeclarationSyntax CreatePublicConstant(string name, Type type, object value)
+        internal static FieldDeclarationSyntax CreatePublicConstant(string name, Type type, object value)
         {
             return SyntaxFactory.FieldDeclaration(
                     SyntaxFactory.VariableDeclaration(
@@ -1095,6 +1098,8 @@ namespace Keysharp.Scripting
             return false;
         }
 
+        // Creates `new VarRef(() => identifier, value => identifier = value)`
+        // In the case of index or property access, it uses the appropriate get/set methods.
         public ExpressionSyntax ConstructVarRef(ExpressionSyntax targetExpression)
         {
             // Handle the different cases of singleExpression
@@ -1350,7 +1355,7 @@ namespace Keysharp.Scripting
             throw new InvalidOperationException("Unsupported singleExpression type for VarRefExpression.");
         }
 
-        public static bool IsLiteralOrConstant(ExpressionSyntax expression)
+        internal static bool IsLiteralOrConstant(ExpressionSyntax expression)
         {
             return expression is LiteralExpressionSyntax ||
                    expression is TypeOfExpressionSyntax ||
@@ -1359,7 +1364,7 @@ namespace Keysharp.Scripting
                    char.IsUpper(identifier.Identifier.Text[0]); // Assume constants are upper-case
         }
 
-        public ExpressionSyntax CreateSuperTuple()
+        internal ExpressionSyntax CreateSuperTuple()
         {
             return SyntaxFactory.CastExpression(
                 SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword)),
@@ -1377,7 +1382,10 @@ namespace Keysharp.Scripting
             );
         }
 
-        public ParameterSyntax AddOptionalParamValue(ParameterSyntax parameter, ExpressionSyntax value)
+        // Non-constant optional parameter values get added to the top of the function body 
+        // as `paramName ??= value` and the default value is set to null. This allows using
+        // arbitrary expressions as default values.
+        internal ParameterSyntax AddOptionalParamValue(ParameterSyntax parameter, ExpressionSyntax value)
         {
             // Extract the parameter name
             var parameterName = parameter.Identifier.Text;

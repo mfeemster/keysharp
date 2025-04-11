@@ -10,24 +10,6 @@ namespace Keysharp.Scripting
 	internal class PreReader
 	{
 		private static readonly char[] libBrackets = ['<', '>'];
-		private static readonly string multiLineComments = new (new[] { MultiComB, MultiComA });
-		private static readonly FrozenSet<string> otbFlowKeywords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-		{
-			FlowCatch,
-			FlowClass,
-			FlowElse,
-			FlowFinally,
-			FlowFor,
-			FlowGosub,
-			FlowIf,
-			FlowLoop,
-			//FlowReturn,//A brace following return is not OTB, instead it's the beginning of the creation of a Map to be returned.
-			FlowSwitch,
-			FlowTry,
-			FlowUntil,//Could until { one : 1 } == x ever be done?
-			FlowWhile//Same: while { one : 1 } == x
-		} .ToFrozenSet(StringComparer.OrdinalIgnoreCase);
-		private static FrozenSet<string>.AlternateLookup<ReadOnlySpan<char>> otbFlowKeywordsAlt = otbFlowKeywords.GetAlternateLookup<ReadOnlySpan<char>>();
 		private static int hotifcount;
 		private readonly Stack<(bool, bool)> currentDefines = new ();
 		private readonly HashSet<string> defines =
@@ -429,45 +411,7 @@ namespace Keysharp.Scripting
                     int i;
                     switch (token.Type)
                     {
-                        /*
                         case MainLexer.OpenBrace:
-                            if (parenthesisDepth != 0)
-                                break;
-                            //PopWhitespaces(codeTokens.Count);
-                            i = codeTokens.Count - 1;
-                            if (i < 0 || codeTokens[i].Type != MainLexer.EOL)
-                                break;
-                            if (--i < 0 || codeTokens[i].Type != MainLexer.CloseParen)
-                                break;
-                            int parenDepth = 0;
-                            while (--i > -1) {
-                                var codeToken = codeTokens[i];
-                                if (codeToken.Type == MainLexer.CloseParen)
-                                    parenDepth++;
-                                if (codeToken.Type == MainLexer.OpenParen) {
-                                    if (parenDepth == 0)
-                                        break;
-                                    parenDepth--;
-                                }
-                            } 
-                            if (i > 0) {
-                                char lastChar = codeTokens[i - 1].Text[^1];
-                                bool matches = char.IsLetter(lastChar) ||    // Matches \p{L} (any letter)
-                                    lastChar == '_' ||            // Matches _ (underscore)
-                                    char.GetUnicodeCategory(lastChar) == System.Globalization.UnicodeCategory.NonSpacingMark || // Matches \p{Mn}
-                                    char.IsDigit(lastChar) ||      // Matches \p{Nd} (any digit)
-                                    lastChar == '%' ||             // Matches %
-                                    lastChar == ')' ||             // Matches )
-                                    lastChar == ']';               // Matches ]
-                                if (matches)
-                                    codeTokens.RemoveAt(codeTokens.Count - 1);
-                            }
-                            break;
-                            */
-                        case MainLexer.OpenBrace:
-							//if (codeTokens.Count > 1 && codeTokens[^1].Type == MainLexer.EOL && codeTokens[^2].Type == MainLexer.CloseParen)
-							//	codeTokens.RemoveAt(codeTokens.Count - 1);
-                            break;
                         case MainLexer.OpenBracket:
                         case MainLexer.DerefStart:
                             break;

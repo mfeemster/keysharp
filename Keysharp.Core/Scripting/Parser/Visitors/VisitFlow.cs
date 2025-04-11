@@ -19,7 +19,7 @@ using Antlr4.Runtime.Tree;
 
 namespace Keysharp.Scripting
 {
-    internal partial class MainVisitor : MainParserBaseVisitor<SyntaxNode>
+    internal partial class VisitMain : MainParserBaseVisitor<SyntaxNode>
     {
         private SyntaxNode VisitLoopGeneric(
             ExpressionSyntax loopExpression,

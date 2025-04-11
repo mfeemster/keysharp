@@ -1,9 +1,9 @@
+// Original source: https://github.com/antlr/grammars-v4/blob/master/csharp/CSharpPreprocessorParser.g4
+// Modified by Descolada for Keysharp use.
+//
 // Eclipse Public License - v 1.0, http://www.eclipse.org/legal/epl-v10.html
 // Copyright (c) 2013, Christian Wulf (chwchw@gmx.de)
 // Copyright (c) 2016-2017, Ivan Kochurkin (kvanttt@gmail.com), Positive Technologies.
-
-// $antlr-format alignTrailingComments true, columnLimit 150, minEmptyLines 1, maxEmptyLinesToKeep 1, reflowComments false, useTab false
-// $antlr-format allowShortRulesOnASingleLine false, allowShortBlocksOnASingleLine true, alignSemicolons hanging, alignColons hanging
 
 parser grammar PreprocessorParser;
 

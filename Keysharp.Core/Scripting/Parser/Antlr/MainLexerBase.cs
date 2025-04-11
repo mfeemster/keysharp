@@ -13,24 +13,10 @@ public abstract class MainLexerBase : Lexer
     private IToken _lastVisibleToken = null;
 
     private bool _isBOS = true;
-
-    /// <summary>
-    /// Current nesting depth
-    /// </summary>
     private int _currentDepth = 0;
     private bool _hotstringIsLiteral = true;
 
-    private bool _whitespaceEnabled = true;
-
-    private bool _ignoreNextEOL = false;
-
-    /// <summary>
-    /// Preserve nesting depth of template literals
-    /// </summary>
-    private Stack<int> templateDepthStack = new Stack<int>();
-
-    public MainLexerBase(ICharStream input)
-        : base(input)
+    public MainLexerBase(ICharStream input) : base(input)
     {
         _input = input;
     }
@@ -40,8 +26,6 @@ public abstract class MainLexerBase : Lexer
         RemoveErrorListeners(); // Remove default error listeners
         AddErrorListener(new MainLexerErrorListener());
     }
-
-    private readonly Queue<IToken> _insertedTokens = new Queue<IToken>();
 
     /// <summary>
     /// Return the next token from the character stream and records this last
@@ -56,52 +40,20 @@ public abstract class MainLexerBase : Lexer
     /// 
     public override IToken NextToken()
     {
-        /*
-        // Return any inserted tokens first
-        if (_insertedTokens.Count > 0)
-        {
-            _lastToken = _insertedTokens.Dequeue();
-            return _lastToken;
-        }
-        */
-
         // Get the next token.
         IToken next = base.NextToken();
-        /*
-        // Check if the last token was a CloseBrace and insert an EOL after it if there isn't one present already
-        if (_lastToken?.Type == CloseBrace && next.Type != EOL) {
-            var eolToken = new CommonToken(EOL)
-            {
-                Line = _lastToken.Line,
-                Column = _lastToken.Column + _lastToken.Text.Length
-            };
-            _insertedTokens.Enqueue(next);
-            _lastToken = eolToken;
-            return eolToken;
-        }
-        // Check if the next token is CloseBrace and insert an EOL before it if needed
-        if (next?.Type == CloseBrace && _lastToken?.Type != EOL)
-        {
-            // Insert an EOL token after CloseBrace
-            var eolToken = new CommonToken(EOL)
-            {
-                Line = _lastToken.Line,
-                Column = _lastToken.Column + _lastToken.Text.Length
-            };
-            _insertedTokens.Enqueue(next);
-            _lastToken = eolToken;
-            return eolToken;
-        } else
-        */
 
+        // Record last visible token
         if (next.Channel == DefaultTokenChannel)
             _lastVisibleToken = next;
 
+        // Keep track of newlines
         if (next.Type == EOL || next.Type == DirectiveNewline)
             _isBOS = true;
         else if (next.Type != WS)
             _isBOS = false;
 
+        // Record last token (whether visible or not)
         _lastToken = next;
 
         return next;
@@ -122,6 +74,7 @@ public abstract class MainLexerBase : Lexer
         return res;
     }
 
+    // Determine whether the X option is in effect or not
     protected bool IsHotstringLiteral() {
         int intermediate = _processHotstringOptions(base.Text.Substring(1));
         return intermediate == -1 ? _hotstringIsLiteral : intermediate == 0;
@@ -133,10 +86,6 @@ public abstract class MainLexerBase : Lexer
             _hotstringIsLiteral = intermediate == 0;
     }
 
-    protected bool IsBeginningOfLine() {
-        return Column == 0;
-    }
-
     protected void ProcessOpenBrace()
     {
         //_currentDepth++;
@@ -146,26 +95,16 @@ public abstract class MainLexerBase : Lexer
         //_currentDepth--;
     }
 
-    protected bool IgnoreEOL() {
-        return _currentDepth != 0;
-    }
-
+    // Hide EOL and WS if the previous visible token was a line continuation-allowing operator such as :=
     protected void ProcessEOL() {
-        //if (_currentDepth != 0)
-        //    this.Type = MainLexer.WS;
-        //else
-            //this.Text = "\n\r";
         if (_lastVisibleToken == null) return;
         if (_lastVisibleToken.Type != MainLexer.OpenBrace && lineContinuationOperators.Contains(_lastVisibleToken.Type))
             this.Channel = Hidden;
     }
-
     protected void ProcessWS() {
         if (_lastVisibleToken == null) return;
         if (lineContinuationOperators.Contains(_lastVisibleToken.Type))
             this.Channel = Hidden;
-        //if (_lastToken?.Type == EOL || _lastToken?.Type == CloseBrace)
-        //    Skip();
     }
 
     private HashSet<int> unaryOperators = new HashSet<int> {
@@ -188,7 +127,7 @@ public abstract class MainLexerBase : Lexer
         MainLexer.Assign,
         MainLexer.QuestionMark,
         MainLexer.QuestionMarkDot,
-        //MainLexer.Colon,
+        //MainLexer.Colon, // This may be after a label or switch-case clause, so we can't trim EOL and WS after it
         MainLexer.Plus,
         MainLexer.Minus,
         MainLexer.Divide,
@@ -231,7 +170,6 @@ public abstract class MainLexerBase : Lexer
         MainLexer.Arrow,
     };
 
-    
     protected void ProcessOpenBracket()
     {
         _currentDepth++;
@@ -259,15 +197,6 @@ public abstract class MainLexerBase : Lexer
     {
     }
 
-    protected void ProcessTemplateOpenBrace() {
-        _currentDepth++;
-        templateDepthStack.Push(_currentDepth);
-    }
-
-    protected void ProcessTemplateCloseBrace() {
-        templateDepthStack.Pop();
-        _currentDepth--;
-    }
     private uint _derefDepth = 0;
     protected void ProcessDeref() {
         if (_derefDepth == 0) {
@@ -316,6 +245,7 @@ public abstract class MainLexerBase : Lexer
         }
     }
 
+    // In some cases decimals can be omitted the leading 0, for example .3 instead of 0.3.  
     protected bool IsValidDotDecimal() {
         if (_lastToken == null || _lastVisibleToken == null || _lastToken.Channel != DefaultTokenChannel)
             return true;
@@ -338,46 +268,10 @@ public abstract class MainLexerBase : Lexer
             prevChar == '\u2028' || prevChar == '\u2029';
     }
 
-    /// <summary>
-    /// Returns true if the lexer can match a regex literal.
-    /// </summary>
-    protected bool IsRegexPossible()
-    {
-        if (_lastToken == null)
-        {
-            // No token has been produced yet: at the start of the input,
-            // no division is possible, so a regex literal _is_ possible.
-            return true;
-        }
-
-        switch (_lastToken.Type)
-        {
-            case Identifier:
-            case NullLiteral:
-            case MainParser.True:
-            case MainParser.False:
-            case This:
-            case CloseBracket:
-            case CloseParen:
-            case OctalIntegerLiteral:
-            case DecimalLiteral:
-            case HexIntegerLiteral:
-            case StringLiteral:
-            case PlusPlus:
-            case MinusMinus:
-                // After any of the tokens above, no regex literal can follow.
-                return false;
-            default:
-                // In all other cases, a regex literal _is_ possible.
-                return true;
-        }
-    }
-
     public override void Reset()
     {
         _lastToken = null;
         _currentDepth = 0;
-        templateDepthStack.Clear();
         base.Reset();
     }
 }

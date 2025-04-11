@@ -1,6 +1,10 @@
 /*
  * The MIT License (MIT)
- *
+ * 
+ * This file is based on the ANTLR4 grammar for Javascript (https://github.com/antlr/grammars-v4/tree/master/javascript/javascript),
+ * but very heavily modified by Descolada (modified for Keysharp use). 
+ * 
+ * List of authors and contributors for the Javascript grammar:
  * Copyright (c) 2014 by Bart Kiers (original author) and Alexandre Vitorelli (contributor -> ported to CSharp)
  * Copyright (c) 2017-2020 by Ivan Kochurkin (Positive Technologies):
     added ECMAScript 6 support, cleared and transformed to the universal grammar.
@@ -45,7 +49,6 @@ sourceElements
     : sourceElement+
     ;
 
-// Function declarations are handled as expressions
 sourceElement
     : classDeclaration eos
     | positionalDirective eos
@@ -57,6 +60,7 @@ sourceElement
     | EOL
     ;
 
+// Non-positional directives are handled elsewhere, mainly in PreReader.cs
 positionalDirective
     : HotIf singleExpression?       # HotIfDirective
     | HotstringOptions              # HotstringDirective
@@ -96,20 +100,20 @@ statement
     | gotoStatement
     | switchStatement
     | throwStatement
-    | tryStatement  // always followed by a statement which requires eos */
+    | tryStatement
     | awaitStatement
     | deleteStatement
     | block
+// These are TODO when at some point modules are supported
 //    | importStatement
 //    | exportStatement
-//    | withStatement
     ;
 
 block
     : '{' s* statementList? '}'
     ;
 
-// Only to be used inside something, cannot meet EOF
+// Only to be used inside of a block, cannot meet EOF
 statementList
     : (statement EOL)+
     ;
@@ -126,6 +130,7 @@ deleteStatement
     : Delete WS* singleExpression
     ;
 
+// TODO (import, export)
 importStatement
     : Import WS* importFromBlock
     ;
@@ -202,9 +207,13 @@ variableDeclaration
     ;
 
 functionStatement
-    : primaryExpression (WS+ arguments)? // This is ambiguous with expressionStatements first expression. I don't know how to resolve it.
+    : primaryExpression (WS+ arguments)?
     ;
 
+// isFunctionCallStatement does some manual parsing to determine whether this is a functionStatement or
+// expressionStatement. A functionStatement can begin with an identifier, property/index access, dereference.
+// This could actually be omitted because ANTLR is smart enough to figure out which is which, but it can lead to
+// some serious performance issues because of long lookaheads.
 expressionStatement
     : {!this.isFunctionCallStatement()}? expressionSequence
     ;
@@ -230,10 +239,10 @@ elseProduction
 iterationStatement
     : Loop WS* (singleExpression WS*)? flowBlock untilProduction? elseProduction      # LoopStatement
     | LoopFiles WS* singleExpression (WS* ',' singleExpression)? WS* flowBlock untilProduction? elseProduction  # LoopFilesStatement
-    | LoopRead WS* singleExpression (WS* ',' singleExpression)? WS* flowBlock untilProduction? elseProduction  # LoopReadStatement
+    | LoopRead WS* singleExpression (WS* ',' singleExpression)? WS* flowBlock untilProduction? elseProduction   # LoopReadStatement
     | LoopReg WS* singleExpression (WS* ',' singleExpression)? WS* flowBlock untilProduction? elseProduction    # LoopRegStatement
     | LoopParse WS* singleExpression (WS* ',' singleExpression?)* WS* flowBlock untilProduction? elseProduction # LoopParseStatement
-    | While WS* singleExpression WS* flowBlock untilProduction? elseProduction      # WhileStatement
+    | While WS* singleExpression WS* flowBlock untilProduction? elseProduction       # WhileStatement
     | For WS* forInParameters WS* flowBlock untilProduction? elseProduction          # ForInStatement
     ;
 
@@ -318,17 +327,6 @@ functionDeclaration
     : functionHead functionBody
     ;
 
-/*L
-hotkeyDeclaration
-    : (HotkeyLiteral+) (singleExpression eos | functionBody)
-    ;
-
-hotstringDeclaration
-    : HotstringLiteral eos
-    | HotstringTriggers (singleExpression eos | functionBody)
-    ;
-*/
-
 classDeclaration
     : Class WS* identifier (WS+ Extends WS+ classExtensionName)? s* classTail
     ;
@@ -342,10 +340,10 @@ classTail
     ;
 
 classElement
-    : methodDefinition   # ClassMethodDeclaration
-    | (Static WS*)? propertyDefinition # ClassPropertyDeclaration
+    : methodDefinition                                            # ClassMethodDeclaration
+    | (Static WS*)? propertyDefinition                            # ClassPropertyDeclaration
     | (Static WS*)? fieldDefinition (WS* ',' fieldDefinition)*    # ClassFieldDeclaration
-    | classDeclaration           # NestedClassDeclaration
+    | classDeclaration                                            # NestedClassDeclaration
     ;
 
 methodDefinition
@@ -379,7 +377,7 @@ formalParameterList
     ;
 
 formalParameterArg
-    : BitAnd? identifier (':=' expression | QuestionMark)? // singleLineExpression not needed because is always enclosed in parenthesis
+    : BitAnd? identifier (':=' expression | QuestionMark)? // expression instead of singleExpression because it's always enclosed in parenthesis and thus function expressions can be unambiguously parsed
     ;
 
 lastFormalParameterArg
@@ -391,21 +389,22 @@ arrayLiteral
     : '[' (WS | EOL)* (arguments (WS | EOL)*)? ']'
     ;
 
+// Allow [expr1:expr2, expr3:expr4] to create a Map
 mapLiteral
     : '[' (WS | EOL)* mapElementList (WS | EOL)* ']'
     ;
 
-// Keysharp supports arrays like [,,1,2,,].
 mapElementList
     : (WS* ',')* mapElement (WS* ',' mapElement?)*
     ;
 
 mapElement
-    : key = expression ':' value = expression // Map element
+    : key = expression ':' value = expression
     ;
 
 propertyAssignment
     : memberIdentifier (WS | EOL)* ':' (WS | EOL)* expression                           # PropertyExpressionAssignment
+    // These might be implemented at some point in the future
     //| functionHeadPrefix? '*'? propertyName '(' formalParameterList? ')' functionBody # FunctionProperty
     //| getter '(' ')' functionBody                                        # PropertyGetter
     //| setter '(' formalParameterArg ')' functionBody                     # PropertySetter
@@ -415,7 +414,7 @@ propertyAssignment
 propertyName
     : identifier
     | reservedWord
-    | StringLiteral
+    | StringLiteral // Multi-line strings not supported
     | numericLiteral
     ;
 
@@ -443,6 +442,7 @@ memberIndexArguments
 
 // ifStatement and loops require that they don't contain a bodied function expression.
 // The only way I could solve this was to duplicate some of the expressions with and without function expressions.
+// expression can contain function expressions, whereas singleExpression can not.
 expression
     : left = expression (op = '&&' | op = VerbalAnd) right = expression  # LogicalAndExpression
     | left = expression (op = '||' | op = VerbalOr) right = expression   # LogicalOrExpression
@@ -514,6 +514,7 @@ memberIdentifier
     | literal
     ;
 
+// A combination of identifiers and derefs, such as `a%b%`
 dynamicIdentifier
     : propertyName dereference (propertyName | dereference)*
     | dereference (propertyName | dereference)*
@@ -619,7 +620,7 @@ identifier
     : (Identifier
     | Default
     | This
-//    | Class
+//    | Class // AHK v2.1 actually allows assignment like `class := 1`, but it seems unwise
     | Enum
     | Extends
     | Super

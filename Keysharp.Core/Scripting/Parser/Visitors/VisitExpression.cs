@@ -12,7 +12,7 @@ using System.Xml.Linq;
 
 namespace Keysharp.Scripting
 {
-    internal partial class MainVisitor : MainParserBaseVisitor<SyntaxNode>
+    internal partial class VisitMain : MainParserBaseVisitor<SyntaxNode>
     {
         // Converts identifiers such as a%b% to
         // Keysharp.Scripting.Script.Vars[string.Concat<object>(new object[] {"a", b)]
