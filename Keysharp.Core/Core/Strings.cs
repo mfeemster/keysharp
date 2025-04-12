@@ -1177,24 +1177,38 @@
 						ptr = buf.Ptr;
 					else if (obj[1] is long l)
 						ptr = new IntPtr(l);
+					else if (obj[1] is IntPtr ip)
+						ptr = ip;
+					else if (obj[1] is string ec)
+					{
+						encoding = Files.GetEncoding(ec);
+						return encoding.GetBytes(s).Length;
+					}
 				}
 
 				if (ptr != IntPtr.Zero && ptr.ToInt64() < 65536)//65536 is the first valid address.
 					return Errors.ErrorOccurred(err = new ValueError($"Address of {ptr.ToInt64()} is less than the minimum allowable address of 65,536.")) ? throw err : 0L;
 
 				if (obj.Length > 2 && !obj[2].IsNullOrEmpty())
-					len = Math.Abs(obj.Al(2));
+				{
+					if (obj[2] is string ec)
+					{
+						encoding = Files.GetEncoding(obj[2]);
+						len = s.Length;
+					}
+					else
+						len = Math.Abs(obj.Al(2));
+				}
 
 				if (obj.Length > 3)
 					encoding = Files.GetEncoding(obj[3]);
 
 				var bytes = encoding.GetBytes(s);
+				int written;
 
 				if (buf != null)
 				{
-					var written = (int)Math.Min((long)buf.Size, bytes.Length);
-					Marshal.Copy(bytes, 0, ptr, written);
-					return written;
+					written = (int)Math.Min((long)buf.Size, bytes.Length);
 				}
 				else
 				{
@@ -1208,8 +1222,10 @@
 					else if (len == long.MinValue)
 						return Errors.ErrorOccurred(err = new ValueError($"Length was not specified, but the target was not a Buffer object. Either pass a Buffer, or specify a Length.")) ? throw err : 0L;
 
-					Marshal.Copy(bytes, 0, ptr, Math.Min((int)len, bytes.Length));
+					written = Math.Min((int)len, bytes.Length);
 				}
+				Marshal.Copy(bytes, 0, ptr, written);
+				return written;
 			}
 
 			return 0L;
