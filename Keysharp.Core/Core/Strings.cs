@@ -1142,6 +1142,7 @@
 
 		/// <summary>
 		/// Copies a string to a memory address or buffer, optionally converting it to a given code page.
+		/// This includes the null terminator (0) character(s).
 		/// </summary>
 		/// <param name="str">Any string. If a number is given, it is automatically converted to a string.</param>
 		/// <param name="target">A Buffer-like object or memory address to which the string will be written.</param>
@@ -1162,7 +1163,7 @@
 			if (obj.Length > 0 && obj[0] != null)
 			{
 				Error err;
-				var s = obj.As(0);
+				var s = obj.As(0) + char.MinValue;
 				var len = long.MinValue;
 				var encoding = Encoding.Unicode;
 				var ptr = IntPtr.Zero;
