@@ -1382,7 +1382,7 @@
 
 			if ((opts.xpos == GuiOptions.Positioning.Absolute || opts.ypos == GuiOptions.Positioning.Absolute) && LastContainer != null)
 			{
-				Point controlLoc = form.PointToScreen(LastContainer.Location);
+				var controlLoc = LastContainer is Form ? LastContainer.Location : form.PointToScreen(LastContainer.Location);
 
 				if (opts.xpos == GuiOptions.Positioning.Absolute)
 					xoffset = controlLoc.X - form.Location.X;
