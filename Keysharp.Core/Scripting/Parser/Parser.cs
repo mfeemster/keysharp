@@ -13,6 +13,7 @@ using Antlr4.Runtime.Atn;
 using Keysharp.Core;
 using Keysharp.Core.Common.Keyboard;
 using Keysharp.Core.Scripting.Parser.Helpers;
+using System.Collections;
 
 namespace Keysharp.Scripting
 {
@@ -229,7 +230,7 @@ namespace Keysharp.Scripting
 
 		public uint lambdaCount = 0;
 
-        public const string LoopEnumeratorBaseName = "_ks_e";
+        public const string LoopEnumeratorBaseName = InternalPrefix + "e";
 
         public static NameSyntax ScriptOperateName = CreateQualifiedName("Keysharp.Scripting.Script.Operate");
         public static NameSyntax ScriptOperateUnaryName = CreateQualifiedName("Keysharp.Scripting.Script.OperateUnary");
@@ -289,7 +290,6 @@ namespace Keysharp.Scripting
 
         public class Function
         {
-
             public MethodDeclarationSyntax Method = null;
             public string Name = null;
             public List<StatementSyntax> Body = new();
@@ -305,6 +305,8 @@ namespace Keysharp.Scripting
 			public bool Public = true;
 			public bool Static = true;
 
+            public bool HasDerefs = false;
+
             public Function(string name, TypeSyntax returnType = null)
             {
                 if (string.IsNullOrWhiteSpace(name))
@@ -319,7 +321,140 @@ namespace Keysharp.Scripting
 
             public BlockSyntax AssembleBody()
             {
-                var statements = Locals.Values.Concat(Body).ToList();
+                var statements = Locals.Values.ToList();
+
+                if (HasDerefs && Name != Keywords.AutoExecSectionName)
+                {
+                    var arguments = new List<ArgumentSyntax>();
+
+                    arguments.Add(
+                        SyntaxFactory.Argument(
+                            SyntaxFactory.MemberAccessExpression(
+                                SyntaxKind.SimpleMemberAccessExpression,
+                                SyntaxFactory.ParseName("Keysharp.Scripting.eScope"),
+                                SyntaxFactory.IdentifierName(Scope.ToString())
+                            )
+                        )
+                    );
+
+                    if (Globals.Count == 0)
+                        arguments.Add(SyntaxFactory.Argument(SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression)));
+                    else
+                    {
+                        var literalList = new List<ExpressionSyntax>();
+                        foreach (var s in Globals)
+                            literalList.Add(SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression,SyntaxFactory.Literal(s)));
+
+                        // Create an array initializer: { "item1", "item2", ... }
+                        var arrayInitializer = SyntaxFactory.InitializerExpression(
+                            SyntaxKind.ArrayInitializerExpression,
+                            SyntaxFactory.SeparatedList(literalList)
+                        );
+
+                        // Create an array creation expression: new string[] { "item1", "item2", ... }
+                        var arrayCreation = SyntaxFactory.ArrayCreationExpression(
+                            SyntaxFactory.ArrayType(
+                                SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.StringKeyword)),
+                                SyntaxFactory.SingletonList(
+                                    SyntaxFactory.ArrayRankSpecifier(
+                                        SyntaxFactory.SingletonSeparatedList<ExpressionSyntax>(
+                                            SyntaxFactory.OmittedArraySizeExpression()
+                                        )
+                                    )
+                                )
+                            )
+                        ).WithInitializer(arrayInitializer);
+
+                        // Create the object creation expression:
+                        // new HashSet<string>( new string[] { ... }, StringComparer.OrdinalIgnoreCase )
+                        var objectCreation = SyntaxFactory.ObjectCreationExpression(
+                            // Use a generic name for HashSet<string>
+                            SyntaxFactory.GenericName(
+                                SyntaxFactory.Identifier("HashSet")
+                            ).WithTypeArgumentList(
+                                SyntaxFactory.TypeArgumentList(
+                                    SyntaxFactory.SingletonSeparatedList<TypeSyntax>(
+                                        SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.StringKeyword))
+                                    )
+                                )
+                            )
+                        ).WithArgumentList(
+                            SyntaxFactory.ArgumentList(
+                                SyntaxFactory.SeparatedList<ArgumentSyntax>(
+                                    new ArgumentSyntax[]
+                                    {
+                                        // First argument: the string array we just created.
+                                        SyntaxFactory.Argument(arrayCreation),
+                                        // Second argument: StringComparer.OrdinalIgnoreCase
+                                        SyntaxFactory.Argument(
+                                            SyntaxFactory.MemberAccessExpression(
+                                                SyntaxKind.SimpleMemberAccessExpression,
+                                                SyntaxFactory.IdentifierName("StringComparer"),
+                                                SyntaxFactory.IdentifierName("OrdinalIgnoreCase")
+                                            )
+                                        )
+                                    }
+                                )
+                            )
+                        );
+
+                        arguments.Add(SyntaxFactory.Argument(objectCreation));
+                    }
+
+                    foreach (string localName in Locals.Keys) {
+                        arguments.Add(
+                            SyntaxFactory.Argument(
+                                SyntaxFactory.LiteralExpression(
+                                    SyntaxKind.StringLiteralExpression, 
+                                    SyntaxFactory.Literal(localName)
+                                )
+                            )
+                        );
+
+                        arguments.Add(
+                            SyntaxFactory.Argument(
+                                Parser.ConstructVarRefFromIdentifier(localName)
+                            )
+                        );
+                    }
+
+                    foreach (string staticName in Statics)
+                    {
+                        arguments.Add(
+                            SyntaxFactory.Argument(
+                                SyntaxFactory.LiteralExpression(
+                                    SyntaxKind.StringLiteralExpression,
+                                    SyntaxFactory.Literal(staticName.Substring(Name.Length + 1))
+                                )
+                            )
+                        );
+
+                        arguments.Add(
+                            SyntaxFactory.Argument(
+                                Parser.ConstructVarRefFromIdentifier(staticName)
+                            )
+                        );
+                    }
+
+                    // Create the object creation expression:
+                    //   new Keysharp.Scripting.Script.Variables.Dereference()
+                    ObjectCreationExpressionSyntax newExpr = SyntaxFactory.ObjectCreationExpression(
+                            SyntaxFactory.ParseTypeName("Keysharp.Scripting.Script.Variables.Dereference"))
+                        .WithArgumentList(SyntaxFactory.ArgumentList(SyntaxFactory.SeparatedList(arguments)));
+
+                    // Create the variable declarator for _ks_Derefs with its initializer.
+                    VariableDeclaratorSyntax varDeclarator = SyntaxFactory.VariableDeclarator(
+                            SyntaxFactory.Identifier(InternalPrefix + "Derefs"))
+                        .WithInitializer(SyntaxFactory.EqualsValueClause(newExpr));
+
+                    // Create the variable declaration: "Dereference _ks_Derefs = new Keysharp.Scripting.Script.Variables.Dereference();"
+                    VariableDeclarationSyntax varDeclaration = SyntaxFactory.VariableDeclaration(SyntaxFactory.ParseTypeName("Keysharp.Scripting.Script.Variables.Dereference"))
+                        .WithVariables(SyntaxFactory.SingletonSeparatedList(varDeclarator));
+
+                    statements.Add(SyntaxFactory.LocalDeclarationStatement(varDeclaration));
+                }
+
+                statements.AddRange(Body);
 
                 if (!Void)
                 {

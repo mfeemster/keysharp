@@ -40,7 +40,7 @@ namespace Keysharp.Scripting
                 ));
             } else
             {
-                var hotIfFunctionName = $"_ks_HotIf_{++parser.hotIfCount}";
+                var hotIfFunctionName = InternalPrefix + $"HotIf_{++parser.hotIfCount}";
 
                 // Visit the singleExpression and wrap it in an anonymous function
                 var conditionExpression = (ExpressionSyntax)Visit(context.singleExpression());
@@ -228,7 +228,7 @@ namespace Keysharp.Scripting
             parser.isPersistent = true;
             parser.isHotkeyDefinition = true;
             // Generate a unique function name
-            var hotkeyFunctionName = $"_ks_Hotkey_{++parser.hotkeyCount}";
+            var hotkeyFunctionName = InternalPrefix + $"Hotkey_{++parser.hotkeyCount}";
             MethodDeclarationSyntax hotkeyFunction = null;
 
             if (context.functionDeclaration() != null)
@@ -350,7 +350,7 @@ namespace Keysharp.Scripting
             string functionName = null;
             if (!hasExpansion)
             {
-                functionName = $"_ks_Hotstring_{++parser.hotstringCount}";
+                functionName = InternalPrefix + $"Hotstring_{++parser.hotstringCount}";
 
                 PushFunction(functionName);
 
@@ -488,8 +488,8 @@ namespace Keysharp.Scripting
             targetKey = EscapedString(targetKey, true);
 
             // Generate function names
-            var downFunctionName = $"_ks_Hotkey_{++parser.hotkeyCount}";
-            var upFunctionName = $"_ks_Hotkey_{++parser.hotkeyCount}";
+            var downFunctionName = InternalPrefix + $"Hotkey_{++parser.hotkeyCount}";
+            var upFunctionName = InternalPrefix + $"Hotkey_{++parser.hotkeyCount}";
 
             // Fix for v1.0.44.07: Set remap_dest_vk to 0xFF if hotkey_flag's length is only 1 because:
             // 1) It allows a destination key that doesn't exist in the keyboard layout (such as 6::ð in

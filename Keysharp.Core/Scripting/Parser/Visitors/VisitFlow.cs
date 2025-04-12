@@ -821,7 +821,7 @@ namespace Keysharp.Scripting
         {
             parser.tryDepth++;
             var prevExceptionIdentifierName = exceptionIdentifierName;
-            var elseClaudeIdentifier = "_ks_trythrew_" + parser.tryDepth.ToString();
+            var elseClaudeIdentifier = InternalPrefix + "trythrew_" + parser.tryDepth.ToString();
             // Generate the try block
             var tryBlock = EnsureBlockSyntax(Visit(context.statement()));
 
@@ -891,7 +891,7 @@ namespace Keysharp.Scripting
             foreach (var catchProduction in context.catchProduction())
             {
                 i++;
-                exceptionIdentifierName = "_ks_ex_" + parser.tryDepth.ToString() + "_" + i.ToString();
+                exceptionIdentifierName = InternalPrefix + "ex_" + parser.tryDepth.ToString() + "_" + i.ToString();
                 catchClauses.Add((CatchClauseSyntax)VisitCatchProduction(catchProduction));
             }
 
@@ -904,7 +904,7 @@ namespace Keysharp.Scripting
                     .WithDeclaration(
                         SyntaxFactory.CatchDeclaration(
                             SyntaxFactory.ParseTypeName("Keysharp.Core.Error"),
-                            SyntaxFactory.Identifier("_ks_ex_" + parser.tryDepth.ToString() + "_0")
+                            SyntaxFactory.Identifier(InternalPrefix + "ex_" + parser.tryDepth.ToString() + "_0")
                         )
                     )
                     .WithBlock(SyntaxFactory.Block());
@@ -983,7 +983,7 @@ namespace Keysharp.Scripting
                 
                 SyntaxToken exceptionIdentifier = SyntaxFactory.Identifier(exceptionIdentifierName);
 
-                TypeSyntax exceptionType = SyntaxFactory.ParseTypeName("Keysharp.Core.Error");
+                TypeSyntax exceptionType = SyntaxFactory.ParseTypeName("Keysharp.Core.KeysharpException");
                 var typeConditions = new List<ExpressionSyntax>();
 
                 if (catchAssignable.catchClasses() != null)
@@ -992,6 +992,8 @@ namespace Keysharp.Scripting
                     foreach (var catchClass in catchAssignable.catchClasses().identifier())
                     {
                         catchClassText = catchClass.GetText();
+                        if (catchClassText.Equals("Any", StringComparison.OrdinalIgnoreCase))
+                            catchClassText = "KeysharpException";
                         if (Reflections.stringToTypes.TryGetValue(catchClassText, out var t))
                             catchClassText = t.FullName;
                         else
@@ -1013,7 +1015,7 @@ namespace Keysharp.Scripting
                     typeConditions.Add(
                         SyntaxFactory.IsPatternExpression(
                             SyntaxFactory.IdentifierName(exceptionIdentifierName),
-                            SyntaxFactory.TypePattern(SyntaxFactory.ParseTypeName("Keysharp.Core.Error"))
+                            SyntaxFactory.TypePattern(SyntaxFactory.ParseTypeName("Keysharp.Core.KeysharpException"))
                         )
                     );
                 }
@@ -1044,7 +1046,7 @@ namespace Keysharp.Scripting
             return SyntaxFactory.CatchClause()
                 .WithDeclaration(
                     SyntaxFactory.CatchDeclaration(
-                        SyntaxFactory.ParseTypeName("Keysharp.Core.Error"),
+                        SyntaxFactory.ParseTypeName("Keysharp.Core.KeysharpException"),
                         SyntaxFactory.Identifier(exceptionIdentifierName)
                     )
                 )
@@ -1213,7 +1215,7 @@ namespace Keysharp.Scripting
                             SyntaxFactory.InvocationExpression(
                                 SyntaxFactory.MemberAccessExpression(
                                     SyntaxKind.SimpleMemberAccessExpression,
-                                    SyntaxFactory.IdentifierName("_ks_string_" + caseClauseCount),
+                                    SyntaxFactory.IdentifierName(InternalPrefix + "string_" + caseClauseCount),
                                     SyntaxFactory.IdentifierName("Equals")
                                 ),
                                 SyntaxFactory.ArgumentList(
@@ -1227,7 +1229,7 @@ namespace Keysharp.Scripting
                             SyntaxFactory.Token(SyntaxKind.CaseKeyword), // case keyword
                             SyntaxFactory.DeclarationPattern(
                                 SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.StringKeyword)),
-                                SyntaxFactory.SingleVariableDesignation(SyntaxFactory.Identifier("_ks_string_" + caseClauseCount))
+                                SyntaxFactory.SingleVariableDesignation(SyntaxFactory.Identifier(InternalPrefix + "string_" + caseClauseCount))
                             ),
                             whenClause, // when condition
                             SyntaxFactory.Token(SyntaxKind.ColonToken) // colon

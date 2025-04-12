@@ -16,33 +16,34 @@ namespace Keysharp.Core
 		/// Doing this saves significant time when doing repeated calls to the same DLL function with the same argument types.
 		/// </summary>
 		private static readonly ConcurrentDictionary<string, DllCache> dllCache = new ();
+        private static readonly ConcurrentDictionary<int, Func<IntPtr, long[], long>> delegateCache = new();
 
-		/// <summary>
-		/// Creates a <see cref="DelegateHolder"/> object that wraps a <see cref="FuncObj"/>.
-		/// Passing string pointers to <see cref="DllCall"/> when passing a created callback is strongly recommended against.<br/>
-		/// This is because the string pointer cannot remain pinned, and is likely to crash the program if the pointer gets moved by the GC.
-		/// </summary>
-		/// <param name="function">
-		/// A function object to call automatically whenever the <see cref="DelegateHolder"/> is called, optionally passing arguments.<br/>
-		/// A closure or bound function can be used to differentiate between multiple callbacks which all call the same script function.<br/>
-		/// The callback retains a reference to the function object, and releases it when the script calls <see cref="CallbackFree"/>.
-		/// </param>
-		/// <param name="options">
-		/// If blank or omitted, a new thread will be started each time function is called, the standard calling convention will be used, and the parameters will be passed individually to function.<br/>
-		/// Otherwise, specify one or more of the following options. Separate each option from the next with a space (e.g. "C Fast").<br/>
-		///     Fast or F: Avoids starting a new thread each time function is called.Although this performs better, it must be avoided whenever the thread from which Address is called varies (e.g.when the callback is triggered by an incoming message).<br/>
-		///     This is because function will be able to change global settings such as <see cref="A_LastError"/> and the last-found window for whichever thread happens to be running at the time it is called.<br/>
-		///     <![CDATA[&]]>: Causes the address of the parameter list (a single integer) to be passed to function instead of the individual parameters. Parameter values can be retrieved by using <see cref="External.NumGet"/>.<br/>
-		/// </param>
-		/// <param name="paramCount">
-		/// If omitted, it defaults to 0, which is usually the number of mandatory parameters in the definition of function.<br/>
-		/// Otherwise, specify the number of parameters that Address's caller will pass to it.<br/>
-		/// In either case, ensure that the caller passes exactly this number of parameters.
-		/// </param>
-		/// <returns>A <see cref="DelegateHolder"/> object which internally holds a function pointer.<br/>
-		/// This is typically passed to an external function via <see cref="DllCall"/> or placed in a struct using <see cref="NumPut"/>, but can also be called directly by <see cref="DllCall"/>.
-		/// </returns>
-		public static DelegateHolder CallbackCreate(object function, object options = null, object paramCount = null)
+        /// <summary>
+        /// Creates a <see cref="DelegateHolder"/> object that wraps a <see cref="FuncObj"/>.
+        /// Passing string pointers to <see cref="DllCall"/> when passing a created callback is strongly recommended against.<br/>
+        /// This is because the string pointer cannot remain pinned, and is likely to crash the program if the pointer gets moved by the GC.
+        /// </summary>
+        /// <param name="function">
+        /// A function object to call automatically whenever the <see cref="DelegateHolder"/> is called, optionally passing arguments.<br/>
+        /// A closure or bound function can be used to differentiate between multiple callbacks which all call the same script function.<br/>
+        /// The callback retains a reference to the function object, and releases it when the script calls <see cref="CallbackFree"/>.
+        /// </param>
+        /// <param name="options">
+        /// If blank or omitted, a new thread will be started each time function is called, the standard calling convention will be used, and the parameters will be passed individually to function.<br/>
+        /// Otherwise, specify one or more of the following options. Separate each option from the next with a space (e.g. "C Fast").<br/>
+        ///     Fast or F: Avoids starting a new thread each time function is called.Although this performs better, it must be avoided whenever the thread from which Address is called varies (e.g.when the callback is triggered by an incoming message).<br/>
+        ///     This is because function will be able to change global settings such as <see cref="A_LastError"/> and the last-found window for whichever thread happens to be running at the time it is called.<br/>
+        ///     <![CDATA[&]]>: Causes the address of the parameter list (a single integer) to be passed to function instead of the individual parameters. Parameter values can be retrieved by using <see cref="External.NumGet"/>.<br/>
+        /// </param>
+        /// <param name="paramCount">
+        /// If omitted, it defaults to 0, which is usually the number of mandatory parameters in the definition of function.<br/>
+        /// Otherwise, specify the number of parameters that Address's caller will pass to it.<br/>
+        /// In either case, ensure that the caller passes exactly this number of parameters.
+        /// </param>
+        /// <returns>A <see cref="DelegateHolder"/> object which internally holds a function pointer.<br/>
+        /// This is typically passed to an external function via <see cref="DllCall"/> or placed in a struct using <see cref="NumPut"/>, but can also be called directly by <see cref="DllCall"/>.
+        /// </returns>
+        public static DelegateHolder CallbackCreate(object function, object options = null, object paramCount = null)
         {
             var o = options.As();
             return new DelegateHolder(function, o.Contains('f', StringComparison.OrdinalIgnoreCase), o.Contains('&'));//paramCount is unused.
@@ -359,83 +360,59 @@ namespace Keysharp.Core
 		/// <param name="vtbl">The vtbl of the COM object.</param>
 		/// <param name="args">The argument list.</param>
 		/// <returns>An <see cref="IntPtr"/> which contains the return value of the COM call.</returns>
-		private static long CallDel(IntPtr vtbl, long[] args)
+		internal static long CallDel(IntPtr vtbl, long[] args)
 		{
-			switch (args.Length)
-			{
-				case 0:
-					var del0 = Marshal.GetDelegateForFunctionPointer<DelNone>(vtbl);
-					return del0();
+            var del = delegateCache.GetOrAdd(args.Length, CreateDelegateForArgCount);
+            return del(vtbl, args);
+        }
 
-				case 1:
-					var del1 = Marshal.GetDelegateForFunctionPointer<Del0>(vtbl);
-					return del1(args[0]);
+        /// <summary>
+        /// Generates (and returns) a delegate of type Func<IntPtr, long[], long>
+        /// for a function pointer that accepts exactly n long arguments.
+        /// It reads n arguments from the provided array (pushing 0 for missing entries),
+        /// then loads the function pointer and calls it.
+        /// </summary>
+        /// <param name="n">The number of long arguments expected.</param>
+        private static Func<IntPtr, long[], long> CreateDelegateForArgCount(int n)
+        {
+            // The dynamic method always has two parameters:
+            //  - IntPtr: the function pointer,
+            //  - long[]: the array of arguments.
+            DynamicMethod dm = new DynamicMethod(
+                "DynamicDllCall_" + n,
+                typeof(long),
+                new[] { typeof(IntPtr), typeof(long[]) },
+                typeof(Dll).Module,
+                skipVisibility: true);
 
-				case 2:
-					var del2 = Marshal.GetDelegateForFunctionPointer<Del01>(vtbl);
-					return del2(args[0], args[1]);
+            ILGenerator il = dm.GetILGenerator();
 
-				case 3:
-					var del3 = Marshal.GetDelegateForFunctionPointer<Del02>(vtbl);
-					return del3(args[0], args[1], args[2]);
+            // Unroll the loading of n arguments from the array.
+            for (int i = 0; i < n; i++)
+            {
+                // Load the 'args' array (argument at index 1).
+                il.Emit(OpCodes.Ldarg_1);
+                // Push the constant index i onto the stack.
+                il.Emit(OpCodes.Ldc_I4, i);
+                // Load the long element at that index (expects each element is an 8-byte long).
+                il.Emit(OpCodes.Ldelem_I8);
+            }
 
-				case 4:
-					var del4 = Marshal.GetDelegateForFunctionPointer<Del03>(vtbl);
-					return del4(args[0], args[1], args[2], args[3]);
+            // Load the function pointer from the first parameter (IntPtr).
+            il.Emit(OpCodes.Ldarg_0);
 
-				case 5:
-					var del5 = Marshal.GetDelegateForFunctionPointer<Del04>(vtbl);
-					return del5(args[0], args[1], args[2], args[3], args[4]);
+            // Build an array of parameter types (n longs).
+            Type[] paramTypes = Enumerable.Repeat(typeof(long), n).ToArray();
 
-				case 6:
-					var del6 = Marshal.GetDelegateForFunctionPointer<Del05>(vtbl);
-					return del6(args[0], args[1], args[2], args[3], args[4], args[5]);
+            // Emit a calli instruction to call the unmanaged function.
+            // This assumes a StdCall calling convention and that the function returns a long.
+            il.EmitCalli(OpCodes.Calli, CallingConvention.StdCall, typeof(long), paramTypes);
+            il.Emit(OpCodes.Ret);
 
-				case 7:
-					var del7 = Marshal.GetDelegateForFunctionPointer<Del06>(vtbl);
-					return del7(args[0], args[1], args[2], args[3], args[4], args[5], args[6]);
+            return (Func<IntPtr, long[], long>)dm.CreateDelegate(typeof(Func<IntPtr, long[], long>));
+        }
 
-				case 8:
-					var del8 = Marshal.GetDelegateForFunctionPointer<Del07>(vtbl);
-					return del8(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7]);
-
-				case 9:
-					var del9 = Marshal.GetDelegateForFunctionPointer<Del08>(vtbl);
-					return del9(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8]);
-
-				case 10:
-					var del10 = Marshal.GetDelegateForFunctionPointer<Del09>(vtbl);
-					return del10(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9]);
-
-				case 11:
-					var del11 = Marshal.GetDelegateForFunctionPointer<Del10>(vtbl);
-					return del11(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10]);
-
-				case 12:
-					var del12 = Marshal.GetDelegateForFunctionPointer<Del11>(vtbl);
-					return del12(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11]);
-
-				case 13:
-					var del13 = Marshal.GetDelegateForFunctionPointer<Del12>(vtbl);
-					return del13(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11], args[12]);
-
-				case 14:
-					var del14 = Marshal.GetDelegateForFunctionPointer<Del13>(vtbl);
-					return del14(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11], args[12], args[13]);
-
-				case 15:
-					var del15 = Marshal.GetDelegateForFunctionPointer<Del14>(vtbl);
-					return del15(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11], args[12], args[13], args[14]);
-
-				case 16:
-					var del16 = Marshal.GetDelegateForFunctionPointer<Del15>(vtbl);
-					return del16(args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9], args[10], args[11], args[12], args[13], args[14], args[15]);
-			}
-
-			return IntPtr.Zero;
-		}
-
-		internal static unsafe void FixParamTypeAndCopyBack(ref object p, string ps, IntPtr aip)
+        internal static unsafe void FixParamTypeAndCopyBack(ref object p, string ps, IntPtr aip)
 		{
 			if (ps.EndsWith("uint*", StringComparison.OrdinalIgnoreCase) || ps.EndsWith("uintp", StringComparison.OrdinalIgnoreCase))
 			{

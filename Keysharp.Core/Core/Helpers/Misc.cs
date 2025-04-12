@@ -33,13 +33,13 @@ namespace Keysharp.Core
             private readonly Func<object> Get;
             private readonly Action<object> Set;
 
-            public VarRef(object x)
+            public VarRef(object x) : base(skipLogic: true)
             {
                 this.Get = () => x;
                 this.Set = (value) => x = value;
             }
 
-            public VarRef(Func<object> getter, Action<object> setter)
+            public VarRef(Func<object> getter, Action<object> setter) : base(skipLogic: true)
             {
                 this.Get = getter;
                 this.Set = setter;

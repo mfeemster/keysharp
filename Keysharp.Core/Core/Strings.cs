@@ -1175,7 +1175,7 @@ namespace Keysharp.Core
 			if (obj.Length > 0 && obj[0] != null)
 			{
 				Error err;
-				var s = obj.As(0);
+				var s = obj.As(0) + char.MinValue;
 				var len = long.MinValue;
 				var encoding = Encoding.Unicode;
 				var ptr = IntPtr.Zero;
@@ -1233,7 +1233,9 @@ namespace Keysharp.Core
 					else if (len == long.MinValue)
 						return Errors.ErrorOccurred(err = new ValueError($"Length was not specified, but the target was not a Buffer object. Either pass a Buffer, or specify a Length.")) ? throw err : 0L;
 
-					Marshal.Copy(bytes, 0, ptr, Math.Min((int)len, bytes.Length));
+					var written = Math.Min((int)len, bytes.Length);
+                    Marshal.Copy(bytes, 0, ptr, written);
+					return written;
 				}
 			}
 
@@ -1540,10 +1542,26 @@ namespace Keysharp.Core
 		/// </returns>
 		public static long VerCompare(object versionA, object versionB)
 		{
-			var v1 = versionA.As();
-			var v2 = versionB.As();
+			var v1 = versionA.As().TrimStart();
+			var v2 = versionB.As().TrimStart();
 			var semver1 = Semver.SemVersion.Parse(v1, Semver.SemVersionStyles.Any);
-			var semver2 = Semver.SemVersion.Parse(v2, Semver.SemVersionStyles.Any);
+			var semver2 = Semver.SemVersion.Parse(v2.TrimStart('>', '<', '='), Semver.SemVersionStyles.Any);
+			switch (v2[0]) {
+				case '=':
+                    return semver1.CompareSortOrderTo(semver2) == 0 ? 1L : 0L;
+				case '>':
+                    return (
+                        v2[0] == '=' 
+							? semver2.CompareSortOrderTo(semver1) >= 0 
+							: semver2.CompareSortOrderTo(semver1) > 0
+                        ) ? 1L : 0L;
+                case '<':
+                    return (
+                        v2[0] == '='
+                            ? semver1.CompareSortOrderTo(semver2) >= 0
+                            : semver1.CompareSortOrderTo(semver2) > 0
+                        ) ? 1L : 0L;
+            }
 			return semver1.CompareSortOrderTo(semver2);
 		}
 

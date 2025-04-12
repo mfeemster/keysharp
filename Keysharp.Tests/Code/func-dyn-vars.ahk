@@ -3,6 +3,7 @@ y := "x"
 
 func()
 {
+	global x
 	%y% := 123
 }
 
@@ -23,6 +24,7 @@ y11 := 123
 
 func2()
 {
+	global y11
 	y%x% := 222
 }
 
@@ -84,6 +86,46 @@ y := 0
 %x%(123)
 
 If (y == 123)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+
+x := 1
+y := "x"
+
+localfunc()
+{
+	x := 2
+	%y% := 123
+	If (x == 123)
+		FileAppend "pass", "*"
+	else
+		FileAppend "fail", "*"
+}
+
+localfunc()
+
+If (x == 1)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+
+x := 1
+y := "x"
+
+staticfunc()
+{
+	static x := 2
+	%y% := 123
+	If (x == 123)
+		FileAppend "pass", "*"
+	else
+		FileAppend "fail", "*"
+}
+
+staticfunc()
+
+If (x == 1)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"

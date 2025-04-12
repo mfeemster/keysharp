@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Reflection;
+using System.Xml.Linq;
 
 namespace Keysharp.Scripting
 {
@@ -25,7 +26,7 @@ namespace Keysharp.Scripting
 			/// <param name="s"></param>
 			public static void AddPreLoadedDll(string p, bool s) => preloadedDlls.Add((p, s));
 
-			public static void InitGlobalVars()
+			public static void InitGlobalVars(Type program = null)
 			{
 				Error err;
 				WindowX.SetProcessDPIAware();
@@ -48,13 +49,12 @@ namespace Keysharp.Scripting
                 Prototypes = new();
 				Statics = new();
 
-				var type = Type.GetType("Keysharp.CompiledMain.Program");
-				if (type != null && type.FullName.StartsWith("Keysharp.CompiledMain", StringComparison.OrdinalIgnoreCase))
+				if (program != null)
 				{
-                    var fields = type.GetFields(BindingFlags.Static |
+					var fields = program.GetFields(BindingFlags.Static |
 												BindingFlags.NonPublic |
 												BindingFlags.Public);
-					var props = type.GetProperties(BindingFlags.Static |
+					var props = program.GetProperties(BindingFlags.Static |
 													BindingFlags.NonPublic |
 													BindingFlags.Public);
 					_ = globalVars.EnsureCapacity(fields.Length + props.Length);
@@ -133,11 +133,16 @@ namespace Keysharp.Scripting
                 // Initiate necessary base types in specific order
                 InitStaticInstance(typeof(Any), typeof(KeysharpObject));
                 InitStaticInstance(typeof(FuncObj));
+                InitStaticInstance(typeof(Class));
+                
+                Statics[typeof(Class)].DefineProp("base", Collections.Map("value", Variables.Statics[typeof(Any)]));
                 InitStaticInstance(typeof(KeysharpObject));
+                Prototypes[typeof(Class)].DefineProp("base", Collections.Map("value", Variables.Prototypes[typeof(KeysharpObject)]));
                 Statics[typeof(KeysharpObject)] = (KeysharpObject)Prototypes[typeof(KeysharpObject)].Clone();
                 Statics[typeof(KeysharpObject)].DefineProp("prototype", Collections.Map("value", Variables.Prototypes[typeof(KeysharpObject)]));
                 Prototypes[typeof(FuncObj)].DefineProp("base", Collections.Map("value", Variables.Prototypes[typeof(KeysharpObject)]));
                 Statics[typeof(FuncObj)].DefineProp("base", Collections.Map("value", Variables.Statics[typeof(KeysharpObject)]));
+
 
                 var typesToRemoveSet = new HashSet<Type>(new[] { typeof(Any), typeof(FuncObj), typeof(KeysharpObject) });
                 var orderedTypes = types.Where(type => !typesToRemoveSet.Contains(type)).OrderBy(GetInheritanceDepth);
@@ -175,6 +180,11 @@ namespace Keysharp.Scripting
                 }
                 return depth;
             }
+
+			public bool HasVariable(string key) =>
+				globalVars.ContainsKey(key)
+				|| Reflections.flatPublicStaticProperties.ContainsKey(key)
+				|| Flow.cachedFuncObj.ContainsKey(key);
 
             public object GetVariable(string key)
 			{
@@ -242,6 +252,52 @@ namespace Keysharp.Scripting
 				get => GetPropertyValue(key, "__Value", false) ?? GetVariable(key.ToString()) ?? "";
 				set => _ = (key is KeysharpObject kso && Functions.HasProp(kso, "__Value") == 1) ? Script.SetPropertyValue(kso, "__Value", value) : SetVariable(key.ToString(), value);
 			}
+
+			public class Dereference
+			{
+                private readonly Dictionary<string, object> vars = new(StringComparer.OrdinalIgnoreCase);
+				private eScope scope = eScope.Local;
+				private HashSet<string> globals;
+                public Dereference(eScope funcScope, HashSet<string> funcGlobals, params object[] args)
+				{
+					scope = funcScope;
+					globals = funcGlobals;
+
+					for (int i = 0; i < args.Length; i += 2)
+					{
+						if (args[i] is string varName)
+						{
+							vars[varName] = args[i + 1];
+						}
+					}
+				}
+
+                public object this[object key]
+				{
+					get
+					{
+						if (vars.TryGetValue(key.ToString(), out var val))
+							return GetPropertyValue(val, "__Value");
+						return Vars[key];
+					}
+					set
+					{
+						var s = key.ToString();
+						if (vars.TryGetValue(s, out var val))
+						{
+							SetPropertyValue(val, "__Value", value);
+							return;
+						}
+						if ((scope == eScope.Global || (globals?.Contains(s) ?? false)) && Vars.HasVariable(s))
+						{
+							Vars[s] = value;
+							return;
+						}
+
+						vars[s] = new Misc.VarRef(null);
+                    }
+				}
+            }
 		}
 	}
 }

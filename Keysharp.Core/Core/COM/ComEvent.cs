@@ -24,7 +24,7 @@ namespace Keysharp.Core.COM
 				foreach (var kv in Reflections.stringToTypeLocalMethods)
 				{
 					if (string.Compare(kv.Key, "Main", true) != 0 &&
-							string.Compare(kv.Key, "_ks_UserMainCode", true) != 0)
+							string.Compare(kv.Key, AutoExecSectionName, true) != 0)
 					{
 						if (kv.Key.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
 						{

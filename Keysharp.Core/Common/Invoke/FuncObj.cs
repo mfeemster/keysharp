@@ -209,7 +209,19 @@
 		=> new BoundFunc(mi, args, Inst);
 
 		public virtual object Call(params object[] obj) => mph.callFunc(Inst, obj);
-		public virtual object CallInst(object inst, params object[] obj) => mph.callFunc(inst, obj);
+		public virtual object CallInst(object inst, params object[] obj)
+		{
+			if (Inst == null)
+				return mph.callFunc(inst, obj);
+			else
+			{
+                int count = obj.Length;
+                object[] args = new object[count + 1];
+                args[0] = inst;
+                System.Array.Copy(obj, 0, args, 1, count);
+                return mph.callFunc(Inst, args);
+            }
+		}
         public virtual object CallWithRefs(params object[] args)
 		{
 			var argsArray = new object[args.Length];

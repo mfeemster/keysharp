@@ -203,7 +203,7 @@ namespace Keysharp.Core
 		/// </summary>
 		/// <param name="obj0">The text to send to the debugger for display.</param>
 		/// <param name="obj1">True to first clear the display, else false to append.</param>
-		public static void OutputDebug(object obj0, object obj1 = null)
+		public static object OutputDebug(object obj0, object obj1 = null)
 		{
 			var text = obj0.As();
 			var clear = obj1.Ab();
@@ -223,6 +223,8 @@ namespace Keysharp.Core
 					Script.mainWindow.SetText(text, MainWindow.MainFocusedTab.Debug, false);
 				else
 					Script.mainWindow.AddText(text, MainWindow.MainFocusedTab.Debug, false);
+
+			return "";
 		}
 
 	}

@@ -62,7 +62,7 @@ namespace Keysharp.Scripting
             parser.namespaceDeclaration = SyntaxFactory.NamespaceDeclaration(CreateQualifiedName("Keysharp.CompiledMain"))
                 .AddUsings(usings.ToArray());
 
-            parser.currentClass = new Class(Keywords.MainClassName, null);
+            parser.currentClass = new Parser.Class(Keywords.MainClassName, null);
             parser.mainClass = parser.currentClass;
 
             var mainFunc = new Function("Main", SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.IntKeyword)));
@@ -91,7 +91,7 @@ namespace Keysharp.Scripting
 					try
 					{
 						{{String.Join(Environment.NewLine, parser.mainFuncInitial)}}
-						Keysharp.Scripting.Script.Variables.InitGlobalVars();
+						Keysharp.Scripting.Script.Variables.InitGlobalVars(typeof({{Keywords.MainClassName}}));
 						Keysharp.Scripting.Script.SetName(name);
 						if (Keysharp.Scripting.Script.HandleSingleInstance(name, eScriptInstance.{{System.Enum.GetName(typeof(eScriptInstance), parser.reader.SingleInstance)}}))
 						{
@@ -455,15 +455,19 @@ namespace Keysharp.Scripting
 
         public override SyntaxNode VisitDynamicIdentifier([NotNull] DynamicIdentifierContext context)
         {
+            parser.currentFunc.HasDerefs = true;
             // In this case we have a identifier composed of identifier parts and dereference expressions
             // such as a%b%. CreateDynamicVariableAccessor will return string.Concat<object>(new object[] {"a", b), so
             // to turn it into an identifier we need to wrap it in Keysharp.Scripting.Script.Vars[]
             return SyntaxFactory.ElementAccessExpression(
-                SyntaxFactory.MemberAccessExpression(
-                    SyntaxKind.SimpleMemberAccessExpression,
-                    CreateQualifiedName("Keysharp.Scripting.Script"),
-                    SyntaxFactory.IdentifierName("Vars")
-                ),
+                parser.currentFunc.Name == Keywords.AutoExecSectionName 
+                    ? SyntaxFactory.MemberAccessExpression(
+                        SyntaxKind.SimpleMemberAccessExpression,
+                        CreateQualifiedName("Keysharp.Scripting.Script"),
+                        SyntaxFactory.IdentifierName("Vars")
+                      )
+                    : SyntaxFactory.IdentifierName(InternalPrefix + "Derefs")
+                ,
                 SyntaxFactory.BracketedArgumentList(
                     SyntaxFactory.SingletonSeparatedList(
                         SyntaxFactory.Argument((ExpressionSyntax)CreateDynamicVariableString(context))
@@ -986,7 +990,7 @@ namespace Keysharp.Scripting
             }
 
             // Otherwise, return a normal throw statement
-            return SyntaxFactory.ThrowStatement(expression);
+            return SyntaxFactory.ThrowStatement(SyntaxFactory.CastExpression(SyntaxFactory.ParseTypeName("KeysharpException"), expression));
         }
 
         private SyntaxNode HandleTernaryCondition(ExpressionSyntax condition, ExpressionSyntax trueExpression, ExpressionSyntax falseExpression)
@@ -1270,15 +1274,15 @@ namespace Keysharp.Scripting
                 else
                 {
                     var nullVariableDeclaration = SyntaxFactory.LocalDeclarationStatement(
-                        CreateNullObjectVariable(methodName.ToLowerInvariant())
+                        CreateNullObjectVariable(variableName)
                     );
 
                     // Add the variable declaration to the beginning of the current function body
-                    parser.currentFunc.Locals[methodName] = nullVariableDeclaration;
+                    parser.currentFunc.Locals[variableName] = nullVariableDeclaration;
 
                     // Add the assignment statement to the `statements` list
                     parser.currentFunc.Body.Add(SyntaxFactory.ExpressionStatement(
-                        CreateSimpleAssignment(methodName.ToLowerInvariant(), funcObj)
+                        CreateSimpleAssignment(variableName, funcObj)
                     ));
                 }
 
@@ -1439,7 +1443,7 @@ namespace Keysharp.Scripting
                 if (context.lastFormalParameterArg().Multiply() != null)
                 {
                     var identifier = parameter.Identifier.Text;
-                    var substitute = "_ks_" + identifier.TrimStart('@');
+                    var substitute = Keywords.InternalPrefix + identifier.TrimStart('@');
                     parameter = parameter.WithIdentifier(SyntaxFactory.Identifier(substitute));
 
                     var statement = SyntaxFactory.LocalDeclarationStatement(

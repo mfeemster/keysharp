@@ -794,7 +794,7 @@ namespace Keysharp.Scripting
         {
             parser.ClassStack.Push(parser.currentClass);
             parser.classDepth++;
-            parser.currentClass = new Class(className, baseName);
+            parser.currentClass = new Parser.Class(className, baseName);
         }
 
         private void PopClass()

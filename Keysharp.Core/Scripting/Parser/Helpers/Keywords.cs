@@ -59,9 +59,10 @@
 		internal const char Divide = '/';
 
         internal const string ClassStaticPrefix = "static";
-        internal const string TempVariablePrefix = "_ks_temp";
-        internal const string AnonymousLambdaPrefix = "_ks_AnonLambda_";
-        internal const string AnonymousFatArrowLambdaPrefix = "_ks_AnonFatArrowLambda_";
+		internal const string InternalPrefix = "_ks_";
+        internal const string TempVariablePrefix = InternalPrefix + "temp";
+        internal const string AnonymousLambdaPrefix = InternalPrefix + "AnonLambda_";
+        internal const string AnonymousFatArrowLambdaPrefix = InternalPrefix + "AnonFatArrowLambda_";
 
 		public const string MainClassName = "Program";
 		public const string AutoExecSectionName = "AutoExecSection";

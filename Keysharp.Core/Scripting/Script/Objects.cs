@@ -160,7 +160,7 @@ namespace Keysharp.Scripting
                     proto.op[propertyName] = propertyMap;
             }
 
-            if (!(t == typeof(Any) || t == typeof(FuncObj)))
+            if (!(t == typeof(Any) || t == typeof(FuncObj) || t == typeof(Class)))
                 proto.DefineProp("base", Collections.MapWithoutBase("value", Variables.Prototypes[t.BaseType]));
 
 			if (isBuiltin)
@@ -173,8 +173,8 @@ namespace Keysharp.Scripting
 
             staticInst.DefineProp("prototype", Collections.Map("value", Variables.Prototypes[t]));
 
-			if (t != typeof(FuncObj) && t != typeof(Any))
-				staticInst.DefineProp("base", Collections.MapWithoutBase("value", Variables.Statics[t.BaseType]));
+			if (t != typeof(FuncObj) && t != typeof(Any) || t == typeof(Class))
+				staticInst.DefineProp("base", Collections.MapWithoutBase("value", t.BaseType == typeof(KeysharpObject) ? Variables.Prototypes[typeof(Class)] : Variables.Statics[t.BaseType]));
 
 			if (!isBuiltin)
 			{

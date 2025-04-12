@@ -284,7 +284,6 @@ using static Keysharp.Scripting.Script;
 					//This will be the build output folder when running from within the debugger, and the install folder when running from an installation.
 					//Note that Keysharp.Core.dll and System.CodeDom.dll *must* remain in that location for a compiled executable to work.
 					MetadataReference.CreateFromFile(Path.Combine(ksCoreDir, "Keysharp.Core.dll")),
-					//MetadataReference.CreateFromFile(Path.Combine(ksCoreDir, "System.CodeDom.dll"))//Even though the .NET desktop install comes with CodeDOM, we reference a special version in Keysharp.Core.
 				};
 				var ms = new MemoryStream();
 				var compilation = CSharpCompilation.Create(outputname)
@@ -326,7 +325,7 @@ using static Keysharp.Scripting.Script;
 				manifestStream.Position = 0;
 				var msi = Assembly.GetEntryAssembly().GetManifestResourceStream("Keysharp.Keysharp.ico");
 				var res = compilation.CreateDefaultWin32Resources(true, false, manifestStream, msi);//The first argument must be true to embed version/assembly information.
-				var compilationResult = compilation.Emit(ms, win32Resources: res);
+                var compilationResult = compilation.Emit(ms, win32Resources: res);
 				return (compilationResult, ms, null);
 			}
 			catch (Exception e)

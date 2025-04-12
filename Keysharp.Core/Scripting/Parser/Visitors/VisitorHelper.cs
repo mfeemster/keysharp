@@ -2,6 +2,7 @@
 using Antlr4.Runtime;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using static MainParser;
+using System.Data.Common;
 
 namespace Keysharp.Scripting
 {
@@ -1098,6 +1099,42 @@ namespace Keysharp.Scripting
             return false;
         }
 
+        public static ExpressionSyntax ConstructVarRefFromIdentifier(string identifier)
+        {
+            var identifierName = SyntaxFactory.IdentifierName(identifier);
+            return SyntaxFactory.ObjectCreationExpression(
+                SyntaxFactory.IdentifierName("VarRef"),
+                SyntaxFactory.ArgumentList(
+                    SyntaxFactory.SeparatedList(new[]
+                    {
+                // Getter lambda: () => identifier
+                SyntaxFactory.Argument(
+                    SyntaxFactory.ParenthesizedLambdaExpression(
+                        SyntaxFactory.ParameterList(),
+                        identifierName
+                    )
+                ),
+                // Setter lambda: value => identifier = value
+                SyntaxFactory.Argument(
+                    SyntaxFactory.ParenthesizedLambdaExpression(
+                        SyntaxFactory.ParameterList(
+                            SyntaxFactory.SingletonSeparatedList(
+                                SyntaxFactory.Parameter(SyntaxFactory.Identifier("value"))
+                            )
+                        ),
+                        SyntaxFactory.AssignmentExpression(
+                            SyntaxKind.SimpleAssignmentExpression,
+                            identifierName,
+                            SyntaxFactory.IdentifierName("value")
+                        )
+                    )
+                )
+                    })
+                ),
+                null
+            );
+        }
+
         // Creates `new VarRef(() => identifier, value => identifier = value)`
         // In the case of index or property access, it uses the appropriate get/set methods.
         public ExpressionSyntax ConstructVarRef(ExpressionSyntax targetExpression)
@@ -1109,37 +1146,7 @@ namespace Keysharp.Scripting
                 var addedName = MaybeAddVariableDeclaration(identifierName.Identifier.Text);
                 if (addedName != null && addedName != identifierName.Identifier.Text)
                     targetExpression = identifierName = SyntaxFactory.IdentifierName(addedName);
-                return SyntaxFactory.ObjectCreationExpression(
-                    SyntaxFactory.IdentifierName("VarRef"),
-                    SyntaxFactory.ArgumentList(
-                        SyntaxFactory.SeparatedList(new[]
-                        {
-                    // Getter lambda: () => identifier
-                    SyntaxFactory.Argument(
-                        SyntaxFactory.ParenthesizedLambdaExpression(
-                            SyntaxFactory.ParameterList(),
-                            identifierName
-                        )
-                    ),
-                    // Setter lambda: value => identifier = value
-                    SyntaxFactory.Argument(
-                        SyntaxFactory.ParenthesizedLambdaExpression(
-                            SyntaxFactory.ParameterList(
-                                SyntaxFactory.SingletonSeparatedList(
-                                    SyntaxFactory.Parameter(SyntaxFactory.Identifier("value"))
-                                )
-                            ),
-                            SyntaxFactory.AssignmentExpression(
-                                SyntaxKind.SimpleAssignmentExpression,
-                                identifierName,
-                                SyntaxFactory.IdentifierName("value")
-                            )
-                        )
-                    )
-                        })
-                    ),
-                    null
-                );
+                return ConstructVarRefFromIdentifier(identifierName.Identifier.Text);
             }
             else if (targetExpression is MemberAccessExpressionSyntax memberAccess)
             {
