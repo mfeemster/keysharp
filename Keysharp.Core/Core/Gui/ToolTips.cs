@@ -125,8 +125,16 @@
 					//We use SetTool() via reflection in this function because it bypasses ToolTip.Show()'s check for whether or not the window
 					//is active.
 					var temppt = Cursor.Position;
-					temppt.X += 10;
-					temppt.Y += 10;
+
+					if (_x == int.MinValue)
+						temppt.X += 10;
+					else
+						temppt.X = _x;
+
+					if (_y == int.MinValue)
+						temppt.Y += 10;
+					else
+						temppt.Y = _y;
 
 					if (ttp != null && ttp?.X == temppt.X && ttp?.Y == temppt.Y && tt.GetToolTip(tooltipInvokerForm) == t)
 						return;
