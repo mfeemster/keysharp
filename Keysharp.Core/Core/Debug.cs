@@ -191,19 +191,24 @@ namespace Keysharp.Core
 			return sb.ToString();
 		}
 
-		public static void ListLines(params object[] obj)
+		public static object ListLines(params object[] obj)
 		{
 			OutputDebug("ListLines() is not supported in Keysharp because it's a compiled program, not an interpreted one.");
+			return "";
 		}
 
-		public static void ListVars() => Script.mainWindow?.ShowInternalVars(true);
+		public static object ListVars()
+		{
+			Script.mainWindow?.ShowInternalVars(true);
+			return "";
+		}
 
 		/// <summary>
 		/// Sends a string to the debugger (if any) for display.
 		/// </summary>
 		/// <param name="obj0">The text to send to the debugger for display.</param>
 		/// <param name="obj1">True to first clear the display, else false to append.</param>
-		public static void OutputDebug(object obj0, object obj1 = null)
+		public static object OutputDebug(object obj0, object obj1 = null)
 		{
 			var text = obj0.As();
 			var clear = obj1.Ab();
@@ -223,6 +228,8 @@ namespace Keysharp.Core
 					Script.mainWindow.SetText(text, MainWindow.MainFocusedTab.Debug, false);
 				else
 					Script.mainWindow.AddText(text, MainWindow.MainFocusedTab.Debug, false);
+
+			return "";
 		}
 
 	}
