@@ -1224,6 +1224,7 @@
 
 					written = Math.Min((int)len, bytes.Length);
 				}
+
 				Marshal.Copy(bytes, 0, ptr, written);
 				return written;
 			}
@@ -1500,8 +1501,42 @@
 			var v1 = versionA.As();
 			var v2 = versionB.As();
 			var semver1 = Semver.SemVersion.Parse(v1, Semver.SemVersionStyles.Any);
-			var semver2 = Semver.SemVersion.Parse(v2, Semver.SemVersionStyles.Any);
-			return semver1.CompareSortOrderTo(semver2);
+
+			if (v2.StartsWith("<="))
+			{
+				v2 = v2.Substring(2);
+				var semver2 = Semver.SemVersion.Parse(v2, Semver.SemVersionStyles.Any);
+				return semver1.CompareSortOrderTo(semver2) <= 0 ? 1L : 0L;
+			}
+			else if (v2.StartsWith('<'))
+			{
+				v2 = v2.Substring(1);
+				var semver2 = Semver.SemVersion.Parse(v2, Semver.SemVersionStyles.Any);
+				return semver1.CompareSortOrderTo(semver2) < 0 ? 1L : 0L;
+			}
+			else if (v2.StartsWith(">="))
+			{
+				v2 = v2.Substring(2);
+				var semver2 = Semver.SemVersion.Parse(v2, Semver.SemVersionStyles.Any);
+				return semver1.CompareSortOrderTo(semver2) >= 0 ? 1L : 0L;
+			}
+			else if (v2.StartsWith('>'))
+			{
+				v2 = v2.Substring(1);
+				var semver2 = Semver.SemVersion.Parse(v2, Semver.SemVersionStyles.Any);
+				return semver1.CompareSortOrderTo(semver2) > 0 ? 1L : 0L;
+			}
+			else if (v2.StartsWith('='))
+			{
+				v2 = v2.Substring(1);
+				var semver2 = Semver.SemVersion.Parse(v2, Semver.SemVersionStyles.Any);
+				return semver1.CompareSortOrderTo(semver2) == 0 ? 1L : 0L;
+			}
+			else
+			{
+				var semver2 = Semver.SemVersion.Parse(v2, Semver.SemVersionStyles.Any);
+				return semver1.CompareSortOrderTo(semver2);
+			}
 		}
 
 		/// <summary>
