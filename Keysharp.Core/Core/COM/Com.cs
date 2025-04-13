@@ -433,33 +433,7 @@ namespace Keysharp.Core.COM
 			return (long)Marshal.AddRef(unk);
 		}
 
-        /// <summary>
-        /// Returns an IntPtr that represents the given object.
-        /// The resulting GCHandle is allocated with GCHandleType.Normal,
-        /// so it must be freed later to avoid a leak.
-        /// </summary>
-        public static IntPtr ObjPtr(object obj)
-        {
-            if (obj == null)
-                throw new ArgumentNullException(nameof(obj));
-
-            // Allocate a GCHandle to create a "handle" to the managed object.
-            GCHandle handle = GCHandle.Alloc(obj, GCHandleType.Normal);
-            return GCHandle.ToIntPtr(handle);
-        }
-
-        /// <summary>
-        /// Given an IntPtr produced by ObjPtr, returns the original object.
-        /// </summary>
-        public static object ObjFromPtr(IntPtr ptr)
-        {
-            if (ptr == IntPtr.Zero)
-                return null;
-            GCHandle handle = GCHandle.FromIntPtr(ptr);
-            return handle.Target;
-        }
-
-        public static object ObjRelease(object ptr)
+		public static object ObjRelease(object ptr)
 		{
 			if (ptr is ComObject co)
 				ptr = co.Ptr;
@@ -547,7 +521,7 @@ namespace Keysharp.Core.COM
 			else if (helper.ReturnType == typeof(string))
 			{
 				var str = Marshal.PtrToStringUni((nint)value);
-				_ = Strings.FreeStrPtr(value);//If this string came from us, it will be freed, else no action.
+				_ = Objects.ObjFree(value);//If this string came from us, it will be freed, else no action.
 				return str;
 			}
 

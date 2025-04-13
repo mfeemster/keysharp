@@ -265,12 +265,12 @@
 				index--;
 
 				if (index < funcParams.Length)
-					return funcParams[index].ParameterType.IsByRef || funcParams[index].ParameterType == typeof(Misc.VarRef);
+					return funcParams[index].ParameterType.IsByRef || funcParams[index].ParameterType == typeof(VarRef);
 			}
 			else
 			{
 				for (var i = 0; i < funcParams.Length; i++)
-					if (funcParams[i].ParameterType.IsByRef || funcParams[index].ParameterType == typeof(Misc.VarRef))
+					if (funcParams[i].ParameterType.IsByRef || funcParams[index].ParameterType == typeof(VarRef))
 						return true;
 			}
 

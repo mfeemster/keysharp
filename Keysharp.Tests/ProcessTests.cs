@@ -8,7 +8,7 @@ namespace Keysharp.Tests
 		[Test, Category("Process")]
 		public void ProcessRunWaitClose()
 		{
-			Misc.VarRef pid = new(null);
+			VarRef pid = new(null);
 #if WINDOWS
 			_ = Run("notepad.exe", "", "max", pid);
 			_ = ProcessWait(pid.__Value);

@@ -118,5 +118,55 @@
 
 			return Errors.ErrorOccurred(err = new Error($"Object of type {obj0.GetType()} was not of type KeysharpObject.")) ? throw err : null;
 		}
+
+		/// <summary>
+		/// Returns an IntPtr that represents the given object.
+		/// The resulting GCHandle is allocated with GCHandleType.Normal,
+		/// so it must be freed later to avoid a leak.
+		/// </summary>
+		public static IntPtr ObjPtr(object obj)
+		{
+			if (obj == null)
+				return 0;
+
+			// Allocate a GCHandle to create a "handle" to the managed object.
+			GCHandle handle = GCHandle.Alloc(obj, GCHandleType.Normal);
+			return GCHandle.ToIntPtr(handle);
+		}
+
+		/// <summary>
+		/// Given an IntPtr produced by ObjPtr, returns the original object.
+		/// </summary>
+		public static object ObjFromPtr(IntPtr ptr)
+		{
+			if (ptr == IntPtr.Zero)
+				return null;
+			GCHandle handle = GCHandle.FromIntPtr(ptr);
+			return handle.Target;
+		}
+
+		/// <summary>
+		/// Frees a managed C# object or string, allowing it to be garbage-collected.
+		/// </summary>
+		public static bool ObjFree(object value)
+		{
+			Error err;
+			nint ip;
+
+			if (value is nint nn)
+				ip = nn;
+			else if (value is long l)
+				ip = (nint)l;
+			else
+				return Errors.ErrorOccurred(err = new TypeError($"Argument of type {value.GetType()} was not a pointer.")) ? throw err : false;
+
+			if (Script.gcHandles.Remove(ip, out var oldGch))
+			{
+				oldGch.Free();
+				return true;
+			}
+			else
+				return false;
+		}
 	}
 }

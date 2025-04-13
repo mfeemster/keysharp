@@ -227,7 +227,7 @@ namespace Keysharp.Core
 		/// </summary>
 		public static long Run(object target, object workingDir = null, object options = null)
 		{
-			object pid = Misc.EmptyVarRef;
+			object pid = VarRef.Empty;
 			return Run(target, workingDir, options, pid, null);
 		}
 
@@ -377,7 +377,7 @@ namespace Keysharp.Core
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown on failure.</exception>
 		private static long RunInternal(string target, string workingDir, string showMode, object outputVarPID, string args, bool wait = false)
 		{
-			outputVarPID ??= Misc.EmptyVarRef;
+			outputVarPID ??= VarRef.Empty;
 			Error err;
 			var pid = 0;
 			var useRunAs = RunAsSpecified();

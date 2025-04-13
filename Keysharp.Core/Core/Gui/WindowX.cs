@@ -561,7 +561,7 @@ namespace Keysharp.Core
 											 object excludeTitle = null,
 											 object excludeText = null)
 		{
-            outX ??= Misc.EmptyVarRef; outY ??= Misc.EmptyVarRef; outWidth ??= Misc.EmptyVarRef; outHeight ??= Misc.EmptyVarRef;
+            outX ??= VarRef.Empty; outY ??= VarRef.Empty; outWidth ??= VarRef.Empty; outHeight ??= VarRef.Empty;
             object valX = Script.GetPropertyValue(outX, "__Value"), valY = Script.GetPropertyValue(outY, "__Value"), valWidth = Script.GetPropertyValue(outWidth, "__Value"), valHeight = Script.GetPropertyValue(outHeight, "__Value");
             WinPosHelper(true, ref outX, ref outY, ref outWidth, ref outHeight, winTitle, winText, excludeTitle, excludeText);
             Script.SetPropertyValue(outX, "__Value", valX); Script.SetPropertyValue(outY, "__Value", valY); Script.SetPropertyValue(outWidth, "__Value", valWidth); Script.SetPropertyValue(outHeight, "__Value", valHeight);
@@ -665,7 +665,7 @@ namespace Keysharp.Core
 									   object excludeTitle = null,
 									   object excludeText = null)
 		{
-            outX ??= Misc.EmptyVarRef; outY ??= Misc.EmptyVarRef; outWidth ??= Misc.EmptyVarRef; outHeight ??= Misc.EmptyVarRef;
+            outX ??= VarRef.Empty; outY ??= VarRef.Empty; outWidth ??= VarRef.Empty; outHeight ??= VarRef.Empty;
             object valX = Script.GetPropertyValue(outX, "__Value"), valY = Script.GetPropertyValue(outY, "__Value"), valWidth = Script.GetPropertyValue(outWidth, "__Value"), valHeight = Script.GetPropertyValue(outHeight, "__Value");
 
             WinPosHelper(false, ref outX, ref outY, ref outWidth, ref outHeight, winTitle, winText, excludeTitle, excludeText);

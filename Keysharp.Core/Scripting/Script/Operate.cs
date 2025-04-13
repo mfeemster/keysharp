@@ -368,7 +368,7 @@ namespace Keysharp.Scripting
 					if (right == null)
 						return Errors.ErrorOccurred(err = new UnsetError("Right side operand of regular expression was null.")) ? throw err : null;
 
-                        Misc.VarRef outvar = new Misc.VarRef(null);
+                        VarRef outvar = new VarRef(null);
 						_ = RegEx.RegExMatch(ForceString(left), ForceString(right), outvar, 1);
 						return outvar.__Value;
 					}

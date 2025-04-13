@@ -366,7 +366,7 @@
 
 				case 4:
 				{
-                    Misc.VarRef outvar = new Misc.VarRef(null);
+					VarRef outvar = new VarRef(null);
 					_ = RegEx.RegExMatch(a, b, outvar, 1);
 					RegExResults output = (RegExResults)(outvar.__Value);
 					return output.Count.Ai() > 0 && !string.IsNullOrEmpty(output[0]);

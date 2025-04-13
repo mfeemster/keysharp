@@ -13,7 +13,7 @@
 		/// </summary>
 		public static long RegExMatch(object haystack, object needle)
 		{
-			object outvar = new Misc.VarRef(null);
+			object outvar = new VarRef(null);
 			return RegExMatch(haystack, needle, outvar, null);
 		}
 
@@ -108,7 +108,7 @@
 		/// </summary>
 		public static string RegExReplace(object haystack, object needleRegEx, object replacement = null)
 		{
-			object outputVarCount = new Misc.VarRef(null);
+			object outputVarCount = new VarRef(null);
 			return RegExReplace(haystack, needleRegEx, replacement, outputVarCount);
 		}
 

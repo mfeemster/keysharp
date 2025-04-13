@@ -87,7 +87,7 @@ namespace Keysharp.Core
 		public static bool CaretGetPos([Optional()][DefaultParameterValue(null)] object outputVarX,
 									   [Optional()][DefaultParameterValue(null)] object outputVarY)
 		{
-			outputVarX ??= Misc.EmptyVarRef; outputVarY ??= Misc.EmptyVarRef;
+			outputVarX ??= VarRef.Empty; outputVarY ??= VarRef.Empty;
             // I believe only the foreground window can have a caret position due to relationship with focused control.
             var targetWindow = WindowsAPI.GetForegroundWindow(); // Variable must be named targetwindow for ATTACH_THREAD_INPUT.
 

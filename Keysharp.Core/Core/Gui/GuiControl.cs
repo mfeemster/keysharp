@@ -1828,7 +1828,7 @@
 
 		internal static void GetPosHelper(Control control, bool scaling, bool client, object outX, object outY, object outWidth, object outHeight)
 		{
-            outX ??= Misc.EmptyVarRef; outY ??= Misc.EmptyVarRef; outWidth ??= Misc.EmptyVarRef; outHeight ??= Misc.EmptyVarRef;
+            outX ??= VarRef.Empty; outY ??= VarRef.Empty; outWidth ??= VarRef.Empty; outHeight ??= VarRef.Empty;
             var rect = client ? control.ClientRectangle : control.Bounds;
 
 			if (!scaling)

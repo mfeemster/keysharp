@@ -234,7 +234,7 @@ namespace Keysharp.Core
 										 [Optional()][DefaultParameterValue(null)] object outputVarControl,
 										 object flag = null)
 		{
-			outputVarX ??= EmptyVarRef; outputVarY ??= EmptyVarRef; outputVarWin ??= EmptyVarRef; outputVarControl ??= EmptyVarRef;
+			outputVarX ??= VarRef.Empty; outputVarY ??= VarRef.Empty; outputVarWin ??= VarRef.Empty; outputVarControl ??= VarRef.Empty;
 			var mode = flag.Al(0L);
 			var pos = Cursor.Position;
 			var aX = 0;

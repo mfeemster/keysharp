@@ -458,13 +458,13 @@ namespace Keysharp.Tests
 			var dir = string.Concat(path, "DirCopy");
 			Dir.DirCopy(dir, "./FileGetShortcut/");
 			var patharg = Path.GetDirectoryName(Path.GetFullPath("./FileGetShortcut/file1.txt"));
-			Misc.VarRef outTarget = new(null);
-            Misc.VarRef outDir = new(null);
-            Misc.VarRef outArgs = new(null);
-            Misc.VarRef outDescription = new(null);
-            Misc.VarRef outIcon = new(null);
-            Misc.VarRef outIconNum = new(null);
-            Misc.VarRef outRunState = new(null);
+			VarRef outTarget = new(null);
+            VarRef outDir = new(null);
+            VarRef outArgs = new(null);
+            VarRef outDescription = new(null);
+            VarRef outIcon = new(null);
+            VarRef outIconNum = new(null);
+            VarRef outRunState = new(null);
 #if LINUX
 			//Test creating a basic symlink first on linux.
 			Keysharp.Core.Files.FileCreateShortcut
@@ -491,13 +491,13 @@ namespace Keysharp.Tests
 			if (System.IO.File.Exists("./testshortcut.lnk"))
 				System.IO.File.Delete("./testshortcut.lnk");
 
-			Misc.VarRef outTarget = new(null);
-            Misc.VarRef outDir = new(null);
-            Misc.VarRef outArgs = new(null);
-            Misc.VarRef outDescription = new(null);
-            Misc.VarRef outIcon = new(null);
-            Misc.VarRef outIconNum = new(null);
-            Misc.VarRef outRunState = new(null);
+			VarRef outTarget = new(null);
+            VarRef outDir = new(null);
+            VarRef outArgs = new(null);
+            VarRef outDescription = new(null);
+            VarRef outIcon = new(null);
+            VarRef outIconNum = new(null);
+            VarRef outRunState = new(null);
 #endif
             Files.FileCreateShortcut
 			(
@@ -1080,11 +1080,11 @@ groupkey13=groupval13
 		public void SplitPath()
 		{
 			var fullpath = string.Concat(path, "DirCopy/file1.txt");
-			Misc.VarRef filename = new(null);
-            Misc.VarRef dir = new(null);
-            Misc.VarRef ext = new(null);
-            Misc.VarRef namenoext = new(null);
-            Misc.VarRef drive = new(null);
+			VarRef filename = new(null);
+            VarRef dir = new(null);
+            VarRef ext = new(null);
+            VarRef namenoext = new(null);
+            VarRef drive = new(null);
 			Dir.SplitPath(fullpath, filename, dir, ext, namenoext, drive);
 			Assert.AreEqual("file1.txt", filename.__Value);
 			Assert.AreEqual("txt", ext.__Value);

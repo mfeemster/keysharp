@@ -273,7 +273,7 @@ namespace Keysharp.Tests
 		[Test, Category("String")]
 		public void RegExMatch()
 		{
-			Misc.VarRef match = new Misc.VarRef(null);
+			VarRef match = new VarRef(null);
 			_ = RegEx.RegExMatch("abc123abc456", "abc\\d+", match, 1);
 			Assert.AreEqual(((RegExResults)match.__Value)[0], "abc123");
 			Assert.AreEqual(((RegExResults)match.__Value).Pos(), 1);
@@ -321,7 +321,7 @@ namespace Keysharp.Tests
 		[Test, Category("String")]
 		public void RegExReplace()
 		{
-            Misc.VarRef outputVarCount = new(null);
+            VarRef outputVarCount = new(null);
 			var match = RegEx.RegExReplace("abc123123", "123$", "xyz");
 			Assert.AreEqual(match, "abc123xyz");
 			match = RegEx.RegExReplace("abc123", "i)^ABC");
@@ -563,7 +563,7 @@ namespace Keysharp.Tests
 		{
 			var x = "a,b,c,d,e,f";//Can't test the ref var which holds the count here because those must be global. However it is tested in the script.
 			var y = Strings.StrReplace(x, ",");
-            Misc.VarRef outputVarCount = new(0L);
+            VarRef outputVarCount = new(0L);
 			Assert.AreEqual("abcdef", y);
 			y = Strings.StrReplace(x, ",", "");
 			Assert.AreEqual("abcdef", y);

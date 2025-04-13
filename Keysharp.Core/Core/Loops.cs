@@ -505,7 +505,7 @@ namespace Keysharp.Core
 			if (numOfVars == 0)
 			{
 				object temp = null;
-				args = new object[] { new Misc.VarRef(() => temp, (v) => temp = v) };
+				args = new object[] { new VarRef(() => temp, (v) => temp = v) };
 				while (ke.Call(args).IsCallbackResultNonEmpty())
 					yield return temp;
 			}

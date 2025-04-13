@@ -202,11 +202,11 @@
 		/// </summary>
 		public static object SplitPath(object obj)
 		{
-			Misc.VarRef outFileName = new(null);
-            Misc.VarRef outDir = new(null);
-            Misc.VarRef outExtension = new(null);
-            Misc.VarRef outNameNoExt = new(null);
-            Misc.VarRef outDrive = new(null);
+			VarRef outFileName = new(null);
+            VarRef outDir = new(null);
+            VarRef outExtension = new(null);
+            VarRef outNameNoExt = new(null);
+            VarRef outDrive = new(null);
 			return SplitPath(obj, outFileName, outDir, outExtension, outNameNoExt, outDrive);
 		}
 
@@ -215,10 +215,10 @@
 		/// </summary>
 		public static object SplitPath(object obj, ref object outFileName)
 		{
-            Misc.VarRef outDir = new(null);
-            Misc.VarRef outExtension = new(null);
-            Misc.VarRef outNameNoExt = new(null);
-            Misc.VarRef outDrive = new(null);
+            VarRef outDir = new(null);
+            VarRef outExtension = new(null);
+            VarRef outNameNoExt = new(null);
+            VarRef outDrive = new(null);
             return SplitPath(obj, outFileName, outDir, outExtension, outNameNoExt, outDrive);
 		}
 
@@ -227,9 +227,9 @@
 		/// </summary>
 		public static object SplitPath(object obj, ref object outFileName, ref object outDir)
 		{
-            Misc.VarRef outExtension = new(null);
-            Misc.VarRef outNameNoExt = new(null);
-            Misc.VarRef outDrive = new(null);
+            VarRef outExtension = new(null);
+            VarRef outNameNoExt = new(null);
+            VarRef outDrive = new(null);
             return SplitPath(obj, outFileName, outDir, outExtension, outNameNoExt, outDrive);
 		}
 
@@ -238,8 +238,8 @@
 		/// </summary>
 		public static object SplitPath(object obj, ref object outFileName, ref object outDir, ref object outExtension)
 		{
-            Misc.VarRef outNameNoExt = new(null);
-            Misc.VarRef outDrive = new(null);
+            VarRef outNameNoExt = new(null);
+            VarRef outDrive = new(null);
             return SplitPath(obj, outFileName, outDir, outExtension, outNameNoExt, outDrive);
 		}
 
@@ -248,7 +248,7 @@
 		/// </summary>
 		public static object SplitPath(object obj, ref object outFileName, ref object outDir, ref object outExtension, ref object outNameNoExt)
 		{
-            Misc.VarRef outDrive = new(null);
+            VarRef outDrive = new(null);
             return SplitPath(obj, outFileName, outDir, outExtension, outNameNoExt, outDrive);
 		}
 
@@ -278,7 +278,7 @@
 		/// </param>
 		public static object SplitPath(object path, object outFileName, object outDir, object outExtension, object outNameNoExt, object outDrive)
 		{
-			outFileName ??= Misc.EmptyVarRef; outDir ??= Misc.EmptyVarRef; outExtension ??= Misc.EmptyVarRef; outNameNoExt ??= Misc.EmptyVarRef; outDrive ??= Misc.EmptyVarRef;
+			outFileName ??= VarRef.Empty; outDir ??= VarRef.Empty; outExtension ??= VarRef.Empty; outNameNoExt ??= VarRef.Empty; outDrive ??= VarRef.Empty;
 
             var p = path.As();
 

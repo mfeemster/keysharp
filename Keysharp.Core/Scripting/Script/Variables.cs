@@ -302,7 +302,7 @@ namespace Keysharp.Scripting
 							return;
 						}
 
-						vars[s] = new Misc.VarRef(null);
+						vars[s] = new VarRef(null);
                     }
 				}
             }

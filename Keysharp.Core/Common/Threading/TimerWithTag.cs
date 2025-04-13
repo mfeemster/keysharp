@@ -4,7 +4,7 @@
     {
         [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
         public object Tag { get; set; }
-        public TimerWithTag()
+		public TimerWithTag()
             : base() { }
 
         public TimerWithTag(double interval)

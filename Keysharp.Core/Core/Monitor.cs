@@ -61,7 +61,7 @@
 		/// <returns>The monitor number which is the same as n unless n was omitted.</returns>
 		public static object MonitorGet(object n, object left, object top, object right, object bottom)
 		{
-			left ??= Misc.EmptyVarRef; top ??= Misc.EmptyVarRef; right ??= Misc.EmptyVarRef; bottom ??= Misc.EmptyVarRef;
+			left ??= VarRef.Empty; top ??= VarRef.Empty; right ??= VarRef.Empty; bottom ??= VarRef.Empty;
 			var monitorIndex = n.Al(-1L);
 			System.Windows.Forms.Screen screen;
 

@@ -7,7 +7,7 @@ namespace Keysharp.Tests
 		[Test, Category("Monitor")]
 		public void MonitorGet()
 		{
-			Misc.VarRef l = new(null), t = new(null), r = new(null), b = new(null);
+			VarRef l = new(null), t = new(null), r = new(null), b = new(null);
 			var monget = Core.Monitor.MonitorGet(null, l, t, r, b);
 			Assert.IsTrue(l.__Value.Ai() >= 0);
 			Assert.IsTrue(r.__Value.Ai() >= 0);
@@ -49,7 +49,7 @@ namespace Keysharp.Tests
 		[Test, Category("Monitor")]
 		public void MonitorGetWorkArea()
 		{
-			Misc.VarRef l = new(null), t = new(null), r = new(null), b = new(null);
+			VarRef l = new(null), t = new(null), r = new(null), b = new(null);
 			var monget = Core.Monitor.MonitorGetWorkArea(null, l, t, r, b);
 			Assert.IsTrue(l.__Value.Ai() >= 0);
 			Assert.IsTrue(r.__Value.Ai() >= 0);

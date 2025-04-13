@@ -509,33 +509,6 @@ namespace Keysharp.Core
 		}
 
 		/// <summary>
-		/// Frees an object that was pinned by <see cref="StrPtr"/>.
-		/// </summary>
-		/// <param name="value">The address of the object to free.</param>
-		/// <returns>True if value was found and freed, else false.</returns>
-		/// <exception cref="TypeError">A <see cref="TypeError"/> exception is thrown if value is not of type <see cref="IntPtr"/> or <see cref="long"/>.</exception>
-		public static bool FreeStrPtr(object value)
-		{
-			Error err;
-			nint ip;
-
-			if (value is nint nn)
-				ip = nn;
-			else if (value is long l)
-				ip = (nint)l;
-			else
-				return Errors.ErrorOccurred(err = new TypeError($"Argument of type {value.GetType()} was not a pointer.")) ? throw err : false;
-
-			if (Script.gcHandles.Remove(ip, out var oldGch))
-			{
-				oldGch.Free();
-				return true;
-			}
-			else
-				return false;
-		}
-
-		/// <summary>
 		/// Searches for a given occurrence of a string, from the left or the right.
 		/// </summary>
 		/// <param name="haystack">The string whose content is searched.</param>
@@ -1126,7 +1099,7 @@ namespace Keysharp.Core
 		/// Returns the current memory address of a string.
 		/// Note, this does not actually point to the string. Instead, it
 		/// points to a copy of the bytes of the string.
-		/// Note, the caller will have to manually free the returned pointer by calling FreeStrPtr.
+		/// Note, the caller will have to manually free the returned pointer by calling ObjFree.
 		/// </summary>
 		/// <param name="value">The string to return a pointer to.</param>
 		/// <returns>The memory address of a copy of the string bytes.</returns>
@@ -1248,7 +1221,7 @@ namespace Keysharp.Core
 		public static string StrReplace(object haystack, object needle, object replaceText = null, object caseSense = null)
 		{
 			object obj4 = null;
-			object outputVarCount = new Misc.VarRef(null);
+			object outputVarCount = new VarRef(null);
 			return StrReplace(haystack, needle, replaceText, caseSense, outputVarCount, obj4);
 		}
 

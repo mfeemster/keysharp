@@ -961,7 +961,7 @@
                 // If only one variable is passed, return just the value.
                 if (args.Length == 1)
                 {
-                    if (args[0] is Misc.VarRef arg2)
+                    if (args[0] is VarRef arg2)
                         arg2.__Value = Current.Item1;
                     else
                         Script.SetPropertyValue(args[0], "__Value", Current.Item1);
@@ -970,11 +970,11 @@
                 else
                 {
                     var (pos, val) = Current;
-                    if (args[0] is Misc.VarRef arg1)
+                    if (args[0] is VarRef arg1)
 						arg1.__Value = pos;
 					else
                         Script.SetPropertyValue(args[0], "__Value", pos);
-					if (args[1] is Misc.VarRef arg2)
+					if (args[1] is VarRef arg2)
 						arg2.__Value = val;
 					else
                         Script.SetPropertyValue(args[1], "__Value", val);

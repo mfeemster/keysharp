@@ -6,7 +6,7 @@ namespace Keysharp.Core.Common.Invoke
         internal object[] args;
         internal string[] names;
         internal Type[] types;
-		internal Dictionary<int, object> refs = new();
+        internal Dictionary<int, object> refs = new();
 
         internal DllArgumentHelper(object[] parameters)
             : base(parameters)

@@ -334,7 +334,7 @@ namespace Keysharp.Core
 					else if (comHelper.ReturnType == typeof(string))
 					{
 						var str = Marshal.PtrToStringUni((nint)value);
-						_ = Strings.FreeStrPtr(value);//If this string came from us, it will be freed, else no action.
+						_ = Objects.ObjFree(value);//If this string came from us, it will be freed, else no action.
 						return str;
 					}
 

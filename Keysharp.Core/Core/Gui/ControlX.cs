@@ -218,7 +218,7 @@
 										   object excludeTitle = null,
 										   object excludeText = null)
 		{
-			outX ??= Misc.EmptyVarRef; outY ??= Misc.EmptyVarRef; outWidth ??= Misc.EmptyVarRef; outHeight ??= Misc.EmptyVarRef;
+			outX ??= VarRef.Empty; outY ??= VarRef.Empty; outWidth ??= VarRef.Empty; outHeight ??= VarRef.Empty;
 			object valX = Script.GetPropertyValue(outX, "__Value"), valY = Script.GetPropertyValue(outY, "__Value"), valWidth = Script.GetPropertyValue(outWidth, "__Value"), valHeight = Script.GetPropertyValue(outHeight, "__Value");
 
             ControlProvider.Manager.ControlGetPos(

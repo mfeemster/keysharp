@@ -106,7 +106,7 @@ namespace Keysharp.Core
 		public static object ImageSearch(object outX, object outY, object x1, object y1, object x2, object y2, object imageFile, object options = null)
 		{
 			Error err;
-            outX ??= Misc.EmptyVarRef; outY ??= Misc.EmptyVarRef;
+            outX ??= VarRef.Empty; outY ??= VarRef.Empty;
             var _x1 = x1.Ai();
 			var _y1 = y1.Ai();
 			var _x2 = x2.Ai();
@@ -260,7 +260,7 @@ namespace Keysharp.Core
 		public static long PixelSearch(object outX, object outY, object obj0, object obj1, object obj2, object obj3, object obj4, object obj5 = null)
 		{
 			Error err;
-			outX ??= Misc.EmptyVarRef; outY ??= Misc.EmptyVarRef;
+			outX ??= VarRef.Empty; outY ??= VarRef.Empty;
 			var x1 = obj0.Ai();
 			var y1 = obj1.Ai();
 			var x2 = obj2.Ai();

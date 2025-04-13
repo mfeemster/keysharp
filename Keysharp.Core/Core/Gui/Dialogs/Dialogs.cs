@@ -313,7 +313,7 @@ namespace Keysharp.Core
 				Prompt = p,
 				Title = t?.Length == 0 ? A_ScriptName : t
 			};
-			Misc.VarRef wl = new(null), wt = new(null), wr = new(null), wb = new(null);
+			VarRef wl = new(null), wt = new(null), wr = new(null), wb = new(null);
 			var workarea = Monitor.MonitorGetWorkArea(null, wl, wt, wr, wb);
 			var w = int.MinValue;
 			var h = int.MinValue;

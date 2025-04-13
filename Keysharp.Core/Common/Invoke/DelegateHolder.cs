@@ -14,7 +14,7 @@
 
 		public DelegateHolder(object obj, bool f, bool r)
 		{
-			funcObj = Functions.GetFuncObj(obj, null, true);
+			funcObj = Functions.GetFuncObj(obj, null, -1, true);
             if (funcObj is FuncObj fo)
                 paramCount = fo.MaxParams;
             fast = f;

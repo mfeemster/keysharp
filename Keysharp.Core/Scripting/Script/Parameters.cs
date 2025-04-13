@@ -23,7 +23,7 @@ namespace Keysharp.Scripting
 			{
 				var l = new List<object>();
 				object v1 = null;
-				Misc.VarRef vf = new Misc.VarRef(v1);
+				VarRef vf = new VarRef(v1);
 
 				while (ke.Call(vf).IsCallbackResultNonEmpty())
 					l.Add(vf.__Value);

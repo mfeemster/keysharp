@@ -518,13 +518,13 @@
 		/// </summary>
 		public static object FileGetShortcut(object obj)
 		{
-			object outTarget = Misc.EmptyVarRef;
-			object outDir = Misc.EmptyVarRef;
-			object outArgs = Misc.EmptyVarRef;
-			object outDescription = Misc.EmptyVarRef;
-			object outIcon = Misc.EmptyVarRef;
-			object outIconNum = Misc.EmptyVarRef;
-			object outRunState = Misc.EmptyVarRef;
+			object outTarget = VarRef.Empty;
+			object outDir = VarRef.Empty;
+			object outArgs = VarRef.Empty;
+			object outDescription = VarRef.Empty;
+			object outIcon = VarRef.Empty;
+			object outIconNum = VarRef.Empty;
+			object outRunState = VarRef.Empty;
 			return FileGetShortcut(obj,
 								   outTarget,
 								   outDir,
@@ -541,12 +541,12 @@
 		public static object FileGetShortcut(object obj,
 											 object outTarget)
 		{
-			object outDir = Misc.EmptyVarRef;
-			object outArgs = Misc.EmptyVarRef;
-			object outDescription = Misc.EmptyVarRef;
-			object outIcon = Misc.EmptyVarRef;
-			object outIconNum = Misc.EmptyVarRef;
-			object outRunState = Misc.EmptyVarRef;
+			object outDir = VarRef.Empty;
+			object outArgs = VarRef.Empty;
+			object outDescription = VarRef.Empty;
+			object outIcon = VarRef.Empty;
+			object outIconNum = VarRef.Empty;
+			object outRunState = VarRef.Empty;
 			return FileGetShortcut(obj,
 								   outTarget,
 								   outDir,
@@ -564,11 +564,11 @@
 											 object outTarget,
 											 object outDir)
 		{
-            object outArgs = Misc.EmptyVarRef;
-            object outDescription = Misc.EmptyVarRef;
-            object outIcon = Misc.EmptyVarRef;
-            object outIconNum = Misc.EmptyVarRef;
-            object outRunState = Misc.EmptyVarRef;
+            object outArgs = VarRef.Empty;
+            object outDescription = VarRef.Empty;
+            object outIcon = VarRef.Empty;
+            object outIconNum = VarRef.Empty;
+            object outRunState = VarRef.Empty;
             return FileGetShortcut(obj,
 								   outTarget,
 								   outDir,
@@ -587,10 +587,10 @@
 											 object outDir,
 											 object outArgs)
 		{
-            object outDescription = Misc.EmptyVarRef;
-            object outIcon = Misc.EmptyVarRef;
-            object outIconNum = Misc.EmptyVarRef;
-            object outRunState = Misc.EmptyVarRef;
+            object outDescription = VarRef.Empty;
+            object outIcon = VarRef.Empty;
+            object outIconNum = VarRef.Empty;
+            object outRunState = VarRef.Empty;
             return FileGetShortcut(obj,
 								   outTarget,
 								   outDir,
@@ -610,9 +610,9 @@
 											 object outArgs,
 											 object outDescription)
 		{
-            object outIcon = Misc.EmptyVarRef;
-            object outIconNum = Misc.EmptyVarRef;
-            object outRunState = Misc.EmptyVarRef;
+            object outIcon = VarRef.Empty;
+            object outIconNum = VarRef.Empty;
+            object outRunState = VarRef.Empty;
             return FileGetShortcut(obj,
 								   outTarget,
 								   outDir,
@@ -633,8 +633,8 @@
 											 object outDescription,
 											 object outIcon)
 		{
-            object outIconNum = Misc.EmptyVarRef;
-            object outRunState = Misc.EmptyVarRef;
+            object outIconNum = VarRef.Empty;
+            object outRunState = VarRef.Empty;
             return FileGetShortcut(obj,
 								   outTarget,
 								   outDir,
@@ -656,7 +656,7 @@
 											 object outIcon,
 											 object outIconNum)
 		{
-            object outRunState = Misc.EmptyVarRef;
+            object outRunState = VarRef.Empty;
             return FileGetShortcut(obj,
 								   outTarget,
 								   outDir,
