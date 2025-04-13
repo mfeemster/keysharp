@@ -9,7 +9,6 @@ namespace Keysharp.Core
 	/// </summary>
 	public static class Flow
 	{
-		internal static ConcurrentDictionary<string, IFuncObj> cachedFuncObj = new ();
 		internal static bool callingCritical;
 		internal static volatile bool hasExited;
 		internal static int IntervalUnspecified = int.MinValue + 303;// Use some negative value unlikely to ever be passed explicitly:
@@ -259,7 +258,7 @@ namespace Keysharp.Core
 		[PublicForTestOnly]
 		public static void ResetState()
 		{
-			cachedFuncObj = new ();
+			Functions.cachedFuncObj = new ();
 			MethodPropertyHolder.delegateCache = new();
             initializedUserStaticVariables = new(); // Technically belongs in Scripting.Script.Operate, but putting it here makes clearing it between test runs more maintainable
             callingCritical = false;
@@ -307,7 +306,7 @@ namespace Keysharp.Core
 			if (once)
 				p = -p;
 
-            func = TryGetCallable(f);
+            func = Functions.GetFuncObj(f);
 
 			if (f != null && func == null)
 			{
@@ -731,31 +730,6 @@ namespace Keysharp.Core
 				return false;
 			}
 		}
-
-        public static IFuncObj TryGetCallable(object f)
-        {
-            IFuncObj func = null;
-            if (f is IFuncObj fc)
-            {
-                func = fc;
-            }
-            else if (f is string s) // Cache string accesses to avoid multiple reflection calls
-            {
-                if (cachedFuncObj.TryGetValue(s, out var tempfunc))
-                    func = tempfunc;
-                else
-                    cachedFuncObj[s] = func = Functions.Func(s);
-            }
-            else if (f is Delegate del) // This could happen if a string is dereferenced to a built-in function name.
-            {
-                var n = del.Method.DeclaringType.FullName;
-                if (cachedFuncObj.TryGetValue(n, out var tempfunc))
-                    func = tempfunc;
-                else
-                    cachedFuncObj[n] = func = new FuncObj(del.Method);
-            }
-            return func;
-        }
 
         /// <summary>
         /// Special exception class to signal that the user has requested exiting the script

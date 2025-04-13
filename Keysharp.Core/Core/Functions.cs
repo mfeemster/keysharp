@@ -7,6 +7,8 @@ namespace Keysharp.Core
 	/// </summary>
 	public static class Functions
 	{
+		// Avoid creating new FuncObj objects for the same string/delegate
+		internal static ConcurrentDictionary<object, IFuncObj> cachedFuncObj = new(new CaseEqualityComp(eCaseSense.Off));
 		/// <summary>
 		/// Creates a function object by searching for a method within the script.
 		/// The search is done by matching the object type, name and parameter count.
@@ -160,7 +162,7 @@ namespace Keysharp.Core
 		/// <returns>An <see cref="IFuncObj"/> which may be a newly recreated one, or h if it was already one.</returns>
 		/// <exception cref="MethodError">A <see cref="MethodError"/> exception is thrown if a function object couldn't be created</exception>
 		/// <exception cref="TypeError">A <see cref="TypeError"/> exception is thrown if h was not a string or existing function object.</exception>
-		public static IFuncObj GetFuncObj(object h, object eventObj, object paramCount = null, bool throwIfBad = false)
+		public static IFuncObj GetFuncObj(object h, object eventObj = null, object paramCount = null, bool throwIfBad = false)
 		{
 			Error err;
 			IFuncObj del = null;
@@ -169,7 +171,7 @@ namespace Keysharp.Core
 			{
 				if (s.Length > 0)
 				{
-					var tempdel = new FuncObj(s, eventObj, paramCount);
+					var tempdel = cachedFuncObj.GetOrAdd(s, (key) => new FuncObj(s, eventObj, paramCount));
 
 					if (tempdel.IsValid)
 						del = tempdel;
@@ -188,7 +190,7 @@ namespace Keysharp.Core
 			}
 			else if (h is Delegate d)
 			{
-				var tempdel = new FuncObj(d, eventObj);
+				var tempdel = cachedFuncObj.GetOrAdd(d, (key) => new FuncObj(d, eventObj));
 
 				if (tempdel.IsValid)
 					del = tempdel;

@@ -184,7 +184,7 @@ namespace Keysharp.Scripting
 			public bool HasVariable(string key) =>
 				globalVars.ContainsKey(key)
 				|| Reflections.flatPublicStaticProperties.ContainsKey(key)
-				|| Flow.cachedFuncObj.ContainsKey(key);
+				|| Reflections.flatPublicStaticMethods.ContainsKey(key);
 
             public object GetVariable(string key)
 			{
@@ -200,7 +200,7 @@ namespace Keysharp.Scripting
 				if (rv != null)
 					return rv;
 
-				return Flow.TryGetCallable(key);
+				return Functions.GetFuncObj(key);
 
             }
 
