@@ -455,7 +455,10 @@ namespace Keysharp.Scripting
 
         public override SyntaxNode VisitDynamicIdentifier([NotNull] DynamicIdentifierContext context)
         {
+            var dynVar = (ExpressionSyntax)CreateDynamicVariableString(context);
+
             parser.currentFunc.HasDerefs = true;
+
             // In this case we have a identifier composed of identifier parts and dereference expressions
             // such as a%b%. CreateDynamicVariableAccessor will return string.Concat<object>(new object[] {"a", b), so
             // to turn it into an identifier we need to wrap it in Keysharp.Scripting.Script.Vars[]
@@ -470,7 +473,7 @@ namespace Keysharp.Scripting
                 ,
                 SyntaxFactory.BracketedArgumentList(
                     SyntaxFactory.SingletonSeparatedList(
-                        SyntaxFactory.Argument((ExpressionSyntax)CreateDynamicVariableString(context))
+                        SyntaxFactory.Argument(dynVar)
                     )
                 )
             );

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Windows.Forms;
 using Keysharp.Core;
+using Keysharp.Core.Windows;
 
 namespace Keysharp.Scripting
 {
@@ -267,6 +268,35 @@ namespace Keysharp.Scripting
 
 			return Errors.ErrorOccurred(err = new Error($"Attempting to get static method {name} failed.")) ? throw err : (null, null);
 		}
+
+		internal static object InvokeMeta(object obj, string meth)
+		{
+			try { 
+				var mitup = GetMethodOrProperty(obj, meth, -1);
+
+				if (mitup.Item2 is MethodPropertyHolder mph)
+					return mph.callFunc(mitup.Item1, null);
+				else if (mitup.Item2 is IFuncObj ifo2)
+				{
+					if (mitup.Item1 == null) // __Call was found
+						return null;
+					return ifo2.Call(mitup.Item1);
+				}
+				else if (mitup.Item2 is KeysharpObject kso)
+				{
+					return Invoke(kso, "Call", obj);
+				}
+			}
+            catch (Exception e)
+            {
+				if (e.InnerException is KeysharpException ke)
+					throw ke;
+				else
+					throw;
+            }
+
+            throw new MemberError($"Attempting to invoke method or property {meth} failed.");
+}
 
         public static object Invoke(object obj, object meth, params object[] parameters)
         {

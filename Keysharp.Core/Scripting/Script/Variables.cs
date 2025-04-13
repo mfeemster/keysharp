@@ -276,12 +276,20 @@ namespace Keysharp.Scripting
 				{
 					get
 					{
+						if (key is KeysharpObject)
+							return GetPropertyValue(key, "__Value");
 						if (vars.TryGetValue(key.ToString(), out var val))
 							return GetPropertyValue(val, "__Value");
 						return Vars[key];
 					}
 					set
 					{
+						if (key is KeysharpObject)
+						{
+							SetPropertyValue(key, "__Value", value);
+							return;
+						}
+
 						var s = key.ToString();
 						if (vars.TryGetValue(s, out var val))
 						{

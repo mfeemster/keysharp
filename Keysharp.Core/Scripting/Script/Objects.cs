@@ -182,10 +182,16 @@ namespace Keysharp.Scripting
                 foreach (var nestedType in nestedTypes)
                 {
                     RuntimeHelpers.RunClassConstructor(nestedType.TypeHandle);
-                    Script.Variables.Statics[t].DefineProp(nestedType.Name, Collections.Map("value", Variables.Statics[nestedType]));
+                    Script.Variables.Statics[t].DefineProp(nestedType.Name, 
+						Collections.Map(
+							"get", new FuncObj((params object[] args) => Variables.Statics[nestedType]),
+							"call", new FuncObj((object @this, params object[] args) => Script.Invoke(Variables.Statics[nestedType], "Call", args))
+						)
+					);
                 }
-                Script.Invoke(Script.Variables.Statics[t], "__Init");
-                Script.Invoke(Script.Variables.Statics[t], "__New");
+
+                Script.InvokeMeta(Script.Variables.Statics[t], "__Init");
+                Script.InvokeMeta(Script.Variables.Statics[t], "__New");
             }
         }
         public static object Index(object item, params object[] index) => item == null ? null : IndexAt(item, index);
