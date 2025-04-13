@@ -14,8 +14,8 @@ namespace Keysharp.Core
 		/// An optimization is to keep a cache of these objects, keyed by the exact function name and argument types.<br/>
 		/// Doing this saves significant time when doing repeated calls to the same DLL function with the same argument types.
 		/// </summary>
-		private static readonly ConcurrentDictionary<string, DllCache> dllCache = new();
-		private static readonly ConcurrentDictionary<int, Func<IntPtr, long[], long>> delegateCache = new();
+		private static readonly ConcurrentDictionary<string, DllCache> dllCache = new ();
+		private static readonly ConcurrentDictionary<int, Func<IntPtr, long[], long>> delegateCache = new ();
 
 		/// <summary>
 		/// Creates a <see cref="DelegateHolder"/> object that wraps a <see cref="FuncObj"/>.
@@ -367,12 +367,11 @@ namespace Keysharp.Core
 			//  - IntPtr: the function pointer,
 			//  - long[]: the array of arguments.
 			DynamicMethod dm = new DynamicMethod(
-			"DynamicDllCall_" + n,
-			typeof(long),
-			new[] { typeof(IntPtr), typeof(long[]) },
-			typeof(Dll).Module,
-			skipVisibility: true);
-
+				"DynamicDllCall_" + n,
+				typeof(long),
+				new[] { typeof(IntPtr), typeof(long[]) },
+				typeof(Dll).Module,
+				skipVisibility: true);
 			ILGenerator il = dm.GetILGenerator();
 
 			// Unroll the loading of n arguments from the array.
@@ -388,15 +387,12 @@ namespace Keysharp.Core
 
 			// Load the function pointer from the first parameter (IntPtr).
 			il.Emit(OpCodes.Ldarg_0);
-
 			// Build an array of parameter types (n longs).
 			Type[] paramTypes = Enumerable.Repeat(typeof(long), n).ToArray();
-
 			// Emit a calli instruction to call the unmanaged function.
 			// This assumes a StdCall calling convention and that the function returns a long.
 			il.EmitCalli(OpCodes.Calli, CallingConvention.StdCall, typeof(long), paramTypes);
 			il.Emit(OpCodes.Ret);
-
 			return (Func<IntPtr, long[], long>)dm.CreateDelegate(typeof(Func<IntPtr, long[], long>));
 		}
 
@@ -484,7 +480,7 @@ namespace Keysharp.Core
 					}
 					else if (p0 is string ps)
 					{
-						if (ps[^1] == '*' || ps[^1] == 'p')
+						if (ps[ ^ 1] == '*' || ps[ ^ 1] == 'p')
 						{
 							var arg = args[ai];
 

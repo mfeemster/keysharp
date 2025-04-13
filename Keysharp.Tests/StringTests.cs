@@ -311,7 +311,7 @@ namespace Keysharp.Tests
 			Assert.AreEqual(((RegExResults)match)[0], "txt");
 			Assert.AreEqual(((RegExResults)match).Pos(), 16);
 			_ = RegEx.RegExMatch("Michiganroad 72", @"(.*) (?<nr>\d+)", ref match);
-			Assert.AreEqual(((RegExResults)match).Count, 2);
+			Assert.AreEqual(((RegExResults)match).Count, 3);
 			Assert.AreEqual(((RegExResults)match)[1], "Michiganroad");
 			Assert.AreEqual(((RegExResults)match).Name(2), "nr");
 			Assert.AreEqual(((RegExResults)match)[2], "72");

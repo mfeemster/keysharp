@@ -4163,6 +4163,12 @@ namespace Keysharp.Core.Windows
 				repeatCount = x;
 				x = CoordUnspecified;
 			}
+			else if (x == CoordUnspecified && y == CoordUnspecified)//Neither was specified, so just use the cursor position.
+			{
+				var pos = Cursor.Position;
+				x = pos.X;
+				y = pos.Y;
+			}
 		}
 
 		internal void ResetHook(bool allModifiersUp = false, HookType whichHook = HookType.Keyboard | HookType.Mouse, bool resetKVKandKSC = false)
