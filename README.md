@@ -74,7 +74,7 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 	+ Keysharp breaks this and will instead create a variable, initialize it to zero, then increment it.
 	+ For example, a file with nothing but the line `x++` in it, will end with a variable named x which has the value of 1.
 * Function objects behave differently in a few ways.
-	+ The underlying function object class is named `FuncObj`. This was named so, instead of `Func`, because C# already contains a built in class named `Func`.
+	+ The underlying function object class is named `FuncObj`. This was named so, instead of `Func`, because C# already contains a built in class named `Func`. `MsgBox is Func` is still supported though, as is `MsgBox is FuncObj`.
 	+ Function objects can be created by passing the name of the function as as a direct reference or as a string to `Func()`.
 	+ This can be done by passing the name of the desired function as a direct reference or as a string, and optionally an object and a parameter count like so:
 		+ `Func(functionName [, object, paramCount])`.
@@ -89,18 +89,22 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 	SetTimer(Func(Func1)) ; Pass a direct reference to the function as an argument to Func().
 	SetTimer(Func("Func1")) ; Pass the name of the function as an argument to Func().
 ```
-* Closures are not supported. The current behaviour is that a nested function (including anonymous functions) is automatically converted to a normal top-level function.
 * Exception classes aren't, and can't be, derived from `KeysharpObject`.
 	+ That is because for the exception mechanics to work in C#, all exception objects must be derived from the base `System.Exception` class, and multiple inheritance is not allowed.
 	+ User-defined exception classes must derive from `Error`.
-	+ Catch statements with multiple exception classes listed on a single line will parse, but will not generate the expected functionality.
-		+ List each exception type separately to work around this.
+	+ `Error is Error` evaluates to false, because currently `Error()` is implemented as a function, which is a `FuncObj`. `UserDefinedError is Error` evaluates to true.
+* `StrPtr()` works slightly differently because C# strings are constant.
+	+ `StrPtr(variable)` returns a custom `StringBuffer` object which is entangled with the original string. When this object is used with DllCall, NumPut etc, then the `StringBuffer` is used as the pointer, and the entangled string is updated after the function call. 
+	+ `StrPtr("literal")` with a literal string will pin the string from garbage collection and return the actual address of the string. This string must not be modified, and should be freed after use with `ObjFree()`.
+	+ Instead of `StrPtr` it is recommended to use a `StringBuffer` instance instead.
 * `CallbackCreate()` does not support the `CDecl/C` option because the program will be run in 64-bit mode.
 	+ The `paramCount` parameter is unused. The callback that gets created supports passing up to 31 parameters and the number that actually gets passed is adjusted internally.
-	+ Passing string pointers to `DllCall()` when passing a created callback is strongly recommended against. This is because the string pointer cannot remain pinned, and is likely to crash the program if the pointer gets moved by the GC.
+	+ Passing string pointers to `DllCall()` when passing a created callback is recommended against. See explanation above under `StrPtr()`.
 	+ Usage of the created callback will be extremely inefficient, so usage of `CallbackCreate()` is discouraged.
 * Deleting a tab via `GuiCtrl.Delete()` does not reassociate the controls that it contains with the next tab. Instead, they are all deleted.
 * The size and positioning of some GUI components will be slightly different than AHK because WinForms uses different defaults.
+	+ There is an additional positioning option `xc` and `yc` which position the control relative to the container. For example inside a tab `xc+10` would position the control 10 pixels from the left side of the tab control. 
+	+ GroupBoxes can be used as containers by calling `GuiObj.UseGroup(groupbox)`, and to exit the group call `GuiObj.UseGroup()`.
 * The class name for statusbar/statusstrip objects created by Keysharp is "WindowsForms10.Window.8.app.0.2b89eaa_r3_ad1". However, for accessing a statusbar created by another, non .NET program, the class name is still "msctls_statusbar321".
 * Using the class name with `ClassNN` on .NET controls gives long, version specific names such as "WindowsForms10.Window.8.app.0.2b89eaa_r3_ad1" for a statusbar/statusstrip.
 	+ This is because a simpler class names can't be specified in code the way they can in AHK with calls to `CreatWindowEx()`.
@@ -110,11 +114,6 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 	+ `NetClassNN` will give values like 'KeysharpButton6' (note that the final digit is the same for the `ClassNN` and the `NetClassNN`).
 	+ Due to the added simplicity, `NetClassNN` is preferred over `ClassNN` for WinForms controls created with Keysharp.
 	+ This is used internally in the index operator for the Gui class, where if a control with a matching `ClassNN` is not found, then controls are searched for their `NetClassNN` values.
-* Tooltips function slightly differently.
-	+ When specifying a coordinate for a ToolTip, it will attempt to show it relative to the currently focused Keysharp form.
-	+ If there is no focused form, it will attempt to show it relative to the last form which was created. If none are found, it will use the main form shown when double clicking the tray icon.
-	+ If the form is minimized, then it will attempt to use the RestoreBounds property of the form. This may not work sometimes, so the ToolTip may never show in that case.
-	+ Tooltips cannot be used if the script is not persistent (meaning, it has no main window). This is because C# tooltips require a parent control or form.
 * `TrayTip()` functions slightly differently.
 	+ Muting the sound played by the tip is not supported with the `Mute` option. The sound will be whatever the user has configured in their system settings.
 	+ The option `4` to use the program's tray icon is not supported. It is always shown in the title of the tip.
@@ -130,57 +129,21 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 * `ControlMove()` and `ControlSetPos()` operate relative to their immediate parent, which may not be the main window if they are contained in a nested control.
 + Delays are not inserted after every window and control related call. Due to the design of Keysharp, this is not needed and causes out of order message processing bugs.
 	+ `SetWinDelay()`, `A_WinDelay`, `SetControlDelay` and `A_ControlDelay` exist but have no effect.
-* Static function variables are initialized on program startup, rather than the first time the function is called. This is because C# does not support static function variables.
-* The built in class methods `__Init()` and `__New()` are not static. They are instance methods so they can access static and instance member variables.
-* Because `__Init()` and `__New()` are not static, a new special static function has been created named `__StaticInit()`. Simple static member variable initialization should be done inline. However, more complex initialization should be done inside of `__StaticInit()`. This function will be called exactly once.
-```
-	class myclass
-	{
-		static simplevar := 123
-		static complexvar := ""
-						
-		static __StaticInit()
-		{
-			; Note, global is required because `this.` can't be used because `__StaticInit()` is a static function.
-			; Only static members may be accessed within this function.
-			global
-			complexvar := 456; complex initialization here
-		}
-	}
-```
-	+ If static variables are initialized in `__New()` instead of inline, they won't contain valid values until an instance of the class is created. Further, they will be reinitialized for every instance of the class created.
-* The parameters for `__New()` in a class definition will be not be automatically passed to the base class.
-	+ To pass the values as is to the base, change the values passed, or the order they are passed in, call `super.__New(arg1, arg2, ...)` in `__New()` with the arguments in the needed order.
-	+ This is not needed for classes derived from built-in types.
-* Because `__Init()`, `__New()` and `Call()` are auto-generated methods, users must not also define functions with these same names.
-	+ This also applies to the auto-generated `__Class` property and constructors with the same name as the class they are defined in.
 * Function objects are much slower than direct function calls due to the need to use reflection. So for repeated function calls, such as those involving math, it's best to use the functions directly.
 * The `File` object is internally named `KeysharpFile` so that it doesn't conflict with `System.IO.File`.
 * `obj.OwnProps()/ObjOwnProps()` take an optional second/third parameter as a boolean (default: `True`). Pass `True` to only return the properties defined by the user, else `False` to also return properties defined internally by Keysharp.
 * In `SetTimer()`, the priority is not in the range -2147483648 and 2147483647, instead it is only 0-4.
 * If a `ComObject` with `VarType` of `VT_DISPATCH` and a null pointer value is assinged a non-null pointer value, its type does not change. The `Ptr` member remains available.
 * `A_LineNumber` is not a reliable indicator of the line number because the preprocessor condenses the code before parsing and compiling it.
-* Loop counter variables for `for in` loops declared inside of a function cannot have the same name as a local variable declared inside of that same function.
-```
-testfunc()
-{
-    arr := [10, 20, 30]
-    loopvar := 0 ; Either change the name of this variable, the loop variable, or move this declaration outside of the function.
-
-    for (loopvar in arr)
-    {
-    }
-}
-```
-* Pointers returnd by `StrPtr()` must be freed by passing the value to a new function named `FreeStrPtr()`.
+* Pointers returnd by `StrPtr()` must be freed by passing the value to a new function named `ObjFree()`.
 	+ `StrPtr()` does not return the address of the string, instead it returns the address of a copy of the bytes of the string.
 * Threads are not resumable once an exception has been thrown.
 	+ Callbacks set by `OnError()` will properly run, but execution of the current thread will not resume regardless of the exception type or the return value of the callback.
 	+ Errors of type `ExitApp` will exit the script as usual.
-* `ExitApp()` and `Reload()` will not immediately exit the script such that lines appearing after it within a function will not execute.
-	+ Instead of calling `ExitApp()/Reload()` then `Sleep()` afterward to let the script exit, check the value of `A_HasExited` like so:
+* `Reload()` will not immediately exit the script such that lines appearing after it within a function will not execute.
+	+ Instead of calling `Reload()` then `Sleep()` afterward to let the script exit, check the value of `A_HasExited` like so:
 ```
-	ExitApp()
+	Reload()
 	
 	if (!A_HasExited)
 	{
@@ -188,30 +151,15 @@ testfunc()
 	}
 ```
 * `Sleep()` will not do any sleeping if shutdown has been initiated.
-* `/Debug` command line switch is not implemented.
+* `/Debug` command line switch is not implemented.  
 * If a script is compiled then none of Keysharp or AutoHotkey command parameters apply. 
 	
 ###	Syntax: ###
-* The syntax used in `Format()` is exactly that of `string.Format()` in C#, except with 1-based indexing. Traditional AHK style formatting is not supported.
-	+ Full documentation for the formatting rules can be found [here](https://learn.microsoft.com/en-us/dotnet/api/system.string.format).
-* Function calls on the right side of the `:=` operator must use parentheses and must not use command style.
-	+ `x := func 123 ; not supported`
-	+ `x := func, 123 ; not supported`
-	+ `x := func(123) ; supported`
-* The default name for the array of parameters in a variadic function is `args`, instead of `params`. This is due to `params` being a reserved word in C#.
-	+ The array for variadic parameters is read only and cannot be manipulated in the way a normal `Array` can.
 * `DllCall()` has the following caveats:
-	+ Use `Ptr` and `StringBuffer` for double pointer parameters such as `LPTSTR*`.
-	+ Passing `GetCommandLine` to `DllCall()` won't work exactly as the examples show. Instead, the type must be `Ptr` and the result must be wrapped in `StrGet()` like:
-		+ `StrGet(DllCall("GetCommandLine", "ptr"))`
-		+ This holds true for any function which returns a pointer to memory which was allocated inside of a Dll.
+	+ Use `Ptr` and `StringBuffer` for double pointer parameters such as `LPTSTR*`. This is recommended over the use of `StrPtr()`.
 * `ImageSearch()` takes an options string as a fifth parameter, rather than inserted in the string before the `imageFile` parameter.
-* In AHK, when applied to a power operation, the unary operators apply to the entire result. So `-x**y` really means `-(x**y)`.
-	+ In Keysharp, this behavior is different due to an inability to resolve bugs in the original code. So follow these rules instead:
-		+ To negate the result of a power operation, use parentheses: `-(x**y)`.
-		+ To negate one term of a power operation before applying, use parentheses around the term: `(-x)**y` or `-(x)**y`.	
 * A leading plus sign on numeric values, such as `+123` or `+0x123` is not supported. It has no effect anyway, so just omit it.
-* AHK does not support null, but Keysharp uses it in some cases to determine if a variable has ever been assigned to, such as with `IsSet()`.
+* AHK `unset` is implemented as `null`. `IsSet(x)` is equivalent to `x == null`.
 * Leading spaces and tabs are not omitted from the strings in continuation strings. They will be parsed as is, according to the options specified. Trailing spaces and tabs will not be trimmed unless `RTrim` is specified.
 * In continuation statements, the smart behavior logic for left trimming each line is disabled. Lines are not left trimmed by default and are only left trimmed if `LTrim` is specified.
 * Because a comma at the end of a line indicates a continuation statement, command style syntax with a trailing comma is not supported:
@@ -219,52 +167,13 @@ testfunc()
 	+ `MouseGetPos &mrX, &mrY ; omitting the trailing commas is supported`
 	+ `MouseGetPos(&mrX, &mrY) ; using parens is preferred`
 	+ `MouseGetPos(&mrX, &mrY, , ) ; trailing commas can be used with parens`
-* Quotes in strings cannot be escaped with double quotes, they must use the escape character, \`.
-* Dynamic variable references like %x% can only refer to a global variable. There is no way to access a local variable in C# via reflection.
+* Use of the dereference syntax `%expression%` inside functions is highly discouraged. This is because using it will cause every function call to construct an object which captures all local variables, and depending on the number of variables the performance loss may be significant.
 * `Goto` statements cannot use any type of variable. They must be labels known at compile time and function just like goto statements in C#.
 * `Goto` statements being called as a function like `Goto("Label")` are not supported. Instead, just use `goto Label`.
-* Callback functions do not require a `*` parameter to work. So `func()` and `func(*)` can both be used as callbacks.
-* Optional function parameters can be specified using the `?` suffix, however it is not needed or supported when referring to that parameter inside of the function, for example:
-```
-	myfunc(a, b, c?, d?)
-	{
-		e := a
-		f := b
-		g := c ; No question mark needed for c or d.
-		h := d
-	}
-```
-* The spread operator asterisk (`*`) can be used as a function argument only if the function parameter is variadic, for example:
-```
-	myfunc(a, b*) {
-	}
-	myfunc(c*) ; not allowed because `a` isn't variadic
-	myfunc(1, c*) ; allowed
-```
-* The parameter name for the variadic `__New()` method in classes is always `args` unless otherwise specified.
-```
-class class1
-{
-	__New() ; args is implicit.
-	{
-		for n in args
-		{
-			; Do something.
-		}
-	}
-}
-```
 * The `#Requires` directive differs in the following ways:
 	+ In addition to supporting `AutoHotkey`, it also supports `Keysharp`.
 	+ Sub versions such as -alpha and -beta are not supported. Only the four numerical values values contained in the assembly version in the form of `0.0.0.0` are supported.	
-* Global variables can be accessed from within class methods by using the `program.` prefix: `program.a := 123`.
-* Accessing class member variables within methods and properties does not require the `this.` prefix.
-	+ Instead, just reference the member variable using `global`, and that will distinguish it between a local function variable of the same name.
-	+ Using `this.` is still supported, but is slower, so avoid using it if possible.
-* If a class and sublcass both have properties with the same name, the following rules apply when accessing the properties within a member function in the base class:
-	+ `global propname` and `this.propname` refer to the property defined in the most derived subclass class.
-	+ `super.propname` refers to the property defined in the base class.
-	+ To avoid confusion, it is best not to give properties the same name between base and sub classes.
+* Global variables can be accessed from anywhere by using the `Program.` prefix: `program.a := 123`.
 * For any `__Enum()` class method, it should have a parameter value of 2 when returning `Array` or `Map`, since their enumerators have two fields.
 * Auto-generated variables and functions will have the prefix `_ks_`, so to avoid naming collisions you shouldn't create variables/functions with that same prefix.
 * Regex does not use Perl Compatible Regular Expressions. Instead, it uses the built in C# RegEx library. This results in the following changes from AHK:
@@ -299,6 +208,7 @@ class class1
 	+ To learn more about C# regular expressions, see [here](https://learn.microsoft.com/en-us/dotnet/standard/base-types/regular-expressions).
 
 ###	Additions/Improvements: ###
+* The spread operator `*` may be used multiple times in one function call. `MyFunc(arr1*, arr2*)` is allowed.
 * Buffer has an `__Item[]` indexer which can be used to read a byte at a 1-based offset.
 * A new class named `StringBuffer` which can be used for passing string memory to `DllCall()` which will be written to inside of the call.
 	+ There are two methods for creating a `StringBuffer`:
@@ -376,6 +286,8 @@ class class1
 * `FileGetSize()` supports `G` and `T` for gigabytes and terabytes.
 * `DateAdd()` and `DateDiff()` support taking a value of `"L"` for the `TimeUnits` parameter to add miLliseconds or return the elapsed time in milliseconds, respectively.
 	+ See the new accessors `A_NowMs`/`A_NowUTCMs`.
+* New function `FormatCs()` is an alternative to AHK `Format`. The syntax used in `Format()` is exactly that of `string.Format()` in C#, except with 1-based indexing. Traditional AHK style formatting is not supported.
+	+ Full documentation for the formatting rules can be found [here](https://learn.microsoft.com/en-us/dotnet/api/system.string.format).
 * `SubStr()` uses a default of 1 for the second parameter, `startingPos`, to relieve the caller of always having to specify it.
 * New string functions:
 	+ `Base64Decode(str) => Array` to convert a Base64 string to a byte array.
@@ -445,7 +357,7 @@ class class1
 	+ `A_WorkAreaWidth` returns the width of the working area of the primary screen.
 * `Log(number, base := 10)` is by default base 10, but it can accept a double as the second parameter to specify a custom base.
 * In `SetTimer()`:
-	+ The callback is passed the function object as the first argument, and the date/time the timer was triggered as a YYYYMMDDHH24MISS string for the second argument.
+	+ In the callback function, `A_EventInfo` is set to the function object used to create the timer.
 	+ This allows the handler to alter the timer by passing the function object back to another call to `SetTimer()`.
 	+ Timers are not disabled when the program menu is shown.
 * A new timer function `EnabledTimerCount()` which returns the number of currently enabled timers in existence.
@@ -464,11 +376,6 @@ class class1
 	+ Reference parameters in functions work for class methods, global functions, built in functions, lambdas and function objects.
 		+ Lambdas with a single reference parameter can be declared with no parentheses:
 			+ `lam := &a => a := (a * 2)`
-	+ For an argument to be passed as a reference, the function parameter in that position must be declared as a reference:
-		+ `func(&p1) { }`
-	+ Reference parameters cannot be optional because C# does not support it.
-		+ `func(p1, &p2 := 0) {} ; not supported`
-		+ `func(p1, &p2) {} ; supported`
 	+ When passing a class member variable as a dynamic reference to a function from within another function of that same class, the `this` prefix must be used:
 ```
 	class myclass
@@ -511,7 +418,7 @@ class class1
 		+ `IsFunc(functionName [, paramCount]) => Integer`
 		+ `Any.HasProp(propName [, paramCount]) => Integer`
 			+ The only properties which can have parameters are the `__Item[]` indexer properties.
-	+ This is needed to resolve the proper overloaded method.
+	+ This is needed to resolve the proper overloaded method. However, overloaded methods are currently not supported, but might be implemented in the future.
 	+ Omit `paramCount` or pass -1 to just use the first encountered method on the specified object with the specified name.
 * `KeysharpObject` has a new method `OwnPropCount()` which corresponds to the global function `ObjOwnPropCount()`.
 * `ComObjConnect()` takes an optional third parameter as a boolean (default: `false`) which specifies whether to write additional information to the debug output tab when events are received.
@@ -580,10 +487,7 @@ class class1
 	  Reads pre-compiled assembly code from the file or StdIn and runs it. Optionally also provide the entrypoint type and method, but if omitted then the default type `Keysharp.CompiledMain.program` and method `Main` are used.
 	
 ###	Removals: ###
-* Nested classes are not supported.
-* Nested functions are not supported.
-* `VarSetStrCapacity()` and `ObjGet/SetCapacity()` have been removed because C# manages its own memory internally.
-* `ListLines()` is omitted because C# doesn't support it.
+* `ListLines()` is non-functional because C# doesn't support it.
 * `ObjPtr()` is not implemented because objects can be moved by the GC.
 * There is no such thing as dereferencing in C#, so the `*` dereferencing operator is not supported.		
 * The `R`, `Dn` or `Tn` parameters in `FormatDateTime()` are not supported, except for 0x80000000 to disallow user overrides.
@@ -591,7 +495,6 @@ class class1
 	+ [Here](https://docs.microsoft.com/en-us/dotnet/standard/base-types/custom-date-and-time-format-strings) is a list of the C# style DateTime formatters which are supported.
 * Static text controls do not send the Windows `API WM_CTLCOLORSTATIC (0x0138)` message to their parent controls like they do in AHK.
 * `IsAlpha()`, `IsUpper()`, `IsLower()` do not accept a locale parameter because all strings are Unicode.
-* Renaming Keysharp.exe to run a specific script by default will not work.
 * Double click handlers for buttons are not supported.
 * UpDown controls with paired buddy controls are not supported. Keysharp just uses the regular NumericUpDown control in C#.
 	+ The options `16`, `Horz` and `Wrap` have no effect.
@@ -611,10 +514,8 @@ class class1
 	+ The help option `16384` is ignored.
 * Only `Tab3` is supported, no older tab functionality is present.
 * When adding a `ListView`, the `Count` option is not supported because C# can't preallocate memory for a `ListView`.
-* Function references are supported, but the VarRef object is not supported.
-* The address of a variable cannot be taken using the reference operator except when passing an argument to a function.
-	+ `x := &var ; not supported`
-	+ `functhattakesref(&x) ; supported`
+* The address of a variable cannot be taken using the reference operator.
+	+ It returns a VarRef object as in AHK.
 * `OnMessage()` doesn't observe any of the behavior mentioned in the documentation regarding the message check interval because it's implemented in a different way.
 	+ A GUI object is required for `OnMessage()` to be used.
 * Pausing a script is not supported because a Keysharp script is actually a running program.
@@ -626,13 +527,8 @@ class class1
 * The `/script` option for compiled scripts does not apply and is therefore not implemented.
 * The Help and Window Spy menu items are not implemented yet.
 * `Download()` only supports the `*0` option, and not any other numerical values.
-* Static class variables cannot be overridden in subclasses. So regardless of the class used to access the variable, they all refer to the same static member variable.
-* Static class member variable initializers like `static x.y := 42` are not supported. Instead, just initialize in one step like `static x := { y, 42 }`.
-* Within a class, a property and a method cannot have the same name. However, they can if one is in a base class and the other is in a subclass.
-* The concept of a class prototype is not supported, because it doesn't exist in C# classes. Thus, there is no `.Prototype` member.
 * Properties other than `__Item[]` cannot take parameters. If you need to pass a parameter, use a method instead.
 	+ This also applies to properties which have been dynamically defined with `DefineProp()`.
-* Static `__Item[]` properties are not allowed, only instance `__Item[]` properties. This is because C# does not support static indexers.
 * When passing `"Interrupt"` as the first argument to `Thread()`, the third argument for `LineCount` is not supported because Keysharp does not support line level awareness.
 * Tooltips do not automatically disappear when clicking on them.
 
