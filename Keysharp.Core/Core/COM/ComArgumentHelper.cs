@@ -310,6 +310,9 @@ namespace Keysharp.Core.COM
 
 						if (!isreturn)
 						{
+							if (p is KeysharpObject && Script.GetPropertyValue(p, "ptr", false) is object argPtr && argPtr != null)
+								p = argPtr;
+
 							if (p is nint ip)
 								args[n] = ip;
 							else if (p is int || p is long || p is uint)

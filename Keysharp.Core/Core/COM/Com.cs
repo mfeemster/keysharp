@@ -489,6 +489,9 @@ namespace Keysharp.Core.COM
 			object ptr = null;
 			var pUnk = IntPtr.Zero;
 
+			if (comObj is KeysharpObject kso && Script.GetPropertyValue(comObj, "ptr", false) is object propPtr && propPtr != null)
+				comObj = propPtr;
+
 			if (comObj is ComObject co)
 				ptr = co.Ptr;
 			else if (Marshal.IsComObject(comObj))
@@ -570,7 +573,12 @@ namespace Keysharp.Core.COM
 			*/
 			try
 			{
-				return Dll.CallDel(vtbl, args);
+				// This could potentially be optimized by compiling a specific delegate
+				// for the ComCall scenario with the signature Func<nint, long, long[], long>
+				long[] newArgs = new long[args.Length + 1];
+				newArgs[0] = objPtr;
+				System.Array.Copy(args, 0, newArgs, 1, args.Length);
+				return Dll.CallDel(vtbl, newArgs);
 			}
 			catch (InvalidCastException)
 			{

@@ -139,7 +139,10 @@ namespace Keysharp.Core.Common.Invoke
                         {
                             if (name == "ptr" || name == "uptr")
                             {
-                                if (p is null)
+								if (p is KeysharpObject && Script.GetPropertyValue(p, "ptr", false) is object argPtr && argPtr != null)
+									p = argPtr;
+
+								if (p is null)
                                     args[n] = IntPtr.Zero;
                                 else if (p is IntPtr)
                                 {
