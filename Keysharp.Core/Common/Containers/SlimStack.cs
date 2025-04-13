@@ -10,10 +10,10 @@
     [PublicForTestOnly]
     public class SlimStack<T> where T : class
     {
-        /// <summary>
-        /// The internal list used to contain the stack elements.
-        /// </summary>
-        private readonly T[] list;
+		/// <summary>
+		/// The internal list used to contain the stack elements.
+		/// </summary>
+		private readonly T[] list;
 
         /// <summary>
         /// The size of the list which is set once during construction and does not change.
