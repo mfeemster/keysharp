@@ -756,12 +756,12 @@ namespace Keysharp.Tests
 		public void VerCompare()
 		{
 			Assert.AreEqual(Strings.VerCompare("1.20.0", "1.3"), 1L);
-			Assert.AreEqual(Strings.VerCompare("1.20.0", "<1.30"), 1L);
-			Assert.AreEqual(Strings.VerCompare("1.20.0", "<=1.30"), 1L);
-			Assert.AreEqual(Strings.VerCompare("1.20.0", ">1.30"), 0L);
-			Assert.AreEqual(Strings.VerCompare("1.20.0", ">=1.30"), 0L);
-			Assert.AreEqual(Strings.VerCompare("1.20.0", "=1.30"), 0L);
-			Assert.AreEqual(Strings.VerCompare("1.20.0", "=1.20.0"), 1L);
+			Assert.AreEqual(Strings.VerCompare(" 1.20.0", "<1.30"), 1L);
+			Assert.AreEqual(Strings.VerCompare("1.20.0 ", "<=1.30"), 1L);
+			Assert.AreEqual(Strings.VerCompare("1.20.0", " >1.30"), 0L);
+			Assert.AreEqual(Strings.VerCompare("1.20.0", " >=1.30 "), 0L);
+			Assert.AreEqual(Strings.VerCompare(" 1.20.0", " =1.30 "), 0L);
+			Assert.AreEqual(Strings.VerCompare(" 1.20.0 ", " =1.20.0 "), 1L);
 			Assert.AreEqual(Strings.StrCompare("1.20.0", "1.3"), -1L);
 			Assert.AreEqual(Strings.VerCompare("2.0-a137", "2.0-a136"), 1L);
 			Assert.AreEqual(Strings.VerCompare("2.0-a137", "2.0"), -1);

@@ -1498,8 +1498,8 @@
 		/// </returns>
 		public static long VerCompare(object versionA, object versionB)
 		{
-			var v1 = versionA.As();
-			var v2 = versionB.As();
+			var v1 = versionA.As().Trim();
+			var v2 = versionB.As().Trim();
 			var semver1 = Semver.SemVersion.Parse(v1, Semver.SemVersionStyles.Any);
 
 			if (v2.StartsWith("<="))

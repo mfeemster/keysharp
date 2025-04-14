@@ -45,7 +45,7 @@ namespace Keysharp.Core
 			var moveOffset = false;
 			var ht = Script.HookThread;
 			var options = $"{coords.As()} {whichButton.As()} {clickCount.As()} {downOrUp.As()} {relative.As()}";
-			ht.ParseClickOptions(options.As(), ref x, ref y, ref vk, ref eventType, ref repeatCount, ref moveOffset);
+			ht.ParseClickOptions(options, ref x, ref y, ref vk, ref eventType, ref repeatCount, ref moveOffset);
 			//Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() =>
 			ht.kbdMsSender.PerformMouseCommon(repeatCount < 1 ? Actions.ACT_MOUSEMOVE : Actions.ACT_MOUSECLICK // Treat repeat-count<1 as a move (like {click}).
 											  , vk, x, y, 0, 0, repeatCount, eventType, ThreadAccessors.A_DefaultMouseSpeed, moveOffset);//, true, true);
