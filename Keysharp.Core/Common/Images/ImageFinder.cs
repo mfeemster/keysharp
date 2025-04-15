@@ -96,7 +96,7 @@
 				}
 				catch (Exception ex)
 				{
-					Debug.OutputDebug(ex.Message);
+					_ = Debug.OutputDebug(ex.Message);
 				}
 				finally
 				{

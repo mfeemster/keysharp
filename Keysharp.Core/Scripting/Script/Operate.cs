@@ -35,7 +35,7 @@ namespace Keysharp.Scripting
 		const string Alnum = "alnum";
 		const string Space = "space";
 		const string Time = "time";
-		
+
 		public static bool IfLegacy(object subject, string op, string test, bool not = false)
 		{
 			Error err;
@@ -158,11 +158,18 @@ namespace Keysharp.Scripting
 
 		public static object PrefixIncDec(Operator op, object left, object val) => Operate(op, left, val);
 
+		public static object PostfixIncDecIndex(object obj, object index, object val)
+		{
+			var orig = Keysharp.Scripting.Script.Index(obj, index);
+			_ = Keysharp.Scripting.Script.SetObject(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.Add, orig, val), obj, index);
+			return orig;
+		}
+
 		public static object PostfixIncDecProp(object obj, object prop, object val)
 		{
 			var orig = GetPropertyValue(obj, prop);
 			var newval = Operate(Operator.Add, orig, val);
-			SetPropertyValue(obj, prop, newval);
+			_ = SetPropertyValue(obj, prop, newval);
 			return orig;
 		}
 

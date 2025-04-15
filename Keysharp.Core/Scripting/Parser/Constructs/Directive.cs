@@ -126,9 +126,9 @@ namespace Keysharp.Scripting
 				case "HOTIF":
 				{
 					if (!string.IsNullOrEmpty(parts[1]))
-						topStatements.Add(new CodeMethodInvokeExpression((CodeMethodReferenceExpression)InternalMethods.HotIf, new CodePrimitiveExpression(parts[1])));
+						_ = topStatements.Add(new CodeMethodInvokeExpression((CodeMethodReferenceExpression)InternalMethods.HotIf, new CodePrimitiveExpression(parts[1])));
 					else
-						topStatements.Add(new CodeMethodInvokeExpression((CodeMethodReferenceExpression)InternalMethods.HotIf));
+						_ = topStatements.Add(new CodeMethodInvokeExpression((CodeMethodReferenceExpression)InternalMethods.HotIf));
 				}
 				break;
 

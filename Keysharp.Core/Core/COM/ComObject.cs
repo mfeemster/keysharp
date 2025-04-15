@@ -290,7 +290,7 @@ namespace Keysharp.Core.COM
 
 				if (co.VarType == Com.vt_dispatch || co.VarType == Com.vt_unknown)
 				{
-					Com.ObjAddRef(co);
+					_ = Com.ObjAddRef(co);
 				}
 				else if ((co.Flags & F_OWNVALUE) == F_OWNVALUE)
 				{

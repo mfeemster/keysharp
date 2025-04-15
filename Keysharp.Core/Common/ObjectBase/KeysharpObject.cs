@@ -243,14 +243,14 @@
 
 		protected internal void Init__Item()
 		{
-			DefineProp("__Item",
-					   Objects.Object(
-						   [
-							   "get",
-							   Functions.GetFuncObj("ItemWrapper", this, 1, true),
-							   "set",
-							   Functions.GetFuncObj("ItemWrapper", this, 1, true)
-						   ]));
+			_ = DefineProp("__Item",
+						   Objects.Object(
+							   [
+								   "get",
+								   Functions.GetFuncObj("ItemWrapper", this, 1, true),
+								   "set",
+								   Functions.GetFuncObj("ItemWrapper", this, 1, true)
+							   ]));
 		}
 
 		/// <summary>

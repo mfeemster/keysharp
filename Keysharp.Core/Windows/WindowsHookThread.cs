@@ -5185,7 +5185,7 @@ namespace Keysharp.Core.Windows
 				}
 				catch (Exception ex)
 				{
-					Debug.OutputDebug($"Windows hook thread exited unexpectedly: {ex}");
+					_ = Debug.OutputDebug($"Windows hook thread exited unexpectedly: {ex}");
 				}
 				finally
 				{

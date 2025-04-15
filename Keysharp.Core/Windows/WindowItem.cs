@@ -251,7 +251,7 @@ namespace Keysharp.Core.Windows
 			set
 			{
 				if (IsSpecified)
-					WindowsAPI.SetWindowText(Handle, value ?? string.Empty);
+					_ = WindowsAPI.SetWindowText(Handle, value ?? string.Empty);
 			}
 		}
 
