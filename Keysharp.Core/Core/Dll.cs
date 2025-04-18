@@ -462,7 +462,7 @@ namespace Keysharp.Core
 			}
 		}
 
-		private static unsafe void FixParamTypesAndCopyBack<T>(object[] parameters, T[] args)
+		internal static unsafe void FixParamTypesAndCopyBack<T>(object[] parameters, T[] args)
 		{
 			//Ensure arguments passed in are in the proper format when writing back.
 			for (int pi = 0, ai = 0; pi < parameters.Length; pi += 2, ++ai)

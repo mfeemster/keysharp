@@ -108,7 +108,9 @@ namespace Keysharp.Core.COM
 					}
 				}
 
-				if (wasObj)
+				// It doesn't make sense to convert anything other than IDispatch, because
+				// the resulting object couldn't be used as a "native object" anyway.
+				if (wasObj && VarType == Com.vt_dispatch)
 				{
 					if (longVal != 0L)
 					{
@@ -183,8 +185,13 @@ namespace Keysharp.Core.COM
 		{
 			if (Marshal.IsComObject(Ptr))
 				_ = Marshal.ReleaseComObject(Ptr);
-			else if (Ptr is IntPtr ip)
-				_ = Marshal.Release(ip);
+			else if (VarType == Com.vt_unknown || VarType == Com.vt_dispatch)
+			{
+				if (Ptr is long l && l != 0L)
+					_ = Marshal.Release((nint)l);
+				else if (Ptr is IntPtr ip && ip != IntPtr.Zero)
+					_ = Marshal.Release(ip);
+			}
 		}
 
 		public object __New(params object[] args)
