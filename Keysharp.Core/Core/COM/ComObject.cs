@@ -107,7 +107,7 @@ namespace Keysharp.Core.COM
 					}
 				}
 
-				if (wasObj)
+				if (wasObj && VarType == Com.vt_dispatch)
 				{
 					if (longVal != 0L)
 					{

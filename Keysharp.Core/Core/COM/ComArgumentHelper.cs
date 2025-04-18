@@ -27,15 +27,7 @@ namespace Keysharp.Core.COM
 			{
 				var p = parameters[i];
 				var pm1 = parameters[i - 1].ToString();
-				GCHandle gch;
-
-				if (obj != null)
-					gch = GCHandle.Alloc(obj ?? p, GCHandleType.Pinned);
-				else if (p is ComObject co)
-					gch = GCHandle.Alloc(co.Ptr, GCHandleType.Pinned);
-				else
-					gch = GCHandle.Alloc(p, GCHandleType.Pinned);
-
+				var gch = GCHandle.Alloc(obj ?? p, GCHandleType.Pinned);
 				_ = gcHandles.Add(gch);
 				var intptr = gch.AddrOfPinnedObject();
 				args[n] = intptr;
@@ -76,11 +68,15 @@ namespace Keysharp.Core.COM
 					case '*':
 					case 'P':
 					case 'p':
-                        if (parameters[i] is KeysharpObject kso)
+                        if (parameters[i] is KeysharpObject kso2)
                         {
                             refs[i] = parameters[i];
-                            parameters[i] = Script.GetPropertyValue(kso, "__Value");
-                        }
+							if (Script.GetPropertyValue(kso2, "__Value", false) is object val && val != null)
+								p = parameters[i] = val;
+							else if (Script.GetPropertyValue(kso2, "ptr", false) is object ptr && ptr != null)
+								p = parameters[i] = ptr;
+
+						}
 
                         name = name.TrimEnd(pointerChars);
 						type = typeof(nint);
@@ -88,6 +84,9 @@ namespace Keysharp.Core.COM
 						SetupPointerArg(i, n);
 						goto TypeDetermined;
 				}
+
+				if (parameters[i] is KeysharpObject kso && Script.GetPropertyValue(kso, "ptr", false) is object kptr && kptr != null)
+					p = parameters[i] = kptr;
 
 				switch (name)
 				{
@@ -310,7 +309,7 @@ namespace Keysharp.Core.COM
 
 						if (!isreturn)
 						{
-							if (p is KeysharpObject && Script.GetPropertyValue(p, "ptr", false) is object argPtr && argPtr != null)
+							if (p is KeysharpObject && p is not ComObject && Script.GetPropertyValue(p, "ptr", false) is object argPtr && argPtr != null)
 								p = argPtr;
 
 							if (p is nint ip)

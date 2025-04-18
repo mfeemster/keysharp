@@ -259,12 +259,14 @@ namespace Keysharp.Core
 					FixParamTypesAndCopyBack(parameters, helper.args);
 
                     foreach (var refIndex in helper.refs)
-                        Script.SetPropertyValue(refIndex.Value, "__Value", parameters[refIndex.Key]);
+                        Script.SetPropertyValue(refIndex.Value, Objects.ObjHasProp(refIndex.Value, "__Value") != 0L ? "__Value" : "ptr", parameters[refIndex.Key]);
 
-                    if (value is int i)
+					if (value is int i)
 						return (long)i;
 					else if (value is uint ui)
 						return (long)ui;
+					else if (value is UIntPtr uip)
+						return (long)uip;
 
 					return value;
 				}
@@ -478,7 +480,7 @@ namespace Keysharp.Core
 			}
 		}
 
-		private static unsafe void FixParamTypesAndCopyBack<T>(object[] parameters, T[] args)
+		internal static unsafe void FixParamTypesAndCopyBack<T>(object[] parameters, T[] args)
 		{
 			//Ensure arguments passed in are in the proper format when writing back.
 			for (int pi = 0, ai = 0; pi < parameters.Length; pi += 2, ++ai)

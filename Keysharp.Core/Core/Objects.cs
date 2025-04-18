@@ -58,6 +58,8 @@
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if obj was not of type KeysharpObject.</exception>
 		public static long ObjHasOwnProp(object obj, object name) => obj is KeysharpObject kso ? kso.HasOwnProp(name) : 0L;
 
+		public static long ObjHasProp(object obj, object name) => obj is KeysharpObject kso ? kso.HasProp(name) : 0L;
+
 		/// <summary>
 		/// Returns the number of properties owned by an object.
 		/// </summary>
@@ -137,13 +139,23 @@
 		/// <summary>
 		/// Given an IntPtr produced by ObjPtr, returns the original object.
 		/// </summary>
-		public static object ObjFromPtr(IntPtr ptr)
+		public static object ObjFromPtr(object ptr)
 		{
-			if (ptr == IntPtr.Zero)
+			IntPtr iptr = IntPtr.Zero;
+
+			if (ptr is long l)
+				iptr = (nint)l;
+			else if (ptr is nint ip)
+				iptr = ip;
+
+			if (iptr == IntPtr.Zero)
 				return null;
-			GCHandle handle = GCHandle.FromIntPtr(ptr);
+			GCHandle handle = GCHandle.FromIntPtr(iptr);
 			return handle.Target;
 		}
+
+		// Mostly for compatibility with AHK
+		public static object ObjFromPtrAddRef(object ptr) => ObjFromPtr(ptr);
 
 		/// <summary>
 		/// Frees a managed C# object or string, allowing it to be garbage-collected.

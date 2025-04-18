@@ -55,7 +55,6 @@ namespace Keysharp.Core
 
 			var tooltipInvokerForm = GuiHelper.DialogOwner ?? Form.ActiveForm;
 			var focusedWindow = IntPtr.Zero;
-			var one_or_both_coords_specified = _x != int.MinValue || _y != int.MinValue;
 			var one_or_both_coords_unspecified = _x == int.MinValue || _y == int.MinValue;
 
 			if (tooltipInvokerForm == null)
@@ -127,15 +126,18 @@ namespace Keysharp.Core
 					//We use SetTool() via reflection in this function because it bypasses ToolTip.Show()'s check for whether or not the window
 					//is active.
 					var temppt = Cursor.Position;
-					temppt.X += 10;
-					temppt.Y += 10;
 
-                    if (_x != int.MinValue)
-                        temppt.X += _x;
-                    if (_y != int.MinValue)
-                        temppt.Y += _y;
+					if (_x == int.MinValue)
+						temppt.X += 10;
+					else
+						temppt.X = _x;
 
-                    if (ttp != null && ttp?.X == temppt.X && ttp?.Y == temppt.Y && tt.GetToolTip(tooltipInvokerForm) == t)
+					if (_y == int.MinValue)
+						temppt.Y += 10;
+					else
+						temppt.Y = _y;
+
+					if (ttp != null && ttp?.X == temppt.X && ttp?.Y == temppt.Y && tt.GetToolTip(tooltipInvokerForm) == t)
 						return;
 
 					persistentTooltipsPositions[id] = new Point(temppt.X, temppt.Y);
@@ -147,60 +149,57 @@ namespace Keysharp.Core
 					var tempx = 0;
 					var tempy = 0;
 
-					if (one_or_both_coords_specified)
+					//var coordMode = Mouse.Coords.GetCoordMode(CoordMode.Tooltip);
+					if (_x != int.MinValue)
+						tempx = _x;
+
+					if (_y != int.MinValue)
+						tempy = _y;
+
+					if (coordModeToolTip == CoordModeType.Screen)
 					{
-						//var coordMode = Mouse.Coords.GetCoordMode(CoordMode.Tooltip);
-						if (_x != int.MinValue)
-							tempx = _x;
+						if (ttp != null && ttp?.X == tempx && ttp?.Y == tempy && tt.GetToolTip(tooltipInvokerForm) == t)
+							return;
 
-						if (_y != int.MinValue)
-							tempy = _y;
+						persistentTooltipsPositions[id] = new Point(tempx, tempy);
+						_ = mSetTrackPosition.Invoke(tt, [tempx, tempy]);
+						_ = mSetTool.Invoke(tt, [tooltipInvokerForm, t, 2, persistentTooltipsPositions[id]]);
+					}
+					else
+					{
+						var foreground = WindowProvider.Manager.ActiveWindow;
 
-						if (coordModeToolTip == CoordModeType.Screen)
+						if (foreground.Handle != IntPtr.Zero)
+							PlatformProvider.Manager.CoordToScreen(ref tempx, ref tempy, CoordMode.Tooltip);
+
+						if (ttp != null && ttp?.X == tempx && ttp?.Y == tempy && tt.GetToolTip(tooltipInvokerForm) == t)
+							return;
+
+						persistentTooltipsPositions[id] = new Point(tempx, tempy);
+						//This is the hard case. They've specified coordinates relative to a window, however if that window
+						//is minimized, then its coordinates are impossible to get. Attempt to use the RestoreBounds property, but that is usually
+						//wrong.
+						//if (tooltipInvokerForm.WindowState == FormWindowState.Minimized)
+						//{
+						//  var actualbounds = tooltipInvokerForm.RestoreBounds;
+						//  tempx += actualbounds.X;
+						//  tempy += actualbounds.Y;
+						//  var m = tt.GetType().GetMethod("SetTool", BindingFlags.Instance | BindingFlags.NonPublic);
+						//  _ = m.Invoke(tt, new object[] { tooltipInvokerForm, text, 2, new Point(tempx, tempy) });
+						//}
+						//else// if (tooltipForm.Visible && tooltipForm.Focused)//The coord is relative to a window, and the window is not minimized and is active.
 						{
-							if (ttp != null && ttp?.X == tempx && ttp?.Y == tempy && tt.GetToolTip(tooltipInvokerForm) == t)
-								return;
-
-							persistentTooltipsPositions[id] = new Point(tempx, tempy);
+							//var pt = tooltipForm.PointToScreen(new Point(tempx, tempy));
+							//var pt = tooltipForm.PointToClient(new Point(tempx, tempy));
 							_ = mSetTrackPosition.Invoke(tt, [tempx, tempy]);
 							_ = mSetTool.Invoke(tt, [tooltipInvokerForm, t, 2, persistentTooltipsPositions[id]]);
 						}
-						else
-						{
-							var foreground = WindowProvider.Manager.ActiveWindow;
-
-							if (foreground.Handle != IntPtr.Zero)
-								PlatformProvider.Manager.CoordToScreen(ref tempx, ref tempy, CoordMode.Tooltip);
-
-							if (ttp != null && ttp?.X == tempx && ttp?.Y == tempy && tt.GetToolTip(tooltipInvokerForm) == t)
-								return;
-
-							persistentTooltipsPositions[id] = new Point(tempx, tempy);
-							//This is the hard case. They've specified coordinates relative to a window, however if that window
-							//is minimized, then its coordinates are impossible to get. Attempt to use the RestoreBounds property, but that is usually
-							//wrong.
-							//if (tooltipInvokerForm.WindowState == FormWindowState.Minimized)
-							//{
-							//  var actualbounds = tooltipInvokerForm.RestoreBounds;
-							//  tempx += actualbounds.X;
-							//  tempy += actualbounds.Y;
-							//  var m = tt.GetType().GetMethod("SetTool", BindingFlags.Instance | BindingFlags.NonPublic);
-							//  _ = m.Invoke(tt, new object[] { tooltipInvokerForm, text, 2, new Point(tempx, tempy) });
-							//}
-							//else// if (tooltipForm.Visible && tooltipForm.Focused)//The coord is relative to a window, and the window is not minimized and is active.
-							{
-								//var pt = tooltipForm.PointToScreen(new Point(tempx, tempy));
-								//var pt = tooltipForm.PointToClient(new Point(tempx, tempy));
-								_ = mSetTrackPosition.Invoke(tt, [tempx, tempy]);
-								_ = mSetTool.Invoke(tt, [tooltipInvokerForm, t, 2, persistentTooltipsPositions[id]]);
-							}
-							//else//The coord is relative to a window, and the window is not minimized but is also not active.
-							//{
-							//  var pt = tooltipForm.PointToScreen(new Point(tempx, tempy));
-							//  var m = tt.GetType().GetMethod("SetTool", BindingFlags.Instance | BindingFlags.NonPublic);
-							//  _ = m.Invoke(tt, new object[] { tooltipForm, text, 2, pt });
-							//}
-						}
+						//else//The coord is relative to a window, and the window is not minimized but is also not active.
+						//{
+						//  var pt = tooltipForm.PointToScreen(new Point(tempx, tempy));
+						//  var m = tt.GetType().GetMethod("SetTool", BindingFlags.Instance | BindingFlags.NonPublic);
+						//  _ = m.Invoke(tt, new object[] { tooltipForm, text, 2, pt });
+						//}
 					}
 				}
 

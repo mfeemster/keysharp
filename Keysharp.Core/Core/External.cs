@@ -161,7 +161,7 @@
 				else if (input is ulong ul)
 					return BitConverter.GetBytes(ul);
 				else
-					return BitConverter.GetBytes(Convert.ToUInt64(input.Al()));
+					return BitConverter.GetBytes(input.Al());
 			}
 			Error err;
 			IntPtr addr = IntPtr.Zero;

@@ -745,8 +745,11 @@ namespace Keysharp.Scripting
         {
             // 1. Built-in functions: Directly invoke the built-in method
             // except in the case of a variadic function call
-            if (!string.IsNullOrEmpty(methodName) &&
-                Reflections.FindBuiltInMethod(methodName, -1) is MethodPropertyHolder mph && mph.mi != null && !UserFuncs.Contains(methodName))
+            if (!string.IsNullOrEmpty(methodName)
+				&& Reflections.FindBuiltInMethod(methodName, -1) is MethodPropertyHolder mph && mph.mi != null
+				&& !UserFuncs.Contains(methodName)
+                && IsVarDeclaredLocally(methodName) == null
+                )
             {
                 if (argumentList.Arguments.Count > 0 && argumentList.Arguments.First().Expression is CollectionExpressionSyntax)
                 {

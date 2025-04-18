@@ -183,7 +183,7 @@ namespace Keysharp.Scripting
 #if WINDOWS
 				else if (item is ComObject co)
 				{
-					return GetPropertyValue(co.Ptr, namestr);
+					return GetPropertyValue(co.Ptr, namestr, throwOnError);
 				}
 				else if (Marshal.IsComObject(item))
 				{

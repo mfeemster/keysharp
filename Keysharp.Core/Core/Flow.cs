@@ -437,9 +437,22 @@ namespace Keysharp.Core
 			//Be careful with Application.DoEvents(), it has caused spurious crashes in my years of programming experience.
 			if (d == 0L)
 			{
+				var start = DateTime.Now;
+				try
+				{
+					Application.DoEvents();//Can sometimes throw on linux.
+				}
+				catch (UserRequestedExitException)
+				{
+					throw;
+				}
+				catch
+				{
+				}
 				//0 tells this thread to relinquish the remainder of its time slice to any thread of equal priority that is ready to run.
 				//If there are no other threads of equal priority that are ready to run, execution of the current thread is not suspended.
-				System.Threading.Thread.Sleep(0);
+				if (start.Equals(DateTime.Now))
+					System.Threading.Thread.Sleep(0);
 			}
 			else if (d == -1L)
 			{

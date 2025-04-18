@@ -111,7 +111,12 @@ namespace Keysharp.Scripting
             ExpressionSyntax targetExpression = null;
             // Visit the singleExpression (the method to be called)
             string methodName = context.primaryExpression().GetText();
-            if (!parser.UserFuncs.Contains(methodName) && Reflections.FindBuiltInMethod(methodName, -1) is MethodPropertyHolder mph && mph.mi != null)
+			// I don't like that this complicated check is repeated in GenerateFunctionInvocation,
+            // but see no good way around it.
+			if (Reflections.FindBuiltInMethod(methodName, -1) is MethodPropertyHolder mph
+				&& mph.mi != null
+				&& !parser.UserFuncs.Contains(methodName) 
+                && parser.IsVarDeclaredLocally(methodName) == null)
                 targetExpression = CreateQualifiedName($"{mph.mi.DeclaringType}.{mph.mi.Name}");
             else
             {
@@ -584,26 +589,25 @@ namespace Keysharp.Scripting
             return HandleLogicalOrExpression((ExpressionSyntax)Visit(context.left), (ExpressionSyntax)Visit(context.right));
         }
 
+        public SyntaxNode HandleCoalesceExpression(ExpressionSyntax left, ExpressionSyntax right)
+        {
+            if (right is AssignmentExpressionSyntax)
+                right = SyntaxFactory.ParenthesizedExpression(right);
+			return SyntaxFactory.BinaryExpression(
+				SyntaxKind.CoalesceExpression,
+				left,
+				right
+			);
+		}
+
         public override SyntaxNode VisitCoalesceExpression([NotNull] CoalesceExpressionContext context)
         {
-            var left = (ExpressionSyntax)Visit(context.left);
-            var right = (ExpressionSyntax)Visit(context.right);
-            return SyntaxFactory.BinaryExpression(
-                SyntaxKind.CoalesceExpression,
-                left,
-                right
-            );
+            return HandleCoalesceExpression((ExpressionSyntax)Visit(context.left), (ExpressionSyntax)Visit(context.right));
         }
         public override SyntaxNode VisitCoalesceExpressionDuplicate([NotNull] CoalesceExpressionDuplicateContext context)
         {
-            var left = (ExpressionSyntax)Visit(context.left);
-            var right = (ExpressionSyntax)Visit(context.right);
-            return SyntaxFactory.BinaryExpression(
-                SyntaxKind.CoalesceExpression,
-                left,
-                right
-            );
-        }
+			return HandleCoalesceExpression((ExpressionSyntax)Visit(context.left), (ExpressionSyntax)Visit(context.right));
+		}
 
         public SyntaxNode HandleUnaryExpressionVisit([NotNull] ParserRuleContext context)
         {
