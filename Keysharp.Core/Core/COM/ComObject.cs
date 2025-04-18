@@ -7,6 +7,7 @@ namespace Keysharp.Core.COM
 		internal static int MaxVtableLen = 16;
 		internal List<IFuncObj> handlers = [];
 		internal object item;
+		private ComObject tempCo;//Must keep a reference else it will throw an exception about the RCW being separated from the object.
 
 		public long Flags { get; set; }
 
@@ -131,10 +132,11 @@ namespace Keysharp.Core.COM
 				if (temp != null && Marshal.IsComObject(temp))
 				{
 					if (temp is IDispatch id)
-					{
 						item = id;
-						return;
-					}
+					else
+						item = new nint(longVal);//This was put here to prevent the COM tests with the taskbar in guitest.ks from crashing. Unsure if it actually makes sense.
+
+					return;
 				}
 
 				item = temp;
@@ -199,6 +201,7 @@ namespace Keysharp.Core.COM
 				Flags |= F_OWNVALUE;
 
 			Ptr = co.Ptr;
+			tempCo = co;
 			return "";
 		}
 

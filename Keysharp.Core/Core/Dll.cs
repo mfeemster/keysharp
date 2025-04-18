@@ -469,21 +469,42 @@ namespace Keysharp.Core
 			{
 				if (pi < parameters.Length - 1)
 				{
-					var p0 = parameters[pi];
-					//var p1 = parameters[pi + 1];
+					var ps = parameters[pi].As();
+					var wasPtr = ps[ ^ 1] == '*' || ps[ ^ 1] == 'p';
 
 					//If they passed in a ComObject with Ptr as an address, make that address into a __ComObject.
 					if (parameters[pi + 1] is ComObject co)
 					{
-						object obj = co.Ptr;
-						co.Ptr = obj;//Reassign to ensure pointers are properly cast to __ComObject.
-					}
-					else if (p0 is string ps)
-					{
-						if (ps[ ^ 1] == '*' || ps[ ^ 1] == 'p')
+						if (wasPtr)
 						{
 							var arg = args[ai];
 
+							if (arg is IntPtr aip)
+								FixParamTypeAndCopyBack(ref co.item, ps, aip);//Reference item directly.
+							else if (arg is long l)
+								FixParamTypeAndCopyBack(ref co.item, ps, (nint)l);
+						}
+
+						object obj = co.Ptr;
+						co.Ptr = obj;//Reassign to ensure pointers are properly cast to __ComObject.
+					}
+					else if (wasPtr)
+					{
+						var arg = args[ai];
+
+						if (parameters[pi + 1] is KeysharpObject kso && kso.HasProp("ptr") == 1L)
+						{
+							object temp = arg;
+
+							if (arg is IntPtr aip)
+								FixParamTypeAndCopyBack(ref temp, ps, aip);
+							else if (arg is long l)
+								FixParamTypeAndCopyBack(ref temp, ps, (nint)l);
+
+							_ = Script.SetPropertyValue(kso, "ptr", temp);//Write it back to the ptr property of the KeysharpObject.
+						}
+						else
+						{
 							if (arg is IntPtr aip)
 								FixParamTypeAndCopyBack(ref parameters[pi + 1], ps, aip);//Must reference directly into the array, not a temp variable.
 							else if (arg is long l)

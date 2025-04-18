@@ -460,6 +460,7 @@ namespace Keysharp.Core.COM
 			if (idx < 0)
 				return Errors.ErrorOccurred(err = new ValueError($"Index value of {idx} was less than zero.")) ? throw err : null;
 
+			evalPointers:
 			object ptr = null;
 			var pUnk = IntPtr.Zero;
 
@@ -471,11 +472,22 @@ namespace Keysharp.Core.COM
 				ptr = ip;
 			else if (comObj is long l)
 				ptr = new IntPtr(l);
+			else if (comObj is KeysharpObject kso && Script.GetPropertyValue(kso, "ptr", false) is object o && o != null)
+			{
+				comObj = o;
+				goto evalPointers;//I know gotos are bad, but the type needs to be reevaluated after retrieving the object stored at ptr.
+			}
 			else
 				return Errors.ErrorOccurred(err = new ValueError($"The passed in object was not a ComObject or a raw COM interface.")) ? throw err : null;
 
 			if (ptr is IntPtr ip2)
+			{
 				pUnk = ip2;
+			}
+			else if (ptr is long l)
+			{
+				pUnk = new IntPtr(l);
+			}
 			else
 			{
 				pUnk = Marshal.GetIUnknownForObject(ptr);
@@ -490,7 +502,7 @@ namespace Keysharp.Core.COM
 			{
 				if (pi < parameters.Length - 1)
 				{
-					var p0 = parameters[pi];
+					var ps = parameters[pi].As();
 
 					//If they passed in a ComObject with Ptr as an address, make that address into a __ComObject.
 					/*  if (parameters[pi + 1] is ComObject co2)
@@ -500,11 +512,17 @@ namespace Keysharp.Core.COM
 					    }
 
 					    else*/
-					if (p0 is string ps)
+					if (ps[ ^ 1] == '*' || ps[ ^ 1] == 'p')
 					{
 						var aip = helper.args[ai];
 
-						if (ps[ ^ 1] == '*' || ps[ ^ 1] == 'p')
+						if (parameters[pi + 1] is KeysharpObject kso && kso.HasProp("ptr") == 1L)
+						{
+							object temp = aip;
+							Dll.FixParamTypeAndCopyBack(ref temp, ps, (IntPtr)aip);
+							_ = Script.SetPropertyValue(kso, "ptr", temp);//Write it back to the ptr property of the KeysharpObject.
+						}
+						else
 							Dll.FixParamTypeAndCopyBack(ref parameters[pi + 1], ps, (IntPtr)aip);//Must reference directly into the array, not a temp variable.
 					}
 				}

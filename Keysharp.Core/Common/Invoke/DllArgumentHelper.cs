@@ -129,21 +129,25 @@ namespace Keysharp.Core.Common.Invoke
 					{
 						if (type == typeof(IntPtr))
 						{
+							object extra = null;
+
 							if (name == "ptr")
 							{
+								evalPointers:
+
 								if (p is null)
 									args[n] = IntPtr.Zero;
 								else if (p is IntPtr)
 								{
 									if (usePtr)
-										SetupPointerArg(i, n);
+										SetupPointerArg(i, n, extra);
 									else
 										args[n] = p;
 								}
 								else if (p is int || p is long || p is uint)
 								{
 									if (usePtr)
-										SetupPointerArg(i, n);
+										SetupPointerArg(i, n, extra);
 									else
 										args[n] = new IntPtr((long)Convert.ChangeType(p, typeof(long)));
 								}
@@ -200,9 +204,16 @@ namespace Keysharp.Core.Common.Invoke
 									_ = Marshal.Release(pUnk);
 								}
 								else if (p is Array array)
+								{
 									SetupPointerArg(i, n, array.array);
+								}
+								else if (p is KeysharpObject kso && Script.GetPropertyValue(kso, "ptr", false) is object o && o != null)
+								{
+									extra = p = o;
+									goto evalPointers;//I know gotos are bad, but the type needs to be reevaluated after retrieving the object stored at ptr.
+								}
 								else
-									SetupPointerArg(i, n);//If it wasn't any of the above types, just take the address, which ends up being the same as int* etc...
+									SetupPointerArg(i, n, extra);//If it wasn't any of the above types, just take the address, which ends up being the same as int* etc...
 							}
 							else if (name == "uint" || name == "int")
 							{

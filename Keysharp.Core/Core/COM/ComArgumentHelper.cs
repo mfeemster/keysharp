@@ -303,6 +303,8 @@ namespace Keysharp.Core.COM
 
 						if (!isreturn)
 						{
+							evalPointers:
+
 							if (p is nint ip)
 								args[n] = ip;
 							else if (p is int || p is long || p is uint)
@@ -318,10 +320,12 @@ namespace Keysharp.Core.COM
 								if (co.Ptr is nint ip2)
 									pUnk = ip2;
 								else
+								{
 									pUnk = Marshal.GetIUnknownForObject(co.Ptr);//Subsequent calls like DllCall() and NumGet() will dereference to get entries in the vtable.
+									_ = Marshal.Release(pUnk);
+								}
 
 								args[n] = pUnk;
-								_ = Marshal.Release(pUnk);
 							}
 							else if (Marshal.IsComObject(p))
 							{
@@ -332,6 +336,11 @@ namespace Keysharp.Core.COM
 							else if (p is DelegateHolder delholder)
 							{
 								args[n] = Marshal.GetFunctionPointerForDelegate(delholder.DelRef);
+							}
+							else if (p is KeysharpObject kso && Script.GetPropertyValue(kso, "ptr", false) is object o && o != null)
+							{
+								p = o;
+								goto evalPointers;//I know gotos are bad, but the type needs to be reevaluated after retrieving the object stored at ptr.
 							}
 							//else if (p is StringBuffer sb)
 							//{
