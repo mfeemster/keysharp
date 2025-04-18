@@ -26,15 +26,7 @@ namespace Keysharp.Core.COM
 			{
 				var p = parameters[i];
 				var pm1 = parameters[i - 1].ToString();
-				GCHandle gch;
-
-				if (obj != null)
-					gch = GCHandle.Alloc(obj ?? p, GCHandleType.Pinned);
-				else if (p is ComObject co)
-					gch = GCHandle.Alloc(co.Ptr, GCHandleType.Pinned);
-				else
-					gch = GCHandle.Alloc(p, GCHandleType.Pinned);
-
+				var gch = GCHandle.Alloc(obj ?? p, GCHandleType.Pinned);
 				_ = gcHandles.Add(gch);
 				var intptr = gch.AddrOfPinnedObject();
 				args[n] = intptr;
@@ -69,6 +61,9 @@ namespace Keysharp.Core.COM
 				var n = i / 2;
 				var p = parameters[i];
 				//var usePtr = false;
+
+				if (p is KeysharpObject kso && Script.GetPropertyValue(kso, "ptr", false) is object kptr && kptr != null)
+					p = parameters[i] = kptr;
 
 				switch (name[name.Length - 1])
 				{
@@ -303,8 +298,6 @@ namespace Keysharp.Core.COM
 
 						if (!isreturn)
 						{
-							evalPointers:
-
 							if (p is nint ip)
 								args[n] = ip;
 							else if (p is int || p is long || p is uint)
@@ -313,20 +306,6 @@ namespace Keysharp.Core.COM
 								args[n] = buf.Ptr;
 							else if (p is Array array)
 								SetupPointerArg(i, n, array.array);
-							else if (p is ComObject co)
-							{
-								nint pUnk;
-
-								if (co.Ptr is nint ip2)
-									pUnk = ip2;
-								else
-								{
-									pUnk = Marshal.GetIUnknownForObject(co.Ptr);//Subsequent calls like DllCall() and NumGet() will dereference to get entries in the vtable.
-									_ = Marshal.Release(pUnk);
-								}
-
-								args[n] = pUnk;
-							}
 							else if (Marshal.IsComObject(p))
 							{
 								var pUnk = Marshal.GetIUnknownForObject(p);
@@ -336,11 +315,6 @@ namespace Keysharp.Core.COM
 							else if (p is DelegateHolder delholder)
 							{
 								args[n] = Marshal.GetFunctionPointerForDelegate(delholder.DelRef);
-							}
-							else if (p is KeysharpObject kso && Script.GetPropertyValue(kso, "ptr", false) is object o && o != null)
-							{
-								p = o;
-								goto evalPointers;//I know gotos are bad, but the type needs to be reevaluated after retrieving the object stored at ptr.
 							}
 							//else if (p is StringBuffer sb)
 							//{
