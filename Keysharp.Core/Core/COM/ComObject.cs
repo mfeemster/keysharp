@@ -7,6 +7,7 @@ namespace Keysharp.Core.COM
 		internal static int MaxVtableLen = 16;
 		internal List<IFuncObj> handlers = [];
 		internal object item;
+		private ComObject tempCo;//Must keep a reference else it will throw an exception about the RCW being separated from the object.
 
 		public long Flags { get; set; }
 
@@ -131,10 +132,11 @@ namespace Keysharp.Core.COM
 				if (temp != null && Marshal.IsComObject(temp))
 				{
 					if (temp is IDispatch id)
-					{
 						item = id;
-						return;
-					}
+					else
+						item = new nint(longVal);//This was put here to prevent the COM tests with the taskbar in guitest.ks from crashing. Unsure if it actually makes sense.
+
+					return;
 				}
 
 				item = temp;
@@ -199,6 +201,7 @@ namespace Keysharp.Core.COM
 				Flags |= F_OWNVALUE;
 
 			Ptr = co.Ptr;
+			tempCo = co;
 			return "";
 		}
 
@@ -290,7 +293,7 @@ namespace Keysharp.Core.COM
 
 				if (co.VarType == Com.vt_dispatch || co.VarType == Com.vt_unknown)
 				{
-					Com.ObjAddRef(co);
+					_ = Com.ObjAddRef(co);
 				}
 				else if ((co.Flags & F_OWNVALUE) == F_OWNVALUE)
 				{
@@ -386,46 +389,6 @@ namespace Keysharp.Core.COM
 			return co;
 		}
 	}
-
-	internal delegate long Del0(long a);
-
-	internal delegate long Del01(long a, long a0);
-
-	internal delegate long Del02(long a, long a0, long a1);
-
-	internal delegate long Del03(long a, long a0, long a1, long a2);
-
-	internal delegate long Del04(long a, long a0, long a1, long a2, long a3);
-
-	internal delegate long Del05(long a, long a0, long a1, long a2, long a3, long a4);
-
-	internal delegate long Del06(long a, long a0, long a1, long a2, long a3, long a4, long a5);
-
-	internal delegate long Del07(long a, long a0, long a1, long a2, long a3, long a4, long a5, long a6);
-
-	internal delegate long Del08(long a, long a0, long a1, long a2, long a3, long a4, long a5, long a6, long a7);
-
-	internal delegate long Del09(long a, long a0, long a1, long a2, long a3, long a4, long a5, long a6, long a7, long a8);
-
-	internal delegate long Del10(long a, long a0, long a1, long a2, long a3, long a4, long a5, long a6, long a7, long a8, long a9);
-
-	internal delegate long Del11(long a, long a0, long a1, long a2, long a3, long a4, long a5, long a6, long a7, long a8, long a9, long a10);
-
-	internal delegate long Del12(long a, long a0, long a1, long a2, long a3, long a4, long a5, long a6, long a7, long a8, long a9, long a10, long a11);
-
-	internal delegate long Del13(long a, long a0, long a1, long a2, long a3, long a4, long a5, long a6, long a7, long a8, long a9, long a10, long a11, long a12);
-
-	internal delegate long Del14(long a, long a0, long a1, long a2, long a3, long a4, long a5, long a6, long a7, long a8, long a9, long a10, long a11, long a12, long a13);
-
-	internal delegate long Del15(long a, long a0, long a1, long a2, long a3, long a4, long a5, long a6, long a7, long a8, long a9, long a10, long a11, long a12, long a13, long a14);
-
-	internal delegate long Del16(long a, long a0, long a1, long a2, long a3, long a4, long a5, long a6, long a7, long a8, long a9, long a10, long a11, long a12, long a13, long a14, long a15);
-
-	internal delegate long Del17(long a, long a0, long a1, long a2, long a3, long a4, long a5, long a6, long a7, long a8, long a9, long a10, long a11, long a12, long a13, long a14, long a15, long a16);
-
-	internal delegate long Del18(long a, long a0, long a1, long a2, long a3, long a4, long a5, long a6, long a7, long a8, long a9, long a10, long a11, long a12, long a13, long a14, long a15, long a16, long a17);
-
-	internal delegate long DelNone();
 }
 
 #endif

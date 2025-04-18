@@ -42,7 +42,7 @@
 				else
 					map["value"] = args[i + 1];
 
-				kso.DefineProp(key, map);
+				_ = kso.DefineProp(key, map);
 			}
 
 			return kso;

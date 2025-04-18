@@ -204,7 +204,7 @@ CheckMatches(match, "0", "txt")
 
 RegExMatch("Michiganroad 72", "(.*) (?<nr>\d+)", &match)
 
-if (match.Count == 2)
+if (match.Count == 3)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
@@ -337,7 +337,7 @@ CheckMatches(match, "0", "txt")
 
 match := "Michiganroad 72" ~= "(.*) (?<nr>\d+)"
 
-if (match.Count == 2)
+if (match.Count == 3)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"

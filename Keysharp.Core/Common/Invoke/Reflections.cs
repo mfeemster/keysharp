@@ -569,7 +569,7 @@ namespace Keysharp.Core.Common.Invoke
 				}
 				catch (Exception ex)
 				{
-					Debug.OutputDebug(ex.Message);
+					_ = Debug.OutputDebug(ex.Message);
 				}
 			}
 

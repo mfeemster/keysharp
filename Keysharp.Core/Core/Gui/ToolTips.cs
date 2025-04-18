@@ -54,7 +54,6 @@
 			var tooltipInvokerForm = GuiHelper.DialogOwner ?? Form.ActiveForm;
 			var focusedWindow = IntPtr.Zero;
 			var one_or_both_coords_specified = _x != int.MinValue || _y != int.MinValue;
-			var one_or_both_coords_unspecified = _x == int.MinValue || _y == int.MinValue;
 
 			if (tooltipInvokerForm == null)
 			{
@@ -120,13 +119,21 @@
 
 				tt.Active = true;
 
-				if (one_or_both_coords_unspecified)
+				if (!one_or_both_coords_specified)
 				{
 					//We use SetTool() via reflection in this function because it bypasses ToolTip.Show()'s check for whether or not the window
 					//is active.
 					var temppt = Cursor.Position;
-					temppt.X += 10;
-					temppt.Y += 10;
+
+					if (_x == int.MinValue)
+						temppt.X += 10;
+					else
+						temppt.X = _x;
+
+					if (_y == int.MinValue)
+						temppt.Y += 10;
+					else
+						temppt.Y = _y;
 
 					if (ttp != null && ttp?.X == temppt.X && ttp?.Y == temppt.Y && tt.GetToolTip(tooltipInvokerForm) == t)
 						return;

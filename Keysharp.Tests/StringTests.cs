@@ -311,7 +311,7 @@ namespace Keysharp.Tests
 			Assert.AreEqual(((RegExResults)match)[0], "txt");
 			Assert.AreEqual(((RegExResults)match).Pos(), 16);
 			_ = RegEx.RegExMatch("Michiganroad 72", @"(.*) (?<nr>\d+)", ref match);
-			Assert.AreEqual(((RegExResults)match).Count, 2);
+			Assert.AreEqual(((RegExResults)match).Count, 3);
 			Assert.AreEqual(((RegExResults)match)[1], "Michiganroad");
 			Assert.AreEqual(((RegExResults)match).Name(2), "nr");
 			Assert.AreEqual(((RegExResults)match)[2], "72");
@@ -379,7 +379,7 @@ namespace Keysharp.Tests
 			for (var i = 0; i < 10; i++)
 			{
 				var z = Strings.Sort(x, "D, n random");
-				Core.Debug.OutputDebug(z);
+				_ = Core.Debug.OutputDebug(z);
 				Assert.AreNotEqual(z, y);
 				y = z;
 			}
@@ -756,10 +756,17 @@ namespace Keysharp.Tests
 		public void VerCompare()
 		{
 			Assert.AreEqual(Strings.VerCompare("1.20.0", "1.3"), 1L);
+			Assert.AreEqual(Strings.VerCompare(" 1.20.0", "<1.30"), 1L);
+			Assert.AreEqual(Strings.VerCompare("1.20.0 ", "<=1.30"), 1L);
+			Assert.AreEqual(Strings.VerCompare("1.20.0", " >1.30"), 0L);
+			Assert.AreEqual(Strings.VerCompare("1.20.0", " >=1.30 "), 0L);
+			Assert.AreEqual(Strings.VerCompare(" 1.20.0", " =1.30 "), 0L);
+			Assert.AreEqual(Strings.VerCompare(" 1.20.0 ", " =1.20.0 "), 1L);
 			Assert.AreEqual(Strings.StrCompare("1.20.0", "1.3"), -1L);
 			Assert.AreEqual(Strings.VerCompare("2.0-a137", "2.0-a136"), 1L);
 			Assert.AreEqual(Strings.VerCompare("2.0-a137", "2.0"), -1);
 			Assert.AreEqual(Strings.VerCompare("10.2-beta.3", "10.2.0"), -1);
+			Assert.IsTrue(TestScript("string-vercompare", true));
 		}
 
 		[Test, Category("String")]

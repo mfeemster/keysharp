@@ -367,7 +367,7 @@ namespace Keysharp.Scripting
 						//in place for HotstringOptions() (#Hotstring xyz) in parts, because we need to call it in both places.
 						//This is because the position must be kept consistent with hotkey/string declarations,
 						//but also kept in place for other usage of global hotstring settings like A_DefaultHotstring*.
-						topStatements.Add(invoke);
+						_ = topStatements.Add(invoke);
 						//Because we've encountered #Hotstring options, we must actually parse the options now (and later in the script)
 						//to find out which defaults should be in place for subsequently parsed hotstrings.
 						HotstringDefinition.ParseOptions(Ch.CodeToString(invoke.Parameters[0]).Trim('\"')//Will be quoted, so remove here.
@@ -1028,7 +1028,7 @@ namespace Keysharp.Scripting
 								var tempprop = $"{InternalID}";
 								var temppropdec = new CodeVariableDeclarationStatement(typeof(object), tempprop, propobj);
 								var temppropref = new CodeVariableReferenceExpression(tempprop);
-								parent.Add(temppropdec);
+								_ = parent.Add(temppropdec);
 								var invoke = (CodeMethodInvokeExpression)InternalMethods.SetPropertyValue;
 								_ = invoke.Parameters.Add(temppropref);
 								_ = invoke.Parameters.Add(propname);
@@ -1235,7 +1235,7 @@ namespace Keysharp.Scripting
 						{
 							int z = -1, x = i - 1, y = i + 1;
 							var d = ops == Script.Operator.Increment ? 1L : -1L;
-							var dl = $"{d}L";
+							var dsnippet = new CodeSnippetExpression($"{d}L");
 							CodeMethodInvokeExpression shadow = null;
 
 							if (x > -1 && parts[x] is CodeMethodInvokeExpression cmie)
@@ -1246,24 +1246,20 @@ namespace Keysharp.Scripting
 										&& cmie.Parameters.Count > 1)
 								{
 									leftSide = (CodeMethodInvokeExpression)InternalMethods.PostfixIncDecProp;
-									leftSide.Parameters.Add(cmie.Parameters[0]);
-									leftSide.Parameters.Add(cmie.Parameters[1]);
-									leftSide.Parameters.Add(new CodeSnippetExpression(dl));
+									_ = leftSide.Parameters.Add(cmie.Parameters[0]);
+									_ = leftSide.Parameters.Add(cmie.Parameters[1]);
+									_ = leftSide.Parameters.Add(dsnippet);
 									parts.RemoveAt(i);
 									parts[x] = leftSide;
 								}
 								else
 								{
-									var sub = new List<object>(5)//Unsure if this ever gets called.
-									{
-										parts[x],
-											  CodeBinaryOperatorType.Assign,
-											  parts[x],
-											  Script.Operator.Add,
-											  d
-									};
+									leftSide = (CodeMethodInvokeExpression)InternalMethods.PostfixIncDecIndex;
+									_ = leftSide.Parameters.Add(cmie.Parameters[0]);
+									_ = leftSide.Parameters.Add(cmie.Parameters[1]);
+									_ = leftSide.Parameters.Add(dsnippet);
 									parts.RemoveAt(i);
-									parts[x] = ParseExpression(codeLine, code, sub, create);
+									parts[x] = leftSide;
 								}
 
 								i = x;
@@ -1413,7 +1409,7 @@ namespace Keysharp.Scripting
 							}
 
 							list.Add("+=");
-							list.Add(new CodeSnippetExpression(dl));
+							list.Add(dsnippet);
 
 							if (shadow != null)
 							{

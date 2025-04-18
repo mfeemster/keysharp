@@ -184,7 +184,7 @@
 			{
 				"Theme", (f, o) =>
 				{
-					Debug.OutputDebug("Themes are not supported", false);
+					_ = Debug.OutputDebug("Themes are not supported", false);
 				}
 			},
 			{

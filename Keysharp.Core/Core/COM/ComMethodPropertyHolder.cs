@@ -274,7 +274,7 @@ namespace Keysharp.Core.COM
 				//If no exception thrown and it wasn't cached, cache the info.
 				if (!found)
 				{
-					comMethodCache.GetOrAdd(comObject).GetOrAdd(methodName, new ComMethodInfo()
+					_ = comMethodCache.GetOrAdd(comObject).GetOrAdd(methodName, new ComMethodInfo()
 					{
 						modifiers = modifiers,
 						expectedTypes = expectedTypes

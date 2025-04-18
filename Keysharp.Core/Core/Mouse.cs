@@ -36,7 +36,7 @@ namespace Keysharp.Core
 		///     Otherwise, specify the word Rel or Relative to treat the coordinates as offsets from the current mouse position.<br/>
 		///     In other words, the cursor will be moved from its current position by X pixels to the right (left if negative) and Y pixels down(up if negative).
 		/// </param>
-		public static object Click(object options)
+		public static object Click(object coords = null, object whichButton = null, object clickCount = null, object downOrUp = null, object relative = null)
 		{
 			int x = 0, y = 0;
 			var vk = 0u;
@@ -44,7 +44,8 @@ namespace Keysharp.Core
 			var repeatCount = 0L;
 			var moveOffset = false;
 			var ht = Script.HookThread;
-			ht.ParseClickOptions(options.As(), ref x, ref y, ref vk, ref eventType, ref repeatCount, ref moveOffset);
+			var options = $"{coords.As()} {whichButton.As()} {clickCount.As()} {downOrUp.As()} {relative.As()}";
+			ht.ParseClickOptions(options, ref x, ref y, ref vk, ref eventType, ref repeatCount, ref moveOffset);
 			//Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() =>
 			ht.kbdMsSender.PerformMouseCommon(repeatCount < 1 ? Actions.ACT_MOUSEMOVE : Actions.ACT_MOUSECLICK // Treat repeat-count<1 as a move (like {click}).
 											  , vk, x, y, 0, 0, repeatCount, eventType, ThreadAccessors.A_DefaultMouseSpeed, moveOffset);//, true, true);

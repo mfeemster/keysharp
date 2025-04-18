@@ -350,7 +350,7 @@ namespace Keysharp.Scripting
 			var popcse = new CodeSnippetExpression("Keysharp.Core.Common.Threading.Threads.EndThread(_ks_pushed)");
 			var ccsHandled = new CodeConditionStatement(new CodeSnippetExpression("!kserr.Handled"));
 			var ccsProcessed = new CodeConditionStatement(new CodeSnippetExpression("!kserr.Processed"));
-			ccsProcessed.TrueStatements.Add(new CodeSnippetExpression("_ = ErrorOccurred(kserr, kserr.ExcType)"));
+			_ = ccsProcessed.TrueStatements.Add(new CodeSnippetExpression("_ = ErrorOccurred(kserr, kserr.ExcType)"));
 			var cmrsexit = new CodeMethodReturnStatement(new CodeSnippetExpression("Environment.ExitCode"));
 			_ = ccsHandled.TrueStatements.Add(pushcse);
 			_ = ccsHandled.TrueStatements.Add(msg);
@@ -1183,7 +1183,7 @@ namespace Keysharp.Scripting
 			//Despite having to compile code again, this took < 1ms in debug mode for over 100 assignments,
 			//so it shouldn't matter.
 			foreach (var assign in assignSnippets)
-				ReevaluateSnippets(assign.Value);
+				_ = ReevaluateSnippets(assign.Value);
 
 			//Static member properties need to be reevaluated.
 			foreach (var member in codeSnippetTypeMembers)
