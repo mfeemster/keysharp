@@ -35,8 +35,10 @@
 			}
 
 			this.op["base"] = new OwnPropsDesc(this, value.op["prototype"].Value);
+			GC.SuppressFinalize(this); // Otherwise if the constructor throws then the destructor is called
             Script.Invoke(this, "__Init");
             Script.Invoke(this, "__New", args);
+			GC.ReRegisterForFinalize(this);
         }
 
         public KeysharpObject(bool skipLogic)
