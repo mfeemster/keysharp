@@ -258,62 +258,50 @@ namespace Keysharp.Core.COM
 		public static object ComObjQuery(object comObj, object sidiid = null, object iid = null)
 		{
 			Error err;
-			object ptr;
+			IntPtr ptr;
 
-			if (comObj is ComObject co)
-				ptr = co.Ptr;
-			else if (Marshal.IsComObject(comObj))
-				ptr = comObj;
+			if (comObj is KeysharpObject kso && Script.GetPropertyValue(kso, "ptr", false) is object kptr && kptr != null)
+				comObj = kptr;
+
+			if (Marshal.IsComObject(comObj))
+				ptr = Marshal.GetIUnknownForObject(comObj);
 			else if (comObj is IntPtr ip)
-				ptr = Marshal.GetObjectForIUnknown(ip);
+				ptr = ip;
 			else if (comObj is long l)
-				ptr = Marshal.GetObjectForIUnknown(new IntPtr(l));
+				ptr = new IntPtr(l);
 			else
 				return Errors.ErrorOccurred(err = new ValueError($"The passed in object {comObj} of type {comObj.GetType()} was not a ComObject or a raw COM interface.")) ? throw err : null;
+
+			IntPtr resultPtr = IntPtr.Zero;
+			Guid id = Guid.Empty;
+			int hr;
 
 			if (sidiid != null && iid != null)
 			{
 				var sidstr = sidiid.As();
 				var iidstr = iid.As();
 
-				if (CLSIDFromString(sidstr, out var sid) >= 0 && CLSIDFromString(iidstr, out var id) >= 0)
+				if (CLSIDFromString(sidstr, out var sid) >= 0 && CLSIDFromString(iidstr, out id) >= 0)
 				{
-					if (ptr is IServiceProvider isp)
-					{
-						_ = isp.QueryService(ref sid, ref id, out var ppv);
-
-						if (ppv != IntPtr.Zero)
-						{
-							var ob = Marshal.GetObjectForIUnknown(ppv);
-							return new ComObject(id == IID_IDispatch ? vt_dispatch : vt_unknown, ob);
-						}
-					}
+					// Query for a service: use IServiceProvider::QueryService.
+					IServiceProvider sp = (IServiceProvider)Marshal.GetObjectForIUnknown(ptr);
+					hr = sp.QueryService(ref sid, ref id, out resultPtr);
 				}
 			}
 			else if (sidiid != null)
 			{
 				var iidstr = sidiid.As();
 
-				if (CLSIDFromString(iidstr, out var id) >= 0)
+				if (CLSIDFromString(iidstr, out id) >= 0)
 				{
-					var iptr = Marshal.GetIUnknownForObject(ptr);
-
-					if (Marshal.QueryInterface(iptr, in id, out var ppv) >= 0)
-					{
-						_ = Marshal.Release(iptr);
-
-						if (ppv != IntPtr.Zero)
-						{
-							var ob = Marshal.GetObjectForIUnknown(ppv);
-							return new ComObject(id == IID_IDispatch ? vt_dispatch : vt_unknown, ob);
-						}
-					}
-
-					_ = Marshal.Release(iptr);
+					hr = Marshal.QueryInterface(ptr, id, out resultPtr);
 				}
 			}
 
-			return Errors.ErrorOccurred(err = new Error($"Unable to get COM interface with arguments {sidiid}, {iid}.")) ? throw err : null;
+			if (resultPtr == IntPtr.Zero)
+				return Errors.ErrorOccurred(err = new Error($"Unable to get COM interface with arguments {sidiid}, {iid}.")) ? throw err : null;
+
+			return new ComObject(id == IID_IDispatch ? vt_dispatch : vt_unknown, resultPtr);
 		}
 
 		public static object ComObjType(object comObj, object infoType = null)
@@ -460,43 +448,27 @@ namespace Keysharp.Core.COM
 			if (idx < 0)
 				return Errors.ErrorOccurred(err = new ValueError($"Index value of {idx} was less than zero.")) ? throw err : null;
 
-			evalPointers:
-			object ptr = null;
 			var pUnk = IntPtr.Zero;
 
-			if (comObj is ComObject co)
-				ptr = co.Ptr;
-			else if (Marshal.IsComObject(comObj))
-				ptr = comObj;
-			else if (comObj is IntPtr ip)
-				ptr = ip;
-			else if (comObj is long l)
-				ptr = new IntPtr(l);
-			else if (comObj is KeysharpObject kso && Script.GetPropertyValue(kso, "ptr", false) is object o && o != null)
-			{
-				comObj = o;
-				goto evalPointers;//I know gotos are bad, but the type needs to be reevaluated after retrieving the object stored at ptr.
-			}
-			else
-				return Errors.ErrorOccurred(err = new ValueError($"The passed in object was not a ComObject or a raw COM interface.")) ? throw err : null;
+			if (comObj is KeysharpObject kso && Script.GetPropertyValue(comObj, "ptr", false) is object propPtr && propPtr != null)
+				comObj = propPtr;
 
-			if (ptr is IntPtr ip2)
+			if (Marshal.IsComObject(comObj))
 			{
-				pUnk = ip2;
-			}
-			else if (ptr is long l)
-			{
-				pUnk = new IntPtr(l);
-			}
-			else
-			{
-				pUnk = Marshal.GetIUnknownForObject(ptr);
+				pUnk = Marshal.GetIUnknownForObject(comObj);
 				_ = Marshal.Release(pUnk);
 			}
+			else if (comObj is IntPtr ip)
+				pUnk = ip;
+			else if (comObj is long l)
+				pUnk = new IntPtr(l);
+			else
+				return Errors.ErrorOccurred(err = new ValueError($"The passed in object was not a ComObject or a raw COM interface.")) ? throw err : null;
 
 			var pVtbl = Marshal.ReadIntPtr(pUnk);
 			var helper = new ComArgumentHelper(parameters);
 			var value = CallDel(pUnk.ToInt64(), Marshal.ReadIntPtr(IntPtr.Add(pVtbl, idx * sizeof(IntPtr))), helper.args);
+			Dll.FixParamTypesAndCopyBack(parameters, helper.args);
 
 			for (int pi = 0, ai = 0; pi < parameters.Length; pi += 2, ++ai)
 			{
@@ -515,15 +487,7 @@ namespace Keysharp.Core.COM
 					if (ps[ ^ 1] == '*' || ps[ ^ 1] == 'p')
 					{
 						var aip = helper.args[ai];
-
-						if (parameters[pi + 1] is KeysharpObject kso && kso.HasProp("ptr") == 1L)
-						{
-							object temp = aip;
-							Dll.FixParamTypeAndCopyBack(ref temp, ps, (IntPtr)aip);
-							_ = Script.SetPropertyValue(kso, "ptr", temp);//Write it back to the ptr property of the KeysharpObject.
-						}
-						else
-							Dll.FixParamTypeAndCopyBack(ref parameters[pi + 1], ps, (IntPtr)aip);//Must reference directly into the array, not a temp variable.
+						Dll.FixParamTypeAndCopyBack(ref parameters[pi + 1], ps, (IntPtr)aip);//Must reference directly into the array, not a temp variable.
 					}
 				}
 			}
@@ -545,6 +509,9 @@ namespace Keysharp.Core.COM
 
 		internal static long CallDel(long objPtr, IntPtr vtbl, long[] args)
 		{
+			if (objPtr == 0L || vtbl == IntPtr.Zero)
+				throw new Error("Invalid object pointer or vtable number");
+
 			//First attempt to call the normal way. This will succeed with any normal COM call.
 			//However, it will throw an exception if we've passed a fake COM function using DelegateHolder.
 			//This can be reproduced with the following script.

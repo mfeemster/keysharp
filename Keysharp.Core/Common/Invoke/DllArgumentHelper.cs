@@ -125,29 +125,31 @@ namespace Keysharp.Core.Common.Invoke
 					names[n] = name0;
 					types[n] = type;
 
+					// This assumes that the ptr property contains a numeric value wrapped in the object type
+					// or System.__ComObject. If the numeric value is not wrapped then using it
+					// as an output variable will not work properly. 
+					if (p is KeysharpObject pkso && Script.GetPropertyValue(pkso, "ptr", false) is object pptr && pptr != null)
+						p = parameters[i] = pptr;
+
 					try
 					{
 						if (type == typeof(IntPtr))
 						{
-							object extra = null;
-
-							if (name == "ptr")
+							if (name == "ptr" || name == "uptr")
 							{
-								evalPointers:
-
 								if (p is null)
 									args[n] = IntPtr.Zero;
 								else if (p is IntPtr)
 								{
 									if (usePtr)
-										SetupPointerArg(i, n, extra);
+										SetupPointerArg(i, n);
 									else
 										args[n] = p;
 								}
 								else if (p is int || p is long || p is uint)
 								{
 									if (usePtr)
-										SetupPointerArg(i, n, extra);
+										SetupPointerArg(i, n);
 									else
 										args[n] = new IntPtr((long)Convert.ChangeType(p, typeof(long)));
 								}
@@ -176,27 +178,6 @@ namespace Keysharp.Core.Common.Invoke
 									args[n] = arr;
 									types[n] = arr.GetType();
 								}
-								else if (p is ComObject co)
-								{
-									if (co.Ptr is IntPtr ip || co.Ptr is long || co.Ptr is int)
-									{
-										if (usePtr)
-											SetupPointerArg(i, n, co.Ptr);
-										else
-											args[n] = co.Ptr;
-									}
-									else if (Marshal.IsComObject(co.Ptr))
-									{
-										var pUnk = Marshal.GetIUnknownForObject(co.Ptr);//Subsequent calls like DllCall() and NumGet() will dereference to get entries in the vtable.
-										args[n] = pUnk;
-										_ = Marshal.Release(pUnk);
-									}
-									else
-									{
-										_ = Errors.ErrorOccurred(err = new TypeError($"COM object with ptr type {co.Ptr.GetType()} could not be converted into a DLL argument.")) ? throw err : "";
-										return;
-									}
-								}
 								else if (Marshal.IsComObject(p))
 								{
 									var pUnk = Marshal.GetIUnknownForObject(p);
@@ -207,13 +188,8 @@ namespace Keysharp.Core.Common.Invoke
 								{
 									SetupPointerArg(i, n, array.array);
 								}
-								else if (p is KeysharpObject kso && Script.GetPropertyValue(kso, "ptr", false) is object o && o != null)
-								{
-									extra = p = o;
-									goto evalPointers;//I know gotos are bad, but the type needs to be reevaluated after retrieving the object stored at ptr.
-								}
 								else
-									SetupPointerArg(i, n, extra);//If it wasn't any of the above types, just take the address, which ends up being the same as int* etc...
+									SetupPointerArg(i, n);//If it wasn't any of the above types, just take the address, which ends up being the same as int* etc...
 							}
 							else if (name == "uint" || name == "int")
 							{
