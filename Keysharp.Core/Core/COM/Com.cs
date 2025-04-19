@@ -298,8 +298,6 @@ namespace Keysharp.Core.COM
 				}
 			}
 
-			_ = Marshal.Release(ptr);
-
 			if (resultPtr == IntPtr.Zero)
 				return Errors.ErrorOccurred(err = new Error($"Unable to get COM interface with arguments {sidiid}, {iid}.")) ? throw err : null;
 
@@ -426,16 +424,16 @@ namespace Keysharp.Core.COM
 		public static object ObjRelease(object ptr)
 		{
 			if (ptr is ComObject co)
+			{
 				ptr = co.Ptr;
+				return (long)Marshal.ReleaseComObject(ptr);
+			}
 			else if (ptr is IntPtr ip)
 				ptr = ip;
 			else if (ptr is long l)
 				ptr = new IntPtr(l);
 
-			if (ptr is IntPtr ip2)
-				ptr = Marshal.GetObjectForIUnknown(ip2);
-
-			return (long)Marshal.ReleaseComObject(ptr);
+			return (long)Marshal.Release((nint)ptr);
 		}
 
 		/// <summary>

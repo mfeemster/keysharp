@@ -1236,17 +1236,6 @@ namespace Keysharp.Core
 			var w = scaledPref;
 			var lastControl = LastControl;
 
-			if (ctrl is KeysharpTabControl ktc)
-			{
-				if (ktc.TabPages.Count >= 0)
-					holder.UseTab(1);//Will set this object's CurrentTab value, as well as the LastContainer values.
-
-                if (opts.bgtrans)
-                    ktc.SetColor(Color.Transparent);
-                else if (opts.bgcolor.HasValue)
-                    ktc.SetColor(opts.bgcolor.Value);
-            }
-
 			if (lastControl is KeysharpRadioButton && ctrl is not KeysharpRadioButton)//Pop container if we've ended a radio group.
 			{
 				LastContainer = LastContainer.Parent;
@@ -1384,13 +1373,12 @@ namespace Keysharp.Core
 
 			if ((opts.xpos == GuiOptions.Positioning.Absolute || opts.ypos == GuiOptions.Positioning.Absolute) && LastContainer != null)
 			{
-				Point controlLoc = LastContainer is Form ? LastContainer.Location : form.PointToScreen(LastContainer.Location);
+				Point p = LastContainer.GetLocationRelativeToForm();
 
 				if (opts.xpos == GuiOptions.Positioning.Absolute)
-					xoffset = controlLoc.X - form.Location.X;
-
+					xoffset = p.X;
 				if (opts.ypos == GuiOptions.Positioning.Absolute)
-					yoffset = controlLoc.Y - form.Location.Y;
+					yoffset = p.Y;
 			}
 
 			if (opts.xpos == GuiOptions.Positioning.Absolute)
@@ -1507,14 +1495,20 @@ namespace Keysharp.Core
 										  opts.y != int.MinValue ? opts.y : (int)Math.Round(top));
 			}
 
-			if (ctrl is KeysharpTabControl tc && CurrentTab is TabPage currtp)
+			if (ctrl is KeysharpTabControl ktc)
 			{
+				if (ktc.TabPages.Count >= 0)
+					holder.UseTab(1);//Will set this object's CurrentTab value, as well as the LastContainer values.
+
+				if (opts.bgtrans)
+					ktc.SetColor(Color.Transparent);
+				else if (opts.bgcolor.HasValue)
+					ktc.SetColor(opts.bgcolor.Value);
+
 				prevParent.TagAndAdd(holder);
 
 				if (prevParent != form)
 					ctrl.Size = new Size(Math.Min(prevParent.Width - (2 * prevParent.Margin.Right), ctrl.Right), Math.Min(prevParent.Height - (2 * prevParent.Margin.Top), ctrl.Bottom));
-
-				LastContainer = currtp;
 			}
 			else if (ctrl is KeysharpRadioButton krb)
 			{
@@ -1689,10 +1683,14 @@ namespace Keysharp.Core
 			var width = obj2.Ai();
 			var height = obj3.Ai();
 			var scale = !dpiscaling ? 1.0 : A_ScaledScreenDPI;
-			form.Top = (int)Math.Round(y * scale);
-			form.Left = (int)Math.Round(x * scale);
-			form.Width = (int)Math.Round(width * scale);
-			form.Height = (int)Math.Round(height * scale);
+			if (obj1 != null)
+				form.Top = (int)y;
+			if (obj0 != null)
+				form.Left = (int)x;
+			if (obj2 != null)
+				form.Width = (int)Math.Round(width * scale);
+			if (obj3 != null)
+				form.Height = (int)Math.Round(height * scale);
 			return null;
 		}
 

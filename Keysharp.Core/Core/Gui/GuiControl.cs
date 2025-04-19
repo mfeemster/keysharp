@@ -1078,14 +1078,16 @@
 			var _y = y.Al(long.MinValue);
 			var w = width.Al(long.MinValue);
 			var h = height.Al(long.MinValue);
-			var scale = !DpiScaling ? 1.0 : 1.0 / A_ScaledScreenDPI;
+			var scale = !DpiScaling ? 1.0 : A_ScaledScreenDPI;
 			var hasScrollBars = _control is KeysharpTextBox || _control is KeysharpRichEdit;//Reflections.SafeHasProperty(_control, "ScrollBars") || Reflections.SafeHasProperty(_control, "HorizontalScrollbar") || Reflections.SafeHasProperty(_control, "Scrollable")
 
-			if (_y != long.MinValue)
-				_control.Top = (int)Math.Round(_y * scale);
+			Point offset = Parent == null || Parent.GetControl() is Form ? Point.Empty : Parent.GetControl().GetLocationRelativeToForm();
 
 			if (_x != long.MinValue)
-				_control.Left = (int)Math.Round(_x * scale);
+				_control.Left = (int)Math.Round(_x * scale - offset.X);
+
+			if (_y != long.MinValue)
+				_control.Top = (int)Math.Round(_y * scale - offset.Y);
 
 			if (w != long.MinValue)//Add extra if the control has scrollbars, even if they are not visible.
 				_control.Width = (int)Math.Round(w * scale) - (hasScrollBars ? SystemInformation.VerticalScrollBarWidth : 0);
@@ -1830,6 +1832,11 @@
 		{
             outX ??= VarRef.Empty; outY ??= VarRef.Empty; outWidth ??= VarRef.Empty; outHeight ??= VarRef.Empty;
             var rect = client ? control.ClientRectangle : control.Bounds;
+			if (!client && control?.Parent != null)
+			{
+				Point p = control.Parent.GetLocationRelativeToForm();
+				rect.X += p.X; rect.Y += p.Y;
+			}
 
 			if (!scaling)
 			{

@@ -181,10 +181,12 @@ namespace Keysharp.Core.COM
 		{
 			if (Ptr == null)
 				return;
-			if (Marshal.IsComObject(Ptr))
-				_ = Marshal.ReleaseComObject(Ptr);
-			else if (Ptr is IntPtr ip)
-				_ = Marshal.Release(ip);
+			if (VarType == Com.vt_unknown || VarType == Com.vt_dispatch) {
+				if (Ptr is IntPtr ip)
+					_ = Marshal.Release(ip);
+				else if (Ptr is long lp)
+					_ = Marshal.Release((nint)lp);
+			}
 		}
 
 		public override object __New(params object[] args)

@@ -161,7 +161,7 @@ namespace Keysharp.Scripting
 						return null;
                     }
                     else if (TryGetOwnPropsMap(kso, "__Get", out var protoGet) && protoGet.Call != null && protoGet.Call is IFuncObj ifoprotoget)
-                        return ifoprotoget.Call(item, new Keysharp.Core.Array(), namestr);
+                        return ifoprotoget.Call(item, namestr, new Keysharp.Core.Array());
 
                     if (Reflections.FindAndCacheProperty(typetouse, namestr, 0) is MethodPropertyHolder mph2)
                     {
