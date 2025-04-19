@@ -111,7 +111,9 @@ namespace Keysharp.Core.COM
 				{
 					if (longVal != 0L)
 					{
-						temp = Marshal.GetObjectForIUnknown(new nint(longVal));
+						var nptr = new nint(longVal);
+						temp = Marshal.GetObjectForIUnknown(nptr);
+						Marshal.Release(nptr);
 					}
 
 					//else if (value is long l && l > 0)// && Marshal.IsComObject(value))
@@ -182,9 +184,9 @@ namespace Keysharp.Core.COM
 			if (Ptr == null)
 				return;
 			if (VarType == Com.vt_unknown || VarType == Com.vt_dispatch) {
-				if (Ptr is IntPtr ip)
+				if (Ptr is IntPtr ip && ip != IntPtr.Zero)
 					_ = Marshal.Release(ip);
-				else if (Ptr is long lp)
+				else if (Ptr is long lp && lp != 0L)
 					_ = Marshal.Release((nint)lp);
 			}
 		}
