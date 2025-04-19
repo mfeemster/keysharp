@@ -6,7 +6,7 @@
 		protected string[] captions;
 		protected IntPtr handle;
 		protected int panelCount;
-		protected int pid;
+		protected uint pid;
 
 		internal string Caption
 		{
@@ -25,11 +25,11 @@
 			}
 		}
 
-		internal int OwningPID
+		internal uint OwningPID
 		{
 			get
 			{
-				if (pid == -1)
+				if (pid == 0)
 					pid = GetOwningPid();
 
 				return pid;
@@ -51,7 +51,7 @@
 		{
 			handle = hWnd;
 			panelCount = -1;
-			pid = -1;
+			pid = 0;
 		}
 
 		internal void SetCaptions(int index, string caption)//Everything here resolves to SetCaption() below which will throw.//TODO
@@ -79,7 +79,7 @@
 		//May need to add wait functionality here the way AHK does in StatusBarUtil().
 		protected abstract string GetCaption(uint index);
 
-		protected abstract int GetOwningPid();
+		protected abstract uint GetOwningPid();
 
 		protected abstract int GetPanelCount();
 
