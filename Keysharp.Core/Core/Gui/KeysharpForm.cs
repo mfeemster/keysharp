@@ -165,7 +165,12 @@
 				else
 					state = 0L;
 
-				_ = sizeHandlers?.InvokeEventHandlers(g, state, (long)Width, (long)Height);
+				Size client = ClientSize;
+
+				if (g.dpiscaling)
+					_ = sizeHandlers?.InvokeEventHandlers(g, state, (long)client.Width / A_ScaledScreenDPI, (long)client.Height / A_ScaledScreenDPI);
+				else
+					_ = sizeHandlers?.InvokeEventHandlers(g, state, (long)client.Width, (long)client.Height);
 			}
 		}
 
