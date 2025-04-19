@@ -169,6 +169,7 @@
 			var n = 0;
 			var reverse = index < 1;
 			var str = needle + reverse;
+			outputVarCount ??= VarRef.Empty;
 			RegexWithTag exp = null;
 
 			lock (locker)//KeyedCollection is not threadsafe, the way ConcurrentDictionary is, so we must lock. We use KeyedCollection because we need to preserve order to remove the first entry.
