@@ -71,19 +71,16 @@ namespace Keysharp.Core.Windows
 		{
 			get
 			{
-				// 1) Get the PID for this window
 				WindowsAPI.GetWindowThreadProcessId(Handle, out uint pid);
 				if (pid == 0)
 					return "";
 
-				// 2) Open a lightweight handle to that process
 				IntPtr hProc = WindowsAPI.OpenProcess(ProcessAccessTypes.PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
 				if (hProc == IntPtr.Zero)
-					return null;
+					return "";
 
 				try
 				{
-					// 3) Query for the full path, then strip to filename
 					var sb = new StringBuilder(1024);
 					uint capacity = (uint)sb.Capacity;
 					if (WindowsAPI.QueryFullProcessImageName(hProc, 0, sb, ref capacity))
