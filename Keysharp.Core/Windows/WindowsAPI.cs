@@ -1146,7 +1146,8 @@ namespace Keysharp.Core.Windows
 							  advapi = "advapi32.dll",
 							  ole32 = "ole32.dll",
 							  oleacc = "oleacc.dll",
-							  oleaut = "oleaut32.dll";
+							  oleaut = "oleaut32.dll",
+							  psapi = "psapi.dll";
 
 		internal static Point ToPoint(this RECT rect) => new (rect.Left, rect.Top);
 
@@ -2086,7 +2087,7 @@ namespace Keysharp.Core.Windows
 
 		[DllImport(kernel32, CharSet = CharSet.Unicode)]
 		internal static extern IntPtr OpenProcess(ProcessAccessTypes desiredAccess, bool inheritHandle, uint processId);
-		
+
 		[DllImport(kernel32, CharSet = CharSet.Unicode)]
 		internal static extern bool QueryFullProcessImageName(IntPtr hProcess, uint dwFlags, [Out, MarshalAs(UnmanagedType.LPTStr)] StringBuilder lpExeName, ref uint lpdwSize);
 
@@ -2130,6 +2131,9 @@ namespace Keysharp.Core.Windows
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
 		internal static extern int GetSystemMetrics(SystemMetric smIndex);
+
+		[DllImport(psapi, CharSet = CharSet.Unicode)]
+		internal static extern uint GetProcessImageFileName(IntPtr hProcess, [Out, MarshalAs(UnmanagedType.LPTStr)] StringBuilder lpExeName, uint nSize);
 	}
 }
 #endif

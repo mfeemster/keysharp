@@ -82,8 +82,7 @@ namespace Keysharp.Core.Windows
 				try
 				{
 					var sb = new StringBuilder(1024);
-					uint capacity = (uint)sb.Capacity;
-					if (WindowsAPI.QueryFullProcessImageName(hProc, 0, sb, ref capacity))
+					if (WindowsAPI.GetProcessImageFileName(hProc, sb, (uint)sb.Capacity) > 0)
 					{
 						// e.g. "C:\Windows\System32\notepad.exe" → "notepad.exe"
 						return System.IO.Path.GetFileName(sb.ToString());
