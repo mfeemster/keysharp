@@ -1,4 +1,4 @@
-﻿using static Keysharp.Core.Accessors;
+using static Keysharp.Core.Accessors;
 using static Keysharp.Core.COM.Com;
 using static Keysharp.Core.Collections;
 using static Keysharp.Core.Common.Keyboard.HotkeyDefinition;
