@@ -15,8 +15,12 @@
 		public DelegateHolder(object obj, bool f, bool r)
 		{
 			funcObj = Functions.GetFuncObj(obj, null, -1, true);
-            if (funcObj is FuncObj fo)
-                paramCount = fo.MaxParams;
+			if (funcObj is FuncObj fo)
+			{
+				paramCount = fo.MaxParams;
+				if (fo is BoundFunc bo)
+					paramCount -= bo.boundargs.Count();
+			}
             fast = f;
 			Reference = r;
 			delRef = (PlaceholderFunction)Delegate.CreateDelegate(typeof(PlaceholderFunction), this, "DelegatePlaceholder");
