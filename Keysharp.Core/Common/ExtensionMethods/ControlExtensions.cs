@@ -237,6 +237,26 @@
 		}
 
 		/// <summary>
+		/// Gets the position of the <see cref="Control"/> relative to the client are of the Form.
+		/// </summary>
+		/// <param name="control">The <see cref="Control"/> to get the location for.</param>
+		internal static Point GetLocationRelativeToForm(this Control control)
+		{
+			if (control is Form)
+				return Point.Empty;
+			Point p = control.Location;
+			Control parent = control.Parent;
+			// This is done like this because Control.PointToScreen and similar functions
+			// apparently don't always work correctly if the Form is hidden.
+			while (parent != null && parent is not Form)
+			{
+				p.Offset(parent.Location);
+				parent = parent.Parent;
+			}
+			return p;
+		}
+
+		/// <summary>
 		/// Finds the right most and bottom most child controls of a <see cref="Control"/>.<br/>
 		/// The .Right and .Bottom properties of the controls are used to identify the controls.
 		/// </summary>

@@ -1136,7 +1136,7 @@
 			if (Script.gcHandles.Remove(ptr, out var oldGch))
 				oldGch.Free();
 
-			Script.gcHandles.Add(ptr, gch);
+			Script.gcHandles[ptr] = gch;
 			return ptr;
 		}
 

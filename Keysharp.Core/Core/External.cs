@@ -34,12 +34,17 @@
 			}
 
 			IntPtr addr;
-			var buf = address as Buffer;
+			long size = 0;
 			t = t.ToLower();
 
-			if (buf != null)
-				addr = buf.Ptr;
-			else if (address is object[] objarr && objarr.Length > 0)//Assume the first element was a long which was an address.
+			if (address is KeysharpObject kso && Script.GetPropertyValue(kso, "ptr", false) is object p && p != null)
+			{
+				if (address is Buffer buf)
+					size = buf.Size.Al();
+				address = p;
+			}
+			
+			if (address is object[] objarr && objarr.Length > 0)//Assume the first element was a long which was an address.
 				addr = new nint(objarr[0].Al());
 			else if (address is IntPtr ptr)
 				addr = ptr;
@@ -49,12 +54,6 @@
 				addr = new IntPtr(i);
 
 #if WINDOWS
-			else if (t == "ptr" && address is ComObject co)
-			{
-				var pUnk = Marshal.GetIUnknownForObject(co.Ptr);
-				addr = pUnk;//Don't dererference here, it'll be done below.
-				_ = Marshal.Release(pUnk);
-			}
 			else if (t == "ptr" && Marshal.IsComObject(address))
 			{
 				var pUnk = Marshal.GetIUnknownForObject(address);
@@ -73,44 +72,44 @@
 			switch (t)
 			{
 				case "uint":
-					if (buf != null && (off + 4 > (long)buf.Size))
-						return Errors.ErrorOccurred(err = new IndexError($"Memory access exceeded buffer size. Offset {off} + length 4 > buffer size {(long)buf.Size}.")) ? throw err : null;
+					if (size != 0 && (off + 4 > size))
+						return Errors.ErrorOccurred(err = new IndexError($"Memory access exceeded buffer size. Offset {off} + length 4 > buffer size {size}.")) ? throw err : null;
 
 					return (long)(uint)Marshal.ReadInt32(addr, off);
 
 				case "int":
-					if (buf != null && (off + 4 > (long)buf.Size))
-						return Errors.ErrorOccurred(err = new IndexError($"Memory access exceeded buffer size. Offset {off} + length 4 > buffer size {(long)buf.Size}.")) ? throw err : null;
+					if (size != 0 && (off + 4 > size))
+						return Errors.ErrorOccurred(err = new IndexError($"Memory access exceeded buffer size. Offset {off} + length 4 > buffer size {size}.")) ? throw err : null;
 
 					return (long)Marshal.ReadInt32(addr, off);
 
 				case "short":
-					if (buf != null && (off + 2 > (long)buf.Size))
-						return Errors.ErrorOccurred(err = new IndexError($"Memory access exceeded buffer size. Offset {off} + length 2 > buffer size {(long)buf.Size}.")) ? throw err : null;
+					if (size != 0 && (off + 2 > size))
+						return Errors.ErrorOccurred(err = new IndexError($"Memory access exceeded buffer size. Offset {off} + length 2 > buffer size {size}.")) ? throw err : null;
 
 					return (long)Marshal.ReadInt16(addr, off);
 
 				case "ushort":
-					if (buf != null && (off + 2 > (long)buf.Size))
-						return Errors.ErrorOccurred(err = new IndexError($"Memory access exceeded buffer size. Offset {off} + length 2 > buffer size {(long)buf.Size}.")) ? throw err : null;
+					if (size != 0 && (off + 2 > size))
+						return Errors.ErrorOccurred(err = new IndexError($"Memory access exceeded buffer size. Offset {off} + length 2 > buffer size {size}.")) ? throw err : null;
 
 					return (long)(ushort)Marshal.ReadInt16(addr, off);
 
 				case "char":
-					if (buf != null && (off + 1 > (long)buf.Size))
-						return Errors.ErrorOccurred(err = new IndexError($"Memory access exceeded buffer size. Offset {off} + length 1 > buffer size {(long)buf.Size}.")) ? throw err : null;
+					if (size != 0 && (off + 1 > size))
+						return Errors.ErrorOccurred(err = new IndexError($"Memory access exceeded buffer size. Offset {off} + length 1 > buffer size {size}.")) ? throw err : null;
 
 					return (long)(sbyte)Marshal.ReadByte(addr, off);
 
 				case "uchar":
-					if (buf != null && (off + 1 > (long)buf.Size))
-						return Errors.ErrorOccurred(err = new IndexError($"Memory access exceeded buffer size. Offset {off} + length 1 > buffer size {(long)buf.Size}.")) ? throw err : null;
+					if (size != 0 && (off + 1 > size))
+						return Errors.ErrorOccurred(err = new IndexError($"Memory access exceeded buffer size. Offset {off} + length 1 > buffer size {size}.")) ? throw err : null;
 
 					return (long)Marshal.ReadByte(addr, off);
 
 				case "double":
-					if (buf != null && (off + 8 > (long)buf.Size))
-						return Errors.ErrorOccurred(err = new IndexError($"Memory access exceeded buffer size. Offset {off} + length 8 > buffer size {(long)buf.Size}.")) ? throw err : null;
+					if (size != 0 && (off + 8 > size))
+						return Errors.ErrorOccurred(err = new IndexError($"Memory access exceeded buffer size. Offset {off} + length 8 > buffer size {size}.")) ? throw err : null;
 
 					unsafe
 					{
@@ -120,8 +119,8 @@
 					}
 
 				case "float":
-					if (buf != null && (off + 4 > (long)buf.Size))
-						return Errors.ErrorOccurred(err = new IndexError($"Memory access exceeded buffer size. Offset {off} + length 4 > buffer size {(long)buf.Size}.")) ? throw err : null;
+					if (size != 0 && (off + 4 > size))
+						return Errors.ErrorOccurred(err = new IndexError($"Memory access exceeded buffer size. Offset {off} + length 4 > buffer size {size}.")) ? throw err : null;
 
 					unsafe
 					{
@@ -133,8 +132,8 @@
 				case "ptr":
 				case "uptr":
 				default:
-					if (buf != null && (off + 8 > (long)buf.Size))
-						return Errors.ErrorOccurred(err = new IndexError($"Memory access exceeded buffer size. Offset {off} + length 8 > buffer size {(long)buf.Size}.")) ? throw err : null;
+					if (size != 0 && (off + 8 > size))
+						return Errors.ErrorOccurred(err = new IndexError($"Memory access exceeded buffer size. Offset {off} + length 8 > buffer size {size}.")) ? throw err : null;
 
 					var ipoff = IntPtr.Add(addr, off);
 					//var pp = (long*)ipoff.ToPointer();
@@ -165,7 +164,7 @@
 			}
 			Error err;
 			IntPtr addr = IntPtr.Zero;
-			Buffer buf;
+			Buffer buf = null;
 			var offset = 0;
 			int lastPairIndex;
 			var offsetSpecified = !((obj.Length & 1) == 1);
@@ -183,11 +182,14 @@
 				target = obj[obj.Length - 1];
 			}
 
-			buf = target as Buffer;
+			if (target is KeysharpObject kso && Script.GetPropertyValue(kso, "ptr", false) is object p && p != null)
+			{
+				if (target is Buffer)
+					buf = (Buffer)target;
+				target = p;
+			}
 
-			if (buf != null)
-				addr = buf.Ptr;
-			else if (target is IntPtr ptr)
+			if (target is IntPtr ptr)
 				addr = ptr;
 			else if (target is long l)
 				addr = new IntPtr(l);
