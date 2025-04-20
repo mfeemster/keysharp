@@ -95,14 +95,14 @@ namespace Keysharp.Core.Windows
 		/// Might be able to make this common by abstracting thread ids.//TODO
 		/// </summary>
 		/// <returns></returns>
-		protected override int GetOwningPid()
+		protected override uint GetOwningPid()
 		{
-			var ownpid = IntPtr.Zero;
+			uint ownpid = 0;
 
 			if (handle != IntPtr.Zero)
 				_ = WindowsAPI.GetWindowThreadProcessId(handle, out ownpid);
 
-			return ownpid.ToInt32();
+			return ownpid;
 		}
 
 		protected override int GetPanelCount()

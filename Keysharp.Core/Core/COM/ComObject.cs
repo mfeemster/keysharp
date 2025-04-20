@@ -114,7 +114,9 @@ namespace Keysharp.Core.COM
 				{
 					if (longVal != 0L)
 					{
-						temp = Marshal.GetObjectForIUnknown(new nint(longVal));
+						var nptr = new nint(longVal);
+						temp = Marshal.GetObjectForIUnknown(nptr);
+						Marshal.Release(nptr);
 					}
 
 					//else if (value is long l && l > 0)// && Marshal.IsComObject(value))
@@ -183,14 +185,14 @@ namespace Keysharp.Core.COM
 
 		~ComObject()
 		{
-			if (Marshal.IsComObject(Ptr))
-				_ = Marshal.ReleaseComObject(Ptr);
-			else if (VarType == Com.vt_unknown || VarType == Com.vt_dispatch)
-			{
-				if (Ptr is long l && l != 0L)
-					_ = Marshal.Release((nint)l);
-				else if (Ptr is IntPtr ip && ip != IntPtr.Zero)
+			if (Ptr == null)
+				return;
+			// System.__ComObject decreases the reference count automatically on destruction
+			if (VarType == Com.vt_unknown || VarType == Com.vt_dispatch) {
+				if (Ptr is IntPtr ip && ip != IntPtr.Zero)
 					_ = Marshal.Release(ip);
+				else if (Ptr is long lp && lp != 0L)
+					_ = Marshal.Release((nint)lp);
 			}
 		}
 

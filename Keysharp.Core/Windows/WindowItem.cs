@@ -8,6 +8,8 @@ namespace Keysharp.Core.Windows
 	internal class WindowItem : WindowItemBase
 	{
 		private static bool triedKeyUp = false;
+		private int lastChildCount = 64;
+		private string path = "";
 
 		internal override bool Active
 		{
@@ -71,7 +73,7 @@ namespace Keysharp.Core.Windows
 		{
 			get
 			{
-				var children = new HashSet<WindowItemBase>();
+				var children = new HashSet<WindowItemBase>(lastChildCount);
 
 				if (IsSpecified)
 				{
@@ -95,6 +97,7 @@ namespace Keysharp.Core.Windows
 					});
 				}
 
+				lastChildCount = children.Count;
 				return children;
 			}
 		}
@@ -178,6 +181,42 @@ namespace Keysharp.Core.Windows
 		internal override WindowItemBase NonChildParentWindow => new WindowItem(WindowsAPI.GetNonChildParent(Handle));
 
 		internal override WindowItemBase ParentWindow => new WindowItem(WindowsAPI.GetAncestor(Handle, gaFlags.GA_PARENT));
+
+		internal override string Path
+		{
+			get
+			{
+				if (path.Length > 0)
+					return path;
+
+				_ = WindowsAPI.GetWindowThreadProcessId(Handle, out var pid);
+
+				if (pid == 0)
+					return "";
+
+				var hProc = WindowsAPI.OpenProcess(ProcessAccessTypes.PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
+
+				if (hProc == IntPtr.Zero)
+					return "";
+
+				try
+				{
+					var sb = new StringBuilder(1024);
+
+					if (WindowsAPI.GetProcessImageFileName(hProc, sb, (uint)sb.Capacity) > 0)
+					{
+						// e.g. "C:\Windows\System32\notepad.exe" → "notepad.exe"
+						return path = System.IO.Path.GetFileName(sb.ToString());
+					}
+				}
+				finally
+				{
+					_ = WindowsAPI.CloseHandle(hProc);
+				}
+
+				return "";
+			}
+		}
 
 		internal override long PID
 		{
@@ -727,7 +766,7 @@ namespace Keysharp.Core.Windows
 			if (!Exists)
 				return true;
 
-			var pid = (int)PID;
+			var pid = (uint)PID;
 			var prc = pid != 0 ? WindowsAPI.OpenProcess(ProcessAccessTypes.PROCESS_ALL_ACCESS, false, pid) : IntPtr.Zero;
 
 			if (prc != IntPtr.Zero)

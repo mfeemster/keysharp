@@ -1234,17 +1234,6 @@
 			var w = scaledPref;
 			var lastControl = LastControl;
 
-			if (ctrl is KeysharpTabControl ktc)
-			{
-				if (ktc.TabPages.Count >= 0)
-					holder.UseTab(1);//Will set this object's CurrentTab value, as well as the LastContainer values.
-
-				if (opts.bgtrans)
-					ktc.SetColor(Color.Transparent);
-				else if (opts.bgcolor.HasValue)
-					ktc.SetColor(opts.bgcolor.Value);
-			}
-
 			if (lastControl is KeysharpRadioButton && ctrl is not KeysharpRadioButton)//Pop container if we've ended a radio group.
 			{
 				LastContainer = LastContainer.Parent;
@@ -1382,13 +1371,12 @@
 
 			if ((opts.xpos == GuiOptions.Positioning.Absolute || opts.ypos == GuiOptions.Positioning.Absolute) && LastContainer != null)
 			{
-				var controlLoc = LastContainer is Form ? LastContainer.Location : form.PointToScreen(LastContainer.Location);
+				Point p = LastContainer.GetLocationRelativeToForm();
 
 				if (opts.xpos == GuiOptions.Positioning.Absolute)
-					xoffset = controlLoc.X - form.Location.X;
-
+					xoffset = p.X;
 				if (opts.ypos == GuiOptions.Positioning.Absolute)
-					yoffset = controlLoc.Y - form.Location.Y;
+					yoffset = p.Y;
 			}
 
 			if (opts.xpos == GuiOptions.Positioning.Absolute)
@@ -1505,14 +1493,20 @@
 										  opts.y != int.MinValue ? opts.y : (int)Math.Round(top));
 			}
 
-			if (ctrl is KeysharpTabControl tc && CurrentTab is TabPage currtp)
+			if (ctrl is KeysharpTabControl ktc)
 			{
+				if (ktc.TabPages.Count >= 0)
+					holder.UseTab(1);//Will set this object's CurrentTab value, as well as the LastContainer values.
+
+				if (opts.bgtrans)
+					ktc.SetColor(Color.Transparent);
+				else if (opts.bgcolor.HasValue)
+					ktc.SetColor(opts.bgcolor.Value);
+
 				prevParent.TagAndAdd(holder);
 
 				if (prevParent != form)
 					ctrl.Size = new Size(Math.Min(prevParent.Width - (2 * prevParent.Margin.Right), ctrl.Right), Math.Min(prevParent.Height - (2 * prevParent.Margin.Top), ctrl.Bottom));
-
-				LastContainer = currtp;
 			}
 			else if (ctrl is KeysharpRadioButton krb)
 			{
@@ -1682,15 +1676,19 @@
 
 		public object Move(object obj0 = null, object obj1 = null, object obj2 = null, object obj3 = null)
 		{
-			var x = obj0.Ai();
-			var y = obj1.Ai();
-			var width = obj2.Ai();
-			var height = obj3.Ai();
+			var x = obj0.Ai(int.MinValue);
+			var y = obj1.Ai(int.MinValue);
+			var width = obj2.Ai(int.MinValue);
+			var height = obj3.Ai(int.MinValue);
 			var scale = !dpiscaling ? 1.0 : A_ScaledScreenDPI;
-			form.Top = (int)Math.Round(y * scale);
-			form.Left = (int)Math.Round(x * scale);
-			form.Width = (int)Math.Round(width * scale);
-			form.Height = (int)Math.Round(height * scale);
+			if (x != int.MinValue)
+				form.Left = (int)x;
+			if (y != int.MinValue)
+				form.Top = (int)y;
+			if (width != int.MinValue)
+				form.Width = (int)Math.Round(width * scale);
+			if (height != int.MinValue)
+				form.Height = (int)Math.Round(height * scale);
 			return null;
 		}
 

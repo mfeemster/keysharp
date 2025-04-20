@@ -1080,11 +1080,13 @@
 			var scale = !DpiScaling ? 1.0 : A_ScaledScreenDPI;
 			var hasScrollBars = _control is KeysharpTextBox || _control is KeysharpRichEdit;//Reflections.SafeHasProperty(_control, "ScrollBars") || Reflections.SafeHasProperty(_control, "HorizontalScrollbar") || Reflections.SafeHasProperty(_control, "Scrollable")
 
-			if (_y != long.MinValue)
-				_control.Top = (int)Math.Round(_y * scale);
+			Point offset = Parent == null || Parent.GetControl() is Form ? Point.Empty : Parent.GetControl().GetLocationRelativeToForm();
 
 			if (_x != long.MinValue)
-				_control.Left = (int)Math.Round(_x * scale);
+				_control.Left = (int)Math.Round(_x * scale - offset.X);
+
+			if (_y != long.MinValue)
+				_control.Top = (int)Math.Round(_y * scale - offset.Y);
 
 			if (w != long.MinValue)//Add extra if the control has scrollbars, even if they are not visible.
 				_control.Width = (int)Math.Round(w * scale) - (hasScrollBars ? SystemInformation.VerticalScrollBarWidth : 0);
@@ -1827,7 +1829,12 @@
 
 		internal static void GetPosHelper(Control control, bool scaling, bool client, ref object x, ref object y, ref object w, ref object h)
 		{
-			var rect = client ? control.ClientRectangle : control.Bounds;
+            var rect = client ? control.ClientRectangle : control.Bounds;
+			if (!client && control?.Parent != null)
+			{
+				Point p = control.Parent.GetLocationRelativeToForm();
+				rect.X += p.X; rect.Y += p.Y;
+			}
 
 			if (!scaling)
 			{

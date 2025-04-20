@@ -381,7 +381,7 @@ namespace Keysharp.Core
 			//timer.Tick += (ss, ee) =>
 			timer.Elapsed += (ss, ee) =>
 			{
-				if ((!A_AllowTimers.Ab() && Script.totalExistingThreads > 0)
+				if (A_HasExited || (!A_AllowTimers.Ab() && Script.totalExistingThreads > 0)
 						|| !Threads.AnyThreadsAvailable() || !Threads.IsInterruptible())
 					return;
 
