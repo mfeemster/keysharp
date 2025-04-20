@@ -513,29 +513,6 @@ namespace Keysharp.Scripting
                                 )
                             )
                         ),
-                        // __Static = Variables.Statics[typeof(Myclass)];
-                        SyntaxFactory.ExpressionStatement(
-                            SyntaxFactory.AssignmentExpression(
-                                SyntaxKind.SimpleAssignmentExpression,
-                                SyntaxFactory.IdentifierName("__Static"),
-                                SyntaxFactory.ElementAccessExpression(
-                                    SyntaxFactory.MemberAccessExpression(
-                                        SyntaxKind.SimpleMemberAccessExpression,
-                                        SyntaxFactory.IdentifierName("Variables"),
-                                        SyntaxFactory.IdentifierName("Statics")
-                                    ),
-                                    SyntaxFactory.BracketedArgumentList(
-                                        SyntaxFactory.SingletonSeparatedList(
-                                            SyntaxFactory.Argument(
-                                                SyntaxFactory.TypeOfExpression(
-                                                    SyntaxFactory.IdentifierName(className)
-                                                )
-                                            )
-                                        )
-                                    )
-                                )
-                            )
-                        ),
                         // SetPropertyValue(Variables.Prototypes[typeof(ClassName)], "__Class", "UserDeclaredClassname");
                         SyntaxFactory.ExpressionStatement(
                             ((InvocationExpressionSyntax)InternalMethods.SetPropertyValue)

@@ -120,36 +120,48 @@ namespace Keysharp.Scripting
                 .ToList();
         }
 
-        internal static List<string> GetScopeFunctions(ParserRuleContext context)
+        public struct FunctionInfo
         {
-            var result = new List<string>();
+            public string Name;
+            public bool Static;
+        }
+
+        internal static List<FunctionInfo> GetScopeFunctions(ParserRuleContext context)
+        {
+            var result = new List<FunctionInfo>();
 
             if (context == null || context.children == null)
                 return result;
 
             foreach (var child in context.children)
             {
-                // Add FunctionDeclarationContext directly
-                if (child is FatArrowExpressionContext fatArrow)
+                FunctionHeadContext head = null;
+				// Add FunctionDeclarationContext directly
+				if (child is FatArrowExpressionContext fatArrow)
                 {
-                    var head = fatArrow.fatArrowExpressionHead();
-                    if (head.functionExpressionHead() != null && head.functionExpressionHead().functionHead() != null)
-                        result.Add(head.functionExpressionHead().functionHead().identifierName().GetText());
-
+                    head = fatArrow.fatArrowExpressionHead()?.functionExpressionHead()?.functionHead();
                 }
                 else if (child is FunctionExpressionContext func && func.functionExpressionHead().functionHead() != null)
                 {
-                    result.Add(func.functionExpressionHead().functionHead().identifierName().GetText());
+                    head = func.functionExpressionHead().functionHead();
                 }
                 else if (child is FunctionDeclarationContext funcdecl)
                 {
-                    result.Add(funcdecl.functionHead().identifierName().GetText());
+                    head = funcdecl.functionHead();
                 }
                 // Recurse into children only if the current node is not a FunctionDeclarationContext
                 else if (child is ParserRuleContext parserRuleContext && child is not FunctionDeclarationContext && child is not FatArrowExpressionContext && child is not FunctionExpressionContext && child is not ClassDeclarationContext)
                 {
                     result.AddRange(GetScopeFunctions(parserRuleContext));
                 }
+
+                if (head != null)
+                {
+					var f = new FunctionInfo();
+                    f.Name = head.identifierName().GetText();
+                    f.Static = head.functionHeadPrefix()?.Static() != null;
+                    result.Add(f);
+				}
             }
 
             return result;
@@ -353,14 +365,14 @@ namespace Keysharp.Scripting
             if (currentFunc.Statics.Contains(staticName)) return staticName;
             if (currentFunc.Locals.ContainsKey(name)) return null;
 
-            if (!currentFunc.Static)
+            foreach (var (f, _) in FunctionStack)
             {
-                foreach (var (f, _) in FunctionStack)
-                {
-                    staticName = f.Name.ToUpper() + "_" + name.TrimStart('@');
-                    if (f.Statics.Contains(staticName)) return staticName;
-                    if (f.Locals.ContainsKey(name)) return null;
-                }
+                if (f.Name == Keywords.AutoExecSectionName)
+                    break;
+
+                staticName = f.Name.ToUpper() + "_" + name.TrimStart('@');
+                if (f.Statics.Contains(staticName)) return staticName;
+                if (f.Locals.ContainsKey(name)) return null;
             }
             return null;
         }
@@ -927,6 +939,39 @@ namespace Keysharp.Scripting
             if (currentFunc == null) return null;
             return currentFunc.Name.ToUpper() + "_" + name.ToLowerInvariant().TrimStart('@');
         }
+
+        internal ExpressionStatementSyntax CreateStaticVariableInitializer(IdentifierNameSyntax identifier, ExpressionSyntax initializerValue)
+        {
+			var invocationExpression = SyntaxFactory.InvocationExpression(
+	            SyntaxFactory.MemberAccessExpression(
+		            SyntaxKind.SimpleMemberAccessExpression,
+		            CreateQualifiedName("Keysharp.Scripting.Script"),
+		            SyntaxFactory.IdentifierName("InitStaticVariable")
+	            ),
+	            SyntaxFactory.ArgumentList(
+		            SyntaxFactory.SeparatedList(new[]
+		            {
+                        // Argument: ref identifier
+                        SyntaxFactory.Argument(identifier)
+							.WithRefOrOutKeyword(SyntaxFactory.Token(SyntaxKind.RefKeyword)),
+
+                        // Argument: identifier as a string literal
+                        SyntaxFactory.Argument(
+							SyntaxFactory.LiteralExpression(
+								SyntaxKind.StringLiteralExpression,
+								SyntaxFactory.Literal(currentClass.Name + "_" + identifier.Identifier.Text)
+							)
+						),
+
+                        // Argument: () => initializerValue
+                        SyntaxFactory.Argument(
+							SyntaxFactory.ParenthesizedLambdaExpression(initializerValue)
+						)
+		            })
+	            )
+            );
+			return SyntaxFactory.ExpressionStatement(invocationExpression);
+		}
 
         internal string NormalizeFunctionIdentifier(string name, eNameCase nameCase = eNameCase.Lower)
         {

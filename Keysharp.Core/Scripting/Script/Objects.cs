@@ -178,7 +178,12 @@ namespace Keysharp.Scripting
 
 			if (!isBuiltin)
 			{
-                var nestedTypes = t.GetNestedTypes(BindingFlags.Public);
+				if (staticInst.op.TryGetValue("__Static", out var __static) && __static.Set != null)
+				{
+					if (__static.Set is IFuncObj ifo)
+						ifo.Call((object)staticInst);
+				}
+				var nestedTypes = t.GetNestedTypes(BindingFlags.Public);
                 foreach (var nestedType in nestedTypes)
                 {
                     RuntimeHelpers.RunClassConstructor(nestedType.TypeHandle);

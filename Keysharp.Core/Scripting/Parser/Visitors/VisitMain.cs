@@ -5,6 +5,7 @@ using static MainParser;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Data;
 using static Keysharp.Scripting.Parser;
+using System.Reflection;
 
 namespace Keysharp.Scripting
 {
@@ -168,8 +169,8 @@ namespace Keysharp.Scripting
             var scopeFunctionDeclarations = GetScopeFunctions(context);
             foreach (var funcName in scopeFunctionDeclarations)
             {
-                parser.UserFuncs.Add(funcName);
-                parser.AddGlobalFuncObjVariable(funcName.ToLowerInvariant());
+                parser.UserFuncs.Add(funcName.Name);
+                parser.AddGlobalFuncObjVariable(funcName.Name.ToLowerInvariant());
             }
 
             if (context.sourceElements() != null)
@@ -561,35 +562,7 @@ namespace Keysharp.Scripting
 
                 if (parser.currentFunc.Scope == eScope.Static)
                 {
-                    var invocationExpression = SyntaxFactory.InvocationExpression(
-                        SyntaxFactory.MemberAccessExpression(
-                            SyntaxKind.SimpleMemberAccessExpression,
-                            CreateQualifiedName("Keysharp.Scripting.Script"),
-                            SyntaxFactory.IdentifierName("InitStaticVariable")
-                        ),
-                        SyntaxFactory.ArgumentList(
-                            SyntaxFactory.SeparatedList(new[]
-                            {
-                                // Argument: ref identifier
-                                SyntaxFactory.Argument(identifier)
-                                    .WithRefOrOutKeyword(SyntaxFactory.Token(SyntaxKind.RefKeyword)),
-
-                                // Argument: identifier as a string literal
-                                SyntaxFactory.Argument(
-                                    SyntaxFactory.LiteralExpression(
-                                        SyntaxKind.StringLiteralExpression,
-                                        SyntaxFactory.Literal(parser.currentClass.Name + "_" + identifier.Identifier.Text)
-                                    )
-                                ),
-
-                                // Argument: () => initializerValue
-                                SyntaxFactory.Argument(
-                                    SyntaxFactory.ParenthesizedLambdaExpression(initializerValue)
-                                )
-                            })
-                        )
-                    );
-                    return SyntaxFactory.ExpressionStatement(invocationExpression);
+                    return parser.CreateStaticVariableInitializer(identifier, initializerValue);
                 }
 
                 return SyntaxFactory.ExpressionStatement(HandleAssignment(
@@ -991,6 +964,8 @@ namespace Keysharp.Scripting
                     )
                 );
             }
+            else
+                expression = SyntaxFactory.ParenthesizedExpression(expression);
 
             // Otherwise, return a normal throw statement
             return SyntaxFactory.ThrowStatement(SyntaxFactory.CastExpression(SyntaxFactory.ParseTypeName("KeysharpException"), expression));
@@ -1251,12 +1226,14 @@ namespace Keysharp.Scripting
                     .WithBody(methodDeclaration.Body)
                     .WithModifiers(modifiers);
 
-                InvocationExpressionSyntax funcObj = CreateFuncObj(
+                var isStatic = modifiers.Any(m => m.IsKind(SyntaxKind.StaticKeyword));
+
+				InvocationExpressionSyntax funcObj = CreateFuncObj(
                     SyntaxFactory.CastExpression(
                         SyntaxFactory.IdentifierName("Delegate"),
                         SyntaxFactory.IdentifierName(methodName)
                     ),
-                    !modifiers.Any(m => m.IsKind(SyntaxKind.StaticKeyword))
+                    !isStatic
                 );
 
                 parser.currentFunc.Body.Add(delegateSyntax);
@@ -1274,6 +1251,21 @@ namespace Keysharp.Scripting
                         )
                     ));
                 }
+                else if (isStatic)
+                {
+					ExpressionSyntax initializerValue = CreateFuncObj(
+	                    SyntaxFactory.CastExpression(
+		                    SyntaxFactory.IdentifierName("Delegate"),
+		                    SyntaxFactory.IdentifierName(CultureInfo.CurrentCulture.TextInfo.ToTitleCase(methodName))
+	                    )
+                    );
+
+                    variableName = parser.CreateStaticIdentifier(variableName);
+
+					parser.currentFunc.Body.Add(parser.CreateStaticVariableInitializer(
+						SyntaxFactory.IdentifierName(variableName),
+						initializerValue));
+				}
                 else
                 {
                     var nullVariableDeclaration = SyntaxFactory.LocalDeclarationStatement(
@@ -1319,10 +1311,6 @@ namespace Keysharp.Scripting
         {
             Visit(context.functionHead());
 
-            var scopeFunctionDeclarations = GetScopeFunctions(context);
-            foreach (var funcName in scopeFunctionDeclarations)
-                parser.UserFuncs.Add(funcName);
-
             BlockSyntax functionBody = (BlockSyntax)VisitFunctionBody(context.functionBody());
             parser.currentFunc.Body.AddRange(functionBody.Statements.ToArray());
 
@@ -1359,9 +1347,7 @@ namespace Keysharp.Scripting
         {
             Visit(context.functionExpressionHead());
 
-            var scopeFunctionDeclarations = GetScopeFunctions(context);
-            foreach (var funcName in scopeFunctionDeclarations)
-                parser.UserFuncs.Add(funcName);
+            HandleScopeFunctions(context);
 
             VisitVariableStatements(context.block());
 
@@ -1484,9 +1470,44 @@ namespace Keysharp.Scripting
             return SyntaxFactory.ParameterList(SyntaxFactory.SeparatedList(parameters));
         }
 
+        public void HandleScopeFunctions(ParserRuleContext context)
+        {
+			var scopeFunctionDeclarations = GetScopeFunctions(context);
+
+			foreach (var fi in scopeFunctionDeclarations)
+			{
+				if (parser.currentFunc.Name != Keywords.AutoExecSectionName)
+				{
+					if (fi.Static)
+					{
+						var staticName = parser.CreateStaticIdentifier(fi.Name);
+						// Declare the variable in the containing class
+						parser.currentFunc.Statics.Add(staticName);
+						var prevScope = parser.currentFunc.Scope;
+						parser.currentFunc.Scope = eScope.Static;
+						parser.AddVariableDeclaration(staticName);
+						parser.currentFunc.Scope = prevScope;
+					}
+					else
+					{
+						var variableName = fi.Name.ToLowerInvariant();
+						var nullVariableDeclaration = SyntaxFactory.LocalDeclarationStatement(
+							CreateNullObjectVariable(variableName)
+						);
+						// Add the variable declaration to the beginning of the current function body
+						parser.currentFunc.Locals[variableName] = nullVariableDeclaration;
+					}
+				}
+				else
+					parser.UserFuncs.Add(fi.Name);
+			}
+		}
+
         public override SyntaxNode VisitFunctionBody([NotNull] FunctionBodyContext context)
         {
-            VisitVariableStatements(context);
+            HandleScopeFunctions(context);
+
+			VisitVariableStatements(context);
             if (context.expression() != null)
             {
                 var expression = (ExpressionSyntax)Visit(context.expression());

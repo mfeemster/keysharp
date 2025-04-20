@@ -126,7 +126,7 @@
 		/// The resulting GCHandle is allocated with GCHandleType.Normal,
 		/// so it must be freed later to avoid a leak.
 		/// </summary>
-		public static IntPtr ObjPtr(object obj)
+		public static long ObjPtr(object obj)
 		{
 			if (obj == null)
 				return 0;
@@ -135,6 +135,7 @@
 			GCHandle handle = GCHandle.Alloc(obj, GCHandleType.Normal);
 			return GCHandle.ToIntPtr(handle);
 		}
+		public static long ObjPtrAddRef(object obj) => ObjPtr(obj);
 
 		/// <summary>
 		/// Given an IntPtr produced by ObjPtr, returns the original object.

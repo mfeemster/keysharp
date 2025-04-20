@@ -2433,6 +2433,8 @@ namespace Keysharp.Core
 
 		public class WebBrowser(params object[] args) : GuiControl(args) { }
 
+		public class Custom(params object[] args) : GuiControl(args) { }
+
 		internal class GuiOptions
 		{
 			internal int addexstyle = 0;

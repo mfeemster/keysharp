@@ -82,3 +82,17 @@ g() {
     else
         FileAppend "fail", "*"
 }
+
+StaticLocalFuncs() {
+    return f2()
+    static f1() => 1
+    static f2() => f1()
+}
+
+a := 0
+a := StaticLocalFuncs()
+
+if (a == 1)
+    FileAppend "pass", "*"
+else
+    FileAppend "fail", "*"
