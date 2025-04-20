@@ -104,6 +104,8 @@
 				try
 				{
 					var proc = Process.GetProcessById((int)PID);
+					//This will be extremely slow in a loop because MainModule calls an underlying method GetModules()
+					//which does a lot of processing.
 					return proc.MainModule.FileName;
 				}
 				catch

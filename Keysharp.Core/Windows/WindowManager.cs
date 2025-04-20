@@ -7,6 +7,7 @@ namespace Keysharp.Core.Windows
 	internal class WindowManager : WindowManagerBase
 	{
 		internal override WindowItemBase ActiveWindow => new WindowItem(WindowsAPI.GetForegroundWindow());
+		private int lastWindowCount = 64;
 
 		/// <summary>
 		/// Return all top level windows. This does not recurse into child windows.
@@ -15,7 +16,7 @@ namespace Keysharp.Core.Windows
 		{
 			get
 			{
-				var windows = new List<WindowItemBase>(64);
+				var windows = new List<WindowItemBase>(lastWindowCount);
 				var doHidden = ThreadAccessors.A_DetectHiddenWindows;
 				_ = WindowsAPI.EnumWindows(delegate (IntPtr hwnd, int lParam)
 				{
@@ -24,6 +25,7 @@ namespace Keysharp.Core.Windows
 
 					return true;
 				}, 0);
+				lastWindowCount = windows.Count;
 				return windows;
 			}
 		}

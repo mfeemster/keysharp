@@ -800,7 +800,7 @@ namespace Keysharp.Core.Windows
 
 		internal const int PBM_SETBKCOLOR = 0x2001;
 
-        internal const int CBN_ERRSPACE = -1;
+		internal const int CBN_ERRSPACE = -1;
 		internal const int CBN_SELCHANGE = 1;
 		internal const int CBN_DBLCLK = 2;
 		internal const int CBN_SETFOCUS = 3;
@@ -1610,13 +1610,15 @@ namespace Keysharp.Core.Windows
 
 		internal static string GetWindowText(IntPtr hwnd)
 		{
-            int textLength = WindowsAPI.GetWindowTextLength(hwnd);
-            if (textLength == 0)
-                return string.Empty;
-            StringBuilder outText = new StringBuilder(textLength + 1);
-            int a = GetWindowText(hwnd, outText, outText.Capacity);
-            return outText.ToString();
-        }
+			int textLength = WindowsAPI.GetWindowTextLength(hwnd);
+
+			if (textLength == 0)
+				return string.Empty;
+
+			StringBuilder outText = new StringBuilder(textLength + 1);
+			int a = GetWindowText(hwnd, outText, outText.Capacity);
+			return outText.ToString();
+		}
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
 		internal static extern int GetWindowTextLength(IntPtr hWnd);
