@@ -67,6 +67,36 @@ namespace Keysharp.Core.Windows
 			}
 		}
 
+		internal override string Path
+		{
+			get
+			{
+				WindowsAPI.GetWindowThreadProcessId(Handle, out uint pid);
+				if (pid == 0)
+					return "";
+
+				IntPtr hProc = WindowsAPI.OpenProcess(ProcessAccessTypes.PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
+				if (hProc == IntPtr.Zero)
+					return "";
+
+				try
+				{
+					var sb = new StringBuilder(1024);
+					if (WindowsAPI.GetProcessImageFileName(hProc, sb, (uint)sb.Capacity) > 0)
+					{
+						// e.g. "C:\Windows\System32\notepad.exe" → "notepad.exe"
+						return System.IO.Path.GetFileName(sb.ToString());
+					}
+				}
+				finally
+				{
+					WindowsAPI.CloseHandle(hProc);
+				}
+
+				return "";
+			}
+		}
+
 		internal override HashSet<WindowItemBase> ChildWindows
 		{
 			get
@@ -727,7 +757,7 @@ namespace Keysharp.Core.Windows
 			if (!Exists)
 				return true;
 
-			var pid = (int)PID;
+			var pid = (uint)PID;
 			var prc = pid != 0 ? WindowsAPI.OpenProcess(ProcessAccessTypes.PROCESS_ALL_ACCESS, false, pid) : IntPtr.Zero;
 
 			if (prc != IntPtr.Zero)

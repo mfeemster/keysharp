@@ -207,6 +207,7 @@ namespace Keysharp.Core.Windows
 		PROCESS_QUERY_INFORMATION = 0x00000400,
 		STANDARD_RIGHTS_REQUIRED = 0x000F0000,
 		SYNCHRONIZE = 0x00100000,
+		PROCESS_QUERY_LIMITED_INFORMATION = 0x00001000,
 
 		PROCESS_ALL_ACCESS = PROCESS_TERMINATE | PROCESS_CREATE_THREAD | PROCESS_SET_SESSIONID | PROCESS_VM_OPERATION |
 							 PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_DUP_HANDLE | PROCESS_CREATE_PROCESS | PROCESS_SET_QUOTA |
@@ -1145,7 +1146,8 @@ namespace Keysharp.Core.Windows
 							  advapi = "advapi32.dll",
 							  ole32 = "ole32.dll",
 							  oleacc = "oleacc.dll",
-							  oleaut = "oleaut32.dll";
+							  oleaut = "oleaut32.dll",
+							  psapi = "psapi.dll";
 
 		internal static Point ToPoint(this RECT rect) => new (rect.Left, rect.Top);
 
@@ -1410,7 +1412,7 @@ namespace Keysharp.Core.Windows
 
 			// Even if the PID is our own, open the process anyway to simplify the code. After all, it would be
 			// pretty silly for a script to access its own ListViews via this method.
-			if ((handle = OpenProcess(ProcessAccessTypes.PROCESS_VM_OPERATION | ProcessAccessTypes.PROCESS_VM_READ | ProcessAccessTypes.PROCESS_VM_WRITE | extraAccess, false, pid.ToInt32())) == IntPtr.Zero)
+			if ((handle = OpenProcess(ProcessAccessTypes.PROCESS_VM_OPERATION | ProcessAccessTypes.PROCESS_VM_READ | ProcessAccessTypes.PROCESS_VM_WRITE | extraAccess, false, pid)) == IntPtr.Zero)
 				return mem;
 
 			// Reason for using VirtualAllocEx(): When sending LVITEM structures to a control in a remote process, the
@@ -1620,7 +1622,7 @@ namespace Keysharp.Core.Windows
 		internal static extern int GetWindowTextLength(IntPtr hWnd);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern uint GetWindowThreadProcessId(IntPtr hWnd, out IntPtr lpdwProcessId);
+		internal static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
 		internal static extern bool InvalidateRect(IntPtr hWnd, IntPtr lpRect, bool bErase);
@@ -2084,7 +2086,10 @@ namespace Keysharp.Core.Windows
 		internal static extern bool SetThreadPriority(IntPtr hThread, int priority);
 
 		[DllImport(kernel32, CharSet = CharSet.Unicode)]
-		internal static extern IntPtr OpenProcess(ProcessAccessTypes desiredAccess, bool inheritHandle, int processId);
+		internal static extern IntPtr OpenProcess(ProcessAccessTypes desiredAccess, bool inheritHandle, uint processId);
+
+		[DllImport(kernel32, CharSet = CharSet.Unicode)]
+		internal static extern bool QueryFullProcessImageName(IntPtr hProcess, uint dwFlags, [Out, MarshalAs(UnmanagedType.LPTStr)] StringBuilder lpExeName, ref uint lpdwSize);
 
 		[DllImport(kernel32, CharSet = CharSet.Unicode)]
 		internal static extern IntPtr VirtualAllocEx(IntPtr hProcess, IntPtr address, uint size, VirtualAllocExTypes allocationType, AccessProtectionFlags flags);
@@ -2126,6 +2131,9 @@ namespace Keysharp.Core.Windows
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
 		internal static extern int GetSystemMetrics(SystemMetric smIndex);
+
+		[DllImport(psapi, CharSet = CharSet.Unicode)]
+		internal static extern uint GetProcessImageFileName(IntPtr hProcess, [Out, MarshalAs(UnmanagedType.LPTStr)] StringBuilder lpExeName, uint nSize);
 	}
 }
 #endif
