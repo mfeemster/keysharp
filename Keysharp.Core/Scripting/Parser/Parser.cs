@@ -503,8 +503,8 @@ namespace Keysharp.Scripting
             public ClassDeclarationSyntax Declaration = null;
 
             public bool isInitialization = false;
-            public readonly List<(string FieldName, string PropType, ExpressionSyntax Initializer)> deferredInitializations = new();
-            public readonly List<(string FieldName, string PropType, ExpressionSyntax Initializer)> deferredStaticInitializations = new();
+            public readonly List<(ExpressionSyntax BaseExpr, ExpressionSyntax TargetExpr, ExpressionSyntax Initializer)> deferredInitializations = new();
+            public readonly List<(ExpressionSyntax BaseExpr, ExpressionSyntax TargetExpr, ExpressionSyntax Initializer)> deferredStaticInitializations = new();
 
             public Class(string name, string baseName = "KeysharpObject")
             {

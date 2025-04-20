@@ -88,7 +88,7 @@ namespace Keysharp.Scripting
             );
             */
 
-            string fieldDeclarationName = parser.currentClass.Name.ToLower();
+            string fieldDeclarationName = NormalizeIdentifier(parser.currentClass.Name);
 
             MemberDeclarationSyntax fieldDeclaration = null;
             SyntaxToken[] fieldDeclarationModifiers = [SyntaxFactory.Token(SyntaxKind.PublicKeyword), SyntaxFactory.Token(SyntaxKind.StaticKeyword)];
@@ -354,7 +354,6 @@ namespace Keysharp.Scripting
         public override SyntaxNode VisitClassFieldDeclaration([NotNull] ClassFieldDeclarationContext context)
         {
             parser.currentClass.isInitialization = true;
-            var fieldNames = new HashSet<string> { };
             var fieldDeclarations = new List<PropertyDeclarationSyntax>();
 
             var isStatic = context.Static() != null;
@@ -364,8 +363,19 @@ namespace Keysharp.Scripting
 
             foreach (var fieldDefinition in context.fieldDefinition())
             {
-                var fieldName = fieldDefinition.propertyName().GetText();
-                fieldNames.Add(fieldName);
+				ExpressionSyntax baseExpression = SyntaxFactory.IdentifierName("@this");
+                ExpressionSyntax targetExpression = null;
+
+				if (fieldDefinition.propertyName().Length == 1)
+					targetExpression = SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(fieldDefinition.propertyName(0).GetText()));
+                else
+                {
+                    for (int i = 0; i < (fieldDefinition.propertyName().Length - 1); i++)
+                    {
+                        baseExpression = GenerateGetPropertyValue(baseExpression, SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(fieldDefinition.propertyName(i).GetText())));
+					}
+					targetExpression = SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(fieldDefinition.propertyName(fieldDefinition.propertyName().Length - 1).GetText()));
+				}
 
                 if (fieldDefinition.expression() != null)
                 {
@@ -377,13 +387,13 @@ namespace Keysharp.Scripting
                     }
 
                     if (isStatic)
-                        parser.currentClass.deferredStaticInitializations.Add((fieldName, "value", initializerValue));
+                        parser.currentClass.deferredStaticInitializations.Add((baseExpression, targetExpression, initializerValue));
                     else
-                        parser.currentClass.deferredInitializations.Add((fieldName, "value", initializerValue));
+                        parser.currentClass.deferredInitializations.Add((baseExpression, targetExpression, initializerValue));
                 }
 
-                if (parser.PropertyExistsInBuiltinBase(fieldName) != null)
-                    continue;
+                //if (parser.PropertyExistsInBuiltinBase(fieldName) != null)
+                //    continue;
             }
             parser.currentClass.isInitialization = false;
             return null;
@@ -405,7 +415,7 @@ namespace Keysharp.Scripting
         {
             var methodDefinition = context.methodDefinition();
             Visit(methodDefinition.functionHead());
-            var rawMethodName = methodDefinition.functionHead().identifier().GetText();
+            var rawMethodName = methodDefinition.functionHead().identifierName().GetText();
             var methodName = parser.currentFunc.Name = parser.NormalizeClassIdentifier(rawMethodName);
 
             var fieldName = methodName.ToLowerInvariant();
@@ -620,8 +630,8 @@ namespace Keysharp.Scripting
                                                 .WithArgumentList(
                                                     SyntaxFactory.ArgumentList(
                                         SyntaxFactory.SeparatedList(new[] {
-                                            SyntaxFactory.Argument(SyntaxFactory.IdentifierName("@this")),
-                                            SyntaxFactory.Argument(SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(deferred.Item1))),
+                                            SyntaxFactory.Argument(deferred.Item1),
+                                            SyntaxFactory.Argument(deferred.Item2),
                                             SyntaxFactory.Argument(deferred.Item3)
                                         })
                                     )
@@ -653,8 +663,8 @@ namespace Keysharp.Scripting
                                                 .WithArgumentList(
                                                     SyntaxFactory.ArgumentList(
                                         SyntaxFactory.SeparatedList(new[] {
-                                            SyntaxFactory.Argument(SyntaxFactory.IdentifierName("@this")),
-                                            SyntaxFactory.Argument(SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(deferred.Item1))),
+                                            SyntaxFactory.Argument(deferred.Item1),
+                                            SyntaxFactory.Argument(deferred.Item2),
                                             SyntaxFactory.Argument(deferred.Item3)
                                         })
                                     )

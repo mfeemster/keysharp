@@ -369,7 +369,7 @@ propertySetterDefinition
     ;
 
 fieldDefinition
-    : propertyName ':=' expression
+    : (propertyName ('.' propertyName)*) ':=' expression
     ;
 
 formalParameterList
@@ -533,7 +533,7 @@ objectLiteral
     ;
 
 functionHead
-    : functionHeadPrefix? identifier '(' formalParameterList? ')'
+    : functionHeadPrefix? identifierName '(' formalParameterList? ')'
     ;
 
 functionHeadPrefix
@@ -546,8 +546,8 @@ functionExpressionHead
     ;
 
 fatArrowExpressionHead
-    : (functionHeadPrefix? identifier)? Multiply 
-    | functionHeadPrefix? BitAnd? identifier QuestionMark?
+    : (functionHeadPrefix? identifierName)? Multiply 
+    | functionHeadPrefix? BitAnd? identifierName QuestionMark?
     | functionExpressionHead
     ;
 
@@ -627,7 +627,8 @@ identifier
     | Base
     | From
     | Get
-    | Set)
+    | Set
+    | As)
     ;
 
 reservedWord

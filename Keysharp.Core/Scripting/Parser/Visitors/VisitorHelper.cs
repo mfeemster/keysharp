@@ -3,6 +3,7 @@ using Antlr4.Runtime;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using static MainParser;
 using System.Data.Common;
+using System.Linq.Expressions;
 
 namespace Keysharp.Scripting
 {
@@ -133,16 +134,16 @@ namespace Keysharp.Scripting
                 {
                     var head = fatArrow.fatArrowExpressionHead();
                     if (head.functionExpressionHead() != null && head.functionExpressionHead().functionHead() != null)
-                        result.Add(head.functionExpressionHead().functionHead().identifier().GetText());
+                        result.Add(head.functionExpressionHead().functionHead().identifierName().GetText());
 
                 }
                 else if (child is FunctionExpressionContext func && func.functionExpressionHead().functionHead() != null)
                 {
-                    result.Add(func.functionExpressionHead().functionHead().identifier().GetText());
+                    result.Add(func.functionExpressionHead().functionHead().identifierName().GetText());
                 }
                 else if (child is FunctionDeclarationContext funcdecl)
                 {
-                    result.Add(funcdecl.functionHead().identifier().GetText());
+                    result.Add(funcdecl.functionHead().identifierName().GetText());
                 }
                 // Recurse into children only if the current node is not a FunctionDeclarationContext
                 else if (child is ParserRuleContext parserRuleContext && child is not FunctionDeclarationContext && child is not FatArrowExpressionContext && child is not FunctionExpressionContext && child is not ClassDeclarationContext)
@@ -1391,6 +1392,24 @@ namespace Keysharp.Scripting
                     )
             );
         }
+
+        internal static ExpressionSyntax GenerateGetPropertyValue(ExpressionSyntax baseExpression, ExpressionSyntax memberExpression)
+        {
+			return SyntaxFactory.InvocationExpression(
+				SyntaxFactory.MemberAccessExpression(
+					SyntaxKind.SimpleMemberAccessExpression,
+					CreateQualifiedName("Keysharp.Scripting.Script"),
+					SyntaxFactory.IdentifierName("GetPropertyValue")
+				),
+				SyntaxFactory.ArgumentList(
+					SyntaxFactory.SeparatedList(new[]
+					{
+						SyntaxFactory.Argument(baseExpression),
+						SyntaxFactory.Argument(memberExpression)
+					})
+				)
+			);
+		}
 
         // Non-constant optional parameter values get added to the top of the function body 
         // as `paramName ??= value` and the default value is set to null. This allows using

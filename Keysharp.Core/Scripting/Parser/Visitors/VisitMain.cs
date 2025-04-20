@@ -1142,7 +1142,7 @@ namespace Keysharp.Scripting
 
         public override SyntaxNode VisitFunctionHead([NotNull] FunctionHeadContext context)
         {
-            PushFunction(CultureInfo.CurrentCulture.TextInfo.ToTitleCase(context.identifier().GetText()));
+            PushFunction(CultureInfo.CurrentCulture.TextInfo.ToTitleCase(context.identifierName().GetText()));
 
             VisitFunctionHeadPrefix(context.functionHeadPrefix());
 
@@ -1181,7 +1181,7 @@ namespace Keysharp.Scripting
             PushFunction(Keywords.AnonymousFatArrowLambdaPrefix + ++parser.lambdaCount);
             VisitFunctionHeadPrefix(context.functionHeadPrefix());
 
-            var parameterName = ToValidIdentifier(context.identifier()?.GetText().ToLowerInvariant().Trim() ?? "args");
+            var parameterName = ToValidIdentifier(context.identifierName()?.GetText().ToLowerInvariant().Trim() ?? "args");
             ParameterSyntax parameter;
             if (context.Multiply() != null)
             {

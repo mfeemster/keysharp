@@ -16,8 +16,11 @@ public class MainParserErrorListener : IAntlrErrorListener<IToken>
         string msg,
         RecognitionException e)
     {
-        // Throw an exception to stop parsing
-        throw new InvalidOperationException($"Syntax error at line {line}:{charPositionInLine} \"{offendingSymbol.Text}\" - {msg}", e);
+		string fullPath = offendingSymbol.InputStream?.SourceName ?? "<unknown file>";
+		string fileName = Path.GetFileName(fullPath);
+
+		// Throw an exception to stop parsing
+		throw new InvalidOperationException($"Syntax error in file {fileName} at line {line}:{charPositionInLine} \"{offendingSymbol.Text}\" - {msg}", e);
     }
 }
 
@@ -199,6 +202,10 @@ public abstract class MainParserBase : Antlr4.Runtime.Parser
                     continue;
                 case MainLexer.WS:
                 case MainLexer.EOL:
+                    nextToken = InputStream.LA(i+1);
+                    if (MainLexer.lineContinuationOperators.Contains(nextToken))
+                        return false;
+                    return true;
                 case MainLexer.Eof:
                     return true;
                 case MainLexer.Comma:
