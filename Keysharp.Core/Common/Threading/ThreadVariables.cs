@@ -24,7 +24,7 @@ namespace Keysharp.Core.Common.Threading
 		internal long keyDelayPlay = -1L;
 		internal long keyDuration = -1L;
 		internal long keyDurationPlay = -1L;
-		internal long lastFoundForm = 0L;
+		internal long lastFoundForm;
 		internal long mouseDelay = 10L;
 		internal long mouseDelayPlay = -1L;
 		internal long peekFrequency = 5L;

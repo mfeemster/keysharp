@@ -316,7 +316,7 @@ namespace Keysharp.Scripting
 					var init = new CodeVariableDeclarationStatement();
 					init.Name = id;
 					init.Type = new CodeTypeReference(typeof(IEnumerator));
-					init.InitExpression = new CodeMethodInvokeExpression(iterator, "GetEnumerator", System.Array.Empty<CodeExpression>());
+					init.InitExpression = new CodeMethodInvokeExpression(iterator, "GetEnumerator", []);
 					var condition = new CodeMethodInvokeExpression();
 					condition.Method.TargetObject = new CodeVariableReferenceExpression(id);
 					condition.Method.MethodName = "MoveNext";

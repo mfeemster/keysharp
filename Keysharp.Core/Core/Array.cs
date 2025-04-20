@@ -48,7 +48,7 @@
 		/// </summary>
 		public object Capacity
 		{
-			get => array != null ? (long)array.Capacity : 0L;
+			get => array != null ? array.Capacity : 0L;
 
 			set
 			{
@@ -88,7 +88,7 @@
 		/// </summary>
 		public object Length
 		{
-			get => array != null ? (long)array.Count : 0L;
+			get => array != null ? array.Count : 0L;
 
 			set
 			{
@@ -178,7 +178,7 @@
 		///     <see cref="ICollection"/>: adds each element to the underlying list.
 		/// </param>
 		/// <returns>Empty string, unused.</returns>
-		public object __New(params object[] args)
+		public new object __New(params object[] args)
 		{
 			array = new List<object>(capacity);
 			Init__Item();

@@ -10,7 +10,7 @@
 
 		public static implicit operator string(StringBuffer s) => s.sb.ToString();
 
-		public object __New(params object[] args)
+		public new object __New(params object[] args)
 		{
 			var str = args.Length > 0 ? args[0].ToString() : "";
 			var capacity = args.Length > 1 ? args[1].Ai() : 256;

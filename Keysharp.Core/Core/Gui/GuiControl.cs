@@ -332,7 +332,7 @@
 						var width = int.MinValue;
 						var height = int.MinValue;
 						var icon = "";
-						object iconnumber = 0;
+						object iconnumber = 0L;
 						var filename = "";
 
 						foreach (Range r in val.AsSpan().SplitAny(SpaceTabSv))
@@ -416,7 +416,7 @@
 
 		public GuiControl(params object[] args) => _ = __New(args);
 
-		public object __New(params object[] args)
+		public new object __New(params object[] args)
 		{
 			var g = args[0] as Gui;
 			var control = args[1] as Control;
@@ -1079,7 +1079,6 @@
 			var h = height.Al(long.MinValue);
 			var scale = !DpiScaling ? 1.0 : A_ScaledScreenDPI;
 			var hasScrollBars = _control is KeysharpTextBox || _control is KeysharpRichEdit;//Reflections.SafeHasProperty(_control, "ScrollBars") || Reflections.SafeHasProperty(_control, "HorizontalScrollbar") || Reflections.SafeHasProperty(_control, "Scrollable")
-
 			Point offset = Parent == null || Parent.GetControl() is Form ? Point.Empty : Parent.GetControl().GetLocationRelativeToForm();
 
 			if (_x != long.MinValue)
@@ -1829,7 +1828,8 @@
 
 		internal static void GetPosHelper(Control control, bool scaling, bool client, ref object x, ref object y, ref object w, ref object h)
 		{
-            var rect = client ? control.ClientRectangle : control.Bounds;
+			var rect = client ? control.ClientRectangle : control.Bounds;
+
 			if (!client && control?.Parent != null)
 			{
 				Point p = control.Parent.GetLocationRelativeToForm();

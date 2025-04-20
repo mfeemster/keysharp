@@ -540,7 +540,7 @@ namespace Keysharp.Core.Common.Strings
 			else if (files)
 				return filelist;
 
-			return System.Array.Empty<string>();
+			return [];
 		}
 
 		internal static string ToOSType(PlatformID id)

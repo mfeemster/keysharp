@@ -10,7 +10,7 @@
 			_ = __New(kso, map);
 		}
 
-		public object __New(params object[] args)
+		public new object __New(params object[] args)
 		{
 			var kso = (KeysharpObject)args[0];
 			var map = (Map)args[1];
@@ -59,13 +59,12 @@
 		}
 
 		object IEnumerator.Current => Current;
-		internal int Count => GetVal ? 2 : 1;
+		internal new int Count => GetVal ? 2 : 1;
 		internal bool GetVal { get; set; }
 
 		internal OwnPropsIterator(KeysharpObject o, Dictionary<object, object> m, bool gv)
 			: base(null, gv ? 2 : 1)
 		{
-			Error err;
 			obj = o;
 			map = m;
 			GetVal = gv;

@@ -276,7 +276,7 @@ namespace Keysharp.Core.Common.Strings
 
 			if (doit)
 			{
-				if (allowempty && suffix.CompareTo(ReadOnlySpan<char>.Empty, StringComparison.OrdinalIgnoreCase) == 0)//Need CompareTo() because == doesn't work with spans and "".
+				if (allowempty && suffix.CompareTo([], StringComparison.OrdinalIgnoreCase) == 0)//Need CompareTo() because == doesn't work with spans and "".
 				{
 					result = def;
 					return true;

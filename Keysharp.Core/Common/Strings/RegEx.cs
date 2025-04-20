@@ -13,7 +13,7 @@
 
 		public static implicit operator long(RegExResults r) => r.Pos();
 
-		public object __New(params object[] args)
+		public new object __New(params object[] args)
 		{
 			match = args[0] as Match;
 

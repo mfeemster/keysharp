@@ -170,7 +170,7 @@
 
 		public InputObject(params object[] args) => _ = __New(args);
 
-		public object __New(params object[] args)
+		public new object __New(params object[] args)
 		{
 			var options = args[0].ToString();
 			var endKeys = args[1].ToString();

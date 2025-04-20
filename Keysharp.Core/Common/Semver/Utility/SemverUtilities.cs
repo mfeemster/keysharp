@@ -194,7 +194,7 @@
 			char splitOn,
 			Func<string, T> func)
 		{
-			if (value.Length == 0) return ReadOnlyList<T>.Empty;
+			if (value.Length == 0) return [];
 
 			// Figure out how many items the resulting list will have
 			int count = 1; // Always one more item than there are separators
