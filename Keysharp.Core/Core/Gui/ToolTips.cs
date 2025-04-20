@@ -55,7 +55,7 @@ namespace Keysharp.Core
 
 			var tooltipInvokerForm = GuiHelper.DialogOwner ?? Form.ActiveForm;
 			var focusedWindow = IntPtr.Zero;
-			var one_or_both_coords_unspecified = _x == int.MinValue || _y == int.MinValue;
+			var one_or_both_coords_specified = _x != int.MinValue || _y != int.MinValue;
 
 			if (tooltipInvokerForm == null)
 			{
@@ -121,7 +121,7 @@ namespace Keysharp.Core
 
 				tt.Active = true;
 
-				if (one_or_both_coords_unspecified)
+				if (!one_or_both_coords_specified)
 				{
 					//We use SetTool() via reflection in this function because it bypasses ToolTip.Show()'s check for whether or not the window
 					//is active.

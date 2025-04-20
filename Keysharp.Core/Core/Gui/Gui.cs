@@ -188,7 +188,7 @@ namespace Keysharp.Core
 			{
 				"Theme", (f, o) =>
 				{
-					Debug.OutputDebug("Themes are not supported", false);
+					_ = Debug.OutputDebug("Themes are not supported", false);
 				}
 			},
 			{
@@ -1678,18 +1678,18 @@ namespace Keysharp.Core
 
 		public object Move(object obj0 = null, object obj1 = null, object obj2 = null, object obj3 = null)
 		{
-			var x = obj0.Ai();
-			var y = obj1.Ai();
-			var width = obj2.Ai();
-			var height = obj3.Ai();
+			var x = obj0.Ai(int.MinValue);
+			var y = obj1.Ai(int.MinValue);
+			var width = obj2.Ai(int.MinValue);
+			var height = obj3.Ai(int.MinValue);
 			var scale = !dpiscaling ? 1.0 : A_ScaledScreenDPI;
-			if (obj1 != null)
-				form.Top = (int)y;
-			if (obj0 != null)
+			if (x != int.MinValue)
 				form.Left = (int)x;
-			if (obj2 != null)
+			if (y != int.MinValue)
+				form.Top = (int)y;
+			if (width != int.MinValue)
 				form.Width = (int)Math.Round(width * scale);
-			if (obj3 != null)
+			if (height != int.MinValue)
 				form.Height = (int)Math.Round(height * scale);
 			return null;
 		}

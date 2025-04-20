@@ -90,7 +90,7 @@ namespace Keysharp.Core
 			if (value is FuncObj)
 				return 1L;
 			else if (value is KeysharpObject kso)
-                return HasProp(value, "Call");
+                return n == "" ? HasProp(value, "Call") : (kso.op != null && Script.TryGetOwnPropsMap(kso, n, out var opm) && opm != null && opm.Call != null ? 1L : 0L);
 				
 			var mph = Reflections.FindAndCacheMethod(value.GetType(), n.Length > 0 ? n : "Call", count);
 			return mph != null && mph.mi != null ? 1L : 0L;

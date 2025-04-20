@@ -16,7 +16,7 @@ namespace Keysharp.Core
 		/// Doing this saves significant time when doing repeated calls to the same DLL function with the same argument types.
 		/// </summary>
 		private static readonly ConcurrentDictionary<string, DllCache> dllCache = new ();
-        private static readonly ConcurrentDictionary<int, Func<IntPtr, long[], long>> delegateCache = new();
+		private static readonly ConcurrentDictionary<int, Func<IntPtr, long[], long>> delegateCache = new ();
 
         /// <summary>
         /// Creates a <see cref="DelegateHolder"/> object that wraps a <see cref="FuncObj"/>.
@@ -353,66 +353,59 @@ namespace Keysharp.Core
 		}
 
 		/// <summary>
-		/// A private helper to wrap invoking a COM method with a specific number of arguments.<br/>
-		/// This is done because there is no way to dynamically create and COM call in C# at runtime without knowing the COM ID ahead of time.<br/>
-		/// Since it can only be done at compile time, we have to provide specific function signatures from 0 to 16 parameters,<br/>
-		/// then call the appropriate one based on how many arguments are specificed when called.<br/>
-		/// All arguments are considered <see cref="long"/> internally.
+		/// A private helper to compile and cache a delegate with the appropriate number of<br/>
+		/// parameters and then invoke it. All arguments are considered <see cref="long"/> internally.
 		/// </summary>
 		/// <param name="vtbl">The vtbl of the COM object.</param>
 		/// <param name="args">The argument list.</param>
 		/// <returns>An <see cref="IntPtr"/> which contains the return value of the COM call.</returns>
 		internal static long CallDel(IntPtr vtbl, long[] args)
 		{
-            var del = delegateCache.GetOrAdd(args.Length, CreateDelegateForArgCount);
-            return del(vtbl, args);
-        }
+			var del = delegateCache.GetOrAdd(args.Length, CreateDelegateForArgCount);
+			return del(vtbl, args);
+		}
 
-        /// <summary>
-        /// Generates (and returns) a delegate of type Func<IntPtr, long[], long>
-        /// for a function pointer that accepts exactly n long arguments.
-        /// It reads n arguments from the provided array (pushing 0 for missing entries),
-        /// then loads the function pointer and calls it.
-        /// </summary>
-        /// <param name="n">The number of long arguments expected.</param>
-        private static Func<IntPtr, long[], long> CreateDelegateForArgCount(int n)
-        {
-            // The dynamic method always has two parameters:
-            //  - IntPtr: the function pointer,
-            //  - long[]: the array of arguments.
-            DynamicMethod dm = new DynamicMethod(
-                "DynamicDllCall_" + n,
-                typeof(long),
-                new[] { typeof(IntPtr), typeof(long[]) },
-                typeof(Dll).Module,
-                skipVisibility: true);
+		/// <summary>
+		/// Generates (and returns) a delegate of type Func<IntPtr, long[], long>
+		/// for a function pointer that accepts exactly n long arguments.
+		/// It reads n arguments from the provided array (pushing 0 for missing entries),
+		/// then loads the function pointer and calls it.
+		/// </summary>
+		/// <param name="n">The number of long arguments expected.</param>
+		private static Func<IntPtr, long[], long> CreateDelegateForArgCount(int n)
+		{
+			// The dynamic method always has two parameters:
+			//  - IntPtr: the function pointer,
+			//  - long[]: the array of arguments.
+			DynamicMethod dm = new DynamicMethod(
+				"DynamicDllCall_" + n,
+				typeof(long),
+				new[] { typeof(IntPtr), typeof(long[]) },
+				typeof(Dll).Module,
+				skipVisibility: true);
+			ILGenerator il = dm.GetILGenerator();
 
-            ILGenerator il = dm.GetILGenerator();
+			// Unroll the loading of n arguments from the array.
+			for (int i = 0; i < n; i++)
+			{
+				// Load the 'args' array (argument at index 1).
+				il.Emit(OpCodes.Ldarg_1);
+				// Push the constant index i onto the stack.
+				il.Emit(OpCodes.Ldc_I4, i);
+				// Load the long element at that index (expects each element is an 8-byte long).
+				il.Emit(OpCodes.Ldelem_I8);
+			}
 
-            // Unroll the loading of n arguments from the array.
-            for (int i = 0; i < n; i++)
-            {
-                // Load the 'args' array (argument at index 1).
-                il.Emit(OpCodes.Ldarg_1);
-                // Push the constant index i onto the stack.
-                il.Emit(OpCodes.Ldc_I4, i);
-                // Load the long element at that index (expects each element is an 8-byte long).
-                il.Emit(OpCodes.Ldelem_I8);
-            }
-
-            // Load the function pointer from the first parameter (IntPtr).
-            il.Emit(OpCodes.Ldarg_0);
-
-            // Build an array of parameter types (n longs).
-            Type[] paramTypes = Enumerable.Repeat(typeof(long), n).ToArray();
-
-            // Emit a calli instruction to call the unmanaged function.
-            // This assumes a StdCall calling convention and that the function returns a long.
-            il.EmitCalli(OpCodes.Calli, CallingConvention.StdCall, typeof(long), paramTypes);
-            il.Emit(OpCodes.Ret);
-
-            return (Func<IntPtr, long[], long>)dm.CreateDelegate(typeof(Func<IntPtr, long[], long>));
-        }
+			// Load the function pointer from the first parameter (IntPtr).
+			il.Emit(OpCodes.Ldarg_0);
+			// Build an array of parameter types (n longs).
+			Type[] paramTypes = Enumerable.Repeat(typeof(long), n).ToArray();
+			// Emit a calli instruction to call the unmanaged function.
+			// This assumes a StdCall calling convention and that the function returns a long.
+			il.EmitCalli(OpCodes.Calli, CallingConvention.StdCall, typeof(long), paramTypes);
+			il.Emit(OpCodes.Ret);
+			return (Func<IntPtr, long[], long>)dm.CreateDelegate(typeof(Func<IntPtr, long[], long>));
+		}
 
         internal static unsafe void FixParamTypeAndCopyBack(ref object p, string ps, IntPtr aip)
 		{
@@ -487,23 +480,45 @@ namespace Keysharp.Core
 			{
 				if (pi < parameters.Length - 1)
 				{
-					var p0 = parameters[pi];
-					//var p1 = parameters[pi + 1];
+					var ps = parameters[pi].As();
+					var wasPtr = ps[ ^ 1] == '*' || ps[ ^ 1] == 'p';
 
 					//If they passed in a ComObject with Ptr as an address, make that address into a __ComObject.
 					if (parameters[pi + 1] is ComObject co)
 					{
-						object obj = co.Ptr;
-						co.Ptr = obj;//Reassign to ensure pointers are properly cast to __ComObject.
-					}
-					else if (p0 is string ps)
-					{
-						if (parameters[pi + 1] is StringBuffer sb)
-							sb.UpdateEntangledStringFromBuffer();
-						if (ps[ ^ 1] == '*' || ps[ ^ 1] == 'p')
+						if (wasPtr)
 						{
 							var arg = args[ai];
 
+							if (arg is IntPtr aip)
+								FixParamTypeAndCopyBack(ref co.item, ps, aip);//Reference item directly.
+							else if (arg is long l)
+								FixParamTypeAndCopyBack(ref co.item, ps, (nint)l);
+						}
+
+						object obj = co.Ptr;
+						co.Ptr = obj;//Reassign to ensure pointers are properly cast to __ComObject.
+					}
+					else if (wasPtr)
+					{
+						var arg = args[ai];
+
+						if (parameters[pi + 1] is StringBuffer sb)
+							sb.UpdateEntangledStringFromBuffer();
+
+						if (parameters[pi + 1] is KeysharpObject kso && kso.HasProp("ptr") == 1L)
+						{
+							object temp = arg;
+
+							if (arg is IntPtr aip)
+								FixParamTypeAndCopyBack(ref temp, ps, aip);
+							else if (arg is long l)
+								FixParamTypeAndCopyBack(ref temp, ps, (nint)l);
+
+							_ = Script.SetPropertyValue(kso, "ptr", temp);//Write it back to the ptr property of the KeysharpObject.
+						}
+						else
+						{
 							if (arg is IntPtr aip)
 								FixParamTypeAndCopyBack(ref parameters[pi + 1], ps, aip);//Must reference directly into the array, not a temp variable.
 							else if (arg is long l)

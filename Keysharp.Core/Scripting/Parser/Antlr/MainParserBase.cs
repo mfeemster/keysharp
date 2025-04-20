@@ -175,7 +175,7 @@ public abstract class MainParserBase : Antlr4.Runtime.Parser
                     enclosableDepth++;
                     break;
                 case MainLexer.OpenParen:
-                    if (i != 1 && enclosableDepth == 0)
+                    if (enclosableDepth == 0)
                         return false;
                     enclosableDepth++;
                     break;
@@ -202,10 +202,6 @@ public abstract class MainParserBase : Antlr4.Runtime.Parser
                     continue;
                 case MainLexer.WS:
                 case MainLexer.EOL:
-                    nextToken = InputStream.LA(i+1);
-                    if (MainLexer.lineContinuationOperators.Contains(nextToken))
-                        return false;
-                    return true;
                 case MainLexer.Eof:
                     return true;
                 case MainLexer.Comma:

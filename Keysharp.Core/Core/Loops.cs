@@ -685,7 +685,7 @@ namespace Keysharp.Core
 					}
 					catch (Exception ex)
 					{
-						Debug.OutputDebug(ex);
+						_ = Debug.OutputDebug(ex);
 					}
 
 					if (subdirs != null)
@@ -708,7 +708,7 @@ namespace Keysharp.Core
 					}
 					catch (Exception ex)
 					{
-						Debug.OutputDebug(ex);
+						_ = Debug.OutputDebug(ex);
 					}
 
 					if (files != null)

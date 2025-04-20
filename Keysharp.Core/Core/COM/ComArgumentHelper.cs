@@ -63,6 +63,9 @@ namespace Keysharp.Core.COM
 				var p = parameters[i];
 				//var usePtr = false;
 
+				if (p is KeysharpObject kso && Script.GetPropertyValue(kso, "ptr", false) is object kptr && kptr != null)
+					p = parameters[i] = kptr;
+
 				switch (name[name.Length - 1])
 				{
 					case '*':
@@ -84,9 +87,6 @@ namespace Keysharp.Core.COM
 						SetupPointerArg(i, n);
 						goto TypeDetermined;
 				}
-
-				if (parameters[i] is KeysharpObject kso && Script.GetPropertyValue(kso, "ptr", false) is object kptr && kptr != null)
-					p = parameters[i] = kptr;
 
 				switch (name)
 				{
@@ -320,18 +320,6 @@ namespace Keysharp.Core.COM
 								args[n] = buf.Ptr;
 							else if (p is Array array)
 								SetupPointerArg(i, n, array.array);
-							else if (p is ComObject co)
-							{
-								nint pUnk;
-
-								if (co.Ptr is nint ip2)
-									pUnk = ip2;
-								else
-									pUnk = Marshal.GetIUnknownForObject(co.Ptr);//Subsequent calls like DllCall() and NumGet() will dereference to get entries in the vtable.
-
-								args[n] = pUnk;
-								_ = Marshal.Release(pUnk);
-							}
 							else if (Marshal.IsComObject(p))
 							{
 								var pUnk = Marshal.GetIUnknownForObject(p);

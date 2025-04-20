@@ -41,7 +41,7 @@ try
 }
 catch
 {
-	caught = true
+	caught := true
 }
 
 

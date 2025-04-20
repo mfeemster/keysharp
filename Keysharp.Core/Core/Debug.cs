@@ -117,7 +117,7 @@ namespace Keysharp.Core
 						}
 						catch (Exception ex)
 						{
-							OutputDebug($"GetVars(): exception thrown inside of nested loop inside of second internal loop: {ex.Message}");
+							_ = OutputDebug($"GetVars(): exception thrown inside of nested loop inside of second internal loop: {ex.Message}");
 						}
 					}
 
@@ -191,12 +191,17 @@ namespace Keysharp.Core
 			return sb.ToString();
 		}
 
-		public static void ListLines(params object[] obj)
+		public static object ListLines(params object[] obj)
 		{
-			OutputDebug("ListLines() is not supported in Keysharp because it's a compiled program, not an interpreted one.");
+			_ = OutputDebug("ListLines() is not supported in Keysharp because it's a compiled program, not an interpreted one.");
+			return "";
 		}
 
-		public static void ListVars() => Script.mainWindow?.ShowInternalVars(true);
+		public static object ListVars()
+		{
+			Script.mainWindow?.ShowInternalVars(true);
+			return "";
+		}
 
 		/// <summary>
 		/// Sends a string to the debugger (if any) for display.

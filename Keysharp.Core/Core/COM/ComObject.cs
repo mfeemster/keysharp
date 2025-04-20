@@ -7,6 +7,7 @@ namespace Keysharp.Core.COM
 		internal static int MaxVtableLen = 16;
 		internal List<IFuncObj> handlers = [];
 		internal object item;
+		private ComObject tempCo;//Must keep a reference else it will throw an exception about the RCW being separated from the object.
 
 		public long Flags { get; set; }
 
@@ -107,6 +108,8 @@ namespace Keysharp.Core.COM
 					}
 				}
 
+				// It doesn't make sense to convert anything other than IDispatch, because
+				// the resulting object couldn't be used as a "native object" anyway.
 				if (wasObj && VarType == Com.vt_dispatch)
 				{
 					if (longVal != 0L)
@@ -133,10 +136,11 @@ namespace Keysharp.Core.COM
 				if (temp != null && Marshal.IsComObject(temp))
 				{
 					if (temp is IDispatch id)
-					{
 						item = id;
-						return;
-					}
+					else
+						item = new nint(longVal);//This was put here to prevent the COM tests with the taskbar in guitest.ks from crashing. Unsure if it actually makes sense.
+
+					return;
 				}
 
 				item = temp;
@@ -183,6 +187,7 @@ namespace Keysharp.Core.COM
 		{
 			if (Ptr == null)
 				return;
+			// System.__ComObject decreases the reference count automatically on destruction
 			if (VarType == Com.vt_unknown || VarType == Com.vt_dispatch) {
 				if (Ptr is IntPtr ip && ip != IntPtr.Zero)
 					_ = Marshal.Release(ip);
@@ -205,6 +210,7 @@ namespace Keysharp.Core.COM
 				Flags |= F_OWNVALUE;
 
 			Ptr = co.Ptr;
+			tempCo = co;
 			return "";
 		}
 
@@ -296,7 +302,7 @@ namespace Keysharp.Core.COM
 
 				if (co.VarType == Com.vt_dispatch || co.VarType == Com.vt_unknown)
 				{
-					Com.ObjAddRef(co);
+					_ = Com.ObjAddRef(co);
 				}
 				else if ((co.Flags & F_OWNVALUE) == F_OWNVALUE)
 				{
@@ -392,8 +398,6 @@ namespace Keysharp.Core.COM
 			return co;
 		}
 	}
-
-    internal delegate long DelNone();
 }
 
 #endif

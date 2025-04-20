@@ -296,7 +296,7 @@ else
 
 x := (*) => 1
 
-if (x is not Closure)
+if (not x is Closure)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"

@@ -465,7 +465,7 @@ namespace Keysharp.Main
 			else
 			{
 				_ = MessageBox.Show(text, "Keysharp", MessageBoxButtons.OK, MessageBoxIcon.Information);
-				Core.Debug.OutputDebug(text);
+				_ = Core.Debug.OutputDebug(text);
 			}
 
 			return error ? 1 : 0;

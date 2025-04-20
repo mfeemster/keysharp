@@ -38,7 +38,7 @@ namespace Keysharp.Benchmark
 							  ; Flow.IsTrueAndRunning(e2.Call(ref val));
 				)
 			{
-				Keysharp.Core.Loops.Inc();
+				_ = Keysharp.Core.Loops.Inc();
 				total += (double)val;
 				e3:
 				;

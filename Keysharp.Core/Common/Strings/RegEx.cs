@@ -20,20 +20,20 @@
 			for (int i = 0; i < match.Groups.Count; i++)
 			{
 				var g = match.Groups[i];
-				DefineProp(g.Name,
-						   Objects.Object(
-							   [
-								   "get",
-								   Functions.GetFuncObj("GetWrapper", this, 2, true).Bind(g.Name)
-							   ]));
-
-				if (i.ToString() != g.Name)//No need to add it twice if the name matches the index.
-					DefineProp(i,
+				_ = DefineProp(g.Name,
 							   Objects.Object(
 								   [
 									   "get",
 									   Functions.GetFuncObj("GetWrapper", this, 2, true).Bind(g.Name)
 								   ]));
+
+				if (i.ToString() != g.Name)//No need to add it twice if the name matches the index.
+					_ = DefineProp(i,
+								   Objects.Object(
+									   [
+										   "get",
+										   Functions.GetFuncObj("GetWrapper", this, 2, true).Bind(g.Name)
+									   ]));
 			}
 
 			return "";

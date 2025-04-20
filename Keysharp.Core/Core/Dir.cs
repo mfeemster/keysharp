@@ -213,7 +213,7 @@
 		/// <summary>
 		/// <seealso cref="SplitPath(path, outFileName, outDir, outExtension, outNameNoExt, outDrive)"/>
 		/// </summary>
-		public static object SplitPath(object obj, ref object outFileName)
+		public static object SplitPath(object obj, object outFileName)
 		{
             VarRef outDir = new(null);
             VarRef outExtension = new(null);
@@ -225,7 +225,7 @@
 		/// <summary>
 		/// <seealso cref="SplitPath(path, outFileName, outDir, outExtension, outNameNoExt, outDrive)"/>
 		/// </summary>
-		public static object SplitPath(object obj, ref object outFileName, ref object outDir)
+		public static object SplitPath(object obj, object outFileName, object outDir)
 		{
             VarRef outExtension = new(null);
             VarRef outNameNoExt = new(null);
@@ -236,7 +236,7 @@
 		/// <summary>
 		/// <seealso cref="SplitPath(path, outFileName, outDir, outExtension, outNameNoExt, outDrive)"/>
 		/// </summary>
-		public static object SplitPath(object obj, ref object outFileName, ref object outDir, ref object outExtension)
+		public static object SplitPath(object obj, object outFileName, object outDir, object outExtension)
 		{
             VarRef outNameNoExt = new(null);
             VarRef outDrive = new(null);
@@ -246,7 +246,7 @@
 		/// <summary>
 		/// <seealso cref="SplitPath(path, outFileName, outDir, outExtension, outNameNoExt, outDrive)"/>
 		/// </summary>
-		public static object SplitPath(object obj, ref object outFileName, ref object outDir, ref object outExtension, ref object outNameNoExt)
+		public static object SplitPath(object obj, object outFileName, object outDir, object outExtension, object outNameNoExt)
 		{
             VarRef outDrive = new(null);
             return SplitPath(obj, outFileName, outDir, outExtension, outNameNoExt, outDrive);

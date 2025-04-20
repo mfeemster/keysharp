@@ -202,7 +202,10 @@ namespace Keysharp.Scripting
             if (value.Contains("."))
             {
                 double.TryParse(value, CultureInfo.InvariantCulture, out double result);
-                return SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(result));
+				value = value.EndsWith("d", StringComparison.OrdinalIgnoreCase)
+	                ? value
+	                : value + "d";
+				return SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(value, result));
             }
             else if (value.StartsWith("0x", StringComparison.InvariantCultureIgnoreCase))
             {
@@ -410,7 +413,7 @@ namespace Keysharp.Scripting
             var builtin = IsBuiltInMethod(name, caseSense);
             if (builtin != null) return builtin;
 
-            builtin = IsBuiltInProperty(name, caseSense);
+            builtin = IsBuiltInProperty(name, caseSense, true);
             if (builtin != null) return builtin;
 
             if (Reflections.stringToTypes.ContainsKey(name))
@@ -419,7 +422,7 @@ namespace Keysharp.Scripting
             return null;
         }
 
-        internal string IsBuiltInProperty(string name, bool caseSense = false)
+        internal string IsBuiltInProperty(string name, bool caseSense = false, bool ignoreExtensionClass = false)
         {
             KeyValuePair<string, PropertyInfo> match;
             if (caseSense && Reflections.flatPublicStaticProperties.ContainsKey(name))
@@ -427,7 +430,8 @@ namespace Keysharp.Scripting
             else
                 match = Reflections.flatPublicStaticProperties.FirstOrDefault(v => v.Key.Equals(name, StringComparison.OrdinalIgnoreCase));
 
-            if (match.Key == null
+            if (!ignoreExtensionClass
+                && match.Key == null
                 && currentClass != null
                 && Reflections.stringToTypeProperties.ContainsKey(name))
             {
@@ -945,7 +949,7 @@ namespace Keysharp.Scripting
             if (UserTypes.ContainsKey(normalizedName))
                 return normalizedName;
 
-            var builtin = IsBuiltInProperty(name);
+            var builtin = IsBuiltInProperty(name, false, true);
             if (builtin != null) return builtin;
 
             // Normalize before checking these, because method and type identifiers will all be lower-case

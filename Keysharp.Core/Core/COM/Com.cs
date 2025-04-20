@@ -490,8 +490,9 @@ namespace Keysharp.Core.COM
 
 		internal static long CallDel(long objPtr, IntPtr vtbl, long[] args)
 		{
-			if (objPtr == 0 || vtbl == 0)
+			if (objPtr == 0L || vtbl == IntPtr.Zero)
 				throw new Error("Invalid object pointer or vtable number");
+
 			//First attempt to call the normal way. This will succeed with any normal COM call.
 			//However, it will throw an exception if we've passed a fake COM function using DelegateHolder.
 			//This can be reproduced with the following script.

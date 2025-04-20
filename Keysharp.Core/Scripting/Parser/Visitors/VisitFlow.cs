@@ -896,9 +896,7 @@ namespace Keysharp.Scripting
             }
 
             // Ensure a catch clause for `Keysharp.Core.Error` exists
-            if (!catchClauses.Any(c =>
-                    c.Declaration != null &&
-                    c.Declaration.Type.ToString().Equals("Keysharp.Core.Error", StringComparison.InvariantCultureIgnoreCase)))
+            if (catchClauses.Count == 0)
             {
                 var keysharpErrorCatch = SyntaxFactory.CatchClause()
                     .WithDeclaration(
@@ -983,7 +981,7 @@ namespace Keysharp.Scripting
                 
                 SyntaxToken exceptionIdentifier = SyntaxFactory.Identifier(exceptionIdentifierName);
 
-                TypeSyntax exceptionType = SyntaxFactory.ParseTypeName("Keysharp.Core.KeysharpException");
+                TypeSyntax exceptionType = SyntaxFactory.ParseTypeName("Keysharp.Core.Error");
                 var typeConditions = new List<ExpressionSyntax>();
 
                 if (catchAssignable.catchClasses() != null)
@@ -993,7 +991,7 @@ namespace Keysharp.Scripting
                     {
                         catchClassText = catchClass.GetText();
                         if (catchClassText.Equals("Any", StringComparison.OrdinalIgnoreCase))
-                            catchClassText = "KeysharpException";
+                            catchClassText = "Error";
                         if (Reflections.stringToTypes.TryGetValue(catchClassText, out var t))
                             catchClassText = t.FullName;
                         else
@@ -1015,7 +1013,7 @@ namespace Keysharp.Scripting
                     typeConditions.Add(
                         SyntaxFactory.IsPatternExpression(
                             SyntaxFactory.IdentifierName(exceptionIdentifierName),
-                            SyntaxFactory.TypePattern(SyntaxFactory.ParseTypeName("Keysharp.Core.KeysharpException"))
+                            SyntaxFactory.TypePattern(SyntaxFactory.ParseTypeName("Keysharp.Core.Error"))
                         )
                     );
                 }
@@ -1046,7 +1044,7 @@ namespace Keysharp.Scripting
             return SyntaxFactory.CatchClause()
                 .WithDeclaration(
                     SyntaxFactory.CatchDeclaration(
-                        SyntaxFactory.ParseTypeName("Keysharp.Core.KeysharpException"),
+                        SyntaxFactory.ParseTypeName("Keysharp.Core.Error"),
                         SyntaxFactory.Identifier(exceptionIdentifierName)
                     )
                 )

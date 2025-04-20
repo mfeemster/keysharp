@@ -1128,6 +1128,7 @@ namespace Keysharp.Core
 
 		/// <summary>
 		/// Copies a string to a memory address or buffer, optionally converting it to a given code page.
+		/// This includes the null terminator (0) character(s).
 		/// </summary>
 		/// <param name="str">Any string. If a number is given, it is automatically converted to a string.</param>
 		/// <param name="target">A Buffer-like object or memory address to which the string will be written.</param>
@@ -1176,10 +1177,12 @@ namespace Keysharp.Core
 
 				if (obj.Length > 2 && !obj[2].IsNullOrEmpty())
 				{
-					if (obj[2] is string ec) {
+					if (obj[2] is string ec)
+					{
 						encoding = Files.GetEncoding(obj[2]);
 						len = s.Length;
-					} else
+					}
+					else
 						len = Math.Abs(obj.Al(2));
 				}
 
@@ -1187,12 +1190,11 @@ namespace Keysharp.Core
 					encoding = Files.GetEncoding(obj[3]);
 
 				var bytes = encoding.GetBytes(s);
+				int written;
 
 				if (buf != null)
 				{
-					var written = (int)Math.Min((long)buf.Size, bytes.Length);
-					Marshal.Copy(bytes, 0, ptr, written);
-					return written;
+					written = (int)Math.Min((long)buf.Size, bytes.Length);
 				}
 				else
 				{
@@ -1206,10 +1208,11 @@ namespace Keysharp.Core
 					else if (len == long.MinValue)
 						return Errors.ErrorOccurred(err = new ValueError($"Length was not specified, but the target was not a Buffer object. Either pass a Buffer, or specify a Length.")) ? throw err : 0L;
 
-					var written = Math.Min((int)len, bytes.Length);
-                    Marshal.Copy(bytes, 0, ptr, written);
-					return written;
+					written = Math.Min((int)len, bytes.Length);
 				}
+
+				Marshal.Copy(bytes, 0, ptr, written);
+				return written;
 			}
 
 			return 0L;
@@ -1515,27 +1518,45 @@ namespace Keysharp.Core
 		/// </returns>
 		public static long VerCompare(object versionA, object versionB)
 		{
-			var v1 = versionA.As().TrimStart();
-			var v2 = versionB.As().TrimStart();
+			var v1 = versionA.As().Trim();
+			var v2 = versionB.As().Trim();
 			var semver1 = Semver.SemVersion.Parse(v1, Semver.SemVersionStyles.Any);
-			var semver2 = Semver.SemVersion.Parse(v2.TrimStart('>', '<', '='), Semver.SemVersionStyles.Any);
-			switch (v2[0]) {
-				case '=':
-                    return semver1.CompareSortOrderTo(semver2) == 0 ? 1L : 0L;
-				case '>':
-                    return (
-                        v2[0] == '=' 
-							? semver2.CompareSortOrderTo(semver1) >= 0 
-							: semver2.CompareSortOrderTo(semver1) > 0
-                        ) ? 1L : 0L;
-                case '<':
-                    return (
-                        v2[0] == '='
-                            ? semver1.CompareSortOrderTo(semver2) >= 0
-                            : semver1.CompareSortOrderTo(semver2) > 0
-                        ) ? 1L : 0L;
-            }
-			return semver1.CompareSortOrderTo(semver2);
+
+			if (v2.StartsWith("<="))
+			{
+				v2 = v2.Substring(2);
+				var semver2 = Semver.SemVersion.Parse(v2, Semver.SemVersionStyles.Any);
+				return semver1.CompareSortOrderTo(semver2) <= 0 ? 1L : 0L;
+			}
+			else if (v2.StartsWith('<'))
+			{
+				v2 = v2.Substring(1);
+				var semver2 = Semver.SemVersion.Parse(v2, Semver.SemVersionStyles.Any);
+				return semver1.CompareSortOrderTo(semver2) < 0 ? 1L : 0L;
+			}
+			else if (v2.StartsWith(">="))
+			{
+				v2 = v2.Substring(2);
+				var semver2 = Semver.SemVersion.Parse(v2, Semver.SemVersionStyles.Any);
+				return semver1.CompareSortOrderTo(semver2) >= 0 ? 1L : 0L;
+			}
+			else if (v2.StartsWith('>'))
+			{
+				v2 = v2.Substring(1);
+				var semver2 = Semver.SemVersion.Parse(v2, Semver.SemVersionStyles.Any);
+				return semver1.CompareSortOrderTo(semver2) > 0 ? 1L : 0L;
+			}
+			else if (v2.StartsWith('='))
+			{
+				v2 = v2.Substring(1);
+				var semver2 = Semver.SemVersion.Parse(v2, Semver.SemVersionStyles.Any);
+				return semver1.CompareSortOrderTo(semver2) == 0 ? 1L : 0L;
+			}
+			else
+			{
+				var semver2 = Semver.SemVersion.Parse(v2, Semver.SemVersionStyles.Any);
+				return semver1.CompareSortOrderTo(semver2);
+			}
 		}
 
 		/// <summary>

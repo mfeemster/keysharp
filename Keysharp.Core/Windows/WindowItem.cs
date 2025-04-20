@@ -8,6 +8,8 @@ namespace Keysharp.Core.Windows
 	internal class WindowItem : WindowItemBase
 	{
 		private static bool triedKeyUp = false;
+		private int lastChildCount = 64;
+		private string path = "";
 
 		internal override bool Active
 		{
@@ -67,45 +69,11 @@ namespace Keysharp.Core.Windows
 			}
 		}
 
-		internal override string Path
-		{
-			get
-			{
-				// 1) Get the PID for this window
-				WindowsAPI.GetWindowThreadProcessId(Handle, out uint pid);
-				if (pid == 0)
-					return "";
-
-				// 2) Open a lightweight handle to that process
-				IntPtr hProc = WindowsAPI.OpenProcess(ProcessAccessTypes.PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
-				if (hProc == IntPtr.Zero)
-					return null;
-
-				try
-				{
-					// 3) Query for the full path, then strip to filename
-					var sb = new StringBuilder(1024);
-					uint capacity = (uint)sb.Capacity;
-					if (WindowsAPI.QueryFullProcessImageName(hProc, 0, sb, ref capacity))
-					{
-						// e.g. "C:\Windows\System32\notepad.exe" → "notepad.exe"
-						return System.IO.Path.GetFileName(sb.ToString());
-					}
-				}
-				finally
-				{
-					WindowsAPI.CloseHandle(hProc);
-				}
-
-				return "";
-			}
-		}
-
 		internal override HashSet<WindowItemBase> ChildWindows
 		{
 			get
 			{
-				var children = new HashSet<WindowItemBase>();
+				var children = new HashSet<WindowItemBase>(lastChildCount);
 
 				if (IsSpecified)
 				{
@@ -129,6 +97,7 @@ namespace Keysharp.Core.Windows
 					});
 				}
 
+				lastChildCount = children.Count;
 				return children;
 			}
 		}
@@ -213,6 +182,42 @@ namespace Keysharp.Core.Windows
 
 		internal override WindowItemBase ParentWindow => new WindowItem(WindowsAPI.GetAncestor(Handle, gaFlags.GA_PARENT));
 
+		internal override string Path
+		{
+			get
+			{
+				if (path.Length > 0)
+					return path;
+
+				_ = WindowsAPI.GetWindowThreadProcessId(Handle, out var pid);
+
+				if (pid == 0)
+					return "";
+
+				var hProc = WindowsAPI.OpenProcess(ProcessAccessTypes.PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
+
+				if (hProc == IntPtr.Zero)
+					return "";
+
+				try
+				{
+					var sb = new StringBuilder(1024);
+
+					if (WindowsAPI.GetProcessImageFileName(hProc, sb, (uint)sb.Capacity) > 0)
+					{
+						// e.g. "C:\Windows\System32\notepad.exe" → "notepad.exe"
+						return path = System.IO.Path.GetFileName(sb.ToString());
+					}
+				}
+				finally
+				{
+					_ = WindowsAPI.CloseHandle(hProc);
+				}
+
+				return "";
+			}
+		}
+
 		internal override long PID
 		{
 			get
@@ -285,7 +290,7 @@ namespace Keysharp.Core.Windows
 			set
 			{
 				if (IsSpecified)
-					WindowsAPI.SetWindowText(Handle, value ?? string.Empty);
+					_ = WindowsAPI.SetWindowText(Handle, value ?? string.Empty);
 			}
 		}
 

@@ -122,7 +122,10 @@ namespace Keysharp.Core.Common.Invoke
                 }
                 else if (!isreturn && i < parameters.Length)
                 {
-                    if (parameters[i] is KeysharpObject pkso && Script.GetPropertyValue(pkso, "ptr", false) is object pptr && pptr != null)
+					// This assumes that the ptr property contains a numeric value wrapped in the object type
+					// or System.__ComObject. If the numeric value is not wrapped then using it
+					// as an output variable will not work properly. 
+					if (parameters[i] is KeysharpObject pkso && Script.GetPropertyValue(pkso, "ptr", false) is object pptr && pptr != null)
                         parameters[i] = pptr;
                     else if (usePtr && parameters[i] is KeysharpObject kso && kso is not ComObject)
                     {
@@ -135,133 +138,111 @@ namespace Keysharp.Core.Common.Invoke
                     names[n] = name0;
                     types[n] = type;
 
-                    try
-                    {
-                        if (type == typeof(IntPtr))
-                        {
-                            if (name == "ptr" || name == "uptr")
-                            {
-								if (p is KeysharpObject && p is not ComObject && Script.GetPropertyValue(p, "ptr", false) is object argPtr && argPtr != null)
-									p = argPtr;
-
+					try
+					{
+						if (type == typeof(IntPtr))
+						{
+							if (name == "ptr" || name == "uptr")
+							{
 								if (p is null)
-                                    args[n] = IntPtr.Zero;
-                                else if (p is IntPtr)
-                                {
-                                    if (usePtr)
-                                        SetupPointerArg(i, n);
-                                    else
-                                        args[n] = p;
-                                }
-                                else if (p is int || p is long || p is uint)
-                                {
-                                    if (usePtr)
-                                        SetupPointerArg(i, n);
-                                    else
-                                        args[n] = new IntPtr((long)Convert.ChangeType(p, typeof(long)));
-                                }
-                                else if (p is Buffer buf)
-                                {
-                                    args[n] = buf.Ptr;
-                                }
-                                else if (p is DelegateHolder delholder)
-                                {
-                                    args[n] = delholder.delRef;
-                                    types[n] = delholder.delRef.GetType();
-                                }
-                                else if (p is StringBuffer sb)
-                                {
-                                    sb.UpdateBufferFromEntangledString();
-                                    args[n] = sb.sb;
-                                    types[n] = typeof(StringBuilder);
-                                }
-                                else if (p is Delegate del)
-                                {
-                                    args[n] = del;
-                                    types[n] = del.GetType();
-                                }
-                                else if (p is System.Array arr)
-                                //else if (p is ComObjArray arr)
-                                {
-                                    args[n] = arr;
-                                    types[n] = arr.GetType();
-                                }
-                                else if (p is ComObject co)
-                                {
-                                    if (co.Ptr is IntPtr ip || co.Ptr is long || co.Ptr is int)
-                                    {
-                                        if (usePtr)
-                                            SetupPointerArg(i, n, co.Ptr);
-                                        else
-                                            args[n] = co.Ptr;
-                                    }
-                                    else if (Marshal.IsComObject(co.Ptr))
-                                    {
-                                        var pUnk = Marshal.GetIUnknownForObject(co.Ptr);//Subsequent calls like DllCall() and NumGet() will dereference to get entries in the vtable.
-                                        args[n] = pUnk;
-                                        _ = Marshal.Release(pUnk);
-                                    }
-                                    else
-                                    {
-                                        _ = Errors.ErrorOccurred(err = new TypeError($"COM object with ptr type {co.Ptr.GetType()} could not be converted into a DLL argument.")) ? throw err : "";
-                                        return;
-                                    }
-                                }
-                                else if (Marshal.IsComObject(p))
-                                {
-                                    var pUnk = Marshal.GetIUnknownForObject(p);
-                                    args[n] = pUnk;
-                                    _ = Marshal.Release(pUnk);
-                                }
-                                else if (p is Array array)
-                                    SetupPointerArg(i, n, array.array);
-                                else
-                                    SetupPointerArg(i, n);//If it wasn't any of the above types, just take the address, which ends up being the same as int* etc...
-                            }
-                            else if (name == "uint" || name == "int")
-                            {
-                                if (usePtr)
-                                    SetupPointerArg(i, n);
-                                else if (p is IntPtr ip)
-                                    args[n] = ip.ToInt64();
-                                else if (p is long l && l > 0)
-                                    args[n] = l;
-                                else if (p is int ii && ii > 0)
-                                    args[n] = ii;
-                            }
-                            else
-                                SetupPointerArg(i, n);
-                        }
-                        else if (type == typeof(int))
-                        {
-                            if (p is null)
-                                args[n] = 0;
-                            else if (p is IntPtr ip)
-                                args[n] = ip.ToInt32();
-                            else
-                                args[n] = (int)p.Al();
-                        }
-                        else if (type == typeof(uint))
-                        {
-                            if (p is null)
-                                args[n] = 0u;
-                            else if (p is IntPtr ip)
-                                args[n] = (uint)ip.ToInt64();
-                            else
-                                args[n] = (uint)p.Al();
-                        }
-                        else
-                            args[n] = Convert.ChangeType(p, type);
-                    }
-                    catch (Exception e)
-                    {
-                        _ = Errors.ErrorOccurred(err = new TypeError($"Argument type conversion failed: {e.Message}")) ? throw err : "";
-                        return;
-                    }
-                }
-            }
-        }
-    }
+									args[n] = IntPtr.Zero;
+								else if (p is IntPtr)
+								{
+									if (usePtr)
+										SetupPointerArg(i, n);
+									else
+										args[n] = p;
+								}
+								else if (p is int || p is long || p is uint)
+								{
+									if (usePtr)
+										SetupPointerArg(i, n);
+									else
+										args[n] = new IntPtr((long)Convert.ChangeType(p, typeof(long)));
+								}
+								else if (p is Buffer buf)
+								{
+									args[n] = buf.Ptr;
+								}
+								else if (p is DelegateHolder delholder)
+								{
+									args[n] = delholder.delRef;
+									types[n] = delholder.delRef.GetType();
+								}
+								else if (p is StringBuffer sb)
+								{
+									sb.UpdateBufferFromEntangledString();
+									args[n] = sb.sb;
+									types[n] = typeof(StringBuilder);
+								}
+								else if (p is Delegate del)
+								{
+									args[n] = del;
+									types[n] = del.GetType();
+								}
+								else if (p is System.Array arr)
+									//else if (p is ComObjArray arr)
+								{
+									args[n] = arr;
+									types[n] = arr.GetType();
+								}
+								else if (Marshal.IsComObject(p))
+								{
+									var pUnk = Marshal.GetIUnknownForObject(p);
+									args[n] = pUnk;
+									_ = Marshal.Release(pUnk);
+								}
+								else if (p is Array array)
+								{
+									SetupPointerArg(i, n, array.array);
+								}
+								else
+									SetupPointerArg(i, n);//If it wasn't any of the above types, just take the address, which ends up being the same as int* etc...
+							}
+							else if (name == "uint" || name == "int")
+							{
+								if (usePtr)
+									SetupPointerArg(i, n);
+								else if (p is IntPtr ip)
+									args[n] = ip.ToInt64();
+								else if (p is long l && l > 0)
+									args[n] = l;
+								else if (p is int ii && ii > 0)
+									args[n] = ii;
+							}
+							else
+								SetupPointerArg(i, n);
+						}
+						else if (type == typeof(int))
+						{
+							if (p is null)
+								args[n] = 0;
+							else if (p is IntPtr ip)
+								args[n] = ip.ToInt32();
+							else
+								args[n] = (int)p.Al();
+						}
+						else if (type == typeof(uint))
+						{
+							if (p is null)
+								args[n] = 0u;
+							else if (p is IntPtr ip)
+								args[n] = (uint)ip.ToInt64();
+							else
+								args[n] = (uint)p.Al();
+						}
+						else
+							args[n] = Convert.ChangeType(p, type);
+					}
+					catch (Exception e)
+					{
+						_ = Errors.ErrorOccurred(err = new TypeError($"Argument type conversion failed: {e.Message}")) ? throw err : "";
+						return;
+					}
+				}
+			}
+		}
+	}
 }
 
 #endif

@@ -131,7 +131,7 @@
 					if (t is string s)
 					{
 						if (s == "fail")
-							Debug.OutputDebug(s);
+							_ = Debug.OutputDebug(s);
 
 						if (raw)
 							//sw.Write(Encoding.Unicode.GetBytes(s));
