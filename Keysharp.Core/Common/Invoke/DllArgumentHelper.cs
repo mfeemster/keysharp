@@ -127,7 +127,7 @@ namespace Keysharp.Core.Common.Invoke
 
 					// This assumes that the ptr property contains a numeric value wrapped in the object type
 					// or System.__ComObject. If the numeric value is not wrapped then using it
-					// as an output variable will not work properly. 
+					// as an output variable will not work properly.
 					if (p is KeysharpObject pkso && Script.GetPropertyValue(pkso, "ptr", false) is object pptr && pptr != null)
 						p = parameters[i] = pptr;
 
@@ -146,7 +146,7 @@ namespace Keysharp.Core.Common.Invoke
 									else
 										args[n] = p;
 								}
-								else if (p is int || p is long || p is uint)
+								else if (p is long)//p is int || p is long || p is uint)
 								{
 									if (usePtr)
 										SetupPointerArg(i, n);

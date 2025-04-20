@@ -1,4 +1,6 @@
-﻿namespace Keysharp.Core
+﻿using System.Net;
+
+namespace Keysharp.Core
 {
 	/// <summary>
 	/// Public interface for external-related functions.
@@ -34,25 +36,30 @@
 			}
 
 			IntPtr addr;
-			long size = 0;
+			var size = 0L;
 			t = t.ToLower();
 
-			if (address is KeysharpObject kso && Script.GetPropertyValue(kso, "ptr", false) is object p && p != null)
+			if (address is Buffer abuf)//Put Buffer check first because it's faster and more likely.
 			{
-				if (address is Buffer buf)
-					size = buf.Size.Al();
-				address = p;
+				address = abuf.Ptr;
+				size = abuf.Size.Al();
 			}
-			
+			else if (address is KeysharpObject kso && Script.GetPropertyValue(kso, "ptr", false) is object p && p != null
+					 && Script.GetPropertyValue(kso, "size", false) is object s && s != null)
+			{
+				address = p;
+				size = s.Al();
+			}
+
 			if (address is object[] objarr && objarr.Length > 0)//Assume the first element was a long which was an address.
 				addr = new nint(objarr[0].Al());
 			else if (address is IntPtr ptr)
 				addr = ptr;
 			else if (address is long l)
 				addr = new IntPtr(l);
-			else if (address is int i)
-				addr = new IntPtr(i);
 
+			//else if (address is int i)
+			//  addr = new IntPtr(i);
 #if WINDOWS
 			else if (t == "ptr" && Marshal.IsComObject(address))
 			{
@@ -61,54 +68,54 @@
 				_ = Marshal.Release(pUnk);
 			}
 			else
-				return Errors.ErrorOccurred(err = new TypeError($"Could not convert address argument of type {address.GetType()} into an IntPtr. Type must be int, long, ComObject or Buffer.")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new TypeError($"Could not convert address argument of type {address.GetType()} into an IntPtr. Type must be integer, ComObject, Buffer or other object with Ptr and Size properties that are integers.")) ? throw err : null;
 
 #else
 			else
-				return Errors.ErrorOccurred(err = new TypeError($"Could not convert address argument of type {address.GetType()} into an IntPtr. Type must be int, long, or Buffer.")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new TypeError($"Could not convert address argument of type {address.GetType()} into an IntPtr. Type must be int, long, Buffer or other object with Ptr and Size properties that are integers.")) ? throw err : null;
 
 #endif
 
 			switch (t)
 			{
 				case "uint":
-					if (size != 0 && (off + 4 > size))
+					if (size > 0 && (off + 4 > size))
 						return Errors.ErrorOccurred(err = new IndexError($"Memory access exceeded buffer size. Offset {off} + length 4 > buffer size {size}.")) ? throw err : null;
 
 					return (long)(uint)Marshal.ReadInt32(addr, off);
 
 				case "int":
-					if (size != 0 && (off + 4 > size))
+					if (size > 0 && (off + 4 > size))
 						return Errors.ErrorOccurred(err = new IndexError($"Memory access exceeded buffer size. Offset {off} + length 4 > buffer size {size}.")) ? throw err : null;
 
 					return (long)Marshal.ReadInt32(addr, off);
 
 				case "short":
-					if (size != 0 && (off + 2 > size))
+					if (size > 0 && (off + 2 > size))
 						return Errors.ErrorOccurred(err = new IndexError($"Memory access exceeded buffer size. Offset {off} + length 2 > buffer size {size}.")) ? throw err : null;
 
 					return (long)Marshal.ReadInt16(addr, off);
 
 				case "ushort":
-					if (size != 0 && (off + 2 > size))
+					if (size > 0 && (off + 2 > size))
 						return Errors.ErrorOccurred(err = new IndexError($"Memory access exceeded buffer size. Offset {off} + length 2 > buffer size {size}.")) ? throw err : null;
 
 					return (long)(ushort)Marshal.ReadInt16(addr, off);
 
 				case "char":
-					if (size != 0 && (off + 1 > size))
+					if (size > 0 && (off + 1 > size))
 						return Errors.ErrorOccurred(err = new IndexError($"Memory access exceeded buffer size. Offset {off} + length 1 > buffer size {size}.")) ? throw err : null;
 
 					return (long)(sbyte)Marshal.ReadByte(addr, off);
 
 				case "uchar":
-					if (size != 0 && (off + 1 > size))
+					if (size > 0 && (off + 1 > size))
 						return Errors.ErrorOccurred(err = new IndexError($"Memory access exceeded buffer size. Offset {off} + length 1 > buffer size {size}.")) ? throw err : null;
 
 					return (long)Marshal.ReadByte(addr, off);
 
 				case "double":
-					if (size != 0 && (off + 8 > size))
+					if (size > 0 && (off + 8 > size))
 						return Errors.ErrorOccurred(err = new IndexError($"Memory access exceeded buffer size. Offset {off} + length 8 > buffer size {size}.")) ? throw err : null;
 
 					unsafe
@@ -119,7 +126,7 @@
 					}
 
 				case "float":
-					if (size != 0 && (off + 4 > size))
+					if (size > 0 && (off + 4 > size))
 						return Errors.ErrorOccurred(err = new IndexError($"Memory access exceeded buffer size. Offset {off} + length 4 > buffer size {size}.")) ? throw err : null;
 
 					unsafe
@@ -132,7 +139,7 @@
 				case "ptr":
 				case "uptr":
 				default:
-					if (size != 0 && (off + 8 > size))
+					if (size > 0 && (off + 8 > size))
 						return Errors.ErrorOccurred(err = new IndexError($"Memory access exceeded buffer size. Offset {off} + length 8 > buffer size {size}.")) ? throw err : null;
 
 					var ipoff = IntPtr.Add(addr, off);
@@ -160,12 +167,12 @@
 				else if (input is ulong ul)
 					return BitConverter.GetBytes(ul);
 				else
-					return BitConverter.GetBytes(Convert.ToUInt64(input.Al()));
+					return BitConverter.GetBytes(input.Al());
 			}
 			Error err;
 			IntPtr addr = IntPtr.Zero;
-			Buffer buf = null;
 			var offset = 0;
+			var size = 0L;
 			int lastPairIndex;
 			var offsetSpecified = !((obj.Length & 1) == 1);
 			object target;
@@ -182,10 +189,15 @@
 				target = obj[obj.Length - 1];
 			}
 
-			if (target is KeysharpObject kso && Script.GetPropertyValue(kso, "ptr", false) is object p && p != null)
+			if (target is Buffer buf)//Put Buffer check first because it's faster and more likely.
 			{
-				if (target is Buffer)
-					buf = (Buffer)target;
+				size = buf.Size.Al();
+				target = buf.Ptr;
+			}
+			else if (target is KeysharpObject kso && Script.GetPropertyValue(kso, "ptr", false) is object p && p != null
+					 && Script.GetPropertyValue(kso, "size", false) is object s && s != null)
+			{
+				size = s.Al();
 				target = p;
 			}
 
@@ -193,8 +205,10 @@
 				addr = ptr;
 			else if (target is long l)
 				addr = new IntPtr(l);
-			else if (target is int i)
-				addr = new IntPtr(i);
+			//else if (target is int i)
+			//  addr = new IntPtr(i);
+			else
+				return Errors.ErrorOccurred(err = new TypeError($"Could not convert address argument of type {target.GetType()} into an IntPtr. Type must be integer, Buffer or other object with Ptr and Size properties that are integers.")) ? throw err : 0L;
 
 			for (var i = 0; i <= lastPairIndex; i += 2)
 			{
@@ -262,22 +276,22 @@
 						break;
 
 					default:
-						bytes = System.Array.Empty<byte>();
+						bytes = [];
 						inc = 0;
 						break;
 				}
 
 				var finalAddr = IntPtr.Add(addr, offset);
 
-				if (buf != null)
+				if (size > 0)
 				{
-					if ((offset + bytes.Length) <= (long)buf.Size)
+					if ((offset + bytes.Length) <= size)
 					{
 						Marshal.Copy(bytes, 0, finalAddr, bytes.Length);
 						offset += inc;
 					}
 					else
-						return Errors.ErrorOccurred(err = new IndexError($"Memory access exceeded buffer size. Offset {offset} + length {bytes.Length} > buffer size {(long)buf.Size}.")) ? throw err : 0L;
+						return Errors.ErrorOccurred(err = new IndexError($"Memory access exceeded buffer size. Offset {offset} + length {bytes.Length} > buffer size {size}.")) ? throw err : 0L;
 				}
 				else if (addr != IntPtr.Zero)
 				{

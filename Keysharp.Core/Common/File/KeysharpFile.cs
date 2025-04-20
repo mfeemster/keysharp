@@ -64,7 +64,7 @@
 
 		public KeysharpFile(params object[] args) => _ = __New(args);
 
-		public object __New(params object[] args)
+		public new object __New(params object[] args)
 		{
 			var filename = args[0].As();
 			var m = (FileMode)args[1];

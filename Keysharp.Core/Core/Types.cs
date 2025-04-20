@@ -60,7 +60,7 @@
 		{
 			var o = value;
 
-			if (o is double || o is float || o is decimal)
+			if (o is double)// || o is float || o is decimal)
 				return 1;
 
 			double? val;
@@ -91,10 +91,11 @@
 		{
 			var o = value;
 
-			if (o is long || o is int || o is uint || o is ulong)
+			//if (o is long || o is int || o is uint || o is ulong)
+			if (o is long || o is IntPtr)
 				return 1L;
 
-			if (o is double || o is float || o is decimal)
+			if (o is double)// || o is float || o is decimal)
 				return 0L;
 
 			long? val;

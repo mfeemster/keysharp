@@ -6,7 +6,7 @@
 		internal DateTime historyTickPrev = DateTime.Now;
 		private readonly List<KeyHistoryItem> keyHistory;
 		private int keyHistoryNext;
-		internal IntPtr HistoryHwndPrev { get; set; } = IntPtr.Zero;
+		internal long HistoryHwndPrev { get; set; }
 		internal int Size => keyHistory.Count;
 
 		internal KeyHistory(int size = 40)

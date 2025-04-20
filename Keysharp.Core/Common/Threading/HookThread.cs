@@ -371,11 +371,11 @@ namespace Keysharp.Core.Common.Threading
 
 		protected internal void FreeHookMem()
 		{
-			kvkm = System.Array.Empty<uint>();
-			kscm = System.Array.Empty<uint>();
+			kvkm = [];
+			kscm = [];
 			hotkeyUp.Clear();
-			kvk = System.Array.Empty<KeyType>();
-			ksc = System.Array.Empty<KeyType>();
+			kvk = [];
+			ksc = [];
 		}
 
 		protected internal abstract void Start();

@@ -73,7 +73,7 @@
 		{
 			try
 			{
-				return fo.Call(System.Array.Empty<object>());
+				return fo.Call([]);
 			}
 			catch (Exception e)
 			{

@@ -34,7 +34,7 @@
 	/// <param name="x">The first object to compare.</param>
 	/// <param name="y">The second object to compare.</param>
 	/// <returns>True if the two objects are equal, else false.</returns>
-	public bool Equals(object x, object y)
+	public new bool Equals(object x, object y)
 		{
 			//If both are strings, use the built-in comparer.
 			if (x is string s1 && y is string s2)
@@ -181,7 +181,7 @@
 		///     <see cref="Dictionary{object, object}"/>: assigns the dictionary directly to the underlying dictionary.
 		/// </param>
 		/// <returns>Empty string, unused.</returns>
-		public object __New(params object[] args)
+		public new object __New(params object[] args)
 		{
 			Set(args);
 			return "";

@@ -1811,6 +1811,8 @@ namespace Keysharp.Scripting
 			&& Type == other.Type;
 
 			public override bool Equals(object other) => other is CommonParameterInfo cpi && this == cpi;
+
+			public override int GetHashCode() => base.GetHashCode();
 		}
 	}
 }

@@ -136,8 +136,8 @@
 							ico = LoadIconFromAssembly(filename, iconstr);
 
 #if WINDOWS
-						else if (iconindex is int iconint)
-							ico = GuiHelper.GetIcon(filename, iconint);
+						else
+							ico = GuiHelper.GetIcon(filename, iconindex.Ai());
 
 #endif
 
@@ -174,8 +174,10 @@
 							temp = tempIco;
 							bmp = tempIcoBmp.Item2;
 						}
-						else if (iconindex.Ai() is int iconint)
+						else
 						{
+							var iconint = iconindex.Ai(int.MaxValue);
+
 							if (iconint < icos.Count)
 							{
 								var tempIcoBmp = icos[iconint];
@@ -241,7 +243,7 @@
 			if (iconnumber == null)
 				return 0;
 			else if (iconnumber.ParseLong(false) is long l && l > 0)//Note this allows us to pass the icon number as a string, however that also prevents us from loading an icon from a .NET DLL that happens to be named that same number. This is an extremely unlikely scenario.
-				return (int)l - 1;
+				return l - 1;
 			else
 				return iconnumber;
 		}

@@ -730,11 +730,7 @@ namespace Keysharp.Core.Windows
 		{
 			if (WindowSearch.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
-				if (val is int i)
-					item.ExStyle = i;
-				else if (val is uint ui)
-					item.ExStyle = ui;
-				else if (val is long l)
+				if (val is long l)
 					item.ExStyle = l;
 				else if (val is double d)
 					item.ExStyle = (long)d;
@@ -747,6 +743,11 @@ namespace Keysharp.Core.Windows
 					else if (Options.TryParse(s, "^", ref temp)) { item.ExStyle ^= temp; }
 					else item.ExStyle = val.ParseLong(true).Value;
 				}
+
+				//else if (val is int i)
+				//  item.ExStyle = i;
+				//else if (val is uint ui)
+				//  item.ExStyle = ui;
 			}
 		}
 
@@ -754,11 +755,7 @@ namespace Keysharp.Core.Windows
 		{
 			if (WindowSearch.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
-				if (val is int i)
-					item.Style = i;
-				else if (val is uint ui)
-					item.Style = ui;
-				else if (val is long l)
+				if (val is long l)
 					item.Style = l;
 				else if (val is double d)
 					item.Style = (long)d;
@@ -771,6 +768,11 @@ namespace Keysharp.Core.Windows
 					else if (Options.TryParse(s, "^", ref temp)) { item.Style ^= temp; }
 					else item.Style = val.ParseLong(true).Value;
 				}
+
+				//else if (val is int i)
+				//  item.Style = i;
+				//else if (val is uint ui)
+				//  item.Style = ui;
 			}
 		}
 
@@ -1278,7 +1280,7 @@ namespace Keysharp.Core.Windows
 					var sarr = Encoding.Unicode.GetBytes(s);
 					var len = sarr.Length;
 					WindowsAPI.COPYDATASTRUCT cds;
-					cds.dwData = (IntPtr)1;
+					cds.dwData = 1;
 					cds.lpData = s;
 					cds.cbData = len + 1;
 					sendresult = WindowsAPI.SendMessageTimeout(thehandle, msg, wptr, ref cds, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, (uint)timeout, out result);
