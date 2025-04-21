@@ -7,6 +7,7 @@
 #else
 	using sttd = System.Collections.Generic.Dictionary<string, System.Collections.Generic.Dictionary<System.Type, System.Collections.Generic.Dictionary<int, Keysharp.Core.Common.Invoke.MethodPropertyHolder>>>;
 	using ttsd = System.Collections.Generic.Dictionary<System.Type, System.Collections.Generic.Dictionary<string, System.Collections.Generic.Dictionary<int, Keysharp.Core.Common.Invoke.MethodPropertyHolder>>>;
+
 #endif
 
 namespace Keysharp.Core.Common.Invoke
@@ -452,9 +453,29 @@ namespace Keysharp.Core.Common.Invoke
 			return ct;
 		}
 
-		internal static T SafeGetProperty<T>(object item, string name) => (T)item.GetType().GetProperty(name, typeof(T))?.GetValue(item);
+		internal static IntPtr GetPtrProperty(object item, bool throwIfZero = false)
+		{
+			Error err;
+			var addr = IntPtr.Zero;
 
-		internal static bool SafeHasProperty(object item, string name) => item.GetType().GetProperties().Where(prop => prop.Name == name).Any();
+			if (item is IntPtr ip)
+				addr = ip;
+			else if (item is Buffer buf)//Put Buffer check first because it's faster and more likely.
+				addr = buf.Ptr;
+			else if (item is KeysharpObject kso && Script.GetPropertyValue(kso, "ptr", false) is object p && p != null)
+				addr = (nint)p.Al();
+			else
+				addr = (nint)item.Al();
+
+			if (throwIfZero && addr == IntPtr.Zero)
+				return Errors.ErrorOccurred(err = new TypeError($"Argument was of type {item.GetType()}. Type must be integer, Buffer or other object with a Ptr property that is an integer.\"")) ? throw err : IntPtr.Zero;
+
+			return addr;
+		}
+
+		//internal static T SafeGetProperty<T>(object item, string name) => (T)item.GetType().GetProperty(name, typeof(T))?.GetValue(item);
+
+		//internal static bool SafeHasProperty(object item, string name) => item.GetType().GetProperties().Where(prop => prop.Name == name).Any();
 
 		internal static void SafeSetProperty(object item, string name, object value) => item.GetType().GetProperty(name, value.GetType())?.SetValue(item, value, null);
 
@@ -477,7 +498,6 @@ namespace Keysharp.Core.Common.Invoke
 														)).ToList();
 
 			//_ = MessageBox.Show(string.Join('\n', assemblies.Select(assy => assy.FullName)));
-
 			foreach (var asm in assemblies)
 				foreach (var type in asm.GetExportedTypes())
 					if (type.IsClass && type.IsPublic && type.Namespace != null && (!ignoreMainAssembly || type.Name != Parser.mainClassName) &&
@@ -488,7 +508,6 @@ namespace Keysharp.Core.Common.Invoke
 						_ = FindAndCacheInstanceMethod(type, "", -1);
 						_ = FindAndCacheStaticMethod(type, "", -1);
 					}
-
 			_ = FindAndCacheInstanceMethod(typeof(object[]), "", -1, BindingFlags.Public | BindingFlags.Instance);//Needs to be done manually because many of the properties are declared in a base class.
 			_ = FindAndCacheStaticMethod(typeof(object[]), "", -1, BindingFlags.Public | BindingFlags.Static);
 
@@ -497,7 +516,6 @@ namespace Keysharp.Core.Common.Invoke
 				foreach (var methkv in typekv.Value)
 					_ = stringToTypeMethods.GetOrAdd(methkv.Key).GetOrAdd(typekv.Key, methkv.Value);
 			}
-
 			foreach (var typekv in typeToStringStaticMethods)
 			{
 				foreach (var methkv in typekv.Value)

@@ -1,5 +1,4 @@
 ﻿#if WINDOWS
-
 namespace Keysharp.Core.Windows
 {
 	/// <summary>
@@ -1263,8 +1262,7 @@ namespace Keysharp.Core.Windows
 		{
 			Error err;
 			long ret;
-			var wbuf = Reflections.SafeGetProperty<Buffer>(wparam, "Ptr");
-			var wptr = wbuf != null ? wbuf.Ptr : wparam != null ? new IntPtr(wparam.ParseLong().Value) : IntPtr.Zero;
+			var wptr = Reflections.GetPtrProperty(wparam);
 			var item = ctrl != null
 					   ? WindowSearch.SearchControl(ctrl, title, text, excludeTitle, excludeText)
 					   : WindowSearch.SearchWindow(title, text, excludeTitle, excludeText, true);
@@ -1295,8 +1293,7 @@ namespace Keysharp.Core.Windows
 			}
 			else
 			{
-				var lbuf = Reflections.SafeGetProperty<Buffer>(lparam, "Ptr");
-				var lptr = lbuf != null ? lbuf.Ptr : new IntPtr(lparam.ParseLong().Value);
+				var lptr = Reflections.GetPtrProperty(lparam);
 
 				if (WindowsAPI.SendMessageTimeout(thehandle, (uint)msg, wptr, lptr, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, (uint)timeout, out var result) == 0)
 					return Errors.ErrorOccurred(err = new OSError("", $"Could not send message with values msg: {msg}, lparam: {lparam}, wparam: {wparam} to control in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : 0L;

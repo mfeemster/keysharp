@@ -1,5 +1,3 @@
-
-
 x := "this is a string"
 y := " and another string"
 z := x . y
@@ -37,6 +35,13 @@ z := "The number is"
 . " another line"
 
 If (z = "The number is another line")
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+a .= "hello"
+
+if (a = "hello")
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"

@@ -175,6 +175,100 @@ namespace Keysharp.Core
 #endif
 	}
 
+#if WINDOWS
+	public class KeysharpCustomControl : Control
+	{
+		private static int ICC_ANIMATE_CLASS      = 0x00000080;
+		private static int ICC_BAR_CLASSES        = 0x00000004;
+		private static int ICC_COOL_CLASSES       = 0x00000400;
+		private static int ICC_DATE_CLASSES       = 0x00000100;
+		private static int ICC_HOTKEY_CLASS       = 0x00000040;
+		private static int ICC_INTERNET_CLASSES   = 0x00000800;
+		private static int ICC_LINK_CLASS         = 0x00008000;
+		private static int ICC_LISTVIEW_CLASSES   = 0x00000001;
+		private static int ICC_NATIVEFNTCTL_CLASS = 0x00002000;
+		private static int ICC_PAGESCROLLER_CLASS = 0x00001000;
+		private static int ICC_PROGRESS_CLASS     = 0x00000020;
+		private static int ICC_STANDARD_CLASSES   = 0x00004000;
+		private static int ICC_TAB_CLASSES        = 0x00000008;
+		private static int ICC_TREEVIEW_CLASSES   = 0x00000002;
+		private static int ICC_UPDOWN_CLASS       = 0x00000010;
+		private static int ICC_USEREX_CLASSES     = 0x00000200;
+		private static int ICC_WIN95_CLASSES      = 0x000000FF;
+		private readonly int addExStyle, removeExStyle;
+		private readonly int addStyle, removeStyle;
+		private readonly string className;
+
+		protected override CreateParams CreateParams
+		{
+			get
+			{
+				var cp = base.CreateParams;
+				cp.ClassName = className;
+				cp.Style |= addStyle;
+				cp.Style &= ~removeStyle;
+				cp.ExStyle |= addExStyle;
+				cp.ExStyle &= ~removeExStyle;
+				return cp;
+			}
+		}
+
+		static KeysharpCustomControl()
+		{
+			var icce = new INITCOMMONCONTROLSEX
+			{
+				dwSize = Marshal.SizeOf<INITCOMMONCONTROLSEX>(),
+				dwICC  = ICC_LISTVIEW_CLASSES
+				| ICC_TREEVIEW_CLASSES
+				| ICC_BAR_CLASSES
+				| ICC_TAB_CLASSES
+				| ICC_UPDOWN_CLASS
+				| ICC_PROGRESS_CLASS
+				| ICC_HOTKEY_CLASS
+				| ICC_ANIMATE_CLASS
+				| ICC_WIN95_CLASSES
+				| ICC_DATE_CLASSES
+				| ICC_USEREX_CLASSES
+				| ICC_COOL_CLASSES
+				| ICC_INTERNET_CLASSES
+				| ICC_PAGESCROLLER_CLASS
+				| ICC_NATIVEFNTCTL_CLASS
+				| ICC_STANDARD_CLASSES
+				| ICC_LINK_CLASS
+			};
+
+			if (!InitCommonControlsEx(ref icce))
+				throw new Win32Exception(Marshal.GetLastWin32Error());
+		}
+
+		public KeysharpCustomControl(string _className, int _addStyle = 0, int _addExStyle = 0, int _removeStyle = 0, int _removeExStyle = 0)
+		{
+			className = _className;
+			addStyle = _addStyle;
+			addExStyle = _addExStyle;
+			removeStyle = _removeStyle;
+			removeExStyle = _removeExStyle;
+		}
+
+		protected override void WndProc(ref Message m)
+		{
+			if (!GuiHelper.CallMessageHandler(this, ref m))
+				base.WndProc(ref m);
+		}
+
+		[DllImport("comctl32.dll", SetLastError = true)]
+		private static extern bool InitCommonControlsEx(ref INITCOMMONCONTROLSEX icce);
+
+		// comboex
+		[StructLayout(LayoutKind.Sequential)]
+		private struct INITCOMMONCONTROLSEX
+		{
+			public int dwSize;
+			public int dwICC;
+		}
+	}
+#endif
+
 	public class KeysharpTextBox : TextBox
 	{
 		private readonly int addStyle, removeStyle;
@@ -993,7 +1087,7 @@ namespace Keysharp.Core
 	public class KeysharpTabControl : TabControl
 	{
 		internal Color? bgcolor;
-        private readonly int addStyle, removeStyle;
+		private readonly int addStyle, removeStyle;
 		private readonly int addExStyle, removeExStyle;
 
 		protected override CreateParams CreateParams
@@ -1033,6 +1127,7 @@ namespace Keysharp.Core
 				Height = requestedSize.Height;
 				return;
 			}
+
 			var tempw = 0.0;
 			var temph = 0.0;
 
@@ -1049,7 +1144,7 @@ namespace Keysharp.Core
 
 			Width  = requestedSize.Width == int.MinValue ? (int)Math.Round(tempw) : requestedSize.Width;
 			Height = requestedSize.Height == int.MinValue ? (int)Math.Round(temph) : requestedSize.Height;
-        }
+		}
 
 		internal void SetColor(Color color)
 		{
@@ -1064,12 +1159,11 @@ namespace Keysharp.Core
 		{
 			if (bgcolor.HasValue)
 			{
-				using (var brush = new SolidBrush(bgcolor.Value)) 
-				{ 
+				using (var brush = new SolidBrush(bgcolor.Value))
+				{
 					var rect = DisplayRectangle;
 					rect.Offset(1, 1);
 					e.Graphics.FillRectangle(brush, rect);
-
 					Rectangle paddedTabBounds = DisplayRectangle;
 
 					for (var i = 0; i < TabPages.Count; i++)
@@ -1080,17 +1174,18 @@ namespace Keysharp.Core
 						paddedTabBounds.Width -= 4;
 						paddedTabBounds.Height -= 2;
 						Rectangle fillBounds = paddedTabBounds;
+
 						if (this.SelectedIndex == i)
 							fillBounds.Height += 4;
 
 						e.Graphics.FillRectangle(brush, fillBounds);
 						TextRenderer.DrawText(e.Graphics, page.Text, page.Font, paddedTabBounds, page.ForeColor);
 					}
+
 					Rectangle headerArea = new Rectangle(paddedTabBounds.Right + 2, 0, this.Width - paddedTabBounds.Right, this.DisplayRectangle.Top - 2);
 					e.Graphics.FillRectangle(brush, headerArea);
 				}
-
-            }
+			}
 			else
 				base.OnDrawItem(e);
 		}
