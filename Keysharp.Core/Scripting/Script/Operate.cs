@@ -919,31 +919,36 @@ namespace Keysharp.Scripting
 		public static object OrMaybe(object left, object right) => Types.IsSet(left) == 1L ? left : right;
 
 		internal static bool IsFloat(object obj) =>
-		obj is double ||
-		obj is float ||
-		obj is decimal;
+		obj is double/* ||
+        obj is float ||
+        obj is decimal*/;
 
 		internal static bool IsInteger(object obj) =>
-		obj is long ||
-		obj is int ||
-		obj is ulong ||
-		obj is uint ||
-		obj is short ||
-		obj is ushort ||
-		obj is char ||
-		obj is sbyte ||
-		obj is byte;
+		obj is long
+		/*  ||
+		    obj is int ||
+		    obj is ulong ||
+		    obj is uint ||
+		    obj is short ||
+		    obj is ushort ||
+		    obj is char ||
+		    obj is sbyte ||
+		    obj is byte
+		*/;
 
+		internal static bool IsFloatType(Type type) => type == typeof(double);
+		internal static bool IsIntegerType(Type type) => type == typeof(long);
 		internal static bool IsNumeric(Type type) =>
-		type == typeof(long)
-		|| type == typeof(double)
-		|| type == typeof(int)
-		|| type == typeof(uint)
-		|| type == typeof(ulong)
-		|| type == typeof(float)
-		|| type == typeof(decimal)
-		|| type == typeof(byte)
-		|| type == typeof(sbyte)
+		IsIntegerType(type)
+		|| IsFloatType(type)
+		/*
+		    || type == typeof(int)
+		    || type == typeof(uint)
+		    || type == typeof(ulong)
+		    || type == typeof(float)
+		    || type == typeof(decimal)
+		    || type == typeof(byte)
+		    || type == typeof(sbyte)*/
 		;
 
 		internal static bool IsNumeric(object value) => value != null&& IsNumeric(value.GetType());

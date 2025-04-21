@@ -486,12 +486,7 @@ namespace Keysharp.Core
 			}
 			else
 			{
-				if (comp is int i || comp is long l)
-				{
-					search.targetName = "";
-					search.targetInstance = comp.Ai();
-				}
-				else if (comp is string cs && cs != "")
+				if (comp is string cs && cs.Length > 0)
 				{
 					var splits = search.targetName.Split(':');
 
@@ -505,6 +500,11 @@ namespace Keysharp.Core
 						search.name = cs;
 						search.targetInstance = 1;
 					}
+				}
+				else
+				{
+					search.targetName = "";
+					search.targetInstance = comp.Ai();
 				}
 
 				if (!FindComponent(mmDev, search))
@@ -765,12 +765,7 @@ namespace Keysharp.Core
 				var targetIndex = 0;
 				var targetName = "";
 
-				if (obj0 is int || obj0 is long)
-				{
-					targetName = "";
-					targetIndex = obj0.Ai() - 1;
-				}
-				else if (obj0 is string ds && ds.Length > 0)
+				if (obj0 is string ds && ds.Length > 0)
 				{
 					var splits = ds.Split(':');
 
@@ -781,6 +776,11 @@ namespace Keysharp.Core
 					}
 					else
 						targetName = ds;
+				}
+				else
+				{
+					targetName = "";
+					targetIndex = obj0.Ai() - 1;
 				}
 
 				var devices = deviceEnum.EnumerateAudioEndPoints(DataFlow.All, DeviceState.Active | DeviceState.Unplugged).ToList();

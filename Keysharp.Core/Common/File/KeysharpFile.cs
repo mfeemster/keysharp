@@ -64,7 +64,7 @@
 
 		public KeysharpFile(params object[] args) : base(args) { }
 
-        public override object __New(params object[] args)
+		public override object __New(params object[] args)
 		{
 			if (args == null || args.Length == 0)
 				return "";

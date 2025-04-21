@@ -1377,6 +1377,7 @@ namespace Keysharp.Core
 
 				if (opts.xpos == GuiOptions.Positioning.Absolute)
 					xoffset = p.X;
+
 				if (opts.ypos == GuiOptions.Positioning.Absolute)
 					yoffset = p.Y;
 			}
@@ -1683,14 +1684,19 @@ namespace Keysharp.Core
 			var width = obj2.Ai(int.MinValue);
 			var height = obj3.Ai(int.MinValue);
 			var scale = !dpiscaling ? 1.0 : A_ScaledScreenDPI;
+
 			if (x != int.MinValue)
-				form.Left = (int)x;
+				form.Left = x;
+
 			if (y != int.MinValue)
-				form.Top = (int)y;
+				form.Top = y;
+
 			if (width != int.MinValue)
 				form.Width = (int)Math.Round(width * scale);
+
 			if (height != int.MinValue)
 				form.Height = (int)Math.Round(height * scale);
+
 			return null;
 		}
 

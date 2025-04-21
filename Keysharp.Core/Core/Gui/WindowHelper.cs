@@ -19,10 +19,10 @@ namespace Keysharp.Core
 			{
 				return (true, ip);
 			}
-			else if (ctrl is int i)
-			{
-				return (true, i);
-			}
+			//else if (ctrl is int i)
+			//{
+			//  return (true, i);
+			//}
 			else if (!(ctrl is string))
 			{
 				object hwnd = null;
@@ -39,9 +39,9 @@ namespace Keysharp.Core
 					ptr = new IntPtr(ll);
 				else if (hwnd is IntPtr p)
 					ptr = p;
-				else if (hwnd is int ii)
-					ptr = new IntPtr(ii);
 
+				//else if (hwnd is int ii)
+				//  ptr = new IntPtr(ii);
 				return (true, ptr);
 			}
 
@@ -115,11 +115,11 @@ namespace Keysharp.Core
 
 				if (ex)
 				{
-					if (val is int i)
-						win.ExStyle = i;
-					else if (val is uint ui)
-						win.ExStyle = ui;
-					else if (val is long l)
+					/*  if (val is int i)
+					    win.ExStyle = i;
+					    else if (val is uint ui)
+					    win.ExStyle = ui;
+					    else*/ if (val is long l)
 						win.ExStyle = l;
 					else if (val is double d)
 						win.ExStyle = (long)d;
@@ -135,11 +135,11 @@ namespace Keysharp.Core
 				}
 				else
 				{
-					if (val is int i)
-						win.Style = i;
-					else if (val is uint ui)
-						win.Style = ui;
-					else if (val is long l)
+					/*  if (val is int i)
+					    win.Style = i;
+					    else if (val is uint ui)
+					    win.Style = ui;
+					    else*/ if (val is long l)
 						win.Style = l;
 					else if (val is double d)
 						win.Style = (long)d;

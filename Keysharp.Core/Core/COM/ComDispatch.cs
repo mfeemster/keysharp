@@ -68,17 +68,17 @@ namespace Keysharp.Core.COM
 		private const int E_NOTIMPL = unchecked((int)0x80004001);
 		private static readonly Guid IID_IManagedObject = new ("{C3FCC19E-A970-11D2-8B5A-00A0C9B7C9C4}");
 		internal static readonly Guid IID_IDispatch = new ("{00020400-0000-0000-c000-000000000046}");
-		private ct.IConnectionPoint connection;
+		private ct.IConnectionPoint? connection;
 		private int cookie;
 		private bool disposedValue;
 		private readonly Guid interfaceID;
 		private readonly ct.ITypeInfo? typeInfo;
 
-		public ComObject Co { get; }
+		public ComObject? Co { get; }
 
 		internal Guid InterfaceId => interfaceID;
 
-		internal Dispatcher(ComObject cobj)
+		internal Dispatcher(ComObject? cobj)
 		{
 			Error err;
 			ArgumentNullException.ThrowIfNull(cobj);
@@ -187,9 +187,9 @@ namespace Keysharp.Core.COM
 						  ref ct.DISPPARAMS pDispParams,
 						  IntPtr pVarResult, IntPtr pExcepInfo, IntPtr puArgErr)
 		{
-			var args = pDispParams.cArgs > 0 ? Marshal.GetObjectsForNativeVariants(pDispParams.rgvarg, pDispParams.cArgs) : null;
+			var args = pDispParams.cArgs > 0 ? Marshal.GetObjectsForNativeVariants(pDispParams.rgvarg, pDispParams.cArgs) : [];
 			var names = new string[1];
-			typeInfo.GetNames(dispIdMember, names, 1, out var pcNames);
+			typeInfo?.GetNames(dispIdMember, names, 1, out var pcNames);
 			var evt = new DispatcherEventArgs(dispIdMember, names[0], args);
 			OnEvent(this, evt);
 			var result = evt.Result;
@@ -238,7 +238,7 @@ namespace Keysharp.Core.COM
 
 	internal class DispatcherEventArgs : EventArgs
 	{
-		internal object[] Arguments { get; }
+		internal object?[] Arguments { get; }
 
 		internal int DispId { get; }
 
@@ -246,11 +246,11 @@ namespace Keysharp.Core.COM
 
 		internal object? Result { get; set; }
 
-		internal DispatcherEventArgs(int dispId, string name, params object[] arguments)
+		internal DispatcherEventArgs(int dispId, string name, params object?[] arguments)
 		{
 			DispId = dispId;
 			Name = name;
-			Arguments = arguments ?? System.Array.Empty<object>();
+			Arguments = arguments ?? [];
 		}
 	}
 }

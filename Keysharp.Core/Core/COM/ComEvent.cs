@@ -81,7 +81,7 @@ namespace Keysharp.Core.COM
 			{
 				var arg = args[i];
 
-				if (arg is long || arg is double || arg is string)
+				if (arg is long || arg is double || arg is string)//The most likely cases.
 					continue;
 
 				if (arg is int ii)

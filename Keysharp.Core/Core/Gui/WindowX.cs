@@ -572,31 +572,31 @@ namespace Keysharp.Core
 											object winText = null,
 											object excludeTitle = null,
 											object excludeText = null) =>
-			WinGetControlsHelper(true, winTitle, winText, excludeTitle, excludeText);
+		WinGetControlsHelper(true, winTitle, winText, excludeTitle, excludeText);
 
 		public static object WinGetControlsHwnd(object winTitle = null,
 												object winText = null,
 												object excludeTitle = null,
 												object excludeText = null) =>
-			WinGetControlsHelper(false, winTitle, winText, excludeTitle, excludeText);
+		WinGetControlsHelper(false, winTitle, winText, excludeTitle, excludeText);
 
 		public static long WinGetCount(object winTitle = null,
 									   object winText = null,
 									   object excludeTitle = null,
 									   object excludeText = null) =>
-			SearchWindows(winTitle, winText, excludeTitle, excludeText).Count;
+		SearchWindows(winTitle, winText, excludeTitle, excludeText).Count;
 
 		public static long WinGetExStyle(object winTitle = null,
 										 object winText = null,
 										 object excludeTitle = null,
 										 object excludeText = null) =>
-			SearchWindow(winTitle, winText, excludeTitle, excludeText, true) is WindowItem win ? win.ExStyle : 0L;
+		SearchWindow(winTitle, winText, excludeTitle, excludeText, true) is WindowItem win ? win.ExStyle : 0L;
 
 		public static object WinGetID(object winTitle = null,
 									  object winText = null,
 									  object excludeTitle = null,
 									  object excludeText = null) =>
-			SearchWindow(winTitle, winText, excludeTitle, excludeText, true) is WindowItem win ? win.Handle.ToInt64() : 0L;
+		SearchWindow(winTitle, winText, excludeTitle, excludeText, true) is WindowItem win ? win.Handle.ToInt64() : 0L;
 
 		public static long WinGetIDLast(object winTitle = null,
 										object winText = null,
@@ -620,13 +620,13 @@ namespace Keysharp.Core
 									   object winText = null,
 									   object excludeTitle = null,
 									   object excludeText = null) =>
-			new Array((
-				winTitle.IsNullOrEmpty() 
-				&& winText.IsNullOrEmpty() 
-				&& excludeTitle.IsNullOrEmpty() 
-				&& excludeText.IsNullOrEmpty() 
-					? WindowProvider.Manager.AllWindows
-                    : SearchWindows(winTitle, winText, excludeTitle, excludeText)).Select(item => item.Handle.ToInt64()).ToList());
+		new Array((
+					  winTitle.IsNullOrEmpty()
+					  && winText.IsNullOrEmpty()
+					  && excludeTitle.IsNullOrEmpty()
+					  && excludeText.IsNullOrEmpty()
+					  ? WindowProvider.Manager.AllWindows
+					  : SearchWindows(winTitle, winText, excludeTitle, excludeText)).Select(item => item.Handle.ToInt64()).ToList());
 
 		public static long WinGetMinMax(object winTitle = null,
 										object winText = null,
@@ -654,7 +654,7 @@ namespace Keysharp.Core
 									   object winText = null,
 									   object excludeTitle = null,
 									   object excludeText = null) =>
-			SearchWindow(winTitle, winText, excludeTitle, excludeText, true) is WindowItem win ? win.PID : 0L;
+		SearchWindow(winTitle, winText, excludeTitle, excludeText, true) is WindowItem win ? win.PID : 0L;
 
 		public static object WinGetPos([Optional()][DefaultParameterValue(null)] object outX,
 									   [Optional()][DefaultParameterValue(null)] object outY,
@@ -677,19 +677,19 @@ namespace Keysharp.Core
 											   object winText = null,
 											   object excludeTitle = null,
 											   object excludeText = null) =>
-			SearchWindow(winTitle, winText, excludeTitle, excludeText, true) is WindowItem win ? win.ProcessName : "";
+		SearchWindow(winTitle, winText, excludeTitle, excludeText, true) is WindowItem win ? win.ProcessName : "";
 
 		public static string WinGetProcessPath(object winTitle = null,
 											   object winText = null,
 											   object excludeTitle = null,
 											   object excludeText = null) =>
-			SearchWindow(winTitle, winText, excludeTitle, excludeText, true) is WindowItem win ? win.Path : "";
+		SearchWindow(winTitle, winText, excludeTitle, excludeText, true) is WindowItem win ? win.Path : "";
 
 		public static long WinGetStyle(object winTitle = null,
 									   object winText = null,
 									   object excludeTitle = null,
 									   object excludeText = null) =>
-			SearchWindow(winTitle, winText, excludeTitle, excludeText, true) is WindowItem win ? win.Style : 0L;
+		SearchWindow(winTitle, winText, excludeTitle, excludeText, true) is WindowItem win ? win.Style : 0L;
 
 		public static string WinGetText(object winTitle = null,
 										object winText = null,
@@ -701,7 +701,7 @@ namespace Keysharp.Core
 										 object winText = null,
 										 object excludeTitle = null,
 										 object excludeText = null) =>
-			SearchWindow(winTitle, winText, excludeTitle, excludeText, true) is WindowItem win ? win.Title : "";
+		SearchWindow(winTitle, winText, excludeTitle, excludeText, true) is WindowItem win ? win.Title : "";
 
 		public static string WinGetTransColor(object winTitle = null,
 											  object winText = null,
@@ -1134,8 +1134,9 @@ namespace Keysharp.Core
 			var b = false;
 			var seconds = timeout.Ad();
 			var start = DateTime.Now;
-            var criteria = SearchCriteria.FromString(winTitle, winText, excludeTitle, excludeText);
+			var criteria = SearchCriteria.FromString(winTitle, winText, excludeTitle, excludeText);
 			var windows = WindowProvider.Manager.FindWindowGroup(criteria, false, true);
+
 			if (windows.Count == 0)
 				return 1L;
 

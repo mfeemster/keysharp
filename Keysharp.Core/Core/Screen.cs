@@ -117,7 +117,7 @@ namespace Keysharp.Core
 			Point start;
 			Size bound;
 			Bitmap bmp;
-			object iconnumber = 0;
+			object iconnumber = 0L;
 			int w = 0, h = 0;
 			long trans = -1;
 			byte variation = 0;

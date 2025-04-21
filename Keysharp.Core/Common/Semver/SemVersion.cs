@@ -144,9 +144,9 @@
 			Minor = 0;
 			Patch = 0;
 			Prerelease = "";
-			PrereleaseIdentifiers = ReadOnlyList<PrereleaseIdentifier>.Empty;
+			PrereleaseIdentifiers = [];
 			Metadata = "";
-			MetadataIdentifiers = ReadOnlyList<MetadataIdentifier>.Empty;
+			MetadataIdentifiers = [];
 		}
 
 		/// <summary>
@@ -161,9 +161,9 @@
 			Minor = minor;
 			Patch = 0;
 			Prerelease = "";
-			PrereleaseIdentifiers = ReadOnlyList<PrereleaseIdentifier>.Empty;
+			PrereleaseIdentifiers = [];
 			Metadata = "";
-			MetadataIdentifiers = ReadOnlyList<MetadataIdentifier>.Empty;
+			MetadataIdentifiers = [];
 		}
 
 		/// <summary>
@@ -179,9 +179,9 @@
 			Minor = minor;
 			Patch = patch;
 			Prerelease = "";
-			PrereleaseIdentifiers = ReadOnlyList<PrereleaseIdentifier>.Empty;
+			PrereleaseIdentifiers = [];
 			Metadata = "";
-			MetadataIdentifiers = ReadOnlyList<MetadataIdentifier>.Empty;
+			MetadataIdentifiers = [];
 		}
 
 		/// <summary>
@@ -258,7 +258,7 @@
 			if (prereleaseIdentifiers is null || prereleaseIdentifiers.Count == 0)
 			{
 				Prerelease = "";
-				PrereleaseIdentifiers = ReadOnlyList<PrereleaseIdentifier>.Empty;
+				PrereleaseIdentifiers = [];
 			}
 			else
 			{
@@ -269,7 +269,7 @@
 			if (metadataIdentifiers is null || metadataIdentifiers.Count == 0)
 			{
 				Metadata = "";
-				MetadataIdentifiers = ReadOnlyList<MetadataIdentifier>.Empty;
+				MetadataIdentifiers = [];
 			}
 			else
 			{
@@ -318,7 +318,7 @@
 			if (prereleaseIdentifiers is null || prereleaseIdentifiers.Count == 0)
 			{
 				Prerelease = "";
-				PrereleaseIdentifiers = ReadOnlyList<PrereleaseIdentifier>.Empty;
+				PrereleaseIdentifiers = [];
 			}
 			else
 			{
@@ -329,7 +329,7 @@
 			if (metadataIdentifiers is null || metadataIdentifiers.Count == 0)
 			{
 				Metadata = "";
-				MetadataIdentifiers = ReadOnlyList<MetadataIdentifier>.Empty;
+				MetadataIdentifiers = [];
 			}
 			else
 			{
@@ -362,7 +362,7 @@
 				Patch = version.Revision;
 
 			Prerelease = "";
-			PrereleaseIdentifiers = ReadOnlyList<PrereleaseIdentifier>.Empty;
+			PrereleaseIdentifiers = [];
 
 			if (version.Build > 0)
 			{
@@ -372,7 +372,7 @@
 			else
 			{
 				Metadata = "";
-				MetadataIdentifiers = ReadOnlyList<MetadataIdentifier>.Empty;
+				MetadataIdentifiers = [];
 			}
 		}
 
@@ -721,7 +721,7 @@
 			if (prerelease is null) throw new ArgumentNullException(nameof(prerelease));
 
 			var prereleaseIdentifiers = prerelease.Length == 0
-										? ReadOnlyList<PrereleaseIdentifier>.Empty
+										? []
 										: prerelease.SplitAndMapToReadOnlyList('.',
 												i => new PrereleaseIdentifier(i, allowLeadingZeros, nameof(prerelease)));
 
@@ -732,7 +732,7 @@
 			if (metadata is null) throw new ArgumentNullException(nameof(metadata));
 
 			var metadataIdentifiers = metadata.Length == 0
-									  ? ReadOnlyList<MetadataIdentifier>.Empty
+									  ? []
 									  : metadata.SplitAndMapToReadOnlyList('.', i => new MetadataIdentifier(i, nameof(metadata)));
 			return new SemVersion(major, minor, patch,
 								  prerelease, prereleaseIdentifiers, metadata, metadataIdentifiers);
@@ -1191,7 +1191,7 @@
 
 				if (prereleaseIdentifiers.Count == 0)
 				{
-					prereleaseIdentifiers = ReadOnlyList<PrereleaseIdentifier>.Empty;
+					prereleaseIdentifiers = [];
 					prereleaseString = "";
 				}
 				else if (prereleaseIdentifiers.Any(i => i == default))
@@ -1209,7 +1209,7 @@
 
 				if (metadataIdentifiers.Count == 0)
 				{
-					metadataIdentifiers = ReadOnlyList<MetadataIdentifier>.Empty;
+					metadataIdentifiers = [];
 					metadataString = "";
 				}
 				else if (metadataIdentifiers.Any(i => i == default))
@@ -1387,7 +1387,7 @@
 			if (MetadataIdentifiers.Count == 0) return this;
 
 			return new SemVersion(Major, Minor, Patch,
-								  Prerelease, PrereleaseIdentifiers, "", ReadOnlyList<MetadataIdentifier>.Empty);
+								  Prerelease, PrereleaseIdentifiers, "", []);
 		}
 
 		/// <summary>
@@ -1399,7 +1399,7 @@
 			if (!IsPrerelease) return this;
 
 			return new SemVersion(Major, Minor, Patch,
-								  "", ReadOnlyList<PrereleaseIdentifier>.Empty, Metadata, MetadataIdentifiers);
+								  "", [], Metadata, MetadataIdentifiers);
 		}
 
 		/// <summary>
@@ -1411,7 +1411,7 @@
 			if (!IsPrerelease && MetadataIdentifiers.Count == 0) return this;
 
 			return new SemVersion(Major, Minor, Patch,
-								  "", ReadOnlyList<PrereleaseIdentifier>.Empty, "", ReadOnlyList<MetadataIdentifier>.Empty);
+								  "", [], "", []);
 		}
 
 		/// <summary>

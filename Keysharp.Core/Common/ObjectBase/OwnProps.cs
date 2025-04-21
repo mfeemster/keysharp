@@ -6,7 +6,7 @@
 
         public OwnPropsMap(KeysharpObject kso, Map map) : base(skipLogic: true) => __New(kso, map);
 
-        public object __New(params object[] args)
+		public override object __New(params object[] args)
 		{
             if (args.Length == 0) return null;
             var kso = (KeysharpObject)args[0];
@@ -56,7 +56,7 @@
 		}
 
 		object IEnumerator.Current => Current;
-		internal int Count => GetVal ? 2 : 1;
+		internal new int Count => GetVal ? 2 : 1;
 		internal bool GetVal { get; set; }
 
 		internal OwnPropsIterator(KeysharpObject o, Dictionary<object, object> m, bool gv)

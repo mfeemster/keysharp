@@ -187,8 +187,10 @@ namespace Keysharp.Core.COM
 		{
 			if (Ptr == null)
 				return;
+
 			// System.__ComObject decreases the reference count automatically on destruction
-			if (VarType == Com.vt_unknown || VarType == Com.vt_dispatch) {
+			if (VarType == Com.vt_unknown || VarType == Com.vt_dispatch)
+			{
 				if (Ptr is IntPtr ip && ip != IntPtr.Zero)
 					_ = Marshal.Release(ip);
 				else if (Ptr is long lp && lp != 0L)

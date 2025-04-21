@@ -153,7 +153,7 @@ namespace Keysharp.Core.Common.Invoke
 									else
 										args[n] = p;
 								}
-								else if (p is int || p is long || p is uint)
+								else if (p is long)//p is int || p is long || p is uint)
 								{
 									if (usePtr)
 										SetupPointerArg(i, n);

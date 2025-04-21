@@ -61,7 +61,6 @@ namespace Keysharp.Core.COM
                 Type type = null;
 				var n = i / 2;
 				var p = parameters[i];
-				//var usePtr = false;
 
 				if (p is KeysharpObject kso && Script.GetPropertyValue(kso, "ptr", false) is object kptr && kptr != null)
 					p = parameters[i] = kptr;
@@ -83,7 +82,6 @@ namespace Keysharp.Core.COM
 
                         name = name.TrimEnd(pointerChars);
 						type = typeof(nint);
-						//usePtr = true;
 						SetupPointerArg(i, n);
 						goto TypeDetermined;
 				}
@@ -314,7 +312,7 @@ namespace Keysharp.Core.COM
 
 							if (p is nint ip)
 								args[n] = ip;
-							else if (p is int || p is long || p is uint)
+							else if (p is long)//p is int || p is long || p is uint)
 								args[n] = new nint((long)Convert.ChangeType(p, typeof(long)));
 							else if (p is Buffer buf)
 								args[n] = buf.Ptr;

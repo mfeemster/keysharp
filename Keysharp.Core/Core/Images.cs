@@ -50,7 +50,7 @@
 			var width = int.MinValue;
 			var height = int.MinValue;
 			var icon = "";
-			object iconnumber = 0;
+			object iconnumber = 0L;
 			var disposeHandle = false;
 
 			foreach (Range r in opts.AsSpan().SplitAny(Spaces))

@@ -144,7 +144,7 @@
 			else
 			{
 				prerelease = "";
-				prereleaseIdentifiers = ReadOnlyList<PrereleaseIdentifier>.Empty;
+				prereleaseIdentifiers = [];
 			}
 
 			// Parse metadata
@@ -161,7 +161,7 @@
 			else
 			{
 				metadata = "";
-				metadataIdentifiers = ReadOnlyList<MetadataIdentifier>.Empty;
+				metadataIdentifiers = [];
 			}
 
 			// There shouldn't be any unprocessed characters before the trailing whitespace.

@@ -186,20 +186,9 @@
 					if (kv.Key == "base" || kv.Key == "super")
 						continue;
 
-					if (kv.Value.Get != null && (kv.Value.Get is not FuncObj fo || (fo.Mph.mi != null && fo.Mph.ParamLength <= 1)))
-                            props[kv.Key] = kv.Value.Get;
-
-                    if (kv.Value.Value != null && (kv.Value.Value is not FuncObj fo2 || (fo2.Mph.mi != null && fo2.Mph.ParamLength <= 1)))
-                        props[kv.Key] = kv.Value.Value;
+					props[kv.Key] = kv.Value.GetDesc();
 				}
 			}
-
-			_ = Reflections.FindAndCacheProperty(GetType(), "", -1);
-			var valProps = Reflections.GetOwnProps(GetType(), user);
-
-			foreach (var mph in valProps)
-				if (mph.pi != null && mph.ParamLength == 0 && mph.pi.Name != "super")
-					props[mph.pi.Name] = mph;
 
 			return new OwnPropsIterator(this, props, vals);
 		}

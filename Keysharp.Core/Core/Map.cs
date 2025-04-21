@@ -34,7 +34,7 @@
 	/// <param name="x">The first object to compare.</param>
 	/// <param name="y">The second object to compare.</param>
 	/// <returns>True if the two objects are equal, else false.</returns>
-	public bool Equals(object x, object y)
+	public new bool Equals(object x, object y)
 		{
 			//If both are strings, use the built-in comparer.
 			if (x is string s1 && y is string s2)
@@ -171,18 +171,18 @@
         /// <returns><see cref="KeysharpEnumerator"/></returns>
 		public KeysharpEnumerator __Enum(object count) => new MapKeyValueIterator(map, count.Ai());
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Map"/> class.
-        /// </summary>
-        /// <param name="args">An array of values to initialize the map with.<br/>
-        /// This can be one of several values:<br/>
-        ///     null: creates an empty map.<br/>
-        ///     object[] or <see cref="Array"/>: adds every two elements as a key,value pair to the underlying map.<br/>
-        ///     <see cref="Map"/>: assigns the map directly to the underlying dictionary as well as the case sense mode.<br/>
-        ///     <see cref="Dictionary{object, object}"/>: assigns the dictionary directly to the underlying dictionary.
-        /// </param>
-        /// <returns>Empty string, unused.</returns>
-        public object __New(params object[] args)
+		/// <summary>
+		/// Initializes a new instance of the <see cref="Map"/> class.
+		/// </summary>
+		/// <param name="args">An array of values to initialize the map with.<br/>
+		/// This can be one of several values:<br/>
+		///     null: creates an empty map.<br/>
+		///     object[] or <see cref="Array"/>: adds every two elements as a key,value pair to the underlying map.<br/>
+		///     <see cref="Map"/>: assigns the map directly to the underlying dictionary as well as the case sense mode.<br/>
+		///     <see cref="Dictionary{object, object}"/>: assigns the dictionary directly to the underlying dictionary.
+		/// </param>
+		/// <returns>Empty string, unused.</returns>
+		public override object __New(params object[] args)
 		{
 			Set(args);
 			return "";

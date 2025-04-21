@@ -50,7 +50,7 @@
 		/// </summary>
 		public object Capacity
 		{
-			get => array != null ? (long)array.Capacity : 0L;
+			get => array != null ? array.Capacity : 0L;
 
 			set
 			{
@@ -90,7 +90,7 @@
 		/// </summary>
 		public object Length
 		{
-			get => array != null ? (long)array.Count : 0L;
+			get => array != null ? array.Count : 0L;
 
 			set
 			{
@@ -169,18 +169,18 @@
 		/// <returns><see cref="KeysharpEnumerator"/></returns>
 		public KeysharpEnumerator __Enum(object count) => new ArrayIndexValueIterator(array, count.Ai());
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Array"/> class.
-        /// </summary>
-        /// <param name="args">An array of values to initialize the array with.<br/>
-        /// This can be one of several values:<br/>
-        ///     null: creates an empty array.<br/>
-        ///     object[]: adds each element to the underlying list.<br/>
-        ///     <see cref="List{object}"/>: assigns the list directly to the underlying list.<br/>
-        ///     <see cref="ICollection"/>: adds each element to the underlying list.
-        /// </param>
-        /// <returns>Empty string, unused.</returns>
-        public override object __New(params object[] args)
+		/// <summary>
+		/// Initializes a new instance of the <see cref="Array"/> class.
+		/// </summary>
+		/// <param name="args">An array of values to initialize the array with.<br/>
+		/// This can be one of several values:<br/>
+		///     null: creates an empty array.<br/>
+		///     object[]: adds each element to the underlying list.<br/>
+		///     <see cref="List{object}"/>: assigns the list directly to the underlying list.<br/>
+		///     <see cref="ICollection"/>: adds each element to the underlying list.
+		/// </param>
+		/// <returns>Empty string, unused.</returns>
+		public override object __New(params object[] args)
 		{
 			array = new List<object>(capacity);
 

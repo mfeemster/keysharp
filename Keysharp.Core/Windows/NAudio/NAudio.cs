@@ -33,11 +33,12 @@ namespace Keysharp.Core.Windows
 
 	internal struct AudioVolumeNotificationDataStruct
 	{
-		internal Guid guidEventContext;
-		internal bool bMuted;
-		internal float fMasterVolume;
-		internal uint nChannels;
-		internal float ChannelVolume;
+		public AudioVolumeNotificationDataStruct() { }
+		internal Guid guidEventContext = default;//Need these to suppress warnings about initial values.
+		internal bool bMuted = default;
+		internal float fMasterVolume = default;
+		internal uint nChannels = default;
+		internal float ChannelVolume = default;
 	}
 
 	/// <summary>
@@ -600,7 +601,7 @@ namespace Keysharp.Core.Windows
 			//Determine offset in structure of the first float
 			var offset = Marshal.OffsetOf<AudioVolumeNotificationDataStruct>("ChannelVolume");
 			//Determine offset in memory of the first float
-			var firstFloatPtr = (IntPtr)((long)notifyData + (long)offset);
+			var firstFloatPtr = (IntPtr)(notifyData + (long)offset);
 			var voldata = new float[data.nChannels];
 
 			//Read all floats from memory.
@@ -1216,7 +1217,7 @@ namespace Keysharp.Core.Windows
 		/// <returns>Device</returns>
 		internal MMDevice GetDefaultAudioEndpoint(DataFlow dataFlow, Role role)
 		{
-			Marshal.ThrowExceptionForHR(((IMMDeviceEnumerator)realEnumerator).GetDefaultAudioEndpoint(dataFlow, role, out var device));
+			Marshal.ThrowExceptionForHR(realEnumerator.GetDefaultAudioEndpoint(dataFlow, role, out var device));
 			return new MMDevice(device);
 		}
 
@@ -1229,7 +1230,7 @@ namespace Keysharp.Core.Windows
 		internal bool HasDefaultAudioEndpoint(DataFlow dataFlow, Role role)
 		{
 			const int E_NOTFOUND = unchecked((int)0x80070490);
-			int hresult = ((IMMDeviceEnumerator)realEnumerator).GetDefaultAudioEndpoint(dataFlow, role, out var device);
+			int hresult = realEnumerator.GetDefaultAudioEndpoint(dataFlow, role, out var device);
 
 			if (hresult == 0x0)
 			{
@@ -1253,7 +1254,7 @@ namespace Keysharp.Core.Windows
 		/// <returns>Device</returns>
 		internal MMDevice GetDevice(string id)
 		{
-			Marshal.ThrowExceptionForHR(((IMMDeviceEnumerator)realEnumerator).GetDevice(id, out var device));
+			Marshal.ThrowExceptionForHR(realEnumerator.GetDevice(id, out var device));
 			return new MMDevice(device);
 		}
 

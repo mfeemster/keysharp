@@ -170,7 +170,7 @@
 
 		public InputObject(params object[] args) : base(args) { }
 
-        public override object __New(params object[] args)
+		public override object __New(params object[] args)
 		{
 			var options = args[0].ToString();
 			var endKeys = args[1].ToString();

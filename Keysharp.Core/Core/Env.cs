@@ -89,7 +89,7 @@ namespace Keysharp.Core
 						{
 						}
 						else if (nulldata)
-							buf = System.Array.Empty<byte>();//This format usually has null data.
+							buf = [];//This format usually has null data.
 						else
 							continue;//GetClipboardData() failed: skip this format.
 
