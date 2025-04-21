@@ -1169,11 +1169,19 @@
 					holder = new WebBrowser(this, ctrl, typeo);
 				}
 				break;
-
+#if WINDOWS
 				case Keyword_Custom:
 				{
+					var custom = new KeysharpCustomControl(opts.customclass, opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle);
+					ctrl = custom;
+
+					if (!opts.bgcolor.HasValue)
+						ctrl.BackColor = Color.FromKnownColor(KnownColor.Window);
+
+					holder = new Custom(this, ctrl, typeo);
 				}
 				break;
+#endif
 			}
 
 			if (ctrl == null)
@@ -1266,6 +1274,10 @@
 				w = (fontpixels * 30) + (3 * ctrl.Margin.Left);
 			else if (ctrl is KeysharpListView || ctrl is KeysharpTreeView || ctrl is KeysharpDateTimePicker)//Documentaiton doesn't mention these, but IronAHK handled them this way, so leaving this here.
 				w = fontpixels * 30;
+#if WINDOWS
+			else if (ctrl is KeysharpCustomControl custom)
+				w = fontpixels * 10;
+#endif
 
 			ctrl.Width = opts.width == int.MinValue ? Math.Max((int)w, (int)Math.Round(scaledPref)) : (holder.requestedSize.Width = (int)Math.Round(w));
 
@@ -1298,7 +1310,10 @@
 						r = 1;
 					else if (ctrl is TabPage || ctrl is KeysharpTabControl)
 						r = 10;
-
+#if WINDOWS
+					else if (ctrl is KeysharpCustomControl custom)
+						r = 5;//AHK used 5.
+#endif
 					var fontRows = (int)(Math.Round(fontpixels + 0.5) * r);//This is a rough attempt to make text boxes tall enough to show the requested number of lines without having the scrollbars appear unnecessarily.
 					var defheight = fontRows;//AHK used external leading, but just use fontpixels here because it's close enough.
 
@@ -1326,6 +1341,12 @@
 					{
 						tc2.Height = defheight + (int)Math.Round((tc2.Margin.Top + tc2.Margin.Bottom) *  (2.0 + ((int)(r + 1.5) - 1)));//Same here, but -1.
 					}
+#if WINDOWS
+					else if (ctrl is KeysharpCustomControl)
+					{
+						ctrl.Height = fontRows + ctrl.Margin.Top;
+					}
+#endif
 					else
 					{
 						if (opts.rows == float.MinValue) //Neither r or h were specified.
@@ -1343,7 +1364,7 @@
 							}
 						}
 
-						if (r > 1)
+						if (r > 0)
 						{
 							ctrl.Height = ctrl.Height - ctrl.ClientSize.Height + fontRows;
 						}
@@ -2157,6 +2178,9 @@
 					else if (Options.TryParse(opt, "Autosize", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.autosize = tempbool; }
 					else if (Options.TryParse(opt, "wp", ref options.wp, StringComparison.OrdinalIgnoreCase, true)) { }
 					else if (Options.TryParse(opt, "hp", ref options.hp, StringComparison.OrdinalIgnoreCase, true)) { }
+#if WINDOWS
+					else if (Options.TryParseString(opt, "Class", ref options.customclass, StringComparison.OrdinalIgnoreCase)) { }
+#endif
 					else if (Options.TryParse(opt, "xp", ref options.x, StringComparison.OrdinalIgnoreCase, true)) { options.xpos = GuiOptions.Positioning.PreviousTopLeft; }
 					else if (Options.TryParse(opt, "yp", ref options.y, StringComparison.OrdinalIgnoreCase, true)) { options.ypos = GuiOptions.Positioning.PreviousTopLeft; }
 					else if (Options.TryParse(opt, "xm", ref options.x, StringComparison.OrdinalIgnoreCase, true)) { options.xpos = GuiOptions.Positioning.Margin; }
@@ -2392,7 +2416,9 @@
 		public class Button(params object[] args) : GuiControl(args) { }
 
 		public class CheckBox(params object[] args) : GuiControl(args) { }
-
+#if WINDOWS
+		public class Custom(params object[] args) : GuiControl(args) { }
+#endif
 		public class DateTime(params object[] args) : GuiControl(args) { }
 
 		public class Edit(params object[] args) : GuiControl(args) { }
@@ -2437,6 +2463,7 @@
 
 		public class WebBrowser(params object[] args) : GuiControl(args) { }
 
+
 		internal class GuiOptions
 		{
 			internal int addexstyle = 0;
@@ -2468,7 +2495,10 @@
 
 			//ComboBox.
 			internal bool? cmbsimple;
-
+#if WINDOWS
+			//Custom.
+			internal string customclass = "";
+#endif
 			//DateTime.
 			internal string customdate = "";
 
