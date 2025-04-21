@@ -1500,6 +1500,53 @@
 		{
 			var v1 = versionA.As().Trim();
 			var v2 = versionB.As().Trim();
+			var v1DotCount = v1.AsSpan().Count('.');
+			var v2DotCount = v2.AsSpan().Count('.');
+
+			//If either was a C# style version string, then assume both are.
+			//This is done because SemVer does not support version strings with 4 numbers.
+			//The shortcoming here is that a C# version string can't be compared to a SemVer style one.
+			if (v1DotCount == 3 || v2DotCount == 3)
+			{
+				var csV1 = new Version(v1);
+
+				if (v2.StartsWith("<="))
+				{
+					v2 = v2.Substring(2);
+					var csV2 = new Version(v2);
+					return csV1.CompareTo(csV2) <= 0 ? 1L : 0L;
+				}
+				else if (v2.StartsWith('<'))
+				{
+					v2 = v2.Substring(1);
+					var csV2 = new Version(v2);
+					return csV1.CompareTo(csV2) < 0 ? 1L : 0L;
+				}
+				else if (v2.StartsWith(">="))
+				{
+					v2 = v2.Substring(2);
+					var csV2 = new Version(v2);
+					return csV1.CompareTo(csV2) >= 0 ? 1L : 0L;
+				}
+				else if (v2.StartsWith('>'))
+				{
+					v2 = v2.Substring(1);
+					var csV2 = new Version(v2);
+					return csV1.CompareTo(csV2) > 0 ? 1L : 0L;
+				}
+				else if (v2.StartsWith('='))
+				{
+					v2 = v2.Substring(1);
+					var csV2 = new Version(v2);
+					return csV1.CompareTo(csV2) == 0 ? 1L : 0L;
+				}
+				else
+				{
+					var csV2 = new Version(v2);
+					return csV1.CompareTo(csV2);
+				}
+			}
+
 			var semver1 = Semver.SemVersion.Parse(v1, Semver.SemVersionStyles.Any);
 
 			if (v2.StartsWith("<="))
