@@ -1432,15 +1432,39 @@ namespace Keysharp.Scripting
                         SyntaxFactory.SeparatedList<ArgumentSyntax>(
                             new ArgumentSyntax[]
                             {
-                                SyntaxFactory.Argument(SyntaxFactory.TypeOfExpression(
-                                    CreateQualifiedName(currentClass.Base) // typeof(MyType)
-                                )),
+                                SyntaxFactory.Argument(
+                                    GenerateItemAccess(
+                                        SyntaxFactory.IdentifierName("Variables"),
+										SyntaxFactory.IdentifierName(currentFunc.UserStatic ? "Statics" : "Prototypes"),
+                                        SyntaxFactory.TypeOfExpression(
+                                            CreateQualifiedName(currentClass.Base) // typeof(MyType)
+                                        )
+                                    )
+                                ),
                                 SyntaxFactory.Argument(SyntaxFactory.IdentifierName("@this"))
                             }
                         )
                     )
             );
         }
+
+        internal static ExpressionSyntax GenerateItemAccess(ExpressionSyntax baseName, SimpleNameSyntax memberName, ExpressionSyntax item)
+        {
+            return SyntaxFactory.ElementAccessExpression(
+                SyntaxFactory.MemberAccessExpression(
+                    SyntaxKind.SimpleMemberAccessExpression,
+                    baseName,
+                    memberName
+                ),
+                SyntaxFactory.BracketedArgumentList(
+                    SyntaxFactory.SingletonSeparatedList(
+                        SyntaxFactory.Argument(
+                            item
+                        )
+                    )
+                )
+            );
+		}
 
         internal static ExpressionSyntax GenerateGetPropertyValue(ExpressionSyntax baseExpression, ExpressionSyntax memberExpression)
         {

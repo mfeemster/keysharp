@@ -1131,7 +1131,9 @@ namespace Keysharp.Scripting
             parser.currentFunc.Async = context?.Async() != null && context.Async().Length > 0;
             parser.currentFunc.Public = parser.functionDepth < 2;
             parser.currentFunc.Static = !(parser.functionDepth > 1 && (context?.Static() == null || context.Static().Length == 0));
-            return null;
+            parser.currentFunc.UserStatic = context?.Static() != null;
+
+			return null;
         }
 
         public override SyntaxNode VisitFunctionExpressionHead([NotNull] FunctionExpressionHeadContext context)

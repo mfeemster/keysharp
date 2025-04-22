@@ -298,25 +298,10 @@ namespace Keysharp.Core
 			}
 			else
 			{
-				var address = IntPtr.Zero;
+				var address = Reflections.GetPtrProperty(function);
 
-				if (function is IntPtr ip)
-				{
-					address = ip;
-				}
-				else if (function is int || function is long)
-				{
-					address = new IntPtr(function.Al());
-				}
-				else
-				{
-					var val = Reflections.SafeGetProperty<IntPtr>(function, "Ptr");
-
-					if (val == IntPtr.Zero)
-						return Errors.ErrorOccurred(err = new TypeError($"Function argument was of type {function.GetType()}. It must be string, StringBuffer, int, long or an object with a Ptr member.")) ? throw err : null;
-
-					address = val;
-				}
+				if (address == IntPtr.Zero)
+					return Errors.ErrorOccurred(err = new TypeError($"Function argument was of type {function.GetType()}. It must be string, StringBuffer, integer, Buffer or other object with a Ptr property that is an integer.")) ? throw err : null;
 
 				try
 				{

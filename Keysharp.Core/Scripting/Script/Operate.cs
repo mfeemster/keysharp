@@ -358,6 +358,7 @@ namespace Keysharp.Scripting
 
 				case Operator.Concat:
 				{
+					//Do not check the left side for null, AHK allows it.
 					if (right == null)
 						return Errors.ErrorOccurred(err = new UnsetError("Right side operand of concat was null.")) ? throw err : null;
 

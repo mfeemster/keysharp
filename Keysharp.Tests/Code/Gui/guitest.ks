@@ -1002,6 +1002,65 @@ LV2_Btn6.OnEvent("Click", "LV_CountFocused")
 LV2_Btn7 := MyGui.Add("Button", "xc+216 yp w100 h25", "Count Columns")
 LV2_Btn7.OnEvent("Click", "LV_CountCol")
 
+#if WINDOWS
+customText := MyGui.Add("Text", "xc+10", "Custom controls:")
+customText.SetFont("s8 CBlue")
+
+IP := MyGui.Add("Custom", "ClassSysIPAddress32 r1 w150")
+IP.OnCommand(0x300, IP_EditChange)
+IP.OnNotify(-860, IP_FieldChange)
+IPText := MyGui.Add("Text", "wp")
+IPField := MyGui.Add("Text", "wp y+m")
+
+IPCtrlSetAddress(IP, SysGetIPAddresses()[1])
+
+IP_EditChange(*)
+{
+	IPText.Text := "New text: " IP.Text
+}
+
+IP_FieldChange(thisCtrl, NMIPAddress)
+{
+	; Extract info from the NMIPAddress structure.
+	iField := NumGet(NMIPAddress, 3*A_PtrSize + 0, "int")
+	iValue := NumGet(NMIPAddress, 3*A_PtrSize + 4, "int")
+
+	if (iValue >= 0)
+		IPField.Text := "Field #" iField " modified: " iValue
+	else
+		IPField.Text := "Field #" iField " left empty"
+}
+
+IPCtrlSetAddress(GuiCtrl, IPAddress)
+{
+	static WM_USER := 0x0400
+	static IPM_SETADDRESS := WM_USER + 101
+
+	; Pack the IP address into a 32-bit word for use with SendMessage.
+	IPAddrWord := 0
+	Loop Parse IPAddress, "."
+		IPAddrWord := (IPAddrWord * 256) + A_LoopField
+
+	SendMessage(IPM_SETADDRESS, 0, IPAddrWord, GuiCtrl)
+}
+
+IPCtrlGetAddress(GuiCtrl)
+{
+	static WM_USER := 0x0400
+	static IPM_GETADDRESS := WM_USER + 102
+
+	AddrWord := Buffer(4)
+	SendMessage(IPM_GETADDRESS, 0, AddrWord, GuiCtrl)
+	IPPart := []
+
+	Loop 4
+		IPPart.Push(NumGet(AddrWord, 4 - A_Index, "UChar"))
+
+	return IPPart[1] "." IPPart[2] "." IPPart[3] "." IPPart[4]
+}
+
+#endif
+
 MyGui.UseGroup()
 Tab.UseTab("ControlZoo")
 gb2_CZ := MyGui.Add("GroupBox", "x+10 yc+10 w370 h875", "ControlZoo - Group Two")

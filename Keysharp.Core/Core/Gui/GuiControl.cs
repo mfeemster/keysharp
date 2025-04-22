@@ -1968,7 +1968,7 @@
 				_ = (changeHandlers?.InvokeEventHandlers(this, 0L));
 		}
 
-		internal object InvokeMessageHandlers(ref Message m)
+		internal unsafe object InvokeMessageHandlers(ref Message m)
 		{
 #if WINDOWS
 
@@ -1980,7 +1980,7 @@
 
 					if (notifyHandlers.TryGetValue((int)nmhdr.code, out var handler))
 					{
-						var ret = handler?.InvokeEventHandlers(this, nmhdr);
+						var ret = handler?.InvokeEventHandlers(this, m.LParam.ToInt64());
 						m.Result = ret.IsCallbackResultNonEmpty() ? 1 : 0;
 						return true;
 					}
@@ -1990,7 +1990,8 @@
 			{
 				if (commandHandlers != null)
 				{
-					var val = (int)m.WParam;
+					var val = (int)((m.WParam.ToInt64() >> 16) & 0xFFFF);
+					//Debug.OutputDebug($"Received WM_COMMAND {m.Msg}, with val: {val:X}, with lparam: {m.LParam.ToInt64():X}, wparam: {m.WParam.ToInt64():X}");
 
 					if (commandHandlers.TryGetValue(val, out var handler))
 					{

@@ -304,6 +304,7 @@ namespace Keysharp.Scripting
             public bool Async = false;
 			public bool Public = true;
 			public bool Static = true;
+            public bool UserStatic = false;
 
             public bool HasDerefs = false;
 

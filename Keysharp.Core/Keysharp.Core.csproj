@@ -59,6 +59,7 @@
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.13.0" />
     <PackageReference Include="Microsoft.CodeDom.Providers.DotNetCompilerPlatform" Version="4.1.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyModel" Version="10.0.0-preview.2.25163.2" />
+    <PackageReference Include="Semver" Version="3.0.0" />
     <PackageReference Include="System.Management" Version="10.0.0-preview.2.25163.2" />
   </ItemGroup>
 

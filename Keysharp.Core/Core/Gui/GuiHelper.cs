@@ -83,7 +83,7 @@
 
 		internal static bool CallMessageHandler(Control control, ref Message m)
 		{
-			if (Control.FromHandle(m.HWnd) == control)
+			if (m.HWnd == control.Handle)
 			{
 				if (control.GetGuiControl() is GuiControl ctrl)
 				{

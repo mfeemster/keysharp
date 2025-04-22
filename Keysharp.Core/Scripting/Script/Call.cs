@@ -50,9 +50,9 @@ namespace Keysharp.Scripting
 			{
                 if (item is KeysharpObject)
                     kso = (KeysharpObject)item;
-                else if (item is ITuple otup && otup.Length > 1 && otup[0] is Type t)
+                else if (item is ITuple otup && otup.Length > 1 && otup[0] is KeysharpObject t)
 				{
-					typetouse = t; item = otup[1];
+					kso = t; item = otup[1];
 				}
 
                 if (item == null)
@@ -60,7 +60,7 @@ namespace Keysharp.Scripting
 					if (Reflections.FindMethod(key, paramCount) is MethodPropertyHolder mph0)
 						return (item, mph0);
 				}
-				else if (((typetouse != null && Variables.Prototypes.TryGetValue(typetouse, out kso)) || kso != null) && kso.op != null)
+				else if (kso != null && kso.op != null)
 				{
 					if (TryGetOwnPropsMap(kso, key, out var val))
 					{
@@ -134,14 +134,10 @@ namespace Keysharp.Scripting
                 if (item is VarRef vr && namestr.Equals("__Value", StringComparison.OrdinalIgnoreCase))
 					return vr.__Value;
 
-                if (item is ITuple otup && otup.Length > 1)
+                if (item is ITuple otup && otup.Length > 1 && otup[0] is KeysharpObject kso2 && otup[1] is object o)
 				{
-					if (otup[0] is Type t && otup[1] is object o)
-					{
-						typetouse = t;
-						item = o;
-						Variables.Prototypes.TryGetValue(t, out kso);
-					}
+					kso = kso2;
+					item = o;
 				}
                 
 				if (typetouse == null && item != null)

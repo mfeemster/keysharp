@@ -767,7 +767,7 @@
 			get
 			{
 				var addr = Dns.GetHostEntry(Dns.GetHostName()).AddressList;
-				var ips = new Array(addr.Length);
+				var ips = new Array();
 
 				for (var i = 0; i < addr.Length; i++)
 					if (addr[i].AddressFamily == AddressFamily.InterNetwork)
