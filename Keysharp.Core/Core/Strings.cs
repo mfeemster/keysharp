@@ -1500,42 +1500,173 @@
 		{
 			var v1 = versionA.As().Trim();
 			var v2 = versionB.As().Trim();
-			var semver1 = Semver.SemVersion.Parse(v1, Semver.SemVersionStyles.Any);
+			Error err;
+			Exception ex;
+
+			//SemVer cannot parse a C# style version string with 4 numbers.
+			//So we have to first try SemVer, then if it fails, try C# style.
+			//If that fails, throw the original exception.
+			//The shortcoming here is that a C# version string can't be compared to a SemVer style one.
 
 			if (v2.StartsWith("<="))
 			{
 				v2 = v2.Substring(2);
-				var semver2 = Semver.SemVersion.Parse(v2, Semver.SemVersionStyles.Any);
-				return semver1.CompareSortOrderTo(semver2) <= 0 ? 1L : 0L;
+
+				try
+				{
+					var semver1 = Semver.SemVersion.Parse(v1, Semver.SemVersionStyles.Any);
+					var semver2 = Semver.SemVersion.Parse(v2, Semver.SemVersionStyles.Any);
+					return semver1.CompareSortOrderTo(semver2) <= 0 ? 1L : 0L;
+				}
+				catch (Exception e)
+				{
+					ex = e;
+				}
+
+				try
+				{
+					var csV1 = new Version(v1);
+					var csV2 = new Version(v2);
+					return csV1.CompareTo(csV2) <= 0 ? 1L : 0L;
+				}
+				catch (Exception)
+				{
+				}
+
+				return Errors.ErrorOccurred(err = new Error($"Error comparing version {versionA} to {versionB}: {ex.Message}")) ? throw err : 0L;
 			}
 			else if (v2.StartsWith('<'))
 			{
 				v2 = v2.Substring(1);
-				var semver2 = Semver.SemVersion.Parse(v2, Semver.SemVersionStyles.Any);
-				return semver1.CompareSortOrderTo(semver2) < 0 ? 1L : 0L;
+
+				try
+				{
+					var semver1 = Semver.SemVersion.Parse(v1, Semver.SemVersionStyles.Any);
+					var semver2 = Semver.SemVersion.Parse(v2, Semver.SemVersionStyles.Any);
+					return semver1.CompareSortOrderTo(semver2) < 0 ? 1L : 0L;
+				}
+				catch (Exception e)
+				{
+					ex = e;
+				}
+
+				try
+				{
+					var csV1 = new Version(v1);
+					var csV2 = new Version(v2);
+					return csV1.CompareTo(csV2) < 0 ? 1L : 0L;
+				}
+				catch (Exception)
+				{
+				}
+
+				return Errors.ErrorOccurred(err = new Error($"Error comparing version {versionA} to {versionB}: {ex.Message}")) ? throw err : 0L;
 			}
 			else if (v2.StartsWith(">="))
 			{
 				v2 = v2.Substring(2);
-				var semver2 = Semver.SemVersion.Parse(v2, Semver.SemVersionStyles.Any);
-				return semver1.CompareSortOrderTo(semver2) >= 0 ? 1L : 0L;
+
+				try
+				{
+					var semver1 = Semver.SemVersion.Parse(v1, Semver.SemVersionStyles.Any);
+					var semver2 = Semver.SemVersion.Parse(v2, Semver.SemVersionStyles.Any);
+					return semver1.CompareSortOrderTo(semver2) >= 0 ? 1L : 0L;
+				}
+				catch (Exception e)
+				{
+					ex = e;
+				}
+
+				try
+				{
+					var csV1 = new Version(v1);
+					var csV2 = new Version(v2);
+					return csV1.CompareTo(csV2) >= 0 ? 1L : 0L;
+				}
+				catch (Exception)
+				{
+				}
+
+				return Errors.ErrorOccurred(err = new Error($"Error comparing version {versionA} to {versionB}: {ex.Message}")) ? throw err : 0L;
 			}
 			else if (v2.StartsWith('>'))
 			{
 				v2 = v2.Substring(1);
-				var semver2 = Semver.SemVersion.Parse(v2, Semver.SemVersionStyles.Any);
-				return semver1.CompareSortOrderTo(semver2) > 0 ? 1L : 0L;
+
+				try
+				{
+					var semver1 = Semver.SemVersion.Parse(v1, Semver.SemVersionStyles.Any);
+					var semver2 = Semver.SemVersion.Parse(v2, Semver.SemVersionStyles.Any);
+					return semver1.CompareSortOrderTo(semver2) > 0 ? 1L : 0L;
+				}
+				catch (Exception e)
+				{
+					ex = e;
+				}
+
+				try
+				{
+					var csV1 = new Version(v1);
+					var csV2 = new Version(v2);
+					return csV1.CompareTo(csV2) > 0 ? 1L : 0L;
+				}
+				catch (Exception)
+				{
+				}
+
+				return Errors.ErrorOccurred(err = new Error($"Error comparing version {versionA} to {versionB}: {ex.Message}")) ? throw err : 0L;
 			}
 			else if (v2.StartsWith('='))
 			{
 				v2 = v2.Substring(1);
-				var semver2 = Semver.SemVersion.Parse(v2, Semver.SemVersionStyles.Any);
-				return semver1.CompareSortOrderTo(semver2) == 0 ? 1L : 0L;
+
+				try
+				{
+					var semver1 = Semver.SemVersion.Parse(v1, Semver.SemVersionStyles.Any);
+					var semver2 = Semver.SemVersion.Parse(v2, Semver.SemVersionStyles.Any);
+					return semver1.CompareSortOrderTo(semver2) == 0 ? 1L : 0L;
+				}
+				catch (Exception e)
+				{
+					ex = e;
+				}
+
+				try
+				{
+					var csV1 = new Version(v1);
+					var csV2 = new Version(v2);
+					return csV1.CompareTo(csV2) == 0 ? 1L : 0L;
+				}
+				catch (Exception)
+				{
+				}
+
+				return Errors.ErrorOccurred(err = new Error($"Error comparing version {versionA} to {versionB}: {ex.Message}")) ? throw err : 0L;
 			}
 			else
 			{
-				var semver2 = Semver.SemVersion.Parse(v2, Semver.SemVersionStyles.Any);
-				return semver1.CompareSortOrderTo(semver2);
+				try
+				{
+					var semver1 = Semver.SemVersion.Parse(v1, Semver.SemVersionStyles.Any);
+					var semver2 = Semver.SemVersion.Parse(v2, Semver.SemVersionStyles.Any);
+					return semver1.CompareSortOrderTo(semver2);
+				}
+				catch (Exception e)
+				{
+					ex = e;
+				}
+
+				try
+				{
+					var csV1 = new Version(v1);
+					var csV2 = new Version(v2);
+					return csV1.CompareTo(csV2);
+				}
+				catch (Exception)
+				{
+				}
+
+				return Errors.ErrorOccurred(err = new Error($"Error comparing version {versionA} to {versionB}: {ex.Message}")) ? throw err : 0L;
 			}
 		}
 
