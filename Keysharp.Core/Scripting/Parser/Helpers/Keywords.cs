@@ -639,7 +639,7 @@
 		internal static readonly char[] TrimLine = "\t\r\n ".ToCharArray();
 		internal static readonly char[] TrimSec = "[]".ToCharArray();
 		internal static readonly char[] SpaceMultiDelim;
-		internal static readonly SearchValues<char> SpaceMultiDelimSv;
+		//internal static readonly SearchValues<char> SpaceMultiDelimSv;
 		internal static readonly char[] FlowDelimiters;
 		internal static readonly SearchValues<char> FlowDelimitersSv;
 		internal static readonly char[] FlowDelimiters2;
@@ -728,13 +728,13 @@
 			SpaceMultiDelim = new char[Spaces.Length + 1];
 			SpaceMultiDelim[0] = Multicast;
 			Spaces.CopyTo(SpaceMultiDelim, 1);
-			SpaceMultiDelimSv = SearchValues.Create(SpaceMultiDelim);
+			//SpaceMultiDelimSv = SearchValues.Create(SpaceMultiDelim);
 			//
-			var braces = new char[6];
-			BothBraces.CopyTo(braces, 0);
-			BothBrackets.CopyTo(braces, 2);
-			BothBrackets.CopyTo(braces, 4);
-			AllBracesBracketsParensSv = SearchValues.Create(braces);
+			//var braces = new char[6];
+			//BothBraces.CopyTo(braces, 0);
+			//BothParens.CopyTo(braces, 2);
+			//BothBrackets.CopyTo(braces, 4);
+			//AllBracesBracketsParensSv = SearchValues.Create(braces);
 		}
 	}
 }

@@ -762,6 +762,31 @@ namespace Keysharp.Tests
 			Assert.AreEqual(Strings.VerCompare("1.20.0", " >=1.30 "), 0L);
 			Assert.AreEqual(Strings.VerCompare(" 1.20.0", " =1.30 "), 0L);
 			Assert.AreEqual(Strings.VerCompare(" 1.20.0 ", " =1.20.0 "), 1L);
+			//Same, but with the first string being a C# style version strings with 4 numbers.
+			Assert.AreEqual(Strings.VerCompare(" 1.20.0.1", "<1.30"), 1L);
+			Assert.AreEqual(Strings.VerCompare("1.20.0.1 ", "<=1.30"), 1L);
+			Assert.AreEqual(Strings.VerCompare("1.20.0.1", " >1.30"), 0L);
+			Assert.AreEqual(Strings.VerCompare("1.20.0.1", " >=1.30 "), 0L);
+			Assert.AreEqual(Strings.VerCompare(" 1.20.0.1", " =1.30 "), 0L);
+			Assert.AreEqual(Strings.VerCompare(" 1.20.0.1 ", " =1.20.0 "), 0L);
+			Assert.AreEqual(Strings.VerCompare(" 1.20.0.1 ", " >1.20.0 "), 1L);
+			//With the second being such.
+			Assert.AreEqual(Strings.VerCompare(" 1.20.0", "<1.30.0.1"), 1L);
+			Assert.AreEqual(Strings.VerCompare("1.20.0 ", "<=1.30.0.1"), 1L);
+			Assert.AreEqual(Strings.VerCompare("1.20.0", " >1.30.0.1"), 0L);
+			Assert.AreEqual(Strings.VerCompare("1.20.0", " >=1.30.0.1 "), 0L);
+			Assert.AreEqual(Strings.VerCompare(" 1.20.0", " =1.30.0.1 "), 0L);
+			Assert.AreEqual(Strings.VerCompare(" 1.20.0 ", " =1.20.0.0 "), 0L);
+			Assert.AreEqual(Strings.VerCompare(" 1.20.0 ", " <1.20.0.1 "), 1L);
+			//With both.
+			Assert.AreEqual(Strings.VerCompare(" 1.20.0.0", "<1.30.0.1"), 1L);
+			Assert.AreEqual(Strings.VerCompare("1.20.0.0 ", "<=1.30.0.1"), 1L);
+			Assert.AreEqual(Strings.VerCompare("1.20.0.0", " >1.30.0.1"), 0L);
+			Assert.AreEqual(Strings.VerCompare("1.20.0.0", " >=1.30.0.1 "), 0L);
+			Assert.AreEqual(Strings.VerCompare(" 1.20.0.0", " =1.30.0.1 "), 0L);
+			Assert.AreEqual(Strings.VerCompare(" 1.20.0.0 ", " =1.20.0.0 "), 1L);
+			Assert.AreEqual(Strings.VerCompare(" 1.20.0.0 ", " <1.20.0.1 "), 1L);
+			//
 			Assert.AreEqual(Strings.StrCompare("1.20.0", "1.3"), -1L);
 			Assert.AreEqual(Strings.VerCompare("2.0-a137", "2.0-a136"), 1L);
 			Assert.AreEqual(Strings.VerCompare("2.0-a137", "2.0"), -1);
