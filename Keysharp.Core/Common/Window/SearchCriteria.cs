@@ -31,12 +31,13 @@
 				return criteria;
 			}
 
-			//if (obj is IntPtr ptr1)
-			//{
-			//  criteria.ID = ptr1;
-			//  criteria.IsPureID = true;
-			//  return criteria;
-			//}
+			if (obj is IntPtr ptr1)
+			{
+				criteria.ID = ptr1;
+				criteria.IsPureID = true;
+				return criteria;
+			}
+
 			object hwnd = null;
 
 			try
@@ -56,12 +57,12 @@
 					return criteria;
 				}
 
-				//if (hwnd is IntPtr ptr2)
-				//{
-				//  criteria.ID = ptr2;
-				//  criteria.IsPureID = true;
-				//  return criteria;
-				//}
+				if (hwnd is IntPtr ptr2)
+				{
+					criteria.ID = ptr2;
+					criteria.IsPureID = true;
+					return criteria;
+				}
 			}
 
 			var mixed = obj.ToString();
