@@ -5,7 +5,7 @@
 	/// Menu objects are used to define, modify and display popup menus. <see cref="Menu()"/>, <see cref="MenuFromHandle"/><br/>
 	/// and <see cref="A_TrayMenu"/> return an object of this type.
 	/// </summary>
-	public class Menu
+	public class Menu : KeysharpObject
 	{
 		/// <summary>
 		/// The default item in the menu.
@@ -73,17 +73,20 @@
 		/// </summary>
 		internal ContextMenuStrip MenuItem { get; set; }
 
+		public Menu(params object[] args) : base(args) { }
+
 		/// <summary>
 		/// Initializes a new instance of the <see cref="Menu"/> class.
 		/// </summary>
 		/// <param name="strip">Optional existing <see cref="ContextMenuStrip"/>. Default: false.</param>
-		public Menu(ContextMenuStrip strip = null)
+		public override object __New(params object[] args)
 		{
-			MenuItem = strip ?? new ContextMenuStrip();
+			MenuItem = (args.Length > 0 ? (ContextMenuStrip)args[0] : null) ?? new ContextMenuStrip();
 			//GetMenu().ImageScalingSize = new System.Drawing.Size(28, 28);//Don't set scaling, it makes the checked icons look funny.
 			var newCount = Interlocked.Increment(ref menuCount);
 			GetMenu().Name = $"Menu_{newCount}";
 			dummyHandle = Handle;//Must access the handle once to force creation.
+			return "";
 		}
 
 		/// <summary>

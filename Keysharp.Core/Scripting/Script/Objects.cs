@@ -38,7 +38,7 @@ namespace Keysharp.Scripting
 				var methodName = method.Name;
 
                 bool isStatic = isBuiltin && method.IsStatic;
-                if (!isBuiltin && methodName.StartsWith(Keywords.ClassStaticPrefix))
+                if (methodName.StartsWith(Keywords.ClassStaticPrefix))
                 {
                     isStatic = true;
                     methodName = methodName.Substring(Keywords.ClassStaticPrefix.Length);
@@ -80,7 +80,7 @@ namespace Keysharp.Scripting
 					continue;
                 }
 
-                if (!isBuiltin && isStatic)
+                if (isStatic)
                 {
                     staticInst.DefineProp(methodName, Collections.MapWithoutBase("call", new FuncObj(method)));
 					continue;
@@ -122,7 +122,7 @@ namespace Keysharp.Scripting
             {
                 var propertyName = prop.Name;
                 OwnPropsDesc propertyMap = null;
-                if ((prop.GetMethod?.IsStatic ?? false) || (prop.SetMethod?.IsStatic ?? false) || (!isBuiltin && propertyName.StartsWith(Keywords.ClassStaticPrefix)))
+                if ((prop.GetMethod?.IsStatic ?? false) || (prop.SetMethod?.IsStatic ?? false) || (propertyName.StartsWith(Keywords.ClassStaticPrefix)))
 				{
 					if (propertyName.StartsWith(Keywords.ClassStaticPrefix))
 						propertyName = propertyName.Substring(Keywords.ClassStaticPrefix.Length);
@@ -171,9 +171,9 @@ namespace Keysharp.Scripting
 				proto.DefineProp("__Class", Collections.MapWithoutBase("value", name));
 			}
 
-            staticInst.DefineProp("prototype", Collections.Map("value", Variables.Prototypes[t]));
+            staticInst.DefineProp("prototype", Collections.MapWithoutBase("value", Variables.Prototypes[t]));
 
-			if (t != typeof(FuncObj) && t != typeof(Any) || t == typeof(Class))
+			if (t != typeof(FuncObj) && t != typeof(Any) && t != typeof(Class))
 				staticInst.DefineProp("base", Collections.MapWithoutBase("value", t.BaseType == typeof(KeysharpObject) ? Variables.Prototypes[typeof(Class)] : Variables.Statics[t.BaseType]));
 
 			if (!isBuiltin)
@@ -217,7 +217,7 @@ namespace Keysharp.Scripting
 						item = o;
 					} else if (otup[0] is KeysharpObject kso && otup[1] is object ob)
 					{
-                        item = kso; typetouse = ob.GetType();
+                        item = ob; typetouse = kso.GetType();
                     }
 				}
 				else
@@ -321,33 +321,23 @@ namespace Keysharp.Scripting
 				else
 					len = 1;
 
-				Type typetouse = null;
-				Type itemType = item.GetType();
+				KeysharpObject type = item as KeysharpObject;
 
-                if (item is ITuple otup && otup.Length > 1)
+                if (item is ITuple otup && otup.Length > 1 && otup[0] is KeysharpObject t)
 				{
-					if (otup[0] is Type t && otup[1] is object o)
-					{
-						typetouse = t;
-						item = o;
-					} else if (otup[0] is KeysharpObject kso && otup[1] is object ob)
-					{
-						item = kso; typetouse = ob.GetType();
-					}
+					type = t; item = otup[1];
+				}
+
+				if (type != null)
+				{
+					if (TryGetOwnPropsMap(type, "__Item", out var opm, true, OwnPropsMapType.Get) && opm.Get is IFuncObj ifo)
+						return ifo.Call([item, .. index]);
+					else if (TryGetOwnPropsMap(type, "__Get", out var opm2, true, OwnPropsMapType.Call) && opm2.Call is IFuncObj ifo2)
+						return ifo2.Call(item, new Keysharp.Core.Array(index));
 				}
 
 				if (len == 1)
 				{
-					//This excludes types derived from Array so that super can be used.
-					if (itemType == typeof(Keysharp.Core.Array))
-					{
-						return ((Keysharp.Core.Array)item)[key];
-					}
-					else if (itemType == typeof(Keysharp.Core.Map))
-					{
-						return ((Keysharp.Core.Map)item)[key];
-					}
-
 					var position = (int)ForceLong(key);
 
 					//The most common is going to be a string, array, map or buffer.
@@ -355,10 +345,6 @@ namespace Keysharp.Scripting
 					{
 						var actualindex = position < 0 ? s.Length + position : position - 1;
 						return s[actualindex];
-					}
-					else if (itemType == typeof(Keysharp.Core.Buffer))
-					{
-						return ((Keysharp.Core.Buffer)item)[position];
 					}
 					else if (item is object[] objarr)//Used for indexing into variadic function params.
 					{
@@ -378,25 +364,6 @@ namespace Keysharp.Scripting
 						return coa.array.GetValue(actualindex);
 					}
 #endif
-				}
-
-				if (item is KeysharpObject kso2)
-				{
-                    if (typetouse != null && Variables.Prototypes.TryGetValue(typetouse, out var kso3) && kso3.op != null)
-						kso2 = kso3;
-
-                    if (TryGetOwnPropsMap(kso2, "__Item", out var opm) && opm.Get != null && opm.Get is IFuncObj ifo)
-						return ifo.Call([item, ..index]);
-					else if (TryGetOwnPropsMap(kso2, "__Get", out var opm2) && opm2.Call != null && opm2.Call is IFuncObj ifo2)
-						return ifo2.Call(item, new Keysharp.Core.Array(index));
-                }
-
-				if (Reflections.FindAndCacheInstanceMethod(typetouse ?? itemType, "get_Item", len) is MethodPropertyHolder mph)
-				{
-					if (len == mph.ParamLength || mph.IsVariadic)
-						return mph.callFunc(item, index);
-					else
-						return Errors.ErrorOccurred(err = new ValueError($"{len} arguments were passed to a get indexer which only accepts {mph.ParamLength}.")) ? throw err : null;
 				}
 			}
 			catch (Exception e)

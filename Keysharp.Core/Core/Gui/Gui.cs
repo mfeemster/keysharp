@@ -269,8 +269,6 @@ namespace Keysharp.Core
 
 		public KeysharpForm ParentForm => form.FindParent<KeysharpForm>();
 
-		public new (Type, object) super => (typeof(KeysharpObject), this);
-
 		public object Title
 		{
 			get => form.Text;

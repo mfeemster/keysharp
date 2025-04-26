@@ -86,6 +86,25 @@ namespace Keysharp.Core.COM
 						goto TypeDetermined;
 				}
 
+				if (name == "bstr" || name == "str" || name == "astr" || name == "wstr")
+				{
+					if (p is KeysharpObject kso2 && Script.GetPropertyValue(kso2, "__Value", false) is object val && val != null)
+					{
+						refs[i] = p;
+						if (val is string)
+						{
+							if (name == "astr")
+							{
+								var sb = new StringBuffer(val, null, "ANSI");
+								sb.EntangledString = kso2;
+								val = sb;
+							} else
+								val = new StringBuffer(val);
+						}
+						p = parameters[i] = val;
+					}
+				}
+
 				switch (name)
 				{
 					case "bstr":
@@ -121,7 +140,12 @@ namespace Keysharp.Core.COM
 
 						if (!isreturn)
 						{
-							if (p is string s)
+							if (p is StringBuffer sb)
+							{
+								type = typeof(nint);
+								args[n] = sb.Ptr;
+							}
+							else if (p is string s)
 								SetupPointerArg(i, n, Encoding.Unicode.GetBytes(s));
 							else
 							{
@@ -139,7 +163,9 @@ namespace Keysharp.Core.COM
 
 						if (!isreturn)
 						{
-							if (p is string s)
+							if (p is StringBuffer sb)
+								args[n] = sb.Ptr;
+							else if (p is string s)
 								SetupPointerArg(i, n, Encoding.ASCII.GetBytes(s));
 							else
 							{

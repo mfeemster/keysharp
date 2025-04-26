@@ -170,18 +170,11 @@ namespace Keysharp.Core.COM
 			    }
 			*/
 		}
-
-		public new (Type, object) super => (typeof(KeysharpObject), this);
-
 		public int VarType { get; set; }
 
 		public ComObject(params object[] args) : base(args) { }
 
 		internal ComObject(object varType, object value, object flags = null) : base(varType, value, flags) { }
-
-		internal ComObject() : base(skipLogic: true)
-		{
-		}
 
 		~ComObject()
 		{
@@ -200,6 +193,7 @@ namespace Keysharp.Core.COM
 
 		public override object __New(params object[] args)
 		{
+			if (args.Length == 0 || args[0] == null) return "";
 			var varType = args[0];
 			var value = args[1];
 			var flags = args.Length > 2 ? args[2] : null;

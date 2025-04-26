@@ -117,46 +117,6 @@ namespace Keysharp.Scripting
                 parser.ClassStack.Peek().Body.Add(fieldDeclaration);
             }
 
-            // Add the super property
-            var superPropertyDeclaration = SyntaxFactory.PropertyDeclaration(
-                SyntaxFactory.TupleType(
-                    SyntaxFactory.SeparatedList<TupleElementSyntax>(
-                        new[]
-                        {
-                            SyntaxFactory.TupleElement(SyntaxFactory.IdentifierName("Type")),
-                            SyntaxFactory.TupleElement(SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword)))
-                        }
-                    )
-                ),
-                SyntaxFactory.Identifier("super") // Property name
-            )
-            .WithModifiers(
-                SyntaxFactory.TokenList(
-                    new[]
-                    {
-                        SyntaxFactory.Token(SyntaxKind.PublicKeyword),
-                        SyntaxFactory.Token(SyntaxKind.NewKeyword)
-                    }
-                )
-            )
-            .WithExpressionBody(
-                SyntaxFactory.ArrowExpressionClause(
-                    SyntaxFactory.TupleExpression(
-                        SyntaxFactory.SeparatedList<ArgumentSyntax>(
-                            new ArgumentSyntax[]
-                            {
-                                SyntaxFactory.Argument(SyntaxFactory.TypeOfExpression(
-                                    CreateQualifiedName(parser.currentClass.Base) // typeof(MyType)
-                                )),
-                                SyntaxFactory.Argument(SyntaxFactory.ThisExpression()) // this
-                            }
-                        )
-                    )
-                )
-            )
-            .WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken));
-            parser.currentClass.Body.Add(superPropertyDeclaration);
-
             // Add the constructor
             parser.currentClass.Body.Add(CreateConstructor(parser.currentClass.Name));
 

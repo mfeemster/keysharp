@@ -46,17 +46,19 @@
             SkipConstructorLogic = skipLogic;
         }
 
+		public virtual object static__New(params object[] args) => "";
+
 		public virtual object __New(params object[] args) => "";
 
-        public new (Type, object) super => (typeof(Any), this);
+		public object Call(params object[] args) => Activator.CreateInstance(this.GetType(), args);
 
-        /// <summary>
-        /// Return a cloned copy of the object.
-        /// Just calling MemberwiseClone() is sufficient to clone all of the properties as well
-        /// as the OwnProps object op.
-        /// </summary>
-        /// <returns>A cloned copy of the object.</returns>
-        public virtual object Clone()
+		/// <summary>
+		/// Return a cloned copy of the object.
+		/// Just calling MemberwiseClone() is sufficient to clone all of the properties as well
+		/// as the OwnProps object op.
+		/// </summary>
+		/// <returns>A cloned copy of the object.</returns>
+		public virtual object Clone()
 		{
 			return MemberwiseClone();
 		}
@@ -183,19 +185,18 @@
 			{
 				foreach (var kv in op)
 				{
-					if (kv.Key == "base" || kv.Key == "super")
+					if (kv.Key == "base")
 						continue;
 
-					props[kv.Key] = kv.Value.GetDesc();
+					props[kv.Key] = kv.Value;
 				}
 			}
 
 			return new OwnPropsIterator(this, props, vals);
 		}
 
-		public virtual void PrintProps(string name, StringBuffer sbuf, ref int tabLevel)
+		public virtual void PrintProps(string name, StringBuffer sb, ref int tabLevel)
 		{
-			var sb = sbuf.sb;
 			var fieldType = GetType().Name;
 			var opi = (OwnPropsIterator)OwnProps(true, false);
 			var indent = new string('\t', tabLevel);
@@ -215,7 +216,7 @@
 
 				if (val != this && val is KeysharpObject kso2)//Check against this to prevent stack overflow.
 				{
-					kso2.PrintProps(propName.ToString(), sbuf, ref tabLevel);
+					kso2.PrintProps(propName.ToString(), sb, ref tabLevel);
 				}
 				else if (val != null)
 				{
@@ -248,13 +249,11 @@
 
 		public object Wrap(object obj) => obj;
 
-		protected static object __StaticInit() => "";
+		public virtual object static__Init() => "";
 
 		/// <summary>
 		/// Placeholder for property initialization code that derived classes will call *before* __New() gets called.
 		/// </summary>
-		public virtual void __Init()
-		{
-		}
+		public virtual object __Init() => "";
 	}
 }

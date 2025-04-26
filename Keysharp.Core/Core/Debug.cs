@@ -72,8 +72,7 @@ namespace Keysharp.Core
 			//sw.Start();
 			var tabLevel = 0;
 			var doInternal = obj.Ab(true);
-			var sbuf = new StringBuffer();
-			var sb = sbuf.sb;
+			var sb = new StringBuffer();
 			var typesToProps = new SortedDictionary<string, List<PropertyInfo>>();
 			_ = sb.AppendLine($"**User defined**\r\n");
 
@@ -83,7 +82,7 @@ namespace Keysharp.Core
 				{
 					var val = fieldKv.Value.GetValue(null);
 					var fieldType = val != null ? val.GetType().Name : fieldKv.Value.FieldType.Name;
-					_ = Misc.PrintProps(val, fieldKv.Key, sbuf, ref tabLevel);
+					_ = Misc.PrintProps(val, fieldKv.Key, sb, ref tabLevel);
 				}
 			}
 
@@ -113,7 +112,7 @@ namespace Keysharp.Core
 							//OutputDebug($"GetVars(): getting prop: {prop.Name}");
 							var val = prop.GetValue(null);
 							var proptype = val != null ? val.GetType().Name : prop.PropertyType.Name;
-							_ = Misc.PrintProps(val, prop.Name, sbuf, ref tabLevel);
+							_ = Misc.PrintProps(val, prop.Name, sb, ref tabLevel);
 						}
 						catch (Exception ex)
 						{
@@ -126,7 +125,7 @@ namespace Keysharp.Core
 				}
 			}
 
-			var s = sbuf.sb.ToString();
+			var s = sb.ToString();
 			//sw.Stop();
 			//OutputDebug($"GetVars(): took {sw.Elapsed.TotalMilliseconds}ms.");
 			return s;

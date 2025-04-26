@@ -135,8 +135,6 @@
 			set => onKeyUp = Functions.GetFuncObj(value, null, true);
 		}
 
-		public new (Type, object) super => (typeof(KeysharpObject), this);
-
 		public object Timeout
 		{
 			get => input.timeout / 1000.0;

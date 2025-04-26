@@ -36,15 +36,14 @@ namespace Keysharp.Core
 		/// <param name="sbuf">The <see cref="StringBuffer"/> to place the property info in.</param>
 		/// <param name="tabLevel">The number of tabs to use for indenting the property tree.</param>
 		/// <returns>sbuf.ToString()</returns>
-		internal static string PrintProps(object obj, string name, StringBuffer sbuf, ref int tabLevel)
+		internal static string PrintProps(object obj, string name, StringBuffer sb, ref int tabLevel)
 		{
-			var sb = sbuf.sb;
 			var indent = new string('\t', tabLevel);
 			var fieldType = obj != null ? obj.GetType().Name : "";
 
 			if (obj is KeysharpObject kso)
 			{
-				kso.PrintProps(name, sbuf, ref tabLevel);
+				kso.PrintProps(name, sb, ref tabLevel);
 			}
 			else if (obj != null)
 			{

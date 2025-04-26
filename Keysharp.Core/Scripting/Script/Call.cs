@@ -22,7 +22,16 @@ namespace Keysharp.Scripting
 
 			return Errors.ErrorOccurred(err = new Error($"Could not find a class, global or built-in method for {name} with param count of {paramCount}.")) ? throw err : null;
 		}
-        public static bool TryGetOwnPropsMap(KeysharpObject baseObj, string key, out OwnPropsDesc opm, bool searchBase = true)
+
+		[Flags] public enum OwnPropsMapType
+		{
+			None = 0,
+			Call = 1,
+			Get = 2,
+			Set = 4,
+			Value = 8
+		}
+        public static bool TryGetOwnPropsMap(KeysharpObject baseObj, string key, out OwnPropsDesc opm, bool searchBase = true, OwnPropsMapType type = 0)
         {
             opm = null;
 
@@ -37,13 +46,19 @@ namespace Keysharp.Scripting
 					return false;
 				ownProps = ((KeysharpObject)baseEntry.Value).op;
 				if (ownProps != null && ownProps.TryGetValue(key, out opm))
-					return true;
+				{
+					if (type == OwnPropsMapType.None)
+						return true;
+					if (opm.Call != null && (type & OwnPropsMapType.Call) != 0) return true;
+					if (opm.Get != null && (type & OwnPropsMapType.Get) != 0) return true;
+					if (opm.Set != null && (type & OwnPropsMapType.Set) != 0) return true;
+					if (opm.Value != null && (type & OwnPropsMapType.Value) != 0) return true;
+				}
 			}
         }
         public static (object, object) GetMethodOrProperty(object item, string key, int paramCount, bool checkBase = true)//This has to be public because the script will emit it in Main().
 		{
 			Error err;
-			Type typetouse = null;
 			KeysharpObject kso = null;
 
 			try
@@ -55,12 +70,7 @@ namespace Keysharp.Scripting
 					kso = t; item = otup[1];
 				}
 
-                if (item == null)
-				{
-					if (Reflections.FindMethod(key, paramCount) is MethodPropertyHolder mph0)
-						return (item, mph0);
-				}
-				else if (kso != null && kso.op != null)
+                if (kso != null && kso.op != null)
 				{
 					if (TryGetOwnPropsMap(kso, key, out var val))
 					{
@@ -79,22 +89,10 @@ namespace Keysharp.Scripting
                         return (null, ifoprotocall.Bind(item, key));
                 }
 
-                if (typetouse == null)
-                    typetouse = item.GetType();
-
-                if (Reflections.FindAndCacheInstanceMethod(typetouse, key, paramCount) is MethodPropertyHolder mph1)
-				{
-					return (item, mph1);
-				}
-				else if (Reflections.FindAndCacheProperty(typetouse, key, paramCount) is MethodPropertyHolder mph2)
-				{
-					return (item, mph2);
-				}
-
 #if WINDOWS
 				//COM checks must come before Item checks because they can get confused sometimes and COM should take
 				//precedence in such cases.
-				else if (item is ComObject co)
+				if (item is ComObject co)
 				{
 					return GetMethodOrProperty(co.Ptr, key, paramCount);
 				}
@@ -104,11 +102,6 @@ namespace Keysharp.Scripting
 				}
 
 #endif
-				else if (Reflections.FindAndCacheInstanceMethod(typetouse, "get_Item", 1) is MethodPropertyHolder mph)//Last ditch attempt, see if it was a map entry, but was treated as a class property.
-				{
-					var val = mph.callFunc(item, [key]);
-					return (item, val);
-				}
 			}
 			catch (Exception e)
 			{
@@ -134,50 +127,30 @@ namespace Keysharp.Scripting
                 if (item is VarRef vr && namestr.Equals("__Value", StringComparison.OrdinalIgnoreCase))
 					return vr.__Value;
 
-                if (item is ITuple otup && otup.Length > 1 && otup[0] is KeysharpObject kso2 && otup[1] is object o)
+                if (item is ITuple otup && otup.Length > 1 && otup[0] is KeysharpObject t)
 				{
-					kso = kso2;
-					item = o;
+					kso = t;
+					item = otup[1];
 				}
-                
-				if (typetouse == null && item != null)
-                    typetouse = item.GetType();
-
 
                 if ((kso != null || (kso = item as KeysharpObject) != null) && kso.op != null)
                 {
-                    if (TryGetOwnPropsMap(kso, namestr, out var opm))
+					if (TryGetOwnPropsMap(kso, namestr, out var opm))
 					{
-                        if (opm.Value != null)
-                            return opm.Value;
-                        else if (opm.Get != null && opm.Get is IFuncObj ifo && ifo != null)
-                            return ifo.Call(item);
-                        else if (opm.Call != null && opm.Call is IFuncObj ifo2 && ifo2 != null)
-                            return ifo2;
+						if (opm.Value != null)
+							return opm.Value;
+						else if (opm.Get != null && opm.Get is IFuncObj ifo && ifo != null)
+							return ifo.Call(item);
+						else if (opm.Call != null && opm.Call is IFuncObj ifo2 && ifo2 != null)
+							return ifo2;
 						return null;
-                    }
-                    else if (TryGetOwnPropsMap(kso, "__Get", out var protoGet) && protoGet.Call != null && protoGet.Call is IFuncObj ifoprotoget)
+					}
+					else if (TryGetOwnPropsMap(kso, "__Get", out var protoGet) && (protoGet.Call != null ? protoGet.Call : protoGet.Value) is IFuncObj ifoprotoget && ifoprotoget != null)
                         return ifoprotoget.Call(item, namestr, new Keysharp.Core.Array());
-
-                    if (Reflections.FindAndCacheProperty(typetouse, namestr, 0) is MethodPropertyHolder mph2)
-                    {
-                        return mph2.callFunc(item, null);
-                    }
                 }
 
-                if (Reflections.FindAndCacheProperty(typetouse, namestr, 0) is MethodPropertyHolder mph)
-				{
-					return mph.callFunc(item, null);
-				}
-
-				//This is for the case where a Map accesses a key within the Map as if it were a property, so we try to get the indexer property, then pass the name of the passed in property as the key/index.
-				//We check for a param length of 1 so we don't accidentally grab properties named Item which have no parameters, such as is the case with ComObject.
-				//else if (Reflections.FindAndCacheInstanceMethod(typetouse, "get_Item", 1) is MethodPropertyHolder mph1 && mph1.ParamLength == 1)
-				//{
-				//  return mph1.callFunc(item, [namestr]);
-				//}
 #if WINDOWS
-				else if (item is ComObject co)
+				if (item is ComObject co)
 				{
 					return GetPropertyValue(co.Ptr, namestr, throwOnError);
 				}
@@ -363,48 +336,6 @@ namespace Keysharp.Scripting
             throw new MemberError($"Attempting to invoke method or property {meth} failed.");
         }
 
-        /*
-        public static object Invoke(object obj, object meth, params object[] parameters)
-		{
-            try
-            {
-				(object, object) mitup = (null, null);
-                IFuncObj f;
-				var methName = (string)meth;
-				if (meth is IFuncObj fo1)
-					mitup = (obj, fo1);
-				else if (obj is ITuple otup && otup.Length > 1)
-				{
-					mitup = GetMethodOrProperty(otup, methName, -1);
-					if (otup[0] is object o && !(o is ComObject))
-						mitup.Item1 = o;
-				}
-				else if (obj is IFuncObj fo2 && methName.Equals("Call", StringComparison.OrdinalIgnoreCase))
-				{
-					return fo2.Call(fo2.Inst == null ? parameters : new object[] { fo2.Inst }.Concat(parameters));
-				}
-				else
-				{
-					mitup = GetMethodOrProperty(obj, methName, -1);
-					if (!(obj is ComObject))
-						mitup.Item1 = obj;
-				}
-
-                return Invoke(mitup, parameters);
-            }
-            catch (Exception e)
-            {
-                if (e.InnerException is KeysharpException ke)
-                    throw ke;
-                else
-                    throw;
-            }
-
-            throw new MemberError($"Attempting to invoke method or property {meth} failed.");
-        }
-
-		*/
-
         public static object Invoke((object, object) mitup, params object[] parameters)
 		{
 			Error err;
@@ -589,14 +520,9 @@ namespace Keysharp.Scripting
 					vr.__Value = value;
 					return value;
 				}
-				else if (item is ITuple otup && otup.Length > 1)
+				else if (item is ITuple otup && otup.Length > 1 && otup[0] is KeysharpObject t)
 				{
-					if (otup[0] is Type t && otup[1] is object o)
-					{
-						typetouse = t;
-						item = o;
-						Variables.Prototypes.TryGetValue(typetouse, out kso);
-					}
+					kso = t; item = otup[1];
                 }
 
 				if ((kso != null || (kso = item as KeysharpObject) != null) && kso.op != null)

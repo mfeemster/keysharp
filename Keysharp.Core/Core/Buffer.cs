@@ -62,10 +62,6 @@
 			}
 		}
 
-		/// <summary>
-		/// The implementation for <see cref="KeysharpObject.super"/> for this class to return this type.
-		/// </summary>
-		public new (Type, object) super => (typeof(KeysharpObject), this);
 
 		/// <summary>
 		/// Calls <see cref="__New"/> to initialize a new instance of the <see cref="Buffer"/> class.
@@ -93,7 +89,7 @@
 		///     Integer[, Integer]: Sets length to the first value and optionally sets each byte to the second value.
 		/// </param>
 		/// <returns>Empty string, unused.</returns>
-		public new unsafe object __New(params object[] obj)
+		public override unsafe object __New(params object[] obj)
 		{
 			if (obj == null || obj.Length == 0)
 			{

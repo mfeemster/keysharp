@@ -990,7 +990,9 @@ namespace Keysharp.Scripting
                     foreach (var catchClass in catchAssignable.catchClasses().identifier())
                     {
                         catchClassText = catchClass.GetText();
-                        if (catchClassText.Equals("Any", StringComparison.OrdinalIgnoreCase))
+                        if (catchClassText.Equals("As", StringComparison.OrdinalIgnoreCase))
+                            continue;
+					    else if (catchClassText.Equals("Any", StringComparison.OrdinalIgnoreCase))
                             catchClassText = "Error";
                         if (Reflections.stringToTypes.TryGetValue(catchClassText, out var t))
                             catchClassText = t.FullName;
@@ -1008,7 +1010,8 @@ namespace Keysharp.Scripting
                     if (typeConditions.Count == 1)
                         exceptionType = SyntaxFactory.ParseTypeName(catchClassText);
                 } 
-                else
+                
+                if (typeConditions.Count == 0)
                 {
                     typeConditions.Add(
                         SyntaxFactory.IsPatternExpression(
@@ -1053,7 +1056,7 @@ namespace Keysharp.Scripting
 
         public override SyntaxNode VisitFinallyProduction([NotNull] FinallyProductionContext context)
         {
-            return EnsureBlockSyntax(Visit(context.flowBlock()));
+            return EnsureBlockSyntax(Visit(context.statement()));
         }
 
         private bool switchCaseSense = true;

@@ -807,8 +807,6 @@ namespace Keysharp.Core
 		IDataObject dataObject = Clipboard.GetDataObject();
 		string[] formats;
 
-		public new (Type, object) super => (typeof(KeysharpObject), this);
-
 		public ClipboardAll(params object[] args) : base(args) { }
 
 		public override object __New(params object[] args)
@@ -853,11 +851,6 @@ namespace Keysharp.Core
 		//  : base(obj)
 		//{
 		//}
-
-		/// <summary>
-		/// The implementation for <see cref="KeysharpObject.super"/> for this class to return this type.
-		/// </summary>
-		public new (Type, object) super => (typeof(KeysharpObject), this);
 
 		public ClipboardAll(params object[] args) : base(args) { }
     }

@@ -320,7 +320,7 @@ catchClasses
     ;
 
 finallyProduction
-    : EOL Finally WS* flowBlock
+    : EOL Finally s* statement 
     ;
 
 functionDeclaration
@@ -529,7 +529,8 @@ assignable
     ;
 
 objectLiteral
-    : '{' s* (propertyAssignment (WS* ',' propertyAssignment)* s*)? '}'
+    : '{' s* propertyAssignment (WS* ',' propertyAssignment)* s* '}'
+    | '{' WS+ '}' // Don't allow linebreaks, otherwise this creates ambiguity in Loop { }
     ;
 
 functionHead

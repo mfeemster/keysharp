@@ -128,11 +128,6 @@
 		public object Default { get; set; }
 
 		/// <summary>
-		/// The implementation for <see cref="KeysharpObject.super"/> for this class to return this type.
-		/// </summary>
-		public new (Type, object) super => (typeof(KeysharpObject), this);
-
-		/// <summary>
 		/// Gets a value indicating whether synchronized.
 		/// </summary>
 		bool ICollection.IsSynchronized => ((ICollection)map).IsSynchronized;
@@ -146,10 +141,7 @@
 		/// Initializes a new instance of the <see cref="Map"/> class.
 		/// See <see cref="__New(object[])"/>.
 		/// </summary>
-		public Map(params object[] args)
-		{
-			_ = __New(args);
-		}
+		public Map(params object[] args) : base(args) { }
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="Map"/> class without creating the __Item dynamic property.
@@ -323,9 +315,8 @@
 		/// <param name="name">The name to use for this object.</param>
 		/// <param name="sbuf">The <see cref="StringBuffer"/> to print to.</param>
 		/// <param name="tabLevel">The tab level to use when printing.</param>
-		public override void PrintProps(string name, StringBuffer sbuf, ref int tabLevel)
+		public override void PrintProps(string name, StringBuffer sb, ref int tabLevel)
 		{
-			var sb = sbuf.sb;
 			var indent = new string('\t', tabLevel);
 
 			if (map.Count > 0)
@@ -402,7 +393,7 @@
 
 				if (val != this && val is KeysharpObject kso2)
 				{
-					kso2.PrintProps(propName.ToString(), sbuf, ref tabLevel);
+					kso2.PrintProps(propName.ToString(), sb, ref tabLevel);
 				}
 				else if (val != null)
 				{

@@ -97,9 +97,6 @@
 					_ = Errors.ErrorOccurred(err = new Error($"Can only set RichText on a RichEdit control. Attempted on a {_control.GetType().Name} control.")) ? throw err : "";
 			}
 		}
-
-		public new (Type, object) super => (typeof(KeysharpObject), this);
-
 		public object Text
 		{
 			get
@@ -1829,6 +1826,7 @@
 
 		internal static void GetPosHelper(Control control, bool scaling, bool client, object outX, object outY, object outWidth, object outHeight)
 		{
+			outX ??= VarRef.Empty; outY ??= VarRef.Empty; outWidth ??= VarRef.Empty; outHeight ??= VarRef.Empty;
             var rect = client ? control.ClientRectangle : control.Bounds;
 			if (!client && control?.Parent != null)
 			{
@@ -1878,10 +1876,10 @@
 			{
 				//mousecount ^= 1;//Button click events get fired twice, because we have double click and standard click enabled, so filter the second click here.
 				//if (mousecount > 0)
-				_ = clickHandlers.InvokeEventHandlers(this, null);
+				_ = clickHandlers.InvokeEventHandlers(this, 0L);
 			}
 			else
-				_ = clickHandlers.InvokeEventHandlers(this, null);
+				_ = clickHandlers.InvokeEventHandlers(this, 0L);
 		}
 
 		internal void _control_DoubleClick(object sender, EventArgs e)

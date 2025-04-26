@@ -43,7 +43,16 @@
 
 				if (GetVal)
 				{
-					if (kv.Value is MethodPropertyHolder mph)
+					if (kv.Value is OwnPropsDesc op)
+					{
+						if (op.Value != null)
+							return (kv.Key, op.Value);
+						else if (op.Get != null && op.Get is FuncObj fo)
+							return (kv.Key, fo.Call(obj));
+						else if (op.Call != null)
+							return (kv.Key, op.Call);
+					} 
+					else if (kv.Value is MethodPropertyHolder mph)
 						return (kv.Key, mph.callFunc(obj, null));
 					else if (kv.Value is FuncObj fo)//ParamLength was verified when this was created in OwnProps().
 						return (kv.Key, fo.Call(obj));

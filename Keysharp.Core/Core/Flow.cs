@@ -231,7 +231,7 @@ namespace Keysharp.Core
 			var b = persist.Ab(true);
 			var old = Script.persistent;
 			Script.persistent = persistentValueSetByUser = b;
-			return old;
+			return old == false ? 0L : 1L;
 		}
 
 		/// <summary>

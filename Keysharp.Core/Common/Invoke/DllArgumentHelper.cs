@@ -126,12 +126,12 @@ namespace Keysharp.Core.Common.Invoke
 					// or System.__ComObject. If the numeric value is not wrapped then using it
 					// as an output variable will not work properly. 
 					if (parameters[i] is KeysharpObject pkso && Script.GetPropertyValue(pkso, "ptr", false) is object pptr && pptr != null)
-                        parameters[i] = pptr;
-                    else if (usePtr && parameters[i] is KeysharpObject kso && kso is not ComObject)
-                    {
-                        refs[i] = kso;
-                        parameters[i] = Script.GetPropertyValue(kso, "__Value");
-                    }
+						parameters[i] = pptr;
+					else if (usePtr && parameters[i] is KeysharpObject kso && kso is not ComObject)
+					{
+						refs[i] = kso;
+						parameters[i] = Script.GetPropertyValue(kso, "__Value");
+					}
 
                     var n = i / 2;
                     var p = parameters[i];
@@ -168,12 +168,6 @@ namespace Keysharp.Core.Common.Invoke
 								{
 									args[n] = delholder.delRef;
 									types[n] = delholder.delRef.GetType();
-								}
-								else if (p is StringBuffer sb)
-								{
-									sb.UpdateBufferFromEntangledString();
-									args[n] = sb.sb;
-									types[n] = typeof(StringBuilder);
 								}
 								else if (p is Delegate del)
 								{

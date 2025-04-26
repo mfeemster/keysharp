@@ -370,7 +370,7 @@ namespace Keysharp.Core.Common.Invoke
 
 					if (typeToStringProperties.TryGetValue(t, out var dkt))
 					{
-						if (name != "__Class" && name != "__Static" && name != "super")
+						if (name != "__Class" && name != "__Static")
 							if (dkt.TryGetValue(name, out var prop))
 								return true;
 					}
@@ -434,9 +434,6 @@ namespace Keysharp.Core.Common.Invoke
 					if (typeToStringProperties.TryGetValue(t, out var dkt))
 					{
 						ct += dkt.Count;
-
-						if (dkt.ContainsKey("super"))
-							--ct;
 
                         if (dkt.ContainsKey("__Static"))
                             --ct;

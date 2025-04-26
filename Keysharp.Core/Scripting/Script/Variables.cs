@@ -144,7 +144,7 @@ namespace Keysharp.Scripting
                 Statics[typeof(FuncObj)].DefineProp("base", Collections.Map("value", Variables.Statics[typeof(KeysharpObject)]));
 
 
-                var typesToRemoveSet = new HashSet<Type>(new[] { typeof(Any), typeof(FuncObj), typeof(KeysharpObject) });
+                var typesToRemoveSet = new HashSet<Type>(new[] { typeof(Any), typeof(FuncObj), typeof(KeysharpObject), typeof(Class) });
                 var orderedTypes = types.Where(type => !typesToRemoveSet.Contains(type)).OrderBy(GetInheritanceDepth);
                 foreach (var t in orderedTypes)
                 {

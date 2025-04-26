@@ -59,9 +59,6 @@
 
 			set => Seek(value);
 		}
-
-		public new (Type, object) super => (typeof(KeysharpObject), this);
-
 		public KeysharpFile(params object[] args) : base(args) { }
 
 		public override object __New(params object[] args)

@@ -1,4 +1,6 @@
-﻿namespace Keysharp.Core
+﻿using System.Drawing;
+
+namespace Keysharp.Core
 {
 	public static class GuiHelper
 	{

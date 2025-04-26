@@ -20,8 +20,6 @@ namespace Keysharp.Core.Common.ObjectBase
 
 		public object Base => GetType().BaseType;//Documentation says this can be set, but C# doesn't support changing a base at runtime.
 
-		public (Type, object) super => (typeof(object), this);
-
 		public virtual IFuncObj GetMethod(object obj0 = null, object obj1 = null) => Functions.GetMethod(this, obj0, obj1);
 
 		//public bool DefineProp(object obj0, object obj1)

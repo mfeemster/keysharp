@@ -55,7 +55,7 @@
 	MyGui := Gui(, "KEYSHARP TESTS")
 	MyGui.OnEvent("Close", "CloseApp")
 
-CloseApp() {
+CloseApp(*) {
 	shell := ""
 	ExitApp
 }
@@ -233,7 +233,7 @@ iniEdit := MyGui.Add("Edit", "xc+10 y+10 w300 h180")
 
 	kstests := "." . A_DirSeparator . "kstests.ini"
 
-	ReadINI() {
+	ReadINI(*) {
 		Val := IniRead(kstests, "section2", "PRIMATE2")
 		iniText.SetFont("s10 cBlue")
 		IniFileText := FileRead(kstests)
@@ -250,7 +250,7 @@ iniWriteEdit := MyGui.Add("Edit", "xc+10 y+10 w300 h180")
 
 MyGui.UseGroup()
 
-WriteINI() {
+WriteINI(*) {
 	IniWrite("BonoboBozo has been captured", kstests, "SECTION42", "PRIMATEZ_ON_LOOSE")
 	IniFileText2 := FileRead(kstests)
 	ControlSetText(IniFileText2, iniWriteEdit)
@@ -435,12 +435,12 @@ MoveButtonBack := MyGui.Add("Button", "xc+120 yp", "Move GUI Back")
 MoveButtonBack.OnEvent("Focus", "ChangeMoveBtnBackColor")
 MoveButtonBack.OnEvent("Click", "MoveGuiBack")
 
-	ChangeMoveBtnColor() {
+	ChangeMoveBtnColor(*) {
 		MoveButton.SetFont("cRed")
 		MoveButtonBack.SetFont("cBlack")
 	}
 
-	ChangeMoveBtnBackColor() {
+	ChangeMoveBtnBackColor(*) {
 		MoveButton.SetFont("cBlack")
 		MoveButtonBack.SetFont("cRed")
 	}
@@ -457,12 +457,12 @@ SendBtn1.OnEvent("Click", "ChangeTitle")
 SendBtn2 := MyGui.Add("Button", "xc+120 yp", "Restore Title")
 SendBtn2.OnEvent("Click", "RestoreTitle")
 
-	ChangeTitle() {
+	ChangeTitle(*) {
 		Title := "KEYSHARP'S BRAND SPANKING NEW TITLE"
 		SendMessage(0x000C, 0, Title)  ; 0X000C is WM_SETTEXT
 	}
 
-	RestoreTitle() {
+	RestoreTitle(*) {
 		Title := "KEYSHARP TESTS"
 		SendMessage(0x000C, 0, Title)  ; 0X000C is WM_SETTEXT
 	}
@@ -476,7 +476,7 @@ PostInfo.SetFont("cBlue s8")
 PostBtn1 := MyGui.Add("Button", "xc+10 y+10", "Show Notepad 'About'")
 PostBtn1.OnEvent("Click", "AboutNotepad")
 
-	AboutNotepad() {
+	AboutNotepad(*) {
 		SetTitleMatchMode(2)
 		Run("Notepad.exe")
 		Sleep(1000)
@@ -527,7 +527,7 @@ MyGui.UseGroup(gb1_TabThree)
 	MyLbBtn2 := MyGui.Add("Button", "x+10 yp", "Add White")
 	MyLbBtn2.OnEvent("Click", "AddWhite")
 
-	DeleteWhite() {
+	DeleteWhite(*) {
 
 		Try 
 		{
@@ -542,7 +542,7 @@ MyGui.UseGroup(gb1_TabThree)
 		ControlDeleteItem(WhiteIndex, MyListBox)
 	}
 
-	AddWhite() {
+	AddWhite(*) {
 		ControlAddItem("White", MyListBox)
 	}
 
@@ -572,11 +572,11 @@ CB_AddBtn.OnEvent("Click", "AddYellow")
 CB_DeleteBtn := MyGui.Add("Button", "h25 w80 xc+170 yp", "Del Yellow")
 CB_DeleteBtn.OnEvent("Click", "DeleteYellow")
 
-	AddYellow() {
+	AddYellow(*) {
 		ControlAddItem("Yellow", MyCB)
 	}
 
-	DeleteYellow() {
+	DeleteYellow(*) {
 
 		Try 
 		{
@@ -603,7 +603,7 @@ MySliderPos := MyGui.Add("Text", "xc+10 y+5","")
 	; ┌───────────────────┐
 	; │  Slider Callback  │
 	; └───────────────────┘
-	SliderPos() {
+	SliderPos(*) {
 		ControlSetText("Slider value is " MySlider.Value, MySliderPos.Hwnd)
 	}
 
@@ -661,7 +661,7 @@ mybtn.OnEvent("Click", "STest")
 FakeSep := MyGui.Add("Text", "xc+10 y+10", "__________________________________________________")
 FakeSep.SetFont("cTeal Bold")
 
-STest() {
+STest(*) {
 	Loop(MySlider2.Value) {
 		padding := A_Index
 		s := FormatCs("| {1,-" padding "} |`r`n| {2," padding "} |`r`n", "Left  ", "Right")
@@ -688,7 +688,7 @@ MyHotkey.OnEvent("Change", "UpdateHK")
 MyHkText := MyGui.Add("Text", "xc+10 y+5 w200" , MyHotkey.Value)
 ;MyHkText2 := MyGui.Add("Text", "xc+10 y+5 w200 cRed", "NOTE: Combos w/Win not working.")
 
-	UpdateHK() {
+	UpdateHK(*) {
 		ControlSetText(MyHotkey.Value, MyHkText)
 	}
 
@@ -740,7 +740,7 @@ CopyImageToClipboard("HBITMAP:" MySecondPic)
 ShowBtn := MyGui.Add("Button", "xc+10 y+10", "Paste Pic")
 ShowBtn.OnEvent("Click", "PastePic")
 
-	PastePic() {
+	PastePic(*) {
 		ControlFocus(MyRE)
 	#if WINDOWS
 		Send("^v")
@@ -757,7 +757,7 @@ MyRE2 := MyGui.Add("RichEdit", "xc+10 y+10 w300 h100")
 ShowBtn2 := MyGui.Add("Button", "xc+10 y+10", "Paste from file")
 ShowBtn2.OnEvent("Click", "CopyPicFromFile")
 
-	CopyPicFromFile() {
+	CopyPicFromFile(*) {
 		SelectedFile := FileSelect("3", A_AppData . A_DirSeparator . "Pictures")
 	
 		if (SelectedFile != "")
@@ -797,7 +797,7 @@ gb2Btn2.OnEvent("Click", "SendToGui")
 
 	;MyGui.Add("Text", , "Testing placement")
 
-	SendToApp() {
+	SendToApp(*) {
 	#if WINDOWS
 		Run("Notepad.exe")
 		WinWaitActive("ahk_exe Notepad.exe")
@@ -818,7 +818,7 @@ gb2Btn2.OnEvent("Click", "SendToGui")
 	#endif
 	}
 
-	SendToGui() {
+	SendToGui(*) {
 	#if WINDOWS
 		WinActivate(MyGui)
 		ControlFocus(gb2Edit)
@@ -1172,12 +1172,12 @@ CandyText.SetFont("cFFFFFF")
 
 CandyTimerFunc := Func("CandyTimer")
 
-CloseCandy() {
+CloseCandy(*) {
 	global CandyTimerFunc
 	SetTimer(CandyTimerFunc, 0)
 }
 
-CandyProgress()
+CandyProgress(*)
 {
 	global
 	
@@ -1192,7 +1192,7 @@ CandyProgress()
 
 candyvalue := 0
 
-CandyTimer()
+CandyTimer(*)
 {
 	global
 	
@@ -1216,7 +1216,7 @@ CandyTimer()
 	}
 }
 
-TestTypes()
+TestTypes(*)
 {
 	global
 	local s := "All of these should be true`n"
@@ -1274,13 +1274,13 @@ Gui2CtrlIndexButton.OnEvent("Click", "FindByItem")
 Gui2Edit := Gui2.Add("Edit", "xc+10 y+20 h400 w500 +Multiline")
 ;MsgBox(Gui2Edit.Hwnd, "Hwnd of Edit")
 
-	SecondGUI() {
+	SecondGUI(*) {
 		Gui2.Show()
 		ControlGetPos(&x, &y,,, Gui2Edit.Hwnd)
 		Gui2Edit.Text := "Edit position: " . x . " " y
 	}
 
-	GetTheControls() {
+	GetTheControls(*) {
 		MyWords := Gui2Edit.Hwnd
 		MyBtn1 := ControlGetClassNN(Gui2StyleButton.Hwnd)
 		TheMsg := "The Style Button's ClassNN is " . MyBtn1 . "`n"
@@ -1294,7 +1294,7 @@ Gui2Edit := Gui2.Add("Edit", "xc+10 y+20 h400 w500 +Multiline")
 		Sleep(2000)
 	}
 
-	FindSecondGuiEdit() {
+	FindSecondGuiEdit(*) {
 		; Called by button "Get Edit Hwnd"
 		MyWords := Gui2Edit.Hwnd
 		StyleBtn := ControlGetClassNN(Gui2StyleButton.Hwnd)
@@ -1305,7 +1305,7 @@ Gui2Edit := Gui2.Add("Edit", "xc+10 y+20 h400 w500 +Multiline")
 
 	}
 
-EnumCtrls() {
+EnumCtrls(*) {
 	theMsg := ""
 	For GuiCtrlObj in MyGui {
         try
@@ -1322,7 +1322,7 @@ EnumCtrls() {
 	Gui2Edit.Value := theMsg
 }
 
-	StyleTest()  {
+	StyleTest(*)  {
 		ToolTip("Setting style to -0xC00000`n(Will revert in two seconds to`n+0xC00000)")
 		WinSetStyle("-0xC00000", "A")
 		Sleep(2000)
@@ -1330,7 +1330,7 @@ EnumCtrls() {
 		WinSetStyle("+0xC00000", "A")
 	}
 
-	FindByItem() {
+	FindByItem(*) {
 		EditObj := Gui2Edit
 		MsgBox(EditObj.Text)
 	}
@@ -1359,41 +1359,41 @@ MyEdit3 := Gui3.Add("Edit", "xc+10 h200 w200")
 
 	;Gui3.Show()
 
-	FindByText() {
+	FindByText(*) {
 		theItem := Gui3["Find by Name"]
 		MsgBox("I found a button. Text:`n" theItem.Text, "Find by Text")
 	}
 
-	FindByHwnd() {
+	FindByHwnd(*) {
 		theItem := Gui3[ButtonTwo.Hwnd]
 		MsgBox("I found a button by its Hwnd. Text:`n" theItem.Text, "Find by Hwnd")
 	}
 
-	;FindByClassNN() {
+	;FindByClassNN(*) {
 	;    theItem := Gui3["WindowsForms10.Button.app.0.5dbcd3_r3_ad11"]
 	;    MsgBox(theItem.Text, "Find by ClassNN")
 	;}
 
-	FindByNetClassNN() {
+	FindByNetClassNN(*) {
 		theItem := Gui3["KeysharpButton5"]
 		MsgBox("I found a button by its .NET classname. Text:`n" theItem.Text, "Find by NetClassNN")
 	}
 
-	FindByName() {
+	FindByName(*) {
 		theItem := Gui3[ButtonDummy.Name]
 		MsgBox("I found a renamed button by Name.`nIt was renamed to:`n" theItem.Name, "Find by Name")
 	}
 
-	ThirdGUI() {
+	ThirdGUI(*) {
 		Gui3.Show()
 	}
 
-	;MouseMoveTests() {
+	;MouseMoveTests(*) {
 	;    MsgBox("Dead monkey")
 	;}
 
 
-	MoveTheMouse() {
+	MoveTheMouse(*) {
 	#if WINDOWS
 		mx :=
 		my := 0
@@ -1445,7 +1445,7 @@ MyEdit3 := Gui3.Add("Edit", "xc+10 h200 w200")
 
 ;ReloaderBtn := MyGui.Add("Button", "w200 h25 xc+10 y+5", "Reload").OnEvent("Click", "Reload")
 
-	;ReloadMe() {
+	;ReloadMe(*) {
 	;    Reload()
 	;}
 
@@ -1453,15 +1453,15 @@ MyEdit3 := Gui3.Add("Edit", "xc+10 h200 w200")
 	; │  ControlZoo Functions  │
 	; └────────────────────────┘
 
-	AddFuchsia() {
+	AddFuchsia(*) {
 		ControlAddItem("Fuchsia", CZ_ListBox)
 	}
 
-	AddWhite2() {
+	AddWhite2(*) {
 		ControlAddItem("White", gb2_CZ_CB)
 	}
 
-	DeleteFuchsia() {
+	DeleteFuchsia(*) {
 		Try 
 		{
 			FuchsiaIndex := ControlFindItem("Fuchsia", CZ_ListBox)
@@ -1476,7 +1476,7 @@ MyEdit3 := Gui3.Add("Edit", "xc+10 h200 w200")
 		ControlDeleteItem(FuchsiaIndex, CZ_ListBox)
 	}
 
-	DeleteWhite2() {
+	DeleteWhite2(*) {
 		Try 
 		{
 			WhiteIndex := ControlFindItem("White", gb2_CZ_CB)
@@ -1490,7 +1490,7 @@ MyEdit3 := Gui3.Add("Edit", "xc+10 h200 w200")
 		ControlDeleteItem(WhiteIndex, gb2_CZ_CB)
 	}
 
-	FuchsiaDeleteTrayTip() {
+	FuchsiaDeleteTrayTip(*) {
 	#if LINUX
 		TrayTip("Also tests ControlFindItem`nClick into another edit box to dismiss this.")
 	#else
@@ -1498,19 +1498,19 @@ MyEdit3 := Gui3.Add("Edit", "xc+10 h200 w200")
 	#endif
 	}
 
-	ChooseIndex() {
+	ChooseIndex(*) {
 		ControlChooseIndex(7, CZ_ListBox)
 	}
 
-	ChooseString() {
+	ChooseString(*) {
 		ControlChooseString("красный", CZ_ListBox)
 	}
 
-	ChooseString_CB() {
+	ChooseString_CB(*) {
 		ControlChooseString("Purple", gb2_CZ_CB)
 	}
 
-	GetChoice() {
+	GetChoice(*) {
 		Try
 		{
 		Choice := ControlGetChoice(CZ_ListBox, MyGui)
@@ -1523,7 +1523,7 @@ MyEdit3 := Gui3.Add("Edit", "xc+10 h200 w200")
 		}
 	}
 
-	GetIndex() {
+	GetIndex(*) {
 		Try
 		{
 		index := ControlGetIndex(CZ_ListBox, MyGui)
@@ -1536,12 +1536,12 @@ MyEdit3 := Gui3.Add("Edit", "xc+10 h200 w200")
 		}
 	}
 
-	GetClassNN() {
+	GetClassNN(*) {
 		ClassNN := ControlGetClassNN(CZ_ListBox, MyGui)
 		MsgBox(ClassNN, "ClassNN")
 	}
 
-	GetEnabled() {
+	GetEnabled(*) {
 		Result := ControlGetEnabled(CZ_LbBtn8, MyGui)
 		MsgBox(Result, "'Disabled' Button State (1: enabled 0: disabled)")
 		Result2 := ControlGetEnabled(CZ_LbBtn6, MyGui)
@@ -1554,25 +1554,25 @@ MyEdit3 := Gui3.Add("Edit", "xc+10 h200 w200")
 		ControlSetEnabled(!Result, CZ_LbBtn8, MyGui)
 	}
 
-	GetHwnd() {
+	GetHwnd(*) {
 		Result := ControlGetHwnd(CZ_ListBox, MyGui)
 		MsgBox(Result, "Hwnd of ListBox")
 	}
 
-	GetText() {
+	GetText(*) {
 		Result := ControlGetText(CZ_LbBtn8, MyGui)
 		MsgBox(Result, "Text of Target Button")
 	}
 
-	HideButton() {
+	HideButton(*) {
 		ControlHide(CZ_LbBtn8, MyGui)
 	}
 
-	ShowButton() {
+	ShowButton(*) {
 		ControlShow(CZ_LbBtn8, MyGui)
 	}
 
-	IsItHidden() {
+	IsItHidden(*) {
 		Result := ControlGetVisible(Cz_LbBtn8, MyGui)
 		If (Result != 0) {
 			Result := "Visible"
@@ -1582,80 +1582,80 @@ MyEdit3 := Gui3.Add("Edit", "xc+10 h200 w200")
 		MsgBox(Result, "Visible or Not?")
 	}
 
-	GetCol() {
+	GetCol(*) {
 		CurrentCol := EditGetCurrentCol(CZ_Edit1, MyGui)
 		MsgBox(CurrentCol, "Current Colum No.")
 		CurrentCol := ""
 	}
 
-	GetLine() {
+	GetLine(*) {
 		CurrentLine := EditGetCurrentLine(CZ_Edit1, MyGui)
 		MsgBox(CurrentLine, "Current Line No.")
 		CurrentLine := ""
 	}
 
-	GetLineText() {
+	GetLineText(*) {
 		CurrentLine := EditGetCurrentLine(CZ_Edit1, MyGui)
 		CurrentLineText := EditGetLine(CurrentLine, CZ_Edit1, MyGui)
 		MsgBox(CurrentLineText, "Current Line Text")
 		CurrentLineText := "" ; Reset variable
 	}
 
-	GetSelectedText() {
+	GetSelectedText(*) {
 		SelectedText := EditGetSelectedText(CZ_Edit1, MyGui)
 		MsgBox(SelectedText, "Selected text in Edit")
 		SelectedText := "" ; Reset variable
 	}
 
-	EditPaster() {
+	EditPaster(*) {
 		EditPasted := "How now brown cow"
 		EditPaste(EditPasted, CZ_Edit1, MyGui)
 	}
 
-	LV_Selected() {
+	LV_Selected(*) {
 		List := ListViewGetContent("Selected", LV2, MyGui)
 		MsgBox(List, "LV Selected")
 		List := ""
 	}
 
-	LV_Focused() {
+	LV_Focused(*) {
 		List := ListViewGetContent("Focused", LV2, MyGui)
 		MsgBox(List, "LV Focused")
 		List := ""
 	}
 
-	LV_Col1() {
+	LV_Col1(*) {
 		List := ListViewGetContent("Col1", LV2, MyGui)
 		MsgBox(List, "LV Column 1")
 		List := ""
 	}
 
-	LV_Count() {
+	LV_Count(*) {
 		List := ListViewGetContent("Count", LV2, MyGui)
 		MsgBox(List, "LV Row Count")
 		List := ""
 	}
 
-	LV_CountSelected() {
+	LV_CountSelected(*) {
 		List := ListViewGetContent("Count Selected", LV2, MyGui)
 		MsgBox(List, "LV Count Selected")
 		List := ""
 	}
 
-	LV_CountFocused() {
+	LV_CountFocused(*) {
 		List := ListViewGetContent("Count Focused", LV2, MyGui)
 		MsgBox(List, "LV Count Focused")
 		List := ""
 	}
 
-	LV_CountCol() {
+	LV_CountCol(*) {
 		List := ListViewGetContent("Count Col", LV2, MyGui)
 		MsgBox(List, "LV Column Count")
 		List := ""
 	}
 
 
-	Click_CB() {
+	Click_CB(*) {
 	#if WINDOWS
 		Send("#r")  ; Open the Run dialog.
 		WinWaitActive("ahk_class #32770")  ; Wait for the dialog to appear.
@@ -1667,7 +1667,7 @@ MyEdit3 := Gui3.Add("Edit", "xc+10 h200 w200")
 	#endif
 	}
 
-	GetPix() {
+	GetPix(*) {
 		mx :=
 		my := 0
 		MouseGetPos(&mx, &my)
@@ -1677,32 +1677,32 @@ MyEdit3 := Gui3.Add("Edit", "xc+10 h200 w200")
 		MyColorText.SetFont(ColorString)
 	}
 
-	Click_LB_Items()
+	Click_LB_Items(*)
 	{
 		global CZ_ListBox
 		items := ControlGetItems(CZ_ListBox)
 		MsgBox(items.Join("`n"))
 	}
 
-	Click_CB_Items()
+	Click_CB_Items(*)
 	{
 		global gb2_CZ_CB
 		items := ControlGetItems(gb2_CZ_CB)
 		MsgBox(items.Join("`n"))
 	}
 
-	Click_CB_Show_Dropdown()
+	Click_CB_Show_Dropdown(*)
 	{
 		ControlShowDropDown(gb2_CZ_CB, MyGui)
 	}
 
-	Click_CB_Hide_Dropdown()
+	Click_CB_Hide_Dropdown(*)
 	{
 		ControlHideDropDown(gb2_CZ_CB, MyGui)
 	}
 
 	#if WINDOWS
-	LoadSC() {
+	LoadSC(*) {
 		Tab.UseTab("Send & Hotkey")
 		path := A_Desktop . A_DirSeparator . "MyScreenClip.png"
 		If (!FileExist(path)) {
@@ -1755,7 +1755,7 @@ MyScBtn := MyGui.Add("Button", "w200 h25 xc+10 y+10", "Press to get screenclip")
 	; │  Send and Hotkey button functions  │
 	; └────────────────────────────────────┘
 
-	BtnSendFunc(){   
+	BtnSendFunc(*) {   
 		TheSendMsg := "
 	(
 	From the AHK docs:
@@ -1775,7 +1775,7 @@ MyScBtn := MyGui.Add("Button", "w200 h25 xc+10 y+10", "Press to get screenclip")
 	}
 
 
-	BtnSendTextFunc(){
+	BtnSendTextFunc(*) {
 
 		TheSendTextMsg := "
 	(
@@ -1835,7 +1835,7 @@ MyScBtn := MyGui.Add("Button", "w200 h25 xc+10 y+10", "Press to get screenclip")
 	Send("{Alt}fx{Tab}{Enter}")
 	}
 
-	BtnSendInputFunc(){
+	BtnSendInputFunc(*) {
 
 		TheSendInputMsg := "
 	(
@@ -1897,7 +1897,7 @@ MyScBtn := MyGui.Add("Button", "w200 h25 xc+10 y+10", "Press to get screenclip")
 
 	}
 
-	BtnSendPlayFunc(){
+	BtnSendPlayFunc(*) {
 		TheSendPlayMsg := "
 	(
 	Warning: SendPlay may have no effect at all if UAC is enabled, even if the script is running as an administrator. For more information, refer to the FAQ.
@@ -1931,7 +1931,7 @@ MyScBtn := MyGui.Add("Button", "w200 h25 xc+10 y+10", "Press to get screenclip")
 		SendEvent("!{F4}")
 	}
 
-	BtnSendEventFunc(){
+	BtnSendEventFunc(*) {
 		TheSendEventMsg := "
 	(
 	From the AHK docs:
@@ -1990,7 +1990,7 @@ boundText := ""
 		MsgBox(boundText . "`n" . a . ", " . b, "A bound function test")
 	}
 	
-DoTricks() {
+DoTricks(*) {
 	global boundText
 	RealFn := Func("RealFn")
 
@@ -2011,11 +2011,11 @@ DoTricks() {
 	;fn(, 4)    ; Error: 'a' was omitted
 }
 
-	StupidTrickTwo() {
+	StupidTrickTwo(*) {
 		Hotkey("RCtrl & RShift", "AltTab")
 	}
 
-	StupidTrickThree() {
+	StupidTrickThree(*) {
 		Try 
 		{
 				Hotkey("RCtrl & RShift", "Off")
@@ -2032,13 +2032,13 @@ DoTricks() {
 		MsgBox(TheMessage)
 	}
 
-FuncObjTest() {
+FuncObjTest(*) {
 	RealFn2 := Func("RealFn2")
 	fn2 := RealFn2.Bind("AltTab")
 	fn2()
 }
 
-	ToggleHotkey() {
+	ToggleHotkey(*) {
 		Try 
 		{
 			Hotkey("RCtrl & RShift", "Toggle")
@@ -2050,12 +2050,12 @@ FuncObjTest() {
 
 	}
 
-	GrabFromIni() {
+	GrabFromIni(*) {
 		HotkeyVal := IniRead("hotkeyini_1.ini", "HotkeyToRead", "Key")
 		Hotkey(HotkeyVal, "AltTab")
 	}
 
-ToggleFromIni() {
+ToggleFromIni(*) {
 	Try 
 	{
 		Hotkey("RCtrl & LShift", "Toggle")
@@ -2070,7 +2070,7 @@ ToggleFromIni() {
 F3::MsgBox getSelected()
 #HotIf
 
-getSelected() { ; https://www.autohotkey.com/boards/viewtopic.php?style=17&t=60403#p255256 by teadrinker
+getSelected(*) { ; https://www.autohotkey.com/boards/viewtopic.php?style=17&t=60403#p255256 by teadrinker
 	hwnd := WinExist('A'), selection := ''
 
 	If WinGetClass() ~= '(Cabinet|Explore)WClass'
@@ -2105,7 +2105,7 @@ getSelected() { ; https://www.autohotkey.com/boards/viewtopic.php?style=17&t=604
 	; │  Change header font  │
 	; └──────────────────────┘
 
-	ChangeFont()
+	ChangeFont(*)
 	{
 		global TEST_HEADER
 		TEST_HEADER.SetFont("cBlue s14", "Comic Sans MS")
@@ -2114,7 +2114,7 @@ getSelected() { ; https://www.autohotkey.com/boards/viewtopic.php?style=17&t=604
 	; │  Restore font  │
 	; └────────────────┘
 
-	ChangeFontBack()
+	ChangeFontBack(*)
 	{
 		TEST_HEADER.SetFont("cBlack s8", "Arial")
 		MsgBox("Done", "Restoring Font")
@@ -2123,7 +2123,7 @@ getSelected() { ; https://www.autohotkey.com/boards/viewtopic.php?style=17&t=604
 	; │  Change background color  │
 	; └───────────────────────────┘
 
-	ChangeBG()
+	ChangeBG(*)
 	{
 		global origBackColor := MyGui.BackColor
 		MsgBox(MyGui.BackColor, "Background color:")
@@ -2133,7 +2133,7 @@ getSelected() { ; https://www.autohotkey.com/boards/viewtopic.php?style=17&t=604
 	; │  Restore background function  │
 	; └───────────────────────────────┘
 
-	RestoreBG()
+	RestoreBG(*)
 	{
 		global MyGui, origBackColor
 		MyGui.BackColor := origBackColor
@@ -2143,7 +2143,7 @@ getSelected() { ; https://www.autohotkey.com/boards/viewtopic.php?style=17&t=604
 	; │  Input test function  │
 	; └───────────────────────┘
 
-	InputTest() {
+	InputTest(*) {
 		OutputVar := InputBox("What is your first name?", "Question 1").Value
 		if (OutputVar = "Bill")
 			MsgBox("That's an awesome name, " OutputVar ".", "What a great name ...")
@@ -2160,7 +2160,7 @@ getSelected() { ; https://www.autohotkey.com/boards/viewtopic.php?style=17&t=604
 	; │  RadioThree callback  │
 	; └───────────────────────┘
 
-	RadioThreeClicked() {
+	RadioThreeClicked(*) {
 		MsgBox("You clicked the last radio button.", "Radio 3 Clicked")
 	}
 
@@ -2168,7 +2168,7 @@ getSelected() { ; https://www.autohotkey.com/boards/viewtopic.php?style=17&t=604
 	; │  Checkbox callback  │
 	; └─────────────────────┘
 
-	CheckBoxOneClicked() {
+	CheckBoxOneClicked(*) {
 		IsChecked := ControlGetChecked(CheckBoxOne, "KEYSHARP TESTS")
 		MsgBox("1 is checked - 0 is unchecked`nTests 'ControlGetChecked' also`n`nValue is: " IsChecked, "Checkbox Test")
 		TrayTip("TrayTipTest", "I will see myself out, thanks!", "Icon!")
@@ -2176,23 +2176,23 @@ getSelected() { ; https://www.autohotkey.com/boards/viewtopic.php?style=17&t=604
 		HideTrayTip()
 	}
 
-	SetChecked()
+	SetChecked(*)
 	{
 		ControlSetChecked(true, RadioThree, MyGui)
 		ControlSetChecked(true, CheckBoxOne, MyGui)
 	}
 
-	SelectMenuByIndex()
+	SelectMenuByIndex(*)
 	{
 		MenuSelect(MyGui, "KEYSHARP TESTS", "1&", "5&", "2&")
 	}
 
-	SelectByString()
+	SelectByString(*)
 	{
 		MenuSelect(MyGui, "KEYSHARP TESTS", "Menu Icon Test", "My Submenu", "Item B")
 	}
 
-	MinimizeBySystemMenu()
+	MinimizeBySystemMenu(*)
 	{
 		MenuSelect(MyGui, "KEYSHARP TESTS", "0&", "Minimize")
 	}
@@ -2214,7 +2214,7 @@ getSelected() { ; https://www.autohotkey.com/boards/viewtopic.php?style=17&t=604
 	; └────────────────┘
 
 	; Copy this function into your script to use it.
-	HideTrayTip() {  
+	HideTrayTip(*) {  
 		TrayTip()  ; Attempt to hide it the normal way.
 		if SubStr(A_OSVersion,1,3) = "10." {
 			A_IconHidden := True
@@ -2236,7 +2236,7 @@ getSelected() { ; https://www.autohotkey.com/boards/viewtopic.php?style=17&t=604
 	"Quote marks" are now automatically escaped when appropriate.
 	)"
 
-	SendTextToEdit() {
+	SendTextToEdit(*) {
 		;MsgBox(EditVar)
 		global EditVar
 		ControlSetText(EditVar, SecondEdit)
@@ -2245,21 +2245,21 @@ getSelected() { ; https://www.autohotkey.com/boards/viewtopic.php?style=17&t=604
 	; ┌───────────────────────┐
 	; │  Clear Edit Callback  │
 	; └───────────────────────┘
-	ClearEdit() {
+	ClearEdit(*) {
 		ControlSetText(, SecondEdit)
 	}
 	; ┌──────────────────────┐
 	; │  RichEdit Callbacks  │
 	; └──────────────────────┘
 
-	SendTextToRichEdit() {
+	SendTextToRichEdit(*) {
 		;MsgBox(EditVar)
 		; ControlSetText(EditVar, SecondRichEdit)
 		global EditVar
 		SecondRichEdit.Value := EditVar
 	}
 
-	SendRtfToRichEdit()
+	SendRtfToRichEdit(*)
 	{
 		RawRichEditVar := "
 	(
@@ -2290,11 +2290,11 @@ getSelected() { ; https://www.autohotkey.com/boards/viewtopic.php?style=17&t=604
 	; ┌───────────────────────┐
 	; │  Clear Edit Callback  │
 	; └───────────────────────┘
-	ClearRichEdit() {
+	ClearRichEdit(*) {
 		ControlSetText(, SecondRichEdit)
 	}
 
-	GetLineCount()
+	GetLineCount(*)
 	{
 		MsgBox("Regular edit line count: " . EditGetLineCount(SecondEdit, MyGui) . "`nRich edit line count: " . EditGetLineCount(SecondRichEdit, MyGui))
 	}
@@ -2341,7 +2341,7 @@ GetIcon(Theme, W:=0, H:=0)
 }
 
 Icon2 := "HICON:*" . hSecondPic ; The * is important so it can be reused.
-LoadPic() {
+LoadPic(*) {
 	global
 	local x, y, w, h
 	Tab.UseTab("Second")
@@ -2364,7 +2364,7 @@ LoadPic() {
 }
 
 #if WINDOWS
-DestroyPic()
+DestroyPic(*)
 {
 	global MyFirstPic, MySecondPic
 	DllCall("DestroyWindow", "Ptr", MyFirstPic.Hwnd)
@@ -2379,7 +2379,7 @@ DestroyPic()
 	; │  Listbox Callback  │
 	; └────────────────────┘
 
-	ListBoxClicked() {
+	ListBoxClicked(*) {
 		; MsgBox(MyListBox.Text, "ListBox")
 		;MySB.SetIcon("Shell32.dll", 2)
 		; MsgBox("Icon lives at " . A_KeysharpCorePath)
@@ -2390,7 +2390,7 @@ DestroyPic()
 	; ┌─────────────────────┐
 	; │  Multi LB Callback  │
 	; └─────────────────────┘
-	MultiLBClicked() {
+	MultiLBClicked(*) {
 		For Index, Field in MyMultiLB.Text
 			{
 				MsgBox("Selection number " Index " is " Field, "Multi ListBox")
@@ -2400,14 +2400,14 @@ DestroyPic()
 	; ┌─────────────────────┐
 	; │  DropDown Callback  │
 	; └─────────────────────┘
-	DDLClicked() {
+	DDLClicked(*) {
 		MsgBox(MyDDL.Text, "Drop Down List")
 	}
 
 	; ┌─────────────────────┐
 	; │  ComboBox Callback  │
 	; └─────────────────────┘
-	CB_ButtonClicked() {
+	CB_ButtonClicked(*) {
 		MsgBox(MyCB.Text, "CB Selection")
 	}
 
@@ -2415,7 +2415,7 @@ DestroyPic()
 	; │  Progress Button Callbacks  │
 	; └─────────────────────────────┘
 
-	Pbtn1Clicked() {
+	Pbtn1Clicked(*) {
 		;MsgBox(MyProgress.Value)
 		MyProgress.Value -= 10
 	#if WINDOWS
@@ -2426,7 +2426,7 @@ DestroyPic()
 	#endif
 	}
 
-	Pbtn2Clicked() {
+	Pbtn2Clicked(*) {
 		MyProgress.Value += 10
 	#if WINDOWS
 		MyVertProgress.Value += 10
@@ -2436,7 +2436,7 @@ DestroyPic()
 	#endif
 	}
 
-	MC_Colors() {
+	MC_Colors(*) {
 		MsgBox("Not implemented.", "Future feature")
 	}
 
@@ -2444,7 +2444,7 @@ DestroyPic()
 	; │  Test GuiCtrl.Hwnd  │
 	; └─────────────────────┘
 
-	ShowEditHwnd() {
+	ShowEditHwnd(*) {
 		MsgBox(HwndSecondEdit, "Test 'GuiCtrl.Hwnd'")
 	}
 
@@ -2452,7 +2452,7 @@ DestroyPic()
 	; │  Update OSD  │
 	; └──────────────┘
 
-	UpdateOSD()
+	UpdateOSD(*)
 	{
 		mx :=
 		my := 
@@ -2470,7 +2470,7 @@ DestroyPic()
 	; │  GroupBox Tab - Functions  │
 	; └────────────────────────────┘
 
-	SendToGB3() {
+	SendToGB3(*) {
 	GB3Text := "
 	(
 	This uses 'ControlSetText' from a button in GroupBox 4 to populate this edit.
@@ -2486,11 +2486,11 @@ DestroyPic()
 		ControlSetText(GB3Text, obj)
 	}
 
-	ClearGB3() {
+	ClearGB3(*) {
 		ControlSetText(, gb3Edit)
 	}
 
-	StartEditToolTip() {
+	StartEditToolTip(*) {
 	ToolTipText := "
 	(
 	This uses 'ControlSetText' from a button in GroupBox 4 to populate this edit.
@@ -2502,22 +2502,22 @@ DestroyPic()
 		ToolTip(ToolTipText)
 	}
 
-	StopToolTip() {
+	StopToolTip(*) {
 		ToolTip()
 	}
 
 	; ┌───────────────────────────────┐
 	; │  Tab One Group Two functions  │
 	; └───────────────────────────────┘
-	Set_Style() {
+	Set_Style(*) {
 		WinSetStyle("-0xC00000", "A")
 	}
 
-	Reset_Style() {
+	Reset_Style(*) {
 		WinSetStyle("+0xC00000", "A")
 	}
 
-	Set_Edit_Style() 
+	Set_Edit_Style(*) 
 	{
 		;MsgBox(HwndMyEdit, "This is the ID")
 	#if WINDOWS
@@ -2529,7 +2529,7 @@ DestroyPic()
 		ControlFocus(HwndMyEdit)
 	}
 
-	Reset_Edit_Style()
+	Reset_Edit_Style(*)
 	{
 	#if WINDOWS
 		Str := ControlGetStyle(HwndMyEdit)
@@ -2551,7 +2551,7 @@ DestroyPic()
 	; │  Move Gui functions  │
 	; └──────────────────────┘
 
-	MoveGui() {
+	MoveGui(*) {
 		global winposx, winposy, winposw, winposh, gb2_TabTwo
 		Tab.UseTab("Second")
 		MyGui.UseGroup(gb2_TabTwo)
@@ -2561,7 +2561,7 @@ DestroyPic()
 		; MyGui.Move(100, 100, 200, 200)
 	}
 
-	MoveGuiBack() {
+	MoveGuiBack(*) {
 		global winposx, winposy, winposw, winposh, gb2_TabTwo
 		Tab.UseTab("Second")
 		MyGui.UseGroup(gb2_TabTwo)
@@ -2574,7 +2574,7 @@ DestroyPic()
 	; │  Image Search functions  │
 	; └──────────────────────────┘
 
-	ImgSrch() {
+	ImgSrch(*) {
 	CoordMode("Pixel", )  ; Interprets the coordinates below as relative to the screen rather than the active window.
 
 		try 
@@ -2676,7 +2676,7 @@ axPic := "http://www.animatedgif.net/cartoons/A_5odie_e0.gif"
 axText := "mshtml:<img src='" . axPic . "' />"
 activeXOdie := MyGui.AddActiveX("w100 h150 xc+10 y+10", axText)
 
-DllMsgBox()
+DllMsgBox(*)
 {
 	WhichButton := DllCall("MessageBox", "Int", 0, "Str", "Press Yes or No", "Str", "Title of box", "Int", 4)
 	MsgBox "You pressed button #" WhichButton
@@ -2692,7 +2692,7 @@ DllMsgBox()
 		DetectHiddenWindows False
 	}
 
-DllWsprintf()
+DllWsprintf(*)
 {
 	ZeroPaddedNumber := Buffer(20)  ; Ensure the buffer is large enough to accept the new string.
 	DllCall("wsprintf", "Ptr", ZeroPaddedNumber, "Str", "%010d", "Int", 432, "Cdecl")  ; Requires the Cdecl calling convention.
@@ -2701,7 +2701,7 @@ DllWsprintf()
 	MsgBox(str)
 }
 
-DllPerformanceCounter()
+DllPerformanceCounter(*)
 {
 	freq := 0
 	CounterBefore := 0
@@ -2721,7 +2721,7 @@ DllPerformanceCounter()
 	MsgBox("This value should be near 1000ms: " . elapsed . "`r`nValue using DateDiff(): " . diff . "`r`nValue using A_TickCount: " . elapsedTick)
 }
 
-DllGetWindowRect()
+DllGetWindowRect(*)
 {
 	Run "Notepad"
 	notepadHwnd := WinWait("Untitled - Notepad")  ; This also sets the "last found window" for use with WinExist below.
@@ -2742,7 +2742,7 @@ DllGetWindowRect()
 		return NumGet(NumGet(ptr, "ptr"), n*A_PtrSize, "ptr")
 	}
 
-	DllFillRect()
+	DllFillRect(*)
 	{
 		Rect := Buffer(16)  ; Set capacity to hold four 4-byte integers.
 		NumPut( "Int", 0                  ; left
@@ -2757,7 +2757,7 @@ DllGetWindowRect()
 		DllCall("DeleteObject", "Ptr", hBrush)  ; Clean-up.
 	}
 
-	DllDeleteFromTaskbar()
+	DllDeleteFromTaskbar(*)
 	{
 		IID_ITaskbarList  := "{56FDF342-FD6D-11d0-958A-006097C9A090}"
 		CLSID_TaskbarList := "{56FDF344-FD6D-11d0-958A-006097C9A090}"
@@ -2776,7 +2776,7 @@ DllGetWindowRect()
 		ObjRelease(tbl.ptr)
 	}
 
-	ComDeleteFromTaskbar()
+	ComDeleteFromTaskbar(*)
 	{
 		IID_ITaskbarList  := "{56FDF342-FD6D-11d0-958A-006097C9A090}"
 		CLSID_TaskbarList := "{56FDF344-FD6D-11d0-958A-006097C9A090}"
@@ -2796,7 +2796,7 @@ DllGetWindowRect()
 		tbl := ""
 	}
 
-	ComRunWord()
+	ComRunWord(*)
 	{
 		wd := ComObject("Word.Application")
 		wd.Visible := "True"
@@ -2807,7 +2807,7 @@ DllGetWindowRect()
 
 	handlerobj := ""
 
-	ComRunWordEventListener()
+	ComRunWordEventListener(*)
 	{
 		global handlerobj := mycomhandler()
 		wd := ComObject("Word.Application")
@@ -2865,7 +2865,7 @@ DllGetWindowRect()
 
 shell := unset
 
-ComExecNotepadShell()
+ComExecNotepadShell(*)
 {
 	global shell
 	
@@ -2875,7 +2875,7 @@ ComExecNotepadShell()
 	exec := shell.Exec("Notepad.exe")
 }
 
-ComRunNotepadShell()
+ComRunNotepadShell(*)
 {
 	global shell
 
@@ -2888,7 +2888,7 @@ ComRunNotepadShell()
 ; Try a fake COM call.
 ReturnString() => StrPtr("hello")
 
-FakeComCall()
+FakeComCall(*)
 {
 	; Create dummy vtable without a defined AddRef, Release etc
 	vtbl := Buffer(4*A_PtrSize)

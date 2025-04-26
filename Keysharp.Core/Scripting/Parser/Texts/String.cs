@@ -85,6 +85,8 @@ namespace Keysharp.Scripting
 						{
 							join = EscapedString(option.Slice(4), false);
 						}
+						else if (option.StartsWith(";"))
+							break;
 						else
 						{
 							switch (option)

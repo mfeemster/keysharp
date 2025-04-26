@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using System.Runtime.InteropServices;
 
 namespace Keysharp.Core
 {
@@ -269,6 +270,9 @@ namespace Keysharp.Core
 					case "uint64":
 					case "ptr":
 					case "uptr":
+						if (number is KeysharpObject kso)
+							number = Reflections.GetPtrProperty(kso);
+
 						if (number is DelegateHolder dh)
 							bytes = BitConverter.GetBytes(Marshal.GetFunctionPointerForDelegate(dh.DelRef));
 						else

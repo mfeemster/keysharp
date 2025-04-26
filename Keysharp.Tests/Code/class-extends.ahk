@@ -803,7 +803,7 @@ if (classobj.a == 999)
 else
 	FileAppend "fail", "*"
 
-if (classobj.super.a == 123)
+if (classobj.base.base.a == 123)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"

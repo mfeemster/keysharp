@@ -9,8 +9,6 @@
 
 		public RegExResults(params object[] args) : base(args) { }
 
-        public new (Type, object) super => (typeof(RegExResults), this);
-
         public static implicit operator long(RegExResults r) => r.Pos();
 
 		public override object __New(params object[] args)

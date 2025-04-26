@@ -800,6 +800,8 @@ namespace Keysharp.Core.Windows
 
 		internal const int PBM_SETBKCOLOR = 0x2001;
 
+		internal const int STM_SETIMAGE = 0x172;
+
 		internal const int CBN_ERRSPACE = -1;
 		internal const int CBN_SELCHANGE = 1;
 		internal const int CBN_DBLCLK = 2;

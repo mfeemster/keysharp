@@ -199,7 +199,7 @@ namespace Keysharp.Core.COM
 									modifier[i] = isByRef;
 									ConvertType(i, vtBase);
 								}
-								if (modifier[i])
+								if (modifier[i] && i < inputParameters.Length)
 								{
 									refs[i] = inputParameters[i];
 									inputParameters[i] = Script.GetPropertyValue(inputParameters[i], "__Value");

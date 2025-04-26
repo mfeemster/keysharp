@@ -23,8 +23,6 @@
 	{
 		internal object[] boundargs;
 
-		public new (Type, object) super => (typeof(FuncObj), this);
-
 		internal BoundFunc(MethodInfo m, object[] ba, object o = null)
 			: base(m, o)
 		{
@@ -127,7 +125,7 @@
         internal Closure(Delegate m, object o = null) : base(m, o) { }
     }
 
-	internal class FuncObj : KeysharpObject, IFuncObj
+	public class FuncObj : KeysharpObject, IFuncObj
 	{
 		protected bool anyRef;
 		protected bool isVariadic;
@@ -145,7 +143,6 @@
 		public long MaxParams { get; internal set; } = 9999;
 		public long MinParams { get; internal set; } = 0;
 		internal MethodPropertyHolder Mph => mph;
-		public new (Type, object) super => (typeof(KeysharpObject), this);
 
 		public Func<object, object[], object> Delegate => mph.callFunc;
 
