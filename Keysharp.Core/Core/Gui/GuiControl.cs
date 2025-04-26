@@ -1874,14 +1874,14 @@
 						_ = clickHandlers.InvokeEventHandlers(this, tss.Item1 != "" ? tss.Item1 : ll.Links.IndexOf(lllce.Link) + 1L, tss.Item2);
 				}
 			}
-			else if (_control is KeysharpButton)
-			{
-				//mousecount ^= 1;//Button click events get fired twice, because we have double click and standard click enabled, so filter the second click here.
-				//if (mousecount > 0)
-				_ = clickHandlers.InvokeEventHandlers(this, null);
-			}
+			//else if (_control is KeysharpButton)
+			//{
+			//  //mousecount ^= 1;//Button click events get fired twice, because we have double click and standard click enabled, so filter the second click here.
+			//  //if (mousecount > 0)
+			//  _ = clickHandlers.InvokeEventHandlers(this, 0L);
+			//}
 			else
-				_ = clickHandlers.InvokeEventHandlers(this, null);
+				_ = clickHandlers.InvokeEventHandlers(this, 0L);
 		}
 
 		internal void _control_DoubleClick(object sender, EventArgs e)
@@ -1903,7 +1903,7 @@
 					_ = doubleClickHandlers.InvokeEventHandlers(this, 0L);
 			}
 			else
-				_ = doubleClickHandlers.InvokeEventHandlers(this, null);
+				_ = doubleClickHandlers.InvokeEventHandlers(this, 0L);
 
 			//Status strip items are handled in a separate special handler contained within each item.
 		}
