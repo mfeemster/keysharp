@@ -5257,8 +5257,8 @@ namespace Keysharp.Core.Windows
 			//before Application.Run().
 			//This must use the context, rather than the main window, because this could happen on a script containing InputHook,
 			//which are not persistent, and thus no main window will be present.
-			if (Processes.mainContext != null)//Will be null during unit tests.
-				Processes.mainContext.Send(new SendOrPostCallback((obj) => func()), null);
+			if (Processes.hookContext != null)//Will be null during unit tests.
+				Processes.hookContext.Send(new SendOrPostCallback((obj) => func()), null);
 			else
 				func();
 

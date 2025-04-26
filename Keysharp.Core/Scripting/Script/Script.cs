@@ -76,7 +76,24 @@
 			if (Vars == null)
 				Vars = new Variables();
 
-			_ = InitHook();//Why is this always being initialized even when there are no hooks? This is very inefficient.//TODO
+			Processes.hookThread = new Thread(
+				() => {
+					Processes.hookContext = SynchronizationContext.Current
+								?? new WindowsFormsSynchronizationContext();
+					SynchronizationContext.SetSynchronizationContext(Processes.hookContext);
+
+					_ = InitHook();//Why is this always being initialized even when there are no hooks? This is very inefficient.//TODO
+					Application.Run();
+				}
+			)
+			{
+				IsBackground = true,
+			};
+			Processes.hookThread.SetApartmentState(ApartmentState.STA);
+			Processes.hookThread.Start();
+
+			while (Processes.hookContext == null)
+				Thread.Yield();
 		}
 
 		public static string GetPublicStaticPropertyNames()

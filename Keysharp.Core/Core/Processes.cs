@@ -6,6 +6,8 @@ namespace Keysharp.Core
 	public static class Processes
 	{
 		public static SynchronizationContext mainContext;
+		public static Thread hookThread;
+		public static SynchronizationContext hookContext;
 
 		//internal static int CurrentThreadID = Process.GetCurrentProcess().Threads[0].Id; //WindowsAPI.GetCurrentThread();
 		internal static uint CurrentThreadID = 0u;
