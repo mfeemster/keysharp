@@ -530,7 +530,7 @@ assignable
 
 objectLiteral
     : '{' s* propertyAssignment (WS* ',' propertyAssignment)* s* '}'
-    | '{' WS+ '}' // Don't allow linebreaks, otherwise this creates ambiguity in Loop { }
+    | '{' WS* '}' // Don't allow linebreaks, otherwise this creates ambiguity in Loop { }
     ;
 
 functionHead
