@@ -1,5 +1,7 @@
+#define USEFORMSTIMER
 using static Keysharp.Core.Errors;
-using Timer = Keysharp.Core.Common.Threading.TimerWithTag;
+using Timer1 = System.Timers.Timer;
+using Timer2 = Keysharp.Core.Common.Threading.TimerWithTag;
 
 namespace Keysharp.Core
 {
@@ -12,10 +14,10 @@ namespace Keysharp.Core
 		internal static bool callingCritical;
 		internal static volatile bool hasExited;
 		internal static int IntervalUnspecified = int.MinValue + 303;// Use some negative value unlikely to ever be passed explicitly:
-		internal static Timer mainTimer;
+		internal static Timer1 mainTimer;
 		internal static int NoSleep = -1;
 		internal static bool persistentValueSetByUser;
-		internal static ConcurrentDictionary<IFuncObj, Timer> timers = new ();
+		internal static ConcurrentDictionary<IFuncObj, Timer2> timers = new ();
 
 		/// <summary>
 		/// Whether a thread can be interrupted/preempted by subsequent thread.
@@ -297,7 +299,7 @@ namespace Keysharp.Core
 			var pri = priority.Al();
 			var once = p < 0;
 			IFuncObj func = null;
-			Timer timer = null;
+			Timer2 timer = null;
 
 			if (once)
 				p = -p;
@@ -378,14 +380,17 @@ namespace Keysharp.Core
 			else//They tried to stop a timer that didn't exist
 				return null;
 
-			//timer.Tick += (ss, ee) =>
+#if USEFORMSTIMER
+			timer.Tick += (ss, ee) =>
+#else
 			timer.Elapsed += (ss, ee) =>
+#endif
 			{
 				if (A_HasExited || (!A_AllowTimers.Ab() && Script.totalExistingThreads > 0)
 						|| !Threads.AnyThreadsAvailable() || !Threads.IsInterruptible())
 					return;
 
-				if (ss is Timer t)
+				if (ss is Timer2 t)
 				{
 					if (!t.Enabled)//A way of checking to make sure the timer is not already executing.
 						return;
@@ -401,9 +406,9 @@ namespace Keysharp.Core
 						{
 							_ = Interlocked.Increment(ref Script.totalExistingThreads);
 							(bool, ThreadVariables) btv = Threads.PushThreadVariables(pri, true, false);
-                            btv.Item2.currentTimer = timer;
-                            btv.Item2.eventInfo = func;
-                            var ret = func.Call();
+							btv.Item2.currentTimer = timer;
+							btv.Item2.eventInfo = func;
+							var ret = func.Call();
 							_ = Threads.EndThread(btv.Item1);
 						}, true);//Pop on exception because EndThread() above won't be called.
 
@@ -440,6 +445,7 @@ namespace Keysharp.Core
 			if (d == 0L)
 			{
 				var start = DateTime.Now;
+
 				try
 				{
 					Application.DoEvents();//Can sometimes throw on linux.
@@ -451,9 +457,11 @@ namespace Keysharp.Core
 				catch
 				{
 				}
+
 				//0 tells this thread to relinquish the remainder of its time slice to any thread of equal priority that is ready to run.
 				//If there are no other threads of equal priority that are ready to run, execution of the current thread is not suspended.
 				System.Threading.Thread.Sleep(0);
+
 				if (start.Equals(DateTime.Now))
 					System.Threading.Thread.Sleep(0);
 			}
@@ -643,7 +651,7 @@ namespace Keysharp.Core
 		{
 			if (mainTimer == null)
 			{
-				mainTimer = new Timer(10);
+				mainTimer = new (10);
 				mainTimer.Elapsed += (o, e) => { };
 				mainTimer.Start();
 			}
