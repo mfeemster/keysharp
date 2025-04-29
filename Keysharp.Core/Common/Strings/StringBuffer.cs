@@ -1,4 +1,5 @@
-﻿using System.Configuration;
+﻿using System;
+using System.Configuration;
 using System.Drawing;
 
 namespace Keysharp.Core.Common.Strings
@@ -19,8 +20,7 @@ namespace Keysharp.Core.Common.Strings
 				NativeMemory.Free(_buffer);
 		}
 
-		public static implicit operator string(StringBuffer s) => 
-			s._bytesPerChar == 1 ? Marshal.PtrToStringAnsi((IntPtr)s._buffer, (int)s._capacity) : Marshal.PtrToStringUni((IntPtr)s._buffer, (int)s._capacity);
+		public static implicit operator string(StringBuffer s) => s.ToString();
 
 		public override object __New(params object[] args)
 		{
@@ -80,7 +80,7 @@ namespace Keysharp.Core.Common.Strings
 				char[] bytes = text.ToCharArray();
 				fixed (char* src = bytes)
 				{
-					NativeMemory.Copy(src, _buffer + (nint)_position * _bytesPerChar, (nuint)bytes.Length);
+					NativeMemory.Copy(src, _buffer + (nint)_position * _bytesPerChar, (nuint)(bytes.Length * _bytesPerChar));
 				}
 
 				_position += len;
@@ -140,6 +140,31 @@ namespace Keysharp.Core.Common.Strings
 				_ = sbuf.AppendLine($"{indent}{name}: {str} ({fieldType})");
 		}
 
-		public override string ToString() => (string)this;
+		public override string ToString()
+		{
+			if (_buffer == null)
+				return "";
+
+			if (_bytesPerChar == 1)
+			{
+				// Find length up to first 0 byte
+				byte* p = _buffer;
+				int len = 0;
+				while (p[len] != 0)
+					len++;
+				// Decode exactly that many ANSI bytes
+				return _encoding.GetString(new ReadOnlySpan<byte>(_buffer, len));
+			}
+			else
+			{
+				// Find length up to first 0 wchar
+				char* p = (char*)_buffer;
+				int len = 0;
+				while (p[len] != '\0')
+					len++;
+				// Construct a managed string from that many chars
+				return new string (p, 0, len);
+			}
+		}
 	}
 }
