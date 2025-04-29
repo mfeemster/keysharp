@@ -4,7 +4,8 @@ namespace Keysharp.Core.Common.Threading
 {
 	public class ThreadVariables : IClearable
 	{
-		internal Task<object> task = null;
+		//internal Task<object> task = null;
+		internal bool task = false;
 		internal bool allowThreadToBeInterrupted = true;
 		internal long controlDelay = 20L;
 		internal Timer currentTimer;
@@ -58,15 +59,18 @@ namespace Keysharp.Core.Common.Threading
 		internal bool IsCriticalAndRunning()
 		{
 			var tempTask = task;
-			return tempTask != null && !tempTask.IsCompleted && !allowThreadToBeInterrupted && isCritical;
+			//return tempTask != null && !tempTask.IsCompleted && !allowThreadToBeInterrupted && isCritical;
+			return tempTask && !allowThreadToBeInterrupted && isCritical;
 		}
 
 		internal void WaitForCriticalToFinish()
 		{
-			if (IsCriticalAndRunning())
+			//if (IsCriticalAndRunning())
+			while (IsCriticalAndRunning())
 			{
-				var tempTask = task;
-				tempTask?.Wait();
+				//var tempTask = task;
+				//tempTask?.Wait();
+				Thread.Sleep(50);
 			}
 		}
 
@@ -75,7 +79,7 @@ namespace Keysharp.Core.Common.Threading
 		/// </summary>
 		public void Clear()
 		{
-			task = null;
+			task = false;// null;
 			isCritical = false;
 			allowThreadToBeInterrupted = true;
 			uninterruptibleDuration = 17;
@@ -117,7 +121,7 @@ namespace Keysharp.Core.Common.Threading
 
 		public void Init()
 		{
-			task = null;
+			task = false;// null;
 			isCritical = false;
 			allowThreadToBeInterrupted = true;
 			uninterruptibleDuration = Script.uninterruptibleTime;

@@ -2,7 +2,15 @@
 {
 	public static class Threads
 	{
-		private static readonly ThreadVariableManager tvm = new ();
+		/// <summary>
+		/// Each thread has its own TVM. This means the main UI thread gets one, and the hook thread gets one.
+		/// This allows the hook thread to run #HotIf evaluations separately without interfering with the main thread.
+		/// It could conceivably lead to more threads being in existence than the user allowed, for a very brief moment.
+		/// This shouldn't be a problem though.
+		/// Note that we use ThreadLocal<T> here because it allows initialization for each thread, whereas
+		/// [ThreadStatic] doesn't.
+		/// </summary>
+		private static ThreadLocal<ThreadVariableManager> tvm = new ThreadLocal<ThreadVariableManager>(() => new ());
 
 		public static (bool, ThreadVariables) BeginThread(bool onlyIfEmpty = false)
 		{
@@ -20,18 +28,18 @@
 
 		[PublicForTestOnly]
 		public static (bool, ThreadVariables) PushThreadVariables(int priority, bool skipUninterruptible,
-				bool isCritical = false, bool onlyIfEmpty = false) => tvm.PushThreadVariables(priority, skipUninterruptible, isCritical, onlyIfEmpty);
+				bool isCritical = false, bool onlyIfEmpty = false) => tvm.Value.PushThreadVariables(priority, skipUninterruptible, isCritical, onlyIfEmpty);
 
 		internal static bool AnyThreadsAvailable() => Script.totalExistingThreads < Script.MaxThreadsTotal;
 
-		internal static ThreadVariables GetThreadVariables() => tvm.GetThreadVariables();
+		internal static ThreadVariables GetThreadVariables() => tvm.Value.GetThreadVariables();
 
 		internal static bool IsInterruptible()
 		{
 			if (!Flow.AllowInterruption)
 				return false;
 
-			if (Script.totalExistingThreads == 0)//Before _ks_UserMainCode() starts to run.
+			if (Script.totalExistingThreads == 0)//Before _ks_UserMainCode() starts to run.1
 				return true;
 
 			var tv = GetThreadVariables();
@@ -64,14 +72,16 @@
 			{
 				var existingTv = GetThreadVariables();
 				existingTv.WaitForCriticalToFinish();//Cannot launch a new task while a critical one is running.
-				void AssignTask(ThreadVariables localTv) => localTv.task = tsk;//Needed to capture tsk so it can be used from within the Task.
+				//void AssignTask(ThreadVariables localTv) => localTv.task = tsk;//Needed to capture tsk so it can be used from within the Task.
 				//tsk = Task.Factory.StartNew(() =>
-				tsk = StaTask.Run(() =>//This appears to be necessary to use the clipboard within hotkey/string events.
+				//tsk = StaTask.Run(() =>//This appears to be necessary to use the clipboard within hotkey/string events.
+				Script.mainWindow.CheckedBeginInvoke(() =>
 				{
 					object ret = null;
 					(bool, ThreadVariables) btv = (false, null);
 					_ = Interlocked.Increment(ref Script.totalExistingThreads);//Will be decremented in EndThread().
 					btv = PushThreadVariables(priority, skipUninterruptible, isCritical);//Always start each thread with one entry.
+					btv.Item2.task = true;
 
 					if (btv.Item1)
 					{
@@ -79,8 +89,7 @@
 						{
 							_ = Flow.TryCatch(() =>
 							{
-								AssignTask(btv.Item2);
-
+								//AssignTask(btv.Item2);
 								if (func is VariadicFunction vf)
 									ret = vf(o);
 								else if (func is IFuncObj ifo)
@@ -93,8 +102,7 @@
 						}
 						else
 						{
-							AssignTask(btv.Item2);
-
+							//AssignTask(btv.Item2);
 							if (func is VariadicFunction vf)
 								ret = vf(o);
 							else if (func is IFuncObj ifo)
@@ -106,8 +114,9 @@
 						}
 					}
 
-					return ret;
-				});
+					btv.Item2.task = false;
+					//return ret;
+				}, true, false);
 				//,
 				//This is needed to make a variety of functionality work inside of hotkey/string handlers.
 				//Such as clipboard and window functions.
@@ -128,6 +137,6 @@
 			//return tsk;
 		}
 
-		internal static void PopThreadVariables(bool pushed, bool checkThread = false) => tvm.PopThreadVariables(pushed, checkThread);
+		internal static void PopThreadVariables(bool pushed, bool checkThread = false) => tvm.Value.PopThreadVariables(pushed, checkThread);
 	}
 }

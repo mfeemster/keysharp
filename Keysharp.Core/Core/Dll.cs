@@ -456,14 +456,13 @@ namespace Keysharp.Core
 				{
 					var ps = parameters[pi].As();
 					var wasPtr = ps[ ^ 1] == '*' || ps[ ^ 1] == 'p';
+					var arg = args[ai];
 
 					//If they passed in a ComObject with Ptr as an address, make that address into a __ComObject.
 					if (parameters[pi + 1] is ComObject co)
 					{
 						if (wasPtr)
 						{
-							var arg = args[ai];
-
 							if (arg is IntPtr aip)
 								FixParamTypeAndCopyBack(ref co.item, ps, aip);//Reference item directly.
 							else if (arg is long l)
@@ -475,8 +474,6 @@ namespace Keysharp.Core
 					}
 					else if (wasPtr)
 					{
-						var arg = args[ai];
-
 						if (parameters[pi + 1] is KeysharpObject kso && kso.HasProp("ptr") == 1L)
 						{
 							object temp = arg;
@@ -496,6 +493,23 @@ namespace Keysharp.Core
 								FixParamTypeAndCopyBack(ref parameters[pi + 1], ps, (nint)l);
 						}
 					}
+					/*
+					else
+					{
+						if (parameters[pi + 1] is string s)
+						{
+							if (arg is not string)
+							{
+								//var s = (long*)aip.ToPointer();
+								//p = Strings.StrGet(new IntPtr(s));
+								if (arg is IntPtr aip)
+									parameters[pi + 1] = Strings.StrGet(aip);
+								else if (arg is long l)
+									parameters[pi + 1] = Strings.StrGet((nint)l);
+							}
+						}
+					}
+					*/
 				}
 			}
 		}

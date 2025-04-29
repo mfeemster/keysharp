@@ -28,6 +28,7 @@
 #if WINDOWS
 			thread.SetApartmentState(ApartmentState.STA);
 #endif
+			//thread.IsBackground = true;//Don't let this keep the program alive.
 			thread.Start();
 			return tcs.Task;
 		}
@@ -57,6 +58,7 @@
 #if WINDOWS
 			thread.SetApartmentState(ApartmentState.STA);
 #endif
+			//thread.IsBackground = true;
 			thread.Start();
 			return tcs.Task;
 		}
