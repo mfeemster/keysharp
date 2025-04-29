@@ -87,6 +87,11 @@ public abstract class MainParserBase : Antlr4.Runtime.Parser
         return ((ITokenStream)this.InputStream).LT(-1).Text.Equals(str);
     }
 
+    protected bool prev(int token)
+    {
+        return ((ITokenStream)this.InputStream).LT(-1).Type == token;
+    }
+
     // Short form for next(String str)
     protected bool n(string str)
     {
@@ -104,12 +109,35 @@ public abstract class MainParserBase : Antlr4.Runtime.Parser
         return _input.LA(2) == token;
     }
 
+    protected int prevVisible() {
+        int i = 0, token;
+        do {
+            token = InputStream.LA(--i);
+        } while (token == WS || token == EOL);
+        return token;
+    }
+
     protected int nextVisible() {
         int i = 0, token;
         do {
             token = InputStream.LA(++i);
         } while ((token == WS || token == EOL) && (token != Eof));
         return token;
+    }
+
+    protected bool isEmptyObject() {
+        int i = 0, token;
+        do {
+            token = InputStream.LA(++i);
+            if (token == Eof) return false;
+        } while (token == WS || token == EOL);
+        if (token != OpenBrace)
+            return false;
+        do {
+            token = InputStream.LA(++i);
+            if (token == Eof) return false;
+        } while (token == WS || token == EOL);
+        return token == CloseBrace;
     }
 
     protected bool noBlockAhead() {

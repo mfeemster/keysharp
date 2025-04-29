@@ -237,7 +237,7 @@ elseProduction
     ;
 
 iterationStatement
-    : Loop WS* (singleExpression WS*)? flowBlock untilProduction? elseProduction      # LoopStatement
+    : Loop WS* ({!this.isEmptyObject()}? singleExpression WS*)? flowBlock untilProduction? elseProduction      # LoopStatement
     | LoopFiles WS* singleExpression (WS* ',' singleExpression)? WS* flowBlock untilProduction? elseProduction  # LoopFilesStatement
     | LoopRead WS* singleExpression (WS* ',' singleExpression)? WS* flowBlock untilProduction? elseProduction   # LoopReadStatement
     | LoopReg WS* singleExpression (WS* ',' singleExpression)? WS* flowBlock untilProduction? elseProduction    # LoopRegStatement
@@ -529,8 +529,7 @@ assignable
     ;
 
 objectLiteral
-    : '{' s* propertyAssignment (WS* ',' propertyAssignment)* s* '}'
-    | '{' WS* '}' // Don't allow linebreaks, otherwise this creates ambiguity in Loop { }
+    : '{' s* (propertyAssignment (WS* ',' propertyAssignment)* s*)? '}'
     ;
 
 functionHead
