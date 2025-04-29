@@ -89,10 +89,15 @@ namespace Keysharp.Scripting
                         return (null, ifoprotocall.Bind(item, key));
                 }
 
+				if (item == null)
+				{
+					if (Reflections.FindMethod(key, paramCount) is MethodPropertyHolder mph0)
+						return (item, mph0);
+				}
 #if WINDOWS
 				//COM checks must come before Item checks because they can get confused sometimes and COM should take
 				//precedence in such cases.
-				if (item is ComObject co)
+				else if (item is ComObject co)
 				{
 					return GetMethodOrProperty(co.Ptr, key, paramCount);
 				}
@@ -100,8 +105,25 @@ namespace Keysharp.Scripting
 				{
 					return (item, new ComMethodPropertyHolder(key));
 				}
-
 #endif
+				else if (item is not KeysharpObject)
+				{
+					Type typetouse = item.GetType();
+
+					if (Reflections.FindAndCacheInstanceMethod(typetouse, key, paramCount) is MethodPropertyHolder mph1)
+					{
+						return (item, mph1);
+					}
+					else if (Reflections.FindAndCacheProperty(typetouse, key, paramCount) is MethodPropertyHolder mph2)
+					{
+						return (item, mph2);
+					}
+					else if (Reflections.FindAndCacheInstanceMethod(typetouse, "get_Item", 1) is MethodPropertyHolder mph)//Last ditch attempt, see if it was a map entry, but was treated as a class property.
+					{
+						var val = mph.callFunc(item, [key]);
+						return (item, val);
+					}
+				}
 			}
 			catch (Exception e)
 			{
@@ -160,8 +182,17 @@ namespace Keysharp.Scripting
 					//So try invoking the member as either a property or a method.
 					return item.GetType().InvokeMember(namestr, BindingFlags.InvokeMethod | BindingFlags.GetProperty, null, item, null);
 				}
-
 #endif
+				if (item != null && item is not KeysharpObject)
+				{
+					if (typetouse == null && item != null)
+						typetouse = item.GetType();
+
+					if (Reflections.FindAndCacheProperty(typetouse, namestr, 0) is MethodPropertyHolder mph2)
+					{
+						return mph2.callFunc(item, null);
+					}
+				}
 			}
 			catch (Exception e)
 			{
