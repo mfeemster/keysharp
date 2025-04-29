@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Windows.Forms;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.TextBox;
 
 namespace Keysharp.Core
@@ -345,7 +346,7 @@ namespace Keysharp.Core
 			Script.ExitIfNotPersistent();//May not be necessary, but try anyway.
 		}
 
-		public KeysharpEnumerator __Enum(object count) => new GuiControlIterator(controls, count.Ai());
+		public IFuncObj __Enum(object count) => (new GuiControlIterator(controls, count.Ai())).fo;
 
 		public override object __New(params object[] obj)
 		{
@@ -2638,13 +2639,13 @@ namespace Keysharp.Core
 		/// </summary>
 		/// <param name="key">A reference to the control value.</param>
 		/// <returns>True if the iterator position has not moved past the last element, else false.</returns>
-		public override object Call(ref object key)
+		public override object Call(object key)
 		{
 			if (MoveNext())
 			{
 				try
 				{
-					key = iter.Current.Value;
+					Script.SetPropertyValue(key, "__Value", iter.Current.Value);
 				}
 				catch (IndexOutOfRangeException)
 				{
@@ -2663,15 +2664,15 @@ namespace Keysharp.Core
 		/// <param name="key">A reference to the handle value.</param>
 		/// <param name="value">A reference to the control value.</param>
 		/// <returns>True if the iterator position has not moved past the last element, else false.</returns>
-		public override object Call(ref object key, ref object value)
+		public override object Call(object key, object value)
 		{
 			if (MoveNext())
 			{
 				try
 				{
 					var kv = iter.Current;
-					key = kv.Key;
-					value = kv.Value;
+					Script.SetPropertyValue(key, "__Value", kv.Key);
+					Script.SetPropertyValue(value, "__Value", kv.Value);
 				}
 				catch (IndexOutOfRangeException)
 				{
@@ -2683,23 +2684,5 @@ namespace Keysharp.Core
 
 			return false;
 		}
-
-        public override object Call(params object[] args)
-        {
-            if (MoveNext())
-            {
-                if (args.Length == 1)
-                {
-                    Script.SetPropertyValue(args[0], "__Value", iter.Current.Value);
-                }
-                else if (args.Length >= 2)
-                {
-                    Script.SetPropertyValue(args[0], "__Value", iter.Current.Key);
-                    Script.SetPropertyValue(args[1], "__Value", iter.Current.Value);
-                }
-                return true;
-            }
-            return false;
-        }
     }
 }

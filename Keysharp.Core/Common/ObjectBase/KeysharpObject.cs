@@ -2,7 +2,7 @@
 {
 	internal interface I__Enum
 	{
-		public KeysharpEnumerator __Enum(object count);
+		public IFuncObj __Enum(object count);
 	}
 
 	public class KeysharpObject : Any

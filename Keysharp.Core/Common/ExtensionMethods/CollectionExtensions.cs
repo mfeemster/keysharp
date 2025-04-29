@@ -107,9 +107,10 @@
             if (enumerable is I__Enum ie)//Iterators for array, gui and map will be this.
             {
                 var en = ie.__Enum(1);
-                object element = null;
+				object element = null;
+                VarRef val = new VarRef(() => element, value => element = value);
 
-                while (en.Call(ref element).Ab())
+                while (en.Call(val).Ab())
                 {
                     if (recurse && element is IEnumerable candidate && !(element is string))
                     {

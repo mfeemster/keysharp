@@ -22,7 +22,7 @@
 							   Objects.Object(
 								   [
 									   "get",
-									   Functions.GetFuncObj("GetWrapper", this, 2, true).Bind(g.Name)
+									   new FuncObj("GetWrapper", this, 2).Bind(g.Name)
 								   ]));
 
 				if (i.ToString() != g.Name)//No need to add it twice if the name matches the index.
@@ -30,14 +30,14 @@
 								   Objects.Object(
 									   [
 										   "get",
-										   Functions.GetFuncObj("GetWrapper", this, 2, true).Bind(g.Name)
+										   new FuncObj("GetWrapper", this, 2).Bind(g.Name)
 									   ]));
 			}
 
 			return "";
 		}
 
-		public KeysharpEnumerator __Enum(object count) => new RegExIterator(match, count.Ai());
+		public IFuncObj __Enum(object count) => new RegExIterator(match, count.Ai()).fo;
 
 		public IEnumerator<(object, object)> GetEnumerator() => new RegExIterator(match, 2);
 
@@ -157,9 +157,8 @@
 			match = m;
 			iter = ((IEnumerable<Group>)match.Groups).GetEnumerator();
 			var p = c <= 1 ? p1 : p2;
-			var fo = (FuncObj)p.Clone();
+			fo = (FuncObj)p.Clone();
 			fo.Inst = this;
-			CallFunc = fo;
 		}
 
 		/// <summary>
@@ -181,34 +180,16 @@
 				_ = Errors.ErrorOccurred(err = new MethodError($"Existing function object was invalid.")) ? throw err : "";
 		}
 
-        public override object Call(params object[] args)
-        {
-            if (MoveNext())
-            {
-                if (args.Length == 1)
-                {
-                    Script.SetPropertyValue(args[0], "__Value", Current.Item1);
-                }
-                else if (args.Length >= 2)
-                {
-                    Script.SetPropertyValue(args[0], "__Value", Current.Item1);
-                    Script.SetPropertyValue(args[1], "__Value", Current.Item2);
-                }
-                return true;
-            }
-            return false;
-        }
-
         /// <summary>
         /// Calls <see cref="Current"/> and places the key value in the passed in object reference.
         /// </summary>
         /// <param name="key">A reference to the key value.</param>
         /// <returns>True if the iterator position has not moved past the last element, else false.</returns>
-        public override object Call(ref object value)
+        public override object Call(object value)
 		{
 			if (MoveNext())
 			{
-				value = Current.Item1;
+				Script.SetPropertyValue(value, "__Value", Current.Item1);
 				return true;
 			}
 
@@ -221,11 +202,12 @@
 		/// <param name="name">A reference to the name of the current match.</param>
 		/// <param name="value">A reference to the value of the current match.</param>
 		/// <returns>True if the iterator position has not moved past the last element, else false.</returns>
-		public override object Call(ref object name, ref object value)
+		public override object Call(object name, object value)
 		{
 			if (MoveNext())
 			{
-				(name, value) = Current;
+				Script.SetPropertyValue(name, "__Value", Current.Item1);
+				Script.SetPropertyValue(value, "__Value", Current.Item2);
 				return true;
 			}
 

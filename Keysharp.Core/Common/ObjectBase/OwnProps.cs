@@ -76,9 +76,8 @@
 			GetVal = gv;
 			iter = map.GetEnumerator();
 			var p = Count <= 1 ? p1 : p2;
-			var fo = (FuncObj)p.Clone();
+			fo = (FuncObj)p.Clone();
 			fo.Inst = this;
-			CallFunc = fo;
 		}
 
 		/// <summary>
@@ -100,47 +99,30 @@
 				_ = Errors.ErrorOccurred(err = new MethodError($"Existing function object was invalid.")) ? throw err : "";
 		}
 
-		public override object Call(ref object obj0)
+		public override object Call(object obj0)
 		{
 			if (MoveNext())
 			{
 				GetVal = false;
-				(obj0, _) = Current;
+				Script.SetPropertyValue(obj0, "__Value", Current.Item1);
 				return true;
 			}
 
 			return false;
 		}
 
-		public override object Call(ref object obj0, ref object obj1)
+		public override object Call(object obj0, object obj1)
 		{
 			if (MoveNext())
 			{
 				GetVal = true;
-				(obj0, obj1) = Current;
+				Script.SetPropertyValue(obj0, "__Value", Current.Item1);
+				Script.SetPropertyValue(obj1, "__Value", Current.Item2);
 				return true;
 			}
 
 			return false;
 		}
-
-        public override object Call(object[] obj)
-        {
-			GetVal = obj.Length != 1;
-
-            if (MoveNext())
-            {
-                if (GetVal)
-                {
-                    Script.SetPropertyValue(obj[0], "__Value", Current.Item1);
-                    Script.SetPropertyValue(obj[1], "__Value", Current.Item2);
-                }
-                else
-                    Script.SetPropertyValue(obj[0], "__Value", Current.Item1);
-                return true;
-            }
-            return false;
-        }
 
         public void Dispose() => Reset();
 

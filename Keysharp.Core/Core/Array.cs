@@ -162,7 +162,11 @@
 		///     2: Return the index in the first element, and the value in the second.
 		/// </param>
 		/// <returns><see cref="KeysharpEnumerator"/></returns>
-		public KeysharpEnumerator __Enum(object count) => new ArrayIndexValueIterator(array, count.Ai());
+		public IFuncObj __Enum(object count)
+		{
+			var iter = new ArrayIndexValueIterator(array, count.Ai());
+			return iter.fo;
+		}
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="Array"/> class.
@@ -891,9 +895,8 @@
 		{
 			arr = a;
 			var p = c <= 1 ? p1 : p2;
-			var fo = (FuncObj)p.Clone();
+			fo = (FuncObj)p.Clone();
 			fo.Inst = this;
-			CallFunc = fo;
 		}
 
 		/// <summary>
@@ -916,15 +919,15 @@
 		}
 
 		/// <summary>
-		/// Calls <see cref="Current"/> and places the position value in the passed in object reference.
+		/// Calls <see cref="Current"/> and places the value in the passed in object reference.
 		/// </summary>
-		/// <param name="pos">A reference to the position value.</param>
+		/// <param name="pos">A reference to the value.</param>
 		/// <returns>True if the iterator position has not moved past the last element, else false.</returns>
-		public override object Call(ref object pos)
+		public override object Call(object pos)
 		{
 			if (MoveNext())
 			{
-				(pos, _) = Current;
+				Script.SetPropertyValue(pos, "__Value", Current.Item1);
 				return true;
 			}
 
@@ -937,46 +940,17 @@
 		/// <param name="pos">A reference to the position value.</param>
 		/// <param name="val">A reference to the object value.</param>
 		/// <returns>True if the iterator position has not moved past the last element, else false.</returns>
-		public override object Call(ref object pos, ref object val)
+		public override object Call(object pos, object val)
 		{
 			if (MoveNext())
 			{
-				(pos, val) = Current;
+				Script.SetPropertyValue(pos, "__Value", Current.Item1);
+				Script.SetPropertyValue(val, "__Value", Current.Item2);
 				return true;
 			}
 
 			return false;
 		}
-
-        public override object Call(params object[] args)
-        {
-            if (MoveNext())
-            {
-                // If only one variable is passed, return just the value.
-                if (args.Length == 1)
-                {
-                    if (args[0] is VarRef arg2)
-                        arg2.__Value = Current.Item1;
-                    else
-                        Script.SetPropertyValue(args[0], "__Value", Current.Item1);
-                }
-                // Otherwise return the index (1-based) and the value.
-                else
-                {
-                    var (pos, val) = Current;
-                    if (args[0] is VarRef arg1)
-						arg1.__Value = pos;
-					else
-                        Script.SetPropertyValue(args[0], "__Value", pos);
-					if (args[1] is VarRef arg2)
-						arg2.__Value = val;
-					else
-                        Script.SetPropertyValue(args[1], "__Value", val);
-                }
-                return true;
-            }
-            return false;
-        }
 
         /// <summary>
         /// The implementation for <see cref="IComparer.Dispose"/> which internally resets the iterator.

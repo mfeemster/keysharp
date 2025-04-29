@@ -199,7 +199,7 @@ namespace Keysharp.Core
 			}
 			else if (h is KeysharpEnumerator ke)
 			{
-				del = ke.CallFunc;
+				del = ke.fo;
 			}
 			else if (throwIfBad)
 				return Errors.ErrorOccurred(err = new TypeError($"Improper value of {h} was supplied for a function object.")) ? throw err : null;

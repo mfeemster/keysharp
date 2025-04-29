@@ -161,7 +161,7 @@
         ///     2: Return the key in the first element, and the value in the second.
         /// </param>
         /// <returns><see cref="KeysharpEnumerator"/></returns>
-		public KeysharpEnumerator __Enum(object count) => new MapKeyValueIterator(map, count.Ai());
+		public IFuncObj __Enum(object count) => (new MapKeyValueIterator(map, count.Ai())).fo;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="Map"/> class.
@@ -638,9 +638,8 @@
 			map = m;
 			iter = map.GetEnumerator();
 			var p = c <= 1 ? p1 : p2;
-			var fo = (FuncObj)p.Clone();
+			fo = (FuncObj)p.Clone();
 			fo.Inst = this;
-			CallFunc = fo;
 		}
 
 		/// <summary>
@@ -667,11 +666,11 @@
 		/// </summary>
 		/// <param name="key">A reference to the key value.</param>
 		/// <returns>True if the iterator position has not moved past the last element, else false.</returns>
-		public override object Call(ref object key)
+		public override object Call(object key)
 		{
 			if (MoveNext())
 			{
-				(key, _) = Current;
+				Script.SetPropertyValue(key, "__Value", Current.Item1);
 				return true;
 			}
 
@@ -684,11 +683,12 @@
 		/// <param name="key">A reference to the key value.</param>
 		/// <param name="value">A reference to the object value.</param>
 		/// <returns>True if the iterator position has not moved past the last element, else false.</returns>
-		public override object Call(ref object key, ref object value)
+		public override object Call(object key, object value)
 		{
 			if (MoveNext())
 			{
-				(key, value) = Current;
+				Script.SetPropertyValue(key, "__Value", Current.Item1);
+				Script.SetPropertyValue(value, "__Value", Current.Item2);
 				return true;
 			}
 

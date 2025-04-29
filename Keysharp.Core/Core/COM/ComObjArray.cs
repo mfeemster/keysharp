@@ -64,52 +64,32 @@ namespace Keysharp.Core.COM
 			arr = a;
 			count = c;
 			var p = c <= 1 ? p1 : p2;
-			var fo = (FuncObj)p.Clone();
+			fo = (FuncObj)p.Clone();
 			fo.Inst = this;
-			CallFunc = fo;
 		}
 
-		public override object Call(ref object pos)
+		public override object Call(object pos)
 		{
 			if (MoveNext())
 			{
-				(pos, _) = Current;
+				Script.SetPropertyValue(pos, "__Value", Current.Item1);
 				return true;
 			}
 
 			return false;
 		}
 
-		public override object Call(ref object pos, ref object val)
+		public override object Call(object pos, object val)
 		{
 			if (MoveNext())
 			{
-				(pos, val) = Current;
+				Script.SetPropertyValue(pos, "__Value", Current.Item1);
+				Script.SetPropertyValue(val, "__Value", Current.Item2);
 				return true;
 			}
 
 			return false;
 		}
-
-        public object Call(params object[] args)
-        {
-            if (MoveNext())
-            {
-                // If only one variable is passed, return just the value.
-                if (args.Length == 1)
-                {
-                    Script.SetPropertyValue(args[0], "__Value", Current.Item1);
-                }
-                // Otherwise return the index (1-based) and the value.
-                else if (args.Length >= 2)
-                {
-                    Script.SetPropertyValue(args[0], "__Value", Current.Item1);
-                    Script.SetPropertyValue(args[1], "__Value", Current.Item2);
-                }
-                return true;
-            }
-            return false;
-        }
 
         public void Dispose() => Reset();
 
@@ -141,7 +121,7 @@ namespace Keysharp.Core.COM
 			array = arr;
 		}
 
-		public KeysharpEnumerator __Enum(object count) => new ComArrayIndexValueEnumerator(array, count.Ai());
+		public IFuncObj __Enum(object count) => new ComArrayIndexValueEnumerator(array, count.Ai()).fo;
 
 		public int Add(object value) => ((IList)array).Add(value);
 

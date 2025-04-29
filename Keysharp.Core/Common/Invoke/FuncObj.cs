@@ -198,7 +198,13 @@
 			mi = m;
 			Inst = o;
 
-            if (mi != null)
+			if (Script.Variables.Prototypes.Count > 1)
+			{
+				Script.Variables.Prototypes.TryGetValue(GetType(), out KeysharpObject value);
+				op["base"] = new OwnPropsDesc(this, value);
+			}
+
+			if (mi != null)
 				Init();
 		}
 

@@ -430,7 +430,7 @@ namespace Keysharp.Core
 			var ct = count.Ai();
 
 			if (obj is I__Enum ienum)
-				return ienum.__Enum(ct);
+				return (KeysharpEnumerator)ienum.__Enum(ct).Inst;
 			else if (obj is OwnPropsIterator opi)
 			{
 				opi.GetVal = ct != 1;
@@ -445,7 +445,7 @@ namespace Keysharp.Core
 			//else if (obj is IEnumerable ie)
 			//  return ie.Cast<object>().Select(o => (o, o)).GetEnumerator();
 			else if (obj is object[] oa)
-				return new Array(oa).__Enum(count.Ai());
+				return (KeysharpEnumerator)new Array(oa).__Enum(count.Ai()).Inst;
 			else if (Functions.GetFuncObj(obj, null) is FuncObj fo)
 			{
 				//if (fo is BoundFunc bfo)

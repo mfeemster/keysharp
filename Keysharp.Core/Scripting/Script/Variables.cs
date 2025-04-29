@@ -130,10 +130,27 @@ namespace Keysharp.Scripting
                     .Where(type => type.IsClass && !type.IsAbstract && anyType.IsAssignableFrom(type));
 				*/
 
-                // Initiate necessary base types in specific order
-                InitStaticInstance(typeof(Any), typeof(KeysharpObject));
-                InitStaticInstance(typeof(FuncObj));
-                InitStaticInstance(typeof(Class));
+				// Initiate necessary base types in specific order
+				InitStaticInstance(typeof(FuncObj));
+				// Need to do this so that FuncObj methods contain themselves in the prototype,
+				// meaning a circular reference. This shouldn't prevent garbage collection, but
+				// I haven't verified that.
+				var fop = Variables.Prototypes[typeof(FuncObj)];
+				foreach (var op in fop.op)
+				{
+					var opm = op.Value;
+					if (opm.Value is FuncObj fov && fov != null)
+						fov.op["base"] = new OwnPropsDesc(fov, fop);
+					if (opm.Get is FuncObj fog && fog != null)
+						fog.op["base"] = new OwnPropsDesc(fog, fop);
+					if (opm.Set is FuncObj fos && fos != null)
+						fos.op["base"] = new OwnPropsDesc(fos, fop);
+					if (opm.Call is FuncObj foc && foc != null)
+						foc.op["base"] = new OwnPropsDesc(foc, fop);
+				}
+				InitStaticInstance(typeof(Any), typeof(KeysharpObject));
+
+				InitStaticInstance(typeof(Class));
                 
                 Statics[typeof(Class)].DefineProp("base", Collections.Map("value", Variables.Statics[typeof(Any)]));
                 InitStaticInstance(typeof(KeysharpObject));
