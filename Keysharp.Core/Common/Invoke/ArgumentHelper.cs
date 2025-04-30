@@ -4,7 +4,7 @@
 	{
 		internal const string cdeclstr = "cdecl";
 		protected bool cdecl = false;
-		protected HashSet<GCHandle> gcHandles = [];
+		protected List<GCHandle> gcHandles = [];
 		protected ScopeHelper gcHandlesScope;
 		protected bool hasreturn = false;
 		protected string returnName = "";
@@ -12,6 +12,8 @@
 		internal bool CDecl => cdecl;
 		internal string ReturnName => returnName;
 		internal Type ReturnType => returnType;
+
+		internal ArgumentHelper() { }
 
 		internal ArgumentHelper(object[] parameters)
 		{

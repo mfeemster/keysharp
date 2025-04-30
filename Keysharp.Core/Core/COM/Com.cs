@@ -33,8 +33,8 @@ namespace Keysharp.Core.COM
 		public const int vt_array = 0x2000; //SAFEARRAY
 		public const int vt_byref = 0x4000; //Pointer to another type of value
 		public const int vt_typemask = 0xfff;
-		internal static Guid IID_IDispatch = new (0x00020400, 0x0000, 0x0000, 0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46);
-		internal static Guid IID_IServiceProvider = new ("6d5140c1-7436-11ce-8034-00aa006009fa");
+		internal static Guid IID_IDispatch = new(0x00020400, 0x0000, 0x0000, 0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46);
+		internal static Guid IID_IServiceProvider = new("6d5140c1-7436-11ce-8034-00aa006009fa");
 		internal const int CLSCTX_INPROC_SERVER = 0x1;
 		internal const int CLSCTX_INPROC_HANDLER = 0x2;
 		internal const int CLSCTX_LOCAL_SERVER = 0x4;
@@ -395,7 +395,7 @@ namespace Keysharp.Core.COM
 			}
 		}
 
-		public static ComObject ComValue(object varType, object value, object flags = null) => new (varType, value, flags);
+		public static ComObject ComValue(object varType, object value, object flags = null) => new(varType, value, flags);
 
 		public static object ObjAddRef(object ptr)
 		{
@@ -484,7 +484,7 @@ namespace Keysharp.Core.COM
 					    }
 
 					    else*/
-					if (ps[ ^ 1] == '*' || ps[ ^ 1] == 'p')
+					if (ps[^1] == '*' || ps[^1] == 'p')
 					{
 						var aip = helper.args[ai];
 						Dll.FixParamTypeAndCopyBack(ref parameters[pi + 1], ps, (IntPtr)aip);//Must reference directly into the array, not a temp variable.
@@ -512,6 +512,8 @@ namespace Keysharp.Core.COM
 			if (objPtr == 0L || vtbl == IntPtr.Zero)
 				throw new Error("Invalid object pointer or vtable number");
 
+			long ret = 0L;
+
 			//First attempt to call the normal way. This will succeed with any normal COM call.
 			//However, it will throw an exception if we've passed a fake COM function using DelegateHolder.
 			//This can be reproduced with the following script.
@@ -534,27 +536,17 @@ namespace Keysharp.Core.COM
 				long[] newArgs = new long[args.Length + 1];
 				newArgs[0] = objPtr;
 				System.Array.Copy(args, 0, newArgs, 1, args.Length);
-				return Dll.CallDel(vtbl, newArgs);
+				ret = Dll.CallDel(vtbl, newArgs);
+				// Copy back.
+				System.Array.Copy(newArgs, 1, args, 0, args.Length);
+				return ret;
 			}
 			catch (InvalidCastException)
 			{
 			}
 
 			//For faked COM calls, don't pass in the object pointer since there won't be one.
-			var phf = Marshal.GetDelegateForFunctionPointer<DelegateHolder.PlaceholderFunction>(vtbl);
-			var tempargs = new object[31];
-			var ct = Math.Min(tempargs.Length, args.Length);
-
-			for (var i = 0; i < ct; ++i)
-				tempargs[i] = args[i];
-
-			var ret = phf.DynamicInvoke(tempargs);
-
-			//Copy back.
-			for (var i = 0; i < ct; ++i)
-				args[i] = tempargs[i].Al();
-
-			return ret.Al();
+			return Dll.CallDel(vtbl, args);
 		}
 
 

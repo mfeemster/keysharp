@@ -19,7 +19,7 @@ namespace Keysharp.Core.Common.Invoke
 				var p = parameters[i];
 				var pm1 = parameters[i - 1].ToString();
 				var gch = GCHandle.Alloc(obj ?? p, GCHandleType.Pinned);
-				_ = gcHandles.Add(gch);
+				gcHandles.Add(gch);
 				var intptr = gch.AddrOfPinnedObject();
 				//Numbers being passed in will always be of type long or double, however that won't work
 				//when a DLL function expects a pointer to a smaller type. So advance the pointer by the appropriate amount so it
@@ -156,16 +156,6 @@ namespace Keysharp.Core.Common.Invoke
 								else if (p is Buffer buf)
 								{
 									args[n] = buf.Ptr;
-								}
-								else if (p is DelegateHolder delholder)
-								{
-									args[n] = delholder.delRef;
-									types[n] = delholder.delRef.GetType();
-								}
-								else if (p is StringBuffer sb)
-								{
-									args[n] = sb.sb;
-									types[n] = typeof(StringBuilder);
 								}
 								else if (p is Delegate del)
 								{

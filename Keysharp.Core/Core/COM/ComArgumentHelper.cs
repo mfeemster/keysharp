@@ -1,23 +1,38 @@
 ﻿#if WINDOWS
 namespace Keysharp.Core.COM
 {
-	internal class ComArgumentHelper : ArgumentHelper
+	internal class ComArgumentHelper : ArgumentHelper, IDisposable
 	{
 		internal static char[] pointerChars = [' ', '*', 'p', 'P'];
 		internal long[] args;
 		internal HashSet<nint> bstrs;
+		internal bool isDisposed = false;
 		internal ComArgumentHelper(object[] parameters)
-			: base(parameters)
 		{
+			ConvertParameters(parameters);
 		}
 
 		~ComArgumentHelper()
 		{
-			if (bstrs != null)
+			Dispose();
+		}
+
+		public void Dispose()
+		{
+			if (!isDisposed)
 			{
-				foreach (var bstr in bstrs)
-					Marshal.FreeBSTR(bstr);
+				if (bstrs != null)
+				{
+					foreach (var bstr in bstrs)
+						Marshal.FreeBSTR(bstr);
+				}
+				if (gcHandles.Count > 0)
+				{
+					foreach (var gch in gcHandles)
+						gch.Free();
+				}
 			}
+			isDisposed = true;
 		}
 
 		protected unsafe override void ConvertParameters(object[] parameters)
@@ -25,26 +40,27 @@ namespace Keysharp.Core.COM
 			void SetupPointerArg(int i, int n, object obj = null)
 			{
 				var p = parameters[i];
-				var pm1 = parameters[i - 1].ToString();
 				var gch = GCHandle.Alloc(obj ?? p, GCHandleType.Pinned);
-				_ = gcHandles.Add(gch);
+				gcHandles.Add(gch);
 				var intptr = gch.AddrOfPinnedObject();
 				args[n] = intptr;
 			}
 			Error err;
-			var len = parameters.Length / 2;
+			var paramCount = parameters.Length;
+			var len = paramCount / 2;
 			args = new long[len];
-			hasreturn = (parameters.Length & 1) == 1;
+			hasreturn = (paramCount & 1) == 1;
+			var last = paramCount - 1;
 
 			//Done slightly differently than in DllArgumentHelper.
-			for (var i = 0; i < parameters.Length; i++)
+			for (var i = 0; i < paramCount; i++)
 			{
-				var isreturn = hasreturn && i == parameters.Length - 1;
-				var name = parameters[i].ToString().ToLowerInvariant().Trim(Spaces);
+				var isreturn = hasreturn && i == last;
+				var name = parameters[i].ToString().ToLower().Trim(Spaces);
 
 				if (isreturn)
 				{
-					if (name.StartsWith(cdeclstr, StringComparison.OrdinalIgnoreCase))
+					if (name.StartsWith(cdeclstr))
 					{
 						name = name.Substring(cdeclstr.Length).Trim();
 						cdecl = true;
@@ -61,6 +77,9 @@ namespace Keysharp.Core.COM
 				var n = i / 2;
 				var p = parameters[i];
 
+				// This assumes that the ptr property contains a numeric value wrapped in the object type
+				// or System.__ComObject. If the numeric value is not wrapped then using it
+				// as an output variable will not work properly.
 				if (p is KeysharpObject kso && Script.GetPropertyValue(kso, "ptr", false) is object kptr && kptr != null)
 					p = parameters[i] = kptr;
 
@@ -111,7 +130,7 @@ namespace Keysharp.Core.COM
 						if (!isreturn)
 						{
 							if (p is string s)
-								SetupPointerArg(i, n, Encoding.Unicode.GetBytes(s));
+								SetupPointerArg(i, n);
 							else
 							{
 								_ = Errors.ErrorOccurred(err = new TypeError($"Argument had type {name} but was not a string.")) ? throw err : "";

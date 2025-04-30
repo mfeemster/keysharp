@@ -137,11 +137,11 @@
 
 		public object Inst { get; internal set; }
 		public bool IsBuiltIn => mi.DeclaringType.Module.Name.StartsWith("keysharp.core", StringComparison.OrdinalIgnoreCase);
-		public bool IsValid => mi != null&& mph != null&& mph.callFunc != null;
+		public bool IsValid => mi != null && mph != null && mph.callFunc != null;
 		public string Name => mi != null ? mi.Name : "";
 		internal bool IsVariadic => isVariadic;
-		internal long MaxParams => 9999;//All functions in keysharp are variadic so this property doesn't apply.
-		internal long MinParams => 0;//All functions in keysharp are variadic so this property doesn't apply.
+		public long MaxParams { get; internal set; } = 9999;
+		public long MinParams { get; internal set; } = 0;
 		internal MethodPropertyHolder Mph => mph;
 		public new (Type, object) super => (typeof(KeysharpObject), this);
 
@@ -255,6 +255,8 @@
 		{
 			mph = new MethodPropertyHolder(mi, null);
 			var parameters = mph.parameters;
+			MinParams = mph.MinParams;
+			MaxParams = mph.MaxParams;
 
 			foreach (var p in parameters)
 			{
