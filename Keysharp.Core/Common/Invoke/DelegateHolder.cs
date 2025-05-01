@@ -1,12 +1,14 @@
-﻿namespace Keysharp.Core.Common.Invoke
+﻿
+namespace Keysharp.Core.Common.Invoke
 {
-	public class DelegateHolder
+	public class DelegateHolder : KeysharpObject, IPointable
 	{
 		internal IFuncObj funcObj;
 		private static readonly ModuleBuilder _modBuilder;
 		private static readonly ConcurrentDictionary<int, Type> _closedTypeCache = new();
 		private static readonly ConcurrentDictionary<int, DynamicMethod> _stubCache = new();
 
+		public IntPtr Ptr { get; internal set; }
 		public Delegate DelRef { get; private set; }
 		internal bool Reference { get; }
 		private readonly bool _fast;
@@ -41,6 +43,7 @@
 
 			// create closed delegate binding 'this'
 			DelRef = stub.CreateDelegate(closedType, this);
+			Ptr = Marshal.GetFunctionPointerForDelegate(DelRef);
 		}
 
 		/// <summary>
@@ -179,6 +182,7 @@
 		{
 			DelRef = null;
 			funcObj = null;
+			Ptr = 0;
 		}
 	}
 }

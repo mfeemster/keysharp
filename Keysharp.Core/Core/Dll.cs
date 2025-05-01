@@ -50,13 +50,10 @@ namespace Keysharp.Core
 		/// <returns>A <see cref="DelegateHolder"/> object which internally holds a function pointer.<br/>
 		/// This is typically passed to an external function via <see cref="DllCall"/> or placed in a struct using <see cref="NumPut"/>, but can also be called directly by <see cref="DllCall"/>.
 		/// </returns>
-		public static long CallbackCreate(object function, object options = null, object paramCount = null)
+		public static object CallbackCreate(object function, object options = null, object paramCount = null)
 		{
 			var o = options.As();
-			var holder = new DelegateHolder(function, o.Contains('f', StringComparison.OrdinalIgnoreCase), o.Contains('&'), paramCount.Ai(-1));
-			var ptr = Marshal.GetFunctionPointerForDelegate(holder.DelRef);
-			callbackCache[ptr] = holder;
-			return ptr;
+			return new DelegateHolder(function, o.Contains('f', StringComparison.OrdinalIgnoreCase), o.Contains('&'), paramCount.Ai(-1));
 		}
 
 		/// <summary>
@@ -65,11 +62,8 @@ namespace Keysharp.Core
 		/// <param name="address">The <see cref="DelegateHolder"/> to be freed.</param>
 		public static object CallbackFree(object address)
 		{
-			long ptr = address.Al();
-			if (callbackCache.TryRemove(ptr, out var value))
-			{
-				value.Clear();
-			}
+			if (address is DelegateHolder dh)
+				dh.Clear();
 			return null;
 		}
 
@@ -364,12 +358,12 @@ namespace Keysharp.Core
 				var pi = pair.Key;
 				var n = pi / 2;
 
-				//If they passed in a ComObject with Ptr as an address, make that address into a __ComObject.
-				if (parameters[pi] is ComObject co)
-				{
-					object obj = co.Ptr;
-					co.Ptr = obj;//Reassign to ensure pointers are properly cast to __ComObject.
-				}
+					//If they passed in a ComObject with Ptr as an address, make that address into a __ComObject.
+					if (parameters[pi] is ComObject co)
+					{
+						object obj = co.Ptr;
+						co.Ptr = obj;//Reassign to ensure pointers are properly cast to __ComObject.
+					}
 				else
 				{
 					var arg = helper.args[n];

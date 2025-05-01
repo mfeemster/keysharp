@@ -5,7 +5,7 @@
 	/// Buffer objects are typically created by calling <see cref="Collections.Buffer"/>,<br/>
 	/// but can also be returned by <see cref="Files.FileRead"/> with the "RAW" option.
 	/// </summary>
-	public class Buffer : KeysharpObject, IDisposable
+	public class Buffer : KeysharpObject, IDisposable, IPointable
 	{
 		/// <summary>
 		/// Whether the object has been disposed or not.
