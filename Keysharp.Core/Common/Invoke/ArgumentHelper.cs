@@ -99,10 +99,10 @@ namespace Keysharp.Core.Common.Invoke
 					n++;
 					p = parameters[paramIndex];
 
-					if (Reflections.GetPtrProperty(p) is object kptr && kptr != null)
-					{
+					if (p is KeysharpObject kso && Script.GetPropertyValue(kso, "ptr", false) is object kptr && kptr != null)
+					{ 
 						// Need to track this separately, because we later need to update ComObject.Ptr in FixParamTypesAndCopyBack
-						if (p is ComObject)
+						if (kso is ComObject)
 							outputVars[paramIndex] = typeof(nint);
 						p = kptr;
 					}
