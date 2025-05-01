@@ -2,197 +2,183 @@
 {
 	public class DelegateHolder
 	{
-		internal PlaceholderFunction delRef;
 		internal IFuncObj funcObj;
-		protected readonly ConcurrentStackArrayPool<long> paramsPool = new (31);
-		private readonly bool fast;
+		private static readonly ModuleBuilder _modBuilder;
+		private static readonly ConcurrentDictionary<int, Type> _closedTypeCache = new();
+		private static readonly ConcurrentDictionary<int, DynamicMethod> _stubCache = new();
 
-		public Delegate DelRef => delRef;
-
+		public Delegate DelRef { get; private set; }
 		internal bool Reference { get; }
+		private readonly bool _fast;
 
-		public DelegateHolder(object obj, bool f, bool r)
+		static DelegateHolder()
 		{
-			funcObj = Functions.GetFuncObj(obj, null, true);
-			fast = f;
-			Reference = r;
-			delRef = (PlaceholderFunction)Delegate.CreateDelegate(typeof(PlaceholderFunction), this, "DelegatePlaceholder");
+			var asm = AssemblyBuilder.DefineDynamicAssembly(
+				new AssemblyName("DynamicDelegates"), AssemblyBuilderAccess.Run);
+			_modBuilder = asm.DefineDynamicModule("M");
 		}
 
-		public long DelegatePlaceholder(long p1 = 0L, long p2 = 0L, long p3 = 0L, long p4 = 0L, long p5 = 0L, long p6 = 0L, long p7 = 0L, long p8 = 0L,
-										long p9 = 0L, long p10 = 0L, long p11 = 0L, long p12 = 0L, long p13 = 0L, long p14 = 0L, long p15 = 0L, long p16 = 0L,
-										long p17 = 0L, long p18 = 0L, long p19 = 0L, long p20 = 0L, long p21 = 0L, long p22 = 0L, long p23 = 0L, long p24 = 0L,
-										long p25 = 0L, long p26 = 0L, long p27 = 0L, long p28 = 0L, long p29 = 0L, long p30 = 0L, long p31 = 0L)
+		public DelegateHolder(object obj, bool fast, bool reference, int paramCount)
+		{
+			funcObj = Functions.GetFuncObj(obj, null, true);
+			_fast = fast;
+			Reference = reference;
+
+			int arity = Math.Clamp(
+				paramCount < 0
+					? (reference
+						? 32
+						: (funcObj is FuncObj fo
+							? (int)fo.MaxParams - ((fo is BoundFunc bo) ? bo.boundargs.Count() : 0)
+							: 0))
+					: paramCount,
+				0, 32);
+
+			// build or get stub dynamic method for this arity with definition `static long Stub(DelegateHolder, long p0…pN)`
+			var stub = _stubCache.GetOrAdd(arity, BuildStubMethod);
+			// build or get closed delegate type Func<long0..longN>
+			var closedType = _closedTypeCache.GetOrAdd(arity, BuildClosedType);
+
+			// create closed delegate binding 'this'
+			DelRef = stub.CreateDelegate(closedType, this);
+		}
+
+		/// <summary>
+		/// Returns a DynamicMethod with type <c>static long Stub(DelegateHolder, long p0…pN)</c>
+		/// that will package its parameters into a <c>long[]</c>
+		/// and invoke this instance’s <see cref="DelegateTrampoline(long[])"/>.
+		/// </summary>
+		/// <param name="arity">The number of <c>long</c> parameters.</param>
+		/// <returns>
+		///   A <see cref="DynamicMethod"/> which can be used to create a closed delegate.
+		/// </returns>
+		private static DynamicMethod BuildStubMethod(int arity)
+		{
+			// 1) Create type <DelegateHolder, long p0..pN>
+			var paramTypes = new Type[arity + 1];
+			paramTypes[0] = typeof(DelegateHolder);
+			for (int i = 0; i < arity; i++)
+				paramTypes[i + 1] = typeof(long);
+
+			// 2) Create a DynamicMethod: static long Stub(DelegateHolder, long p0…pN)
+			var dm = new DynamicMethod(
+				name: $"DynamicDelegate_{arity}",
+				returnType: typeof(long),
+				parameterTypes: paramTypes,
+				m: typeof(DelegateHolder).Module,
+				skipVisibility: true);
+
+			// 3) Create the function body which loads the arguments from long0..longN to long[N]
+			// and then calls this.DelegateTrampoline(long[N])
+			var il = dm.GetILGenerator();
+			var arrLocal = il.DeclareLocal(typeof(long[]));
+
+			// new long[arity]
+			il.Emit(OpCodes.Ldc_I4, arity);
+			il.Emit(OpCodes.Newarr, typeof(long));
+			il.Emit(OpCodes.Stloc, arrLocal);
+
+			// fill array
+			for (int i = 0; i < arity; i++)
+			{
+				il.Emit(OpCodes.Ldloc, arrLocal);
+				il.Emit(OpCodes.Ldc_I4, i);
+				il.Emit(OpCodes.Ldarg, i + 1);
+				il.Emit(OpCodes.Stelem_I8);
+			}
+
+			// call this.DelegateTrampoline(arr)
+			il.Emit(OpCodes.Ldarg_0);
+			il.Emit(OpCodes.Ldloc, arrLocal);
+			var mi = typeof(DelegateHolder)
+				.GetMethod(nameof(DelegateTrampoline), BindingFlags.Instance | BindingFlags.Public);
+			il.EmitCall(OpCodes.Callvirt, mi, null);
+			il.Emit(OpCodes.Ret);
+
+			return dm;
+		}
+
+		// Build a type to accept <DelegateHolder, long0..longN>
+		private static Type BuildClosedType(int arity)
+		{
+			string name = $"DynamicCallback{arity}";
+			var tb = _modBuilder.DefineType(
+				name,
+				TypeAttributes.Public | TypeAttributes.Sealed | TypeAttributes.Class,
+				typeof(MulticastDelegate));
+
+			// ctor(object, IntPtr)
+			var ctor = tb.DefineConstructor(
+				MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.RTSpecialName,
+				CallingConventions.Standard,
+				new[] { typeof(object), typeof(IntPtr) });
+			ctor.SetImplementationFlags(MethodImplAttributes.Runtime);
+
+			// Invoke(long...)
+			var paramTypes = Enumerable.Repeat(typeof(long), arity).ToArray();
+			var mb = tb.DefineMethod(
+				"Invoke",
+				MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.NewSlot | MethodAttributes.Virtual,
+				CallingConventions.Standard,
+				typeof(long),
+				paramTypes);
+			mb.SetImplementationFlags(MethodImplAttributes.Runtime);
+
+			return tb.CreateType();
+		}
+
+		/// <summary>
+		/// StubDelegate calls this function with the arguments packed into an array.
+		/// Then we create a new green thread an run the target function there with the received arguments.
+		/// </summary>
+		/// <param name="args">Argument list for the target function.</param>
+		/// <returns>Result of the target function converted to a long.</returns>
+		public unsafe long DelegateTrampoline(long[] args)
 		{
 			object val = null;
-			long[] arr = null;
-
-			if (delRef != null)
+			if (DelRef != null)
 			{
 				_ = Flow.TryCatch(() =>
 				{
-					(bool, ThreadVariables) btv = (false, null);
-
-					if (!fast)
-						btv = Threads.BeginThread();
-
+					var state = _fast ? (true, (ThreadVariables)null) : Threads.BeginThread();
 					if (Reference)
 					{
-						arr = paramsPool.Rent();
-						arr[0] = p1;
-						arr[1] = p2;
-						arr[2] = p3;
-						arr[3] = p4;
-						arr[4] = p5;
-						arr[5] = p6;
-						arr[6] = p7;
-						arr[7] = p8;
-						arr[8] = p9;
-						arr[9] = p10;
-						arr[10] = p11;
-						arr[11] = p12;
-						arr[12] = p13;
-						arr[13] = p14;
-						arr[14] = p15;
-						arr[15] = p16;
-						arr[16] = p17;
-						arr[17] = p18;
-						arr[18] = p19;
-						arr[19] = p20;
-						arr[20] = p21;
-						arr[21] = p22;
-						arr[22] = p23;
-						arr[23] = p24;
-						arr[24] = p25;
-						arr[25] = p26;
-						arr[26] = p27;
-						arr[27] = p28;
-						arr[28] = p29;
-						arr[29] = p30;
-						arr[30] = p31;
-						val = DelegatePlaceholderArr(arr);
-						_ = paramsPool.Return(arr);
-						arr = null;
+						var gh = GCHandle.Alloc(args, GCHandleType.Pinned);
+						try
+						{
+							long* ptr = (long*)gh.AddrOfPinnedObject().ToPointer();
+							val = funcObj.Call((long)ptr);
+						}
+						finally { gh.Free(); }
 					}
 					else
-						val = funcObj.Call(p1, p2, p3, p4, p5, p6, p7, p8,
-										   p9, p10, p11, p12, p13, p14, p15, p16,
-										   p17, p18, p19, p20, p21, p22, p23, p24,
-										   p25, p26, p27, p28, p29, p30, p31);
-
-					if (!fast)
-						_ = Threads.EndThread(btv.Item1);
-				}, !fast);//Pop on exception because EndThread() above won't be called.
-			}
-
-			if (arr != null)
-				_ = paramsPool.Return(arr);
-
-			return ConvertResult(val);
-		}
-
-		public long DelegatePlaceholderArr(long[] arr)
-		{
-			object val = null;
-
-			if (delRef != null)
-			{
-				if (Reference)
-				{
-					unsafe
 					{
-						fixed (long* pin = &arr[0])
-						{
-							var ptr = new IntPtr(pin);
-							val = funcObj.Call(ptr.ToInt64());
-						}
+						val = funcObj.Call(System.Array.ConvertAll(args, item => (object)item));
 					}
-				}
-				else if (arr.Length >= 31)
-				{
-					val = delRef.Invoke(arr[0], arr[1], arr[2], arr[3], arr[4], arr[5],
-										arr[6], arr[7], arr[8], arr[9], arr[10], arr[11],
-										arr[12], arr[13], arr[14], arr[15], arr[16], arr[17],
-										arr[18], arr[19], arr[20], arr[21], arr[22], arr[23],
-										arr[24], arr[25], arr[26], arr[27], arr[28], arr[29],
-										arr[30]);
-				}
-				else
-				{
-					_ = Flow.TryCatch(() =>
-					{
-						(bool, ThreadVariables) btv = (false, null);
-
-						if (!fast)
-							btv = Threads.BeginThread();
-
-						val = funcObj.Call(arr);
-
-						if (!fast)
-							_ = Threads.EndThread(btv.Item1);
-					}, !fast);//Pop on exception because EndThread() above won't be called.
-				}
+					if (!_fast) _ = Threads.EndThread(state.Item1);
+				}, !_fast);
 			}
-
 			return ConvertResult(val);
 		}
 
 		internal static long ConvertResult(object val)
 		{
-			if (val is int i)
-				return i;
-			else if (val is long l)
-				return l;
-			else if (val is bool b)
-				return b ? 1L : 0L;
-			else if (val is double d)
-				return (long)d;
-			else if (val is string s && s.Length == 0)
-				return 0L;
-			else if (val is null)
-				return 0L;
-			else if (val is IntPtr ip)
-				return ip.ToInt64();
-
-			return 0L;
+			return val switch
+			{
+				int i => i,
+				long l => l,
+				bool b => b ? 1L : 0L,
+				double d => (long)d,
+				string s => s.Length == 0 ? 0L : 0L,
+				IntPtr ip => ip.ToInt64(),
+				_ => 0L
+			};
 		}
 
 		internal void Clear()
 		{
-			delRef = null;
+			DelRef = null;
 			funcObj = null;
 		}
-
-		internal long DirectCall(params object[] parameters)
-		{
-			if (Reference)
-			{
-				var helper = new ComArgumentHelper(parameters);
-				return DelegatePlaceholderArr(helper.args);
-			}
-			else
-			{
-				object val = null;
-				_ = Flow.TryCatch(() =>
-				{
-					var helper = new DllArgumentHelper(parameters);
-					(bool, ThreadVariables) btv = (false, null);
-
-					if (!fast)
-						btv = Threads.BeginThread();
-
-					val = funcObj.Call(helper.args);
-
-					if (!fast)
-						_ = Threads.EndThread(btv.Item1);
-				}, !fast);//Pop on exception because EndThread() above won't be called.
-				return ConvertResult(val);
-			}
-		}
-
-		public delegate long PlaceholderFunction(long p1 = 0L, long p2 = 0L, long p3 = 0L, long p4 = 0L, long p5 = 0L, long p6 = 0L, long p7 = 0L, long p8 = 0L,
-				long p9 = 0L, long p10 = 0L, long p11 = 0L, long p12 = 0L, long p13 = 0L, long p14 = 0L, long p15 = 0L, long p16 = 0L,
-				long p17 = 0L, long p18 = 0L, long p19 = 0L, long p20 = 0L, long p21 = 0L, long p22 = 0L, long p23 = 0L, long p24 = 0L,
-				long p25 = 0L, long p26 = 0L, long p27 = 0L, long p28 = 0L, long p29 = 0L, long p30 = 0L, long p31 = 0L);
 	}
 }

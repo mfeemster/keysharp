@@ -18,6 +18,8 @@
 		internal bool IsBind { get; private set; }
 		internal bool IsVariadic => startVarIndex != -1;
 		internal int ParamLength { get; }
+		internal int MinParams = 0;
+		internal int MaxParams = 9999;
 
 		public MethodPropertyHolder(MethodInfo m, PropertyInfo p)
 		{
@@ -33,11 +35,17 @@
 
 				for (var i = 0; i < parameters.Length; i++)
 				{
-					if (parameters[i].ParameterType == typeof(object[]))
+					var pmi = parameters[i];
+					if (pmi.ParameterType == typeof(object[]))
 						startVarIndex = i;
 					else if (startVarIndex != -1 && stopVarIndexDistanceFromEnd == 0)
 						stopVarIndexDistanceFromEnd = parameters.Length - i;
+
+					if (!(pmi.IsOptional || pmi.IsVariadic() || pmi.ParameterType == typeof(object[])))
+						MinParams++;
 				}
+				if (startVarIndex == -1)
+					MaxParams = parameters.Length;
 
 				IsStaticFunc = mi.Attributes.HasFlag(MethodAttributes.Static);
 				var isFuncObj = typeof(IFuncObj).IsAssignableFrom(mi.DeclaringType);
@@ -259,6 +267,7 @@
 				isGuiType = Gui.IsGuiType(pi.DeclaringType);
 				parameters = pi.GetIndexParameters();
 				ParamLength = parameters.Length;
+				MinParams = MaxParams = ParamLength;
 
 				if (pi.GetAccessors().Any(x => x.IsStatic))
 				{
