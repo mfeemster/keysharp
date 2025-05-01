@@ -267,11 +267,10 @@ namespace Keysharp.Core
 					case "uint64":
 					case "ptr":
 					case "uptr":
-						if (number is DelegateHolder dh)
-							bytes = BitConverter.GetBytes(Marshal.GetFunctionPointerForDelegate(dh.DelRef));
-						else
-							bytes = ConvertToInt(number);
+						if (number is KeysharpObject kso)
+							number = Reflections.GetPtrProperty(kso);
 
+						bytes = ConvertToInt(number);
 						inc = 8;
 						break;
 

@@ -1038,8 +1038,8 @@
 			var ptr = IntPtr.Zero;
 			var buf = source as Buffer;
 
-			if (buf != null)
-				ptr = buf.Ptr;
+			if (source is IPointable ip)
+				ptr = (nint)ip.Ptr;
 			else if (source is long l)
 				ptr = new IntPtr(l);
 			else if (source is IntPtr p)
@@ -1173,8 +1173,8 @@
 				{
 					buf = obj[1] as Buffer;
 
-					if (buf != null)
-						ptr = buf.Ptr;
+					if (obj[1] is IPointable)
+						ptr = (nint)buf.Ptr;
 					else if (obj[1] is long l)
 						ptr = new IntPtr(l);
 					else if (obj[1] is IntPtr ip)
