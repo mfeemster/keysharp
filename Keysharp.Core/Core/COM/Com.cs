@@ -466,31 +466,10 @@ namespace Keysharp.Core.COM
 				return Errors.ErrorOccurred(err = new ValueError($"The passed in object was not a ComObject or a raw COM interface.")) ? throw err : null;
 
 			var pVtbl = Marshal.ReadIntPtr(pUnk);
-			var helper = new ComArgumentHelper(parameters);
+			var helper = new ArgumentHelper(parameters);
 			var value = CallDel(pUnk.ToInt64(), Marshal.ReadIntPtr(IntPtr.Add(pVtbl, idx * sizeof(IntPtr))), helper.args);
-			Dll.FixParamTypesAndCopyBack(parameters, helper.args);
-
-			for (int pi = 0, ai = 0; pi < parameters.Length; pi += 2, ++ai)
-			{
-				if (pi < parameters.Length - 1)
-				{
-					var ps = parameters[pi].As();
-
-					//If they passed in a ComObject with Ptr as an address, make that address into a __ComObject.
-					/*  if (parameters[pi + 1] is ComObject co2)
-					    {
-					    object obj = co2.Ptr;
-					    co2.Ptr = obj;//Reassign to ensure pointers are properly cast to __ComObject.
-					    }
-
-					    else*/
-					if (ps[^1] == '*' || ps[^1] == 'p')
-					{
-						var aip = helper.args[ai];
-						Dll.FixParamTypeAndCopyBack(ref parameters[pi + 1], ps, (IntPtr)aip);//Must reference directly into the array, not a temp variable.
-					}
-				}
-			}
+			Dll.FixParamTypesAndCopyBack(parameters, helper);
+			helper.Dispose();
 
 			if (helper.ReturnType == typeof(int))
 			{
