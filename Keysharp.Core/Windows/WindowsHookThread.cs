@@ -5257,7 +5257,9 @@ namespace Keysharp.Core.Windows
 			//before Application.Run().
 			//This must use the context, rather than the main window, because this could happen on a script containing InputHook,
 			//which are not persistent, and thus no main window will be present.
-			if (Processes.mainContext != null)//Will be null during unit tests.
+			//kbMouseContext will be null if the hooks are run on the main thread.
+			//mainContext be null during unit tests.
+			if (Script.kbMouseContext == null && Processes.mainContext != null)
 				Processes.mainContext.Send(new SendOrPostCallback((obj) => func()), null);
 			else
 				func();

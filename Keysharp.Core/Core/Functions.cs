@@ -8,6 +8,11 @@ namespace Keysharp.Core
 	public static class Functions
 	{
 		/// <summary>
+		/// Avoid creating new FuncObj objects for the same string/delegate.
+		/// </summary>
+		internal static ConcurrentDictionary<object, IFuncObj> cachedFuncObj = new (new CaseEqualityComp(eCaseSense.Off));
+
+		/// <summary>
 		/// Creates a function object by searching for a method within the script.
 		/// The search is done by matching the object type, name and parameter count.
 		/// Static functions use null for the object.
@@ -148,7 +153,7 @@ namespace Keysharp.Core
 			{
 				if (s.Length > 0)
 				{
-					var tempdel = new FuncObj(s, eventObj, paramCount);
+					var tempdel = cachedFuncObj.GetOrAdd(s, (key) => new FuncObj(s, eventObj, paramCount));
 
 					if (tempdel.IsValid)
 						del = tempdel;
@@ -167,7 +172,7 @@ namespace Keysharp.Core
 			}
 			else if (h is Delegate d)
 			{
-				var tempdel = new FuncObj(d, eventObj);
+				var tempdel = cachedFuncObj.GetOrAdd(d, (key) => new FuncObj(d, eventObj));
 
 				if (tempdel.IsValid)
 					del = tempdel;

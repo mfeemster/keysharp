@@ -10,7 +10,6 @@
 		/// <typeparam name="TResult">The return type of the task.</typeparam>
 		/// <param name="function">The work to execute asynchronously.</param>
 		/// <returns>A task object that represents the work queued to execute on an STA thread.</returns>
-
 		internal static Task<TResult> Run<TResult>([NotNull] Func<TResult> function)
 		{
 			var tcs = new TaskCompletionSource<TResult>();
@@ -28,6 +27,7 @@
 #if WINDOWS
 			thread.SetApartmentState(ApartmentState.STA);
 #endif
+			//thread.IsBackground = true;//Don't let this keep the program alive.
 			thread.Start();
 			return tcs.Task;
 		}
@@ -57,6 +57,7 @@
 #if WINDOWS
 			thread.SetApartmentState(ApartmentState.STA);
 #endif
+			//thread.IsBackground = true;
 			thread.Start();
 			return tcs.Task;
 		}
