@@ -10,7 +10,6 @@
 		/// <typeparam name="TResult">The return type of the task.</typeparam>
 		/// <param name="function">The work to execute asynchronously.</param>
 		/// <returns>A task object that represents the work queued to execute on an STA thread.</returns>
-
 		internal static Task<TResult> Run<TResult>([NotNull] Func<TResult> function)
 		{
 			var tcs = new TaskCompletionSource<TResult>();

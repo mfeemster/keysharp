@@ -18,6 +18,7 @@ namespace Keysharp.Core
 		internal static int NoSleep = -1;
 		internal static bool persistentValueSetByUser;
 		internal static ConcurrentDictionary<IFuncObj, Timer2> timers = new ();
+		internal static DateTime lastLoopDoEvents = DateTime.Now;
 
 		/// <summary>
 		/// Whether a thread can be interrupted/preempted by subsequent thread.
@@ -163,8 +164,18 @@ namespace Keysharp.Core
 		/// </summary>
 		/// <param name="obj">The value to examine.</param>
 		/// <returns>True if the value is true and the script is running, else false.</returns>
-		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		public static bool IsTrueAndRunning(object obj) => !hasExited && Script.ForceBool(obj);
+		public static bool IsTrueAndRunning(object obj)
+		{
+			var b = !hasExited && Script.ForceBool(obj);
+
+			if (b && (DateTime.Now - lastLoopDoEvents).TotalMilliseconds > 15)
+			{
+				Application.DoEvents();
+				lastLoopDoEvents = DateTime.Now;
+			}
+
+			return b;
+		}
 
 		/// <summary>
 		/// Registers a function to be called automatically whenever the script exits.
@@ -603,40 +614,14 @@ namespace Keysharp.Core
 			hasExited = true;//At this point, we are clear to exit, so do not allow any more calls to this function.
 			AllowInterruption = allowInterruption_prev;
 			HotkeyDefinition.AllDestruct();
-
-			if (Script.HookThread is HookThread ht)
-				ht.Stop();
-
 			StopMainTimer();
 
 			foreach (var kv in timers)
 				kv.Value.Stop();
 
-			foreach (var kv in Script.gcHandles)
-				kv.Value.Free();
-
-			if (!Script.IsMainWindowClosing)
-			{
-				Script.mainWindow.CheckedInvoke(() =>
-				{
-					Script.mainWindow.Close();
-					Script.mainWindow = null;
-				}, false);
-			}
-
-			if (Script.Tray != null && Script.Tray.ContextMenuStrip != null)
-			{
-				Script.Tray.ContextMenuStrip.CheckedInvoke(() =>
-				{
-					Script.Tray.Visible = false;
-					Script.Tray.Dispose();
-					Script.Tray = null;
-				}, true);
-			}
-
+			Script.Stop();
 			Environment.ExitCode = ec;
 
-			//Environment.Exit(exitCode);//This seems too harsh, and also prevents compiled unit tests from properly being run.
 			if (useThrow)
 				throw new UserRequestedExitException();
 			else

@@ -372,6 +372,7 @@
 		private void Keyview_FormClosing(object sender, FormClosingEventArgs e)
 		{
 			timer.Stop();
+			Script.Stop();
 			var dir = Path.GetDirectoryName(lastrun);
 
 			if (!Directory.Exists(dir))
