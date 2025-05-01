@@ -605,9 +605,23 @@ namespace Keysharp.Core
 				//more than one message box simultaneously and switch between them. However, within a thread, a message box always
 				//blocks that thread.
 				if (owner != null)
+				{
 					_ = owner.Invoke(() => ret = MessageBox.Show(owner, txt, caption, buttons, icon, defaultbutton, mbopts).ToString());
+				}
 				else
-					ret = MessageBox.Show(null, txt, caption, buttons, icon, defaultbutton, mbopts).ToString();
+				{
+					var tsk = StaTask.Run(() =>
+										  MessageBox.Show(null, txt, caption, buttons, icon, defaultbutton, mbopts).ToString());
+
+					while (!tsk.IsCompleted)
+					{
+						Application.DoEvents();
+						Thread.Sleep(1);
+					}
+
+					//tsk.Wait();
+					ret = tsk.Result;
+				}
 
 				//ret = Script.mainWindow.CheckedInvoke(() => MessageBox.Show(null, txt, caption, buttons, icon, defaultbutton, mbopts).ToString(), true);
 				nMessageBoxes--;

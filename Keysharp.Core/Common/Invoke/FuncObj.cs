@@ -139,6 +139,7 @@
 		public bool IsBuiltIn => mi.DeclaringType.Module.Name.StartsWith("keysharp.core", StringComparison.OrdinalIgnoreCase);
 		public bool IsValid => mi != null && mph != null && mph.callFunc != null;
 		public string Name => mi != null ? mi.Name : "";
+		public new (Type, object) super => (typeof(KeysharpObject), this);
 		internal bool IsVariadic => isVariadic;
 		public long MaxParams { get; internal set; } = 9999;
 		public long MinParams { get; internal set; } = 0;
@@ -257,6 +258,12 @@
 
 			return val;
 		}
+
+		public override bool Equals(object obj) => obj is FuncObj fo ? fo.mi == mi : false;
+
+		public bool Equals(FuncObj value) => value.mi == mi;
+
+		public override int GetHashCode() => mi.GetHashCode();
 
 		public bool IsByRef(object obj = null)
 		{

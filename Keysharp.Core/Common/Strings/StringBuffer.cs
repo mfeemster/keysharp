@@ -6,13 +6,24 @@ namespace Keysharp.Core.Common.Strings
 {
 	unsafe public class StringBuffer : KeysharpObject
 	{
-		private byte* _buffer; // pointer to unmanaged UTF-16 buffer
-		private long _capacity = 0; // in wchar (char) units
-		private long _position = 0;  // current position in the buffer when appending characters
+		/// <summary>
+		/// Pointer to the unmanaged memory holding the buffer contents.
+		/// </summary>
+		private byte* _buffer;
+		/// <summary>
+		/// Capacity of the buffer in character units (not bytes). 
+		/// Does not include null terminator.
+		/// </summary>
+		private long _capacity = 0;
+		/// <summary>
+		/// Current write position (in character units) within the buffer.
+		/// </summary>
+		private long _position = 0;
 		private Encoding _encoding;
 		private int _bytesPerChar;
+		public object EntangledString { get; set; }
 
-		public StringBuffer(params object[] args) : base(args) { }
+		public StringBuffer(params object[] args) => __New(args);
 
 		~StringBuffer()
 		{
@@ -22,7 +33,15 @@ namespace Keysharp.Core.Common.Strings
 
 		public static implicit operator string(StringBuffer s) => s.ToString();
 
-		public override object __New(params object[] args)
+		/// <summary>
+		/// Initializes the buffer. All parameters are optional:
+		/// <list type="bullet">
+		///   <item><description><c>args[0]</c> (optional): initial string content; defaults to empty.</description></item>
+		///   <item><description><c>args[1]</c> (optional): initial capacity in characters (excluding null terminator); defaults to larger of 256 or provided string length.</description></item>
+		///   <item><description><c>args[2]</c> (optional): encoding specifier; pass "ANSI" (case-insensitive) for system ANSI encoding, otherwise defaults to Unicode.</description></item>
+		/// </list>
+		/// </summary>
+		public new object __New(params object[] args)
 		{
 			var str = args.Length > 0 ? args[0].ToString() : "";
 			var capacity = args.Length > 1 && args[1] != null ? args[1].Ai() + 1 : Math.Max(str.Length + 1, 256);
@@ -34,14 +53,24 @@ namespace Keysharp.Core.Common.Strings
 			return "";
 		}
 
-		public long Ptr
+		/// <summary>
+		/// Gets the raw pointer address (as a long) to the unmanaged buffer.
+		/// </summary>
+		public long Ptr => (long)_buffer;
+
+		/// <summary>
+		/// Gets or sets the current write/read position in character units.
+		/// </summary>
+		public long Pos
 		{
-			get {
-				UpdateBufferFromEntangledString();
-				return (long)_buffer;
-			}
+			get => _position;
+			set => Seek(_position);
 		}
 
+		/// <summary>
+		/// Gets or sets the buffer capacity (in chars). Expands or shrinks the unmanaged block.
+		/// Shrinking the capacity causes a null-terminator to be added to the end.
+		/// </summary>
 		public object Capacity
 		{
 			get => _capacity;
@@ -58,6 +87,25 @@ namespace Keysharp.Core.Common.Strings
 			}
 		}
 
+		public object UpdateEntangledStringFromBuffer() => EntangledString != null ? Script.SetPropertyValue(EntangledString, "__Value", ToString()) : null;
+		public object UpdateBufferFromEntangledString()
+		{
+			if (EntangledString == null)
+				return null;
+			var str = Script.GetPropertyValue(EntangledString, "__Value") as string;
+			str ??= "";
+			var requiredCapacity = Math.Max(_capacity, str.Length);
+			EnsureCapacity(requiredCapacity);
+			Clear();
+			Append(str);
+			return str;
+		}
+
+		/// <summary>
+		/// Appends <paramref name="text"/> to the buffer,
+		/// expanding capacity if needed, and null-terminates.
+		/// Returns the new position (in chars).
+		/// </summary>
 		public object Append(string text)
 		{
 			if (text == null) throw new Error("String cannot be unset");
@@ -74,7 +122,8 @@ namespace Keysharp.Core.Common.Strings
 				_position += len;
 
 				_buffer[_position] = 0;
-			} else
+			}
+			else
 			{
 				// Copy chars
 				char[] bytes = text.ToCharArray();
@@ -90,12 +139,19 @@ namespace Keysharp.Core.Common.Strings
 			return _position;
 		}
 
+		/// <summary>
+		/// Appends <paramref name="text"/> followed by the system newline.
+		/// Returns the new position (in chars).
+		/// </summary>
 		public object AppendLine(string text = "")
 		{
 			Append(text);
 			return Append(Environment.NewLine);
 		}
 
+		/// <summary>
+		/// Clears the buffer contents and resets position to zero.
+		/// </summary>
 		public object Clear()
 		{
 			_position = 0;
@@ -106,26 +162,49 @@ namespace Keysharp.Core.Common.Strings
 			return "";
 		}
 
-		private void EnsureCapacity(long requiredCapacity)
+		/// <summary>
+		/// Seeks to <paramref name="position"/> (clamped to capacity),
+		/// or if negative, finds the current string length by scanning for a null terminator.
+		/// Returns the new position.
+		/// </summary>
+		public object Seek(object position)
 		{
-			if (requiredCapacity > _capacity)
-				Capacity = requiredCapacity;
+			long pos = position.Al();
+			if (pos < 0)
+			{
+				if (_bytesPerChar == 1)
+				{
+					// Find length up to first 0 byte
+					byte* p = _buffer;
+					_position = 0;
+					while (p[_position] != 0)
+						_position++;
+				}
+				else
+				{
+					// Find length up to first 0 wchar
+					char* p = (char*)_buffer;
+					_position = 0;
+					while (p[_position] != '\0')
+						_position++;
+				}
+			}
+			else
+			{
+				_position = Math.Min(_capacity, pos);
+			}
+			return _position;
 		}
 
-		public object EntangledString { get; set; }
-
-		public object UpdateEntangledStringFromBuffer() => EntangledString != null ? Script.SetPropertyValue(EntangledString, "__Value", ToString()) : null;
-		public object UpdateBufferFromEntangledString()
+		/// <summary>
+		/// Ensures the buffer can hold <paramref name="requiredCapacity"/> characters.
+		/// If <paramref name="exact"/> is false then the maximum of <paramref name="requiredCapacity"/>
+		/// and double the current capacity is used.
+		/// </summary>
+		private void EnsureCapacity(long requiredCapacity, bool exact = false)
 		{
-			if (EntangledString == null)
-				return null;
-			var str = Script.GetPropertyValue(EntangledString, "__Value") as string;
-			str ??= "";
-			var requiredCapacity = Math.Max(_capacity, str.Length);
-			EnsureCapacity(requiredCapacity);
-			Clear();
-			Append(str);
-			return str;
+			if (requiredCapacity > _capacity)
+				Capacity = exact ? requiredCapacity : Math.Max(requiredCapacity, _capacity * 2);
 		}
 
 		public override void PrintProps(string name, StringBuffer sbuf, ref int tabLevel)
@@ -140,6 +219,10 @@ namespace Keysharp.Core.Common.Strings
 				_ = sbuf.AppendLine($"{indent}{name}: {str} ({fieldType})");
 		}
 
+		/// <summary>
+		/// Reads the current buffer contents up to the null-terminator or current position (whichever is larger)
+		/// and returns as a managed string.
+		/// </summary>
 		public override string ToString()
 		{
 			if (_buffer == null)
@@ -153,7 +236,7 @@ namespace Keysharp.Core.Common.Strings
 				while (p[len] != 0)
 					len++;
 				// Decode exactly that many ANSI bytes
-				return _encoding.GetString(new ReadOnlySpan<byte>(_buffer, len));
+				return _encoding.GetString(new ReadOnlySpan<byte>(_buffer, Math.Max(len, (int)_position)));
 			}
 			else
 			{
@@ -163,7 +246,7 @@ namespace Keysharp.Core.Common.Strings
 				while (p[len] != '\0')
 					len++;
 				// Construct a managed string from that many chars
-				return new string (p, 0, len);
+				return new string(p, 0, Math.Max(len, (int)_position));
 			}
 		}
 	}

@@ -152,7 +152,7 @@
 		/// </summary>
 		/// <param name="obj"></param>
 		/// <returns></returns>
-		public override bool Equals(object obj) => obj is WindowItemBase ? (obj as WindowItemBase).Handle == Handle : base.Equals(obj);
+		public override bool Equals(object obj) => obj is WindowItemBase window ? window.Handle == Handle : base.Equals(obj);
 
 		public override int GetHashCode() => base.GetHashCode();
 

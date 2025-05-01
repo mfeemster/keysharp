@@ -155,7 +155,7 @@ namespace Keysharp.Scripting
 					item = otup[1];
 				}
 
-                if ((kso != null || (kso = item as KeysharpObject) != null) && kso.op != null)
+                if ((kso != null || (kso = item as KeysharpObject) != null) && kso.op != null && kso.op.Count != 0)
                 {
 					if (TryGetOwnPropsMap(kso, namestr, out var opm))
 					{
@@ -172,7 +172,7 @@ namespace Keysharp.Scripting
                 }
 
 #if WINDOWS
-				if (item is ComObject co)
+				else if (item is ComObject co)
 				{
 					return GetPropertyValue(co.Ptr, namestr, throwOnError);
 				}
@@ -183,9 +183,9 @@ namespace Keysharp.Scripting
 					return item.GetType().InvokeMember(namestr, BindingFlags.InvokeMethod | BindingFlags.GetProperty, null, item, null);
 				}
 #endif
-				if (item != null && item is not KeysharpObject)
+				else if (item != null)
 				{
-					if (typetouse == null && item != null)
+					if (typetouse == null)
 						typetouse = item.GetType();
 
 					if (Reflections.FindAndCacheProperty(typetouse, namestr, 0) is MethodPropertyHolder mph2)

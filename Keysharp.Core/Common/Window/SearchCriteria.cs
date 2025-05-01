@@ -31,12 +31,13 @@
 				return criteria;
 			}
 
-			//if (obj is IntPtr ptr1)
-			//{
-			//  criteria.ID = ptr1;
-			//  criteria.IsPureID = true;
-			//  return criteria;
-			//}
+			if (obj is IntPtr ptr1)
+			{
+				criteria.ID = ptr1;
+				criteria.IsPureID = true;
+				return criteria;
+			}
+
 			object hwnd = null;
 
 			try

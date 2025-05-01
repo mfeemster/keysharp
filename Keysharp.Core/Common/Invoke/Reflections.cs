@@ -456,10 +456,12 @@ namespace Keysharp.Core.Common.Invoke
 		internal static IntPtr GetPtrProperty(object item, bool throwIfZero = false)
 		{
 			Error err;
-			var addr = IntPtr.Zero;
+			nint addr;
 
-			if (item is IntPtr ip)
+			if (item is nint ip)
 				addr = ip;
+			else if (item is long l)
+				addr = (nint)l;
 			else if (item is Buffer buf)//Put Buffer check first because it's faster and more likely.
 				addr = buf.Ptr;
 			else if (item is KeysharpObject kso && Script.GetPropertyValue(kso, "ptr", false) is object p && p != null)
@@ -467,8 +469,8 @@ namespace Keysharp.Core.Common.Invoke
 			else
 				addr = (nint)item.Al();
 
-			if (throwIfZero && addr == IntPtr.Zero)
-				return Errors.ErrorOccurred(err = new TypeError($"Argument was of type {item.GetType()}. Type must be integer, Buffer or other object with a Ptr property that is an integer.\"")) ? throw err : IntPtr.Zero;
+			if (throwIfZero && addr == nint.Zero)
+				return Errors.ErrorOccurred(err = new TypeError($"Argument was of type {item.GetType()}. Type must be integer, Buffer or other object with a Ptr property that is an integer.\"")) ? throw err : nint.Zero;
 
 			return addr;
 		}

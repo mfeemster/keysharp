@@ -41,3 +41,21 @@ else
 	FileAppend "fail", "*"
 
 ExitApp()
+
+x := 0
+
+SetTimer(TimerHandler3, -100) ; Ensure only one timer gets created because the handler is cached.
+SetTimer(TimerHandler3, -200)
+
+TimerHandler3()
+{
+	global x
+	x++
+}
+
+Sleep(1000)
+
+if (x == 1)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"

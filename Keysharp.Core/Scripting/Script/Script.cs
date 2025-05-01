@@ -1,4 +1,6 @@
-﻿namespace Keysharp.Scripting
+﻿#define SEPARATE_KB_THREAD
+
+namespace Keysharp.Scripting
 {
 	public partial class Script
 	{
@@ -40,6 +42,8 @@
 		internal static int totalExistingThreads;
 		internal static int uninterruptibleTime = 17;
 		internal static ConcurrentDictionary<nint, GCHandle> gcHandles = [];
+		internal static Task kbMouseThread;
+		internal static ApplicationContext kbMouseContext;
 		private static bool isReadyToExecute;
 		private static IntPtr mainWindowHandle;
 
@@ -316,6 +320,36 @@
 		[PublicForTestOnly]
 		public static void SimulateKeyPress(uint key) => HookThread.SimulateKeyPress(key);
 
+		public static void Stop()
+		{
+			if (HookThread is HookThread ht)//Put anything here that involves Script in a Stop() function in Script.//TODO
+				ht.Stop();
+
+			kbMouseContext?.ExitThread();
+
+			foreach (var kv in gcHandles)
+				kv.Value.Free();
+
+			if (!IsMainWindowClosing)
+			{
+				mainWindow.CheckedInvoke(() =>
+				{
+					mainWindow.Close();
+					mainWindow = null;
+				}, false);
+			}
+
+			if (Tray != null && Tray.ContextMenuStrip != null)
+			{
+				Tray.ContextMenuStrip.CheckedInvoke(() =>
+				{
+					Tray.Visible = false;
+					Tray.Dispose();
+					Tray = null;
+				}, true);
+			}
+		}
+
 		public static void VerifyVersion(string ver, bool plus, int line, string code)
 		{
 			var ahkver = A_AhkVersion;
@@ -400,12 +434,49 @@
 				return false;
 
 #if WINDOWS
+#if SEPARATE_KB_THREAD
+			kbMouseThread = StaTask.Run(() =>
+			{
+				try
+				{
+					kbMouseContext = new ApplicationContext();
+					HookThread = new WindowsHookThread();
+					Application.Run(kbMouseContext);
+				}
+				catch
+				{
+					kbMouseContext?.ExitThread();
+				}
+
+				//System.Diagnostics.Debug.WriteLine("Exited kb mouse context.");
+			});
+#else
 			HookThread = new WindowsHookThread();
-			return true;
-#elif LINUX
-			HookThread = new Keysharp.Core.Linux.LinuxHookThread();
-			return true;
 #endif
+#elif LINUX
+#if SEPARATE_KB_THREAD
+			kbMouseThread = StaTask.Run(() =>
+			{
+				try
+				{
+					kbMouseContext = new ApplicationContext();
+					HookThread = new LinuxHookThread();
+					Application.Run(kbMouseContext);
+				}
+				catch
+				{
+					kbMouseContext?.ExitThread();
+				}
+
+				//System.Diagnostics.Debug.WriteLine("Exited kb mouse context.");
+			});
+#else
+			HookThread = new LinuxHookThread();
+#endif
+#else
+			return false;
+#endif
+			return true;
 		}
 
 		internal static ResultType IsCycleComplete(int aSleepDuration, DateTime aStartTime, bool aAllowEarlyReturn)

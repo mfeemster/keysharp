@@ -7,8 +7,11 @@ namespace Keysharp.Core
 	/// </summary>
 	public static class Functions
 	{
-		// Avoid creating new FuncObj objects for the same string/delegate
-		internal static ConcurrentDictionary<object, IFuncObj> cachedFuncObj = new(new CaseEqualityComp(eCaseSense.Off));
+		/// <summary>
+		/// Avoid creating new FuncObj objects for the same string/delegate.
+		/// </summary>
+		internal static ConcurrentDictionary<object, IFuncObj> cachedFuncObj = new (new CaseEqualityComp(eCaseSense.Off));
+
 		/// <summary>
 		/// Creates a function object by searching for a method within the script.
 		/// The search is done by matching the object type, name and parameter count.

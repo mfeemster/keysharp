@@ -539,7 +539,7 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 * [Cross platform INI file processor](https://www.codeproject.com/articles/20053/a-complete-win-ini-file-utility-class)
 * [P/Invoke calls](https://www.pinvoke.net)
 * [Tuple splatter](https://github.com/iotalambda/TupleSplatter/tree/master/TupleSplatter)
-* [Semver version parsing](https://github.com/maxhauser/semver)
+* [Semver version parsing](https://github.com/WalkerCodeRanger/semver)
 * [PictureBox derivation](https://www.codeproject.com/articles/717312/pixelbox-a-picturebox-with-configurable-interpolat)
 * [Using SendMessage() with string](https://gist.github.com/BoyCook/5075907)
 * [Program icon](https://thenounproject.com/icon/mechanical-keyboard-switch-2987081/) is a derivative of work by [Bamicon](https://thenounproject.com/bamicon/)

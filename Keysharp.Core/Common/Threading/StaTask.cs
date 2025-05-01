@@ -30,6 +30,7 @@ namespace Keysharp.Core.Common.Threading
 #if WINDOWS
 			thread.SetApartmentState(ApartmentState.STA);
 #endif
+			//thread.IsBackground = true;//Don't let this keep the program alive.
 			thread.Start();
 			return tcs.Task;
 		}
@@ -59,6 +60,7 @@ namespace Keysharp.Core.Common.Threading
 #if WINDOWS
 			thread.SetApartmentState(ApartmentState.STA);
 #endif
+			//thread.IsBackground = true;
 			thread.Start();
 			return tcs.Task;
 		}
