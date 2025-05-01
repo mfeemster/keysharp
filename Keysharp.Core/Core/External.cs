@@ -273,11 +273,7 @@ namespace Keysharp.Core
 						if (number is KeysharpObject kso)
 							number = Reflections.GetPtrProperty(kso);
 
-						if (number is DelegateHolder dh)
-							bytes = BitConverter.GetBytes(Marshal.GetFunctionPointerForDelegate(dh.DelRef));
-						else
-							bytes = ConvertToInt(number);
-
+						bytes = ConvertToInt(number);
 						inc = 8;
 						break;
 

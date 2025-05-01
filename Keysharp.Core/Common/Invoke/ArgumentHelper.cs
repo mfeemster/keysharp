@@ -99,15 +99,12 @@ namespace Keysharp.Core.Common.Invoke
 					n++;
 					p = parameters[paramIndex];
 
-					// This assumes that the ptr property contains a numeric value wrapped in the object type
-					// or System.__ComObject. If the numeric value is not wrapped then using it
-					// as an output variable will not work properly.
-					if (p is KeysharpObject kso && Script.GetPropertyValue(kso, "ptr", false) is object kptr && kptr != null)
+					if (Reflections.GetPtrProperty(p) is object kptr && kptr != null)
 					{
 						// Need to track this separately, because we later need to update ComObject.Ptr in FixParamTypesAndCopyBack
-						if (kso is ComObject)
+						if (p is ComObject)
 							outputVars[paramIndex] = typeof(nint);
-						p = parameters[paramIndex] = kptr;
+						p = kptr;
 					}
 				}
 

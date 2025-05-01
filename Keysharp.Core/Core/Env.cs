@@ -778,7 +778,7 @@ namespace Keysharp.Core
 							if (index + size < length)
 							{
 								var hglobal = Marshal.AllocHGlobal(size);
-								System.Buffer.MemoryCopy((ptr + index).ToPointer(), hglobal.ToPointer(), size, size);
+								System.Buffer.MemoryCopy((void*)(ptr + index), hglobal.ToPointer(), size, size);
 								_ = WindowsAPI.SetClipboardData(cliptype, hglobal);
 								//Do not free hglobal here.
 								index += size;

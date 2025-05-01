@@ -4,7 +4,7 @@ using System.Drawing;
 
 namespace Keysharp.Core.Common.Strings
 {
-	unsafe public class StringBuffer : KeysharpObject
+	unsafe public class StringBuffer : KeysharpObject, IPointable
 	{
 		/// <summary>
 		/// Pointer to the unmanaged memory holding the buffer contents.
@@ -56,7 +56,7 @@ namespace Keysharp.Core.Common.Strings
 		/// <summary>
 		/// Gets the raw pointer address (as a long) to the unmanaged buffer.
 		/// </summary>
-		public long Ptr => (long)_buffer;
+		public IntPtr Ptr => (IntPtr)_buffer;
 
 		/// <summary>
 		/// Gets or sets the current write/read position in character units.
