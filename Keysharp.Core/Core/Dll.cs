@@ -14,8 +14,16 @@ namespace Keysharp.Core
 		/// An optimization is to keep a cache of these objects, keyed by the exact function name and argument types.<br/>
 		/// Doing this saves significant time when doing repeated calls to the same DLL function with the same argument types.
 		/// </summary>
-		private static readonly ConcurrentDictionary<string, DllCache> dllCache = new ();
-		private static readonly ConcurrentDictionary<int, Func<IntPtr, long[], long>> delegateCache = new ();
+		private static readonly ConcurrentDictionary<int, Func<IntPtr, long[], long>> delegateCache = new();
+		private static readonly ConcurrentDictionary<long, DelegateHolder> callbackCache = new();
+		private static readonly Dictionary<string, IntPtr> loadedDlls = new()
+		{
+			{ "user32", NativeLibrary.Load("user32") },
+			{ "kernel32", NativeLibrary.Load("kernel32") },
+			{ "comctl32", NativeLibrary.Load("comctl32") },
+			{ "gdi32", NativeLibrary.Load("gdi32") }
+		};
+		private static readonly ConcurrentDictionary<string, IntPtr> procAddressCache = new(StringComparer.OrdinalIgnoreCase);
 
 		/// <summary>
 		/// Creates a <see cref="DelegateHolder"/> object that wraps a <see cref="FuncObj"/>.
@@ -42,10 +50,13 @@ namespace Keysharp.Core
 		/// <returns>A <see cref="DelegateHolder"/> object which internally holds a function pointer.<br/>
 		/// This is typically passed to an external function via <see cref="DllCall"/> or placed in a struct using <see cref="NumPut"/>, but can also be called directly by <see cref="DllCall"/>.
 		/// </returns>
-		public static DelegateHolder CallbackCreate(object function, object options = null, object paramCount = null)
+		public static long CallbackCreate(object function, object options = null, object paramCount = null)
 		{
 			var o = options.As();
-			return new DelegateHolder(function, o.Contains('f', StringComparison.OrdinalIgnoreCase), o.Contains('&'));//paramCount is unused.
+			var holder = new DelegateHolder(function, o.Contains('f', StringComparison.OrdinalIgnoreCase), o.Contains('&'), paramCount.Ai(-1));
+			var ptr = Marshal.GetFunctionPointerForDelegate(holder.DelRef);
+			callbackCache[ptr] = holder;
+			return ptr;
 		}
 
 		/// <summary>
@@ -54,7 +65,11 @@ namespace Keysharp.Core
 		/// <param name="address">The <see cref="DelegateHolder"/> to be freed.</param>
 		public static object CallbackFree(object address)
 		{
-			(address as DelegateHolder)?.Clear();
+			long ptr = address.Al();
+			if (callbackCache.TryRemove(ptr, out var value))
+			{
+				value.Clear();
+			}
 			return null;
 		}
 
@@ -95,42 +110,67 @@ namespace Keysharp.Core
 		{
 			//You should some day add the ability to use this with .NET dlls, exposing some type of reflection to the script.//TODO
 			Error err;
+			nint handle = IntPtr.Zero;
+			nint address = IntPtr.Zero;
 
 			if (function is string path)
 			{
 				string name;
-				var helper = new DllArgumentHelper(parameters);
 				var z = path.LastIndexOf(Path.DirectorySeparatorChar);
 
 				if (z == -1)
 				{
 					name = path;
-					path = string.Empty;
+
+					if (procAddressCache.TryGetValue(name, out address))
+						goto AddressFound;
 
 					if (Environment.OSVersion.Platform == PlatformID.Win32NT)
 					{
-						foreach (var lib in new[] { "user32", "kernel32", "comctl32", "gdi32" })
+						foreach (var dll in loadedDlls)
 						{
-							var handle = WindowsAPI.GetModuleHandle(lib);
-
-							if (handle == IntPtr.Zero)
-								continue;
-
-							var address = WindowsAPI.GetProcAddress(handle, name);
-
-							if (address == IntPtr.Zero)
-								address = WindowsAPI.GetProcAddress(handle, name + "W");
-
-							if (address != IntPtr.Zero)
+							if (NativeLibrary.TryGetExport(dll.Value, name, out address))
 							{
-								path = lib + ".dll";
-								break;
+								procAddressCache[name] = address;
+								procAddressCache[dll.Key + Path.DirectorySeparatorChar + name] = address;
+								goto AddressFound;
+							}
+						}
+
+						var nameW = name + "W";
+						foreach (var dll in loadedDlls)
+						{
+							if (NativeLibrary.TryGetExport(dll.Value, nameW, out address))
+							{
+								procAddressCache[name] = address;
+								procAddressCache[dll.Key + Path.DirectorySeparatorChar + name] = address;
+								goto AddressFound;
 							}
 						}
 					}
 
-					if (path.Length == 0)
-						return Errors.ErrorOccurred(err = new Error($"Unable to locate dll with path {name}.")) ? throw err : null;
+					return Errors.ErrorOccurred(err = new Error($"Unable to locate dll with path {path}.")) ? throw err : null;
+				} 
+				else if (loadedDlls.Keys.FirstOrDefault(n => path.StartsWith(n, StringComparison.OrdinalIgnoreCase)) is string moduleName && moduleName != null)
+				{
+					name = path.Substring(z + 1);
+					var key = moduleName + Path.DirectorySeparatorChar + name;
+
+					if (procAddressCache.TryGetValue(key, out address))
+						goto AddressFound;
+
+					if (!NativeLibrary.TryGetExport(loadedDlls[moduleName], name, out address))
+					{
+						NativeLibrary.TryGetExport(loadedDlls[moduleName], name + "W", out address);
+					}
+
+					if (address == IntPtr.Zero)
+						return Errors.ErrorOccurred(err = new Error($"Unable to locate dll with path {path}.")) ? throw err : null;
+					else
+					{
+						procAddressCache[name] = address;
+						procAddressCache[key] = address;
+					}
 				}
 				else
 				{
@@ -141,188 +181,57 @@ namespace Keysharp.Core
 
 					name = path.Substring(z);
 					path = path.Substring(0, z - 1);
+
+					if (Environment.OSVersion.Platform == PlatformID.Win32NT && path.Length != 0 && !Path.HasExtension(path))
+						path += ".dll";
+
+					NativeLibrary.TryLoad(path, out handle);
+
+					if (handle != IntPtr.Zero && !NativeLibrary.TryGetExport(handle, name, out address))
+						NativeLibrary.TryGetExport(handle, name + "W", out address);
 				}
-
-				if (Environment.OSVersion.Platform == PlatformID.Win32NT && path.Length != 0 && !Path.HasExtension(path))
-					path += ".dll";
-
-				var id = GetDllCallId(name, path, helper);
-				MethodInfo method;
-
-				if (dllCache.TryGetValue(id, out var cached))
-				{
-					method = cached.method;
-				}
-				else
-				{
-					try
-					{
-						//Caching this would be ideal, but it doesn't seem possible because you can't modify the type after it's created.
-						//Creating the assembly, module, type and method take about 4-7ms, so it's not too big of a deal.
-						//The best we can do is the caching above in dllCache.
-						var assembly = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName("pinvokes"), AssemblyBuilderAccess.RunAndCollect);
-						var module = assembly.DefineDynamicModule("module");
-						var container = module.DefineType("container", TypeAttributes.Public | TypeAttributes.UnicodeClass);
-						var invoke = container.DefinePInvokeMethod(
-										 name,
-										 path,
-										 MethodAttributes.Public | MethodAttributes.Static | MethodAttributes.PinvokeImpl,
-										 CallingConventions.Standard,
-										 helper.ReturnType,
-										 helper.types,
-										 helper.CDecl ? CallingConvention.Cdecl : CallingConvention.Winapi,
-										 CharSet.Auto);
-						invoke.SetImplementationFlags(invoke.GetMethodImplementationFlags() | MethodImplAttributes.PreserveSig);
-
-						for (var i = 0; i < helper.args.Length; i++)
-						{
-							if (helper.args[i] is string s)
-							{
-								if (helper.names[i] == "astr")
-								{
-									var pb = invoke.DefineParameter(i + 1, ParameterAttributes.HasFieldMarshal, $"dynparam_{i}");
-									pb.SetCustomAttribute(new CustomAttributeBuilder(
-															  typeof(MarshalAsAttribute).GetConstructor([typeof(UnmanagedType)]),
-															  [UnmanagedType.LPStr]));
-								}
-								else if (helper.names[i] == "bstr")
-								{
-									var pb = invoke.DefineParameter(i + 1, ParameterAttributes.HasFieldMarshal, $"dynparam_{i}");
-									pb.SetCustomAttribute(new CustomAttributeBuilder(
-															  typeof(MarshalAsAttribute).GetConstructor([typeof(UnmanagedType)]),
-															  [UnmanagedType.BStr]));
-								}
-							}
-							else if (helper.args[i] is System.Array array)
-							{
-								//var p = invoke.GetParameters();
-								var pb = invoke.DefineParameter(i + 1, ParameterAttributes.HasFieldMarshal, $"dynparam_{i}");
-								pb.SetCustomAttribute(new CustomAttributeBuilder(
-														  typeof(MarshalAsAttribute).GetConstructor([typeof(UnmanagedType)]),
-														  [UnmanagedType.SafeArray],
-														  [typeof(MarshalAsAttribute).GetField("SafeArraySubType")],
-														  [VarEnum.VT_VARIANT]
-													  ));
-							}
-						}
-
-						var created = container.CreateType();
-						method = created.GetMethod(name);
-
-						if (method == null)
-							return Errors.ErrorOccurred(err = new Error($"Method {name} could not be found.")) ? throw err : null;
-
-						dllCache[id] = new DllCache()
-						{
-							assembly = assembly,
-							module = module,
-							container = container,
-							invoke = invoke,
-							created = created,
-							method = method
-						};
-					}
-					catch (Exception e)
-					{
-						var inner = e.InnerException != null ? " " + e.InnerException.Message : "";
-
-						if (e.InnerException is Error ie)
-							inner += " " + ie.Message;
-
-						return Errors.ErrorOccurred(err = new Error($"An error occurred when calling {name}() in {path}: {e.Message}{inner}")
-						{
-							Extra = "0x" + A_LastError.ToString("X")
-						}) ? throw err : null;
-					}
-				}
-
-				try
-				{
-					var value = method.Invoke(null, helper.args);
-
-					if (helper.ReturnName == "HRESULT" && value is int retval && retval < 0)
-					{
-						var ose = new OSError($"DllCall with return type of HRESULT returned {retval}.");
-						ose.Extra = "0x" + ose.Number.ToString("X");
-						throw ose;
-					}
-
-					if (helper.ReturnType == typeof(IntPtr))
-					{
-						if (helper.ReturnName == "astr")
-							value = Marshal.PtrToStringAnsi((IntPtr)value);
-						else if (helper.ReturnName == "str" || helper.ReturnName == "wstr")
-							value = Marshal.PtrToStringUni((IntPtr)value);
-					}
-
-					FixParamTypesAndCopyBack(parameters, helper.args);
-
-					if (value is int i)
-						return (long)i;
-					else if (value is uint ui)
-						return (long)ui;
-
-					return value;
-				}
-				catch (Exception e)
-				{
-					var inner = e.InnerException != null ? " " + e.InnerException.Message : "";
-
-					if (e.InnerException is Error ie)
-						inner += " " + ie.Message;
-
-					return Errors.ErrorOccurred(err = new Error($"An error occurred when calling {name}() in {path}: {e.Message}{inner}")
-					{
-						Extra = "0x" + A_LastError.ToString("X")
-					}) ? throw err : null;
-				}
-			}
-			else if (function is DelegateHolder dh)
-			{
-				return dh.DirectCall(parameters);
-			}
-			else if (function is Delegate del)
-			{
-				var helper = new DllArgumentHelper(parameters);
-				var value = del.DynamicInvoke(helper.args);
-				FixParamTypesAndCopyBack(parameters, helper.args);
-				return value;
 			}
 			else
+				address = Reflections.GetPtrProperty(function);
+
+			AddressFound:
+
+			if (address == IntPtr.Zero)
+				return Errors.ErrorOccurred(err = new TypeError($"Function argument was of type {function.GetType()}. It must be string, StringBuffer, integer, Buffer or other object with a Ptr property that is an integer.")) ? throw err : null;
+
+			try
 			{
-				var address = Reflections.GetPtrProperty(function);
+				var helper = new ArgumentHelper(parameters);
+				var value = CallDel(address, helper.args);
+				FixParamTypesAndCopyBack(parameters, helper);
+				helper.Dispose();
 
-				if (address == IntPtr.Zero)
-					return Errors.ErrorOccurred(err = new TypeError($"Function argument was of type {function.GetType()}. It must be string, StringBuffer, integer, Buffer or other object with a Ptr property that is an integer.")) ? throw err : null;
-
-				try
+				//Special conversion for the return value.
+				if (helper.ReturnType == typeof(int))
 				{
-					var comHelper = new ComArgumentHelper(parameters);
-					var value = CallDel(address, comHelper.args);
-					FixParamTypesAndCopyBack(parameters, comHelper.args);
-
-					//Special conversion for the return value.
-					if (comHelper.ReturnType == typeof(int))
-					{
-						int ii = *(int*)&value;
-						value = ii;
-					}
-					else if (comHelper.ReturnType == typeof(string))
-					{
-						var str = Marshal.PtrToStringUni((nint)value);
-						_ = Strings.FreeStrPtr(value);//If this string came from us, it will be freed, else no action.
-						return str;
-					}
-
-					return value;
+					int ii = *(int*)&value;
+					value = ii;
 				}
-				catch (Exception ex)
+				else if (helper.ReturnType == typeof(string))
 				{
-					return Errors.ErrorOccurred(err = new Error($"An error occurred when calling {function}(): {ex.Message}")
-					{
-						Extra = "0x" + A_LastError.ToString("X")
-					}) ? throw err : null;
+					var str = Marshal.PtrToStringUni((nint)value);
+					_ = Strings.FreeStrPtr(value);//If this string came from us, it will be freed, else no action.
+					return str;
 				}
+
+				return value;
+			}
+			catch (Exception ex)
+			{
+				return Errors.ErrorOccurred(err = new Error($"An error occurred when calling {function}(): {ex.Message}")
+				{
+					Extra = "0x" + A_LastError.ToString("X")
+				}) ? throw err : null;
+			}
+			finally
+			{
+				if (handle != IntPtr.Zero)
+					NativeLibrary.Free(handle);
 			}
 		}
 
@@ -381,188 +290,119 @@ namespace Keysharp.Core
 			return (Func<IntPtr, long[], long>)dm.CreateDelegate(typeof(Func<IntPtr, long[], long>));
 		}
 
-		internal static unsafe void FixParamTypeAndCopyBack(ref object p, string ps, IntPtr aip)
+		internal static unsafe void FixParamTypeAndCopyBack(ref object p, Type t, IntPtr aip)
 		{
-			if (ps.EndsWith("uint*", StringComparison.OrdinalIgnoreCase) || ps.EndsWith("uintp", StringComparison.OrdinalIgnoreCase))
+			if (t == typeof(uint))
 			{
 				var tempui = *(uint*)aip.ToPointer();
 				var templ = (long)tempui;
 				p = templ;
 			}
-			else if (ps.EndsWith("int*", StringComparison.OrdinalIgnoreCase) || ps.EndsWith("intp", StringComparison.OrdinalIgnoreCase))
+			else if (t == typeof(int))
 			{
 				var tempi = *(int*)aip.ToPointer();
 				var templ = (long)tempi;
 				p = templ;
 			}
-			else if (ps.EndsWith("int64*", StringComparison.OrdinalIgnoreCase) || ps.EndsWith("int64p", StringComparison.OrdinalIgnoreCase))
+			else if (t == typeof(long))
 			{
 				var templ = *(long*)aip.ToPointer();
 				p = templ;
 			}
-			else if (ps.EndsWith("double*", StringComparison.OrdinalIgnoreCase) || ps.EndsWith("doublep", StringComparison.OrdinalIgnoreCase))
+			else if (t == typeof(double))
 			{
 				var tempd = *(double*)aip.ToPointer();
 				p = tempd;
 			}
-			else if (ps.EndsWith("float*", StringComparison.OrdinalIgnoreCase) || ps.EndsWith("floatp", StringComparison.OrdinalIgnoreCase))
+			else if (t == typeof(float))
 			{
 				var tempf = *(float*)aip.ToPointer();
 				var tempd = (double)tempf;
 				p = tempd;
 			}
-			else if (ps.EndsWith("ushort*", StringComparison.OrdinalIgnoreCase) || ps.EndsWith("ushortp", StringComparison.OrdinalIgnoreCase))
+			else if (t == typeof(ushort))
 			{
 				var tempus = *(ushort*)aip.ToPointer();
 				var templ = (long)tempus;
 				p = templ;
 			}
-			else if (ps.EndsWith("short*", StringComparison.OrdinalIgnoreCase) || ps.EndsWith("shortp", StringComparison.OrdinalIgnoreCase))
+			else if (t == typeof(short))
 			{
 				var temps = *(short*)aip.ToPointer();
 				var templ = (long)temps;
 				p = templ;
 			}
-			else if (ps.EndsWith("uchar*", StringComparison.OrdinalIgnoreCase) || ps.EndsWith("ucharp", StringComparison.OrdinalIgnoreCase))
+			else if (t == typeof(byte))
 			{
 				var tempub = *(byte*)aip.ToPointer();
 				var templ = (long)tempub;
 				p = templ;
 			}
-			else if (ps.EndsWith("char*", StringComparison.OrdinalIgnoreCase) || ps.EndsWith("charp", StringComparison.OrdinalIgnoreCase))
+			else if (t == typeof(sbyte))
 			{
 				var tempb = *(sbyte*)aip.ToPointer();
 				var templ = (long)tempb;
 				p = templ;
 			}
-			else if (ps.EndsWith("str*", StringComparison.OrdinalIgnoreCase))
+			else if (t == typeof(string))
 			{
 				var s = (long*)aip.ToPointer();
 				p = Strings.StrGet(new IntPtr(*s));
 			}
-			else if (ps.EndsWith('*') || ps.EndsWith("p", StringComparison.OrdinalIgnoreCase))//Last attempt if nothing else worked.
+			else
 			{
 				var pp = (long*)aip.ToPointer();
 				p = *pp;
 			}
 		}
 
-		internal static unsafe void FixParamTypesAndCopyBack<T>(object[] parameters, T[] args)
+		internal static unsafe void FixParamTypesAndCopyBack(object[] parameters, ArgumentHelper helper)
 		{
 			//Ensure arguments passed in are in the proper format when writing back.
-			for (int pi = 0, ai = 0; pi < parameters.Length; pi += 2, ++ai)
+			foreach (var pair in helper.outputVars)
 			{
-				if (pi < parameters.Length - 1)
+				var pi = pair.Key;
+				var n = pi / 2;
+
+				//If they passed in a ComObject with Ptr as an address, make that address into a __ComObject.
+				if (parameters[pi] is ComObject co)
 				{
-					var ps = parameters[pi].As();
-					var wasPtr = ps[ ^ 1] == '*' || ps[ ^ 1] == 'p';
-					var arg = args[ai];
-
-					//If they passed in a ComObject with Ptr as an address, make that address into a __ComObject.
-					if (parameters[pi + 1] is ComObject co)
+					object obj = co.Ptr;
+					co.Ptr = obj;//Reassign to ensure pointers are properly cast to __ComObject.
+				}
+				else
+				{
+					var arg = helper.args[n];
+					if (parameters[pi] is KeysharpObject kso)
 					{
-						if (wasPtr)
-						{
-							if (arg is IntPtr aip)
-								FixParamTypeAndCopyBack(ref co.item, ps, aip);//Reference item directly.
-							else if (arg is long l)
-								FixParamTypeAndCopyBack(ref co.item, ps, (nint)l);
-						}
-
-						object obj = co.Ptr;
-						co.Ptr = obj;//Reassign to ensure pointers are properly cast to __ComObject.
+						object temp = arg;
+						FixParamTypeAndCopyBack(ref temp, pair.Value, (nint)arg);
+						_ = Script.SetPropertyValue(kso, "ptr", temp);//Write it back to the ptr property of the KeysharpObject.
 					}
-					else if (wasPtr)
-					{
-						if (parameters[pi + 1] is KeysharpObject kso && kso.HasProp("ptr") == 1L)
-						{
-							object temp = arg;
-
-							if (arg is IntPtr aip)
-								FixParamTypeAndCopyBack(ref temp, ps, aip);
-							else if (arg is long l)
-								FixParamTypeAndCopyBack(ref temp, ps, (nint)l);
-
-							_ = Script.SetPropertyValue(kso, "ptr", temp);//Write it back to the ptr property of the KeysharpObject.
-						}
-						else
-						{
-							if (arg is IntPtr aip)
-								FixParamTypeAndCopyBack(ref parameters[pi + 1], ps, aip);//Must reference directly into the array, not a temp variable.
-							else if (arg is long l)
-								FixParamTypeAndCopyBack(ref parameters[pi + 1], ps, (nint)l);
-						}
-					}
-					/*
 					else
 					{
-						if (parameters[pi + 1] is string s)
+						FixParamTypeAndCopyBack(ref parameters[pi], pair.Value, (nint)arg);
+					}
+				}
+				/*
+				else
+				{
+					if (parameters[pi + 1] is string s)
+					{
+						if (arg is not string)
 						{
-							if (arg is not string)
-							{
-								//var s = (long*)aip.ToPointer();
-								//p = Strings.StrGet(new IntPtr(s));
-								if (arg is IntPtr aip)
-									parameters[pi + 1] = Strings.StrGet(aip);
-								else if (arg is long l)
-									parameters[pi + 1] = Strings.StrGet((nint)l);
-							}
+							//var s = (long*)aip.ToPointer();
+							//p = Strings.StrGet(new IntPtr(s));
+							if (arg is IntPtr aip)
+								parameters[pi + 1] = Strings.StrGet(aip);
+							else if (arg is long l)
+								parameters[pi + 1] = Strings.StrGet((nint)l);
 						}
 					}
-					*/
 				}
+				*/
 			}
 		}
-
-		/// <summary>
-		/// Compose a string that uniquely identifies a call to a DLL function with specific arguments.
-		/// This is used as a key to the <see cref="dllCache"/> dictionary to optimize performance.
-		/// </summary>
-		/// <param name="name">The name of the function.</param>
-		/// <param name="path">The path to the DLL the function resides in.</param>
-		/// <param name="helper">The helper which contains the argument types and names.</param>
-		/// <returns>A string which uniquely identifies a DLL call.</returns>
-		private static string GetDllCallId(string name, string path, DllArgumentHelper helper)
-		{
-			return $"{name}{path}{helper.ReturnType}{string.Join(',', helper.names)}-{string.Join(',', helper.types.Select(t => t.Name))}";
-		}
-	}
-
-	/// <summary>
-	/// A cached DLL assembly/module/type/method to be reused when
-	/// the same function is repeatedly called with the same number and type of arguments.
-	/// </summary>
-	internal class DllCache
-	{
-		/// <summary>
-		/// The assembly to cache.
-		/// </summary>
-		internal AssemblyBuilder assembly;
-
-		/// <summary>
-		/// The container to cache.
-		/// </summary>
-		internal TypeBuilder container;
-
-		/// <summary>
-		/// The created type to cache.
-		/// </summary>
-		internal Type created;
-
-		/// <summary>
-		/// The pinvoke method to cache.
-		/// </summary>
-		internal MethodBuilder invoke;
-
-		/// <summary>
-		/// The created pinvoke method from the type to cache.
-		/// </summary>
-		internal MethodInfo method;
-
-		/// <summary>
-		/// The created dynamic module to cache.
-		/// </summary>
-		internal ModuleBuilder module;
 	}
 }
 

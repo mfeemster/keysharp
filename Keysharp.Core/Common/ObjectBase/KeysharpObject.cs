@@ -184,9 +184,8 @@
 			return new OwnPropsIterator(this, props, vals);
 		}
 
-		public virtual void PrintProps(string name, StringBuffer sbuf, ref int tabLevel)
+		public virtual void PrintProps(string name, StringBuffer sb, ref int tabLevel)
 		{
-			var sb = sbuf.sb;
 			var fieldType = GetType().Name;
 			var opi = (OwnPropsIterator)OwnProps(true, false);
 			var indent = new string('\t', tabLevel);
@@ -206,7 +205,7 @@
 
 				if (val != this && val is KeysharpObject kso2)//Check against this to prevent stack overflow.
 				{
-					kso2.PrintProps(propName.ToString(), sbuf, ref tabLevel);
+					kso2.PrintProps(propName.ToString(), sb, ref tabLevel);
 				}
 				else if (val != null)
 				{

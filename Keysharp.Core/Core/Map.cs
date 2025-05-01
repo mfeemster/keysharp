@@ -322,9 +322,8 @@
 		/// <param name="name">The name to use for this object.</param>
 		/// <param name="sbuf">The <see cref="StringBuffer"/> to print to.</param>
 		/// <param name="tabLevel">The tab level to use when printing.</param>
-		public override void PrintProps(string name, StringBuffer sbuf, ref int tabLevel)
+		public override void PrintProps(string name, StringBuffer sb, ref int tabLevel)
 		{
-			var sb = sbuf.sb;
 			var indent = new string('\t', tabLevel);
 
 			if (map.Count > 0)
@@ -401,7 +400,7 @@
 
 				if (val != this && val is KeysharpObject kso2)
 				{
-					kso2.PrintProps(propName.ToString(), sbuf, ref tabLevel);
+					kso2.PrintProps(propName.ToString(), sb, ref tabLevel);
 				}
 				else if (val != null)
 				{
