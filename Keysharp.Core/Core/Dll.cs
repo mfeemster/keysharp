@@ -154,7 +154,7 @@ namespace Keysharp.Core
 				else if (loadedDlls.Keys.FirstOrDefault(n => path.StartsWith(n, StringComparison.OrdinalIgnoreCase)) is string moduleName && moduleName != null)
 				{
 					name = path.Substring(z + 1);
-					var key = path + Path.DirectorySeparatorChar + name;
+					var key = moduleName + Path.DirectorySeparatorChar + name;
 
 					if (procAddressCache.TryGetValue(key, out address))
 						goto AddressFound;
@@ -169,7 +169,7 @@ namespace Keysharp.Core
 					else
 					{
 						procAddressCache[name] = address;
-						procAddressCache[path] = address;
+						procAddressCache[key] = address;
 					}
 				}
 				else
