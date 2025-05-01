@@ -373,8 +373,7 @@ namespace Keysharp.Core
 						sb.UpdateEntangledStringFromBuffer();
 						parameters[pi] = sb.EntangledString;
 					}
-
-					if (parameters[pi] is KeysharpObject kso)
+					else if (parameters[pi] is KeysharpObject kso)
 					{
 						object temp = arg;
 						FixParamTypeAndCopyBack(ref temp, pair.Value, (nint)arg);

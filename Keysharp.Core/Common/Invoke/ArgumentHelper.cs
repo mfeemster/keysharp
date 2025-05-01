@@ -157,6 +157,13 @@ namespace Keysharp.Core.Common.Invoke
 						goto TypeDetermined;
 					}
 
+					// Special case for strings passed by reference but not with "str*", since strings are always by reference
+					if (p is KeysharpObject kso2 && Script.GetPropertyValue(kso2, "__Value", false) is object kptr && kptr != null)
+					{
+						outputVars[paramIndex] = typeof(nint);
+						p = kptr;
+					}
+
 					if (p is string s)
 					{
 						if (outputVars.ContainsKey(paramIndex) && parameters[paramIndex] is KeysharpObject kso)
@@ -188,6 +195,11 @@ namespace Keysharp.Core.Common.Invoke
 					{
 						type = typeof(nint);
 						goto TypeDetermined;
+					}
+					if (p is KeysharpObject kso2 && Script.GetPropertyValue(kso2, "__Value", false) is object kptr && kptr != null)
+					{
+						outputVars[paramIndex] = typeof(nint);
+						p = kptr;
 					}
 
 					if (p is string s)

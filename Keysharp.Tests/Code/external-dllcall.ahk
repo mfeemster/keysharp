@@ -118,7 +118,7 @@ else
 	FileAppend "fail", "*"
 	
 str2 := "world"
-DllCall("msvcrt.dll\_wcsrev", "Str*", &str2)
+DllCall("msvcrt.dll\_wcsrev", "Str", &str2)
 
 if (str2 == "dlrow")
 	FileAppend "pass", "*"
