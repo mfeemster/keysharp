@@ -104,7 +104,7 @@ namespace Keysharp.Core.Common.Invoke
 						// Need to track this separately, because we later need to update ComObject.Ptr in FixParamTypesAndCopyBack
 						if (p is ComObject)
 							outputVars[paramIndex] = typeof(nint);
-						p = parameters[paramIndex] = kptr;
+						p = kptr;
 					}
 				}
 

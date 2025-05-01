@@ -358,12 +358,12 @@ namespace Keysharp.Core
 				var pi = pair.Key;
 				var n = pi / 2;
 
-					//If they passed in a ComObject with Ptr as an address, make that address into a __ComObject.
-					if (parameters[pi] is ComObject co)
-					{
-						object obj = co.Ptr;
-						co.Ptr = obj;//Reassign to ensure pointers are properly cast to __ComObject.
-					}
+				//If they passed in a ComObject with Ptr as an address, make that address into a __ComObject.
+				if (parameters[pi] is ComObject co)
+				{
+					object obj = co.Ptr;
+					co.Ptr = obj;//Reassign to ensure pointers are properly cast to __ComObject.
+				}
 				else
 				{
 					var arg = helper.args[n];
