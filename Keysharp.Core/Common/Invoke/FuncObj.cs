@@ -4,8 +4,9 @@
 	{
 		public IntPtr Ptr { get; }
 	}
-    public interface IFuncObj
-    {
+	
+	public interface IFuncObj
+	{
 		public object Inst { get; }
 		public bool IsBuiltIn { get; }
 		public bool IsValid { get; }

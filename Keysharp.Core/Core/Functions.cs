@@ -10,7 +10,12 @@ namespace Keysharp.Core
 		/// <summary>
 		/// Avoid creating new FuncObj objects for the same string/delegate.
 		/// </summary>
-		internal static ConcurrentDictionary<object, IFuncObj> cachedFuncObj = new (new CaseEqualityComp(eCaseSense.Off));
+		private static ConcurrentDictionary<object, IFuncObj> cachedFuncObj = new (new CaseEqualityComp(eCaseSense.Off));
+
+		internal static void ClearCache()
+		{
+			cachedFuncObj.Clear();
+		}
 
 		/// <summary>
 		/// Creates a function object by searching for a method within the script.
@@ -161,6 +166,7 @@ namespace Keysharp.Core
 					if (!del.IsValid)
 					{
 						del = null;
+
 						if (throwIfBad)
 							return Errors.ErrorOccurred(err = new MethodError($"Unable to retrieve method {s} when creating a function object.")) ? throw err : null;
 					}
@@ -170,8 +176,10 @@ namespace Keysharp.Core
 			{
 				del = fo;
 
-				if (!del.IsValid) {
+				if (!del.IsValid)
+				{
 					del = null;
+
 					if (throwIfBad)
 						return Errors.ErrorOccurred(err = new MethodError($"Existing function object was invalid.")) ? throw err : null;
 				}
@@ -183,8 +191,10 @@ namespace Keysharp.Core
 				else
 					del = cachedFuncObj.GetOrAdd(d, (key) => new FuncObj(d, eventObj));
 
-				if (!del.IsValid) {
+				if (!del.IsValid)
+				{
 					del = null;
+
 					if (throwIfBad)
 						return Errors.ErrorOccurred(err = new MethodError($"Unable to retrieve method info for {d.Method.Name} when creating a function object from delegate.")) ? throw err : null;
 				}
