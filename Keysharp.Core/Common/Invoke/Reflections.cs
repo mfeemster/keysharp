@@ -89,6 +89,9 @@ namespace Keysharp.Core.Common.Invoke
 		[PublicForTestOnly]
 		public static void Initialize(bool ignoreMainAssembly = false)
 		{
+			DelegateHolder.ClearCache();
+			Dll.ClearCache();
+			Functions.ClearCache();
 			loadedAssemblies = GetLoadedAssemblies();
 			CacheAllMethods(ignoreMainAssembly);
 			CacheAllPropertiesAndFields();
@@ -462,7 +465,7 @@ namespace Keysharp.Core.Common.Invoke
 				addr = ip;
 			else if (item is long l)
 				addr = (nint)l;
-			else if (item is Buffer buf)//Put Buffer check first because it's faster and more likely.
+			else if (item is IPointable buf)//Put Buffer, StringBuffer etc check first because it's faster and more likely.
 				addr = buf.Ptr;
 			else if (item is KeysharpObject kso && Script.GetPropertyValue(kso, "ptr", false) is object p && p != null)
 				addr = (nint)p.Al();

@@ -10,7 +10,12 @@ namespace Keysharp.Core
 		/// <summary>
 		/// Avoid creating new FuncObj objects for the same string/delegate.
 		/// </summary>
-		internal static ConcurrentDictionary<object, IFuncObj> cachedFuncObj = new (new CaseEqualityComp(eCaseSense.Off));
+		private static ConcurrentDictionary<object, IFuncObj> cachedFuncObj = new (new CaseEqualityComp(eCaseSense.Off));
+
+		internal static void ClearCache()
+		{
+			cachedFuncObj.Clear();
+		}
 
 		/// <summary>
 		/// Creates a function object by searching for a method within the script.
@@ -153,31 +158,46 @@ namespace Keysharp.Core
 			{
 				if (s.Length > 0)
 				{
-					var tempdel = cachedFuncObj.GetOrAdd(s, (key) => new FuncObj(s, eventObj, paramCount));
+					if (eventObj != null)
+						del = new FuncObj(s, eventObj, paramCount);
+					else
+						del = cachedFuncObj.GetOrAdd(s, (key) => new FuncObj(s, eventObj, paramCount));
 
-					if (tempdel.IsValid)
-						del = tempdel;
-					else if (throwIfBad)
-						return Errors.ErrorOccurred(err = new MethodError($"Unable to retrieve method {s} when creating a function object.")) ? throw err : null;
+					if (!del.IsValid)
+					{
+						del = null;
+
+						if (throwIfBad)
+							return Errors.ErrorOccurred(err = new MethodError($"Unable to retrieve method {s} when creating a function object.")) ? throw err : null;
+					}
 				}//Empty string will just return null, which is a valid value in some cases.
 			}
 			else if (h is IFuncObj fo)
 			{
-				var tempdel = fo;
+				del = fo;
 
-				if (tempdel.IsValid)
-					del = tempdel;
-				else if (throwIfBad)
-					return Errors.ErrorOccurred(err = new MethodError($"Existing function object was invalid.")) ? throw err : null;
+				if (!del.IsValid)
+				{
+					del = null;
+
+					if (throwIfBad)
+						return Errors.ErrorOccurred(err = new MethodError($"Existing function object was invalid.")) ? throw err : null;
+				}
 			}
 			else if (h is Delegate d)
 			{
-				var tempdel = cachedFuncObj.GetOrAdd(d, (key) => new FuncObj(d, eventObj));
+				if (eventObj != null)
+					del = new FuncObj(d, eventObj);
+				else
+					del = cachedFuncObj.GetOrAdd(d, (key) => new FuncObj(d, eventObj));
 
-				if (tempdel.IsValid)
-					del = tempdel;
-				else if (throwIfBad)
-					return Errors.ErrorOccurred(err = new MethodError($"Unable to retrieve method info for {d.Method.Name} when creating a function object from delegate.")) ? throw err : null;
+				if (!del.IsValid)
+				{
+					del = null;
+
+					if (throwIfBad)
+						return Errors.ErrorOccurred(err = new MethodError($"Unable to retrieve method info for {d.Method.Name} when creating a function object from delegate.")) ? throw err : null;
+				}
 			}
 			else if (h is KeysharpEnumerator ke)
 			{

@@ -1,5 +1,10 @@
 ﻿namespace Keysharp.Core.Common.Invoke
 {
+	public interface IPointable
+	{
+		public IntPtr Ptr { get; }
+	}
+	
 	public interface IFuncObj
 	{
 		public object Inst { get; }
