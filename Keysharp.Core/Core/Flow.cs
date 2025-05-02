@@ -18,7 +18,7 @@ namespace Keysharp.Core
 		internal static int NoSleep = -1;
 		internal static bool persistentValueSetByUser;
 		internal static ConcurrentDictionary<IFuncObj, Timer2> timers = new ();
-		internal static DateTime lastLoopDoEvents = DateTime.Now;
+		internal static int lastLoopDoEvents = Environment.TickCount;
 
 		/// <summary>
 		/// Whether a thread can be interrupted/preempted by subsequent thread.
@@ -138,9 +138,9 @@ namespace Keysharp.Core
 				{
 					_ = ExitAppInternal(ExitReasons.Exit, exitCode);
 				}, true);
-				var start = DateTime.Now;
+				var start = DateTime.UtcNow;
 
-				while (!hasExited && (DateTime.Now - start).TotalSeconds < 5)
+				while (!hasExited && (DateTime.UtcNow - start).TotalSeconds < 5)
 					_ = Sleep(500);
 			}
 
@@ -168,10 +168,13 @@ namespace Keysharp.Core
 		{
 			var b = !hasExited && Script.ForceBool(obj);
 
-			if (b && (DateTime.Now - lastLoopDoEvents).TotalMilliseconds > 15)
+			//Use Environment.TickCount because it's the fastest and we don't want to add extra time to each loop.
+			//Its precision is around 15ms which is the amount we're testing for, so it should be ok.
+			//https://stackoverflow.com/questions/243351/environment-tickcount-vs-datetime-now
+			if (b && (Environment.TickCount - lastLoopDoEvents) > 15)
 			{
 				Application.DoEvents();
-				lastLoopDoEvents = DateTime.Now;
+				lastLoopDoEvents = Environment.TickCount;
 			}
 
 			return b;
@@ -258,9 +261,9 @@ namespace Keysharp.Core
 				A_ExitReason = ExitReasons.Reload;
 				Application.Restart();//This will pass the same command line args to the new instance that were passed to this instance.
 			}, true, true);
-			var start = DateTime.Now;
+			var start = DateTime.UtcNow;
 
-			while (!hasExited && (DateTime.Now - start).TotalSeconds < 5)
+			while (!hasExited && (DateTime.UtcNow - start).TotalSeconds < 5)
 				_ = Sleep(500);
 
 			return null;
@@ -455,7 +458,7 @@ namespace Keysharp.Core
 			//Be careful with Application.DoEvents(), it has caused spurious crashes in my years of programming experience.
 			if (d == 0L)
 			{
-				var start = DateTime.Now;
+				var start = DateTime.UtcNow;
 
 				try
 				{
@@ -473,7 +476,7 @@ namespace Keysharp.Core
 				//If there are no other threads of equal priority that are ready to run, execution of the current thread is not suspended.
 				System.Threading.Thread.Sleep(0);
 
-				if (start.Equals(DateTime.Now))
+				if (start.Equals(DateTime.UtcNow))
 					System.Threading.Thread.Sleep(0);
 			}
 			else if (d == -1L)
@@ -511,9 +514,9 @@ namespace Keysharp.Core
 			}
 			else
 			{
-				var stop = DateTime.Now.AddMilliseconds(d);//Using Application.DoEvents() is a pseudo-sleep that blocks until the timeout, but doesn't freeze the window.
+				var stop = DateTime.UtcNow.AddMilliseconds(d);//Using Application.DoEvents() is a pseudo-sleep that blocks until the timeout, but doesn't freeze the window.
 
-				while (DateTime.Now < stop && !hasExited)
+				while (DateTime.UtcNow < stop && !hasExited)
 				{
 					try
 					{

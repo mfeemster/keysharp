@@ -405,7 +405,8 @@ namespace Keysharp.Core.Common.Strings
 
 		internal static DateTime ToDateTime(ReadOnlySpan<char> time, Calendar cal)
 		{
-			int[] t = [DateTime.Now.Year / 100, DateTime.Now.Year % 100, 1, 1, 0, 0, 0, 0];
+			var y = DateTime.Now.Year;
+			int[] t = [y / 100, y % 100, 1, 1, 0, 0, 0, 0];
 			int i, k;
 
 			for (i = 0, k = 0; i < t.Length; i++, k += 2)

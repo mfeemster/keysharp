@@ -172,13 +172,13 @@ namespace Keysharp.Core
 			if (t >= 0)
 				t = time * 1000;
 
-			var start = DateTime.Now;
+			var start = DateTime.UtcNow;
 
 			while ((proc = FindProcess(name)) == null)
 			{
 				_ = Flow.Sleep(LoopFrequency);
 
-				if (t >= 0.0 && (DateTime.Now - start).TotalMilliseconds > t)
+				if (t >= 0.0 && (DateTime.UtcNow - start).TotalMilliseconds > t)
 					break;
 			}
 

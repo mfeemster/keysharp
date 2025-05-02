@@ -35,9 +35,9 @@ namespace Keysharp.Tests
 		{
 			Flow.ResetState();
 			Clipboard.Clear();
-			var dt = DateTime.Now;
+			var dt = DateTime.UtcNow;
 			var b = Env.ClipWait(0.5);
-			var dt2 = DateTime.Now;
+			var dt2 = DateTime.UtcNow;
 			var ms = (dt2 - dt).TotalMilliseconds;
 			Assert.AreEqual(false, b);//Will have timed out, so ErrorLevel will be 1.
 			Assert.IsTrue(ms >= 500 && ms <= 3000);
@@ -52,9 +52,9 @@ namespace Keysharp.Tests
 			thread.SetApartmentState(ApartmentState.STA);
 #endif
 			thread.Start();
-			dt = DateTime.Now;
+			dt = DateTime.UtcNow;
 			b = Env.ClipWait(null, true);//Will wait indefinitely for any type.
-			dt2 = DateTime.Now;
+			dt2 = DateTime.UtcNow;
 			ms = (dt2 - dt).TotalMilliseconds;
 			//Seems to take much longer than 100ms, but it's not too important.
 			//Assert.IsTrue(ms >= 500 && ms <= 1100);
@@ -78,9 +78,9 @@ namespace Keysharp.Tests
 			thread.SetApartmentState(ApartmentState.STA);
 #endif
 			thread.Start();
-			dt = DateTime.Now;
+			dt = DateTime.UtcNow;
 			b = Env.ClipWait();//Will wait indefinitely for only text or file paths.
-			dt2 = DateTime.Now;
+			dt2 = DateTime.UtcNow;
 			ms = (dt2 - dt).TotalMilliseconds;
 			tcs.Task.Wait();
 			Assert.AreEqual(true, b);//Will have detected clipboard data, so ErrorLevel will be 0.
@@ -98,9 +98,9 @@ namespace Keysharp.Tests
 			thread.SetApartmentState(ApartmentState.STA);
 #endif
 			thread.Start();
-			dt = DateTime.Now;
+			dt = DateTime.UtcNow;
 			b = Env.ClipWait(1);//Will wait for one second for only text or file paths.
-			dt2 = DateTime.Now;
+			dt2 = DateTime.UtcNow;
 			ms = (dt2 - dt).TotalMilliseconds;
 			tcs.Task.Wait();
 			Assert.AreEqual(false, b);//Will have timed out, so ErrorLevel will be 1.

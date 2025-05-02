@@ -432,7 +432,7 @@ namespace Keysharp.Core
 			var bartext = barText.As();
 			var seconds = timeout.Ai();
 			var intvl = interval.Ai();
-			var start = DateTime.Now;
+			var start = DateTime.UtcNow;
 			var matchfound = false;
 
 			if (intvl == 0)
@@ -448,7 +448,7 @@ namespace Keysharp.Core
 					break;
 				}
 
-				if (seconds != 0 && (DateTime.Now - start).TotalSeconds >= seconds)
+				if (seconds != 0 && (DateTime.UtcNow - start).TotalSeconds >= seconds)
 					break;
 
 				_ = Flow.Sleep(interval);
@@ -1064,13 +1064,13 @@ namespace Keysharp.Core
 		{
 			var seconds = timeout.Ad();
 			WindowItemBase win;
-			var start = DateTime.Now;
+			var start = DateTime.UtcNow;
 
 			do
 			{
 				win = SearchWindow(winTitle, winText, excludeTitle, excludeText, false, false, true);
 
-				if (win != null || (seconds != 0 && (DateTime.Now - start).TotalSeconds >= seconds))
+				if (win != null || (seconds != 0 && (DateTime.UtcNow - start).TotalSeconds >= seconds))
 					break;
 
 				_ = Flow.Sleep(50);
@@ -1091,11 +1091,11 @@ namespace Keysharp.Core
 		{
 			var b = false;
 			var seconds = timeout.Ad();
-			var start = DateTime.Now;
+			var start = DateTime.UtcNow;
 			var criteria = SearchCriteria.FromString(winTitle, winText, excludeTitle, excludeText);
 			var hwnd = 0L;
 
-			while (!b && (seconds == 0 || (DateTime.Now - start).TotalSeconds < seconds))
+			while (!b && (seconds == 0 || (DateTime.UtcNow - start).TotalSeconds < seconds))
 			{
 				var windows = WindowProvider.Manager.FindWindowGroup(criteria, true);//Pass true because we must inspect all matching windows to see if any of them are active.
 
@@ -1126,7 +1126,7 @@ namespace Keysharp.Core
 		{
 			var b = false;
 			var seconds = timeout.Ad();
-			var start = DateTime.Now;
+			var start = DateTime.UtcNow;
 			var criteria = SearchCriteria.FromString(winTitle, winText, excludeTitle, excludeText);
 			var windows = WindowProvider.Manager.FindWindowGroup(criteria, false, true);
 
@@ -1137,7 +1137,7 @@ namespace Keysharp.Core
 			{
 				WindowProvider.Manager.LastFound = win;
 
-				while (seconds == 0 || (DateTime.Now - start).TotalSeconds < seconds)
+				while (seconds == 0 || (DateTime.UtcNow - start).TotalSeconds < seconds)
 				{
 					if (!win.Exists || (!ThreadAccessors.A_DetectHiddenWindows && !win.Visible))
 					{
@@ -1161,7 +1161,7 @@ namespace Keysharp.Core
 		{
 			var b = false;
 			var seconds = timeout.Ad();
-			var start = DateTime.Now;
+			var start = DateTime.UtcNow;
 
 			if (SearchWindow(winTitle, winText, excludeTitle, excludeText, true) is WindowItem win)
 			{
@@ -1169,7 +1169,7 @@ namespace Keysharp.Core
 				//Keysharp.Core.File.FileAppend($"The window to wait for is: {win.Handle.ToInt64()}, {win.Title}\n", "out.txt");
 				WindowProvider.Manager.LastFound = win;
 
-				while (!b && (seconds == 0 || (DateTime.Now - start).TotalSeconds < seconds))
+				while (!b && (seconds == 0 || (DateTime.UtcNow - start).TotalSeconds < seconds))
 				{
 					if (!win.Active)
 					{

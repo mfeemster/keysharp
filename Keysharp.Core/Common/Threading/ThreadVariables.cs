@@ -50,7 +50,7 @@ namespace Keysharp.Core.Common.Threading
 
 		internal Random RandomGenerator
 		{
-			get => randomGenerator != null ? randomGenerator : randomGenerator = new Random((int)(DateTime.Now.Ticks & 0xFFFFFFFF));
+			get => randomGenerator != null ? randomGenerator : randomGenerator = new Random((int)(DateTime.UtcNow.Ticks & 0xFFFFFFFF));
 			set => randomGenerator = value;
 		}
 
@@ -153,10 +153,7 @@ namespace Keysharp.Core.Common.Threading
 			regView = RegViewDefault;
 #endif
 			sendLevel = SendLevelDefault;
-
-			if (Enum.TryParse<SendModes>(SendModeDefault.As(), out var temp))
-				sendMode = temp;
-
+			sendMode = SendModeDefault;
 			storeCapsLockMode = StoreCapsLockModeDefault;
 			threadId = 0;
 			titleMatchMode = TitleMatchModeDefault;

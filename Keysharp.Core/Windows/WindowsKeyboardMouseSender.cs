@@ -32,7 +32,7 @@ namespace Keysharp.Core.Windows
 		internal static int MaxInitialEventsSI = 500;
 		internal static uint menuMaskKeySC = ScanCodes.LControl;
 		internal static uint menuMaskKeyVK = VK_CONTROL;
-		internal static DateTime thisHotkeyStartTime = DateTime.Now;
+		internal static DateTime thisHotkeyStartTime = DateTime.UtcNow;
 		internal int currentEvent;
 		internal uint eventModifiersLR;
 		internal List<PlaybackEvent> eventPb = new (MaxInitialEventsPB);
@@ -491,7 +491,7 @@ namespace Keysharp.Core.Windows
 				// Only the last pressed modifier is excluded, since any other key-down or key-up being
 				// detected would usually mean that the previous call to the hook has finished (although
 				// the hook can be called recursively with artificial input).
-				if (modifiersLRLastPressed != 0 && ((DateTime.Now - modifiersLRLastPressedTime).TotalMilliseconds < 20))
+				if (modifiersLRLastPressed != 0 && ((DateTime.UtcNow - modifiersLRLastPressedTime).TotalMilliseconds < 20))
 				{
 					if ((modifiersWronglyDown & modifiersLRLastPressed) != 0)
 					{
@@ -1128,7 +1128,7 @@ namespace Keysharp.Core.Windows
 						thisEventHasBeenLogged = false;
 						thisEventIsScreenCoord = false;
 
-						for (thisEventTime = DateTime.Now;
+						for (thisEventTime = DateTime.UtcNow;
 								eventPb[currentEvent].messagetype == 0;// HC_SKIP has ensured there is a non-delay event, so no need to check sCurrentEvent < sEventCount.
 								thisEventTime.AddMilliseconds(eventPb[currentEvent++].time_to_wait)) ; // Overflow is okay.
 					}
@@ -1244,7 +1244,7 @@ namespace Keysharp.Core.Windows
 						}
 					}
 
-					var timeUntilEvent = (thisEventTime - DateTime.Now).TotalMilliseconds; // Cast to int to avoid loss of negatives from DWORD subtraction.
+					var timeUntilEvent = (thisEventTime - DateTime.UtcNow).TotalMilliseconds; // Cast to int to avoid loss of negatives from DWORD subtraction.
 
 					if (timeUntilEvent > 0)
 						return new IntPtr((int)timeUntilEvent);
@@ -2071,7 +2071,7 @@ namespace Keysharp.Core.Windows
 				// Windows would have already been artificially released by then, so IsKeyDownAsync() wouldn't be
 				// able to detect when the user physically releases the key.
 				if ((thisHotkeyModifiersLR & (MOD_LWIN | MOD_RWIN)) != 0 // Limit the scope to only those hotkeys that have a Win modifier, since anything outside that scope hasn't been fully analyzed.
-						&& (DateTime.Now - thisHotkeyStartTime).TotalMilliseconds < 50 // Ensure g_script.mThisHotkeyModifiersLR is up-to-date enough to be reliable.
+						&& (DateTime.UtcNow - thisHotkeyStartTime).TotalMilliseconds < 50 // Ensure g_script.mThisHotkeyModifiersLR is up-to-date enough to be reliable.
 						&& sendModeOrig != SendModes.Play // SM_PLAY is reported to be incapable of locking the computer.
 						&& !inBlindMode // The philosophy of blind-mode is that the script should have full control, so don't do any waiting during blind mode.
 						&& sendRaw != SendRawModes.RawText // {Text} mode does not trigger Win+L.
@@ -2159,7 +2159,7 @@ namespace Keysharp.Core.Windows
 				// Even if TickCount has wrapped due to system being up more than about 49 days,
 				// DWORD subtraction still gives the right answer as long as g_script.mThisHotkeyStartTime
 				// itself isn't more than about 49 days ago:
-				if ((DateTime.Now - thisHotkeyStartTime).TotalMilliseconds < hotkeyModifierTimeout) // Elapsed time < timeout-value
+				if ((DateTime.UtcNow - thisHotkeyStartTime).TotalMilliseconds < hotkeyModifierTimeout) // Elapsed time < timeout-value
 					modsDownPhysicallyOrig = modsCurrent & thisHotkeyModifiersLR; // Bitwise AND is set intersection.
 				else
 					// Since too much time as passed since the user pressed the hotkey, it seems best,
@@ -2779,7 +2779,7 @@ namespace Keysharp.Core.Windows
 					// times out; i.e. elapsed time < timeout-value; DWORD subtraction gives the right answer even if
 					// tick-count has wrapped around).
 					modsDownPhysically = (hotkeyModifierTimeout < 0 // It never times out or...
-										  || (DateTime.Now - thisHotkeyStartTime).TotalMilliseconds < hotkeyModifierTimeout) // It didn't time out.
+										  || (DateTime.UtcNow - thisHotkeyStartTime).TotalMilliseconds < hotkeyModifierTimeout) // It didn't time out.
 										 ? modsDownPhysicallyOrig : 0;
 
 				// Put any modifiers in sModifiersLR_remapped back into effect, as if they were physically down.
@@ -3580,14 +3580,14 @@ namespace Keysharp.Core.Windows
 		protected internal override void LongOperationUpdate()
 		{
 			var msg = new Msg();
-			var now = DateTime.Now;
+			var now = DateTime.UtcNow;
 
 			if ((now - Script.lastPeekTime).TotalMilliseconds > ThreadAccessors.A_PeekFrequency)
 			{
 				if (PeekMessage(out msg, IntPtr.Zero, 0, 0, PM_NOREMOVE))
 					_ = Flow.Sleep(-1);
 
-				now = DateTime.Now;
+				now = DateTime.UtcNow;
 				Script.lastPeekTime = now;
 			}
 		}
@@ -3598,14 +3598,14 @@ namespace Keysharp.Core.Windows
 		protected internal override void LongOperationUpdateForSendKeys()
 		{
 			var msg = new Msg();
-			var now = DateTime.Now;
+			var now = DateTime.UtcNow;
 
 			if ((now - Script.lastPeekTime).TotalMilliseconds > ThreadAccessors.A_PeekFrequency)
 			{
 				if (PeekMessage(out msg, IntPtr.Zero, 0, 0, PM_NOREMOVE))
 					Flow.SleepWithoutInterruption(-1);
 
-				now = DateTime.Now;
+				now = DateTime.UtcNow;
 				Script.lastPeekTime = now;
 			}
 		}

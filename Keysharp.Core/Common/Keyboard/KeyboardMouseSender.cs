@@ -73,7 +73,7 @@
 		internal int maxEvents = 0;
 		internal uint modifiersLRCtrlAltDelMask = 0u;
 		internal uint modifiersLRLastPressed = 0u;
-		internal DateTime modifiersLRLastPressedTime = DateTime.Now;
+		internal DateTime modifiersLRLastPressedTime = DateTime.UtcNow;
 		internal uint modifiersLRLogical = 0u;
 		internal uint modifiersLRLogicalNonIgnored = 0u;
 		internal uint modifiersLRNumpadMask = 0u;
