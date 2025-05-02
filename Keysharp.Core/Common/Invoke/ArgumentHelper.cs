@@ -99,12 +99,17 @@ namespace Keysharp.Core.Common.Invoke
 					n++;
 					p = parameters[paramIndex];
 
-					if (p is KeysharpObject kso && Script.GetPropertyValue(kso, "ptr", false) is object kptr && kptr != null)
-					{ 
-						// Need to track this separately, because we later need to update ComObject.Ptr in FixParamTypesAndCopyBack
-						if (kso is ComObject)
-							outputVars[paramIndex] = typeof(nint);
-						p = kptr;
+					if (p is KeysharpObject kso)
+					{
+						object kptr;
+						if ((kso is IPointable ip && (kptr = ip.Ptr) != null)
+							|| (Script.GetPropertyValue(kso, "ptr", false) is object tmp && (kptr = tmp) != null))
+						{
+							// Need to track this separately, because we later need to update ComObject.Ptr in FixParamTypesAndCopyBack
+							if (kso is ComObject)
+								outputVars[paramIndex] = typeof(nint);
+							p = kptr;
+						}
 					}
 				}
 
