@@ -491,7 +491,7 @@ namespace Keysharp.Scripting
 			var createDummyRef = false;
 			var argsSnippet = new CodeSnippetExpression("args");
 			var ctrObjectArray = new CodeTypeReference(typeof(object[]));
-			var tsVar = DateTime.Now.ToString("__MMddyyyyHHmmssfffffff");
+			var tsVar = DateTime.UtcNow.ToString("__MMddyyyyHHmmssfffffff");
 
 			while (targetClass.Members.Cast<CodeTypeMember>().Any(ctm => ctm.Name == tsVar))
 				tsVar = "_" + tsVar;

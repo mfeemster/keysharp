@@ -2,8 +2,8 @@
 {
 	internal class KeyHistory
 	{
-		internal DateTime historyTickNow = DateTime.Now;
-		internal DateTime historyTickPrev = DateTime.Now;
+		internal DateTime historyTickNow = DateTime.UtcNow;
+		internal DateTime historyTickPrev = DateTime.UtcNow;
 		private readonly List<KeyHistoryItem> keyHistory;
 		private int keyHistoryNext;
 		internal long HistoryHwndPrev { get; set; }
@@ -105,7 +105,7 @@
 
 		private void UpdateTimestamp(KeyHistoryItem item)
 		{
-			historyTickNow = DateTime.Now;
+			historyTickNow = DateTime.UtcNow;
 			item.elapsedTime = (historyTickNow - historyTickPrev).TotalMilliseconds / 1000;
 			historyTickPrev = historyTickNow;
 		}

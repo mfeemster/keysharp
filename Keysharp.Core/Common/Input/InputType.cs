@@ -619,7 +619,7 @@ namespace Keysharp.Core.Common.Input
 
 		internal void SetTimeoutTimer()
 		{
-			var now = DateTime.Now;
+			var now = DateTime.UtcNow;
 			timeoutAt = now.AddMilliseconds(timeout);
 
 			if (!Script.inputTimerExists || timeout < (Script.inputTimeoutAt - now).TotalMilliseconds)
@@ -674,7 +674,7 @@ namespace Keysharp.Core.Common.Input
 			{
 				if (input.timeout != 0 && input.InProgress())
 				{
-					var timeLeft = (int)(input.timeoutAt - DateTime.Now).TotalMilliseconds;
+					var timeLeft = (int)(input.timeoutAt - DateTime.UtcNow).TotalMilliseconds;
 
 					if (timeLeft <= 0)
 						input.EndByTimeout();
@@ -686,7 +686,7 @@ namespace Keysharp.Core.Common.Input
 			if (newTimerPeriod != 0)
 			{
 				inputTimer.Interval = newTimerPeriod;
-				Script.inputTimeoutAt = DateTime.Now.AddMilliseconds(newTimerPeriod);
+				Script.inputTimeoutAt = DateTime.UtcNow.AddMilliseconds(newTimerPeriod);
 				inputTimer.Start();
 			}
 			else

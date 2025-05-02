@@ -47,7 +47,7 @@
 			if (!tv.isCritical//Added this whereas AHK doesn't check it. We should never make a critical thread interruptible.
 					&& !tv.allowThreadToBeInterrupted // Those who check whether g->AllowThreadToBeInterrupted==false should then check whether it should be made true.
 					&& tv.uninterruptibleDuration > -1 // Must take precedence over the below.  g_script.mUninterruptibleTime is not checked because it's supposed to go into effect during thread creation, not after the thread is running and has possibly changed the timeout via 'Thread "Interrupt"'.
-					&& (DateTime.Now - tv.threadStartTime).TotalMilliseconds >= tv.uninterruptibleDuration // See big comment section above.
+					&& (DateTime.UtcNow - tv.threadStartTime).TotalMilliseconds >= tv.uninterruptibleDuration // See big comment section above.
 					&& !Flow.callingCritical // In case of "Critical" on the first line.  See v2.0 comment above.
 			   )
 			{

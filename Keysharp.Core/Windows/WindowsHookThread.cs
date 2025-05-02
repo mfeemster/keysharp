@@ -204,7 +204,7 @@ namespace Keysharp.Core.Windows
 				vkCode = key,
 				scanCode = MapVkToSc(key),
 				flags = 0,
-				time = (uint)DateTime.Now.Ticks,
+				time = (uint)DateTime.UtcNow.Ticks,
 				dwExtraInfo = 0
 			};
 			_ = LowLevelKeybdHandler(0, new IntPtr(256), ref kbdStruct);
@@ -334,7 +334,7 @@ namespace Keysharp.Core.Windows
 			// hook and it's more maintainable if we ensure the status is correct prior to returning.
 			//DateTime startTime;
 			//bool problemActivatingHooks;
-			//for (problemActivatingHooks = false, startTime = DateTime.Now; ;) // For our caller, wait for hook thread to update the status of the hooks.
+			//for (problemActivatingHooks = false, startTime = DateTime.UtcNow; ;) // For our caller, wait for hook thread to update the status of the hooks.
 			{
 				//Wait till we get confirmation back that the action completed.
 				//if (PeekMessage(out msg, IntPtr.Zero, (uint)UserMessages.AHK_CHANGE_HOOK_STATE, (uint)UserMessages.AHK_CHANGE_HOOK_STATE, PM_REMOVE))
@@ -391,7 +391,7 @@ namespace Keysharp.Core.Windows
 				//So do not timeout when debugging.
 				//if (!Debugger.IsAttached)
 				//{
-				//  if ((DateTime.Now - startTime).TotalMilliseconds > 1000)//Original did 500ms, increase to 1s just to be safe.
+				//  if ((DateTime.UtcNow - startTime).TotalMilliseconds > 1000)//Original did 500ms, increase to 1s just to be safe.
 				//      break;
 				//}
 				// v1.0.43: The following sleeps for 0 rather than some longer time because:
@@ -2137,7 +2137,7 @@ namespace Keysharp.Core.Windows
 			// the LControl event received here is marked as physical by the OS or keyboard driver.  This is undesirable
 			// primarily because it makes g_TimeLastInputPhysical inaccurate, but also because falsely marked physical
 			// events can impact the script's calls to GetKeyState("LControl", "P"), etc.
-			Script.timeLastInputPhysical = Script.timeLastInputKeyboard = DateTime.Now;
+			Script.timeLastInputPhysical = Script.timeLastInputKeyboard = DateTime.UtcNow;
 			return true;
 		}
 
@@ -3876,7 +3876,7 @@ namespace Keysharp.Core.Windows
 			//event.flags &= ~LLMHF_INJECTED;
 
 			if ((lParam.flags & LLMHF_INJECTED) == 0) // Physical mouse movement or button action (uses LLMHF vs. LLKHF).
-				Script.timeLastInputPhysical = Script.timeLastInputMouse = DateTime.Now;
+				Script.timeLastInputPhysical = Script.timeLastInputMouse = DateTime.UtcNow;
 
 			// Above: Don't use event.time, mostly because SendInput can produce invalid timestamps on such events
 			// (though in truth, that concern isn't valid because SendInput's input isn't marked as physical).
@@ -4784,7 +4784,7 @@ namespace Keysharp.Core.Windows
 
 					// See comments in GetModifierLRState() for details about the following.
 					kbdMsSender.modifiersLRLastPressed = modLR;
-					kbdMsSender.modifiersLRLastPressedTime = DateTime.Now;
+					kbdMsSender.modifiersLRLastPressedTime = DateTime.UtcNow;
 				}
 			} // vk is a modifier key.
 		}
@@ -4886,9 +4886,9 @@ namespace Keysharp.Core.Windows
 				//
 				//if (channel.Writer.TryWrite(ksmsg))
 				//{
-				//  var startTime = DateTime.Now;
+				//  var startTime = DateTime.UtcNow;
 				//
-				//  while ((DateTime.Now - startTime).TotalMilliseconds < 1000 && !ksmsg.completed)
+				//  while ((DateTime.UtcNow - startTime).TotalMilliseconds < 1000 && !ksmsg.completed)
 				//      System.Threading.Thread.Sleep(100); // Should never execute if thread already existed before this function was called.
 				//}
 			}
@@ -5177,7 +5177,7 @@ namespace Keysharp.Core.Windows
 							//if (priority < (long)Accessors.A_Priority)
 							//  continue;
 							//Original tries to do some type of thread init here.//TOOD
-							Script.lastPeekTime = DateTime.Now;
+							Script.lastPeekTime = DateTime.UtcNow;
 						}
 					}
 

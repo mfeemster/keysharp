@@ -188,7 +188,8 @@
 				return 0L;
 			}
 
-			int[] t = [DateTime.Now.Year / 100, DateTime.Now.Year % 100, 1, 1, 0, 0, 0, 0];
+			var y = DateTime.Now.Year;
+			int[] t = [y / 100, y % 100, 1, 1, 0, 0, 0, 0];
 			var tempdt = new DateTime(t[1], t[2], t[3], t[4], t[5], t[6], CultureInfo.CurrentCulture.Calendar);//Will be wrong if parsing totally failed.
 			return dt != tempdt ? 1L : 0L;
 		}

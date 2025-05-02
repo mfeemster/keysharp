@@ -2064,10 +2064,10 @@ namespace Keysharp.Core.Common.Keyboard
 			var ht = Script.HookThread;
 
 			if (timePrev == DateTime.MinValue)
-				timePrev = DateTime.Now;
+				timePrev = DateTime.UtcNow;
 
 			++throttledKeyCount;
-			timeNow = DateTime.Now;
+			timeNow = DateTime.UtcNow;
 			// Calculate the amount of time since the last reset of the sliding interval.
 			// Note: A tickcount in the past can be subtracted from one in the future to find
 			// the true difference between them, even if the system's uptime is greater than
@@ -2141,7 +2141,7 @@ namespace Keysharp.Core.Common.Keyboard
 					// to ExecUntil(), to keep it auto-repeating:
 					variant.runAgainAfterFinished = false;  // i.e. this "run again" ticket has now been used up.
 
-					if ((DateTime.Now - variant.runAgainTime).TotalMilliseconds <= 1000)
+					if ((DateTime.UtcNow - variant.runAgainTime).TotalMilliseconds <= 1000)
 					{
 						// v1.0.44.14: Post a message rather than directly running the above ExecUntil again.
 						// This fixes unreported bugs in previous versions where the thread isn't reinitialized before
@@ -2585,7 +2585,7 @@ namespace Keysharp.Core.Common.Keyboard
 			if (maxThreadsBuffer)
 				runAgainAfterFinished = true;
 
-			runAgainTime = DateTime.Now;
+			runAgainTime = DateTime.UtcNow;
 		}
 	}
 
