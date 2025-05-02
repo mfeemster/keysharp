@@ -1,192 +1,464 @@
-﻿
-namespace Keysharp.Core.Common.Invoke
+﻿namespace Keysharp.Core.Common.Invoke
 {
-	public class DelegateHolder : KeysharpObject, IPointable
+	/// <summary>
+	/// Creates a native callback pointer which can be used to call the target function object.
+	/// The callback starts from a stub which inserts the pointer to this DelegateHolder
+	/// instance to the end of the argument list and forwards the call to SharedTrampoline,
+	/// which in turn packs the arguments into an array and calls Dispatch, which then
+	/// pushes a new green thread (unless Fast mode is used) and calls the target function.
+	/// </summary>
+	public sealed class DelegateHolder : KeysharpObject, IDisposable, IPointable
 	{
 		internal IFuncObj funcObj;
-		private static readonly ModuleBuilder _modBuilder;
-		private static readonly ConcurrentDictionary<int, Type> _closedTypeCache = new ();
-		private static readonly ConcurrentDictionary<int, DynamicMethod> _stubCache = new ();
+		readonly bool _fast, _reference;
+		readonly int _arity;
 
-		public IntPtr Ptr { get; internal set; }
-		public Delegate DelRef { get; private set; }
-		internal bool Reference { get; }
-		private readonly bool _fast;
+		// Self GCHandle & pointer to self
+		readonly GCHandle _selfHandle;
+		readonly IntPtr _ctx;
+
+		// Precomputed trampolines for parameter counts 0..32
+		static readonly IntPtr[] _trampolinePtrs;
+
+		// Native function pointer to pass into unmanaged code.
+		public IntPtr Ptr { get; }
 
 		static DelegateHolder()
 		{
-			var asm = AssemblyBuilder.DefineDynamicAssembly(
-						  new AssemblyName("DynamicDelegates"), AssemblyBuilderAccess.Run);
-			_modBuilder = asm.DefineDynamicModule("M");
+			_trampolinePtrs = Enumerable.Range(0, 33)
+				.Select(n => {
+					var mi = typeof(DelegateHolder)
+						.GetMethod($"SharedTrampoline{n}", BindingFlags.Static | BindingFlags.NonPublic);
+					RuntimeHelpers.PrepareMethod(mi.MethodHandle);
+					return mi.MethodHandle.GetFunctionPointer();
+				})
+				.ToArray();
 		}
 
-		internal static void ClearCache()
+		/// <summary>
+		/// Creates a holder and allocates a native stub that embeds its context.
+		/// </summary>
+		public DelegateHolder(object function, bool fast, bool reference, int paramCount)
 		{
-			_closedTypeCache.Clear();
-			_stubCache.Clear();
-		}
-
-		public DelegateHolder(object obj, bool fast, bool reference, int paramCount)
-		{
-			funcObj = Functions.GetFuncObj(obj, null, true);
+			funcObj = Functions.GetFuncObj(function, null, true);
 			_fast = fast;
-			Reference = reference;
-			int arity = Math.Clamp(
-							paramCount < 0
-							? (reference
-							   ? 32
-							   : (funcObj is FuncObj fo
-								  ? (int)fo.MaxParams - ((fo is BoundFunc bo) ? bo.boundargs.Count() : 0)
-								  : 0))
+			_reference = reference;
+			_arity = Math.Clamp(paramCount < 0
+							? (_reference ? 32 : (funcObj is FuncObj fo
+								? (int)fo.MaxParams - ((fo is BoundFunc bo) ? bo.boundargs.Count() : 0)
+								: 0))
 							: paramCount,
-							0, 32);
-			// build or get stub dynamic method for this arity with definition `static long Stub(DelegateHolder, long p0…pN)`
-			var stub = _stubCache.GetOrAdd(arity, BuildStubMethod);
-			// build or get closed delegate type Func<long0..longN>
-			var closedType = _closedTypeCache.GetOrAdd(arity, BuildClosedType);
-			// create closed delegate binding 'this'
-			DelRef = stub.CreateDelegate(closedType, this);
-			Ptr = Marshal.GetFunctionPointerForDelegate(DelRef);
+						  0, 32);
+
+			// Pin self and store handle as context
+			_selfHandle = GCHandle.Alloc(this, GCHandleType.Normal);
+			_ctx = GCHandle.ToIntPtr(_selfHandle);
+
+			// Create native stub which inserts context and calls SharedTrampoline
+			Ptr = NativeThunkFactory.CreateThunk(_trampolinePtrs[_arity], _ctx, _arity);
 		}
+
+		// Shared unmanaged-callable trampolines
+		[UnmanagedCallersOnly]
+		static long SharedTrampoline0(IntPtr ctx)
+			=> Dispatch(ctx, System.Array.Empty<long>());
+
+		[UnmanagedCallersOnly]
+		static long SharedTrampoline1(long p0, IntPtr ctx)
+			=> Dispatch(ctx, new[] { p0 });
+
+		[UnmanagedCallersOnly]
+		static long SharedTrampoline2(long p0, long p1, IntPtr ctx)
+			=> Dispatch(ctx, new[] { p0, p1 });
+
+		[UnmanagedCallersOnly]
+		static long SharedTrampoline3(long p0, long p1, long p2, IntPtr ctx)
+			=> Dispatch(ctx, new[] { p0, p1, p2 });
+
+		[UnmanagedCallersOnly]
+		static long SharedTrampoline4(long p0, long p1, long p2, long p3, IntPtr ctx)
+			=> Dispatch(ctx, new[] { p0, p1, p2, p3 });
+
+		[UnmanagedCallersOnly]
+		static long SharedTrampoline5(long p0, long p1, long p2, long p3, long p4, IntPtr ctx)
+			=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4 });
+
+		[UnmanagedCallersOnly]
+		static long SharedTrampoline6(long p0, long p1, long p2, long p3, long p4, long p5, IntPtr ctx)
+			=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5 });
+
+		[UnmanagedCallersOnly]
+		static long SharedTrampoline7(long p0, long p1, long p2, long p3, long p4, long p5, long p6, IntPtr ctx)
+			=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5, p6 });
+
+		[UnmanagedCallersOnly]
+		static long SharedTrampoline8(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, IntPtr ctx)
+			=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5, p6, p7 });
+
+		[UnmanagedCallersOnly]
+		static long SharedTrampoline9(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, IntPtr ctx)
+			=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5, p6, p7, p8 });
+
+		[UnmanagedCallersOnly]
+		static long SharedTrampoline10(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, IntPtr ctx)
+			=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5, p6, p7, p8, p9 });
+
+		[UnmanagedCallersOnly]
+		static long SharedTrampoline11(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, IntPtr ctx)
+			=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10 });
+
+		[UnmanagedCallersOnly]
+		static long SharedTrampoline12(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, IntPtr ctx)
+			=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11 });
+
+		[UnmanagedCallersOnly]
+		static long SharedTrampoline13(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, IntPtr ctx)
+			=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12 });
+
+		[UnmanagedCallersOnly]
+		static long SharedTrampoline14(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, IntPtr ctx)
+			=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13 });
+
+		[UnmanagedCallersOnly]
+		static long SharedTrampoline15(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, IntPtr ctx)
+			=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14 });
+
+		[UnmanagedCallersOnly]
+		static long SharedTrampoline16(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, IntPtr ctx)
+			=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15 });
+
+		[UnmanagedCallersOnly]
+		static long SharedTrampoline17(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, IntPtr ctx)
+			=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16 });
+
+		[UnmanagedCallersOnly]
+		static long SharedTrampoline18(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, IntPtr ctx)
+			=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17 });
+
+		[UnmanagedCallersOnly]
+		static long SharedTrampoline19(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, IntPtr ctx)
+			=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18 });
+
+		[UnmanagedCallersOnly]
+		static long SharedTrampoline20(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, IntPtr ctx)
+			=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19 });
+
+		[UnmanagedCallersOnly]
+		static long SharedTrampoline21(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, IntPtr ctx)
+			=> Dispatch(ctx, new[] {p0, p1, p2, p3, p4,  p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20 });
+
+		[UnmanagedCallersOnly]
+		static long SharedTrampoline22(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, IntPtr ctx)
+			=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21 });
+
+		[UnmanagedCallersOnly]
+		static long SharedTrampoline23(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, IntPtr ctx)
+			=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4,  p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22
+			});
+
+		[UnmanagedCallersOnly]
+		static long SharedTrampoline24(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, long p23, IntPtr ctx)
+			=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4,  p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23 });
+
+		[UnmanagedCallersOnly]
+		static long SharedTrampoline25(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, long p23, long p24, IntPtr ctx)
+			=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4,  p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24 });
+
+		[UnmanagedCallersOnly]
+		static long SharedTrampoline26(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, long p23, long p24, long p25, IntPtr ctx)
+			=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4,  p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25 });
+
+		[UnmanagedCallersOnly]
+		static long SharedTrampoline27(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, long p23, long p24, long p25, long p26, IntPtr ctx)
+			=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4,  p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26 });
+
+		[UnmanagedCallersOnly]
+		static long SharedTrampoline28(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, long p23, long p24, long p25, long p26, long p27, IntPtr ctx)
+			=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4,  p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26, p27 });
+
+		[UnmanagedCallersOnly]
+		static long SharedTrampoline29(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, long p23, long p24, long p25, long p26, long p27, long p28, IntPtr ctx)
+			=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4,  p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26, p27, p28 });
+
+		[UnmanagedCallersOnly]
+		static long SharedTrampoline30(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, long p23, long p24, long p25, long p26, long p27, long p28, long p29, IntPtr ctx)
+			=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4,  p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26, p27, p28, p29 });
+
+		[UnmanagedCallersOnly]
+		static long SharedTrampoline31(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, long p23, long p24, long p25, long p26, long p27, long p28, long p29, long p30, IntPtr ctx)
+			=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4,  p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26, p27, p28, p29, p30 });
+
+		[UnmanagedCallersOnly]
+		static long SharedTrampoline32(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, long p23, long p24, long p25, long p26, long p27, long p28, long p29, long p30, long p31, IntPtr ctx)
+			=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4,  p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26, p27, p28, p29, p30, p31 });
 
 		/// <summary>
-		/// Returns a DynamicMethod with type <c>static long Stub(DelegateHolder, long p0…pN)</c>
-		/// that will package its parameters into a <c>long[]</c>
-		/// and invoke this instance’s <see cref="DelegateTrampoline(long[])"/>.
+		/// SharedTrampoline calls this function with the arguments packed into an array.
+		/// We then create a new green thread an run the target function there with the received arguments.
 		/// </summary>
-		/// <param name="arity">The number of <c>long</c> parameters.</param>
-		/// <returns>
-		///   A <see cref="DynamicMethod"/> which can be used to create a closed delegate.
-		/// </returns>
-		private static DynamicMethod BuildStubMethod(int arity)
-		{
-			// 1) Create type <DelegateHolder, long p0..pN>
-			var paramTypes = new Type[arity + 1];
-			paramTypes[0] = typeof(DelegateHolder);
-
-			for (int i = 0; i < arity; i++)
-				paramTypes[i + 1] = typeof(long);
-
-			// 2) Create a DynamicMethod: static long Stub(DelegateHolder, long p0…pN)
-			var dm = new DynamicMethod(
-				name: $"DynamicDelegate_{arity}",
-				returnType: typeof(long),
-				parameterTypes: paramTypes,
-				m: typeof(DelegateHolder).Module,
-				skipVisibility: true);
-			// 3) Create the function body which loads the arguments from long0..longN to long[N]
-			// and then calls this.DelegateTrampoline(long[N])
-			var il = dm.GetILGenerator();
-			var arrLocal = il.DeclareLocal(typeof(long[]));
-			// new long[arity]
-			il.Emit(OpCodes.Ldc_I4, arity);
-			il.Emit(OpCodes.Newarr, typeof(long));
-			il.Emit(OpCodes.Stloc, arrLocal);
-
-			// fill array
-			for (int i = 0; i < arity; i++)
-			{
-				il.Emit(OpCodes.Ldloc, arrLocal);
-				il.Emit(OpCodes.Ldc_I4, i);
-				il.Emit(OpCodes.Ldarg, i + 1);
-				il.Emit(OpCodes.Stelem_I8);
-			}
-
-			// call this.DelegateTrampoline(arr)
-			il.Emit(OpCodes.Ldarg_0);
-			il.Emit(OpCodes.Ldloc, arrLocal);
-			var mi = typeof(DelegateHolder)
-					 .GetMethod(nameof(DelegateTrampoline), BindingFlags.Instance | BindingFlags.Public);
-			il.EmitCall(OpCodes.Callvirt, mi, null);
-			il.Emit(OpCodes.Ret);
-			return dm;
-		}
-
-		// Build a type to accept <DelegateHolder, long0..longN>
-		private static Type BuildClosedType(int arity)
-		{
-			string name = $"DynamicCallback{arity}";
-			var tb = _modBuilder.DefineType(
-						 name,
-						 TypeAttributes.Public | TypeAttributes.Sealed | TypeAttributes.Class,
-						 typeof(MulticastDelegate));
-			// ctor(object, IntPtr)
-			var ctor = tb.DefineConstructor(
-						   MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.RTSpecialName,
-						   CallingConventions.Standard,
-						   new[] { typeof(object), typeof(IntPtr) });
-			ctor.SetImplementationFlags(MethodImplAttributes.Runtime);
-			// Invoke(long...)
-			var paramTypes = Enumerable.Repeat(typeof(long), arity).ToArray();
-			var mb = tb.DefineMethod(
-						 "Invoke",
-						 MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.NewSlot | MethodAttributes.Virtual,
-						 CallingConventions.Standard,
-						 typeof(long),
-						 paramTypes);
-			mb.SetImplementationFlags(MethodImplAttributes.Runtime);
-			return tb.CreateType();
-		}
-
-		/// <summary>
-		/// StubDelegate calls this function with the arguments packed into an array.
-		/// Then we create a new green thread an run the target function there with the received arguments.
-		/// </summary>
+		/// <param name="ctx">Pointer to this DelegateHolder instance.</param>
 		/// <param name="args">Argument list for the target function.</param>
 		/// <returns>Result of the target function converted to a long.</returns>
-		public unsafe long DelegateTrampoline(long[] args)
+		static long Dispatch(IntPtr ctx, long[] args)
 		{
-			object val = null;
-
-			if (DelRef != null)
+			// Recover the DelegateHolder by reversing the GCHandle
+			var handle = GCHandle.FromIntPtr(ctx);
+			if (!(handle.Target is DelegateHolder holder))
 			{
-				_ = Flow.TryCatch(() =>
+				Error err;
+				return Errors.ErrorOccurred(err = new Error($"Invalid DelegateHolder pointer passed to Dispatch.")) ? throw err : 0L;
+			}
+
+			object val = null;
+			_ = Flow.TryCatch(() =>
+			{
+				var state = holder._fast
+					? (true, (ThreadVariables)null)
+					: Threads.BeginThread();
+
+				if (holder._reference)
 				{
-					var state = _fast ? (true, (ThreadVariables)null) : Threads.BeginThread();
-
-					if (Reference)
+					var gh = GCHandle.Alloc(args, GCHandleType.Pinned);
+					try
 					{
-						var gh = GCHandle.Alloc(args, GCHandleType.Pinned);
-
-						try
+						unsafe
 						{
 							long* ptr = (long*)gh.AddrOfPinnedObject().ToPointer();
-							val = funcObj.Call((long)ptr);
+							val = holder.funcObj.Call((long)ptr);
 						}
-						finally { gh.Free(); }
 					}
-					else
-					{
-						val = funcObj.Call(System.Array.ConvertAll(args, item => (object)item));
-					}
+					finally { gh.Free(); }
+				}
+				else
+				{
+					val = holder.funcObj.Call(System.Array.ConvertAll(args, item => (object)item));
+				}
 
-					if (!_fast) _ = Threads.EndThread(state.Item1);
-				}, !_fast);
-			}
+				if (!holder._fast)
+					_ = Threads.EndThread(state.Item1);
+			}, !holder._fast);
 
 			return ConvertResult(val);
 		}
 
-		internal static long ConvertResult(object val)
+		internal static long ConvertResult(object val) => val switch
 		{
+			int i => i,
+			long l => l,
+			bool b => b ? 1L : 0L,
+			double d => (long)d,
+			string s => s.Length == 0 ? 0L : 0L,
+			IntPtr ip => ip.ToInt64(),
+			_ => 0L
+		};
 
-			return val switch
+		/// <summary>Frees the native stub and drops references.</summary>
+		public void Clear()
 		{
-				int i => i,
-				long l => l,
-				bool b => b ? 1L : 0L,
-				double d => (long)d,
-					string s => s.Length == 0 ? 0L : 0L,
-					IntPtr ip => ip.ToInt64(),
-					_ => 0L
-			};
+			// Free the handle and context
+			_selfHandle.Free();
+			NativeThunkFactory.FreeThunk(Ptr);
+			funcObj = null;
 		}
 
-		internal void Clear()
+		public void Dispose() => Clear();
+	}
+
+	/// <summary>
+	/// Allocates and frees small 64-byte native thunks which insert a context pointer to the end of the argument list
+	/// and then calls SharedTrampoline.
+	/// 
+	/// WARNING: THIS HAS BEEN TESTED ONLY ON 64-BIT WINDOWS
+	/// </summary>
+	static class NativeThunkFactory
+	{
+		public static unsafe IntPtr CreateThunk(IntPtr trampPtr, IntPtr ctx, int arity)
 		{
-			DelRef = null;
-			funcObj = null;
-			Ptr = 0;
+			IntPtr mem = ExecutableMemoryPoolManager.Rent();
+			byte* ptr = (byte*)mem;
+			int disp;
+
+			switch (RuntimeInformation.ProcessArchitecture)
+			{
+				case Architecture.X64:
+					if (arity < 4)
+					{
+						// opcode for MOV reg,imm64 depends on register:
+						//    RCX=48 B9, RDX=48 BA, R8=49 B8, R9=49 B9
+						switch (arity)
+						{
+							case 0: *ptr++ = 0x48; *ptr++ = 0xB9; break; // mov rcx
+							case 1: *ptr++ = 0x48; *ptr++ = 0xBA; break; // mov rdx
+							case 2: *ptr++ = 0x49; *ptr++ = 0xB8; break; // mov r8
+							default: *ptr++ = 0x49; *ptr++ = 0xB9; break; // mov r9
+						}
+						*((ulong*)ptr) = (ulong)ctx.ToInt64(); ptr += 8;
+					}
+					else
+					{
+						disp = 8 * (arity + 1);
+						// 1) mov rax, ctx
+						*ptr++ = 0x48; *ptr++ = 0xB8;
+						*((ulong*)ptr) = (ulong)ctx.ToInt64(); ptr += 8;
+						// 2) mov qword ptr [rsp+disp], rax
+						*ptr++ = 0x48; *ptr++ = 0x89; *ptr++ = 0x84; *ptr++ = 0x24;
+						*((uint*)ptr) = (uint)disp; ptr += 4;
+					}
+					// mov rax, trampPtr
+					*ptr++ = 0x48; *ptr++ = 0xB8;
+					*((ulong*)ptr) = (ulong)trampPtr.ToInt64(); ptr += 8;
+					// jmp rax
+					*ptr++ = 0xFF; *ptr++ = 0xE0;
+					break;
+
+				case Architecture.X86:
+					// write ctx at [esp + 4*(arity+1)]
+					disp = 4 * (arity + 1);
+					// mov dword ptr [esp+disp], imm32
+					*ptr++ = 0xC7;
+					*ptr++ = 0x44;
+					*ptr++ = 0x24;
+					*ptr++ = (byte)disp;
+					*((uint*)ptr) = (uint)ctx.ToInt32(); ptr += 4;
+
+					// then jmp to the trampoline
+					*ptr++ = 0xB8;                                   // mov eax, imm32
+					*((uint*)ptr) = (uint)trampPtr.ToInt32(); ptr += 4;
+					*ptr++ = 0xFF; *ptr++ = 0xE0;                   // jmp eax
+					break;
+
+				case Architecture.Arm64:
+					// PC‐relative literal load into X{arity}
+					// LDR Xd, [PC, #8]  encodes as 0x58000040 | Rd
+					uint ldrCtx = 0x58000040u | (uint)arity;
+					*((uint*)ptr) = ldrCtx; ptr += 4;
+					// LDR X16, [PC, #8]
+					*((uint*)ptr) = 0x58000040u | 16u; ptr += 4;
+					// BR X16
+					*((uint*)ptr) = 0xD61F0200; ptr += 4;
+					// literal pool: ctx, then trampPtr
+					*((ulong*)ptr) = (ulong)ctx.ToInt64(); ptr += 8;
+					*((ulong*)ptr) = (ulong)trampPtr.ToInt64();
+					break;
+
+				default:
+					throw new PlatformNotSupportedException($"Architecture {RuntimeInformation.ProcessArchitecture} not supported");
+			}
+
+			return mem;
+		}
+
+		public static void FreeThunk(IntPtr ptr)
+		{
+			ExecutableMemoryPoolManager.Return(ptr);
+		}
+	}
+
+	/// <summary>
+	/// Manages executable memory in 512-byte pages, providing fixed 64-byte chunks for DelegateHolder.
+	/// Automatically allocates new pages when needed and reuses freed chunks.
+	/// This is needed because VirtualAlloc is quite a heavy function, best called as few times as possible.
+	/// </summary>
+	public sealed class ExecutableMemoryPoolManager
+	{
+		private const int PageSize = 512;
+		private const int ChunkSize = 64;
+		private static readonly object _lock = new object();
+
+		// All allocated pages
+		private static readonly List<IntPtr> _pages = new List<IntPtr>();
+		// Free chunk addresses
+		private static readonly Stack<IntPtr> _freeChunks = new Stack<IntPtr>();
+
+		// Current page and offset
+		private static IntPtr _currentPage;
+		private static int _currentOffset;
+
+#if LINUX || OSX
+        [DllImport("libc", SetLastError = true)]
+        private static extern IntPtr mmap(IntPtr addr, UIntPtr length, int prot, int flags, int fd, IntPtr offset);
+        [DllImport("libc", SetLastError = true)]
+        private static extern int munmap(IntPtr addr, UIntPtr length);
+
+        private const int PROT_READ = 1;
+        private const int PROT_WRITE = 2;
+        private const int PROT_EXEC = 4;
+        private const int MAP_PRIVATE = 2;
+        private const int MAP_ANONYMOUS = 0x20;
+#endif
+
+		/// <summary>
+		/// Rents a 32-byte executable chunk.
+		/// </summary>
+		public static IntPtr Rent()
+		{
+			lock (_lock)
+			{
+				if (_freeChunks.Count > 0)
+					return _freeChunks.Pop();
+
+				// Carve from current page
+				if (_currentPage == IntPtr.Zero || _currentOffset + ChunkSize > PageSize)
+				{
+					var page = AllocatePage();
+					_pages.Add(page);
+					_currentPage = page;
+					_currentOffset = 0;
+				}
+				var ptr = _currentPage + _currentOffset;
+				_currentOffset += ChunkSize;
+				return ptr;
+			}
+		}
+
+		/// <summary>
+		/// Returns a previously rented chunk for reuse.
+		/// </summary>
+		public static void Return(IntPtr ptr)
+		{
+			if (ptr == IntPtr.Zero) return;
+			lock (_lock)
+			{
+				_freeChunks.Push(ptr);
+			}
+		}
+
+		/// <summary>
+		/// Releases all allocated pages.
+		/// </summary>
+		public static void Dispose()
+		{
+			lock (_lock)
+			{
+#if WINDOWS
+				foreach (var page in _pages)
+					WindowsAPI.VirtualFree(page, UIntPtr.Zero, (uint)VirtualAllocExTypes.MEM_RELEASE);
+#elif LINUX || OSX
+                foreach (var page in _pages)
+                    munmap(page, (UIntPtr)PageSize);
+#endif
+				_pages.Clear();
+				_freeChunks.Clear();
+				_currentPage = IntPtr.Zero;
+				_currentOffset = 0;
+			}
+		}
+
+		private static IntPtr AllocatePage()
+		{
+#if WINDOWS
+			var ptr = WindowsAPI.VirtualAlloc(IntPtr.Zero, (UIntPtr)PageSize, (uint)VirtualAllocExTypes.MEM_COMMIT, (uint)AccessProtectionFlags.PAGE_EXECUTE_READWRITE);
+			if (ptr == IntPtr.Zero)
+				throw new InvalidOperationException($"VirtualAlloc failed: {Marshal.GetLastWin32Error()}");
+			return ptr;
+#elif LINUX || OSX
+            var ptr = mmap(IntPtr.Zero, (UIntPtr)PageSize, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS, -1, IntPtr.Zero);
+            if (ptr == new IntPtr(-1))
+                throw new InvalidOperationException("mmap failed");
+            return ptr;
+#else
+#error Unsupported OS for AllocatePage
+#endif
 		}
 	}
 }
