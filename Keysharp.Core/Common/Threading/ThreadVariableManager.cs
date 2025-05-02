@@ -79,7 +79,7 @@
 								// This also makes it more predictable, since AllowThreadToBeInterrupted is only changed
 								// when IsInterruptible() is called, which might not happen in between changes to the setting.
 								// For explanation of why two fields instead of one are used, see comments in IsInterruptible().
-								tv.threadStartTime = DateTime.Now;
+								tv.threadStartTime = DateTime.UtcNow;
 								tv.uninterruptibleDuration = Script.uninterruptibleTime;
 							}
 						}

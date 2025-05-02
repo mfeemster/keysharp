@@ -50,8 +50,8 @@
 		private readonly CSharpStyler csStyler = new ();
 		private bool force = false;
 		private string fullCode = "";
-		private DateTime lastCompileTime = DateTime.Now;
-		private DateTime lastKeyTime = DateTime.Now;
+		private DateTime lastCompileTime = DateTime.UtcNow;
+		private DateTime lastKeyTime = DateTime.UtcNow;
 		private bool SearchIsOpen = false;
 		private string trimmedCode = "";
 		private readonly string trimstr = "{}\t";
@@ -125,7 +125,7 @@
 		private void clearSelectionToolStripMenuItem_Click(object sender, EventArgs e)
 		{
 			txtIn.SetEmptySelection(0);
-			lastKeyTime = DateTime.Now;
+			lastKeyTime = DateTime.UtcNow;
 		}
 
 		private void CloseSearch()
@@ -160,13 +160,13 @@
 		private void copyToolStripMenuItem_Click(object sender, EventArgs e)
 		{
 			txtIn.Copy();
-			lastKeyTime = DateTime.Now;
+			lastKeyTime = DateTime.UtcNow;
 		}
 
 		private void cutToolStripMenuItem_Click(object sender, EventArgs e)
 		{
 			txtIn.Cut();
-			lastKeyTime = DateTime.Now;
+			lastKeyTime = DateTime.UtcNow;
 		}
 
 		private void expandAllToolStripMenuItem_Click(object sender, EventArgs e) => txtIn.FoldAll(FoldAction.Expand);
@@ -196,7 +196,7 @@
 			//We use this hack to send "Shift+Tab" to scintilla, since there is no known API to indent,
 			//although the indentation function exists. Pressing TAB with the editor focused confirms this.
 			GenerateKeystrokes("{TAB}");
-			lastKeyTime = DateTime.Now;
+			lastKeyTime = DateTime.UtcNow;
 		}
 
 		private void indentGuidesToolStripMenuItem_Click(object sender, EventArgs e)
@@ -420,7 +420,7 @@
 			{
 				FileName.Text = Path.GetFileName(path);
 				txtIn.Text = File.ReadAllText(path);
-				lastKeyTime = DateTime.Now;
+				lastKeyTime = DateTime.UtcNow;
 			}
 		}
 
@@ -430,7 +430,7 @@
 			var end = txtIn.SelectionEnd;
 			txtIn.ReplaceSelection(txtIn.GetTextRange(start, end - start).ToLower());
 			txtIn.SetSelection(start, end);
-			lastKeyTime = DateTime.Now;
+			lastKeyTime = DateTime.UtcNow;
 		}
 
 		private void lowercaseSelectionToolStripMenuItem_Click(object sender, EventArgs e) => Lowercase();
@@ -482,7 +482,7 @@
 			// we use this hack to send "Shift+Tab" to scintilla, since there is no known API to outdent,
 			// although the indentation function exists. Pressing Shift+Tab with the editor focused confirms this.
 			GenerateKeystrokes("+{TAB}");
-			lastKeyTime = DateTime.Now;
+			lastKeyTime = DateTime.UtcNow;
 		}
 
 		private void outdentSelectionToolStripMenuItem_Click(object sender, EventArgs e) => Outdent();
@@ -490,7 +490,7 @@
 		private void pasteToolStripMenuItem_Click(object sender, EventArgs e)
 		{
 			txtIn.Paste();
-			lastKeyTime = DateTime.Now;
+			lastKeyTime = DateTime.UtcNow;
 		}
 
 		private void selectAllToolStripMenuItem_Click(object sender, EventArgs e) => txtIn.SelectAll();
@@ -557,13 +557,13 @@
 
 		private void Timer_Tick(object sender, EventArgs e)
 		{
-			if ((force || ((DateTime.Now - lastKeyTime).TotalSeconds >= updateFreqSeconds && lastKeyTime > lastCompileTime)) && txtIn.Text != "")
+			if ((force || ((DateTime.UtcNow - lastKeyTime).TotalSeconds >= updateFreqSeconds && lastKeyTime > lastCompileTime)) && txtIn.Text != "")
 			{
 				timer.Enabled = false;
 
 				try
 				{
-					lastCompileTime = DateTime.Now;
+					lastCompileTime = DateTime.UtcNow;
 					CompilerHelper.compiledasm = null;
 					btnRunScript.Enabled = false;
 					var oldIndex = txtOut.FirstVisibleLine;
@@ -617,7 +617,7 @@
 					}
 					else if (results.Success)
 					{
-						SetSuccess((DateTime.Now - lastCompileTime).TotalSeconds);
+						SetSuccess((DateTime.UtcNow - lastCompileTime).TotalSeconds);
 						fullCode = code;
 						var token = "[System.STAThreadAttribute()]";
 						var start = code.IndexOf(token);
@@ -742,7 +742,7 @@
 			if (e.KeyCode == Keys.F5)
 				force = true;
 			else if (ReferenceEquals(sender, txtIn))
-				lastKeyTime = DateTime.Now;
+				lastKeyTime = DateTime.UtcNow;
 		}
 
 		private void txtIn_MarginClick(object sender, MarginClickEventArgs e)
@@ -768,7 +768,7 @@
 			}
 		}
 
-		private void txtIn_TextChanged(object sender, EventArgs e) => lastKeyTime = DateTime.Now;
+		private void txtIn_TextChanged(object sender, EventArgs e) => lastKeyTime = DateTime.UtcNow;
 
 		private void txtOut_KeyDown(object sender, KeyEventArgs e) => txtIn_KeyDown(sender, e);
 
@@ -793,7 +793,7 @@
 			var end = txtIn.SelectionEnd;
 			txtIn.ReplaceSelection(txtIn.GetTextRange(start, end - start).ToUpper());
 			txtIn.SetSelection(start, end);
-			lastKeyTime = DateTime.Now;
+			lastKeyTime = DateTime.UtcNow;
 		}
 
 		private void uppercaseSelectionToolStripMenuItem_Click(object sender, EventArgs e) => Uppercase();

@@ -345,7 +345,7 @@
 		/// <exception cref="ValueError">A <see cref="ValueError"/> exception is thrown if the value couldn't be converted to a <see cref="CoordModeType"/>.</exception>
 		public static object A_CoordModeCaret
 		{
-			get => Mouse.Coords.Caret.ToString();
+			get => CoordModeTypeToString(Mouse.Coords.Caret);
 
 			set
 			{
@@ -375,7 +375,7 @@
 		/// <exception cref="ValueError">A <see cref="ValueError"/> exception is thrown if the value couldn't be converted to a <see cref="CoordModeType"/>.</exception>
 		public static object A_CoordModeMenu
 		{
-			get => Mouse.Coords.Menu.ToString();
+			get => CoordModeTypeToString(Mouse.Coords.Menu);
 
 			set
 			{
@@ -405,7 +405,7 @@
 		/// <exception cref="ValueError">A <see cref="ValueError"/> exception is thrown if the value couldn't be converted to a <see cref="CoordModeType"/>.</exception>
 		public static object A_CoordModeMouse
 		{
-			get => Mouse.Coords.Mouse.ToString();
+			get => CoordModeTypeToString(Mouse.Coords.Mouse);
 
 			set
 			{
@@ -435,7 +435,7 @@
 		/// <exception cref="ValueError">A <see cref="ValueError"/> exception is thrown if the value couldn't be converted to a <see cref="CoordModeType"/>.</exception>
 		public static object A_CoordModePixel
 		{
-			get => Mouse.Coords.Pixel.ToString();
+			get => CoordModeTypeToString(Mouse.Coords.Pixel);
 
 			set
 			{
@@ -465,7 +465,7 @@
 		/// <exception cref="ValueError">A <see cref="ValueError"/> exception is thrown if the value couldn't be converted to a <see cref="CoordModeType"/>.</exception>
 		public static object A_CoordModeToolTip
 		{
-			get => Mouse.Coords.Tooltip.ToString();
+			get => CoordModeTypeToString(Mouse.Coords.Tooltip);
 
 			set
 			{
@@ -1776,7 +1776,7 @@
 		/// Otherwise, this variable is equivalent to <see cref="A_TimeIdle"/>.
 		/// </summary>
 		public static long A_TimeIdleKeyboard => Script.HookThread is HookThread ht && ht.HasKbdHook()
-		? (long)(DateTime.Now - Script.timeLastInputKeyboard).TotalMilliseconds
+		? (long)(DateTime.UtcNow - Script.timeLastInputKeyboard).TotalMilliseconds
 		: A_TimeIdle;
 
 		/// <summary>
@@ -1784,7 +1784,7 @@
 		/// Otherwise, this variable is equivalent to <see cref="A_TimeIdle"/>.
 		/// </summary>
 		public static long A_TimeIdleMouse => Script.HookThread is HookThread ht && ht.HasMouseHook()
-		? (long)(DateTime.Now - Script.timeLastInputMouse).TotalMilliseconds
+		? (long)(DateTime.UtcNow - Script.timeLastInputMouse).TotalMilliseconds
 		: A_TimeIdle;
 
 		/// <summary>
@@ -1794,18 +1794,18 @@
 		/// If only one hook is installed, only its type of physical input affects A_TimeIdlePhysical (the other/non-installed hook's input, both physical and artificial, has no effect).
 		/// </summary>
 		public static long A_TimeIdlePhysical => Script.HookThread is HookThread ht && ht.HasEitherHook()
-		? (long)(DateTime.Now - Script.timeLastInputPhysical).TotalMilliseconds
+		? (long)(DateTime.UtcNow - Script.timeLastInputPhysical).TotalMilliseconds
 		: A_TimeIdle;
 
 		/// <summary>
 		/// Time in ms that have elapsed since <see cref="A_PriorHotkey"/> was pressed. It will be -1 whenever <see cref="A_PriorHotkey"/> is blank.
 		/// </summary>
-		public static long A_TimeSincePriorHotkey => string.IsNullOrEmpty(Script.priorHotkeyName) ? -1L : (long)(DateTime.Now - Script.priorHotkeyStartTime).TotalMilliseconds;
+		public static long A_TimeSincePriorHotkey => string.IsNullOrEmpty(Script.priorHotkeyName) ? -1L : (long)(DateTime.UtcNow - Script.priorHotkeyStartTime).TotalMilliseconds;
 
 		/// <summary>
 		/// Time in ms that have elapsed since <see cref="A_ThisHotkey"/> was pressed. It will be -1 whenever <see cref="A_ThisHotkey"/> is blank.
 		/// </summary>
-		public static long A_TimeSinceThisHotkey => string.IsNullOrEmpty(Script.thisHotkeyName) ? -1L : (long)(DateTime.Now - Script.thisHotkeyStartTime).TotalMilliseconds;
+		public static long A_TimeSinceThisHotkey => string.IsNullOrEmpty(Script.thisHotkeyName) ? -1L : (long)(DateTime.UtcNow - Script.thisHotkeyStartTime).TotalMilliseconds;
 
 		/// <summary>
 		/// The current mode set by <see cref="SetTitleMatchMode"/>: 1, 2, 3, or RegEx.
@@ -2002,6 +2002,30 @@
 		/// </summary>
 		/// <returns>If compiled, the entry assembly, else the executing assembly.</returns>
 		internal static Assembly GetAssembly() => CompilerHelper.compiledasm ?? Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly();
+
+		/// <summary>
+		/// Wrapper to get a string representation of the <see cref="CordModeType"/> enum because using
+		/// ToString() is slow because it uses reflection.
+		/// </summary>
+		/// <param name="mode">The enum to return the string for.</param>
+		/// <returns>The string representation of mode.</returns>
+		internal static string CoordModeTypeToString(CoordModeType mode)
+		{
+			switch (mode)
+			{
+				case CoordModeType.Client:
+					return "Client";
+
+				case CoordModeType.Window:
+					return "Window";
+
+				case CoordModeType.Screen:
+					return "Screen";
+
+				default:
+					return "";
+			}
+		}
 	}
 
 	public static partial class KeysharpEnhancements
@@ -2109,12 +2133,56 @@
 		/// <summary>
 		/// The default send mode of hotstrings.
 		/// </summary>
-		public static string A_DefaultHotstringSendMode => HotstringManager.hsSendMode.ToString();
+		public static string A_DefaultHotstringSendMode
+		{
+			get
+			{
+				switch (HotstringManager.hsSendMode)
+				{
+					case SendModes.Event:
+						return "Event";
+
+					case SendModes.Input:
+						return "Input";
+
+					case SendModes.Play:
+						return "Play";
+
+					case SendModes.InputThenPlay:
+						return "InputThenPlay";
+
+					case SendModes.Invalid:
+						return "Invalid";
+
+					default:
+						return "";
+				}
+			}
+		}
 
 		/// <summary>
 		/// The default send raw mode of hotstrings.
 		/// </summary>
-		public static string A_DefaultHotstringSendRaw => HotstringManager.hsSendRaw.ToString();
+		public static string A_DefaultHotstringSendRaw
+		{
+			get
+			{
+				switch (HotstringManager.hsSendRaw)
+				{
+					case SendRawModes.NotRaw:
+						return "NotRaw";
+
+					case SendRawModes.Raw:
+						return "Raw";
+
+					case SendRawModes.RawText:
+						return "RawText";
+
+					default:
+						return "";
+				}
+			}
+		}
 
 		/// <summary>
 		/// The native directory separator string, i.e. "/" on linux, "\" on Windows.
@@ -2161,7 +2229,7 @@
 		/// <summary>
 		/// The maximum simultaneously running threads allowed in a script.
 		/// </summary>
-		public static object A_MaxThreads => Script.MaxThreadsTotal;
+		public static object A_MaxThreads => (long)Script.MaxThreadsTotal;
 
 		/// <summary>
 		/// The value specified by #NoTrayIcon.
@@ -2177,7 +2245,7 @@
 		/// <summary>
 		/// The current Coordinated Universal Time (UTC) in YYYYMMDDHH24MISS.fff format.
 		/// </summary>
-		public static string A_NowUTCMs => Conversions.ToYYYYMMDDHH24MISSFFF(DateTime.UtcNow);
+		public static string A_NowUtcMs => Conversions.ToYYYYMMDDHH24MISSFFF(DateTime.UtcNow);
 
 		/// <summary>
 		/// Whether the script is exempt from being able to be suspended.

@@ -18,7 +18,7 @@ namespace Keysharp.Scripting
 		internal static List<IFuncObj> hotExprs = [];
 		internal static InputType input;
 		internal static int inputBeforeHotkeysCount;
-		internal static DateTime inputTimeoutAt = DateTime.Now;
+		internal static DateTime inputTimeoutAt = DateTime.UtcNow;
 		internal static bool inputTimerExists;
 		internal static DateTime lastPeekTime;
 		internal static MainWindow mainWindow;
@@ -31,14 +31,14 @@ namespace Keysharp.Scripting
 		internal static Icon pausedIcon;
 		internal static bool persistent;
 		internal static IntPtr playbackHook = IntPtr.Zero;
-		internal static DateTime priorHotkeyStartTime = DateTime.Now;
+		internal static DateTime priorHotkeyStartTime = DateTime.UtcNow;
 		internal static string scriptName = "";
 		internal static Icon suspendedIcon;
 		internal static string thisHotkeyName, priorHotkeyName;
-		internal static DateTime thisHotkeyStartTime = DateTime.Now;
+		internal static DateTime thisHotkeyStartTime = DateTime.UtcNow;
 		internal static DateTime timeLastInputKeyboard = timeLastInputPhysical;
 		internal static DateTime timeLastInputMouse = timeLastInputPhysical;
-		internal static DateTime timeLastInputPhysical = DateTime.Now;
+		internal static DateTime timeLastInputPhysical = DateTime.UtcNow;
 		internal static int totalExistingThreads;
 		internal static int uninterruptibleTime = 17;
 		internal static ConcurrentDictionary<nint, GCHandle> gcHandles = [];
@@ -487,7 +487,7 @@ namespace Keysharp.Scripting
 			// DWORD subtraction still gives the right answer as long as aStartTime itself isn't more
 			// than about 49 days ago. Note: must cast to int or any negative result will be lost
 			// due to DWORD type:
-			var tick_now = DateTime.Now;
+			var tick_now = DateTime.UtcNow;
 
 			if (!aAllowEarlyReturn && (int)(aSleepDuration - (tick_now - aStartTime).TotalMilliseconds) > SLEEP_INTERVAL_HALF)
 				// Early return isn't allowed and the time remaining is large enough that we need to
@@ -539,7 +539,7 @@ namespace Keysharp.Scripting
 			// with the HOTKEY command -- a hot string's unique name is always its label since that includes
 			// the options that distinguish between (for example) :c:ahk:: and ::ahk::
 			thisHotkeyName = name;
-			thisHotkeyStartTime = DateTime.Now; // Fixed for v1.0.35.10 to not happen for GUI
+			thisHotkeyStartTime = DateTime.UtcNow; // Fixed for v1.0.35.10 to not happen for GUI
 		}
 
 		internal static void SetInitialFloatFormat()

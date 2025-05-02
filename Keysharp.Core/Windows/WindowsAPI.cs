@@ -1200,7 +1200,7 @@ namespace Keysharp.Core.Windows
 		internal static bool OpenClipboard(long ms)
 		{
 			bool open;
-			var dtStart = DateTime.Now;
+			var dtStart = DateTime.UtcNow;
 
 			while (!(open = OpenClipboard(IntPtr.Zero)))
 			{
@@ -1210,7 +1210,7 @@ namespace Keysharp.Core.Windows
 				if (ms == 0)
 					break;
 
-				if ((DateTime.Now - dtStart).TotalMilliseconds > ms)
+				if ((DateTime.UtcNow - dtStart).TotalMilliseconds > ms)
 					break;
 
 				_ = Flow.Sleep(100);
@@ -2094,6 +2094,10 @@ namespace Keysharp.Core.Windows
 
 		[DllImport(kernel32, CharSet = CharSet.Unicode)]
 		internal static extern bool QueryFullProcessImageName(IntPtr hProcess, uint dwFlags, [Out, MarshalAs(UnmanagedType.LPTStr)] StringBuilder lpExeName, ref uint lpdwSize);
+		[DllImport(kernel32, CharSet = CharSet.Unicode)]
+		internal static extern IntPtr VirtualAlloc(IntPtr lpAddress, UIntPtr dwSize, uint flAllocationType, uint flProtect);
+		[DllImport(kernel32, CharSet = CharSet.Unicode)]
+		internal static extern bool VirtualFree(IntPtr lpAddress, UIntPtr dwSize, uint dwFreeType);
 
 		[DllImport(kernel32, CharSet = CharSet.Unicode)]
 		internal static extern IntPtr VirtualAllocEx(IntPtr hProcess, IntPtr address, uint size, VirtualAllocExTypes allocationType, AccessProtectionFlags flags);

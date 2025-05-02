@@ -616,7 +616,7 @@ break_twice:;
 				}
 			}
 
-			for (startTime = DateTime.Now; ;) // start_time is initialized unconditionally for use with v1.0.30.02's new logging feature further below.
+			for (startTime = DateTime.UtcNow; ;) // start_time is initialized unconditionally for use with v1.0.30.02's new logging feature further below.
 			{
 				// Always do the first iteration so that at least one check is done.
 				if (vk != 0) // Waiting for key or mouse button, not joystick.
@@ -631,7 +631,7 @@ break_twice:;
 				}
 
 				// Must cast to int or any negative result will be lost due to DWORD type:
-				if (waitIndefinitely || (int)(sleepDuration - (DateTime.Now - startTime).TotalMilliseconds) > Script.SLEEP_INTERVAL_HALF)
+				if (waitIndefinitely || (int)(sleepDuration - (DateTime.UtcNow - startTime).TotalMilliseconds) > Script.SLEEP_INTERVAL_HALF)
 				{
 					_ = Flow.Sleep(Script.SLEEP_INTERVAL);
 					//MsgSleep() might not even be needed if we use real threads//TODO

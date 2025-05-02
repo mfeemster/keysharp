@@ -54,3 +54,20 @@ else
 	FileAppend "fail", "*"
 
 CallbackFree(EnumAddress)
+
+args := []
+Loop 32 {
+	i := A_Index - 1, ret := -1
+	if (i > 0) {
+		args.Push("ptr", i)
+	}
+	cb := CallbackCreate(Variadic,, i)
+	ret := DllCall(cb, args*)
+	if (ret == i)
+		FileAppend "pass", "*"
+	else
+		FileAppend "fail", "*"
+	CallbackFree(cb)
+}
+
+Variadic(args*) => args.Length ? args[args.Length] : 0

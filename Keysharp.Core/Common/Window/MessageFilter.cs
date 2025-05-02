@@ -17,7 +17,7 @@
 #if WINDOWS
 				Script.HwndLastUsed = WindowsAPI.GetNonChildParent(m.HWnd);//Assign parent window as the last found window (it's ok if it's hidden).
 #endif
-				var now = DateTime.Now;
+				var now = DateTime.UtcNow;
 				Script.lastPeekTime = now;
 				A_EventInfo = now;//AHK used msg.time, but the C# version does not have a time field.
 				monitor.instanceCount++;

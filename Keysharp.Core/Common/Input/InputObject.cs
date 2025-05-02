@@ -266,9 +266,9 @@
 		public void Wait(object obj)
 		{
 			var ms = obj.Ad(double.MaxValue) * 1000.0;
-			var tickStart = DateTime.Now;
+			var tickStart = DateTime.UtcNow;
 
-			while (input.InProgress() && (DateTime.Now - tickStart).TotalMilliseconds < ms)
+			while (input.InProgress() && (DateTime.UtcNow - tickStart).TotalMilliseconds < ms)
 				_ = Flow.Sleep(20);
 		}
 	}

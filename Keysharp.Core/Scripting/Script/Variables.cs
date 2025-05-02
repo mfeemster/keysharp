@@ -11,7 +11,7 @@ namespace Keysharp.Scripting
             public static Dictionary<Type, KeysharpObject> Prototypes = new();
 			public static Dictionary<Type, KeysharpObject> Statics = new();
             internal static List<(string, bool)> preloadedDlls = [];
-			internal static DateTime startTime = DateTime.Now;
+			internal static DateTime startTime = DateTime.UtcNow;
 			private static readonly Dictionary<string, MemberInfo> globalVars = new (StringComparer.OrdinalIgnoreCase);
 #if LINUX
 			internal static string ldLibraryPath = Environment.GetEnvironmentVariable("LD_LIBRARY_PATH") ?? "";

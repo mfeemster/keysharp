@@ -380,11 +380,11 @@
 
 		private bool Wait(double seconds, Func<bool> func)
 		{
-			var start = DateTime.Now;
+			var start = DateTime.UtcNow;
 
 			while (!func())
 			{
-				if (seconds != 0 && (DateTime.Now - start).TotalSeconds >= seconds)
+				if (seconds != 0 && (DateTime.UtcNow - start).TotalSeconds >= seconds)
 					return false;
 
 				_ = Flow.Sleep(Delay);
