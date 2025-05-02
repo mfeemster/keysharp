@@ -89,7 +89,6 @@ namespace Keysharp.Core.Common.Invoke
 		[PublicForTestOnly]
 		public static void Initialize(bool ignoreMainAssembly = false)
 		{
-			DelegateHolder.ClearCache();
 			Dll.ClearCache();
 			Functions.ClearCache();
 			loadedAssemblies = GetLoadedAssemblies();

@@ -2092,6 +2092,10 @@ namespace Keysharp.Core.Windows
 
 		[DllImport(kernel32, CharSet = CharSet.Unicode)]
 		internal static extern bool QueryFullProcessImageName(IntPtr hProcess, uint dwFlags, [Out, MarshalAs(UnmanagedType.LPTStr)] StringBuilder lpExeName, ref uint lpdwSize);
+		[DllImport(kernel32, CharSet = CharSet.Unicode)]
+		internal static extern IntPtr VirtualAlloc(IntPtr lpAddress, UIntPtr dwSize, uint flAllocationType, uint flProtect);
+		[DllImport(kernel32, CharSet = CharSet.Unicode)]
+		internal static extern bool VirtualFree(IntPtr lpAddress, UIntPtr dwSize, uint dwFreeType);
 
 		[DllImport(kernel32, CharSet = CharSet.Unicode)]
 		internal static extern IntPtr VirtualAllocEx(IntPtr hProcess, IntPtr address, uint size, VirtualAllocExTypes allocationType, AccessProtectionFlags flags);
