@@ -15,16 +15,23 @@ namespace Keysharp.Core
 		/// An optimization is to keep a cache of these objects, keyed by the exact function name and argument types.<br/>
 		/// Doing this saves significant time when doing repeated calls to the same DLL function with the same argument types.
 		/// </summary>
-		private static readonly ConcurrentDictionary<int, Func<IntPtr, long[], long>> delegateCache = new();
-		private static readonly ConcurrentDictionary<long, DelegateHolder> callbackCache = new();
-		private static readonly Dictionary<string, IntPtr> loadedDlls = new()
+		private static readonly ConcurrentDictionary<int, Func<IntPtr, long[], long>> delegateCache = new ();
+		private static readonly ConcurrentDictionary<long, DelegateHolder> callbackCache = new ();
+		private static readonly Dictionary<string, IntPtr> loadedDlls = new ()
 		{
 			{ "user32", NativeLibrary.Load("user32") },
 			{ "kernel32", NativeLibrary.Load("kernel32") },
 			{ "comctl32", NativeLibrary.Load("comctl32") },
 			{ "gdi32", NativeLibrary.Load("gdi32") }
 		};
-		private static readonly ConcurrentDictionary<string, IntPtr> procAddressCache = new(StringComparer.OrdinalIgnoreCase);
+		private static readonly ConcurrentDictionary<string, IntPtr> procAddressCache = new (StringComparer.OrdinalIgnoreCase);
+
+		internal static void ClearCache()
+		{
+			delegateCache.Clear();
+			callbackCache.Clear();
+			procAddressCache.Clear();
+		}
 
 		/// <summary>
 		/// Creates a <see cref="DelegateHolder"/> object that wraps a <see cref="FuncObj"/>.
@@ -65,6 +72,7 @@ namespace Keysharp.Core
 		{
 			if (address is DelegateHolder dh)
 				dh.Clear();
+
 			return null;
 		}
 
@@ -133,6 +141,7 @@ namespace Keysharp.Core
 						}
 
 						var nameW = name + "W";
+
 						foreach (var dll in loadedDlls)
 						{
 							if (NativeLibrary.TryGetExport(dll.Value, nameW, out address))
@@ -145,7 +154,7 @@ namespace Keysharp.Core
 					}
 
 					return Errors.ErrorOccurred(err = new Error($"Unable to locate dll with path {path}.")) ? throw err : null;
-				} 
+				}
 				else if (loadedDlls.Keys.FirstOrDefault(n => path.StartsWith(n, StringComparison.OrdinalIgnoreCase)) is string moduleName && moduleName != null)
 				{
 					name = path.Substring(z + 1);
@@ -387,22 +396,23 @@ namespace Keysharp.Core
 						FixParamTypeAndCopyBack(ref parameters[pi], pair.Value, (nint)arg);
 					}
 				}
+
 				/*
-				else
-				{
-					if (parameters[pi + 1] is string s)
-					{
-						if (arg is not string)
-						{
-							//var s = (long*)aip.ToPointer();
-							//p = Strings.StrGet(new IntPtr(s));
-							if (arg is IntPtr aip)
-								parameters[pi + 1] = Strings.StrGet(aip);
-							else if (arg is long l)
-								parameters[pi + 1] = Strings.StrGet((nint)l);
-						}
-					}
-				}
+				    else
+				    {
+				    if (parameters[pi + 1] is string s)
+				    {
+				        if (arg is not string)
+				        {
+				            //var s = (long*)aip.ToPointer();
+				            //p = Strings.StrGet(new IntPtr(s));
+				            if (arg is IntPtr aip)
+				                parameters[pi + 1] = Strings.StrGet(aip);
+				            else if (arg is long l)
+				                parameters[pi + 1] = Strings.StrGet((nint)l);
+				        }
+				    }
+				    }
 				*/
 			}
 		}

@@ -269,8 +269,6 @@ namespace Keysharp.Core
 		[PublicForTestOnly]
 		public static void ResetState()
 		{
-			Functions.cachedFuncObj = new ();
-			MethodPropertyHolder.delegateCache = new();
             initializedUserStaticVariables = new(); // Technically belongs in Scripting.Script.Operate, but putting it here makes clearing it between test runs more maintainable
             callingCritical = false;
 			hasExited = false;

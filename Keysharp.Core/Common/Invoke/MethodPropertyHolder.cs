@@ -426,7 +426,12 @@ namespace Keysharp.Core.Common.Invoke
                 return sb.ToString();
             }
         }
-    }
+
+		internal static void ClearCache()
+		{
+			delegateCache.Clear();
+		}
+	}
     class ArgumentError : Error
     {
         public ArgumentError()
