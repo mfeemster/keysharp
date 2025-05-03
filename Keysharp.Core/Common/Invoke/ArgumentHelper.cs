@@ -182,6 +182,12 @@ namespace Keysharp.Core.Common.Invoke
 						else
 							SetupPointerArg();
 					}
+					else if (p is StringBuffer sb)
+					{
+						parameters[paramIndex] = sb;
+						sb.UpdateBufferFromEntangledString();
+						args[n] = sb.Ptr;
+					}
 					else
 					{
 						ConvertPtr();
@@ -222,6 +228,12 @@ namespace Keysharp.Core.Common.Invoke
 							p = Encoding.ASCII.GetBytes(s);
 							SetupPointerArg();
 						}
+					}
+					else if (p is StringBuffer sb)
+					{
+						parameters[paramIndex] = sb;
+						sb.UpdateBufferFromEntangledString();
+						args[n] = sb.Ptr;
 					}
 					else
 					{
