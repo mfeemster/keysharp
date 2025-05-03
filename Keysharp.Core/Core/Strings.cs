@@ -1460,11 +1460,12 @@ namespace Keysharp.Core
 		public static string Trim(object str, object omitChars = null) => str.As().Trim(omitChars.As(" \t").ToCharArray());
 
 		/// <summary>
-		/// Unsupported.
+		/// Sets a string capacity by replacing it with a StringBuffer instance.
 		/// </summary>
-		/// <param name="obj">Ignored</param>
-		/// <returns>None</returns>
-		/// <exception cref="Error">An <see cref="Error"/> exception is thrown because this function has no meaning in Keysharp.</exception>
+		/// <param name="targetVar">The string to wrap</param>
+		/// <param name="requestedCapacity">Capacity for the StringBuffer. If this is -1 then
+		/// <paramref name="targetVar"/> contents are replaced with the content of the StringBuffer.</param>
+		/// <returns>StringBuffer</returns>
 		public static object VarSetStrCapacity(object targetVar, object requestedCapacity = null)
 		{
 			if (!(targetVar is KeysharpObject))
