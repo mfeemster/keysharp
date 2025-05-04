@@ -129,10 +129,6 @@
 
 			if (op != null && op.TryGetValue(name, out var dynProp))
 			{
-				var kso = new KeysharpObject();
-				var list = new List<object>();
-				kso.op = new Dictionary<string, OwnPropsDesc>();
-
 				return dynProp.GetDesc();
 			}
 

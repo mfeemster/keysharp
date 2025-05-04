@@ -66,7 +66,17 @@
 
 		object IEnumerator.Current => Current;
 		internal new int Count => GetVal ? 2 : 1;
-		internal bool GetVal { get; set; }
+		internal bool _getVal = true;
+		internal bool GetVal {
+			get => _getVal;
+			set
+			{
+				_getVal = value;
+				var p = _getVal ? p2 : p1;
+				fo = (FuncObj)p.Clone();
+				fo.Inst = this;
+			} 
+		}
 
 		internal OwnPropsIterator(KeysharpObject o, Dictionary<object, object> m, bool gv)
 			: base(null, gv ? 2 : 1)
@@ -75,9 +85,6 @@
 			map = m;
 			GetVal = gv;
 			iter = map.GetEnumerator();
-			var p = Count <= 1 ? p1 : p2;
-			fo = (FuncObj)p.Clone();
-			fo.Inst = this;
 		}
 
 		/// <summary>
@@ -252,8 +259,6 @@
 		public KeysharpObject GetDesc()
 		{
             var map = new KeysharpObject();
-            var list = new List<object>();
-            map.op = new Dictionary<string, OwnPropsDesc>(StringComparer.OrdinalIgnoreCase);
 
 			if (Value != null)
 				map.op["value"] = new OwnPropsDesc(Parent, Value);
