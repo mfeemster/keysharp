@@ -10,6 +10,7 @@ namespace Keysharp.Core.Common.Invoke
 		protected Type returnType = typeof(int);
 		internal Dictionary<int, Type> outputVars = [];
 		internal bool CDecl => cdecl;
+		internal bool HasReturn => hasreturn;
 		internal Type ReturnType => returnType;
 		internal long[] args;
 		// contains bitwise info about the location of float and double type arguments, as well as the return type
@@ -91,7 +92,10 @@ namespace Keysharp.Core.Common.Invoke
 						len = span.Length;
 
 						if (len == 0)
+						{
+							hasreturn = false;
 							break;
+						}
 
 						c0 = (char)(span[0] | 0x20);
 					}
@@ -162,7 +166,7 @@ namespace Keysharp.Core.Common.Invoke
 				{
 					if (parseType)
 					{
-						type = typeof(string);
+						type = isReturn ? typeof(string) : typeof(nint);
 						goto TypeDetermined;
 					}
 
@@ -186,7 +190,7 @@ namespace Keysharp.Core.Common.Invoke
 				{
 					if (parseType)
 					{
-						type = typeof(nint);
+						type = isReturn ? typeof(string) : typeof(nint);
 						goto TypeDetermined;
 					}
 
@@ -257,6 +261,8 @@ namespace Keysharp.Core.Common.Invoke
 						{
 							if (parseType)
 							{
+								if (isReturn)
+									hasreturn = false; // needed for ComCall OSError
 								type = typeof(int);
 								goto TypeDetermined;
 							}
