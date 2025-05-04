@@ -471,6 +471,16 @@ namespace Keysharp.Core.COM
 			Dll.FixParamTypesAndCopyBack(parameters, helper);
 			helper.Dispose();
 
+			// If the return type was omitted then it should be treated as HRESULT
+			// and if that is a negative value then throw an OSError
+			if ((parameters.Length & 1) == 0)
+			{
+				long hrLong = (long)value;                // unbox the raw long  
+				int hr32 = unchecked((int)hrLong);   // keep only the low 32 bits
+				if (hr32 < 0)
+					throw new OSError(hr32);
+			}
+
 			//Special conversion for the return value.
 			if (helper.ReturnType == typeof(int))
 			{
@@ -486,7 +496,7 @@ namespace Keysharp.Core.COM
 			}
 			else if (helper.ReturnType == typeof(string))
 			{
-				var str = Marshal.PtrToStringUni((nint)value);
+				var str = Marshal.PtrToStringUni((nint)((long)value));
 				_ = Strings.FreeStrPtr(value);//If this string came from us, it will be freed, else no action.
 				return str;
 			}
@@ -516,25 +526,17 @@ namespace Keysharp.Core.COM
 
 			    MsgBox ComCall(3, dummyCOM.Ptr, "int")
 			*/
-			try
-			{
-				// This could potentially be optimized by compiling a specific delegate
-				// for the ComCall scenario with the signature Func<nint, long, long[], long>
-				long[] newArgs = new long[args.Length + 1];
-				newArgs[0] = objPtr;
-				System.Array.Copy(args, 0, newArgs, 1, args.Length);
-				mask = mask << 1; // since we inserted an extra argument at the beginning
-				ret = Dll.NativeInvoke(vtbl, newArgs, mask);
-				// Copy back.
-				System.Array.Copy(newArgs, 1, args, 0, args.Length);
-				return ret;
-			}
-			catch (InvalidCastException)
-			{
-			}
 
-			//For faked COM calls, don't pass in the object pointer since there won't be one.
-			return Dll.NativeInvoke(vtbl, args, mask);
+			// This could potentially be optimized by compiling a specific delegate
+			// for the ComCall scenario with the signature Func<nint, long, long[], long>
+			long[] newArgs = new long[args.Length + 1];
+			newArgs[0] = objPtr;
+			System.Array.Copy(args, 0, newArgs, 1, args.Length);
+			mask = mask << 1; // since we inserted an extra argument at the beginning
+			ret = Dll.NativeInvoke(vtbl, newArgs, mask);
+			// Copy back.
+			System.Array.Copy(newArgs, 1, args, 0, args.Length);
+			return ret;
 		}
 
 

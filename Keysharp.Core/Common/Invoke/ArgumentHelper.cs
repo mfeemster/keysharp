@@ -162,7 +162,7 @@ namespace Keysharp.Core.Common.Invoke
 				{
 					if (parseType)
 					{
-						type = typeof(string);
+						type = isReturn ? typeof(string) : typeof(nint);
 						goto TypeDetermined;
 					}
 
@@ -186,7 +186,7 @@ namespace Keysharp.Core.Common.Invoke
 				{
 					if (parseType)
 					{
-						type = typeof(nint);
+						type = isReturn ? typeof(string) : typeof(nint);
 						goto TypeDetermined;
 					}
 
