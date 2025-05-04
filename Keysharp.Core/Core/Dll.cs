@@ -1,4 +1,4 @@
-//#define CONCURRENT
+﻿//#define CONCURRENT
 #define TL
 #if WINDOWS
 namespace Keysharp.Core
@@ -25,14 +25,14 @@ namespace Keysharp.Core
 		};
 
 #if CONCURRENT
-		private static readonly ConcurrentDictionary<int, Func<IntPtr, long[], long>> delegateCache = new ();
+		private static readonly ConcurrentDictionary<ulong, Delegate> delegateCache = new ();
 		private static readonly ConcurrentDictionary<string, IntPtr> procAddressCache = new (StringComparer.OrdinalIgnoreCase);
 #else
 #if TL
-		private static readonly ThreadLocal<Dictionary<int, Func<IntPtr, long[], long>>> delegateCache = new (() => new ());
+		private static readonly ThreadLocal<Dictionary<ulong, Delegate>> delegateCache = new (() => new ());
 		private static readonly ThreadLocal<Dictionary<string, IntPtr>> procAddressCache = new ( () => new Dictionary<string, IntPtr>(StringComparer.OrdinalIgnoreCase));
 #else
-		private static readonly Dictionary<int, Func<IntPtr, long[], long>> delegateCache = new ();
+		private static readonly Dictionary<ulong, Delegate> delegateCache = new ();
 		private static readonly Dictionary<string, IntPtr> procAddressCache = new (StringComparer.OrdinalIgnoreCase);
 #endif
 #endif
@@ -251,15 +251,22 @@ namespace Keysharp.Core
 			try
 			{
 				var helper = new ArgumentHelper(parameters);
-				var value = CallDel(address, helper.args);
+				var value = NativeInvoke(address, helper.args, helper.floatingTypeMask);
 				FixParamTypesAndCopyBack(parameters, helper);
 				helper.Dispose();
 
 				//Special conversion for the return value.
 				if (helper.ReturnType == typeof(int))
 				{
-					int ii = *(int*)&value;
+					long l = (long)value;
+					int ii = *(int*)&l;
 					value = ii;
+				}
+				else if (helper.ReturnType == typeof(float)) 
+				{
+					double d = (double)value;
+					float f = *(float*)&d;
+					return f;
 				}
 				else if (helper.ReturnType == typeof(string))
 				{
@@ -288,25 +295,150 @@ namespace Keysharp.Core
 		/// A private helper to compile and cache a delegate with the appropriate number of<br/>
 		/// parameters and then invoke it. All arguments are considered <see cref="long"/> internally.
 		/// </summary>
-		/// <param name="vtbl">The vtbl of the COM object.</param>
+		/// <param name="fnPtr">The pointer to the native function to be called.</param>
 		/// <param name="args">The argument list.</param>
-		/// <returns>An <see cref="IntPtr"/> which contains the return value of the COM call.</returns>
-		internal static long CallDel(IntPtr vtbl, long[] args)
+		/// <param name="mask">64-bit mask containing information about floating point arguments and return value</param>
+		/// <returns>An <see cref="IntPtr"/> which contains the return value of the function call.</returns>
+		internal static object NativeInvoke(IntPtr fnPtr, long[] args, ulong mask)
 		{
+			IntPtr shim = IntPtr.Zero;
+			int n = args.Length;
+			// pack n (≤ 58) into bits 58–63, mask occupies bits 0–57
+			// this means the maximum argument count is 63 for integer return values, 57 for floating point ones
+			// (this limitation can be eliminated in the future if needed)
+			ulong key = ((ulong)n << 58) | (mask & ((1UL << 58) - 1));
 #if CONCURRENT
-			var del = delegateCache.GetOrAdd(args.Length, CreateDelegateForArgCount);
+			var del = delegateCache.GetOrAdd(key, _ => CreateInvoker(n, mask));
 #else
 #if TL
-			ref var del = ref CollectionsMarshal.GetValueRefOrAddDefault(delegateCache.Value, args.Length, out var exists);
+			ref var del = ref CollectionsMarshal.GetValueRefOrAddDefault(delegateCache.Value, key, out var exists);
 #else
-			ref var del = ref CollectionsMarshal.GetValueRefOrAddDefault(delegateCache, args.Length, out var exists);
+			ref var del = ref CollectionsMarshal.GetValueRefOrAddDefault(delegateCache, key, out var exists);
 #endif
 
 			if (!exists)
-				del = CreateDelegateForArgCount(args.Length);
-
+				del = CreateInvoker(n, mask);
 #endif
-			return del(vtbl, args);
+
+#if WINDOWS
+			// Under Windows x64 AutoHotkey passes the first four arguments in both
+			// general purpose registers as well as floating point registers to support
+			// variadic function calls. Here we create a small shim which copies floating points
+			// to GPRs, but only if any of the first four args is floating point.
+			if (((mask & 0xFUL) != 0) && RuntimeInformation.ProcessArchitecture == Architecture.X64)
+			{
+				shim = ExecutableMemoryPoolManager.Rent();
+				unsafe
+				{
+					byte* ptr = (byte*)shim;
+					// Emit MOVQ rcx←xmm0, rdx←xmm1, r8←xmm2, r9←xmm3 as needed
+					for (int i = 0; i < 4; i++)
+					{
+						if ((mask & (1UL << i)) == 0) continue;
+						switch (i)
+						{
+							case 0:
+								// MOVQ RCX <- XMM0  (66 0F 7E C1)
+								*ptr++ = 0x66; *ptr++ = 0x0F; *ptr++ = 0x7E; *ptr++ = 0xC1;
+								break;
+							case 1:
+								// MOVQ RDX <- XMM1  (66 0F 7E CA)
+								*ptr++ = 0x66; *ptr++ = 0x0F; *ptr++ = 0x7E; *ptr++ = 0xCA;
+								break;
+							case 2:
+								// MOVQ R8  <- XMM2  (REX.B + 0F 7E C0)
+								*ptr++ = 0x49; *ptr++ = 0x0F; *ptr++ = 0x7E; *ptr++ = 0xC0;
+								break;
+							case 3:
+								// MOVQ R9  <- XMM3  (REX.B + 0F 7E C9)
+								*ptr++ = 0x49; *ptr++ = 0x0F; *ptr++ = 0x7E; *ptr++ = 0xC9;
+								break;
+						}
+					}
+
+					// Emit: JMP [RIP + 0]  => FF 25 00 00 00 00
+					*ptr++ = 0xFF; *ptr++ = 0x25; *ptr++ = 0x00; *ptr++ = 0x00; *ptr++ = 0x00; *ptr++ = 0x00;
+
+					// Followed immediately by the 64-bit absolute address
+					*((long*)ptr) = fnPtr;
+					fnPtr = shim;
+				}
+			}
+#endif
+
+			object result = 0L;
+			// invoke with the correct delegate type
+			if (((mask >> n) & 1) != 0)
+				result = ((Func<IntPtr, long[], double>)del)(fnPtr, args);
+			else
+				result = ((Func<IntPtr, long[], long>)del)(fnPtr, args);
+
+			if (shim != IntPtr.Zero)
+				ExecutableMemoryPoolManager.Return(shim);
+
+			return result;
+		}
+
+		/// <summary>
+		/// Generates (and returns) a delegate of type Func<IntPtr, long[], long> or Func<IntPtr, long[], double>
+		/// for a function pointer that accepts exactly n long arguments.
+		/// It reads n arguments from the provided array, loads as either long or double,
+		/// then loads the function pointer and calls it.
+		/// </summary>
+		/// <param name="n">The number of long arguments expected.</param>
+		/// <param name="mask">Bitmask containing info about possible floating point number argument positions</param>
+		private static Delegate CreateInvoker(int n, ulong mask)
+		{
+			Type returnType = (((mask >> n) & 1) != 0) ? typeof(double) : typeof(long);
+			// method name only depends on n and floatingTypeMask
+			string name = $"NativeCall_{n}_{mask}";
+
+			var dm = new DynamicMethod(
+				name,
+				returnType,
+				new[] { typeof(IntPtr), typeof(long[]) },
+				typeof(Dll).Module,
+				skipVisibility: true);
+
+			var il = dm.GetILGenerator();
+
+			// 1) load each argument slot
+			for (int i = 0; i < n; i++)
+			{
+				il.Emit(OpCodes.Ldarg_1);           // args[]
+				il.Emit(OpCodes.Ldc_I4, i);         // index
+
+				if (((mask >> i) & 1) != 0)
+					il.Emit(OpCodes.Ldelem_R8);     // double
+				else
+					il.Emit(OpCodes.Ldelem_I8);		// long
+			}
+
+			// 2) load fn pointer
+			il.Emit(OpCodes.Ldarg_0);
+
+			// 3) build the param-type list for calli
+			var paramTypes = Enumerable.Range(0, n)
+				.Select(i => (((mask >> i) & 1) != 0)
+					? typeof(double)
+					: typeof(long))
+				.ToArray();
+
+			// 4) emit the unmanaged cdecl calli
+			il.EmitCalli(
+				OpCodes.Calli,
+				CallingConvention.Cdecl,
+				returnType,
+				paramTypes);
+
+			il.Emit(OpCodes.Ret);
+
+			// pick the right Func<…> delegate
+			Type delegateType = (returnType == typeof(double))
+				? typeof(Func<IntPtr, long[], double>)
+				: typeof(Func<IntPtr, long[], long>);
+
+			return dm.CreateDelegate(delegateType);
 		}
 
 		/// <summary>
@@ -346,7 +478,7 @@ namespace Keysharp.Core
 			Type[] paramTypes = Enumerable.Repeat(typeof(long), n).ToArray();
 			// Emit a calli instruction to call the unmanaged function.
 			// This assumes a StdCall calling convention and that the function returns a long.
-			il.EmitCalli(OpCodes.Calli, CallingConvention.StdCall, typeof(long), paramTypes);
+			il.EmitCalli(OpCodes.Calli, CallingConvention.Cdecl, typeof(long), paramTypes);
 			il.Emit(OpCodes.Ret);
 			return (Func<IntPtr, long[], long>)dm.CreateDelegate(typeof(Func<IntPtr, long[], long>));
 		}
