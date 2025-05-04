@@ -164,7 +164,7 @@ namespace Keysharp.Core.Common.Invoke
 				{
 					if (parseType)
 					{
-						type = typeof(nint);
+						type = isReturn ? typeof(string) : typeof(nint);
 						goto TypeDetermined;
 					}
 
@@ -210,7 +210,7 @@ namespace Keysharp.Core.Common.Invoke
 				{
 					if (parseType)
 					{
-						type = typeof(nint);
+						type = isReturn ? typeof(string) : typeof(nint);
 						goto TypeDetermined;
 					}
 					if (p is KeysharpObject kso2 && Script.GetPropertyValue(kso2, "__Value", false) is object kptr && kptr != null)
