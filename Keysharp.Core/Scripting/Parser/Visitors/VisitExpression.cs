@@ -652,12 +652,10 @@ namespace Keysharp.Scripting
             return HandleAssignmentExpression(context.left, context.right, context.assignmentOperator().GetText());
         }
 
-        /*
         public override SyntaxNode VisitAssignmentExpressionDuplicate([NotNull] AssignmentExpressionDuplicateContext context)
         {
             return HandleAssignmentExpression(context.left, context.right, context.assignmentOperator().GetText());
         }
-        */
 
         private ExpressionSyntax HandleAssignment(ExpressionSyntax leftExpression, ExpressionSyntax rightExpression, string assignmentOperator)
         {

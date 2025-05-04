@@ -1192,12 +1192,17 @@ namespace Keysharp.Scripting
 
         public SyntaxNode FunctionExpressionCommon(MethodDeclarationSyntax methodDeclaration, ParserRuleContext context)
         {
-            if (context.Parent is ExpressionSequenceContext esc && esc.Parent is ExpressionStatementContext && esc.ChildCount == 1 && parser.currentFunc.Name == Keywords.AutoExecSectionName)
+            // Case 1: If we are inside the auto-execute section and this is the only expression in the expression sequence
+            // then consider it a top-level function. The method declaration will be added to the main
+            // class in VisitExpressionSequence.
+            if (parser.currentFunc.Name == Keywords.AutoExecSectionName &&
+                context.Parent is ExpressionSequenceContext esc && esc.Parent is ExpressionStatementContext && esc.ChildCount == 1)
             {
                 return methodDeclaration;
             }
-            // Case 1: If we are not inside a class declaration OR we are inside a class
-            // declaration method declaration then add it as a closure
+            // Case 2: If we are in the main class (not inside a class declaration)
+            // OR we are inside any method declaration besides the auto-execute one then add it as a closure.
+            // Function expressions inside the auto-execute section are added as static nested functions.
             if (parser.currentClass.Name == Keywords.MainClassName || parser.currentFunc.Name != Keywords.AutoExecSectionName)
             {
                 var methodName = methodDeclaration.Identifier.Text;
@@ -1288,7 +1293,8 @@ namespace Keysharp.Scripting
             }
             else
 
-            // Case 2: If inside a class declaration and not inside a method
+            // Case 3: If inside a class declaration and not inside a method, for example
+            // a class field is being assigned a fat arrow function
             {
                 // Transform the method into an anonymous lambda function
                 var isAsync = methodDeclaration.Modifiers.Any(SyntaxKind.AsyncKeyword);

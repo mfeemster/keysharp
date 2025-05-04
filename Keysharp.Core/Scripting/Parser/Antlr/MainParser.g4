@@ -448,6 +448,7 @@ expression
     | left = expression (op = '||' | op = VerbalOr) right = expression   # LogicalOrExpression
     | <assoc = right> left = expression op = '??' right = expression                               # CoalesceExpression
     | <assoc = right> ternCond = expression (WS | EOL)* '?' (WS | EOL)* ternTrue = expression (WS | EOL)* ':' (WS | EOL)* ternFalse = expression # TernaryExpression 
+    | <assoc = right> left = primaryExpression op = assignmentOperator right = expression          # AssignmentExpression
     | fatArrowExpressionHead '=>' expression             # FatArrowExpression // Not sure why, but this needs to be lower than coalesce expression
     | functionExpressionHead (WS | EOL)* block           # FunctionExpression
     | operatorExpression                                 # ExpressionDummy  
@@ -456,7 +457,7 @@ expression
 singleExpression
     : left = singleExpression op = ('&&' | VerbalAnd) right = singleExpression     # LogicalAndExpressionDuplicate
     | left = singleExpression op = ('||' | VerbalOr) right = singleExpression      # LogicalOrExpressionDuplicate
-    | left = singleExpression op = '??' right = singleExpression                   # CoalesceExpressionDuplicate
+    | <assoc = right> left = singleExpression op = '??' right = singleExpression                   # CoalesceExpressionDuplicate
     | <assoc = right> ternCond = singleExpression (WS | EOL)* '?' (WS | EOL)* ternTrue = singleExpression (WS | EOL)* ':' (WS | EOL)* ternFalse = singleExpression # TernaryExpressionDuplicate
     | operatorExpression                                            # SingleExpressionDummy
     ;
@@ -484,7 +485,7 @@ operatorExpression
     | left = operatorExpression op = ('=' | '!=' | '==' | '!==') right = operatorExpression        # EqualityExpression
     | left = operatorExpression (s* op = (Instanceof | Is | In | Contains) s*) right = operatorExpression  # ContainExpression
     | VerbalNot WS* right = operatorExpression                                                         # VerbalNotExpression
-    | <assoc = right> left = primaryExpression op = assignmentOperator right = expression          # AssignmentExpression
+    | <assoc = right> left = primaryExpression op = assignmentOperator right = singleExpression          # AssignmentExpressionDuplicate
     ;
 
 primaryExpression

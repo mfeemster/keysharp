@@ -642,6 +642,13 @@ public interface IMainParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitFunctionExpression([NotNull] MainParser.FunctionExpressionContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>AssignmentExpression</c>
+	/// labeled alternative in <see cref="MainParser.expression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitAssignmentExpression([NotNull] MainParser.AssignmentExpressionContext context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>FatArrowExpression</c>
 	/// labeled alternative in <see cref="MainParser.expression"/>.
 	/// </summary>
@@ -782,13 +789,6 @@ public interface IMainParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitUnaryMinusExpression([NotNull] MainParser.UnaryMinusExpressionContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>AssignmentExpression</c>
-	/// labeled alternative in <see cref="MainParser.operatorExpression"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitAssignmentExpression([NotNull] MainParser.AssignmentExpressionContext context);
-	/// <summary>
 	/// Visit a parse tree produced by the <c>BitAndExpression</c>
 	/// labeled alternative in <see cref="MainParser.operatorExpression"/>.
 	/// </summary>
@@ -802,6 +802,13 @@ public interface IMainParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitPostDecreaseExpression([NotNull] MainParser.PostDecreaseExpressionContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>AssignmentExpressionDuplicate</c>
+	/// labeled alternative in <see cref="MainParser.operatorExpression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitAssignmentExpressionDuplicate([NotNull] MainParser.AssignmentExpressionDuplicateContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>BitOrExpression</c>
 	/// labeled alternative in <see cref="MainParser.operatorExpression"/>.
