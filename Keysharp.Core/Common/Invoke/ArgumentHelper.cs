@@ -12,6 +12,10 @@ namespace Keysharp.Core.Common.Invoke
 		internal bool CDecl => cdecl;
 		internal Type ReturnType => returnType;
 		internal long[] args;
+		// contains bitwise info about the location of float and double type arguments, as well as the return type
+		// bit i = 1 if argTypes[i] is float or double  
+		// bit n = 1 if returnType is float or double
+		internal ulong floatingTypeMask = 0;
 
 		// Storage for pinned BSTR pointers, to be released at disposal
 		private readonly List<IntPtr> _bstrs = new List<IntPtr>();
@@ -263,7 +267,7 @@ namespace Keysharp.Core.Common.Invoke
 
 						break;
 
-					case 'u': // UINT*, USHORT, UCHAR, UPTR
+					case 'u': // UINT, USHORT, UCHAR, UPTR
 						char c1u = (char)(span[1] | 0x20);
 
 						if (c1u == 'i')
@@ -365,7 +369,7 @@ namespace Keysharp.Core.Common.Invoke
 								type = typeof(float);
 								goto TypeDetermined;
 							}
-
+							floatingTypeMask |= 1UL << n;
 							float f = p.Af();
 							args[n] = *(int*)&f;
 							continue;
@@ -378,10 +382,10 @@ namespace Keysharp.Core.Common.Invoke
 						{
 							if (parseType)
 							{
-								type = typeof(string);
+								type = typeof(double);
 								goto TypeDetermined;
 							}
-
+							floatingTypeMask |= 1UL << n;
 							double d = p.Ad();
 							args[n] = *(long*)&d;
 							continue;
@@ -400,7 +404,11 @@ namespace Keysharp.Core.Common.Invoke
 				TypeDetermined:
 
 				if (isReturn)
+				{
 					returnType = type;
+					if (type == typeof(float) || type == typeof(double))
+						floatingTypeMask |= 1UL << n;
+				}
 				else
 					outputVars[paramIndex] = type;
 			}
