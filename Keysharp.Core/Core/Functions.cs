@@ -145,20 +145,20 @@ namespace Keysharp.Core
 		/// </summary>
 		/// <param name="obj">The object to find the method on.</param>
 		/// <param name="name">A method name. If omitted, the bound function calls obj itself.</param>
-		/// <param name="paramCount">The number of parameters the property takes. Default: use the first function found.</param>
 		/// <param name="args">The arguments to bind to the function.</param>
 		/// <returns>An new <see cref="BoundFunc"/> object with the specified arguments bound to it.</returns>
-		public static IFuncObj ObjBindMethod(object obj, object name = null, object paramCount = null, params object[] args)
+		public static IFuncObj ObjBindMethod(object obj, object name = null, params object[] args)
 		{
 			var o = obj;
 			var n = name.As();
-			var count = paramCount.Ai(-1);
-			object[] a = args;
 
-			if (Reflections.FindAndCacheMethod(o.GetType(), n, count) is MethodPropertyHolder mph && mph.mi != null)
-				return new BoundFunc(mph.mi, a, o);
+			if (obj is KeysharpObject kso && Script.GetPropertyValue(kso, name, false) is IFuncObj ifo && ifo != null)
+				return ifo.Bind(args);
+			else if (Reflections.FindAndCacheMethod(o.GetType(), n, -1) is MethodPropertyHolder mph && mph.mi != null)
+				return new BoundFunc(mph.mi, args, o);
 
-			return null;
+			Error err;
+			return Errors.ErrorOccurred(err = new MethodError($"Unable to retrieve method {name} for object.")) ? throw err : null;
 		}
 
 		/// <summary>
