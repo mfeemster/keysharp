@@ -1,4 +1,6 @@
-﻿#if WINDOWS
+﻿//#define CONCURRENT
+#define TL
+#if WINDOWS
 
 namespace Keysharp.Core
 {
@@ -15,8 +17,6 @@ namespace Keysharp.Core
 		/// An optimization is to keep a cache of these objects, keyed by the exact function name and argument types.<br/>
 		/// Doing this saves significant time when doing repeated calls to the same DLL function with the same argument types.
 		/// </summary>
-		private static readonly ConcurrentDictionary<ulong, Delegate> delegateCache = new ();
-		private static readonly ConcurrentDictionary<long, DelegateHolder> callbackCache = new ();
 		private static readonly Dictionary<string, IntPtr> loadedDlls = new ()
 		{
 			{ "user32", NativeLibrary.Load("user32") },
@@ -24,13 +24,28 @@ namespace Keysharp.Core
 			{ "comctl32", NativeLibrary.Load("comctl32") },
 			{ "gdi32", NativeLibrary.Load("gdi32") }
 		};
-		private static readonly ConcurrentDictionary<string, IntPtr> procAddressCache = new (StringComparer.OrdinalIgnoreCase);
 
+#if CONCURRENT
+		private static readonly ConcurrentDictionary<ulong, Delegate> delegateCache = new ();
+		private static readonly ConcurrentDictionary<string, IntPtr> procAddressCache = new (StringComparer.OrdinalIgnoreCase);
+#else
+#if TL
+		private static readonly ThreadLocal<Dictionary<ulong, Delegate>> delegateCache = new (() => new ());
+		private static readonly ThreadLocal<Dictionary<string, IntPtr>> procAddressCache = new ( () => new Dictionary<string, IntPtr>(StringComparer.OrdinalIgnoreCase));
+#else
+		private static readonly Dictionary<ulong, Delegate> delegateCache = new ();
+		private static readonly Dictionary<string, IntPtr> procAddressCache = new (StringComparer.OrdinalIgnoreCase);
+#endif
+#endif
 		internal static void ClearCache()
 		{
+#if TL
+			delegateCache.Value.Clear();
+			procAddressCache.Value.Clear();
+#else
 			delegateCache.Clear();
-			callbackCache.Clear();
 			procAddressCache.Clear();
+#endif
 		}
 
 		/// <summary>
@@ -124,9 +139,17 @@ namespace Keysharp.Core
 				if (z == -1)
 				{
 					name = path;
+#if TL
+
+					if (procAddressCache.Value.TryGetValue(name, out address))
+						goto AddressFound;
+
+#else
 
 					if (procAddressCache.TryGetValue(name, out address))
 						goto AddressFound;
+
+#endif
 
 					if (Environment.OSVersion.Platform == PlatformID.Win32NT)
 					{
@@ -134,8 +157,13 @@ namespace Keysharp.Core
 						{
 							if (NativeLibrary.TryGetExport(dll.Value, name, out address))
 							{
+#if TL
+								procAddressCache.Value[name] = address;
+								procAddressCache.Value[dll.Key + Path.DirectorySeparatorChar + name] = address;
+#else
 								procAddressCache[name] = address;
 								procAddressCache[dll.Key + Path.DirectorySeparatorChar + name] = address;
+#endif
 								goto AddressFound;
 							}
 						}
@@ -146,8 +174,13 @@ namespace Keysharp.Core
 						{
 							if (NativeLibrary.TryGetExport(dll.Value, nameW, out address))
 							{
+#if TL
+								procAddressCache.Value[name] = address;
+								procAddressCache.Value[dll.Key + Path.DirectorySeparatorChar + name] = address;
+#else
 								procAddressCache[name] = address;
 								procAddressCache[dll.Key + Path.DirectorySeparatorChar + name] = address;
+#endif
 								goto AddressFound;
 							}
 						}
@@ -159,9 +192,17 @@ namespace Keysharp.Core
 				{
 					name = path.Substring(z + 1);
 					var key = moduleName + Path.DirectorySeparatorChar + name;
+#if TL
+
+					if (procAddressCache.Value.TryGetValue(key, out address))
+						goto AddressFound;
+
+#else
 
 					if (procAddressCache.TryGetValue(key, out address))
 						goto AddressFound;
+
+#endif
 
 					if (!NativeLibrary.TryGetExport(loadedDlls[moduleName], name, out address))
 					{
@@ -172,8 +213,13 @@ namespace Keysharp.Core
 						return Errors.ErrorOccurred(err = new Error($"Unable to locate dll with path {path}.")) ? throw err : null;
 					else
 					{
+#if TL
+						procAddressCache.Value[name] = address;
+						procAddressCache.Value[key] = address;
+#else
 						procAddressCache[name] = address;
 						procAddressCache[key] = address;
+#endif
 					}
 				}
 				else
@@ -261,7 +307,19 @@ namespace Keysharp.Core
 			// pack n (≤ 58) into bits 58–63, mask occupies bits 0–57
 			// this means the maximum argument count is 63 for integer return values, 57 for floating point ones
 			// (this limitation can be eliminated in the future if needed)
-			var del = delegateCache.GetOrAdd(((ulong)n << 58) | (mask & ((1UL << 58) - 1)), _ => CreateInvoker(n, mask));
+			ulong key = ((ulong)n << 58) | (mask & ((1UL << 58) - 1));
+#if CONCURRENT
+			var del = delegateCache.GetOrAdd(key, _ => CreateInvoker(n, mask));
+#else
+#if TL
+			ref var del = ref CollectionsMarshal.GetValueRefOrAddDefault(delegateCache.Value, key, out var exists);
+#else
+			ref var del = ref CollectionsMarshal.GetValueRefOrAddDefault(delegateCache, key, out var exists);
+#endif
+
+			if (!exists)
+				del = CreateInvoker(n, mask);
+#endif
 
 #if WINDOWS
 			// Under Windows x64 AutoHotkey passes the first four arguments in both

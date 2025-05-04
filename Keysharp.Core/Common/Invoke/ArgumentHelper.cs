@@ -55,7 +55,6 @@ namespace Keysharp.Core.Common.Invoke
 			args = new long[argCount];
 			object p = null;
 			int n = -1;
-
 			void SetupPointerArg()
 			{
 				var gch = GCHandle.Alloc(p, GCHandleType.Pinned);
@@ -67,13 +66,12 @@ namespace Keysharp.Core.Common.Invoke
 			{
 				bool isReturn = hasReturn && paramIndex == lastIdx;
 				bool parseType = isReturn;
-
 				// Read the tag and value
 				string tag = parameters[paramIndex++] as string ?? string.Empty;
-
 				// Trim whitespace around tag
 				ReadOnlySpan<char> span = tag.AsSpan().Trim();
 				int len = span.Length;
+
 				if (len == 0)
 					goto InvalidType;
 
@@ -83,15 +81,15 @@ namespace Keysharp.Core.Common.Invoke
 				if (isReturn)
 				{
 					if (c0 == 'c' && len >= 5
-					&& ((span[1] | 0x20) == 'd')
-					&& ((span[2] | 0x20) == 'e')
-					&& ((span[3] | 0x20) == 'c')
-					&& ((span[4] | 0x20) == 'l'))
+							&& ((span[1] | 0x20) == 'd')
+							&& ((span[2] | 0x20) == 'e')
+							&& ((span[3] | 0x20) == 'c')
+							&& ((span[4] | 0x20) == 'l'))
 					{
 						span = span.Slice(5).TrimStart();
 						cdecl = true;
-
 						len = span.Length;
+
 						if (len == 0)
 							break;
 
@@ -106,12 +104,14 @@ namespace Keysharp.Core.Common.Invoke
 					if (p is KeysharpObject kso)
 					{
 						object kptr;
+
 						if ((kso is IPointable ip && (kptr = ip.Ptr) != null)
-							|| (Script.GetPropertyValue(kso, "ptr", false) is object tmp && (kptr = tmp) != null))
+								|| (Script.GetPropertyValue(kso, "ptr", false) is object tmp && (kptr = tmp) != null))
 						{
 							// Need to track this separately, because we later need to update ComObject.Ptr in FixParamTypesAndCopyBack
 							if (kso is ComObject)
 								outputVars[paramIndex] = typeof(nint);
+
 							p = kptr;
 						}
 					}
@@ -119,6 +119,7 @@ namespace Keysharp.Core.Common.Invoke
 
 				// Check for pointer suffix: '*' or 'P'/'p'
 				char last = span[len - 1];
+
 				if (last == '*' || (char)(last | 0x20) == 'p')
 				{
 					if (p is KeysharpObject kso && Script.GetPropertyValue(kso, "__Value", false) is object kptr && kptr != null)
@@ -133,15 +134,16 @@ namespace Keysharp.Core.Common.Invoke
 
 				// BSTR
 				if (c0 == 'b' && len == 4
-					&& ((span[1] | 0x20) == 's')
-					&& ((span[2] | 0x20) == 't')
-					&& ((span[3] | 0x20) == 'r'))
+						&& ((span[1] | 0x20) == 's')
+						&& ((span[2] | 0x20) == 't')
+						&& ((span[3] | 0x20) == 'r'))
 				{
 					if (parseType)
 					{
 						type = typeof(string);
 						goto TypeDetermined;
 					}
+
 					if (p is string s)
 					{
 						IntPtr bstr = Marshal.StringToBSTR(s);
@@ -153,12 +155,12 @@ namespace Keysharp.Core.Common.Invoke
 						_ = Errors.ErrorOccurred(err = new TypeError($"Argument had type {tag} but was not a string.")) ? throw err : "";
 						return;
 					}
+
 					continue;
 				}
-
 				// WSTR or STR
 				else if ((c0 == 'w' && len == 4 && ((span[1] | 0x20) == 's') && ((span[2] | 0x20) == 't') && ((span[3] | 0x20) == 'r'))
-				 || (c0 == 's' && len == 3 && ((span[1] | 0x20) == 't') && ((span[2] | 0x20) == 'r')))
+						 || (c0 == 's' && len == 3 && ((span[1] | 0x20) == 't') && ((span[2] | 0x20) == 'r')))
 				{
 					if (parseType)
 					{
@@ -202,9 +204,9 @@ namespace Keysharp.Core.Common.Invoke
 
 				// ASTR
 				if (c0 == 'a' && len == 4
-					&& ((span[1] | 0x20) == 's')
-					&& ((span[2] | 0x20) == 't')
-					&& ((span[3] | 0x20) == 'r'))
+						&& ((span[1] | 0x20) == 's')
+						&& ((span[2] | 0x20) == 't')
+						&& ((span[3] | 0x20) == 'r'))
 				{
 					if (parseType)
 					{
@@ -244,6 +246,7 @@ namespace Keysharp.Core.Common.Invoke
 						_ = Errors.ErrorOccurred(err = new TypeError($"Argument had type {tag} but was not a string.")) ? throw err : "";
 						return;
 					}
+
 					continue;
 				}
 
@@ -252,18 +255,21 @@ namespace Keysharp.Core.Common.Invoke
 				{
 					case 'p':
 						if (len == 3
-							&& ((span[1] | 0x20) == 't')
-							&& ((span[2] | 0x20) == 'r'))
+								&& ((span[1] | 0x20) == 't')
+								&& ((span[2] | 0x20) == 'r'))
 						{
 							if (parseType)
 							{
 								type = typeof(nint);
 								goto TypeDetermined;
 							}
+
 							ConvertPtr();
 							continue;
 						}
+
 						break;
+
 					case 'i': // INT or INT64
 						if (len == 5 && span[3] == '6' && span[4] == '4') // "int64"
 						{
@@ -272,6 +278,7 @@ namespace Keysharp.Core.Common.Invoke
 								type = typeof(long);
 								goto TypeDetermined;
 							}
+
 							args[n] = p is IntPtr ip ? ip : p.Al();
 							continue;
 						}
@@ -282,9 +289,11 @@ namespace Keysharp.Core.Common.Invoke
 								type = typeof(int);
 								goto TypeDetermined;
 							}
+
 							args[n] = p is IntPtr ip2 ? ip2 : p.Ai();
 							continue;
 						}
+
 						break;
 
 					case 'h': // HRESULT
@@ -295,13 +304,16 @@ namespace Keysharp.Core.Common.Invoke
 								type = typeof(int);
 								goto TypeDetermined;
 							}
+
 							args[n] = p is IntPtr ip3 ? ip3 : p.Ai();
 							continue;
 						}
+
 						break;
 
 					case 'u': // UINT, USHORT, UCHAR, UPTR
 						char c1u = (char)(span[1] | 0x20);
+
 						if (c1u == 'i')
 						{
 							if (len == 6) // "uint64"
@@ -311,6 +323,7 @@ namespace Keysharp.Core.Common.Invoke
 									type = typeof(ulong);
 									goto TypeDetermined;
 								}
+
 								args[n] = p is IntPtr ip4 ? ip4 : p.Al();
 								continue;
 							}
@@ -321,7 +334,8 @@ namespace Keysharp.Core.Common.Invoke
 									type = typeof(uint);
 									goto TypeDetermined;
 								}
-								args[n] = p is IntPtr ip5 ? ip5 : p.Al();
+
+								args[n] = p is IntPtr ip5 ? ip5 : p.Aui();
 								continue;
 							}
 						}
@@ -332,6 +346,7 @@ namespace Keysharp.Core.Common.Invoke
 								type = typeof(ushort);
 								goto TypeDetermined;
 							}
+
 							args[n] = p is IntPtr ip6 ? ip6 : (ushort)p.Al();
 							continue;
 						}
@@ -342,6 +357,7 @@ namespace Keysharp.Core.Common.Invoke
 								type = typeof(byte);
 								goto TypeDetermined;
 							}
+
 							args[n] = p is IntPtr ip7 ? ip7 : (byte)p.Al();
 							continue;
 						}
@@ -352,9 +368,11 @@ namespace Keysharp.Core.Common.Invoke
 								type = typeof(nint);
 								goto TypeDetermined;
 							}
+
 							ConvertPtr();
 							continue;
 						}
+
 						break;
 
 					case 's': // SHORT
@@ -365,9 +383,11 @@ namespace Keysharp.Core.Common.Invoke
 								type = typeof(short);
 								goto TypeDetermined;
 							}
+
 							args[n] = p is IntPtr ip9 ? ip9 : (short)p.Al();
 							continue;
 						}
+
 						break;
 
 					case 'c': // CHAR
@@ -378,9 +398,11 @@ namespace Keysharp.Core.Common.Invoke
 								type = typeof(sbyte);
 								goto TypeDetermined;
 							}
+
 							args[n] = p is IntPtr ipA ? ipA : (sbyte)p.Al();
 							continue;
 						}
+
 						break;
 
 					case 'f': // FLOAT
@@ -396,6 +418,7 @@ namespace Keysharp.Core.Common.Invoke
 							args[n] = *(int*)&f;
 							continue;
 						}
+
 						break;
 
 					case 'd': // DOUBLE
@@ -411,13 +434,14 @@ namespace Keysharp.Core.Common.Invoke
 							args[n] = *(long*)&d;
 							continue;
 						}
+
 						break;
 				}
 
-			InvalidType:
-
+				InvalidType:
 				// Invalid type tag
 				var ex = new ValueError($"Arg or return type of {tag} is invalid.");
+
 				if (Errors.ErrorOccurred(ex))
 					throw ex;
 

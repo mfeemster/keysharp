@@ -5,7 +5,7 @@
 		private readonly Func<object> Get;
 		private readonly Action<object> Set;
 
-		internal static VarRef Empty = new VarRef(() => null, x => x = null);
+		public static VarRef Empty = new VarRef(() => null, x => x = null);
 
 		public VarRef(object x) : base(skipLogic: true)
 		{
