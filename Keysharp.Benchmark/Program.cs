@@ -7,7 +7,9 @@ namespace Keysharp.Benchmark
 	[InProcess]
 	[Orderer(SummaryOrderPolicy.FastestToSlowest)] // Order the result
 	[IterationCount(30)]
+	//[IterationCount(3)]
 	[InvocationCount(50)]
+	//[InvocationCount(3)]
 	[WarmupCount(15)]
 	[HideColumns("Error", "StdDev", "RatioSD", "Gen0", "Gen1", "Gen2")]
 	public class BaseTest
@@ -21,6 +23,7 @@ namespace Keysharp.Benchmark
 		{
 			BenchmarkDotNet.Reports.Summary summary = null;
 			var logger = ConsoleLogger.Default;
+			//var config = new BenchmarkDotNet.Configs.DebugInProcessConfig();
 			var config = new ManualConfig();
 			_ = config.AddColumnProvider([.. DefaultConfig.Instance.GetColumnProviders()]);
 			_ = config.AddExporter([.. DefaultConfig.Instance.GetExporters()]);
@@ -29,19 +32,23 @@ namespace Keysharp.Benchmark
 			_ = config.AddJob([.. DefaultConfig.Instance.GetJobs()]);
 			_ = config.AddValidator([.. DefaultConfig.Instance.GetValidators()]);
 			config.UnionRule = ConfigUnionRule.AlwaysUseGlobal; // Overriding the default
-			summary = BenchmarkRunner.Run<MapReadBenchmark>(config);
-			MarkdownExporter.Console.ExportToLog(summary, logger);
-			summary = BenchmarkRunner.Run<MapWriteBenchmark>(config);
-			MarkdownExporter.Console.ExportToLog(summary, logger);
-			summary = BenchmarkRunner.Run<IndexBench>(config);
-			MarkdownExporter.Console.ExportToLog(summary, logger);
-			summary = BenchmarkRunner.Run<ListAddBench>(config);
-			MarkdownExporter.Console.ExportToLog(summary, logger);
-			summary = BenchmarkRunner.Run<HexBench>(config);
-			MarkdownExporter.Console.ExportToLog(summary, logger);
-			summary = BenchmarkRunner.Run<MathBench>(config);
-			MarkdownExporter.Console.ExportToLog(summary, logger);
-			summary = BenchmarkRunner.Run<FuncBench>(config);
+			/*
+			    summary = BenchmarkRunner.Run<MapReadBenchmark>(config);
+			    MarkdownExporter.Console.ExportToLog(summary, logger);
+			    summary = BenchmarkRunner.Run<MapWriteBenchmark>(config);
+			    MarkdownExporter.Console.ExportToLog(summary, logger);
+			    summary = BenchmarkRunner.Run<IndexBench>(config);
+			    MarkdownExporter.Console.ExportToLog(summary, logger);
+			    summary = BenchmarkRunner.Run<ListAddBench>(config);
+			    MarkdownExporter.Console.ExportToLog(summary, logger);
+			    summary = BenchmarkRunner.Run<HexBench>(config);
+			    MarkdownExporter.Console.ExportToLog(summary, logger);
+			    summary = BenchmarkRunner.Run<MathBench>(config);
+			    MarkdownExporter.Console.ExportToLog(summary, logger);
+			    summary = BenchmarkRunner.Run<FuncBench>(config);
+			    MarkdownExporter.Console.ExportToLog(summary, logger);
+			*/
+			summary = BenchmarkRunner.Run<DllBench>(config);
 			MarkdownExporter.Console.ExportToLog(summary, logger);
 			//ConclusionHelper.Print(logger, summary.BenchmarksCases.First().Config.GetCompositeAnalyser().Analyse(summary).ToList());
 			_ = Console.ReadLine();
