@@ -467,14 +467,22 @@ namespace Keysharp.Core.COM
 
 			var pVtbl = Marshal.ReadIntPtr(pUnk);
 			var helper = new ArgumentHelper(parameters);
-			var value = CallDel(pUnk.ToInt64(), Marshal.ReadIntPtr(IntPtr.Add(pVtbl, idx * sizeof(IntPtr))), helper.args);
+			var value = NativeInvoke(pUnk.ToInt64(), Marshal.ReadIntPtr(IntPtr.Add(pVtbl, idx * sizeof(IntPtr))), helper.args, helper.floatingTypeMask);
 			Dll.FixParamTypesAndCopyBack(parameters, helper);
 			helper.Dispose();
 
+			//Special conversion for the return value.
 			if (helper.ReturnType == typeof(int))
 			{
-				int ii = *(int*)&value;
+				long l = (long)value;
+				int ii = *(int*)&l;
 				value = ii;
+			}
+			else if (helper.ReturnType == typeof(float))
+			{
+				double d = (double)value;
+				float f = *(float*)&d;
+				return f;
 			}
 			else if (helper.ReturnType == typeof(string))
 			{
@@ -486,12 +494,12 @@ namespace Keysharp.Core.COM
 			return value;
 		}
 
-		internal static long CallDel(long objPtr, IntPtr vtbl, long[] args)
+		internal static object NativeInvoke(long objPtr, IntPtr vtbl, long[] args, ulong mask)
 		{
 			if (objPtr == 0L || vtbl == IntPtr.Zero)
 				throw new Error("Invalid object pointer or vtable number");
 
-			long ret = 0L;
+			object ret = 0L;
 
 			//First attempt to call the normal way. This will succeed with any normal COM call.
 			//However, it will throw an exception if we've passed a fake COM function using DelegateHolder.
@@ -515,7 +523,8 @@ namespace Keysharp.Core.COM
 				long[] newArgs = new long[args.Length + 1];
 				newArgs[0] = objPtr;
 				System.Array.Copy(args, 0, newArgs, 1, args.Length);
-				ret = Dll.CallDel(vtbl, newArgs);
+				mask = mask << 1; // since we inserted an extra argument at the beginning
+				ret = Dll.NativeInvoke(vtbl, newArgs, mask);
 				// Copy back.
 				System.Array.Copy(newArgs, 1, args, 0, args.Length);
 				return ret;
@@ -525,7 +534,7 @@ namespace Keysharp.Core.COM
 			}
 
 			//For faked COM calls, don't pass in the object pointer since there won't be one.
-			return Dll.CallDel(vtbl, args);
+			return Dll.NativeInvoke(vtbl, args, mask);
 		}
 
 
