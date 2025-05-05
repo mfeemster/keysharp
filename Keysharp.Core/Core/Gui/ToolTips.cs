@@ -111,6 +111,8 @@
 				tt.Active = true;
 				tt.SetToolTip(tooltipInvokerForm, text);//Setting position is not possible on linux.
 #elif WINDOWS
+				//We use SetTool() via reflection in this function because it bypasses ToolTip.Show()'s check for whether or not the window
+				//is active.
 				var mSetTrackPosition = tt.GetType().GetMethod("SetTrackPosition", BindingFlags.Instance | BindingFlags.NonPublic);
 				var mSetTool = tt.GetType().GetMethod("SetTool", BindingFlags.Instance | BindingFlags.NonPublic);
 
