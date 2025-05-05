@@ -263,7 +263,7 @@ namespace Keysharp.Core
 					int ii = *(int*)&l;
 					value = ii;
 				}
-				else if (helper.ReturnType == typeof(float)) 
+				else if (helper.ReturnType == typeof(float))
 				{
 					double d = (double)value;
 					float f = *(float*)&d;
@@ -319,9 +319,10 @@ namespace Keysharp.Core
 
 			if (!exists)
 				del = CreateInvoker(n, mask);
-#endif
 
+#endif
 #if WINDOWS
+
 			// Under Windows x64 AutoHotkey passes the first four arguments in both
 			// general purpose registers as well as floating point registers to support
 			// variadic function calls. Here we create a small shim which copies floating points
@@ -336,20 +337,24 @@ namespace Keysharp.Core
 					for (int i = 0; i < 4; i++)
 					{
 						if ((mask & (1UL << i)) == 0) continue;
+
 						switch (i)
 						{
 							case 0:
 								// MOVQ RCX <- XMM0  (66 0F 7E C1)
 								*ptr++ = 0x66; *ptr++ = 0x0F; *ptr++ = 0x7E; *ptr++ = 0xC1;
 								break;
+
 							case 1:
 								// MOVQ RDX <- XMM1  (66 0F 7E CA)
 								*ptr++ = 0x66; *ptr++ = 0x0F; *ptr++ = 0x7E; *ptr++ = 0xCA;
 								break;
+
 							case 2:
 								// MOVQ R8  <- XMM2  (REX.B + 0F 7E C0)
 								*ptr++ = 0x49; *ptr++ = 0x0F; *ptr++ = 0x7E; *ptr++ = 0xC0;
 								break;
+
 							case 3:
 								// MOVQ R9  <- XMM3  (REX.B + 0F 7E C9)
 								*ptr++ = 0x49; *ptr++ = 0x0F; *ptr++ = 0x7E; *ptr++ = 0xC9;
@@ -358,16 +363,17 @@ namespace Keysharp.Core
 					}
 
 					// Emit: JMP [RIP + 0]  => FF 25 00 00 00 00
-					*ptr++ = 0xFF; *ptr++ = 0x25; *ptr++ = 0x00; *ptr++ = 0x00; *ptr++ = 0x00; *ptr++ = 0x00;
+					*ptr++ = 0xFF;* ptr++ = 0x25;* ptr++ = 0x00;* ptr++ = 0x00;* ptr++ = 0x00;* ptr++ = 0x00;
 
 					// Followed immediately by the 64-bit absolute address
 					*((long*)ptr) = fnPtr;
 					fnPtr = shim;
 				}
 			}
-#endif
 
+#endif
 			object result = 0L;
+
 			// invoke with the correct delegate type
 			if (((mask >> n) & 1) != 0)
 				result = ((Func<IntPtr, long[], double>)del)(fnPtr, args);
@@ -393,14 +399,12 @@ namespace Keysharp.Core
 			Type returnType = (((mask >> n) & 1) != 0) ? typeof(double) : typeof(long);
 			// method name only depends on n and floatingTypeMask
 			string name = $"NativeCall_{n}_{mask}";
-
 			var dm = new DynamicMethod(
 				name,
 				returnType,
 				new[] { typeof(IntPtr), typeof(long[]) },
 				typeof(Dll).Module,
 				skipVisibility: true);
-
 			var il = dm.GetILGenerator();
 
 			// 1) load each argument slot
@@ -412,33 +416,28 @@ namespace Keysharp.Core
 				if (((mask >> i) & 1) != 0)
 					il.Emit(OpCodes.Ldelem_R8);     // double
 				else
-					il.Emit(OpCodes.Ldelem_I8);		// long
+					il.Emit(OpCodes.Ldelem_I8);     // long
 			}
 
 			// 2) load fn pointer
 			il.Emit(OpCodes.Ldarg_0);
-
 			// 3) build the param-type list for calli
 			var paramTypes = Enumerable.Range(0, n)
-				.Select(i => (((mask >> i) & 1) != 0)
-					? typeof(double)
-					: typeof(long))
-				.ToArray();
-
+							 .Select(i => (((mask >> i) & 1) != 0)
+									 ? typeof(double)
+									 : typeof(long))
+							 .ToArray();
 			// 4) emit the unmanaged cdecl calli
 			il.EmitCalli(
 				OpCodes.Calli,
 				CallingConvention.Cdecl,
 				returnType,
 				paramTypes);
-
 			il.Emit(OpCodes.Ret);
-
 			// pick the right Func<…> delegate
 			Type delegateType = (returnType == typeof(double))
-				? typeof(Func<IntPtr, long[], double>)
-				: typeof(Func<IntPtr, long[], long>);
-
+								? typeof(Func<IntPtr, long[], double>)
+								: typeof(Func<IntPtr, long[], long>);
 			return dm.CreateDelegate(delegateType);
 		}
 

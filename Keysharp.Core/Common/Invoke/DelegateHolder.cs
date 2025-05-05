@@ -317,6 +317,7 @@
 					*ptr++ = 0xFF; *ptr++ = 0xE0;
 					break;
 #else
+
 					// On SystemV x86-64 the first six integer args go in
 					//   RDI, RSI, RDX, RCX, R8, R9
 					// beyond that they spill onto the stack (in the 128-byte red zone).
@@ -328,22 +329,28 @@
 							case 0: // RDI ← ctx
 								*ptr++ = 0x48; *ptr++ = 0xBF;
 								break;
+
 							case 1: // RSI ← ctx
 								*ptr++ = 0x48; *ptr++ = 0xBE;
 								break;
+
 							case 2: // RDX ← ctx
 								*ptr++ = 0x48; *ptr++ = 0xBA;
 								break;
+
 							case 3: // RCX ← ctx
 								*ptr++ = 0x48; *ptr++ = 0xB9;
 								break;
+
 							case 4: // R8  ← ctx
 								*ptr++ = 0x49; *ptr++ = 0xB8;
 								break;
+
 							default: // case 5: R9  ← ctx
 								*ptr++ = 0x49; *ptr++ = 0xB9;
 								break;
 						}
+
 						// imm64 for ctx
 						*((ulong*)ptr) = (ulong)ctx.ToInt64();
 						ptr += 8;
@@ -395,50 +402,42 @@
 					if (arity < 8)
 					{
 						// Case A: extra arg fits in a register X<arity>
-
 						// 1) LDR X<arity>, [PC, #imm0]   ; imm0 = 1 → literal at +12
 						uint imm0 = 1;
 						uint ldrCtxReg = 0x58000000u        // LDR literal opcode
-									   | (imm0 << 5)        // imm19 = 1
-									   | (uint)arity;       // Rt = arity
+										 | (imm0 << 5)        // imm19 = 1
+										 | (uint)arity;       // Rt = arity
 						*((uint*)ptr) = ldrCtxReg; ptr += 4;
-
 						// 2) LDR X16, [PC, #imm1]        ; imm1 = 2 → literal at +20
 						uint imm1 = 2;
 						uint ldrTramp = 0x58000000u
-									  | (imm1 << 5)
-									  | 16u;               // Rt = 16 for X16
+										| (imm1 << 5)
+										| 16u;               // Rt = 16 for X16
 						*((uint*)ptr) = ldrTramp; ptr += 4;
-
 						// 3) BR X16
 						*((uint*)ptr) = 0xD61F0200; ptr += 4;
 					}
 					else
 					{
 						// Case B: extra arg must go on the stack
-
 						// 1) Load ctx into X8
-						//    LDR X8, [PC, #imm0] with imm0 = 1 
+						//    LDR X8, [PC, #imm0] with imm0 = 1
 						uint imm0 = 1;
 						uint ldrCtxX8 = 0x58000000u
-									  | (imm0 << 5)
-									  | 8u;                // Rt = 8 for X8
+										| (imm0 << 5)
+										| 8u;                // Rt = 8 for X8
 						*((uint*)ptr) = ldrCtxX8; ptr += 4;
-
 						// 2) SUB SP, SP, #16            ; carve out an 8-byte slot (aligned)
 						*((uint*)ptr) = 0x910043FF; ptr += 4;  // encoding for SUB SP,SP,#16
-
 						// 3) STR X8, [SP], #0           ; store ctx at top of stack
 						//    (STR Xt, [SP, #imm]) imm=0
 						*((uint*)ptr) = 0xF90003E8; ptr += 4;  // encoding for STR X8, [SP,#0]
-
 						// 4) LDR X16, [PC, #imm1]       ; load trampPtr
 						uint imm1 = 2;
 						uint ldrTrampX16 = 0x58000000u
-										 | (imm1 << 5)
-										 | 16u;
+										   | (imm1 << 5)
+										   | 16u;
 						*((uint*)ptr) = ldrTrampX16; ptr += 4;
-
 						// 5) BR X16
 						*((uint*)ptr) = 0xD61F0200; ptr += 4;
 					}
