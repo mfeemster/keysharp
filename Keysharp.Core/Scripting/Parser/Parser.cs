@@ -1209,6 +1209,9 @@ namespace Keysharp.Scripting
 			if (!NoTrayIcon)
 				_ = initial.Add(new CodeExpressionStatement((CodeMethodInvokeExpression)InternalMethods.CreateTrayMenu));
 
+			if (Persistent)
+				_ = initial.Add(new CodeMethodInvokeExpression(new CodeMethodReferenceExpression(new CodeTypeReferenceExpression(typeof(Flow)), "Persistent"), [new CodePrimitiveExpression(true)]));
+
 			_ = initial.Add(new CodeSnippetExpression("Keysharp.Core.Env.HandleCommandLineParams(args)"));
 			var inst = (CodeMethodInvokeExpression)InternalMethods.HandleSingleInstance;
 			_ = inst.Parameters.Add(new CodeSnippetExpression("name"));
