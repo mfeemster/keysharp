@@ -473,7 +473,7 @@ namespace Keysharp.Core.COM
 
 			// If the return type was omitted then it should be treated as HRESULT
 			// and if that is a negative value then throw an OSError
-			if ((parameters.Length & 1) == 0)
+			if (!helper.HasReturn)
 			{
 				long hrLong = (long)value;                // unbox the raw long  
 				int hr32 = unchecked((int)hrLong);   // keep only the low 32 bits
