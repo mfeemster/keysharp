@@ -407,6 +407,8 @@ class class1
 	+ Instead, just pass `WM_COPYDATA (0x4A)` as the message type and the string as the `lparam`, and `SendMessage()` will handle it internally.
 * A new function `Collect()` which calls `GC.Collect()` to force a memory collection.
 	+ This rarely ever has to be used in properly written code.
+	+ Calling `Collect()` may not always have an immediate effect. For example if an object is assigned to a variable inside a function and then the variable is assigned an empty string then calling `Collect()` after it will not cause the object destructor to be called. Only after the function has returned will the object be considered to have no references and `Collect()` starts working.
+	+ If an object destructor needs to be called immediately then it may better to call `Object.__Delete()` manually.
 * In addition to using `#ClipboardTimeout`, a new accessor named `A_ClipboardTimeout` can be used at any point in the program to get or set that value.
 * A compiled script can be reloaded.
 	+ AHK does not support reloading a compiled script.
