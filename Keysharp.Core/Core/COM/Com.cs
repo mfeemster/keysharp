@@ -423,12 +423,17 @@ namespace Keysharp.Core.COM
 
 		public static object ObjRelease(object ptr)
 		{
-			if (ptr is ComObject co)
+			var co = ptr as ComObject;
+			if (co != null)
 			{
 				ptr = co.Ptr;
-				return (long)Marshal.ReleaseComObject(ptr);
+				if (Marshal.IsComObject(ptr))
+				{
+					ptr = Marshal.GetIUnknownForObject(ptr); // Make sure we decrease the COM object not RCW
+					_ = Marshal.Release((nint)ptr);
+				}
 			}
-			else if (ptr is IntPtr ip)
+			if (ptr is IntPtr ip)
 				ptr = ip;
 			else if (ptr is long l)
 				ptr = new IntPtr(l);
