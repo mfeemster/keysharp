@@ -1,7 +1,7 @@
 ﻿#if WINDOWS
 namespace Keysharp.Core.COM
 {
-	public unsafe class ComObject : KeysharpObject//ComValue
+	public unsafe class ComObject : KeysharpObject, IDisposable//ComValue
 	{
 		internal static long F_OWNVALUE = 1;
 		internal static int MaxVtableLen = 16;
@@ -19,13 +19,7 @@ namespace Keysharp.Core.COM
 
 		public object Ptr
 		{
-			get
-			{
-				if (item is IntPtr ip)
-					return ip;//.ToInt64();
-				else
-					return item;
-			}
+			get => item;
 			set
 			{
 				object temp = null;
@@ -183,19 +177,32 @@ namespace Keysharp.Core.COM
 		{
 		}
 
-		~ComObject()
+		public object __Delete()
+		{
+			Dispose();
+			return null;
+		}
+		
+		public void Dispose()
 		{
 			if (Ptr == null)
 				return;
 
-			// System.__ComObject decreases the reference count automatically on destruction
 			if (VarType == Com.vt_unknown || VarType == Com.vt_dispatch)
 			{
 				if (Ptr is IntPtr ip && ip != IntPtr.Zero)
 					_ = Marshal.Release(ip);
 				else if (Ptr is long lp && lp != 0L)
 					_ = Marshal.Release((nint)lp);
+				else if (Marshal.IsComObject(Ptr))
+					Marshal.ReleaseComObject(Ptr);
 			}
+			Ptr = null;
+		}
+
+		~ComObject()
+		{
+			Dispose();
 		}
 
 		public new object __New(params object[] args)
