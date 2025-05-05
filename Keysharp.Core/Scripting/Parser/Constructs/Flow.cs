@@ -614,7 +614,7 @@ namespace Keysharp.Scripting
 						classtype.BaseTypes.Add(basetype);
 
 						if (string.Compare(basetype, "gui", true) == 0)
-							Persistent = true;
+							persistent = true;
 					}
 					else
 					{
