@@ -547,6 +547,9 @@
 			if (uint.TryParse(s, out i))
 				return i;
 
+			if (long.TryParse(s, out var ll) && ll < 0)
+				return unchecked((uint)ll);
+
 			if (!char.IsNumber(s[s.Length - 1]))//Handle a string specifying a uint like "123U".
 				if (uint.TryParse(s.Slice(0, s.Length - 1), out i))
 					return i;
