@@ -23,7 +23,7 @@
 		public bool IsOptional(object obj = null);
 	}
 
-	internal class BoundFunc : FuncObj
+	public class BoundFunc : FuncObj
 	{
 		internal object[] boundargs;
 
@@ -124,15 +124,13 @@
 		}
 	}
 
-	internal class Closure : FuncObj
+	public class Closure : FuncObj
 	{
         internal Closure(Delegate m, object o = null) : base(m, o) { }
     }
 
 	public class FuncObj : KeysharpObject, IFuncObj
 	{
-		protected bool anyRef;
-		protected bool isVariadic;
 		protected MethodInfo mi;
 		protected MethodPropertyHolder mph;
 		new public static object __Static { get; set; }
@@ -144,9 +142,9 @@
 		public bool IsValid => mi != null && mph != null && mph.callFunc != null;
 		public string Name => mi != null ? mi.Name : "";
 		public new (Type, object) super => (typeof(KeysharpObject), this);
-		internal bool IsVariadic => isVariadic;
-		public long MaxParams { get; internal set; } = 9999;
-		public long MinParams { get; internal set; } = 0;
+		internal bool IsVariadic => mph.parameters.Length > 0 && mph.parameters[mph.parameters.Length - 1].ParameterType == typeof(object[]);
+		public long MaxParams => mph.MaxParams;
+		public long MinParams => mph.MinParams;
 		internal MethodPropertyHolder Mph => mph;
 
 		public Func<object, object[], object> Delegate => mph.callFunc;
@@ -192,7 +190,7 @@
 		{
 		}
 
-        internal FuncObj(Delegate m, object o = null)
+		internal FuncObj(Delegate m, object o = null)
 		: this(m?.GetMethodInfo(), o)
         {
 			this.Inst = m.Target;
@@ -315,21 +313,7 @@
 
 		private void Init()
 		{
-			mph = new MethodPropertyHolder(mi, null); // TODO: find a way to cache these (or at least mph.callFunc delegate)
-			var parameters = mph.parameters;
-			MinParams = mph.MinParams;
-			MaxParams = mph.MaxParams;
-
-			foreach (var p in parameters)
-			{
-				if (p.ParameterType.IsByRef)
-				{
-					anyRef = true;
-					break;
-				}
-			}
-
-			isVariadic = parameters.Length > 0 && parameters[parameters.Length - 1].ParameterType == typeof(object[]);
+			mph = MethodPropertyHolder.GetOrAdd(mi);
 		}
 	}
 
