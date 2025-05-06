@@ -789,6 +789,10 @@ namespace Keysharp.Scripting
 			{
 				firstl = ll;
 			}
+			else if (left is bool b)
+			{
+				firstl = b ? 1L : 0L;
+			}
 			else if (left is IntPtr lip)
 			{
 				firstl = lip.ToInt64();
@@ -813,6 +817,10 @@ namespace Keysharp.Scripting
 			else if (right is long rl)
 			{
 				secondl = rl;
+			}
+			else if (right is bool b)
+			{
+				secondl = b ? 1L : 0L;
 			}
 			else if (right is IntPtr rip)
 			{
