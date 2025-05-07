@@ -30,44 +30,51 @@
 		/// Initializes a new instance of the <see cref="ConcurrentStackArrayPool"/> class.
 		/// </summary>
 		/// <param name="_arraySize">The size of each array.</param>
-		/// <param name="stackSize">The fixed size of each stack.</param>
+		/// <param name="stackSize">The fixed size of the stack.</param>
 		public ConcurrentStackArrayPool(int _arraySize, int stackSize = 16)
 		{
 			arraySize = _arraySize;
-			collection = new (stackSize);
+			collection = new (stackSize, () => new T[arraySize]);
 		}
 
 		/// <summary>
 		/// Rents an array from the stack.<br/>
-		/// If there are no free elements in the stack, a new array is returned which
+		/// If there are no free elements in the stack, a new array is written to array which
 		/// is just allocated regularly on the heap.
 		/// </summary>
+		/// <param name="array">The newly pushed array.</param>
+		/// <param name="clear">True to set all array elements to null, else false.</param>
 		/// <returns>An array of type <typeparamref name="T"/> whose size is that specified in the constructor.</returns>
-		public T[] Rent() => collection.TryPop(out var obj) ? obj : (new T[arraySize]);
+		public bool TryPush(out T[] array, bool clear)
+		{
+			if (!collection.TryPush(out array))
+				array = new T[arraySize];//GC will handle this.
+			else if (clear)
+				System.Array.Clear(array);
+
+			return true;
+		}
 
 		/// <summary>
 		/// Returns an array to the stack.<br/>
-		/// Note that the array size must match the size specified in the constructor, otherwise
-		/// it will not be pushed back onto the stack.<br/>
 		/// It still may be cleared in this case.
 		/// </summary>
-		/// <param name="array">The array to return.</param>
-		/// <param name="clearArray">True to set all elements of the array to null before returning, else false.
+		/// <param name="array">The popped array. Null if returning failed.</param>
+		/// <param name="clear">True to set all elements of the array to null after returning, else false.
 		/// This helps avoid holding on to references unintentionally.
 		/// </param>
 		/// <returns>True if returned, else false.</returns>
-		public bool Return(T[] array, bool clearArray = false)
+		public bool TryPop(out T[] array, bool clear = false)
 		{
-			if (array != null)
+			if (!collection.TryPop(out array))
 			{
-				if (clearArray)
-					System.Array.Clear(array);
-
-				if (array.Length == arraySize)
-					return collection.Push(array);
+				array = null;
+				return false;
 			}
+			else if (clear)
+				System.Array.Clear(array);
 
-			return false;
+			return true;
 		}
 	}
 }

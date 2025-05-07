@@ -2,7 +2,7 @@
 
 namespace Keysharp.Core.Common.Threading
 {
-	public class ThreadVariables : IClearable
+	public class ThreadVariables
 	{
 		//internal Task<object> task = null;
 		internal bool task = false;
