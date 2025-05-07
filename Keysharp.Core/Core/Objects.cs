@@ -131,11 +131,18 @@
 			if (obj == null)
 				return 0;
 
+			return Marshal.GetIUnknownForObject(obj);
+
 			// Allocate a GCHandle to create a "handle" to the managed object.
 			GCHandle handle = GCHandle.Alloc(obj, GCHandleType.Normal);
 			return GCHandle.ToIntPtr(handle);
 		}
-		public static long ObjPtrAddRef(object obj) => ObjPtr(obj);
+		public static long ObjPtrAddRef(object obj)
+		{
+			var punk = Marshal.GetIUnknownForObject(obj);
+			Marshal.AddRef(punk);
+			return punk;
+		}
 
 		/// <summary>
 		/// Given an IntPtr produced by ObjPtr, returns the original object.
@@ -151,6 +158,8 @@
 
 			if (iptr == IntPtr.Zero)
 				return null;
+
+			return Marshal.GetObjectForIUnknown(iptr);
 			GCHandle handle = GCHandle.FromIntPtr(iptr);
 			return handle.Target;
 		}
