@@ -178,8 +178,19 @@ namespace Keysharp.Scripting
 
             GenerateGeneralDirectiveStatements();
 
-            // Merge positional directives, hotkeys, hotstrings to the beginning of the auto-execute section
-            parser.DHHR.Add(SyntaxFactory.ExpressionStatement(
+            if (parser.persistent)
+				parser.DHHR.Add(SyntaxFactory.ExpressionStatement(
+	                SyntaxFactory.InvocationExpression(
+		                SyntaxFactory.MemberAccessExpression(
+			                SyntaxKind.SimpleMemberAccessExpression,
+			                CreateQualifiedName("Keysharp.Core.Flow"),
+			                SyntaxFactory.IdentifierName("Persistent")
+		                )
+	                )
+                ));
+
+			// Merge positional directives, hotkeys, hotstrings to the beginning of the auto-execute section
+			parser.DHHR.Add(SyntaxFactory.ExpressionStatement(
                 SyntaxFactory.InvocationExpression(
                     SyntaxFactory.MemberAccessExpression(
                         SyntaxKind.SimpleMemberAccessExpression,

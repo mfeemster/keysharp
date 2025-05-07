@@ -375,11 +375,11 @@ namespace Keysharp.Scripting
 
                         case "PERSISTENT":
 							var nextTokenText = tokens[index + 2].Text.ToLowerInvariant().Trim();
-                            parser.Persistent = !(nextTokenText == "false" || nextTokenText == "0");
+                            parser.persistent = !(nextTokenText == "false" || nextTokenText == "0");
                             break;
 
                         case "ERRORSTDOUT":
-							parser.ErrorStdOut = true;
+							parser.errorStdOut = true;
 							break;
                         case "CLIPBOARDTIMEOUT":
                         case "HOTIFTIMEOUT":

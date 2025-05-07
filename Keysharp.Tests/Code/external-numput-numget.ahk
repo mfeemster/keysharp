@@ -317,3 +317,11 @@ if (b1 == buf.Ptr)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
+
+NumPut("uint", 5000000000, buf)
+ret := NumGet(buf, "uint")
+
+if (ret == 705032704)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"

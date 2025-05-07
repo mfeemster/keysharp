@@ -225,7 +225,7 @@ namespace Keysharp.Scripting
 
         public override SyntaxNode VisitHotkey([NotNull] HotkeyContext context)
         {
-            parser.isPersistent = true;
+            parser.persistent = true;
             parser.isHotkeyDefinition = true;
             // Generate a unique function name
             var hotkeyFunctionName = InternalPrefix + $"Hotkey_{++parser.hotkeyCount}";
@@ -329,7 +329,7 @@ namespace Keysharp.Scripting
 
         public override SyntaxNode VisitHotstring([NotNull] HotstringContext context)
         {
-            parser.isPersistent = true;
+            parser.persistent = true;
             // Extract the hotstring triggers
             var triggers = context.HotstringTrigger()
                 .Select(triggerContext => EscapedString(triggerContext.GetText()[..^2], true))
@@ -480,7 +480,7 @@ namespace Keysharp.Scripting
 
         public override SyntaxNode VisitRemap([NotNull] RemapContext context)
         {
-            parser.isPersistent = true;
+            parser.persistent = true;
             // Extract the source and target keys
             var remapKey = context.RemapKey();
             ParseRemapKey(remapKey.GetText(), out string sourceKey, out string targetKey);

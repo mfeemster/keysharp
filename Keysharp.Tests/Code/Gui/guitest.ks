@@ -1954,7 +1954,7 @@ MyScBtn := MyGui.Add("Button", "w200 h25 xc+10 y+10", "Press to get screenclip")
 	; └─────────────────────────┘
 
 MyGui.Add("Text", "xc+0 y+20 w700", "_____________________________________________________________________________________________________________")
-HotkeySectionTopText := MyGui.Add("Text", "xc+10 y+5 w600", "HOTKEY TESTS`nHold F1 to slow mouse, release to restore.")
+HotkeySectionTopText := MyGui.Add("Text", "xc+10 y+5 w600", "HOTKEY TESTS`nHold F1 to slow mouse (not touchpad), release to restore.")
 HotkeySectionTopText.SetFont("cBlue s14")
 FuncBtnOne := MyGui.Add("Button", "xc+10 y+5", "FuncObj Bind Tests")
 FuncBtnOne.OnEvent("Click", "DoTricks")

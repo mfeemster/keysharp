@@ -154,12 +154,13 @@ namespace Keysharp.Scripting
 
 		internal static FrozenSet<string>.AlternateLookup<ReadOnlySpan<char>> propKeywordsAlt = propKeywords.GetAlternateLookup<ReadOnlySpan<char>>();
 
-		internal bool ErrorStdOut;
+		internal bool errorStdOut;
 		internal CodeStatementCollection initial = [];//These are placed at the very beginning of Main().
 		internal List<string> mainFuncInitial = new();
 		internal string name = string.Empty;
-		internal bool NoTrayIcon;
-		internal bool Persistent;
+		internal bool noTrayIcon;
+		internal bool persistent;
+		internal bool persistentValueSetByUser;
 		private const string args = "args";
 		private const string initParams = "initparams";
 		private const string mainScope = "";
@@ -205,8 +206,6 @@ namespace Keysharp.Scripting
         public bool isHotkeyDefinition = false;
 
         internal PreReader reader;
-
-        public bool isPersistent = false;
 
         public Stack<(Function, HashSet<string>)> FunctionStack = new();
 		public Stack<Class> ClassStack = new();

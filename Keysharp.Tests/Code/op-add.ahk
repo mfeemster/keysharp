@@ -996,3 +996,11 @@ if (Type(y) = "Integer")
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
+
+a := true
+b := !0
+
+if (a + b == 2)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"

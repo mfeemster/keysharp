@@ -6,11 +6,11 @@ namespace Keysharp.Core.Common.Invoke
 		protected bool cdecl = false;
 		protected List<GCHandle> gcHandles = [];
 		protected ScopeHelper gcHandlesScope;
-		protected bool hasreturn = false;
+		protected bool hasReturn = false;
 		protected Type returnType = typeof(int);
 		internal Dictionary<int, Type> outputVars = [];
 		internal bool CDecl => cdecl;
-		internal bool HasReturn => hasreturn;
+		internal bool HasReturn => hasReturn;
 		internal Type ReturnType => returnType;
 		internal long[] args;
 		// contains bitwise info about the location of float and double type arguments, as well as the return type
@@ -50,7 +50,7 @@ namespace Keysharp.Core.Common.Invoke
 			Error err;
 			Type type = null;
 			int paramCount = parameters.Length;
-			bool hasReturn = (paramCount & 1) != 0;
+			hasReturn = (paramCount & 1) != 0;
 			int lastIdx = paramCount - 1;
 			int argCount = paramCount / 2;
 			args = new long[argCount];
@@ -93,7 +93,7 @@ namespace Keysharp.Core.Common.Invoke
 
 						if (len == 0)
 						{
-							hasreturn = false;
+							hasReturn = false;
 							break;
 						}
 
@@ -306,7 +306,7 @@ namespace Keysharp.Core.Common.Invoke
 							if (parseType)
 							{
 								if (isReturn)
-									hasreturn = false; // needed for ComCall OSError
+									hasReturn = false; // needed for ComCall OSError
 								type = typeof(int);
 								goto TypeDetermined;
 							}
