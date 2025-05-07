@@ -487,7 +487,7 @@ namespace Keysharp.Scripting
 										break;
 
 									case "PERSISTENT":
-										parser.Persistent = true;
+										parser.persistentValueSetByUser = true;
 										break;
 
 									case "REQUIRES":

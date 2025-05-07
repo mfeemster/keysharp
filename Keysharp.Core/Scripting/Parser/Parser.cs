@@ -167,11 +167,12 @@ namespace Keysharp.Scripting
 
 		internal static FrozenSet<string>.AlternateLookup<ReadOnlySpan<char>> propKeywordsAlt = propKeywords.GetAlternateLookup<ReadOnlySpan<char>>();
 
-		internal bool ErrorStdOut;
+		internal bool errorStdOut;
 		internal CodeStatementCollection initial = [];//These are placed at the very beginning of Main().
 		internal string name = string.Empty;
-		internal bool NoTrayIcon;
-		internal bool Persistent;
+		internal bool noTrayIcon;
+		internal bool persistent;
+		internal bool persistentValueSetByUser;
 		private const string args = "args";
 		private const string initParams = "initparams";
 		private const string mainScope = "";
@@ -332,7 +333,7 @@ namespace Keysharp.Scripting
 			var inv = (CodeMethodInvokeExpression)InternalMethods.RunMainWindow;
 			_ = inv.Parameters.Add(new CodeSnippetExpression("name"));
 			_ = inv.Parameters.Add(new CodeSnippetExpression("_ks_UserMainCode"));
-			_ = inv.Parameters.Add(new CodePrimitiveExpression(Persistent));
+			_ = inv.Parameters.Add(new CodePrimitiveExpression(EitherPeristent()));
 			_ = main.Statements.Add(new CodeExpressionStatement(inv));
 			_ = main.Statements.Add(new CodeExpressionStatement((CodeMethodInvokeExpression)InternalMethods.WaitThreads));
 			var exit0 = (CodeMethodInvokeExpression)InternalMethods.ExitApp;
@@ -1174,7 +1175,7 @@ namespace Keysharp.Scripting
 			else
 				_ = userMainMethod.Statements.Add(hotkeyInitCmie);
 
-			_ = userMainMethod.Statements.Add(Persistent ? exitIfNotPersistent : exit0);
+			_ = userMainMethod.Statements.Add(EitherPeristent() ? exitIfNotPersistent : exit0);
 			_ = userMainMethod.Statements.Add(new CodeMethodReturnStatement(emptyStringPrimitive));
 			methods.GetOrAdd(targetClass)[userMainMethod.Name] = userMainMethod;
 			_ = targetClass.Members.Add(userMainMethod);
@@ -1206,10 +1207,10 @@ namespace Keysharp.Scripting
 #endif
 			Statements();
 
-			if (!NoTrayIcon)
+			if (!noTrayIcon)
 				_ = initial.Add(new CodeExpressionStatement((CodeMethodInvokeExpression)InternalMethods.CreateTrayMenu));
 
-			if (Persistent)
+			if (persistentValueSetByUser)
 				_ = initial.Add(new CodeMethodInvokeExpression(new CodeMethodReferenceExpression(new CodeTypeReferenceExpression(typeof(Flow)), "Persistent"), [new CodePrimitiveExpression(true)]));
 
 			_ = initial.Add(new CodeSnippetExpression("Keysharp.Core.Env.HandleCommandLineParams(args)"));
@@ -1379,12 +1380,14 @@ namespace Keysharp.Scripting
 
 		private void CheckPersistent(string name)
 		{
-			if (Persistent)
+			if (persistent)
 				return;
 
 			if (persistentTerms.Contains(name))
-				Persistent = true;
+				persistent = true;
 		}
+
+		private bool EitherPeristent() => persistent || persistentValueSetByUser;
 
 		private CodeTypeDeclaration FindUserDefinedType(string typeName)
 		{

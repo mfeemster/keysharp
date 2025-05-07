@@ -119,7 +119,7 @@ namespace Keysharp.Scripting
 
 				case "ERRORSTDOUT":
 				{
-					ErrorStdOut = true;
+					errorStdOut = true;
 				}
 				break;
 
@@ -233,9 +233,9 @@ namespace Keysharp.Scripting
 
 				case "NOTRAYICON":
 				{
-					NoTrayIcon = true;
+					noTrayIcon = true;
 					var prop = new CodePropertyReferenceExpression(new CodeTypeReferenceExpression("Keysharp.Scripting.Script"), "NoTrayIcon");
-					var propset = new CodeAssignStatement(prop, new CodePrimitiveExpression(NoTrayIcon));
+					var propset = new CodeAssignStatement(prop, new CodePrimitiveExpression(noTrayIcon));
 					initial.Insert(0, propset);
 				}
 				break;

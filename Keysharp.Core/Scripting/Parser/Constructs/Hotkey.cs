@@ -14,7 +14,7 @@ namespace Keysharp.Scripting
 			if (hook_action == (uint)HotkeyTypeEnum.Normal && string.IsNullOrEmpty(SetLastHotkeyFunc(hotkeyName)))
 				return null;
 
-			Persistent = true;
+			persistent = true;
 			var invoke = (CodeMethodInvokeExpression)InternalMethods.AddHotkey;
 			_ = invoke.Parameters.Add(lastHotkeyFunc != "" ? new CodeSnippetExpression("Func(\"" + lastHotkeyFunc + "\", null)") : nullPrimitive);//Can't use interpolated string here because the AStyle formatter misinterprets it.
 			_ = invoke.Parameters.Add(new CodePrimitiveExpression(hook_action));
@@ -663,7 +663,7 @@ namespace Keysharp.Scripting
 						}
 					}
 
-					Persistent = true;
+					persistent = true;
 					var hasContinuationSection = replacement.AsSpan().IndexOfAny(CrLfSv) != -1;//Not a perfect detection, but will be correct most of the time.
 					var invoke = (CodeMethodInvokeExpression)InternalMethods.AddHotstring;
 					_ = invoke.Parameters.Add(new CodePrimitiveExpression(hotName));
