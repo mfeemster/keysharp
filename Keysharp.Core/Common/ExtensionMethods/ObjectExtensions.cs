@@ -501,10 +501,16 @@
 			if (obj is BoolResult br)
 				return br.o.ParseUInt(doconvert);
 
+			if (obj is long l)
+				return unchecked((uint)l);
+
 			var s = obj.ToString().AsSpan().Trim();
 
 			if (s.Length == 0)
 				return new uint? ();
+
+			if (long.TryParse(s, out var ll))
+				return unchecked((uint)ll);
 
 			if (uint.TryParse(s, out i))
 				return i;
