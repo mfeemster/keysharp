@@ -1,7 +1,4 @@
-﻿using System;
-using System.Reflection;
-using System.Reflection.Emit;
-using Keysharp.Core.Windows;
+﻿//#define CONCURRENT
 using Label = System.Reflection.Emit.Label;
 
 namespace Keysharp.Core.Common.Invoke
@@ -19,7 +16,13 @@ namespace Keysharp.Core.Common.Invoke
 		private readonly int startVarIndex = -1;
 		private readonly int stopVarIndexDistanceFromEnd;
 
-        internal static ConcurrentDictionary<MethodInfo, Func<object, object[], object>> delegateCache = new();
+#if CONCURRENT
+        internal static ConcurrentDictionary<MethodInfo, MethodPropertyHolder> methodCache = new();
+		internal static ConcurrentDictionary<PropertyInfo, MethodPropertyHolder> propertyCache = new();
+#else
+		internal static Dictionary<MethodInfo, MethodPropertyHolder> methodCache = new();
+		internal static Dictionary<PropertyInfo, MethodPropertyHolder> propertyCache = new();
+#endif
 
 		internal bool IsStaticFunc { get; private set; }
 		internal bool IsStaticProp { get; private set; }
@@ -29,63 +32,86 @@ namespace Keysharp.Core.Common.Invoke
 		internal int MinParams = 0;
 		internal int MaxParams = 9999;
 
-		internal MethodPropertyHolder(MethodInfo m, PropertyInfo p)
+        public static MethodPropertyHolder GetOrAdd(MethodInfo mi)
+        {
+#if CONCURRENT
+            return methodCache.GetOrAdd(mi, key => new MethodPropertyHolder(mi));
+#else
+			if (methodCache.TryGetValue(mi, out var mph))
+                return mph;
+            return methodCache[mi] = new MethodPropertyHolder(mi);
+#endif
+        }
+
+		internal static MethodPropertyHolder GetOrAdd(PropertyInfo pi)
 		{
-			mi = m;
-			pi = p;
+#if CONCURRENT
+            return propertyCache.GetOrAdd(pi, key => new MethodPropertyHolder(pi));
+#else
+			if (propertyCache.TryGetValue(pi, out var mph))
+				return mph;
+			return propertyCache[pi] = new MethodPropertyHolder(pi);
+#endif
+        }
 
-			if (mi != null)
+        internal MethodPropertyHolder() { }
+
+		internal MethodPropertyHolder(MethodInfo m)
+        {
+            mi = m;
+
+			parameters = mi.GetParameters();
+			ParamLength = parameters.Length;
+			isGuiType = Gui.IsGuiType(mi.DeclaringType);
+			anyOptional = parameters.Any(p => p.IsOptional || p.IsVariadic());
+
+			for (var i = 0; i < parameters.Length; i++)
 			{
-                parameters = mi.GetParameters();
-				ParamLength = parameters.Length;
-				isGuiType = Gui.IsGuiType(mi.DeclaringType);
-				anyOptional = parameters.Any(p => p.IsOptional || p.IsVariadic());
+				var pmi = parameters[i];
+				if (pmi.ParameterType == typeof(object[]))
+					startVarIndex = i;
+				else if (startVarIndex != -1 && stopVarIndexDistanceFromEnd == 0)
+					stopVarIndexDistanceFromEnd = parameters.Length - i;
 
-                for (var i = 0; i < parameters.Length; i++)
+				if (!(pmi.IsOptional || pmi.IsVariadic() || pmi.ParameterType == typeof(object[])))
+					MinParams++;
+			}
+			if (startVarIndex == -1)
+				MaxParams = parameters.Length;
+
+			IsStaticFunc = mi.Attributes.HasFlag(MethodAttributes.Static);
+			var isFuncObj = typeof(IFuncObj).IsAssignableFrom(mi.DeclaringType);
+
+			if (isFuncObj && mi.Name == "Bind")
+				IsBind = true;
+
+			if (isFuncObj && mi.Name == "Call")
+			{
+				callFunc = (inst, obj) => ((IFuncObj)inst).Call(obj);
+			}
+			else
+			{
+				var del = DelegateFactory.CreateDelegate(mi);
+
+				if (isGuiType)
 				{
-					var pmi = parameters[i];
-					if (pmi.ParameterType == typeof(object[]))
-						startVarIndex = i;
-					else if (startVarIndex != -1 && stopVarIndexDistanceFromEnd == 0)
-						stopVarIndexDistanceFromEnd = parameters.Length - i;
-
-					if (!(pmi.IsOptional || pmi.IsVariadic() || pmi.ParameterType == typeof(object[])))
-						MinParams++;
+					callFunc = (inst, obj) =>
+					{
+						var ctrl = (inst ?? obj[0]).GetControl();
+						object ret = null;
+						ctrl.CheckedInvoke(() =>
+						{
+							ret = del(inst, obj);
+						}, true);
+						return ret;
+					};
 				}
-				if (startVarIndex == -1)
-					MaxParams = parameters.Length;
+				else
+					callFunc = del;
+			}
 
-				IsStaticFunc = mi.Attributes.HasFlag(MethodAttributes.Static);
-				var isFuncObj = typeof(IFuncObj).IsAssignableFrom(mi.DeclaringType);
 
-				if (isFuncObj && mi.Name == "Bind")
-					IsBind = true;
-
-				if (isFuncObj && mi.Name == "Call")
-				{
-					callFunc = (inst, obj) => ((IFuncObj)inst).Call(obj);
-				} else
-				{
-                    var del = delegateCache.GetOrAdd(mi, key => DelegateFactory.CreateDelegate(mi));
-
-					if (isGuiType)
-                    {
-                        callFunc = (inst, obj) =>
-                        {
-                            var ctrl = (inst ?? obj[0]).GetControl();
-                            object ret = null;
-                            ctrl.CheckedInvoke(() =>
-                            {
-                                ret = del(inst, obj);
-                            }, true);
-                            return ret;
-                        };
-                    }
-                    else
-                        callFunc = del;
-                }
-				return;
-				
+			/*
 				if (ParamLength == 0)
 				{
 					if (isGuiType)
@@ -291,145 +317,118 @@ namespace Keysharp.Core.Common.Invoke
 						};
 					}
 				}
-			}
-			else if (pi != null)
+            */
+		}
+
+		internal MethodPropertyHolder(PropertyInfo p)
+		{
+            pi = p;
+			isGuiType = Gui.IsGuiType(pi.DeclaringType);
+			parameters = pi.GetIndexParameters();
+			ParamLength = parameters.Length;
+			MinParams = MaxParams = ParamLength;
+
+			if (pi.GetAccessors().Any(x => x.IsStatic))
 			{
-				isGuiType = Gui.IsGuiType(pi.DeclaringType);
-				parameters = pi.GetIndexParameters();
-				ParamLength = parameters.Length;
-				MinParams = MaxParams = ParamLength;
+				IsStaticProp = true;
 
-				if (pi.GetAccessors().Any(x => x.IsStatic))
+				if (isGuiType)
 				{
-					IsStaticProp = true;
+                    callFunc = (inst, obj) =>//Gui calls aren't worth optimizing further.
+                    {
+                        object ret = null;
+                        var ctrl = (inst ?? obj[0]).GetControl();//If it's a gui control, then invoke on the gui thread.
+                        ctrl.CheckedInvoke(() =>
+                        {
+                            ret = pi.GetValue(null);
+                        }, true);//This can be null if called before a Gui object is fully initialized.
 
-					if (isGuiType)
+                        if (ret is int i)
+                            ret = (long)i;//Try to keep everything as long.
+
+                        return ret;
+                    };
+					setPropFunc = (inst, obj) =>
 					{
-						callFunc = (inst, obj) =>//Gui calls aren't worth optimizing further.
+						var ctrl = inst.GetControl();//If it's a gui control, then invoke on the gui thread.
+						ctrl.CheckedInvoke(() =>
 						{
-							object ret = null;
-							var ctrl = (inst ?? obj[0]).GetControl();//If it's a gui control, then invoke on the gui thread.
-							ctrl.CheckedInvoke(() =>
-							{
-								ret = pi.GetValue(null);
-							}, true);//This can be null if called before a Gui object is fully initialized.
-
-							if (ret is int i)
-								ret = (long)i;//Try to keep everything as long.
-
-							return ret;
-						};
-						setPropFunc = (inst, obj) =>
-						{
-							var ctrl = inst.GetControl();//If it's a gui control, then invoke on the gui thread.
-							ctrl.CheckedInvoke(() =>
-							{
-								pi.SetValue(null, obj);
-							}, true);//This can be null if called before a Gui object is fully initialized.
-						};
-					}
-					else
-					{
-						if (pi.PropertyType == typeof(int))
-						{
-							callFunc = (inst, obj) =>
-							{
-								var ret = pi.GetValue(null);
-
-								if (ret is int i)
-									ret = (long)i;//Try to keep everything as long.
-
-								return ret;
-							};
-						}
-						else
-							callFunc = (inst, obj) => pi.GetValue(null);
-
-						setPropFunc = (inst, obj) => pi.SetValue(null, obj);
-					}
+							pi.SetValue(null, obj);
+						}, true);//This can be null if called before a Gui object is fully initialized.
+					};
 				}
 				else
 				{
-					if (isGuiType)
+					if (pi.PropertyType == typeof(int))
 					{
 						callFunc = (inst, obj) =>
 						{
-							object ret = null;
-							var ctrl = (inst ?? obj[0]).GetControl();//If it's a gui control, then invoke on the gui thread.
-							ctrl.CheckedInvoke(() =>
-							{
-								ret = pi.GetValue(inst ?? obj[0]);
-							}, true);//This can be null if called before a Gui object is fully initialized.
+							var ret = pi.GetValue(null);
 
 							if (ret is int i)
 								ret = (long)i;//Try to keep everything as long.
 
 							return ret;
 						};
-						setPropFunc = (inst, obj) =>
+					}
+					else
+						callFunc = (inst, obj) => pi.GetValue(null);
+
+					setPropFunc = (inst, obj) => pi.SetValue(null, obj);
+				}
+			}
+			else
+			{
+				if (isGuiType)
+				{
+					callFunc = (inst, obj) =>
+					{
+						object ret = null;
+						var ctrl = (inst ?? obj[0]).GetControl();//If it's a gui control, then invoke on the gui thread.
+						ctrl.CheckedInvoke(() =>
 						{
-							var ctrl = inst.GetControl();//If it's a gui control, then invoke on the gui thread.
-							ctrl.CheckedInvoke(() =>
-							{
-								pi.SetValue(inst, obj);
-							}, true);//This can be null if called before a Gui object is fully initialized.
+							ret = pi.GetValue(inst ?? obj[0]);
+						}, true);//This can be null if called before a Gui object is fully initialized.
+
+						if (ret is int i)
+							ret = (long)i;//Try to keep everything as long.
+
+						return ret;
+					};
+					setPropFunc = (inst, obj) =>
+					{
+						var ctrl = inst.GetControl();//If it's a gui control, then invoke on the gui thread.
+						ctrl.CheckedInvoke(() =>
+						{
+							pi.SetValue(inst, obj);
+						}, true);//This can be null if called before a Gui object is fully initialized.
+					};
+				}
+				else
+				{
+					if (pi.PropertyType == typeof(int))
+					{
+						callFunc = (inst, obj) =>
+						{
+							var ret = pi.GetValue(inst);
+
+							if (ret is int i)
+								ret = (long)i;//Try to keep everything as long.
+
+							return ret;
 						};
 					}
 					else
-					{
-						if (pi.PropertyType == typeof(int))
-						{
-							callFunc = (inst, obj) =>
-							{
-								var ret = pi.GetValue(inst);
+						callFunc = (inst, obj) => pi.GetValue(inst);
 
-								if (ret is int i)
-									ret = (long)i;//Try to keep everything as long.
-
-								return ret;
-							};
-						}
-						else
-							callFunc = (inst, obj) => pi.GetValue(inst);
-
-						setPropFunc = pi.SetValue;
-					}
+					setPropFunc = pi.SetValue;
 				}
 			}
-
-            string GenerateMethodInfoCacheKey()
-            {
-                var sb = new StringBuilder();
-
-                sb.Append(mi.DeclaringType.FullName);
-                sb.Append("+");
-                sb.Append(mi.Name);
-                sb.Append("<");
-
-                // For methods, use the return type and parameter list.
-                sb.Append(mi.ReturnType.FullName);
-                foreach (var param in mi.GetParameters())
-                {
-                    sb.Append(",").Append(param.ParameterType.FullName);
-                    if (param.HasDefaultValue)
-                    {
-                        // Append the default value or "null" if it's null.
-                        sb.Append("=").Append(param.DefaultValue == null ? "null" : param.DefaultValue.ToString());
-                    }
-                    else
-                    {
-                        sb.Append("=NoDefault");
-                    }
-                }
-                sb.Append(">");
-
-                return sb.ToString();
-            }
-        }
-
+		}
 		internal static void ClearCache()
 		{
-			delegateCache.Clear();
+			methodCache.Clear();
+            propertyCache.Clear();
 		}
 	}
     class ArgumentError : Error

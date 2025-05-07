@@ -1,12 +1,13 @@
-// #define CONCURRENT
+//#define CONCURRENT
 #if CONCURRENT
 
-	using sttd = System.Collections.Concurrent.ConcurrentDictionary<string, System.Collections.Concurrent.ConcurrentDictionary<System.Type, System.Collections.Concurrent.ConcurrentDictionary<int, Keysharp.Core.Common.Invoke.MethodPropertyHolder>>>;
-	using ttsd = System.Collections.Concurrent.ConcurrentDictionary<System.Type, System.Collections.Concurrent.ConcurrentDictionary<string, System.Collections.Concurrent.ConcurrentDictionary<int, Keysharp.Core.Common.Invoke.MethodPropertyHolder>>>;
+using sttd = System.Collections.Concurrent.ConcurrentDictionary<string, System.Collections.Concurrent.ConcurrentDictionary<System.Type, System.Collections.Concurrent.ConcurrentDictionary<int, Keysharp.Core.Common.Invoke.MethodPropertyHolder>>>;
+using ttsd = System.Collections.Concurrent.ConcurrentDictionary<System.Type, System.Collections.Concurrent.ConcurrentDictionary<string, System.Collections.Concurrent.ConcurrentDictionary<int, Keysharp.Core.Common.Invoke.MethodPropertyHolder>>>;
 
 #else
-	using sttd = System.Collections.Generic.Dictionary<string, System.Collections.Generic.Dictionary<System.Type, System.Collections.Generic.Dictionary<int, Keysharp.Core.Common.Invoke.MethodPropertyHolder>>>;
-	using ttsd = System.Collections.Generic.Dictionary<System.Type, System.Collections.Generic.Dictionary<string, System.Collections.Generic.Dictionary<int, Keysharp.Core.Common.Invoke.MethodPropertyHolder>>>;
+
+using sttd = System.Collections.Generic.Dictionary<string, System.Collections.Generic.Dictionary<System.Type, System.Collections.Generic.Dictionary<int, Keysharp.Core.Common.Invoke.MethodPropertyHolder>>>;
+using ttsd = System.Collections.Generic.Dictionary<System.Type, System.Collections.Generic.Dictionary<string, System.Collections.Generic.Dictionary<int, Keysharp.Core.Common.Invoke.MethodPropertyHolder>>>;
 
 #endif
 
@@ -76,7 +77,7 @@ namespace Keysharp.Core.Common.Invoke
 			flatPublicStaticMethods = new Dictionary<string, MethodInfo>(500, StringComparer.OrdinalIgnoreCase);
 			flatPublicStaticProperties = new Dictionary<string, PropertyInfo>(200, StringComparer.OrdinalIgnoreCase);
 			stringToTypes = new Dictionary<string, Type>(sttcap / 4, StringComparer.OrdinalIgnoreCase);
-        }
+		}
 
 		/// <summary>
 		/// This must be manually called before any program is run.
@@ -221,7 +222,7 @@ namespace Keysharp.Core.Common.Invoke
 							foreach (var meth in meths)
 								typeToMethods.GetOrAdd(meth.ReflectedType,
 													   (tp) => new ConcurrentDictionary<string, ConcurrentDictionary<int, MethodPropertyHolder>>(StringComparer.OrdinalIgnoreCase))
-								.GetOrAdd(meth.Name)[meth.GetParameters().Length] = new MethodPropertyHolder(meth, null);
+								.GetOrAdd(meth.Name)[meth.GetParameters().Length] = MethodPropertyHolder.GetOrAdd(meth);
 						}
 						else//Make a dummy entry because this type has no methods. This saves us additional searching later on when we encounter a type derived from this one. It will make the first Dictionary lookup above return true.
 						{
@@ -235,9 +236,12 @@ namespace Keysharp.Core.Common.Invoke
 						if (meths.Length > 0)
 						{
 							foreach (var meth in meths)
+							{
+								var mph = MethodPropertyHolder.GetOrAdd(meth);
 								typeToMethods.GetOrAdd(meth.ReflectedType,
 													   () => new Dictionary<string, Dictionary<int, MethodPropertyHolder>>(meths.Length, StringComparer.OrdinalIgnoreCase))
-								.GetOrAdd(meth.Name)[meth.GetParameters().Length] = new MethodPropertyHolder(meth, null);
+								.GetOrAdd(meth.Name)[mph.ParamLength] = mph;
+							}
 						}
 						else//Make a dummy entry because this type has no methods. This saves us additional searching later on when we encounter a type derived from this one. It will make the first Dictionary lookup above return true.
 						{
@@ -295,7 +299,7 @@ namespace Keysharp.Core.Common.Invoke
 								foreach (var prop in props)
 									typeToStringProperties.GetOrAdd(prop.ReflectedType,
 																	(tp) => new ConcurrentDictionary<string, ConcurrentDictionary<int, MethodPropertyHolder>>(StringComparer.OrdinalIgnoreCase))
-									.GetOrAdd(prop.Name)[prop.GetIndexParameters().Length] = new MethodPropertyHolder(null, prop);
+									.GetOrAdd(prop.Name)[prop.GetIndexParameters().Length] = MethodPropertyHolder.GetOrAdd(prop);
 							}
 							else//Make a dummy entry because this type has no properties. This saves us additional searching later on when we encounter a type derived from this one. It will make the first Dictionary lookup above return true.
 							{
@@ -309,9 +313,12 @@ namespace Keysharp.Core.Common.Invoke
 							if (props.Length > 0)
 							{
 								foreach (var prop in props)
+								{
+									var mph = MethodPropertyHolder.GetOrAdd(prop);
 									typeToStringProperties.GetOrAdd(prop.ReflectedType,
 																	() => new Dictionary<string, Dictionary<int, MethodPropertyHolder>>(props.Length, StringComparer.OrdinalIgnoreCase))
-									.GetOrAdd(prop.Name)[prop.GetIndexParameters().Length] = new MethodPropertyHolder(null, prop);
+									.GetOrAdd(prop.Name)[mph.ParamLength] = mph;
+								}
 							}
 							else//Make a dummy entry because this type has no properties. This saves us additional searching later on when we encounter a type derived from this one. It will make the first Dictionary lookup above return true.
 							{
@@ -338,8 +345,8 @@ namespace Keysharp.Core.Common.Invoke
 							return mph;
 					}
 
-                    t = t.BaseType;
-                } while (t.Assembly == typeof(Any).Assembly
+					t = t.BaseType;
+				} while (t.Assembly == typeof(Any).Assembly
 
 						 || t.Namespace.StartsWith("Keysharp.CompiledMain", StringComparison.OrdinalIgnoreCase)
 						 || isSystem);
@@ -439,9 +446,9 @@ namespace Keysharp.Core.Common.Invoke
 						ct += dkt.Count;
 
                         if (dkt.ContainsKey("__Static"))
-                            --ct;
+							--ct;
 
-                        if (dkt.ContainsKey("__Class"))
+						if (dkt.ContainsKey("__Class"))
 							--ct;
 					}
 
@@ -509,7 +516,7 @@ namespace Keysharp.Core.Common.Invoke
 							(type.Namespace.StartsWith("Keysharp.Core", StringComparison.OrdinalIgnoreCase) ||
 							 type.Namespace.StartsWith("Keysharp.CompiledMain", StringComparison.OrdinalIgnoreCase) ||
 							 type.Namespace.StartsWith("Keysharp.Scripting", StringComparison.OrdinalIgnoreCase) ||
-                             type.Namespace.StartsWith("Keysharp.Tests", StringComparison.OrdinalIgnoreCase)))//Allow tests so we can use function objects inside of unit tests.
+							 type.Namespace.StartsWith("Keysharp.Tests", StringComparison.OrdinalIgnoreCase)))//Allow tests so we can use function objects inside of unit tests.
 					{
 						_ = FindAndCacheInstanceMethod(type, "", -1);
 						_ = FindAndCacheStaticMethod(type, "", -1);
@@ -599,7 +606,7 @@ namespace Keysharp.Core.Common.Invoke
 
 			return dkt;
 		}
-    }
+	}
 
 	internal class UnloadableAssemblyLoadContext : AssemblyLoadContext
 	{
@@ -612,5 +619,5 @@ namespace Keysharp.Core.Common.Invoke
 			var assemblyPath = resolver.ResolveAssemblyToPath(name);
 			return assemblyPath != null ? LoadFromAssemblyPath(assemblyPath) : null;
 		}
-    }
+	}
 }

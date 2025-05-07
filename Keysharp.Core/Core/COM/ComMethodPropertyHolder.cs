@@ -14,7 +14,6 @@ namespace Keysharp.Core.COM
 		public string Name { get; private set; }
 
 		public ComMethodPropertyHolder(string name)
-			: base(null, null)
 		{
 			Name = name;
 			callFunc = (inst, obj) =>
