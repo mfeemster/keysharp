@@ -1,7 +1,6 @@
-﻿using System.Reflection;
-using static Keysharp.Scripting.Script;
-
+﻿#if WINDOWS
 [assembly: ComVisible(true)]
+#endif
 
 namespace Keysharp.Core.Common.ObjectBase
 {
@@ -10,12 +9,16 @@ namespace Keysharp.Core.Common.ObjectBase
 		public IFuncObj __Enum(object count);
 	}
 
-	[Guid("934B0E6A-9B50-4248-884B-BE5A9BC66B39")]
+#if WINDOWS
+	[Guid("98D592E1-0CE8-4892-82C5-F219B040A390")]
 	[ClassInterface(ClassInterfaceType.AutoDispatch)]
 	[ProgId("Keysharp.Script")]
-	public class KeysharpObject : Any, IReflect
+	public partial class KeysharpObject : Any, IReflect
+#else
+	public class KeysharpObject : Any
+#endif
 	{
-        protected internal Dictionary<string, OwnPropsDesc> op = new Dictionary<string, OwnPropsDesc>(StringComparer.OrdinalIgnoreCase);
+		protected internal Dictionary<string, OwnPropsDesc> op = new Dictionary<string, OwnPropsDesc>(StringComparer.OrdinalIgnoreCase);
 
         MethodInfo mi;
 		// In some cases we wish to skip the automatic calls to __Init and __New (eg when creating OwnProps),
@@ -259,126 +262,5 @@ namespace Keysharp.Core.Common.ObjectBase
 		/// Placeholder for property initialization code that derived classes will call *before* __New() gets called.
 		/// </summary>
 		public virtual object __Init() => "";
-
-		#region IReflect implementation
-
-		public FieldInfo GetField(string name, BindingFlags bindingAttr) => null;
-		public FieldInfo[] GetFields(BindingFlags bindingAttr) => System.Array.Empty<FieldInfo>();
-		public MethodInfo GetMethod(string name, BindingFlags bindingAttr) => null;
-		public MethodInfo GetMethod(string name, BindingFlags bindingAttr, Binder binder, Type[] types, ParameterModifier[] modifiers) => null;
-		public MethodInfo[] GetMethods(BindingFlags bindingAttr)
-		{
-			List<MethodInfo> meths = new();
-			KeysharpObject kso = this;
-			if (Script.TryGetProps(this, out var props, true, OwnPropsMapType.Call))
-			{
-				foreach (var prop in props)
-				{
-					var opm = prop.Value;
-					if (opm.Call is FuncObj fo && fo != null)
-					{
-						if (fo.Mph.mi.Name.Equals(prop.Key, StringComparison.OrdinalIgnoreCase))
-							meths.Add(fo.Mph.mi);
-						else
-							meths.Add(new RenamedMethodInfo(fo.Mph.mi, prop.Key));
-					}
-				}
-			}
-
-			return meths.ToArray();
-		}
-		public PropertyInfo[] GetProperties(BindingFlags bindingAttr) => System.Array.Empty<PropertyInfo>();
-		public PropertyInfo GetProperty(string name, BindingFlags bindingAttr) => null;
-		public PropertyInfo GetProperty(string name, BindingFlags bindingAttr, Binder? binder, Type? type, Type[] types, ParameterModifier[]? modifiers) => null;
-		public MemberInfo[] GetMember(string name, BindingFlags bindingAttr) => System.Array.Empty<MemberInfo>();
-		public MemberInfo[] GetMembers(BindingFlags bindingAttr) => System.Array.Empty<MemberInfo>();
-		public object InvokeMember(
-			string name,
-			BindingFlags invokeAttr,
-			Binder binder,
-			object target,
-			object[] args,
-			ParameterModifier[] modifiers,
-			System.Globalization.CultureInfo culture,
-			string[] namedParameters)
-		{
-			// property getter?
-			if ((invokeAttr & BindingFlags.GetProperty) != 0)
-				return Script.GetPropertyValue(target, name);
-
-			// property setter?
-			if ((invokeAttr & BindingFlags.SetProperty) != 0)
-			{
-				Script.SetPropertyValue(target, name, args);
-				return null;
-			}
-
-			// method call
-			if ((invokeAttr & BindingFlags.InvokeMethod) != 0)
-				return Script.Invoke(target, name, args);
-
-			throw new MissingMemberException($"Member '{name}' not found");
-		}
-
-		public Type UnderlyingSystemType => typeof(KeysharpObject);
-
-		/// <summary>
-		/// A MethodInfo that delegates to an underlying MethodInfo
-		/// but returns a different Name.
-		/// </summary>
-		sealed class RenamedMethodInfo : MethodInfo
-		{
-			readonly MethodInfo _inner;
-			readonly string _fakeName;
-			public RenamedMethodInfo(MethodInfo inner, string fakeName)
-			{
-				_inner = inner;
-				_fakeName = fakeName;
-			}
-
-			public override string Name => _fakeName;
-
-			// everything else just delegates to _inner…
-			public override ICustomAttributeProvider ReturnTypeCustomAttributes
-				=> _inner.ReturnTypeCustomAttributes;
-			public override MethodAttributes Attributes
-				=> _inner.Attributes;
-			public override Type DeclaringType
-				=> _inner.DeclaringType;
-			public override RuntimeMethodHandle MethodHandle
-				=> _inner.MethodHandle;
-			public override Type ReflectedType
-				=> _inner.ReflectedType;
-			public override MethodImplAttributes GetMethodImplementationFlags()
-				=> _inner.GetMethodImplementationFlags();
-			public override ParameterInfo[] GetParameters()
-				=> _inner.GetParameters();
-			public override object[] GetCustomAttributes(bool inherit)
-				=> _inner.GetCustomAttributes(inherit);
-			public override object[] GetCustomAttributes(Type attrType, bool inherit)
-				=> _inner.GetCustomAttributes(attrType, inherit);
-			public override bool IsDefined(Type attrType, bool inherit)
-				=> _inner.IsDefined(attrType, inherit);
-			public override object Invoke(object obj, BindingFlags invokeAttr, Binder binder, object[] parameters, CultureInfo culture)
-				=> _inner.Invoke(obj, invokeAttr, binder, parameters, culture);
-			public new object Invoke(object obj, object[] parameters)
-				=> _inner.Invoke(obj, parameters);
-			public override MethodInfo GetBaseDefinition()
-				=> _inner.GetBaseDefinition();
-			public override Type ReturnType
-				=> _inner.ReturnType;
-			public override MethodInfo MakeGenericMethod(params Type[] typeArguments)
-				=> _inner.MakeGenericMethod(typeArguments);
-			public override bool ContainsGenericParameters
-				=> _inner.ContainsGenericParameters;
-			public override bool IsGenericMethod
-				=> _inner.IsGenericMethod;
-			public override bool IsGenericMethodDefinition
-				=> _inner.IsGenericMethodDefinition;
-			public override Type[] GetGenericArguments()
-				=> _inner.GetGenericArguments();
-		}
-
-		#endregion
 	}
 }
