@@ -439,6 +439,39 @@ namespace Keysharp.Core
 		}
 
 		/// <summary>
+		/// Calls DoEvents but catches and discards most errors thrown from inside of it.
+		/// </summary>
+		/// <param name="allowExit"/>If true then UserRequestedExitException is allowed through
+		/// so the program can exit, otherwise all exceptions are discarded.
+		public static void TryDoEvents(bool allowExit = true)
+		{
+			if (allowExit)
+			{
+				try
+				{
+					Application.DoEvents();//Can sometimes throw on linux.
+				}
+				catch (UserRequestedExitException)
+				{
+					throw;
+				}
+				catch
+				{
+				}
+			} 
+			else
+			{
+				try
+				{
+					Application.DoEvents();//Can sometimes throw on linux.
+				}
+				catch
+				{
+				}
+			}
+		}
+
+		/// <summary>
 		/// Waits the specified amount of time before continuing.
 		/// </summary>
 		/// <param name="delay">The amount of time to pause in milliseconds.</param>
@@ -454,17 +487,7 @@ namespace Keysharp.Core
 			{
 				var start = DateTime.UtcNow;
 
-				try
-				{
-					Application.DoEvents();//Can sometimes throw on linux.
-				}
-				catch (UserRequestedExitException)
-				{
-					throw;
-				}
-				catch
-				{
-				}
+				TryDoEvents();
 
 				//0 tells this thread to relinquish the remainder of its time slice to any thread of equal priority that is ready to run.
 				//If there are no other threads of equal priority that are ready to run, execution of the current thread is not suspended.
@@ -473,33 +496,13 @@ namespace Keysharp.Core
 			}
 			else if (d == -1L)
 			{
-				try
-				{
-					Application.DoEvents();//Can sometimes throw on linux.
-				}
-				catch (UserRequestedExitException)
-				{
-					throw;
-				}
-				catch
-				{
-				}
+				TryDoEvents();
 			}
 			else if (d == -2)//Sleep indefinitely until all InputHooks are finished.
 			{
 				while (!hasExited && Script.input != null && Script.input.InProgress())
 				{
-					try
-					{
-						Application.DoEvents();//Can sometimes throw on linux.
-					}
-					catch (UserRequestedExitException)
-					{
-						throw;
-					}
-					catch
-					{
-					}
+					TryDoEvents();
 
 					System.Threading.Thread.Sleep(10);
 				}
@@ -510,18 +513,7 @@ namespace Keysharp.Core
 
 				while (DateTime.UtcNow < stop && !hasExited)
 				{
-					try
-					{
-						//if (System.Threading.Thread.CurrentThread.ManagedThreadId == Processes.ManagedMainThreadID)
-						Application.DoEvents();//Can sometimes throw on linux.
-					}
-					catch (UserRequestedExitException)
-					{
-						throw;
-					}
-					catch
-					{
-					}
+					TryDoEvents();
 
 					System.Threading.Thread.Sleep(10);
 				}
