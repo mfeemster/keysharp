@@ -77,7 +77,7 @@
 			Dispose(true);
 		}
 
-		public static object Call(object byteCount = null, object fillByte = null) => new Buffer(byteCount, fillByte);
+		public static object Call(object @this, object byteCount = null, object fillByte = null) => new Buffer(byteCount, fillByte);
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="Buffer"/> class.
