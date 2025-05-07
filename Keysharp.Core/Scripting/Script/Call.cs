@@ -42,9 +42,19 @@ namespace Keysharp.Scripting
                 return false;
 			while (true)
 			{
-				if (!ownProps.TryGetValue("base", out var baseEntry) || baseEntry.Value == null)
+				if (!ownProps.TryGetValue("base", out var baseEntry) || (baseEntry.Value == null && baseEntry.Get == null))
 					return false;
-				ownProps = ((KeysharpObject)baseEntry.Value).op;
+				if (baseEntry.Get != null && baseEntry.Get is FuncObj fo && fo != null && fo.Call(baseObj) is KeysharpObject kso)
+				{
+					baseObj = kso;
+				}
+				else 
+				{
+					baseObj = (KeysharpObject)baseEntry.Value;
+				}
+				if (baseObj == null)
+					return false;
+				ownProps = baseObj.op;
 				if (ownProps != null && ownProps.TryGetValue(key, out opm))
 				{
 					if (type == OwnPropsMapType.None)
@@ -56,7 +66,58 @@ namespace Keysharp.Scripting
 				}
 			}
         }
-        public static (object, object) GetMethodOrProperty(object item, string key, int paramCount, bool checkBase = true)//This has to be public because the script will emit it in Main().
+
+		public static bool TryGetProps(KeysharpObject baseObj, out Dictionary<string, OwnPropsDesc> props, bool searchBase = true, OwnPropsMapType type = 0)
+		{
+			OwnPropsDesc opm = null;
+			props = new Dictionary<string, OwnPropsDesc>(StringComparer.OrdinalIgnoreCase);
+
+			var ownProps = baseObj.op;
+
+			while (ownProps != null && ownProps.Count != 0)
+			{
+				foreach (var prop in ownProps)
+				{
+					if (props.ContainsKey(prop.Key))
+						continue;
+
+					opm = prop.Value;
+
+					if (type == OwnPropsMapType.None)
+					{
+						props[prop.Key] = prop.Value;
+						continue;
+					}
+					
+					if ((opm.Call != null && (type & OwnPropsMapType.Call) != 0) 
+						|| (opm.Get != null && (type & OwnPropsMapType.Get) != 0)
+						|| (opm.Set != null && (type & OwnPropsMapType.Set) != 0)
+						|| (opm.Value != null && (type & OwnPropsMapType.Value) != 0))
+						props[prop.Key] = prop.Value;
+				}
+
+				if (!searchBase)
+					break;
+
+				if (!ownProps.TryGetValue("base", out var baseEntry) || (baseEntry.Value == null && baseEntry.Get == null))
+					break;
+				if (baseEntry.Get != null && baseEntry.Get is FuncObj fo && fo != null && fo.Call(baseObj) is KeysharpObject kso)
+				{
+					baseObj = kso;
+				}
+				else
+				{
+					baseObj = (KeysharpObject)baseEntry.Value;
+				}
+				if (baseObj == null)
+					break;
+				ownProps = baseObj.op;
+			}
+
+			return props.Count != 0;
+		}
+
+		public static (object, object) GetMethodOrProperty(object item, string key, int paramCount, bool checkBase = true)//This has to be public because the script will emit it in Main().
 		{
 			Error err;
 			KeysharpObject kso = null;
