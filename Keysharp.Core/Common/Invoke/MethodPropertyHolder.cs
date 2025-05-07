@@ -36,6 +36,7 @@
 				for (var i = 0; i < parameters.Length; i++)
 				{
 					var pmi = parameters[i];
+
 					if (pmi.ParameterType == typeof(object[]))
 						startVarIndex = i;
 					else if (startVarIndex != -1 && stopVarIndexDistanceFromEnd == 0)
@@ -44,6 +45,7 @@
 					if (!(pmi.IsOptional || pmi.IsVariadic() || pmi.ParameterType == typeof(object[])))
 						MinParams++;
 				}
+
 				if (startVarIndex == -1)
 					MaxParams = parameters.Length;
 
@@ -100,7 +102,7 @@
 								//so manually create an array of parameters that matches the required size.
 								var oi = 0;
 								var pi = 0;
-								newobj = paramsPool.Rent();
+								paramsPool.TryPush(out newobj, true);
 
 								for (; oi < objLength && pi < ParamLength; pi++)
 								{
@@ -190,7 +192,7 @@
 								else
 									System.Array.Copy(newobj, obj, len);
 
-								_ = paramsPool.Return(newobj, true);
+								paramsPool.TryPop(out newobj, true);
 							}
 
 							return ret;
@@ -226,7 +228,7 @@
 							else
 							{
 								var pi = 0;//The slower case: a function is trying to be called with a different number of parameters than it actually has, so manually create an array of parameters that matches the required size.
-								var newobj = paramsPool.Rent();//Using the memory pool in this function seems to help a lot.
+								paramsPool.TryPush(out var newobj, true);
 
 								for (; pi < objLength && pi < ParamLength; ++pi)
 									if (obj[pi] == null && parameters[pi].IsOptional)
@@ -254,7 +256,7 @@
 								}
 
 								System.Array.Copy(newobj, obj, Math.Min(newobj.Length, objLength));//In case any params were references.
-								_ = paramsPool.Return(newobj, true);
+								paramsPool.TryPop(out newobj, true);
 							}
 
 							return ret;
