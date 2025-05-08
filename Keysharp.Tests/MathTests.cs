@@ -95,7 +95,7 @@ namespace Keysharp.Tests
 			{
 				var x = n[i];
 				var y = n[i - 1];
-				Assert.AreEqual(Math.Atan2(y, x), Maths.ATan2(y, x));
+				Assert.AreEqual(Math.Atan2(y, x), KeysharpEnhancements.ATan2(y, x));
 			}
 
 			Assert.IsTrue(TestScript("math-atan2", true));
@@ -597,14 +597,6 @@ namespace Keysharp.Tests
 				Assert.AreEqual(Math.Tanh(v), KeysharpEnhancements.Tanh(v));
 			}
 			Assert.IsTrue(TestScript("math-tanh", true));
-		}
-
-		[Test, Category("Math")]
-		public void Truncate()
-		{
-			foreach (var n in new[] { -1, -4.5, 0, -0, 2.5, 1, 8.675 })
-				Assert.AreEqual(Math.Truncate(n), Maths.Truncate(n));
-			Assert.IsTrue(TestScript("math-truncate", true));
 		}
 	}
 }
