@@ -6,14 +6,14 @@ namespace Keysharp.Core.Common.ObjectBase
 	public partial class KeysharpObject : Any, IReflect
 	{
 		#region IReflect implementation
-		public FieldInfo GetField(string name, BindingFlags bindingAttr)
+		FieldInfo IReflect.GetField(string name, BindingFlags bindingAttr)
 		{
 			// only own (no base) and only if there's a Value slot
 			if (Script.TryGetOwnPropsMap(this, name, out var opm, searchBase: false, type: OwnPropsMapType.Value))
 				return new SimpleFieldInfo(name);
 			return null;
 		}
-		public FieldInfo[] GetFields(BindingFlags bindingAttr)
+		FieldInfo[] IReflect.GetFields(BindingFlags bindingAttr)
 		{
 			var list = new List<FieldInfo>();
 			if (op != null)
@@ -26,9 +26,9 @@ namespace Keysharp.Core.Common.ObjectBase
 			}
 			return list.ToArray();
 		}
-		public MethodInfo GetMethod(string name, BindingFlags bindingAttr) => null;
-		public MethodInfo GetMethod(string name, BindingFlags bindingAttr, Binder binder, Type[] types, ParameterModifier[] modifiers) => null;
-		public MethodInfo[] GetMethods(BindingFlags bindingAttr)
+		MethodInfo IReflect.GetMethod(string name, BindingFlags bindingAttr) => null;
+		MethodInfo IReflect.GetMethod(string name, BindingFlags bindingAttr, Binder binder, Type[] types, ParameterModifier[] modifiers) => null;
+		MethodInfo[] IReflect.GetMethods(BindingFlags bindingAttr)
 		{
 			List<MethodInfo> meths = new();
 			KeysharpObject kso = this;
@@ -49,7 +49,7 @@ namespace Keysharp.Core.Common.ObjectBase
 
 			return meths.ToArray();
 		}
-		public PropertyInfo[] GetProperties(BindingFlags bindingAttr)
+		PropertyInfo[] IReflect.GetProperties(BindingFlags bindingAttr)
 		{
 			var list = new List<PropertyInfo>();
 			if (Script.TryGetProps(this, out var props, true, OwnPropsMapType.Get | OwnPropsMapType.Set))
@@ -65,26 +65,26 @@ namespace Keysharp.Core.Common.ObjectBase
 			}
 			return list.ToArray();
 		}
-		public PropertyInfo GetProperty(string name, BindingFlags bindingAttr) => null;
-		public PropertyInfo GetProperty(string name, BindingFlags bindingAttr, Binder? binder, Type? type, Type[] types, ParameterModifier[]? modifiers) => null;
-		public MemberInfo[] GetMember(string name, BindingFlags bindingAttr)
+		PropertyInfo IReflect.GetProperty(string name, BindingFlags bindingAttr) => null;
+		PropertyInfo IReflect.GetProperty(string name, BindingFlags bindingAttr, Binder? binder, Type? type, Type[] types, ParameterModifier[]? modifiers) => null;
+		MemberInfo[] IReflect.GetMember(string name, BindingFlags bindingAttr)
 		{
 			var list = new List<MemberInfo>();
-			var f = GetField(name, bindingAttr);
+			var f = ((IReflect)this).GetField(name, bindingAttr);
 			if (f != null) list.Add(f);
-			var p = GetProperty(name, bindingAttr);
+			var p = ((IReflect)this).GetProperty(name, bindingAttr);
 			if (p != null) list.Add(p);
-			var ms = GetMethods(bindingAttr);
+			var ms = ((IReflect)this).GetMethods(bindingAttr);
 			foreach (var m in ms) if (string.Equals(m.Name, name, StringComparison.OrdinalIgnoreCase))
 					list.Add(m);
 			return list.ToArray();
 		}
-		public MemberInfo[] GetMembers(BindingFlags bindingAttr)
+		MemberInfo[] IReflect.GetMembers(BindingFlags bindingAttr)
 		{
 			var all = new List<MemberInfo>();
-			all.AddRange(GetFields(bindingAttr));
-			all.AddRange(GetProperties(bindingAttr));
-			all.AddRange(GetMethods(bindingAttr));
+			all.AddRange(((IReflect)this).GetFields(bindingAttr));
+			all.AddRange(((IReflect)this).GetProperties(bindingAttr));
+			all.AddRange(((IReflect)this).GetMethods(bindingAttr));
 			return all.ToArray();
 		}
 
@@ -97,7 +97,7 @@ namespace Keysharp.Core.Common.ObjectBase
 		const int DISPID_DESTRUCTOR = -7;
 		const int DISPID_COLLECT = -8;
 
-		public object InvokeMember(
+		object IReflect.InvokeMember(
 			string name,
 			BindingFlags invokeAttr,
 			Binder binder,
