@@ -7,7 +7,7 @@ namespace Keysharp.Core.Common.Strings
 			if (mode == null)
 				return false;
 
-			return mode.ToString().ToLowerInvariant() switch
+			return mode.ToString().ToLower() switch
 		{
 				Keyword_On or "1" or "true" => true,
 				Keyword_Off or "0" or "false" => false,
