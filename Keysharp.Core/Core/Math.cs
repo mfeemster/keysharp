@@ -516,10 +516,12 @@
 		/// <param name="number">A double number to be rounded.</param>
 		/// <param name="n">The number of double places in the return value.</param>
 		/// <returns>The number nearest to <paramref name="number"/> that contains a number of fractional digits equal to <paramref name="n"/>.</returns>
-		public static double Round(object obj0, object obj1 = null)
+		public static object Round(object obj0, object obj1 = null)
 		{
 			var number = obj0.Ad();
 			var n = obj1.Al();
+			if (n == 0)
+				return Convert.ToInt64(number);
 			var mult = n != 0 ? Math.Pow(10, n) : 1;//Code taken from AHK.
 			return (number >= 0.0 ? Math.Floor(number * mult + 0.5) : Math.Ceiling((number * mult) - 0.5)) / mult;
 		}
