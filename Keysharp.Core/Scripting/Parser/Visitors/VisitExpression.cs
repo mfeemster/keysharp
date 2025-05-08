@@ -111,6 +111,11 @@ namespace Keysharp.Scripting
             ExpressionSyntax targetExpression = null;
             // Visit the singleExpression (the method to be called)
             string methodName = context.primaryExpression().GetText();
+
+            // In case it's a variable
+            var normalized = parser.IsVarDeclaredLocally(NormalizeIdentifier(methodName));
+            if (normalized != null)
+                methodName = normalized;
 			// I don't like that this complicated check is repeated in GenerateFunctionInvocation,
             // but see no good way around it.
 			if (Reflections.FindBuiltInMethod(methodName, -1) is MethodPropertyHolder mph
@@ -259,7 +264,7 @@ namespace Keysharp.Scripting
         {
             ArgumentListSyntax argumentList = (ArgumentListSyntax)Visit(context.expressionSequence());
             if (argumentList.Arguments.Count == 1)
-                return argumentList.Arguments[0].Expression;
+                return SyntaxFactory.ParenthesizedExpression(argumentList.Arguments[0].Expression);
 
             return ((InvocationExpressionSyntax)InternalMethods.MultiStatement)
                 .WithArgumentList(argumentList);

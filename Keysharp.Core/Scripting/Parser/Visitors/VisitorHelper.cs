@@ -270,12 +270,21 @@ namespace Keysharp.Scripting
                     return match;
             }
 
-            if (!currentFunc.Static)
+			if (currentFunc.Params != null)
+			{
+				var parameterMatch = currentFunc.Params.FirstOrDefault(param =>
+					caseSense ? param.Identifier.Text == name
+							  : param.Identifier.Text.Equals(name, StringComparison.OrdinalIgnoreCase));
+				if (parameterMatch != null)
+					return parameterMatch.Identifier.Text;
+			}
+
+			if (!currentFunc.Static)
             {
                 // Skip the UserMainFunction function in the stack and check the rest
                 foreach (var (func, _) in FunctionStack.SkipLast(1))
                 {
-                    if (caseSense)
+					if (caseSense)
                     {
                         if (func.Locals.ContainsKey(name) || func.Statics.Contains(name))
                             return name;
@@ -289,7 +298,16 @@ namespace Keysharp.Scripting
                         if (match != null)
                             return match;
                     }
-                }
+
+					if (func.Params != null)
+					{
+						var parameterMatch = func.Params.FirstOrDefault(param =>
+							caseSense ? param.Identifier.Text == name
+									  : param.Identifier.Text.Equals(name, StringComparison.OrdinalIgnoreCase));
+						if (parameterMatch != null)
+							return parameterMatch.Identifier.Text;
+					}
+				}
             }
 
             return null;
@@ -327,7 +345,7 @@ namespace Keysharp.Scripting
             {
                 var parameterMatch = currentFunc.Params.FirstOrDefault(param =>
                     caseSense ? param.Identifier.Text == name
-                              : param.Identifier.Text.Equals(name, StringComparison.InvariantCultureIgnoreCase));
+                              : param.Identifier.Text.Equals(name, StringComparison.OrdinalIgnoreCase));
                 if (parameterMatch != null)
                     return parameterMatch.Identifier.Text;
             }
