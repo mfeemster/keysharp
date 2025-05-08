@@ -1,6 +1,11 @@
+val := Round(3.14)
 
-
-if (Round(3.14) == 3)
+if (val == 3)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+	
+if (Type(val) == "Integer")
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
