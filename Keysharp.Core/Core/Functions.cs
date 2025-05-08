@@ -150,12 +150,12 @@ namespace Keysharp.Core
 		public static IFuncObj ObjBindMethod(object obj, object name = null, params object[] args)
 		{
 			var o = obj;
-			var n = name.As();
+			var n = name.As("Call");
 
 			if (obj is KeysharpObject kso && Script.GetPropertyValue(kso, name, false) is IFuncObj ifo && ifo != null)
-				return ifo.Bind(args);
+				return ifo.Bind([obj, ..args]);
 			else if (Reflections.FindAndCacheMethod(o.GetType(), n, -1) is MethodPropertyHolder mph && mph.mi != null)
-				return new BoundFunc(mph.mi, args, o);
+				return new BoundFunc(mph.mi, [obj, ..args], o);
 
 			Error err;
 			return Errors.ErrorOccurred(err = new MethodError($"Unable to retrieve method {name} for object.")) ? throw err : null;
