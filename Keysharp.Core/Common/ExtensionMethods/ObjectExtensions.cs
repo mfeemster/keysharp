@@ -170,12 +170,12 @@
 
 		/// <summary>
 		/// Attempt to convert an object to a bool.
-		/// This treats 0, "", false, and off as false.
-		/// and 1, true and on as true.
+		/// This treats 0, false, and optionally "off" and "false" string literals as false.
+		/// and 1, true and optionally "on" and "true" string literals as true.
 		/// </summary>
 		/// <param name="obj">The object to convert.</param>
 		/// <returns>The nullable bool resulting from the conversion.</returns>
-		public static bool? ParseBool(this object obj)
+		public static bool? ParseBool(this object obj, bool parseBoolKeywords = false)
 		{
 			if (obj is bool b)
 				return b;
@@ -183,7 +183,7 @@
 			if (obj is BoolResult br)
 				return br.o.ParseBool();
 
-			return Options.OnOff(obj);
+			return parseBoolKeywords ? Options.OnOff(obj) : null;
 		}
 
 		/// <summary>

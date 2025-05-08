@@ -4,7 +4,7 @@ testnot(1, "0")
 testnot("1", "0")
 ; Won't work with hex strings compared against true, but that seems like an odd case.
 
-testnot(x, y?)
+testnot(x, y := false)
 {
 	If (!x = false)
 		FileAppend "pass", "*"

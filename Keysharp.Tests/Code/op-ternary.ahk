@@ -348,7 +348,7 @@ else
 
 y := "false" ? 1 : 0
 
-if (!y)
+if (y)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"

@@ -92,7 +92,7 @@ If (x or y)
 else
 	FileAppend "fail", "*"
 
-If ((x or y) = true)
+If ((x or y) = x)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -112,7 +112,7 @@ If ((x or y) = false)
 else
 	FileAppend "pass", "*"
 
-If ((1.234 or 5.678) = true)
+If ((1.234 or 5.678) = 1.234)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -223,7 +223,7 @@ If (x || y)
 else
 	FileAppend "fail", "*"
 
-If ((x || y) = true)
+If ((x || y) = x)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -243,7 +243,7 @@ If ((x || y) = false)
 else
 	FileAppend "pass", "*"
 
-If ((1.234 || 5.678) = true)
+If ((1.234 || 5.678) = 1.234)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -351,14 +351,29 @@ if ((x := 0 || 2) == 2 && x == 2)
 else
 	FileAppend "fail", "*"
 
-val := evalfunc(x := "" || false || 0 || unset || 123)
+val := evalfunc(x := "" || false || 0 || 123)
 
 if (val == 123 && x == 123)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
 	
-if (("" || "false" || 0 || unset || 123) == 123)
+if (("" || "false" || 0 || 123) == "false")
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
+
+if (("" || "false" || 0 || 123) == false)
+	FileAppend "fail", "*"
+else
+	FileAppend "pass", "*"
+
+a := unset
+try {
+  if (!a)
+    FileAppend "fail", "*"
+  else
+    FileAppend "fail", "*"
+} catch {
+  FileAppend "pass", "*"
+}
