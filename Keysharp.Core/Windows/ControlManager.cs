@@ -1262,7 +1262,7 @@ namespace Keysharp.Core.Windows
 		{
 			Error err;
 			long ret;
-			var wptr = Reflections.GetPtrProperty(wparam);
+			var wptr = Reflections.GetIntPtrProperty(wparam);
 			var item = ctrl != null
 					   ? WindowSearch.SearchControl(ctrl, title, text, excludeTitle, excludeText)
 					   : WindowSearch.SearchWindow(title, text, excludeTitle, excludeText, true);
@@ -1293,7 +1293,7 @@ namespace Keysharp.Core.Windows
 			}
 			else
 			{
-				var lptr = Reflections.GetPtrProperty(lparam);
+				var lptr = Reflections.GetIntPtrProperty(lparam);
 
 				if (WindowsAPI.SendMessageTimeout(thehandle, (uint)msg, wptr, lptr, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, (uint)timeout, out var result) == 0)
 					return Errors.ErrorOccurred(err = new OSError("", $"Could not send message with values msg: {msg}, lparam: {lparam}, wparam: {wparam} to control in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : 0L;
