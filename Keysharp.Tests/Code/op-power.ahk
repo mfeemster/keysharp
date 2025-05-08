@@ -112,13 +112,13 @@ x := 2
 y := 0.5
 z := x**y
 
-If (z = "1.414214")
-	FileAppend, "pass", "*"
+If (z = "1.4142135623730951")
+	FileAppend "pass", "*"
 else
 	FileAppend, "fail", "*"
 
-If (z != "1.414214")
-	FileAppend, "fail", "*"
+If (z != "1.4142135623730951")
+	FileAppend "fail", "*"
 else
 	FileAppend, "pass", "*"
 
@@ -126,8 +126,8 @@ x := 2
 y := 0.5
 z := 2**0.5
 
-If (z = "1.414214")
-	FileAppend, "pass", "*"
+If (z = "1.4142135623730951")
+	FileAppend "pass", "*"
 else
 	FileAppend, "fail", "*"
 
@@ -136,13 +136,13 @@ x := 0.5
 y := 0.5
 z := x**y
 
-If (z = "0.707107")
-	FileAppend, "pass", "*"
+If (z = "0.70710678118654757")
+	FileAppend "pass", "*"
 else
 	FileAppend, "fail", "*"
 
-If (z != "0.707107")
-	FileAppend, "fail", "*"
+If (z != "0.70710678118654757")
+	FileAppend "fail", "*"
 else
 	FileAppend, "pass", "*"
 
@@ -150,7 +150,7 @@ x := 0.5
 y := 0.5
 z := 0.5**0.5
 
-If (z = "0.707107")
-	FileAppend, "pass", "*"
+If (z = "0.70710678118654757")
+	FileAppend "pass", "*"
 else
 	FileAppend, "fail", "*"

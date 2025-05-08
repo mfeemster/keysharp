@@ -93,5 +93,8 @@ namespace Keysharp.Tests
 
 		[Test, Category("Operator")]
 		public void UnaryMinus() => Assert.IsTrue(TestScript("op-unary-minus", true));
+
+		[Test, Category("Operator")]
+		public void Equality() => Assert.IsTrue(TestScript("op-equality", true));
 	}
 }

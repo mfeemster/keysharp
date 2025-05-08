@@ -4,6 +4,12 @@ namespace Keysharp.Scripting
 	{
 		internal static bool ForceBool(object input)
 		{
+			if (input == null)
+			{
+				Error err;
+				return Errors.ErrorOccurred(err = new UnsetError($"This parameter has not been assigned a value.")) ? throw err : false;
+			}
+
 			var d = 0.0;
 			var l = 0L;
 

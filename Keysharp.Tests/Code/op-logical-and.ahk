@@ -98,13 +98,13 @@ else
 x := 1.234
 y := 5.678
 
-If ((x and y) = true)
-	FileAppend, "pass", "*"
+If ((x and y) = y)
+	FileAppend "pass", "*"
 else
 	FileAppend, "fail", "*"
 
-If ((x and y) = false)
-	FileAppend, "fail", "*"
+If ((x and y) = true)
+	FileAppend "fail", "*"
 else
 	FileAppend, "pass", "*"
 
@@ -118,18 +118,18 @@ If (not ((x and y) = false))
 else
 	FileAppend, "fail", "*"
 
-If (!((x and y) = true))
-	FileAppend, "fail", "*"
+If (!((x and y) = y))
+	FileAppend "fail", "*"
 else
 	FileAppend, "pass", "*"
 
-If (not ((x and y) = true))
-	FileAppend, "fail", "*"
+If (not ((x and y) = y))
+	FileAppend "fail", "*"
 else
 	FileAppend, "pass", "*"
 
-If ((1.234 and 5.678) = true)
-	FileAppend, "pass", "*"
+If ((1.234 and 5.678) = 5.678)
+	FileAppend "pass", "*"
 else
 	FileAppend, "fail", "*"
 
@@ -244,8 +244,8 @@ else
 x := 1.234
 y := 5.678
 
-If ((x && y) = true)
-	FileAppend, "pass", "*"
+If ((x && y) = y)
+	FileAppend "pass", "*"
 else
 	FileAppend, "fail", "*"
 
@@ -264,18 +264,18 @@ If (not ((x && y) = false))
 else
 	FileAppend, "fail", "*"
 
-If (!((x && y) = true))
-	FileAppend, "fail", "*"
+If (!((x && y) = y))
+	FileAppend "fail", "*"
 else
 	FileAppend, "pass", "*"
 
-If (not ((x && y) = true))
-	FileAppend, "fail", "*"
+If (not ((x && y) = y))
+	FileAppend "fail", "*"
 else
 	FileAppend, "pass", "*"
 
-If ((1.234 && 5.678) = true)
-	FileAppend, "pass", "*"
+If ((1.234 && 5.678) = 5.678)
+	FileAppend "pass", "*"
 else
 	FileAppend, "fail", "*"
 

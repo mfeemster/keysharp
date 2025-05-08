@@ -758,7 +758,7 @@ namespace Keysharp.Scripting
 			}
 		}
 
-		internal static bool ParseNumericArgs(object left, object right, string desc, out bool firstIsDouble, out bool secondIsDouble, out double firstd, out long firstl, out double secondd, out long secondl)
+		internal static bool ParseNumericArgs(object left, object right, string desc, out bool firstIsDouble, out bool secondIsDouble, out double firstd, out long firstl, out double secondd, out long secondl, bool throwOnError = true)
 		{
 			Error err;
 			firstIsDouble = false;
@@ -769,10 +769,10 @@ namespace Keysharp.Scripting
 			secondl = 0L;
 
 			if (left == null)
-				return Errors.ErrorOccurred(err = new UnsetError($"Left side operand of {desc} was null.")) ? throw err : false;
+				return throwOnError ? (Errors.ErrorOccurred(err = new UnsetError($"Left side operand of {desc} was null.")) ? throw err : false) : false;
 
 			if (right == null)
-				return Errors.ErrorOccurred(err = new UnsetError($"Right side operand of {desc} was null.")) ? throw err : false;
+				return throwOnError ? (Errors.ErrorOccurred(err = new UnsetError($"Right side operand of {desc} was null.")) ? throw err : false) : false;
 
 			if (left is double ld)//Check non-string types first as a hot path.
 			{
@@ -798,10 +798,12 @@ namespace Keysharp.Scripting
 			{
 				firstIsDouble = true;
 			}
-			else
+			else if (throwOnError)
 			{
 				return Errors.ErrorOccurred(err = new UnsetError($"Left side operand of {desc} could not be converted to a number.")) ? throw err : false;
 			}
+			else
+				return false;
 
 			if (right is double rd)
 			{
@@ -827,10 +829,12 @@ namespace Keysharp.Scripting
 			{
 				secondIsDouble = true;
 			}
-			else
+			else if (throwOnError)
 			{
 				return Errors.ErrorOccurred(err = new UnsetError($"Right side operand of {desc} could not be converted to a number.")) ? throw err : false;
 			}
+			else
+				return false;
 
 			return true;
 		}

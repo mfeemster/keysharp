@@ -4,17 +4,44 @@
 	{
 		private static Type MatchTypes(ref object left, ref object right)
 		{
+			if (left is bool bl)
+				left = bl ? 1L : 0L;
+			if (right is bool br)
+				right = br ? 1L : 0L;
+
+			var lt = left.GetType();
+			if (lt == right.GetType())
+				return lt;
+
+			if (ParseNumericArgs(left, right, "value compare", out bool leftIsDouble, out bool rightIsDouble, out double leftd, out long leftl, out double rightd, out long rightl, false))
+			{
+				if (leftIsDouble && rightIsDouble)
+				{
+					left = leftd; right = rightd;
+					return typeof(double);
+				}
+				else if (!leftIsDouble && !rightIsDouble)
+				{
+					left = leftl; right = rightl;
+					return typeof(long);
+				}
+				else if (!leftIsDouble)
+				{
+					left = leftl.Ad(); right = rightd;
+					return typeof(double);
+				}
+				else if (!rightIsDouble)
+				{
+					left = leftd; right = rightl.Ad();
+					return typeof(double);
+				}
+			}
+
 			if (left is string || right is string)
 			{
 				left = ForceString(left);
 				right = ForceString(right);
 				return typeof(string);
-			}
-			else if (left is bool || right is bool)//bool takes precedence, because if one is a bool, we assume they want to do a boolean style comparison.
-			{
-				left = ForceBool(left);
-				right = ForceBool(right);
-				return typeof(bool);
 			}
 			else if (left is double || right is double)
 			{
