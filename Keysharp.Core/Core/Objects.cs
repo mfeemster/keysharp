@@ -121,6 +121,23 @@
 			return Errors.ErrorOccurred(err = new Error($"Object of type {obj0.GetType()} was not of type KeysharpObject.")) ? throw err : null;
 		}
 
+		// Shared helper to normalize an “object” that might be
+		// an IntPtr, a long, or a RCW wrapper into a raw IUnknown*.
+		private static IntPtr GetRawIUnknownPtr(object ptrOrObj)
+		{
+			if (ptrOrObj is IntPtr ip)            // already a pointer
+				return ip;
+			if (ptrOrObj is long l)               // pointer encoded as a long
+				return new IntPtr(l);
+
+			// must be a CCW/RCW object:
+			// 1) GetIUnknownForObject adds 1 ref
+			// 2) Release immediately drops it back to original count
+			IntPtr punk = Marshal.GetIUnknownForObject(ptrOrObj);
+			Marshal.Release(punk);
+			return punk;
+		}
+
 		/// <summary>
 		/// Returns an IntPtr that represents the given object.
 		/// The resulting GCHandle is allocated with GCHandleType.Normal,
@@ -131,17 +148,15 @@
 			if (obj == null)
 				return 0;
 
-			return Marshal.GetIUnknownForObject(obj);
-
-			// Allocate a GCHandle to create a "handle" to the managed object.
-			GCHandle handle = GCHandle.Alloc(obj, GCHandleType.Normal);
-			return GCHandle.ToIntPtr(handle);
+			return GetRawIUnknownPtr(obj).ToInt64();
 		}
 		public static long ObjPtrAddRef(object obj)
 		{
-			var punk = Marshal.GetIUnknownForObject(obj);
-			Marshal.AddRef(punk);
-			return punk;
+			if (obj == null)
+				return 0;
+
+			// GetIUnknownForObject always adds one ref
+			return Marshal.GetIUnknownForObject(obj).ToInt64();
 		}
 
 		/// <summary>
@@ -149,23 +164,31 @@
 		/// </summary>
 		public static object ObjFromPtr(object ptr)
 		{
-			IntPtr iptr = IntPtr.Zero;
+			ptr = Reflections.GetPtrProperty(ptr);
 
-			if (ptr is long l)
-				iptr = (nint)l;
-			else if (ptr is nint ip)
-				iptr = ip;
-
-			if (iptr == IntPtr.Zero)
+			IntPtr punk = GetRawIUnknownPtr(ptr);
+			if (punk == IntPtr.Zero)
 				return null;
 
-			return Marshal.GetObjectForIUnknown(iptr);
-			GCHandle handle = GCHandle.FromIntPtr(iptr);
-			return handle.Target;
+			// This creates or finds the RCW, but does not AddRef
+			return Marshal.GetObjectForIUnknown(punk);
 		}
 
 		// Mostly for compatibility with AHK
-		public static object ObjFromPtrAddRef(object ptr) => ObjFromPtr(ptr);
+		public static object ObjFromPtrAddRef(object ptr)
+		{
+			ptr = Reflections.GetPtrProperty(ptr); 
+
+			IntPtr punk = GetRawIUnknownPtr(ptr);
+			if (punk == IntPtr.Zero)
+				return null;
+
+			// bump the COM ref-count
+			Marshal.AddRef(punk);
+
+			// then unwrap to RCW
+			return Marshal.GetObjectForIUnknown(punk);
+		}
 
 		/// <summary>
 		/// Frees a managed C# object or string, allowing it to be garbage-collected.

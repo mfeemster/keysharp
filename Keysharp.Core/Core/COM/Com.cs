@@ -401,8 +401,8 @@ namespace Keysharp.Core.COM
 		{
 			var unk = IntPtr.Zero;
 
-			if (ptr is ComObject co)
-				ptr = co.Ptr;
+			if (ptr is IPointable ipo)
+				ptr = ipo.Ptr;
 			else if (ptr is IntPtr ip)
 				ptr = ip;
 			else if (ptr is long l)
@@ -423,16 +423,15 @@ namespace Keysharp.Core.COM
 
 		public static object ObjRelease(object ptr)
 		{
-			var co = ptr as ComObject;
-			if (co != null)
+			if (ptr is IPointable ipo)
+				ptr = ipo;
+
+			if (Marshal.IsComObject(ptr))
 			{
-				ptr = co.Ptr;
-				if (Marshal.IsComObject(ptr))
-				{
-					ptr = Marshal.GetIUnknownForObject(ptr); // Make sure we decrease the COM object not RCW
-					_ = Marshal.Release((nint)ptr);
-				}
+				ptr = Marshal.GetIUnknownForObject(ptr); // Make sure we decrease the COM object not RCW
+				_ = Marshal.Release((nint)ptr);
 			}
+
 			if (ptr is IntPtr ip)
 				ptr = ip;
 			else if (ptr is long l)

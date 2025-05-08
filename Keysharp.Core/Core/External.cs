@@ -271,7 +271,7 @@ namespace Keysharp.Core
 					case "ptr":
 					case "uptr":
 						if (number is KeysharpObject kso)
-							number = Reflections.GetPtrProperty(kso);
+							number = Reflections.GetIntPtrProperty(kso);
 
 						bytes = ConvertToInt(number);
 						inc = 8;
