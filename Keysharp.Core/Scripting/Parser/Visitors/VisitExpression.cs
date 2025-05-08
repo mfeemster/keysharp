@@ -1268,8 +1268,16 @@ namespace Keysharp.Scripting
                 return result;
             }
 
-            binaryOperation = CreateBinaryOperatorExpression(
-                GetOperatorToken(binaryOperator),
+            var op = GetOperatorToken(binaryOperator);
+
+            // If operator is .= then make sure the left-side operand is declared
+            if (op == MainParser.Dot && leftExpression is IdentifierNameSyntax identifier)
+            {
+                parser.MaybeAddVariableDeclaration(identifier.Identifier.Text);
+            }
+
+			binaryOperation = CreateBinaryOperatorExpression(
+				op,
                 leftExpression,
                 rightExpression
             );
