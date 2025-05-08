@@ -121,7 +121,7 @@ namespace Keysharp.Core.Common.ObjectBase
 				if (op.Count == 0)
 					op = null;//Make all subsequent member access faster because this won't have to be checked first.
 
-				return map;
+				return map.Value;
 			}
 
 			return "";
