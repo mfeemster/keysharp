@@ -1,9 +1,54 @@
-﻿namespace Keysharp.Core
+﻿using System.Windows.Forms;
+using System;
+
+namespace Keysharp.Core
 {
+	public static partial class KeysharpEnhancements
+	{
+		/// <summary>
+		/// Returns the angle whose tangent is the y/x number.
+		/// </summary>
+		/// <param name="y">A number representing the Y value.</param>
+		/// <param name="x">A number representing the X value.</param>
+		/// <returns>An angle, θ, measured in radians, such that -(y/x)/2 ≤ θ ≤ (y/x)/2.</returns>
+		public static double ATan2(object y, object x) => Math.Atan2(y is double d0 ? d0 : y.Ad(), x is double d1 ? d1 : x.Ad());
+
+		/// <summary>
+		/// Returns the hyperbolic cosine of the specified angle.
+		/// </summary>
+		/// <param name="n">An angle, measured in radians.</param>
+		/// <returns>The hyperbolic cosine of <paramref name="n"/>.</returns>
+		public static double Cosh(object obj) => Math.Cosh(obj is double d ? d : obj.Ad());
+
+		/// <summary>
+		/// Reinitializes the random number generator for the current thread with the specified numerical seed.
+		/// </summary>
+		/// <param name="obj">The numerical seed to create the random number generator with.</param>
+		public static object RandomSeed(object obj)
+		{
+			Threads.GetThreadVariables().RandomGenerator = new Random(obj.Ai());
+			return null;
+		}
+
+		/// <summary>
+		/// Returns the hyperbolic sine of the specified angle.
+		/// </summary>
+		/// <param name="n">An angle, measured in radians.</param>
+		/// <returns>The hyperbolic sine of <paramref name="n"/>.</returns>
+		public static double Sinh(object obj) => Math.Sinh(obj is double d ? d : obj.Ad());
+
+		/// <summary>
+		/// Returns the hyperbolic tangent of the specified angle.
+		/// </summary>
+		/// <param name="n">An angle, measured in radians.</param>
+		/// <returns>The hyperbolic tangent of <paramref name="n"/>.</returns>
+		public static double Tanh(object obj) => Math.Tanh(obj is double d ? d : obj.Ad());
+	}
+
 	/// <summary>
 	/// Public interface for math-related functions.
 	/// Most functions here do not take variadic parameters so they can run as fast as possible.
-	/// Also, an attempt to cast the object argument to a double is first made because it's the
+	/// Also, an attempt to cast the object argument to a double is made first because it's the
 	/// most common and fastest case. If it's not a double, Ad() is used.
 	/// </summary>
 	public static class Maths
@@ -16,20 +61,20 @@
 		/// <summary>
 		/// Returns the absolute value of a number.
 		/// </summary>
-		/// <param name="n">Any number.</param>
+		/// <param name="number">Any number.</param>
 		/// <returns>The magnitude of <paramref name="n"/>.</returns>
-		public static double Abs(object obj) => Math.Abs(obj is double d ? d : obj.Ad());
+		public static double Abs(object number) => Math.Abs(number is double d ? d : number.Ad());
 
 		/// <summary>
 		/// Returns the angle whose cosine is the specified number.
 		/// </summary>
-		/// <param name="n">A number representing a cosine, where -1 ≤ <paramref name="n"/> ≤ 1.</param>
+		/// <param name="number">A number representing a cosine, where -1 ≤ <paramref name="n"/> ≤ 1.</param>
 		/// <returns>An angle, θ, measured in radians, such that 0 ≤ θ ≤ π.</returns>
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if the argument was not between -1 and 1.</exception>
-		public static double ACos(object obj)
+		public static double ACos(object number)
 		{
 			Error err;
-			var n = obj is double d ? d : obj.Ad();
+			var n = number is double d ? d : number.Ad();
 
 			if (n < -1 || n > 1)
 				return Errors.ErrorOccurred(err = new Error($"ACos() argument of {n} was not between -1 and 1.")) ? throw err : 0.0;
@@ -40,13 +85,13 @@
 		/// <summary>
 		/// Returns the angle whose sine is the specified number.
 		/// </summary>
-		/// <param name="n">A number representing a sine, where -1 ≤ <paramref name="n"/> ≤ 1.</param>
+		/// <param name="number">A number representing a sine, where -1 ≤ <paramref name="n"/> ≤ 1.</param>
 		/// <returns>An angle, θ, measured in radians, such that -π/2 ≤ θ ≤ π/2.</returns>
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if the argument was not between -1 and 1.</exception>
-		public static double ASin(object obj)
+		public static double ASin(object number)
 		{
 			Error err;
-			var n = obj is double d ? d : obj.Ad();
+			var n = number is double d ? d : number.Ad();
 
 			if (n < -1 || n > 1)
 				return Errors.ErrorOccurred(err = new Error($"ASin() argument of {n} was not between -1 and 1.")) ? throw err : 0.0;
@@ -57,30 +102,23 @@
 		/// <summary>
 		/// Returns the angle whose tangent is the specified number.
 		/// </summary>
-		/// <param name="n">A number representing a tangent.</param>
+		/// <param name="number">A number representing a tangent.</param>
 		/// <returns>An angle, θ, measured in radians, such that -π/2 ≤ θ ≤ π/2.</returns>
-		public static double ATan(object obj) => Math.Atan(obj is double d ? d : obj.Ad());
-
-		/// <summary>
-		/// Returns the angle whose tangent is the y/x number.
-		/// </summary>
-		/// <param name="n">A number representing a tangent.</param>
-		/// <returns>An angle, θ, measured in radians, such that -(y/x)/2 ≤ θ ≤ (y/x)/2.</returns>
-		public static double ATan2(object obj0, object obj1) => Math.Atan2(obj0 is double d0 ? d0 : obj0.Ad(), obj1 is double d1 ? d1 : obj1.Ad());
+		public static double ATan(object number) => Math.Atan(number is double d ? d : number.Ad());
 
 		/// <summary>
 		/// Returns the specified number rounded up to the nearest integer.
 		/// </summary>
-		/// <param name="n">A number.</param>
+		/// <param name="number">A number.</param>
 		/// <returns>The smallest integer greater than or equal to <paramref name="n"/>.</returns>
-		public static long Ceil(object obj) => (long)Math.Ceiling(obj is double d ? d : obj.Ad());
+		public static long Ceil(object number) => (long)Math.Ceiling(number is double d ? d : number.Ad());
 
 		/// <summary>
 		/// Returns the cosine of the specified angle.
 		/// </summary>
-		/// <param name="n">An angle, measured in radians.</param>
+		/// <param name="number">An angle, measured in radians.</param>
 		/// <returns>The cosine of <paramref name="n"/>.</returns>
-		public static double Cos(object obj) => Math.Cos(obj is double d ? d : obj.Ad());
+		public static double Cos(object number) => Math.Cos(number is double d ? d : number.Ad());
 
 		/// <summary>
 		/// Adds or subtracts time from a date-time value.
@@ -113,7 +151,7 @@
 			else
 				d1 = d1.AddDays(t);
 
-			return  wasMs ? Conversions.ToYYYYMMDDHH24MISSFFF(d1) : Conversions.ToYYYYMMDDHH24MISS(d1);
+			return wasMs ? Conversions.ToYYYYMMDDHH24MISSFFF(d1) : Conversions.ToYYYYMMDDHH24MISS(d1);
 		}
 
 		/// <summary>
@@ -162,45 +200,19 @@
 		/// </summary>
 		/// <param name="n">A number specifying a power.</param>
 		/// <returns>The number <c>e</c> raised to the power <paramref name="n"/>.</returns>
-		public static double Exp(object obj) => Math.Exp(obj is double d ? d : obj.Ad());
-
-		/// <summary>
-		/// Returns the largest integer less than or equal to the specified double number.
-		/// </summary>
-		/// <param name="n">A number.</param>
-		/// <returns>The largest integer less than or equal to <paramref name="n"/>.</returns>
-		public static long Floor(object obj) => (long)Math.Floor(obj is double d ? d : obj.Ad());
-
-		/// <summary>
-		/// Converts a numeric string or floating-point value to an integer.
-		/// </summary>
-		/// <param name="obj">The object to be converted</param>
-		/// <returns>The converted value as a long.</returns>
-		/// <exception cref="TypeError">A <see cref="TypeError"/> exception is thrown if the conversion failed.</exception>
-		public static long Integer(object obj)
-		{
-			try
-			{
-				return (long)(obj is double d ? d : obj.Ad());
-			}
-			catch (Exception e)
-			{
-				Error err;
-				return Errors.ErrorOccurred(err = new TypeError(e.Message)) ? throw err : 0L;
-			}
-		}
+		public static double Exp(object n) => Math.Exp(n is double d ? d : n.Ad());
 
 		/// <summary>
 		/// Converts a numeric string or integer value to a floating-point number.
 		/// </summary>
-		/// <param name="obj">The object to be converted</param>
+		/// <param name="value">The object to be converted</param>
 		/// <returns>The converted value as a double.</returns>
 		/// <exception cref="TypeError">A <see cref="TypeError"/> exception is thrown if the conversion failed.</exception>
-		public static double Float(object obj)
+		public static double Float(object value)
 		{
 			try
 			{
-				return obj is double d ? d : obj.Ad();
+				return value is double d ? d : value.Ad();
 			}
 			catch (Exception e)
 			{
@@ -210,15 +222,41 @@
 		}
 
 		/// <summary>
+		/// Returns the largest integer less than or equal to the specified double number.
+		/// </summary>
+		/// <param name="number">A number.</param>
+		/// <returns>The largest integer less than or equal to <paramref name="n"/>.</returns>
+		public static long Floor(object number) => (long)Math.Floor(number is double d ? d : number.Ad());
+
+		/// <summary>
+		/// Converts a numeric string or floating-point value to an integer.
+		/// </summary>
+		/// <param name="value">The object to be converted</param>
+		/// <returns>The converted value as a long.</returns>
+		/// <exception cref="TypeError">A <see cref="TypeError"/> exception is thrown if the conversion failed.</exception>
+		public static long Integer(object value)
+		{
+			try
+			{
+				return (long)(value is double d ? d : value.Ad());
+			}
+			catch (Exception e)
+			{
+				Error err;
+				return Errors.ErrorOccurred(err = new TypeError(e.Message)) ? throw err : 0L;
+			}
+		}
+
+		/// <summary>
 		/// Returns the natural (base e) logarithm of a specified number.
 		/// </summary>
-		/// <param name="n">A number whose logarithm is to be found.</param>
+		/// <param name="number">A number whose logarithm is to be found.</param>
 		/// <returns>The natural logarithm of <paramref name="n"/> if it's positive, else an exception is thrown.</returns>
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if the argument was negative.</exception>
-		public static double Ln(object obj)
+		public static double Ln(object number)
 		{
 			Error err;
-			var n = obj is double d ? d : obj.Ad();
+			var n = number is double d ? d : number.Ad();
 
 			if (n < 0)
 				return Errors.ErrorOccurred(err = new Error($"Ln() argument {n} was negative.")) ? throw err : 0.0;
@@ -229,15 +267,15 @@
 		/// <summary>
 		/// Returns the logarithm of a specified number in a specified base.
 		/// </summary>
-		/// <param name="n">A number whose logarithm is to be found.</param>
-		/// <param name="b">The base of the logarithm. If unspecified this is <c>10</c>.</param>
+		/// <param name="number">A number whose logarithm is to be found.</param>
+		/// <param name="base">The base of the logarithm. If unspecified this is <c>10</c>.</param>
 		/// <returns>The logarithm of <paramref name="n"/> to base <paramref name="b"/> if n is positive, else an exception is thrown.</returns>
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if the argument was negative.</exception>
-		public static double Log(object obj0, object obj1 = null)
+		public static double Log(object number, object @base = null)
 		{
 			Error err;
-			var n = obj0.Ad(double.MinValue);
-			var b = obj1.Ad(double.MinValue);
+			var n = number.Ad(double.MinValue);
+			var b = @base.Ad(double.MinValue);
 
 			if (n < 0)
 				return Errors.ErrorOccurred(err = new Error($"Log() argument {n} was negative.")) ? throw err : 0.0;
@@ -400,30 +438,30 @@
 		/// <param name="divisor">The divisor.</param>
 		/// <returns>The remainder after dividing <paramref name="dividend"/> by <paramref name="divisor"/>.</returns>
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if the divisor == 0.</exception>
-		public static object Mod(object obj0, object obj1)
+		public static object Mod(object dividend, object divisor)
 		{
 			Error err;
 
-			if (obj0 is double || obj1 is double)
+			if (dividend is double || divisor is double)
 			{
-				var dividend = obj0.Ad();
-				var divisor = obj1.Ad();
+				var divid = dividend.Ad();
+				var divis = divisor.Ad();
 
-				if (divisor == 0)
-					return Errors.ErrorOccurred(err = new Error($"Mod() divisor argument of {divisor} was 0.")) ? throw err : null;
+				if (divis == 0)
+					return Errors.ErrorOccurred(err = new Error($"Mod() divisor argument of {divis} was 0.")) ? throw err : null;
 
 				//return Math.IEEERemainder(dividend, divisor);
-				return dividend % divisor;
+				return divid % divis;
 			}
 			else
 			{
-				var dividend = obj0.Al();
-				var divisor = obj1.Al();
+				var divid = dividend.Al();
+				var divis = divisor.Al();
 
-				if (divisor == 0)
-					return Errors.ErrorOccurred(err = new Error($"Mod() divisor argument of {divisor} was 0.")) ? throw err : null;
+				if (divis == 0)
+					return Errors.ErrorOccurred(err = new Error($"Mod() divisor argument of {divis} was 0.")) ? throw err : null;
 
-				return dividend % divisor;
+				return divid % divis;
 			}
 		}
 
@@ -467,44 +505,49 @@
 
 		/// <summary>
 		/// Returns a random number within a specified range.
+		/// If both are omitted, the default is 0.0 to 1.0.<br/>
+		/// If only one parameter is specified, the other parameter defaults to 0. Otherwise, specify the minimum and maximum number to be generated, in either order.<br/>
+		/// For integers, the minimum value and maximum value are both included in the set of possible numbers that may be returned.<br />
+		/// The full range of 64-bit integers is supported.<br />
+		/// For floating point numbers, the maximum value is generally excluded.
 		/// </summary>
-		/// <param name="result">The name of the variable in which to store the result.</param>
-		/// <param name="min">The inclusive lower bound of the random number returned. Default: 0.</param>
-		/// <param name="max">The exclusive upper bound of the random number returned. Default 1.</param>
-		/// <returns>A random number in the range of <c><paramref name="min"/> - (<paramref name="max/> Q)</c>,
-		/// <remarks>If <paramref name="min"/> and <paramref name="max"/> are both integers <paramref name="result"/> will also be an integer.
-		/// Otherwise <paramref name="result"/> can be a floating point number.</remarks>
-		public static object Random(object obj0 = null, object obj1 = null)
+		/// <param name="a">The inclusive lower bound of the random number returned. Default: 0.</param>
+		/// <param name="b">The exclusive upper bound of the random number returned. Default 1.</param>
+		/// <returns>A random number in the range of <c><paramref name="a"/> - <paramref name="b"/></c>,
+		/// If either <paramref name="a"/> or <paramref name="b"/> is a floating point number or both are omitted,<br/>
+		/// the result will be a floating point number. Otherwise, the result will be an integer.
+		/// </returns>
+		public static object Random(object a = null, object b = null)
 		{
 			var r = RandomGenerator;
 
-			if (obj0 is null && obj1 is null)
+			if (a is null && b is null)
 				return r.NextDouble();
 
-			if (obj0 is long l0)
+			if (a is long l0)
 			{
-				if (obj1 is long l1)
+				if (b is long l1)
 				{
 					var min = Math.Min(l0, l1);
 					var max = Math.Max(l0, l1);
 					return r.NextInt64(min, max + 1L);//Integer ranges include the max number.
 				}
-				else if (obj1 is null)
+				else if (b is null)
 				{
 					var min = Math.Min(0L, l0);
 					var max = Math.Max(0L, l0);
 					return r.NextInt64(min, max + 1L);//If one param is omitted, it defaults to 0.
 				}
 			}
-			else if (obj1 is long l11)
+			else if (b is long l11)
 			{
 				var min = Math.Min(0L, l11);
 				var max = Math.Max(0L, l11);
 				return r.NextInt64(min, max + 1L);//If one param is omitted, it defaults to 0.
 			}
 
-			var mind = obj0.Ad();
-			var maxd = obj1.Ad();
+			var mind = a.Ad();
+			var maxd = b.Ad();
 			var lower = Math.Min(mind, maxd);
 			var upper = Math.Max(mind, maxd);
 			return r.NextDouble(lower, upper);
@@ -515,34 +558,38 @@
 		/// </summary>
 		/// <param name="number">A double number to be rounded.</param>
 		/// <param name="n">The number of double places in the return value.</param>
-		/// <returns>The number nearest to <paramref name="number"/> that contains a number of fractional digits equal to <paramref name="n"/>.</returns>
-		public static object Round(object obj0, object obj1 = null)
+		/// <returns>The number nearest to <paramref name="number"/> that contains a number of fractional digits equal to <paramref name="n"/>.<br />
+		/// If
+		/// </returns>
+		public static object Round(object number, object n = null)
 		{
-			var number = obj0.Ad();
-			var n = obj1.Al();
-			if (n == 0)
-				return Convert.ToInt64(number);
-			var mult = n != 0 ? Math.Pow(10, n) : 1;//Code taken from AHK.
-			return (number >= 0.0 ? Math.Floor(number * mult + 0.5) : Math.Ceiling((number * mult) - 0.5)) / mult;
+			var num = number.Ad();
+			var places = n.Al();
+
+			if (places == 0L)
+				return Convert.ToInt64(num);
+
+			var mult = Math.Pow(10, places);//Code taken from AHK.
+			return (num >= 0.0 ? Math.Floor(num * mult + 0.5) : Math.Ceiling((num * mult) - 0.5)) / mult;
 		}
 
 		/// <summary>
 		/// Returns the sine of the specified angle.
 		/// </summary>
-		/// <param name="n">An angle, measured in radians.</param>
+		/// <param name="number">An angle, measured in radians.</param>
 		/// <returns>The sine of <paramref name="n"/>.</returns>
-		public static double Sin(object obj) => Math.Sin(obj is double d ? d : obj.Ad());
+		public static double Sin(object number) => Math.Sin(number is double d ? d : number.Ad());
 
 		/// <summary>
 		/// Returns the square root of a specified number.
 		/// </summary>
-		/// <param name="n">A number.</param>
+		/// <param name="number">A number.</param>
 		/// <returns>The positive square root of <paramref name="n"/> if positive, else an exception is thrown.</returns>
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if the value is negative.</exception>
-		public static double Sqrt(object obj)
+		public static double Sqrt(object number)
 		{
 			Error err;
-			var n = obj is double d ? d : obj.Ad();
+			var n = number is double d ? d : number.Ad();
 
 			if (n < 0)
 				return Errors.ErrorOccurred(err = new Error($"Sqrt() argument of {n} was negative.")) ? throw err : 0.0;
@@ -553,49 +600,8 @@
 		/// <summary>
 		/// Returns the tangent of the specified angle.
 		/// </summary>
-		/// <param name="n">An angle, measured in radians.</param>
+		/// <param name="number">An angle, measured in radians.</param>
 		/// <returns>The tangent of <paramref name="n"/>.</returns>
-		public static double Tan(object obj) => Math.Tan(obj is double d ? d : obj.Ad());
-
-		/// <summary>
-		/// Calculates the integral part of a specified number.
-		/// </summary>
-		/// <param name="n">A number to truncate.</param>
-		/// <returns>The integral part of <paramref name="n"/>; that is, the number that remains after any fractional digits have been discarded.</returns>
-		public static double Truncate(object obj) => Math.Truncate(obj is double d ? d : obj.Ad());
-	}
-
-	public static partial class KeysharpEnhancements
-	{
-		/// <summary>
-		/// Returns the hyperbolic sine of the specified angle.
-		/// </summary>
-		/// <param name="n">An angle, measured in radians.</param>
-		/// <returns>The hyperbolic sine of <paramref name="n"/>.</returns>
-		public static double Sinh(object obj) => Math.Sinh(obj is double d ? d : obj.Ad());
-
-		/// <summary>
-		/// Returns the hyperbolic cosine of the specified angle.
-		/// </summary>
-		/// <param name="n">An angle, measured in radians.</param>
-		/// <returns>The hyperbolic cosine of <paramref name="n"/>.</returns>
-		public static double Cosh(object obj) => Math.Cosh(obj is double d ? d : obj.Ad());
-
-		/// <summary>
-		/// Returns the hyperbolic tangent of the specified angle.
-		/// </summary>
-		/// <param name="n">An angle, measured in radians.</param>
-		/// <returns>The hyperbolic tangent of <paramref name="n"/>.</returns>
-		public static double Tanh(object obj) => Math.Tanh(obj is double d ? d : obj.Ad());
-
-		/// <summary>
-		/// Reinitializes the random number generator for the current thread with the specified numerical seed.
-		/// </summary>
-		/// <param name="obj">The numerical seed to create the random number generator with.</param>
-		public static object RandomSeed(object obj)
-		{
-			Threads.GetThreadVariables().RandomGenerator = new Random(obj.Ai());
-			return null;
-		}
+		public static double Tan(object number) => Math.Tan(number is double d ? d : number.Ad());
 	}
 }
