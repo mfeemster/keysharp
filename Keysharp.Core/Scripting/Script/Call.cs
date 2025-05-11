@@ -625,7 +625,7 @@ namespace Keysharp.Scripting
 							var arr = new object[2];
 							arr[0] = item;//Special logic here: this was called on an OwnProps map, so it uses its parent as the object.
 							arr[1] = value;
-							return ifo.Call(item, value);
+							return ifo.Call(item, value) ?? value;
 						}
 						else
 							return own.Value = value;
@@ -637,7 +637,7 @@ namespace Keysharp.Scripting
                             var arr = new object[2];
                             arr[0] = item;//Special logic here: this was called on an OwnProps map, so it uses its parent as the object.
                             arr[1] = value;
-                            return ifo.Call(item, value);
+                            return ifo.Call(item, value) ?? value;
                         }
 
                     }
@@ -660,7 +660,7 @@ namespace Keysharp.Scripting
 				else if (item is ComObject co && co.Ptr != null)
 				{
 					//_ = co.Ptr.GetType().InvokeMember(namestr, System.Reflection.BindingFlags.SetProperty, null, item, new object[] { value });//Unwrap.
-					return SetPropertyValue(co.Ptr, namestr, value);
+					return SetPropertyValue(co.Ptr, namestr, value) ?? value;
 				}
 				else if (Marshal.IsComObject(item))
 				{
@@ -676,7 +676,7 @@ namespace Keysharp.Scripting
 				}
 				else if (Reflections.FindAndCacheInstanceMethod(typetouse, "set_Item", 2) is MethodPropertyHolder mph1 && mph1.ParamLength == 2)
 				{
-					return mph1.callFunc(item, [namestr, value]);
+					return mph1.callFunc(item, [namestr, value]) ?? value;
 				}
             }
 			catch (Exception e)
