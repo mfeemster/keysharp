@@ -330,13 +330,14 @@ namespace Keysharp.Core
 			if (((mask & 0xFUL) != 0) && RuntimeInformation.ProcessArchitecture == Architecture.X64)
 			{
 				shim = ExecutableMemoryPoolManager.Rent();
+
 				unsafe
 				{
 					byte* ptr = (byte*)shim;
 					// Emit MOVQ rcx←xmm0, rdx←xmm1, r8←xmm2, r9←xmm3 as needed
 					for (int i = 0; i < 4; i++)
 					{
-						if ((mask & (1UL << i)) == 0) continue;
+						if ((mask & (1UL << i)) == 0 || i == n) continue;
 
 						switch (i)
 						{
