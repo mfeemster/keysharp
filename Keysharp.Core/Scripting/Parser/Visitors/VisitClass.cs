@@ -117,6 +117,9 @@ namespace Keysharp.Scripting
                 parser.ClassStack.Peek().Body.Add(fieldDeclaration);
             }
 
+            if (parser.ClassStack.Count == 1)
+                parser.autoExecFunc.Body.Add(SyntaxFactory.ParseStatement($"_ = {fieldDeclarationName};"));
+
             // Add the constructor
             parser.currentClass.Body.Add(CreateConstructor(parser.currentClass.Name));
 
@@ -174,7 +177,7 @@ namespace Keysharp.Scripting
         }
 
 
-        public override SyntaxNode VisitClassTail([NotNull] ClassTailContext context)
+		public override SyntaxNode VisitClassTail([NotNull] ClassTailContext context)
         {
             return base.VisitClassTail(context);
         }

@@ -6,6 +6,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Data;
 using static Keysharp.Scripting.Parser;
 using System.Reflection;
+using System.Xml.Linq;
 
 namespace Keysharp.Scripting
 {
@@ -320,7 +321,13 @@ namespace Keysharp.Scripting
                     else
                         statements.Add(EnsureStatementSyntax(visited));
                 } 
-                else if (visited is ClassDeclarationSyntax classDeclarationSyntax)
+                else if (visited is MemberDeclarationSyntax memberDeclarationSyntax)
+                {
+                    // This shouldn't happen anywhere else but the auto-execute section
+                    // when the function declaration is inside a block for example
+                    parser.mainClass.Body.Add(memberDeclarationSyntax);
+				}
+				else if (visited is ClassDeclarationSyntax classDeclarationSyntax)
                 {
                     // In case a class is declared inside a function (such as some unit tests)
                     parser.mainClass.Body.Add(classDeclarationSyntax);
