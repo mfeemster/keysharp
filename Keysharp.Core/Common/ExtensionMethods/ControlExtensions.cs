@@ -175,7 +175,7 @@
 		/// </summary>
 		/// <param name="control">The <see cref="Control"/> whose Tag member will be returned.</param>
 		/// <returns>A <see cref="GuiControl"/> if the Tag member was a <see cref="GuiTag">, else null.</returns>
-		internal static GuiControl GetGuiControl(this Control control) => control.Tag is GuiTag guiTag ? guiTag.GuiControl : null;
+		internal static Gui.Control GetGuiControl(this Control control) => control.Tag is GuiTag guiTag ? guiTag.GuiControl : null;
 
 		/// <summary>
 		/// Returns all child <see cref="ToolStripItem"/>s of a <see cref="ToolStrip"/>, recursively.
@@ -508,11 +508,11 @@
 		/// </summary>
 		/// <param name="control">The <see cref="Control"/> to add a newly tagged <see cref="GuiControl"/> to.</param>
 		/// <param name="add">The <see cref="GuiControl"/> to tag and add to control.</param>
-		internal static void TagAndAdd(this Control control, GuiControl add)
+		internal static void TagAndAdd(this Control control, Gui.Control add)
 		{
-			((GuiTag)add.Control.Tag).Index = control.Controls.Count;//The reference to the control was set in the constructor, so set the index here.
-			control.Controls.Add(add.Control);
-			control.Controls.SetChildIndex(add.Control, 0);//Required for proper Z ordering so that this control is on top.
+			((GuiTag)add.Ctrl.Tag).Index = control.Controls.Count;//The reference to the control was set in the constructor, so set the index here.
+			control.Controls.Add(add.Ctrl);
+			control.Controls.SetChildIndex(add.Ctrl, 0);//Required for proper Z ordering so that this control is on top.
 		}
 
 		/// <summary>

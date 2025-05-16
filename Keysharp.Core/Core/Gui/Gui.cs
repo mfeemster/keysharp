@@ -5,7 +5,7 @@ using static System.Windows.Forms.VisualStyles.VisualStyleElement.TextBox;
 
 namespace Keysharp.Core
 {
-	public class Gui : KeysharpObject, I__Enum, IEnumerable<(object, object)>
+	public partial class Gui : KeysharpObject, I__Enum, IEnumerable<(object, object)>
 	{
 		public TabPage CurrentTab;
 		public KeysharpForm form;
@@ -14,7 +14,7 @@ namespace Keysharp.Core
 		internal static Type[] GuiTypes =
 			[
 				typeof(Gui),
-				typeof(GuiControl),
+				typeof(Gui.Control),
 				typeof(Menu),
 				typeof(Control)//Add native control and form types just to be safe.
 			];
@@ -149,7 +149,7 @@ namespace Keysharp.Core
 					{
 						if (int.TryParse(s, out var hwnd))
 						{
-							if (Control.FromHandle(new IntPtr(hwnd)) is Form theform)
+							if (System.Windows.Forms.Control.FromHandle(new IntPtr(hwnd)) is Form theform)
 								f.form.Owner = theform;
 						}
 					}
@@ -162,7 +162,7 @@ namespace Keysharp.Core
 					{
 						if (int.TryParse(s, out var hwnd))
 						{
-							if (Control.FromHandle(new IntPtr(hwnd)) is Form theform)
+							if (System.Windows.Forms.Control.FromHandle(new IntPtr(hwnd)) is Form theform)
 								f.form.Parent = theform;
 						}
 					}
@@ -234,7 +234,7 @@ namespace Keysharp.Core
 			}
 		}
 
-		public Control FocusedCtrl => form.ActiveControl;
+		public System.Windows.Forms.Control FocusedCtrl => form.ActiveControl;
 
 		public IntPtr Hwnd => form.Handle;
 
@@ -284,18 +284,18 @@ namespace Keysharp.Core
 
 		internal Font Font { get; set; }
 
-		internal Control LastContainer { get; set; }
+		internal System.Windows.Forms.Control LastContainer { get; set; }
 
-		internal Control LastControl
+		internal System.Windows.Forms.Control LastControl
 		{
 			get
 			{
 				if (LastContainer != null)
 				{
-					Control lastControl = null;
+					System.Windows.Forms.Control lastControl = null;
 					int maxIndex = int.MinValue;
 
-					foreach (Control ctrl in LastContainer.Controls)
+					foreach (System.Windows.Forms.Control ctrl in LastContainer.Controls)
 					{
 						if (ctrl is KeysharpStatusStrip)
 							continue;
@@ -317,7 +317,7 @@ namespace Keysharp.Core
 			}
 		}
 
-		internal Control Section { get; set; }
+		internal System.Windows.Forms.Control Section { get; set; }
 
 		internal StatusStrip StatusStrip { get; set; }
 
@@ -330,8 +330,8 @@ namespace Keysharp.Core
 				form = kf;
 
 				//This is wrong and needs to add things recursively and keep a count.
-				foreach (var ctrl in form.GetAllControlsRecursive<Control>())//In order for searches that use allGuiHwnds, we must make all of the child controls point here.
-					ctrl.Tag = new GuiControl(this, ctrl, ctrl.Name, true);//Supposed to be name like "label", "edit" etc, but just pass the name since this is only used with the main window.
+				foreach (var ctrl in form.GetAllControlsRecursive<System.Windows.Forms.Control>())//In order for searches that use allGuiHwnds, we must make all of the child controls point here.
+					ctrl.Tag = new Gui.Control(this, ctrl, ctrl.Name, true);//Supposed to be name like "label", "edit" etc, but just pass the name since this is only used with the main window.
 			}
 
 			LastContainer = form;
@@ -389,19 +389,19 @@ namespace Keysharp.Core
 			return "";
 		}
 
-		public GuiControl Add(object obj0, object obj1 = null, object obj2 = null)
+		public Control Add(object obj0, object obj1 = null, object obj2 = null)
 		{
 			var typeo = obj0.As();
 			var options = obj1.As();
 			var o = obj2;//The third argument needs to account for being an array in the case of combo/list boxes.
 			var type = typeo.ToLowerInvariant();
-			GuiControl holder = null;
+			Control holder = null;
 			var text = o as string;
 			var al = o as Array;
 			var dpiscale = !dpiscaling ? 1.0 : A_ScaledScreenDPI;
 			var dpiinv = 1.0 / dpiscale;
 			var opts = ParseOpt(type, text, options);
-			Control ctrl = null;
+			System.Windows.Forms.Control ctrl = null;
 
 			switch (type)
 			{
@@ -1040,7 +1040,7 @@ namespace Keysharp.Core
 					if (opts.vertical)
 						opts.addstyle |= 0x04;
 
-					var prg = new KeysharpProgressBar(opts.bgcolor.HasValue || opts.c != Control.DefaultForeColor,
+					var prg = new KeysharpProgressBar(opts.bgcolor.HasValue || opts.c != System.Windows.Forms.Control.DefaultForeColor,
 													  opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle)
 					{
 						Font = Conversions.ConvertFont(form.Font)
@@ -1608,57 +1608,57 @@ namespace Keysharp.Core
 			return holder;
 		}
 
-		public GuiControl AddActiveX(object obj0 = null, object obj1 = null) => Add(Keyword_ActiveX, obj0, obj1);
+		public Gui.Control AddActiveX(object obj0 = null, object obj1 = null) => Add(Keyword_ActiveX, obj0, obj1);
 
-		public GuiControl AddButton(object obj0 = null, object obj1 = null) => Add(Keyword_Button, obj0, obj1);
+		public Gui.Control AddButton(object obj0 = null, object obj1 = null) => Add(Keyword_Button, obj0, obj1);
 
-		public GuiControl AddCheckbox(object obj0 = null, object obj1 = null) => Add(Keyword_CheckBox, obj0, obj1);
+		public Gui.Control AddCheckbox(object obj0 = null, object obj1 = null) => Add(Keyword_CheckBox, obj0, obj1);
 
-		public GuiControl AddComboBox(object obj0 = null, object obj1 = null) => Add(Keyword_ComboBox, obj0, obj1);
+		public Gui.Control AddComboBox(object obj0 = null, object obj1 = null) => Add(Keyword_ComboBox, obj0, obj1);
 
-		public GuiControl AddCustom(object obj0 = null, object obj1 = null) => Add(Keyword_Custom, obj0, obj1);
+		public Gui.Control AddCustom(object obj0 = null, object obj1 = null) => Add(Keyword_Custom, obj0, obj1);
 
-		public GuiControl AddDateTime(object obj0 = null, object obj1 = null) => Add(Keyword_DateTime, obj0, obj1);
+		public Gui.Control AddDateTime(object obj0 = null, object obj1 = null) => Add(Keyword_DateTime, obj0, obj1);
 
-		public GuiControl AddDDL(object obj0 = null, object obj1 = null) => Add(Keyword_DropDownList, obj0, obj1);
+		public Gui.Control AddDDL(object obj0 = null, object obj1 = null) => Add(Keyword_DropDownList, obj0, obj1);
 
-		public GuiControl AddDropDownList(object obj0 = null, object obj1 = null) => Add(Keyword_DropDownList, obj0, obj1);
+		public Gui.Control AddDropDownList(object obj0 = null, object obj1 = null) => Add(Keyword_DropDownList, obj0, obj1);
 
-		public GuiControl AddEdit(object obj0 = null, object obj1 = null) => Add(Keyword_Edit, obj0, obj1);
+		public Gui.Control AddEdit(object obj0 = null, object obj1 = null) => Add(Keyword_Edit, obj0, obj1);
 
-		public GuiControl AddGroupBox(object obj0 = null, object obj1 = null) => Add(Keyword_GroupBox, obj0, obj1);
+		public Gui.Control AddGroupBox(object obj0 = null, object obj1 = null) => Add(Keyword_GroupBox, obj0, obj1);
 
-		public GuiControl AddHotKey(object obj0 = null, object obj1 = null) => Add(Keyword_Hotkey, obj0, obj1);
+		public Gui.Control AddHotKey(object obj0 = null, object obj1 = null) => Add(Keyword_Hotkey, obj0, obj1);
 
-		public GuiControl AddLink(object obj0 = null, object obj1 = null) => Add(Keyword_Link, obj0, obj1);
+		public Gui.Control AddLink(object obj0 = null, object obj1 = null) => Add(Keyword_Link, obj0, obj1);
 
-		public GuiControl AddListBox(object obj0 = null, object obj1 = null) => Add(Keyword_ListBox, obj0, obj1);
+		public Gui.Control AddListBox(object obj0 = null, object obj1 = null) => Add(Keyword_ListBox, obj0, obj1);
 
-		public GuiControl AddListView(object obj0 = null, object obj1 = null) => Add(Keyword_ListView, obj0, obj1);
+		public Gui.Control AddListView(object obj0 = null, object obj1 = null) => Add(Keyword_ListView, obj0, obj1);
 
-		public GuiControl AddMonthCal(object obj0 = null, object obj1 = null) => Add(Keyword_MonthCal, obj0, obj1);
+		public Gui.Control AddMonthCal(object obj0 = null, object obj1 = null) => Add(Keyword_MonthCal, obj0, obj1);
 
-		public GuiControl AddPic(object obj0 = null, object obj1 = null) => Add(Keyword_Picture, obj0, obj1);
+		public Gui.Control AddPic(object obj0 = null, object obj1 = null) => Add(Keyword_Picture, obj0, obj1);
 
-		public GuiControl AddPicture(object obj0 = null, object obj1 = null) => Add(Keyword_Picture, obj0, obj1);
+		public Gui.Control AddPicture(object obj0 = null, object obj1 = null) => Add(Keyword_Picture, obj0, obj1);
 
-		public GuiControl AddProgress(object obj0 = null, object obj1 = null) => Add(Keyword_Progress, obj0, obj1);
+		public Gui.Control AddProgress(object obj0 = null, object obj1 = null) => Add(Keyword_Progress, obj0, obj1);
 
-		public GuiControl AddRadio(object obj0 = null, object obj1 = null) => Add(Keyword_Radio, obj0, obj1);
+		public Gui.Control AddRadio(object obj0 = null, object obj1 = null) => Add(Keyword_Radio, obj0, obj1);
 
-		public GuiControl AddSlider(object obj0 = null, object obj1 = null) => Add(Keyword_Slider, obj0, obj1);
+		public Gui.Control AddSlider(object obj0 = null, object obj1 = null) => Add(Keyword_Slider, obj0, obj1);
 
-		public GuiControl AddStatusBar(object obj0 = null, object obj1 = null) => Add(Keyword_StatusBar, obj0, obj1);
+		public Gui.Control AddStatusBar(object obj0 = null, object obj1 = null) => Add(Keyword_StatusBar, obj0, obj1);
 
-		public GuiControl AddTab(object obj0 = null, object obj1 = null) => Add(Keyword_Tab, obj0, obj1);
+		public Gui.Control AddTab(object obj0 = null, object obj1 = null) => Add(Keyword_Tab, obj0, obj1);
 
-		public GuiControl AddText(object obj0 = null, object obj1 = null) => Add(Keyword_Text, obj0, obj1);
+		public Gui.Control AddText(object obj0 = null, object obj1 = null) => Add(Keyword_Text, obj0, obj1);
 
-		public GuiControl AddTreeView(object obj0 = null, object obj1 = null) => Add(Keyword_TreeView, obj0, obj1);
+		public Gui.Control AddTreeView(object obj0 = null, object obj1 = null) => Add(Keyword_TreeView, obj0, obj1);
 
-		public GuiControl AddUpDown(object obj0 = null, object obj1 = null) => Add(Keyword_UpDown, obj0, obj1);
+		public Gui.Control AddUpDown(object obj0 = null, object obj1 = null) => Add(Keyword_UpDown, obj0, obj1);
 
-		public GuiControl AddWebBrowser(object obj0 = null, object obj1 = null) => Add(Keyword_WebBrowser, obj0, obj1);
+		public Gui.Control AddWebBrowser(object obj0 = null, object obj1 = null) => Add(Keyword_WebBrowser, obj0, obj1);
 
 		public object Destroy() => form?.Destroy();
 
@@ -1675,7 +1675,7 @@ namespace Keysharp.Core
 								   [Optional()][DefaultParameterValue(null)] object outWidth,
 								   [Optional()][DefaultParameterValue(null)] object outHeight)
 		{
-			GuiControl.GetClientPos(form, dpiscaling, outX, outY, outWidth, outHeight);
+			Gui.Control.GetClientPos(form, dpiscaling, outX, outY, outWidth, outHeight);
 			return null;
 		}
 
@@ -1683,7 +1683,7 @@ namespace Keysharp.Core
 
 		public object GetPos([Optional()][DefaultParameterValue(null)] object outX, [Optional()][DefaultParameterValue(null)] object outY, [Optional()][DefaultParameterValue(null)] object outWidth, [Optional()][DefaultParameterValue(null)] object outHeight)
 		{
-			GuiControl.GetPos(form, dpiscaling, outX, outY, outWidth, outHeight);
+			Gui.Control.GetPos(form, dpiscaling, outX, outY, outWidth, outHeight);
 			return null;
 		}
 
@@ -1879,7 +1879,7 @@ namespace Keysharp.Core
 				var maxx = 0;
 				var maxy = 0;
 
-				foreach (Control ctrl in form.Controls)
+				foreach (System.Windows.Forms.Control ctrl in form.Controls)
 				{
 					if (ctrl != ss)
 					{
@@ -1995,9 +1995,9 @@ namespace Keysharp.Core
 			var ctrls = form.Controls.Flatten(true);
 			var dkt = new Dictionary<object, object>();
 
-			foreach (Control control in form.Controls)
+			foreach (System.Windows.Forms.Control control in form.Controls)
 			{
-				if (control.Name != "" && control.GetGuiControl() is GuiControl guictrl)
+				if (control.Name != "" && control.GetGuiControl() is Gui.Control guictrl)
 				{
 					if (control is KeysharpTextBox || control is KeysharpDateTimePicker || control is KeysharpMonthCalendar)//Just use value because it's the same and consolidates the formatting in one place, despite being slightly slower.
 						dkt[control.Name] = guictrl.Value;
@@ -2026,7 +2026,7 @@ namespace Keysharp.Core
 						if (rb.Parent is Panel pnl && !panels.Contains(pnl))
 						{
 							_ = panels.Add(pnl);
-							var rbs = pnl.Controls.Cast<Control>().Where(pc => pc is RadioButton pcrb).Cast<RadioButton>().ToList();
+							var rbs = pnl.Controls.Cast<System.Windows.Forms.Control>().Where(pc => pc is RadioButton pcrb).Cast<RadioButton>().ToList();
 							var named = rbs.Where(rr => rr.Name != "").ToList();
 
 							if (named.Count == 1)
@@ -2057,7 +2057,7 @@ namespace Keysharp.Core
 
 		public object UseGroup(object obj0 = null)
 		{
-			if (obj0 is GuiControl gctrl && gctrl.Control is KeysharpGroupBox gb)
+			if (obj0 is Gui.Control gctrl && gctrl.Ctrl is KeysharpGroupBox gb)
 				LastContainer = gb;
 			else
 				LastContainer = form;
@@ -2206,9 +2206,9 @@ namespace Keysharp.Core
 						options.addexstyle |= 0x00000020;
 						options.bgtrans = true;
 					}
-					else if (opt.Equals("-Background", StringComparison.OrdinalIgnoreCase)) { options.bgcolor = Control.DefaultBackColor; }
-					else if (opt.Equals("Background", StringComparison.OrdinalIgnoreCase)) { options.bgcolor = Control.DefaultBackColor; }
-					else if (opt.Equals("BackgroundDefault", StringComparison.OrdinalIgnoreCase)) { options.bgcolor = Control.DefaultBackColor; }
+					else if (opt.Equals("-Background", StringComparison.OrdinalIgnoreCase)) { options.bgcolor = System.Windows.Forms.Control.DefaultBackColor; }
+					else if (opt.Equals("Background", StringComparison.OrdinalIgnoreCase)) { options.bgcolor = System.Windows.Forms.Control.DefaultBackColor; }
+					else if (opt.Equals("BackgroundDefault", StringComparison.OrdinalIgnoreCase)) { options.bgcolor = System.Windows.Forms.Control.DefaultBackColor; }
 					else if (Options.TryParse(opt, "Background", ref tempcolor, StringComparison.OrdinalIgnoreCase, true)) { options.bgcolor = tempcolor; }
 					else if (Options.TryParse(opt, "Border", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.thinborder = tempbool; }
 					//Control specific.
@@ -2352,10 +2352,10 @@ namespace Keysharp.Core
 		private void ResizeTabControls()
 		{
 			var dpiscale = !dpiscaling ? 1.0 : A_ScaledScreenDPI;
-			var tabControls = controls.Values.OfType<GuiControl>().Where(gc => gc.Control is KeysharpTabControl).ToHashSet();
+			var tabControls = controls.Values.OfType<Gui.Control>().Where(gc => gc.Ctrl is KeysharpTabControl).ToHashSet();
 
 			foreach (var tc in tabControls)
-				((KeysharpTabControl)tc.Control).AdjustSize(dpiscale, tc.requestedSize);
+				((KeysharpTabControl)tc.Ctrl).AdjustSize(dpiscale, tc.requestedSize);
 		}
 
 		public object this[object controlname]
@@ -2367,7 +2367,7 @@ namespace Keysharp.Core
 
 				if (handle.HasValue)
 				{
-					if (controls.TryGetValue(handle.Value, out var val) && val is GuiControl gc)
+					if (controls.TryGetValue(handle.Value, out var val) && val is Gui.Control gc)
 						return gc;
 				}
 
@@ -2375,7 +2375,7 @@ namespace Keysharp.Core
 				{
 					foreach (var ctrlkv in controls)
 					{
-						if (ctrlkv.Value is GuiControl gc)
+						if (ctrlkv.Value is Gui.Control gc)
 						{
 							if (string.Compare(gc.Name as string, s, true) == 0)
 								return gc;
@@ -2388,7 +2388,7 @@ namespace Keysharp.Core
 					//Put the ClassNN searches in a separate loop to be done as a last resort because they're very slow.
 					foreach (var ctrlkv in controls)
 					{
-						if (ctrlkv.Value is GuiControl gc)
+						if (ctrlkv.Value is Gui.Control gc)
 						{
 							if (string.Compare(gc.ClassNN, s, true) == 0)
 								return gc;
@@ -2397,7 +2397,7 @@ namespace Keysharp.Core
 
 					foreach (var ctrlkv in controls)
 					{
-						if (ctrlkv.Value is GuiControl gc)
+						if (ctrlkv.Value is Gui.Control gc)
 						{
 							if (string.Compare(gc.NetClassNN, s, true) == 0)
 								return gc;
@@ -2412,25 +2412,25 @@ namespace Keysharp.Core
 		//Create a thin wrapper for each control type so that type checking like:
 		//if (obj is Gui.Edit)
 		//works correctly.
-		public class ActiveX(params object[] args) : GuiControl(args) { }
+		public class ActiveX(params object[] args) : Gui.Control(args) { }
 
-		public class Button(params object[] args) : GuiControl(args) { }
+		public class Button(params object[] args) : Gui.Control(args) { }
 
-		public class CheckBox(params object[] args) : GuiControl(args) { }
+		public class CheckBox(params object[] args) : Gui.Control(args) { }
 #if WINDOWS
-		public class Custom(params object[] args) : GuiControl(args) { }
+		public class Custom(params object[] args) : Gui.Control(args) { }
 #endif
-		public class DateTime(params object[] args) : GuiControl(args) { }
+		public class DateTime(params object[] args) : Gui.Control(args) { }
 
-		public class Edit(params object[] args) : GuiControl(args) { }
+		public class Edit(params object[] args) : Gui.Control(args) { }
 
-		public class GroupBox(params object[] args) : GuiControl(args) { }
+		public class GroupBox(params object[] args) : Gui.Control(args) { }
 
-		public class Hotkey(params object[] args) : GuiControl(args) { }
+		public class Hotkey(params object[] args) : Gui.Control(args) { }
 
-		public class Link(params object[] args) : GuiControl(args) { }
+		public class Link(params object[] args) : Gui.Control(args) { }
 
-		public class List(params object[] args) : GuiControl(args) { }
+		public class List(params object[] args) : Gui.Control(args) { }
 
 		public class ComboBox(params object[] args) : Gui.List(args) { }
 
@@ -2440,29 +2440,29 @@ namespace Keysharp.Core
 
 		public class Tab(params object[] args) : Gui.List(args) { }
 
-		public class ListView(params object[] args) : GuiControl(args) { }
+		public class ListView(params object[] args) : Gui.Control(args) { }
 
-		public class MonthCal(params object[] args) : GuiControl(args) { }
+		public class MonthCal(params object[] args) : Gui.Control(args) { }
 
-		public class Pic(params object[] args) : GuiControl(args) { }
+		public class Pic(params object[] args) : Gui.Control(args) { }
 
-		public class Progress(params object[] args) : GuiControl(args) { }
+		public class Progress(params object[] args) : Gui.Control(args) { }
 
-		public class Radio(params object[] args) : GuiControl(args) { }
+		public class Radio(params object[] args) : Gui.Control(args) { }
 
-		public class RichEdit(params object[] args) : GuiControl(args) { }
+		public class RichEdit(params object[] args) : Gui.Control(args) { }
 
-		public class Slider(params object[] args) : GuiControl(args) { }
+		public class Slider(params object[] args) : Gui.Control(args) { }
 
-		public class StatusBar(params object[] args) : GuiControl(args) { }
+		public class StatusBar(params object[] args) : Gui.Control(args) { }
 
-		public class Text(params object[] args) : GuiControl(args) { }
+		public class Text(params object[] args) : Gui.Control(args) { }
 
-		public class TreeView(params object[] args) : GuiControl(args) { }
+		public class TreeView(params object[] args) : Gui.Control(args) { }
 
-		public class UpDown(params object[] args) : GuiControl(args) { }
+		public class UpDown(params object[] args) : Gui.Control(args) { }
 
-		public class WebBrowser(params object[] args) : GuiControl(args) { }
+		public class WebBrowser(params object[] args) : Gui.Control(args) { }
 
 		internal class GuiOptions
 		{
@@ -2475,14 +2475,14 @@ namespace Keysharp.Core
 			internal bool bgtrans = false;
 			internal bool bottom = false;
 
-			//Control specific.
+			//Ctrl specific.
 			//Button.
 			internal bool? btndef;
 
 			//Tab.
 			internal bool? buttons;
 
-			internal Color c = Control.DefaultForeColor;
+			internal Color c = System.Windows.Forms.Control.DefaultForeColor;
 			internal bool? center;
 
 			//Checkbox.
