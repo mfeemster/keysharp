@@ -31,7 +31,7 @@ namespace Keysharp.Scripting
                     .Select(mph => mph.mi) // Flatten to IEnumerable<MethodPropertyHolder>
                     .ToArray();
             else
-                methods = t.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.DeclaredOnly);
+                methods = t.GetMethods(BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.DeclaredOnly);
 
             foreach (var method in methods)
             {
