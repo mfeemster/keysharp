@@ -26,13 +26,13 @@ namespace Keysharp.Core.Windows
 	/// </summary>
 	internal class WindowsKeyboardMouseSender : KeyboardMouseSender
 	{
-		internal static bool firstCallForThisEvent;
-		internal static bool inBlindMode;
-		internal static int MaxInitialEventsPB = 1500;
-		internal static int MaxInitialEventsSI = 500;
-		internal static uint menuMaskKeySC = ScanCodes.LControl;
-		internal static uint menuMaskKeyVK = VK_CONTROL;
-		internal static DateTime thisHotkeyStartTime = DateTime.UtcNow;
+		internal bool firstCallForThisEvent;
+		internal bool inBlindMode;
+		internal const int MaxInitialEventsPB = 1500;
+		internal const int MaxInitialEventsSI = 500;
+		internal uint menuMaskKeySC = ScanCodes.LControl;
+		internal uint menuMaskKeyVK = VK_CONTROL;
+		internal DateTime thisHotkeyStartTime = DateTime.UtcNow;
 		internal int currentEvent;
 		internal uint eventModifiersLR;
 		internal List<PlaybackEvent> eventPb = new (MaxInitialEventsPB);
@@ -66,11 +66,11 @@ namespace Keysharp.Core.Windows
 		//public const uint KEY_PHYS_IGNORE = (KEY_IGNORE - 1);  // Same as above but marked as physical for other instances of the hook.
 		//public const uint KEY_IGNORE_ALL_EXCEPT_MODIFIER = (KEY_IGNORE - 2);  // Non-physical and ignored only if it's not a modifier.
 		//public const uint KEY_BLOCK_THIS = (KEY_IGNORE + 1);
-		private static readonly int[] ctrls = [/*(int)Keys.ShiftKey, */(int)Keys.LShiftKey, (int)Keys.RShiftKey, /*(int)Keys.ControlKey,*/(int)Keys.LControlKey, (int)Keys.RControlKey, (int)Keys.Menu];
+		private readonly int[] ctrls = [/*(int)Keys.ShiftKey, */(int)Keys.LShiftKey, (int)Keys.RShiftKey, /*(int)Keys.ControlKey,*/(int)Keys.LControlKey, (int)Keys.RControlKey, (int)Keys.Menu];
 
 		//private static readonly byte[] state = new byte[VKMAX];
-		private static readonly IntPtr hookId = IntPtr.Zero;
-		private static bool thisEventHasBeenLogged, thisEventIsScreenCoord;
+		private readonly IntPtr hookId = IntPtr.Zero;
+		private bool thisEventHasBeenLogged, thisEventIsScreenCoord;
 		private readonly StringBuilder buf = new (4);
 		private readonly List<CachedLayoutType> cachedLayouts = new (10);
 		//private bool dead;
@@ -80,6 +80,10 @@ namespace Keysharp.Core.Windows
 		//private WindowsAPI.LowLevelKeyboardProc proc;
 
 		private DateTime thisEventTime;
+
+		internal WindowsKeyboardMouseSender()
+		{
+		}
 
 		/// <summary>
 		/// Loads and reads the keyboard layout DLL to determine if it has AltGr.
@@ -365,10 +369,10 @@ namespace Keysharp.Core.Windows
 		internal override IntPtr GetFocusedKeybdLayout(IntPtr window)
 		{
 			if (window == IntPtr.Zero)
-				window = WindowProvider.Manager.GetForeGroundWindowHwnd();
+				window = script.WindowProvider.Manager.GetForeGroundWindowHwnd();
 
 			var tempzero = IntPtr.Zero;
-			return PlatformProvider.Manager.GetKeyboardLayout(WindowProvider.Manager.GetFocusedCtrlThread(ref tempzero, window));
+			return script.PlatformProvider.Manager.GetKeyboardLayout(script.WindowProvider.Manager.GetFocusedCtrlThread(ref tempzero, window));
 		}
 
 		//  // SendInput() appears to be limited to 5000 chars (10000 events in array), at least on XP.  This is
@@ -409,7 +413,7 @@ namespace Keysharp.Core.Windows
 		/// <returns></returns>
 		internal override uint GetModifierLRState(bool explicitlyGet = false)
 		{
-			var ht = Script.HookThread;
+			var ht = script.HookThread;
 
 			// If the hook is active, rely only on its tracked value rather than calling Get():
 			if (ht.HasKbdHook() && !explicitlyGet)
@@ -766,7 +770,7 @@ namespace Keysharp.Core.Windows
 
 						if ((childUnderCursor = WindowFromPoint(point)) != IntPtr.Zero
 								&& (parentUnderCursor = GetNonChildParent(childUnderCursor)) != IntPtr.Zero // WM_NCHITTEST below probably requires parent vs. child.
-								&& GetWindowThreadProcessId(parentUnderCursor, out _) == Processes.MainThreadID) // It's one of our thread's windows.
+								&& GetWindowThreadProcessId(parentUnderCursor, out _) == script.ProcessesData.MainThreadID) // It's one of our thread's windows.
 						{
 							var hitTest = SendMessage(parentUnderCursor, WM_NCHITTEST, 0, MakeLong((short)point.X, (short)point.Y));
 
@@ -1058,7 +1062,7 @@ namespace Keysharp.Core.Windows
 			{
 				// Convert relative coords to screen coords if necessary (depends on CoordMode).
 				// None of this is done for playback mode since that mode already returned higher above.
-				PlatformProvider.Manager.CoordToScreen(ref x, ref y, CoordMode.Mouse);
+				script.PlatformProvider.Manager.CoordToScreen(ref x, ref y, CoordMode.Mouse);
 			}
 
 			if (sendMode == SendModes.Input) // Track predicted cursor position for use by subsequent events put into the array.
@@ -1105,7 +1109,7 @@ namespace Keysharp.Core.Windows
 		internal IntPtr PlaybackHandler(int code, IntPtr wParam, ref EventMsg lParam)
 		// Journal playback hook.
 		{
-			var ht = Script.HookThread;
+			var ht = script.HookThread;
 			//var lParam = (EventMsg)Marshal.PtrToStructure(lp, typeof(EventMsg));
 
 			switch (code)
@@ -1237,7 +1241,7 @@ namespace Keysharp.Core.Windows
 							{
 								var tx = (int)ev.paramL;
 								var ty = (int)ev.paramH;
-								PlatformProvider.Manager.CoordToScreen(ref tx, ref ty, CoordMode.Mouse);   // Playback uses screen coords.
+								script.PlatformProvider.Manager.CoordToScreen(ref tx, ref ty, CoordMode.Mouse);   // Playback uses screen coords.
 								ev.paramL = (uint)tx;
 								ev.paramH = (uint)ty;
 							}
@@ -1281,8 +1285,8 @@ namespace Keysharp.Core.Windows
 						// MSDN implies in the following statement that it's acceptable (and perhaps preferable in
 						// the case of a playback hook) for the hook to unhook itself: "The hook procedure can be in the
 						// state of being called by another thread even after UnhookWindowsHookEx returns."
-						_ = UnhookWindowsHookEx(Script.playbackHook);
-						Script.playbackHook = IntPtr.Zero; // Signal the installer of the hook that it's gone now.
+						script.HookThread.Unhook(script.playbackHook);
+						script.playbackHook = IntPtr.Zero; // Signal the installer of the hook that it's gone now.
 						// The following is an obsolete method from pre-v1.0.44.  Do not reinstate it without adding handling
 						// to MainWindowProc() to do "g_PlaybackHook = NULL" upon receipt of WM_CANCELJOURNAL.
 						// PostMessage(g_hWnd, WM_CANCELJOURNAL, 0, 0); // v1.0.44: Post it to g_hWnd vs. NULL because it's a little safer (SEE COMMENTS in MsgSleep's WM_CANCELJOURNAL for why it's almost completely safe with NULL).
@@ -1315,7 +1319,7 @@ namespace Keysharp.Core.Windows
 					// The first parameter uses g_PlaybackHook rather than NULL because MSDN says it's merely
 					// "currently ignored", but in the older "Win32 hooks" article, it says that the behavior
 					// may change in the future.
-					return CallNextHookEx(Script.playbackHook, code, wParam, ref lParam);
+					return CallNextHookEx(script.playbackHook, code, wParam, ref lParam);
 					// Except for the cases above, CallNextHookEx() is not called for performance and also because from
 					// what I can tell from the MSDN docs and other examples, it is neither required nor desirable to do so
 					// during playback's SKIP/GETNEXT.
@@ -1589,6 +1593,8 @@ namespace Keysharp.Core.Windows
 		/// <param name="modsDuringSend"></param>
 		internal override void SendEventArray(ref long finalKeyDelay, uint modsDuringSend)
 		{
+			var ht = script.HookThread;
+
 			if (sendMode == SendModes.Input)
 			{
 				//if (eventSi.Count == 0)
@@ -1607,10 +1613,9 @@ namespace Keysharp.Core.Windows
 				// remove only those that actually have corresponding events in the array.  This avoids temporarily
 				// losing visibility of physical key states (especially when the keyboard hook is removed).
 				HookType activeHooks;
-				var ht = Script.HookThread;
 
 				if ((activeHooks = ht.GetActiveHooks()) != HookType.None)
-					Script.HookThread.AddRemoveHooks((HookType)((int)activeHooks & ~hooksToRemoveDuringSendInput), true);
+					ht.AddRemoveHooks((HookType)((int)activeHooks & ~hooksToRemoveDuringSendInput), true);
 
 				_ = SendInput((uint)eventSi.Count, eventSi.ToArray(), Marshal.SizeOf(typeof(INPUT))); // Must call dynamically-resolved version for Win95/NT compatibility.
 
@@ -1646,12 +1651,12 @@ namespace Keysharp.Core.Windows
 						modifiersLRPhysical &= ~(modsChangedPhysicallyDuringSend & modsDuringSend); // Remove those that changed from down to up.
 						modifiersLRPhysical |= modsChangedPhysicallyDuringSend & modsCurrent; // Add those that changed from up to down.
 						modifiersLRLogical = modifiersLRLogicalNonIgnored = modsCurrent; // Necessary for hotkeys to be recognized correctly if modifiers were sent.
-						Script.HookThread.hsHwnd = GetForegroundWindow(); // An item done by ResetHook() that seems worthwhile here.
+						ht.hsHwnd = GetForegroundWindow(); // An item done by ResetHook() that seems worthwhile here.
 						// Most other things done by ResetHook() seem like they would do more harm than good to reset here
 						// because of the the time the hook is typically missing is very short, usually under 30ms.
 					}
 
-					Script.HookThread.AddRemoveHooks(activeHooks, true); // Restore the hooks that were active before the SendInput.
+					ht.AddRemoveHooks(activeHooks, true); // Restore the hooks that were active before the SendInput.
 				}
 
 				return;
@@ -1681,17 +1686,13 @@ namespace Keysharp.Core.Windows
 			            // - Study contents of the sEventPB array, which contains the keystrokes just recorded.
 			            eventCount = 0; // Used by RecordProc().
 
-			            if ((Keysharp.Scripting.Script.playbackHook = SetWindowsHookEx(WH_JOURNALRECORD, RecordProc, WindowsAPI.GetModuleHandle(Process.GetCurrentProcess().MainModule.ModuleName), 0)) == 0)
+			            if ((Keysharp.Scripting.script.playbackHook = SetWindowsHookEx(WH_JOURNALRECORD, RecordProc, WindowsAPI.GetModuleHandle(Process.GetCurrentProcess().MainModule.ModuleName), 0)) == 0)
 			                return;
 
 			*/
-			Action func = () =>
-			{
-				Script.playbackHook = SetWindowsHookEx(WH_JOURNALPLAYBACK, PlaybackHandler, GetModuleHandle(Process.GetCurrentProcess().MainModule.ModuleName), 0);
-			};
-			Script.mainWindow.CheckedBeginInvoke(func, true, false);
+			ht.Invoke(() => script.playbackHook = SetWindowsHookEx(WH_JOURNALPLAYBACK, PlaybackHandler, GetModuleHandle(Process.GetCurrentProcess().MainModule.ModuleName), 0));
 
-			if (Script.playbackHook == IntPtr.Zero)
+			if (script.playbackHook == IntPtr.Zero)
 				return;
 
 			// During playback, have the keybd hook (if it's installed) block presses of the Windows key.
@@ -1699,7 +1700,7 @@ namespace Keysharp.Core.Windows
 			// that takes effect immediately rather than getting buffered/postponed until after the playback.
 			// It should be okay to set this after the playback hook is installed because playback shouldn't
 			// actually begin until we have our thread do its first MsgSleep later below.
-			Script.HookThread.blockWinKeys = true;
+			ht.blockWinKeys = true;
 
 			// Otherwise, hook is installed, so:
 			// Wait for the hook to remove itself because the script should not be allowed to continue
@@ -1722,10 +1723,10 @@ namespace Keysharp.Core.Windows
 			// affect performance because there used to be the following here in place of the loop,
 			// and it didn't perform any better:
 			// GetMessage(&msg, NULL, WM_CANCELJOURNAL, WM_CANCELJOURNAL);
-			while (Script.playbackHook != IntPtr.Zero)
-				Flow.SleepWithoutInterruption(Flow.IntervalUnspecified); // For maintainability, macro is used rather than optimizing/splitting the code it contains.
+			while (script.playbackHook != IntPtr.Zero)
+				Flow.SleepWithoutInterruption(Flow.intervalUnspecified); // For maintainability, macro is used rather than optimizing/splitting the code it contains.
 
-			Script.HookThread.blockWinKeys = false;
+			ht.blockWinKeys = false;
 
 			// Either the hook unhooked itself or the OS did due to Ctrl-Esc or Ctrl-Alt-Del.
 			// MSDN: When an application sees a [system-generated] WM_CANCELJOURNAL message, it can assume
@@ -1791,8 +1792,8 @@ namespace Keysharp.Core.Windows
 			// for this particular vk keystroke, but modifiersLRPersistent are the ones that will stay
 			// in pressed down even after it's sent.
 			var modifiersLRSpecified = (modifiersLR | modifiersLRPersistent);
-			var vkIsMouse = Script.HookThread.IsMouseVK(vk); // Caller has ensured that VK is non-zero when it wants a mouse click.
-			var tv = Threads.GetThreadVariables();
+			var vkIsMouse = script.HookThread.IsMouseVK(vk); // Caller has ensured that VK is non-zero when it wants a mouse click.
+			var tv = script.Threads.GetThreadVariables();
 			var sendLevel = tv.sendLevel;
 
 			for (var i = 0L; i < repeatCount; ++i)
@@ -1943,11 +1944,11 @@ namespace Keysharp.Core.Windows
 				return;
 
 			Error err;
-			var origLastPeekTime = Script.lastPeekTime;
+			var origLastPeekTime = script.lastPeekTime;
 			var modsExcludedFromBlind = 0u;// For performance and also to reserve future flexibility, recognize {Blind} only when it's the first item in the string.
 			var i = 0;
 			var sub = keys.AsSpan();
-			var ht = Script.HookThread;
+			var ht = script.HookThread;
 
 			if (inBlindMode = ((sendRaw == SendRawModes.NotRaw) && keys.StartsWith("{Blind"))) // Don't allow {Blind} while in raw mode due to slight chance {Blind} is intended to be sent as a literal string.
 			{
@@ -1995,7 +1996,7 @@ namespace Keysharp.Core.Windows
 				sub = sub.Slice(6);
 			}
 
-			var tv = Threads.GetThreadVariables();
+			var tv = script.Threads.GetThreadVariables();
 			var origKeyDelay = tv.keyDelay;
 			var origPressDuration = tv.keyDuration;
 
@@ -2049,13 +2050,14 @@ namespace Keysharp.Core.Windows
 			uint keybdLayoutThread = 0;     //
 			uint targetThread = 0;
 			var tempitem = new WindowItem(targetWindow);
+			var pd = script.ProcessesData;
 
 			if (targetWindow != IntPtr.Zero) // Caller has ensured this is NULL for SendInput and SendPlay modes.
 			{
 				if ((targetThread = GetWindowThreadProcessId(targetWindow, out _)) != 0 // Assign.
-						&& targetThread != Processes.MainThreadID && !tempitem.IsHung)
+						&& targetThread != pd.MainThreadID && !tempitem.IsHung)
 				{
-					threadsAreAttached = AttachThreadInput(Processes.MainThreadID, targetThread, true);
+					threadsAreAttached = AttachThreadInput(pd.MainThreadID, targetThread, true);
 					keybdLayoutThread = targetThread; // Testing shows that ControlSend benefits from the adapt-to-layout technique too.
 				}
 
@@ -2075,7 +2077,7 @@ namespace Keysharp.Core.Windows
 						&& sendModeOrig != SendModes.Play // SM_PLAY is reported to be incapable of locking the computer.
 						&& !inBlindMode // The philosophy of blind-mode is that the script should have full control, so don't do any waiting during blind mode.
 						&& sendRaw != SendRawModes.RawText // {Text} mode does not trigger Win+L.
-						&& mgr.CurrentThreadId() == Processes.MainThreadID // Exclude the hook thread because it isn't allowed to call anything like MsgSleep, nor are any calls from the hook thread within the understood/analyzed scope of this workaround.
+						&& mgr.CurrentThreadId() == pd.MainThreadID // Exclude the hook thread because it isn't allowed to call anything like MsgSleep, nor are any calls from the hook thread within the understood/analyzed scope of this workaround.
 				   )
 				{
 					var waitForWinKeyRelease = false;
@@ -2116,7 +2118,7 @@ namespace Keysharp.Core.Windows
 
 					if (waitForWinKeyRelease)
 						while (ht.IsKeyDownAsync(VK_LWIN) || ht.IsKeyDownAsync(VK_RWIN)) // Even if the keyboard hook is installed, it seems best to use IsKeyDownAsync() vs. g_PhysicalKeyState[] because it's more likely to produce consistent behavior.
-							Flow.SleepWithoutInterruption(Flow.IntervalUnspecified); // Seems best not to allow other threads to launch, for maintainability and because SendKeys() isn't designed to be interruptible.
+							Flow.SleepWithoutInterruption(Flow.intervalUnspecified); // Seems best not to allow other threads to launch, for maintainability and because SendKeys() isn't designed to be interruptible.
 				}
 
 				// v1.0.44.03: The following change is meaningful only to people who use more than one keyboard layout.
@@ -2128,10 +2130,10 @@ namespace Keysharp.Core.Windows
 				// for each keystroke.
 				// v1.1.27.01: Use the thread of the focused control, which may differ from the active window.
 				var tempzero = IntPtr.Zero;
-				keybdLayoutThread = WindowProvider.Manager.GetFocusedCtrlThread(ref tempzero, IntPtr.Zero);
+				keybdLayoutThread = script.WindowProvider.Manager.GetFocusedCtrlThread(ref tempzero, IntPtr.Zero);
 			}
 
-			targetKeybdLayout = PlatformProvider.Manager.GetKeyboardLayout(keybdLayoutThread); // If keybd_layout_thread==0, this will get our thread's own layout, which seems like the best/safest default.
+			targetKeybdLayout = script.PlatformProvider.Manager.GetKeyboardLayout(keybdLayoutThread); // If keybd_layout_thread==0, this will get our thread's own layout, which seems like the best/safest default.
 			targetLayoutHasAltGr = LayoutHasAltGr(targetKeybdLayout);  // Note that WM_INPUTLANGCHANGEREQUEST is not monitored by MsgSleep for the purpose of caching our thread's keyboard layout.  This is because it would be unreliable if another msg pump such as MsgBox is running.  Plus it hardly helps perf. at all, and hurts maintainability.
 			// Below is now called with "true" so that the hook's modifier state will be corrected (if necessary)
 			// prior to every send.
@@ -2145,6 +2147,7 @@ namespace Keysharp.Core.Windows
 			// but not logically such as when RControl, for example, is a suffix hotkey and the user is
 			// physically holding it down.
 			uint modsDownPhysicallyOrig, modsDownPhysicallyButNotLogicallyOrig;
+			var ad = script.AccessorData;
 
 			//if (hookId != IntPtr.Zero)
 			if (ht.HasKbdHook())
@@ -2159,7 +2162,7 @@ namespace Keysharp.Core.Windows
 				// Even if TickCount has wrapped due to system being up more than about 49 days,
 				// DWORD subtraction still gives the right answer as long as g_script.mThisHotkeyStartTime
 				// itself isn't more than about 49 days ago:
-				if ((DateTime.UtcNow - thisHotkeyStartTime).TotalMilliseconds < hotkeyModifierTimeout) // Elapsed time < timeout-value
+				if ((DateTime.UtcNow - thisHotkeyStartTime).TotalMilliseconds < ad.hotkeyModifierTimeout) // Elapsed time < timeout-value
 					modsDownPhysicallyOrig = modsCurrent & thisHotkeyModifiersLR; // Bitwise AND is set intersection.
 				else
 					// Since too much time as passed since the user pressed the hotkey, it seems best,
@@ -2252,8 +2255,9 @@ namespace Keysharp.Core.Windows
 				InitEventArray(maxEvents, modsCurrent);
 			}
 
-			var blockinputPrev = Keyboard.blockInput;
-			var doSelectiveBlockInput = (Keyboard.blockInputMode == ToggleValueType.Send || Keyboard.blockInputMode == ToggleValueType.SendAndMouse)
+			var kbd = script.KeyboardData;
+			var blockinputPrev = kbd.blockInput;
+			var doSelectiveBlockInput = (kbd.blockInputMode == ToggleValueType.Send || kbd.blockInputMode == ToggleValueType.SendAndMouse)
 										&& sendMode == SendModes.Event && targetWindow == IntPtr.Zero;
 
 			if (doSelectiveBlockInput)
@@ -2778,8 +2782,8 @@ namespace Keysharp.Core.Windows
 					// but do this only if the timeout period didn't expire (or the user specified that it never
 					// times out; i.e. elapsed time < timeout-value; DWORD subtraction gives the right answer even if
 					// tick-count has wrapped around).
-					modsDownPhysically = (hotkeyModifierTimeout < 0 // It never times out or...
-										  || (DateTime.UtcNow - thisHotkeyStartTime).TotalMilliseconds < hotkeyModifierTimeout) // It didn't time out.
+					modsDownPhysically = (ad.hotkeyModifierTimeout < 0 // It never times out or...
+										  || (DateTime.UtcNow - thisHotkeyStartTime).TotalMilliseconds < ad.hotkeyModifierTimeout) // It didn't time out.
 										 ? modsDownPhysicallyOrig : 0;
 
 				// Put any modifiers in sModifiersLR_remapped back into effect, as if they were physically down.
@@ -2881,7 +2885,7 @@ namespace Keysharp.Core.Windows
 			// Might be better to do this after changing capslock state, since having the threads attached
 			// tends to help with updating the global state of keys (perhaps only under Win9x in this case):
 			if (threadsAreAttached)
-				_ = AttachThreadInput(Processes.MainThreadID, targetThread, false);
+				_ = AttachThreadInput(pd.MainThreadID, targetThread, false);
 
 			if (doSelectiveBlockInput && !blockinputPrev) // Turn it back off only if it was off before we started.
 				_ = Keyboard.ScriptBlockInput(false);
@@ -2896,7 +2900,7 @@ namespace Keysharp.Core.Windows
 			// each new hotkey thread returns, even though Critical was not used.  Also note SLEEP_WITHOUT_INTERRUPTION
 			// causes g_script.mLastScriptRest to be reset, so it's unlikely that a sleep would occur between Send calls.
 			// To solve this, call MsgSleep(-1) now (unless no delays were performed, or the thread is uninterruptible):
-			if (sendModeOrig == SendModes.Event && Script.lastPeekTime != origLastPeekTime && Threads.IsInterruptible())
+			if (sendModeOrig == SendModes.Event && script.lastPeekTime != origLastPeekTime && script.Threads.IsInterruptible())
 				_ = Flow.Sleep(0); // MsgSleep(-1);//MsgSleep() is going to be extremely hard to implement, so just do regular sleep for now until we get real threads implemented.//TODO
 
 			// v1.0.43.03: Someone reported that when a non-autoreplace hotstring calls us to do its backspacing, the
@@ -2910,7 +2914,7 @@ namespace Keysharp.Core.Windows
 			// This fix does not apply to the SendPlay or SendEvent modes, the former due to the fact that it sleeps
 			// a lot while the playback is running, and the latter due to key-delay and because testing has never shown
 			// a need for it.
-			if (sendModeOrig == SendModes.Input && GetWindowThreadProcessId(GetForegroundWindow(), out _) == Processes.MainThreadID) // GetWindowThreadProcessId() tolerates a NULL hwnd.
+			if (sendModeOrig == SendModes.Input && GetWindowThreadProcessId(GetForegroundWindow(), out _) == pd.MainThreadID) // GetWindowThreadProcessId() tolerates a NULL hwnd.
 				Flow.SleepWithoutInterruption(-1);
 
 			// v1.0.43.08: Restore the original thread key-delay values in case above temporarily overrode them.
@@ -3447,9 +3451,9 @@ namespace Keysharp.Core.Windows
 				if (targetWindow != IntPtr.Zero)
 				{
 					//if (hookId != IntPtr.Zero)
-					if (Script.HookThread.HasKbdHook())
+					if (script.HookThread.HasKbdHook())
 						Flow.SleepWithoutInterruption(0); // Don't use ternary operator to combine this with next due to "else if".
-					else if (GetWindowThreadProcessId(targetWindow, out var _) == Processes.MainThreadID)
+					else if (GetWindowThreadProcessId(targetWindow, out var _) == script.ProcessesData.MainThreadID)
 						Flow.SleepWithoutInterruption(-1);
 				}
 			}
@@ -3523,7 +3527,7 @@ namespace Keysharp.Core.Windows
 		internal override ToggleValueType ToggleKeyState(uint vk, ToggleValueType toggleValue)
 		{
 			// Can't use IsKeyDownAsync/GetAsyncKeyState() because it doesn't have this info:
-			var startingState = Script.HookThread.IsKeyToggledOn(vk) ? ToggleValueType.On : ToggleValueType.Off;
+			var startingState = script.HookThread.IsKeyToggledOn(vk) ? ToggleValueType.On : ToggleValueType.Off;
 
 			if (toggleValue != ToggleValueType.On && toggleValue != ToggleValueType.Off) // Shouldn't be called this way.
 				return startingState;
@@ -3549,7 +3553,7 @@ namespace Keysharp.Core.Windows
 				// true state doesn't change either).  This problem tends to happen when the key
 				// is pressed while the hook is forcing it to be either ON or OFF (or it suppresses
 				// it because it's a hotkey).  Needs more testing on diff. keyboards & OSes:
-				if (Script.HookThread.IsKeyDown(vk))
+				if (script.HookThread.IsKeyDown(vk))
 					SendKeyEvent(KeyEventTypes.KeyUp, vk);
 			}
 			// Since it's not already in the desired state, toggle it:
@@ -3560,10 +3564,10 @@ namespace Keysharp.Core.Windows
 			// to both directions (ON and OFF) since it seems likely to be needed for them all.
 			bool ourThreadIsForeground;
 
-			if (ourThreadIsForeground = GetWindowThreadProcessId(GetForegroundWindow(), out var _) == Processes.MainThreadID) // GetWindowThreadProcessId() tolerates a NULL hwnd.
+			if (ourThreadIsForeground = GetWindowThreadProcessId(GetForegroundWindow(), out var _) == script.ProcessesData.MainThreadID) // GetWindowThreadProcessId() tolerates a NULL hwnd.
 				Flow.SleepWithoutInterruption(-1);
 
-			if (vk == VK_CAPITAL && toggleValue == ToggleValueType.Off && Script.HookThread.IsKeyToggledOn(vk))
+			if (vk == VK_CAPITAL && toggleValue == ToggleValueType.Off && script.HookThread.IsKeyToggledOn(vk))
 			{
 				// Fix for v1.0.36.06: Since it's Capslock and it didn't turn off as attempted, it's probably because
 				// the OS is configured to turn Capslock off only in response to pressing the SHIFT key (via Ctrl Panel's
@@ -3582,13 +3586,13 @@ namespace Keysharp.Core.Windows
 			var msg = new Msg();
 			var now = DateTime.UtcNow;
 
-			if ((now - Script.lastPeekTime).TotalMilliseconds > ThreadAccessors.A_PeekFrequency)
+			if ((now - script.lastPeekTime).TotalMilliseconds > ThreadAccessors.A_PeekFrequency)
 			{
 				if (PeekMessage(out msg, IntPtr.Zero, 0, 0, PM_NOREMOVE))
 					_ = Flow.Sleep(-1);
 
 				now = DateTime.UtcNow;
-				Script.lastPeekTime = now;
+				script.lastPeekTime = now;
 			}
 		}
 
@@ -3600,13 +3604,13 @@ namespace Keysharp.Core.Windows
 			var msg = new Msg();
 			var now = DateTime.UtcNow;
 
-			if ((now - Script.lastPeekTime).TotalMilliseconds > ThreadAccessors.A_PeekFrequency)
+			if ((now - script.lastPeekTime).TotalMilliseconds > ThreadAccessors.A_PeekFrequency)
 			{
 				if (PeekMessage(out msg, IntPtr.Zero, 0, 0, PM_NOREMOVE))
 					Flow.SleepWithoutInterruption(-1);
 
 				now = DateTime.UtcNow;
-				Script.lastPeekTime = now;
+				script.lastPeekTime = now;
 			}
 		}
 
@@ -3715,7 +3719,7 @@ namespace Keysharp.Core.Windows
 
 			// Since calls from the hook thread could come in even while the SendInput array is being constructed,
 			// don't let those events get interspersed with the script's explicit use of SendInput.
-			var ht = Script.HookThread;
+			var ht = script.HookThread;
 			//Note that the threading model in Keysharp is different than AHK, so this doesn't apply.
 			//In AHK, the low level keyboard proc runs in its own thread, however in Keysharp it turns on the main window thread.
 			//Further, after hours of extreme scrutiny in AHK, there seems to be no code in HookThreadProc() where a keyboard event could be sent here.

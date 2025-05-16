@@ -14,7 +14,7 @@ namespace Keysharp.Core
 			{ "h", HeightRegex() }
 		};
 
-		private static Size size1 = new (1, 1);
+		private static readonly Size size1 = new (1, 1);
 
 		/// <summary>
 		/// Gets a screenclip from a specified region of the screen and return it as a <see cref="Bitmap"/>
@@ -174,7 +174,7 @@ namespace Keysharp.Core
 
 			if (location.HasValue)
 			{
-				location = Mouse.RevertPoint(location.Value, Mouse.Coords.Mouse);
+				location = Mouse.RevertPoint(location.Value, script.Coords.Mouse);
 				outX = (long)location.Value.X;
 				outY = (long)location.Value.Y;
 			}
@@ -293,7 +293,7 @@ namespace Keysharp.Core
 
 			if (location.HasValue)
 			{
-				location = Mouse.RevertPoint(location.Value, Mouse.Coords.Mouse);
+				location = Mouse.RevertPoint(location.Value, script.Coords.Mouse);
 				outX = (long)location.Value.X;
 				outY = (long)location.Value.Y;
 				return 1L;

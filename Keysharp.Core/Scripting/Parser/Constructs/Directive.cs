@@ -199,7 +199,7 @@ namespace Keysharp.Scripting
 					if (numeric)
 					{
 						var val = Math.Clamp(value, 1u, 255u);
-						var prop = new CodePropertyReferenceExpression(new CodeTypeReferenceExpression(typeof(Script)), nameof(Script.MaxThreadsTotal));
+						var prop = new CodePropertyReferenceExpression(ScriptObjectSnippet, nameof(Script.MaxThreadsTotal));
 						var propset = new CodeAssignStatement(prop, new CodePrimitiveExpression(val));
 						initial.Insert(0, propset);
 					}
@@ -234,7 +234,7 @@ namespace Keysharp.Scripting
 				case "NOTRAYICON":
 				{
 					noTrayIcon = true;
-					var prop = new CodePropertyReferenceExpression(new CodeTypeReferenceExpression("Keysharp.Scripting.Script"), "NoTrayIcon");
+					var prop = new CodePropertyReferenceExpression(ScriptObjectSnippet, "NoTrayIcon");
 					var propset = new CodeAssignStatement(prop, new CodePrimitiveExpression(noTrayIcon));
 					initial.Insert(0, propset);
 				}
@@ -252,7 +252,7 @@ namespace Keysharp.Scripting
 				case "USEHOOK":
 				{
 					var val = parts[1].Length > 0 ? (Options.OnOff(parts[1]) ?? false) : true;
-					var prop = new CodePropertyReferenceExpression(new CodeTypeReferenceExpression("Keysharp.Scripting.Script"), "ForceKeybdHook");
+					var prop = new CodePropertyReferenceExpression(ScriptObjectSnippet, "ForceKeybdHook");
 					var propset = new CodeAssignStatement(prop, new CodePrimitiveExpression(val));
 					_ = topStatements.Add(propset);
 				}
@@ -260,9 +260,9 @@ namespace Keysharp.Scripting
 
 				case "WINACTIVATEFORCE":
 				{
-					Script.WinActivateForce = true;
-					var prop = new CodePropertyReferenceExpression(new CodeTypeReferenceExpression("Keysharp.Scripting.Script"), "WinActivateForce");
-					var propset = new CodeAssignStatement(prop, new CodePrimitiveExpression(Script.WinActivateForce));
+					//Script.WinActivateForce = true;
+					var prop = new CodePropertyReferenceExpression(ScriptObjectSnippet, "WinActivateForce");
+					var propset = new CodeAssignStatement(prop, new CodePrimitiveExpression(true));
 					initial.Insert(0, propset);
 				}
 				break;

@@ -6,6 +6,10 @@ namespace Keysharp.Core.Linux
 	/// </summary>
 	internal class LinuxHookThread : Keysharp.Core.Common.Threading.HookThread
 	{
+		internal LinuxHookThread()
+		{
+		}
+
 		public override void SimulateKeyPress(uint key)
 		{
 		}
@@ -52,6 +56,8 @@ namespace Keysharp.Core.Linux
 		internal override bool TextToVKandSC(ReadOnlySpan<char> text, ref uint vk, ref uint sc, ref uint? modifiersLr, IntPtr keybdLayout) => false;
 
 		internal override void Unhook() { }
+
+		internal override void Unhook(nint hook) { }
 
 		internal override char VKtoChar(uint vk, IntPtr keybdLayout) => (char)0;
 

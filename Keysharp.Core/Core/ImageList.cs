@@ -1,24 +1,18 @@
 ﻿namespace Keysharp.Core
 {
+	internal class ImageListData
+	{
+		/// <summary>
+		/// Dictionary that holds all image lists in the script.
+		/// </summary>
+		internal ConcurrentDictionary<long, ImageList> imageLists = new ();
+	}
+
 	/// <summary>
 	/// Public interface for ImageList-related functions and classes.
 	/// </summary>
 	public static class ImageLists
 	{
-		/// <summary>
-		/// Dictionary that holds all image lists in the script.
-		/// </summary>
-		private static readonly ConcurrentDictionary<long, ImageList> imageLists;
-
-		/// <summary>
-		/// Static constructor that initializes one instance of the dictionary.
-		/// </summary>
-		static ImageLists()
-		{
-			if (imageLists == null)
-				imageLists = new ConcurrentDictionary<long, ImageList>();
-		}
-
 		/// <summary>
 		/// Adds an icon or picture to the specified <see cref="ImageList"/>.
 		/// </summary>
@@ -46,7 +40,7 @@
 			var filename = picFileName.As();
 			var iconnumber = ImageHelper.PrepareIconNumber(maskColor);
 			var resizeNonIcon = resize.Ab();
-			var il = imageLists.GetOrAdd(id);
+			var il = script.ImageListData.imageLists.GetOrAdd(id);
 
 			if (ImageHelper.LoadImage(filename, 0, 0, iconnumber).Item1 is Bitmap bmp)
 			{
@@ -86,7 +80,7 @@
 				ImageSize = !li ? SystemInformation.SmallIconSize : SystemInformation.IconSize
 			};//initialCount and growCount are unused. Memory is handled internally.
 			var ptr = il.Handle.ToInt64();
-			return imageLists.TryAdd(ptr, il) ? ptr : 0L;
+			return script.ImageListData.imageLists.TryAdd(ptr, il) ? ptr : 0L;
 		}
 
 		/// <summary>
@@ -94,14 +88,14 @@
 		/// </summary>
 		/// <param name="imageListID">The <see cref="ImageList"/> ID.</param>
 		/// <returns>On success, it function returns 1, else 0.</returns>
-		public static long IL_Destroy(object imageListID) => imageLists.TryRemove(imageListID.Al(), out _) ? 1L : 0L;
+		public static long IL_Destroy(object imageListID) => script.ImageListData.imageLists.TryRemove(imageListID.Al(), out _) ? 1L : 0L;
 
 		/// <summary>
 		/// Internal helper which gets an <see cref="ImageList"/> based on the ID that was returned when it was created.
 		/// </summary>
 		/// <param name="imageListID">The ID of the <see cref="ImageList"/> to retrieve</param>
 		/// <returns>The <see cref="ImageList"/> if found, else null.</returns>
-		internal static ImageList IL_Get(long imageListID) => imageLists.TryGetValue(imageListID, out var il) ? il : null;
+		internal static ImageList IL_Get(long imageListID) => script.ImageListData.imageLists.TryGetValue(imageListID, out var il) ? il : null;
 
 		/// <summary>
 		/// Internal helper which gets the ID of the specified image list.
@@ -111,7 +105,7 @@
 		internal static long IL_GetId(ImageList il)
 		{
 			if (il != null)
-				foreach (var kv in imageLists)
+				foreach (var kv in script.ImageListData.imageLists)
 					if (kv.Value == il)
 						return kv.Key;
 

@@ -2,7 +2,7 @@
 {
 	internal class MapperBase<T> where T : struct, IConvertible
 	{
-		protected static Dictionary<T, string> clrMappingTable = [];
+		protected Dictionary<T, string> clrMappingTable = [];
 
 		internal MapperBase() => SetUpMappingTable();
 

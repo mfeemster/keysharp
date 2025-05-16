@@ -15,7 +15,7 @@ namespace Keysharp.Core.Windows
 		{
 			get
 			{
-				if (IsSpecified && WindowProvider.Manager.ActiveWindow is WindowItem item)
+				if (IsSpecified && script.WindowProvider.Manager.ActiveWindow is WindowItem item)
 				{
 					//Keysharp.Scripting.Script.OutputDebug($"item.Handle: {item.Handle.ToInt64()}, item.Title: {item.Title}, Handle: {Handle.ToInt64()}, Title: {Title}");
 					//Keysharp.Core.File.FileAppend($"item.Handle: {item.Handle.ToInt64()}, item.Title: {item.Title}, Handle: {Handle.ToInt64()}, Title: {Title}\n", "out.txt");
@@ -29,7 +29,7 @@ namespace Keysharp.Core.Windows
 			{
 				if (IsSpecified)
 				{
-					if (WindowProvider.Manager.ActiveWindow.Handle.ToInt64() != Handle.ToInt64())
+					if (script.WindowProvider.Manager.ActiveWindow.Handle.ToInt64() != Handle.ToInt64())
 					{
 						if (IsIconic)
 							_ = WindowsAPI.ShowWindow(Handle, WindowsAPI.SW_RESTORE);
@@ -268,7 +268,7 @@ namespace Keysharp.Core.Windows
 					return [];
 
 				var items = new List<string>(64);
-				var tv = Threads.GetThreadVariables();
+				var tv = script.Threads.GetThreadVariables();
 				_ = WindowsAPI.EnumChildWindows(Handle, (IntPtr hwnd, int lParam) =>
 				{
 					if (tv.detectHiddenText || WindowsAPI.IsWindowVisible(hwnd))
@@ -421,14 +421,14 @@ namespace Keysharp.Core.Windows
 				return IntPtr.Zero;
 
 			var targetWindow = win.Handle;
-			var mainid = Processes.MainThreadID;
+			var mainid = script.ProcessesData.MainThreadID;
 			var targetThread = WindowsAPI.GetWindowThreadProcessId(targetWindow, out var procid);
 
 			if (targetThread != mainid && win.IsHung)//Calls to IsWindowHung should probably be avoided if the window belongs to our thread.
 				return IntPtr.Zero;
 
 			var origForegroundWnd = WindowsAPI.GetForegroundWindow();
-			var sender = Script.HookThread.kbdMsSender;
+			var sender = script.HookThread.kbdMsSender;
 
 			//Restore the window *before* checking if it is already active.
 			if (win.IsIconic && !backgroundActivation)
@@ -448,7 +448,7 @@ namespace Keysharp.Core.Windows
 			var newForegroundWnd = IntPtr.Zero;
 
 			//Try a simple approach first.
-			if (!Script.WinActivateForce)
+			if (!script.WinActivateForce)
 			{
 				newForegroundWnd = AttemptSetForeground(targetWindow, origForegroundWnd);
 
@@ -493,7 +493,7 @@ namespace Keysharp.Core.Windows
 			// The log showed that it never seemed to need more than two tries.  But there's
 			// not much harm in trying a few extra times.  The number of tries needed might
 			// vary depending on how fast the CPU is:
-			var activateforce = Script.WinActivateForce ? 1 : 0;
+			var activateforce = script.WinActivateForce ? 1 : 0;
 
 			for (var i = 0; i < 5; ++i)
 			{

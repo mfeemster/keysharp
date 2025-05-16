@@ -2,7 +2,14 @@
 
 namespace Keysharp.Core.Common.Keyboard
 {
-	internal static class KeyboardUtils
+	internal class KeyboardUtilsData
+	{
+		internal List<int> mouseList = [];
+		internal List<int> keyboardList = [];
+		internal List<int> kbMouseList = [];
+	}
+
+	internal class KeyboardUtils
 	{
 		internal const uint MOD_ALT = 0x0001;
 		internal const uint MOD_CONTROL = 0x0002;
@@ -25,11 +32,9 @@ namespace Keysharp.Core.Common.Keyboard
 		internal static string[] SEND_MODES = ["Event", "Input", "Play", "InputThenPlay"]; // Must match the SendModes enum.
 
 		internal static uint MakeLong(short lowPart, short highPart) => ((ushort)lowPart) | (uint)(highPart << 16);
-		internal static List<int> mouseList = [];
-		internal static List<int> keyboardList = [];
-		internal static List<int> kbMouseList = [];
 
-		static KeyboardUtils()
+
+		internal KeyboardUtils()
 		{
 #if LINUX
 			var inputStr = "xinput".Bash();

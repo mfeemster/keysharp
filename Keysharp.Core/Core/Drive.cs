@@ -60,7 +60,7 @@ namespace Keysharp.Core
 			DriveType? type = null;
 
 			if (!string.IsNullOrEmpty(drivetype))
-				type = MappingService.Instance.DriveType.LookUpCLRType(drivetype);
+				type = script.DriveTypeMapper.LookUpCLRType(drivetype);
 
 			var drives = DriveInfo.GetDrives();
 #if !WINDOWS
@@ -181,7 +181,7 @@ namespace Keysharp.Core
 		/// Unknown, Removable, Fixed, Network, CDROM, or RAMDisk.<br/>
 		/// If Path is invalid (e.g. because the drive does not exist), the return value is an empty string.
 		/// </returns>
-		public static string DriveGetType(object path) => MappingService.Instance.DriveType.LookUpKeysharpType(new DriveInfo(path.As()).DriveType);
+		public static string DriveGetType(object path) => script.DriveTypeMapper.LookUpKeysharpType(new DriveInfo(path.As()).DriveType);
 
 		/// <summary>
 		/// Prevents the eject feature of the specified drive from working.

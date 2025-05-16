@@ -1,4 +1,5 @@
 ﻿#if WINDOWS
+
 using static Keysharp.Core.Common.Keyboard.KeyboardMouseSender;
 using static Keysharp.Core.Common.Keyboard.KeyboardUtils;
 using static Keysharp.Core.Common.Keyboard.ScanCodes;
@@ -15,14 +16,15 @@ namespace Keysharp.Core.Windows
 	/// </summary>
 	internal class WindowsHookThread : HookThread
 	{
-		private static bool pendingDeadKeyInvisible;
-		private static List<DeadKeyRecord> pendingDeadKeys = [];
-		private static bool uwpAppFocused;
-		private static IntPtr uwpHwndChecked = IntPtr.Zero;
+		private bool pendingDeadKeyInvisible;
+		private List<DeadKeyRecord> pendingDeadKeys = [];
+		private bool uwpAppFocused;
+		private IntPtr uwpHwndChecked = IntPtr.Zero;
 		private readonly LowLevelKeyboardProc kbdHandlerDel;
 		private readonly LowLevelMouseProc mouseHandlerDel;
+		private StaThreadWithMessageQueue thread;
 
-		static WindowsHookThread()
+		internal WindowsHookThread()
 		{
 			keyToSc = new Dictionary<string, uint>(StringComparer.OrdinalIgnoreCase)//Unsure if these are cross platform or not.//TODO
 			{
@@ -188,10 +190,7 @@ namespace Keysharp.Core.Windows
 				else
 					vkToKey[kv.Value] = kv.Key;
 			}
-		}
 
-		internal WindowsHookThread()
-		{
 			kbdMsSender = new WindowsKeyboardMouseSender();
 			kbdHandlerDel = new LowLevelKeyboardProc(LowLevelKeybdHandler);
 			mouseHandlerDel = new LowLevelMouseProc(LowLevelMouseHandler);
@@ -444,11 +443,11 @@ namespace Keysharp.Core.Windows
 				// to avoid the possibility that the script will continue to call this function recursively, resulting
 				// in an infinite stack of MsgBoxes. This approach is similar to that used in Hotkey::Perform()
 				// for the A_MaxHotkeysPerInterval warning dialog:
-				Flow.AllowInterruption = false;
+				script.FlowData.allowInterruption = false;
 				// Below is a generic message to reduce code size.  Failure is rare, but has been known to happen when
 				// certain types of games are running).
 				_ = MessageBox.Show("Warning: The keyboard and/or mouse hook could not be activated; some parts of the script will not function.");//AHK has its own MsgBox() function which does things differently. Will need to see if we need to do all of that.
-				Flow.AllowInterruption = true;
+				script.FlowData.allowInterruption = true;
 			}
 		}
 
@@ -464,6 +463,7 @@ namespace Keysharp.Core.Windows
 			HotstringDefinition hsOut = null;
 			var caseConformMode = CaseConformModes.None;
 			var endChar = (char)0;
+			var hm = script.HotstringManager;
 
 			// Prevent toggleable keys from being toggled (if the user wanted that) by suppressing it.
 			// Seems best to suppress key-up events as well as key-down, since a key-up by itself,
@@ -526,7 +526,7 @@ namespace Keysharp.Core.Windows
 							return SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, extraInfo, keyHistoryCurr, hotkeyIDToPost, variant);
 				}
 
-				if ((HotstringManager.enabledCount > 0 && !isIgnored) || Script.input != null)
+				if ((hm.enabledCount > 0 && !isIgnored) || script.input != null)
 					if (!CollectInput(ref kbd, vk, sc, keyUp, isIgnored, state, keyHistoryCurr, ref hsOut, ref caseConformMode, ref endChar)) // Key should be invisible (suppressed).
 						return SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, extraInfo, keyHistoryCurr, hotkeyIDToPost, variant, hsOut, caseConformMode, endChar);
 
@@ -690,9 +690,9 @@ namespace Keysharp.Core.Windows
 			} // Keyboard vs. mouse hook.
 
 			// Since above didn't return, this keystroke is being passed through rather than suppressed.
-			if (HotstringManager.hsResetUponMouseClick && (vk == VK_LBUTTON || vk == VK_RBUTTON)) // v1.0.42.03
+			if (hm.hsResetUponMouseClick && (vk == VK_LBUTTON || vk == VK_RBUTTON)) // v1.0.42.03
 			{
-				HotstringManager.ClearBuf();
+				hm.ClearBuf();
 			}
 
 			// In case CallNextHookEx() is high overhead or can sometimes take a long time to return,
@@ -757,6 +757,7 @@ namespace Keysharp.Core.Windows
 			// of Num/Caps/ScrollLock always on or off (a fairly rare situation, probably):
 			if (kvk == null || kvk.Length == 0)  // Since it's an initialized global, this indicates that all 4 objects are not yet allocated.
 			{
+				var kbd = script.KeyboardData;
 				kvk = new KeyType[VK_ARRAY_COUNT];
 				ksc = new KeyType[SC_ARRAY_COUNT];
 
@@ -801,9 +802,9 @@ namespace Keysharp.Core.Windows
 				ksc[RWin].asModifiersLR = MOD_RWIN;
 				// Use the address rather than the value, so that if the global var's value
 				// changes during runtime, ours will too:
-				kvk[VK_SCROLL].forceToggle = Keyboard.toggleStates;
-				kvk[VK_CAPITAL].forceToggle = Keyboard.toggleStates;
-				kvk[VK_NUMLOCK].forceToggle = Keyboard.toggleStates;
+				kvk[VK_SCROLL].forceToggle = kbd.toggleStates;
+				kvk[VK_CAPITAL].forceToggle = kbd.toggleStates;
+				kvk[VK_NUMLOCK].forceToggle = kbd.toggleStates;
 			}
 
 			// Init only those attributes which reflect the hotkey's definition, not those that reflect
@@ -829,7 +830,8 @@ namespace Keysharp.Core.Windows
 				hotkeyUp[i] = HotkeyDefinition.HOTKEY_ID_INVALID;
 
 			KeyType thisKey;
-			var hkSorted = new List<HkSortedType>(HotkeyDefinition.shk.Count);
+			var shk = script.HotkeyData.shk;
+			var hkSorted = new List<HkSortedType>(shk.Count);
 
 			for (var i = 0; i < hks.Count; ++i)
 			{
@@ -1084,14 +1086,14 @@ namespace Keysharp.Core.Windows
 						{
 							prevHkId = (int)(itsTableEntry & HotkeyDefinition.HOTKEY_ID_MASK);
 
-							if (thisHkId >= HotkeyDefinition.shk.Count || prevHkId >= HotkeyDefinition.shk.Count) // AltTab hotkey.
+							if (thisHkId >= shk.Count || prevHkId >= shk.Count) // AltTab hotkey.
 								continue; // Exclude AltTab hotkeys since hotkey_up[] and shk[] can't be used.
 
 							prevHkIsKeyUp = (itsTableEntry & HotkeyDefinition.HOTKEY_KEY_UP) != 0;
 
 							if (thisHkIsKeyUp && !prevHkIsKeyUp) // Override any existing key-up hotkey for this down hotkey ID, e.g. "LButton Up" takes precedence over "*LButton Up".
 							{
-								var prevHk = HotkeyDefinition.shk[prevHkId];
+								var prevHk = shk[prevHkId];
 
 								// v1.1.33.03: Since modifiers aren't checked when hotkey_to_fire_upon_release is used
 								// to fire a key-up hotkey, avoid setting setting this_hk as prev_hk's up hotkey when:
@@ -1154,7 +1156,7 @@ namespace Keysharp.Core.Windows
 
 								if (newUpId != HotkeyDefinition.HOTKEY_ID_INVALID)
 								{
-									var new_up_hk = HotkeyDefinition.shk[(int)newUpId & HotkeyDefinition.HOTKEY_ID_MASK];
+									var new_up_hk = shk[(int)newUpId & HotkeyDefinition.HOTKEY_ID_MASK];
 
 									// v1.1.33.03: Since modifiers aren't checked when hotkey_to_fire_upon_release is used
 									// to fire a key-up hotkey, avoid setting setting new_up_hk as this_hk's up hotkey when:
@@ -1315,6 +1317,7 @@ namespace Keysharp.Core.Windows
 											  KeyHistoryItem keyHistoryCurr, ref HotstringDefinition hsOut, ref CaseConformModes caseConformMode, ref char endChar)
 		{
 			var suppressHotstringFinalChar = false; // Set default.
+			var hm = script.HotstringManager;
 
 			if (activeWindow != hsHwnd)
 			{
@@ -1322,28 +1325,28 @@ namespace Keysharp.Core.Windows
 				// active window, if the active window changes, it seems best to reset the buffer
 				// to avoid misfires.
 				hsHwnd = activeWindow;
-				HotstringManager.ClearBuf();
+				hm.ClearBuf();
 			}
-			else if (HotstringManager.hsBuf.Count > 90)
-				HotstringManager.hsBuf.RemoveRange(0, 45);
+			else if (hm.hsBuf.Count > 90)
+				hm.hsBuf.RemoveRange(0, 45);
 
-			HotstringManager.hsBuf.Add(ch[0]);
+			hm.hsBuf.Add(ch[0]);
 
 			if (charCount > 1)
 				// MSDN: "This usually happens when a dead-key character (accent or diacritic) stored in the
 				// keyboard layout cannot be composed with the specified virtual key to form a single character."
-				HotstringManager.hsBuf.Add(ch[1]);
+				hm.hsBuf.Add(ch[1]);
 
-			if (HotstringManager.MatchHotstring() is HotstringDefinition hs)
+			if (hm.MatchHotstring() is HotstringDefinition hs)
 			{
 				int cpcaseStart, cpcaseEnd;
 				int caseCapableCharacters;
 				bool firstCharWithCaseIsUpper, firstCharWithCaseHasGoneBy;
-				var hsBufSpan = (ReadOnlySpan<char>)CollectionsMarshal.AsSpan(HotstringManager.hsBuf);
+				var hsBufSpan = (ReadOnlySpan<char>)CollectionsMarshal.AsSpan(hm.hsBuf);
 				var hsLength = hsBufSpan.Length;
 				var hsBufCountm1 = hsLength - 1;
 				var hsBufCountm2 = hsLength - 2;
-				var hasEndChar = HotstringManager.defEndChars.Contains(hsBufSpan[hsBufCountm1]);
+				var hasEndChar = hm.defEndChars.Contains(hsBufSpan[hsBufCountm1]);
 
 				if (HotInputLevelAllowsFiring(hs.inputLevel, ev.dwExtraInfo, ref keyHistoryCurr.eventType))
 				{
@@ -1486,9 +1489,9 @@ namespace Keysharp.Core.Windows
 						// sent by DoReplace() won't be captured (since it's "ignored input", which
 						// is why it's put into the buffer manually here):
 						if (hs.endCharRequired)
-							HotstringManager.hsBuf.RemoveRange(0, HotstringManager.hsBuf.Count - 1);
+							hm.hsBuf.RemoveRange(0, hm.hsBuf.Count - 1);
 						else
-							HotstringManager.ClearBuf();
+							hm.ClearBuf();
 					}
 					else if (hs.doBackspace)
 					{
@@ -1498,10 +1501,10 @@ namespace Keysharp.Core.Windows
 						// active window.  A simpler way to understand is to realize that the buffer now
 						// contains (for recognition purposes, in its right side) the hotstring and its
 						// end char (if applicable), so remove both:
-						HotstringManager.hsBuf.RemoveRange(HotstringManager.hsBuf.Count - hs.str.Length, hs.str.Length);
+						hm.hsBuf.RemoveRange(hm.hsBuf.Count - hs.str.Length, hs.str.Length);
 
 						if (hs.endCharRequired)
-							HotstringManager.hsBuf.RemoveAt(HotstringManager.hsBuf.Count - 1);
+							hm.hsBuf.RemoveAt(hm.hsBuf.Count - 1);
 					}
 
 					// v1.0.38.04: Fixed the following mDoReset section by moving it beneath the above because
@@ -1514,7 +1517,7 @@ namespace Keysharp.Core.Windows
 					// There are probably many other uses for the reset option (albeit obscure, but they have
 					// been brought up in the forum at least twice).
 					if (hs.doReset)
-						HotstringManager.ClearBuf(); // Further below, the buffer will be terminated to reflect this change.
+						hm.ClearBuf(); // Further below, the buffer will be terminated to reflect this change.
 				}//for each hotstring for this letter.
 			}//if hotstring buffer not empty.
 
@@ -1542,6 +1545,8 @@ namespace Keysharp.Core.Windows
 			var activeWindowKeybdLayout = state.keyboardLayout;
 			var ch = state.ch;
 			var sb = new StringBuilder(8);
+			var hm = script.HotstringManager;
+			var hsBuf = hm.hsBuf;
 
 			if (!CollectInputHook(ref ev, vk, sc, ch, charCount, false))
 				return false; // Suppress.
@@ -1550,7 +1555,7 @@ namespace Keysharp.Core.Windows
 			// the Input command.  One reason for not monitoring ignored input is to avoid any chance of
 			// an infinite loop of keystrokes caused by one hotstring triggering itself directly or
 			// indirectly via a different hotstring:
-			if (HotstringManager.enabledCount != 0 && !isIgnored)
+			if (hm.enabledCount != 0 && !isIgnored)
 			{
 				switch (vk)
 				{
@@ -1565,8 +1570,8 @@ namespace Keysharp.Core.Windows
 
 						// Reset hotstring detection if the user seems to be navigating within an editor.  This is done
 						// so that hotstrings do not fire in unexpected places.
-						if (HotstringManager.hsBuf.Count > 0)
-							HotstringManager.ClearBuf();
+						if (hsBuf.Count > 0)
+							hm.ClearBuf();
 
 						break;
 
@@ -1578,8 +1583,8 @@ namespace Keysharp.Core.Windows
 						// that determines whether the backspace behaves like an unmodified backspace.  This solves the issue
 						// of the Input command collecting simulated backspaces as real characters rather than recognizing
 						// them as a means to erase the previous character in the buffer.
-						if (kbdMsSender.modifiersLRLogical == 0 && HotstringManager.hsBuf.Count > 0)
-							HotstringManager.hsBuf.RemoveAt(HotstringManager.hsBuf.Count - 1);
+						if (kbdMsSender.modifiersLRLogical == 0 && hsBuf.Count > 0)
+							hsBuf.RemoveAt(hsBuf.Count - 1);
 
 						// Fall through to the check below in case this {BS} completed a dead key sequence.
 						break;
@@ -1612,7 +1617,7 @@ namespace Keysharp.Core.Windows
 
 		internal bool CollectInputHook(ref KBDLLHOOKSTRUCT ev, uint vk, uint sc, char[] ch, int charCount, bool early)
 		{
-			var input = Script.input;
+			var input = script.input;
 
 			for (; input != null; input = input.prev)
 			{
@@ -1748,7 +1753,7 @@ namespace Keysharp.Core.Windows
 		// might have adjusted vk, namely to make it a left/right specific modifier key rather than a
 		// neutral one.
 		{
-			for (var input = Script.input; input != null; input = input.prev)
+			for (var input = script.input; input != null; input = input.prev)
 			{
 				if (input.BeforeHotkeys == early && input.IsInteresting(ev.dwExtraInfo) && input.InProgress())
 				{
@@ -1860,7 +1865,7 @@ namespace Keysharp.Core.Windows
 				// normally be excluded from the input (except those rare ones that have only SHIFT as a modifier).
 				// Note that ToAsciiEx() will translate ^i to a tab character, !i to plain i, and many other modified
 				// letters as just the plain letter key, which we don't want.
-				for (var input = Script.input; ; input = input.prev)
+				for (var input = script.input; ; input = input.prev)
 				{
 					if (input == null) // No inputs left, and none were found that meet the conditions below.
 					{
@@ -1881,7 +1886,7 @@ namespace Keysharp.Core.Windows
 			// See Get_active_window_keybd_layout macro definition for related comments.
 			var activeWindow = GetForegroundWindow(); // Set default in case there's no focused control.
 			var tempzero = IntPtr.Zero;
-			var activeWindowKeybdLayout = PlatformProvider.Manager.GetKeyboardLayout(WindowProvider.Manager.GetFocusedCtrlThread(ref tempzero, activeWindow));
+			var activeWindowKeybdLayout = script.PlatformProvider.Manager.GetKeyboardLayout(script.WindowProvider.Manager.GetFocusedCtrlThread(ref tempzero, activeWindow));
 			state.activeWindow = activeWindow;
 			state.keyboardLayout = activeWindowKeybdLayout;
 
@@ -2053,6 +2058,10 @@ namespace Keysharp.Core.Windows
 			return true;//Visible.
 		}
 
+		internal override object Invoke(Func<object> f) => thread.Invoke(() => f());
+
+		internal override bool IsHookThreadRunning() => thread != null && !thread.IsDisposed();
+
 		internal override bool IsHotstringWordChar(char ch)
 		// Returns true if aChar would be part of a word if followed by a word char.
 		// aChar itself may be a word char or a nonspacing mark which combines with
@@ -2137,7 +2146,7 @@ namespace Keysharp.Core.Windows
 			// the LControl event received here is marked as physical by the OS or keyboard driver.  This is undesirable
 			// primarily because it makes g_TimeLastInputPhysical inaccurate, but also because falsely marked physical
 			// events can impact the script's calls to GetKeyState("LControl", "P"), etc.
-			Script.timeLastInputPhysical = Script.timeLastInputKeyboard = DateTime.UtcNow;
+			script.timeLastInputPhysical = script.timeLastInputKeyboard = DateTime.UtcNow;
 			return true;
 		}
 
@@ -2181,7 +2190,7 @@ namespace Keysharp.Core.Windows
 						// The following line is commented out in favor of the one beneath it (seem below comment):
 						//GetWindowText(fore_win, pKeyHistoryCurr.target_window, sizeof(pKeyHistoryCurr.target_window));
 						//PostMessage(Keysharp.Scripting.Script.MainWindowHandle, (uint)UserMessages.AHK_GETWINDOWTEXT, keyHistoryCurr.targetWindow, fore_win);
-						var wnd = Control.FromHandle(fore_win) is Control ctrl ? ctrl : Script.mainWindow;
+						var wnd = Control.FromHandle(fore_win) is Control ctrl ? ctrl : script.mainWindow;
 
 						if (wnd != null)
 						{
@@ -2298,7 +2307,7 @@ namespace Keysharp.Core.Windows
 			// is done only once for each event.  If there are no InputHooks with the H option, the translation is done
 			// later to avoid any change in behaviour compared to v2.0 (such as dead keys affecting the translation prior
 			// to being suppressed by a hotkey), or not done at all if the event is suppressed by other means.
-			if (hook == kbdHook && Script.inputBeforeHotkeysCount > 0
+			if (hook == kbdHook && script.inputBeforeHotkeysCount > 0
 					&& !EarlyCollectInput(ref kbd, vk, sc, keyUp, isIgnored, collectInputState, keyHistoryCurr))
 				return new IntPtr(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, extraInfo, keyHistoryCurr, hotkeyIdToPost, null));
 
@@ -2453,9 +2462,9 @@ namespace Keysharp.Core.Windows
 				var menuHwnd = IntPtr.Zero;
 
 				if ((vk == VK_LBUTTON || vk == VK_RBUTTON)
-						&& (Script.menuIsVisible != MenuType.None // Ordered for short-circuit performance.
+						&& (script.menuIsVisible != MenuType.None // Ordered for short-circuit performance.
 							|| ((menuHwnd = FindWindow("#32768", null)) != IntPtr.Zero
-								&& GetWindowThreadProcessId(menuHwnd, out _) == Processes.MainThreadID))) // Don't call GetCurrentThreadId() because our thread is different than main's.
+								&& GetWindowThreadProcessId(menuHwnd, out _) == script.ProcessesData.MainThreadID))) // Don't call GetCurrentThreadId() because our thread is different than main's.
 				{
 					// Bug-fix for v1.0.22: If "LControl & LButton::" (and perhaps similar combinations)
 					// is a hotkey, the foreground window would think that the mouse is stuck down, at least
@@ -2576,6 +2585,7 @@ namespace Keysharp.Core.Windows
 			uint modifiersLRnew;
 			var toggleVal = thisKey.ToggleVal(thisKeyIndex);
 			var thisToggleKeyCanBeToggled = toggleVal != null && toggleVal.Value == ToggleValueType.Neutral; // Relies on short-circuit boolean order.
+			var shk = script.HotkeyData.shk;
 
 			// Prior to considering whether to fire a hotkey, correct the hook's modifier state.
 			// Although this is rarely needed, there are times when the OS disables the hook, thus
@@ -2704,7 +2714,7 @@ namespace Keysharp.Core.Windows
 								//     the prefix key was used to activate a custom combo.
 								//  3) A key-down hotkey without ~ fires immediately instead of on release.
 								//  4) A key-up hotkey without ~ fires even if the prefix key was used to activate a custom combo.
-								if (hotkeyIdWithFlags < HotkeyDefinition.shk.Count && hotkeyUp[(int)hotkeyIdWithFlags] != HotkeyDefinition.HOTKEY_ID_INVALID)
+								if (hotkeyIdWithFlags < shk.Count && hotkeyUp[(int)hotkeyIdWithFlags] != HotkeyDefinition.HOTKEY_ID_INVALID)
 								{
 									// This key-down hotkey has a key-up counterpart.
 									fireWithNoSuppress = false; // Reset for the call below.
@@ -2737,7 +2747,7 @@ namespace Keysharp.Core.Windows
 							thisKey.hotkeyToFireUponRelease = hotkeyIdWithFlags;
 							hotkeyIdWithFlags = HotkeyDefinition.HOTKEY_ID_INVALID;
 						}
-						else if (hotkeyIdWithFlags < HotkeyDefinition.shk.Count)//Valid key-down hotkey.
+						else if (hotkeyIdWithFlags < shk.Count)//Valid key-down hotkey.
 						{
 							thisKey.hotkeyToFireUponRelease = hotkeyUp[(int)hotkeyIdWithFlags];//Might assign HotkeyDefinition.HOTKEY_ID_INVALID.
 							// Since this prefix key is being used in its capacity as a suffix instead,
@@ -2987,7 +2997,7 @@ namespace Keysharp.Core.Windows
 				// ModifierVK/SC combos take precedence over normally-modified combos:
 				for (hotkeyIdTemp = thisKey.firstHotkey; hotkeyIdTemp != HotkeyDefinition.HOTKEY_ID_INVALID;)
 				{
-					var this_hk = HotkeyDefinition.shk[(int)hotkeyIdTemp]; // hotkey_id_temp does not include flags in this case.
+					var this_hk = shk[(int)hotkeyIdTemp]; // hotkey_id_temp does not include flags in this case.
 
 					if (!(this_hk.modifierVK != 0 || this_hk.modifierSC != 0))
 						break; // Not a custom combo.
@@ -3270,7 +3280,7 @@ namespace Keysharp.Core.Windows
 						// through from Case #3, in which case this hotkey_id_with_flags is implicitly a key-up
 						// hotkey if there is no actual explicit key-up hotkey for it.  UPDATE: It is now possible
 						// to fall through from Case #2, so that is checked below.
-						if (hotkeyIdTemp < HotkeyDefinition.shk.Count && hotkeyUp[(int)hotkeyIdTemp] != HotkeyDefinition.HOTKEY_ID_INVALID) // Relies on short-circuit boolean order.
+						if (hotkeyIdTemp < shk.Count && hotkeyUp[(int)hotkeyIdTemp] != HotkeyDefinition.HOTKEY_ID_INVALID) // Relies on short-circuit boolean order.
 						{
 							if (fellThroughFromCase2
 									|| (firingIsCertain = HotkeyDefinition.CriterionFiringIsCertain(ref hotkeyIdWithFlags, keyUp, extraInfo, ref fireWithNoSuppress, ref keyHistoryCurr.eventType)) != null)
@@ -3293,7 +3303,7 @@ namespace Keysharp.Core.Windows
 								hotkeyIdWithFlags = HotkeyDefinition.HOTKEY_ID_INVALID;
 					}
 					else // hotkey_id_with_flags contains the down-hotkey that is now eligible for firing. But check if there's an up-event to queue up for later.
-						if (hotkeyIdTemp < HotkeyDefinition.shk.Count)
+						if (hotkeyIdTemp < shk.Count)
 						{
 							// Fixed for v1.1.33.01: Any key-up hotkey already found by the custom combo section
 							// should take precedence over this hotkey.  This fixes "b & a up::" not suppressing
@@ -3381,7 +3391,7 @@ namespace Keysharp.Core.Windows
 			// v1.0.41: This must be done prior to the setting of sDisguiseNextMenu below.
 			hotkeyIdTemp = hotkeyIdWithFlags & HotkeyDefinition.HOTKEY_ID_MASK;
 
-			if (hotkeyIdTemp < HotkeyDefinition.shk.Count// i.e. don't call the below for Alt-tab hotkeys and similar.
+			if (hotkeyIdTemp < shk.Count// i.e. don't call the below for Alt-tab hotkeys and similar.
 					&& firingIsCertain == null // i.e. CriterionFiringIsCertain() wasn't already called earlier.
 					&& (firingIsCertain = HotkeyDefinition.CriterionFiringIsCertain(ref hotkeyIdWithFlags, keyUp, extraInfo, ref fireWithNoSuppress, ref keyHistoryCurr.eventType)) == null)
 			{
@@ -3876,7 +3886,7 @@ namespace Keysharp.Core.Windows
 			//event.flags &= ~LLMHF_INJECTED;
 
 			if ((lParam.flags & LLMHF_INJECTED) == 0) // Physical mouse movement or button action (uses LLMHF vs. LLKHF).
-				Script.timeLastInputPhysical = Script.timeLastInputMouse = DateTime.UtcNow;
+				script.timeLastInputPhysical = script.timeLastInputMouse = DateTime.UtcNow;
 
 			// Above: Don't use event.time, mostly because SendInput can produce invalid timestamps on such events
 			// (though in truth, that concern isn't valid because SendInput's input isn't marked as physical).
@@ -3885,7 +3895,7 @@ namespace Keysharp.Core.Windows
 			var iwParam = param.ToInt32();
 
 			if (iwParam == WM_MOUSEMOVE) // Only after updating for physical input, above, is this checked.
-				return (Keyboard.blockMouseMove && ((lParam.flags & LLMHF_INJECTED) == 0)) ? new IntPtr(1) : CallNextHookEx(mouseHook, code, param, ref lParam);
+				return (script.KeyboardData.blockMouseMove && ((lParam.flags & LLMHF_INJECTED) == 0)) ? new IntPtr(1) : CallNextHookEx(mouseHook, code, param, ref lParam);
 
 			// Above: In v1.0.43.11, a new mode was added to block mouse movement only since it's more flexible than
 			// BlockInput (which keybd too, and blocks all mouse buttons too).  However, this mode blocks only
@@ -4244,7 +4254,7 @@ namespace Keysharp.Core.Windows
 				altTabMenuIsVisible = FindWindow("#32771", null) != IntPtr.Zero;
 				pendingDeadKeys.Clear();
 				pendingDeadKeyInvisible = false;
-				HotstringManager.ClearBuf();
+				script.HotstringManager.ClearBuf();
 				hsHwnd = IntPtr.Zero; // It isn't necessary to determine the actual window/control at this point since the buffer is already empty.
 
 				if (resetKVKandKSC)
@@ -4279,9 +4289,11 @@ namespace Keysharp.Core.Windows
 						// Control up::Send {LWin up}
 						if (!alwaysSetAsPrefix)
 						{
-							for (var i = 0; i < HotkeyDefinition.shk.Count; ++i)
+							var shk = script.HotkeyData.shk;
+
+							for (var i = 0; i < shk.Count; ++i)
 							{
-								var h = HotkeyDefinition.shk[i];
+								var h = shk[i];
 
 								if (h.vk == vk && h.keyUp && h.modifiersConsolidatedLR == 0 && h.modifierVK == 0 && h.modifierSC == 0 && !h.IsCompletelyDisabled())
 									return; // Since caller didn't specify aAlwaysSetAsPrefix==true, don't make this key a prefix.
@@ -4402,6 +4414,12 @@ namespace Keysharp.Core.Windows
 			// system settings of the same ilk as "favor background processes").
 			SendHotkeyMessages(keyUp, extraInfo, keyHistoryCurr, hotkeyIDToPost, variant, hs, caseConformMode, endChar);
 			return 1;
+		}
+
+		protected internal override void Stop()
+		{
+			thread?.Dispose();
+			base.Stop();
 		}
 
 		internal override bool SystemHasAnotherKeybdHook() => SystemHasAnotherHook(ref keybdMutex, KeybdMutexName);
@@ -4572,7 +4590,7 @@ namespace Keysharp.Core.Windows
 				return 0;
 
 			if (keybdLayout == IntPtr.Zero)
-				keybdLayout = PlatformProvider.Manager.GetKeyboardLayout(0);
+				keybdLayout = script.PlatformProvider.Manager.GetKeyboardLayout(0);
 
 			// Don't trim() aText or modify it because that will mess up the caller who expects it to be unchanged.
 			// Instead, for now, just check it as-is.  The only extra whitespace that should exist, due to trimming
@@ -4656,9 +4674,14 @@ namespace Keysharp.Core.Windows
 			//Original did these, but HookThread.Stop() will take care of it before this is called.
 			//WindowsAPI.PostQuitMessage(exitCode);
 			AddRemoveHooks(HookType.None); // Remove all hooks. By contrast, registered hotkeys are unregistered below.
+			Unhook(script.playbackHook); // Would be unusual for this to be installed during exit, but should be checked for completeness.
+			thread?.Dispose();
+		}
 
-			if (Script.playbackHook != IntPtr.Zero) // Would be unusual for this to be installed during exit, but should be checked for completeness.
-				_ = UnhookWindowsHookEx(Script.playbackHook);
+		internal override void Unhook(nint hook)
+		{
+			if (hook != IntPtr.Zero)
+				thread?.Invoke(() => _ = UnhookWindowsHookEx(hook));
 		}
 
 		/// <summary>
@@ -4801,7 +4824,7 @@ namespace Keysharp.Core.Windows
 		internal override char VKtoChar(uint vk, IntPtr keybdLayout)
 		{
 			if (keybdLayout == IntPtr.Zero)
-				keybdLayout = PlatformProvider.Manager.GetKeyboardLayout(0);
+				keybdLayout = script.PlatformProvider.Manager.GetKeyboardLayout(0);
 
 			// MapVirtualKeyEx() always produces 'A'-'Z' for those keys regardless of keyboard layout,
 			// but for any other keys it produces the correct results, so we'll use it:
@@ -4905,6 +4928,7 @@ namespace Keysharp.Core.Windows
 
 			running = true;
 			channelThreadID = 0;
+			thread = new StaThreadWithMessageQueue();
 			//This is a consolidation of the main windows proc, message sleep and the thread which they keyboard hook is created on.
 			//Unsure how much of this is windows specific or can be cross platform. Will need to determine when we begin linux work.//TODO
 			//If Start() is called while this thread is already running, the foreach will exit, and thus the previous thread will exit.
@@ -4941,7 +4965,7 @@ namespace Keysharp.Core.Windows
 							// ********
 							// NO BREAK IN ABOVE, FALL INTO NEXT CASE:
 							// ********
-							var tv = Threads.GetThreadVariables();
+							var tv = script.Threads.GetThreadVariables();
 							tv.WaitForCriticalToFinish();//Must wait until the previous critical task finished before proceeding.
 
 							switch (msg.message)
@@ -5048,7 +5072,7 @@ namespace Keysharp.Core.Windows
 											if (!(string.Compare(hs.hotCriterion.Name, "HotIfWinNotActivePrivate", true) == 0 || string.Compare(hs.hotCriterion.Name, "HotIfWinNotExistPrivate", true) == 0))
 												criterion_found_hwnd = IntPtr.Zero;
 											else if (hs.HotIfRequiresEval())
-												criterion_found_hwnd = Script.hotExprLFW;// For #if WinExist(WinTitle) and similar.
+												criterion_found_hwnd = script.hotExprLFW;// For #if WinExist(WinTitle) and similar.
 										}
 										else // No criterion, so it's a global hotstring.  It can always fire, but it has no "last found window".
 											criterion_found_hwnd = IntPtr.Zero;
@@ -5059,7 +5083,7 @@ namespace Keysharp.Core.Windows
 										// even if it can't launch due to MaxThreads, MaxThreadsPerHotkey, or some other reason:
 										//Any key sending must be on the main thread else keys will come in out of order.
 										//Does only the backspacing if it's not an auto-replace hotstring.
-										Script.mainWindow.CheckedInvoke(() => hs.DoReplace(hmsg.caseMode, hmsg.endChar), true);
+										script.mainWindow.CheckedInvoke(() => hs.DoReplace(hmsg.caseMode, hmsg.endChar), true);
 
 										if (string.IsNullOrEmpty(hs.replacement))
 										{
@@ -5077,7 +5101,7 @@ namespace Keysharp.Core.Windows
 								case WM_HOTKEY://Some hotkeys are handled directly by windows using WndProc(), others, such as those with left/right modifiers, are handled directly by us.
 								case (uint)UserMessages.AHK_HOOK_HOTKEY://Some hotkeys are handled directly by windows using WndProc(), others, such as those with left/right modifiers, are handled directly by us.
 								{
-									Script.HookThread.kbdMsSender.ProcessHotkey((int)wParamVal, (int)lParamVal, msg.obj as HotkeyVariant, msg.message);
+									script.HookThread.kbdMsSender.ProcessHotkey((int)wParamVal, (int)lParamVal, msg.obj as HotkeyVariant, msg.message);
 									break;
 								}
 
@@ -5118,7 +5142,7 @@ namespace Keysharp.Core.Windows
 									// (see comments above for why the message is posted even when it is 90% certain it will be discarded
 									// in all cases where MsgSleep isn't done).
 									//return 0;
-									if (tv.priority == 0 && Threads.AnyThreadsAvailable())
+									if (tv.priority == 0 && script.Threads.AnyThreadsAvailable())
 									{
 										if (msg.obj is InputType it
 												&& it.InputRelease() is InputType inputHook
@@ -5126,7 +5150,7 @@ namespace Keysharp.Core.Windows
 										{
 											if (so.OnEnd is IFuncObj ifo)
 											{
-												Threads.LaunchInThread(0, false, false, ifo, [so], true);
+												script.Threads.LaunchInThread(0, false, false, ifo, [so], true);
 											}
 										}
 										else
@@ -5145,7 +5169,7 @@ namespace Keysharp.Core.Windows
 									InputType input_hook;
 									var inputHookParam = msg.obj as InputType;
 
-									for (input_hook = Script.input; input_hook != null && input_hook != inputHookParam; input_hook = input_hook.prev)
+									for (input_hook = script.input; input_hook != null && input_hook != inputHookParam; input_hook = input_hook.prev)
 									{
 									}
 
@@ -5155,12 +5179,12 @@ namespace Keysharp.Core.Windows
 									if ((msg.message == (uint)UserMessages.AHK_INPUT_KEYDOWN ? input_hook.scriptObject.OnKeyDown
 											: msg.message == (uint)UserMessages.AHK_INPUT_KEYUP ? input_hook.scriptObject.OnKeyUp
 											: input_hook.scriptObject.OnChar) is IFuncObj ifo
-											&& Threads.AnyThreadsAvailable())
+											&& script.Threads.AnyThreadsAvailable())
 									{
 										var args = msg.message == (uint)UserMessages.AHK_INPUT_CHAR ?//AHK_INPUT_CHAR passes the chars as a string, whereas the rest pass them individually.
 												   new object[] { input_hook.scriptObject, new string(new char[] { (char)lParamVal, (char)wParamVal }) }
 												   : [input_hook.scriptObject, lParamVal, wParamVal];
-										Threads.LaunchInThread(0, false, false, ifo, args, true);
+										script.Threads.LaunchInThread(0, false, false, ifo, args, true);
 									}
 									else
 										continue;
@@ -5177,7 +5201,7 @@ namespace Keysharp.Core.Windows
 							//if (priority < (long)Accessors.A_Priority)
 							//  continue;
 							//Original tries to do some type of thread init here.//TOOD
-							Script.lastPeekTime = DateTime.UtcNow;
+							script.lastPeekTime = DateTime.UtcNow;
 						}
 					}
 
@@ -5251,7 +5275,6 @@ namespace Keysharp.Core.Windows
 						if (UnhookWindowsHookEx(mouseHook) || GetLastError() == ERROR_INVALID_HOOK_HANDLE)// Check last error in case the OS has already removed the hook.
 							mouseHook = IntPtr.Zero;
 			};
-
 			//Any modifications to the hooks must be done on the main thread else Windows will internally ignore them.
 			//We assume that if the main window does not exist yet, then this code is running within the part of main() that happens
 			//before Application.Run().
@@ -5259,11 +5282,11 @@ namespace Keysharp.Core.Windows
 			//which are not persistent, and thus no main window will be present.
 			//kbMouseContext will be null if the hooks are run on the main thread.
 			//mainContext be null during unit tests.
-			if (Script.kbMouseContext == null && Processes.mainContext != null)
-				Processes.mainContext.Send(new SendOrPostCallback((obj) => func()), null);
-			else
-				func();
-
+			//if (Script.kbMouseContext == null && Processes.mainContext != null)
+			//  Processes.mainContext.Send(new SendOrPostCallback((obj) => func()), null);
+			//else
+			//  func();
+			thread?.Invoke(func);
 			//Keysharp.Scripting.Script.mainWindow.CheckedInvoke(func, true);
 			return problem_activating_hooks;
 		}
@@ -5346,11 +5369,11 @@ namespace Keysharp.Core.Windows
 				case VK_MENU: vk = (sc == RAlt) ? VK_RMENU : VK_LMENU; break;
 			}
 
-			if (lParam.scanCode == FakeLControl && altGrExtraInfo != 0 && (lParam.flags & LLKHF_INJECTED) != 0)
+			if (lParam.scanCode == FakeLControl &&  kbdMsSender.altGrExtraInfo != 0 && (lParam.flags & LLKHF_INJECTED) != 0)
 			{
 				// This LCtrl is a result of sending RAlt, which hasn't been received yet.
 				// Override dwExtraInfo, though it will only affect this hook instance.
-				lParam.dwExtraInfo = altGrExtraInfo;
+				lParam.dwExtraInfo = kbdMsSender.altGrExtraInfo;
 			}
 
 			MSDLLHOOKSTRUCT tempstruct = default;

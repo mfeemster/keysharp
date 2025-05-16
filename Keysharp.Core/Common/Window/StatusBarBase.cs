@@ -59,7 +59,7 @@
 			if (index == -1)
 			{
 				var oldParts = Captions;
-				var newParts = caption.Split([ " | " ], StringSplitOptions.None);
+				var newParts = caption.Split([" | "], StringSplitOptions.None);
 
 				if ((oldParts.Length == newParts.Length) && (newParts.Length > 0))
 				{

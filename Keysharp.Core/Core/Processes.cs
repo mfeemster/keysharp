@@ -1,20 +1,23 @@
 namespace Keysharp.Core
 {
+	internal class ProcessesData
+	{
+		internal SynchronizationContext mainContext;
+
+		//internal int CurrentThreadID = Process.GetCurrentProcess().Threads[0].Id; //WindowsAPI.GetCurrentThread();
+		internal uint CurrentThreadID = 0u;
+		internal uint MainThreadID;
+		internal int ManagedMainThreadID;
+		internal string runDomain;
+		internal SecureString runPassword;
+		internal string runUser;
+	}
+
 	/// <summary>
 	/// Public interface for process-related functions.
 	/// </summary>
 	public static class Processes
 	{
-		public static SynchronizationContext mainContext;
-
-		//internal static int CurrentThreadID = Process.GetCurrentProcess().Threads[0].Id; //WindowsAPI.GetCurrentThread();
-		internal static uint CurrentThreadID = 0u;
-
-		internal static uint MainThreadID;
-		internal static int ManagedMainThreadID;
-		internal static string runDomain;
-		internal static SecureString runPassword;
-		internal static string runUser;
 		private const int LoopFrequency = 50;
 
 		private static readonly FrozenSet<string> verbs = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
@@ -270,21 +273,21 @@ namespace Keysharp.Core
 			var u = user.As();
 			var p = password.As();
 			var d = domain.As();
-			runUser = u;
-			runDomain = d;
+			script.ProcessesData.runUser = u;
+			script.ProcessesData.runDomain = d;
 
 			if (string.IsNullOrEmpty(p))
 			{
-				runPassword = null;
+				script.ProcessesData.runPassword = null;
 			}
 			else
 			{
-				runPassword = new SecureString();
+				script.ProcessesData.runPassword = new SecureString();
 
 				foreach (var sym in p)
-					runPassword.AppendChar(sym);
+					script.ProcessesData.runPassword.AppendChar(sym);
 
-				runPassword.MakeReadOnly();
+				script.ProcessesData.runPassword.MakeReadOnly();
 			}
 
 			return null;
@@ -326,7 +329,7 @@ namespace Keysharp.Core
 		/// </summary>
 		public static object Shutdown(object obj)
 		{
-			_ = PlatformProvider.Manager.ExitProgram((uint)obj.Al(), 0);
+			_ = script.PlatformProvider.Manager.ExitProgram((uint)obj.Al(), 0);
 			return null;
 		}
 
@@ -367,9 +370,9 @@ namespace Keysharp.Core
 
 		private static bool RunAsSpecified()
 		{
-			return (runPassword != null && runPassword.Length > 0)
-				   || (!string.IsNullOrEmpty(runUser))
-				   || (!string.IsNullOrEmpty(runDomain));
+			return (script.ProcessesData.runPassword != null && script.ProcessesData.runPassword.Length > 0)
+				   || (!string.IsNullOrEmpty(script.ProcessesData.runUser))
+				   || (!string.IsNullOrEmpty(script.ProcessesData.runDomain));
 		}
 
 		/// <summary>
@@ -488,10 +491,10 @@ namespace Keysharp.Core
 					}
 
 					prc.StartInfo.FileName = target;
-					prc.StartInfo.UserName = string.IsNullOrEmpty(runUser) ? null : runUser;
+					prc.StartInfo.UserName = string.IsNullOrEmpty(script.ProcessesData.runUser) ? null : script.ProcessesData.runUser;
 #if WINDOWS
-					prc.StartInfo.Domain = string.IsNullOrEmpty(runDomain) ? null : runDomain;
-					prc.StartInfo.Password = (runPassword == null || runPassword.Length == 0) ? null : runPassword;
+					prc.StartInfo.Domain = string.IsNullOrEmpty(script.ProcessesData.runDomain) ? null : script.ProcessesData.runDomain;
+					prc.StartInfo.Password = (script.ProcessesData.runPassword == null || script.ProcessesData.runPassword.Length == 0) ? null : script.ProcessesData.runPassword;
 #endif
 				}
 				else

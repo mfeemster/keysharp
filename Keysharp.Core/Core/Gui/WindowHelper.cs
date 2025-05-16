@@ -1,5 +1,4 @@
 ﻿using static Keysharp.Core.WindowSearch;
-using static Keysharp.Scripting.Script;
 
 namespace Keysharp.Core
 {
@@ -29,7 +28,7 @@ namespace Keysharp.Core
 
 				try
 				{
-					hwnd = GetPropertyValue(ctrl, "Hwnd");
+					hwnd = Script.GetPropertyValue(ctrl, "Hwnd");
 				}
 				catch { }
 

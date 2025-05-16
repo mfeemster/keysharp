@@ -1,10 +1,21 @@
 ﻿namespace Keysharp.Core
 {
+	internal class GuiData
+	{
+		internal int windowCount = 0;
+		internal ConcurrentDictionary<long, Gui> allGuiHwnds = new ();
+		internal ConcurrentDictionary<long, MsgMonitor> onMessageHandlers = new ();
+
+		/// <summary>
+		/// A global counter of all menus in existence within the script.
+		/// </summary>
+		internal int menuCount = 0;
+	}
+
 	public class Gui : KeysharpObject, I__Enum, IEnumerable<(object, object)>
 	{
 		public TabPage CurrentTab;
 		public KeysharpForm form;
-		internal static ConcurrentDictionary<long, Gui> allGuiHwnds = new ();
 
 		internal static Type[] GuiTypes =
 			[
@@ -53,7 +64,7 @@
 					if (o is bool b)
 					{
 						f.lastfound = b;
-						Script.HwndLastUsed = f.Hwnd;
+						script.HwndLastUsed = f.Hwnd;
 					}
 				}
 			},
@@ -207,7 +218,6 @@
 			}
 		};
 
-		private static int windowCount = 0;
 		private bool lastfound = false;
 		private bool owndialogs = false;
 		private bool resizable = false;
@@ -332,15 +342,15 @@
 			}
 
 			LastContainer = form;
-			allGuiHwnds[form.Handle.ToInt64()] = this;//Calling handle forces the creation of the window.
+			script.GuiData.allGuiHwnds[form.Handle.ToInt64()] = this;//Calling handle forces the creation of the window.
 
 			if (lastfound)
-				Script.HwndLastUsed = Hwnd;
+				script.HwndLastUsed = Hwnd;
 		}
 
 		~Gui()
 		{
-			Script.ExitIfNotPersistent();//May not be necessary, but try anyway.
+			script.ExitIfNotPersistent();//May not be necessary, but try anyway.
 		}
 
 		public KeysharpEnumerator __Enum(object count) => new GuiControlIterator(controls, count.Ai());
@@ -353,7 +363,7 @@
 				var options = obj.Length > 0 ? obj[0].As() : null;
 				var caption = obj.Length > 1 ? obj[1].As() : null;
 				var eventObj = obj.Length > 2 ? obj[2] : null;
-				var newCount = Interlocked.Increment(ref windowCount);
+				var newCount = Interlocked.Increment(ref script.GuiData.windowCount);
 				//Get numeric creation params first.
 				int addStyle = 0, addExStyle = 0, removeStyle = 0, removeExStyle = 0;
 				Opt(options, ref addStyle, ref addExStyle, ref removeStyle, ref removeExStyle);
@@ -381,7 +391,7 @@
 				//This will be added to allGuiHwnds on show.
 
 				if (lastfound)
-					Script.HwndLastUsed = Hwnd;
+					script.HwndLastUsed = Hwnd;
 			}
 
 			return "";
@@ -1170,6 +1180,7 @@
 				}
 				break;
 #if WINDOWS
+
 				case Keyword_Custom:
 				{
 					var custom = new KeysharpCustomControl(opts.customclass, opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle);
@@ -1274,11 +1285,12 @@
 				w = (fontpixels * 30) + (3 * ctrl.Margin.Left);
 			else if (ctrl is KeysharpListView || ctrl is KeysharpTreeView || ctrl is KeysharpDateTimePicker)//Documentaiton doesn't mention these, but IronAHK handled them this way, so leaving this here.
 				w = fontpixels * 30;
+
 #if WINDOWS
 			else if (ctrl is KeysharpCustomControl custom)
 				w = fontpixels * 10;
-#endif
 
+#endif
 			ctrl.Width = opts.width == int.MinValue ? Math.Max((int)w, (int)Math.Round(scaledPref)) : (holder.requestedSize.Width = (int)Math.Round(w));
 
 			if (opts.hp != int.MinValue)
@@ -1310,9 +1322,11 @@
 						r = 1;
 					else if (ctrl is TabPage || ctrl is KeysharpTabControl)
 						r = 10;
+
 #if WINDOWS
 					else if (ctrl is KeysharpCustomControl custom)
 						r = 5;//AHK used 5.
+
 #endif
 					var fontRows = (int)(Math.Round(fontpixels + 0.5) * r);//This is a rough attempt to make text boxes tall enough to show the requested number of lines without having the scrollbars appear unnecessarily.
 					var defheight = fontRows;//AHK used external leading, but just use fontpixels here because it's close enough.
@@ -1341,11 +1355,13 @@
 					{
 						tc2.Height = defheight + (int)Math.Round((tc2.Margin.Top + tc2.Margin.Bottom) *  (2.0 + ((int)(r + 1.5) - 1)));//Same here, but -1.
 					}
+
 #if WINDOWS
 					else if (ctrl is KeysharpCustomControl)
 					{
 						ctrl.Height = fontRows + ctrl.Margin.Top;
 					}
+
 #endif
 					else
 					{
@@ -2066,12 +2082,12 @@
 
 		IEnumerator IEnumerable.GetEnumerator() => new GuiControlIterator(controls, 2);
 
-		internal static bool AnyExistingVisibleWindows() => allGuiHwnds.Values.Any(g => g.form != null && g.form != Script.mainWindow && g.form.Visible);
+		internal static bool AnyExistingVisibleWindows() => script.GuiData.allGuiHwnds.Values.Any(g => g.form != null && g.form != script.mainWindow && g.form.Visible);
 
 		internal static void DestroyAll()
 		{
 			//Destroy everything but the main window, which will destroy itself.
-			foreach (var gui in allGuiHwnds.Values.Where(g => g.form != Script.mainWindow).ToArray())
+			foreach (var gui in script.GuiData.allGuiHwnds.Values.Where(g => g.form != script.mainWindow).ToArray())
 			{
 				try
 				{
@@ -2082,7 +2098,7 @@
 				}
 			}
 
-			allGuiHwnds.Clear();
+			script.GuiData.allGuiHwnds.Clear();
 		}
 
 		internal static float GetFontPixels(Font font) => font.GetHeight((float)A_ScreenDPI);
@@ -2178,8 +2194,10 @@
 					else if (Options.TryParse(opt, "Autosize", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.autosize = tempbool; }
 					else if (Options.TryParse(opt, "wp", ref options.wp, StringComparison.OrdinalIgnoreCase, true)) { }
 					else if (Options.TryParse(opt, "hp", ref options.hp, StringComparison.OrdinalIgnoreCase, true)) { }
+
 #if WINDOWS
 					else if (Options.TryParseString(opt, "Class", ref options.customclass, StringComparison.OrdinalIgnoreCase)) { }
+
 #endif
 					else if (Options.TryParse(opt, "xp", ref options.x, StringComparison.OrdinalIgnoreCase, true)) { options.xpos = GuiOptions.Positioning.PreviousTopLeft; }
 					else if (Options.TryParse(opt, "yp", ref options.y, StringComparison.OrdinalIgnoreCase, true)) { options.ypos = GuiOptions.Positioning.PreviousTopLeft; }

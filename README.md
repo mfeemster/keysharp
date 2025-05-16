@@ -382,7 +382,7 @@ class class1
 	+ `Base64Encode(value) => String` to convert a byte array to a Base64 string.
 	+ `NormalizeEol(str, eol) => String` to make all line endings in a string match the value passed in, or the default for the current environment.
 	+ `StartsWith(value, token [,comparison]) => Boolean` and `EndsWith(value, token [,comparison]) => Boolean` to determine if the beginning or end of a string start/end with a given string.
-	+ 'Join(separator, params*) => String` to join each parameter together as a string, separated by `separator`.
+	+ `Join(separator, params*) => String` to join each parameter together as a string, separated by `separator`.
 		+ Pass params as `params*` if it's a collection.
 * The v1 `Map` methods `MaxIndex()` and `MinIndex()` are still supported. They are also supported for `Array`.
 * New function `GetScreenClip(x, y, width, height [, filename]) => Bitmap` can be used to return a bitmap screenshot of an area of the screen and optionally save it to file.

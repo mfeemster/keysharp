@@ -1,11 +1,14 @@
 ﻿namespace Keysharp.Core.Common.Joystick
 {
+	internal class JoystickData
+	{
+		internal const int MaxJoyButtons = 32;
+		internal const int MaxJoysticks = 16;  // The maximum allowed by any Windows operating system.
+		internal uint[] buttonsPrev = new uint[MaxJoysticks];
+	}
+
 	internal static class Joystick
 	{
-		internal static uint[] buttonsPrev = new uint[MaxJoysticks];
-		internal static int MaxJoyButtons = 32;
-		internal static int MaxJoysticks = 16;  // The maximum allowed by any Windows operating system.
-
 		/// <summary>
 		/// The caller TextToKey() currently relies on the fact that when aAllowOnlyButtons==true, a value
 		/// that can fit in a sc_type (USHORT) is returned, which is true since the joystick buttons
@@ -28,7 +31,7 @@
 				var val = buf.ParseUInt(false);
 				var joystick_id = val.HasValue ? val.Value - 1 : 0u;
 
-				if (joystick_id < 0 || joystick_id >= MaxJoysticks)
+				if (joystick_id < 0 || joystick_id >= JoystickData.MaxJoysticks)
 					return JoyControls.Invalid;
 
 				if (joystickID != null)
@@ -42,7 +45,7 @@
 
 				if (val.HasValue)
 				{
-					if (val.Value < 1 || val.Value > MaxJoyButtons)
+					if (val.Value < 1 || val.Value > JoystickData.MaxJoyButtons)
 						return JoyControls.Invalid;
 
 					return JoyControls.Button1 + (val.Value - 1);
@@ -100,10 +103,11 @@
 			// Even if joystick hotkeys aren't currently allowed to fire, poll it anyway so that hotkey
 			// messages can be buffered for later.
 			var jie = JOYINFOEX.Default;
+			var jd = script.JoystickData;
 
-			for (var i = 0; i < MaxJoysticks; ++i)
+			for (var i = 0; i < JoystickData.MaxJoysticks; ++i)
 			{
-				if (!HotkeyDefinition.joystickHasHotkeys[i])
+				if (!script.HotkeyData.joystickHasHotkeys[i])
 					continue;
 
 				// Reset these every time in case joyGetPosEx() ever changes them. Also, most systems have only one joystick,
@@ -116,8 +120,8 @@
 				// The exclusive-or operator determines which buttons have changed state.  After that,
 				// the bitwise-and operator determines which of those have gone from up to down (the
 				// down-to-up events are currently not significant).
-				var buttons_newly_down = (jie.dwButtons ^ buttonsPrev[i]) & jie.dwButtons;
-				buttonsPrev[i] = jie.dwButtons;
+				var buttons_newly_down = (jie.dwButtons ^ jd.buttonsPrev[i]) & jie.dwButtons;
+				jd.buttonsPrev[i] = jie.dwButtons;
 
 				if (buttons_newly_down == 0)
 					continue;

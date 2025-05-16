@@ -149,70 +149,73 @@ If x = 5
 else
 	FileAppend, "fail", "*"
 
-x := 0
-y := 5
-z5 := 100
-
-while z%y% ; this is a comment
+if (A_ThisFunc != "TestFunc")
 {
-	if (A_Index > 25)
-		break
+	x := 0
+	y := 5
+	z5 := 100
+
+	while z%y% ; this is a comment
+	{
+		if (A_Index > 25)
+			break
 	
-	x++
+		x++
+	}
+
+	If x = 25
+		FileAppend, "pass", "*"
+	else
+		FileAppend, "fail", "*"
+
+	If A_Index = 0
+		FileAppend, "pass", "*"
+	else
+		FileAppend, "fail", "*"
+
+	x := 0
+	y := 5
+	z5 := 100
+
+	while z%y% { ; another comment
+		if (A_Index > 25)
+			break
+	
+		x++
+	}
+
+	If x = 25
+		FileAppend, "pass", "*"
+	else
+		FileAppend, "fail", "*"
+
+	If A_Index = 0
+		FileAppend, "pass", "*"
+	else
+		FileAppend, "fail", "*"
+
+	x := 0
+	y := 5
+	z5 := 100
+
+	while (z%y%) {
+		if (A_Index > 25)
+			break
+	
+		x++
+	}
+
+	If x = 25
+		FileAppend, "pass", "*"
+	else
+		FileAppend, "fail", "*"
+
+	If A_Index = 0
+		FileAppend, "pass", "*"
+	else
+		FileAppend, "fail", "*"
 }
 
-If x = 25
-	FileAppend, "pass", "*"
-else
-	FileAppend, "fail", "*"
-
-If A_Index = 0
-	FileAppend, "pass", "*"
-else
-	FileAppend, "fail", "*"
-
-x := 0
-y := 5
-z5 := 100
-
-while z%y% { ; another comment
-	if (A_Index > 25)
-		break
-	
-	x++
-}
-
-If x = 25
-	FileAppend, "pass", "*"
-else
-	FileAppend, "fail", "*"
-
-If A_Index = 0
-	FileAppend, "pass", "*"
-else
-	FileAppend, "fail", "*"
-
-x := 0
-y := 5
-z5 := 100
-
-while (z%y%) {
-	if (A_Index > 25)
-		break
-	
-	x++
-}
-
-If x = 25
-	FileAppend, "pass", "*"
-else
-	FileAppend, "fail", "*"
-
-If A_Index = 0
-	FileAppend, "pass", "*"
-else
-	FileAppend, "fail", "*"
-	
 x := 1
 b := false
 

@@ -1,7 +1,10 @@
-﻿using System;
-
-namespace Keysharp.Core
+﻿namespace Keysharp.Core
 {
+	internal class FunctionData
+	{
+		internal ConcurrentDictionary<object, IFuncObj> cachedFuncObj = new (new CaseEqualityComp(eCaseSense.Off));
+	}
+
 	/// <summary>
 	/// Public interface for function object and function reflection-related functions.
 	/// </summary>
@@ -10,12 +13,11 @@ namespace Keysharp.Core
 		/// <summary>
 		/// Avoid creating new FuncObj objects for the same string/delegate.
 		/// </summary>
-		private static ConcurrentDictionary<object, IFuncObj> cachedFuncObj = new (new CaseEqualityComp(eCaseSense.Off));
 
-		internal static void ClearCache()
-		{
-			cachedFuncObj.Clear();
-		}
+		//internal static void ClearCache()
+		//{
+		//  cachedFuncObj.Clear();
+		//}
 
 		/// <summary>
 		/// Creates a function object by searching for a method within the script.
@@ -153,6 +155,7 @@ namespace Keysharp.Core
 		{
 			Error err;
 			IFuncObj del = null;
+			var cachedFuncObj = script.FunctionData.cachedFuncObj;
 
 			if (h is string s)
 			{

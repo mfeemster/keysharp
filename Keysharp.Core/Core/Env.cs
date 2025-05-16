@@ -7,8 +7,6 @@ namespace Keysharp.Core
 	/// </summary>
 	public static class Env
 	{
-		public static string[] KeysharpArgs = [];
-
 		/// <summary>
 		/// Creates an object containing everything on the clipboard (such as pictures and formatting).
 		/// Omit both parameters to retrieve the current contents of the clipboard.<br/>
@@ -225,7 +223,7 @@ namespace Keysharp.Core
 		{
 			if (callback is IFuncObj fo)
 			{
-				Script.ClipFunctions.ModifyEventHandlers(fo, addRemove.Al(1));
+				script.ClipFunctions.ModifyEventHandlers(fo, addRemove.Al(1));
 				return null;
 			}
 			else
@@ -570,11 +568,11 @@ namespace Keysharp.Core
 		internal static string FindCommandLineArg(string arg, bool startsWith = true)
 		{
 			if (startsWith)
-				return KeysharpArgs.FirstOrDefault(x => (x.StartsWith('-')
-												   || x.StartsWith('/')) && x.Trim(DashSlash).StartsWith(arg, StringComparison.OrdinalIgnoreCase));
+				return script.KeysharpArgs.FirstOrDefault(x => (x.StartsWith('-')
+						|| x.StartsWith('/')) && x.Trim(DashSlash).StartsWith(arg, StringComparison.OrdinalIgnoreCase));
 			else
-				return KeysharpArgs.FirstOrDefault(x => (x.StartsWith('-')
-												   || x.StartsWith('/')) && x.Trim(DashSlash).Contains(arg, StringComparison.OrdinalIgnoreCase));
+				return script.KeysharpArgs.FirstOrDefault(x => (x.StartsWith('-')
+						|| x.StartsWith('/')) && x.Trim(DashSlash).Contains(arg, StringComparison.OrdinalIgnoreCase));
 		}
 
 		/// <summary>
@@ -586,7 +584,7 @@ namespace Keysharp.Core
 		/// <returns>The matched value if found, else null.</returns>
 		internal static string FindCommandLineArgVal(string arg, bool startsWith = true)
 		{
-			var args = KeysharpArgs;
+			var args = script.KeysharpArgs;
 
 			for (var i = 0; i < args.Length; i++)
 			{
@@ -699,11 +697,11 @@ namespace Keysharp.Core
 			var swapped = false;
 			var deviceNames = "xinput list --name-only".Bash().Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 			//foreach (var name in deviceNames)
-			//  Keysharp.Scripting.Script.OutputDebug($"{name}");
+			//  Debug.OutputDebug($"{name}");
 			var deviceIds = "xinput list --id-only".Bash().Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
 			//foreach (var id in deviceIds)
-			//  Keysharp.Scripting.Script.OutputDebug($"{id}");
+			//  Debug.OutputDebug($"{id}");
 
 			if (deviceNames.Length == deviceIds.Length)
 			{
@@ -716,7 +714,7 @@ namespace Keysharp.Core
 
 						if (buttonStrSplits.All(sp => int.TryParse(sp, out var _)))
 						{
-							//Keysharp.Scripting.Script.OutputDebug($"Device {deviceIds[i]}: {deviceNames[i]} with buttons {buttonStr} getting examined.");
+							//Debug.OutputDebug($"Device {deviceIds[i]}: {deviceNames[i]} with buttons {buttonStr} getting examined.");
 							for (var j = 0; j < 3 && j < buttonStrSplits.Length; j++)
 							{
 								if (int.TryParse(buttonStrSplits[j], out var btn))
@@ -724,7 +722,7 @@ namespace Keysharp.Core
 									if (btn != j + 1)
 									{
 										swapped = true;
-										//Keysharp.Scripting.Script.OutputDebug($"\tWas swapped.");
+										//Debug.OutputDebug($"\tWas swapped.");
 										break;
 									}
 								}

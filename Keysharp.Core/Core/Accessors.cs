@@ -1,45 +1,48 @@
 ﻿namespace Keysharp.Core
 {
+	internal class AccessorData
+	{
+		internal long hotkeyModifierTimeout = 50L;
+		internal long hotkeyThrottleInterval = 2000L;
+		internal long maxHotkeysPerInterval = 2000L;
+		internal readonly string initialWorkingDir = Environment.CurrentDirectory;
+		internal bool allowMainWindow = true;
+		internal long controlDelay = 20L;
+		internal CoordModeType coordModeCaretDefault = CoordModeType.Client;
+		internal CoordModeType coordModeMenuDefault = CoordModeType.Client;
+		internal CoordModeType coordModeMouseDefault = CoordModeType.Client;
+		internal CoordModeType coordModePixelDefault = CoordModeType.Client;
+		internal CoordModeType coordModeToolTipDefault = CoordModeType.Client;
+		internal long defaultMouseSpeed = 2L;
+		internal bool detectHiddenText = true;
+		internal bool detectHiddenWindows = false;
+		internal Encoding fileEncoding = Encoding.Default;
+		internal bool? iconFrozen;
+		internal bool iconHidden;
+		internal uint inputLevel;
+		internal long keyDelay = 10L;
+		internal long keyDelayPlay = -1L;
+		internal long keyDuration = -1L;
+		internal long keyDurationPlay = -1L;
+		internal string menuMaskKey = "";
+		internal long mouseDelay = 10L;
+		internal long mouseDelayPlay = -1L;
+		internal long peekFrequency = 5L;
+		internal Icon prevTrayIcon;
+		internal long regView = 64L;
+		internal uint sendLevel = 0;
+		internal SendModes sendMode = SendModes.Input;
+		internal bool storeCapsLockMode = true;
+		internal object titleMatchMode = 2L;
+		internal bool titleMatchModeSpeed = true;
+		internal long winDelay = 100L;
+	}
+
 	/// <summary>
 	/// Public static properties which mostly start with A_.
 	/// </summary>
 	public static class Accessors
 	{
-		internal static long hotkeyModifierTimeout = 50L;
-		internal static long hotkeyThrottleInterval = 2000L;
-		internal static long maxHotkeysPerInterval = 2000L;
-		private static readonly string initialWorkingDir = Environment.CurrentDirectory;
-		private static bool allowMainWindow = true;
-		private static long controlDelay = 20L;
-		private static CoordModeType coordModeCaretDefault = CoordModeType.Client;
-		private static CoordModeType coordModeMenuDefault = CoordModeType.Client;
-		private static CoordModeType coordModeMouseDefault = CoordModeType.Client;
-		private static CoordModeType coordModePixelDefault = CoordModeType.Client;
-		private static CoordModeType coordModeToolTipDefault = CoordModeType.Client;
-		private static long defaultMouseSpeed = 2L;
-		private static bool detectHiddenText = true;
-		private static bool detectHiddenWindows = false;
-		private static Encoding fileEncoding = Encoding.Default;
-		private static bool? iconFrozen;
-		private static bool iconHidden;
-		private static uint inputLevel;
-		private static long keyDelay = 10L;
-		private static long keyDelayPlay = -1L;
-		private static long keyDuration = -1L;
-		private static long keyDurationPlay = -1L;
-		private static string menuMaskKey = "";
-		private static long mouseDelay = 10L;
-		private static long mouseDelayPlay = -1L;
-		private static long peekFrequency = 5L;
-		private static Icon prevTrayIcon;
-		private static long regView = 64L;
-		private static uint sendLevel = 0;
-		private static SendModes sendMode = SendModes.Input;
-		private static bool storeCapsLockMode = true;
-		private static object titleMatchMode = 2L;
-		private static bool titleMatchModeSpeed = true;
-		private static long winDelay = 100L;
-
 		/// <summary>
 		/// The version of the assembly that was used to compile the script that is currently running.
 		/// This queries the AssemblyBuildVersionAttribute of the generated code, which is automatically added by the script compiler
@@ -77,7 +80,7 @@
 		/// </summary>
 		public static object A_AllowMainWindow
 		{
-			get => allowMainWindow;
+			get => script.AccessorData.allowMainWindow;
 
 			set
 			{
@@ -85,13 +88,13 @@
 
 				if (val.HasValue)
 				{
-					allowMainWindow = val.Value;
-					Script.openMenuItem.Visible = val.Value;
+					script.AccessorData.allowMainWindow = val.Value;
+					script.openMenuItem.Visible = val.Value;
 
 					if (!A_AllowMainWindow.Ab())
-						Script.openMenuItem.Visible = false;
+						script.openMenuItem.Visible = false;
 					else
-						Script.trayMenu.Default = "&Open";
+						script.trayMenu.Default = "&Open";
 				}
 			}
 		}
@@ -264,12 +267,12 @@
 					return "";
 				};
 				var ret = "";
-				Script.mainWindow.CheckedInvoke(() => ret = act(), true);
+				script.mainWindow.CheckedInvoke(() => ret = act(), true);
 				return ret;
 			}
 			set
 			{
-				Script.mainWindow.CheckedInvoke(() =>
+				script.mainWindow.CheckedInvoke(() =>
 				{
 #if LINUX
 
@@ -332,8 +335,8 @@
 			{
 				var val = value.Al();
 
-				if (!Script.IsReadyToExecute)
-					controlDelay = val;
+				if (!script.IsReadyToExecute)
+					script.AccessorData.controlDelay = val;
 
 				ThreadAccessors.A_ControlDelay = val;
 			}
@@ -345,7 +348,7 @@
 		/// <exception cref="ValueError">A <see cref="ValueError"/> exception is thrown if the value couldn't be converted to a <see cref="CoordModeType"/>.</exception>
 		public static object A_CoordModeCaret
 		{
-			get => CoordModeTypeToString(Mouse.Coords.Caret);
+			get => CoordModeTypeToString(script.Coords.Caret);
 
 			set
 			{
@@ -362,10 +365,10 @@
 					return;
 				}
 
-				if (!Script.IsReadyToExecute)
-					coordModeCaretDefault = val;
+				if (!script.IsReadyToExecute)
+					script.AccessorData.coordModeCaretDefault = val;
 
-				Mouse.Coords.Caret = val;
+				script.Coords.Caret = val;
 			}
 		}
 
@@ -375,7 +378,7 @@
 		/// <exception cref="ValueError">A <see cref="ValueError"/> exception is thrown if the value couldn't be converted to a <see cref="CoordModeType"/>.</exception>
 		public static object A_CoordModeMenu
 		{
-			get => CoordModeTypeToString(Mouse.Coords.Menu);
+			get => CoordModeTypeToString(script.Coords.Menu);
 
 			set
 			{
@@ -392,10 +395,10 @@
 					return;
 				}
 
-				if (!Script.IsReadyToExecute)
-					coordModeMenuDefault = val;
+				if (!script.IsReadyToExecute)
+					script.AccessorData.coordModeMenuDefault = val;
 
-				Mouse.Coords.Menu = val;
+				script.Coords.Menu = val;
 			}
 		}
 
@@ -405,7 +408,7 @@
 		/// <exception cref="ValueError">A <see cref="ValueError"/> exception is thrown if the value couldn't be converted to a <see cref="CoordModeType"/>.</exception>
 		public static object A_CoordModeMouse
 		{
-			get => CoordModeTypeToString(Mouse.Coords.Mouse);
+			get => CoordModeTypeToString(script.Coords.Mouse);
 
 			set
 			{
@@ -422,10 +425,10 @@
 					return;
 				}
 
-				if (!Script.IsReadyToExecute)
-					coordModeMouseDefault = val;
+				if (!script.IsReadyToExecute)
+					script.AccessorData.coordModeMouseDefault = val;
 
-				Mouse.Coords.Mouse = val;
+				script.Coords.Mouse = val;
 			}
 		}
 
@@ -435,7 +438,7 @@
 		/// <exception cref="ValueError">A <see cref="ValueError"/> exception is thrown if the value couldn't be converted to a <see cref="CoordModeType"/>.</exception>
 		public static object A_CoordModePixel
 		{
-			get => CoordModeTypeToString(Mouse.Coords.Pixel);
+			get => CoordModeTypeToString(script.Coords.Pixel);
 
 			set
 			{
@@ -452,10 +455,10 @@
 					return;
 				}
 
-				if (!Script.IsReadyToExecute)
-					coordModePixelDefault = val;
+				if (!script.IsReadyToExecute)
+					script.AccessorData.coordModePixelDefault = val;
 
-				Mouse.Coords.Pixel = val;
+				script.Coords.Pixel = val;
 			}
 		}
 
@@ -465,7 +468,7 @@
 		/// <exception cref="ValueError">A <see cref="ValueError"/> exception is thrown if the value couldn't be converted to a <see cref="CoordModeType"/>.</exception>
 		public static object A_CoordModeToolTip
 		{
-			get => CoordModeTypeToString(Mouse.Coords.Tooltip);
+			get => CoordModeTypeToString(script.Coords.Tooltip);
 
 			set
 			{
@@ -482,10 +485,10 @@
 					return;
 				}
 
-				if (!Script.IsReadyToExecute)
-					coordModeToolTipDefault = val;
+				if (!script.IsReadyToExecute)
+					script.AccessorData.coordModeToolTipDefault = val;
 
-				Mouse.Coords.Tooltip = val;
+				script.Coords.Tooltip = val;
 			}
 		}
 
@@ -530,8 +533,8 @@
 			{
 				var val = value.Al();
 
-				if (!Script.IsReadyToExecute)
-					defaultMouseSpeed = val;
+				if (!script.IsReadyToExecute)
+					script.AccessorData.defaultMouseSpeed = val;
 
 				ThreadAccessors.A_DefaultMouseSpeed = val;
 			}
@@ -562,8 +565,8 @@
 				{
 					var b = val.Value.Ab();
 
-					if (!Script.IsReadyToExecute)
-						detectHiddenText = b;
+					if (!script.IsReadyToExecute)
+						script.AccessorData.detectHiddenText = b;
 
 					ThreadAccessors.A_DetectHiddenText = b;
 				}
@@ -585,8 +588,8 @@
 				{
 					var b = val.Value.Ab();
 
-					if (!Script.IsReadyToExecute)
-						detectHiddenWindows = b;
+					if (!script.IsReadyToExecute)
+						script.AccessorData.detectHiddenWindows = b;
 
 					ThreadAccessors.A_DetectHiddenWindows = b;
 				}
@@ -612,8 +615,8 @@
 		/// </summary>
 		public static object A_EventInfo
 		{
-			get => Threads.GetThreadVariables().eventInfo;
-			set => Threads.GetThreadVariables().eventInfo = value;
+			get => ThreadAccessors.A_EventInfo;
+			set => ThreadAccessors.A_EventInfo = value;
 		}
 
 		/// <summary>
@@ -627,8 +630,8 @@
 			{
 				var val = Files.GetEncoding(value.ToString());
 
-				if (!Script.IsReadyToExecute)
-					fileEncoding = val;
+				if (!script.IsReadyToExecute)
+					script.AccessorData.fileEncoding = val;
 
 				ThreadAccessors.A_FileEncoding = val;
 			}
@@ -644,8 +647,8 @@
 		/// </summary>
 		public static object A_HotkeyInterval
 		{
-			get => hotkeyThrottleInterval;
-			set => hotkeyThrottleInterval = value.Al();
+			get => script.AccessorData.hotkeyThrottleInterval;
+			set => script.AccessorData.hotkeyThrottleInterval = value.Al();
 		}
 
 		/// <summary>
@@ -654,8 +657,8 @@
 		/// </summary>
 		public static object A_HotkeyModifierTimeout
 		{
-			get => hotkeyModifierTimeout;
-			set => hotkeyModifierTimeout = value.Al();
+			get => script.AccessorData.hotkeyModifierTimeout;
+			set => script.AccessorData.hotkeyModifierTimeout = value.Al();
 		}
 
 		/// <summary>
@@ -673,33 +676,33 @@
 		/// </summary>
 		public static object A_IconHidden
 		{
-			get => iconHidden;
+			get => script.AccessorData.iconHidden;
 
 			set
 			{
-				if (Script.NoTrayIcon)
+				if (script.NoTrayIcon)
 					return;
 
 				var val = Options.OnOff(value);
 
 				if (val.HasValue)
 				{
-					if (!val.Value && iconHidden)//Was true, switching to false, so show.
+					if (!val.Value && script.AccessorData.iconHidden)//Was true, switching to false, so show.
 					{
-						if (Script.Tray != null)
+						if (script.Tray != null)
 						{
-							Script.Tray.Icon = prevTrayIcon;
-							prevTrayIcon = null;
-							iconHidden = val.Value;
+							script.Tray.Icon = script.AccessorData.prevTrayIcon;
+							script.AccessorData.prevTrayIcon = null;
+							script.AccessorData.iconHidden = val.Value;
 						}
 					}
-					else if (val.Value && !iconHidden)//Was false, switching to true, so hide.
+					else if (val.Value && !script.AccessorData.iconHidden)//Was false, switching to true, so hide.
 					{
-						if (Script.Tray != null)
+						if (script.Tray != null)
 						{
-							prevTrayIcon = Script.Tray.Icon;
-							Script.Tray.Icon = null;
-							iconHidden = val.Value;
+							script.AccessorData.prevTrayIcon = script.Tray.Icon;
+							script.Tray.Icon = null;
+							script.AccessorData.iconHidden = val.Value;
 						}
 					}
 				}
@@ -716,12 +719,12 @@
 		/// </summary>
 		public static object A_IconTip
 		{
-			get => Script.Tray != null ? Script.Tray.Text : "";
+			get => script.Tray != null ? script.Tray.Text : "";
 
 			set
 			{
-				if (Script.Tray != null)
-					Script.Tray.Text = value.ToString();
+				if (script.Tray != null)
+					script.Tray.Text = value.ToString();
 			}
 		}
 
@@ -748,15 +751,15 @@
 		/// The script's initial working directory, which is determined by how it was launched.<br/>
 		/// For example, if it was run via shortcut -- such as on the Start Menu -- its initial working directory is determined by the "Start in" field within the shortcut's properties.
 		/// </summary>
-		public static string A_InitialWorkingDir => initialWorkingDir;
+		public static string A_InitialWorkingDir => script.AccessorData.initialWorkingDir;
 
 		/// <summary>
 		/// The default input level to use for subsequently created hotkeys and hotstrings.
 		/// </summary>
 		public static object A_InputLevel
 		{
-			get => inputLevel;
-			set => inputLevel = (uint)Math.Clamp(value.Al(), 0L, 100L);
+			get => script.AccessorData.inputLevel;
+			set => script.AccessorData.inputLevel = (uint)Math.Clamp(value.Al(), 0L, 100L);
 		}
 
 		/// <summary>
@@ -818,7 +821,7 @@
 		{
 			get
 			{
-				var tv = Threads.GetThreadVariables();
+				var tv = script.Threads.GetThreadVariables();
 				return tv.isCritical ? tv.peekFrequency : 0L;
 			}
 		}
@@ -826,7 +829,7 @@
 		/// <summary>
 		/// True if the script's hotkeys and hotstrings are suspended, else false.
 		/// </summary>
-		public static bool A_IsSuspended => Flow.Suspended;
+		public static bool A_IsSuspended => script.FlowData.suspended;
 
 		/// <summary>
 		/// Only for compatibility with AHK, C# programs are always unicode.
@@ -840,7 +843,7 @@
 		///     2: Only another keyboard hook is installed.
 		///     3: Ours and another keyboard hook are installed.
 		/// </summary>
-		public static long A_KeybdHookInstalled => Script.HookThread is HookThread ht
+		public static long A_KeybdHookInstalled => script.HookThread is HookThread ht
 		? (ht.HasKbdHook() ? 1L : 0L) | (ht.SystemHasAnotherKeybdHook() ? 2L : 0L)
 		: 0L;
 
@@ -855,8 +858,8 @@
 			{
 				var val = value.Al();
 
-				if (!Script.IsReadyToExecute)
-					keyDelay = val;
+				if (!script.IsReadyToExecute)
+					script.AccessorData.keyDelay = val;
 
 				ThreadAccessors.A_KeyDelay = val;
 			}
@@ -873,8 +876,8 @@
 			{
 				var val = value.Al();
 
-				if (!Script.IsReadyToExecute)
-					keyDelayPlay = val;
+				if (!script.IsReadyToExecute)
+					script.AccessorData.keyDelayPlay = val;
 
 				ThreadAccessors.A_KeyDelayPlay = val;
 			}
@@ -891,8 +894,8 @@
 			{
 				var val = value.Al();
 
-				if (!Script.IsReadyToExecute)
-					keyDuration = val;
+				if (!script.IsReadyToExecute)
+					script.AccessorData.keyDuration = val;
 
 				ThreadAccessors.A_KeyDuration = val;
 			}
@@ -909,8 +912,8 @@
 			{
 				var val = value.Al();
 
-				if (!Script.IsReadyToExecute)
-					keyDurationPlay = val;
+				if (!script.IsReadyToExecute)
+					script.AccessorData.keyDurationPlay = val;
 
 				ThreadAccessors.A_KeyDurationPlay = val;
 			}
@@ -1023,11 +1026,7 @@
 			get
 			{
 				var loop = Loops.GetDirLoop();
-
-				if (loop != null && loop.file is string s)
-					return Path.GetDirectoryName(s);
-
-				return null;
+				return loop != null && loop.file is string s ? Path.GetDirectoryName(s) : null;
 			}
 		}
 
@@ -1341,8 +1340,8 @@
 		/// </summary>
 		public static object A_MaxHotkeysPerInterval
 		{
-			get => maxHotkeysPerInterval;
-			set => maxHotkeysPerInterval = value.Al();
+			get => script.AccessorData.maxHotkeysPerInterval;
+			set => script.AccessorData.maxHotkeysPerInterval = value.Al();
 		}
 
 		/// <summary>
@@ -1367,8 +1366,8 @@
 		/// </summary>
 		public static object A_MenuMaskKey
 		{
-			get => menuMaskKey;
-			set => menuMaskKey = value.ToString();
+			get => script.AccessorData.menuMaskKey;
+			set => script.AccessorData.menuMaskKey = value.ToString();
 		}
 
 		/// <summary>
@@ -1407,8 +1406,8 @@
 			{
 				var val = value.Al();
 
-				if (!Script.IsReadyToExecute)
-					mouseDelay = val;
+				if (!script.IsReadyToExecute)
+					script.AccessorData.mouseDelay = val;
 
 				ThreadAccessors.A_MouseDelay = val;
 			}
@@ -1425,8 +1424,8 @@
 			{
 				var val = value.Al();
 
-				if (!Script.IsReadyToExecute)
-					mouseDelayPlay = val;
+				if (!script.IsReadyToExecute)
+					script.AccessorData.mouseDelayPlay = val;
 
 				ThreadAccessors.A_MouseDelayPlay = val;
 			}
@@ -1439,7 +1438,7 @@
 		///     2: Only another mouse hook is installed.
 		///     3: Ours and another mouse hook are installed.
 		/// </summary>
-		public static long A_MouseHookInstalled => Script.HookThread is HookThread ht
+		public static long A_MouseHookInstalled => script.HookThread is HookThread ht
 		? (ht.HasMouseHook() ? 1L : 0L) | (ht.SystemHasAnotherMouseHook() ? 2L : 0L)
 		: 0L;
 
@@ -1491,8 +1490,8 @@
 			{
 				var val = value.Al();
 
-				if (!Script.IsReadyToExecute)
-					peekFrequency = val;
+				if (!script.IsReadyToExecute)
+					script.AccessorData.peekFrequency = val;
 
 				ThreadAccessors.A_PeekFrequency = val;
 			}
@@ -1506,7 +1505,7 @@
 		/// <summary>
 		/// The key name of the previously executed hotkey or hotstring.
 		/// </summary>
-		public static string A_PriorHotkey => Script.priorHotkeyName;
+		public static string A_PriorHotkey => script.priorHotkeyName;
 
 		/// <summary>
 		/// The default priority to use for each thread.
@@ -1517,7 +1516,7 @@
 		/// The last key typed.
 		/// All input generated by the script is excluded.
 		/// </summary>
-		public static string A_PriorKey => Script.HookThread is HookThread ht ? ht.keyHistory.PriorKey() : "";
+		public static string A_PriorKey => script.HookThread is HookThread ht ? ht.keyHistory.PriorKey() : "";
 
 		/// <summary>
 		/// The full path and name of the Program Files directory (e.g. C:\Program Files).
@@ -1552,8 +1551,8 @@
 			{
 				var val = value is string s && s.Equals("default", StringComparison.CurrentCultureIgnoreCase) ? 64L : value.Al() == 32L ? 32L : 64L;
 
-				if (!Script.IsReadyToExecute)
-					regView = val;
+				if (!script.IsReadyToExecute)
+					script.AccessorData.regView = val;
 
 				ThreadAccessors.A_RegView = val;
 			}
@@ -1599,27 +1598,27 @@
 			{
 				if (A_IsCompiled)
 					return Path.GetDirectoryName(GetAssembly().Location);
-				else if (Script.scriptName == "*")
+				else if (script.scriptName == "*")
 					return A_WorkingDir as string;
 				else
-					return Path.GetDirectoryName(Script.scriptName);
+					return Path.GetDirectoryName(script.scriptName);
 			}
 		}
 
 		/// <summary>
 		/// The full path of the script location.
 		/// </summary>
-		public static string A_ScriptFullPath => A_IsCompiled ? A_AhkPath : Script.scriptName;
+		public static string A_ScriptFullPath => A_IsCompiled ? A_AhkPath : script.scriptName;
 
 		/// <summary>
 		/// The unique ID (HWND/handle) of the script's hidden main window.
 		/// </summary>
-		public static long A_ScriptHwnd => Script.MainWindowHandle.ToInt64();
+		public static long A_ScriptHwnd => script.MainWindowHandle.ToInt64();
 
 		/// <summary>
 		/// The file name of the script.
 		/// </summary>
-		public static string A_ScriptName => Path.GetFileName(Script.scriptName);
+		public static string A_ScriptName => Path.GetFileName(script.scriptName);
 
 		/// <summary>
 		/// Current 2-digit second (00-59).
@@ -1638,8 +1637,8 @@
 			{
 				var val = (uint)Math.Clamp(value.Al(), 0L, 100L);
 
-				if (!Script.IsReadyToExecute)
-					sendLevel = val;
+				if (!script.IsReadyToExecute)
+					script.AccessorData.sendLevel = val;
 
 				ThreadAccessors.A_SendLevel = val;
 			}
@@ -1657,8 +1656,8 @@
 			{
 				if (Enum.TryParse<SendModes>(value.As(), out var val))
 				{
-					if (!Script.IsReadyToExecute)
-						sendMode = val;
+					if (!script.IsReadyToExecute)
+						script.AccessorData.sendMode = val;
 
 					ThreadAccessors.A_SendMode = val;
 				}
@@ -1703,8 +1702,8 @@
 
 				if (val != null)
 				{
-					if (!Script.IsReadyToExecute)
-						storeCapsLockMode = val.Value;
+					if (!script.IsReadyToExecute)
+						script.AccessorData.storeCapsLockMode = val.Value;
 
 					ThreadAccessors.A_StoreCapsLockMode = val.Value;
 				}
@@ -1734,7 +1733,7 @@
 		/// <summary>
 		/// The key name of the most recently executed hotkey or hotstring.
 		/// </summary>
-		public static string A_ThisHotkey => Script.thisHotkeyName;
+		public static string A_ThisHotkey => script.thisHotkeyName;
 
 		/// <summary>
 		/// The name of the menu from which A_ThisMenuItem was selected.
@@ -1776,16 +1775,16 @@
 		/// If the keyboard hook is installed, this is the number of milliseconds that have elapsed since the system last received physical keyboard input.<br/>
 		/// Otherwise, this variable is equivalent to <see cref="A_TimeIdle"/>.
 		/// </summary>
-		public static long A_TimeIdleKeyboard => Script.HookThread is HookThread ht && ht.HasKbdHook()
-		? (long)(DateTime.UtcNow - Script.timeLastInputKeyboard).TotalMilliseconds
+		public static long A_TimeIdleKeyboard => script.HookThread is HookThread ht && ht.HasKbdHook()
+		? (long)(DateTime.UtcNow - script.timeLastInputKeyboard).TotalMilliseconds
 		: A_TimeIdle;
 
 		/// <summary>
 		/// If the mouse hook is installed, this is the number of milliseconds that have elapsed since the system last received physical mouse input.<br/>
 		/// Otherwise, this variable is equivalent to <see cref="A_TimeIdle"/>.
 		/// </summary>
-		public static long A_TimeIdleMouse => Script.HookThread is HookThread ht && ht.HasMouseHook()
-		? (long)(DateTime.UtcNow - Script.timeLastInputMouse).TotalMilliseconds
+		public static long A_TimeIdleMouse => script.HookThread is HookThread ht && ht.HasMouseHook()
+		? (long)(DateTime.UtcNow - script.timeLastInputMouse).TotalMilliseconds
 		: A_TimeIdle;
 
 		/// <summary>
@@ -1794,19 +1793,19 @@
 		/// If neither hook is installed, this variable is equivalent to <see cref="A_TimeIdle"/>.<br/>
 		/// If only one hook is installed, only its type of physical input affects A_TimeIdlePhysical (the other/non-installed hook's input, both physical and artificial, has no effect).
 		/// </summary>
-		public static long A_TimeIdlePhysical => Script.HookThread is HookThread ht && ht.HasEitherHook()
-		? (long)(DateTime.UtcNow - Script.timeLastInputPhysical).TotalMilliseconds
+		public static long A_TimeIdlePhysical => script.HookThread is HookThread ht && ht.HasEitherHook()
+		? (long)(DateTime.UtcNow - script.timeLastInputPhysical).TotalMilliseconds
 		: A_TimeIdle;
 
 		/// <summary>
 		/// Time in ms that have elapsed since <see cref="A_PriorHotkey"/> was pressed. It will be -1 whenever <see cref="A_PriorHotkey"/> is blank.
 		/// </summary>
-		public static long A_TimeSincePriorHotkey => string.IsNullOrEmpty(Script.priorHotkeyName) ? -1L : (long)(DateTime.UtcNow - Script.priorHotkeyStartTime).TotalMilliseconds;
+		public static long A_TimeSincePriorHotkey => string.IsNullOrEmpty(script.priorHotkeyName) ? -1L : (long)(DateTime.UtcNow - script.priorHotkeyStartTime).TotalMilliseconds;
 
 		/// <summary>
 		/// Time in ms that have elapsed since <see cref="A_ThisHotkey"/> was pressed. It will be -1 whenever <see cref="A_ThisHotkey"/> is blank.
 		/// </summary>
-		public static long A_TimeSinceThisHotkey => string.IsNullOrEmpty(Script.thisHotkeyName) ? -1L : (long)(DateTime.UtcNow - Script.thisHotkeyStartTime).TotalMilliseconds;
+		public static long A_TimeSinceThisHotkey => string.IsNullOrEmpty(script.thisHotkeyName) ? -1L : (long)(DateTime.UtcNow - script.thisHotkeyStartTime).TotalMilliseconds;
 
 		/// <summary>
 		/// The current mode set by <see cref="SetTitleMatchMode"/>: 1, 2, 3, or RegEx.
@@ -1817,8 +1816,8 @@
 
 			set
 			{
-				if (!Script.IsReadyToExecute)
-					titleMatchMode = value;
+				if (!script.IsReadyToExecute)
+					script.AccessorData.titleMatchMode = value;
 
 				ThreadAccessors.A_TitleMatchMode = value;
 			}
@@ -1842,8 +1841,8 @@
 					case Keyword_Slow: val = false; break;
 				}
 
-				if (!Script.IsReadyToExecute)
-					titleMatchModeSpeed = val;
+				if (!script.IsReadyToExecute)
+					script.AccessorData.titleMatchModeSpeed = val;
 
 				ThreadAccessors.A_TitleMatchModeSpeed = val;
 			}
@@ -1852,7 +1851,7 @@
 		/// <summary>
 		/// The current tray menu object.
 		/// </summary>
-		public static Menu A_TrayMenu => Script.trayMenu;
+		public static Menu A_TrayMenu => script.trayMenu;
 
 		/// <summary>
 		/// The logon name of the current user.
@@ -1875,8 +1874,8 @@
 			{
 				var val = value.Al();
 
-				if (!Script.IsReadyToExecute)
-					winDelay = val;
+				if (!script.IsReadyToExecute)
+					script.AccessorData.winDelay = val;
 
 				ThreadAccessors.A_WinDelay = val;
 			}
@@ -1960,8 +1959,8 @@
 		/// </summary>
 		internal static object A_IconFrozen
 		{
-			get => iconFrozen ?? (iconFrozen = false).Value;
-			set => iconFrozen = value.ParseBool();
+			get => script.AccessorData.iconFrozen ?? (script.AccessorData.iconFrozen = false).Value;
+			set => script.AccessorData.iconFrozen = value.ParseBool();
 		}
 
 		/// <summary>
@@ -1969,32 +1968,32 @@
 		/// </summary>
 		internal static double A_ScaledScreenDPI => A_ScreenDPI / 96.0;
 
-		internal static long ControlDelayDefault => controlDelay;
-		internal static CoordModeType CoordModeCaretDefault => coordModeCaretDefault;
-		internal static CoordModeType CoordModeMenuDefault => coordModeMenuDefault;
-		internal static CoordModeType CoordModeMouseDefault => coordModeMouseDefault;
-		internal static CoordModeType CoordModePixelDefault => coordModePixelDefault;
-		internal static CoordModeType CoordModeToolTipDefault => coordModeToolTipDefault;
-		internal static long DefaultMouseSpeedDefault => defaultMouseSpeed;
-		internal static bool DetectHiddenTextDefault => detectHiddenText;
-		internal static bool DetectHiddenWindowsDefault => detectHiddenWindows;
-		internal static Encoding FileEncodingDefault => fileEncoding;
-		internal static long KeyDelayDefault => keyDelay;
-		internal static long KeyDelayPlayDefault => keyDelayPlay;
-		internal static long KeyDurationDefault => keyDuration;
-		internal static long KeyDurationPlayDefault => keyDurationPlay;
-		internal static long MouseDelayDefault => mouseDelay;
-		internal static long MouseDelayPlayDefault => mouseDelayPlay;
-		internal static long PeekFrequencyDefault => peekFrequency;
+		internal static long ControlDelayDefault => script.AccessorData.controlDelay;
+		internal static CoordModeType CoordModeCaretDefault => script.AccessorData.coordModeCaretDefault;
+		internal static CoordModeType CoordModeMenuDefault => script.AccessorData.coordModeMenuDefault;
+		internal static CoordModeType CoordModeMouseDefault => script.AccessorData.coordModeMouseDefault;
+		internal static CoordModeType CoordModePixelDefault => script.AccessorData.coordModePixelDefault;
+		internal static CoordModeType CoordModeToolTipDefault => script.AccessorData.coordModeToolTipDefault;
+		internal static long DefaultMouseSpeedDefault => script.AccessorData.defaultMouseSpeed;
+		internal static bool DetectHiddenTextDefault => script.AccessorData.detectHiddenText;
+		internal static bool DetectHiddenWindowsDefault => script.AccessorData.detectHiddenWindows;
+		internal static Encoding FileEncodingDefault => script.AccessorData.fileEncoding;
+		internal static long KeyDelayDefault => script.AccessorData.keyDelay;
+		internal static long KeyDelayPlayDefault => script.AccessorData.keyDelayPlay;
+		internal static long KeyDurationDefault => script.AccessorData.keyDuration;
+		internal static long KeyDurationPlayDefault => script.AccessorData.keyDurationPlay;
+		internal static long MouseDelayDefault => script.AccessorData.mouseDelay;
+		internal static long MouseDelayPlayDefault => script.AccessorData.mouseDelayPlay;
+		internal static long PeekFrequencyDefault => script.AccessorData.peekFrequency;
 #if WINDOWS
-		internal static long RegViewDefault => regView;
+		internal static long RegViewDefault => script.AccessorData.regView;
 #endif
-		internal static uint SendLevelDefault => sendLevel;
-		internal static SendModes SendModeDefault => sendMode;
-		internal static bool StoreCapsLockModeDefault => storeCapsLockMode;
-		internal static object TitleMatchModeDefault => titleMatchMode;
-		internal static bool TitleMatchModeSpeedDefault => titleMatchModeSpeed;
-		internal static long WinDelayDefault => winDelay;
+		internal static uint SendLevelDefault => script.AccessorData.sendLevel;
+		internal static SendModes SendModeDefault => script.AccessorData.sendMode;
+		internal static bool StoreCapsLockModeDefault => script.AccessorData.storeCapsLockMode;
+		internal static object TitleMatchModeDefault => script.AccessorData.titleMatchMode;
+		internal static bool TitleMatchModeSpeedDefault => script.AccessorData.titleMatchModeSpeed;
+		internal static long WinDelayDefault => script.AccessorData.winDelay;
 
 		//if (A_IsCompiled != 0)//  return Path.GetFileName(GetAssembly().Location);//else if (scriptName == "*")//  return "*";//else//  return Path.GetFileName(scriptName);
 
@@ -2079,57 +2078,57 @@
 		/// <summary>
 		/// The default case sensitivity of hotstrings.
 		/// </summary>
-		public static bool A_DefaultHotstringCaseSensitive => HotstringManager.hsCaseSensitive;
+		public static bool A_DefaultHotstringCaseSensitive => script.HotstringManager.hsCaseSensitive;
 
 		/// <summary>
 		/// The default case conformity of hotstrings.
 		/// </summary>
-		public static bool A_DefaultHotstringConformToCase => HotstringManager.hsConformToCase;
+		public static bool A_DefaultHotstringConformToCase => script.HotstringManager.hsConformToCase;
 
 		/// <summary>
 		/// The default inside word detection of hotstrings.
 		/// </summary>
-		public static bool A_DefaultHotstringDetectWhenInsideWord => HotstringManager.hsDetectWhenInsideWord;
+		public static bool A_DefaultHotstringDetectWhenInsideWord => script.HotstringManager.hsDetectWhenInsideWord;
 
 		/// <summary>
 		/// The default backspacing of hotstrings.
 		/// </summary>
-		public static bool A_DefaultHotstringDoBackspace => HotstringManager.hsDoBackspace;
+		public static bool A_DefaultHotstringDoBackspace => script.HotstringManager.hsDoBackspace;
 
 		/// <summary>
 		/// The default recognizer reset mode of hotstrings.
 		/// </summary>
-		public static bool A_DefaultHotstringDoReset => HotstringManager.hsDoReset;
+		public static bool A_DefaultHotstringDoReset => script.HotstringManager.hsDoReset;
 
 		/// <summary>
 		/// The default end char mode of hotstrings.
 		/// </summary>
-		public static bool A_DefaultHotstringEndCharRequired => HotstringManager.hsEndCharRequired;
+		public static bool A_DefaultHotstringEndCharRequired => script.HotstringManager.hsEndCharRequired;
 
 		/// <summary>
 		/// The default end chars of hotstrings.
 		/// </summary>
-		public static string A_DefaultHotstringEndChars => HotstringManager.defEndChars;
+		public static string A_DefaultHotstringEndChars => script.HotstringManager.defEndChars;
 
 		/// <summary>
 		/// The default end chars of hotstrings.
 		/// </summary>
-		public static long A_DefaultHotstringKeyDelay => HotstringManager.hsKeyDelay;
+		public static long A_DefaultHotstringKeyDelay => script.HotstringManager.hsKeyDelay;
 
 		/// <summary>
 		/// Whether mouse clicks reset the hotstring recognizer.
 		/// </summary>
-		public static object A_DefaultHotstringNoMouse => !HotstringManager.hsResetUponMouseClick;
+		public static object A_DefaultHotstringNoMouse => !script.HotstringManager.hsResetUponMouseClick;
 
 		/// <summary>
 		/// The default end char omission mode of hotstrings.
 		/// </summary>
-		public static bool A_DefaultHotstringOmitEndChar => HotstringManager.hsOmitEndChar;
+		public static bool A_DefaultHotstringOmitEndChar => script.HotstringManager.hsOmitEndChar;
 
 		/// <summary>
 		/// The default priority of hotstrings.
 		/// </summary>
-		public static long A_DefaultHotstringPriority => HotstringManager.hsPriority;
+		public static long A_DefaultHotstringPriority => script.HotstringManager.hsPriority;
 
 		/// <summary>
 		/// The default send mode of hotstrings.
@@ -2138,7 +2137,7 @@
 		{
 			get
 			{
-				switch (HotstringManager.hsSendMode)
+				switch (script.HotstringManager.hsSendMode)
 				{
 					case SendModes.Event:
 						return "Event";
@@ -2168,7 +2167,7 @@
 		{
 			get
 			{
-				switch (HotstringManager.hsSendRaw)
+				switch (script.HotstringManager.hsSendRaw)
 				{
 					case SendRawModes.NotRaw:
 						return "NotRaw";
@@ -2193,7 +2192,7 @@
 		/// <summary>
 		/// Whether the script has exited yet.
 		/// </summary>
-		public static bool A_HasExited => Flow.hasExited;
+		public static bool A_HasExited => script.FlowData.hasExited;
 
 		/// <summary>
 		/// The path to Keysharp.Core.Dll
@@ -2230,13 +2229,13 @@
 		/// <summary>
 		/// The maximum simultaneously running threads allowed in a script.
 		/// </summary>
-		public static object A_MaxThreads => (long)Script.MaxThreadsTotal;
+		public static object A_MaxThreads => (long)script.MaxThreadsTotal;
 
 		/// <summary>
 		/// The value specified by #NoTrayIcon.
 		/// Disables the showing of a tray icon.
 		/// </summary>
-		public static bool A_NoTrayIcon => Script.NoTrayIcon;
+		public static bool A_NoTrayIcon => script.NoTrayIcon;
 
 		/// <summary>
 		/// The current local time in YYYYMMDDHH24MISS.fff format.
@@ -2253,8 +2252,8 @@
 		/// </summary>
 		public static object A_SuspendExempt
 		{
-			get => HotstringManager.hsSuspendExempt;
-			set => HotstringManager.hsSuspendExempt = value.Ab();
+			get => script.HotstringManager.hsSuspendExempt;
+			set => script.HotstringManager.hsSuspendExempt = value.Ab();
 		}
 
 		/// <summary>
@@ -2270,12 +2269,12 @@
 		/// <summary>
 		/// The value specified by #UseHook.
 		/// </summary>
-		public static object A_UseHook => Script.ForceKeybdHook;
+		public static object A_UseHook => script.ForceKeybdHook;
 
 		/// <summary>
 		/// Whether #WinActivateForce was specified.
 		/// </summary>
-		public static object A_WinActivateForce => Script.WinActivateForce;
+		public static object A_WinActivateForce => script.WinActivateForce;
 
 		/// <summary>
 		/// The height of the working area of the primary screen.
@@ -2299,8 +2298,8 @@
 		/// </summary>
 		internal static long A_ControlDelay
 		{
-			get => Threads.GetThreadVariables().controlDelay;
-			set => Threads.GetThreadVariables().controlDelay = value;
+			get => script.Threads.GetThreadVariables().controlDelay;
+			set => script.Threads.GetThreadVariables().controlDelay = value;
 		}
 
 		/// <summary>
@@ -2308,8 +2307,8 @@
 		/// </summary>
 		internal static long A_DefaultMouseSpeed
 		{
-			get => Threads.GetThreadVariables().defaultMouseSpeed;
-			set => Threads.GetThreadVariables().defaultMouseSpeed = value;
+			get => script.Threads.GetThreadVariables().defaultMouseSpeed;
+			set => script.Threads.GetThreadVariables().defaultMouseSpeed = value;
 		}
 
 		/// <summary>
@@ -2317,8 +2316,8 @@
 		/// </summary>
 		internal static bool A_DetectHiddenText
 		{
-			get => Threads.GetThreadVariables().detectHiddenText;
-			set => Threads.GetThreadVariables().detectHiddenText = value;
+			get => script.Threads.GetThreadVariables().detectHiddenText;
+			set => script.Threads.GetThreadVariables().detectHiddenText = value;
 		}
 
 		/// <summary>
@@ -2326,8 +2325,17 @@
 		/// </summary>
 		internal static bool A_DetectHiddenWindows
 		{
-			get => Threads.GetThreadVariables().detectHiddenWindows;
-			set => Threads.GetThreadVariables().detectHiddenWindows = value;
+			get => script.Threads.GetThreadVariables().detectHiddenWindows;
+			set => script.Threads.GetThreadVariables().detectHiddenWindows = value;
+		}
+
+		/// <summary>
+		/// Contains event information from various commands.
+		/// </summary>
+		internal static object A_EventInfo
+		{
+			get => script.Threads.GetThreadVariables().eventInfo;
+			set => script.Threads.GetThreadVariables().eventInfo = value;
 		}
 
 		/// <summary>
@@ -2355,22 +2363,22 @@
 			}
 			set
 			{
-				Threads.GetThreadVariables().fileEncoding = value is Encoding enc ? enc : Files.GetEncoding(value.ToString());
+				script.Threads.GetThreadVariables().fileEncoding = value is Encoding enc ? enc : Files.GetEncoding(value.ToString());
 			}
 		}
 
 		/// <summary>
 		/// Wrapper to retrieve the file encoding as an <see cref="Encoding"/> object.
 		/// </summary>
-		internal static Encoding A_FileEncodingRaw => Threads.GetThreadVariables().fileEncoding;
+		internal static Encoding A_FileEncodingRaw => script.Threads.GetThreadVariables().fileEncoding;
 
 		/// <summary>
 		/// The delay in milliseconds between SendEvent keystrokes.
 		/// </summary>
 		internal static long A_KeyDelay
 		{
-			get => Threads.GetThreadVariables().keyDelay;
-			set => Threads.GetThreadVariables().keyDelay = value;
+			get => script.Threads.GetThreadVariables().keyDelay;
+			set => script.Threads.GetThreadVariables().keyDelay = value;
 		}
 
 		/// <summary>
@@ -2378,8 +2386,8 @@
 		/// </summary>
 		internal static long A_KeyDelayPlay
 		{
-			get => Threads.GetThreadVariables().keyDelayPlay;
-			set => Threads.GetThreadVariables().keyDelayPlay = value;
+			get => script.Threads.GetThreadVariables().keyDelayPlay;
+			set => script.Threads.GetThreadVariables().keyDelayPlay = value;
 		}
 
 		/// <summary>
@@ -2387,8 +2395,8 @@
 		/// </summary>
 		internal static long A_KeyDuration
 		{
-			get => Threads.GetThreadVariables().keyDuration;
-			set => Threads.GetThreadVariables().keyDuration = value;
+			get => script.Threads.GetThreadVariables().keyDuration;
+			set => script.Threads.GetThreadVariables().keyDuration = value;
 		}
 
 		/// <summary>
@@ -2396,8 +2404,8 @@
 		/// </summary>
 		internal static long A_KeyDurationPlay
 		{
-			get => Threads.GetThreadVariables().keyDurationPlay;
-			set => Threads.GetThreadVariables().keyDurationPlay = value;
+			get => script.Threads.GetThreadVariables().keyDurationPlay;
+			set => script.Threads.GetThreadVariables().keyDurationPlay = value;
 		}
 
 		/// <summary>
@@ -2405,8 +2413,8 @@
 		/// </summary>
 		internal static long A_MouseDelay
 		{
-			get => Threads.GetThreadVariables().mouseDelay;
-			set => Threads.GetThreadVariables().mouseDelay = value;
+			get => script.Threads.GetThreadVariables().mouseDelay;
+			set => script.Threads.GetThreadVariables().mouseDelay = value;
 		}
 
 		/// <summary>
@@ -2414,8 +2422,8 @@
 		/// </summary>
 		internal static long A_MouseDelayPlay
 		{
-			get => Threads.GetThreadVariables().mouseDelayPlay;
-			set => Threads.GetThreadVariables().mouseDelayPlay = value;
+			get => script.Threads.GetThreadVariables().mouseDelayPlay;
+			set => script.Threads.GetThreadVariables().mouseDelayPlay = value;
 		}
 
 		/// <summary>
@@ -2423,8 +2431,8 @@
 		/// Unused because Keysharp is compiled and not interpreted.
 		internal static long A_PeekFrequency
 		{
-			get => Threads.GetThreadVariables().peekFrequency;
-			set => Threads.GetThreadVariables().peekFrequency = value;
+			get => script.Threads.GetThreadVariables().peekFrequency;
+			set => script.Threads.GetThreadVariables().peekFrequency = value;
 		}
 
 #if WINDOWS
@@ -2434,8 +2442,8 @@
 		/// </summary>
 		internal static long A_RegView
 		{
-			get => Threads.GetThreadVariables().regView;
-			set => Threads.GetThreadVariables().regView = value;
+			get => script.Threads.GetThreadVariables().regView;
+			set => script.Threads.GetThreadVariables().regView = value;
 		}
 
 #endif
@@ -2446,8 +2454,8 @@
 		/// </summary>
 		internal static uint A_SendLevel
 		{
-			get => Threads.GetThreadVariables().sendLevel;
-			set => Threads.GetThreadVariables().sendLevel = value;
+			get => script.Threads.GetThreadVariables().sendLevel;
+			set => script.Threads.GetThreadVariables().sendLevel = value;
 		}
 
 		/// <summary>
@@ -2456,8 +2464,8 @@
 		/// </summary>
 		internal static SendModes A_SendMode
 		{
-			get => Threads.GetThreadVariables().sendMode;
-			set => Threads.GetThreadVariables().sendMode = value;
+			get => script.Threads.GetThreadVariables().sendMode;
+			set => script.Threads.GetThreadVariables().sendMode = value;
 		}
 
 		/// <summary>
@@ -2465,20 +2473,20 @@
 		/// </summary>
 		internal static bool A_StoreCapsLockMode
 		{
-			get => Threads.GetThreadVariables().storeCapsLockMode;
-			set => Threads.GetThreadVariables().storeCapsLockMode = value;
+			get => script.Threads.GetThreadVariables().storeCapsLockMode;
+			set => script.Threads.GetThreadVariables().storeCapsLockMode = value;
 		}
 
 		internal static object A_TitleMatchMode
 		{
 			get
 			{
-				var l = Threads.GetThreadVariables().titleMatchMode;
+				var l = script.Threads.GetThreadVariables().titleMatchMode;
 				return l.ParseLong(false) == 4L ? Keyword_RegEx : l;
 			}
 			set
 			{
-				var vars = Threads.GetThreadVariables();
+				var vars = script.Threads.GetThreadVariables();
 
 				switch (value.ToString().ToLowerInvariant())
 				{
@@ -2496,11 +2504,11 @@
 
 		internal static object A_TitleMatchModeSpeed
 		{
-			get => Threads.GetThreadVariables().titleMatchModeSpeed;
+			get => script.Threads.GetThreadVariables().titleMatchModeSpeed;
 
 			set
 			{
-				var vars = Threads.GetThreadVariables();
+				var vars = script.Threads.GetThreadVariables();
 
 				if (value is bool b)
 				{
@@ -2523,8 +2531,8 @@
 		/// </summary>
 		internal static long A_WinDelay
 		{
-			get => Threads.GetThreadVariables().winDelay;
-			set => Threads.GetThreadVariables().winDelay = value;
+			get => script.Threads.GetThreadVariables().winDelay;
+			set => script.Threads.GetThreadVariables().winDelay = value;
 		}
 	}
 }

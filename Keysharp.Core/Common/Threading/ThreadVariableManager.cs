@@ -9,7 +9,7 @@
 		/// in response to a button click, hotkey, timer event, etc...
 		/// So we create a SlimStack to be used as an object pool which we push and pop each time a thread starts and finishes.
 		/// </summary>
-		internal static SlimStack<ThreadVariables> threadVars = new ((int)Script.MaxThreadsTotal, () => new ThreadVariables());
+		internal SlimStack<ThreadVariables> threadVars = new ((int)script.MaxThreadsTotal, () => new ThreadVariables());
 
 		internal ThreadVariables GetThreadVariables()
 		{
@@ -23,7 +23,7 @@
 			var ctid = Thread.CurrentThread.ManagedThreadId;
 
 			//Do not check threadVars for null, because it should have always been created with a call to PushThreadVariables() before this.
-			if (ctid != Processes.ManagedMainThreadID
+			if (ctid != script.ProcessesData.ManagedMainThreadID
 					|| threadVars.Index > 0)//Never pop the last object on the main thread.
 			{
 				//Script.OutputDebug($"About to pop with {threadVars.Index} existing threads");
@@ -56,14 +56,14 @@
 						if (!tv.isCritical)
 							tv.isCritical = isCritical;
 
-						if (Script.uninterruptibleTime != 0 || tv.isCritical) // v1.0.38.04.
+						if (script.uninterruptibleTime != 0 || tv.isCritical) // v1.0.38.04.
 						{
 							//tv.allowThreadToBeInterrupted = false;//This is really only for the line count feature, which is not supported.//TODO
 							tv.allowThreadToBeInterrupted = !tv.isCritical;
 
 							if (!tv.isCritical)
 							{
-								if (Script.uninterruptibleTime < 0) // A setting of -1 (or any negative) means the thread's uninterruptibility never times out.
+								if (script.uninterruptibleTime < 0) // A setting of -1 (or any negative) means the thread's uninterruptibility never times out.
 								{
 									tv.uninterruptibleDuration = -1; // "Lock in" the above because for backward compatibility, above is not supposed to affect threads after they're created. Override the default value contained in g_default.
 									//g.ThreadStartTime doesn't need to be set when g.UninterruptibleDuration < 0.
@@ -77,7 +77,7 @@
 									// when IsInterruptible() is called, which might not happen in between changes to the setting.
 									// For explanation of why two fields instead of one are used, see comments in IsInterruptible().
 									tv.threadStartTime = DateTime.UtcNow;
-									tv.uninterruptibleDuration = Script.uninterruptibleTime;
+									tv.uninterruptibleDuration = script.uninterruptibleTime;
 								}
 							}
 						}

@@ -12,7 +12,7 @@ namespace Keysharp.Core.Linux
 				EventMasks.FocusChange | EventMasks.SubstructureNofity |
 				EventMasks.KeyRelease | EventMasks.Exposure;
 
-		private static XConnectionSingleton instance;
+		private static XConnectionSingleton instance;//Should make this part of an instance data class like we do on windows.//TODO
 		private Thread listener;
 
 		private XErrorHandler oldHandler;

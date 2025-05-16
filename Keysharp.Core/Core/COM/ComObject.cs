@@ -3,8 +3,8 @@ namespace Keysharp.Core.COM
 {
 	public unsafe class ComObject : KeysharpObject, IDisposable//ComValue
 	{
-		internal static long F_OWNVALUE = 1;
-		internal static int MaxVtableLen = 16;
+		internal static readonly long F_OWNVALUE = 1;
+		internal static readonly int MaxVtableLen = 16;
 		internal List<IFuncObj> handlers = [];
 		internal object item;
 		private ComObject tempCo;//Must keep a reference else it will throw an exception about the RCW being separated from the object.
@@ -20,6 +20,7 @@ namespace Keysharp.Core.COM
 		public object Ptr
 		{
 			get => item;
+
 			set
 			{
 				object temp = null;
@@ -182,7 +183,7 @@ namespace Keysharp.Core.COM
 			Dispose();
 			return null;
 		}
-		
+
 		public void Dispose()
 		{
 			if (Ptr == null)
@@ -197,6 +198,7 @@ namespace Keysharp.Core.COM
 				else if (Marshal.IsComObject(Ptr))
 					Marshal.ReleaseComObject(Ptr);
 			}
+
 			Ptr = null;
 		}
 

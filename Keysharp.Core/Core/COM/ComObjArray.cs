@@ -3,8 +3,6 @@ namespace Keysharp.Core.COM
 {
 	public class ComArrayIndexValueEnumerator : KeysharpEnumerator, IEnumerator<(object, object)>
 	{
-		private static FuncObj p1, p2;
-
 		/// <summary>
 		/// The internal array to be iterated over.
 		/// </summary>
@@ -42,28 +40,12 @@ namespace Keysharp.Core.COM
 
 		object IEnumerator.Current => Current;
 
-		static ComArrayIndexValueEnumerator()
-		{
-			Error err;
-			var mi1 = Reflections.FindAndCacheMethod(typeof(ComArrayIndexValueEnumerator), "Call", 1);
-			p1 = new FuncObj(mi1, null);
-
-			if (!p1.IsValid)
-				_ = Errors.ErrorOccurred(err = new MethodError($"Existing function object was invalid.")) ? throw err : "";
-
-			var mi2 = Reflections.FindAndCacheMethod(typeof(ComArrayIndexValueEnumerator), "Call", 2);
-			p2 = new FuncObj(mi2, null);
-
-			if (!p2.IsValid)
-				_ = Errors.ErrorOccurred(err = new MethodError($"Existing function object was invalid.")) ? throw err : "";
-		}
-
 		public ComArrayIndexValueEnumerator(System.Array a, int c)
 			: base(null, c)
 		{
 			arr = a;
 			count = c;
-			var p = c <= 1 ? p1 : p2;
+			var p = c <= 1 ? script.ComArrayIndexValueEnumeratorData.p1 : script.ComArrayIndexValueEnumeratorData.p2;
 			var fo = (FuncObj)p.Clone();
 			fo.Inst = this;
 			CallFunc = fo;
@@ -150,6 +132,27 @@ namespace Keysharp.Core.COM
 		IEnumerator IEnumerable.GetEnumerator() => new ComArrayIndexValueEnumerator(array, 2);
 
 		public object this[int index] { get => ((IList)array)[index]; set => ((IList)array)[index] = value; }
+	}
+
+	internal class ComArrayIndexValueEnumeratorData
+	{
+		internal FuncObj p1, p2;
+
+		internal ComArrayIndexValueEnumeratorData()
+		{
+			Error err;
+			var mi1 = Reflections.FindAndCacheMethod(typeof(ComArrayIndexValueEnumerator), "Call", 1);
+			p1 = new FuncObj(mi1, null);
+
+			if (!p1.IsValid)
+				_ = Errors.ErrorOccurred(err = new MethodError($"Existing function object was invalid.")) ? throw err : "";
+
+			var mi2 = Reflections.FindAndCacheMethod(typeof(ComArrayIndexValueEnumerator), "Call", 2);
+			p2 = new FuncObj(mi2, null);
+
+			if (!p2.IsValid)
+				_ = Errors.ErrorOccurred(err = new MethodError($"Existing function object was invalid.")) ? throw err : "";
+		}
 	}
 }
 #endif

@@ -221,7 +221,7 @@ namespace Keysharp.Scripting
 			}
 			else//If there was more than one variable lookup, it needs to be wrapped in one final Vars[] lookup.
 			{
-				var vars = new CodePropertyReferenceExpression(new CodeTypeReferenceExpression("Keysharp.Scripting.Script"), varsPropertyName);
+				var vars = new CodePropertyReferenceExpression(ScriptObjectSnippet, varsPropertyName);
 				return new CodeArrayIndexerExpression(vars, concat);
 			}
 		}
@@ -291,9 +291,9 @@ namespace Keysharp.Scripting
 			}
 			else
 			{
-				var vars = new CodePropertyReferenceExpression(new CodeTypeReferenceExpression("Keysharp.Scripting.Script"), varsPropertyName);
+				var vars = new CodePropertyReferenceExpression(ScriptObjectSnippet, varsPropertyName);
 
-				if (Reflections.flatPublicStaticProperties.TryGetValue(name, out var prop))
+				if (script.ReflectionsData.flatPublicStaticProperties.TryGetValue(name, out var prop))
 					return new CodeArrayIndexerExpression(vars, new CodeVariableReferenceExpression(prop.Name));
 				else
 					return new CodeArrayIndexerExpression(vars, new CodeVariableReferenceExpression(name));

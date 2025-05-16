@@ -9,6 +9,7 @@ namespace Keysharp.Benchmark
 		private IFuncObj fo = Func("Cos");
 		private List<double> vals = [];
 		private List<object> objvals = [];
+		private Keysharp.Scripting.Script _ks_s;
 
 		[Params(500000)]
 		public int Size { get; set; }
@@ -64,7 +65,7 @@ namespace Keysharp.Benchmark
 		[GlobalSetup]
 		public void Setup()
 		{
-			Scripting.Script.Variables.InitGlobalVars();
+			_ks_s  = new ();
 			totalCos = 0.0;
 			vals = new List<double>(Size);
 			objvals = new List<object>(Size);

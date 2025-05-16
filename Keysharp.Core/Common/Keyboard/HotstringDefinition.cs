@@ -71,21 +71,22 @@
 									 , bool _hasContinuationSection, int _suspend)
 
 		{
+			var hm = script.HotstringManager;
 			funcObj = _funcObj;
-			hotCriterion = Threads.GetThreadVariables().hotCriterion;
+			hotCriterion = script.Threads.GetThreadVariables().hotCriterion;
 			suspended = _suspend;
 			maxThreads = A_MaxThreadsPerHotkey.Aui();  // The value of g_MaxThreadsPerHotkey can vary during load-time.
-			priority = HotstringManager.hsPriority;
-			keyDelay = HotstringManager.hsKeyDelay;
-			sendMode = HotstringManager.hsSendMode;  // And all these can vary too.
-			caseSensitive = HotstringManager.hsCaseSensitive;
-			conformToCase = HotstringManager.hsConformToCase;
-			doBackspace = HotstringManager.hsDoBackspace;
-			omitEndChar = HotstringManager.hsOmitEndChar;
-			sendRaw = _hasContinuationSection ? SendRawModes.RawText : HotstringManager.hsSendRaw;
-			endCharRequired = HotstringManager.hsEndCharRequired;
-			detectWhenInsideWord = HotstringManager.hsDetectWhenInsideWord;
-			doReset = HotstringManager.hsDoReset;
+			priority = hm.hsPriority;
+			keyDelay = hm.hsKeyDelay;
+			sendMode = hm.hsSendMode;  // And all these can vary too.
+			caseSensitive = hm.hsCaseSensitive;
+			conformToCase = hm.hsConformToCase;
+			doBackspace = hm.hsDoBackspace;
+			omitEndChar = hm.hsOmitEndChar;
+			sendRaw = _hasContinuationSection ? SendRawModes.RawText : hm.hsSendRaw;
+			endCharRequired = hm.hsEndCharRequired;
+			detectWhenInsideWord = hm.hsDetectWhenInsideWord;
+			doReset = hm.hsDoReset;
 			inputLevel = (uint)A_InputLevel;
 			suspendExempt = A_SuspendExempt.Ab();
 			constructedOK = false;
@@ -269,7 +270,7 @@
 			var sb = new StringBuilder();//This might be able to be done more efficiently, but use sb unless performance issues show up.
 			var startOfReplacement = 0;
 			string sendBuf;
-			var ht = Script.HookThread;
+			var ht = script.HookThread;
 			var kbdMouseSender = ht.kbdMsSender;
 
 			if (doBackspace)
@@ -355,7 +356,7 @@
 
 			// For the following, mSendMode isn't checked because the backup/restore is needed to varying extents
 			// by every mode.
-			var tv = Threads.GetThreadVariables();
+			var tv = script.Threads.GetThreadVariables();
 			var oldDelay = tv.keyDelay;
 			var oldPressDuration = tv.keyDuration;
 			var oldDelayPlay = tv.keyDelayPlay;
@@ -405,13 +406,13 @@
 		/// </summary>
 		internal ResultType PerformInNewThreadMadeByCaller(IntPtr hwndCritFound, string endChar)
 		{
-			if (!Threads.AnyThreadsAvailable())//First test global thread count.
+			if (!script.Threads.AnyThreadsAvailable())//First test global thread count.
 				return ResultType.Fail;
 
 			if (!AnyThreadsAvailable())//Then test local thread count.
 				return ResultType.Fail;
 
-			var tv = Threads.GetThreadVariables();
+			var tv = script.Threads.GetThreadVariables();
 
 			if (priority < tv.priority)//Finally, test priority.
 				return ResultType.Fail;
@@ -419,7 +420,7 @@
 			VariadicFunction vf = (o) =>
 			{
 				object ret = null;
-				var tv = Threads.GetThreadVariables();
+				var tv = script.Threads.GetThreadVariables();
 				tv.sendLevel = inputLevel;
 				tv.hwndLastUsed = hwndCritFound;
 				tv.hotCriterion = hotCriterion;// v2: Let the Hotkey command use the criterion of this hotstring by default.
@@ -437,11 +438,11 @@
 				// See Hotkey::Perform() for details about this.  For hot strings -- which also use the
 				// g_script.mThisHotkeyStartTime value to determine whether g_script.mThisHotkeyModifiersLR
 				// is still timely/accurate -- it seems best to set to "no modifiers":
-				KeyboardMouseSender.thisHotkeyModifiersLR = 0;
+				script.HookThread.kbdMsSender.thisHotkeyModifiersLR = 0;
 				A_EndChar = endCharRequired ? endChar : ""; // v1.0.48.04: Explicitly set 0 when hs->mEndCharRequired==false because LOWORD is used for something else in that case.
-				Script.SetHotNamesAndTimes(Name);
+				script.SetHotNamesAndTimes(Name);
 				_ = Interlocked.Increment(ref existingThreads);//This is the thread count for this particular hotstring only.
-				Threads.LaunchInThread(priority, false, false, vf, [Name], false);
+				script.Threads.LaunchInThread(priority, false, false, vf, [Name], false);
 			}
 			catch (Error ex)
 			{

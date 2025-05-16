@@ -19,8 +19,8 @@ namespace Keysharp.Core.Common.Platform
 
 		internal virtual WindowItemBase LastFound
 		{
-			get => CreateWindow(Script.HwndLastUsed);
-			set => Script.HwndLastUsed = value.Handle;
+			get => CreateWindow(script.HwndLastUsed);
+			set => script.HwndLastUsed = value.Handle;
 		}
 
 		internal abstract WindowItemBase CreateWindow(nint id);
@@ -55,7 +55,7 @@ namespace Keysharp.Core.Common.Platform
 
 			if (parsed)
 				if (!ignorePureID && IsWindow(ptr))
-					return LastFound = WindowProvider.Manager.CreateWindow(ptr);
+					return LastFound = script.WindowProvider.Manager.CreateWindow(ptr);
 
 			var text = winText.As();
 			var exclTitle = excludeTitle.As();

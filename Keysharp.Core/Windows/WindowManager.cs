@@ -30,7 +30,7 @@ namespace Keysharp.Core.Windows
 			}
 		}
 
-		internal WindowManager() => Processes.CurrentThreadID = WindowsAPI.GetCurrentThreadId();
+		internal WindowManager() => script.ProcessesData.CurrentThreadID = WindowsAPI.GetCurrentThreadId();
 
 		internal override WindowItemBase CreateWindow(IntPtr id) => new WindowItem(id);
 
@@ -59,7 +59,7 @@ namespace Keysharp.Core.Windows
 			if (criteria.IsEmpty)
 				return found;
 
-			var mm = Threads.GetThreadVariables().titleMatchMode.ParseLong(false);
+			var mm = script.Threads.GetThreadVariables().titleMatchMode.ParseLong(false);
 			var hasTitle = !criteria.Title.IsNullOrEmpty();
 
 			if (!criteria.ClassName.IsNullOrEmpty() || (mm == 3 && hasTitle))

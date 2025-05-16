@@ -12,9 +12,9 @@ namespace Keysharp.Tests
 			//Environment.CurrentDirectory = dir;
 			// or
 			//Directory.SetCurrentDirectory(dir);
-			_ = WindowX.SetProcessDPIAware();
+			//_ = WindowX.SetProcessDPIAware();
 			//Reflections.Initialize();
-			_ = Core.Common.Threading.Threads.PushThreadVariables(0, true, false, true);//Ensure there is always one thread in existence for reference purposes, but do not increment the actual thread counter.
+			//_ = Core.Common.Threading.Threads.PushThreadVariables(0, true, false, true);//Ensure there is always one thread in existence for reference purposes, but do not increment the actual thread counter.
 		}
 	}
 }

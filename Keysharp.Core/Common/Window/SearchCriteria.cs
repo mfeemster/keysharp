@@ -2,6 +2,7 @@
 {
 	internal class SearchCriteria
 	{
+		internal bool IsPureID = false;
 		internal bool Active { get; private set; }
 		internal string ClassName { get; set; }
 		internal string ExcludeText { get; set; }
@@ -10,7 +11,6 @@
 		internal bool HasExcludes => !string.IsNullOrEmpty(ExcludeTitle) || !string.IsNullOrEmpty(ExcludeText);
 		internal bool HasID => ID != IntPtr.Zero || PID != 0;
 		internal IntPtr ID { get; set; }
-		internal bool IsPureID = false;
 		internal bool IsEmpty => !HasID&& !HasExcludes&& string.IsNullOrEmpty(Group)&& string.IsNullOrEmpty(Title)&& string.IsNullOrEmpty(Text)&& string.IsNullOrEmpty(ClassName)&& string.IsNullOrEmpty(Path);
 		internal string Path { get; set; }
 		internal long PID { get; set; }

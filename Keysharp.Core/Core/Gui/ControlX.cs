@@ -7,7 +7,7 @@
 										  object winTitle = null,
 										  object winText = null,
 										  object excludeTitle = null,
-										  object excludeText = null) => ControlProvider.Manager.ControlAddItem(
+										  object excludeText = null) => script.ControlProvider.Manager.ControlAddItem(
 											  @string.As(),
 											  control,
 											  winTitle,
@@ -22,7 +22,7 @@
 												object excludeTitle = null,
 												object excludeText = null)
 		{
-			ControlProvider.Manager.ControlChooseIndex(
+			script.ControlProvider.Manager.ControlChooseIndex(
 				n.Ai(),
 				control,
 				winTitle,
@@ -37,7 +37,7 @@
 											   object winTitle = null,
 											   object winText = null,
 											   object excludeTitle = null,
-											   object excludeText = null) => ControlProvider.Manager.ControlChooseString(
+											   object excludeText = null) => script.ControlProvider.Manager.ControlChooseString(
 													   @string.As(),
 													   control,
 													   winTitle,
@@ -54,7 +54,7 @@
 										  object excludeTitle = null,
 										  object excludeText = null)
 		{
-			ControlProvider.Manager.ControlClick(
+			script.ControlProvider.Manager.ControlClick(
 				ctrlOrPos,
 				title,
 				text,
@@ -73,7 +73,7 @@
 											   object excludeTitle = null,
 											   object excludeText = null)
 		{
-			ControlProvider.Manager.ControlDeleteItem(
+			script.ControlProvider.Manager.ControlDeleteItem(
 				n.Ai(),
 				control,
 				winTitle,
@@ -88,7 +88,7 @@
 										   object winTitle = null,
 										   object winText = null,
 										   object excludeTitle = null,
-										   object excludeText = null) => ControlProvider.Manager.ControlFindItem(
+										   object excludeText = null) => script.ControlProvider.Manager.ControlFindItem(
 											   @string.As(),
 											   control,
 											   winTitle,
@@ -102,7 +102,7 @@
 										  object excludeTitle = null,
 										  object excludeText = null)
 		{
-			ControlProvider.Manager.ControlFocus(
+			script.ControlProvider.Manager.ControlFocus(
 				control,
 				winTitle,
 				winText,
@@ -115,7 +115,7 @@
 											 object winTitle = null,
 											 object winText = null,
 											 object excludeTitle = null,
-											 object excludeText = null) => ControlProvider.Manager.ControlGetChecked(
+											 object excludeText = null) => script.ControlProvider.Manager.ControlGetChecked(
 													 control,
 													 winTitle,
 													 winText,
@@ -126,7 +126,7 @@
 											  object winTitle = null,
 											  object winText = null,
 											  object excludeTitle = null,
-											  object excludeText = null) => ControlProvider.Manager.ControlGetChoice(
+											  object excludeText = null) => script.ControlProvider.Manager.ControlGetChoice(
 													  control,
 													  winTitle,
 													  winText,
@@ -137,7 +137,7 @@
 											   object winTitle = null,
 											   object winText = null,
 											   object excludeTitle = null,
-											   object excludeText = null) => ControlProvider.Manager.ControlGetClassNN(
+											   object excludeText = null) => script.ControlProvider.Manager.ControlGetClassNN(
 													   control,
 													   winTitle,
 													   winText,
@@ -148,7 +148,7 @@
 											 object winTitle = null,
 											 object winText = null,
 											 object excludeTitle = null,
-											 object excludeText = null) => ControlProvider.Manager.ControlGetEnabled(
+											 object excludeText = null) => script.ControlProvider.Manager.ControlGetEnabled(
 													 control,
 													 winTitle,
 													 winText,
@@ -159,7 +159,7 @@
 											 object winTitle = null,
 											 object winText = null,
 											 object excludeTitle = null,
-											 object excludeText = null) => ControlProvider.Manager.ControlGetExStyle(
+											 object excludeText = null) => script.ControlProvider.Manager.ControlGetExStyle(
 													 control,
 													 winTitle,
 													 winText,
@@ -169,7 +169,7 @@
 		public static long ControlGetFocus(object winTitle = null,
 										   object winText = null,
 										   object excludeTitle = null,
-										   object excludeText = null) => ControlProvider.Manager.ControlGetFocus(
+										   object excludeText = null) => script.ControlProvider.Manager.ControlGetFocus(
 											   winTitle,
 											   winText,
 											   excludeTitle,
@@ -179,7 +179,7 @@
 										  object winTitle = null,
 										  object winText = null,
 										  object excludeTitle = null,
-										  object excludeText = null) => ControlProvider.Manager.ControlGetHwnd(
+										  object excludeText = null) => script.ControlProvider.Manager.ControlGetHwnd(
 											  control,
 											  winTitle,
 											  winText,
@@ -190,7 +190,7 @@
 										   object winTitle = null,
 										   object winText = null,
 										   object excludeTitle = null,
-										   object excludeText = null) => ControlProvider.Manager.ControlGetIndex(
+										   object excludeText = null) => script.ControlProvider.Manager.ControlGetIndex(
 											   control,
 											   winTitle,
 											   winText,
@@ -201,7 +201,7 @@
 											object winTitle = null,
 											object winText = null,
 											object excludeTitle = null,
-											object excludeText = null) => ControlProvider.Manager.ControlGetItems(
+											object excludeText = null) => script.ControlProvider.Manager.ControlGetItems(
 												control,
 												winTitle,
 												winText,
@@ -218,7 +218,7 @@
 										   object excludeTitle = null,
 										   object excludeText = null)
 		{
-			ControlProvider.Manager.ControlGetPos(
+			script.ControlProvider.Manager.ControlGetPos(
 				ref outX,
 				ref outY,
 				ref outWidth,
@@ -235,7 +235,7 @@
 										   object winTitle = null,
 										   object winText = null,
 										   object excludeTitle = null,
-										   object excludeText = null) => ControlProvider.Manager.ControlGetStyle(
+										   object excludeText = null) => script.ControlProvider.Manager.ControlGetStyle(
 											   control,
 											   winTitle,
 											   winText,
@@ -246,7 +246,7 @@
 											object winTitle = null,
 											object winText = null,
 											object excludeTitle = null,
-											object excludeText = null) => ControlProvider.Manager.ControlGetText(
+											object excludeText = null) => script.ControlProvider.Manager.ControlGetText(
 												control,
 												winTitle,
 												winText,
@@ -257,7 +257,7 @@
 											 object winTitle = null,
 											 object winText = null,
 											 object excludeTitle = null,
-											 object excludeText = null) => ControlProvider.Manager.ControlGetVisible(
+											 object excludeText = null) => script.ControlProvider.Manager.ControlGetVisible(
 													 control,
 													 winTitle,
 													 winText,
@@ -270,7 +270,7 @@
 										 object excludeTitle = null,
 										 object excludeText = null)
 		{
-			ControlProvider.Manager.ControlHide(
+			script.ControlProvider.Manager.ControlHide(
 				control,
 				winTitle,
 				winText,
@@ -285,7 +285,7 @@
 				object excludeTitle = null,
 				object excludeText = null)
 		{
-			ControlProvider.Manager.ControlHideDropDown(
+			script.ControlProvider.Manager.ControlHideDropDown(
 				control,
 				winTitle,
 				winText,
@@ -304,7 +304,7 @@
 										 object excludeTitle = null,
 										 object excludeText = null)
 		{
-			ControlProvider.Manager.ControlMove(
+			script.ControlProvider.Manager.ControlMove(
 				x.Ai(int.MinValue),
 				y.Ai(int.MinValue),
 				width.Ai(int.MinValue),
@@ -324,7 +324,7 @@
 										 object excludeTitle = null,
 										 object excludeText = null)
 		{
-			ControlProvider.Manager.ControlSend(
+			script.ControlProvider.Manager.ControlSend(
 				keys.As(),
 				control,
 				winTitle,
@@ -341,7 +341,7 @@
 											 object excludeTitle = null,
 											 object excludeText = null)
 		{
-			ControlProvider.Manager.ControlSendText(
+			script.ControlProvider.Manager.ControlSendText(
 				keys.As(),
 				control,
 				winTitle,
@@ -358,7 +358,7 @@
 											   object excludeTitle = null,
 											   object excludeText = null)
 		{
-			ControlProvider.Manager.ControlSetChecked(
+			script.ControlProvider.Manager.ControlSetChecked(
 				newSetting,
 				control,
 				winTitle,
@@ -375,7 +375,7 @@
 											   object excludeTitle = null,
 											   object excludeText = null)
 		{
-			ControlProvider.Manager.ControlSetEnabled(
+			script.ControlProvider.Manager.ControlSetEnabled(
 				newSetting,
 				control,
 				winTitle,
@@ -392,7 +392,7 @@
 											   object excludeTitle = null,
 											   object excludeText = null)
 		{
-			ControlProvider.Manager.ControlSetExStyle(
+			script.ControlProvider.Manager.ControlSetExStyle(
 				value,
 				control,
 				winTitle,
@@ -409,7 +409,7 @@
 											 object excludeTitle = null,
 											 object excludeText = null)
 		{
-			ControlProvider.Manager.ControlSetStyle(
+			script.ControlProvider.Manager.ControlSetStyle(
 				value,
 				control,
 				winTitle,
@@ -426,7 +426,7 @@
 											object excludeTitle = null,
 											object excludeText = null)
 		{
-			ControlProvider.Manager.ControlSetText(
+			script.ControlProvider.Manager.ControlSetText(
 				newText.As(),
 				control,
 				winTitle,
@@ -442,7 +442,7 @@
 										 object excludeTitle = null,
 										 object excludeText = null)
 		{
-			ControlProvider.Manager.ControlShow(
+			script.ControlProvider.Manager.ControlShow(
 				control,
 				winTitle,
 				winText,
@@ -457,7 +457,7 @@
 				object excludeTitle = null,
 				object excludeText = null)
 		{
-			ControlProvider.Manager.ControlShowDropDown(
+			script.ControlProvider.Manager.ControlShowDropDown(
 				control,
 				winTitle,
 				winText,
