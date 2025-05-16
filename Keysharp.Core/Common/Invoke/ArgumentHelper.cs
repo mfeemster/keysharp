@@ -413,7 +413,7 @@ namespace Keysharp.Core.Common.Invoke
 				{
 					returnType = type;
 					if (type == typeof(float) || type == typeof(double))
-						floatingTypeMask |= 1UL << n;
+						floatingTypeMask |= 1UL << (n + 1);
 				}
 				else
 					outputVars[paramIndex] = type;
