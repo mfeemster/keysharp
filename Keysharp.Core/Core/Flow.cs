@@ -1,33 +1,12 @@
 #define USEFORMSTIMER
 
 using static Keysharp.Core.Errors;
+
 using Timer1 = System.Timers.Timer;
 using Timer2 = Keysharp.Core.Common.Threading.TimerWithTag;
 
 namespace Keysharp.Core
 {
-	internal class FlowData
-	{
-		internal ConcurrentDictionary<string, IFuncObj> cachedFuncObj = new ();
-		internal bool callingCritical;
-		internal volatile bool hasExited;
-		internal Timer1 mainTimer;
-		internal int NoSleep = -1;
-		internal bool persistentValueSetByUser;
-		internal ConcurrentDictionary<IFuncObj, Timer2> timers = new ();
-		internal int lastLoopDoEvents = Environment.TickCount;
-
-		/// <summary>
-		/// Whether a thread can be interrupted/preempted by subsequent thread.
-		/// </summary>
-		internal bool allowInterruption = true;
-
-		/// <summary>
-		/// Internal property to track whether the script's hotkeys and hotstrings are suspended.
-		/// </summary>
-		internal bool suspended;
-	}
-
 	/// <summary>
 	/// Public interface for flow-related functions.
 	/// </summary>
@@ -153,17 +132,6 @@ namespace Keysharp.Core
 		}
 
 		/// <summary>
-		/// Initializes the flow state of the script.
-		/// This is used internally and is only public so tests can access it.
-		/// </summary>
-		[PublicForTestOnly]
-		public static object Init()
-		{
-			script.FlowData.hasExited = false;
-			return null;
-		}
-
-		/// <summary>
 		/// Returns whether the passed in value is true and the script is running.
 		/// This is used in the generated code to evaluate loop variables.
 		/// </summary>
@@ -274,27 +242,6 @@ namespace Keysharp.Core
 
 			return null;
 		}
-
-		//[PublicForTestOnly]
-		//public static void ResetState()
-		//{
-		//  cachedFuncObj = new ();
-		//  callingCritical = false;
-		//  hasExited = false;
-		//  IntervalUnspecified = int.MinValue + 303;// Use some negative value unlikely to ever be passed explicitly:
-		//  mainTimer = null;
-		//  NoSleep = -1;
-		//  persistentValueSetByUser = false;
-		//  timers = new ();
-		//  AllowInterruption = true;
-		//  Suspended = false;
-		//  /*
-		//      A_ExitReason = 0L;
-		//      Environment.ExitCode = 0;
-		//      Script.Init();
-		//      Functions.ClearCache();
-		//  */
-		//}
 
 		/// <summary>
 		/// Causes a function to be called automatically and repeatedly at a specified time interval.
@@ -803,5 +750,27 @@ namespace Keysharp.Core
 
 			return ct;
 		}
+	}
+
+	internal class FlowData
+	{
+		/// <summary>
+		/// Whether a thread can be interrupted/preempted by subsequent thread.
+		/// </summary>
+		internal bool allowInterruption = true;
+		internal ConcurrentDictionary<string, IFuncObj> cachedFuncObj = new ();
+		internal bool callingCritical;
+		internal volatile bool hasExited;
+		internal int lastLoopDoEvents = Environment.TickCount;
+		internal Timer1 mainTimer;
+		internal int NoSleep = -1;
+		internal bool persistentValueSetByUser;
+
+		/// <summary>
+		/// Internal property to track whether the script's hotkeys and hotstrings are suspended.
+		/// </summary>
+		internal bool suspended;
+
+		internal ConcurrentDictionary<IFuncObj, Timer2> timers = new ();
 	}
 }

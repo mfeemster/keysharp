@@ -563,11 +563,12 @@
 			if ((force || ((DateTime.UtcNow - lastKeyTime).TotalSeconds >= updateFreqSeconds && lastKeyTime > lastCompileTime)) && txtIn.Text != "")
 			{
 				timer.Enabled = false;
+				Script s = null;
 
 				try
 				{
 					lastCompileTime = DateTime.UtcNow;
-					var s = new Script();//Start completely fresh for every compilation.
+					s = new Script();//Start completely fresh for every compilation.
 					CompilerHelper.compiledasm = null;
 					btnRunScript.Enabled = false;
 					var oldIndex = txtOut.FirstVisibleLine;
@@ -645,6 +646,7 @@
 				}
 
 				theend:
+				s?.Stop();
 				btnRunScript.Enabled = true;
 				timer.Enabled = true;
 			}

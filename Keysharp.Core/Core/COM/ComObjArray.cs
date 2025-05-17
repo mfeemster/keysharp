@@ -134,25 +134,8 @@ namespace Keysharp.Core.COM
 		public object this[int index] { get => ((IList)array)[index]; set => ((IList)array)[index] = value; }
 	}
 
-	internal class ComArrayIndexValueEnumeratorData
+	internal class ComArrayIndexValueEnumeratorData : BaseIteratorData<ComArrayIndexValueEnumerator>
 	{
-		internal FuncObj p1, p2;
-
-		internal ComArrayIndexValueEnumeratorData()
-		{
-			Error err;
-			var mi1 = Reflections.FindAndCacheMethod(typeof(ComArrayIndexValueEnumerator), "Call", 1);
-			p1 = new FuncObj(mi1, null);
-
-			if (!p1.IsValid)
-				_ = Errors.ErrorOccurred(err = new MethodError($"Existing function object was invalid.")) ? throw err : "";
-
-			var mi2 = Reflections.FindAndCacheMethod(typeof(ComArrayIndexValueEnumerator), "Call", 2);
-			p2 = new FuncObj(mi2, null);
-
-			if (!p2.IsValid)
-				_ = Errors.ErrorOccurred(err = new MethodError($"Existing function object was invalid.")) ? throw err : "";
-		}
 	}
 }
 #endif

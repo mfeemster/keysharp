@@ -41,17 +41,6 @@ namespace Keysharp.Core
 			{ "gdi32", NativeLibrary.Load("gdi32") }
 		};
 
-		//      internal static void ClearCache()
-		//      {
-		//#if TL
-		//          delegateCache.Value.Clear();
-		//          procAddressCache.Value.Clear();
-		//#else
-		//          delegateCache.Clear();
-		//          procAddressCache.Clear();
-		//#endif
-		//      }
-
 		/// <summary>
 		/// Creates a <see cref="DelegateHolder"/> object that wraps a <see cref="FuncObj"/>.
 		/// Passing string pointers to <see cref="DllCall"/> when passing a created callback is strongly recommended against.<br/>

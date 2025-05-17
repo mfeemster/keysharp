@@ -26,13 +26,6 @@
 		[PublicForTestOnly]
 		public string CurrentInputBuffer => new (hsBuf.ToArray());
 
-		[PublicForTestOnly]
-		public void AddChars(string s)
-		{
-			foreach (var ch in s)
-				hsBuf.Add(ch);
-		}
-
 		/// <summary>
 		/// Returns OK or FAIL.
 		/// Caller has ensured that aHotstringOptions is blank if there are no options.  Otherwise, aHotstringOptions
@@ -57,6 +50,13 @@
 				++hm.enabledCount; // This works because the script can't be suspended during startup (aSuspend is always FALSE).
 
 			return hs;
+		}
+
+		[PublicForTestOnly]
+		public void AddChars(string s)
+		{
+			foreach (var ch in s)
+				hsBuf.Add(ch);
 		}
 
 		[PublicForTestOnly]

@@ -53,38 +53,6 @@ namespace Keysharp.Core.Common.Invoke
 		}
 
 		/// <summary>
-		/// This should only ever be called from the unit tests.
-		/// </summary>
-		//      [PublicForTestOnly]
-		//      public static void Clear()
-		//      {
-		//          staticFields = [];
-		//#if CONCURRENT
-		//          stringToTypeBuiltInMethods = new sttd(StringComparer.OrdinalIgnoreCase);
-		//          stringToTypeLocalMethods = new sttd(StringComparer.OrdinalIgnoreCase);
-		//          stringToTypeMethods = new sttd(StringComparer.OrdinalIgnoreCase);
-		//          stringToTypeStaticMethods = new sttd(StringComparer.OrdinalIgnoreCase);
-		//          stringToTypeProperties = new sttd(StringComparer.OrdinalIgnoreCase);
-		//          typeToStringMethods = new ttsd();
-		//          typeToStringStaticMethods = new ();
-		//          typeToStringProperties = new ttsd();
-		//#else
-		//          stringToTypeBuiltInMethods = new sttd(sttcap, StringComparer.OrdinalIgnoreCase);
-		//          stringToTypeLocalMethods = new sttd(sttcap / 10, StringComparer.OrdinalIgnoreCase);
-		//          stringToTypeMethods = new sttd(sttcap, StringComparer.OrdinalIgnoreCase);
-		//          stringToTypeStaticMethods = new sttd(sttcap, StringComparer.OrdinalIgnoreCase);
-		//          stringToTypeProperties = new sttd(sttcap, StringComparer.OrdinalIgnoreCase);
-		//          typeToStringMethods = new ttsd(sttcap / 5);
-		//          typeToStringStaticMethods = new (sttcap / 5);
-		//          typeToStringProperties = new ttsd(sttcap / 5);
-		//#endif
-		//          loadedAssemblies = [];
-		//          flatPublicStaticMethods = new Dictionary<string, MethodInfo>(500, StringComparer.OrdinalIgnoreCase);
-		//          flatPublicStaticProperties = new Dictionary<string, PropertyInfo>(200, StringComparer.OrdinalIgnoreCase);
-		//          stringToTypes = new Dictionary<string, Type>(sttcap / 4, StringComparer.OrdinalIgnoreCase);
-		//      }
-
-		/// <summary>
 		/// This must be manually called before any program is run.
 		/// Normally we'd put this kind of init in the constructor, however it must be able to be manually called
 		/// when running unit tests. Once upon init, then again within the unit test's auto generated program so it can find
@@ -95,8 +63,6 @@ namespace Keysharp.Core.Common.Invoke
 		[PublicForTestOnly]
 		public static void Initialize(bool ignoreMainAssembly = false)
 		{
-			//Dll.ClearCache();
-			//Functions.ClearCache();
 			var rd = script.ReflectionsData;
 			rd.loadedAssemblies = GetLoadedAssemblies();
 			CacheAllMethods(ignoreMainAssembly);

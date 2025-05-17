@@ -31,25 +31,8 @@
 		}
 	}
 
-	internal class OwnPropsIteratorData
+	internal class OwnPropsIteratorData : BaseIteratorData<OwnPropsIterator>
 	{
-		internal FuncObj p1, p2;
-
-		internal OwnPropsIteratorData()
-		{
-			Error err;
-			var mi1 = Reflections.FindAndCacheMethod(typeof(OwnPropsIterator), "Call", 1);
-			p1 = new FuncObj(mi1, null);
-
-			if (!p1.IsValid)
-				_ = Errors.ErrorOccurred(err = new MethodError($"Existing function object was invalid.")) ? throw err : "";
-
-			var mi2 = Reflections.FindAndCacheMethod(typeof(OwnPropsIterator), "Call", 2);
-			p2 = new FuncObj(mi2, null);
-
-			if (!p2.IsValid)
-				_ = Errors.ErrorOccurred(err = new MethodError($"Existing function object was invalid.")) ? throw err : "";
-		}
 	}
 
 	internal class OwnPropsIterator : KeysharpEnumerator, IEnumerator<(object, object)>

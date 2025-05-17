@@ -16,14 +16,13 @@ namespace Keysharp.Core.Windows
 	/// </summary>
 	internal class WindowsHookThread : HookThread
 	{
-		private bool pendingDeadKeyInvisible;
-		private List<DeadKeyRecord> pendingDeadKeys = [];
-		private bool uwpAppFocused;
-		private IntPtr uwpHwndChecked = IntPtr.Zero;
 		private readonly LowLevelKeyboardProc kbdHandlerDel;
 		private readonly LowLevelMouseProc mouseHandlerDel;
+		private bool pendingDeadKeyInvisible;
+		private List<DeadKeyRecord> pendingDeadKeys = [];
 		private StaThreadWithMessageQueue thread;
-
+		private bool uwpAppFocused;
+		private IntPtr uwpHwndChecked = IntPtr.Zero;
 		internal WindowsHookThread()
 		{
 			keyToSc = new Dictionary<string, uint>(StringComparer.OrdinalIgnoreCase)//Unsure if these are cross platform or not.//TODO
@@ -2058,7 +2057,7 @@ namespace Keysharp.Core.Windows
 			return true;//Visible.
 		}
 
-		internal override object Invoke(Func<object> f) => thread.Invoke(() => f());
+		internal override object Invoke(Func<object> f) => thread?.Invoke(() => f());
 
 		internal override bool IsHookThreadRunning() => thread != null && !thread.IsDisposed();
 
@@ -4416,12 +4415,6 @@ namespace Keysharp.Core.Windows
 			return 1;
 		}
 
-		protected internal override void Stop()
-		{
-			thread?.Dispose();
-			base.Stop();
-		}
-
 		internal override bool SystemHasAnotherKeybdHook() => SystemHasAnotherHook(ref keybdMutex, KeybdMutexName);
 
 		internal override bool SystemHasAnotherMouseHook() => SystemHasAnotherHook(ref mouseMutex, MouseMutexName);
@@ -4681,7 +4674,7 @@ namespace Keysharp.Core.Windows
 		internal override void Unhook(nint hook)
 		{
 			if (hook != IntPtr.Zero)
-				thread?.Invoke(() => _ = UnhookWindowsHookEx(hook));
+				Invoke(() => _ = UnhookWindowsHookEx(hook));
 		}
 
 		/// <summary>
@@ -5226,10 +5219,16 @@ namespace Keysharp.Core.Windows
 				Thread.Sleep(10);
 		}
 
+		protected internal override void Stop()
+		{
+			thread?.Dispose();
+			base.Stop();
+		}
+
 		private bool ChangeHookState(HookType hooksToBeActive, bool changeIsTemporary)//This is going to be a problem if it's ever called to re-add a hook from another thread because only the main gui thread has a message loop.//TODO
 		{
 			var problem_activating_hooks = false;
-			Action func = () =>
+			Func<object> func = () =>
 			{
 				if (((uint)hooksToBeActive & (uint)HookType.Keyboard) != 0) // Activate the keyboard hook (if it isn't already).
 				{
@@ -5274,6 +5273,8 @@ namespace Keysharp.Core.Windows
 					if (mouseHook != IntPtr.Zero)
 						if (UnhookWindowsHookEx(mouseHook) || GetLastError() == ERROR_INVALID_HOOK_HANDLE)// Check last error in case the OS has already removed the hook.
 							mouseHook = IntPtr.Zero;
+
+				return "";
 			};
 			//Any modifications to the hooks must be done on the main thread else Windows will internally ignore them.
 			//We assume that if the main window does not exist yet, then this code is running within the part of main() that happens
@@ -5286,7 +5287,7 @@ namespace Keysharp.Core.Windows
 			//  Processes.mainContext.Send(new SendOrPostCallback((obj) => func()), null);
 			//else
 			//  func();
-			thread?.Invoke(func);
+			Invoke(func);
 			//Keysharp.Scripting.Script.mainWindow.CheckedInvoke(func, true);
 			return problem_activating_hooks;
 		}

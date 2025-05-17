@@ -7,7 +7,6 @@ namespace Keysharp.Core.Windows
 	/// </summary>
 	internal class WindowItem : WindowItemBase
 	{
-		private static bool triedKeyUp = false;
 		private int lastChildCount = 64;
 		private string path = "";
 
@@ -497,9 +496,9 @@ namespace Keysharp.Core.Windows
 
 			for (var i = 0; i < 5; ++i)
 			{
-				if (i == activateforce && !triedKeyUp) // At least one attempt failed this time, and Alt-up hasn't been tried since the process started.
+				if (i == activateforce && !sender.triedKeyUp) // At least one attempt failed this time, and Alt-up hasn't been tried since the process started.
 				{
-					triedKeyUp = true;
+					sender.triedKeyUp = true;
 					// Lexikos: Recent testing on Windows 10.0.19555 indicated that sending Alt-up was just as effective
 					// as sending double-Alt (the second Alt was probably just to counter the first one), but it should
 					// have lower risk of side-effects since there's no key-down.  One observable side-effect is that

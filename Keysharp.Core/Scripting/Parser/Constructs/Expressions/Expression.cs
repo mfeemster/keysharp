@@ -865,7 +865,7 @@ namespace Keysharp.Scripting
 						//Do not do this if a FuncObj is already being passed, which will be the case when #HotIf is found in the preprocessing stage.
 						if (name == "HotIf" && paren.Count > 1 && !paren[0].ToString().StartsWith("Func"))
 						{
-							var hotiffuncname = $"_ks_HotIf_{PreReader.NextHotIfCount}";
+							var hotiffuncname = $"_ks_HotIf_{preReader.NextHotIfCount}";
 							var hotifexpr = ParseExpression(codeLine, code, paren, false);
 							var hotifmethod = LocalMethod(hotiffuncname);
 							_ = hotifmethod.Statements.Add(new CodeMethodReturnStatement(hotifexpr));

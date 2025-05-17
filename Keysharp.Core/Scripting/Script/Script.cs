@@ -2,18 +2,34 @@
 
 namespace Keysharp.Scripting
 {
+	/// <summary>
+	/// This is the main script object which contains all instance data needed for a script to run.
+	/// A Script object is created twice: once for parsing, and another for running.
+	/// The design is unusual because all instance data is contained here, then the object itself
+	/// is assigned to a global static member of itself, script.
+	/// The reason for this is that most of the user facing functions in Keysharp are static.
+	/// However, just having them access static data presents a major problem:
+	///     Static data is left around after multiple instances are created during parsing, running
+	///     and between unit tests. As long as they all exist in the same process, each instance does
+	///     not start clean and instead starts with unpredictable remnants of the previous instance.
+	/// To remedy this problem, all data is instance data, and there is only one static member that all
+	/// instance data is accessed through. This ensures a clean start every time we create a Script object.
+	/// </summary>
 	public partial class Script
 	{
 		public bool ForceKeybdHook;
+		public string[] KeysharpArgs = [];
 		public uint MaxThreadsTotal = 12u;
 		public bool NoTrayIcon = false;
 		public bool ValidateThenExit;
 		public bool WinActivateForce = false;
-		public string[] KeysharpArgs = [];
 		internal const int INTERVAL_UNSPECIFIED = int.MinValue + 303;
+		internal const int maxThreadsLimit = 0xFF;
 		internal const int SLEEP_INTERVAL = 10;
 		internal const int SLEEP_INTERVAL_HALF = SLEEP_INTERVAL / 2;
+		internal static Script script;
 		internal List<IFuncObj> ClipFunctions = [];
+		internal bool dpimodeset;
 		internal List<IFuncObj> hotCriterions = [];
 		internal IntPtr hotExprLFW = IntPtr.Zero;
 		internal List<IFuncObj> hotExprs = [];
@@ -24,9 +40,9 @@ namespace Keysharp.Scripting
 		internal DateTime lastPeekTime;
 		internal MainWindow mainWindow;
 		internal Gui mainWindowGui;
-		internal const int maxThreadsLimit = 0xFF;
 		internal MenuType menuIsVisible = MenuType.None;
 		internal PlatformManagerBase mgr;
+		internal int nMessageBoxes;
 		internal List<IFuncObj> onErrorHandlers;
 		internal List<IFuncObj> onExitHandlers = [];
 		internal Icon pausedIcon;
@@ -37,85 +53,67 @@ namespace Keysharp.Scripting
 		internal Icon suspendedIcon;
 		internal string thisHotkeyName, priorHotkeyName;
 		internal DateTime thisHotkeyStartTime;
+		internal Threads threads;
 		internal DateTime timeLastInputKeyboard;
 		internal DateTime timeLastInputMouse;
 		internal DateTime timeLastInputPhysical = DateTime.UtcNow;
 		internal int totalExistingThreads;
 		internal int uninterruptibleTime = 17;
-		private bool isReadyToExecute;
-		internal int nMessageBoxes;
-		private IntPtr mainWindowHandle;
-		//internal ThreadLocal<Threads> threads;
-		internal Threads threads;
+		private static int instanceCount;
 		private AccessorData accessorData;
+		private ArrayIndexValueIteratorData arrayIndexValueIteratorData;
+		private ComArrayIndexValueEnumeratorData comArrayIndexValueEnumeratorData;
+		private ComEnumeratorData comEnumeratorData;
+		private ComMethodData comMethodData;
+		private ControlProvider controlProvider;
 		private DelegateData delegateData;
 		private DllData dllData;
-		private FunctionData functionData;
-		private ImageListData imageListData;
+		private DriveTypeMapper driveTypeMapper;
+		private ExecutableMemoryPoolManager exeMemoryPoolManager;
 		private FlowData flowData;
+		private FunctionData functionData;
 		private GuiData guiData;
 		private HotkeyData hotkeyData;
+		private HotstringManager hotstringManager;
+		private ImageListData imageListData;
 		private InputData inputData;
+		private bool isReadyToExecute;
 		private JoystickData joystickData;
 		private KeyboardData keyboardData;
+		private KeyboardUtilsData keyboardUtilsData;
 		private LoopData loopData;
+		private IntPtr mainWindowHandle;
+		private MapKeyValueIteratorData mapKeyValueIteratorData;
+		private OwnPropsIteratorData ownPropsIteratorData;
+		private PlatformProvider platformProvider;
 		private ProcessesData processesData;
 		private RegExData regExData;
+		private RegExIteratorData regExIteratorData;
 		private StringsData stringsData;
 		private ToolTipData toolTipData;
-		private HotstringManager hotstringManager;
-		private ExecutableMemoryPoolManager exeMemoryPoolManager;
-		private KeyboardUtilsData keyboardUtilsData;
-		private DriveTypeMapper driveTypeMapper;
-		private OwnPropsIteratorData ownPropsIteratorData;
-		private ComEnumeratorData comEnumeratorData;
-		private ArrayIndexValueIteratorData arrayIndexValueIteratorData;
-		private ControlProvider controlProvider;
-		private PlatformProvider platformProvider;
 		private WindowProvider windowProvider;
-		private ComMethodData comMethodData;
-		private ComArrayIndexValueEnumeratorData comArrayIndexValueEnumeratorData;
-		internal bool dpimodeset;
-		internal static Script script;
-		private static int instanceCount;
 
 		[PublicForTestOnly]
 		public static Keysharp.Scripting.Script TheScript => script;
-
-		internal ComArrayIndexValueEnumeratorData ComArrayIndexValueEnumeratorData => comArrayIndexValueEnumeratorData ?? (comArrayIndexValueEnumeratorData = new ());
-		internal ComMethodData ComMethodData => comMethodData ?? (comMethodData = new ());
-		internal ArrayIndexValueIteratorData ArrayIndexValueIteratorData => arrayIndexValueIteratorData ?? (arrayIndexValueIteratorData = new ());
-		internal ComEnumeratorData ComEnumeratorData => comEnumeratorData ?? (comEnumeratorData = new ());
-		internal ControlProvider ControlProvider => controlProvider ?? (controlProvider = new ());
-		internal PlatformProvider PlatformProvider => platformProvider ?? (platformProvider = new ());
-		internal WindowProvider WindowProvider => windowProvider ?? (windowProvider = new ());
-		internal OwnPropsIteratorData OwnPropsIteratorData => ownPropsIteratorData ?? (ownPropsIteratorData = new ());
-		internal DriveTypeMapper DriveTypeMapper => driveTypeMapper ?? (driveTypeMapper = new ());
-		internal KeyboardUtilsData KeyboardUtilsData => keyboardUtilsData ?? (keyboardUtilsData = new ());
 		public HotstringManager HotstringManager => hotstringManager ?? (hotstringManager = new ());
-		internal ImageListData ImageListData => imageListData ?? (imageListData = new ());
-		internal FlowData FlowData => flowData ?? (flowData = new ());
-		internal FunctionData FunctionData => functionData ?? (functionData = new ());
-		internal KeyboardData KeyboardData => keyboardData ?? (keyboardData = new ());
-		internal HotkeyData HotkeyData => hotkeyData ?? (hotkeyData = new ());
-		internal JoystickData JoystickData => joystickData ?? (joystickData = new ());
-		internal LoopData LoopData => loopData ?? (loopData = new ());
-		internal ProcessesData ProcessesData => processesData ?? (processesData = new ());
-		internal RegExData RegExData => regExData ?? (regExData = new ());
-		internal StringsData StringsData => stringsData ?? (stringsData = new ());
+		public Threads Threads => threads;
+		public Variables Vars { get; private set; }
+		internal AccessorData AccessorData => accessorData ?? (accessorData = new ());
+		internal ArrayIndexValueIteratorData ArrayIndexValueIteratorData => arrayIndexValueIteratorData ?? (arrayIndexValueIteratorData = new ());
+		internal ComArrayIndexValueEnumeratorData ComArrayIndexValueEnumeratorData => comArrayIndexValueEnumeratorData ?? (comArrayIndexValueEnumeratorData = new ());
+		internal ComEnumeratorData ComEnumeratorData => comEnumeratorData ?? (comEnumeratorData = new ());
+		internal ComMethodData ComMethodData => comMethodData ?? (comMethodData = new ());
+		internal ControlProvider ControlProvider => controlProvider ?? (controlProvider = new ());
+		internal CoordModes Coords { get; private set; }
 		internal DelegateData DelegateData => delegateData ?? (delegateData = new ());
 		internal DllData DllData => dllData ?? (dllData = new ());
-		internal GuiData GuiData => guiData ?? (guiData = new ());
-		internal InputData InputData => inputData ?? (inputData = new ());
-		internal ToolTipData ToolTipData => toolTipData ?? (toolTipData = new ());
-		internal AccessorData AccessorData => accessorData ?? (accessorData = new ());
+		internal DriveTypeMapper DriveTypeMapper => driveTypeMapper ?? (driveTypeMapper = new ());
 		internal ExecutableMemoryPoolManager ExecutableMemoryPoolManager => exeMemoryPoolManager ?? (exeMemoryPoolManager = new ());
-		internal CoordModes Coords { get; private set; }
-		internal ReflectionsData ReflectionsData { get; } = new (); //Don't lazy initialize, it's always needed in every script.
-		public Threads Threads => threads;//.Value;
-		public Variables Vars { get; private set; }
-		internal Reflections Reflections { get; private set; }
+		internal FlowData FlowData => flowData ?? (flowData = new ());
+		internal FunctionData FunctionData => functionData ?? (functionData = new ());
+		internal GuiData GuiData => guiData ?? (guiData = new ());
 		internal HookThread HookThread { get; private set; }
+		internal HotkeyData HotkeyData => hotkeyData ?? (hotkeyData = new ());
 
 		internal IntPtr HwndLastUsed
 		{
@@ -123,9 +121,14 @@ namespace Keysharp.Scripting
 			set => threads.GetThreadVariables().hwndLastUsed = value;
 		}
 
+		internal ImageListData ImageListData => imageListData ?? (imageListData = new ());
+		internal InputData InputData => inputData ?? (inputData = new ());
 		internal bool IsMainWindowClosing => mainWindow == null || mainWindow.IsClosing;
-
 		internal bool IsReadyToExecute => isReadyToExecute;
+		internal JoystickData JoystickData => joystickData ?? (joystickData = new ());
+		internal KeyboardData KeyboardData => keyboardData ?? (keyboardData = new ());
+		internal KeyboardUtilsData KeyboardUtilsData => keyboardUtilsData ?? (keyboardUtilsData = new ());
+		internal LoopData LoopData => loopData ?? (loopData = new ());
 
 		internal IntPtr MainWindowHandle
 		{
@@ -141,6 +144,18 @@ namespace Keysharp.Scripting
 			}
 		}
 
+		internal MapKeyValueIteratorData MapKeyValueIteratorData => mapKeyValueIteratorData ?? (mapKeyValueIteratorData = new ());
+		internal OwnPropsIteratorData OwnPropsIteratorData => ownPropsIteratorData ?? (ownPropsIteratorData = new ());
+		internal PlatformProvider PlatformProvider => platformProvider ?? (platformProvider = new ());
+		internal ProcessesData ProcessesData => processesData ?? (processesData = new ());
+		internal Reflections Reflections { get; private set; }
+		internal ReflectionsData ReflectionsData { get; } = new ();//Don't lazy initialize, it's always needed in every script.
+		internal RegExData RegExData => regExData ?? (regExData = new ());
+		internal RegExIteratorData RegExIteratorData => regExIteratorData ?? (regExIteratorData = new ());
+		internal StringsData StringsData => stringsData ?? (stringsData = new ());
+		internal ToolTipData ToolTipData => toolTipData ?? (toolTipData = new ());
+		internal WindowProvider WindowProvider => windowProvider ?? (windowProvider = new ());
+
 		public Script()
 		{
 			script = this;//Everywhere in the script will reference this.
@@ -148,7 +163,6 @@ namespace Keysharp.Scripting
 			timeLastInputKeyboard = timeLastInputPhysical;
 			timeLastInputMouse = timeLastInputPhysical;
 			threads = new Threads();
-			//threads = new ThreadLocal<Threads>(() => new ());
 			Vars = new Variables();
 			_ = InitHook();//Why is this always being initialized even when there are no hooks? This is very inefficient.//TODO
 			//Init the data objects that the API classes will use.
@@ -157,14 +171,6 @@ namespace Keysharp.Scripting
 			//Init the API classes, passing in this which will be used to access their respective data objects.
 			Reflections = new ();
 			SetInitialFloatFormat();//This must be done intially and not just when A_FormatFloat is referenced for the first time.
-		}
-
-		public string GetPublicStaticPropertyNames()
-		{
-			var l1 = ReflectionsData.flatPublicStaticMethods.Keys.ToList();
-			l1.AddRange(ReflectionsData.flatPublicStaticProperties.Keys);
-			var hs = new HashSet<string>(l1);
-			return string.Join(' ', hs);
 		}
 
 		public static bool HandleSingleInstance(string title, eScriptInstance inst)
@@ -218,6 +224,26 @@ namespace Keysharp.Scripting
 			_ = WindowX.SetTitleMatchMode(oldMatchMode);
 			_ = WindowX.DetectHiddenWindows(oldDetect);
 			return exit;
+		}
+
+		public void ExitIfNotPersistent(Flow.ExitReasons exitReason = Flow.ExitReasons.Exit)
+		{
+			//Must use BeginInvoke() because this might be called from _ks_UserMainCode(),
+			//so it needs to run after that thread has exited.
+			if (!IsMainWindowClosing)
+				mainWindow?.CheckedBeginInvoke(new Action(() =>
+			{
+				if (!IsMainWindowClosing && !AnyPersistent())
+					_ = Flow.ExitAppInternal(exitReason, Environment.ExitCode, false);
+			}), true, true);
+		}
+
+		public string GetPublicStaticPropertyNames()
+		{
+			var l1 = ReflectionsData.flatPublicStaticMethods.Keys.ToList();
+			l1.AddRange(ReflectionsData.flatPublicStaticProperties.Keys);
+			var hs = new HashSet<string>(l1);
+			return string.Join(' ', hs);
 		}
 
 		public void RunMainWindow(string title, Func<object> userInit, bool _persistent)
@@ -381,10 +407,7 @@ namespace Keysharp.Scripting
 		public void Stop()
 		{
 			HookThread?.Stop();
-
-			if (stringsData != null)
-				foreach (var kv in stringsData.gcHandles)
-					kv.Value.Free();
+			stringsData?.Free();
 
 			if (!IsMainWindowClosing)
 			{
@@ -442,6 +465,37 @@ namespace Keysharp.Scripting
 				_ = Flow.Sleep(200);
 		}
 
+		internal static string MakeTitleWithVersion(string title) => title + " - Keysharp " + A_AhkVersion;
+
+		internal static int[] ParseVersionToInts(string ver)
+		{
+			var i = 0;
+			var vers = new int[] { 0, 0, 0, 0 };
+
+			foreach (Range r in ver.AsSpan().Split('.'))
+			{
+				var split = ver.AsSpan(r).Trim();
+
+				if (split.Length > 0)
+				{
+					if (int.TryParse(split, out var v))
+						vers[i] = v;
+
+					i++;
+				}
+			}
+
+			return vers;
+		}
+
+		internal static void SetInitialFloatFormat()
+		{
+			var t = Thread.CurrentThread;
+			var ci = new CultureInfo(t.CurrentCulture.Name);
+			ci.NumberFormat.NumberDecimalDigits = 6;
+			t.CurrentCulture = ci;
+		}
+
 		internal bool AnyPersistent()
 		{
 			if (Gui.AnyExistingVisibleWindows())
@@ -477,33 +531,6 @@ namespace Keysharp.Scripting
 			return false;
 		}
 
-		public void ExitIfNotPersistent(Flow.ExitReasons exitReason = Flow.ExitReasons.Exit)
-		{
-			//Must use BeginInvoke() because this might be called from _ks_UserMainCode(),
-			//so it needs to run after that thread has exited.
-			if (!IsMainWindowClosing)
-				mainWindow?.CheckedBeginInvoke(new Action(() =>
-			{
-				if (!IsMainWindowClosing && !AnyPersistent())
-					_ = Flow.ExitAppInternal(exitReason, Environment.ExitCode, false);
-			}), true, true);
-		}
-
-		private bool InitHook()
-		{
-			if (HookThread != null && HookThread.IsHookThreadRunning() && HookThread.IsReadThreadRunning())
-				return false;
-
-#if WINDOWS
-			HookThread = new WindowsHookThread();
-#elif LINUX
-			HookThread = new LinuxHookThread();
-#else
-			return false;
-#endif
-			return true;
-		}
-
 		internal ResultType IsCycleComplete(int aSleepDuration, DateTime aStartTime, bool aAllowEarlyReturn)
 		// This function is used just to make MsgSleep() more readable/understandable.
 		{
@@ -531,29 +558,6 @@ namespace Keysharp.Scripting
 			return ResultType.Ok;
 		}
 
-		internal static string MakeTitleWithVersion(string title) => title + " - Keysharp " + A_AhkVersion;
-
-		internal static int[] ParseVersionToInts(string ver)
-		{
-			var i = 0;
-			var vers = new int[] { 0, 0, 0, 0 };
-
-			foreach (Range r in ver.AsSpan().Split('.'))
-			{
-				var split = ver.AsSpan(r).Trim();
-
-				if (split.Length > 0)
-				{
-					if (int.TryParse(split, out var v))
-						vers[i] = v;
-
-					i++;
-				}
-			}
-
-			return vers;
-		}
-
 		internal void SetHotNamesAndTimes(string name)
 		{
 			// Just prior to launching the hotkey, update these values to support built-in
@@ -567,12 +571,19 @@ namespace Keysharp.Scripting
 			thisHotkeyStartTime = DateTime.UtcNow; // Fixed for v1.0.35.10 to not happen for GUI
 		}
 
-		internal static void SetInitialFloatFormat()
+		private bool InitHook()
 		{
-			var t = Thread.CurrentThread;
-			var ci = new CultureInfo(t.CurrentCulture.Name);
-			ci.NumberFormat.NumberDecimalDigits = 6;
-			t.CurrentCulture = ci;
+			if (HookThread != null && HookThread.IsHookThreadRunning() && HookThread.IsReadThreadRunning())
+				return false;
+
+#if WINDOWS
+			HookThread = new WindowsHookThread();
+#elif LINUX
+			HookThread = new LinuxHookThread();
+#else
+			return false;
+#endif
+			return true;
 		}
 
 		private void PrivateClipboardUpdate(params object[] o)

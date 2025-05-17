@@ -3,19 +3,6 @@ using static Keysharp.Core.Common.Keyboard.VirtualKeys;
 
 namespace Keysharp.Core.Common.Keyboard
 {
-	internal class HotkeyData
-	{
-		internal uint joyHotkeyCount;
-		internal bool[] joystickHasHotkeys = new bool[JoystickData.MaxJoysticks];
-		internal List<HotkeyDefinition> shk = new (256);
-		internal readonly HookType whichHookAlways = HookType.None;
-		internal bool dialogIsDisplayed;
-		internal uint throttledKeyCount;
-		internal DateTime timeNow;
-		internal DateTime timePrev = DateTime.MinValue;
-		internal HookType whichHookNeeded = HookType.None;
-	}
-
 	public class HotkeyDefinition
 	{
 		internal const uint AT_LEAST_ONE_COMBO_HAS_TILDE = 0x10;
@@ -2541,6 +2528,19 @@ namespace Keysharp.Core.Common.Keyboard
 			// Ensure predictability by putting them in an order based on id_with_flags.
 			return (int)b1.idWithFlags - (int)b2.idWithFlags;
 		}
+	}
+
+	internal class HotkeyData
+	{
+		internal readonly HookType whichHookAlways = HookType.None;
+		internal bool dialogIsDisplayed;
+		internal uint joyHotkeyCount;
+		internal bool[] joystickHasHotkeys = new bool[JoystickData.MaxJoysticks];
+		internal List<HotkeyDefinition> shk = new (256);
+		internal uint throttledKeyCount;
+		internal DateTime timeNow;
+		internal DateTime timePrev = DateTime.MinValue;
+		internal HookType whichHookNeeded = HookType.None;
 	}
 
 	/// <summary>

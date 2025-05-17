@@ -49,6 +49,7 @@
 		// close to UINT_MAX might be a little better since it's might be less likely to be used as a pointer
 		// value by any apps that send keybd events whose ExtraInfo is really a pointer value.
 		internal const uint KeyIgnore = 0xFFC3D44F;
+
 		internal const uint KeyIgnoreAllExceptModifier = KeyIgnore - 2;
 		internal const uint KeyIgnoreMax = KeyIgnore;
 		internal const uint KeyPhysIgnore = KeyIgnore - 1;
@@ -58,16 +59,13 @@
 		internal const uint SendLevelMax = 100u;
 		internal const int StateDown = 0x80;
 		internal const int StateOn = 0x01;
-		internal uint altGrExtraInfo = 0u;
 		internal static char[] bracechars = "{}".ToCharArray();
-		internal SearchValues<char> bracecharsSv = SearchValues.Create(bracechars);
 		internal static string[] CoordModes = ["Client", "Window", "Screen"];
 		internal static char[] llChars = "Ll".ToCharArray();
-		internal SearchValues<char> llCharsSv = SearchValues.Create(llChars);
-		internal KeyType prefixKey = null;
-		internal string sendKeyChars = "^+!#{}";
-		internal uint thisHotkeyModifiersLR;
 		internal bool abortArraySend = false;
+		internal uint altGrExtraInfo = 0u;
+		internal SearchValues<char> bracecharsSv = SearchValues.Create(bracechars);
+		internal SearchValues<char> llCharsSv = SearchValues.Create(llChars);
 		internal int maxEvents = 0;
 		internal uint modifiersLRCtrlAltDelMask = 0u;
 		internal uint modifiersLRLastPressed = 0u;
@@ -76,6 +74,10 @@
 		internal uint modifiersLRLogicalNonIgnored = 0u;
 		internal uint modifiersLRNumpadMask = 0u;
 		internal uint modifiersLRPhysical = 0u;
+		internal KeyType prefixKey = null;
+		internal string sendKeyChars = "^+!#{}";
+		internal uint thisHotkeyModifiersLR;
+		internal bool triedKeyUp;
 		protected internal PlatformManagerBase mgr = script.PlatformProvider.Manager;
 		protected ArrayPool<byte> keyStatePool = ArrayPool<byte>.Create(256, 100);
 		protected SendModes sendMode = SendModes.Event;//Note this is different than the one in Accessors and serves as a temporary.

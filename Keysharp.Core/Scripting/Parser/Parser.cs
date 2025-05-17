@@ -1,4 +1,3 @@
-using slmd = System.Collections.Generic.Dictionary<string, System.Collections.Generic.List<System.CodeDom.CodeMethodInvokeExpression>>;
 using tsmd = System.Collections.Generic.Dictionary<System.CodeDom.CodeTypeDeclaration, System.Collections.Generic.Dictionary<string, System.Collections.Generic.List<System.CodeDom.CodeMethodInvokeExpression>>>;
 
 namespace Keysharp.Scripting
@@ -167,12 +166,23 @@ namespace Keysharp.Scripting
 
 		internal static FrozenSet<string>.AlternateLookup<ReadOnlySpan<char>> propKeywordsAlt = propKeywords.GetAlternateLookup<ReadOnlySpan<char>>();
 
+		internal readonly CodeMemberField HotstringManagerObject;
+		internal readonly string HotstringManagerObjectName;
+		internal readonly CodeSnippetExpression HotstringManagerObjectSnippet;
+		internal readonly CodeMemberField ScriptObject;
+		internal readonly string ScriptObjectName;
+		internal readonly CodeSnippetExpression ScriptObjectSnippet;
+		internal readonly string VarPrefix = "_ks_";
 		internal bool errorStdOut;
-		internal CodeStatementCollection initial = [];//These are placed at the very beginning of Main().
+		internal CodeStatementCollection initial = [];
+
+		//These are placed at the very beginning of Main().
 		internal string name = string.Empty;
+
 		internal bool noTrayIcon;
 		internal bool persistent;
 		internal bool persistentValueSetByUser;
+		internal PreReader preReader;
 		private const string args = "args";
 		private const string initParams = "initparams";
 		private const string mainScope = "";
@@ -217,21 +227,6 @@ namespace Keysharp.Scripting
 		};
 
 		private readonly CodeNamespace mainNs = new ("Keysharp.CompiledMain");
-
-		internal readonly string VarPrefix = "_ks_";
-
-		internal readonly string ScriptObjectName;
-
-		internal readonly CodeMemberField ScriptObject;
-
-		internal readonly CodeSnippetExpression ScriptObjectSnippet;
-
-		internal readonly string HotstringManagerObjectName;
-
-		internal readonly CodeMemberField HotstringManagerObject;
-
-		internal readonly CodeSnippetExpression HotstringManagerObjectSnippet;
-
 		private readonly Dictionary<CodeTypeDeclaration, Dictionary<string, CodeMemberMethod>> methods = [];
 
 		private readonly char[] ops = [Equal, Not, Greater, Less];
@@ -1215,8 +1210,6 @@ namespace Keysharp.Scripting
 			foreach (var member in codeSnippetTypeMembers)
 				ReevaluateStaticProperties(member);
 
-			//Some hotstring directives may have been parsed, which could have changed settings. So restore before building and running.
-			script.HotstringManager.RestoreDefaults(true);
 			return unit;
 		}
 
@@ -1225,8 +1218,8 @@ namespace Keysharp.Scripting
 		public CodeCompileUnit Parse(TextReader codeStream, string nm)
 		{
 			name = nm;
-			var reader = new PreReader(this);
-			codeLines = reader.Read(codeStream, name);
+			preReader = new PreReader(this);
+			codeLines = preReader.Read(codeStream, name);
 #if DEBUG
 			//File.WriteAllLines("./finalscriptcode.txt", codeLines.Select((cl) => $"{cl.LineNumber}: {cl.Code}"));
 #endif
@@ -1241,13 +1234,13 @@ namespace Keysharp.Scripting
 			_ = initial.Add(new CodeSnippetExpression("Keysharp.Core.Env.HandleCommandLineParams(args)"));
 			var inst = (CodeMethodInvokeExpression)InternalMethods.HandleSingleInstance;
 			_ = inst.Parameters.Add(new CodeSnippetExpression("name"));
-			_ = inst.Parameters.Add(new CodeSnippetExpression($"eScriptInstance.{reader.SingleInstance}"));
+			_ = inst.Parameters.Add(new CodeSnippetExpression($"eScriptInstance.{preReader.SingleInstance}"));
 			var condInst = new CodeConditionStatement(inst, new CodeMethodReturnStatement(new CodePrimitiveExpression(0)));
 			_ = initial.Add(new CodeSnippetExpression($"{ScriptObject.Name}.SetName(name)"));
 			_ = initial.Add(new CodeAssignStatement(HotstringManagerObjectSnippet, new CodeSnippetExpression($"{ScriptObjectName}.HotstringManager")));
 			_ = initial.Add(new CodeAssignStatement(ScriptObjectSnippet, new CodeObjectCreateExpression(typeof(Keysharp.Scripting.Script))));
 
-			foreach (var (p, s) in reader.PreloadedDlls)//Add after Script.Init() call above, because the statements will be added in reverse order.
+			foreach (var (p, s) in preReader.PreloadedDlls)//Add after Script.Init() call above, because the statements will be added in reverse order.
 			{
 				var cmie = new CodeMethodInvokeExpression(new CodeTypeReferenceExpression("Keysharp.Scripting.Script.Variables"), "AddPreLoadedDll");
 				_ = cmie.Parameters.Add(new CodePrimitiveExpression(p));

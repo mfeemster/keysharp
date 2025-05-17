@@ -346,13 +346,6 @@ using static Keysharp.Scripting.Script;
 
 		public (CodeCompileUnit[], CompilerErrorCollection) CreateDomFromFile(params string[] fileNames)
 		{
-			// Creating the DOM relies on querying methods from Reflections, but if previously
-			// a script assembly has been loaded (eg when running tests) then unwanted methods
-			// may be found from there. Thus clear all cached methods here, and reinitialize while
-			// ignoring the "program" namespace.
-			//Reflections.Clear();
-			//Reflections.Initialize(true);
-			//Flow.ResetState();
 			var units = new CodeCompileUnit[fileNames.Length];
 			var errors = new CompilerErrorCollection();
 			var enc = Encoding.Default;

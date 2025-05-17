@@ -26,37 +26,40 @@ namespace Keysharp.Core.Windows
 	/// </summary>
 	internal class WindowsKeyboardMouseSender : KeyboardMouseSender
 	{
-		internal bool firstCallForThisEvent;
-		internal bool inBlindMode;
 		internal const int MaxInitialEventsPB = 1500;
 		internal const int MaxInitialEventsSI = 500;
-		internal uint menuMaskKeySC = ScanCodes.LControl;
-		internal uint menuMaskKeyVK = VK_CONTROL;
-		internal DateTime thisHotkeyStartTime = DateTime.UtcNow;
 		internal int currentEvent;
 		internal uint eventModifiersLR;
 		internal List<PlaybackEvent> eventPb = new (MaxInitialEventsPB);
 		internal List<INPUT> eventSi = new (MaxInitialEventsSI);
-
+		internal bool firstCallForThisEvent;
 		// sizeof(INPUT) == 28 as of 2006. Since Send is called so often, and since most Sends are short, reducing the load on the stack is also a deciding factor for these.
 		// sizeof(PlaybackEvent) == 8, so more events are justified before resorting to malloc().
 		internal uint hooksToRemoveDuringSendInput;
+		internal bool inBlindMode;
+		internal uint menuMaskKeySC = ScanCodes.LControl;
+		internal uint menuMaskKeyVK = VK_CONTROL;
 		internal uint modifiersLRPersistent;
 		internal uint modifiersLRRemapped;
 		internal uint prevEventModifierDown;
 		internal KeyEventTypes prevEventType;
 		internal uint prevVK;
-
 		// Tracks this script's own lifetime/persistent modifiers (the ones it caused to be persistent and thus is responsible for tracking).
 		internal Point sendInputCursorPos;
-		internal IntPtr targetKeybdLayout;
 
+		internal IntPtr targetKeybdLayout;
 		// Set by SendKeys() for use by the functions it calls directly and indirectly.
 		internal ResultType targetLayoutHasAltGr;
+
+		internal DateTime thisHotkeyStartTime = DateTime.UtcNow;
 		internal long workaroundHitTest;
 
 		//Tracks/predicts cursor position as SendInput array is built.
 		internal uint workaroundVK;
+
+		private readonly StringBuilder buf = new (4);
+
+		private readonly List<CachedLayoutType> cachedLayouts = new (10);
 
 		// Below uses a pseudo-random value.  It's best that this be constant so that if multiple instances
 		// of the app are running, they will all ignore each other's keyboard & mouse events.  Also, a value
@@ -71,8 +74,6 @@ namespace Keysharp.Core.Windows
 		//private static readonly byte[] state = new byte[VKMAX];
 		private readonly IntPtr hookId = IntPtr.Zero;
 		private bool thisEventHasBeenLogged, thisEventIsScreenCoord;
-		private readonly StringBuilder buf = new (4);
-		private readonly List<CachedLayoutType> cachedLayouts = new (10);
 		//private bool dead;
 		//private List<uint> deadKeys;
 		//private bool ignore;

@@ -3,32 +3,8 @@ using System.Runtime.InteropServices.Marshalling;
 
 namespace Keysharp.Core.COM
 {
-	internal class ComEnumeratorData
+	internal class ComEnumeratorData : BaseIteratorData<ComEnumerator>
 	{
-		/// <summary>
-		/// Cache for iterators with either 1 or 2 parameters.
-		/// This prevents reflection from having to always be done to find the Call method.
-		/// </summary>
-		internal FuncObj p1, p2;
-
-		/// <summary>
-		/// Static constructor to initialize function objects.
-		/// </summary>
-		internal ComEnumeratorData()
-		{
-			Error err;
-			var mi1 = Reflections.FindAndCacheMethod(typeof(ComEnumerator), "Call", 1);
-			p1 = new FuncObj(mi1, null);
-
-			if (!p1.IsValid)
-				_ = Errors.ErrorOccurred(err = new MethodError($"Existing function object was invalid.")) ? throw err : "";
-
-			var mi2 = Reflections.FindAndCacheMethod(typeof(ComEnumerator), "Call", 2);
-			p2 = new FuncObj(mi2, null);
-
-			if (!p2.IsValid)
-				_ = Errors.ErrorOccurred(err = new MethodError($"Existing function object was invalid.")) ? throw err : "";
-		}
 	}
 
 	/// <summary>

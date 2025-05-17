@@ -6,6 +6,7 @@ namespace Keysharp.Scripting
 	{
 		private static readonly char[] libBrackets = ['<', '>'];
 		private static readonly string multiLineComments = new (new[] { MultiComB, MultiComA });
+
 		private static readonly FrozenSet<string> otbFlowKeywords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
 		{
 			FlowCatch,
@@ -22,9 +23,11 @@ namespace Keysharp.Scripting
 			FlowUntil,//Could until { one : 1 } == x ever be done?
 			FlowWhile//Same: while { one : 1 } == x
 		} .ToFrozenSet(StringComparer.OrdinalIgnoreCase);
-		private static FrozenSet<string>.AlternateLookup<ReadOnlySpan<char>> otbFlowKeywordsAlt = otbFlowKeywords.GetAlternateLookup<ReadOnlySpan<char>>();
+
 		private static int hotifcount;
+		private static FrozenSet<string>.AlternateLookup<ReadOnlySpan<char>> otbFlowKeywordsAlt = otbFlowKeywords.GetAlternateLookup<ReadOnlySpan<char>>();
 		private readonly Stack<(bool, bool)> currentDefines = new ();
+
 		private readonly HashSet<string> defines =
 			[
 				"KEYSHARP",
@@ -34,11 +37,12 @@ namespace Keysharp.Scripting
 				"LINUX",
 #endif
 			];
+
 		private readonly List<string> includes = [];
 		private readonly Parser parser;
 		private string includePath = "./";
 		private CompilerHelper tempCompiler = null;
-		internal static int NextHotIfCount => ++hotifcount;
+		internal int NextHotIfCount => ++hotifcount;
 		internal List<(string, bool)> PreloadedDlls { get; } = [];
 		internal eScriptInstance SingleInstance { get; private set; } = eScriptInstance.Prompt;
 

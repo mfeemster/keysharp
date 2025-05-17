@@ -2,15 +2,6 @@ using EnumerationOptions = System.IO.EnumerationOptions;
 
 namespace Keysharp.Core
 {
-	internal class LoopData
-	{
-		/// <summary>
-		/// The stack which keeps track of all loops currently running in the script.<br/>
-		/// This is ThreadLocal<> because it must actually be thread safe for real threads.
-		/// </summary>
-		internal ThreadLocal<Stack<LoopInfo>> loopStack = new (() => new ());
-	}
-
 	/// <summary>
 	/// Public interface for loops-related functions.
 	/// </summary>
@@ -281,6 +272,7 @@ namespace Keysharp.Core
 		}
 
 #if WINDOWS
+
 		/// <summary>
 		/// Retrieves the contents of the specified registry subkey, one item at a time.
 		/// </summary>
@@ -825,6 +817,7 @@ namespace Keysharp.Core
 		public object file;
 		public string filename = string.Empty;
 		public long index;
+		public DateTime lastIter = DateTime.UtcNow;
 		public string line;
 		public string path;
 		public object regDate;
@@ -835,7 +828,15 @@ namespace Keysharp.Core
 		public object result;
 		public TextWriter sw;
 		public LoopType type = LoopType.Normal;
-		public DateTime lastIter = DateTime.UtcNow;
+	}
+
+	internal class LoopData
+	{
+		/// <summary>
+		/// The stack which keeps track of all loops currently running in the script.<br/>
+		/// This is ThreadLocal<> because it must actually be thread safe for real threads.
+		/// </summary>
+		internal ThreadLocal<Stack<LoopInfo>> loopStack = new (() => new ());
 	}
 
 	/// <summary>

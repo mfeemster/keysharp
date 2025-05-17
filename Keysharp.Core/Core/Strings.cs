@@ -85,6 +85,14 @@
 	internal class StringsData
 	{
 		internal ConcurrentDictionary<nint, GCHandle> gcHandles = [];
+
+		~StringsData() => Free();
+
+		internal void Free()
+		{
+			foreach (var kv in gcHandles)
+				kv.Value.Free();
+		}
 	}
 
 	/// <summary>

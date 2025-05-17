@@ -5,8 +5,6 @@ namespace Keysharp.Core
 	/// </summary>
 	public static class Dialogs
 	{
-		//internal int nFileDialogs;
-		//internal int nFolderDialogs;
 		internal static readonly Guid computer = new ("0AC0837C-BBF8-452A-850D-79D08E667CA7"); //Computer (/).
 		internal static readonly Guid desktop = new ("B4BFCC3A-DB2C-424C-B029-7FE99A87C641"); //Desktop (~/Desktop).
 		internal static readonly Guid documents = new ("FDD39AD0-238F-46AF-ADB4-6C85480369C7"); //Documents (~/Documents).
@@ -83,9 +81,7 @@ namespace Keysharp.Core
 			else if (folder.Length != 0)
 				select.SelectedPath = folder;
 
-			//nFolderDialogs++;
 			var selected = script.mainWindow.CheckedInvoke(() => GuiHelper.DialogOwner == null ? select.ShowDialog() : select.ShowDialog(GuiHelper.DialogOwner), true);
-			//nFolderDialogs--;
 			return selected == DialogResult.OK ? select.SelectedPath : "";
 		}
 
@@ -181,8 +177,6 @@ namespace Keysharp.Core
 				}
 			}
 
-			//nFileDialogs++;
-
 			if (!f.Contains("All Files (*.*)|*.*"))
 				f += "|All Files (*.*)|*.*";
 
@@ -245,7 +239,6 @@ namespace Keysharp.Core
 				}
 			}
 
-			//nFileDialogs--;
 			return files;
 		}
 
@@ -344,7 +337,6 @@ namespace Keysharp.Core
 				input.Left = x != int.MinValue ? x : (((wr.Ai() - wl.Ai()) / 2) - (input.Width / 2));
 				input.Top = y != int.MinValue ? y : (((wb.Ai() - wt.Ai()) / 2) - (input.Height / 2));
 			};
-			//nFileDialogs++;
 			script.mainWindow.CheckedInvoke(() =>
 			{
 				if (GuiHelper.DialogOwner != null)
@@ -356,7 +348,6 @@ namespace Keysharp.Core
 			while (input.Visible)
 				Application.DoEvents();
 
-			//nFileDialogs--;
 			return new DialogResultReturn()
 			{
 				Value = input.Message,

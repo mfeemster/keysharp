@@ -22,7 +22,6 @@ namespace Keysharp.Scripting
 		{
 			Error err;
 			WindowX.SetProcessDPIAware();
-			Flow.Init();
 			CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
 			CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture;
 #if LINUX
@@ -113,7 +112,6 @@ namespace Keysharp.Scripting
 				}
 			}
 
-			//script.Reflections.Initialize();//For some reason, the program will crash if these are delay initialized, so do them now.
 			Application.AddMessageFilter(new MessageFilter());
 		}
 
