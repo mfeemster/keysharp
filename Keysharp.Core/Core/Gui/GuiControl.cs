@@ -6,33 +6,32 @@
 		{
 			internal string typename;
 			internal WeakReference<Gui> gui;
-			private readonly List<IFuncObj> clickHandlers = [];
-			private readonly List<IFuncObj> doubleClickHandlers = [];
-			private bool DpiScaling => Gui.dpiscaling;
+		private readonly List<IFuncObj> clickHandlers = [];
+		private readonly List<IFuncObj> doubleClickHandlers = [];
+		private bool DpiScaling => Gui.dpiscaling;
 			private System.Windows.Forms.Control _control;
 
-			//Normal event handlers can't be used becaused they need to return a value.
-			//The returned values are then inspected to determine if subsequent handlers should be called or not.
-			private List<IFuncObj> changeHandlers;
-
-			private List<IFuncObj> columnClickHandlers;
-			private Dictionary<int, List<IFuncObj>> commandHandlers;
-			private List<IFuncObj> contextMenuChangedHandlers;
-			private IntPtr dummyHandle;
-			private List<IFuncObj> focusedItemChangedHandlers;
-			private List<IFuncObj> focusHandlers;
-			private List<IFuncObj> itemCheckHandlers;
-			private List<IFuncObj> itemEditHandlers;
-			private List<IFuncObj> itemExpandHandlers;
-			private List<IFuncObj> lostFocusHandlers;
-			private Dictionary<int, List<IFuncObj>> notifyHandlers;
-			private long parenthandle;
-			private List<IFuncObj> selectedItemChangedHandlers;
-			internal Size requestedSize = new(int.MinValue, int.MinValue);
+		//Normal event handlers can't be used becaused they need to return a value.
+		//The returned values are then inspected to determine if subsequent handlers should be called or not.
+		private List<IFuncObj> changeHandlers;
+		private List<IFuncObj> columnClickHandlers;
+		private Dictionary<int, List<IFuncObj>> commandHandlers;
+		private List<IFuncObj> contextMenuChangedHandlers;
+		private IntPtr dummyHandle;
+		private List<IFuncObj> focusedItemChangedHandlers;
+		private List<IFuncObj> focusHandlers;
+		private List<IFuncObj> itemCheckHandlers;
+		private List<IFuncObj> itemEditHandlers;
+		private List<IFuncObj> itemExpandHandlers;
+		private List<IFuncObj> lostFocusHandlers;
+		private Dictionary<int, List<IFuncObj>> notifyHandlers;
+		private long parenthandle;
+		private List<IFuncObj> selectedItemChangedHandlers;
+		internal Size requestedSize = new (int.MinValue, int.MinValue);
 
 			public bool AltSubmit { get; internal set; } = false;
 
-			public string ClassNN => WindowProvider.Manager.CreateWindow(_control.Handle) is WindowItemBase wi ? wi.ClassNN : "";
+		public string ClassNN => script.WindowProvider.Manager.CreateWindow(_control.Handle) is WindowItemBase wi ? wi.ClassNN : "";
 
 			public System.Windows.Forms.Control Ctrl => _control;
 
@@ -63,7 +62,7 @@
 				set => _control.Name = value.ToString();
 			}
 
-			public string NetClassNN => WindowProvider.Manager.CreateWindow(_control.Handle) is WindowItemBase wi ? wi.NetClassNN : "";
+		public string NetClassNN => script.WindowProvider.Manager.CreateWindow(_control.Handle) is WindowItemBase wi ? wi.NetClassNN : "";
 
 			public object Parent
 			{

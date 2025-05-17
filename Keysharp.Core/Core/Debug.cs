@@ -1,5 +1,3 @@
-﻿using Keysharp.Scripting;
-
 namespace Keysharp.Core
 {
 	public static class Debug
@@ -12,8 +10,8 @@ namespace Keysharp.Core
 				return;
 			}
 
-			var title = Script.mainWindow != null ? Script.mainWindow.Text : "";
-			var tv = Threads.GetThreadVariables();
+			var title = script.mainWindow != null ? script.mainWindow.Text : "";
+			var tv = script.Threads.GetThreadVariables();
 			var mm = tv.titleMatchMode;
 			tv.titleMatchMode = 2L;//Match anywhere.
 			var hwnd = WindowX.WinExist(A_ScriptName, "", title, "");
@@ -76,7 +74,7 @@ namespace Keysharp.Core
 			var typesToProps = new SortedDictionary<string, List<PropertyInfo>>();
 			_ = sb.AppendLine($"**User defined**\r\n");
 
-			foreach (var typeKv in Reflections.staticFields.Where(tkv => tkv.Key.Name.StartsWith(Keywords.MainClassName, StringComparison.OrdinalIgnoreCase)))
+			foreach (var typeKv in script.ReflectionsData.staticFields.Where(tkv => tkv.Key.Name.StartsWith("program", StringComparison.OrdinalIgnoreCase)))
 			{
 				foreach (var fieldKv in typeKv.Value.OrderBy(f => f.Key))
 				{
@@ -90,7 +88,7 @@ namespace Keysharp.Core
 
 			if (doInternal)
 			{
-				foreach (var propKv in Reflections.flatPublicStaticProperties)
+				foreach (var propKv in script.ReflectionsData.flatPublicStaticProperties)
 				{
 					var list = typesToProps.GetOrAdd(propKv.Value.DeclaringType.Name);
 
@@ -134,17 +132,17 @@ namespace Keysharp.Core
 		public static string ListKeyHistory()
 		{
 			var sb = new StringBuilder(2048);
-			var target_window = WindowProvider.Manager.ActiveWindow;
+			var target_window = script.WindowProvider.Manager.ActiveWindow;
 			var win_title = target_window.IsSpecified ? target_window.Title : "";
 			var enabledTimers = 0;
-			var ht = Script.HookThread;
+			var ht = script.HookThread;
 
-			foreach (var timer in Flow.timers)
+			foreach (var timer in script.FlowData.timers)
 			{
 				if (timer.Value.Enabled)
 				{
 					enabledTimers++;
-					_ = sb.Append($"{timer.Key.ToString()} ");
+					_ = sb.Append($"{timer.Key.Name} ");
 				}
 			}
 
@@ -182,8 +180,8 @@ namespace Keysharp.Core
 			_ = sb.AppendLine($"Window: {win_title}");
 			_ = sb.AppendLine($"Keybd hook: {(ht != null && ht.HasKbdHook() ? "yes" : "no")}");
 			_ = sb.AppendLine($"Mouse hook: {(ht != null && ht.HasMouseHook() ? "yes" : "no")}");
-			_ = sb.AppendLine($"Enabled timers: {enabledTimers} of {Flow.timers.Count} ({timerlist})");
-			_ = sb.AppendLine($"Threads: {Script.totalExistingThreads}");
+			_ = sb.AppendLine($"Enabled timers: {enabledTimers} of {script.FlowData.timers.Count} ({timerlist})");
+			_ = sb.AppendLine($"Threads: {script.totalExistingThreads}");
 			_ = sb.AppendLine($"Modifiers (GetKeyState() now) = {mod}");
 			_ = sb.AppendLine(hookstatus);
 			_ = sb.Append(cont);
@@ -198,7 +196,7 @@ namespace Keysharp.Core
 
 		public static object ListVars()
 		{
-			Script.mainWindow?.ShowInternalVars(true);
+			script.mainWindow?.ShowInternalVars(true);
 			return "";
 		}
 
@@ -222,11 +220,11 @@ namespace Keysharp.Core
 			{
 			}
 
-			if (!Script.IsMainWindowClosing)
+			if (!script.IsMainWindowClosing)
 				if (clear)
-					Script.mainWindow.SetText(text, MainWindow.MainFocusedTab.Debug, false);
+					script.mainWindow.SetText(text, MainWindow.MainFocusedTab.Debug, false);
 				else
-					Script.mainWindow.AddText(text, MainWindow.MainFocusedTab.Debug, false);
+					script.mainWindow.AddText(text, MainWindow.MainFocusedTab.Debug, false);
 
 			return "";
 		}

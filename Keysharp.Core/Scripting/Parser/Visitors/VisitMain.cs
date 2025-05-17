@@ -82,10 +82,29 @@ namespace Keysharp.Scripting
 
             mainFunc.Params.Add(mainFuncParam);
 
-            parser.mainFuncInitial.Add($"string name = @\"{Path.GetFullPath(parser.fileName)}\";");
+			parser.mainClass.Body.Add(
+                SyntaxFactory.FieldDeclaration(
+				    SyntaxFactory.VariableDeclaration(
+				        SyntaxFactory.ParseTypeName("Keysharp.Scripting.Script"))
+				        .AddVariables(SyntaxFactory.VariableDeclarator(Keywords.MainScriptVariableName))
+                )
+				.AddModifiers(
+					SyntaxFactory.Token(SyntaxKind.PrivateKeyword),
+					SyntaxFactory.Token(SyntaxKind.StaticKeyword)));
+			parser.mainClass.Body.Add(
+                SyntaxFactory.FieldDeclaration(
+					SyntaxFactory.VariableDeclaration(
+						SyntaxFactory.ParseTypeName("Keysharp.Core.Common.Keyboard.HotstringManager"))
+						.AddVariables(SyntaxFactory.VariableDeclarator("MainHotstringManager"))
+				)
+				.AddModifiers(
+					SyntaxFactory.Token(SyntaxKind.PrivateKeyword),
+					SyntaxFactory.Token(SyntaxKind.StaticKeyword)));
+
+			parser.mainFuncInitial.Add($"string name = @\"{Path.GetFullPath(parser.fileName)}\";");
             foreach (var (p, s) in parser.reader.PreloadedDlls)
             {
-                parser.mainFuncInitial.Add($"Keysharp.Scripting.Script.Variables.AddPreLoadedDll(\"{p}\", {s.ToString().ToLower()});");
+                parser.mainFuncInitial.Add($"{Keywords.MainScriptVariableName}.Vars.AddPreLoadedDll(\"{p}\", {s.ToString().ToLower()});");
             }
 
             string mainBodyCode = $$"""
@@ -93,16 +112,17 @@ namespace Keysharp.Scripting
 					try
 					{
 						{{String.Join(Environment.NewLine, parser.mainFuncInitial)}}
-						Keysharp.Scripting.Script.Variables.InitGlobalVars(typeof({{Keywords.MainClassName}}));
-						Keysharp.Scripting.Script.SetName(name);
+						{{MainScriptVariableName}} = new Keysharp.Scripting.Script(typeof({{Keywords.MainClassName}}));
+                        MainHotstringManager = {{MainScriptVariableName}}.HotstringManager;
+						{{MainScriptVariableName}}.SetName(name);
 						if (Keysharp.Scripting.Script.HandleSingleInstance(name, eScriptInstance.{{System.Enum.GetName(typeof(eScriptInstance), parser.reader.SingleInstance)}}))
 						{
 							return 0;
 						}
 						Keysharp.Core.Env.HandleCommandLineParams(args);
-						Keysharp.Scripting.Script.CreateTrayMenu();
-						Keysharp.Scripting.Script.RunMainWindow(name, {{Keywords.AutoExecSectionName}}, false);
-						Keysharp.Scripting.Script.WaitThreads();
+						{{MainScriptVariableName}}.CreateTrayMenu();
+						{{MainScriptVariableName}}.RunMainWindow(name, {{Keywords.AutoExecSectionName}}, false);
+						{{MainScriptVariableName}}.WaitThreads();
 					}
                     catch (Keysharp.Core.Flow.UserRequestedExitException)
                     {
@@ -111,9 +131,9 @@ namespace Keysharp.Scripting
 					{
 						if (ErrorOccurred(kserr))
 						{
-							var (_ks_pushed, _ks_btv) = Keysharp.Core.Common.Threading.Threads.BeginThread();
+							var (_ks_pushed, _ks_btv) = {{MainScriptVariableName}}.Threads.BeginThread();
 							MsgBox("Uncaught Keysharp exception:\r\n" + kserr, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
-							Keysharp.Core.Common.Threading.Threads.EndThread(_ks_pushed);
+							{{MainScriptVariableName}}.Threads.EndThread(_ks_pushed);
 						}
 						Keysharp.Core.Flow.ExitApp(1);
 					}
@@ -125,16 +145,16 @@ namespace Keysharp.Scripting
 						{
 							if (ErrorOccurred(kserr))
 							{
-								var (_ks_pushed, _ks_btv) = Keysharp.Core.Common.Threading.Threads.BeginThread();
+								var (_ks_pushed, _ks_btv) = {{MainScriptVariableName}}.Threads.BeginThread();
 								MsgBox("Uncaught Keysharp exception:\r\n" + kserr, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
-								Keysharp.Core.Common.Threading.Threads.EndThread(_ks_pushed);
+								{{MainScriptVariableName}}.Threads.EndThread(_ks_pushed);
 							}
 						}
 						else
 						{
-							var (_ks_pushed, _ks_btv) = Keysharp.Core.Common.Threading.Threads.BeginThread();
+							var (_ks_pushed, _ks_btv) = {{MainScriptVariableName}}.Threads.BeginThread();
 							MsgBox("Uncaught exception:\r\n" + "Message: " + ex.Message + "\r\nStack: " + ex.StackTrace, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
-							Keysharp.Core.Common.Threading.Threads.EndThread(_ks_pushed);
+							{{MainScriptVariableName}}.Threads.EndThread(_ks_pushed);
 						}
 						Keysharp.Core.Flow.ExitApp(1);
 					}
@@ -159,7 +179,7 @@ namespace Keysharp.Scripting
                 var classBase = classDeclaration.classExtensionName()?.GetText() ?? "KeysharpObject";
                 parser.UserTypes[className] = classBase;
                 parser.AllTypes[className] = classBase;
-                while (Reflections.stringToTypes.TryGetValue(classBase, out Type baseType))
+                while (script.ReflectionsData.stringToTypes.TryGetValue(classBase, out Type baseType))
                 {
                     classBase = parser.AllTypes[baseType.Name] = baseType.BaseType.Name;
                 }
@@ -485,7 +505,7 @@ namespace Keysharp.Scripting
                 parser.currentFunc.Name == Keywords.AutoExecSectionName 
                     ? SyntaxFactory.MemberAccessExpression(
                         SyntaxKind.SimpleMemberAccessExpression,
-                        CreateQualifiedName("Keysharp.Scripting.Script"),
+						SyntaxFactory.IdentifierName(Keywords.MainScriptVariableName),
                         SyntaxFactory.IdentifierName("Vars")
                       )
                     : SyntaxFactory.IdentifierName(InternalPrefix + "Derefs")

@@ -10,11 +10,11 @@ namespace Keysharp.Scripting
 		{
             var isBuiltin = !t.Namespace.Equals("Keysharp.CompiledMain", StringComparison.OrdinalIgnoreCase);
 
-            Variables.Prototypes[t] = (KeysharpObject)RuntimeHelpers.GetUninitializedObject(alias ?? t);
-            object inst = Script.Variables.Statics[t] = (KeysharpObject)RuntimeHelpers.GetUninitializedObject(alias ?? t);
+            script.Vars.Prototypes[t] = (KeysharpObject)RuntimeHelpers.GetUninitializedObject(alias ?? t);
+            object inst = script.Vars.Statics[t] = (KeysharpObject)RuntimeHelpers.GetUninitializedObject(alias ?? t);
 			KeysharpObject staticInst = (KeysharpObject)inst;
 
-            var proto = Variables.Prototypes[t];
+            var proto = script.Vars.Prototypes[t];
 
             if (proto.op == null)
             {
@@ -24,8 +24,8 @@ namespace Keysharp.Scripting
             // Get all instance methods
             MethodInfo[] methods;
 
-            if (isBuiltin && Reflections.typeToStringMethods.ContainsKey(t))
-                methods = Reflections.typeToStringMethods[t]
+            if (isBuiltin && script.ReflectionsData.typeToStringMethods.ContainsKey(t))
+                methods = script.ReflectionsData.typeToStringMethods[t]
                     .Values // Get Dictionary<string, Dictionary<int, MethodPropertyHolder>>
                     .SelectMany(m => m.Values) // Flatten to IEnumerable<Dictionary<int, MethodPropertyHolder>>
                     .Select(mph => mph.mi) // Flatten to IEnumerable<MethodPropertyHolder>
@@ -91,8 +91,8 @@ namespace Keysharp.Scripting
             }
 
 			// Get all static methods
-            if (isBuiltin && Reflections.typeToStringStaticMethods.ContainsKey(t))
-                methods = Reflections.typeToStringStaticMethods[t]
+            if (isBuiltin && script.ReflectionsData.typeToStringStaticMethods.ContainsKey(t))
+                methods = script.ReflectionsData.typeToStringStaticMethods[t]
                     .Values // Get Dictionary<string, Dictionary<int, MethodPropertyHolder>>
 					.SelectMany(m => m.Values) // Flatten to IEnumerable<Dictionary<int, MethodPropertyHolder>>
 					.Select(mph => mph.mi) // Flatten to IEnumerable<MethodPropertyHolder>
@@ -109,8 +109,8 @@ namespace Keysharp.Scripting
 
             PropertyInfo[] properties;
 
-            if (isBuiltin && Reflections.typeToStringProperties.ContainsKey(t))
-                properties = Reflections.typeToStringProperties[t]
+            if (isBuiltin && script.ReflectionsData.typeToStringProperties.ContainsKey(t))
+                properties = script.ReflectionsData.typeToStringProperties[t]
                     .Values
                     .SelectMany(m => m.Values) 
                     .Select(mph => mph.pi)
@@ -161,7 +161,7 @@ namespace Keysharp.Scripting
             }
 
             if (!(t == typeof(Any) || t == typeof(FuncObj) || t == typeof(Class)))
-                proto.DefineProp("base", Collections.MapWithoutBase("value", Variables.Prototypes[t.BaseType]));
+                proto.DefineProp("base", Collections.MapWithoutBase("value", script.Vars.Prototypes[t.BaseType]));
 
 			if (isBuiltin)
 			{
@@ -171,10 +171,10 @@ namespace Keysharp.Scripting
 				proto.DefineProp("__Class", Collections.MapWithoutBase("value", name));
 			}
 
-            staticInst.DefineProp("prototype", Collections.MapWithoutBase("value", Variables.Prototypes[t]));
+            staticInst.DefineProp("prototype", Collections.MapWithoutBase("value", script.Vars.Prototypes[t]));
 
 			if (t != typeof(FuncObj) && t != typeof(Any) && t != typeof(Class))
-				staticInst.DefineProp("base", Collections.MapWithoutBase("value", t.BaseType == typeof(KeysharpObject) ? Variables.Prototypes[typeof(Class)] : Variables.Statics[t.BaseType]));
+				staticInst.DefineProp("base", Collections.MapWithoutBase("value", t.BaseType == typeof(KeysharpObject) ? script.Vars.Prototypes[typeof(Class)] : script.Vars.Statics[t.BaseType]));
 
 			if (!isBuiltin)
 			{
@@ -187,16 +187,16 @@ namespace Keysharp.Scripting
                 foreach (var nestedType in nestedTypes)
                 {
                     RuntimeHelpers.RunClassConstructor(nestedType.TypeHandle);
-                    Script.Variables.Statics[t].DefineProp(nestedType.Name, 
+					script.Vars.Statics[t].DefineProp(nestedType.Name, 
 						Collections.Map(
-							"get", new FuncObj((params object[] args) => Variables.Statics[nestedType]),
-							"call", new FuncObj((object @this, params object[] args) => Script.Invoke(Variables.Statics[nestedType], "Call", args))
+							"get", new FuncObj((params object[] args) => script.Vars.Statics[nestedType]),
+							"call", new FuncObj((object @this, params object[] args) => Script.Invoke(script.Vars.Statics[nestedType], "Call", args))
 						)
 					);
                 }
 
-                Script.InvokeMeta(Script.Variables.Statics[t], "__Init");
-                Script.InvokeMeta(Script.Variables.Statics[t], "__New");
+                Script.InvokeMeta(script.Vars.Statics[t], "__Init");
+                Script.InvokeMeta(script.Vars.Statics[t], "__New");
             }
         }
         public static object Index(object item, params object[] index) => item == null ? null : IndexAt(item, index);

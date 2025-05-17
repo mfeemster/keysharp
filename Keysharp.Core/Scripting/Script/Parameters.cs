@@ -41,7 +41,7 @@ namespace Keysharp.Scripting
 			for (var i = 0; i < names.Length; i++)
 			{
 				var init = i < values.Length ? values[i] : i < defaults.Length ? defaults[i] : null;
-				Vars[names[i]] = init;
+				script.Vars[names[i]] = init;
 			}
 		}
 	}

@@ -32,6 +32,7 @@ namespace Keysharp.Main
 
 			try
 			{
+				var script = new Script();//One Script object will exist here, then another will be created when the script runs.
 				WindowX.SetProcessDPIAware();
 				CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
 				CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture;
@@ -45,7 +46,7 @@ namespace Keysharp.Main
 				var assembly = false;
 				var assemblyType = "Keysharp.CompiledMain." + Keywords.MainClassName;
 				var assemblyMethod = "Main";
-				var script = string.Empty;
+				var scriptName = string.Empty;
 				var gotscript = false;
 				var fromstdin = false;
 				var validate = false;
@@ -61,10 +62,10 @@ namespace Keysharp.Main
 					{
 						if (!gotscript)//Script name.
 						{
-							script = args[i] == "*" ? "*" : Path.GetFullPath(args[i]);
+							scriptName = args[i] == "*" ? "*" : Path.GetFullPath(args[i]);
 							gotscript = true;
 							scriptArgs = [.. args.Skip(i + 1)];
-							Env.KeysharpArgs = [.. args.Take(i + 1)];
+							script.KeysharpArgs = [.. args.Take(i + 1)];
 							continue;
 						}
 						else//Parameters.
@@ -84,7 +85,7 @@ namespace Keysharp.Main
 							return Message($"{asm.GetName().Version}", false);
 
 						case "validate":
-							Script.ValidateThenExit = validate = true;
+							script.ValidateThenExit = validate = true;
 							break;
 
 						case "about":
@@ -131,7 +132,7 @@ namespace Keysharp.Main
 
 				//Message($"Operating off of script: {script} in current dir: {Environment.CurrentDirectory} for full path: {Path.GetFullPath(script)}", false);
 
-				if (string.IsNullOrEmpty(script))
+				if (string.IsNullOrEmpty(scriptName))
 				{
 					var dirs = new string[]
 					{
@@ -143,7 +144,7 @@ namespace Keysharp.Main
 					{
 						if (File.Exists(dir))
 						{
-							script = dir;
+							scriptName = dir;
 							break;
 						}
 					}
@@ -151,7 +152,7 @@ namespace Keysharp.Main
 
 				if (assembly)
 				{
-					using (var reader = new BinaryReader(script == "*" ? Console.OpenStandardInput() : File.Open(script, FileMode.Open)))
+					using (var reader = new BinaryReader(scriptName == "*" ? Console.OpenStandardInput() : File.Open(scriptName, FileMode.Open)))
 					{
 						int length = reader.ReadInt32();
 						byte[] assemblyBytes = reader.ReadBytes(length);
@@ -163,7 +164,7 @@ namespace Keysharp.Main
 					}
 				}
 
-				if (script == "*")
+				if (scriptName == "*")
 				{
 					fromstdin = true;
 					string s;
@@ -172,27 +173,32 @@ namespace Keysharp.Main
 					while ((s = Console.ReadLine()) != null)
 						sb.AppendLine(s);
 
-					script = sb.ToString();
+					scriptName = sb.ToString();
 				}
 
-				if (string.IsNullOrEmpty(script))
+				if (string.IsNullOrEmpty(scriptName))
 					return Message("No script was specified, no text was read from stdin, and no script named keysharp.ahk was found in the current folder or your documents folder.", true);
 
-				if (!fromstdin && !File.Exists(script))
-					return Message($"Could not find the script file {script}.", true);
+				if (!fromstdin && !File.Exists(scriptName))
+					return Message($"Could not find the script file {scriptName}.", true);
+
+				if (!fromstdin && !File.Exists(scriptName))
+					return Message($"Could not find the script file {scriptName}.", true);
                 /*
 #if DEBUG
-				Core.Debug.OutputDebug($"Creating DOM from {script}");
+				Core.Debug.OutputDebug($"Creating DOM from {scriptName}");
 #endif
+				var (domunits, domerrs) = ch.CreateDomFromFile(scriptName);
+				string namenoext, path, scriptdir;
 				var (domunits, domerrs) = ch.CreateDomFromFile(script);
 				*/
-                var (st, errs) = ch.CreateSyntaxTreeFromFile(script);
+                var (st, errs) = ch.CreateSyntaxTreeFromFile(scriptName);
                 string namenoext, path, scriptdir;
 
 				if (!fromstdin)
 				{
-					namenoext = Path.GetFileNameWithoutExtension(script);
-					scriptdir = Path.GetDirectoryName(script);
+					namenoext = Path.GetFileNameWithoutExtension(scriptName);
+					scriptdir = Path.GetDirectoryName(scriptName);
 					path = $"{scriptdir}{Path.DirectorySeparatorChar}{namenoext}";
 				}
 				else
@@ -203,7 +209,7 @@ namespace Keysharp.Main
 				}
 
 				if (errs.HasErrors)
-					return HandleCompilerErrors(errs, script, path, "Compiling script to DOM");
+					return HandleCompilerErrors(errs, scriptName, path, "Compiling script to DOM");
 
 				/*
 #if DEBUG
@@ -316,7 +322,7 @@ namespace Keysharp.Main
 				}
 				else
 				{
-					return HandleCompilerErrors(results.Diagnostics, script, path, "Compiling C# code to executable", compileexc != null ? compileexc.Message : string.Empty);
+					return HandleCompilerErrors(results.Diagnostics, scriptName, path, "Compiling C# code to executable", compileexc != null ? compileexc.Message : string.Empty);
 				}
 
 				if (validate)

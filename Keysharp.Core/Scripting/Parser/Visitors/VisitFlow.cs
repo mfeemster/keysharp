@@ -994,7 +994,7 @@ namespace Keysharp.Scripting
                             continue;
 					    else if (catchClassText.Equals("Any", StringComparison.OrdinalIgnoreCase))
                             catchClassText = "Error";
-                        if (Reflections.stringToTypes.TryGetValue(catchClassText, out var t))
+                        if (script.ReflectionsData.stringToTypes.TryGetValue(catchClassText, out var t))
                             catchClassText = t.FullName;
                         else
                             catchClassText = "Keysharp.Core." + catchClassText;

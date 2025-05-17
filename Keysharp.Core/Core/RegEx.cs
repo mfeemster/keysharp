@@ -1,13 +1,16 @@
 ﻿namespace Keysharp.Core
 {
+	internal class RegExData
+	{
+		internal readonly Lock locker = new ();
+		internal RegEx.RegexEntry regdkt = [];
+	}
+
 	/// <summary>
 	/// Public interface for regex-related functions.
 	/// </summary>
 	public static class RegEx
 	{
-		internal static readonly Lock locker = new ();
-		internal static RegexEntry regdkt = [];
-
 		/// <summary>
 		/// <see cref="RegExMatch(object, object, ref object, object)"/>
 		/// </summary>
@@ -59,8 +62,9 @@
 			var reverse = index < 1;
 			var str = n + reverse;
 			RegexWithTag exp = null;
+			var regdkt = script.RegExData.regdkt;
 
-			lock (locker)//KeyedCollection is not threadsafe, the way ConcurrentDictionary is, so we must lock. We use KC because we need to preserve order to remove the first entry.
+			lock (script.RegExData.locker)//KeyedCollection is not threadsafe, the way ConcurrentDictionary is, so we must lock. We use KC because we need to preserve order to remove the first entry.
 			{
 				if (!regdkt.TryGetValue(str, out exp))
 				{
@@ -171,8 +175,9 @@
 			var str = needle + reverse;
 			outputVarCount ??= VarRef.Empty;
 			RegexWithTag exp = null;
+			var regdkt = script.RegExData.regdkt;
 
-			lock (locker)//KeyedCollection is not threadsafe, the way ConcurrentDictionary is, so we must lock. We use KeyedCollection because we need to preserve order to remove the first entry.
+			lock (script.RegExData.locker)//KeyedCollection is not threadsafe, the way ConcurrentDictionary is, so we must lock. We use KeyedCollection because we need to preserve order to remove the first entry.
 			{
 				if (!regdkt.TryGetValue(str, out exp))
 				{

@@ -19,11 +19,6 @@
 		protected long dummyHandle;
 
 		/// <summary>
-		/// A global counter of all menus in existence within the script.
-		/// </summary>
-		private static int menuCount = 0;
-
-		/// <summary>
 		/// Click handlers for all menu items within this menu.
 		/// Each item can have more than one click handler.
 		/// </summary>
@@ -83,7 +78,7 @@
 		{
 			MenuItem = (args.Length > 0 ? (ContextMenuStrip)args[0] : null) ?? new ContextMenuStrip();
 			//GetMenu().ImageScalingSize = new System.Drawing.Size(28, 28);//Don't set scaling, it makes the checked icons look funny.
-			var newCount = Interlocked.Increment(ref menuCount);
+			var newCount = Interlocked.Increment(ref script.GuiData.menuCount);
 			GetMenu().Name = $"Menu_{newCount}";
 			dummyHandle = Handle;//Must access the handle once to force creation.
 			return "";
@@ -141,7 +136,7 @@
 			var emptyfunc = (params object[] args) => "";
 			var openfunc = (params object[] args) =>
 			{
-				var mainWindow = Script.mainWindow;
+				var mainWindow = script.mainWindow;
 
 				if (mainWindow != null && A_AllowMainWindow.Ab())
 				{
@@ -169,10 +164,10 @@
 				return "";
 			};
 			//Won't be a gui target, so won't be marked as IsGui internally, but it's ok because it's only ever called on the gui thread in response to gui events.
-			Script.openMenuItem = Add("&Open", new FuncObj(openfunc.Method, openfunc.Target));
+			script.openMenuItem = Add("&Open", new FuncObj(openfunc.Method, openfunc.Target));
 
 			if (!A_AllowMainWindow.Ab())
-				Script.openMenuItem.Visible = false;
+				script.openMenuItem.Visible = false;
 
 			//Need to fill in the event handlers for help and window spy when the proper functionality is implemented.//TODO
 			//_ = Add("&Help", new FuncObj(emptyfunc.Method, emptyfunc.Target));
@@ -193,7 +188,7 @@
 			}
 
 			_ = menu.Items.Add(new ToolStripSeparator());
-			Script.suspendMenuItem = Add("&Suspend Hotkeys", new FuncObj(suspend.Method, suspend.Target));
+			script.suspendMenuItem = Add("&Suspend Hotkeys", new FuncObj(suspend.Method, suspend.Target));
 			_ = Add("&Exit", new FuncObj(exitfunc.Method, exitfunc.Target));
 			return null;
 		}
@@ -379,7 +374,7 @@
 			var _y = y.Ai(Cursor.Position.Y);
 			var pt = new Point(_x, _y);
 
-			if (Mouse.Coords.Menu == CoordModeType.Screen)
+			if (script.Coords.Menu == CoordModeType.Screen)
 				if (Form.ActiveForm is Form form)
 					pt = form.PointToClient(pt);
 

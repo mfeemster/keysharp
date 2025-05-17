@@ -92,7 +92,7 @@
 			item.vk = vk;
 			item.sc = sc;
 			item.eventType = 'i'; // Callers all want this.
-			var win = WindowProvider.Manager.ActiveWindow;
+			var win = script.WindowProvider.Manager.ActiveWindow;
 			var forewin = win.Handle;
 
 			if (forewin != IntPtr.Zero)

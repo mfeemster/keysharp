@@ -11,6 +11,7 @@ namespace Keysharp.Benchmark
 {
 	public class ParserBench : BaseTest
 	{
+		private Keysharp.Scripting.Script _ks_s;
 		private CompilerHelper _ch;
 		private string _filePath;
 		private string _outputDir;
@@ -28,7 +29,8 @@ namespace Keysharp.Benchmark
 		[GlobalSetup]
 		public void Setup()
 		{
-			Variables.InitGlobalVars();
+			_ks_s = new();
+			_ks_s.Vars.InitGlobalVars();
 		}
 	}
 }

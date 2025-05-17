@@ -3,7 +3,7 @@ namespace Keysharp.Core.Common.Window
 {
 	internal class KeysharpActiveX : UserControl
 	{
-		private static bool loadedDll = false;
+		private static bool loadedDll = false;//Ok to keep this static because as long as it's loaded once per process, it's ok.
 
 		/// <summary>
 		/// Required designer variable.
@@ -22,7 +22,6 @@ namespace Keysharp.Core.Common.Window
 
 		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 		internal ComObject Iid { get; private set; }
-
 
 		protected override CreateParams CreateParams
 		{

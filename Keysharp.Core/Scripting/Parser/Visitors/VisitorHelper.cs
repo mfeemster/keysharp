@@ -9,7 +9,9 @@ namespace Keysharp.Scripting
 {
     internal partial class Parser
     {
-        internal static Dictionary<int, SyntaxKind> pureBinaryOperators = new Dictionary<int, SyntaxKind>()
+        internal static ExpressionSyntax VarsNameSyntax = CreateQualifiedName($"{Keywords.MainScriptVariableName}.Vars");
+
+		internal static Dictionary<int, SyntaxKind> pureBinaryOperators = new Dictionary<int, SyntaxKind>()
         {
             {MainParser.Plus, SyntaxKind.AddExpression},
             {MainParser.Minus, SyntaxKind.SubtractExpression},
@@ -71,16 +73,6 @@ namespace Keysharp.Scripting
             {MainParser.VerbalNot, "LogicalNot"},
             {MainParser.BitNot, "BitwiseNot"}
         };
-
-        static Parser()
-        {
-            var anyType = typeof(Any);
-            foreach (var type in Reflections.stringToTypes.Values
-                    .Where(type => type.IsClass && !type.IsAbstract && anyType.IsAssignableFrom(type)))
-            {
-                BuiltinTypes[type.Name] = type;
-            }
-        }
         internal void AddAssembly(string assemblyName, string value)
         {
             assemblies = assemblies.Add(SyntaxFactory.Attribute(
@@ -446,8 +438,8 @@ namespace Keysharp.Scripting
             builtin = IsBuiltInProperty(name, caseSense, true);
             if (builtin != null) return builtin;
 
-            if (Reflections.stringToTypes.ContainsKey(name))
-                return caseSense ? ((Reflections.stringToTypes.FirstOrDefault(item => item.Key.Equals(name, StringComparison.OrdinalIgnoreCase)).Key) == name ? name : null) : name.ToLower();
+            if (script.ReflectionsData.stringToTypes.ContainsKey(name))
+                return caseSense ? ((script.ReflectionsData.stringToTypes.FirstOrDefault(item => item.Key.Equals(name, StringComparison.OrdinalIgnoreCase)).Key) == name ? name : null) : name.ToLower();
 
             return null;
         }
@@ -455,15 +447,15 @@ namespace Keysharp.Scripting
         internal string IsBuiltInProperty(string name, bool caseSense = false, bool ignoreExtensionClass = false)
         {
             KeyValuePair<string, PropertyInfo> match;
-            if (caseSense && Reflections.flatPublicStaticProperties.ContainsKey(name))
+            if (caseSense && script.ReflectionsData.flatPublicStaticProperties.ContainsKey(name))
                 return name;
             else
-                match = Reflections.flatPublicStaticProperties.FirstOrDefault(v => v.Key.Equals(name, StringComparison.OrdinalIgnoreCase));
+                match = script.ReflectionsData.flatPublicStaticProperties.FirstOrDefault(v => v.Key.Equals(name, StringComparison.OrdinalIgnoreCase));
 
             if (!ignoreExtensionClass
                 && match.Key == null
                 && currentClass != null
-                && Reflections.stringToTypeProperties.ContainsKey(name))
+                && script.ReflectionsData.stringToTypeProperties.ContainsKey(name))
             {
                 var baseName = currentClass.Base;
                 while (UserTypes.ContainsKey(baseName))
@@ -473,8 +465,8 @@ namespace Keysharp.Scripting
                     baseName = UserTypes[baseName];
                 }
 
-                if (Reflections.stringToTypeProperties[name].Keys.Any(item => item.Name.Equals(baseName, StringComparison.OrdinalIgnoreCase)))
-                    return Reflections.stringToTypeProperties.FirstOrDefault(item => item.Key.Equals(name, StringComparison.OrdinalIgnoreCase)).Key;
+                if (script.ReflectionsData.stringToTypeProperties[name].Keys.Any(item => item.Name.Equals(baseName, StringComparison.OrdinalIgnoreCase)))
+                    return script.ReflectionsData.stringToTypeProperties.FirstOrDefault(item => item.Key.Equals(name, StringComparison.OrdinalIgnoreCase)).Key;
             }
             return match.Key;
         }
@@ -615,7 +607,7 @@ namespace Keysharp.Scripting
                                     SyntaxFactory.ElementAccessExpression(
                                         SyntaxFactory.MemberAccessExpression(
                                             SyntaxKind.SimpleMemberAccessExpression,
-                                            SyntaxFactory.IdentifierName("Variables"),
+											VarsNameSyntax,
                                             SyntaxFactory.IdentifierName("Statics")
                                         ),
                                         SyntaxFactory.BracketedArgumentList(
@@ -1019,7 +1011,7 @@ namespace Keysharp.Scripting
             builtin = IsBuiltInMethod(normalizedName);
             if (builtin != null) return normalizedName;
 
-            if (Reflections.stringToTypes.ContainsKey(normalizedName))
+            if (script.ReflectionsData.stringToTypes.ContainsKey(normalizedName))
                 return normalizedName;
 
             if (currentFunc.Scope == eScope.Static)
@@ -1053,14 +1045,14 @@ namespace Keysharp.Scripting
 
         internal string PropertyExistsInBuiltinBase(string name)
         {
-            if (Reflections.stringToTypeProperties.TryGetValue(name, out var dttp))
+            if (script.ReflectionsData.stringToTypeProperties.TryGetValue(name, out var dttp))
             {
                 string className = currentClass.Name;
                 while (AllTypes.TryGetValue(className, out string classBase))
                 {
                     className = classBase;
                     if (dttp.Any(t => t.Key.Name == className))
-                        return Reflections.stringToTypeProperties.Keys
+                        return script.ReflectionsData.stringToTypeProperties.Keys
                             .FirstOrDefault(key => string.Equals(key, name, StringComparison.OrdinalIgnoreCase));
                 }
             }
@@ -1452,7 +1444,7 @@ namespace Keysharp.Scripting
                             {
                                 SyntaxFactory.Argument(
                                     GenerateItemAccess(
-                                        SyntaxFactory.IdentifierName("Variables"),
+										VarsNameSyntax,
 										SyntaxFactory.IdentifierName(currentFunc.UserStatic ? "Statics" : "Prototypes"),
                                         SyntaxFactory.TypeOfExpression(
                                             CreateQualifiedName(currentClass.Base) // typeof(MyType)

@@ -15,6 +15,10 @@ namespace Keysharp.Core.Linux
 
 		private XConnectionSingleton XConn;
 
+		internal LinuxKeyboardMouseSender()
+		{
+		}
+
 		public void SetupMapping()
 		{
 			Mapping = new Dictionary<XKeys, Keys>();

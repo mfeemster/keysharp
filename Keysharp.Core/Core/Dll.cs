@@ -1,9 +1,26 @@
 ﻿//#define CONCURRENT
 #define TL
+
 #if WINDOWS
 
 namespace Keysharp.Core
 {
+	internal class DllData
+	{
+#if CONCURRENT
+		internal readonly ConcurrentDictionary<ulong, Delegate> delegateCache = new ();
+		internal readonly ConcurrentDictionary<string, IntPtr> procAddressCache = new (StringComparer.OrdinalIgnoreCase);
+#else
+#if TL
+		internal readonly ThreadLocal<Dictionary<ulong, Delegate>> delegateCache = new (() => new ());
+		internal readonly ThreadLocal<Dictionary<string, IntPtr>> procAddressCache = new (() => new Dictionary<string, IntPtr>(StringComparer.OrdinalIgnoreCase));
+#else
+		internal readonly Dictionary<ulong, Delegate> delegateCache = new ();
+		internal readonly Dictionary<string, IntPtr> procAddressCache = new (StringComparer.OrdinalIgnoreCase);
+#endif
+#endif
+	}
+
 	/// <summary>
 	/// Public interface for DLL-related functions.
 	/// </summary>
@@ -24,29 +41,6 @@ namespace Keysharp.Core
 			{ "comctl32", NativeLibrary.Load("comctl32") },
 			{ "gdi32", NativeLibrary.Load("gdi32") }
 		};
-
-#if CONCURRENT
-		private static readonly ConcurrentDictionary<ulong, Delegate> delegateCache = new ();
-		private static readonly ConcurrentDictionary<string, IntPtr> procAddressCache = new (StringComparer.OrdinalIgnoreCase);
-#else
-#if TL
-		private static readonly ThreadLocal<Dictionary<ulong, Delegate>> delegateCache = new (() => new ());
-		private static readonly ThreadLocal<Dictionary<string, IntPtr>> procAddressCache = new ( () => new Dictionary<string, IntPtr>(StringComparer.OrdinalIgnoreCase));
-#else
-		private static readonly Dictionary<ulong, Delegate> delegateCache = new ();
-		private static readonly Dictionary<string, IntPtr> procAddressCache = new (StringComparer.OrdinalIgnoreCase);
-#endif
-#endif
-		internal static void ClearCache()
-		{
-#if TL
-			delegateCache.Value.Clear();
-			procAddressCache.Value.Clear();
-#else
-			delegateCache.Clear();
-			procAddressCache.Clear();
-#endif
-		}
 
 		/// <summary>
 		/// Creates a <see cref="DelegateHolder"/> object that wraps a <see cref="FuncObj"/>.
@@ -135,6 +129,7 @@ namespace Keysharp.Core
 			{
 				string name;
 				var z = path.LastIndexOf(Path.DirectorySeparatorChar);
+				var procAddressCache = script.DllData.procAddressCache;
 
 				if (z == -1)
 				{
@@ -304,6 +299,7 @@ namespace Keysharp.Core
 		{
 			IntPtr shim = IntPtr.Zero;
 			int n = args.Length;
+			var delegateCache = script.DllData.delegateCache;
 			// pack n (≤ 58) into bits 58–63, mask occupies bits 0–57
 			// this means the maximum argument count is 63 for integer return values, 57 for floating point ones
 			// (this limitation can be eliminated in the future if needed)
@@ -329,8 +325,7 @@ namespace Keysharp.Core
 			// to GPRs, but only if any of the first four args is floating point.
 			if (((mask & 0xFUL) != 0) && RuntimeInformation.ProcessArchitecture == Architecture.X64)
 			{
-				shim = ExecutableMemoryPoolManager.Rent();
-
+				shim = script.ExecutableMemoryPoolManager.Rent();
 				unsafe
 				{
 					byte* ptr = (byte*)shim;
@@ -382,7 +377,7 @@ namespace Keysharp.Core
 				result = ((Func<IntPtr, long[], long>)del)(fnPtr, args);
 
 			if (shim != IntPtr.Zero)
-				ExecutableMemoryPoolManager.Return(shim);
+				script.ExecutableMemoryPoolManager.Return(shim);
 
 			return result;
 		}

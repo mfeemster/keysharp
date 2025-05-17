@@ -24,7 +24,7 @@
 		{
 			Icon icon = null;
 
-			if (Reflections.loadedAssemblies.TryGetValue(path, out var assembly))
+			if (script.ReflectionsData.loadedAssemblies.TryGetValue(path, out var assembly))
 			{
 				icon = LoadIconHelper(assembly, iconName);
 			}

@@ -20,22 +20,22 @@ namespace Keysharp.Core.Common.Threading
 		internal const int SC_MAX = 0x1FF;
 		internal const int VK_ARRAY_COUNT = VK_MAX + 1;
 		internal const int VK_MAX = 0xFF;
+		internal const int KSCM_SIZE = (int)((MODLR_MAX + 1) * SC_ARRAY_COUNT);
+		internal const int KVKM_SIZE = (int)((MODLR_MAX + 1) * VK_ARRAY_COUNT);
 
-		internal static readonly Channel<object> channel = Channel.CreateUnbounded<object>(new UnboundedChannelOptions
+		internal readonly Channel<object> channel = Channel.CreateUnbounded<object>(new UnboundedChannelOptions
 		{
 			SingleReader = true
 		});
 
-		internal static Mutex keybdMutex = null, mouseMutex = null;
-		internal static string KeybdMutexName = "Keysharp Keybd";
-		internal static Dictionary<string, uint> keyToSc = null;
-		internal static Dictionary<string, uint>.AlternateLookup<ReadOnlySpan<char>> keyToScAlt;
-		internal static Dictionary<string, uint> keyToVk = null;
-		internal static Dictionary<string, uint>.AlternateLookup<ReadOnlySpan<char>> keyToVkAlt;
-		internal static int KSCM_SIZE = (int)((MODLR_MAX + 1) * SC_ARRAY_COUNT);
-		internal static int KVKM_SIZE = (int)((MODLR_MAX + 1) * VK_ARRAY_COUNT);
-		internal static string MouseMutexName = "Keysharp Mouse";
-		internal static Dictionary<uint, string> vkToKey = [];
+		internal Mutex keybdMutex = null, mouseMutex = null;
+		internal string KeybdMutexName = "Keysharp Keybd";
+		internal Dictionary<string, uint> keyToSc = null;
+		internal Dictionary<string, uint>.AlternateLookup<ReadOnlySpan<char>> keyToScAlt;
+		internal Dictionary<string, uint> keyToVk = null;
+		internal Dictionary<string, uint>.AlternateLookup<ReadOnlySpan<char>> keyToVkAlt;
+		internal string MouseMutexName = "Keysharp Mouse";
+		internal Dictionary<uint, string> vkToKey = [];
 		internal bool blockWinKeys = false;
 		internal IntPtr hsHwnd = IntPtr.Zero;
 		internal KeyboardMouseSender kbdMsSender = null;
@@ -47,8 +47,7 @@ namespace Keysharp.Core.Common.Threading
 		// and never come back down, thus penalizing performance until the program is restarted:
 		internal KeyType prefixKey = null;
 
-		protected internal static PlatformManagerBase mgr = PlatformProvider.Manager;
-
+		protected internal PlatformManagerBase mgr;
 		// Whether the alt-tab menu was shown by an AltTab hotkey or alt-tab was detected
 		// by the hook.  This might be inaccurate if the menu was displayed before the hook
 		// was installed or the keys weren't detected because of UIPI.  If this turns out to
@@ -83,6 +82,7 @@ namespace Keysharp.Core.Common.Threading
 
 		internal HookThread()
 		{
+			mgr = script.PlatformProvider.Manager;
 		}
 
 		public abstract void SimulateKeyPress(uint key);
@@ -148,6 +148,8 @@ namespace Keysharp.Core.Common.Threading
 
 		internal bool HasMouseHook() => mouseHook != IntPtr.Zero;
 
+		internal virtual object Invoke(Func<object> f) => f();
+
 		internal virtual bool IsHotstringWordChar(char ch) => char.IsLetterOrDigit(ch) ? true : !char.IsWhiteSpace(ch);
 
 		internal abstract bool IsKeyDown(uint vk);
@@ -157,6 +159,8 @@ namespace Keysharp.Core.Common.Threading
 		internal abstract bool IsKeyToggledOn(uint vk);
 
 		internal abstract bool IsMouseVK(uint vk);
+
+		internal virtual bool IsHookThreadRunning() => false;
 
 		internal bool IsReadThreadCompleted()
 		=> channelReadThread != null&&
@@ -298,7 +302,7 @@ namespace Keysharp.Core.Common.Threading
 			return useFallback ? "sc" + sc.ToString("X3") : "";
 		}
 
-		internal void Stop()
+		protected internal virtual void Stop()
 		{
 			if (running)
 			{
@@ -343,6 +347,8 @@ namespace Keysharp.Core.Common.Threading
 		internal abstract bool TextToVKandSC(ReadOnlySpan<char> text, ref uint vk, ref uint sc, ref uint? modifiersLR, IntPtr keybdLayout);
 
 		internal abstract void Unhook();
+
+		internal abstract void Unhook(nint hook);
 
 		internal abstract char VKtoChar(uint vk, IntPtr keybdLayout);
 

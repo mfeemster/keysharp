@@ -16,37 +16,37 @@ namespace Keysharp.Tests
 				ExitApp(0)
 				FileAppend('fail', '*')
 			", "1", true, false, 0)));
-            Flow.ResetState();
-            Assert.IsTrue(HasPassed(RunScript(@"
+			//Flow.ResetState();
+			Assert.IsTrue(HasPassed(RunScript(@"
 				FileAppend('pass', '*')
 				ExitApp(2)
 				FileAppend('fail', '*')
 			", "2", true, false, 2)));
-            Flow.ResetState();
-            Assert.IsTrue(HasPassed(RunScript(@"
+			//Flow.ResetState();
+			Assert.IsTrue(HasPassed(RunScript(@"
 				FileAppend('pass', '*')
 				Exit(0)
 				FileAppend('fail', '*')
 			", "3", true, false, 0)));
-            Flow.ResetState();
-            Assert.IsTrue(HasPassed(RunScript(@"
+			//Flow.ResetState();
+			Assert.IsTrue(HasPassed(RunScript(@"
 				FileAppend('pass', '*')
 				Exit(2)
 				FileAppend('fail', '*')
 			", "4", true, false, 2)));
-            Flow.ResetState();
-            Assert.IsTrue(HasPassed(RunScript(@"
+			//Flow.ResetState();
+			Assert.IsTrue(HasPassed(RunScript(@"
 				SetTimer((*) => FileAppend('pass', '*'), -1)
 				Exit(1)
 			", "5", true, false, 1)));
-            Flow.ResetState();
-            Assert.IsTrue(HasPassed(RunScript(@"
+			//Flow.ResetState();
+			Assert.IsTrue(HasPassed(RunScript(@"
 				SetTimer((*) => (FileAppend('pass', '*'), Exit(3)), -1)
 				Exit(2)
 				FileAppend('fail', '*')
 			", "6", true, false, 3)));
-            Flow.ResetState();
-            Assert.IsTrue(HasPassed(RunScript(@"
+			//Flow.ResetState();
+			Assert.IsTrue(HasPassed(RunScript(@"
 				SetTimer((*) => (FileAppend('pass', '*'), ExitApp(0)), -1)
 				SomeLabel:
 				Sleep(1)
@@ -60,14 +60,13 @@ namespace Keysharp.Tests
         [Test, Category("Flow")]
         public void FlowIf() => Assert.IsTrue(TestScript("flow-if", true));
 
-        [Test, Category("Flow"), NonParallelizable]
-        public void FlowLoop()
-        {
-            _ = Flow.Init();
-            const long n = 10L;
-            var x = 0L;
-            Assert.AreEqual(0L, Accessors.A_Index);
-            _ = Push();
+		[Test, Category("Flow"), NonParallelizable]
+		public void FlowLoop()
+		{
+			const long n = 10L;
+			var x = 0L;
+			Assert.AreEqual(0L, Accessors.A_Index);
+			_ = Push();
 
             foreach (long i in Loop(n))
             {
@@ -102,18 +101,16 @@ namespace Keysharp.Tests
         public void FlowLoopRead() => Assert.IsTrue(TestScript("flow-loop-read", true));
 
 #if WINDOWS
-        [Test, Category("Flow")]
-        public void FlowLoopReg()
-        {
-            _ = Flow.Init();
-
-            try
-            {
-                Registrys.RegDeleteKey(@"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest");
-            }
-            catch
-            {
-            }
+		[Test, Category("Flow")]
+		public void FlowLoopReg()
+		{
+			try
+			{
+				Registrys.RegDeleteKey(@"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest");
+			}
+			catch
+			{
+			}
 
             //
             _ = Registrys.RegWrite("ksdefval", "REG_SZ", @"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest", "");
@@ -254,14 +251,13 @@ namespace Keysharp.Tests
         [Test, Category("Flow")]
         public void FlowUntil() => Assert.IsTrue(TestScript("flow-until", true));
 
-        [Test, Category("Flow"), NonParallelizable]
-        public void FlowWhile()
-        {
-            _ = Flow.Init();
-            const long n = 10L;
-            var x = 0L;
-            Assert.AreEqual(0L, Accessors.A_Index);
-            _ = Push();
+		[Test, Category("Flow"), NonParallelizable]
+		public void FlowWhile()
+		{
+			const long n = 10L;
+			var x = 0L;
+			Assert.AreEqual(0L, Accessors.A_Index);
+			_ = Push();
 
             foreach (long i in Loop(n))
             {

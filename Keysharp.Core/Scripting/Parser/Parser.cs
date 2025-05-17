@@ -1,4 +1,3 @@
-using slmd = System.Collections.Generic.Dictionary<string, System.Collections.Generic.List<System.CodeDom.CodeMethodInvokeExpression>>;
 using tsmd = System.Collections.Generic.Dictionary<System.CodeDom.CodeTypeDeclaration, System.Collections.Generic.Dictionary<string, System.Collections.Generic.List<System.CodeDom.CodeMethodInvokeExpression>>>;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -158,6 +157,7 @@ namespace Keysharp.Scripting
 		internal CodeStatementCollection initial = [];//These are placed at the very beginning of Main().
 		internal List<string> mainFuncInitial = new();
 		internal string name = string.Empty;
+
 		internal bool noTrayIcon;
 		internal bool persistent;
 		internal bool persistentValueSetByUser;
@@ -215,7 +215,21 @@ namespace Keysharp.Scripting
         public HashSet<string> globalVars = [];
         public HashSet<string> accessibleVars = [];
 
-		public static Dictionary<string, Type> BuiltinTypes = new(StringComparer.OrdinalIgnoreCase);
+        public static Dictionary<string, Type> _builtinTypes = null;
+		public static Dictionary<string, Type> BuiltinTypes
+        {
+            get
+            {
+                if (_builtinTypes != null)
+                    return _builtinTypes;
+                _builtinTypes = new (StringComparer.OrdinalIgnoreCase);
+				var anyType = typeof(Any);
+				foreach (var type in script.ReflectionsData.stringToTypes.Values
+						.Where(type => type.IsClass && !type.IsAbstract && anyType.IsAssignableFrom(type)))
+					_builtinTypes[type.Name] = type;
+				return _builtinTypes;
+			}
+        }
         public Dictionary<string, string> AllTypes = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         public Dictionary<string, string> UserTypes = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         public HashSet<string> UserFuncs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -439,7 +453,7 @@ namespace Keysharp.Scripting
                     // Create the object creation expression:
                     //   new Keysharp.Scripting.Script.Variables.Dereference()
                     ObjectCreationExpressionSyntax newExpr = SyntaxFactory.ObjectCreationExpression(
-                            SyntaxFactory.ParseTypeName("Keysharp.Scripting.Script.Variables.Dereference"))
+                            SyntaxFactory.ParseTypeName("Keysharp.Scripting.Variables.Dereference"))
                         .WithArgumentList(SyntaxFactory.ArgumentList(SyntaxFactory.SeparatedList(arguments)));
 
                     // Create the variable declarator for _ks_Derefs with its initializer.
@@ -447,8 +461,8 @@ namespace Keysharp.Scripting
                             SyntaxFactory.Identifier(InternalPrefix + "Derefs"))
                         .WithInitializer(SyntaxFactory.EqualsValueClause(newExpr));
 
-                    // Create the variable declaration: "Dereference _ks_Derefs = new Keysharp.Scripting.Script.Variables.Dereference();"
-                    VariableDeclarationSyntax varDeclaration = SyntaxFactory.VariableDeclaration(SyntaxFactory.ParseTypeName("Keysharp.Scripting.Script.Variables.Dereference"))
+                    // Create the variable declaration: "Dereference _ks_Derefs = new Keysharp.Scripting.Variables.Dereference();"
+                    VariableDeclarationSyntax varDeclaration = SyntaxFactory.VariableDeclaration(SyntaxFactory.ParseTypeName("Keysharp.Scripting.Variables.Dereference"))
                         .WithVariables(SyntaxFactory.SingletonSeparatedList(varDeclarator));
 
                     statements.Add(SyntaxFactory.LocalDeclarationStatement(varDeclaration));

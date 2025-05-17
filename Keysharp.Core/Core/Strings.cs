@@ -85,6 +85,19 @@ namespace Keysharp.Core
 		public static long StartsWith(object str, object str2, object ignoreCase = null) => str.As().StartsWith(str2.As(), ignoreCase.Ab() ? StringComparison.CurrentCulture : StringComparison.CurrentCultureIgnoreCase) ? 1L : 0L;
 	}
 
+	internal class StringsData
+	{
+		internal ConcurrentDictionary<nint, GCHandle> gcHandles = [];
+
+		~StringsData() => Free();
+
+		internal void Free()
+		{
+			foreach (var kv in gcHandles)
+				kv.Value.Free();
+		}
+	}
+
 	/// <summary>
 	/// Public interface for strings-related functions.
 	/// </summary>
@@ -1119,10 +1132,10 @@ namespace Keysharp.Core
 			var gch = GCHandle.Alloc(value, GCHandleType.Pinned);
 			var ptr = gch.AddrOfPinnedObject();
 
-			if (Script.gcHandles.Remove(ptr, out var oldGch))
+			if (script.StringsData.gcHandles.Remove(ptr, out var oldGch))
 				oldGch.Free();
 
-			Script.gcHandles[ptr] = gch;
+			script.StringsData.gcHandles[ptr] = gch;
 			return ptr;
 		}
 

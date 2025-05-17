@@ -21,6 +21,7 @@ namespace Keysharp.Benchmark
 		private Dictionary<object, object> dkt = [];
 		private Map map = Collections.Map(), mapScript = Collections.Map();
 		private List<string> strings = [];
+		private Keysharp.Scripting.Script _ks_s;
 
 		[Params(100000)]
 		public int Size { get; set; }
@@ -49,7 +50,7 @@ namespace Keysharp.Benchmark
 		[GlobalSetup]
 		public void Setup()
 		{
-			Variables.InitGlobalVars();
+			_ks_s = new ();
 			map = Collections.Map();
 			mapScript = Collections.Map();
 			dkt = [];
@@ -71,13 +72,14 @@ namespace Keysharp.Benchmark
 		private readonly Dictionary<object, object> dkt = [];
 		private readonly Map map = Collections.Map(), mapScript = Collections.Map();
 		private readonly List<string> strings = [];
+		private Keysharp.Scripting.Script _ks_s;
 
 		[Params(100000)]
 		public int Size { get; set; }
 
 		public MapWriteBenchmark()
 		{
-			Variables.InitGlobalVars();
+			_ks_s = new ();
 			map = Collections.Map();
 			mapScript = Collections.Map();
 			dkt = [];

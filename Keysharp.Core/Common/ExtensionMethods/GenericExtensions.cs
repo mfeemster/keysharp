@@ -198,7 +198,7 @@
 				//lock (ehLock)
 				{
 					var oldEventInfo = A_EventInfo;
-					var (pushed, tv) = Threads.BeginThread();
+					var (pushed, tv) = script.Threads.BeginThread();
 
 					if (pushed)//If we've exceeded the number of allowable threads, then just do nothing.
 					{
@@ -206,7 +206,7 @@
 						_ = Flow.TryCatch(() =>
 						{
 							if (inst is Control ctrl && ctrl.FindForm() is Form form)
-								Script.HwndLastUsed = form.Handle;
+								script.HwndLastUsed = form.Handle;
 
 							foreach (var handler in handlers)
 							{
@@ -219,7 +219,7 @@
 								}
 							}
 
-							_ = Threads.EndThread(true);
+							_ = script.Threads.EndThread(true);
 						}, true);//Pop on exception because EndThread() above won't be called.
 					}
 				}

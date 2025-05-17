@@ -1,8 +1,38 @@
 ﻿namespace Keysharp.Core.Common.Containers
 {
-    public class KeysharpEnumerator
+
+	internal class BaseIteratorData<T>
+	{
+		/// <summary>
+		/// Cache for iterators with either 1 or 2 parameters.
+		/// This prevents reflection from having to always be done to find the Call method.
+		/// </summary>
+		internal FuncObj p1, p2;
+
+		/// <summary>
+		/// Static constructor to initialize function objects.
+		/// </summary>
+		internal BaseIteratorData()
+		{
+			Error err;
+			var mi1 = Reflections.FindAndCacheMethod(typeof(T), "Call", 1);
+			p1 = new FuncObj(mi1, null);
+
+			if (!p1.IsValid)
+				_ = Errors.ErrorOccurred(err = new MethodError($"Existing function object p1 for type {typeof(T)} was invalid.")) ? throw err : "";
+
+			var mi2 = Reflections.FindAndCacheMethod(typeof(T), "Call", 2);
+			p2 = new FuncObj(mi2, null);
+
+			if (!p2.IsValid)
+				_ = Errors.ErrorOccurred(err = new MethodError($"Existing function object p2 for type {typeof(T)} was invalid.")) ? throw err : "";
+		}
+	}
+
+	public class KeysharpEnumerator
 	{
 		public IFuncObj fo;
+		private object[] args;
 
 		/// <summary>
 		/// The number of items to return for each iteration. Allowed values are 1 and 2:
@@ -11,10 +41,13 @@
 		/// </summary>
 		public int Count { get; private set; }
 
+		public IFuncObj CallFunc { get; protected set; }
+
 		public KeysharpEnumerator(IFuncObj f, int count)
 		{
 			fo = f;
 			Count = count;//Unsure what happens when this differs from the number of parameters fo expects. MethodPropertyHolder probably just fills them in.
+			args = new object[count];
 		}
 
 		/*
@@ -65,7 +98,17 @@
 
 		    File.WriteAllText("./enumcalls.txt", sb.ToString());
 		*/
-		public virtual object Call(params object[] args) => fo.Call(args);
+		public virtual object Call(params object[] args)
+		{
+			try
+			{
+				return fo.Call(args);
+			}
+			catch (Exception e)
+			{
+				throw new Error(e.Message);
+			}
+		}
 
 		public virtual object Call(object ovar1)
 		{

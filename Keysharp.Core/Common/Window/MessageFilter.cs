@@ -4,21 +4,21 @@
 	{
 		public bool PreFilterMessage(ref Message m)
 		{
-			if (GuiHelper.onMessageHandlers.TryGetValue(m.Msg, out var monitor))
+			if (script.GuiData.onMessageHandlers.TryGetValue(m.Msg, out var monitor))
 			{
-				var tv = Threads.GetThreadVariables();
+				var tv = script.Threads.GetThreadVariables();
 
-				if (!Threads.AnyThreadsAvailable() || tv.priority > 0)
+				if (!script.Threads.AnyThreadsAvailable() || tv.priority > 0)
 					return false;
 
 				if (monitor.instanceCount >= monitor.maxInstances)
 					return false;
 
 #if WINDOWS
-				Script.HwndLastUsed = WindowsAPI.GetNonChildParent(m.HWnd);//Assign parent window as the last found window (it's ok if it's hidden).
+				script.HwndLastUsed = WindowsAPI.GetNonChildParent(m.HWnd);//Assign parent window as the last found window (it's ok if it's hidden).
 #endif
 				var now = DateTime.UtcNow;
-				Script.lastPeekTime = now;
+				script.lastPeekTime = now;
 				A_EventInfo = now;//AHK used msg.time, but the C# version does not have a time field.
 				monitor.instanceCount++;
 				object res = null;

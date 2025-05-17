@@ -1,16 +1,8 @@
 ﻿#if WINDOWS
 namespace Keysharp.Core.COM
 {
-	internal class ComMethodInfo
+	public unsafe class ComMethodPropertyHolder : MethodPropertyHolder
 	{
-		internal ParameterModifier[] modifiers;
-		internal Type[] expectedTypes;
-	}
-
-	unsafe public class ComMethodPropertyHolder : MethodPropertyHolder
-	{
-		static Dictionary<object, Dictionary<string, ComMethodInfo>> comMethodCache = [];
-
 		public string Name { get; private set; }
 
 		public ComMethodPropertyHolder(string name)
@@ -52,7 +44,6 @@ namespace Keysharp.Core.COM
 			};
 		}
 
-
 		///<summary>
 		///Dynamically invokes a COM method by querying all available type-info interfaces on the COM object.
 		///It locates an ITypeInfo that defines the method, retrieves the FUNCDESC to determine expected parameter
@@ -75,7 +66,7 @@ namespace Keysharp.Core.COM
 				ParameterModifier[] modifiers = null;
 				Dictionary<int, object> refs = new();
 
-				if (comMethodCache.TryGetValue(comObject, out var objDkt))
+				if (script.ComMethodData.comMethodCache.TryGetValue(comObject, out var objDkt))
 				{
 					if (objDkt.TryGetValue(methodName, out var cmi))
 					{
@@ -285,7 +276,7 @@ namespace Keysharp.Core.COM
 				//If no exception thrown and it wasn't cached, cache the info.
 				if (!found)
 				{
-					_ = comMethodCache.GetOrAdd(comObject).GetOrAdd(methodName, new ComMethodInfo()
+					_ = script.ComMethodData.comMethodCache.GetOrAdd(comObject).GetOrAdd(methodName, new ComMethodInfo()
 					{
 						modifiers = modifiers,
 						expectedTypes = expectedTypes
@@ -315,6 +306,17 @@ namespace Keysharp.Core.COM
 				return Errors.ErrorOccurred(err = new TypeError($"COM call to '{methodName}()' failed: {ex.Message}.")) ? throw err : null;
 			}
 		}
+	}
+
+	internal class ComMethodData
+	{
+		internal Dictionary<object, Dictionary<string, ComMethodInfo>> comMethodCache = [];
+	}
+
+	internal class ComMethodInfo
+	{
+		internal Type[] expectedTypes;
+		internal ParameterModifier[] modifiers;
 	}
 }
 

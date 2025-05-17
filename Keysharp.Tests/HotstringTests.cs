@@ -23,8 +23,8 @@ namespace Keysharp.Tests
 			var filename = string.Format("..{0}..{0}..{0}Keysharp.Tests{0}HotstringTests.txt", Path.DirectorySeparatorChar);
 			var hotstrings = File.ReadLines(filename);
 			var delimiters = new char[] { ',' };
-			HotstringManager.ClearHotstrings();
-			HotstringManager.RestoreDefaults(true);
+			hsm.ClearHotstrings();
+			hsm.RestoreDefaults(true);
 			_ = Keyboard.Hotstring("Reset");
 
 			foreach (var hotstring in hotstrings)
@@ -32,24 +32,24 @@ namespace Keysharp.Tests
 				var splits = hotstring.Split(delimiters, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 				var split0 = splits[0].Substring(splits[0].IndexOf('(') + 1).Trim('"');
 				var split3 = splits[3].Trim('"');
-				hs1 = HotstringManager.AddHotstring(split0, null, splits[2].Trim('"'), split3, splits[4].Trim('"'), false);
-				System.Diagnostics.Debug.WriteLine(split0);
+				hs1 = Keysharp.Core.Common.Keyboard.HotstringManager.AddHotstring(split0, null, splits[2].Trim('"'), split3, splits[4].Trim('"'), false);
+				//System.Diagnostics.Debug.WriteLine(split0);
 
 				if (!split0.Contains('*'))
 					val = split3 + " ";
 				else
 					val = split3;
 
-				HotstringManager.AddChars(val);
-				hs2 = HotstringManager.MatchHotstring();//Test as is.
+				hsm.AddChars(val);
+				hs2 = hsm.MatchHotstring();//Test as is.
 				Assert.AreEqual(hs1, hs2);
 				//
 				_ = Keyboard.Hotstring("Reset");
-				HotstringManager.AddChars(Guid.NewGuid() + " " + val);//Test with text before it.
-				hs2 = HotstringManager.MatchHotstring();
+				hsm.AddChars(Guid.NewGuid() + " " + val);//Test with text before it.
+				hs2 = hsm.MatchHotstring();
 				Assert.AreEqual(hs1, hs2);
 				_ = Keyboard.Hotstring("Reset");
-				hs2 = HotstringManager.MatchHotstring();
+				hs2 = hsm.MatchHotstring();
 				Assert.AreEqual(null, hs2);
 				//Need to ensure the other tests with ? and * work.
 				var opts = split0.Substring(1, split0.IndexOf(':', 1) - 1);
@@ -84,7 +84,7 @@ namespace Keysharp.Tests
 		[Test, Category("Hotstring"), NonParallelizable]
 		public void ChangeDefaultOptions()
 		{
-			HotstringManager.RestoreDefaults(true);
+			hsm.RestoreDefaults(true);
 			//End char required.
 			var newVal = false;
 			var origVal = A_DefaultHotstringEndCharRequired;
@@ -311,7 +311,7 @@ namespace Keysharp.Tests
 		[Test, Category("Hotstring"), NonParallelizable]
 		public void ChangeEndChars()
 		{
-			HotstringManager.RestoreDefaults(true);
+			hsm.RestoreDefaults(true);
 			var newVal = "newendchars";
 			var origVal = A_DefaultHotstringEndChars;
 			Assert.AreEqual(origVal, "-()[]{}:;'\"/\\,.?!\r\n \t");
@@ -326,17 +326,17 @@ namespace Keysharp.Tests
 		{
 			//Can't seem to simulate uppercase here, so we can't test case sensitive hotstrings.
 			btwtyped = false;
-			HotstringManager.ClearHotstrings();
-			HotstringManager.RestoreDefaults(true);
+			hsm.ClearHotstrings();
+			hsm.RestoreDefaults(true);
 			_ = Keyboard.Hotstring("Reset");
-			_ = HotstringManager.AddHotstring("::btw", Functions.Func("label_9F201721", (object)null), ":btw", "btw", "", false);
+			_ = Keysharp.Core.Common.Keyboard.HotstringManager.AddHotstring("::btw", Functions.Func("label_9F201721", null), ":btw", "btw", "", false);
 			HotkeyDefinition.ManifestAllHotkeysHotstringsHooks();
 			Assert.IsTrue(A_KeybdHookInstalled == 1L);//Will fail if system has another hook, so exit your scripts before running this.
 			Assert.IsTrue(A_MouseHookInstalled == 1L);//Because there is a hotstring and mouse reset is true by default, the mouse hook gets installed.
-			Script.SimulateKeyPress((uint)Keys.B);
-			Script.SimulateKeyPress((uint)Keys.T);
-			Script.SimulateKeyPress((uint)Keys.W);
-			Script.SimulateKeyPress((uint)Keys.Enter);
+			s.SimulateKeyPress((uint)Keys.B);
+			s.SimulateKeyPress((uint)Keys.T);
+			s.SimulateKeyPress((uint)Keys.W);
+			s.SimulateKeyPress((uint)Keys.Enter);
 			Thread.Sleep(2000);
 			Assert.AreEqual(btwtyped, true);
 		}
@@ -408,37 +408,37 @@ namespace Keysharp.Tests
 		[Test, Category("Hotstring"), NonParallelizable]
 		public void HotstringParsing2()
 		{
-			var filename = string.Format("hotstring-parsing2", Path.DirectorySeparatorChar);
+			var filename = "hotstring-parsing2";
 			_ = TestScript(filename, false);
 			//After the script exits, the hotstrings are still kept in memory in the global list.
 			//So query them below to ensure they were properly parsed.
 			_ = Keyboard.Hotstring("Reset");
-			HotstringManager.AddChars("bitw ");
-			var hs = HotstringManager.MatchHotstring();
+			hsm.AddChars("bitw ");
+			var hs = hsm.MatchHotstring();
 			Assert.AreEqual(hs.Name, "::bitw");
 			Assert.AreEqual(hs.Replacement, "biggest in the world");
 			_ = Keyboard.Hotstring("Reset");
 			//
-			HotstringManager.AddChars("1 ");
-			hs = HotstringManager.MatchHotstring();
+			hsm.AddChars("1 ");
+			hs = hsm.MatchHotstring();
 			Assert.AreEqual(hs.Name, "::1");
 			Assert.AreEqual(hs.Replacement, ":2");
 			_ = Keyboard.Hotstring("Reset");
 			//
-			HotstringManager.AddChars("3 ");
-			hs = HotstringManager.MatchHotstring();
+			hsm.AddChars("3 ");
+			hs = hsm.MatchHotstring();
 			Assert.AreEqual(hs.Name, "::3");
 			Assert.AreEqual(hs.Replacement, "::4");
 			_ = Keyboard.Hotstring("Reset");
 			//
-			HotstringManager.AddChars("5: ");
-			hs = HotstringManager.MatchHotstring();
+			hsm.AddChars("5: ");
+			hs = hsm.MatchHotstring();
 			Assert.AreEqual(hs.Name, "::5:");
 			Assert.AreEqual(hs.Replacement, "6");
 			_ = Keyboard.Hotstring("Reset");
 			//
-			HotstringManager.AddChars("7: ");
-			hs = HotstringManager.MatchHotstring();
+			hsm.AddChars("7: ");
+			hs = hsm.MatchHotstring();
 			Assert.AreEqual(hs.Name, "::7:");
 			Assert.AreEqual(hs.Replacement, ":8");
 			_ = Keyboard.Hotstring("Reset");
@@ -447,60 +447,60 @@ namespace Keysharp.Tests
 					  ", the hard carriage return (Enter) between the previous line and this one is als" +
 					  "o preserved.\r\n    By default, the indentation (tab) to the left of this line is " +
 					  "preserved.";
-			HotstringManager.AddChars("text1 ");
-			hs = HotstringManager.MatchHotstring();
+			hsm.AddChars("text1 ");
+			hs = hsm.MatchHotstring();
 			Assert.AreEqual(hs.Name, "::text1");
 			Assert.AreEqual(hs.Replacement, val);
 			//
 			_ = Keyboard.Hotstring("Reset");
-			HotstringManager.AddChars("mf1 ");
-			hs = HotstringManager.MatchHotstring();
+			hsm.AddChars("mf1 ");
+			hs = hsm.MatchHotstring();
 			Assert.AreEqual(hs.Name, ":X:mf1");
 			Assert.AreEqual(hs.Replacement, null);
 			//
 			_ = Keyboard.Hotstring("Reset");
-			HotstringManager.AddChars("mf2 ");
-			hs = HotstringManager.MatchHotstring();
+			hsm.AddChars("mf2 ");
+			hs = hsm.MatchHotstring();
 			Assert.AreEqual(hs.Name, ":X:mf2");
 			Assert.AreEqual(hs.Replacement, null);
 			//
 			_ = Keyboard.Hotstring("Reset");
-			HotstringManager.AddChars("mf3 ");
-			hs = HotstringManager.MatchHotstring();
+			hsm.AddChars("mf3 ");
+			hs = hsm.MatchHotstring();
 			Assert.AreEqual(hs.Name, ":X:mf3");
 			Assert.AreEqual(hs.Replacement, null);
 			//
 			_ = Keyboard.Hotstring("Reset");
-			HotstringManager.AddChars("mf4 ");
-			hs = HotstringManager.MatchHotstring();
+			hsm.AddChars("mf4 ");
+			hs = hsm.MatchHotstring();
 			Assert.AreEqual(hs.Name, "::mf4");
 			Assert.AreEqual(hs.Replacement, null);
 			//
 			_ = Keyboard.Hotstring("Reset");
-			HotstringManager.AddChars("mf5 ");
-			hs = HotstringManager.MatchHotstring();
+			hsm.AddChars("mf5 ");
+			hs = hsm.MatchHotstring();
 			Assert.AreEqual(hs.Name, "::mf5");
 			Assert.AreEqual(hs.Replacement, null);
 			//
 			_ = Keyboard.Hotstring("Reset");
-			HotstringManager.AddChars("mf6 ");
-			hs = HotstringManager.MatchHotstring();
+			hsm.AddChars("mf6 ");
+			hs = hsm.MatchHotstring();
 			Assert.AreEqual(hs.Name, "::mf6");
 			Assert.AreEqual(hs.Replacement, null);
 			//
 			_ = Keyboard.Hotstring("Reset");
-			HotstringManager.AddChars("mf7 ");
-			hs = HotstringManager.MatchHotstring();
+			hsm.AddChars("mf7 ");
+			hs = hsm.MatchHotstring();
 			Assert.AreEqual(hs.Name, ":X:mf7");
 			Assert.AreEqual(hs.Replacement, null);
 			//
 			_ = Keyboard.Hotstring("Reset");
-			HotstringManager.AddChars("mf8 ");
-			hs = HotstringManager.MatchHotstring();
+			hsm.AddChars("mf8 ");
+			hs = hsm.MatchHotstring();
 			Assert.AreEqual(hs.Name, "::mf8");
 			Assert.AreEqual(hs.Replacement, null);
 			//
-			HotstringManager.ClearHotstrings();
+			hsm.ClearHotstrings();
 		}
 
 		[Test, Category("Hotstring"), NonParallelizable]
@@ -536,12 +536,12 @@ namespace Keysharp.Tests
 		[Test, Category("Hotstring"), NonParallelizable]
 		public void ResetInputBuffer()
 		{
-			HotstringManager.AddChars("asdf");
-			var origVal = HotstringManager.CurrentInputBuffer;
+			hsm.AddChars("asdf");
+			var origVal = hsm.CurrentInputBuffer;
 			Assert.AreEqual(origVal, "asdf");
 			origVal = Keyboard.Hotstring("Reset") as string;
 			Assert.AreEqual(origVal, "asdf");
-			var newVal = HotstringManager.CurrentInputBuffer;
+			var newVal = hsm.CurrentInputBuffer;
 			Assert.AreNotEqual(origVal, newVal);
 			Assert.AreEqual(newVal, "");
 		}
@@ -549,7 +549,7 @@ namespace Keysharp.Tests
 		[Test, Category("Hotstring"), NonParallelizable]
 		public void ResetOnMouseClick()
 		{
-			HotstringManager.RestoreDefaults(true);
+			hsm.RestoreDefaults(true);
 			var newVal = false;
 			var origVal = A_DefaultHotstringNoMouse;
 			Assert.AreEqual(origVal, false);
@@ -577,8 +577,8 @@ namespace Keysharp.Tests
 			_ = Keyboard.Hotstring("K0");
 			_ = Keyboard.Hotstring("P0");
 			_ = Keyboard.Hotstring("EndChars", "-()[]{}:;'\"/\\,.?!\r\n \t");
-			HotstringManager.RestoreDefaults(true);
-			HotstringManager.ClearHotstrings();
+			hsm.RestoreDefaults(true);
+			hsm.ClearHotstrings();
 		}
 	}
 }

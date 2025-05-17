@@ -1389,9 +1389,10 @@ namespace Keysharp.Core.Windows
 		{
 			var threadsAreAttached = false;
 			var targetThread = GetWindowThreadProcessId(targetWindow, out _);
+			var pd = script.ProcessesData;
 
-			if (targetThread != 0 && targetThread != Processes.CurrentThreadID && !IsHungAppWindow(targetWindow))
-				threadsAreAttached = AttachThreadInput(Processes.CurrentThreadID, targetThread, true);
+			if (targetThread != 0 && targetThread != pd.CurrentThreadID && !IsHungAppWindow(targetWindow))
+				threadsAreAttached = AttachThreadInput(pd.CurrentThreadID, targetThread, true);
 
 			if (setActive)
 				_ = SetActiveWindow(targetWindow);
@@ -1402,7 +1403,7 @@ namespace Keysharp.Core.Windows
 		internal static void DetachThreadInput(bool threadsAreAttached, uint targetThread)
 		{
 			if (threadsAreAttached)
-				_ = AttachThreadInput(Processes.CurrentThreadID, targetThread, false);
+				_ = AttachThreadInput(script.ProcessesData.CurrentThreadID, targetThread, false);
 		}
 
 		internal static IntPtr AllocInterProcMem(uint size, IntPtr hwnd, ProcessAccessTypes extraAccess, out IntPtr handle)

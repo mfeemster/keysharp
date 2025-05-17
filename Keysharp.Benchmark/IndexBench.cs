@@ -10,6 +10,7 @@ namespace Keysharp.Benchmark
 		private object[] nativearray = System.Array.Empty<object>();
 		private double[] nativedoublearray = System.Array.Empty<double>();
 		private double totalSum;
+		private Keysharp.Scripting.Script _ks_s;
 
 		[Params(500000)]
 		public int Size { get; set; }
@@ -117,7 +118,7 @@ namespace Keysharp.Benchmark
 		[GlobalSetup]
 		public void Setup()
 		{
-			Variables.InitGlobalVars();
+			_ks_s  = new ();
 			totalSum = 0;
 			Size = 1000000;
 			nativearray = new object[Size];
@@ -145,6 +146,7 @@ namespace Keysharp.Benchmark
 		private Keysharp.Core.Array keysharparray = Collections.Array();
 		private List<object> nativelist = [];
 		private readonly object o = 123L;
+		private Keysharp.Scripting.Script _ks_s;
 
 		[Params(500000)]
 		public int Size { get; set; }
@@ -227,7 +229,7 @@ namespace Keysharp.Benchmark
 		[GlobalSetup]
 		public void Setup()
 		{
-			Variables.InitGlobalVars();
+			_ks_s = new ();
 			Size = 500000;
 			nativelist = [];
 			keysharparray = Collections.Array();

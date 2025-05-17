@@ -4,18 +4,16 @@ namespace Keysharp.Core
 {
 	public static class GuiHelper
 	{
-		internal static ConcurrentDictionary<long, MsgMonitor> onMessageHandlers = new ();
-
 		internal static string DefaultGuiId
 		{
-			get => Threads.GetThreadVariables().defaultGui ?? "1";
-			set => Threads.GetThreadVariables().defaultGui = value;
+			get => script.Threads.GetThreadVariables().defaultGui ?? "1";
+			set => script.Threads.GetThreadVariables().defaultGui = value;
 		}
 
 		internal static Form DialogOwner
 		{
-			get => Threads.GetThreadVariables().dialogOwner;
-			set => Threads.GetThreadVariables().dialogOwner = value;
+			get => script.Threads.GetThreadVariables().dialogOwner;
+			set => script.Threads.GetThreadVariables().dialogOwner = value;
 		}
 
 		public static Gui Gui(object obj0 = null, object obj1 = null, object obj2 = null) => new ([obj0, obj1, obj2]);
@@ -33,8 +31,9 @@ namespace Keysharp.Core
 		{
 			var hwnd = obj0.Al();
 			var recurse = obj1.Ab();
+			var allGuiHwnds = script.GuiData.allGuiHwnds;
 
-			if (Core.Gui.allGuiHwnds.TryGetValue(hwnd, out var gui))
+			if (allGuiHwnds.TryGetValue(hwnd, out var gui))
 				return gui;
 
 			foreach (Form f in Application.OpenForms.Cast<Form>())
@@ -54,7 +53,7 @@ namespace Keysharp.Core
 				{
 					while (c.Parent is Control cp)
 					{
-						if (Core.Gui.allGuiHwnds.TryGetValue(cp.Handle.ToInt64(), out gui))
+						if (allGuiHwnds.TryGetValue(cp.Handle.ToInt64(), out gui))
 							return gui;
 
 						c = cp;

@@ -29,16 +29,16 @@ namespace Keysharp.Core.Common.ObjectBase
 		{
 			// Skip Map and OwnPropsMap because SetPropertyValue will cause recursive stack overflow
 			// (if the property doesn't exist then a new Map is created which calls this function again)
-			if (Script.Variables.Prototypes == null || SkipConstructorLogic
+			if (script.Vars.Prototypes == null || SkipConstructorLogic
                 // Hack way to check that Prototypes/Statics are initialized
-                || Script.Variables.Statics.Count < 10)
+                || script.Vars.Statics.Count < 10)
             {
 				__New(args);
 				return;
 			}
 
             var t = GetType();
-            Script.Variables.Statics.TryGetValue(t, out KeysharpObject value);
+			script.Vars.Statics.TryGetValue(t, out KeysharpObject value);
 			if (value == null)
 			{
 				__New(args);

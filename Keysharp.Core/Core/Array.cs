@@ -837,6 +837,10 @@
 		}
 	}
 
+	internal class ArrayIndexValueIteratorData : BaseIteratorData<ArrayIndexValueIterator>
+	{
+	}
+
 	/// <summary>
 	/// A two component iterator for <see cref="Array"/> which returns the value and the 1-based index the
 	/// value was at as a tuple.
@@ -852,12 +856,6 @@
 		/// The current 0-based position the iterator is at.
 		/// </summary>
 		private int position = -1;
-
-		/// <summary>
-		/// Cache for iterators with either 1 or 2 parameters.
-		/// This prevents reflection from having to always be done to find the Call method.
-		/// </summary>
-		private static FuncObj p1, p2;
 
 		/// <summary>
 		/// The implementation for <see cref="IEnumerator.Current"/> which gets the index,value tuple at the current iterator position.
@@ -894,32 +892,13 @@
 			: base(null, c)
 		{
 			arr = a;
-			var p = c <= 1 ? p1 : p2;
+			var p = c <= 1 ? script.ArrayIndexValueIteratorData.p1 : script.ArrayIndexValueIteratorData.p2;
 			fo = (FuncObj)p.Clone();
 			fo.Inst = this;
 		}
 
 		/// <summary>
-		/// Static constructor to initialize function objects.
-		/// </summary>
-		static ArrayIndexValueIterator()
-		{
-			Error err;
-			var mi1 = Reflections.FindAndCacheMethod(typeof(ArrayIndexValueIterator), "Call", 1);
-			p1 = new FuncObj(mi1, null);
-
-			if (!p1.IsValid)
-				_ = Errors.ErrorOccurred(err = new MethodError($"Existing function object was invalid.")) ? throw err : "";
-
-			var mi2 = Reflections.FindAndCacheMethod(typeof(ArrayIndexValueIterator), "Call", 2);
-			p2 = new FuncObj(mi2, null);
-
-			if (!p2.IsValid)
-				_ = Errors.ErrorOccurred(err = new MethodError($"Existing function object was invalid.")) ? throw err : "";
-		}
-
-		/// <summary>
-		/// Calls <see cref="Current"/> and places the value in the passed in object reference.
+		/// Calls <see cref="Current"/> and places the position value in the passed in object reference.
 		/// </summary>
 		/// <param name="pos">A reference to the value.</param>
 		/// <returns>True if the iterator position has not moved past the last element, else false.</returns>

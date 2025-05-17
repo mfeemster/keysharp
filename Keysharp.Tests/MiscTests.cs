@@ -5,7 +5,7 @@ namespace Keysharp.Tests
 {
 	public partial class Misctests : TestRunner
 	{
-		[Test, Category("Misc")]
+		[Test, Category("Misc"), NonParallelizable]
 		public void MiscIs()
 		{
 			var x = 1;
@@ -171,7 +171,7 @@ namespace Keysharp.Tests
 			Assert.IsTrue(TestScript("misc-is", true));
 		}
 
-		[Test, Category("Misc")]
+		[Test, Category("Misc"), NonParallelizable]
 		public void MiscObject()
 		{
 			var a = Collections.Array(10, 20, 30);

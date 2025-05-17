@@ -1,18 +1,20 @@
 namespace Keysharp.Core
 {
+	internal class KeyboardData
+	{
+		internal readonly ToggleStates toggleStates = new ();
+		internal bool blockInput;
+		internal ToggleValueType blockInputMode = ToggleValueType.Default;
+		internal bool blockMouseMove;
+		internal Dictionary<string, HotkeyDefinition> hotkeys = [];
+		internal Dictionary<string, HotstringDefinition> hotstrings = [];
+	}
+
 	/// <summary>
 	/// Public interface for keyboard-related functions.
 	/// </summary>
 	public static class Keyboard
 	{
-		//Make readonly so that only one instance can ever be created, because other code will refer to this object.
-		internal static readonly ToggleStates toggleStates = new ();
-		internal static bool blockInput;
-		internal static ToggleValueType blockInputMode = ToggleValueType.Default;
-		internal static bool blockMouseMove;
-		internal static Dictionary<string, HotkeyDefinition> hotkeys = [];
-		internal static Dictionary<string, HotstringDefinition> hotstrings = [];
-
 		/// <summary>
 		/// Disables or enables the user's ability to interact with the computer via keyboard and mouse.
 		/// </summary>
@@ -52,16 +54,16 @@ namespace Keysharp.Core
 				case ToggleValueType.Mouse:
 				case ToggleValueType.SendAndMouse:
 				case ToggleValueType.Default:
-					blockInputMode = toggle;
+					script.KeyboardData.blockInputMode = toggle;
 					break;
 
 				case ToggleValueType.MouseMove:
-					blockMouseMove = true;
+					script.KeyboardData.blockMouseMove = true;
 					HotkeyDefinition.InstallMouseHook();
 					break;
 
 				case ToggleValueType.MouseMoveOff:
-					blockMouseMove = false; // But the mouse hook is left installed because it might be needed by other things. This approach is similar to that used by the Input command.
+					script.KeyboardData.blockMouseMove = false; // But the mouse hook is left installed because it might be needed by other things. This approach is similar to that used by the Input command.
 					break;
 					// default (NEUTRAL or TOGGLE_INVALID): do nothing.
 			}
@@ -114,10 +116,10 @@ namespace Keysharp.Core
 				X = info.rcCaret.Left,
 				Y = info.rcCaret.Top
 			};
-			var caretWnd = WindowProvider.Manager.CreateWindow(info.hwndCaret);
+			var caretWnd = script.WindowProvider.Manager.CreateWindow(info.hwndCaret);
 			caretWnd.ClientToScreen(ref pt);// Unconditionally convert to screen coordinates, for simplicity.
 			int x = 0, y = 0;
-			PlatformProvider.Manager.CoordToScreen(ref x, ref y, CoordMode.Caret);// Now convert back to whatever is expected for the current mode.
+			script.PlatformProvider.Manager.CoordToScreen(ref x, ref y, CoordMode.Caret);// Now convert back to whatever is expected for the current mode.
 			pt.X -= x;
 			pt.Y -= y;
             Script.SetPropertyValue(outputVarX, "__Value", (long)pt.X);
@@ -171,11 +173,11 @@ namespace Keysharp.Core
 			Error err;
 			var keyname = obj0.As();
 			var mode = obj1.As();
-			var ht = Script.HookThread;
+			var ht = script.HookThread;
 			JoyControls joy;
 			uint? joystickid = 0u;
 			uint? dummy = null;
-			var vk = ht.TextToVK(keyname, ref dummy, false, true, PlatformProvider.Manager.GetKeyboardLayout(0));
+			var vk = ht.TextToVK(keyname, ref dummy, false, true, script.PlatformProvider.Manager.GetKeyboardLayout(0));
 
 			if (vk == 0)
 			{
@@ -244,15 +246,17 @@ namespace Keysharp.Core
 			if (action != null)
 			{
 				fo = Functions.GetFuncObj(action, null);//Don't throw on failure because returning null is a valid action.
-				var tv = Threads.GetThreadVariables();
+				var tv = script.Threads.GetThreadVariables();
 
 				if (fo == null && !string.IsNullOrEmpty(label) && ((hook_action = HotkeyDefinition.ConvertAltTab(label, true)) == 0))
 				{
-					for (var i = 0; i < HotkeyDefinition.shk.Count; ++i)
+					var shk = script.HotkeyData.shk;
+
+					for (var i = 0; i < shk.Count; ++i)
 					{
-						if (HotkeyDefinition.shk[i].Name == label)
+						if (shk[i].Name == label)
 						{
-							for (var v = HotkeyDefinition.shk[i].firstVariant; v != null; v = v.nextVariant)
+							for (var v = shk[i].firstVariant; v != null; v = v.nextVariant)
 							{
 								if (v.hotCriterion == tv.hotCriterion)
 								{
@@ -304,23 +308,24 @@ break_twice:;
 			Error err;
 			var name = obj0.As();
 			var replacement = obj1;
-			var ht = Script.HookThread;
+			var ht = script.HookThread;
 			var kbdMouseSender = ht.kbdMsSender;
 			var xOption = false;
 			var action = replacement as string;
+			var hm = script.HotstringManager;
 
 			if (string.Compare(name, "EndChars", true) == 0) // Equivalent to #Hotstring EndChars <action>
 			{
-				var old = HotstringManager.defEndChars;
+				var old = hm.defEndChars;
 
 				if (!string.IsNullOrEmpty(action))
-					HotstringManager.defEndChars = action;
+					hm.defEndChars = action;
 
 				return old;//Return the old value.
 			}
 			else if (string.Compare(name, "MouseReset", true) == 0) // "MouseReset, true" seems more intuitive than "NoMouse, false"
 			{
-				var previousValue = HotstringManager.hsResetUponMouseClick;
+				var previousValue = hm.hsResetUponMouseClick;
 
 				if (replacement != null)
 				{
@@ -328,9 +333,9 @@ break_twice:;
 
 					if (val != null)
 					{
-						HotstringManager.hsResetUponMouseClick = val.Value;
+						hm.hsResetUponMouseClick = val.Value;
 
-						if (HotstringManager.hsResetUponMouseClick != previousValue && HotstringManager.enabledCount != 0) // No need if there aren't any hotstrings.
+						if (hm.hsResetUponMouseClick != previousValue && hm.enabledCount != 0) // No need if there aren't any hotstrings.
 							HotkeyDefinition.ManifestAllHotkeysHotstringsHooks(); // Install the hook if needed, or uninstall if no longer needed.
 					}
 				}
@@ -339,15 +344,15 @@ break_twice:;
 			}
 			else if (string.Compare(name, "Reset", true) == 0)
 			{
-				var str = HotstringManager.CurrentInputBuffer;
-				HotstringManager.ClearBuf();
+				var str = hm.CurrentInputBuffer;
+				hm.ClearBuf();
 				return str;
 			}
 			else if (replacement == null && obj2 == null && name.Length > 0 && name[0] != ':') //Check if only one param was passed. Equivalent to #Hotstring <name>.
 			{
-				HotstringDefinition.ParseOptions(name, ref HotstringManager.hsPriority, ref HotstringManager.hsKeyDelay, ref HotstringManager.hsSendMode, ref HotstringManager.hsCaseSensitive
-												 , ref HotstringManager.hsConformToCase, ref HotstringManager.hsDoBackspace, ref HotstringManager.hsOmitEndChar, ref HotstringManager.hsSendRaw, ref HotstringManager.hsEndCharRequired
-												 , ref HotstringManager.hsDetectWhenInsideWord, ref HotstringManager.hsDoReset, ref xOption, ref HotstringManager.hsSuspendExempt);
+				HotstringDefinition.ParseOptions(name, ref hm.hsPriority, ref hm.hsKeyDelay, ref hm.hsSendMode, ref hm.hsCaseSensitive
+												 , ref hm.hsConformToCase, ref hm.hsDoBackspace, ref hm.hsOmitEndChar, ref hm.hsSendRaw, ref hm.hsEndCharRequired
+												 , ref hm.hsDetectWhenInsideWord, ref hm.hsDoReset, ref xOption, ref hm.hsSuspendExempt);
 				return null;
 			}
 
@@ -377,8 +382,8 @@ break_twice:;
 				return Errors.ErrorOccurred(err = new ValueError("Hotstring definition did not contain a hotstring.")) ? throw err : null;
 
 			// Determine options which affect hotstring identity/uniqueness.
-			var caseSensitive = HotstringManager.hsCaseSensitive;
-			var detectInsideWord = HotstringManager.hsDetectWhenInsideWord;
+			var caseSensitive = hm.hsCaseSensitive;
+			var detectInsideWord = hm.hsDetectWhenInsideWord;
 			var un = false; var iun = 0; var sm = SendModes.Event; var sr = SendRawModes.NotRaw; // Unused.
 			var executeAction = false;
 
@@ -402,8 +407,8 @@ break_twice:;
 				return Errors.ErrorOccurred(err = new ValueError($"Invalid value of {obj2} for parameter 3.")) ? throw err : null;
 
 			bool wasAlreadyEnabled;
-			var tv = Threads.GetThreadVariables();
-			var existing = HotstringManager.FindHotstring(hotstringStart, caseSensitive, detectInsideWord, tv.hotCriterion);
+			var tv = script.Threads.GetThreadVariables();
+			var existing = hm.FindHotstring(hotstringStart, caseSensitive, detectInsideWord, tv.hotCriterion);
 
 			if (existing != null)
 			{
@@ -454,7 +459,7 @@ break_twice:;
 				if (HotstringManager.AddHotstring(name, ifunc, hotstringOptions, hotstringStart, action, false, initialSuspendState) == null)
 					return null;
 
-				existing = HotstringManager.shs[HotstringManager.shs.Count - 1];
+				existing = hm.shs[hm.shs.Count - 1];
 				wasAlreadyEnabled = false; // Because it didn't exist.
 			}
 
@@ -469,13 +474,13 @@ break_twice:;
 				//  - a hotstring was created and enabled
 				//  - an existing disabled hotstring was just enabled
 				//  - an existing enabled hotstring was just disabled
-				var previouslyEnabled = HotstringManager.enabledCount;
-				HotstringManager.enabledCount = isenabled ? HotstringManager.enabledCount + 1 : HotstringManager.enabledCount - 1;
+				var previouslyEnabled = hm.enabledCount;
+				hm.enabledCount = isenabled ? hm.enabledCount + 1 : hm.enabledCount - 1;
 
-				if ((HotstringManager.enabledCount > 0) != (previouslyEnabled > 0)) // Change in status of whether the hotstring recognizer is needed.
+				if ((hm.enabledCount > 0) != (previouslyEnabled > 0)) // Change in status of whether the hotstring recognizer is needed.
 				{
 					if (isenabled)
-						HotstringManager.ClearBuf();
+						hm.ClearBuf();
 
 					if (!isenabled || ht.kbdHook == IntPtr.Zero) // Hook may not be needed anymore || hook is needed but not present.
 						HotkeyDefinition.ManifestAllHotkeysHotstringsHooks();
@@ -500,7 +505,7 @@ break_twice:;
 			{
 				var max = Math.Clamp(maxEvents.Al(), 0, 500);
 
-				if (Script.HookThread is HookThread ht)
+				if (script.HookThread is HookThread ht)
 				{
 					if (ht.HasEitherHook())
 					{
@@ -514,11 +519,11 @@ break_twice:;
 						ht.keyHistory = new KeyHistory((int)max);
 				}
 			}
-			else if (Script.mainWindow != null)
+			else if (script.mainWindow != null)
 			{
-				Script.mainWindow.CheckedBeginInvoke(() =>
+				script.mainWindow.CheckedBeginInvoke(() =>
 				{
-					Script.mainWindow.ShowHistory();
+					script.mainWindow.ShowHistory();
 				}, false, false);
 			}
 
@@ -565,11 +570,11 @@ break_twice:;
 			KeyStateTypes keyStateType;
 			var joy = JoyControls.Invalid;
 			uint? joystickId = 0;
-			var ht = Script.HookThread;
+			var ht = script.HookThread;
 			var kbdMouseSender = ht.kbdMsSender;
 			uint? modLR = null;
 
-			if ((vk = ht.TextToVK(keyname, ref modLR, false, true, PlatformProvider.Manager.GetKeyboardLayout(0))) == 0)
+			if ((vk = ht.TextToVK(keyname, ref modLR, false, true, script.PlatformProvider.Manager.GetKeyboardLayout(0))) == 0)
 			{
 				joy = Joystick.ConvertJoy(keyname, ref joystickId);
 
@@ -661,7 +666,7 @@ break_twice:;
 		/// <param name="keys">The sequence of keys to send.</param>
 		public static object Send(object keys)
 		{
-			Script.HookThread.kbdMsSender.SendKeys(keys.As(), SendRawModes.NotRaw, ThreadAccessors.A_SendMode, IntPtr.Zero);
+			script.HookThread.kbdMsSender.SendKeys(keys.As(), SendRawModes.NotRaw, ThreadAccessors.A_SendMode, IntPtr.Zero);
 			return null;
 		}
 
@@ -672,7 +677,7 @@ break_twice:;
 		/// </summary>
 		public static object SendEvent(object keys)
 		{
-			Script.HookThread.kbdMsSender.SendKeys(keys.As(), SendRawModes.NotRaw, SendModes.Event, IntPtr.Zero);
+			script.HookThread.kbdMsSender.SendKeys(keys.As(), SendRawModes.NotRaw, SendModes.Event, IntPtr.Zero);
 			return null;
 		}
 
@@ -684,7 +689,7 @@ break_twice:;
 		/// </summary>
 		public static object SendInput(object keys)
 		{
-			Script.HookThread.kbdMsSender.SendKeys(keys.As(), SendRawModes.NotRaw, ThreadAccessors.A_SendMode == SendModes.InputThenPlay ? SendModes.InputThenPlay : SendModes.Input, IntPtr.Zero);
+			script.HookThread.kbdMsSender.SendKeys(keys.As(), SendRawModes.NotRaw, ThreadAccessors.A_SendMode == SendModes.InputThenPlay ? SendModes.InputThenPlay : SendModes.Input, IntPtr.Zero);
 			return null;
 		}
 
@@ -721,7 +726,7 @@ break_twice:;
 		/// </summary>
 		public static object SendPlay(object keys)
 		{
-			Script.HookThread.kbdMsSender.SendKeys(keys.As(), SendRawModes.NotRaw, SendModes.Play, IntPtr.Zero);
+			script.HookThread.kbdMsSender.SendKeys(keys.As(), SendRawModes.NotRaw, SendModes.Play, IntPtr.Zero);
 			return null;
 		}
 
@@ -730,7 +735,7 @@ break_twice:;
 		/// </summary>
 		public static object SendText(object keys)
 		{
-			Script.HookThread.kbdMsSender.SendKeys(keys.As(), SendRawModes.RawText, ThreadAccessors.A_SendMode, IntPtr.Zero);
+			script.HookThread.kbdMsSender.SendKeys(keys.As(), SendRawModes.RawText, ThreadAccessors.A_SendMode, IntPtr.Zero);
 			return null;
 		}
 
@@ -747,7 +752,7 @@ break_twice:;
 		/// </param>
 		public static object SetCapsLockState(object state = null)
 		{
-			SetToggleState((uint)Keys.Capital, ref toggleStates.forceCapsLock, state.As());//Shouldn't have windows code in a common location.//TODO
+			SetToggleState((uint)Keys.Capital, ref script.KeyboardData.toggleStates.forceCapsLock, state.As());//Shouldn't have windows code in a common location.//TODO
 			return null;
 		}
 
@@ -802,7 +807,7 @@ break_twice:;
 		/// </summary>
 		public static object SetNumLockState(object state = null)
 		{
-			SetToggleState((uint)Keys.NumLock, ref toggleStates.forceNumLock, state.As());//Shouldn't have windows code in a common location.//TODO
+			SetToggleState((uint)Keys.NumLock, ref script.KeyboardData.toggleStates.forceNumLock, state.As());//Shouldn't have windows code in a common location.//TODO
 			return null;
 		}
 
@@ -811,7 +816,7 @@ break_twice:;
 		/// </summary>
 		public static object SetScrollLockState(object state = null)
 		{
-			SetToggleState((uint)Keys.Scroll, ref toggleStates.forceScrollLock, state.As());//Shouldn't have windows code in a common location.//TODO
+			SetToggleState((uint)Keys.Scroll, ref script.KeyboardData.toggleStates.forceScrollLock, state.As());//Shouldn't have windows code in a common location.//TODO
 			return null;
 		}
 
@@ -866,7 +871,7 @@ break_twice:;
 		/// <returns>The name of the key as specified by vk and sc. Else def if the conversion failed.</returns>
 		internal static string GetKeyNameHelper(uint vk, uint sc, string def = "not found")
 		{
-			var ht = Script.HookThread;
+			var ht = script.HookThread;
 			var buf = ""; // Set default.
 
 			if (vk == 0 && sc == 0)
@@ -909,7 +914,7 @@ break_twice:;
 #elif WINDOWS
 			_ = WindowsAPI.BlockInput(enable);
 #endif
-			blockInput = enable;
+			script.KeyboardData.blockInput = enable;
 			return ResultType.Ok;//By design, it never returns FAIL.
 		}
 
@@ -921,7 +926,7 @@ break_twice:;
 		/// <returns>true if down, else false</returns>
 		internal static bool ScriptGetKeyState(uint vk, KeyStateTypes keyStateType)
 		{
-			var ht = Script.HookThread;
+			var ht = script.HookThread;
 			var kbdMouseSender = ht.kbdMsSender;
 
 			if (vk == 0) // Assume "up" if indeterminate.
@@ -976,12 +981,12 @@ break_twice:;
 		/// <returns>A string or integer representation of the key.</returns>
 		private static object GetKeyNamePrivate(string keyname, int callid)
 		{
-			var ht = Script.HookThread;
+			var ht = script.HookThread;
 			var kbdMouseSender = ht.kbdMsSender;
 			var vk = 0u;
 			var sc = 0u;
 			uint? modLR = null;
-			_ = ht.TextToVKandSC(keyname, ref vk, ref sc, ref modLR, PlatformProvider.Manager.GetKeyboardLayout(0));//Need to make cross platform.
+			_ = ht.TextToVKandSC(keyname, ref vk, ref sc, ref modLR, script.PlatformProvider.Manager.GetKeyboardLayout(0));//Need to make cross platform.
 
 			return callid switch
 		{
@@ -1001,7 +1006,7 @@ break_twice:;
 		private static void SetToggleState(uint vk, ref ToggleValueType forceLock, string toggleText)
 		{
 			var toggle = Conversions.ConvertOnOffAlways(toggleText, ToggleValueType.Neutral);
-			var ht = Script.HookThread;
+			var ht = script.HookThread;
 			var kbdMouseSender = ht.kbdMsSender;
 
 			switch (toggle)

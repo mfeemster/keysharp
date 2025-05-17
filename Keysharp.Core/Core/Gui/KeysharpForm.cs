@@ -88,12 +88,12 @@ namespace Keysharp.Core
 			//we must check if there are any remaining visible windows. If not, and the script
 			//has not been explicitly marked persistent, then exit the program.
 			var handle = Handle.ToInt64();
-			_ = Gui.allGuiHwnds.TryRemove(handle, out _);
-			Script.mainWindow?.CheckedBeginInvoke(new Action(() =>
+			_ = script.GuiData.allGuiHwnds.TryRemove(handle, out _);
+			script.mainWindow?.CheckedBeginInvoke(new Action(() =>
 			{
 				GC.Collect();
 			}), true, true);
-			Script.ExitIfNotPersistent();//Also does BeginInvoke(), so it will come after the GC.Collect() above.
+			script.ExitIfNotPersistent();//Also does BeginInvoke(), so it will come after the GC.Collect() above.
 		}
 
 		internal object Destroy()
@@ -103,7 +103,7 @@ namespace Keysharp.Core
 			//Do not close the window if the program is already exiting because it will throw
 			//an enumeration modified exception because Winforms is internally already iterating over
 			//all open windows to close them.
-			if (!Script.IsMainWindowClosing)
+			if (!script.IsMainWindowClosing)
 				Close();
 
 			return null;
@@ -233,7 +233,7 @@ namespace Keysharp.Core
 			if (Visible)
 			{
 				if (Tag is WeakReference<Gui> wrg && wrg.TryGetTarget(out var g))
-					Gui.allGuiHwnds[Handle.ToInt64()] = g;
+					script.GuiData.allGuiHwnds[Handle.ToInt64()] = g;
 			}
 			else
 				ClearThis();

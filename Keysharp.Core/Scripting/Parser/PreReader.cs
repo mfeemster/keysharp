@@ -12,6 +12,7 @@ namespace Keysharp.Scripting
 		private static readonly char[] libBrackets = ['<', '>'];
 		private static int hotifcount;
 		private readonly Stack<(bool, bool)> currentDefines = new ();
+
 		private readonly HashSet<string> defines =
 			[
 				"KEYSHARP",
@@ -21,11 +22,12 @@ namespace Keysharp.Scripting
 				"LINUX",
 #endif
 			];
+
 		private readonly List<string> includes = [];
 		private readonly Parser parser;
 		private string includePath = "./";
 		private CompilerHelper tempCompiler = null;
-		internal static int NextHotIfCount => ++hotifcount;
+		internal int NextHotIfCount => ++hotifcount;
 		internal List<(string, bool)> PreloadedDlls { get; } = [];
 		
 		internal eScriptInstance SingleInstance { get; private set; } = eScriptInstance.Prompt;
@@ -336,7 +338,7 @@ namespace Keysharp.Scripting
                                     if (!reqvers.Any(x => x != 0))
                                         throw new ParseException($"This script requires {p1}", lineNumber, name);
 
-                                    Script.VerifyVersion(ver, plus, lineNumber, code);
+                                    script.VerifyVersion(ver, plus, lineNumber, code);
 
 									//In addition to being checked here, it must be added to the code for when it runs as a compiled exe.
 									parser.mainFuncInitial.Add($"Keysharp.Scripting.Script.VerifyVersion({ver}, {plus}, 0, name);");

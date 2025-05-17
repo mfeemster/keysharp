@@ -39,10 +39,10 @@
 		private const int NUMBER_MARGIN = 1;
 
 		private static readonly string keywords1 = "true false this thishotkey super unset isset " + Keywords.GetKeywords();
-		private static readonly string keywords2 = Script.GetPublicStaticPropertyNames();
+		private readonly string keywords2;
 		private readonly Button btnCopyFullCode = new ();
 		private readonly CheckBox chkFullCode = new ();
-		private readonly string lastrun = $"{Accessors.A_AppData}/Keysharp/lastkeyviewrun.txt";
+		private readonly string lastrun;
 		private readonly System.Windows.Forms.Timer timer = new ();
 		private readonly char[] trimend = ['\n', '\r'];
 		private readonly double updateFreqSeconds = 1;
@@ -66,6 +66,9 @@
 		public Keyview()
 		{
 			InitializeComponent();
+			var s = new Script();
+			keywords2 = s.GetPublicStaticPropertyNames();
+			lastrun = $"{Accessors.A_AppData}/Keysharp/lastkeyviewrun.txt";
 			Icon = Keysharp.Core.Properties.Resources.Keysharp_ico;
 			btnCopyFullCode.Text = "Copy full code";
 			btnCopyFullCode.Click += CopyFullCode_Click;
@@ -371,7 +374,7 @@
 		private void Keyview_FormClosing(object sender, FormClosingEventArgs e)
 		{
 			timer.Stop();
-			Script.Stop();
+			//Script.Stop();
 			var dir = Path.GetDirectoryName(lastrun);
 
 			if (!Directory.Exists(dir))
@@ -560,10 +563,12 @@
 			if ((force || ((DateTime.UtcNow - lastKeyTime).TotalSeconds >= updateFreqSeconds && lastKeyTime > lastCompileTime)) && txtIn.Text != "")
 			{
 				timer.Enabled = false;
+				Script s = null;
 
 				try
 				{
 					lastCompileTime = DateTime.UtcNow;
+					s = new Script();//Start completely fresh for every compilation.
 					CompilerHelper.compiledasm = null;
 					btnRunScript.Enabled = false;
 					var oldIndex = txtOut.FirstVisibleLine;
@@ -647,6 +652,7 @@
 				}
 
 				theend:
+				s?.Stop();
 				btnRunScript.Enabled = true;
 				timer.Enabled = true;
 			}

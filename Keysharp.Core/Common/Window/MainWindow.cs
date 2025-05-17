@@ -131,7 +131,7 @@
 
 				case WindowsAPI.WM_COPYDATA:
 				{
-					if (GuiHelper.onMessageHandlers.TryGetValue(m.Msg, out var msgMonitor))//Needs to be handled here instead of MessageFilter because that one doesn't seem to intercept it.
+					if (script.GuiData.onMessageHandlers.TryGetValue(m.Msg, out var msgMonitor))//Needs to be handled here instead of MessageFilter because that one doesn't seem to intercept it.
 					{
 						var copyStruct = (WindowsAPI.COPYDATASTRUCT)m.GetLParam(typeof(WindowsAPI.COPYDATASTRUCT));
 						_ = msgMonitor.funcs.InvokeEventHandlers(m.WParam.ToInt64(), copyStruct.lpData, m.Msg, m.HWnd.ToInt64());
@@ -146,7 +146,7 @@
 					break;
 
 				case WindowsAPI.WM_HOTKEY://We will need to find a cross platform way to do this. At the moment, hotkeys appear to be a built in feature in Windows.//TODO
-					_ = HookThread.channel.Writer.TryWrite(new KeysharpMsg()
+					_ = script.HookThread.channel.Writer.TryWrite(new KeysharpMsg()
 					{
 						hwnd = m.HWnd,//Unused, but probably still good to assign.
 						message = WindowsAPI.WM_HOTKEY,

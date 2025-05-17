@@ -576,6 +576,10 @@
 		}
 	}
 
+	internal class MapKeyValueIteratorData : BaseIteratorData<MapKeyValueIterator>
+	{
+	}
+
 	/// <summary>
 	/// A two component iterator for <see cref="Map"/> which returns the key and the value as a tuple.
 	/// </summary>
@@ -637,28 +641,9 @@
 		{
 			map = m;
 			iter = map.GetEnumerator();
-			var p = c <= 1 ? p1 : p2;
+			var p = c <= 1 ? script.MapKeyValueIteratorData.p1 : script.MapKeyValueIteratorData.p2;
 			fo = (FuncObj)p.Clone();
 			fo.Inst = this;
-		}
-
-		/// <summary>
-		/// Static constructor to initialize function objects.
-		/// </summary>
-		static MapKeyValueIterator()
-		{
-			Error err;
-			var mi1 = Reflections.FindAndCacheMethod(typeof(MapKeyValueIterator), "Call", 1);
-			p1 = new FuncObj(mi1, null);
-
-			if (!p1.IsValid)
-				_ = Errors.ErrorOccurred(err = new MethodError($"Existing function object was invalid.")) ? throw err : "";
-
-			var mi2 = Reflections.FindAndCacheMethod(typeof(MapKeyValueIterator), "Call", 2);
-			p2 = new FuncObj(mi2, null);
-
-			if (!p2.IsValid)
-				_ = Errors.ErrorOccurred(err = new MethodError($"Existing function object was invalid.")) ? throw err : "";
 		}
 
 		/// <summary>

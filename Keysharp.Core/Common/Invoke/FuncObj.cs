@@ -176,7 +176,7 @@
         }
 
         internal FuncObj(string s, string t, object paramCount = null)
-		: this(Reflections.FindAndCacheMethod(Reflections.stringToTypes[t], s, paramCount.Ai(-1)))
+		: this(Reflections.FindAndCacheMethod(script.ReflectionsData.stringToTypes[t], s, paramCount.Ai(-1)))
         {
         }
 
@@ -201,9 +201,9 @@
 			mi = m;
 			Inst = o;
 
-			if (Script.Variables.Prototypes.Count > 1)
+			if (script.Vars.Prototypes.Count > 1)
 			{
-				Script.Variables.Prototypes.TryGetValue(GetType(), out KeysharpObject value);
+				script.Vars.Prototypes.TryGetValue(GetType(), out KeysharpObject value);
 				op["base"] = new OwnPropsDesc(this, value);
 			}
 

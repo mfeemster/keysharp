@@ -240,7 +240,7 @@ namespace Keysharp.Scripting
 				return input.ToString();
 		}
 
-		private static object ForceType(Type requested, object value)
+		internal static object ForceType(Type requested, object value)
 		{
 			if (requested == typeof(object) || requested.IsAssignableFrom(value.GetType()))
 				return value;

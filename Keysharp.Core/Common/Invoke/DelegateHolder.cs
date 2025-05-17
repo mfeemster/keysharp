@@ -1,5 +1,23 @@
 ﻿namespace Keysharp.Core.Common.Invoke
 {
+	internal class DelegateData
+	{
+		// Precomputed trampolines for parameter counts 0..32
+		internal readonly IntPtr[] trampolinePtrs;
+
+		internal DelegateData()
+		{
+			trampolinePtrs = Enumerable.Range(0, 33)
+							 .Select(n =>
+			{
+				var mi = typeof(DelegateHolder)
+						 .GetMethod($"SharedTrampoline{n}", BindingFlags.Static | BindingFlags.NonPublic);
+				RuntimeHelpers.PrepareMethod(mi.MethodHandle);
+				return mi.MethodHandle.GetFunctionPointer();
+			}).ToArray();
+		}
+	}
+
 	/// <summary>
 	/// Creates a native callback pointer which can be used to call the target function object.
 	/// The callback starts from a stub which inserts the pointer to this DelegateHolder
@@ -17,24 +35,8 @@
 		readonly GCHandle _selfHandle;
 		readonly IntPtr _ctx;
 
-		// Precomputed trampolines for parameter counts 0..32
-		static readonly IntPtr[] _trampolinePtrs;
-
 		// Native function pointer to pass into unmanaged code.
 		public IntPtr Ptr { get; }
-
-		static DelegateHolder()
-		{
-			_trampolinePtrs = Enumerable.Range(0, 33)
-							  .Select(n =>
-			{
-				var mi = typeof(DelegateHolder)
-						 .GetMethod($"SharedTrampoline{n}", BindingFlags.Static | BindingFlags.NonPublic);
-				RuntimeHelpers.PrepareMethod(mi.MethodHandle);
-				return mi.MethodHandle.GetFunctionPointer();
-			})
-			.ToArray();
-		}
 
 		/// <summary>
 		/// Creates a holder and allocates a native stub that embeds its context.
@@ -54,7 +56,7 @@
 			_selfHandle = GCHandle.Alloc(this, GCHandleType.Normal);
 			_ctx = GCHandle.ToIntPtr(_selfHandle);
 			// Create native stub which inserts context and calls SharedTrampoline
-			Ptr = NativeThunkFactory.CreateThunk(_trampolinePtrs[_arity], _ctx, _arity);
+			Ptr = NativeThunkFactory.CreateThunk(script.DelegateData.trampolinePtrs[_arity], _ctx, _arity);
 		}
 
 		// Shared unmanaged-callable trampolines
@@ -214,7 +216,7 @@
 			{
 				var state = holder._fast
 							? (true, (ThreadVariables)null)
-							: Threads.BeginThread();
+							: script.Threads.BeginThread();
 
 				if (holder._reference)
 				{
@@ -236,7 +238,7 @@
 				}
 
 				if (!holder._fast)
-					_ = Threads.EndThread(state.Item1);
+					_ = script.Threads.EndThread(state.Item1);
 			}, !holder._fast);
 			return ConvertResult(val);
 		}
@@ -274,7 +276,7 @@
 	{
 		public static unsafe IntPtr CreateThunk(IntPtr trampPtr, IntPtr ctx, int arity)
 		{
-			IntPtr mem = ExecutableMemoryPoolManager.Rent();
+			IntPtr mem = script.ExecutableMemoryPoolManager.Rent();
 			byte* ptr = (byte*)mem;
 			int disp;
 
@@ -456,7 +458,7 @@
 
 		public static void FreeThunk(IntPtr ptr)
 		{
-			ExecutableMemoryPoolManager.Return(ptr);
+			script.ExecutableMemoryPoolManager.Return(ptr);
 		}
 	}
 
@@ -469,16 +471,16 @@
 	{
 		private const int PageSize = 512;
 		private const int ChunkSize = 64;
-		private static readonly object _lock = new object();
+		private readonly object _lock = new object();
 
 		// All allocated pages
-		private static readonly List<IntPtr> _pages = new List<IntPtr>();
+		private readonly List<IntPtr> _pages = new List<IntPtr>();
 		// Free chunk addresses
-		private static readonly Stack<IntPtr> _freeChunks = new Stack<IntPtr>();
+		private readonly Stack<IntPtr> _freeChunks = new Stack<IntPtr>();
 
 		// Current page and offset
-		private static IntPtr _currentPage;
-		private static int _currentOffset;
+		private IntPtr _currentPage;
+		private int _currentOffset;
 
 #if LINUX || OSX
 		[DllImport("libc", SetLastError = true)]
@@ -496,7 +498,7 @@
 		/// <summary>
 		/// Rents a 32-byte executable chunk.
 		/// </summary>
-		public static IntPtr Rent()
+		public IntPtr Rent()
 		{
 			lock (_lock)
 			{
@@ -521,7 +523,7 @@
 		/// <summary>
 		/// Returns a previously rented chunk for reuse.
 		/// </summary>
-		public static void Return(IntPtr ptr)
+		public void Return(IntPtr ptr)
 		{
 			if (ptr == IntPtr.Zero) return;
 
@@ -534,7 +536,7 @@
 		/// <summary>
 		/// Releases all allocated pages.
 		/// </summary>
-		public static void Dispose()
+		public void Dispose()
 		{
 			lock (_lock)
 			{
@@ -556,15 +558,11 @@
 			}
 		}
 
-		private static IntPtr AllocatePage()
+		private IntPtr AllocatePage()
 		{
 #if WINDOWS
 			var ptr = WindowsAPI.VirtualAlloc(IntPtr.Zero, (UIntPtr)PageSize, (uint)VirtualAllocExTypes.MEM_COMMIT, (uint)AccessProtectionFlags.PAGE_EXECUTE_READWRITE);
-
-			if (ptr == IntPtr.Zero)
-				throw new InvalidOperationException($"VirtualAlloc failed: {Marshal.GetLastWin32Error()}");
-
-			return ptr;
+			return ptr == IntPtr.Zero ? throw new InvalidOperationException($"VirtualAlloc failed: {Marshal.GetLastWin32Error()}") : ptr;
 #elif LINUX || OSX
 			var ptr = mmap(IntPtr.Zero, (UIntPtr)PageSize, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS, -1, IntPtr.Zero);
 

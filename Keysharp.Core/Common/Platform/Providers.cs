@@ -1,8 +1,8 @@
 ﻿namespace Keysharp.Core.Common.Platform
 {
-	internal static class ControlProvider
+	internal class ControlProvider
 	{
-		internal static ControlManagerBase Manager { get; } =
+		internal ControlManagerBase Manager { get; } =
 #if WINDOWS
 			new ControlManager()
 #elif LINUX
@@ -28,9 +28,9 @@
 		}
 	}
 
-	internal static class PlatformProvider
+	internal class PlatformProvider
 	{
-		internal static PlatformManagerBase Manager { get; } =
+		internal PlatformManagerBase Manager { get; } =
 #if WINDOWS
 			new PlatformManager()
 #elif LINUX
@@ -56,9 +56,9 @@
 		}
 	}
 
-	internal static class WindowProvider
+	internal class WindowProvider
 	{
-		internal static WindowManagerBase Manager { get; } =
+		internal WindowManagerBase Manager { get; } =
 #if WINDOWS
 			new WindowManager()
 #elif LINUX

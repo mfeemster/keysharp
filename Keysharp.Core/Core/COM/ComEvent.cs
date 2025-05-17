@@ -21,7 +21,7 @@ namespace Keysharp.Core.COM
 			{
 				prefix = s;
 
-				foreach (var kv in Reflections.stringToTypeLocalMethods)
+				foreach (var kv in script.ReflectionsData.stringToTypeLocalMethods)
 				{
 					if (string.Compare(kv.Key, "Main", true) != 0 &&
 							string.Compare(kv.Key, AutoExecSectionName, true) != 0)
@@ -40,10 +40,10 @@ namespace Keysharp.Core.COM
 			}
 			else if (sink is KeysharpObject ko)
 			{
-				if (!Reflections.typeToStringMethods.TryGetValue(ko.GetType(), out var methDkt))
+				if (!script.ReflectionsData.typeToStringMethods.TryGetValue(ko.GetType(), out var methDkt))
 				{
 					_ = Reflections.FindAndCacheInstanceMethod(ko.GetType(), "", 0);
-					_ = Reflections.typeToStringMethods.TryGetValue(ko.GetType(), out methDkt);
+					_ = script.ReflectionsData.typeToStringMethods.TryGetValue(ko.GetType(), out methDkt);
 				}
 
 				if (methDkt != null)

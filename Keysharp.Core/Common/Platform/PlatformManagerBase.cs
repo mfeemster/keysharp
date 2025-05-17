@@ -11,12 +11,12 @@
 		/// <param name="aWhichMode"></param>
 		internal void CoordToScreen(ref int aX, ref int aY, CoordMode modeType)
 		{
-			var coordMode = Core.Mouse.Coords.GetCoordMode(modeType);
+			var coordMode = script.Coords.GetCoordMode(modeType);
 
 			if (coordMode == CoordModeType.Screen)
 				return;
 
-			var activeWindow = WindowProvider.Manager.ActiveWindow;
+			var activeWindow = script.WindowProvider.Manager.ActiveWindow;
 
 			if (activeWindow.Handle != IntPtr.Zero && !activeWindow.IsIconic)
 			{

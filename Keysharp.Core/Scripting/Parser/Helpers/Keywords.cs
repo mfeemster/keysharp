@@ -66,6 +66,7 @@
 
 		public const string MainClassName = "Program";
 		public const string AutoExecSectionName = "AutoExecSection";
+		public const string MainScriptVariableName = "MainScript";
 
         internal static HashSet<string> ClassReservedKeywords = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
             {

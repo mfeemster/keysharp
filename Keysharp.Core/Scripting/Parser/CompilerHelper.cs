@@ -357,15 +357,11 @@ using static Keysharp.Scripting.Script;
 
 		public (SyntaxTree[], CompilerErrorCollection) CreateSyntaxTreeFromFile(params string[] fileNames)
         {
-            Reflections.Clear();
-            Reflections.Initialize(true);
-            Flow.ResetState();
-
             var units = new SyntaxTree[fileNames.Length];
             var errors = new CompilerErrorCollection();
             var enc = Encoding.Default;
             var x = Env.FindCommandLineArg("cp");
-            var (pushed, btv) = Threads.BeginThread();//Some internal parsing uses Accessors, so a thread must be present.
+            var (pushed, btv) = script.Threads.BeginThread();//Some internal parsing uses Accessors, so a thread must be present.
 
             if (pushed)
             {
@@ -385,12 +381,12 @@ using static Keysharp.Scripting.Script;
                     {
                         if (File.Exists(fileNames[i]))
                         {
-                            Script.scriptName = fileNames[i];
+                            script.scriptName = fileNames[i];
                             units[i] = parser.Parse<SyntaxTree>(new StreamReader(fileNames[i], enc), Path.GetFullPath(fileNames[i]));
                         }
                         else
                         {
-                            Script.scriptName = "*";
+                            script.scriptName = "*";
                             units[i] = parser.Parse<SyntaxTree>(new StringReader(fileNames[i]), "*");//In memory.
                         }
                     }
@@ -405,7 +401,7 @@ using static Keysharp.Scripting.Script;
                     finally { }
                 }
 
-                _ = Threads.EndThread(pushed);
+                _ = script.Threads.EndThread(pushed);
             }
 
             return (units, errors);

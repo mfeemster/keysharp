@@ -45,9 +45,9 @@ namespace Keysharp.Scripting
                 {
                     baseClassName += "." + parser.NormalizeClassIdentifier(extendsParts[i].GetText());
                 }
-                if (extendsParts.Length == 1 && Reflections.stringToTypes.ContainsKey(baseClassName))
+                if (extendsParts.Length == 1 && script.ReflectionsData.stringToTypes.ContainsKey(baseClassName))
                 {
-                    baseClassName = Reflections.stringToTypes.First(pair => pair.Key.Equals(baseClassName, StringComparison.InvariantCultureIgnoreCase)).Key;
+                    baseClassName = script.ReflectionsData.stringToTypes.First(pair => pair.Key.Equals(baseClassName, StringComparison.InvariantCultureIgnoreCase)).Key;
                 }
                 parser.currentClass.Base = baseClassName;
                 parser.currentClass.BaseList.Add(SyntaxFactory.SimpleBaseType(CreateQualifiedName(baseClassName)));
@@ -487,7 +487,7 @@ namespace Keysharp.Scripting
                                             SyntaxFactory.ElementAccessExpression(
                                                 SyntaxFactory.MemberAccessExpression(
                                                     SyntaxKind.SimpleMemberAccessExpression,
-                                                    SyntaxFactory.IdentifierName("Variables"),
+													VarsNameSyntax,
                                                     SyntaxFactory.IdentifierName("Prototypes")
                                                 ),
                                                 SyntaxFactory.BracketedArgumentList(

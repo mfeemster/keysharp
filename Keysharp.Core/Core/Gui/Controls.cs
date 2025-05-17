@@ -178,23 +178,23 @@ namespace Keysharp.Core
 #if WINDOWS
 	public class KeysharpCustomControl : Control
 	{
-		private static int ICC_ANIMATE_CLASS      = 0x00000080;
-		private static int ICC_BAR_CLASSES        = 0x00000004;
-		private static int ICC_COOL_CLASSES       = 0x00000400;
-		private static int ICC_DATE_CLASSES       = 0x00000100;
-		private static int ICC_HOTKEY_CLASS       = 0x00000040;
-		private static int ICC_INTERNET_CLASSES   = 0x00000800;
-		private static int ICC_LINK_CLASS         = 0x00008000;
-		private static int ICC_LISTVIEW_CLASSES   = 0x00000001;
-		private static int ICC_NATIVEFNTCTL_CLASS = 0x00002000;
-		private static int ICC_PAGESCROLLER_CLASS = 0x00001000;
-		private static int ICC_PROGRESS_CLASS     = 0x00000020;
-		private static int ICC_STANDARD_CLASSES   = 0x00004000;
-		private static int ICC_TAB_CLASSES        = 0x00000008;
-		private static int ICC_TREEVIEW_CLASSES   = 0x00000002;
-		private static int ICC_UPDOWN_CLASS       = 0x00000010;
-		private static int ICC_USEREX_CLASSES     = 0x00000200;
-		private static int ICC_WIN95_CLASSES      = 0x000000FF;
+		private static readonly int ICC_ANIMATE_CLASS      = 0x00000080;
+		private static readonly int ICC_BAR_CLASSES        = 0x00000004;
+		private static readonly int ICC_COOL_CLASSES       = 0x00000400;
+		private static readonly int ICC_DATE_CLASSES       = 0x00000100;
+		private static readonly int ICC_HOTKEY_CLASS       = 0x00000040;
+		private static readonly int ICC_INTERNET_CLASSES   = 0x00000800;
+		private static readonly int ICC_LINK_CLASS         = 0x00008000;
+		private static readonly int ICC_LISTVIEW_CLASSES   = 0x00000001;
+		private static readonly int ICC_NATIVEFNTCTL_CLASS = 0x00002000;
+		private static readonly int ICC_PAGESCROLLER_CLASS = 0x00001000;
+		private static readonly int ICC_PROGRESS_CLASS     = 0x00000020;
+		private static readonly int ICC_STANDARD_CLASSES   = 0x00004000;
+		private static readonly int ICC_TAB_CLASSES        = 0x00000008;
+		private static readonly int ICC_TREEVIEW_CLASSES   = 0x00000002;
+		private static readonly int ICC_UPDOWN_CLASS       = 0x00000010;
+		private static readonly int ICC_USEREX_CLASSES     = 0x00000200;
+		private static readonly int ICC_WIN95_CLASSES      = 0x000000FF;
 		private readonly int addExStyle, removeExStyle;
 		private readonly int addStyle, removeStyle;
 		private readonly string className;

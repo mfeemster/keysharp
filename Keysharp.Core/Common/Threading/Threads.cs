@@ -1,6 +1,6 @@
 ﻿namespace Keysharp.Core.Common.Threading
 {
-	public static class Threads
+	public class Threads
 	{
 		/// <summary>
 		/// Each thread has its own TVM. This means the main UI thread gets one, and the hook thread gets one.
@@ -10,61 +10,96 @@
 		/// Note that we use ThreadLocal<T> here because it allows initialization for each thread, whereas
 		/// [ThreadStatic] doesn't.
 		/// </summary>
-		private static ThreadLocal<ThreadVariableManager> tvm = new ThreadLocal<ThreadVariableManager>(() => new ());
+		private readonly Lock locker = new ();
+		private ThreadVariableManager tvm = new ();
 
-		public static (bool, ThreadVariables) BeginThread(bool onlyIfEmpty = false)
+		//public Threads()
+		//{
+		//  Console.WriteLine("Threads()");
+		//}
+
+		public (bool, ThreadVariables) BeginThread(bool onlyIfEmpty = false)
 		{
-			var skip = Flow.AllowInterruption == false;//This will be false when exiting the program.
-			_ = Interlocked.Increment(ref Script.totalExistingThreads);
-			return PushThreadVariables(0, skip, false, onlyIfEmpty);
+			lock (locker)
+			{
+				var skip = script.FlowData.allowInterruption == false;//This will be false when exiting the program.
+				return PushThreadVariables(0, skip, false, onlyIfEmpty, true);
+			}
 		}
 
-		public static object EndThread(bool pushed, bool checkThread = false)
+		public object EndThread(bool pushed, bool checkThread = false)
 		{
-			PopThreadVariables(pushed, checkThread);
-			_ = Interlocked.Decrement(ref Script.totalExistingThreads);
-			return null;
+			lock (locker)
+			{
+				PopThreadVariables(pushed, checkThread);
+				_ = Interlocked.Decrement(ref script.totalExistingThreads);
+				return null;
+			}
 		}
 
 		[PublicForTestOnly]
-		public static (bool, ThreadVariables) PushThreadVariables(int priority, bool skipUninterruptible,
-				bool isCritical = false, bool onlyIfEmpty = false) => tvm.Value.PushThreadVariables(priority, skipUninterruptible, isCritical, onlyIfEmpty);
-
-		internal static bool AnyThreadsAvailable() => Script.totalExistingThreads < Script.MaxThreadsTotal;
-
-		internal static ThreadVariables GetThreadVariables() => tvm.Value.GetThreadVariables();
-
-		internal static bool IsInterruptible()
+		public (bool, ThreadVariables) PushThreadVariables(int priority, bool skipUninterruptible,
+				bool isCritical = false, bool onlyIfEmpty = false, bool inc = false)
 		{
-			if (!Flow.AllowInterruption)
-				return false;
-
-			if (Script.totalExistingThreads == 0)//Before _ks_UserMainCode() starts to run.1
-				return true;
-
-			var tv = GetThreadVariables();
-
-			if (!tv.isCritical//Added this whereas AHK doesn't check it. We should never make a critical thread interruptible.
-					&& !tv.allowThreadToBeInterrupted // Those who check whether g->AllowThreadToBeInterrupted==false should then check whether it should be made true.
-					&& tv.uninterruptibleDuration > -1 // Must take precedence over the below.  g_script.mUninterruptibleTime is not checked because it's supposed to go into effect during thread creation, not after the thread is running and has possibly changed the timeout via 'Thread "Interrupt"'.
-					&& (DateTime.UtcNow - tv.threadStartTime).TotalMilliseconds >= tv.uninterruptibleDuration // See big comment section above.
-					&& !Flow.callingCritical // In case of "Critical" on the first line.  See v2.0 comment above.
-			   )
+			lock (locker)
 			{
-				// Once the thread becomes interruptible by any means, g->ThreadStartTime/UninterruptibleDuration
-				// can never matter anymore because only Critical (never "Thread Interrupt") can turn off the
-				// interruptibility again, and it resets g->UninterruptibleDuration.
-				tv.allowThreadToBeInterrupted = true; // Avoids issues with 49.7 day limit of 32-bit TickCount, and also helps performance future callers of this function (they can skip most of the checking above).
+				if (inc)
+					_ = Interlocked.Increment(ref script.totalExistingThreads);//Will be decremented in EndThread().
 
-				if (!tv.isCritical)
-					tv.peekFrequency = ThreadVariables.DefaultPeekFrequency;
+				return tvm.PushThreadVariables(priority, skipUninterruptible, isCritical, onlyIfEmpty);
 			}
-
-			return tv.allowThreadToBeInterrupted;
 		}
 
-		internal static void LaunchInThread(int priority, bool skipUninterruptible,
-											bool isCritical, object func, object[] o, bool tryCatch)//Determine later the optimal threading model.//TODO
+		internal bool AnyThreadsAvailable()
+		{
+			lock (locker)
+			{
+				return script.totalExistingThreads < script.MaxThreadsTotal;
+			}
+		}
+
+		internal ThreadVariables GetThreadVariables()
+		{
+			lock (locker)
+			{
+				return tvm.GetThreadVariables();
+			}
+		}
+
+		internal bool IsInterruptible()
+		{
+			lock (locker)
+			{
+				if (!script.FlowData.allowInterruption)
+					return false;
+
+				if (script.totalExistingThreads == 0)//Before _ks_UserMainCode() starts to run.1
+					return true;
+
+				var tv = GetThreadVariables();
+
+				if (!tv.isCritical//Added this whereas AHK doesn't check it. We should never make a critical thread interruptible.
+						&& !tv.allowThreadToBeInterrupted // Those who check whether g->AllowThreadToBeInterrupted==false should then check whether it should be made true.
+						&& tv.uninterruptibleDuration > -1 // Must take precedence over the below.  g_script.mUninterruptibleTime is not checked because it's supposed to go into effect during thread creation, not after the thread is running and has possibly changed the timeout via 'Thread "Interrupt"'.
+						&& (DateTime.UtcNow - tv.threadStartTime).TotalMilliseconds >= tv.uninterruptibleDuration // See big comment section above.
+						&& !script.FlowData.callingCritical // In case of "Critical" on the first line.  See v2.0 comment above.
+				   )
+				{
+					// Once the thread becomes interruptible by any means, g->ThreadStartTime/UninterruptibleDuration
+					// can never matter anymore because only Critical (never "Thread Interrupt") can turn off the
+					// interruptibility again, and it resets g->UninterruptibleDuration.
+					tv.allowThreadToBeInterrupted = true; // Avoids issues with 49.7 day limit of 32-bit TickCount, and also helps performance future callers of this function (they can skip most of the checking above).
+
+					if (!tv.isCritical)
+						tv.peekFrequency = ThreadVariables.DefaultPeekFrequency;
+				}
+
+				return tv.allowThreadToBeInterrupted;
+			}
+		}
+
+		internal void LaunchInThread(int priority, bool skipUninterruptible,
+									 bool isCritical, object func, object[] o, bool tryCatch)//Determine later the optimal threading model.//TODO
 		{
 			Task<object> tsk = null;
 
@@ -75,12 +110,11 @@
 				//void AssignTask(ThreadVariables localTv) => localTv.task = tsk;//Needed to capture tsk so it can be used from within the Task.
 				//tsk = Task.Factory.StartNew(() =>
 				//tsk = StaTask.Run(() =>//This appears to be necessary to use the clipboard within hotkey/string events.
-				Script.mainWindow.CheckedBeginInvoke(() =>
+				script.mainWindow.CheckedBeginInvoke(() =>
 				{
 					object ret = null;
 					(bool, ThreadVariables) btv = (false, null);
-					_ = Interlocked.Increment(ref Script.totalExistingThreads);//Will be decremented in EndThread().
-					btv = PushThreadVariables(priority, skipUninterruptible, isCritical);//Always start each thread with one entry.
+					btv = PushThreadVariables(priority, skipUninterruptible, isCritical, false, true);//Always start each thread with one entry.
 					btv.Item2.task = true;
 
 					if (btv.Item1)
@@ -137,6 +171,6 @@
 			//return tsk;
 		}
 
-		internal static void PopThreadVariables(bool pushed, bool checkThread = false) => tvm.Value.PopThreadVariables(pushed, checkThread);
+		internal void PopThreadVariables(bool pushed, bool checkThread = false) => tvm.PopThreadVariables(pushed, checkThread);
 	}
 }

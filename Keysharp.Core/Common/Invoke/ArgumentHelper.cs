@@ -14,7 +14,7 @@ namespace Keysharp.Core.Common.Invoke
 		internal Type ReturnType => returnType;
 		internal long[] args;
 		// contains bitwise info about the location of float and double type arguments, as well as the return type
-		// bit i = 1 if argTypes[i] is float or double  
+		// bit i = 1 if argTypes[i] is float or double
 		// bit n = 1 if returnType is float or double
 		internal ulong floatingTypeMask = 0;
 
@@ -307,6 +307,7 @@ namespace Keysharp.Core.Common.Invoke
 							{
 								if (isReturn)
 									hasReturn = false; // needed for ComCall OSError
+
 								type = typeof(int);
 								goto TypeDetermined;
 							}
@@ -419,6 +420,7 @@ namespace Keysharp.Core.Common.Invoke
 								type = typeof(float);
 								goto TypeDetermined;
 							}
+
 							floatingTypeMask |= 1UL << n;
 							float f = p.Af();
 							args[n] = *(int*)&f;
@@ -435,6 +437,7 @@ namespace Keysharp.Core.Common.Invoke
 								type = typeof(double);
 								goto TypeDetermined;
 							}
+
 							floatingTypeMask |= 1UL << n;
 							double d = p.Ad();
 							args[n] = *(long*)&d;
@@ -456,6 +459,7 @@ namespace Keysharp.Core.Common.Invoke
 				if (isReturn)
 				{
 					returnType = type;
+
 					if (type == typeof(float) || type == typeof(double))
 						floatingTypeMask |= 1UL << (n + 1);
 				}

@@ -28,9 +28,12 @@
 		}
 	}
 
+	internal class OwnPropsIteratorData : BaseIteratorData<OwnPropsIterator>
+	{
+	}
+
 	internal class OwnPropsIterator : KeysharpEnumerator, IEnumerator<(object, object)>
 	{
-		private static FuncObj p1, p2;
 		private readonly Dictionary<object, object> map;
 		private readonly KeysharpObject obj;
 		private IEnumerator<KeyValuePair<object, object>> iter;
@@ -66,17 +69,7 @@
 
 		object IEnumerator.Current => Current;
 		internal new int Count => GetVal ? 2 : 1;
-		internal bool _getVal = true;
-		internal bool GetVal {
-			get => _getVal;
-			set
-			{
-				_getVal = value;
-				var p = _getVal ? p2 : p1;
-				fo = (FuncObj)p.Clone();
-				fo.Inst = this;
-			} 
-		}
+		internal bool GetVal { get; set; }
 
 		internal OwnPropsIterator(KeysharpObject o, Dictionary<object, object> m, bool gv)
 			: base(null, gv ? 2 : 1)
@@ -85,25 +78,10 @@
 			map = m;
 			GetVal = gv;
 			iter = map.GetEnumerator();
-		}
-
-		/// <summary>
-		/// Static constructor to initialize function objects.
-		/// </summary>
-		static OwnPropsIterator()
-		{
-			Error err;
-			var mi1 = Reflections.FindAndCacheMethod(typeof(OwnPropsIterator), "Call", 1);
-			p1 = new FuncObj(mi1, null);
-
-			if (!p1.IsValid)
-				_ = Errors.ErrorOccurred(err = new MethodError($"Existing function object was invalid.")) ? throw err : "";
-
-			var mi2 = Reflections.FindAndCacheMethod(typeof(OwnPropsIterator), "Call", 2);
-			p2 = new FuncObj(mi2, null);
-
-			if (!p2.IsValid)
-				_ = Errors.ErrorOccurred(err = new MethodError($"Existing function object was invalid.")) ? throw err : "";
+			var p = Count <= 1 ? script.OwnPropsIteratorData.p1 : script.OwnPropsIteratorData.p2;
+			fo = (FuncObj)p.Clone();
+			fo.Inst = this;
+			CallFunc = fo;
 		}
 
 		public override object Call(object obj0)
