@@ -1,6 +1,5 @@
 using static Keysharp.Core.WindowHelper;
 using static Keysharp.Core.WindowSearch;
-using static Keysharp.Scripting.Script;
 
 namespace Keysharp.Core
 {
@@ -9,7 +8,7 @@ namespace Keysharp.Core
 
 		public static object WinMaximizeAll()
 		{
-			DoDelayedAction(WindowProvider.Manager.MaximizeAll);
+			DoDelayedAction(script.WindowProvider.Manager.MaximizeAll);
 			return null;
 		}
 
@@ -21,10 +20,6 @@ namespace Keysharp.Core
 
 	public static class WindowX
 	{
-		private static bool dpimodeset;
-
-		private static Dictionary<string, WindowGroup> windowGroups => WindowProvider.Manager.Groups;
-
 		public static object DetectHiddenText(object mode)
 		{
 			var oldVal = A_DetectHiddenText;
@@ -44,7 +39,7 @@ namespace Keysharp.Core
 			var name = groupName.As().ToLowerInvariant();
 			var m = mode.As();
 
-			if (windowGroups.TryGetValue(name, out var group))
+			if (script.WindowProvider.Manager.Groups.TryGetValue(name, out var group))
 			{
 				if (group.sc.Count == 0)
 					return 0L;
@@ -54,7 +49,7 @@ namespace Keysharp.Core
 				if (windows.Count != 0 && windows.Count == group.activated.Count)
 					group.activated.Clear();
 
-				if (windows.Count == 1 && windows[0].Handle.ToInt64() == WindowProvider.Manager.GetForeGroundWindowHwnd().ToInt64())
+				if (windows.Count == 1 && windows[0].Handle.ToInt64() == script.WindowProvider.Manager.GetForeGroundWindowHwnd().ToInt64())
 					return 0L;
 
 				if (!m.Equals(Keyword_R, StringComparison.OrdinalIgnoreCase) && !windows.Any(w => w.Active))
@@ -84,6 +79,7 @@ namespace Keysharp.Core
 									  object excludeText = null)
 		{
 			var name = groupName.As();
+			var windowGroups = script.WindowProvider.Manager.Groups;
 
 			if (string.IsNullOrEmpty(name))
 				return null;
@@ -106,6 +102,7 @@ namespace Keysharp.Core
 		{
 			var name = groupName.As().ToLowerInvariant();
 			var m = mode.As();
+			var windowGroups = script.WindowProvider.Manager.Groups;
 
 			if (windowGroups.TryGetValue(name, out var group))
 			{
@@ -151,6 +148,7 @@ namespace Keysharp.Core
 		{
 			var name = groupName.As().ToLowerInvariant();
 			var m = mode.As();
+			var windowGroups = script.WindowProvider.Manager.Groups;
 
 			if (windowGroups.TryGetValue(name, out var group))
 			{
@@ -158,12 +156,12 @@ namespace Keysharp.Core
 					return null;
 
 				var windows = SearchWindows($"ahk_group {name}");
-				var allwindows = WindowProvider.Manager.FilterForGroups(WindowProvider.Manager.AllWindows.Where(w => !windows.Any(ww => ww.Handle.ToInt64() == w.Handle.ToInt64()))).ToList();
+				var allwindows = script.WindowProvider.Manager.FilterForGroups(script.WindowProvider.Manager.AllWindows.Where(w => !windows.Any(ww => ww.Handle.ToInt64() == w.Handle.ToInt64()))).ToList();
 
 				if (allwindows.Count != 0 && windows.Count == group.deactivated.Count)
 					group.deactivated.Clear();
 
-				if (allwindows.Count == 1 && allwindows[0].Handle.ToInt64() == WindowProvider.Manager.GetForeGroundWindowHwnd().ToInt64())
+				if (allwindows.Count == 1 && allwindows[0].Handle.ToInt64() == script.WindowProvider.Manager.GetForeGroundWindowHwnd().ToInt64())
 					return null;
 
 				if (!m.Equals(Keyword_R, StringComparison.OrdinalIgnoreCase) && windows.Any(w => w.Active))
@@ -191,7 +189,7 @@ namespace Keysharp.Core
 												object winTitle = null,
 												object winText = null,
 												object excludeTitle = null,
-												object excludeText = null) => ControlProvider.Manager.ListViewGetContent(
+												object excludeText = null) => script.ControlProvider.Manager.ListViewGetContent(
 														options.As(),
 														control,
 														winTitle,
@@ -211,7 +209,7 @@ namespace Keysharp.Core
 										object excludeTitle = null,
 										object excludeText = null)
 		{
-			ControlProvider.Manager.MenuSelect(
+			script.ControlProvider.Manager.MenuSelect(
 				winTitle,
 				winText,
 				menu,
@@ -235,7 +233,7 @@ namespace Keysharp.Core
 										 object excludeTitle = null,
 										 object excludeText = null)
 		{
-			ControlProvider.Manager.PostMessage(
+			script.ControlProvider.Manager.PostMessage(
 				msg.Ai(),
 				wparam.Ai(),
 				lparam.Ai(),
@@ -255,7 +253,7 @@ namespace Keysharp.Core
 									   object winText = null,
 									   object excludeTitle = null,
 									   object excludeText = null,
-									   object timeout = null) => ControlProvider.Manager.SendMessage(
+									   object timeout = null) => script.ControlProvider.Manager.SendMessage(
 										   msg.Ai(),
 										   wparam,
 										   lparam,
@@ -280,9 +278,9 @@ namespace Keysharp.Core
 #endif
 			Application.EnableVisualStyles();
 
-			if (!dpimodeset)
+			if (!script.dpimodeset)
 			{
-				dpimodeset = true;
+				script.dpimodeset = true;
 
 				try
 				{
@@ -494,7 +492,7 @@ namespace Keysharp.Core
 									 object excludeText = null)
 		{
 			var criteria = SearchCriteria.FromString(winTitle, winText, excludeTitle, excludeText);
-			var window = WindowProvider.Manager.ActiveWindow;
+			var window = script.WindowProvider.Manager.ActiveWindow;
 			return (window != null && window.Equals(criteria)) ? window.Handle.ToInt64() : 0L;
 		}
 
@@ -513,9 +511,9 @@ namespace Keysharp.Core
 		{
 			Error err;
 			var seconds = secondsToWait.Ad(double.MinValue);
-			var (windows, crit) = WindowProvider.Manager.FindWindowGroup(winTitle, winText, excludeTitle, excludeText);
+			var (windows, crit) = script.WindowProvider.Manager.FindWindowGroup(winTitle, winText, excludeTitle, excludeText);
 
-			if (crit == null && string.IsNullOrEmpty(crit.Group) && windows.Count == 0 && !IsMainWindowClosing)
+			if (crit == null && string.IsNullOrEmpty(crit.Group) && windows.Count == 0 && !script.IsMainWindowClosing)
 				return Errors.ErrorOccurred(err = new TargetError($"Could not find window with criteria: title: {winTitle}, text: {winText}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : null;
 
 			foreach (var win in windows)
@@ -601,13 +599,13 @@ namespace Keysharp.Core
 										object excludeText = null)
 		{
 			Error err;
-			var (windows, criteria) = WindowProvider.Manager.FindWindowGroup(winTitle, winText, excludeTitle, excludeText);
+			var (windows, criteria) = script.WindowProvider.Manager.FindWindowGroup(winTitle, winText, excludeTitle, excludeText);
 
 			if (windows != null && windows.Count > 0)
 			{
 				return windows[ ^ 1].Handle.ToInt64();
 			}
-			else if (!IsMainWindowClosing)
+			else if (!script.IsMainWindowClosing)
 				return Errors.ErrorOccurred(err = new TargetError($"Could not find window with criteria: title: {winTitle}, text: {winText}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : 0L;
 
 			return 0L;
@@ -622,7 +620,7 @@ namespace Keysharp.Core
 					  && winText.IsNullOrEmpty()
 					  && excludeTitle.IsNullOrEmpty()
 					  && excludeText.IsNullOrEmpty()
-					  ? WindowProvider.Manager.AllWindows
+					  ? script.WindowProvider.Manager.AllWindows
 					  : SearchWindows(winTitle, winText, excludeTitle, excludeText)).Select(item => item.Handle.ToInt64()).ToList());
 
 		public static long WinGetMinMax(object winTitle = null,
@@ -743,9 +741,9 @@ namespace Keysharp.Core
 		{
 			Error err;
 			var seconds = secondsToWait.Ad(double.MinValue);
-			var (windows, crit) = WindowProvider.Manager.FindWindowGroup(winTitle, winText, excludeTitle, excludeText);
+			var (windows, crit) = script.WindowProvider.Manager.FindWindowGroup(winTitle, winText, excludeTitle, excludeText);
 
-			if (crit == null && string.IsNullOrEmpty(crit.Group) && windows.Count == 0 && !IsMainWindowClosing)
+			if (crit == null && string.IsNullOrEmpty(crit.Group) && windows.Count == 0 && !script.IsMainWindowClosing)
 				return Errors.ErrorOccurred(err = new TargetError($"Could not find window with criteria: title: {winTitle}, text: {winText}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : null;
 
 			foreach (var win in windows)
@@ -780,13 +778,13 @@ namespace Keysharp.Core
 
 		public static object WinMinimizeAll()
 		{
-			DoDelayedAction(WindowProvider.Manager.MinimizeAll);
+			DoDelayedAction(script.WindowProvider.Manager.MinimizeAll);
 			return null;
 		}
 
 		public static object WinMinimizeAllUndo(params object[] obj)
 		{
-			DoDelayedAction(WindowProvider.Manager.MinimizeAllUndo);
+			DoDelayedAction(script.WindowProvider.Manager.MinimizeAllUndo);
 			return null;
 		}
 
@@ -1047,7 +1045,7 @@ namespace Keysharp.Core
 									 object excludeTitle = null,
 									 object excludeText = null)
 		{
-			var tv = Threads.GetThreadVariables();
+			var tv = script.Threads.GetThreadVariables();
 			var prev = tv.detectHiddenWindows;
 			tv.detectHiddenWindows = true;
 			SearchWindows(winTitle, winText, excludeTitle, excludeText).ForEach(win => win.Show());
@@ -1077,7 +1075,7 @@ namespace Keysharp.Core
 			} while (win == null);
 
 			if (win != null)
-				WindowProvider.Manager.LastFound = win;
+				script.WindowProvider.Manager.LastFound = win;
 
 			WindowItemBase.DoWinDelay();
 			return win != null ? win.Handle.ToInt64() : 0L;
@@ -1097,13 +1095,13 @@ namespace Keysharp.Core
 
 			while (!b && (seconds == 0 || (DateTime.UtcNow - start).TotalSeconds < seconds))
 			{
-				var windows = WindowProvider.Manager.FindWindowGroup(criteria, true);//Pass true because we must inspect all matching windows to see if any of them are active.
+				var windows = script.WindowProvider.Manager.FindWindowGroup(criteria, true);//Pass true because we must inspect all matching windows to see if any of them are active.
 
 				foreach (var win in windows)
 				{
 					if (win.Active)
 					{
-						WindowProvider.Manager.LastFound = win;
+						script.WindowProvider.Manager.LastFound = win;
 						hwnd = win.Handle.ToInt64();
 						b = true;
 						break;
@@ -1128,14 +1126,14 @@ namespace Keysharp.Core
 			var seconds = timeout.Ad();
 			var start = DateTime.UtcNow;
 			var criteria = SearchCriteria.FromString(winTitle, winText, excludeTitle, excludeText);
-			var windows = WindowProvider.Manager.FindWindowGroup(criteria, false, true);
+			var windows = script.WindowProvider.Manager.FindWindowGroup(criteria, false, true);
 
 			if (windows.Count == 0)
 				return 1L;
 
 			foreach (var win in windows)//In the case of WinWaitClose(), this loop won't execute and the function will return 1.
 			{
-				WindowProvider.Manager.LastFound = win;
+				script.WindowProvider.Manager.LastFound = win;
 
 				while (seconds == 0 || (DateTime.UtcNow - start).TotalSeconds < seconds)
 				{
@@ -1167,7 +1165,7 @@ namespace Keysharp.Core
 			{
 				//Keysharp.Scripting.Script.OutputDebug($"The window to wait for is: {win.Handle.ToInt64()}, {win.Title}");
 				//Keysharp.Core.File.FileAppend($"The window to wait for is: {win.Handle.ToInt64()}, {win.Title}\n", "out.txt");
-				WindowProvider.Manager.LastFound = win;
+				script.WindowProvider.Manager.LastFound = win;
 
 				while (!b && (seconds == 0 || (DateTime.UtcNow - start).TotalSeconds < seconds))
 				{

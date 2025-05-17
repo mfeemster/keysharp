@@ -99,6 +99,10 @@
 		}
 	}
 
+	internal class RegExIteratorData : BaseIteratorData<RegExIterator>
+	{
+	}
+
 	/// <summary>
 	/// A two component iterator for <see cref="RegExResults"/> which returns the name and the value as a tuple.
 	/// </summary>
@@ -158,29 +162,10 @@
 		{
 			match = m;
 			iter = ((IEnumerable<Group>)match.Groups).GetEnumerator();
-			var p = c <= 1 ? p1 : p2;
+			var p = c <= 1 ? script.RegExIteratorData.p1 : script.RegExIteratorData.p2;
 			var fo = (FuncObj)p.Clone();
 			fo.Inst = this;
 			CallFunc = fo;
-		}
-
-		/// <summary>
-		/// Static constructor to initialize function objects.
-		/// </summary>
-		static RegExIterator()
-		{
-			Error err;
-			var mi1 = Reflections.FindAndCacheMethod(typeof(RegExIterator), "Call", 1);
-			p1 = new FuncObj(mi1, null);
-
-			if (!p1.IsValid)
-				_ = Errors.ErrorOccurred(err = new MethodError($"Existing function object was invalid.")) ? throw err : "";
-
-			var mi2 = Reflections.FindAndCacheMethod(typeof(RegExIterator), "Call", 2);
-			p2 = new FuncObj(mi2, null);
-
-			if (!p2.IsValid)
-				_ = Errors.ErrorOccurred(err = new MethodError($"Existing function object was invalid.")) ? throw err : "";
 		}
 
 		/// <summary>

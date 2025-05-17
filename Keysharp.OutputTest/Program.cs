@@ -1,4 +1,4 @@
-using static Keysharp.Core.Accessors;
+﻿using static Keysharp.Core.Accessors;
 using static Keysharp.Core.COM.Com;
 using static Keysharp.Core.Collections;
 using static Keysharp.Core.Common.Keyboard.HotkeyDefinition;
@@ -66,6 +66,7 @@ namespace Keysharp.CompiledMain
 	using System.Text;
 	using System.Threading.Tasks;
 	using System.Windows.Forms;
+
 	using Keysharp.Core;
 	using Keysharp.Core.Common;
 	using Keysharp.Core.Common.File;
@@ -74,6 +75,7 @@ namespace Keysharp.CompiledMain
 	using Keysharp.Core.Common.Strings;
 	using Keysharp.Core.Common.Threading;
 	using Keysharp.Scripting;
+
 	using Array = Keysharp.Core.Array;
 	using Buffer = Keysharp.Core.Buffer;
 
@@ -87,18 +89,13 @@ namespace Keysharp.CompiledMain
 			try
 			{
 				string name = "*";
-				Keysharp.Scripting.Script.Variables.InitGlobalVars();
-				Keysharp.Scripting.Script.SetName(name);
-
-				if (Keysharp.Scripting.Script.HandleSingleInstance(name, eScriptInstance.Prompt))
-				{
-					return 0;
-				}
-
+				_ks_s = new Keysharp.Scripting.Script();
+				_ks_hm = _ks_s.HotstringManager;
+				_ks_s.SetName(name);
 				Keysharp.Core.Env.HandleCommandLineParams(args);
-				Keysharp.Scripting.Script.CreateTrayMenu();
-				Keysharp.Scripting.Script.RunMainWindow(name, _ks_UserMainCode, false);
-				Keysharp.Scripting.Script.WaitThreads();
+				_ks_s.CreateTrayMenu();
+				_ks_s.RunMainWindow(name, _ks_UserMainCode, false);
+				_ks_s.WaitThreads();
 				return Environment.ExitCode;
 			}
 			catch (Keysharp.Core.Error kserr)
@@ -110,9 +107,9 @@ namespace Keysharp.CompiledMain
 
 				if (!kserr.Handled)
 				{
-					var (_ks_pushed, _ks_btv) = Keysharp.Core.Common.Threading.Threads.BeginThread();
+					var (_ks_pushed, _ks_btv) = _ks_s.Threads.BeginThread();
 					MsgBox("Uncaught Keysharp exception:\r\n" + kserr, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
-					Keysharp.Core.Common.Threading.Threads.EndThread(_ks_pushed);
+					_ks_s.Threads.EndThread(_ks_pushed);
 				}
 
 				Keysharp.Core.Flow.ExitApp(1);
@@ -133,16 +130,16 @@ namespace Keysharp.CompiledMain
 
 					if (!kserr.Handled)
 					{
-						var (_ks_pushed, _ks_btv) = Keysharp.Core.Common.Threading.Threads.BeginThread();
+						var (_ks_pushed, _ks_btv) = _ks_s.Threads.BeginThread();
 						MsgBox("Uncaught Keysharp exception:\r\n" + kserr, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
-						Keysharp.Core.Common.Threading.Threads.EndThread(_ks_pushed);
+						_ks_s.Threads.EndThread(_ks_pushed);
 					}
 				}
 				else
 				{
-					var (_ks_pushed, _ks_btv) = Keysharp.Core.Common.Threading.Threads.BeginThread();
+					var (_ks_pushed, _ks_btv) = _ks_s.Threads.BeginThread();
 					MsgBox("Uncaught exception:\r\n" + "Message: " + ex.Message + "\r\nStack: " + ex.StackTrace, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
-					Keysharp.Core.Common.Threading.Threads.EndThread(_ks_pushed);
+					_ks_s.Threads.EndThread(_ks_pushed);
 				}
 
 				;
@@ -152,6 +149,10 @@ namespace Keysharp.CompiledMain
 				return Environment.ExitCode;
 			}
 		}
+
+		private static Keysharp.Scripting.Script _ks_s;
+
+		private static Keysharp.Core.Common.Keyboard.HotstringManager _ks_hm;
 
 		public static object x;
 

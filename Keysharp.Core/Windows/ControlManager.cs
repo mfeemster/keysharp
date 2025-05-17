@@ -666,9 +666,7 @@ namespace Keysharp.Core.Windows
 		{
 			if (WindowSearch.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
-				var ht = Script.HookThread;
-				var kbdMouseSender = ht.kbdMsSender;
-				kbdMouseSender.SendKeys(str, mode, SendModes.Event, item.Handle);
+				script.HookThread.kbdMsSender.SendKeys(str, mode, SendModes.Event, item.Handle);
 			}
 		}
 

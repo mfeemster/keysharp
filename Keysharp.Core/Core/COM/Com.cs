@@ -33,8 +33,8 @@ namespace Keysharp.Core.COM
 		public const int vt_array = 0x2000; //SAFEARRAY
 		public const int vt_byref = 0x4000; //Pointer to another type of value
 		public const int vt_typemask = 0xfff;
-		internal static Guid IID_IDispatch = new(0x00020400, 0x0000, 0x0000, 0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46);
-		internal static Guid IID_IServiceProvider = new("6d5140c1-7436-11ce-8034-00aa006009fa");
+		internal static Guid IID_IDispatch = new (0x00020400, 0x0000, 0x0000, 0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46);
+		internal static Guid IID_IServiceProvider = new ("6d5140c1-7436-11ce-8034-00aa006009fa");
 		internal const int CLSCTX_INPROC_SERVER = 0x1;
 		internal const int CLSCTX_INPROC_HANDLER = 0x2;
 		internal const int CLSCTX_LOCAL_SERVER = 0x4;
@@ -43,8 +43,6 @@ namespace Keysharp.Core.COM
 		internal const int CLSCTX_SERVER = CLSCTX_INPROC_SERVER | CLSCTX_LOCAL_SERVER | CLSCTX_REMOTE_SERVER; //16;
 		internal const int LOCALE_SYSTEM_DEFAULT = 0x800;
 		internal static HashSet<ComEvent> comEvents = [];
-
-		//private static Dictionary<int,
 
 		[DllImport(WindowsAPI.ole32, CharSet = CharSet.Unicode)]
 		public static extern int CoCreateInstance(ref Guid clsid,
@@ -395,7 +393,7 @@ namespace Keysharp.Core.COM
 			}
 		}
 
-		public static ComObject ComValue(object varType, object value, object flags = null) => new(varType, value, flags);
+		public static ComObject ComValue(object varType, object value, object flags = null) => new (varType, value, flags);
 
 		public static object ObjAddRef(object ptr)
 		{
@@ -424,15 +422,18 @@ namespace Keysharp.Core.COM
 		public static object ObjRelease(object ptr)
 		{
 			var co = ptr as ComObject;
+
 			if (co != null)
 			{
 				ptr = co.Ptr;
+
 				if (Marshal.IsComObject(ptr))
 				{
 					ptr = Marshal.GetIUnknownForObject(ptr); // Make sure we decrease the COM object not RCW
 					_ = Marshal.Release((nint)ptr);
 				}
 			}
+
 			if (ptr is IntPtr ip)
 				ptr = ip;
 			else if (ptr is long l)
@@ -480,8 +481,9 @@ namespace Keysharp.Core.COM
 			// and if that is a negative value then throw an OSError
 			if (!helper.HasReturn)
 			{
-				long hrLong = (long)value;                // unbox the raw long  
+				long hrLong = (long)value;                // unbox the raw long
 				int hr32 = unchecked((int)hrLong);   // keep only the low 32 bits
+
 				if (hr32 < 0)
 					throw new OSError(hr32);
 			}
@@ -515,7 +517,6 @@ namespace Keysharp.Core.COM
 				throw new Error("Invalid object pointer or vtable number");
 
 			object ret = 0L;
-
 			//First attempt to call the normal way. This will succeed with any normal COM call.
 			//However, it will throw an exception if we've passed a fake COM function using DelegateHolder.
 			//This can be reproduced with the following script.
@@ -531,7 +532,6 @@ namespace Keysharp.Core.COM
 
 			    MsgBox ComCall(3, dummyCOM.Ptr, "int")
 			*/
-
 			// This could potentially be optimized by compiling a specific delegate
 			// for the ComCall scenario with the signature Func<nint, long, long[], long>
 			long[] newArgs = new long[args.Length + 1];

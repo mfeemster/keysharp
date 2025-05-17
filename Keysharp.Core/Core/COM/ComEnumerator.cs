@@ -3,6 +3,10 @@ using System.Runtime.InteropServices.Marshalling;
 
 namespace Keysharp.Core.COM
 {
+	internal class ComEnumeratorData : BaseIteratorData<ComEnumerator>
+	{
+	}
+
 	/// <summary>
 	/// A two component iterator for a COM object which returns the value and the type of the element as a tuple.
 	/// </summary>
@@ -22,12 +26,6 @@ namespace Keysharp.Core.COM
 		/// newEnum cast to an <see cref="IEnumerator"/>.
 		/// </summary>
 		private IEnumerator enumerator;
-
-		/// <summary>
-		/// Cache for iterators with either 1 or 2 parameters.
-		/// This prevents reflection from having to always be done to find the Call method.
-		/// </summary>
-		private static FuncObj p1, p2;
 
 		/// <summary>
 		/// The implementation for <see cref="IEnumerator.Current"/> which gets the type,value tuple at the current iterator position.
@@ -61,14 +59,14 @@ namespace Keysharp.Core.COM
 			: base(null, c)
 		{
 			com = o;
-			var p = c <= 1 ? p1 : p2;
+			var p = c <= 1 ? script.ComEnumeratorData.p1 : script.ComEnumeratorData.p2;
 			var fo = (FuncObj)p.Clone();
 			fo.Inst = this;
 			CallFunc = fo;
 
 			try
 			{
-				newEnum = Keysharp.Scripting.Script.Invoke(Keysharp.Scripting.Script.GetMethodOrProperty(com, "_NewEnum", 0));
+				newEnum = Keysharp.Scripting.Script.Invoke(Script.GetMethodOrProperty(com, "_NewEnum", 0));
 				enumerator = (IEnumerator)newEnum;
 			}
 			catch (Keysharp.Core.Error ex)
@@ -76,25 +74,6 @@ namespace Keysharp.Core.COM
 				Error err;
 				_ = Errors.ErrorOccurred(err = new Error($"Could not retrieve the _NewEnum() method on a COM object while trying to create an enumerator: {ex}")) ? throw err : "";
 			}
-		}
-
-		/// <summary>
-		/// Static constructor to initialize function objects.
-		/// </summary>
-		static ComEnumerator()
-		{
-			Error err;
-			var mi1 = Reflections.FindAndCacheMethod(typeof(ComEnumerator), "Call", 1);
-			p1 = new FuncObj(mi1, null);
-
-			if (!p1.IsValid)
-				_ = Errors.ErrorOccurred(err = new MethodError($"Existing function object was invalid.")) ? throw err : "";
-
-			var mi2 = Reflections.FindAndCacheMethod(typeof(ComEnumerator), "Call", 2);
-			p2 = new FuncObj(mi2, null);
-
-			if (!p2.IsValid)
-				_ = Errors.ErrorOccurred(err = new MethodError($"Existing function object was invalid.")) ? throw err : "";
 		}
 
 		/// <summary>

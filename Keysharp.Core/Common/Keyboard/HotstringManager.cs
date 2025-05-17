@@ -1,37 +1,30 @@
 ﻿namespace Keysharp.Core.Common.Keyboard
 {
-	public static class HotstringManager
+	public class HotstringManager
 	{
-		internal static string defEndChars = "-()[]{}:;'\"/\\,.?!\r\n \t";//Should this be a platform specific newline instead of \r\n?//TODO
-		internal static uint enabledCount;      // Keep in sync with the above.
-		internal static List<char> hsBuf = new (256);
-		internal static bool hsCaseSensitive;
-		internal static bool hsConformToCase = true;
-		internal static bool hsDetectWhenInsideWord;
-		internal static bool hsDoBackspace = true;
-		internal static bool hsDoReset;
-		internal static bool hsEndCharRequired = true;
-		internal static int hsKeyDelay;
-		internal static bool hsOmitEndChar;
-		internal static int hsPriority;
-		internal static bool hsResetUponMouseClick = true;
-		internal static bool hsSameLineAction;
-		internal static SendModes hsSendMode = SendModes.Input;
-		internal static SendRawModes hsSendRaw = SendRawModes.NotRaw;
-		internal static bool hsSuspendExempt;
-		internal static List<HotstringDefinition> shs = new (256);
-		private static readonly Dictionary<char, List<HotstringDefinition>> shsDkt = new (new CharNoCaseEqualityComp());
-		//private static Stopwatch sw = new Stopwatch();
+		internal string defEndChars = "-()[]{}:;'\"/\\,.?!\r\n \t";//Should this be a platform specific newline instead of \r\n?//TODO
+		internal uint enabledCount;      // Keep in sync with the above.
+		internal List<char> hsBuf = new (256);
+		internal bool hsCaseSensitive;
+		internal bool hsConformToCase = true;
+		internal bool hsDetectWhenInsideWord;
+		internal bool hsDoBackspace = true;
+		internal bool hsDoReset;
+		internal bool hsEndCharRequired = true;
+		internal int hsKeyDelay;
+		internal bool hsOmitEndChar;
+		internal int hsPriority;
+		internal bool hsResetUponMouseClick = true;
+		internal bool hsSameLineAction;
+		internal SendModes hsSendMode = SendModes.Input;
+		internal SendRawModes hsSendRaw = SendRawModes.NotRaw;
+		internal bool hsSuspendExempt;
+		internal List<HotstringDefinition> shs = new (256);
+		private readonly Dictionary<char, List<HotstringDefinition>> shsDkt = new (new CharNoCaseEqualityComp());
+		//private Stopwatch sw = new Stopwatch();
 
 		[PublicForTestOnly]
-		public static string CurrentInputBuffer => new (hsBuf.ToArray());
-
-		[PublicForTestOnly]
-		public static void AddChars(string s)
-		{
-			foreach (var ch in s)
-				hsBuf.Add(ch);
-		}
+		public string CurrentInputBuffer => new (hsBuf.ToArray());
 
 		/// <summary>
 		/// Returns OK or FAIL.
@@ -49,17 +42,25 @@
 			if (!hs.constructedOK)
 				return null;
 
-			shs.Add(hs);
-			shsDkt.GetOrAdd(_hotstring[0]).Add(hs);
+			var hm = script.HotstringManager;
+			hm.shs.Add(hs);
+			hm.shsDkt.GetOrAdd(_hotstring[0]).Add(hs);
 
-			if (!Script.IsReadyToExecute) // Caller is LoadIncludedFile(); allow BIF_Hotstring to manage this at runtime.
-				++enabledCount; // This works because the script can't be suspended during startup (aSuspend is always FALSE).
+			if (!script.IsReadyToExecute) // Caller is LoadIncludedFile(); allow BIF_Hotstring to manage this at runtime.
+				++hm.enabledCount; // This works because the script can't be suspended during startup (aSuspend is always FALSE).
 
 			return hs;
 		}
 
 		[PublicForTestOnly]
-		public static void ClearHotstrings()
+		public void AddChars(string s)
+		{
+			foreach (var ch in s)
+				hsBuf.Add(ch);
+		}
+
+		[PublicForTestOnly]
+		public void ClearHotstrings()
 		{
 			hsBuf.Clear();
 			shs.Clear();
@@ -67,7 +68,7 @@
 		}
 
 		[PublicForTestOnly]
-		public static HotstringDefinition MatchHotstring()
+		public HotstringDefinition MatchHotstring()
 		{
 			var found = false;
 			HotstringDefinition hs = null;
@@ -80,7 +81,7 @@
 				var hsBufCountm1 = hsLength - 1;
 				var hsBufCountm2 = hsLength - 2;
 				var hasEndChar = defEndChars.Contains(hsBufSpan[hsBufCountm1]);
-				var ht = Script.HookThread;
+				var ht = script.HookThread;
 
 				for (var i = 0; !found && i < hsBuf.Count; i++)//Must loop forward to catch hotstrings in order.
 				{
@@ -181,7 +182,7 @@
 		}
 
 		[PublicForTestOnly]
-		public static void RestoreDefaults(bool doNonPositional = false)
+		public void RestoreDefaults(bool doNonPositional = false)
 		{
 			if (doNonPositional)
 			{
@@ -208,9 +209,9 @@
 			hsSuspendExempt = false;
 		}
 
-		internal static void ClearBuf() => hsBuf.Clear();
+		internal void ClearBuf() => hsBuf.Clear();
 
-		internal static HotstringDefinition FindHotstring(string _hotstring, bool _caseSensitive, bool _detectWhenInsideWord, IFuncObj _hotCriterion)
+		internal HotstringDefinition FindHotstring(string _hotstring, bool _caseSensitive, bool _detectWhenInsideWord, IFuncObj _hotCriterion)
 		{
 			if (shsDkt.TryGetValue(_hotstring[0], out var possibleHotstrings))
 				foreach (var hs in possibleHotstrings)
@@ -220,8 +221,7 @@
 			return null;
 		}
 
-		//static Stopwatch sw = new Stopwatch();
-		internal static void SuspendAll(bool _suspend)
+		internal void SuspendAll(bool _suspend)
 		{
 			if (shs.Count < 1) // At least one part below relies on this check.
 				return;

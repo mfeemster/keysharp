@@ -60,8 +60,8 @@ namespace Keysharp.Scripting
 			var hotstringExecute = false;
 			var suffixHasTilde = false;
 			var hookIsMandatory = false;
-			var ht = Script.HookThread;
-			var kbLayout = PlatformProvider.Manager.GetKeyboardLayout(0);
+			var ht = script.HookThread;
+			var kbLayout = script.PlatformProvider.Manager.GetKeyboardLayout(0);
 			string SetLastHotstringFunc(string hotstringName) => lastHotstringFunc.Length == 0 ? (lastHotstringFunc = LabelMethodName(hotstringName)) : lastHotstringFunc;
 			void ClearParserHotstringState()
 			{
@@ -106,7 +106,7 @@ namespace Keysharp.Scripting
 			if (hotstringStartIndex > 0)
 			{
 				// Check for 'X' option early since escape sequence processing depends on it.
-				hotstringExecute = HotstringManager.hsSameLineAction;
+				hotstringExecute = script.HotstringManager.hsSameLineAction;
 
 				for (cp = hotstringOptionsIndex; cp < hotstringStartIndex; ++cp)
 					if (char.ToUpper(buf[cp]) == 'X')
@@ -523,7 +523,7 @@ namespace Keysharp.Scripting
 					{
 						// Never use otb if text or raw mode is in effect for this hotstring.
 						// Either explicitly or via #hotstring.
-						var uses_text_or_raw_mode = HotstringManager.hsSendRaw != SendRawModes.NotRaw;
+						var uses_text_or_raw_mode = script.HotstringManager.hsSendRaw != SendRawModes.NotRaw;
 
 						for (var i = hotstringOptionsIndex; i < hotstringStartIndex; ++i)
 						{

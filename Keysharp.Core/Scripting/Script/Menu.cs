@@ -2,15 +2,15 @@
 {
 	public partial class Script
 	{
-		internal static ToolStripMenuItem openMenuItem;
-		internal static ToolStripMenuItem suspendMenuItem;
-		internal static NotifyIcon Tray;
-		internal static Keysharp.Core.Menu trayMenu;
+		internal ToolStripMenuItem openMenuItem;
+		internal ToolStripMenuItem suspendMenuItem;
+		internal NotifyIcon Tray;
+		internal Keysharp.Core.Menu trayMenu;
 
-		public static void CreateTrayMenu()
+		public void CreateTrayMenu()
 		{
 			var trayIcon = Tray = new NotifyIcon { ContextMenuStrip = new ContextMenuStrip(), Text = A_ScriptName.Substring(0, Math.Min(A_ScriptName.Length, 64)) };//System tray icon tooltips have a limit of 64 characters.
-			Processes.mainContext = SynchronizationContext.Current;//This must happen after the icon is created.
+			script.ProcessesData.mainContext = SynchronizationContext.Current;//This must happen after the icon is created.
 
 			if (NoTrayIcon)
 				return;
@@ -40,13 +40,13 @@
 
 		internal static void SuspendHotkeys()
 		{
-			mainWindow.CheckedInvoke(() =>
+			script.mainWindow.CheckedInvoke(() =>
 			{
-				Flow.Suspended = !Flow.Suspended;
-				HotstringManager.SuspendAll(Flow.Suspended);//Must do this prior to ManifestAllHotkeysHotstringsHooks() to avoid incorrect removal of hook.
+				var suspended = script.flowData.suspended = !script.flowData.suspended;
+				script.HotstringManager.SuspendAll(suspended);//Must do this prior to ManifestAllHotkeysHotstringsHooks() to avoid incorrect removal of hook.
 				HotkeyDefinition.ManifestAllHotkeysHotstringsHooks();//Update the state of all hotkeys based on the complex interdependencies hotkeys have with each another.
-				suspendMenuItem.Checked = Flow.Suspended;
-				mainWindow.SuspendHotkeysToolStripMenuItem.Checked = Flow.Suspended;
+				script.suspendMenuItem.Checked = suspended;
+				script.mainWindow.SuspendHotkeysToolStripMenuItem.Checked = suspended;
 			}, false);
 		}
 

@@ -346,18 +346,11 @@ using static Keysharp.Scripting.Script;
 
 		public (CodeCompileUnit[], CompilerErrorCollection) CreateDomFromFile(params string[] fileNames)
 		{
-			// Creating the DOM relies on querying methods from Reflections, but if previously
-			// a script assembly has been loaded (eg when running tests) then unwanted methods
-			// may be found from there. Thus clear all cached methods here, and reinitialize while
-			// ignoring the "program" namespace.
-			Reflections.Clear();
-			Reflections.Initialize(true);
-			Flow.ResetState();
 			var units = new CodeCompileUnit[fileNames.Length];
 			var errors = new CompilerErrorCollection();
 			var enc = Encoding.Default;
 			var x = Env.FindCommandLineArg("cp");
-			var (pushed, btv) = Threads.BeginThread();//Some internal parsing uses Accessors, so a thread must be present.
+			var (pushed, btv) = script.Threads.BeginThread();//Some internal parsing uses Accessors, so a thread must be present.
 
 			if (pushed)
 			{
@@ -377,13 +370,13 @@ using static Keysharp.Scripting.Script;
 					{
 						if (File.Exists(fileNames[i]))
 						{
-							Script.scriptName = fileNames[i];
-							using var reader = new StreamReader(Script.scriptName, enc);
+							script.scriptName = fileNames[i];
+							using var reader = new StreamReader(script.scriptName, enc);
 							units[i] = parser.Parse(reader, Path.GetFullPath(fileNames[i]));
 						}
 						else
 						{
-							Script.scriptName = "*";
+							script.scriptName = "*";
 							using var reader = new StringReader(fileNames[i]);
 							units[i] = parser.Parse(reader, "*");//In memory.
 						}
@@ -401,7 +394,7 @@ using static Keysharp.Scripting.Script;
 					}
 				}
 
-				_ = Threads.EndThread(pushed);
+				_ = script.Threads.EndThread(pushed);
 			}
 
 			return (units, errors);

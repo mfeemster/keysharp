@@ -5,18 +5,15 @@ namespace Keysharp.Core
 	/// </summary>
 	public static class Dialogs
 	{
-		internal static int nFileDialogs;
-		internal static int nFolderDialogs;
-		internal static int nMessageBoxes;
-		internal static Guid computer = new ("0AC0837C-BBF8-452A-850D-79D08E667CA7"); //Computer (/).
-		internal static Guid desktop = new ("B4BFCC3A-DB2C-424C-B029-7FE99A87C641"); //Desktop (~/Desktop).
-		internal static Guid documents = new ("FDD39AD0-238F-46AF-ADB4-6C85480369C7"); //Documents (~/Documents).
-		internal static Guid downloads = new ("374DE290-123F-4565-9164-39C4925E467B"); //Downloads (~/Downloads).
-		internal static Guid music = new ("4BD8D571-6D19-48D3-BE97-422220080E43"); //Music (~/Music).
-		internal static Guid pictures = new ("33E28130-4E1E-4676-835A-98395C3BC3BB"); //Pictures (~/Pictures).
-		internal static Guid @public = new ("DFDF76A2-C82A-4D63-906A-5644AC457385"); //Public (~/Public).
-		internal static Guid userprofile = new ("5E6C858F-0E22-4760-9AFE-EA3317B67173"); //User profile root (~/).
-		internal static Guid userprofiles = new ("0762D272-C50A-4BB0-A382-697DCD729B80"); //User profiles (/home).
+		internal static readonly Guid computer = new ("0AC0837C-BBF8-452A-850D-79D08E667CA7"); //Computer (/).
+		internal static readonly Guid desktop = new ("B4BFCC3A-DB2C-424C-B029-7FE99A87C641"); //Desktop (~/Desktop).
+		internal static readonly Guid documents = new ("FDD39AD0-238F-46AF-ADB4-6C85480369C7"); //Documents (~/Documents).
+		internal static readonly Guid downloads = new ("374DE290-123F-4565-9164-39C4925E467B"); //Downloads (~/Downloads).
+		internal static readonly Guid music = new ("4BD8D571-6D19-48D3-BE97-422220080E43"); //Music (~/Music).
+		internal static readonly Guid pictures = new ("33E28130-4E1E-4676-835A-98395C3BC3BB"); //Pictures (~/Pictures).
+		internal static readonly Guid @public = new ("DFDF76A2-C82A-4D63-906A-5644AC457385"); //Public (~/Public).
+		internal static readonly Guid userprofile = new ("5E6C858F-0E22-4760-9AFE-EA3317B67173"); //User profile root (~/).
+		internal static readonly Guid userprofiles = new ("0762D272-C50A-4BB0-A382-697DCD729B80"); //User profiles (/home).
 
 		/// <summary>
 		/// Displays a standard dialog that allows the user to select a folder.
@@ -84,9 +81,7 @@ namespace Keysharp.Core
 			else if (folder.Length != 0)
 				select.SelectedPath = folder;
 
-			nFolderDialogs++;
-			var selected = Script.mainWindow.CheckedInvoke(() => GuiHelper.DialogOwner == null ? select.ShowDialog() : select.ShowDialog(GuiHelper.DialogOwner), true);
-			nFolderDialogs--;
+			var selected = script.mainWindow.CheckedInvoke(() => GuiHelper.DialogOwner == null ? select.ShowDialog() : select.ShowDialog(GuiHelper.DialogOwner), true);
 			return selected == DialogResult.OK ? select.SelectedPath : "";
 		}
 
@@ -182,8 +177,6 @@ namespace Keysharp.Core
 				}
 			}
 
-			nFileDialogs++;
-
 			if (!f.Contains("All Files (*.*)|*.*"))
 				f += "|All Files (*.*)|*.*";
 
@@ -203,7 +196,7 @@ namespace Keysharp.Core
 					InitialDirectory = Path.GetDirectoryName(rootdir),
 					FileName = Path.GetFileName(rootdir)
 				};
-				var selected = Script.mainWindow.CheckedInvoke(() => GuiHelper.DialogOwner == null ? saveas.ShowDialog() : saveas.ShowDialog(GuiHelper.DialogOwner), true);
+				var selected = script.mainWindow.CheckedInvoke(() => GuiHelper.DialogOwner == null ? saveas.ShowDialog() : saveas.ShowDialog(GuiHelper.DialogOwner), true);
 				files = selected == DialogResult.OK ? saveas.FileName : "";
 			}
 			else
@@ -221,7 +214,7 @@ namespace Keysharp.Core
 						Description = t,
 						ShowNewFolderButton = true//Seems to be visible regardless of this property.
 					};
-					var selected = Script.mainWindow.CheckedInvoke(() => GuiHelper.DialogOwner == null ? select.ShowDialog() : select.ShowDialog(GuiHelper.DialogOwner), true);
+					var selected = script.mainWindow.CheckedInvoke(() => GuiHelper.DialogOwner == null ? select.ShowDialog() : select.ShowDialog(GuiHelper.DialogOwner), true);
 					files = selected == DialogResult.OK ? select.SelectedPath : "";
 				}
 				else
@@ -239,14 +232,13 @@ namespace Keysharp.Core
 						InitialDirectory = Path.GetDirectoryName(rootdir),
 						FileName = Path.GetFileName(rootdir)
 					};
-					var selected = Script.mainWindow.CheckedInvoke(() => GuiHelper.DialogOwner == null ? open.ShowDialog() : open.ShowDialog(GuiHelper.DialogOwner), true);
+					var selected = script.mainWindow.CheckedInvoke(() => GuiHelper.DialogOwner == null ? open.ShowDialog() : open.ShowDialog(GuiHelper.DialogOwner), true);
 					files = selected == DialogResult.OK
 							? multi ? new Array(open.FileNames.Cast<object>().ToArray()) : open.FileName
 							: multi ? new Array() : "";
 				}
 			}
 
-			nFileDialogs--;
 			return files;
 		}
 
@@ -345,8 +337,7 @@ namespace Keysharp.Core
 				input.Left = x != int.MinValue ? x : (((wr.Ai() - wl.Ai()) / 2) - (input.Width / 2));
 				input.Top = y != int.MinValue ? y : (((wb.Ai() - wt.Ai()) / 2) - (input.Height / 2));
 			};
-			nFileDialogs++;
-			Script.mainWindow.CheckedInvoke(() =>
+			script.mainWindow.CheckedInvoke(() =>
 			{
 				if (GuiHelper.DialogOwner != null)
 					_ = input.ShowDialog(GuiHelper.DialogOwner);
@@ -357,7 +348,6 @@ namespace Keysharp.Core
 			while (input.Visible)
 				Application.DoEvents();
 
-			nFileDialogs--;
 			return new DialogResultReturn()
 			{
 				Value = input.Message,
@@ -584,7 +574,7 @@ namespace Keysharp.Core
 			{
 				var timeoutclosed = false;
 				var w = new Form() { Size = new Size(0, 0) };//Gotten from https://stackoverflow.com/a/26418199
-				nMessageBoxes++;
+				script.nMessageBoxes++;
 				//No need to show the form, it will work while hidden.
 				_ = Task.Delay(TimeSpan.FromSeconds(timeout))
 					.ContinueWith(t =>
@@ -593,12 +583,12 @@ namespace Keysharp.Core
 					timeoutclosed = true;
 				}, TaskScheduler.FromCurrentSynchronizationContext());
 				var ret = MessageBox.Show(w, txt, caption, buttons, icon, defaultbutton, mbopts);
-				nMessageBoxes--;
+				script.nMessageBoxes--;
 				return timeoutclosed ? "Timeout" : ret.ToString();
 			}
 			else
 			{
-				nMessageBoxes++;
+				script.nMessageBoxes++;
 				var ret = "";
 
 				//If owner is null, then the message boxes will not be modal between threads, meaning it's possible to show
@@ -624,7 +614,7 @@ namespace Keysharp.Core
 				}
 
 				//ret = Script.mainWindow.CheckedInvoke(() => MessageBox.Show(null, txt, caption, buttons, icon, defaultbutton, mbopts).ToString(), true);
-				nMessageBoxes--;
+				script.nMessageBoxes--;
 				return ret;
 			}
 		}
@@ -638,7 +628,7 @@ namespace Keysharp.Core
 		{
 #if WINDOWS
 			//Will need a way to do this on linux.//TODO
-			var tempn = nMessageBoxes;
+			var tempn = script.nMessageBoxes;
 
 			while (tempn > 0)
 			{

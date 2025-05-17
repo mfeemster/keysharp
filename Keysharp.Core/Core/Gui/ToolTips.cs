@@ -1,23 +1,26 @@
 ﻿namespace Keysharp.Core
 {
+	internal class ToolTipData
+	{
+		/// <summary>
+		/// The maximum number of tool tips allowed to be displayed at once.
+		/// </summary>
+		internal const int MaxToolTips = 20;
+		/// <summary>
+		/// An array of all tooltips.
+		/// </summary>
+		internal readonly ToolTip[] persistentTooltips = new ToolTip[MaxToolTips];
+		/// <summary>
+		/// An array of all tooltip positions used to avoid position flickering.
+		/// </summary>
+		internal readonly Point?[] persistentTooltipsPositions = new Point?[MaxToolTips];
+	}
+
 	/// <summary>
 	/// Public interface for tooltip-related functions.
 	/// </summary>
 	public static class ToolTips
 	{
-		/// <summary>
-		/// The maximum number of tool tips allowed to be displayed at once.
-		/// </summary>
-		public static readonly int MaxToolTips = 20;
-		/// <summary>
-		/// An array of all tooltips.
-		/// </summary>
-		private static readonly ToolTip[] persistentTooltips = new ToolTip[MaxToolTips];
-		/// <summary>
-		/// An array of all tooltip positions used to avoid position flickering.
-		/// </summary>
-		private static Point?[] persistentTooltipsPositions = new Point?[MaxToolTips];
-
 		/// <summary>
 		/// Shows an always-on-top window anywhere on the screen.
 		/// </summary>
@@ -37,6 +40,8 @@
 			var _x = x.Ai(int.MinValue);
 			var _y = y.Ai(int.MinValue);
 			var id = whichToolTip.Ai(1);
+			var persistentTooltips = script.ToolTipData.persistentTooltips;
+			var persistentTooltipsPositions = script.ToolTipData.persistentTooltipsPositions;
 			id--;
 
 			if (t == "") // Clear tooltip and return
@@ -57,10 +62,10 @@
 
 			if (tooltipInvokerForm == null)
 			{
-				tooltipInvokerForm = Application.OpenForms.Cast<Form>().LastOrDefault(f => f != Script.mainWindow);//Get the last created one, which is not necessarily the last focused one, even though that's really what we want.
+				tooltipInvokerForm = Application.OpenForms.Cast<Form>().LastOrDefault(f => f != script.mainWindow);//Get the last created one, which is not necessarily the last focused one, even though that's really what we want.
 
 				if (tooltipInvokerForm == null)
-					tooltipInvokerForm = Script.mainWindow;
+					tooltipInvokerForm = script.mainWindow;
 			}
 
 			if (tooltipInvokerForm == null)
@@ -104,7 +109,7 @@
 #endif
 			}, false);
 			// CheckedBeginInvoke might run in a different thread with a different CoordMode
-			var coordModeToolTip = Mouse.Coords.Tooltip;
+			var coordModeToolTip = script.Coords.Tooltip;
 			tooltipInvokerForm.CheckedBeginInvoke(() =>
 			{
 #if LINUX
@@ -120,7 +125,6 @@
 					_ = mSetTool.Invoke(tt, [tooltipInvokerForm, t, 2, new Point(0, 0)]);
 
 				tt.Active = true;
-
 				var tempx = _x;
 				var tempy = _y;
 
@@ -137,11 +141,10 @@
 					//  var m = tt.GetType().GetMethod("SetTool", BindingFlags.Instance | BindingFlags.NonPublic);
 					//  _ = m.Invoke(tt, new object[] { tooltipInvokerForm, text, 2, new Point(tempx, tempy) });
 					//}
-
-					var foreground = WindowProvider.Manager.ActiveWindow;
+					var foreground = script.WindowProvider.Manager.ActiveWindow;
 
 					if (foreground.Handle != IntPtr.Zero)
-						PlatformProvider.Manager.CoordToScreen(ref tempx, ref tempy, CoordMode.Tooltip);
+						script.PlatformProvider.Manager.CoordToScreen(ref tempx, ref tempy, CoordMode.Tooltip);
 				}
 
 				if (_x == int.MinValue || _y == int.MinValue) //At least one coordinate was missing, so default it to the mouse position
@@ -163,6 +166,7 @@
 				_ = mSetTrackPosition.Invoke(tt, [tempx, tempy]);
 				_ = mSetTool.Invoke(tt, [tooltipInvokerForm, t, 2, persistentTooltipsPositions[id]]);
 #endif
+				//Debug.OutputDebug("invoked tooltip");
 				//AHK did a large amount of work to make sure the tooltip didn't go off screen
 				//and also to ensure it was not behind the mouse cursor. This seems like overkill
 				//for two reasons.
@@ -193,7 +197,7 @@
 			var filename = fileName.As();
 			var iconnumber = ImageHelper.PrepareIconNumber(iconNumber);
 
-			if (Script.NoTrayIcon)
+			if (script.NoTrayIcon)
 				return null;
 
 			if (freeze != null)
@@ -203,8 +207,8 @@
 			{
 				var (bmp, temp) = ImageHelper.LoadImage(filename, 0, 0, iconnumber);
 
-				if (Script.Tray == null)
-					Script.CreateTrayMenu();
+				if (script.Tray == null)
+					script.CreateTrayMenu();
 
 				if (bmp != null)
 				{
@@ -221,15 +225,15 @@
 						{
 							A_IconFile = filename;
 							A_IconNumber = iconNumber;
-							Script.mainWindow.CheckedBeginInvoke(() =>
+							script.mainWindow.CheckedBeginInvoke(() =>
 							{
-								Script.Tray.Icon = Script.mainWindow.Icon = icon;
+								script.Tray.Icon = script.mainWindow.Icon = icon;
 							}, false, false);
 						}
 					}
 					finally
 					{
-						_ =  PlatformProvider.Manager.DestroyIcon(ptr);
+						_ =  script.PlatformProvider.Manager.DestroyIcon(ptr);
 					}
 				}
 			}
@@ -237,9 +241,9 @@
 			{
 				A_IconFile = "";
 				A_IconNumber = 1;
-				Script.mainWindow.CheckedBeginInvoke(() =>
+				script.mainWindow.CheckedBeginInvoke(() =>
 				{
-					Script.Tray.Icon = Script.mainWindow.Icon = Properties.Resources.Keysharp_ico;
+					script.Tray.Icon = script.mainWindow.Icon = Properties.Resources.Keysharp_ico;
 				}, false, false);
 			}
 
@@ -259,14 +263,14 @@
 			var _title = title.As();
 			var opts = options;
 
-			if (Script.NoTrayIcon)
+			if (script.NoTrayIcon)
 				return null;
 
 			if ((bool)A_IconHidden)
 				return null;
 
-			if (Script.Tray == null)
-				Script.CreateTrayMenu();
+			if (script.Tray == null)
+				script.CreateTrayMenu();
 
 			//As passing an empty string hides the TrayTip (or does nothing on Windows 10),
 			//pass a space to ensure the TrayTip is shown.  Testing showed that Windows 10
@@ -278,8 +282,8 @@
 
 			if (_text.Length == 0 && _title.Length == 0)
 			{
-				Script.Tray.Visible = false;
-				Script.Tray.Visible = true;
+				script.Tray.Visible = false;
+				script.Tray.Visible = true;
 				return null;
 			}
 
@@ -313,8 +317,8 @@
 			else if (opts != null)
 				HandleInt(opts.ParseInt());
 
-			Script.Tray.Visible = true;
-			Script.Tray.ShowBalloonTip(1000, _title, _text, icon);//Duration is now ignored by Windows.
+			script.Tray.Visible = true;
+			script.Tray.ShowBalloonTip(1000, _title, _text, icon);//Duration is now ignored by Windows.
 			return null;
 		}
 	}

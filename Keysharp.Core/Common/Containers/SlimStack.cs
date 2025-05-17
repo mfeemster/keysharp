@@ -53,7 +53,7 @@
 		/// <returns>True if the object was pushed, else false if there was no available space.</returns>
 		public bool TryPush(out T obj)
 		{
-			var next = Interlocked.Increment(ref index);
+			var next = Interlocked.Increment(ref index);//This is probably not actually thread safe: push, push, mid-push, pop, push.//TODO
 
 			if (next > 0 && next <= size)
 			{

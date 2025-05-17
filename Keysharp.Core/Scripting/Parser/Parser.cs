@@ -1,4 +1,3 @@
-using slmd = System.Collections.Generic.Dictionary<string, System.Collections.Generic.List<System.CodeDom.CodeMethodInvokeExpression>>;
 using tsmd = System.Collections.Generic.Dictionary<System.CodeDom.CodeTypeDeclaration, System.Collections.Generic.Dictionary<string, System.Collections.Generic.List<System.CodeDom.CodeMethodInvokeExpression>>>;
 
 namespace Keysharp.Scripting
@@ -167,12 +166,23 @@ namespace Keysharp.Scripting
 
 		internal static FrozenSet<string>.AlternateLookup<ReadOnlySpan<char>> propKeywordsAlt = propKeywords.GetAlternateLookup<ReadOnlySpan<char>>();
 
+		internal readonly CodeMemberField HotstringManagerObject;
+		internal readonly string HotstringManagerObjectName;
+		internal readonly CodeSnippetExpression HotstringManagerObjectSnippet;
+		internal readonly CodeMemberField ScriptObject;
+		internal readonly string ScriptObjectName;
+		internal readonly CodeSnippetExpression ScriptObjectSnippet;
+		internal readonly string VarPrefix = "_ks_";
 		internal bool errorStdOut;
-		internal CodeStatementCollection initial = [];//These are placed at the very beginning of Main().
+		internal CodeStatementCollection initial = [];
+
+		//These are placed at the very beginning of Main().
 		internal string name = string.Empty;
+
 		internal bool noTrayIcon;
 		internal bool persistent;
 		internal bool persistentValueSetByUser;
+		internal PreReader preReader;
 		private const string args = "args";
 		private const string initParams = "initparams";
 		private const string mainScope = "";
@@ -217,7 +227,6 @@ namespace Keysharp.Scripting
 		};
 
 		private readonly CodeNamespace mainNs = new ("Keysharp.CompiledMain");
-
 		private readonly Dictionary<CodeTypeDeclaration, Dictionary<string, CodeMemberMethod>> methods = [];
 
 		private readonly char[] ops = [Equal, Not, Greater, Less];
@@ -242,13 +251,7 @@ namespace Keysharp.Scripting
 
 		private readonly Stack<CodeTypeDeclaration> typeStack = new ();
 
-		private readonly CodeMemberMethod userMainMethod = new ()
-		{
-			Attributes = MemberAttributes.Public | MemberAttributes.Static,
-			Name = "_ks_UserMainCode",
-			ReturnType = objTypeRef
-		};
-
+		private readonly CodeMemberMethod userMainMethod;
 		private bool blockOpen;
 		private uint caseCount;
 		private List<CodeLine> codeLines = [];
@@ -268,11 +271,28 @@ namespace Keysharp.Scripting
 		public Parser(CompilerHelper ch)
 		{
 			Ch = ch;
+			userMainMethod = new ()
+			{
+				Attributes = MemberAttributes.Public | MemberAttributes.Static,
+				Name = $"{VarPrefix}UserMainCode",
+				ReturnType = objTypeRef
+			};
 			main.ReturnType = new CodeTypeReference(typeof(int));
 			_ = main.Parameters.Add(new CodeParameterDeclarationExpression(typeof(string[]), "args"));
 			_ = main.CustomAttributes.Add(new CodeAttributeDeclaration(new CodeTypeReference(typeof(STAThreadAttribute))));
 			targetClass = AddType(mainClassName);
 			_ = targetClass.Members.Add(main);
+			ScriptObjectName = $"{VarPrefix}s";
+			ScriptObjectSnippet = new CodeSnippetExpression(ScriptObjectName);
+			ScriptObject = new CodeMemberField(typeof(Keysharp.Scripting.Script), ScriptObjectName);
+			ScriptObject.Attributes |= MemberAttributes.Static;
+			_ = targetClass.Members.Add(ScriptObject);
+			//
+			HotstringManagerObjectName = $"{VarPrefix}hm";
+			HotstringManagerObjectSnippet = new CodeSnippetExpression(HotstringManagerObjectName);
+			HotstringManagerObject = new CodeMemberField(typeof(Keysharp.Core.Common.Keyboard.HotstringManager), HotstringManagerObjectName);
+			HotstringManagerObject.Attributes |= MemberAttributes.Static;
+			_ = targetClass.Members.Add(HotstringManagerObject);
 			cad = new CodeAttributeDeclaration(ctrpaa);
 		}
 
@@ -330,25 +350,25 @@ namespace Keysharp.Scripting
 			AddAssemblyAttribute(typeof(AssemblyBuildVersionAttribute), A_AhkVersion);
 			unit.AssemblyCustomAttributes.AddRange(assemblyAttributes);
 			assemblyAttributes.Clear();
-			var inv = (CodeMethodInvokeExpression)InternalMethods.RunMainWindow;
+			var inv = new CodeMethodInvokeExpression(ScriptObjectSnippet, "RunMainWindow");
 			_ = inv.Parameters.Add(new CodeSnippetExpression("name"));
-			_ = inv.Parameters.Add(new CodeSnippetExpression("_ks_UserMainCode"));
+			_ = inv.Parameters.Add(new CodeSnippetExpression($"{VarPrefix}UserMainCode"));
 			_ = inv.Parameters.Add(new CodePrimitiveExpression(EitherPeristent()));
 			_ = main.Statements.Add(new CodeExpressionStatement(inv));
-			_ = main.Statements.Add(new CodeExpressionStatement((CodeMethodInvokeExpression)InternalMethods.WaitThreads));
+			_ = main.Statements.Add(new CodeMethodInvokeExpression(ScriptObjectSnippet, "WaitThreads"));
 			var exit0 = (CodeMethodInvokeExpression)InternalMethods.ExitApp;
 			_ = exit0.Parameters.Add(new CodePrimitiveExpression(0));
 			var exit1 = (CodeMethodInvokeExpression)InternalMethods.ExitApp;
 			_ = exit1.Parameters.Add(new CodePrimitiveExpression(1));
-			var exitIfNotPersistent = (CodeMethodInvokeExpression)InternalMethods.ExitIfNotPersistent;
+			var exitIfNotPersistent = new CodeMethodInvokeExpression(ScriptObjectSnippet, "ExitIfNotPersistent");
 			//Wrap the entire body of Main() in a try/catch block.
 			//First try to catch our own special exceptions, and if the exception type was not that, then just look for regular system exceptions.
 			var tcf = new CodeTryCatchFinallyStatement();
 			//
 			var ctch2 = new CodeCatchClause("kserr", new CodeTypeReference("Keysharp.Core.Error"));
-			var pushcse = new CodeSnippetExpression("var (_ks_pushed, _ks_btv) = Keysharp.Core.Common.Threading.Threads.BeginThread()");
+			var pushcse = new CodeSnippetExpression($"var ({VarPrefix}pushed, {VarPrefix}btv) = {ScriptObjectName}.Threads.BeginThread()");
 			var msg = new CodeSnippetExpression("MsgBox(\"Uncaught Keysharp exception:\\r\\n\" + kserr, $\"{Accessors.A_ScriptName}: Unhandled exception\", \"iconx\")");
-			var popcse = new CodeSnippetExpression("Keysharp.Core.Common.Threading.Threads.EndThread(_ks_pushed)");
+			var popcse = new CodeSnippetExpression($"{ScriptObjectName}.Threads.EndThread({VarPrefix}pushed)");
 			var ccsHandled = new CodeConditionStatement(new CodeSnippetExpression("!kserr.Handled"));
 			var ccsProcessed = new CodeConditionStatement(new CodeSnippetExpression("!kserr.Processed"));
 			_ = ccsProcessed.TrueStatements.Add(new CodeSnippetExpression("_ = ErrorOccurred(kserr, kserr.ExcType)"));
@@ -375,16 +395,16 @@ namespace Keysharp.Scripting
 
 					if (!kserr.Handled)
 					{
-						var (_ks_pushed, _ks_btv) = Keysharp.Core.Common.Threading.Threads.BeginThread();
+						var (_ks_pushed, _ks_btv) = _ks_s.Threads.BeginThread();
 						MsgBox(""Uncaught Keysharp exception:\r\n"" + kserr, $""{Accessors.A_ScriptName}: Unhandled exception"", ""iconx"");
-						Keysharp.Core.Common.Threading.Threads.EndThread(_ks_pushed);
+						_ks_s.Threads.EndThread(_ks_pushed);
 					}
 				}
 				else
 				{
-					var (_ks_pushed, _ks_btv) = Keysharp.Core.Common.Threading.Threads.BeginThread();
+					var (_ks_pushed, _ks_btv) = _ks_s.Threads.BeginThread();
 					MsgBox(""Uncaught exception:\r\n"" + ""Message: "" + ex.Message + ""\r\nStack: "" + ex.StackTrace, $""{Accessors.A_ScriptName}: Unhandled exception"", ""iconx"");
-					Keysharp.Core.Common.Threading.Threads.EndThread(_ks_pushed);
+					_ks_s.Threads.EndThread(_ks_pushed);
 				}
 "));
 			//_ = ctch.Statements.Add(new CodeSnippetExpression("MsgBox(\"Uncaught exception:\\r\\n\" + \"Message: \" + mainex.Message + \"\\r\\nStack: \" + mainex.StackTrace)"));
@@ -730,7 +750,7 @@ namespace Keysharp.Scripting
 						}
 						else//Try built in types.
 						{
-							foreach (var typekv in Reflections.typeToStringMethods)
+							foreach (var typekv in script.ReflectionsData.typeToStringMethods)
 							{
 								if (string.Compare(typekv.Key.Name, baseType, true) == 0)
 								{
@@ -1190,8 +1210,6 @@ namespace Keysharp.Scripting
 			foreach (var member in codeSnippetTypeMembers)
 				ReevaluateStaticProperties(member);
 
-			//Some hotstring directives may have been parsed, which could have changed settings. So restore before building and running.
-			HotstringManager.RestoreDefaults(true);
 			return unit;
 		}
 
@@ -1200,15 +1218,15 @@ namespace Keysharp.Scripting
 		public CodeCompileUnit Parse(TextReader codeStream, string nm)
 		{
 			name = nm;
-			var reader = new PreReader(this);
-			codeLines = reader.Read(codeStream, name);
+			preReader = new PreReader(this);
+			codeLines = preReader.Read(codeStream, name);
 #if DEBUG
 			//File.WriteAllLines("./finalscriptcode.txt", codeLines.Select((cl) => $"{cl.LineNumber}: {cl.Code}"));
 #endif
 			Statements();
 
 			if (!noTrayIcon)
-				_ = initial.Add(new CodeExpressionStatement((CodeMethodInvokeExpression)InternalMethods.CreateTrayMenu));
+				_ = initial.Add(new CodeMethodInvokeExpression(ScriptObjectSnippet, "CreateTrayMenu"));
 
 			if (persistentValueSetByUser)
 				_ = initial.Add(new CodeMethodInvokeExpression(new CodeMethodReferenceExpression(new CodeTypeReferenceExpression(typeof(Flow)), "Persistent"), [new CodePrimitiveExpression(true)]));
@@ -1216,13 +1234,13 @@ namespace Keysharp.Scripting
 			_ = initial.Add(new CodeSnippetExpression("Keysharp.Core.Env.HandleCommandLineParams(args)"));
 			var inst = (CodeMethodInvokeExpression)InternalMethods.HandleSingleInstance;
 			_ = inst.Parameters.Add(new CodeSnippetExpression("name"));
-			_ = inst.Parameters.Add(new CodeSnippetExpression($"eScriptInstance.{reader.SingleInstance}"));
+			_ = inst.Parameters.Add(new CodeSnippetExpression($"eScriptInstance.{preReader.SingleInstance}"));
 			var condInst = new CodeConditionStatement(inst, new CodeMethodReturnStatement(new CodePrimitiveExpression(0)));
-			_ = initial.Add(condInst);
-			_ = initial.Add(new CodeSnippetExpression("Keysharp.Scripting.Script.SetName(name)"));
-			_ = initial.Add(new CodeSnippetExpression("Keysharp.Scripting.Script.Variables.InitGlobalVars()"));
+			_ = initial.Add(new CodeSnippetExpression($"{ScriptObject.Name}.SetName(name)"));
+			_ = initial.Add(new CodeAssignStatement(HotstringManagerObjectSnippet, new CodeSnippetExpression($"{ScriptObjectName}.HotstringManager")));
+			_ = initial.Add(new CodeAssignStatement(ScriptObjectSnippet, new CodeObjectCreateExpression(typeof(Keysharp.Scripting.Script))));
 
-			foreach (var (p, s) in reader.PreloadedDlls)//Add after InitGlobalVars() call above, because the statements will be added in reverse order.
+			foreach (var (p, s) in preReader.PreloadedDlls)//Add after Script.Init() call above, because the statements will be added in reverse order.
 			{
 				var cmie = new CodeMethodInvokeExpression(new CodeTypeReferenceExpression("Keysharp.Scripting.Script.Variables"), "AddPreLoadedDll");
 				_ = cmie.Parameters.Add(new CodePrimitiveExpression(p));
@@ -1556,7 +1574,7 @@ namespace Keysharp.Scripting
 
 		private (bool, PropertyInfo) PropExistsInBuiltInClass(string baseType, string p, int paramCount)
 		{
-			if (Reflections.stringToTypeProperties.TryGetValue(p, out var props))
+			if (script.ReflectionsData.stringToTypeProperties.TryGetValue(p, out var props))
 			{
 				//Must iterate rather than look up because we only have the string name, not the type.
 				foreach (var typekv in props)

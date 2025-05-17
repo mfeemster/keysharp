@@ -9,6 +9,7 @@ namespace Keysharp.Benchmark
 	{
 		private myclass? cl;
 		private long totalSum;
+		private Keysharp.Scripting.Script _ks_s;
 
 		[Params(500000L)]
 		public long Size { get; set; }
@@ -136,7 +137,7 @@ namespace Keysharp.Benchmark
 		[GlobalSetup]
 		public void Setup()
 		{
-			Variables.InitGlobalVars();
+			_ks_s = new ();
 			Size = 500000L;
 			totalSum = Size;
 			cl = new myclass();

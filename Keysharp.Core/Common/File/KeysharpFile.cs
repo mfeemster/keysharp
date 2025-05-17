@@ -2,9 +2,9 @@
 {
 	public class KeysharpFile : KeysharpObject, IDisposable
 	{
-		internal Encoding enc;
+		private Encoding enc;
 
-		internal int eolconv = 0;
+		private int eolconv = 0;
 
 		private BinaryReader br;
 

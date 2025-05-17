@@ -160,8 +160,8 @@ namespace Keysharp.Scripting
 
 		public static object PostfixIncDecIndex(object obj, object index, object val)
 		{
-			var orig = Keysharp.Scripting.Script.Index(obj, index);
-			_ = Keysharp.Scripting.Script.SetObject(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.Add, orig, val), obj, index);
+			var orig = Index(obj, index);
+			_ = SetObject(Operate(Operator.Add, orig, val), obj, index);
 			return orig;
 		}
 

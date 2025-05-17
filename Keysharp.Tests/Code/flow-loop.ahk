@@ -41,7 +41,8 @@ If A_Index = 0
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
-	
+
+
 x = 0
 
 Loop y
@@ -151,7 +152,7 @@ If A_Index = 0
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
-	
+
 x := 0
 
 Loop
@@ -270,48 +271,51 @@ If A_Index = 0
 else
 	FileAppend, "fail", "*"
 
-x := 0
-y := 5
-z5 := 100
- 
-Loop z%y% ; this is a comment
+if (A_ThisFunc != "TestFunc")
 {
-	if (A_Index > 25)
-		break
-	
-	x++
-}
-
-If x = 25
-	FileAppend, "pass", "*"
-else
-	FileAppend, "fail", "*"
-
-If A_Index = 0
-	FileAppend, "pass", "*"
-else
-	FileAppend, "fail", "*"
-
-x := 0
-y := 5
-z5 := 100
+	x := 0
+	y := 5
+	z5 := 100
  
-Loop z%y% { ; another comment
-	if (A_Index > 25)
-		break
+	Loop z%y% ; this is a comment
+	{
+		if (A_Index > 25)
+			break
 	
-	x++
+		x++
+	}
+
+	If x = 25
+		FileAppend, "pass", "*"
+	else
+		FileAppend, "fail", "*"
+
+	If A_Index = 0
+		FileAppend, "pass", "*"
+	else
+		FileAppend, "fail", "*"
+
+	x := 0
+	y := 5
+	z5 := 100
+ 
+	Loop z%y% { ; another comment
+		if (A_Index > 25)
+			break
+	
+		x++
+	}
+
+	If x = 25
+		FileAppend, "pass", "*"
+	else
+		FileAppend, "fail", "*"
+
+	If A_Index = 0
+		FileAppend, "pass", "*"
+	else
+		FileAppend, "fail", "*"
 }
-
-If x = 25
-	FileAppend, "pass", "*"
-else
-	FileAppend, "fail", "*"
-
-If A_Index = 0
-	FileAppend, "pass", "*"
-else
-	FileAppend, "fail", "*"
 
 x := 1
 b := false

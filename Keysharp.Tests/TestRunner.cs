@@ -6,6 +6,15 @@ namespace Keysharp.Tests
 	{
 		protected string path = string.Format("..{0}..{0}..{0}Keysharp.Tests{0}Code{0}", Path.DirectorySeparatorChar);
 		private const string ext = ".ahk";
+		protected Script s;
+		protected HotstringManager hsm;
+
+		[SetUp]
+		public void SetupBeforeEachTest()
+		{
+			s = new Script();
+			hsm = s.HotstringManager;
+		}
 
 		protected bool HasPassed(string output)
 		{
@@ -23,6 +32,8 @@ namespace Keysharp.Tests
 
 		protected string RunScript(string source, string name, bool execute, bool exeout, int? exitCode = null)
 		{
+			SetupBeforeEachTest();
+			s.SetName(name);
 			_ = Core.Debug.OutputDebug(Environment.CurrentDirectory);
 			var ch = new CompilerHelper();
 			var (domunits, domerrs) = ch.CreateDomFromFile(source);
@@ -142,6 +153,10 @@ namespace Keysharp.Tests
 				}
 			}
 
+			//Make the Script object from within the script available to the calling code.
+			//This is uesd in the HotstringParsing2() test.
+			s = Script.TheScript;
+			hsm = s.HotstringManager;
 			return output;
 		}
 
@@ -176,7 +191,7 @@ namespace Keysharp.Tests
 		protected string WrapInFunc(string source)
 		{
 			var sb = new StringBuilder();
-			_ = sb.AppendLine("TestFunc()");
+			_ = sb.AppendLine("TestFunc()");//This must be named TestFunc because it's referenced in some of the tests.
 			_ = sb.AppendLine("{");
 
 			using (var sr = new StringReader(source))

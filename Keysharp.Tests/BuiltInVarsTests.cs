@@ -57,8 +57,5 @@ namespace Keysharp.Tests
 
 		[Test, Category("BuiltInVars")]
 		public void PropsSpecialChars() => Assert.IsTrue(TestScript("props-special-chars", true));
-
-		[Test, Category("BuiltInVars")]
-		public void ReflectionsInit() => Reflections.Initialize();
 	}
 }

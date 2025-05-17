@@ -1,5 +1,7 @@
 #define USEFORMSTIMER
+
 using static Keysharp.Core.Errors;
+
 using Timer1 = System.Timers.Timer;
 using Timer2 = Keysharp.Core.Common.Threading.TimerWithTag;
 
@@ -10,25 +12,7 @@ namespace Keysharp.Core
 	/// </summary>
 	public static class Flow
 	{
-		internal static ConcurrentDictionary<string, IFuncObj> cachedFuncObj = new ();
-		internal static bool callingCritical;
-		internal static volatile bool hasExited;
-		internal static int IntervalUnspecified = int.MinValue + 303;// Use some negative value unlikely to ever be passed explicitly:
-		internal static Timer1 mainTimer;
-		internal static int NoSleep = -1;
-		internal static bool persistentValueSetByUser;
-		internal static ConcurrentDictionary<IFuncObj, Timer2> timers = new ();
-		internal static int lastLoopDoEvents = Environment.TickCount;
-
-		/// <summary>
-		/// Whether a thread can be interrupted/preempted by subsequent thread.
-		/// </summary>
-		internal static bool AllowInterruption { get; set; } = true;
-
-		/// <summary>
-		/// Internal property to track whether the script's hotkeys and hotstrings are suspended.
-		/// </summary>
-		internal static bool Suspended { get; set; }
+		internal const int intervalUnspecified = int.MinValue + 303;// Use some negative value unlikely to ever be passed explicitly:
 
 		/// <summary>
 		/// Prevents the current thread from being interrupted by other threads, or enables it to be interrupted.
@@ -45,8 +29,8 @@ namespace Keysharp.Core
 		/// </param>
 		public static object Critical(object onOffNumeric = null)
 		{
-			callingCritical = true;
-			var tv = Threads.GetThreadVariables();
+			script.FlowData.callingCritical = true;
+			var tv = script.Threads.GetThreadVariables();
 			var on = onOffNumeric == null;
 			long freq = !on ? (onOffNumeric.ParseLong(false) ?? 0L) : 0L;
 
@@ -106,7 +90,7 @@ namespace Keysharp.Core
 
 			// The thread's interruptibility has been explicitly set; so the script is now in charge of
 			// managing this thread's interruptibility.
-			callingCritical = false;
+			script.FlowData.callingCritical = false;
 			return ret;
 		}
 
@@ -132,29 +116,18 @@ namespace Keysharp.Core
 		/// This code is accessible to any program that spawned the script, such as another script (via RunWait) or a batch (.bat) file.</param>
 		public static object ExitApp(object exitCode = null)
 		{
-			if (!hasExited)//This can be called multiple times, so ensure it only runs through once.
+			if (!script.FlowData.hasExited)//This can be called multiple times, so ensure it only runs through once.
 			{
-				Script.mainWindow.CheckedInvoke(() =>
+				script.mainWindow.CheckedInvoke(() =>
 				{
 					_ = ExitAppInternal(ExitReasons.Exit, exitCode);
 				}, true);
 				var start = DateTime.UtcNow;
 
-				while (!hasExited && (DateTime.UtcNow - start).TotalSeconds < 5)
+				while (!script.FlowData.hasExited && (DateTime.UtcNow - start).TotalSeconds < 5)
 					_ = Sleep(500);
 			}
 
-			return null;
-		}
-
-		/// <summary>
-		/// Initializes the flow state of the script.
-		/// This is used internally and is only public so tests can access it.
-		/// </summary>
-		[PublicForTestOnly]
-		public static object Init()
-		{
-			hasExited = false;
 			return null;
 		}
 
@@ -166,15 +139,15 @@ namespace Keysharp.Core
 		/// <returns>True if the value is true and the script is running, else false.</returns>
 		public static bool IsTrueAndRunning(object obj)
 		{
-			var b = !hasExited && Script.ForceBool(obj);
+			var b = !script.FlowData.hasExited && Script.ForceBool(obj);
 
 			//Use Environment.TickCount because it's the fastest and we don't want to add extra time to each loop.
 			//Its precision is around 15ms which is the amount we're testing for, so it should be ok.
 			//https://stackoverflow.com/questions/243351/environment-tickcount-vs-datetime-now
-			if (b && (Environment.TickCount - lastLoopDoEvents) > 15)
+			if (b && (Environment.TickCount - script.FlowData.lastLoopDoEvents) > 15)
 			{
 				Application.DoEvents();
-				lastLoopDoEvents = Environment.TickCount;
+				script.FlowData.lastLoopDoEvents = Environment.TickCount;
 			}
 
 			return b;
@@ -194,7 +167,7 @@ namespace Keysharp.Core
 		/// </param>
 		public static object OnExit(object callback, object addRemove = null)
 		{
-			Script.onExitHandlers.ModifyEventHandlers(Functions.GetFuncObj(callback, null, true), addRemove.Al(1L));
+			script.onExitHandlers.ModifyEventHandlers(Functions.GetFuncObj(callback, null, true), addRemove.Al(1L));
 			return null;
 		}
 
@@ -216,17 +189,18 @@ namespace Keysharp.Core
 		{
 			var msg = msgNumber.Al();
 			var mt = maxThreads.Al(1);
-			var monitor = GuiHelper.onMessageHandlers.GetOrAdd(msg);
+			var gd = script.GuiData;
+			var monitor = gd.onMessageHandlers.GetOrAdd(msg);
 
 			if (mt > 0)
-				monitor.maxInstances = Math.Clamp((int)mt, 1, MsgMonitor.MAX_INSTANCES);
+				monitor.maxInstances = Math.Clamp((int)mt, 1, Script.maxThreadsLimit);
 			else if (mt < 0)
 				monitor.maxInstances = (int)(-mt);
 
 			monitor.funcs.ModifyEventHandlers(Functions.GetFuncObj(callback, null, true), mt);
 
 			if (mt == 0 && monitor.funcs.Count == 0)
-				_ = GuiHelper.onMessageHandlers.TryRemove(msg, out var _);
+				_ = gd.onMessageHandlers.TryRemove(msg, out var _);
 
 			return null;
 		}
@@ -243,8 +217,8 @@ namespace Keysharp.Core
 		public static object Persistent(object persist = null)
 		{
 			var b = persist.Ab(true);
-			var old = Script.persistent;
-			Script.persistent = persistentValueSetByUser = b;
+			var old = script.persistent;
+			script.persistent = script.FlowData.persistentValueSetByUser = b;
 			return old;
 		}
 
@@ -256,32 +230,17 @@ namespace Keysharp.Core
 			//Just calling Application.Restart will trigger ExitAppInternal().
 			//So it doesn't need to be called directly. Further, it will cause problems if called
 			//so just let the natural chain of closing events handle it.
-			Script.mainWindow.CheckedBeginInvoke(() =>
+			script.mainWindow.CheckedBeginInvoke(() =>
 			{
 				A_ExitReason = ExitReasons.Reload;
 				Application.Restart();//This will pass the same command line args to the new instance that were passed to this instance.
 			}, true, true);
 			var start = DateTime.UtcNow;
 
-			while (!hasExited && (DateTime.UtcNow - start).TotalSeconds < 5)
+			while (!script.FlowData.hasExited && (DateTime.UtcNow - start).TotalSeconds < 5)
 				_ = Sleep(500);
 
 			return null;
-		}
-
-		[PublicForTestOnly]
-		public static void ResetState()
-		{
-			cachedFuncObj = new ();
-			callingCritical = false;
-			hasExited = false;
-			IntervalUnspecified = int.MinValue + 303;// Use some negative value unlikely to ever be passed explicitly:
-			mainTimer = null;
-			NoSleep = -1;
-			persistentValueSetByUser = false;
-			timers = new ();
-			AllowInterruption = true;
-			Suspended = false;
 		}
 
 		/// <summary>
@@ -320,10 +279,10 @@ namespace Keysharp.Core
 
 			if (f is string s)//Make sure they don't keep adding the same function object via string.
 			{
-				if (cachedFuncObj.TryGetValue(s, out var tempfunc))
+				if (script.FlowData.cachedFuncObj.TryGetValue(s, out var tempfunc))
 					func = tempfunc;
 				else
-					cachedFuncObj[s] = func = Functions.Func(s);
+					script.FlowData.cachedFuncObj[s] = func = Functions.Func(s);
 			}
 
 			if (f != null && func == null)
@@ -337,11 +296,11 @@ namespace Keysharp.Core
 				}
 			}
 
-			if (func != null && timers.TryGetValue(func, out timer))
+			if (func != null && script.FlowData.timers.TryGetValue(func, out timer))
 			{
 			}
 			else if (f == null)
-				timer = Threads.GetThreadVariables().currentTimer;//This means: use the timer which has already been created for this thread/timer event which we are currently inside of.
+				timer = script.Threads.GetThreadVariables().currentTimer;//This means: use the timer which has already been created for this thread/timer event which we are currently inside of.
 
 			if (timer != null)
 			{
@@ -349,17 +308,17 @@ namespace Keysharp.Core
 				{
 					if (func == null)
 					{
-						var temptimer = timers.Where((kv) => kv.Value == timer).FirstOrDefault();
+						var temptimer = script.FlowData.timers.Where((kv) => kv.Value == timer).FirstOrDefault();
 
 						if (temptimer.Key != null)
-							_ = timers.TryRemove(temptimer.Key, out _);
+							_ = script.FlowData.timers.TryRemove(temptimer.Key, out _);
 					}
 					else
-						_ = timers.TryRemove(func, out _);
+						_ = script.FlowData.timers.TryRemove(func, out _);
 
 					timer.Stop();
 					timer.Dispose();
-					Script.ExitIfNotPersistent();
+					script.ExitIfNotPersistent();
 					return null;
 				}
 				else
@@ -387,7 +346,7 @@ namespace Keysharp.Core
 				if (p == long.MaxValue)//Period omitted and timer didn't exist, so create one with a 250ms interval.
 					p = 250;
 
-				_ = timers.TryAdd(func, timer = new ());
+				_ = script.FlowData.timers.TryAdd(func, timer = new ());
 				timer.Tag = (int)pri;
 				timer.Interval = (int)p;
 			}
@@ -400,8 +359,10 @@ namespace Keysharp.Core
 			timer.Elapsed += (ss, ee) =>
 #endif
 			{
-				if (A_HasExited || (!A_AllowTimers.Ab() && Script.totalExistingThreads > 0)
-						|| !Threads.AnyThreadsAvailable() || !Threads.IsInterruptible())
+				var v = script.Threads;
+
+				if (A_HasExited || (!A_AllowTimers.Ab() && script.totalExistingThreads > 0)
+						|| !v.AnyThreadsAvailable() || !script.Threads.IsInterruptible())
 					return;
 
 				if (ss is Timer2 t)
@@ -410,7 +371,7 @@ namespace Keysharp.Core
 						return;
 
 					var pri = t.Tag.Ai();
-					var tv = Threads.GetThreadVariables();
+					var tv = v.GetThreadVariables();
 
 					if (pri >= tv.priority)
 					{
@@ -418,29 +379,28 @@ namespace Keysharp.Core
 
 						var remove = !TryCatch(() =>
 						{
-							_ = Interlocked.Increment(ref Script.totalExistingThreads);
-							(bool, ThreadVariables) btv = Threads.PushThreadVariables(pri, true, false);
+							(bool, ThreadVariables) btv = v.PushThreadVariables(pri, true, false, false, true);
 							btv.Item2.currentTimer = timer;
 							btv.Item2.eventInfo = func;
 							var ret = func.Call();
-							_ = Threads.EndThread(btv.Item1);
+							_ = v.EndThread(btv.Item1);
 						}, true);//Pop on exception because EndThread() above won't be called.
 
 						if (once || remove)
 						{
-							_ = timers.TryRemove(func, out _);
+							_ = script.FlowData.timers.TryRemove(func, out _);
 							t.Stop();
 							t.Dispose();
-							Script.ExitIfNotPersistent();
+							script.ExitIfNotPersistent();
 						}
-						else if (timers.TryGetValue(func, out var existing))//They could have disabled it, in which case it wouldn't be in the dictionary.
+						else if (script.FlowData.timers.TryGetValue(func, out var existing))//They could have disabled it, in which case it wouldn't be in the dictionary.
 							existing.Enabled = true;
 						else
-							Script.ExitIfNotPersistent();//Was somehow removed, such as in a window close handler, so attempt to exit.
+							script.ExitIfNotPersistent();//Was somehow removed, such as in a window close handler, so attempt to exit.
 					}
 				}
 			};
-			Script.mainWindow.CheckedInvoke(timer.Start, true);
+			script.mainWindow.CheckedInvoke(timer.Start, true);
 			return null;
 		}
 
@@ -452,7 +412,7 @@ namespace Keysharp.Core
 		{
 			var d = delay.Al(-1L);
 
-			if (hasExited)
+			if (script.FlowData.hasExited)
 				throw new UserRequestedExitException();
 
 			//Be careful with Application.DoEvents(), it has caused spurious crashes in my years of programming experience.
@@ -495,7 +455,7 @@ namespace Keysharp.Core
 			}
 			else if (d == -2)//Sleep indefinitely until all InputHooks are finished.
 			{
-				while (!hasExited && Script.input != null && Script.input.InProgress())
+				while (!script.FlowData.hasExited && script.input != null && script.input.InProgress())
 				{
 					try
 					{
@@ -516,7 +476,7 @@ namespace Keysharp.Core
 			{
 				var stop = DateTime.UtcNow.AddMilliseconds(d);//Using Application.DoEvents() is a pseudo-sleep that blocks until the timeout, but doesn't freeze the window.
 
-				while (DateTime.UtcNow < stop && !hasExited)
+				while (DateTime.UtcNow < stop && !script.FlowData.hasExited)
 				{
 					try
 					{
@@ -550,10 +510,11 @@ namespace Keysharp.Core
 		public static object Suspend(object newState)
 		{
 			var state = Conversions.ConvertOnOffToggle(newState.As());
-			Suspended = state == ToggleValueType.Toggle ? !Suspended : (state == ToggleValueType.On);
+			var fd = script.FlowData;
+			fd.suspended = state == ToggleValueType.Toggle ? !fd.suspended : (state == ToggleValueType.On);
 
-			if (!(bool)A_IconFrozen && !Script.NoTrayIcon)
-				Script.Tray.Icon = Suspended ? Properties.Resources.Keysharp_s_ico : Properties.Resources.Keysharp_ico;
+			if (!(bool)A_IconFrozen && !script.NoTrayIcon)
+				script.Tray.Icon = fd.suspended ? Properties.Resources.Keysharp_s_ico : Properties.Resources.Keysharp_ico;
 
 			return null;
 		}
@@ -579,9 +540,9 @@ namespace Keysharp.Core
 			if (string.Compare(sf, "notimers", true) == 0)
 				A_AllowTimers = !(Options.OnOff(value1.As()) ?? false);
 			else if (string.Compare(sf, "priority", true) == 0)
-				Threads.GetThreadVariables().priority = value1.Al();
+				script.Threads.GetThreadVariables().priority = value1.Al();
 			else if (string.Compare(sf, "interrupt", true) == 0)
-				Script.uninterruptibleTime = value1.Ai(Script.uninterruptibleTime);
+				script.uninterruptibleTime = value1.Ai(script.uninterruptibleTime);
 
 			return null;
 		}
@@ -594,35 +555,36 @@ namespace Keysharp.Core
 		/// <returns>True if exiting was interrupted by a non empty callback return value, else false.</returns>
 		internal static bool ExitAppInternal(ExitReasons exitReason, object exitCode = null, bool useThrow = true)
 		{
-			if (hasExited)//This can be called multiple times, so ensure it only runs through once.
+			if (script.FlowData.hasExited)//This can be called multiple times, so ensure it only runs through once.
 				return false;
 
 			Dialogs.CloseMessageBoxes();
 			var ec = exitCode.Ai();
+			var fd = script.FlowData;
 			A_ExitReason = exitReason.ToString();
-			var allowInterruption_prev = AllowInterruption;//Save current setting.
-			AllowInterruption = false;
-			var result = Script.onExitHandlers.InvokeEventHandlers(A_ExitReason, exitCode);
+			var allowInterruption_prev = fd.allowInterruption;//Save current setting.
+			fd.allowInterruption = false;
+			var result = script.onExitHandlers.InvokeEventHandlers(A_ExitReason, exitCode);
 
 			//If it wasn't a critical shutdown and any exit handlers returned a non empty value, abort the exit.
 			if (exitReason >= ExitReasons.None && result.IsCallbackResultNonEmpty())
 			{
 				A_ExitReason = "";
-				AllowInterruption = allowInterruption_prev;
+				fd.allowInterruption = allowInterruption_prev;
 				return true;
 			}
 			else
-				Script.onExitHandlers.Clear();
+				script.onExitHandlers.Clear();
 
-			hasExited = true;//At this point, we are clear to exit, so do not allow any more calls to this function.
-			AllowInterruption = allowInterruption_prev;
+			script.FlowData.hasExited = true;//At this point, we are clear to exit, so do not allow any more calls to this function.
+			fd.allowInterruption = allowInterruption_prev;
 			HotkeyDefinition.AllDestruct();
 			StopMainTimer();
 
-			foreach (var kv in timers)
+			foreach (var kv in script.FlowData.timers)
 				kv.Value.Stop();
 
-			Script.Stop();
+			script.Stop();
 			Environment.ExitCode = ec;
 
 			if (useThrow)
@@ -637,10 +599,13 @@ namespace Keysharp.Core
 		/// </summary>
 		internal static void SetMainTimer()
 		{
+			var mainTimer = script.FlowData.mainTimer;
+
 			if (mainTimer == null)
 			{
 				mainTimer = new (10);
 				mainTimer.Elapsed += (o, e) => { };
+				script.FlowData.mainTimer = mainTimer;
 				mainTimer.Start();
 			}
 		}
@@ -651,9 +616,10 @@ namespace Keysharp.Core
 		/// <param name="duration">The time in milliseconds to sleep for.</param>
 		internal static void SleepWithoutInterruption(object duration = null)
 		{
-			AllowInterruption = false;
+			var fd = script.FlowData;
+			fd.allowInterruption = false;
 			_ = Sleep(duration);
-			AllowInterruption = true;
+			fd.allowInterruption = true;
 		}
 
 		/// <summary>
@@ -662,10 +628,12 @@ namespace Keysharp.Core
 		/// </summary>
 		internal static void StopMainTimer()
 		{
+			var mainTimer = script.FlowData.mainTimer;
+
 			if (mainTimer != null)
 			{
 				mainTimer.Stop();
-				mainTimer = null;
+				script.FlowData.mainTimer = null;
 			}
 		}
 
@@ -682,6 +650,8 @@ namespace Keysharp.Core
 		/// <returns>True if no errors occurred, else false if any catch blocks were reached.</returns>
 		internal static bool TryCatch(Action action, bool pop)
 		{
+			var t = script.Threads;
+
 			try
 			{
 				action();
@@ -696,13 +666,13 @@ namespace Keysharp.Core
 
 				if (!kserr.Handled)
 				{
-					var (__pushed, __btv) = Threads.BeginThread();
+					var (__pushed, __btv) = t.BeginThread();
 					_ = Dialogs.MsgBox("Uncaught Keysharp exception:\r\n" + kserr, $"{A_ScriptName}: Unhandled exception", "iconx");
-					_ = Threads.EndThread(__pushed);
+					_ = t.EndThread(__pushed);
 				}
 
 				if (pop)
-					_ = Threads.EndThread(true);
+					_ = t.EndThread(true);
 
 				return false;
 			}
@@ -713,7 +683,7 @@ namespace Keysharp.Core
 				if (mainex is UserRequestedExitException || ex is UserRequestedExitException)
 				{
 					if (pop)
-						_ = Threads.EndThread(true);
+						_ = t.EndThread(true);
 
 					return true;
 				}
@@ -724,20 +694,20 @@ namespace Keysharp.Core
 
 					if (!kserr.Handled)
 					{
-						var (__pushed, __btv) = Threads.BeginThread();
+						var (__pushed, __btv) = t.BeginThread();
 						_ = Dialogs.MsgBox("Uncaught Keysharp exception:\r\n" + kserr, $"{A_ScriptName}: Unhandled exception", "iconx");
-						_ = Threads.EndThread(__pushed);
+						_ = t.EndThread(__pushed);
 					}
 				}
 				else
 				{
-					var (__pushed, __btv) = Threads.BeginThread();
+					var (__pushed, __btv) = t.BeginThread();
 					_ = Dialogs.MsgBox("Uncaught exception:\r\n" + "Message: " + ex.Message + "\r\nStack: " + ex.StackTrace, $"{A_ScriptName}: Unhandled exception", "iconx");
-					_ = Threads.EndThread(__pushed);
+					_ = t.EndThread(__pushed);
 				}
 
 				if (pop)
-					_ = Threads.EndThread(true);
+					_ = t.EndThread(true);
 
 				return false;
 			}
@@ -774,11 +744,33 @@ namespace Keysharp.Core
 		{
 			var ct = 0L;
 
-			foreach (var kv in Flow.timers)
+			foreach (var kv in script.FlowData.timers)
 				if (kv.Value.Enabled)//This won't work if we're enabling and disabling timers in the tick event.//TODO
 					ct++;
 
 			return ct;
 		}
+	}
+
+	internal class FlowData
+	{
+		/// <summary>
+		/// Whether a thread can be interrupted/preempted by subsequent thread.
+		/// </summary>
+		internal bool allowInterruption = true;
+		internal ConcurrentDictionary<string, IFuncObj> cachedFuncObj = new ();
+		internal bool callingCritical;
+		internal volatile bool hasExited;
+		internal int lastLoopDoEvents = Environment.TickCount;
+		internal Timer1 mainTimer;
+		internal int NoSleep = -1;
+		internal bool persistentValueSetByUser;
+
+		/// <summary>
+		/// Internal property to track whether the script's hotkeys and hotstrings are suspended.
+		/// </summary>
+		internal bool suspended;
+
+		internal ConcurrentDictionary<IFuncObj, Timer2> timers = new ();
 	}
 }

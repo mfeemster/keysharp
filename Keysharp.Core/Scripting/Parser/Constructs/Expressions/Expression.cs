@@ -339,7 +339,7 @@ namespace Keysharp.Scripting
 			value = code.Substring(i);
 			value = value.Length == 0 ? null : StripCommentSingle(value.Trim(Spaces));
 			CodeExpression left;
-			left = Reflections.flatPublicStaticProperties.TryGetValue(name, out var pi)
+			left = script.ReflectionsData.flatPublicStaticProperties.TryGetValue(name, out var pi)
 				   ? new CodeVariableReferenceExpression(pi.Name)//Using static declarations obviate the need for specifying the static class type.
 				   : VarId(codeLine, name, true);
 			var result = value == null ? nullPrimitive : IsExpressionParameter(value) ? ParseSingleExpression(codeLine, value.TrimStart(Spaces).Substring(2), false) : VarIdExpand(codeLine, value);
@@ -363,6 +363,7 @@ namespace Keysharp.Scripting
 
 					if (hso)
 					{
+						var hm = script.HotstringManager;
 						//Note that in addition to adding this to the beginning, we also leave it
 						//in place for HotstringOptions() (#Hotstring xyz) in parts, because we need to call it in both places.
 						//This is because the position must be kept consistent with hotkey/string declarations,
@@ -371,9 +372,9 @@ namespace Keysharp.Scripting
 						//Because we've encountered #Hotstring options, we must actually parse the options now (and later in the script)
 						//to find out which defaults should be in place for subsequently parsed hotstrings.
 						HotstringDefinition.ParseOptions(Ch.CodeToString(invoke.Parameters[0]).Trim('\"')//Will be quoted, so remove here.
-														 , ref HotstringManager.hsPriority, ref HotstringManager.hsKeyDelay, ref HotstringManager.hsSendMode, ref HotstringManager.hsCaseSensitive
-														 , ref HotstringManager.hsConformToCase, ref HotstringManager.hsDoBackspace, ref HotstringManager.hsOmitEndChar, ref HotstringManager.hsSendRaw, ref HotstringManager.hsEndCharRequired
-														 , ref HotstringManager.hsDetectWhenInsideWord, ref HotstringManager.hsDoReset, ref HotstringManager.hsSameLineAction, ref HotstringManager.hsSuspendExempt);
+														 , ref hm.hsPriority, ref hm.hsKeyDelay, ref hm.hsSendMode, ref hm.hsCaseSensitive
+														 , ref hm.hsConformToCase, ref hm.hsDoBackspace, ref hm.hsOmitEndChar, ref hm.hsSendRaw, ref hm.hsEndCharRequired
+														 , ref hm.hsDetectWhenInsideWord, ref hm.hsDoReset, ref hm.hsSameLineAction, ref hm.hsSuspendExempt);
 						parts[i] = new CodeSnippetExpression("//#directive replaced by function call");
 					}
 				}
@@ -423,7 +424,7 @@ namespace Keysharp.Scripting
 							&& !allglobal
 							&& (wasRef || wasAssign)//Only create the variable if it was a reference and/or and assignment.
 							&& !VarExistsAtCurrentOrParentScope(tp, scope, cvre.VariableName)
-							&& !Reflections.flatPublicStaticProperties.TryGetValue(cvre.VariableName, out _)
+							&& !script.ReflectionsData.flatPublicStaticProperties.TryGetValue(cvre.VariableName, out _)
 							&& MethodExistsInTypeOrBase(tp.Name, cvre.VariableName) == null
 							&& Reflections.FindBuiltInMethod(cvre.VariableName, -1) == null
 					   )
@@ -652,7 +653,7 @@ namespace Keysharp.Scripting
 					else if (IsIdentifier(part, true) && (!IsKeyword(part) || string.Compare(part, "default", true) == 0))//Hack to allow for default because a subclass derived from Map might need to access its Default property.
 					{
 						var s = i < parts.Count - 1 && parts[i + 1] is string s1 ? s1 : "";
-						var varexpr = Reflections.flatPublicStaticProperties.TryGetValue(part, out var pi)
+						var varexpr = script.ReflectionsData.flatPublicStaticProperties.TryGetValue(part, out var pi)
 									  ? new CodeVariableReferenceExpression(pi.Name)//Using static declarations obviate the need for specifying the static class type.
 									  //Check for function or property calls on an object, which only count as read operations.
 									  : VarIdOrConstant(codeLine, part,
@@ -864,7 +865,7 @@ namespace Keysharp.Scripting
 						//Do not do this if a FuncObj is already being passed, which will be the case when #HotIf is found in the preprocessing stage.
 						if (name == "HotIf" && paren.Count > 1 && !paren[0].ToString().StartsWith("Func"))
 						{
-							var hotiffuncname = $"_ks_HotIf_{PreReader.NextHotIfCount}";
+							var hotiffuncname = $"_ks_HotIf_{preReader.NextHotIfCount}";
 							var hotifexpr = ParseExpression(codeLine, code, paren, false);
 							var hotifmethod = LocalMethod(hotiffuncname);
 							_ = hotifmethod.Statements.Add(new CodeMethodReturnStatement(hotifexpr));

@@ -174,8 +174,8 @@ namespace Keysharp.Core
 
 		private void InputDialog_Shown(object sender, EventArgs e)
 		{
-			if (Script.Tray?.Icon != null)
-				Icon = Script.Tray.Icon;
+			if (script.Tray?.Icon != null)
+				Icon = script.Tray.Icon;
 
 			if (Timeout > 0)
 			{

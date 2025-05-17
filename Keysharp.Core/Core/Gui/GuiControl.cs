@@ -2,8 +2,8 @@
 {
 	public class GuiControl : KeysharpObject
 	{
-		internal string typename;
-		internal WeakReference<Gui> gui;
+		private string typename;
+		private WeakReference<Gui> gui;
 		private readonly List<IFuncObj> clickHandlers = [];
 		private readonly List<IFuncObj> doubleClickHandlers = [];
 		private bool DpiScaling => Gui.dpiscaling;
@@ -12,7 +12,6 @@
 		//Normal event handlers can't be used becaused they need to return a value.
 		//The returned values are then inspected to determine if subsequent handlers should be called or not.
 		private List<IFuncObj> changeHandlers;
-
 		private List<IFuncObj> columnClickHandlers;
 		private Dictionary<int, List<IFuncObj>> commandHandlers;
 		private List<IFuncObj> contextMenuChangedHandlers;
@@ -30,7 +29,7 @@
 
 		public bool AltSubmit { get; internal set; } = false;
 
-		public string ClassNN => WindowProvider.Manager.CreateWindow(_control.Handle) is WindowItemBase wi ? wi.ClassNN : "";
+		public string ClassNN => script.WindowProvider.Manager.CreateWindow(_control.Handle) is WindowItemBase wi ? wi.ClassNN : "";
 
 		public Control Control => _control;
 
@@ -61,7 +60,7 @@
 			set => _control.Name = value.ToString();
 		}
 
-		public string NetClassNN => WindowProvider.Manager.CreateWindow(_control.Handle) is WindowItemBase wi ? wi.NetClassNN : "";
+		public string NetClassNN => script.WindowProvider.Manager.CreateWindow(_control.Handle) is WindowItemBase wi ? wi.NetClassNN : "";
 
 		public object Parent
 		{

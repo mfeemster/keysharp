@@ -1,5 +1,4 @@
-﻿using System;
-using static Keysharp.Core.Common.Keyboard.KeyboardUtils;
+﻿using static Keysharp.Core.Common.Keyboard.KeyboardUtils;
 
 namespace Keysharp.Core.Common.Input
 {
@@ -12,9 +11,13 @@ namespace Keysharp.Core.Common.Input
 		internal IntPtr keyboardLayout;
 	};
 
+	internal class InputData
+	{
+		internal System.Windows.Forms.Timer inputTimer;
+	}
+
 	internal class InputType//This is also Windows specific, and needs to eventually be made into a common base with derived OS specific classes.//TODO
 	{
-		internal static System.Windows.Forms.Timer inputTimer;
 		internal bool backspaceIsUndo = true;
 		internal bool beforeHotkeys;
 		internal string buffer = "";
@@ -181,7 +184,7 @@ namespace Keysharp.Core.Common.Input
 
 		internal string GetEndReason(ref string keyBuf)
 		{
-			if (Script.HookThread is HookThread hook && hook.kbdMsSender != null)
+			if (script.HookThread is HookThread hook && hook.kbdMsSender != null)
 			{
 				switch (status)
 				{
@@ -217,8 +220,8 @@ namespace Keysharp.Core.Common.Input
 							var sb = new StringBuilder();
 							state[(int)Keys.ShiftKey] |= 0x80; // Indicate that the neutral shift key is down for conversion purposes.
 							var active_window_keybd_layout = hook.kbdMsSender.GetFocusedKeybdLayout(IntPtr.Zero);
-							var count = PlatformProvider.Manager.ToUnicodeEx(endingVK, hook.MapVkToSc(endingVK), state // Nothing is done about ToAsciiEx's dead key side-effects here because it seems to rare to be worth it (assuming its even a problem).
-										, sb, 2, Script.menuIsVisible != MenuType.None ? 1u : 0u, active_window_keybd_layout); // v1.0.44.03: Changed to call ToAsciiEx() so that active window's layout can be specified (see hook.cpp for details).
+							var count = script.PlatformProvider.Manager.ToUnicodeEx(endingVK, hook.MapVkToSc(endingVK), state // Nothing is done about ToAsciiEx's dead key side-effects here because it seems to rare to be worth it (assuming its even a problem).
+										, sb, 2, script.menuIsVisible != MenuType.None ? 1u : 0u, active_window_keybd_layout); // v1.0.44.03: Changed to call ToAsciiEx() so that active window's layout can be specified (see hook.cpp for details).
 							keyName = keyName.Substring(0, count);
 						}
 						else
@@ -254,10 +257,10 @@ namespace Keysharp.Core.Common.Input
 
 		internal InputType InputFindLink(InputType input)
 		{
-			if (Script.input == input)
-				return Script.input;
+			if (script.input == input)
+				return script.input;
 			else
-				for (var i = Script.input; input != null; i = i.prev)
+				for (var i = script.input; input != null; i = i.prev)
 					if (i.prev == input)
 						return i.prev;
 
@@ -266,17 +269,17 @@ namespace Keysharp.Core.Common.Input
 
 		internal InputType InputRelease()
 		{
-			var ht = Script.HookThread;
+			var ht = script.HookThread;
 
 			// Input should already have ended prior to this function being called.
 			// Otherwise, removal of aInput from the chain will end input collection.
-			if (Script.input == this)
+			if (script.input == this)
 			{
-				Script.input = prev;
+				script.input = prev;
 			}
 			else
 			{
-				for (var input = Script.input; ; input = input.prev)
+				for (var input = script.input; ; input = input.prev)
 				{
 					if (input == null)
 						return null; // aInput is not valid (faked AHK_INPUT_END message?) or not active.
@@ -307,7 +310,7 @@ namespace Keysharp.Core.Common.Input
 				// the InputObject and as such the link should never be broken until both are deleted.
 				//aInput->ScriptObject = NULL;
 				//Seems extreme to do this, and the script should exit on its own if its not persistent.
-				//Script.ExitIfNotPersistent(Flow.ExitReasons.Exit); // In case this InputHook was the only thing keeping the script running.
+				//script.ExitIfNotPersistent(Flow.ExitReasons.Exit); // In case this InputHook was the only thing keeping the script running.
 			}
 
 			return null;
@@ -324,12 +327,12 @@ namespace Keysharp.Core.Common.Input
 			// in the message queue, in which case it must be removed from its current position
 			// to prevent the list from looping back on itself.
 			_ = InputUnlinkIfStopped(this);
-			prev = Script.input;
+			prev = script.input;
 			Start();
-			Script.input = this; // Signal the hook to start the input.
+			script.input = this; // Signal the hook to start the input.
 
 			if (beforeHotkeys)
-				++Script.inputBeforeHotkeysCount;
+				++script.inputBeforeHotkeysCount;
 
 			HotkeyDefinition.InstallKeybdHook(); // Install the hook (if needed).
 		}
@@ -341,21 +344,21 @@ namespace Keysharp.Core.Common.Input
 			if (input == null)
 				return null;
 
-			if (Script.input == input)
+			if (script.input == input)
 			{
-				temp = Script.input;
-				Script.input = temp.prev;
+				temp = script.input;
+				script.input = temp.prev;
 			}
 			else
 			{
-				for (var i = Script.input; i != null; i = i.prev)
+				for (var i = script.input; i != null; i = i.prev)
 				{
 					if (i.prev == input)
 					{
 						if (!input.InProgress())
 						{
 							temp = i.prev;
-							Script.HookThread.WaitHookIdle();
+							script.HookThread.WaitHookIdle();
 							i.prev = input.prev;
 						}
 					}
@@ -449,7 +452,7 @@ namespace Keysharp.Core.Common.Input
 			var sc = 0u;
 			var vkByNumber = false;
 			bool? scByNumber = false;
-			var ht = Script.HookThread;
+			var ht = script.HookThread;
 			var kbdMouseSender = ht.kbdMsSender;//This should always be non-null if any hotkeys/strings are present.
 
 			for (var i = 0; i < keys.Length; ++i) // This a modified version of the processing loop used in SendKeys().
@@ -503,7 +506,7 @@ namespace Keysharp.Core.Common.Input
 						// Otherwise, for any key name which has a VK shared by two possible SCs
 						// (such as Up and NumpadUp), handle it by SC so it's identified correctly.
 						var nextkey = sub.Slice(0, endPos).ToString();
-						vk = ht.TextToVK(nextkey, ref modifiersLR, true, true, PlatformProvider.Manager.GetKeyboardLayout(0));
+						vk = ht.TextToVK(nextkey, ref modifiersLR, true, true, script.PlatformProvider.Manager.GetKeyboardLayout(0));
 
 						if (vk != 0)
 						{
@@ -532,7 +535,7 @@ namespace Keysharp.Core.Common.Input
 
 						singleCharString = ch.ToString();
 						modifiersLR = 0u;  // Init prior to below.
-						vk = ht.TextToVK(singleCharString, ref modifiersLR, true, true, PlatformProvider.Manager.GetKeyboardLayout(0));
+						vk = ht.TextToVK(singleCharString, ref modifiersLR, true, true, script.PlatformProvider.Manager.GetKeyboardLayout(0));
 						vkByNumber = false;
 						scByNumber = false;
 						break;
@@ -622,19 +625,21 @@ namespace Keysharp.Core.Common.Input
 			var now = DateTime.UtcNow;
 			timeoutAt = now.AddMilliseconds(timeout);
 
-			if (!Script.inputTimerExists || timeout < (Script.inputTimeoutAt - now).TotalMilliseconds)
+			if (!script.inputTimerExists || timeout < (script.inputTimeoutAt - now).TotalMilliseconds)
 			{
-				Script.inputTimeoutAt = timeoutAt;
+				var inputTimer = script.InputData.inputTimer;
+				script.inputTimeoutAt = timeoutAt;
 
 				if (inputTimer == null)
 				{
 					inputTimer = new System.Windows.Forms.Timer();
 					inputTimer.Tick += InputTimer_Tick;
+					script.InputData.inputTimer = inputTimer;
 				}
 
 				inputTimer.Interval = timeout;
 				inputTimer.Start();
-				Script.inputTimerExists = true;
+				script.inputTimerExists = true;
 			}
 		}
 
@@ -644,13 +649,13 @@ namespace Keysharp.Core.Common.Input
 
 		private void EndByReason(InputStatusType aReason)
 		{
-			if (Script.HookThread is HookThread hook && hook.kbdMsSender != null)
+			if (script.HookThread is HookThread hook && hook.kbdMsSender != null)
 			{
 				endingMods = hook.kbdMsSender.modifiersLRLogical; // Not relevant to all end reasons, but might be useful anyway.
 				status = aReason;
 
 				if (beforeHotkeys)
-					--Script.inputBeforeHotkeysCount;
+					--script.inputBeforeHotkeysCount;
 
 				// It's done this way rather than calling InputRelease() directly...
 				// ...so that we can rely on MsgSleep() to create a new thread for the OnEnd event.
@@ -667,10 +672,11 @@ namespace Keysharp.Core.Common.Input
 
 		private void InputTimer_Tick(object sender, EventArgs e)
 		{
+			var inputTimer = script.InputData.inputTimer;
 			inputTimer.Stop();
 			var newTimerPeriod = 0;
 
-			for (var input = Script.input; input != null; input = input.prev)
+			for (var input = script.input; input != null; input = input.prev)
 			{
 				if (input.timeout != 0 && input.InProgress())
 				{
@@ -686,15 +692,15 @@ namespace Keysharp.Core.Common.Input
 			if (newTimerPeriod != 0)
 			{
 				inputTimer.Interval = newTimerPeriod;
-				Script.inputTimeoutAt = DateTime.UtcNow.AddMilliseconds(newTimerPeriod);
+				script.inputTimeoutAt = DateTime.UtcNow.AddMilliseconds(newTimerPeriod);
 				inputTimer.Start();
 			}
 			else
 			{
-				if (Script.inputTimerExists)
+				if (script.inputTimerExists)
 				{
 					inputTimer.Stop();
-					Script.inputTimerExists = false;
+					script.inputTimerExists = false;
 				}
 			}
 		}

@@ -871,6 +871,7 @@ namespace Keysharp.Scripting
 						var excname = "";
 						var exctypename = "Keysharp.Core.Error";
 						var extraExceptions = new List<string>(8);
+						var rd = script.ReflectionsData;
 
 						if (parts.Length > 1)
 						{
@@ -884,7 +885,7 @@ namespace Keysharp.Scripting
 
 									if (exi == 0)
 									{
-										if (Reflections.stringToTypes.TryGetValue(exctype, out var t))
+										if (rd.stringToTypes.TryGetValue(exctype, out var t))
 										{
 											if (t == typeof(Any))//Catch Any means all exceptions. So catch not only Error, but basic Exceptions too.
 												exctypename = typeof(Exception).FullName;
@@ -901,7 +902,7 @@ namespace Keysharp.Scripting
 									}
 									else
 									{
-										if (Reflections.stringToTypes.TryGetValue(exctype, out var t))
+										if (rd.stringToTypes.TryGetValue(exctype, out var t))
 										{
 											if (typeof(KeysharpException).IsAssignableFrom(t))
 											{

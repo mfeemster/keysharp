@@ -7,18 +7,7 @@ namespace Keysharp.Core
 	/// </summary>
 	public static class Loops
 	{
-		/// <summary>
-		/// The stack which keeps track of all loops currently running in the script.<br/>
-		/// This is marked as [ThreadStatic] because it must actually be thread safe for real threads.
-		/// </summary>
-		[ThreadStatic]
-		private static Stack<LoopInfo> loopStack;
-
-		/// <summary>
-		/// Getter for the <see cref="loopStack"/> member.<br/>
-		/// This lazy initializes it for each thread.
-		/// </summary>
-		internal static Stack<LoopInfo> LoopStack => loopStack ?? (loopStack = new Stack<LoopInfo>());
+		internal static Stack<LoopInfo> LoopStack => script.LoopData.loopStack.Value;
 
 		/// <summary>
 		/// Increments the loop counter variable for the current loop.<br/>
@@ -28,7 +17,7 @@ namespace Keysharp.Core
 		/// <returns>The newly incremented count of the most recent loop, else 0 if no loops.</returns>
 		public static long Inc()
 		{
-			var s = LoopStack;
+			var s = script.LoopData.loopStack.Value;
 			return s.Count > 0 ? ++s.Peek().index : 0;
 		}
 
@@ -46,12 +35,12 @@ namespace Keysharp.Core
 
 				if (n != -1)
 				{
-					for (; info.index < n && !Flow.hasExited;)//Check info.index because the caller can change A_Index inside of the loop.
+					for (; info.index < n && !script.FlowData.hasExited;)//Check info.index because the caller can change A_Index inside of the loop.
 						yield return ++info.index;
 				}
 				else
 				{
-					while (!Flow.hasExited)
+					while (!script.FlowData.hasExited)
 						yield return ++info.index;
 				}
 
@@ -110,7 +99,7 @@ namespace Keysharp.Core
 
 			foreach (var file in GetFiles(dir, pattern, d, f, r))
 			{
-				if (Flow.hasExited)
+				if (script.FlowData.hasExited)
 					break;
 
 				info.file = file;
@@ -129,7 +118,7 @@ namespace Keysharp.Core
 		/// <returns>The count of the most recent loop, else 0 if no loops.</returns>
 		public static long LoopIndex()
 		{
-			var s = LoopStack;
+			var s = script.LoopData.loopStack.Value;
 			return s.Count > 0 ? s.Peek().index : 0;
 		}
 
@@ -212,7 +201,7 @@ namespace Keysharp.Core
 					info.index++;
 					yield return result;
 
-					if (current == -1 || Flow.hasExited)
+					if (current == -1 || script.FlowData.hasExited)
 						break;
 				}
 			}
@@ -229,7 +218,7 @@ namespace Keysharp.Core
 
 				foreach (var part in parts)
 				{
-					if (Flow.hasExited)
+					if (script.FlowData.hasExited)
 						break;
 
 					info.result = part;
@@ -270,7 +259,7 @@ namespace Keysharp.Core
 
 				while ((line = reader.ReadLine()) != null)
 				{
-					if (Flow.hasExited)
+					if (script.FlowData.hasExited)
 						break;
 
 					info.line = line;
@@ -283,6 +272,7 @@ namespace Keysharp.Core
 		}
 
 #if WINDOWS
+
 		/// <summary>
 		/// Retrieves the contents of the specified registry subkey, one item at a time.
 		/// </summary>
@@ -329,7 +319,7 @@ namespace Keysharp.Core
 				{
 					foreach (var val in GetSubKeys(info, subkey, k, v))
 					{
-						if (Flow.hasExited)
+						if (script.FlowData.hasExited)
 							break;
 
 						yield return val;
@@ -341,7 +331,7 @@ namespace Keysharp.Core
 					{
 						foreach (var valueName in subkey.GetValueNames().Reverse())
 						{
-							if (Flow.hasExited)
+							if (script.FlowData.hasExited)
 								break;
 
 							info.index++;
@@ -360,7 +350,7 @@ namespace Keysharp.Core
 					{
 						foreach (var subKeyName in subkey.GetSubKeyNames().Reverse())//AHK spec says the subkeys and values are returned in reverse.
 						{
-							if (Flow.hasExited)
+							if (script.FlowData.hasExited)
 								break;
 
 							using (var tempKey = subkey.OpenSubKey(subKeyName, false))
@@ -499,7 +489,7 @@ namespace Keysharp.Core
 		/// <returns>The popped loop if any, else null.</returns>
 		public static LoopInfo Pop()
 		{
-			var s = LoopStack;
+			var s = script.LoopData.loopStack.Value;
 			var info = s.Count > 0 ? s.Pop() : null;
 
 			if (info != null && info.type == LoopType.File && info.sw != null)
@@ -518,7 +508,7 @@ namespace Keysharp.Core
 		public static LoopInfo Push(LoopType t = LoopType.Normal)
 		{
 			var info = new LoopInfo { type = t };
-			LoopStack.Push(info);
+			script.LoopData.loopStack.Value.Push(info);
 			return info;
 		}
 
@@ -528,7 +518,7 @@ namespace Keysharp.Core
 		/// <returns>The most recent directory loop if found, else null.</returns>
 		internal static LoopInfo GetDirLoop()
 		{
-			var s = LoopStack;
+			var s = script.LoopData.loopStack.Value;
 
 			if (s.Count > 0)
 			{
@@ -551,7 +541,7 @@ namespace Keysharp.Core
 		/// <returns>The filename of the most recent directory loop if found, else null.</returns>
 		internal static string GetDirLoopFilename()
 		{
-			var s = LoopStack;
+			var s = script.LoopData.loopStack.Value;
 
 			if (s.Count == 0)
 				return string.Empty;
@@ -613,11 +603,13 @@ namespace Keysharp.Core
 		/// Returns the most recent loop item without removing it.
 		/// </summary>
 		/// <returns>The most recent loop item if found, else null.</returns>
-		internal static LoopInfo Peek() => LoopStack.PeekOrNull();
+		internal static LoopInfo Peek() => script.LoopData.loopStack.Value.PeekOrNull();
 
 		internal static LoopInfo Peek(LoopType looptype)
 		{
-			foreach (var l in LoopStack)
+			var s = script.LoopData.loopStack.Value;
+
+			foreach (var l in s)
 				if (l.type == looptype)
 					return l;
 
@@ -797,7 +789,7 @@ namespace Keysharp.Core
 		/// <returns>Non negative number on success, else negative.</returns>
 		private static long QueryInfoKey(RegistryKey regkey)
 		{
-			var tv = Threads.GetThreadVariables();
+			var tv = script.Threads.GetThreadVariables();
 
 			if (tv.RegSb.Length > 0)
 				_ = tv.RegSb.Clear();
@@ -825,6 +817,7 @@ namespace Keysharp.Core
 		public object file;
 		public string filename = string.Empty;
 		public long index;
+		public DateTime lastIter = DateTime.UtcNow;
 		public string line;
 		public string path;
 		public object regDate;
@@ -835,7 +828,15 @@ namespace Keysharp.Core
 		public object result;
 		public TextWriter sw;
 		public LoopType type = LoopType.Normal;
-		public DateTime lastIter = DateTime.UtcNow;
+	}
+
+	internal class LoopData
+	{
+		/// <summary>
+		/// The stack which keeps track of all loops currently running in the script.<br/>
+		/// This is ThreadLocal<> because it must actually be thread safe for real threads.
+		/// </summary>
+		internal ThreadLocal<Stack<LoopInfo>> loopStack = new (() => new ());
 	}
 
 	/// <summary>

@@ -54,22 +54,18 @@
 		internal const uint KeyIgnoreMax = KeyIgnore;
 		internal const uint KeyPhysIgnore = KeyIgnore - 1;
 		internal const int MaxMouseSpeed = 100;
-
 		internal const string ModLRString = "<^>^<!>!<+>+<#>#";
 		internal const uint MsgOffsetMouseMove = 0x80000000;
 		internal const uint SendLevelMax = 100u;
 		internal const int StateDown = 0x80;
 		internal const int StateOn = 0x01;
-		internal static uint altGrExtraInfo = 0u;
 		internal static char[] bracechars = "{}".ToCharArray();
-		internal static SearchValues<char> bracecharsSv = SearchValues.Create(bracechars);
 		internal static string[] CoordModes = ["Client", "Window", "Screen"];
 		internal static char[] llChars = "Ll".ToCharArray();
-		internal static SearchValues<char> llCharsSv = SearchValues.Create(llChars);
-		internal static KeyType prefixKey = null;
-		internal static string sendKeyChars = "^+!#{}";
-		internal static uint thisHotkeyModifiersLR;
 		internal bool abortArraySend = false;
+		internal uint altGrExtraInfo = 0u;
+		internal SearchValues<char> bracecharsSv = SearchValues.Create(bracechars);
+		internal SearchValues<char> llCharsSv = SearchValues.Create(llChars);
 		internal int maxEvents = 0;
 		internal uint modifiersLRCtrlAltDelMask = 0u;
 		internal uint modifiersLRLastPressed = 0u;
@@ -78,7 +74,11 @@
 		internal uint modifiersLRLogicalNonIgnored = 0u;
 		internal uint modifiersLRNumpadMask = 0u;
 		internal uint modifiersLRPhysical = 0u;
-		protected internal static PlatformManagerBase mgr = PlatformProvider.Manager;
+		internal KeyType prefixKey = null;
+		internal string sendKeyChars = "^+!#{}";
+		internal uint thisHotkeyModifiersLR;
+		internal bool triedKeyUp;
+		protected internal PlatformManagerBase mgr = script.PlatformProvider.Manager;
 		protected ArrayPool<byte> keyStatePool = ArrayPool<byte>.Create(256, 100);
 		protected SendModes sendMode = SendModes.Event;//Note this is different than the one in Accessors and serves as a temporary.
 		private const int retention = 1024;
@@ -231,7 +231,7 @@
 			// Drag consists of at most:
 			// 1) Move; 2) Delay; 3) Down; 4) Delay; 5) Move; 6) Delay; 7) Delay (dupe); 8) Up; 9) Delay.
 			const int MAX_PERFORM_MOUSE_EVENTS = 10;
-			var ht = Script.HookThread;
+			var ht = script.HookThread;
 			sendMode = ThreadAccessors.A_SendMode;
 
 			if (sendMode == SendModes.Input || sendMode == SendModes.InputThenPlay)
@@ -247,9 +247,9 @@
 
 			// Turn it on unconditionally even if it was on, since Ctrl-Alt-Del might have disabled it.
 			// Turn it back off only if it wasn't ON before we started.
-			var blockinputPrev = Core.Keyboard.blockInput;
-			var doSelectiveBlockinput = (Core.Keyboard.blockInputMode == ToggleValueType.Mouse
-										 || Core.Keyboard.blockInputMode == ToggleValueType.SendAndMouse)
+			var blockinputPrev = script.KeyboardData.blockInput;
+			var doSelectiveBlockinput = (script.KeyboardData.blockInputMode == ToggleValueType.Mouse
+										 || script.KeyboardData.blockInputMode == ToggleValueType.SendAndMouse)
 										&& sendMode == SendModes.Event;
 
 			if (doSelectiveBlockinput) // It seems best NOT to use g_BlockMouseMove for this, since often times the user would want keyboard input to be disabled too, until after the mouse event is done.
@@ -288,10 +288,11 @@
 		internal void ProcessHotkey(int wParamVal, int lParamVal, HotkeyVariant variant, uint msg)
 		{
 			var hkId = wParamVal & HotkeyDefinition.HOTKEY_ID_MASK;
+			var shk = script.HotkeyData.shk;
 
-			if (hkId < HotkeyDefinition.shk.Count)//Ensure hotkey ID is valid.
+			if (hkId < shk.Count)//Ensure hotkey ID is valid.
 			{
-				var hk = HotkeyDefinition.shk[hkId];
+				var hk = shk[hkId];
 				// Check if criterion allows firing.
 				// For maintainability, this is done here rather than a little further down
 				// past the g_MaxThreadsTotal and thread-priority checks.  Those checks hardly
@@ -343,7 +344,7 @@
 				if (!(variant != null || (variant = hk.CriterionAllowsFiring(ref criterion_found_hwnd, msg == (uint)UserMessages.AHK_HOOK_HOTKEY ? KeyIgnoreLevel((uint)Conversions.HighWord(lParamVal)) : 0, ref dummy)) != null))
 					return;
 
-				if (!Threads.AnyThreadsAvailable())//First test global thread count.
+				if (!script.Threads.AnyThreadsAvailable())//First test global thread count.
 					return;
 
 				// If this is AHK_HOOK_HOTKEY, criterion was eligible at time message was posted,
@@ -363,7 +364,7 @@
 					return;
 				}
 
-				var tv = Threads.GetThreadVariables();
+				var tv = script.Threads.GetThreadVariables();
 
 				// Now that above has ensured variant is non-NULL:
 				if (variant.priority >= tv.priority)//Finally, test priority.

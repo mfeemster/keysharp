@@ -128,8 +128,12 @@
 				{
 					if (t is string s)
 					{
+#if DEBUG
+
 						if (s == "fail")
 							_ = Debug.OutputDebug(s);
+
+#endif
 
 						if (raw)
 							//sw.Write(Encoding.Unicode.GetBytes(s));

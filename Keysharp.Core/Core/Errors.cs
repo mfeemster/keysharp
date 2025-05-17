@@ -26,11 +26,11 @@
 
 			if (!err.Processed)
 			{
-				if (Script.onErrorHandlers != null)
+				if (script.onErrorHandlers != null)
 				{
 					err.ExcType = excType;
 
-					foreach (var handler in Script.onErrorHandlers)
+					foreach (var handler in script.onErrorHandlers)
 					{
 						var result = handler.Call(err, err.ExcType);
 
@@ -109,10 +109,10 @@
 			var i = addRemove.Al(1L);
 			var del = Functions.GetFuncObj(e, null, true);
 
-			if (Script.onErrorHandlers == null)
-				Script.onErrorHandlers = [];
+			if (script.onErrorHandlers == null)
+				script.onErrorHandlers = [];
 
-			Script.onErrorHandlers.ModifyEventHandlers(del, i);
+			script.onErrorHandlers.ModifyEventHandlers(del, i);
 			return null;
 		}
 
