@@ -16,7 +16,7 @@ namespace Keysharp.Core.COM
 		public ComMethodPropertyHolder(string name)
 		{
 			Name = name;
-			callFunc = (inst, obj) =>
+			_callFunc = (inst, obj) =>
 			{
 				var t = inst.GetType();
 				var args = new object[obj.Length];

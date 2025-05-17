@@ -5,7 +5,35 @@ namespace Keysharp.Core.Common.Invoke
 {
 	public class MethodPropertyHolder
 	{
-		public Func<object, object[], object> callFunc;
+		public Func<object, object[], object> _callFunc;
+		public Func<object, object[], object> callFunc
+        {
+            get
+            {
+                if (_callFunc != null)
+                    return _callFunc;
+
+				var del = DelegateFactory.CreateDelegate(mi);
+
+				if (isGuiType)
+				{
+					_callFunc = (inst, obj) =>
+					{
+						var ctrl = (inst ?? obj[0]).GetControl();
+						object ret = null;
+						ctrl.CheckedInvoke(() =>
+						{
+							ret = del(inst, obj);
+						}, true);
+						return ret;
+					};
+				}
+				else
+					_callFunc = del;
+
+                return _callFunc;
+			}
+        }
 		internal readonly MethodInfo mi;
 		internal readonly ParameterInfo[] parameters;
 		internal readonly PropertyInfo pi;
@@ -89,27 +117,11 @@ namespace Keysharp.Core.Common.Invoke
 
 			if (isFuncObj && mi.Name == "Call")
 			{
-				callFunc = (inst, obj) => ((IFuncObj)inst).Call(obj);
+				_callFunc = (inst, obj) => ((IFuncObj)inst).Call(obj);
 			}
 			else
 			{
-				var del = DelegateFactory.CreateDelegate(mi);
 
-				if (isGuiType)
-				{
-					callFunc = (inst, obj) =>
-					{
-						var ctrl = (inst ?? obj[0]).GetControl();
-						object ret = null;
-						ctrl.CheckedInvoke(() =>
-						{
-							ret = del(inst, obj);
-						}, true);
-						return ret;
-					};
-				}
-				else
-					callFunc = del;
 			}
 
 
@@ -336,7 +348,7 @@ namespace Keysharp.Core.Common.Invoke
 
 				if (isGuiType)
 				{
-                    callFunc = (inst, obj) =>//Gui calls aren't worth optimizing further.
+                    _callFunc = (inst, obj) =>//Gui calls aren't worth optimizing further.
                     {
                         object ret = null;
                         var ctrl = (inst ?? obj[0]).GetControl();//If it's a gui control, then invoke on the gui thread.
@@ -363,7 +375,7 @@ namespace Keysharp.Core.Common.Invoke
 				{
 					if (pi.PropertyType == typeof(int))
 					{
-						callFunc = (inst, obj) =>
+						_callFunc = (inst, obj) =>
 						{
 							var ret = pi.GetValue(null);
 
@@ -374,7 +386,7 @@ namespace Keysharp.Core.Common.Invoke
 						};
 					}
 					else
-						callFunc = (inst, obj) => pi.GetValue(null);
+						_callFunc = (inst, obj) => pi.GetValue(null);
 
 					setPropFunc = (inst, obj) => pi.SetValue(null, obj);
 				}
@@ -383,7 +395,7 @@ namespace Keysharp.Core.Common.Invoke
 			{
 				if (isGuiType)
 				{
-					callFunc = (inst, obj) =>
+					_callFunc = (inst, obj) =>
 					{
 						object ret = null;
 						var ctrl = (inst ?? obj[0]).GetControl();//If it's a gui control, then invoke on the gui thread.
@@ -410,7 +422,7 @@ namespace Keysharp.Core.Common.Invoke
 				{
 					if (pi.PropertyType == typeof(int))
 					{
-						callFunc = (inst, obj) =>
+						_callFunc = (inst, obj) =>
 						{
 							var ret = pi.GetValue(inst);
 
@@ -421,7 +433,7 @@ namespace Keysharp.Core.Common.Invoke
 						};
 					}
 					else
-						callFunc = (inst, obj) => pi.GetValue(inst);
+						_callFunc = (inst, obj) => pi.GetValue(inst);
 
 					setPropFunc = pi.SetValue;
 				}

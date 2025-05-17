@@ -8,7 +8,7 @@ namespace Keysharp.Scripting
 	{
 		public static void InitStaticInstance(Type t, Type alias = null)
 		{
-            var isBuiltin = !t.Namespace.Equals("Keysharp.CompiledMain", StringComparison.InvariantCultureIgnoreCase);
+            var isBuiltin = !t.Namespace.Equals("Keysharp.CompiledMain", StringComparison.OrdinalIgnoreCase);
 
             Variables.Prototypes[t] = (KeysharpObject)RuntimeHelpers.GetUninitializedObject(alias ?? t);
             object inst = Script.Variables.Statics[t] = (KeysharpObject)RuntimeHelpers.GetUninitializedObject(alias ?? t);
