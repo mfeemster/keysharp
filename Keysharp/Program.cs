@@ -32,9 +32,7 @@ namespace Keysharp.Main
 
 			try
 			{
-				WindowX.SetProcessDPIAware();
-				CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
-				CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture;
+				var script = new Script();//One Script object will exist here, then another will be created when the script runs.
 				var asm = Assembly.GetExecutingAssembly();
 				var exePath = Path.GetFullPath(asm.Location);
 				var exeName = Path.GetFileNameWithoutExtension(exePath);
@@ -49,7 +47,6 @@ namespace Keysharp.Main
 				var gotscript = false;
 				var fromstdin = false;
 				var validate = false;
-				var script = new Script();//One Script object will exist here, then another will be created when the script runs.
 				string[] scriptArgs = [];
 
 				for (var i = 0; i < args.Length; i++)

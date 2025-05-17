@@ -20,25 +20,7 @@ namespace Keysharp.Scripting
 
 		public Variables()
 		{
-			Error err;
-			WindowX.SetProcessDPIAware();
-			CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
-			CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture;
-#if LINUX
-			Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);//For some reason, linux needs this for rich text to work.
-			enc1252 = Encoding.GetEncoding(1252);
-#endif
-			var pd = script.ProcessesData;
-			mgr = script.PlatformProvider.Manager;
-			pd.MainThreadID = mgr.CurrentThreadId();
-			pd.ManagedMainThreadID = Thread.CurrentThread.ManagedThreadId;//Figure out how to do this on linux.//TODO
-			_ = script.Threads.PushThreadVariables(0, true, false, true);//Ensure there is always one thread in existence for reference purposes, but do not increment the actual thread counter.
 			var stack = new StackTrace(false).GetFrames();
-			//If we're running via passing in a script and are not in a unit test, then set the working directory to that of the script file.
-			var path = Path.GetFileName(Application.ExecutablePath).ToLowerInvariant();
-
-			if (path != "testhost.exe" && path != "testhost.dll" && !A_IsCompiled)
-				Dir.SetWorkingDir(A_ScriptDir);
 
 			for (var i = stack.Length - 1; i >= 0; i--)
 			{
@@ -63,56 +45,6 @@ namespace Keysharp.Scripting
 					break;
 				}
 			}
-
-			foreach (var dll in preloadedDlls)
-			{
-				if (dll.Item1.Length == 0)
-				{
-					if (!mgr.SetDllDirectory(null))//An empty #DllLoad restores the default search order.
-						if (!dll.Item2)
-						{
-							_ = Errors.ErrorOccurred(err = new Error("PlatformProvider.Manager.SetDllDirectory(null) failed."), Keyword_ExitApp) ? throw err : "";
-							return;
-						}
-				}
-				else if (Directory.Exists(dll.Item1))
-				{
-					if (!mgr.SetDllDirectory(dll.Item1))
-						if (!dll.Item2)
-						{
-							_ = Errors.ErrorOccurred(err = new Error($"PlatformProvider.Manager.SetDllDirectory({dll.Item1}) failed."), Keyword_ExitApp) ? throw err : "";
-							return;
-						}
-				}
-				else
-				{
-					var dllname = dll.Item1;
-#if WINDOWS
-
-					if (!dllname.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
-						dllname += ".dll";
-
-#endif
-					var hmodule = mgr.LoadLibrary(dllname);
-
-					if (hmodule != IntPtr.Zero)
-					{
-#if WINDOWS
-						// "Pin" the dll so that the script cannot unload it with FreeLibrary.
-						// This is done to avoid undefined behavior when DllCall optimizations
-						// resolves a proc address in a dll loaded by this directive.
-						_ = WindowsAPI.GetModuleHandleEx(WindowsAPI.GET_MODULE_HANDLE_EX_FLAG_PIN, dllname, out hmodule);  // MSDN regarding hmodule: "If the function fails, this parameter is NULL."
-#endif
-					}
-					else if (!dll.Item2)
-					{
-						_ = Errors.ErrorOccurred(err = new Error($"Failed to load DLL {dllname}."), Keyword_ExitApp) ? throw err : "";
-						return;
-					}
-				}
-			}
-
-			Application.AddMessageFilter(new MessageFilter());
 		}
 
 		public object GetVariable(string key)
