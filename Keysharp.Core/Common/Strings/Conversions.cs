@@ -357,34 +357,6 @@ namespace Keysharp.Core.Common.Strings
 			}
 		}
 
-		internal static RegexWithTag ParseRegEx(string exp, bool reverse = false)
-		{
-			var opts = reverse ? RegexOptions.RightToLeft : RegexOptions.None;
-			opts |= RegexOptions.Compiled;
-			var parenIndex = exp.IndexOf(')');
-
-			if (parenIndex != -1)
-			{
-				var leftParenIndex = exp.IndexOf('(');
-
-				if (leftParenIndex == -1 || (leftParenIndex > parenIndex))//Make sure it was just a ) for options and not a ().
-				{
-					var span = exp.AsSpan(0, parenIndex);
-					var substr = exp.Substring(parenIndex + 1);
-					opts |= ToRegexOptions(span);
-
-					if (span.Contains('A'))
-					{
-						substr = "\\A" + substr;
-					}
-
-					return new RegexWithTag(substr, opts);
-				}
-			}
-
-			return new RegexWithTag(exp, opts);
-		}
-
 		/// <summary>
 		/// Gotten from https://stackoverflow.com/questions/311165/how-do-you-convert-a-byte-array-to-a-hexadecimal-string-and-vice-versa
 		/// </summary>
@@ -560,9 +532,9 @@ namespace Keysharp.Core.Common.Strings
 		};
 	}
 
-	internal static RegexOptions ToRegexOptions(ReadOnlySpan<char> sequence)
+	internal static PcreRegexSettings ToRegexOptions(ReadOnlySpan<char> sequence)
 		{
-			var options = RegexOptions.None;
+			var settings = new PcreRegexSettings();
 
 			foreach (var modifier in sequence)
 			{
@@ -570,27 +542,70 @@ namespace Keysharp.Core.Common.Strings
 				{
 					case 'i':
 					case 'I':
-						options |= RegexOptions.IgnoreCase;
+						settings.Options |= PcreOptions.IgnoreCase;
 						break;
 
 					case 'm':
 					case 'M':
-						options |= RegexOptions.Multiline;
+						settings.Options |= PcreOptions.MultiLine;
 						break;
 
 					case 's':
+						settings.Options |= PcreOptions.DotAll;
+						break;
+
 					case 'S':
-						options |= RegexOptions.Singleline;
+						settings.Options |= PcreOptions.Singleline;
 						break;
 
 					case 'x':
+						settings.Options |= PcreOptions.IgnorePatternWhitespace;
+						break;
+
+					case 'A':
+						settings.Options |= PcreOptions.Anchored;
+						break;
+
+					case 'D':
+						settings.Options |= PcreOptions.DollarEndOnly;
+						break;
+
+					case 'J':
+						settings.Options |= PcreOptions.DupNames;
+						break;
+
+					case 'U':
+						settings.Options |= PcreOptions.Ungreedy;
+						break;
+
 					case 'X':
-						options |= RegexOptions.IgnorePatternWhitespace;
+						settings.Options |= PcreOptions.Extended;
+						break;
+
+					case 'c':
+					case 'C':
+						settings.Options |= PcreOptions.AutoCallout;
+						break;
+
+					case 'a':
+						settings.NewLine = PcreNewLine.Any;
+						break;
+
+					case 'r':
+						settings.NewLine = PcreNewLine.Cr;
+						break;
+
+					case 'n':
+						settings.NewLine = PcreNewLine.Lf;
+						break;
+
+					case 'u':
+						settings.Options |= PcreOptions.NoAutoPossess | PcreOptions.NoStartOptimize | PcreOptions.NoDotStarAnchor;
 						break;
 				}
 			}
 
-			return options;
+			return settings;
 		}
 
 #if WINDOWS

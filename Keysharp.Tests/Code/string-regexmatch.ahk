@@ -19,7 +19,7 @@ else
 
 CheckMatches(match, "0", "abc123")
 
-RegExMatch("abc123abc456", "456", &match, -1)
+RegExMatch("abc123abc456", "456", &match, -3)
 
 if (match[0] == "456")
 	FileAppend, "pass", "*"
@@ -38,7 +38,7 @@ else
 
 CheckMatches(match, "0", "456")
 
-RegExMatch("abc123abc456", "abc", &match, -1)
+RegExMatch("abc123abc456", "abc", &match, -6)
 
 if (match[0] == "abc")
 	FileAppend, "pass", "*"
@@ -69,14 +69,14 @@ if (match.0 == "abc")
 else
 	FileAppend, "fail", "*"
 
-if (match.Pos() == 7)
+if (match.Pos() == 1)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
 
 CheckMatches(match, "0", "abc")
 
-RegExMatch("abc123abc456", "abc", &match, -5)
+RegExMatch("abc123abc456", "abc", &match, -7)
 
 if (match[0] == "abc")
 	FileAppend, "pass", "*"
@@ -88,7 +88,7 @@ if (match.0 == "abc")
 else
 	FileAppend, "fail", "*"
 
-if (match.Pos() == 1)
+if (match.Pos() == 7)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
@@ -358,6 +358,34 @@ else
 	FileAppend, "fail", "*"
 
 CheckMatches(match, "01nr", "Michiganroad 72Michiganroad72")
+
+global quick := false, lazy := false, i := 0
+RegExMatch("The quick brown fox jumps over the lazy dog.", "i)(The) (\w+)\b(?C{Callout})")
+
+if (quick)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+if (lazy)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+if (i == 2)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+Callout(m, *) {
+	global i, quick, lazy
+	i++
+	if (i == 1 && m[2] == "quick")
+		quick := true
+	else if (i == 2 && m[2] == "lazy")
+		lazy := true
+    return 1
+}
 
 CheckMatches(m, nameMatch, valuesMatch)
 {

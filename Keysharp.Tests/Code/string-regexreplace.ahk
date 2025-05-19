@@ -32,3 +32,15 @@ if (outputVarCount == 2)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
+match := RegExReplace("abc", ".", (m) => m[] == "a" ? 1 : m[] == "b" ? 2 : 3, &outputVarCount:=0)
+
+if (match == "123")
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+	
+if (outputVarCount == 3)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"

@@ -370,7 +370,7 @@
 				{
 					object outvar = null;
 					_ = RegEx.RegExMatch(a, b, ref outvar, 1);
-					RegExResults output = (RegExResults)outvar;
+					RegExMatchInfo output = (RegExMatchInfo)outvar;
 					return output.Count.Ai() > 0 && !string.IsNullOrEmpty(output[0]);
 				}
 			}
