@@ -278,9 +278,9 @@ namespace Keysharp.Core
 #endif
 			Application.EnableVisualStyles();
 
-			if (!script.dpimodeset)
+			if (!Script.dpimodeset)
 			{
-				script.dpimodeset = true;
+				Script.dpimodeset = true;
 
 				try
 				{

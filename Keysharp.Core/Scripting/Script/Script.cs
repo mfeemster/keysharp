@@ -17,6 +17,8 @@ namespace Keysharp.Scripting
 	/// </summary>
 	public partial class Script
 	{
+		internal static bool dpimodeset; //This should be done once per process, so it can be static
+
 		public bool ForceKeybdHook;
 		public string[] KeysharpArgs = [];
 		public uint MaxThreadsTotal = 12u;
@@ -29,7 +31,6 @@ namespace Keysharp.Scripting
 		internal const int SLEEP_INTERVAL_HALF = SLEEP_INTERVAL / 2;
 		internal static Script script;
 		internal List<IFuncObj> ClipFunctions = [];
-		internal bool dpimodeset;
 		internal List<IFuncObj> hotCriterions = [];
 		internal IntPtr hotExprLFW = IntPtr.Zero;
 		internal List<IFuncObj> hotExprs = [];
@@ -156,6 +157,18 @@ namespace Keysharp.Scripting
 		internal ToolTipData ToolTipData => toolTipData ?? (toolTipData = new ());
 		internal WindowProvider WindowProvider => windowProvider ?? (windowProvider = new ());
 
+		static Script()
+		{
+			WindowX.SetProcessDPIAware();
+			CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
+			CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture;
+#if LINUX
+		Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);//For some reason, linux needs this for rich text to work.
+		enc1252 = Encoding.GetEncoding(1252);
+#endif
+			SetInitialFloatFormat();//This must be done intially and not just when A_FormatFloat is referenced for the first time.
+		}
+
 		public Script()
 		{
 			script = this;//Everywhere in the script will reference this.
@@ -164,13 +177,79 @@ namespace Keysharp.Scripting
 			timeLastInputMouse = timeLastInputPhysical;
 			threads = new Threads();
 			Vars = new Variables();
+
+			_ = script.Threads.PushThreadVariables(0, true, false, true);//Ensure there is always one thread in existence for reference purposes, but do not increment the actual thread counter.
+
+			var pd = this.ProcessesData;
+			mgr = this.PlatformProvider.Manager;
+			pd.MainThreadID = mgr.CurrentThreadId();
+			pd.ManagedMainThreadID = Thread.CurrentThread.ManagedThreadId;//Figure out how to do this on linux.//TODO
+			//If we're running via passing in a script and are not in a unit test, then set the working directory to that of the script file.
+			var path = Path.GetFileName(Application.ExecutablePath).ToLowerInvariant();
+			if (path != "testhost.exe" && path != "testhost.dll" && !A_IsCompiled)
+				Dir.SetWorkingDir(A_ScriptDir);
+
+			//Preload dlls requested with #DllLoad
+			LoadDlls();
+			Application.AddMessageFilter(new MessageFilter());
 			_ = InitHook();//Why is this always being initialized even when there are no hooks? This is very inefficient.//TODO
 			//Init the data objects that the API classes will use.
-			mgr = this.PlatformProvider.Manager;
 			Coords = Threads.GetThreadVariables().Coords;
 			//Init the API classes, passing in this which will be used to access their respective data objects.
 			Reflections = new ();
 			SetInitialFloatFormat();//This must be done intially and not just when A_FormatFloat is referenced for the first time.
+		}
+
+		private void LoadDlls()
+		{
+			Error err;
+			foreach (var dll in Vars.preloadedDlls)
+			{
+				if (dll.Item1.Length == 0)
+				{
+					if (!mgr.SetDllDirectory(null))//An empty #DllLoad restores the default search order.
+						if (!dll.Item2)
+						{
+							_ = Errors.ErrorOccurred(err = new Error("PlatformProvider.Manager.SetDllDirectory(null) failed."), Keyword_ExitApp) ? throw err : "";
+							return;
+						}
+				}
+				else if (Directory.Exists(dll.Item1))
+				{
+					if (!mgr.SetDllDirectory(dll.Item1))
+						if (!dll.Item2)
+						{
+							_ = Errors.ErrorOccurred(err = new Error($"PlatformProvider.Manager.SetDllDirectory({dll.Item1}) failed."), Keyword_ExitApp) ? throw err : "";
+							return;
+						}
+				}
+				else
+				{
+					var dllname = dll.Item1;
+#if WINDOWS
+
+					if (!dllname.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
+						dllname += ".dll";
+
+#endif
+					var hmodule = mgr.LoadLibrary(dllname);
+
+					if (hmodule != IntPtr.Zero)
+					{
+#if WINDOWS
+						// "Pin" the dll so that the script cannot unload it with FreeLibrary.
+						// This is done to avoid undefined behavior when DllCall optimizations
+						// resolves a proc address in a dll loaded by this directive.
+						_ = WindowsAPI.GetModuleHandleEx(WindowsAPI.GET_MODULE_HANDLE_EX_FLAG_PIN, dllname, out hmodule);  // MSDN regarding hmodule: "If the function fails, this parameter is NULL."
+#endif
+					}
+					else if (!dll.Item2)
+					{
+						_ = Errors.ErrorOccurred(err = new Error($"Failed to load DLL {dllname}."), Keyword_ExitApp) ? throw err : "";
+						return;
+					}
+				}
+			}
 		}
 
 		public static bool HandleSingleInstance(string title, eScriptInstance inst)
