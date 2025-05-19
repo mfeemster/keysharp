@@ -244,8 +244,10 @@
 		{
 			if (control is Form)
 				return Point.Empty;
+
 			Point p = control.Location;
 			Control parent = control.Parent;
+
 			// This is done like this because Control.PointToScreen and similar functions
 			// apparently don't always work correctly if the Form is hidden.
 			while (parent != null && parent is not Form)
@@ -253,6 +255,7 @@
 				p.Offset(parent.Location);
 				parent = parent.Parent;
 			}
+
 			return p;
 		}
 

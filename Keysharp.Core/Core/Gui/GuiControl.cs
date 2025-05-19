@@ -4,34 +4,34 @@
 	{
 		public class Control : KeysharpObject
 		{
-			internal string typename;
-			internal WeakReference<Gui> gui;
-		private readonly List<IFuncObj> clickHandlers = [];
-		private readonly List<IFuncObj> doubleClickHandlers = [];
-		private bool DpiScaling => Gui.dpiscaling;
+			private string typename;
+			private WeakReference<Gui> gui;
+			private readonly List<IFuncObj> clickHandlers = [];
+			private readonly List<IFuncObj> doubleClickHandlers = [];
+			private bool DpiScaling => Gui.dpiscaling;
 			private System.Windows.Forms.Control _control;
 
-		//Normal event handlers can't be used becaused they need to return a value.
-		//The returned values are then inspected to determine if subsequent handlers should be called or not.
-		private List<IFuncObj> changeHandlers;
-		private List<IFuncObj> columnClickHandlers;
-		private Dictionary<int, List<IFuncObj>> commandHandlers;
-		private List<IFuncObj> contextMenuChangedHandlers;
-		private IntPtr dummyHandle;
-		private List<IFuncObj> focusedItemChangedHandlers;
-		private List<IFuncObj> focusHandlers;
-		private List<IFuncObj> itemCheckHandlers;
-		private List<IFuncObj> itemEditHandlers;
-		private List<IFuncObj> itemExpandHandlers;
-		private List<IFuncObj> lostFocusHandlers;
-		private Dictionary<int, List<IFuncObj>> notifyHandlers;
-		private long parenthandle;
-		private List<IFuncObj> selectedItemChangedHandlers;
-		internal Size requestedSize = new (int.MinValue, int.MinValue);
+			//Normal event handlers can't be used becaused they need to return a value.
+			//The returned values are then inspected to determine if subsequent handlers should be called or not.
+			private List<IFuncObj> changeHandlers;
+			private List<IFuncObj> columnClickHandlers;
+			private Dictionary<int, List<IFuncObj>> commandHandlers;
+			private List<IFuncObj> contextMenuChangedHandlers;
+			private IntPtr dummyHandle;
+			private List<IFuncObj> focusedItemChangedHandlers;
+			private List<IFuncObj> focusHandlers;
+			private List<IFuncObj> itemCheckHandlers;
+			private List<IFuncObj> itemEditHandlers;
+			private List<IFuncObj> itemExpandHandlers;
+			private List<IFuncObj> lostFocusHandlers;
+			private Dictionary<int, List<IFuncObj>> notifyHandlers;
+			private long parenthandle;
+			private List<IFuncObj> selectedItemChangedHandlers;
+			internal Size requestedSize = new (int.MinValue, int.MinValue);
 
 			public bool AltSubmit { get; internal set; } = false;
 
-		public string ClassNN => script.WindowProvider.Manager.CreateWindow(_control.Handle) is WindowItemBase wi ? wi.ClassNN : "";
+			public string ClassNN => script.WindowProvider.Manager.CreateWindow(_control.Handle) is WindowItemBase wi ? wi.ClassNN : "";
 
 			public System.Windows.Forms.Control Ctrl => _control;
 
@@ -62,7 +62,7 @@
 				set => _control.Name = value.ToString();
 			}
 
-		public string NetClassNN => script.WindowProvider.Manager.CreateWindow(_control.Handle) is WindowItemBase wi ? wi.NetClassNN : "";
+			public string NetClassNN => script.WindowProvider.Manager.CreateWindow(_control.Handle) is WindowItemBase wi ? wi.NetClassNN : "";
 
 			public object Parent
 			{
@@ -98,6 +98,9 @@
 						_ = Errors.ErrorOccurred(err = new Error($"Can only set RichText on a RichEdit control. Attempted on a {_control.GetType().Name} control.")) ? throw err : "";
 				}
 			}
+
+			public new (Type, object) super => (typeof(KeysharpObject), this);
+
 			public object Text
 			{
 				get
@@ -635,41 +638,41 @@
 						break;
 
 					case KeysharpTabControl tc:
+					{
+						if (index < 0)
+							tc.TabPages.Clear();
+						else if (index < tc.TabPages.Count)
 						{
-							if (index < 0)
-								tc.TabPages.Clear();
-							else if (index < tc.TabPages.Count)
+							var ctrls = tc.TabPages[index].Controls;
+							tc.TabPages.RemoveAt(index);
+
+							if (index < tc.TabPages.Count)//Extremely bizarre behavior, but the documentation says that if you delete a tab, then its controls are moved to the next tab, replacing whatever was on that tab.
 							{
-								var ctrls = tc.TabPages[index].Controls;
-								tc.TabPages.RemoveAt(index);
-
-								if (index < tc.TabPages.Count)//Extremely bizarre behavior, but the documentation says that if you delete a tab, then its controls are moved to the next tab, replacing whatever was on that tab.
-								{
-									tc.TabPages[index].Controls.Clear();
-									tc.TabPages[index].Controls.AddRange(ctrls.Cast<System.Windows.Forms.Control>().ToArray());
-								}
+								tc.TabPages[index].Controls.Clear();
+								tc.TabPages[index].Controls.AddRange(ctrls.Cast<System.Windows.Forms.Control>().ToArray());
 							}
-
-							break;
 						}
+
+						break;
+					}
 
 					case KeysharpTreeView tv:
+					{
+						var id = value.Al(long.MinValue);
+
+						if (id == long.MinValue)
 						{
-							var id = value.Al(long.MinValue);
-
-							if (id == long.MinValue)
-							{
-								tv.Nodes.Clear();
-								return 1L;
-							}
-							else if (TreeViewHelper.TV_FindNode(tv, id) is TreeNode node)
-							{
-								node.Remove();
-								return 1L;
-							}
-
-							break;
+							tv.Nodes.Clear();
+							return 1L;
 						}
+						else if (TreeViewHelper.TV_FindNode(tv, id) is TreeNode node)
+						{
+							node.Remove();
+							return 1L;
+						}
+
+						break;
+					}
 
 					case KeysharpListView lv:
 						if (index < 0)
@@ -775,7 +778,7 @@
 
 				if (_control is KeysharpTreeView tv)
 				{
-				none:
+					none:
 
 					if (string.IsNullOrEmpty(mode))
 					{
@@ -876,7 +879,7 @@
 				return 0L;
 			}
 
-			public long GetSelection() => _control is KeysharpTreeView tv && tv.SelectedNode != null ? tv.SelectedNode.Handle.ToInt64() : 0L;
+			public long GetSelection() => _control is KeysharpTreeView tv&& tv.SelectedNode != null ? tv.SelectedNode.Handle.ToInt64() : 0L;
 
 			public string GetText(object rowNumber, object columnNumber = null)
 			{
@@ -1348,7 +1351,7 @@
 
 					_ = WindowsAPI.SetWindowLongPtr(txt.Handle, WindowsAPI.GWL_STYLE, new IntPtr(val));
 #else
-				txt.IsNumeric = opts.number;
+					txt.IsNumeric = opts.number;
 #endif
 
 					if (opts.lowercase.IsTrue())
@@ -1393,7 +1396,7 @@
 
 					_ = WindowsAPI.SetWindowLongPtr(rtxt.Handle, WindowsAPI.GWL_STYLE, new IntPtr(val));
 #else
-				rtxt.IsNumeric = opts.number;
+					rtxt.IsNumeric = opts.number;
 #endif
 
 					if (opts.lowercase.IsTrue())
@@ -1638,41 +1641,41 @@
 							switch (type)
 							{
 								case 0:
+								{
+									oldil = ImageLists.IL_GetId(lv.LargeImageList);
+									lv.LargeImageList = newil;
+									break;
+								}
+
+								case 1:
+								{
+									oldil = ImageLists.IL_GetId(lv.SmallImageList);
+									lv.SmallImageList = newil;
+									break;
+								}
+
+								case 2://Documentation says state icons don't work, but they do here.
+								{
+									oldil = ImageLists.IL_GetId(lv.StateImageList);
+									lv.StateImageList = newil;
+									break;
+								}
+
+								default:
+								{
+									if (il.ImageSize.Width > Env.SysGet(SystemMetric.SM_CXSMICON).Al())
 									{
 										oldil = ImageLists.IL_GetId(lv.LargeImageList);
 										lv.LargeImageList = newil;
-										break;
 									}
-
-								case 1:
+									else
 									{
 										oldil = ImageLists.IL_GetId(lv.SmallImageList);
 										lv.SmallImageList = newil;
-										break;
 									}
 
-								case 2://Documentation says state icons don't work, but they do here.
-									{
-										oldil = ImageLists.IL_GetId(lv.StateImageList);
-										lv.StateImageList = newil;
-										break;
-									}
-
-								default:
-									{
-										if (il.ImageSize.Width > Env.SysGet(SystemMetric.SM_CXSMICON).Al())
-										{
-											oldil = ImageLists.IL_GetId(lv.LargeImageList);
-											lv.LargeImageList = newil;
-										}
-										else
-										{
-											oldil = ImageLists.IL_GetId(lv.SmallImageList);
-											lv.SmallImageList = newil;
-										}
-
-										break;
-									}
+									break;
+								}
 							}
 						}
 					}

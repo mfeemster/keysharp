@@ -33,9 +33,6 @@ namespace Keysharp.Main
 			try
 			{
 				var script = new Script();//One Script object will exist here, then another will be created when the script runs.
-				WindowX.SetProcessDPIAware();
-				CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
-				CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture;
 				var asm = Assembly.GetExecutingAssembly();
 				var exePath = Path.GetFullPath(asm.Location);
 				var exeName = Path.GetFileNameWithoutExtension(exePath);
