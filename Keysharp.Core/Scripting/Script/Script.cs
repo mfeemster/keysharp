@@ -169,18 +169,6 @@ namespace Keysharp.Scripting
 			SetInitialFloatFormat();//This must be done intially and not just when A_FormatFloat is referenced for the first time.
 		}
 
-		public Script()
-		{
-			WindowX.SetProcessDPIAware();
-			CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
-			CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture;
-#if LINUX
-		Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);//For some reason, linux needs this for rich text to work.
-		enc1252 = Encoding.GetEncoding(1252);
-#endif
-			SetInitialFloatFormat();//This must be done intially and not just when A_FormatFloat is referenced for the first time.
-		}
-
 		public Script(Type program = null)
 		{
 			script = this;//Everywhere in the script will reference this.
@@ -188,7 +176,9 @@ namespace Keysharp.Scripting
 			timeLastInputKeyboard = timeLastInputPhysical;
 			timeLastInputMouse = timeLastInputPhysical;
 			threads = new Threads();
+			Reflections = new Reflections();
 			Vars = new Variables();
+			Vars.InitPrototypes();
 
 			_ = script.Threads.PushThreadVariables(0, true, false, true);//Ensure there is always one thread in existence for reference purposes, but do not increment the actual thread counter.
 

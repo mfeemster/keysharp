@@ -30,7 +30,7 @@ namespace Keysharp.Benchmark
 		public void Setup()
 		{
 			_ks_s = new();
-			_ks_s.Vars.InitGlobalVars();
+			_ks_s.Vars.InitPrototypes();
 		}
 	}
 }

@@ -24,11 +24,7 @@ namespace Keysharp.Scripting
 		/// <param name="s"></param>
 		public void AddPreLoadedDll(string p, bool s) => preloadedDlls.Add((p, s));
 
-		public Variables()
-		{
-		}
-
-		internal void InitVarsPrototypes(Type program = null)
+		public Variables(Type program = null)
 		{
 			if (program != null)
 			{
@@ -46,7 +42,10 @@ namespace Keysharp.Scripting
 				foreach (var prop in props)
 					globalVars[prop.Name] = prop;
 			}
+		}
 
+		public void InitPrototypes()
+		{
 			// Initialize prototypes 
 			Dictionary<Type, KeysharpObject> protos = new();
 
