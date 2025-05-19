@@ -92,8 +92,8 @@
 		{
 			if (obj is Gui gui)
 				return gui.form;
-			else if (obj is GuiControl ctrl)
-				return ctrl.Control;
+			else if (obj is Gui.Control ctrl)
+				return ctrl.Ctrl;
 			else if (obj is Keysharp.Core.Menu menu)
 				return menu.GetMenu();
 			else if (obj is Control control)//Final check in the event it's some kind of native control or form.
@@ -114,7 +114,7 @@
 		/// </summary>
 		/// <param name="obj">The object to examine.</param>
 		/// <returns>True if obj was a <see cref="Gui"/>, <see cref="GuiControl"/> or <see cref="Menu"/>, else false.</returns>
-		public static bool IsKeysharpGui(this object obj) => obj is Gui || obj is GuiControl || obj is Keysharp.Core.Menu;
+		public static bool IsKeysharpGui(this object obj) => obj is Gui || obj is Gui.Control || obj is Keysharp.Core.Menu;
 
 		/// <summary>
 		/// Returns whether an object is a string that is not empty.

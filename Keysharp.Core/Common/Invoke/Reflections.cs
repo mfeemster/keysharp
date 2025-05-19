@@ -68,10 +68,10 @@ namespace Keysharp.Core.Common.Invoke
 			CacheAllMethods(ignoreMainAssembly);
 			CacheAllPropertiesAndFields();
 			var types = rd.loadedAssemblies.Values.Where(asm => asm.FullName.StartsWith("Keysharp.Core,"))
-						.SelectMany(t => t.GetExportedTypes())
+						.SelectMany(t => GetNestedTypes(t.GetExportedTypes()))
 						.Where(t => t.GetCustomAttribute<PublicForTestOnly>() == null && t.Namespace != null && t.Namespace.StartsWith("Keysharp.Core")
 							   && t.Namespace != "Keysharp.Core.Properties"
-							   && t.IsClass && t.IsPublic);
+							   && t.IsClass && (t.IsPublic || t.IsNestedPublic));
 			var tl = types;
 
 			foreach (var t in tl)
@@ -89,18 +89,18 @@ namespace Keysharp.Core.Common.Invoke
 					 .Where(m => !m.IsSpecialName && m.GetCustomAttribute<PublicForTestOnly>() == null))
 				rd.flatPublicStaticMethods.TryAdd(method.Name, method);
 
-			//#if DEBUG
-			//var mlist = rd.flatPublicStaticMethods.Where(kv => kv.Value.ReturnType == typeof(void)).Select(kv => kv.Key).ToList();
-			//mlist.Sort();
-			//System.IO.File.WriteAllText("methpropskeysharp.txt", string.Join("\n", mlist.Select(m => $"{rd.flatPublicStaticMethods[m].DeclaringType}.{m}()").OrderBy(s => s)));
+#if DEBUG
+			//var typelist = tl.ToList();
 			//var mlist = rd.flatPublicStaticMethods.Keys.ToList();
 			//mlist.Sort();
 			//var plist = rd.flatPublicStaticProperties.Keys.ToList();
 			//plist.Sort();
-			//System.IO.File.WriteAllText("methpropskeysharp.txt", string.Join("\n", mlist.Select(m => $"{rd.flatPublicStaticMethods[m].DeclaringType}.{m}()").OrderBy(s => s))
+			//System.IO.File.WriteAllText("methpropskeysharp.txt", string.Join("\n", typelist.Select(t => t.FullName))
+			//                          + "\n"
+			//                          + string.Join("\n", mlist.Select(m => $"{rd.flatPublicStaticMethods[m].DeclaringType}.{m}()").OrderBy(s => s))
 			//                          + "\n"
 			//                          + string.Join("\n", plist.Select(p => $"{rd.flatPublicStaticProperties[p].DeclaringType}.{p}").OrderBy(s => s)));
-			//#endif
+#endif
 		}
 
 		internal static FieldInfo FindAndCacheField(Type t, string name, BindingFlags propType =
@@ -480,7 +480,7 @@ namespace Keysharp.Core.Common.Invoke
 
 			//_ = MessageBox.Show(string.Join('\n', assemblies.Select(assy => assy.FullName)));
 			foreach (var asm in assemblies)
-				foreach (var type in asm.GetExportedTypes())
+				foreach (var type in GetNestedTypes(asm.GetExportedTypes()))
 					if (type.IsClass && type.IsPublic && type.Namespace != null && (!ignoreMainAssembly || type.Name != Parser.mainClassName) &&
 							(type.Namespace.StartsWith("Keysharp.Core", StringComparison.OrdinalIgnoreCase) ||
 							 type.Namespace.StartsWith("Keysharp.CompiledMain", StringComparison.OrdinalIgnoreCase) ||
@@ -520,8 +520,8 @@ namespace Keysharp.Core.Common.Invoke
 
 			//The compiled and running output of a script will have the name of the script file without the extension.
 			//So we can't just use "Keysharp" to identify it.
-			foreach (var item in rd.loadedAssemblies.Values.Where(assy => assy.FullName.StartsWith("Keysharp") || exeAssembly == assy))
-				foreach (var type in item.GetExportedTypes())
+			foreach (var asm in rd.loadedAssemblies.Values.Where(assy => assy.FullName.StartsWith("Keysharp", StringComparison.OrdinalIgnoreCase) || exeAssembly == assy))
+				foreach (var type in GetNestedTypes(asm.GetExportedTypes()))
 					if (type.IsClass && type.IsPublic && type.Namespace != null &&
 							(type.Namespace.StartsWith("Keysharp.Core", StringComparison.OrdinalIgnoreCase) ||
 							 type.Namespace.StartsWith("Keysharp.CompiledMain", StringComparison.OrdinalIgnoreCase)))
@@ -574,6 +574,15 @@ namespace Keysharp.Core.Common.Invoke
 			}
 
 			return dkt;
+		}
+
+		private static IEnumerable<Type> GetNestedTypes(Type[] types)
+		{
+			foreach (var t in types)
+			{
+				yield return t;
+				GetNestedTypes(t.GetNestedTypes());
+			}
 		}
 	}
 
