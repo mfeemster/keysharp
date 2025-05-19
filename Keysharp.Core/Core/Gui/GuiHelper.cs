@@ -19,7 +19,7 @@
 		public static object GuiCtrlFromHwnd(object obj)
 		{
 			if (Control.FromHandle(new IntPtr(obj.Al())) is Control c)
-				if (c.GetGuiControl() is GuiControl gui)
+				if (c.GetGuiControl() is Gui.Control gui)
 					return gui;
 
 			return "";
@@ -84,7 +84,7 @@
 		{
 			if (m.HWnd == control.Handle)
 			{
-				if (control.GetGuiControl() is GuiControl ctrl)
+				if (control.GetGuiControl() is Gui.Control ctrl)
 				{
 					var ret = ctrl.InvokeMessageHandlers(ref m);
 
