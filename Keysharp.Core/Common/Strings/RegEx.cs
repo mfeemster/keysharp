@@ -11,9 +11,10 @@ namespace Keysharp.Core.Common.Strings
 	{
 		internal PcreMatch match;
 		internal RegexHolder holder;
-		public object Count => match.Groups.Count;
+		public object Count => match.CaptureCount;
 		public object Mark => match.Mark;
 		public object Success => match.Success;
+		public object pos => Pos(); //Lower-cased because of the naming conflict with the method
 
 		public new (Type, object) super => (typeof(KeysharpObject), this);
 
