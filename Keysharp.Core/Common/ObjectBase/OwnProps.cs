@@ -69,7 +69,18 @@
 
 		object IEnumerator.Current => Current;
 		internal new int Count => GetVal ? 2 : 1;
-		internal bool GetVal { get; set; }
+		private bool _getVal = false;
+		internal bool GetVal {
+			get => _getVal;
+			set
+			{
+				_getVal = value;
+				var p = value ? script.OwnPropsIteratorData.p2 : script.OwnPropsIteratorData.p1;
+				fo = (FuncObj)p.Clone();
+				fo.Inst = this;
+				CallFunc = fo;
+			}
+		}
 
 		internal OwnPropsIterator(KeysharpObject o, Dictionary<object, object> m, bool gv)
 			: base(null, gv ? 2 : 1)
@@ -78,10 +89,6 @@
 			map = m;
 			GetVal = gv;
 			iter = map.GetEnumerator();
-			var p = Count <= 1 ? script.OwnPropsIteratorData.p1 : script.OwnPropsIteratorData.p2;
-			fo = (FuncObj)p.Clone();
-			fo.Inst = this;
-			CallFunc = fo;
 		}
 
 		public override object Call(object obj0)

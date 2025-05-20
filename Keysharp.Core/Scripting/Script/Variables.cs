@@ -51,7 +51,6 @@ namespace Keysharp.Scripting
 
 			var anyType = typeof(Any);
 			var types = script.ReflectionsData.stringToTypes.Values
-				.Concat(script.ReflectionsData.stringToTypes.Values.SelectMany(t => t.GetNestedTypes(BindingFlags.Public)))
 				.Where(type => type.IsClass && !type.IsAbstract && anyType.IsAssignableFrom(type));
 
 			/*
@@ -101,11 +100,6 @@ namespace Keysharp.Scripting
 			// Now that the static objects are created, loop the types again and call __Init and __New for all built-in classes
 			foreach (var t in orderedTypes)
 			{
-				var nestedTypes = t.GetNestedTypes(BindingFlags.Public);
-				foreach (var nestedType in nestedTypes)
-				{
-					Statics[t].DefineProp(nestedType.Name, Collections.Map("value", Statics[nestedType]));
-				}
 				if (t.Namespace.Equals("Keysharp.CompiledMain", StringComparison.InvariantCultureIgnoreCase))
 				{
 					Script.Invoke(Statics[t], "__Init");

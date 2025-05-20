@@ -69,7 +69,7 @@ namespace Keysharp.Core.Common.Invoke
 			CacheAllMethods(ignoreMainAssembly);
 			CacheAllPropertiesAndFields();
 			var types = rd.loadedAssemblies.Values.Where(asm => asm.FullName.StartsWith("Keysharp.Core,"))
-						.SelectMany(t => GetNestedTypes(t.GetExportedTypes()))
+						.SelectMany(t => t.GetExportedTypes())
 						.Where(t => t.GetCustomAttribute<PublicForTestOnly>() == null && t.Namespace != null && t.Namespace.StartsWith("Keysharp.Core")
 							   && t.Namespace != "Keysharp.Core.Properties"
 							   && t.IsClass && (t.IsPublic || t.IsNestedPublic));
@@ -554,7 +554,7 @@ namespace Keysharp.Core.Common.Invoke
 			//The compiled and running output of a script will have the name of the script file without the extension.
 			//So we can't just use "Keysharp" to identify it.
 			foreach (var asm in rd.loadedAssemblies.Values.Where(assy => assy.FullName.StartsWith("Keysharp", StringComparison.OrdinalIgnoreCase) || exeAssembly == assy))
-				foreach (var type in GetNestedTypes(asm.GetExportedTypes()))
+				foreach (var type in asm.GetExportedTypes())
 					if (type.IsClass && type.IsPublic && type.Namespace != null &&
 							(type.Namespace.StartsWith("Keysharp.Core", StringComparison.OrdinalIgnoreCase) ||
 							 type.Namespace.StartsWith("Keysharp.CompiledMain", StringComparison.OrdinalIgnoreCase)))
@@ -607,15 +607,6 @@ namespace Keysharp.Core.Common.Invoke
 			}
 
 			return dkt;
-		}
-
-		private static IEnumerable<Type> GetNestedTypes(Type[] types)
-		{
-			foreach (var t in types)
-			{
-				yield return t;
-				GetNestedTypes(t.GetNestedTypes());
-			}
 		}
 	}
 

@@ -177,7 +177,7 @@ namespace Keysharp.Scripting
 			timeLastInputMouse = timeLastInputPhysical;
 			threads = new Threads();
 			Reflections = new Reflections();
-			Vars = new Variables();
+			Vars = new Variables(program);
 			Vars.InitPrototypes();
 
 			_ = script.Threads.PushThreadVariables(0, true, false, true);//Ensure there is always one thread in existence for reference purposes, but do not increment the actual thread counter.
