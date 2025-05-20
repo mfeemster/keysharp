@@ -272,7 +272,8 @@ using static Keysharp.Scripting.Script;
 					//This will be the build output folder when running from within the debugger, and the install folder when running from an installation.
 					//Note that Keysharp.Core.dll and System.CodeDom.dll *must* remain in that location for a compiled executable to work.
 					MetadataReference.CreateFromFile(Path.Combine(ksCoreDir, "Keysharp.Core.dll")),
-					MetadataReference.CreateFromFile(Path.Combine(ksCoreDir, "System.CodeDom.dll"))//Even though the .NET desktop install comes with CodeDOM, we reference a special version in Keysharp.Core.
+					MetadataReference.CreateFromFile(Path.Combine(ksCoreDir, "System.CodeDom.dll")),//Even though the .NET desktop install comes with CodeDOM, we reference a special version in Keysharp.Core.
+					MetadataReference.CreateFromFile(Path.Combine(ksCoreDir, "PCRE.NET.dll")),
 				};
 				var ms = new MemoryStream();
 				var compilation = CSharpCompilation.Create(outputname)
