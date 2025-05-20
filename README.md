@@ -275,7 +275,8 @@ class class1
 	+ Callout differ in a few ways:
 		+ Callouts do not set `A_EventInfo`
 		+ The callout function must be a top-level function
-	+ PCRE exceptions are not thrown when there is an error.
+		+ A named callout must be enclosed in "", '', or {}
+	+ RegEx operator ~= returns a RegExMatchInfo, which is treated as an integer in comparison or math operations
 
 ###	Additions/Improvements: ###
 * Buffer has an `__Item[]` indexer which can be used to read a byte at a 1-based offset.
