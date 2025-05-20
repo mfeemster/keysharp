@@ -556,7 +556,7 @@ MyMultiLB.OnEvent("Change", "MultiLBClicked")
 ; ┌─────────────┐
 ; │  Drop-Down  │
 ; └─────────────┘
-ThirdText3 := MyGui.Add("Text", "xc+10 y+10 cBlue s10", "Drop-down List with 4 rows")
+ThirdText3 := MyGui.Add("Text", "xc+10 y+10 cBlue s10", "Drop-down List with 5 rows")
 MyDDL := MyGui.Add("DropDownList", "xc+10 y+10 r4", ["Orange","Purple","Fuchsia","Lime","Aqua"])
 MyDDL.OnEvent("Change", "DDLClicked")
 
