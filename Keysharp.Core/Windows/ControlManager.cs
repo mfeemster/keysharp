@@ -666,7 +666,7 @@ namespace Keysharp.Core.Windows
 		{
 			if (WindowSearch.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
-				script.HookThread.kbdMsSender.SendKeys(str, mode, SendModes.Event, item.Handle);
+				Script.TheScript.HookThread.kbdMsSender.SendKeys(str, mode, SendModes.Event, item.Handle);
 			}
 		}
 

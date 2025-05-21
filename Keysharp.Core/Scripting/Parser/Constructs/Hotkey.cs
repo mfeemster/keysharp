@@ -60,6 +60,7 @@ namespace Keysharp.Scripting
 			var hotstringExecute = false;
 			var suffixHasTilde = false;
 			var hookIsMandatory = false;
+			var script = Script.TheScript;
 			var ht = script.HookThread;
 			var kbLayout = script.PlatformProvider.Manager.GetKeyboardLayout(0);
 			string SetLastHotstringFunc(string hotstringName) => lastHotstringFunc.Length == 0 ? (lastHotstringFunc = LabelMethodName(hotstringName)) : lastHotstringFunc;

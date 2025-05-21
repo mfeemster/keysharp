@@ -124,7 +124,7 @@ namespace Keysharp.Core.Common.Threading
 			task = false;// null;
 			isCritical = false;
 			allowThreadToBeInterrupted = true;
-			uninterruptibleDuration = script.uninterruptibleTime;
+			uninterruptibleDuration = Script.TheScript.uninterruptibleTime;
 			threadStartTime = DateTime.MinValue;
 			controlDelay = ControlDelayDefault;
 			coords = null;

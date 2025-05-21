@@ -59,6 +59,7 @@ namespace Keysharp.Core.COM
 			: base(null, c)
 		{
 			com = o;
+			var script = Script.TheScript;
 			var p = c <= 1 ? script.ComEnumeratorData.p1 : script.ComEnumeratorData.p2;
 			var fo = (FuncObj)p.Clone();
 			fo.Inst = this;

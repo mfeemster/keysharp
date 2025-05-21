@@ -31,7 +31,7 @@
 
 			public bool AltSubmit { get; internal set; } = false;
 
-			public string ClassNN => script.WindowProvider.Manager.CreateWindow(_control.Handle) is WindowItemBase wi ? wi.ClassNN : "";
+			public string ClassNN => Script.TheScript.WindowProvider.Manager.CreateWindow(_control.Handle) is WindowItemBase wi ? wi.ClassNN : "";
 
 			public System.Windows.Forms.Control Ctrl => _control;
 
@@ -62,7 +62,7 @@
 				set => _control.Name = value.ToString();
 			}
 
-			public string NetClassNN => script.WindowProvider.Manager.CreateWindow(_control.Handle) is WindowItemBase wi ? wi.NetClassNN : "";
+			public string NetClassNN => Script.TheScript.WindowProvider.Manager.CreateWindow(_control.Handle) is WindowItemBase wi ? wi.NetClassNN : "";
 
 			public object Parent
 			{

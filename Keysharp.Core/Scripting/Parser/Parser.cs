@@ -317,7 +317,7 @@ namespace Keysharp.Scripting
 		}
 
 		/// <summary>
-		/// Return a DOM representation of a script.
+		/// Return a DOM representation of a Script.TheScript.
 		/// </summary>
 		public CodeCompileUnit GenerateCompileUnit()
 		{
@@ -750,7 +750,7 @@ namespace Keysharp.Scripting
 						}
 						else//Try built in types.
 						{
-							foreach (var typekv in script.ReflectionsData.typeToStringMethods)
+							foreach (var typekv in Script.TheScript.ReflectionsData.typeToStringMethods)
 							{
 								if (string.Compare(typekv.Key.Name, baseType, true) == 0)
 								{
@@ -1574,7 +1574,7 @@ namespace Keysharp.Scripting
 
 		private (bool, PropertyInfo) PropExistsInBuiltInClass(string baseType, string p, int paramCount)
 		{
-			if (script.ReflectionsData.stringToTypeProperties.TryGetValue(p, out var props))
+			if (Script.TheScript.ReflectionsData.stringToTypeProperties.TryGetValue(p, out var props))
 			{
 				//Must iterate rather than look up because we only have the string name, not the type.
 				foreach (var typekv in props)

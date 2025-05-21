@@ -8,6 +8,7 @@ namespace Keyview
 		[STAThread]
 		private static void Main()
 		{
+			var s = new Script();
 			_ = Application.SetHighDpiMode(HighDpiMode.SystemAware);
 			Application.EnableVisualStyles();
 			Application.SetCompatibleTextRenderingDefault(false);

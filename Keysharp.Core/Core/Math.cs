@@ -26,7 +26,7 @@ namespace Keysharp.Core
 		/// <param name="obj">The numerical seed to create the random number generator with.</param>
 		public static object RandomSeed(object obj)
 		{
-			script.Threads.GetThreadVariables().RandomGenerator = new Random(obj.Ai());
+			Script.TheScript.Threads.GetThreadVariables().RandomGenerator = new Random(obj.Ai());
 			return null;
 		}
 
@@ -56,7 +56,7 @@ namespace Keysharp.Core
 		/// <summary>
 		/// Internal helper to get a random number generator for the current thread.
 		/// </summary>
-		private static Random RandomGenerator => script.Threads.GetThreadVariables().RandomGenerator;
+		private static Random RandomGenerator => Script.TheScript.Threads.GetThreadVariables().RandomGenerator;
 
 		/// <summary>
 		/// Returns the absolute value of a number.

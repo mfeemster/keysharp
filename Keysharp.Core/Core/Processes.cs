@@ -273,6 +273,7 @@ namespace Keysharp.Core
 			var u = user.As();
 			var p = password.As();
 			var d = domain.As();
+			var script = Script.TheScript;
 			script.ProcessesData.runUser = u;
 			script.ProcessesData.runDomain = d;
 
@@ -329,7 +330,7 @@ namespace Keysharp.Core
 		/// </summary>
 		public static object Shutdown(object obj)
 		{
-			_ = script.PlatformProvider.Manager.ExitProgram((uint)obj.Al(), 0);
+			_ = Script.TheScript.PlatformProvider.Manager.ExitProgram((uint)obj.Al(), 0);
 			return null;
 		}
 
@@ -370,6 +371,8 @@ namespace Keysharp.Core
 
 		private static bool RunAsSpecified()
 		{
+			var script = Script.TheScript;
+			
 			return (script.ProcessesData.runPassword != null && script.ProcessesData.runPassword.Length > 0)
 				   || (!string.IsNullOrEmpty(script.ProcessesData.runUser))
 				   || (!string.IsNullOrEmpty(script.ProcessesData.runDomain));
@@ -398,6 +401,7 @@ namespace Keysharp.Core
 
 			try
 			{
+				var script = Script.TheScript;
 				string shellVerb = null, shellAction = target, shellParams = null;
 				args = args.Trim();
 

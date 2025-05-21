@@ -871,7 +871,7 @@ namespace Keysharp.Scripting
 						var excname = "";
 						var exctypename = "Keysharp.Core.Error";
 						var extraExceptions = new List<string>(8);
-						var rd = script.ReflectionsData;
+						var rd = Script.TheScript.ReflectionsData;
 
 						if (parts.Length > 1)
 						{

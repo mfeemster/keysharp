@@ -7,7 +7,7 @@ namespace Keysharp.Core
 	/// </summary>
 	public static class Loops
 	{
-		internal static Stack<LoopInfo> LoopStack => script.LoopData.loopStack.Value;
+		internal static Stack<LoopInfo> LoopStack => Script.TheScript.LoopData.loopStack.Value;
 
 		/// <summary>
 		/// Increments the loop counter variable for the current loop.<br/>
@@ -17,7 +17,7 @@ namespace Keysharp.Core
 		/// <returns>The newly incremented count of the most recent loop, else 0 if no loops.</returns>
 		public static long Inc()
 		{
-			var s = script.LoopData.loopStack.Value;
+			var s = Script.TheScript.LoopData.loopStack.Value;
 			return s.Count > 0 ? ++s.Peek().index : 0;
 		}
 
@@ -32,7 +32,8 @@ namespace Keysharp.Core
 			{
 				var n = obj.Al();
 				var info = Peek(LoopType.Normal);//The calling code must have called Push() with this type.
-
+				var script = Script.TheScript;
+				
 				if (n != -1)
 				{
 					for (; info.index < n && !script.FlowData.hasExited;)//Check info.index because the caller can change A_Index inside of the loop.
@@ -99,7 +100,7 @@ namespace Keysharp.Core
 
 			foreach (var file in GetFiles(dir, pattern, d, f, r))
 			{
-				if (script.FlowData.hasExited)
+				if (Script.TheScript.FlowData.hasExited)
 					break;
 
 				info.file = file;
@@ -118,7 +119,7 @@ namespace Keysharp.Core
 		/// <returns>The count of the most recent loop, else 0 if no loops.</returns>
 		public static long LoopIndex()
 		{
-			var s = script.LoopData.loopStack.Value;
+			var s = Script.TheScript.LoopData.loopStack.Value;
 			return s.Count > 0 ? s.Peek().index : 0;
 		}
 
@@ -140,7 +141,8 @@ namespace Keysharp.Core
 			var delimiters = delimiterChars.As();
 			var omit = omitChars.As();
 			var info = Peek(LoopType.Parse);//The calling code must have called Push() with this type.
-
+			var script = Script.TheScript;
+			
 			if (delimiters.ToLowerInvariant() == Keyword_CSV)
 			{
 				var reader = new StringReader(i);
@@ -259,7 +261,7 @@ namespace Keysharp.Core
 
 				while ((line = reader.ReadLine()) != null)
 				{
-					if (script.FlowData.hasExited)
+					if (Script.TheScript.FlowData.hasExited)
 						break;
 
 					info.line = line;
@@ -313,6 +315,7 @@ namespace Keysharp.Core
 				var subkey = reg.OpenSubKey(key, false);
 				var l = QueryInfoKey(subkey);
 				var dt = DateTime.FromFileTimeUtc(l);
+				var script = Script.TheScript;
 				info.regDate = Conversions.ToYYYYMMDDHH24MISS(dt);
 
 				if (r)
@@ -489,7 +492,7 @@ namespace Keysharp.Core
 		/// <returns>The popped loop if any, else null.</returns>
 		public static LoopInfo Pop()
 		{
-			var s = script.LoopData.loopStack.Value;
+			var s = Script.TheScript.LoopData.loopStack.Value;
 			var info = s.Count > 0 ? s.Pop() : null;
 
 			if (info != null && info.type == LoopType.File && info.sw != null)
@@ -508,7 +511,7 @@ namespace Keysharp.Core
 		public static LoopInfo Push(LoopType t = LoopType.Normal)
 		{
 			var info = new LoopInfo { type = t };
-			script.LoopData.loopStack.Value.Push(info);
+			Script.TheScript.LoopData.loopStack.Value.Push(info);
 			return info;
 		}
 
@@ -518,7 +521,7 @@ namespace Keysharp.Core
 		/// <returns>The most recent directory loop if found, else null.</returns>
 		internal static LoopInfo GetDirLoop()
 		{
-			var s = script.LoopData.loopStack.Value;
+			var s = Script.TheScript.LoopData.loopStack.Value;
 
 			if (s.Count > 0)
 			{
@@ -541,7 +544,7 @@ namespace Keysharp.Core
 		/// <returns>The filename of the most recent directory loop if found, else null.</returns>
 		internal static string GetDirLoopFilename()
 		{
-			var s = script.LoopData.loopStack.Value;
+			var s = Script.TheScript.LoopData.loopStack.Value;
 
 			if (s.Count == 0)
 				return string.Empty;
@@ -603,11 +606,11 @@ namespace Keysharp.Core
 		/// Returns the most recent loop item without removing it.
 		/// </summary>
 		/// <returns>The most recent loop item if found, else null.</returns>
-		internal static LoopInfo Peek() => script.LoopData.loopStack.Value.PeekOrNull();
+		internal static LoopInfo Peek() => Script.TheScript.LoopData.loopStack.Value.PeekOrNull();
 
 		internal static LoopInfo Peek(LoopType looptype)
 		{
-			var s = script.LoopData.loopStack.Value;
+			var s = Script.TheScript.LoopData.loopStack.Value;
 
 			foreach (var l in s)
 				if (l.type == looptype)
@@ -789,7 +792,7 @@ namespace Keysharp.Core
 		/// <returns>Non negative number on success, else negative.</returns>
 		private static long QueryInfoKey(RegistryKey regkey)
 		{
-			var tv = script.Threads.GetThreadVariables();
+			var tv = Script.TheScript.Threads.GetThreadVariables();
 
 			if (tv.RegSb.Length > 0)
 				_ = tv.RegSb.Clear();

@@ -339,7 +339,7 @@ namespace Keysharp.Scripting
 			value = code.Substring(i);
 			value = value.Length == 0 ? null : StripCommentSingle(value.Trim(Spaces));
 			CodeExpression left;
-			left = script.ReflectionsData.flatPublicStaticProperties.TryGetValue(name, out var pi)
+			left = Script.TheScript.ReflectionsData.flatPublicStaticProperties.TryGetValue(name, out var pi)
 				   ? new CodeVariableReferenceExpression(pi.Name)//Using static declarations obviate the need for specifying the static class type.
 				   : VarId(codeLine, name, true);
 			var result = value == null ? nullPrimitive : IsExpressionParameter(value) ? ParseSingleExpression(codeLine, value.TrimStart(Spaces).Substring(2), false) : VarIdExpand(codeLine, value);
@@ -363,7 +363,7 @@ namespace Keysharp.Scripting
 
 					if (hso)
 					{
-						var hm = script.HotstringManager;
+						var hm = Script.TheScript.HotstringManager;
 						//Note that in addition to adding this to the beginning, we also leave it
 						//in place for HotstringOptions() (#Hotstring xyz) in parts, because we need to call it in both places.
 						//This is because the position must be kept consistent with hotkey/string declarations,
@@ -424,7 +424,7 @@ namespace Keysharp.Scripting
 							&& !allglobal
 							&& (wasRef || wasAssign)//Only create the variable if it was a reference and/or and assignment.
 							&& !VarExistsAtCurrentOrParentScope(tp, scope, cvre.VariableName)
-							&& !script.ReflectionsData.flatPublicStaticProperties.TryGetValue(cvre.VariableName, out _)
+							&& !Script.TheScript.ReflectionsData.flatPublicStaticProperties.TryGetValue(cvre.VariableName, out _)
 							&& MethodExistsInTypeOrBase(tp.Name, cvre.VariableName) == null
 							&& Reflections.FindBuiltInMethod(cvre.VariableName, -1) == null
 					   )
@@ -653,7 +653,7 @@ namespace Keysharp.Scripting
 					else if (IsIdentifier(part, true) && (!IsKeyword(part) || string.Compare(part, "default", true) == 0))//Hack to allow for default because a subclass derived from Map might need to access its Default property.
 					{
 						var s = i < parts.Count - 1 && parts[i + 1] is string s1 ? s1 : "";
-						var varexpr = script.ReflectionsData.flatPublicStaticProperties.TryGetValue(part, out var pi)
+						var varexpr = Script.TheScript.ReflectionsData.flatPublicStaticProperties.TryGetValue(part, out var pi)
 									  ? new CodeVariableReferenceExpression(pi.Name)//Using static declarations obviate the need for specifying the static class type.
 									  //Check for function or property calls on an object, which only count as read operations.
 									  : VarIdOrConstant(codeLine, part,

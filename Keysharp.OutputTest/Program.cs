@@ -66,7 +66,6 @@ namespace Keysharp.CompiledMain
 	using System.Text;
 	using System.Threading.Tasks;
 	using System.Windows.Forms;
-
 	using Keysharp.Core;
 	using Keysharp.Core.Common;
 	using Keysharp.Core.Common.File;
@@ -75,7 +74,6 @@ namespace Keysharp.CompiledMain
 	using Keysharp.Core.Common.Strings;
 	using Keysharp.Core.Common.Threading;
 	using Keysharp.Scripting;
-
 	using Array = Keysharp.Core.Array;
 	using Buffer = Keysharp.Core.Buffer;
 
@@ -93,8 +91,10 @@ namespace Keysharp.CompiledMain
 				_ks_hm = _ks_s.HotstringManager;
 				_ks_s.SetName(name);
 				Keysharp.Core.Env.HandleCommandLineParams(args);
+				Keysharp.Core.Flow.Persistent(true);
 				_ks_s.CreateTrayMenu();
-				_ks_s.RunMainWindow(name, _ks_UserMainCode, false);
+				_ks_s.MaxThreadsTotal = 1u;
+				_ks_s.RunMainWindow(name, _ks_UserMainCode, true);
 				_ks_s.WaitThreads();
 				return Environment.ExitCode;
 			}
@@ -154,13 +154,23 @@ namespace Keysharp.CompiledMain
 
 		private static Keysharp.Core.Common.Keyboard.HotstringManager _ks_hm;
 
-		public static object x;
+		public static object F1()
+		{
+			Keysharp.Core.Flow.Sleep(2000L);
+			return "";
+		}
+
+		public static object F2()
+		{
+			return _ = Keysharp.Core.Dialogs.MsgBox("F2");
+		}
 
 		public static object _ks_UserMainCode()
 		{
-			x = 123L;
+			Keysharp.Core.Flow.SetTimer(Keysharp.Core.Functions.Func(F1), Keysharp.Scripting.Script.OperateUnary(Keysharp.Scripting.Script.Operator.Subtract, 1L));
+			Keysharp.Core.Flow.SetTimer(Keysharp.Core.Functions.Func(F2), Keysharp.Scripting.Script.OperateUnary(Keysharp.Scripting.Script.Operator.Subtract, 1L));
 			Keysharp.Core.Common.Keyboard.HotkeyDefinition.ManifestAllHotkeysHotstringsHooks();
-			Keysharp.Core.Flow.ExitApp(0);
+			_ks_s.ExitIfNotPersistent();
 			return "";
 		}
 	}

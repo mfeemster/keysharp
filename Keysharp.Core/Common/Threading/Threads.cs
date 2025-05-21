@@ -13,16 +13,16 @@
 		private readonly Lock locker = new ();
 		private ThreadVariableManager tvm = new ();
 
-		//public Threads()
-		//{
-		//  Console.WriteLine("Threads()");
-		//}
+		public Threads()
+		{
+			_ = PushThreadVariables(0, true, false, true);//Ensure there is always one thread in existence for reference purposes, but do not increment the actual thread counter.
+		}
 
 		public (bool, ThreadVariables) BeginThread(bool onlyIfEmpty = false)
 		{
 			lock (locker)
 			{
-				var skip = script.FlowData.allowInterruption == false;//This will be false when exiting the program.
+				var skip = Script.TheScript.FlowData.allowInterruption == false;//This will be false when exiting the program.
 				return PushThreadVariables(0, skip, false, onlyIfEmpty, true);
 			}
 		}
@@ -32,7 +32,7 @@
 			lock (locker)
 			{
 				PopThreadVariables(pushed, checkThread);
-				_ = Interlocked.Decrement(ref script.totalExistingThreads);
+				_ = Interlocked.Decrement(ref Script.TheScript.totalExistingThreads);
 				return null;
 			}
 		}
@@ -44,7 +44,7 @@
 			lock (locker)
 			{
 				if (inc)
-					_ = Interlocked.Increment(ref script.totalExistingThreads);//Will be decremented in EndThread().
+					_ = Interlocked.Increment(ref Script.TheScript.totalExistingThreads);//Will be decremented in EndThread().
 
 				return tvm.PushThreadVariables(priority, skipUninterruptible, isCritical, onlyIfEmpty);
 			}
@@ -54,6 +54,7 @@
 		{
 			lock (locker)
 			{
+				var script = Script.TheScript;
 				return script.totalExistingThreads < script.MaxThreadsTotal;
 			}
 		}
@@ -70,6 +71,8 @@
 		{
 			lock (locker)
 			{
+				var script = Script.TheScript;
+
 				if (!script.FlowData.allowInterruption)
 					return false;
 
@@ -110,7 +113,7 @@
 				//void AssignTask(ThreadVariables localTv) => localTv.task = tsk;//Needed to capture tsk so it can be used from within the Task.
 				//tsk = Task.Factory.StartNew(() =>
 				//tsk = StaTask.Run(() =>//This appears to be necessary to use the clipboard within hotkey/string events.
-				script.mainWindow.CheckedBeginInvoke(() =>
+				Script.TheScript.mainWindow.CheckedBeginInvoke(() =>
 				{
 					object ret = null;
 					(bool, ThreadVariables) btv = (false, null);

@@ -8,7 +8,8 @@ namespace Keysharp.Core
 		{
 			Error err;
 			var (parsed, ptr) = CtrlToIntPtr(ctrl);
-
+			var script = Script.TheScript;
+			
 			if (parsed)
 			{
 				if (script.WindowProvider.Manager.IsWindow(ptr))
@@ -88,6 +89,7 @@ namespace Keysharp.Core
 				bool ignorePureID = false)
 		{
 			Error err;
+			var script = Script.TheScript;
 			var win = script.WindowProvider.Manager.FindWindow(winTitle, winText, excludeTitle, excludeText, last, ignorePureID);
 
 			if (win == null && throwifnull && !script.IsMainWindowClosing)
@@ -101,7 +103,7 @@ namespace Keysharp.Core
 				object excludeTitle = null,
 				object excludeText = null)
 		{
-			var (windows, crit) = script.WindowProvider.Manager.FindWindowGroup(winTitle, winText, excludeTitle, excludeText);
+			var (windows, crit) = Script.TheScript.WindowProvider.Manager.FindWindowGroup(winTitle, winText, excludeTitle, excludeText);
 			return windows;
 		}
 
@@ -112,6 +114,7 @@ namespace Keysharp.Core
 				object excludeText)
 		{
 			Error err;
+			var script = Script.TheScript;
 			var win = script.WindowProvider.Manager.FindWindow(winTitle, winText, excludeTitle, excludeText);
 
 			if (win != null)

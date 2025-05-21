@@ -56,7 +56,7 @@
 			_selfHandle = GCHandle.Alloc(this, GCHandleType.Normal);
 			_ctx = GCHandle.ToIntPtr(_selfHandle);
 			// Create native stub which inserts context and calls SharedTrampoline
-			Ptr = NativeThunkFactory.CreateThunk(script.DelegateData.trampolinePtrs[_arity], _ctx, _arity);
+			Ptr = NativeThunkFactory.CreateThunk(Script.TheScript.DelegateData.trampolinePtrs[_arity], _ctx, _arity);
 		}
 
 		// Shared unmanaged-callable trampolines
@@ -214,6 +214,7 @@
 			object val = null;
 			_ = Flow.TryCatch(() =>
 			{
+				var script = Script.TheScript;
 				var state = holder._fast
 							? (true, (ThreadVariables)null)
 							: script.Threads.BeginThread();
@@ -276,7 +277,7 @@
 	{
 		public static unsafe IntPtr CreateThunk(IntPtr trampPtr, IntPtr ctx, int arity)
 		{
-			IntPtr mem = script.ExecutableMemoryPoolManager.Rent();
+			IntPtr mem = Script.TheScript.ExecutableMemoryPoolManager.Rent();
 			byte* ptr = (byte*)mem;
 			int disp;
 
@@ -458,7 +459,7 @@
 
 		public static void FreeThunk(IntPtr ptr)
 		{
-			script.ExecutableMemoryPoolManager.Return(ptr);
+			Script.TheScript.ExecutableMemoryPoolManager.Return(ptr);
 		}
 	}
 

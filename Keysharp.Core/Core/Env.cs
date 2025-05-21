@@ -195,7 +195,7 @@ namespace Keysharp.Core
 
 		/// <summary>
 		/// Assign command line arguments to <see cref="A_Args"/>.
-		/// This should never be called directly by a script.<br/>
+		/// This should never be called directly by a Script.TheScript.<br/>
 		/// Instead, it's used by the parser in the generated C# code.
 		/// </summary>
 		/// <param name="args">The command line arguments to process.</param>
@@ -223,7 +223,7 @@ namespace Keysharp.Core
 		{
 			if (callback is IFuncObj fo)
 			{
-				script.ClipFunctions.ModifyEventHandlers(fo, addRemove.Al(1));
+				Script.TheScript.ClipFunctions.ModifyEventHandlers(fo, addRemove.Al(1));
 				return null;
 			}
 			else
@@ -568,10 +568,10 @@ namespace Keysharp.Core
 		internal static string FindCommandLineArg(string arg, bool startsWith = true)
 		{
 			if (startsWith)
-				return script.KeysharpArgs.FirstOrDefault(x => (x.StartsWith('-')
+				return Script.TheScript.KeysharpArgs.FirstOrDefault(x => (x.StartsWith('-')
 						|| x.StartsWith('/')) && x.Trim(DashSlash).StartsWith(arg, StringComparison.OrdinalIgnoreCase));
 			else
-				return script.KeysharpArgs.FirstOrDefault(x => (x.StartsWith('-')
+				return Script.TheScript.KeysharpArgs.FirstOrDefault(x => (x.StartsWith('-')
 						|| x.StartsWith('/')) && x.Trim(DashSlash).Contains(arg, StringComparison.OrdinalIgnoreCase));
 		}
 
@@ -584,7 +584,7 @@ namespace Keysharp.Core
 		/// <returns>The matched value if found, else null.</returns>
 		internal static string FindCommandLineArgVal(string arg, bool startsWith = true)
 		{
-			var args = script.KeysharpArgs;
+			var args = Script.TheScript.KeysharpArgs;
 
 			for (var i = 0; i < args.Length; i++)
 			{

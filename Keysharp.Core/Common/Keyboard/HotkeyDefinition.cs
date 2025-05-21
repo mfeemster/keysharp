@@ -67,6 +67,7 @@ namespace Keysharp.Core.Common.Keyboard
 		internal HotkeyDefinition(uint _id, IFuncObj callback, uint _hookAction, string _name, uint _noSuppress)
 		{
 			hookAction = _hookAction;
+			var script = Script.TheScript;
 			var ht = script.HookThread;
 			var kbdMouseSender = ht.kbdMsSender;//This should always be non-null if any hotkeys/strings are present.
 
@@ -277,6 +278,8 @@ namespace Keysharp.Core.Common.Keyboard
 
 		public static void HotIf(object obj0 = null)
 		{
+			var script = Script.TheScript;
+
 			if (obj0 != null)
 			{
 				var funcobj = Functions.GetFuncObj(obj0, null, true);
@@ -302,7 +305,7 @@ namespace Keysharp.Core.Common.Keyboard
 		/// <summary>
 		/// Get the hotkey descriptions and put them in the Vars tab of the main window.
 		/// </summary>
-		public static void ListHotkeys() => script.mainWindow?.ListHotkeys();
+		public static void ListHotkeys() => Script.TheScript.mainWindow?.ListHotkeys();
 
 		/// <summary>
 		/// This function examines all hotkeys and hotstrings to determine:
@@ -336,6 +339,7 @@ namespace Keysharp.Core.Common.Keyboard
 			// be to set mKeybdHookMandatory = true, but that would prevent the hotkey from reverting to
 			// HK_NORMAL when it no longer needs the hook.  Instead, there are now three passes.
 			var vkIsPrefix = new bool[HookThread.VK_ARRAY_COUNT];
+			var script = Script.TheScript;
 			var hkd = script.HotkeyData;
 			var kbd = script.KeyboardData;
 			var shk = hkd.shk;
@@ -630,6 +634,7 @@ namespace Keysharp.Core.Common.Keyboard
 			Error err;
 			HotkeyDefinition hk;
 			var hookIsMandatory = false;
+			var script = Script.TheScript;
 
 			//We must first check if the hotkey exists before creating a new one because this might just be a variant.
 			//The code to check for a variant was in the parsing section of AHK, but we move it here because Keysharp adds them at runtime.
@@ -694,12 +699,13 @@ namespace Keysharp.Core.Common.Keyboard
 			return null;
 		}
 
-		internal static void AddHotkeyCriterion(IFuncObj fo) => script.hotCriterions.Add(fo);
+		internal static void AddHotkeyCriterion(IFuncObj fo) => Script.TheScript.hotCriterions.Add(fo);
 
-		internal static void AddHotkeyIfExpr(IFuncObj fo) => script.hotExprs.Add(fo);
+		internal static void AddHotkeyIfExpr(IFuncObj fo) => Script.TheScript.hotExprs.Add(fo);
 
 		internal static void AllDestruct()
 		{
+			var script = Script.TheScript;
 			script.HookThread.Unhook();
 			var shk = script.HotkeyData.shk;
 
@@ -749,6 +755,7 @@ namespace Keysharp.Core.Common.Keyboard
 		{
 			// aHookAction isn't checked because this should never be called for alt-tab hotkeys (see other comments above).
 			var hotkeyId = hotkeyIDwithFlags & HOTKEY_ID_MASK;
+			var script = Script.TheScript;
 			var ht = script.HookThread;
 			var kbdMouseSender = ht.kbdMsSender;
 			var shk = script.HotkeyData.shk;
@@ -873,7 +880,7 @@ namespace Keysharp.Core.Common.Keyboard
 
 		internal static ref uint CustomComboLast(ref uint first)
 		{
-			for (; first != HOTKEY_ID_INVALID; first = ref script.HotkeyData.shk[(int)first].nextHotkey)
+			for (; first != HOTKEY_ID_INVALID; first = ref Script.TheScript.HotkeyData.shk[(int)first].nextHotkey)
 			{
 			}
 
@@ -906,6 +913,7 @@ namespace Keysharp.Core.Common.Keyboard
 			var variant = hk?.FindVariant();
 			var updateAllHotkeys = false;  // This method avoids multiple calls to ManifestAllHotkeysHotstringsHooks() (which is high-overhead).
 			var variantWasJustCreated = false;
+			var script = Script.TheScript;
 
 			switch (hookAction)
 			{
@@ -1179,7 +1187,7 @@ namespace Keysharp.Core.Common.Keyboard
 		/// </summary>
 		internal static HotkeyDefinition FindHotkeyByTrueNature(string _name, ref uint _noSuppress, ref bool _hookIsMandatory)
 		{
-			var shk = script.HotkeyData.shk;
+			var shk = Script.TheScript.HotkeyData.shk;
 			HotkeyProperties propCandidate = new (), propExisting = new ();
 			_ = TextToModifiers(_name, null, propCandidate);
 			_noSuppress = (propCandidate.prefixHasTilde ? NO_SUPPRESS_PREFIX : 0)//Set for caller.
@@ -1235,16 +1243,16 @@ namespace Keysharp.Core.Common.Keyboard
 			if (modifiersLR == 0)
 				return null;
 
-			foreach (var v in script.HotkeyData.shk)
+			foreach (var v in Script.TheScript.HotkeyData.shk)
 				if ((v.modifiersLR & modifiersLR) != 0)// Bitwise set-intersection: indicates if anything in common:
 					return v;
 
 			return null;  // No match found.
 		}
 
-		internal static IFuncObj FindHotkeyCriterion(IFuncObj fo) => FindHotkeyIf(fo, script.hotCriterions);
+		internal static IFuncObj FindHotkeyCriterion(IFuncObj fo) => FindHotkeyIf(fo, Script.TheScript.hotCriterions);
 
-		internal static IFuncObj FindHotkeyIfExpr(IFuncObj fo) => FindHotkeyIf(fo, script.hotExprs);
+		internal static IFuncObj FindHotkeyIfExpr(IFuncObj fo) => FindHotkeyIf(fo, Script.TheScript.hotExprs);
 
 		internal static uint FindPairedHotkey(uint firstID, uint modsLR, bool keyUp)
 		{
@@ -1252,7 +1260,7 @@ namespace Keysharp.Core.Common.Keyboard
 
 			for (var candidateId = firstID; candidateId != HOTKEY_ID_INVALID;)
 			{
-				var hk2 = script.HotkeyData.shk[(int)candidateId];
+				var hk2 = Script.TheScript.HotkeyData.shk[(int)candidateId];
 				candidateId = hk2.nextHotkey;
 
 				if ((hk2.allowExtraModifiers || ((~hk2.modifiersConsolidatedLR & modsLR) == 0))
@@ -1271,11 +1279,11 @@ namespace Keysharp.Core.Common.Keyboard
 		}
 
 		/// <summary>
-		/// Get the text description of all hotkeys in this script.
+		/// Get the text description of all hotkeys in this Script.TheScript.
 		/// </summary>
 		internal static string GetHotkeyDescriptions()
 		{
-			var shk = script.HotkeyData.shk;
+			var shk = Script.TheScript.HotkeyData.shk;
 			var sb = new StringBuilder(4096);
 			_ = sb.Append("Type\tOff?\tLevel\tRunning\tName\r\n-------------------------------------------------------------------\r\n");
 
@@ -1321,10 +1329,11 @@ namespace Keysharp.Core.Common.Keyboard
 				return 0L;
 		}
 
-		internal static uint HotkeyRequiresModLR(uint hotkeyID, uint modLR) => hotkeyID < script.HotkeyData.shk.Count ? script.HotkeyData.shk[(int)hotkeyID].modifiersConsolidatedLR& modLR : 0u;
+		internal static uint HotkeyRequiresModLR(uint hotkeyID, uint modLR) => hotkeyID < Script.TheScript.HotkeyData.shk.Count ? Script.TheScript.HotkeyData.shk[(int)hotkeyID].modifiersConsolidatedLR& modLR : 0u;
 
 		internal static void InstallKeybdHook()
 		{
+			var script = Script.TheScript;
 			script.HotkeyData.whichHookNeeded |= HookType.Keyboard;
 			var ht = script.HookThread;
 
@@ -1334,6 +1343,7 @@ namespace Keysharp.Core.Common.Keyboard
 
 		internal static void InstallMouseHook()
 		{
+			var script = Script.TheScript;
 			script.HotkeyData.whichHookNeeded |= HookType.Mouse;
 			var ht = script.HookThread;
 
@@ -1349,6 +1359,8 @@ namespace Keysharp.Core.Common.Keyboard
 		/// </summary>
 		internal static void MaybeUninstallHook()
 		{
+			var script = Script.TheScript;
+
 			// Do some quick checks to avoid scanning all hotkeys unnecessarily:
 			if (script.input != null || script.HotstringManager.enabledCount != 0 || ((int)script.HotkeyData.whichHookAlways & KeyboardMouseSender.HookKeyboard) != 0)
 				return;
@@ -1370,6 +1382,7 @@ namespace Keysharp.Core.Common.Keyboard
 		/// <returns></returns>
 		internal static bool PrefixHasNoEnabledSuffixes(uint VKorSC, bool isSC, ref bool suppress)
 		{
+			var script = Script.TheScript;
 			var ht = script.HookThread;
 			var shk = script.HotkeyData.shk;
 			// v1.0.44: Added aAsModifier so that a pair of hotkeys such as:
@@ -1442,7 +1455,7 @@ namespace Keysharp.Core.Common.Keyboard
 
 		internal static void ResetRunAgainAfterFinished()  // For all hotkeys and all variants of each.
 		{
-			var shk = script.HotkeyData.shk;
+			var shk = Script.TheScript.HotkeyData.shk;
 
 			for (var i = 0; i < shk.Count; ++i)
 				for (var vp = shk[i].firstVariant; vp != null; vp = vp.nextVariant)
@@ -1505,6 +1518,7 @@ namespace Keysharp.Core.Common.Keyboard
 			uint? modifiersLR = 0u;
 			var isMouse = false;
 			uint? joystickId = 0u;
+			var script = Script.TheScript;
 			var ht = script.HookThread;
 			var kbdMouseSender = ht.kbdMsSender;//This should always be non-null if any hotkeys/strings are present.
 			// Previous steps should make it unnecessary to call omit_leading_whitespace(aText).
@@ -1857,6 +1871,7 @@ namespace Keysharp.Core.Common.Keyboard
 
 		internal static void TriggerJoyHotkeys(int joystickID, uint buttonsNewlyDown)
 		{
+			var script = Script.TheScript;
 			var shk = script.HotkeyData.shk;
 
 			for (var i = 0; i < shk.Count; ++i)
@@ -1913,7 +1928,7 @@ namespace Keysharp.Core.Common.Keyboard
 				maxThreads = A_MaxThreadsPerHotkey.Aui(),    // The values of these can vary during load-time.
 				maxThreadsBuffer = A_MaxThreadsBuffer.Ab(),
 				inputLevel = (uint)A_InputLevel,
-				hotCriterion = script.Threads.GetThreadVariables().hotCriterion, // If this hotkey is an alt-tab one (mHookAction), this is stored but ignored until/unless the Hotkey command converts it into a non-alt-tab hotkey.
+				hotCriterion = Script.TheScript.Threads.GetThreadVariables().hotCriterion, // If this hotkey is an alt-tab one (mHookAction), this is stored but ignored until/unless the Hotkey command converts it into a non-alt-tab hotkey.
 				suspendExempt = A_SuspendExempt.Ab(),
 				noSuppress = _noSuppress,
 				enabled = true
@@ -2018,7 +2033,7 @@ namespace Keysharp.Core.Common.Keyboard
 		/// <returns></returns>
 		internal HotkeyVariant FindVariant()
 		{
-			var tv = script.Threads.GetThreadVariables();
+			var tv = Script.TheScript.Threads.GetThreadVariables();
 
 			for (var vp = firstVariant; vp != null; vp = vp.nextVariant)
 				if (vp.hotCriterion == tv.hotCriterion)
@@ -2062,6 +2077,7 @@ namespace Keysharp.Core.Common.Keyboard
 		/// <param name="lParamVal"></param>
 		internal void PerformInNewThreadMadeByCallerAsync(HotkeyVariant variant, long critFoundHwnd, int lParamVal)
 		{
+			var script = Script.TheScript;
 			var hkd = script.HotkeyData;
 
 			if (script.HotkeyData.dialogIsDisplayed) // Another recursion layer is already displaying the warning dialog below.
@@ -2129,6 +2145,7 @@ namespace Keysharp.Core.Common.Keyboard
 					A_EventInfo = (long)Conversions.LowWord(lParamVal); // v1.0.43.03: Override the thread default of 0 with the number of notches by which the wheel was turned.
 
 				A_SendLevel = variant.inputLevel;
+				var script = Script.TheScript;
 				var tv = script.Threads.GetThreadVariables();
 				tv.hwndLastUsed = new IntPtr(critFoundHwnd);
 				tv.hotCriterion = variant.hotCriterion;
@@ -2206,6 +2223,7 @@ namespace Keysharp.Core.Common.Keyboard
 			// user from having to specify +SHIFT in the script:
 			var key = (Keys)vk;
 			var modifiersToRegister = modifiers;
+			var script = Script.TheScript;
 
 			switch (key)
 			{
@@ -2307,6 +2325,7 @@ namespace Keysharp.Core.Common.Keyboard
 			if (!isRegistered)
 				return ResultType.Ok;
 
+			var script = Script.TheScript;
 			var mw = script.mainWindow;
 
 			// Don't report any errors in here, at least not when we were called in conjunction
@@ -2322,7 +2341,7 @@ namespace Keysharp.Core.Common.Keyboard
 			var handle = script.MainWindowHandle;
 			mw?.Invoke(() =>
 			{
-				_ = script.PlatformProvider.Manager.UnregisterHotKey(handle, id);
+				_ = Script.TheScript.PlatformProvider.Manager.UnregisterHotKey(handle, id);
 			});
 			return isRegistered ? ResultType.Ok : ResultType.Fail;//I've see it fail in one rare case.
 		}
@@ -2382,6 +2401,8 @@ namespace Keysharp.Core.Common.Keyboard
 
 		private static void SetupHotIfWin(string funcname, object obj0 = null, object obj1 = null)
 		{
+			var script = Script.TheScript;
+
 			if (obj0 != null || obj1 != null)
 			{
 				var mi = typeof(HotkeyDefinition).GetMethod(funcname, BindingFlags.NonPublic | BindingFlags.Static);

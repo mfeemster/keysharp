@@ -82,7 +82,7 @@ namespace Keysharp.Core.Common.Threading
 
 		internal HookThread()
 		{
-			mgr = script.PlatformProvider.Manager;
+			mgr = Script.TheScript.PlatformProvider.Manager;
 		}
 
 		public abstract void SimulateKeyPress(uint key);
