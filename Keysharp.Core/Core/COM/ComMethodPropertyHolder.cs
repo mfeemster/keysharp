@@ -65,7 +65,7 @@ namespace Keysharp.Core.COM
 				Type[] expectedTypes = null;
 				ParameterModifier[] modifiers = null;
 
-				if (script.ComMethodData.comMethodCache.TryGetValue(comObject, out var objDkt))
+				if (Script.TheScript.ComMethodData.comMethodCache.TryGetValue(comObject, out var objDkt))
 				{
 					if (objDkt.TryGetValue(methodName, out var cmi))
 					{
@@ -265,7 +265,7 @@ namespace Keysharp.Core.COM
 				//If no exception thrown and it wasn't cached, cache the info.
 				if (!found)
 				{
-					_ = script.ComMethodData.comMethodCache.GetOrAdd(comObject).GetOrAdd(methodName, new ComMethodInfo()
+					_ = Script.TheScript.ComMethodData.comMethodCache.GetOrAdd(comObject).GetOrAdd(methodName, new ComMethodInfo()
 					{
 						modifiers = modifiers,
 						expectedTypes = expectedTypes

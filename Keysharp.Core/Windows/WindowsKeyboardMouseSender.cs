@@ -369,6 +369,8 @@ namespace Keysharp.Core.Windows
 
 		internal override IntPtr GetFocusedKeybdLayout(IntPtr window)
 		{
+			var script = Script.TheScript;
+
 			if (window == IntPtr.Zero)
 				window = script.WindowProvider.Manager.GetForeGroundWindowHwnd();
 
@@ -414,7 +416,7 @@ namespace Keysharp.Core.Windows
 		/// <returns></returns>
 		internal override uint GetModifierLRState(bool explicitlyGet = false)
 		{
-			var ht = script.HookThread;
+			var ht = Script.TheScript.HookThread;
 
 			// If the hook is active, rely only on its tracked value rather than calling Get():
 			if (ht.HasKbdHook() && !explicitlyGet)
@@ -771,7 +773,7 @@ namespace Keysharp.Core.Windows
 
 						if ((childUnderCursor = WindowFromPoint(point)) != IntPtr.Zero
 								&& (parentUnderCursor = GetNonChildParent(childUnderCursor)) != IntPtr.Zero // WM_NCHITTEST below probably requires parent vs. child.
-								&& GetWindowThreadProcessId(parentUnderCursor, out _) == script.ProcessesData.MainThreadID) // It's one of our thread's windows.
+								&& GetWindowThreadProcessId(parentUnderCursor, out _) == Script.TheScript.ProcessesData.MainThreadID) // It's one of our thread's windows.
 						{
 							var hitTest = SendMessage(parentUnderCursor, WM_NCHITTEST, 0, MakeLong((short)point.X, (short)point.Y));
 
@@ -1063,7 +1065,7 @@ namespace Keysharp.Core.Windows
 			{
 				// Convert relative coords to screen coords if necessary (depends on CoordMode).
 				// None of this is done for playback mode since that mode already returned higher above.
-				script.PlatformProvider.Manager.CoordToScreen(ref x, ref y, CoordMode.Mouse);
+				Script.TheScript.PlatformProvider.Manager.CoordToScreen(ref x, ref y, CoordMode.Mouse);
 			}
 
 			if (sendMode == SendModes.Input) // Track predicted cursor position for use by subsequent events put into the array.
@@ -1110,6 +1112,7 @@ namespace Keysharp.Core.Windows
 		internal IntPtr PlaybackHandler(int code, IntPtr wParam, ref EventMsg lParam)
 		// Journal playback hook.
 		{
+			var script = Script.TheScript;
 			var ht = script.HookThread;
 			//var lParam = (EventMsg)Marshal.PtrToStructure(lp, typeof(EventMsg));
 
@@ -1594,6 +1597,7 @@ namespace Keysharp.Core.Windows
 		/// <param name="modsDuringSend"></param>
 		internal override void SendEventArray(ref long finalKeyDelay, uint modsDuringSend)
 		{
+			var script = Script.TheScript;
 			var ht = script.HookThread;
 
 			if (sendMode == SendModes.Input)
@@ -1687,11 +1691,11 @@ namespace Keysharp.Core.Windows
 			            // - Study contents of the sEventPB array, which contains the keystrokes just recorded.
 			            eventCount = 0; // Used by RecordProc().
 
-			            if ((Keysharp.Scripting.script.playbackHook = SetWindowsHookEx(WH_JOURNALRECORD, RecordProc, WindowsAPI.GetModuleHandle(Process.GetCurrentProcess().MainModule.ModuleName), 0)) == 0)
+			            if ((script.TheScript.playbackHook = SetWindowsHookEx(WH_JOURNALRECORD, RecordProc, WindowsAPI.GetModuleHandle(Process.GetCurrentProcess().MainModule.ModuleName), 0)) == 0)
 			                return;
 
 			*/
-			ht.Invoke(() => script.playbackHook = SetWindowsHookEx(WH_JOURNALPLAYBACK, PlaybackHandler, GetModuleHandle(Process.GetCurrentProcess().MainModule.ModuleName), 0));
+			ht.Invoke(() => Script.TheScript.playbackHook = SetWindowsHookEx(WH_JOURNALPLAYBACK, PlaybackHandler, GetModuleHandle(Process.GetCurrentProcess().MainModule.ModuleName), 0));
 
 			if (script.playbackHook == IntPtr.Zero)
 				return;
@@ -1793,6 +1797,7 @@ namespace Keysharp.Core.Windows
 			// for this particular vk keystroke, but modifiersLRPersistent are the ones that will stay
 			// in pressed down even after it's sent.
 			var modifiersLRSpecified = (modifiersLR | modifiersLRPersistent);
+			var script = Script.TheScript;
 			var vkIsMouse = script.HookThread.IsMouseVK(vk); // Caller has ensured that VK is non-zero when it wants a mouse click.
 			var tv = script.Threads.GetThreadVariables();
 			var sendLevel = tv.sendLevel;
@@ -1945,6 +1950,7 @@ namespace Keysharp.Core.Windows
 				return;
 
 			Error err;
+			var script = Script.TheScript;
 			var origLastPeekTime = script.lastPeekTime;
 			var modsExcludedFromBlind = 0u;// For performance and also to reserve future flexibility, recognize {Blind} only when it's the first item in the string.
 			var i = 0;
@@ -3128,6 +3134,7 @@ namespace Keysharp.Core.Windows
 			// Set up some conditions so that the keystrokes that disguise the release of Win or Alt
 			// are only sent when necessary (which helps avoid complications caused by keystroke interaction,
 			// while improving performance):
+			var script = Script.TheScript;
 			var modifiersLRunion = modifiersLRnow | modifiersLRnew; // The set of keys that were or will be down.
 			var ctrlNotDown = (modifiersLRnow & (MOD_LCONTROL | MOD_RCONTROL)) == 0; // Neither CTRL key is down now.
 			var ctrlWillNotBeDown = (modifiersLRnew & (MOD_LCONTROL | MOD_RCONTROL)) == 0 // Nor will it be.
@@ -3527,6 +3534,7 @@ namespace Keysharp.Core.Windows
 		/// <returns></returns>
 		internal override ToggleValueType ToggleKeyState(uint vk, ToggleValueType toggleValue)
 		{
+			var script = Script.TheScript;
 			// Can't use IsKeyDownAsync/GetAsyncKeyState() because it doesn't have this info:
 			var startingState = script.HookThread.IsKeyToggledOn(vk) ? ToggleValueType.On : ToggleValueType.Off;
 
@@ -3586,6 +3594,7 @@ namespace Keysharp.Core.Windows
 		{
 			var msg = new Msg();
 			var now = DateTime.UtcNow;
+			var script = Script.TheScript;
 
 			if ((now - script.lastPeekTime).TotalMilliseconds > ThreadAccessors.A_PeekFrequency)
 			{
@@ -3604,6 +3613,7 @@ namespace Keysharp.Core.Windows
 		{
 			var msg = new Msg();
 			var now = DateTime.UtcNow;
+			var script = Script.TheScript;
 
 			if ((now - script.lastPeekTime).TotalMilliseconds > ThreadAccessors.A_PeekFrequency)
 			{
@@ -3720,7 +3730,7 @@ namespace Keysharp.Core.Windows
 
 			// Since calls from the hook thread could come in even while the SendInput array is being constructed,
 			// don't let those events get interspersed with the script's explicit use of SendInput.
-			var ht = script.HookThread;
+			var ht = Script.TheScript.HookThread;
 			//Note that the threading model in Keysharp is different than AHK, so this doesn't apply.
 			//In AHK, the low level keyboard proc runs in its own thread, however in Keysharp it turns on the main window thread.
 			//Further, after hours of extreme scrutiny in AHK, there seems to be no code in HookThreadProc() where a keyboard event could be sent here.

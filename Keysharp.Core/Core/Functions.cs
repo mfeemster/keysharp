@@ -31,7 +31,7 @@
 		{
 			Error err;
 			IFuncObj del = null;
-			var cachedFuncObj = script.FunctionData.cachedFuncObj;
+			var cachedFuncObj = Script.TheScript.FunctionData.cachedFuncObj;
 
 			if (h is string s)
 			{

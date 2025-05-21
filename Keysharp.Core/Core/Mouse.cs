@@ -38,7 +38,7 @@ namespace Keysharp.Core
 			var eventType = KeyEventTypes.KeyDown;
 			var repeatCount = 0L;
 			var moveOffset = false;
-			var ht = script.HookThread;
+			var ht = Script.TheScript.HookThread;
 			var options = $"{coords.As()} {whichButton.As()} {clickCount.As()} {downOrUp.As()} {relative.As()}";
 			ht.ParseClickOptions(options, ref x, ref y, ref vk, ref eventType, ref repeatCount, ref moveOffset);
 			//Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() =>
@@ -232,6 +232,7 @@ namespace Keysharp.Core
 			var pos = Cursor.Position;
 			var aX = 0;
 			var aY = 0;
+			var script = Script.TheScript;
 			script.PlatformProvider.Manager.CoordToScreen(ref aX, ref aY, Core.CoordMode.Mouse);//Determine where 0,0 in window or client coordinates are on the screen.
 			var child = script.WindowProvider.Manager.WindowFromPoint(pos);
 			outputVarX = (long)(pos.X - aX);//Convert the mouse position in screen coordinates to window coordinates.
@@ -341,6 +342,8 @@ namespace Keysharp.Core
 		/// <param name="y">The y point to adjust.</param>
 		internal static void AdjustPoint(ref int x, ref int y)
 		{
+			var script = Script.TheScript;
+			
 			if (script.Coords.Mouse == CoordModeType.Window)
 			{
 				var rect = script.WindowProvider.Manager.ActiveWindow.Location;
@@ -365,6 +368,8 @@ namespace Keysharp.Core
 		/// <param name="y2">The bottom of the rect to adjust.</param>
 		internal static void AdjustRect(ref int x1, ref int y1, ref int x2, ref int y2)
 		{
+			var script = Script.TheScript;
+			
 			if (script.Coords.Mouse == CoordModeType.Window)
 			{
 				var rect = script.WindowProvider.Manager.ActiveWindow.Location;
@@ -394,7 +399,7 @@ namespace Keysharp.Core
 			//for cross platform purposes, should use something like Form.ActiveForm.PointToScreen() etc...
 			if (modeType == CoordModeType.Window)//This does not account for the mode value of other coord settings, like menu.//TODO
 			{
-				var rect = script.WindowProvider.Manager.ActiveWindow.Location;
+				var rect = Script.TheScript.WindowProvider.Manager.ActiveWindow.Location;
 				return new Point(p.X - rect.Left, p.Y - rect.Top);
 			}
 
@@ -421,7 +426,7 @@ namespace Keysharp.Core
 		{
 			Error err;
 			uint vk;
-			var ht = script.HookThread;
+			var ht = Script.TheScript.HookThread;
 
 			if (actionType == Actions.ACT_MOUSEMOVE)
 				vk = 0;

@@ -14,7 +14,7 @@ namespace Keysharp.Core.Windows
 		{
 			get
 			{
-				if (IsSpecified && script.WindowProvider.Manager.ActiveWindow is WindowItem item)
+				if (IsSpecified && Script.TheScript.WindowProvider.Manager.ActiveWindow is WindowItem item)
 				{
 					//Keysharp.Scripting.Script.OutputDebug($"item.Handle: {item.Handle.ToInt64()}, item.Title: {item.Title}, Handle: {Handle.ToInt64()}, Title: {Title}");
 					//Keysharp.Core.File.FileAppend($"item.Handle: {item.Handle.ToInt64()}, item.Title: {item.Title}, Handle: {Handle.ToInt64()}, Title: {Title}\n", "out.txt");
@@ -28,7 +28,7 @@ namespace Keysharp.Core.Windows
 			{
 				if (IsSpecified)
 				{
-					if (script.WindowProvider.Manager.ActiveWindow.Handle.ToInt64() != Handle.ToInt64())
+					if (Script.TheScript.WindowProvider.Manager.ActiveWindow.Handle.ToInt64() != Handle.ToInt64())
 					{
 						if (IsIconic)
 							_ = WindowsAPI.ShowWindow(Handle, WindowsAPI.SW_RESTORE);
@@ -267,7 +267,7 @@ namespace Keysharp.Core.Windows
 					return [];
 
 				var items = new List<string>(64);
-				var tv = script.Threads.GetThreadVariables();
+				var tv = Script.TheScript.Threads.GetThreadVariables();
 				_ = WindowsAPI.EnumChildWindows(Handle, (IntPtr hwnd, int lParam) =>
 				{
 					if (tv.detectHiddenText || WindowsAPI.IsWindowVisible(hwnd))
@@ -420,6 +420,7 @@ namespace Keysharp.Core.Windows
 				return IntPtr.Zero;
 
 			var targetWindow = win.Handle;
+			var script = Script.TheScript;
 			var mainid = script.ProcessesData.MainThreadID;
 			var targetThread = WindowsAPI.GetWindowThreadProcessId(targetWindow, out var procid);
 

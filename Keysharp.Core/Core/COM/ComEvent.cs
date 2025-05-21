@@ -13,6 +13,8 @@ namespace Keysharp.Core.COM
 		internal ComEvent(Dispatcher disp, object sink, bool log)
 		{
 			Error err;
+			var script = Script.TheScript;
+			
 			dispatcher = disp;
 			thisArg = [this];
 			logAll = log;

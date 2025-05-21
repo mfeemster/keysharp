@@ -293,7 +293,7 @@ namespace Keysharp.Scripting
 			{
 				var vars = new CodePropertyReferenceExpression(ScriptObjectSnippet, varsPropertyName);
 
-				if (script.ReflectionsData.flatPublicStaticProperties.TryGetValue(name, out var prop))
+				if (Script.TheScript.ReflectionsData.flatPublicStaticProperties.TryGetValue(name, out var prop))
 					return new CodeArrayIndexerExpression(vars, new CodeVariableReferenceExpression(prop.Name));
 				else
 					return new CodeArrayIndexerExpression(vars, new CodeVariableReferenceExpression(name));

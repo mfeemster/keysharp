@@ -39,7 +39,8 @@ namespace Keysharp.Core
 		{
 			var mode = value.As();
 			var toggle = ConvertBlockInput(mode);
-
+			var script = Script.TheScript;
+			
 			switch (toggle)
 			{
 				case ToggleValueType.On:
@@ -101,7 +102,7 @@ namespace Keysharp.Core
 			var h = WindowsAPI.GetWindowThreadProcessId(targetWindow, out var _);
 			var info = GUITHREADINFO.Default;//Must be initialized this way because the size field must be populated.
 			var result = WindowsAPI.GetGUIThreadInfo(h, out info) && info.hwndCaret != IntPtr.Zero;
-
+		
 			if (!result)
 			{
 				outputVarX = outputVarY = 0L;
@@ -113,6 +114,7 @@ namespace Keysharp.Core
 				X = info.rcCaret.Left,
 				Y = info.rcCaret.Top
 			};
+			var script = Script.TheScript;
 			var caretWnd = script.WindowProvider.Manager.CreateWindow(info.hwndCaret);
 			caretWnd.ClientToScreen(ref pt);// Unconditionally convert to screen coordinates, for simplicity.
 			int x = 0, y = 0;
@@ -170,6 +172,7 @@ namespace Keysharp.Core
 			Error err;
 			var keyname = obj0.As();
 			var mode = obj1.As();
+			var script = Script.TheScript;
 			var ht = script.HookThread;
 			JoyControls joy;
 			uint? joystickid = 0u;
@@ -243,6 +246,7 @@ namespace Keysharp.Core
 			if (action != null)
 			{
 				fo = Functions.GetFuncObj(action, null);//Don't throw on failure because returning null is a valid action.
+				var script = Script.TheScript;
 				var tv = script.Threads.GetThreadVariables();
 
 				if (fo == null && !string.IsNullOrEmpty(label) && ((hook_action = HotkeyDefinition.ConvertAltTab(label, true)) == 0))
@@ -305,6 +309,7 @@ break_twice:;
 			Error err;
 			var name = obj0.As();
 			var replacement = obj1;
+			var script = Script.TheScript;
 			var ht = script.HookThread;
 			var kbdMouseSender = ht.kbdMsSender;
 			var xOption = false;
@@ -498,6 +503,8 @@ break_twice:;
 		/// Specify 0 to disable key history entirely.</param>
 		public static object KeyHistory(object maxEvents)
 		{
+			var script = Script.TheScript;
+			
 			if (maxEvents != null)
 			{
 				var max = Math.Clamp(maxEvents.Al(), 0, 500);
@@ -520,7 +527,7 @@ break_twice:;
 			{
 				script.mainWindow.CheckedBeginInvoke(() =>
 				{
-					script.mainWindow.ShowHistory();
+					Script.TheScript.mainWindow.ShowHistory();
 				}, false, false);
 			}
 
@@ -567,6 +574,7 @@ break_twice:;
 			KeyStateTypes keyStateType;
 			var joy = JoyControls.Invalid;
 			uint? joystickId = 0;
+			var script = Script.TheScript;
 			var ht = script.HookThread;
 			var kbdMouseSender = ht.kbdMsSender;
 			uint? modLR = null;
@@ -663,7 +671,7 @@ break_twice:;
 		/// <param name="keys">The sequence of keys to send.</param>
 		public static object Send(object keys)
 		{
-			script.HookThread.kbdMsSender.SendKeys(keys.As(), SendRawModes.NotRaw, ThreadAccessors.A_SendMode, IntPtr.Zero);
+			Script.TheScript.HookThread.kbdMsSender.SendKeys(keys.As(), SendRawModes.NotRaw, ThreadAccessors.A_SendMode, IntPtr.Zero);
 			return null;
 		}
 
@@ -674,7 +682,7 @@ break_twice:;
 		/// </summary>
 		public static object SendEvent(object keys)
 		{
-			script.HookThread.kbdMsSender.SendKeys(keys.As(), SendRawModes.NotRaw, SendModes.Event, IntPtr.Zero);
+			Script.TheScript.HookThread.kbdMsSender.SendKeys(keys.As(), SendRawModes.NotRaw, SendModes.Event, IntPtr.Zero);
 			return null;
 		}
 
@@ -686,7 +694,7 @@ break_twice:;
 		/// </summary>
 		public static object SendInput(object keys)
 		{
-			script.HookThread.kbdMsSender.SendKeys(keys.As(), SendRawModes.NotRaw, ThreadAccessors.A_SendMode == SendModes.InputThenPlay ? SendModes.InputThenPlay : SendModes.Input, IntPtr.Zero);
+			Script.TheScript.HookThread.kbdMsSender.SendKeys(keys.As(), SendRawModes.NotRaw, ThreadAccessors.A_SendMode == SendModes.InputThenPlay ? SendModes.InputThenPlay : SendModes.Input, IntPtr.Zero);
 			return null;
 		}
 
@@ -723,7 +731,7 @@ break_twice:;
 		/// </summary>
 		public static object SendPlay(object keys)
 		{
-			script.HookThread.kbdMsSender.SendKeys(keys.As(), SendRawModes.NotRaw, SendModes.Play, IntPtr.Zero);
+			Script.TheScript.HookThread.kbdMsSender.SendKeys(keys.As(), SendRawModes.NotRaw, SendModes.Play, IntPtr.Zero);
 			return null;
 		}
 
@@ -732,7 +740,7 @@ break_twice:;
 		/// </summary>
 		public static object SendText(object keys)
 		{
-			script.HookThread.kbdMsSender.SendKeys(keys.As(), SendRawModes.RawText, ThreadAccessors.A_SendMode, IntPtr.Zero);
+			Script.TheScript.HookThread.kbdMsSender.SendKeys(keys.As(), SendRawModes.RawText, ThreadAccessors.A_SendMode, IntPtr.Zero);
 			return null;
 		}
 
@@ -749,7 +757,7 @@ break_twice:;
 		/// </param>
 		public static object SetCapsLockState(object state = null)
 		{
-			SetToggleState((uint)Keys.Capital, ref script.KeyboardData.toggleStates.forceCapsLock, state.As());//Shouldn't have windows code in a common location.//TODO
+			SetToggleState((uint)Keys.Capital, ref Script.TheScript.KeyboardData.toggleStates.forceCapsLock, state.As());//Shouldn't have windows code in a common location.//TODO
 			return null;
 		}
 
@@ -804,7 +812,7 @@ break_twice:;
 		/// </summary>
 		public static object SetNumLockState(object state = null)
 		{
-			SetToggleState((uint)Keys.NumLock, ref script.KeyboardData.toggleStates.forceNumLock, state.As());//Shouldn't have windows code in a common location.//TODO
+			SetToggleState((uint)Keys.NumLock, ref Script.TheScript.KeyboardData.toggleStates.forceNumLock, state.As());//Shouldn't have windows code in a common location.//TODO
 			return null;
 		}
 
@@ -813,7 +821,7 @@ break_twice:;
 		/// </summary>
 		public static object SetScrollLockState(object state = null)
 		{
-			SetToggleState((uint)Keys.Scroll, ref script.KeyboardData.toggleStates.forceScrollLock, state.As());//Shouldn't have windows code in a common location.//TODO
+			SetToggleState((uint)Keys.Scroll, ref Script.TheScript.KeyboardData.toggleStates.forceScrollLock, state.As());//Shouldn't have windows code in a common location.//TODO
 			return null;
 		}
 
@@ -868,7 +876,7 @@ break_twice:;
 		/// <returns>The name of the key as specified by vk and sc. Else def if the conversion failed.</returns>
 		internal static string GetKeyNameHelper(uint vk, uint sc, string def = "not found")
 		{
-			var ht = script.HookThread;
+			var ht = Script.TheScript.HookThread;
 			var buf = ""; // Set default.
 
 			if (vk == 0 && sc == 0)
@@ -911,7 +919,7 @@ break_twice:;
 #elif WINDOWS
 			_ = WindowsAPI.BlockInput(enable);
 #endif
-			script.KeyboardData.blockInput = enable;
+			Script.TheScript.KeyboardData.blockInput = enable;
 			return ResultType.Ok;//By design, it never returns FAIL.
 		}
 
@@ -923,7 +931,7 @@ break_twice:;
 		/// <returns>true if down, else false</returns>
 		internal static bool ScriptGetKeyState(uint vk, KeyStateTypes keyStateType)
 		{
-			var ht = script.HookThread;
+			var ht = Script.TheScript.HookThread;
 			var kbdMouseSender = ht.kbdMsSender;
 
 			if (vk == 0) // Assume "up" if indeterminate.
@@ -978,6 +986,7 @@ break_twice:;
 		/// <returns>A string or integer representation of the key.</returns>
 		private static object GetKeyNamePrivate(string keyname, int callid)
 		{
+			var script = Script.TheScript;
 			var ht = script.HookThread;
 			var kbdMouseSender = ht.kbdMsSender;
 			var vk = 0u;
@@ -1003,7 +1012,7 @@ break_twice:;
 		private static void SetToggleState(uint vk, ref ToggleValueType forceLock, string toggleText)
 		{
 			var toggle = Conversions.ConvertOnOffAlways(toggleText, ToggleValueType.Neutral);
-			var ht = script.HookThread;
+			var ht = Script.TheScript.HookThread;
 			var kbdMouseSender = ht.kbdMsSender;
 
 			switch (toggle)

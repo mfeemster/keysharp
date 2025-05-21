@@ -77,7 +77,7 @@ namespace Keysharp.Scripting
 
 		private PropertyInfo FindReservedVariable(string name)
 		{
-			_ = script.ReflectionsData.flatPublicStaticProperties.TryGetValue(name, out var prop);
+			_ = Script.TheScript.ReflectionsData.flatPublicStaticProperties.TryGetValue(name, out var prop);
 			return prop;
 		}
 

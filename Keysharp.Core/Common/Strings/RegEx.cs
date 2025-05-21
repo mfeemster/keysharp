@@ -180,6 +180,7 @@ namespace Keysharp.Core.Common.Strings
 		{
 			match = m;
 			iter = match.match.Groups.GetEnumerator();
+			var script = Script.TheScript;
 			var p = c <= 1 ? script.RegExIteratorData.p1 : script.RegExIteratorData.p2;
 			var fo = (FuncObj)p.Clone();
 			fo.Inst = this;

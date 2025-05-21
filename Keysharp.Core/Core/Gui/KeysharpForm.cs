@@ -86,6 +86,8 @@
 			//we must check if there are any remaining visible windows. If not, and the script
 			//has not been explicitly marked persistent, then exit the program.
 			var handle = Handle.ToInt64();
+			var script = Script.TheScript;
+			
 			_ = script.GuiData.allGuiHwnds.TryRemove(handle, out _);
 			script.mainWindow?.CheckedBeginInvoke(new Action(() =>
 			{
@@ -101,7 +103,7 @@
 			//Do not close the window if the program is already exiting because it will throw
 			//an enumeration modified exception because Winforms is internally already iterating over
 			//all open windows to close them.
-			if (!script.IsMainWindowClosing)
+			if (!Script.TheScript.IsMainWindowClosing)
 				Close();
 
 			return null;
@@ -231,7 +233,7 @@
 			if (Visible)
 			{
 				if (Tag is WeakReference<Gui> wrg && wrg.TryGetTarget(out var g))
-					script.GuiData.allGuiHwnds[Handle.ToInt64()] = g;
+					Script.TheScript.GuiData.allGuiHwnds[Handle.ToInt64()] = g;
 			}
 			else
 				ClearThis();

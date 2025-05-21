@@ -66,8 +66,7 @@
 		public Keyview()
 		{
 			InitializeComponent();
-			var s = new Script();
-			keywords2 = s.GetPublicStaticPropertyNames();
+			keywords2 = Script.TheScript.GetPublicStaticPropertyNames();
 			lastrun = $"{Accessors.A_AppData}/Keysharp/lastkeyviewrun.txt";
 			Icon = Keysharp.Core.Properties.Resources.Keysharp_ico;
 			btnCopyFullCode.Text = "Copy full code";
@@ -573,7 +572,7 @@
 					btnRunScript.Enabled = false;
 					var oldIndex = txtOut.FirstVisibleLine;
 					SetStart();
-					tslCodeStatus.Text = "Creating DOM from script...";
+					tslCodeStatus.Text = "Creating DOM from Script.TheScript...";
 					Refresh();
 					var (domunits, domerrs) = ch.CreateDomFromFile([txtIn.Text]);
 
@@ -581,7 +580,7 @@
 					{
 						var (errors, warnings) = CompilerHelper.GetCompilerErrors(domerrs);
 						SetFailure();
-						var txt = "Error creating DOM from script.";
+						var txt = "Error creating DOM from Script.TheScript.";
 
 						if (errors.Length > 0)
 							txt += $"\n\n{errors}";

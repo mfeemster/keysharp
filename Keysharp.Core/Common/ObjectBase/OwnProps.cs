@@ -72,7 +72,7 @@
 			map = m;
 			GetVal = gv;
 			iter = map.GetEnumerator();
-			var p = Count <= 1 ? script.OwnPropsIteratorData.p1 : script.OwnPropsIteratorData.p2;
+			var p = Count <= 1 ? Script.TheScript.OwnPropsIteratorData.p1 : Script.TheScript.OwnPropsIteratorData.p2;
 			var fo = (FuncObj)p.Clone();
 			fo.Inst = this;
 			CallFunc = fo;

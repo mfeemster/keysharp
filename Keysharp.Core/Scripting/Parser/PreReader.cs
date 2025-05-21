@@ -515,7 +515,7 @@ namespace Keysharp.Scripting
 												if (!reqvers.Any(x => x != 0))
 													throw new ParseException($"This script requires {p1}", lineNumber, name);
 
-												script.VerifyVersion(ver, plus, lineNumber, code);
+												Script.TheScript.VerifyVersion(ver, plus, lineNumber, code);
 												//In addition to being checked here, it must be added to the code for when it runs as a compiled exe.
 												var cmie = new CodeMethodInvokeExpression(parser.ScriptObjectSnippet, "VerifyVersion");
 												_ = cmie.Parameters.Add(new CodePrimitiveExpression(ver));

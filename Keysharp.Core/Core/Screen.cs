@@ -174,7 +174,7 @@ namespace Keysharp.Core
 
 			if (location.HasValue)
 			{
-				location = Mouse.RevertPoint(location.Value, script.Coords.Mouse);
+				location = Mouse.RevertPoint(location.Value, Script.TheScript.Coords.Mouse);
 				outX = (long)location.Value.X;
 				outY = (long)location.Value.Y;
 			}
@@ -293,7 +293,7 @@ namespace Keysharp.Core
 
 			if (location.HasValue)
 			{
-				location = Mouse.RevertPoint(location.Value, script.Coords.Mouse);
+				location = Mouse.RevertPoint(location.Value, Script.TheScript.Coords.Mouse);
 				outX = (long)location.Value.X;
 				outY = (long)location.Value.Y;
 				return 1L;

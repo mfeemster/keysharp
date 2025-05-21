@@ -29,7 +29,6 @@ namespace Keysharp.Scripting
 		internal const int maxThreadsLimit = 0xFF;
 		internal const int SLEEP_INTERVAL = 10;
 		internal const int SLEEP_INTERVAL_HALF = SLEEP_INTERVAL / 2;
-		internal static Script script;
 		internal List<IFuncObj> ClipFunctions = [];
 		internal List<IFuncObj> hotCriterions = [];
 		internal IntPtr hotExprLFW = IntPtr.Zero;
@@ -95,7 +94,7 @@ namespace Keysharp.Scripting
 		private WindowProvider windowProvider;
 
 		[PublicForTestOnly]
-		public static Keysharp.Scripting.Script TheScript => script;
+		public static Keysharp.Scripting.Script TheScript { get; private set; }
 		public HotstringManager HotstringManager => hotstringManager ?? (hotstringManager = new ());
 		public Threads Threads => threads;
 		public Variables Vars { get; private set; }
@@ -150,7 +149,7 @@ namespace Keysharp.Scripting
 		internal PlatformProvider PlatformProvider => platformProvider ?? (platformProvider = new ());
 		internal ProcessesData ProcessesData => processesData ?? (processesData = new ());
 		internal Reflections Reflections { get; private set; }
-		internal ReflectionsData ReflectionsData { get; } = new ();//Don't lazy initialize, it's always needed in every script.
+		internal ReflectionsData ReflectionsData { get; } = new ();//Don't lazy initialize, it's always needed in every Script.TheScript.
 		internal RegExData RegExData => regExData ?? (regExData = new ());
 		internal RegExIteratorData RegExIteratorData => regExIteratorData ?? (regExIteratorData = new ());
 		internal StringsData StringsData => stringsData ?? (stringsData = new ());
@@ -163,29 +162,28 @@ namespace Keysharp.Scripting
 			CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
 			CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture;
 #if LINUX
-		Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);//For some reason, linux needs this for rich text to work.
-		enc1252 = Encoding.GetEncoding(1252);
+			Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);//For some reason, linux needs this for rich text to work.
+			enc1252 = Encoding.GetEncoding(1252);
 #endif
 			SetInitialFloatFormat();//This must be done intially and not just when A_FormatFloat is referenced for the first time.
 		}
 
 		public Script()
 		{
-			script = this;//Everywhere in the script will reference this.
+			Script.TheScript = this;//Everywhere in the script will reference this.
 			timeLastInputPhysical = DateTime.UtcNow;
 			timeLastInputKeyboard = timeLastInputPhysical;
 			timeLastInputMouse = timeLastInputPhysical;
 			threads = new Threads();
 			Vars = new Variables();
-
-			_ = script.Threads.PushThreadVariables(0, true, false, true);//Ensure there is always one thread in existence for reference purposes, but do not increment the actual thread counter.
-
+			_ = Script.TheScript.Threads.PushThreadVariables(0, true, false, true);//Ensure there is always one thread in existence for reference purposes, but do not increment the actual thread counter.
 			var pd = this.ProcessesData;
 			mgr = this.PlatformProvider.Manager;
 			pd.MainThreadID = mgr.CurrentThreadId();
 			pd.ManagedMainThreadID = Thread.CurrentThread.ManagedThreadId;//Figure out how to do this on linux.//TODO
 			//If we're running via passing in a script and are not in a unit test, then set the working directory to that of the script file.
 			var path = Path.GetFileName(Application.ExecutablePath).ToLowerInvariant();
+
 			if (path != "testhost.exe" && path != "testhost.dll" && !A_IsCompiled)
 				Dir.SetWorkingDir(A_ScriptDir);
 
@@ -203,6 +201,7 @@ namespace Keysharp.Scripting
 		private void LoadDlls()
 		{
 			Error err;
+
 			foreach (var dll in Vars.preloadedDlls)
 			{
 				if (dll.Item1.Length == 0)

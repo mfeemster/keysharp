@@ -351,6 +351,7 @@ using static Keysharp.Scripting.Script;
 			var errors = new CompilerErrorCollection();
 			var enc = Encoding.Default;
 			var x = Env.FindCommandLineArg("cp");
+			var script = Script.TheScript;
 			var (pushed, btv) = script.Threads.BeginThread();//Some internal parsing uses Accessors, so a thread must be present.
 
 			if (pushed)

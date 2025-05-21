@@ -4,6 +4,8 @@
 	{
 		public bool PreFilterMessage(ref Message m)
 		{
+			var script = Script.TheScript;
+			
 			if (script.GuiData.onMessageHandlers.TryGetValue(m.Msg, out var monitor))
 			{
 				var tv = script.Threads.GetThreadVariables();

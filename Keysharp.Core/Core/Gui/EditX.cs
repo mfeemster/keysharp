@@ -6,7 +6,7 @@
 											 object winTitle = null,
 											 object winText = null,
 											 object excludeTitle = null,
-											 object excludeText = null) => script.ControlProvider.Manager.EditGetCurrentCol(
+											 object excludeText = null) => Script.TheScript.ControlProvider.Manager.EditGetCurrentCol(
 													 control,
 													 winTitle,
 													 winText,
@@ -17,7 +17,7 @@
 											  object winTitle = null,
 											  object winText = null,
 											  object excludeTitle = null,
-											  object excludeText = null) => script.ControlProvider.Manager.EditGetCurrentLine(
+											  object excludeText = null) => Script.TheScript.ControlProvider.Manager.EditGetCurrentLine(
 													  control,
 													  winTitle,
 													  winText,
@@ -29,7 +29,7 @@
 										 object winTitle = null,
 										 object winText = null,
 										 object excludeTitle = null,
-										 object excludeText = null) => script.ControlProvider.Manager.EditGetLine(
+										 object excludeText = null) => Script.TheScript.ControlProvider.Manager.EditGetLine(
 											 n.Ai(),
 											 control,
 											 winTitle,
@@ -41,7 +41,7 @@
 											object winTitle = null,
 											object winText = null,
 											object excludeTitle = null,
-											object excludeText = null) => script.ControlProvider.Manager.EditGetLineCount(
+											object excludeText = null) => Script.TheScript.ControlProvider.Manager.EditGetLineCount(
 												control,
 												winTitle,
 												winText,
@@ -52,7 +52,7 @@
 				object winTitle = null,
 				object winText = null,
 				object excludeTitle = null,
-				object excludeText = null) => script.ControlProvider.Manager.EditGetSelectedText(
+				object excludeText = null) => Script.TheScript.ControlProvider.Manager.EditGetSelectedText(
 					control,
 					winTitle,
 					winText,
@@ -66,7 +66,7 @@
 									   object excludeTitle = null,
 									   object excludeText = null)
 		{
-			script.ControlProvider.Manager.EditPaste(
+			Script.TheScript.ControlProvider.Manager.EditPaste(
 				@string.As(),
 				control,
 				winTitle,

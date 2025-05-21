@@ -519,7 +519,7 @@ namespace Keysharp.Core.COM
 			object ret = 0L;
 			//First attempt to call the normal way. This will succeed with any normal COM call.
 			//However, it will throw an exception if we've passed a fake COM function using DelegateHolder.
-			//This can be reproduced with the following script.
+			//This can be reproduced with the following Script.TheScript.
 			/*
 			    ReturnInt() => 123
 

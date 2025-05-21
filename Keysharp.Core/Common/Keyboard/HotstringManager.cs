@@ -37,6 +37,7 @@
 		public static HotstringDefinition AddHotstring(string _name, IFuncObj _funcObj, ReadOnlySpan<char> _options, string _hotstring
 				, string _replacement, bool _hasContinuationSection, int _suspend = 0)
 		{
+			var script = Script.TheScript;
 			var hs = new HotstringDefinition(_name, _funcObj, _options, _hotstring, _replacement, _hasContinuationSection, _suspend);
 
 			if (!hs.constructedOK)
@@ -81,7 +82,7 @@
 				var hsBufCountm1 = hsLength - 1;
 				var hsBufCountm2 = hsLength - 2;
 				var hasEndChar = defEndChars.Contains(hsBufSpan[hsBufCountm1]);
-				var ht = script.HookThread;
+				var ht = Script.TheScript.HookThread;
 
 				for (var i = 0; !found && i < hsBuf.Count; i++)//Must loop forward to catch hotstrings in order.
 				{
