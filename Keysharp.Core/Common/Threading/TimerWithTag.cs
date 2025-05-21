@@ -32,7 +32,7 @@ namespace Keysharp.Core.Common.Threading
 			base.Start();
 
 			if (Interval == 1)
-				Immediate();
+				PushToMessageQueue();
 		}
 
 		/// <summary>
@@ -69,23 +69,14 @@ namespace Keysharp.Core.Common.Threading
 		}
 
 		/// <summary>
-		/// Pushes the Tick to the message queue.
+		/// Pushes a Tick to the main thread message queue immediately.
 		/// </summary>
-		public void Immediate()
+		public void PushToMessageQueue()
 		{
 			Script.TheScript.mainWindow.CheckedBeginInvoke(() =>
 			{
-				Fire();
+				OnTick(EventArgs.Empty);
 			}, false, true);
-		}
-
-		/// <summary>
-		/// Fires the Tick immediately.
-		/// </summary>
-		public void Fire()
-		{
-			base.OnTick(EventArgs.Empty);
-			_lastStart = DateTime.UtcNow;
 		}
 
 		/// <summary>
