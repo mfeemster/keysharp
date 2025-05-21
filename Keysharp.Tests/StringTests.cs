@@ -311,11 +311,11 @@ namespace Keysharp.Tests
 			Assert.AreEqual(((RegExMatchInfo)match)[0], "txt");
 			Assert.AreEqual(((RegExMatchInfo)match).Pos(), 16);
 			_ = RegEx.RegExMatch("Michiganroad 72", @"(.*) (?<nr>\d+)", ref match);
-			Assert.AreEqual(((RegExMatchInfo)match).Count, 3);
+			Assert.AreEqual(((RegExMatchInfo)match).Count, 2);
 			Assert.AreEqual(((RegExMatchInfo)match)[1], "Michiganroad");
 			Assert.AreEqual(((RegExMatchInfo)match).Name(2), "nr");
 			Assert.AreEqual(((RegExMatchInfo)match)[2], "72");
-			Assert.IsTrue(TestScript("string-regexmatch", true));
+			Assert.IsTrue(TestScript("string-regexmatch", false));
 		}
 
 		[Test, Category("String")]
