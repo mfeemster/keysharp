@@ -75,7 +75,9 @@ namespace Keysharp.Core.Common.Threading
 		{
 			Script.TheScript.mainWindow.CheckedBeginInvoke(() =>
 			{
+				base.Stop();
 				OnTick(EventArgs.Empty);
+				base.Start(); //Reset the internal counter, because we called the tick manually
 			}, false, true);
 		}
 
