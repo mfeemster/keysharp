@@ -362,49 +362,53 @@ namespace Keysharp.Core
 			{
 				var v = script.Threads;
 
+				//If script has exited or we don't receive a TimerWithTag object, just exit
+				if (A_HasExited || (ss is not TimerWithTag t))
+					return;
+
+				if (!t.Enabled)//A way of checking to make sure the timer is not already executing.
+					return;
+
 				//If there are not enough threads, then this will exit and retry. Even a single shot
 				//timer will keep trying until it gets through.
 				//Note that this means there is no real "queueing" of timer events. Rather,
 				//they just keep getting retried.
 				//The reason for this is that if a timer event calls Sleep() which calls DoEvents(),
 				//we can't also call those functions here or else the program will freeze/crash.
-				if (A_HasExited || (!A_AllowTimers.Ab() && script.totalExistingThreads > 0)
+				if ((!A_AllowTimers.Ab() && script.totalExistingThreads > 0)
 						|| !v.AnyThreadsAvailable() || !script.Threads.IsInterruptible())
-					return;
-
-				if (ss is TimerWithTag t)
 				{
-					if (!t.Enabled)//A way of checking to make sure the timer is not already executing.
-						return;
+					t.PushToMessageQueue();
+					return;
+				}
 
-					var pri = t.Tag.Ai();
-					var tv = v.GetThreadVariables();
+				var pri = t.Tag.Ai();
+				var tv = v.GetThreadVariables();
 
-					if (pri >= tv.priority)
+				if (pri >= tv.priority)
+				{
+					t.Enabled = false;
+
+					var remove = !TryCatch(() =>
 					{
-						t.Enabled = false;
+						(bool, ThreadVariables) btv = v.PushThreadVariables(pri, true, false, false, true);
+						btv.Item2.currentTimer = timer;
+						btv.Item2.eventInfo = func;
+						var ret = func.Call();
+						_ = v.EndThread(btv.Item1);
+					}, true);//Pop on exception because EndThread() above won't be called.
 
-						var remove = !TryCatch(() =>
-						{
-							(bool, ThreadVariables) btv = v.PushThreadVariables(pri, true, false, false, true);
-							btv.Item2.currentTimer = timer;
-							btv.Item2.eventInfo = func;
-							var ret = func.Call();
-							_ = v.EndThread(btv.Item1);
-						}, true);//Pop on exception because EndThread() above won't be called.
-
-						if (once || remove)
-						{
-							_ = script.FlowData.timers.TryRemove(func, out _);
-							t.Stop();
-							t.Dispose();
-							script.ExitIfNotPersistent();
-						}
-						else if (script.FlowData.timers.TryGetValue(func, out var existing))//They could have disabled it, in which case it wouldn't be in the dictionary.
-							existing.Enabled = true;
-						else
-							script.ExitIfNotPersistent();//Was somehow removed, such as in a window close handler, so attempt to exit.
+					if (once || remove)
+					{
+						_ = script.FlowData.timers.TryRemove(func, out _);
+						t.Stop();
+						t.Dispose();
+						script.ExitIfNotPersistent();
 					}
+					else if (script.FlowData.timers.TryGetValue(func, out var existing))//They could have disabled it, in which case it wouldn't be in the dictionary.
+						existing.Enabled = true;
+					else
+						script.ExitIfNotPersistent();//Was somehow removed, such as in a window close handler, so attempt to exit.
 				}
 			};
 			script.mainWindow.CheckedInvoke(timer.Start, true);
