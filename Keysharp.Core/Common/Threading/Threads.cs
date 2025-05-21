@@ -13,10 +13,10 @@
 		private readonly Lock locker = new ();
 		private ThreadVariableManager tvm = new ();
 
-		//public Threads()
-		//{
-		//  Console.WriteLine("Threads()");
-		//}
+		public Threads()
+		{
+			_ = PushThreadVariables(0, true, false, true);//Ensure there is always one thread in existence for reference purposes, but do not increment the actual thread counter.
+		}
 
 		public (bool, ThreadVariables) BeginThread(bool onlyIfEmpty = false)
 		{
@@ -72,7 +72,7 @@
 			lock (locker)
 			{
 				var script = Script.TheScript;
-				
+
 				if (!script.FlowData.allowInterruption)
 					return false;
 

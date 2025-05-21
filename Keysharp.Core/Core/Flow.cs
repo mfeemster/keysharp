@@ -232,7 +232,6 @@ namespace Keysharp.Core
 		public static object Reload()
 		{
 			var script = Script.TheScript;
-			
 			//Just calling Application.Restart will trigger ExitAppInternal().
 			//So it doesn't need to be called directly. Further, it will cause problems if called
 			//so just let the natural chain of closing events handle it.
@@ -280,7 +279,7 @@ namespace Keysharp.Core
 			IFuncObj func = null;
 			Timer2 timer = null;
 			var script = Script.TheScript;
-			
+
 			if (once)
 				p = -p;
 
@@ -368,13 +367,15 @@ namespace Keysharp.Core
 			{
 				var v = script.Threads;
 
+				//If there are not enough threads, then this will exit and retry. Even a single shot
+				//timer will keep trying until it gets through.
+				//Note that this means there is no real "queueing" of timer events. Rather,
+				//they just keep getting retried.
+				//The reason for this is that if a timer event calls Sleep() which calls DoEvents(),
+				//we can't also call those functions here or else the program will freeze/crash.
 				if (A_HasExited || (!A_AllowTimers.Ab() && script.totalExistingThreads > 0)
 						|| !v.AnyThreadsAvailable() || !script.Threads.IsInterruptible())
 					return;
-
-				//while (!v.AnyThreadsAvailable() && !A_HasExited)
-				//  return;
-				//Sleep(20L);
 
 				if (ss is Timer2 t)
 				{
@@ -424,7 +425,7 @@ namespace Keysharp.Core
 		{
 			var d = delay.Al(-1L);
 			var script = Script.TheScript;
-			
+
 			if (script.FlowData.hasExited)
 				throw new UserRequestedExitException();
 
@@ -551,7 +552,7 @@ namespace Keysharp.Core
 		{
 			var sf = subFunction.As();
 			var script = Script.TheScript;
-			
+
 			if (string.Compare(sf, "notimers", true) == 0)
 				A_AllowTimers = !(Options.OnOff(value1.As()) ?? false);
 			else if (string.Compare(sf, "priority", true) == 0)
