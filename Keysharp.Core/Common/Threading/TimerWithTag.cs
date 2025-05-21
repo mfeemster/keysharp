@@ -64,7 +64,7 @@ namespace Keysharp.Core.Common.Threading
 				_isPaused = false;
 				var elapsed = (DateTime.UtcNow - _lastStart).TotalMilliseconds;
 				if (elapsed >= Interval)
-					OnTick(EventArgs.Empty);
+					PushToMessageQueue();
 			}
 		}
 
