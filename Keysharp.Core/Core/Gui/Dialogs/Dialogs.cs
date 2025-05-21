@@ -347,7 +347,7 @@ namespace Keysharp.Core
 			}, true);
 
 			while (input.Visible)
-				Application.DoEvents();
+				Flow.TryDoEvents();
 
 			return new DialogResultReturn()
 			{
@@ -607,8 +607,7 @@ namespace Keysharp.Core
 
 					while (!tsk.IsCompleted)
 					{
-						Application.DoEvents();
-						Thread.Sleep(1);
+						Flow.TryDoEvents();
 					}
 
 					//tsk.Wait();

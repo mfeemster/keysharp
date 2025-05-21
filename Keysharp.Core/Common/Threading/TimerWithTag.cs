@@ -1,24 +1,108 @@
-﻿#define USEFORMSTIMER
+﻿using Keysharp.Scripting;
+
 namespace Keysharp.Core.Common.Threading
 {
-#if USEFORMSTIMER
 	internal class TimerWithTag : System.Windows.Forms.Timer
-#else
-	internal class TimerWithTag : System.Timers.Timer
-#endif
 	{
 		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
-		public object Tag { get; set; }
-		public TimerWithTag()
-			: base() { }
+		public new object Tag { get; set; }
 
-		public TimerWithTag(double interval)
-#if USEFORMSTIMER
+		// When the timer was last (re)started
+		private DateTime _lastStart;
+
+		// Whether we’re currently paused
+		private bool _isPaused;
+
+		public TimerWithTag() : base()
+		{
+		}
+
+		public TimerWithTag(double interval) : this()
 		{
 			Interval = (int)interval;
 		}
-#else
-			: base(interval) { }
-#endif
+
+		/// <summary>
+		/// Start (or restart) the timer at the full interval.
+		/// </summary>
+		public new void Start()
+		{
+			_lastStart = DateTime.UtcNow;
+			_isPaused = false;
+			base.Start();
+
+			if (Interval == 1)
+				Immediate();
+		}
+
+		/// <summary>
+		/// Stops entirely and clears any pause state.
+		/// </summary>
+		public new void Stop()
+		{
+			base.Stop();
+			_isPaused = false;
+		}
+
+		/// <summary>
+		/// Pause delivery of Tick events without stopping the internal clock.
+		/// </summary>
+		public void Pause()
+		{
+			if (!_isPaused && Enabled)
+				_isPaused = true;
+		}
+
+		/// <summary>
+		/// Resume Tick delivery. If the elapsed time already exceeded the interval,
+		/// a tick will fire immediately.
+		/// </summary>
+		public void Resume()
+		{
+			if (_isPaused)
+			{
+				_isPaused = false;
+				var elapsed = (DateTime.UtcNow - _lastStart).TotalMilliseconds;
+				if (elapsed >= Interval)
+					OnTick(EventArgs.Empty);
+			}
+		}
+
+		/// <summary>
+		/// Pushes the Tick to the message queue.
+		/// </summary>
+		public void Immediate()
+		{
+			Script.TheScript.mainWindow.CheckedBeginInvoke(() =>
+			{
+				Fire();
+			}, false, true);
+		}
+
+		/// <summary>
+		/// Fires the Tick immediately.
+		/// </summary>
+		public void Fire()
+		{
+			base.OnTick(EventArgs.Empty);
+			_lastStart = DateTime.UtcNow;
+		}
+
+		/// <summary>
+		/// Suppress ticks while paused, otherwise raise them and afterwards reset the start time.
+		/// </summary>
+		protected override void OnTick(EventArgs e)
+		{
+			if (_isPaused)
+				return;
+
+			base.OnTick(e);
+			_lastStart = DateTime.UtcNow;
+		}
+
+		/// <summary>
+		/// Whether the timer has been paused.
+		/// </summary>
+		public bool IsPaused => _isPaused;
 	}
 }

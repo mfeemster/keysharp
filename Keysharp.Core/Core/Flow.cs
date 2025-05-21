@@ -1,8 +1,7 @@
-#define USEFORMSTIMER
+using Keysharp.Scripting;
 using static Keysharp.Core.Errors;
 
 using Timer1 = System.Timers.Timer;
-using Timer2 = Keysharp.Core.Common.Threading.TimerWithTag;
 
 namespace Keysharp.Core
 {
@@ -149,7 +148,7 @@ namespace Keysharp.Core
 			//https://stackoverflow.com/questions/243351/environment-tickcount-vs-datetime-now
 			if (b && (Environment.TickCount - script.FlowData.lastLoopDoEvents) > 15)
 			{
-				Application.DoEvents();
+				TryDoEvents(true, false);
 				script.FlowData.lastLoopDoEvents = Environment.TickCount;
 			}
 
@@ -277,7 +276,7 @@ namespace Keysharp.Core
 			var pri = priority.Al();
 			var once = p < 0;
 			IFuncObj func = null;
-			Timer2 timer = null;
+			TimerWithTag timer = null;
 			var script = Script.TheScript;
 
 			if (once)
@@ -359,11 +358,7 @@ namespace Keysharp.Core
 			else//They tried to stop a timer that didn't exist
 				return null;
 
-#if USEFORMSTIMER
 			timer.Tick += (ss, ee) =>
-#else
-			timer.Elapsed += (ss, ee) =>
-#endif
 			{
 				var v = script.Threads;
 
@@ -377,7 +372,7 @@ namespace Keysharp.Core
 						|| !v.AnyThreadsAvailable() || !script.Threads.IsInterruptible())
 					return;
 
-				if (ss is Timer2 t)
+				if (ss is TimerWithTag t)
 				{
 					if (!t.Enabled)//A way of checking to make sure the timer is not already executing.
 						return;
@@ -418,6 +413,49 @@ namespace Keysharp.Core
 		}
 
 		/// <summary>
+		/// Calls DoEvents but catches and discards all errors, except if <paramref name="allowExit"/>
+		/// is true in which case UserRequestedExitException is allowed through.
+		/// </summary>
+		/// <param name="allowExit"/>If true then UserRequestedExitException is allowed through
+		/// so the program can exit, otherwise all exceptions are discarded.
+		public static void TryDoEvents(bool allowExit = true, bool yieldTick = true)
+		{
+			DateTime start = yieldTick
+				? DateTime.UtcNow
+				: default;
+
+			if (allowExit)
+			{
+				try
+				{
+					Application.DoEvents();//Can sometimes throw on linux.
+				}
+				catch (UserRequestedExitException)
+				{
+					throw;
+				}
+				catch
+				{
+				}
+			}
+			else
+			{
+				try
+				{
+					Application.DoEvents();//Can sometimes throw on linux.
+				}
+				catch
+				{
+				}
+			}
+
+			if (yieldTick && start.Equals(DateTime.UtcNow))
+				//0 tells this thread to relinquish the remainder of its time slice to any thread of equal priority that is ready to run.
+				//If there are no other threads of equal priority that are ready to run, execution of the current thread is not suspended.
+				System.Threading.Thread.Sleep(0);
+		}
+
+		/// <summary>
 		/// Waits the specified amount of time before continuing.
 		/// </summary>
 		/// <param name="delay">The amount of time to pause in milliseconds.</param>
@@ -432,58 +470,17 @@ namespace Keysharp.Core
 			//Be careful with Application.DoEvents(), it has caused spurious crashes in my years of programming experience.
 			if (d == 0L)
 			{
-				var start = DateTime.UtcNow;
-
-				try
-				{
-					Application.DoEvents();//Can sometimes throw on linux.
-				}
-				catch (UserRequestedExitException)
-				{
-					throw;
-				}
-				catch
-				{
-				}
-
-				//0 tells this thread to relinquish the remainder of its time slice to any thread of equal priority that is ready to run.
-				//If there are no other threads of equal priority that are ready to run, execution of the current thread is not suspended.
-				System.Threading.Thread.Sleep(0);
-
-				if (start.Equals(DateTime.UtcNow))
-					System.Threading.Thread.Sleep(0);
+				TryDoEvents();
 			}
 			else if (d == -1L)
 			{
-				try
-				{
-					Application.DoEvents();//Can sometimes throw on linux.
-				}
-				catch (UserRequestedExitException)
-				{
-					throw;
-				}
-				catch
-				{
-				}
+				TryDoEvents(true, false);
 			}
 			else if (d == -2)//Sleep indefinitely until all InputHooks are finished.
 			{
 				while (!script.FlowData.hasExited && script.input != null && script.input.InProgress())
 				{
-					try
-					{
-						Application.DoEvents();//Can sometimes throw on linux.
-					}
-					catch (UserRequestedExitException)
-					{
-						throw;
-					}
-					catch
-					{
-					}
-
-					System.Threading.Thread.Sleep(10);
+					TryDoEvents(); //Does events once per tick
 				}
 			}
 			else
@@ -492,20 +489,7 @@ namespace Keysharp.Core
 
 				while (DateTime.UtcNow < stop && !script.FlowData.hasExited)
 				{
-					try
-					{
-						//if (System.Threading.Thread.CurrentThread.ManagedThreadId == Processes.ManagedMainThreadID)
-						Application.DoEvents();//Can sometimes throw on linux.
-					}
-					catch (UserRequestedExitException)
-					{
-						throw;
-					}
-					catch
-					{
-					}
-
-					System.Threading.Thread.Sleep(10);
+					TryDoEvents(); //Does events once per tick
 				}
 			}
 
@@ -791,6 +775,6 @@ namespace Keysharp.Core
 		/// </summary>
 		internal bool suspended;
 
-		internal ConcurrentDictionary<IFuncObj, Timer2> timers = new ();
+		internal ConcurrentDictionary<IFuncObj, TimerWithTag> timers = new ();
 	}
 }
