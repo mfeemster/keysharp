@@ -413,7 +413,7 @@ namespace Keysharp.Core
 			};
 			script.mainWindow.CheckedInvoke(timer.Start, true);
 
-			if (script.totalExistingThreads == script.MaxThreadsTotal)
+			if (script.totalExistingThreads >= script.MaxThreadsTotal)
 				timer.Pause();
 			else if (timer.Interval == 1)
 				timer.PushToMessageQueue();
