@@ -10,6 +10,9 @@ namespace Keysharp.Core.Common.Threading
 		// When the timer was last (re)started
 		private DateTime _lastStart;
 
+		// Guard so we never queue more than one pending invoke
+		private bool _pushPending;
+
 		// Whether we’re currently paused
 		private bool _isPaused;
 
@@ -42,6 +45,7 @@ namespace Keysharp.Core.Common.Threading
 		{
 			base.Stop();
 			_isPaused = false;
+			_pushPending = false;
 		}
 
 		/// <summary>
@@ -73,9 +77,15 @@ namespace Keysharp.Core.Common.Threading
 		/// </summary>
 		public void PushToMessageQueue()
 		{
+			if (_pushPending || !Enabled)
+				return;
+
+			_pushPending = true;
+			base.Stop(); //Prevent timer from pushing another tick onto the message queue while we are queued
+
 			Script.TheScript.mainWindow.CheckedBeginInvoke(() =>
 			{
-				base.Stop();
+				_pushPending = false; //Delegate is now running → clear the pending-flag
 				OnTick(EventArgs.Empty);
 				base.Start(); //Reset the internal counter, because we called the tick manually
 			}, false, true);
