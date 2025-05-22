@@ -9,7 +9,12 @@
 		/// in response to a button click, hotkey, timer event, etc...
 		/// So we create a SlimStack to be used as an object pool which we push and pop each time a thread starts and finishes.
 		/// </summary>
-		internal SlimStack<ThreadVariables> threadVars = new ((int)Script.TheScript.MaxThreadsTotal, () => new ThreadVariables());
+		internal SlimStack<ThreadVariables> threadVars;
+
+		internal ThreadVariableManager(int size)
+		{
+			threadVars = new (size, () => new ThreadVariables());
+		}
 
 		internal ThreadVariables GetThreadVariables()
 		{
