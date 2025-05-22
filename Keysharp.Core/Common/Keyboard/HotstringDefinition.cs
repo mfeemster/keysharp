@@ -71,6 +71,7 @@
 									 , bool _hasContinuationSection, int _suspend)
 
 		{
+			var script = Script.TheScript;
 			var hm = script.HotstringManager;
 			funcObj = _funcObj;
 			hotCriterion = script.Threads.GetThreadVariables().hotCriterion;
@@ -270,6 +271,7 @@
 			var sb = new StringBuilder();//This might be able to be done more efficiently, but use sb unless performance issues show up.
 			var startOfReplacement = 0;
 			string sendBuf;
+			var script = Script.TheScript;
 			var ht = script.HookThread;
 			var kbdMouseSender = ht.kbdMsSender;
 
@@ -406,6 +408,8 @@
 		/// </summary>
 		internal ResultType PerformInNewThreadMadeByCaller(IntPtr hwndCritFound, string endChar)
 		{
+			var script = Script.TheScript;
+			
 			if (!script.Threads.AnyThreadsAvailable())//First test global thread count.
 				return ResultType.Fail;
 

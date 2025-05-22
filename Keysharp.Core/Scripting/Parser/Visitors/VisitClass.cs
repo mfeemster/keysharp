@@ -45,9 +45,9 @@ namespace Keysharp.Scripting
                 {
                     baseClassName += "." + parser.NormalizeClassIdentifier(extendsParts[i].GetText());
                 }
-                if (extendsParts.Length == 1 && script.ReflectionsData.stringToTypes.ContainsKey(baseClassName))
+                if (extendsParts.Length == 1 && Script.TheScript.ReflectionsData.stringToTypes.ContainsKey(baseClassName))
                 {
-                    baseClassName = script.ReflectionsData.stringToTypes.First(pair => pair.Key.Equals(baseClassName, StringComparison.InvariantCultureIgnoreCase)).Key;
+                    baseClassName = Script.TheScript.ReflectionsData.stringToTypes.First(pair => pair.Key.Equals(baseClassName, StringComparison.InvariantCultureIgnoreCase)).Key;
                 }
                 parser.currentClass.Base = baseClassName;
                 parser.currentClass.BaseList.Add(SyntaxFactory.SimpleBaseType(CreateQualifiedName(baseClassName)));

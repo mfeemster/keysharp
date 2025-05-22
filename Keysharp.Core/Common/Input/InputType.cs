@@ -184,6 +184,8 @@ namespace Keysharp.Core.Common.Input
 
 		internal string GetEndReason(ref string keyBuf)
 		{
+			var script = Script.TheScript;
+
 			if (script.HookThread is HookThread hook && hook.kbdMsSender != null)
 			{
 				switch (status)
@@ -257,6 +259,8 @@ namespace Keysharp.Core.Common.Input
 
 		internal InputType InputFindLink(InputType input)
 		{
+			var script = Script.TheScript;
+
 			if (script.input == input)
 				return script.input;
 			else
@@ -269,6 +273,7 @@ namespace Keysharp.Core.Common.Input
 
 		internal InputType InputRelease()
 		{
+			var script = Script.TheScript;
 			var ht = script.HookThread;
 
 			// Input should already have ended prior to this function being called.
@@ -318,6 +323,8 @@ namespace Keysharp.Core.Common.Input
 
 		internal void InputStart()
 		{
+			var script = Script.TheScript;
+
 			// Set or update the timeout timer if needed.  The timer proc takes care to end
 			// only those inputs which are due, and will reset or kill the timer as needed.
 			if (timeout > 0)
@@ -340,6 +347,7 @@ namespace Keysharp.Core.Common.Input
 		internal InputType InputUnlinkIfStopped(InputType input)
 		{
 			InputType temp = null;
+			var script = Script.TheScript;
 
 			if (input == null)
 				return null;
@@ -452,6 +460,7 @@ namespace Keysharp.Core.Common.Input
 			var sc = 0u;
 			var vkByNumber = false;
 			bool? scByNumber = false;
+			var script = Script.TheScript;
 			var ht = script.HookThread;
 			var kbdMouseSender = ht.kbdMsSender;//This should always be non-null if any hotkeys/strings are present.
 
@@ -622,6 +631,7 @@ namespace Keysharp.Core.Common.Input
 
 		internal void SetTimeoutTimer()
 		{
+			var script = Script.TheScript;
 			var now = DateTime.UtcNow;
 			timeoutAt = now.AddMilliseconds(timeout);
 
@@ -649,6 +659,8 @@ namespace Keysharp.Core.Common.Input
 
 		private void EndByReason(InputStatusType aReason)
 		{
+			var script = Script.TheScript;
+
 			if (script.HookThread is HookThread hook && hook.kbdMsSender != null)
 			{
 				endingMods = hook.kbdMsSender.modifiersLRLogical; // Not relevant to all end reasons, but might be useful anyway.
@@ -672,6 +684,7 @@ namespace Keysharp.Core.Common.Input
 
 		private void InputTimer_Tick(object sender, EventArgs e)
 		{
+			var script = Script.TheScript;
 			var inputTimer = script.InputData.inputTimer;
 			inputTimer.Stop();
 			var newTimerPeriod = 0;

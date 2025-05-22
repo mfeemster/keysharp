@@ -10,7 +10,7 @@
 		public void CreateTrayMenu()
 		{
 			var trayIcon = Tray = new NotifyIcon { ContextMenuStrip = new ContextMenuStrip(), Text = A_ScriptName.Substring(0, Math.Min(A_ScriptName.Length, 64)) };//System tray icon tooltips have a limit of 64 characters.
-			script.ProcessesData.mainContext = SynchronizationContext.Current;//This must happen after the icon is created.
+			Script.TheScript.ProcessesData.mainContext = SynchronizationContext.Current;//This must happen after the icon is created.
 
 			if (NoTrayIcon)
 				return;
@@ -40,8 +40,9 @@
 
 		internal static void SuspendHotkeys()
 		{
-			script.mainWindow.CheckedInvoke(() =>
+			Script.TheScript.mainWindow.CheckedInvoke(() =>
 			{
+				var script = Script.TheScript;
 				var suspended = script.flowData.suspended = !script.flowData.suspended;
 				script.HotstringManager.SuspendAll(suspended);//Must do this prior to ManifestAllHotkeysHotstringsHooks() to avoid incorrect removal of hook.
 				HotkeyDefinition.ManifestAllHotkeysHotstringsHooks();//Update the state of all hotkeys based on the complex interdependencies hotkeys have with each another.

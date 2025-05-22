@@ -50,7 +50,7 @@ namespace Keysharp.Scripting
 			Dictionary<Type, KeysharpObject> protos = new();
 
 			var anyType = typeof(Any);
-			var types = script.ReflectionsData.stringToTypes.Values
+			var types = Script.TheScript.ReflectionsData.stringToTypes.Values
 				.Where(type => type.IsClass && !type.IsAbstract && anyType.IsAssignableFrom(type));
 
 			/*
@@ -121,8 +121,8 @@ namespace Keysharp.Scripting
 
 		public bool HasVariable(string key) =>
 			globalVars.ContainsKey(key)
-			|| script.ReflectionsData.flatPublicStaticProperties.ContainsKey(key)
-			|| script.ReflectionsData.flatPublicStaticMethods.ContainsKey(key);
+			|| Script.TheScript.ReflectionsData.flatPublicStaticProperties.ContainsKey(key)
+			|| Script.TheScript.ReflectionsData.flatPublicStaticMethods.ContainsKey(key);
 
         public object GetVariable(string key)
 		{
@@ -159,7 +159,7 @@ namespace Keysharp.Scripting
 
 		private PropertyInfo FindReservedVariable(string name)
 		{
-			_ = script.ReflectionsData.flatPublicStaticProperties.TryGetValue(name, out var prop);
+			_ = Script.TheScript.ReflectionsData.flatPublicStaticProperties.TryGetValue(name, out var prop);
 			return prop;
 		}
 
@@ -218,7 +218,7 @@ namespace Keysharp.Scripting
 						return GetPropertyValue(key, "__Value");
 					if (vars.TryGetValue(key.ToString(), out var val))
 						return GetPropertyValue(val, "__Value");
-					return script.Vars[key];
+					return Script.TheScript.Vars[key];
 				}
 				set
 				{
@@ -234,9 +234,9 @@ namespace Keysharp.Scripting
 						SetPropertyValue(val, "__Value", value);
 						return;
 					}
-					if ((scope == eScope.Global || (globals?.Contains(s) ?? false)) && script.Vars.HasVariable(s))
+					if ((scope == eScope.Global || (globals?.Contains(s) ?? false)) && Script.TheScript.Vars.HasVariable(s))
 					{
-						script.Vars[s] = value;
+						Script.TheScript.Vars[s] = value;
 						return;
 					}
 

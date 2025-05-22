@@ -120,7 +120,7 @@ namespace Keysharp.Core
 		/// <exception cref="TypeError">A <see cref="TypeError"/> exception is thrown if any of the arguments was required to have a .Ptr member, but none was found.</exception>
 		public static unsafe object DllCall(object function, params object[] parameters)
 		{
-			//You should some day add the ability to use this with .NET dlls, exposing some type of reflection to the script.//TODO
+			//You should some day add the ability to use this with .NET dlls, exposing some type of reflection to the Script.TheScript.//TODO
 			Error err;
 			nint handle = IntPtr.Zero;
 			nint address = IntPtr.Zero;
@@ -129,7 +129,7 @@ namespace Keysharp.Core
 			{
 				string name;
 				var z = path.LastIndexOf(Path.DirectorySeparatorChar);
-				var procAddressCache = script.DllData.procAddressCache;
+				var procAddressCache = Script.TheScript.DllData.procAddressCache;
 
 				if (z == -1)
 				{
@@ -299,6 +299,7 @@ namespace Keysharp.Core
 		{
 			IntPtr shim = IntPtr.Zero;
 			int n = args.Length;
+			var script = Script.TheScript;
 			var delegateCache = script.DllData.delegateCache;
 			// pack n (≤ 58) into bits 58–63, mask occupies bits 0–57
 			// this means the maximum argument count is 63 for integer return values, 57 for floating point ones

@@ -6,14 +6,14 @@ namespace Keysharp.Core
 	{
 		internal static string DefaultGuiId
 		{
-			get => script.Threads.GetThreadVariables().defaultGui ?? "1";
-			set => script.Threads.GetThreadVariables().defaultGui = value;
+			get => Script.TheScript.Threads.GetThreadVariables().defaultGui ?? "1";
+			set => Script.TheScript.Threads.GetThreadVariables().defaultGui = value;
 		}
 
 		internal static Form DialogOwner
 		{
-			get => script.Threads.GetThreadVariables().dialogOwner;
-			set => script.Threads.GetThreadVariables().dialogOwner = value;
+			get => Script.TheScript.Threads.GetThreadVariables().dialogOwner;
+			set => Script.TheScript.Threads.GetThreadVariables().dialogOwner = value;
 		}
 
 		public static Gui Gui(object obj0 = null, object obj1 = null, object obj2 = null) => new ([obj0, obj1, obj2]);
@@ -31,7 +31,7 @@ namespace Keysharp.Core
 		{
 			var hwnd = obj0.Al();
 			var recurse = obj1.Ab();
-			var allGuiHwnds = script.GuiData.allGuiHwnds;
+			var allGuiHwnds = Script.TheScript.GuiData.allGuiHwnds;
 
 			if (allGuiHwnds.TryGetValue(hwnd, out var gui))
 				return gui;

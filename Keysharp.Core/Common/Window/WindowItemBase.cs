@@ -203,7 +203,7 @@
 
 			if (!string.IsNullOrEmpty(criteria.Group))
 			{
-				if (script.WindowProvider.Manager.Groups.TryGetValue(criteria.Group, out var stack))
+				if (Script.TheScript.WindowProvider.Manager.Groups.TryGetValue(criteria.Group, out var stack))
 				{
 					if (stack.sc.Count > 0)//An empty group is assumed to want to match all windows.
 					{
@@ -355,7 +355,7 @@
 			if (string.IsNullOrEmpty(a))
 				return false;
 
-			switch (script.Threads.GetThreadVariables().titleMatchMode.ParseLong(false))
+			switch (Script.TheScript.Threads.GetThreadVariables().titleMatchMode.ParseLong(false))
 			{
 				case 1:
 					return a.StartsWith(b, comp);
@@ -370,7 +370,7 @@
 				{
 					VarRef outvar = new VarRef(null);
 					_ = RegEx.RegExMatch(a, b, outvar, 1);
-					RegExResults output = (RegExResults)(outvar.__Value);
+					RegExMatchInfo output = (RegExMatchInfo)(outvar.__Value);
 					return output.Count.Ai() > 0 && !string.IsNullOrEmpty(output[0]);
 				}
 			}

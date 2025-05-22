@@ -641,6 +641,7 @@
 		{
 			map = m;
 			iter = map.GetEnumerator();
+			var script = Script.TheScript;
 			var p = c <= 1 ? script.MapKeyValueIteratorData.p1 : script.MapKeyValueIteratorData.p2;
 			fo = (FuncObj)p.Clone();
 			fo.Inst = this;

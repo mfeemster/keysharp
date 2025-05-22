@@ -9,7 +9,8 @@ namespace Keysharp.Core
 				_ = Dialogs.MsgBox("Cannot edit a compiled script.");
 				return;
 			}
-
+			
+			var script = Script.TheScript;
 			var title = script.mainWindow != null ? script.mainWindow.Text : "";
 			var tv = script.Threads.GetThreadVariables();
 			var mm = tv.titleMatchMode;
@@ -71,6 +72,7 @@ namespace Keysharp.Core
 			var tabLevel = 0;
 			var doInternal = obj.Ab(true);
 			var sb = new StringBuffer();
+			var script = Script.TheScript;
 			var typesToProps = new SortedDictionary<string, List<PropertyInfo>>();
 			_ = sb.AppendLine($"**User defined**\r\n");
 
@@ -132,6 +134,7 @@ namespace Keysharp.Core
 		public static string ListKeyHistory()
 		{
 			var sb = new StringBuilder(2048);
+			var script = Script.TheScript;
 			var target_window = script.WindowProvider.Manager.ActiveWindow;
 			var win_title = target_window.IsSpecified ? target_window.Title : "";
 			var enabledTimers = 0;
@@ -196,7 +199,7 @@ namespace Keysharp.Core
 
 		public static object ListVars()
 		{
-			script.mainWindow?.ShowInternalVars(true);
+			Script.TheScript.mainWindow?.ShowInternalVars(true);
 			return "";
 		}
 
@@ -209,6 +212,7 @@ namespace Keysharp.Core
 		{
 			var text = obj0.As();
 			var clear = obj1.Ab();
+			var script = Script.TheScript;
 			System.Diagnostics.Debug.WriteLine(text);//Will print only in debug mode.
 
 			//This will throw when running tests.

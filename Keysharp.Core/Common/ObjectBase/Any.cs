@@ -6,8 +6,8 @@ namespace Keysharp.Core.Common.ObjectBase
 	{
 		public static object __Static
 		{
-			get => script.Vars.Statics.GetValueOrDefault(GetCallingType());
-			set => script.Vars.Statics[GetCallingType()] = (KeysharpObject)value;
+			get => Script.TheScript.Vars.Statics.GetValueOrDefault(GetCallingType());
+			set => Script.TheScript.Vars.Statics[GetCallingType()] = (KeysharpObject)value;
         }
 
         private static Type GetCallingType()

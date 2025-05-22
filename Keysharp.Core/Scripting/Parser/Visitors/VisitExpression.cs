@@ -1426,7 +1426,7 @@ namespace Keysharp.Scripting
             if (baseExpression is IdentifierNameSyntax identifierName)
             {
                 var name = Parser.NormalizeIdentifier(identifierName.Identifier.Text);
-                if ((script.ReflectionsData.stringToTypes.ContainsKey(name) || name.Equals(Keywords.MainClassName, StringComparison.OrdinalIgnoreCase))
+                if ((Script.TheScript.ReflectionsData.stringToTypes.ContainsKey(name) || name.Equals(Keywords.MainClassName, StringComparison.OrdinalIgnoreCase))
                     && parser.IsVarDeclaredGlobally(name) == null && parser.IsVarDeclaredLocally(name) == null && parser.IsVarDeclaredInClass(parser.currentClass, name) == null)
                 {
                     //name = Reflections.stringToTypes.SingleOrDefault(kv => kv.Key.Equals(name, StringComparison.OrdinalIgnoreCase)).Key;

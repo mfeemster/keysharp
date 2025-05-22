@@ -67,6 +67,7 @@ global using global::Keysharp.Core.Common.Window;
 global using global::Keysharp.Scripting;
 global using global::Semver.Comparers;
 global using global::Semver.Utility;
+global using global::PCRE;
 
 #if WINDOWS
 	global using global::Accessibility;

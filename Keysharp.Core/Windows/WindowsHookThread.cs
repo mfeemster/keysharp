@@ -438,6 +438,7 @@ namespace Keysharp.Core.Windows
 			// For maintainability, it seems best to display the MsgBox only at the very end.
 			if (problemActivatingHooks)
 			{
+				var script = Script.TheScript;
 				// Prevent hotkeys and other subroutines from running (which could happen via MsgBox's message pump)
 				// to avoid the possibility that the script will continue to call this function recursively, resulting
 				// in an infinite stack of MsgBoxes. This approach is similar to that used in Hotkey::Perform()
@@ -462,6 +463,7 @@ namespace Keysharp.Core.Windows
 			HotstringDefinition hsOut = null;
 			var caseConformMode = CaseConformModes.None;
 			var endChar = (char)0;
+			var script = Script.TheScript;
 			var hm = script.HotstringManager;
 
 			// Prevent toggleable keys from being toggled (if the user wanted that) by suppressing it.
@@ -725,6 +727,7 @@ namespace Keysharp.Core.Windows
 		{
 			// Determine the set of hooks that should be activated or deactivated.
 			var hooksToBeActive = whichHook | whichHookAlways; // Bitwise union.
+			var script = Script.TheScript;
 
 			if (hooksToBeActive == 0) // No need to check any further in this case.  Just remove all hooks.
 			{
@@ -1316,7 +1319,7 @@ namespace Keysharp.Core.Windows
 											  KeyHistoryItem keyHistoryCurr, ref HotstringDefinition hsOut, ref CaseConformModes caseConformMode, ref char endChar)
 		{
 			var suppressHotstringFinalChar = false; // Set default.
-			var hm = script.HotstringManager;
+			var hm = Script.TheScript.HotstringManager;
 
 			if (activeWindow != hsHwnd)
 			{
@@ -1544,7 +1547,7 @@ namespace Keysharp.Core.Windows
 			var activeWindowKeybdLayout = state.keyboardLayout;
 			var ch = state.ch;
 			var sb = new StringBuilder(8);
-			var hm = script.HotstringManager;
+			var hm = Script.TheScript.HotstringManager;
 			var hsBuf = hm.hsBuf;
 
 			if (!CollectInputHook(ref ev, vk, sc, ch, charCount, false))
@@ -1616,7 +1619,7 @@ namespace Keysharp.Core.Windows
 
 		internal bool CollectInputHook(ref KBDLLHOOKSTRUCT ev, uint vk, uint sc, char[] ch, int charCount, bool early)
 		{
-			var input = script.input;
+			var input = Script.TheScript.input;
 
 			for (; input != null; input = input.prev)
 			{
@@ -1752,7 +1755,7 @@ namespace Keysharp.Core.Windows
 		// might have adjusted vk, namely to make it a left/right specific modifier key rather than a
 		// neutral one.
 		{
-			for (var input = script.input; input != null; input = input.prev)
+			for (var input = Script.TheScript.input; input != null; input = input.prev)
 			{
 				if (input.BeforeHotkeys == early && input.IsInteresting(ev.dwExtraInfo) && input.InProgress())
 				{
@@ -1821,6 +1824,7 @@ namespace Keysharp.Core.Windows
 		// might have adjusted aVK, such as to make it a left/right specific modifier key rather than a
 		// neutral one. On the other hand, event.scanCode is the one we need for ToUnicodeEx() calls.
 		{
+			var script = Script.TheScript;
 			state.earlyCollected = true;
 			state.used_dead_key_non_destructively = false;
 			state.charCount = 0;
@@ -2134,6 +2138,7 @@ namespace Keysharp.Core.Windows
 					return false;
 			}
 
+			var script = Script.TheScript;
 			// Otherwise, it's physical.
 			// v1.0.42.04:
 			// The time member of the incoming event struct has been observed to be wrongly zero sometimes, perhaps only
@@ -2158,6 +2163,7 @@ namespace Keysharp.Core.Windows
 		{
 			var hotkeyIdToPost = HotkeyDefinition.HOTKEY_ID_INVALID; // Set default.
 			var isIgnored = IsIgnored(extraInfo);
+			var script = Script.TheScript;
 			var collectInputState = new CollectInputState()
 			{
 				earlyCollected = false
@@ -3874,6 +3880,8 @@ namespace Keysharp.Core.Windows
 
 		internal IntPtr LowLevelMouseHandler(int code, IntPtr param, ref MSDLLHOOKSTRUCT lParam)
 		{
+			var script = Script.TheScript;
+
 			// code != HC_ACTION should be evaluated PRIOR to considering the values
 			// of wParam and lParam, because those values may be invalid or untrustworthy
 			// whenever code < 0.
@@ -4253,7 +4261,7 @@ namespace Keysharp.Core.Windows
 				altTabMenuIsVisible = FindWindow("#32771", null) != IntPtr.Zero;
 				pendingDeadKeys.Clear();
 				pendingDeadKeyInvisible = false;
-				script.HotstringManager.ClearBuf();
+				Script.TheScript.HotstringManager.ClearBuf();
 				hsHwnd = IntPtr.Zero; // It isn't necessary to determine the actual window/control at this point since the buffer is already empty.
 
 				if (resetKVKandKSC)
@@ -4288,7 +4296,7 @@ namespace Keysharp.Core.Windows
 						// Control up::Send {LWin up}
 						if (!alwaysSetAsPrefix)
 						{
-							var shk = script.HotkeyData.shk;
+							var shk = Script.TheScript.HotkeyData.shk;
 
 							for (var i = 0; i < shk.Count; ++i)
 							{
@@ -4583,7 +4591,7 @@ namespace Keysharp.Core.Windows
 				return 0;
 
 			if (keybdLayout == IntPtr.Zero)
-				keybdLayout = script.PlatformProvider.Manager.GetKeyboardLayout(0);
+				keybdLayout = Script.TheScript.PlatformProvider.Manager.GetKeyboardLayout(0);
 
 			// Don't trim() aText or modify it because that will mess up the caller who expects it to be unchanged.
 			// Instead, for now, just check it as-is.  The only extra whitespace that should exist, due to trimming
@@ -4667,7 +4675,7 @@ namespace Keysharp.Core.Windows
 			//Original did these, but HookThread.Stop() will take care of it before this is called.
 			//WindowsAPI.PostQuitMessage(exitCode);
 			AddRemoveHooks(HookType.None); // Remove all hooks. By contrast, registered hotkeys are unregistered below.
-			Unhook(script.playbackHook); // Would be unusual for this to be installed during exit, but should be checked for completeness.
+			Unhook(Script.TheScript.playbackHook); // Would be unusual for this to be installed during exit, but should be checked for completeness.
 			thread?.Dispose();
 		}
 
@@ -4817,7 +4825,7 @@ namespace Keysharp.Core.Windows
 		internal override char VKtoChar(uint vk, IntPtr keybdLayout)
 		{
 			if (keybdLayout == IntPtr.Zero)
-				keybdLayout = script.PlatformProvider.Manager.GetKeyboardLayout(0);
+				keybdLayout = Script.TheScript.PlatformProvider.Manager.GetKeyboardLayout(0);
 
 			// MapVirtualKeyEx() always produces 'A'-'Z' for those keys regardless of keyboard layout,
 			// but for any other keys it produces the correct results, so we'll use it:
@@ -4958,6 +4966,7 @@ namespace Keysharp.Core.Windows
 							// ********
 							// NO BREAK IN ABOVE, FALL INTO NEXT CASE:
 							// ********
+							var script = Script.TheScript;
 							var tv = script.Threads.GetThreadVariables();
 							tv.WaitForCriticalToFinish();//Must wait until the previous critical task finished before proceeding.
 

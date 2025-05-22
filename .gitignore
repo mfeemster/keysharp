@@ -31,4 +31,6 @@
 /Keysharp.Core/Scripting/Parser/Antlr/.antlr
 /Keysharp.Core/bin/x64/Debug/net9.0-windows
 /Keysharp/bin/x64/Debug/net9.0-windows
+/Keysharp.Tests/Code/Gui/guitest.deps.json
+/Keysharp.Tests/Code/Gui/guitest.runtimeconfig.json
 /.vs

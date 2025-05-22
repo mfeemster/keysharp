@@ -51,7 +51,7 @@
 		/// Regardless of the value of startingPos, the return value is always relative to the first character of haystack.<br/>
 		/// For example, the position of "abc" in "123abc789" is always 4.
 		/// </param>
-		/// <returns>The <see cref="RegExResults"/> object which contains the matches, if any.</returns>
+		/// <returns>The <see cref="RegExMatchInfo"/> object which contains the matches, if any.</returns>
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown on failure.</exception>
 		public static long RegExMatch(object haystack, object needle, object outputVar, object startingPos)
 		{
@@ -59,47 +59,59 @@
 			var input = haystack.As();
 			var n = needle.As();
 			var index = startingPos.Ai(1);
-			var reverse = index < 1;
-			var str = n + reverse;
-			RegexWithTag exp = null;
-			var regdkt = script.RegExData.regdkt;
+			IFuncObj callout = null;
 
-			lock (script.RegExData.locker)//KeyedCollection is not threadsafe, the way ConcurrentDictionary is, so we must lock. We use KC because we need to preserve order to remove the first entry.
+			RegexHolder exp;
+			try
 			{
-				if (!regdkt.TryGetValue(str, out exp))
-				{
-					try
-					{
-						exp = Conversions.ParseRegEx(n, reverse);//This will not throw PCRE style errors like the documentation says.
-					}
-					catch (Exception ex)
-					{
-						return Errors.ErrorOccurred(err = new Error("Regular expression compile error", "", ex.Message)) ? throw err : 0L;
-					}
-
-					exp.tag = str;
-					regdkt.Add(exp);
-
-					while (regdkt.Count > 100)
-						regdkt.RemoveAt(0);
-				}
+				exp = new RegexHolder(input, n);//This will not throw PCRE style errors like the documentation says.
+			}
+			catch (Exception ex)
+			{
+				return Errors.ErrorOccurred(err = new Error("Regular expression compile error", "", ex.Message)) ? throw err : 0L;
 			}
 
 			if (index < 0)
 			{
-				index = input.Length + index + 1;
+				index = input.Length + index;
 
 				if (index < 0)
-					index = input.Length;
+					index = 0;
 			}
 			else
 				index = Math.Min(Math.Max(0, index - 1), input.Length);
 
+			PcreCalloutResult MatchCalloutHandler(PcreCallout pcre_callout)
+			{
+				if (callout == null)
+				{
+					string calloutString = pcre_callout.Number == 0 ? pcre_callout.String : null;
+					string name = calloutString != null && calloutString != "" ? calloutString : "pcre_callout";
+					callout = Functions.GetFuncObj(name, null);
+				}
+				int result = callout.Call(
+					new RegExMatchInfo(pcre_callout.Match, exp),
+					(long)pcre_callout.Number,
+					pcre_callout.PatternPosition,
+					haystack,
+					needle).ParseInt() ?? 0;
+
+				if (result > 1)
+					result = 1;
+				else if (result < -1)
+				{
+					Error err;
+					return Errors.ErrorOccurred(err = new Error($"PCRE matching error", null, (long)result)) ? throw err : PcreCalloutResult.Abort;
+				}
+				return (PcreCalloutResult)result;
+			}
+
 			try
 			{
-				var res = new RegExResults(exp.Match(input, index));
-                Script.SetPropertyValue(outputVar, "__Value", res);
-                return res.Pos();
+				var res = new RegExMatchInfo(exp.regex.Match(input, index, MatchCalloutHandler), exp);
+				var pos = res.Pos();
+				Script.SetPropertyValue(outputVar, "__Value", pos > 0 ? res : "");
+				return pos;
 			}
 			catch (Exception ex)
 			{
@@ -130,7 +142,7 @@
 		/// Replaces occurrences of a pattern (regular expression) inside a string.
 		/// </summary>
 		/// <param name="haystack">The string whose content is searched and replaced.</param>
-		/// <param name="needleRegEx">The pattern to search for, which is a C# compatible regular expression.<br/>
+		/// <param name="needleRegEx">The pattern to search for, which is a PCRE2 regular expression.<br/>
 		/// The pattern's options (if any) must be included at the beginning of the string followed by a close-parenthesis.<br/>
 		/// For example, the pattern i)abc.*123 would turn on the case-insensitive option and search for "abc",<br/>
 		/// followed by zero or more occurrences of any character, followed by "123".<br/>
@@ -139,7 +151,8 @@
 		/// </param>
 		/// <param name="replacement">
 		/// If blank or omitted, NeedleRegEx will be replaced with blank (empty), meaning it will be omitted from the return value.<br/>
-		/// Otherwise, specify the string to be substituted for each match, which is plain text (not a regular expression).
+		/// Otherwise, specify the string to be substituted for each match, which is plain text (not a regular expression).<br/>
+		/// This can also be a function object, which gets called with one argument (RegExMatchInfo) and must return the replacement string.
 		/// </param>
 		/// <param name="outputVarCount">If omitted, the corresponding value will not be stored.<br/>
 		/// Otherwise, specify a reference to the output variable in which to store the number of replacements that occurred (0 if none).
@@ -167,35 +180,28 @@
 			Error err;
 			var input = haystack.As();
 			var needle = needleRegEx.As();
-			var replace = replacement.As();
+			IFuncObj callout = null;
+			string replace = null;
+			Func<PcreMatch, string> replaceParser = null;
+			if (replacement is IFuncObj ifo)
+				callout = ifo;
+			else
+			{
+				replace = replacement.As();
+				replaceParser = RegexHolder.ReplacementCache.GetOrAdd(replace, RegexHolder.ParseReplace);
+			}
 			var l = limit.Ai(-1);
 			var index = startingPos.Ai(1);
-			var n = 0;
-			var reverse = index < 1;
-			var str = needle + reverse;
-			outputVarCount ??= VarRef.Empty;
-			RegexWithTag exp = null;
-			var regdkt = script.RegExData.regdkt;
+			int n = 0;
 
-			lock (script.RegExData.locker)//KeyedCollection is not threadsafe, the way ConcurrentDictionary is, so we must lock. We use KeyedCollection because we need to preserve order to remove the first entry.
+			RegexHolder exp;
+			try
 			{
-				if (!regdkt.TryGetValue(str, out exp))
-				{
-					try
-					{
-						exp = Conversions.ParseRegEx(needle, reverse);
-					}
-					catch (ArgumentException ex)
-					{
-						return Errors.ErrorOccurred(err = new Error("Regular expression compile error", "", ex.Message)) ? throw err : null;
-					}
-
-					exp.tag = str;
-					regdkt.Add(exp);
-
-					while (regdkt.Count > 100)
-						regdkt.RemoveAt(0);
-				}
+				exp = new RegexHolder(input, needle);//This will not throw PCRE style errors like the documentation says.
+			}
+			catch (Exception ex)
+			{
+				return Errors.ErrorOccurred(err = new Error("Regular expression compile error", "", ex.Message)) ? throw err : input;
 			}
 
 			if (l < 1)
@@ -203,24 +209,27 @@
 
 			if (index < 0)
 			{
-				index = input.Length + index + 1;
+				index = input.Length + index;
 
 				if (index < 0)
-					index = input.Length;
+					index = 0;
 			}
 			else
 				index = Math.Min(Math.Max(0, index - 1), input.Length);
 
-			string match(Match hit)
+			string CalloutHandler(PcreMatch match)
 			{
 				n++;
-				return hit.Result(replace);
+				if (callout != null)
+					return callout.Call(new RegExMatchInfo(match, exp)).As();
+
+				return replaceParser(match);
 			}
 
 			try
 			{
-				var result = exp.Replace(input, match, l, index);
-                Script.SetPropertyValue(outputVarCount, "__Value", (long)n);
+				string result = exp.regex.Replace(input, CalloutHandler, l, index);
+				Script.SetPropertyValue(outputVarCount, "__Value", (long)n);
 				return result;
 			}
 			catch (Exception ex)
@@ -233,14 +242,14 @@
 		/// Thin derivation of a <see cref="KeyedCollection"/> to make it easy to look up
 		/// regular expression items.
 		/// </summary>
-		internal class RegexEntry : KeyedCollection<string, RegexWithTag>
+		internal class RegexEntry : KeyedCollection<string, RegexHolder>
 		{
 			/// <summary>
-			/// Return the tag property of the <see cref="RegexWithTag">.
+			/// Return the tag property of the <see cref="RegexHolder">.
 			/// </summary>
-			/// <param name="item">The <see cref="RegexWithTag"/> whose tag field will be returned.</param>
+			/// <param name="item">The <see cref="RegexHolder"/> whose tag field will be returned.</param>
 			/// <returns>The tag field of the item.</returns>
-			protected override string GetKeyForItem(RegexWithTag item) => item.tag;
+			protected override string GetKeyForItem(RegexHolder item) => item.tag;
 		}
 	}
 }

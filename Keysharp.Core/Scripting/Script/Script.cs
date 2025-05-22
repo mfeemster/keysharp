@@ -29,7 +29,6 @@ namespace Keysharp.Scripting
 		internal const int maxThreadsLimit = 0xFF;
 		internal const int SLEEP_INTERVAL = 10;
 		internal const int SLEEP_INTERVAL_HALF = SLEEP_INTERVAL / 2;
-		internal static Script script;
 		internal List<IFuncObj> ClipFunctions = [];
 		internal List<IFuncObj> hotCriterions = [];
 		internal IntPtr hotExprLFW = IntPtr.Zero;
@@ -54,11 +53,11 @@ namespace Keysharp.Scripting
 		internal Icon suspendedIcon;
 		internal string thisHotkeyName, priorHotkeyName;
 		internal DateTime thisHotkeyStartTime;
-		internal Threads threads;
+		internal ThreadLocal<Threads> threads;
 		internal DateTime timeLastInputKeyboard;
 		internal DateTime timeLastInputMouse;
 		internal DateTime timeLastInputPhysical = DateTime.UtcNow;
-		internal int totalExistingThreads;
+		internal int totalExistingThreads;//Even though the thread stacks are on a per-real-thread basis, we keep a global count of threads. This may need to change in the future.
 		internal int uninterruptibleTime = 17;
 		private static int instanceCount;
 		private AccessorData accessorData;
@@ -95,9 +94,9 @@ namespace Keysharp.Scripting
 		private WindowProvider windowProvider;
 
 		[PublicForTestOnly]
-		public static Keysharp.Scripting.Script TheScript => script;
+		public static Keysharp.Scripting.Script TheScript { get; private set; }
 		public HotstringManager HotstringManager => hotstringManager ?? (hotstringManager = new ());
-		public Threads Threads => threads;
+		public Threads Threads => threads.Value;
 		public Variables Vars { get; private set; }
 		internal AccessorData AccessorData => accessorData ?? (accessorData = new ());
 		internal ArrayIndexValueIteratorData ArrayIndexValueIteratorData => arrayIndexValueIteratorData ?? (arrayIndexValueIteratorData = new ());
@@ -118,8 +117,8 @@ namespace Keysharp.Scripting
 
 		internal IntPtr HwndLastUsed
 		{
-			get => threads.GetThreadVariables().hwndLastUsed;
-			set => threads.GetThreadVariables().hwndLastUsed = value;
+			get => Threads.GetThreadVariables().hwndLastUsed;
+			set => Threads.GetThreadVariables().hwndLastUsed = value;
 		}
 
 		internal ImageListData ImageListData => imageListData ?? (imageListData = new ());
@@ -150,7 +149,7 @@ namespace Keysharp.Scripting
 		internal PlatformProvider PlatformProvider => platformProvider ?? (platformProvider = new ());
 		internal ProcessesData ProcessesData => processesData ?? (processesData = new ());
 		internal Reflections Reflections { get; private set; }
-		internal ReflectionsData ReflectionsData { get; } = new ();//Don't lazy initialize, it's always needed in every script.
+		internal ReflectionsData ReflectionsData { get; } = new ();//Don't lazy initialize, it's always needed in every Script.TheScript.
 		internal RegExData RegExData => regExData ?? (regExData = new ());
 		internal RegExIteratorData RegExIteratorData => regExIteratorData ?? (regExIteratorData = new ());
 		internal StringsData StringsData => stringsData ?? (stringsData = new ());
@@ -163,31 +162,31 @@ namespace Keysharp.Scripting
 			CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
 			CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture;
 #if LINUX
-		Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);//For some reason, linux needs this for rich text to work.
-		enc1252 = Encoding.GetEncoding(1252);
+			Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);//For some reason, linux needs this for rich text to work.
+			enc1252 = Encoding.GetEncoding(1252);
 #endif
 			SetInitialFloatFormat();//This must be done intially and not just when A_FormatFloat is referenced for the first time.
 		}
 
 		public Script(Type program = null)
 		{
-			script = this;//Everywhere in the script will reference this.
+			Script.TheScript = this;//Everywhere in the script will reference this.
 			timeLastInputPhysical = DateTime.UtcNow;
 			timeLastInputKeyboard = timeLastInputPhysical;
 			timeLastInputMouse = timeLastInputPhysical;
-			threads = new Threads();
+			threads = new(() => new());
 			Reflections = new Reflections();
 			Vars = new Variables(program);
 			Vars.InitPrototypes();
 
-			_ = script.Threads.PushThreadVariables(0, true, false, true);//Ensure there is always one thread in existence for reference purposes, but do not increment the actual thread counter.
-
+			_ = Script.TheScript.Threads.PushThreadVariables(0, true, false, true);//Ensure there is always one thread in existence for reference purposes, but do not increment the actual thread counter.
 			var pd = this.ProcessesData;
 			mgr = this.PlatformProvider.Manager;
 			pd.MainThreadID = mgr.CurrentThreadId();
 			pd.ManagedMainThreadID = Thread.CurrentThread.ManagedThreadId;//Figure out how to do this on linux.//TODO
 			//If we're running via passing in a script and are not in a unit test, then set the working directory to that of the script file.
 			var path = Path.GetFileName(Application.ExecutablePath).ToLowerInvariant();
+
 			if (path != "testhost.exe" && path != "testhost.dll" && !A_IsCompiled)
 				Dir.SetWorkingDir(A_ScriptDir);
 
@@ -202,6 +201,7 @@ namespace Keysharp.Scripting
 		private void LoadDlls()
 		{
 			Error err;
+
 			foreach (var dll in Vars.preloadedDlls)
 			{
 				if (dll.Item1.Length == 0)
@@ -342,14 +342,14 @@ namespace Keysharp.Scripting
 			{
 				if (!Flow.TryCatch(() =>
 			{
-				var (__pushed, __btv) = threads.BeginThread();
+				var (__pushed, __btv) = Threads.BeginThread();
 					_ = userInit();
 					//HotkeyDefinition.ManifestAllHotkeysHotstringsHooks() will be called inside of userInit() because it
 					//must be done:
 					//  After the window handle is created and the handle isn't valid until mainWindow.Load() is called.
 					//  Also right after all hotkeys and hotstrings are created.
 					isReadyToExecute = true;
-					_ = threads.EndThread(__pushed);
+					_ = Threads.EndThread(__pushed);
 				}, true))//Pop on exception because EndThread() above won't be called.
 				{
 					if (!persistent)//An exception was thrown so the generated ExitApp() call in _ks_UserMainCode() will not have been called, so call it here.

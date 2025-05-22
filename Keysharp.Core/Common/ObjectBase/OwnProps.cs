@@ -75,7 +75,7 @@
 			set
 			{
 				_getVal = value;
-				var p = value ? script.OwnPropsIteratorData.p2 : script.OwnPropsIteratorData.p1;
+				var p = value ? Script.TheScript.OwnPropsIteratorData.p2 : Script.TheScript.OwnPropsIteratorData.p1;
 				fo = (FuncObj)p.Clone();
 				fo.Inst = this;
 				CallFunc = fo;

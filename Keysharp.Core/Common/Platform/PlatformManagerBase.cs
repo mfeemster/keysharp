@@ -11,6 +11,7 @@
 		/// <param name="aWhichMode"></param>
 		internal void CoordToScreen(ref int aX, ref int aY, CoordMode modeType)
 		{
+			var script = Script.TheScript;
 			var coordMode = script.Coords.GetCoordMode(modeType);
 
 			if (coordMode == CoordModeType.Screen)

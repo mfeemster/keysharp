@@ -860,9 +860,9 @@ namespace Keysharp.Scripting
 
         public static void InitStaticVariable(ref object variable, string name, Func<object> initFunc)
         {
-            if (script.FlowData.initializedUserStaticVariables.Contains(name))
+            if (Script.TheScript.FlowData.initializedUserStaticVariables.Contains(name))
                 return;
-			script.FlowData.initializedUserStaticVariables.Add(name);
+			Script.TheScript.FlowData.initializedUserStaticVariables.Add(name);
             variable = initFunc();
         }
 

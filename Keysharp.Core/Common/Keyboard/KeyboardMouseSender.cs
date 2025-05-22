@@ -78,7 +78,7 @@
 		internal string sendKeyChars = "^+!#{}";
 		internal uint thisHotkeyModifiersLR;
 		internal bool triedKeyUp;
-		protected internal PlatformManagerBase mgr = script.PlatformProvider.Manager;
+		protected internal PlatformManagerBase mgr = Script.TheScript.PlatformProvider.Manager;
 		protected ArrayPool<byte> keyStatePool = ArrayPool<byte>.Create(256, 100);
 		protected SendModes sendMode = SendModes.Event;//Note this is different than the one in Accessors and serves as a temporary.
 		private const int retention = 1024;
@@ -231,6 +231,7 @@
 			// Drag consists of at most:
 			// 1) Move; 2) Delay; 3) Down; 4) Delay; 5) Move; 6) Delay; 7) Delay (dupe); 8) Up; 9) Delay.
 			const int MAX_PERFORM_MOUSE_EVENTS = 10;
+			var script = Script.TheScript;
 			var ht = script.HookThread;
 			sendMode = ThreadAccessors.A_SendMode;
 
@@ -288,6 +289,7 @@
 		internal void ProcessHotkey(int wParamVal, int lParamVal, HotkeyVariant variant, uint msg)
 		{
 			var hkId = wParamVal & HotkeyDefinition.HOTKEY_ID_MASK;
+			var script = Script.TheScript;
 			var shk = script.HotkeyData.shk;
 
 			if (hkId < shk.Count)//Ensure hotkey ID is valid.

@@ -103,6 +103,7 @@
 			// Even if joystick hotkeys aren't currently allowed to fire, poll it anyway so that hotkey
 			// messages can be buffered for later.
 			var jie = JOYINFOEX.Default;
+			var script = Script.TheScript;
 			var jd = script.JoystickData;
 
 			for (var i = 0; i < JoystickData.MaxJoysticks; ++i)

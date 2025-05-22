@@ -892,8 +892,8 @@
 			: base(null, c)
 		{
 			arr = a;
-			var p = c <= 1 ? script.ArrayIndexValueIteratorData.p1 : script.ArrayIndexValueIteratorData.p2;
-			fo = (FuncObj)p.Clone();
+			var p = c <= 1 ? Script.TheScript.ArrayIndexValueIteratorData.p1 : Script.TheScript.ArrayIndexValueIteratorData.p2;
+			var fo = (FuncObj)p.Clone();
 			fo.Inst = this;
 		}
 

@@ -42,6 +42,7 @@ namespace Keysharp.Core
 			var _x = x.Ai(int.MinValue);
 			var _y = y.Ai(int.MinValue);
 			var id = whichToolTip.Ai(1);
+			var script = Script.TheScript;
 			var persistentTooltips = script.ToolTipData.persistentTooltips;
 			var persistentTooltipsPositions = script.ToolTipData.persistentTooltipsPositions;
 			id--;
@@ -122,7 +123,8 @@ namespace Keysharp.Core
 				//is active.
 				var mSetTrackPosition = tt.GetType().GetMethod("SetTrackPosition", BindingFlags.Instance | BindingFlags.NonPublic);
 				var mSetTool = tt.GetType().GetMethod("SetTool", BindingFlags.Instance | BindingFlags.NonPublic);
-
+				var script = Script.TheScript;
+			
 				if (!tt.Active) // If this is the first run then invoke the ToolTip once before displaying it, otherwise it shows at the mouse position
 					_ = mSetTool.Invoke(tt, [tooltipInvokerForm, t, 2, new Point(0, 0)]);
 
@@ -198,7 +200,8 @@ namespace Keysharp.Core
 		{
 			var filename = fileName.As();
 			var iconnumber = ImageHelper.PrepareIconNumber(iconNumber);
-
+			var script = Script.TheScript;
+			
 			if (script.NoTrayIcon)
 				return null;
 
@@ -264,7 +267,8 @@ namespace Keysharp.Core
 			var _text = text.As();
 			var _title = title.As();
 			var opts = options;
-
+			var script = Script.TheScript;
+			
 			if (script.NoTrayIcon)
 				return null;
 

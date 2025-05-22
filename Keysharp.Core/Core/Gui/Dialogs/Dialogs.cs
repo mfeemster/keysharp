@@ -81,7 +81,7 @@ namespace Keysharp.Core
 			else if (folder.Length != 0)
 				select.SelectedPath = folder;
 
-			var selected = script.mainWindow.CheckedInvoke(() => GuiHelper.DialogOwner == null ? select.ShowDialog() : select.ShowDialog(GuiHelper.DialogOwner), true);
+			var selected = Script.TheScript.mainWindow.CheckedInvoke(() => GuiHelper.DialogOwner == null ? select.ShowDialog() : select.ShowDialog(GuiHelper.DialogOwner), true);
 			return selected == DialogResult.OK ? select.SelectedPath : "";
 		}
 
@@ -127,6 +127,7 @@ namespace Keysharp.Core
 			var rootdir = rootDirFilename.As();
 			var t = title.As();
 			var f = FixFilters(filter.As());
+			var script = Script.TheScript;
 			bool save = false, multi = false, check = false, create = false, overwite = false, shortcuts = false, dir = false;
 			opts = opts.ToUpperInvariant();
 			object files = null;
@@ -337,7 +338,7 @@ namespace Keysharp.Core
 				input.Left = x != int.MinValue ? x : (((wr.__Value.Ai() - wl.__Value.Ai()) / 2) - (input.Width / 2));
 				input.Top = y != int.MinValue ? y : (((wb.__Value.Ai() - wt.__Value.Ai()) / 2) - (input.Height / 2));
 			};
-			script.mainWindow.CheckedInvoke(() =>
+			Script.TheScript.mainWindow.CheckedInvoke(() =>
 			{
 				if (GuiHelper.DialogOwner != null)
 					_ = input.ShowDialog(GuiHelper.DialogOwner);
@@ -346,7 +347,7 @@ namespace Keysharp.Core
 			}, true);
 
 			while (input.Visible)
-				Application.DoEvents();
+				Flow.TryDoEvents();
 
 			return new DialogResultReturn()
 			{
@@ -391,6 +392,7 @@ namespace Keysharp.Core
 			var buttons = MessageBoxButtons.OK;
 			var icon = MessageBoxIcon.None;
 			var defaultbutton = MessageBoxDefaultButton.Button1;
+			var script = Script.TheScript;
 #if WINDOWS
 			var mbopts = (MessageBoxOptions)WindowsAPI.MB_SETFOREGROUND;//For some reason this constant is not available in C#, but it works and is required to make the message box take the focus.
 #else
@@ -605,8 +607,7 @@ namespace Keysharp.Core
 
 					while (!tsk.IsCompleted)
 					{
-						Application.DoEvents();
-						Thread.Sleep(1);
+						Flow.TryDoEvents();
 					}
 
 					//tsk.Wait();
@@ -628,7 +629,7 @@ namespace Keysharp.Core
 		{
 #if WINDOWS
 			//Will need a way to do this on linux.//TODO
-			var tempn = script.nMessageBoxes;
+			var tempn = Script.TheScript.nMessageBoxes;
 
 			while (tempn > 0)
 			{

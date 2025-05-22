@@ -224,7 +224,7 @@ namespace Keysharp.Scripting
                     return _builtinTypes;
                 _builtinTypes = new (StringComparer.OrdinalIgnoreCase);
 				var anyType = typeof(Any);
-				foreach (var type in script.ReflectionsData.stringToTypes.Values
+				foreach (var type in Script.TheScript.ReflectionsData.stringToTypes.Values
 						.Where(type => type.IsClass && !type.IsAbstract && anyType.IsAssignableFrom(type)))
 					_builtinTypes[type.Name] = type;
 				return _builtinTypes;

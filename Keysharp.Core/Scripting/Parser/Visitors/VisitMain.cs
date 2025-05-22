@@ -179,7 +179,7 @@ namespace Keysharp.Scripting
                 var classBase = classDeclaration.classExtensionName()?.GetText() ?? "KeysharpObject";
                 parser.UserTypes[className] = classBase;
                 parser.AllTypes[className] = classBase;
-                while (script.ReflectionsData.stringToTypes.TryGetValue(classBase, out Type baseType))
+                while (Script.TheScript.ReflectionsData.stringToTypes.TryGetValue(classBase, out Type baseType))
                 {
                     classBase = parser.AllTypes[baseType.Name] = baseType.BaseType.Name;
                 }

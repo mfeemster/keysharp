@@ -69,7 +69,7 @@ namespace Keysharp.Core
 					if (o is bool b)
 					{
 						f.lastfound = b;
-						script.HwndLastUsed = f.Hwnd;
+						Script.TheScript.HwndLastUsed = f.Hwnd;
 					}
 				}
 			},
@@ -335,6 +335,8 @@ namespace Keysharp.Core
 
 		internal Gui(object obj0 = null, object obj1 = null, object obj2 = null, object obj3 = null) : base(skipLogic:true)//The last parameter is hidden and is only for internal use for when we wrap the main window in a Gui object.
 		{
+			var script = Script.TheScript;
+			
 			if (obj3 is KeysharpForm kf)
 			{
 				form = kf;
@@ -353,7 +355,7 @@ namespace Keysharp.Core
 
 		~Gui()
 		{
-			script.ExitIfNotPersistent();//May not be necessary, but try anyway.
+			Script.TheScript.ExitIfNotPersistent();//May not be necessary, but try anyway.
 		}
 
 		public IFuncObj __Enum(object count) => (new GuiControlIterator(controls, count.Ai())).fo;
@@ -365,6 +367,7 @@ namespace Keysharp.Core
 				var options = obj.Length > 0 ? obj[0].As() : null;
 				var caption = obj.Length > 1 ? obj[1].As() : null;
 				var eventObj = obj.Length > 2 ? obj[2] : null;
+				var script = Script.TheScript;
 				var newCount = Interlocked.Increment(ref script.GuiData.windowCount);
 				//Get numeric creation params first.
 				int addStyle = 0, addExStyle = 0, removeStyle = 0, removeExStyle = 0;
@@ -2083,10 +2086,12 @@ namespace Keysharp.Core
 
 		IEnumerator IEnumerable.GetEnumerator() => new GuiControlIterator(controls, 2);
 
-		internal static bool AnyExistingVisibleWindows() => script.GuiData.allGuiHwnds.Values.Any(g => g.form != null && g.form != script.mainWindow && g.form.Visible);
+		internal static bool AnyExistingVisibleWindows() => Script.TheScript.GuiData.allGuiHwnds.Values.Any(g => g.form != null && g.form != Script.TheScript.mainWindow && g.form.Visible);
 
 		internal static void DestroyAll()
 		{
+			var script = Script.TheScript;
+			
 			//Destroy everything but the main window, which will destroy itself.
 			foreach (var gui in script.GuiData.allGuiHwnds.Values.Where(g => g.form != script.mainWindow).ToArray())
 			{

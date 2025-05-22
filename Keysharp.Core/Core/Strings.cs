@@ -1131,7 +1131,8 @@ namespace Keysharp.Core
 			value = Encoding.Unicode.GetBytes(value.ToString());
 			var gch = GCHandle.Alloc(value, GCHandleType.Pinned);
 			var ptr = gch.AddrOfPinnedObject();
-
+			var script = Script.TheScript;
+			
 			if (script.StringsData.gcHandles.Remove(ptr, out var oldGch))
 				oldGch.Free();
 

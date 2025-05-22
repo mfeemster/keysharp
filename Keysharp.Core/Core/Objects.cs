@@ -205,7 +205,7 @@
 			else
 				return Errors.ErrorOccurred(err = new TypeError($"Argument of type {value.GetType()} was not a pointer.")) ? throw err : false;
 
-			if (script.StringsData.gcHandles.Remove(ip, out var oldGch))
+			if (Script.TheScript.StringsData.gcHandles.Remove(ip, out var oldGch))
 			{
 				oldGch.Free();
 				return true;

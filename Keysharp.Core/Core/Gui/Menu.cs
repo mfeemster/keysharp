@@ -78,7 +78,7 @@
 		{
 			MenuItem = (args.Length > 0 ? (ContextMenuStrip)args[0] : null) ?? new ContextMenuStrip();
 			//GetMenu().ImageScalingSize = new System.Drawing.Size(28, 28);//Don't set scaling, it makes the checked icons look funny.
-			var newCount = Interlocked.Increment(ref script.GuiData.menuCount);
+			var newCount = Interlocked.Increment(ref Script.TheScript.GuiData.menuCount);
 			GetMenu().Name = $"Menu_{newCount}";
 			dummyHandle = Handle;//Must access the handle once to force creation.
 			return "";
@@ -133,8 +133,9 @@
 		public object AddStandard()
 		{
 			var menu = GetMenu();
-			var emptyfunc = (params object[] args) => "";
-			var openfunc = (params object[] args) =>
+			var emptyfunc = new Func<object>(() => "");
+			var script = Script.TheScript;
+			var openfunc = new Func<object>(() =>
 			{
 				var mainWindow = script.mainWindow;
 
@@ -147,7 +148,7 @@
 				}
 
 				return "";
-			};
+			});
 			var reloadfunc = (params object[] args) =>
 			{
 				_ = Flow.Reload();
@@ -374,7 +375,7 @@
 			var _y = y.Ai(Cursor.Position.Y);
 			var pt = new Point(_x, _y);
 
-			if (script.Coords.Menu == CoordModeType.Screen)
+			if (Script.TheScript.Coords.Menu == CoordModeType.Screen)
 				if (Form.ActiveForm is Form form)
 					pt = form.PointToClient(pt);
 

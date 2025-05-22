@@ -9,20 +9,21 @@
 		/// This shouldn't be a problem though.
 		/// Note that we use ThreadLocal<T> here because it allows initialization for each thread, whereas
 		/// [ThreadStatic] doesn't.
+		/// Always add 1 to MaxThreadsTotal because the a dummy entry will always be added in the constructor.
 		/// </summary>
 		private readonly Lock locker = new ();
-		private ThreadVariableManager tvm = new ();
+		private ThreadVariableManager tvm = new ((int)Script.TheScript.MaxThreadsTotal + 1);
 
-		//public Threads()
-		//{
-		//  Console.WriteLine("Threads()");
-		//}
+		public Threads()
+		{
+			_ = PushThreadVariables(0, true, false, true);//Ensure there is always one thread in existence for reference purposes, but do not increment the actual thread counter.
+		}
 
 		public (bool, ThreadVariables) BeginThread(bool onlyIfEmpty = false)
 		{
 			lock (locker)
 			{
-				var skip = script.FlowData.allowInterruption == false;//This will be false when exiting the program.
+				var skip = Script.TheScript.FlowData.allowInterruption == false;//This will be false when exiting the program.
 				return PushThreadVariables(0, skip, false, onlyIfEmpty, true);
 			}
 		}
@@ -31,7 +32,18 @@
 		{
 			lock (locker)
 			{
+				var script = Script.TheScript;
 				PopThreadVariables(pushed, checkThread);
+
+				// Resume timers since we are about to have a free thread
+				if (script.totalExistingThreads == script.MaxThreadsTotal)
+				{
+					foreach (var timer in script.FlowData.timers.Values)
+					{
+						timer.Resume();
+					}
+				}
+
 				_ = Interlocked.Decrement(ref script.totalExistingThreads);
 				return null;
 			}
@@ -43,8 +55,20 @@
 		{
 			lock (locker)
 			{
+				var script = Script.TheScript;
+
 				if (inc)
 					_ = Interlocked.Increment(ref script.totalExistingThreads);//Will be decremented in EndThread().
+
+				// Pause all timers if out of available threads. This is done here instead of BeginThread
+				// because not all threads are started with it (eg timer threads)
+				if (script.totalExistingThreads == script.MaxThreadsTotal)
+				{
+					foreach (var timer in script.FlowData.timers.Values)
+					{
+						timer.Pause();
+					}
+				}
 
 				return tvm.PushThreadVariables(priority, skipUninterruptible, isCritical, onlyIfEmpty);
 			}
@@ -54,6 +78,7 @@
 		{
 			lock (locker)
 			{
+				var script = Script.TheScript;
 				return script.totalExistingThreads < script.MaxThreadsTotal;
 			}
 		}
@@ -70,6 +95,8 @@
 		{
 			lock (locker)
 			{
+				var script = Script.TheScript;
+
 				if (!script.FlowData.allowInterruption)
 					return false;
 
@@ -110,7 +137,7 @@
 				//void AssignTask(ThreadVariables localTv) => localTv.task = tsk;//Needed to capture tsk so it can be used from within the Task.
 				//tsk = Task.Factory.StartNew(() =>
 				//tsk = StaTask.Run(() =>//This appears to be necessary to use the clipboard within hotkey/string events.
-				script.mainWindow.CheckedBeginInvoke(() =>
+				Script.TheScript.mainWindow.CheckedBeginInvoke(() =>
 				{
 					object ret = null;
 					(bool, ThreadVariables) btv = (false, null);

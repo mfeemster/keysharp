@@ -28,6 +28,8 @@ namespace Keysharp.Core
 
 			if (!err.Processed)
 			{
+				var script = Script.TheScript;
+
 				if (script.onErrorHandlers != null)
 				{
 					err.ExcType = excType;
@@ -110,7 +112,8 @@ namespace Keysharp.Core
 			var e = callback;
 			var i = addRemove.Al(1L);
 			var del = Functions.GetFuncObj(e, null, true);
-
+			var script = Script.TheScript;
+			
 			if (script.onErrorHandlers == null)
 				script.onErrorHandlers = [];
 

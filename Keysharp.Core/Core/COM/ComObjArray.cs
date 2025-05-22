@@ -45,6 +45,7 @@ namespace Keysharp.Core.COM
 		{
 			arr = a;
 			count = c;
+			var script = Script.TheScript;
 			var p = c <= 1 ? script.ComArrayIndexValueEnumeratorData.p1 : script.ComArrayIndexValueEnumeratorData.p2;
 			fo = (FuncObj)p.Clone();
 			fo.Inst = this;

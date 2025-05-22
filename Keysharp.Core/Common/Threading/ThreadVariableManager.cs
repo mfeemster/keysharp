@@ -9,7 +9,12 @@
 		/// in response to a button click, hotkey, timer event, etc...
 		/// So we create a SlimStack to be used as an object pool which we push and pop each time a thread starts and finishes.
 		/// </summary>
-		internal SlimStack<ThreadVariables> threadVars = new ((int)script.MaxThreadsTotal, () => new ThreadVariables());
+		internal SlimStack<ThreadVariables> threadVars;
+
+		internal ThreadVariableManager(int size)
+		{
+			threadVars = new (size, () => new ThreadVariables());
+		}
 
 		internal ThreadVariables GetThreadVariables()
 		{
@@ -23,7 +28,7 @@
 			var ctid = Thread.CurrentThread.ManagedThreadId;
 
 			//Do not check threadVars for null, because it should have always been created with a call to PushThreadVariables() before this.
-			if (ctid != script.ProcessesData.ManagedMainThreadID
+			if (ctid != Script.TheScript.ProcessesData.ManagedMainThreadID
 					|| threadVars.Index > 0)//Never pop the last object on the main thread.
 			{
 				//Script.OutputDebug($"About to pop with {threadVars.Index} existing threads");
@@ -43,6 +48,7 @@
 		{
 			if (!onlyIfEmpty || threadVars.Index == 0)
 			{
+				var script = Script.TheScript;
 				var pushed = threadVars.TryPush(out var tv);
 
 				if (pushed)

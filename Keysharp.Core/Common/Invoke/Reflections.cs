@@ -64,7 +64,7 @@ namespace Keysharp.Core.Common.Invoke
 		[PublicForTestOnly]
 		public static void Initialize(bool ignoreMainAssembly = false)
 		{
-			var rd = script.ReflectionsData;
+			var rd = Script.TheScript.ReflectionsData;
 			rd.loadedAssemblies = GetLoadedAssemblies();
 			CacheAllMethods(ignoreMainAssembly);
 			CacheAllPropertiesAndFields();
@@ -111,7 +111,7 @@ namespace Keysharp.Core.Common.Invoke
 			{
 				do
 				{
-					var rd = script.ReflectionsData;
+					var rd = Script.TheScript.ReflectionsData;
 
 					if (rd.staticFields.TryGetValue(t, out var dkt))
 					{
@@ -160,11 +160,11 @@ namespace Keysharp.Core.Common.Invoke
 
 		internal static MethodPropertyHolder FindAndCacheInstanceMethod(Type t, string name, int paramCount, BindingFlags propType =//probably dont even want to allow this to be passed.
 					BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly, bool isSystem = false) =>
-		FindAndCacheMethod(script.ReflectionsData.typeToStringMethods, t, name, paramCount, propType, isSystem);
+		FindAndCacheMethod(Script.TheScript.ReflectionsData.typeToStringMethods, t, name, paramCount, propType, isSystem);
 
 		internal static MethodPropertyHolder FindAndCacheStaticMethod(Type t, string name, int paramCount, BindingFlags propType =
 					BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly, bool isSystem = false) =>
-		FindAndCacheMethod(script.ReflectionsData.typeToStringStaticMethods, t, name, paramCount, propType, isSystem);
+		FindAndCacheMethod(Script.TheScript.ReflectionsData.typeToStringStaticMethods, t, name, paramCount, propType, isSystem);
 
 		internal static MethodPropertyHolder FindAndCacheMethod(Type t, string name, int paramCount)
 		{
@@ -185,7 +185,7 @@ namespace Keysharp.Core.Common.Invoke
 				}
 				else
 				{
-					lock (script.ReflectionsData.locker)
+					lock (Script.TheScript.ReflectionsData.locker)
 					{
 						var meths = t.GetMethods(propType);
 #if CONCURRENT
@@ -257,7 +257,7 @@ namespace Keysharp.Core.Common.Invoke
 			{
 				do
 				{
-					var rd = script.ReflectionsData;
+					var rd = Script.TheScript.ReflectionsData;
 
 					if (rd.typeToStringProperties.TryGetValue(t, out var dkt))
 					{
@@ -335,10 +335,10 @@ namespace Keysharp.Core.Common.Invoke
 		}
 
 		internal static MethodPropertyHolder FindBuiltInMethod(string name, int paramCount) =>
-		FindMethod(script.ReflectionsData.stringToTypeBuiltInMethods, name, paramCount);
+		FindMethod(Script.TheScript.ReflectionsData.stringToTypeBuiltInMethods, name, paramCount);
 
 		internal static MethodPropertyHolder FindLocalMethod(string name, int paramCount) =>
-		FindMethod(script.ReflectionsData.stringToTypeLocalMethods, name, paramCount);
+		FindMethod(Script.TheScript.ReflectionsData.stringToTypeLocalMethods, name, paramCount);
 
 		internal static MethodPropertyHolder FindMethod(string name, int paramCount) => FindLocalMethod(name, paramCount) is MethodPropertyHolder mph ? mph : FindBuiltInMethod(name, paramCount);
 
@@ -353,7 +353,7 @@ namespace Keysharp.Core.Common.Invoke
 					if (userOnly && t.Assembly == typeof(Any).Assembly)
 						break;
 
-					if (script.ReflectionsData.typeToStringProperties.TryGetValue(t, out var dkt))
+					if (Script.TheScript.ReflectionsData.typeToStringProperties.TryGetValue(t, out var dkt))
 					{
 						if (name != "__Class" && name != "__Static")
 							if (dkt.TryGetValue(name, out var prop))
@@ -382,7 +382,7 @@ namespace Keysharp.Core.Common.Invoke
 					if (userOnly && t.Assembly == typeof(Any).Assembly)
 						break;
 
-					if (script.ReflectionsData.typeToStringProperties.TryGetValue(t, out var dkt))
+					if (Script.TheScript.ReflectionsData.typeToStringProperties.TryGetValue(t, out var dkt))
 					{
 						foreach (var kv in dkt)
 							if (kv.Value.Count > 0 && kv.Key != "__Class" && kv.Key != "__Static")
@@ -416,7 +416,7 @@ namespace Keysharp.Core.Common.Invoke
 					if (userOnly && t.Assembly == typeof(Any).Assembly)
 						break;
 
-					if (script.ReflectionsData.typeToStringProperties.TryGetValue(t, out var dkt))
+					if (Script.TheScript.ReflectionsData.typeToStringProperties.TryGetValue(t, out var dkt))
 					{
 						ct += dkt.Count;
 
@@ -494,7 +494,7 @@ namespace Keysharp.Core.Common.Invoke
 		private static void CacheAllMethods(bool ignoreMainAssembly = false)
 		{
 			List<Assembly> assemblies;
-			var rd = script.ReflectionsData;
+			var rd = Script.TheScript.ReflectionsData;
 			var loadedAssembliesList = rd.loadedAssemblies.Values;
 			rd.stringToTypeLocalMethods.Clear();
 			rd.stringToTypeBuiltInMethods.Clear();
@@ -546,7 +546,7 @@ namespace Keysharp.Core.Common.Invoke
 
 		private static void CacheAllPropertiesAndFields()
 		{
-			var rd = script.ReflectionsData;
+			var rd = Script.TheScript.ReflectionsData;
 			rd.typeToStringProperties.Clear();
 			rd.stringToTypeProperties.Clear();
 			var exeAssembly = Accessors.GetAssembly();

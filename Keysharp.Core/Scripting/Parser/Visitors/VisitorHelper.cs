@@ -438,15 +438,16 @@ namespace Keysharp.Scripting
             builtin = IsBuiltInProperty(name, caseSense, true);
             if (builtin != null) return builtin;
 
-            if (script.ReflectionsData.stringToTypes.ContainsKey(name))
-                return caseSense ? ((script.ReflectionsData.stringToTypes.FirstOrDefault(item => item.Key.Equals(name, StringComparison.OrdinalIgnoreCase)).Key) == name ? name : null) : name.ToLower();
+            if (Script.TheScript.ReflectionsData.stringToTypes.ContainsKey(name))
+                return caseSense ? ((Script.TheScript.ReflectionsData.stringToTypes.FirstOrDefault(item => item.Key.Equals(name, StringComparison.OrdinalIgnoreCase)).Key) == name ? name : null) : name.ToLower();
 
             return null;
         }
 
         internal string IsBuiltInProperty(string name, bool caseSense = false, bool ignoreExtensionClass = false)
         {
-            KeyValuePair<string, PropertyInfo> match;
+            var script = Script.TheScript;
+			KeyValuePair<string, PropertyInfo> match;
             if (caseSense && script.ReflectionsData.flatPublicStaticProperties.ContainsKey(name))
                 return name;
             else
@@ -1011,7 +1012,7 @@ namespace Keysharp.Scripting
             builtin = IsBuiltInMethod(normalizedName);
             if (builtin != null) return normalizedName;
 
-            if (script.ReflectionsData.stringToTypes.ContainsKey(normalizedName))
+            if (Script.TheScript.ReflectionsData.stringToTypes.ContainsKey(normalizedName))
                 return normalizedName;
 
             if (currentFunc.Scope == eScope.Static)
@@ -1045,14 +1046,14 @@ namespace Keysharp.Scripting
 
         internal string PropertyExistsInBuiltinBase(string name)
         {
-            if (script.ReflectionsData.stringToTypeProperties.TryGetValue(name, out var dttp))
+            if (Script.TheScript.ReflectionsData.stringToTypeProperties.TryGetValue(name, out var dttp))
             {
                 string className = currentClass.Name;
                 while (AllTypes.TryGetValue(className, out string classBase))
                 {
                     className = classBase;
                     if (dttp.Any(t => t.Key.Name == className))
-                        return script.ReflectionsData.stringToTypeProperties.Keys
+                        return Script.TheScript.ReflectionsData.stringToTypeProperties.Keys
                             .FirstOrDefault(key => string.Equals(key, name, StringComparison.OrdinalIgnoreCase));
                 }
             }
