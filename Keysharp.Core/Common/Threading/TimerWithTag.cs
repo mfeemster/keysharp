@@ -33,9 +33,6 @@ namespace Keysharp.Core.Common.Threading
 			_lastStart = DateTime.UtcNow;
 			_isPaused = false;
 			base.Start();
-
-			if (Interval == 1)
-				PushToMessageQueue();
 		}
 
 		/// <summary>
