@@ -423,16 +423,14 @@ namespace Keysharp.Core
 		}
 
 		/// <summary>
-		/// Calls DoEvents but catches and discards all errors, except if <paramref name="allowExit"/>
+		/// Calls DoEvents() but catches and discards all errors, except if <paramref name="allowExit"/>
 		/// is true in which case UserRequestedExitException is allowed through.
 		/// </summary>
 		/// <param name="allowExit"/>If true then UserRequestedExitException is allowed through
 		/// so the program can exit, otherwise all exceptions are discarded.
 		public static void TryDoEvents(bool allowExit = true, bool yieldTick = true)
 		{
-			DateTime start = yieldTick
-				? DateTime.UtcNow
-				: default;
+			var start = yieldTick ? Environment.TickCount : default;
 
 			if (allowExit)
 			{
@@ -459,10 +457,10 @@ namespace Keysharp.Core
 				}
 			}
 
-			if (yieldTick && start.Equals(DateTime.UtcNow))
+			if (yieldTick && start.Equals(Environment.TickCount))
 				//0 tells this thread to relinquish the remainder of its time slice to any thread of equal priority that is ready to run.
 				//If there are no other threads of equal priority that are ready to run, execution of the current thread is not suspended.
-				System.Threading.Thread.Sleep(0);
+				System.Threading.Thread.Sleep(1);
 		}
 
 		/// <summary>
@@ -481,6 +479,7 @@ namespace Keysharp.Core
 			if (d == 0L)
 			{
 				TryDoEvents();
+				System.Threading.Thread.Sleep(0);
 			}
 			else if (d == -1L)
 			{
