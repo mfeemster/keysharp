@@ -1,8 +1,7 @@
-#define USEFORMSTIMER
+using Keysharp.Scripting;
 using static Keysharp.Core.Errors;
 
 using Timer1 = System.Timers.Timer;
-using Timer2 = Keysharp.Core.Common.Threading.TimerWithTag;
 
 namespace Keysharp.Core
 {
@@ -149,7 +148,7 @@ namespace Keysharp.Core
 			//https://stackoverflow.com/questions/243351/environment-tickcount-vs-datetime-now
 			if (b && (Environment.TickCount - script.FlowData.lastLoopDoEvents) > 15)
 			{
-				Application.DoEvents();
+				TryDoEvents(true, false);
 				script.FlowData.lastLoopDoEvents = Environment.TickCount;
 			}
 
@@ -277,7 +276,7 @@ namespace Keysharp.Core
 			var pri = priority.Al();
 			var once = p < 0;
 			IFuncObj func = null;
-			Timer2 timer = null;
+			TimerWithTag timer = null;
 			var script = Script.TheScript;
 
 			if (once)
@@ -359,13 +358,16 @@ namespace Keysharp.Core
 			else//They tried to stop a timer that didn't exist
 				return null;
 
-#if USEFORMSTIMER
 			timer.Tick += (ss, ee) =>
-#else
-			timer.Elapsed += (ss, ee) =>
-#endif
 			{
 				var v = script.Threads;
+
+				//If script has exited or we don't receive a TimerWithTag object, just exit
+				if (A_HasExited || (ss is not TimerWithTag t))
+					return;
+
+				if (!t.Enabled)//A way of checking to make sure the timer is not already executing.
+					return;
 
 				//If there are not enough threads, then this will exit and retry. Even a single shot
 				//timer will keep trying until it gets through.
@@ -373,48 +375,94 @@ namespace Keysharp.Core
 				//they just keep getting retried.
 				//The reason for this is that if a timer event calls Sleep() which calls DoEvents(),
 				//we can't also call those functions here or else the program will freeze/crash.
-				if (A_HasExited || (!A_AllowTimers.Ab() && script.totalExistingThreads > 0)
+				if ((!A_AllowTimers.Ab() && script.totalExistingThreads > 0)
 						|| !v.AnyThreadsAvailable() || !script.Threads.IsInterruptible())
-					return;
-
-				if (ss is Timer2 t)
 				{
-					if (!t.Enabled)//A way of checking to make sure the timer is not already executing.
-						return;
+					t.PushToMessageQueue();
+					return;
+				}
 
-					var pri = t.Tag.Ai();
-					var tv = v.GetThreadVariables();
+				var pri = t.Tag.Ai();
+				var tv = v.GetThreadVariables();
 
-					if (pri >= tv.priority)
+				if (pri >= tv.priority)
+				{
+					t.Enabled = false;
+
+					var remove = !TryCatch(() =>
 					{
-						t.Enabled = false;
+						(bool, ThreadVariables) btv = v.PushThreadVariables(pri, true, false, false, true);
+						btv.Item2.currentTimer = timer;
+						btv.Item2.eventInfo = func;
+						var ret = func.Call();
+						_ = v.EndThread(btv.Item1);
+					}, true);//Pop on exception because EndThread() above won't be called.
 
-						var remove = !TryCatch(() =>
-						{
-							(bool, ThreadVariables) btv = v.PushThreadVariables(pri, true, false, false, true);
-							btv.Item2.currentTimer = timer;
-							btv.Item2.eventInfo = func;
-							var ret = func.Call();
-							_ = v.EndThread(btv.Item1);
-						}, true);//Pop on exception because EndThread() above won't be called.
-
-						if (once || remove)
-						{
-							_ = script.FlowData.timers.TryRemove(func, out _);
-							t.Stop();
-							t.Dispose();
-							script.ExitIfNotPersistent();
-						}
-						else if (script.FlowData.timers.TryGetValue(func, out var existing))//They could have disabled it, in which case it wouldn't be in the dictionary.
-							existing.Enabled = true;
-						else
-							script.ExitIfNotPersistent();//Was somehow removed, such as in a window close handler, so attempt to exit.
+					if (once || remove)
+					{
+						_ = script.FlowData.timers.TryRemove(func, out _);
+						t.Stop();
+						t.Dispose();
+						script.ExitIfNotPersistent();
 					}
+					else if (script.FlowData.timers.TryGetValue(func, out var existing))//They could have disabled it, in which case it wouldn't be in the dictionary.
+						existing.Enabled = true;
+					else
+						script.ExitIfNotPersistent();//Was somehow removed, such as in a window close handler, so attempt to exit.
 				}
 			};
 			script.mainWindow.CheckedInvoke(timer.Start, true);
+
+			if (script.totalExistingThreads >= script.MaxThreadsTotal)
+				timer.Pause();
+			else if (timer.Interval == 1)
+				timer.PushToMessageQueue();
+
 			//script.mainWindow.CheckedBeginInvoke(timer.Start, true, true);
 			return null;
+		}
+
+		/// <summary>
+		/// Calls DoEvents but catches and discards all errors, except if <paramref name="allowExit"/>
+		/// is true in which case UserRequestedExitException is allowed through.
+		/// </summary>
+		/// <param name="allowExit"/>If true then UserRequestedExitException is allowed through
+		/// so the program can exit, otherwise all exceptions are discarded.
+		public static void TryDoEvents(bool allowExit = true, bool yieldTick = true)
+		{
+			DateTime start = yieldTick
+				? DateTime.UtcNow
+				: default;
+
+			if (allowExit)
+			{
+				try
+				{
+					Application.DoEvents();//Can sometimes throw on linux.
+				}
+				catch (UserRequestedExitException)
+				{
+					throw;
+				}
+				catch
+				{
+				}
+			}
+			else
+			{
+				try
+				{
+					Application.DoEvents();//Can sometimes throw on linux.
+				}
+				catch
+				{
+				}
+			}
+
+			if (yieldTick && start.Equals(DateTime.UtcNow))
+				//0 tells this thread to relinquish the remainder of its time slice to any thread of equal priority that is ready to run.
+				//If there are no other threads of equal priority that are ready to run, execution of the current thread is not suspended.
+				System.Threading.Thread.Sleep(0);
 		}
 
 		/// <summary>
@@ -432,58 +480,17 @@ namespace Keysharp.Core
 			//Be careful with Application.DoEvents(), it has caused spurious crashes in my years of programming experience.
 			if (d == 0L)
 			{
-				var start = DateTime.UtcNow;
-
-				try
-				{
-					Application.DoEvents();//Can sometimes throw on linux.
-				}
-				catch (UserRequestedExitException)
-				{
-					throw;
-				}
-				catch
-				{
-				}
-
-				//0 tells this thread to relinquish the remainder of its time slice to any thread of equal priority that is ready to run.
-				//If there are no other threads of equal priority that are ready to run, execution of the current thread is not suspended.
-				System.Threading.Thread.Sleep(0);
-
-				if (start.Equals(DateTime.UtcNow))
-					System.Threading.Thread.Sleep(0);
+				TryDoEvents();
 			}
 			else if (d == -1L)
 			{
-				try
-				{
-					Application.DoEvents();//Can sometimes throw on linux.
-				}
-				catch (UserRequestedExitException)
-				{
-					throw;
-				}
-				catch
-				{
-				}
+				TryDoEvents(true, false);
 			}
 			else if (d == -2)//Sleep indefinitely until all InputHooks are finished.
 			{
 				while (!script.FlowData.hasExited && script.input != null && script.input.InProgress())
 				{
-					try
-					{
-						Application.DoEvents();//Can sometimes throw on linux.
-					}
-					catch (UserRequestedExitException)
-					{
-						throw;
-					}
-					catch
-					{
-					}
-
-					System.Threading.Thread.Sleep(10);
+					TryDoEvents(); //Does events once per tick
 				}
 			}
 			else
@@ -492,20 +499,7 @@ namespace Keysharp.Core
 
 				while (DateTime.UtcNow < stop && !script.FlowData.hasExited)
 				{
-					try
-					{
-						//if (System.Threading.Thread.CurrentThread.ManagedThreadId == Processes.ManagedMainThreadID)
-						Application.DoEvents();//Can sometimes throw on linux.
-					}
-					catch (UserRequestedExitException)
-					{
-						throw;
-					}
-					catch
-					{
-					}
-
-					System.Threading.Thread.Sleep(10);
+					TryDoEvents(); //Does events once per tick
 				}
 			}
 
@@ -791,6 +785,6 @@ namespace Keysharp.Core
 		/// </summary>
 		internal bool suspended;
 
-		internal ConcurrentDictionary<IFuncObj, Timer2> timers = new ();
+		internal ConcurrentDictionary<IFuncObj, TimerWithTag> timers = new ();
 	}
 }

@@ -1,4 +1,6 @@
-﻿namespace Keysharp.Core.Common.Threading
+﻿using Keysharp.Scripting;
+
+namespace Keysharp.Core.Common.Threading
 {
 	public class Threads
 	{
@@ -32,8 +34,19 @@
 		{
 			lock (locker)
 			{
+				var script = Script.TheScript;
 				PopThreadVariables(pushed, checkThread);
-				_ = Interlocked.Decrement(ref Script.TheScript.totalExistingThreads);
+
+				// Resume timers since we are about to have a free thread
+				if (script.totalExistingThreads == script.MaxThreadsTotal)
+				{
+					foreach (var timer in script.FlowData.timers.Values)
+					{
+						timer.Resume();
+					}
+				}
+
+				_ = Interlocked.Decrement(ref script.totalExistingThreads);
 				return null;
 			}
 		}
@@ -44,8 +57,20 @@
 		{
 			lock (locker)
 			{
+				var script = Script.TheScript;
+
 				if (inc)
-					_ = Interlocked.Increment(ref Script.TheScript.totalExistingThreads);//Will be decremented in EndThread().
+					_ = Interlocked.Increment(ref script.totalExistingThreads);//Will be decremented in EndThread().
+
+				// Pause all timers if out of available threads. This is done here instead of BeginThread
+				// because not all threads are started with it (eg timer threads)
+				if (script.totalExistingThreads == script.MaxThreadsTotal)
+				{
+					foreach (var timer in script.FlowData.timers.Values)
+					{
+						timer.Pause();
+					}
+				}
 
 				return tvm.PushThreadVariables(priority, skipUninterruptible, isCritical, onlyIfEmpty);
 			}
