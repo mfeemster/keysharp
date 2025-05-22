@@ -36,6 +36,9 @@ namespace Keysharp.Tests
 
 		[Test, Category("External")]
 		public void NumPutNumGet() => Assert.IsTrue(TestScript("external-numput-numget", true));
+
+		[Test, Category("External")]
+		public void COM() => Assert.IsTrue(TestScript("external-com", false));
 #endif
 	}
 }

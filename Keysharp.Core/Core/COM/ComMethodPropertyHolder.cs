@@ -233,7 +233,24 @@ namespace Keysharp.Core.COM
 						else if (et == typeof(byte))
 							inputParameters[i] = (byte)inputParameters[i].Aui();
 						else
+						{
+							if (it == typeof(long) || it == typeof(IntPtr))
+							{
+								var buf = inputParameters[i].Ai();
+
+								if (buf <= int.MaxValue && buf >= int.MinValue)
+									inputParameters[i] = buf;
+							}
+							else if (it == typeof(ulong))
+							{
+								var buf = inputParameters[i].Aui();
+
+								if (buf <= uint.MaxValue && buf >= uint.MinValue)
+									inputParameters[i] = buf;
+							}
+
 							inputParameters[i] = Convert.ChangeType(inputParameters[i], expectedTypes[i], CultureInfo.CurrentCulture);
+						}
 					}
 					catch (Exception)
 					{
