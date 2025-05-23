@@ -172,7 +172,7 @@ Gfunc456(*)
 ; Sort of a combination of instance, static, and intializiation funcs with direct function references to global functions.
 class foclass
 {
-    static sg123 := true ? gfunc123 : gfunc456
+	static sg123 := true ? gfunc123 : gfunc456
 	static sg456 := true ? gfunc456 : gfunc123
 	static stestmemberfunc := this.sclassfunc789
 

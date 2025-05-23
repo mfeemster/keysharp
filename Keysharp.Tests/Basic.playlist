@@ -371,6 +371,12 @@
                         <Property Name="DisplayName" Value="NumPutNumGet" />
                       </Rule>
                     </Rule>
+                    <Rule Match="All">
+                      <Property Name="TestWithNormalizedFullyQualifiedName" Value="Keysharp.Tests.ExternalTests.COM" />
+                      <Rule Match="Any">
+                        <Property Name="DisplayName" Value="COM" />
+                      </Rule>
+                    </Rule>
                   </Rule>
                 </Rule>
                 <Rule Match="All">

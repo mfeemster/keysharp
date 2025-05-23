@@ -283,6 +283,14 @@ namespace Keysharp.Scripting
 						return ifo2.Call(kso2, new Keysharp.Core.Array(index), value);
                 }
 
+#if WINDOWS
+
+				if (item is ComObject co)
+					return co.Ptr.GetType().InvokeMember("Item", BindingFlags.SetProperty, null, co.Ptr, index.Concat([value]));
+				else if (Marshal.IsComObject(item))
+					return item.GetType().InvokeMember("Item", BindingFlags.SetProperty, null, item, index.Concat([value]));
+
+#endif
 				var il1 = index.Length + 1;
 
 				if (Reflections.FindAndCacheInstanceMethod(typetouse, "set_Item", il1) is MethodPropertyHolder mph2)
@@ -367,6 +375,15 @@ namespace Keysharp.Scripting
 					}
 #endif
 				}
+
+#if WINDOWS
+
+				if (item is ComObject co)
+					return Invoke((co.Ptr, new ComMethodPropertyHolder("Item")), index);
+				else if (Marshal.IsComObject(item))
+					return Invoke((item, new ComMethodPropertyHolder("Item")), index);
+
+#endif
 			}
 			catch (Exception e)
 			{

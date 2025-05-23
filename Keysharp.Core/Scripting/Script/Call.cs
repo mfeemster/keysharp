@@ -158,6 +158,8 @@ namespace Keysharp.Scripting
 #if WINDOWS
 				//COM checks must come before Item checks because they can get confused sometimes and COM should take
 				//precedence in such cases.
+				//This assumes the caller is never trying to retrieve properties or methods on the underlying
+				//COM object that have the same name in ComObject, such as Ptr, __Delete() or Dispose().
 				else if (item is ComObject co)
 				{
 					return GetMethodOrProperty(co.Ptr, key, paramCount);
@@ -233,7 +235,7 @@ namespace Keysharp.Scripting
                 }
 
 #if WINDOWS
-				else if (item is ComObject co)
+				if (item is ComObject co)
 				{
 					return GetPropertyValue(co.Ptr, namestr, throwOnError);
 				}

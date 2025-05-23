@@ -893,7 +893,7 @@
 		{
 			arr = a;
 			var p = c <= 1 ? Script.TheScript.ArrayIndexValueIteratorData.p1 : Script.TheScript.ArrayIndexValueIteratorData.p2;
-			var fo = (FuncObj)p.Clone();
+			fo = (FuncObj)p.Clone();
 			fo.Inst = this;
 		}
 

@@ -264,7 +264,3 @@ if (result == 3) ; This is testing the conversion of long back to int.
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
-
-shell := ComObject("WScript.Shell")
-exec := shell.Exec("Notepad.exe")
-exec := shell.Run("Notepad.exe")

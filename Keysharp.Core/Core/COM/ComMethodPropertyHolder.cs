@@ -66,7 +66,7 @@ namespace Keysharp.Core.COM
 				ParameterModifier[] modifiers = null;
 				Dictionary<int, object> refs = new();
 
-				if (Script.TheScript.ComMethodData.comMethodCache.TryGetValue(comObject, out var objDkt))
+				if (Script.TheScript.ComMethodData.comMethodCache.TryGetValue(comObject.GetHashCode(), out var objDkt))
 				{
 					if (objDkt.TryGetValue(methodName, out var cmi))
 					{
@@ -189,7 +189,7 @@ namespace Keysharp.Core.COM
 									modifier[i] = isByRef;
 									ConvertType(i, vtBase);
 								}
-								if (modifier[i] && i < inputParameters.Length)
+								if (modifier[i] && i < inputParameters.Length && inputParameters[i] is KeysharpObject)
 								{
 									refs[i] = inputParameters[i];
 									inputParameters[i] = Script.GetPropertyValue(inputParameters[i], "__Value");
@@ -241,7 +241,24 @@ namespace Keysharp.Core.COM
 						else if (et == typeof(byte))
 							inputParameters[i] = (byte)inputParameters[i].Aui();
 						else
+						{
+							if (it == typeof(long) || it == typeof(IntPtr))
+							{
+								var buf = inputParameters[i].Ai();
+
+								if (buf <= int.MaxValue && buf >= int.MinValue)
+									inputParameters[i] = buf;
+							}
+							else if (it == typeof(ulong))
+							{
+								var buf = inputParameters[i].Aui();
+
+								if (buf <= uint.MaxValue && buf >= uint.MinValue)
+									inputParameters[i] = buf;
+							}
+
 							inputParameters[i] = Convert.ChangeType(inputParameters[i], expectedTypes[i], CultureInfo.CurrentCulture);
+						}
 					}
 					catch (Exception)
 					{
@@ -276,7 +293,7 @@ namespace Keysharp.Core.COM
 				//If no exception thrown and it wasn't cached, cache the info.
 				if (!found)
 				{
-					_ = Script.TheScript.ComMethodData.comMethodCache.GetOrAdd(comObject).GetOrAdd(methodName, new ComMethodInfo()
+					_ = Script.TheScript.ComMethodData.comMethodCache.GetOrAdd(comObject.GetHashCode()).GetOrAdd(methodName, new ComMethodInfo()
 					{
 						modifiers = modifiers,
 						expectedTypes = expectedTypes
