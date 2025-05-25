@@ -58,6 +58,9 @@ namespace Keysharp.Core.COM
 		{
 			Error err;
 
+			IntPtr pUnk = Marshal.GetIUnknownForObject(comObject);
+			Marshal.Release(pUnk);
+
 			try
 			{
 				var found = false;
@@ -65,7 +68,7 @@ namespace Keysharp.Core.COM
 				Type[] expectedTypes = null;
 				ParameterModifier[] modifiers = null;
 
-				if (Script.TheScript.ComMethodData.comMethodCache.TryGet(comObject.GetHashCode(), out var objDkt))
+				if (Script.TheScript.ComMethodData.comMethodCache.TryGet(pUnk, out var objDkt))
 				{
 					if (objDkt.TryGetValue(methodName, out var cmi))
 					{
@@ -285,7 +288,7 @@ namespace Keysharp.Core.COM
 				if (!found)
 				{
 					_ = Script.TheScript.ComMethodData.comMethodCache
-						.GetOrAdd(comObject.GetHashCode(), key => new Dictionary<string, ComMethodInfo>(StringComparer.OrdinalIgnoreCase))
+						.GetOrAdd(pUnk, key => new Dictionary<string, ComMethodInfo>(StringComparer.OrdinalIgnoreCase))
 						.GetOrAdd(methodName, new ComMethodInfo()
 							{
 								modifiers = modifiers,
@@ -320,7 +323,7 @@ namespace Keysharp.Core.COM
 
 	internal class ComMethodData
 	{
-		internal ConcurrentLfu<object, Dictionary<string, ComMethodInfo>> comMethodCache = new (Caching.DefaultCacheCapacity);
+		internal ConcurrentLfu<IntPtr, Dictionary<string, ComMethodInfo>> comMethodCache = new (Caching.DefaultCacheCapacity);
 	}
 
 	internal class ComMethodInfo
