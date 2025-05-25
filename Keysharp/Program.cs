@@ -291,19 +291,20 @@ namespace Keysharp.Main
 									assemblyToCopyResorcesFrom: outputDllPath);
 #endif
 
-								if (!minimalexeout && string.Compare(exeDir, scriptdir, true) != 0)
+								if (string.Compare(exeDir, scriptdir, true) != 0)
 								{
+									var deps = minimalexeout ? ["Keysharp.Core.dll"]
+										: CompilerHelper.requiredManagedDependencies
+#if DEBUG
+											//This is only required for non-published projects.
+											.Concat(CompilerHelper.requiredNativeDependencies.Select(s => $"runtimes{Path.DirectorySeparatorChar}{RuntimeInformation.RuntimeIdentifier}{Path.DirectorySeparatorChar}native{Path.DirectorySeparatorChar}{s}"))
+#endif
+											.Concat(CompilerHelper.requiredNativeDependencies);
 									//Need to copy Keysharp.Core and other dependencies from the install path to
 									//the folder the script resides in. Without them, the compiled exe cannot be run in a standalone manner.
 									//MessageBox.Show($"scriptdir = {scriptdir}");
 									//MessageBox.Show($"About to copy from {ksCorePath} to {Path.Combine(scriptdir, "Keysharp.Core.dll")}");
-									foreach (var dep in CompilerHelper.requiredManagedDependencies
-										.Concat(CompilerHelper.requiredNativeDependencies)
-#if DEBUG
-										//This is only required for non-published projects.
-										.Concat(CompilerHelper.requiredNativeDependencies.Select(s => $"runtimes{Path.DirectorySeparatorChar}{RuntimeInformation.RuntimeIdentifier}{Path.DirectorySeparatorChar}native{Path.DirectorySeparatorChar}{s}"))
-#endif
-										)
+									foreach (var dep in deps)
 									{
 										var depPath = Path.Combine(exeDir, dep);
 										if (File.Exists(depPath))
