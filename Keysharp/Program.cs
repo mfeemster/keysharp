@@ -19,7 +19,6 @@ namespace Keysharp.Main
 	public static class Program
 	{
 		private static readonly CompilerHelper ch = new ();
-		private static readonly char dotNetMajorVersion = '9';
 
 		internal static Version Version => Assembly.GetExecutingAssembly().GetName().Version;
 
@@ -388,7 +387,7 @@ namespace Keysharp.Main
 #if LINUX
 			var dir = Directory.GetDirectories(@"/lib/dotnet/sdk/").Select(System.IO.Path.GetFileName).Where(x => x.StartsWith(dotNetMajorVersion)).OrderByDescending(x => new Version(x)).FirstOrDefault();
 #elif WINDOWS
-			var dir = Directory.GetDirectories(@"C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Host.win-x64\").Select(Path.GetFileName).Where(x => x.StartsWith(dotNetMajorVersion)).OrderByDescending(x => new Version(x.Contains("-rc") ? x.Substring(0, x.IndexOf("-rc")) : x)).FirstOrDefault();
+			var dir = Directory.GetDirectories(@"C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Host.win-x64\").Select(Path.GetFileName).Where(x => x.StartsWith(Script.dotNetMajorVersion)).OrderByDescending(x => new Version(x.Contains("-rc") ? x.Substring(0, x.IndexOf("-rc")) : x)).FirstOrDefault();
 #endif
 			return dir;
 		}

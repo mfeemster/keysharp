@@ -201,6 +201,13 @@ namespace Keysharp.Core
 		/// <param name="args">The command line arguments to process.</param>
 		public static object HandleCommandLineParams(string[] args)
 		{
+			if (args.Length > 0 && args[0].TrimStart(Keywords.DashSlash).ToUpper() == "SCRIPT") 
+			{
+				string[] newArgs = new string[args.Length - 1];
+				System.Array.Copy(args, 1, newArgs, 0, args.Length - 1);
+				Environment.ExitCode = Runner.Run(args);
+				throw new Flow.UserRequestedExitException();
+			}
 			_ = A_Args.AddRange(args);
 			return null;
 		}
