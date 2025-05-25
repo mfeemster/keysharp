@@ -12,6 +12,7 @@ using Microsoft.NET.HostModel.AppHost;
 using Microsoft.Win32;
 using Keysharp.Core;
 using Keysharp.Scripting;
+using System.Runtime.InteropServices;
 
 namespace Keysharp.Main
 {
@@ -289,6 +290,26 @@ namespace Keysharp.Main
 									windowsGraphicalUserInterface: true,
 									assemblyToCopyResorcesFrom: outputDllPath);
 #endif
+
+								if (!minimalexeout && string.Compare(exeDir, scriptdir, true) != 0)
+								{
+									//Need to copy Keysharp.Core and other dependencies from the install path to
+									//the folder the script resides in. Without them, the compiled exe cannot be run in a standalone manner.
+									//MessageBox.Show($"scriptdir = {scriptdir}");
+									//MessageBox.Show($"About to copy from {ksCorePath} to {Path.Combine(scriptdir, "Keysharp.Core.dll")}");
+									foreach (var dep in CompilerHelper.requiredManagedDependencies
+										.Concat(CompilerHelper.requiredNativeDependencies)
+#if DEBUG
+										//This is only required for non-published projects.
+										.Concat(CompilerHelper.requiredNativeDependencies.Select(s => $"runtimes{Path.DirectorySeparatorChar}{RuntimeInformation.RuntimeIdentifier}{Path.DirectorySeparatorChar}native{Path.DirectorySeparatorChar}{s}"))
+#endif
+										)
+									{
+										var depPath = Path.Combine(exeDir, dep);
+										if (File.Exists(depPath))
+											File.Copy(depPath, Path.Combine(scriptdir, Path.GetFileName(dep)), true);
+									}
+								}
 							}
 							catch (Exception writeex)
 							{

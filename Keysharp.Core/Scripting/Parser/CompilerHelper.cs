@@ -116,9 +116,15 @@ using static Keysharp.Scripting.Script;
 		public static Assembly compiledasm;
 		public static byte[] compiledBytes;
 
-		private static string[] requiredDependencies = new[] {
+		public static string[] requiredManagedDependencies = new[] {
 			"Keysharp.Core.dll",
 			"System.CodeDom.dll",
+			"PCRE.NET.dll",
+			"BitFaster.Caching.dll"
+		};
+		public static string[] requiredNativeDependencies = new[]
+		{
+			"PCRE.NET.Native" + EmbeddedDependencyLoader.dllExt,
 		};
 
 		private static string[] usings = new[] {//These aren't what show up in the output .cs file. See Parser.GenerateCompileUnit() for that.
@@ -402,15 +408,15 @@ using static Keysharp.Scripting.Script;
 				{
 					//This will be the build output folder when running from within the debugger, and the install folder when running from an installation.
 					//Note that Keysharp.Core.dll and System.CodeDom.dll *must* remain in that location for a compiled executable to work.
-					foreach (var dep in requiredDependencies)
+					foreach (var dep in requiredManagedDependencies)
 						references.Add(MetadataReference.CreateFromFile(Path.Combine(ksCoreDir, dep)));
 				} 
 				else
 				{
 					var asm = Assembly.GetExecutingAssembly();
-					if (!asm.GetManifestResourceNames().Any(s => requiredDependencies.Contains(s)))
+					if (!asm.GetManifestResourceNames().Any(s => requiredManagedDependencies.Contains(s)))
 						asm = Assembly.GetEntryAssembly();
-					var refs = requiredDependencies.Select(logicalName =>
+					var refs = requiredManagedDependencies.Select(logicalName =>
 					{
 						using var rs = asm.GetManifestResourceStream("Deps." + logicalName)!;
 						return MetadataReference.CreateFromStream(rs);
