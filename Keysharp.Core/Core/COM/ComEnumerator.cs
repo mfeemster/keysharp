@@ -1,6 +1,4 @@
 ﻿#if WINDOWS
-using System.Runtime.InteropServices.Marshalling;
-
 namespace Keysharp.Core.COM
 {
 	internal class ComEnumeratorData : BaseIteratorData<ComEnumerator>
@@ -15,17 +13,17 @@ namespace Keysharp.Core.COM
 		/// <summary>
 		/// The COM object to create an enumerator for.
 		/// </summary>
-		private object com;
+		private readonly object com;
 
 		/// <summary>
 		/// The COM enumerator object for the COM object.
 		/// </summary>
-		private object newEnum;
+		private readonly object newEnum;
 
 		/// <summary>
 		/// newEnum cast to an <see cref="IEnumerator"/>.
 		/// </summary>
-		private IEnumerator enumerator;
+		private readonly IEnumerator enumerator;
 
 		/// <summary>
 		/// The implementation for <see cref="IEnumerator.Current"/> which gets the type,value tuple at the current iterator position.

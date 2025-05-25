@@ -1,5 +1,3 @@
-using System.Runtime.InteropServices;
-
 // In SDK-style projects such as this one, several assembly attributes that were historically
 // defined in this file are now automatically added during build and populated with
 // values defined in project properties. For details of which attributes are included
@@ -16,5 +14,5 @@ using System.Runtime.InteropServices;
 
 [assembly: Guid("cc70a763-b0a6-4586-bba5-a37a2fe0ea3b")]
 
-// Set a fixed culture to prevent problems caused by differing user cultures 
+// Set a fixed culture to prevent problems caused by differing user cultures
 [assembly: SetCulture("en-US")]

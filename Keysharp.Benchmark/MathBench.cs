@@ -1,7 +1,4 @@
-﻿using BenchmarkDotNet.Order;
-using static Keysharp.Core.Functions;
-
-namespace Keysharp.Benchmark
+﻿namespace Keysharp.Benchmark
 {
 	public class MathBench : BaseTest
 	{

@@ -26,7 +26,7 @@
 		/// <summary>
 		/// An object creation function. This is done so this class can be used with T and T[].
 		/// </summary>
-		private Func<T> create;
+		private readonly Func<T> create;
 		/// <summary>
 		/// Gets the current size/index of the stack.
 		/// </summary>

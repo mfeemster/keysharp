@@ -8,7 +8,7 @@ namespace Keysharp.Core
 	{
 		// These dictionaries are theoretically unbounded in size, but in practice should not blow up in size.
 		// delegateCache is keyed by a combination of the number of arguments and whether the argument
-		// is a floating-type, so the max size should be about 1000. 
+		// is a floating-type, so the max size should be about 1000.
 		// procAddressCache is keyed by DllCall target functions, which in practice should not get
 		// into too large numbers.
 #if CONCURRENT
@@ -133,7 +133,7 @@ namespace Keysharp.Core
 			{
 				string name;
 				var z = path.LastIndexOf(Path.DirectorySeparatorChar);
-				var procAddressCache = Script.TheScript.DllData.procAddressCache;
+				var procAddressCache = TheScript.DllData.procAddressCache;
 
 				if (z == -1)
 				{
@@ -303,7 +303,7 @@ namespace Keysharp.Core
 		{
 			IntPtr shim = IntPtr.Zero;
 			int n = args.Length;
-			var script = Script.TheScript;
+			var script = TheScript;
 			var delegateCache = script.DllData.delegateCache;
 			// pack n (≤ 58) into bits 58–63, mask occupies bits 0–57
 			// this means the maximum argument count is 63 for integer return values, 57 for floating point ones
@@ -403,7 +403,7 @@ namespace Keysharp.Core
 			var dm = new DynamicMethod(
 				name,
 				returnType,
-				new[] { typeof(IntPtr), typeof(long[]) },
+				[typeof(IntPtr), typeof(long[])],
 				typeof(Dll).Module,
 				skipVisibility: true);
 			var il = dm.GetILGenerator();
@@ -457,7 +457,7 @@ namespace Keysharp.Core
 			DynamicMethod dm = new DynamicMethod(
 				"DynamicDllCall_" + n,
 				typeof(long),
-				new[] { typeof(IntPtr), typeof(long[]) },
+				[typeof(IntPtr), typeof(long[])],
 				typeof(Dll).Module,
 				skipVisibility: true);
 			ILGenerator il = dm.GetILGenerator();

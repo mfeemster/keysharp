@@ -34,8 +34,10 @@ namespace Keysharp.Main
 				var script = new Script();//One Script object will exist here, then another will be created when the script runs.
 				var asm = Assembly.GetExecutingAssembly();
 				var exePath = Path.GetFullPath(asm.Location);
+
 				if (exePath.IsNullOrEmpty()) //Happens when the assembly is dynamically loaded from memory
 					exePath = Environment.ProcessPath;
+
 				var exeName = Path.GetFileNameWithoutExtension(exePath);
 				var exeDir = Path.GetFullPath(Path.GetDirectoryName(exePath));
 				var nsname = typeof(Program).Namespace;
@@ -294,12 +296,13 @@ namespace Keysharp.Main
 								if (string.Compare(exeDir, scriptdir, true) != 0)
 								{
 									var deps = minimalexeout ? ["Keysharp.Core.dll"]
-										: CompilerHelper.requiredManagedDependencies
+											   : CompilerHelper.requiredManagedDependencies
 #if DEBUG
-											//This is only required for non-published projects.
-											.Concat(CompilerHelper.requiredNativeDependencies.Select(s => $"runtimes{Path.DirectorySeparatorChar}{RuntimeInformation.RuntimeIdentifier}{Path.DirectorySeparatorChar}native{Path.DirectorySeparatorChar}{s}"))
+											   //This is only required for non-published projects.
+											   .Concat(CompilerHelper.requiredNativeDependencies.Select(s => $"runtimes{Path.DirectorySeparatorChar}{RuntimeInformation.RuntimeIdentifier}{Path.DirectorySeparatorChar}native{Path.DirectorySeparatorChar}{s}"))
 #endif
-											.Concat(CompilerHelper.requiredNativeDependencies);
+											   .Concat(CompilerHelper.requiredNativeDependencies);
+
 									//Need to copy Keysharp.Core and other dependencies from the install path to
 									//the folder the script resides in. Without them, the compiled exe cannot be run in a standalone manner.
 									//MessageBox.Show($"scriptdir = {scriptdir}");
@@ -307,6 +310,7 @@ namespace Keysharp.Main
 									foreach (var dep in deps)
 									{
 										var depPath = Path.Combine(exeDir, dep);
+
 										if (File.Exists(depPath))
 											File.Copy(depPath, Path.Combine(scriptdir, Path.GetFileName(dep)), true);
 									}

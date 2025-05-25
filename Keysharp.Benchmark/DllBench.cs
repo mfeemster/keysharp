@@ -1,7 +1,4 @@
-﻿using BenchmarkDotNet.Order;
-using static Keysharp.Core.Functions;
-
-namespace Keysharp.Benchmark
+﻿namespace Keysharp.Benchmark
 {
 	[IterationCount(5)]
 	[InvocationCount(5)]
@@ -9,8 +6,8 @@ namespace Keysharp.Benchmark
 	public class DllBench : BaseTest
 	{
 		private Keysharp.Scripting.Script _ks_s;
-		private static object mcode_e = Keysharp.Core.Collections.Map("1", 4L, "2", 1L);
-		private static object mcode_c = (_ = Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.ValueEquality, Accessors.A_PtrSize, 8L)) ? (object)(_ = "x64") : (object)(_ = "x86"));
+		private static readonly object mcode_e = Keysharp.Core.Collections.Map("1", 4L, "2", 1L);
+		private static readonly object mcode_c = (_ = Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.ValueEquality, Accessors.A_PtrSize, 8L)) ? (object)(_ = "x64") : (object)(_ = "x86"));
 		private static object p = 0L, ptr = 0L, result = 0L;
 
 		public static object CallbackTwoArgs(object arg1, object arg2)
