@@ -1,4 +1,6 @@
-﻿namespace Keysharp.Scripting
+﻿using Keysharp.Core;
+
+namespace Keysharp.Scripting
 {
 	public class CompilerHelper
 	{
@@ -113,6 +115,78 @@ using static Keysharp.Scripting.Script;
 		/// </summary>
 		public static Assembly compiledasm;
 		public static byte[] compiledBytes;
+
+		private static string[] requiredDependencies = new[] {
+			"Keysharp.Core.dll",
+			"System.CodeDom.dll",
+		};
+
+		private static string[] usings = new[] {//These aren't what show up in the output .cs file. See Parser.GenerateCompileUnit() for that.
+			"System",
+			"System.Collections",
+			"System.Collections.Generic",
+			"System.Data",
+			"System.Drawing",
+			"System.IO",
+			"System.Linq",
+			"System.Reflection",
+			"System.Runtime",
+			"System.Windows.Forms",
+			"System.Runtime.InteropServices",
+			"Keysharp.Core",
+		};
+
+		private static HashSet<string> _compiledScriptDependencies;
+		public static HashSet<string> GetCompiledScriptDependencies(string depsJson)
+		{
+			if (_compiledScriptDependencies == null)
+			{
+				_compiledScriptDependencies = new(StringComparer.OrdinalIgnoreCase);
+				// 2) load and parse
+				using var doc = JsonDocument.Parse(File.ReadAllText(depsJson));
+				var dir = Path.GetDirectoryName(depsJson);
+				var rid = RuntimeInformation.RuntimeIdentifier;
+
+				// 3) drill into the “libraries” section for runtime & native assets
+				var targets = doc.RootElement.GetProperty("targets");
+				foreach (var target in targets.EnumerateObject())
+				{
+					foreach (var library in target.Value.EnumerateObject())
+					{
+						var name = library.Name;
+						var info = library.Value;
+
+						// managed assemblies
+						// asmEntry.Name might be "lib/netstandard2.0/PCRE.NET.dll"
+						if (info.TryGetProperty("runtime", out var runTimeGroup))
+							foreach (var asmEntry in runTimeGroup.EnumerateObject())
+								switch (Path.GetFileName(asmEntry.Name).ToUpper())
+								{
+									// Don't include our entry assemblies
+									case "KEYSHARP.DLL":
+									case "KEYVIEW.DLL":
+									case "KEYSHARP.OUTPUTTEST.DLL":
+										break;
+									default:
+										_compiledScriptDependencies.Add(File.Exists(asmEntry.Name) ? asmEntry.Name : Path.Combine(dir, Path.GetFileName(asmEntry.Name)));
+										break;
+								}
+
+						// native libraries
+						// nativeEntry.Name might be "runtimes/win-x64/native/PCRE.NET.Native.dll"
+						if (info.TryGetProperty("native", out var nativeGroup))
+							foreach (var nativeEntry in nativeGroup.EnumerateObject())
+								_compiledScriptDependencies.Add(File.Exists(nativeEntry.Name) ? nativeEntry.Name : Path.Combine(dir, Path.GetFileName(nativeEntry.Name)));
+						if (info.TryGetProperty("runtimeTargets", out var runtimeTargetsGroup))
+							foreach (var nativeEntry in runtimeTargetsGroup.EnumerateObject())
+								if (nativeEntry.Value.TryGetProperty("rid", out var targetRid) && targetRid.ValueEquals(rid))
+									_compiledScriptDependencies.Add(File.Exists(nativeEntry.Name) ? nativeEntry.Name : Path.Combine(dir, Path.GetFileName(nativeEntry.Name)));
+					}
+				}
+			}
+
+			return _compiledScriptDependencies;
+		}
 
 		private readonly CodeGeneratorOptions cgo = new ()
 		{
@@ -233,30 +307,61 @@ using static Keysharp.Scripting.Script;
 			return "";
 		}
 
-		public (EmitResult, MemoryStream, Exception) Compile(string code, string outputname, string currentDir)
+		public (EmitResult, MemoryStream, Exception) Compile(string code, string outputname, string currentDir, bool minimalexeout = false)
 		{
 			try
 			{
+				IEnumerable<ResourceDescription> resourceDescriptions = null;
+				HashSet<string> allDependencies = null;
+
 				var tree = SyntaxFactory.ParseSyntaxTree(code,
 						   new CSharpParseOptions(LanguageVersion.LatestMajor, DocumentationMode.None, SourceCodeKind.Regular));
 				var coreDir = Path.GetDirectoryName(typeof(object).GetTypeInfo().Assembly.Location);
 				var desktopDir = Path.GetDirectoryName(typeof(Form).GetTypeInfo().Assembly.Location);
 				var ksCoreDir = Path.GetDirectoryName(A_KeysharpCorePath);
-				var usings = new List<string>()//These aren't what show up in the output .cs file. See Parser.GenerateCompileUnit() for that.
+
+				var currentDepsConfigPath = Path.Combine(ksCoreDir ?? "", $"{Assembly.GetEntryAssembly().GetName().Name}.deps.json");
+				if (!File.Exists(currentDepsConfigPath))
 				{
-					"System",
-					"System.Collections",
-					"System.Collections.Generic",
-					"System.Data",
-					"System.Drawing",
-					"System.IO",
-					"System.Linq",
-					"System.Reflection",
-					"System.Runtime",
-					"System.Windows.Forms",
-					"System.Runtime.InteropServices",
-					"Keysharp.Core"
-				};
+					currentDepsConfigPath = Path.Combine(currentDir, $"{Assembly.GetEntryAssembly().GetName().Name}.deps.json");
+					if (!File.Exists(currentDepsConfigPath))
+						currentDepsConfigPath = null;
+				}
+
+				if (currentDepsConfigPath != null)
+				{
+					allDependencies = CompilerHelper.GetCompiledScriptDependencies(currentDepsConfigPath);
+
+					if (minimalexeout)
+						resourceDescriptions = allDependencies
+							.Where(path => {
+								switch (Path.GetFileName(path).ToUpper())
+								{
+									// Exclude Keysharp.Core because it needs to dynamically load the other
+									// embedded assemblies and native libraries.
+									case "KEYSHARP.CORE.DLL":
+									// The following would need to be included if dynamic compilation
+									// is desired by the resulting executable.
+									case "MICROSOFT.CODEANALYSIS.DLL":
+									case "MICROSOFT.CODEANALYSIS.CSHARP.DLL":
+									case "MICROSOFT.CODEDOM.PROVIDERS.DOTNETCOMPILERPLATFORM.DLL":
+									case "MICROSOFT.NET.HOSTMODEL.DLL":
+										return false;
+									default:
+										return true;
+								}
+							})
+							.Select(path =>
+							new ResourceDescription(
+								// Prefix with Deps to avoid any naming conflicts. Not sure if this is needed.
+								resourceName: "Deps." + Path.GetFileName(path),
+								dataProvider: () => File.OpenRead(path),
+								isPublic: true
+							)
+						);
+				}
+
+				// should probably try to extract these from deps.json as well, TODO
 				var references = new List<MetadataReference>
 				{
 					MetadataReference.CreateFromFile(Path.Combine(coreDir, "System.dll")),
@@ -269,12 +374,49 @@ using static Keysharp.Scripting.Script;
 					MetadataReference.CreateFromFile(Path.Combine(coreDir, "System.Private.CoreLib.dll")),
 					MetadataReference.CreateFromFile(Path.Combine(desktopDir, "System.Drawing.Common.dll")),
 					MetadataReference.CreateFromFile(Path.Combine(desktopDir, "System.Windows.Forms.dll")),
+				};
+				// allDependencies has been loaded from a deps.json file and thus should contain all
+				// the necessary dependencies for Keysharp.Core to function. 
+				if (allDependencies != null)
+				{
+					references.AddRange(
+					allDependencies
+						// Filter out any non-managed files
+						.Where((string dep) => {
+							try
+							{
+								AssemblyName.GetAssemblyName(dep);
+								return true;
+							} 
+							catch
+							{
+								return false;
+							}
+						})
+						.Select(dep => MetadataReference.CreateFromFile(dep))
+					);
+				}
+				// Otherwise default to Keysharp.Core.dll folder and read metadata from known required
+				// dependencies.
+				else if (ksCoreDir != null)
+				{
 					//This will be the build output folder when running from within the debugger, and the install folder when running from an installation.
 					//Note that Keysharp.Core.dll and System.CodeDom.dll *must* remain in that location for a compiled executable to work.
-					MetadataReference.CreateFromFile(Path.Combine(ksCoreDir, "Keysharp.Core.dll")),
-					MetadataReference.CreateFromFile(Path.Combine(ksCoreDir, "System.CodeDom.dll")),//Even though the .NET desktop install comes with CodeDOM, we reference a special version in Keysharp.Core.
-					MetadataReference.CreateFromFile(Path.Combine(ksCoreDir, "PCRE.NET.dll")),
-				};
+					foreach (var dep in requiredDependencies)
+						references.Add(MetadataReference.CreateFromFile(Path.Combine(ksCoreDir, dep)));
+				} 
+				else
+				{
+					var asm = Assembly.GetExecutingAssembly();
+					if (!asm.GetManifestResourceNames().Any(s => requiredDependencies.Contains(s)))
+						asm = Assembly.GetEntryAssembly();
+					var refs = requiredDependencies.Select(logicalName =>
+					{
+						using var rs = asm.GetManifestResourceStream("Deps." + logicalName)!;
+						return MetadataReference.CreateFromStream(rs);
+					});
+					references.AddRange(refs);
+				}
 				var ms = new MemoryStream();
 				var compilation = CSharpCompilation.Create(outputname)
 								  .WithOptions(
@@ -315,7 +457,7 @@ using static Keysharp.Scripting.Script;
 				manifestStream.Position = 0;
 				var msi = Assembly.GetEntryAssembly().GetManifestResourceStream("Keysharp.Keysharp.ico");
 				var res = compilation.CreateDefaultWin32Resources(true, false, manifestStream, msi);//The first argument must be true to embed version/assembly information.
-				var compilationResult = compilation.Emit(ms, win32Resources: res);
+				var compilationResult = compilation.Emit(ms, win32Resources: res, manifestResources: resourceDescriptions);
 				return (compilationResult, ms, null);
 			}
 			catch (Exception e)

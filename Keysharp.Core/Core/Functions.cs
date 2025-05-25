@@ -1,4 +1,6 @@
-﻿namespace Keysharp.Core
+﻿using BitFaster.Caching.Scheduler;
+
+namespace Keysharp.Core
 {
 	/// <summary>
 	/// Public interface for function object and function reflection-related functions.
@@ -179,6 +181,6 @@
 
 	internal class FunctionData
 	{
-		internal ConcurrentDictionary<object, IFuncObj> cachedFuncObj = new (new CaseEqualityComp(eCaseSense.Off));
+		internal ConcurrentLfu<object, IFuncObj> cachedFuncObj = new (Caching.DefaultCacheCapacity, Environment.ProcessorCount, new ThreadPoolScheduler(), new CaseEqualityComp(eCaseSense.Off));
 	}
 }

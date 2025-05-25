@@ -1,4 +1,5 @@
-﻿using Keysharp.Core.Windows;
+﻿using BitFaster.Caching.Lfu;
+using Keysharp.Core.Windows;
 using Keysharp.Scripting;
 using PCRE;
 using System;
@@ -256,7 +257,7 @@ namespace Keysharp.Core.Common.Strings
 		internal PcreRegexSettings opts;
 		internal string[] groupNames;
 
-		internal static ConcurrentDictionary<string, Func<PcreMatch, string>> ReplacementCache = new ();
+		internal static ConcurrentLfu<string, Func<PcreMatch, string>> ReplacementCache = new (Caching.DefaultCacheCapacity);
 
 		internal static Func<string, Func<PcreMatch, string>> _parseReplace = null;
 		internal static Func<string, Func<PcreMatch, string>> ParseReplace

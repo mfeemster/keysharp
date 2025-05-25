@@ -556,6 +556,8 @@ class class1
 	  In addition to running the script, Keysharp outputs a .cs file with the same name as the script containing the code which was used to compile. This is the same code displayed in Keyview. 
 	- `--exeout`  
 	  In addition to running the script, Keysharp outputs a .exe file which can be ran as standalone from Keysharp (but still requires .NET 9).
+	- `--minimalexeout`    
+	  Same as `--exeout` but the number of file dependencies is reduced by embedding them in Scriptname.dll. The resulting program will have five dependencies: Scriptname.exe, Scriptname.dll, Keysharp.Core.dll, Scriptname.deps.json, and Scriptname.runtime.config. To get a truly single-file executable the script must be compiled as a C# project, for example as Keysharp.OutputTest in the Keysharp solution.
 	- `--validate`  
 	  Compiles but does not run the script. Can be used to check for load-time errors.
 	- `--assembly [Type Method]`  

@@ -5,6 +5,7 @@ global using global::Microsoft.CodeAnalysis.Emit;
 global using global::Microsoft.VisualBasic.FileIO;//See if this is cross platform or not. //TODO
 global using global::System;
 global using global::System.Buffers;
+global using global::System.Data;
 global using global::System.CodeDom;
 global using global::System.CodeDom.Compiler;
 global using global::System.Collections;
@@ -69,9 +70,10 @@ global using global::Keysharp.Scripting;
 global using global::Semver.Comparers;
 global using global::Semver.Utility;
 global using global::PCRE;
+global using global::BitFaster.Caching.Lfu;
 
 #if WINDOWS
-	global using global::Accessibility;
+global using global::Accessibility;
 	global using global::Microsoft.Win32;
 	global using global::Microsoft.Win32.SafeHandles;
 	global using global::System.Management;

@@ -12,8 +12,6 @@ using Microsoft.NET.HostModel.AppHost;
 using Microsoft.Win32;
 using Keysharp.Core;
 using Keysharp.Scripting;
-using System.Globalization;
-using Keysharp.Core.Properties;
 
 namespace Keysharp.Main
 {
@@ -35,11 +33,14 @@ namespace Keysharp.Main
 				var script = new Script();//One Script object will exist here, then another will be created when the script runs.
 				var asm = Assembly.GetExecutingAssembly();
 				var exePath = Path.GetFullPath(asm.Location);
+				if (exePath.IsNullOrEmpty()) //Happens when the assembly is dynamically loaded from memory
+					exePath = Environment.ProcessPath;
 				var exeName = Path.GetFileNameWithoutExtension(exePath);
 				var exeDir = Path.GetFullPath(Path.GetDirectoryName(exePath));
 				var nsname = typeof(Program).Namespace;
 				var codeout = false;
 				var exeout = false;
+				var minimalexeout = false;
 				var assembly = false;
 				var assemblyType = "Keysharp.CompiledMain.program";
 				var assemblyMethod = "Main";
@@ -102,6 +103,11 @@ namespace Keysharp.Main
 							break;
 
 						case "exeout":
+							exeout = true;
+							break;
+
+						case "minimalexeout":
+							minimalexeout = true;
 							exeout = true;
 							break;
 
@@ -237,7 +243,7 @@ namespace Keysharp.Main
 #if DEBUG
 				Core.Debug.OutputDebug("Compiling code.");
 #endif
-				var (results, ms, compileexc) = ch.Compile(code, namenoext, exeDir);
+				var (results, ms, compileexc) = ch.Compile(code, namenoext, exeDir, minimalexeout);
 
 				if (results == null)
 				{
@@ -259,7 +265,8 @@ namespace Keysharp.Main
 								var ver = GetLatestDotNetVersion();
 								var outputRuntimeConfigPath = Path.ChangeExtension(path, "runtimeconfig.json");
 								var currentRuntimeConfigPath = Path.ChangeExtension(exePath, "runtimeconfig.json");
-								File.WriteAllBytes(path + ".dll", arr);
+								var outputDllPath = path + ".dll";
+								File.WriteAllBytes(outputDllPath, arr);
 								File.Copy(currentRuntimeConfigPath, outputRuntimeConfigPath, true);
 								var outputDepsConfigPath = Path.ChangeExtension(path, "deps.json");
 								var currentDepsConfigPath = Path.ChangeExtension(exePath, "deps.json");
@@ -272,7 +279,7 @@ namespace Keysharp.Main
 									appHostDestinationFilePath: finalPath,
 									appBinaryFilePath: $"{namenoext}.dll",
 									windowsGraphicalUserInterface: false,
-									assemblyToCopyResorcesFrom: $"{path}.dll");
+									assemblyToCopyResorcesFrom: outputDllPath);
 #elif WINDOWS
 								finalPath = $"{path}.exe";
 								HostWriter.CreateAppHost(
@@ -280,22 +287,8 @@ namespace Keysharp.Main
 									appHostDestinationFilePath: finalPath,
 									appBinaryFilePath: $"{namenoext}.dll",
 									windowsGraphicalUserInterface: true,
-									assemblyToCopyResorcesFrom: $"{path}.dll");
+									assemblyToCopyResorcesFrom: outputDllPath);
 #endif
-								var ksCorePath = Path.Combine(exeDir, "Keysharp.Core.dll");
-								var codeDomPath = Path.Combine(exeDir, "System.CodeDom.dll");
-								//Need to copy Keysharp.Core from the install path to folder the script resides in. Without it, the compiled exe cannot be run in a standalone manner.
-								//MessageBox.Show($"scriptdir = {scriptdir}");
-								//MessageBox.Show($"About to copy from {ksCorePath} to {Path.Combine(scriptdir, "Keysharp.Core.dll")}");
-
-								if (string.Compare(exeDir, scriptdir, true) != 0)
-								{
-									if (File.Exists(ksCorePath))
-										File.Copy(ksCorePath, Path.Combine(scriptdir, "Keysharp.Core.dll"), true);
-
-									if (File.Exists(codeDomPath))
-										File.Copy(codeDomPath, Path.Combine(scriptdir, "System.CodeDom.dll"), true);
-								}
 							}
 							catch (Exception writeex)
 							{
