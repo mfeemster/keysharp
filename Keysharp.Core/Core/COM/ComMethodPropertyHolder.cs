@@ -58,6 +58,9 @@ namespace Keysharp.Core.COM
 		{
 			Error err;
 
+			IntPtr pUnk = Marshal.GetIUnknownForObject(comObject);
+			Marshal.Release(pUnk);
+
 			try
 			{
 				var found = false;
@@ -65,7 +68,7 @@ namespace Keysharp.Core.COM
 				Type[] expectedTypes = null;
 				ParameterModifier[] modifiers = null;
 
-				if (Script.TheScript.ComMethodData.comMethodCache.TryGetValue(comObject, out var objDkt))
+				if (Script.TheScript.ComMethodData.comMethodCache.TryGet(pUnk, out var objDkt))
 				{
 					if (objDkt.TryGetValue(methodName, out var cmi))
 					{
@@ -141,6 +144,8 @@ namespace Keysharp.Core.COM
 
 					if (!found)
 						return Errors.ErrorOccurred(err = new TypeError($"COM call to '{methodName}()' could not be found in any type-info interface.")) ? throw err : null;
+
+					found = false; // Set back to false to cache the result
 
 					void PopulateModifiers(FUNCDESC funcDesc)
 					{
@@ -282,11 +287,13 @@ namespace Keysharp.Core.COM
 				//If no exception thrown and it wasn't cached, cache the info.
 				if (!found)
 				{
-					_ = Script.TheScript.ComMethodData.comMethodCache.GetOrAdd(comObject).GetOrAdd(methodName, new ComMethodInfo()
-					{
-						modifiers = modifiers,
-						expectedTypes = expectedTypes
-					});
+					_ = Script.TheScript.ComMethodData.comMethodCache
+						.GetOrAdd(pUnk, key => new Dictionary<string, ComMethodInfo>(StringComparer.OrdinalIgnoreCase))
+						.GetOrAdd(methodName, new ComMethodInfo()
+							{
+								modifiers = modifiers,
+								expectedTypes = expectedTypes
+							});
 				}
 
 				return ret;
@@ -316,7 +323,7 @@ namespace Keysharp.Core.COM
 
 	internal class ComMethodData
 	{
-		internal Dictionary<object, Dictionary<string, ComMethodInfo>> comMethodCache = [];
+		internal ConcurrentLfu<IntPtr, Dictionary<string, ComMethodInfo>> comMethodCache = new (Caching.DefaultCacheCapacity);
 	}
 
 	internal class ComMethodInfo

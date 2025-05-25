@@ -6,6 +6,11 @@ namespace Keysharp.Core
 {
 	internal class DllData
 	{
+		// These dictionaries are theoretically unbounded in size, but in practice should not blow up in size.
+		// delegateCache is keyed by a combination of the number of arguments and whether the argument
+		// is a floating-type, so the max size should be about 1000. 
+		// procAddressCache is keyed by DllCall target functions, which in practice should not get
+		// into too large numbers.
 #if CONCURRENT
 		internal readonly ConcurrentDictionary<ulong, Delegate> delegateCache = new ();
 		internal readonly ConcurrentDictionary<string, IntPtr> procAddressCache = new (StringComparer.OrdinalIgnoreCase);
