@@ -605,8 +605,7 @@
 
 					code = CompilerHelper.UsingStr + code;
 					tslCodeStatus.Text = "Compiling C# code...";
-					var asm = Assembly.GetExecutingAssembly();
-					var (results, ms, compileexc) = ch.Compile(code, "Keyview", Path.GetFullPath(Path.GetDirectoryName(asm.Location)));
+					var (results, ms, compileexc) = ch.Compile(code, "Keyview", Path.GetFullPath(Path.GetDirectoryName(Environment.ProcessPath)));
 
 					if (results == null)
 					{

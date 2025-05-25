@@ -62,7 +62,7 @@ namespace Keysharp.Tests
 			}
 
 			var asm = Assembly.GetExecutingAssembly();
-			var (results, ms, compileexc) = ch.Compile(code, name, Path.GetFullPath(Path.GetDirectoryName(asm.Location)));
+			var (results, ms, compileexc) = ch.Compile(code, name, Path.GetFullPath(Path.GetDirectoryName(asm.Location.IsNullOrEmpty() ? Environment.ProcessPath : asm.Location)));
 
 			if (compileexc != null)
 			{
