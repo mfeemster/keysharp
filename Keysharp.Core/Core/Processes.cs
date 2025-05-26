@@ -610,15 +610,18 @@ namespace Keysharp.Core
 		/// <summary>
 		/// Reads and returns all text from the process's standard output stream.
 		/// </summary>
-		public string StdOut => _process.StandardOutput.ReadToEnd();
+		private object _StdOut = null;
+		public object StdOut => _StdOut ??= new KeysharpFile(_process.StandardOutput);
 		/// <summary>
 		/// Reads and returns all text from the process's standard error stream.
 		/// </summary>
-		public string StdErr => _process.StandardError.ReadToEnd();
+		private object _StdErr = null;
+		public object StdErr => _StdErr ??= new KeysharpFile(_process.StandardError);
 		/// <summary>
 		/// Provides access to the process's standard input stream.
 		/// </summary>
-		public object StdIn => new KeysharpFile(_process.StandardInput);
+		private object _StdIn = null;
+		public object StdIn => _StdIn ??= new KeysharpFile(_process.StandardInput);
 		/// <summary>
 		/// Immediately kills the underlying process.
 		/// </summary>

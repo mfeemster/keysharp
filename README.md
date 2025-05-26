@@ -392,7 +392,8 @@ class class1
 * In addition to using `#ClipboardTimeout`, a new accessor named `A_ClipboardTimeout` can be used at any point in the program to get or set that value.
 * A compiled script can be reloaded.
 	+ AHK does not support reloading a compiled script.
-* A new function `RunScript(code, name := "DynamicScript", callbackOrAsync?)` which dynamically compiles the provided code and runs it using the currently running process executable. Optionally provide the script name, and whether to run it asynchronously (non-unset non-zero `callbackOrAsync` causes async run). If `callbackOrAsync` is provided a function then after the script has finished this is called with the `ProcessInfo`. Over multiple runs this method is faster than running the process manually and writing to StdIn because of assembly and compilation caching.   
+* A new function `RunScript(code, callbackOrAsync?, name := "DynamicScript", executable?)` which dynamically parses, compiles, and runs the provided code. Optionally provide the script name; whether to run it asynchronously (non-unset non-zero `callbackOrAsync` causes async run without a callback); an executable path to run the compiled assembly (defaults to the current process). 
+  If `callbackOrAsync` is provided a function then it is called after the script has finished with the `ProcessInfo` as the only argument. Over multiple runs `RunScript` is faster than running the process manually and writing to StdIn because of assembly and compilation caching.   
   This function returns a `ProcessInfo` object encapsulating info and I/O for the process. Available properties: `HasExited`, `ExitCode`, `ExitTime` (YYYYMMDDHH24MISS), `StdOut`, `StdErr`, `StdIn` (as `KeysharpFile`). Available methods: `Kill()`.
 * `A_EventInfo` is not limited to positive values when reporting the mouse wheel scroll amount.
 	+ When scrolling up, the value will be positive, and negative when scrolling down.

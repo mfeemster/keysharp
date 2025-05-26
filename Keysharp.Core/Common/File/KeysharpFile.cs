@@ -70,6 +70,12 @@
 			enc = sw.Encoding;
 		}
 
+		public KeysharpFile(StreamReader sr)
+		{
+			tr = sr;
+			enc = sr.CurrentEncoding;
+		}
+
 		public new object __New(params object[] args)
 		{
 			var filename = args[0].As();
