@@ -392,6 +392,9 @@ class class1
 * In addition to using `#ClipboardTimeout`, a new accessor named `A_ClipboardTimeout` can be used at any point in the program to get or set that value.
 * A compiled script can be reloaded.
 	+ AHK does not support reloading a compiled script.
+* A new function `RunScript(code, callbackOrAsync?, name := "DynamicScript", executable?)` which dynamically parses, compiles, and runs the provided code. Optionally provide the script name; whether to run it asynchronously (non-unset non-zero `callbackOrAsync` causes async run without a callback); an executable path to run the compiled assembly (defaults to the current process). 
+  If `callbackOrAsync` is provided a function then it is called after the script has finished with the `ProcessInfo` as the only argument. Over multiple runs `RunScript` is faster than running the process manually and writing to StdIn because of assembly and compilation caching.   
+  This function returns a `ProcessInfo` object encapsulating info and I/O for the process. Available properties: `HasExited`, `ExitCode`, `ExitTime` (YYYYMMDDHH24MISS), `StdOut`, `StdErr`, `StdIn` (as `KeysharpFile`). Available methods: `Kill()`.
 * `A_EventInfo` is not limited to positive values when reporting the mouse wheel scroll amount.
 	+ When scrolling up, the value will be positive, and negative when scrolling down.
 * New accessors:
@@ -550,6 +553,9 @@ class class1
 ```
 * Command line switches may start with either `/` (Windows-only), `-` or `--`. 
 * Command line switches
+    - `--script`    
+	  Causes a compiled script to ignore its main code and instead executes the provided script. For this to apply, `--script` must be the first command line argument.    
+	  Example: `CompiledScript.exe /script /ErrorStdOut MyScript.ahk "Script's arg 1"`
 	- `--version`, `-v`  
 	  Displays Keysharp version.
 	- `--codeout`  

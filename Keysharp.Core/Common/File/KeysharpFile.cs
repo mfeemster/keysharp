@@ -64,6 +64,18 @@
 
 		public KeysharpFile(params object[] args) => _ = __New(args);
 
+		public KeysharpFile(StreamWriter sw)
+		{
+			tw = sw;
+			enc = sw.Encoding;
+		}
+
+		public KeysharpFile(StreamReader sr)
+		{
+			tr = sr;
+			enc = sr.CurrentEncoding;
+		}
+
 		public new object __New(params object[] args)
 		{
 			var filename = args[0].As();
@@ -159,6 +171,7 @@
 			tr?.Close();
 			tw?.Close();
 			fs?.Close();
+			disposed = true;
 		}
 
 		public virtual void Dispose(bool disposing)
@@ -166,7 +179,6 @@
 			if (!disposed)
 			{
 				Close();
-				disposed = true;
 			}
 		}
 

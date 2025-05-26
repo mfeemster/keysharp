@@ -36,60 +36,27 @@ namespace Keysharp.Tests
 			s.SetName(name);
 			_ = Core.Debug.OutputDebug(Environment.CurrentDirectory);
 			var ch = new CompilerHelper();
-			var (domunits, domerrs) = ch.CreateDomFromFile(source);
 
-			if (domerrs.HasErrors)
+			var (arr, code) = ch.CompileCodeToByteArray([source], name);
+
+			if (arr == null)
 			{
-				foreach (CompilerError err in domerrs)
-					_ = Core.Debug.OutputDebug(err.ErrorText);
-
+				_ = Core.Debug.OutputDebug(code);
 				return string.Empty;
 			}
-
-			var (code, exc) = ch.CreateCodeFromDom(domunits);
-
-			if (exc is Exception e)
-			{
-				_ = Core.Debug.OutputDebug(e.Message);
-				return string.Empty;
-			}
-
-			code = CompilerHelper.UsingStr + code;
 
 			using (var sourceWriter = new StreamWriter("./" + name + ".cs"))
 			{
 				sourceWriter.WriteLine(code);
 			}
 
-			var asm = Assembly.GetExecutingAssembly();
-			var (results, ms, compileexc) = ch.Compile(code, name, Path.GetFullPath(Path.GetDirectoryName(asm.Location.IsNullOrEmpty() ? Environment.ProcessPath : asm.Location)));
+			if (exeout)
+			{
+				File.WriteAllBytes("./" + name + ".exe", arr);
+				File.WriteAllText("./" + name + ".runtimeconfig.json", CompilerHelper.GenerateRuntimeConfig());//Probably not needed for test exe outputs.
+			}
 
-			if (compileexc != null)
-			{
-				_ = Core.Debug.OutputDebug(compileexc.Message);
-				return string.Empty;
-			}
-			else if (results == null)
-			{
-				return string.Empty;
-			}
-			else if (results.Success)
-			{
-				_ = ms.Seek(0, SeekOrigin.Begin);
-				var arr = ms.ToArray();
-
-				if (exeout)
-				{
-					File.WriteAllBytes("./" + name + ".exe", arr);
-					File.WriteAllText("./" + name + ".runtimeconfig.json", CompilerHelper.GenerateRuntimeConfig());//Probably not needed for test exe outputs.
-				}
-
-				CompilerHelper.compiledasm = Assembly.Load(arr);
-			}
-			else
-			{
-				return string.Empty;
-			}
+			CompilerHelper.compiledasm = Assembly.Load(arr);
 
 			var buffer = new StringBuilder();
 			var output = string.Empty;

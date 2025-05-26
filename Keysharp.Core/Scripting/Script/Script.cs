@@ -18,6 +18,7 @@ namespace Keysharp.Scripting
 	public partial class Script
 	{
 		internal static bool dpimodeset; //This should be done once per process, so it can be static
+		public const char dotNetMajorVersion = '9';
 
 		public bool ForceKeybdHook;
 		public string[] KeysharpArgs = [];
