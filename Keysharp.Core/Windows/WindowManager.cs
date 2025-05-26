@@ -73,7 +73,7 @@ namespace Keysharp.Core.Windows
 				{
 					found = new WindowItem(hwnd);
 
-					if ((!hasTitle || criteria.Title.Equals(found.Title)) && criteria.ClassName.Equals(found.ClassName))
+					if ((!hasTitle || criteria.Title.Equals(found.Title)) && criteria.ClassName != null && criteria.ClassName.Equals(found.ClassName))
 						return found;
 
 					found = null;

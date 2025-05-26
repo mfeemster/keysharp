@@ -88,13 +88,17 @@ namespace Keysharp.CompiledMain
 			{
 				string name = "*";
 				_ks_s = new Keysharp.Scripting.Script();
+
+				if (Keysharp.Scripting.Script.HandleSingleInstance(name, eScriptInstance.Prompt))
+				{
+					return Environment.ExitCode = 0;
+				}
+
 				_ks_hm = _ks_s.HotstringManager;
 				_ks_s.SetName(name);
 				Keysharp.Core.Env.HandleCommandLineParams(args);
-				Keysharp.Core.Flow.Persistent(true);
 				_ks_s.CreateTrayMenu();
-				_ks_s.MaxThreadsTotal = 1u;
-				_ks_s.RunMainWindow(name, _ks_UserMainCode, true);
+				_ks_s.RunMainWindow(name, _ks_UserMainCode, false);
 				_ks_s.WaitThreads();
 				return Environment.ExitCode;
 			}
@@ -154,23 +158,13 @@ namespace Keysharp.CompiledMain
 
 		private static Keysharp.Core.Common.Keyboard.HotstringManager _ks_hm;
 
-		public static object F1()
-		{
-			Keysharp.Core.Flow.Sleep(2000L);
-			return "";
-		}
-
-		public static object F2()
-		{
-			return _ = Keysharp.Core.Dialogs.MsgBox("F2");
-		}
+		public static object x;
 
 		public static object _ks_UserMainCode()
 		{
-			Keysharp.Core.Flow.SetTimer(Keysharp.Core.Functions.Func(F1), Keysharp.Scripting.Script.OperateUnary(Keysharp.Scripting.Script.Operator.Subtract, 1L));
-			Keysharp.Core.Flow.SetTimer(Keysharp.Core.Functions.Func(F2), Keysharp.Scripting.Script.OperateUnary(Keysharp.Scripting.Script.Operator.Subtract, 1L));
+			x = 123L;
 			Keysharp.Core.Common.Keyboard.HotkeyDefinition.ManifestAllHotkeysHotstringsHooks();
-			_ks_s.ExitIfNotPersistent();
+			Keysharp.Core.Flow.ExitApp(0);
 			return "";
 		}
 	}

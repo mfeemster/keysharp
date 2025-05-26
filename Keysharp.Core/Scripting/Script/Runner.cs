@@ -1,15 +1,15 @@
 ﻿namespace Keysharp.Scripting
 {
-	/**
-	 * This is a lightweight version of the Keysharp main program, which is used to parse and compile
-	 * scripts dynamically specifically from compiled scripts. This version doesn't support emitting 
-	 * an executable (that would require the HostModel package dependency), and all errors/messages 
-	 * are output to StdOut. The compiled script used to run this must be shipped with CodeAnalysis 
-	 * and CodeDom dlls.
-	 */
+	/// <summary>
+	/// This is a lightweight version of the Keysharp main program, which is used to parse and compile
+	/// scripts dynamically specifically from compiled scripts. This version doesn't support emitting
+	/// an executable(that would require the HostModel package dependency), and all errors/messages
+	/// are output to StdOut. The compiled script used to run this must be shipped with CodeAnalysis
+	/// and CodeDom dlls.
+	/// </summary>
 	internal class Runner
 	{
-		private static readonly CompilerHelper ch = new();
+		private static readonly CompilerHelper ch = new ();
 
 		public static int Run(string[] args)
 		{
@@ -18,8 +18,10 @@
 				var script = new Script();
 				var asm = Assembly.GetEntryAssembly();
 				var exePath = Path.GetFullPath(asm.Location);
+
 				if (exePath.IsNullOrEmpty()) //Happens when the assembly is dynamically loaded from memory
 					exePath = Environment.ProcessPath;
+
 				var exeName = Path.GetFileNameWithoutExtension(exePath);
 				var exeDir = Path.GetFullPath(Path.GetDirectoryName(exePath));
 				var codeout = false;
@@ -114,7 +116,15 @@
 						byte[] assemblyBytes = reader.ReadBytes(length);
 						Assembly scriptAsm = Assembly.Load(assemblyBytes);
 						Type type = scriptAsm.GetType(assemblyType);
+
+						if (type == null)
+							return Message($"Could not find assembly {assemblyType}", true);
+
 						MethodInfo method = type.GetMethod(assemblyMethod);
+
+						if (method == null)
+							return Message($"Could not find method {assemblyMethod}", true);
+
 						return method.Invoke(null, [scriptArgs]).Ai();
 					}
 				}
@@ -180,7 +190,6 @@
 				{
 					ms.Seek(0, SeekOrigin.Begin);
 					var arr = ms.ToArray();
-
 					CompilerHelper.compiledasm = Assembly.Load(arr);
 				}
 				else
@@ -201,7 +210,6 @@
 
 				var program = CompilerHelper.compiledasm.GetType("Keysharp.CompiledMain.program");
 				var main = program.GetMethod("Main");
-
 				return main.Invoke(null, [scriptArgs]).Ai();
 			}
 			catch (Exception ex)
@@ -216,7 +224,6 @@
 				_ = error.AppendLine(ex.StackTrace);
 				var msg = error.ToString();
 				var trace = $"{Accessors.A_AppData}/Keysharp/execution_errors.txt";
-
 				return Message(msg, true);
 			}
 		}
