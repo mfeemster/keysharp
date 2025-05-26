@@ -16,6 +16,12 @@ using System.Runtime.InteropServices;
 
 namespace Keysharp.Main
 {
+	/**
+	 * The main program which interprets command line arguments, reads and compiles the code, loads
+	 * the resulting assembly and invokes the entry-point method.
+	 * Similar but simplified logic is present in Keysharp.Scripting.Runner, so changes here should
+	 * likely be done there as well.
+	 */
 	public static class Program
 	{
 		private static readonly CompilerHelper ch = new ();
@@ -162,8 +168,8 @@ namespace Keysharp.Main
 						Assembly scriptAsm = Assembly.Load(assemblyBytes);
 						Type type = scriptAsm.GetType(assemblyType);
 						MethodInfo method = type.GetMethod(assemblyMethod);
-						_ = method.Invoke(null, [scriptArgs]);
-						return 0;
+						Environment.ExitCode = method.Invoke(null, [scriptArgs]).Ai();
+						return Environment.ExitCode;
 					}
 				}
 
