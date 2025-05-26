@@ -574,6 +574,53 @@ using static Keysharp.Scripting.Script;
 
 		internal string CreateEscapedIdentifier(string variable) => provider.CreateEscapedIdentifier(variable);
 
+		public byte[] CompileCodeToByteArray(string script, string name = "DynamicScript")
+		{
+			Error err;
+			byte[] compiledBytes;
+			var (domunits, domerrs) = CreateDomFromFile([script]);
+
+			if (domerrs.HasErrors)
+			{
+				var (errors, warnings) = GetCompilerErrors(domerrs);
+				var txt = "Error creating DOM from Script.TheScript.";
+
+				if (errors.Length > 0)
+					txt += $"\n\n{errors}";
+
+				if (warnings.Length > 0)
+					txt += $"\n\n{warnings}";
+
+				throw new Error(txt);
+			}
+
+			var (code, exc) = CreateCodeFromDom(domunits);
+
+			if (exc is Exception ex)
+			{
+				throw new Error($"Error creating C# code from DOM:\n{ex.Message}");
+			}
+
+			code = UsingStr + code;
+			var (results, ms, compileexc) = Compile(code, name, Path.GetFullPath(Path.GetDirectoryName(Environment.ProcessPath)));
+
+			if (results == null)
+			{
+				throw new Error($"Error compiling C# code to executable: {(compileexc != null ? compileexc.Message : string.Empty)}\n\n{code}");
+			}
+			else if (results.Success)
+			{
+				_ = ms.Seek(0, SeekOrigin.Begin);
+				compiledBytes = ms.ToArray();
+			}
+			else
+			{
+				throw new Error(HandleCompilerErrors(results.Diagnostics, name, "Compiling C# code to executable", compileexc != null ? compileexc.Message : string.Empty) + "\n" + code);
+			}
+
+			return compiledBytes;
+		}
+
 		internal object EvaluateCode(string code)
 		{
 			var coreDir = Path.GetDirectoryName(typeof(object).GetTypeInfo().Assembly.Location);

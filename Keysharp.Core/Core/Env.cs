@@ -213,6 +213,70 @@ namespace Keysharp.Core
 		}
 
 		/// <summary>
+		/// Compiles and executes a C# script dynamically in a separate process.
+		/// </summary>
+		/// <param name="obj0">The script source code (as any object with a valid string representation).</param>
+		/// <param name="obj1">An optional name for the dynamically generated assembly; defaults to "DynamicScript".</param>
+		/// <param name="obj2">Whether to run the process as async (provide non-unset non-zero value) or not.
+		/// If provided a callback function then it's considered async and the function <c>Call</c> method will be 
+		/// invoked when the process exits with the ProcessInfo as the only argument.</param>
+		/// <returns>
+		/// Returns a <see cref="ProcessInfo"/> wrapper around the spawned process.
+		/// If compilation fails without a flagged error, returns <c>null</c>.
+		/// </returns>
+		/// <exception cref="Error">Throws any compilation as <see cref="Error"/>.</exception>
+		public static object RunScript(object obj0, object obj1 = null, object obj2 = null)
+		{
+			string script = obj0.As();
+			string name = obj1.As("DynamicScript");
+			IFuncObj cb = null;
+			if (obj2 != null)
+				cb = obj2 as IFuncObj;
+			byte[] compiledBytes;
+			var ch = new CompilerHelper();
+			try
+			{
+				compiledBytes = ch.CompileCodeToByteArray(script, name);
+			} catch (Error err) {
+				if (Errors.ErrorOccurred(err))
+					throw;
+				return null;
+			}
+
+			var scriptProcess = new Process
+			{
+				StartInfo = new ProcessStartInfo
+				{
+					FileName = Path.GetFileName(Environment.ProcessPath),
+					Arguments = "--script --assembly *",
+					RedirectStandardInput = true,
+					RedirectStandardOutput = true,
+					UseShellExecute = false,
+					CreateNoWindow = true
+				}
+			};
+			var info = new ProcessInfo(scriptProcess);
+			scriptProcess.EnableRaisingEvents = true;
+			scriptProcess.Exited += (object sender, EventArgs e) =>
+			{
+				cb?.Call(info);
+			};
+			_ = scriptProcess.Start();
+
+			using (var writer = new BinaryWriter(scriptProcess.StandardInput.BaseStream, Encoding.UTF8, leaveOpen: true))
+			{
+				writer.Write(compiledBytes.Length);
+				writer.Write(compiledBytes);
+				writer.Flush();
+			}
+
+			if (!ForceBool(obj2 ?? false))
+				scriptProcess.WaitForExit();
+
+			return info;
+		}
+
+		/// <summary>
 		/// Registers a function to be called automatically whenever the clipboard's content changes.
 		/// </summary>
 		/// <param name="callback">The callback to call, which has a single parameter specifying which data type the clipboard contains.<br/>

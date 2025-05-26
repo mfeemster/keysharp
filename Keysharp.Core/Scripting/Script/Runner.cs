@@ -115,8 +115,7 @@
 						Assembly scriptAsm = Assembly.Load(assemblyBytes);
 						Type type = scriptAsm.GetType(assemblyType);
 						MethodInfo method = type.GetMethod(assemblyMethod);
-						_ = method.Invoke(null, [scriptArgs]);
-						return 0;
+						return method.Invoke(null, [scriptArgs]).Ai();
 					}
 				}
 
@@ -206,7 +205,7 @@
 				var program = CompilerHelper.compiledasm.GetType("Keysharp.CompiledMain.program");
 				var main = program.GetMethod("Main");
 
-				Environment.ExitCode = main.Invoke(null, [scriptArgs]).Ai();
+				return main.Invoke(null, [scriptArgs]).Ai();
 			}
 			catch (Exception ex)
 			{
@@ -221,9 +220,8 @@
 				var msg = error.ToString();
 				var trace = $"{Accessors.A_AppData}/Keysharp/execution_errors.txt";
 
-				Environment.ExitCode = Message(msg, true);
+				return Message(msg, true);
 			}
-			return Environment.ExitCode;
 		}
 
 		internal static string GetLatestDotNetVersion()
