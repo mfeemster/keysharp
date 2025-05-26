@@ -608,17 +608,17 @@ namespace Keysharp.Core
 		/// </summary>
 		public string ExitTime => Conversions.ToYYYYMMDDHH24MISS(_process.ExitTime);
 		/// <summary>
-		/// Reads and returns all text from the process's standard output stream.
+		/// Returns a KeysharpFile wrapping the standard output stream.
 		/// </summary>
 		private object _StdOut = null;
 		public object StdOut => _StdOut ??= new KeysharpFile(_process.StandardOutput);
 		/// <summary>
-		/// Reads and returns all text from the process's standard error stream.
+		/// Returns a KeysharpFile wrapping the standard error stream.
 		/// </summary>
 		private object _StdErr = null;
 		public object StdErr => _StdErr ??= new KeysharpFile(_process.StandardError);
 		/// <summary>
-		/// Provides access to the process's standard input stream.
+		/// Returns a KeysharpFile wrapping the standard input stream.
 		/// </summary>
 		private object _StdIn = null;
 		public object StdIn => _StdIn ??= new KeysharpFile(_process.StandardInput);
