@@ -574,22 +574,30 @@ using static Keysharp.Scripting.Script;
 
 		internal string CreateEscapedIdentifier(string variable) => provider.CreateEscapedIdentifier(variable);
 
-		public (byte[], string) CompileCodeToByteArray(string[] fileNames, string name)
+		public (byte[], string) CompileCodeToByteArray(string[] fileNames, string nameNoExt, string exeDir = null, bool minimalexeout = false)
 		{
+			if (fileNames.Length == 0)
+				throw new Error("At least one file name must be provided");
+
+			var asm = Assembly.GetExecutingAssembly();
+			exeDir ??= Path.GetFullPath(Path.GetDirectoryName(asm.Location.IsNullOrEmpty() ? Environment.ProcessPath : asm.Location));
+
 			var (domunits, domerrs) = CreateDomFromFile(fileNames);
 
 			if (domerrs.HasErrors)
 			{
 				var (errors, warnings) = GetCompilerErrors(domerrs);
-				var txt = "Error creating DOM from Script.TheScript.";
 
-				if (errors.Length > 0)
-					txt += $"\n\n{errors}";
+				var sb = new StringBuilder(1024);
+				_ = sb.AppendLine($"Compiling script to DOM failed.");
 
-				if (warnings.Length > 0)
-					txt += $"\n\n{warnings}";
+				if (!string.IsNullOrEmpty(errors))
+					_ = sb.Append(errors);
 
-				return (null, txt);
+				if (!string.IsNullOrEmpty(warnings))
+					_ = sb.Append(warnings);
+
+				return (null, sb.ToString());
 			}
 
 			var (code, exc) = CreateCodeFromDom(domunits);
@@ -601,8 +609,7 @@ using static Keysharp.Scripting.Script;
 
 			code = UsingStr + code;
 
-			var asm = Assembly.GetExecutingAssembly();
-			var (results, ms, compileexc) = Compile(code, name, Path.GetFullPath(Path.GetDirectoryName(asm.Location.IsNullOrEmpty() ? Environment.ProcessPath : asm.Location)));
+			var (results, ms, compileexc) = Compile(code, nameNoExt, exeDir, minimalexeout);
 
 			if (results == null)
 			{
@@ -615,7 +622,7 @@ using static Keysharp.Scripting.Script;
 			}
 			else
 			{
-				return (null, HandleCompilerErrors(results.Diagnostics, name, "Compiling C# code to executable", compileexc != null ? compileexc.Message : string.Empty) + "\n" + code);
+				return (null, HandleCompilerErrors(results.Diagnostics, nameNoExt, "Compiling C# code to executable", compileexc != null ? compileexc.Message : string.Empty) + "\n" + code);
 			}
 		}
 

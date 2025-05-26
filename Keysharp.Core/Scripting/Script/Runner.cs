@@ -156,9 +156,6 @@
 				if (domerrs.HasErrors)
 					return HandleCompilerErrors(domerrs, scriptName, path, "Compiling script to DOM");
 
-#if DEBUG
-				Core.Debug.OutputDebug("Creating code from DOM.");
-#endif
 				var (code, exc) = ch.CreateCodeFromDom(domunits);
 
 				if (exc is Exception e)
