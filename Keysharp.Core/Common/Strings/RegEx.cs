@@ -1,12 +1,4 @@
-﻿using BitFaster.Caching.Lfu;
-using Keysharp.Core.Windows;
-using Keysharp.Scripting;
-using PCRE;
-using System;
-using System.Text.RegularExpressions;
-
-
-namespace Keysharp.Core.Common.Strings
+﻿namespace Keysharp.Core.Common.Strings
 {
 	public class RegExMatchInfo : KeysharpObject, I__Enum, IEnumerable<(object, object)>
 	{
@@ -31,22 +23,22 @@ namespace Keysharp.Core.Common.Strings
 			for (int i = 0; i < match.Groups.Count; i++)
 			{
 				_ = DefineProp(i,
-					Objects.Object(
-						[
-							"get",
-							Functions.GetFuncObj("GetWrapper", this, 2, true).Bind(i)
-						]));
+							   Objects.Object(
+								   [
+									   "get",
+									   Functions.GetFuncObj("GetWrapper", this, 2, true).Bind(i)
+								   ]));
 			}
 
 			foreach (var name in holder.info.GroupNames)
 			{
 				if (match.Groups[name] != null)
-				_ = DefineProp(name,
-				   Objects.Object(
-					   [
-						   "get",
-							Functions.GetFuncObj("GetWrapper", this, 2, true).Bind(name)
-					   ]));
+					_ = DefineProp(name,
+								   Objects.Object(
+									   [
+										   "get",
+										   Functions.GetFuncObj("GetWrapper", this, 2, true).Bind(name)
+									   ]));
 			}
 
 			return "";
@@ -98,7 +90,7 @@ namespace Keysharp.Core.Common.Strings
 					if (index >= 0 && index <= match.Groups.Count)
 						return match.Groups[index];
 				}
-			} 
+			}
 			catch (ArgumentOutOfRangeException)
 			{
 				return null;
@@ -126,12 +118,6 @@ namespace Keysharp.Core.Common.Strings
 	/// </summary>
 	internal class RegExIterator : KeysharpEnumerator, IEnumerator<(object, object)>
 	{
-		/// <summary>
-		/// Cache for iterators with either 1 or 2 parameters.
-		/// This prevents reflection from having to always be done to find the Call method.
-		/// </summary>
-		private static FuncObj p1, p2;
-
 		/// <summary>
 		/// The internal regex results to be iterated over.
 		/// </summary>
@@ -251,39 +237,16 @@ namespace Keysharp.Core.Common.Strings
 		internal PcreRegex regex;
 		internal PcrePatternInfo info;
 		internal string haystack;
-		internal string needle; //unmodified RegEx pattern
-		internal string pattern; //RegEx pattern with AHK settings removed
+		internal string needle;//Unmodified RegEx pattern.
+		internal string pattern;//RegEx pattern with AHK settings removed.
 		internal string tag;
 		internal PcreRegexSettings opts;
 		internal string[] groupNames;
-
-		internal static ConcurrentLfu<string, Func<PcreMatch, string>> ReplacementCache = new (Caching.DefaultCacheCapacity);
-
-		internal static Func<string, Func<PcreMatch, string>> _parseReplace = null;
-		internal static Func<string, Func<PcreMatch, string>> ParseReplace
-		{
-			get
-			{
-				if (_parseReplace == null)
-				{
-					var asm = typeof(PcreRegex).Assembly;
-					// 2) find the internal class by its full name
-					var rpType = asm.GetType("PCRE.Internal.ReplacementPattern", throwOnError: true);
-					var mi = rpType.GetMethod("Parse", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
-					_parseReplace = (Func<string, Func<PcreMatch, string>>)Delegate.CreateDelegate(
-						typeof(Func<string, Func<PcreMatch, string>>),
-						mi
-					);
-				}
-				return _parseReplace;
-			}
-		}
 
 		internal RegexHolder(string hs, string n)
 		{
 			haystack = hs;
 			needle = n;
-
 			PcreRegexSettings settings = null;
 			var parenIndex = n.IndexOf(')');
 
@@ -301,12 +264,13 @@ namespace Keysharp.Core.Common.Strings
 					{
 						substr = "\\A" + substr;
 					}
+
 					pattern = substr;
 				}
 			}
+
 			settings ??= new PcreRegexSettings();
 			settings.Options |= PcreOptions.Compiled;
-
 			pattern ??= n;
 			opts = settings;
 			regex = new PcreRegex(pattern, opts);

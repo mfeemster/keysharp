@@ -57,7 +57,7 @@
 		private readonly string trimstr = "{}\t";
 		private Process scriptProcess = null;
 		private readonly Button btnRunScript = new ();
-		private Dictionary<string, string> btnRunScriptText = new Dictionary<string, string>()
+		private readonly Dictionary<string, string> btnRunScriptText = new Dictionary<string, string>()
 		{
 			{ "Run", "▶ Run script (F9)" },
 			{ "Stop", "⏹ Stop script (F9)" }

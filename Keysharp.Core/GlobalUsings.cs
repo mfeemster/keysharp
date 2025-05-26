@@ -49,7 +49,6 @@ global using global::System.Windows.Forms;
 
 //Our usings.
 global using global::Keysharp.Core;
-global using global::Keysharp.Core.Common;
 global using global::Keysharp.Core.Common.Containers;
 global using global::Keysharp.Core.Common.Cryptography;
 global using global::Keysharp.Core.Common.ExtensionMethods;
@@ -71,9 +70,10 @@ global using global::Semver.Comparers;
 global using global::Semver.Utility;
 global using global::PCRE;
 global using global::BitFaster.Caching.Lfu;
+global using global::BitFaster.Caching.Scheduler;
 
 #if WINDOWS
-global using global::Accessibility;
+	global using global::Accessibility;
 	global using global::Microsoft.Win32;
 	global using global::Microsoft.Win32.SafeHandles;
 	global using global::System.Management;
