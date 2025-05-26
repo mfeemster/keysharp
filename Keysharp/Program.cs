@@ -16,10 +16,15 @@ using System.Runtime.InteropServices;
 
 namespace Keysharp.Main
 {
+	/**
+	 * The main program which interprets command line arguments, reads and compiles the code, loads
+	 * the resulting assembly and invokes the entry-point method.
+	 * Similar but simplified logic is present in Keysharp.Scripting.Runner, so changes here should
+	 * likely be done there as well.
+	 */
 	public static class Program
 	{
 		private static readonly CompilerHelper ch = new ();
-		private static readonly char dotNetMajorVersion = '9';
 
 		internal static Version Version => Assembly.GetExecutingAssembly().GetName().Version;
 
@@ -165,8 +170,8 @@ namespace Keysharp.Main
 						Assembly scriptAsm = Assembly.Load(assemblyBytes);
 						Type type = scriptAsm.GetType(assemblyType);
 						MethodInfo method = type.GetMethod(assemblyMethod);
-						_ = method.Invoke(null, [scriptArgs]);
-						return 0;
+						Environment.ExitCode = method.Invoke(null, [scriptArgs]).Ai();
+						return Environment.ExitCode;
 					}
 				}
 
@@ -188,10 +193,6 @@ namespace Keysharp.Main
 				if (!fromstdin && !File.Exists(scriptName))
 					return Message($"Could not find the script file {scriptName}.", true);
 
-#if DEBUG
-				Core.Debug.OutputDebug($"Creating DOM from {scriptName}");
-#endif
-				var (domunits, domerrs) = ch.CreateDomFromFile(scriptName);
 				string namenoext, path, scriptdir;
 
 				if (!fromstdin)
@@ -207,18 +208,12 @@ namespace Keysharp.Main
 					path = $".{Path.DirectorySeparatorChar}{namenoext}";
 				}
 
-				if (domerrs.HasErrors)
-					return HandleCompilerErrors(domerrs, scriptName, path, "Compiling script to DOM");
+				byte[] arr = null;
+				string result = null;
+				(arr, result) = ch.CompileCodeToByteArray([scriptName], namenoext, exeDir, minimalexeout);
 
-#if DEBUG
-				Core.Debug.OutputDebug("Creating code from DOM.");
-#endif
-				var (code, exc) = ch.CreateCodeFromDom(domunits);
-
-				if (exc is Exception e)
-					return Message($"Creating C# code from DOM: {e.Message}", true);
-
-				code = CompilerHelper.UsingStr + code;//Need to manually add the using static statements.
+				if (arr == null)
+					return Message(result, true);
 
 				//If they want to write out the code, place it in the same folder as the script, with the same name, and .cs extension.
 				if (codeout)
@@ -231,7 +226,7 @@ namespace Keysharp.Main
 						{
 							using (var sourceWriter = new StreamWriter(codePath))
 							{
-								sourceWriter.WriteLine(code);
+								sourceWriter.WriteLine(result);
 							}
 						}
 						catch (Exception writeex)
@@ -241,56 +236,40 @@ namespace Keysharp.Main
 					});
 				}
 
-				//If they want to write out the code, place it in the same folder as the script, with the same name, and .exe extension.
-				//Message($"Before compiling, setting current dir to {Environment.CurrentDirectory}", false);
-#if DEBUG
-				Core.Debug.OutputDebug("Compiling code.");
-#endif
-				var (results, ms, compileexc) = ch.Compile(code, namenoext, exeDir, minimalexeout);
-
-				if (results == null)
+				if (exeout)
 				{
-					return Message($"Compiling C# code to executable: {(compileexc != null ? compileexc.Message : string.Empty)}", true);
-				}
-				else if (results.Success)
-				{
-					ms.Seek(0, SeekOrigin.Begin);
-					var arr = ms.ToArray();
-
-					if (exeout)
+					writeExeTask = Task.Run(() =>
 					{
-						writeExeTask = Task.Run(() =>
-						{
-							var finalPath = "";
+						var finalPath = "";
 
-							try
-							{
-								var ver = GetLatestDotNetVersion();
-								var outputRuntimeConfigPath = Path.ChangeExtension(path, "runtimeconfig.json");
-								var currentRuntimeConfigPath = Path.ChangeExtension(exePath, "runtimeconfig.json");
-								var outputDllPath = path + ".dll";
-								File.WriteAllBytes(outputDllPath, arr);
-								File.Copy(currentRuntimeConfigPath, outputRuntimeConfigPath, true);
-								var outputDepsConfigPath = Path.ChangeExtension(path, "deps.json");
-								var currentDepsConfigPath = Path.ChangeExtension(exePath, "deps.json");
-								File.Copy(currentDepsConfigPath, outputDepsConfigPath, true);
-								//Message($"About to write executable to {path}.exe/dll.\r\nappHostDestinationFilePath: {path}.exe\r\nappBinaryFilePath: {namenoext}.dll\r\nassemblyToCopyResorcesFrom: {path}.dll", false);
+						try
+						{
+							var ver = GetLatestDotNetVersion();
+							var outputRuntimeConfigPath = Path.ChangeExtension(path, "runtimeconfig.json");
+							var currentRuntimeConfigPath = Path.ChangeExtension(exePath, "runtimeconfig.json");
+							var outputDllPath = path + ".dll";
+							File.WriteAllBytes(outputDllPath, arr);
+							File.Copy(currentRuntimeConfigPath, outputRuntimeConfigPath, true);
+							var outputDepsConfigPath = Path.ChangeExtension(path, "deps.json");
+							var currentDepsConfigPath = Path.ChangeExtension(exePath, "deps.json");
+							File.Copy(currentDepsConfigPath, outputDepsConfigPath, true);
+							//Message($"About to write executable to {path}.exe/dll.\r\nappHostDestinationFilePath: {path}.exe\r\nappBinaryFilePath: {namenoext}.dll\r\nassemblyToCopyResorcesFrom: {path}.dll", false);
 #if LINUX
-								finalPath = path;
-								HostWriter.CreateAppHost(
-									appHostSourceFilePath: @$"/lib/dotnet/sdk/{ver}/AppHostTemplate/apphost",
-									appHostDestinationFilePath: finalPath,
-									appBinaryFilePath: $"{namenoext}.dll",
-									windowsGraphicalUserInterface: false,
-									assemblyToCopyResorcesFrom: outputDllPath);
+							finalPath = path;
+							HostWriter.CreateAppHost(
+								appHostSourceFilePath: @$"/lib/dotnet/sdk/{ver}/AppHostTemplate/apphost",
+								appHostDestinationFilePath: finalPath,
+								appBinaryFilePath: $"{namenoext}.dll",
+								windowsGraphicalUserInterface: false,
+								assemblyToCopyResorcesFrom: outputDllPath);
 #elif WINDOWS
-								finalPath = $"{path}.exe";
-								HostWriter.CreateAppHost(
-									appHostSourceFilePath: @$"C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Host.win-x64\{ver}\runtimes\win-x64\native\apphost.exe",
-									appHostDestinationFilePath: finalPath,
-									appBinaryFilePath: $"{namenoext}.dll",
-									windowsGraphicalUserInterface: true,
-									assemblyToCopyResorcesFrom: outputDllPath);
+							finalPath = $"{path}.exe";
+							HostWriter.CreateAppHost(
+								appHostSourceFilePath: @$"C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Host.win-x64\{ver}\runtimes\win-x64\native\apphost.exe",
+								appHostDestinationFilePath: finalPath,
+								appBinaryFilePath: $"{namenoext}.dll",
+								windowsGraphicalUserInterface: true,
+								assemblyToCopyResorcesFrom: outputDllPath);
 #endif
 
 								if (string.Compare(exeDir, scriptdir, true) != 0)
@@ -323,12 +302,7 @@ namespace Keysharp.Main
 						});
 					}
 
-					CompilerHelper.compiledasm = Assembly.Load(arr);
-				}
-				else
-				{
-					return HandleCompilerErrors(results.Diagnostics, scriptName, path, "Compiling C# code to executable", compileexc != null ? compileexc.Message : string.Empty);
-				}
+				CompilerHelper.compiledasm = Assembly.Load(arr);
 
 				if (validate)
 				{
@@ -392,7 +366,7 @@ namespace Keysharp.Main
 #if LINUX
 			var dir = Directory.GetDirectories(@"/lib/dotnet/sdk/").Select(System.IO.Path.GetFileName).Where(x => x.StartsWith(dotNetMajorVersion)).OrderByDescending(x => new Version(x)).FirstOrDefault();
 #elif WINDOWS
-			var dir = Directory.GetDirectories(@"C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Host.win-x64\").Select(Path.GetFileName).Where(x => x.StartsWith(dotNetMajorVersion)).OrderByDescending(x => new Version(x.Contains("-rc") ? x.Substring(0, x.IndexOf("-rc")) : x)).FirstOrDefault();
+			var dir = Directory.GetDirectories(@"C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Host.win-x64\").Select(Path.GetFileName).Where(x => x.StartsWith(Script.dotNetMajorVersion)).OrderByDescending(x => new Version(x.Contains("-rc") ? x.Substring(0, x.IndexOf("-rc")) : x)).FirstOrDefault();
 #endif
 			return dir;
 		}
@@ -417,55 +391,6 @@ namespace Keysharp.Main
 		}
 
 #endif
-
-		private static int HandleCompilerErrors(ImmutableArray<Diagnostic> diagnostics, string filename, string path, string desc, string message = "")
-		{
-			var errstr = CompilerHelper.HandleCompilerErrors(diagnostics, filename, desc, message);
-
-			if (errstr != "")
-			{
-				//System.IO.File.WriteAllText($"{Keysharp.Core.Accessors.A_AppData}/Keysharp/compiler_errors.txt", errstr);
-				_ = Message(errstr, true);
-				return 1;
-			}
-
-			return 0;
-		}
-
-		private static int HandleCompilerErrors(CompilerErrorCollection results, string filename, string path, string desc, string message = "")
-		{
-			var (errors, warnings) = CompilerHelper.GetCompilerErrors(results, filename);
-			var failed = errors != "";
-
-			if (failed)
-			{
-				var sb = new StringBuilder(1024);
-				_ = sb.AppendLine($"{desc} failed.");
-
-				if (!string.IsNullOrEmpty(errors))
-					_ = sb.Append(errors);
-
-				if (!string.IsNullOrEmpty(warnings))
-					_ = sb.Append(warnings);
-
-				if (!string.IsNullOrEmpty(message))
-					_ = sb.Append(message);
-
-				var errstr = sb.ToString();
-				//System.IO.File.WriteAllText($"{Keysharp.Core.Accessors.A_AppData}/Keysharp/compiler_errors.txt", errstr);
-				_ = Message(errstr, true);
-			}
-			else
-			{
-				try
-				{
-					//System.IO.File.Delete($"{Keysharp.Core.Accessors.A_AppData}/Keysharp/compiler_errors.txt");
-				}
-				catch { }
-			}
-
-			return failed ? 1 : 0;
-		}
 
 		private static int Message(string text, bool error)
 		{

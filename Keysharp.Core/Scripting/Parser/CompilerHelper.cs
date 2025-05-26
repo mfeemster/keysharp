@@ -561,12 +561,17 @@ using static Keysharp.Scripting.Script;
 			return (units, errors);
 		}
 
-		public void PrintCompilerErrors(string s)
+		public void PrintCompilerErrors(string s, bool stdout = false)
 		{
 			if (parser.errorStdOut || Env.FindCommandLineArg("errorstdout") != null)
 				_ = Core.Debug.OutputDebug(s); //For this to show on the command line, they need to pipe to more like: | more
 			else
-				_ = MessageBox.Show(s, "Keysharp", MessageBoxButtons.OK, MessageBoxIcon.Error);
+			{
+				if (stdout)
+					Console.Write(s);
+				else
+					_ = MessageBox.Show(s, "Keysharp", MessageBoxButtons.OK, MessageBoxIcon.Error);
+			}
 		}
 
 		internal string CodeToString(CodeExpression expr)
@@ -579,6 +584,58 @@ using static Keysharp.Scripting.Script;
 		}
 
 		internal string CreateEscapedIdentifier(string variable) => provider.CreateEscapedIdentifier(variable);
+
+		public (byte[], string) CompileCodeToByteArray(string[] fileNames, string nameNoExt, string exeDir = null, bool minimalexeout = false)
+		{
+			if (fileNames.Length == 0)
+				throw new Error("At least one file name must be provided");
+
+			var asm = Assembly.GetExecutingAssembly();
+			exeDir ??= Path.GetFullPath(Path.GetDirectoryName(asm.Location.IsNullOrEmpty() ? Environment.ProcessPath : asm.Location));
+
+			var (domunits, domerrs) = CreateDomFromFile(fileNames);
+
+			if (domerrs.HasErrors)
+			{
+				var (errors, warnings) = GetCompilerErrors(domerrs);
+
+				var sb = new StringBuilder(1024);
+				_ = sb.AppendLine($"Compiling script to DOM failed.");
+
+				if (!string.IsNullOrEmpty(errors))
+					_ = sb.Append(errors);
+
+				if (!string.IsNullOrEmpty(warnings))
+					_ = sb.Append(warnings);
+
+				return (null, sb.ToString());
+			}
+
+			var (code, exc) = CreateCodeFromDom(domunits);
+
+			if (exc is Exception ex)
+			{
+				return (null, $"Error creating C# code from DOM:\n{ex.Message}");
+			}
+
+			code = UsingStr + code;
+
+			var (results, ms, compileexc) = Compile(code, nameNoExt, exeDir, minimalexeout);
+
+			if (results == null)
+			{
+				return (null, $"Error compiling C# code to executable: {(compileexc != null ? compileexc.Message : string.Empty)}\n\n{code}");
+			}
+			else if (results.Success)
+			{
+				_ = ms.Seek(0, SeekOrigin.Begin);
+				return (ms.ToArray(), code);
+			}
+			else
+			{
+				return (null, HandleCompilerErrors(results.Diagnostics, nameNoExt, "Compiling C# code to executable", compileexc != null ? compileexc.Message : string.Empty) + "\n" + code);
+			}
+		}
 
 		internal object EvaluateCode(string code)
 		{

@@ -572,7 +572,7 @@
 					btnRunScript.Enabled = false;
 					var oldIndex = txtOut.FirstVisibleLine;
 					SetStart();
-					tslCodeStatus.Text = "Creating DOM from Script.TheScript...";
+					tslCodeStatus.Text = "Creating DOM from script...";
 					Refresh();
 					var (domunits, domerrs) = ch.CreateDomFromFile([txtIn.Text]);
 
@@ -580,7 +580,7 @@
 					{
 						var (errors, warnings) = CompilerHelper.GetCompilerErrors(domerrs);
 						SetFailure();
-						var txt = "Error creating DOM from Script.TheScript.";
+						var txt = "Error creating DOM from script.";
 
 						if (errors.Length > 0)
 							txt += $"\n\n{errors}";
