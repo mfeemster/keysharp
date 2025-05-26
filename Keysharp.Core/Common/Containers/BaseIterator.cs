@@ -1,6 +1,5 @@
 ﻿namespace Keysharp.Core.Common.Containers
 {
-
 	internal class BaseIteratorData<T>
 	{
 		/// <summary>
@@ -31,8 +30,8 @@
 
 	public class KeysharpEnumerator
 	{
-		private IFuncObj fo;
-		private object[] args;
+		private readonly IFuncObj fo;
+		private readonly object[] args;
 
 		/// <summary>
 		/// The number of items to return for each iteration. Allowed values are 1 and 2:

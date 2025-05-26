@@ -1,6 +1,4 @@
-﻿using Assert = NUnit.Framework.Legacy.ClassicAssert;
-
-namespace Keysharp.Tests
+﻿namespace Keysharp.Tests
 {
 	[SetUpFixture]
 	public class MySetUpClass

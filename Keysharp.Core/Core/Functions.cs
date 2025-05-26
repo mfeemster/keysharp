@@ -1,6 +1,4 @@
-﻿using BitFaster.Caching.Scheduler;
-
-namespace Keysharp.Core
+﻿namespace Keysharp.Core
 {
 	/// <summary>
 	/// Public interface for function object and function reflection-related functions.

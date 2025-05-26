@@ -1,7 +1,4 @@
-﻿using System.Windows.Forms;
-using System;
-
-namespace Keysharp.Core
+﻿namespace Keysharp.Core
 {
 	public static partial class KeysharpEnhancements
 	{

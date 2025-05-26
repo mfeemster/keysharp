@@ -1,6 +1,4 @@
-﻿using System.Net;
-
-namespace Keysharp.Core
+﻿namespace Keysharp.Core
 {
 	/// <summary>
 	/// Public interface for external-related functions.

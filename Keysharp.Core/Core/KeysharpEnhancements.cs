@@ -1,6 +1,4 @@
-﻿using System.Windows.Forms;
-
-namespace Keysharp.Core
+﻿namespace Keysharp.Core
 {
 	/// <summary>
 	/// A class to put functions which are new to Keysharp that serve as an

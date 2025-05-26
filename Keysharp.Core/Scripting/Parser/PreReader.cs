@@ -25,7 +25,7 @@ namespace Keysharp.Scripting
 		} .ToFrozenSet(StringComparer.OrdinalIgnoreCase);
 
 		private static int hotifcount;
-		private static FrozenSet<string>.AlternateLookup<ReadOnlySpan<char>> otbFlowKeywordsAlt = otbFlowKeywords.GetAlternateLookup<ReadOnlySpan<char>>();
+		private static readonly FrozenSet<string>.AlternateLookup<ReadOnlySpan<char>> otbFlowKeywordsAlt = otbFlowKeywords.GetAlternateLookup<ReadOnlySpan<char>>();
 		private readonly Stack<(bool, bool)> currentDefines = new ();
 
 		private readonly HashSet<string> defines =

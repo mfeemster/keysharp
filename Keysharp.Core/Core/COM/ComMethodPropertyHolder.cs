@@ -57,7 +57,6 @@ namespace Keysharp.Core.COM
 		private static object InvokeComMethodWithTypeInfo(object comObject, string methodName, object[] inputParameters)
 		{
 			Error err;
-
 			IntPtr pUnk = Marshal.GetIUnknownForObject(comObject);
 			Marshal.Release(pUnk);
 
@@ -146,7 +145,6 @@ namespace Keysharp.Core.COM
 						return Errors.ErrorOccurred(err = new TypeError($"COM call to '{methodName}()' could not be found in any type-info interface.")) ? throw err : null;
 
 					found = false; // Set back to false to cache the result
-
 					void PopulateModifiers(FUNCDESC funcDesc)
 					{
 						paramCount = funcDesc.cParams;
@@ -287,13 +285,13 @@ namespace Keysharp.Core.COM
 				//If no exception thrown and it wasn't cached, cache the info.
 				if (!found)
 				{
-					_ = Script.TheScript.ComMethodData.comMethodCache
+					_ = TheScript.ComMethodData.comMethodCache
 						.GetOrAdd(pUnk, key => new Dictionary<string, ComMethodInfo>(StringComparer.OrdinalIgnoreCase))
 						.GetOrAdd(methodName, new ComMethodInfo()
-							{
-								modifiers = modifiers,
-								expectedTypes = expectedTypes
-							});
+					{
+						modifiers = modifiers,
+						expectedTypes = expectedTypes
+					});
 				}
 
 				return ret;
