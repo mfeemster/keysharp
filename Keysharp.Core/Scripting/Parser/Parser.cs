@@ -1235,9 +1235,10 @@ namespace Keysharp.Scripting
 			var inst = (CodeMethodInvokeExpression)InternalMethods.HandleSingleInstance;
 			_ = inst.Parameters.Add(new CodeSnippetExpression("name"));
 			_ = inst.Parameters.Add(new CodeSnippetExpression($"eScriptInstance.{preReader.SingleInstance}"));
-			var condInst = new CodeConditionStatement(inst, new CodeMethodReturnStatement(new CodePrimitiveExpression(0)));
+			var condInst = new CodeConditionStatement(inst, new CodeMethodReturnStatement(new CodeSnippetExpression("Environment.ExitCode = 0")));
 			_ = initial.Add(new CodeSnippetExpression($"{ScriptObject.Name}.SetName(name)"));
 			_ = initial.Add(new CodeAssignStatement(HotstringManagerObjectSnippet, new CodeSnippetExpression($"{ScriptObjectName}.HotstringManager")));
+			_ = initial.Add(condInst);
 			_ = initial.Add(new CodeAssignStatement(ScriptObjectSnippet, new CodeObjectCreateExpression(typeof(Keysharp.Scripting.Script))));
 
 			foreach (var (p, s) in preReader.PreloadedDlls)//Add after Script.Init() call above, because the statements will be added in reverse order.
