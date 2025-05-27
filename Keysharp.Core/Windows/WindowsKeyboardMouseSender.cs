@@ -47,7 +47,7 @@ namespace Keysharp.Core.Windows
 		// Tracks this script's own lifetime/persistent modifiers (the ones it caused to be persistent and thus is responsible for tracking).
 		internal Point sendInputCursorPos;
 
-		internal IntPtr targetKeybdLayout;
+		internal nint targetKeybdLayout;
 		// Set by SendKeys() for use by the functions it calls directly and indirectly.
 		internal ResultType targetLayoutHasAltGr;
 
@@ -72,12 +72,12 @@ namespace Keysharp.Core.Windows
 		private readonly int[] ctrls = [/*(int)Keys.ShiftKey, */(int)Keys.LShiftKey, (int)Keys.RShiftKey, /*(int)Keys.ControlKey,*/(int)Keys.LControlKey, (int)Keys.RControlKey, (int)Keys.Menu];
 
 		//private static readonly byte[] state = new byte[VKMAX];
-		private readonly IntPtr hookId = IntPtr.Zero;
+		private readonly nint hookId = 0;
 		private bool thisEventHasBeenLogged, thisEventIsScreenCoord;
 		//private bool dead;
 		//private List<uint> deadKeys;
 		//private bool ignore;
-		//private IntPtr kbd = PlatformProvider.Manager.GetKeyboardLayout(0);
+		//private nint kbd = PlatformProvider.Manager.GetKeyboardLayout(0);
 		//private WindowsAPI.LowLevelKeyboardProc proc;
 
 		private DateTime thisEventTime;
@@ -93,18 +93,18 @@ namespace Keysharp.Core.Windows
 		/// </summary>
 		/// <param name="layout"></param>
 		/// <returns></returns>
-		internal static ResultType LayoutHasAltGrDirect(IntPtr layout)
+		internal static ResultType LayoutHasAltGrDirect(nint layout)
 		{
 #if WINDOWS
 			const int KLLF_ALTGR = 0x0001;
 			var result = ResultType.Fail;
 			var hmod = LoadKeyboardLayoutModule(layout);
 
-			if (hmod != IntPtr.Zero)
+			if (hmod != 0)
 			{
 				var kbdLayerDescriptor = GetProcAddress(hmod, "KbdLayerDescriptor");
 
-				if (kbdLayerDescriptor != IntPtr.Zero)
+				if (kbdLayerDescriptor != 0)
 				{
 					var func = (KbdTables)Marshal.GetDelegateForFunctionPointer(kbdLayerDescriptor, typeof(KbdTables));
 					var kl = func();
@@ -129,7 +129,7 @@ namespace Keysharp.Core.Windows
 		/// </summary>
 		/// <param name="layout">The keyboard layout to examine</param>
 		/// <returns>True if the layout has AltGr, else false.</returns>
-		//private bool LayoutHasAltGr(IntPtr layout)//Unsure if this is usable on linux, where the registry method used below obviously doesn't exist.
+		//private bool LayoutHasAltGr(nint layout)//Unsure if this is usable on linux, where the registry method used below obviously doesn't exist.
 		//{
 		//  var hasAltGr = false;
 		//  for (byte i = 32; i <= 255; ++i)
@@ -149,9 +149,9 @@ namespace Keysharp.Core.Windows
 		/// </summary>
 		/// <param name="layout"></param>
 		/// <returns></returns>
-		internal static IntPtr LoadKeyboardLayoutModule(IntPtr layout)
+		internal static nint LoadKeyboardLayoutModule(nint layout)
 		{
-			var hmod = IntPtr.Zero;
+			nint hmod = 0;
 #if WINDOWS
 			// Unfortunately activating the layout seems to be the only way to retrieve it's name.
 			// This may have side-effects in general (such as the language selector flickering),
@@ -179,7 +179,7 @@ namespace Keysharp.Core.Windows
 				}
 
 				if (layout.ToInt32() != oldLayout)
-					_ = ActivateKeyboardLayout(new IntPtr(oldLayout), 0); // Nothing we can do if it fails.
+					_ = ActivateKeyboardLayout(new nint(oldLayout), 0); // Nothing we can do if it fails.
 			}
 
 #endif
@@ -367,14 +367,14 @@ namespace Keysharp.Core.Windows
 				Flow.SleepWithoutInterruption(mouseDelay);
 		}
 
-		internal override IntPtr GetFocusedKeybdLayout(IntPtr window)
+		internal override nint GetFocusedKeybdLayout(nint window)
 		{
 			var script = Script.TheScript;
 
-			if (window == IntPtr.Zero)
+			if (window == 0)
 				window = script.WindowProvider.Manager.GetForeGroundWindowHwnd();
 
-			var tempzero = IntPtr.Zero;
+			nint tempzero = 0;
 			return script.PlatformProvider.Manager.GetKeyboardLayout(script.WindowProvider.Manager.GetFocusedCtrlThread(ref tempzero, window));
 		}
 
@@ -571,10 +571,10 @@ namespace Keysharp.Core.Windows
 		/// </summary>
 		/// <param name="layout"></param>
 		/// <returns></returns>
-		internal ResultType LayoutHasAltGr(IntPtr layout)
+		internal ResultType LayoutHasAltGr(nint layout)
 		{
 			// Layouts are cached for performance (to avoid the discovery loop later below).
-			for (var i = 0; i < cachedLayouts.Count && cachedLayouts[i].hkl != IntPtr.Zero; ++i)
+			for (var i = 0; i < cachedLayouts.Count && cachedLayouts[i].hkl != 0; ++i)
 				if (cachedLayouts[i].hkl == layout) // Match Found.
 					return cachedLayouts[i].has_altgr;
 
@@ -769,10 +769,10 @@ namespace Keysharp.Core.Windows
 						_ = GetCursorPos(out var point); // Assuming success seems harmless.
 						// Despite what MSDN says, WindowFromPoint() appears to fetch a non-NULL value even when the
 						// mouse is hovering over a disabled control (at least on XP).
-						IntPtr childUnderCursor, parentUnderCursor;
+						nint childUnderCursor, parentUnderCursor;
 
-						if ((childUnderCursor = WindowFromPoint(point)) != IntPtr.Zero
-								&& (parentUnderCursor = GetNonChildParent(childUnderCursor)) != IntPtr.Zero // WM_NCHITTEST below probably requires parent vs. child.
+						if ((childUnderCursor = WindowFromPoint(point)) != 0
+								&& (parentUnderCursor = GetNonChildParent(childUnderCursor)) != 0 // WM_NCHITTEST below probably requires parent vs. child.
 								&& GetWindowThreadProcessId(parentUnderCursor, out _) == Script.TheScript.ProcessesData.MainThreadID) // It's one of our thread's windows.
 						{
 							var hitTest = SendMessage(parentUnderCursor, WM_NCHITTEST, 0, MakeLong((short)point.X, (short)point.Y));
@@ -970,7 +970,7 @@ namespace Keysharp.Core.Windows
 				mouse_event(eventFlags
 							, x == CoordUnspecified ? 0 : x // v1.0.43.01: Must be zero if no change in position is desired
 							, y == CoordUnspecified ? 0 : y // (fixes compatibility with certain apps/games).
-							, data, new UIntPtr(KeyIgnoreLevel(ThreadAccessors.A_SendLevel)));
+							, data, new nint(KeyIgnoreLevel(ThreadAccessors.A_SendLevel)));
 			}
 		}
 
@@ -1109,7 +1109,7 @@ namespace Keysharp.Core.Windows
 
 		internal override int PbEventCount() => eventPb.Count;
 
-		internal IntPtr PlaybackHandler(int code, IntPtr wParam, ref EventMsg lParam)
+		internal nint PlaybackHandler(int code, nint wParam, ref EventMsg lParam)
 		// Journal playback hook.
 		{
 			var script = Script.TheScript;
@@ -1255,7 +1255,7 @@ namespace Keysharp.Core.Windows
 					var timeUntilEvent = (thisEventTime - DateTime.UtcNow).TotalMilliseconds; // Cast to int to avoid loss of negatives from DWORD subtraction.
 
 					if (timeUntilEvent > 0)
-						return new IntPtr((int)timeUntilEvent);
+						return new nint((int)timeUntilEvent);
 
 					// Otherwise, the event is scheduled to occur immediately (or is overdue).  In case HC_GETNEXT can be
 					// called multiple times even when we previously returned 0, ensure the event is logged only once.
@@ -1270,7 +1270,7 @@ namespace Keysharp.Core.Windows
 						thisEventHasBeenLogged = true;
 					}
 
-					return IntPtr.Zero; // No CallNextHookEx(). See comments further below.
+					return 0; // No CallNextHookEx(). See comments further below.
 				} // case HC_GETNEXT.
 
 				case HC_SKIP: // Advance to the next mouse/keyboard event, if any.
@@ -1290,7 +1290,7 @@ namespace Keysharp.Core.Windows
 						// the case of a playback hook) for the hook to unhook itself: "The hook procedure can be in the
 						// state of being called by another thread even after UnhookWindowsHookEx returns."
 						script.HookThread.Unhook(script.playbackHook);
-						script.playbackHook = IntPtr.Zero; // Signal the installer of the hook that it's gone now.
+						script.playbackHook = 0; // Signal the installer of the hook that it's gone now.
 						// The following is an obsolete method from pre-v1.0.44.  Do not reinstate it without adding handling
 						// to MainWindowProc() to do "g_PlaybackHook = NULL" upon receipt of WM_CANCELJOURNAL.
 						// PostMessage(g_hWnd, WM_CANCELJOURNAL, 0, 0); // v1.0.44: Post it to g_hWnd vs. NULL because it's a little safer (SEE COMMENTS in MsgSleep's WM_CANCELJOURNAL for why it's almost completely safe with NULL).
@@ -1302,7 +1302,7 @@ namespace Keysharp.Core.Windows
 					else
 						firstCallForThisEvent = true; // Reset to prepare for next HC_GETNEXT.
 
-					return IntPtr.Zero; // MSDN: The return value is used only if the hook code is HC_GETNEXT; otherwise, it is ignored.
+					return 0; // MSDN: The return value is used only if the hook code is HC_GETNEXT; otherwise, it is ignored.
 
 				default:
 					// Covers the following cases:
@@ -1543,7 +1543,7 @@ namespace Keysharp.Core.Windows
 			// that suffix to auto-repeat it -- see keyboard_mouse.h for details).
 			var modifiersLRNow = sendMode != SendModes.Event ? eventModifiersLR : GetModifierLRState();
 			SetModifierLRState((modifiersLRNow | MOD_LALT) & ~(MOD_RALT | MOD_LCONTROL | MOD_RCONTROL | MOD_LSHIFT | MOD_RSHIFT)
-							   , modifiersLRNow, IntPtr.Zero, false // Pass false because there's no need to disguise the down-event of LALT.
+							   , modifiersLRNow, 0, false // Pass false because there's no need to disguise the down-event of LALT.
 							   , true, KeyIgnore); // Pass true so that any release of RALT is disguised (Win is never released here).
 			// Note: It seems best never to press back down any key released above because the
 			// act of doing so may do more harm than good (i.e. the keystrokes may caused
@@ -1697,7 +1697,7 @@ namespace Keysharp.Core.Windows
 			*/
 			ht.Invoke(() => Script.TheScript.playbackHook = SetWindowsHookEx(WH_JOURNALPLAYBACK, PlaybackHandler, GetModuleHandle(Process.GetCurrentProcess().MainModule.ModuleName), 0));
 
-			if (script.playbackHook == IntPtr.Zero)
+			if (script.playbackHook == 0)
 				return;
 
 			// During playback, have the keybd hook (if it's installed) block presses of the Windows key.
@@ -1728,7 +1728,7 @@ namespace Keysharp.Core.Windows
 			// affect performance because there used to be the following here in place of the loop,
 			// and it didn't perform any better:
 			// GetMessage(&msg, NULL, WM_CANCELJOURNAL, WM_CANCELJOURNAL);
-			while (script.playbackHook != IntPtr.Zero)
+			while (script.playbackHook != 0)
 				Flow.SleepWithoutInterruption(Flow.intervalUnspecified); // For maintainability, macro is used rather than optimizing/splitting the code it contains.
 
 			ht.blockWinKeys = false;
@@ -1769,7 +1769,7 @@ namespace Keysharp.Core.Windows
 		/// <param name="y"></param>
 		/// <param name="moveOffset"></param>
 		internal override void SendKey(uint vk, uint sc, uint modifiersLR, uint modifiersLRPersistent
-									   , long repeatCount, KeyEventTypes eventType, uint keyAsModifiersLR, IntPtr targetWindow
+									   , long repeatCount, KeyEventTypes eventType, uint keyAsModifiersLR, nint targetWindow
 									   , int x = CoordUnspecified, int y = CoordUnspecified, bool moveOffset = false)
 		{
 			// Caller is now responsible for verifying this:
@@ -1847,7 +1847,7 @@ namespace Keysharp.Core.Windows
 
 				// v1.0.42.04: Mouse clicks are now handled here in the same loop as keystrokes so that the modifiers
 				// will be readjusted (above) if the user presses/releases modifier keys during the mouse clicks.
-				if (vkIsMouse && targetWindow == IntPtr.Zero)
+				if (vkIsMouse && targetWindow == 0)
 				{
 					MouseClick(vk, x, y, 1, tv.defaultMouseSpeed, eventType, moveOffset);
 				}
@@ -1931,7 +1931,7 @@ namespace Keysharp.Core.Windows
 		}
 
 		// For #MenuMaskKey.
-		internal override void SendKeyEventMenuMask(KeyEventTypes eventType, uint extraInfo = KeyIgnoreAllExceptModifier) => SendKeyEvent(eventType, menuMaskKeyVK, menuMaskKeySC, IntPtr.Zero, false, extraInfo);
+		internal override void SendKeyEventMenuMask(KeyEventTypes eventType, uint extraInfo = KeyIgnoreAllExceptModifier) => SendKeyEvent(eventType, menuMaskKeyVK, menuMaskKeySC, 0, false, extraInfo);
 
 		/// <summary>
 		/// thisHotkeyModifiersLR, if non-zero,
@@ -1944,7 +1944,7 @@ namespace Keysharp.Core.Windows
 		/// <param name="sendRaw"></param>
 		/// <param name="sendModeOrig"></param>
 		/// <param name="targetWindow"></param>
-		internal override void SendKeys(string keys, SendRawModes sendRaw, SendModes sendModeOrig, IntPtr targetWindow)
+		internal override void SendKeys(string keys, SendRawModes sendRaw, SendModes sendModeOrig, nint targetWindow)
 		{
 			if (keys?.Length == 0)
 				return;
@@ -2059,7 +2059,7 @@ namespace Keysharp.Core.Windows
 			var tempitem = new WindowItem(targetWindow);
 			var pd = script.ProcessesData;
 
-			if (targetWindow != IntPtr.Zero) // Caller has ensured this is NULL for SendInput and SendPlay modes.
+			if (targetWindow != 0) // Caller has ensured this is NULL for SendInput and SendPlay modes.
 			{
 				if ((targetThread = GetWindowThreadProcessId(targetWindow, out _)) != 0 // Assign.
 						&& targetThread != pd.MainThreadID && !tempitem.IsHung)
@@ -2136,8 +2136,8 @@ namespace Keysharp.Core.Windows
 				// the active window, its thread, and its layout are retrieved only once for each Send rather than once
 				// for each keystroke.
 				// v1.1.27.01: Use the thread of the focused control, which may differ from the active window.
-				var tempzero = IntPtr.Zero;
-				keybdLayoutThread = script.WindowProvider.Manager.GetFocusedCtrlThread(ref tempzero, IntPtr.Zero);
+				nint tempzero = 0;
+				keybdLayoutThread = script.WindowProvider.Manager.GetFocusedCtrlThread(ref tempzero, 0);
 			}
 
 			targetKeybdLayout = script.PlatformProvider.Manager.GetKeyboardLayout(keybdLayoutThread); // If keybd_layout_thread==0, this will get our thread's own layout, which seems like the best/safest default.
@@ -2156,7 +2156,7 @@ namespace Keysharp.Core.Windows
 			uint modsDownPhysicallyOrig, modsDownPhysicallyButNotLogicallyOrig;
 			var ad = script.AccessorData;
 
-			//if (hookId != IntPtr.Zero)
+			//if (hookId != 0)
 			if (ht.HasKbdHook())
 			{
 				// Since hook is installed, use its more reliable tracking to determine which
@@ -2265,7 +2265,7 @@ namespace Keysharp.Core.Windows
 			var kbd = script.KeyboardData;
 			var blockinputPrev = kbd.blockInput;
 			var doSelectiveBlockInput = (kbd.blockInputMode == ToggleValueType.Send || kbd.blockInputMode == ToggleValueType.SendAndMouse)
-										&& sendMode == SendModes.Event && targetWindow == IntPtr.Zero;
+										&& sendMode == SendModes.Event && targetWindow == 0;
 
 			if (doSelectiveBlockInput)
 				_ = Keyboard.ScriptBlockInput(true); // Turn it on unconditionally even if it was on, since Ctrl-Alt-Del might have disabled it.
@@ -2489,7 +2489,7 @@ namespace Keysharp.Core.Windows
 
 								if ((keyAsModifiersLR = ht.KeyToModifiersLR(vk, sc, ref b)) != 0) // Assign
 								{
-									if (targetWindow == IntPtr.Zero)
+									if (targetWindow == 0)
 									{
 										if (eventType == KeyEventTypes.KeyDown) // i.e. make {Shift down} have the same effect {ShiftDown}
 										{
@@ -2545,7 +2545,7 @@ namespace Keysharp.Core.Windows
 								// such as F1::ð (i.e. a destination key that doesn't have a VK, at least in English).
 								if (eventType != KeyEventTypes.KeyUp) // In this mode, mods_for_next_key and event_type are ignored due to being unsupported.
 								{
-									if (targetWindow != IntPtr.Zero)
+									if (targetWindow != 0)
 									{
 										// Although MSDN says WM_CHAR uses UTF-16, it seems to really do automatic
 										// translation between ANSI and UTF-16; we rely on this for correct results:
@@ -2559,9 +2559,9 @@ namespace Keysharp.Core.Windows
 							// See comment "else must never change sModifiersLR_persistent" above about why
 							// !aTargetWindow is used below:
 							else if ((vk = ht.TextToSpecial(subspan, ref eventType
-															, ref persistentModifiersForThisSendKeys, targetWindow == IntPtr.Zero)) != 0) // Assign.
+															, ref persistentModifiersForThisSendKeys, targetWindow == 0)) != 0) // Assign.
 							{
-								if (targetWindow == IntPtr.Zero)
+								if (targetWindow == 0)
 								{
 									if (eventType == KeyEventTypes.KeyDown)
 										thisEventModifierDown = vk;
@@ -2588,7 +2588,7 @@ namespace Keysharp.Core.Windows
 										LongOperationUpdateForSendKeys();
 								}
 							}
-							else if (keyTextLength > 4 && subspan.StartsWith("ASC ", StringComparison.OrdinalIgnoreCase) && targetWindow == IntPtr.Zero) // {ASC nnnnn}
+							else if (keyTextLength > 4 && subspan.StartsWith("ASC ", StringComparison.OrdinalIgnoreCase) && targetWindow == 0) // {ASC nnnnn}
 							{
 								// Include the trailing space in "ASC " to increase uniqueness (selectivity).
 								// Also, sending the ASC sequence to window doesn't work, so don't even try:
@@ -2620,7 +2620,7 @@ namespace Keysharp.Core.Windows
 										wc2 = (char)0;
 									}
 
-									if (targetWindow != IntPtr.Zero)
+									if (targetWindow != 0)
 									{
 										// Although MSDN says WM_CHAR uses UTF-16, PostMessageA appears to truncate it to 8-bit.
 										// This probably means it does automatic translation between ANSI and UTF-16.  Since we
@@ -2710,7 +2710,7 @@ namespace Keysharp.Core.Windows
 					else // Try to send it by alternate means.
 					{
 						// In this mode, mods_for_next_key is ignored due to being unsupported.
-						if (targetWindow != IntPtr.Zero)
+						if (targetWindow != 0)
 							// Although MSDN says WM_CHAR uses UTF-16, it seems to really do automatic
 							// translation between ANSI and UTF-16; we rely on this for correct results:
 							_ = PostMessage(targetWindow, WM_CHAR, sub[keyIndex], 0);
@@ -2768,7 +2768,7 @@ namespace Keysharp.Core.Windows
 					// still be considered to be down for the purpose of firing hotkeys (it can't change global key state
 					// as seen by GetAsyncKeyState).
 					// For more explanation of above, see a similar section for the non-array/old Send below.
-					SetModifierLRState(modsToSet, eventModifiersLR, IntPtr.Zero, true, true); // Disguise in case user released or pressed Win/Alt during the Send (seems best to do it even for SendPlay, though it probably needs only Alt, not Win).
+					SetModifierLRState(modsToSet, eventModifiersLR, 0, true, true); // Disguise in case user released or pressed Win/Alt during the Send (seems best to do it even for SendPlay, though it probably needs only Alt, not Win).
 					// mods_to_set is used further below as the set of modifiers that were explicitly put into effect at the tail end of SendInput.
 					SendEventArray(ref finalKeyDelay, modsToSet);
 				}
@@ -3026,7 +3026,7 @@ namespace Keysharp.Core.Windows
 			// Set modifier keystate as specified by caller.  Generally this will be 0, since
 			// key combinations with Unicode packets either do nothing at all or do the same as
 			// without the modifiers.  All modifiers are known to interfere in some applications.
-			SetModifierLRState(modifiers, sendMode != SendModes.Event ? eventModifiersLR : GetModifierLRState(), IntPtr.Zero, false, true, KeyIgnore);
+			SetModifierLRState(modifiers, sendMode != SendModes.Event ? eventModifiersLR : GetModifierLRState(), 0, false, true, KeyIgnore);
 			var sendLevel = ThreadAccessors.A_SendLevel;
 
 			if (sendMode == SendModes.Input)
@@ -3081,7 +3081,7 @@ namespace Keysharp.Core.Windows
 		/// <param name="disguiseDownWinAlt"></param>
 		/// <param name="disguiseUpWinAlt"></param>
 		/// <param name="extraInfo"></param>
-		internal void SetModifierLRState(uint modifiersLRnew, uint modifiersLRnow, IntPtr targetWindow
+		internal void SetModifierLRState(uint modifiersLRnew, uint modifiersLRnow, nint targetWindow
 										 , bool disguiseDownWinAlt, bool disguiseUpWinAlt, uint extraInfo = KeyIgnoreAllExceptModifier)
 		{
 			if (modifiersLRnow == modifiersLRnew) // They're already in the right state, so avoid doing all the checks.
@@ -3198,7 +3198,7 @@ namespace Keysharp.Core.Windows
 					// The above event is safe because if we're here, it means VK_CONTROL will not be
 					// pressed down further below.  In other words, we're not defeating the job
 					// of this function by sending these disguise keystrokes.
-					SendKeyEvent(KeyEventTypes.KeyUp, VK_LWIN, 0, IntPtr.Zero, false, extraInfo);
+					SendKeyEvent(KeyEventTypes.KeyUp, VK_LWIN, 0, 0, false, extraInfo);
 				}
 
 				// else release it only after the normal operation of the function pushes down the disguise keys.
@@ -3208,7 +3208,7 @@ namespace Keysharp.Core.Windows
 				if (disguiseWinDown)
 					SendKeyEventMenuMask(KeyEventTypes.KeyDown, extraInfo); // Ensures that the Start Menu does not appear.
 
-				SendKeyEvent(KeyEventTypes.KeyDown, VK_LWIN, 0, IntPtr.Zero, false, extraInfo);
+				SendKeyEvent(KeyEventTypes.KeyDown, VK_LWIN, 0, 0, false, extraInfo);
 
 				if (disguiseWinDown)
 					SendKeyEventMenuMask(KeyEventTypes.KeyUp, extraInfo); // Ensures that the Start Menu does not appear.
@@ -3221,7 +3221,7 @@ namespace Keysharp.Core.Windows
 					if (ctrlNorShiftNorAltDown && disguiseUpWinAlt && sendMode != SendModes.Play)
 						SendKeyEventMenuMask(KeyEventTypes.KeyDownAndUp, extraInfo); // Disguise key release to suppress Start Menu.
 
-					SendKeyEvent(KeyEventTypes.KeyUp, VK_RWIN, 0, IntPtr.Zero, false, extraInfo);
+					SendKeyEvent(KeyEventTypes.KeyUp, VK_RWIN, 0, 0, false, extraInfo);
 				}
 
 				// else release it only after the normal operation of the function pushes down the disguise keys.
@@ -3231,7 +3231,7 @@ namespace Keysharp.Core.Windows
 				if (disguiseWinDown)
 					SendKeyEventMenuMask(KeyEventTypes.KeyDown, extraInfo); // Ensures that the Start Menu does not appear.
 
-				SendKeyEvent(KeyEventTypes.KeyDown, VK_RWIN, 0, IntPtr.Zero, false, extraInfo);
+				SendKeyEvent(KeyEventTypes.KeyDown, VK_RWIN, 0, 0, false, extraInfo);
 
 				if (disguiseWinDown)
 					SendKeyEventMenuMask(KeyEventTypes.KeyUp, extraInfo); // Ensures that the Start Menu does not appear.
@@ -3241,10 +3241,10 @@ namespace Keysharp.Core.Windows
 			if (releaseShiftBeforeAltCtrl)
 			{
 				if (releaseLshift)
-					SendKeyEvent(KeyEventTypes.KeyUp, VK_LSHIFT, 0, IntPtr.Zero, false, extraInfo);
+					SendKeyEvent(KeyEventTypes.KeyUp, VK_LSHIFT, 0, 0, false, extraInfo);
 
 				if (releaseRshift)
-					SendKeyEvent(KeyEventTypes.KeyUp, VK_RSHIFT, 0, IntPtr.Zero, false, extraInfo);
+					SendKeyEvent(KeyEventTypes.KeyUp, VK_RSHIFT, 0, 0, false, extraInfo);
 			}
 
 			// ** ALT
@@ -3255,7 +3255,7 @@ namespace Keysharp.Core.Windows
 					if (ctrlNotDown && disguiseUpWinAlt)
 						SendKeyEventMenuMask(KeyEventTypes.KeyDownAndUp, extraInfo); // Disguise key release to suppress menu activation.
 
-					SendKeyEvent(KeyEventTypes.KeyUp, VK_LMENU, 0, IntPtr.Zero, false, extraInfo);
+					SendKeyEvent(KeyEventTypes.KeyUp, VK_LMENU, 0, 0, false, extraInfo);
 				}
 			}
 			else if ((modifiersLRnow & MOD_LALT) == 0 && (modifiersLRnew & MOD_LALT) != 0)
@@ -3263,7 +3263,7 @@ namespace Keysharp.Core.Windows
 				if (disguiseAltDown)
 					SendKeyEventMenuMask(KeyEventTypes.KeyDown, extraInfo); // Ensures that menu bar is not activated.
 
-				SendKeyEvent(KeyEventTypes.KeyDown, VK_LMENU, 0, IntPtr.Zero, false, extraInfo);
+				SendKeyEvent(KeyEventTypes.KeyDown, VK_LMENU, 0, 0, false, extraInfo);
 
 				if (disguiseAltDown)
 					SendKeyEventMenuMask(KeyEventTypes.KeyUp, extraInfo);
@@ -3289,7 +3289,7 @@ namespace Keysharp.Core.Windows
 						if (ctrlNotDown && disguiseUpWinAlt)
 							SendKeyEventMenuMask(KeyEventTypes.KeyDownAndUp, extraInfo); // Disguise key release to suppress menu activation.
 
-					SendKeyEvent(KeyEventTypes.KeyUp, VK_RMENU, 0, IntPtr.Zero, false, extraInfo);
+					SendKeyEvent(KeyEventTypes.KeyUp, VK_RMENU, 0, 0, false, extraInfo);
 				}
 			}
 			else if ((modifiersLRnow & MOD_RALT) == 0 && (modifiersLRnew & MOD_RALT) != 0) // Press down RALT.
@@ -3300,7 +3300,7 @@ namespace Keysharp.Core.Windows
 				if (disguiseAltDown && targetLayoutHasAltGr != ResultType.ConditionTrue)
 				{
 					SendKeyEventMenuMask(KeyEventTypes.KeyDown, extraInfo); // Ensures that menu bar is not activated.
-					SendKeyEvent(KeyEventTypes.KeyDown, VK_RMENU, 0, IntPtr.Zero, false, extraInfo);
+					SendKeyEvent(KeyEventTypes.KeyDown, VK_RMENU, 0, 0, false, extraInfo);
 					SendKeyEventMenuMask(KeyEventTypes.KeyUp, extraInfo);
 				}
 				else // No disguise needed.
@@ -3317,7 +3317,7 @@ namespace Keysharp.Core.Windows
 					if (targetLayoutHasAltGr == ResultType.ConditionTrue)
 					{
 						if ((modifiersLRnow & MOD_LCONTROL) != 0)
-							SendKeyEvent(KeyEventTypes.KeyUp, VK_LCONTROL, 0, IntPtr.Zero, false, extraInfo);
+							SendKeyEvent(KeyEventTypes.KeyUp, VK_LCONTROL, 0, 0, false, extraInfo);
 
 						if ((modifiersLRnow & MOD_RCONTROL) != 0)
 						{
@@ -3326,12 +3326,12 @@ namespace Keysharp.Core.Windows
 							// With LCtrl not in effect and RCtrl being released below, AltGr would instead
 							// act as pure RAlt, which would not have the right effect.
 							// RCtrl will be put back into effect below if modifiersLRnew & MOD_RCONTROL.
-							SendKeyEvent(KeyEventTypes.KeyUp, VK_RCONTROL, 0, IntPtr.Zero, false, extraInfo);
+							SendKeyEvent(KeyEventTypes.KeyUp, VK_RCONTROL, 0, 0, false, extraInfo);
 							modifiersLRnow &= ~MOD_RCONTROL;
 						}
 					}
 
-					SendKeyEvent(KeyEventTypes.KeyDown, VK_RMENU, 0, IntPtr.Zero, false, extraInfo);
+					SendKeyEvent(KeyEventTypes.KeyDown, VK_RMENU, 0, 0, false, extraInfo);
 
 					if (targetLayoutHasAltGr == ResultType.ConditionTrue) // Note that KeyEvent() might have just changed the value of sTargetLayoutHasAltGr.
 					{
@@ -3355,14 +3355,14 @@ namespace Keysharp.Core.Windows
 					// probably several other circumstances:
 					// <^>!a::send \  ; Backslash is solved by this fix; it's manifest via AltGr+Dash on German layout.
 					&& !((modifiersLRnew & MOD_RALT) != 0 && targetLayoutHasAltGr == ResultType.ConditionTrue))
-				SendKeyEvent(KeyEventTypes.KeyUp, VK_LCONTROL, 0, IntPtr.Zero, false, extraInfo);
+				SendKeyEvent(KeyEventTypes.KeyUp, VK_LCONTROL, 0, 0, false, extraInfo);
 			else if ((modifiersLRnow & MOD_LCONTROL) == 0 && (modifiersLRnew & MOD_LCONTROL) != 0) // Press down LControl.
-				SendKeyEvent(KeyEventTypes.KeyDown, VK_LCONTROL, 0, IntPtr.Zero, false, extraInfo);
+				SendKeyEvent(KeyEventTypes.KeyDown, VK_LCONTROL, 0, 0, false, extraInfo);
 
 			if ((modifiersLRnow & MOD_RCONTROL) != 0 && (modifiersLRnew & MOD_RCONTROL) == 0) // Release RControl
-				SendKeyEvent(KeyEventTypes.KeyUp, VK_RCONTROL, 0, IntPtr.Zero, false, extraInfo);
+				SendKeyEvent(KeyEventTypes.KeyUp, VK_RCONTROL, 0, 0, false, extraInfo);
 			else if ((modifiersLRnow & MOD_RCONTROL) == 0 && (modifiersLRnew & MOD_RCONTROL) != 0) // Press down RControl.
-				SendKeyEvent(KeyEventTypes.KeyDown, VK_RCONTROL, 0, IntPtr.Zero, false, extraInfo);
+				SendKeyEvent(KeyEventTypes.KeyDown, VK_RCONTROL, 0, 0, false, extraInfo);
 
 			// ** SHIFT (PART 2 OF 2)
 			// Must follow CTRL and ALT because a release of SHIFT while ALT/CTRL is down-but-soon-to-be-up
@@ -3370,32 +3370,32 @@ namespace Keysharp.Core.Windows
 			// CTRL just went down above (by definition of defer_alt_release), which will prevent the language hotkey
 			// from firing.
 			if (releaseLshift && !releaseShiftBeforeAltCtrl) // Release LShift.
-				SendKeyEvent(KeyEventTypes.KeyUp, VK_LSHIFT, 0, IntPtr.Zero, false, extraInfo);
+				SendKeyEvent(KeyEventTypes.KeyUp, VK_LSHIFT, 0, 0, false, extraInfo);
 			else if ((modifiersLRnow & MOD_LSHIFT) == 0 && (modifiersLRnew & MOD_LSHIFT) != 0) // Press down LShift.
-				SendKeyEvent(KeyEventTypes.KeyDown, VK_LSHIFT, 0, IntPtr.Zero, false, extraInfo);
+				SendKeyEvent(KeyEventTypes.KeyDown, VK_LSHIFT, 0, 0, false, extraInfo);
 
 			if (releaseRshift && !releaseShiftBeforeAltCtrl) // Release RShift.
-				SendKeyEvent(KeyEventTypes.KeyUp, VK_RSHIFT, 0, IntPtr.Zero, false, extraInfo);
+				SendKeyEvent(KeyEventTypes.KeyUp, VK_RSHIFT, 0, 0, false, extraInfo);
 			else if ((modifiersLRnow & MOD_RSHIFT) == 0 && (modifiersLRnew & MOD_RSHIFT) != 0) // Press down RShift.
-				SendKeyEvent(KeyEventTypes.KeyDown, VK_RSHIFT, 0, IntPtr.Zero, false, extraInfo);
+				SendKeyEvent(KeyEventTypes.KeyDown, VK_RSHIFT, 0, 0, false, extraInfo);
 
 			// ** KEYS DEFERRED FROM EARLIER
 			if (deferWinRelease) // Must be done before ALT because it might rely on ALT being down to disguise release of WIN key.
 			{
 				if (releaseLwin)
-					SendKeyEvent(KeyEventTypes.KeyUp, VK_LWIN, 0, IntPtr.Zero, false, extraInfo);
+					SendKeyEvent(KeyEventTypes.KeyUp, VK_LWIN, 0, 0, false, extraInfo);
 
 				if (releaseRwin)
-					SendKeyEvent(KeyEventTypes.KeyUp, VK_RWIN, 0, IntPtr.Zero, false, extraInfo);
+					SendKeyEvent(KeyEventTypes.KeyUp, VK_RWIN, 0, 0, false, extraInfo);
 			}
 
 			if (deferAltRelease)
 			{
 				if (releaseLalt)
-					SendKeyEvent(KeyEventTypes.KeyUp, VK_LMENU, 0, IntPtr.Zero, false, extraInfo);
+					SendKeyEvent(KeyEventTypes.KeyUp, VK_LMENU, 0, 0, false, extraInfo);
 
 				if (releaseRalt && targetLayoutHasAltGr != ResultType.ConditionTrue) // If AltGr is present, RAlt would already have been released earlier since defer_alt_release would have been ignored for it.
-					SendKeyEvent(KeyEventTypes.KeyUp, VK_RMENU, 0, IntPtr.Zero, false, extraInfo);
+					SendKeyEvent(KeyEventTypes.KeyUp, VK_RMENU, 0, 0, false, extraInfo);
 			}
 
 			// When calling SendKeyEvent(), probably best not to specify a scan code unless
@@ -3456,9 +3456,9 @@ namespace Keysharp.Core.Windows
 				// mouse clicks should behave the same when the hook is moved into a separate thread because from
 				// the program's point-of-view, keystrokes & mouse clicks result in a calling the hook almost
 				// exactly as if the hook were in the same thread.
-				if (targetWindow != IntPtr.Zero)
+				if (targetWindow != 0)
 				{
-					//if (hookId != IntPtr.Zero)
+					//if (hookId != 0)
 					if (script.HookThread.HasKbdHook())
 						Flow.SleepWithoutInterruption(0); // Don't use ternary operator to combine this with next due to "else if".
 					else if (GetWindowThreadProcessId(targetWindow, out var _) == script.ProcessesData.MainThreadID)
@@ -3598,7 +3598,7 @@ namespace Keysharp.Core.Windows
 
 			if ((now - script.lastPeekTime).TotalMilliseconds > ThreadAccessors.A_PeekFrequency)
 			{
-				if (PeekMessage(out msg, IntPtr.Zero, 0, 0, PM_NOREMOVE))
+				if (PeekMessage(out msg, 0, 0, 0, PM_NOREMOVE))
 					_ = Flow.Sleep(-1);
 
 				now = DateTime.UtcNow;
@@ -3617,7 +3617,7 @@ namespace Keysharp.Core.Windows
 
 			if ((now - script.lastPeekTime).TotalMilliseconds > ThreadAccessors.A_PeekFrequency)
 			{
-				if (PeekMessage(out msg, IntPtr.Zero, 0, 0, PM_NOREMOVE))
+				if (PeekMessage(out msg, 0, 0, 0, PM_NOREMOVE))
 					Flow.SleepWithoutInterruption(-1);
 
 				now = DateTime.UtcNow;
@@ -3720,7 +3720,7 @@ namespace Keysharp.Core.Windows
 		/// <param name="doKeyDelay"></param>
 		/// <param name="extraInfo"></param>
 		///
-		protected internal override void SendKeyEvent(KeyEventTypes eventType, uint vk, uint sc = 0u, IntPtr targetWindow = default, bool doKeyDelay = false, uint extraInfo = KeyIgnoreAllExceptModifier)
+		protected internal override void SendKeyEvent(KeyEventTypes eventType, uint vk, uint sc = 0u, nint targetWindow = default, bool doKeyDelay = false, uint extraInfo = KeyIgnoreAllExceptModifier)
 		{
 			if ((vk | sc) == 0)//If neither VK nor SC was specified, return.
 				return;
@@ -3786,7 +3786,7 @@ namespace Keysharp.Core.Windows
 			// One exception to this is something like "ControlSend, Edit1, {Control down}", which explicitly
 			// calls us with a target window.  This exception is by design and has been bug-fixed and documented
 			// in ControlSend for v1.0.21:
-			if (targetWindow != IntPtr.Zero) // This block shouldn't affect overall thread-safety because hook thread never calls it in this mode.
+			if (targetWindow != 0) // This block shouldn't affect overall thread-safety because hook thread never calls it in this mode.
 			{
 				bool? b = null;
 
@@ -3878,8 +3878,8 @@ namespace Keysharp.Core.Windows
 				// Users of the below want them updated only for keybd_event() keystrokes (not PostMessage ones):
 				prevEventType = eventType;
 				prevVK = vk;
-				var tempTargetLayoutHasAltGr = (callerIsKeybdHook ? LayoutHasAltGr(GetFocusedKeybdLayout(IntPtr.Zero)) : targetLayoutHasAltGr) == ResultType.ConditionTrue; // i.e. not CONDITION_FALSE (which is nonzero) or FAIL (zero).
-				var hookableAltGr = (vk == VK_RMENU) && tempTargetLayoutHasAltGr && !putEventIntoArray && ht.HasKbdHook();// hookId != IntPtr.Zero;
+				var tempTargetLayoutHasAltGr = (callerIsKeybdHook ? LayoutHasAltGr(GetFocusedKeybdLayout(0)) : targetLayoutHasAltGr) == ResultType.ConditionTrue; // i.e. not CONDITION_FALSE (which is nonzero) or FAIL (zero).
+				var hookableAltGr = (vk == VK_RMENU) && tempTargetLayoutHasAltGr && !putEventIntoArray && ht.HasKbdHook();// hookId != 0;
 				// Calculated only once for performance (and avoided entirely if not needed):
 				bool? b = null;
 				var keyAsModifiersLR = putEventIntoArray ? ht.KeyToModifiersLR(vk, sc, ref b) : 0;
@@ -4007,7 +4007,7 @@ namespace Keysharp.Core.Windows
 		private static int MouseCoordToAbs(int coord, int width_or_height) => ((65536 * coord) / width_or_height) + (coord < 0 ? -1 : 1);
 
 		/*  JOURNAL_RECORD_MODE
-		        internal IntPtr PlaybackProc(int nCode, IntPtr wParam, ref KBDLLHOOKSTRUCT lParam)
+		        internal nint PlaybackProc(int nCode, nint wParam, ref KBDLLHOOKSTRUCT lParam)
 		        {
 		            switch (aCode)
 		            {
@@ -4110,7 +4110,7 @@ namespace Keysharp.Core.Windows
 		internal class CachedLayoutType
 		{
 			internal ResultType has_altgr = ResultType.Fail;
-			internal IntPtr hkl = IntPtr.Zero;
+			internal nint hkl = 0;
 		};
 
 		private delegate KBDTABLES64 KbdTables();
@@ -4129,7 +4129,7 @@ namespace Keysharp.Core.Windows
 
 		    uint virtualKeyCode = (uint)key;
 		    uint scanCode = MapVirtualKey(virtualKeyCode, 0);
-		    IntPtr inputLocaleIdentifier = GetKeyboardLayout(0);
+		    nint inputLocaleIdentifier = GetKeyboardLayout(0);
 
 		    StringBuilder result = new StringBuilder();
 		    ToUnicodeEx(virtualKeyCode, scanCode, keyboardState, result, (int)5, (uint)0, inputLocaleIdentifier);
@@ -4144,10 +4144,10 @@ namespace Keysharp.Core.Windows
 		    static extern uint MapVirtualKey(uint uCode, uint uMapType);
 
 		    [DllImport("user32.dll")]
-		    static extern IntPtr GetKeyboardLayout(uint idThread);
+		    static extern nint GetKeyboardLayout(uint idThread);
 
 		    [DllImport("user32.dll")]
-		    static extern int ToUnicodeEx(uint wVirtKey, uint wScanCode, byte[] lpKeyState, [Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder pwszBuff, int cchBuff, uint wFlags, IntPtr dwhkl);
+		    static extern int ToUnicodeEx(uint wVirtKey, uint wScanCode, byte[] lpKeyState, [Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder pwszBuff, int cchBuff, uint wFlags, nint dwhkl);
 
 		*/
 	}

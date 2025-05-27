@@ -182,7 +182,7 @@ namespace Keysharp.Core
 #elif WINDOWS
 
 			//SendMessage() freezes when running in a unit test. PostMessage seems to work. Use SendMessageTimeout().
-			try { _ = WindowsAPI.SendMessageTimeout(new IntPtr(WindowsAPI.HWND_BROADCAST), WindowsAPI.WM_SETTINGCHANGE, 0u, IntPtr.Zero, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 1000, out var result); }
+			try { _ = WindowsAPI.SendMessageTimeout(new nint(WindowsAPI.HWND_BROADCAST), WindowsAPI.WM_SETTINGCHANGE, 0, 0, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 1000, out var result); }
 			catch (Exception ex)
 			{
 				Error err;
@@ -683,7 +683,7 @@ namespace Keysharp.Core
 				if (WindowsAPI.OpenClipboard(A_ClipboardTimeout.Al()))
 				{
 					byte[] buf;
-					var gLock = IntPtr.Zero;
+					nint gLock = 0;
 
 					try
 					{

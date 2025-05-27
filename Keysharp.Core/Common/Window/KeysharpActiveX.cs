@@ -56,8 +56,8 @@ namespace Keysharp.Core.Common.Window
 		[DllImport("atl.dll", CharSet = CharSet.Unicode)]
 		public static extern int AtlAxCreateControl(
 			string lpszName,
-			IntPtr hWnd,
-			IntPtr pStream,
+			nint hWnd,
+			nint pStream,
 			[MarshalAs(UnmanagedType.IDispatch)] out object ppUnkContainer);
 
 		[DllImport("atl.dll", CharSet = CharSet.Unicode)]
@@ -69,8 +69,8 @@ namespace Keysharp.Core.Common.Window
 			{
 				var hInstance = Marshal.GetHINSTANCE(GetType().Module);
 
-				if (AtlAxCreateControl(AxText, Handle, IntPtr.Zero, out ob) >= 0)
-					//if (axHandle != IntPtr.Zero)
+				if (AtlAxCreateControl(AxText, Handle, 0, out ob) >= 0)
+					//if (axHandle != 0)
 				{
 					Console.WriteLine("AtlAxCreateControl() succeeded.");
 

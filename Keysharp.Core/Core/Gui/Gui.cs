@@ -155,7 +155,7 @@
 					{
 						if (int.TryParse(s, out var hwnd))
 						{
-							if (System.Windows.Forms.Control.FromHandle(new IntPtr(hwnd)) is Form theform)
+							if (System.Windows.Forms.Control.FromHandle(new nint(hwnd)) is Form theform)
 								f.form.Owner = theform;
 						}
 					}
@@ -168,7 +168,7 @@
 					{
 						if (int.TryParse(s, out var hwnd))
 						{
-							if (System.Windows.Forms.Control.FromHandle(new IntPtr(hwnd)) is Form theform)
+							if (System.Windows.Forms.Control.FromHandle(new nint(hwnd)) is Form theform)
 								f.form.Parent = theform;
 						}
 					}
@@ -241,7 +241,7 @@
 
 		public System.Windows.Forms.Control FocusedCtrl => form.ActiveControl;
 
-		public IntPtr Hwnd => form.Handle;
+		public long Hwnd => form.Handle;
 
 		public long MarginX
 		{

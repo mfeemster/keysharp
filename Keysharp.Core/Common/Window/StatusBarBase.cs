@@ -4,7 +4,7 @@
 	{
 		protected const int timeout = 2000;
 		protected string[] captions;
-		protected IntPtr handle;
+		protected nint handle;
 		protected int panelCount;
 		protected uint pid;
 
@@ -47,7 +47,7 @@
 			}
 		}
 
-		internal StatusBarBase(IntPtr hWnd)
+		internal StatusBarBase(nint hWnd)
 		{
 			handle = hWnd;
 			panelCount = -1;

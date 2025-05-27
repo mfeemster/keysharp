@@ -1320,8 +1320,6 @@ namespace Keysharp.Core.Common.Keyboard
 			{
 				if (val is long l)
 					return l;
-				else if (val is IntPtr ptr)
-					return ptr.ToInt64();
 				else
 					return Script.ForceBool(val) ? 1L : 0L;
 			}
@@ -1553,7 +1551,7 @@ namespace Keysharp.Core.Common.Keyboard
 			var hotkeyTypeTemp = HotkeyTypeEnum.Normal;
 			ref var hotkeyType = ref (thisHotkey != null ? ref thisHotkey.type : ref hotkeyTypeTemp);//Simplifies and reduces code size below.
 
-			if ((tempVk = ht.TextToVK(text, ref modifiersLR, true, true, IntPtr.Zero)) != 0) // Assign.
+			if ((tempVk = ht.TextToVK(text, ref modifiersLR, true, true, 0)) != 0) // Assign.
 			{
 				if (isModifier)
 				{
@@ -1994,7 +1992,7 @@ namespace Keysharp.Core.Common.Keyboard
 			if (!parentEnabled) // IsCompletelyDisabled() isn't called because the loop below checks all the mEnabled flags, no need to do it twice.
 				return null;
 
-			var unused = IntPtr.Zero;
+			var unused = 0;
 			HotkeyVariant vp, vpToFire;
 
 			// aHookAction isn't checked because this should never be called for alt-tab hotkeys (see other comments above).
@@ -2147,7 +2145,7 @@ namespace Keysharp.Core.Common.Keyboard
 				A_SendLevel = variant.inputLevel;
 				var script = Script.TheScript;
 				var tv = script.Threads.GetThreadVariables();
-				tv.hwndLastUsed = new IntPtr(critFoundHwnd);
+				tv.hwndLastUsed = new nint(critFoundHwnd);
 				tv.hotCriterion = variant.hotCriterion;
 				object ret = null;
 				var ok = Flow.TryCatch(() =>

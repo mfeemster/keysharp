@@ -434,12 +434,12 @@ namespace Keysharp.Core
 			{
 				if (search.targetControl == SoundControlType.IID)
 				{
-					_ = mmDev.deviceInterface.Activate(ref search.targetIid, ClsCtx.ALL, IntPtr.Zero, out var result);
+					_ = mmDev.deviceInterface.Activate(ref search.targetIid, ClsCtx.ALL, 0, out var result);
 					//Need the specific interface pointer, else ComCall() will fail when using IAudioMeterInformation.
 					var iptr = Marshal.GetIUnknownForObject(result);
 
 					if (Marshal.QueryInterface(iptr, in search.targetIid, out var ptr) >= 0)
-						result = ptr;
+						result = ptr.ToInt64();
 
 					_ = Marshal.Release(iptr);
 					return result;
@@ -513,7 +513,7 @@ namespace Keysharp.Core
 				}
 				else if (search.targetControl == SoundControlType.IID)
 				{
-					return search.control;//The IntPtr.
+					return search.control;//The nint.
 				}
 				else if (search.targetControl == SoundControlType.Name)
 				{
@@ -525,7 +525,7 @@ namespace Keysharp.Core
 				}
 				else if (search.targetControl == SoundControlType.Volume)
 				{
-					object comobj = search.control is IntPtr ip ? Marshal.GetObjectForIUnknown(ip) : search.control;
+					object comobj = search.control is long ll ? Marshal.GetObjectForIUnknown((nint)ll) : search.control;
 
 					if (comobj is IAudioVolumeLevel avl)
 					{
@@ -581,7 +581,7 @@ namespace Keysharp.Core
 				}
 				else if (search.targetControl == SoundControlType.Mute)
 				{
-					object comobj = search.control is IntPtr ip ? Marshal.GetObjectForIUnknown(ip) : search.control;
+					object comobj = search.control is long ll ? Marshal.GetObjectForIUnknown((nint)ll) : search.control;
 
 					if (comobj is IAudioMute am)
 					{
@@ -693,8 +693,8 @@ namespace Keysharp.Core
 
 										if (Marshal.QueryInterface(iptr, in search.targetIid, out var ptr) >= 0)
 										{
-											if (ptr != IntPtr.Zero)
-												search.control = ptr;
+											if (ptr != 0)
+												search.control = ptr.ToInt64();
 										}
 
 										_ = Marshal.Release(iptr);
@@ -724,8 +724,8 @@ namespace Keysharp.Core
 
 									if (Marshal.QueryInterface(iptr, in search.targetIid, out var ptr) >= 0)
 									{
-										if (ptr != IntPtr.Zero)
-											search.control = ptr;
+										if (ptr != 0)
+											search.control = ptr.ToInt64();
 									}
 
 									_ = Marshal.Release(iptr);

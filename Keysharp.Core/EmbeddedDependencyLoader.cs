@@ -39,7 +39,7 @@
 			else if (assemblyResources.TryGetValue("Deps." + resourceName, out resourceAsm))
 				rs = resourceAsm.GetManifestResourceStream("Deps." + resourceName);
 
-			if (rs == null) return IntPtr.Zero;
+			if (rs == null) return 0;
 
 			var tmp = Path.Combine(Path.GetDirectoryName(Environment.ProcessPath), resourceName);
 

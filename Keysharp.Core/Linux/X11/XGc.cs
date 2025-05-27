@@ -81,9 +81,9 @@ namespace Keysharp.Core.Linux.X11
 	internal struct XGCValues
 	{
 		internal GXFunction function;
-		internal IntPtr plane_mask;
-		internal IntPtr foreground;
-		internal IntPtr background;
+		internal nint plane_mask;
+		internal nint foreground;
+		internal nint background;
 		internal int line_width;
 		internal GCLineStyle line_style;
 		internal GCCapStyle cap_style;
@@ -91,16 +91,16 @@ namespace Keysharp.Core.Linux.X11
 		internal GCFillStyle fill_style;
 		internal GCFillRule fill_rule;
 		internal GCArcMode arc_mode;
-		internal IntPtr tile;
-		internal IntPtr stipple;
+		internal nint tile;
+		internal nint stipple;
 		internal int ts_x_origin;
 		internal int ts_y_origin;
-		internal IntPtr font;
+		internal nint font;
 		internal GCSubwindowMode subwindow_mode;
 		internal bool graphics_exposures;
 		internal int clip_x_origin;
 		internal int clib_y_origin;
-		internal IntPtr clip_mask;
+		internal nint clip_mask;
 		internal int dash_offset;
 		internal byte dashes;
 	}

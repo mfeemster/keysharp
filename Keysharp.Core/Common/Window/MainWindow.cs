@@ -150,7 +150,7 @@
 					{
 						hwnd = m.HWnd,//Unused, but probably still good to assign.
 						message = WindowsAPI.WM_HOTKEY,
-						wParam = new IntPtr(m.WParam.ToInt32()),
+						wParam = new nint(m.WParam.ToInt32()),
 						lParam = m.LParam.ToInt32()
 					});
 					handled = true;
@@ -161,7 +161,7 @@
 			base.WndProc(ref m);
 
 			if (handled)
-				m.Result = new IntPtr(1);
+				m.Result = new nint(1);
 		}
 
 		private void aboutToolStripMenuItem_Click(object sender, EventArgs e)

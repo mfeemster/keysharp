@@ -37,7 +37,7 @@ namespace Keysharp.Core.Common.Threading
 		internal string MouseMutexName = "Keysharp Mouse";
 		internal Dictionary<uint, string> vkToKey = [];
 		internal bool blockWinKeys = false;
-		internal IntPtr hsHwnd = IntPtr.Zero;
+		internal nint hsHwnd = 0;
 		internal KeyboardMouseSender kbdMsSender = null;
 		internal byte[] physicalKeyState = new byte[VK_ARRAY_COUNT];
 
@@ -70,13 +70,13 @@ namespace Keysharp.Core.Common.Threading
 		protected internal bool disguiseNextMenu = false;
 		protected internal bool hookSynced = false;
 		protected internal List<uint> hotkeyUp = new (256);
-		protected internal IntPtr kbdHook = IntPtr.Zero;
+		protected internal nint kbdHook = 0;
 		protected internal KeyHistory keyHistory = new ();
 		protected internal KeyType[] ksc;
 		protected internal uint[] kscm;
 		protected internal KeyType[] kvk;
 		protected internal uint[] kvkm;
-		protected internal IntPtr mouseHook = IntPtr.Zero;
+		protected internal nint mouseHook = 0;
 		protected internal bool undisguisedMenuInEffect = false;
 		protected volatile bool running;
 
@@ -91,7 +91,7 @@ namespace Keysharp.Core.Common.Threading
 
 		internal abstract void ChangeHookState(List<HotkeyDefinition> hk, HookType whichHook, HookType whichHookAlways);
 
-		internal abstract uint CharToVKAndModifiers(char ch, ref uint? modifiersLR, IntPtr keybdLayout, bool enableAZFallback = false);
+		internal abstract uint CharToVKAndModifiers(char ch, ref uint? modifiersLR, nint keybdLayout, bool enableAZFallback = false);
 
 		internal uint ConvertMouseButton(string buf, bool allowWheel = true) => ConvertMouseButton(buf.AsSpan(), allowWheel);
 
@@ -144,9 +144,9 @@ namespace Keysharp.Core.Common.Threading
 
 		internal bool HasEitherHook() => GetActiveHooks() != HookType.None;
 
-		internal bool HasKbdHook() => kbdHook != IntPtr.Zero;
+		internal bool HasKbdHook() => kbdHook != 0;
 
-		internal bool HasMouseHook() => mouseHook != IntPtr.Zero;
+		internal bool HasMouseHook() => mouseHook != 0;
 
 		internal virtual object Invoke(Func<object> f) => f();
 
@@ -336,21 +336,21 @@ namespace Keysharp.Core.Common.Threading
 
 		internal abstract uint TextToSpecial(ReadOnlySpan<char> text, ref KeyEventTypes eventType, ref uint modifiersLR, bool updatePersistent);
 
-		internal uint TextToVK(string text, ref uint? modifiersLR, bool excludeThoseHandledByScanCode, bool allowExplicitVK, IntPtr keybdLayout) =>
+		internal uint TextToVK(string text, ref uint? modifiersLR, bool excludeThoseHandledByScanCode, bool allowExplicitVK, nint keybdLayout) =>
 		TextToVK(text.AsSpan(), ref modifiersLR, excludeThoseHandledByScanCode, allowExplicitVK, keybdLayout);
 
-		internal abstract uint TextToVK(ReadOnlySpan<char> text, ref uint? modifiersLR, bool excludeThoseHandledByScanCode, bool allowExplicitVK, IntPtr keybdLayout);
+		internal abstract uint TextToVK(ReadOnlySpan<char> text, ref uint? modifiersLR, bool excludeThoseHandledByScanCode, bool allowExplicitVK, nint keybdLayout);
 
-		internal bool TextToVKandSC(string text, ref uint vk, ref uint sc, ref uint? modifiersLR, IntPtr keybdLayout) =>
+		internal bool TextToVKandSC(string text, ref uint vk, ref uint sc, ref uint? modifiersLR, nint keybdLayout) =>
 		TextToVKandSC(text.AsSpan(), ref vk, ref sc, ref modifiersLR, keybdLayout);
 
-		internal abstract bool TextToVKandSC(ReadOnlySpan<char> text, ref uint vk, ref uint sc, ref uint? modifiersLR, IntPtr keybdLayout);
+		internal abstract bool TextToVKandSC(ReadOnlySpan<char> text, ref uint vk, ref uint sc, ref uint? modifiersLR, nint keybdLayout);
 
 		internal abstract void Unhook();
 
 		internal abstract void Unhook(nint hook);
 
-		internal abstract char VKtoChar(uint vk, IntPtr keybdLayout);
+		internal abstract char VKtoChar(uint vk, nint keybdLayout);
 
 		internal string VKtoKeyName(uint vk, bool useFallback)
 		{
@@ -359,7 +359,7 @@ namespace Keysharp.Core.Common.Threading
 
 			// Since above didn't return, no match was found.  Try to map it to
 			// a character or use the default format for an unknown key code:
-			var ch = VKtoChar(vk, IntPtr.Zero);
+			var ch = VKtoChar(vk, 0);
 
 			if (ch != (char)0)
 				return ch.ToString();

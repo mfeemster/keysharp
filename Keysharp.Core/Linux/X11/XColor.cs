@@ -4,7 +4,7 @@ namespace Keysharp.Core.Linux.X11
 	[StructLayout(LayoutKind.Sequential, Pack = 2)]
 	internal struct XColor
 	{
-		internal IntPtr pixel;
+		internal nint pixel;
 		internal ushort red;
 		internal ushort green;
 		internal ushort blue;
@@ -15,16 +15,16 @@ namespace Keysharp.Core.Linux.X11
 	[StructLayout(LayoutKind.Sequential)]
 	internal struct XStandardColormap
 	{
-		internal IntPtr colormap;
-		internal IntPtr red_max;
-		internal IntPtr red_mult;
-		internal IntPtr green_max;
-		internal IntPtr green_mult;
-		internal IntPtr blue_max;
-		internal IntPtr blue_mult;
-		internal IntPtr base_pixel;
-		internal IntPtr visualid;
-		internal IntPtr killid;
+		internal nint colormap;
+		internal nint red_max;
+		internal nint red_mult;
+		internal nint green_max;
+		internal nint green_mult;
+		internal nint blue_max;
+		internal nint blue_mult;
+		internal nint base_pixel;
+		internal nint visualid;
+		internal nint killid;
 	}
 
 	[Flags]

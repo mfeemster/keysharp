@@ -39,10 +39,10 @@ namespace Keysharp.Core.Linux
 				isGnome = true;//Assume Gnome if no other DE was found.
 		}
 
-		internal override IntPtr GetKeyboardLayout(uint idThread)
+		internal override nint GetKeyboardLayout(uint idThread)
 		=> throw new NotImplementedException();
 
-		internal override int ToUnicodeEx(uint wVirtKey, uint wScanCode, byte[] lpKeyState, [Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder pwszBuff, int cchBuff, uint wFlags, IntPtr dwhkl)
+		internal override int ToUnicodeEx(uint wVirtKey, uint wScanCode, byte[] lpKeyState, [Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder pwszBuff, int cchBuff, uint wFlags, nint dwhkl)
 		=> throw new NotImplementedException();
 
 		internal override bool SetDllDirectory(string path)
@@ -72,11 +72,11 @@ namespace Keysharp.Core.Linux
 			}
 		}
 
-		internal override IntPtr LoadLibrary(string path) => Xlib.dlopen(path, Xlib.RTLD_LAZY);//Assume lazy is more efficient. Use RTLD_NOW if this doesn't work.
+		internal override nint LoadLibrary(string path) => Xlib.dlopen(path, Xlib.RTLD_LAZY);//Assume lazy is more efficient. Use RTLD_NOW if this doesn't work.
 
 		internal override uint CurrentThreadId() => (uint)Xlib.gettid();
 
-		internal override bool DestroyIcon(IntPtr icon) => Xlib.GdipDisposeImage(icon) == 0;//Unsure if this works or is even needed on linux.
+		internal override bool DestroyIcon(nint icon) => Xlib.GdipDisposeImage(icon) == 0;//Unsure if this works or is even needed on linux.
 
 		internal override bool ExitProgram(uint flags, uint reason)
 		{
@@ -165,15 +165,15 @@ namespace Keysharp.Core.Linux
 			return true;
 		}
 
-		internal override bool UnregisterHotKey(IntPtr hWnd, uint id) => true;
+		internal override bool UnregisterHotKey(nint hWnd, uint id) => true;
 
-		internal override bool PostMessage(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam) => true;
+		internal override bool PostMessage(nint hWnd, uint msg, nint wParam, nint lParam) => true;
 
-		internal override bool PostMessage(IntPtr hWnd, uint msg, uint wParam, uint lParam) => true;
+		internal override bool PostMessage(nint hWnd, uint msg, uint wParam, uint lParam) => true;
 
-		internal override bool PostHotkeyMessage(IntPtr hWnd, uint wParam, uint lParam) => true;
+		internal override bool PostHotkeyMessage(nint hWnd, uint wParam, uint lParam) => true;
 
-		internal override bool RegisterHotKey(IntPtr hWnd, uint id, KeyModifiers fsModifiers, uint vk) => true;
+		internal override bool RegisterHotKey(nint hWnd, uint id, KeyModifiers fsModifiers, uint vk) => true;
 	}
 }
 #endif

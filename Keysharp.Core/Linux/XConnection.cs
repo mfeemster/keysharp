@@ -27,7 +27,7 @@ namespace Keysharp.Core.Linux
 
 		private List<long> windows;
 
-		internal IntPtr Handle { get; private set; }
+		internal nint Handle { get; private set; }
 
 		internal bool SuppressErrors
 		{
@@ -93,7 +93,7 @@ namespace Keysharp.Core.Linux
 
 		private void Listen()
 		{
-			Handle = Xlib.XOpenDisplay(IntPtr.Zero);
+			Handle = Xlib.XOpenDisplay(0);
 			// Select all the windows already present
 			SuppressErrors = true;
 			RecurseTree(Handle, Xlib.XDefaultRootWindow(Handle));
@@ -113,7 +113,7 @@ namespace Keysharp.Core.Linux
 		/// </summary>
 		/// <param name="display"></param>
 		/// <param name="rootWindow"></param>
-		private unsafe void RecurseTree(IntPtr display, long rootWindow)
+		private unsafe void RecurseTree(nint display, long rootWindow)
 		{
 			if (!windows.Contains(rootWindow))
 				windows.Add(rootWindow);

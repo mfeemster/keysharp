@@ -3,7 +3,7 @@
 	internal class DelegateData
 	{
 		// Precomputed trampolines for parameter counts 0..32
-		internal readonly IntPtr[] trampolinePtrs;
+		internal readonly nint[] trampolinePtrs;
 
 		internal DelegateData()
 		{
@@ -33,10 +33,10 @@
 
 		// Self GCHandle & pointer to self
 		readonly GCHandle _selfHandle;
-		readonly IntPtr _ctx;
+		readonly nint _ctx;
 
 		// Native function pointer to pass into unmanaged code.
-		public IntPtr Ptr { get; }
+		public long Ptr { get; }
 
 		/// <summary>
 		/// Creates a holder and allocates a native stub that embeds its context.
@@ -61,136 +61,136 @@
 
 		// Shared unmanaged-callable trampolines
 		[UnmanagedCallersOnly]
-		static long SharedTrampoline0(IntPtr ctx)
+		static long SharedTrampoline0(nint ctx)
 		=> Dispatch(ctx, System.Array.Empty<long>());
 
 		[UnmanagedCallersOnly]
-		static long SharedTrampoline1(long p0, IntPtr ctx)
+		static long SharedTrampoline1(long p0, nint ctx)
 		=> Dispatch(ctx, new[] { p0 });
 
 		[UnmanagedCallersOnly]
-		static long SharedTrampoline2(long p0, long p1, IntPtr ctx)
+		static long SharedTrampoline2(long p0, long p1, nint ctx)
 		=> Dispatch(ctx, new[] { p0, p1 });
 
 		[UnmanagedCallersOnly]
-		static long SharedTrampoline3(long p0, long p1, long p2, IntPtr ctx)
+		static long SharedTrampoline3(long p0, long p1, long p2, nint ctx)
 		=> Dispatch(ctx, new[] { p0, p1, p2 });
 
 		[UnmanagedCallersOnly]
-		static long SharedTrampoline4(long p0, long p1, long p2, long p3, IntPtr ctx)
+		static long SharedTrampoline4(long p0, long p1, long p2, long p3, nint ctx)
 		=> Dispatch(ctx, new[] { p0, p1, p2, p3 });
 
 		[UnmanagedCallersOnly]
-		static long SharedTrampoline5(long p0, long p1, long p2, long p3, long p4, IntPtr ctx)
+		static long SharedTrampoline5(long p0, long p1, long p2, long p3, long p4, nint ctx)
 		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4 });
 
 		[UnmanagedCallersOnly]
-		static long SharedTrampoline6(long p0, long p1, long p2, long p3, long p4, long p5, IntPtr ctx)
+		static long SharedTrampoline6(long p0, long p1, long p2, long p3, long p4, long p5, nint ctx)
 		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5 });
 
 		[UnmanagedCallersOnly]
-		static long SharedTrampoline7(long p0, long p1, long p2, long p3, long p4, long p5, long p6, IntPtr ctx)
+		static long SharedTrampoline7(long p0, long p1, long p2, long p3, long p4, long p5, long p6, nint ctx)
 		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5, p6 });
 
 		[UnmanagedCallersOnly]
-		static long SharedTrampoline8(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, IntPtr ctx)
+		static long SharedTrampoline8(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, nint ctx)
 		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5, p6, p7 });
 
 		[UnmanagedCallersOnly]
-		static long SharedTrampoline9(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, IntPtr ctx)
+		static long SharedTrampoline9(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, nint ctx)
 		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5, p6, p7, p8 });
 
 		[UnmanagedCallersOnly]
-		static long SharedTrampoline10(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, IntPtr ctx)
+		static long SharedTrampoline10(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, nint ctx)
 		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5, p6, p7, p8, p9 });
 
 		[UnmanagedCallersOnly]
-		static long SharedTrampoline11(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, IntPtr ctx)
+		static long SharedTrampoline11(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, nint ctx)
 		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10 });
 
 		[UnmanagedCallersOnly]
-		static long SharedTrampoline12(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, IntPtr ctx)
+		static long SharedTrampoline12(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, nint ctx)
 		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11 });
 
 		[UnmanagedCallersOnly]
-		static long SharedTrampoline13(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, IntPtr ctx)
+		static long SharedTrampoline13(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, nint ctx)
 		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12 });
 
 		[UnmanagedCallersOnly]
-		static long SharedTrampoline14(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, IntPtr ctx)
+		static long SharedTrampoline14(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, nint ctx)
 		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13 });
 
 		[UnmanagedCallersOnly]
-		static long SharedTrampoline15(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, IntPtr ctx)
+		static long SharedTrampoline15(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, nint ctx)
 		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14 });
 
 		[UnmanagedCallersOnly]
-		static long SharedTrampoline16(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, IntPtr ctx)
+		static long SharedTrampoline16(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, nint ctx)
 		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15 });
 
 		[UnmanagedCallersOnly]
-		static long SharedTrampoline17(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, IntPtr ctx)
+		static long SharedTrampoline17(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, nint ctx)
 		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16 });
 
 		[UnmanagedCallersOnly]
-		static long SharedTrampoline18(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, IntPtr ctx)
+		static long SharedTrampoline18(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, nint ctx)
 		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17 });
 
 		[UnmanagedCallersOnly]
-		static long SharedTrampoline19(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, IntPtr ctx)
+		static long SharedTrampoline19(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, nint ctx)
 		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18 });
 
 		[UnmanagedCallersOnly]
-		static long SharedTrampoline20(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, IntPtr ctx)
+		static long SharedTrampoline20(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, nint ctx)
 		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19 });
 
 		[UnmanagedCallersOnly]
-		static long SharedTrampoline21(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, IntPtr ctx)
+		static long SharedTrampoline21(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, nint ctx)
 		=> Dispatch(ctx, new[] {p0, p1, p2, p3, p4,  p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20 });
 
 		[UnmanagedCallersOnly]
-		static long SharedTrampoline22(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, IntPtr ctx)
+		static long SharedTrampoline22(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, nint ctx)
 		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21 });
 
 		[UnmanagedCallersOnly]
-		static long SharedTrampoline23(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, IntPtr ctx)
+		static long SharedTrampoline23(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, nint ctx)
 		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4,  p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22
 							   });
 
 		[UnmanagedCallersOnly]
-		static long SharedTrampoline24(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, long p23, IntPtr ctx)
+		static long SharedTrampoline24(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, long p23, nint ctx)
 		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4,  p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23 });
 
 		[UnmanagedCallersOnly]
-		static long SharedTrampoline25(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, long p23, long p24, IntPtr ctx)
+		static long SharedTrampoline25(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, long p23, long p24, nint ctx)
 		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4,  p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24 });
 
 		[UnmanagedCallersOnly]
-		static long SharedTrampoline26(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, long p23, long p24, long p25, IntPtr ctx)
+		static long SharedTrampoline26(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, long p23, long p24, long p25, nint ctx)
 		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4,  p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25 });
 
 		[UnmanagedCallersOnly]
-		static long SharedTrampoline27(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, long p23, long p24, long p25, long p26, IntPtr ctx)
+		static long SharedTrampoline27(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, long p23, long p24, long p25, long p26, nint ctx)
 		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4,  p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26 });
 
 		[UnmanagedCallersOnly]
-		static long SharedTrampoline28(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, long p23, long p24, long p25, long p26, long p27, IntPtr ctx)
+		static long SharedTrampoline28(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, long p23, long p24, long p25, long p26, long p27, nint ctx)
 		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4,  p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26, p27 });
 
 		[UnmanagedCallersOnly]
-		static long SharedTrampoline29(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, long p23, long p24, long p25, long p26, long p27, long p28, IntPtr ctx)
+		static long SharedTrampoline29(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, long p23, long p24, long p25, long p26, long p27, long p28, nint ctx)
 		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4,  p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26, p27, p28 });
 
 		[UnmanagedCallersOnly]
-		static long SharedTrampoline30(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, long p23, long p24, long p25, long p26, long p27, long p28, long p29, IntPtr ctx)
+		static long SharedTrampoline30(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, long p23, long p24, long p25, long p26, long p27, long p28, long p29, nint ctx)
 		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4,  p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26, p27, p28, p29 });
 
 		[UnmanagedCallersOnly]
-		static long SharedTrampoline31(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, long p23, long p24, long p25, long p26, long p27, long p28, long p29, long p30, IntPtr ctx)
+		static long SharedTrampoline31(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, long p23, long p24, long p25, long p26, long p27, long p28, long p29, long p30, nint ctx)
 		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4,  p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26, p27, p28, p29, p30 });
 
 		[UnmanagedCallersOnly]
-		static long SharedTrampoline32(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, long p23, long p24, long p25, long p26, long p27, long p28, long p29, long p30, long p31, IntPtr ctx)
+		static long SharedTrampoline32(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, long p23, long p24, long p25, long p26, long p27, long p28, long p29, long p30, long p31, nint ctx)
 		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4,  p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26, p27, p28, p29, p30, p31 });
 
 		/// <summary>
@@ -200,7 +200,7 @@
 		/// <param name="ctx">Pointer to this DelegateHolder instance.</param>
 		/// <param name="args">Argument list for the target function.</param>
 		/// <returns>Result of the target function converted to a long.</returns>
-		static long Dispatch(IntPtr ctx, long[] args)
+		static long Dispatch(nint ctx, long[] args)
 		{
 			// Recover the DelegateHolder by reversing the GCHandle
 			var handle = GCHandle.FromIntPtr(ctx);
@@ -245,22 +245,20 @@
 		}
 
 		internal static long ConvertResult(object val) => val switch
-	{
-			int i => i,
+			{
 				long l => l,
 				bool b => b ? 1L : 0L,
 				double d => (long)d,
-					string s => s.Length == 0 ? 0L : 0L,
-					IntPtr ip => ip.ToInt64(),
-					_ => 0L
-		};
+				string s => s.Length == 0 ? 0L : 0L,
+				_ => 0L
+			};
 
 		/// <summary>Frees the native stub and drops references.</summary>
 		public void Clear()
 		{
 			// Free the handle and context
 			_selfHandle.Free();
-			NativeThunkFactory.FreeThunk(Ptr);
+			NativeThunkFactory.FreeThunk((nint)Ptr);
 			funcObj = null;
 		}
 
@@ -275,9 +273,9 @@
 	/// </summary>
 	static class NativeThunkFactory
 	{
-		public static unsafe IntPtr CreateThunk(IntPtr trampPtr, IntPtr ctx, int arity)
+		public static unsafe nint CreateThunk(nint trampPtr, nint ctx, int arity)
 		{
-			IntPtr mem = Script.TheScript.ExecutableMemoryPoolManager.Rent();
+			nint mem = Script.TheScript.ExecutableMemoryPoolManager.Rent();
 			byte* ptr = (byte*)mem;
 			int disp;
 
@@ -457,7 +455,7 @@
 			return mem;
 		}
 
-		public static void FreeThunk(IntPtr ptr)
+		public static void FreeThunk(nint ptr)
 		{
 			Script.TheScript.ExecutableMemoryPoolManager.Return(ptr);
 		}
@@ -475,19 +473,19 @@
 		private readonly object _lock = new object();
 
 		// All allocated pages
-		private readonly List<IntPtr> _pages = new List<IntPtr>();
+		private readonly List<nint> _pages = new List<nint>();
 		// Free chunk addresses
-		private readonly Stack<IntPtr> _freeChunks = new Stack<IntPtr>();
+		private readonly Stack<nint> _freeChunks = new Stack<nint>();
 
 		// Current page and offset
-		private IntPtr _currentPage;
+		private nint _currentPage;
 		private int _currentOffset;
 
 #if LINUX || OSX
 		[DllImport("libc", SetLastError = true)]
-		private static extern IntPtr mmap(IntPtr addr, UIntPtr length, int prot, int flags, int fd, IntPtr offset);
+		private static extern nint mmap(nint addr, nint length, int prot, int flags, int fd, nint offset);
 		[DllImport("libc", SetLastError = true)]
-		private static extern int munmap(IntPtr addr, UIntPtr length);
+		private static extern int munmap(nint addr, nint length);
 
 		private const int PROT_READ = 1;
 		private const int PROT_WRITE = 2;
@@ -499,7 +497,7 @@
 		/// <summary>
 		/// Rents a 32-byte executable chunk.
 		/// </summary>
-		public IntPtr Rent()
+		public nint Rent()
 		{
 			lock (_lock)
 			{
@@ -507,7 +505,7 @@
 					return _freeChunks.Pop();
 
 				// Carve from current page
-				if (_currentPage == IntPtr.Zero || _currentOffset + ChunkSize > PageSize)
+				if (_currentPage == 0 || _currentOffset + ChunkSize > PageSize)
 				{
 					var page = AllocatePage();
 					_pages.Add(page);
@@ -524,9 +522,9 @@
 		/// <summary>
 		/// Returns a previously rented chunk for reuse.
 		/// </summary>
-		public void Return(IntPtr ptr)
+		public void Return(nint ptr)
 		{
-			if (ptr == IntPtr.Zero) return;
+			if (ptr == 0) return;
 
 			lock (_lock)
 			{
@@ -544,30 +542,30 @@
 #if WINDOWS
 
 				foreach (var page in _pages)
-					WindowsAPI.VirtualFree(page, UIntPtr.Zero, (uint)VirtualAllocExTypes.MEM_RELEASE);
+					WindowsAPI.VirtualFree(page, 0, (uint)VirtualAllocExTypes.MEM_RELEASE);
 
 #elif LINUX || OSX
 
 				foreach (var page in _pages)
-					munmap(page, (UIntPtr)PageSize);
+					munmap(page, (nint)PageSize);
 
 #endif
 				_pages.Clear();
 				_freeChunks.Clear();
-				_currentPage = IntPtr.Zero;
+				_currentPage = 0;
 				_currentOffset = 0;
 			}
 		}
 
-		private IntPtr AllocatePage()
+		private nint AllocatePage()
 		{
 #if WINDOWS
-			var ptr = WindowsAPI.VirtualAlloc(IntPtr.Zero, (UIntPtr)PageSize, (uint)VirtualAllocExTypes.MEM_COMMIT, (uint)AccessProtectionFlags.PAGE_EXECUTE_READWRITE);
-			return ptr == IntPtr.Zero ? throw new InvalidOperationException($"VirtualAlloc failed: {Marshal.GetLastWin32Error()}") : ptr;
+			var ptr = WindowsAPI.VirtualAlloc(0, (nint)PageSize, (uint)VirtualAllocExTypes.MEM_COMMIT, (uint)AccessProtectionFlags.PAGE_EXECUTE_READWRITE);
+			return ptr == 0 ? throw new InvalidOperationException($"VirtualAlloc failed: {Marshal.GetLastWin32Error()}") : ptr;
 #elif LINUX || OSX
-			var ptr = mmap(IntPtr.Zero, (UIntPtr)PageSize, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS, -1, IntPtr.Zero);
+			var ptr = mmap(0, (nint)PageSize, PROT_READ | PROT_WRITE | PROT_EXEC, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 
-			if (ptr == new IntPtr(-1))
+			if (ptr == new nint(-1))
 				throw new InvalidOperationException("mmap failed");
 
 			return ptr;

@@ -523,7 +523,7 @@
 		/// </summary>
 		/// <param name="value">The address of the object to free.</param>
 		/// <returns>True if value was found and freed, else false.</returns>
-		/// <exception cref="TypeError">A <see cref="TypeError"/> exception is thrown if value is not of type <see cref="IntPtr"/> or <see cref="long"/>.</exception>
+		/// <exception cref="TypeError">A <see cref="TypeError"/> exception is thrown if value is not of type <see cref="nint"/> or <see cref="long"/>.</exception>
 		public static bool FreeStrPtr(object value)
 		{
 			Error err;
@@ -1048,17 +1048,15 @@
 					encoding = Encoding.Unicode;
 			}
 
-			var ptr = IntPtr.Zero;
+			nint ptr = 0;
 			var buf = source as Buffer;
 
 			if (source is IPointable ip)
 				ptr = (nint)ip.Ptr;
 			else if (source is long l)
-				ptr = new IntPtr(l);
-			else if (source is IntPtr p)
-				ptr = p;
+				ptr = new nint(l);
 
-			if (ptr == IntPtr.Zero)
+			if (ptr == 0)
 				return Errors.ErrorOccurred(err = new ValueError($"No valid address or buffer was supplied.")) ? throw err : null;
 			else if (ptr.ToInt64() < 65536)//65536 is the first valid address.
 				return Errors.ErrorOccurred(err = new ValueError($"Address of {ptr.ToInt64()} is less than the minimum allowable address of 65,536.")) ? throw err : null;
@@ -1180,7 +1178,7 @@
 				var s = obj.As(0) + char.MinValue;
 				var len = long.MinValue;
 				var encoding = Encoding.Unicode;
-				var ptr = IntPtr.Zero;
+				nint ptr = 0;
 				Buffer buf = null;
 
 				if (obj.Length > 1)
@@ -1190,9 +1188,7 @@
 					if (obj[1] is IPointable)
 						ptr = (nint)buf.Ptr;
 					else if (obj[1] is long l)
-						ptr = new IntPtr(l);
-					else if (obj[1] is IntPtr ip)
-						ptr = ip;
+						ptr = new nint(l);
 					else if (obj[1] is string ec)
 					{
 						encoding = Files.GetEncoding(ec);
@@ -1200,7 +1196,7 @@
 					}
 				}
 
-				if (ptr != IntPtr.Zero && ptr.ToInt64() < 65536)//65536 is the first valid address.
+				if (ptr != 0 && ptr.ToInt64() < 65536)//65536 is the first valid address.
 					return Errors.ErrorOccurred(err = new ValueError($"Address of {ptr.ToInt64()} is less than the minimum allowable address of 65,536.")) ? throw err : 0L;
 
 				if (obj.Length > 2 && !obj[2].IsNullOrEmpty())
@@ -1231,7 +1227,7 @@
 						if (len < s.Length || len < bytes.Length)
 							return Errors.ErrorOccurred(err = new ValueError($"Length of {len} is less than the either the length of the string {s.Length} or the length of the converted buffer {bytes.Length}.")) ? throw err : 0L;
 					}
-					else if (ptr == IntPtr.Zero)
+					else if (ptr == 0)
 						return bytes.Length;
 					else if (len == long.MinValue)
 						return Errors.ErrorOccurred(err = new ValueError($"Length was not specified, but the target was not a Buffer object. Either pass a Buffer, or specify a Length.")) ? throw err : 0L;

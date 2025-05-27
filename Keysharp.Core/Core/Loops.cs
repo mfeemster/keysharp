@@ -802,7 +802,7 @@ namespace Keysharp.Core
 					regkey.Handle,
 					tv.RegSb,
 					ref classSize,
-					IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero,
+					0, 0, 0, 0, 0, 0, 0, 0,
 					out var l);
 			return l;
 		}

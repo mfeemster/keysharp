@@ -12,14 +12,14 @@
 	internal class KeysharpMsg
 	{
 		//internal bool completed;
-		internal IntPtr hwnd = IntPtr.Zero;
+		internal nint hwnd = 0;
 
-		internal IntPtr lParam = IntPtr.Zero;
+		internal nint lParam = 0;
 		internal uint message;
 		internal object obj;
 
 		//internal System.Drawing.Point pt;
 		//internal uint time;
-		internal IntPtr wParam = IntPtr.Zero;
+		internal nint wParam = 0;
 	}
 }

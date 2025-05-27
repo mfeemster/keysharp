@@ -656,7 +656,7 @@ namespace Keysharp.Tests
 				var buf = new Buffer(4);
 				unsafe
 				{
-					var ptr = (byte*)buf.Ptr.ToPointer();
+					var ptr = (byte*)buf.Ptr;
 
 					for (var i = 0L; i < (long)buf.Size; i++)
 						ptr[i] = (byte)i;
@@ -668,8 +668,8 @@ namespace Keysharp.Tests
 				f.RawRead(buf2);
 				unsafe
 				{
-					var p1 = (byte*)buf.Ptr.ToPointer();
-					var p2 = (byte*)buf2.Ptr.ToPointer();
+					var p1 = (byte*)buf.Ptr;
+					var p2 = (byte*)buf2.Ptr;
 
 					for (var i = 0L; i < (long)buf.Size; i++)
 					{

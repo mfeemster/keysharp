@@ -34,7 +34,7 @@ namespace Keysharp.Core.COM
 				   int lcid,
 				   ct.INVOKEKIND wFlags,
 				   ref ct.DISPPARAMS pDispParams,
-				   IntPtr pVarResult, IntPtr pExcepInfo, IntPtr puArgErr);
+				   nint pVarResult, nint pExcepInfo, nint puArgErr);
 	}
 
 	[ComImport]
@@ -56,7 +56,7 @@ namespace Keysharp.Core.COM
 		int QueryService(
 			[In] ref Guid guidService,
 			[In] ref Guid riid,
-			[Out] out IntPtr ppvObject);
+			[Out] out nint ppvObject);
 	}
 
 	/// <summary>
@@ -185,7 +185,7 @@ namespace Keysharp.Core.COM
 						  int lcid,
 						  ct.INVOKEKIND wFlags,
 						  ref ct.DISPPARAMS pDispParams,
-						  IntPtr pVarResult, IntPtr pExcepInfo, IntPtr puArgErr)
+						  nint pVarResult, nint pExcepInfo, nint puArgErr)
 		{
 			var args = pDispParams.cArgs > 0 ? Marshal.GetObjectsForNativeVariants(pDispParams.rgvarg, pDispParams.cArgs) : [];
 			var names = new string[1];
@@ -194,7 +194,7 @@ namespace Keysharp.Core.COM
 			OnEvent(this, evt);
 			var result = evt.Result;
 
-			if (pVarResult != IntPtr.Zero)
+			if (pVarResult != 0)
 			{
 				Marshal.GetNativeVariantForObject(result, pVarResult);
 			}
@@ -202,7 +202,7 @@ namespace Keysharp.Core.COM
 			return 0;
 		}
 
-		CustomQueryInterfaceResult ICustomQueryInterface.GetInterface(ref Guid iid, out IntPtr ppv)
+		CustomQueryInterfaceResult ICustomQueryInterface.GetInterface(ref Guid iid, out nint ppv)
 		{
 			if (iid == typeof(IDispatch).GUID || iid == InterfaceId)
 			{
@@ -210,7 +210,7 @@ namespace Keysharp.Core.COM
 				return CustomQueryInterfaceResult.Handled;
 			}
 
-			ppv = IntPtr.Zero;
+			ppv = 0;
 			return iid == IID_IManagedObject ? CustomQueryInterfaceResult.Failed : CustomQueryInterfaceResult.NotHandled;
 		}
 

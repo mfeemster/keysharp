@@ -19,7 +19,7 @@ namespace Keysharp.Core.Common.Platform
 
 		internal virtual WindowItemBase LastFound
 		{
-			get => CreateWindow(Script.TheScript.HwndLastUsed);
+			get => CreateWindow((nint)Script.TheScript.HwndLastUsed);
 			set => Script.TheScript.HwndLastUsed = value.Handle;
 		}
 
@@ -51,7 +51,7 @@ namespace Keysharp.Core.Common.Platform
 		internal WindowItemBase FindWindow(object winTitle, object winText, object excludeTitle, object excludeText, bool last = false, bool ignorePureID = false)
 		{
 			WindowItemBase foundWindow = null;
-			var (parsed, ptr) = WindowHelper.CtrlToIntPtr(winTitle);
+			var (parsed, ptr) = WindowHelper.CtrlTonint(winTitle);
 
 			if (parsed)
 				if (!ignorePureID && IsWindow(ptr))
@@ -63,7 +63,7 @@ namespace Keysharp.Core.Common.Platform
 
 			if (winTitle is Gui gui)
 			{
-				return LastFound = CreateWindow(gui.Hwnd);
+				return LastFound = CreateWindow((nint)gui.Hwnd);
 			}
 			else if ((winTitle == null || winTitle is string s && string.IsNullOrEmpty(s)) &&
 					 string.IsNullOrEmpty(text) &&
@@ -153,9 +153,9 @@ namespace Keysharp.Core.Common.Platform
 
 		internal abstract uint GetFocusedCtrlThread(ref nint apControl, nint aWindow);
 
-		internal abstract IntPtr GetForeGroundWindowHwnd();
+		internal abstract nint GetForeGroundWindowHwnd();
 
-		internal abstract bool IsWindow(IntPtr handle);
+		internal abstract bool IsWindow(nint handle);
 
 		internal abstract void MaximizeAll();
 

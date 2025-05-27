@@ -4,21 +4,21 @@ namespace Keysharp.Core.Linux.X11
 	[StructLayout(LayoutKind.Sequential)]
 	internal struct XSetWindowAttributes
 	{
-		internal IntPtr background_pixmap;
-		internal IntPtr background_pixel;
-		internal IntPtr border_pixmap;
-		internal IntPtr border_pixel;
+		internal nint background_pixmap;
+		internal nint background_pixel;
+		internal nint border_pixmap;
+		internal nint border_pixel;
 		internal Gravity bit_gravity;
 		internal Gravity win_gravity;
 		internal int backing_store;
-		internal IntPtr backing_planes;
-		internal IntPtr backing_pixel;
+		internal nint backing_planes;
+		internal nint backing_pixel;
 		internal bool save_under;
-		internal IntPtr event_mask;
-		internal IntPtr do_not_propagate_mask;
+		internal nint event_mask;
+		internal nint do_not_propagate_mask;
 		internal bool override_redirect;
-		internal IntPtr colormap;
-		internal IntPtr cursor;
+		internal nint colormap;
+		internal nint cursor;
 	}
 
 	[StructLayout(LayoutKind.Sequential)]
@@ -30,23 +30,23 @@ namespace Keysharp.Core.Linux.X11
 		internal int height;
 		internal int border_width;
 		internal int depth;
-		internal IntPtr visual;
-		internal IntPtr root;
+		internal nint visual;
+		internal nint root;
 		internal int c_class;
 		internal Gravity bit_gravity;
 		internal Gravity win_gravity;
 		internal int backing_store;
-		internal IntPtr backing_planes;
-		internal IntPtr backing_pixel;
+		internal nint backing_planes;
+		internal nint backing_pixel;
 		internal bool save_under;
-		internal IntPtr colormap;
+		internal nint colormap;
 		internal bool map_installed;
 		internal MapState map_state;
-		internal IntPtr all_event_masks;
-		internal IntPtr your_event_mask;
-		internal IntPtr do_not_propagate_mask;
+		internal nint all_event_masks;
+		internal nint your_event_mask;
+		internal nint do_not_propagate_mask;
 		internal bool override_direct;
-		internal IntPtr screen;
+		internal nint screen;
 	}
 }
 #endif

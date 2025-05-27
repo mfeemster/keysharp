@@ -7,7 +7,7 @@ namespace Keysharp.Core
 		internal static WindowItemBase SearchControl(object ctrl, object title, object text, object excludeTitle, object excludeText, bool throwifnull = true)
 		{
 			Error err;
-			var (parsed, ptr) = CtrlToIntPtr(ctrl);
+			var (parsed, ptr) = CtrlTonint(ctrl);
 			var script = Script.TheScript;
 			
 			if (parsed)

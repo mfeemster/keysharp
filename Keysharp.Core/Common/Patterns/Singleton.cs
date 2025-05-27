@@ -51,13 +51,13 @@
 	//  public override bool IsInvalid => pinnedArray.AddrOfPinnedObject().ToInt64() > 0 && pinnedArray.IsAllocated;
 	//
 	//  public AutoPinner(object obj)
-	//      : base(IntPtr.Zero, true)
+	//      : base(0, true)
 	//  {
 	//      pinnedArray = GCHandle.Alloc(obj, GCHandleType.Pinned);
 	//      SetHandle(pinnedArray.AddrOfPinnedObject());
 	//  }
 	//
-	//  public static implicit operator IntPtr(AutoPinner ap) => ap.pinnedArray.AddrOfPinnedObject();
+	//  public static implicit operator nint(AutoPinner ap) => ap.pinnedArray.AddrOfPinnedObject();
 	//
 	//  protected override bool ReleaseHandle()
 	//  {

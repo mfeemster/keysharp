@@ -1593,7 +1593,7 @@
 		{
 			get
 			{
-				using (var graphics = Graphics.FromHwnd(IntPtr.Zero))//This will only get the DPI for the first screen.
+				using (var graphics = Graphics.FromHwnd(0))//This will only get the DPI for the first screen.
 				{
 					var x = graphics.DpiX;
 					//var y = graphics.DpiY;

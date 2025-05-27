@@ -5,17 +5,17 @@ namespace Keysharp.Core.Linux.X11
 	internal struct XClientMessageEvent
 	{
 		internal XEventName type;
-		internal IntPtr serial;
+		internal nint serial;
 		internal bool send_event;
-		internal IntPtr display;
-		internal IntPtr window;
-		internal IntPtr message_type;
+		internal nint display;
+		internal nint window;
+		internal nint message_type;
 		internal int format;
-		internal IntPtr ptr1;
-		internal IntPtr ptr2;
-		internal IntPtr ptr3;
-		internal IntPtr ptr4;
-		internal IntPtr ptr5;
+		internal nint ptr1;
+		internal nint ptr2;
+		internal nint ptr3;
+		internal nint ptr4;
+		internal nint ptr5;
 	}
 }
 #endif

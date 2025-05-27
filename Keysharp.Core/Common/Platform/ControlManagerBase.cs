@@ -236,9 +236,9 @@
 
 		internal abstract void MenuSelect(object title, object text, object menu, object sub1, object sub2, object sub3, object sub4, object sub5, object sub6, object excludeTitle, object excludeText);
 
-		internal abstract void PostMessage(int msg, int wparam, int lparam, object ctrl, object title, object text, object excludeTitle, object excludeText);
+		internal abstract void PostMessage(uint msg, nint wparam, nint lparam, object ctrl, object title, object text, object excludeTitle, object excludeText);
 
-		internal abstract long SendMessage(int msg, object wparam, object lparam, object ctrl, object title, object text, object excludeTitle, object excludeText, int timeout);
+		internal abstract long SendMessage(uint msg, object wparam, object lparam, object ctrl, object title, object text, object excludeTitle, object excludeText, int timeout);
 
 		private static void ShowHideHelper(bool val, object ctrl, object title, object text, object excludeTitle, object excludeText)
 		{

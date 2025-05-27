@@ -105,7 +105,7 @@ namespace Keysharp.Core.Linux
 		internal override void DoMouseDelay()
 		{ }
 
-		internal override IntPtr GetFocusedKeybdLayout(IntPtr window) => IntPtr.Zero;
+		internal override nint GetFocusedKeybdLayout(nint window) => 0;
 
 		internal override uint GetModifierLRState(bool explicitlyGet = false) => 0;
 
@@ -132,7 +132,7 @@ namespace Keysharp.Core.Linux
 		{ }
 
 		internal override void SendKey(uint vk, uint sc, uint modifiersLR, uint modifiersLRPersistent
-									   , long repeatCount, KeyEventTypes eventType, uint keyAsModifiersLR, IntPtr targetWindow
+									   , long repeatCount, KeyEventTypes eventType, uint keyAsModifiersLR, nint targetWindow
 									   , int x = CoordUnspecified, int y = CoordUnspecified, bool moveOffset = false)
 		{
 		}
@@ -141,7 +141,7 @@ namespace Keysharp.Core.Linux
 		{
 		}
 
-		internal override void SendKeys(string keys, SendRawModes sendRaw, SendModes sendModeOrig, IntPtr targetWindow)
+		internal override void SendKeys(string keys, SendRawModes sendRaw, SendModes sendModeOrig, nint targetWindow)
 		{
 		}
 
@@ -191,7 +191,7 @@ namespace Keysharp.Core.Linux
 		//{
 		//  // TODO disposal
 		//}
-		protected internal override void SendKeyEvent(KeyEventTypes eventType, uint vk, uint sc = 0u, IntPtr targetWindow = default, bool doKeyDelay = false, uint extraInfo = KeyIgnoreAllExceptModifier)
+		protected internal override void SendKeyEvent(KeyEventTypes eventType, uint vk, uint sc = 0u, nint targetWindow = default, bool doKeyDelay = false, uint extraInfo = KeyIgnoreAllExceptModifier)
 		{
 		}
 
@@ -240,7 +240,7 @@ namespace Keysharp.Core.Linux
 			_ = Dummy.Append(" "); // HACK: Somehow necessary
 			ev.KeyEvent.state = 16; // Repair any shifting applied by control
 
-			if (Xlib.XLookupString(ref ev, Dummy, 10, IntPtr.Zero, IntPtr.Zero) != 0)
+			if (Xlib.XLookupString(ref ev, Dummy, 10, 0, 0) != 0)
 			{
 				var Lookup = Dummy.ToString();
 

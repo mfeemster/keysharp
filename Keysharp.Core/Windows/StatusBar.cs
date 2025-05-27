@@ -8,7 +8,7 @@ namespace Keysharp.Core.Windows
 	/// </summary>
 	internal class StatusBar : StatusBarBase
 	{
-		internal StatusBar(IntPtr hWnd)
+		internal StatusBar(nint hWnd)
 			: base(hWnd)
 		{
 		}
@@ -17,7 +17,7 @@ namespace Keysharp.Core.Windows
 		protected override string GetCaption(uint index)
 		{
 			//var length = WindowsAPI.SendMessage(_handle, WindowsAPI.SB_GETTEXTLENGTH, index, 0);
-			_ = WindowsAPI.SendMessageTimeout(handle, WindowsAPI.SB_GETTEXTLENGTH, index, 0, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, timeout, out var result);
+			_ = WindowsAPI.SendMessageTimeout(handle, WindowsAPI.SB_GETTEXTLENGTH, (nint)index, 0, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, timeout, out var result);
 			var length = result.ToInt32();
 
 			if (length == 0)
@@ -26,25 +26,25 @@ namespace Keysharp.Core.Windows
 			// Low part is the count. High part is the window type. Mask out the high bits.
 			// The returned text will also be unicode so double the length to accomodate our buffer
 			length = (length & 0x0000ffff) * 2;
-			var hProcess = IntPtr.Zero;
-			var allocated = IntPtr.Zero;
+			nint hProcess = 0;
+			nint allocated = 0;
 			KeysharpException ksexc = null;
 
 			try
 			{
 				hProcess = WindowsAPI.OpenProcess(ProcessAccessTypes.PROCESS_ALL_ACCESS, false, OwningPID);
 
-				if (hProcess != IntPtr.Zero)
+				if (hProcess != 0)
 				{
 					// Allocate memory in the remote process
-					allocated = WindowsAPI.VirtualAllocEx(hProcess, IntPtr.Zero, (uint)length, (VirtualAllocExTypes.MEM_COMMIT_OR_RESERVE), AccessProtectionFlags.PAGE_READWRITE);
+					allocated = WindowsAPI.VirtualAllocEx(hProcess, 0, (uint)length, (VirtualAllocExTypes.MEM_COMMIT_OR_RESERVE), AccessProtectionFlags.PAGE_READWRITE);
 
-					if (allocated != IntPtr.Zero)
+					if (allocated != 0)
 					{
 						var buffer = new byte[length];
 						// SB_GETTEXT tells the remote process to write out text to the remote memory we allocated.
-						//_ = WindowsAPI.SendMessage(_handle, WindowsAPI.SB_GETTEXT, (IntPtr)index, allocated);
-						_ = WindowsAPI.SendMessageTimeout(handle, WindowsAPI.SB_GETTEXT, index, allocated, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, timeout, out result);
+						//_ = WindowsAPI.SendMessage(_handle, WindowsAPI.SB_GETTEXT, (nint)index, allocated);
+						_ = WindowsAPI.SendMessageTimeout(handle, WindowsAPI.SB_GETTEXT, (nint)index, allocated, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, timeout, out result);
 						// Now we need to read that memory from the remote process into a local buffer.
 						var success = WindowsAPI.ReadProcessMemory(hProcess, allocated, buffer, (uint)length, out var bytesRead);
 
@@ -76,9 +76,9 @@ namespace Keysharp.Core.Windows
 			}
 			finally
 			{
-				if (hProcess != IntPtr.Zero)
+				if (hProcess != 0)
 				{
-					if (allocated != IntPtr.Zero)
+					if (allocated != 0)
 						_ = WindowsAPI.VirtualFreeEx(hProcess, allocated, 0, VirtualAllocExTypes.MEM_RELEASE);
 
 					_ = WindowsAPI.CloseHandle(hProcess);
@@ -99,7 +99,7 @@ namespace Keysharp.Core.Windows
 		{
 			uint ownpid = 0;
 
-			if (handle != IntPtr.Zero)
+			if (handle != 0)
 				_ = WindowsAPI.GetWindowThreadProcessId(handle, out ownpid);
 
 			return ownpid;
@@ -107,7 +107,7 @@ namespace Keysharp.Core.Windows
 
 		protected override int GetPanelCount()
 		{
-			if (handle != IntPtr.Zero)
+			if (handle != 0)
 			{
 				_ = WindowsAPI.SendMessageTimeout(handle, WindowsAPI.SB_GETPARTS, 0, 0, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, timeout, out var val);
 				return val.ToInt32();

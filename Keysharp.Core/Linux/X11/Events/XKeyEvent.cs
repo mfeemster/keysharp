@@ -5,13 +5,13 @@ namespace Keysharp.Core.Linux.X11
 	internal struct XKeyEvent
 	{
 		internal XEventName type;
-		internal IntPtr serial;
+		internal nint serial;
 		internal bool send_event;
-		internal IntPtr display;
-		internal IntPtr window;
-		internal IntPtr root;
-		internal IntPtr subwindow;
-		internal IntPtr time;
+		internal nint display;
+		internal nint window;
+		internal nint root;
+		internal nint subwindow;
+		internal nint time;
 		internal int x;
 		internal int y;
 		internal int x_root;

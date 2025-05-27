@@ -16,7 +16,7 @@ namespace Keysharp.Tests
 			var rect = new RECT();
 			var buf = Collections.Buffer(16, 0);
 			_ = Dll.DllCall("user32.dll\\GetWindowRect", "ptr", desktop, "ptr", buf);
-			_ = WindowsAPI.GetWindowRect(desktop, out rect);
+			_ = WindowsAPI.GetWindowRect((nint)desktop, out rect);
 			var l = (long)NumGet(buf, 0, "UInt");
 			var t = (long)NumGet(buf, 4, "UInt");
 			var r = (long)NumGet(buf, 8, "UInt");

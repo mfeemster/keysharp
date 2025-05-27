@@ -32,7 +32,7 @@ namespace Keysharp.Scripting
 		internal const int SLEEP_INTERVAL_HALF = SLEEP_INTERVAL / 2;
 		internal List<IFuncObj> ClipFunctions = [];
 		internal List<IFuncObj> hotCriterions = [];
-		internal IntPtr hotExprLFW = IntPtr.Zero;
+		internal nint hotExprLFW = 0;
 		internal List<IFuncObj> hotExprs = [];
 		internal InputType input;
 		internal int inputBeforeHotkeysCount;
@@ -48,7 +48,7 @@ namespace Keysharp.Scripting
 		internal List<IFuncObj> onExitHandlers = [];
 		internal Icon pausedIcon;
 		internal bool persistent;
-		internal IntPtr playbackHook = IntPtr.Zero;
+		internal nint playbackHook = 0;
 		internal DateTime priorHotkeyStartTime = DateTime.UtcNow;
 		internal string scriptName = "";
 		internal Icon suspendedIcon;
@@ -83,7 +83,7 @@ namespace Keysharp.Scripting
 		private KeyboardData keyboardData;
 		private KeyboardUtilsData keyboardUtilsData;
 		private LoopData loopData;
-		private IntPtr mainWindowHandle;
+		private nint mainWindowHandle;
 		private MapKeyValueIteratorData mapKeyValueIteratorData;
 		private OwnPropsIteratorData ownPropsIteratorData;
 		private PlatformProvider platformProvider;
@@ -116,7 +116,7 @@ namespace Keysharp.Scripting
 		internal HookThread HookThread { get; private set; }
 		internal HotkeyData HotkeyData => hotkeyData ?? (hotkeyData = new ());
 
-		internal IntPtr HwndLastUsed
+		internal long HwndLastUsed
 		{
 			get => Threads.GetThreadVariables().hwndLastUsed;
 			set => Threads.GetThreadVariables().hwndLastUsed = value;
@@ -131,14 +131,14 @@ namespace Keysharp.Scripting
 		internal KeyboardUtilsData KeyboardUtilsData => keyboardUtilsData ?? (keyboardUtilsData = new ());
 		internal LoopData LoopData => loopData ?? (loopData = new ());
 
-		internal IntPtr MainWindowHandle
+		internal nint MainWindowHandle
 		{
 			get
 			{
 				if (mainWindow == null)
-					return IntPtr.Zero;
+					return 0;
 
-				if (mainWindowHandle == IntPtr.Zero)
+				if (mainWindowHandle == 0)
 					_ = mainWindow.Invoke(() => mainWindowHandle = mainWindow.Handle);
 
 				return mainWindowHandle;
@@ -234,7 +234,7 @@ namespace Keysharp.Scripting
 #endif
 					var hmodule = mgr.LoadLibrary(dllname);
 
-					if (hmodule != IntPtr.Zero)
+					if (hmodule != 0)
 					{
 #if WINDOWS
 						// "Pin" the dll so that the script cannot unload it with FreeLibrary.

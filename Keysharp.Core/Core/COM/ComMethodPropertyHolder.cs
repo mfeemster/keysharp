@@ -57,7 +57,7 @@ namespace Keysharp.Core.COM
 		private static object InvokeComMethodWithTypeInfo(object comObject, string methodName, object[] inputParameters)
 		{
 			Error err;
-			IntPtr pUnk = Marshal.GetIUnknownForObject(comObject);
+			nint pUnk = Marshal.GetIUnknownForObject(comObject);
 			Marshal.Release(pUnk);
 
 			try
@@ -158,7 +158,7 @@ namespace Keysharp.Core.COM
 							//Read each ELEMDESC from lprgelemdescParam.
 							for (int i = 0; i < paramCount; i++)
 							{
-								var pElemDesc = new IntPtr(funcDesc.lprgelemdescParam.ToInt64() + (i * Marshal.SizeOf<ELEMDESC>()));
+								var pElemDesc = new nint(funcDesc.lprgelemdescParam.ToInt64() + (i * Marshal.SizeOf<ELEMDESC>()));
 								var elemDesc = Marshal.PtrToStructure<ELEMDESC>(pElemDesc);
 								//First, check if VT_BYREF is set.
 								var isByRef = (elemDesc.tdesc.vt & Com.vt_byref) != 0;
@@ -172,7 +172,7 @@ namespace Keysharp.Core.COM
 									//Mark it as byref.
 									modifier[i] = true;
 
-									if (elemDesc.tdesc.lpValue != IntPtr.Zero)
+									if (elemDesc.tdesc.lpValue != 0)
 									{
 										//Read the pointed-to TYPEDESC.
 										var pointedType = Marshal.PtrToStructure<TYPEDESC>(elemDesc.tdesc.lpValue);
@@ -237,7 +237,7 @@ namespace Keysharp.Core.COM
 							inputParameters[i] = (byte)inputParameters[i].Aui();
 						else
 						{
-							if (it == typeof(long) || it == typeof(IntPtr))
+							if (it == typeof(long) || it == typeof(nint))
 							{
 								var buf = inputParameters[i].Ai();
 
@@ -321,7 +321,7 @@ namespace Keysharp.Core.COM
 
 	internal class ComMethodData
 	{
-		internal ConcurrentLfu<IntPtr, Dictionary<string, ComMethodInfo>> comMethodCache = new (Caching.DefaultCacheCapacity);
+		internal ConcurrentLfu<nint, Dictionary<string, ComMethodInfo>> comMethodCache = new (Caching.DefaultCacheCapacity);
 	}
 
 	internal class ComMethodInfo

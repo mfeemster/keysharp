@@ -6,99 +6,99 @@ namespace Keysharp.Core.Linux.Proxies
 	/// </summary>
 	internal class XDisplay : IDisposable
 	{
-		private static IntPtr _defaultDisp = IntPtr.Zero;
+		private static nint _defaultDisp = 0;
 		private int screenNumber;
-		internal IntPtr WM_PROTOCOLS;
-		internal IntPtr WM_DELETE_WINDOW;
-		internal IntPtr WM_TAKE_FOCUS;
-		//internal IntPtr _NET_SUPPORTED;
-		//internal IntPtr _NET_CLIENT_LIST;
-		//internal IntPtr _NET_NUMBER_OF_DESKTOPS;
-		internal IntPtr _NET_DESKTOP_GEOMETRY;
-		//internal IntPtr _NET_DESKTOP_VIEWPORT;
-		internal IntPtr _NET_CURRENT_DESKTOP;
-		//internal IntPtr _NET_DESKTOP_NAMES;
-		internal IntPtr _NET_ACTIVE_WINDOW;
-		internal IntPtr _NET_WORKAREA;
-		//internal IntPtr _NET_SUPPORTING_WM_CHECK;
-		//internal IntPtr _NET_VIRTUAL_ROOTS;
-		//internal IntPtr _NET_DESKTOP_LAYOUT;
-		//internal IntPtr _NET_SHOWING_DESKTOP;
-		//internal IntPtr _NET_CLOSE_WINDOW;
-		//internal IntPtr _NET_MOVERESIZE_WINDOW;
-		internal IntPtr _NET_WM_MOVERESIZE;
-		//internal IntPtr _NET_RESTACK_WINDOW;
-		//internal IntPtr _NET_REQUEST_FRAME_EXTENTS;
-		internal IntPtr _NET_WM_NAME;
-		//internal IntPtr _NET_WM_VISIBLE_NAME;
-		//internal IntPtr _NET_WM_ICON_NAME;
-		//internal IntPtr _NET_WM_VISIBLE_ICON_NAME;
-		//internal IntPtr _NET_WM_DESKTOP;
-		internal IntPtr _NET_WM_WINDOW_TYPE;
-		internal IntPtr _NET_WM_STATE;
-		//internal IntPtr _NET_WM_ALLOWED_ACTIONS;
-		//internal IntPtr _NET_WM_STRUT;
-		//internal IntPtr _NET_WM_STRUT_PARTIAL;
-		//internal IntPtr _NET_WM_ICON_GEOMETRY;
-		internal IntPtr _NET_WM_ICON;
-		internal IntPtr _NET_WM_PID;
-		//internal IntPtr _NET_WM_HANDLED_ICONS;
-		internal IntPtr _NET_WM_USER_TIME;
-		internal IntPtr _NET_FRAME_EXTENTS;
-		//internal IntPtr _NET_WM_PING;
-		//internal IntPtr _NET_WM_SYNC_REQUEST;
-		internal IntPtr _NET_SYSTEM_TRAY_S;
-		//internal IntPtr _NET_SYSTEM_TRAY_ORIENTATION;
-		internal IntPtr _NET_SYSTEM_TRAY_OPCODE;
-		internal IntPtr _NET_WM_STATE_MAXIMIZED_HORZ;
-		internal IntPtr _NET_WM_STATE_MAXIMIZED_VERT;
-		internal IntPtr _XEMBED;
-		internal IntPtr _XEMBED_INFO;
-		internal IntPtr _MOTIF_WM_HINTS;
-		internal IntPtr _NET_WM_STATE_SKIP_TASKBAR;
-		internal IntPtr _NET_WM_STATE_ABOVE;
-		internal IntPtr _NET_WM_STATE_MODAL;
-		internal IntPtr _NET_WM_STATE_HIDDEN;
-		internal IntPtr _NET_WM_CONTEXT_HELP;
-		internal IntPtr _NET_WM_WINDOW_OPACITY;
-		//internal IntPtr _NET_WM_WINDOW_TYPE_DESKTOP;
-		//internal IntPtr _NET_WM_WINDOW_TYPE_DOCK;
-		//internal IntPtr _NET_WM_WINDOW_TYPE_TOOLBAR;
-		//internal IntPtr _NET_WM_WINDOW_TYPE_MENU;
-		internal IntPtr _NET_WM_WINDOW_TYPE_UTILITY;
-		//internal IntPtr _NET_WM_WINDOW_TYPE_SPLASH;
-		// internal IntPtr _NET_WM_WINDOW_TYPE_DIALOG;
-		internal IntPtr _NET_WM_WINDOW_TYPE_NORMAL;
-		internal IntPtr CLIPBOARD;
-		internal IntPtr PRIMARY;
-		//internal IntPtr DIB;
-		internal IntPtr OEMTEXT;
-		internal IntPtr UTF8_STRING;
-		internal IntPtr UTF16_STRING;
-		internal IntPtr RICHTEXTFORMAT;
-		internal IntPtr TARGETS;
-		internal IntPtr PostAtom;       // PostMessage atom
-		internal IntPtr AsyncAtom;      // Support for async messages
-		internal IntPtr HoverAtom;       // PostMessage atom
+		internal nint WM_PROTOCOLS;
+		internal nint WM_DELETE_WINDOW;
+		internal nint WM_TAKE_FOCUS;
+		//internal nint _NET_SUPPORTED;
+		//internal nint _NET_CLIENT_LIST;
+		//internal nint _NET_NUMBER_OF_DESKTOPS;
+		internal nint _NET_DESKTOP_GEOMETRY;
+		//internal nint _NET_DESKTOP_VIEWPORT;
+		internal nint _NET_CURRENT_DESKTOP;
+		//internal nint _NET_DESKTOP_NAMES;
+		internal nint _NET_ACTIVE_WINDOW;
+		internal nint _NET_WORKAREA;
+		//internal nint _NET_SUPPORTING_WM_CHECK;
+		//internal nint _NET_VIRTUAL_ROOTS;
+		//internal nint _NET_DESKTOP_LAYOUT;
+		//internal nint _NET_SHOWING_DESKTOP;
+		//internal nint _NET_CLOSE_WINDOW;
+		//internal nint _NET_MOVERESIZE_WINDOW;
+		internal nint _NET_WM_MOVERESIZE;
+		//internal nint _NET_RESTACK_WINDOW;
+		//internal nint _NET_REQUEST_FRAME_EXTENTS;
+		internal nint _NET_WM_NAME;
+		//internal nint _NET_WM_VISIBLE_NAME;
+		//internal nint _NET_WM_ICON_NAME;
+		//internal nint _NET_WM_VISIBLE_ICON_NAME;
+		//internal nint _NET_WM_DESKTOP;
+		internal nint _NET_WM_WINDOW_TYPE;
+		internal nint _NET_WM_STATE;
+		//internal nint _NET_WM_ALLOWED_ACTIONS;
+		//internal nint _NET_WM_STRUT;
+		//internal nint _NET_WM_STRUT_PARTIAL;
+		//internal nint _NET_WM_ICON_GEOMETRY;
+		internal nint _NET_WM_ICON;
+		internal nint _NET_WM_PID;
+		//internal nint _NET_WM_HANDLED_ICONS;
+		internal nint _NET_WM_USER_TIME;
+		internal nint _NET_FRAME_EXTENTS;
+		//internal nint _NET_WM_PING;
+		//internal nint _NET_WM_SYNC_REQUEST;
+		internal nint _NET_SYSTEM_TRAY_S;
+		//internal nint _NET_SYSTEM_TRAY_ORIENTATION;
+		internal nint _NET_SYSTEM_TRAY_OPCODE;
+		internal nint _NET_WM_STATE_MAXIMIZED_HORZ;
+		internal nint _NET_WM_STATE_MAXIMIZED_VERT;
+		internal nint _XEMBED;
+		internal nint _XEMBED_INFO;
+		internal nint _MOTIF_WM_HINTS;
+		internal nint _NET_WM_STATE_SKIP_TASKBAR;
+		internal nint _NET_WM_STATE_ABOVE;
+		internal nint _NET_WM_STATE_MODAL;
+		internal nint _NET_WM_STATE_HIDDEN;
+		internal nint _NET_WM_CONTEXT_HELP;
+		internal nint _NET_WM_WINDOW_OPACITY;
+		//internal nint _NET_WM_WINDOW_TYPE_DESKTOP;
+		//internal nint _NET_WM_WINDOW_TYPE_DOCK;
+		//internal nint _NET_WM_WINDOW_TYPE_TOOLBAR;
+		//internal nint _NET_WM_WINDOW_TYPE_MENU;
+		internal nint _NET_WM_WINDOW_TYPE_UTILITY;
+		//internal nint _NET_WM_WINDOW_TYPE_SPLASH;
+		// internal nint _NET_WM_WINDOW_TYPE_DIALOG;
+		internal nint _NET_WM_WINDOW_TYPE_NORMAL;
+		internal nint CLIPBOARD;
+		internal nint PRIMARY;
+		//internal nint DIB;
+		internal nint OEMTEXT;
+		internal nint UTF8_STRING;
+		internal nint UTF16_STRING;
+		internal nint RICHTEXTFORMAT;
+		internal nint TARGETS;
+		internal nint PostAtom;       // PostMessage atom
+		internal nint AsyncAtom;      // Support for async messages
+		internal nint HoverAtom;       // PostMessage atom
 
 		internal static XDisplay Default
 		{
 			get
 			{
-				if (_defaultDisp == IntPtr.Zero)
-					_defaultDisp = Xlib.XOpenDisplay(IntPtr.Zero);
+				if (_defaultDisp == 0)
+					_defaultDisp = Xlib.XOpenDisplay(0);
 
 				return new XDisplay(_defaultDisp);
 			}
 		}
 
-		internal IntPtr Handle { get; } = IntPtr.Zero;
+		internal nint Handle { get; } = 0;
 
 		internal XWindow Root => new XWindow(this, Xlib.XDefaultRootWindow(Handle));
 
 		internal int ScreenNumber => screenNumber;
 
-		internal XDisplay(IntPtr prt)
+		internal XDisplay(nint prt)
 		{
 			Handle = prt;
 			screenNumber = Xlib.XDefaultScreen(Handle);
@@ -107,7 +107,7 @@ namespace Keysharp.Core.Linux.Proxies
 
 		public void Dispose()
 		{
-			if (Handle != IntPtr.Zero && Handle != _defaultDisp)
+			if (Handle != 0 && Handle != _defaultDisp)
 				Xlib.XCloseDisplay(Handle);
 		}
 
@@ -145,7 +145,7 @@ namespace Keysharp.Core.Linux.Proxies
 		internal unsafe IEnumerable<XWindow> XQueryTree(XWindow windowToObtain, Func<long, bool> filter = null)
 		{
 			var windows = new List<XWindow>();
-			var childrenReturn = IntPtr.Zero;
+			var childrenReturn = 0;
 
 			try
 			{
@@ -180,7 +180,7 @@ namespace Keysharp.Core.Linux.Proxies
 			}
 			finally
 			{
-				if (childrenReturn != IntPtr.Zero)
+				if (childrenReturn != 0)
 					_ = Xlib.XFree(childrenReturn);
 			}
 
@@ -196,7 +196,7 @@ namespace Keysharp.Core.Linux.Proxies
 		internal unsafe IEnumerable<XWindow> XQueryTreeRecursive(Func<long, bool> filter = null) => XQueryTreeRecursive(Root, filter);
 		internal unsafe IEnumerable<XWindow> XQueryTreeRecursive(XWindow windowToObtain, Func<long, bool> filter = null)
 		{
-			var childrenReturn = IntPtr.Zero;
+			var childrenReturn = 0;
 			var windows = new HashSet<XWindow>();
 
 			try
@@ -227,7 +227,7 @@ namespace Keysharp.Core.Linux.Proxies
 			}
 			finally
 			{
-				if (childrenReturn != IntPtr.Zero)
+				if (childrenReturn != 0)
 					_ = Xlib.XFree(childrenReturn);
 			}
 
@@ -311,7 +311,7 @@ namespace Keysharp.Core.Linux.Proxies
 				"_SWF_PostMessageAtom",
 				"_SWF_HoverAtom"
 			};
-			IntPtr[] atoms = new IntPtr[atom_names.Length];
+			nint[] atoms = new nint[atom_names.Length];
 			_ = Xlib.XInternAtoms(Handle, atom_names, atom_names.Length, false, atoms);
 			int off = 0;
 			WM_PROTOCOLS = atoms[off++];
@@ -384,7 +384,7 @@ namespace Keysharp.Core.Linux.Proxies
 			AsyncAtom = atoms[off++];
 			PostAtom = atoms[off++];
 			HoverAtom = atoms[off++];
-			//DIB = (IntPtr)Atom.XA_PIXMAP;
+			//DIB = (nint)Atom.XA_PIXMAP;
 			_NET_SYSTEM_TRAY_S = Xlib.XInternAtom(Handle, "_NET_SYSTEM_TRAY_S" + screenNumber.ToString(), false);
 			//for (var i = 0; i < atom_names.Length; i++)
 			//  Keysharp.Scripting.Script.OutputDebug($"Atom {atom_names[i]} = {atoms[i].ToInt64()}.");

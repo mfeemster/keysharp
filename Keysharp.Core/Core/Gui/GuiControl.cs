@@ -17,7 +17,7 @@
 			private List<IFuncObj> columnClickHandlers;
 			private Dictionary<int, List<IFuncObj>> commandHandlers;
 			private List<IFuncObj> contextMenuChangedHandlers;
-			private IntPtr dummyHandle;
+			private nint dummyHandle;
 			private List<IFuncObj> focusedItemChangedHandlers;
 			private List<IFuncObj> focusHandlers;
 			private List<IFuncObj> itemCheckHandlers;
@@ -1351,7 +1351,7 @@
 					else
 						val = WindowsAPI.GetWindowLongPtr(txt.Handle, WindowsAPI.GWL_STYLE).ToInt64() & ~0x2000;
 
-					_ = WindowsAPI.SetWindowLongPtr(txt.Handle, WindowsAPI.GWL_STYLE, new IntPtr(val));
+					_ = WindowsAPI.SetWindowLongPtr(txt.Handle, WindowsAPI.GWL_STYLE, new nint(val));
 #else
 					txt.IsNumeric = opts.number;
 #endif
@@ -1396,7 +1396,7 @@
 					else
 						val = WindowsAPI.GetWindowLongPtr(rtxt.Handle, WindowsAPI.GWL_STYLE).ToInt64() & ~0x2000;
 
-					_ = WindowsAPI.SetWindowLongPtr(rtxt.Handle, WindowsAPI.GWL_STYLE, new IntPtr(val));
+					_ = WindowsAPI.SetWindowLongPtr(rtxt.Handle, WindowsAPI.GWL_STYLE, new nint(val));
 #else
 					rtxt.IsNumeric = opts.number;
 #endif
@@ -1601,7 +1601,7 @@
 				return null;
 			}
 
-			public IntPtr SetIcon(object fileName, object iconNumber = null, object partNumber = null)
+			public nint SetIcon(object fileName, object iconNumber = null, object partNumber = null)
 			{
 				if (_control is KeysharpStatusStrip ss)
 				{
@@ -1618,7 +1618,7 @@
 					}
 				}
 
-				return IntPtr.Zero;
+				return 0;
 			}
 
 			public long SetImageList(object imageListID, object iconType = null)
