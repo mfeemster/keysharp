@@ -1159,7 +1159,7 @@
 					holder = new StatusBar(this, ctrl, typeo);
 				}
 				break;
-
+#if WINDOWS
 				case Keyword_ActiveX:
 				{
 					var ax = new KeysharpActiveX(text)
@@ -1170,7 +1170,7 @@
 					holder = new ActiveX(this, ctrl, typeo);
 				}
 				break;
-
+#endif
 				case Keyword_WebBrowser:
 				{
 					var web = new KeysharpWebBrowser()
@@ -1586,10 +1586,10 @@
 			{
 				LastContainer.TagAndAdd(holder);
 			}
-
+#if WINDOWS
 			if (ctrl is KeysharpActiveX kax)
 				kax.Init();
-
+#endif
 			if (ctrl is KeysharpPictureBox pbox)
 			{
 				if (text != null && ImageHelper.LoadImage(text, opts.width, opts.height, opts.iconnumber).Item1 is Bitmap bmp)

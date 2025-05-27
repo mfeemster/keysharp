@@ -7,6 +7,8 @@
 			new ControlManager()
 #elif LINUX
 			new Linux.ControlManager()
+#else
+			null
 #endif
 		;
 	}
@@ -24,6 +26,8 @@
 			return new Windows.Drive(drive);
 #elif LINUX
 			return new Linux.Drive(drive);
+#else
+			return null;
 #endif
 		}
 	}
@@ -35,6 +39,8 @@
 			new PlatformManager()
 #elif LINUX
 			new Linux.PlatformManager()
+#else
+			null
 #endif
 		;
 	}
@@ -52,6 +58,8 @@
 			return new StatusBar(hwnd);
 #elif LINUX
 			return new Linux.StatusBar(hwnd);
+#else
+			return null;
 #endif
 		}
 	}
@@ -63,6 +71,8 @@
 			new WindowManager()
 #elif LINUX
 			new Linux.WindowManager()
+#else
+			null
 #endif
 		;
 	}

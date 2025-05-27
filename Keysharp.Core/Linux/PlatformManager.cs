@@ -49,8 +49,8 @@ namespace Keysharp.Core.Linux
 		{
 			if (path == null)
 			{
-				Environment.SetEnvironmentVariable("LD_LIBRARY_PATH", Script.Variables.ldLibraryPath);
-				return Environment.GetEnvironmentVariable("LD_LIBRARY_PATH") == Script.Variables.ldLibraryPath;
+				Environment.SetEnvironmentVariable("LD_LIBRARY_PATH", Script.TheScript.ldLibraryPath);
+				return Environment.GetEnvironmentVariable("LD_LIBRARY_PATH") == Script.TheScript.ldLibraryPath;
 			}
 			else
 			{
@@ -129,14 +129,14 @@ namespace Keysharp.Core.Linux
 				else if (IsLxqt)
 				{
 					if (force)
-						Keysharp.Scripting.Script.OutputDebug($"LXQT doesn't support forced logouts.");
+						Debug.OutputDebug($"LXQT doesn't support forced logouts.");
 
 					cmd = "lxqt-leave";
 				}
 				else if (IsLxde)
 				{
 					if (force)
-						Keysharp.Scripting.Script.OutputDebug($"LXDE doesn't support forced logouts.");
+						Debug.OutputDebug($"LXDE doesn't support forced logouts.");
 
 					cmd = "lxde-logout";
 				}

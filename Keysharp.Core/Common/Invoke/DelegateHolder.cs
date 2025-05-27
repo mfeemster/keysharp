@@ -384,6 +384,7 @@
 					ptr += 8;
 					// JMP RAX
 					*ptr++ = 0xFF; *ptr++ = 0xE0;
+					break;
 #endif
 
 				case Architecture.X86:
@@ -573,6 +574,7 @@
 			return ptr;
 #else
 #error Unsupported OS for AllocatePage
+			return IntPtr.Zero;
 #endif
 		}
 	}
