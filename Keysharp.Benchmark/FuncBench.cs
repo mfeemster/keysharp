@@ -7,7 +7,7 @@ namespace Keysharp.Benchmark
 {
 	public class FuncBench : BaseTest
 	{
-		private myclass cll = new ();
+		private myclass cl = new ();
 		private long totalSum;
 		private Keysharp.Scripting.Script? _ks_s;
 
