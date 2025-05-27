@@ -13,6 +13,11 @@ if (dict.Item("Name") == "Alice")
 else
 	FileAppend, "fail", "*"
 
+if dict.Exists("Age")
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
 if (dict.Item("Age") == 30)
 	FileAppend, "pass", "*"
 else
@@ -38,6 +43,32 @@ else
 dict["newval"] := 75
 
 if (dict.Item("newval") == 75 && dict["newval"] == 75)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+totalKeys := ""
+totalVals := ""
+
+for key in dict.Keys
+{
+	totalKeys .= key
+	totalVals .= dict.Item(key)
+}
+
+if totalKeys == "NameAgeCountrynewval"
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+if totalVals == "Alice50USA75"
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+dict.Remove("Country")
+
+if (dict.Count == 3)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
