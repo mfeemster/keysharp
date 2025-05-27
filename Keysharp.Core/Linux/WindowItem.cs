@@ -43,7 +43,7 @@ namespace Keysharp.Core.Linux
 						{
 							lock (WindowManager.xLibLock)
 							{
-								manager.SendNetWMMessage(Handle, xwindow.XDisplay._NET_ACTIVE_WINDOW, 1, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
+								manager.SendNetWMMessage(Handle, xwindow.XDisplay._NET_ACTIVE_WINDOW, 1, 0, 0, 0);
 								_  = Xlib.XFlush(xwindow.XDisplay.Handle);
 							}
 						}
@@ -59,11 +59,11 @@ namespace Keysharp.Core.Linux
 				if (!IsSpecified)
 					return false;
 
-				if (Control.FromHandle((IntPtr)xwindow.ID) is Form form)
+				if (Control.FromHandle((nint)xwindow.ID) is Form form)
 					return form.TopMost;
 
 				var onTop = false;
-				_ = ReadProps(xwindow.XDisplay._NET_WM_STATE, (IntPtr)XAtom.XA_ATOM, (atom) =>
+				_ = ReadProps(xwindow.XDisplay._NET_WM_STATE, (nint)XAtom.XA_ATOM, (atom) =>
 				{
 					if (atom == xwindow.XDisplay._NET_WM_STATE_ABOVE)
 					{
@@ -79,10 +79,10 @@ namespace Keysharp.Core.Linux
 			{
 				if (IsSpecified)
 				{
-					if (Control.FromHandle((IntPtr)xwindow.ID) is Form form)
+					if (Control.FromHandle((nint)xwindow.ID) is Form form)
 						form.TopMost = value;
 					else
-						manager.SendNetWMMessage(Handle, xwindow.XDisplay._NET_WM_STATE, value ? 1 : 0, xwindow.XDisplay._NET_WM_STATE_ABOVE, IntPtr.Zero, IntPtr.Zero);
+						manager.SendNetWMMessage(Handle, xwindow.XDisplay._NET_WM_STATE, value ? 1 : 0, xwindow.XDisplay._NET_WM_STATE_ABOVE, 0, 0);
 
 					_  = Xlib.XFlush(xwindow.XDisplay.Handle);
 				}
@@ -229,7 +229,7 @@ namespace Keysharp.Core.Linux
 
 				//For some reason, Mono Winforms windows don't properly return the frame dimensions when queried below, so
 				//the location is is always erroneously below where the top of the title bar is.
-				if (Control.FromHandle((IntPtr)xwindow.ID) is Control ctrl)
+				if (Control.FromHandle((nint)xwindow.ID) is Control ctrl)
 					return ctrl.Bounds;
 
 				Xlib.XTranslateCoordinates(xwindow.XDisplay.Handle, xwindow.ID, xwindow.XDisplay.Root.ID, 0, 0, out var x, out var y, out var dummy);
@@ -260,7 +260,7 @@ namespace Keysharp.Core.Linux
 					if (value.Y != int.MinValue)
 						y = value.Y;
 
-					if (Control.FromHandle((IntPtr)xwindow.ID) is Control ctrl)
+					if (Control.FromHandle((nint)xwindow.ID) is Control ctrl)
 						ctrl.Location = new Point(x, y);
 					else
 						_ = Xlib.XMoveWindow(xwindow.XDisplay.Handle, xwindow.ID, x, y);//This is smart enough not to need manual processing for the title bar.
@@ -295,7 +295,7 @@ namespace Keysharp.Core.Linux
 			get
 			{
 				var parentReturn = 0L;
-				var childrenReturn = IntPtr.Zero;
+				var childrenReturn = 0;
 
 				try
 				{
@@ -307,7 +307,7 @@ namespace Keysharp.Core.Linux
 				}
 				finally
 				{
-					if (childrenReturn != IntPtr.Zero)
+					if (childrenReturn != 0)
 						_ = Xlib.XFree(childrenReturn);
 				}
 
@@ -323,7 +323,7 @@ namespace Keysharp.Core.Linux
 
 				if (IsSpecified)
 				{
-					_ = ReadProps(xwindow.XDisplay._NET_WM_PID, (IntPtr)XAtom.AnyPropertyType, (atom) =>
+					_ = ReadProps(xwindow.XDisplay._NET_WM_PID, (nint)XAtom.AnyPropertyType, (atom) =>
 					{
 						pid = atom;
 						return false;
@@ -340,7 +340,7 @@ namespace Keysharp.Core.Linux
 			{
 				var attr = xwindow.Attributes;
 
-				if (Control.FromHandle((IntPtr)xwindow.ID) is Control ctrl)
+				if (Control.FromHandle((nint)xwindow.ID) is Control ctrl)
 				{
 					return ctrl.Size;
 				}
@@ -362,7 +362,7 @@ namespace Keysharp.Core.Linux
 					var scale = 1.0 / Accessors.A_ScaledScreenDPI;//Unsure if we need to use this.
 #endif
 
-					if (Control.FromHandle((IntPtr)xwindow.ID) is Control ctrl)
+					if (Control.FromHandle((nint)xwindow.ID) is Control ctrl)
 						ctrl.Size = new Size(value.Width, value.Height);
 					else
 						_ = Xlib.XResizeWindow(xwindow.XDisplay.Handle, xwindow.ID, value.Width, value.Height);
@@ -492,7 +492,7 @@ namespace Keysharp.Core.Linux
 				if (!IsSpecified)
 					return alpha;
 
-				_ = ReadProps(xwindow.XDisplay._NET_WM_WINDOW_OPACITY, (IntPtr)XAtom.XA_CARDINAL, (atom) =>
+				_ = ReadProps(xwindow.XDisplay._NET_WM_WINDOW_OPACITY, (nint)XAtom.XA_CARDINAL, (atom) =>
 				{
 					alpha = atom;
 					return false;
@@ -511,8 +511,8 @@ namespace Keysharp.Core.Linux
 				}
 				else
 				{
-					var alpha = (IntPtr)Math.Clamp((int)value.Al(), 0, 255);
-					_ = Xlib.XChangeProperty(xwindow.XDisplay.Handle, xwindow.ID, xwindow.XDisplay._NET_WM_WINDOW_OPACITY, (IntPtr)XAtom.XA_CARDINAL, 32, PropertyMode.Replace, ref alpha, 1);
+					var alpha = (nint)Math.Clamp((int)value.Al(), 0, 255);
+					_ = Xlib.XChangeProperty(xwindow.XDisplay.Handle, xwindow.ID, xwindow.XDisplay._NET_WM_WINDOW_OPACITY, (nint)XAtom.XA_CARDINAL, 32, PropertyMode.Replace, ref alpha, 1);
 				}
 
 				_  = Xlib.XFlush(xwindow.XDisplay.Handle);
@@ -572,7 +572,7 @@ namespace Keysharp.Core.Linux
 
 				var maximized = 0;
 				var minimized = false;
-				_ = ReadProps(xwindow.XDisplay._NET_WM_STATE, (IntPtr)XAtom.XA_ATOM, (atom) =>
+				_ = ReadProps(xwindow.XDisplay._NET_WM_STATE, (nint)XAtom.XA_ATOM, (atom) =>
 				{
 					if ((atom == xwindow.XDisplay._NET_WM_STATE_MAXIMIZED_HORZ) || (atom == xwindow.XDisplay._NET_WM_STATE_MAXIMIZED_VERT))
 					{
@@ -619,14 +619,14 @@ namespace Keysharp.Core.Linux
 							if (current_state == FormWindowState.Minimized)
 							{
 								_ = Xlib.XMapWindow(xwindow.XDisplay.Handle, Handle);
-								//Debug.OutputDebug($"Window was minimized, so setting to normal.");
-								manager.SendNetWMMessage(Handle, xwindow.XDisplay._NET_ACTIVE_WINDOW, (IntPtr)1, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
+								//Keysharp.Scripting.Script.OutputDebug($"Window was minimized, so setting to normal.");
+								manager.SendNetWMMessage(Handle, xwindow.XDisplay._NET_ACTIVE_WINDOW, (nint)1, 0, 0, 0);
 							}
 							else if (current_state == FormWindowState.Maximized)
 							{
 								//Debug.OutputDebug($"Window was maximized, so setting to normal.");
-								manager.SendNetWMMessage(Handle, xwindow.XDisplay._NET_WM_STATE, 2 /* toggle */, xwindow.XDisplay._NET_WM_STATE_MAXIMIZED_HORZ, xwindow.XDisplay._NET_WM_STATE_MAXIMIZED_VERT, IntPtr.Zero);
-								manager.SendNetWMMessage(Handle, xwindow.XDisplay._NET_ACTIVE_WINDOW, (IntPtr)1, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
+								manager.SendNetWMMessage(Handle, xwindow.XDisplay._NET_WM_STATE, 2 /* toggle */, xwindow.XDisplay._NET_WM_STATE_MAXIMIZED_HORZ, xwindow.XDisplay._NET_WM_STATE_MAXIMIZED_VERT, 0);
+								manager.SendNetWMMessage(Handle, xwindow.XDisplay._NET_ACTIVE_WINDOW, (nint)1, 0, 0, 0);
 							}
 
 							//else
@@ -643,7 +643,7 @@ namespace Keysharp.Core.Linux
 						{
 							if (current_state == FormWindowState.Maximized)
 							{
-								manager.SendNetWMMessage(Handle, xwindow.XDisplay._NET_WM_STATE, 2 /* toggle */, xwindow.XDisplay._NET_WM_STATE_MAXIMIZED_HORZ, xwindow.XDisplay._NET_WM_STATE_MAXIMIZED_VERT, IntPtr.Zero);
+								manager.SendNetWMMessage(Handle, xwindow.XDisplay._NET_WM_STATE, 2 /* toggle */, xwindow.XDisplay._NET_WM_STATE_MAXIMIZED_HORZ, xwindow.XDisplay._NET_WM_STATE_MAXIMIZED_VERT, 0);
 							}
 
 							_ = Xlib.XIconifyWindow(xwindow.XDisplay.Handle, Handle.ToInt64(), xwindow.XDisplay.ScreenNumber);
@@ -661,10 +661,10 @@ namespace Keysharp.Core.Linux
 								_ = Xlib.XMapWindow(xwindow.XDisplay.Handle, Handle);
 							}
 
-							manager.SendNetWMMessage(Handle, xwindow.XDisplay._NET_WM_STATE, 1 /* Add */, xwindow.XDisplay._NET_WM_STATE_MAXIMIZED_HORZ, xwindow.XDisplay._NET_WM_STATE_MAXIMIZED_VERT, IntPtr.Zero);
+							manager.SendNetWMMessage(Handle, xwindow.XDisplay._NET_WM_STATE, 1 /* Add */, xwindow.XDisplay._NET_WM_STATE_MAXIMIZED_HORZ, xwindow.XDisplay._NET_WM_STATE_MAXIMIZED_VERT, 0);
 						}
 
-						manager.SendNetWMMessage(Handle, xwindow.XDisplay._NET_ACTIVE_WINDOW, (IntPtr)1, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
+						manager.SendNetWMMessage(Handle, xwindow.XDisplay._NET_ACTIVE_WINDOW, (nint)1, 0, 0, 0);
 						break;
 					}
 				}
@@ -674,12 +674,12 @@ namespace Keysharp.Core.Linux
 		}
 
 		internal WindowItem(XWindow uxwindow)
-			: base(new IntPtr(uxwindow.ID))
+			: base(new nint(uxwindow.ID))
 		{
 			xwindow = uxwindow;
 		}
 
-		internal WindowItem(IntPtr handle)
+		internal WindowItem(nint handle)
 			: this(new XWindow(XDisplay.Default, handle.ToInt64()))
 		{
 		}
@@ -716,7 +716,7 @@ namespace Keysharp.Core.Linux
 			{
 				int x = 0, y = 0;
 
-				if (Control.FromHandle((IntPtr)xwindow.ID) is Control ctrl)
+				if (Control.FromHandle((nint)xwindow.ID) is Control ctrl)
 					_ = Xlib.XTranslateCoordinates(xwindow.XDisplay.Handle, xwindow.ID, xwindow.XDisplay.Root.ID, ctrl.ClientRectangle.X, ctrl.ClientRectangle.Y, out x, out y, out var dummy);
 				else
 					_ = Xlib.XTranslateCoordinates(xwindow.XDisplay.Handle, xwindow.ID, xwindow.XDisplay.Root.ID, 0, 0, out x, out y, out var dummy);
@@ -794,15 +794,15 @@ namespace Keysharp.Core.Linux
 			return !Exists;
 		}
 
-		internal bool ReadProps(IntPtr state, IntPtr type, Func<long, bool> func)
+		internal bool ReadProps(nint state, nint type, Func<long, bool> func)
 		{
-			IntPtr prop = IntPtr.Zero;
+			nint prop = 0;
 
 			if (Xlib.XGetWindowProperty(xwindow.XDisplay.Handle,
 										xwindow.ID,
 										state,
-										IntPtr.Zero,
-										new IntPtr(256),
+										0,
+										new nint(256),
 										false,
 										type,
 										out var actualAtom,
@@ -813,11 +813,11 @@ namespace Keysharp.Core.Linux
 			{
 				var itemCount = nitems.ToInt64();
 
-				if (itemCount > 0 && prop != IntPtr.Zero)
+				if (itemCount > 0 && prop != 0)
 				{
 					for (int i = 0; i < nitems; i++)
 					{
-						var atom = (IntPtr)Marshal.ReadInt64(prop, i * 8);
+						var atom = (nint)Marshal.ReadInt64(prop, i * 8);
 						//Debug.OutputDebug($"ReadStateProps() item {i} was atom {atom}.");
 
 						if (!func(atom))
@@ -863,7 +863,7 @@ namespace Keysharp.Core.Linux
 				click.Y = size.Height / 2;
 			}
 
-			//var lparam = new IntPtr(Conversions.MakeInt(click.X, click.Y));
+			//var lparam = new nint(Conversions.MakeInt(click.X, click.Y));
 			var ev = new XEvent();
 			ev.ButtonEvent = new XButtonEvent();
 			ev.ButtonEvent.type = evName;
@@ -873,7 +873,7 @@ namespace Keysharp.Core.Linux
 			ev.ButtonEvent.subwindow = Handle;
 			ev.ButtonEvent.x = click.X;
 			ev.ButtonEvent.y = click.Y;
-			ev.ButtonEvent.root = new IntPtr(xwindow.XDisplay.Root.ID);
+			ev.ButtonEvent.root = new nint(xwindow.XDisplay.Root.ID);
 			ev.ButtonEvent.same_screen = true;
 			ev.ButtonEvent.button = button;
 			//Unsure if propagate should be true or false here. The documentation is confusing.
@@ -1027,7 +1027,7 @@ namespace Keysharp.Core.Linux
 			cp.Style = 0;
 			cp.ExStyle = 0;
 			cp.Param = 0;
-			cp.Parent = IntPtr.Zero;
+			cp.Parent = 0;
 
 			if (((form.Parent != null || !form.TopLevel) && !form.IsMdiChild))
 			{
@@ -1254,11 +1254,11 @@ namespace Keysharp.Core.Linux
 
 		private Rectangle FrameExtents()
 		{
-			var prop = IntPtr.Zero;
+			var prop = 0;
 			var rect = Rectangle.Empty;
-			_ = Xlib.XGetWindowProperty(xwindow.XDisplay.Handle, xwindow.ID, xwindow.XDisplay._NET_FRAME_EXTENTS, IntPtr.Zero, new IntPtr(40), false, (IntPtr)XAtom.XA_CARDINAL, out var actualAtom, out var actualFormat, out var nitems, out var bytesAfter, ref prop);
+			_ = Xlib.XGetWindowProperty(xwindow.XDisplay.Handle, xwindow.ID, xwindow.XDisplay._NET_FRAME_EXTENTS, 0, new nint(40), false, (nint)XAtom.XA_CARDINAL, out var actualAtom, out var actualFormat, out var nitems, out var bytesAfter, ref prop);
 
-			if (prop != IntPtr.Zero)
+			if (prop != 0)
 			{
 				try
 				{
@@ -1266,9 +1266,9 @@ namespace Keysharp.Core.Linux
 					{
 						rect = new Rectangle(
 							Marshal.ReadInt32(prop, 0),//L
-							Marshal.ReadInt32(prop, 2 * IntPtr.Size),//T
-							Marshal.ReadInt32(prop, IntPtr.Size),//R
-							Marshal.ReadInt32(prop, 3 * IntPtr.Size));//B
+							Marshal.ReadInt32(prop, 2 * nint.Size),//T
+							Marshal.ReadInt32(prop, nint.Size),//R
+							Marshal.ReadInt32(prop, 3 * nint.Size));//B
 					}
 				}
 				finally

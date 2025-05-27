@@ -76,7 +76,7 @@ namespace Keysharp.Core
 				// (or the idle thread) needs to be interruptible, such as while displaying a dialog->
 				// In other words, g->ThreadIsCritical only represents the desired setting as set by the
 				// script, and isn't the actual mechanism used to make the thread uninterruptible.
-				tv.uninterruptibleDuration = -1;
+				tv.UninterruptibleDuration = -1;
 			}
 			else // Critical has been turned off.
 			{

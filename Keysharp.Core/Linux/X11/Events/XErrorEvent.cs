@@ -5,9 +5,9 @@ namespace Keysharp.Core.Linux.X11
 	internal struct XErrorEvent
 	{
 		internal XEventName type;
-		internal IntPtr display;
-		internal IntPtr resourceid;
-		internal IntPtr serial;
+		internal nint display;
+		internal nint resourceid;
+		internal nint serial;
 		internal byte error_code;
 		internal XRequest request_code;
 		internal byte minor_code;

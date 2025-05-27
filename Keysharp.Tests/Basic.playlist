@@ -1209,6 +1209,12 @@
                         <Property Name="DisplayName" Value="Add" />
                       </Rule>
                     </Rule>
+                    <Rule Match="All">
+                      <Property Name="TestWithNormalizedFullyQualifiedName" Value="Keysharp.Tests.OperatorTests.Equality" />
+                      <Rule Match="Any">
+                        <Property Name="DisplayName" Value="Equality" />
+                      </Rule>
+                    </Rule>
                   </Rule>
                 </Rule>
                 <Rule Match="All">

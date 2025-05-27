@@ -4,24 +4,16 @@ namespace Keysharp.Core
 {
 	internal static class WindowHelper
 	{
-		internal static (bool, IntPtr) CtrlToIntPtr(object ctrl)
+		internal static (bool, nint) CtrlTonint(object ctrl)
 		{
 			if (ctrl == null)
 			{
-				return (false, IntPtr.Zero);
+				return (false, 0);
 			}
 			else if (ctrl is long l)
 			{
-				return (true, new IntPtr(l));
+				return (true, new nint(l));
 			}
-			else if (ctrl is IntPtr ip)
-			{
-				return (true, ip);
-			}
-			//else if (ctrl is int i)
-			//{
-			//  return (true, i);
-			//}
 			else if (!(ctrl is string))
 			{
 				object hwnd = null;
@@ -32,19 +24,17 @@ namespace Keysharp.Core
 				}
 				catch { }
 
-				var ptr = IntPtr.Zero;
+				nint ptr = 0;
 
 				if (hwnd is long ll)
-					ptr = new IntPtr(ll);
-				else if (hwnd is IntPtr p)
-					ptr = p;
+					ptr = new nint(ll);
+				else
+					throw new ValueError($"Invalid hWnd property type {hwnd.GetType().Name}");
 
-				//else if (hwnd is int ii)
-				//  ptr = new IntPtr(ii);
 				return (true, ptr);
 			}
 
-			return (false, IntPtr.Zero);
+			return (false, 0);
 		}
 
 		internal static void DoDelayedAction(Action act)

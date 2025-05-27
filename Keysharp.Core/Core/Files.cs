@@ -155,7 +155,7 @@
 							unsafe
 							{
 								var bytes = new byte[len];
-								Marshal.Copy(buf.Ptr, bytes, 0, len);
+								Marshal.Copy((nint)buf.Ptr, bytes, 0, len);
 								sw.BaseStream.Write(bytes);
 							}
 						}
@@ -1301,7 +1301,7 @@
 #if LINUX
 				"gio trash --empty".Bash();
 #elif WINDOWS
-				_ = WindowsAPI.SHEmptyRecycleBin(IntPtr.Zero, s != "" ? s : null, WindowsAPI.SHERB_NOCONFIRMATION | WindowsAPI.SHERB_NOPROGRESSUI | WindowsAPI.SHERB_NOSOUND);
+				_ = WindowsAPI.SHEmptyRecycleBin(0, s != "" ? s : null, WindowsAPI.SHERB_NOCONFIRMATION | WindowsAPI.SHERB_NOPROGRESSUI | WindowsAPI.SHERB_NOSOUND);
 #endif
 				return null;
 			}

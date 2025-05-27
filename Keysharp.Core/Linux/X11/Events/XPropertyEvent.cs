@@ -5,12 +5,12 @@ namespace Keysharp.Core.Linux.X11
 	internal struct XPropertyEvent
 	{
 		internal XEventName type;
-		internal IntPtr serial;
+		internal nint serial;
 		internal bool send_event;
-		internal IntPtr display;
+		internal nint display;
 		internal int window;
 		internal XAtom atom;
-		internal IntPtr time;
+		internal nint time;
 		internal int state;
 	}
 }

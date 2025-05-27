@@ -19,9 +19,7 @@ namespace Keysharp.Core.COM
 				var longVal = 0L;
 				var wasObj = false;
 
-				if (value is IntPtr ip)
-					longVal = ip.ToInt64();
-				else if (value is long l)
+				if (value is long l)
 					longVal = l;
 
 				if ((VarType & Com.vt_byref) == Com.vt_byref)
@@ -110,7 +108,7 @@ namespace Keysharp.Core.COM
 					//{
 					//  try
 					//  {
-					//      temp = Marshal.GetObjectForIUnknown(new IntPtr(l));//This can just be a pointer to memory, in which case it'll throw.
+					//      temp = Marshal.GetObjectForIUnknown(new nint(l));//This can just be a pointer to memory, in which case it'll throw.
 					//  }
 					//  catch (Exception)
 					//  {
@@ -138,10 +136,10 @@ namespace Keysharp.Core.COM
 			    {
 			    object temp;
 
-			    if (value is IntPtr ip && ip != IntPtr.Zero)
+			    if (value is nint ip && ip != 0)
 			        temp = Marshal.GetObjectForIUnknown(ip);
 			    else if (value is long l && l > 0)
-			        temp = Marshal.GetObjectForIUnknown(new IntPtr(l));
+			        temp = Marshal.GetObjectForIUnknown(new nint(l));
 			    else
 			        temp = value;
 
@@ -206,9 +204,7 @@ namespace Keysharp.Core.COM
 
 			if (VarType == Com.vt_unknown || VarType == Com.vt_dispatch)
 			{
-				if (Ptr is IntPtr ip && ip != IntPtr.Zero)
-					_ = Marshal.Release(ip);
-				else if (Ptr is long lp && lp != 0L)
+				if (Ptr is long lp && lp != 0L)
 					_ = Marshal.Release((nint)lp);
 				else if (Marshal.IsComObject(Ptr))
 					Marshal.ReleaseComObject(Ptr);
@@ -241,12 +237,6 @@ namespace Keysharp.Core.COM
 			{
 				variant.VarType = Com.vt_r8;
 				variant.Ptr = d;
-				return;
-			}
-			else if (val is IntPtr ptr)
-			{
-				variant.VarType = Com.vt_i8;
-				variant.Ptr = ptr;
 				return;
 			}
 			else if (val is ComObject co)
@@ -297,9 +287,6 @@ namespace Keysharp.Core.COM
 					Ptr = val.Ab() ? -1 : 0
 				};
 			}
-
-			if (val is IntPtr ptr)
-				val = ptr.ToInt64();
 
 			if (val is long l)
 			{
@@ -377,7 +364,7 @@ namespace Keysharp.Core.COM
 				v.data.dblVal = d;
 			else if (Ptr is string str)
 				v.data.bstrVal = Marshal.StringToBSTR(str);
-			else if (Ptr is IntPtr ip)
+			else if (Ptr is nint ip)
 				v.data.pdispVal = ip;//Works for COM interfaces, safearray and other pointer types.
 			else if (Ptr is int i)
 				v.data.lVal = i;

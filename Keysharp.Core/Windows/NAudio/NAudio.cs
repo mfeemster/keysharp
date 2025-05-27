@@ -53,7 +53,7 @@ namespace Keysharp.Core.Windows
 		/// <summary>
 		/// Pointer to buffer storing data.
 		/// </summary>
-		internal IntPtr Data;
+		internal nint Data;
 	}
 
 	/// <summary>
@@ -199,7 +199,7 @@ namespace Keysharp.Core.Windows
 		/// <summary>
 		/// Pointer value.
 		/// </summary>
-		[FieldOffset(8)] internal IntPtr pointerValue; //LPWSTR
+		[FieldOffset(8)] internal nint pointerValue; //LPWSTR
 
 		//IUnknown* punkVal;
 		/*  IDispatch* pdispVal;
@@ -287,7 +287,7 @@ namespace Keysharp.Core.Windows
 			for (var n = 0; n < items; n++)
 			{
 				array[n] = (T)Activator.CreateInstance(typeof(T));
-				Marshal.PtrToStructure(new IntPtr((long)blobVal.Data + n * structSize), array[n]);
+				Marshal.PtrToStructure(new nint((long)blobVal.Data + n * structSize), array[n]);
 			}
 
 			return array;
@@ -342,7 +342,7 @@ namespace Keysharp.Core.Windows
 		/// <summary>
 		/// Clears with a known pointer
 		/// </summary>
-		internal static void Clear(IntPtr ptr) => PropVariantNative.PropVariantClear(ptr);
+		internal static void Clear(nint ptr) => PropVariantNative.PropVariantClear(ptr);
 	}
 
 	/// <summary>
@@ -589,19 +589,19 @@ namespace Keysharp.Core.Windows
 
 		internal AudioEndpointVolumeCallback(AudioEndpointVolume parent) => this.parent = parent;
 
-		public void OnNotify(IntPtr notifyData)
+		public void OnNotify(nint notifyData)
 		{
 			//Since AUDIO_VOLUME_NOTIFICATION_DATA is dynamic in length based on the
 			//number of audio channels available we cannot just call PtrToStructure
 			//to get all data, thats why it is split up into two steps, first the static
-			//data is marshalled into the data structure, then with some IntPtr math the
+			//data is marshalled into the data structure, then with some nint math the
 			//remaining floats are read from memory.
 			//
 			var data = Marshal.PtrToStructure<AudioVolumeNotificationDataStruct>(notifyData);
 			//Determine offset in structure of the first float
 			var offset = Marshal.OffsetOf<AudioVolumeNotificationDataStruct>("ChannelVolume");
 			//Determine offset in memory of the first float
-			var firstFloatPtr = (IntPtr)(notifyData + (long)offset);
+			var firstFloatPtr = (nint)(notifyData + (long)offset);
 			var voldata = new float[data.nChannels];
 
 			//Read all floats from memory.
@@ -858,33 +858,33 @@ namespace Keysharp.Core.Windows
 
 		//internal IAudioClient GetAudioClient()
 		//{
-		//  Marshal.ThrowExceptionForHR(deviceInterface.Activate(ref IID_IAudioClient, ClsCtx.ALL, IntPtr.Zero, out var result));
+		//  Marshal.ThrowExceptionForHR(deviceInterface.Activate(ref IID_IAudioClient, ClsCtx.ALL, 0, out var result));
 		//  //return new AudioClient(result as IAudioClient);
 		//  return result as IAudioClient;
 		//}
 
 		private void GetAudioMeterInformation()
 		{
-			Marshal.ThrowExceptionForHR(deviceInterface.Activate(ref IID_IAudioMeterInformation, ClsCtx.ALL, IntPtr.Zero, out var result));
+			Marshal.ThrowExceptionForHR(deviceInterface.Activate(ref IID_IAudioMeterInformation, ClsCtx.ALL, 0, out var result));
 			//audioMeterInformation = new AudioMeterInformation(result as IAudioMeterInformation);
 			audioMeterInformation = result as IAudioMeterInformation;
 		}
 
 		private void GetAudioEndpointVolume()
 		{
-			Marshal.ThrowExceptionForHR(deviceInterface.Activate(ref IID_IAudioEndpointVolume, ClsCtx.ALL, IntPtr.Zero, out var result));
+			Marshal.ThrowExceptionForHR(deviceInterface.Activate(ref IID_IAudioEndpointVolume, ClsCtx.ALL, 0, out var result));
 			audioEndpointVolume = new AudioEndpointVolume(result as IAudioEndpointVolume);
 		}
 
 		private void GetAudioSessionManager()
 		{
-			Marshal.ThrowExceptionForHR(deviceInterface.Activate(ref IDD_IAudioSessionManager, ClsCtx.ALL, IntPtr.Zero, out var result));
+			Marshal.ThrowExceptionForHR(deviceInterface.Activate(ref IDD_IAudioSessionManager, ClsCtx.ALL, 0, out var result));
 			audioSessionManager = result as IAudioSessionManager;
 		}
 
 		private void GetDeviceTopology()
 		{
-			Marshal.ThrowExceptionForHR(deviceInterface.Activate(ref IDD_IDeviceTopology, ClsCtx.ALL, IntPtr.Zero, out var result));
+			Marshal.ThrowExceptionForHR(deviceInterface.Activate(ref IDD_IDeviceTopology, ClsCtx.ALL, 0, out var result));
 			//deviceTopology = new DeviceTopology(result as IDeviceTopology);
 			deviceTopology = result as IDeviceTopology;
 		}
@@ -1456,7 +1456,7 @@ namespace Keysharp.Core.Windows
 		internal static extern int PropVariantClear(ref PropVariant pvar);
 
 		[DllImport("ole32.dll", CharSet = CharSet.Unicode)]
-		internal static extern int PropVariantClear(IntPtr pvar);
+		internal static extern int PropVariantClear(nint pvar);
 	}
 
 	/// <summary>

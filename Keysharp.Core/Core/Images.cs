@@ -46,7 +46,7 @@
 		{
 			var file = filename.As();
 			var opts = options.As();
-			var handle = IntPtr.Zero;
+			nint handle = 0;
 			var width = int.MinValue;
 			var height = int.MinValue;
 			var icon = "";

@@ -240,7 +240,7 @@ namespace Keysharp.Core
 			outputVarWin = null;
 			outputVarControl = null;
 
-			if (child == null || child.Handle == IntPtr.Zero)
+			if (child == null || child.Handle == 0)
 				return null;
 
 			var parent = child.NonChildParentWindow;
@@ -254,7 +254,7 @@ namespace Keysharp.Core
 				var pah = new PointAndHwnd(pos);//Find topmost control containing point.
 				parent.ChildFindPoint(pah);
 
-				if (pah.hwndFound != IntPtr.Zero)
+				if (pah.hwndFound != 0)
 					child = script.WindowProvider.Manager.CreateWindow(pah.hwndFound);
 			}
 

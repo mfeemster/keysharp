@@ -157,7 +157,7 @@
 			if (!joyIsButton && joy != JoyControls.Pov)
 			{
 				// Get the joystick's range of motion so that we can report position as a percentage.
-				if (WindowsAPI.joyGetDevCaps(new IntPtr(joystickID), ref jc, (uint)Marshal.SizeOf(jc)) != WindowsAPI.JOYERR_NOERROR)
+				if (WindowsAPI.joyGetDevCaps(new nint(joystickID), ref jc, (uint)Marshal.SizeOf(jc)) != WindowsAPI.JOYERR_NOERROR)
 					jc = new JOYCAPS();//Recreate on failure, for use of the zeroes later below.
 			}
 

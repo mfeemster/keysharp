@@ -5,11 +5,11 @@ namespace Keysharp.Core.Linux.X11
 	internal struct XColormapEvent
 	{
 		internal XEventName type;
-		internal IntPtr serial;
+		internal nint serial;
 		internal bool send_event;
-		internal IntPtr display;
-		internal IntPtr window;
-		internal IntPtr colormap;
+		internal nint display;
+		internal nint window;
+		internal nint colormap;
 		internal bool c_new;
 		internal int state;
 	}

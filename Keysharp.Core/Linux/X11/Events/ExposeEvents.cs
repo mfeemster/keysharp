@@ -5,10 +5,10 @@ namespace Keysharp.Core.Linux.X11
 	internal struct XExposeEvent
 	{
 		internal XEventName type;
-		internal IntPtr serial;
+		internal nint serial;
 		internal bool send_event;
-		internal IntPtr display;
-		internal IntPtr window;
+		internal nint display;
+		internal nint window;
 		internal int x;
 		internal int y;
 		internal int width;
@@ -20,10 +20,10 @@ namespace Keysharp.Core.Linux.X11
 	internal struct XGraphicsExposeEvent
 	{
 		internal XEventName type;
-		internal IntPtr serial;
+		internal nint serial;
 		internal bool send_event;
-		internal IntPtr display;
-		internal IntPtr drawable;
+		internal nint display;
+		internal nint drawable;
 		internal int x;
 		internal int y;
 		internal int width;
@@ -37,10 +37,10 @@ namespace Keysharp.Core.Linux.X11
 	internal struct XNoExposeEvent
 	{
 		internal XEventName type;
-		internal IntPtr serial;
+		internal nint serial;
 		internal bool send_event;
-		internal IntPtr display;
-		internal IntPtr drawable;
+		internal nint display;
+		internal nint drawable;
 		internal int major_code;
 		internal int minor_code;
 	}

@@ -5,12 +5,12 @@ namespace Keysharp.Benchmark
 {
 	public class IndexBench : BaseTest
 	{
-		private dynamic? dynamickeysharparray;
+		private dynamic dynamickeysharparray = new Array();
 		private Array keysharparray = Collections.Array();
 		private object[] nativearray = System.Array.Empty<object>();
 		private double[] nativedoublearray = System.Array.Empty<double>();
 		private double totalSum;
-		private Keysharp.Scripting.Script _ks_s;
+		private Keysharp.Scripting.Script? _ks_s;
 
 		[Params(500000)]
 		public int Size { get; set; }
@@ -35,8 +35,8 @@ namespace Keysharp.Benchmark
 			var e2 = Loops.MakeEnumerator(e0, 1);
 			_ = Loops.Push();
 
-			for (object val = null
-							  ; Flow.IsTrueAndRunning(e2.Call(ref val));
+			for (object? val = null
+							   ; Flow.IsTrueAndRunning(e2.Call(ref val));
 				)
 			{
 				_ = Keysharp.Core.Loops.Inc();
@@ -146,7 +146,7 @@ namespace Keysharp.Benchmark
 		private Keysharp.Core.Array keysharparray = Collections.Array();
 		private List<object> nativelist = [];
 		private readonly object o = 123L;
-		private Keysharp.Scripting.Script _ks_s;
+		private Keysharp.Scripting.Script? _ks_s;
 
 		[Params(500000)]
 		public int Size { get; set; }

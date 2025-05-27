@@ -117,26 +117,26 @@ namespace Keysharp.Core
 				{
 					case Keyword_A:
 						while (stack.Count != 0)
-							_ = new WindowItem(new IntPtr(stack.Pop())).Close();
+							_ = new WindowItem(new nint(stack.Pop())).Close();
 
 						_ = windowGroups.Remove(name);
 						break;
 
 					case Keyword_R:
 						if (stack.Count > 0)
-							_ = new WindowItem(new IntPtr(stack.Pop())).Close();
+							_ = new WindowItem(new nint(stack.Pop())).Close();
 
 						if (stack.Count > 0 && !windows.Any(w => w.Active))
-							_ = new WindowItem(new IntPtr(stack.Peek())).Active = true;
+							_ = new WindowItem(new nint(stack.Peek())).Active = true;
 
 						break;
 
 					case "":
 						if (stack.Count > 0)
-							_ = new WindowItem(new IntPtr(stack.Pop())).Close();
+							_ = new WindowItem(new nint(stack.Pop())).Close();
 
 						if (stack.Count > 0)
-							new WindowItem(new IntPtr(stack.ToArray()[stack.Count - 1])).Active = true;
+							new WindowItem(new nint(stack.ToArray()[stack.Count - 1])).Active = true;
 
 						break;
 				}
@@ -236,7 +236,7 @@ namespace Keysharp.Core
 										 object excludeText = null)
 		{
 			Script.TheScript.ControlProvider.Manager.PostMessage(
-				msg.Ai(),
+				msg.Aui(),
 				wparam.Ai(),
 				lparam.Ai(),
 				control,
@@ -256,7 +256,7 @@ namespace Keysharp.Core
 									   object excludeTitle = null,
 									   object excludeText = null,
 									   object timeout = null) => Script.TheScript.ControlProvider.Manager.SendMessage(
-										   msg.Ai(),
+										   msg.Aui(),
 										   wparam,
 										   lparam,
 										   control,
@@ -950,11 +950,11 @@ namespace Keysharp.Core
 				}
 			}
 
-			var hrgn = IntPtr.Zero;
+			nint hrgn = 0;
 
 			if (points.Count == 0)
 			{
-				if (WindowsAPI.SetWindowRgn(win.Handle, IntPtr.Zero, true) == 0)
+				if (WindowsAPI.SetWindowRgn(win.Handle, 0, true) == 0)
 					return Errors.ErrorOccurred(err = new OSError("", $"Could not reset window region with criteria: title: {winTitle}, text: {winText}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : null;
 
 				WindowItemBase.DoWinDelay();
@@ -975,7 +975,7 @@ namespace Keysharp.Core
 			else
 				hrgn = WindowsAPI.CreatePolygonRgn(points.Select(p => new POINT { x = p.X, y = p.Y }).ToArray(), points.Count, wind ? WindowsAPI.WINDING : WindowsAPI.ALTERNATE);
 
-			if (hrgn != IntPtr.Zero)
+			if (hrgn != 0)
 			{
 				if (WindowsAPI.SetWindowRgn(win.Handle, hrgn, true) == 0)
 				{
