@@ -131,6 +131,14 @@ namespace Keysharp.Core.Common.Invoke
 					// Remove the suffix
 					span = span.Slice(0, --len);
 					// Pin the object and store its address
+					object temp = 0L;
+					if (p is long ll)
+						temp = ll;
+					else if (p is bool bl)
+						temp = bl;
+					else if (p is double d)
+						temp = d;
+					p = temp;
 					SetupPointerArg();
 					// Determine the type only
 					parseType = true;
