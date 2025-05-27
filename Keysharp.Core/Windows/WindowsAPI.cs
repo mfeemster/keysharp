@@ -38,8 +38,8 @@ namespace Keysharp.Core.Windows
 	[StructLayout(LayoutKind.Sequential)]
 	internal struct NMHDR
 	{
-		internal IntPtr hwndFrom;
-		internal UIntPtr idFrom;
+		internal nint hwndFrom;
+		internal nint idFrom;
 		internal uint code;
 	}
 
@@ -51,10 +51,10 @@ namespace Keysharp.Core.Windows
 		internal int iSubItem;
 		internal uint state;
 		internal uint stateMask;
-		internal IntPtr pszText;
+		internal nint pszText;
 		internal int cchTextMax;
 		internal int iImage;
-		internal IntPtr lParam;
+		internal nint lParam;
 	}
 
 	[StructLayout(LayoutKind.Sequential)]
@@ -281,12 +281,12 @@ namespace Keysharp.Core.Windows
 
 		internal uint cbSize;
 		internal uint flags;
-		internal IntPtr hwndActive;
-		internal IntPtr hwndFocus;
-		internal IntPtr hwndCapture;
-		internal IntPtr hwndMenuOwner;
-		internal IntPtr hwndMoveSize;
-		internal IntPtr hwndCaret;
+		internal nint hwndActive;
+		internal nint hwndFocus;
+		internal nint hwndCapture;
+		internal nint hwndMenuOwner;
+		internal nint hwndMoveSize;
+		internal nint hwndCaret;
 		internal RECT rcCaret;
 	}
 
@@ -356,7 +356,7 @@ namespace Keysharp.Core.Windows
 		internal int mouseData;//Pinvoke.net claims this must be int and not uint.
 		internal uint flags;
 		internal int time;
-		internal UIntPtr dwExtraInfo;
+		internal ulong dwExtraInfo;
 	}
 
 	[StructLayout(LayoutKind.Sequential)]
@@ -400,10 +400,10 @@ namespace Keysharp.Core.Windows
 	[StructLayout(LayoutKind.Sequential)]
 	internal struct Msg
 	{
-		internal IntPtr hwnd;
+		internal nint hwnd;
 		internal uint message;
-		internal IntPtr wParam;
-		internal IntPtr lParam;
+		internal nint wParam;
+		internal nint lParam;
 		internal uint time;
 		internal POINT pt;//Apparently we can also use System.Drawing.Point, change if needed.
 #if _MAC
@@ -437,7 +437,7 @@ namespace Keysharp.Core.Windows
 		internal uint paramL;
 		internal uint paramH;
 		internal uint time;
-		internal IntPtr hwnd;
+		internal nint hwnd;
 	}
 
 	internal enum gaFlags : uint
@@ -1160,16 +1160,16 @@ namespace Keysharp.Core.Windows
 		});
 
 		[DllImport(oleacc, CharSet = CharSet.Unicode)]
-		internal static extern int AccessibleObjectFromWindow(IntPtr hwnd, uint id, ref Guid iid, [In, Out, MarshalAs(UnmanagedType.IUnknown)] ref object ppvObject);
+		internal static extern int AccessibleObjectFromWindow(nint hwnd, uint id, ref Guid iid, [In, Out, MarshalAs(UnmanagedType.IUnknown)] ref object ppvObject);
 
 		//[DllImport(oleaut)]
 		//public static extern int SafeArrayGetDim([MarshalAs(UnmanagedType.SafeArray, SafeArraySubType = VarEnum.VT_I4)] System.Array arr);
-		//public static extern int SafeArrayGetDim([MarshalAs(UnmanagedType.SafeArray, SafeArraySubType = VarEnum.VT_I4)] IntPtr arr);
+		//public static extern int SafeArrayGetDim([MarshalAs(UnmanagedType.SafeArray, SafeArraySubType = VarEnum.VT_I4)] nint arr);
 
 		/// <summary>
 		/// Gotten from https://stackoverflow.com/questions/29392625/check-if-a-winform-checkbox-is-checked-through-winapi-only
 		/// </summary>
-		internal static bool IsChecked(IntPtr handle)
+		internal static bool IsChecked(nint handle)
 		{
 			var guid = new Guid("{618736E0-3C3D-11CF-810C-00AA00389B71}");
 			object obj = null;
@@ -1187,10 +1187,10 @@ namespace Keysharp.Core.Windows
 		}
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool PeekMessage(out Msg message, IntPtr handle, uint filterMin, uint filterMax, uint flags);
+		internal static extern bool PeekMessage(out Msg message, nint handle, uint filterMin, uint filterMax, uint flags);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool OpenClipboard(IntPtr hWndNewOwner);
+		internal static extern bool OpenClipboard(nint hWndNewOwner);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
 		internal static extern bool CloseClipboard();
@@ -1200,7 +1200,7 @@ namespace Keysharp.Core.Windows
 			bool open;
 			var dtStart = DateTime.UtcNow;
 
-			while (!(open = OpenClipboard(IntPtr.Zero)))
+			while (!(open = OpenClipboard(0)))
 			{
 				if (ms == -1)
 					break;
@@ -1217,7 +1217,7 @@ namespace Keysharp.Core.Windows
 			return open;
 		}
 
-		internal static IntPtr GetClipboardData(int format, ref bool nullIsOkay)
+		internal static nint GetClipboardData(int format, ref bool nullIsOkay)
 		{
 			nullIsOkay = false;
 			var formatName = "";
@@ -1237,13 +1237,13 @@ namespace Keysharp.Core.Windows
 						|| formatName.StartsWith("OwnerLink", StringComparison.OrdinalIgnoreCase)
 						|| formatName.StartsWith("Native", StringComparison.OrdinalIgnoreCase)
 						|| formatName.StartsWith("Embed Source", StringComparison.OrdinalIgnoreCase))
-					return IntPtr.Zero;
+					return 0;
 
 				if (formatName.StartsWith("MSDEVColumnSelect", StringComparison.OrdinalIgnoreCase)
 						|| formatName.StartsWith("MSDEVLineSelect", StringComparison.OrdinalIgnoreCase))
 				{
 					nullIsOkay = true;
-					return IntPtr.Zero;
+					return 0;
 				}
 			}
 
@@ -1251,68 +1251,68 @@ namespace Keysharp.Core.Windows
 		}
 
 		[DllImport(kernel32, CharSet = CharSet.Unicode)]
-		internal static extern IntPtr GlobalSize(IntPtr handle);
+		internal static extern nint GlobalSize(nint handle);
 
 		[DllImport(kernel32, CharSet = CharSet.Unicode)]
-		internal static extern IntPtr GlobalLock(IntPtr hMem);
+		internal static extern nint GlobalLock(nint hMem);
 
 		[DllImport(kernel32, CharSet = CharSet.Unicode)]
-		internal static extern bool GlobalUnlock(IntPtr hMem);
+		internal static extern bool GlobalUnlock(nint hMem);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern IntPtr GetClipboardData(uint uFormat);
+		internal static extern nint GetClipboardData(uint uFormat);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern IntPtr SetClipboardData(uint uFormat, IntPtr hMem);
+		internal static extern nint SetClipboardData(uint uFormat, nint hMem);
 
 		[DllImport(dwmapi, CharSet = CharSet.Unicode)]
-		internal static extern uint DwmGetWindowAttribute(IntPtr hwnd, DWMWINDOWATTRIBUTE dwAttribute, ref int pvAttribute, int cbsize);
+		internal static extern uint DwmGetWindowAttribute(nint hwnd, DWMWINDOWATTRIBUTE dwAttribute, ref int pvAttribute, int cbsize);
 
-		internal static bool IsWindowCloaked(IntPtr hwnd)
+		internal static bool IsWindowCloaked(nint hwnd)
 		{
 			var cloaked = 0;
 			return DwmGetWindowAttribute(hwnd, DWMWINDOWATTRIBUTE.DWMWA_CLOAKED, ref cloaked, 4) >= 0 && cloaked >= 0;
 		}
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern IntPtr GetLastActivePopup(IntPtr hWnd);
+		internal static extern nint GetLastActivePopup(nint hWnd);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern IntPtr GetShellWindow();
+		internal static extern nint GetShellWindow();
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
 		internal static extern bool BlockInput(bool fBlockIt);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern IntPtr CallNextHookEx(IntPtr hhk, int nCode, IntPtr wParam, ref EventMsg lParam);
+		internal static extern nint CallNextHookEx(nint hhk, int nCode, nint wParam, ref EventMsg lParam);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern IntPtr CallNextHookEx(IntPtr hhk, int nCode, IntPtr wParam, ref KBDLLHOOKSTRUCT lParam);
+		internal static extern nint CallNextHookEx(nint hhk, int nCode, nint wParam, ref KBDLLHOOKSTRUCT lParam);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern IntPtr CallNextHookEx(IntPtr hhk, int nCode, IntPtr wParam, ref MSDLLHOOKSTRUCT lParam);
+		internal static extern nint CallNextHookEx(nint hhk, int nCode, nint wParam, ref MSDLLHOOKSTRUCT lParam);
 
 		[DllImport(kernel32, CharSet = CharSet.Unicode)]
-		internal static extern bool CloseHandle(IntPtr hObject);
+		internal static extern bool CloseHandle(nint hObject);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern int CloseWindow(IntPtr hWnd);
+		internal static extern int CloseWindow(nint hWnd);
 
 		[DllImport(kernel32, CharSet = CharSet.Unicode, SetLastError = true)]
-		internal static extern IntPtr CreateFile(string fileName,
+		internal static extern nint CreateFile(string fileName,
 				uint desiredAccess,
 				uint shareMode,
-				IntPtr attributes,
+				nint attributes,
 				uint creationDisposition,
 				uint flagsAndAttributes,
-				IntPtr templateFile);
+				nint templateFile);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool DestroyWindow(IntPtr hwnd);
+		internal static extern bool DestroyWindow(nint hwnd);
 
 		[DllImport(kernel32, CharSet = CharSet.Unicode, SetLastError = true)]
 		internal static extern bool DeviceIoControl(
-			IntPtr hDevice,
+			nint hDevice,
 			uint dwIoControlCode,
 			ref long InBuffer,
 			int nInBufferSize,
@@ -1322,38 +1322,38 @@ namespace Keysharp.Core.Windows
 			[In] ref NativeOverlapped lpOverlapped);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool DestroyIcon(IntPtr handle);
+		internal static extern bool DestroyIcon(nint handle);
 
 		//[DllImport(kernel32, SetLastError = true)]
-		//internal static extern bool DeviceIoControl(IntPtr driveHandle,
+		//internal static extern bool DeviceIoControl(nint driveHandle,
 		//      uint IoControlCode,
-		//      IntPtr lpInBuffer,
+		//      nint lpInBuffer,
 		//      uint inBufferSize,
-		//      IntPtr lpOutBuffer,
+		//      nint lpOutBuffer,
 		//      uint outBufferSize,
 		//      out uint lpBytesReturned,
-		//      IntPtr lpOverlapped);
+		//      nint lpOverlapped);
 		[DllImport(winmm, CharSet = CharSet.Unicode)]
-		internal static extern int mciSendString(string command, StringBuilder buffer, int bufferSize, IntPtr hwndCallback);
+		internal static extern int mciSendString(string command, StringBuilder buffer, int bufferSize, nint hwndCallback);
 
 		[DllImport(winmm, CharSet = CharSet.Unicode)]
 		internal static extern int joyGetPosEx(int uJoyID, ref JOYINFOEX pji);
 
 		[DllImport(winmm, CharSet = CharSet.Unicode)]
-		internal static extern int joyGetDevCaps(IntPtr id, ref JOYCAPS lpCaps, uint uSize);
+		internal static extern int joyGetDevCaps(nint id, ref JOYCAPS lpCaps, uint uSize);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
 		internal static extern bool SetProcessDPIAware();
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool IsHungAppWindow(IntPtr hWnd);
+		internal static extern bool IsHungAppWindow(nint hWnd);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool EnableWindow(IntPtr hWnd, bool bEnable);
+		internal static extern bool EnableWindow(nint hWnd, bool bEnable);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
 		[return: MarshalAs(UnmanagedType.Bool)]
-		internal static extern bool EnumChildWindows(IntPtr hwndParent, _EnumWindowsProc lpEnumFunc, object lParam);
+		internal static extern bool EnumChildWindows(nint hwndParent, _EnumWindowsProc lpEnumFunc, object lParam);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
 		internal static extern int EnumWindows(_EnumWindowsProc lpEnumFunc, int lParam);
@@ -1362,20 +1362,20 @@ namespace Keysharp.Core.Windows
 		internal static extern bool ExitWindowsEx(uint uFlags, uint dwReason);
 
 		[DllImport(shell32, CharSet = CharSet.Unicode)]
-		internal static extern IntPtr ExtractIcon(IntPtr hInst, string lpszExeFileName, int nIconIndex);
+		internal static extern nint ExtractIcon(nint hInst, string lpszExeFileName, int nIconIndex);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
 		[PublicForTestOnly]
-		public static extern IntPtr FindWindow(string className, string windowName);
+		public static extern nint FindWindow(string className, string windowName);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern IntPtr FindWindowEx(IntPtr parentHandle, IntPtr childAfter, string className, string windowTitle);
+		internal static extern nint FindWindowEx(nint parentHandle, nint childAfter, string className, string windowTitle);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool FlashWindow(IntPtr hWnd, bool bInvert);
+		internal static extern bool FlashWindow(nint hWnd, bool bInvert);
 
 		[DllImport(kernel32, CharSet = CharSet.Unicode)]
-		internal static extern bool FreeLibrary(IntPtr hModule);
+		internal static extern bool FreeLibrary(nint hModule);
 
 		[DllImport(kernel32, CharSet = CharSet.Unicode)]
 		internal static extern uint GetCurrentThreadId();
@@ -1383,7 +1383,7 @@ namespace Keysharp.Core.Windows
 		[DllImport(user32, CharSet = CharSet.Unicode)]
 		internal static extern bool AttachThreadInput(uint idAttach, uint idAttachTo, bool fAttach);
 
-		internal static (bool, uint) AttachThreadInput(IntPtr targetWindow, bool setActive)
+		internal static (bool, uint) AttachThreadInput(nint targetWindow, bool setActive)
 		{
 			var threadsAreAttached = false;
 			var targetThread = GetWindowThreadProcessId(targetWindow, out _);
@@ -1404,24 +1404,24 @@ namespace Keysharp.Core.Windows
 				_ = AttachThreadInput(Script.TheScript.ProcessesData.CurrentThreadID, targetThread, false);
 		}
 
-		internal static IntPtr AllocInterProcMem(uint size, IntPtr hwnd, ProcessAccessTypes extraAccess, out IntPtr handle)
+		internal static nint AllocInterProcMem(uint size, nint hwnd, ProcessAccessTypes extraAccess, out nint handle)
 		// aHandle is an output parameter that receives the process handle.
 		// Returns NULL on failure (in which case caller should ignore the value of aHandle).
 		{
-			var mem = IntPtr.Zero;
+			nint mem = 0;
 			_ = GetWindowThreadProcessId(hwnd, out var pid);
 
 			// Even if the PID is our own, open the process anyway to simplify the code. After all, it would be
 			// pretty silly for a script to access its own ListViews via this method.
-			if ((handle = OpenProcess(ProcessAccessTypes.PROCESS_VM_OPERATION | ProcessAccessTypes.PROCESS_VM_READ | ProcessAccessTypes.PROCESS_VM_WRITE | extraAccess, false, pid)) == IntPtr.Zero)
+			if ((handle = OpenProcess(ProcessAccessTypes.PROCESS_VM_OPERATION | ProcessAccessTypes.PROCESS_VM_READ | ProcessAccessTypes.PROCESS_VM_WRITE | extraAccess, false, pid)) == 0)
 				return mem;
 
 			// Reason for using VirtualAllocEx(): When sending LVITEM structures to a control in a remote process, the
 			// structure and its pszText buffer must both be memory inside the remote process rather than in our own.
-			mem = VirtualAllocEx(handle, IntPtr.Zero, size, VirtualAllocExTypes.MEM_RESERVE | VirtualAllocExTypes.MEM_COMMIT, AccessProtectionFlags.PAGE_READWRITE);
+			mem = VirtualAllocEx(handle, 0, size, VirtualAllocExTypes.MEM_RESERVE | VirtualAllocExTypes.MEM_COMMIT, AccessProtectionFlags.PAGE_READWRITE);
 
 			//
-			if (mem == IntPtr.Zero)
+			if (mem == 0)
 				_ = CloseHandle(handle); // Caller should ignore the value of aHandle when return value is NULL.
 
 			//else leave the handle open.  It's the caller's responsibility to close it.
@@ -1429,18 +1429,18 @@ namespace Keysharp.Core.Windows
 		}
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern IntPtr GetActiveWindow(IntPtr hWnd);
+		internal static extern nint GetActiveWindow(nint hWnd);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern IntPtr GetActiveWindow();
+		internal static extern nint GetActiveWindow();
 
 		[DllImport(user32, CharSet = CharSet.Unicode, ExactSpelling = true)]
-		internal static extern IntPtr GetAncestor(IntPtr hWnd, gaFlags gaFlags);
+		internal static extern nint GetAncestor(nint hWnd, gaFlags gaFlags);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern int GetClassName(IntPtr hWnd, StringBuilder lpClassName, int nMaxCount);
+		internal static extern int GetClassName(nint hWnd, StringBuilder lpClassName, int nMaxCount);
 
-		internal static string GetClassName(IntPtr hwnd)
+		internal static string GetClassName(nint hwnd)
 		{
 			var buf = new StringBuilder(64);
 			_ = GetClassName(hwnd, buf, buf.Capacity);
@@ -1452,7 +1452,7 @@ namespace Keysharp.Core.Windows
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
 		[PublicForTestOnly]
-		public static extern IntPtr GetDesktopWindow();
+		public static extern long GetDesktopWindow();
 
 		[DllImport(version, CharSet = CharSet.Unicode)]
 		internal static extern bool GetFileVersionInfo(string sFileName, int handle, int size, byte[] infoBuffer);
@@ -1461,22 +1461,22 @@ namespace Keysharp.Core.Windows
 		internal static extern int GetFileVersionInfoSize(string sFileName, out int handle);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern IntPtr GetFocus();
+		internal static extern nint GetFocus();
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern IntPtr GetParent(IntPtr hWnd);
+		internal static extern nint GetParent(nint hWnd);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern IntPtr GetForegroundWindow();
+		internal static extern nint GetForegroundWindow();
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
 		internal static extern bool GetGUIThreadInfo(uint idThread, out GUITHREADINFO lpgui);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern int ActivateKeyboardLayout(IntPtr hkl, uint Flags);
+		internal static extern int ActivateKeyboardLayout(nint hkl, uint Flags);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern IntPtr GetKeyboardLayout(uint idThread);
+		internal static extern nint GetKeyboardLayout(uint idThread);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
 		internal static extern bool GetKeyboardLayoutName([Out] StringBuilder pwszKLID);
@@ -1497,31 +1497,31 @@ namespace Keysharp.Core.Windows
 		internal static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, uint dwExtraInfo);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern IntPtr GetMenu(IntPtr hWnd);
+		internal static extern nint GetMenu(nint hWnd);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern IntPtr GetSystemMenu(IntPtr hWnd, bool revert);
+		internal static extern nint GetSystemMenu(nint hWnd, bool revert);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern int GetMenuItemCount(IntPtr hMenu);
+		internal static extern int GetMenuItemCount(nint hMenu);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern int GetMenuString(IntPtr hMenu, uint uIDItem, [Out] StringBuilder lpString, int nMaxCount, uint uFlag);
+		internal static extern int GetMenuString(nint hMenu, uint uIDItem, [Out] StringBuilder lpString, int nMaxCount, uint uFlag);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern unsafe bool IsDialogMessage(IntPtr hDlg, Msg lpMsg);
+		internal static extern unsafe bool IsDialogMessage(nint hDlg, Msg lpMsg);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern int GetMessage(out Msg lpMsg, IntPtr hWnd, uint wMsgFilterMin, uint wMsgFilterMax);
+		internal static extern int GetMessage(out Msg lpMsg, nint hWnd, uint wMsgFilterMin, uint wMsgFilterMax);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern IntPtr GetMessageExtraInfo();
+		internal static extern nint GetMessageExtraInfo();
 
 		[DllImport(kernel32, CharSet = CharSet.Unicode)]
-		internal static extern int GetModuleHandleEx(uint dwFlags, string lpModuleName, out IntPtr phModule);
+		internal static extern int GetModuleHandleEx(uint dwFlags, string lpModuleName, out nint phModule);
 
 		[DllImport(kernel32, CharSet = CharSet.Unicode)]
-		internal static extern IntPtr GetModuleHandle(string lpModuleName);
+		internal static extern nint GetModuleHandle(string lpModuleName);
 
 		[DllImport(kernel32, CharSet = CharSet.Unicode)]
 		internal static extern uint GetPrivateProfileString(string lpAppName, string lpKeyName, string lpDefault, StringBuilder lpReturnedString, uint nSize, string lpFileName);
@@ -1539,13 +1539,13 @@ namespace Keysharp.Core.Windows
 		/// <param name="procName"></param>
 		/// <returns></returns>
 		[DllImport(kernel32, CharSet = CharSet.Ansi, ExactSpelling = true, SetLastError = true)]
-		internal static extern IntPtr GetProcAddress(IntPtr hModule, string procName);
+		internal static extern nint GetProcAddress(nint hModule, string procName);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern IntPtr GetSubMenu(IntPtr hMenu, int nPos);
+		internal static extern nint GetSubMenu(nint hMenu, int nPos);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern uint GetMenuItemID(IntPtr hMenu, int nPos);
+		internal static extern uint GetMenuItemID(nint hMenu, int nPos);
 
 		[DllImport(kernel32, CharSet = CharSet.Unicode)]
 		internal static extern void SetLastError(uint dwErrCode);
@@ -1554,39 +1554,39 @@ namespace Keysharp.Core.Windows
 		internal static extern uint GetLastError();
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern int GetDlgCtrlID(IntPtr hwndCtl);
+		internal static extern int GetDlgCtrlID(nint hwndCtl);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern IntPtr GetWindow(IntPtr hWnd, uint uCmd);
+		internal static extern nint GetWindow(nint hWnd, uint uCmd);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
 		internal static extern bool GetLastInputInfo(ref LASTINPUTINFO plii);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool GetLayeredWindowAttributes(IntPtr hwnd, out uint crKey, out byte bAlpha, out uint dwFlags);
+		internal static extern bool GetLayeredWindowAttributes(nint hwnd, out uint crKey, out byte bAlpha, out uint dwFlags);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
 		[return: MarshalAs(UnmanagedType.Bool)]
-		internal static extern bool GetWindowPlacement(IntPtr hWnd, out WINDOWPLACEMENT lpwndpl);
+		internal static extern bool GetWindowPlacement(nint hWnd, out WINDOWPLACEMENT lpwndpl);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
 		[PublicForTestOnly]
-		public static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
+		public static extern bool GetWindowRect(nint hWnd, out RECT lpRect);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool GetClientRect(IntPtr hWnd, out RECT lpRect);
+		internal static extern bool GetClientRect(nint hWnd, out RECT lpRect);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern int MapWindowPoints(IntPtr hWndFrom, IntPtr hWndTo, [In, Out] ref RECT rect, [MarshalAs(UnmanagedType.U4)] int cPoints);
+		internal static extern int MapWindowPoints(nint hWndFrom, nint hWndTo, [In, Out] ref RECT rect, [MarshalAs(UnmanagedType.U4)] int cPoints);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool ClientToScreen(IntPtr hWnd, ref Point lpPoint);
+		internal static extern bool ClientToScreen(nint hWnd, ref Point lpPoint);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool ScreenToClient(IntPtr hWnd, ref Point lpPoint);
+		internal static extern bool ScreenToClient(nint hWnd, ref Point lpPoint);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern int GetWindowText(IntPtr hWnd, StringBuilder lpString, int nMaxCount);
+		internal static extern int GetWindowText(nint hWnd, StringBuilder lpString, int nMaxCount);
 
 		//void CoordToScreen(POINT &aPoint, int aWhichMode)
 		//// For convenience. See function above for comments.
@@ -1595,7 +1595,7 @@ namespace Keysharp.Core.Windows
 		//}
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern void mouse_event(uint dwFlags, int dx, int dy, uint dwData, UIntPtr dwExtraInfo);
+		internal static extern void mouse_event(uint dwFlags, int dx, int dy, uint dwData, nint dwExtraInfo);
 
 		/// <summary>
 		/// See http://msdn.microsoft.com/en-us/library/ms632599%28VS.85%29.aspx#message_only
@@ -1604,12 +1604,12 @@ namespace Keysharp.Core.Windows
 		/// <returns></returns>
 		[DllImport(user32, CharSet = CharSet.Unicode)]
 		[return: MarshalAs(UnmanagedType.Bool)]
-		internal static extern bool AddClipboardFormatListener(IntPtr hwnd);
+		internal static extern bool AddClipboardFormatListener(nint hwnd);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool RemoveClipboardFormatListener(IntPtr hwnd);
+		internal static extern bool RemoveClipboardFormatListener(nint hwnd);
 
-		internal static string GetWindowText(IntPtr hwnd)
+		internal static string GetWindowText(nint hwnd)
 		{
 			int textLength = WindowsAPI.GetWindowTextLength(hwnd);
 
@@ -1622,47 +1622,47 @@ namespace Keysharp.Core.Windows
 		}
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern int GetWindowTextLength(IntPtr hWnd);
+		internal static extern int GetWindowTextLength(nint hWnd);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
+		internal static extern uint GetWindowThreadProcessId(nint hWnd, out uint lpdwProcessId);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool InvalidateRect(IntPtr hWnd, IntPtr lpRect, bool bErase);
+		internal static extern bool InvalidateRect(nint hWnd, nint lpRect, bool bErase);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool IsWindow(IntPtr hWnd);
+		internal static extern bool IsWindow(nint hWnd);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
 		[return: MarshalAs(UnmanagedType.Bool)]
-		internal static extern bool IsWindowEnabled(IntPtr hWnd);
+		internal static extern bool IsWindowEnabled(nint hWnd);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool IsWindowVisible(IntPtr hWnd);
+		internal static extern bool IsWindowVisible(nint hWnd);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool IsChild(IntPtr hWndParent, IntPtr hWnd);
+		internal static extern bool IsChild(nint hWndParent, nint hWnd);
 
 		[DllImport(kernel32, CharSet = CharSet.Unicode)]
 		internal static extern bool SetDllDirectory(string lpPathName);
 
 		[DllImport(kernel32, CharSet = CharSet.Unicode)]
-		internal static extern IntPtr LoadLibrary(string lpFileName);
+		internal static extern nint LoadLibrary(string lpFileName);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern short VkKeyScanEx(char ch, IntPtr dwhkl);
+		internal static extern short VkKeyScanEx(char ch, nint dwhkl);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
 		internal static extern uint MapVirtualKey(uint uCode, uint uMapType);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern uint MapVirtualKeyEx(uint uCode, uint uMapType, IntPtr dwhkl);
+		internal static extern uint MapVirtualKeyEx(uint uCode, uint uMapType, nint dwhkl);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool MoveWindow(IntPtr hWnd, int X, int Y, int nWidth, int nHeight, bool bRepaint);
+		internal static extern bool MoveWindow(nint hWnd, int X, int Y, int nWidth, int nHeight, bool bRepaint);
 
 		//[DllImport(kernel32, CharSet = CharSet.Unicode)]
-		//internal static extern IntPtr OpenProcess(uint dwDesiredAccess, bool bInheritHandle, uint dwProcessId);
+		//internal static extern nint OpenProcess(uint dwDesiredAccess, bool bInheritHandle, uint dwProcessId);
 
 		[DllImport(kernel32, CharSet = CharSet.Unicode)]
 		internal static extern void OutputDebugString(string lpOutputString);
@@ -1671,47 +1671,47 @@ namespace Keysharp.Core.Windows
 		internal static extern void PostQuitMessage(int nExitCode);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool PostThreadMessage(uint threadId, uint msg, UIntPtr wParam, IntPtr lParam);
+		internal static extern bool PostThreadMessage(uint threadId, uint msg, nint wParam, nint lParam);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool PostMessage(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
+		internal static extern bool PostMessage(nint hWnd, uint msg, nint wParam, nint lParam);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool PostMessage(IntPtr hWnd, uint msg, uint wParam, uint lParam);
+		internal static extern bool PostMessage(nint hWnd, uint msg, uint wParam, uint lParam);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool PostMessage(IntPtr hWnd, uint msg, string wParam, IntPtr lParam);
+		internal static extern bool PostMessage(nint hWnd, uint msg, string wParam, nint lParam);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern IntPtr RealChildWindowFromPoint(IntPtr hwndParent, Point ptParentClientCoords);
+		internal static extern nint RealChildWindowFromPoint(nint hwndParent, Point ptParentClientCoords);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
 		internal static extern uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern uint SendMessage(IntPtr hWnd, uint msg, uint wParam, uint lParam);
+		internal static extern uint SendMessage(nint hWnd, uint msg, uint wParam, uint lParam);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern IntPtr SendMessage(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
+		internal static extern nint SendMessage(nint hWnd, uint msg, nint wParam, nint lParam);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern IntPtr SendMessage(IntPtr hWnd, uint msg, int wParam, int[] lParam);
+		internal static extern nint SendMessage(nint hWnd, uint msg, int wParam, int[] lParam);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern IntPtr SendLVColMessage(IntPtr hWnd, uint msg, uint wParam, ref LV_COLUMN lParam);
+		internal static extern nint SendLVColMessage(nint hWnd, uint msg, uint wParam, ref LV_COLUMN lParam);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool IsIconic(IntPtr Hwnd);
+		internal static extern bool IsIconic(nint Hwnd);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool IsZoomed(IntPtr hWnd);
+		internal static extern bool IsZoomed(nint hWnd);
 
 		[DllImport(shell32, CharSet = CharSet.Unicode, SetLastError = true)]
 		internal static extern int SHGetKnownFolderPath(
 			[MarshalAs(UnmanagedType.LPStruct)] Guid rfid,
 			uint dwFlags,
-			IntPtr hToken,
-			out IntPtr pszPath);
+			nint hToken,
+			out nint pszPath);
 
 		/// <summary>
 		/// Gotten from https://www.codeproject.com/Questions/1224984/How-to-get-quick-access-folder-path-in-windows-usi
@@ -1720,12 +1720,12 @@ namespace Keysharp.Core.Windows
 		/// <returns></returns>
 		internal static string SHGetKnownFolderPath(Guid guid)
 		{
-			var pPath = IntPtr.Zero;
+			nint pPath = 0;
 			string path = null;
 
 			try
 			{
-				var hr = SHGetKnownFolderPath(guid, (uint)KnownFolderFlag.None, IntPtr.Zero, out pPath);
+				var hr = SHGetKnownFolderPath(guid, (uint)KnownFolderFlag.None, 0, out pPath);
 
 				if (hr == 0)
 				{
@@ -1735,10 +1735,10 @@ namespace Keysharp.Core.Windows
 			}
 			finally
 			{
-				if (pPath != IntPtr.Zero)
+				if (pPath != 0)
 				{
 					Marshal.FreeCoTaskMem(pPath);
-					pPath = IntPtr.Zero;
+					pPath = 0;
 				}
 			}
 
@@ -1750,7 +1750,7 @@ namespace Keysharp.Core.Windows
 		/// </summary>
 		internal struct COPYDATASTRUCT
 		{
-			public IntPtr dwData;
+			public nint dwData;
 			public int cbData;
 
 			[MarshalAs(UnmanagedType.LPStr)]
@@ -1759,197 +1759,167 @@ namespace Keysharp.Core.Windows
 
 		//For use with WM_COPYDATA and COPYDATASTRUCT
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern int SendMessageTimeout(IntPtr hWnd, int Msg, IntPtr wParam, ref COPYDATASTRUCT lParam,
+		internal static extern long SendMessageTimeout(nint hWnd, uint Msg, nint wParam, ref COPYDATASTRUCT lParam,
 				SendMessageTimeoutFlags flags,
 				uint timeout,
-				out IntPtr result);
+				out nint result);
 
 		//For use with WM_COPYDATA and COPYDATASTRUCT
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern int PostMessage(IntPtr hWnd, int Msg, IntPtr wParam, ref COPYDATASTRUCT lParam);
+		internal static extern int PostMessage(nint hWnd, uint Msg, nint wParam, ref COPYDATASTRUCT lParam);
 
 		[DllImport(user32, SetLastError = true, CharSet = CharSet.Unicode)]
-		internal static extern int SendMessageTimeout(
-			IntPtr hWnd,
+		internal static extern long SendMessageTimeout(
+			nint hWnd,
 			uint Msg,
 			object wParam,
 			string lParam,
 			SendMessageTimeoutFlags flags,
 			uint timeout,
-			out IntPtr result);
+			out nint result);
 
 		[DllImport(user32, SetLastError = true, CharSet = CharSet.Unicode)]
-		internal static extern int SendMessageTimeout(
-			IntPtr hWnd,
+		internal static extern long SendMessageTimeout(
+			nint hWnd,
 			uint Msg,
-			int wParam,
+			nint wParam,
 			string lParam,
 			SendMessageTimeoutFlags flags,
 			uint timeout,
-			out IntPtr result);
+			out nint result);
 
 		[DllImport(user32, SetLastError = true, CharSet = CharSet.Unicode)]
-		internal static extern int SendMessageTimeout(
-			IntPtr hWnd,
+		internal static extern long SendMessageTimeout(
+			nint hWnd,
 			uint Msg,
-			ref int wParam,
-			ref int lParam,
+			ref uint wParam,
+			ref uint lParam,
 			SendMessageTimeoutFlags flags,
 			uint timeout,
-			out IntPtr result);
+			out nint result);
 
 		[DllImport(user32, SetLastError = true, CharSet = CharSet.Unicode)]
-		internal static extern int SendMessageTimeout(
-			IntPtr hWnd,
+		internal static extern long SendMessageTimeout(
+			nint hWnd,
 			uint Msg,
-			int wParam,
-			int lParam,
+			ref nint wParam,
+			ref nint lParam,
 			SendMessageTimeoutFlags flags,
 			uint timeout,
-			out IntPtr result);
+			out nint result);
 
 		[DllImport(user32, SetLastError = true, CharSet = CharSet.Unicode)]
-		internal static extern int SendMessageTimeout(
-			IntPtr hWnd,
+		internal static extern long SendMessageTimeout(
+			nint hWnd,
 			uint Msg,
-			uint wParam,
-			IntPtr lParam,
+			nint wParam,
+			nint lParam,
 			SendMessageTimeoutFlags flags,
 			uint timeout,
-			out IntPtr result);
+			out nint result);
 
 		[DllImport(user32, SetLastError = true, CharSet = CharSet.Unicode)]
 		internal static extern int SendMessageTimeout(
-			IntPtr hWnd,
+			nint hWnd,
 			uint Msg,
-			IntPtr wParam,
-			IntPtr lParam,
-			SendMessageTimeoutFlags flags,
-			uint timeout,
-			out IntPtr result);
-
-		[DllImport(user32, SetLastError = true, CharSet = CharSet.Unicode)]
-		internal static extern int SendMessageTimeout(
-			IntPtr hWnd,
-			uint Msg,
-			uint wParam,
-			uint lParam,
-			SendMessageTimeoutFlags flags,
-			uint timeout,
-			out IntPtr result);
-
-		[DllImport(user32, SetLastError = true, CharSet = CharSet.Unicode)]
-		internal static extern int SendMessageTimeout(
-			IntPtr hWnd,
-			uint Msg,
-			uint wParam,
+			nint wParam,
 			StringBuilder lParam,
 			SendMessageTimeoutFlags flags,
 			uint timeout,
-			out IntPtr result);
-
-		[DllImport(user32, SetLastError = true, CharSet = CharSet.Unicode)]
-		internal static extern int SendMessageTimeout(
-			IntPtr hWnd,
-			uint Msg,
-			uint wParam,
-			string lParam,
-			SendMessageTimeoutFlags flags,
-			uint timeout,
-			out IntPtr result);
+			out nint result);
 
 		[DllImport(advapi, CharSet = CharSet.Unicode)]
 		internal static extern int RegQueryInfoKey(
 			SafeRegistryHandle hKey,
 			[Out()] StringBuilder lpClass,
 			ref uint lpcchClass,
-			IntPtr lpReserved,
-			IntPtr lpcSubKeys,
-			IntPtr lpcbMaxSubKeyLen,
-			IntPtr lpcbMaxClassLen,
-			IntPtr lpcValues,
-			IntPtr lpcbMaxValueNameLen,
-			IntPtr lpcbMaxValueLen,
-			IntPtr lpcbSecurityDescriptor,
+			nint lpReserved,
+			nint lpcSubKeys,
+			nint lpcbMaxSubKeyLen,
+			nint lpcbMaxClassLen,
+			nint lpcValues,
+			nint lpcbMaxValueNameLen,
+			nint lpcbMaxValueLen,
+			nint lpcbSecurityDescriptor,
 			out long lpftLastWriteTime);
 
 		[DllImport(kernel32, CharSet = CharSet.Unicode)]
 		internal static extern int GetShortPathName(string longPath, StringBuilder shortPath, int bufSize);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern int SetActiveWindow(IntPtr handle);
+		internal static extern int SetActiveWindow(nint handle);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool BringWindowToTop(IntPtr hWnd);
+		internal static extern bool BringWindowToTop(nint hWnd);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern IntPtr SetFocus(IntPtr hWnd);
+		internal static extern nint SetFocus(nint hWnd);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
 		[PublicForTestOnly]
-		public static extern bool SetForegroundWindow(IntPtr hWnd);
+		public static extern bool SetForegroundWindow(nint hWnd);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool SetLayeredWindowAttributes(IntPtr hwnd, uint crKey, byte bAlpha, uint dwFlags);
+		internal static extern bool SetLayeredWindowAttributes(nint hwnd, uint crKey, byte bAlpha, uint dwFlags);
 
 		//[DllImport(user32, CharSet = CharSet.Unicode)]
-		//internal static extern int SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
+		//internal static extern int SetWindowLong(nint hWnd, int nIndex, int dwNewLong);
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern IntPtr GetWindowLongPtr(IntPtr hWnd, int nIndex);
+		internal static extern nint GetWindowLongPtr(nint hWnd, int nIndex);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern IntPtr SetWindowLongPtr(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
+		internal static extern nint SetWindowLongPtr(nint hWnd, int nIndex, nint dwNewLong);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
 		[return: MarshalAs(UnmanagedType.Bool)]
-		internal static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
+		internal static extern bool SetWindowPos(nint hWnd, nint hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern IntPtr SetWindowsHookEx(int idHook, LowLevelKeyboardProc lpfn, IntPtr hMod, uint dwThreadId);
+		internal static extern nint SetWindowsHookEx(int idHook, LowLevelKeyboardProc lpfn, nint hMod, uint dwThreadId);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern IntPtr SetWindowsHookEx(int idHook, LowLevelMouseProc lpfn, IntPtr hMod, uint dwThreadId);
+		internal static extern nint SetWindowsHookEx(int idHook, LowLevelMouseProc lpfn, nint hMod, uint dwThreadId);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern IntPtr SetWindowsHookEx(int idHook, PlaybackProc lpfn, IntPtr hMod, uint dwThreadId);
+		internal static extern nint SetWindowsHookEx(int idHook, PlaybackProc lpfn, nint hMod, uint dwThreadId);
 
 		//[DllImport(user32, CharSet = CharSet.Unicode)]
-		//internal static extern IntPtr CallNextHookEx(IntPtr hhk, int nCode, int wParam, [In] KBDLLHOOKSTRUCT lParam);
+		//internal static extern nint CallNextHookEx(nint hhk, int nCode, int wParam, [In] KBDLLHOOKSTRUCT lParam);
 		//[DllImport(user32, CharSet = CharSet.Unicode)]
-		//internal static extern IntPtr CallNextHookEx(IntPtr hhk, int nCode, int wParam, [In] MSDLLHOOKSTRUCT lParam);
+		//internal static extern nint CallNextHookEx(nint hhk, int nCode, int wParam, [In] MSDLLHOOKSTRUCT lParam);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool SetWindowText(IntPtr hWnd, string lpString);
+		internal static extern bool SetWindowText(nint hWnd, string lpString);
 
 		[DllImport(shell32)]
-		internal static extern int SHEmptyRecycleBin(IntPtr hWnd, string pszRootPath, uint dwFlags);
+		internal static extern int SHEmptyRecycleBin(nint hWnd, string pszRootPath, uint dwFlags);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+		internal static extern bool ShowWindow(nint hWnd, int nCmdShow);
 
 		[DllImport(kernel32, CharSet = CharSet.Unicode)]
-		internal static extern bool TerminateProcess(IntPtr hProcess, uint uExitCode);
+		internal static extern bool TerminateProcess(nint hProcess, uint uExitCode);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern int ToUnicodeEx(uint wVirtKey, uint wScanCode, byte[] lpKeyState, [Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder pwszBuff, int cchBuff, uint wFlags, IntPtr dwhkl);
+		internal static extern int ToUnicodeEx(uint wVirtKey, uint wScanCode, byte[] lpKeyState, [Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder pwszBuff, int cchBuff, uint wFlags, nint dwhkl);
 
-		internal static int ToUnicodeOrAsciiEx(uint wVirtKey, uint wScanCode, byte[] lpKeyState, [Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder pwszBuff, uint wFlags, IntPtr dwhkl) =>
+		internal static int ToUnicodeOrAsciiEx(uint wVirtKey, uint wScanCode, byte[] lpKeyState, [Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder pwszBuff, uint wFlags, nint dwhkl) =>
 		ToUnicodeEx(wVirtKey, wScanCode, lpKeyState, pwszBuff, pwszBuff.Capacity, wFlags, dwhkl);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool UnhookWindowsHookEx(IntPtr hhk);
+		internal static extern bool UnhookWindowsHookEx(nint hhk);
 
 		[DllImport(version, CharSet = CharSet.Unicode)]
 		internal static extern bool VerQueryValue(byte[] pBlock, string pSubBlock, out string pValue, out uint len);
 
 		[DllImport(winmm, CharSet = CharSet.Unicode)]
-		internal static extern uint waveOutGetVolume(IntPtr hwo, out uint dwVolume);
+		internal static extern uint waveOutGetVolume(nint hwo, out uint dwVolume);
 
 		[DllImport(winmm, CharSet = CharSet.Unicode)]
-		internal static extern int waveOutSetVolume(IntPtr hwo, uint dwVolume);
+		internal static extern int waveOutSetVolume(nint hwo, uint dwVolume);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern IntPtr WindowFromPoint(Point Point);
+		internal static extern nint WindowFromPoint(Point Point);
 
 		[DllImport(kernel32, CharSet = CharSet.Unicode)]
 		internal static extern bool WritePrivateProfileString(string lpAppName, string lpKeyName, string lpString, string lpFileName);
@@ -1958,16 +1928,16 @@ namespace Keysharp.Core.Windows
 		internal static extern bool WritePrivateProfileSection(string lpAppName, string lpString, string lpFileName);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern int SendMessage(IntPtr hwnd, uint msg, int wParam, StringBuilder sb);
+		internal static extern int SendMessage(nint hwnd, uint msg, int wParam, StringBuilder sb);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern IntPtr GetAncestor(IntPtr hwnd, GetAncestorFlags flags);
+		internal static extern nint GetAncestor(nint hwnd, GetAncestorFlags flags);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool RegisterHotKey(IntPtr hWnd, uint id, KeyModifiers fsModifiers, uint vk);
+		internal static extern bool RegisterHotKey(nint hWnd, uint id, KeyModifiers fsModifiers, uint vk);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool UnregisterHotKey(IntPtr hWnd, uint id);
+		internal static extern bool UnregisterHotKey(nint hWnd, uint id);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
 		internal static extern bool IsCharAlphaNumeric(char ch);
@@ -1991,11 +1961,11 @@ namespace Keysharp.Core.Windows
 		/// </summary>
 		/// <param name="hwnd"></param>
 		/// <returns></returns>
-		internal static IntPtr GetNonChildParent(IntPtr hwnd)
+		internal static nint GetNonChildParent(nint hwnd)
 		{
-			if (hwnd == IntPtr.Zero) return hwnd;
+			if (hwnd == 0) return hwnd;
 
-			IntPtr parent, parent_prev;
+			nint parent, parent_prev;
 
 			for (parent_prev = hwnd; ; parent_prev = parent)
 			{
@@ -2004,16 +1974,16 @@ namespace Keysharp.Core.Windows
 
 				parent = GetAncestor(parent_prev, gaFlags.GA_PARENT);
 
-				if (parent == IntPtr.Zero)
+				if (parent == 0)
 					return parent_prev;  // This will return aWnd if aWnd has no parents.
 			}
 		}
 
-		internal static string GetWindowTextTimeout(IntPtr hwnd, uint timeout)
+		internal static string GetWindowTextTimeout(nint hwnd, uint timeout)
 		{
-			_ = SendMessageTimeout(hwnd, WM_GETTEXTLENGTH, 0u, IntPtr.Zero, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, timeout, out var length);
+			_ = SendMessageTimeout(hwnd, WM_GETTEXTLENGTH, 0, 0, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, timeout, out var length);
 
-			if (length == IntPtr.Zero)
+			if (length == 0)
 				return null;
 
 			var val = length.ToInt32();
@@ -2024,20 +1994,20 @@ namespace Keysharp.Core.Windows
 			}
 
 			var sb = new StringBuilder(val + 1);  // leave room for null-terminator
-			var ptr = IntPtr.Zero;
+			nint ptr = 0;
 
-			if (SendMessageTimeout(hwnd, WM_GETTEXT, (uint)sb.Capacity, sb, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, timeout, out ptr) == 0)
+			if (SendMessageTimeout(hwnd, WM_GETTEXT, sb.Capacity, sb, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, timeout, out ptr) == 0)
 				return null;
 
 			return sb.ToString();
 		}
 
-		internal static bool ControlSetTab(IntPtr hwnd, int tabIndex)
+		internal static bool ControlSetTab(nint hwnd, int tabIndex)
 		{
 			// MSDN: "If the tab control does not have the TCS_BUTTONS style, changing the focus also changes
 			// the selected tab. In this case, the tab control sends the TCN_SELCHANGING and TCN_SELCHANGE
 			// notification codes to its parent window."
-			if (SendMessageTimeout(hwnd, TCM_SETCURFOCUS, (uint)tabIndex, 0, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000, out var result) == 0)
+			if (SendMessageTimeout(hwnd, TCM_SETCURFOCUS, tabIndex, 0, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000, out var result) == 0)
 				return false;
 
 			// Tab controls with the TCS_BUTTONS style need additional work:
@@ -2083,64 +2053,64 @@ namespace Keysharp.Core.Windows
 		internal static extern bool GetStringTypeEx(uint Locale, uint dwInfoType, string lpSrcStr, int cchSrc, [Out] ushort[] lpCharType);
 
 		[DllImport(kernel32, CharSet = CharSet.Unicode)]
-		internal static extern bool GetExitCodeThread(IntPtr hThread, out uint lpExitCode);
+		internal static extern bool GetExitCodeThread(nint hThread, out uint lpExitCode);
 
 		[DllImport(kernel32, CharSet = CharSet.Unicode)]
-		internal static extern bool SetThreadPriority(IntPtr hThread, int priority);
+		internal static extern bool SetThreadPriority(nint hThread, int priority);
 
 		[DllImport(kernel32, CharSet = CharSet.Unicode)]
-		internal static extern IntPtr OpenProcess(ProcessAccessTypes desiredAccess, bool inheritHandle, uint processId);
+		internal static extern nint OpenProcess(ProcessAccessTypes desiredAccess, bool inheritHandle, uint processId);
 
 		[DllImport(kernel32, CharSet = CharSet.Unicode)]
-		internal static extern bool QueryFullProcessImageName(IntPtr hProcess, uint dwFlags, [Out, MarshalAs(UnmanagedType.LPTStr)] StringBuilder lpExeName, ref uint lpdwSize);
+		internal static extern bool QueryFullProcessImageName(nint hProcess, uint dwFlags, [Out, MarshalAs(UnmanagedType.LPTStr)] StringBuilder lpExeName, ref uint lpdwSize);
 		[DllImport(kernel32, CharSet = CharSet.Unicode)]
-		internal static extern IntPtr VirtualAlloc(IntPtr lpAddress, UIntPtr dwSize, uint flAllocationType, uint flProtect);
+		internal static extern nint VirtualAlloc(nint lpAddress, nint dwSize, uint flAllocationType, uint flProtect);
 		[DllImport(kernel32, CharSet = CharSet.Unicode)]
-		internal static extern bool VirtualFree(IntPtr lpAddress, UIntPtr dwSize, uint dwFreeType);
+		internal static extern bool VirtualFree(nint lpAddress, nint dwSize, uint dwFreeType);
 
 		[DllImport(kernel32, CharSet = CharSet.Unicode)]
-		internal static extern IntPtr VirtualAllocEx(IntPtr hProcess, IntPtr address, uint size, VirtualAllocExTypes allocationType, AccessProtectionFlags flags);
+		internal static extern nint VirtualAllocEx(nint hProcess, nint address, uint size, VirtualAllocExTypes allocationType, AccessProtectionFlags flags);
 
 		[DllImport(kernel32, CharSet = CharSet.Unicode)]
-		internal static extern bool VirtualFreeEx(IntPtr hProcess, IntPtr address, uint size, VirtualAllocExTypes dwFreeType);
+		internal static extern bool VirtualFreeEx(nint hProcess, nint address, uint size, VirtualAllocExTypes dwFreeType);
 
 		[DllImport(kernel32, CharSet = CharSet.Unicode)]
-		internal static extern bool ReadProcessMemory(IntPtr hProcess, IntPtr baseAddress, byte[] buffer, uint dwSize, out uint numberOfBytesRead);
+		internal static extern bool ReadProcessMemory(nint hProcess, nint baseAddress, byte[] buffer, uint dwSize, out uint numberOfBytesRead);
 
 		[DllImport(kernel32, CharSet = CharSet.Unicode)]
-		internal static extern bool WriteProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, IntPtr lpBuffer, int nSize, out IntPtr lpNumberOfBytesWritten);
+		internal static extern bool WriteProcessMemory(nint hProcess, nint lpBaseAddress, nint lpBuffer, int nSize, out nint lpNumberOfBytesWritten);
 
 		[DllImport(gdi32, CharSet = CharSet.Unicode)]
-		internal static extern IntPtr CreateEllipticRgn(int nLeftRect, int nTopRect, int nRightRect, int nBottomRect);
+		internal static extern nint CreateEllipticRgn(int nLeftRect, int nTopRect, int nRightRect, int nBottomRect);
 
 		[DllImport(gdi32, CharSet = CharSet.Unicode)]
-		internal static extern IntPtr CreateRoundRectRgn(int x1, int y1, int x2, int y2, int cx, int cy);
+		internal static extern nint CreateRoundRectRgn(int x1, int y1, int x2, int y2, int cx, int cy);
 
 		[DllImport(gdi32, CharSet = CharSet.Unicode)]
-		internal static extern IntPtr CreateRectRgn(int nLeftRect, int nTopRect, int nRightRect, int nBottomRect);
+		internal static extern nint CreateRectRgn(int nLeftRect, int nTopRect, int nRightRect, int nBottomRect);
 
 		[DllImport(gdi32, CharSet = CharSet.Unicode)]
-		internal static extern IntPtr CreatePolygonRgn(POINT[] lppt, int cPoints, int fnPolyFillMode);
+		internal static extern nint CreatePolygonRgn(POINT[] lppt, int cPoints, int fnPolyFillMode);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern int SetWindowRgn(IntPtr hWnd, IntPtr hRgn, bool bRedraw);
+		internal static extern int SetWindowRgn(nint hWnd, nint hRgn, bool bRedraw);
 
 		[DllImport(gdi32, CharSet = CharSet.Unicode)]
-		internal static extern bool DeleteObject(IntPtr hObject);
+		internal static extern bool DeleteObject(nint hObject);
 
-		internal delegate bool _EnumWindowsProc(IntPtr hwnd, int lParam);//Add an underscore to this name because some sample programs use EnumWindowsProc as a function name.
+		internal delegate bool _EnumWindowsProc(nint hwnd, int lParam);//Add an underscore to this name because some sample programs use EnumWindowsProc as a function name.
 
-		internal delegate IntPtr LowLevelKeyboardProc(int nCode, IntPtr wParam, ref KBDLLHOOKSTRUCT lParam);
+		internal delegate nint LowLevelKeyboardProc(int nCode, nint wParam, ref KBDLLHOOKSTRUCT lParam);
 
-		internal delegate IntPtr LowLevelMouseProc(int nCode, IntPtr wParam, ref MSDLLHOOKSTRUCT lParam);
+		internal delegate nint LowLevelMouseProc(int nCode, nint wParam, ref MSDLLHOOKSTRUCT lParam);
 
-		internal delegate IntPtr PlaybackProc(int nCode, IntPtr wParam, ref EventMsg lParam);
+		internal delegate nint PlaybackProc(int nCode, nint wParam, ref EventMsg lParam);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
 		internal static extern int GetSystemMetrics(SystemMetric smIndex);
 
 		[DllImport(psapi, CharSet = CharSet.Unicode)]
-		internal static extern uint GetProcessImageFileName(IntPtr hProcess, [Out, MarshalAs(UnmanagedType.LPTStr)] StringBuilder lpExeName, uint nSize);
+		internal static extern uint GetProcessImageFileName(nint hProcess, [Out, MarshalAs(UnmanagedType.LPTStr)] StringBuilder lpExeName, uint nSize);
 	}
 }
 #endif

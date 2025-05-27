@@ -19,7 +19,7 @@
 
 			var activeWindow = script.WindowProvider.Manager.ActiveWindow;
 
-			if (activeWindow.Handle != IntPtr.Zero && !activeWindow.IsIconic)
+			if (activeWindow.Handle != 0 && !activeWindow.IsIconic)
 			{
 				if (coordMode == CoordModeType.Window)
 				{
@@ -47,26 +47,26 @@
 
 		internal abstract uint CurrentThreadId();
 
-		internal abstract bool DestroyIcon(IntPtr icon);
+		internal abstract bool DestroyIcon(nint icon);
 
 		internal abstract bool ExitProgram(uint flags, uint reason);
 
-		internal abstract IntPtr GetKeyboardLayout(uint idThread);
+		internal abstract nint GetKeyboardLayout(uint idThread);
 
-		internal abstract IntPtr LoadLibrary(string path);
+		internal abstract nint LoadLibrary(string path);
 
-		internal abstract bool PostHotkeyMessage(IntPtr hWnd, uint wParam, uint lParam);
+		internal abstract bool PostHotkeyMessage(nint hWnd, uint wParam, uint lParam);
 
-		internal abstract bool PostMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
+		internal abstract bool PostMessage(nint hWnd, uint Msg, nint wParam, nint lParam);
 
-		internal abstract bool PostMessage(IntPtr hWnd, uint msg, uint wParam, uint lParam);
+		internal abstract bool PostMessage(nint hWnd, uint msg, uint wParam, uint lParam);
 
-		internal abstract bool RegisterHotKey(IntPtr hWnd, uint id, KeyModifiers fsModifiers, uint vk);
+		internal abstract bool RegisterHotKey(nint hWnd, uint id, KeyModifiers fsModifiers, uint vk);
 
 		internal abstract bool SetDllDirectory(string path);
 
-		internal abstract int ToUnicodeEx(uint wVirtKey, uint wScanCode, byte[] lpKeyState, StringBuilder pwszBuff, int cchBuff, uint wFlags, IntPtr dwhkl);
+		internal abstract int ToUnicodeEx(uint wVirtKey, uint wScanCode, byte[] lpKeyState, StringBuilder pwszBuff, int cchBuff, uint wFlags, nint dwhkl);
 
-		internal abstract bool UnregisterHotKey(IntPtr hWnd, uint id);
+		internal abstract bool UnregisterHotKey(nint hWnd, uint id);
 	}
 }

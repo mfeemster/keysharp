@@ -11,45 +11,45 @@ namespace Keysharp.Core.Linux.X11
 		private const string libXfixesName = "libXfixes";//"libXfixes.so.3",
 
 		[DllImport(libXfixesName)]
-		internal static extern void XFixesSelectSelectionInput(IntPtr display, IntPtr root, IntPtr atom, SelectionNotifyMask mask);
+		internal static extern void XFixesSelectSelectionInput(nint display, nint root, nint atom, SelectionNotifyMask mask);
 
 		[DllImport(libX11Name)]
-		internal static extern void XCloseDisplay(IntPtr display);
+		internal static extern void XCloseDisplay(nint display);
 
 		[DllImport(libX11Name)]
-		internal static extern long XDefaultRootWindow(IntPtr display);
+		internal static extern long XDefaultRootWindow(nint display);
 
 		[DllImport(libX11Name)]
-		internal static extern int XDefaultScreen(IntPtr display);
+		internal static extern int XDefaultScreen(nint display);
 
 		[DllImport("X11")]
-		internal static extern int XFree(IntPtr ptr);
+		internal static extern int XFree(nint ptr);
 
 		[DllImport(libX11Name)]
-		internal static extern int XGetInputFocus(IntPtr display, out long window, out int focusState);
+		internal static extern int XGetInputFocus(nint display, out long window, out int focusState);
 
 		[DllImport(libX11Name)]
-		internal static extern int XDeleteProperty(IntPtr display, long window, IntPtr property);
+		internal static extern int XDeleteProperty(nint display, long window, nint property);
 
 		[DllImport(libX11Name)]
-		internal static extern int XChangeProperty(IntPtr display, long window, IntPtr property, IntPtr type, int format, PropertyMode mode, ref IntPtr value, int nelements);
+		internal static extern int XChangeProperty(nint display, long window, nint property, nint type, int format, PropertyMode mode, ref nint value, int nelements);
 
 		[DllImport(libX11Name)]
-		internal static extern int XGetTextProperty(IntPtr display, long window, ref XTextProperty ret, XAtom atom);
+		internal static extern int XGetTextProperty(nint display, long window, ref XTextProperty ret, XAtom atom);
 
 		[DllImport(libX11Name)]
-		internal static extern int XGetWindowAttributes(IntPtr display, long window, ref XWindowAttributes attributes);
+		internal static extern int XGetWindowAttributes(nint display, long window, ref XWindowAttributes attributes);
 
 		[DllImport(libX11Name)]
-		internal static extern int XRaiseWindow(IntPtr display, long window);
+		internal static extern int XRaiseWindow(nint display, long window);
 
 		[DllImport(libX11Name)]
-		internal static extern int XLowerWindow(IntPtr display, long window);
+		internal static extern int XLowerWindow(nint display, long window);
 
 		[DllImport(libX11Name)]
-		internal static extern int XGetClassHint(IntPtr display, long window, ref XClassHint classHint);
+		internal static extern int XGetClassHint(nint display, long window, ref XClassHint classHint);
 
-		internal static int GetClassHint(IntPtr display, long window, ref XClassHintStr classHint)
+		internal static int GetClassHint(nint display, long window, ref XClassHintStr classHint)
 		{
 			var localClassHint = XClassHint.Zero;
 
@@ -57,8 +57,8 @@ namespace Keysharp.Core.Linux.X11
 			{
 				// Clean up unmanaged memory.
 				// --------------------------
-				// Typically: _classHint.res_name == IntPtr.Zero
-				// Freeing a IntPtr.Zero is not prohibited.
+				// Typically: _classHint.res_name == 0
+				// Freeing a 0 is not prohibited.
 				// Use first member (at offset 0) to free the structure itself.
 				_ = XFree(localClassHint.resName);
 				classHint = XClassHintStr.Zero;
@@ -72,7 +72,7 @@ namespace Keysharp.Core.Linux.X11
 				classHint.resClass = Marshal.PtrToStringAuto(localClassHint.resClass);
 				// Clean up unmanaged memory.
 				// --------------------------
-				// Freeing a IntPtr.Zero is not prohibited.
+				// Freeing a 0 is not prohibited.
 				// First structure member (at offset 0) frees  the structure itself as well.
 				_ = XFree(localClassHint.resName);
 				_ = XFree(localClassHint.resClass);
@@ -81,57 +81,57 @@ namespace Keysharp.Core.Linux.X11
 		}
 
 		[DllImport(libX11Name)]
-		internal static extern int XGetWindowProperty(IntPtr display, long window, IntPtr atom, IntPtr longOffset, IntPtr longLength, bool delete, IntPtr reqType, out IntPtr actualType, out int actualFormat, out IntPtr nitems, out IntPtr bytesAfter, ref IntPtr prop);
+		internal static extern int XGetWindowProperty(nint display, long window, nint atom, nint longOffset, nint longLength, bool delete, nint reqType, out nint actualType, out int actualFormat, out nint nitems, out nint bytesAfter, ref nint prop);
 
 		[DllImport(libX11Name)]
-		public static extern uint XKeysymToKeycode(IntPtr display, uint keySym);
+		public static extern uint XKeysymToKeycode(nint display, uint keySym);
 
 		[DllImport(libX11Name)]
-		internal static extern int XLookupString(ref XEvent key, StringBuilder buffer, int count, IntPtr keySym, IntPtr useless);
+		internal static extern int XLookupString(ref XEvent key, StringBuilder buffer, int count, nint keySym, nint useless);
 
 		[DllImport(libX11Name)]
-		internal static extern void XNextEvent(IntPtr display, ref XEvent ev);
+		internal static extern void XNextEvent(nint display, ref XEvent ev);
 
 		[DllImport(libX11Name)]
-		internal static extern IntPtr XOpenDisplay(IntPtr from);
+		internal static extern nint XOpenDisplay(nint from);
 
 		[DllImport(libX11Name)]
-		internal static extern int XIconifyWindow(IntPtr display, long window, int screenNumber);
+		internal static extern int XIconifyWindow(nint display, long window, int screenNumber);
 
 		[DllImport(libX11Name)]
-		internal static extern int XMapWindow(IntPtr display, long window);
+		internal static extern int XMapWindow(nint display, long window);
 
 		[DllImport(libX11Name)]
-		internal static extern int XUnmapWindow(IntPtr display, long window);
+		internal static extern int XUnmapWindow(nint display, long window);
 
 		[DllImport(libX11Name)]
-		internal static extern int XMoveWindow(IntPtr display, long window, int x, int y);
+		internal static extern int XMoveWindow(nint display, long window, int x, int y);
 
 		[DllImport(libX11Name)]
-		internal static extern int XResizeWindow(IntPtr display, long window, int width, int height);
+		internal static extern int XResizeWindow(nint display, long window, int width, int height);
 
 		[DllImport(libX11Name)]
-		internal static extern int XMoveResizeWindow(IntPtr display, long window, int x, int y, int width, int height);
+		internal static extern int XMoveResizeWindow(nint display, long window, int x, int y, int width, int height);
 
 		[DllImport(libX11Name)]
-		internal static extern int XClearWindow(IntPtr display, long window);
+		internal static extern int XClearWindow(nint display, long window);
 
 		[DllImport(libX11Name)]
-		internal static extern int XKillClient(IntPtr display, long window);
+		internal static extern int XKillClient(nint display, long window);
 
 		[DllImport(libX11Name)]
-		internal static extern IntPtr XInternAtom(IntPtr display, string atomName, bool onlyIfExists);
+		internal static extern nint XInternAtom(nint display, string atomName, bool onlyIfExists);
 
 		[DllImport(libX11Name)]
-		internal static extern int XInternAtoms(IntPtr display, string[] atomNames, int atomCount, bool onlyIfExists, IntPtr[] atoms);
+		internal static extern int XInternAtoms(nint display, string[] atomNames, int atomCount, bool onlyIfExists, nint[] atoms);
 
 		[DllImport(libX11Name)]
-		internal static extern int XSendEvent(IntPtr display, long window, bool propagate, EventMasks eventMask, ref XEvent sendEvent);
+		internal static extern int XSendEvent(nint display, long window, bool propagate, EventMasks eventMask, ref XEvent sendEvent);
 
 		[DllImport(libX11Name)]
-		internal static extern int XGetWMName(IntPtr display, long window, ref XTextProperty textProp);
+		internal static extern int XGetWMName(nint display, long window, ref XTextProperty textProp);
 
-		internal static string GetWMName(IntPtr display, long window)
+		internal static string GetWMName(nint display, long window)
 		{
 			var titleNameProp = new XTextProperty();
 
@@ -143,23 +143,23 @@ namespace Keysharp.Core.Linux.X11
 			{
 				var title = "";
 
-				if (titleNameProp.value == IntPtr.Zero || titleNameProp.format != 8 || titleNameProp.nitems > 0)
+				if (titleNameProp.value == 0 || titleNameProp.format != 8 || titleNameProp.nitems > 0)
 					title = Marshal.PtrToStringAuto(titleNameProp.value);
 
 				_ = XFree(titleNameProp.value);
-				titleNameProp.value = IntPtr.Zero;
+				titleNameProp.value = 0;
 				return title;
 			}
 		}
 
 		[DllImport(libX11Name)]
-		internal static extern IntPtr XGetAtomName(IntPtr display, IntPtr atom);
+		internal static extern nint XGetAtomName(nint display, nint atom);
 
-		internal static string GetAtomName(IntPtr display, IntPtr atom)
+		internal static string GetAtomName(nint display, nint atom)
 		{
 			var buf = XGetAtomName(display, atom);
 
-			if (buf == IntPtr.Zero)
+			if (buf == 0)
 				return null;
 
 			var name = Marshal.PtrToStringAuto(buf);
@@ -168,7 +168,7 @@ namespace Keysharp.Core.Linux.X11
 		}
 
 		[DllImport(libX11Name)]
-		internal static extern int XFlush(IntPtr display);
+		internal static extern int XFlush(nint display);
 
 		/// <summary>
 		/// The XQueryTree() function returns the root ID, the parent window ID,
@@ -186,35 +186,35 @@ namespace Keysharp.Core.Linux.X11
 		/// <param name="nchildren_return">Returns the number of children.</param>
 		/// <returns></returns>
 		[DllImport(libX11Name)]
-		internal static extern int XQueryTree(IntPtr display, long window, out long rootReturn, out long parentReturn,
-											  out IntPtr childrenReturn, out int nchildrenReturn);
+		internal static extern int XQueryTree(nint display, long window, out long rootReturn, out long parentReturn,
+											  out nint childrenReturn, out int nchildrenReturn);
 
 		[DllImport(libX11Name)]
-		internal static extern IntPtr XSelectInput(IntPtr display, long window, EventMasks eventMask);
+		internal static extern nint XSelectInput(nint display, long window, EventMasks eventMask);
 
 		[DllImport(libX11Name)]
 		internal static extern XErrorHandler XSetErrorHandler(XErrorHandler handler);
 
 		[DllImport(libX11Name)]
-		internal static extern void XSetTextProperty(IntPtr display, long window, ref XTextProperty textProp, XAtom atom);
+		internal static extern void XSetTextProperty(nint display, long window, ref XTextProperty textProp, XAtom atom);
 
 		[DllImport(libX11Name)]
-		internal static extern int XStringListToTextProperty(ref IntPtr argv, int argc, ref XTextProperty textProp);
+		internal static extern int XStringListToTextProperty(ref nint argv, int argc, ref XTextProperty textProp);
 
 		[DllImport(libX11Name)]
-		internal static extern int XTextPropertyToStringList(IntPtr prop, ref byte[] listReturn, out int countReturn);
+		internal static extern int XTextPropertyToStringList(nint prop, ref byte[] listReturn, out int countReturn);
 
 		[DllImport(libX11Name)]
 		internal static extern uint XStringToKeysym(string convert);
 
 		[DllImport(libX11Name)]
-		internal extern static bool XTranslateCoordinates(IntPtr display, long srcWin, long destWin, int srcX, int srcY, out int destXreturn, out int destYreturn, out IntPtr childReturn);
+		internal extern static bool XTranslateCoordinates(nint display, long srcWin, long destWin, int srcX, int srcY, out int destXreturn, out int destYreturn, out nint childReturn);
 
 		[DllImport(libX11Name)]
-		internal extern static bool XGetGeometry(IntPtr display, long window, out IntPtr root, out int x, out int y, out int width, out int height, out int borderWidth, out int depth);
+		internal extern static bool XGetGeometry(nint display, long window, out nint root, out int x, out int y, out int width, out int height, out int borderWidth, out int depth);
 
 		[DllImport("libXtst.so.6")]
-		internal static extern void XTestFakeKeyEvent(IntPtr display, uint keyCode, bool isPress, ulong delay);
+		internal static extern void XTestFakeKeyEvent(nint display, uint keyCode, bool isPress, ulong delay);
 
 		[DllImport(libCName)]
 		internal static extern int getpid();
@@ -229,18 +229,18 @@ namespace Keysharp.Core.Linux.X11
 		internal static extern ulong pthread_self();
 
 		[DllImport(libGdiPlusName, ExactSpelling = true)]
-		internal static extern int GdipDisposeImage(IntPtr image);
+		internal static extern int GdipDisposeImage(nint image);
 
 		[DllImport(libDlName)]
-		internal static extern IntPtr dlopen(string filename, uint flags);
+		internal static extern nint dlopen(string filename, uint flags);
 
 		[DllImport(libDlName)]
-		internal static extern IntPtr dlsym(IntPtr handle, string symbol);
+		internal static extern nint dlsym(nint handle, string symbol);
 
 		internal const int RTLD_LAZY = 1;
 		internal const int RTLD_NOW = 2;
 	}
 
-	internal delegate int XErrorHandler(IntPtr displayHandle, ref XErrorEvent errorEvent);
+	internal delegate int XErrorHandler(nint displayHandle, ref XErrorEvent errorEvent);
 }
 #endif

@@ -58,7 +58,7 @@
 			}
 
 			var tooltipInvokerForm = GuiHelper.DialogOwner ?? Form.ActiveForm;
-			var focusedWindow = IntPtr.Zero;
+			var focusedWindow = 0;
 			var one_or_both_coords_specified = _x != int.MinValue || _y != int.MinValue;
 
 			if (tooltipInvokerForm == null)
@@ -96,7 +96,7 @@
 #if WINDOWS
 				var h = tt.GetType().GetProperty("Handle", BindingFlags.Instance | BindingFlags.NonPublic);
 
-				handle = ((IntPtr)h.GetValue(tt)).ToInt64();
+				handle = ((nint)h.GetValue(tt)).ToInt64();
 
 #elif LINUX
 				var ttwndField = tt.GetType().GetField("tooltip_window", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -105,7 +105,7 @@
 
 				var hprop = ttwnd.GetType().GetProperty("Handle", BindingFlags.Instance | BindingFlags.Public);
 
-				handle = ((IntPtr)hprop.GetValue(ttwnd)).ToInt64();
+				handle = ((nint)hprop.GetValue(ttwnd)).ToInt64();
 
 #endif
 			}, false);
@@ -145,7 +145,7 @@
 					//}
 					var foreground = script.WindowProvider.Manager.ActiveWindow;
 
-					if (foreground.Handle != IntPtr.Zero)
+					if (foreground.Handle != 0)
 						script.PlatformProvider.Manager.CoordToScreen(ref tempx, ref tempy, CoordMode.Tooltip);
 				}
 

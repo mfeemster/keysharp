@@ -95,7 +95,7 @@
 			var win = Script.TheScript.WindowProvider.Manager.ActiveWindow;
 			var forewin = win.Handle;
 
-			if (forewin != IntPtr.Zero)
+			if (forewin != 0)
 				item.targetWindow = forewin != HistoryHwndPrev ? win.Title : "";
 			else
 				item.targetWindow = "N/A";

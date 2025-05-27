@@ -383,7 +383,7 @@
 			if (!(doBackspace || omitEndChar) && sendMode != SendModes.Event) // The final character of the abbreviation (or its EndChar) was not suppressed by the hook.
 				Thread.Sleep(0);
 
-			kbdMouseSender.SendKeys(sendBuf, sendRaw, sendMode, IntPtr.Zero); // Send the backspaces and/or replacement.
+			kbdMouseSender.SendKeys(sendBuf, sendRaw, sendMode, 0); // Send the backspaces and/or replacement.
 			// Restore original values.
 			tv.keyDelay = oldDelay;
 			tv.keyDuration = oldPressDuration;
@@ -406,7 +406,7 @@
 		/// has been done.  Caller must have already created a new thread for us, and must close the thread when
 		/// we return.
 		/// </summary>
-		internal ResultType PerformInNewThreadMadeByCaller(IntPtr hwndCritFound, string endChar)
+		internal ResultType PerformInNewThreadMadeByCaller(nint hwndCritFound, string endChar)
 		{
 			var script = Script.TheScript;
 			

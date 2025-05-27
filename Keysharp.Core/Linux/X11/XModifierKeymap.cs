@@ -5,7 +5,7 @@ namespace Keysharp.Core.Linux.X11
 	internal struct XModifierKeymap
 	{
 		internal int max_keypermod;
-		internal IntPtr modifiermap;
+		internal nint modifiermap;
 	}
 }
 #endif

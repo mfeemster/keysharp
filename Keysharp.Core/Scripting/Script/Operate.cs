@@ -195,14 +195,7 @@ namespace Keysharp.Scripting
 							if (secondIsDouble)
 								return firstl + secondd;
 							else
-							{
-								if (left is IntPtr lip)
-									return IntPtr.Add(lip, (int)secondl);
-								else if (right is IntPtr rip)
-									return IntPtr.Add(rip, (int)firstl);
-								else
-									return firstl + secondl;
-							}
+								return firstl + secondl;
 						}
 					}
 
@@ -668,14 +661,7 @@ namespace Keysharp.Scripting
 							if (secondIsDouble)
 								return firstl - secondd;
 							else
-							{
-								if (left is IntPtr lip)
-									return IntPtr.Subtract(lip, (int)secondl);
-								else if (right is IntPtr rip)
-									return IntPtr.Subtract(new IntPtr(firstl), (int)secondl);
-								else
-									return firstl - secondl;
-							}
+								return firstl - secondl;
 						}
 					}
 
@@ -787,10 +773,6 @@ namespace Keysharp.Scripting
 			{
 				firstl = b ? 1L : 0L;
 			}
-			else if (left is IntPtr lip)
-			{
-				firstl = lip.ToInt64();
-			}
 			else if (left.ParseLong(ref firstl, false, false))
 			{
 			}
@@ -817,10 +799,6 @@ namespace Keysharp.Scripting
 			else if (right is bool b)
 			{
 				secondl = b ? 1L : 0L;
-			}
-			else if (right is IntPtr rip)
-			{
-				secondl = rip.ToInt64();
 			}
 			else if (right.ParseLong(ref secondl, false, false))
 			{

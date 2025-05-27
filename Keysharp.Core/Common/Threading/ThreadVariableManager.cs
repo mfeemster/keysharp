@@ -43,7 +43,7 @@
 			}
 		}
 
-		internal (bool, ThreadVariables) PushThreadVariables(int priority, bool skipUninterruptible,
+		internal (bool, ThreadVariables) PushThreadVariables(int priority, bool skipninterruptible,
 				bool isCritical = false, bool onlyIfEmpty = false)
 		{
 			if (!onlyIfEmpty || threadVars.Index == 0)
@@ -57,7 +57,7 @@
 					tv.threadId = Thread.CurrentThread.ManagedThreadId;
 					tv.priority = priority;
 
-					if (!skipUninterruptible)
+					if (!skipninterruptible)
 					{
 						if (!tv.isCritical)
 							tv.isCritical = isCritical;
@@ -72,7 +72,7 @@
 								if (script.uninterruptibleTime < 0) // A setting of -1 (or any negative) means the thread's uninterruptibility never times out.
 								{
 									tv.uninterruptibleDuration = -1; // "Lock in" the above because for backward compatibility, above is not supposed to affect threads after they're created. Override the default value contained in g_default.
-									//g.ThreadStartTime doesn't need to be set when g.UninterruptibleDuration < 0.
+									//g.ThreadStartTime doesn't need to be set when g.ninterruptibleDuration < 0.
 								}
 								else // It's now known to be >0 (due to various checks above).
 								{

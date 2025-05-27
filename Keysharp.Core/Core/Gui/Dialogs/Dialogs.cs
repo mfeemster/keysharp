@@ -485,7 +485,7 @@ namespace Keysharp.Core
 					{
 						long hwnd = 0;
 
-						if (Options.TryParse(opt, "Owner", ref hwnd)) { owner = Control.FromHandle(new IntPtr(hwnd)); }
+						if (Options.TryParse(opt, "Owner", ref hwnd)) { owner = Control.FromHandle(new nint(hwnd)); }
 						else if (Options.TryParse(opt, "T", ref timeout)) { }
 						else if (int.TryParse(opt, out var itemp))
 						{
@@ -637,11 +637,11 @@ namespace Keysharp.Core
 
 			while (tempn > 0)
 			{
-				IntPtr wnd;
+				nint wnd;
 
-				if ((wnd = WindowsAPI.FindWindow("#32770", null)) != IntPtr.Zero)
+				if ((wnd = WindowsAPI.FindWindow("#32770", null)) != 0)
 				{
-					_ = WindowsAPI.SendMessage(wnd, WindowsAPI.WM_CLOSE, IntPtr.Zero, IntPtr.Zero);
+					_ = WindowsAPI.SendMessage(wnd, WindowsAPI.WM_CLOSE, 0, 0);
 					tempn--;
 				}
 			}

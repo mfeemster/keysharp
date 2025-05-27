@@ -41,7 +41,7 @@ namespace Keysharp.Core
 					on = b.Value;
 
 					if (on)
-						freq = ThreadVariables.DefaultUninterruptiblePeekFrequency;
+						freq = ThreadVariables.DefaultninterruptiblePeekFrequency;
 				}
 			}
 

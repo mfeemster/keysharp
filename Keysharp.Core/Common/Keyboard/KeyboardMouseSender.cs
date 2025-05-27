@@ -204,7 +204,7 @@
 
 		internal abstract void DoMouseDelay();
 
-		internal abstract IntPtr GetFocusedKeybdLayout(IntPtr aWindow);
+		internal abstract nint GetFocusedKeybdLayout(nint aWindow);
 
 		internal abstract uint GetModifierLRState(bool aExplicitlyGet = false);
 
@@ -384,12 +384,12 @@
 		internal abstract void SendEventArray(ref long aFinalKeyDelay, uint aModsDuringSend);
 
 		internal abstract void SendKey(uint aVK, uint aSC, uint aModifiersLR, uint aModifiersLRPersistent
-									   , long aRepeatCount, KeyEventTypes aEventType, uint aKeyAsModifiersLR, IntPtr aTargetWindow
+									   , long aRepeatCount, KeyEventTypes aEventType, uint aKeyAsModifiersLR, nint aTargetWindow
 									   , int aX = CoordUnspecified, int aY = CoordUnspecified, bool aMoveOffset = false);
 
 		internal abstract void SendKeyEventMenuMask(KeyEventTypes aEventType, uint aExtraInfo = KeyIgnoreAllExceptModifier);
 
-		internal abstract void SendKeys(string aKeys, SendRawModes aSendRaw, SendModes aSendModeOrig, IntPtr aTargetWindow);
+		internal abstract void SendKeys(string aKeys, SendRawModes aSendRaw, SendModes aSendModeOrig, nint aTargetWindow);
 
 		internal abstract int SiEventCount();
 
@@ -404,7 +404,7 @@
 		//protected internal abstract void Send(string keys);
 
 		//protected internal abstract void Send(Keys key);
-		protected internal abstract void SendKeyEvent(KeyEventTypes aEventType, uint aVK, uint aSC = 0u, IntPtr aTargetWindow = default, bool aDoKeyDelay = false, uint aExtraInfo = KeyIgnoreAllExceptModifier);
+		protected internal abstract void SendKeyEvent(KeyEventTypes aEventType, uint aVK, uint aSC = 0u, nint aTargetWindow = default, bool aDoKeyDelay = false, uint aExtraInfo = KeyIgnoreAllExceptModifier);
 
 		protected abstract void RegisterHook();
 	}

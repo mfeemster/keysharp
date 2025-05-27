@@ -51,7 +51,7 @@
 		/// <summary>
 		/// Gets the raw pointer address (as a long) to the unmanaged buffer.
 		/// </summary>
-		public IntPtr Ptr => (IntPtr)_buffer;
+		public long Ptr => (long)_buffer;
 
 		/// <summary>
 		/// Gets or sets the current write/read position in character units.

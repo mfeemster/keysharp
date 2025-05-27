@@ -50,7 +50,7 @@ namespace Keysharp.Core.Windows
 				if (!IsSpecified)
 					return;
 
-				var type = new IntPtr(value ? WindowsAPI.HWND_TOPMOST : WindowsAPI.HWND_NOTOPMOST);
+				var type = new nint(value ? WindowsAPI.HWND_TOPMOST : WindowsAPI.HWND_NOTOPMOST);
 				_ = WindowsAPI.SetWindowPos(Handle, type, 0, 0, 0, 0, WindowsAPI.SWP_NOMOVE | WindowsAPI.SWP_NOSIZE | WindowsAPI.SWP_NOACTIVATE);
 				DoWinDelay();
 			}
@@ -63,7 +63,7 @@ namespace Keysharp.Core.Windows
 				if (!IsSpecified)
 					return;
 
-				var type = new IntPtr(value ? WindowsAPI.HWND_BOTTOM : WindowsAPI.HWND_TOP);
+				var type = new nint(value ? WindowsAPI.HWND_BOTTOM : WindowsAPI.HWND_TOP);
 				_ = WindowsAPI.SetWindowPos(Handle, type, 0, 0, 0, 0, WindowsAPI.SWP_NOMOVE | WindowsAPI.SWP_NOSIZE | WindowsAPI.SWP_NOACTIVATE);
 			}
 		}
@@ -77,7 +77,7 @@ namespace Keysharp.Core.Windows
 				if (IsSpecified)
 				{
 					//var detectHiddenText = ThreadAccessors.A_DetectHiddenText;
-					_ = WindowsAPI.EnumChildWindows(Handle, (IntPtr hwnd, int lParam) =>
+					_ = WindowsAPI.EnumChildWindows(Handle, (nint hwnd, int lParam) =>
 					{
 						//if (detectHiddenText || WindowsAPI.IsWindowVisible(hwnd))
 						_ = children.Add(new WindowItem(hwnd));
@@ -142,11 +142,11 @@ namespace Keysharp.Core.Windows
 			set
 			{
 				if (IsSpecified)
-					_ = WindowsAPI.SetWindowLongPtr(Handle, WindowsAPI.GWL_EXSTYLE, new IntPtr(value));
+					_ = WindowsAPI.SetWindowLongPtr(Handle, WindowsAPI.GWL_EXSTYLE, new nint(value));
 			}
 		}
 
-		internal override bool IsHung => Handle == IntPtr.Zero ? false : WindowsAPI.IsHungAppWindow(Handle);
+		internal override bool IsHung => Handle == 0 ? false : WindowsAPI.IsHungAppWindow(Handle);
 
 		internal override Rectangle Location
 		{
@@ -195,7 +195,7 @@ namespace Keysharp.Core.Windows
 
 				var hProc = WindowsAPI.OpenProcess(ProcessAccessTypes.PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
 
-				if (hProc == IntPtr.Zero)
+				if (hProc == 0)
 					return "";
 
 				try
@@ -255,7 +255,7 @@ namespace Keysharp.Core.Windows
 			set
 			{
 				if (IsSpecified)
-					_ = WindowsAPI.SetWindowLongPtr(Handle, WindowsAPI.GWL_STYLE, new IntPtr(value));
+					_ = WindowsAPI.SetWindowLongPtr(Handle, WindowsAPI.GWL_STYLE, new nint(value));
 			}
 		}
 
@@ -268,7 +268,7 @@ namespace Keysharp.Core.Windows
 
 				var items = new List<string>(64);
 				var tv = Script.TheScript.Threads.GetThreadVariables();
-				_ = WindowsAPI.EnumChildWindows(Handle, (IntPtr hwnd, int lParam) =>
+				_ = WindowsAPI.EnumChildWindows(Handle, (nint hwnd, int lParam) =>
 				{
 					if (tv.detectHiddenText || WindowsAPI.IsWindowVisible(hwnd))
 					{
@@ -310,14 +310,14 @@ namespace Keysharp.Core.Windows
 				if (value is string s)
 				{
 					if (s.ToLower() == "off")
-						_ = WindowsAPI.SetWindowLongPtr(Handle, WindowsAPI.GWL_EXSTYLE, new IntPtr(exstyle | ~WindowsAPI.WS_EX_LAYERED));
+						_ = WindowsAPI.SetWindowLongPtr(Handle, WindowsAPI.GWL_EXSTYLE, new nint(exstyle | ~WindowsAPI.WS_EX_LAYERED));
 				}
 				else
 				{
 					Error err;
 					var alpha = Math.Clamp((int)value.Al(), 0, 255);
 
-					if (WindowsAPI.SetWindowLongPtr(Handle, WindowsAPI.GWL_EXSTYLE, new IntPtr(exstyle | WindowsAPI.WS_EX_LAYERED)) == IntPtr.Zero ||
+					if (WindowsAPI.SetWindowLongPtr(Handle, WindowsAPI.GWL_EXSTYLE, new nint(exstyle | WindowsAPI.WS_EX_LAYERED)) == 0 ||
 							!WindowsAPI.SetLayeredWindowAttributes(Handle, 0, (byte)alpha, WindowsAPI.LWA_ALPHA))
 						_ = Errors.ErrorOccurred(err = new OSError("", $"Could not assign transparency with alpha value of {alpha}.")) ? throw err : "";
 				}
@@ -343,7 +343,7 @@ namespace Keysharp.Core.Windows
 
 				if (colorstr.ToLower() == "off")
 				{
-					if (WindowsAPI.SetWindowLongPtr(Handle, WindowsAPI.GWL_EXSTYLE, new IntPtr(exstyle.ToInt64() & ~WindowsAPI.WS_EX_LAYERED)) == IntPtr.Zero)
+					if (WindowsAPI.SetWindowLongPtr(Handle, WindowsAPI.GWL_EXSTYLE, new nint(exstyle.ToInt64() & ~WindowsAPI.WS_EX_LAYERED)) == 0)
 						_ = Errors.ErrorOccurred(err = new OSError("", $"Could not turn transparency off.")) ? throw err : "";
 				}
 				else
@@ -359,7 +359,7 @@ namespace Keysharp.Core.Windows
 							flags |= WindowsAPI.LWA_ALPHA;
 						}
 
-						if (WindowsAPI.SetWindowLongPtr(Handle, WindowsAPI.GWL_EXSTYLE, new IntPtr(exstyle.ToInt64() | WindowsAPI.WS_EX_LAYERED)) != IntPtr.Zero)//At one point this only worked with xor ^ and not or |, but it seems to be working with | now.
+						if (WindowsAPI.SetWindowLongPtr(Handle, WindowsAPI.GWL_EXSTYLE, new nint(exstyle.ToInt64() | WindowsAPI.WS_EX_LAYERED)) != 0)//At one point this only worked with xor ^ and not or |, but it seems to be working with | now.
 						{
 							color = Color.FromArgb(color.A, color.B, color.G, color.R);//Flip RGB to BGR.
 
@@ -405,7 +405,7 @@ namespace Keysharp.Core.Windows
 			}
 		}
 
-		internal WindowItem(IntPtr handle) : base(handle)
+		internal WindowItem(nint handle) : base(handle)
 		{
 		}
 
@@ -414,10 +414,10 @@ namespace Keysharp.Core.Windows
 		/// </summary>
 		/// <param name="targetWindow"></param>
 		/// <returns></returns>
-		internal static IntPtr SetForegroundWindowEx(WindowItemBase win, bool backgroundActivation = false)
+		internal static nint SetForegroundWindowEx(WindowItemBase win, bool backgroundActivation = false)
 		{
 			if (win == null)
-				return IntPtr.Zero;
+				return 0;
 
 			var targetWindow = win.Handle;
 			var script = Script.TheScript;
@@ -425,7 +425,7 @@ namespace Keysharp.Core.Windows
 			var targetThread = WindowsAPI.GetWindowThreadProcessId(targetWindow, out var procid);
 
 			if (targetThread != mainid && win.IsHung)//Calls to IsWindowHung should probably be avoided if the window belongs to our thread.
-				return IntPtr.Zero;
+				return 0;
 
 			var origForegroundWnd = WindowsAPI.GetForegroundWindow();
 			var sender = script.HookThread.kbdMsSender;
@@ -445,14 +445,14 @@ namespace Keysharp.Core.Windows
 			if (targetWindow == origForegroundWnd)//It's already the active window.
 				return targetWindow;
 
-			var newForegroundWnd = IntPtr.Zero;
+			nint newForegroundWnd = 0;
 
 			//Try a simple approach first.
 			if (!script.WinActivateForce)
 			{
 				newForegroundWnd = AttemptSetForeground(targetWindow, origForegroundWnd);
 
-				if (newForegroundWnd != IntPtr.Zero)
+				if (newForegroundWnd != 0)
 					return newForegroundWnd;
 			}
 
@@ -460,7 +460,7 @@ namespace Keysharp.Core.Windows
 			bool is_attached_my_to_fore = false, isAttachedForeToTarget = false;
 			uint foreThread = 0;
 
-			if (origForegroundWnd != IntPtr.Zero) // Might be NULL from above.
+			if (origForegroundWnd != 0) // Might be NULL from above.
 			{
 				var foregroundwin = new WindowItem(origForegroundWnd);
 				// Based on MSDN docs, these calls should always succeed due to the other
@@ -516,12 +516,12 @@ namespace Keysharp.Core.Windows
 					// installed, the Alt-up will be suppressed to further reduce the risk of side-effects.  Testing
 					// showed that the suppressed event worked just as well (in theory, because the system's handling
 					// of it isn't and can't be suppressed).
-					sender.SendKeyEvent(KeyEventTypes.KeyUp, VirtualKeys.VK_MENU, 0, IntPtr.Zero, false, KeyboardMouseSender.KeyBlockThis);//Porting these will be tough.
+					sender.SendKeyEvent(KeyEventTypes.KeyUp, VirtualKeys.VK_MENU, 0, 0, false, KeyboardMouseSender.KeyBlockThis);//Porting these will be tough.
 				}
 
 				newForegroundWnd = AttemptSetForeground(targetWindow, origForegroundWnd);
 
-				if (newForegroundWnd != IntPtr.Zero)
+				if (newForegroundWnd != 0)
 					break;
 			}
 
@@ -532,7 +532,7 @@ namespace Keysharp.Core.Windows
 			// - Using SW_FORCEMINIMIZE instead of SW_MINIMIZE has at least one (and probably more)
 			// side effect: When the window is restored, at least via SW_RESTORE, it is no longer
 			// maximized even if it was before the minimize.  So don't use it.
-			if (newForegroundWnd == IntPtr.Zero) // Not successful yet.
+			if (newForegroundWnd == 0) // Not successful yet.
 			{
 				// Some apps may be intentionally blocking us by having called the API function
 				// LockSetForegroundWindow(), for which MSDN says "The system automatically enables
@@ -586,7 +586,7 @@ namespace Keysharp.Core.Windows
 			// is a bit messed up, because when you dismiss the MessageBox, an unexpected
 			// window (probably the one two levels down) becomes active rather than the
 			// window that's only 1 level down in the z-order:
-			if (newForegroundWnd != IntPtr.Zero && !backgroundActivation) // success.
+			if (newForegroundWnd != 0 && !backgroundActivation) // success.
 			{
 				// Even though this is already done for the IE 5.5 "hack" above, must at
 				// a minimum do it here: The above one may be optional, not sure (safest
@@ -606,7 +606,7 @@ namespace Keysharp.Core.Windows
 		internal override void ChildFindPoint(PointAndHwnd pah)
 		{
 			var rect = new RECT();
-			_ = WindowsAPI.EnumChildWindows(Handle, (IntPtr hwnd, int lParam) =>
+			_ = WindowsAPI.EnumChildWindows(Handle, (nint hwnd, int lParam) =>
 			{
 				if (!WindowsAPI.IsWindowVisible(hwnd) // Omit hidden controls, like Window Spy does.
 						|| (pah.ignoreDisabled && !WindowsAPI.IsWindowEnabled(hwnd))) // For ControlClick, also omit disabled controls, since testing shows that the OS doesn't post mouse messages to them.
@@ -629,7 +629,7 @@ namespace Keysharp.Core.Windows
 					var centerx = rect.Left + ((double)(rect.Right - rect.Left) / 2);
 					var centery = rect.Top + ((double)(rect.Bottom - rect.Top) / 2);
 					var distance = Math.Sqrt(Math.Pow(pah.pt.X - centerx, 2.0) + Math.Pow(pah.pt.Y - centery, 2.0));
-					var updateIt = pah.hwndFound == IntPtr.Zero;
+					var updateIt = pah.hwndFound == 0;
 
 					if (!updateIt)
 					{
@@ -689,7 +689,7 @@ namespace Keysharp.Core.Windows
 			return pt;
 		}
 
-		internal override bool Close() => IsSpecified&& WindowsAPI.PostMessage(Handle, WindowsAPI.WM_CLOSE, IntPtr.Zero, IntPtr.Zero);
+		internal override bool Close() => IsSpecified&& WindowsAPI.PostMessage(Handle, WindowsAPI.WM_CLOSE, 0, 0);
 
 		internal uint GetMenuItemId(params object[] items)
 		{
@@ -698,7 +698,7 @@ namespace Keysharp.Core.Windows
 
 			var i1 = 0;
 			var menuid = 0xFFFFFFFF;
-			IntPtr menu = IntPtr.Zero;
+			nint menu = 0;
 
 			if (items[0].As() == "0&")
 			{
@@ -708,7 +708,7 @@ namespace Keysharp.Core.Windows
 			else
 				menu = WindowsAPI.GetMenu(Handle);
 
-			if (menu == IntPtr.Zero || WindowsAPI.GetMenuItemCount(menu) == 0)
+			if (menu == 0 || WindowsAPI.GetMenuItemCount(menu) == 0)
 				return 0xFFFFFFFF;
 
 			for (; i1 < items.Length; i1++)
@@ -724,7 +724,7 @@ namespace Keysharp.Core.Windows
 					menuid = WindowsAPI.GetMenuItemID(menu, n);
 					menu = WindowsAPI.GetSubMenu(menu, n);
 
-					if (menu == IntPtr.Zero)
+					if (menu == 0)
 						break;// return 0xFFFFFFFF;
 				}
 				else
@@ -767,9 +767,9 @@ namespace Keysharp.Core.Windows
 				return true;
 
 			var pid = (uint)PID;
-			var prc = pid != 0 ? WindowsAPI.OpenProcess(ProcessAccessTypes.PROCESS_ALL_ACCESS, false, pid) : IntPtr.Zero;
+			var prc = pid != 0 ? WindowsAPI.OpenProcess(ProcessAccessTypes.PROCESS_ALL_ACCESS, false, pid) : 0;
 
-			if (prc != IntPtr.Zero)
+			if (prc != 0)
 			{
 				_ = WindowsAPI.TerminateProcess(prc, 0);
 				_ = WindowsAPI.CloseHandle(prc);
@@ -788,7 +788,7 @@ namespace Keysharp.Core.Windows
 		//  return child;
 		//}
 
-		internal override bool Redraw() => IsSpecified&& WindowsAPI.InvalidateRect(Handle, IntPtr.Zero, true);
+		internal override bool Redraw() => IsSpecified&& WindowsAPI.InvalidateRect(Handle, 0, true);
 
 		internal void SendMouseEvent(uint mouseevent, Point? location = null)
 		{
@@ -806,8 +806,8 @@ namespace Keysharp.Core.Windows
 				click.Y = size.Height / 2;
 			}
 
-			var lparam = new IntPtr(Conversions.MakeInt(click.X, click.Y));
-			_ = WindowsAPI.PostMessage(Handle, mouseevent, new IntPtr(1), lparam);
+			var lparam = new nint(Conversions.MakeInt(click.X, click.Y));
+			_ = WindowsAPI.PostMessage(Handle, mouseevent, new nint(1), lparam);
 		}
 
 		internal override bool Show()
@@ -825,7 +825,7 @@ namespace Keysharp.Core.Windows
 		/// <param name="targetWindow"></param>
 		/// <param name="foreWindow"></param>
 		/// <returns></returns>
-		private static IntPtr AttemptSetForeground(IntPtr targetWindow, IntPtr foreWindow)
+		private static nint AttemptSetForeground(nint targetWindow, nint foreWindow)
 		{
 			_ = WindowsAPI.SetForegroundWindow(targetWindow);
 			//Need to be able to set interrupt disable here which prevents both timers and hotkeys from firing while this sleep is happening.//TODO
@@ -840,7 +840,7 @@ namespace Keysharp.Core.Windows
 			// made the foreground window, at least if the windows it owns are visible.
 			return newForeWindow != foreWindow && targetWindow == WindowsAPI.GetWindow(newForeWindow, WindowsAPI.GW_OWNER)
 				   ? newForeWindow
-				   : IntPtr.Zero;
+				   : 0;
 		}
 	}
 }

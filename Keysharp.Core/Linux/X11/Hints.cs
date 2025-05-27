@@ -20,7 +20,7 @@ namespace Keysharp.Core.Linux.X11
 	[StructLayout(LayoutKind.Sequential)]
 	internal struct XSizeHints
 	{
-		internal IntPtr flags;
+		internal nint flags;
 		internal int x;
 		internal int y;
 		internal int width;
@@ -57,22 +57,22 @@ namespace Keysharp.Core.Linux.X11
 	[StructLayout(LayoutKind.Sequential)]
 	internal struct XWMHints
 	{
-		internal IntPtr flags;
+		internal nint flags;
 		internal bool input;
 		internal XInitialState initial_state;
-		internal IntPtr icon_pixmap;
-		internal IntPtr icon_window;
+		internal nint icon_pixmap;
+		internal nint icon_window;
 		internal int icon_x;
 		internal int icon_y;
-		internal IntPtr icon_mask;
-		internal IntPtr window_group;
+		internal nint icon_mask;
+		internal nint window_group;
 	}
 
 	[StructLayout(LayoutKind.Sequential)]
 	internal struct XClassHint
 	{
-		public IntPtr resName;
-		public IntPtr resClass;
+		public nint resName;
+		public nint resClass;
 
 		public static XClassHint Zero = new XClassHint();
 	}

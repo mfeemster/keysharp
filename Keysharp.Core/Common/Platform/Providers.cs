@@ -52,7 +52,7 @@
 		/// </summary>
 		/// <param name="drive"></param>
 		/// <returns></returns>
-		internal static StatusBarBase CreateStatusBar(IntPtr hwnd)
+		internal static StatusBarBase CreateStatusBar(nint hwnd)
 		{
 #if WINDOWS
 			return new StatusBar(hwnd);

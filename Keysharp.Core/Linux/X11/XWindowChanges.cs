@@ -9,7 +9,7 @@ namespace Keysharp.Core.Linux.X11
 		internal int width;
 		internal int height;
 		internal int border_width;
-		internal IntPtr sibling;
+		internal nint sibling;
 		internal StackMode stack_mode;
 	}
 }

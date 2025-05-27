@@ -27,11 +27,11 @@ namespace Keysharp.Core.Windows
 				var sb = new StringBuilder(128);
 				var str = $"open {drive.Name} type cdaudio alias cd wait shareable";
 
-				if (WindowsAPI.mciSendString(str, sb, sb.Capacity, IntPtr.Zero) != 0)
+				if (WindowsAPI.mciSendString(str, sb, sb.Capacity, 0) != 0)
 					return Errors.ErrorOccurred(err = new Error($"Opening CD {drive.Name} failed.")) ? throw err : null;
 
-				var res = WindowsAPI.mciSendString("status cdaudio mode", sb, sb.Capacity, IntPtr.Zero);
-				_ = WindowsAPI.mciSendString("close cd wait", null, 0, IntPtr.Zero);
+				var res = WindowsAPI.mciSendString("status cdaudio mode", sb, sb.Capacity, 0);
+				_ = WindowsAPI.mciSendString("close cd wait", null, 0, 0);
 
 				if (res == 0)
 					return sb.ToString();
@@ -53,15 +53,15 @@ namespace Keysharp.Core.Windows
 
 		private void EjectRetract(uint control, long l, long lo)
 		{
-			var fileHandle = IntPtr.Zero;
+			nint fileHandle = 0;
 			Exception exception = null;
 
 			try
 			{
 				//Create an handle to the drive.
 				fileHandle = WindowsAPI.CreateFile(CreateDeviceIOPath,
-												   WindowsAPI.GENERICREAD, 0, IntPtr.Zero,
-												   WindowsAPI.OPENEXISTING, 0, IntPtr.Zero);
+												   WindowsAPI.GENERICREAD, 0, 0,
+												   WindowsAPI.OPENEXISTING, 0, 0);
 
 				if ((int)fileHandle != WindowsAPI.INVALID_HANDLE)
 				{
@@ -83,7 +83,7 @@ namespace Keysharp.Core.Windows
 			{
 				//Close Drive Handle.
 				_ = WindowsAPI.CloseHandle(fileHandle);
-				fileHandle = IntPtr.Zero;
+				fileHandle = 0;
 			}
 
 			if (exception != null)

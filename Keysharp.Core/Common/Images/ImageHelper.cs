@@ -88,7 +88,7 @@
 
 					if (long.TryParse(hstr, out var handle))
 					{
-						var tempico = Icon.FromHandle(new IntPtr(handle));
+						var tempico = Icon.FromHandle(new nint(handle));
 						bmp = tempico.ToBitmap();
 
 						if (!dontClear)
@@ -109,7 +109,7 @@
 
 						if (long.TryParse(hstr, out var handle))
 						{
-							var ptr = new IntPtr(handle);
+							var ptr = new nint(handle);
 							bmp = Image.FromHbitmap(ptr);
 #if WINDOWS
 

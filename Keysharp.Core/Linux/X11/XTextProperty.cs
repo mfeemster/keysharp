@@ -4,10 +4,10 @@ namespace Keysharp.Core.Linux.X11
 	[StructLayout(LayoutKind.Sequential)]
 	internal struct XTextProperty
 	{
-		internal IntPtr value;
-		internal IntPtr encoding;
+		internal nint value;
+		internal nint encoding;
 		internal int format;
-		internal IntPtr nitems;
+		internal nint nitems;
 
 		internal unsafe string GetText() => Marshal.PtrToStringAuto(value);
 		//{
@@ -20,7 +20,7 @@ namespace Keysharp.Core.Linux.X11
 		//      {
 		//          fixed (void* ptr = strings)
 		//          {
-		//              return Marshal.PtrToStringUTF8(new IntPtr(ptr));
+		//              return Marshal.PtrToStringUTF8(new nint(ptr));
 		//          }
 		//      }
 		//  }
@@ -39,7 +39,7 @@ namespace Keysharp.Core.Linux.X11
 
 			var str = Marshal.StringToHGlobalAnsi(value);
 
-			if (str == IntPtr.Zero)
+			if (str == 0)
 			{
 				return false;
 			}
@@ -59,10 +59,10 @@ namespace Keysharp.Core.Linux.X11
 		/// </summary>
 		internal void Free()
 		{
-			if (value != IntPtr.Zero)
+			if (value != 0)
 			{
 				_ = Xlib.XFree(value);
-				value = IntPtr.Zero;
+				value = 0;
 			}
 		}
 	}

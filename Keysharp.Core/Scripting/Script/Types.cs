@@ -55,25 +55,6 @@
 				right = ForceLong(right);
 				return typeof(long);
 			}
-			//Anything below here is highly unlikely to occur.
-			//else if (left is int || right is int)
-			//{
-			//  left = ForceInt(left);
-			//  right = ForceInt(right);
-			//  return typeof(int);
-			//}
-			//else if (left is uint || right is uint)
-			//{
-			//  left = (uint)ForceLong(left);
-			//  right = (uint)ForceLong(right);
-			//  return typeof(uint);
-			//}
-			else if (left is IntPtr || right is IntPtr)
-			{
-				left = ForceLong(left);
-				right = ForceLong(right);
-				return typeof(long);
-			}
 			else
 			{
 				return null;

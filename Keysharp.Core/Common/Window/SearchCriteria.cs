@@ -9,8 +9,8 @@
 		internal string ExcludeTitle { get; set; }
 		internal string Group { get; set; }
 		internal bool HasExcludes => !string.IsNullOrEmpty(ExcludeTitle) || !string.IsNullOrEmpty(ExcludeText);
-		internal bool HasID => ID != IntPtr.Zero || PID != 0;
-		internal IntPtr ID { get; set; }
+		internal bool HasID => ID != 0 || PID != 0;
+		internal nint ID { get; set; }
 		internal bool IsEmpty => !HasID&& !HasExcludes&& string.IsNullOrEmpty(Group)&& string.IsNullOrEmpty(Title)&& string.IsNullOrEmpty(Text)&& string.IsNullOrEmpty(ClassName)&& string.IsNullOrEmpty(Path);
 		internal string Path { get; set; }
 		internal long PID { get; set; }
@@ -26,14 +26,7 @@
 
 			if (obj is long l)
 			{
-				criteria.ID = new IntPtr(l);
-				criteria.IsPureID = true;
-				return criteria;
-			}
-
-			if (obj is IntPtr ptr1)
-			{
-				criteria.ID = ptr1;
+				criteria.ID = new nint(l);
 				criteria.IsPureID = true;
 				return criteria;
 			}
@@ -52,14 +45,7 @@
 			{
 				if (hwnd is long ll)
 				{
-					criteria.ID = new IntPtr(ll);
-					criteria.IsPureID = true;
-					return criteria;
-				}
-
-				if (hwnd is IntPtr ptr2)
-				{
-					criteria.ID = ptr2;
+					criteria.ID = new nint(ll);
 					criteria.IsPureID = true;
 					return criteria;
 				}
@@ -131,7 +117,7 @@
 					var val = span.Slice(2).TrimStart().ParseUntilSpace();
 
 					if (long.TryParse(val, out var id))
-						criteria.ID = new IntPtr(id);
+						criteria.ID = new nint(id);
 
 					if (criteria.ID != oldId)
 						idCount++;
@@ -149,7 +135,7 @@
 					var val = span.Slice(3).TrimStart().ParseUntilSpace();
 
 					if (long.TryParse(val, out var id))
-						criteria.PID = new IntPtr(id);
+						criteria.PID = new nint(id);
 
 					if (criteria.PID != oldVal)
 						pidCount++;
