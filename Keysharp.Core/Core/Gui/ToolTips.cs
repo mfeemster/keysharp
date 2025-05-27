@@ -58,7 +58,6 @@
 			}
 
 			var tooltipInvokerForm = GuiHelper.DialogOwner ?? Form.ActiveForm;
-			var focusedWindow = 0;
 			var one_or_both_coords_specified = _x != int.MinValue || _y != int.MinValue;
 
 			if (tooltipInvokerForm == null)
@@ -122,7 +121,7 @@
 				var mSetTrackPosition = tt.GetType().GetMethod("SetTrackPosition", BindingFlags.Instance | BindingFlags.NonPublic);
 				var mSetTool = tt.GetType().GetMethod("SetTool", BindingFlags.Instance | BindingFlags.NonPublic);
 				var script = Script.TheScript;
-			
+
 				if (!tt.Active) // If this is the first run then invoke the ToolTip once before displaying it, otherwise it shows at the mouse position
 					_ = mSetTool.Invoke(tt, [tooltipInvokerForm, t, 2, new Point(0, 0)]);
 
@@ -199,7 +198,7 @@
 			var filename = fileName.As();
 			var iconnumber = ImageHelper.PrepareIconNumber(iconNumber);
 			var script = Script.TheScript;
-			
+
 			if (script.NoTrayIcon)
 				return null;
 
@@ -266,7 +265,7 @@
 			var _title = title.As();
 			var opts = options;
 			var script = Script.TheScript;
-			
+
 			if (script.NoTrayIcon)
 				return null;
 

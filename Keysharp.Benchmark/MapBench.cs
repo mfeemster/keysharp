@@ -21,7 +21,7 @@ namespace Keysharp.Benchmark
 		private Dictionary<object, object> dkt = [];
 		private Map map = Collections.Map(), mapScript = Collections.Map();
 		private List<string> strings = [];
-		private Keysharp.Scripting.Script _ks_s;
+		private Keysharp.Scripting.Script? _ks_s;
 
 		[Params(100000)]
 		public int Size { get; set; }

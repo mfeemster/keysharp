@@ -7,9 +7,9 @@ namespace Keysharp.Benchmark
 {
 	public class FuncBench : BaseTest
 	{
-		private myclass? cl;
+		private myclass cll = new ();
 		private long totalSum;
-		private Keysharp.Scripting.Script _ks_s;
+		private Keysharp.Scripting.Script? _ks_s;
 
 		[Params(500000L)]
 		public long Size { get; set; }

@@ -12,7 +12,7 @@ namespace Keysharp.Core.Common.Threading
 		internal string defaultGui;
 		internal long defaultMouseSpeed = 2L;
 		internal static readonly long DefaultPeekFrequency = 5L;
-		internal static readonly long DefaultninterruptiblePeekFrequency = 16L;
+		internal static readonly long DefaultUninterruptiblePeekFrequency = 16L;
 		internal bool detectHiddenText = true;
 		internal bool detectHiddenWindows;
 		internal Form dialogOwner;
@@ -40,7 +40,7 @@ namespace Keysharp.Core.Common.Threading
 		internal DateTime threadStartTime = DateTime.MinValue;
 		internal object titleMatchMode = 2L;
 		internal bool titleMatchModeSpeed = true;
-		internal int uninterruptibleDuration = 17;
+		internal int UninterruptibleDuration = 17;
 		internal long winDelay = 100L;
 		private CoordModes coords;
 		private Random randomGenerator;
@@ -82,7 +82,7 @@ namespace Keysharp.Core.Common.Threading
 			task = false;// null;
 			isCritical = false;
 			allowThreadToBeInterrupted = true;
-			uninterruptibleDuration = 17;
+			UninterruptibleDuration = 17;
 			threadStartTime = DateTime.MinValue;
 			controlDelay = 20L;
 			coords = null;
@@ -124,7 +124,7 @@ namespace Keysharp.Core.Common.Threading
 			task = false;// null;
 			isCritical = false;
 			allowThreadToBeInterrupted = true;
-			uninterruptibleDuration = Script.TheScript.uninterruptibleTime;
+			UninterruptibleDuration = Script.TheScript.uninterruptibleTime;
 			threadStartTime = DateTime.MinValue;
 			controlDelay = ControlDelayDefault;
 			coords = null;

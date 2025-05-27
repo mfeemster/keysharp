@@ -5,7 +5,7 @@
 	[WarmupCount(15)]
 	public class DllBench : BaseTest
 	{
-		private Keysharp.Scripting.Script _ks_s;
+		private Keysharp.Scripting.Script? _ks_s;
 		private static readonly object mcode_e = Keysharp.Core.Collections.Map("1", 4L, "2", 1L);
 		private static readonly object mcode_c = (_ = Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.ValueEquality, Accessors.A_PtrSize, 8L)) ? (object)(_ = "x64") : (object)(_ = "x86"));
 		private static object p = 0L, ptr = 0L, result = 0L;
@@ -17,10 +17,10 @@
 
 		public static object MCode(object mcode)
 		{
-			object m = null;
-			object s = null;
-			object p = null;
-			object op = null;
+			object? m = null;
+			object? s = null;
+			object? p = null;
+			object? op = null;
 
 			if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.OperateUnary(Keysharp.Scripting.Script.Operator.LogicalNot, Keysharp.Core.RegEx.RegExMatch(mcode, Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.Concat, "^([0-9]+),(", Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.Concat, Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.Concat, Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.Concat, mcode_c, ":|.*?,"), mcode_c), ":)([^,]+)")), ref m))))
 			{

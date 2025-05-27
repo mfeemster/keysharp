@@ -1,73 +1,73 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
-    <TargetFramework>net9.0-windows</TargetFramework>
-    <UseWindowsForms>true</UseWindowsForms>
-    <Platforms>x64</Platforms>
-  </PropertyGroup>
+	<PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
+		<TargetFramework>net9.0-windows</TargetFramework>
+		<UseWindowsForms>true</UseWindowsForms>
+		<Platforms>x64</Platforms>
+	</PropertyGroup>
 
-  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Linux'))">
-    <TargetFramework>net9.0</TargetFramework>
-  </PropertyGroup>
+	<PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Linux'))">
+		<TargetFramework>net9.0</TargetFramework>
+	</PropertyGroup>
 
-  <PropertyGroup>
-    <IsPackable>false</IsPackable>
-    <OutputType>WinExe</OutputType>
-    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
-    <GenerateRuntimeConfigDevFile>true</GenerateRuntimeConfigDevFile>
-    <AssemblyVersion>0.0.0.10</AssemblyVersion>
-    <FileVersion>0.0.0.10</FileVersion>
-    <Version>0.0.0.10</Version>
-    <Authors>Matt Feemster</Authors>
-    <Description>A suite of unit tests to verify Keysharp functionality</Description>
-    <Company>Keysharp</Company>
-    <PreserveCompilationContext>true</PreserveCompilationContext>
-    <ProduceReferenceAssembly>true</ProduceReferenceAssembly>
-    <SignAssembly>False</SignAssembly>
-    <DelaySign>False</DelaySign>
-    <PlatformTarget>x64</PlatformTarget>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <WarningLevel>8</WarningLevel>
+	<PropertyGroup>
+		<IsPackable>false</IsPackable>
+		<OutputType>WinExe</OutputType>
+		<CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+		<GenerateRuntimeConfigDevFile>true</GenerateRuntimeConfigDevFile>
+		<AssemblyVersion>0.0.0.10</AssemblyVersion>
+		<FileVersion>0.0.0.10</FileVersion>
+		<Version>0.0.0.10</Version>
+		<Authors>Matt Feemster</Authors>
+		<Description>A suite of unit tests to verify Keysharp functionality</Description>
+		<Company>Keysharp</Company>
+		<PreserveCompilationContext>true</PreserveCompilationContext>
+		<ProduceReferenceAssembly>true</ProduceReferenceAssembly>
+		<SignAssembly>False</SignAssembly>
+		<DelaySign>False</DelaySign>
+		<PlatformTarget>x64</PlatformTarget>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<WarningLevel>8</WarningLevel>
 	<SatelliteResourceLanguages>en</SatelliteResourceLanguages>
-  </PropertyGroup>
+	</PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <OutputPath>..\bin\debug\</OutputPath>
-    <DefineConstants Condition="$([MSBuild]::IsOSPlatform('Windows'))">DEBUG;LEGACY;WINDOWS</DefineConstants>
-    <DefineConstants Condition="$([MSBuild]::IsOSPlatform('Linux'))">DEBUG;LEGACY;LINUX</DefineConstants>
-    <NoWarn>1701;1702;8981</NoWarn>
-  </PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+		<OutputPath>..\bin\debug\</OutputPath>
+		<DefineConstants Condition="$([MSBuild]::IsOSPlatform('Windows'))">DEBUG;LEGACY;WINDOWS</DefineConstants>
+		<DefineConstants Condition="$([MSBuild]::IsOSPlatform('Linux'))">DEBUG;LEGACY;LINUX</DefineConstants>
+		<NoWarn>1701;1702;8981;0164;8974</NoWarn>
+	</PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <OutputPath>..\bin\release\</OutputPath>
-    <DefineConstants Condition="$([MSBuild]::IsOSPlatform('Windows'))">LEGACY;WINDOWS</DefineConstants>
-    <DefineConstants Condition="$([MSBuild]::IsOSPlatform('Linux'))">LEGACY;LINUX</DefineConstants>
-    <NoWarn>1701;1702;8981</NoWarn>
-  </PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+		<OutputPath>..\bin\release\</OutputPath>
+		<DefineConstants Condition="$([MSBuild]::IsOSPlatform('Windows'))">LEGACY;WINDOWS</DefineConstants>
+		<DefineConstants Condition="$([MSBuild]::IsOSPlatform('Linux'))">LEGACY;LINUX</DefineConstants>
+		<NoWarn>1701;1702;8981;0164;8974</NoWarn>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <Content Include="..\Keysharp.ico" Link="Keysharp.ico" />
-  </ItemGroup>
+	<ItemGroup>
+		<Content Include="..\Keysharp.ico" Link="Keysharp.ico" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="NUnit" Version="4.3.2" />
-    <PackageReference Include="NUnit3TestAdapter" Version="5.0.0" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.0" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="NUnit" Version="4.3.2" />
+		<PackageReference Include="NUnit3TestAdapter" Version="5.0.0" />
+		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.0" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Keysharp.Core\Keysharp.Core.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\Keysharp.Core\Keysharp.Core.csproj" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <None Update="Code\Gui\killbill.png">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </None>
-    <None Update="Code\Gui\monkey.ico">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </None>
-    <None Update="Code\Gui\Robin.png">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
+	<ItemGroup>
+		<None Update="Code\Gui\killbill.png">
+			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
+		</None>
+		<None Update="Code\Gui\monkey.ico">
+			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
+		</None>
+		<None Update="Code\Gui\Robin.png">
+			<CopyToOutputDirectory>Never</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
 
 </Project>

@@ -1992,7 +1992,6 @@ namespace Keysharp.Core.Common.Keyboard
 			if (!parentEnabled) // IsCompletelyDisabled() isn't called because the loop below checks all the mEnabled flags, no need to do it twice.
 				return null;
 
-			var unused = 0;
 			HotkeyVariant vp, vpToFire;
 
 			// aHookAction isn't checked because this should never be called for alt-tab hotkeys (see other comments above).

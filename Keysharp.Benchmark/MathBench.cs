@@ -6,7 +6,7 @@
 		private IFuncObj fo = Func("Cos");
 		private List<double> vals = [];
 		private List<object> objvals = [];
-		private Keysharp.Scripting.Script _ks_s;
+		private Keysharp.Scripting.Script? _ks_s;
 
 		[Params(500000)]
 		public int Size { get; set; }

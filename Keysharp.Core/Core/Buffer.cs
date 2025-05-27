@@ -114,9 +114,10 @@
 				{
 					var ct = array.array.Count;
 					Size = ct;
+					var bp = (nint)Ptr;
 
 					for (var i = 0; i < ct; i++)
-						Marshal.WriteByte(Ptr, i, (byte)Script.ForceLong(array.array[i]));//Access the underlying array[] directly for performance.
+						Unsafe.Write((void*)nint.Add(bp, i), (byte)Script.ForceLong(array.array[i]));//Access the underlying array[] directly for performance.
 				}
 				else//This will be called by the user.
 				{

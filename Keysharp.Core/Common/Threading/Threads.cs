@@ -50,7 +50,7 @@
 		}
 
 		[PublicForTestOnly]
-		public (bool, ThreadVariables) PushThreadVariables(int priority, bool skipninterruptible,
+		public (bool, ThreadVariables) PushThreadVariables(int priority, bool skipUninterruptible,
 				bool isCritical = false, bool onlyIfEmpty = false, bool inc = false)
 		{
 			lock (locker)
@@ -70,7 +70,7 @@
 					}
 				}
 
-				return tvm.PushThreadVariables(priority, skipninterruptible, isCritical, onlyIfEmpty);
+				return tvm.PushThreadVariables(priority, skipUninterruptible, isCritical, onlyIfEmpty);
 			}
 		}
 
@@ -107,14 +107,14 @@
 
 				if (!tv.isCritical//Added this whereas AHK doesn't check it. We should never make a critical thread interruptible.
 						&& !tv.allowThreadToBeInterrupted // Those who check whether g->AllowThreadToBeInterrupted==false should then check whether it should be made true.
-						&& tv.uninterruptibleDuration > -1 // Must take precedence over the below.  g_script.mninterruptibleTime is not checked because it's supposed to go into effect during thread creation, not after the thread is running and has possibly changed the timeout via 'Thread "Interrupt"'.
-						&& (DateTime.UtcNow - tv.threadStartTime).TotalMilliseconds >= tv.uninterruptibleDuration // See big comment section above.
+						&& tv.UninterruptibleDuration > -1 // Must take precedence over the below.  g_script.mUninterruptibleTime is not checked because it's supposed to go into effect during thread creation, not after the thread is running and has possibly changed the timeout via 'Thread "Interrupt"'.
+						&& (DateTime.UtcNow - tv.threadStartTime).TotalMilliseconds >= tv.UninterruptibleDuration// See big comment section above.
 						&& !script.FlowData.callingCritical // In case of "Critical" on the first line.  See v2.0 comment above.
 				   )
 				{
-					// Once the thread becomes interruptible by any means, g->ThreadStartTime/ninterruptibleDuration
+					// Once the thread becomes interruptible by any means, g->ThreadStartTime/UninterruptibleDuration
 					// can never matter anymore because only Critical (never "Thread Interrupt") can turn off the
-					// interruptibility again, and it resets g->ninterruptibleDuration.
+					// interruptibility again, and it resets g->UninterruptibleDuration.
 					tv.allowThreadToBeInterrupted = true; // Avoids issues with 49.7 day limit of 32-bit TickCount, and also helps performance future callers of this function (they can skip most of the checking above).
 
 					if (!tv.isCritical)
@@ -125,11 +125,10 @@
 			}
 		}
 
-		internal void LaunchInThread(int priority, bool skipninterruptible,
+		internal void LaunchInThread(int priority, bool skipUninterruptible,
 									 bool isCritical, object func, object[] o, bool tryCatch)//Determine later the optimal threading model.//TODO
 		{
 			//Task<object> tsk = null;
-
 			try
 			{
 				var existingTv = GetThreadVariables();
@@ -141,7 +140,7 @@
 				{
 					object ret = null;
 					(bool, ThreadVariables) btv = (false, null);
-					btv = PushThreadVariables(priority, skipninterruptible, isCritical, false, true);//Always start each thread with one entry.
+					btv = PushThreadVariables(priority, skipUninterruptible, isCritical, false, true);//Always start each thread with one entry.
 					btv.Item2.task = true;
 
 					if (btv.Item1)

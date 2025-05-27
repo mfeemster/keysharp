@@ -7,7 +7,7 @@
 	public class HexBench : BaseTest
 	{
 		// Initialize the byte array for each run
-		private byte[] _array;
+		private byte[] _array = [];
 
 		//[Params(10, 1000, 10000)]
 		[Params(100000)]
