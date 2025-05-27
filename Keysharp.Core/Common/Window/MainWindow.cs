@@ -150,8 +150,8 @@
 					{
 						hwnd = m.HWnd,//Unused, but probably still good to assign.
 						message = WindowsAPI.WM_HOTKEY,
-						wParam = new nint(m.WParam.ToInt32()),
-						lParam = m.LParam.ToInt32()
+						wParam = m.WParam,
+						lParam = m.LParam,
 					});
 					handled = true;
 					break;
