@@ -1,4 +1,8 @@
 ﻿#if LINUX
+using EvDevSharp;
+using EvDevSharp.Wrappers.Keyboard;
+using EvDevSharp.Wrappers.Mouse;
+
 namespace Keysharp.Core.Linux
 {
 	/// <summary>
@@ -8,6 +12,20 @@ namespace Keysharp.Core.Linux
 	{
 		internal LinuxHookThread()
 		{
+			/*
+			    EvDev.RegisterDevices<EvDevMouseDevice>();
+			    EvDev.RegisterDevices<EvDevKeyboardDevice>();
+			    var kbs = EvDev.GetRegisteredDevices<EvDevKeyboardDevice>().OrderBy(d => d.DevicePath).ToList();
+			    var mice = EvDev.GetRegisteredDevices<EvDevMouseDevice>().OrderBy(d => d.DevicePath).ToList();
+
+			    foreach (var kb in kbs)
+			    {
+			        kb.OnKeyEvent += (s, e) =>
+			        {
+			            Keysharp.Scripting.Script.OutputDebug($"You pressed {e.Key}\tState: {e.Value}");
+			        };
+			    }
+			*/
 		}
 
 		public override void SimulateKeyPress(uint key)
