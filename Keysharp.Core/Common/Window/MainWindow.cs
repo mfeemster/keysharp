@@ -4,7 +4,9 @@
 	{
 		public static Font OurDefaultFont = new ("Microsoft Sans Serif", 9F);
 		internal FormWindowState lastWindowState = FormWindowState.Normal;
-		private readonly bool success;
+#if WINDOWS
+		private readonly bool clipSuccess;
+#endif
 		private AboutBox about;
 		private bool callingInternalVars = false;
 
@@ -27,9 +29,8 @@
 			SetStyle(ControlStyles.EnableNotifyMessage, true);
 #if LINUX
 			//gtkClipBoard.OwnerChange += gtkClipBoard_OwnerChange;
-			success = true;
 #elif WINDOWS
-			success = WindowsAPI.AddClipboardFormatListener(Handle);//Need a cross platform way to do this.//TODO
+			clipSuccess = WindowsAPI.AddClipboardFormatListener(Handle);//Need a cross platform way to do this.//TODO
 #endif
 			tpVars.HandleCreated += TpVars_HandleCreated;
 			editScriptToolStripMenuItem.Visible = !A_IsCompiled;
@@ -123,7 +124,7 @@
 			switch (m.Msg)
 			{
 				case WindowsAPI.WM_CLIPBOARDUPDATE:
-					if (success)
+					if (clipSuccess)
 						ClipboardUpdate?.Invoke(null);
 
 					handled = true;
@@ -240,7 +241,7 @@
 
 #if WINDOWS
 
-			if (success)
+			if (clipSuccess)
 				_ = WindowsAPI.RemoveClipboardFormatListener(Handle);
 
 #elif LINUX

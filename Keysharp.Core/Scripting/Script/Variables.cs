@@ -5,10 +5,6 @@ namespace Keysharp.Scripting
 		internal List<(string, bool)> preloadedDlls = [];
 		internal DateTime startTime = DateTime.UtcNow;
 		private readonly Dictionary<string, MemberInfo> globalVars = new (StringComparer.OrdinalIgnoreCase);
-#if LINUX
-		internal string ldLibraryPath = Environment.GetEnvironmentVariable("LD_LIBRARY_PATH") ?? "";
-		private Encoding enc1252 = Encoding.Default;
-#endif
 
 		/// <summary>
 		/// Will be a generated call within Main which calls into this class to add DLLs.

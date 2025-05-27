@@ -17,7 +17,7 @@ namespace Keysharp.Core.Linux
 			throw new NotImplementedException();
 		}
 
-		protected override int GetOwningPid()
+		protected override uint GetOwningPid()
 		{
 			throw new NotImplementedException();
 		}

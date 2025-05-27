@@ -14,7 +14,7 @@ namespace Keysharp.Core.Linux
 	internal class WindowItem : Common.Window.WindowItemBase//Do we want to prefix each of these derived classes with Windws/Linux?//TODO
 	{
 		private readonly XWindow xwindow = null;
-		private readonly WindowManager manager = (Keysharp.Core.Linux.WindowManager)WindowProvider.Manager;
+		private readonly Linux.WindowManager manager = (Linux.WindowManager)Script.TheScript.WindowProvider.Manager;
 
 		internal override bool Active
 		{
@@ -22,7 +22,7 @@ namespace Keysharp.Core.Linux
 			{
 				if (IsSpecified && manager.ActiveWindow is WindowItem item)
 				{
-					//Keysharp.Scripting.Script.OutputDebug($"item.Handle: {item.Handle.ToInt64()}, item.Title: {item.Title}, Handle: {Handle.ToInt64()}, Title: {Title}");
+					//Debug.OutputDebug($"item.Handle: {item.Handle.ToInt64()}, item.Title: {item.Title}, Handle: {Handle.ToInt64()}, Title: {Title}");
 					if (item.Handle.ToInt64() == Handle.ToInt64())
 						return true;
 				}
@@ -98,12 +98,12 @@ namespace Keysharp.Core.Linux
 
 				if (value)
 				{
-					//Keysharp.Scripting.Script.OutputDebug($"Bottom: about to call XLowerWindow().");
+					//Debug.OutputDebug($"Bottom: about to call XLowerWindow().");
 					_ = Xlib.XLowerWindow(xwindow.XDisplay.Handle, xwindow.ID);
 				}
 				else
 				{
-					//Keysharp.Scripting.Script.OutputDebug($"Bottom: about to call XRaiseWindow().");
+					//Debug.OutputDebug($"Bottom: about to call XRaiseWindow().");
 					_ = Xlib.XRaiseWindow(xwindow.XDisplay.Handle, xwindow.ID);
 				}
 
@@ -130,7 +130,7 @@ namespace Keysharp.Core.Linux
 
 					return false;
 				};
-				windows.AddRange(xwindow.XDisplay.XQueryTreeRecursive(xwindow, filter).Select(w => new WindowItem(w)));
+				windows.AddRange(xwindow.XDisplay.XQueryTreeRecursive(xwindow, filter).Select(w => manager.CreateWindow((nint)w.ID)));
 				return windows;
 			}
 		}
@@ -205,7 +205,7 @@ namespace Keysharp.Core.Linux
 
 				if (ctrl == null)
 				{
-					Keysharp.Scripting.Script.OutputDebug($"Window with handle {Handle} was not a .NET Form or Control, so the ex style could not be retrieved. Returning 0.");
+					Debug.OutputDebug($"Window with handle {Handle} was not a .NET Form or Control, so the ex style could not be retrieved. Returning 0.");
 					return 0;
 				}
 				else if (ctrl is Form form)
@@ -215,7 +215,7 @@ namespace Keysharp.Core.Linux
 			}
 			set
 			{
-				Keysharp.Scripting.Script.OutputDebug($"ExStyles cannot be set on linux.");
+				Debug.OutputDebug($"ExStyles cannot be set on linux.");
 			}
 		}
 
@@ -303,7 +303,7 @@ namespace Keysharp.Core.Linux
 				}
 				catch (Exception ex)
 				{
-					Keysharp.Scripting.Script.OutputDebug($"XQueryTree() failed: {ex.Message}");
+					Debug.OutputDebug($"XQueryTree() failed: {ex.Message}");
 				}
 				finally
 				{
@@ -383,7 +383,7 @@ namespace Keysharp.Core.Linux
 
 				if (ctrl == null)
 				{
-					Keysharp.Scripting.Script.OutputDebug($"Window with handle {Handle} was not a .NET Form or Control, so the style could not be retrieved. Returning 0.");
+					Debug.OutputDebug($"Window with handle {Handle} was not a .NET Form or Control, so the style could not be retrieved. Returning 0.");
 					return 0;
 				}
 				else if (ctrl is Form form)
@@ -393,7 +393,7 @@ namespace Keysharp.Core.Linux
 			}
 			set
 			{
-				Keysharp.Scripting.Script.OutputDebug($"Styles cannot be set on linux.");
+				Debug.OutputDebug($"Styles cannot be set on linux.");
 			}
 		}
 
@@ -406,7 +406,7 @@ namespace Keysharp.Core.Linux
 
 				var prop = new XTextProperty();
 				var attr = new XWindowAttributes();
-				var tv = Threads.GetThreadVariables();
+				var tv = Script.TheScript.Threads.GetThreadVariables();
 				var doHidden = ThreadAccessors.A_DetectHiddenWindows;
 				var filter = (long id) =>
 				{
@@ -446,7 +446,7 @@ namespace Keysharp.Core.Linux
 				}
 				catch (Exception ex)
 				{
-					Keysharp.Scripting.Script.OutputDebug($"XGetWMName() failed: {ex.Message}");
+					Debug.OutputDebug($"XGetWMName() failed: {ex.Message}");
 				}
 
 				return "";
@@ -470,7 +470,7 @@ namespace Keysharp.Core.Linux
 						}
 						catch (Exception ex)
 						{
-							Keysharp.Scripting.Script.OutputDebug($"XSetTextProperty() failed: {ex.Message}");
+							Debug.OutputDebug($"XSetTextProperty() failed: {ex.Message}");
 						}
 						finally
 						{
@@ -523,12 +523,12 @@ namespace Keysharp.Core.Linux
 		{
 			get
 			{
-				Keysharp.Scripting.Script.OutputDebug($"Transparency key/color not supported on linux, returning 0.");
+				Debug.OutputDebug($"Transparency key/color not supported on linux, returning 0.");
 				return 0L;
 			}
 			set
 			{
-				Keysharp.Scripting.Script.OutputDebug($"Transparency key/color not supported on linux.");
+				Debug.OutputDebug($"Transparency key/color not supported on linux.");
 			}
 		}
 
@@ -605,7 +605,7 @@ namespace Keysharp.Core.Linux
 
 				if (current_state == value)
 				{
-					//Keysharp.Scripting.Script.OutputDebug($"Window {current_state} == {value}, so doing nothing.");
+					//Debug.OutputDebug($"Window {current_state} == {value}, so doing nothing.");
 					return;
 				}
 
@@ -619,18 +619,18 @@ namespace Keysharp.Core.Linux
 							if (current_state == FormWindowState.Minimized)
 							{
 								_ = Xlib.XMapWindow(xwindow.XDisplay.Handle, Handle);
-								//Keysharp.Scripting.Script.OutputDebug($"Window was minimized, so setting to normal.");
+								//Debug.OutputDebug($"Window was minimized, so setting to normal.");
 								manager.SendNetWMMessage(Handle, xwindow.XDisplay._NET_ACTIVE_WINDOW, (IntPtr)1, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
 							}
 							else if (current_state == FormWindowState.Maximized)
 							{
-								//Keysharp.Scripting.Script.OutputDebug($"Window was maximized, so setting to normal.");
+								//Debug.OutputDebug($"Window was maximized, so setting to normal.");
 								manager.SendNetWMMessage(Handle, xwindow.XDisplay._NET_WM_STATE, 2 /* toggle */, xwindow.XDisplay._NET_WM_STATE_MAXIMIZED_HORZ, xwindow.XDisplay._NET_WM_STATE_MAXIMIZED_VERT, IntPtr.Zero);
 								manager.SendNetWMMessage(Handle, xwindow.XDisplay._NET_ACTIVE_WINDOW, (IntPtr)1, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
 							}
 
 							//else
-							//  Keysharp.Scripting.Script.OutputDebug($"Window was {current_state}, so doing nothing.");
+							//  Debug.OutputDebug($"Window was {current_state}, so doing nothing.");
 						}
 
 						//Active = true;
@@ -818,7 +818,7 @@ namespace Keysharp.Core.Linux
 					for (int i = 0; i < nitems; i++)
 					{
 						var atom = (IntPtr)Marshal.ReadInt64(prop, i * 8);
-						//Keysharp.Scripting.Script.OutputDebug($"ReadStateProps() item {i} was atom {atom}.");
+						//Debug.OutputDebug($"ReadStateProps() item {i} was atom {atom}.");
 
 						if (!func(atom))
 							break;
@@ -828,11 +828,11 @@ namespace Keysharp.Core.Linux
 				}
 
 				//else
-				//  Keysharp.Scripting.Script.OutputDebug($"ReadStateProps() contained zero atoms.");
+				//  Debug.OutputDebug($"ReadStateProps() contained zero atoms.");
 				return true;
 			}
 			else
-				Keysharp.Scripting.Script.OutputDebug($"ReadStateProps() XGetWindowProperty failed.");
+				Debug.OutputDebug($"ReadStateProps() XGetWindowProperty failed.");
 
 			return false;
 		}

@@ -29,17 +29,19 @@
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutputPath>..\bin\debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE;LEGACY</DefineConstants>
+    <DefineConstants Condition="$([MSBuild]::IsOSPlatform('Windows'))">DEBUG;TRACE;LEGACY;WINDOWS</DefineConstants>
+    <DefineConstants Condition="$([MSBuild]::IsOSPlatform('Linux'))">DEBUG;TRACE;LEGACY;LINUX</DefineConstants>
     <NoWarn>1701;1702;8981</NoWarn>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutputPath>..\bin\release\</OutputPath>
-    <DefineConstants>TRACE;LEGACY</DefineConstants>
+    <DefineConstants Condition="$([MSBuild]::IsOSPlatform('Windows'))">TRACE;LEGACY;WINDOWS</DefineConstants>
+    <DefineConstants Condition="$([MSBuild]::IsOSPlatform('Linux'))">TRACE;LEGACY;LINUX</DefineConstants>
     <NoWarn>1701;1702;8981</NoWarn>
   </PropertyGroup>
-  
-  <ItemGroup>
+
+  <ItemGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
     <COMReference Include="IWshRuntimeLibrary.dll">
       <Guid>f935dc20-1cf0-11d0-adb9-00c04fd58a0b</Guid>
       <VersionMajor>1</VersionMajor>

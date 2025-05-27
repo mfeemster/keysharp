@@ -913,7 +913,7 @@ break_twice:;
 #if LINUX
 			var cmdstr = enable ? "--enable" : "--disable";
 
-			foreach (var id in KeyboardUtils.kbMouseList)
+			foreach (var id in Script.TheScript.KeyboardUtilsData.kbMouseList)
 				_ = $"xinput {cmdstr} {id}".Bash();
 
 #elif WINDOWS

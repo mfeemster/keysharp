@@ -19,6 +19,8 @@ namespace Keysharp.Core.Linux.Devices
 
 		public InputReader(string path)
 		{
+			Error err;
+
 			Path = path;
 
 			try
@@ -27,12 +29,12 @@ namespace Keysharp.Core.Linux.Devices
 			}
 			catch (UnauthorizedAccessException ex)
 			{
-				//_logger.LogError(ex, "Current user doesn't have permissions to access input data. Add user to input group to correct this error");
+				_ = Errors.ErrorOccurred(err = new Error($"The current user doesn't have permission to access input data. Add the user to the input group to correct this error: {ex.Message}"), Keyword_ExitApp) ? throw err : "";
 				Faulted = true;
 			}
 			catch (IOException ex)
 			{
-				//_logger.LogWarning(ex, $"Error occurred while trying to build stream for {path}");
+				_ = Errors.ErrorOccurred(err = new Error($"An error occurred while trying to build the stream for {Path}: {ex.Message}"), Keyword_ExitApp) ? throw err : "";
 				Faulted = true;
 			}
 
@@ -92,6 +94,8 @@ namespace Keysharp.Core.Linux.Devices
 
 		private void Run()
 		{
+			Error err;
+			
 			while (!_disposing)
 			{
 				try
@@ -103,7 +107,7 @@ namespace Keysharp.Core.Linux.Devices
 				}
 				catch (IOException ex)
 				{
-					//_logger.LogInformation(ex, $"Error occured while trying to read from the stream for {Path}");
+					_ = Errors.ErrorOccurred(err = new Error($"Error occured while trying to read from the stream for {Path}: {ex.Message}"), Keyword_ExitApp) ? throw err : "";
 					Faulted = true;
 				}
 

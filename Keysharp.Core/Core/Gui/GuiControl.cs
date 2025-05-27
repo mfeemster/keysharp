@@ -245,9 +245,10 @@
 						return ss.Text;//Unsure if this is what's intended.
 					else if (_control is KeysharpPictureBox pic)
 						return pic.Filename;
+#if WINDOWS
 					else if (_control is KeysharpActiveX kax)
 						return kax.Iid;
-
+#endif
 					return "";
 				}
 				set

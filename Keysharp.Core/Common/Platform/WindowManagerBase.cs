@@ -55,7 +55,7 @@ namespace Keysharp.Core.Common.Platform
 
 			if (parsed)
 				if (!ignorePureID && IsWindow(ptr))
-					return LastFound = Script.TheScript.WindowProvider.Manager.CreateWindow(ptr);
+					return LastFound = CreateWindow(ptr);
 
 			var text = winText.As();
 			var exclTitle = excludeTitle.As();
@@ -90,9 +90,9 @@ namespace Keysharp.Core.Common.Platform
 
 			if (!ignorePureID && criteria.IsPureID)
 			{
-				if (WindowsAPI.IsWindow(criteria.ID))
+				if (IsWindow(criteria.ID))
 				{
-					var window = new WindowItem(criteria.ID);
+					var window = CreateWindow(criteria.ID);
 
 					if (window.Equals(criteria)) // Other criteria may be present such as ExcludeTitle etc
 						found.Add(window);
