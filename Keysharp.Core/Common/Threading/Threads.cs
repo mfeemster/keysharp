@@ -12,7 +12,7 @@
 		/// Always add 1 to MaxThreadsTotal because the a dummy entry will always be added in the constructor.
 		/// </summary>
 		private readonly Lock locker = new ();
-		private ThreadVariableManager tvm = new ((int)Script.TheScript.MaxThreadsTotal + 1);
+		private readonly ThreadVariableManager tvm = new ((int)Script.TheScript.MaxThreadsTotal + 1);
 
 		public Threads()
 		{

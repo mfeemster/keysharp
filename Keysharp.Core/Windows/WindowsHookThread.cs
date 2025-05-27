@@ -19,7 +19,7 @@ namespace Keysharp.Core.Windows
 		private readonly LowLevelKeyboardProc kbdHandlerDel;
 		private readonly LowLevelMouseProc mouseHandlerDel;
 		private bool pendingDeadKeyInvisible;
-		private List<DeadKeyRecord> pendingDeadKeys = [];
+		private readonly List<DeadKeyRecord> pendingDeadKeys = [];
 		private StaThreadWithMessageQueue thread;
 		private bool uwpAppFocused;
 		private IntPtr uwpHwndChecked = IntPtr.Zero;

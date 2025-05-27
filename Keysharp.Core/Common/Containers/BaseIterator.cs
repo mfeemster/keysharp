@@ -1,6 +1,5 @@
 ﻿namespace Keysharp.Core.Common.Containers
 {
-
 	internal class BaseIteratorData<T>
 	{
 		/// <summary>

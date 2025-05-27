@@ -78,5 +78,11 @@ namespace Keysharp.Tests
 			Assert.IsTrue(TestScript("process-run-wait-close", false));
 #endif
 		}
+
+		[Test, Category("Process")]
+		public void ProcessRunScript()
+		{
+			Assert.IsTrue(TestScript("process-runscript", false));
+		}
 	}
 }

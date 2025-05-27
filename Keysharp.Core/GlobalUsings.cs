@@ -5,6 +5,7 @@ global using global::Microsoft.CodeAnalysis.Emit;
 global using global::Microsoft.VisualBasic.FileIO;//See if this is cross platform or not. //TODO
 global using global::System;
 global using global::System.Buffers;
+global using global::System.Data;
 global using global::System.CodeDom;
 global using global::System.CodeDom.Compiler;
 global using global::System.Collections;
@@ -47,7 +48,6 @@ global using global::System.Windows.Forms;
 
 //Our usings.
 global using global::Keysharp.Core;
-global using global::Keysharp.Core.Common;
 global using global::Keysharp.Core.Common.Containers;
 global using global::Keysharp.Core.Common.Cryptography;
 global using global::Keysharp.Core.Common.ExtensionMethods;
@@ -68,6 +68,8 @@ global using global::Keysharp.Scripting;
 global using global::Semver.Comparers;
 global using global::Semver.Utility;
 global using global::PCRE;
+global using global::BitFaster.Caching.Lfu;
+global using global::BitFaster.Caching.Scheduler;
 
 #if WINDOWS
 	global using global::Accessibility;

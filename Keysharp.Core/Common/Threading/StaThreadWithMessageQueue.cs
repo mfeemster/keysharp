@@ -10,9 +10,9 @@
 	{
 		private SynchronizationContext ctx;
 
-		private ManualResetEventSlim mre;
+		private readonly ManualResetEventSlim mre;
 
-		private Thread thread;
+		private readonly Thread thread;
 
 		public StaThreadWithMessageQueue()
 		{

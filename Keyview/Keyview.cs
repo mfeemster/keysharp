@@ -57,7 +57,7 @@
 		private readonly string trimstr = "{}\t";
 		private Process scriptProcess = null;
 		private readonly Button btnRunScript = new ();
-		private Dictionary<string, string> btnRunScriptText = new Dictionary<string, string>()
+		private readonly Dictionary<string, string> btnRunScriptText = new Dictionary<string, string>()
 		{
 			{ "Run", "▶ Run script (F9)" },
 			{ "Stop", "⏹ Stop script (F9)" }
@@ -572,7 +572,7 @@
 					btnRunScript.Enabled = false;
 					var oldIndex = txtOut.FirstVisibleLine;
 					SetStart();
-					tslCodeStatus.Text = "Creating DOM from Script.TheScript...";
+					tslCodeStatus.Text = "Creating DOM from script...";
 					Refresh();
 					var (st, domerrs) = ch.CreateSyntaxTreeFromFile(txtIn.Text);
 					//var (domunits, domerrs) = ch.CreateDomFromFile([txtIn.Text]);
@@ -581,7 +581,7 @@
 					{
 						var (errors, warnings) = CompilerHelper.GetCompilerErrors(domerrs);
 						SetFailure();
-						var txt = "Error creating DOM from Script.TheScript.";
+						var txt = "Error creating DOM from script.";
 
 						if (errors.Length > 0)
 							txt += $"\n\n{errors}";
@@ -596,23 +596,9 @@
 					tslCodeStatus.Text = "Creating C# code from DOM...";
 					Refresh();
 
-					/*
-					var (code, exc) = ch.CreateCodeFromDom(domunits);
-
-					if (exc is Exception ex)
-					{
-						SetFailure();
-						SetTxtOut($"Error creating C# code from DOM:\n{ex.Message}");
-						goto theend;
-					}
-
-					code = CompilerHelper.UsingStr + code;
-					*/
 					var code = st[0].ToString();
-
-                    tslCodeStatus.Text = "Compiling C# code...";
-					var asm = Assembly.GetExecutingAssembly();
-					var (results, ms, compileexc) = ch.Compile(code, "Keyview", Path.GetFullPath(Path.GetDirectoryName(asm.Location)));
+					tslCodeStatus.Text = "Compiling C# code...";
+					var (results, ms, compileexc) = ch.Compile(code, "Keyview", Path.GetFullPath(Path.GetDirectoryName(Environment.ProcessPath)));
 
 					if (results == null)
 					{

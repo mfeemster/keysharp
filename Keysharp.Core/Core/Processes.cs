@@ -586,4 +586,50 @@ namespace Keysharp.Core
             return 0L;
 		}
 	}
+
+	/// <summary>
+	/// Encapsulates information and I/O for a spawned <see cref="Process"/>.
+	/// </summary>
+	public class ProcessInfo : KeysharpObject
+	{
+		private Process _process;
+		public ProcessInfo(params object[] args) : base(args) { }
+
+		public override object __New(params object[] args)
+		{
+			_process = args[0] as Process;
+			return "";
+		}
+
+		public long HasExited => _process.HasExited ? 1L : 0L;
+		public long ExitCode => (long)_process.ExitCode;
+		/// <summary>
+		/// Gets the exit time formatted as "YYYYMMDDHH24MISS".
+		/// </summary>
+		public string ExitTime => Conversions.ToYYYYMMDDHH24MISS(_process.ExitTime);
+		/// <summary>
+		/// Returns a KeysharpFile wrapping the standard output stream.
+		/// </summary>
+		private object _StdOut = null;
+		public object StdOut => _StdOut ??= new KeysharpFile(_process.StandardOutput);
+		/// <summary>
+		/// Returns a KeysharpFile wrapping the standard error stream.
+		/// </summary>
+		private object _StdErr = null;
+		public object StdErr => _StdErr ??= new KeysharpFile(_process.StandardError);
+		/// <summary>
+		/// Returns a KeysharpFile wrapping the standard input stream.
+		/// </summary>
+		private object _StdIn = null;
+		public object StdIn => _StdIn ??= new KeysharpFile(_process.StandardInput);
+		/// <summary>
+		/// Immediately kills the underlying process.
+		/// </summary>
+		/// <returns></returns>
+		public object Kill()
+		{
+			_process.Kill();
+			return "";
+		}
+	}
 }

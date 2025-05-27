@@ -589,7 +589,7 @@
 		/// Cache for iterators with either 1 or 2 parameters.
 		/// This prevents reflection from having to always be done to find the Call method.
 		/// </summary>
-		private static FuncObj p1, p2;
+		private static readonly FuncObj p1, p2;
 
 		/// <summary>
 		/// The internal map to be iterated over.

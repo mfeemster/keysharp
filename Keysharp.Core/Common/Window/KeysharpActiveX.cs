@@ -8,7 +8,7 @@ namespace Keysharp.Core.Common.Window
 		/// <summary>
 		/// Required designer variable.
 		/// </summary>
-		private System.ComponentModel.IContainer components = null;
+		private readonly System.ComponentModel.IContainer components = null;
 
 		/// <summary>
 		/// Required reference so that accessing the underlying __ComObject does not throw an exception

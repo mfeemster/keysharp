@@ -114,6 +114,89 @@ using static Keysharp.Scripting.Script;
 		public static Assembly compiledasm;
 		public static byte[] compiledBytes;
 
+		public static readonly string[] requiredManagedDependencies = new[]
+		{
+			"Keysharp.Core.dll",
+			"System.CodeDom.dll",
+			"PCRE.NET.dll",
+			"BitFaster.Caching.dll"
+		};
+		public static readonly string[] requiredNativeDependencies = new[]
+		{
+			"PCRE.NET.Native" + EmbeddedDependencyLoader.dllExt,
+		};
+
+		private static readonly string[] usings = new[]  //These aren't what show up in the output .cs file. See Parser.GenerateCompileUnit() for that.
+		{
+			"System",
+			"System.Collections",
+			"System.Collections.Generic",
+			"System.Data",
+			"System.Drawing",
+			"System.IO",
+			"System.Linq",
+			"System.Reflection",
+			"System.Runtime",
+			"System.Windows.Forms",
+			"System.Runtime.InteropServices",
+			"Keysharp.Core",
+		};
+
+		private static HashSet<string> _compiledScriptDependencies;
+		public static HashSet<string> GetCompiledScriptDependencies(string depsJson)
+		{
+			if (_compiledScriptDependencies == null)
+			{
+				_compiledScriptDependencies = new (StringComparer.OrdinalIgnoreCase);
+
+				// 2) load and parse
+				using var doc = JsonDocument.Parse(File.ReadAllText(depsJson));
+				var dir = Path.GetDirectoryName(depsJson);
+				var rid = RuntimeInformation.RuntimeIdentifier;
+				// 3) drill into the “libraries” section for runtime & native assets
+				var targets = doc.RootElement.GetProperty("targets");
+
+				foreach (var target in targets.EnumerateObject())
+				{
+					foreach (var library in target.Value.EnumerateObject())
+					{
+						var name = library.Name;
+						var info = library.Value;
+
+						// managed assemblies
+						// asmEntry.Name might be "lib/netstandard2.0/PCRE.NET.dll"
+						if (info.TryGetProperty("runtime", out var runTimeGroup))
+							foreach (var asmEntry in runTimeGroup.EnumerateObject())
+								switch (Path.GetFileName(asmEntry.Name).ToUpper())
+								{
+									// Don't include our entry assemblies
+									case "KEYSHARP.DLL":
+									case "KEYVIEW.DLL":
+									case "KEYSHARP.OUTPUTTEST.DLL":
+										break;
+
+									default:
+										_compiledScriptDependencies.Add(File.Exists(asmEntry.Name) ? asmEntry.Name : Path.Combine(dir, Path.GetFileName(asmEntry.Name)));
+										break;
+								}
+
+						// native libraries
+						// nativeEntry.Name might be "runtimes/win-x64/native/PCRE.NET.Native.dll"
+						if (info.TryGetProperty("native", out var nativeGroup))
+							foreach (var nativeEntry in nativeGroup.EnumerateObject())
+								_compiledScriptDependencies.Add(File.Exists(nativeEntry.Name) ? nativeEntry.Name : Path.Combine(dir, Path.GetFileName(nativeEntry.Name)));
+
+						if (info.TryGetProperty("runtimeTargets", out var runtimeTargetsGroup))
+							foreach (var nativeEntry in runtimeTargetsGroup.EnumerateObject())
+								if (nativeEntry.Value.TryGetProperty("rid", out var targetRid) && targetRid.ValueEquals(rid))
+									_compiledScriptDependencies.Add(File.Exists(nativeEntry.Name) ? nativeEntry.Name : Path.Combine(dir, Path.GetFileName(nativeEntry.Name)));
+					}
+				}
+			}
+
+			return _compiledScriptDependencies;
+		}
+
 		private readonly CodeGeneratorOptions cgo = new ()
 		{
 			IndentString = "\t",
@@ -233,13 +316,13 @@ using static Keysharp.Scripting.Script;
 			return "";
 		}
 
-        public (EmitResult, MemoryStream, Exception) Compile(string code, string outputname, string currentDir)
+        public (EmitResult, MemoryStream, Exception) Compile(string code, string outputname, string currentDir, bool minimalexeout = false)
         {
             try
             {
                 var tree = SyntaxFactory.ParseSyntaxTree(code,
                            new CSharpParseOptions(LanguageVersion.LatestMajor, DocumentationMode.None, SourceCodeKind.Regular));
-                return CompileFromTree(tree, outputname, currentDir);
+                return CompileFromTree(tree, outputname, currentDir, minimalexeout);
             }
             catch (Exception e)
             {
@@ -247,28 +330,62 @@ using static Keysharp.Scripting.Script;
             }
         }
 
-        public (EmitResult, MemoryStream, Exception) CompileFromTree(SyntaxTree tree, string outputname, string currentDir)
+        public (EmitResult, MemoryStream, Exception) CompileFromTree(SyntaxTree tree, string outputname, string currentDir, bool minimalexeout = false)
 		{
 			try
 			{
+				IEnumerable<ResourceDescription> resourceDescriptions = null;
+				HashSet<string> allDependencies = null;
 				var coreDir = Path.GetDirectoryName(typeof(object).GetTypeInfo().Assembly.Location);
 				var desktopDir = Path.GetDirectoryName(typeof(Form).GetTypeInfo().Assembly.Location);
 				var ksCoreDir = Path.GetDirectoryName(A_KeysharpCorePath);
-				var usings = new List<string>()//These aren't what show up in the output .cs file. See Parser.GenerateCompileUnit() for that.
+				var currentDepsConfigPath = Path.Combine(ksCoreDir ?? "", $"{Assembly.GetEntryAssembly().GetName().Name}.deps.json");
+
+				if (!File.Exists(currentDepsConfigPath))
 				{
-					"System",
-					"System.Collections",
-					"System.Collections.Generic",
-					"System.Data",
-					"System.Drawing",
-					"System.IO",
-					"System.Linq",
-					"System.Reflection",
-					"System.Runtime",
-					"System.Windows.Forms",
-					"System.Runtime.InteropServices",
-					"Keysharp.Core"
-				};
+					currentDepsConfigPath = Path.Combine(currentDir, $"{Assembly.GetEntryAssembly().GetName().Name}.deps.json");
+
+					if (!File.Exists(currentDepsConfigPath))
+						currentDepsConfigPath = null;
+				}
+
+				if (currentDepsConfigPath != null)
+				{
+					allDependencies = CompilerHelper.GetCompiledScriptDependencies(currentDepsConfigPath);
+
+					if (minimalexeout)
+						resourceDescriptions = allDependencies
+											   .Where(path =>
+					{
+						switch (Path.GetFileName(path).ToUpper())
+						{
+							// Exclude Keysharp.Core because it needs to dynamically load the other
+							// embedded assemblies and native libraries.
+							case "KEYSHARP.CORE.DLL":
+
+							// The following would need to be included if dynamic compilation
+							// is desired by the resulting executable.
+							case "MICROSOFT.CODEANALYSIS.DLL":
+							case "MICROSOFT.CODEANALYSIS.CSHARP.DLL":
+							case "MICROSOFT.CODEDOM.PROVIDERS.DOTNETCOMPILERPLATFORM.DLL":
+							case "MICROSOFT.NET.HOSTMODEL.DLL":
+								return false;
+
+							default:
+								return true;
+						}
+					})
+					.Select(path =>
+							new ResourceDescription(
+						// Prefix with Deps to avoid any naming conflicts. Not sure if this is needed.
+						resourceName: "Deps." + Path.GetFileName(path),
+						dataProvider: () => File.OpenRead(path),
+						isPublic: true
+					)
+						   );
+				}
+
+				// should probably try to extract these from deps.json as well, TODO
 				var references = new List<MetadataReference>
 				{
 					MetadataReference.CreateFromFile(Path.Combine(coreDir, "System.dll")),
@@ -279,14 +396,56 @@ using static Keysharp.Scripting.Script;
 					MetadataReference.CreateFromFile(Path.Combine(coreDir, "System.Reflection.dll")),
 					MetadataReference.CreateFromFile(Path.Combine(coreDir, "System.Runtime.dll")),
 					MetadataReference.CreateFromFile(Path.Combine(coreDir, "System.Private.CoreLib.dll")),
-                    MetadataReference.CreateFromFile(Path.Combine(desktopDir, "System.Drawing.Common.dll")),
-                    MetadataReference.CreateFromFile(Path.Combine(desktopDir, "System.Windows.Forms.dll")),
+					MetadataReference.CreateFromFile(Path.Combine(desktopDir, "System.Drawing.Common.dll")),
+					MetadataReference.CreateFromFile(Path.Combine(desktopDir, "System.Windows.Forms.dll")),
+				};
+
+				// allDependencies has been loaded from a deps.json file and thus should contain all
+				// the necessary dependencies for Keysharp.Core to function.
+				if (allDependencies != null)
+				{
+					references.AddRange(
+						allDependencies
+						// Filter out any non-managed files
+						.Where((string dep) =>
+					{
+						try
+						{
+							AssemblyName.GetAssemblyName(dep);
+							return true;
+						}
+						catch
+						{
+							return false;
+						}
+					})
+					.Select(dep => MetadataReference.CreateFromFile(dep))
+					);
+				}
+				// Otherwise default to Keysharp.Core.dll folder and read metadata from known required
+				// dependencies.
+				else if (ksCoreDir != null)
+				{
 					//This will be the build output folder when running from within the debugger, and the install folder when running from an installation.
 					//Note that Keysharp.Core.dll and System.CodeDom.dll *must* remain in that location for a compiled executable to work.
-					MetadataReference.CreateFromFile(Path.Combine(ksCoreDir, "Keysharp.Core.dll")),
-					MetadataReference.CreateFromFile(Path.Combine(ksCoreDir, "System.CodeDom.dll")),//Even though the .NET desktop install comes with CodeDOM, we reference a special version in Keysharp.Core.
-					MetadataReference.CreateFromFile(Path.Combine(ksCoreDir, "PCRE.NET.dll")),
-				};
+					foreach (var dep in requiredManagedDependencies)
+						references.Add(MetadataReference.CreateFromFile(Path.Combine(ksCoreDir, dep)));
+				}
+				else
+				{
+					var asm = Assembly.GetExecutingAssembly();
+
+					if (!asm.GetManifestResourceNames().Any(s => requiredManagedDependencies.Contains(s)))
+						asm = Assembly.GetEntryAssembly();
+
+					var refs = requiredManagedDependencies.Select(logicalName =>
+					{
+						using var rs = asm.GetManifestResourceStream("Deps." + logicalName)!;
+						return MetadataReference.CreateFromStream(rs);
+					});
+					references.AddRange(refs);
+				}
+
 				var ms = new MemoryStream();
 				var compilation = CSharpCompilation.Create(outputname)
 								  .WithOptions(
@@ -327,7 +486,7 @@ using static Keysharp.Scripting.Script;
 				manifestStream.Position = 0;
 				var msi = Assembly.GetEntryAssembly().GetManifestResourceStream("Keysharp.Keysharp.ico");
 				var res = compilation.CreateDefaultWin32Resources(true, false, manifestStream, msi);//The first argument must be true to embed version/assembly information.
-                var compilationResult = compilation.Emit(ms, win32Resources: res);
+				var compilationResult = compilation.Emit(ms, win32Resources: res, manifestResources: resourceDescriptions);
 				return (compilationResult, ms, null);
 			}
 			catch (Exception e)
@@ -410,12 +569,130 @@ using static Keysharp.Scripting.Script;
             return (units, errors);
         }
 
-		public void PrintCompilerErrors(string s)
+		public void PrintCompilerErrors(string s, bool stdout = false)
 		{
 			if (parser.errorStdOut || Env.FindCommandLineArg("errorstdout") != null)
 				_ = Core.Debug.OutputDebug(s); //For this to show on the command line, they need to pipe to more like: | more
 			else
-				_ = MessageBox.Show(s, "Keysharp", MessageBoxButtons.OK, MessageBoxIcon.Error);
+			{
+				if (stdout)
+					Console.Write(s);
+				else
+					_ = MessageBox.Show(s, "Keysharp", MessageBoxButtons.OK, MessageBoxIcon.Error);
+			}
 		}
+
+		internal string CodeToString(CodeExpression expr)
+		{
+			using (TextWriter tx = new StringWriter())
+			{
+				provider.GenerateCodeFromExpression(expr, tx, cgo);
+				return tx.ToString();
+			}
+		}
+
+		internal string CreateEscapedIdentifier(string variable) => provider.CreateEscapedIdentifier(variable);
+
+		public (byte[], string) CompileCodeToByteArray(string[] fileNames, string nameNoExt, string exeDir = null, bool minimalexeout = false)
+		{
+			if (fileNames.Length == 0)
+				throw new Error("At least one file name must be provided");
+
+			var asm = Assembly.GetExecutingAssembly();
+			exeDir ??= Path.GetFullPath(Path.GetDirectoryName(asm.Location.IsNullOrEmpty() ? Environment.ProcessPath : asm.Location));
+
+			var (st, errs) = CreateSyntaxTreeFromFile(fileNames);
+
+			if (errs.HasErrors || st[0] == null)
+			{
+				var (errors, warnings) = GetCompilerErrors(errs);
+
+				var sb = new StringBuilder(1024);
+				_ = sb.AppendLine($"Compiling script to DOM failed.");
+
+				if (!string.IsNullOrEmpty(errors))
+					_ = sb.Append(errors);
+
+				if (!string.IsNullOrEmpty(warnings))
+					_ = sb.Append(warnings);
+
+				return (null, sb.ToString());
+			}
+
+			var code = st[0].ToString();
+
+			var (results, ms, compileexc) = Compile(code, nameNoExt, exeDir, minimalexeout);
+
+			if (results == null)
+			{
+				return (null, $"Error compiling C# code to executable: {(compileexc != null ? compileexc.Message : string.Empty)}\n\n{code}");
+			}
+			else if (results.Success)
+			{
+				_ = ms.Seek(0, SeekOrigin.Begin);
+				return (ms.ToArray(), code);
+			}
+			else
+			{
+				return (null, HandleCompilerErrors(results.Diagnostics, nameNoExt, "Compiling C# code to executable", compileexc != null ? compileexc.Message : string.Empty) + "\n" + code);
+			}
+		}
+
+		internal object EvaluateCode(string code)
+		{
+			var coreDir = Path.GetDirectoryName(typeof(object).GetTypeInfo().Assembly.Location);
+			var usings = new List<string>()//These aren't what show up in the output .cs file.
+			{
+				"System"
+			};
+			var references = new List<MetadataReference>
+			{
+				MetadataReference.CreateFromFile(Path.Combine(coreDir, "mscorlib.dll")),
+				MetadataReference.CreateFromFile(Path.Combine(coreDir, "System.dll")),
+				MetadataReference.CreateFromFile(Path.Combine(coreDir, "System.Private.CoreLib.dll"))
+			};
+			string finalCode = @"
+using System;
+
+namespace Dyn
+{
+	public class DynamicCode
+	{
+		public object Evaluate()
+		{
+			return " + code + @";
+		}
+	}
+}";
+			var tree = SyntaxFactory.ParseSyntaxTree(finalCode,
+					   new CSharpParseOptions(LanguageVersion.LatestMajor, DocumentationMode.None, SourceCodeKind.Regular));
+			var ms = new MemoryStream();
+			var compilation = CSharpCompilation.Create("DynamicCode")
+							  .WithOptions(
+								  new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
+								  .WithUsings(usings)
+								  .WithOptimizationLevel(OptimizationLevel.Debug)//Quick evaluations don't need to be optimized.
+								  .WithPlatform(Platform.AnyCpu)
+								  .WithConcurrentBuild(true)
+							  )
+							  .AddReferences(references)
+							  .AddSyntaxTrees(tree)
+							  ;
+			var results = compilation.Emit(ms);
+
+			if (results.Success)
+			{
+				_ = ms.Seek(0, SeekOrigin.Begin);
+				var arr = ms.ToArray();
+				var compiledasm = Assembly.Load(arr);
+				object o = compiledasm.CreateInstance("Dyn.DynamicCode");
+				Type t = o.GetType();
+				return t.GetMethod("Evaluate").Invoke(o, null);
+			}
+			else
+				throw new ParseException($"Failed to compile: {code}.");
+		}
+
+		internal bool IsValidIdentifier(string variable) => provider.IsValidIdentifier(variable);
 	}
 }

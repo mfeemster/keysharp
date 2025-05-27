@@ -4,6 +4,27 @@
 	{
 		internal readonly Lock locker = new ();
 		internal RegEx.RegexEntry regdkt = [];
+		internal ConcurrentLfu<string, Func<PcreMatch, string>> ReplacementCache = new (Caching.DefaultCacheCapacity);
+		internal Func<string, Func<PcreMatch, string>> parseReplace = null;
+
+		internal Func<string, Func<PcreMatch, string>> ParseReplace
+		{
+			get
+			{
+				if (parseReplace == null)
+				{
+					var asm = typeof(PcreRegex).Assembly;
+					// 2) find the internal class by its full name
+					var rpType = asm.GetType("PCRE.Internal.ReplacementPattern", throwOnError: true);
+					var mi = rpType.GetMethod("Parse", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
+					parseReplace = (Func<string, Func<PcreMatch, string>>)Delegate.CreateDelegate(
+									   typeof(Func<string, Func<PcreMatch, string>>),
+									   mi);
+				}
+
+				return parseReplace;
+			}
+		}
 	}
 
 	/// <summary>
@@ -60,8 +81,8 @@
 			var n = needle.As();
 			var index = startingPos.Ai(1);
 			IFuncObj callout = null;
-
 			RegexHolder exp;
+
 			try
 			{
 				exp = new RegexHolder(input, n);//This will not throw PCRE style errors like the documentation says.
@@ -89,12 +110,13 @@
 					string name = calloutString != null && calloutString != "" ? calloutString : "pcre_callout";
 					callout = Functions.GetFuncObj(name, null);
 				}
+
 				int result = callout.Call(
-					new RegExMatchInfo(pcre_callout.Match, exp),
-					(long)pcre_callout.Number,
-					pcre_callout.PatternPosition,
-					haystack,
-					needle).ParseInt() ?? 0;
+								 new RegExMatchInfo(pcre_callout.Match, exp),
+								 (long)pcre_callout.Number,
+								 pcre_callout.PatternPosition,
+								 haystack,
+								 needle).ParseInt() ?? 0;
 
 				if (result > 1)
 					result = 1;
@@ -103,6 +125,7 @@
 					Error err;
 					return Errors.ErrorOccurred(err = new Error($"PCRE matching error", null, (long)result)) ? throw err : PcreCalloutResult.Abort;
 				}
+
 				return (PcreCalloutResult)result;
 			}
 
@@ -180,21 +203,24 @@
 			Error err;
 			var input = haystack.As();
 			var needle = needleRegEx.As();
+			var rd = TheScript.RegExData;
 			IFuncObj callout = null;
 			string replace = null;
 			Func<PcreMatch, string> replaceParser = null;
+
 			if (replacement is IFuncObj ifo)
 				callout = ifo;
 			else
 			{
 				replace = replacement.As();
-				replaceParser = RegexHolder.ReplacementCache.GetOrAdd(replace, RegexHolder.ParseReplace);
+				replaceParser = rd.ReplacementCache.GetOrAdd(replace, rd.ParseReplace);
 			}
+
 			var l = limit.Ai(-1);
 			var index = startingPos.Ai(1);
 			int n = 0;
-
 			RegexHolder exp;
+
 			try
 			{
 				exp = new RegexHolder(input, needle);//This will not throw PCRE style errors like the documentation says.
@@ -220,6 +246,7 @@
 			string CalloutHandler(PcreMatch match)
 			{
 				n++;
+
 				if (callout != null)
 					return callout.Call(new RegExMatchInfo(match, exp)).As();
 

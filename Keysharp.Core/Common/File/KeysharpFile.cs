@@ -61,6 +61,18 @@
 		}
 		public KeysharpFile(params object[] args) : base(args) { }
 
+		public KeysharpFile(StreamWriter sw)
+		{
+			tw = sw;
+			enc = sw.Encoding;
+		}
+
+		public KeysharpFile(StreamReader sr)
+		{
+			tr = sr;
+			enc = sr.CurrentEncoding;
+		}
+
 		public override object __New(params object[] args)
 		{
 			if (args == null || args.Length == 0)
@@ -159,6 +171,7 @@
 			tr?.Close();
 			tw?.Close();
 			fs?.Close();
+			disposed = true;
 		}
 
 		public virtual void Dispose(bool disposing)
@@ -166,7 +179,6 @@
 			if (!disposed)
 			{
 				Close();
-				disposed = true;
 			}
 		}
 

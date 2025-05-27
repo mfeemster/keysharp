@@ -1,4 +1,3 @@
-using Keysharp.Scripting;
 using static Keysharp.Core.Errors;
 
 using Timer1 = System.Timers.Timer;

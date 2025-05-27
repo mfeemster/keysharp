@@ -37,82 +37,26 @@ namespace Keysharp.Tests
 			_ = Core.Debug.OutputDebug(Environment.CurrentDirectory);
 			var ch = new CompilerHelper();
 
-            /*
-			var (domunits, domerrs) = ch.CreateDomFromFile(source);
+			var (arr, code) = ch.CompileCodeToByteArray([source], name);
 
-			if (domerrs.HasErrors)
+			if (arr == null)
 			{
-				foreach (CompilerError err in domerrs)
-					_ = Core.Debug.OutputDebug(err.ErrorText);
-
+				_ = Core.Debug.OutputDebug(code);
 				return string.Empty;
 			}
-
-			var (code, exc) = ch.CreateCodeFromDom(domunits);
-
-			if (exc is Exception e)
-			{
-				_ = Core.Debug.OutputDebug(e.Message);
-				return string.Empty;
-			}
-
-			code = CompilerHelper.UsingStr + code;
 
 			using (var sourceWriter = new StreamWriter("./" + name + ".cs"))
 			{
 				sourceWriter.WriteLine(code);
 			}
-			
-			var asm = Assembly.GetExecutingAssembly();
-			var (results, ms, compileexc) = ch.Compile(code, name, Path.GetFullPath(Path.GetDirectoryName(asm.Location)));
-			*/
 
-            var (st, errs) = ch.CreateSyntaxTreeFromFile(source);
-
-            if (errs.HasErrors || st[0] == null)
-            {
-                foreach (CompilerError err in errs)
-                    Core.Debug.OutputDebug(err.ErrorText);
-
-                return string.Empty;
-            }
-
-            var code = st[0].ToString();
-
-            using (var sourceWriter = new StreamWriter("./" + name + ".cs"))
-            {
-                sourceWriter.WriteLine(code);
-            }
-
-            var asm = Assembly.GetExecutingAssembly();
-            var (results, ms, compileexc) = ch.CompileFromTree(st[0], name, Path.GetFullPath(Path.GetDirectoryName(asm.Location)));
-
-            if (compileexc != null)
+			if (exeout)
 			{
-				_ = Core.Debug.OutputDebug(compileexc.Message);
-				return string.Empty;
+				File.WriteAllBytes("./" + name + ".exe", arr);
+				File.WriteAllText("./" + name + ".runtimeconfig.json", CompilerHelper.GenerateRuntimeConfig());//Probably not needed for test exe outputs.
 			}
-			else if (results == null)
-			{
-				return string.Empty;
-			}
-			else if (results.Success)
-			{
-				_ = ms.Seek(0, SeekOrigin.Begin);
-				var arr = ms.ToArray();
 
-				if (exeout)
-				{
-					File.WriteAllBytes("./" + name + ".exe", arr);
-					File.WriteAllText("./" + name + ".runtimeconfig.json", CompilerHelper.GenerateRuntimeConfig());//Probably not needed for test exe outputs.
-				}
-
-				CompilerHelper.compiledasm = Assembly.Load(arr);
-			}
-			else
-			{
-				return string.Empty;
-			}
+			CompilerHelper.compiledasm = Assembly.Load(arr);
 
 			var buffer = new StringBuilder();
 			var output = string.Empty;
@@ -131,7 +75,7 @@ namespace Keysharp.Tests
 							throw new Exception("Compilation failed.");
 
 						//Environment.SetEnvironmentVariable("SCRIPT", script);
-						var program = CompilerHelper.compiledasm.GetType("Keysharp.CompiledMain." + Keywords.MainClassName);
+						var program = CompilerHelper.compiledasm.GetType($"Keysharp.CompiledMain.{Keywords.MainClassName}");
 						var main = program.GetMethod("Main");
 						var temp = new string[] { };
 						var result = main.Invoke(null, [temp]);

@@ -1,6 +1,4 @@
-﻿using Keysharp.Scripting;
-
-namespace Keysharp.Core.Common.Threading
+﻿namespace Keysharp.Core.Common.Threading
 {
 	internal class TimerWithTag : System.Windows.Forms.Timer
 	{

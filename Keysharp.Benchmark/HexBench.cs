@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using BenchmarkDotNet.Order;
-
-namespace Keysharp.Benchmark
+﻿namespace Keysharp.Benchmark
 {
 	/// <summary>
 	/// Some benchmarking from https://www.meziantou.net/comparing-implementations-with-benchmarkdotnet.htm

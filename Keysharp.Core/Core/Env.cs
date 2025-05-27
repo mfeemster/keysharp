@@ -201,8 +201,79 @@ namespace Keysharp.Core
 		/// <param name="args">The command line arguments to process.</param>
 		public static object HandleCommandLineParams(string[] args)
 		{
+			if (args.Length > 0 && args[0].TrimStart(Keywords.DashSlash).ToUpper() == "SCRIPT") 
+			{
+				string[] newArgs = new string[args.Length - 1];
+				System.Array.Copy(args, 1, newArgs, 0, args.Length - 1);
+				Environment.ExitCode = Runner.Run(args);
+				throw new Flow.UserRequestedExitException();
+			}
 			_ = A_Args.AddRange(args);
 			return null;
+		}
+
+		/// <summary>
+		/// Compiles and executes a C# script dynamically in a separate process.
+		/// </summary>
+		/// <param name="obj0">The script source result (as any object with a valid string representation).</param>
+		/// <param name="obj1">Whether to run the process as async (provide non-unset non-zero value) or not.
+		/// <param name="obj2">An optional name for the dynamically generated program; defaults to "DynamicScript".</param>
+		/// <param name="obj3">Optional executable path used to run the generated assembly; defaults to the currently running process.</param>
+		/// If provided a callback function then it's considered async and the function <c>Call</c> method will be 
+		/// invoked when the process exits with the ProcessInfo as the only argument.</param>
+		/// <returns>
+		/// Returns a <see cref="ProcessInfo"/> wrapper around the spawned process.
+		/// If compilation fails without a flagged error, returns <c>null</c>.
+		/// </returns>
+		/// <exception cref="Error">Throws any compilation as <see cref="Error"/>.</exception>
+		public static object RunScript(object obj0, object obj1 = null, object obj2 = null, object obj3 = null)
+		{
+			string script = obj0.As();
+			IFuncObj cb = null;
+			if (obj1 != null)
+				cb = Functions.Func(obj1);
+			string name = obj2.As("DynamicScript");
+			string result = null;
+			Error err; 
+
+			byte[] compiledBytes = null;
+			var ch = new CompilerHelper();
+
+			(compiledBytes, result) = ch.CompileCodeToByteArray([script], name);
+			if (compiledBytes == null)
+				return Errors.ErrorOccurred(err = new Error(result)) ? throw err : null;
+
+			var scriptProcess = new Process
+			{
+				StartInfo = new ProcessStartInfo
+				{
+					FileName = obj3 == null ? Path.GetFileName(Environment.ProcessPath) : obj3.As(),
+					Arguments = "--script --assembly *",
+					RedirectStandardInput = true,
+					RedirectStandardOutput = true,
+					UseShellExecute = false,
+					CreateNoWindow = true
+				}
+			};
+			var info = new ProcessInfo(scriptProcess);
+			scriptProcess.EnableRaisingEvents = true;
+			scriptProcess.Exited += (object sender, EventArgs e) =>
+			{
+				cb?.Call(info);
+			};
+			_ = scriptProcess.Start();
+
+			using (var writer = new BinaryWriter(scriptProcess.StandardInput.BaseStream, Encoding.UTF8, leaveOpen: true))
+			{
+				writer.Write(compiledBytes.Length);
+				writer.Write(compiledBytes);
+				writer.Flush();
+			}
+
+			if (!ForceBool(obj1 ?? false))
+				scriptProcess.WaitForExit();
+
+			return info;
 		}
 
 		/// <summary>

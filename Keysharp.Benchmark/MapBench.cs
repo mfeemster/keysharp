@@ -72,7 +72,7 @@ namespace Keysharp.Benchmark
 		private readonly Dictionary<object, object> dkt = [];
 		private readonly Map map = Collections.Map(), mapScript = Collections.Map();
 		private readonly List<string> strings = [];
-		private Keysharp.Scripting.Script _ks_s;
+		private readonly Keysharp.Scripting.Script _ks_s;
 
 		[Params(100000)]
 		public int Size { get; set; }
