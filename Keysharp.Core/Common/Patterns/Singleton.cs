@@ -1,20 +1,20 @@
 ﻿namespace Keysharp.Core.Common.Patterns
 {
-	internal class ScopeHelper
-	{
-		public EventHandler<object> eh;
-		private readonly object obj;
-
-		public ScopeHelper(object o)
-		{
-			obj = o;
-		}
-
-		~ScopeHelper()
-		{
-			eh?.Invoke(this, obj);
-		}
-	}
+	//internal class ScopeHelper
+	//{
+	//	public EventHandler<object> eh;
+	//	private readonly object obj;
+	//
+	//	public ScopeHelper(object o)
+	//	{
+	//		obj = o;
+	//	}
+	//
+	//	~ScopeHelper()
+	//	{
+	//		eh?.Invoke(this, obj);
+	//	}
+	//}
 
 	/// <summary>
 	/// generic for singletons

@@ -40,7 +40,7 @@ namespace Keysharp.Core.Linux
 		internal WindowManager()
 		{
 			_display = XDisplay.Default;
-			Processes.CurrentThreadID = (uint)Xlib.gettid();
+			Script.TheScript.ProcessesData.CurrentThreadID = (uint)Xlib.gettid();
 		}
 
 		internal override WindowItemBase CreateWindow(nint id) => new WindowItem(id);

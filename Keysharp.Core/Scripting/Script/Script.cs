@@ -17,9 +17,11 @@ namespace Keysharp.Scripting
 	/// </summary>
 	public partial class Script
 	{
-		internal static bool dpimodeset; //This should be done once per process, so it can be static
+		internal static bool dpimodeset;//This should be done once per process, so it can be static.
+#if LINUX
+		private static Encoding enc1252 = Encoding.Default;
+#endif
 		public const char dotNetMajorVersion = '9';
-
 		public bool ForceKeybdHook;
 		public string[] KeysharpArgs = [];
 		public uint MaxThreadsTotal = 12u;
@@ -63,12 +65,16 @@ namespace Keysharp.Scripting
 		private static int instanceCount;
 		private AccessorData accessorData;
 		private ArrayIndexValueIteratorData arrayIndexValueIteratorData;
+#if WINDOWS
 		private ComArrayIndexValueEnumeratorData comArrayIndexValueEnumeratorData;
 		private ComEnumeratorData comEnumeratorData;
 		private ComMethodData comMethodData;
+#endif
 		private ControlProvider controlProvider;
 		private DelegateData delegateData;
+#if WINDOWS
 		private DllData dllData;
+#endif
 		private DriveTypeMapper driveTypeMapper;
 		private ExecutableMemoryPoolManager exeMemoryPoolManager;
 		private FlowData flowData;
@@ -101,13 +107,17 @@ namespace Keysharp.Scripting
 		public Variables Vars { get; private set; }
 		internal AccessorData AccessorData => accessorData ?? (accessorData = new ());
 		internal ArrayIndexValueIteratorData ArrayIndexValueIteratorData => arrayIndexValueIteratorData ?? (arrayIndexValueIteratorData = new ());
-		internal ComArrayIndexValueEnumeratorData ComArrayIndexValueEnumeratorData => comArrayIndexValueEnumeratorData ?? (comArrayIndexValueEnumeratorData = new ());
+#if WINDOWS
+		internal ComArrayIndexValueEnumeratorData ComArrayIndexValueEnumeratorData => comArrayIndexValueEnumeratorData ?? (comArrayIndexValueEnumeratorData = new());
 		internal ComEnumeratorData ComEnumeratorData => comEnumeratorData ?? (comEnumeratorData = new ());
 		internal ComMethodData ComMethodData => comMethodData ?? (comMethodData = new ());
+#endif
 		internal ControlProvider ControlProvider => controlProvider ?? (controlProvider = new ());
 		internal CoordModes Coords { get; private set; }
 		internal DelegateData DelegateData => delegateData ?? (delegateData = new ());
-		internal DllData DllData => dllData ?? (dllData = new ());
+#if WINDOWS
+		internal DllData DllData => dllData ?? (dllData = new());
+#endif
 		internal DriveTypeMapper DriveTypeMapper => driveTypeMapper ?? (driveTypeMapper = new ());
 		internal ExecutableMemoryPoolManager ExecutableMemoryPoolManager => exeMemoryPoolManager ?? (exeMemoryPoolManager = new ());
 		internal FlowData FlowData => flowData ?? (flowData = new ());
@@ -156,6 +166,10 @@ namespace Keysharp.Scripting
 		internal StringsData StringsData => stringsData ?? (stringsData = new ());
 		internal ToolTipData ToolTipData => toolTipData ?? (toolTipData = new ());
 		internal WindowProvider WindowProvider => windowProvider ?? (windowProvider = new ());
+
+#if LINUX
+		internal string ldLibraryPath = Environment.GetEnvironmentVariable("LD_LIBRARY_PATH") ?? "";
+#endif
 
 		static Script()
 		{

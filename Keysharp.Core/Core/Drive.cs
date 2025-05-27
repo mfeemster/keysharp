@@ -56,7 +56,6 @@ namespace Keysharp.Core
 		public static string DriveGetList(object driveType = null)
 		{
 			var drivetype = driveType.As();
-			var matchingDevices = "";
 			DriveType? type = null;
 
 			if (!string.IsNullOrEmpty(drivetype))
@@ -65,6 +64,8 @@ namespace Keysharp.Core
 			var drives = DriveInfo.GetDrives();
 #if !WINDOWS
 			var list = new List<string>(drives.Length);
+#else
+			var matchingDevices = "";
 #endif
 
 			for (var i = 0; i < drives.Length; i++)

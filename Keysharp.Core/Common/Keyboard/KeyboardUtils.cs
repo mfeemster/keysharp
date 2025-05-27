@@ -38,7 +38,15 @@ namespace Keysharp.Core.Common.Keyboard
 		{
 #if LINUX
 			var inputStr = "xinput".Bash();
+			var kud = Script.TheScript.KeyboardUtilsData;
+			var mouseList = kud.mouseList;
+			var keyboardList = kud.keyboardList;
+			var kbMouseList = kud.kbMouseList;
 
+			mouseList.Clear();
+			keyboardList.Clear();
+			kbMouseList.Clear();
+			
 			foreach (Range r in inputStr.AsSpan().SplitAny(CrLf))
 			{
 				var split = inputStr.AsSpan(r).Trim();

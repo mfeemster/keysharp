@@ -40,7 +40,9 @@ namespace Keysharp.Core
 			{
 				ShowNewFolderButton = (opts & 1) == 1//The 1, 3 and 5 options seem to not apply to this class and the New Folder button will always be shown.
 			};
+#if WINDOWS
 			select.UseDescriptionForTitle = true;
+#endif
 			select.Description = p != "" ? p : "Select Folder - " + A_ScriptName;
 			select.RootFolder = Environment.SpecialFolder.MyComputer;
 
@@ -211,7 +213,9 @@ namespace Keysharp.Core
 					{
 						RootFolder = Environment.SpecialFolder.MyComputer,
 						SelectedPath = rootdir + Path.DirectorySeparatorChar,
+#if WINDOWS
 						UseDescriptionForTitle = true,
+#endif
 						Description = t,
 						ShowNewFolderButton = true//Seems to be visible regardless of this property.
 					};

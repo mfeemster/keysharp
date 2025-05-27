@@ -5,7 +5,6 @@ namespace Keysharp.Core.Common.Invoke
 	{
 		protected bool cdecl = false;
 		protected List<GCHandle> gcHandles = [];
-		protected ScopeHelper gcHandlesScope;
 		protected bool hasReturn = false;
 		protected Type returnType = typeof(int);
 		internal Dictionary<int, Type> outputVars = [];

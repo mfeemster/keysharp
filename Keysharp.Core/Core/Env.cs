@@ -105,6 +105,8 @@ namespace Keysharp.Core
 			}
 
 			return new ClipboardAll(System.Array.Empty<byte>());
+#else
+			return null;
 #endif
 		}
 
@@ -201,7 +203,7 @@ namespace Keysharp.Core
 		/// <param name="args">The command line arguments to process.</param>
 		public static object HandleCommandLineParams(string[] args)
 		{
-			if (args.Length > 0 && args[0].TrimStart(Keywords.DashSlash).ToUpper() == "SCRIPT") 
+			if (args.Length > 0 && args[0].TrimStart(Keywords.DashSlash).ToUpper() == "SCRIPT")
 			{
 				string[] newArgs = new string[args.Length - 1];
 				System.Array.Copy(args, 1, newArgs, 0, args.Length - 1);
@@ -234,7 +236,7 @@ namespace Keysharp.Core
 				cb = Functions.Func(obj1);
 			string name = obj2.As("DynamicScript");
 			string result = null;
-			Error err; 
+			Error err;
 
 			byte[] compiledBytes = null;
 			var ch = new CompilerHelper();
@@ -865,7 +867,6 @@ namespace Keysharp.Core
 			}
 		}
 	}
-
 #if LINUX
 	/// <summary>
 	/// Gotten from: https://stackoverflow.com/questions/6262454/c-sharp-backing-up-and-restoring-clipboard
@@ -880,7 +881,7 @@ namespace Keysharp.Core
 
 		public ClipboardAll(params object[] args) => _ = __New(args);
 
-		public object __New(params object[] args)
+		public new object __New(params object[] args)
 		{
 			Save();
 			return "";
@@ -930,6 +931,9 @@ namespace Keysharp.Core
 
 		public ClipboardAll(params object[] args) => _ = __New(args);
 	}
-
+#else
+	public class ClipboardAll
+	{
+	}
 #endif
 }

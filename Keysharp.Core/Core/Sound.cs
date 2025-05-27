@@ -834,12 +834,16 @@ namespace Keysharp.Core
 			internal string targetName;
 			// Valid only when target_control == SoundControlType::Name.
 		};
-
+#else
+		private static object DoSound(SoundCommands soundCmd, object obj0, object obj1 = null, object obj2 = null)
+		{
+			return null;
+		}
 #endif
 
-		/// <summary>
-		/// Enum for specifying different sound operations which will be passed to <see cref="DoSound(SoundCommands, object, object, object)"/>
-		/// </summary>
+			/// <summary>
+			/// Enum for specifying different sound operations which will be passed to <see cref="DoSound(SoundCommands, object, object, object)"/>
+			/// </summary>
 		private enum SoundCommands
 		{
 			SoundGetVolume = 0, SoundGetMute, SoundGetName

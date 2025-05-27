@@ -25,7 +25,7 @@
 		/// <typeparam name="T">The type of element the collections contain.</typeparam>
 		/// <param name="hash">The <see cref="HashSet{T}"/> to add the items to.</param>
 		/// <param name="add">The <see cref="IEnumerable{T}"/> whose items will be added to hash.</param>
-		internal static void AddRange<T>(this HashSet<T> hash, IEnumerable<T> add) where T : class, new ()
+		internal static void AddRange<T>(this HashSet<T> hash, IEnumerable<T> add) where T : class
 		{
 			foreach (var item in add)
 				_ = hash.Add(item);
@@ -116,7 +116,7 @@
 		/// <returns>The existing or newly added element.</returns>
 		internal static V GetOrAdd<K, V>(this Dictionary<K, V> dictionary, K k, V v)
 		where K : notnull
-			where V : new ()
+			where V : class
 		{
 			ref var val = ref CollectionsMarshal.GetValueRefOrAddDefault(dictionary, k, out var exists);
 			return !exists ? val = v : val;
@@ -137,7 +137,7 @@
 		/// <returns>The existing or newly added element.</returns>
 		internal static V GetOrAdd<K, V>(this Dictionary<K, V> dictionary, K k, Func<V> constructionFunc)
 		where K : notnull
-			where V : new ()
+			where V : class
 		{
 			ref var val = ref CollectionsMarshal.GetValueRefOrAddDefault(dictionary, k, out var exists);
 			return !exists ? val = constructionFunc() : val;

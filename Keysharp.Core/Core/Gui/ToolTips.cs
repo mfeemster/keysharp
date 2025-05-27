@@ -115,7 +115,7 @@
 			{
 #if LINUX
 				tt.Active = true;
-				tt.SetToolTip(tooltipInvokerForm, text);//Setting position is not possible on linux.
+				tt.SetToolTip(tooltipInvokerForm, text.As());//Setting position is not possible on linux.
 #elif WINDOWS
 				//We use SetTool() via reflection in this function because it bypasses ToolTip.Show()'s check for whether or not the window
 				//is active.

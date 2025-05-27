@@ -128,7 +128,7 @@
 		internal void LaunchInThread(int priority, bool skipninterruptible,
 									 bool isCritical, object func, object[] o, bool tryCatch)//Determine later the optimal threading model.//TODO
 		{
-			Task<object> tsk = null;
+			//Task<object> tsk = null;
 
 			try
 			{
