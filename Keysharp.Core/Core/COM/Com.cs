@@ -295,7 +295,7 @@ namespace Keysharp.Core.COM
 			if (resultPtr == 0)
 				return Errors.ErrorOccurred(err = new Error($"Unable to get COM interface with arguments {sidiid}, {iid}.")) ? throw err : null;
 
-			return new ComObject(id == IID_IDispatch ? vt_dispatch : vt_unknown, resultPtr);
+			return new ComObject(id == IID_IDispatch ? vt_dispatch : vt_unknown, (long)resultPtr);
 		}
 
 		public static object ComObjType(object comObj, object infoType = null)
@@ -421,7 +421,6 @@ namespace Keysharp.Core.COM
 					_ = Marshal.Release((nint)ptr);
 				}
 			}
-
 			else if (ptr is long l)
 				ptr = new nint(l);
 
