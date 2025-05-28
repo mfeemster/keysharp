@@ -244,7 +244,7 @@ namespace Keysharp.Core
 				return null;
 
 			var parent = child.NonChildParentWindow;
-			outputVarWin = parent.Handle;
+			outputVarWin = (long)parent.Handle;
 #if WINDOWS
 
 			//Doing it this way overcomes the limitations of WindowFromPoint() and ChildWindowFromPoint()
@@ -265,7 +265,7 @@ namespace Keysharp.Core
 
 			if ((mode & 0x02) != 0)
 			{
-				outputVarControl = child.Handle;
+				outputVarControl = (long)child.Handle;
 				return null;
 			}
 
@@ -343,7 +343,7 @@ namespace Keysharp.Core
 		internal static void AdjustPoint(ref int x, ref int y)
 		{
 			var script = Script.TheScript;
-			
+
 			if (script.Coords.Mouse == CoordModeType.Window)
 			{
 				var rect = script.WindowProvider.Manager.ActiveWindow.Location;
@@ -369,7 +369,7 @@ namespace Keysharp.Core
 		internal static void AdjustRect(ref int x1, ref int y1, ref int x2, ref int y2)
 		{
 			var script = Script.TheScript;
-			
+
 			if (script.Coords.Mouse == CoordModeType.Window)
 			{
 				var rect = script.WindowProvider.Manager.ActiveWindow.Location;

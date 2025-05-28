@@ -144,8 +144,8 @@ namespace Keysharp.Core.Linux.Proxies
 		/// <returns></returns>
 		internal unsafe IEnumerable<XWindow> XQueryTree(XWindow windowToObtain, Func<long, bool> filter = null)
 		{
+			var childrenReturn = nint.Zero;
 			var windows = new List<XWindow>();
-			var childrenReturn = 0;
 
 			try
 			{
@@ -196,7 +196,7 @@ namespace Keysharp.Core.Linux.Proxies
 		internal unsafe IEnumerable<XWindow> XQueryTreeRecursive(Func<long, bool> filter = null) => XQueryTreeRecursive(Root, filter);
 		internal unsafe IEnumerable<XWindow> XQueryTreeRecursive(XWindow windowToObtain, Func<long, bool> filter = null)
 		{
-			var childrenReturn = 0;
+			var childrenReturn = nint.Zero;
 			var windows = new HashSet<XWindow>();
 
 			try
