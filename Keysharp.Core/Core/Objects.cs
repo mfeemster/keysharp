@@ -133,5 +133,110 @@
 
 			return Errors.ErrorOccurred(err = new Error($"Object of type {obj0.GetType()} was not of type KeysharpObject.")) ? throw err : null;
 		}
+
+		// Shared helper to normalize an “object” that might be
+		// an IntPtr, a long, or a RCW wrapper into a raw IUnknown*.
+		private static nint GetRawIUnknownPtr(object ptrOrObj)
+		{
+			if (ptrOrObj is long l)               // pointer encoded as a long
+				return (nint)l;
+
+			// must be a CCW/RCW object:
+			// 1) GetIUnknownForObject adds 1 ref
+			// 2) Release immediately drops it back to original count
+			nint punk = Marshal.GetIUnknownForObject(ptrOrObj);
+			Marshal.Release(punk);
+			return punk;
+		}
+
+		/// <summary>
+		/// Returns an IntPtr that represents the given object.
+		/// The resulting GCHandle is allocated with GCHandleType.Normal,
+		/// so it must be freed later to avoid a leak.
+		/// </summary>
+		public static long ObjPtr(object obj)
+		{
+			if (obj == null)
+				return 0;
+
+			return GetRawIUnknownPtr(obj);
+		}
+		public static long ObjPtrAddRef(object obj)
+		{
+			if (obj == null)
+				return 0;
+
+			// GetIUnknownForObject always adds one ref
+			return Marshal.GetIUnknownForObject(obj);
+		}
+
+		/// <summary>
+		/// Given an IntPtr produced by ObjPtr, returns the original object.
+		/// </summary>
+		public static object ObjFromPtr(object ptr)
+		{
+			ptr = Reflections.GetPtrProperty(ptr);
+
+			nint punk = GetRawIUnknownPtr(ptr);
+			if (punk == 0)
+				return null;
+
+			// For COM object this creates or finds the RCW and bumps the ref count,
+			// and once the object is collected then the ref count is decreased.
+			// If it's a managed object then it's just returned (I think, this is unverified).
+			var dispPtr = Marshal.GetObjectForIUnknown(punk);
+
+			if (dispPtr is IDispatch id)
+				return new ComObject(VarEnum.VT_DISPATCH, id);
+			else if (Marshal.IsComObject(dispPtr))
+				return new ComObject(VarEnum.VT_UNKNOWN, dispPtr);
+			else
+				return dispPtr;
+		}
+
+		// Mostly for compatibility with AHK
+		public static object ObjFromPtrAddRef(object ptr)
+		{
+			ptr = Reflections.GetPtrProperty(ptr);
+
+			nint punk = GetRawIUnknownPtr(ptr);
+			if (punk == 0)
+				return null;
+
+			// bump the COM ref-count
+			Marshal.AddRef(punk);
+
+			// then unwrap to RCW
+			return Marshal.GetObjectForIUnknown(punk);
+		}
+
+		/// <summary>
+		/// Frees a managed C# object or string, allowing it to be garbage-collected.
+		/// </summary>
+		public static bool ObjFree(object value)
+		{
+			Error err;
+
+			if (value is IPointable ip)
+				value = ip.Ptr;
+
+			if (Marshal.IsComObject(value))
+			{
+				Marshal.ReleaseComObject(value);
+				return true;
+			} 
+			else if (value is long l) 
+			{
+				if (Script.TheScript.StringsData.gcHandles.Remove((nint)l, out var oldGch))
+				{
+					oldGch.Free();
+					return true;
+				}
+				Marshal.Release((nint)l);
+				return true;
+			} 
+			else
+				return Errors.ErrorOccurred(err = new TypeError($"Argument of type {value.GetType()} was not a pointer.")) ? throw err : false;
+		}
 	}
 }

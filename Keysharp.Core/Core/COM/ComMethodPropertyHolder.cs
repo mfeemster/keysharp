@@ -87,15 +87,22 @@ namespace Keysharp.Core.COM
 					else
 						_ = dispatch.GetTypeInfo(0, 0, out ti);
 
+					if (ti == null)
+						goto AfterTypeInfoQuery;
+
 					//Put this in a try catch because GetIDsOfNames() will fail in a unit test scenario,
 					//but run fine everywhere else for reasons unknown.
 					var names = new string[] { methodName };
 					var dispIds = new int[1];
 					var dummy = Guid.Empty;
 					_ = dispatch.GetIDsOfNames(ref dummy, names, 1, Com.LOCALE_SYSTEM_DEFAULT, dispIds);
+					if (dispIds.Length == 0)
+						goto AfterTypeInfoQuery;
 					//If we get here, this type - info defines the method.
 					var foundDispId = dispIds[0];
 					ti.GetContainingTypeLib(out var typeLib, out int pIndex);//This is the only way to properly get all interfaces.
+					if (typeLib == null)
+						goto AfterTypeInfoQuery;
 					var typeCount = typeLib.GetTypeInfoCount();
 
 					for (var i = 0; i < typeCount; i++)
@@ -141,10 +148,24 @@ namespace Keysharp.Core.COM
 						}
 					}
 
-					if (!found)
-						return Errors.ErrorOccurred(err = new TypeError($"COM call to '{methodName}()' could not be found in any type-info interface.")) ? throw err : null;
+					AfterTypeInfoQuery:
 
-					found = false; // Set back to false to cache the result
+					if (!found)
+					{
+						paramCount = inputParameters.Length;
+						expectedTypes = new Type[paramCount];
+						var modifier = new ParameterModifier(paramCount);
+						for (int i = 0; i < paramCount; i++)
+						{
+							expectedTypes[i] = typeof(object);
+							modifier[i] = false;
+						}
+						modifiers = [modifier];
+						found = true; // Do not cache
+						//return Errors.ErrorOccurred(err = new TypeError($"COM call to '{methodName}()' could not be found in any type-info interface.")) ? throw err : null;
+					}
+					else
+						found = false; // Set back to false to cache the result
 					void PopulateModifiers(FUNCDESC funcDesc)
 					{
 						paramCount = funcDesc.cParams;
@@ -161,12 +182,12 @@ namespace Keysharp.Core.COM
 								var pElemDesc = new nint(funcDesc.lprgelemdescParam.ToInt64() + (i * Marshal.SizeOf<ELEMDESC>()));
 								var elemDesc = Marshal.PtrToStructure<ELEMDESC>(pElemDesc);
 								//First, check if VT_BYREF is set.
-								var isByRef = (elemDesc.tdesc.vt & Com.vt_byref) != 0;
+								var isByRef = ((VarEnum)elemDesc.tdesc.vt & VarEnum.VT_BYREF) != 0;
 								//Mask out VT_BYREF to get the base VARTYPE.
-								var vtBase = (short)(elemDesc.tdesc.vt & ~Com.vt_byref);
+								var vtBase = (VarEnum)elemDesc.tdesc.vt & ~VarEnum.VT_BYREF;
 
 								//If the base type is VT_PTR (26), then we try to get the pointed-to type.
-								if (vtBase == Com.vt_ptr)
+								if (vtBase == VarEnum.VT_PTR)
 								{
 									//VT_PTR typically means the parameter is a pointer (i.e. byref).
 									//Mark it as byref.
@@ -176,8 +197,8 @@ namespace Keysharp.Core.COM
 									{
 										//Read the pointed-to TYPEDESC.
 										var pointedType = Marshal.PtrToStructure<TYPEDESC>(elemDesc.tdesc.lpValue);
-										var pointedVt = (short)(pointedType.vt & ~Com.vt_byref);
-										ConvertType(i, pointedVt);
+										var pointedVt = (VarEnum)pointedType.vt & ~VarEnum.VT_BYREF;
+										expectedTypes[i] = Com.ConvertVarTypeToCLRType(pointedVt);
 									}
 									else
 									{
@@ -189,7 +210,7 @@ namespace Keysharp.Core.COM
 								{
 									//Otherwise, use the normal mapping.
 									modifier[i] = isByRef;
-									ConvertType(i, vtBase);
+									expectedTypes[i] = Com.ConvertVarTypeToCLRType(vtBase);
 								}
 							}
 
@@ -295,22 +316,6 @@ namespace Keysharp.Core.COM
 				}
 
 				return ret;
-				void ConvertType(int i, short vt)
-				{
-
-					expectedTypes[i] = vt switch
-				{
-						Com.vt_i2 => typeof(short),
-							Com.vt_i4 or Com.vt_int => typeof(int),
-							Com.vt_i8 => typeof(long),
-							Com.vt_r4 => typeof(float),
-							Com.vt_r8 => typeof(double),
-							Com.vt_bool => typeof(bool),
-							Com.vt_bstr => typeof(string),
-							Com.vt_variant => typeof(object),
-							_ => typeof(object),
-					};
-				}
 			}
 			catch (Exception ex)
 			{

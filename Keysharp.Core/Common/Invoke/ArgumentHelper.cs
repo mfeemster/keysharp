@@ -7,7 +7,8 @@ namespace Keysharp.Core.Common.Invoke
 		protected List<GCHandle> gcHandles = [];
 		protected bool hasReturn = false;
 		protected Type returnType = typeof(int);
-		internal Dictionary<int, Type> outputVars = [];
+		//int is the index in the argument list, and bool specifies if it's a VarRef (false) or Ptr (true)
+		internal Dictionary<int, (Type, bool)> outputVars = [];
 		internal bool CDecl => cdecl;
 		internal bool HasReturn => hasReturn;
 		internal Type ReturnType => returnType;
@@ -77,6 +78,8 @@ namespace Keysharp.Core.Common.Invoke
 
 				// Lowercase-first-char for fast case-insensitive dispatch
 				char c0 = (char)(span[0] | 0x20);
+				// Check for pointer suffix: '*' or 'P'/'p'
+				char last = span[len - 1];
 
 				if (isReturn)
 				{
@@ -108,25 +111,31 @@ namespace Keysharp.Core.Common.Invoke
 					{
 						object kptr;
 
-						if ((kso is IPointable ip && (kptr = ip.Ptr) != null)
-								|| (Script.GetPropertyValue(kso, "ptr", false) is object tmp && (kptr = tmp) != null))
+						if (c0 == 'p' && ((kso is IPointable ip && (kptr = ip.Ptr) != null)
+								|| (Script.GetPropertyValue(kso, "ptr", false) is object tmp && (kptr = tmp) != null)))
 						{
-							// Need to track this separately, because we later need to update ComObject.Ptr in FixParamTypesAndCopyBack
-							if (kso is ComObject)
-								outputVars[paramIndex] = typeof(nint);
+							if (last == '*' || (char)(last | 0x20) == 'p')
+								outputVars[paramIndex] = (typeof(nint), true);
 
 							p = kptr;
 						}
 					}
 				}
 
-				// Check for pointer suffix: '*' or 'P'/'p'
-				char last = span[len - 1];
-
 				if (last == '*' || (char)(last | 0x20) == 'p')
 				{
 					// Remove the suffix
 					span = span.Slice(0, --len);
+					
+					// Make sure the original object isn't directly modified
+					object temp = 0L;
+					if (p is long ll)
+						temp = ll;
+					else if (p is bool bl)
+						temp = bl;
+					else if (p is double d)
+						temp = d;
+					p = temp;
 					// Pin the object and store its address
 					SetupPointerArg();
 					// Determine the type only
@@ -419,7 +428,7 @@ namespace Keysharp.Core.Common.Invoke
 						floatingTypeMask |= 1UL << (n + 1);
 				}
 				else
-					outputVars[paramIndex] = type;
+					outputVars[paramIndex] = (type, outputVars.ContainsKey(paramIndex));
 			}
 
 			void ConvertPtr()
