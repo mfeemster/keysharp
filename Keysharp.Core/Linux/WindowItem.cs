@@ -295,7 +295,7 @@ namespace Keysharp.Core.Linux
 			get
 			{
 				var parentReturn = 0L;
-				var childrenReturn = 0;
+				var childrenReturn = nint.Zero;
 
 				try
 				{
@@ -1254,7 +1254,7 @@ namespace Keysharp.Core.Linux
 
 		private Rectangle FrameExtents()
 		{
-			var prop = 0;
+			var prop = nint.Zero;
 			var rect = Rectangle.Empty;
 			_ = Xlib.XGetWindowProperty(xwindow.XDisplay.Handle, xwindow.ID, xwindow.XDisplay._NET_FRAME_EXTENTS, 0, new nint(40), false, (nint)XAtom.XA_CARDINAL, out var actualAtom, out var actualFormat, out var nitems, out var bytesAfter, ref prop);
 

@@ -1127,8 +1127,12 @@ MaximizeAllButton := MyGui.Add("Button", "xc+10 y+5", "Maximize all")
 MaximizeAllButton.OnEvent("Click", "MaximizeAll")
 MoveAllButton := MyGui.Add("Button", "xc+10 y+5", "Move me")
 MoveAllButton.OnEvent("Click", "MoveButton")
+
+#if WINDOWS
 CandyProgressButton := MyGui.Add("Button", "y+5", "Candy progress") ; x deliberately omitted to ensure default positioning works when only one dimension is specified.
 CandyProgressButton.OnEvent("Click", "CandyProgress")
+#endif
+
 TestTypesButton := MyGui.Add("Button", "xc+10", "Test types") ; Same, but for y.
 TestTypesButton.OnEvent("Click", "TestTypes")
 
@@ -1157,6 +1161,7 @@ MoveButton()
 	ControlMove(x, y, w, h, MoveAllButton.Hwnd, MyGui)
 }
 
+#if WINDOWS
 candygui := Gui("-DPIScale +E0x02080000", "Candy Progress")
 candygui.OnEvent("Close", "CloseCandy")
 candygui.BackColor := "FFCC00"
@@ -1215,13 +1220,16 @@ CandyTimer()
 		candyvalue := 0
 	}
 }
+#endif
 
 TestTypes()
 {
 	global
 	local s := "All of these should be true`n"
 	
+#if WINDOWS
 	s .= "Odie is Gui.ActiveX: " . (activeXOdie is Gui.ActiveX) . "`n"
+#endif
 	s .= "Add Fuchsia is Gui.Button: " . (CZ_LbBtn1 is Gui.Button) . "`n"
 	s .= "CheckBox test is Gui.CheckBox: " . (CheckBoxOne is Gui.CheckBox) . "`n"
 	s .= "DateTime test is Gui.DateTime: " . (MyDateTime is Gui.DateTime) . "`n"
@@ -1653,7 +1661,6 @@ LV_CountCol() {
 	MsgBox(List, "LV Column Count")
 	List := ""
 }
-
 
 Click_CB() {
 #if WINDOWS
@@ -2090,6 +2097,7 @@ getSelected() { ; https://www.autohotkey.com/boards/viewtopic.php?style=17&t=604
 }
 
 #endif
+
 ; ┌───────────────────────────┐
 ; │  FUNCTIONS AND CALLBACKS  │
 ; └───────────────────────────┘
@@ -2132,6 +2140,7 @@ ChangeBG()
 ; ┌───────────────────────────────┐
 ; │  Restore background function  │
 ; └───────────────────────────────┘
+
 
 RestoreBG()
 {
@@ -2307,6 +2316,7 @@ MyFirstPic := ""
 MySecondPic := ""
 Monkey := A_ScriptDir . A_DirSeparator . "monkey.ico"
 
+#if WINDOWS
 hSecondPic := GetIcon("W")
 GetIcon(Theme, W:=0, H:=0)
 { ; v1.10
@@ -2341,6 +2351,8 @@ GetIcon(Theme, W:=0, H:=0)
 }
 
 Icon2 := "HICON:*" . hSecondPic ; The * is important so it can be reused.
+#endif
+
 LoadPic() {
 	global
 	local x, y, w, h
@@ -2350,15 +2362,17 @@ LoadPic() {
 		MyFirstPic := MyGui.Add("Picture", "xc+400 yc+650 w100 h-1 border", Monkey)
 	else
 		MyFirstPic.Value := Monkey
-	
+#if WINDOWS	
 	if (MySecondPic = "")
 		MySecondPic := MyGui.Add("Picture", "xc+520 yc+650 w100 h-1 border", Icon2)
 	else
 		MySecondPic.Value := Icon2
-		
+#endif
 	Sleep(2000)
 	MyFirstPic.Value := ""
+#if WINDOWS	
 	MySecondPic.Value := ""
+#endif
 	Tab.UseTab()
 	; MyGui.Opts("+Redraw")
 }
@@ -2900,8 +2914,6 @@ FakeComCall()
 	MsgBox(val)
 }
 
-OnExit (*) => SystemCursor("Show")  ; Ensure the cursor is made visible when the script exits.
-
 #c::SystemCursor("Toggle")  ; Win+C hotkey to toggle the cursor on and off.
 
 SystemCursor(cmd)  ; cmd = "Show|Hide|Toggle|Reload"
@@ -2938,12 +2950,13 @@ SystemCursor(cmd)  ; cmd = "Show|Hide|Toggle|Reload"
         DllCall("SetSystemCursor", "Ptr", h_cursor, "UInt", id)
     }
 }
+
+OnExit (*) => SystemCursor("Show")  ; Ensure the cursor is made visible when the script exits.
 #endif
 
 ; ┌──────────────────┐
 ; │  Sound Tab       │
 ; └──────────────────┘
-
 MyGui.UseGroup()
 Tab.UseTab("Sound")
 
