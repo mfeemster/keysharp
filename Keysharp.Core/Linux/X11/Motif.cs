@@ -4,11 +4,11 @@ namespace Keysharp.Core.Linux.X11
 	[StructLayout(LayoutKind.Sequential)]
 	internal struct MotifWmHints
 	{
-		internal IntPtr flags;
-		internal IntPtr functions;
-		internal IntPtr decorations;
-		internal IntPtr input_mode;
-		internal IntPtr status;
+		internal nint flags;
+		internal nint functions;
+		internal nint decorations;
+		internal nint input_mode;
+		internal nint status;
 	}
 
 	[Flags]

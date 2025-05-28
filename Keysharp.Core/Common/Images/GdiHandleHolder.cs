@@ -3,7 +3,7 @@
 	internal sealed class GdiHandleHolder : KeysharpObject
 	{
 		private readonly bool disposeHandle = true;
-		private readonly IntPtr handle;
+		private readonly nint handle;
 
 		internal GdiHandleHolder(IntPtr h, bool d)
 		{
@@ -15,7 +15,7 @@
 		{
 #if WINDOWS
 
-			if (disposeHandle && handle != IntPtr.Zero)
+			if (disposeHandle && handle != 0)
 				_ = WindowsAPI.DeleteObject(handle);//Windows specific, figure out how to do this, or if it's even needed on other platforms.//TODO
 
 #endif

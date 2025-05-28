@@ -474,10 +474,12 @@ namespace Keysharp.Core
 
 				return Errors.ErrorOccurred(err = new UnsetError($"__Enum() could not be located on the object.")) ? throw err : null;
 			}
+#if WINDOWS
 			else if (Marshal.IsComObject(obj))
 			{
 				return new ComEnumerator(obj, ct);
 			}
+#endif
 			else if (obj is null)
 				return Errors.ErrorOccurred(err = new UnsetError($"Object was null and could not be converted to a KeysharpEnumerator.")) ? throw err : null;
 			else
@@ -828,7 +830,7 @@ namespace Keysharp.Core
 					regkey.Handle,
 					tv.RegSb,
 					ref classSize,
-					IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero,
+					0, 0, 0, 0, 0, 0, 0, 0,
 					out var l);
 			return l;
 		}

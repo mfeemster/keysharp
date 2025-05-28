@@ -1,20 +1,20 @@
 ﻿namespace Keysharp.Core.Common.Patterns
 {
-	internal class ScopeHelper
-	{
-		public EventHandler<object> eh;
-		private readonly object obj;
-
-		public ScopeHelper(object o)
-		{
-			obj = o;
-		}
-
-		~ScopeHelper()
-		{
-			eh?.Invoke(this, obj);
-		}
-	}
+	//internal class ScopeHelper
+	//{
+	//	public EventHandler<object> eh;
+	//	private readonly object obj;
+	//
+	//	public ScopeHelper(object o)
+	//	{
+	//		obj = o;
+	//	}
+	//
+	//	~ScopeHelper()
+	//	{
+	//		eh?.Invoke(this, obj);
+	//	}
+	//}
 
 	/// <summary>
 	/// generic for singletons
@@ -51,13 +51,13 @@
 	//  public override bool IsInvalid => pinnedArray.AddrOfPinnedObject().ToInt64() > 0 && pinnedArray.IsAllocated;
 	//
 	//  public AutoPinner(object obj)
-	//      : base(IntPtr.Zero, true)
+	//      : base(0, true)
 	//  {
 	//      pinnedArray = GCHandle.Alloc(obj, GCHandleType.Pinned);
 	//      SetHandle(pinnedArray.AddrOfPinnedObject());
 	//  }
 	//
-	//  public static implicit operator IntPtr(AutoPinner ap) => ap.pinnedArray.AddrOfPinnedObject();
+	//  public static implicit operator nint(AutoPinner ap) => ap.pinnedArray.AddrOfPinnedObject();
 	//
 	//  protected override bool ReleaseHandle()
 	//  {

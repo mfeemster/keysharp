@@ -5,10 +5,10 @@ namespace Keysharp.Core.Linux.X11
 	internal struct XKeymapEvent
 	{
 		internal XEventName type;
-		internal IntPtr serial;
+		internal nint serial;
 		internal bool send_event;
-		internal IntPtr display;
-		internal IntPtr window;
+		internal nint display;
+		internal nint window;
 		internal byte key_vector0;
 		internal byte key_vector1;
 		internal byte key_vector2;

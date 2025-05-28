@@ -29,11 +29,11 @@
 			}
 			else
 			{
-				off = offset is IntPtr ip ? ip.ToInt32() : offset.Ai();
+				off = offset.Ai();
 				t = type.As("UInt");
 			}
 
-			IntPtr addr;
+			nint addr;
 			var size = 0L;
 			t = t.ToLower();
 
@@ -51,13 +51,11 @@
 
 			if (address is object[] objarr && objarr.Length > 0)//Assume the first element was a long which was an address.
 				addr = new nint(objarr[0].Al());
-			else if (address is IntPtr ptr)
-				addr = ptr;
 			else if (address is long l)
-				addr = new IntPtr(l);
+				addr = new nint(l);
 
 			//else if (address is int i)
-			//  addr = new IntPtr(i);
+			//  addr = new nint(i);
 #if WINDOWS
 			else if (t == "ptr" && Marshal.IsComObject(address))
 			{
@@ -66,11 +64,11 @@
 				_ = Marshal.Release(pUnk);
 			}
 			else
-				return Errors.ErrorOccurred(err = new TypeError($"Could not convert address argument of type {address.GetType()} into an IntPtr. Type must be integer, ComObject, Buffer or other object with Ptr and Size properties that are integers.")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new TypeError($"Could not convert address argument of type {address.GetType()} into an nint. Type must be integer, ComObject, Buffer or other object with Ptr and Size properties that are integers.")) ? throw err : null;
 
 #else
 			else
-				return Errors.ErrorOccurred(err = new TypeError($"Could not convert address argument of type {address.GetType()} into an IntPtr. Type must be int, long, Buffer or other object with Ptr and Size properties that are integers.")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new TypeError($"Could not convert address argument of type {address.GetType()} into an nint. Type must be int, long, Buffer or other object with Ptr and Size properties that are integers.")) ? throw err : null;
 
 #endif
 
@@ -140,7 +138,7 @@
 					if (size > 0 && (off + 8 > size))
 						return Errors.ErrorOccurred(err = new IndexError($"Memory access exceeded buffer size. Offset {off} + length 8 > buffer size {size}.")) ? throw err : null;
 
-					var ipoff = IntPtr.Add(addr, off);
+					var ipoff = nint.Add(addr, off);
 					//var pp = (long*)ipoff.ToPointer();
 					//return *pp;
 					return Marshal.ReadIntPtr(ipoff).ToInt64();//Dereference here.
@@ -158,17 +156,8 @@
 		/// <exception cref="IndexError">An <see cref="IndexError"/> exception is thrown if the offset exceeds the bounds of the memory or if it couldn't be determined.</exception>
 		public static long NumPut(params object[] obj)
 		{
-			byte[] ConvertToInt(object input)
-			{
-				if (input is IntPtr ip)
-					return BitConverter.GetBytes(ip.ToInt64());
-				else if (input is ulong ul)
-					return BitConverter.GetBytes(ul);
-				else
-					return BitConverter.GetBytes(input.Al());
-			}
 			Error err;
-			IntPtr addr = IntPtr.Zero;
+			nint addr = 0;
 			var offset = 0;
 			var size = 0L;
 			int lastPairIndex;
@@ -199,14 +188,10 @@
 				target = p;
 			}
 
-			if (target is IntPtr ptr)
-				addr = ptr;
-			else if (target is long l)
-				addr = new IntPtr(l);
-			//else if (target is int i)
-			//  addr = new IntPtr(i);
+			if (target is long l)
+				addr = new nint(l);
 			else
-				return Errors.ErrorOccurred(err = new TypeError($"Could not convert address argument of type {target.GetType()} into an IntPtr. Type must be integer, Buffer or other object with Ptr and Size properties that are integers.")) ? throw err : 0L;
+				return Errors.ErrorOccurred(err = new TypeError($"Could not convert address argument of type {target.GetType()} into an nint. Type must be integer, Buffer or other object with Ptr and Size properties that are integers.")) ? throw err : 0L;
 
 			for (var i = 0; i <= lastPairIndex; i += 2)
 			{
@@ -270,7 +255,7 @@
 						if (number is KeysharpObject kso)
 							number = Reflections.GetIntPtrProperty(kso);
 
-						bytes = ConvertToInt(number);
+						bytes = BitConverter.GetBytes(number.Al());
 						inc = 8;
 						break;
 
@@ -280,7 +265,7 @@
 						break;
 				}
 
-				var finalAddr = IntPtr.Add(addr, offset);
+				var finalAddr = nint.Add(addr, offset);
 
 				if (size > 0)
 				{
@@ -292,7 +277,7 @@
 					else
 						return Errors.ErrorOccurred(err = new IndexError($"Memory access exceeded buffer size. Offset {offset} + length {bytes.Length} > buffer size {size}.")) ? throw err : 0L;
 				}
-				else if (addr != IntPtr.Zero)
+				else if (addr != 0)
 				{
 					Marshal.Copy(bytes, 0, finalAddr, bytes.Length);
 					offset += inc;
@@ -301,7 +286,7 @@
 					return Errors.ErrorOccurred(err = new IndexError($"Could not parse target {target} as a Buffer or memory address.")) ? throw err : 0L;
 			}
 
-			return IntPtr.Add(addr, offset).ToInt64();
+			return nint.Add(addr, offset).ToInt64();
 		}
 	}
 }

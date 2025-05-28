@@ -5,11 +5,11 @@ namespace Keysharp.Core.Linux.X11
 	internal struct XCirculateEvent
 	{
 		internal XEventName type;
-		internal IntPtr serial;
+		internal nint serial;
 		internal bool send_event;
-		internal IntPtr display;
-		internal IntPtr xevent;
-		internal IntPtr window;
+		internal nint display;
+		internal nint xevent;
+		internal nint window;
 		internal int place;
 	}
 
@@ -17,11 +17,11 @@ namespace Keysharp.Core.Linux.X11
 	internal struct XCirculateRequestEvent
 	{
 		internal XEventName type;
-		internal IntPtr serial;
+		internal nint serial;
 		internal bool send_event;
-		internal IntPtr display;
-		internal IntPtr parent;
-		internal IntPtr window;
+		internal nint display;
+		internal nint parent;
+		internal nint window;
 		internal int place;
 	}
 }

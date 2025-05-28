@@ -112,7 +112,7 @@ namespace Keysharp.Core.COM
 
 				//case VT_RECORD:   Corresponding boxed value type.
 				//case vt_variant: t = typeof(VARIANT); break;
-				//case vt_variant: t = typeof(IntPtr); break;
+				//case vt_variant: t = typeof(nint); break;
 				case vt_variant: t = typeof(object); break;
 
 				default:
@@ -126,7 +126,7 @@ namespace Keysharp.Core.COM
 		{
 			if (comObj is ComObject co)
 			{
-				if (co.VarType != vt_dispatch && co.VarType != vt_unknown)// || Marshal.GetIUnknownForObject(co.Ptr) == IntPtr.Zero)
+				if (co.VarType != vt_dispatch && co.VarType != vt_unknown)// || Marshal.GetIUnknownForObject(co.Ptr) == 0)
 				{
 					Error err;
 					return Errors.ErrorOccurred(err = new ValueError($"COM object type of {co.VarType} was not VT_DISPATCH or VT_UNKNOWN, and was not IUnknown.")) ? throw err : null;
@@ -194,7 +194,7 @@ namespace Keysharp.Core.COM
 					var iptr = Marshal.GetIUnknownForObject(inst);
 
 					if (Marshal.QueryInterface(iptr, in id, out var ptr) >= 0)
-						inst = ptr;
+						inst = (long)ptr;
 
 					_ = Marshal.Release(iptr);
 				}
@@ -238,10 +238,8 @@ namespace Keysharp.Core.COM
 		{
 			Error err;
 
-			if (dispPtr is IntPtr ip)
-				dispPtr = Marshal.GetObjectForIUnknown(ip);
-			else if (dispPtr is long l)
-				dispPtr = Marshal.GetObjectForIUnknown(new IntPtr(l));
+			if (dispPtr is long l)
+				dispPtr = Marshal.GetObjectForIUnknown(new nint(l));
 
 			if (dispPtr is IDispatch id)
 				return new ComObject(vt_dispatch, id);
@@ -256,21 +254,19 @@ namespace Keysharp.Core.COM
 		public static object ComObjQuery(object comObj, object sidiid = null, object iid = null)
 		{
 			Error err;
-			IntPtr ptr;
+			nint ptr;
 
 			if (comObj is KeysharpObject kso && Script.GetPropertyValue(kso, "ptr", false) is object kptr && kptr != null)
 				comObj = kptr;
 
 			if (Marshal.IsComObject(comObj))
 				ptr = Marshal.GetIUnknownForObject(comObj);
-			else if (comObj is IntPtr ip)
-				ptr = ip;
 			else if (comObj is long l)
-				ptr = new IntPtr(l);
+				ptr = new nint(l);
 			else
 				return Errors.ErrorOccurred(err = new ValueError($"The passed in object {comObj} of type {comObj.GetType()} was not a ComObject or a raw COM interface.")) ? throw err : null;
 
-			IntPtr resultPtr = IntPtr.Zero;
+			nint resultPtr = 0;
 			Guid id = Guid.Empty;
 			int hr;
 
@@ -296,7 +292,7 @@ namespace Keysharp.Core.COM
 				}
 			}
 
-			if (resultPtr == IntPtr.Zero)
+			if (resultPtr == 0)
 				return Errors.ErrorOccurred(err = new Error($"Unable to get COM interface with arguments {sidiid}, {iid}.")) ? throw err : null;
 
 			return new ComObject(id == IID_IDispatch ? vt_dispatch : vt_unknown, resultPtr);
@@ -380,10 +376,6 @@ namespace Keysharp.Core.COM
 			{
 				return co.Ptr;
 			}
-			else if (comObj is IntPtr ip)
-			{
-				return ip.ToInt64();
-			}
 			else//Unsure if this logic even makes sense.
 			{
 				var gch = GCHandle.Alloc(comObj, GCHandleType.Pinned);
@@ -397,7 +389,7 @@ namespace Keysharp.Core.COM
 
 		public static object ObjAddRef(object ptr)
 		{
-			var unk = IntPtr.Zero;
+			nint unk = 0;
 
 			if (ptr is IPointable ipo)
 				ptr = ipo.Ptr;
@@ -406,9 +398,9 @@ namespace Keysharp.Core.COM
 			else if (ptr is long l)
 				ptr = new IntPtr(l);
 
-			if (ptr is IntPtr ip2)
+			if (ptr is long l)
 			{
-				unk = ip2;
+				unk = new nint(l);
 			}
 			else
 			{
@@ -430,10 +422,8 @@ namespace Keysharp.Core.COM
 				_ = Marshal.Release((nint)ptr);
 			}
 
-			if (ptr is IntPtr ip)
-				ptr = ip;
 			else if (ptr is long l)
-				ptr = new IntPtr(l);
+				ptr = new nint(l);
 
 			return (long)Marshal.Release((nint)ptr);
 		}
@@ -450,7 +440,7 @@ namespace Keysharp.Core.COM
 			if (idx < 0)
 				return Errors.ErrorOccurred(err = new ValueError($"Index value of {idx} was less than zero.")) ? throw err : null;
 
-			var pUnk = IntPtr.Zero;
+			nint pUnk = 0;
 
 			if (comObj is KeysharpObject kso && Script.GetPropertyValue(comObj, "ptr", false) is object propPtr && propPtr != null)
 				comObj = propPtr;
@@ -460,16 +450,14 @@ namespace Keysharp.Core.COM
 				pUnk = Marshal.GetIUnknownForObject(comObj);
 				_ = Marshal.Release(pUnk);
 			}
-			else if (comObj is IntPtr ip)
-				pUnk = ip;
 			else if (comObj is long l)
-				pUnk = new IntPtr(l);
+				pUnk = new nint(l);
 			else
 				return Errors.ErrorOccurred(err = new ValueError($"The passed in object was not a ComObject or a raw COM interface.")) ? throw err : null;
 
 			var pVtbl = Marshal.ReadIntPtr(pUnk);
 			var helper = new ArgumentHelper(parameters);
-			var value = NativeInvoke(pUnk.ToInt64(), Marshal.ReadIntPtr(IntPtr.Add(pVtbl, idx * sizeof(IntPtr))), helper.args, helper.floatingTypeMask);
+			var value = NativeInvoke(pUnk.ToInt64(), Marshal.ReadIntPtr(nint.Add(pVtbl, idx * sizeof(nint))), helper.args, helper.floatingTypeMask);
 			Dll.FixParamTypesAndCopyBack(parameters, helper);
 			helper.Dispose();
 
@@ -507,9 +495,9 @@ namespace Keysharp.Core.COM
 			return value;
 		}
 
-		internal static object NativeInvoke(long objPtr, IntPtr vtbl, long[] args, ulong mask)
+		internal static object NativeInvoke(long objPtr, nint vtbl, long[] args, ulong mask)
 		{
-			if (objPtr == 0L || vtbl == IntPtr.Zero)
+			if (objPtr == 0L || vtbl == 0)
 				throw new Error("Invalid object pointer or vtable number");
 
 			object ret = 0L;
@@ -564,12 +552,12 @@ namespace Keysharp.Core.COM
 			if (!Guid.TryParse(progId, out var clsid))
 				_ = CLSIDFromProgIDEx(progId, out clsid);
 
-			GetActiveObject(ref clsid, IntPtr.Zero, out var obj);
+			GetActiveObject(ref clsid, 0, out var obj);
 			return obj;
 		}
 
 		[DllImport(WindowsAPI.oleaut, CharSet = CharSet.Unicode, PreserveSig = false)]
-		private static extern void GetActiveObject(ref Guid rclsid, IntPtr pvReserved, [MarshalAs(UnmanagedType.IUnknown)] out object ppunk);
+		private static extern void GetActiveObject(ref Guid rclsid, nint pvReserved, [MarshalAs(UnmanagedType.IUnknown)] out object ppunk);
 	}
 }
 #endif

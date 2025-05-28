@@ -14,14 +14,14 @@ namespace Keysharp.Core
 		// into too large numbers.
 #if CONCURRENT
 		internal readonly ConcurrentDictionary<ulong, Delegate> delegateCache = new ();
-		internal readonly ConcurrentDictionary<string, IntPtr> procAddressCache = new (StringComparer.OrdinalIgnoreCase);
+		internal readonly ConcurrentDictionary<string, nint> procAddressCache = new (StringComparer.OrdinalIgnoreCase);
 #else
 #if TL
 		internal readonly ThreadLocal<Dictionary<ulong, Delegate>> delegateCache = new (() => new ());
-		internal readonly ThreadLocal<Dictionary<string, IntPtr>> procAddressCache = new (() => new Dictionary<string, IntPtr>(StringComparer.OrdinalIgnoreCase));
+		internal readonly ThreadLocal<Dictionary<string, nint>> procAddressCache = new (() => new Dictionary<string, nint>(StringComparer.OrdinalIgnoreCase));
 #else
 		internal readonly Dictionary<ulong, Delegate> delegateCache = new ();
-		internal readonly Dictionary<string, IntPtr> procAddressCache = new (StringComparer.OrdinalIgnoreCase);
+		internal readonly Dictionary<string, nint> procAddressCache = new (StringComparer.OrdinalIgnoreCase);
 #endif
 #endif
 	}
@@ -39,7 +39,7 @@ namespace Keysharp.Core
 		/// An optimization is to keep a cache of these objects, keyed by the exact function name and argument types.<br/>
 		/// Doing this saves significant time when doing repeated calls to the same DLL function with the same argument types.
 		/// </summary>
-		private static readonly Dictionary<string, IntPtr> loadedDlls = new ()
+		private static readonly Dictionary<string, nint> loadedDlls = new ()
 		{
 			{ "user32", NativeLibrary.Load("user32") },
 			{ "kernel32", NativeLibrary.Load("kernel32") },
@@ -127,8 +127,8 @@ namespace Keysharp.Core
 		{
 			//You should some day add the ability to use this with .NET dlls, exposing some type of reflection to the Script.TheScript.//TODO
 			Error err;
-			nint handle = IntPtr.Zero;
-			nint address = IntPtr.Zero;
+			nint handle = 0;
+			nint address = 0;
 
 			if (function is string path)
 			{
@@ -209,7 +209,7 @@ namespace Keysharp.Core
 						NativeLibrary.TryGetExport(loadedDlls[moduleName], name + "W", out address);
 					}
 
-					if (address == IntPtr.Zero)
+					if (address == 0)
 						return Errors.ErrorOccurred(err = new Error($"Unable to locate dll with path {path}.")) ? throw err : null;
 					else
 					{
@@ -237,7 +237,7 @@ namespace Keysharp.Core
 
 					NativeLibrary.TryLoad(path, out handle);
 
-					if (handle != IntPtr.Zero && !NativeLibrary.TryGetExport(handle, name, out address))
+					if (handle != 0 && !NativeLibrary.TryGetExport(handle, name, out address))
 						NativeLibrary.TryGetExport(handle, name + "W", out address);
 				}
 			}
@@ -246,7 +246,7 @@ namespace Keysharp.Core
 
 			AddressFound:
 
-			if (address == IntPtr.Zero)
+			if (address == 0)
 				return Errors.ErrorOccurred(err = new TypeError($"Function argument was of type {function.GetType()}. It must be string, StringBuffer, integer, Buffer or other object with a Ptr property that is an integer.")) ? throw err : null;
 
 			try
@@ -287,7 +287,7 @@ namespace Keysharp.Core
 			}
 			finally
 			{
-				if (handle != IntPtr.Zero)
+				if (handle != 0)
 					NativeLibrary.Free(handle);
 			}
 		}
@@ -299,10 +299,10 @@ namespace Keysharp.Core
 		/// <param name="fnPtr">The pointer to the native function to be called.</param>
 		/// <param name="args">The argument list.</param>
 		/// <param name="mask">64-bit mask containing information about floating point arguments and return value</param>
-		/// <returns>An <see cref="IntPtr"/> which contains the return value of the function call.</returns>
-		internal static object NativeInvoke(IntPtr fnPtr, long[] args, ulong mask)
+		/// <returns>An <see cref="nint"/> which contains the return value of the function call.</returns>
+		internal static object NativeInvoke(nint fnPtr, long[] args, ulong mask)
 		{
-			IntPtr shim = IntPtr.Zero;
+			nint shim = 0;
 			int n = args.Length;
 			var script = TheScript;
 			var delegateCache = script.DllData.delegateCache;
@@ -378,18 +378,18 @@ namespace Keysharp.Core
 
 			// invoke with the correct delegate type
 			if (((mask >> n) & 1) != 0)
-				result = ((Func<IntPtr, long[], double>)del)(fnPtr, args);
+				result = ((Func<nint, long[], double>)del)(fnPtr, args);
 			else
-				result = ((Func<IntPtr, long[], long>)del)(fnPtr, args);
+				result = ((Func<nint, long[], long>)del)(fnPtr, args);
 
-			if (shim != IntPtr.Zero)
+			if (shim != 0)
 				script.ExecutableMemoryPoolManager.Return(shim);
 
 			return result;
 		}
 
 		/// <summary>
-		/// Generates (and returns) a delegate of type Func<IntPtr, long[], long> or Func<IntPtr, long[], double>
+		/// Generates (and returns) a delegate of type Func<nint, long[], long> or Func<nint, long[], double>
 		/// for a function pointer that accepts exactly n long arguments.
 		/// It reads n arguments from the provided array, loads as either long or double,
 		/// then loads the function pointer and calls it.
@@ -404,7 +404,7 @@ namespace Keysharp.Core
 			var dm = new DynamicMethod(
 				name,
 				returnType,
-				[typeof(IntPtr), typeof(long[])],
+				[typeof(nint), typeof(long[])],
 				typeof(Dll).Module,
 				skipVisibility: true);
 			var il = dm.GetILGenerator();
@@ -438,27 +438,27 @@ namespace Keysharp.Core
 			il.Emit(OpCodes.Ret);
 			// pick the right Func<…> delegate
 			Type delegateType = (returnType == typeof(double))
-								? typeof(Func<IntPtr, long[], double>)
-								: typeof(Func<IntPtr, long[], long>);
+								? typeof(Func<nint, long[], double>)
+								: typeof(Func<nint, long[], long>);
 			return dm.CreateDelegate(delegateType);
 		}
 
 		/// <summary>
-		/// Generates (and returns) a delegate of type Func<IntPtr, long[], long>
+		/// Generates (and returns) a delegate of type Func<nint, long[], long>
 		/// for a function pointer that accepts exactly n long arguments.
 		/// It reads n arguments from the provided array (pushing 0 for missing entries),
 		/// then loads the function pointer and calls it.
 		/// </summary>
 		/// <param name="n">The number of long arguments expected.</param>
-		private static Func<IntPtr, long[], long> CreateDelegateForArgCount(int n)
+		private static Func<nint, long[], long> CreateDelegateForArgCount(int n)
 		{
 			// The dynamic method always has two parameters:
-			//  - IntPtr: the function pointer,
+			//  - nint: the function pointer,
 			//  - long[]: the array of arguments.
 			DynamicMethod dm = new DynamicMethod(
 				"DynamicDllCall_" + n,
 				typeof(long),
-				[typeof(IntPtr), typeof(long[])],
+				[typeof(nint), typeof(long[])],
 				typeof(Dll).Module,
 				skipVisibility: true);
 			ILGenerator il = dm.GetILGenerator();
@@ -474,7 +474,7 @@ namespace Keysharp.Core
 				il.Emit(OpCodes.Ldelem_I8);
 			}
 
-			// Load the function pointer from the first parameter (IntPtr).
+			// Load the function pointer from the first parameter (nint).
 			il.Emit(OpCodes.Ldarg_0);
 			// Build an array of parameter types (n longs).
 			Type[] paramTypes = Enumerable.Repeat(typeof(long), n).ToArray();
@@ -482,7 +482,7 @@ namespace Keysharp.Core
 			// This assumes a StdCall calling convention and that the function returns a long.
 			il.EmitCalli(OpCodes.Calli, CallingConvention.Cdecl, typeof(long), paramTypes);
 			il.Emit(OpCodes.Ret);
-			return (Func<IntPtr, long[], long>)dm.CreateDelegate(typeof(Func<IntPtr, long[], long>));
+			return (Func<nint, long[], long>)dm.CreateDelegate(typeof(Func<nint, long[], long>));
 		}
 
 		internal static unsafe void FixParamTypeAndCopyBack(ref object p, Type t, nint aip)
@@ -596,10 +596,8 @@ namespace Keysharp.Core
 				        if (arg is not string)
 				        {
 				            //var s = (long*)aip.ToPointer();
-				            //p = Strings.StrGet(new IntPtr(s));
-				            if (arg is IntPtr aip)
-				                parameters[pi + 1] = Strings.StrGet(aip);
-				            else if (arg is long l)
+				            //p = Strings.StrGet(new nint(s));
+				            if (arg is long l)
 				                parameters[pi + 1] = Strings.StrGet((nint)l);
 				        }
 				    }

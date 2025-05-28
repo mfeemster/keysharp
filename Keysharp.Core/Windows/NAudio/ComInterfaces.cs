@@ -31,7 +31,7 @@ namespace Keysharp.Core.Windows
 	 ComImport]
 	internal interface IAudioEndpointVolumeCallback
 	{
-		void OnNotify(IntPtr notifyData);
+		void OnNotify(nint notifyData);
 	};
 
 	[Guid("C02216F6-8C67-4B5B-9D00-D008E73E0064"),
@@ -41,7 +41,7 @@ namespace Keysharp.Core.Windows
 	{
 		int GetPeakValue(out float pfPeak);
 		int GetMeteringChannelCount(out int pnChannelCount);
-		int GetChannelsPeakValues(int u32ChannelCount, [In] IntPtr afPeakValues);
+		int GetChannelsPeakValues(int u32ChannelCount, [In] nint afPeakValues);
 		int QueryHardwareSupport(out int pdwHardwareSupportMask);
 	};
 
@@ -76,9 +76,9 @@ namespace Keysharp.Core.Windows
 	//  int IsFormatSupported(
 	//      AudioClientShareMode shareMode,
 	//      [In] WaveFormat pFormat,
-	//      IntPtr closestMatchFormat); // or outIntPtr??
+	//      nint closestMatchFormat); // or outnint??
 
-	//  int GetMixFormat(out IntPtr deviceFormatPointer);
+	//  int GetMixFormat(out nint deviceFormatPointer);
 
 	//  // REFERENCE_TIME is 64 bit int
 	//  int GetDevicePeriod(out long defaultDevicePeriod, out long minimumDevicePeriod);
@@ -89,7 +89,7 @@ namespace Keysharp.Core.Windows
 
 	//  int Reset();
 
-	//  int SetEventHandle(IntPtr eventHandle);
+	//  int SetEventHandle(nint eventHandle);
 
 	//  /// <summary>
 	//  /// The GetService method accesses additional services from the audio client object.
@@ -155,7 +155,7 @@ namespace Keysharp.Core.Windows
 		[PreserveSig]
 		int OnChannelVolumeChanged(
 			[In][MarshalAs(UnmanagedType.U4)] UInt32 channelCount,
-			[In][MarshalAs(UnmanagedType.SysInt)] IntPtr newVolumes, // Pointer to float array
+			[In][MarshalAs(UnmanagedType.SysInt)] nint newVolumes, // Pointer to float array
 			[In][MarshalAs(UnmanagedType.U4)] UInt32 channelIndex,
 			[In] ref Guid eventContext);
 
@@ -378,7 +378,7 @@ namespace Keysharp.Core.Windows
 	internal interface IMMDevice
 	{
 		// activationParams is a propvariant
-		int Activate(ref Guid id, ClsCtx clsCtx, IntPtr activationParams,
+		int Activate(ref Guid id, ClsCtx clsCtx, nint activationParams,
 					 [MarshalAs(UnmanagedType.IUnknown)] out object interfacePointer);
 
 		int OpenPropertyStore(StorageAccessMode stgmAccess, out IPropertyStore properties);
@@ -451,7 +451,7 @@ namespace Keysharp.Core.Windows
 		[PreserveSig]
 		int OnNotify(
 			[In] uint controlId,
-			[In] IntPtr context);
+			[In] nint context);
 	}
 
 	/// <summary>

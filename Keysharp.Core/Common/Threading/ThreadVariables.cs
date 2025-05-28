@@ -20,7 +20,7 @@ namespace Keysharp.Core.Common.Threading
 		internal Encoding fileEncoding = Encoding.Default;
 		internal string formatNumeric;
 		internal IFuncObj hotCriterion;
-		internal IntPtr hwndLastUsed = IntPtr.Zero;
+		internal long hwndLastUsed = 0;
 		internal bool isCritical = false;
 		internal long keyDelay = 10L;
 		internal long keyDelayPlay = -1L;
@@ -41,7 +41,7 @@ namespace Keysharp.Core.Common.Threading
 		internal DateTime threadStartTime = DateTime.MinValue;
 		internal object titleMatchMode = 2L;
 		internal bool titleMatchModeSpeed = true;
-		internal int uninterruptibleDuration = 17;
+		internal int UninterruptibleDuration = 17;
 		internal long winDelay = 100L;
 		private CoordModes coords;
 		private Random randomGenerator;
@@ -83,7 +83,7 @@ namespace Keysharp.Core.Common.Threading
 			task = false;// null;
 			isCritical = false;
 			allowThreadToBeInterrupted = true;
-			uninterruptibleDuration = 17;
+			UninterruptibleDuration = 17;
 			threadStartTime = DateTime.MinValue;
 			controlDelay = 20L;
 			coords = null;
@@ -96,7 +96,7 @@ namespace Keysharp.Core.Common.Threading
 			eventInfo = null;
 			fileEncoding = Encoding.Default;
 			hotCriterion = null;
-			hwndLastUsed = IntPtr.Zero;
+			hwndLastUsed = 0;
 			keyDelay = 10L;
 			keyDelayPlay = -1L;
 			keyDuration = -1L;
@@ -125,7 +125,7 @@ namespace Keysharp.Core.Common.Threading
 			task = false;// null;
 			isCritical = false;
 			allowThreadToBeInterrupted = true;
-			uninterruptibleDuration = Script.TheScript.uninterruptibleTime;
+			UninterruptibleDuration = Script.TheScript.uninterruptibleTime;
 			threadStartTime = DateTime.MinValue;
 			controlDelay = ControlDelayDefault;
 			coords = null;
@@ -138,12 +138,12 @@ namespace Keysharp.Core.Common.Threading
 			eventInfo = null;
 			fileEncoding = FileEncodingDefault;
 			hotCriterion = null;
-			hwndLastUsed = IntPtr.Zero;
+			hwndLastUsed = 0;
 			keyDelay = KeyDelayDefault;
 			keyDelayPlay = KeyDelayPlayDefault;
 			keyDuration = KeyDurationDefault;
 			keyDurationPlay = KeyDurationPlayDefault;
-			lastFoundForm = IntPtr.Zero;
+			lastFoundForm = 0;
 			mouseDelay = MouseDelayDefault;
 			mouseDelayPlay = MouseDelayPlayDefault;
 			peekFrequency = PeekFrequencyDefault;

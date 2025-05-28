@@ -40,18 +40,18 @@ namespace Keysharp.Core.Linux
 		internal WindowManager()
 		{
 			_display = XDisplay.Default;
-			Processes.CurrentThreadID = (uint)Xlib.gettid();
+			Script.TheScript.ProcessesData.CurrentThreadID = (uint)Xlib.gettid();
 		}
 
-		internal override WindowItemBase CreateWindow(IntPtr id) => new WindowItem(id);
+		internal override WindowItemBase CreateWindow(nint id) => new WindowItem(id);
 
 		internal override IEnumerable<WindowItemBase> FilterForGroups(IEnumerable<WindowItemBase> windows) => windows;
 
-		internal override uint GetFocusedCtrlThread(ref IntPtr apControl, IntPtr aWindow) => throw new NotImplementedException();
+		internal override uint GetFocusedCtrlThread(ref nint apControl, nint aWindow) => throw new NotImplementedException();
 
-		internal override IntPtr GetForeGroundWindowHwnd() => new IntPtr(_display.XGetInputFocusHandle());
+		internal override nint GetForeGroundWindowHwnd() => new nint(_display.XGetInputFocusHandle());
 
-		internal override bool IsWindow(IntPtr handle)
+		internal override bool IsWindow(nint handle)
 		{
 			var attr = new XWindowAttributes();
 			return Xlib.XGetWindowAttributes(_display.Handle, handle.ToInt64(), ref attr) != 0;
@@ -84,7 +84,7 @@ namespace Keysharp.Core.Linux
 			}
 		}
 
-		internal void SendNetClientMessage(IntPtr window, IntPtr message_type, IntPtr l0, IntPtr l1, IntPtr l2)
+		internal void SendNetClientMessage(nint window, nint message_type, nint l0, nint l1, nint l2)
 		{
 			var xev = new XEvent();
 			xev.ClientMessageEvent.type = XEventName.ClientMessage;
@@ -98,7 +98,7 @@ namespace Keysharp.Core.Linux
 			_ = Xlib.XSendEvent(_display.Handle, window, false, EventMasks.NoEvent, ref xev);
 		}
 
-		internal void SendNetWMMessage(IntPtr window, IntPtr message_type, IntPtr l0, IntPtr l1, IntPtr l2, IntPtr l3)
+		internal void SendNetWMMessage(nint window, nint message_type, nint l0, nint l1, nint l2, nint l3)
 		{
 			var xev = new XEvent();
 			xev.ClientMessageEvent.type = XEventName.ClientMessage;

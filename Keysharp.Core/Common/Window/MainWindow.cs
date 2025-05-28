@@ -4,7 +4,9 @@
 	{
 		public static Font OurDefaultFont = new ("Microsoft Sans Serif", 9F);
 		internal FormWindowState lastWindowState = FormWindowState.Normal;
-		private readonly bool success;
+#if WINDOWS
+		private readonly bool clipSuccess;
+#endif
 		private AboutBox about;
 		private bool callingInternalVars = false;
 
@@ -27,9 +29,8 @@
 			SetStyle(ControlStyles.EnableNotifyMessage, true);
 #if LINUX
 			//gtkClipBoard.OwnerChange += gtkClipBoard_OwnerChange;
-			success = true;
 #elif WINDOWS
-			success = WindowsAPI.AddClipboardFormatListener(Handle);//Need a cross platform way to do this.//TODO
+			clipSuccess = WindowsAPI.AddClipboardFormatListener(Handle);//Need a cross platform way to do this.//TODO
 #endif
 			tpVars.HandleCreated += TpVars_HandleCreated;
 			editScriptToolStripMenuItem.Visible = !A_IsCompiled;
@@ -123,7 +124,7 @@
 			switch (m.Msg)
 			{
 				case WindowsAPI.WM_CLIPBOARDUPDATE:
-					if (success)
+					if (clipSuccess)
 						ClipboardUpdate?.Invoke(null);
 
 					handled = true;
@@ -150,8 +151,8 @@
 					{
 						hwnd = m.HWnd,//Unused, but probably still good to assign.
 						message = WindowsAPI.WM_HOTKEY,
-						wParam = new IntPtr(m.WParam.ToInt32()),
-						lParam = m.LParam.ToInt32()
+						wParam = m.WParam,
+						lParam = m.LParam,
 					});
 					handled = true;
 					break;
@@ -161,7 +162,7 @@
 			base.WndProc(ref m);
 
 			if (handled)
-				m.Result = new IntPtr(1);
+				m.Result = new nint(1);
 		}
 
 		private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
@@ -240,7 +241,7 @@
 
 #if WINDOWS
 
-			if (success)
+			if (clipSuccess)
 				_ = WindowsAPI.RemoveClipboardFormatListener(Handle);
 
 #elif LINUX

@@ -14,7 +14,6 @@
 		public static readonly char[] BothBraces = "{}".ToCharArray();
 		public static readonly char[] BothParens = "()".ToCharArray();
 		public static readonly char[] BothBrackets = "[]".ToCharArray();
-		internal static SearchValues<char> AllBracesBracketsParensSv;
 
 		public static readonly char[] Quote = "\"".ToCharArray();
 		public static readonly char[] Comma = ",".ToCharArray();
@@ -729,13 +728,6 @@
 			SpaceMultiDelim = new char[Spaces.Length + 1];
 			SpaceMultiDelim[0] = Multicast;
 			Spaces.CopyTo(SpaceMultiDelim, 1);
-			//SpaceMultiDelimSv = SearchValues.Create(SpaceMultiDelim);
-			//
-			//var braces = new char[6];
-			//BothBraces.CopyTo(braces, 0);
-			//BothParens.CopyTo(braces, 2);
-			//BothBrackets.CopyTo(braces, 4);
-			//AllBracesBracketsParensSv = SearchValues.Create(braces);
 		}
 	}
 }

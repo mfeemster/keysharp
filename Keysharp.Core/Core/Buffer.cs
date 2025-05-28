@@ -20,7 +20,7 @@
 		/// <summary>
 		/// Gets the pointer to the memory.
 		/// </summary>
-		public IntPtr Ptr { get; private set; }
+		public long Ptr { get; private set; }
 
 		/// <summary>
 		/// Gets or sets the size of the buffer.<br/>
@@ -41,17 +41,17 @@
 					//var newptr = Marshal.AllocCoTaskMem((int)val);
 					var newptr = Marshal.AllocHGlobal((int)val);
 
-					if (Ptr != IntPtr.Zero)
+					if (Ptr != 0)
 					{
 						unsafe
 						{
-							var src = (byte*)Ptr.ToPointer();
+							var src = (byte*)Ptr;
 							var dst = (byte*)newptr.ToPointer();
 							System.Buffer.MemoryCopy(src, dst, val, size);
 						}
 						var old = Ptr;
 						Ptr = newptr;
-						Marshal.FreeHGlobal(old);
+						Marshal.FreeHGlobal((nint)old);
 						//Marshal.FreeCoTaskMem(old);
 					}
 					else
@@ -104,27 +104,27 @@
 					Size = bytearray.Length;//Performs the allocation.
 
 					if (size > 0)
-						Marshal.Copy(bytearray, 0, Ptr, Math.Min((int)size, bytearray.Length));
+						Marshal.Copy(bytearray, 0, (nint)Ptr, Math.Min((int)size, bytearray.Length));
 				}
 				else if (obj0 is Array array)
 				{
 					var ct = array.array.Count;
 					Size = ct;
+					var bp = (nint)Ptr;
 
 					for (var i = 0; i < ct; i++)
-						Marshal.WriteByte(Ptr, i, (byte)Script.ForceLong(array.array[i]));//Access the underlying array[] directly for performance.
+						Unsafe.Write((void*)nint.Add(bp, i), (byte)Script.ForceLong(array.array[i]));//Access the underlying array[] directly for performance.
 				}
 				else//This will be called by the user.
 				{
 					var bytecount = obj0.Al(0);
 					var fill = obj.Length > 1 ? obj[1].Al(long.MinValue) : long.MinValue;
 					Size = bytecount;
-					var ptr = Ptr.ToPointer();
 
 					if (bytecount > 0)
 					{
 						byte val = fill != long.MinValue ? (byte)(fill & 255) : (byte)0;
-						Unsafe.InitBlockUnaligned(ptr, val, (uint)bytecount);
+						Unsafe.InitBlockUnaligned((void*)Ptr, val, (uint)bytecount);
 					}
 				}
 			}
@@ -140,9 +140,9 @@
 		{
 			if (!disposed)
 			{
-				Marshal.FreeHGlobal(Ptr);
+				Marshal.FreeHGlobal((nint)Ptr);
 				//Marshal.FreeCoTaskMem(Ptr);
-				Ptr = IntPtr.Zero;
+				Ptr = 0;
 				Size = 0;
 				disposed = true;
 			}
@@ -173,7 +173,7 @@
 				{
 					unsafe
 					{
-						var ptr = (byte*)Ptr.ToPointer();
+						var ptr = (byte*)Ptr;
 						return ptr[index - 1];
 					}
 				}

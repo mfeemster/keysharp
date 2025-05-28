@@ -21,8 +21,10 @@
 					assemblyResources[name] = asm;
 		}
 
-		[ModuleInitializer]
-		public static void Initialize()
+#pragma warning disable CA2255 // The 'ModuleInitializer' attribute should not be used in libraries
+        [ModuleInitializer]
+#pragma warning restore CA2255 // The 'ModuleInitializer' attribute should not be used in libraries
+        public static void Initialize()
 		{
 			if (assemblyResources.Count > 0)
 				AppDomain.CurrentDomain.AssemblyResolve += ResolveFromResources;
@@ -39,7 +41,7 @@
 			else if (assemblyResources.TryGetValue("Deps." + resourceName, out resourceAsm))
 				rs = resourceAsm.GetManifestResourceStream("Deps." + resourceName);
 
-			if (rs == null) return IntPtr.Zero;
+			if (rs == null) return 0;
 
 			var tmp = Path.Combine(Path.GetDirectoryName(Environment.ProcessPath), resourceName);
 

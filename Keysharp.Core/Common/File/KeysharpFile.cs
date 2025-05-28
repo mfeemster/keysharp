@@ -112,7 +112,7 @@
 					if (handle.HasValue)
 					{
 						exists = true;
-						fs = new FileStream(new Microsoft.Win32.SafeHandles.SafeFileHandle(new IntPtr(handle.Value), false), a, 4096);
+						fs = new FileStream(new Microsoft.Win32.SafeHandles.SafeFileHandle(new nint(handle.Value), false), a, 4096);
 					}
 				}
 				else
@@ -206,7 +206,7 @@
 					var len = Math.Min(val.Length, size);
 					unsafe
 					{
-						var ptr = (byte*)buffer.Ptr.ToPointer();
+						var ptr = (byte*)buffer.Ptr;
 
 						for (var i = 0; i < len; i++)
 							ptr[i] = val[i];
@@ -229,7 +229,7 @@
 					unsafe
 					{
 						var bytes = new byte[len];
-						Marshal.Copy(buffer.Ptr, bytes, 0, len);
+						Marshal.Copy((nint)buffer.Ptr, bytes, 0, len);
 						bw.Write(bytes);
 					}
 				}

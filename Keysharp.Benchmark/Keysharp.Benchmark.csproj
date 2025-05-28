@@ -16,12 +16,12 @@
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <DefineConstants>DEBUG</DefineConstants>
-    <NoWarn>1701;1702;8981</NoWarn>
+    <NoWarn>1701;1702;8981;0164;8974</NoWarn>
     <WarningLevel>8</WarningLevel>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <NoWarn>1701;1702;8981</NoWarn>
+    <NoWarn>1701;1702;8981;0164;8974</NoWarn>
     <WarningLevel>8</WarningLevel>
   </PropertyGroup>
 

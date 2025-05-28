@@ -6,7 +6,7 @@ namespace Keysharp.Core.Linux
 	/// </summary>
 	internal class StatusBar : Keysharp.Core.Common.Window.StatusBarBase
 	{
-		internal StatusBar(IntPtr hWnd)
+		internal StatusBar(nint hWnd)
 			: base(hWnd)
 		{
 		}
@@ -17,7 +17,7 @@ namespace Keysharp.Core.Linux
 			throw new NotImplementedException();
 		}
 
-		protected override int GetOwningPid()
+		protected override uint GetOwningPid()
 		{
 			throw new NotImplementedException();
 		}

@@ -2,7 +2,7 @@
 {
 	public interface IPointable
 	{
-		public IntPtr Ptr { get; }
+		public long Ptr { get; }
 	}
     public interface IFuncObj
     {

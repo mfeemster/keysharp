@@ -1,27 +1,25 @@
 ﻿using System;
-using System.CodeDom.Compiler;
-using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Keysharp.Core;
+using Keysharp.Scripting;
 using Microsoft.CodeAnalysis;
 using Microsoft.NET.HostModel.AppHost;
 using Microsoft.Win32;
-using Keysharp.Core;
-using Keysharp.Scripting;
-using System.Runtime.InteropServices;
 
 namespace Keysharp.Main
 {
-	/**
-	 * The main program which interprets command line arguments, reads and compiles the code, loads
-	 * the resulting assembly and invokes the entry-point method.
-	 * Similar but simplified logic is present in Keysharp.Scripting.Runner, so changes here should
-	 * likely be done there as well.
-	 */
+	/// <summary>
+	/// The main program which interprets command line arguments, reads and compiles the code, loads
+	/// the resulting assembly and invokes the entry-point method.
+	/// Similar but simplified logic is present in Keysharp.Scripting.Runner, so changes here should
+	/// likely be done there as well.
+	/// </summary>
 	public static class Program
 	{
 		private static readonly CompilerHelper ch = new ();
@@ -169,11 +167,15 @@ namespace Keysharp.Main
 						byte[] assemblyBytes = reader.ReadBytes(length);
 						Assembly scriptAsm = Assembly.Load(assemblyBytes);
 						Type type = scriptAsm.GetType(assemblyType);
+
 						if (type == null)
 							return Message($"Could not find assembly {assemblyType}", true);
+
 						MethodInfo method = type.GetMethod(assemblyMethod);
+
 						if (method == null)
 							return Message($"Could not find method {assemblyMethod}", true);
+
 						Environment.ExitCode = method.Invoke(null, [scriptArgs]).Ai();
 						return Environment.ExitCode;
 					}
@@ -276,35 +278,35 @@ namespace Keysharp.Main
 								assemblyToCopyResorcesFrom: outputDllPath);
 #endif
 
-								if (string.Compare(exeDir, scriptdir, true) != 0)
-								{
-									var deps = minimalexeout ? ["Keysharp.Core.dll"]
-											   : CompilerHelper.requiredManagedDependencies
+							if (string.Compare(exeDir, scriptdir, true) != 0)
+							{
+								var deps = minimalexeout ? ["Keysharp.Core.dll"]
+										   : CompilerHelper.requiredManagedDependencies
 #if DEBUG
-											   //This is only required for non-published projects.
-											   .Concat(CompilerHelper.requiredNativeDependencies.Select(s => $"runtimes{Path.DirectorySeparatorChar}{RuntimeInformation.RuntimeIdentifier}{Path.DirectorySeparatorChar}native{Path.DirectorySeparatorChar}{s}"))
+										   //This is only required for non-published projects.
+										   .Concat(CompilerHelper.requiredNativeDependencies.Select(s => $"runtimes{Path.DirectorySeparatorChar}{RuntimeInformation.RuntimeIdentifier}{Path.DirectorySeparatorChar}native{Path.DirectorySeparatorChar}{s}"))
 #endif
-											   .Concat(CompilerHelper.requiredNativeDependencies);
+										   .Concat(CompilerHelper.requiredNativeDependencies);
 
-									//Need to copy Keysharp.Core and other dependencies from the install path to
-									//the folder the script resides in. Without them, the compiled exe cannot be run in a standalone manner.
-									//MessageBox.Show($"scriptdir = {scriptdir}");
-									//MessageBox.Show($"About to copy from {ksCorePath} to {Path.Combine(scriptdir, "Keysharp.Core.dll")}");
-									foreach (var dep in deps)
-									{
-										var depPath = Path.Combine(exeDir, dep);
+								//Need to copy Keysharp.Core and other dependencies from the install path to
+								//the folder the script resides in. Without them, the compiled exe cannot be run in a standalone manner.
+								//MessageBox.Show($"scriptdir = {scriptdir}");
+								//MessageBox.Show($"About to copy from {ksCorePath} to {Path.Combine(scriptdir, "Keysharp.Core.dll")}");
+								foreach (var dep in deps)
+								{
+									var depPath = Path.Combine(exeDir, dep);
 
-										if (File.Exists(depPath))
-											File.Copy(depPath, Path.Combine(scriptdir, Path.GetFileName(dep)), true);
-									}
+									if (File.Exists(depPath))
+										File.Copy(depPath, Path.Combine(scriptdir, Path.GetFileName(dep)), true);
 								}
 							}
-							catch (Exception writeex)
-							{
-								Message($"Writing executable to {finalPath} failed: {writeex.Message}", true);
-							}
-						});
-					}
+						}
+						catch (Exception writeex)
+						{
+							Message($"Writing executable to {finalPath} failed: {writeex.Message}", true);
+						}
+					});
+				}
 
 				CompilerHelper.compiledasm = Assembly.Load(arr);
 
@@ -368,9 +370,11 @@ namespace Keysharp.Main
 		internal static string GetLatestDotNetVersion()
 		{
 #if LINUX
-			var dir = Directory.GetDirectories(@"/lib/dotnet/sdk/").Select(System.IO.Path.GetFileName).Where(x => x.StartsWith(dotNetMajorVersion)).OrderByDescending(x => new Version(x)).FirstOrDefault();
+			var dir = Directory.GetDirectories(@"/lib/dotnet/sdk/").Select(System.IO.Path.GetFileName).Where(x => x.StartsWith(Script.dotNetMajorVersion)).OrderByDescending(x => new Version(x)).FirstOrDefault();
 #elif WINDOWS
 			var dir = Directory.GetDirectories(@"C:\Program Files\dotnet\packs\Microsoft.NETCore.App.Host.win-x64\").Select(Path.GetFileName).Where(x => x.StartsWith(Script.dotNetMajorVersion)).OrderByDescending(x => new Version(x.Contains("-rc") ? x.Substring(0, x.IndexOf("-rc")) : x)).FirstOrDefault();
+#else
+			var dir = "";
 #endif
 			return dir;
 		}

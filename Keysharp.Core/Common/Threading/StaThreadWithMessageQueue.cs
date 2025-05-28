@@ -26,7 +26,9 @@
 				{
 					IsBackground = true
 				};
+#if WINDOWS
 				thread.SetApartmentState(ApartmentState.STA);
+#endif
 				thread.Start();
 				mre.Wait();
 			}

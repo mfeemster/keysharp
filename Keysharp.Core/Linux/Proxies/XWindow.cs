@@ -2,7 +2,7 @@
 namespace Keysharp.Core.Linux.Proxies
 {
 	/// <summary>
-	/// represents a single xwindow - proxy for actions affecting x windows
+	/// Represents a single xwindow proxy for actions affecting x windows.
 	/// </summary>
 	internal class XWindow : IComparable<XWindow>
 	{

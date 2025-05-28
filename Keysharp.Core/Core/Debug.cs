@@ -17,7 +17,7 @@ namespace Keysharp.Core
 			tv.titleMatchMode = 2L;//Match anywhere.
 			var hwnd = WindowX.WinExist(A_ScriptName, "", title, "");
 			tv.titleMatchMode = mm;
-			var wi = new WindowItem(new IntPtr(hwnd));
+			var wi = Script.TheScript.WindowProvider.Manager.CreateWindow((nint)hwnd);
 			var classname = wi.ClassName;//Logic taken from AHK.
 
 			if (classname == "#32770" || classname == "AutoHotkey" || classname == "Keysharp")//MessageBox(), InputBox(), FileSelect(), or GUI/script-owned window.

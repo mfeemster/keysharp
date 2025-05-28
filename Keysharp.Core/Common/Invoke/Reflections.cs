@@ -438,49 +438,22 @@ namespace Keysharp.Core.Common.Invoke
 			return ct;
 		}
 
-		internal static object GetPtrProperty(object item, bool throwIfZero = false)
+		internal static long GetPtrProperty(object item, bool throwIfZero = false)
 		{
 			Error err;
-			object addr = null;
+			long addr;
 
-			if (item is IPointable buf)//Put Buffer, StringBuffer etc check first because it's faster and more likely.
-				addr = buf.Ptr;
-			else if (item is KeysharpObject kso && Script.GetPropertyValue(kso, "ptr", false) is object p && p != null)
-				addr = p;
-
-			if (item is nint ip)
-				addr = ip;
-			else if (item is long l)
-				addr = (nint)l;
-			else if (Marshal.IsComObject(item))
-				addr = item;
-			else
-				addr = (nint)item.Al();
-
-			if (throwIfZero && addr == null)
-				return Errors.ErrorOccurred(err = new TypeError($"Argument was of type {item.GetType()}. Type must be integer, Buffer or other object with a Ptr property that is an integer.\"")) ? throw err : nint.Zero;
-
-			return addr;
-		}
-
-		internal static IntPtr GetIntPtrProperty(object item, bool throwIfZero = false)
-		{
-			Error err;
-			nint addr;
-
-			if (item is nint ip)
-				addr = ip;
-			else if (item is long l)
-				addr = (nint)l;
+			if (item is long l)
+				addr = l;
 			else if (item is IPointable buf)//Put Buffer, StringBuffer etc check first because it's faster and more likely.
 				addr = buf.Ptr;
 			else if (item is KeysharpObject kso && Script.GetPropertyValue(kso, "ptr", false) is object p && p != null)
-				addr = (nint)p.Al();
+				addr = p.Al();
 			else
-				addr = (nint)item.Al();
+				addr = item.Al();
 
-			if (throwIfZero && addr == nint.Zero)
-				return Errors.ErrorOccurred(err = new TypeError($"Argument was of type {item.GetType()}. Type must be integer, Buffer or other object with a Ptr property that is an integer.\"")) ? throw err : nint.Zero;
+			if (throwIfZero && addr == 0L)
+				return Errors.ErrorOccurred(err = new TypeError($"Argument was of type {item.GetType()}. Type must be integer, Buffer or other object with a Ptr property that is an integer.\"")) ? throw err : 0;
 
 			return addr;
 		}

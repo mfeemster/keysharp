@@ -94,7 +94,7 @@ namespace Keysharp.Core
             // I believe only the foreground window can have a caret position due to relationship with focused control.
             var targetWindow = WindowsAPI.GetForegroundWindow(); // Variable must be named targetwindow for ATTACH_THREAD_INPUT.
 
-			if (targetWindow == IntPtr.Zero) // No window is in the foreground, report blank coordinate.
+			if (targetWindow == 0) // No window is in the foreground, report blank coordinate.
 			{
 				Script.SetPropertyValue(outputVarX, "__Value", 0L);
                 Script.SetPropertyValue(outputVarY, "__Value", 0L);
@@ -103,7 +103,7 @@ namespace Keysharp.Core
 
 			var h = WindowsAPI.GetWindowThreadProcessId(targetWindow, out var _);
 			var info = GUITHREADINFO.Default;//Must be initialized this way because the size field must be populated.
-			var result = WindowsAPI.GetGUIThreadInfo(h, out info) && info.hwndCaret != IntPtr.Zero;
+			var result = WindowsAPI.GetGUIThreadInfo(h, out info) && info.hwndCaret != 0;
 		
 			if (!result)
 			{
@@ -487,7 +487,7 @@ break_twice:;
 					if (isenabled)
 						hm.ClearBuf();
 
-					if (!isenabled || ht.kbdHook == IntPtr.Zero) // Hook may not be needed anymore || hook is needed but not present.
+					if (!isenabled || ht.kbdHook == 0) // Hook may not be needed anymore || hook is needed but not present.
 						HotkeyDefinition.ManifestAllHotkeysHotstringsHooks();
 				}
 			}
@@ -519,7 +519,7 @@ break_twice:;
 						_ = ht.PostMessage(new KeysharpMsg()
 						{
 							message = (uint)UserMessages.AHK_HOOK_SET_KEYHISTORY,
-							wParam = new IntPtr(max)
+							wParam = new nint(max)
 						});
 					}
 					else
@@ -661,11 +661,11 @@ break_twice:;
 		//The state of those threads needs to be preserved, but invoking will overwrite that state by putting the call on the main GUI thread.
 		//This is unlikely to be true anymore since we implemented the pseudo-thread functionality of AHK.
 		//So put them back to just straight calls, revisit if cross threading bugs occur.
-		//public static void SendEvent(object obj) => Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, SendModes.Event, IntPtr.Zero), true, true);
-		//public static void Send(object obj) => Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, Accessors.SendMode, IntPtr.Zero), true, true);
-		//public static void SendInput(object obj) => Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, Accessors.SendMode == SendModes.InputThenPlay ? SendModes.InputThenPlay : SendModes.Input, IntPtr.Zero), true, true);
-		//public static void SendPlay(object obj) => Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, SendModes.Play, IntPtr.Zero), true, true);
-		//public static void SendText(object obj) => Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.RawText, Accessors.SendMode, IntPtr.Zero), true, true);
+		//public static void SendEvent(object obj) => Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, SendModes.Event, 0), true, true);
+		//public static void Send(object obj) => Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, Accessors.SendMode, 0), true, true);
+		//public static void SendInput(object obj) => Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, Accessors.SendMode == SendModes.InputThenPlay ? SendModes.InputThenPlay : SendModes.Input, 0), true, true);
+		//public static void SendPlay(object obj) => Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, SendModes.Play, 0), true, true);
+		//public static void SendText(object obj) => Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.RawText, Accessors.SendMode, 0), true, true);
 
 		/// <summary>
 		/// Sends simulated keystrokes and mouse clicks to the active window.
@@ -674,7 +674,7 @@ break_twice:;
 		/// <param name="keys">The sequence of keys to send.</param>
 		public static object Send(object keys)
 		{
-			Script.TheScript.HookThread.kbdMsSender.SendKeys(keys.As(), SendRawModes.NotRaw, ThreadAccessors.A_SendMode, IntPtr.Zero);
+			Script.TheScript.HookThread.kbdMsSender.SendKeys(keys.As(), SendRawModes.NotRaw, ThreadAccessors.A_SendMode, 0);
 			return null;
 		}
 
@@ -685,7 +685,7 @@ break_twice:;
 		/// </summary>
 		public static object SendEvent(object keys)
 		{
-			Script.TheScript.HookThread.kbdMsSender.SendKeys(keys.As(), SendRawModes.NotRaw, SendModes.Event, IntPtr.Zero);
+			Script.TheScript.HookThread.kbdMsSender.SendKeys(keys.As(), SendRawModes.NotRaw, SendModes.Event, 0);
 			return null;
 		}
 
@@ -697,7 +697,7 @@ break_twice:;
 		/// </summary>
 		public static object SendInput(object keys)
 		{
-			Script.TheScript.HookThread.kbdMsSender.SendKeys(keys.As(), SendRawModes.NotRaw, ThreadAccessors.A_SendMode == SendModes.InputThenPlay ? SendModes.InputThenPlay : SendModes.Input, IntPtr.Zero);
+			Script.TheScript.HookThread.kbdMsSender.SendKeys(keys.As(), SendRawModes.NotRaw, ThreadAccessors.A_SendMode == SendModes.InputThenPlay ? SendModes.InputThenPlay : SendModes.Input, 0);
 			return null;
 		}
 
@@ -734,7 +734,7 @@ break_twice:;
 		/// </summary>
 		public static object SendPlay(object keys)
 		{
-			Script.TheScript.HookThread.kbdMsSender.SendKeys(keys.As(), SendRawModes.NotRaw, SendModes.Play, IntPtr.Zero);
+			Script.TheScript.HookThread.kbdMsSender.SendKeys(keys.As(), SendRawModes.NotRaw, SendModes.Play, 0);
 			return null;
 		}
 
@@ -743,7 +743,7 @@ break_twice:;
 		/// </summary>
 		public static object SendText(object keys)
 		{
-			Script.TheScript.HookThread.kbdMsSender.SendKeys(keys.As(), SendRawModes.RawText, ThreadAccessors.A_SendMode, IntPtr.Zero);
+			Script.TheScript.HookThread.kbdMsSender.SendKeys(keys.As(), SendRawModes.RawText, ThreadAccessors.A_SendMode, 0);
 			return null;
 		}
 
@@ -916,7 +916,7 @@ break_twice:;
 #if LINUX
 			var cmdstr = enable ? "--enable" : "--disable";
 
-			foreach (var id in KeyboardUtils.kbMouseList)
+			foreach (var id in Script.TheScript.KeyboardUtilsData.kbMouseList)
 				_ = $"xinput {cmdstr} {id}".Bash();
 
 #elif WINDOWS

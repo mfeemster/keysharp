@@ -60,7 +60,6 @@ namespace Keysharp.Core
 			}
 
 			var tooltipInvokerForm = GuiHelper.DialogOwner ?? Form.ActiveForm;
-			var focusedWindow = IntPtr.Zero;
 			var one_or_both_coords_specified = _x != int.MinValue || _y != int.MinValue;
 
 			if (tooltipInvokerForm == null)
@@ -98,7 +97,7 @@ namespace Keysharp.Core
 #if WINDOWS
 				var h = tt.GetType().GetProperty("Handle", BindingFlags.Instance | BindingFlags.NonPublic);
 
-				handle = ((IntPtr)h.GetValue(tt)).ToInt64();
+				handle = ((nint)h.GetValue(tt)).ToInt64();
 
 #elif LINUX
 				var ttwndField = tt.GetType().GetField("tooltip_window", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -107,7 +106,7 @@ namespace Keysharp.Core
 
 				var hprop = ttwnd.GetType().GetProperty("Handle", BindingFlags.Instance | BindingFlags.Public);
 
-				handle = ((IntPtr)hprop.GetValue(ttwnd)).ToInt64();
+				handle = ((nint)hprop.GetValue(ttwnd)).ToInt64();
 
 #endif
 			}, false);
@@ -117,14 +116,14 @@ namespace Keysharp.Core
 			{
 #if LINUX
 				tt.Active = true;
-				tt.SetToolTip(tooltipInvokerForm, text);//Setting position is not possible on linux.
+				tt.SetToolTip(tooltipInvokerForm, text.As());//Setting position is not possible on linux.
 #elif WINDOWS
 				//We use SetTool() via reflection in this function because it bypasses ToolTip.Show()'s check for whether or not the window
 				//is active.
 				var mSetTrackPosition = tt.GetType().GetMethod("SetTrackPosition", BindingFlags.Instance | BindingFlags.NonPublic);
 				var mSetTool = tt.GetType().GetMethod("SetTool", BindingFlags.Instance | BindingFlags.NonPublic);
 				var script = Script.TheScript;
-			
+
 				if (!tt.Active) // If this is the first run then invoke the ToolTip once before displaying it, otherwise it shows at the mouse position
 					_ = mSetTool.Invoke(tt, [tooltipInvokerForm, t, 2, new Point(0, 0)]);
 
@@ -147,7 +146,7 @@ namespace Keysharp.Core
 					//}
 					var foreground = script.WindowProvider.Manager.ActiveWindow;
 
-					if (foreground.Handle != IntPtr.Zero)
+					if (foreground.Handle != 0)
 						script.PlatformProvider.Manager.CoordToScreen(ref tempx, ref tempy, CoordMode.Tooltip);
 				}
 
@@ -201,7 +200,7 @@ namespace Keysharp.Core
 			var filename = fileName.As();
 			var iconnumber = ImageHelper.PrepareIconNumber(iconNumber);
 			var script = Script.TheScript;
-			
+
 			if (script.NoTrayIcon)
 				return null;
 
@@ -268,7 +267,7 @@ namespace Keysharp.Core
 			var _title = title.As();
 			var opts = options;
 			var script = Script.TheScript;
-			
+
 			if (script.NoTrayIcon)
 				return null;
 

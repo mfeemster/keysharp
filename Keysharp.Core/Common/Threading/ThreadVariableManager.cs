@@ -71,7 +71,7 @@
 							{
 								if (script.uninterruptibleTime < 0) // A setting of -1 (or any negative) means the thread's uninterruptibility never times out.
 								{
-									tv.uninterruptibleDuration = -1; // "Lock in" the above because for backward compatibility, above is not supposed to affect threads after they're created. Override the default value contained in g_default.
+									tv.UninterruptibleDuration = -1; // "Lock in" the above because for backward compatibility, above is not supposed to affect threads after they're created. Override the default value contained in g_default.
 									//g.ThreadStartTime doesn't need to be set when g.UninterruptibleDuration < 0.
 								}
 								else // It's now known to be >0 (due to various checks above).
@@ -83,7 +83,7 @@
 									// when IsInterruptible() is called, which might not happen in between changes to the setting.
 									// For explanation of why two fields instead of one are used, see comments in IsInterruptible().
 									tv.threadStartTime = DateTime.UtcNow;
-									tv.uninterruptibleDuration = script.uninterruptibleTime;
+									tv.UninterruptibleDuration = script.uninterruptibleTime;
 								}
 							}
 						}

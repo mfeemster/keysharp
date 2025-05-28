@@ -160,7 +160,7 @@ namespace Keysharp.Core
 					{
 						if (int.TryParse(s, out var hwnd))
 						{
-							if (System.Windows.Forms.Control.FromHandle(new IntPtr(hwnd)) is Form theform)
+							if (System.Windows.Forms.Control.FromHandle(new nint(hwnd)) is Form theform)
 								f.form.Owner = theform;
 						}
 					}
@@ -173,7 +173,7 @@ namespace Keysharp.Core
 					{
 						if (int.TryParse(s, out var hwnd))
 						{
-							if (System.Windows.Forms.Control.FromHandle(new IntPtr(hwnd)) is Form theform)
+							if (System.Windows.Forms.Control.FromHandle(new nint(hwnd)) is Form theform)
 								f.form.Parent = theform;
 						}
 					}
@@ -246,7 +246,7 @@ namespace Keysharp.Core
 
 		public System.Windows.Forms.Control FocusedCtrl => form.ActiveControl;
 
-		public IntPtr Hwnd => form.Handle;
+		public long Hwnd => form.Handle;
 
 		public long MarginX
 		{
@@ -1160,7 +1160,7 @@ namespace Keysharp.Core
 					holder = new StatusBar(this, ctrl, typeo);
 				}
 				break;
-
+#if WINDOWS
 				case Keyword_ActiveX:
 				{
 					var ax = new KeysharpActiveX(text)
@@ -1171,7 +1171,7 @@ namespace Keysharp.Core
 					holder = new ActiveX(this, ctrl, typeo);
 				}
 				break;
-
+#endif
 				case Keyword_WebBrowser:
 				{
 					var web = new KeysharpWebBrowser()
@@ -1587,10 +1587,10 @@ namespace Keysharp.Core
 			{
 				LastContainer.TagAndAdd(holder);
 			}
-
+#if WINDOWS
 			if (ctrl is KeysharpActiveX kax)
 				kax.Init();
-
+#endif
 			if (ctrl is KeysharpPictureBox pbox)
 			{
 				if (text != null && ImageHelper.LoadImage(text, opts.width, opts.height, opts.iconnumber).Item1 is Bitmap bmp)

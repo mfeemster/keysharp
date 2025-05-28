@@ -22,7 +22,7 @@ namespace Keysharp.Core.Windows
 		private readonly List<DeadKeyRecord> pendingDeadKeys = [];
 		private StaThreadWithMessageQueue thread;
 		private bool uwpAppFocused;
-		private IntPtr uwpHwndChecked = IntPtr.Zero;
+		private nint uwpHwndChecked = 0;
 		internal WindowsHookThread()
 		{
 			keyToSc = new Dictionary<string, uint>(StringComparer.OrdinalIgnoreCase)//Unsure if these are cross platform or not.//TODO
@@ -205,7 +205,7 @@ namespace Keysharp.Core.Windows
 				time = (uint)DateTime.UtcNow.Ticks,
 				dwExtraInfo = 0
 			};
-			_ = LowLevelKeybdHandler(0, new IntPtr(256), ref kbdStruct);
+			_ = LowLevelKeybdHandler(0, new nint(256), ref kbdStruct);
 		}
 
 		internal override void AddRemoveHooks(HookType hooksToBeActive, bool changeIsTemporary = false)
@@ -293,8 +293,8 @@ namespace Keysharp.Core.Windows
 			//var ksmsg = new KeysharpMsg()
 			//{
 			//  message = (uint)UserMessages.AHK_CHANGE_HOOK_STATE,
-			//  wParam = new IntPtr((uint)hooksToBeActive),
-			//  lParam = new IntPtr(changeIsTemporary ? 0 : 1/*Flipped on purpose*/)
+			//  wParam = new nint((uint)hooksToBeActive),
+			//  lParam = new nint(changeIsTemporary ? 0 : 1/*Flipped on purpose*/)
 			//};
 			//
 			//for (var i = 0; i < 50 && !channel.Writer.TryWrite(ksmsg); ++i)
@@ -303,7 +303,7 @@ namespace Keysharp.Core.Windows
 			var problemActivatingHooks = ChangeHookState(hooksToBeActive, changeIsTemporary);
 			//
 			//
-			//for (var i = 0; i < 50 && !PostThreadMessage(hookThreadID, (uint)UserMessages.AHK_CHANGE_HOOK_STATE, new UIntPtr((uint)hooksToBeActive), new IntPtr(changeIsTemporary ? 1 : 0/*Flipped on purpose*/)); ++i)
+			//for (var i = 0; i < 50 && !PostThreadMessage(hookThreadID, (uint)UserMessages.AHK_CHANGE_HOOK_STATE, new nint((uint)hooksToBeActive), new nint(changeIsTemporary ? 1 : 0/*Flipped on purpose*/)); ++i)
 			//System.Threading.Thread.Sleep(10); // Should never execute if thread already existed before this function was called.
 			// Above: Sleep(10) seems better than Sleep(0), which would max the CPU while waiting.
 			// MUST USE Sleep vs. MsgSleep, otherwise an infinite recursion of ExitApp is possible.
@@ -335,12 +335,12 @@ namespace Keysharp.Core.Windows
 			//for (problemActivatingHooks = false, startTime = DateTime.UtcNow; ;) // For our caller, wait for hook thread to update the status of the hooks.
 			{
 				//Wait till we get confirmation back that the action completed.
-				//if (PeekMessage(out msg, IntPtr.Zero, (uint)UserMessages.AHK_CHANGE_HOOK_STATE, (uint)UserMessages.AHK_CHANGE_HOOK_STATE, PM_REMOVE))
+				//if (PeekMessage(out msg, 0, (uint)UserMessages.AHK_CHANGE_HOOK_STATE, (uint)UserMessages.AHK_CHANGE_HOOK_STATE, PM_REMOVE))
 				//if (ksmsg.completed)
 				{
 					if (hooksToBeActive != HookType.None) // Wait for the hook thread to activate the specified hooks.
 					{
-						//if (ksmsg.wParam != IntPtr.Zero) // The hook thread indicated failure to activate one or both of the hooks.
+						//if (ksmsg.wParam != 0) // The hook thread indicated failure to activate one or both of the hooks.
 						if (problemActivatingHooks) // The hook thread indicated failure to activate one or both of the hooks.
 						{
 							// This is done so that the MsgBox warning won't be shown until after these loops finish,
@@ -374,7 +374,7 @@ namespace Keysharp.Core.Windows
 						}
 						else // Wait for the thread to terminate.
 						{
-							//GetExitCodeThread(new IntPtr(hookThreadID), out exit_code);
+							//GetExitCodeThread(new nint(hookThreadID), out exit_code);
 							if (IsReadThreadCompleted()) // The hook thread is now gone.
 							{
 								channelReadThread = null;
@@ -456,7 +456,7 @@ namespace Keysharp.Core.Windows
 		/// might have adjusted vk, namely to make it a left/right specific modifier key rather than a
 		/// neutral one.
 		/// </summary>
-		internal long AllowIt(IntPtr hook, int code, long param, ref KBDLLHOOKSTRUCT kbd, ref MSDLLHOOKSTRUCT mouse, uint vk, uint sc,
+		internal long AllowIt(nint hook, int code, long param, ref KBDLLHOOKSTRUCT kbd, ref MSDLLHOOKSTRUCT mouse, uint vk, uint sc,
 							  bool keyUp, ulong extraInfo, CollectInputState state, KeyHistoryItem keyHistoryCurr,
 							  uint hotkeyIDToPost, HotkeyVariant variant)
 		{
@@ -700,7 +700,7 @@ namespace Keysharp.Core.Windows
 			// call it before posting the messages.  This solves conditions in which the main thread is
 			// able to launch a script subroutine before the hook thread can finish updating its key state.
 			// Search on AHK_HOOK_HOTKEY in this file for more comments.
-			var resultToReturn = CallNextHookEx(hook, code, new IntPtr(param), ref kbd);
+			var resultToReturn = CallNextHookEx(hook, code, new nint(param), ref kbd);
 			SendHotkeyMessages(keyUp, extraInfo, keyHistoryCurr, hotkeyIDToPost, variant, hsOut, caseConformMode, endChar);
 			return resultToReturn.ToInt64();
 		}
@@ -1242,7 +1242,7 @@ namespace Keysharp.Core.Windows
 			AddRemoveHooks(hooksToBeActive);
 		}
 
-		internal override uint CharToVKAndModifiers(char ch, ref uint? modifiersLR, IntPtr keybdLayout, bool enableAZFallback = false)
+		internal override uint CharToVKAndModifiers(char ch, ref uint? modifiersLR, nint keybdLayout, bool enableAZFallback = false)
 		// If non-NULL, pModifiersLR contains the initial set of modifiers provided by the caller, to which
 		// we add any extra modifiers required to realize aChar.
 		{
@@ -1315,7 +1315,7 @@ namespace Keysharp.Core.Windows
 			return vk;
 		}
 
-		internal unsafe bool CollectHotstring(ref KBDLLHOOKSTRUCT ev, char[] ch, int charCount, IntPtr activeWindow,
+		internal unsafe bool CollectHotstring(ref KBDLLHOOKSTRUCT ev, char[] ch, int charCount, nint activeWindow,
 											  KeyHistoryItem keyHistoryCurr, ref HotstringDefinition hsOut, ref CaseConformModes caseConformMode, ref char endChar)
 		{
 			var suppressHotstringFinalChar = false; // Set default.
@@ -1702,8 +1702,8 @@ namespace Keysharp.Core.Windows
 					{
 						message = (uint)UserMessages.AHK_INPUT_KEYDOWN,
 						obj = input,
-						lParam = new IntPtr(vk),
-						wParam = new IntPtr(sc)
+						lParam = new nint(vk),
+						wParam = new nint(sc)
 					});
 					//PostMessage(Keysharp.Scripting.Script.MainWindowHandle, (uint)UserMessages.AHK_INPUT_KEYDOWN, input, (uint)((sc << 16) | vk));
 				}
@@ -1716,8 +1716,8 @@ namespace Keysharp.Core.Windows
 					{
 						message = (uint)UserMessages.AHK_INPUT_CHAR,
 						obj = input,
-						lParam = new IntPtr(ch[0]),
-						wParam = ch.Length > 1 ? new IntPtr(ch[1]) : IntPtr.Zero
+						lParam = new nint(ch[0]),
+						wParam = ch.Length > 1 ? new nint(ch[1]) : 0
 					});
 					//PostMessage(Keysharp.Scripting.Script.MainWindowHandle, (uint)UserMessages.AHK_INPUT_CHAR, input, (uint)((ch[1] << 16) | ch[0]));
 				}
@@ -1767,8 +1767,8 @@ namespace Keysharp.Core.Windows
 						{
 							message = (uint)UserMessages.AHK_INPUT_KEYUP,
 							obj = input,
-							lParam = new IntPtr(vk),
-							wParam = new IntPtr(sc)
+							lParam = new nint(vk),
+							wParam = new nint(sc)
 						});
 					}
 
@@ -1888,7 +1888,7 @@ namespace Keysharp.Core.Windows
 			// hotstrings when the first keypress causes a change in focus, such as to enter editing mode in Excel.
 			// See Get_active_window_keybd_layout macro definition for related comments.
 			var activeWindow = GetForegroundWindow(); // Set default in case there's no focused control.
-			var tempzero = IntPtr.Zero;
+			nint tempzero = 0;
 			var activeWindowKeybdLayout = script.PlatformProvider.Manager.GetKeyboardLayout(script.WindowProvider.Manager.GetFocusedCtrlThread(ref tempzero, activeWindow));
 			state.activeWindow = activeWindow;
 			state.keyboardLayout = activeWindowKeybdLayout;
@@ -2159,7 +2159,7 @@ namespace Keysharp.Core.Windows
 		/// maintainability.  The code size savings as of v1.0.38.06 is 3.5 KB of uncompressed code, but that
 		/// savings will grow larger if more complexity is ever added to the hooks.
 		/// </summary>
-		internal IntPtr LowLevelCommon(IntPtr hook, int code, long wParam, ref KBDLLHOOKSTRUCT kbd, ref MSDLLHOOKSTRUCT mouse, uint vk, uint sc, bool keyUp, ulong extraInfo, uint eventFlags)
+		internal nint LowLevelCommon(nint hook, int code, long wParam, ref KBDLLHOOKSTRUCT kbd, ref MSDLLHOOKSTRUCT mouse, uint vk, uint sc, bool keyUp, ulong extraInfo, uint eventFlags)
 		{
 			var hotkeyIdToPost = HotkeyDefinition.HOTKEY_ID_INVALID; // Set default.
 			var isIgnored = IsIgnored(extraInfo);
@@ -2188,7 +2188,7 @@ namespace Keysharp.Core.Windows
 				keyHistoryCurr.keyUp = keyUp;
 				var fore_win = GetForegroundWindow();
 
-				if (fore_win != IntPtr.Zero)
+				if (fore_win != 0)
 				{
 					if (fore_win != kh.HistoryHwndPrev)
 					{
@@ -2271,7 +2271,7 @@ namespace Keysharp.Core.Windows
 				// Artificial character input via VK_PACKET isn't supported by hotkeys, since they always work via
 				// keycode, but hotstrings and Input are supported via the macro below when #InputLevel is non-zero.
 				// Must return now to avoid misinterpreting aSC as an actual scancode in the code below.
-				return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, extraInfo, collectInputState, keyHistoryCurr, hotkeyIdToPost, null));
+				return new nint(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, extraInfo, collectInputState, keyHistoryCurr, hotkeyIdToPost, null));
 			}
 
 			//else: Use usual modified value.
@@ -2314,7 +2314,7 @@ namespace Keysharp.Core.Windows
 			// to being suppressed by a hotkey), or not done at all if the event is suppressed by other means.
 			if (hook == kbdHook && script.inputBeforeHotkeysCount > 0
 					&& !EarlyCollectInput(ref kbd, vk, sc, keyUp, isIgnored, collectInputState, keyHistoryCurr))
-				return new IntPtr(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, extraInfo, keyHistoryCurr, hotkeyIdToPost, null));
+				return new nint(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, extraInfo, keyHistoryCurr, hotkeyIdToPost, null));
 
 			// v1.0.43: Block the Win keys during journal playback to prevent keystrokes hitting the Start Menu
 			// if the user accidentally presses one of those keys during playback.  Note: Keys other than Win
@@ -2325,7 +2325,7 @@ namespace Keysharp.Core.Windows
 			// Also, it seems best to block artificial LWIN keystrokes too, in case some other script or
 			// program tries to display the Start Menu during playback.
 			if (blockWinKeys && (vk == VK_LWIN || vk == VK_RWIN) && !keyUp)
-				return new IntPtr(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, extraInfo, keyHistoryCurr, hotkeyIdToPost, null));
+				return new nint(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, extraInfo, keyHistoryCurr, hotkeyIdToPost, null));
 
 			// v1.0.37.07: Cancel the alt-tab menu upon receipt of Escape so that it behaves like the OS's native Alt-Tab.
 			// Even if is_ignored==true, it seems more flexible/useful to cancel the Alt-Tab menu upon receiving
@@ -2359,9 +2359,9 @@ namespace Keysharp.Core.Windows
 				// versions of Alt-Tab, but it still applies if the classic Alt-Tab is restored via the registry.
 				// However, on these OSes, the user is able to press Esc to dismiss our Alt-Tab.  Other scripts
 				// (and presumably other processes) are *NOT* able to dismiss it by simulating Esc.
-				IntPtr altTabWindow;
+				nint altTabWindow;
 
-				if ((altTabWindow = FindWindow("#32771", null)) != IntPtr.Zero // There is an alt-tab window...
+				if ((altTabWindow = FindWindow("#32771", null)) != 0 // There is an alt-tab window...
 						&& GetWindowThreadProcessId(altTabWindow, out _) == mgr.CurrentThreadId()) // ...and it's owned by the hook thread (not the main thread).
 				{
 					kbdMsSender.SendKeyEvent(KeyEventTypes.KeyDown, VK_ESCAPE);
@@ -2374,7 +2374,7 @@ namespace Keysharp.Core.Windows
 					//    alt-tab suffix, testing shows that the existing alt-tab logic here in the hook will put
 					//    alt or shift-alt back down if it needs to.
 					kbdMsSender.SendKeyEvent(KeyEventTypes.KeyUp, (kbdMsSender.modifiersLRLogical & MOD_RALT) != 0 ? VK_RMENU : VK_LMENU);
-					return new IntPtr(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, extraInfo, keyHistoryCurr, hotkeyIdToPost, null));// Testing shows that by contrast, the upcoming key-up on Escape doesn't require this logic.
+					return new nint(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, extraInfo, keyHistoryCurr, hotkeyIdToPost, null));// Testing shows that by contrast, the upcoming key-up on Escape doesn't require this logic.
 				}
 
 				// Otherwise, the alt-tab window doesn't exist or (more likely) it's owned by some other process
@@ -2419,7 +2419,7 @@ namespace Keysharp.Core.Windows
 					prefixKey = null;
 				}
 
-				return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, extraInfo, collectInputState, keyHistoryCurr, hotkeyIdToPost, null));
+				return new nint(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, extraInfo, collectInputState, keyHistoryCurr, hotkeyIdToPost, null));
 			}
 
 			if (!keyUp) // Set defaults for this down event.
@@ -2444,7 +2444,7 @@ namespace Keysharp.Core.Windows
 			{
 				// If no vk, there's no mapping for this key, so currently there's no way to process it.
 				if (vk == 0)
-					return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, extraInfo, collectInputState, keyHistoryCurr, hotkeyIdToPost, null));
+					return new nint(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, extraInfo, collectInputState, keyHistoryCurr, hotkeyIdToPost, null));
 
 				// Also, if the script is displaying a menu (tray, main, or custom popup menu), always
 				// pass left-button events through -- even if LButton is defined as a hotkey -- so
@@ -2464,11 +2464,11 @@ namespace Keysharp.Core.Windows
 				// 2) Right-click is a valid way to select a context menu items (but apparently not popup or menu bar items).
 				// 3) Right-click should invoke another instance of the context menu (or dismiss existing menu, depending
 				//    on where the click occurs) if user clicks outside of our thread's existing context menu.
-				var menuHwnd = IntPtr.Zero;
+				nint menuHwnd = 0;
 
 				if ((vk == VK_LBUTTON || vk == VK_RBUTTON)
 						&& (script.menuIsVisible != MenuType.None // Ordered for short-circuit performance.
-							|| ((menuHwnd = FindWindow("#32768", null)) != IntPtr.Zero
+							|| ((menuHwnd = FindWindow("#32768", null)) != 0
 								&& GetWindowThreadProcessId(menuHwnd, out _) == script.ProcessesData.MainThreadID))) // Don't call GetCurrentThreadId() because our thread is different than main's.
 				{
 					// Bug-fix for v1.0.22: If "LControl & LButton::" (and perhaps similar combinations)
@@ -2481,7 +2481,7 @@ namespace Keysharp.Core.Windows
 					// ...because it returned too early here before it could get to that part further below.
 					thisKey.downPerformedAction = false; // Seems ok in this case to do this for both aKeyUp and !aKeyUp.
 					thisKey.isDown = !keyUp;
-					return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, extraInfo, collectInputState, keyHistoryCurr, hotkeyIdToPost, null));
+					return new nint(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, extraInfo, collectInputState, keyHistoryCurr, hotkeyIdToPost, null));
 				}
 			} // Mouse hook.
 
@@ -2520,7 +2520,7 @@ namespace Keysharp.Core.Windows
 				// Fix for v1.1.31.03: Done conditionally because its previous value is used below.  This affects
 				// modifier keys as hotkeys, such as Shift::MsgBox.
 				thisKey.isDown = !keyUp;
-				return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, extraInfo, collectInputState, keyHistoryCurr, hotkeyIdToPost, null));
+				return new nint(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, extraInfo, collectInputState, keyHistoryCurr, hotkeyIdToPost, null));
 			}
 
 			var hotkeyIdWithFlags = HotkeyDefinition.HOTKEY_ID_INVALID; // Set default.
@@ -2580,7 +2580,7 @@ namespace Keysharp.Core.Windows
 			{
 				// If the mouse hook is installed without the keyboard hook, update kbdMsSender.modifiersLR_logical
 				// manually so that it can be referred to by the mouse hook after this point:
-				if (kbdHook == IntPtr.Zero)
+				if (kbdHook == 0)
 				{
 					kbdMsSender.modifiersLRLogical = kbdMsSender.modifiersLRLogicalNonIgnored = kbdMsSender.GetModifierLRState(true);
 					modifiersWereCorrected = true;
@@ -2784,12 +2784,12 @@ namespace Keysharp.Core.Windows
 						thisKey.noSuppress |= HotkeyDefinition.NO_SUPPRESS_NEXT_UP_EVENT; // Since the "down" is non-suppressed, so should the "up".
 
 					if (thisKey.asModifiersLR != 0 || !suppressThisPrefix || thisToggleKeyCanBeToggled)
-						return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, extraInfo, collectInputState, keyHistoryCurr, hotkeyIdToPost, null));
+						return new nint(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, extraInfo, collectInputState, keyHistoryCurr, hotkeyIdToPost, null));
 
 					// Mark this key as having been suppressed.  This currently doesn't have any known effect
 					// since the change to tilde (~) handling in v1.0.95 (commit 161162b8), but may in future.
 					thisKey.hotkeyDownWasSuppressed = true;
-					return new IntPtr(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, extraInfo, keyHistoryCurr, hotkeyIdToPost, null));
+					return new nint(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, extraInfo, keyHistoryCurr, hotkeyIdToPost, null));
 				}
 
 				//else valid suffix hotkey has been found; this will now fall through to Case #4 by virtue of aKeyUp==false.
@@ -2853,8 +2853,8 @@ namespace Keysharp.Core.Windows
 				if (!thisKey.usedAsKeyUp)
 				{
 					return (downPerformedAction && !fireWithNoSuppress) ?
-						   new IntPtr(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, extraInfo, keyHistoryCurr, hotkeyIdToPost, null)) :
-						   new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, extraInfo, collectInputState, keyHistoryCurr, hotkeyIdToPost, null));
+						   new nint(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, extraInfo, keyHistoryCurr, hotkeyIdToPost, null)) :
+						   new nint(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, extraInfo, collectInputState, keyHistoryCurr, hotkeyIdToPost, null));
 				}
 
 				//else continue checking to see if the right modifiers are down to trigger one of this
@@ -2907,9 +2907,9 @@ namespace Keysharp.Core.Windows
 					// will see all three events in the right order:
 					if (thisKey.wasJustUsed == KeyType.AS_PREFIX_FOR_HOTKEY) // If this is true, it's probably impossible for hotkey_id_with_flags to be valid by means of this_key.hotkey_to_fire_upon_release.
 					{
-						kbdMsSender.SendKeyEvent(KeyEventTypes.KeyUp, vk, sc, IntPtr.Zero, false, KeyPhysIgnore);// Mark it as physical for any other hook instances.
+						kbdMsSender.SendKeyEvent(KeyEventTypes.KeyUp, vk, sc, 0, false, KeyPhysIgnore);// Mark it as physical for any other hook instances.
 						kbdMsSender.SendKeyEvent(KeyEventTypes.KeyDownAndUp, vk, sc);
-						return new IntPtr(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, extraInfo, keyHistoryCurr, hotkeyIdToPost, null));
+						return new nint(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, extraInfo, keyHistoryCurr, hotkeyIdToPost, null));
 					}
 
 					// Otherwise, if it was used to modify a non-suffix key, or it was just
@@ -2917,7 +2917,7 @@ namespace Keysharp.Core.Windows
 					// at all.  UPDATE: Don't return here if it didn't modify anything because
 					// this prefix might also be a suffix. Let later sections handle it then.
 					if (thisKey.wasJustUsed == KeyType.AS_PREFIX)
-						return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, extraInfo, collectInputState, keyHistoryCurr, hotkeyIdToPost, null));
+						return new nint(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, extraInfo, collectInputState, keyHistoryCurr, hotkeyIdToPost, null));
 				}
 				else // It's not a toggleable key, or it is but it's being kept forcibly on or off.
 
@@ -2936,9 +2936,9 @@ namespace Keysharp.Core.Windows
 					{
 						if (thisKey.asModifiersLR != 0 // Always false if our caller is the mouse hook.
 								|| fireWithNoSuppress) // Shouldn't be true unless it's a modifier, but seems safest to check anyway.
-							return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, extraInfo, collectInputState, keyHistoryCurr, hotkeyIdToPost, null));// Win/Alt will be disguised if needed.
+							return new nint(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, extraInfo, collectInputState, keyHistoryCurr, hotkeyIdToPost, null));// Win/Alt will be disguised if needed.
 
-						return new IntPtr(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, extraInfo, keyHistoryCurr, hotkeyIdToPost, null));
+						return new nint(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, extraInfo, keyHistoryCurr, hotkeyIdToPost, null));
 					}
 
 				// v1.0.41: This spot cannot be reached when a disabled prefix key's up-action fires on
@@ -2960,8 +2960,8 @@ namespace Keysharp.Core.Windows
 					return (thisKey.asModifiersLR != 0
 							|| fireWithNoSuppress
 							|| thisToggleKeyCanBeToggled) ?
-						   new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, extraInfo, collectInputState, keyHistoryCurr, hotkeyIdToPost, null)) :
-						   new IntPtr(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, extraInfo, keyHistoryCurr, hotkeyIdToPost, null));
+						   new nint(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, extraInfo, collectInputState, keyHistoryCurr, hotkeyIdToPost, null)) :
+						   new nint(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, extraInfo, keyHistoryCurr, hotkeyIdToPost, null));
 
 				// Since the above didn't return, this key is both a prefix and a suffix, but
 				// is currently operating in its capacity as a suffix.
@@ -2978,7 +2978,7 @@ namespace Keysharp.Core.Windows
 				// even when *no* keyboard management software is installed). Some keyboards also have
 				// scroll wheels that generate a stream of up events in one direction and down in the other.
 				if (!(wasDownBeforeUp || thisKey.usedAsKeyUp)) // Verified correct.
-					return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, extraInfo, collectInputState, keyHistoryCurr, hotkeyIdToPost, null));
+					return new nint(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, extraInfo, collectInputState, keyHistoryCurr, hotkeyIdToPost, null));
 
 				//else v1.0.37.05: Since no suffix action was triggered while it was held down, fall through
 				// rather than returning so that the key's own unmodified/naked suffix action will be considered.
@@ -3199,7 +3199,7 @@ namespace Keysharp.Core.Windows
 					if (!keyUp)
 						thisKey.hotkeyDownWasSuppressed = true;
 
-					return new IntPtr(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, extraInfo, keyHistoryCurr, hotkeyIdToPost, null));
+					return new nint(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, extraInfo, keyHistoryCurr, hotkeyIdToPost, null));
 				} // end of alt-tab section.
 
 				// Since above didn't return, this isn't a prefix-triggered alt-tab action (though it might be
@@ -3349,8 +3349,8 @@ namespace Keysharp.Core.Windows
 								|| fireWithNoSuppress
 								// The order on this line important; it relies on short-circuit boolean:
 								|| thisToggleKeyCanBeToggled) ?
-							   new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, extraInfo, collectInputState, keyHistoryCurr, hotkeyIdToPost, null)) :
-							   new IntPtr(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, extraInfo, keyHistoryCurr, hotkeyIdToPost, null));
+							   new nint(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, extraInfo, collectInputState, keyHistoryCurr, hotkeyIdToPost, null)) :
+							   new nint(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, extraInfo, keyHistoryCurr, hotkeyIdToPost, null));
 
 					// v1.0.37.02: Added !this_key.used_as_prefix for mouse hook too (see comment above).
 
@@ -3367,7 +3367,7 @@ namespace Keysharp.Core.Windows
 					// function as a prefix key (since case #1 didn't set pPrefixKey to this_key), and fixing
 					// that would change the behaviour in ways that might be undesired, so it's left as is.
 					if (thisKey.hotkeyToFireUponRelease == HotkeyDefinition.HOTKEY_ID_INVALID)
-						return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, extraInfo, collectInputState, keyHistoryCurr, hotkeyIdToPost, null));
+						return new nint(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, extraInfo, collectInputState, keyHistoryCurr, hotkeyIdToPost, null));
 
 					char? ch = null;
 
@@ -3384,8 +3384,8 @@ namespace Keysharp.Core.Windows
 
 					thisKey.hotkeyDownWasSuppressed = !fireWithNoSuppress; // Fixed for v1.1.33.01: If this isn't set, the key-up won't be suppressed even after the key-down is.
 					return fireWithNoSuppress ?
-						   new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, extraInfo, collectInputState, keyHistoryCurr, hotkeyIdToPost, null)) :
-						   new IntPtr(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, extraInfo, keyHistoryCurr, hotkeyIdToPost, null));
+						   new nint(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, extraInfo, collectInputState, keyHistoryCurr, hotkeyIdToPost, null)) :
+						   new nint(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, extraInfo, keyHistoryCurr, hotkeyIdToPost, null));
 				}
 
 				//else an eligible hotkey was found.
@@ -3401,7 +3401,7 @@ namespace Keysharp.Core.Windows
 					&& (firingIsCertain = HotkeyDefinition.CriterionFiringIsCertain(ref hotkeyIdWithFlags, keyUp, extraInfo, ref fireWithNoSuppress, ref keyHistoryCurr.eventType)) == null)
 			{
 				if (keyHistoryCurr.eventType == 'i') // This non-zero SendLevel event is being ignored due to #InputLevel, so unconditionally pass it through, like with is_ignored.
-					return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, extraInfo, collectInputState, keyHistoryCurr, hotkeyIdToPost, null));
+					return new nint(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, extraInfo, collectInputState, keyHistoryCurr, hotkeyIdToPost, null));
 
 				// v1.1.08: Although the hotkey corresponding to this event is disabled, it may need to
 				// be suppressed if it has a counterpart (key-down or key-up) hotkey which is enabled.
@@ -3414,11 +3414,11 @@ namespace Keysharp.Core.Windows
 				//     Prior to v1.1.08, neither event was suppressed.
 				if (keyUp)
 					return thisKey.hotkeyDownWasSuppressed ?
-						   new IntPtr(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, extraInfo, keyHistoryCurr, hotkeyIdToPost, null)) :
-						   new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, extraInfo, collectInputState, keyHistoryCurr, hotkeyIdToPost, null));
+						   new nint(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, extraInfo, keyHistoryCurr, hotkeyIdToPost, null)) :
+						   new nint(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, extraInfo, collectInputState, keyHistoryCurr, hotkeyIdToPost, null));
 
 				if (thisKey.hotkeyToFireUponRelease == HotkeyDefinition.HOTKEY_ID_INVALID)
-					return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, extraInfo, collectInputState, keyHistoryCurr, hotkeyIdToPost, null));
+					return new nint(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, extraInfo, collectInputState, keyHistoryCurr, hotkeyIdToPost, null));
 
 				char? ch = null;
 				// Otherwise, this is a key-down event with a corresponding key-up hotkey.
@@ -3432,12 +3432,12 @@ namespace Keysharp.Core.Windows
 				if (firingIsCertain == null || fireWithNoSuppress)
 				{
 					thisKey.noSuppress |= HotkeyDefinition.NO_SUPPRESS_NEXT_UP_EVENT;
-					return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, extraInfo, collectInputState, keyHistoryCurr, hotkeyIdToPost, null));
+					return new nint(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, extraInfo, collectInputState, keyHistoryCurr, hotkeyIdToPost, null));
 				}
 
 				// Both this down event and the corresponding up event should be suppressed.
 				thisKey.hotkeyDownWasSuppressed = true;
-				return new IntPtr(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, extraInfo, keyHistoryCurr, hotkeyIdToPost, null));
+				return new nint(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, extraInfo, keyHistoryCurr, hotkeyIdToPost, null));
 			}
 
 			hotkeyIdTemp = hotkeyIdWithFlags & HotkeyDefinition.HOTKEY_ID_MASK; // Update in case CriterionFiringIsCertain() changed the naked/raw ID.
@@ -3513,7 +3513,7 @@ namespace Keysharp.Core.Windows
 
 			//Had to pull this out of the case statement because it's not allowed to fall though.
 			if (hotkeyIdToFire == HotkeyDefinition.HOTKEY_ID_ALT_TAB_MENU_DISMISS && !altTabMenuIsVisible)// This case must occur before HOTKEY_ID_ALT_TAB_MENU due to non-break.
-				return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, extraInfo, collectInputState, keyHistoryCurr, hotkeyIdToPost, null)); // Let the key do its native function.
+				return new nint(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, extraInfo, collectInputState, keyHistoryCurr, hotkeyIdToPost, null)); // Let the key do its native function.
 
 			switch (hotkeyIdToFire)
 			{
@@ -3659,7 +3659,7 @@ namespace Keysharp.Core.Windows
 					// WheelDown::AltTab     ; But if the menu is displayed, the wheel will function normally.
 					// WheelUp::ShiftAltTab  ; But if the menu is displayed, the wheel will function normally.
 					if (!altTabMenuIsVisible)
-						return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, extraInfo, collectInputState, keyHistoryCurr, hotkeyIdToPost, null));
+						return new nint(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, extraInfo, collectInputState, keyHistoryCurr, hotkeyIdToPost, null));
 
 					// Unlike CONTROL, SHIFT, AND ALT, the LWIN/RWIN keys don't seem to need any
 					// special handling to make them work with the alt-tab features.
@@ -3764,9 +3764,9 @@ namespace Keysharp.Core.Windows
 				// and has the added benefit of allowing the key to be toggled if
 				// a modifier is held down before it (e.g. alt-CapsLock would then
 				// be able to toggle the CapsLock key):
-				kbdMsSender.SendKeyEvent(KeyEventTypes.KeyUp, vk, sc, IntPtr.Zero, false, KeyPhysIgnore);// Mark it as physical for any other hook instances.
+				kbdMsSender.SendKeyEvent(KeyEventTypes.KeyUp, vk, sc, 0, false, KeyPhysIgnore);// Mark it as physical for any other hook instances.
 				kbdMsSender.SendKeyEvent(KeyEventTypes.KeyDownAndUp, vk, sc);
-				return new IntPtr(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, extraInfo, keyHistoryCurr, hotkeyIdToPost, firingIsCertain));
+				return new nint(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, extraInfo, keyHistoryCurr, hotkeyIdToPost, firingIsCertain));
 			}
 
 			if (keyUp)
@@ -3783,8 +3783,8 @@ namespace Keysharp.Core.Windows
 					// *LAlt up::Send {LWin up}
 					// *LAlt::Send {LWin down}
 					return thisKey.hotkeyDownWasSuppressed ?
-						   new IntPtr(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, extraInfo, keyHistoryCurr, hotkeyIdToPost, firingIsCertain)) :
-						   new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, extraInfo, collectInputState, keyHistoryCurr, hotkeyIdToPost, firingIsCertain));
+						   new nint(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, extraInfo, keyHistoryCurr, hotkeyIdToPost, firingIsCertain)) :
+						   new nint(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, extraInfo, collectInputState, keyHistoryCurr, hotkeyIdToPost, firingIsCertain));
 
 				if (fireWithNoSuppress) // Plus we know it's not a modifier since otherwise it would've returned above.
 				{
@@ -3792,7 +3792,7 @@ namespace Keysharp.Core.Windows
 					// it probably does no harm to let the key-up pass through, and in this case, it's exactly
 					// what the script is asking to happen (by prefixing the key-up hotkey with '~').
 					// this_key.pForceToggle isn't checked because AllowIt() handles that.
-					return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, extraInfo, collectInputState, keyHistoryCurr, hotkeyIdToPost, firingIsCertain));
+					return new nint(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, extraInfo, collectInputState, keyHistoryCurr, hotkeyIdToPost, firingIsCertain));
 				} // No suppression.
 			}
 			else // Key Down
@@ -3816,7 +3816,7 @@ namespace Keysharp.Core.Windows
 					// since doing so would result in the UP event having preceded the DOWN, which would
 					// be the wrong order.
 					thisKey.noSuppress |= HotkeyDefinition.NO_SUPPRESS_NEXT_UP_EVENT;
-					return new IntPtr(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, extraInfo, collectInputState, keyHistoryCurr, hotkeyIdToPost, firingIsCertain));
+					return new nint(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, extraInfo, collectInputState, keyHistoryCurr, hotkeyIdToPost, firingIsCertain));
 				}
 				// Fix for v1.1.37.02 and v2.0.6: The following is also done for LWin/RWin because otherwise,
 				// the system does not generate WM_SYSKEYDOWN (or even WM_KEYDOWN) messages for combinations
@@ -3867,7 +3867,7 @@ namespace Keysharp.Core.Windows
 					// the ALT key is physically down even though it is not logically down:
 					// RAlt::Send f  ; Actually triggers !f, which activates the FILE menu if the active window has one.
 					// RAlt::Send {PgDn}  ; Fails to work because ALT-PgDn usually does nothing.
-					kbdMsSender.SendKeyEvent(KeyEventTypes.KeyUp, vk, sc, IntPtr.Zero, false, KeyBlockThis);
+					kbdMsSender.SendKeyEvent(KeyEventTypes.KeyUp, vk, sc, 0, false, KeyBlockThis);
 				}
 			}
 
@@ -3875,10 +3875,10 @@ namespace Keysharp.Core.Windows
 			if (!keyUp)
 				thisKey.hotkeyDownWasSuppressed = true;
 
-			return new IntPtr(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, extraInfo, keyHistoryCurr, hotkeyIdToPost, firingIsCertain));
+			return new nint(SuppressThisKeyFunc(hook, ref kbd, vk, sc, keyUp, extraInfo, keyHistoryCurr, hotkeyIdToPost, firingIsCertain));
 		}
 
-		internal IntPtr LowLevelMouseHandler(int code, IntPtr param, ref MSDLLHOOKSTRUCT lParam)
+		internal nint LowLevelMouseHandler(int code, nint param, ref MSDLLHOOKSTRUCT lParam)
 		{
 			var script = Script.TheScript;
 
@@ -3902,7 +3902,7 @@ namespace Keysharp.Core.Windows
 			var iwParam = param.ToInt32();
 
 			if (iwParam == WM_MOUSEMOVE) // Only after updating for physical input, above, is this checked.
-				return (script.KeyboardData.blockMouseMove && ((lParam.flags & LLMHF_INJECTED) == 0)) ? new IntPtr(1) : CallNextHookEx(mouseHook, code, param, ref lParam);
+				return (script.KeyboardData.blockMouseMove && ((lParam.flags & LLMHF_INJECTED) == 0)) ? new nint(1) : CallNextHookEx(mouseHook, code, param, ref lParam);
 
 			// Above: In v1.0.43.11, a new mode was added to block mouse movement only since it's more flexible than
 			// BlockInput (which keybd too, and blocks all mouse buttons too).  However, this mode blocks only
@@ -3969,7 +3969,7 @@ namespace Keysharp.Core.Windows
 			}
 
 			KBDLLHOOKSTRUCT tempstruct = default;
-			return LowLevelCommon(mouseHook, code, iwParam, ref tempstruct, ref lParam, vk, sc, keyUp, lParam.dwExtraInfo.ToUInt64(), lParam.flags);
+			return LowLevelCommon(mouseHook, code, iwParam, ref tempstruct, ref lParam, vk, sc, keyUp, lParam.dwExtraInfo, lParam.flags);
 		}
 
 		internal override uint MapScToVk(uint sc)
@@ -4258,11 +4258,11 @@ namespace Keysharp.Core.Windows
 				// A NULL result is probably more common, such as if it's been a while since the hook
 				// was removed (or Alt was released).  If the *classic* alt-tab menu isn't in use,
 				// this at least serves to reset altTabMenuIsVisible to false:
-				altTabMenuIsVisible = FindWindow("#32771", null) != IntPtr.Zero;
+				altTabMenuIsVisible = FindWindow("#32771", null) != 0;
 				pendingDeadKeys.Clear();
 				pendingDeadKeyInvisible = false;
 				Script.TheScript.HotstringManager.ClearBuf();
-				hsHwnd = IntPtr.Zero; // It isn't necessary to determine the actual window/control at this point since the buffer is already empty.
+				hsHwnd = 0; // It isn't necessary to determine the actual window/control at this point since the buffer is already empty.
 
 				if (resetKVKandKSC)
 				{
@@ -4360,7 +4360,7 @@ namespace Keysharp.Core.Windows
 				ksc[sc].usedAsPrefix = KeyType.PREFIX_ACTUAL;
 		}
 
-		internal long SuppressThisKeyFunc(IntPtr hook, ref KBDLLHOOKSTRUCT lParam, uint vk, uint sc, bool keyUp, ulong extraInfo,
+		internal long SuppressThisKeyFunc(nint hook, ref KBDLLHOOKSTRUCT lParam, uint vk, uint sc, bool keyUp, ulong extraInfo,
 										  KeyHistoryItem keyHistoryCurr, uint hotkeyIDToPost, HotkeyVariant variant,
 										  HotstringDefinition hs = null, CaseConformModes caseConformMode = CaseConformModes.None, char endChar = (char)0)
 		// Always use the parameter vk rather than event.vkCode because the caller or caller's caller
@@ -4585,12 +4585,12 @@ namespace Keysharp.Core.Windows
 		/// <param name="allowExplicitVK"></param>
 		/// <param name="keybdLayout"></param>
 		/// <returns></returns>
-		internal override uint TextToVK(ReadOnlySpan<char> text, ref uint? modifiersLR, bool excludeThoseHandledByScanCode, bool allowExplicitVK, IntPtr keybdLayout)
+		internal override uint TextToVK(ReadOnlySpan<char> text, ref uint? modifiersLR, bool excludeThoseHandledByScanCode, bool allowExplicitVK, nint keybdLayout)
 		{
 			if (text.Length == 0)
 				return 0;
 
-			if (keybdLayout == IntPtr.Zero)
+			if (keybdLayout == 0)
 				keybdLayout = Script.TheScript.PlatformProvider.Manager.GetKeyboardLayout(0);
 
 			// Don't trim() aText or modify it because that will mess up the caller who expects it to be unchanged.
@@ -4626,7 +4626,7 @@ namespace Keysharp.Core.Windows
 			return sc != 0 ? MapScToVk(sc) : 0;
 		}
 
-		internal override bool TextToVKandSC(ReadOnlySpan<char> text, ref uint vk, ref uint sc, ref uint? modifiersLR, IntPtr keybdLayout)
+		internal override bool TextToVKandSC(ReadOnlySpan<char> text, ref uint vk, ref uint sc, ref uint? modifiersLR, nint keybdLayout)
 		{
 			if ((vk = TextToVK(text, ref modifiersLR, true, true, keybdLayout)) != 0)
 			{
@@ -4681,7 +4681,7 @@ namespace Keysharp.Core.Windows
 
 		internal override void Unhook(nint hook)
 		{
-			if (hook != IntPtr.Zero)
+			if (hook != 0)
 				Invoke(() => _ = UnhookWindowsHookEx(hook));
 		}
 
@@ -4822,9 +4822,9 @@ namespace Keysharp.Core.Windows
 		/// <param name="vk"></param>
 		/// <param name="keybdLayout"></param>
 		/// <returns></returns>
-		internal override char VKtoChar(uint vk, IntPtr keybdLayout)
+		internal override char VKtoChar(uint vk, nint keybdLayout)
 		{
-			if (keybdLayout == IntPtr.Zero)
+			if (keybdLayout == 0)
 				keybdLayout = Script.TheScript.PlatformProvider.Manager.GetKeyboardLayout(0);
 
 			// MapVirtualKeyEx() always produces 'A'-'Z' for those keys regardless of keyboard layout,
@@ -4951,7 +4951,7 @@ namespace Keysharp.Core.Windows
 						//}
 						//var item = await reader.ReadAsync();
 						//var theasyncfunc = async () =>
-						var criterion_found_hwnd = IntPtr.Zero;
+						nint criterion_found_hwnd = 0;
 						channelThreadID = mgr.CurrentThreadId();
 
 						if (item is KeysharpMsg msg)
@@ -4959,7 +4959,7 @@ namespace Keysharp.Core.Windows
 							if (msg.message == WM_QUIT)//Needed to be pulled out of the case statement because it uses fallthrough logic which isn't allowed in C#.
 								// After this message, fall through to the next case below so that the hooks will be removed before
 								// exiting this thread.
-								msg.wParam = IntPtr.Zero; // Indicate to AHK_CHANGE_HOOK_STATE that both hooks should be deactivated.
+								msg.wParam = 0; // Indicate to AHK_CHANGE_HOOK_STATE that both hooks should be deactivated.
 
 							var wParamVal = msg.wParam.ToInt64();
 							var lParamVal = msg.lParam.ToInt64();
@@ -4979,41 +4979,41 @@ namespace Keysharp.Core.Windows
 
 									    if ((wParamVal & (long)HookType.Keyboard) != 0) // Activate the keyboard hook (if it isn't already).
 									    {
-									    if (kbdHook == IntPtr.Zero)
+									    if (kbdHook == 0)
 									    {
 									        // v1.0.39: Reset *before* hook is installed to avoid any chance that events can
 									        // flow into the hook prior to the reset:
-									        if (msg.lParam != IntPtr.Zero) // Sender of msg. is signaling that reset should be done.
+									        if (msg.lParam != 0) // Sender of msg. is signaling that reset should be done.
 									            ResetHook(false, HookType.Keyboard, true);
 
 									        if ((kbdHook = SetWindowsHookEx(WH_KEYBOARD_LL,
 									                                        LowLevelKeybdHandler,
-									                                        GetModuleHandle(Process.GetCurrentProcess().MainModule.ModuleName), 0)) == IntPtr.Zero)
+									                                        GetModuleHandle(Process.GetCurrentProcess().MainModule.ModuleName), 0)) == 0)
 									            problem_activating_hooks = true;
 									    }
 									    }
 									    else // Caller specified that the keyboard hook is to be deactivated (if it isn't already).
-									    if (kbdHook != IntPtr.Zero)
+									    if (kbdHook != 0)
 									        if (UnhookWindowsHookEx(kbdHook))
-									            kbdHook = IntPtr.Zero;
+									            kbdHook = 0;
 
 									    if ((wParamVal & (long)HookType.Mouse) != 0) // Activate the mouse hook (if it isn't already).
 									    {
-									    if (mouseHook == IntPtr.Zero)
+									    if (mouseHook == 0)
 									    {
-									        if (msg.lParam != IntPtr.Zero) // Sender of msg. is signaling that reset should be done.
+									        if (msg.lParam != 0) // Sender of msg. is signaling that reset should be done.
 									            ResetHook(false, HookType.Mouse, true);
 
 									        if ((mouseHook = SetWindowsHookEx(WH_MOUSE_LL,
 									                                          mouseHandlerDel,
-									                                          GetModuleHandle(Process.GetCurrentProcess().MainModule.ModuleName), 0)) == IntPtr.Zero)
+									                                          GetModuleHandle(Process.GetCurrentProcess().MainModule.ModuleName), 0)) == 0)
 									            problem_activating_hooks = true;
 									    }
 									    }
 									    else // Caller specified that the mouse hook is to be deactivated (if it isn't already).
-									    if (mouseHook != IntPtr.Zero)
+									    if (mouseHook != 0)
 									        if (WindowsAPI.UnhookWindowsHookEx(mouseHook))
-									            mouseHook = IntPtr.Zero;
+									            mouseHook = 0;
 
 									    // Upon failure, don't display MsgBox here because although MsgBox's own message pump would
 									    // service the hook that didn't fail (if it's active), it's best to avoid any blocking calls
@@ -5025,16 +5025,16 @@ namespace Keysharp.Core.Windows
 									    // will discard the message unless the caller has timed out, which seems impossible
 									    // in this case).
 									    if (wParamVal != 0) // The caller wants a reply only when it didn't ask us to terminate via deactivating both hooks.
-									    msg.wParam = new IntPtr(problem_activating_hooks ? 1 : 0);
+									    msg.wParam = new nint(problem_activating_hooks ? 1 : 0);
 
-									    //PostThreadMessage(Processes.MainThreadID, (uint)UserMessages.AHK_CHANGE_HOOK_STATE, new UIntPtr(problem_activating_hooks ? 1u : 0u), IntPtr.Zero);
+									    //PostThreadMessage(Processes.MainThreadID, (uint)UserMessages.AHK_CHANGE_HOOK_STATE, new nint(problem_activating_hooks ? 1u : 0u), 0);
 									    msg.completed = true;
 
 									    //else this is WM_QUIT or the caller wanted this thread to terminate.  Send no reply.
 
 									    // If caller passes true for msg.lParam, it wants a permanent change to hook state; so in that case, terminate this
 									    // thread whenever neither hook is no longer present.
-									    if (lParamVal != 0 && kbdHook == IntPtr.Zero && mouseHook == IntPtr.Zero) // Both hooks are inactive (for whatever reason).
+									    if (lParamVal != 0 && kbdHook == 0 && mouseHook == 0) // Both hooks are inactive (for whatever reason).
 									    return; // Thread is no longer needed. The "return" automatically calls ExitThread().
 
 									    // 1) Due to this thread's non-GUI nature, there doesn't seem to be any need to call
@@ -5061,9 +5061,9 @@ namespace Keysharp.Core.Windows
 										if (hs.hotCriterion != null)
 										{
 											// For details, see comments in the hotkey section of this switch().
-											criterion_found_hwnd = new IntPtr(HotkeyDefinition.HotCriterionAllowsFiring(hs.hotCriterion, hs.Name));
+											criterion_found_hwnd = new nint(HotkeyDefinition.HotCriterionAllowsFiring(hs.hotCriterion, hs.Name));
 
-											if (criterion_found_hwnd.ToInt64() == 0L)
+											if (criterion_found_hwnd == 0L)
 												// Hotstring is no longer eligible to fire even though it was when the hook sent us
 												// the message.  Abort the firing even though the hook may have already started
 												// executing the hotstring by suppressing the final end-character or other actions.
@@ -5077,7 +5077,7 @@ namespace Keysharp.Core.Windows
 												criterion_found_hwnd = script.hotExprLFW;// For #if WinExist(WinTitle) and similar.
 										}
 										else // No criterion, so it's a global hotstring.  It can always fire, but it has no "last found window".
-											criterion_found_hwnd = IntPtr.Zero;
+											criterion_found_hwnd = 0;
 
 										// Do a simple replacement for the hotstring if that's all that's called for.
 										// Don't create a new quasi-thread or any of that other complexity done further
@@ -5241,7 +5241,7 @@ namespace Keysharp.Core.Windows
 			{
 				if (((uint)hooksToBeActive & (uint)HookType.Keyboard) != 0) // Activate the keyboard hook (if it isn't already).
 				{
-					if (kbdHook == IntPtr.Zero)
+					if (kbdHook == 0)
 					{
 						// v1.0.39: Reset *before* hook is installed to avoid any chance that events can
 						// flow into the hook prior to the reset:
@@ -5254,34 +5254,34 @@ namespace Keysharp.Core.Windows
 						//on the thread that a particular function is being called from.
 						if ((kbdHook = SetWindowsHookEx(WH_KEYBOARD_LL,
 														kbdHandlerDel,//This must be a class member or else it will go out of scope and cause the program to crash unpredictably.
-														//GetModuleHandle(Process.GetCurrentProcess().MainModule.ModuleName), 0)) == IntPtr.Zero)
-														Process.GetCurrentProcess().MainModule.BaseAddress, 0)) == IntPtr.Zero)
+														//GetModuleHandle(Process.GetCurrentProcess().MainModule.ModuleName), 0)) == 0)
+														Process.GetCurrentProcess().MainModule.BaseAddress, 0)) == 0)
 							problem_activating_hooks = true;
 					}
 				}
 				else // Caller specified that the keyboard hook is to be deactivated (if it isn't already).
 					if (HasKbdHook())
 						if (UnhookWindowsHookEx(kbdHook) || GetLastError() == ERROR_INVALID_HOOK_HANDLE)// Check last error in case the OS has already removed the hook.
-							kbdHook = IntPtr.Zero;
+							kbdHook = 0;
 
 				if (((uint)hooksToBeActive & (uint)HookType.Mouse) != 0) // Activate the mouse hook (if it isn't already).
 				{
-					if (mouseHook == IntPtr.Zero)
+					if (mouseHook == 0)
 					{
 						if (!changeIsTemporary) // Sender of msg. is signaling that reset should be done.
 							ResetHook(false, HookType.Mouse, true);
 
 						if ((mouseHook = SetWindowsHookEx(WH_MOUSE_LL,
 														  mouseHandlerDel,
-														  //GetModuleHandle(Process.GetCurrentProcess().MainModule.ModuleName), 0)) == IntPtr.Zero)
-														  Process.GetCurrentProcess().MainModule.BaseAddress, 0)) == IntPtr.Zero)
+														  //GetModuleHandle(Process.GetCurrentProcess().MainModule.ModuleName), 0)) == 0)
+														  Process.GetCurrentProcess().MainModule.BaseAddress, 0)) == 0)
 							problem_activating_hooks = true;
 					}
 				}
 				else // Caller specified that the mouse hook is to be deactivated (if it isn't already).
-					if (mouseHook != IntPtr.Zero)
+					if (mouseHook != 0)
 						if (UnhookWindowsHookEx(mouseHook) || GetLastError() == ERROR_INVALID_HOOK_HANDLE)// Check last error in case the OS has already removed the hook.
-							mouseHook = IntPtr.Zero;
+							mouseHook = 0;
 
 				return "";
 			};
@@ -5301,7 +5301,7 @@ namespace Keysharp.Core.Windows
 			return problem_activating_hooks;
 		}
 
-		private IntPtr LowLevelKeybdHandler(int code, IntPtr wParam, ref KBDLLHOOKSTRUCT lParam)
+		private nint LowLevelKeybdHandler(int code, nint wParam, ref KBDLLHOOKSTRUCT lParam)
 		{
 			if (code != HC_ACTION)  // MSDN docs specify that both LL keybd & mouse hook should return in this case.
 				return CallNextHookEx(kbdHook, code, wParam, ref lParam);
@@ -5315,7 +5315,7 @@ namespace Keysharp.Core.Windows
 			if (lParam.dwExtraInfo == KeyPhysIgnore)
 				lParam.flags &= ~LLKHF_INJECTED;
 			else if (lParam.dwExtraInfo == KeyBlockThis)
-				return new IntPtr(1);
+				return new nint(1);
 
 			// Make all keybd events physical to try to fool the system into accepting CTRL-ALT-DELETE.
 			// This didn't work, which implies that Ctrl-Alt-Delete is trapped at a lower level than
@@ -5398,8 +5398,8 @@ namespace Keysharp.Core.Windows
 				_ = channel.Writer.TryWrite(new KeysharpMsg()
 				{
 					message = (uint)UserMessages.AHK_HOOK_HOTKEY,
-					wParam = new IntPtr(hotkeyIDToPost),//Would be so much better to eventually pass around object references rather than array indexes.//TODO
-					lParam = new IntPtr(MakeLong((short)keyHistoryCurr.sc, (short)inputLevel)),
+					wParam = new nint(hotkeyIDToPost),//Would be so much better to eventually pass around object references rather than array indexes.//TODO
+					lParam = new nint(MakeLong((short)keyHistoryCurr.sc, (short)inputLevel)),
 					obj = variant
 				});
 
@@ -5410,8 +5410,8 @@ namespace Keysharp.Core.Windows
 					_ = channel.Writer.TryWrite(new KeysharpMsg()
 					{
 						message = (uint)UserMessages.AHK_HOOK_HOTKEY,
-						wParam = new IntPtr(hotkeyUp[(int)hotkeyIDToPost & HotkeyDefinition.HOTKEY_ID_MASK]),
-						lParam = new IntPtr(MakeLong((short)keyHistoryCurr.sc, (short)inputLevel))
+						wParam = new nint(hotkeyUp[(int)hotkeyIDToPost & HotkeyDefinition.HOTKEY_ID_MASK]),
+						lParam = new nint(MakeLong((short)keyHistoryCurr.sc, (short)inputLevel))
 						//Do not pass the variant.
 					});
 				}

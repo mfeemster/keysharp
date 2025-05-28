@@ -111,7 +111,7 @@ namespace Keysharp.Core
 			var o = value;
 
 			//if (o is long || o is int || o is uint || o is ulong)
-			if (o is long || o is IntPtr)
+			if (o is long)
 				return 1L;
 
 			if (o is double)// || o is float || o is decimal)

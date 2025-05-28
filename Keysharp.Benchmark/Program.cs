@@ -21,7 +21,7 @@ namespace Keysharp.Benchmark
 		[System.STAThreadAttribute()]
 		public static void Main(string[] args)
 		{
-			BenchmarkDotNet.Reports.Summary summary = null;
+			BenchmarkDotNet.Reports.Summary summary;
 			var logger = ConsoleLogger.Default;
 			//var config = new BenchmarkDotNet.Configs.DebugInProcessConfig();
 			var config = new ManualConfig();

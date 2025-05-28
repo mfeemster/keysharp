@@ -44,15 +44,15 @@ namespace Keysharp.Core.COM
 		//VARIANT_BOOL is a 16-bit value: -1 (TRUE) or 0 (FALSE).
 		[FieldOffset(0)]
 		internal short boolVal;
-		//BSTR is represented as an IntPtr.
+		//BSTR is represented as an nint.
 		[FieldOffset(0)]
-		internal IntPtr bstrVal;
+		internal nint bstrVal;
 		//For COM interfaces.
 		[FieldOffset(0)]
-		internal IntPtr pdispVal;
+		internal nint pdispVal;
 		//For SAFEARRAYs or other pointer types.
 		[FieldOffset(0)]
-		internal IntPtr parray;
+		internal nint parray;
 	}
 
 	internal static class VariantConstants

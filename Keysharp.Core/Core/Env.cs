@@ -105,6 +105,8 @@ namespace Keysharp.Core
 			}
 
 			return new ClipboardAll(System.Array.Empty<byte>());
+#else
+			return null;
 #endif
 		}
 
@@ -182,7 +184,7 @@ namespace Keysharp.Core
 #elif WINDOWS
 
 			//SendMessage() freezes when running in a unit test. PostMessage seems to work. Use SendMessageTimeout().
-			try { _ = WindowsAPI.SendMessageTimeout(new IntPtr(WindowsAPI.HWND_BROADCAST), WindowsAPI.WM_SETTINGCHANGE, 0u, IntPtr.Zero, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 1000, out var result); }
+			try { _ = WindowsAPI.SendMessageTimeout(new nint(WindowsAPI.HWND_BROADCAST), WindowsAPI.WM_SETTINGCHANGE, 0, 0, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 1000, out var result); }
 			catch (Exception ex)
 			{
 				Error err;
@@ -201,13 +203,14 @@ namespace Keysharp.Core
 		/// <param name="args">The command line arguments to process.</param>
 		public static object HandleCommandLineParams(string[] args)
 		{
-			if (args.Length > 0 && args[0].TrimStart(Keywords.DashSlash).ToUpper() == "SCRIPT") 
+			if (args.Length > 0 && args[0].TrimStart(Keywords.DashSlash).ToUpper() == "SCRIPT")
 			{
 				string[] newArgs = new string[args.Length - 1];
 				System.Array.Copy(args, 1, newArgs, 0, args.Length - 1);
 				Environment.ExitCode = Runner.Run(args);
 				throw new Flow.UserRequestedExitException();
 			}
+
 			_ = A_Args.AddRange(args);
 			return null;
 		}
@@ -219,7 +222,7 @@ namespace Keysharp.Core
 		/// <param name="obj1">Whether to run the process as async (provide non-unset non-zero value) or not.
 		/// <param name="obj2">An optional name for the dynamically generated program; defaults to "DynamicScript".</param>
 		/// <param name="obj3">Optional executable path used to run the generated assembly; defaults to the currently running process.</param>
-		/// If provided a callback function then it's considered async and the function <c>Call</c> method will be 
+		/// If provided a callback function then it's considered async and the function <c>Call</c> method will be
 		/// invoked when the process exits with the ProcessInfo as the only argument.</param>
 		/// <returns>
 		/// Returns a <see cref="ProcessInfo"/> wrapper around the spawned process.
@@ -230,16 +233,17 @@ namespace Keysharp.Core
 		{
 			string script = obj0.As();
 			IFuncObj cb = null;
+
 			if (obj1 != null)
 				cb = Functions.Func(obj1);
+
 			string name = obj2.As("DynamicScript");
 			string result = null;
-			Error err; 
-
+			Error err;
 			byte[] compiledBytes = null;
 			var ch = new CompilerHelper();
-
 			(compiledBytes, result) = ch.CompileCodeToByteArray([script], name);
+
 			if (compiledBytes == null)
 				return Errors.ErrorOccurred(err = new Error(result)) ? throw err : null;
 
@@ -683,7 +687,7 @@ namespace Keysharp.Core
 				if (WindowsAPI.OpenClipboard(A_ClipboardTimeout.Al()))
 				{
 					byte[] buf;
-					var gLock = IntPtr.Zero;
+					nint gLock = 0;
 
 					try
 					{
@@ -830,24 +834,24 @@ namespace Keysharp.Core
 					if (WindowsAPI.OpenClipboard(A_ClipboardTimeout.Al()))//Need to leave it open for it to work when using the Windows API.
 					{
 						wasOpened = true;
-						var ptr = clip.Ptr;
+						var ptr = (nint)clip.Ptr;
 						length = Math.Min(Math.Max(0U, length), (long)clip.Size);
 
 						for (var index = 0; index < length;)
 						{
-							var cliptype = (uint)Marshal.ReadInt32(ptr, index);
+							var cliptype = Unsafe.Read<uint>((void*)nint.Add(ptr, index));
 
 							if (cliptype == 0)
 								break;
 
 							index += 4;
-							var size = Marshal.ReadInt32(ptr, index);
+							var size = Unsafe.Read<int>((void*)nint.Add(ptr, index));
 							index += 4;
 
 							if (index + size < length)
 							{
 								var hglobal = Marshal.AllocHGlobal(size);
-								System.Buffer.MemoryCopy((void*)(ptr + index), hglobal.ToPointer(), size, size);
+								System.Buffer.MemoryCopy((void*)nint.Add(ptr, index), hglobal.ToPointer(), size, size);
 								_ = WindowsAPI.SetClipboardData(cliptype, hglobal);
 								//Do not free hglobal here.
 								index += size;
@@ -865,7 +869,6 @@ namespace Keysharp.Core
 			}
 		}
 	}
-
 #if LINUX
 	/// <summary>
 	/// Gotten from: https://stackoverflow.com/questions/6262454/c-sharp-backing-up-and-restoring-clipboard
@@ -921,8 +924,16 @@ namespace Keysharp.Core
 		//{
 		//}
 
-		public ClipboardAll(params object[] args) : base(args) { }
-    }
+		/// <summary>
+		/// The implementation for <see cref="KeysharpObject.super"/> for this class to return this type.
+		/// </summary>
+		public new (Type, object) super => (typeof(KeysharpObject), this);
 
+		public ClipboardAll(params object[] args) => _ = __New(args);
+	}
+#else
+	public class ClipboardAll
+	{
+	}
 #endif
 }

@@ -20,7 +20,7 @@ namespace Keysharp.Core
 
 		public static object GuiCtrlFromHwnd(object obj)
 		{
-			if (Control.FromHandle(new IntPtr(obj.Al())) is Control c)
+			if (Control.FromHandle(new nint(obj.Al())) is Control c)
 				if (c.GetGuiControl() is Gui.Control gui)
 					return gui;
 
@@ -70,7 +70,7 @@ namespace Keysharp.Core
 
 		public static object MenuFromHandle(object obj)
 		{
-			var handle = new IntPtr(obj.Al());
+			var handle = new nint(obj.Al());
 			var menu = Control.FromHandle(handle);
 
 			if (menu != null)
@@ -107,7 +107,7 @@ namespace Keysharp.Core
 											   (colorValue >> 8) & 0xFF,
 											   (colorValue >> 16) & 0xFF);
 					control.BackColor = requestedColor;
-					m.Result = new IntPtr(colorValue);
+					m.Result = new nint(colorValue);
 					return true;
 			}
 
@@ -121,7 +121,7 @@ namespace Keysharp.Core
 			var prc = Process.GetCurrentProcess().Handle;
 			var icon = WindowsAPI.ExtractIcon(prc, source, n);
 
-			if (icon != IntPtr.Zero)
+			if (icon != 0)
 				return Icon.FromHandle(icon);
 
 			return Icon.ExtractAssociatedIcon(source);

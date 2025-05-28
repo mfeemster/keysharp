@@ -5,10 +5,10 @@ namespace Keysharp.Core.Linux.X11
 	internal struct XFocusChangeEvent
 	{
 		internal XEventName type;
-		internal IntPtr serial;
+		internal nint serial;
 		internal bool send_event;
-		internal IntPtr display;
-		internal IntPtr window;
+		internal nint display;
+		internal nint window;
 		internal int mode;
 		internal NotifyDetail detail;
 	}

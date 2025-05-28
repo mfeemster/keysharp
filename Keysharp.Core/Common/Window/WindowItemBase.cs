@@ -3,7 +3,7 @@
 	internal class PointAndHwnd
 	{
 		internal double distanceFound = 0.0;
-		internal IntPtr hwndFound = IntPtr.Zero;
+		internal nint hwndFound = 0;
 		internal bool ignoreDisabled = false;
 		internal Point pt;
 		internal Rectangle rectFound = new ();
@@ -44,9 +44,9 @@
 		internal abstract bool Enabled { get; set; }
 		internal abstract bool Exists { get; }
 		internal abstract long ExStyle { get; set; }
-		internal IntPtr Handle { get; set; } = IntPtr.Zero;
+		internal nint Handle { get; set; } = 0;
 		internal abstract bool IsHung { get; }
-		internal bool IsSpecified => Handle != IntPtr.Zero;
+		internal bool IsSpecified => Handle != 0;
 		internal abstract Rectangle Location { get; set; }
 		internal virtual string NetClassName
 		{
@@ -145,7 +145,7 @@
 		internal abstract bool Visible { get; set; }
 		internal abstract FormWindowState WindowState { get; set; }
 
-		internal WindowItemBase(IntPtr handle) => Handle = handle;
+		internal WindowItemBase(nint handle) => Handle = handle;
 
 		/// <summary>
 		/// Define Standard Equalty Opertaor
@@ -236,7 +236,7 @@
 					return false;
 			}
 
-			if (criteria.ID != IntPtr.Zero && Handle != criteria.ID)
+			if (criteria.ID != 0 && Handle != criteria.ID)
 				return false;
 
 			if (criteria.PID != 0L && PID != criteria.PID)

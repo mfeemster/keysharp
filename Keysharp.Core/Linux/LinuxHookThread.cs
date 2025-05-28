@@ -1,4 +1,8 @@
 ﻿#if LINUX
+using EvDevSharp;
+using EvDevSharp.Wrappers.Keyboard;
+using EvDevSharp.Wrappers.Mouse;
+
 namespace Keysharp.Core.Linux
 {
 	/// <summary>
@@ -8,6 +12,20 @@ namespace Keysharp.Core.Linux
 	{
 		internal LinuxHookThread()
 		{
+			/*
+			    EvDev.RegisterDevices<EvDevMouseDevice>();
+			    EvDev.RegisterDevices<EvDevKeyboardDevice>();
+			    var kbs = EvDev.GetRegisteredDevices<EvDevKeyboardDevice>().OrderBy(d => d.DevicePath).ToList();
+			    var mice = EvDev.GetRegisteredDevices<EvDevMouseDevice>().OrderBy(d => d.DevicePath).ToList();
+
+			    foreach (var kb in kbs)
+			    {
+			        kb.OnKeyEvent += (s, e) =>
+			        {
+			            Keysharp.Scripting.Script.OutputDebug($"You pressed {e.Key}\tState: {e.Value}");
+			        };
+			    }
+			*/
 		}
 
 		public override void SimulateKeyPress(uint key)
@@ -20,7 +38,7 @@ namespace Keysharp.Core.Linux
 		internal override void ChangeHookState(List<HotkeyDefinition> hk, HookType whichHook, HookType whichHookAlways)
 		{ }
 
-		internal override uint CharToVKAndModifiers(char ch, ref uint? modifiersLr, IntPtr keybdLayout, bool enableAZFallback = false) => 0;
+		internal override uint CharToVKAndModifiers(char ch, ref uint? modifiersLr, nint keybdLayout, bool enableAZFallback = false) => 0;
 
 		internal override uint ConvertMouseButton(ReadOnlySpan<char> buf, bool allowWheel = true) => 0u;
 
@@ -51,15 +69,15 @@ namespace Keysharp.Core.Linux
 
 		internal override uint TextToSpecial(ReadOnlySpan<char> text, ref KeyEventTypes eventType, ref uint modifiersLr, bool updatePersistent) => 0u;
 
-		internal override uint TextToVK(ReadOnlySpan<char> text, ref uint? modifiersLr, bool excludeThoseHandledByScanCode, bool allowExplicitVK, IntPtr keybdLayout) => 0u;
+		internal override uint TextToVK(ReadOnlySpan<char> text, ref uint? modifiersLr, bool excludeThoseHandledByScanCode, bool allowExplicitVK, nint keybdLayout) => 0u;
 
-		internal override bool TextToVKandSC(ReadOnlySpan<char> text, ref uint vk, ref uint sc, ref uint? modifiersLr, IntPtr keybdLayout) => false;
+		internal override bool TextToVKandSC(ReadOnlySpan<char> text, ref uint vk, ref uint sc, ref uint? modifiersLr, nint keybdLayout) => false;
 
 		internal override void Unhook() { }
 
 		internal override void Unhook(nint hook) { }
 
-		internal override char VKtoChar(uint vk, IntPtr keybdLayout) => (char)0;
+		internal override char VKtoChar(uint vk, nint keybdLayout) => (char)0;
 
 		internal override void WaitHookIdle()
 		{ }

@@ -100,7 +100,7 @@ namespace Keysharp.Core.COM
 					args[i] = (long)c;
 				else if (arg is byte b)
 					args[i] = (long)b;
-				else if (arg is IntPtr ip)
+				else if (arg is nint ip)
 					args[i] = ip.ToInt64();
 			}
 		}

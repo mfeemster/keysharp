@@ -5,7 +5,6 @@ namespace Keysharp.Core.Common.Invoke
 	{
 		protected bool cdecl = false;
 		protected List<GCHandle> gcHandles = [];
-		protected ScopeHelper gcHandlesScope;
 		protected bool hasReturn = false;
 		protected Type returnType = typeof(int);
 		internal Dictionary<int, Type> outputVars = [];
@@ -19,7 +18,7 @@ namespace Keysharp.Core.Common.Invoke
 		internal ulong floatingTypeMask = 0;
 
 		// Storage for pinned BSTR pointers, to be released at disposal
-		private readonly List<IntPtr> _bstrs = new List<IntPtr>();
+		private readonly List<nint> _bstrs = new List<nint>();
 		private bool _isDisposed;
 
 		internal ArgumentHelper(object[] parameters)
@@ -158,7 +157,7 @@ namespace Keysharp.Core.Common.Invoke
 
 					if (p is string s)
 					{
-						IntPtr bstr = Marshal.StringToBSTR(s);
+						nint bstr = Marshal.StringToBSTR(s);
 						_bstrs.Add(bstr);
 						args[n] = bstr;
 					}
@@ -291,7 +290,7 @@ namespace Keysharp.Core.Common.Invoke
 								goto TypeDetermined;
 							}
 
-							args[n] = p is IntPtr ip ? ip : p.Al();
+							args[n] = p.Al();
 							continue;
 						}
 						else if (len == 3) // "int"
@@ -302,7 +301,7 @@ namespace Keysharp.Core.Common.Invoke
 								goto TypeDetermined;
 							}
 
-							args[n] = p is IntPtr ip2 ? ip2 : p.Ai();
+							args[n] = p.Ai();
 							continue;
 						}
 
@@ -320,7 +319,7 @@ namespace Keysharp.Core.Common.Invoke
 								goto TypeDetermined;
 							}
 
-							args[n] = p is IntPtr ip3 ? ip3 : p.Ai();
+							args[n] = p.Ai();
 							continue;
 						}
 
@@ -339,7 +338,7 @@ namespace Keysharp.Core.Common.Invoke
 									goto TypeDetermined;
 								}
 
-								args[n] = p is IntPtr ip4 ? ip4 : p.Al();
+								args[n] = p.Al();
 								continue;
 							}
 							else if (len == 4) // "uint"
@@ -350,7 +349,7 @@ namespace Keysharp.Core.Common.Invoke
 									goto TypeDetermined;
 								}
 
-								args[n] = p is IntPtr ip5 ? ip5 : p.Aui();
+								args[n] = p.Aui();
 								continue;
 							}
 						}
@@ -362,7 +361,7 @@ namespace Keysharp.Core.Common.Invoke
 								goto TypeDetermined;
 							}
 
-							args[n] = p is IntPtr ip6 ? ip6 : (ushort)p.Al();
+							args[n] = (ushort)p.Al();
 							continue;
 						}
 						else if (c1u == 'c' && len == 5) // "uchar"
@@ -373,7 +372,7 @@ namespace Keysharp.Core.Common.Invoke
 								goto TypeDetermined;
 							}
 
-							args[n] = p is IntPtr ip7 ? ip7 : (byte)p.Al();
+							args[n] = (byte)p.Al();
 							continue;
 						}
 						else if (c1u == 'p' && len == 4) // "uptr"
@@ -399,7 +398,7 @@ namespace Keysharp.Core.Common.Invoke
 								goto TypeDetermined;
 							}
 
-							args[n] = p is IntPtr ip9 ? ip9 : (short)p.Al();
+							args[n] = (short)p.Al();
 							continue;
 						}
 
@@ -414,7 +413,7 @@ namespace Keysharp.Core.Common.Invoke
 								goto TypeDetermined;
 							}
 
-							args[n] = p is IntPtr ipA ? ipA : (sbyte)p.Al();
+							args[n] = (sbyte)p.Al();
 							continue;
 						}
 
@@ -477,9 +476,7 @@ namespace Keysharp.Core.Common.Invoke
 
 			void ConvertPtr()
 			{
-				if (p is IntPtr ipPtr)
-					args[n] = ipPtr;
-				else if (p is long lptr)
+				if (p is long lptr)
 					args[n] = lptr;
 				else if (p is Array arrPtr)
 				{

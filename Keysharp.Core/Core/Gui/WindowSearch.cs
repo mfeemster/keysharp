@@ -7,13 +7,14 @@ namespace Keysharp.Core
 		internal static WindowItemBase SearchControl(object ctrl, object title, object text, object excludeTitle, object excludeText, bool throwifnull = true)
 		{
 			Error err;
-			var (parsed, ptr) = CtrlToIntPtr(ctrl);
+			var (parsed, ptr) = CtrlTonint(ctrl);
 			var script = Script.TheScript;
+			var mgr = script.WindowProvider.Manager;
 			
 			if (parsed)
 			{
-				if (script.WindowProvider.Manager.IsWindow(ptr))
-					return script.WindowProvider.Manager.CreateWindow(ptr);
+				if (mgr.IsWindow(ptr))
+					return mgr.CreateWindow(ptr);
 				else if (throwifnull && !script.IsMainWindowClosing)
 					return Errors.ErrorOccurred(err = new TargetError($"Could not find child control with handle: {ptr}")) ? throw err : null;
 				else
