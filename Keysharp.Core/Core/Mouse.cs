@@ -247,7 +247,7 @@ namespace Keysharp.Core
 				return null;
 
 			var parent = child.NonChildParentWindow;
-            Script.SetPropertyValue(outputVarWin, "__Value", parent.Handle);
+            Script.SetPropertyValue(outputVarWin, "__Value", (long)parent.Handle);
 #if WINDOWS
 
 			//Doing it this way overcomes the limitations of WindowFromPoint() and ChildWindowFromPoint()
@@ -268,7 +268,7 @@ namespace Keysharp.Core
 
 			if ((mode & 0x02) != 0)
 			{
-                Script.SetPropertyValue(outputVarControl, "__Value", child.Handle);
+                Script.SetPropertyValue(outputVarControl, "__Value", (long)child.Handle);
 				return null;
 			}
 

@@ -558,34 +558,25 @@ namespace Keysharp.Core
 			{
 				var pi = pair.Key;
 				var n = pi / 2;
+				var arg = helper.args[n];
 
-				//If they passed in a ComObject with Ptr as an address, make that address into a __ComObject.
-				if (parameters[pi] is ComObject co)
+				if (parameters[pi] is StringBuffer sb)
 				{
-					object obj = co.Ptr;
-					co.Ptr = obj;//Reassign to ensure pointers are properly cast to __ComObject.
+					sb.UpdateEntangledStringFromBuffer();
+					parameters[pi] = sb.EntangledString;
+				}
+				else if (parameters[pi] is KeysharpObject kso)
+				{
+					object temp = arg;
+					FixParamTypeAndCopyBack(ref temp, pair.Value.Item1, (nint)arg);
+					if (pair.Value.Item2)
+						_ = Script.SetPropertyValue(kso, "ptr", temp);
+					else
+						_ = Script.SetPropertyValue(kso, "__Value", temp);
 				}
 				else
 				{
-					var arg = helper.args[n];
-					if (parameters[pi] is StringBuffer sb)
-					{
-						sb.UpdateEntangledStringFromBuffer();
-						parameters[pi] = sb.EntangledString;
-					}
-					else if (parameters[pi] is KeysharpObject kso)
-					{
-						object temp = arg;
-						FixParamTypeAndCopyBack(ref temp, pair.Value, (nint)arg);
-						if (kso.HasProp("ptr") == 1L)
-							_ = Script.SetPropertyValue(kso, "ptr", temp);
-						else
-							_ = Script.SetPropertyValue(kso, "__Value", temp);
-					}
-					else
-					{
-						FixParamTypeAndCopyBack(ref parameters[pi], pair.Value, (nint)arg);
-					}
+					FixParamTypeAndCopyBack(ref parameters[pi], pair.Value.Item1, (nint)arg);
 				}
 
 				/*

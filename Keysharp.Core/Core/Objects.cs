@@ -123,12 +123,10 @@
 
 		// Shared helper to normalize an “object” that might be
 		// an IntPtr, a long, or a RCW wrapper into a raw IUnknown*.
-		private static IntPtr GetRawIUnknownPtr(object ptrOrObj)
+		private static nint GetRawIUnknownPtr(object ptrOrObj)
 		{
-			if (ptrOrObj is IntPtr ip)            // already a pointer
-				return ip;
 			if (ptrOrObj is long l)               // pointer encoded as a long
-				return new IntPtr(l);
+				return (nint)l;
 
 			// must be a CCW/RCW object:
 			// 1) GetIUnknownForObject adds 1 ref
@@ -148,7 +146,7 @@
 			if (obj == null)
 				return 0;
 
-			return GetRawIUnknownPtr(obj).ToInt64();
+			return GetRawIUnknownPtr(obj);
 		}
 		public static long ObjPtrAddRef(object obj)
 		{
@@ -166,8 +164,8 @@
 		{
 			ptr = Reflections.GetPtrProperty(ptr);
 
-			IntPtr punk = GetRawIUnknownPtr(ptr);
-			if (punk == IntPtr.Zero)
+			nint punk = GetRawIUnknownPtr(ptr);
+			if (punk == 0)
 				return null;
 
 			// This creates or finds the RCW, but does not AddRef
@@ -179,8 +177,8 @@
 		{
 			ptr = Reflections.GetPtrProperty(ptr); 
 
-			IntPtr punk = GetRawIUnknownPtr(ptr);
-			if (punk == IntPtr.Zero)
+			nint punk = GetRawIUnknownPtr(ptr);
+			if (punk == 0)
 				return null;
 
 			// bump the COM ref-count

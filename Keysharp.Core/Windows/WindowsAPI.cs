@@ -1164,6 +1164,9 @@ namespace Keysharp.Core.Windows
 		[DllImport(oleacc, CharSet = CharSet.Unicode)]
 		internal static extern int AccessibleObjectFromWindow(nint hwnd, uint id, ref Guid iid, [In, Out, MarshalAs(UnmanagedType.IUnknown)] ref object ppvObject);
 
+		[DllImport(oleaut, CharSet = CharSet.Unicode)]
+		internal static extern void SysFreeString(nint bstr);
+
 		//[DllImport(oleaut)]
 		//public static extern int SafeArrayGetDim([MarshalAs(UnmanagedType.SafeArray, SafeArraySubType = VarEnum.VT_I4)] System.Array arr);
 		//public static extern int SafeArrayGetDim([MarshalAs(UnmanagedType.SafeArray, SafeArraySubType = VarEnum.VT_I4)] nint arr);

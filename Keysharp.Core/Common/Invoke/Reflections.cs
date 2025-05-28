@@ -438,10 +438,10 @@ namespace Keysharp.Core.Common.Invoke
 			return ct;
 		}
 
-		internal static long GetPtrProperty(object item, bool throwIfZero = false)
+		internal static object GetPtrProperty(object item, bool throwIfZero = false)
 		{
 			Error err;
-			long addr;
+			object addr;
 
 			if (item is long l)
 				addr = l;
@@ -452,8 +452,30 @@ namespace Keysharp.Core.Common.Invoke
 			else
 				addr = item.Al();
 
-			if (throwIfZero && addr == 0L)
+			if (throwIfZero && addr == null)
 				return Errors.ErrorOccurred(err = new TypeError($"Argument was of type {item.GetType()}. Type must be integer, Buffer or other object with a Ptr property that is an integer.\"")) ? throw err : 0;
+
+			return addr;
+		}
+
+		internal static nint GetIntPtrProperty(object item, bool throwIfZero = false)
+		{
+			Error err;
+			nint addr;
+
+			if (item is nint ip)
+				addr = ip;
+			else if (item is long l)
+				addr = (nint)l;
+			else if (item is IPointable buf)//Put Buffer, StringBuffer etc check first because it's faster and more likely.
+				addr = (nint)buf.Ptr;
+			else if (item is KeysharpObject kso && Script.GetPropertyValue(kso, "ptr", false) is object p && p != null)
+				addr = (nint)p.Al();
+			else
+				addr = (nint)item.Al();
+
+			if (throwIfZero && addr == nint.Zero)
+				return Errors.ErrorOccurred(err = new TypeError($"Argument was of type {item.GetType()}. Type must be integer, Buffer or other object with a Ptr property that is an integer.\"")) ? throw err : nint.Zero;
 
 			return addr;
 		}

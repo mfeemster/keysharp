@@ -5,7 +5,7 @@
 		private readonly bool disposeHandle = true;
 		private readonly nint handle;
 
-		internal GdiHandleHolder(IntPtr h, bool d)
+		internal GdiHandleHolder(nint h, bool d)
 		{
 			handle = h;
 			disposeHandle = d;

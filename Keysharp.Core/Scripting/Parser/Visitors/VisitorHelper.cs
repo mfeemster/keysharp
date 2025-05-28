@@ -593,9 +593,9 @@ namespace Keysharp.Scripting
             if (name != null) return name;
 
             // Only add built-in classes, because user-defined classes are handled in the constructor
-            if (!Parser.BuiltinTypes.ContainsKey(className))
+            if (!Parser.BuiltinTopLevelTypes.ContainsKey(className))
                 return null;
-            string casedName = Parser.BuiltinTypes.SingleOrDefault(kv => kv.Key.Equals(className, StringComparison.OrdinalIgnoreCase)).Key;
+            string casedName = Parser.BuiltinTopLevelTypes.SingleOrDefault(kv => kv.Key.Equals(className, StringComparison.OrdinalIgnoreCase)).Key;
 
             // Add `internal static object myclass = Myclass.__Static;` global field
             var fieldDeclaration = SyntaxFactory.FieldDeclaration(

@@ -216,7 +216,7 @@ namespace Keysharp.Scripting
         public HashSet<string> accessibleVars = [];
 
         public static Dictionary<string, Type> _builtinTypes = null;
-		public static Dictionary<string, Type> BuiltinTypes
+		public static Dictionary<string, Type> BuiltinTopLevelTypes
         {
             get
             {
@@ -225,7 +225,10 @@ namespace Keysharp.Scripting
                 _builtinTypes = new (StringComparer.OrdinalIgnoreCase);
 				var anyType = typeof(Any);
 				foreach (var type in Script.TheScript.ReflectionsData.stringToTypes.Values
-						.Where(type => type.IsClass && !type.IsAbstract && anyType.IsAssignableFrom(type)))
+						.Where(type => type.IsClass 
+                            && !type.IsAbstract
+							&& !type.IsNested
+							&& anyType.IsAssignableFrom(type)))
 					_builtinTypes[type.Name] = type;
 				return _builtinTypes;
 			}
@@ -613,8 +616,6 @@ namespace Keysharp.Scripting
 
             var codeTokenSource = new ListTokenSource(codeTokens);
             var codeTokenStream = new CommonTokenStream(codeTokenSource);
-
-            //Console.WriteLine("Lexed");
 
             /*
             foreach (var token in codeTokens)

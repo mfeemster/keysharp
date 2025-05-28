@@ -83,25 +83,11 @@ namespace Keysharp.Scripting
             mainFunc.Params.Add(mainFuncParam);
 
 			parser.mainClass.Body.Add(
-                SyntaxFactory.FieldDeclaration(
-				    SyntaxFactory.VariableDeclaration(
-				        SyntaxFactory.ParseTypeName("Keysharp.Scripting.Script"))
-				        .AddVariables(SyntaxFactory.VariableDeclarator(Keywords.MainScriptVariableName))
-                )
-				.AddModifiers(
-					SyntaxFactory.Token(SyntaxKind.PrivateKeyword),
-					SyntaxFactory.Token(SyntaxKind.StaticKeyword)));
+                SyntaxFactory.ParseMemberDeclaration($"private static Keysharp.Scripting.Script {MainScriptVariableName} = new Keysharp.Scripting.Script(typeof({Keywords.MainClassName}));"));
 			parser.mainClass.Body.Add(
-                SyntaxFactory.FieldDeclaration(
-					SyntaxFactory.VariableDeclaration(
-						SyntaxFactory.ParseTypeName("Keysharp.Core.Common.Keyboard.HotstringManager"))
-						.AddVariables(SyntaxFactory.VariableDeclarator("MainHotstringManager"))
-				)
-				.AddModifiers(
-					SyntaxFactory.Token(SyntaxKind.PrivateKeyword),
-					SyntaxFactory.Token(SyntaxKind.StaticKeyword)));
+                SyntaxFactory.ParseMemberDeclaration($"private static Keysharp.Core.Common.Keyboard.HotstringManager MainHotstringManager = MainScript.HotstringManager;"));
 
-			parser.mainFuncInitial.Add($"string name = @\"{Path.GetFullPath(parser.fileName)}\";");
+			parser.mainFuncInitial.Add($"{MainScriptVariableName}.SetName(@\"{(parser.fileName == "*" ? "*" : Path.GetFullPath(parser.fileName))}\");");
             foreach (var (p, s) in parser.reader.PreloadedDlls)
             {
                 parser.mainFuncInitial.Add($"{Keywords.MainScriptVariableName}.Vars.AddPreLoadedDll(\"{p}\", {s.ToString().ToLower()});");
@@ -112,16 +98,13 @@ namespace Keysharp.Scripting
 					try
 					{
 						{{String.Join(Environment.NewLine, parser.mainFuncInitial)}}
-						{{MainScriptVariableName}} = new Keysharp.Scripting.Script(typeof({{Keywords.MainClassName}}));
-                        MainHotstringManager = {{MainScriptVariableName}}.HotstringManager;
-						{{MainScriptVariableName}}.SetName(name);
-						if (Keysharp.Scripting.Script.HandleSingleInstance(name, eScriptInstance.{{System.Enum.GetName(typeof(eScriptInstance), parser.reader.SingleInstance)}}))
+						if (Keysharp.Scripting.Script.HandleSingleInstance(Accessors.A_ScriptName, eScriptInstance.{{System.Enum.GetName(typeof(eScriptInstance), parser.reader.SingleInstance)}}))
 						{
 							return 0;
 						}
 						Keysharp.Core.Env.HandleCommandLineParams(args);
 						{{MainScriptVariableName}}.CreateTrayMenu();
-						{{MainScriptVariableName}}.RunMainWindow(name, {{Keywords.AutoExecSectionName}}, false);
+						{{MainScriptVariableName}}.RunMainWindow(Accessors.A_ScriptName, {{Keywords.AutoExecSectionName}}, false);
 						{{MainScriptVariableName}}.WaitThreads();
 					}
                     catch (Keysharp.Core.Flow.UserRequestedExitException)

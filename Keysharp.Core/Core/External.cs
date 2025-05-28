@@ -198,8 +198,6 @@
 				var inc = 0;
 				var type = obj[i] as string;
 				var number = obj[i + 1];
-				if (number is IntPtr)
-					number = ((IntPtr)number).ToInt64();
 				byte[] bytes;
 
 				switch (type.ToLower())

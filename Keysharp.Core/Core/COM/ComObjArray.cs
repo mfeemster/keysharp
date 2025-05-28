@@ -99,7 +99,7 @@ namespace Keysharp.Core.COM
 
 		public object SyncRoot => ((ICollection)array).SyncRoot;
 
-		public ComObjArray(System.Array arr) : base(Com.vt_array, arr, 1)
+		public ComObjArray(System.Array arr) : base(VarEnum.VT_ARRAY, arr, 1)
 		{
 			array = arr;
 		}

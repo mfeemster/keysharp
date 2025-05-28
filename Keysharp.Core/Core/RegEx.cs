@@ -256,7 +256,8 @@
 			try
 			{
 				string result = exp.regex.Replace(input, CalloutHandler, l, index);
-				Script.SetPropertyValue(outputVarCount, "__Value", (long)n);
+				if (outputVarCount != null)
+					Script.SetPropertyValue(outputVarCount, "__Value", (long)n);
 				return result;
 			}
 			catch (Exception ex)

@@ -635,12 +635,15 @@ namespace Keysharp.Core.Common.Invoke
                     if (!parameters[j].IsOptional)
                         nonOptionalIndexCount++;
                 }
-                int minRequired = nonOptionalIndexCount + 1; // at least one for the "value"
+				// Determine if this is the special case: the index parameter is an object[]
+				// (i.e. the second-to-last parameter is of type object[])
+				bool isSpecialSetItem = (formalCount > 1 &&
+										 parameters[formalCount - 2].ParameterType == typeof(object[]));
 
-                // Determine if this is the special case: the index parameter is an object[]
-                // (i.e. the second-to-last parameter is of type object[])
-                bool isSpecialSetItem = (formalCount > 1 &&
-                                         parameters[formalCount - 2].ParameterType == typeof(object[]));
+				if (isSpecialSetItem)
+					nonOptionalIndexCount -= 1;
+
+				int minRequired = nonOptionalIndexCount + 1; // at least one for the "value"
 
                 // --- Emit IL to check that availableCountLocal >= minRequired ---
                 il.Emit(OpCodes.Ldloc, availableCountLocal);          // push availableCountLocal

@@ -17,7 +17,7 @@
 
 		public static object MCode(object mcode)
 		{
-			object? m = null;
+			object? m = new VarRef(() => v, value => v = value); ;
 			object? s = null;
 			object? p = null;
 			object? op = null;

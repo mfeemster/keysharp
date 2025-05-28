@@ -52,7 +52,7 @@ namespace Keysharp.Scripting
 		internal bool persistent;
 		internal nint playbackHook = 0;
 		internal DateTime priorHotkeyStartTime = DateTime.UtcNow;
-		internal string scriptName = "";
+		public string scriptName = "";
 		internal Icon suspendedIcon;
 		internal string thisHotkeyName, priorHotkeyName;
 		internal DateTime thisHotkeyStartTime;

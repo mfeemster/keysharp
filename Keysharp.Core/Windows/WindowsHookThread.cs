@@ -5072,7 +5072,7 @@ namespace Keysharp.Core.Windows
 												continue;
 
 											if (hs.hotCriterion is IFuncObj fc && !(string.Compare(fc.Name, "HotIfWinNotActivePrivate", true) == 0 || string.Compare(fc.Name, "HotIfWinNotExistPrivate", true) == 0))
-												criterion_found_hwnd = IntPtr.Zero;
+												criterion_found_hwnd = 0;
 											else if (hs.HotIfRequiresEval())
 												criterion_found_hwnd = script.hotExprLFW;// For #if WinExist(WinTitle) and similar.
 										}
