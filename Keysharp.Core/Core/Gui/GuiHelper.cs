@@ -270,6 +270,9 @@
 						dst.Write(src, offset, length);//Copy the image data. This can either be in uncompressed ARGB bitmap format with no header, or compressed PNG with a header.
 						_ = dst.BaseStream.Seek(0, SeekOrigin.Begin);//Create an icon from the in-memory file.
 						var icon2 = new Icon(dst.BaseStream);
+#if LINUX
+						var bmp = icon2.BuildBitmapOnWin32();
+#else						
 						var bmp = icon2.ToBitmap();
 
 						//If there is an alpha channel on this icon, it needs to be applied here,
@@ -287,7 +290,7 @@
 								}
 							}
 						}
-
+#endif
 						splitIcons.Add((icon2, bmp));
 					}
 				}

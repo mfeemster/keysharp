@@ -113,8 +113,6 @@ namespace Keysharp.Core
 			var filename = imageFile.As();
 			var o = options.As();
 			var opts = Options.ParseOptionsRegex(ref o, optsItems, false);
-			Point start;
-			Size bound;
 			Bitmap bmp;
 			object iconnumber = 0L;
 			int w = 0, h = 0;
@@ -143,9 +141,6 @@ namespace Keysharp.Core
 			if (opts.TryGetValue("h", out var hopt) && hopt != "")
 				_ = int.TryParse(hopt, out h);
 
-			Mouse.AdjustRect(ref _x1, ref _y1, ref _x2, ref _y2);
-			start = new Point(_x1, _y1);
-			bound = new Size(_x2 - start.X, _y2 - start.Y);
 
 			try
 			{
@@ -159,6 +154,13 @@ namespace Keysharp.Core
 			if (bmp == null)
 				return Errors.ErrorOccurred(err = new ValueError($"Loading icon or bitmap from {filename} failed.")) ? throw err : null;
 
+			Mouse.AdjustRect(ref _x1, ref _y1, ref _x2, ref _y2);
+			var start = new Point(_x1, _y1);
+			//Ensure we're not trying to search outside of the screen bounds,
+			//because X11 will throw an exception if we do.
+			var maxX = Math.Min(A_TotalScreenWidth.Ai(), _x2) - start.X;
+			var maxY = Math.Min(A_TotalScreenHeight.Ai(), _y2) - start.Y;
+			var bound = new Size(maxX, maxY);
 			var source = GuiHelper.GetScreen(new Rectangle(start, bound));
 			var searchImg = new ImageFinder(source) { Variation = variation };
 			Point? location;
