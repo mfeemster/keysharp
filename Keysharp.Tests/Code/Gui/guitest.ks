@@ -121,7 +121,7 @@ MyGui.UseGroup(gb1_TabOne)
 ; │  Listview testing                │
 ; │  Double-click activates tooltip  │
 ; └──────────────────────────────────┘
-LV_Label := MyGui.Add("Text", "w400 xc+10 y+20","Create listview with tooltip - double-click row")
+LV_Label := MyGui.Add("Text", "w300 h20 xc+10 y+20","Create listview with tooltip - double-click row")
 LV_Label.SetFont("cBlue s10")
 ; Create the ListView with two columns, Name and Size:
 LV := MyGui.Add("ListView", "r15 w300 xc+10 y+5 BackgroundTeal", ["Name","Size (KB)"])
@@ -152,20 +152,20 @@ LV.ModifyCol(2, "Integer")  ; For sorting purposes, indicate that column 2 is an
 ; │  Add a radio group  │
 ; └─────────────────────┘
 
-RadioText := MyGui.Add("Text", "w200 xc+10", "Radio group tests")
+RadioText := MyGui.Add("Text", "w200 h20 xc+10", "Radio group tests")
 RadioText.SetFont("cBlue s10")
-RadioOne := MyGui.Add("Radio", "vMyRadioGroup", "Change header font (alternate).")
+RadioOne := MyGui.Add("Radio", "vMyRadioGroup", "Change header font (alternate)")
 RadioOne.OnEvent("Click", "ChangeFont")
 RadioTwo := MyGui.Add("Radio", "vMyRadioGroup", "Restore header font (alternate)")
 RadioTwo.OnEvent("Click", "ChangeFontBack")
-RadioThree := MyGui.Add("Radio", "vMyRadioGroup", "Please click me.")
+RadioThree := MyGui.Add("Radio", "vMyRadioGroup", "Please click me")
 RadioThree.OnEvent("Click", "RadioThreeClicked")
 
 ; ┌──────────────────┐
 ; │  Add checkboxes  │
 ; └──────────────────┘
 
-CheckBoxText := MyGui.Add("Text", "w200", "Checkbox test")
+CheckBoxText := MyGui.Add("Text", "w200 h20", "Checkbox test")
 CheckBoxText.SetFont("cBlue s10")
 CheckBoxOne := MyGui.Add("CheckBox", "w200 xc+10 yp+20", "If this text is long, it will wrap automatically")
 CheckBoxOne.OnEvent("Click", "CheckBoxOneClicked")
@@ -973,7 +973,7 @@ CZ_LbBtn18.OnEvent("Click", "EditPaster")
 ; │  ListView Content Tests  │
 ; └──────────────────────────┘
 
-CZ_SeparatorText1 := MyGui.Add("Text", "xc+10 yp+8 w320", "ListView Content Tests")
+CZ_SeparatorText1 := MyGui.Add("Text", "xc+10 yp+8 w320", "ListView content tests")
 CZ_SeparatorText1.SetFont("s8 CBlue")
 
 LV2 := MyGui.Add("ListView", "r5 w300 xc+10 y+5", ["Name","Size (KB)"])
