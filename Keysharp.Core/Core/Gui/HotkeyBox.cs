@@ -14,10 +14,7 @@ namespace Keysharp.Core
 			Multiline = false;
 			ContextMenuStrip = new ContextMenuStrip();
 			Text = Enum.GetName(typeof(Keys), key);
-			KeyPress += (sender, e) =>
-			{
-				e.Handled = true;
-			};
+			KeyPress += (sender, e) => e.Handled = true;
 			KeyUp += (sender, e) =>
 			{
 				if (e.KeyCode == Keys.None && e.Modifiers == Keys.None)

@@ -595,16 +595,10 @@ namespace Keysharp.Core
 			foreach (var kv in script.FlowData.timers)
 				kv.Value.Stop();
 
-			foreach (var kv in script.GuiData.allGuiHwnds)
-				if (kv.Value.form != script.mainWindow)
-					kv.Value.form.CheckedInvoke(() =>
-					{
-                        kv.Value.form.Close();
-                    }, false);
-
+			Gui.DestroyAll();
 			script.Stop();
 			Environment.ExitCode = ec;
-				
+
 			if (useThrow)
 				throw new UserRequestedExitException();
 			else
@@ -630,7 +624,7 @@ namespace Keysharp.Core
 		}
 
 		/// <summary>
-		/// Internal helper to call <see cref="Sleep"/> in between the toggling of <see cref="AllowInterruption"/> off then back oin.
+		/// Internal helper to call <see cref="Sleep"/> in between the toggling of <see cref="AllowInterruption"/> off then back on.
 		/// </summary>
 		/// <param name="duration">The time in milliseconds to sleep for.</param>
 		internal static void SleepWithoutInterruption(object duration = null)

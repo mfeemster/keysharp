@@ -189,7 +189,7 @@ namespace Keysharp.Core.Common.Strings
 		TryParse(opt.AsSpan(), prefix, ref result, comp, allowempty);
 
 		internal static bool TryParse(ReadOnlySpan<char> opt, string prefix, ref Color result, StringComparison comp = StringComparison.OrdinalIgnoreCase, bool allowempty = false) =>
-		TryParseWrapper(opt, prefix, (ReadOnlySpan<char> v, out Color r) => { return Conversions.TryParseColor(v.ToString(), out r); }, ref result, comp, allowempty, Control.DefaultForeColor);
+		TryParseWrapper(opt, prefix, (ReadOnlySpan<char> v, out Color r) => Conversions.TryParseColor(v.ToString(), out r), ref result, comp, allowempty, Control.DefaultForeColor);
 
 		internal static bool TryParse(string opt, string prefix, ref bool result, StringComparison comp = StringComparison.OrdinalIgnoreCase, bool allowempty = false, bool def = default) =>
 		TryParse(opt.AsSpan(), prefix, ref result, comp, allowempty, def);

@@ -96,13 +96,17 @@ namespace Keysharp.Core.COM
 					var dispIds = new int[1];
 					var dummy = Guid.Empty;
 					_ = dispatch.GetIDsOfNames(ref dummy, names, 1, Com.LOCALE_SYSTEM_DEFAULT, dispIds);
+
 					if (dispIds.Length == 0)
 						goto AfterTypeInfoQuery;
+
 					//If we get here, this type - info defines the method.
 					var foundDispId = dispIds[0];
 					ti.GetContainingTypeLib(out var typeLib, out int pIndex);//This is the only way to properly get all interfaces.
+
 					if (typeLib == null)
 						goto AfterTypeInfoQuery;
+
 					var typeCount = typeLib.GetTypeInfoCount();
 
 					for (var i = 0; i < typeCount; i++)
@@ -155,17 +159,20 @@ namespace Keysharp.Core.COM
 						paramCount = inputParameters.Length;
 						expectedTypes = new Type[paramCount];
 						var modifier = new ParameterModifier(paramCount);
+
 						for (int i = 0; i < paramCount; i++)
 						{
 							expectedTypes[i] = typeof(object);
 							modifier[i] = false;
 						}
+
 						modifiers = [modifier];
 						found = true; // Do not cache
 						//return Errors.ErrorOccurred(err = new TypeError($"COM call to '{methodName}()' could not be found in any type-info interface.")) ? throw err : null;
 					}
 					else
 						found = false; // Set back to false to cache the result
+
 					void PopulateModifiers(FUNCDESC funcDesc)
 					{
 						paramCount = funcDesc.cParams;

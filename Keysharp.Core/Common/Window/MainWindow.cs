@@ -170,10 +170,7 @@
 			if (about == null)
 			{
 				about = new AboutBox();
-				about.FormClosing += (ss, ee) =>
-				{
-					about = null;
-				};
+				about.FormClosing += (ss, ee) => about = null;
 			}
 
 			about.Show();
@@ -247,7 +244,6 @@
 #elif LINUX
 			//gtkClipBoard.OwnerChange -= gtkClipBoard_OwnerChange;
 #endif
-			Gui.DestroyAll();
 			about?.Close();
 		}
 

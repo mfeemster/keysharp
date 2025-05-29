@@ -214,7 +214,8 @@ namespace Keysharp.Core.COM
 					_ = Marshal.Release((nint)lp);
 				else if (Marshal.IsComObject(Ptr))
 					Marshal.ReleaseComObject(Ptr);
-			} else if (vt == VarEnum.VT_BSTR && (Flags & F_OWNVALUE) != 0 && Ptr is long)
+			}
+			else if (vt == VarEnum.VT_BSTR && (Flags & F_OWNVALUE) != 0 && Ptr is long)
 			{
 				WindowsAPI.SysFreeString((nint)Ptr);
 			}
@@ -232,20 +233,27 @@ namespace Keysharp.Core.COM
 				// ── Integers → long ───────────────────────────────────────────────
 				case VarEnum.VT_I1:
 					return (long)(sbyte)Marshal.ReadByte(dataPtr);
+
 				case VarEnum.VT_UI1:
 					return (long)Marshal.ReadByte(dataPtr);
+
 				case VarEnum.VT_I2:
 					return (long)Marshal.ReadInt16(dataPtr);
+
 				case VarEnum.VT_UI2:
 					return (long)(ushort)Marshal.ReadInt16(dataPtr);
+
 				case VarEnum.VT_I4:
 				case VarEnum.VT_INT:
 					return (long)Marshal.ReadInt32(dataPtr);
+
 				case VarEnum.VT_UI4:
 				case VarEnum.VT_UINT:
 					return (long)(uint)Marshal.ReadInt32(dataPtr);
+
 				case VarEnum.VT_I8:
 					return Marshal.ReadInt64(dataPtr);
+
 				case VarEnum.VT_UI8:
 					return (long)(ulong)Marshal.ReadInt64(dataPtr);
 
@@ -259,6 +267,7 @@ namespace Keysharp.Core.COM
 					// Read 4-byte float, then promote
 					float f = Marshal.PtrToStructure<float>(dataPtr);
 					return (double)f;
+
 				case VarEnum.VT_R8:
 				case VarEnum.VT_DATE:
 					// VT_DATE is also stored as an 8-byte IEEE double
@@ -266,24 +275,26 @@ namespace Keysharp.Core.COM
 
 				// ── BSTR → string ────────────────────────────────────────────────
 				case VarEnum.VT_BSTR:
-					{
-						nint bstr = Marshal.ReadIntPtr(dataPtr);
-						return bstr == 0
-							 ? string.Empty
-							 : Marshal.PtrToStringBSTR(bstr);
-					}
+				{
+					nint bstr = Marshal.ReadIntPtr(dataPtr);
+					return bstr == 0
+						   ? string.Empty
+						   : Marshal.PtrToStringBSTR(bstr);
+				}
 
 				default:
+				{
+					nint unk = Marshal.ReadIntPtr(dataPtr);
+
+					if (unk == 0)
+						return null;
+
+					return new ComObject
 					{
-						nint unk = Marshal.ReadIntPtr(dataPtr);
-						if (unk == 0)
-							return null;
-						return new ComObject
-						{
-							vt = vtRaw & ~VarEnum.VT_BYREF,
-							Ptr = unk,
-						};
-					}
+						vt = vtRaw & ~VarEnum.VT_BYREF,
+						Ptr = unk,
+					};
+				}
 			}
 		}
 
@@ -374,42 +385,44 @@ namespace Keysharp.Core.COM
 
 				// ── BSTR → string ─────────────────────────────────────────────────
 				case VarEnum.VT_BSTR:
-					{
-						// free old BSTR
-						nint oldBstr = Marshal.ReadIntPtr(dataPtr);
-						if (oldBstr != 0)
-							WindowsAPI.SysFreeString(oldBstr);
+				{
+					// free old BSTR
+					nint oldBstr = Marshal.ReadIntPtr(dataPtr);
 
-						// allocate new BSTR (null → zero pointer)
-						string s = value as string;
-						IntPtr newBstr = string.IsNullOrEmpty(s)
-							? IntPtr.Zero
-							: Marshal.StringToBSTR(s);
+					if (oldBstr != 0)
+						WindowsAPI.SysFreeString(oldBstr);
 
-						Marshal.WriteIntPtr(dataPtr, newBstr);
-					}
-					break;
+					// allocate new BSTR (null → zero pointer)
+					string s = value as string;
+					IntPtr newBstr = string.IsNullOrEmpty(s)
+									 ? IntPtr.Zero
+									 : Marshal.StringToBSTR(s);
+					Marshal.WriteIntPtr(dataPtr, newBstr);
+				}
+				break;
 
 				// ── COM interfaces → IUnknown pointer ─────────────────────────────
 				case VarEnum.VT_DISPATCH:
 				case VarEnum.VT_UNKNOWN:
-					{
-						// release old pointer
-						nint oldPtr = Marshal.ReadIntPtr(dataPtr);
-						if (oldPtr != 0)
-							Marshal.Release(oldPtr);
+				{
+					// release old pointer
+					nint oldPtr = Marshal.ReadIntPtr(dataPtr);
 
-						// get new pointer (allow passing either IntPtr or RCW)
-						nint newPtr = value switch
-						{
-							long ptr => (nint)ptr,
+					if (oldPtr != 0)
+						Marshal.Release(oldPtr);
+
+					// get new pointer (allow passing either IntPtr or RCW)
+
+					nint newPtr = value switch
+				{
+						long ptr => (nint)ptr,
 							null => 0,
 							_ => Marshal.GetIUnknownForObject(value)
-						};
+					};
 
-						Marshal.WriteIntPtr(dataPtr, newPtr);
-					}
-					break;
+					Marshal.WriteIntPtr(dataPtr, newPtr);
+				}
+				break;
 
 				// ── Unsupported ────────────────────────────────────────────────
 				default:

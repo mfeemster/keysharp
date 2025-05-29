@@ -294,10 +294,7 @@
 						setPropFunc = (inst, obj) =>
 						{
 							var ctrl = inst.GetControl();//If it's a gui control, then invoke on the gui thread.
-							ctrl.CheckedInvoke(() =>
-							{
-								pi.SetValue(null, obj);
-							}, true);//This can be null if called before a Gui object is fully initialized.
+							ctrl.CheckedInvoke(() => pi.SetValue(null, obj), true);//This can be null if called before a Gui object is fully initialized.
 						};
 					}
 					else
@@ -341,10 +338,7 @@
 						setPropFunc = (inst, obj) =>
 						{
 							var ctrl = inst.GetControl();//If it's a gui control, then invoke on the gui thread.
-							ctrl.CheckedInvoke(() =>
-							{
-								pi.SetValue(inst, obj);
-							}, true);//This can be null if called before a Gui object is fully initialized.
+							ctrl.CheckedInvoke(() => pi.SetValue(inst, obj), true);//This can be null if called before a Gui object is fully initialized.
 						};
 					}
 					else
