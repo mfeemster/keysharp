@@ -1128,10 +1128,10 @@ MaximizeAllButton.OnEvent("Click", "MaximizeAll")
 MoveAllButton := MyGui.Add("Button", "xc+10 y+5", "Move me")
 MoveAllButton.OnEvent("Click", "MoveButton")
 
-#if WINDOWS
+
 CandyProgressButton := MyGui.Add("Button", "y+5", "Candy progress") ; x deliberately omitted to ensure default positioning works when only one dimension is specified.
 CandyProgressButton.OnEvent("Click", "CandyProgress")
-#endif
+
 
 TestTypesButton := MyGui.Add("Button", "xc+10", "Test types") ; Same, but for y.
 TestTypesButton.OnEvent("Click", "TestTypes")
@@ -1161,13 +1161,14 @@ MoveButton()
 	ControlMove(x, y, w, h, MoveAllButton.Hwnd, MyGui)
 }
 
-#if WINDOWS
+
 candygui := Gui("-DPIScale +E0x02080000", "Candy Progress")
 candygui.OnEvent("Close", "CloseCandy")
 candygui.BackColor := "FFCC00"
 
 CandyProgress := candygui.Add("Progress", "xc+15 yc+30 w436 h36 BackgroundSilver")
 
+; These currently don't work on linux.
 Icon1 := candygui.Add("Picture", "xc+15  yc+30 w18  h36 BackgroundTrans", "Icon1.ico")
 Icon2 := candygui.Add("Picture", "xc+33  yc+30 w400 h36 BackgroundTrans", "Icon2.ico")
 Icon3 := candygui.Add("Picture", "xc+433 yc+30 w18  h36 BackgroundTrans", "Icon3.ico")
@@ -1220,7 +1221,6 @@ CandyTimer()
 		candyvalue := 0
 	}
 }
-#endif
 
 TestTypes()
 {
