@@ -355,7 +355,8 @@ namespace Keysharp.Core.COM
 			else
 			{
 				unk = Marshal.GetIUnknownForObject(ptr);
-				_ = Marshal.Release(unk);//Need this or else it will add 2.
+				_ = Marshal.AddRef(unk);
+				return (long)Marshal.Release(unk);//GetIUnknownForObject already added 1.
 			}
 
 			return (long)Marshal.AddRef(unk);
@@ -375,8 +376,16 @@ namespace Keysharp.Core.COM
 					_ = Marshal.Release((nint)ptr);
 				}
 			}
-			else if (ptr is long l)
+			
+			if (ptr is long l)
+			{
 				ptr = new nint(l);
+			}
+			else
+			{
+				Error err;
+				return Errors.ErrorOccurred(err = new TypeError($"Argument of type {ptr.GetType()} was not a pointer or ComObject.")) ? throw err : false;
+			}
 
 			return (long)Marshal.Release((nint)ptr);
 		}
