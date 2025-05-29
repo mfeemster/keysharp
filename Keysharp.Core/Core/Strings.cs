@@ -519,33 +519,6 @@
 		}
 
 		/// <summary>
-		/// Frees an object that was pinned by <see cref="StrPtr"/>.
-		/// </summary>
-		/// <param name="value">The address of the object to free.</param>
-		/// <returns>True if value was found and freed, else false.</returns>
-		/// <exception cref="TypeError">A <see cref="TypeError"/> exception is thrown if value is not of type <see cref="nint"/> or <see cref="long"/>.</exception>
-		public static bool FreeStrPtr(object value)
-		{
-			Error err;
-			nint ip;
-
-			if (value is nint nn)
-				ip = nn;
-			else if (value is long l)
-				ip = (nint)l;
-			else
-				return Errors.ErrorOccurred(err = new TypeError($"Argument of type {value.GetType()} was not a pointer.")) ? throw err : false;
-
-			if (Script.TheScript.StringsData.gcHandles.Remove(ip, out var oldGch))
-			{
-				oldGch.Free();
-				return true;
-			}
-			else
-				return false;
-		}
-
-		/// <summary>
 		/// Searches for a given occurrence of a string, from the left or the right.
 		/// </summary>
 		/// <param name="haystack">The string whose content is searched.</param>

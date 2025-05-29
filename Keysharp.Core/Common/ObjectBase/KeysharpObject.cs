@@ -5,7 +5,14 @@
 		public KeysharpEnumerator __Enum(object count);
 	}
 
+#if WINDOWS
+	[Guid("98D592E1-0CE8-4892-82C5-F219B040A390")]
+	[ClassInterface(ClassInterfaceType.AutoDispatch)]
+	[ProgId("Keysharp.Script")]
+	public partial class KeysharpObject : Any, IReflect
+#else
 	public class KeysharpObject : Any
+#endif
 	{
 		protected internal Dictionary<string, OwnPropsMap> op;
 

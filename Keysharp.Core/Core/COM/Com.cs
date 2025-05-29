@@ -3,36 +3,7 @@ namespace Keysharp.Core.COM
 {
 	unsafe public static class Com
 	{
-		public const int vt_empty = 0; //No value
-		public const int vt_null = 1; //SQL-style Null
-		public const int vt_i2 = 2; //16-bit signed int
-		public const int vt_i4 = 3; //32-bit signed int
-		public const int vt_r4 = 4; //32-bit floating-point number
-		public const int vt_r8 = 5; //64-bit floating-point number
-		public const int vt_cy = 6; //Currency
-		public const int vt_date = 7; //Date
-		public const int vt_bstr = 8; //COM string (Unicode string with length prefix)
-		public const int vt_dispatch = 9; //COM object
-		public const int vt_error = 0xA; //Error code(32-bit integer)
-		public const int vt_bool = 0xB; //Boolean True(-1) or False(0)
-		public const int vt_variant = 0xC; //VARIANT(must be combined with VT_ARRAY or VT_BYREF)
-		public const int vt_unknown = 0xD; //IUnknown interface pointer
-		public const int vt_decimal = 0xE; //(not supported)
-		public const int vt_i1 = 0x10; //8-bit signed int
-		public const int vt_ui1 = 0x11; //8-bit unsigned int
-		public const int vt_ui2 = 0x12; //16-bit unsigned int
-		public const int vt_ui4 = 0x13; //32-bit unsigned int
-		public const int vt_i8 = 0x14; //64-bit signed int
-		public const int vt_ui8 = 0x15; //64-bit unsigned int
-		public const int vt_int = 0x16; //Signed machine int
-		public const int vt_uint = 0x17; //Unsigned machine int
-		public const int vt_void = 0x18;
-		public const int vt_hresult = 0x19;
-		public const int vt_ptr = 0x001A;
-		public const int vt_record = 0x24; //User-defined type -- NOT SUPPORTED
-		public const int vt_array = 0x2000; //SAFEARRAY
-		public const int vt_byref = 0x4000; //Pointer to another type of value
-		public const int vt_typemask = 0xfff;
+		public const int variantTypeMask = 0xfff;
 		internal static Guid IID_IDispatch = new (0x00020400, 0x0000, 0x0000, 0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46);
 		internal static Guid IID_IServiceProvider = new ("6d5140c1-7436-11ce-8034-00aa006009fa");
 		internal const int CLSCTX_INPROC_SERVER = 0x1;
@@ -56,7 +27,7 @@ namespace Keysharp.Core.COM
 		public static object ComObjArray(object varType, object count1, params object[] args)
 		{
 			Error err;
-			var vt = varType.Ai();//Need a switch statement on type.
+			var vt = (VarEnum)varType.Ai();//Need a switch statement on type.
 			var dim1Size = count1.Ai();
 			var lengths = new int[args != null ? args.Length + 1 : 1];
 			var t = typeof(object);
@@ -69,67 +40,50 @@ namespace Keysharp.Core.COM
 			for (var i = 0; i < args.Length; i++)
 				lengths[i + 1] = args[i].Ai();
 
-			switch (vt)
+			t = ConvertVarTypeToCLRType(vt);
+
+			if (t == typeof(object)) //Some special handling for objects
 			{
-				case vt_dispatch: t = typeof(DispatchWrapper); break;
-
-				//case VT_UNKNOWN: System.__ComObject or null if (punkVal == null)
-				case vt_error: t = typeof(uint); break;
-
-				case vt_bool: t = typeof(bool); break;
-
-				case vt_i1: t = typeof(sbyte); break;
-
-				case vt_ui1: t = typeof(byte); break;
-
-				case vt_i2: t = typeof(short); break;
-
-				case vt_ui2: t = typeof(ushort); break;
-
-				case vt_i4: t = typeof(int); break;
-
-				case vt_ui4: t = typeof(uint); break;
-
-				case vt_i8: t = typeof(long); break;
-
-				case vt_ui8: t = typeof(ulong); break;
-
-				case vt_r4: t = typeof(float); break;
-
-				case vt_r8: t = typeof(double); break;
-
-				case vt_decimal: t = typeof(decimal); break;
-
-				case vt_date: t = typeof(DateTime); break;
-
-				case vt_bstr: t = typeof(string); break;
-
-				case vt_int: t = typeof(int); break;
-
-				case vt_uint: t = typeof(uint); break;
-
-				case vt_cy: t = typeof(decimal); break;
-
-				//case VT_RECORD:   Corresponding boxed value type.
-				//case vt_variant: t = typeof(VARIANT); break;
-				//case vt_variant: t = typeof(nint); break;
-				case vt_variant: t = typeof(object); break;
-
-				default:
-					return Errors.ErrorOccurred(err = new ValueError($"The supplied COM type of {varType} is not supported.")) ? throw err : null;
+				switch (vt)
+				{
+					case VarEnum.VT_DISPATCH: t = typeof(DispatchWrapper); break;
+					case VarEnum.VT_VARIANT: break;
+					default:
+						return Errors.ErrorOccurred(err = new ValueError($"The supplied COM type of {varType} is not supported.")) ? throw err : null;
+				}
 			}
 
 			return new ComObjArray(System.Array.CreateInstance(t, lengths));
 		}
 
+		internal static Type ConvertVarTypeToCLRType(VarEnum vt) =>
+			vt switch
+			{
+				VarEnum.VT_I1 => typeof(sbyte),
+				VarEnum.VT_UI1 => typeof(byte),
+				VarEnum.VT_I2 => typeof(short),
+				VarEnum.VT_UI2 => typeof(ushort),
+				VarEnum.VT_I4 or VarEnum.VT_INT => typeof(int),
+				VarEnum.VT_UI4 or VarEnum.VT_UINT or VarEnum.VT_ERROR => typeof(uint),
+				VarEnum.VT_I8 => typeof(long),
+				VarEnum.VT_UI8 => typeof(ulong),
+				VarEnum.VT_R4 => typeof(float),
+				VarEnum.VT_R8 or VarEnum.VT_DATE => typeof(double), //should VT_DATE be converted to DateTime?
+				VarEnum.VT_DECIMAL or VarEnum.VT_CY => typeof(decimal),
+				VarEnum.VT_BOOL => typeof(bool),
+				VarEnum.VT_BSTR => typeof(string),
+				_ => typeof(object),
+			};
+
+
 		public static object ComObjConnect(object comObj, object prefixOrSink = null, object debug = null)
 		{
 			if (comObj is ComObject co)
 			{
-				if (co.VarType != vt_dispatch && co.VarType != vt_unknown)// || Marshal.GetIUnknownForObject(co.Ptr) == 0)
+				if (co.vt != VarEnum.VT_DISPATCH && co.vt != VarEnum.VT_UNKNOWN)// || Marshal.GetIUnknownForObject(co.Ptr) == 0)
 				{
 					Error err;
-					return Errors.ErrorOccurred(err = new ValueError($"COM object type of {co.VarType} was not VT_DISPATCH or VT_UNKNOWN, and was not IUnknown.")) ? throw err : null;
+					return Errors.ErrorOccurred(err = new ValueError($"COM object type of {co.vt} was not VT_DISPATCH or VT_UNKNOWN, and was not IUnknown.")) ? throw err : null;
 				}
 
 				//If it existed, whether obj1 was null or not, remove it.
@@ -201,7 +155,7 @@ namespace Keysharp.Core.COM
 
 				return new ComObject()
 				{
-					VarType = id == IID_IDispatch ? vt_dispatch : vt_unknown,
+					vt = id == IID_IDispatch ? VarEnum.VT_DISPATCH : VarEnum.VT_UNKNOWN,
 					Ptr = inst
 				};
 			}
@@ -242,9 +196,9 @@ namespace Keysharp.Core.COM
 				dispPtr = Marshal.GetObjectForIUnknown(new nint(l));
 
 			if (dispPtr is IDispatch id)
-				return new ComObject(vt_dispatch, id);
+				return new ComObject(VarEnum.VT_DISPATCH, id);
 			else if (Marshal.IsComObject(dispPtr))
-				return new ComObject(vt_unknown, dispPtr);
+				return new ComObject(VarEnum.VT_UNKNOWN, dispPtr);
 
 			return Errors.ErrorOccurred(err = new TypeError($"Passed in value {dispPtr} of type {dispPtr.GetType()} was not of type IDispatch.")) ? throw err : null;
 		}
@@ -295,7 +249,7 @@ namespace Keysharp.Core.COM
 			if (resultPtr == 0)
 				return Errors.ErrorOccurred(err = new Error($"Unable to get COM interface with arguments {sidiid}, {iid}.")) ? throw err : null;
 
-			return new ComObject(id == IID_IDispatch ? vt_dispatch : vt_unknown, (long)resultPtr);
+			return new ComObject(id == IID_IDispatch ? VarEnum.VT_DISPATCH : VarEnum.VT_UNKNOWN, (long)resultPtr);
 		}
 
 		public static object ComObjType(object comObj, object infoType = null)
@@ -317,7 +271,7 @@ namespace Keysharp.Core.COM
 					//var vt = (long)attr.tdescAlias.vt;
 					//typeInfo.ReleaseTypeAttr(typeAttr);
 					//return vt;
-					return (long)co.VarType;
+					return (long)co.vt;
 				}
 
 				if (s.StartsWith('c'))
@@ -401,7 +355,8 @@ namespace Keysharp.Core.COM
 			else
 			{
 				unk = Marshal.GetIUnknownForObject(ptr);
-				_ = Marshal.Release(unk);//Need this or else it will add 2.
+				_ = Marshal.AddRef(unk);
+				return (long)Marshal.Release(unk);//GetIUnknownForObject already added 1.
 			}
 
 			return (long)Marshal.AddRef(unk);
@@ -421,8 +376,16 @@ namespace Keysharp.Core.COM
 					_ = Marshal.Release((nint)ptr);
 				}
 			}
-			else if (ptr is long l)
+			
+			if (ptr is long l)
+			{
 				ptr = new nint(l);
+			}
+			else
+			{
+				Error err;
+				return Errors.ErrorOccurred(err = new TypeError($"Argument of type {ptr.GetType()} was not a pointer or ComObject.")) ? throw err : false;
+			}
 
 			return (long)Marshal.Release((nint)ptr);
 		}
@@ -487,7 +450,7 @@ namespace Keysharp.Core.COM
 			else if (helper.ReturnType == typeof(string))
 			{
 				var str = Marshal.PtrToStringUni((nint)((long)value));
-				_ = Strings.FreeStrPtr(value);//If this string came from us, it will be freed, else no action.
+				_ = Objects.ObjFree(value);//If this string came from us, it will be freed, else no action.
 				return str;
 			}
 

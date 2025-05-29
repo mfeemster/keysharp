@@ -172,7 +172,8 @@ testfunc()
     }
 }
 ```
-* Pointers returnd by `StrPtr()` must be freed by passing the value to a new function named `FreeStrPtr()`.
+* `ObjPtr()` returns an IUnknown `ComObject` with the pointer wrapped in it, whereas `ObjPtrAddRef()` returns a raw pointer.
+* Pointers returned by `StrPtr()` must be freed by passing the value to a new function named `ObjFree()`.
 	+ `StrPtr()` does not return the address of the string, instead it returns the address of a copy of the bytes of the string.
 * Threads are not resumable once an exception has been thrown.
 	+ Callbacks set by `OnError()` will properly run, but execution of the current thread will not resume regardless of the exception type or the return value of the callback.
