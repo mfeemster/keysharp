@@ -89,10 +89,10 @@ mh := DllCall("GetModuleHandle", "Str", "kernel32", "Ptr")
 qpf := DllCall("GetProcAddress", "Ptr", mh, "AStr", "QueryPerformanceFrequency", "Ptr")
 qpc := DllCall("GetProcAddress", "Ptr", mh, "AStr", "QueryPerformanceCounter", "Ptr")
 
-DllCall(qpf, "Int64*", freq)
-DllCall(qpc, "Int64*", counterbefore)
+DllCall(qpf, "Int64*", &freq)
+DllCall(qpc, "Int64*", &counterbefore)
 Sleep(1000)
-DllCall(qpc, "Int64*", counterafter)
+DllCall(qpc, "Int64*", &counterafter)
 elapsed := (CounterAfter - CounterBefore) / freq * 1000
 
 if (elapsed > 900 && elapsed < 1200)

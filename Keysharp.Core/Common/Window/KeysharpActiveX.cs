@@ -75,9 +75,9 @@ namespace Keysharp.Core.Common.Window
 					Console.WriteLine("AtlAxCreateControl() succeeded.");
 
 					if (ob is IDispatch iid)
-						Iid = new ComObject(Com.vt_variant, iid);
+						Iid = new ComObject(VarEnum.VT_VARIANT, iid);
 					else
-						Iid = new ComObject(Com.vt_unknown, ob);
+						Iid = new ComObject(VarEnum.VT_UNKNOWN, ob);
 				}
 			}
 		}

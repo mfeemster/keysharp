@@ -271,7 +271,7 @@ namespace Keysharp.Core
 				else if (helper.ReturnType == typeof(string))
 				{
 					var str = Marshal.PtrToStringUni((nint)value);
-					_ = Strings.FreeStrPtr(value);//If this string came from us, it will be freed, else no action.
+					_ = Objects.ObjFree(value);//If this string came from us, it will be freed, else no action.
 					return str;
 				}
 
@@ -557,27 +557,17 @@ namespace Keysharp.Core
 			{
 				var pi = pair.Key;
 				var n = pi / 2;
+				var arg = helper.args[n];
 
-				//If they passed in a ComObject with Ptr as an address, make that address into a __ComObject.
-				if (parameters[pi] is ComObject co)
+				if (parameters[pi] is KeysharpObject kso && pair.Value.Item2)
 				{
-					object obj = co.Ptr;
-					co.Ptr = obj;//Reassign to ensure pointers are properly cast to __ComObject.
+					object temp = arg;
+					FixParamTypeAndCopyBack(ref temp, pair.Value.Item1, (nint)arg);
+					_ = Script.SetPropertyValue(kso, "ptr", temp);//Write it back to the ptr property of the KeysharpObject.
 				}
 				else
 				{
-					var arg = helper.args[n];
-
-					if (parameters[pi] is KeysharpObject kso)
-					{
-						object temp = arg;
-						FixParamTypeAndCopyBack(ref temp, pair.Value, (nint)arg);
-						_ = Script.SetPropertyValue(kso, "ptr", temp);//Write it back to the ptr property of the KeysharpObject.
-					}
-					else
-					{
-						FixParamTypeAndCopyBack(ref parameters[pi], pair.Value, (nint)arg);
-					}
+					FixParamTypeAndCopyBack(ref parameters[pi], pair.Value.Item1, (nint)arg);
 				}
 
 				/*
