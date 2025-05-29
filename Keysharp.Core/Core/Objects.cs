@@ -135,7 +135,7 @@
 		}
 
 		/// <summary>
-		/// Returns an IntPtr that represents the given object.
+		/// Returns an IUnknown `ComObject` wrapping the pointer to the given object.
 		/// The resulting GCHandle is allocated with GCHandleType.Normal,
 		/// so it must be freed later to avoid a leak.
 		/// </summary>
@@ -147,6 +147,12 @@
 			var punk = Marshal.GetIUnknownForObject(obj);
 			return Com.ComValue(13L, (long)punk);
 		}
+
+		/// <summary>
+		/// Returns a pointer to the given object (not wrapped in `ComObject`) and increases the reference count.
+		/// The resulting GCHandle is allocated with GCHandleType.Normal,
+		/// so it must be freed later to avoid a leak.
+		/// </summary>
 		public static long ObjPtrAddRef(object obj)
 		{
 			if (obj == null)
@@ -157,7 +163,7 @@
 		}
 
 		/// <summary>
-		/// Given an IntPtr produced by ObjPtr, returns the original object.
+		/// Returns either a managed object or COM object wrapped in `ComObject` from a pointer.
 		/// </summary>
 		public static object ObjFromPtr(object ptr)
 		{
