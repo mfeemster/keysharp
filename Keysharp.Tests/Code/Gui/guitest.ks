@@ -56,7 +56,9 @@ MyGui := Gui(, "KEYSHARP TESTS")
 MyGui.OnEvent("Close", "CloseApp")
 
 CloseApp() {
-	shell := ""
+#if WINDOWS
+ 	global shell := ""
+#endif
 	ExitApp
 }
 

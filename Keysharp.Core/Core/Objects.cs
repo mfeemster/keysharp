@@ -133,7 +133,7 @@
 
 			return Errors.ErrorOccurred(err = new Error($"Object of type {obj0.GetType()} was not of type KeysharpObject.")) ? throw err : null;
 		}
-
+#if WINDOWS
 		/// <summary>
 		/// Returns an IUnknown `ComObject` wrapping the pointer to the given object.
 		/// The resulting GCHandle is allocated with GCHandleType.Normal,
@@ -205,6 +205,7 @@
 				return dispPtr;
 		}
 
+#endif
 		/// <summary>
 		/// Frees a managed C# object or string, allowing it to be garbage-collected.
 		/// </summary>

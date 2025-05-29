@@ -183,7 +183,7 @@
 
 		private void editScriptToolStripMenuItem_Click(object sender, EventArgs e) => Core.Debug.Edit();
 
-		private void exitToolStripMenuItem_Click(object sender, EventArgs e) => Flow.ExitAppInternal(Flow.ExitReasons.Exit);
+		private void exitToolStripMenuItem_Click(object sender, EventArgs e) => _ = Flow.ExitAppInternal(Flow.ExitReasons.Menu, null, false);
 
 		private TabPage GetTab(MainFocusedTab tab)
 		{
