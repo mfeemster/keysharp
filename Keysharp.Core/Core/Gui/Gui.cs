@@ -193,10 +193,7 @@
 				"SysMenu", (f, o) => { if (o is bool b) f.form.ControlBox = b; }
 			},
 			{
-				"Theme", (f, o) =>
-				{
-					_ = Debug.OutputDebug("Themes are not supported", false);
-				}
+				"Theme", (f, o) => _ = Debug.OutputDebug("Themes are not supported", false)
 			},
 			{
 				"ToolWindow", (f, o) => {
@@ -333,12 +330,11 @@
 		internal Gui(object obj0 = null, object obj1 = null, object obj2 = null, object obj3 = null)//The last parameter is hidden and is only for internal use for when we wrap the main window in a Gui object.
 		{
 			var script = Script.TheScript;
-			
+
 			if (obj3 is KeysharpForm kf)
 			{
 				form = kf;
 
-				//This is wrong and needs to add things recursively and keep a count.
 				foreach (var ctrl in form.GetAllControlsRecursive<System.Windows.Forms.Control>())//In order for searches that use allGuiHwnds, we must make all of the child controls point here.
 					ctrl.Tag = new Gui.Control(this, ctrl, ctrl.Name, true);//Supposed to be name like "label", "edit" etc, but just pass the name since this is only used with the main window.
 			}
@@ -1160,6 +1156,7 @@
 				}
 				break;
 #if WINDOWS
+
 				case Keyword_ActiveX:
 				{
 					var ax = new KeysharpActiveX(text)
@@ -1171,6 +1168,7 @@
 				}
 				break;
 #endif
+
 				case Keyword_WebBrowser:
 				{
 					var web = new KeysharpWebBrowser()
@@ -1586,10 +1584,14 @@
 			{
 				LastContainer.TagAndAdd(holder);
 			}
+
 #if WINDOWS
+
 			if (ctrl is KeysharpActiveX kax)
 				kax.Init();
+
 #endif
+
 			if (ctrl is KeysharpPictureBox pbox)
 			{
 				if (text != null && ImageHelper.LoadImage(text, opts.width, opts.height, opts.iconnumber).Item1 is Bitmap bmp)
@@ -2090,7 +2092,7 @@
 		internal static void DestroyAll()
 		{
 			var script = Script.TheScript;
-			
+
 			//Destroy everything but the main window, which will destroy itself.
 			foreach (var gui in script.GuiData.allGuiHwnds.Values.Where(g => g.form != script.mainWindow).ToArray())
 			{

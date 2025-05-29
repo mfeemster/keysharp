@@ -434,7 +434,7 @@ namespace Keysharp.Core.Common.Invoke
 		internal static long GetPtrProperty(object item, bool throwIfZero = false)
 		{
 			Error err;
-			long addr;
+			long addr = 0L;
 
 			if (item is long l)
 				addr = l;

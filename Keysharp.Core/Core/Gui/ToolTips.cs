@@ -227,10 +227,7 @@
 						{
 							A_IconFile = filename;
 							A_IconNumber = iconNumber;
-							script.mainWindow.CheckedBeginInvoke(() =>
-							{
-								script.Tray.Icon = script.mainWindow.Icon = icon;
-							}, false, false);
+							script.mainWindow.CheckedBeginInvoke(() => script.Tray.Icon = script.mainWindow.Icon = icon, false, false);
 						}
 					}
 					finally
@@ -243,10 +240,7 @@
 			{
 				A_IconFile = "";
 				A_IconNumber = 1;
-				script.mainWindow.CheckedBeginInvoke(() =>
-				{
-					script.Tray.Icon = script.mainWindow.Icon = Properties.Resources.Keysharp_ico;
-				}, false, false);
+				script.mainWindow.CheckedBeginInvoke(() => script.Tray.Icon = script.mainWindow.Icon = Properties.Resources.Keysharp_ico, false, false);
 			}
 
 			return null;

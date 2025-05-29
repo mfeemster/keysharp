@@ -133,5 +133,101 @@
 
 			return Errors.ErrorOccurred(err = new Error($"Object of type {obj0.GetType()} was not of type KeysharpObject.")) ? throw err : null;
 		}
+#if WINDOWS
+		/// <summary>
+		/// Returns an IUnknown `ComObject` wrapping the pointer to the given object.
+		/// The resulting GCHandle is allocated with GCHandleType.Normal,
+		/// so it must be freed later to avoid a leak.
+		/// </summary>
+		public static object ObjPtr(object obj)
+		{
+			if (obj == null)
+				return 0;
+
+			var punk = Marshal.GetIUnknownForObject(obj);
+			return Com.ComValue(13L, (long)punk);
+		}
+
+		/// <summary>
+		/// Returns a pointer to the given object (not wrapped in `ComObject`) and increases the reference count.
+		/// The resulting GCHandle is allocated with GCHandleType.Normal,
+		/// so it must be freed later to avoid a leak.
+		/// </summary>
+		public static long ObjPtrAddRef(object obj)
+		{
+			if (obj == null)
+				return 0;
+
+			// GetIUnknownForObject always adds one ref
+			return Marshal.GetIUnknownForObject(obj);
+		}
+
+		/// <summary>
+		/// Returns either a managed object or COM object wrapped in `ComObject` from a pointer.
+		/// </summary>
+		public static object ObjFromPtr(object ptr)
+		{
+			// Almost the same as ObjFromPtrAddRef, but decreases the ref count if the object
+			// turned out to be a native COM object
+
+			var punk = Reflections.GetPtrProperty(ptr);
+
+			// For COM object this creates or finds the RCW and bumps the ref count,
+			// and once the object is collected then the ref count is decreased.
+			// If it's a managed object then it's just returned without changing the ref count of the RCW.
+			var dispPtr = Marshal.GetObjectForIUnknown((nint)punk);
+
+			object result = null;
+
+			if (Marshal.IsComObject(dispPtr))
+				result = new ComObject(VarEnum.VT_UNKNOWN, dispPtr);
+			else
+				return dispPtr;
+
+			// If the result was a COM object not a managed one then decrease the ref count bumped by GetObjectForIUnknown
+			Marshal.Release((nint)dispPtr);
+			return result;
+		}
+
+		// Mostly for compatibility with AHK
+		public static object ObjFromPtrAddRef(object ptr)
+		{
+			var punk = Reflections.GetPtrProperty(ptr);
+
+			// For COM object this creates or finds the RCW and bumps the ref count,
+			// and once the object is collected then the ref count is decreased.
+			// If it's a managed object then it's just returned without changing the ref count of the RCW.
+			var dispPtr = Marshal.GetObjectForIUnknown((nint)punk);
+
+			if (Marshal.IsComObject(dispPtr))
+				return new ComObject(VarEnum.VT_UNKNOWN, dispPtr);
+			else
+				return dispPtr;
+		}
+
+#endif
+		/// <summary>
+		/// Frees a managed C# object or string, allowing it to be garbage-collected.
+		/// </summary>
+		public static bool ObjFree(object value)
+		{
+			Error err;
+
+			if (value is IPointable ip)
+				value = ip.Ptr;
+				
+			if (value is long l) 
+			{
+				if (Script.TheScript.StringsData.gcHandles.Remove((nint)l, out var oldGch))
+				{
+					oldGch.Free();
+					return true;
+				}
+			} 
+			else
+				return Errors.ErrorOccurred(err = new TypeError($"Argument of type {value.GetType()} was not a pointer.")) ? throw err : false;
+
+			return false;
+		}
 	}
 }

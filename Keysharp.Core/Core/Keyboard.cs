@@ -40,7 +40,7 @@ namespace Keysharp.Core
 			var mode = value.As();
 			var toggle = ConvertBlockInput(mode);
 			var script = Script.TheScript;
-			
+
 			switch (toggle)
 			{
 				case ToggleValueType.On:
@@ -102,7 +102,7 @@ namespace Keysharp.Core
 			var h = WindowsAPI.GetWindowThreadProcessId(targetWindow, out var _);
 			var info = GUITHREADINFO.Default;//Must be initialized this way because the size field must be populated.
 			var result = WindowsAPI.GetGUIThreadInfo(h, out info) && info.hwndCaret != 0;
-		
+
 			if (!result)
 			{
 				outputVarX = outputVarY = 0L;
@@ -504,7 +504,7 @@ break_twice:;
 		public static object KeyHistory(object maxEvents)
 		{
 			var script = Script.TheScript;
-			
+
 			if (maxEvents != null)
 			{
 				var max = Math.Clamp(maxEvents.Al(), 0, 500);
@@ -525,10 +525,7 @@ break_twice:;
 			}
 			else if (script.mainWindow != null)
 			{
-				script.mainWindow.CheckedBeginInvoke(() =>
-				{
-					Script.TheScript.mainWindow.ShowHistory();
-				}, false, false);
+				script.mainWindow.CheckedBeginInvoke(() => Script.TheScript.mainWindow.ShowHistory(), false, false);
 			}
 
 			return null;

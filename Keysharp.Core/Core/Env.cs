@@ -261,10 +261,7 @@ namespace Keysharp.Core
 			};
 			var info = new ProcessInfo(scriptProcess);
 			scriptProcess.EnableRaisingEvents = true;
-			scriptProcess.Exited += (object sender, EventArgs e) =>
-			{
-				cb?.Call(info);
-			};
+			scriptProcess.Exited += (object sender, EventArgs e) => cb?.Call(info);
 			_ = scriptProcess.Start();
 
 			using (var writer = new BinaryWriter(scriptProcess.StandardInput.BaseStream, Encoding.UTF8, leaveOpen: true))
