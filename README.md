@@ -135,7 +135,20 @@ Despite our best efforts to remain compatible with the AHK v2 spec, there are di
 * In `SetTimer()`, the priority is not in the range -2147483648 and 2147483647, instead it is only 0-4.
 * If a `ComObject` with `VarType` of `VT_DISPATCH` and a null pointer value is assinged a non-null pointer value, its type does not change. The `Ptr` member remains available.
 * `A_LineNumber` is not a reliable indicator of the line number because the preprocessor condenses the code before parsing and compiling it.
-* Pointers returnd by `StrPtr()` must be freed by passing the value to a new function named `ObjFree()`.
+* Loop counter variables for `for in` loops declared inside of a function cannot have the same name as a local variable declared inside of that same function.
+```
+testfunc()
+{
+    arr := [10, 20, 30]
+    loopvar := 0 ; Either change the name of this variable, the loop variable, or move this declaration outside of the function.
+
+    for (loopvar in arr)
+    {
+    }
+}
+```
+* `ObjPtr()` returns an IUnknown `ComObject` with the pointer wrapped in it, whereas `ObjPtrAddRef()` returns a raw pointer.
+* Pointers returned by `StrPtr()` must be freed by passing the value to a new function named `ObjFree()`.
 	+ `StrPtr()` does not return the address of the string, instead it returns the address of a copy of the bytes of the string.
 * Threads are not resumable once an exception has been thrown.
 	+ Callbacks set by `OnError()` will properly run, but execution of the current thread will not resume regardless of the exception type or the return value of the callback.

@@ -62,7 +62,6 @@ namespace Keysharp.Core.COM
 			try
 			{
 				var found = false;
-				var foundFuncDesc = false;
 				var paramCount = -1;
 				Type[] expectedTypes = null;
 				ParameterModifier[] modifiers = null;
@@ -88,15 +87,26 @@ namespace Keysharp.Core.COM
 					else
 						_ = dispatch.GetTypeInfo(0, 0, out ti);
 
+					if (ti == null)
+						goto AfterTypeInfoQuery;
+
 					//Put this in a try catch because GetIDsOfNames() will fail in a unit test scenario,
 					//but run fine everywhere else for reasons unknown.
 					var names = new string[] { methodName };
 					var dispIds = new int[1];
 					var dummy = Guid.Empty;
 					_ = dispatch.GetIDsOfNames(ref dummy, names, 1, Com.LOCALE_SYSTEM_DEFAULT, dispIds);
+
+					if (dispIds.Length == 0)
+						goto AfterTypeInfoQuery;
+
 					//If we get here, this type - info defines the method.
 					var foundDispId = dispIds[0];
 					ti.GetContainingTypeLib(out var typeLib, out int pIndex);//This is the only way to properly get all interfaces.
+
+					if (typeLib == null)
+						goto AfterTypeInfoQuery;
+
 					var typeCount = typeLib.GetTypeInfoCount();
 
 					for (var i = 0; i < typeCount; i++)
@@ -122,7 +132,7 @@ namespace Keysharp.Core.COM
 
 									if (name.Equals(methodName, StringComparison.OrdinalIgnoreCase))
 									{
-                                        foundFuncDesc = true;
+                                        found = true;
 										methodName = name;
 										PopulateModifiers(funcDesc);
 										i = int.MaxValue - 1;
@@ -142,10 +152,27 @@ namespace Keysharp.Core.COM
 						}
 					}
 
-					if (!foundFuncDesc)
-						return Errors.ErrorOccurred(err = new TypeError($"COM call to '{methodName}()' could not be found in any type-info interface.")) ? throw err : null;
+					AfterTypeInfoQuery:
 
-					found = false; // Set back to false to cache the result
+					if (!found)
+					{
+						paramCount = inputParameters.Length;
+						expectedTypes = new Type[paramCount];
+						var modifier = new ParameterModifier(paramCount);
+
+						for (int i = 0; i < paramCount; i++)
+						{
+							expectedTypes[i] = typeof(object);
+							modifier[i] = false;
+						}
+
+						modifiers = [modifier];
+						found = true; // Do not cache
+						//return Errors.ErrorOccurred(err = new TypeError($"COM call to '{methodName}()' could not be found in any type-info interface.")) ? throw err : null;
+					}
+					else
+						found = false; // Set back to false to cache the result
+
 					void PopulateModifiers(FUNCDESC funcDesc)
 					{
 						paramCount = funcDesc.cParams;
@@ -164,7 +191,7 @@ namespace Keysharp.Core.COM
 								//First, check if VT_BYREF is set.
 								var isByRef = ((VarEnum)elemDesc.tdesc.vt & VarEnum.VT_BYREF) != 0;
 								//Mask out VT_BYREF to get the base VARTYPE.
-								var vtBase = ((VarEnum)elemDesc.tdesc.vt & ~VarEnum.VT_BYREF);
+								var vtBase = (VarEnum)elemDesc.tdesc.vt & ~VarEnum.VT_BYREF;
 
 								//If the base type is VT_PTR (26), then we try to get the pointed-to type.
 								if (vtBase == VarEnum.VT_PTR)
@@ -177,7 +204,7 @@ namespace Keysharp.Core.COM
 									{
 										//Read the pointed-to TYPEDESC.
 										var pointedType = Marshal.PtrToStructure<TYPEDESC>(elemDesc.tdesc.lpValue);
-										var pointedVt = ((VarEnum)pointedType.vt & ~VarEnum.VT_BYREF);
+										var pointedVt = (VarEnum)pointedType.vt & ~VarEnum.VT_BYREF;
 										expectedTypes[i] = Com.ConvertVarTypeToCLRType(pointedVt);
 									}
 									else

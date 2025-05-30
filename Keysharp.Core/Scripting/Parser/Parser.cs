@@ -12,7 +12,6 @@ using Antlr4.Runtime.Atn;
 using Keysharp.Core;
 using Keysharp.Core.Common.Keyboard;
 using Keysharp.Core.Scripting.Parser.Helpers;
-using System.Collections;
 
 namespace Keysharp.Scripting
 {
@@ -657,7 +656,7 @@ namespace Keysharp.Scripting
                 documentationMode: DocumentationMode.None,
                 kind: SourceCodeKind.Regular);
 
-            return (T)(object)SyntaxFactory.SyntaxTree(compilationUnit, parseOptions);
+			return (T)(object)SyntaxFactory.SyntaxTree(compilationUnit, parseOptions);
 		}
 
         static void ProfileParser(MainParser parser)

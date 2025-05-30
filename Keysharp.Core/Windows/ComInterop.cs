@@ -25,7 +25,7 @@ namespace Keysharp.Core.Common.ObjectBase
 				}
 			}
 			return list.ToArray();
-		}
+			}
 		MethodInfo IReflect.GetMethod(string name, BindingFlags bindingAttr) => null;
 		MethodInfo IReflect.GetMethod(string name, BindingFlags bindingAttr, Binder binder, Type[] types, ParameterModifier[] modifiers) => null;
 		MethodInfo[] IReflect.GetMethods(BindingFlags bindingAttr)
@@ -56,7 +56,7 @@ namespace Keysharp.Core.Common.ObjectBase
 			{
 
 				foreach (var kv in props)
-				{
+					{
 					var opm = kv.Value;
 					bool hasGet = opm.Get != null;
 					bool hasSet = opm.Set != null;
@@ -71,12 +71,18 @@ namespace Keysharp.Core.Common.ObjectBase
 		{
 			var list = new List<MemberInfo>();
 			var f = ((IReflect)this).GetField(name, bindingAttr);
+
 			if (f != null) list.Add(f);
+
 			var p = ((IReflect)this).GetProperty(name, bindingAttr);
+
 			if (p != null) list.Add(p);
+
 			var ms = ((IReflect)this).GetMethods(bindingAttr);
+
 			foreach (var m in ms) if (string.Equals(m.Name, name, StringComparison.OrdinalIgnoreCase))
 					list.Add(m);
+
 			return list.ToArray();
 		}
 		MemberInfo[] IReflect.GetMembers(BindingFlags bindingAttr)
@@ -115,7 +121,7 @@ namespace Keysharp.Core.Common.ObjectBase
 
 			var argCount = args.Length;
 
-			if (args.Length > 0 && args[^1] is object[] tail && tail != null)
+			if (args.Length > 0 && args[ ^ 1] is object[] tail && tail != null)
 			{
 				// Last parameter was variadic and C# converted the arguments to object[],
 				// so let's concat it back.
@@ -129,20 +135,42 @@ namespace Keysharp.Core.Common.ObjectBase
 
 			for (int i = 0; i < argCount; i++)
 			{
-				if (args[i] is System.Reflection.Missing)
+				var val = args[i];
+
+				if (val is System.Reflection.Missing)
 					args[i] = null;
+				else if (val is float f)
+					args[i] = (double)f;
+				else if (val is IConvertible conv)
+				{
+					switch (conv.GetTypeCode())
+					{
+						case TypeCode.Char:
+						case TypeCode.SByte:
+						case TypeCode.Byte:
+						case TypeCode.Int16:
+						case TypeCode.UInt16:
+						case TypeCode.Int32:
+						case TypeCode.UInt32:
+						case TypeCode.Int64:
+						case TypeCode.UInt64:
+							args[i] = conv.Al();
+							break;
+					}
+				}
 			}
 
 			if (name.Equals("_NewEnum", StringComparison.OrdinalIgnoreCase)
-				|| name.Equals($"[DISPID={DISPID_NEWENUM}]", StringComparison.OrdinalIgnoreCase))
+					|| name.Equals($"[DISPID={DISPID_NEWENUM}]", StringComparison.OrdinalIgnoreCase))
 			{
 				name = "__Enum";
+
 				if (args.Length == 0)
 					args = [2];
 			}
 			else if (name.Equals("__Item", StringComparison.OrdinalIgnoreCase)
-				|| name.Equals("_Item", StringComparison.OrdinalIgnoreCase)
-				|| name.Equals($"[DISPID={DISPID_VALUE}]", StringComparison.OrdinalIgnoreCase))
+					 || name.Equals("_Item", StringComparison.OrdinalIgnoreCase)
+					 || name.Equals($"[DISPID={DISPID_VALUE}]", StringComparison.OrdinalIgnoreCase))
 			{
 				if (this is Array)
 				{
@@ -158,13 +186,13 @@ namespace Keysharp.Core.Common.ObjectBase
 				}
 
 				if ((invokeAttr & BindingFlags.GetProperty) != 0
-					|| (invokeAttr & BindingFlags.GetField) != 0)
+						|| (invokeAttr & BindingFlags.GetField) != 0)
 				{
 					return Script.Index(target ?? this, args);
 				}
 				else
 				{
-					object value = argCount > 0 ? args[^1] : null;
+					object value = argCount > 0 ? args[ ^ 1] : null;
 					var indices = new object[argCount > 0 ? argCount - 1 : 0];
 					System.Array.Copy(args, indices, indices.Length);
 
@@ -177,13 +205,16 @@ namespace Keysharp.Core.Common.ObjectBase
 			{
 				// parse the number inside the brackets
 				var dispStr = name.Substring(8, name.Length - 9); // drop "[DISPID=" and "]"
+
 				if (!int.TryParse(dispStr, out int dispId))
 					throw new Error($"Failed to parse DISPID from {name}");
+
 				switch (dispId)
 				{
 					case DISPID_CONSTRUCTOR:
 						name = "__New";
 						break;
+
 					case DISPID_DESTRUCTOR:
 						name = "__Delete";
 						break;
@@ -192,20 +223,22 @@ namespace Keysharp.Core.Common.ObjectBase
 				throw new Error($"Failed to invoke property/method for {name}");
 			}
 
+			target ??= this;
+
 			// property getter?
-			if ((invokeAttr & BindingFlags.GetProperty) != 0)
-				return Script.GetPropertyValue(target ?? this, name);
+			if ((invokeAttr & BindingFlags.GetProperty) != 0 && argCount == 0 && HasProp(name) == 1L)
+				return Script.GetPropertyValue(target, name);
 
 			// property setter?
 			if ((invokeAttr & BindingFlags.SetProperty) != 0)
 			{
-				Script.SetPropertyValue(target ?? this, name, argCount > 0 ? args[0] : null);
+				Script.SetPropertyValue(target, name, argCount > 0 ? args[0] : null);
 				return null;
 			}
 
 			// method call
 			if ((invokeAttr & BindingFlags.InvokeMethod) != 0)
-				return Script.Invoke(target ?? this, name, args);
+				return Script.Invoke(target, name, args);
 
 			throw new MissingMemberException($"Member '{name}' not found");
 		}
@@ -232,43 +265,43 @@ namespace Keysharp.Core.Common.ObjectBase
 
 		// everything else just delegates to _inner…
 		public override ICustomAttributeProvider ReturnTypeCustomAttributes
-			=> _inner.ReturnTypeCustomAttributes;
+		=> _inner.ReturnTypeCustomAttributes;
 		public override MethodAttributes Attributes
-			=> _inner.Attributes;
+		=> _inner.Attributes;
 		public override Type DeclaringType
-			=> _inner.DeclaringType;
+		=> _inner.DeclaringType;
 		public override RuntimeMethodHandle MethodHandle
-			=> _inner.MethodHandle;
+		=> _inner.MethodHandle;
 		public override Type ReflectedType
-			=> _inner.ReflectedType;
+		=> _inner.ReflectedType;
 		public override MethodImplAttributes GetMethodImplementationFlags()
-			=> _inner.GetMethodImplementationFlags();
+		=> _inner.GetMethodImplementationFlags();
 		public override ParameterInfo[] GetParameters()
-			=> _inner.GetParameters();
+		=> _inner.GetParameters();
 		public override object[] GetCustomAttributes(bool inherit)
-			=> _inner.GetCustomAttributes(inherit);
+		=> _inner.GetCustomAttributes(inherit);
 		public override object[] GetCustomAttributes(Type attrType, bool inherit)
-			=> _inner.GetCustomAttributes(attrType, inherit);
+		=> _inner.GetCustomAttributes(attrType, inherit);
 		public override bool IsDefined(Type attrType, bool inherit)
-			=> _inner.IsDefined(attrType, inherit);
+		=> _inner.IsDefined(attrType, inherit);
 		public override object Invoke(object obj, BindingFlags invokeAttr, Binder binder, object[] parameters, CultureInfo culture)
-			=> _inner.Invoke(obj, invokeAttr, binder, parameters, culture);
+		=> _inner.Invoke(obj, invokeAttr, binder, parameters, culture);
 		public new object Invoke(object obj, object[] parameters)
-			=> _inner.Invoke(obj, parameters);
+		=> _inner.Invoke(obj, parameters);
 		public override MethodInfo GetBaseDefinition()
-			=> _inner.GetBaseDefinition();
+		=> _inner.GetBaseDefinition();
 		public override Type ReturnType
-			=> _inner.ReturnType;
+		=> _inner.ReturnType;
 		public override MethodInfo MakeGenericMethod(params Type[] typeArguments)
-			=> _inner.MakeGenericMethod(typeArguments);
+		=> _inner.MakeGenericMethod(typeArguments);
 		public override bool ContainsGenericParameters
-			=> _inner.ContainsGenericParameters;
+		=> _inner.ContainsGenericParameters;
 		public override bool IsGenericMethod
-			=> _inner.IsGenericMethod;
+		=> _inner.IsGenericMethod;
 		public override bool IsGenericMethodDefinition
-			=> _inner.IsGenericMethodDefinition;
+		=> _inner.IsGenericMethodDefinition;
 		public override Type[] GetGenericArguments()
-			=> _inner.GetGenericArguments();
+		=> _inner.GetGenericArguments();
 	}
 
 	/// <summary>
@@ -283,7 +316,7 @@ namespace Keysharp.Core.Common.ObjectBase
 		public override Type FieldType => typeof(object);
 		public override object GetValue(object obj) => Script.GetPropertyValue(obj, _name);
 		public override void SetValue(object obj, object val, BindingFlags bindingFlags, Binder binder, CultureInfo ci)
-			=> Script.SetPropertyValue(obj, _name, new object[] { val });
+		=> Script.SetPropertyValue(obj, _name, new object[] { val });
 
 		#region All other members just delegate / throw NotSupported
 		public override FieldAttributes Attributes => FieldAttributes.Public;
@@ -319,9 +352,9 @@ namespace Keysharp.Core.Common.ObjectBase
 		public override MethodInfo GetGetMethod(bool nonPublic) => null;
 		public override MethodInfo GetSetMethod(bool nonPublic) => null;
 		public override object GetValue(object obj, BindingFlags bindingFlags, Binder binder, object[] index, CultureInfo ci)
-			=> Script.GetPropertyValue(obj, _name);
+		=> Script.GetPropertyValue(obj, _name);
 		public override void SetValue(object obj, object value, BindingFlags bindingFlags, Binder binder, object[] index, CultureInfo ci)
-			=> Script.SetPropertyValue(obj, _name, new object[] { value });
+		=> Script.SetPropertyValue(obj, _name, new object[] { value });
 
 		#region Other members stubbed out
 		public override ParameterInfo[] GetIndexParameters() => System.Array.Empty<ParameterInfo>();

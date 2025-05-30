@@ -22,14 +22,14 @@ namespace Keysharp.Core.COM
 				if (value is long l)
 					longVal = l;
 
-				if ((VarType & VarEnum.VT_BYREF) == VarEnum.VT_BYREF)
+				if ((vt & VarEnum.VT_BYREF) == VarEnum.VT_BYREF)
 				{
 					item = longVal;
 					return;
 				}
 				else
 				{
-					switch (VarType)
+					switch (vt)
 					{
 						case VarEnum.VT_EMPTY://No value
 							break;
@@ -95,7 +95,7 @@ namespace Keysharp.Core.COM
 
 				// It doesn't make sense to convert anything other than IDispatch, because
 				// the resulting object couldn't be used as a "native object" anyway.
-				if (wasObj && VarType == VarEnum.VT_DISPATCH)
+				if (wasObj && vt == VarEnum.VT_DISPATCH)
 				{
 					if (longVal != 0L)
 					{
@@ -155,7 +155,13 @@ namespace Keysharp.Core.COM
 			    }
 			*/
 		}
-		public VarEnum VarType { get; set; }
+
+		public VarEnum vt;
+		public long VarType
+		{
+			get => (long)vt;
+			set => vt = (VarEnum)value.Ai();
+		}
 		internal long Flags { get; set; }
 
 		public ComObject(params object[] args) : base(args) { }
@@ -176,10 +182,10 @@ namespace Keysharp.Core.COM
 			var flags = args.Length > 2 ? args[2] : null;
 			var vt = (VarEnum)varType.Al();
 			var co = ValueToVarType(value, vt, true);
-			VarType = vt;
+			this.vt = vt;
 			Flags = flags != null ? flags.Al() : 0L;
 
-			if (VarType == VarEnum.VT_BSTR && value is not long)
+			if (this.vt == VarEnum.VT_BSTR && value is not long)
 				Flags |= F_OWNVALUE;
 
 			Ptr = co.Ptr;
@@ -187,38 +193,21 @@ namespace Keysharp.Core.COM
 			return "";
 		}
 
-		public object this[params object[] index] 
-		{
-			get
-			{
-				if (index.Length == 0 && (VarType & VarEnum.VT_BYREF) != 0)
-				{
-					return ReadVariant(Ptr.Al(), VarType);
-				}
-				return Script.Index(this, index);
-			}
-			set
-			{
-				if (index.Length == 0 && (VarType & VarEnum.VT_BYREF) != 0)
-				{
-					WriteVariant(Ptr.Al(), VarType, value);
-				} 
-				else
-					Script.SetObject(value, this, index);
-			}
-		}
-
 		public void Dispose()
 		{
 			if (Ptr == null)
 				return;
 
-			if (VarType == VarEnum.VT_UNKNOWN || VarType == VarEnum.VT_DISPATCH)
+			if (vt == VarEnum.VT_UNKNOWN || vt == VarEnum.VT_DISPATCH)
 			{
 				if (Ptr is long lp && lp != 0L)
 					_ = Marshal.Release((nint)lp);
 				else if (Marshal.IsComObject(Ptr))
 					Marshal.ReleaseComObject(Ptr);
+			}
+			else if (vt == VarEnum.VT_BSTR && (Flags & F_OWNVALUE) != 0 && Ptr is long)
+			{
+				WindowsAPI.SysFreeString((nint)Ptr);
 			}
 
 			Ptr = null;
@@ -234,20 +223,27 @@ namespace Keysharp.Core.COM
 				// ── Integers → long ───────────────────────────────────────────────
 				case VarEnum.VT_I1:
 					return (long)(sbyte)Marshal.ReadByte(dataPtr);
+
 				case VarEnum.VT_UI1:
 					return (long)Marshal.ReadByte(dataPtr);
+
 				case VarEnum.VT_I2:
 					return (long)Marshal.ReadInt16(dataPtr);
+
 				case VarEnum.VT_UI2:
 					return (long)(ushort)Marshal.ReadInt16(dataPtr);
+
 				case VarEnum.VT_I4:
 				case VarEnum.VT_INT:
 					return (long)Marshal.ReadInt32(dataPtr);
+
 				case VarEnum.VT_UI4:
 				case VarEnum.VT_UINT:
 					return (long)(uint)Marshal.ReadInt32(dataPtr);
+
 				case VarEnum.VT_I8:
 					return Marshal.ReadInt64(dataPtr);
+
 				case VarEnum.VT_UI8:
 					return (long)(ulong)Marshal.ReadInt64(dataPtr);
 
@@ -261,6 +257,7 @@ namespace Keysharp.Core.COM
 					// Read 4-byte float, then promote
 					float f = Marshal.PtrToStructure<float>(dataPtr);
 					return (double)f;
+
 				case VarEnum.VT_R8:
 				case VarEnum.VT_DATE:
 					// VT_DATE is also stored as an 8-byte IEEE double
@@ -268,24 +265,26 @@ namespace Keysharp.Core.COM
 
 				// ── BSTR → string ────────────────────────────────────────────────
 				case VarEnum.VT_BSTR:
-					{
-						nint bstr = Marshal.ReadIntPtr(dataPtr);
-						return bstr == 0
-							 ? string.Empty
-							 : Marshal.PtrToStringBSTR(bstr);
-					}
+				{
+					nint bstr = Marshal.ReadIntPtr(dataPtr);
+					return bstr == 0
+						   ? string.Empty
+						   : Marshal.PtrToStringBSTR(bstr);
+				}
 
 				default:
+				{
+					nint unk = Marshal.ReadIntPtr(dataPtr);
+
+					if (unk == 0)
+						return null;
+
+					return new ComObject
 					{
-						nint unk = Marshal.ReadIntPtr(dataPtr);
-						if (unk == 0)
-							return null;
-						return new ComObject
-						{
-							VarType = vtRaw & ~VarEnum.VT_BYREF,
-							Ptr = unk,
-						};
-					}
+						vt = vtRaw & ~VarEnum.VT_BYREF,
+						Ptr = unk,
+					};
+				}
 			}
 		}
 
@@ -376,42 +375,44 @@ namespace Keysharp.Core.COM
 
 				// ── BSTR → string ─────────────────────────────────────────────────
 				case VarEnum.VT_BSTR:
-					{
-						// free old BSTR
-						nint oldBstr = Marshal.ReadIntPtr(dataPtr);
-						if (oldBstr != 0)
-							WindowsAPI.SysFreeString(oldBstr);
+				{
+					// free old BSTR
+					nint oldBstr = Marshal.ReadIntPtr(dataPtr);
 
-						// allocate new BSTR (null → zero pointer)
-						string s = value as string;
-						IntPtr newBstr = string.IsNullOrEmpty(s)
-							? IntPtr.Zero
-							: Marshal.StringToBSTR(s);
+					if (oldBstr != 0)
+						WindowsAPI.SysFreeString(oldBstr);
 
-						Marshal.WriteIntPtr(dataPtr, newBstr);
-					}
-					break;
+					// allocate new BSTR (null → zero pointer)
+					string s = value as string;
+					IntPtr newBstr = string.IsNullOrEmpty(s)
+									 ? IntPtr.Zero
+									 : Marshal.StringToBSTR(s);
+					Marshal.WriteIntPtr(dataPtr, newBstr);
+				}
+				break;
 
 				// ── COM interfaces → IUnknown pointer ─────────────────────────────
 				case VarEnum.VT_DISPATCH:
 				case VarEnum.VT_UNKNOWN:
-					{
-						// release old pointer
-						nint oldPtr = Marshal.ReadIntPtr(dataPtr);
-						if (oldPtr != 0)
-							Marshal.Release(oldPtr);
+				{
+					// release old pointer
+					nint oldPtr = Marshal.ReadIntPtr(dataPtr);
 
-						// get new pointer (allow passing either IntPtr or RCW)
-						nint newPtr = value switch
-						{
-							long ptr => (nint)ptr,
+					if (oldPtr != 0)
+						Marshal.Release(oldPtr);
+
+					// get new pointer (allow passing either IntPtr or RCW)
+
+					nint newPtr = value switch
+				{
+						long ptr => (nint)ptr,
 							null => 0,
 							_ => Marshal.GetIUnknownForObject(value)
-						};
+					};
 
-						Marshal.WriteIntPtr(dataPtr, newPtr);
-					}
-					break;
+					Marshal.WriteIntPtr(dataPtr, newPtr);
+				}
+				break;
 
 				// ── Unsupported ────────────────────────────────────────────────
 				default:
@@ -423,44 +424,44 @@ namespace Keysharp.Core.COM
 		{
 			if (val is string s)
 			{
-				variant.VarType = VarEnum.VT_BSTR;
+				variant.vt = VarEnum.VT_BSTR;
 				variant.Ptr = s.Clone();
 				return;
 			}
 			else if (val is long l)
 			{
-				variant.VarType = (l == (int)l) ? VarEnum.VT_I4 : VarEnum.VT_I8;
+				variant.vt = (l == (int)l) ? VarEnum.VT_I4 : VarEnum.VT_I8;
 				variant.Ptr = l;
 				return;
 			}
 			else if (val is int i)
 			{
-				variant.VarType = VarEnum.VT_I4;
+				variant.vt = VarEnum.VT_I4;
 				variant.Ptr = i;
 				return;
 			}
 			else if (val is double d)
 			{
-				variant.VarType = VarEnum.VT_R8;
+				variant.vt = VarEnum.VT_R8;
 				variant.Ptr = d;
 				return;
 			}
 			else if (val is ComObject co)
 			{
-				variant.VarType = co.VarType;
+				variant.vt = co.vt;
 				variant.Ptr = co.Ptr;
 
-				if (co.VarType == VarEnum.VT_DISPATCH || co.VarType == VarEnum.VT_UNKNOWN)
+				if (co.vt == VarEnum.VT_DISPATCH || co.vt == VarEnum.VT_UNKNOWN)
 				{
 					_ = Com.ObjAddRef(co);
 				}
 				else if ((co.Flags & F_OWNVALUE) == F_OWNVALUE)
 				{
-					if ((VarEnum)((int)variant.VarType & ~Com.vt_typemask) == VarEnum.VT_ARRAY && co.Ptr is ComObjArray coa)
+					if ((VarEnum)((int)variant.vt & ~Com.variantTypeMask) == VarEnum.VT_ARRAY && co.Ptr is ComObjArray coa)
 					{
 						variant.Ptr = coa.array.Clone();//Copy array since both sides will call Destroy().
 					}
-					else if (variant.VarType == VarEnum.VT_BSTR)
+					else if (variant.vt == VarEnum.VT_BSTR)
 					{
 						variant.Ptr = co.Ptr.ToString().Clone();//Copy the string.
 					}
@@ -469,7 +470,7 @@ namespace Keysharp.Core.COM
 				return;
 			}
 
-			variant.VarType = VarEnum.VT_DISPATCH;
+			variant.vt = VarEnum.VT_DISPATCH;
 			variant.Ptr = val is IDispatch id ? id : val;
 		}
 
@@ -481,7 +482,7 @@ namespace Keysharp.Core.COM
 			{
 				return new ComObject()
 				{
-					VarType = varType,
+					vt = varType,
 					Ptr = val
 				};
 			}
@@ -497,7 +498,7 @@ namespace Keysharp.Core.COM
 			{
 				return new ComObject()
 				{
-					VarType = varType,
+					vt = varType,
 					//Ptr = val.Ab() ? -1L : 0L
 					Ptr = val.Ab() ? -1 : 0
 				};
@@ -507,7 +508,7 @@ namespace Keysharp.Core.COM
 			{
 				co = new ComObject
 				{
-					VarType = VarEnum.VT_I8,
+					vt = VarEnum.VT_I8,
 					Ptr = l
 				};
 
@@ -536,7 +537,7 @@ namespace Keysharp.Core.COM
 			else
 				ValueToVariant(val, co = new ComObject());
 
-			if (co.VarType != varType)//Attempt to coerce var to the correct type.
+			if (co.vt != varType)//Attempt to coerce var to the correct type.
 			{
 				var origVal = co.Ptr;
 				var newVal = co.Ptr;
@@ -548,7 +549,7 @@ namespace Keysharp.Core.COM
 				}
 
 				co.Ptr = newVal;
-				co.VarType = varType;
+				co.vt = varType;
 			}
 
 			return co;
@@ -561,7 +562,7 @@ namespace Keysharp.Core.COM
 
 		internal void Clear()
 		{
-			VarType = 0;
+			vt = 0;
 			Ptr = null;
 			Flags = 0L;
 		}
@@ -570,7 +571,7 @@ namespace Keysharp.Core.COM
 		{
 			var v = new VARIANT()
 			{
-				vt = (ushort)VarType
+				vt = (ushort)vt
 			};
 
 			if (Ptr is long l)//Put most common first.

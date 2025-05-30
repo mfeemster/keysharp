@@ -409,7 +409,7 @@
 		internal ResultType PerformInNewThreadMadeByCaller(nint hwndCritFound, string endChar)
 		{
 			var script = Script.TheScript;
-			
+
 			if (!script.Threads.AnyThreadsAvailable())//First test global thread count.
 				return ResultType.Fail;
 
@@ -428,10 +428,7 @@
 				tv.sendLevel = inputLevel;
 				tv.hwndLastUsed = hwndCritFound;
 				tv.hotCriterion = hotCriterion;// v2: Let the Hotkey command use the criterion of this hotstring by default.
-				var ok = Flow.TryCatch(() =>
-				{
-					ret = funcObj.Call(o);
-				}, false);
+				var ok = Flow.TryCatch(() => ret = funcObj.Call(o), false);
 				_ = Interlocked.Decrement(ref existingThreads);
 				return ret;
 			};

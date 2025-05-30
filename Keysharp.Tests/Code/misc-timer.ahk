@@ -58,18 +58,18 @@ TimerHandler3()
 Sleep(50)
 
 if (x == 1)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := 0
 SetTimer(TimerHandler3, -1) ; Ensure the timer is called immediately if the period is 1
 Sleep(-1)
 
 if (x == 1)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := 0, doDelayEnd := 0
 ; Fill max threads with TimerHandler4, and ensure TimerHandler3 was queued
@@ -84,9 +84,9 @@ TimerHandler4() {
 }
 
 if (A_TickCount == doDelayEnd)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (x == 1)
 	FileAppend "pass", "*"

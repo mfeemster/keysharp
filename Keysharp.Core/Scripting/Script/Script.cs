@@ -350,10 +350,13 @@ namespace Keysharp.Scripting
 			mainWindow.Icon = Core.Properties.Resources.Keysharp_ico;
 			persistent = _persistent;
 			mainWindowGui = new Gui(null, null, null, mainWindow);
+			//Only do these on Windows, because it seems to have the opposite effect on linux:
+			//The main window is always shown on startup, but in a broken non-drawn state.
+#if WINDOWS
 			mainWindow.AllowShowDisplay = false; // Prevent show on script startup
 			mainWindow.ShowInTaskbar = true; // Without this the main window won't have a taskbar icon
-
-            mainWindow.BeginInvoke(() =>
+#endif
+			_ = mainWindow.BeginInvoke(() =>
 			{
 				if (!Flow.TryCatch(() =>
 			{

@@ -3,7 +3,7 @@ namespace Keysharp.Core.COM
 {
 	unsafe public static class Com
 	{
-		public const int vt_typemask = 0xfff;
+		public const int variantTypeMask = 0xfff;
 		internal static Guid IID_IDispatch = new (0x00020400, 0x0000, 0x0000, 0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46);
 		internal static Guid IID_IServiceProvider = new ("6d5140c1-7436-11ce-8034-00aa006009fa");
 		internal const int CLSCTX_INPROC_SERVER = 0x1;
@@ -42,7 +42,7 @@ namespace Keysharp.Core.COM
 
 			t = ConvertVarTypeToCLRType(vt);
 
-			if (t == typeof(object)) //Some special handling
+			if (t == typeof(object)) //Some special handling for objects
 			{
 				switch (vt)
 				{
@@ -56,33 +56,34 @@ namespace Keysharp.Core.COM
 			return new ComObjArray(System.Array.CreateInstance(t, lengths));
 		}
 
-		internal static Type ConvertVarTypeToCLRType(VarEnum vt) => 
+		internal static Type ConvertVarTypeToCLRType(VarEnum vt) =>
 			vt switch
-				{
-					VarEnum.VT_I1 => typeof(sbyte),
-					VarEnum.VT_UI1 => typeof(byte),
-					VarEnum.VT_I2 => typeof(short),
-					VarEnum.VT_UI2 => typeof(ushort),
-					VarEnum.VT_I4 or VarEnum.VT_INT => typeof(int),
-					VarEnum.VT_UI4 or VarEnum.VT_UINT or VarEnum.VT_ERROR => typeof(uint),
-					VarEnum.VT_I8 => typeof(long),
-					VarEnum.VT_UI8 => typeof(ulong),
-					VarEnum.VT_R4 => typeof(float),
-					VarEnum.VT_R8 or VarEnum.VT_DATE => typeof(double),
-					VarEnum.VT_DECIMAL or VarEnum.VT_CY => typeof(decimal),
-					VarEnum.VT_BOOL => typeof(bool),
-					VarEnum.VT_BSTR => typeof(string),
-					_ => typeof(object),
-				};
+			{
+				VarEnum.VT_I1 => typeof(sbyte),
+				VarEnum.VT_UI1 => typeof(byte),
+				VarEnum.VT_I2 => typeof(short),
+				VarEnum.VT_UI2 => typeof(ushort),
+				VarEnum.VT_I4 or VarEnum.VT_INT => typeof(int),
+				VarEnum.VT_UI4 or VarEnum.VT_UINT or VarEnum.VT_ERROR => typeof(uint),
+				VarEnum.VT_I8 => typeof(long),
+				VarEnum.VT_UI8 => typeof(ulong),
+				VarEnum.VT_R4 => typeof(float),
+				VarEnum.VT_R8 or VarEnum.VT_DATE => typeof(double), //should VT_DATE be converted to DateTime?
+				VarEnum.VT_DECIMAL or VarEnum.VT_CY => typeof(decimal),
+				VarEnum.VT_BOOL => typeof(bool),
+				VarEnum.VT_BSTR => typeof(string),
+				_ => typeof(object),
+			};
+
 
 		public static object ComObjConnect(object comObj, object prefixOrSink = null, object debug = null)
 		{
 			if (comObj is ComObject co)
 			{
-				if (co.VarType != VarEnum.VT_DISPATCH && co.VarType != VarEnum.VT_UNKNOWN)// || Marshal.GetIUnknownForObject(co.Ptr) == 0)
+				if (co.vt != VarEnum.VT_DISPATCH && co.vt != VarEnum.VT_UNKNOWN)// || Marshal.GetIUnknownForObject(co.Ptr) == 0)
 				{
 					Error err;
-					return Errors.ErrorOccurred(err = new ValueError($"COM object type of {co.VarType} was not VT_DISPATCH or VT_UNKNOWN, and was not IUnknown.")) ? throw err : null;
+					return Errors.ErrorOccurred(err = new ValueError($"COM object type of {co.vt} was not VT_DISPATCH or VT_UNKNOWN, and was not IUnknown.")) ? throw err : null;
 				}
 
 				//If it existed, whether obj1 was null or not, remove it.
@@ -154,7 +155,7 @@ namespace Keysharp.Core.COM
 
 				return new ComObject()
 				{
-					VarType = id == IID_IDispatch ? VarEnum.VT_DISPATCH : VarEnum.VT_UNKNOWN,
+					vt = id == IID_IDispatch ? VarEnum.VT_DISPATCH : VarEnum.VT_UNKNOWN,
 					Ptr = inst
 				};
 			}
@@ -270,7 +271,7 @@ namespace Keysharp.Core.COM
 					//var vt = (long)attr.tdescAlias.vt;
 					//typeInfo.ReleaseTypeAttr(typeAttr);
 					//return vt;
-					return (long)co.VarType;
+					return (long)co.vt;
 				}
 
 				if (s.StartsWith('c'))
@@ -344,8 +345,8 @@ namespace Keysharp.Core.COM
 		{
 			nint unk = 0;
 
-			if (ptr is IPointable ipo)
-				ptr = ipo.Ptr;
+			if (ptr is ComObject co)
+				ptr = co.Ptr;
 
 			if (ptr is long l)
 			{
@@ -354,7 +355,8 @@ namespace Keysharp.Core.COM
 			else
 			{
 				unk = Marshal.GetIUnknownForObject(ptr);
-				_ = Marshal.Release(unk);//Need this or else it will add 2.
+				_ = Marshal.AddRef(unk);
+				return (long)Marshal.Release(unk);//GetIUnknownForObject already added 1.
 			}
 
 			return (long)Marshal.AddRef(unk);
@@ -362,17 +364,28 @@ namespace Keysharp.Core.COM
 
 		public static object ObjRelease(object ptr)
 		{
-			if (ptr is IPointable ipo)
-				ptr = ipo;
+			var co = ptr as ComObject;
 
-			if (Marshal.IsComObject(ptr))
+			if (co != null)
 			{
-				ptr = Marshal.GetIUnknownForObject(ptr); // Make sure we decrease the COM object not RCW
-				_ = Marshal.Release((nint)ptr);
+				ptr = co.Ptr;
+
+				if (Marshal.IsComObject(ptr))
+				{
+					ptr = Marshal.GetIUnknownForObject(ptr); // Make sure we decrease the COM object not RCW
+					_ = Marshal.Release((nint)ptr);
+				}
 			}
 
-			else if (ptr is long l)
+			if (ptr is long l)
+			{
 				ptr = new nint(l);
+			}
+			else
+			{
+				Error err;
+				return Errors.ErrorOccurred(err = new TypeError($"Argument of type {ptr.GetType()} was not a pointer or ComObject.")) ? throw err : false;
+			}
 
 			return (long)Marshal.Release((nint)ptr);
 		}

@@ -1,7 +1,3 @@
-using System.Reflection;
-using System.Windows.Forms.Design;
-using System.Windows.Forms.Integration;
-
 namespace Keysharp.Scripting
 {
 	public partial class Script
@@ -286,7 +282,14 @@ namespace Keysharp.Scripting
 #if WINDOWS
 
 				if (item is ComObject co)
-					return co.Ptr.GetType().InvokeMember("Item", BindingFlags.SetProperty, null, co.Ptr, index.Concat([value]));
+				{
+					if (index.Length == 0 && (co.vt & VarEnum.VT_BYREF) != 0)
+					{
+						ComObject.WriteVariant(co.Ptr.Al(), co.vt, value);
+						return value;
+					} else
+						return co.Ptr.GetType().InvokeMember("Item", BindingFlags.SetProperty, null, co.Ptr, index.Concat([value]));
+				}
 				else if (Marshal.IsComObject(item))
 					return item.GetType().InvokeMember("Item", BindingFlags.SetProperty, null, item, index.Concat([value]));
 
@@ -379,7 +382,12 @@ namespace Keysharp.Scripting
 #if WINDOWS
 
 				if (item is ComObject co)
+				{
+					//Could be an indexer, but MethodPropertyHolder currently doesn't support those
+					if (index.Length == 0 && (co.vt & VarEnum.VT_BYREF) != 0)
+						return ComObject.ReadVariant(co.Ptr.Al(), co.vt);
 					return Invoke((co.Ptr, new ComMethodPropertyHolder("Item")), index);
+				}
 				else if (Marshal.IsComObject(item))
 					return Invoke((item, new ComMethodPropertyHolder("Item")), index);
 

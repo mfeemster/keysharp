@@ -251,7 +251,7 @@
 					case "ptr":
 					case "uptr":
 						if (number is KeysharpObject kso)
-							number = Reflections.GetIntPtrProperty(kso);
+							number = Reflections.GetPtrProperty(kso);
 
 						bytes = BitConverter.GetBytes(number.Al());
 						inc = 8;

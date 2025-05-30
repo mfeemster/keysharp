@@ -852,7 +852,11 @@ namespace Keysharp.Scripting
                         parser.generalDirectiveStatements.Add(SyntaxFactory.ExpressionStatement(
                             SyntaxFactory.AssignmentExpression(
                                 SyntaxKind.SimpleAssignmentExpression,
-                                CreateQualifiedName("Keysharp.Scripting.Script.MaxThreadsTotal"),
+								SyntaxFactory.MemberAccessExpression(
+						            SyntaxKind.SimpleMemberAccessExpression,
+						            SyntaxFactory.IdentifierName("MainScript"),
+						            SyntaxFactory.IdentifierName("MaxThreadsTotal")
+					            ),
                                 SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(uint.Parse(item.Value)))
                             )
                         ));
@@ -884,7 +888,11 @@ namespace Keysharp.Scripting
                         parser.generalDirectiveStatements.Add(SyntaxFactory.ExpressionStatement(
                             SyntaxFactory.AssignmentExpression(
                                 SyntaxKind.SimpleAssignmentExpression,
-                                CreateQualifiedName("Keysharp.Scripting.Script.NoTrayIcon"),
+								SyntaxFactory.MemberAccessExpression(
+									SyntaxKind.SimpleMemberAccessExpression,
+									SyntaxFactory.IdentifierName("MainScript"),
+									SyntaxFactory.IdentifierName("NoTrayIcon")
+								),
                                 SyntaxFactory.LiteralExpression(SyntaxKind.TrueLiteralExpression)
                             )
                         ));
@@ -893,7 +901,11 @@ namespace Keysharp.Scripting
                         parser.generalDirectiveStatements.Add(SyntaxFactory.ExpressionStatement(
                             SyntaxFactory.AssignmentExpression(
                                 SyntaxKind.SimpleAssignmentExpression,
-                                CreateQualifiedName("Keysharp.Scripting.Script.WinActivateForce"),
+								SyntaxFactory.MemberAccessExpression(
+									SyntaxKind.SimpleMemberAccessExpression,
+									SyntaxFactory.IdentifierName("MainScript"),
+									SyntaxFactory.IdentifierName("WinActivateForce")
+								),
                                 SyntaxFactory.LiteralExpression(SyntaxKind.TrueLiteralExpression)
                             )
                         ));

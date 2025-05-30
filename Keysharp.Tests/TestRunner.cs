@@ -32,6 +32,8 @@ namespace Keysharp.Tests
 
 		protected string RunScript(string source, string name, bool execute, bool exeout, int? exitCode = null)
 		{
+			var sw = new Stopwatch();
+			sw.Start();
 			SetupBeforeEachTest();
 			s.SetName(name);
 			_ = Core.Debug.OutputDebug(Environment.CurrentDirectory);
@@ -124,6 +126,8 @@ namespace Keysharp.Tests
 			//This is uesd in the HotstringParsing2() test.
 			s = Script.TheScript;
 			hsm = s.HotstringManager;
+			sw.Stop();
+			Core.Debug.OutputDebug(sw.ElapsedMilliseconds);
 			return output;
 		}
 

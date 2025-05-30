@@ -7,6 +7,8 @@ using System.Data;
 using static Keysharp.Scripting.Parser;
 using System.Reflection;
 using System.Xml.Linq;
+using Microsoft.CodeAnalysis;
+using System.Runtime.Serialization;
 
 namespace Keysharp.Scripting
 {
@@ -226,13 +228,13 @@ namespace Keysharp.Scripting
                 .WithTarget(SyntaxFactory.AttributeTargetSpecifier(SyntaxFactory.Token(SyntaxKind.AssemblyKeyword)));
 
             // Using tabs as indentation rather than spaces seems to be more performant.
-            // Not normalizing whitespaces is even faster though.
+            // Not normalizing whitespaces is even faster though, but breaks code compilation.
             parser.compilationUnit = parser.compilationUnit
                 .AddMembers(parser.namespaceDeclaration)
                 .AddAttributeLists(attributeList)
                 .NormalizeWhitespace("\t");
 
-            return parser.compilationUnit;
+			return parser.compilationUnit;
         }
 
         public override SyntaxNode VisitSourceElements([NotNull] SourceElementsContext context)
@@ -925,7 +927,7 @@ namespace Keysharp.Scripting
                 (StatementSyntax)Visit(context.flowBlock())
             );
 
-            var elseProduction = (BlockSyntax)Visit(context.elseProduction());
+            var elseProduction = context.elseProduction() != null ? (BlockSyntax)Visit(context.elseProduction()) : null;
             if (elseProduction != null)
                 ifStatement = ifStatement.WithElse(SyntaxFactory.ElseClause(elseProduction));
 
@@ -1656,7 +1658,7 @@ namespace Keysharp.Scripting
                     case ExpressionStatementContext:
                     case ExpressionSequenceContext:
                     case MainParser.ExpressionDummyContext:
-                    case OperatorExpressionDummyContext:
+                    case SingleExpressionDummyContext:
                     case ParenthesizedExpressionContext:
                     case VarRefExpressionContext:
                         VisitVariableStatements((ParserRuleContext)child);

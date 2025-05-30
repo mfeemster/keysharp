@@ -621,7 +621,7 @@ using static Keysharp.Scripting.Script;
 
 			var code = st[0].ToString();
 
-			var (results, ms, compileexc) = Compile(code, nameNoExt, exeDir, minimalexeout);
+			var (results, ms, compileexc) = CompileFromTree(st[0], nameNoExt, exeDir, minimalexeout);
 
 			if (results == null)
 			{

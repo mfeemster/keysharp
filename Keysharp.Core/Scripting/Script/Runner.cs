@@ -176,7 +176,7 @@
 					return 0;
 				}
 
-				var (results, ms, compileexc) = ch.Compile(code, namenoext, exeDir);
+				var (results, ms, compileexc) = ch.CompileFromTree(st[0], namenoext, exeDir);
 
 				if (results == null)
 				{

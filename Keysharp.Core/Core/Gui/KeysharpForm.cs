@@ -59,10 +59,7 @@ namespace Keysharp.Core
 				VisibleChanged += Form_VisibleChanged;
 			}
 
-			Shown += (o, e) =>
-			{
-				beenShown = true;//Will not trigger on initial temporary show/hide in constructor, and instead will only happen after Gui.Show() completes.
-			};
+			Shown += (o, e) => beenShown = true;
 		}
 
         internal void CallContextMenuChangeHandlers(bool wasRightClick, int x, int y)
@@ -89,12 +86,8 @@ namespace Keysharp.Core
 			//has not been explicitly marked persistent, then exit the program.
 			var handle = Handle.ToInt64();
 			var script = Script.TheScript;
-			
 			_ = script.GuiData.allGuiHwnds.TryRemove(handle, out _);
-			script.mainWindow?.CheckedBeginInvoke(new Action(() =>
-			{
-				GC.Collect();
-			}), true, true);
+			script.mainWindow?.CheckedBeginInvoke(new Action(() => GC.Collect()), true, true);
 			script.ExitIfNotPersistent();//Also does BeginInvoke(), so it will come after the GC.Collect() above.
 		}
 
@@ -106,7 +99,7 @@ namespace Keysharp.Core
 			//an enumeration modified exception because Winforms is internally already iterating over
 			//all open windows to close them.
 			if (!Script.TheScript.IsMainWindowClosing)
-				Close();
+				this.CheckedInvoke(Close, false);
 
 			return null;
 		}

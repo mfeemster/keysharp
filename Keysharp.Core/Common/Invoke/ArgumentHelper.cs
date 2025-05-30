@@ -7,7 +7,6 @@ namespace Keysharp.Core.Common.Invoke
 		protected List<GCHandle> gcHandles = [];
 		protected bool hasReturn = false;
 		protected Type returnType = typeof(int);
-
 		//int is the index in the argument list, and bool specifies if it's a VarRef (false) or Ptr (true)
 		internal Dictionary<int, (Type, bool)> outputVars = [];
 		internal bool CDecl => cdecl;
@@ -117,6 +116,7 @@ namespace Keysharp.Core.Common.Invoke
 						{
 							if (last == '*' || (char)(last | 0x20) == 'p')
 								outputVars[paramIndex] = (typeof(nint), true);
+
 							p = kptr;
 						}
 					}

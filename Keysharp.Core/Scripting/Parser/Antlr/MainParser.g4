@@ -441,51 +441,68 @@ memberIndexArguments
     ;
 
 // ifStatement and loops require that they don't contain a bodied function expression.
-// The only way I could solve this was to duplicate some of the expressions with and without function expressions.
+// The only way I could solve this was to duplicate the expressions with and without function expressions.
 // expression can contain function expressions, whereas singleExpression can not.
 expression
-    : left = expression (op = '&&' | op = VerbalAnd) right = expression  # LogicalAndExpression
+    : left = expression '++'                                                 # PostIncrementExpression
+    | left = expression '--'                                                 # PostDecreaseExpression
+    | '++' right = expression                                                # PreIncrementExpression
+    | '--' right = expression                                                # PreDecreaseExpression
+    | <assoc = right> left = expression '**' right = expression      # PowerExpression
+    | '-' right = expression                                                 # UnaryMinusExpression
+    | '!' WS* right = expression                                             # NotExpression
+    | '+' right = expression                                                 # UnaryPlusExpression
+    | '~' right = expression                                                 # BitNotExpression
+    | left = expression ((WS | EOL)* op = ('*' | '/' | '//') (WS | EOL)*) right = expression  # MultiplicativeExpression
+    | left = expression ((WS | EOL)* op = ('+' | '-') (WS | EOL)*) right = expression   # AdditiveExpression
+    | left = expression op = ('<<' | '>>' | '>>>') right = expression              # BitShiftExpression
+    | left = expression ((WS | EOL)* op = '&' (WS | EOL)*) right = expression      # BitAndExpression
+    | left = expression op = '^' right = expression                                # BitXOrExpression
+    | left = expression op = '|' right = expression                                # BitOrExpression
+    | left = expression (ConcatDot | WS+) right = expression                       # ConcatenateExpression
+    | left = expression op = '~=' right = expression                               # RegExMatchExpression
+    | left = expression op = ('<' | '>' | '<=' | '>=') right = expression          # RelationalExpression
+    | left = expression op = ('=' | '!=' | '==' | '!==') right = expression        # EqualityExpression
+    | left = expression (s* op = (Instanceof | Is | In | Contains) s*) right = expression  # ContainExpression
+    | VerbalNot WS* right = expression                                                         # VerbalNotExpression
+    | left = expression (op = '&&' | op = VerbalAnd) right = expression  # LogicalAndExpression
     | left = expression (op = '||' | op = VerbalOr) right = expression   # LogicalOrExpression
     | <assoc = right> left = expression op = '??' right = expression                               # CoalesceExpression
     | <assoc = right> ternCond = expression (WS | EOL)* '?' (WS | EOL)* ternTrue = expression (WS | EOL)* ':' (WS | EOL)* ternFalse = expression # TernaryExpression 
     | <assoc = right> left = primaryExpression op = assignmentOperator right = expression          # AssignmentExpression
     | fatArrowExpressionHead '=>' expression             # FatArrowExpression // Not sure why, but this needs to be lower than coalesce expression
     | functionExpressionHead (WS | EOL)* block           # FunctionExpression
-    | operatorExpression                                 # ExpressionDummy  
+    | primaryExpression                                  # ExpressionDummy
     ;
 
 singleExpression
-    : left = singleExpression op = ('&&' | VerbalAnd) right = singleExpression     # LogicalAndExpressionDuplicate
-    | left = singleExpression op = ('||' | VerbalOr) right = singleExpression      # LogicalOrExpressionDuplicate
-    | <assoc = right> left = singleExpression op = '??' right = singleExpression                   # CoalesceExpressionDuplicate
-    | <assoc = right> ternCond = singleExpression (WS | EOL)* '?' (WS | EOL)* ternTrue = singleExpression (WS | EOL)* ':' (WS | EOL)* ternFalse = singleExpression # TernaryExpressionDuplicate
-    | operatorExpression                                            # SingleExpressionDummy
-    ;
-
-operatorExpression
-    : primaryExpression                                                              # OperatorExpressionDummy
-    | left = operatorExpression '++'                                                 # PostIncrementExpression
-    | left = operatorExpression '--'                                                 # PostDecreaseExpression
-    | '++' right = operatorExpression                                                # PreIncrementExpression
-    | '--' right = operatorExpression                                                # PreDecreaseExpression
-    | <assoc = right> left = operatorExpression '**' right = operatorExpression      # PowerExpression
-    | '-' right = operatorExpression                                                 # UnaryMinusExpression
-    | '!' WS* right = operatorExpression                                             # NotExpression
-    | '+' right = operatorExpression                                                 # UnaryPlusExpression
-    | '~' right = operatorExpression                                                 # BitNotExpression
-    | left = operatorExpression ((WS | EOL)* op = ('*' | '/' | '//') (WS | EOL)*) right = operatorExpression  # MultiplicativeExpression
-    | left = operatorExpression ((WS | EOL)* op = ('+' | '-') (WS | EOL)*) right = operatorExpression   # AdditiveExpression
-    | left = operatorExpression op = ('<<' | '>>' | '>>>') right = operatorExpression              # BitShiftExpression
-    | left = operatorExpression ((WS | EOL)* op = '&' (WS | EOL)*) right = operatorExpression      # BitAndExpression
-    | left = operatorExpression op = '^' right = operatorExpression                                # BitXOrExpression
-    | left = operatorExpression op = '|' right = operatorExpression                                # BitOrExpression
-    | left = operatorExpression (ConcatDot | WS+) right = operatorExpression                       # ConcatenateExpression
-    | left = operatorExpression op = '~=' right = operatorExpression                               # RegExMatchExpression
-    | left = operatorExpression op = ('<' | '>' | '<=' | '>=') right = operatorExpression          # RelationalExpression
-    | left = operatorExpression op = ('=' | '!=' | '==' | '!==') right = operatorExpression        # EqualityExpression
-    | left = operatorExpression (s* op = (Instanceof | Is | In | Contains) s*) right = operatorExpression  # ContainExpression
-    | VerbalNot WS* right = operatorExpression                                                         # VerbalNotExpression
-    | <assoc = right> left = primaryExpression op = assignmentOperator right = singleExpression          # AssignmentExpressionDuplicate
+    : left = singleExpression '++'                                                 # PostIncrementExpressionDuplicate
+    | left = singleExpression '--'                                                 # PostDecreaseExpressionDuplicate
+    | '++' right = singleExpression                                                # PreIncrementExpressionDuplicate
+    | '--' right = singleExpression                                                # PreDecreaseExpressionDuplicate
+    | <assoc = right> left = singleExpression '**' right = singleExpression      # PowerExpressionDuplicate
+    | '-' right = singleExpression                                                 # UnaryMinusExpressionDuplicate
+    | '!' WS* right = singleExpression                                             # NotExpressionDuplicate
+    | '+' right = singleExpression                                                 # UnaryPlusExpressionDuplicate
+    | '~' right = singleExpression                                                 # BitNotExpressionDuplicate
+    | left = singleExpression ((WS | EOL)* op = ('*' | '/' | '//') (WS | EOL)*) right = singleExpression  # MultiplicativeExpressionDuplicate
+    | left = singleExpression ((WS | EOL)* op = ('+' | '-') (WS | EOL)*) right = singleExpression   # AdditiveExpressionDuplicate
+    | left = singleExpression op = ('<<' | '>>' | '>>>') right = singleExpression              # BitShiftExpressionDuplicate
+    | left = singleExpression ((WS | EOL)* op = '&' (WS | EOL)*) right = singleExpression      # BitAndExpressionDuplicate
+    | left = singleExpression op = '^' right = singleExpression                                # BitXOrExpressionDuplicate
+    | left = singleExpression op = '|' right = singleExpression                                # BitOrExpressionDuplicate
+    | left = singleExpression (ConcatDot | WS+) right = singleExpression                       # ConcatenateExpressionDuplicate
+    | left = singleExpression op = '~=' right = singleExpression                               # RegExMatchExpressionDuplicate
+    | left = singleExpression op = ('<' | '>' | '<=' | '>=') right = singleExpression          # RelationalExpressionDuplicate
+    | left = singleExpression op = ('=' | '!=' | '==' | '!==') right = singleExpression        # EqualityExpressionDuplicate
+    | left = singleExpression (s* op = (Instanceof | Is | In | Contains) s*) right = singleExpression  # ContainExpressionDuplicate
+    | VerbalNot WS* right = singleExpression                                                         # VerbalNotExpressionDuplicate
+    | left = singleExpression (op = '&&' | op = VerbalAnd) right = singleExpression  # LogicalAndExpressionDuplicate
+    | left = singleExpression (op = '||' | op = VerbalOr) right = singleExpression   # LogicalOrExpressionDuplicate
+    | <assoc = right> left = singleExpression op = '??' right = singleExpression                               # CoalesceExpressionDuplicate
+    | <assoc = right> ternCond = singleExpression (WS | EOL)* '?' (WS | EOL)* ternTrue = expression (WS | EOL)* ':' (WS | EOL)* ternFalse = singleExpression # TernaryExpressionDuplicate
+        | <assoc = right> left = primaryExpression op = assignmentOperator right = singleExpression          # AssignmentExpressionDuplicate
+    | primaryExpression                                  # SingleExpressionDummy
     ;
 
 primaryExpression

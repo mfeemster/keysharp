@@ -28,14 +28,18 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <OutputPath>..\bin\debug\</OutputPath>
+  <!-- Specifying the output path on linux is broken, it can't be placed in a parent folder, and Debug is required to be capitalized. -->
+    <OutputPath Condition="$([MSBuild]::IsOSPlatform('Linux'))">./bin/Debug/</OutputPath>
+    <OutputPath Condition="$([MSBuild]::IsOSPlatform('Windows'))">..\bin\debug\</OutputPath>
     <DefineConstants Condition="$([MSBuild]::IsOSPlatform('Windows'))">DEBUG;TRACE;LEGACY;WINDOWS</DefineConstants>
     <DefineConstants Condition="$([MSBuild]::IsOSPlatform('Linux'))">DEBUG;TRACE;LEGACY;LINUX</DefineConstants>
     <NoWarn>1701;1702;8981;0164;8974</NoWarn>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <OutputPath>..\bin\release\</OutputPath>
+  <!-- Specifying the output path on linux is broken, it can't be placed in a parent folder, and Release is required to be capitalized. -->
+    <OutputPath Condition="$([MSBuild]::IsOSPlatform('Linux'))">./bin/Release/</OutputPath>
+    <OutputPath Condition="$([MSBuild]::IsOSPlatform('Windows'))">..\bin\release\</OutputPath>
     <DefineConstants Condition="$([MSBuild]::IsOSPlatform('Windows'))">TRACE;LEGACY;WINDOWS</DefineConstants>
     <DefineConstants Condition="$([MSBuild]::IsOSPlatform('Linux'))">TRACE;LEGACY;LINUX</DefineConstants>
     <NoWarn>1701;1702;8981;0164;8974</NoWarn>

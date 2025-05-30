@@ -242,7 +242,7 @@ namespace Keysharp.Core
 				}
 			}
 			else
-				address = Reflections.GetIntPtrProperty(function);
+				address = (nint)Reflections.GetPtrProperty(function);
 
 			AddressFound:
 

@@ -359,6 +359,7 @@ namespace Keysharp.Core
 
 			timer.Tick += (ss, ee) =>
 			{
+				var script = Script.TheScript;//Avoid a capture.
 				var v = script.Threads;
 
 				//If script has exited or we don't receive a TimerWithTag object, just exit
@@ -564,13 +565,13 @@ namespace Keysharp.Core
 		internal static bool ExitAppInternal(ExitReasons exitReason, object exitCode = null, bool useThrow = true)
 		{
 			var script = Script.TheScript;
+			var fd = script.FlowData;
 
-			if (script.FlowData.hasExited)//This can be called multiple times, so ensure it only runs through once.
+			if (fd.hasExited)//This can be called multiple times, so ensure it only runs through once.
 				return false;
 
 			Dialogs.CloseMessageBoxes();
 			var ec = exitCode.Ai();
-			var fd = script.FlowData;
 			A_ExitReason = exitReason.ToString();
 			var allowInterruption_prev = fd.allowInterruption;//Save current setting.
 			fd.allowInterruption = false;
@@ -586,7 +587,7 @@ namespace Keysharp.Core
 			else
 				script.onExitHandlers.Clear();
 
-			script.FlowData.hasExited = true;//At this point, we are clear to exit, so do not allow any more calls to this function.
+			fd.hasExited = true;//At this point, we are clear to exit, so do not allow any more calls to this function.
 			fd.allowInterruption = allowInterruption_prev;
 			HotkeyDefinition.AllDestruct();
 			StopMainTimer();
@@ -594,6 +595,7 @@ namespace Keysharp.Core
 			foreach (var kv in script.FlowData.timers)
 				kv.Value.Stop();
 
+			Gui.DestroyAll();
 			script.Stop();
 			Environment.ExitCode = ec;
 
@@ -622,7 +624,7 @@ namespace Keysharp.Core
 		}
 
 		/// <summary>
-		/// Internal helper to call <see cref="Sleep"/> in between the toggling of <see cref="AllowInterruption"/> off then back oin.
+		/// Internal helper to call <see cref="Sleep"/> in between the toggling of <see cref="AllowInterruption"/> off then back on.
 		/// </summary>
 		/// <param name="duration">The time in milliseconds to sleep for.</param>
 		internal static void SleepWithoutInterruption(object duration = null)

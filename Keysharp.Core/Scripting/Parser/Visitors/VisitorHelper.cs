@@ -99,17 +99,33 @@ namespace Keysharp.Scripting
 
         internal void PopTempVar() => tempVarCount--;
 
-        internal static List<ClassDeclarationContext> GetClassDeclarationsRecursive(ParserRuleContext context)
+        private static List<ClassDeclarationContext> _classDeclarations = new();
+        internal static List<ClassDeclarationContext> GetClassDeclarationsRecursive(ProgramContext program)
         {
-            if (context == null || context.children == null) return new List<ClassDeclarationContext>();
-            return context.children
-                .OfType<ClassDeclarationContext>()
-                .Concat(
-                    context.children
-                        .OfType<ParserRuleContext>()
-                        .SelectMany(GetClassDeclarationsRecursive)
-                )
-                .ToList();
+			var result = new List<ClassDeclarationContext>();
+
+			foreach (var se in program.sourceElements().sourceElement())
+			{
+				var topClass = se.classDeclaration();
+				if (topClass != null)
+					GatherClassDeclarations(topClass);
+			}
+
+			void GatherClassDeclarations(ClassDeclarationContext cls)
+			{
+				result.Add(cls);
+
+				var tail = cls.classTail();
+				if (tail == null) return;
+
+				foreach (var elem in tail.classElement())
+				{
+					if (elem is NestedClassDeclarationContext nested && nested != null)
+						GatherClassDeclarations(nested.classDeclaration());
+				}
+			}
+
+            return result;
         }
 
         public struct FunctionInfo
@@ -122,7 +138,7 @@ namespace Keysharp.Scripting
         {
             var result = new List<FunctionInfo>();
 
-            if (context == null || context.children == null)
+            if (context == null || context.ChildCount == 0)
                 return result;
 
             foreach (var child in context.children)
@@ -159,10 +175,17 @@ namespace Keysharp.Scripting
             return result;
         }
 
+        private static Dictionary<string, NameSyntax> _qualifiedNameCache;
         // Creating an identifier for something like "Keysharp.Program" results in a single identifier,
         // not a namespace/class access. This function splits the name by "." and then joins it one-by-one.
         internal static NameSyntax CreateQualifiedName(string qualifiedString)
         {
+            if (_qualifiedNameCache == null)
+                _qualifiedNameCache = new ();
+
+            if (_qualifiedNameCache.TryGetValue(qualifiedString, out var result))
+                return result;
+
             NameSyntax qualifiedName = null;
 
             foreach (var identifier in qualifiedString.Split('.'))
@@ -179,7 +202,9 @@ namespace Keysharp.Scripting
                 }
             }
 
-            return qualifiedName;
+            _qualifiedNameCache[qualifiedString] = qualifiedName;
+
+			return qualifiedName;
         }
         internal UsingDirectiveSyntax CreateUsingDirective(string usingName)
         {
@@ -417,7 +442,7 @@ namespace Keysharp.Scripting
                     if (caseSense)
                         match = declaration.Declaration.Variables.FirstOrDefault(v => v.Identifier.Text == name);
                     else
-                        match = declaration.Declaration.Variables.FirstOrDefault(v => v.Identifier.Text.Equals(name, StringComparison.InvariantCultureIgnoreCase));
+                        match = declaration.Declaration.Variables.FirstOrDefault(v => v.Identifier.Text.Equals(name, StringComparison.OrdinalIgnoreCase));
                     if (match != null)
                         return match.Identifier.Text;
                 }

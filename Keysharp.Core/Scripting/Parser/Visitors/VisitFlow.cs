@@ -352,7 +352,7 @@ namespace Keysharp.Scripting
             SyntaxNode loopBodyNode = Visit(context.flowBlock());
 
             // Visit the `Else` clause, if present
-            SyntaxNode elseNode = Visit(context.elseProduction());
+            SyntaxNode elseNode = context.elseProduction() != null ? Visit(context.elseProduction()) : null;
             // Invoke the generic loop handler
             return VisitLoopGeneric(
                 loopExpression,
@@ -388,7 +388,7 @@ namespace Keysharp.Scripting
             SyntaxNode loopBodyNode = Visit(context.flowBlock());
 
             // Visit the `Else` clause, if present
-            SyntaxNode elseNode = Visit(context.elseProduction());
+            SyntaxNode elseNode = context.elseProduction() != null ? Visit(context.elseProduction()) : null;
 
             // Invoke the generic loop handler
             return VisitLoopGeneric(
@@ -417,7 +417,7 @@ namespace Keysharp.Scripting
                 : SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression);
 
             SyntaxNode loopBodyNode = Visit(context.flowBlock());
-            SyntaxNode elseNode = Visit(context.elseProduction());
+            SyntaxNode elseNode = context.elseProduction() != null ? Visit(context.elseProduction()) : null;
 
             // Invoke the generic loop handler
             return VisitLoopGeneric(
@@ -446,7 +446,7 @@ namespace Keysharp.Scripting
                 : SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression);
 
             SyntaxNode loopBodyNode = Visit(context.flowBlock());
-            SyntaxNode elseNode = Visit(context.elseProduction());
+            SyntaxNode elseNode = context.elseProduction() != null ? Visit(context.elseProduction()) : null;
 
             // Invoke the generic loop handler
             return VisitLoopGeneric(
@@ -561,7 +561,7 @@ namespace Keysharp.Scripting
             ExpressionSyntax untilCondition = context.untilProduction() != null ? (ExpressionSyntax)Visit(context.untilProduction()) : null;
 
             // Handle the `Else` clause, if present
-            SyntaxNode elseNode = Visit(context.elseProduction());
+            SyntaxNode elseNode = context.elseProduction() != null ? Visit(context.elseProduction()) : null;
 
             List<ExpressionSyntax> argsList = new List<ExpressionSyntax>();
             argsList.Add(loopExpression);
@@ -727,7 +727,7 @@ namespace Keysharp.Scripting
 
             // Handle the `Else` clause if present
             StatementSyntax elseClause = null;
-            BlockSyntax elseBody = (BlockSyntax)Visit(context.elseProduction());
+            BlockSyntax elseBody = context.elseProduction() != null ? (BlockSyntax)Visit(context.elseProduction()) : null;
             if (elseBody != null)
             {
                 // Wrap the else body in an if statement checking Pop().index == 0L
@@ -828,7 +828,7 @@ namespace Keysharp.Scripting
             // Generate the Else block (if present)
             StatementSyntax elseCondition = null;
             LocalDeclarationStatementSyntax exceptionVariableDeclaration = null;
-            if (context.elseProduction().Else() != null)
+            if (context.elseProduction()?.Else() != null)
             {
                 var elseBlock = (BlockSyntax)Visit(context.elseProduction());
 

@@ -346,7 +346,7 @@ namespace Keysharp.Core
 		internal static void AdjustPoint(ref int x, ref int y)
 		{
 			var script = Script.TheScript;
-			
+
 			if (script.Coords.Mouse == CoordModeType.Window)
 			{
 				var rect = script.WindowProvider.Manager.ActiveWindow.Location;
@@ -372,7 +372,7 @@ namespace Keysharp.Core
 		internal static void AdjustRect(ref int x1, ref int y1, ref int x2, ref int y2)
 		{
 			var script = Script.TheScript;
-			
+
 			if (script.Coords.Mouse == CoordModeType.Window)
 			{
 				var rect = script.WindowProvider.Manager.ActiveWindow.Location;

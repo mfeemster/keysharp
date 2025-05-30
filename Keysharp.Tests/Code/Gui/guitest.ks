@@ -55,8 +55,10 @@
 	MyGui := Gui(, "KEYSHARP TESTS")
 	MyGui.OnEvent("Close", "CloseApp")
 
-CloseApp(*) {
-	shell := ""
+CloseApp() {
+#if WINDOWS
+ 	global shell := ""
+#endif
 	ExitApp
 }
 
@@ -121,7 +123,7 @@ MyGui.UseGroup(gb1_TabOne)
 ; │  Listview testing                │
 ; │  Double-click activates tooltip  │
 ; └──────────────────────────────────┘
-LV_Label := MyGui.Add("Text", "w400 xc+10 y+20","Create listview with tooltip - double-click row")
+LV_Label := MyGui.Add("Text", "w300 h20 xc+10 y+20","Create listview with tooltip - double-click row")
 LV_Label.SetFont("cBlue s10")
 ; Create the ListView with two columns, Name and Size:
 LV := MyGui.Add("ListView", "r15 w300 xc+10 y+5 BackgroundTeal", ["Name","Size (KB)"])
@@ -152,20 +154,20 @@ InputBtn.OnEvent("Click", "InputTest")
 	; │  Add a radio group  │
 	; └─────────────────────┘
 
-RadioText := MyGui.Add("Text", "w200 xc+10", "Radio group tests")
+RadioText := MyGui.Add("Text", "w200 h20 xc+10", "Radio group tests")
 RadioText.SetFont("cBlue s10")
-RadioOne := MyGui.Add("Radio", "vMyRadioGroup", "Change header font (alternate).")
+RadioOne := MyGui.Add("Radio", "vMyRadioGroup", "Change header font (alternate)")
 RadioOne.OnEvent("Click", "ChangeFont")
 RadioTwo := MyGui.Add("Radio", "vMyRadioGroup", "Restore header font (alternate)")
 RadioTwo.OnEvent("Click", "ChangeFontBack")
-RadioThree := MyGui.Add("Radio", "vMyRadioGroup", "Please click me.")
+RadioThree := MyGui.Add("Radio", "vMyRadioGroup", "Please click me")
 RadioThree.OnEvent("Click", "RadioThreeClicked")
 
 	; ┌──────────────────┐
 	; │  Add checkboxes  │
 	; └──────────────────┘
 
-CheckBoxText := MyGui.Add("Text", "w200", "Checkbox test")
+CheckBoxText := MyGui.Add("Text", "w200 h20", "Checkbox test")
 CheckBoxText.SetFont("cBlue s10")
 CheckBoxOne := MyGui.Add("CheckBox", "w200 xc+10 yp+20", "If this text is long, it will wrap automatically")
 CheckBoxOne.OnEvent("Click", "CheckBoxOneClicked")
@@ -973,7 +975,7 @@ CZ_LbBtn18.OnEvent("Click", "EditPaster")
 	; │  ListView Content Tests  │
 	; └──────────────────────────┘
 
-CZ_SeparatorText1 := MyGui.Add("Text", "xc+10 yp+8 w320", "ListView Content Tests")
+CZ_SeparatorText1 := MyGui.Add("Text", "xc+10 yp+8 w320", "ListView content tests")
 CZ_SeparatorText1.SetFont("s8 CBlue")
 
 LV2 := MyGui.Add("ListView", "r5 w300 xc+10 y+5", ["Name","Size (KB)"])
@@ -1127,8 +1129,12 @@ MaximizeAllButton := MyGui.Add("Button", "xc+10 y+5", "Maximize all")
 MaximizeAllButton.OnEvent("Click", "MaximizeAll")
 MoveAllButton := MyGui.Add("Button", "xc+10 y+5", "Move me")
 MoveAllButton.OnEvent("Click", "MoveButton")
+
+
 CandyProgressButton := MyGui.Add("Button", "y+5", "Candy progress") ; x deliberately omitted to ensure default positioning works when only one dimension is specified.
 CandyProgressButton.OnEvent("Click", "CandyProgress")
+
+
 TestTypesButton := MyGui.Add("Button", "xc+10", "Test types") ; Same, but for y.
 TestTypesButton.OnEvent("Click", "TestTypes")
 
@@ -1157,12 +1163,14 @@ TestTypesButton.OnEvent("Click", "TestTypes")
 		ControlMove(x, y, w, h, MoveAllButton.Hwnd, MyGui)
 	}
 
+
 candygui := Gui("-DPIScale +E0x02080000", "Candy Progress")
 candygui.OnEvent("Close", "CloseCandy")
 candygui.BackColor := "FFCC00"
 
 CandyProgress := candygui.Add("Progress", "xc+15 yc+30 w436 h36 BackgroundSilver")
 
+; These currently don't work on linux.
 Icon1 := candygui.Add("Picture", "xc+15  yc+30 w18  h36 BackgroundTrans", "Icon1.ico")
 Icon2 := candygui.Add("Picture", "xc+33  yc+30 w400 h36 BackgroundTrans", "Icon2.ico")
 Icon3 := candygui.Add("Picture", "xc+433 yc+30 w18  h36 BackgroundTrans", "Icon3.ico")
@@ -1221,7 +1229,9 @@ TestTypes(*)
 	global
 	local s := "All of these should be true`n"
 	
+#if WINDOWS
 	s .= "Odie is Gui.ActiveX: " . (activeXOdie is Gui.ActiveX) . "`n"
+#endif
 	s .= "Add Fuchsia is Gui.Button: " . (CZ_LbBtn1 is Gui.Button) . "`n"
 	s .= "CheckBox test is Gui.CheckBox: " . (CheckBoxOne is Gui.CheckBox) . "`n"
 	s .= "DateTime test is Gui.DateTime: " . (MyDateTime is Gui.DateTime) . "`n"
@@ -1654,18 +1664,17 @@ MyEdit3 := Gui3.Add("Edit", "xc+10 h200 w200")
 		List := ""
 	}
 
-
-	Click_CB(*) {
-	#if WINDOWS
-		Send("#r")  ; Open the Run dialog.
-		WinWaitActive("ahk_class #32770")  ; Wait for the dialog to appear.
-		ControlShowDropDown("ComboBox1")  ; Show the drop-down list. The second parameter is omitted so that the last found window is used.
-		Sleep(2000)
-		ControlHideDropDown("ComboBox1")  ; Hide the drop-down list.
-		Sleep(1000)
-		Send("{Esc}")  ; Close the Run dialog.
-	#endif
-	}
+Click_CB() {
+#if WINDOWS
+	Send("#r")  ; Open the Run dialog.
+	WinWaitActive("ahk_class #32770")  ; Wait for the dialog to appear.
+	ControlShowDropDown("ComboBox1")  ; Show the drop-down list. The second parameter is omitted so that the last found window is used.
+	Sleep(2000)
+	ControlHideDropDown("ComboBox1")  ; Hide the drop-down list.
+	Sleep(1000)
+	Send("{Esc}")  ; Close the Run dialog.
+#endif
+}
 
 	GetPix(*) {
 		mx :=
@@ -2090,6 +2099,7 @@ getSelected(*) { ; https://www.autohotkey.com/boards/viewtopic.php?style=17&t=60
 }
 
 #endif
+
 ; ┌───────────────────────────┐
 ; │  FUNCTIONS AND CALLBACKS  │
 ; └───────────────────────────┘
@@ -2133,11 +2143,12 @@ getSelected(*) { ; https://www.autohotkey.com/boards/viewtopic.php?style=17&t=60
 	; │  Restore background function  │
 	; └───────────────────────────────┘
 
-	RestoreBG(*)
-	{
-		global MyGui, origBackColor
-		MyGui.BackColor := origBackColor
-	}
+
+RestoreBG()
+{
+	global MyGui, origBackColor
+	MyGui.BackColor := origBackColor
+}
 
 	; ┌───────────────────────┐
 	; │  Input test function  │
@@ -2307,6 +2318,7 @@ MyFirstPic := ""
 MySecondPic := ""
 Monkey := A_ScriptDir . A_DirSeparator . "monkey.ico"
 
+#if WINDOWS
 hSecondPic := GetIcon("W")
 GetIcon(Theme, W:=0, H:=0)
 { ; v1.10
@@ -2341,7 +2353,9 @@ GetIcon(Theme, W:=0, H:=0)
 }
 
 Icon2 := "HICON:*" . hSecondPic ; The * is important so it can be reused.
-LoadPic(*) {
+#endif
+
+LoadPic() {
 	global
 	local x, y, w, h
 	Tab.UseTab("Second")
@@ -2350,15 +2364,17 @@ LoadPic(*) {
 		MyFirstPic := MyGui.Add("Picture", "xc+400 yc+650 w100 h-1 border", Monkey)
 	else
 		MyFirstPic.Value := Monkey
-	
+#if WINDOWS	
 	if (MySecondPic = "")
 		MySecondPic := MyGui.Add("Picture", "xc+520 yc+650 w100 h-1 border", Icon2)
 	else
 		MySecondPic.Value := Icon2
-		
+#endif
 	Sleep(2000)
 	MyFirstPic.Value := ""
+#if WINDOWS	
 	MySecondPic.Value := ""
+#endif
 	Tab.UseTab()
 	; MyGui.Opts("+Redraw")
 }
@@ -2900,52 +2916,51 @@ FakeComCall(*)
 	MsgBox(val)
 }
 
-	OnExit (*) => SystemCursor("Show")  ; Ensure the cursor is made visible when the script exits.
+#c::SystemCursor("Toggle")  ; Win+C hotkey to toggle the cursor on and off.
 
-	#c::SystemCursor("Toggle")  ; Win+C hotkey to toggle the cursor on and off.
+SystemCursor(cmd)  ; cmd = "Show|Hide|Toggle|Reload"
+{
+    static visible := true, c := Map()
+    static sys_cursors := [32512, 32513, 32514, 32515, 32516, 32642
+                         , 32643, 32644, 32645, 32646, 32648, 32649, 32650]
+    if (cmd = "Reload" or !c.Count)  ; Reload when requested or at first call.
+    {
+        for i, id in sys_cursors
+        {
+            h_cursor  := DllCall("LoadCursor", "Ptr", 0, "Ptr", id)
+            h_default := DllCall("CopyImage", "Ptr", h_cursor, "UInt", 2
+                , "Int", 0, "Int", 0, "UInt", 0)
+            h_blank   := DllCall("CreateCursor", "Ptr", 0, "Int", 0, "Int", 0
+                , "Int", 32, "Int", 32
+                , "Ptr", Buffer(32*4, 0xFF)
+                , "Ptr", Buffer(32*4, 0))
+            c[id] := {def: h_default, blank: h_blank}
+        }
+    }
+    switch cmd
+    {
+    case "Show": visible := true
+    case "Hide": visible := false
+    case "Toggle": visible := !visible
+    default: return
+    }
+    for id, handles in c
+    {
+        h_cursor := DllCall("CopyImage"
+            , "Ptr", visible ? handles.def : handles.blank
+            , "UInt", 2, "Int", 0, "Int", 0, "UInt", 0)
+        DllCall("SetSystemCursor", "Ptr", h_cursor, "UInt", id)
+    }
+}
 
-	SystemCursor(cmd)  ; cmd = "Show|Hide|Toggle|Reload"
-	{
-		static visible := true, c := Map()
-		static sys_cursors := [32512, 32513, 32514, 32515, 32516, 32642
-							 , 32643, 32644, 32645, 32646, 32648, 32649, 32650]
-		if (cmd = "Reload" or !c.Count)  ; Reload when requested or at first call.
-		{
-			for i, id in sys_cursors
-			{
-				h_cursor  := DllCall("LoadCursor", "Ptr", 0, "Ptr", id)
-				h_default := DllCall("CopyImage", "Ptr", h_cursor, "UInt", 2
-					, "Int", 0, "Int", 0, "UInt", 0)
-				h_blank   := DllCall("CreateCursor", "Ptr", 0, "Int", 0, "Int", 0
-					, "Int", 32, "Int", 32
-					, "Ptr", Buffer(32*4, 0xFF)
-					, "Ptr", Buffer(32*4, 0))
-				c[id] := {def: h_default, blank: h_blank}
-			}
-		}
-		switch cmd
-		{
-		case "Show": visible := true
-		case "Hide": visible := false
-		case "Toggle": visible := !visible
-		default: return
-		}
-		for id, handles in c
-		{
-			h_cursor := DllCall("CopyImage"
-				, "Ptr", visible ? handles.def : handles.blank
-				, "UInt", 2, "Int", 0, "Int", 0, "UInt", 0)
-			DllCall("SetSystemCursor", "Ptr", h_cursor, "UInt", id)
-		}
-	}
-	#endif
+OnExit (*) => SystemCursor("Show")  ; Ensure the cursor is made visible when the script exits.
+#endif
 
-	; ┌──────────────────┐
-	; │  Sound Tab       │
-	; └──────────────────┘
-
-	MyGui.UseGroup()
-	Tab.UseTab("Sound")
+; ┌──────────────────┐
+; │  Sound Tab       │
+; └──────────────────┘
+MyGui.UseGroup()
+Tab.UseTab("Sound")
 
 	#if WINDOWS
 		audioMeter := SoundGetInterface("{C02216F6-8C67-4B5B-9D00-D008E73E0064}")
@@ -3044,4 +3059,4 @@ sldAdjMasterVolume.OnEvent("Change", "AdjustMasterVolumeSliderPos")
 		SoundPlay(wavTxt.Text, 1)
 	}
 
-	MyGui.Show("Autosize")
+MyGui.Show("Autosize")

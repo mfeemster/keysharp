@@ -598,7 +598,7 @@
 
 					var code = st[0].ToString();
 					tslCodeStatus.Text = "Compiling C# code...";
-					var (results, ms, compileexc) = ch.Compile(code, "Keyview", Path.GetFullPath(Path.GetDirectoryName(Environment.ProcessPath)));
+					var (results, ms, compileexc) = ch.CompileFromTree(st[0], "Keyview", Path.GetFullPath(Path.GetDirectoryName(Environment.ProcessPath)));
 
 					if (results == null)
 					{

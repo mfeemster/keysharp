@@ -360,24 +360,21 @@ namespace Keysharp.Core.Common.Invoke
                         if (ret is int i)
                             ret = (long)i;//Try to keep everything as long.
 
-                        return ret;
-                    };
-					setPropFunc = (inst, obj) =>
-					{
-						var ctrl = inst.GetControl();//If it's a gui control, then invoke on the gui thread.
-						ctrl.CheckedInvoke(() =>
+							return ret;
+						};
+						setPropFunc = (inst, obj) =>
 						{
-							pi.SetValue(null, obj);
-						}, true);//This can be null if called before a Gui object is fully initialized.
-					};
-				}
-				else
-				{
-					if (pi.PropertyType == typeof(int))
+							var ctrl = inst.GetControl();//If it's a gui control, then invoke on the gui thread.
+							ctrl.CheckedInvoke(() => pi.SetValue(null, obj), true);//This can be null if called before a Gui object is fully initialized.
+						};
+					}
+					else
 					{
-						_callFunc = (inst, obj) =>
+						if (pi.PropertyType == typeof(int))
 						{
-							var ret = pi.GetValue(null);
+							_callFunc = (inst, obj) =>
+							{
+								var ret = pi.GetValue(null);
 
 							if (ret is int i)
 								ret = (long)i;//Try to keep everything as long.
@@ -407,24 +404,21 @@ namespace Keysharp.Core.Common.Invoke
 						if (ret is int i)
 							ret = (long)i;//Try to keep everything as long.
 
-						return ret;
-					};
-					setPropFunc = (inst, obj) =>
-					{
-						var ctrl = inst.GetControl();//If it's a gui control, then invoke on the gui thread.
-						ctrl.CheckedInvoke(() =>
+							return ret;
+						};
+						setPropFunc = (inst, obj) =>
 						{
-							pi.SetValue(inst, obj);
-						}, true);//This can be null if called before a Gui object is fully initialized.
-					};
-				}
-				else
-				{
-					if (pi.PropertyType == typeof(int))
+							var ctrl = inst.GetControl();//If it's a gui control, then invoke on the gui thread.
+							ctrl.CheckedInvoke(() => pi.SetValue(inst, obj), true);//This can be null if called before a Gui object is fully initialized.
+						};
+					}
+					else
 					{
-						_callFunc = (inst, obj) =>
+						if (pi.PropertyType == typeof(int))
 						{
-							var ret = pi.GetValue(inst);
+							_callFunc = (inst, obj) =>
+							{
+								var ret = pi.GetValue(inst);
 
 							if (ret is int i)
 								ret = (long)i;//Try to keep everything as long.

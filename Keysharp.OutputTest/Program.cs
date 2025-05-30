@@ -44,105 +44,190 @@ using static Keysharp.Core.Windows.WindowsAPI;
 using static Keysharp.Scripting.Script.Operator;
 using static Keysharp.Scripting.Script;
 
-[assembly: Keysharp.Scripting.AssemblyBuildVersionAttribute("0.0.0.9")]
+[assembly: Keysharp.Scripting.AssemblyBuildVersionAttribute("0.0.0.10")]
 namespace Keysharp.CompiledMain
 {
-    using System;
-    using System.Collections;
-    using System.Collections.Generic;
-    using System.Data;
-    using System.IO;
-    using System.Reflection;
-    using System.Runtime.InteropServices;
-    using System.Text;
-    using System.Threading.Tasks;
-    using System.Windows.Forms;
-    using Keysharp.Core;
-    using Keysharp.Core.Common;
-    using Keysharp.Core.Common.File;
-    using Keysharp.Core.Common.Invoke;
-    using Keysharp.Core.Common.ObjectBase;
-    using Keysharp.Core.Common.Strings;
-    using Keysharp.Core.Common.Threading;
-    using Keysharp.Scripting;
-    using Array = Keysharp.Core.Array;
-    using Buffer = Keysharp.Core.Buffer;
+	using System;
+	using System.Collections;
+	using System.Collections.Generic;
+	using System.Data;
+	using System.Diagnostics;
+	using System.IO;
+	using System.Reflection;
+	using System.Runtime.InteropServices;
+	using System.Text;
+	using System.Threading.Tasks;
+	using System.Windows.Forms;
+	using System.Xml.Linq;
+	using Keysharp.Core;
+	using Keysharp.Core.Common;
+	using Keysharp.Core.Common.File;
+	using Keysharp.Core.Common.Invoke;
+	using Keysharp.Core.Common.ObjectBase;
+	using Keysharp.Core.Common.Strings;
+	using Keysharp.Core.Common.Threading;
+	using Keysharp.Scripting;
+	using Array = Keysharp.Core.Array;
+	using Buffer = Keysharp.Core.Buffer;
 
-    public class Program
-    {
-        [System.STAThreadAttribute()]
-        public static int Main(string[] args)
-        {
-            try
-            {
-                string name = @"C:\Users\minip\Source\Repos\Keysharp_clone\bin\debug\net9.0-windows\*";
-                Keysharp.Scripting.Script.Variables.InitGlobalVars();
-                Keysharp.Scripting.Script.SetName(name);
-                if (Keysharp.Scripting.Script.HandleSingleInstance(name, eScriptInstance.Prompt))
-                {
-                    return 0;
-                }
+	public class Program
+	{
+		[System.STAThreadAttribute()]
+		public static int Main(string[] args)
+		{
+			try
+			{
+				MainScript.SetName(@"*");
+				if (Keysharp.Scripting.Script.HandleSingleInstance(Accessors.A_ScriptName, eScriptInstance.Prompt))
+				{
+					return 0;
+				}
 
-                Keysharp.Core.Env.HandleCommandLineParams(args);
-                Keysharp.Scripting.Script.CreateTrayMenu();
-                Keysharp.Scripting.Script.RunMainWindow(name, AutoExecSection, false);
-                Keysharp.Scripting.Script.WaitThreads();
-            }
-            catch (Keysharp.Core.Flow.UserRequestedExitException)
-            {
-            }
-            catch (Keysharp.Core.Error kserr)
-            {
-                if (ErrorOccurred(kserr))
-                {
-                    var (_ks_pushed, _ks_btv) = Keysharp.Core.Common.Threading.Threads.BeginThread();
-                    MsgBox("Uncaught Keysharp exception:\r\n" + kserr, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
-                    Keysharp.Core.Common.Threading.Threads.EndThread(_ks_pushed);
-                }
+				Keysharp.Core.Env.HandleCommandLineParams(args);
+				MainScript.CreateTrayMenu();
+				MainScript.RunMainWindow(Accessors.A_ScriptName, AutoExecSection, false);
+				MainScript.WaitThreads();
+			}
+			catch (Keysharp.Core.Flow.UserRequestedExitException)
+			{
+			}
+			catch (Keysharp.Core.Error kserr)
+			{
+				if (ErrorOccurred(kserr))
+				{
+					var (_ks_pushed, _ks_btv) = MainScript.Threads.BeginThread();
+					MsgBox("Uncaught Keysharp exception:\r\n" + kserr, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
+					MainScript.Threads.EndThread(_ks_pushed);
+				}
 
 				Keysharp.Core.Flow.ExitApp(1);
-				return Environment.ExitCode;
-			}
-			catch (Keysharp.Core.Flow.UserRequestedExitException exitex)
-			{
-				return Environment.ExitCode;
 			}
 			catch (System.Exception mainex)
 			{
 				var ex = mainex.InnerException ?? mainex;
-
 				if (ex is Keysharp.Core.Error kserr)
 				{
-					if (!kserr.Processed)
-						_ = ErrorOccurred(kserr, kserr.ExcType);
-
-					if (!kserr.Handled)
+					if (ErrorOccurred(kserr))
 					{
-						var (_ks_pushed, _ks_btv) = Keysharp.Core.Common.Threading.Threads.BeginThread();
+						var (_ks_pushed, _ks_btv) = MainScript.Threads.BeginThread();
 						MsgBox("Uncaught Keysharp exception:\r\n" + kserr, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
-						Keysharp.Core.Common.Threading.Threads.EndThread(_ks_pushed);
+						MainScript.Threads.EndThread(_ks_pushed);
 					}
 				}
 				else
 				{
-					var (_ks_pushed, _ks_btv) = Keysharp.Core.Common.Threading.Threads.BeginThread();
+					var (_ks_pushed, _ks_btv) = MainScript.Threads.BeginThread();
 					MsgBox("Uncaught exception:\r\n" + "Message: " + ex.Message + "\r\nStack: " + ex.StackTrace, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
-					Keysharp.Core.Common.Threading.Threads.EndThread(_ks_pushed);
+					MainScript.Threads.EndThread(_ks_pushed);
 				}
 
-            return Environment.ExitCode;
-        }
+				Keysharp.Core.Flow.ExitApp(1);
+			}
 
-        public static object g = null;
-        public static object b = null;
-        public static object msgbox = Keysharp.Core.Functions.Func("msgbox");
-        public static object AutoExecSection()
-        {
-            Keysharp.Core.Common.Keyboard.HotkeyDefinition.ManifestAllHotkeysHotstringsHooks();
-            g = Keysharp.Core.GuiHelper.Gui();
-            b = Keysharp.Scripting.Script.Invoke(g, "AddButton", null, "Hello");
-            Keysharp.Core.Dialogs.MsgBox(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.Is, b, "Gui.Button"));
-            return "";
+			return Environment.ExitCode;
+		}
+
+		private static Keysharp.Scripting.Script MainScript = new Keysharp.Scripting.Script(typeof(Program));
+		private static Keysharp.Core.Common.Keyboard.HotstringManager MainHotstringManager = MainScript.HotstringManager;
+
+		private static string str = null;
+		private static void Func1()
+		{
+			var ch = new CompilerHelper();
+			var (arr, code) = ch.CompileCodeToByteArray([str], "*");
+		}
+
+		private static void Func2()
+		{
+			var ch = new CompilerHelper();
+			var (arr, code) = ch.CompileCodeToByteArray([str], "*");
+		}
+
+		public static object AutoExecSection()
+		{
+			str = @"
+class c1 {
+    class c2 {
+        test() {
+            global a := 5
+        }
+        static test() {
+            global b := 6
+        }
+        statictest() {
+            global c := 7
+        }
+        static statictest() {
+            global d := 8
         }
     }
+    test() {
+        global a := 1
+    }
+    static test() {
+        global b := 2
+    }
+    statictest() {
+        global c := 3
+    }
+    static statictest() {
+        global d := 4
+    }
+}
+
+a := 0, b := 0, c := 0, d := 0
+
+c1().test()
+if (a == 1 && b == 0 && c == 0 && d == 0)
+    FileAppend ""pass"", ""*""
+else
+    FileAppend ""fail"", ""*""
+
+c1.test()
+if (a == 1 && b == 2 && c == 0 && d == 0)
+    FileAppend ""pass"", ""*""
+else
+    FileAppend ""fail"", ""*""
+c1().statictest()
+if (a == 1 && b == 2 && c == 3 && d == 0)
+    FileAppend ""pass"", ""*""
+else
+    FileAppend ""fail"", ""*""
+c1.statictest()
+if (a == 1 && b == 2 && c == 3 && d == 4)
+    FileAppend ""pass"", ""*""
+else
+    FileAppend ""fail"", ""*""
+
+a := 0, b := 0, c := 0, d := 0
+
+c1.c2().test()
+if (a == 5 && b == 0 && c == 0 && d == 0)
+    FileAppend ""pass"", ""*""
+else
+    FileAppend ""fail"", ""*""
+c1.c2.test()
+if (a == 5 && b == 6 && c == 0 && d == 0)
+    FileAppend ""pass"", ""*""
+else
+    FileAppend ""fail"", ""*""
+
+c1.c2().statictest()
+if (a == 5 && b == 6 && c == 7 && d == 0)
+    FileAppend ""pass"", ""*""
+else
+    FileAppend ""fail"", ""*""
+
+c1.c2.statictest()
+if (a == 5 && b == 6 && c == 7 && d == 8)
+    FileAppend ""pass"", ""*""
+else
+    FileAppend ""fail"", ""*""
+";
+			Func1();
+			//for (int i = 0; i < 100; i++)
+				Func2();
+			return null;
+		}
+	}
 }

@@ -102,7 +102,7 @@ public abstract class MainParserBase : Antlr4.Runtime.Parser
     // Ignores hidden channels
     protected bool next(string str)
     {
-        return ((ITokenStream)this.InputStream).LT(1).Text.Equals(str, StringComparison.InvariantCultureIgnoreCase);
+        return ((ITokenStream)this.InputStream).LT(1).Text.Equals(str, StringComparison.OrdinalIgnoreCase);
     }
 
     protected bool second(int token) {
