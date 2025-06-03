@@ -317,9 +317,6 @@ namespace Keysharp.Main
 					return 0;//Any other error condition returned 1 already.
 				}
 
-				GC.Collect();
-				GC.WaitForPendingFinalizers();
-
 				if (CompilerHelper.compiledasm == null)
 					throw new Exception("Compilation failed.");
 
