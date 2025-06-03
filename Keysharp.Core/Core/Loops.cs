@@ -32,16 +32,16 @@ namespace Keysharp.Core
 			{
 				var n = obj.Al();
 				var info = Peek(LoopType.Normal);//The calling code must have called Push() with this type.
-				var script = Script.TheScript;
-				
+				var flowdata = Script.TheScript.FlowData;
+
 				if (n != -1)
 				{
-					for (; info.index < n && !script.FlowData.hasExited;)//Check info.index because the caller can change A_Index inside of the loop.
+					for (; info.index < n && !flowdata.hasExited;)//Check info.index because the caller can change A_Index inside of the loop.
 						yield return ++info.index;
 				}
 				else
 				{
-					while (!script.FlowData.hasExited)
+					while (!flowdata.hasExited)
 						yield return ++info.index;
 				}
 
