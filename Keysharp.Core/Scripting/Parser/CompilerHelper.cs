@@ -628,7 +628,8 @@ using static Keysharp.Scripting.Script;
 				{
 					return (null, HandleCompilerErrors(results.Diagnostics, nameNoExt, "Compiling C# code to executable", compileexc != null ? compileexc.Message : string.Empty) + "\n" + code);
 				}
-			} finally
+			} 
+			finally
 			{
 				ms?.Dispose();
 			}

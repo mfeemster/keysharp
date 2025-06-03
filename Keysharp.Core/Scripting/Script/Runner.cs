@@ -182,19 +182,26 @@
 
 				var (results, ms, compileexc) = ch.Compile(code, namenoext, exeDir);
 
-				if (results == null)
+				try
 				{
-					return Message($"Compiling C# code to executable: {(compileexc != null ? compileexc.Message : string.Empty)}", true);
-				}
-				else if (results.Success)
+					if (results == null)
+					{
+						return Message($"Compiling C# code to executable: {(compileexc != null ? compileexc.Message : string.Empty)}", true);
+					}
+					else if (results.Success)
+					{
+						ms.Seek(0, SeekOrigin.Begin);
+						var arr = ms.ToArray();
+						CompilerHelper.compiledasm = Assembly.Load(arr);
+					}
+					else
+					{
+						return HandleCompilerErrors(results.Diagnostics, scriptName, path, "Compiling C# code to executable", compileexc != null ? compileexc.Message : string.Empty);
+					}
+				} 
+				finally
 				{
-					ms.Seek(0, SeekOrigin.Begin);
-					var arr = ms.ToArray();
-					CompilerHelper.compiledasm = Assembly.Load(arr);
-				}
-				else
-				{
-					return HandleCompilerErrors(results.Diagnostics, scriptName, path, "Compiling C# code to executable", compileexc != null ? compileexc.Message : string.Empty);
+					ms?.Dispose();
 				}
 
 				if (validate)
