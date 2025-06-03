@@ -868,7 +868,7 @@ namespace Keysharp.Scripting
 
             // Generate Finally block
             FinallyClauseSyntax finallyClause = null;
-            if (context.finallyProduction() != null || elseCondition != null)
+            if (context.finallyProduction()?.Finally() != null || elseCondition != null)
             {
                 var finallyStatements = new List<StatementSyntax>();
                 if (elseCondition != null)
@@ -876,7 +876,7 @@ namespace Keysharp.Scripting
                     finallyStatements.Add(elseCondition);
                 }
 
-                if (context.finallyProduction() != null)
+                if (context.finallyProduction().Finally() != null)
                 {
                     finallyStatements.AddRange(((BlockSyntax)VisitFinallyProduction(context.finallyProduction())).Statements);
                 }

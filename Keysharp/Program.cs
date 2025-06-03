@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -31,6 +32,11 @@ namespace Keysharp.Main
 		{
 			Task writeExeTask = null;
 			Task writeCodeTask = null;
+
+#if DEBUG
+			var sw = new Stopwatch();
+			sw.Start();
+#endif
 
 			try
 			{
@@ -216,7 +222,12 @@ namespace Keysharp.Main
 
 				byte[] arr = null;
 				string result = null;
-				(arr, result) = ch.CompileCodeToByteArray([scriptName], namenoext, exeDir, minimalexeout);
+				(arr, result) = ch.CompileCodeToByteArray([scriptName], namenoext, exeDir, minimalexeout, true);
+
+#if DEBUG
+				Core.Debug.OutputDebug($"Compile time: {sw.ElapsedMilliseconds} ms");
+				sw.Restart();
+#endif
 
 				if (arr == null)
 					return Message(result, true);
@@ -317,18 +328,21 @@ namespace Keysharp.Main
 					return 0;//Any other error condition returned 1 already.
 				}
 
-				GC.Collect();
-				GC.WaitForPendingFinalizers();
-
 				if (CompilerHelper.compiledasm == null)
 					throw new Exception("Compilation failed.");
 
 				var program = CompilerHelper.compiledasm.GetType($"Keysharp.CompiledMain.{Keywords.MainClassName}");
 				var main = program.GetMethod("Main");
 #if DEBUG
-				Core.Debug.OutputDebug("Running compiled code.");
+				Core.Debug.OutputDebug($"Assembly load time: {sw.ElapsedMilliseconds} ms");
+				sw.Restart();
 #endif
 				Environment.ExitCode = main.Invoke(null, [scriptArgs]).Ai();
+
+#if DEBUG
+				Core.Debug.OutputDebug($"Run time: {sw.ElapsedMilliseconds} ms");
+				sw.Restart();
+#endif
 			}
 			catch (Exception ex)
 			{
@@ -364,6 +378,11 @@ namespace Keysharp.Main
 
 			writeExeTask?.Wait();
 			writeCodeTask?.Wait();
+
+#if DEBUG
+			Core.Debug.OutputDebug("Running compiled code.");
+#endif
+
 			return Environment.ExitCode;
 		}
 

@@ -151,9 +151,9 @@ public abstract class MainParserBase : Antlr4.Runtime.Parser
 
     protected bool isFunctionCallStatement()
     {
-        var validateObjectLiteral = false;
-        var objectLiteralWSPassed = false;
-        var objectLiteralIdentifierPassed = false;
+        //var validateObjectLiteral = false;
+        //var objectLiteralWSPassed = false;
+        //var objectLiteralIdentifierPassed = false;
         var enclosableDepth = 0;
         var i = 0;
         int nextToken = int.MinValue;
@@ -161,6 +161,7 @@ public abstract class MainParserBase : Antlr4.Runtime.Parser
         {
             i++;
             nextToken = InputStream.LA(i);
+            /*
             if (validateObjectLiteral)
             {
                 switch (nextToken)
@@ -188,17 +189,18 @@ public abstract class MainParserBase : Antlr4.Runtime.Parser
                         break;
                 }
             }
+            */
             switch (nextToken)
             {
                 case MainLexer.OpenBrace:
                     if (enclosableDepth == 0)
                     {
                         // Only allow function statements *starting* with an object literal
-                        if (i != 1)
+                        //if (i != 1)
                             return false;
-                        validateObjectLiteral = true;
-                        objectLiteralWSPassed = false;
-                        objectLiteralIdentifierPassed = false;
+                        //validateObjectLiteral = true;
+                        //objectLiteralWSPassed = false;
+                        //objectLiteralIdentifierPassed = false;
                     }
                     enclosableDepth++;
                     break;

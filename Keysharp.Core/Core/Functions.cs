@@ -200,6 +200,6 @@
 
 	internal class FunctionData
 	{
-		internal ConcurrentLfu<object, IFuncObj> cachedFuncObj = new (Caching.DefaultCacheCapacity, Environment.ProcessorCount, new ThreadPoolScheduler(), new CaseEqualityComp(eCaseSense.Off));
+		internal ConcurrentLfu<object, IFuncObj> cachedFuncObj = new (2000, Environment.ProcessorCount, new ThreadPoolScheduler(), new CaseEqualityComp(eCaseSense.Off));
 	}
 }

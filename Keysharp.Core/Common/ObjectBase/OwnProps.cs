@@ -213,6 +213,18 @@
             }
         }
 
+		public void Merge(OwnPropsDesc opd)
+		{
+			if (opd.Value != null)
+				Value = opd.Value;
+			if (opd.Get != null)
+				Get = opd.Get;
+			if (opd.Set != null)
+				Set = opd.Set;
+			if (opd.Call != null)
+				Call = opd.Call;
+		}
+
         public void Merge(Map map)
 		{
             foreach (var kv in map.map)

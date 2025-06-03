@@ -650,9 +650,6 @@
 
 		private void RunStopScript()
 		{
-			GC.Collect();
-			GC.WaitForPendingFinalizers();
-
 			if (scriptProcess != null)
 			{
 				scriptProcess.Kill();

@@ -67,10 +67,16 @@
 		public const string AutoExecSectionName = "AutoExecSection";
 		public const string MainScriptVariableName = "MainScript";
 
-        internal static HashSet<string> ClassReservedKeywords = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
-            {
-                "Call", "__New", "__Init", "__Get", "__Set", "__Item", "__Class", "__StaticInit"
-            };
+		public static Dictionary<string, string> TypeNameAliases = new(StringComparer.OrdinalIgnoreCase)
+		{
+			{ "int64", "Integer" },
+			{ "double", "Float" },
+			{ "KeysharpObject", "Object" },
+			{ "FuncObj", "Func" }
+		};
+
+		internal static FrozenSet<string> ClassReservedKeywords = FrozenSet.Create(StringComparer.OrdinalIgnoreCase,
+				"Call", "__New", "__Init", "__Get", "__Set", "__Item", "__Class", "__StaticInit");
 
         //internal const string BitShiftLeft = "<<";
         //internal const string BitShiftRight = ">>";
@@ -640,44 +646,39 @@
 		internal static readonly char[] TrimSec = "[]".ToCharArray();
 		internal static readonly char[] SpaceMultiDelim;
 		//internal static readonly SearchValues<char> SpaceMultiDelimSv;
-		internal static readonly char[] FlowDelimiters;
-		internal static readonly SearchValues<char> FlowDelimitersSv;
-		internal static readonly char[] FlowDelimiters2;
 		internal static readonly char[] PlusMinus = ['+', '-'];
 
-        internal static FrozenSet<string> keywords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
-        {
-            AndTxt,
-            OrTxt,
-            NotTxt,
-            TrueTxt,
-            FalseTxt,
-            NullTxt,
-            IsTxt,
-            FlowBreak,
-            FlowContinue,
-            FlowCase,
-            FlowClass,
-            FlowDefault,
-            FlowFor,
-            FlowElse,
-            FlowExtends,
-            FlowGosub,
-            FlowGoto,
-            FlowIf,
-            FlowLoop,
-            FlowReturn,
-            FlowWhile,
-            FunctionLocal,
-            FunctionGlobal,
-            FunctionStatic,
-            FlowTry,
-            FlowCatch,
-            FlowFinally,
-            FlowUntil,
-            FlowSwitch,
-            FlowThrow
-        }.ToFrozenSet(StringComparer.OrdinalIgnoreCase);
+		internal static FrozenSet<string> keywords = FrozenSet.Create(
+			AndTxt,
+			OrTxt,
+			NotTxt,
+			TrueTxt,
+			FalseTxt,
+			NullTxt,
+			IsTxt,
+			FlowBreak,
+			FlowContinue,
+			FlowCase,
+			FlowClass,
+			FlowDefault,
+			FlowFor,
+			FlowElse,
+			FlowExtends,
+			FlowGosub,
+			FlowGoto,
+			FlowIf,
+			FlowLoop,
+			FlowReturn,
+			FlowWhile,
+			FunctionLocal,
+			FunctionGlobal,
+			FunctionStatic,
+			FlowTry,
+			FlowCatch,
+			FlowFinally,
+			FlowUntil,
+			FlowSwitch,
+			FlowThrow);
 
         public static string GetKeywords() => string.Join(' ', keywords);
 
@@ -709,25 +710,5 @@
 		internal const char Multicast = DefaultMulticast;
 #else
 #endif
-
-		static Keywords()
-		{
-			var offset = 2;
-			FlowDelimiters = new char[Spaces.Length + offset];
-			FlowDelimiters[0] = Multicast;
-			FlowDelimiters[1] = HotkeyBound;
-			Spaces.CopyTo(FlowDelimiters, offset);
-			FlowDelimitersSv = SearchValues.Create(FlowDelimiters);
-			offset = 4;
-			FlowDelimiters2 = new char[Spaces.Length + offset];
-			FlowDelimiters2[0] = Multicast;
-			FlowDelimiters2[1] = BlockOpen;
-			FlowDelimiters2[2] = ParenOpen;
-			FlowDelimiters2[3] = HotkeyBound;//Need ':' colon for default: statements. Unsure if this breaks anything else.
-			Spaces.CopyTo(FlowDelimiters2, offset);
-			SpaceMultiDelim = new char[Spaces.Length + 1];
-			SpaceMultiDelim[0] = Multicast;
-			Spaces.CopyTo(SpaceMultiDelim, 1);
-		}
 	}
 }

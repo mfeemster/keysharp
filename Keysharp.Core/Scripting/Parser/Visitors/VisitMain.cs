@@ -14,7 +14,7 @@ namespace Keysharp.Scripting
 {
     internal partial class VisitMain : MainParserBaseVisitor<SyntaxNode>
     {
-        Keysharp.Scripting.Parser parser;
+        internal Keysharp.Scripting.Parser parser;
         public VisitMain(Keysharp.Scripting.Parser _parser) : base()
         {
             parser = _parser;
@@ -172,7 +172,7 @@ namespace Keysharp.Scripting
 
             // Create global FuncObj variables for all functions here, because otherwise during parsing
             // we might not know how to case the name.
-            var scopeFunctionDeclarations = GetScopeFunctions(context);
+            var scopeFunctionDeclarations = GetScopeFunctions(context, this);
             foreach (var funcName in scopeFunctionDeclarations)
             {
                 parser.UserFuncs.Add(funcName.Name);
@@ -695,8 +695,6 @@ namespace Keysharp.Scripting
             ExpressionSyntax arg = null;
             if (context.expression() != null)
                 arg = (ExpressionSyntax)Visit(context.expression());
-            else if (context.primaryExpression() != null)
-                arg = (ExpressionSyntax)Visit(context.primaryExpression());
 
             if (arg != null)
             {
@@ -1378,9 +1376,9 @@ namespace Keysharp.Scripting
         {
             Visit(context.functionExpressionHead());
 
-            HandleScopeFunctions(context);
+            HandleScopeFunctions(context.block());
 
-            VisitVariableStatements(context.block());
+            //VisitVariableStatements(context.block());
 
             BlockSyntax functionBody = (BlockSyntax)Visit(context.block());
             parser.currentFunc.Body.AddRange(functionBody.Statements.ToArray());
@@ -1503,7 +1501,7 @@ namespace Keysharp.Scripting
 
         public void HandleScopeFunctions(ParserRuleContext context)
         {
-			var scopeFunctionDeclarations = GetScopeFunctions(context);
+			var scopeFunctionDeclarations = GetScopeFunctions(context, this);
 
 			foreach (var fi in scopeFunctionDeclarations)
 			{
@@ -1538,7 +1536,7 @@ namespace Keysharp.Scripting
         {
             HandleScopeFunctions(context);
 
-			VisitVariableStatements(context);
+			//VisitVariableStatements(context);
             if (context.expression() != null)
             {
                 var expression = (ExpressionSyntax)Visit(context.expression());
@@ -1574,100 +1572,6 @@ namespace Keysharp.Scripting
 
             return SyntaxFactory.Block(statements);
             */
-        }
-
-        private void VisitVariableStatements(ParserRuleContext context)
-        {
-            foreach (var child in context.children)
-            {
-                switch (child)
-                {
-                    case VariableStatementContext varStmt:
-                        var prevScope = parser.currentFunc.Scope;
-
-                        switch (varStmt.GetChild(0).GetText().ToLower())
-                        {
-                            case "local":
-                                parser.currentFunc.Scope = eScope.Local;
-                                break;
-                            case "global":
-                                parser.currentFunc.Scope = eScope.Global;
-                                break;
-                            case "static":
-                                parser.currentFunc.Scope = eScope.Static;
-                                break;
-                        }
-
-                        if (varStmt.variableDeclarationList() != null && varStmt.variableDeclarationList().ChildCount > 0)
-                        {
-                            foreach (var varDecl in varStmt.variableDeclarationList().variableDeclaration())
-                            {
-                                SyntaxNode node = Visit(varDecl.assignable());
-                                if (!(node is IdentifierNameSyntax))
-                                {
-                                    throw new Error();
-                                }
-                                string name = ((IdentifierNameSyntax)node).Identifier.Text;
-
-                                if (parser.currentFunc.Scope == eScope.Static)
-                                {
-                                    parser.currentFunc.Statics.Add(name);
-                                }
-
-                                if (parser.currentFunc.Scope == eScope.Global)
-                                {
-                                    parser.MaybeAddVariableDeclaration(name);
-                                    parser.currentFunc.Locals.Remove(name);
-                                    parser.currentFunc.Globals.Add(name);
-                                }
-                                else
-                                {
-                                    parser.AddVariableDeclaration(name);
-                                    if (parser.currentFunc.Scope == eScope.Local)
-                                    {
-                                        parser.currentFunc.Globals.Remove(name);
-                                        // AddVariableDeclaration added the Locals entry
-                                    }
-                                }
-                            }
-
-                            parser.currentFunc.Scope = prevScope;
-                        }
-
-                        VisitVariableStatement(varStmt); // Collect variable statement
-                        break;
-
-                    case AssignmentExpressionContext assignStmt:
-                        if (assignStmt.left is IdentifierExpressionContext iec && Visit(iec) is IdentifierNameSyntax ins)
-                        {
-                            parser.MaybeAddVariableDeclaration(ins.Identifier.Text);
-                        }
-                        break;
-                    case FunctionStatementContext:
-                    case FunctionExpressionContext:
-                    case FatArrowExpressionContext:
-                        continue; // Skip nested function bodies entirely
-
-                    // Recursively search inside blocks, loops, and conditionals
-                    case BlockContext:
-                    case IterationStatementContext:
-                    case TryStatementContext:
-                    case FlowBlockContext:
-                    case StatementListContext:
-                    case MainParser.StatementContext:
-                    case ExpressionStatementContext:
-                    case ExpressionSequenceContext:
-                    case MainParser.ExpressionDummyContext:
-                    case SingleExpressionDummyContext:
-                    case ParenthesizedExpressionContext:
-                    case VarRefExpressionContext:
-                        VisitVariableStatements((ParserRuleContext)child);
-                        break;
-
-                    default:
-                        break; // Ignore other nodes
-                }
-            }
         }
 
         public override SyntaxNode VisitArrayLiteral(ArrayLiteralContext context)

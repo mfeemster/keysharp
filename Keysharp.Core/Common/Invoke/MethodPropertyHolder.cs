@@ -3,6 +3,7 @@ using Label = System.Reflection.Emit.Label;
 
 namespace Keysharp.Core.Common.Invoke
 {
+    [PublicForTestOnly]
 	public class MethodPropertyHolder
 	{
 		public Func<object, object[], object> _callFunc;
@@ -93,21 +94,21 @@ namespace Keysharp.Core.Common.Invoke
 			isGuiType = Gui.IsGuiType(mi.DeclaringType);
 			anyOptional = parameters.Any(p => p.IsOptional || p.IsVariadic());
 
-				for (var i = 0; i < parameters.Length; i++)
-				{
-					var pmi = parameters[i];
+			for (var i = 0; i < parameters.Length; i++)
+			{
+				var pmi = parameters[i];
 
-					if (pmi.ParameterType == typeof(object[]))
-						startVarIndex = i;
-					else if (startVarIndex != -1 && stopVarIndexDistanceFromEnd == 0)
-						stopVarIndexDistanceFromEnd = parameters.Length - i;
+			    if (pmi.ParameterType == typeof(object[]))
+					startVarIndex = i;
+				else if (startVarIndex != -1 && stopVarIndexDistanceFromEnd == 0)
+					stopVarIndexDistanceFromEnd = parameters.Length - i;
 
-					if (!(pmi.IsOptional || pmi.IsVariadic() || pmi.ParameterType == typeof(object[])))
-						MinParams++;
-				}
+				if (!(pmi.IsOptional || pmi.IsVariadic() || pmi.ParameterType == typeof(object[])))
+					MinParams++;
+			}
 
-				if (startVarIndex == -1)
-					MaxParams = parameters.Length;
+			if (startVarIndex == -1)
+				MaxParams = parameters.Length;
 
 			IsStaticFunc = mi.Attributes.HasFlag(MethodAttributes.Static);
 			var isFuncObj = typeof(IFuncObj).IsAssignableFrom(mi.DeclaringType);

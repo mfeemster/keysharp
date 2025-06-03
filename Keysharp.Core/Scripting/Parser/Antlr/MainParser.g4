@@ -215,9 +215,12 @@ functionStatement
 // This could actually be omitted because ANTLR is smart enough to figure out which is which, but it can lead to
 // some serious performance issues because of long lookaheads.
 expressionStatement
-    : {!this.isFunctionCallStatement()}? expressionSequence
+    : {InputStream.LA(1) != MainLexer.OpenBrace && !this.isFunctionCallStatement()}? expressionSequence
     ;
 
+// For maximum performance there should be two separate statement rules, one with possible
+// dangling `else` and one without. That would require duplicating all flow rules though, so
+// currently it's not done.
 ifStatement
     : If WS* singleExpression WS* flowBlock elseProduction
     ;
@@ -229,6 +232,7 @@ flowBlock
 
 untilProduction
     : EOL Until s* singleExpression 
+    | {!this.second(Until)}?
     ;
 
 elseProduction
@@ -237,13 +241,13 @@ elseProduction
     ;
 
 iterationStatement
-    : Loop WS* ({!this.isEmptyObject()}? singleExpression WS*)? flowBlock untilProduction? elseProduction      # LoopStatement
-    | LoopFiles WS* singleExpression (WS* ',' singleExpression)? WS* flowBlock untilProduction? elseProduction  # LoopFilesStatement
-    | LoopRead WS* singleExpression (WS* ',' singleExpression)? WS* flowBlock untilProduction? elseProduction   # LoopReadStatement
-    | LoopReg WS* singleExpression (WS* ',' singleExpression)? WS* flowBlock untilProduction? elseProduction    # LoopRegStatement
-    | LoopParse WS* singleExpression (WS* ',' singleExpression?)* WS* flowBlock untilProduction? elseProduction # LoopParseStatement
-    | While WS* singleExpression WS* flowBlock untilProduction? elseProduction       # WhileStatement
-    | For WS* forInParameters WS* flowBlock untilProduction? elseProduction          # ForInStatement
+    : Loop WS* ({!this.isEmptyObject()}? singleExpression WS*)? flowBlock untilProduction elseProduction      # LoopStatement
+    | LoopFiles WS* singleExpression (WS* ',' singleExpression)? WS* flowBlock untilProduction elseProduction  # LoopFilesStatement
+    | LoopRead WS* singleExpression (WS* ',' singleExpression)? WS* flowBlock untilProduction elseProduction   # LoopReadStatement
+    | LoopReg WS* singleExpression (WS* ',' singleExpression)? WS* flowBlock untilProduction elseProduction    # LoopRegStatement
+    | LoopParse WS* singleExpression (WS* ',' singleExpression?)* WS* flowBlock untilProduction elseProduction # LoopParseStatement
+    | While WS* singleExpression WS* flowBlock untilProduction elseProduction       # WhileStatement
+    | For WS* forInParameters WS* flowBlock untilProduction elseProduction          # ForInStatement
     ;
 
 forInParameters
@@ -301,7 +305,7 @@ throwStatement
     ;
 
 tryStatement
-    : Try s* statement catchProduction* elseProduction finallyProduction?
+    : Try s* statement catchProduction* elseProduction finallyProduction
     ;
 
 catchProduction
@@ -321,6 +325,7 @@ catchClasses
 
 finallyProduction
     : EOL Finally s* statement 
+    | {!this.second(Finally)}?
     ;
 
 functionDeclaration
@@ -428,8 +433,7 @@ arguments
     ;
 
 argument
-    : expression
-    | primaryExpression (Multiply | QuestionMark)
+    : expression (Multiply | QuestionMark)?
     ;
 
 expressionSequence
@@ -448,28 +452,28 @@ expression
     | left = expression '--'                                                 # PostDecreaseExpression
     | '++' right = expression                                                # PreIncrementExpression
     | '--' right = expression                                                # PreDecreaseExpression
-    | <assoc = right> left = expression '**' right = expression      # PowerExpression
+    | <assoc = right> left = expression op = '**' right = expression      # PowerExpression
     | '-' right = expression                                                 # UnaryMinusExpression
     | '!' WS* right = expression                                             # NotExpression
     | '+' right = expression                                                 # UnaryPlusExpression
     | '~' right = expression                                                 # BitNotExpression
-    | left = expression ((WS | EOL)* op = ('*' | '/' | '//') (WS | EOL)*) right = expression  # MultiplicativeExpression
-    | left = expression ((WS | EOL)* op = ('+' | '-') (WS | EOL)*) right = expression   # AdditiveExpression
+    | left = expression (op = ('*' | '/' | '//') (WS | EOL)*) right = expression  # MultiplicativeExpression
+    | left = expression (op = ('+' | '-') (WS | EOL)*) right = expression   # AdditiveExpression
     | left = expression op = ('<<' | '>>' | '>>>') right = expression              # BitShiftExpression
-    | left = expression ((WS | EOL)* op = '&' (WS | EOL)*) right = expression      # BitAndExpression
+    | left = expression (op = '&' (WS | EOL)*) right = expression      # BitAndExpression
     | left = expression op = '^' right = expression                                # BitXOrExpression
     | left = expression op = '|' right = expression                                # BitOrExpression
     | left = expression (ConcatDot | WS+) right = expression                       # ConcatenateExpression
     | left = expression op = '~=' right = expression                               # RegExMatchExpression
     | left = expression op = ('<' | '>' | '<=' | '>=') right = expression          # RelationalExpression
     | left = expression op = ('=' | '!=' | '==' | '!==') right = expression        # EqualityExpression
-    | left = expression (s* op = (Instanceof | Is | In | Contains) s*) right = expression  # ContainExpression
+    | left = expression ((WS | EOL)* op = (Instanceof | Is | In | Contains) (WS | EOL)*) right = expression  # ContainExpression
     | VerbalNot WS* right = expression                                                         # VerbalNotExpression
     | left = expression (op = '&&' | op = VerbalAnd) right = expression  # LogicalAndExpression
     | left = expression (op = '||' | op = VerbalOr) right = expression   # LogicalOrExpression
     | <assoc = right> left = expression op = '??' right = expression                               # CoalesceExpression
     | <assoc = right> ternCond = expression (WS | EOL)* '?' (WS | EOL)* ternTrue = expression (WS | EOL)* ':' (WS | EOL)* ternFalse = expression # TernaryExpression 
-    | <assoc = right> left = primaryExpression op = assignmentOperator right = expression          # AssignmentExpression
+    | <assoc = right> left = expression op = assignmentOperator right = expression          # AssignmentExpression
     | fatArrowExpressionHead '=>' expression             # FatArrowExpression // Not sure why, but this needs to be lower than coalesce expression
     | functionExpressionHead (WS | EOL)* block           # FunctionExpression
     | primaryExpression                                  # ExpressionDummy
@@ -480,28 +484,28 @@ singleExpression
     | left = singleExpression '--'                                                 # PostDecreaseExpressionDuplicate
     | '++' right = singleExpression                                                # PreIncrementExpressionDuplicate
     | '--' right = singleExpression                                                # PreDecreaseExpressionDuplicate
-    | <assoc = right> left = singleExpression '**' right = singleExpression      # PowerExpressionDuplicate
+    | <assoc = right> left = singleExpression op ='**' right = singleExpression      # PowerExpressionDuplicate
     | '-' right = singleExpression                                                 # UnaryMinusExpressionDuplicate
     | '!' WS* right = singleExpression                                             # NotExpressionDuplicate
     | '+' right = singleExpression                                                 # UnaryPlusExpressionDuplicate
     | '~' right = singleExpression                                                 # BitNotExpressionDuplicate
-    | left = singleExpression ((WS | EOL)* op = ('*' | '/' | '//') (WS | EOL)*) right = singleExpression  # MultiplicativeExpressionDuplicate
-    | left = singleExpression ((WS | EOL)* op = ('+' | '-') (WS | EOL)*) right = singleExpression   # AdditiveExpressionDuplicate
+    | left = singleExpression (op = ('*' | '/' | '//') (WS | EOL)*) right = singleExpression  # MultiplicativeExpressionDuplicate
+    | left = singleExpression (op = ('+' | '-') (WS | EOL)*) right = singleExpression   # AdditiveExpressionDuplicate
     | left = singleExpression op = ('<<' | '>>' | '>>>') right = singleExpression              # BitShiftExpressionDuplicate
-    | left = singleExpression ((WS | EOL)* op = '&' (WS | EOL)*) right = singleExpression      # BitAndExpressionDuplicate
+    | left = singleExpression (op = '&' (WS | EOL)*) right = singleExpression      # BitAndExpressionDuplicate
     | left = singleExpression op = '^' right = singleExpression                                # BitXOrExpressionDuplicate
     | left = singleExpression op = '|' right = singleExpression                                # BitOrExpressionDuplicate
     | left = singleExpression (ConcatDot | WS+) right = singleExpression                       # ConcatenateExpressionDuplicate
     | left = singleExpression op = '~=' right = singleExpression                               # RegExMatchExpressionDuplicate
     | left = singleExpression op = ('<' | '>' | '<=' | '>=') right = singleExpression          # RelationalExpressionDuplicate
     | left = singleExpression op = ('=' | '!=' | '==' | '!==') right = singleExpression        # EqualityExpressionDuplicate
-    | left = singleExpression (s* op = (Instanceof | Is | In | Contains) s*) right = singleExpression  # ContainExpressionDuplicate
+    | left = singleExpression ((WS | EOL)* op = (Instanceof | Is | In | Contains) (WS | EOL)*) right = singleExpression  # ContainExpressionDuplicate
     | VerbalNot WS* right = singleExpression                                                         # VerbalNotExpressionDuplicate
     | left = singleExpression (op = '&&' | op = VerbalAnd) right = singleExpression  # LogicalAndExpressionDuplicate
     | left = singleExpression (op = '||' | op = VerbalOr) right = singleExpression   # LogicalOrExpressionDuplicate
     | <assoc = right> left = singleExpression op = '??' right = singleExpression                               # CoalesceExpressionDuplicate
     | <assoc = right> ternCond = singleExpression (WS | EOL)* '?' (WS | EOL)* ternTrue = expression (WS | EOL)* ':' (WS | EOL)* ternFalse = singleExpression # TernaryExpressionDuplicate
-        | <assoc = right> left = primaryExpression op = assignmentOperator right = singleExpression          # AssignmentExpressionDuplicate
+    | <assoc = right> left = singleExpression op = assignmentOperator right = singleExpression          # AssignmentExpressionDuplicate
     | primaryExpression                                  # SingleExpressionDummy
     ;
 
@@ -528,7 +532,7 @@ memberDot
 memberIdentifier
     : identifier
     | dynamicIdentifier
-    | reservedWord
+    | keyword
     | literal
     ;
 

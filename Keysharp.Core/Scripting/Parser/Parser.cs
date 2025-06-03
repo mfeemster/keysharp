@@ -271,14 +271,6 @@ namespace Keysharp.Scripting
 			{ "AssemblyVersion", null }
         };
 
-		public static Dictionary<string, string> TypeNameAliases = new(StringComparer.OrdinalIgnoreCase)
-		{
-			{ "int64", "Integer" },
-            { "double", "Float" },
-            { "KeysharpObject", "Object" },
-            { "FuncObj", "Func" }
-		};
-
         public static ParameterSyntax ThisParam = SyntaxFactory.Parameter(SyntaxFactory.Identifier("@this"))
                     .WithType(PredefinedTypes.Object);
 
@@ -655,6 +647,8 @@ namespace Keysharp.Scripting
                 languageVersion: LanguageVersion.LatestMajor,
                 documentationMode: DocumentationMode.None,
                 kind: SourceCodeKind.Regular);
+
+            mainParser.RemoveErrorListeners();
 
 			return (T)(object)SyntaxFactory.SyntaxTree(compilationUnit, parseOptions);
 		}

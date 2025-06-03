@@ -4,6 +4,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using static MainParser;
 using System.Data.Common;
 using System.Linq.Expressions;
+using Antlr4.Runtime.Misc;
 
 namespace Keysharp.Scripting
 {
@@ -133,46 +134,165 @@ namespace Keysharp.Scripting
             public string Name;
             public bool Static;
         }
-
-        internal static List<FunctionInfo> GetScopeFunctions(ParserRuleContext context)
+        internal class VisitFunction : MainParserBaseVisitor<object>
         {
-            var result = new List<FunctionInfo>();
+            internal List<FunctionInfo> functionInfos = new();
+            private VisitMain mainVisitor;
+            private Parser parser;
+			private Function currentFunc;
 
-            if (context == null || context.ChildCount == 0)
-                return result;
-
-            foreach (var child in context.children)
+			public VisitFunction(VisitMain visitor)
             {
-                FunctionHeadContext head = null;
-				// Add FunctionDeclarationContext directly
-				if (child is FatArrowExpressionContext fatArrow)
-                {
-                    head = fatArrow.fatArrowExpressionHead()?.functionExpressionHead()?.functionHead();
-                }
-                else if (child is FunctionExpressionContext func && func.functionExpressionHead().functionHead() != null)
-                {
-                    head = func.functionExpressionHead().functionHead();
-                }
-                else if (child is FunctionDeclarationContext funcdecl)
-                {
-                    head = funcdecl.functionHead();
-                }
-                // Recurse into children only if the current node is not a FunctionDeclarationContext
-                else if (child is ParserRuleContext parserRuleContext && child is not FunctionDeclarationContext && child is not FatArrowExpressionContext && child is not FunctionExpressionContext && child is not ClassDeclarationContext)
-                {
-                    result.AddRange(GetScopeFunctions(parserRuleContext));
-                }
+                mainVisitor = visitor;
+                parser = mainVisitor.parser;
+				currentFunc = parser.currentFunc;
+			}
 
-                if (head != null)
-                {
-					var f = new FunctionInfo();
-                    f.Name = head.identifierName().GetText();
-                    f.Static = head.functionHeadPrefix()?.Static() != null;
-                    result.Add(f);
+            // Skip some rules
+			public override object VisitClassDeclaration([NotNull] ClassDeclarationContext context)
+			{
+				return null;
+			}
+			public override object VisitLiteral([NotNull] LiteralContext context)
+			{
+				return null;
+			}
+			public override object VisitIdentifier([NotNull] IdentifierContext context)
+			{
+				return base.VisitIdentifier(context);
+			}
+
+            // Gather all function declarations/expressions, but don't recurse into them
+			public override object VisitFunctionDeclaration([NotNull] FunctionDeclarationContext context)
+			{
+				AddFunction(context.functionHead());
+				return null;
+			}
+
+			public override object VisitFatArrowExpression([NotNull] FatArrowExpressionContext context)
+			{
+				var head = context
+					.fatArrowExpressionHead()
+					.functionExpressionHead()?
+					.functionHead();
+				AddFunction(head);
+				return null;
+			}
+
+			public override object VisitFunctionExpression([NotNull] FunctionExpressionContext context)
+			{
+				var head = context.functionExpressionHead().functionHead();
+				AddFunction(head);
+				return null;
+			}
+
+			private void AddFunction(FunctionHeadContext head)
+			{
+                if (head == null)
+                    return;
+
+				var info = new FunctionInfo
+				{
+					Name = head.identifierName().GetText(),
+					Static = head.functionHeadPrefix()?.Static() != null
+				};
+				functionInfos.Add(info);
+			}
+
+            // Gather all variable declarations
+			public override object VisitVariableStatement([NotNull] VariableStatementContext context)
+			{
+				var prevScope = currentFunc.Scope;
+
+				switch (context.GetChild(0).GetText().ToUpper())
+				{
+					case "LOCAL":
+						currentFunc.Scope = eScope.Local;
+						break;
+					case "GLOBAL":
+						currentFunc.Scope = eScope.Global;
+						break;
+					case "STATIC":
+						currentFunc.Scope = eScope.Static;
+						break;
 				}
-            }
 
-            return result;
+				if (context.variableDeclarationList() != null && context.variableDeclarationList().ChildCount > 0)
+				{
+					foreach (var varDecl in context.variableDeclarationList().variableDeclaration())
+					{
+						SyntaxNode node = mainVisitor.Visit(varDecl.assignable());
+						if (!(node is IdentifierNameSyntax))
+						{
+							throw new Error();
+						}
+						string name = ((IdentifierNameSyntax)node).Identifier.Text;
+
+						if (currentFunc.Scope == eScope.Static)
+						{
+							currentFunc.Statics.Add(name);
+						}
+
+						if (currentFunc.Scope == eScope.Global)
+						{
+							parser.MaybeAddVariableDeclaration(name);
+							currentFunc.Locals.Remove(name);
+							currentFunc.Globals.Add(name);
+						}
+						else
+						{
+							parser.AddVariableDeclaration(name);
+							if (currentFunc.Scope == eScope.Local)
+							{
+								currentFunc.Globals.Remove(name);
+								// AddVariableDeclaration added the Locals entry
+							}
+						}
+
+                        if (varDecl.expression() != null)
+                            Visit(varDecl);
+					}
+
+					currentFunc.Scope = prevScope;
+				}
+
+                return null;
+			}
+
+			public override object VisitAssignmentExpression([NotNull] AssignmentExpressionContext context)
+			{
+                if (context.left is ExpressionDummyContext edc && edc.primaryExpression() is IdentifierExpressionContext iec)
+                {
+                    SyntaxNode result = mainVisitor.Visit(iec);
+                    if (result is IdentifierNameSyntax identifierNameSyntax)
+                        _ = parser.MaybeAddVariableDeclaration(identifierNameSyntax.Identifier.Text);
+                }
+				return base.VisitAssignmentExpression(context);
+			}
+
+			public override object VisitAssignmentExpressionDuplicate([NotNull] AssignmentExpressionDuplicateContext context)
+			{
+				if (context.left is SingleExpressionDummyContext edc && edc.primaryExpression() is IdentifierExpressionContext iec)
+                {
+					SyntaxNode result = mainVisitor.Visit(iec);
+					if (result is IdentifierNameSyntax identifierNameSyntax)
+						_ = parser.MaybeAddVariableDeclaration(identifierNameSyntax.Identifier.Text);
+				}
+				return base.VisitAssignmentExpressionDuplicate(context);
+			}
+		}
+
+        internal static Dictionary<ParserRuleContext, VisitFunction> functionParserData = new();
+
+		internal static List<FunctionInfo> GetScopeFunctions(ParserRuleContext context, VisitMain mainVisitor)
+        {
+            var visitor = functionParserData.GetOrAdd(context, () => {
+                var v = new VisitFunction(mainVisitor);
+                v.Visit(context);
+                return v;
+            });
+
+            return visitor.functionInfos;
         }
 
         private static Dictionary<string, NameSyntax> _qualifiedNameCache;
@@ -432,23 +552,25 @@ namespace Keysharp.Scripting
         // Checks for a field declaration in a specific class
         internal string IsVarDeclaredInClass(Class cls, string name, bool caseSense = true)
         {
-            var variableDeclarations = cls.Body
-                .OfType<FieldDeclarationSyntax>();
-            if (variableDeclarations != null)
-            {
-                foreach (var declaration in variableDeclarations)
-                {
-                    VariableDeclaratorSyntax match;
-                    if (caseSense)
-                        match = declaration.Declaration.Variables.FirstOrDefault(v => v.Identifier.Text == name);
-                    else
-                        match = declaration.Declaration.Variables.FirstOrDefault(v => v.Identifier.Text.Equals(name, StringComparison.OrdinalIgnoreCase));
-                    if (match != null)
-                        return match.Identifier.Text;
-                }
-            }
-            return null;
-        }
+			var allVars = cls.Body
+				.OfType<FieldDeclarationSyntax>()
+				.SelectMany(f => f.Declaration.Variables);
+
+			if (caseSense)
+			{
+				foreach (var v in allVars)
+					if (v.Identifier.Text == name)
+						return v.Identifier.Text;
+			}
+			else
+			{
+				foreach (var v in allVars)
+					if (v.Identifier.Text.Equals(name, StringComparison.OrdinalIgnoreCase))
+						return v.Identifier.Text;
+			}
+
+			return null;
+		}
 
         internal string IsVarDeclaredGlobally(string name, bool caseSense = true)
         {

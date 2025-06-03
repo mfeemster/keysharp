@@ -1,3 +1,6 @@
+using System.Reflection;
+using Keysharp.Core;
+
 namespace Keysharp.Scripting
 {
 	public partial class Script
@@ -8,19 +11,14 @@ namespace Keysharp.Scripting
 
 			var isBuiltin = !t.Namespace.Equals("Keysharp.CompiledMain", StringComparison.OrdinalIgnoreCase);
 
-            script.Vars.Prototypes[t] = (KeysharpObject)RuntimeHelpers.GetUninitializedObject(alias ?? t);
-            object inst = script.Vars.Statics[t] = (KeysharpObject)RuntimeHelpers.GetUninitializedObject(alias ?? t);
-			KeysharpObject staticInst = (KeysharpObject)inst;
+            var proto = script.Vars.Prototypes[t] = (KeysharpObject)RuntimeHelpers.GetUninitializedObject(alias ?? t);
+			KeysharpObject staticInst = script.Vars.Statics[t] = (KeysharpObject)RuntimeHelpers.GetUninitializedObject(alias ?? t);
 
-            var proto = script.Vars.Prototypes[t];
+			proto.op = new Dictionary<string, OwnPropsDesc>(StringComparer.OrdinalIgnoreCase);
+			staticInst.op = new Dictionary<string, OwnPropsDesc>(StringComparer.OrdinalIgnoreCase);
 
-            if (proto.op == null)
-            {
-                proto.op = new Dictionary<string, OwnPropsDesc>(StringComparer.OrdinalIgnoreCase);
-            }
-
-            // Get all instance methods
-            MethodInfo[] methods;
+			// Get all instance methods
+			MethodInfo[] methods;
 
             if (isBuiltin && script.ReflectionsData.typeToStringMethods.ContainsKey(t))
                 methods = script.ReflectionsData.typeToStringMethods[t]
@@ -54,12 +52,11 @@ namespace Keysharp.Scripting
 
 					if (isStatic)
 					{
-						if (staticInst.op == null)
-							staticInst.op = new Dictionary<string, OwnPropsDesc>(StringComparer.OrdinalIgnoreCase);
 						if (staticInst.op.TryGetValue(propName, out propDesc))
 							propertyMap = propDesc;
 
-					} else
+					} 
+					else
 					{
                         if (proto.op.TryGetValue(propName, out propDesc))
                             propertyMap = propDesc;
@@ -80,12 +77,12 @@ namespace Keysharp.Scripting
 
                 if (isStatic)
                 {
-                    staticInst.DefineProp(methodName, Collections.MapWithoutBase("call", new FuncObj(method)));
+					DefineProp(staticInst, methodName, new OwnPropsDesc(staticInst, null, null, null, new FuncObj(method)));
 					continue;
                 }
 
-                // Wrap method in FuncObj
-                proto.DefineProp(methodName, Collections.MapWithoutBase("call", new FuncObj(method)));
+				// Wrap method in FuncObj
+				DefineProp(proto, methodName, new OwnPropsDesc(proto, null, null, null, new FuncObj(method)));
             }
 
 			// Get all static methods
@@ -100,7 +97,7 @@ namespace Keysharp.Scripting
 
             foreach (var method in methods)
 			{
-                SetPropertyValue(staticInst, method.Name, new FuncObj(method));
+				DefineProp(staticInst, method.Name, new OwnPropsDesc(staticInst, new FuncObj(method)));
             }
 
             // Get all instance and static properties
@@ -158,21 +155,21 @@ namespace Keysharp.Scripting
                     proto.op[propertyName] = propertyMap;
             }
 
-            if (!(t == typeof(Any) || t == typeof(FuncObj) || t == typeof(Class)))
-                proto.DefineProp("base", Collections.MapWithoutBase("value", script.Vars.Prototypes[t.BaseType]));
+			if (!(t == typeof(Any) || t == typeof(FuncObj) || t == typeof(Class)))
+				proto.op["base"] = new OwnPropsDesc(proto, script.Vars.Prototypes[t.BaseType]);
 
 			if (isBuiltin)
 			{
 				string name = t.Name;
-				if (Parser.TypeNameAliases.ContainsKey(name))
-					name = Parser.TypeNameAliases[name];
-				proto.DefineProp("__Class", Collections.MapWithoutBase("value", name));
+				if (Keywords.TypeNameAliases.ContainsKey(name))
+					name = Keywords.TypeNameAliases[name];
+				proto.op["__Class"] = new OwnPropsDesc(proto, name);
 			}
 
-            staticInst.DefineProp("prototype", Collections.MapWithoutBase("value", script.Vars.Prototypes[t]));
+			staticInst.op["prototype"] = new OwnPropsDesc(staticInst, script.Vars.Prototypes[t]);
 
 			if (t != typeof(FuncObj) && t != typeof(Any) && t != typeof(Class))
-				staticInst.DefineProp("base", Collections.MapWithoutBase("value", t.BaseType == typeof(KeysharpObject) ? script.Vars.Prototypes[typeof(Class)] : script.Vars.Statics[t.BaseType]));
+				staticInst.op["base"] = new OwnPropsDesc(staticInst, t.BaseType == typeof(KeysharpObject) ? script.Vars.Prototypes[typeof(Class)] : script.Vars.Statics[t.BaseType]);
 
 			if (!isBuiltin)
 			{
@@ -185,10 +182,11 @@ namespace Keysharp.Scripting
                 foreach (var nestedType in nestedTypes)
                 {
                     RuntimeHelpers.RunClassConstructor(nestedType.TypeHandle);
-					script.Vars.Statics[t].DefineProp(nestedType.Name, 
-						Collections.Map(
-							"get", new FuncObj((params object[] args) => script.Vars.Statics[nestedType]),
-							"call", new FuncObj((object @this, params object[] args) => Script.Invoke(script.Vars.Statics[nestedType], "Call", args))
+					DefineProp(script.Vars.Statics[t], nestedType.Name, 
+						new OwnPropsDesc(script.Vars.Statics[t], null, 
+							new FuncObj((params object[] args) => script.Vars.Statics[nestedType]),
+							null,
+							new FuncObj((object @this, params object[] args) => Script.Invoke(script.Vars.Statics[nestedType], "Call", args))
 						)
 					);
                 }
@@ -197,7 +195,19 @@ namespace Keysharp.Scripting
                 Script.InvokeMeta(script.Vars.Statics[t], "__New");
             }
         }
-        public static object Index(object item, params object[] index) => item == null ? null : IndexAt(item, index);
+
+		internal static void DefineProp(KeysharpObject kso, string name, OwnPropsDesc desc)
+		{
+			if (kso.op == null)
+				kso.op = new Dictionary<string, OwnPropsDesc>(StringComparer.OrdinalIgnoreCase);
+
+			if (kso.op.TryGetValue(name, out var existing))
+				existing.Merge(desc);
+			else
+				kso.op[name] = desc;
+		}
+
+		public static object Index(object item, params object[] index) => item == null ? null : IndexAt(item, index);
 
 		public static object SetObject(object value, object item, params object[] index)
 		{

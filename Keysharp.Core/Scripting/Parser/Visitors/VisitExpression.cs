@@ -383,12 +383,12 @@ namespace Keysharp.Scripting
 
 		public override SyntaxNode VisitPowerExpression([NotNull] PowerExpressionContext context)
         {
-            return HandleBinaryExpressionVisit(context);
+            return HandleBinaryExpressionVisit(context.left, context.right, context.op.Type);
         }
 
 		public override SyntaxNode VisitPowerExpressionDuplicate([NotNull] PowerExpressionDuplicateContext context)
 		{
-			return HandleBinaryExpressionVisit(context);
+			return HandleBinaryExpressionVisit(context.left, context.right, context.op.Type);
 		}
 
 		public override SyntaxNode VisitUnaryMinusExpression([NotNull] UnaryMinusExpressionContext context)
@@ -421,22 +421,10 @@ namespace Keysharp.Scripting
 			return HandleUnaryExpressionVisit(context);
 		}
 
-		public SyntaxNode HandleBinaryExpressionVisit([NotNull] ParserRuleContext context)
+		public SyntaxNode HandleBinaryExpressionVisit([NotNull] ParserRuleContext left, ParserRuleContext right, int op)
         {
-            List<IParseTree> rules = new List<IParseTree>();
-            foreach (var child in context.children)
-            {
-                if (child is ITerminalNode childNode && childNode != null && (childNode.Symbol.Type == EOL || childNode.Symbol.Type == WS))
-                    continue;
-                rules.Add(child);
-            }
-            
-            if (rules[1] is ITerminalNode node && node != null)
-            {
-                return CreateBinaryOperatorExpression(node.Symbol.Type, (ExpressionSyntax)Visit(rules[0]), (ExpressionSyntax)Visit(rules[2]));
-            }
-            throw new ValueError("Invalid operand: " + rules[1].GetText());
-        }
+            return CreateBinaryOperatorExpression(op, (ExpressionSyntax)Visit(left), (ExpressionSyntax)Visit(right));
+		}
 
         public SyntaxNode HandlePureBinaryExpressionVisit([NotNull] ParserRuleContext context)
         {
@@ -450,62 +438,62 @@ namespace Keysharp.Scripting
 
         public override SyntaxNode VisitMultiplicativeExpression([NotNull] MultiplicativeExpressionContext context)
         {
-            return HandleBinaryExpressionVisit(context);
+            return HandleBinaryExpressionVisit(context.left, context.right, context.op.Type);
         }
 
 		public override SyntaxNode VisitMultiplicativeExpressionDuplicate([NotNull] MultiplicativeExpressionDuplicateContext context)
 		{
-			return HandleBinaryExpressionVisit(context);
+			return HandleBinaryExpressionVisit(context.left, context.right, context.op.Type);
 		}
 
 		public override SyntaxNode VisitAdditiveExpression([NotNull] AdditiveExpressionContext context)
         {
-            return HandleBinaryExpressionVisit(context);
+            return HandleBinaryExpressionVisit(context.left, context.right, context.op.Type);
         }
 
 		public override SyntaxNode VisitAdditiveExpressionDuplicate([NotNull] AdditiveExpressionDuplicateContext context)
 		{
-			return HandleBinaryExpressionVisit(context);
+			return HandleBinaryExpressionVisit(context.left, context.right, context.op.Type);
 		}
 
 		public override SyntaxNode VisitBitShiftExpression([NotNull] BitShiftExpressionContext context)
         {
-            return HandleBinaryExpressionVisit(context);
+            return HandleBinaryExpressionVisit(context.left, context.right, context.op.Type);
         }
 
 		public override SyntaxNode VisitBitShiftExpressionDuplicate([NotNull] BitShiftExpressionDuplicateContext context)
 		{
-			return HandleBinaryExpressionVisit(context);
+			return HandleBinaryExpressionVisit(context.left, context.right, context.op.Type);
 		}
 
 		public override SyntaxNode VisitBitAndExpression([NotNull] BitAndExpressionContext context)
         {
-            return HandleBinaryExpressionVisit(context);
+            return HandleBinaryExpressionVisit(context.left, context.right, context.op.Type);
         }
 
 		public override SyntaxNode VisitBitAndExpressionDuplicate([NotNull] BitAndExpressionDuplicateContext context)
 		{
-			return HandleBinaryExpressionVisit(context);
+			return HandleBinaryExpressionVisit(context.left, context.right, context.op.Type);
 		}
 
 		public override SyntaxNode VisitBitXOrExpression([NotNull] BitXOrExpressionContext context)
         {
-            return HandleBinaryExpressionVisit(context);
+            return HandleBinaryExpressionVisit(context.left, context.right, context.op.Type);
         }
 
 		public override SyntaxNode VisitBitXOrExpressionDuplicate([NotNull] BitXOrExpressionDuplicateContext context)
 		{
-			return HandleBinaryExpressionVisit(context);
+			return HandleBinaryExpressionVisit(context.left, context.right, context.op.Type);
 		}
 
 		public override SyntaxNode VisitBitOrExpression([NotNull] BitOrExpressionContext context)
         {
-            return HandleBinaryExpressionVisit(context);
+            return HandleBinaryExpressionVisit(context.left, context.right, context.op.Type);
         }
 
 		public override SyntaxNode VisitBitOrExpressionDuplicate([NotNull] BitOrExpressionDuplicateContext context)
 		{
-			return HandleBinaryExpressionVisit(context);
+			return HandleBinaryExpressionVisit(context.left, context.right, context.op.Type);
 		}
 
 		public override SyntaxNode VisitConcatenateExpression([NotNull] ConcatenateExpressionContext context)
@@ -530,32 +518,32 @@ namespace Keysharp.Scripting
 
 		public override SyntaxNode VisitRegExMatchExpression([NotNull] RegExMatchExpressionContext context)
         {
-            return HandleBinaryExpressionVisit(context);
+            return HandleBinaryExpressionVisit(context.left, context.right, context.op.Type);
         }
 
 		public override SyntaxNode VisitRegExMatchExpressionDuplicate([NotNull] RegExMatchExpressionDuplicateContext context)
 		{
-			return HandleBinaryExpressionVisit(context);
+			return HandleBinaryExpressionVisit(context.left, context.right, context.op.Type);
 		}
 
 		public override SyntaxNode VisitRelationalExpression([NotNull] RelationalExpressionContext context)
         {
-            return HandleBinaryExpressionVisit(context);
+            return HandleBinaryExpressionVisit(context.left, context.right, context.op.Type);
         }
 
 		public override SyntaxNode VisitRelationalExpressionDuplicate([NotNull] RelationalExpressionDuplicateContext context)
 		{
-			return HandleBinaryExpressionVisit(context);
+			return HandleBinaryExpressionVisit(context.left, context.right, context.op.Type);
 		}
 
 		public override SyntaxNode VisitEqualityExpression([NotNull] EqualityExpressionContext context)
         {
-            return HandleBinaryExpressionVisit(context);
+            return HandleBinaryExpressionVisit(context.left, context.right, context.op.Type);
         }
 
 		public override SyntaxNode VisitEqualityExpressionDuplicate([NotNull] EqualityExpressionDuplicateContext context)
 		{
-			return HandleBinaryExpressionVisit(context);
+			return HandleBinaryExpressionVisit(context.left, context.right, context.op.Type);
 		}
 
 		public override SyntaxNode VisitContainExpression([NotNull] ContainExpressionContext context)
@@ -579,7 +567,7 @@ namespace Keysharp.Scripting
 					if (classAsRawString.IndexOfAny(Spaces) != -1)
 						throw new Error("Is expression comparison word cannot contain spaces: " + classAsRawString);
 
-					if (Parser.TypeNameAliases.TryGetValue(classAsRawString, out var alias))
+					if (Keywords.TypeNameAliases.TryGetValue(classAsRawString, out var alias))
 						classAsRawString = alias;
 
 					if (classAsRawString == "unset" || classAsRawString == "null")

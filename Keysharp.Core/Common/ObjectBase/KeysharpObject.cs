@@ -93,9 +93,12 @@ namespace Keysharp.Core.Common.ObjectBase
 				if (kso.op != null)//&& kso.op.TryGetValue(name, out var opm))
 				{
 					if (op == null)
+					{
 						op = new Dictionary<string, OwnPropsDesc>(StringComparer.OrdinalIgnoreCase);
-
-					if (op.TryGetValue(name, out var currProp))
+						op[name] = new OwnPropsDesc();
+						op[name].MergeOwnPropsValues(kso.op);
+					}
+					else if (op.TryGetValue(name, out var currProp))
 					{
 						currProp.MergeOwnPropsValues(kso.op);
 					}

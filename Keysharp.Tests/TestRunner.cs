@@ -37,7 +37,7 @@ namespace Keysharp.Tests
 			_ = Core.Debug.OutputDebug(Environment.CurrentDirectory);
 			var ch = new CompilerHelper();
 
-			var (arr, code) = ch.CompileCodeToByteArray([source], name);
+			var (arr, code) = ch.CompileCodeToByteArray([source], name, sameAssemblyOptimizations: true);
 
 			if (arr == null)
 			{
@@ -68,8 +68,6 @@ namespace Keysharp.Tests
 					try
 					{
 						Console.SetOut(writer);
-						GC.Collect();
-						GC.WaitForPendingFinalizers();
 
 						if (CompilerHelper.compiledasm == null)
 							throw new Exception("Compilation failed.");

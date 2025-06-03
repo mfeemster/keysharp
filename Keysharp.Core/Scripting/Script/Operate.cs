@@ -135,7 +135,7 @@ namespace Keysharp.Scripting
 							goto done;
 					}
 
-					var alias = Parser.TypeNameAliases.FirstOrDefault(kvp => kvp.Value.Equals(test, StringComparison.OrdinalIgnoreCase)).Key;
+					var alias = Keywords.TypeNameAliases.FirstOrDefault(kvp => kvp.Value.Equals(test, StringComparison.OrdinalIgnoreCase)).Key;
 					if (alias != null)
 						test = alias;
 

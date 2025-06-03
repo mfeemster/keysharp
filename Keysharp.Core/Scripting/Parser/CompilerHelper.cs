@@ -1,5 +1,6 @@
 ﻿namespace Keysharp.Scripting
 {
+	[PublicForTestOnly]
 	public class CompilerHelper
 	{
 		//CodeEntryPointMethod entryPoint;
@@ -330,7 +331,7 @@ using static Keysharp.Scripting.Script;
             }
         }
 
-        public (EmitResult, MemoryStream, Exception) CompileFromTree(SyntaxTree tree, string outputname, string currentDir, bool minimalexeout = false)
+        public (EmitResult, MemoryStream, Exception) CompileFromTree(SyntaxTree tree, string outputname, string currentDir, bool minimalexeout = false, bool sameAssemblyOptimizations = false)
 		{
 			try
 			{
@@ -400,31 +401,7 @@ using static Keysharp.Scripting.Script;
 					MetadataReference.CreateFromFile(Path.Combine(desktopDir, "System.Windows.Forms.dll")),
 				};
 
-				// allDependencies has been loaded from a deps.json file and thus should contain all
-				// the necessary dependencies for Keysharp.Core to function.
-				if (allDependencies != null)
-				{
-					references.AddRange(
-						allDependencies
-						// Filter out any non-managed files
-						.Where((string dep) =>
-					{
-						try
-						{
-							AssemblyName.GetAssemblyName(dep);
-							return true;
-						}
-						catch
-						{
-							return false;
-						}
-					})
-					.Select(dep => MetadataReference.CreateFromFile(dep))
-					);
-				}
-				// Otherwise default to Keysharp.Core.dll folder and read metadata from known required
-				// dependencies.
-				else if (ksCoreDir != null)
+				if (ksCoreDir != null)
 				{
 					//This will be the build output folder when running from within the debugger, and the install folder when running from an installation.
 					//Note that Keysharp.Core.dll and System.CodeDom.dll *must* remain in that location for a compiled executable to work.
@@ -479,14 +456,28 @@ using static Keysharp.Scripting.Script;
 				            </asmv3:windowsSettings>
 				        </asmv3:application>
 				    </assembly>";
-				var manifestStream = new MemoryStream();
-				var writer = new StreamWriter(manifestStream);
-				writer.Write(manifestContents);
-				writer.Flush();
-				manifestStream.Position = 0;
-				var msi = Assembly.GetEntryAssembly().GetManifestResourceStream("Keysharp.Keysharp.ico");
-				var res = compilation.CreateDefaultWin32Resources(true, false, manifestStream, msi);//The first argument must be true to embed version/assembly information.
-				var compilationResult = compilation.Emit(ms, win32Resources: res, manifestResources: resourceDescriptions);
+				EmitResult compilationResult;
+				using (var manifestStream = new MemoryStream())
+				{
+					var writer = new StreamWriter(manifestStream);
+					writer.Write(manifestContents);
+					writer.Flush();
+					manifestStream.Position = 0;
+					if (sameAssemblyOptimizations)
+					{
+						var res = compilation.CreateDefaultWin32Resources(true, false, manifestStream, null);//The first argument must be true to embed version/assembly information.
+						compilationResult = compilation.Emit(ms, win32Resources: res, manifestResources: resourceDescriptions);
+					}
+					else
+					{
+						using (var msi = Assembly.GetEntryAssembly().GetManifestResourceStream("Keysharp.Keysharp.ico"))
+						{
+							var res = compilation.CreateDefaultWin32Resources(true, false, manifestStream, msi);//The first argument must be true to embed version/assembly information.
+							compilationResult = compilation.Emit(ms, win32Resources: res, manifestResources: resourceDescriptions);
+						}
+					}
+				}
+
 				return (compilationResult, ms, null);
 			}
 			catch (Exception e)
@@ -593,7 +584,7 @@ using static Keysharp.Scripting.Script;
 
 		internal string CreateEscapedIdentifier(string variable) => provider.CreateEscapedIdentifier(variable);
 
-		public (byte[], string) CompileCodeToByteArray(string[] fileNames, string nameNoExt, string exeDir = null, bool minimalexeout = false)
+		public (byte[], string) CompileCodeToByteArray(string[] fileNames, string nameNoExt, string exeDir = null, bool minimalexeout = false, bool sameAssemblyOptimizations = false)
 		{
 			if (fileNames.Length == 0)
 				throw new Error("At least one file name must be provided");
@@ -619,9 +610,9 @@ using static Keysharp.Scripting.Script;
 				return (null, sb.ToString());
 			}
 
-			var code = st[0].ToString();
+			string code = st[0].ToString();
 
-			var (results, ms, compileexc) = CompileFromTree(st[0], nameNoExt, exeDir, minimalexeout);
+			var (results, ms, compileexc) = CompileFromTree(st[0], nameNoExt, exeDir, minimalexeout, sameAssemblyOptimizations);
 
 			if (results == null)
 			{
