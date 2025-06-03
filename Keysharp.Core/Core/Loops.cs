@@ -18,7 +18,7 @@ namespace Keysharp.Core
 		public static long Inc()
 		{
 			var s = Script.TheScript.LoopData.loopStack.Value;
-			return s.Count > 0 ? ++s.Peek().index : 0;
+			return s.TryPeek(out var l) ? ++l.index : 0L;
 		}
 
 		/// <summary>
@@ -32,16 +32,15 @@ namespace Keysharp.Core
 			{
 				var n = obj.Al();
 				var info = Peek(LoopType.Normal);//The calling code must have called Push() with this type.
-				var flowdata = Script.TheScript.FlowData;
 
 				if (n != -1)
 				{
-					for (; info.index < n && !flowdata.hasExited;)//Check info.index because the caller can change A_Index inside of the loop.
+					for (; info.index < n;)//Check info.index because the caller can change A_Index inside of the loop.
 						yield return ++info.index;
 				}
 				else
 				{
-					while (!flowdata.hasExited)
+					while (true)
 						yield return ++info.index;
 				}
 
@@ -100,9 +99,6 @@ namespace Keysharp.Core
 
 			foreach (var file in GetFiles(dir, pattern, d, f, r))
 			{
-				if (Script.TheScript.FlowData.hasExited)
-					break;
-
 				info.file = file;
 				info.index++;
 				yield return file;
@@ -120,7 +116,7 @@ namespace Keysharp.Core
 		public static long LoopIndex()
 		{
 			var s = Script.TheScript.LoopData.loopStack.Value;
-			return s.Count > 0 ? s.Peek().index : 0;
+			return s.TryPeek(out var l) ? l.index : 0;
 		}
 
 		/// <summary>
@@ -203,7 +199,7 @@ namespace Keysharp.Core
 					info.index++;
 					yield return result;
 
-					if (current == -1 || script.FlowData.hasExited)
+					if (current == -1)
 						break;
 				}
 			}
@@ -220,9 +216,6 @@ namespace Keysharp.Core
 
 				foreach (var part in parts)
 				{
-					if (script.FlowData.hasExited)
-						break;
-
 					info.result = part;
 					info.index++;
 					yield return part;
@@ -261,9 +254,6 @@ namespace Keysharp.Core
 
 				while ((line = reader.ReadLine()) != null)
 				{
-					if (Script.TheScript.FlowData.hasExited)
-						break;
-
 					info.line = line;
 					info.index++;
 					yield return line;
@@ -322,9 +312,6 @@ namespace Keysharp.Core
 				{
 					foreach (var val in GetSubKeys(info, subkey, k, v))
 					{
-						if (script.FlowData.hasExited)
-							break;
-
 						yield return val;
 					}
 				}
@@ -334,9 +321,6 @@ namespace Keysharp.Core
 					{
 						foreach (var valueName in subkey.GetValueNames().Reverse())
 						{
-							if (script.FlowData.hasExited)
-								break;
-
 							info.index++;
 							info.regVal = subkey.GetValue(valueName, string.Empty, RegistryValueOptions.DoNotExpandEnvironmentNames);
 
@@ -353,9 +337,6 @@ namespace Keysharp.Core
 					{
 						foreach (var subKeyName in subkey.GetSubKeyNames().Reverse())//AHK spec says the subkeys and values are returned in reverse.
 						{
-							if (script.FlowData.hasExited)
-								break;
-
 							using (var tempKey = subkey.OpenSubKey(subKeyName, false))
 							{
 								info.index++;
@@ -495,9 +476,8 @@ namespace Keysharp.Core
 		public static LoopInfo Pop()
 		{
 			var s = Script.TheScript.LoopData.loopStack.Value;
-			var info = s.Count > 0 ? s.Pop() : null;
 
-			if (info != null && info.type == LoopType.File && info.sw != null)
+			if (s.TryPop(out var info) && info != null && info.type == LoopType.File && info.sw != null)
 				info.sw.Close();
 
 			return info;
@@ -525,15 +505,12 @@ namespace Keysharp.Core
 		{
 			var s = Script.TheScript.LoopData.loopStack.Value;
 
-			if (s.Count > 0)
+			foreach (var l in s)
 			{
-				foreach (var l in s)
+				switch (l.type)
 				{
-					switch (l.type)
-					{
-						case LoopType.Directory:
-							return l;
-					}
+					case LoopType.Directory:
+						return l;
 				}
 			}
 

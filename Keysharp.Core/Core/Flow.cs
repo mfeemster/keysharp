@@ -116,7 +116,7 @@ namespace Keysharp.Core
 		{
 			var script = Script.TheScript;
 
-			if (!script.FlowData.hasExited)//This can be called multiple times, so ensure it only runs through once.
+			if (!script.hasExited)//This can be called multiple times, so ensure it only runs through once.
 			{
 				script.mainWindow.CheckedInvoke(() =>
 				{
@@ -124,7 +124,7 @@ namespace Keysharp.Core
 				}, true);
 				var start = DateTime.UtcNow;
 
-				while (!script.FlowData.hasExited && (DateTime.UtcNow - start).TotalSeconds < 5)
+				while (!script.hasExited && (DateTime.UtcNow - start).TotalSeconds < 5)
 					_ = Sleep(500);
 			}
 
@@ -139,16 +139,15 @@ namespace Keysharp.Core
 		/// <returns>True if the value is true and the script is running, else false.</returns>
 		public static bool IsTrueAndRunning(object obj)
 		{
-			var flowdata = Script.TheScript.FlowData;
-			var b = !flowdata.hasExited && Script.ForceBool(obj);
+			var script = Script.TheScript;
+			var b = (obj is bool ob ? ob : Script.ForceBool(obj)) && !script.hasExited;
 
 			//Use Environment.TickCount because it's the fastest and we don't want to add extra time to each loop.
 			//Its precision is around 15ms which is the amount we're testing for, so it should be ok.
 			//https://stackoverflow.com/questions/243351/environment-tickcount-vs-datetime-now
-			if (b && (Environment.TickCount - flowdata.lastLoopDoEvents) > 15)
+			if (b && !script.tickTimer.Enabled)
 			{
 				TryDoEvents(true, false);
-				flowdata.lastLoopDoEvents = Environment.TickCount;
 			}
 
 			return b;
@@ -240,7 +239,7 @@ namespace Keysharp.Core
 			}, true, true);
 			var start = DateTime.UtcNow;
 
-			while (!script.FlowData.hasExited && (DateTime.UtcNow - start).TotalSeconds < 5)
+			while (!script.hasExited && (DateTime.UtcNow - start).TotalSeconds < 5)
 				_ = Sleep(500);
 
 			return null;
@@ -472,7 +471,7 @@ namespace Keysharp.Core
 			var d = delay.Al(-1L);
 			var script = Script.TheScript;
 
-			if (script.FlowData.hasExited)
+			if (script.hasExited)
 				throw new UserRequestedExitException();
 
 			//Be careful with Application.DoEvents(), it has caused spurious crashes in my years of programming experience.
@@ -487,7 +486,7 @@ namespace Keysharp.Core
 			}
 			else if (d == -2)//Sleep indefinitely until all InputHooks are finished.
 			{
-				while (!script.FlowData.hasExited && script.input != null && script.input.InProgress())
+				while (!script.hasExited && script.input != null && script.input.InProgress())
 				{
 					TryDoEvents(); //Does events once per tick
 				}
@@ -496,7 +495,7 @@ namespace Keysharp.Core
 			{
 				var stop = DateTime.UtcNow.AddMilliseconds(d);//Using Application.DoEvents() is a pseudo-sleep that blocks until the timeout, but doesn't freeze the window.
 
-				while (DateTime.UtcNow < stop && !script.FlowData.hasExited)
+				while (DateTime.UtcNow < stop && !script.hasExited)
 				{
 					TryDoEvents(); //Does events once per tick
 				}
@@ -567,9 +566,10 @@ namespace Keysharp.Core
 			var script = Script.TheScript;
 			var fd = script.FlowData;
 
-			if (fd.hasExited)//This can be called multiple times, so ensure it only runs through once.
+			if (script.hasExited)//This can be called multiple times, so ensure it only runs through once.
 				return false;
 
+			script.tickTimer.Stop();
 			Dialogs.CloseMessageBoxes();
 			var ec = exitCode.Ai();
 			A_ExitReason = exitReason.ToString();
@@ -587,7 +587,7 @@ namespace Keysharp.Core
 			else
 				script.onExitHandlers.Clear();
 
-			fd.hasExited = true;//At this point, we are clear to exit, so do not allow any more calls to this function.
+			script.hasExited = true;//At this point, we are clear to exit, so do not allow any more calls to this function.
 			fd.allowInterruption = allowInterruption_prev;
 			HotkeyDefinition.AllDestruct();
 			StopMainTimer();
@@ -694,7 +694,7 @@ namespace Keysharp.Core
 			{
 				var ex = mainex.InnerException ?? mainex;
 
-				if (mainex is UserRequestedExitException || ex is UserRequestedExitException)
+				if (ex is UserRequestedExitException)
 				{
 					if (pop)
 						_ = t.EndThread(true);
@@ -774,8 +774,6 @@ namespace Keysharp.Core
 		internal bool allowInterruption = true;
 		internal ConcurrentDictionary<string, IFuncObj> cachedFuncObj = new ();
 		internal bool callingCritical;
-		internal volatile bool hasExited;
-		internal int lastLoopDoEvents = Environment.TickCount;
 		internal Timer1 mainTimer;
 		internal int NoSleep = -1;
 		internal bool persistentValueSetByUser;

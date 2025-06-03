@@ -79,13 +79,20 @@
 		public object Wait(object obj = null)
 		{
 			var timeout = obj.Ai(-1);
+			var start = DateTime.UtcNow;
 
-			if (timeout > 0)
-				_ = task.Wait(timeout);
-			else
-				task.Wait();
+			while (!task.IsCompleted && (timeout < 0 || (DateTime.UtcNow - start).Milliseconds < timeout))
+				Flow.TryDoEvents();
 
-			return task.Result;
+			try
+			{
+				return task.Result;
+			} 
+			catch (AggregateException ae)
+			{
+				// Mostly looking for UserRequestedExitException
+				throw ae.InnerException?.InnerException ?? ae.InnerException;
+			}
 		}
 	}
 }
