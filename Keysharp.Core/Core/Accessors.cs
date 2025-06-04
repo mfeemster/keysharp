@@ -752,14 +752,14 @@
 			get
 			{
 				var s = Loops.LoopStack;
-				return s.Count > 0 ? s.Peek().index : default;
+				return s.TryPeek(out var result) ? result.index : default;
 			}
 			set
 			{
 				var s = Loops.LoopStack;
 
-				if (s.Count > 0)
-					s.Peek().index = value.Al();
+				if (s.TryPeek(out var result))
+					result.index = value.Al();
 			}
 		}
 
@@ -2227,7 +2227,7 @@
 		/// <summary>
 		/// Whether the script has exited yet.
 		/// </summary>
-		public static bool A_HasExited => Script.TheScript.FlowData.hasExited;
+		public static bool A_HasExited => Script.TheScript.hasExited;
 
 		/// <summary>
 		/// The path to Keysharp.Core.Dll

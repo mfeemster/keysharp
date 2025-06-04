@@ -22,6 +22,9 @@ namespace Keysharp.Scripting
 		private static Encoding enc1252 = Encoding.Default;
 #endif
 		public const char dotNetMajorVersion = '9';
+		internal System.Timers.Timer tickTimer = new System.Timers.Timer(SLEEP_INTERVAL);
+		internal volatile bool loopShouldDoEvents = false;
+		internal volatile bool hasExited = false;
 		public bool ForceKeybdHook;
 		public string[] KeysharpArgs = [];
 		public uint MaxThreadsTotal = 12u;
@@ -211,6 +214,15 @@ namespace Keysharp.Scripting
 			//Init the API classes, passing in this which will be used to access their respective data objects.
 			Reflections = new ();
 			SetInitialFloatFormat();//This must be done intially and not just when A_FormatFloat is referenced for the first time.
+
+			tickTimer.Elapsed += TickTimerCallback;
+			tickTimer.Start();
+		}
+
+		[DebuggerStepThrough]
+		void TickTimerCallback(object sender, EventArgs e)
+		{
+			loopShouldDoEvents = true;
 		}
 
 		private void LoadDlls()
@@ -359,8 +371,8 @@ namespace Keysharp.Scripting
 			_ = mainWindow.BeginInvoke(() =>
 			{
 				if (!Flow.TryCatch(() =>
-			{
-				var (__pushed, __btv) = Threads.BeginThread();
+				{
+					var (__pushed, __btv) = Threads.BeginThread();
 					_ = userInit();
 					//HotkeyDefinition.ManifestAllHotkeysHotstringsHooks() will be called inside of userInit() because it
 					//must be done:
