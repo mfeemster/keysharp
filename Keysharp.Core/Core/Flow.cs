@@ -145,7 +145,7 @@ namespace Keysharp.Core
 			//Use Environment.TickCount because it's the fastest and we don't want to add extra time to each loop.
 			//Its precision is around 15ms which is the amount we're testing for, so it should be ok.
 			//https://stackoverflow.com/questions/243351/environment-tickcount-vs-datetime-now
-			if (b && !script.tickTimer.Enabled)
+			if (b && script.loopShouldDoEvents)
 			{
 				TryDoEvents(true, false);
 			}
@@ -430,6 +430,7 @@ namespace Keysharp.Core
 		public static void TryDoEvents(bool allowExit = true, bool yieldTick = true)
 		{
 			var start = yieldTick ? Environment.TickCount : default;
+			Script.TheScript.loopShouldDoEvents = false;
 
 			if (allowExit)
 			{
