@@ -23,6 +23,8 @@ namespace Keysharp.Core
 
 		/// <summary>
 		/// Performs one or more statements repeatedly: either the specified number of times or until break is encountered.
+		/// The inner loops can be broken out of by the calling if the program exits because it will be calling IsTrueAndRunning()
+		/// on each iteration.
 		/// </summary>
 		/// <param name="n">How many times (iterations) to perform the loop. -1 to iterate indefinitely.</param>
 		/// <returns>Yield return an <see cref="IEnumerable"/> which allows the caller can run the loop.</returns>
@@ -138,7 +140,7 @@ namespace Keysharp.Core
 			var omit = omitChars.As();
 			var info = Peek(LoopType.Parse);//The calling code must have called Push() with this type.
 			var script = Script.TheScript;
-			
+
 			if (delimiters.ToLowerInvariant() == Keyword_CSV)
 			{
 				var reader = new StringReader(i);
@@ -454,11 +456,13 @@ namespace Keysharp.Core
 
 				return Errors.ErrorOccurred(err = new UnsetError($"__Enum() could not be located on the object.")) ? throw err : null;
 			}
+
 #if WINDOWS
 			else if (Marshal.IsComObject(obj))
 			{
 				return new ComEnumerator(obj, ct);
 			}
+
 #endif
 			else if (obj is null)
 				return Errors.ErrorOccurred(err = new UnsetError($"Object was null and could not be converted to a KeysharpEnumerator.")) ? throw err : null;

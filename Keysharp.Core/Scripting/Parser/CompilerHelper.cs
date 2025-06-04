@@ -343,36 +343,35 @@ using static Keysharp.Scripting.Script;
 					if (currentDepsConfigPath != null)
 					{
 						allDependencies = CompilerHelper.GetCompiledScriptDependencies(currentDepsConfigPath);
-
 						resourceDescriptions = allDependencies
-							.Where(path =>
+											   .Where(path =>
+						{
+							switch (Path.GetFileName(path).ToUpper())
 							{
-								switch (Path.GetFileName(path).ToUpper())
-								{
-									// Exclude Keysharp.Core because it needs to dynamically load the other
-									// embedded assemblies and native libraries.
-									case "KEYSHARP.CORE.DLL":
+								// Exclude Keysharp.Core because it needs to dynamically load the other
+								// embedded assemblies and native libraries.
+								case "KEYSHARP.CORE.DLL":
 
-									// The following would need to be included if dynamic compilation
-									// is desired by the resulting executable.
-									case "MICROSOFT.CODEANALYSIS.DLL":
-									case "MICROSOFT.CODEANALYSIS.CSHARP.DLL":
-									case "MICROSOFT.CODEDOM.PROVIDERS.DOTNETCOMPILERPLATFORM.DLL":
-									case "MICROSOFT.NET.HOSTMODEL.DLL":
-										return false;
+								// The following would need to be included if dynamic compilation
+								// is desired by the resulting executable.
+								case "MICROSOFT.CODEANALYSIS.DLL":
+								case "MICROSOFT.CODEANALYSIS.CSHARP.DLL":
+								case "MICROSOFT.CODEDOM.PROVIDERS.DOTNETCOMPILERPLATFORM.DLL":
+								case "MICROSOFT.NET.HOSTMODEL.DLL":
+									return false;
 
-									default:
-										return true;
-								}
-							})
-							.Select(path =>
-									new ResourceDescription(
-								// Prefix with Deps to avoid any naming conflicts. Not sure if this is needed.
-								resourceName: "Deps." + Path.GetFileName(path),
-								dataProvider: () => File.OpenRead(path),
-								isPublic: true
-							)
-						);
+								default:
+									return true;
+							}
+						})
+						.Select(path =>
+								new ResourceDescription(
+							// Prefix with Deps to avoid any naming conflicts. Not sure if this is needed.
+							resourceName: "Deps." + Path.GetFileName(path),
+							dataProvider: () => File.OpenRead(path),
+							isPublic: true
+						)
+							   );
 					}
 				}
 
@@ -450,21 +449,18 @@ using static Keysharp.Scripting.Script;
 				        </asmv3:application>
 				    </assembly>";
 				EmitResult compilationResult = null;
+
 				using (var manifestStream = new MemoryStream())
 				{
 					var writer = new StreamWriter(manifestStream);
 					writer.Write(manifestContents);
 					writer.Flush();
 					manifestStream.Position = 0;
-
-					using (var msi = Assembly.GetEntryAssembly().GetManifestResourceStream("Keysharp.Keysharp.ico"))
-					{
-						using (var res = compilation.CreateDefaultWin32Resources(true, false, manifestStream, msi))
-						{//The first argument must be true to embed version/assembly information.
-							compilationResult = compilation.Emit(ms, win32Resources: res, manifestResources: resourceDescriptions);
-						}
-					};
+					using var msi = Assembly.GetEntryAssembly().GetManifestResourceStream("Keysharp.Keysharp.ico");
+					using var res = compilation.CreateDefaultWin32Resources(true, false, manifestStream, msi);//The first argument must be true to embed version/assembly information.
+					compilationResult = compilation.Emit(ms, win32Resources: res, manifestResources: resourceDescriptions);
 				}
+
 				return (compilationResult, ms, null);
 			}
 			catch (Exception e)
@@ -582,13 +578,11 @@ using static Keysharp.Scripting.Script;
 
 			var asm = Assembly.GetExecutingAssembly();
 			exeDir ??= Path.GetFullPath(Path.GetDirectoryName(asm.Location.IsNullOrEmpty() ? Environment.ProcessPath : asm.Location));
-
 			var (domunits, domerrs) = CreateDomFromFile(fileNames);
 
 			if (domerrs.HasErrors)
 			{
 				var (errors, warnings) = GetCompilerErrors(domerrs);
-
 				var sb = new StringBuilder(1024);
 				_ = sb.AppendLine($"Compiling script to DOM failed.");
 
@@ -609,7 +603,6 @@ using static Keysharp.Scripting.Script;
 			}
 
 			code = UsingStr + code;
-
 			var (results, ms, compileexc) = Compile(code, nameNoExt, exeDir, minimalexeout);
 
 			try
@@ -628,7 +621,7 @@ using static Keysharp.Scripting.Script;
 				{
 					return (null, HandleCompilerErrors(results.Diagnostics, nameNoExt, "Compiling C# code to executable", compileexc != null ? compileexc.Message : string.Empty) + "\n" + code);
 				}
-			} 
+			}
 			finally
 			{
 				ms?.Dispose();

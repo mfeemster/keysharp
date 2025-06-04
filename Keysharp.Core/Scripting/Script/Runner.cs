@@ -198,7 +198,7 @@
 					{
 						return HandleCompilerErrors(results.Diagnostics, scriptName, path, "Compiling C# code to executable", compileexc != null ? compileexc.Message : string.Empty);
 					}
-				} 
+				}
 				finally
 				{
 					ms?.Dispose();

@@ -87,7 +87,7 @@
 			try
 			{
 				return task.Result;
-			} 
+			}
 			catch (AggregateException ae)
 			{
 				// Mostly looking for UserRequestedExitException
