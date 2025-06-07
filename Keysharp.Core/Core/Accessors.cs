@@ -89,7 +89,6 @@
 				if (val.HasValue)
 				{
 					var script = Script.TheScript;
-
 					script.AccessorData.allowMainWindow = val.Value;
 					script.openMenuItem.Visible = val.Value;
 
@@ -337,7 +336,7 @@
 			{
 				var val = value.Al();
 				var script = Script.TheScript;
-			
+
 				if (!script.IsReadyToExecute)
 					script.AccessorData.controlDelay = val;
 
@@ -358,7 +357,7 @@
 				Error err;
 				var val = CoordModeType.Client;
 				var script = Script.TheScript;
-			
+
 				if (value is CoordModeType cmt)
 					val = cmt;
 				else if (Enum.TryParse(value.As(), out cmt))
@@ -389,7 +388,7 @@
 				Error err;
 				var val = CoordModeType.Client;
 				var script = Script.TheScript;
-			
+
 				if (value is CoordModeType cmt)
 					val = cmt;
 				else if (Enum.TryParse(value.As(), out cmt))
@@ -420,7 +419,7 @@
 				Error err;
 				var val = CoordModeType.Client;
 				var script = Script.TheScript;
-			
+
 				if (value is CoordModeType cmt)
 					val = cmt;
 				else if (Enum.TryParse(value.As(), out cmt))
@@ -451,7 +450,7 @@
 				Error err;
 				var val = CoordModeType.Client;
 				var script = Script.TheScript;
-			
+
 				if (value is CoordModeType cmt)
 					val = cmt;
 				else if (Enum.TryParse(value.As(), out cmt))
@@ -482,7 +481,7 @@
 				Error err;
 				var val = CoordModeType.Client;
 				var script = Script.TheScript;
-			
+
 				if (value is CoordModeType cmt)
 					val = cmt;
 				else if (Enum.TryParse(value.As(), out cmt))
@@ -541,7 +540,7 @@
 			{
 				var val = value.Al();
 				var script = Script.TheScript;
-			
+
 				if (!script.IsReadyToExecute)
 					script.AccessorData.defaultMouseSpeed = val;
 
@@ -574,7 +573,7 @@
 				{
 					var b = val.Value.Ab();
 					var script = Script.TheScript;
-			
+
 					if (!script.IsReadyToExecute)
 						script.AccessorData.detectHiddenText = b;
 
@@ -598,7 +597,7 @@
 				{
 					var b = val.Value.Ab();
 					var script = Script.TheScript;
-			
+
 					if (!script.IsReadyToExecute)
 						script.AccessorData.detectHiddenWindows = b;
 
@@ -641,7 +640,7 @@
 			{
 				var val = Files.GetEncoding(value.ToString());
 				var script = Script.TheScript;
-			
+
 				if (!script.IsReadyToExecute)
 					script.AccessorData.fileEncoding = val;
 
@@ -693,7 +692,7 @@
 			set
 			{
 				var script = Script.TheScript;
-			
+
 				if (script.NoTrayIcon)
 					return;
 
@@ -752,14 +751,14 @@
 			get
 			{
 				var s = Loops.LoopStack;
-				return s.Count > 0 ? s.Peek().index : default;
+				return s.TryPeek(out var result) ? result.index : default;
 			}
 			set
 			{
 				var s = Loops.LoopStack;
 
-				if (s.Count > 0)
-					s.Peek().index = value.Al();
+				if (s.TryPeek(out var result))
+					result.index = value.Al();
 			}
 		}
 
@@ -874,7 +873,7 @@
 			{
 				var val = value.Al();
 				var script = Script.TheScript;
-			
+
 				if (!script.IsReadyToExecute)
 					script.AccessorData.keyDelay = val;
 
@@ -893,7 +892,7 @@
 			{
 				var val = value.Al();
 				var script = Script.TheScript;
-			
+
 				if (!script.IsReadyToExecute)
 					script.AccessorData.keyDelayPlay = val;
 
@@ -912,7 +911,7 @@
 			{
 				var val = value.Al();
 				var script = Script.TheScript;
-			
+
 				if (!script.IsReadyToExecute)
 					script.AccessorData.keyDuration = val;
 
@@ -931,7 +930,7 @@
 			{
 				var val = value.Al();
 				var script = Script.TheScript;
-			
+
 				if (!script.IsReadyToExecute)
 					script.AccessorData.keyDurationPlay = val;
 
@@ -1426,7 +1425,7 @@
 			{
 				var val = value.Al();
 				var script = Script.TheScript;
-			
+
 				if (!script.IsReadyToExecute)
 					script.AccessorData.mouseDelay = val;
 
@@ -1445,7 +1444,7 @@
 			{
 				var val = value.Al();
 				var script = Script.TheScript;
-			
+
 				if (!script.IsReadyToExecute)
 					script.AccessorData.mouseDelayPlay = val;
 
@@ -1512,7 +1511,7 @@
 			{
 				var val = value.Al();
 				var script = Script.TheScript;
-			
+
 				if (!script.IsReadyToExecute)
 					script.AccessorData.peekFrequency = val;
 
@@ -1574,7 +1573,7 @@
 			{
 				var val = value is string s && s.Equals("default", StringComparison.CurrentCultureIgnoreCase) ? 64L : value.Al() == 32L ? 32L : 64L;
 				var script = Script.TheScript;
-			
+
 				if (!script.IsReadyToExecute)
 					script.AccessorData.regView = val;
 
@@ -1621,7 +1620,7 @@
 			get
 			{
 				var script = Script.TheScript;
-			
+
 				if (A_IsCompiled)
 					return Path.GetDirectoryName(GetAssembly().Location);
 				else if (script.scriptName == "*")
@@ -1663,7 +1662,7 @@
 			{
 				var val = (uint)Math.Clamp(value.Al(), 0L, 100L);
 				var script = Script.TheScript;
-			
+
 				if (!script.IsReadyToExecute)
 					script.AccessorData.sendLevel = val;
 
@@ -1684,7 +1683,7 @@
 				if (Enum.TryParse<SendModes>(value.As(), out var val))
 				{
 					var script = Script.TheScript;
-			
+
 					if (!script.IsReadyToExecute)
 						script.AccessorData.sendMode = val;
 
@@ -1732,7 +1731,7 @@
 				if (val != null)
 				{
 					var script = Script.TheScript;
-			
+
 					if (!script.IsReadyToExecute)
 						script.AccessorData.storeCapsLockMode = val.Value;
 
@@ -1848,7 +1847,7 @@
 			set
 			{
 				var script = Script.TheScript;
-			
+
 				if (!script.IsReadyToExecute)
 					script.AccessorData.titleMatchMode = value;
 
@@ -1867,7 +1866,7 @@
 			{
 				var val = false;
 				var script = Script.TheScript;
-			
+
 				switch (value.ToString().ToLowerInvariant())
 				{
 					case Keyword_Fast: val = true; break;
@@ -1908,7 +1907,7 @@
 			{
 				var val = value.Al();
 				var script = Script.TheScript;
-			
+
 				if (!script.IsReadyToExecute)
 					script.AccessorData.winDelay = val;
 
@@ -2227,7 +2226,7 @@
 		/// <summary>
 		/// Whether the script has exited yet.
 		/// </summary>
-		public static bool A_HasExited => Script.TheScript.FlowData.hasExited;
+		public static bool A_HasExited => Script.TheScript.hasExited;
 
 		/// <summary>
 		/// The path to Keysharp.Core.Dll

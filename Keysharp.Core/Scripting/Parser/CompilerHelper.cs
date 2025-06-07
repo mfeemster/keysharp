@@ -327,50 +327,52 @@ using static Keysharp.Scripting.Script;
 				var coreDir = Path.GetDirectoryName(typeof(object).GetTypeInfo().Assembly.Location);
 				var desktopDir = Path.GetDirectoryName(typeof(Form).GetTypeInfo().Assembly.Location);
 				var ksCoreDir = Path.GetDirectoryName(A_KeysharpCorePath);
-				var currentDepsConfigPath = Path.Combine(ksCoreDir ?? "", $"{Assembly.GetEntryAssembly().GetName().Name}.deps.json");
 
-				if (!File.Exists(currentDepsConfigPath))
+				if (minimalexeout)
 				{
-					currentDepsConfigPath = Path.Combine(currentDir, $"{Assembly.GetEntryAssembly().GetName().Name}.deps.json");
+					var currentDepsConfigPath = Path.Combine(ksCoreDir ?? "", $"{Assembly.GetEntryAssembly().GetName().Name}.deps.json");
 
 					if (!File.Exists(currentDepsConfigPath))
-						currentDepsConfigPath = null;
-				}
+					{
+						currentDepsConfigPath = Path.Combine(currentDir, $"{Assembly.GetEntryAssembly().GetName().Name}.deps.json");
 
-				if (currentDepsConfigPath != null)
-				{
-					allDependencies = CompilerHelper.GetCompiledScriptDependencies(currentDepsConfigPath);
+						if (!File.Exists(currentDepsConfigPath))
+							currentDepsConfigPath = null;
+					}
 
-					if (minimalexeout)
+					if (currentDepsConfigPath != null)
+					{
+						allDependencies = CompilerHelper.GetCompiledScriptDependencies(currentDepsConfigPath);
 						resourceDescriptions = allDependencies
 											   .Where(path =>
-					{
-						switch (Path.GetFileName(path).ToUpper())
 						{
-							// Exclude Keysharp.Core because it needs to dynamically load the other
-							// embedded assemblies and native libraries.
-							case "KEYSHARP.CORE.DLL":
+							switch (Path.GetFileName(path).ToUpper())
+							{
+								// Exclude Keysharp.Core because it needs to dynamically load the other
+								// embedded assemblies and native libraries.
+								case "KEYSHARP.CORE.DLL":
 
-							// The following would need to be included if dynamic compilation
-							// is desired by the resulting executable.
-							case "MICROSOFT.CODEANALYSIS.DLL":
-							case "MICROSOFT.CODEANALYSIS.CSHARP.DLL":
-							case "MICROSOFT.CODEDOM.PROVIDERS.DOTNETCOMPILERPLATFORM.DLL":
-							case "MICROSOFT.NET.HOSTMODEL.DLL":
-								return false;
+								// The following would need to be included if dynamic compilation
+								// is desired by the resulting executable.
+								case "MICROSOFT.CODEANALYSIS.DLL":
+								case "MICROSOFT.CODEANALYSIS.CSHARP.DLL":
+								case "MICROSOFT.CODEDOM.PROVIDERS.DOTNETCOMPILERPLATFORM.DLL":
+								case "MICROSOFT.NET.HOSTMODEL.DLL":
+									return false;
 
-							default:
-								return true;
-						}
-					})
-					.Select(path =>
-							new ResourceDescription(
-						// Prefix with Deps to avoid any naming conflicts. Not sure if this is needed.
-						resourceName: "Deps." + Path.GetFileName(path),
-						dataProvider: () => File.OpenRead(path),
-						isPublic: true
-					)
-						   );
+								default:
+									return true;
+							}
+						})
+						.Select(path =>
+								new ResourceDescription(
+							// Prefix with Deps to avoid any naming conflicts. Not sure if this is needed.
+							resourceName: "Deps." + Path.GetFileName(path),
+							dataProvider: () => File.OpenRead(path),
+							isPublic: true
+						)
+							   );
+					}
 				}
 
 				// should probably try to extract these from deps.json as well, TODO
@@ -388,31 +390,10 @@ using static Keysharp.Scripting.Script;
 					MetadataReference.CreateFromFile(Path.Combine(desktopDir, "System.Windows.Forms.dll")),
 				};
 
-				// allDependencies has been loaded from a deps.json file and thus should contain all
-				// the necessary dependencies for Keysharp.Core to function.
-				if (allDependencies != null)
-				{
-					references.AddRange(
-						allDependencies
-						// Filter out any non-managed files
-						.Where((string dep) =>
-					{
-						try
-						{
-							AssemblyName.GetAssemblyName(dep);
-							return true;
-						}
-						catch
-						{
-							return false;
-						}
-					})
-					.Select(dep => MetadataReference.CreateFromFile(dep))
-					);
-				}
-				// Otherwise default to Keysharp.Core.dll folder and read metadata from known required
-				// dependencies.
-				else if (ksCoreDir != null)
+				// Do not load metadata from all dependencies, but just a select few. We need the metadata
+				// for only those dependencies which types an user script can have contact with. Loading
+				// metadata for unnecessary deps like Microsoft.CodeAnalysis leads to slowdowns because of huge file sizes.
+				if (ksCoreDir != null)
 				{
 					//This will be the build output folder when running from within the debugger, and the install folder when running from an installation.
 					//Note that Keysharp.Core.dll and System.CodeDom.dll *must* remain in that location for a compiled executable to work.
@@ -467,14 +448,19 @@ using static Keysharp.Scripting.Script;
 				            </asmv3:windowsSettings>
 				        </asmv3:application>
 				    </assembly>";
-				var manifestStream = new MemoryStream();
-				var writer = new StreamWriter(manifestStream);
-				writer.Write(manifestContents);
-				writer.Flush();
-				manifestStream.Position = 0;
-				var msi = Assembly.GetEntryAssembly().GetManifestResourceStream("Keysharp.Keysharp.ico");
-				var res = compilation.CreateDefaultWin32Resources(true, false, manifestStream, msi);//The first argument must be true to embed version/assembly information.
-				var compilationResult = compilation.Emit(ms, win32Resources: res, manifestResources: resourceDescriptions);
+				EmitResult compilationResult = null;
+
+				using (var manifestStream = new MemoryStream())
+				{
+					var writer = new StreamWriter(manifestStream);
+					writer.Write(manifestContents);
+					writer.Flush();
+					manifestStream.Position = 0;
+					using var msi = Assembly.GetEntryAssembly().GetManifestResourceStream("Keysharp.Keysharp.ico");
+					using var res = compilation.CreateDefaultWin32Resources(true, false, manifestStream, msi);//The first argument must be true to embed version/assembly information.
+					compilationResult = compilation.Emit(ms, win32Resources: res, manifestResources: resourceDescriptions);
+				}
+
 				return (compilationResult, ms, null);
 			}
 			catch (Exception e)
@@ -592,13 +578,11 @@ using static Keysharp.Scripting.Script;
 
 			var asm = Assembly.GetExecutingAssembly();
 			exeDir ??= Path.GetFullPath(Path.GetDirectoryName(asm.Location.IsNullOrEmpty() ? Environment.ProcessPath : asm.Location));
-
 			var (domunits, domerrs) = CreateDomFromFile(fileNames);
 
 			if (domerrs.HasErrors)
 			{
 				var (errors, warnings) = GetCompilerErrors(domerrs);
-
 				var sb = new StringBuilder(1024);
 				_ = sb.AppendLine($"Compiling script to DOM failed.");
 
@@ -619,21 +603,28 @@ using static Keysharp.Scripting.Script;
 			}
 
 			code = UsingStr + code;
-
 			var (results, ms, compileexc) = Compile(code, nameNoExt, exeDir, minimalexeout);
 
-			if (results == null)
+			try
 			{
-				return (null, $"Error compiling C# code to executable: {(compileexc != null ? compileexc.Message : string.Empty)}\n\n{code}");
+				if (results == null)
+				{
+					return (null, $"Error compiling C# code to executable: {(compileexc != null ? compileexc.Message : string.Empty)}\n\n{code}");
+				}
+				else if (results.Success)
+				{
+					_ = ms.Seek(0, SeekOrigin.Begin);
+					ms.Dispose();
+					return (ms.ToArray(), code);
+				}
+				else
+				{
+					return (null, HandleCompilerErrors(results.Diagnostics, nameNoExt, "Compiling C# code to executable", compileexc != null ? compileexc.Message : string.Empty) + "\n" + code);
+				}
 			}
-			else if (results.Success)
+			finally
 			{
-				_ = ms.Seek(0, SeekOrigin.Begin);
-				return (ms.ToArray(), code);
-			}
-			else
-			{
-				return (null, HandleCompilerErrors(results.Diagnostics, nameNoExt, "Compiling C# code to executable", compileexc != null ? compileexc.Message : string.Empty) + "\n" + code);
+				ms?.Dispose();
 			}
 		}
 
