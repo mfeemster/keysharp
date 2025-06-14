@@ -222,7 +222,7 @@ namespace Keysharp.Main
 
 				byte[] arr = null;
 				string result = null;
-				(arr, result) = ch.CompileCodeToByteArray([scriptName], namenoext, exeDir, minimalexeout, true);
+				(arr, result) = ch.CompileCodeToByteArray([scriptName], namenoext, exeDir, minimalexeout);
 
 #if DEBUG
 				Core.Debug.OutputDebug($"Compile time: {sw.ElapsedMilliseconds} ms");

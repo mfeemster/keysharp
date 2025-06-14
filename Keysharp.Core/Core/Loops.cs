@@ -19,11 +19,13 @@ namespace Keysharp.Core
 		public static long Inc()
 		{
 			var s = Script.TheScript.LoopData.loopStack.Value;
-			return s.Count > 0 ? ++s.Peek().index : 0;
+			return s.TryPeek(out var l) ? ++l.index : 0L;
 		}
 
 		/// <summary>
 		/// Performs one or more statements repeatedly: either the specified number of times or until break is encountered.
+		/// The inner loops can be broken out of by the calling if the program exits because it will be calling IsTrueAndRunning()
+		/// on each iteration.
 		/// </summary>
 		/// <param name="n">How many times (iterations) to perform the loop. -1 to iterate indefinitely.</param>
 		/// <returns>Yield return an <see cref="IEnumerable"/> which allows the caller can run the loop.</returns>
@@ -33,16 +35,15 @@ namespace Keysharp.Core
 			{
 				var n = obj.Al();
 				var info = Peek(LoopType.Normal);//The calling code must have called Push() with this type.
-				var script = Script.TheScript;
-				
+
 				if (n != -1)
 				{
-					for (; info.index < n && !script.FlowData.hasExited;)//Check info.index because the caller can change A_Index inside of the loop.
+					for (; info.index < n;)//Check info.index because the caller can change A_Index inside of the loop.
 						yield return ++info.index;
 				}
 				else
 				{
-					while (!script.FlowData.hasExited)
+					while (true)
 						yield return ++info.index;
 				}
 
@@ -101,9 +102,6 @@ namespace Keysharp.Core
 
 			foreach (var file in GetFiles(dir, pattern, d, f, r))
 			{
-				if (Script.TheScript.FlowData.hasExited)
-					break;
-
 				info.file = file;
 				info.index++;
 				yield return file;
@@ -121,7 +119,7 @@ namespace Keysharp.Core
 		public static long LoopIndex()
 		{
 			var s = Script.TheScript.LoopData.loopStack.Value;
-			return s.Count > 0 ? s.Peek().index : 0;
+			return s.TryPeek(out var l) ? l.index : 0;
 		}
 
 		/// <summary>
@@ -143,7 +141,7 @@ namespace Keysharp.Core
 			var omit = omitChars.As();
 			var info = Peek(LoopType.Parse);//The calling code must have called Push() with this type.
 			var script = Script.TheScript;
-			
+
 			if (delimiters.ToLowerInvariant() == Keyword_CSV)
 			{
 				var reader = new StringReader(i);
@@ -204,7 +202,7 @@ namespace Keysharp.Core
 					info.index++;
 					yield return result;
 
-					if (current == -1 || script.FlowData.hasExited)
+					if (current == -1)
 						break;
 				}
 			}
@@ -221,9 +219,6 @@ namespace Keysharp.Core
 
 				foreach (var part in parts)
 				{
-					if (script.FlowData.hasExited)
-						break;
-
 					info.result = part;
 					info.index++;
 					yield return part;
@@ -262,9 +257,6 @@ namespace Keysharp.Core
 
 				while ((line = reader.ReadLine()) != null)
 				{
-					if (Script.TheScript.FlowData.hasExited)
-						break;
-
 					info.line = line;
 					info.index++;
 					yield return line;
@@ -323,9 +315,6 @@ namespace Keysharp.Core
 				{
 					foreach (var val in GetSubKeys(info, subkey, k, v))
 					{
-						if (script.FlowData.hasExited)
-							break;
-
 						yield return val;
 					}
 				}
@@ -335,9 +324,6 @@ namespace Keysharp.Core
 					{
 						foreach (var valueName in subkey.GetValueNames().Reverse())
 						{
-							if (script.FlowData.hasExited)
-								break;
-
 							info.index++;
 							info.regVal = subkey.GetValue(valueName, string.Empty, RegistryValueOptions.DoNotExpandEnvironmentNames);
 
@@ -354,9 +340,6 @@ namespace Keysharp.Core
 					{
 						foreach (var subKeyName in subkey.GetSubKeyNames().Reverse())//AHK spec says the subkeys and values are returned in reverse.
 						{
-							if (script.FlowData.hasExited)
-								break;
-
 							using (var tempKey = subkey.OpenSubKey(subKeyName, false))
 							{
 								info.index++;
@@ -474,11 +457,13 @@ namespace Keysharp.Core
 
 				return Errors.ErrorOccurred(err = new UnsetError($"__Enum() could not be located on the object.")) ? throw err : null;
 			}
+
 #if WINDOWS
 			else if (Marshal.IsComObject(obj))
 			{
 				return new ComEnumerator(obj, ct);
 			}
+
 #endif
 			else if (obj is null)
 				return Errors.ErrorOccurred(err = new UnsetError($"Object was null and could not be converted to a KeysharpEnumerator.")) ? throw err : null;
@@ -521,9 +506,8 @@ namespace Keysharp.Core
         public static LoopInfo Pop()
 		{
 			var s = Script.TheScript.LoopData.loopStack.Value;
-			var info = s.Count > 0 ? s.Pop() : null;
 
-			if (info != null && info.type == LoopType.File && info.sw != null)
+			if (s.TryPop(out var info) && info != null && info.type == LoopType.File && info.sw != null)
 				info.sw.Close();
 
 			return info;
@@ -551,15 +535,12 @@ namespace Keysharp.Core
 		{
 			var s = Script.TheScript.LoopData.loopStack.Value;
 
-			if (s.Count > 0)
+			foreach (var l in s)
 			{
-				foreach (var l in s)
+				switch (l.type)
 				{
-					switch (l.type)
-					{
-						case LoopType.Directory:
-							return l;
-					}
+					case LoopType.Directory:
+						return l;
 				}
 			}
 

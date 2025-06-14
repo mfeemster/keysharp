@@ -36,8 +36,7 @@ namespace Keysharp.Tests
 			s.SetName(name);
 			_ = Core.Debug.OutputDebug(Environment.CurrentDirectory);
 			var ch = new CompilerHelper();
-
-			var (arr, code) = ch.CompileCodeToByteArray([source], name, sameAssemblyOptimizations: true);
+			var (arr, code) = ch.CompileCodeToByteArray([source], name);
 
 			if (arr == null)
 			{
@@ -57,7 +56,6 @@ namespace Keysharp.Tests
 			}
 
 			CompilerHelper.compiledasm = Assembly.Load(arr);
-
 			var buffer = new StringBuilder();
 			var output = string.Empty;
 
@@ -68,6 +66,8 @@ namespace Keysharp.Tests
 					try
 					{
 						Console.SetOut(writer);
+						GC.Collect(); //Necessary to prevent testhost.exe throwing an error on long runs
+						GC.WaitForPendingFinalizers();
 
 						if (CompilerHelper.compiledasm == null)
 							throw new Exception("Compilation failed.");

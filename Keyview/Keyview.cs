@@ -631,6 +631,8 @@
 						SetFailure();
 						SetTxtOut(CompilerHelper.HandleCompilerErrors(results.Diagnostics, "Keyview", "Compiling C# code to executable", compileexc != null ? compileexc.Message : string.Empty) + "\n" + code);
 					}
+
+					ms?.Dispose();
 				}
 				catch
 				{

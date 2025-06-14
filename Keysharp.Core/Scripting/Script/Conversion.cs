@@ -15,10 +15,6 @@ namespace Keysharp.Scripting
 
 			if (input is bool b)
 				return b;
-
-			if (input == null)
-				return false;
-
 			var pb = input.ParseBool();
 
 			if (pb.HasValue)
