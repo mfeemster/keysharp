@@ -169,6 +169,9 @@
 						gb.Text = s;
 					else
 						_control.Text = s;
+
+					if (ParentForm.Visible == true)
+						_control.Refresh();
 				}
 			}
 
@@ -389,6 +392,9 @@
 							}
 						}
 					}
+
+					if (ParentForm.Visible == true)
+						_control.Refresh();
 				}
 			}
 
