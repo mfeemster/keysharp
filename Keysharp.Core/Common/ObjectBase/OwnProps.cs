@@ -91,7 +91,7 @@
 			iter = map.GetEnumerator();
 		}
 
-		public override object Call(object obj0)
+		public override object Call([ByRef] object obj0)
 		{
 			if (MoveNext())
 			{
@@ -103,7 +103,7 @@
 			return false;
 		}
 
-		public override object Call(object obj0, object obj1)
+		public override object Call([ByRef] object obj0, [ByRef] object obj1)
 		{
 			if (MoveNext())
 			{

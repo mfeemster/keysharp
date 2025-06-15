@@ -410,7 +410,7 @@ namespace Keysharp.Scripting
 
 					return ifo2.CallInst(mitup.Item1, parameters);
 				}
-				else if (mitup.Item2 is KeysharpObject kso && !methName.Equals("Call", StringComparison.OrdinalIgnoreCase))
+				else if (mitup.Item2 is KeysharpObject kso)
 				{
                     int count = parameters.Length;
                     object[] args = new object[count + 1];

@@ -26,12 +26,35 @@ namespace Keysharp.Core.Common.ObjectBase
 			}
 			return list.ToArray();
 			}
-		MethodInfo IReflect.GetMethod(string name, BindingFlags bindingAttr) => null;
+		MethodInfo IReflect.GetMethod(string name, BindingFlags bindingAttr)
+		{
+			// Look through the methods you already return in GetMethods(...)
+			return ((IReflect)this)
+				.GetMethods(bindingAttr)
+				.FirstOrDefault(m =>
+					string.Equals(m.Name, name, StringComparison.OrdinalIgnoreCase));
+		}
 		MethodInfo IReflect.GetMethod(string name, BindingFlags bindingAttr, Binder binder, Type[] types, ParameterModifier[] modifiers) => null;
 		MethodInfo[] IReflect.GetMethods(BindingFlags bindingAttr)
 		{
 			List<MethodInfo> meths = new();
 			KeysharpObject kso = this;
+
+			if (kso is FuncObj sfo && sfo != null)
+			{
+				var mi = sfo.Mph.mi;
+				if (mi.GetParameters()
+					.Any(p => p.IsDefined(typeof(ByRefAttribute), inherit: false)))
+				{
+					mi = ByRefWrapper.Create(mi);
+				}
+
+				if (sfo.Mph.mi.Name.Equals(sfo.Name, StringComparison.OrdinalIgnoreCase))
+					meths.Add(sfo.Mph.mi);
+				else
+					meths.Add(new RenamedMethodInfo(sfo.Mph.mi, sfo.Name));
+			}
+
 			if (Script.TryGetProps(this, out var props, true, OwnPropsMapType.Call))
 			{
 				foreach (var prop in props)
@@ -39,6 +62,13 @@ namespace Keysharp.Core.Common.ObjectBase
 					var opm = prop.Value;
 					if (opm.Call is FuncObj fo && fo != null)
 					{
+						var mi = fo.Mph.mi;
+						if (mi.GetParameters()
+							.Any(p => p.IsDefined(typeof(ByRefAttribute), inherit: false)))
+						{
+							mi = ByRefWrapper.Create(mi);
+						}
+
 						if (fo.Mph.mi.Name.Equals(prop.Key, StringComparison.OrdinalIgnoreCase))
 							meths.Add(fo.Mph.mi);
 						else
@@ -119,6 +149,8 @@ namespace Keysharp.Core.Common.ObjectBase
 			if (args == null)
 				args = [];
 
+			object[] usedArgs = args;
+
 			var argCount = args.Length;
 
 			if (args.Length > 0 && args[ ^ 1] is object[] tail && tail != null)
@@ -130,7 +162,8 @@ namespace Keysharp.Core.Common.ObjectBase
 				var result = new object[headCount + tailCount];
 				System.Array.Copy(args, 0, result, 0, headCount);
 				System.Array.Copy(tail, 0, result, headCount, tailCount);
-				args = result;
+				usedArgs = result;
+				argCount = result.Length;
 			}
 
 			for (int i = 0; i < argCount; i++)
@@ -138,9 +171,9 @@ namespace Keysharp.Core.Common.ObjectBase
 				var val = args[i];
 
 				if (val is System.Reflection.Missing)
-					args[i] = null;
+					usedArgs[i] = null;
 				else if (val is float f)
-					args[i] = (double)f;
+					usedArgs[i] = (double)f;
 				else if (val is IConvertible conv)
 				{
 					switch (conv.GetTypeCode())
@@ -154,7 +187,7 @@ namespace Keysharp.Core.Common.ObjectBase
 						case TypeCode.UInt32:
 						case TypeCode.Int64:
 						case TypeCode.UInt64:
-							args[i] = conv.Al();
+							usedArgs[i] = conv.Al();
 							break;
 					}
 				}
@@ -176,27 +209,27 @@ namespace Keysharp.Core.Common.ObjectBase
 				{
 					for (int i = 0; i < argCount - 1; i++)
 					{
-						args[i] = args[i].Ai() + 1;
+						usedArgs[i] = usedArgs[i].Ai() + 1;
 					}
 				}
 
 				if (target != null && target is FuncObj fo)
 				{
-					return fo.Call(args);
+					return Com.ConvertToCOMType(fo.Call(usedArgs));
 				}
 
 				if ((invokeAttr & BindingFlags.GetProperty) != 0
 						|| (invokeAttr & BindingFlags.GetField) != 0)
 				{
-					return Script.Index(target ?? this, args);
+					return Com.ConvertToCOMType(Script.Index(target ?? this, usedArgs));
 				}
 				else
 				{
-					object value = argCount > 0 ? args[ ^ 1] : null;
+					object value = argCount > 0 ? usedArgs[ ^ 1] : null;
 					var indices = new object[argCount > 0 ? argCount - 1 : 0];
-					System.Array.Copy(args, indices, indices.Length);
+					System.Array.Copy(usedArgs, indices, indices.Length);
 
-					return Script.SetObject(value, target ?? this, indices);
+					return Com.ConvertToCOMType(Script.SetObject(value, target ?? this, indices));
 				}
 			}
 
@@ -227,18 +260,82 @@ namespace Keysharp.Core.Common.ObjectBase
 
 			// property getter?
 			if ((invokeAttr & BindingFlags.GetProperty) != 0 && argCount == 0 && HasProp(name) == 1L)
-				return Script.GetPropertyValue(target, name);
+				return Com.ConvertToCOMType(Script.GetPropertyValue(target, name));
 
 			// property setter?
 			if ((invokeAttr & BindingFlags.SetProperty) != 0)
 			{
-				Script.SetPropertyValue(target, name, argCount > 0 ? args[0] : null);
+				Script.SetPropertyValue(target, name, argCount > 0 ? usedArgs[0] : null);
 				return null;
 			}
 
 			// method call
 			if ((invokeAttr & BindingFlags.InvokeMethod) != 0)
-				return Script.Invoke(target, name, args);
+			{
+				FuncObj fo = null;
+				ParameterInfo[] prms = null;
+				if (target is FuncObj fo2 && name.Equals("Call", StringComparison.OrdinalIgnoreCase))
+				{
+					fo = fo2;
+				}
+				else
+				{
+					(object, object) mitup = (null, null);
+					if (target is ITuple otup && otup.Length > 1)
+					{
+						mitup = GetMethodOrProperty(otup, name, -1);
+					}
+					else
+					{
+						mitup = GetMethodOrProperty(target, name, -1);
+					}
+					if (mitup.Item2 is FuncObj fo3)
+						fo = fo3;
+				}
+				if (fo != null)
+				{
+					prms = fo.Mph.mi.GetParameters().ToArray();
+					for (int i = 0; i < prms.Length; i++)
+					{
+						if (!prms[i].IsDefined(typeof(ByRefAttribute)))
+							prms[i] = null;
+					}
+
+					if (fo is BoundFunc bo)
+					{
+						for (int i = 0; i < bo.boundargs.Length; i++)
+							if (bo.boundargs[i] != null)
+								prms[i] = null;
+					}
+
+					if (prms.Any(p => p != null))
+					{
+						if (usedArgs == args)
+						{
+							usedArgs = new object[args.Length];
+							System.Array.Copy(args, usedArgs, args.Length);
+						}
+
+						for (int i = 0; i < prms.Length; i++)
+						{
+							if (prms != null)
+							{
+								var index = i;
+								usedArgs[i] = new VarRef(() => args[index], value => args[index] = value);
+							}
+						}
+						var result = Com.ConvertToCOMType(Script.Invoke(target, name, usedArgs));
+						for (int i = 0; i < prms.Length; i++)
+						{
+							if (prms[i] != null)
+								args[i] = Com.ConvertToCOMType(args[i]);
+						}
+						return result;
+					}
+				}
+
+				return Com.ConvertToCOMType(Script.Invoke(target, name, usedArgs));
+			}
 
 			throw new MissingMemberException($"Member '{name}' not found");
 		}
@@ -366,6 +463,87 @@ namespace Keysharp.Core.Common.ObjectBase
 		public override Module Module => typeof(KeysharpObject).Module;
 		public override Type ReflectedType => typeof(KeysharpObject);
 		#endregion
+	}
+
+	public static class ByRefWrapper
+	{
+		/// <summary>
+		/// Given a MethodInfo whose parameters may be marked [ByRef],
+		/// returns a new MethodInfo (a DynamicMethod) whose signature
+		/// has those parameters as ref T instead of T.
+		/// The generated IL will dereference the ref args, call the original,
+		/// and return its result.
+		/// </summary>
+		public static MethodInfo Create(MethodInfo original)
+		{
+			var origParams = original.GetParameters();
+			bool isInstance = !original.IsStatic;
+
+			// 2) build the parameter-type list for the wrapper:
+			var wrapperParamTypes = origParams
+				.Select(p =>
+					p.GetCustomAttribute<ByRefAttribute>() != null
+						? p.ParameterType.MakeByRefType()
+						: p.ParameterType
+				).ToList();
+
+			// if instance, first param is the "this"
+			if (isInstance)
+				wrapperParamTypes.Insert(0, original.DeclaringType);
+
+			// 3) create the DynamicMethod
+			var dm = new DynamicMethod(
+				name: original.Name + "_ByRefWrapper",
+				returnType: original.ReturnType,
+				parameterTypes: wrapperParamTypes.ToArray(),
+				m: original.DeclaringType.Module,
+				skipVisibility: true
+			);
+
+			// 4) emit IL
+			var il = dm.GetILGenerator();
+
+			// load the 'this' if needed
+			int argIndex = 0;
+			if (isInstance)
+			{
+				il.Emit(OpCodes.Ldarg_0);
+				argIndex = 1;
+			}
+
+			// for each original parameter:
+			for (int i = 0; i < origParams.Length; i++, argIndex++)
+			{
+				var pi = origParams[i];
+				bool byRef = pi.GetCustomAttribute<ByRefAttribute>() != null;
+
+				if (byRef)
+				{
+					// the wrapper param is a managed reference (object&),
+					// so ldarg loads the address, then ldind.ref derefs it
+					il.Emit(OpCodes.Ldarg, argIndex);
+					il.Emit(OpCodes.Ldind_Ref);
+				}
+				else
+				{
+					il.Emit(OpCodes.Ldarg, argIndex);
+				}
+			}
+
+			// call or callvirt as appropriate
+			il.EmitCall(
+				original.IsVirtual && !original.IsFinal
+					? OpCodes.Callvirt
+					: OpCodes.Call,
+				original,
+				null
+			);
+
+			// return whatever the original returned
+			il.Emit(OpCodes.Ret);
+
+			return dm;
+		}
 	}
 }
 #endif

@@ -919,7 +919,7 @@
 		/// <param name="pos">A reference to the position value.</param>
 		/// <param name="val">A reference to the object value.</param>
 		/// <returns>True if the iterator position has not moved past the last element, else false.</returns>
-		public override object Call(object pos, object val)
+		public override object Call([ByRef] object pos, [ByRef] object val)
 		{
 			if (MoveNext())
 			{

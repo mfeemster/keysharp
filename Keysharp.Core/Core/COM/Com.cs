@@ -56,6 +56,15 @@ namespace Keysharp.Core.COM
 			return new ComObjArray(System.Array.CreateInstance(t, lengths));
 		}
 
+		internal static object ConvertToCOMType(object ret)
+		{
+			if (ret is long ll && ll < int.MaxValue)
+				ret = (int)ll;
+			else if (ret is bool bl)
+				ret = bl ? 1 : 0;
+			return ret;
+		}
+
 		internal static Type ConvertVarTypeToCLRType(VarEnum vt) =>
 			vt switch
 			{
