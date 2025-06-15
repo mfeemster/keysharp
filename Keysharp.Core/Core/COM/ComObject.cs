@@ -282,6 +282,19 @@ namespace Keysharp.Core.COM
 						   : Marshal.PtrToStringBSTR(bstr);
 				}
 
+				case VarEnum.VT_VARIANT:
+				{
+					VarEnum innerVt = (VarEnum)Marshal.ReadInt16(dataPtr);
+					return ReadVariant(ptrValue + 8, innerVt);
+				}
+
+				case VarEnum.VT_UNKNOWN:
+				case VarEnum.VT_DISPATCH:
+				{
+					nint punk = Marshal.ReadIntPtr(dataPtr);
+					return Objects.ObjFromPtr(punk);
+				}
+
 				default:
 				{
 					nint unk = Marshal.ReadIntPtr(dataPtr);
@@ -300,7 +313,7 @@ namespace Keysharp.Core.COM
 
 		/// <summary>
 		/// Write a primitive value back into a COM VARIANT payload.
-		/// Supports VT_I1/UI1/I2/UI2/I4/UI4/I8/UI8, VT_BOOL, VT_R4, VT_R8/VT_DATE.
+		/// Supports VT_I1/UI1/I2/UI2/I4/UI4/I8/UI8, VT_BOOL, VT_R4, VT_R8/VT_DATE, VT_VARIANT.
 		/// </summary>
 		public static void WriteVariant(long ptrValue, VarEnum vtRaw, object value)
 		{
@@ -417,12 +430,55 @@ namespace Keysharp.Core.COM
 				{
 						long ptr => (nint)ptr,
 							null => 0,
-							_ => Marshal.GetIUnknownForObject(value)
-					};
+							_ => vt == VarEnum.VT_DISPATCH ? Marshal.GetIDispatchForObject(value) : Marshal.GetIUnknownForObject(value)
+				};
 
 					Marshal.WriteIntPtr(dataPtr, newPtr);
 				}
 				break;
+
+				case VarEnum.VT_VARIANT:
+				{
+					// 1) Choose the right VarEnum for "value"
+					VarEnum innerVt;
+					if (value is string)
+					{
+						innerVt = VarEnum.VT_BSTR;
+					}
+					else if (value is KeysharpObject)
+					{
+						innerVt = VarEnum.VT_DISPATCH;
+					}
+					else if (value is double)
+					{
+						innerVt = VarEnum.VT_R8;
+					}
+					else if (value is long l)
+					{
+						innerVt = (l >= int.MinValue && l <= int.MaxValue)
+									? VarEnum.VT_I4
+									: VarEnum.VT_I8;
+					}
+					else
+					{
+						throw new NotSupportedException(
+							$"Cannot wrap a {value?.GetType().Name} as VT_VARIANT");
+					}
+
+					// 2) Clear previous contents, release BSTRs etc
+					VariantHelper.VariantClear(dataPtr);
+
+					// 3) Write the VT and clear the four reserved words
+					//    [vt:2][res1:2][res2:2][res3:2]  <-- totals 8 bytes header
+					Marshal.WriteInt16(dataPtr, (short)innerVt);
+
+					// 4) Write the payload into the union at offset 8
+					//    we simply recurse into our existing writer,
+					//    passing the address + 8 and the bare innerVt
+					WriteVariant(ptrValue + 8, innerVt, value);
+				}
+				break;
+
 
 				// ── Unsupported ────────────────────────────────────────────────
 				default:
