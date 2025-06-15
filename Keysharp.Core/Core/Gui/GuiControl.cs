@@ -417,6 +417,9 @@
 					}
 					else
 						_control.BackColor = Color.FromArgb((int)(value.Al() | 0xFF000000));
+
+					if (ParentForm.Visible == true)
+						_control.Refresh();
 				}
 			}
 
