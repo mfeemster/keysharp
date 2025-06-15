@@ -97,6 +97,11 @@ public abstract class MainLexerBase : Lexer
 
     // Hide EOL and WS if the previous visible token was a line continuation-allowing operator such as :=
     protected void ProcessEOL() {
+        if (_currentDepth != 0)
+        {
+            this.Type = WS;
+            return;
+        }
         if (_lastVisibleToken == null) return;
         if (_lastVisibleToken.Type != MainLexer.OpenBrace && lineContinuationOperators.Contains(_lastVisibleToken.Type))
             this.Channel = Hidden;

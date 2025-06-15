@@ -361,8 +361,8 @@ propertyDefinition
     ;
 
 classPropertyName
-    : identifier
-    | identifier '[' formalParameterList? s* ']'
+    : propertyName
+    | propertyName '[' formalParameterList? s* ']'
     ;
 
 propertyGetterDefinition
@@ -650,7 +650,9 @@ identifier
     | From
     | Get
     | Set
-    | As)
+    | As
+    | Import
+    | Export)
     ;
 
 reservedWord

@@ -201,7 +201,7 @@ namespace Keysharp.Scripting
             else
             {
                 // Handle regular property
-                propertyName = propertyNameSyntax.identifier().GetText();
+                propertyName = propertyNameSyntax.propertyName().GetText();
             }
 
             // Generate getter method
