@@ -133,7 +133,7 @@
 			get => Value == null && Get == null && Set == null && Call == null;
 		}
 
-		public void Merge(Dictionary<string, OwnPropsDesc> map)
+		internal void Merge(Dictionary<string, OwnPropsDesc> map)
 		{
 			foreach ((var key, var desc) in map)
 			{
@@ -161,7 +161,7 @@
 			}
 		}
 
-		public void MergeOwnPropsValues(Dictionary<string, OwnPropsDesc> map)
+		internal void MergeOwnPropsValues(Dictionary<string, OwnPropsDesc> map)
 		{
 			foreach ((var name, var desc) in map)
 			{
@@ -189,7 +189,7 @@
 			}
 		}
 
-		public void Merge(OwnPropsDesc opd)
+		internal void Merge(OwnPropsDesc opd)
 		{
 			if (opd.Value != null)
 				Value = opd.Value;
