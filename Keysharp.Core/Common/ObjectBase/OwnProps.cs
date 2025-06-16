@@ -63,7 +63,7 @@
 		{
 			obj = o;
 			map = m;
-			_getVal = !gv;
+			_getVal = !gv; //Force the next line to actually change internal state
 			GetVal = gv;
 			iter = map.GetEnumerator();
 		}
