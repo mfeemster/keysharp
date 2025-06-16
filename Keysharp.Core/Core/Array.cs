@@ -629,7 +629,7 @@
 					_ = sb.AppendLine($"{indent}{name}: [] ({GetType().Name})");
 			}
 
-			var opi = (OwnPropsIterator)OwnProps(true, false);
+			var opi = (OwnPropsIterator)((FuncObj)OwnProps(true, false)).Inst;
 			tabLevel++;
 			indent = new string('\t', tabLevel);
 

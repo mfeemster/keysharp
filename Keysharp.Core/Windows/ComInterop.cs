@@ -215,10 +215,10 @@ namespace Keysharp.Core.Common.ObjectBase
 
 				if (target != null && target is FuncObj fo)
 				{
-					return Com.ConvertToCOMType(fo.Call(usedArgs));
+					invokeAttr |= BindingFlags.InvokeMethod;
+					name = "Call";
 				}
-
-				if ((invokeAttr & BindingFlags.GetProperty) != 0
+				else if ((invokeAttr & BindingFlags.GetProperty) != 0
 						|| (invokeAttr & BindingFlags.GetField) != 0)
 				{
 					return Com.ConvertToCOMType(Script.Index(target ?? this, usedArgs));

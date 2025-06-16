@@ -103,13 +103,18 @@
 			return false;
 		}
 
-		public override object Call([ByRef] object obj0, [ByRef] object obj1)
+		public override object Call([ByRef] object obj0, [ByRef] object obj1 = null)
 		{
 			if (MoveNext())
 			{
-				GetVal = true;
-				Script.SetPropertyValue(obj0, "__Value", Current.Item1);
-				Script.SetPropertyValue(obj1, "__Value", Current.Item2);
+				if (obj1 != null)
+				{
+					GetVal = true;
+					Script.SetPropertyValue(obj0, "__Value", Current.Item1);
+					Script.SetPropertyValue(obj1, "__Value", Current.Item2);
+				} 
+				else
+					Script.SetPropertyValue(obj0, "__Value", Current.Item1);
 				return true;
 			}
 

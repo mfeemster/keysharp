@@ -22,35 +22,35 @@
 	winposh := ""
 	origBackColor := ""
 
-	; ┌────────────────┐
-	; │  Tab One Menu  │
-	; └────────────────┘
-	FileMenu := Menu()
-	FileMenu.Add("System", "MenuHandler")
-	FileMenu.Add("Script Icon", "MenuHandler")
-	FileMenu.Add("Suspend Icon", "MenuHandler")
-	FileMenu.Add("Pause Icon", "MenuHandler")
-	#if WINDOWS
-		FileMenu.SetIcon("System", "Shell32.dll", 174) ; 2nd icon group from the file
-	#endif
-	FileMenu.SetIcon("Script Icon", A_KeysharpCorePath, "Keysharp.ico")
-	FileMenu.SetIcon("Suspend Icon", A_KeysharpCorePath, "Keysharp_s.ico")
-	FileMenu.SetIcon("Pause Icon", A_KeysharpCorePath, "Keysharp_p.ico")
+; ┌────────────────┐
+; │  Tab One Menu  │
+; └────────────────┘
+FileMenu := Menu()
+FileMenu.Add("&System", "MenuHandler")
+FileMenu.Add("S&cript Icon", "MenuHandler")
+FileMenu.Add("S&uspend Icon", "MenuHandler")
+FileMenu.Add("&Pause Icon", "MenuHandler")
+#if WINDOWS
+	FileMenu.SetIcon("&System", "Shell32.dll", 174) ; 2nd icon group from the file
+#endif
+FileMenu.SetIcon("S&cript Icon", A_KeysharpCorePath, "Keysharp.ico")
+FileMenu.SetIcon("S&uspend Icon", A_KeysharpCorePath, "Keysharp_s.ico")
+FileMenu.SetIcon("&Pause Icon", A_KeysharpCorePath, "Keysharp_p.ico")
 
-	; Create another menu destined to become a submenu of the above menu.
-	MainSubmenu1 := Menu()
-	MainSubmenu1.Add("Item A", "MenuHandler")
-	MainSubmenu1.Add("Item B", "MenuHandler")
+; Create another menu destined to become a submenu of the above menu.
+MainSubmenu1 := Menu()
+MainSubmenu1.Add("Item &A", "MenuHandler")
+MainSubmenu1.Add("Item &B", "MenuHandler")
 
-	; Create a submenu in the first menu (a right-arrow indicator). When the user selects it, the second menu is displayed.
-	FileMenu.Add("My Submenu", MainSubmenu1)
+; Create a submenu in the first menu (a right-arrow indicator). When the user selects it, the second menu is displayed.
+FileMenu.Add("My Su&bmenu", MainSubmenu1)
 
-	ImgSrchMenu := Menu()
-	ImgSrchMenu.Add("Image Search Test", "ImgSrch")
+ImgSrchMenu := Menu()
+ImgSrchMenu.Add("&Image Search Test", "ImgSrch")
 
-	MyMenuBar := MenuBar()
-	MyMenuBar.Add("&Menu Icon Test", FileMenu)
-	MyMenuBar.Add("Image Search", ImgSrchMenu)
+MyMenuBar := MenuBar()
+MyMenuBar.Add("&Menu Icon Test", FileMenu)
+MyMenuBar.Add("&Image Search", ImgSrchMenu)
 
 	MyGui := Gui(, "KEYSHARP TESTS")
 	MyGui.OnEvent("Close", "CloseApp")

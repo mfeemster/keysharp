@@ -146,6 +146,19 @@ if (NumGet(var, 0, "int") == 65535)
 else
 	FileAppend "fail", "*"
 
+cv := ComValue(0x4000 | 0xC, var.Ptr) ; VT_VARIANT
+cv[] := 5
+
+if (cv[] == 5)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+if (NumGet(var, 0, "int") == 3)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
 script := "
 (
 	x := ComObjActive("{6B39CAA1-A320-4CB0-8DB4-352AA81E460E}")

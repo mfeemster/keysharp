@@ -202,13 +202,13 @@ namespace Keysharp.Core.Common.ObjectBase
 				}
 			}
 
-			return new OwnPropsIterator(this, props, vals);
+			return new OwnPropsIterator(this, props, vals).fo;
 		}
 
 		public virtual void PrintProps(string name, StringBuffer sb, ref int tabLevel)
 		{
 			var fieldType = GetType().Name;
-			var opi = (OwnPropsIterator)OwnProps(true, false);
+			var opi = (OwnPropsIterator)((FuncObj)OwnProps(true, false)).Inst;
 			var indent = new string('\t', tabLevel);
 
 			if (name.Length == 0)

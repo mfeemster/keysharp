@@ -455,16 +455,20 @@ namespace Keysharp.Core.COM
 							$"Cannot wrap a {value?.GetType().Name} as VT_VARIANT");
 					}
 
-					// 2) Write the VT and clear the four reserved words
+					// 2) Clear previous contents, release BSTRs etc
+					VariantHelper.VariantClear(dataPtr);
+
+					// 3) Write the VT and clear the four reserved words
 					//    [vt:2][res1:2][res2:2][res3:2]  <-- totals 8 bytes header
 					Marshal.WriteInt16(dataPtr, (short)innerVt);
 
-					// 3) Write the payload into the union at offset 8
+					// 4) Write the payload into the union at offset 8
 					//    we simply recurse into our existing writer,
 					//    passing the address + 8 and the bare innerVt
 					WriteVariant(ptrValue + 8, innerVt, value);
 				}
 				break;
+
 
 				// ── Unsupported ────────────────────────────────────────────────
 				default:
