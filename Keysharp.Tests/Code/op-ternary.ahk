@@ -390,3 +390,12 @@ if (x == 3)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
+; Test with a multi-statement because they used to fail.
+a := ""
+a := 1, a ? 2 : 3
+
+if (a == 1)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"

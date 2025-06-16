@@ -208,7 +208,11 @@
 			var evalstr = Ch.CodeToString(eval);
 			var tbs = Ch.CodeToString(trueBranch);
 			var fbs = Ch.CodeToString(falseBranch);
-			var cse = new CodeSnippetExpression($"({evalstr} ? (object)({tbs}) : (object)({fbs}))");//Must explicitly cast both branches to object in case they are different types such as: x ? 1.0 : 1L (double and long).
+			//Must explicitly cast both branches to object in case they are different types such as: x ? 1.0 : 1L (double and long).
+			//Must also use _ = because just wrapping the expression in parentheses will not work in the case of a multi-statement such as:
+			//a := 1, a ? 2 : 3
+			//The second statement is not assigned to anything, and will be invalid C# code if wrapped in parentheses without the result assigned.
+			var cse = new CodeSnippetExpression($"_ = ({evalstr} ? (object)({tbs}) : (object)({fbs}))");
 			cse.UserData["orig"] = new CodeTernaryOperatorExpression(eval, trueBranch, falseBranch);
 			return cse;
 		}
