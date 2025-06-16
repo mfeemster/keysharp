@@ -443,7 +443,7 @@ namespace Keysharp.Core
 			{
 				if (kso.op.TryGetValue("__Enum", out var map))
 				{
-					if (map.map.TryGetValue("call", out var callval) && callval is IFuncObj ifocall)
+					if (map.Call != null && map.Call is IFuncObj ifocall)
 					{
 						var tempEnum = ifocall.Call(obj, count);
 

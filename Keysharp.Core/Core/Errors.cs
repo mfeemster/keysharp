@@ -59,6 +59,15 @@
 		}
 
 		/// <summary>
+		/// Internal helper to handle argument type errors. Throws a <see cref="ValueError"/> or returns true.
+		/// </summary>
+		internal static bool ArgumentErrorOccurred(object arg, int position)
+		{
+			Error err;
+			return ErrorOccurred(err = new ValueError($"Invalid argument of type \"{(arg == null ? "unset" : arg.GetType())}\" at position {position}.")) ? throw err : true;
+		}
+
+		/// <summary>
 		/// Creates and returns a new <see cref="IndexError"/> exception object.
 		/// </summary>
 		/// <param name="args">The the parameters to pass to the constructor.</param>

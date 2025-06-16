@@ -24,25 +24,11 @@
 		{
 			var kso = new KeysharpObject();
 			var count = (args.Length / 2) * 2;
+			kso.op = new Dictionary<string, OwnPropsDesc>(StringComparer.OrdinalIgnoreCase);
 
 			for (var i = 0; i < count; i += 2)
 			{
-				var map = new Map(false)
-				{
-					CaseSense = false
-				};
-				var key = args[i].ToString();
-
-				if (string.Compare(key, "get", true) == 0
-						|| string.Compare(key, "set", true) == 0
-						|| string.Compare(key, "call", true) == 0)
-				{
-					map[key.ToLower()] = args[i + 1];
-				}
-				else
-					map["value"] = args[i + 1];
-
-				_ = kso.DefineProp(key, map);
+				kso.op[args[i].ToString()] = new OwnPropsDesc(kso, args[i + 1]);
 			}
 
 			return kso;
