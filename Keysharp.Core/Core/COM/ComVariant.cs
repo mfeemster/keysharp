@@ -76,8 +76,10 @@ namespace Keysharp.Core.COM
 	internal static class VariantHelper
 	{
 		//Clears the VARIANT and frees any allocated memory (such as BSTRs).
-		[DllImport("OleAut32.dll", PreserveSig = false)]
-		internal static extern void VariantClear(ref VARIANT variant);
+		[DllImport(WindowsAPI.oleaut, PreserveSig = false)]
+		internal static extern int VariantClear(ref VARIANT variant);
+		[DllImport(WindowsAPI.oleaut, PreserveSig = true)]
+		internal static extern int VariantClear(nint pvarg);
 
 		internal static VARIANT CreateVariantFromInt(int value)
 		{
