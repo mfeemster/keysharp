@@ -34,7 +34,7 @@ o1.DefineProp("a", { ; Redefine a dynamic property over previously declared dyna
 
 o1.a := 200
 
-If (o1.a == 0)
+If (o1.a == 123)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
@@ -401,8 +401,18 @@ testfunc(testclassobj)
 		FileAppend, "fail", "*"
 
 	testclassobj.DefineProp("prop", { ; Overwrite previous with dynamically defined call.
-		value: 123,
 		call: (this, p*) => this.a := p.Length
+	})
+	
+	testclassobj.prop(1, 2)
+
+	If (testclassobj.a == 2)
+		FileAppend, "pass", "*"
+	else
+		FileAppend, "fail", "*"
+
+	testclassobj.DefineProp("prop", { ; Overwrite previous with dynamically defined call.
+		value: 123
 	})
 
 	val := testclassobj.prop
@@ -417,13 +427,6 @@ testfunc(testclassobj)
 	val := testclassobj.prop
 
 	If (val == "123")
-		FileAppend, "pass", "*"
-	else
-		FileAppend, "fail", "*"
-	
-	testclassobj.prop(1, 2)
-
-	If (testclassobj.a == 2)
 		FileAppend, "pass", "*"
 	else
 		FileAppend, "fail", "*"

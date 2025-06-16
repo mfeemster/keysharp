@@ -7,7 +7,7 @@ namespace Keysharp.Core.Common.ObjectBase
 		#region IReflect implementation
 		FieldInfo IReflect.GetField(string name, BindingFlags bindingAttr)
 		{
-			if (op != null && op.ContainsKey(name) && op[name].map.ContainsKey("value"))
+			if (op != null && op.ContainsKey(name) && op[name].Value != null)
 				return new SimpleFieldInfo(name);
 
 			return GetType().GetField(name, bindingAttr);
@@ -20,7 +20,7 @@ namespace Keysharp.Core.Common.ObjectBase
 			{
 				foreach (var kv in op)
 				{
-					if (kv.Value.map.ContainsKey("value"))  // only explicit Value entries
+					if (kv.Value.Value != null)  // only explicit Value entries
 						fields[kv.Key] = new SimpleFieldInfo(kv.Key);
 				}
 			}
@@ -36,7 +36,7 @@ namespace Keysharp.Core.Common.ObjectBase
 		MethodInfo IReflect.GetMethod(string name, BindingFlags bindingAttr) => ((IReflect)this).GetMethod(name, bindingAttr, null, null, null);
 		MethodInfo IReflect.GetMethod(string name, BindingFlags bindingAttr, Binder binder, Type[] types, ParameterModifier[] modifiers)
 		{
-			if (op != null && (bindingAttr & BindingFlags.Instance) != 0 && op.ContainsKey(name) && op[name].map.TryGetValue("call", out var val) && val is FuncObj fo)
+			if (op != null && (bindingAttr & BindingFlags.Instance) != 0 && op.ContainsKey(name) && op[name].Call is FuncObj fo)
 				return new RenamedMethodInfo(fo.Mph.mi, name);
 
 			return GetType().GetMethod(name, bindingAttr, binder, types, modifiers);
@@ -49,7 +49,7 @@ namespace Keysharp.Core.Common.ObjectBase
 			if (op != null && (bindingAttr & BindingFlags.Instance) != 0)
 			{
 				foreach (var kv in op)
-					if (kv.Value.map.TryGetValue("call", out var value) && value is FuncObj fo && fo != null)
+					if (kv.Value.Call is FuncObj fo && fo != null)
 					{
 						if (fo.Mph.mi.Name.Equals(kv.Key, StringComparison.OrdinalIgnoreCase))
 							meths[kv.Key] = fo.Mph.mi;
@@ -74,8 +74,8 @@ namespace Keysharp.Core.Common.ObjectBase
 			{
 				foreach (var kv in op)
 				{
-					bool hasGet = kv.Value.map.ContainsKey("get");
-					bool hasSet = kv.Value.map.ContainsKey("set");
+					bool hasGet = kv.Value.Get != null;
+					bool hasSet = kv.Value.Set != null;
 
 					if (hasGet || hasSet)
 					{
