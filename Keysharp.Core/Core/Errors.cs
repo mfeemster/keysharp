@@ -120,7 +120,7 @@
 			var i = addRemove.Al(1L);
 			var del = Functions.GetFuncObj(e, null, true);
 			var script = Script.TheScript;
-			
+
 			if (script.onErrorHandlers == null)
 				script.onErrorHandlers = [];
 

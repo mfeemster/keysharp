@@ -27,6 +27,7 @@
 						else if (op.Call != null)
 							return (kv.Key, op.Call);
 					}
+
 					if (kv.Value is MethodPropertyHolder mph)
 						return (kv.Key, mph.callFunc(obj, null));
 					else if (kv.Value is FuncObj fo)//ParamLength was verified when this was created in OwnProps().
@@ -45,6 +46,7 @@
 		internal bool GetVal
 		{
 			get => _getVal;
+
 			set
 			{
 				if (_getVal != value)
@@ -145,14 +147,17 @@
 						Set = null;
 						Call = null;
 						break;
+
 					case "GET":
 						Get = desc.Get;
 						Value = null;
 						break;
+
 					case "SET":
 						Set = desc.Set;
 						Value = null;
 						break;
+
 					case "CALL":
 						Call = desc.Call;
 						Value = null;
@@ -173,14 +178,17 @@
 						Set = null;
 						Call = null;
 						break;
+
 					case "GET":
 						Get = desc.Get ?? desc.Value;
 						Value = null;
 						break;
+
 					case "SET":
 						Set = desc.Get ?? desc.Value;
 						Value = null;
 						break;
+
 					case "CALL":
 						Call = desc.Get ?? desc.Value;
 						Value = null;
@@ -193,10 +201,13 @@
 		{
 			if (opd.Value != null)
 				Value = opd.Value;
+
 			if (opd.Get != null)
 				Get = opd.Get;
+
 			if (opd.Set != null)
 				Set = opd.Set;
+
 			if (opd.Call != null)
 				Call = opd.Call;
 		}
@@ -213,14 +224,17 @@
 						Set = null;
 						Call = null;
 						break;
+
 					case "GET":
 						Get = value;
 						Value = null;
 						break;
+
 					case "SET":
 						Set = value;
 						Value = null;
 						break;
+
 					case "CALL":
 						Call = value;
 						Value = null;
@@ -236,12 +250,16 @@
 
 			if (Value != null)
 				map.op["value"] = new OwnPropsDesc(map, Value);
+
 			if (Get != null)
 				map.op["get"] = new OwnPropsDesc(map, Get);
+
 			if (Set != null)
 				map.op["set"] = new OwnPropsDesc(map, Set);
+
 			if (Call != null)
 				map.op["call"] = new OwnPropsDesc(map, Call);
+
 			return map;
 		}
 	}
