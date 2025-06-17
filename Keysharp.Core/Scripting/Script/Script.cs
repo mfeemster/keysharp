@@ -111,7 +111,7 @@ namespace Keysharp.Scripting
 		internal AccessorData AccessorData => accessorData ?? (accessorData = new ());
 		internal ArrayIndexValueIteratorData ArrayIndexValueIteratorData => arrayIndexValueIteratorData ?? (arrayIndexValueIteratorData = new ());
 #if WINDOWS
-		internal ComArrayIndexValueEnumeratorData ComArrayIndexValueEnumeratorData => comArrayIndexValueEnumeratorData ?? (comArrayIndexValueEnumeratorData = new());
+		internal ComArrayIndexValueEnumeratorData ComArrayIndexValueEnumeratorData => comArrayIndexValueEnumeratorData ?? (comArrayIndexValueEnumeratorData = new ());
 		internal ComEnumeratorData ComEnumeratorData => comEnumeratorData ?? (comEnumeratorData = new ());
 		internal ComMethodData ComMethodData => comMethodData ?? (comMethodData = new ());
 #endif
@@ -119,7 +119,7 @@ namespace Keysharp.Scripting
 		internal CoordModes Coords { get; private set; }
 		internal DelegateData DelegateData => delegateData ?? (delegateData = new ());
 #if WINDOWS
-		internal DllData DllData => dllData ?? (dllData = new());
+		internal DllData DllData => dllData ?? (dllData = new ());
 #endif
 		internal DriveTypeMapper DriveTypeMapper => driveTypeMapper ?? (driveTypeMapper = new ());
 		internal ExecutableMemoryPoolManager ExecutableMemoryPoolManager => exeMemoryPoolManager ?? (exeMemoryPoolManager = new ());
@@ -203,7 +203,7 @@ namespace Keysharp.Scripting
 			var path = Path.GetFileName(Application.ExecutablePath).ToLowerInvariant();
 
 			if (path != "testhost.exe" && path != "testhost.dll" && !A_IsCompiled)
-				Dir.SetWorkingDir(A_ScriptDir);
+				_ = Dir.SetWorkingDir(A_ScriptDir);
 
 			//Preload dlls requested with #DllLoad
 			LoadDlls();
@@ -214,7 +214,6 @@ namespace Keysharp.Scripting
 			//Init the API classes, passing in this which will be used to access their respective data objects.
 			Reflections = new ();
 			SetInitialFloatFormat();//This must be done intially and not just when A_FormatFloat is referenced for the first time.
-
 			tickTimer.Elapsed += TickTimerCallback;
 			tickTimer.Start();
 		}
@@ -371,8 +370,8 @@ namespace Keysharp.Scripting
 			_ = mainWindow.BeginInvoke(() =>
 			{
 				if (!Flow.TryCatch(() =>
-				{
-					var (__pushed, __btv) = Threads.BeginThread();
+			{
+				var (__pushed, __btv) = Threads.BeginThread();
 					_ = userInit();
 					//HotkeyDefinition.ManifestAllHotkeysHotstringsHooks() will be called inside of userInit() because it
 					//must be done:

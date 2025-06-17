@@ -257,7 +257,7 @@ namespace Keysharp.Core.Common.ObjectBase
 			// property setter?
 			if ((invokeAttr & BindingFlags.SetProperty) != 0)
 			{
-				Script.SetPropertyValue(target, name, argCount > 0 ? args[0] : null);
+				_ = Script.SetPropertyValue(target, name, argCount > 0 ? args[0] : null);
 				return null;
 			}
 

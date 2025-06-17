@@ -101,7 +101,7 @@ namespace Keysharp.Core.COM
 					{
 						var nptr = new nint(longVal);
 						temp = Marshal.GetObjectForIUnknown(nptr);
-						Marshal.Release(nptr);
+						_ = Marshal.Release(nptr);
 					}
 
 					//else if (value is long l && l > 0)// && Marshal.IsComObject(value))
@@ -213,7 +213,7 @@ namespace Keysharp.Core.COM
 				if (Ptr is long lp && lp != 0L)
 					_ = Marshal.Release((nint)lp);
 				else if (Marshal.IsComObject(Ptr))
-					Marshal.ReleaseComObject(Ptr);
+					_ = Marshal.ReleaseComObject(Ptr);
 			}
 			else if (vt == VarEnum.VT_BSTR && (Flags & F_OWNVALUE) != 0 && Ptr is long)
 			{
@@ -315,7 +315,7 @@ namespace Keysharp.Core.COM
 		/// Write a primitive value back into a COM VARIANT payload.
 		/// Supports VT_I1/UI1/I2/UI2/I4/UI4/I8/UI8, VT_BOOL, VT_R4, VT_R8/VT_DATE, VT_VARIANT.
 		/// </summary>
-		public static void WriteVariant(long ptrValue, VarEnum vtRaw, object value)
+		internal static void WriteVariant(long ptrValue, VarEnum vtRaw, object value)
 		{
 			nint dataPtr = new nint(ptrValue);
 			VarEnum vt = vtRaw & ~VarEnum.VT_BYREF;
@@ -422,7 +422,7 @@ namespace Keysharp.Core.COM
 					nint oldPtr = Marshal.ReadIntPtr(dataPtr);
 
 					if (oldPtr != 0)
-						Marshal.Release(oldPtr);
+						_ = Marshal.Release(oldPtr);
 
 					// get new pointer (allow passing either IntPtr or RCW)
 
@@ -431,7 +431,7 @@ namespace Keysharp.Core.COM
 						long ptr => (nint)ptr,
 							null => 0,
 							_ => vt == VarEnum.VT_DISPATCH ? Marshal.GetIDispatchForObject(value) : Marshal.GetIUnknownForObject(value)
-				};
+					};
 
 					Marshal.WriteIntPtr(dataPtr, newPtr);
 				}
@@ -441,6 +441,7 @@ namespace Keysharp.Core.COM
 				{
 					// 1) Choose the right VarEnum for "value"
 					VarEnum innerVt;
+
 					if (value is string)
 					{
 						innerVt = VarEnum.VT_BSTR;
@@ -456,8 +457,8 @@ namespace Keysharp.Core.COM
 					else if (value is long l)
 					{
 						innerVt = (l >= int.MinValue && l <= int.MaxValue)
-									? VarEnum.VT_I4
-									: VarEnum.VT_I8;
+								  ? VarEnum.VT_I4
+								  : VarEnum.VT_I8;
 					}
 					else
 					{
@@ -466,19 +467,16 @@ namespace Keysharp.Core.COM
 					}
 
 					// 2) Clear previous contents, release BSTRs etc
-					VariantHelper.VariantClear(dataPtr);
-
+					_ = VariantHelper.VariantClear(dataPtr);
 					// 3) Write the VT and clear the four reserved words
 					//    [vt:2][res1:2][res2:2][res3:2]  <-- totals 8 bytes header
 					Marshal.WriteInt16(dataPtr, (short)innerVt);
-
 					// 4) Write the payload into the union at offset 8
 					//    we simply recurse into our existing writer,
 					//    passing the address + 8 and the bare innerVt
 					WriteVariant(ptrValue + 8, innerVt, value);
 				}
 				break;
-
 
 				// ── Unsupported ────────────────────────────────────────────────
 				default:

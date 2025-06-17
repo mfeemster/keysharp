@@ -116,7 +116,7 @@ namespace Keysharp.Core
 		///     be "in use" until the script closes or until another file is played(even a nonexistent file).<br/>
 		/// </param>
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown on failure.</exception>
-		public static void SoundPlay(object filename, object wait = null)
+		public static object SoundPlay(object filename, object wait = null)
 		{
 			var file = filename.As();
 			var w = wait.As();
@@ -126,23 +126,36 @@ namespace Keysharp.Core
 			{
 				if (!int.TryParse(file.AsSpan(1), out var n))
 				{
-					return;
+					return null;
 				}
 
 				switch (n)
 				{
-					case -1: SystemSounds.Beep.Play(); return;
+					case -1:
+						SystemSounds.Beep.Play();
+						break;
 
-					case 16: SystemSounds.Hand.Play(); return;
+					case 16:
+						SystemSounds.Hand.Play();
+						break;
 
-					case 32: SystemSounds.Question.Play(); return;
+					case 32:
+						SystemSounds.Question.Play();
+						break;
 
-					case 48: SystemSounds.Exclamation.Play(); return;
+					case 48:
+						SystemSounds.Exclamation.Play();
+						break;
 
-					case 64: SystemSounds.Asterisk.Play(); return;
+					case 64:
+						SystemSounds.Asterisk.Play();
+						break;
 
-					default: return;
+					default:
+						break;
 				}
+
+				return null;
 			}
 
 #endif
@@ -161,11 +174,12 @@ namespace Keysharp.Core
 #else
 				$"aplay --quiet {filename}".Bash(doWait);
 #endif
+				return null;
 			}
 			catch (Exception ex)
 			{
 				Error err;
-				_ = Errors.ErrorOccurred(err = new Error(ex.Message)) ? throw err : "";
+				return Errors.ErrorOccurred(err = new Error(ex.Message)) ? throw err : null;
 			}
 		}
 
@@ -841,9 +855,9 @@ namespace Keysharp.Core
 		}
 #endif
 
-			/// <summary>
-			/// Enum for specifying different sound operations which will be passed to <see cref="DoSound(SoundCommands, object, object, object)"/>
-			/// </summary>
+		/// <summary>
+		/// Enum for specifying different sound operations which will be passed to <see cref="DoSound(SoundCommands, object, object, object)"/>
+		/// </summary>
 		private enum SoundCommands
 		{
 			SoundGetVolume = 0, SoundGetMute, SoundGetName

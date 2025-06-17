@@ -58,7 +58,7 @@ namespace Keysharp.Core.COM
 		{
 			Error err;
 			nint pUnk = Marshal.GetIUnknownForObject(comObject);
-			Marshal.Release(pUnk);
+			_ = Marshal.Release(pUnk);
 
 			try
 			{

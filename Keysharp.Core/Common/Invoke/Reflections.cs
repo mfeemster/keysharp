@@ -579,7 +579,7 @@ namespace Keysharp.Core.Common.Invoke
 			foreach (var t in types)
 			{
 				yield return t;
-				GetNestedTypes(t.GetNestedTypes());
+				_ = GetNestedTypes(t.GetNestedTypes());
 			}
 		}
 	}

@@ -168,7 +168,7 @@
 				return dispPtr;
 
 			// If the result was a COM object not a managed one then decrease the ref count bumped by GetObjectForIUnknown
-			Marshal.Release((nint)dispPtr);
+			_ = Marshal.Release((nint)dispPtr);
 			return result;
 		}
 

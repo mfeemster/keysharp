@@ -427,7 +427,7 @@ namespace Keysharp.Core
 		/// </summary>
 		/// <param name="allowExit"/>If true then UserRequestedExitException is allowed through
 		/// so the program can exit, otherwise all exceptions are discarded.
-		public static void TryDoEvents(bool allowExit = true, bool yieldTick = true)
+		internal static void TryDoEvents(bool allowExit = true, bool yieldTick = true)
 		{
 			var start = yieldTick ? Environment.TickCount : default;
 			Script.TheScript.loopShouldDoEvents = false;

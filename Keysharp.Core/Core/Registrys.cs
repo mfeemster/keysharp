@@ -20,7 +20,7 @@ namespace Keysharp.Core
 		/// Otherwise, specify the name of the value to delete.
 		/// </param>
 		/// <exception cref="OSError">An <see cref="OSError"/> exception is thrown on failure.</exception>
-		public static void RegDelete(object keyName = null, object valueName = null)
+		public static object RegDelete(object keyName = null, object valueName = null)
 		{
 			var keyname = keyName.As();
 			var valname = valueName.As();
@@ -49,11 +49,12 @@ namespace Keysharp.Core
 					val = string.Empty;
 
 				Conversions.ToRegKey(keyname, true).Item1.DeleteValue(val, true);
+				return null;
 			}
 			catch (Exception ex)
 			{
 				Error err;
-				_ = Errors.ErrorOccurred(err = new OSError(ex, $"Error deleting registry key {keyname} and value {valname}")) ? throw err : "";
+				return Errors.ErrorOccurred(err = new OSError(ex, $"Error deleting registry key {keyname} and value {valname}")) ? throw err : null;
 			}
 		}
 
@@ -67,7 +68,7 @@ namespace Keysharp.Core
 		/// If the item is a subkey, the full name of that subkey is used by default.<br/>
 		/// </param>
 		/// <exception cref="OSError">An <see cref="OSError"/> exception is thrown on failure.</exception>
-		public static void RegDeleteKey(object keyName = null)
+		public static object RegDeleteKey(object keyName = null)
 		{
 			var keyname = keyName.As();
 
@@ -79,11 +80,12 @@ namespace Keysharp.Core
 
 				var (reg, comp, key) = Conversions.ToRegRootKey(keyname);
 				reg.DeleteSubKeyTree(key, true);
+				return null;
 			}
 			catch (Exception ex)
 			{
 				Error err;
-				_ = Errors.ErrorOccurred(err = new OSError(ex, $"Error deleting registry key {keyname}")) ? throw err : "";
+				return Errors.ErrorOccurred(err = new OSError(ex, $"Error deleting registry key {keyname}")) ? throw err : null;
 			}
 		}
 

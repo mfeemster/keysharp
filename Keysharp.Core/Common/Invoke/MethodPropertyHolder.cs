@@ -102,7 +102,7 @@
 								//so manually create an array of parameters that matches the required size.
 								var oi = 0;
 								var pi = 0;
-								paramsPool.TryPush(out newobj, true);
+								_ = paramsPool.TryPush(out newobj, true);
 
 								for (; oi < objLength && pi < ParamLength; pi++)
 								{
@@ -192,7 +192,7 @@
 								else
 									System.Array.Copy(newobj, obj, len);
 
-								paramsPool.TryPop(out newobj, true);
+								_ = paramsPool.TryPop(out newobj, true);
 							}
 
 							return ret;
@@ -228,7 +228,7 @@
 							else
 							{
 								var pi = 0;//The slower case: a function is trying to be called with a different number of parameters than it actually has, so manually create an array of parameters that matches the required size.
-								paramsPool.TryPush(out var newobj, true);
+								_ = paramsPool.TryPush(out var newobj, true);
 
 								for (; pi < objLength && pi < ParamLength; ++pi)
 									if (obj[pi] == null && parameters[pi].IsOptional)
@@ -256,7 +256,7 @@
 								}
 
 								System.Array.Copy(newobj, obj, Math.Min(newobj.Length, objLength));//In case any params were references.
-								paramsPool.TryPop(out newobj, true);
+								_ = paramsPool.TryPop(out newobj, true);
 							}
 
 							return ret;

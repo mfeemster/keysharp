@@ -90,7 +90,7 @@
 					}
 				}
 				else
-					Debug.OutputDebug("Thread stack limit exceeded");
+					_ = Debug.OutputDebug("Thread stack limit exceeded");
 
 				return (pushed, tv);
 			}
