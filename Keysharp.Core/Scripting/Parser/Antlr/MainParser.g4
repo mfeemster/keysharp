@@ -467,13 +467,13 @@ expression
     | left = expression op = '~=' right = expression                               # RegExMatchExpression
     | left = expression op = ('<' | '>' | '<=' | '>=') right = expression          # RelationalExpression
     | left = expression op = ('=' | '!=' | '==' | '!==') right = expression        # EqualityExpression
-    | left = expression ((WS | EOL)* op = (Instanceof | Is | In | Contains) (WS | EOL)*) right = expression  # ContainExpression
+    | left = expression ((WS | EOL)* op = (Instanceof | Is | In | Contains) (WS | EOL)*) right = primaryExpression  # ContainExpression
     | VerbalNot WS* right = expression                                                         # VerbalNotExpression
     | left = expression (op = '&&' | op = VerbalAnd) right = expression  # LogicalAndExpression
     | left = expression (op = '||' | op = VerbalOr) right = expression   # LogicalOrExpression
     | <assoc = right> left = expression op = '??' right = expression                               # CoalesceExpression
     | <assoc = right> ternCond = expression (WS | EOL)* '?' (WS | EOL)* ternTrue = expression (WS | EOL)* ':' (WS | EOL)* ternFalse = expression # TernaryExpression 
-    | <assoc = right> left = expression op = assignmentOperator right = expression          # AssignmentExpression
+    | <assoc = right> left = primaryExpression op = assignmentOperator right = expression          # AssignmentExpression
     | fatArrowExpressionHead '=>' expression             # FatArrowExpression // Not sure why, but this needs to be lower than coalesce expression
     | functionExpressionHead (WS | EOL)* block           # FunctionExpression
     | primaryExpression                                  # ExpressionDummy
@@ -499,13 +499,13 @@ singleExpression
     | left = singleExpression op = '~=' right = singleExpression                               # RegExMatchExpressionDuplicate
     | left = singleExpression op = ('<' | '>' | '<=' | '>=') right = singleExpression          # RelationalExpressionDuplicate
     | left = singleExpression op = ('=' | '!=' | '==' | '!==') right = singleExpression        # EqualityExpressionDuplicate
-    | left = singleExpression ((WS | EOL)* op = (Instanceof | Is | In | Contains) (WS | EOL)*) right = singleExpression  # ContainExpressionDuplicate
+    | left = singleExpression ((WS | EOL)* op = (Instanceof | Is | In | Contains) (WS | EOL)*) right = primaryExpression  # ContainExpressionDuplicate
     | VerbalNot WS* right = singleExpression                                                         # VerbalNotExpressionDuplicate
     | left = singleExpression (op = '&&' | op = VerbalAnd) right = singleExpression  # LogicalAndExpressionDuplicate
     | left = singleExpression (op = '||' | op = VerbalOr) right = singleExpression   # LogicalOrExpressionDuplicate
     | <assoc = right> left = singleExpression op = '??' right = singleExpression                               # CoalesceExpressionDuplicate
     | <assoc = right> ternCond = singleExpression (WS | EOL)* '?' (WS | EOL)* ternTrue = expression (WS | EOL)* ':' (WS | EOL)* ternFalse = singleExpression # TernaryExpressionDuplicate
-    | <assoc = right> left = singleExpression op = assignmentOperator right = singleExpression          # AssignmentExpressionDuplicate
+    | <assoc = right> left = primaryExpression op = assignmentOperator right = singleExpression          # AssignmentExpressionDuplicate
     | primaryExpression                                  # SingleExpressionDummy
     ;
 

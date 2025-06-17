@@ -261,7 +261,7 @@ namespace Keysharp.Scripting
 
 			public override object VisitAssignmentExpression([NotNull] AssignmentExpressionContext context)
 			{
-                if (context.left is ExpressionDummyContext edc && edc.primaryExpression() is IdentifierExpressionContext iec)
+                if (context.left is IdentifierExpressionContext iec)
                 {
                     SyntaxNode result = mainVisitor.Visit(iec);
                     if (result is IdentifierNameSyntax identifierNameSyntax)
@@ -272,7 +272,7 @@ namespace Keysharp.Scripting
 
 			public override object VisitAssignmentExpressionDuplicate([NotNull] AssignmentExpressionDuplicateContext context)
 			{
-				if (context.left is SingleExpressionDummyContext edc && edc.primaryExpression() is IdentifierExpressionContext iec)
+				if (context.left is IdentifierExpressionContext iec)
                 {
 					SyntaxNode result = mainVisitor.Visit(iec);
 					if (result is IdentifierNameSyntax identifierNameSyntax)
