@@ -220,7 +220,10 @@ namespace Keysharp.Core
 			var script = Script.TheScript;
 			var old = script.persistent;
 			script.persistent = script.FlowData.persistentValueSetByUser = b;
-			Script.TheScript.ExitIfNotPersistent();//Will internally call CheckedBeginInvoke().
+
+			if (!script.persistent)
+				Script.TheScript.ExitIfNotPersistent();//Will internally call CheckedBeginInvoke().
+
 			return old;
 		}
 
