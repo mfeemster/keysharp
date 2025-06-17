@@ -2547,7 +2547,7 @@ namespace Keysharp.Core.Common.Keyboard
 
 	internal class HotkeyData
 	{
-		internal readonly HookType whichHookAlways = HookType.None;
+		internal HookType whichHookAlways = HookType.None;
 		internal bool dialogIsDisplayed;
 		internal uint joyHotkeyCount;
 		internal bool[] joystickHasHotkeys = new bool[JoystickData.MaxJoysticks];

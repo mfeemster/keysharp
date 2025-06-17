@@ -24,25 +24,11 @@
 		{
 			var kso = new KeysharpObject();
 			var count = (args.Length / 2) * 2;
+			kso.op = new Dictionary<string, OwnPropsDesc>(StringComparer.OrdinalIgnoreCase);
 
 			for (var i = 0; i < count; i += 2)
 			{
-				var map = new Map(false)
-				{
-					CaseSense = false
-				};
-				var key = args[i].ToString();
-
-				if (string.Compare(key, "get", true) == 0
-						|| string.Compare(key, "set", true) == 0
-						|| string.Compare(key, "call", true) == 0)
-				{
-					map[key.ToLower()] = args[i + 1];
-				}
-				else
-					map["value"] = args[i + 1];
-
-				_ = kso.DefineProp(key, map);
+				kso.op[args[i].ToString()] = new OwnPropsDesc(kso, args[i + 1]);
 			}
 
 			return kso;
@@ -169,14 +155,11 @@
 		{
 			// Almost the same as ObjFromPtrAddRef, but decreases the ref count if the object
 			// turned out to be a native COM object
-
 			var punk = Reflections.GetPtrProperty(ptr);
-
 			// For COM object this creates or finds the RCW and bumps the ref count,
 			// and once the object is collected then the ref count is decreased.
 			// If it's a managed object then it's just returned without changing the ref count of the RCW.
 			var dispPtr = Marshal.GetObjectForIUnknown((nint)punk);
-
 			object result = null;
 
 			if (Marshal.IsComObject(dispPtr))
@@ -193,7 +176,6 @@
 		public static object ObjFromPtrAddRef(object ptr)
 		{
 			var punk = Reflections.GetPtrProperty(ptr);
-
 			// For COM object this creates or finds the RCW and bumps the ref count,
 			// and once the object is collected then the ref count is decreased.
 			// If it's a managed object then it's just returned without changing the ref count of the RCW.
@@ -215,15 +197,15 @@
 
 			if (value is IPointable ip)
 				value = ip.Ptr;
-				
-			if (value is long l) 
+
+			if (value is long l)
 			{
 				if (Script.TheScript.StringsData.gcHandles.Remove((nint)l, out var oldGch))
 				{
 					oldGch.Free();
 					return true;
 				}
-			} 
+			}
 			else
 				return Errors.ErrorOccurred(err = new TypeError($"Argument of type {value.GetType()} was not a pointer.")) ? throw err : false;
 

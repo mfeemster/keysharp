@@ -14,7 +14,7 @@
 	public class KeysharpObject : Any
 #endif
 	{
-		protected internal Dictionary<string, OwnPropsMap> op;
+		protected internal Dictionary<string, OwnPropsDesc> op;
 
 		public new (Type, object) super => (typeof(Any), this);
 
@@ -38,35 +38,46 @@
 
 		public KeysharpObject DefineProp(object obj0, object obj1)
 		{
+			Error err;
 			var name = obj0.As();
+
+			if (op == null)
+				op = new Dictionary<string, OwnPropsDesc>(StringComparer.OrdinalIgnoreCase);
 
 			if (obj1 is Map map)
 			{
-				if (op == null)
-					op = new Dictionary<string, OwnPropsMap>(new CaseEqualityComp(eCaseSense.Off));
+				if (!op.ContainsKey(name))
+					op[name] = new OwnPropsDesc(this, map);
+				else
+				{
+					if (map.map.Count > 1 && map.map.Any(k => k.Key.ToString().Equals("value", StringComparison.OrdinalIgnoreCase)))
+						return Errors.ErrorOccurred(err = new ValueError("Value can't be defined along with get, set, or call.")) ? throw err : this;
 
-				op[name] = new OwnPropsMap(this, map);
+					op[name].Merge(map);
+				}
 			}
 			else if (obj1 is KeysharpObject kso)
 			{
 				if (kso.op != null)//&& kso.op.TryGetValue(name, out var opm))
 				{
-					if (op == null)
-						op = new Dictionary<string, OwnPropsMap>(new CaseEqualityComp(eCaseSense.Off));
+					if (kso.op.Count > 1 && kso.op.Any(k => k.Key.ToString().Equals("value", StringComparison.OrdinalIgnoreCase)))
+						return Errors.ErrorOccurred(err = new ValueError("Value can't be defined along with get, set, or call.")) ? throw err : this;
 
-					_ = op.Remove(name);//Clear, but this will prevent defining the property across multiple calls such as first adding value, then get, then set.
-
-					foreach (var kv in kso.op)
+					if (op.TryGetValue(name, out var currProp))
 					{
-						if (op.TryGetValue(name, out var currProp))
-							currProp.map[kv.Key] = kv.Value[kv.Key];//Merge.
-						else
-							op[name] = new OwnPropsMap(this, new Map(false, kv.Value.map));//Create new.
+						currProp.MergeOwnPropsValues(kso.op);
+					}
+					else
+					{
+						op[name] = new OwnPropsDesc(this);
+						op[name].MergeOwnPropsValues(kso.op);
 					}
 
 					kso.op.Clear();
 				}
 			}
+			else
+				_ = Errors.ArgumentErrorOccurred(obj1, 2);
 
 			return this;
 		}
@@ -95,27 +106,11 @@
 		public object GetOwnPropDesc(object obj)
 		{
 			Error err;
-			var name = obj.As().ToLower();
+			var name = obj.As();
 
 			if (op != null && op.TryGetValue(name, out var dynProp))
 			{
-				var kso = new KeysharpObject();
-				var list = new List<object>();
-				kso.op = new Dictionary<string, OwnPropsMap>();
-
-				foreach (var kv in dynProp.map)
-				{
-					list.Add(kv.Key);
-
-					//Must wrap in a function so that when GetMethodOrProperty() unwraps it, it just returns the property and
-					//doesn't actually call get().
-					if (string.Compare(kv.Key.ToString(), "get", true) == 0)
-						list.Add(new FuncObj("Wrap", this).Bind(kv.Value));
-					else
-						list.Add(kv.Value);
-				}
-
-				return Objects.Object(list.ToArray());
+				return dynProp.GetDesc();
 			}
 
 			try
@@ -159,7 +154,7 @@
 
 		public object OwnProps(object getValues = null, object userOnly = null)
 		{
-			var vals = getValues.Ab();
+			var vals = getValues.Ab(true);
 			var user = userOnly.Ab(true);
 			var props = new Dictionary<object, object>();
 
@@ -167,17 +162,7 @@
 			{
 				foreach (var kv in op)
 				{
-					foreach (var propkv in kv.Value.map)
-					{
-						var prop = propkv.Value;
-
-						if (prop != null)
-						{
-							if (prop is not FuncObj fo
-									|| (fo.Mph.mi != null && fo.Mph.ParamLength <= 1))
-								props[kv.Key] = prop;
-						}
-					}
+					props[kv.Key] = kv.Value;
 				}
 			}
 

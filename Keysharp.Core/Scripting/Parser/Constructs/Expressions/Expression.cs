@@ -55,16 +55,20 @@ namespace Keysharp.Scripting
 				if (orig is CodeBinaryOperatorExpression cboe)
 				{
 					cboe.Right = ReevaluateSnippets(cboe.Right);
+
+					//Sometimes a snippet can end up with more "_ = " at the beginning than are needed, so remove.
+					//Note this removal is not needed for the generated C# to compile, it just makes it look less cluttered.
+					if (cboe.Right is CodeSnippetExpression cse2)
+						while (cse2.Value.StartsWith("_ = "))
+							cse2.Value = cse2.Value.TrimStartOf("_ = ");
+
 					var c2s = Ch.CodeToString(orig);
 					c2s = c2s.Substring(1, c2s.Length - 2);
 
-					if (cboe != null)
-					{
-						if (cboe.Operator == CodeBinaryOperatorType.Assign)
-							cse.Value = c2s;
-						else
-							cse.Value = $"_ = ({c2s})";
-					}
+					if (cboe.Operator == CodeBinaryOperatorType.Assign)
+						cse.Value = c2s;
+					else
+						cse.Value = $"_ = ({c2s})";
 				}
 				else if (orig is CodeTernaryOperatorExpression ctoe)
 				{

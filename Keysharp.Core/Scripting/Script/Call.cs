@@ -39,16 +39,16 @@
 				}
 				else if (item is KeysharpObject kso && kso.op != null)
 				{
-					if (kso.op.TryGetValue(key, out var val) && val is OwnPropsMap map)
+					if (kso.op.TryGetValue(key, out var val) && val is OwnPropsDesc map)
 					{
 						//Pass the ownprops map so that Invoke() knows to pass the parent object (item) as the first argument.
-						if (map.map.TryGetValue("call", out var callval) && callval is IFuncObj ifocall)//Call must come first.
+						if (map.Call != null && map.Call is IFuncObj ifocall)//Call must come first.
 							return (map, ifocall);
-						else if (map.map.TryGetValue("get", out var getval) && getval is IFuncObj ifoget)
+						else if (map.Get != null && map.Get is IFuncObj ifoget)
 							return (map, ifoget.Call());//No params passed in, just call as is.
-						else if (map.map.TryGetValue("value", out var valval) && valval is IFuncObj ifoval)
+						else if (map.Value != null && map.Value is IFuncObj ifoval)
 							return (map, ifoval);
-						else if (map.map.TryGetValue("set", out var setval) && setval is IFuncObj ifoset)
+						else if (map.Set != null && map.Set is IFuncObj ifoset)
 							return (map, ifoset);
 
 						return Errors.ErrorOccurred(err = new Error($"Attempting to get method or property {key} on object {map} failed.")) ? throw err : (null, null);
@@ -114,12 +114,12 @@
 
 				if (item is KeysharpObject kso && kso.op != null)
 				{
-					if (kso.op.TryGetValue(namestr, out var val) && val is OwnPropsMap map)
+					if (kso.op.TryGetValue(namestr, out var val) && val is OwnPropsDesc map)
 					{
-						if (map.map.TryGetValue("value", out var valval))
-							return valval;
+						if (map.Value != null)
+							return map.Value;
 
-						if (map.map.TryGetValue("get", out var getval) && getval is IFuncObj ifo)
+						if (map.Get is IFuncObj ifo)
 							return ifo.Call(kso);
 					}
 				}
@@ -234,20 +234,20 @@
 					//  ret = ifo2.Call(arr);
 					//  System.Array.Copy(arr, 1, parameters, 0, parameters.Length);//In case any params were references.
 					//}
-					if (mitup.Item1 is Map)//Either Map or OwnpropsMap.
+					if (mitup.Item1 is Map || mitup.Item1 is OwnPropsDesc)
 					{
 						var lenIsZero = parameters.Length == 0;
 
 						if (lenIsZero)
 						{
 							var arr = new object[2];
-							arr[0] = mitup.Item1 is OwnPropsMap opm ? opm.Parent : mitup.Item1;
+							arr[0] = mitup.Item1 is OwnPropsDesc opm ? opm.Parent : mitup.Item1;
 							return ifo2.Call(arr);
 						}
 						else
 						{
 							var arr = new object[parameters.Length + 1];
-							arr[0] = mitup.Item1 is OwnPropsMap opm ? opm.Parent : mitup.Item1;
+							arr[0] = mitup.Item1 is OwnPropsDesc opm ? opm.Parent : mitup.Item1;
 							System.Array.Copy(parameters, 0, arr, 1, parameters.Length);
 							ret = ifo2.Call(arr);
 							System.Array.Copy(arr, 1, parameters, 0, parameters.Length);//In case any params were references.
@@ -314,14 +314,14 @@
 				{
 					called = true;
 
-					if (mitup.Item1 is Map)//Either Map or OwnpropsMap.
+					if (mitup.Item1 is Map || mitup.Item1 is OwnPropsDesc)
 					{
 						var lenIsZero = parameters.Length == 0;
 
 						if (lenIsZero)
 						{
 							var arr = new object[2];
-							arr[0] = mitup.Item1 is OwnPropsMap opm ? opm.Parent : mitup.Item1;
+							arr[0] = mitup.Item1 is OwnPropsDesc opm ? opm.Parent : mitup.Item1;
 							ret = ifo2.Call(arr);
 						}
 						else
@@ -331,7 +331,7 @@
 									refs[i].index++;//Need to move the indices forward by one because of the additional parameter we'll add to the front below.
 
 							var arr = new object[parameters.Length + 1];
-							arr[0] = mitup.Item1 is OwnPropsMap opm ? opm.Parent : mitup.Item1;
+							arr[0] = mitup.Item1 is OwnPropsDesc opm ? opm.Parent : mitup.Item1;
 							System.Array.Copy(parameters, 0, arr, 1, parameters.Length);
 							ret = ifo2.Call(arr);
 							parameters = arr;//For the reassign loop below, so the indices line up.
@@ -387,21 +387,19 @@
 
 				if ((kso = item as KeysharpObject) != null && kso.op != null)
 				{
-					if (kso.op.TryGetValue(namestr, out var val) && val is OwnPropsMap opm)
+					if (kso.op.TryGetValue(namestr, out var val) && val is OwnPropsDesc opm)
 					{
-						if (opm.map.ContainsKey("value"))
-						{
-							opm.map["value"] = value;
-							return value;
-						}
-
-						if (opm.map.TryGetValue("set", out var setval) && setval is IFuncObj ifo)
+						if (opm.Set != null && opm.Set is IFuncObj ifo)
 						{
 							var arr = new object[2];
 							arr[0] = item;//Special logic here: this was called on an OwnProps map, so it uses its parent as the object.
 							arr[1] = value;
 							return ifo.Call(arr);
 						}
+						else if (opm.Call == null && opm.Get == null)
+							return opm.Value = value;
+						else
+							return Errors.ErrorOccurred(err = new Error($"Property {namestr} on object {item} is read-only.")) ? throw err : null;
 					}
 				}
 
