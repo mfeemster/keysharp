@@ -2307,7 +2307,7 @@ namespace Keysharp.Core.Windows
 
 			// v2.1: Process any InputHooks which have the H option.  This requires translating the event to text, which
 			// is done only once for each event.  If there are no InputHooks with the H option, the translation is done
-			// later to avoid any change in behaviour compared to v2.0 (such as dead keys affecting the translation prior
+			// later to avoid any change in behavior compared to v2.0 (such as dead keys affecting the translation prior
 			// to being suppressed by a hotkey), or not done at all if the event is suppressed by other means.
 			if (hook == kbdHook && script.inputBeforeHotkeysCount > 0
 					&& !EarlyCollectInput(ref kbd, vk, sc, keyUp, isIgnored, collectInputState, keyHistoryCurr))
@@ -3362,7 +3362,7 @@ namespace Keysharp.Core.Windows
 					// section would unconditionally pass through a prefix key if the user was already holding
 					// another prefix key.  Just suppressing it doesn't seem useful since it still wouldn't
 					// function as a prefix key (since case #1 didn't set pPrefixKey to this_key), and fixing
-					// that would change the behaviour in ways that might be undesired, so it's left as is.
+					// that would change the behavior in ways that might be undesired, so it's left as is.
 					if (thisKey.hotkeyToFireUponRelease == HotkeyDefinition.HOTKEY_ID_INVALID)
 						return new nint(AllowIt(hook, code, wParam, ref kbd, ref mouse, vk, sc, keyUp, extraInfo, collectInputState, keyHistoryCurr, hotkeyIdToPost, null));
 
@@ -3441,7 +3441,7 @@ namespace Keysharp.Core.Windows
 
 			// If prefixKey is part of the reason for this hotkey firing, update was_just_used
 			// so that when the prefix key is released, it won't perform its key-up action.
-			// To match the behaviour prior to v1.1.37, this is done on key-up for custom combos
+			// To match the behavior prior to v1.1.37, this is done on key-up for custom combos
 			// but not standard hotkeys.  Note that if there are multiple key-up hotkeys with
 			// different modifier combinations, the one that fires might depend on the modifier
 			// state at the time the key was pressed, rather than when it was released.  In other

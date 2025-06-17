@@ -211,7 +211,7 @@ namespace Keysharp.Core
 		/// <param name="persist">If omitted, it defaults to true.<br/>
 		/// If true, the script will be kept running after all threads have exited,<br/>
 		/// even if none of the other conditions for keeping the script running are met.<br/>
-		/// If false, the default behaviour is restored.
+		/// If false, the default behavior is restored.
 		/// </param>
 		/// <returns>The previous persistence boolean value.</returns>
 		public static object Persistent(object persist = null)
@@ -220,6 +220,7 @@ namespace Keysharp.Core
 			var script = Script.TheScript;
 			var old = script.persistent;
 			script.persistent = script.FlowData.persistentValueSetByUser = b;
+			Script.TheScript.ExitIfNotPersistent();//Will internally call CheckedBeginInvoke().
 			return old;
 		}
 

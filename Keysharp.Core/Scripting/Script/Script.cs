@@ -335,11 +335,11 @@ namespace Keysharp.Scripting
 			//Must use BeginInvoke() because this might be called from _ks_UserMainCode(),
 			//so it needs to run after that thread has exited.
 			if (!IsMainWindowClosing)
-				mainWindow?.CheckedBeginInvoke(new Action(() =>
+				mainWindow?.CheckedBeginInvoke(() =>
 			{
 				if (!IsMainWindowClosing && !AnyPersistent())
 					_ = Flow.ExitAppInternal(exitReason, Environment.ExitCode, false);
-			}), true, true);
+			}, true, true);
 		}
 
 		public string GetPublicStaticPropertyNames()
