@@ -1,4 +1,6 @@
-﻿namespace System.Collections.Generic
+﻿using Keysharp.Scripting;
+
+namespace System.Collections.Generic
 {
 	/// <summary>
 	/// Extension methods for various generic collection classes.
@@ -223,6 +225,7 @@
 
 							_ = script.Threads.EndThread(true);
 						}, true);//Pop on exception because EndThread() above won't be called.
+						TheScript.ExitIfNotPersistent();
 					}
 				}
 			}
