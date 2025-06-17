@@ -76,29 +76,32 @@ namespace Keysharp.Core.Common.ObjectBase
 
 		public KeysharpObject DefineProp(object obj0, object obj1)
 		{
+			Error err;
 			var name = obj0.As();
+
+			if (op == null)
+				op = new Dictionary<string, OwnPropsDesc>(StringComparer.OrdinalIgnoreCase);
 
 			if (obj1 is Map map)
 			{
-				if (op == null)
-					op = new Dictionary<string, OwnPropsDesc>(StringComparer.OrdinalIgnoreCase);
-
 				if (!op.ContainsKey(name))
 					op[name] = new OwnPropsDesc(this, map);
 				else
+				{
+					if (map.map.Count > 1 && map.map.Any(k => k.Key.ToString().Equals("value", StringComparison.OrdinalIgnoreCase)))
+						return Errors.ErrorOccurred(err = new ValueError("Value can't be defined along with get, set, or call.")) ? throw err : this;
+
 					op[name].Merge(map);
+				}
 			}
 			else if (obj1 is KeysharpObject kso)
 			{
 				if (kso.op != null)//&& kso.op.TryGetValue(name, out var opm))
 				{
-					if (op == null)
-					{
-						op = new Dictionary<string, OwnPropsDesc>(StringComparer.OrdinalIgnoreCase);
-						op[name] = new OwnPropsDesc();
-						op[name].MergeOwnPropsValues(kso.op);
-					}
-					else if (op.TryGetValue(name, out var currProp))
+					if (kso.op.Count > 1 && kso.op.Any(k => k.Key.ToString().Equals("value", StringComparison.OrdinalIgnoreCase)))
+						return Errors.ErrorOccurred(err = new ValueError("Value can't be defined along with get, set, or call.")) ? throw err : this;
+
+					if (op.TryGetValue(name, out var currProp))
 					{
 						currProp.MergeOwnPropsValues(kso.op);
 					}
@@ -111,6 +114,8 @@ namespace Keysharp.Core.Common.ObjectBase
 					kso.op.Clear();
 				}
 			}
+			else
+				_ = Errors.ArgumentErrorOccurred(obj1, 2);
 
 			return this;
 		}
@@ -139,7 +144,7 @@ namespace Keysharp.Core.Common.ObjectBase
 		public object GetOwnPropDesc(object obj)
 		{
 			Error err;
-			var name = obj.As().ToLower();
+			var name = obj.As();
 
 			if (op != null && op.TryGetValue(name, out var dynProp))
 			{
@@ -187,7 +192,7 @@ namespace Keysharp.Core.Common.ObjectBase
 
 		public object OwnProps(object getValues = null, object userOnly = null)
 		{
-			var vals = getValues == null || getValues.Ab();
+			var vals = getValues.Ab(true);
 			var user = userOnly.Ab(true);
 			var props = new Dictionary<object, object>();
 

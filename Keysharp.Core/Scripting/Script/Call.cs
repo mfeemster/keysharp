@@ -460,18 +460,18 @@ namespace Keysharp.Scripting
 					//  ret = ifo2.Call(arr);
 					//  System.Array.Copy(arr, 1, parameters, 0, parameters.Length);//In case any params were references.
 					//}
-					if (mitup.Item1 is Map)//Either Map or OwnpropsMap.
+					if (mitup.Item1 is Map || mitup.Item1 is OwnPropsDesc)
 					{
 						var lenIsZero = parameters == null || parameters.Length == 0;
 
 						if (lenIsZero)
 						{
-							return ifo2.Call(mitup.Item1 is OwnPropsMap opm ? opm.Parent : mitup.Item1);
+							return ifo2.Call(mitup.Item1 is OwnPropsDesc opm ? opm.Parent : mitup.Item1);
 						}
 						else
 						{
 							var arr = new object[parameters.Length + 1];
-							arr[0] = mitup.Item1 is OwnPropsMap opm ? opm.Parent : mitup.Item1;
+							arr[0] = mitup.Item1 is OwnPropsDesc opm ? opm.Parent : mitup.Item1;
 							System.Array.Copy(parameters, 0, arr, 1, parameters.Length);
 							ret = ifo2.Call(arr);
 							System.Array.Copy(arr, 1, parameters, 0, parameters.Length);//In case any params were references.
@@ -547,14 +547,14 @@ namespace Keysharp.Scripting
 				{
 					called = true;
 
-					if (mitup.Item1 is Map)//Either Map or OwnpropsMap.
+					if (mitup.Item1 is Map || mitup.Item1 is OwnPropsDesc)
 					{
 						var lenIsZero = parameters.Length == 0;
 
 						if (lenIsZero)
 						{
 							var arr = new object[2];
-							arr[0] = mitup.Item1 is OwnPropsMap opm ? opm.Parent : mitup.Item1;
+							arr[0] = mitup.Item1 is OwnPropsDesc opm ? opm.Parent : mitup.Item1;
 							ret = ifo2.Call(arr);
 						}
 						else
@@ -564,7 +564,7 @@ namespace Keysharp.Scripting
 									refs[i].index++;//Need to move the indices forward by one because of the additional parameter we'll add to the front below.
 
 							var arr = new object[parameters.Length + 1];
-							arr[0] = mitup.Item1 is OwnPropsMap opm ? opm.Parent : mitup.Item1;
+							arr[0] = mitup.Item1 is OwnPropsDesc opm ? opm.Parent : mitup.Item1;
 							System.Array.Copy(parameters, 0, arr, 1, parameters.Length);
 							ret = ifo2.Call(arr);
 							parameters = arr;//For the reassign loop below, so the indices line up.
@@ -629,9 +629,11 @@ namespace Keysharp.Scripting
 							arr[1] = value;
 							return ifo.Call(item, value) ?? value;
 						}
-						else
+						else if (own.Call == null && own.Get == null)
 							return own.Value = value;
-                    }
+						else
+							return Errors.ErrorOccurred(err = new Error($"Property {namestr} on object {item} is read-only.")) ? throw err : null;
+					}
 					if (TryGetOwnPropsMap(kso, namestr, out var opm))
 					{
                         if (opm.Set != null && opm.Set is IFuncObj ifo)

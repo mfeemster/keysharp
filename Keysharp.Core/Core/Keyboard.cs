@@ -1,15 +1,5 @@
 namespace Keysharp.Core
 {
-	internal class KeyboardData
-	{
-		internal readonly ToggleStates toggleStates = new ();
-		internal bool blockInput;
-		internal ToggleValueType blockInputMode = ToggleValueType.Default;
-		internal bool blockMouseMove;
-		internal Dictionary<string, HotkeyDefinition> hotkeys = [];
-		internal Dictionary<string, HotstringDefinition> hotstrings = [];
-	}
-
 	/// <summary>
 	/// Public interface for keyboard-related functions.
 	/// </summary>
@@ -129,8 +119,8 @@ namespace Keysharp.Core
 			return true;
 		}
 
-
 #endif
+
 		/// <summary>
 		/// Retrieves the name/text of a key.
 		/// </summary>
@@ -153,7 +143,6 @@ namespace Keysharp.Core
 		/// </param>
 		/// <returns>Returns the scan code of the specified key, or 0 if the key is invalid or has no scan code.</returns>
 		public static long GetKeySC(object keyName) => Convert.ToInt64(GetKeyNamePrivate(keyName.As(), 1));
-
 
 		/// <summary>
 		/// Returns 1 (true) or 0 (false) depending on whether the specified keyboard key or mouse/controller<br/>
@@ -496,6 +485,13 @@ break_twice:;
 		}
 
 		public static object HotstringOptions(object options) => Hotstring(options);
+
+		public static object InstallKeybdHook(object install = null, object force = null) =>
+		InstallHook(HookType.Keyboard, install, force);
+
+		public static object InstallMouseHook(object install = null, object force = null) =>
+		InstallHook(HookType.Mouse, install, force);
+
 		/// <summary>
 		/// Displays script info and a history of the most recent keystrokes and mouse clicks.
 		/// </summary>
@@ -654,16 +650,6 @@ break_twice:;
 			}
 		}
 
-		//We initially had these using BeginInvoke(), but that is wrong, because these will often be launched from threads in responde to a hotkey/string.
-		//The state of those threads needs to be preserved, but invoking will overwrite that state by putting the call on the main GUI thread.
-		//This is unlikely to be true anymore since we implemented the pseudo-thread functionality of AHK.
-		//So put them back to just straight calls, revisit if cross threading bugs occur.
-		//public static void SendEvent(object obj) => Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, SendModes.Event, 0), true, true);
-		//public static void Send(object obj) => Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, Accessors.SendMode, 0), true, true);
-		//public static void SendInput(object obj) => Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, Accessors.SendMode == SendModes.InputThenPlay ? SendModes.InputThenPlay : SendModes.Input, 0), true, true);
-		//public static void SendPlay(object obj) => Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, SendModes.Play, 0), true, true);
-		//public static void SendText(object obj) => Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.RawText, Accessors.SendMode, 0), true, true);
-
 		/// <summary>
 		/// Sends simulated keystrokes and mouse clicks to the active window.
 		/// By default, Send is synonymous with <see cref="SendInput"/>; but it can be made a synonym for <see cref="SendEvent"/> or <see cref="SendPlay"/> via <see cref="SendMode"/>.
@@ -675,6 +661,16 @@ break_twice:;
 			return null;
 		}
 
+		//We initially had these using BeginInvoke(), but that is wrong, because these will often be launched from threads in responde to a hotkey/string.
+		//The state of those threads needs to be preserved, but invoking will overwrite that state by putting the call on the main GUI thread.
+		//This is unlikely to be true anymore since we implemented the pseudo-thread functionality of AHK.
+		//So put them back to just straight calls, revisit if cross threading bugs occur.
+		//public static void SendEvent(object obj) => Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, SendModes.Event, 0), true, true);
+		//public static void Send(object obj) => Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, Accessors.SendMode, 0), true, true);
+		//public static void SendInput(object obj) => Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, Accessors.SendMode == SendModes.InputThenPlay ? SendModes.InputThenPlay : SendModes.Input, 0), true, true);
+		//public static void SendPlay(object obj) => Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, SendModes.Play, 0), true, true);
+		//public static void SendText(object obj) => Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.RawText, Accessors.SendMode, 0), true, true);
+	
 		/// <summary>
 		/// SendEvent sends keystrokes using the Windows keybd_event function (search Microsoft Docs for details).<br/>
 		/// The rate at which keystrokes are sent is determined by <see cref="SetKeyDelay"/>.<br/>
@@ -1003,6 +999,32 @@ break_twice:;
 			};
 		}
 
+		private static object InstallHook(HookType whichHook, object install = null, object force = null)
+		{
+			var i = install.Ab(true);
+			var f = force.Ab();
+			var ht = Script.TheScript.HookThread;
+
+			//When the second parameter is true, unconditionally remove the hook. If the first parameter is
+			//also true, the hook will be reinstalled fresh. Otherwise the hook will be left uninstalled,
+			//until something happens to reinstall it, such as ManifestAllHotkeysHotstringsHooks().
+			if (f)
+				ht.AddRemoveHooks(ht.GetActiveHooks() & ~whichHook);
+
+			RequireHook(whichHook, i);
+
+			if (!f || i)
+				HotkeyDefinition.ManifestAllHotkeysHotstringsHooks();
+
+			return null;
+		}
+
+		private static void RequireHook(HookType whichHook, bool require = true)
+		{
+			var hkd = Script.TheScript.HotkeyData;
+			_ = require ? hkd.whichHookAlways |= whichHook : hkd.whichHookAlways &= ~whichHook;
+		}
+
 		/// <summary>
 		/// Internal helper to toggle a key state.
 		/// </summary>
@@ -1046,6 +1068,16 @@ break_twice:;
 					break;
 			}
 		}
+	}
+
+	internal class KeyboardData
+	{
+		internal readonly ToggleStates toggleStates = new ();
+		internal bool blockInput;
+		internal ToggleValueType blockInputMode = ToggleValueType.Default;
+		internal bool blockMouseMove;
+		internal Dictionary<string, HotkeyDefinition> hotkeys = [];
+		internal Dictionary<string, HotstringDefinition> hotstrings = [];
 	}
 
 	/// <summary>

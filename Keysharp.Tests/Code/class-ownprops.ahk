@@ -406,15 +406,17 @@ testfunc(testclassobj)
 	testclassobj.DefineProp("prop", { ; Overwrite previous with dynamically defined call.
 		call: (this, p*) => this.a := p.Length
 	})
-
-	val := testclassobj.prop
+	
+	testclassobj.prop(1, 2)
 
 	If (val == 123)
 		FileAppend "pass", "*"
 	else
 		FileAppend "fail", "*"
 
-	testclassobj.prop := "123"
+	testclassobj.DefineProp("prop", { ; Overwrite previous with dynamically defined call.
+		value: 123
+	})
 
 	val := testclassobj.prop
 
