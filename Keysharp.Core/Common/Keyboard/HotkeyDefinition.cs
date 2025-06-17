@@ -270,13 +270,13 @@ namespace Keysharp.Core.Common.Keyboard
 			_ = Unregister();
 		}
 
-		public static void AddHotkey(IFuncObj _callback, uint _hookAction, string _name)
+		public static HotkeyDefinition AddHotkey(IFuncObj _callback, uint _hookAction, string _name)
 		{
 			var b = 0u;
-			_ = AddHotkey(_callback, _hookAction, _name, ref b);
+			return AddHotkey(_callback, _hookAction, _name, ref b);
 		}
 
-		public static void HotIf(object obj0 = null)
+		public static object HotIf(object obj0 = null)
 		{
 			var script = Script.TheScript;
 
@@ -292,20 +292,22 @@ namespace Keysharp.Core.Common.Keyboard
 			}
 			else
 				script.Threads.GetThreadVariables().hotCriterion = null;
+
+			return null;
 		}
 
-		public static void HotIfWinActive(object obj0 = null, object obj1 = null) => SetupHotIfWin("HotIfWinActivePrivate", obj0, obj1);
+		public static object HotIfWinActive(object obj0 = null, object obj1 = null) => SetupHotIfWin("HotIfWinActivePrivate", obj0, obj1);
 
-		public static void HotIfWinExist(object obj0 = null, object obj1 = null) => SetupHotIfWin("HotIfWinExistPrivate", obj0, obj1);
+		public static object HotIfWinExist(object obj0 = null, object obj1 = null) => SetupHotIfWin("HotIfWinExistPrivate", obj0, obj1);
 
-		public static void HotIfWinNotActive(object obj0 = null, object obj1 = null) => SetupHotIfWin("HotIfWinNotActivePrivate", obj0, obj1);
+		public static object HotIfWinNotActive(object obj0 = null, object obj1 = null) => SetupHotIfWin("HotIfWinNotActivePrivate", obj0, obj1);
 
-		public static void HotIfWinNotExist(object obj0 = null, object obj1 = null) => SetupHotIfWin("HotIfWinNotExistPrivate", obj0, obj1);
+		public static object HotIfWinNotExist(object obj0 = null, object obj1 = null) => SetupHotIfWin("HotIfWinNotExistPrivate", obj0, obj1);
 
 		/// <summary>
 		/// Get the hotkey descriptions and put them in the Vars tab of the main window.
 		/// </summary>
-		public static void ListHotkeys() => Script.TheScript.mainWindow?.ListHotkeys();
+		public static object ListHotkeys() => Script.TheScript.mainWindow?.ListHotkeys();
 
 		/// <summary>
 		/// This function examines all hotkeys and hotstrings to determine:
@@ -318,7 +320,7 @@ namespace Keysharp.Core.Common.Keyboard
 		/// - Based on the above, decide whether the keyboard and/or mouse hooks need to be (de)activated.
 		/// Needs to be public so tests can use it.
 		/// </summary>
-		public static void ManifestAllHotkeysHotstringsHooks()
+		public static object ManifestAllHotkeysHotstringsHooks()
 		{
 			// v1.0.37.05: A prefix key such as "a" in "a & b" should cause any use of "a" as a suffix
 			// (such as ^!a) also to be a hook hotkey.  Otherwise, the ^!a hotkey won't fire because the
@@ -598,14 +600,13 @@ namespace Keysharp.Core.Common.Keyboard
 			if (kbd.blockMouseMove || (hm.hsResetUponMouseClick && hm.enabledCount != 0))
 				hkd.whichHookNeeded |= HookType.Mouse;
 
-			//Anything not a mouse or joystick should start the keyboard hook because even hotkeys
-			//which are received in MainWindow.WndProc() need to be forwarded on to the hook thread.
-			foreach (var hk in shk)
-				if (hk.type < HotkeyTypeEnum.MouseHook)
-				{
-					hkd.whichHookNeeded |= HookType.Keyboard;
-					break;
-				}
+			//Regardless of the type of hook needed, including none, we always need to start the reader queue.
+			//The presence of any hotkey/string should start the reader channel thread because even hotkeys
+			//which are received in MainWindow.WndProc() need to be forwarded to it.
+			if (shk.Count != 0 || script.HotstringManager.shs.Count != 0)
+			{
+				ht.Start();
+			}
 
 			// Install or deinstall either or both hooks, if necessary, based on these param values.
 			ht.ChangeHookState(shk, hkd.whichHookNeeded, hkd.whichHookAlways);
@@ -619,6 +620,8 @@ namespace Keysharp.Core.Common.Keyboard
 			// In addition...
 			if (hkd.joyHotkeyCount != 0)  // Joystick hotkeys require the timer to be always on. (This is most likely unneeded).
 				Flow.SetMainTimer();
+
+			return null;
 		}
 
 		public override string ToString() => Name;
@@ -2393,7 +2396,7 @@ namespace Keysharp.Core.Common.Keyboard
 
 		private static bool HotIfWinNotExistPrivate(object title, object text, object hotkey) => !HotIfWinExistPrivate(title, text, hotkey);
 
-		private static void SetupHotIfWin(string funcname, object obj0 = null, object obj1 = null)
+		private static object SetupHotIfWin(string funcname, object obj0 = null, object obj1 = null)
 		{
 			var script = Script.TheScript;
 
@@ -2410,6 +2413,8 @@ namespace Keysharp.Core.Common.Keyboard
 			}
 			else
 				script.Threads.GetThreadVariables().hotCriterion = null;
+
+			return null;
 		}
 
 		private bool Disable(HotkeyVariant aVariant) // Returns true if the variant needed to be disabled, in which case caller should generally call ManifestAllHotkeysHotstringsHooks().

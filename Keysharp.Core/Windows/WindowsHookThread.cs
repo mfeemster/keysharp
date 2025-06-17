@@ -4679,7 +4679,7 @@ namespace Keysharp.Core.Windows
 		internal override void Unhook(nint hook)
 		{
 			if (hook != 0)
-				Invoke(() => _ = UnhookWindowsHookEx(hook));
+				_ = Invoke(() => _ = UnhookWindowsHookEx(hook));
 		}
 
 		/// <summary>
@@ -4917,16 +4917,12 @@ namespace Keysharp.Core.Windows
 
 		protected internal override void Start()
 		{
-			//if (IsReadThreadRunning())
-			//  Stop();
-
 			//If it's running there is no reason to start it again.
 			if (IsReadThreadRunning())
 				return;
 
 			running = true;
 			channelThreadID = 0;
-			thread = new StaThreadWithMessageQueue();
 			//This is a consolidation of the main windows proc, message sleep and the thread which they keyboard hook is created on.
 			//Unsure how much of this is windows specific or can be cross platform. Will need to determine when we begin linux work.//TODO
 			//If Start() is called while this thread is already running, the foreach will exit, and thus the previous thread will exit.
@@ -4971,74 +4967,7 @@ namespace Keysharp.Core.Windows
 							{
 								case (uint)UserMessages.AHK_CHANGE_HOOK_STATE: // No blank line between this in the above to indicate fall-through.
 									// In this case, wParam contains the bitwise set of hooks that should be active.
-									/*
-									    problem_activating_hooks = false;
-
-									    if ((wParamVal & (long)HookType.Keyboard) != 0) // Activate the keyboard hook (if it isn't already).
-									    {
-									    if (kbdHook == 0)
-									    {
-									        // v1.0.39: Reset *before* hook is installed to avoid any chance that events can
-									        // flow into the hook prior to the reset:
-									        if (msg.lParam != 0) // Sender of msg. is signaling that reset should be done.
-									            ResetHook(false, HookType.Keyboard, true);
-
-									        if ((kbdHook = SetWindowsHookEx(WH_KEYBOARD_LL,
-									                                        LowLevelKeybdHandler,
-									                                        GetModuleHandle(Process.GetCurrentProcess().MainModule.ModuleName), 0)) == 0)
-									            problem_activating_hooks = true;
-									    }
-									    }
-									    else // Caller specified that the keyboard hook is to be deactivated (if it isn't already).
-									    if (kbdHook != 0)
-									        if (UnhookWindowsHookEx(kbdHook))
-									            kbdHook = 0;
-
-									    if ((wParamVal & (long)HookType.Mouse) != 0) // Activate the mouse hook (if it isn't already).
-									    {
-									    if (mouseHook == 0)
-									    {
-									        if (msg.lParam != 0) // Sender of msg. is signaling that reset should be done.
-									            ResetHook(false, HookType.Mouse, true);
-
-									        if ((mouseHook = SetWindowsHookEx(WH_MOUSE_LL,
-									                                          mouseHandlerDel,
-									                                          GetModuleHandle(Process.GetCurrentProcess().MainModule.ModuleName), 0)) == 0)
-									            problem_activating_hooks = true;
-									    }
-									    }
-									    else // Caller specified that the mouse hook is to be deactivated (if it isn't already).
-									    if (mouseHook != 0)
-									        if (WindowsAPI.UnhookWindowsHookEx(mouseHook))
-									            mouseHook = 0;
-
-									    // Upon failure, don't display MsgBox here because although MsgBox's own message pump would
-									    // service the hook that didn't fail (if it's active), it's best to avoid any blocking calls
-									    // here so that this event loop will continue to run.  For example, the script or OS might
-									    // ask this thread to terminate, which it couldn't do cleanly if it was in a blocking call.
-									    // Instead, send a reply back to the caller.
-									    // It's safe to post directly to thread because the creator of this thread should be
-									    // explicitly waiting for this message (so there's no chance that a MsgBox msg pump
-									    // will discard the message unless the caller has timed out, which seems impossible
-									    // in this case).
-									    if (wParamVal != 0) // The caller wants a reply only when it didn't ask us to terminate via deactivating both hooks.
-									    msg.wParam = new nint(problem_activating_hooks ? 1 : 0);
-
-									    //PostThreadMessage(Processes.MainThreadID, (uint)UserMessages.AHK_CHANGE_HOOK_STATE, new nint(problem_activating_hooks ? 1u : 0u), 0);
-									    msg.completed = true;
-
-									    //else this is WM_QUIT or the caller wanted this thread to terminate.  Send no reply.
-
-									    // If caller passes true for msg.lParam, it wants a permanent change to hook state; so in that case, terminate this
-									    // thread whenever neither hook is no longer present.
-									    if (lParamVal != 0 && kbdHook == 0 && mouseHook == 0) // Both hooks are inactive (for whatever reason).
-									    return; // Thread is no longer needed. The "return" automatically calls ExitThread().
-
-									    // 1) Due to this thread's non-GUI nature, there doesn't seem to be any need to call
-									    // the somewhat mysterious PostQuitMessage() here.
-									    // 2) For thread safety and maintainability, it seems best to have the caller take
-									    // full responsibility for freeing the hook's memory.
-									*/
+									//Legacy, do nothing. Changing the hook state is handled elsewhere.
 									break;
 
 								case (uint)UserMessages.AHK_HOOK_SYNC:
@@ -5282,19 +5211,13 @@ namespace Keysharp.Core.Windows
 
 				return "";
 			};
-			//Any modifications to the hooks must be done on the main thread else Windows will internally ignore them.
-			//We assume that if the main window does not exist yet, then this code is running within the part of main() that happens
-			//before Application.Run().
-			//This must use the context, rather than the main window, because this could happen on a script containing InputHook,
-			//which are not persistent, and thus no main window will be present.
-			//kbMouseContext will be null if the hooks are run on the main thread.
-			//mainContext be null during unit tests.
-			//if (Script.kbMouseContext == null && Processes.mainContext != null)
-			//  Processes.mainContext.Send(new SendOrPostCallback((obj) => func()), null);
-			//else
-			//  func();
-			Invoke(func);
-			//Keysharp.Scripting.Script.mainWindow.CheckedInvoke(func, true);
+
+			//Do this here on the first time through because it's only ever needed if a hook is added.
+			if (thread == null && hooksToBeActive > HookType.None)
+				thread = new ();//This is needed to ensure that the hooks are run on the main thread.
+
+			//Any modifications to the hooks must be done on the hook thread.
+			_ = Invoke(func);
 			return problem_activating_hooks;
 		}
 
