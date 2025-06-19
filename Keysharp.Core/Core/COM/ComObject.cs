@@ -123,7 +123,7 @@ namespace Keysharp.Core.COM
 					if (temp is IDispatch id)
 						item = id;
 					else
-						item = new nint(longVal);//This was put here to prevent the COM tests with the taskbar in guitest.ks from crashing. Unsure if it actually makes sense.
+						item = new nint(longVal != 0 ? longVal : Marshal.GetIUnknownForObject(temp));//This was put here to prevent the COM tests with the taskbar in guitest.ks from crashing. Unsure if it actually makes sense.
 
 					return;
 				}
@@ -524,10 +524,25 @@ namespace Keysharp.Core.COM
 				}
 
 				return;
+			} 
+			else if (Marshal.IsComObject(val))
+			{
+				if (val is IDispatch idisp)
+				{
+					variant.vt = VarEnum.VT_DISPATCH;
+					variant.Ptr = idisp;
+				} 
+				else
+				{
+					variant.vt = VarEnum.VT_UNKNOWN;
+					variant.Ptr = val;
+				}
+
+				return;
 			}
 
 			variant.vt = VarEnum.VT_DISPATCH;
-			variant.Ptr = val is IDispatch id ? id : val;
+			variant.Ptr = val;
 		}
 
 		internal static ComObject ValueToVarType(object val, VarEnum varType, bool callerIsComValue)
