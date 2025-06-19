@@ -652,12 +652,12 @@ identifier
     | Set
     | As
     | Import
-    | Export)
+    | Export
+    | NullLiteral)
     ;
 
 reservedWord
     : keyword
-    | NullLiteral
     | Unset
     | boolean
     ;
