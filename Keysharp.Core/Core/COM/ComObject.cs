@@ -22,7 +22,8 @@ namespace Keysharp.Core.COM
 				if (value is long l)
 					longVal = l;
 
-				if ((vt & VarEnum.VT_BYREF) == VarEnum.VT_BYREF)
+				if ((vt & VarEnum.VT_BYREF) == VarEnum.VT_BYREF
+					|| (vt & VarEnum.VT_ARRAY) == VarEnum.VT_ARRAY)
 				{
 					item = longVal;
 					return;
@@ -203,7 +204,7 @@ namespace Keysharp.Core.COM
 			return "";
 		}
 
-		public void Dispose()
+		public virtual void Dispose()
 		{
 			if (Ptr == null)
 				return;
@@ -525,7 +526,7 @@ namespace Keysharp.Core.COM
 				{
 					if ((VarEnum)((int)variant.vt & ~Com.variantTypeMask) == VarEnum.VT_ARRAY && co.Ptr is ComObjArray coa)
 					{
-						variant.Ptr = coa.array.Clone();//Copy array since both sides will call Destroy().
+						variant.Ptr = coa.Clone();//Copy array since both sides will call Destroy().
 					}
 					else if (variant.vt == VarEnum.VT_BSTR)
 					{
