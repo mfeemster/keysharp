@@ -261,16 +261,6 @@ namespace Keysharp.Scripting
 						array.SetValue(value, actualindex);
 						return value;
 					}
-
-#if WINDOWS
-					else if (item is ComObjArray coa)
-					{
-						var actualindex = position < 0 ? coa.array.Length + position : position;
-						coa.array.SetValue(value, actualindex);
-						return value;
-					}
-
-#endif
 					else if (item == null)
 					{
 						return null;
@@ -290,8 +280,12 @@ namespace Keysharp.Scripting
                 }
 
 #if WINDOWS
-
-				if (item is ComObject co)
+				if (item is ComObjArray coa)
+				{
+					coa[index] = value;
+					return value;
+				}
+				else if (item is ComObject co)
 				{
 					if (index.Length == 0 && (co.vt & VarEnum.VT_BYREF) != 0)
 					{
@@ -379,19 +373,14 @@ namespace Keysharp.Scripting
 						var actualindex = position < 0 ? array.Length + position : position - 1;
 						return array.GetValue(actualindex);
 					}
-
-#if WINDOWS
-                    else if (item is ComObjArray coa)
-					{
-						var actualindex = position < 0 ? coa.array.Length + position : position;
-						return coa.array.GetValue(actualindex);
-					}
-#endif
 				}
 
 #if WINDOWS
-
-				if (item is ComObject co)
+				if (item is ComObjArray coa)
+				{
+					return coa[index];
+				}
+				else if (item is ComObject co)
 				{
 					//Could be an indexer, but MethodPropertyHolder currently doesn't support those
 					if (index.Length == 0 && (co.vt & VarEnum.VT_BYREF) != 0)

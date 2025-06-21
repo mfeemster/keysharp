@@ -53,7 +53,7 @@ namespace Keysharp.Core.COM
 				}
 			}
 
-			return new ComObjArray(System.Array.CreateInstance(t, lengths));
+			return new ComObjArray(vt, lengths);
 		}
 
 		internal static object ConvertToCOMType(object ret)

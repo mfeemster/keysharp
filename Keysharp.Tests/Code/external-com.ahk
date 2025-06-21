@@ -150,14 +150,60 @@ cv := ComValue(0x4000 | 0xC, var.Ptr) ; VT_VARIANT
 cv[] := 5
 
 if (cv[] == 5)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (NumGet(var, 0, "int") == 3)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
+
+arr := ComObjArray(VT_VARIANT:=12, 3)
+arr[0] := "Auto"
+arr[1] := "Hot"
+arr[2] := "key"
+t := ""
+Loop arr.MaxIndex() + 1
+    t .= arr[A_Index-1]
+
+if (t == "AutoHotkey")
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+
+arr := ComObjArray(VT_VARIANT:=12, 3, 4)
+
+; Get the number of dimensions:
+dim := DllCall("oleaut32\SafeArrayGetDim", "ptr", ComObjValue(arr))
+
+if (dim == arr.Dimensions)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+
+if (arr.MinIndex(1) == 0 && arr.MaxIndex(1) == 2)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+
+if (arr.MinIndex(2) == 0 && arr.MaxIndex(2) == 3)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+
+Loop 3 {
+    x := A_Index-1
+    Loop 4 {
+        y := A_Index-1
+        arr[x, y] := x * y
+    }
+}
+
+if (arr[2, 3] == 6)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
 
 script := "
 (
@@ -199,4 +245,3 @@ ObjRegisterActive(obj, CLSID, Flags:=0) {
 		throw Error(format("Error 0x{:x}", hr), -1)
 	cookieJar[obj] := cookie
 }
->>>>>>> e3a6df06efb2a8f333c58e214e8dc50dea820a90
