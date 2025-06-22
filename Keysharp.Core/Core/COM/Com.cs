@@ -32,7 +32,7 @@ namespace Keysharp.Core.COM
 			var lengths = new int[args != null ? args.Length + 1 : 1];
 			var t = typeof(object);
 
-			if (lengths.Length > 8)
+			if (lengths.Length > 7)
 				_ = Errors.ErrorOccurred(err = new Error($"COM array dimensions of {lengths.Length} is greater than the maximum allowed number of 8.")) ? throw err : "";
 
 			lengths[0] = dim1Size;

@@ -28,7 +28,7 @@
 		/// <param name="cDims">The number of dimensions (1-8).</param>
 		/// <param name="rgsabound">Array of bounds for each dimension.</param>
 		/// <returns>A pointer to the new SAFEARRAY; IntPtr.Zero on failure.</returns>
-		[DllImport("oleaut32.dll")]
+		[DllImport(WindowsAPI.oleaut)]
 		public static extern nint SafeArrayCreate(
 			short vt,
 			uint cDims,
@@ -38,13 +38,13 @@
 		/// </summary>
 		/// <param name="psa">Pointer to the SAFEARRAY.</param>
 		/// <returns>The number of dimensions, or a negative error code.</returns>
-		[DllImport("oleaut32.dll")]
+		[DllImport(WindowsAPI.oleaut)]
 		public static extern int SafeArrayGetDim(
 			nint psa);
 		/// <summary>
 		/// Retrieves the upper bound (max index) for a specified dimension.
 		/// </summary>
-		[DllImport("oleaut32.dll")]
+		[DllImport(WindowsAPI.oleaut)]
 		public static extern int SafeArrayGetUBound(
 			nint psa,
 			uint nDim,
@@ -52,7 +52,7 @@
 		/// <summary>
 		/// Retrieves the lower bound for a specified dimension.
 		/// </summary>
-		[DllImport("oleaut32.dll")]
+		[DllImport(WindowsAPI.oleaut)]
 		public static extern int SafeArrayGetLBound(
 			nint psa,
 			uint nDim,
@@ -60,20 +60,20 @@
 		/// <summary>
 		/// Creates a copy of a SafeArray.
 		/// </summary>
-		[DllImport("oleaut32.dll")]
+		[DllImport(WindowsAPI.oleaut)]
 		public static extern int SafeArrayCopy(
 			nint psa,
 			out nint ppsaOut);
 		/// <summary>
 		/// Destroys a SafeArray, releasing its memory.
 		/// </summary>
-		[DllImport("oleaut32.dll")]
+		[DllImport(WindowsAPI.oleaut)]
 		public static extern int SafeArrayDestroy(
 			nint psa);
 		/// <summary>
 		/// Retrieves an element from a SafeArray by index.
 		/// </summary>
-		[DllImport("oleaut32.dll")]
+		[DllImport(WindowsAPI.oleaut)]
 		public static extern int SafeArrayGetElement(
 			nint psa,
 			[In] int[] rgIndices,
@@ -81,7 +81,7 @@
 		/// <summary>
 		/// Stores an element into a SafeArray by index.
 		/// </summary>
-		[DllImport("oleaut32.dll", PreserveSig = true)]
+		[DllImport(WindowsAPI.oleaut, PreserveSig = true)]
 		public static extern int SafeArrayPutElement(
 			nint psa,
 			[In] int[] rgIndices,
@@ -253,7 +253,6 @@
 			this.vt = VarEnum.VT_ARRAY | baseType;
 			this.Flags = F_OWNVALUE;
 
-			// Store the pointer in your existing API (which expects a long):
 			this.Ptr = _psa.ToInt64();
 		}
 
@@ -264,13 +263,14 @@
 		IEnumerator IEnumerable.GetEnumerator() => new ComArrayIndexValueEnumerator(this, 2);
 
 		/// <summary>
-		/// Gets the upper bound (inclusive) of the specified dimension (1-based).
+		/// Gets the upper bound (inclusive) of the specified dimension.
 		/// </summary>
 		public object MaxIndex(object dim = null)
 		{
+			Error err;
 			int d = dim.Ai(1);
 			if (d < 1 || d > _dimensions)
-				throw new ArgumentOutOfRangeException(nameof(dim));
+				return Errors.ErrorOccurred(err = new ValueError($"Argument out of range.")) ? throw err : null;
 
 			OleAuto.SafeArrayGetUBound(_psa, (uint)d, out int ub);
 			return (long)ub;
@@ -281,9 +281,10 @@
 		/// </summary>
 		public object MinIndex(object dim = null)
 		{
+			Error err;
 			int d = dim.Ai(1);
 			if (d < 1 || d > _dimensions)
-				throw new ArgumentOutOfRangeException(nameof(dim));
+				return Errors.ErrorOccurred(err = new ValueError($"Argument out of range.")) ? throw err : null;
 
 			OleAuto.SafeArrayGetLBound(_psa, (uint)d, out int lb);
 			return (long)lb;
@@ -320,7 +321,7 @@
 			{
 				int temp = indices[i].Ai();
 				if (temp < 0)
-					temp = (int)MaxIndex((long)(i + 1)) + temp + 1;
+					temp = Convert.ToInt32(MaxIndex((long)(i + 1))) + temp + 1;
 				idx[i] = temp;
 			}
 			return idx;
