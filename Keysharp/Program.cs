@@ -423,7 +423,11 @@ namespace Keysharp.Main
 		{
 			if (error)
 			{
-				ch.PrintCompilerErrors(text);
+				const string marker = "\nusing static ";
+				int idx = text.IndexOf(marker, StringComparison.Ordinal);
+				ch.PrintCompilerErrors((idx >= 0)
+					 ? text.Substring(0, idx)
+					 : text);
 			}
 			else
 			{
