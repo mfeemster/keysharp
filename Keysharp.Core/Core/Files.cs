@@ -543,7 +543,7 @@
 		/// <see cref="FileGetShortcut(object, ref object, ref object, ref object, ref object, ref object, ref object, ref object)"/>
 		/// </summary>
 		public static object FileGetShortcut(object obj,
-											 object outTarget)
+											 [ByRef] object outTarget)
 		{
 			object outDir = VarRef.Empty;
 			object outArgs = VarRef.Empty;
@@ -565,8 +565,8 @@
 		/// <see cref="FileGetShortcut(object, ref object, ref object, ref object, ref object, ref object, ref object, ref object)"/>
 		/// </summary>
 		public static object FileGetShortcut(object obj,
-											 object outTarget,
-											 object outDir)
+											 [ByRef] object outTarget,
+											 [ByRef] object outDir)
 		{
             object outArgs = VarRef.Empty;
             object outDescription = VarRef.Empty;
@@ -587,9 +587,9 @@
 		/// <see cref="FileGetShortcut(object, ref object, ref object, ref object, ref object, ref object, ref object, ref object)"/>
 		/// </summary>
 		public static object FileGetShortcut(object obj,
-											 object outTarget,
-											 object outDir,
-											 object outArgs)
+											 [ByRef] object outTarget,
+											 [ByRef] object outDir,
+											 [ByRef] object outArgs)
 		{
             object outDescription = VarRef.Empty;
             object outIcon = VarRef.Empty;
@@ -609,10 +609,10 @@
 		/// <see cref="FileGetShortcut(object, ref object, ref object, ref object, ref object, ref object, ref object, ref object)"/>
 		/// </summary>
 		public static object FileGetShortcut(object obj,
-											 object outTarget,
-											 object outDir,
-											 object outArgs,
-											 object outDescription)
+											 [ByRef] object outTarget,
+											 [ByRef] object outDir,
+											 [ByRef] object outArgs,
+											 [ByRef] object outDescription)
 		{
             object outIcon = VarRef.Empty;
             object outIconNum = VarRef.Empty;
@@ -631,11 +631,11 @@
 		/// <see cref="FileGetShortcut(object, ref object, ref object, ref object, ref object, ref object, ref object, ref object)"/>
 		/// </summary>
 		public static object FileGetShortcut(object obj,
-											 object outTarget,
-											 object outDir,
-											 object outArgs,
-											 object outDescription,
-											 object outIcon)
+											 [ByRef] object outTarget,
+											 [ByRef] object outDir,
+											 [ByRef] object outArgs,
+											 [ByRef] object outDescription,
+											 [ByRef] object outIcon)
 		{
             object outIconNum = VarRef.Empty;
             object outRunState = VarRef.Empty;
@@ -653,12 +653,12 @@
 		/// <see cref="FileGetShortcut(object, ref object, ref object, ref object, ref object, ref object, ref object, ref object)"/>
 		/// </summary>
 		public static object FileGetShortcut(object obj,
-											 object outTarget,
-											 object outDir,
-											 object outArgs,
-											 object outDescription,
-											 object outIcon,
-											 object outIconNum)
+											 [ByRef] object outTarget,
+											 [ByRef] object outDir,
+											 [ByRef] object outArgs,
+											 [ByRef] object outDescription,
+											 [ByRef] object outIcon,
+											 [ByRef] object outIconNum)
 		{
             object outRunState = VarRef.Empty;
             return FileGetShortcut(obj,
@@ -734,11 +734,11 @@
 		/// <exception cref="OSError">An <see cref="OSError"/> exception is thrown if any errors occur.</exception>
 #endif
 		public static object FileGetShortcut(object linkFile,
-											 object outTarget,
-											 object outDir,
-											 object outArgs,
-											 object outDescription,
-											 object outIcon,
+											 [ByRef] object outTarget,
+											 [ByRef] object outDir,
+											 [ByRef] object outArgs,
+											 [ByRef] object outDescription,
+											 [ByRef] object outIcon,
 #if WINDOWS
 											 object outIconNum,
 #else

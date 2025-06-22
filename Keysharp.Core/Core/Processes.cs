@@ -307,7 +307,7 @@ namespace Keysharp.Core
 		/// Unlike Run, <see cref="RunWait"/> will wait until the program finishes before continuing.
 		/// <see cref="Run"/>.
 		/// </summary>
-		public static long RunWait(object target, object workingDir, object options, object outputVarPID, object args = null)
+		public static long RunWait(object target, object workingDir, object options, [ByRef] object outputVarPID, object args = null)
 		{
 			return RunInternal(target.As(), workingDir.As(), options.As(), outputVarPID, args.As(), true);
 		}
@@ -381,7 +381,7 @@ namespace Keysharp.Core
 		/// Internal helper to run a process. <see cref="Run"/>, <see cref="RunAs"/>, <see cref="RunWait"/>
 		/// </summary>
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown on failure.</exception>
-		private static long RunInternal(string target, string workingDir, string showMode, object outputVarPID, string args, bool wait = false)
+		private static long RunInternal(string target, string workingDir, string showMode, [ByRef] object outputVarPID, string args, bool wait = false)
 		{
 			outputVarPID ??= VarRef.Empty;
 			Error err;

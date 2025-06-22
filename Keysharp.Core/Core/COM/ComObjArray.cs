@@ -127,7 +127,7 @@
 			fo.Inst = this;
 		}
 
-		public override object Call(object pos)
+		public override object Call([ByRef] object pos)
 		{
 			if (MoveNext())
 			{
@@ -138,7 +138,7 @@
 			return false;
 		}
 
-		public override object Call(object pos, object val)
+		public override object Call([ByRef] object pos, [ByRef] object val)
 		{
 			if (MoveNext())
 			{

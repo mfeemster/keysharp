@@ -277,12 +277,12 @@
 				index--;
 
 				if (index < funcParams.Length)
-					return funcParams[index].ParameterType.IsByRef || funcParams[index].ParameterType == typeof(VarRef);
+					return funcParams[index].ParameterType.IsByRef || funcParams[index].GetCustomAttribute(typeof(ByRefAttribute)) != null;
 			}
 			else
 			{
 				for (var i = 0; i < funcParams.Length; i++)
-					if (funcParams[i].ParameterType.IsByRef || funcParams[index].ParameterType == typeof(VarRef))
+					if (funcParams[i].ParameterType.IsByRef || funcParams[index].GetCustomAttribute(typeof(ByRefAttribute)) != null)
 						return true;
 			}
 

@@ -460,7 +460,7 @@ expression
     | left = expression (op = ('*' | '/' | '//') (WS | EOL)*) right = expression  # MultiplicativeExpression
     | left = expression (op = ('+' | '-') (WS | EOL)*) right = expression   # AdditiveExpression
     | left = expression op = ('<<' | '>>' | '>>>') right = expression              # BitShiftExpression
-    | left = expression (op = '&' (WS | EOL)*) right = expression      # BitAndExpression
+    | left = expression ((WS | EOL)* op = '&' (WS | EOL)*) right = expression      # BitAndExpression
     | left = expression op = '^' right = expression                                # BitXOrExpression
     | left = expression op = '|' right = expression                                # BitOrExpression
     | left = expression (ConcatDot | WS+) right = expression                       # ConcatenateExpression
@@ -492,7 +492,7 @@ singleExpression
     | left = singleExpression (op = ('*' | '/' | '//') (WS | EOL)*) right = singleExpression  # MultiplicativeExpressionDuplicate
     | left = singleExpression (op = ('+' | '-') (WS | EOL)*) right = singleExpression   # AdditiveExpressionDuplicate
     | left = singleExpression op = ('<<' | '>>' | '>>>') right = singleExpression              # BitShiftExpressionDuplicate
-    | left = singleExpression (op = '&' (WS | EOL)*) right = singleExpression      # BitAndExpressionDuplicate
+    | left = singleExpression ((WS | EOL)* op = '&' (WS | EOL)*) right = singleExpression      # BitAndExpressionDuplicate
     | left = singleExpression op = '^' right = singleExpression                                # BitXOrExpressionDuplicate
     | left = singleExpression op = '|' right = singleExpression                                # BitOrExpressionDuplicate
     | left = singleExpression (ConcatDot | WS+) right = singleExpression                       # ConcatenateExpressionDuplicate
@@ -651,11 +651,12 @@ identifier
     | Get
     | Set
     | As
-    | Import
-    | Export
+    | Class
+    | Do
     | NullLiteral)
     ;
 
+// None of these can be used as a variable name
 reservedWord
     : keyword
     | Unset
@@ -666,12 +667,10 @@ keyword
     : (Local
     | Global
     | Static
-    | Class
     | If
     | Else
     | Loop
     | For
-    | Do
     | While
     | Until
     | Break

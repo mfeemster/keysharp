@@ -61,7 +61,7 @@ namespace Keysharp.Core.Common.ObjectBase
 
 		public virtual object __New(params object[] args) => "";
 
-		public object Call(params object[] args) => Activator.CreateInstance(this.GetType(), args);
+		public virtual object static__Call(params object[] args) => Activator.CreateInstance(this.GetType(), args);
 
 		/// <summary>
 		/// Return a cloned copy of the object.
@@ -98,7 +98,7 @@ namespace Keysharp.Core.Common.ObjectBase
 			{
 				if (kso.op != null)//&& kso.op.TryGetValue(name, out var opm))
 				{
-					if (kso.op.Count > 1 && kso.op.Any(k => k.Key.ToString().Equals("value", StringComparison.OrdinalIgnoreCase)))
+					if (kso.op.Count > 2 && kso.op.Any(k => k.Key.ToString().Equals("value", StringComparison.OrdinalIgnoreCase)))
 						return Errors.ErrorOccurred(err = new ValueError("Value can't be defined along with get, set, or call.")) ? throw err : this;
 
 					if (op.TryGetValue(name, out var currProp))
@@ -200,7 +200,8 @@ namespace Keysharp.Core.Common.ObjectBase
 			{
 				foreach (var kv in op)
 				{
-					if (kv.Key == "base")
+					if (kv.Key == "base"
+						|| kv.Key == "__Static") //This throws if the value is tried to access because "this" is passed
 						continue;
 
 					props[kv.Key] = kv.Value;

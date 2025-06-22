@@ -33,7 +33,7 @@ namespace Keysharp.Scripting
         public override SyntaxNode VisitClassDeclaration([NotNull] ClassDeclarationContext context)
         {
             string userDeclaredName = context.identifier().GetText();
-            PushClass(Parser.NormalizeIdentifier(userDeclaredName, eNameCase.Title));
+            PushClass(parser.NormalizeIdentifier(userDeclaredName, eNameCase.Title));
             parser.currentClass.UserDeclaredName = userDeclaredName;
 
             // Determine the base class (Extends clause)
@@ -88,22 +88,18 @@ namespace Keysharp.Scripting
             );
             */
 
-            string fieldDeclarationName = NormalizeIdentifier(parser.currentClass.Name);
+            string fieldDeclarationName = parser.NormalizeIdentifier(parser.currentClass.Name);
 
             MemberDeclarationSyntax fieldDeclaration = null;
             SyntaxToken[] fieldDeclarationModifiers = [SyntaxFactory.Token(SyntaxKind.PublicKeyword), SyntaxFactory.Token(SyntaxKind.StaticKeyword)];
             var fieldDeclarationArrowClause = SyntaxFactory.ArrowExpressionClause(
-                        SyntaxFactory.MemberAccessExpression(
-                            SyntaxKind.SimpleMemberAccessExpression,
-                            CreateQualifiedName(
-                                string.Join(".",
-                                    parser.ClassStack.Reverse()               // Outer-to-inner order.
-                                    .Select(cls => cls.Name)
-                                ) + "." + parser.currentClass.Name
-                            ),
-                            SyntaxFactory.IdentifierName("__Static")
-                        )
-                    );
+                CreateMemberAccess(
+					string.Join(".",
+						parser.ClassStack.Reverse()               // Outer-to-inner order.
+						.Select(cls => cls.Name)
+					) + "." + parser.currentClass.Name,
+					"__Static")
+                );
             if (parser.ClassStack.Count == 1)
             {
                 fieldDeclaration = SyntaxFactory.PropertyDeclaration(

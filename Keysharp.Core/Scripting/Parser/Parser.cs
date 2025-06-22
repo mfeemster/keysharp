@@ -247,8 +247,8 @@ namespace Keysharp.Scripting
 
         public const string LoopEnumeratorBaseName = InternalPrefix + "e";
 
-        public static NameSyntax ScriptOperateName = CreateQualifiedName("Keysharp.Scripting.Script.Operate");
-        public static NameSyntax ScriptOperateUnaryName = CreateQualifiedName("Keysharp.Scripting.Script.OperateUnary");
+        public static MemberAccessExpressionSyntax ScriptOperateName = CreateMemberAccess("Keysharp.Scripting.Script", "Operate");
+        public static MemberAccessExpressionSyntax ScriptOperateUnaryName = CreateMemberAccess("Keysharp.Scripting.Script", "OperateUnary");
 
 		public List<StatementSyntax> generalDirectiveStatements = new();
 		public Dictionary<string, string> generalDirectives = new(StringComparer.InvariantCultureIgnoreCase) 

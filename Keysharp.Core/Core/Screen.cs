@@ -103,7 +103,7 @@ namespace Keysharp.Core
 		/// </param>
 		/// <exception cref="OSError">An <see cref="OSError"/> exception is thrown if an internal function call fails.</exception>
 		/// <exception cref="ValueError ">A <see cref="ValueError "/> exception thrown if an invalid parameter was detected or the image could not be loaded.</exception>
-		public static object ImageSearch(object outX, object outY, object x1, object y1, object x2, object y2, object imageFile, object options = null)
+		public static object ImageSearch([ByRef] object outX, [ByRef] object outY, object x1, object y1, object x2, object y2, object imageFile, object options = null)
 		{
 			Error err;
             outX ??= VarRef.Empty; outY ??= VarRef.Empty;

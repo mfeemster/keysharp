@@ -77,8 +77,8 @@ namespace Keysharp.Core
 		/// and the output variables are made blank. It returns 1 (true) if the system returned a caret position,<br/>
 		/// but this does not necessarily mean a caret is visible.
 		/// </returns>
-		public static bool CaretGetPos([Optional()][DefaultParameterValue(null)] object outputVarX,
-									   [Optional()][DefaultParameterValue(null)] object outputVarY)
+		public static bool CaretGetPos([ByRef][Optional()][DefaultParameterValue(null)] object outputVarX,
+									   [ByRef][Optional()][DefaultParameterValue(null)] object outputVarY)
 		{
 			outputVarX ??= VarRef.Empty; outputVarY ??= VarRef.Empty;
             // I believe only the foreground window can have a caret position due to relationship with focused control.

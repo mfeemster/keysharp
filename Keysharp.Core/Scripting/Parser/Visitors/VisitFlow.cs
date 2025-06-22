@@ -35,17 +35,13 @@ namespace Keysharp.Scripting
         {
             // Generate the enumerator initialization
             var loopFunction = SyntaxFactory.InvocationExpression(
-                    SyntaxFactory.MemberAccessExpression(
-                        SyntaxKind.SimpleMemberAccessExpression,
-                        CreateQualifiedName("Keysharp.Core.Loops"),
-                        SyntaxFactory.IdentifierName(enumeratorMethodName)
-                    ),
-                    SyntaxFactory.ArgumentList(
-                        SyntaxFactory.SeparatedList(
-                            enumeratorArguments.Select(SyntaxFactory.Argument)
-                        )
+				CreateMemberAccess("Keysharp.Core.Loops", enumeratorMethodName),
+                SyntaxFactory.ArgumentList(
+                    SyntaxFactory.SeparatedList(
+                        enumeratorArguments.Select(SyntaxFactory.Argument)
                     )
-                );
+                )
+            );
             var enumeratorVariable = SyntaxFactory.IdentifierName(loopEnumeratorName);
             var enumeratorDeclaration = SyntaxFactory.VariableDeclaration(
                 CreateQualifiedName(enumeratorType),
@@ -70,20 +66,12 @@ namespace Keysharp.Scripting
             // Generate the Push statement with the loopType
             var pushStatement = SyntaxFactory.ExpressionStatement(
                 SyntaxFactory.InvocationExpression(
-                    SyntaxFactory.MemberAccessExpression(
-                        SyntaxKind.SimpleMemberAccessExpression,
-                        CreateQualifiedName("Keysharp.Core.Loops"),
-                        SyntaxFactory.IdentifierName("Push")
-                    ),
+					CreateMemberAccess("Keysharp.Core.Loops", "Push"),
                     loopType == null ? SyntaxFactory.ArgumentList() :
                     SyntaxFactory.ArgumentList(
                         SyntaxFactory.SingletonSeparatedList(
                             SyntaxFactory.Argument(
-                                SyntaxFactory.MemberAccessExpression(
-                                    SyntaxKind.SimpleMemberAccessExpression,
-                                    CreateQualifiedName("Keysharp.Core.LoopType"),
-                                    SyntaxFactory.IdentifierName(loopType)
-                                )
+								CreateMemberAccess("Keysharp.Core.LoopType", loopType)
                             )
                         )
                     )
@@ -115,7 +103,7 @@ namespace Keysharp.Scripting
             StatementSyntax untilStatement = untilCondition != null
                 ? SyntaxFactory.IfStatement(
                     SyntaxFactory.InvocationExpression(
-                        CreateQualifiedName("Keysharp.Scripting.Script.IfTest"),
+						CreateMemberAccess("Keysharp.Scripting.Script", "IfTest"),
                         SyntaxFactory.ArgumentList(
                             SyntaxFactory.SingletonSeparatedList(SyntaxFactory.Argument(untilCondition))
                         )
@@ -147,11 +135,7 @@ namespace Keysharp.Scripting
             // Generate the Pop() call
             var popStatement = SyntaxFactory.ExpressionStatement(
                 SyntaxFactory.InvocationExpression(
-                    SyntaxFactory.MemberAccessExpression(
-                        SyntaxKind.SimpleMemberAccessExpression,
-                        CreateQualifiedName("Keysharp.Core.Loops"),
-                        SyntaxFactory.IdentifierName("Pop")
-                    )
+					CreateMemberAccess("Keysharp.Core.Loops", "Pop")
                 )
             );
 
@@ -168,11 +152,7 @@ namespace Keysharp.Scripting
                         SyntaxFactory.MemberAccessExpression(
                             SyntaxKind.SimpleMemberAccessExpression,
                             SyntaxFactory.InvocationExpression(
-                                SyntaxFactory.MemberAccessExpression(
-                                    SyntaxKind.SimpleMemberAccessExpression,
-                                    CreateQualifiedName("Keysharp.Core.Loops"),
-                                    SyntaxFactory.IdentifierName("Pop")
-                                )
+								CreateMemberAccess("Keysharp.Core.Loops", "Pop")
                             ),
                             SyntaxFactory.IdentifierName("index")
                         ),
@@ -541,11 +521,7 @@ namespace Keysharp.Scripting
 
             var incStatement = SyntaxFactory.ExpressionStatement(
                 SyntaxFactory.InvocationExpression(
-                    SyntaxFactory.MemberAccessExpression(
-                        SyntaxKind.SimpleMemberAccessExpression,
-                        CreateQualifiedName("Keysharp.Core.Loops"),
-                        SyntaxFactory.IdentifierName("Inc")
-                    )
+					CreateMemberAccess("Keysharp.Core.Loops", "Inc")
                 )
             );
 
@@ -633,11 +609,7 @@ namespace Keysharp.Scripting
 
             // Wrap the condition in IfTest
             var conditionWrapped = SyntaxFactory.InvocationExpression(
-                SyntaxFactory.MemberAccessExpression(
-                    SyntaxKind.SimpleMemberAccessExpression,
-                    CreateQualifiedName("Keysharp.Scripting.Script"),
-                    SyntaxFactory.IdentifierName("IfTest")
-                ),
+				CreateMemberAccess("Keysharp.Scripting.Script", "IfTest"),
                 SyntaxFactory.ArgumentList(
                     SyntaxFactory.SingletonSeparatedList(SyntaxFactory.Argument(conditionExpression))
                 )
@@ -656,11 +628,7 @@ namespace Keysharp.Scripting
 
             var incStatement = SyntaxFactory.ExpressionStatement(
                     SyntaxFactory.InvocationExpression(
-                        SyntaxFactory.MemberAccessExpression(
-                            SyntaxKind.SimpleMemberAccessExpression,
-                            CreateQualifiedName("Keysharp.Core.Loops"),
-                            SyntaxFactory.IdentifierName("Inc")
-                        )
+                        CreateMemberAccess("Keysharp.Core.Loops", "Inc")
                     )
                 );
 
@@ -678,7 +646,7 @@ namespace Keysharp.Scripting
             {
                 untilStatement = SyntaxFactory.IfStatement(
                     SyntaxFactory.InvocationExpression(
-                        CreateQualifiedName("Keysharp.Scripting.Script.IfTest"),
+						CreateMemberAccess("Keysharp.Scripting.Script", "IfTest"),
                         SyntaxFactory.ArgumentList(
                             SyntaxFactory.SingletonSeparatedList(SyntaxFactory.Argument(untilCondition))
                         )
@@ -717,12 +685,8 @@ namespace Keysharp.Scripting
             // Generate the Pop() call
             var popStatement = SyntaxFactory.ExpressionStatement(
                 SyntaxFactory.InvocationExpression(
-                    SyntaxFactory.MemberAccessExpression(
-                        SyntaxKind.SimpleMemberAccessExpression,
-                        CreateQualifiedName("Keysharp.Core.Loops"),
-                        SyntaxFactory.IdentifierName("Pop")
-                    )
-                )
+					CreateMemberAccess("Keysharp.Core.Loops", "Pop")
+				)
             );
 
             // Handle the `Else` clause if present
@@ -737,11 +701,7 @@ namespace Keysharp.Scripting
                         SyntaxFactory.MemberAccessExpression(
                             SyntaxKind.SimpleMemberAccessExpression,
                             SyntaxFactory.InvocationExpression(
-                                SyntaxFactory.MemberAccessExpression(
-                                    SyntaxKind.SimpleMemberAccessExpression,
-                                    CreateQualifiedName("Keysharp.Core.Loops"),
-                                    SyntaxFactory.IdentifierName("Pop")
-                                )
+								CreateMemberAccess("Keysharp.Core.Loops", "Pop")
                             ),
                             SyntaxFactory.IdentifierName("index")
                         ),
@@ -756,11 +716,7 @@ namespace Keysharp.Scripting
 
             var startLoopStatement = SyntaxFactory.ExpressionStatement(
                 SyntaxFactory.InvocationExpression(
-                    SyntaxFactory.MemberAccessExpression(
-                        SyntaxKind.SimpleMemberAccessExpression,
-                        CreateQualifiedName("Keysharp.Core.Loops"),
-                        SyntaxFactory.IdentifierName("Push")
-                    )
+					CreateMemberAccess("Keysharp.Core.Loops", "Push")
                 )
             );
 

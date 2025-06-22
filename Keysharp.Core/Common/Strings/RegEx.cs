@@ -176,7 +176,7 @@
 		/// </summary>
 		/// <param name="key">A reference to the key value.</param>
 		/// <returns>True if the iterator position has not moved past the last element, else false.</returns>
-		public override object Call(object value)
+		public override object Call([ByRef] object value)
 		{
 			if (MoveNext())
 			{
@@ -193,7 +193,7 @@
 		/// <param name="name">A reference to the name of the current match.</param>
 		/// <param name="value">A reference to the value of the current match.</param>
 		/// <returns>True if the iterator position has not moved past the last element, else false.</returns>
-		public override object Call(object name, object value)
+		public override object Call([ByRef] object name, [ByRef] object value)
 		{
 			if (MoveNext())
 			{

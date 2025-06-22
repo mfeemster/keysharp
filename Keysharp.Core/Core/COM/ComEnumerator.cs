@@ -84,7 +84,7 @@ namespace Keysharp.Core.COM
 		/// </summary>
 		/// <param name="value">A reference to the value.</param>
 		/// <returns>True if the iterator position has not moved past the last element, else false.</returns>
-		public override object Call(object value)
+		public override object Call([ByRef] object value)
 		{
 			if (MoveNext())
 			{
@@ -101,7 +101,7 @@ namespace Keysharp.Core.COM
 		/// <param name="type">A reference to the COM type value.</param>
 		/// <param name="val">A reference to the object value.</param>
 		/// <returns>True if the iterator position has not moved past the last element, else false.</returns>
-		public override object Call(object type, object val)
+		public override object Call([ByRef] object type, [ByRef] object val)
 		{
 			if (MoveNext())
 			{

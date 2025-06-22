@@ -409,7 +409,7 @@ testfunc(testclassobj)
 	
 	testclassobj.prop(1, 2)
 
-	If (val == 123)
+	If (testclassobj.a == 2)
 		FileAppend "pass", "*"
 	else
 		FileAppend "fail", "*"
@@ -421,13 +421,6 @@ testfunc(testclassobj)
 	val := testclassobj.prop
 
 	If (val == "123")
-		FileAppend "pass", "*"
-	else
-		FileAppend "fail", "*"
-	
-	testclassobj.prop(1, 2)
-
-	If (testclassobj.a == 2)
 		FileAppend "pass", "*"
 	else
 		FileAppend "fail", "*"

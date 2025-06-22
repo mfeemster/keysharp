@@ -98,12 +98,8 @@ namespace Keysharp.Scripting
         {
             var content = context.HotstringOptions().GetText().Substring("#hotstring ".Length);
             var invocation = SyntaxFactory.InvocationExpression(
-                    SyntaxFactory.MemberAccessExpression(
-                        SyntaxKind.SimpleMemberAccessExpression,
-                        CreateQualifiedName("Keysharp.Core.Keyboard"),
-                        SyntaxFactory.IdentifierName("Hotstring")
-                    )
-                );
+                CreateMemberAccess("Keysharp.Core.Keyboard", "Hotstring")
+            );
             if (content.StartsWith("NoMouse", StringComparison.InvariantCultureIgnoreCase))
             {
                 parser.DHHR.Insert(0,
@@ -150,11 +146,7 @@ namespace Keysharp.Scripting
                 parser.DHHR.Add(
                     SyntaxFactory.ExpressionStatement(
                         SyntaxFactory.InvocationExpression(
-                            SyntaxFactory.MemberAccessExpression(
-                                SyntaxKind.SimpleMemberAccessExpression,
-                                CreateQualifiedName("Keysharp.Core.Keyboard"),
-                                SyntaxFactory.IdentifierName("HotstringOptions")
-                            )
+                            CreateMemberAccess("Keysharp.Core.Keyboard", "HotstringOptions")
                         )
                         .WithArgumentList(
                             SyntaxFactory.ArgumentList(
@@ -178,7 +170,7 @@ namespace Keysharp.Scripting
             parser.DHHR.Add(SyntaxFactory.ExpressionStatement(
                 SyntaxFactory.AssignmentExpression(
                     SyntaxKind.SimpleAssignmentExpression,
-                    CreateQualifiedName("Keysharp.Core.Accessors.A_InputLevel"),
+					CreateMemberAccess("Keysharp.Core.Accessors", "A_InputLevel"),
                     (LiteralExpressionSyntax)expr
                 )
             ));
@@ -192,7 +184,7 @@ namespace Keysharp.Scripting
             parser.DHHR.Add(SyntaxFactory.ExpressionStatement(
                 SyntaxFactory.AssignmentExpression(
                     SyntaxKind.SimpleAssignmentExpression,
-                    CreateQualifiedName("Keysharp.Core.Accessors.A_SuspendExempt"),
+					CreateMemberAccess("Keysharp.Core.Accessors", "A_SuspendExempt"),
                     (LiteralExpressionSyntax)value
                 )
             ));
@@ -216,7 +208,7 @@ namespace Keysharp.Scripting
             parser.DHHR.Add(SyntaxFactory.ExpressionStatement(
                 SyntaxFactory.AssignmentExpression(
                     SyntaxKind.SimpleAssignmentExpression,
-                    CreateQualifiedName("Keysharp.Scripting.Script.ForceKeybdHook"),
+					CreateMemberAccess("Keysharp.Scripting.Script", "ForceKeybdHook"),
                     value
                 )
             ));
@@ -399,11 +391,7 @@ namespace Keysharp.Scripting
 
                 var addHotstringCall = SyntaxFactory.ExpressionStatement(
                     SyntaxFactory.InvocationExpression(
-                        SyntaxFactory.MemberAccessExpression(
-                            SyntaxKind.SimpleMemberAccessExpression,
-                            CreateQualifiedName("Keysharp.Core.Common.Keyboard.HotstringManager"),
-                            SyntaxFactory.IdentifierName("AddHotstring")
-                        )
+                        CreateMemberAccess("Keysharp.Core.Common.Keyboard.HotstringManager", "AddHotstring")
                     )
                     .WithArgumentList(
                         SyntaxFactory.ArgumentList(
@@ -615,11 +603,7 @@ namespace Keysharp.Scripting
                 // by inserting a single extra IF-statement above the Send that produces the down-event:
                 // Generate the Keysharp.Core.Keyboard.GetKeyState invocation
                 var getKeyStateInvocation = SyntaxFactory.InvocationExpression(
-                    SyntaxFactory.MemberAccessExpression(
-                        SyntaxKind.SimpleMemberAccessExpression,
-                        CreateQualifiedName("Keysharp.Core.Keyboard"),
-                        SyntaxFactory.IdentifierName("GetKeyState")
-                    ),
+					CreateMemberAccess("Keysharp.Core.Keyboard", "GetKeyState"),
                     SyntaxFactory.ArgumentList(
                         SyntaxFactory.SingletonSeparatedList(
                             SyntaxFactory.Argument(SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(remapDest)))
@@ -698,11 +682,7 @@ namespace Keysharp.Scripting
             parser.DHHR.Add(
                 SyntaxFactory.ExpressionStatement(
                     SyntaxFactory.InvocationExpression(
-                        SyntaxFactory.MemberAccessExpression(
-                            SyntaxKind.SimpleMemberAccessExpression,
-                            CreateQualifiedName("Keysharp.Core.Common.Keyboard.HotkeyDefinition"),
-                            SyntaxFactory.IdentifierName("AddHotkey")
-                        )
+                        CreateMemberAccess("Keysharp.Core.Common.Keyboard.HotkeyDefinition", "AddHotkey")
                     )
                     .WithArgumentList(
                         SyntaxFactory.ArgumentList(
@@ -751,11 +731,8 @@ namespace Keysharp.Scripting
         {
             return SyntaxFactory.ExpressionStatement(
                 SyntaxFactory.InvocationExpression(
-                    SyntaxFactory.MemberAccessExpression(
-                        SyntaxKind.SimpleMemberAccessExpression,
-                        CreateQualifiedName("Keysharp.Core." + (isMouse ? "Mouse" : "Keyboard")),
-                        SyntaxFactory.IdentifierName(isMouse ? "SetMouseDelay" : "SetKeyDelay")
-                    )
+                    CreateMemberAccess("Keysharp.Core." + (isMouse ? "Mouse" : "Keyboard"), 
+                        isMouse ? "SetMouseDelay" : "SetKeyDelay")
                 )
                 .WithArgumentList(
                     SyntaxFactory.ArgumentList(
@@ -773,11 +750,7 @@ namespace Keysharp.Scripting
         {
             return SyntaxFactory.ExpressionStatement(
                 SyntaxFactory.InvocationExpression(
-                    SyntaxFactory.MemberAccessExpression(
-                        SyntaxKind.SimpleMemberAccessExpression,
-                        CreateQualifiedName("Keysharp.Core.Keyboard"),
-                        SyntaxFactory.IdentifierName("Send")
-                    )
+					CreateMemberAccess("Keysharp.Core.Keyboard", "Send")
                 )
                 .WithArgumentList(
                     SyntaxFactory.ArgumentList(
@@ -834,7 +807,7 @@ namespace Keysharp.Scripting
                         parser.generalDirectiveStatements.Add(SyntaxFactory.ExpressionStatement(
                             SyntaxFactory.AssignmentExpression(
                                 SyntaxKind.SimpleAssignmentExpression,
-                                CreateQualifiedName("Keysharp.Core.Accessors.A_ClipboardTimeout"),
+								CreateMemberAccess("Keysharp.Core.Accessors", "A_ClipboardTimeout"),
                                 SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(uint.Parse(item.Value)))
                             )
                         ));
@@ -843,7 +816,7 @@ namespace Keysharp.Scripting
                         parser.generalDirectiveStatements.Add(SyntaxFactory.ExpressionStatement(
                             SyntaxFactory.AssignmentExpression(
                                 SyntaxKind.SimpleAssignmentExpression,
-                                CreateQualifiedName("Keysharp.Core.Accessors.A_HotIfTimeout"),
+                                CreateMemberAccess("Keysharp.Core.Accessors", "A_HotIfTimeout"),
                                 SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(uint.Parse(item.Value)))
                             )
                         ));
@@ -867,7 +840,7 @@ namespace Keysharp.Scripting
                         parser.generalDirectiveStatements.Add(SyntaxFactory.ExpressionStatement(
                             SyntaxFactory.AssignmentExpression(
                                 SyntaxKind.SimpleAssignmentExpression,
-                                CreateQualifiedName("Keysharp.Core.Accessors.A_MaxThreadsBuffer"),
+								CreateMemberAccess("Keysharp.Core.Accessors", "A_MaxThreadsBuffer"),
                                 SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(argument))
                             )
                         ));
@@ -879,7 +852,7 @@ namespace Keysharp.Scripting
                         parser.generalDirectiveStatements.Add(SyntaxFactory.ExpressionStatement(
                             SyntaxFactory.AssignmentExpression(
                                 SyntaxKind.SimpleAssignmentExpression,
-                                CreateQualifiedName("Keysharp.Core.Accessors.A_MaxThreadsPerHotkey"),
+								CreateMemberAccess("Keysharp.Core.Accessors", "A_MaxThreadsPerHotkey"),
                                 SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(clampedValue))
                             )
                         ));

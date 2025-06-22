@@ -208,10 +208,10 @@
 												excludeTitle,
 												excludeText);
 
-		public static object ControlGetPos([Optional()][DefaultParameterValue(null)] object outX,
-										   [Optional()][DefaultParameterValue(null)] object outY,
-										   [Optional()][DefaultParameterValue(null)] object outWidth,
-										   [Optional()][DefaultParameterValue(null)] object outHeight,
+		public static object ControlGetPos([ByRef][Optional()][DefaultParameterValue(null)] object outX,
+										   [ByRef][Optional()][DefaultParameterValue(null)] object outY,
+										   [ByRef][Optional()][DefaultParameterValue(null)] object outWidth,
+										   [ByRef][Optional()][DefaultParameterValue(null)] object outHeight,
 										   object ctrl = null,
 										   object title = null,
 										   object text = null,

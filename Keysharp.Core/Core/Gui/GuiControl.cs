@@ -1832,11 +1832,11 @@
 				return null;
 			}
 
-			internal static void GetClientPos(System.Windows.Forms.Control control, bool scaling, object outX, object outY, object outWidth, object outHeight) => GetPosHelper(control, scaling, true, outX, outY, outWidth, outHeight);
+			internal static void GetClientPos(System.Windows.Forms.Control control, bool scaling, [ByRef] object outX, [ByRef] object outY, [ByRef] object outWidth, [ByRef] object outHeight) => GetPosHelper(control, scaling, true, outX, outY, outWidth, outHeight);
 
-			internal static void GetPos(System.Windows.Forms.Control control, bool scaling, object outX, object outY, object outWidth, object outHeight) => GetPosHelper(control, scaling, false, outX, outY, outWidth, outHeight);
+			internal static void GetPos(System.Windows.Forms.Control control, bool scaling, [ByRef] object outX, [ByRef] object outY, [ByRef] object outWidth, [ByRef] object outHeight) => GetPosHelper(control, scaling, false, outX, outY, outWidth, outHeight);
 
-			internal static void GetPosHelper(System.Windows.Forms.Control control, bool scaling, bool client, object outX, object outY, object outWidth, object outHeight)
+			internal static void GetPosHelper(System.Windows.Forms.Control control, bool scaling, bool client, [ByRef] object outX, [ByRef] object outY, [ByRef] object outWidth, [ByRef] object outHeight)
 			{
 				outX ??= VarRef.Empty; outY ??= VarRef.Empty; outWidth ??= VarRef.Empty; outHeight ??= VarRef.Empty;
 				var rect = client ? control.ClientRectangle : control.Bounds;

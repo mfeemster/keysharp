@@ -172,7 +172,7 @@ namespace Keysharp.Scripting
 
             // Create global FuncObj variables for all functions here, because otherwise during parsing
             // we might not know how to case the name.
-            var scopeFunctionDeclarations = GetScopeFunctions(context, this);
+            var scopeFunctionDeclarations = parser.GetScopeFunctions(context, this);
             foreach (var funcName in scopeFunctionDeclarations)
             {
                 parser.UserFuncs.Add(funcName.Name);
@@ -187,22 +187,14 @@ namespace Keysharp.Scripting
             if (parser.persistent)
 				parser.DHHR.Add(SyntaxFactory.ExpressionStatement(
 	                SyntaxFactory.InvocationExpression(
-		                SyntaxFactory.MemberAccessExpression(
-			                SyntaxKind.SimpleMemberAccessExpression,
-			                CreateQualifiedName("Keysharp.Core.Flow"),
-			                SyntaxFactory.IdentifierName("Persistent")
-		                )
+                        CreateMemberAccess("Keysharp.Core.Flow", "Persistent")
 	                )
                 ));
 
 			// Merge positional directives, hotkeys, hotstrings to the beginning of the auto-execute section
 			parser.DHHR.Add(SyntaxFactory.ExpressionStatement(
                 SyntaxFactory.InvocationExpression(
-                    SyntaxFactory.MemberAccessExpression(
-                        SyntaxKind.SimpleMemberAccessExpression,
-                        CreateQualifiedName("Keysharp.Core.Common.Keyboard.HotkeyDefinition"),
-                        SyntaxFactory.IdentifierName("ManifestAllHotkeysHotstringsHooks")
-                    )
+                    CreateMemberAccess("Keysharp.Core.Common.Keyboard.HotkeyDefinition", "ManifestAllHotkeysHotstringsHooks")
                 )
             ));
 
@@ -393,7 +385,13 @@ namespace Keysharp.Scripting
                     return parser.currentClass.Name == Keywords.MainClassName ? SyntaxFactory.IdentifierName("@base") : SyntaxFactory.BaseExpression();
                 case "super":
                     return parser.CreateSuperTuple();
-            }
+                case "null":
+					if (parser.hasVisitedIdentifiers && parser.IsVariableDeclared("@null", false) == null)
+					{
+                        return SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression);
+					}
+                    break;
+			}
 
             // Handle special built-ins
             if (parser.IsVarDeclaredGlobally(text) == null)
@@ -430,13 +428,20 @@ namespace Keysharp.Scripting
             {
                 var debug = parser.currentFunc;
                 // If it's a VarRef, access the __Value member
-                return SyntaxFactory.MemberAccessExpression(
-                    SyntaxKind.SimpleMemberAccessExpression,
-                    SyntaxFactory.ParenthesizedExpression(
-                        SyntaxFactory.CastExpression(
-                            SyntaxFactory.IdentifierName("VarRef"),
-                            SyntaxFactory.IdentifierName(vr))), // Identifier name
-                    SyntaxFactory.IdentifierName("__Value")       // Member access
+                return ((InvocationExpressionSyntax)InternalMethods.GetPropertyValue)
+                .WithArgumentList(
+                    SyntaxFactory.ArgumentList(
+                        SyntaxFactory.SeparatedList(new[]
+                        {
+                            SyntaxFactory.Argument(SyntaxFactory.IdentifierName(vr)),
+                            SyntaxFactory.Argument(
+                                SyntaxFactory.LiteralExpression(
+								    SyntaxKind.StringLiteralExpression,
+								    SyntaxFactory.Literal("__Value")
+							    )
+                            )
+                        })
+                    )
                 );
             }
 
@@ -855,11 +860,7 @@ namespace Keysharp.Scripting
 
             // Wrap the array in Keysharp.Core.Objects.Object
             var objectCreationExpression = SyntaxFactory.InvocationExpression(
-                SyntaxFactory.MemberAccessExpression(
-                    SyntaxKind.SimpleMemberAccessExpression,
-                    CreateQualifiedName("Keysharp.Core.Objects"),
-                    SyntaxFactory.IdentifierName("Object")
-                ),
+                CreateMemberAccess("Keysharp.Core.Objects", "Object"),
                 SyntaxFactory.ArgumentList(
                     SyntaxFactory.SingletonSeparatedList(SyntaxFactory.Argument(arrayExpression))
                 )
@@ -916,11 +917,7 @@ namespace Keysharp.Scripting
 
             var ifStatement = SyntaxFactory.IfStatement(
                 SyntaxFactory.InvocationExpression(
-                    SyntaxFactory.MemberAccessExpression(
-                        SyntaxKind.SimpleMemberAccessExpression,
-                        CreateQualifiedName("Keysharp.Scripting.Script"),          // Class name
-                        SyntaxFactory.IdentifierName("IfTest")                     // Method name
-                    ), 
+                    CreateMemberAccess("Keysharp.Scripting.Script", "IfTest"),
                     argumentList),
                 (StatementSyntax)Visit(context.flowBlock())
             );
@@ -996,11 +993,7 @@ namespace Keysharp.Scripting
         {
             // Wrap the condition in Keysharp.Scripting.Script.IfTest(condition) to force a boolean
             var wrappedCondition = SyntaxFactory.InvocationExpression(
-                SyntaxFactory.MemberAccessExpression(
-                    SyntaxKind.SimpleMemberAccessExpression,
-                    CreateQualifiedName("Keysharp.Scripting.Script"),          // Class name
-                    SyntaxFactory.IdentifierName("IfTest")                     // Method name
-                ),
+                CreateMemberAccess("Keysharp.Scripting.Script", "IfTest"),
                 SyntaxFactory.ArgumentList(
                     SyntaxFactory.SingletonSeparatedList(SyntaxFactory.Argument(condition))
                 )
@@ -1025,19 +1018,23 @@ namespace Keysharp.Scripting
         public override SyntaxNode VisitFormalParameterArg([Antlr4.Runtime.Misc.NotNull] FormalParameterArgContext context)
         {
             // Treat as a regular parameter
-            var parameterName = ToValidIdentifier(context.identifier().GetText().Trim().ToLowerInvariant());
+            var parameterName = parser.ToValidIdentifier(context.identifier().GetText().Trim().ToLowerInvariant());
 
-            TypeSyntax parameterType;
-            if (context.BitAnd() == null)
-                parameterType = SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword));
-            else
+            ParameterSyntax parameter = SyntaxFactory.Parameter(SyntaxFactory.Identifier(parameterName))
+					.WithType(PredefinedTypes.Object);
+
+			if (context.BitAnd() != null)
             {
                 parser.currentFunc.VarRefs.Add(parameterName);
-                parameterType = SyntaxFactory.ParseTypeName("VarRef");
-            }
-
-            var parameter = SyntaxFactory.Parameter(SyntaxFactory.Identifier(parameterName))
-                .WithType(parameterType);
+				parameter = parameter
+                    .WithAttributeLists(SyntaxFactory.SingletonList(
+                        SyntaxFactory.AttributeList(
+                            SyntaxFactory.SeparatedList(new[] {
+                                SyntaxFactory.Attribute(SyntaxFactory.IdentifierName("ByRef"))
+                            })
+                        )
+                    ));
+			}
 
             // Handle default value assignment (:=) or optional parameter (QuestionMark)
             if (context.expression() != null)
@@ -1062,7 +1059,7 @@ namespace Keysharp.Scripting
             ParameterSyntax parameter;
             if (context.Multiply() != null)
             {
-                var parameterName = ToValidIdentifier(context.identifier()?.GetText().ToLowerInvariant().Trim() ?? "args");
+                var parameterName = parser.ToValidIdentifier(context.identifier()?.GetText().ToLowerInvariant().Trim() ?? "args");
 
                 // Handle 'Multiply' for variadic arguments (params object[])
                 parameter = SyntaxFactory.Parameter(SyntaxFactory.Identifier(parameterName))
@@ -1179,7 +1176,7 @@ namespace Keysharp.Scripting
             PushFunction(Keywords.AnonymousFatArrowLambdaPrefix + ++parser.lambdaCount);
             VisitFunctionHeadPrefix(context.functionHeadPrefix());
 
-            var parameterName = ToValidIdentifier(context.identifierName()?.GetText().ToLowerInvariant().Trim() ?? "args");
+            var parameterName = parser.ToValidIdentifier(context.identifierName()?.GetText().ToLowerInvariant().Trim() ?? "args");
             ParameterSyntax parameter;
             if (context.Multiply() != null)
             {
@@ -1366,7 +1363,7 @@ namespace Keysharp.Scripting
             }
             */
 
-            var methodDeclaration = parser.currentFunc.Assemble();
+				var methodDeclaration = parser.currentFunc.Assemble();
             PopFunction();
 
             return methodDeclaration;
@@ -1501,7 +1498,7 @@ namespace Keysharp.Scripting
 
         public void HandleScopeFunctions(ParserRuleContext context)
         {
-			var scopeFunctionDeclarations = GetScopeFunctions(context, this);
+			var scopeFunctionDeclarations = parser.GetScopeFunctions(context, this);
 
 			foreach (var fi in scopeFunctionDeclarations)
 			{
@@ -1602,7 +1599,7 @@ namespace Keysharp.Scripting
             ArgumentListSyntax argumentList = (ArgumentListSyntax)Visit(context.mapElementList());
 
             return SyntaxFactory.InvocationExpression(
-                CreateQualifiedName("Keysharp.Core.Collections.Map"),
+                CreateMemberAccess("Keysharp.Core.Collections", "Map"),
                 argumentList
             );
         }

@@ -84,11 +84,12 @@
 
 		public override object Call([ByRef] object obj0, [ByRef] object obj1 = null)
 		{
+			GetVal = obj1 != null;
+
 			if (MoveNext())
 			{
-				if (obj1 != null)
+				if (GetVal)
 				{
-					GetVal = true;
 					Script.SetPropertyValue(obj0, "__Value", Current.Item1);
 					Script.SetPropertyValue(obj1, "__Value", Current.Item2);
 				} 

@@ -457,7 +457,7 @@ namespace Keysharp.Scripting
                             break;
 						case MainLexer.Plus:
 						case MainLexer.Minus:
-						case MainLexer.BitAnd:
+						//case MainLexer.BitAnd: // Can't be here because of VarRefs
 						case MainLexer.Multiply:
 							PopWhitespaces(codeTokens.Count);
 							break;

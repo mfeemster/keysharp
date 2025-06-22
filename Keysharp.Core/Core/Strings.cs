@@ -1268,7 +1268,7 @@ namespace Keysharp.Core
 		/// Otherwise, specify the maximum number of replacements to allow.
 		/// </param>
 		/// <returns>The newly modified string.</returns>
-		public static string StrReplace(object haystack, object needle, object replaceText, object caseSense, object outputVarCount, object limit)
+		public static string StrReplace(object haystack, object needle, object replaceText, object caseSense, [ByRef] object outputVarCount, object limit)
 		{
 			var input = haystack.As();
 			var search = needle.As();
@@ -1476,7 +1476,7 @@ namespace Keysharp.Core
 		/// <param name="requestedCapacity">Capacity for the StringBuffer. If this is -1 then
 		/// <paramref name="targetVar"/> contents are replaced with the content of the StringBuffer.</param>
 		/// <returns>StringBuffer</returns>
-		public static object VarSetStrCapacity(object targetVar, object requestedCapacity = null)
+		public static object VarSetStrCapacity([ByRef] object targetVar, object requestedCapacity = null)
 		{
 			if (!(targetVar is KeysharpObject))
 				throw new TypeError($"Expected argument of type VarRef, but received {targetVar.GetType()}");

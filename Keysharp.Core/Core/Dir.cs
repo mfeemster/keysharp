@@ -213,7 +213,7 @@
 		/// <summary>
 		/// <seealso cref="SplitPath(path, outFileName, outDir, outExtension, outNameNoExt, outDrive)"/>
 		/// </summary>
-		public static object SplitPath(object obj, object outFileName)
+		public static object SplitPath(object obj, [ByRef] object outFileName)
 		{
             VarRef outDir = new(null);
             VarRef outExtension = new(null);
@@ -225,7 +225,7 @@
 		/// <summary>
 		/// <seealso cref="SplitPath(path, outFileName, outDir, outExtension, outNameNoExt, outDrive)"/>
 		/// </summary>
-		public static object SplitPath(object obj, object outFileName, object outDir)
+		public static object SplitPath(object obj, [ByRef] object outFileName, [ByRef] object outDir)
 		{
             VarRef outExtension = new(null);
             VarRef outNameNoExt = new(null);
@@ -236,7 +236,7 @@
 		/// <summary>
 		/// <seealso cref="SplitPath(path, outFileName, outDir, outExtension, outNameNoExt, outDrive)"/>
 		/// </summary>
-		public static object SplitPath(object obj, object outFileName, object outDir, object outExtension)
+		public static object SplitPath(object obj, [ByRef] object outFileName, [ByRef] object outDir, [ByRef] object outExtension)
 		{
             VarRef outNameNoExt = new(null);
             VarRef outDrive = new(null);
@@ -246,7 +246,7 @@
 		/// <summary>
 		/// <seealso cref="SplitPath(path, outFileName, outDir, outExtension, outNameNoExt, outDrive)"/>
 		/// </summary>
-		public static object SplitPath(object obj, object outFileName, object outDir, object outExtension, object outNameNoExt)
+		public static object SplitPath(object obj, [ByRef] object outFileName, [ByRef] object outDir, [ByRef] object outExtension, [ByRef] object outNameNoExt)
 		{
             VarRef outDrive = new(null);
             return SplitPath(obj, outFileName, outDir, outExtension, outNameNoExt, outDrive);
@@ -276,7 +276,7 @@
 		/// If the file is on a local or mapped drive, the variable will be set to the drive letter followed by a colon (no backslash).<br/>
 		/// If the file is on a network path (UNC), the variable will be set to the share name, e.g. \\Workstation01
 		/// </param>
-		public static object SplitPath(object path, object outFileName, object outDir, object outExtension, object outNameNoExt, object outDrive)
+		public static object SplitPath(object path, [ByRef] object outFileName, [ByRef] object outDir, [ByRef] object outExtension, [ByRef] object outNameNoExt, [ByRef] object outDrive)
 		{
 			outFileName ??= VarRef.Empty; outDir ??= VarRef.Empty; outExtension ??= VarRef.Empty; outNameNoExt ??= VarRef.Empty; outDrive ??= VarRef.Empty;
 

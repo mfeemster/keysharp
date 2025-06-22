@@ -121,7 +121,7 @@
 			}
 		}
 
-		public virtual object Call([ByRef] object ovar1, [ByRef] object ovar2)
+		public virtual object Call([ByRef] object ovar1, [ByRef] object ovar2 = null)
 		{
 			try
 			{

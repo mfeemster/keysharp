@@ -10,7 +10,10 @@ namespace Keysharp.Scripting
 {
     internal partial class Parser
     {
-        internal static ExpressionSyntax VarsNameSyntax = CreateQualifiedName($"{Keywords.MainScriptVariableName}.Vars");
+		internal Dictionary<ParserRuleContext, VisitFunction> functionParserData = new();
+        internal bool hasVisitedIdentifiers = true;
+
+		internal static ExpressionSyntax VarsNameSyntax = CreateMemberAccess(Keywords.MainScriptVariableName, "Vars");
 
 		internal static Dictionary<int, SyntaxKind> pureBinaryOperators = new Dictionary<int, SyntaxKind>()
         {
@@ -259,6 +262,17 @@ namespace Keysharp.Scripting
                 return null;
 			}
 
+			public override object VisitVarRefExpression([NotNull] VarRefExpressionContext context)
+			{
+				if (context.primaryExpression() is IdentifierExpressionContext iec)
+                {
+					SyntaxNode result = mainVisitor.Visit(iec);
+					if (result is IdentifierNameSyntax identifierNameSyntax)
+						_ = parser.MaybeAddVariableDeclaration(identifierNameSyntax.Identifier.Text);
+				}
+                return base.VisitVarRefExpression(context);
+			}
+
 			public override object VisitAssignmentExpression([NotNull] AssignmentExpressionContext context)
 			{
                 if (context.left is IdentifierExpressionContext iec)
@@ -282,17 +296,17 @@ namespace Keysharp.Scripting
 			}
 		}
 
-        internal static Dictionary<ParserRuleContext, VisitFunction> functionParserData = new();
-
-		internal static List<FunctionInfo> GetScopeFunctions(ParserRuleContext context, VisitMain mainVisitor)
+		internal List<FunctionInfo> GetScopeFunctions(ParserRuleContext context, VisitMain mainVisitor)
         {
-            var visitor = functionParserData.GetOrAdd(context, () => {
+            hasVisitedIdentifiers = false;
+			var visitor = functionParserData.GetOrAdd(context, () => {
                 var v = new VisitFunction(mainVisitor);
                 v.Visit(context);
                 return v;
             });
+            hasVisitedIdentifiers = true;
 
-            return visitor.functionInfos;
+			return visitor.functionInfos;
         }
 
         private static Dictionary<string, NameSyntax> _qualifiedNameCache;
@@ -326,6 +340,14 @@ namespace Keysharp.Scripting
 
 			return qualifiedName;
         }
+        internal static MemberAccessExpressionSyntax CreateMemberAccess(string baseName, string targetName)
+        {
+            return SyntaxFactory.MemberAccessExpression(
+	            SyntaxKind.SimpleMemberAccessExpression,
+	            CreateQualifiedName(baseName),
+	            SyntaxFactory.IdentifierName(targetName)
+            );
+		}
         internal UsingDirectiveSyntax CreateUsingDirective(string usingName)
         {
             string alias = null;
@@ -380,7 +402,7 @@ namespace Keysharp.Scripting
                 SyntaxFactory.ArgumentList(
                     SyntaxFactory.SeparatedList(new[]
                     {
-                        SyntaxFactory.Argument(CreateQualifiedName("Keysharp.Scripting.Script.Operator." + binaryOperators[op])),
+                        SyntaxFactory.Argument(CreateMemberAccess("Keysharp.Scripting.Script.Operator", binaryOperators[op])),
                         SyntaxFactory.Argument(exprL),
                         SyntaxFactory.Argument(exprR)
                     })
@@ -651,39 +673,48 @@ namespace Keysharp.Scripting
             return name;
         }
 
+        internal string IsVariableDeclared(string name, bool caseSense = true)
+        {
+			string match;
+			if (currentFunc.Scope == eScope.Static)
+			{
+				match = IsVarDeclaredInClass(currentClass, name);
+				if (match != null) return match;
+			}
+			if (currentFunc.Scope == eScope.Local || currentFunc.Scope == eScope.Static)
+			{
+				// If the variable is supposed to be global then don't add a local declaration
+				match = IsGlobalVar(name, caseSense);
+				if (match != null) return match;
+
+				// Otherwise if a local declaration is present then return it
+				match = IsVarDeclaredLocally(name, caseSense);
+				if (match != null) return match;
+			}
+			else if (currentFunc.Scope == eScope.Global)
+			{
+				// If the variable is supposed to be local then return it
+				match = IsLocalVar(name);
+				if (match != null)
+					return match;
+
+				match = IsVarDeclaredGlobally(name, caseSense);
+				if (match != null) return match;
+			}
+
+			if (IsBuiltIn(name, caseSense) is string builtin && builtin != null)
+				return builtin;
+
+            return null;
+		}
+
         // Either adds a new local, static, or global variable declaration (depending on scope),
         // or returns a previously declared variable name
         internal string MaybeAddVariableDeclaration(string name, bool caseSense = true)
         {
-            string match;
-            if (currentFunc.Scope == eScope.Static)
-            {
-                match = IsVarDeclaredInClass(currentClass, name);
-                if (match != null) return match;
-            }
-            if (currentFunc.Scope == eScope.Local || currentFunc.Scope == eScope.Static)
-            {
-                // If the variable is supposed to be global then don't add a local declaration
-                match = IsGlobalVar(name, caseSense);
-                if (match != null) return match;
-
-                // Otherwise if a local declaration is present then return it
-                match = IsVarDeclaredLocally(name, caseSense);
-                if (match != null) return match;
-            }
-            else if (currentFunc.Scope == eScope.Global)
-            {
-                // If the variable is supposed to be local then return it
-                match = IsLocalVar(name);
-                if (match != null)
-                    return match;
-
-                match = IsVarDeclaredGlobally(name, caseSense);
-                if (match != null) return match;
-            }
-
-            if (IsBuiltIn(name, caseSense) is string builtin && builtin != null)
-                return builtin;
+            string match = IsVariableDeclared(name, caseSense);
+            if (match != null)
+                return match;
 
             return AddVariableDeclaration(name, caseSense);
         }
@@ -857,13 +888,13 @@ namespace Keysharp.Scripting
                 );
         }
 
-        internal static VariableDeclarationSyntax CreateFuncObjVariable(string functionName)
+        internal VariableDeclarationSyntax CreateFuncObjVariable(string functionName)
         {
             return SyntaxFactory.VariableDeclaration(SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword)))
                 .WithVariables(
                     SyntaxFactory.SingletonSeparatedList(
                         SyntaxFactory.VariableDeclarator(
-                            SyntaxFactory.Identifier(Parser.ToValidIdentifier(functionName))
+                            SyntaxFactory.Identifier(ToValidIdentifier(functionName))
                         )
                         .WithInitializer(
                             SyntaxFactory.EqualsValueClause(
@@ -940,7 +971,7 @@ namespace Keysharp.Scripting
                 } else
                     // Fully qualified method invocation
                     return SyntaxFactory.InvocationExpression(
-                        CreateQualifiedName($"{mph.mi.DeclaringType}.{mph.mi.Name}"),
+						CreateMemberAccess(mph.mi.DeclaringType.ToString(), mph.mi.Name),
                         argumentList
                     );
             }
@@ -969,8 +1000,7 @@ namespace Keysharp.Scripting
 
             // 3. Handle GetPropertyValue invocation
             if (targetExpression is InvocationExpressionSyntax invocationExpression &&
-                invocationExpression.Expression is MemberAccessExpressionSyntax memberAccess &&
-                memberAccess.Name.Identifier.Text.Equals("GetPropertyValue", StringComparison.OrdinalIgnoreCase))
+                CheckInvocationExpressionName(invocationExpression, "GetPropertyValue"))
             {
                 // Extract arguments of GetPropertyValue
                 var propertyArguments = invocationExpression.ArgumentList.Arguments;
@@ -1031,11 +1061,7 @@ namespace Keysharp.Scripting
 
                     // Wrap in Script.Invoke
                     return SyntaxFactory.InvocationExpression(
-                        SyntaxFactory.MemberAccessExpression(
-                            SyntaxKind.SimpleMemberAccessExpression,
-                            CreateQualifiedName("Keysharp.Scripting.Script"),
-                            SyntaxFactory.IdentifierName("Invoke")
-                        ),
+                        CreateMemberAccess("Keysharp.Scripting.Script", "Invoke"),
                         SyntaxFactory.ArgumentList(
                             SyntaxFactory.SeparatedList(new[]
                             {
@@ -1071,9 +1097,13 @@ namespace Keysharp.Scripting
             {
                 return identifierName.Identifier.Text;
             }
-            if (expression is MemberAccessExpressionSyntax memberAccess)
+            else if (expression is MemberAccessExpressionSyntax memberAccess)
             {
                 return memberAccess.Name.Identifier.Text;
+            }
+            else if (expression is QualifiedNameSyntax qes)
+            {
+                return qes.Right.Identifier.Text;
             }
             return null;
         }
@@ -1101,11 +1131,7 @@ namespace Keysharp.Scripting
         internal ExpressionStatementSyntax CreateStaticVariableInitializer(IdentifierNameSyntax identifier, ExpressionSyntax initializerValue)
         {
 			var invocationExpression = SyntaxFactory.InvocationExpression(
-	            SyntaxFactory.MemberAccessExpression(
-		            SyntaxKind.SimpleMemberAccessExpression,
-		            CreateQualifiedName("Keysharp.Scripting.Script"),
-		            SyntaxFactory.IdentifierName("InitStaticVariable")
-	            ),
+                CreateMemberAccess("Keysharp.Scripting.Script", "InitStaticVariable"),
 	            SyntaxFactory.ArgumentList(
 		            SyntaxFactory.SeparatedList(new[]
 		            {
@@ -1168,7 +1194,7 @@ namespace Keysharp.Scripting
             return normalizedName;
         }
 
-        internal static string NormalizeIdentifier(string name, eNameCase nameCase = eNameCase.Lower)
+        internal string NormalizeIdentifier(string name, eNameCase nameCase = eNameCase.Lower)
         {
             name = name.Trim('"', '\'');
 
@@ -1184,10 +1210,16 @@ namespace Keysharp.Scripting
         }
 
         // Escapes keyword identifiers with @
-        internal static string ToValidIdentifier(string text)
+        internal string ToValidIdentifier(string text)
         {
             if (SyntaxFacts.IsKeywordKind(SyntaxFactory.ParseToken(text).Kind()))
-                return "@" + text;
+            {
+				if (hasVisitedIdentifiers && text.Equals("null", StringComparison.OrdinalIgnoreCase) && IsVariableDeclared("@null", false) == null)
+				{
+					return "null";
+				}
+				return "@" + text;
+            }
             return text;
         }
 
@@ -1449,8 +1481,7 @@ namespace Keysharp.Scripting
             else if (targetExpression is InvocationExpressionSyntax invocationExpression)
             {
                 // Handle Keysharp.Scripting.Script.Index(varname, index)
-                if (invocationExpression.Expression is MemberAccessExpressionSyntax invocationMemberAccess &&
-                    invocationMemberAccess.Name.Identifier.Text == "Index" &&
+                if (CheckInvocationExpressionName(invocationExpression, "Index") &&
                     invocationExpression.ArgumentList.Arguments.Count == 2)
                 {
                     var varName = invocationExpression.ArgumentList.Arguments[0].Expression;
@@ -1504,9 +1535,8 @@ namespace Keysharp.Scripting
                     );
                 }
                 // Handle Keysharp.Scripting.Script.GetPropertyValue(obj, field)
-                else if (invocationExpression.Expression is MemberAccessExpressionSyntax getPropertyAccess &&
-                         getPropertyAccess.Name.Identifier.Text == "GetPropertyValue" &&
-                         invocationExpression.ArgumentList.Arguments.Count == 2)
+                else if (CheckInvocationExpressionName(invocationExpression, "GetPropertyValue") &&
+                    invocationExpression.ArgumentList.Arguments.Count == 2)
                 {
                     var obj = invocationExpression.ArgumentList.Arguments[0].Expression;
                     var field = invocationExpression.ArgumentList.Arguments[1].Expression;
@@ -1582,6 +1612,14 @@ namespace Keysharp.Scripting
                    char.IsUpper(identifier.Identifier.Text[0]); // Assume constants are upper-case
         }
 
+        internal static bool CheckInvocationExpressionName(InvocationExpressionSyntax ies, string target, bool caseSense = false)
+        {
+            StringComparison comparison = caseSense ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
+
+            return (ies.Expression is MemberAccessExpressionSyntax maes && maes.Name.Identifier.Text.Equals(target, comparison))
+                || (ies.Expression is QualifiedNameSyntax qes && qes.Right.Identifier.Text.Equals(target, comparison));
+        }
+
         internal ExpressionSyntax CreateSuperTuple()
         {
             return SyntaxFactory.CastExpression(
@@ -1627,11 +1665,7 @@ namespace Keysharp.Scripting
         internal static ExpressionSyntax GenerateGetPropertyValue(ExpressionSyntax baseExpression, ExpressionSyntax memberExpression)
         {
 			return SyntaxFactory.InvocationExpression(
-				SyntaxFactory.MemberAccessExpression(
-					SyntaxKind.SimpleMemberAccessExpression,
-					CreateQualifiedName("Keysharp.Scripting.Script"),
-					SyntaxFactory.IdentifierName("GetPropertyValue")
-				),
+				CreateMemberAccess("Keysharp.Scripting.Script", "GetPropertyValue"),
 				SyntaxFactory.ArgumentList(
 					SyntaxFactory.SeparatedList(new[]
 					{
@@ -1654,8 +1688,9 @@ namespace Keysharp.Scripting
             bool isConstant = value is LiteralExpressionSyntax;
 
             // Check if the parameter type is VarRef
-            var isVarRefType = parameter.Type is IdentifierNameSyntax typeSyntax &&
-                               typeSyntax.Identifier.Text.Equals("VarRef", StringComparison.OrdinalIgnoreCase);
+            var isVarRefType = parameter.AttributeLists
+				.SelectMany(al => al.Attributes)
+				.Any(attr => attr.Name.ToString().Equals("ByRef"));
 
             StatementSyntax initializationStatement = null;
 
@@ -1699,22 +1734,24 @@ namespace Keysharp.Scripting
             }
 
             // Add the attributes for Optional and DefaultParameterValue
-            return parameter.WithAttributeLists(SyntaxFactory.SingletonList(
-                SyntaxFactory.AttributeList(
-                    SyntaxFactory.SeparatedList(new[]
-                    {
-                        SyntaxFactory.Attribute(SyntaxFactory.IdentifierName("Optional")),
-                        SyntaxFactory.Attribute(
-                            SyntaxFactory.IdentifierName("DefaultParameterValue"),
-                            SyntaxFactory.AttributeArgumentList(
-                                SyntaxFactory.SingletonSeparatedList(
-                                    SyntaxFactory.AttributeArgument(value)
+            return parameter.WithAttributeLists(
+				parameter.AttributeLists.Add(
+                    SyntaxFactory.AttributeList(
+                        SyntaxFactory.SeparatedList(new[]
+                        {
+                            SyntaxFactory.Attribute(SyntaxFactory.IdentifierName("Optional")),
+                            SyntaxFactory.Attribute(
+                                SyntaxFactory.IdentifierName("DefaultParameterValue"),
+                                SyntaxFactory.AttributeArgumentList(
+                                    SyntaxFactory.SingletonSeparatedList(
+                                        SyntaxFactory.AttributeArgument(value)
+                                    )
                                 )
                             )
-                        )
-                    })
+                        })
+                    )
                 )
-            ));
+            );
         }
     }
 }

@@ -26,7 +26,7 @@
 		/// <summary>
 		/// <see cref="MonitorGet(object, object, object, object, object)"/>
 		/// </summary>
-		public static object MonitorGet(object obj, object left)
+		public static object MonitorGet(object obj, [ByRef] object left)
 		{
 			object top = null, right = null, bottom = null;
 			return MonitorGet(obj, left, top, right, bottom);
@@ -35,7 +35,7 @@
 		/// <summary>
 		/// <see cref="MonitorGet(object, object, object, object, object)"/>
 		/// </summary>
-		public static object MonitorGet(object obj, object left, object top)
+		public static object MonitorGet(object obj, [ByRef] object left, [ByRef] object top)
 		{
 			object right = null, bottom = null;
 			return MonitorGet(obj, left, top, right, bottom);
@@ -44,7 +44,7 @@
 		/// <summary>
 		/// <see cref="MonitorGet(object, object, object, object, object)"/>
 		/// </summary>
-		public static object MonitorGet(object obj, object left, object top, object right)
+		public static object MonitorGet(object obj, [ByRef] object left, [ByRef] object top, [ByRef] object right)
 		{
 			object bottom = null;
 			return MonitorGet(obj, left, top, right, bottom);
@@ -59,7 +59,7 @@
 		/// <param name="right">The right bounding coordinate of the specified monitor.</param>
 		/// <param name="bottom">The bottom bounding coordinate of the specified monitor.</param>
 		/// <returns>The monitor number which is the same as n unless n was omitted.</returns>
-		public static object MonitorGet(object n, object left, object top, object right, object bottom)
+		public static object MonitorGet(object n, [ByRef] object left, [ByRef] object top, [ByRef] object right, [ByRef] object bottom)
 		{
 			left ??= VarRef.Empty; top ??= VarRef.Empty; right ??= VarRef.Empty; bottom ??= VarRef.Empty;
 			var monitorIndex = n.Al(-1L);
@@ -136,7 +136,7 @@
 		/// <summary>
 		/// <see cref="MonitorGetWorkArea(object, object, object, object, object)"/>
 		/// </summary>
-		public static object MonitorGetWorkArea(object obj, object left)
+		public static object MonitorGetWorkArea(object obj, [ByRef] object left)
 		{
 			object t = null, r = null, b = null;
 			return MonitorGetWorkArea(obj, left, t, r, b);
@@ -145,7 +145,7 @@
 		/// <summary>
 		/// <see cref="MonitorGetWorkArea(object, object, object, object, object)"/>
 		/// </summary>
-		public static object MonitorGetWorkArea(object obj, object left, object top)
+		public static object MonitorGetWorkArea(object obj, [ByRef] object left, [ByRef] object top)
 		{
 			object r = null, b = null;
 			return MonitorGetWorkArea(obj, left, top, r, b);
@@ -154,7 +154,7 @@
 		/// <summary>
 		/// <see cref="MonitorGetWorkArea(object, object, object, object, object)"/>
 		/// </summary>
-		public static object MonitorGetWorkArea(object obj, object left, object top, object right)
+		public static object MonitorGetWorkArea(object obj, [ByRef] object left, [ByRef] object top, [ByRef] object right)
 		{
 			object b = null;
 			return MonitorGetWorkArea(obj, left, top, right, b);
@@ -169,7 +169,7 @@
 		/// <param name="right">The right bounding coordinate of the work area of the specified monitor.</param>
 		/// <param name="bottom">The bottom bounding coordinate of the work area of the specified monitor.</param>
 		/// <returns>The monitor number which is the same as n unless n was omitted.</returns>
-		public static object MonitorGetWorkArea(object n, object left, object top, object right, object bottom)
+		public static object MonitorGetWorkArea(object n, [ByRef] object left, [ByRef] object top, [ByRef] object right, [ByRef] object bottom)
 		{
 			var monitorIndex = n.Al(-1L);
 			System.Windows.Forms.Screen screen;

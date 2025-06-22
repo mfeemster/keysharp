@@ -74,7 +74,7 @@
 		/// </param>
 		/// <returns>The <see cref="RegExMatchInfo"/> object which contains the matches, if any.</returns>
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown on failure.</exception>
-		public static long RegExMatch(object haystack, object needle, object outputVar, object startingPos)
+		public static long RegExMatch(object haystack, object needle, [ByRef] object outputVar, object startingPos)
 		{
 			Error err;
 			var input = haystack.As();
@@ -198,7 +198,7 @@
 		/// </param>
 		/// <returns>A version of haystack whose contents have been replaced by the operation. If no replacements are needed, haystack is returned unaltered.</returns>
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown on failure.</exception>
-		public static string RegExReplace(object haystack, object needleRegEx, object replacement, object outputVarCount, object limit, object startingPos)
+		public static string RegExReplace(object haystack, object needleRegEx, object replacement, [ByRef] object outputVarCount, object limit, object startingPos)
 		{
 			Error err;
 			var input = haystack.As();
