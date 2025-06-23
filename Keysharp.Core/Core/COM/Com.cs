@@ -27,7 +27,7 @@ namespace Keysharp.Core.COM
 		public static object ComObjArray(object varType, object count1, params object[] args)
 		{
 			Error err;
-			var vt = (VarEnum)varType.Ai();//Need a switch statement on type.
+			var vt = (VarEnum)varType.Ai();
 			var dim1Size = count1.Ai();
 			var lengths = new int[args != null ? args.Length + 1 : 1];
 			var t = typeof(object);
@@ -47,7 +47,9 @@ namespace Keysharp.Core.COM
 				switch (vt)
 				{
 					case VarEnum.VT_DISPATCH: t = typeof(DispatchWrapper); break;
+
 					case VarEnum.VT_VARIANT: break;
+
 					default:
 						return Errors.ErrorOccurred(err = new ValueError($"The supplied COM type of {varType} is not supported.")) ? throw err : null;
 				}
@@ -62,27 +64,29 @@ namespace Keysharp.Core.COM
 				ret = (int)ll;
 			else if (ret is bool bl)
 				ret = bl ? 1 : 0;
+
 			return ret;
 		}
 
 		internal static Type ConvertVarTypeToCLRType(VarEnum vt) =>
-			vt switch
-			{
-				VarEnum.VT_I1 => typeof(sbyte),
-				VarEnum.VT_UI1 => typeof(byte),
-				VarEnum.VT_I2 => typeof(short),
-				VarEnum.VT_UI2 => typeof(ushort),
-				VarEnum.VT_I4 or VarEnum.VT_INT => typeof(int),
-				VarEnum.VT_UI4 or VarEnum.VT_UINT or VarEnum.VT_ERROR => typeof(uint),
-				VarEnum.VT_I8 => typeof(long),
-				VarEnum.VT_UI8 => typeof(ulong),
-				VarEnum.VT_R4 => typeof(float),
-				VarEnum.VT_R8 or VarEnum.VT_DATE => typeof(double), //should VT_DATE be converted to DateTime?
-				VarEnum.VT_DECIMAL or VarEnum.VT_CY => typeof(decimal),
-				VarEnum.VT_BOOL => typeof(bool),
-				VarEnum.VT_BSTR => typeof(string),
-				_ => typeof(object),
-			};
+
+		vt switch
+	{
+			VarEnum.VT_I1 => typeof(sbyte),
+							  VarEnum.VT_UI1 => typeof(byte),
+							  VarEnum.VT_I2 => typeof(short),
+							  VarEnum.VT_UI2 => typeof(ushort),
+							  VarEnum.VT_I4 or VarEnum.VT_INT => typeof(int),
+							  VarEnum.VT_UI4 or VarEnum.VT_UINT or VarEnum.VT_ERROR => typeof(uint),
+							  VarEnum.VT_I8 => typeof(long),
+							  VarEnum.VT_UI8 => typeof(ulong),
+							  VarEnum.VT_R4 => typeof(float),
+							  VarEnum.VT_R8 or VarEnum.VT_DATE => typeof(double), //should VT_DATE be converted to DateTime?
+							  VarEnum.VT_DECIMAL or VarEnum.VT_CY => typeof(decimal),
+							  VarEnum.VT_BOOL => typeof(bool),
+							  VarEnum.VT_BSTR => typeof(string),
+							  _ => typeof(object),
+		};
 
 
 		public static object ComObjConnect(object comObj, object prefixOrSink = null, object debug = null)
@@ -385,7 +389,7 @@ namespace Keysharp.Core.COM
 					_ = Marshal.Release((nint)ptr);
 				}
 			}
-			
+
 			if (ptr is long l)
 			{
 				ptr = new nint(l);

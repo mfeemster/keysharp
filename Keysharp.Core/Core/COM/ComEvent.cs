@@ -14,7 +14,6 @@ namespace Keysharp.Core.COM
 		{
 			Error err;
 			var script = Script.TheScript;
-			
 			dispatcher = disp;
 			thisArg = [this];
 			logAll = log;

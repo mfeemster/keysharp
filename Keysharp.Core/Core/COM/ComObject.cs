@@ -23,7 +23,7 @@ namespace Keysharp.Core.COM
 					longVal = l;
 
 				if ((vt & VarEnum.VT_BYREF) == VarEnum.VT_BYREF
-					|| (vt & VarEnum.VT_ARRAY) == VarEnum.VT_ARRAY)
+						|| (vt & VarEnum.VT_ARRAY) == VarEnum.VT_ARRAY)
 				{
 					item = longVal;
 					return;
@@ -87,7 +87,7 @@ namespace Keysharp.Core.COM
 
 						case VarEnum.VT_ARRAY://SAFEARRAY
 							wasObj = true;
-							temp = longVal;
+							temp = longVal != 0L ? longVal : value;
 							break;
 							//case VarEnum.VT_BYREF    ://Pointer to another type of value (0x4000)
 							//  break;
@@ -582,6 +582,11 @@ namespace Keysharp.Core.COM
 					//Ptr = val.Ab() ? -1L : 0L
 					Ptr = val.Ab() ? -1 : 0
 				};
+			}
+
+			if (varType == VarEnum.VT_ARRAY && val is ComObjArray coa )
+			{
+				return coa;//Don't do anything with it, it's already in the correct form.
 			}
 
 			if (val is long l)
