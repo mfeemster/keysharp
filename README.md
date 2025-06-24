@@ -367,6 +367,8 @@ class class1
 		+ Pass params as `params*` if it's a collection.
 * New RegEx functions `RegExMatchCs()` and `RegExReplaceCs()` which use the C# style regular expression syntax rather than PCRE2.
 	+ `OutputVar` in `RegExMatchCs()` will be of type `RegExMatchInfoCs`.
+	+ PCRE exceptions are not thrown when there is an error, instead C# regex exceptions are thrown.
+	+ To learn more about C# regular expressions, see [here](https://learn.microsoft.com/en-us/dotnet/standard/base-types/regular-expressions).
 	+ The following options are different:
 		+ -A: Forces the pattern to be anchored; that is, it can match only at the start of Haystack. Under most conditions, this is equivalent to explicitly anchoring the pattern by means such as `^`.
 			+ -This is not supported, instead just use `^` or `\A` in your regex string.
@@ -393,9 +395,6 @@ class class1
 			+ -This is not supported.
 
 		+ `\K` is not supported, instead, try using `(?<=abc)`.
-	+ PCRE exceptions are not thrown when there is an error, instead C# regex exceptions are thrown.
-	+ To learn more about C# regular expressions, see [here](https://learn.microsoft.com/en-us/dotnet/standard/base-types/regular-expressions).
-
 * The v1 `Map` methods `MaxIndex()` and `MinIndex()` are still supported. They are also supported for `Array`.
 * New function `GetScreenClip(x, y, width, height [, filename]) => Bitmap` can be used to return a bitmap screenshot of an area of the screen and optionally save it to file.
 * Rich text boxes are supported by passing `RichEdit` to `Gui.Add()`. The same options from `Edit` are supported with the following caveats:
