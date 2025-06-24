@@ -356,6 +356,34 @@ namespace Keysharp.Core.Common.Strings
 				dthigh = DateTime.MaxValue;
 			}
 		}
+		
+		internal static RegexWithTag ParseRegExCs(string exp, bool reverse = false)
+		{
+			var opts = reverse ? RegexOptions.RightToLeft : RegexOptions.None;
+			opts |= RegexOptions.Compiled;
+			var parenIndex = exp.IndexOf(')');
+
+			if (parenIndex != -1)
+			{
+				var leftParenIndex = exp.IndexOf('(');
+
+				if (leftParenIndex == -1 || (leftParenIndex > parenIndex))//Make sure it was just a ) for options and not a ().
+				{
+					var span = exp.AsSpan(0, parenIndex);
+					var substr = exp.Substring(parenIndex + 1);
+					opts |= ToRegexOptionsCs(span);
+
+					if (span.Contains('A'))
+					{
+						substr = "\\A" + substr;
+					}
+
+					return new RegexWithTag(substr, opts);
+				}
+			}
+
+			return new RegexWithTag(exp, opts);
+		}
 
 		/// <summary>
 		/// Gotten from https://stackoverflow.com/questions/311165/how-do-you-convert-a-byte-array-to-a-hexadecimal-string-and-vice-versa
@@ -518,21 +546,20 @@ namespace Keysharp.Core.Common.Strings
 
 		internal static string ToOSType(PlatformID id)
 		{
-
 			return id switch
-		{
-				PlatformID.MacOSX => "MACOSX",
-				PlatformID.Unix => "UNIX",
-				PlatformID.Win32NT => "WIN32_NT",
-				PlatformID.Win32S => "WIN32_S",
-				PlatformID.Win32Windows => "WIN32_WINDOWS",
-				PlatformID.WinCE => "WINCE",
-				PlatformID.Xbox => "XBOX",
-				_ => "UNKNOWN",
-		};
-	}
+			{
+					PlatformID.MacOSX => "MACOSX",
+					PlatformID.Unix => "UNIX",
+					PlatformID.Win32NT => "WIN32_NT",
+					PlatformID.Win32S => "WIN32_S",
+					PlatformID.Win32Windows => "WIN32_WINDOWS",
+					PlatformID.WinCE => "WINCE",
+					PlatformID.Xbox => "XBOX",
+					_ => "UNKNOWN",
+			};
+		}
 
-	internal static PcreRegexSettings ToRegexOptions(ReadOnlySpan<char> sequence)
+		internal static PcreRegexSettings ToRegexOptions(ReadOnlySpan<char> sequence)
 		{
 			var settings = new PcreRegexSettings();
 
@@ -607,6 +634,40 @@ namespace Keysharp.Core.Common.Strings
 
 			return settings;
 		}
+
+		internal static RegexOptions ToRegexOptionsCs(ReadOnlySpan<char> sequence)
+		{
+			var options = RegexOptions.None;
+
+			foreach (var modifier in sequence)
+			{
+				switch (modifier)
+				{
+					case 'i':
+					case 'I':
+						options |= RegexOptions.IgnoreCase;
+						break;
+
+					case 'm':
+					case 'M':
+						options |= RegexOptions.Multiline;
+						break;
+
+					case 's':
+					case 'S':
+						options |= RegexOptions.Singleline;
+						break;
+
+					case 'x':
+					case 'X':
+						options |= RegexOptions.IgnorePatternWhitespace;
+						break;
+				}
+			}
+
+			return options;
+		}
+
 
 #if WINDOWS
 		internal static (RegistryKey, string, string) ToRegKey(string root, bool writable = false)

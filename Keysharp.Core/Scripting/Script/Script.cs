@@ -99,6 +99,7 @@ namespace Keysharp.Scripting
 		private ProcessesData processesData;
 		private RegExData regExData;
 		private RegExIteratorData regExIteratorData;
+		private RegExIteratorDataCs regExIteratorDataCs;
 		private StringsData stringsData;
 		private ToolTipData toolTipData;
 		private WindowProvider windowProvider;
@@ -166,6 +167,7 @@ namespace Keysharp.Scripting
 		internal ReflectionsData ReflectionsData { get; } = new ();//Don't lazy initialize, it's always needed in every Script.TheScript.
 		internal RegExData RegExData => regExData ?? (regExData = new ());
 		internal RegExIteratorData RegExIteratorData => regExIteratorData ?? (regExIteratorData = new ());
+		internal RegExIteratorDataCs RegExIteratorDataCs => regExIteratorDataCs ?? (regExIteratorDataCs = new ());
 		internal StringsData StringsData => stringsData ?? (stringsData = new ());
 		internal ToolTipData ToolTipData => toolTipData ?? (toolTipData = new ());
 		internal WindowProvider WindowProvider => windowProvider ?? (windowProvider = new ());

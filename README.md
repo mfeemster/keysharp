@@ -268,12 +268,12 @@ class class1
 	+ To avoid confusion, it is best not to give properties the same name between base and sub classes.
 * For any `__Enum()` class method, it should have a parameter value of 2 when returning `Array` or `Map`, since their enumerators have two fields.
 * Auto-generated variables and functions will have the prefix `_ks_`, so to avoid naming collisions you shouldn't create variables/functions with that same prefix.
-* Regex uses PCRE2 engine powered by the PCRE.NET library. There are a few limitations compared to AutoHotkey implementation:
+* RegEx uses PCRE2 engine powered by the PCRE.NET library. There are a few limitations compared to the AutoHotkey implementation:
 	+ The following options are different:
 		+ S: Studies the pattern to try improve its performance.
 			+ This is not supported. All RegEx objects are internally created with the `PcreOptions.Compiled` option specified, so performance should be reasonable.
 		+ u: This new option disables optimizations PCRE2_NO_AUTO_POSSESS, PCRE2_NO_START_OPTIMIZE, and PCRE2_NO_DOTSTAR_ANCHOR. This option can be useful when using callouts, since these optimizations might prevent some callouts from happening.
-	+ Callout differ in a few ways:
+	+ Callouts differ in a few ways:
 		+ Callouts do not set `A_EventInfo`
 		+ The callout function must be a top-level function
 		+ A named callout must be enclosed in "", '', or {}
@@ -365,6 +365,37 @@ class class1
 	+ `StartsWith(value, token [,comparison]) => Boolean` and `EndsWith(value, token [,comparison]) => Boolean` to determine if the beginning or end of a string start/end with a given string.
 	+ `Join(separator, params*) => String` to join each parameter together as a string, separated by `separator`.
 		+ Pass params as `params*` if it's a collection.
+* New RegEx functions `RegExMatchCs()` and `RegExReplaceCs()` which use the C# style regular expression syntax rather than PCRE2.
+	+ `OutputVar` in `RegExMatchCs()` will be of type `RegExMatchInfoCs`.
+	+ The following options are different:
+		+ -A: Forces the pattern to be anchored; that is, it can match only at the start of Haystack. Under most conditions, this is equivalent to explicitly anchoring the pattern by means such as `^`.
+			+ -This is not supported, instead just use `^` or `\A` in your regex string.
+
+		+ -C: Enables the auto-callout mode.
+			+ -This is not supported. C# regular expressions don't support calling an event handler for each match. You must manually iterate through the matches yourself.
+			
+		+ -D: Forces dollar-sign ($) to match at the very end of Haystack, even if Haystack's last item is a newline. Without this option, $ instead matches right before the final newline (if there is one). Note: This option is ignored when the `m` option is present.
+			+ -This is not supported, instead just use `$`. However, this will only match `\n`, not `\r\n`. To match the `CR/LF` character combination, include `\r?$` in the regular expression pattern.
+
+		+ -J: Allows duplicate named subpatterns.
+			+ -This is not supported.
+
+		+ -S: Studies the pattern to try improve its performance.
+			+ -This is not supported. All RegEx objects are internally created with the `RegexOptions.Compiled` option specified, so performance should be reasonable.
+
+		+ -U: Ungreedy.	
+			+ -This is not supported, instead use `?` after: `*, ?, +, and {min,max}`.
+
+		+ -X: Enables PCRE features that are incompatible with Perl.
+			+ -This is not supported because it's Perl specific.
+
+		+ ``` `a `n `r ```: Causes specific characters to be recognized as newlines.
+			+ -This is not supported.
+
+		+ `\K` is not supported, instead, try using `(?<=abc)`.
+	+ PCRE exceptions are not thrown when there is an error, instead C# regex exceptions are thrown.
+	+ To learn more about C# regular expressions, see [here](https://learn.microsoft.com/en-us/dotnet/standard/base-types/regular-expressions).
+
 * The v1 `Map` methods `MaxIndex()` and `MinIndex()` are still supported. They are also supported for `Array`.
 * New function `GetScreenClip(x, y, width, height [, filename]) => Bitmap` can be used to return a bitmap screenshot of an area of the screen and optionally save it to file.
 * Rich text boxes are supported by passing `RichEdit` to `Gui.Add()`. The same options from `Edit` are supported with the following caveats:

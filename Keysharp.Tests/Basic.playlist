@@ -1388,6 +1388,18 @@
                         <Property Name="DisplayName" Value="Base64DecodeEncode" />
                       </Rule>
                     </Rule>
+                    <Rule Match="All">
+                      <Property Name="TestWithNormalizedFullyQualifiedName" Value="Keysharp.Tests.StringTests.RegExMatchCs" />
+                      <Rule Match="Any">
+                        <Property Name="DisplayName" Value="RegExMatchCs" />
+                      </Rule>
+                    </Rule>
+                    <Rule Match="All">
+                      <Property Name="TestWithNormalizedFullyQualifiedName" Value="Keysharp.Tests.StringTests.RegExReplaceCs" />
+                      <Rule Match="Any">
+                        <Property Name="DisplayName" Value="RegExReplaceCs" />
+                      </Rule>
+                    </Rule>
                   </Rule>
                 </Rule>
                 <Rule Match="All">
