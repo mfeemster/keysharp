@@ -71,7 +71,7 @@ namespace Keysharp.Core
 			catch (Exception ex)
 			{
 				Error err;
-				return Errors.ErrorOccurred(err = new Error(ex.Message)) ? throw err : null;
+				return Errors.ErrorOccurred(err = new Error(ex.Message)) ? throw err : default;
 			}
 		}
 
@@ -120,7 +120,7 @@ namespace Keysharp.Core
 				else if (def.Length > 0)
 					_ = sb.Append(def);
 				else
-					return Errors.ErrorOccurred(err = new OSError("", $"Failed to find key {k} in section {s} in INI file {file}.")) ? throw err : null;
+					return Errors.ErrorOccurred(err = new OSError("", $"Failed to find key {k} in section {s} in INI file {file}.")) ? throw err : default;
 			}
 			else if (hassec)
 			{
@@ -233,7 +233,7 @@ namespace Keysharp.Core
 			catch (Exception ex)
 			{
 				Error err;
-				return Errors.ErrorOccurred(err = new OSError(ex, $"Error writing key {k} with value {v} in section {s} to INI file {file}.")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new OSError(ex, $"Error writing key {k} with value {v} in section {s} to INI file {file}.")) ? throw err : default;
 			}
 		}
 

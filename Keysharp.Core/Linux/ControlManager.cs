@@ -213,6 +213,7 @@ namespace Keysharp.Core.Linux
 						return form.ActiveControl.Handle.ToInt64();
 				}
 			}
+
 			return 0L;
 		}
 
@@ -399,7 +400,7 @@ namespace Keysharp.Core.Linux
 					var lines = txt.Lines;
 
 					if (n >= lines.Length)
-						return Errors.ErrorOccurred(err = new ValueError($"Requested line of {n + 1} is greater than the number of lines ({lines.Length}) in the text box in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : null;
+						return Errors.ErrorOccurred(err = new ValueError($"Requested line of {n + 1} is greater than the number of lines ({lines.Length}) in the text box in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : default;
 
 					return lines[n];
 				}
@@ -501,7 +502,7 @@ namespace Keysharp.Core.Linux
 						if (col >= 0)
 						{
 							if (col >= lv.Columns.Count)
-								return Errors.ErrorOccurred(err = new ValueError($"Column ${col + 1} is greater than list view column count of {lv.Columns.Count} in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : null;
+								return Errors.ErrorOccurred(err = new ValueError($"Column ${col + 1} is greater than list view column count of {lv.Columns.Count} in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : default;
 
 							items.ForEach(templvi => sb.AppendLine(templvi.SubItems[col].Text));
 						}

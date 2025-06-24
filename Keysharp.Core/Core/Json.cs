@@ -58,7 +58,7 @@
 			catch (Exception ex)
 			{
 				Error err;
-				return Errors.ErrorOccurred(err = new ValueError(ex.Message)) ? throw err : null;
+				return Errors.ErrorOccurred(err = new ValueError(ex.Message)) ? throw err : default;
 			}
 		}
 
@@ -360,7 +360,7 @@
 						if (IsNumber(token))
 							_ = ExtractNumber(ref node, ref i, out value);
 						else if (!ExtractBoolean(ref node, ref i, ref value))
-							return Errors.ErrorOccurred(err = new Error(ErrorMessage(ExNoMemberVal, i))) ? throw err : null;
+							return Errors.ErrorOccurred(err = new Error(ErrorMessage(ExNoMemberVal, i))) ? throw err : default;
 
 						break;
 				}
@@ -394,7 +394,7 @@
 						break;
 
 				if (i == node.Length)
-					return Errors.ErrorOccurred(err = new Error(ErrorMessage(ExUntermField, i))) ? throw err : null;
+					return Errors.ErrorOccurred(err = new Error(ErrorMessage(ExUntermField, i))) ? throw err : default;
 			}
 
 			return node.Substring(start, i - start);

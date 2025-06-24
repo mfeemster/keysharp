@@ -19,7 +19,7 @@
 		internal ThreadVariables GetThreadVariables()
 		{
 			Error err;
-			return threadVars.TryPeek() ?? (Errors.ErrorOccurred(err = new Error("Severe threading error: Tried to get an existing thread variable object but there were none. This should never happen."), Keyword_ExitApp) ? throw err : null);
+			return threadVars.TryPeek() ?? (Errors.ErrorOccurred(err = new Error("Severe threading error: Tried to get an existing thread variable object but there were none. This should never happen."), Keyword_ExitApp) ? throw err : default);
 		}
 
 		internal void PopThreadVariables(bool pushed, bool checkThread = true)

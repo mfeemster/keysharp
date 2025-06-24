@@ -260,7 +260,7 @@
 				return ob;
 			}
 			else
-				return Errors.ErrorOccurred(err = new ValueError($"Invalid deletion index of {index.Ai()}.")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new ValueError($"Invalid deletion index of {index.Ai()}.")) ? throw err : default;
 		}
 
 		/// <summary>
@@ -288,7 +288,7 @@
 					if (i >= 0 && i <= array.Count)
 						return new Array(((IEnumerable<object>)array).Reverse().Skip(Math.Abs(index + 1)).Where(x => Script.ForceBool(ifo.Call(x, i--))).ToList());
 					else
-						return Errors.ErrorOccurred(err = new ValueError($"Invalid find start index of {index}.")) ? throw err : null;
+						return Errors.ErrorOccurred(err = new ValueError($"Invalid find start index of {index}.")) ? throw err : default;
 				}
 				else
 				{
@@ -297,11 +297,11 @@
 					if (i >= 0 && i < array.Count)
 						return new Array(array.Skip(i).Where(x => Script.ForceBool(ifo.Call(x, ++i))).ToList());
 					else
-						return Errors.ErrorOccurred(err = new ValueError($"Invalid find start index of {index}.")) ? throw err : null;
+						return Errors.ErrorOccurred(err = new ValueError($"Invalid find start index of {index}.")) ? throw err : default;
 				}
 			}
 
-			return Errors.ErrorOccurred(err = new TypeError($"Passed in object of type {callback.GetType()} was not a FuncObj.")) ? throw err : null;
+			return Errors.ErrorOccurred(err = new TypeError($"Passed in object of type {callback.GetType()} was not a FuncObj.")) ? throw err : default;
 		}
 
 		/// <summary>
@@ -339,7 +339,7 @@
 						return 0L;
 					}
 					else
-						return Errors.ErrorOccurred(err = new IndexError($"Invalid find start index of {startIndex.Ai(1)}.")) ? throw err : 0L;
+						return Errors.ErrorOccurred(err = new IndexError($"Invalid find start index of {startIndex.Ai(1)}.")) ? throw err : default;
 				}
 				else
 				{
@@ -351,11 +351,11 @@
 						return found != -1L ? found + 1L : 0L;
 					}
 					else
-						return Errors.ErrorOccurred(err = new IndexError($"Invalid find start index of {index}.")) ? throw err : 0L;
+						return Errors.ErrorOccurred(err = new IndexError($"Invalid find start index of {index}.")) ? throw err : default;
 				}
 			}
 
-			return Errors.ErrorOccurred(err = new TypeError($"Passed in object of type {callback.GetType()} was not a FuncObj.")) ? throw err : 0L;
+			return Errors.ErrorOccurred(err = new TypeError($"Passed in object of type {callback.GetType()} was not a FuncObj.")) ? throw err : default;
 		}
 
 		/// <summary>
@@ -380,7 +380,7 @@
 			if ((i = TranslateIndex(i)) != -1)
 				val = array[i];
 			else
-				_ = Errors.ErrorOccurred(err = new IndexError($"Invalid retrieval index of {i}.")) ? throw err : "";
+				return Errors.ErrorOccurred(err = new IndexError($"Invalid retrieval index of {i}.")) ? throw err : default;
 
 			if (val != null)
 				return val;
@@ -389,7 +389,7 @@
 			else if (Default != null)
 				return Default;
 			else
-				return Errors.ErrorOccurred(err = new UnsetItemError($"array[{i}], default and Array.Default were all unset/null.")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new UnsetItemError($"array[{i}], default and Array.Default were all unset/null.")) ? throw err : default;
 		}
 
 		/// <summary>
@@ -510,10 +510,10 @@
 					return new Array(list);
 				}
 				else
-					return Errors.ErrorOccurred(err = new IndexError($"Invalid mapping start index of {startIndex.Ai(1)}.")) ? throw err : null;
+					return Errors.ErrorOccurred(err = new IndexError($"Invalid mapping start index of {startIndex.Ai(1)}.")) ? throw err : default;
 			}
 
-			return Errors.ErrorOccurred(err = new TypeError($"Passed in object of type {callback.GetType()} was not a FuncObj.")) ? throw err : null;
+			return Errors.ErrorOccurred(err = new TypeError($"Passed in object of type {callback.GetType()} was not a FuncObj.")) ? throw err : default;
 		}
 
 		/// <summary>
@@ -564,7 +564,7 @@
 			if (array.Count < 1)
 			{
 				Error err;
-				return Errors.ErrorOccurred(err = new Error($"Cannot pop an empty array.")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new Error($"Cannot pop an empty array.")) ? throw err : default;
 			}
 
 			var index = array.Count - 1;
@@ -691,7 +691,7 @@
 				int i;
 
 				if ((i = TranslateIndex(index)) == -1)
-					return Errors.ErrorOccurred(err = new ValueError($"Invalid removal index of {index}.")) ? throw err : null;
+					return Errors.ErrorOccurred(err = new ValueError($"Invalid removal index of {index}.")) ? throw err : default;
 
 				if (o.Length > 1 && o[1] != null)
 				{
@@ -700,7 +700,7 @@
 					if (i + len <= array.Count)
 						array.RemoveRange(i, len);
 					else
-						_ =  Errors.ErrorOccurred(err = new ValueError($"Invalid removal index of and range of {index} and {len} exceeds array length of {array.Count}.")) ? throw err : "";
+						return Errors.ErrorOccurred(err = new ValueError($"Invalid removal index of and range of {index} and {len} exceeds array length of {array.Count}.")) ? throw err : default;
 				}
 				else if (i < array.Count)
 				{
@@ -710,7 +710,7 @@
 				}
 			}
 
-			return null;
+			return default;
 		}
 
 		/// <summary>
@@ -731,7 +731,7 @@
 				return this;
 			}
 			else
-				return Errors.ErrorOccurred(err = new TypeError($"Passed in object of type {callback.GetType()} was not a FuncObj.")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new TypeError($"Passed in object of type {callback.GetType()} was not a FuncObj.")) ? throw err : default;
 		}
 
 		/// <summary>
@@ -805,7 +805,7 @@
 				if ((i = TranslateIndex(i)) != -1)
 					return array[i];
 				else
-					return Errors.ErrorOccurred(err = new IndexError($"Invalid retrieval index of {index} on an array with length {array.Count}.")) ? throw err : null;
+					return Errors.ErrorOccurred(err = new IndexError($"Invalid retrieval index of {index} on an array with length {array.Count}.")) ? throw err : default;
 			}
 			set
 			{

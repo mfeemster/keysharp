@@ -396,7 +396,7 @@ namespace Keysharp.Core
 				workingDir = workingDir.Trim();
 
 				if (!Directory.Exists(workingDir))
-					return Errors.ErrorOccurred(err = new Error($"{workingDir} is not a valid directory.")) ? throw err : 0L;
+					return Errors.ErrorOccurred(err = new Error($"{workingDir} is not a valid directory.")) ? throw err : default;
 			}
 
 			try
@@ -440,7 +440,7 @@ namespace Keysharp.Core
 				}
 
 				if (useRunAs && !string.IsNullOrEmpty(shellVerb))
-					return Errors.ErrorOccurred(err = new Error("System verbs unsupported with RunAs.")) ? throw err : 0L;
+					return Errors.ErrorOccurred(err = new Error("System verbs unsupported with RunAs.")) ? throw err : default;
 
 				var parsedArgs = "";
 				var prc = new Process//Unsure what to do about this on linux.//TODO
@@ -579,7 +579,7 @@ namespace Keysharp.Core
 			}
 			catch (Exception ex)
 			{
-				return Errors.ErrorOccurred(err = new Error(ex.Message)) ? throw err : 0L;
+				return Errors.ErrorOccurred(err = new Error(ex.Message)) ? throw err : default;
 			}
 
 			outputVarPID = pid;

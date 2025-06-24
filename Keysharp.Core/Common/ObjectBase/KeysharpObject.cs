@@ -51,7 +51,7 @@
 				else
 				{
 					if (map.map.Count > 1 && map.map.Any(k => k.Key.ToString().Equals("value", StringComparison.OrdinalIgnoreCase)))
-						return Errors.ErrorOccurred(err = new ValueError("Value can't be defined along with get, set, or call.")) ? throw err : this;
+						return Errors.ErrorOccurred(err = new ValueError("Value can't be defined along with get, set, or call.")) ? throw err : default;
 
 					op[name].Merge(map);
 				}
@@ -61,7 +61,7 @@
 				if (kso.op != null)//&& kso.op.TryGetValue(name, out var opm))
 				{
 					if (kso.op.Count > 1 && kso.op.Any(k => k.Key.ToString().Equals("value", StringComparison.OrdinalIgnoreCase)))
-						return Errors.ErrorOccurred(err = new ValueError("Value can't be defined along with get, set, or call.")) ? throw err : this;
+						return Errors.ErrorOccurred(err = new ValueError("Value can't be defined along with get, set, or call.")) ? throw err : default;
 
 					if (op.TryGetValue(name, out var currProp))
 					{
@@ -77,7 +77,10 @@
 				}
 			}
 			else
-				_ = Errors.ArgumentErrorOccurred(obj1, 2);
+			{
+				Errors.ArgumentErrorOccurred(obj1, 2);
+				return null;
+			}
 
 			return this;
 		}
@@ -100,7 +103,7 @@
 		public long GetCapacity()
 		{
 			Error err;
-			return Errors.ErrorOccurred(err = new Error("GetCapacity() is not supported or needed in Keysharp. The C# runtime handles all memory.")) ? throw err : 0L;
+			return Errors.ErrorOccurred(err = new Error("GetCapacity() is not supported or needed in Keysharp. The C# runtime handles all memory.")) ? throw err : default;
 		}
 
 		public object GetOwnPropDesc(object obj)
@@ -122,7 +125,7 @@
 			{
 			}
 
-			return Errors.ErrorOccurred(err = new PropertyError($"Object did not have an OwnProp named {name}.")) ? throw err : null;
+			return Errors.ErrorOccurred(err = new PropertyError($"Object did not have an OwnProp named {name}.")) ? throw err : default;
 		}
 
 		public long HasOwnProp(object obj)
@@ -225,7 +228,7 @@
 		public long SetCapacity(object obj)
 		{
 			var err = new Error("SetCapacity() is not supported or needed in Keysharp. The C# runtime handles all memory.");
-			return Errors.ErrorOccurred(err) ? throw err : 0L;
+			return Errors.ErrorOccurred(err) ? throw err : default;
 		}
 
 		public object Wrap(object obj) => obj;

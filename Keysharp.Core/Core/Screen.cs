@@ -148,11 +148,11 @@ namespace Keysharp.Core
 			}
 			catch (Exception ex)
 			{
-				return Errors.ErrorOccurred(err = new ValueError(ex.Message)) ? throw err : null;
+				return Errors.ErrorOccurred(err = new ValueError(ex.Message)) ? throw err : default;
 			}
 
 			if (bmp == null)
-				return Errors.ErrorOccurred(err = new ValueError($"Loading icon or bitmap from {filename} failed.")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new ValueError($"Loading icon or bitmap from {filename} failed.")) ? throw err : default;
 
 			Mouse.AdjustRect(ref _x1, ref _y1, ref _x2, ref _y2);
 			var start = new Point(_x1, _y1);
@@ -171,7 +171,7 @@ namespace Keysharp.Core
 			}
 			catch (Exception ex)
 			{
-				return Errors.ErrorOccurred(err = new OSError(ex, "Error searching the screen for an image.")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new OSError(ex, "Error searching the screen for an image.")) ? throw err : default;
 			}
 
 			if (location.HasValue)
@@ -233,7 +233,7 @@ namespace Keysharp.Core
 			}
 			catch (Exception ex)
 			{
-				return Errors.ErrorOccurred(err = new OSError(ex, $"Error getting the pixel color at {_x},{_y}.")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new OSError(ex, $"Error getting the pixel color at {_x},{_y}.")) ? throw err : default;
 			}
 		}
 
@@ -290,7 +290,7 @@ namespace Keysharp.Core
 			}
 			catch (Exception ex)
 			{
-				return Errors.ErrorOccurred(err = new OSError(ex, "Error searching a region of the screen for a pixel color.")) ? throw err : 0L;
+				return Errors.ErrorOccurred(err = new OSError(ex, "Error searching a region of the screen for a pixel color.")) ? throw err : default;
 			}
 
 			if (location.HasValue)

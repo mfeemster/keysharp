@@ -185,7 +185,7 @@ namespace Keysharp.Core
 						}
 					}
 
-					return Errors.ErrorOccurred(err = new Error($"Unable to locate dll with path {path}.")) ? throw err : null;
+					return Errors.ErrorOccurred(err = new Error($"Unable to locate dll with path {path}.")) ? throw err : default;
 				}
 				else if (loadedDlls.Keys.FirstOrDefault(n => path.StartsWith(n, StringComparison.OrdinalIgnoreCase)) is string moduleName && moduleName != null)
 				{
@@ -209,7 +209,7 @@ namespace Keysharp.Core
 					}
 
 					if (address == 0)
-						return Errors.ErrorOccurred(err = new Error($"Unable to locate dll with path {path}.")) ? throw err : null;
+						return Errors.ErrorOccurred(err = new Error($"Unable to locate dll with path {path}.")) ? throw err : default;
 					else
 					{
 #if TL
@@ -226,7 +226,7 @@ namespace Keysharp.Core
 					z++;
 
 					if (z >= path.Length)
-						return Errors.ErrorOccurred(err = new Error($"Improperly formatted path of {path}.")) ? throw err : null;
+						return Errors.ErrorOccurred(err = new Error($"Improperly formatted path of {path}.")) ? throw err : default;
 
 					name = path.Substring(z);
 					path = path.Substring(0, z - 1);
@@ -246,7 +246,7 @@ namespace Keysharp.Core
 			AddressFound:
 
 			if (address == 0)
-				return Errors.ErrorOccurred(err = new TypeError($"Function argument was of type {function.GetType()}. It must be string, StringBuffer, integer, Buffer or other object with a Ptr property that is an integer.")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new TypeError($"Function argument was of type {function.GetType()}. It must be string, StringBuffer, integer, Buffer or other object with a Ptr property that is an integer.")) ? throw err : default;
 
 			try
 			{
@@ -282,7 +282,7 @@ namespace Keysharp.Core
 				return Errors.ErrorOccurred(err = new Error($"An error occurred when calling {function}(): {ex.Message}")
 				{
 					Extra = "0x" + A_LastError.ToString("X")
-				}) ? throw err : null;
+				}) ? throw err : default;
 			}
 			finally
 			{

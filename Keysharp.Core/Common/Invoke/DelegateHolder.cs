@@ -208,7 +208,7 @@
 			if (!(handle.Target is DelegateHolder holder))
 			{
 				Error err;
-				return Errors.ErrorOccurred(err = new Error($"Invalid DelegateHolder pointer passed to Dispatch.")) ? throw err : 0L;
+				return Errors.ErrorOccurred(err = new Error($"Invalid DelegateHolder pointer passed to Dispatch.")) ? throw err : default;
 			}
 
 			object val = null;
@@ -245,13 +245,13 @@
 		}
 
 		internal static long ConvertResult(object val) => val switch
-			{
-				long l => l,
-				bool b => b ? 1L : 0L,
-				double d => (long)d,
-				string s => s.Length == 0 ? 0L : 0L,
-				_ => 0L
-			};
+	{
+			long l => l,
+				 bool b => b ? 1L : 0L,
+				 double d => (long)d,
+					 string s => s.Length == 0 ? 0L : 0L,
+					 _ => 0L
+		};
 
 		/// <summary>Frees the native stub and drops references.</summary>
 		public void Clear()

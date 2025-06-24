@@ -644,7 +644,7 @@ namespace Keysharp.Core.Common.Strings
 					Keyword_HKey_Classes_Root or Keyword_HKCR => (RegistryKey.OpenBaseKey(RegistryHive.ClassesRoot, Registrys.GetRegView()), computername, key),
 					Keyword_HKey_Current_Config or Keyword_HKCC => (RegistryKey.OpenBaseKey(RegistryHive.CurrentConfig, Registrys.GetRegView()), computername, key),
 					Keyword_HKey_Performance_Data or Keyword_HKPD => (RegistryKey.OpenBaseKey(RegistryHive.PerformanceData, Registrys.GetRegView()), computername, key),
-					_ => Errors.ErrorOccurred(err = new ValueError($"{root} was not a valid registry type.")) ? throw err : (null, null, null),
+					_ => Errors.ErrorOccurred(err = new ValueError($"{root} was not a valid registry type.")) ? throw err : (default, default, default),
 			};
 		}
 #endif

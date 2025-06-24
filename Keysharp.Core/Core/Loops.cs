@@ -380,7 +380,7 @@ namespace Keysharp.Core
 			else if (obj is IEnumerator ie2)
 				return ie2;
 			else
-				return Errors.ErrorOccurred(err = new Error($"Object of type {obj.GetType()} was not of a type that could be converted to an IEnumerator.")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new Error($"Object of type {obj.GetType()} was not of a type that could be converted to an IEnumerator.")) ? throw err : default;
 		}
 
 		/// <summary>
@@ -454,7 +454,7 @@ namespace Keysharp.Core
 					}
 				}
 
-				return Errors.ErrorOccurred(err = new UnsetError($"__Enum() could not be located on the object.")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new UnsetError($"__Enum() could not be located on the object.")) ? throw err : default;
 			}
 
 #if WINDOWS
@@ -465,9 +465,9 @@ namespace Keysharp.Core
 
 #endif
 			else if (obj is null)
-				return Errors.ErrorOccurred(err = new UnsetError($"Object was null and could not be converted to a KeysharpEnumerator.")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new UnsetError($"Object was null and could not be converted to a KeysharpEnumerator.")) ? throw err : default;
 			else
-				return Errors.ErrorOccurred(err = new Error($"Object of type {obj.GetType()} was not of a type that could be converted to a KeysharpEnumerator.")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new Error($"Object of type {obj.GetType()} was not of a type that could be converted to a KeysharpEnumerator.")) ? throw err : default;
 		}
 
 		/// <summary>

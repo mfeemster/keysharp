@@ -194,7 +194,7 @@
 			}
 			catch
 			{
-				return Errors.ErrorOccurred(err = new IndexError($"Could not convert {obj} to a decimal.")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new IndexError($"Could not convert {obj} to a decimal.")) ? throw err : default;
 			}
 		}
 
@@ -269,7 +269,7 @@
 			}
 			catch
 			{
-				return Errors.ErrorOccurred(err = new IndexError($"Could not convert {obj} to a double.")) ? throw err : false;
+				return Errors.ErrorOccurred(err = new IndexError($"Could not convert {obj} to a double.")) ? throw err : default;
 			}
 
 			return false;
@@ -324,7 +324,7 @@
 			}
 			catch
 			{
-				return Errors.ErrorOccurred(err = new IndexError($"Could not convert {obj} to a float.")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new IndexError($"Could not convert {obj} to a float.")) ? throw err : default;
 			}
 		}
 
@@ -384,7 +384,7 @@
 			}
 			catch
 			{
-				return Errors.ErrorOccurred(err = new IndexError($"Could not convert {obj} to an integer.")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new IndexError($"Could not convert {obj} to an integer.")) ? throw err : default;
 			}
 		}
 
@@ -471,7 +471,7 @@
 			}
 			catch
 			{
-				return Errors.ErrorOccurred(err = new IndexError($"Could not convert {obj} to a long.")) ? throw err : false;
+				return Errors.ErrorOccurred(err = new IndexError($"Could not convert {obj} to a long.")) ? throw err : default;
 			}
 
 			return false;
@@ -535,7 +535,7 @@
 			}
 			catch
 			{
-				return Errors.ErrorOccurred(err = new IndexError($"Could not convert {obj} to an unsigned integer.")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new IndexError($"Could not convert {obj} to an unsigned integer.")) ? throw err : default;
 			}
 		}
 

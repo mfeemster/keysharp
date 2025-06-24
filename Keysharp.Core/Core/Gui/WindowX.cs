@@ -517,7 +517,7 @@ namespace Keysharp.Core
 			var (windows, crit) = script.WindowProvider.Manager.FindWindowGroup(winTitle, winText, excludeTitle, excludeText);
 
 			if (crit == null && string.IsNullOrEmpty(crit.Group) && windows.Count == 0 && !script.IsMainWindowClosing)
-				return Errors.ErrorOccurred(err = new TargetError($"Could not find window with criteria: title: {winTitle}, text: {winText}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new TargetError($"Could not find window with criteria: title: {winTitle}, text: {winText}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : default;
 
 			foreach (var win in windows)
 			{
@@ -610,7 +610,7 @@ namespace Keysharp.Core
 				return windows[ ^ 1].Handle.ToInt64();
 			}
 			else if (!script.IsMainWindowClosing)
-				return Errors.ErrorOccurred(err = new TargetError($"Could not find window with criteria: title: {winTitle}, text: {winText}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : 0L;
+				return Errors.ErrorOccurred(err = new TargetError($"Could not find window with criteria: title: {winTitle}, text: {winText}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : default;
 
 			return 0L;
 		}
@@ -749,7 +749,7 @@ namespace Keysharp.Core
 			var (windows, crit) = script.WindowProvider.Manager.FindWindowGroup(winTitle, winText, excludeTitle, excludeText);
 
 			if (crit == null && string.IsNullOrEmpty(crit.Group) && windows.Count == 0 && !script.IsMainWindowClosing)
-				return Errors.ErrorOccurred(err = new TargetError($"Could not find window with criteria: title: {winTitle}, text: {winText}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new TargetError($"Could not find window with criteria: title: {winTitle}, text: {winText}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : default;
 
 			foreach (var win in windows)
 			{
@@ -955,7 +955,7 @@ namespace Keysharp.Core
 			if (points.Count == 0)
 			{
 				if (WindowsAPI.SetWindowRgn(win.Handle, 0, true) == 0)
-					return Errors.ErrorOccurred(err = new OSError("", $"Could not reset window region with criteria: title: {winTitle}, text: {winText}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : null;
+					return Errors.ErrorOccurred(err = new OSError("", $"Could not reset window region with criteria: title: {winTitle}, text: {winText}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : default;
 
 				WindowItemBase.DoWinDelay();
 				return null;
@@ -980,11 +980,11 @@ namespace Keysharp.Core
 				if (WindowsAPI.SetWindowRgn(win.Handle, hrgn, true) == 0)
 				{
 					_ = WindowsAPI.DeleteObject(hrgn);
-					return Errors.ErrorOccurred(err = new OSError("", $"Could not set region for window with criteria: title: {winTitle}, text: {winText}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : null;
+					return Errors.ErrorOccurred(err = new OSError("", $"Could not set region for window with criteria: title: {winTitle}, text: {winText}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : default;
 				}
 			}
 			else
-				return Errors.ErrorOccurred(err = new ValueError($"Could not create region for window with criteria: title: {winTitle}, text: {winText}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new ValueError($"Could not create region for window with criteria: title: {winTitle}, text: {winText}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : default;
 
 			WindowItemBase.DoWinDelay();
 			return null;

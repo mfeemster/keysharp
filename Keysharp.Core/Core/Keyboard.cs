@@ -171,7 +171,7 @@ namespace Keysharp.Core
 			if (vk == 0)
 			{
 				if ((joy = Joystick.ConvertJoy(keyname, ref joystickid)) == 0)
-					return Errors.ErrorOccurred(err = new ValueError("Invalid value.")) ? throw err : null;//It is neither a key name nor a joystick button/axis.
+					return Errors.ErrorOccurred(err = new ValueError("Invalid value.")) ? throw err : default;//It is neither a key name nor a joystick button/axis.
 
 				return Joystick.ScriptGetJoyState(joy, joystickid.Value);
 			}
@@ -260,7 +260,7 @@ namespace Keysharp.Core
 break_twice:;
 
 					if (fo == null)
-						return Errors.ErrorOccurred(err = new Error($"Unable to find existing hotkey handler: {label}")) ? throw err : null;
+						return Errors.ErrorOccurred(err = new Error($"Unable to find existing hotkey handler: {label}")) ? throw err : default;
 				}
 
 				if (fo == null)
@@ -370,7 +370,7 @@ break_twice:;
 			}
 
 			if (hotstringStart.Length == 0)
-				return Errors.ErrorOccurred(err = new ValueError("Hotstring definition did not contain a hotstring.")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new ValueError("Hotstring definition did not contain a hotstring.")) ? throw err : default;
 
 			// Determine options which affect hotstring identity/uniqueness.
 			var caseSensitive = hm.hsCaseSensitive;
@@ -389,13 +389,13 @@ break_twice:;
 				{
 				}
 				else if (executeAction)
-					return Errors.ErrorOccurred(err = new ValueError("The 'X' option must be used together with a function object.")) ? throw err : null;
+					return Errors.ErrorOccurred(err = new ValueError("The 'X' option must be used together with a function object.")) ? throw err : default;
 			}
 
 			var toggle = ToggleValueType.Neutral;
 
 			if (obj2 != null && (toggle = Conversions.ConvertOnOffToggle(obj2)) == ToggleValueType.Invalid)
-				return Errors.ErrorOccurred(err = new ValueError($"Invalid value of {obj2} for parameter 3.")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new ValueError($"Invalid value of {obj2} for parameter 3.")) ? throw err : default;
 
 			bool wasAlreadyEnabled;
 			var tv = script.Threads.GetThreadVariables();
@@ -440,7 +440,7 @@ break_twice:;
 			else // No matching hotstring yet.
 			{
 				if (ifunc == null && string.IsNullOrEmpty(action))
-					return Errors.ErrorOccurred(err = new TargetError("Nonexistent hotstring.", name)) ? throw err : null;
+					return Errors.ErrorOccurred(err = new TargetError("Nonexistent hotstring.", name)) ? throw err : default;
 
 				var initialSuspendState = (toggle == ToggleValueType.Off) ? HotstringDefinition.HS_TURNED_OFF : 0;
 
@@ -577,7 +577,7 @@ break_twice:;
 				joy = Joystick.ConvertJoy(keyname, ref joystickId);
 
 				if (!Joystick.IsJoystickButton(joy))//Currently, only buttons are supported.
-					return Errors.ErrorOccurred(err = new ValueError($"Invalid keyname parameter: {keyname}")) ? throw err : false;// It's either an invalid key name or an unsupported Joy-something.
+					return Errors.ErrorOccurred(err = new ValueError($"Invalid keyname parameter: {keyname}")) ? throw err : default;// It's either an invalid key name or an unsupported Joy-something.
 			}
 
 			// Set defaults:
@@ -667,7 +667,7 @@ break_twice:;
 		//public static void SendInput(object obj) => Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, Accessors.SendMode == SendModes.InputThenPlay ? SendModes.InputThenPlay : SendModes.Input, 0), true, true);
 		//public static void SendPlay(object obj) => Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, SendModes.Play, 0), true, true);
 		//public static void SendText(object obj) => Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.RawText, Accessors.SendMode, 0), true, true);
-	
+
 		/// <summary>
 		/// SendEvent sends keystrokes using the Windows keybd_event function (search Microsoft Docs for details).<br/>
 		/// The rate at which keystrokes are sent is determined by <see cref="SetKeyDelay"/>.<br/>

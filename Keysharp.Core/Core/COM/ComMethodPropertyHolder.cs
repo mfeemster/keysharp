@@ -168,7 +168,7 @@ namespace Keysharp.Core.COM
 
 						modifiers = [modifier];
 						found = true; // Do not cache
-						//return Errors.ErrorOccurred(err = new TypeError($"COM call to '{methodName}()' could not be found in any type-info interface.")) ? throw err : null;
+						//return Errors.ErrorOccurred(err = new TypeError($"COM call to '{methodName}()' could not be found in any type-info interface.")) ? throw err : default;
 					}
 					else
 						found = false; // Set back to false to cache the result
@@ -285,7 +285,7 @@ namespace Keysharp.Core.COM
 					}
 					catch (Exception)
 					{
-						return Errors.ErrorOccurred(err = new TypeError($"COM call to '{methodName}()' failed to convert parameter {i} of type {inputParameters[i].GetType()} to type {expectedTypes[i].FullName}.")) ? throw err : null;
+						return Errors.ErrorOccurred(err = new TypeError($"COM call to '{methodName}()' failed to convert parameter {i} of type {inputParameters[i].GetType()} to type {expectedTypes[i].FullName}.")) ? throw err : default;
 					}
 				}
 
@@ -326,7 +326,7 @@ namespace Keysharp.Core.COM
 			}
 			catch (Exception ex)
 			{
-				return Errors.ErrorOccurred(err = new TypeError($"COM call to '{methodName}()' failed: {ex.Message}.")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new TypeError($"COM call to '{methodName}()' failed: {ex.Message}.")) ? throw err : default;
 			}
 		}
 	}

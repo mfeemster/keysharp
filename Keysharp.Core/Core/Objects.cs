@@ -47,7 +47,7 @@
 			if (obj is KeysharpObject kso)
 				return kso.GetCapacity();
 
-			return Errors.ErrorOccurred(err = new Error($"Object of type {obj.GetType()} was not of type KeysharpObject.")) ? throw err : null;
+			return Errors.ErrorOccurred(err = new Error($"Object of type {obj.GetType()} was not of type KeysharpObject.")) ? throw err : default;
 		}
 
 		/// <summary>
@@ -72,7 +72,7 @@
 			if (obj is KeysharpObject kso)
 				return kso.OwnPropCount();
 
-			return Errors.ErrorOccurred(err = new Error($"Object of type {obj.GetType()} was not of type KeysharpObject.")) ? throw err : 0L;
+			return Errors.ErrorOccurred(err = new Error($"Object of type {obj.GetType()} was not of type KeysharpObject.")) ? throw err : default;
 		}
 
 		/// <summary>
@@ -89,7 +89,7 @@
 			if (obj is KeysharpObject kso)
 				return kso.OwnProps(userOnly);
 
-			return Errors.ErrorOccurred(err = new Error($"Object of type {obj.GetType()} was not of type KeysharpObject.")) ? throw err : null;
+			return Errors.ErrorOccurred(err = new Error($"Object of type {obj.GetType()} was not of type KeysharpObject.")) ? throw err : default;
 		}
 
 		/// <summary>
@@ -100,7 +100,7 @@
 		public static object ObjSetBase(params object[] obj)
 		{
 			Error err;
-			return Errors.ErrorOccurred(err = new Error(Any.BaseExc)) ? throw err : null;
+			return Errors.ErrorOccurred(err = new Error(Any.BaseExc)) ? throw err : default;
 		}
 
 		/// <summary>
@@ -117,7 +117,7 @@
 			if (obj0 is KeysharpObject kso)
 				return kso.SetCapacity(obj1);
 
-			return Errors.ErrorOccurred(err = new Error($"Object of type {obj0.GetType()} was not of type KeysharpObject.")) ? throw err : null;
+			return Errors.ErrorOccurred(err = new Error($"Object of type {obj0.GetType()} was not of type KeysharpObject.")) ? throw err : default;
 		}
 #if WINDOWS
 		/// <summary>
@@ -207,7 +207,7 @@
 				}
 			}
 			else
-				return Errors.ErrorOccurred(err = new TypeError($"Argument of type {value.GetType()} was not a pointer.")) ? throw err : false;
+				return Errors.ErrorOccurred(err = new TypeError($"Argument of type {value.GetType()} was not a pointer.")) ? throw err : default;
 
 			return false;
 		}

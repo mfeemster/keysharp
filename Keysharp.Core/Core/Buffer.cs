@@ -182,7 +182,7 @@
 					}
 				}
 				else
-					return Errors.ErrorOccurred(err = new IndexError($"Invalid index of {index} for buffer of size {Size}.")) ? throw err : 0L;
+					return Errors.ErrorOccurred(err = new IndexError($"Invalid index of {index} for buffer of size {Size}.")) ? throw err : default;
 			}
 		}
 	}

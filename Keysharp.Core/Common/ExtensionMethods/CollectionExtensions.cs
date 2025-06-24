@@ -86,9 +86,11 @@
 		{
 			Error err;
 
-			if (x == null) _ = Errors.ErrorOccurred(err = new UnsetError("x is null")) ? throw err : "";
+			if (x == null)
+				return Errors.ErrorOccurred(err = new UnsetError("x is null")) ? throw err : default;
 
-			if (y == null) _ = Errors.ErrorOccurred(err = new UnsetError("y is null")) ? throw err : "";
+			if (y == null)
+				return Errors.ErrorOccurred(err = new UnsetError("y is null")) ? throw err : default;
 
 			var oldLen = x.Length;
 			Array.Resize(ref x, x.Length + y.Length);

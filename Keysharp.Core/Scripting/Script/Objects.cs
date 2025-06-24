@@ -79,7 +79,8 @@ namespace Keysharp.Scripting
 					{
 						ComObject.WriteVariant(co.Ptr.Al(), co.vt, value);
 						return value;
-					} else
+					}
+					else
 						return co.Ptr.GetType().InvokeMember("Item", BindingFlags.SetProperty, null, co.Ptr, index.Concat([value]));
 				}
 				else if (Marshal.IsComObject(item))
@@ -96,7 +97,7 @@ namespace Keysharp.Scripting
 						return value;
 					}
 					else
-						return Errors.ErrorOccurred(err = new ValueError($"{il1} arguments were passed to a set indexer which only accepts {mph2.ParamLength}.")) ? throw err : null;
+						return Errors.ErrorOccurred(err = new ValueError($"{il1} arguments were passed to a set indexer which only accepts {mph2.ParamLength}.")) ? throw err : default;
 				}
 			}
 			catch (Exception e)
@@ -107,7 +108,7 @@ namespace Keysharp.Scripting
 					throw;
 			}
 
-			return Errors.ErrorOccurred(err = new Error($"Attempting to set index {key} of object {item} to value {value} failed.")) ? throw err : null;
+			return Errors.ErrorOccurred(err = new Error($"Attempting to set index {key} of object {item} to value {value} failed.")) ? throw err : default;
 		}
 
 		private static object IndexAt(object item, params object[] index)
@@ -194,7 +195,7 @@ namespace Keysharp.Scripting
 					if (len == mph.ParamLength || mph.IsVariadic)
 						return mph.callFunc(item, index);
 					else
-						return Errors.ErrorOccurred(err = new ValueError($"{len} arguments were passed to a get indexer which only accepts {mph.ParamLength}.")) ? throw err : null;
+						return Errors.ErrorOccurred(err = new ValueError($"{len} arguments were passed to a get indexer which only accepts {mph.ParamLength}.")) ? throw err : default;
 				}
 			}
 			catch (Exception e)
@@ -205,7 +206,7 @@ namespace Keysharp.Scripting
 					throw;
 			}
 
-			return Errors.ErrorOccurred(err = new Error($"Attempting to get index of {key} on item {item} failed.")) ? throw err : null;
+			return Errors.ErrorOccurred(err = new Error($"Attempting to get index of {key} on item {item} failed.")) ? throw err : default;
 		}
 	}
 }

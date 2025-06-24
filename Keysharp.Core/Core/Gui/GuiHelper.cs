@@ -238,7 +238,7 @@
 			Error err;
 
 			if (icon == null)
-				return Errors.ErrorOccurred(err = new UnsetError("Icon was null")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new UnsetError("Icon was null")) ? throw err : default;
 
 			try
 			{
@@ -299,7 +299,7 @@
 			}
 			catch (Exception e)
 			{
-				return Errors.ErrorOccurred(err = new Error($"Error splitting icon: {e.Message}")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new Error($"Error splitting icon: {e.Message}")) ? throw err : default;
 			}
 		}
 

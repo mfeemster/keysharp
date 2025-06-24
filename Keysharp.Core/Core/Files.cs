@@ -178,7 +178,7 @@
 			catch (Exception ex)
 			{
 				Error err;
-				return Errors.ErrorOccurred(err = new OSError(ex, $"Error appending text to file {file}")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new OSError(ex, $"Error appending text to file {file}")) ? throw err : default;
 			}
 		}
 
@@ -281,7 +281,7 @@
 			var icon = iconFile.As();
 
 			if (t == "")
-				return Errors.ErrorOccurred(err = new ValueError("Shortcut target cannot be an empty string.")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new ValueError("Shortcut target cannot be an empty string.")) ? throw err : default;
 
 #if LINUX
 			var type = shortcutType.As();
@@ -406,7 +406,7 @@
 			}
 
 			if (failures > 0)
-				return Errors.ErrorOccurred(err = new Error($"Failed {failures} times moving or copying files.", "", failures)) ? throw err : null;
+				return Errors.ErrorOccurred(err = new Error($"Failed {failures} times moving or copying files.", "", failures)) ? throw err : default;
 
 			return null;
 		}
@@ -509,7 +509,7 @@
 			catch (Exception ex)
 			{
 				Error err;
-				return Errors.ErrorOccurred(err = new OSError(ex, $"Error getting file attributes for file {s}")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new OSError(ex, $"Error getting file attributes for file {s}")) ? throw err : default;
 			}
 
 			return string.Empty;
@@ -816,7 +816,7 @@
 			catch (Exception ex)
 			{
 				Error err;
-				return Errors.ErrorOccurred(err = new OSError(ex, $"Error getting shortcut information for {link}")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new OSError(ex, $"Error getting shortcut information for {link}")) ? throw err : default;
 			}
 
 #endif
@@ -884,7 +884,7 @@
 			catch (Exception ex)
 			{
 				Error err;
-				return Errors.ErrorOccurred(err = new OSError(ex, $"Error getting file size for file {file}")) ? throw err : 0L;
+				return Errors.ErrorOccurred(err = new OSError(ex, $"Error getting file size for file {file}")) ? throw err : default;
 			}
 
 			return result;
@@ -933,7 +933,7 @@
 			catch (Exception ex)
 			{
 				Error err;
-				return Errors.ErrorOccurred(err = new OSError(ex, $"Error getting file time for file {file}")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new OSError(ex, $"Error getting file time for file {file}")) ? throw err : default;
 			}
 		}
 
@@ -960,7 +960,7 @@
 			catch (Exception ex)
 			{
 				Error err;
-				return Errors.ErrorOccurred(err = new OSError(ex, $"Error getting file version for file {file}")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new OSError(ex, $"Error getting file version for file {file}")) ? throw err : default;
 			}
 		}
 
@@ -971,7 +971,7 @@
 		public static string FileInstall(object obj0, object obj1, object obj2 = null)
 		{
 			Error err;
-			return Errors.ErrorOccurred(err = new Error("Compiling files into an executable is not supported in Keysharp")) ? throw err : null;
+			return Errors.ErrorOccurred(err = new Error("Compiling files into an executable is not supported in Keysharp")) ? throw err : default;
 		}
 
 		/// <summary>
@@ -1138,7 +1138,7 @@
 			catch (Exception ex)
 			{
 				Error err;
-				return Errors.ErrorOccurred(err = new OSError(ex, $"Error opening file {file}")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new OSError(ex, $"Error opening file {file}")) ? throw err : default;
 			}
 		}
 
@@ -1212,7 +1212,7 @@
 				}
 				catch (Exception ex)
 				{
-					return Errors.ErrorOccurred(err = new OSError(ex, $"Error reading file {file}")) ? throw err : null;
+					return Errors.ErrorOccurred(err = new OSError(ex, $"Error reading file {file}")) ? throw err : default;
 				}
 			}
 			else
@@ -1237,7 +1237,7 @@
 				}
 				catch (Exception ex)
 				{
-					return Errors.ErrorOccurred(err = new OSError(ex, $"Error reading file {file}")) ? throw err : null;
+					return Errors.ErrorOccurred(err = new OSError(ex, $"Error reading file {file}")) ? throw err : default;
 				}
 
 				if (max != -1)
@@ -1283,7 +1283,7 @@
 			catch (Exception ex)
 			{
 				Error err;
-				return Errors.ErrorOccurred(err = new OSError(ex, $"Error recycling file(s) with pattern {s}")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new OSError(ex, $"Error recycling file(s) with pattern {s}")) ? throw err : default;
 			}
 		}
 
@@ -1308,7 +1308,7 @@
 			catch (Exception ex)
 			{
 				Error err;
-				return Errors.ErrorOccurred(err = new OSError(ex, $"Error emptying recycle bin for drive {s}")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new OSError(ex, $"Error emptying recycle bin for drive {s}")) ? throw err : default;
 			}
 		}
 
@@ -1380,7 +1380,7 @@
 			if (failures != 0)
 			{
 				Error err;
-				return Errors.ErrorOccurred(err = new Error($"Failed {failures} times setting file attributes.", "", failures)) ? throw err : null;
+				return Errors.ErrorOccurred(err = new Error($"Failed {failures} times setting file attributes.", "", failures)) ? throw err : default;
 			}
 
 			return null;
@@ -1460,7 +1460,7 @@
 							break;
 
 						default:
-							return Errors.ErrorOccurred(err = new Error($"WhichTime value of {whichTime} was not m, c or a.")) ? throw err : null;
+							return Errors.ErrorOccurred(err = new Error($"WhichTime value of {whichTime} was not m, c or a.")) ? throw err : default;
 					}
 
 					if (set != time)
@@ -1470,7 +1470,7 @@
 			}
 
 			if (failures != 0)
-				return Errors.ErrorOccurred(err = new Error($"Failed {failures} times setting file time.", "", failures)) ? throw err : null;
+				return Errors.ErrorOccurred(err = new Error($"Failed {failures} times setting file time.", "", failures)) ? throw err : default;
 
 			return null;
 		}

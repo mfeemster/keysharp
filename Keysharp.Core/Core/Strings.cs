@@ -21,7 +21,7 @@
 			catch (Exception ex)
 			{
 				Error err;
-				return Errors.ErrorOccurred(err = new Error($"Error decoding base64 string {s}: {ex.Message}")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new Error($"Error decoding base64 string {s}: {ex.Message}")) ? throw err : default;
 			}
 		}
 
@@ -561,7 +561,7 @@
 			if (input != "")
 			{
 				if (string.IsNullOrEmpty(n))
-					return Errors.ErrorOccurred(err = new ValueError("Search string was empty")) ? throw err : 0L;
+					return Errors.ErrorOccurred(err = new ValueError("Search string was empty")) ? throw err : default;
 
 				// 1   1 =>  1
 				//-1   1 =>  1
@@ -1030,9 +1030,9 @@
 				ptr = new nint(l);
 
 			if (ptr == 0)
-				return Errors.ErrorOccurred(err = new ValueError($"No valid address or buffer was supplied.")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new ValueError($"No valid address or buffer was supplied.")) ? throw err : default;
 			else if (ptr.ToInt64() < 65536)//65536 is the first valid address.
-				return Errors.ErrorOccurred(err = new ValueError($"Address of {ptr.ToInt64()} is less than the minimum allowable address of 65,536.")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new ValueError($"Address of {ptr.ToInt64()} is less than the minimum allowable address of 65,536.")) ? throw err : default;
 
 			unsafe
 			{
@@ -1117,7 +1117,7 @@
 			var gch = GCHandle.Alloc(value, GCHandleType.Pinned);
 			var ptr = gch.AddrOfPinnedObject();
 			var script = Script.TheScript;
-			
+
 			if (script.StringsData.gcHandles.Remove(ptr, out var oldGch))
 				oldGch.Free();
 
@@ -1170,7 +1170,7 @@
 				}
 
 				if (ptr != 0 && ptr.ToInt64() < 65536)//65536 is the first valid address.
-					return Errors.ErrorOccurred(err = new ValueError($"Address of {ptr.ToInt64()} is less than the minimum allowable address of 65,536.")) ? throw err : 0L;
+					return Errors.ErrorOccurred(err = new ValueError($"Address of {ptr.ToInt64()} is less than the minimum allowable address of 65,536.")) ? throw err : default;
 
 				if (obj.Length > 2 && !obj[2].IsNullOrEmpty())
 				{
@@ -1198,12 +1198,12 @@
 					if (len != long.MinValue)
 					{
 						if (len < s.Length || len < bytes.Length)
-							return Errors.ErrorOccurred(err = new ValueError($"Length of {len} is less than the either the length of the string {s.Length} or the length of the converted buffer {bytes.Length}.")) ? throw err : 0L;
+							return Errors.ErrorOccurred(err = new ValueError($"Length of {len} is less than the either the length of the string {s.Length} or the length of the converted buffer {bytes.Length}.")) ? throw err : default;
 					}
 					else if (ptr == 0)
 						return bytes.Length;
 					else if (len == long.MinValue)
-						return Errors.ErrorOccurred(err = new ValueError($"Length was not specified, but the target was not a Buffer object. Either pass a Buffer, or specify a Length.")) ? throw err : 0L;
+						return Errors.ErrorOccurred(err = new ValueError($"Length was not specified, but the target was not a Buffer object. Either pass a Buffer, or specify a Length.")) ? throw err : default;
 
 					written = Math.Min((int)len, bytes.Length);
 				}
@@ -1465,7 +1465,7 @@
 		public static long VarSetStrCapacity(params object[] obj)
 		{
 			Error err;
-			return Errors.ErrorOccurred(err = new Error("VarSetStrCapacity() not supported or necessary.")) ? throw err : 0L;
+			return Errors.ErrorOccurred(err = new Error("VarSetStrCapacity() not supported or necessary.")) ? throw err : default;
 		}
 
 		/// <summary>
@@ -1516,7 +1516,7 @@
 				{
 				}
 
-				return Errors.ErrorOccurred(err = new Error($"Error comparing version {versionA} to {versionB}: {ex.Message}")) ? throw err : 0L;
+				return Errors.ErrorOccurred(err = new Error($"Error comparing version {versionA} to {versionB}: {ex.Message}")) ? throw err : default;
 			}
 			else if (v2.StartsWith('<'))
 			{
@@ -1543,7 +1543,7 @@
 				{
 				}
 
-				return Errors.ErrorOccurred(err = new Error($"Error comparing version {versionA} to {versionB}: {ex.Message}")) ? throw err : 0L;
+				return Errors.ErrorOccurred(err = new Error($"Error comparing version {versionA} to {versionB}: {ex.Message}")) ? throw err : default;
 			}
 			else if (v2.StartsWith(">="))
 			{
@@ -1570,7 +1570,7 @@
 				{
 				}
 
-				return Errors.ErrorOccurred(err = new Error($"Error comparing version {versionA} to {versionB}: {ex.Message}")) ? throw err : 0L;
+				return Errors.ErrorOccurred(err = new Error($"Error comparing version {versionA} to {versionB}: {ex.Message}")) ? throw err : default;
 			}
 			else if (v2.StartsWith('>'))
 			{
@@ -1597,7 +1597,7 @@
 				{
 				}
 
-				return Errors.ErrorOccurred(err = new Error($"Error comparing version {versionA} to {versionB}: {ex.Message}")) ? throw err : 0L;
+				return Errors.ErrorOccurred(err = new Error($"Error comparing version {versionA} to {versionB}: {ex.Message}")) ? throw err : default;
 			}
 			else if (v2.StartsWith('='))
 			{
@@ -1624,7 +1624,7 @@
 				{
 				}
 
-				return Errors.ErrorOccurred(err = new Error($"Error comparing version {versionA} to {versionB}: {ex.Message}")) ? throw err : 0L;
+				return Errors.ErrorOccurred(err = new Error($"Error comparing version {versionA} to {versionB}: {ex.Message}")) ? throw err : default;
 			}
 			else
 			{
@@ -1649,7 +1649,7 @@
 				{
 				}
 
-				return Errors.ErrorOccurred(err = new Error($"Error comparing version {versionA} to {versionB}: {ex.Message}")) ? throw err : 0L;
+				return Errors.ErrorOccurred(err = new Error($"Error comparing version {versionA} to {versionB}: {ex.Message}")) ? throw err : default;
 			}
 		}
 

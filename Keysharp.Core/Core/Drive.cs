@@ -143,7 +143,7 @@ namespace Keysharp.Core
 			catch (Exception ex)
 			{
 				Error err;
-				return Errors.ErrorOccurred(err = new Error($"Failed to get drive status: {ex.Message}.")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new Error($"Failed to get drive status: {ex.Message}.")) ? throw err : default;
 			}
 		}
 
@@ -170,7 +170,7 @@ namespace Keysharp.Core
 			catch (Exception e)
 			{
 				Error err;
-				return Errors.ErrorOccurred(err = new Error($"Failed to get CD drive status: {e.Message}.")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new Error($"Failed to get CD drive status: {e.Message}.")) ? throw err : default;
 			}
 		}
 
@@ -274,7 +274,7 @@ namespace Keysharp.Core
 				if (allDrives.Count > 0)
 					drive = DriveProvider.CreateDrive(new DriveInfo(allDrives[0].Name));
 
-				return Errors.ErrorOccurred(err = new Error("Failed to find any CDROM or DVD drives.")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new Error("Failed to find any CDROM or DVD drives.")) ? throw err : default;
 			}
 			else
 				drive = DriveProvider.CreateDrive(new DriveInfo(dr));

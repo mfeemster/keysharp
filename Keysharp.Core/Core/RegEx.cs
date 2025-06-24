@@ -89,7 +89,7 @@
 			}
 			catch (Exception ex)
 			{
-				return Errors.ErrorOccurred(err = new Error("Regular expression compile error", "", ex.Message)) ? throw err : 0L;
+				return Errors.ErrorOccurred(err = new Error("Regular expression compile error", "", ex.Message)) ? throw err : default;
 			}
 
 			if (index < 0)
@@ -138,7 +138,7 @@
 			}
 			catch (Exception ex)
 			{
-				return Errors.ErrorOccurred(err = new Error("Regular expression execution error", "", ex.Message)) ? throw err : 0L;
+				return Errors.ErrorOccurred(err = new Error("Regular expression execution error", "", ex.Message)) ? throw err : default;
 			}
 		}
 
@@ -227,7 +227,7 @@
 			}
 			catch (Exception ex)
 			{
-				return Errors.ErrorOccurred(err = new Error("Regular expression compile error", "", ex.Message)) ? throw err : input;
+				return Errors.ErrorOccurred(err = new Error("Regular expression compile error", "", ex.Message)) ? throw err : default;
 			}
 
 			if (l < 1)
@@ -261,7 +261,7 @@
 			}
 			catch (Exception ex)
 			{
-				return Errors.ErrorOccurred(err = new Error("Regular expression execution error", "", ex.Message)) ? throw err : null;
+				return Errors.ErrorOccurred(err = new Error("Regular expression execution error", "", ex.Message)) ? throw err : default;
 			}
 		}
 

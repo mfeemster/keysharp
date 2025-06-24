@@ -278,7 +278,7 @@ namespace Keysharp.Core.Windows
 			if (blobByteLength % structSize != 0)
 			{
 				Error err;
-				return Errors.ErrorOccurred(err = new Error($"Blob size {blobByteLength} not a multiple of struct size {structSize}.")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new Error($"Blob size {blobByteLength} not a multiple of struct size {structSize}.")) ? throw err : default;
 			}
 
 			var items = blobByteLength / structSize;
@@ -325,10 +325,10 @@ namespace Keysharp.Core.Windows
 					{
 							-1 => true,
 							0 => false,
-							_ => Errors.ErrorOccurred(err = new Error("PropVariant VT_BOOL must be either -1 or 0")) ? throw err : null,
+							_ => Errors.ErrorOccurred(err = new Error("PropVariant VT_BOOL must be either -1 or 0")) ? throw err : default,
 						},
 						VarEnum.VT_FILETIME => DateTime.FromFileTime((((long)filetime.dwHighDateTime) << 32) + filetime.dwLowDateTime),
-						_ => Errors.ErrorOccurred(err = new Error("PropVariant " + ve)) ? throw err : null,
+						_ => Errors.ErrorOccurred(err = new Error("PropVariant " + ve)) ? throw err : default,
 				};
 			}
 		}

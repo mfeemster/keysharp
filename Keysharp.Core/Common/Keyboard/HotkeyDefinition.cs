@@ -656,7 +656,7 @@ namespace Keysharp.Core.Common.Keyboard
 				{
 					// Detect duplicate hotkey variants to help spot bugs in scripts.
 					if (hk.FindVariant() != null) // See if there's already a variant matching the current criteria (suffix_has_tilde does not make variants distinct form each other because it would require firing two hotkey IDs in response to pressing one hotkey, which currently isn't in the design).
-						return Errors.ErrorOccurred(err = new Error($"Duplicate hotkey: {_name}")) ? throw err : null;
+						return Errors.ErrorOccurred(err = new Error($"Duplicate hotkey: {_name}")) ? throw err : default;
 
 					if (hk.AddVariant(_callback, _noSuppress) == null)
 						return null;// ScriptError(ERR_OUTOFMEM, buf);

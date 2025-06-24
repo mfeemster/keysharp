@@ -74,7 +74,7 @@
 			var n = number is double d ? d : number.Ad();
 
 			if (n < -1 || n > 1)
-				return Errors.ErrorOccurred(err = new Error($"ACos() argument of {n} was not between -1 and 1.")) ? throw err : 0.0;
+				return Errors.ErrorOccurred(err = new Error($"ACos() argument of {n} was not between -1 and 1.")) ? throw err : default;
 
 			return Math.Acos(n);
 		}
@@ -91,7 +91,7 @@
 			var n = number is double d ? d : number.Ad();
 
 			if (n < -1 || n > 1)
-				return Errors.ErrorOccurred(err = new Error($"ASin() argument of {n} was not between -1 and 1.")) ? throw err : 0.0;
+				return Errors.ErrorOccurred(err = new Error($"ASin() argument of {n} was not between -1 and 1.")) ? throw err : default;
 
 			return Math.Asin(n);
 		}
@@ -214,7 +214,7 @@
 			catch (Exception e)
 			{
 				Error err;
-				return Errors.ErrorOccurred(err = new TypeError(e.Message)) ? throw err : 0.0;
+				return Errors.ErrorOccurred(err = new TypeError(e.Message)) ? throw err : default;
 			}
 		}
 
@@ -240,7 +240,7 @@
 			catch (Exception e)
 			{
 				Error err;
-				return Errors.ErrorOccurred(err = new TypeError(e.Message)) ? throw err : 0L;
+				return Errors.ErrorOccurred(err = new TypeError(e.Message)) ? throw err : default;
 			}
 		}
 
@@ -256,7 +256,7 @@
 			var n = number is double d ? d : number.Ad();
 
 			if (n < 0)
-				return Errors.ErrorOccurred(err = new Error($"Ln() argument {n} was negative.")) ? throw err : 0.0;
+				return Errors.ErrorOccurred(err = new Error($"Ln() argument {n} was negative.")) ? throw err : default;
 
 			return Math.Log(n);
 		}
@@ -275,7 +275,7 @@
 			var b = @base.Ad(double.MinValue);
 
 			if (n < 0)
-				return Errors.ErrorOccurred(err = new Error($"Log() argument {n} was negative.")) ? throw err : 0.0;
+				return Errors.ErrorOccurred(err = new Error($"Log() argument {n} was negative.")) ? throw err : default;
 
 			if (b != double.MinValue)
 				return b == 10 ? Math.Log10(n) : Math.Log(n, b);
@@ -445,7 +445,7 @@
 				var divis = divisor.Ad();
 
 				if (divis == 0)
-					return Errors.ErrorOccurred(err = new Error($"Mod() divisor argument of {divis} was 0.")) ? throw err : null;
+					return Errors.ErrorOccurred(err = new Error($"Mod() divisor argument of {divis} was 0.")) ? throw err : default;
 
 				//return Math.IEEERemainder(dividend, divisor);
 				return divid % divis;
@@ -456,7 +456,7 @@
 				var divis = divisor.Al();
 
 				if (divis == 0)
-					return Errors.ErrorOccurred(err = new Error($"Mod() divisor argument of {divis} was 0.")) ? throw err : null;
+					return Errors.ErrorOccurred(err = new Error($"Mod() divisor argument of {divis} was 0.")) ? throw err : default;
 
 				return divid % divis;
 			}
@@ -496,7 +496,7 @@
 						return val.Value;
 				}
 
-				return Errors.ErrorOccurred(err = new TypeError($"Could not convert {s} to an integer or float.")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new TypeError($"Could not convert {s} to an integer or float.")) ? throw err : default;
 			}
 		}
 
@@ -589,7 +589,7 @@
 			var n = number is double d ? d : number.Ad();
 
 			if (n < 0)
-				return Errors.ErrorOccurred(err = new Error($"Sqrt() argument of {n} was negative.")) ? throw err : 0.0;
+				return Errors.ErrorOccurred(err = new Error($"Sqrt() argument of {n} was negative.")) ? throw err : default;
 
 			return Math.Sqrt(n);
 		}

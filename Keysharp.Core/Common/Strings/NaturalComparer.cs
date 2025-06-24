@@ -17,10 +17,10 @@
 			Error err;
 
 			if (!(left is string s1))
-				return Errors.ErrorOccurred(err = new TypeError($"Left comparison parameter of type {left.GetType()} instead of type string.")) ? throw err : 0;
+				return Errors.ErrorOccurred(err = new TypeError($"Left comparison parameter of type {left.GetType()} instead of type string.")) ? throw err : default;
 
 			if (!(right is string s2))
-				return Errors.ErrorOccurred(err = new TypeError($"Right comparison parameter of type {right.GetType()} instead of type string.")) ? throw err : 0;
+				return Errors.ErrorOccurred(err = new TypeError($"Right comparison parameter of type {right.GetType()} instead of type string.")) ? throw err : default;
 
 			return Compare(s1, s2);
 		}

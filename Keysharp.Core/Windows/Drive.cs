@@ -28,7 +28,7 @@ namespace Keysharp.Core.Windows
 				var str = $"open {drive.Name} type cdaudio alias cd wait shareable";
 
 				if (WindowsAPI.mciSendString(str, sb, sb.Capacity, 0) != 0)
-					return Errors.ErrorOccurred(err = new Error($"Opening CD {drive.Name} failed.")) ? throw err : null;
+					return Errors.ErrorOccurred(err = new Error($"Opening CD {drive.Name} failed.")) ? throw err : default;
 
 				var res = WindowsAPI.mciSendString("status cdaudio mode", sb, sb.Capacity, 0);
 				_ = WindowsAPI.mciSendString("close cd wait", null, 0, 0);
@@ -36,7 +36,7 @@ namespace Keysharp.Core.Windows
 				if (res == 0)
 					return sb.ToString();
 
-				return Errors.ErrorOccurred(err = new Error($"Obtaining status for CD {drive.Name} failed.")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new Error($"Obtaining status for CD {drive.Name} failed.")) ? throw err : default;
 			}
 		}
 

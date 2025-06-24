@@ -7,7 +7,7 @@ namespace Keysharp.Scripting
 			if (input == null)
 			{
 				Error err;
-				return Errors.ErrorOccurred(err = new UnsetError($"This parameter has not been assigned a value.")) ? throw err : false;
+				return Errors.ErrorOccurred(err = new UnsetError($"This parameter has not been assigned a value.")) ? throw err : default;
 			}
 
 			var d = 0.0;
@@ -15,6 +15,7 @@ namespace Keysharp.Scripting
 
 			if (input is bool b)
 				return b;
+
 			var pb = input.ParseBool();
 
 			if (pb.HasValue)

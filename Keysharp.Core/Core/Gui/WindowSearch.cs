@@ -16,7 +16,7 @@ namespace Keysharp.Core
 				if (mgr.IsWindow(ptr))
 					return mgr.CreateWindow(ptr);
 				else if (throwifnull && !script.IsMainWindowClosing)
-					return Errors.ErrorOccurred(err = new TargetError($"Could not find child control with handle: {ptr}")) ? throw err : null;
+					return Errors.ErrorOccurred(err = new TargetError($"Could not find child control with handle: {ptr}")) ? throw err : default;
 				else
 					return null;
 			}
@@ -77,7 +77,7 @@ namespace Keysharp.Core
 			}
 
 			if (childitem == null && throwifnull && !script.IsMainWindowClosing)
-				return Errors.ErrorOccurred(err = new TargetError("Could not find child control using text or class name match \"" + s + $"\" in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : null;//Can't use interpolated string here because the AStyle formatter misinterprets it.
+				return Errors.ErrorOccurred(err = new TargetError("Could not find child control using text or class name match \"" + s + $"\" in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : default;//Can't use interpolated string here because the AStyle formatter misinterprets it.
 			return childitem;
 		}
 
@@ -94,7 +94,7 @@ namespace Keysharp.Core
 			var win = script.WindowProvider.Manager.FindWindow(winTitle, winText, excludeTitle, excludeText, last, ignorePureID);
 
 			if (win == null && throwifnull && !script.IsMainWindowClosing)
-				return Errors.ErrorOccurred(err = new TargetError($"Could not find window with criteria: title: {winTitle}, text: {winText}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new TargetError($"Could not find window with criteria: title: {winTitle}, text: {winText}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : default;
 
 			return win;
 		}
@@ -145,7 +145,7 @@ namespace Keysharp.Core
 				return arr;
 			}
 			else if (!script.IsMainWindowClosing)
-				return Errors.ErrorOccurred(err = new TargetError($"Could not find window with criteria: title: {winTitle}, text: {winText}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new TargetError($"Could not find window with criteria: title: {winTitle}, text: {winText}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : default;
 
 			return "";
 		}

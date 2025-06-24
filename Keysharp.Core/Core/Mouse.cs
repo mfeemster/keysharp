@@ -83,7 +83,7 @@ namespace Keysharp.Core
 			else if (Options.IsOption(mode, Keyword_Screen))
 				rel = CoordModeType.Screen;
 			else
-				return Errors.ErrorOccurred(err = new ValueError($"Invalid RelativeTo value of '{mode}' passed to CoordMode().")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new ValueError($"Invalid RelativeTo value of '{mode}' passed to CoordMode().")) ? throw err : default;
 
 			object prev;
 
@@ -115,7 +115,7 @@ namespace Keysharp.Core
 					break;
 
 				default:
-					return Errors.ErrorOccurred(err = new ValueError($"Invalid TargetType value of '{target}' passed to CoordMode().")) ? throw err : null;
+					return Errors.ErrorOccurred(err = new ValueError($"Invalid TargetType value of '{target}' passed to CoordMode().")) ? throw err : default;
 			}
 
 			return prev;

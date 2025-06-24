@@ -17,7 +17,7 @@
 				else
 				{
 					Error err;
-					return Errors.ErrorOccurred(err = new ValueError($"Index {n + 1} was outside the menu length of {strip.Items.Count}.", topLevel)) ? throw err : null;
+					return Errors.ErrorOccurred(err = new ValueError($"Index {n + 1} was outside the menu length of {strip.Items.Count}.", topLevel)) ? throw err : default;
 				}
 			}
 			else
@@ -51,7 +51,7 @@
 					else
 					{
 						Error err;
-						return Errors.ErrorOccurred(err = new ValueError($"Index {n + 1} was outside the menu length of {menuItem.DropDownItems.Count}.", item)) ? throw err : null;
+						return Errors.ErrorOccurred(err = new ValueError($"Index {n + 1} was outside the menu length of {menuItem.DropDownItems.Count}.", item)) ? throw err : default;
 					}
 				}
 				else

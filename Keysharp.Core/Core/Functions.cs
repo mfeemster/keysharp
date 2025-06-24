@@ -47,7 +47,7 @@
 						del = null;
 
 						if (throwIfBad)
-							return Errors.ErrorOccurred(err = new MethodError($"Unable to retrieve method {s} when creating a function object.")) ? throw err : null;
+							return Errors.ErrorOccurred(err = new MethodError($"Unable to retrieve method {s} when creating a function object.")) ? throw err : default;
 					}
 				}//Empty string will just return null, which is a valid value in some cases.
 			}
@@ -60,7 +60,7 @@
 					del = null;
 
 					if (throwIfBad)
-						return Errors.ErrorOccurred(err = new MethodError($"Existing function object was invalid.")) ? throw err : null;
+						return Errors.ErrorOccurred(err = new MethodError($"Existing function object was invalid.")) ? throw err : default;
 				}
 			}
 			else if (h is Delegate d)
@@ -75,7 +75,7 @@
 					del = null;
 
 					if (throwIfBad)
-						return Errors.ErrorOccurred(err = new MethodError($"Unable to retrieve method info for {d.Method.Name} when creating a function object from delegate.")) ? throw err : null;
+						return Errors.ErrorOccurred(err = new MethodError($"Unable to retrieve method info for {d.Method.Name} when creating a function object from delegate.")) ? throw err : default;
 				}
 			}
 			else if (h is KeysharpEnumerator ke)
@@ -83,7 +83,7 @@
 				del = ke.CallFunc;
 			}
 			else if (throwIfBad)
-				return Errors.ErrorOccurred(err = new TypeError($"Improper value of {h} was supplied for a function object.")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new TypeError($"Improper value of {h} was supplied for a function object.")) ? throw err : default;
 
 			return del;
 		}
@@ -109,7 +109,7 @@
 			if (mph != null && mph.mi != null)
 				return new FuncObj(mph.mi, v);
 
-			return Errors.ErrorOccurred(err = new MethodError($"Unable to retrieve method {n} from object of type {v.GetType()} with parameter count {count}.")) ? throw err : null;
+			return Errors.ErrorOccurred(err = new MethodError($"Unable to retrieve method {n} from object of type {v.GetType()} with parameter count {count}.")) ? throw err : default;
 		}
 
 		/// <summary>

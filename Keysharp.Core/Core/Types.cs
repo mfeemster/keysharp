@@ -117,7 +117,7 @@
 		public static long IsLabel(object name)
 		{
 			Error err;
-			return Errors.ErrorOccurred(err = new Error("C# does not allow querying labels at runtime.")) ? throw err : 0L;
+			return Errors.ErrorOccurred(err = new Error("C# does not allow querying labels at runtime.")) ? throw err : default;
 		}
 
 		/// <summary>

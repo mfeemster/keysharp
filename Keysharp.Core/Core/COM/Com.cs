@@ -33,7 +33,7 @@ namespace Keysharp.Core.COM
 			var t = typeof(object);
 
 			if (lengths.Length > 8)
-				_ = Errors.ErrorOccurred(err = new Error($"COM array dimensions of {lengths.Length} is greater than the maximum allowed number of 8.")) ? throw err : "";
+				return Errors.ErrorOccurred(err = new Error($"COM array dimensions of {lengths.Length} is greater than the maximum allowed number of 8.")) ? throw err : default;
 
 			lengths[0] = dim1Size;
 
@@ -51,7 +51,7 @@ namespace Keysharp.Core.COM
 					case VarEnum.VT_VARIANT: break;
 
 					default:
-						return Errors.ErrorOccurred(err = new ValueError($"The supplied COM type of {varType} is not supported.")) ? throw err : null;
+						return Errors.ErrorOccurred(err = new ValueError($"The supplied COM type of {varType} is not supported.")) ? throw err : default;
 				}
 			}
 
@@ -96,7 +96,7 @@ namespace Keysharp.Core.COM
 				if (co.vt != VarEnum.VT_DISPATCH && co.vt != VarEnum.VT_UNKNOWN)// || Marshal.GetIUnknownForObject(co.Ptr) == 0)
 				{
 					Error err;
-					return Errors.ErrorOccurred(err = new ValueError($"COM object type of {co.vt} was not VT_DISPATCH or VT_UNKNOWN, and was not IUnknown.")) ? throw err : null;
+					return Errors.ErrorOccurred(err = new ValueError($"COM object type of {co.vt} was not VT_DISPATCH or VT_UNKNOWN, and was not IUnknown.")) ? throw err : default;
 				}
 
 				//If it existed, whether obj1 was null or not, remove it.
@@ -213,7 +213,7 @@ namespace Keysharp.Core.COM
 			else if (Marshal.IsComObject(dispPtr))
 				return new ComObject(VarEnum.VT_UNKNOWN, dispPtr);
 
-			return Errors.ErrorOccurred(err = new TypeError($"Passed in value {dispPtr} of type {dispPtr.GetType()} was not of type IDispatch.")) ? throw err : null;
+			return Errors.ErrorOccurred(err = new TypeError($"Passed in value {dispPtr} of type {dispPtr.GetType()} was not of type IDispatch.")) ? throw err : default;
 		}
 
 		public static object ComObjGet(object name) => Marshal.BindToMoniker(name.As());
@@ -231,7 +231,7 @@ namespace Keysharp.Core.COM
 			else if (comObj is long l)
 				ptr = new nint(l);
 			else
-				return Errors.ErrorOccurred(err = new ValueError($"The passed in object {comObj} of type {comObj.GetType()} was not a ComObject or a raw COM interface.")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new ValueError($"The passed in object {comObj} of type {comObj.GetType()} was not a ComObject or a raw COM interface.")) ? throw err : default;
 
 			nint resultPtr = 0;
 			Guid id = Guid.Empty;
@@ -260,7 +260,7 @@ namespace Keysharp.Core.COM
 			}
 
 			if (resultPtr == 0)
-				return Errors.ErrorOccurred(err = new Error($"Unable to get COM interface with arguments {sidiid}, {iid}.")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new Error($"Unable to get COM interface with arguments {sidiid}, {iid}.")) ? throw err : default;
 
 			return new ComObject(id == IID_IDispatch ? VarEnum.VT_DISPATCH : VarEnum.VT_UNKNOWN, (long)resultPtr);
 		}
@@ -397,7 +397,7 @@ namespace Keysharp.Core.COM
 			else
 			{
 				Error err;
-				return Errors.ErrorOccurred(err = new TypeError($"Argument of type {ptr.GetType()} was not a pointer or ComObject.")) ? throw err : false;
+				return Errors.ErrorOccurred(err = new TypeError($"Argument of type {ptr.GetType()} was not a pointer or ComObject.")) ? throw err : default;
 			}
 
 			return (long)Marshal.Release((nint)ptr);
@@ -413,7 +413,7 @@ namespace Keysharp.Core.COM
 			var indexPlus1 = idx + 1;//Index is zero based, so add 1.
 
 			if (idx < 0)
-				return Errors.ErrorOccurred(err = new ValueError($"Index value of {idx} was less than zero.")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new ValueError($"Index value of {idx} was less than zero.")) ? throw err : default;
 
 			nint pUnk = 0;
 
@@ -428,7 +428,7 @@ namespace Keysharp.Core.COM
 			else if (comObj is long l)
 				pUnk = new nint(l);
 			else
-				return Errors.ErrorOccurred(err = new ValueError($"The passed in object was not a ComObject or a raw COM interface.")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new ValueError($"The passed in object was not a ComObject or a raw COM interface.")) ? throw err : default;
 
 			var pVtbl = Marshal.ReadIntPtr(pUnk);
 			var helper = new ArgumentHelper(parameters);

@@ -64,11 +64,11 @@
 				_ = Marshal.Release(pUnk);
 			}
 			else
-				return Errors.ErrorOccurred(err = new TypeError($"Could not convert address argument of type {address.GetType()} into an nint. Type must be integer, ComObject, Buffer or other object with Ptr and Size properties that are integers.")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new TypeError($"Could not convert address argument of type {address.GetType()} into an nint. Type must be integer, ComObject, Buffer or other object with Ptr and Size properties that are integers.")) ? throw err : default;
 
 #else
 			else
-				return Errors.ErrorOccurred(err = new TypeError($"Could not convert address argument of type {address.GetType()} into an nint. Type must be int, long, Buffer or other object with Ptr and Size properties that are integers.")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new TypeError($"Could not convert address argument of type {address.GetType()} into an nint. Type must be int, long, Buffer or other object with Ptr and Size properties that are integers.")) ? throw err : default;
 
 #endif
 
@@ -76,43 +76,43 @@
 			{
 				case "uint":
 					if (size > 0 && (off + 4 > size))
-						return Errors.ErrorOccurred(err = new IndexError($"Memory access exceeded buffer size. Offset {off} + length 4 > buffer size {size}.")) ? throw err : null;
+						return Errors.ErrorOccurred(err = new IndexError($"Memory access exceeded buffer size. Offset {off} + length 4 > buffer size {size}.")) ? throw err : default;
 
 					return (long)(uint)Marshal.ReadInt32(addr, off);
 
 				case "int":
 					if (size > 0 && (off + 4 > size))
-						return Errors.ErrorOccurred(err = new IndexError($"Memory access exceeded buffer size. Offset {off} + length 4 > buffer size {size}.")) ? throw err : null;
+						return Errors.ErrorOccurred(err = new IndexError($"Memory access exceeded buffer size. Offset {off} + length 4 > buffer size {size}.")) ? throw err : default;
 
 					return (long)Marshal.ReadInt32(addr, off);
 
 				case "short":
 					if (size > 0 && (off + 2 > size))
-						return Errors.ErrorOccurred(err = new IndexError($"Memory access exceeded buffer size. Offset {off} + length 2 > buffer size {size}.")) ? throw err : null;
+						return Errors.ErrorOccurred(err = new IndexError($"Memory access exceeded buffer size. Offset {off} + length 2 > buffer size {size}.")) ? throw err : default;
 
 					return (long)Marshal.ReadInt16(addr, off);
 
 				case "ushort":
 					if (size > 0 && (off + 2 > size))
-						return Errors.ErrorOccurred(err = new IndexError($"Memory access exceeded buffer size. Offset {off} + length 2 > buffer size {size}.")) ? throw err : null;
+						return Errors.ErrorOccurred(err = new IndexError($"Memory access exceeded buffer size. Offset {off} + length 2 > buffer size {size}.")) ? throw err : default;
 
 					return (long)(ushort)Marshal.ReadInt16(addr, off);
 
 				case "char":
 					if (size > 0 && (off + 1 > size))
-						return Errors.ErrorOccurred(err = new IndexError($"Memory access exceeded buffer size. Offset {off} + length 1 > buffer size {size}.")) ? throw err : null;
+						return Errors.ErrorOccurred(err = new IndexError($"Memory access exceeded buffer size. Offset {off} + length 1 > buffer size {size}.")) ? throw err : default;
 
 					return (long)(sbyte)Marshal.ReadByte(addr, off);
 
 				case "uchar":
 					if (size > 0 && (off + 1 > size))
-						return Errors.ErrorOccurred(err = new IndexError($"Memory access exceeded buffer size. Offset {off} + length 1 > buffer size {size}.")) ? throw err : null;
+						return Errors.ErrorOccurred(err = new IndexError($"Memory access exceeded buffer size. Offset {off} + length 1 > buffer size {size}.")) ? throw err : default;
 
 					return (long)Marshal.ReadByte(addr, off);
 
 				case "double":
 					if (size > 0 && (off + 8 > size))
-						return Errors.ErrorOccurred(err = new IndexError($"Memory access exceeded buffer size. Offset {off} + length 8 > buffer size {size}.")) ? throw err : null;
+						return Errors.ErrorOccurred(err = new IndexError($"Memory access exceeded buffer size. Offset {off} + length 8 > buffer size {size}.")) ? throw err : default;
 
 					unsafe
 					{
@@ -123,7 +123,7 @@
 
 				case "float":
 					if (size > 0 && (off + 4 > size))
-						return Errors.ErrorOccurred(err = new IndexError($"Memory access exceeded buffer size. Offset {off} + length 4 > buffer size {size}.")) ? throw err : null;
+						return Errors.ErrorOccurred(err = new IndexError($"Memory access exceeded buffer size. Offset {off} + length 4 > buffer size {size}.")) ? throw err : default;
 
 					unsafe
 					{
@@ -136,7 +136,7 @@
 				case "uptr":
 				default:
 					if (size > 0 && (off + 8 > size))
-						return Errors.ErrorOccurred(err = new IndexError($"Memory access exceeded buffer size. Offset {off} + length 8 > buffer size {size}.")) ? throw err : null;
+						return Errors.ErrorOccurred(err = new IndexError($"Memory access exceeded buffer size. Offset {off} + length 8 > buffer size {size}.")) ? throw err : default;
 
 					var ipoff = nint.Add(addr, off);
 					//var pp = (long*)ipoff.ToPointer();
@@ -191,7 +191,7 @@
 			if (target is long l)
 				addr = new nint(l);
 			else
-				return Errors.ErrorOccurred(err = new TypeError($"Could not convert address argument of type {target.GetType()} into an nint. Type must be integer, Buffer or other object with Ptr and Size properties that are integers.")) ? throw err : 0L;
+				return Errors.ErrorOccurred(err = new TypeError($"Could not convert address argument of type {target.GetType()} into an nint. Type must be integer, Buffer or other object with Ptr and Size properties that are integers.")) ? throw err : default;
 
 			for (var i = 0; i <= lastPairIndex; i += 2)
 			{
@@ -273,7 +273,7 @@
 						offset += inc;
 					}
 					else
-						return Errors.ErrorOccurred(err = new IndexError($"Memory access exceeded buffer size. Offset {offset} + length {bytes.Length} > buffer size {size}.")) ? throw err : 0L;
+						return Errors.ErrorOccurred(err = new IndexError($"Memory access exceeded buffer size. Offset {offset} + length {bytes.Length} > buffer size {size}.")) ? throw err : default;
 				}
 				else if (addr != 0)
 				{
@@ -281,7 +281,7 @@
 					offset += inc;
 				}
 				else
-					return Errors.ErrorOccurred(err = new IndexError($"Could not parse target {target} as a Buffer or memory address.")) ? throw err : 0L;
+					return Errors.ErrorOccurred(err = new IndexError($"Could not parse target {target} as a Buffer or memory address.")) ? throw err : default;
 			}
 
 			return nint.Add(addr, offset).ToInt64();

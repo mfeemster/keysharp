@@ -233,7 +233,7 @@
 			if (map.Remove(key, out var val))
 				return val;
 
-			return Errors.ErrorOccurred(err = new KeyError($"Key {key} was not present in the map.")) ? throw err : null;
+			return Errors.ErrorOccurred(err = new KeyError($"Key {key} was not present in the map.")) ? throw err : default;
 		}
 
 		/// <summary>
@@ -262,7 +262,7 @@
 			if (Default != null)
 				return Default;
 
-			return Errors.ErrorOccurred(err = new UnsetItemError($"Key {k} was not present in the map.")) ? throw err : null;
+			return Errors.ErrorOccurred(err = new UnsetItemError($"Key {k} was not present in the map.")) ? throw err : default;
 		}
 
 		/// <summary>
@@ -576,7 +576,7 @@
 				if (TryGetValue(key, out var val))
 					return val;
 
-				return Default ?? (Errors.ErrorOccurred(err = new UnsetItemError($"Key {key} was not present in the map.")) ? throw err : null);
+				return Default ?? (Errors.ErrorOccurred(err = new UnsetItemError($"Key {key} was not present in the map.")) ? throw err : default);
 			}
 
 			set => Insert(key, value);

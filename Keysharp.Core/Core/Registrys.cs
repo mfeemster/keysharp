@@ -54,7 +54,7 @@ namespace Keysharp.Core
 			catch (Exception ex)
 			{
 				Error err;
-				return Errors.ErrorOccurred(err = new OSError(ex, $"Error deleting registry key {keyname} and value {valname}")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new OSError(ex, $"Error deleting registry key {keyname} and value {valname}")) ? throw err : default;
 			}
 		}
 
@@ -85,7 +85,7 @@ namespace Keysharp.Core
 			catch (Exception ex)
 			{
 				Error err;
-				return Errors.ErrorOccurred(err = new OSError(ex, $"Error deleting registry key {keyname}")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new OSError(ex, $"Error deleting registry key {keyname}")) ? throw err : default;
 			}
 		}
 
@@ -151,14 +151,14 @@ namespace Keysharp.Core
 					if (!string.IsNullOrEmpty(def))
 						return def;
 
-					return Errors.ErrorOccurred(err = new OSError("", $"Registry key {keyname} and value {valname} was not found and no default was specified.")) ? throw err : null;
+					return Errors.ErrorOccurred(err = new OSError("", $"Registry key {keyname} and value {valname} was not found and no default was specified.")) ? throw err : default;
 				}
 
 				return reg;
 			}
 			catch (Exception ex)
 			{
-				return Errors.ErrorOccurred(err = new OSError(ex, $"Error reading registry key {keyname} and value {valname}")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new OSError(ex, $"Error reading registry key {keyname} and value {valname}")) ? throw err : default;
 			}
 		}
 
@@ -243,7 +243,7 @@ namespace Keysharp.Core
 			catch (Exception ex)
 			{
 				Error err;
-				return Errors.ErrorOccurred(err = new OSError(ex, $"Error writing registry key {keyname} and value {valname}")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new OSError(ex, $"Error writing registry key {keyname} and value {valname}")) ? throw err : default;
 			}
 		}
 

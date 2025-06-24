@@ -299,7 +299,7 @@ namespace Keysharp.Core
 				if (func == null)
 				{
 					Error err;
-					_ = ErrorOccurred(err = new TypeError($"Parameter {f} of type {f.GetType()} was not a string or a function object.")) ? throw err : "";
+					return ErrorOccurred(err = new TypeError($"Parameter {f} of type {f.GetType()} was not a string or a function object.")) ? throw err : default;
 				}
 			}
 

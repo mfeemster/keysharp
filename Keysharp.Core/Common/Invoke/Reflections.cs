@@ -446,7 +446,7 @@ namespace Keysharp.Core.Common.Invoke
 				addr = item.Al();
 
 			if (throwIfZero && addr == 0L)
-				return Errors.ErrorOccurred(err = new TypeError($"Argument was of type {item.GetType()}. Type must be integer, Buffer or other object with a Ptr property that is an integer.\"")) ? throw err : 0;
+				return Errors.ErrorOccurred(err = new TypeError($"Argument was of type {item.GetType()}. Type must be integer, Buffer or other object with a Ptr property that is an integer.\"")) ? throw err : default;
 
 			return addr;
 		}

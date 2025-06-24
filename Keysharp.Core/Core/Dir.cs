@@ -43,7 +43,7 @@
 			catch (Exception ex)
 			{
 				Error err;
-				return Errors.ErrorOccurred(err = new OSError(ex, $"Error creating directory {dirName}")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new OSError(ex, $"Error creating directory {dirName}")) ? throw err : default;
 			}
 		}
 
@@ -66,7 +66,7 @@
 			catch (Exception ex)
 			{
 				Error err;
-				return Errors.ErrorOccurred(err = new OSError(ex, $"Error creating directory {dirName}")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new OSError(ex, $"Error creating directory {dirName}")) ? throw err : default;
 			}
 		}
 
@@ -131,7 +131,7 @@
 
 			//If dest exists as a file, never copy.
 			if (File.Exists(d))
-				return Errors.ErrorOccurred(err = new OSError("", $"Cannot move {s} to {d} because destination is a file.")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new OSError("", $"Cannot move {s} to {d} because destination is a file.")) ? throw err : default;
 
 			switch (flag.ToUpperInvariant())
 			{
@@ -155,10 +155,10 @@
 			}
 
 			if (rename && Directory.Exists(d))
-				return Errors.ErrorOccurred(err = new OSError("", $"Cannot rename {s} to {d} because it already exists.")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new OSError("", $"Cannot rename {s} to {d} because it already exists.")) ? throw err : default;
 
 			if (!Directory.Exists(s))
-				return Errors.ErrorOccurred(err = new OSError("", $"Cannot move {s} to {d} because source does not exist.")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new OSError("", $"Cannot move {s} to {d} because source does not exist.")) ? throw err : default;
 
 			if (movein && Directory.Exists(d))
 				d = Path.Combine(d, Path.GetFileName(s.TrimEnd(Path.DirectorySeparatorChar)));

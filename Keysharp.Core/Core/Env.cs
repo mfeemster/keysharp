@@ -169,7 +169,7 @@ namespace Keysharp.Core
 			catch (Exception ex)
 			{
 				Error err;
-				return Errors.ErrorOccurred(err = new OSError(ex, $@"Error setting environment variable {name} to value ""{value}"".")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new OSError(ex, $@"Error setting environment variable {name} to value ""{value}"".")) ? throw err : default;
 			}
 		}
 
@@ -188,7 +188,7 @@ namespace Keysharp.Core
 			catch (Exception ex)
 			{
 				Error err;
-				return Errors.ErrorOccurred(err = new OSError(ex, "Error updating environment variables.")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new OSError(ex, "Error updating environment variables.")) ? throw err : default;
 			}
 
 #endif
@@ -245,7 +245,7 @@ namespace Keysharp.Core
 			(compiledBytes, result) = ch.CompileCodeToByteArray([script], name);
 
 			if (compiledBytes == null)
-				return Errors.ErrorOccurred(err = new Error(result)) ? throw err : null;
+				return Errors.ErrorOccurred(err = new Error(result)) ? throw err : default;
 
 			var scriptProcess = new Process
 			{
@@ -301,7 +301,7 @@ namespace Keysharp.Core
 			else
 			{
 				Error err;
-				return Errors.ErrorOccurred(err = new TypeError($"Passed in object of type {callback.GetType()} was not a FuncObj.")) ? throw err : null;
+				return Errors.ErrorOccurred(err = new TypeError($"Passed in object of type {callback.GetType()} was not a FuncObj.")) ? throw err : default;
 			}
 		}
 
