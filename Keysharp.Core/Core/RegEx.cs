@@ -77,7 +77,6 @@
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown on failure.</exception>
 		public static long RegExMatch(object haystack, object needle, ref object outputVar, object startingPos)
 		{
-			Error err;
 			var input = haystack.As();
 			var n = needle.As();
 			var index = startingPos.Ai(1);
@@ -90,7 +89,7 @@
 			}
 			catch (Exception ex)
 			{
-				return Errors.ErrorOccurred(err = new Error("Regular expression compile error", "", ex.Message)) ? throw err : default;
+				return (long)Errors.ErrorOccurred("Regular expression compile error", "", ex.Message, DefaultErrorLong);
 			}
 
 			if (index < 0)
@@ -123,8 +122,7 @@
 					result = 1;
 				else if (result < -1)
 				{
-					Error err;
-					return Errors.ErrorOccurred(err = new Error($"PCRE matching error", null, (long)result)) ? throw err : PcreCalloutResult.Abort;
+					return (PcreCalloutResult)Errors.ErrorOccurred($"PCRE matching error", null, (long)result, PcreCalloutResult.Abort);
 				}
 
 				return (PcreCalloutResult)result;
@@ -139,7 +137,7 @@
 			}
 			catch (Exception ex)
 			{
-				return Errors.ErrorOccurred(err = new Error("Regular expression execution error", "", ex.Message)) ? throw err : default;
+				return (long)Errors.ErrorOccurred("Regular expression execution error", "", ex.Message, DefaultErrorLong);
 			}
 		}
 
@@ -201,7 +199,6 @@
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown on failure.</exception>
 		public static string RegExReplace(object haystack, object needleRegEx, object replacement, ref object outputVarCount, object limit, object startingPos)
 		{
-			Error err;
 			var input = haystack.As();
 			var needle = needleRegEx.As();
 			var rd = TheScript.RegExData;
@@ -228,7 +225,7 @@
 			}
 			catch (Exception ex)
 			{
-				return Errors.ErrorOccurred(err = new Error("Regular expression compile error", "", ex.Message)) ? throw err : default;
+				return (string)Errors.ErrorOccurred("Regular expression compile error", "", ex.Message, DefaultErrorString);
 			}
 
 			if (l < 1)
@@ -262,7 +259,7 @@
 			}
 			catch (Exception ex)
 			{
-				return Errors.ErrorOccurred(err = new Error("Regular expression execution error", "", ex.Message)) ? throw err : default;
+				return (string)Errors.ErrorOccurred("Regular expression execution error", "", ex.Message, DefaultErrorString);
 			}
 		}
 

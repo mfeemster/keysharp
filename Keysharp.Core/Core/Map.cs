@@ -93,7 +93,6 @@
 
 			set
 			{
-				Error err;
 				var oldVal = caseSense;
 				var str = value.ToString().ToLower();
 				var val = Options.OnOff(str);
@@ -108,7 +107,7 @@
 
 				if (Count > 0)
 				{
-					_ = Errors.ErrorOccurred(err = new PropertyError("Attempted to change case sensitivity of a map which was not empty.")) ? throw err : "";
+					_ = Errors.PropertyErrorOccurred("Attempted to change case sensitivity of a map which was not empty.");
 					return;
 				}
 
@@ -184,7 +183,7 @@
 		public new object __New(params object[] args)
 		{
 			Set(args);
-			return "";
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -228,12 +227,10 @@
 		/// <exception cref="KeyError">An <see cref="KeyError"/> exception is thrown if they key was not found.</exception>
 		public object Delete(object key)
 		{
-			Error err;
-
 			if (map.Remove(key, out var val))
 				return val;
 
-			return Errors.ErrorOccurred(err = new KeyError($"Key {key} was not present in the map.")) ? throw err : default;
+			return Errors.KeyErrorOccurred($"Key {key} was not present in the map.");
 		}
 
 		/// <summary>
@@ -249,7 +246,6 @@
 		/// <exception cref="UnsetItemError">Throws an <see cref="UnsetItemError"/> if key is not found and no defaults are supplied.</exception>
 		public object Get(object key, object @default = null)
 		{
-			Error err;
 			var k = key;
 			var def = @default;
 
@@ -262,7 +258,7 @@
 			if (Default != null)
 				return Default;
 
-			return Errors.ErrorOccurred(err = new UnsetItemError($"Key {k} was not present in the map.")) ? throw err : default;
+			return Errors.UnsetItemErrorOccurred($"Key {k} was not present in the map.");
 		}
 
 		/// <summary>
@@ -435,8 +431,6 @@
 			}
 			else
 			{
-				Error err;
-
 				if (args.Length == 1)
 				{
 					if (args[0] is Map m)
@@ -473,7 +467,7 @@
 					}
 					else
 					{
-						_ = Errors.ErrorOccurred(err = new ValueError($"Improper object type of {args[0].GetType()} passed to Map constructor.")) ? throw err : "";
+						_ = Errors.ValueErrorOccurred($"Improper object type of {args[0].GetType()} passed to Map constructor.");
 						return;
 					}
 				}
@@ -489,6 +483,7 @@
 				}
 			}
 		}
+
 		/// <summary>
 		/// Returns the string representation of all elements in the map.
 		/// </summary>
@@ -571,12 +566,10 @@
 		{
 			get
 			{
-				Error err;
-
 				if (TryGetValue(key, out var val))
 					return val;
 
-				return Default ?? (Errors.ErrorOccurred(err = new UnsetItemError($"Key {key} was not present in the map.")) ? throw err : default);
+				return Default ?? Errors.UnsetItemErrorOccurred($"Key {key} was not present in the map.");
 			}
 
 			set => Insert(key, value);

@@ -84,13 +84,17 @@
 		/// <exception cref="UnsetError">An <see cref="UnsetError"/> exception is thrown if either array is null.</exception>
 		public static T[] Concat<T>(this T[] x, T[] y)
 		{
-			Error err;
-
 			if (x == null)
-				return Errors.ErrorOccurred(err = new UnsetError("x is null")) ? throw err : default;
+			{
+				_ = Errors.UnsetErrorOccurred("x");
+				return default;
+			}
 
 			if (y == null)
-				return Errors.ErrorOccurred(err = new UnsetError("y is null")) ? throw err : default;
+			{
+				_ = Errors.UnsetErrorOccurred("y");
+				return default;
+			}
 
 			var oldLen = x.Length;
 			Array.Resize(ref x, x.Length + y.Length);

@@ -31,6 +31,12 @@ namespace Keysharp.Scripting
 		public bool NoTrayIcon = false;
 		public bool ValidateThenExit;
 		public bool WinActivateForce = false;
+		internal const double DefaultErrorDouble = double.NaN;
+		internal const int DefaultErrorInt = int.MinValue;
+		internal const long DefaultErrorLong = long.MinValue;
+		internal const string DefaultObject = "";
+		internal const string DefaultErrorObject = "";
+		internal const string DefaultErrorString = "";
 		internal const int INTERVAL_UNSPECIFIED = int.MinValue + 303;
 		internal const int maxThreadsLimit = 0xFF;
 		internal const int SLEEP_INTERVAL = 10;
@@ -228,8 +234,6 @@ namespace Keysharp.Scripting
 
 		private void LoadDlls()
 		{
-			Error err;
-
 			foreach (var dll in Vars.preloadedDlls)
 			{
 				if (dll.Item1.Length == 0)
@@ -237,7 +241,7 @@ namespace Keysharp.Scripting
 					if (!mgr.SetDllDirectory(null))//An empty #DllLoad restores the default search order.
 						if (!dll.Item2)
 						{
-							_ = Errors.ErrorOccurred(err = new Error("PlatformProvider.Manager.SetDllDirectory(null) failed."), Keyword_ExitApp) ? throw err : "";
+							_ = Errors.ErrorOccurred("PlatformProvider.Manager.SetDllDirectory(null) failed.", null, Keyword_ExitApp);
 							return;
 						}
 				}
@@ -246,7 +250,7 @@ namespace Keysharp.Scripting
 					if (!mgr.SetDllDirectory(dll.Item1))
 						if (!dll.Item2)
 						{
-							_ = Errors.ErrorOccurred(err = new Error($"PlatformProvider.Manager.SetDllDirectory({dll.Item1}) failed."), Keyword_ExitApp) ? throw err : "";
+							_ = Errors.ErrorOccurred($"PlatformProvider.Manager.SetDllDirectory({dll.Item1}) failed.", null, Keyword_ExitApp);
 							return;
 						}
 				}
@@ -272,7 +276,7 @@ namespace Keysharp.Scripting
 					}
 					else if (!dll.Item2)
 					{
-						_ = Errors.ErrorOccurred(err = new Error($"Failed to load DLL {dllname}."), Keyword_ExitApp) ? throw err : "";
+						_ = Errors.ErrorOccurred($"Failed to load DLL {dllname}.", null, Keyword_ExitApp);
 						return;
 					}
 				}

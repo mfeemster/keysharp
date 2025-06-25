@@ -10,7 +10,6 @@ namespace Keysharp.Scripting
 		public static object SetObject(object value, object item, params object[] index)
 		{
 			object key = null;
-			Error err;
 			Type typetouse;
 
 			try
@@ -55,7 +54,7 @@ namespace Keysharp.Scripting
 					}
 					else if (item == null)
 					{
-						return null;
+						return DefaultErrorObject;
 					}
 				}
 				else if (index.Length == 0)//Access brackets with no index like item.prop[] := 123.
@@ -97,7 +96,7 @@ namespace Keysharp.Scripting
 						return value;
 					}
 					else
-						return Errors.ErrorOccurred(err = new ValueError($"{il1} arguments were passed to a set indexer which only accepts {mph2.ParamLength}.")) ? throw err : default;
+						return Errors.ValueErrorOccurred($"{il1} arguments were passed to a set indexer which only accepts {mph2.ParamLength}.");
 				}
 			}
 			catch (Exception e)
@@ -108,12 +107,11 @@ namespace Keysharp.Scripting
 					throw;
 			}
 
-			return Errors.ErrorOccurred(err = new Error($"Attempting to set index {key} of object {item} to value {value} failed.")) ? throw err : default;
+			return Errors.ErrorOccurred($"Attempting to set index {key} of object {item} to value {value} failed.");
 		}
 
 		private static object IndexAt(object item, params object[] index)
 		{
-			Error err;
 			int len;
 			object key = null;
 
@@ -195,7 +193,7 @@ namespace Keysharp.Scripting
 					if (len == mph.ParamLength || mph.IsVariadic)
 						return mph.callFunc(item, index);
 					else
-						return Errors.ErrorOccurred(err = new ValueError($"{len} arguments were passed to a get indexer which only accepts {mph.ParamLength}.")) ? throw err : default;
+						return Errors.ValueErrorOccurred($"{len} arguments were passed to a get indexer which only accepts {mph.ParamLength}.");
 				}
 			}
 			catch (Exception e)
@@ -206,7 +204,7 @@ namespace Keysharp.Scripting
 					throw;
 			}
 
-			return Errors.ErrorOccurred(err = new Error($"Attempting to get index of {key} on item {item} failed.")) ? throw err : default;
+			return Errors.ErrorOccurred($"Attempting to get index of {key} on item {item} failed.");
 		}
 	}
 }

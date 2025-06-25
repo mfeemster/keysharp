@@ -16,7 +16,7 @@
 		public static object Collect()
 		{
 			GC.Collect();
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -68,7 +68,7 @@
 				Clipboard.SetImage(new Bitmap(bmp));
 			}
 
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>

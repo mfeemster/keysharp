@@ -18,13 +18,17 @@
 
 		internal ThreadVariables GetThreadVariables()
 		{
-			Error err;
-			return threadVars.TryPeek() ?? (Errors.ErrorOccurred(err = new Error("Severe threading error: Tried to get an existing thread variable object but there were none. This should never happen."), Keyword_ExitApp) ? throw err : default);
+			var p = threadVars.TryPeek();
+
+			if (p != null)
+				return p;
+
+			_ = Errors.ErrorOccurred("Severe threading error: Tried to get an existing thread variable object but there were none. This should never happen.", null, Keyword_ExitApp);
+			return default;
 		}
 
 		internal void PopThreadVariables(bool pushed, bool checkThread = true)
 		{
-			Error err;
 			var ctid = Thread.CurrentThread.ManagedThreadId;
 
 			//Do not check threadVars for null, because it should have always been created with a call to PushThreadVariables() before this.
@@ -36,7 +40,7 @@
 				{
 					if (checkThread && ctid != tv.threadId)
 					{
-						_ = Errors.ErrorOccurred(err = new Error($"Severe threading error: ThreadVariables.threadId {tv.threadId} did not match the current thread id {ctid}. This should never happen."), Keyword_ExitApp) ? throw err : "";
+						_ = Errors.ErrorOccurred($"Severe threading error: ThreadVariables.threadId {tv.threadId} did not match the current thread id {ctid}. This should never happen.", null, Keyword_ExitApp);
 						return;
 					}
 				}

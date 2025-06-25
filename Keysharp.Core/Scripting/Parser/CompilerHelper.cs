@@ -313,7 +313,7 @@ using static Keysharp.Scripting.Script;
 				return $"{desc} failed.\n\n{sbe}\n{sbw}" + (message != "" ? "\n" + message : "");//Needed to break this up so the AStyle formatter doesn't misformat it.
 			}
 
-			return "";
+			return DefaultObject;
 		}
 
 		public (EmitResult, MemoryStream, Exception) Compile(string code, string outputname, string currentDir, bool minimalexeout = false)

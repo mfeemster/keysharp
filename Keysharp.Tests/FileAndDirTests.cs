@@ -1,6 +1,7 @@
 ﻿using Array = Keysharp.Core.Array;
 using Buffer = Keysharp.Core.Buffer;
 using Assert = NUnit.Framework.Legacy.ClassicAssert;
+using Keysharp.Core.Common.File;
 
 namespace Keysharp.Tests
 {
@@ -169,8 +170,27 @@ namespace Keysharp.Tests
 			Assert.IsTrue(File.Exists("./DirCopy3/file1.txt"));
 			Assert.IsTrue(File.Exists("./DirCopy3/file2.txt"));
 			Assert.IsTrue(File.Exists("./DirCopy3/file3txt"));
-			_ = Dir.DirMove("./DirCopy3", "./DirCopy3"); //Both of these should just return, do nothing, and not throw because ./DirCopy3 exists.
-			_ = Dir.DirMove("./DirCopy3", "./DirCopy3", 0);
+			var threw = false;
+			try
+			{
+				_ = Dir.DirMove("./DirCopy3", "./DirCopy3");//Both of these should throw because ./DirCopy3 already exists.
+			}
+			catch
+			{
+				threw = true;
+			}
+
+			Assert.AreEqual(threw, true);
+			threw = false;
+			try
+			{
+				_ = Dir.DirMove("./DirCopy3", "./DirCopy3", 0);
+			}
+			catch
+			{
+				threw = true;
+			}
+			Assert.AreEqual(threw, true);
 			_ = Dir.DirCopy(dir, "./DirMove");
 			_ = Dir.DirMove("./DirMove", "./DirCopy3", 1); //Will copy into because ./DirCopy3 already exists.
 			Assert.IsTrue(Directory.Exists("./DirCopy3/DirMove"));
@@ -619,7 +639,7 @@ namespace Keysharp.Tests
 			if (File.Exists(filename))
 				File.Delete(filename);
 
-			using (var f = Files.FileOpen(filename, "rw"))//Simplest first, read/write.
+			using (var f = (KeysharpFile)Files.FileOpen(filename, "rw"))//Simplest first, read/write.
 			{
 				var w = "testing";
 				var count = f.WriteLine(w);
@@ -632,7 +652,7 @@ namespace Keysharp.Tests
 			if (File.Exists(filename))
 				File.Delete(filename);
 
-			using (var f = Files.FileOpen(filename, "rw"))//Read/write integers.
+			using (var f = (KeysharpFile)Files.FileOpen(filename, "rw"))//Read/write integers.
 			{
 				uint val = 0x01020304;
 				var count = f.WriteUInt(val);
@@ -651,7 +671,7 @@ namespace Keysharp.Tests
 			if (File.Exists(filename))
 				File.Delete(filename);
 
-			using (var f = Files.FileOpen(filename, "rw"))//Read/write buffers and arrays.
+			using (var f = (KeysharpFile)Files.FileOpen(filename, "rw"))//Read/write buffers and arrays.
 			{
 				var buf = new Buffer(4);
 				unsafe
@@ -683,7 +703,7 @@ namespace Keysharp.Tests
 			if (File.Exists(filename))
 				File.Delete(filename);
 
-			using (var f = Files.FileOpen(filename, "rw"))//Read/write buffers and arrays.
+			using (var f = (KeysharpFile)Files.FileOpen(filename, "rw"))//Read/write buffers and arrays.
 			{
 				var arr = new Array();
 				arr.Capacity = 4;
@@ -711,7 +731,7 @@ namespace Keysharp.Tests
 			if (File.Exists(filename))
 				File.Delete(filename);
 
-			using (var f = Files.FileOpen(filename, "rw", "Unicode"))//Test text encoding.
+			using (var f = (KeysharpFile)Files.FileOpen(filename, "rw", "Unicode"))//Test text encoding.
 			{
 				var w = "testing";
 				var count = f.Write(w);
@@ -722,7 +742,7 @@ namespace Keysharp.Tests
 				Assert.AreEqual(f.Length, 16);//BOM plus 2 bytes per char.
 			}
 
-			using (var f = Files.FileOpen(filename, "rw", "Unicode"))//Ensure reading an existing file with a BOM works.
+			using (var f = (KeysharpFile)Files.FileOpen(filename, "rw", "Unicode"))//Ensure reading an existing file with a BOM works.
 			{
 				var w = "testing";
 				var r = f.ReadLine();
@@ -735,7 +755,7 @@ namespace Keysharp.Tests
 
 			Accessors.A_FileEncoding = "utf-8-raw";
 
-			using (var f = Files.FileOpen(filename, "rw"))//Test position.
+			using (var f = (KeysharpFile)Files.FileOpen(filename, "rw"))//Test position.
 			{
 				var w = "testing";
 				var count = f.Write(w);
@@ -750,7 +770,7 @@ namespace Keysharp.Tests
 			}
 
 			//Do not delete here, file is used for appending.
-			using (var f = Files.FileOpen(filename, "a"))//Test append.
+			using (var f = (KeysharpFile)Files.FileOpen(filename, "a"))//Test append.
 			{
 				var w = "testing";
 				var count = f.Write(w);
@@ -765,13 +785,13 @@ namespace Keysharp.Tests
 			if (File.Exists(filename))
 				File.Delete(filename);
 
-			using (var f = Files.FileOpen(filename, "w"))//Test write only.
+			using (var f = (KeysharpFile)Files.FileOpen(filename, "w"))//Test write only.
 			{
 				var w = "testing";
 				var count = f.Write(w);
 			}
 
-			using (var f = Files.FileOpen(filename, "w"))//Test write only on an existing file, which should clear it.
+			using (var f = (KeysharpFile)Files.FileOpen(filename, "w"))//Test write only on an existing file, which should clear it.
 			{
 				var pos = f.Pos;
 				var eof = f.AtEOF;
@@ -784,13 +804,13 @@ namespace Keysharp.Tests
 			if (File.Exists(filename))
 				File.Delete(filename);
 
-			using (var f = Files.FileOpen(filename, "w"))//Test write only.
+			using (var f = (KeysharpFile)Files.FileOpen(filename, "w"))//Test write only.
 			{
 				var w = "testing";
 				var count = f.Write(w);
 			}
 
-			using (var f = Files.FileOpen(filename, "rw"))//Test read/write on an existing file, which should not clear it.
+			using (var f = (KeysharpFile)Files.FileOpen(filename, "rw"))//Test read/write on an existing file, which should not clear it.
 			{
 				var pos = f.Pos;
 				var eof = f.AtEOF;
@@ -805,29 +825,29 @@ namespace Keysharp.Tests
 			//linux seems to be ok with these combinations and doesn't throw.
 			TestException(() =>
 			{
-				using (var f = Files.FileOpen(filename, "r -r"))//Test read share.
+				using (var f = (KeysharpFile)Files.FileOpen(filename, "r -r"))//Test read share.
 				{
-					using (var f2 = Files.FileOpen(filename, "r"))
+					using (var f2 = (KeysharpFile)Files.FileOpen(filename, "r"))
 					{
 					}
 				}
 			});
 			TestException(() =>
 			{
-				using (var f = Files.FileOpen(filename, "rw -w"))//Test write share.
+				using (var f = (KeysharpFile)Files.FileOpen(filename, "rw -w"))//Test write share.
 				{
-					using (var f2 = Files.FileOpen(filename, "rw"))
+					using (var f2 = (KeysharpFile)Files.FileOpen(filename, "rw"))
 					{
 					}
 				}
 			});
 #endif
 
-			using (var f = Files.FileOpen(filename, "r -r"))//Test read share create from handle.
+			using (var f = (KeysharpFile)Files.FileOpen(filename, "r -r"))//Test read share create from handle.
 			{
 				var handle = f.Handle;
 
-				using (var f2 = Files.FileOpen(handle, "r h"))
+				using (var f2 = (KeysharpFile)Files.FileOpen(handle, "r h"))
 				{
 				}
 			}
@@ -837,7 +857,7 @@ namespace Keysharp.Tests
 
 			TestException(() =>
 			{
-				using (var f = Files.FileOpen(filename, "r"))//Test opening a non existent file in read mode which should crash.
+				using (var f = (KeysharpFile)Files.FileOpen(filename, "r"))//Test opening a non existent file in read mode which should crash.
 				{
 				}
 			});

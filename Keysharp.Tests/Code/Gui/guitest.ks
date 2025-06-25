@@ -2725,7 +2725,7 @@ DllPerformanceCounter()
 	start := A_NowMs
 	startTick := A_TickCount
 	
-	DllCall("QueryPerformanceFrequency", "Int64*", freq)
+	DllCall("QueryPerformanceFrequency", "Int64*", &freq)
 	DllCall("QueryPerformanceCounter", "Int64*", &CounterBefore)
 	Sleep(1000)
 	DllCall("QueryPerformanceCounter", "Int64*", &CounterAfter)

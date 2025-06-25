@@ -5209,7 +5209,7 @@ namespace Keysharp.Core.Windows
 						if (UnhookWindowsHookEx(mouseHook) || GetLastError() == ERROR_INVALID_HOOK_HANDLE)// Check last error in case the OS has already removed the hook.
 							mouseHook = 0;
 
-				return "";
+				return DefaultObject;
 			};
 
 			//Do this here on the first time through because it's only ever needed if a hook is added.

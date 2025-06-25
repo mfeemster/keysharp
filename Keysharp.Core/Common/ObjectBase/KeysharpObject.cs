@@ -36,9 +36,8 @@
 			return MemberwiseClone();
 		}
 
-		public KeysharpObject DefineProp(object obj0, object obj1)
+		public object DefineProp(object obj0, object obj1)
 		{
-			Error err;
 			var name = obj0.As();
 
 			if (op == null)
@@ -51,7 +50,7 @@
 				else
 				{
 					if (map.map.Count > 1 && map.map.Any(k => k.Key.ToString().Equals("value", StringComparison.OrdinalIgnoreCase)))
-						return Errors.ErrorOccurred(err = new ValueError("Value can't be defined along with get, set, or call.")) ? throw err : default;
+						return Errors.ValueErrorOccurred("Value can't be defined along with get, set, or call.");
 
 					op[name].Merge(map);
 				}
@@ -61,7 +60,7 @@
 				if (kso.op != null)//&& kso.op.TryGetValue(name, out var opm))
 				{
 					if (kso.op.Count > 1 && kso.op.Any(k => k.Key.ToString().Equals("value", StringComparison.OrdinalIgnoreCase)))
-						return Errors.ErrorOccurred(err = new ValueError("Value can't be defined along with get, set, or call.")) ? throw err : default;
+						return Errors.ValueErrorOccurred("Value can't be defined along with get, set, or call.");
 
 					if (op.TryGetValue(name, out var currProp))
 					{
@@ -78,8 +77,7 @@
 			}
 			else
 			{
-				Errors.ArgumentErrorOccurred(obj1, 2);
-				return null;
+				return Errors.ArgumentErrorOccurred(obj1, 2);
 			}
 
 			return this;
@@ -97,18 +95,13 @@
 				return map;
 			}
 
-			return "";
+			return DefaultObject;
 		}
 
-		public long GetCapacity()
-		{
-			Error err;
-			return Errors.ErrorOccurred(err = new Error("GetCapacity() is not supported or needed in Keysharp. The C# runtime handles all memory.")) ? throw err : default;
-		}
+		public long GetCapacity() => (long)Errors.ErrorOccurred("GetCapacity() is not supported or needed in Keysharp. The C# runtime handles all memory.", DefaultErrorLong);
 
 		public object GetOwnPropDesc(object obj)
 		{
-			Error err;
 			var name = obj.As();
 
 			if (op != null && op.TryGetValue(name, out var dynProp))
@@ -125,7 +118,7 @@
 			{
 			}
 
-			return Errors.ErrorOccurred(err = new PropertyError($"Object did not have an OwnProp named {name}.")) ? throw err : default;
+			return Errors.PropertyErrorOccurred($"Object did not have an OwnProp named {name}.");
 		}
 
 		public long HasOwnProp(object obj)
@@ -219,16 +212,12 @@
 			tabLevel--;
 		}
 
-		public void SetBase(params object[] obj)
-		{
-			Error err;
-			_ = Errors.ErrorOccurred(err = new Error(BaseExc)) ? throw err : "";
-		}
+		public void SetBase(params object[] obj) => _ = Errors.ErrorOccurred(BaseExc);
 
 		public long SetCapacity(object obj)
 		{
 			var err = new Error("SetCapacity() is not supported or needed in Keysharp. The C# runtime handles all memory.");
-			return Errors.ErrorOccurred(err) ? throw err : default;
+			return Errors.ErrorOccurred(err) ? throw err : DefaultErrorLong;
 		}
 
 		public object Wrap(object obj) => obj;

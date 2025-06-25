@@ -78,7 +78,8 @@ namespace Keysharp.Core.Common.Keyboard
 			{
 				if (modifiers != 0 || modifierVK != 0 || modifierSC != 0)
 				{
-					throw new ValueError("Invalid hotkey.", _name);
+					_ = Errors.ValueErrorOccurred("Invalid hotkey.", _name);
+					return;
 				}
 			}
 			else // Perform modifier adjustment and other activities that don't apply to joysticks.
@@ -112,7 +113,8 @@ namespace Keysharp.Core.Common.Keyboard
 						// to try to guess which key, left or right, should be used based on the
 						// location of the suffix key on the keyboard.  Lexikos: Better not do that
 						// since a wrong guess will leave the user wondering why it doesn't work.
-						throw new ValueError("This AltTab hotkey must specify which key (L or R).", _name);
+						_ = Errors.ValueErrorOccurred("This AltTab hotkey must specify which key (L or R).", _name);
+						return;
 					}
 
 					if (modifiersLR != 0)
@@ -131,7 +133,7 @@ namespace Keysharp.Core.Common.Keyboard
 							MOD_RALT => VK_RMENU,
 							MOD_LWIN => VK_LWIN,
 							MOD_RWIN => VK_RWIN,
-							_ => throw new ValueError("This AltTab hotkey must have exactly one modifier/prefix.", _name),
+							_ => (uint)Errors.ValueErrorOccurred("This AltTab hotkey must have exactly one modifier/prefix.", _name, 0u)
 						};
 
 						// Since above didn't return:
@@ -293,7 +295,7 @@ namespace Keysharp.Core.Common.Keyboard
 			else
 				script.Threads.GetThreadVariables().hotCriterion = null;
 
-			return null;
+			return DefaultObject;
 		}
 
 		public static object HotIfWinActive(object obj0 = null, object obj1 = null) => SetupHotIfWin("HotIfWinActivePrivate", obj0, obj1);
@@ -621,7 +623,7 @@ namespace Keysharp.Core.Common.Keyboard
 			if (hkd.joyHotkeyCount != 0)  // Joystick hotkeys require the timer to be always on. (This is most likely unneeded).
 				Flow.SetMainTimer();
 
-			return null;
+			return DefaultObject;
 		}
 
 		public override string ToString() => Name;
@@ -634,7 +636,6 @@ namespace Keysharp.Core.Common.Keyboard
 		/// </summary>
 		internal static HotkeyDefinition AddHotkey(IFuncObj _callback, uint _hookAction, string _name, ref uint _noSuppress)
 		{
-			Error err;
 			HotkeyDefinition hk;
 			var hookIsMandatory = false;
 			var script = Script.TheScript;
@@ -656,7 +657,10 @@ namespace Keysharp.Core.Common.Keyboard
 				{
 					// Detect duplicate hotkey variants to help spot bugs in scripts.
 					if (hk.FindVariant() != null) // See if there's already a variant matching the current criteria (suffix_has_tilde does not make variants distinct form each other because it would require firing two hotkey IDs in response to pressing one hotkey, which currently isn't in the design).
-						return Errors.ErrorOccurred(err = new Error($"Duplicate hotkey: {_name}")) ? throw err : default;
+					{
+						_ = Errors.ErrorOccurred($"Duplicate hotkey: {_name}");
+						return default;
+					}
 
 					if (hk.AddVariant(_callback, _noSuppress) == null)
 						return null;// ScriptError(ERR_OUTOFMEM, buf);
@@ -924,13 +928,13 @@ namespace Keysharp.Core.Common.Keyboard
 				case HOTKEY_ID_OFF:
 				case HOTKEY_ID_TOGGLE:
 					if (hk == null)
-						throw new ValueError("Nonexistent hotkey.", hotkeyName);
+						return (ResultType)Errors.ValueErrorOccurred("Nonexistent hotkey.", hotkeyName, ResultType.Fail);
 
 					if (!(variant != null || hk.hookAction != 0)) // hookAction (alt-tab) hotkeys don't need a variant that matches the current criteria.
 						// To avoid ambiguity and also allow the script to use error handling to detect whether a variant
 						// already exists, it seems best to strictly require a matching variant rather than falling back
 						// onto some "default variant" such as the global variant (if any).
-						throw new ValueError("Nonexistent hotkey variant(IfWin).", hotkeyName);
+						return (ResultType)Errors.ValueErrorOccurred("Nonexistent hotkey variant(IfWin).", hotkeyName, ResultType.Fail);
 
 					if (hookAction == HOTKEY_ID_TOGGLE)
 						hookAction = hk.hookAction != 0
@@ -955,7 +959,7 @@ namespace Keysharp.Core.Common.Keyboard
 						else // Create hotkey: Hotkey Name, Callback [, Options]
 						{
 							if (callback == null) // Caller is trying to set new aOptions for a nonexistent hotkey.
-								throw new ValueError("Nonexistent hotkey.", hotkeyName);
+								return (ResultType)Errors.ValueErrorOccurred("Nonexistent hotkey.", hotkeyName, ResultType.Fail);
 
 							hk = AddHotkey(callback, 0, hotkeyName, ref noSuppress);
 						}
@@ -1059,7 +1063,7 @@ namespace Keysharp.Core.Common.Keyboard
 			// Hotkey, Name,, Options  ; Where name exists as a hotkey, but the right variant doesn't yet exist.
 			// If it catches anything else, that could be a bug, so this error message will help spot it.
 			if (!(variant != null || hk.hookAction != 0)) // mHookAction (alt-tab) hotkeys don't need a variant that matches the current criteria.
-				throw new ValueError("Nonexistent hotkey variant (IfWin).", hotkeyName);
+				return (ResultType)Errors.ValueErrorOccurred("Nonexistent hotkey variant (IfWin).", hotkeyName, ResultType.Fail);
 
 			// Below relies on the fact that either variant or hk.mHookAction (or both) is now non-zero.
 			// Specifically, when an existing hotkey was changed to become an alt-tab hotkey, above, there will sometimes
@@ -1559,7 +1563,7 @@ namespace Keysharp.Core.Common.Keyboard
 				if (isModifier)
 				{
 					if (ht.IsWheelVK(tempVk))
-						throw new ValueError("Unsupported prefix key.", text, ResultType.Fail);
+						return (ResultType)Errors.ValueErrorOccurred("Unsupported prefix key.", text, ResultType.Fail);
 				}
 				else
 
@@ -1599,14 +1603,14 @@ namespace Keysharp.Core.Common.Keyboard
 
 						// It's more appropriate to say "key name" than "hotkey" in this message because it's only
 						// showing the one bad key name when it's a composite hotkey such as "Capslock & y".
-						throw new ValueError("Invalid key name.", text, ResultType.Fail);
+						return (ResultType)Errors.ValueErrorOccurred("Invalid key name.", text, ResultType.Fail);
 					}
 					else
 					{
 						// Block joystick buttons as prefix keys at this stage in case hotkey_type would be overridden
 						// by the suffix key.  For example, the hotkey `Joy1 & LButton::` would reinterpret Joy1 as sc0C.
 						if (isModifier)
-							throw new ValueError("Unsupported prefix key.", text, ResultType.Fail);
+							return (ResultType)Errors.ValueErrorOccurred("Unsupported prefix key.", text, ResultType.Fail);
 
 						++script.HotkeyData.joyHotkeyCount;
 						hotkeyType = HotkeyTypeEnum.Joystick;

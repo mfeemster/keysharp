@@ -14,13 +14,11 @@
 
 		public int Compare(object left, object right)
 		{
-			Error err;
-
 			if (!(left is string s1))
-				return Errors.ErrorOccurred(err = new TypeError($"Left comparison parameter of type {left.GetType()} instead of type string.")) ? throw err : default;
+				return (int)Errors.TypeErrorOccurred(left, typeof(string), DefaultErrorInt);
 
 			if (!(right is string s2))
-				return Errors.ErrorOccurred(err = new TypeError($"Right comparison parameter of type {right.GetType()} instead of type string.")) ? throw err : default;
+				return (int)Errors.TypeErrorOccurred(right, typeof(string), DefaultErrorInt);
 
 			return Compare(s1, s2);
 		}

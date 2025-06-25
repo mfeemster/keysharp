@@ -46,7 +46,6 @@
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown on failure.</exception>
 		public static long RegExMatchCs(object haystack, object needle, ref object outputVar, object startingPos)
 		{
-			Error err;
 			var input = haystack.As();
 			var n = needle.As();
 			var index = startingPos.Ai(1);
@@ -66,7 +65,7 @@
 					}
 					catch (Exception ex)
 					{
-						return Errors.ErrorOccurred(err = new Error("Regular expression compile error", "", ex.Message)) ? throw err : default;
+						return (long)Errors.ErrorOccurred("Regular expression compile error", "", ex.Message, DefaultErrorLong);
 					}
 
 					exp.tag = str;
@@ -95,7 +94,7 @@
 			}
 			catch (Exception ex)
 			{
-				return Errors.ErrorOccurred(err = new Error("Regular expression execution error", "", ex.Message)) ? throw err : default;
+				return (long)Errors.ErrorOccurred("Regular expression execution error", "", ex.Message, DefaultErrorLong);
 			}
 		}
 
@@ -156,7 +155,6 @@
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown on failure.</exception>
 		public static string RegExReplaceCs(object haystack, object needleRegEx, object replacement, ref object outputVarCount, object limit, object startingPos)
 		{
-			Error err;
 			var input = haystack.As();
 			var needle = needleRegEx.As();
 			var replace = replacement.As();
@@ -179,7 +177,7 @@
 					}
 					catch (ArgumentException ex)
 					{
-						return Errors.ErrorOccurred(err = new Error("Regular expression compile error", "", ex.Message)) ? throw err : default;
+						return (string)Errors.ErrorOccurred("Regular expression compile error", "", ex.Message, DefaultErrorString);
 					}
 
 					exp.tag = str;
@@ -217,7 +215,7 @@
 			}
 			catch (Exception ex)
 			{
-				return Errors.ErrorOccurred(err = new Error("Regular expression execution error", "", ex.Message)) ? throw err : default;
+				return (string)Errors.ErrorOccurred("Regular expression execution error", "", ex.Message, DefaultErrorString);
 			}
 		}
 

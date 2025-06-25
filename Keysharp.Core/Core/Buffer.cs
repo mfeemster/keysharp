@@ -133,7 +133,7 @@
 				}
 			}
 
-			return "";
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -171,8 +171,6 @@
 		{
 			get
 			{
-				Error err;
-
 				if (index > 0 && index <= size)
 				{
 					unsafe
@@ -182,7 +180,7 @@
 					}
 				}
 				else
-					return Errors.ErrorOccurred(err = new IndexError($"Invalid index of {index} for buffer of size {Size}.")) ? throw err : default;
+					return (long)Errors.IndexErrorOccurred($"Invalid index of {index} for buffer of size {Size}.", DefaultErrorLong);
 			}
 		}
 	}

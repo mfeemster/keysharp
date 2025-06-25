@@ -47,7 +47,6 @@ namespace Keysharp.Core.Common.Invoke
 
 		protected unsafe void ConvertParameters(object[] parameters)
 		{
-			Error err;
 			Type type = null;
 			int paramCount = parameters.Length;
 			hasReturn = (paramCount & 1) != 0;
@@ -163,7 +162,7 @@ namespace Keysharp.Core.Common.Invoke
 					}
 					else
 					{
-						_ = Errors.ErrorOccurred(err = new TypeError($"Argument had type {tag} but was not a string.")) ? throw err : "";
+						_ = Errors.TypeErrorOccurred(tag, typeof(string));
 						return;
 					}
 
@@ -212,7 +211,7 @@ namespace Keysharp.Core.Common.Invoke
 					}
 					else
 					{
-						_ = Errors.ErrorOccurred(err = new TypeError($"Argument had type {tag} but was not a string.")) ? throw err : "";
+						_ = Errors.TypeErrorOccurred(tag, typeof(string));
 						return;
 					}
 
@@ -414,11 +413,8 @@ namespace Keysharp.Core.Common.Invoke
 
 				InvalidType:
 				// Invalid type tag
-				var ex = new ValueError($"Arg or return type of {tag} is invalid.");
-
-				if (Errors.ErrorOccurred(ex))
-					throw ex;
-
+				_ = Errors.ValueErrorOccurred($"Arg or return type of {tag} is invalid.");
+				
 				TypeDetermined:
 
 				if (isReturn)

@@ -67,7 +67,7 @@ namespace Keysharp.Tests
 					if (!assembly.IsDynamic)
 						dkt[assembly.Location] = assembly;
 				}
-				catch (Exception ex)
+				catch (Exception)
 				{
 				}
 			}

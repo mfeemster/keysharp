@@ -19,7 +19,7 @@ namespace Keysharp.Core
 		public static object DriveEject(object drive = null)
 		{
 			_ = DriveHelper(drive.As(), true);
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -142,8 +142,7 @@ namespace Keysharp.Core
 			}
 			catch (Exception ex)
 			{
-				Error err;
-				return Errors.ErrorOccurred(err = new Error($"Failed to get drive status: {ex.Message}.")) ? throw err : default;
+				return (string)Errors.ErrorOccurred($"Failed to get drive status: {ex.Message}.", DefaultErrorString);
 			}
 		}
 
@@ -169,8 +168,7 @@ namespace Keysharp.Core
 			}
 			catch (Exception e)
 			{
-				Error err;
-				return Errors.ErrorOccurred(err = new Error($"Failed to get CD drive status: {e.Message}.")) ? throw err : default;
+				return (string)Errors.ErrorOccurred($"Failed to get CD drive status: {e.Message}.", DefaultErrorString);
 			}
 		}
 
@@ -192,7 +190,7 @@ namespace Keysharp.Core
 		public static object DriveLock(object drive)
 		{
 			DriveProvider.CreateDrive(new DriveInfo(drive.As())).Lock();
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -208,7 +206,7 @@ namespace Keysharp.Core
 		public static object DriveRetract(object drive)
 		{
 			_ = DriveHelper(drive.As(), false);
-			return null;
+			return DefaultObject;
 		}
 #if WINDOWS
 		/// <summary>
@@ -224,7 +222,7 @@ namespace Keysharp.Core
 			var di = new DriveInfo(drive.As());
 			var d = DriveProvider.CreateDrive(di);
 			d.VolumeLabel = string.IsNullOrEmpty(label) ? "" : label;
-			return null;
+			return DefaultObject;
 		}
 #endif
 		/// <summary>
@@ -235,7 +233,7 @@ namespace Keysharp.Core
 		public static object DriveUnlock(object drive)
 		{
 			DriveProvider.CreateDrive(new DriveInfo(drive.As())).UnLock();
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -253,7 +251,7 @@ namespace Keysharp.Core
 			else
 				d.Retract();
 
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -264,17 +262,16 @@ namespace Keysharp.Core
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if any failure is detected.</exception>
 		private static DriveBase GetRemovableDrive(string dr)
 		{
-			DriveBase drive;
+			DriveBase drive = null;
 
 			if (dr.Length == 0)
 			{
-				Error err;
 				var allDrives = DriveInfo.GetDrives().Where(drive => drive.DriveType == DriveType.CDRom || drive.DriveType == DriveType.Removable).ToList();
 
 				if (allDrives.Count > 0)
 					drive = DriveProvider.CreateDrive(new DriveInfo(allDrives[0].Name));
-
-				return Errors.ErrorOccurred(err = new Error("Failed to find any CDROM or DVD drives.")) ? throw err : default;
+				else
+					_ = Errors.ErrorOccurred("Failed to find any CDROM or DVD drives.");
 			}
 			else
 				drive = DriveProvider.CreateDrive(new DriveInfo(dr));

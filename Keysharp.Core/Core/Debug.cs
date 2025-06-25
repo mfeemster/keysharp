@@ -7,7 +7,7 @@
 			if (A_IsCompiled)
 			{
 				_ = Dialogs.MsgBox("Cannot edit a compiled script.");
-				return null;
+				return DefaultErrorObject;
 			}
 
 			var script = Script.TheScript;
@@ -64,7 +64,7 @@
 				wi.Active = true;
 			}
 
-			return null;
+			return DefaultObject;
 		}
 
 		public static string GetVars(object obj = null)
@@ -224,7 +224,7 @@
 				else
 					script.mainWindow.AddText(text, MainWindow.MainFocusedTab.Debug, false);
 
-			return "";
+			return DefaultObject;
 		}
 
 	}

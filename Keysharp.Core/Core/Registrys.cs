@@ -49,12 +49,11 @@ namespace Keysharp.Core
 					val = string.Empty;
 
 				Conversions.ToRegKey(keyname, true).Item1.DeleteValue(val, true);
-				return null;
+				return DefaultObject;
 			}
 			catch (Exception ex)
 			{
-				Error err;
-				return Errors.ErrorOccurred(err = new OSError(ex, $"Error deleting registry key {keyname} and value {valname}")) ? throw err : default;
+				return Errors.OSErrorOccurred(ex, $"Error deleting registry key {keyname} and value {valname}");
 			}
 		}
 
@@ -80,12 +79,11 @@ namespace Keysharp.Core
 
 				var (reg, comp, key) = Conversions.ToRegRootKey(keyname);
 				reg.DeleteSubKeyTree(key, true);
-				return null;
+				return DefaultObject;
 			}
 			catch (Exception ex)
 			{
-				Error err;
-				return Errors.ErrorOccurred(err = new OSError(ex, $"Error deleting registry key {keyname}")) ? throw err : default;
+				return Errors.OSErrorOccurred(ex, $"Error deleting registry key {keyname}");
 			}
 		}
 
@@ -108,7 +106,6 @@ namespace Keysharp.Core
 		/// <exception cref="OSError">An <see cref="OSError"/> exception is thrown on failure.</exception>
 		public static object RegRead(object keyName = null, object valueName = null, object @default = null)
 		{
-			Error err;
 			var keyname = keyName.As();
 			var valname = valueName.As();
 			var def = @default.As();
@@ -151,14 +148,14 @@ namespace Keysharp.Core
 					if (!string.IsNullOrEmpty(def))
 						return def;
 
-					return Errors.ErrorOccurred(err = new OSError("", $"Registry key {keyname} and value {valname} was not found and no default was specified.")) ? throw err : default;
+					return Errors.OSErrorOccurred("", $"Registry key {keyname} and value {valname} was not found and no default was specified.");
 				}
 
 				return reg;
 			}
 			catch (Exception ex)
 			{
-				return Errors.ErrorOccurred(err = new OSError(ex, $"Error reading registry key {keyname} and value {valname}")) ? throw err : default;
+				return Errors.OSErrorOccurred(ex, $"Error reading registry key {keyname} and value {valname}");
 			}
 		}
 
@@ -238,12 +235,11 @@ namespace Keysharp.Core
 					reg.SetValue(valname, val, regtype);
 				}
 
-				return null;
+				return DefaultObject;
 			}
 			catch (Exception ex)
 			{
-				Error err;
-				return Errors.ErrorOccurred(err = new OSError(ex, $"Error writing registry key {keyname} and value {valname}")) ? throw err : default;
+				return Errors.OSErrorOccurred(ex, $"Error writing registry key {keyname} and value {valname}");
 			}
 		}
 

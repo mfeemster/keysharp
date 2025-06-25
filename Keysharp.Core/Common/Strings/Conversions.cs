@@ -683,7 +683,6 @@ namespace Keysharp.Core.Common.Strings
 
 		internal static (RegistryKey, string, string) ToRegRootKey(string name)
 		{
-			Error err;
 			var computername = "";
 
 			if (name.StartsWith("\\\\"))
@@ -697,15 +696,21 @@ namespace Keysharp.Core.Common.Strings
 			var root = name.Substring(0, index2).ToLowerInvariant();
 			var key = name.Substring(index2 + 1);
 
+			(RegistryKey, string, string) HandleError()//Hack to work around pattern matching switch statements not supporting multiple lines in the default case.
+			{
+				_ = Errors.ValueErrorOccurred($"{root} was not a valid registry type.");
+				return (default, default, default);
+			}
+
 			return root switch
-		{
+			{
 				Keyword_HKey_Local_Machine or Keyword_HKLM => (RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, Registrys.GetRegView()), computername, key),
-					Keyword_HKey_Users or Keyword_HKU => (RegistryKey.OpenBaseKey(RegistryHive.Users, Registrys.GetRegView()), computername, key),
-					Keyword_HKey_Current_User or Keyword_HKCU => (RegistryKey.OpenBaseKey(RegistryHive.CurrentUser, Registrys.GetRegView()), computername, key),
-					Keyword_HKey_Classes_Root or Keyword_HKCR => (RegistryKey.OpenBaseKey(RegistryHive.ClassesRoot, Registrys.GetRegView()), computername, key),
-					Keyword_HKey_Current_Config or Keyword_HKCC => (RegistryKey.OpenBaseKey(RegistryHive.CurrentConfig, Registrys.GetRegView()), computername, key),
-					Keyword_HKey_Performance_Data or Keyword_HKPD => (RegistryKey.OpenBaseKey(RegistryHive.PerformanceData, Registrys.GetRegView()), computername, key),
-					_ => Errors.ErrorOccurred(err = new ValueError($"{root} was not a valid registry type.")) ? throw err : (default, default, default),
+				Keyword_HKey_Users or Keyword_HKU => (RegistryKey.OpenBaseKey(RegistryHive.Users, Registrys.GetRegView()), computername, key),
+				Keyword_HKey_Current_User or Keyword_HKCU => (RegistryKey.OpenBaseKey(RegistryHive.CurrentUser, Registrys.GetRegView()), computername, key),
+				Keyword_HKey_Classes_Root or Keyword_HKCR => (RegistryKey.OpenBaseKey(RegistryHive.ClassesRoot, Registrys.GetRegView()), computername, key),
+				Keyword_HKey_Current_Config or Keyword_HKCC => (RegistryKey.OpenBaseKey(RegistryHive.CurrentConfig, Registrys.GetRegView()), computername, key),
+				Keyword_HKey_Performance_Data or Keyword_HKPD => (RegistryKey.OpenBaseKey(RegistryHive.PerformanceData, Registrys.GetRegView()), computername, key),
+				_ => HandleError()
 			};
 		}
 #endif

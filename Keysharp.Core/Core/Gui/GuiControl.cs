@@ -8,7 +8,7 @@
 			private WeakReference<Gui> gui;
 			private readonly List<IFuncObj> clickHandlers = [];
 			private readonly List<IFuncObj> doubleClickHandlers = [];
-			private bool DpiScaling => Gui.dpiscaling;
+			private bool DpiScaling => ((Gui)Gui).dpiscaling;
 			private System.Windows.Forms.Control _control;
 
 			//Normal event handlers can't be used becaused they need to return a value.
@@ -43,16 +43,7 @@
 
 			public object Focused => _control.Focused;
 
-			public Gui Gui
-			{
-				get
-				{
-					if (gui.TryGetTarget(out var g))
-						return g;
-
-					return null;
-				}
-			}
+			public object Gui => gui.TryGetTarget(out var g) ? g : DefaultErrorObject;
 
 			public long Hwnd => _control.Handle.ToInt64();
 
@@ -86,16 +77,14 @@
 					if (_control is RichTextBox rtf)
 						return KeysharpEnhancements.NormalizeEol(rtf.Rtf);
 
-					return "";
+					return DefaultErrorObject;
 				}
 				set
 				{
-					Error err;
-
 					if (_control is RichTextBox rtf)
 						rtf.Rtf = KeysharpEnhancements.NormalizeEol(value);
 					else
-						_ = Errors.ErrorOccurred(err = new Error($"Can only set RichText on a RichEdit control. Attempted on a {_control.GetType().Name} control.")) ? throw err : "";
+						_ = Errors.ErrorOccurred($"Can only set RichText on a RichEdit control. Attempted on a {_control.GetType().Name} control.");
 				}
 			}
 
@@ -252,7 +241,7 @@
 					else if (_control is KeysharpActiveX kax)
 						return kax.Iid;
 #endif
-					return "";
+					return DefaultObject;
 				}
 				set
 				{
@@ -428,7 +417,7 @@
 
 			public new object __New(params object[] args)
 			{
-				if (args.Length == 0) return null;
+				if (args.Length == 0) return DefaultErrorObject;
 
 				var g = args[0] as Gui;
 				var control = args[1] as System.Windows.Forms.Control;
@@ -444,7 +433,7 @@
 				};
 
 				if (wrap)//Just a holder for the controls in the main window.
-					return "";
+					return DefaultObject;
 
 				_control.Click += _control_Click;
 				_control.DoubleClick += _control_DoubleClick;
@@ -516,7 +505,7 @@
 				_control.KeyDown += _control_KeyDown;
 				_control.MouseDown += _control_MouseDown;
 				dummyHandle = _control.Handle;//Force creation of the handle.
-				return "";
+				return DefaultObject;
 			}
 
 			public object Add(params object[] obj)
@@ -576,7 +565,7 @@
 				else if (_control is KeysharpTabControl tc)
 					tc.TabPages.AddRange(obj.Cast<object>().Select(x => new TabPage(x.Str())).ToArray());
 
-				return null;
+				return DefaultObject;
 			}
 
 			public object Choose(object value)
@@ -618,7 +607,7 @@
 					}
 				}
 
-				return null;
+				return DefaultObject;
 			}
 
 			/// <summary>
@@ -761,7 +750,7 @@
 									   [Optional()][DefaultParameterValue(0)] ref object height)
 			{
 				GetClientPos(_control, DpiScaling, ref x, ref y, ref width, ref height);
-				return null;
+				return DefaultObject;
 			}
 
 			public long GetCount(object mode = null)
@@ -855,7 +844,7 @@
 					return TreeViewHelper.TV_FindNode(tv, id);
 				}
 
-				return null;
+				return DefaultErrorObject;
 			}
 
 			public long GetParent(object itemID)
@@ -867,7 +856,7 @@
 					return node == null || node.Parent == null || !(node.Parent is TreeNode) ? 0L : node.Parent.Handle.ToInt64();
 				}
 
-				return 0L;
+				return DefaultErrorLong;
 			}
 
 			public object GetPos([Optional()][DefaultParameterValue(0)] ref object x,
@@ -876,7 +865,7 @@
 								 [Optional()][DefaultParameterValue(0)] ref object height)
 			{
 				GetPos(_control, DpiScaling, ref x, ref y, ref width, ref height);
-				return null;
+				return DefaultObject;
 			}
 
 			public long GetPrev(object itemID)
@@ -888,7 +877,7 @@
 					return node == null || node.PrevNode == null ? 0L : node.PrevNode.Handle.ToInt64();
 				}
 
-				return 0L;
+				return DefaultErrorLong;
 			}
 
 			public long GetSelection() => _control is KeysharpTreeView tv&& tv.SelectedNode != null ? tv.SelectedNode.Handle.ToInt64() : 0L;
@@ -916,7 +905,7 @@
 						return lv.Items[row].SubItems[col].Text;
 				}
 
-				return "";
+				return DefaultErrorString;
 			}
 
 			public long Insert(object rowNumber, params object[] obj)
@@ -1111,7 +1100,7 @@
 			public object OnCommand(object notifyCode, object callback, object addRemove = null)
 			{
 				HandleOnCommandNotify(notifyCode.Al(), callback, addRemove.Al(1L), ref commandHandlers);
-				return null;
+				return DefaultObject;
 			}
 
 			public object OnEvent(object eventName, object callback, object addRemove = null)
@@ -1121,7 +1110,7 @@
 				var i = addRemove.Al(1);
 
 				if (gui == null || !gui.TryGetTarget(out var g))
-					return null;
+					return DefaultErrorObject;
 
 				var del = Functions.GetFuncObj(h, g.form.eventObj, true);
 
@@ -1239,19 +1228,19 @@
 					}
 				}
 
-				return null;
+				return DefaultObject;
 			}
 
 			public object OnNotify(object notifyCode, object callback, object addRemove = null)
 			{
 				HandleOnCommandNotify(notifyCode.Al(), callback, addRemove.Al(1L), ref notifyHandlers);
-				return null;
+				return DefaultObject;
 			}
 
 			public object Opt(object options)
 			{
 				if (gui == null || !gui.TryGetTarget(out var g))
-					return null;
+					return DefaultErrorObject;
 
 				var opts = Core.Gui.ParseOpt(typename, _control.Text, options.As());
 
@@ -1590,25 +1579,25 @@
 				if (opts.thinborder.HasValue)
 					Reflections.SafeSetProperty(_control, "BorderStyle", opts.thinborder.Value ? BorderStyle.FixedSingle : BorderStyle.None);
 
-				return null;
+				return DefaultObject;
 			}
 
 			public object Redraw()
 			{
 				_control.Refresh();
-				return null;
+				return DefaultObject;
 			}
 
 			public object SetFont(object options = null, object fontName = null)
 			{
 				_control.SetFont(options, fontName);
-				return null;
+				return DefaultObject;
 			}
 
 			public object SetFormat(object format)
 			{
 				(_control as DateTimePicker)?.SetFormat(format);
-				return null;
+				return DefaultObject;
 			}
 
 			public nint SetIcon(object fileName, object iconNumber = null, object partNumber = null)
@@ -1735,7 +1724,7 @@
 					_ = ss.Items.Add(tssl);
 				}
 
-				return null;
+				return DefaultObject;
 			}
 
 			public object SetTabIcon(object tabIndex, object imageIndex)//New function since the original required SendMessage() to do this.
@@ -1751,7 +1740,7 @@
 						tc.TabPages[tabindex].ImageIndex = -1;
 				}
 
-				return null;
+				return DefaultObject;
 			}
 
 			public bool SetText(object newText, object partNumber = null, object style = null)
@@ -1799,7 +1788,7 @@
 				if (_control is KeysharpTabControl tc)
 				{
 					if (gui == null || !gui.TryGetTarget(out var g))
-						return null;
+						return DefaultErrorObject;
 
 					var val = value;
 					var exact = exactMatch.Ab();
@@ -1831,7 +1820,7 @@
 					}
 				}
 
-				return null;
+				return DefaultObject;
 			}
 
 			internal static void GetClientPos(System.Windows.Forms.Control control, bool scaling, ref object x, ref object y, ref object w, ref object h) => GetPosHelper(control, scaling, true, ref x, ref y, ref w, ref h);
@@ -2015,7 +2004,7 @@
 				}
 
 #endif
-				return null;
+				return DefaultObject;
 			}
 
 			internal void Lb_SelectedIndexChanged(object sender, EventArgs e)

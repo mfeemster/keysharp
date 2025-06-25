@@ -45,7 +45,7 @@
 			_capacity = capacity;
 			_buffer = (byte*)NativeMemory.Alloc((nuint)(_capacity * _bytesPerChar));
 			_ = Append(str);
-			return "";
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -148,7 +148,7 @@
 			else
 				*((char*)_buffer) = '\0';
 
-			return "";
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -219,7 +219,7 @@
 		public override string ToString()
 		{
 			if (_buffer == null)
-				return "";
+				return DefaultErrorString;
 
 			if (_bytesPerChar == 1)
 			{

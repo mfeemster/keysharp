@@ -54,7 +54,7 @@
 					persistentTooltipsPositions[id] = null;
 				}
 
-				return "";
+				return DefaultObject;
 			}
 
 			var tooltipInvokerForm = GuiHelper.DialogOwner ?? Form.ActiveForm;
@@ -69,7 +69,7 @@
 			}
 
 			if (tooltipInvokerForm == null)
-				return "";
+				return DefaultObject;
 
 			var handle = 0L;
 			ToolTip tt = null;
@@ -200,7 +200,7 @@
 			var script = Script.TheScript;
 
 			if (script.NoTrayIcon)
-				return null;
+				return DefaultObject;
 
 			if (freeze != null)
 				A_IconFrozen = freeze.Ab();
@@ -243,7 +243,7 @@
 				script.mainWindow.CheckedBeginInvoke(() => script.Tray.Icon = script.mainWindow.Icon = Properties.Resources.Keysharp_ico, false, false);
 			}
 
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -261,10 +261,10 @@
 			var script = Script.TheScript;
 
 			if (script.NoTrayIcon)
-				return null;
+				return DefaultObject;
 
 			if ((bool)A_IconHidden)
-				return null;
+				return DefaultObject;
 
 			if (script.Tray == null)
 				script.CreateTrayMenu();
@@ -281,7 +281,7 @@
 			{
 				script.Tray.Visible = false;
 				script.Tray.Visible = true;
-				return null;
+				return DefaultObject;
 			}
 
 			var icon = ToolTipIcon.None;
@@ -316,7 +316,7 @@
 
 			script.Tray.Visible = true;
 			script.Tray.ShowBalloonTip(1000, _title, _text, icon);//Duration is now ignored by Windows.
-			return null;
+			return DefaultObject;
 		}
 	}
 }

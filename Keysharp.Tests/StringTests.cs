@@ -863,7 +863,7 @@ namespace Keysharp.Tests
 		{
 			var str1 = "Hello, world!";
 			var b64 = "SGVsbG8sIHdvcmxkIQ==";
-			var conv = KeysharpEnhancements.Base64Decode(b64);
+			var conv = (Keysharp.Core.Array)KeysharpEnhancements.Base64Decode(b64);
 			var barr = conv.ToByteArray().ToArray();
 			var str2 = Encoding.UTF8.GetString(barr);
 			Assert.AreEqual(str1, str2);

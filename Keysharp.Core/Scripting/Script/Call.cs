@@ -4,22 +4,20 @@
 	{
 		public static object FindObjectForMethod(object obj, string name, int paramCount)
 		{
-			Error err;
-
 			if (Reflections.FindAndCacheInstanceMethod(obj.GetType(), name, paramCount) is MethodPropertyHolder mph)
 				return obj;
 
 			if (Reflections.FindAndCacheStaticMethod(obj.GetType(), name, paramCount) is MethodPropertyHolder mph2)
-				return null;
+				return null;//This seems like a bug. Wouldn't we want to return the object?
 
 			if (Reflections.FindMethod(name, paramCount) is MethodPropertyHolder mph3)
 				return null;
 
-			return Errors.ErrorOccurred(err = new Error($"Could not find a class, global or built-in method for {name} with param count of {paramCount}.")) ? throw err : default;
+			_ = Errors.ErrorOccurred($"Could not find a class, global or built-in method for {name} with param count of {paramCount}.");
+			return null;
 		}
 		public static (object, object) GetMethodOrProperty(object item, string key, int paramCount)//This has to be public because the script will emit it in Main().
 		{
-			Error err;
 			Type typetouse = null;
 
 			try
@@ -51,7 +49,8 @@
 						else if (map.Set != null && map.Set is IFuncObj ifoset)
 							return (map, ifoset);
 
-						return Errors.ErrorOccurred(err = new Error($"Attempting to get method or property {key} on object {map} failed.")) ? throw err : (null, null);
+						_ = Errors.ErrorOccurred($"Attempting to get method or property {key} on object {map} failed.");
+						return (null, null);
 					}
 				}
 
@@ -93,12 +92,12 @@
 					throw;
 			}
 
-			return Errors.ErrorOccurred(err = new Error($"Attempting to get method or property {key} on object {item} failed.")) ? throw err : (null, null);
+			_ = Errors.ErrorOccurred($"Attempting to get method or property {key} on object {item} failed.");
+			return (null, null);
 		}
 
 		public static object GetPropertyValue(object item, object name, bool throwOnError = true)//Always assume these are not index properties, which we instead handle via method call with get_Item and set_Item.
 		{
-			Error err;
 			Type typetouse = null;
 			var namestr = name.ToString();
 
@@ -158,14 +157,13 @@
 			}
 
 			if (throwOnError)
-				return Errors.ErrorOccurred(err = new Error($"Attempting to get property {namestr} on object {item} failed.")) ? throw err : default;
+				return Errors.ErrorOccurred($"Attempting to get property {namestr} on object {item} failed.");
 			else
-				return null;
+				return DefaultErrorObject;
 		}
 
 		public static object GetStaticMemberValueT<T>(object name)
 		{
-			Error err;
 			var namestr = name.ToString();
 
 			try
@@ -191,23 +189,20 @@
 					throw;
 			}
 
-			return Errors.ErrorOccurred(err = new Error($"Attempting to get static property or field {namestr} failed.")) ? throw err : default;
+			return Errors.ErrorOccurred($"Attempting to get static property or field {namestr} failed.");
 		}
 
 		public static (object, MethodPropertyHolder) GetStaticMethodT<T>(object name, int paramCount)
 		{
-			Error err;
-
 			if (Reflections.FindAndCacheStaticMethod(typeof(T), name.ToString(), paramCount) is MethodPropertyHolder mph && mph.mi != null && mph.IsStaticFunc)
 				return (null, mph);
 
-			return Errors.ErrorOccurred(err = new Error($"Attempting to get static method {name} failed.")) ? throw err : (null, null);
+			_ = Errors.ErrorOccurred($"Attempting to get static method {name} failed.");
+			return (DefaultErrorObject, null);
 		}
 
 		public static object Invoke((object, object) mitup, params object[] parameters)
 		{
-			Error err;
-
 			try
 			{
 				object ret = null;
@@ -266,13 +261,11 @@
 					throw;
 			}
 
-			return Errors.ErrorOccurred(err = new Error($"Attempting to invoke method or property {mitup.Item1},{mitup.Item2} failed.")) ? throw err : default;
+			return Errors.ErrorOccurred($"Attempting to invoke method or property {mitup.Item1},{mitup.Item2} failed.");
 		}
 
 		public static object InvokeWithRefs((object, object) mitup, params object[] parameters)
 		{
-			Error err;
-
 			try
 			{
 				var mph = mitup.Item2 as MethodPropertyHolder;
@@ -363,13 +356,12 @@
 					throw;
 			}
 
-			return Errors.ErrorOccurred(err = new Error($"Attempting to invoke method or property {mitup.Item1},{mitup.Item2} with references failed.")) ? throw err : default;
+			return Errors.ErrorOccurred($"Attempting to invoke method or property {mitup.Item1},{mitup.Item2} with references failed.");
 		}
 		public static (object, object) MakeObjectTuple(object obj0, object obj1) => (obj0, obj1);
 
 		public static object SetPropertyValue(object item, object name, object value)//Always assume these are not index properties, which we instead handle via method call with get_Item and set_Item.
 		{
-			Error err;
 			Type typetouse = null;
 			var namestr = name.ToString();
 
@@ -399,7 +391,7 @@
 						else if (opm.Call == null && opm.Get == null)
 							return opm.Value = value;
 						else
-							return Errors.ErrorOccurred(err = new Error($"Property {namestr} on object {item} is read-only.")) ? throw err : default;
+							return Errors.ErrorOccurred($"Property {namestr} on object {item} is read-only.");
 					}
 				}
 
@@ -442,12 +434,11 @@
 					throw;
 			}
 
-			return Errors.ErrorOccurred(err = new Error($"Attempting to set property {namestr} on object {item} to value {value} failed.")) ? throw err : default;
+			return Errors.ErrorOccurred($"Attempting to set property {namestr} on object {item} to value {value} failed.");
 		}
 
 		public static void SetStaticMemberValueT<T>(object name, object value)
 		{
-			Error err;
 			var namestr = name.ToString();
 
 			try
@@ -471,7 +462,7 @@
 					throw;
 			}
 
-			_ = Errors.ErrorOccurred(err = new Error($"Attempting to set static property or field {namestr} to value {value} failed.")) ? throw err : "";
+			_ = Errors.ErrorOccurred($"Attempting to set static property or field {namestr} to value {value} failed.");
 		}
 	}
 }

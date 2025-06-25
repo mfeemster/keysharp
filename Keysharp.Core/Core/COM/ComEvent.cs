@@ -12,7 +12,6 @@ namespace Keysharp.Core.COM
 
 		internal ComEvent(Dispatcher disp, object sink, bool log)
 		{
-			Error err;
 			var script = Script.TheScript;
 			dispatcher = disp;
 			thisArg = [this];
@@ -66,7 +65,7 @@ namespace Keysharp.Core.COM
 					_ = Debug.OutputDebug($"No suitable methods were found on the passed in object of type {sink.GetType()} which could be used as COM event handlers. No COM event handlers will be triggered.");
 			}
 			else
-				_ = Errors.ErrorOccurred(err = new ValueError($"The passed in sink object of type {sink.GetType()} was not either a string or a Keysharp object.")) ? throw err : "";
+				_ = Errors.ValueErrorOccurred($"The passed in sink object of type {sink.GetType()} was not either a string or a Keysharp object.");
 		}
 
 		public void Unwire()

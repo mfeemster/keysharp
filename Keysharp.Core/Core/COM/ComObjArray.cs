@@ -271,11 +271,10 @@
 		/// </summary>
 		public object MaxIndex(object dim = null)
 		{
-			Error err;
 			int d = dim.Ai(1);
 
 			if (d < 1 || d > _dimensions)
-				return Errors.ErrorOccurred(err = new ValueError($"Argument out of range.")) ? throw err : null;
+				return Errors.ValueErrorOccurred($"Argument out of range.");
 
 			OleAuto.SafeArrayGetUBound(_psa, (uint)d, out int ub);
 			return (long)ub;
@@ -286,11 +285,10 @@
 		/// </summary>
 		public object MinIndex(object dim = null)
 		{
-			Error err;
 			int d = dim.Ai(1);
 
 			if (d < 1 || d > _dimensions)
-				return Errors.ErrorOccurred(err = new ValueError($"Argument out of range.")) ? throw err : null;
+				return Errors.ValueErrorOccurred($"Argument out of range.");
 
 			OleAuto.SafeArrayGetLBound(_psa, (uint)d, out int lb);
 			return (long)lb;

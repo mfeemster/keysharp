@@ -79,7 +79,7 @@
 				ShowIfNeeded();
 				SetTextInternal(HotkeyDefinition.GetHotkeyDescriptions(), MainFocusedTab.Hotkeys, txtHotkeys, true);
 			});
-			return null;
+			return DefaultObject;
 		}
 
 		internal object ShowDebug()
@@ -89,7 +89,7 @@
 				ShowIfNeeded();
 				tcMain.SelectedTab = tpDebug;
 			});
-			return null;
+			return DefaultObject;
 		}
 
 		internal object ShowHistory()
@@ -99,7 +99,7 @@
 				ShowIfNeeded();
 				SetTextInternal(Core.Debug.ListKeyHistory(), MainFocusedTab.History, txtHistory, true);
 			});
-			return null;
+			return DefaultObject;
 		}
 
 		internal object ShowInternalVars(bool showTab)
@@ -117,7 +117,7 @@
 					callingInternalVars = false;
 				}
 			});
-			return null;
+			return DefaultObject;
 		}
 
 		protected override void WndProc(ref Message m)

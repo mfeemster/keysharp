@@ -61,8 +61,37 @@ if (FileExist("./DirCopy3/file3txt"))
 else
   	FileAppend, "fail", "*"
 
-DirMove("./DirCopy3", "./DirCopy3") ;Both of these should just return, do nothing, and not throw because ./DirCopy3 exists.
-DirMove("./DirCopy3", "./DirCopy3", 0)
+threw := false
+
+try
+{
+    DirMove("./DirCopy3", "./DirCopy3") ; Both of these should not throw because ./DirCopy3 already exists.
+}
+catch
+{
+	threw = true;
+}
+
+if (threw)
+	FileAppend, "pass", "*"
+else
+  	FileAppend, "fail", "*"
+
+threw = false;
+try
+{
+    DirMove("./DirCopy3", "./DirCopy3", 0)
+}
+catch
+{
+	threw = true;
+}
+
+if (threw)
+	FileAppend, "pass", "*"
+else
+  	FileAppend, "fail", "*"
+
 DirCopy(dir, "./DirMove")
 DirMove("./DirMove", "./DirCopy3", 1) ;Will copy into because ./DirCopy3 already exists.
 
@@ -81,7 +110,6 @@ if (FileExist("./DirCopy3/DirMove/file2.txt"))
 	FileAppend, "pass", "*"
 else
   	FileAppend, "fail", "*"
-
 
 if (FileExist("./DirCopy3/DirMove/file3txt"))
 	FileAppend, "pass", "*"

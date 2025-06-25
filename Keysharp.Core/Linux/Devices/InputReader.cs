@@ -29,12 +29,12 @@ namespace Keysharp.Core.Linux.Devices
 			}
 			catch (UnauthorizedAccessException ex)
 			{
-				_ = Errors.ErrorOccurred(err = new Error($"The current user doesn't have permission to access input data. Add the user to the input group to correct this error: {ex.Message}"), Keyword_ExitApp) ? throw err : "";
+				_ = Errors.ErrorOccurred($"The current user doesn't have permission to access input data. Add the user to the input group to correct this error: {ex.Message}"), Keyword_ExitApp) ? throw err : "";
 				Faulted = true;
 			}
 			catch (IOException ex)
 			{
-				_ = Errors.ErrorOccurred(err = new Error($"An error occurred while trying to build the stream for {Path}: {ex.Message}"), Keyword_ExitApp) ? throw err : "";
+				_ = Errors.ErrorOccurred($"An error occurred while trying to build the stream for {Path}: {ex.Message}"), Keyword_ExitApp) ? throw err : "";
 				Faulted = true;
 			}
 
@@ -107,7 +107,7 @@ namespace Keysharp.Core.Linux.Devices
 				}
 				catch (IOException ex)
 				{
-					_ = Errors.ErrorOccurred(err = new Error($"Error occured while trying to read from the stream for {Path}: {ex.Message}"), Keyword_ExitApp) ? throw err : "";
+					_ = Errors.ErrorOccurred($"Error occured while trying to read from the stream for {Path}: {ex.Message}"), Keyword_ExitApp) ? throw err : "";
 					Faulted = true;
 				}
 

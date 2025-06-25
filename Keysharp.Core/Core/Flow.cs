@@ -128,7 +128,7 @@ namespace Keysharp.Core
 					_ = Sleep(500);
 			}
 
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -168,7 +168,7 @@ namespace Keysharp.Core
 		public static object OnExit(object callback, object addRemove = null)
 		{
 			Script.TheScript.onExitHandlers.ModifyEventHandlers(Functions.GetFuncObj(callback, null, true), addRemove.Al(1L));
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -202,7 +202,7 @@ namespace Keysharp.Core
 			if (mt == 0 && monitor.funcs.Count == 0)
 				_ = gd.onMessageHandlers.TryRemove(msg, out var _);
 
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -246,7 +246,7 @@ namespace Keysharp.Core
 			while (!script.hasExited && (DateTime.UtcNow - start).TotalSeconds < 5)
 				_ = Sleep(500);
 
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -297,10 +297,7 @@ namespace Keysharp.Core
 				func = f as FuncObj;
 
 				if (func == null)
-				{
-					Error err;
-					return ErrorOccurred(err = new TypeError($"Parameter {f} of type {f.GetType()} was not a string or a function object.")) ? throw err : default;
-				}
+					return (long)Errors.TypeErrorOccurred(f, typeof(nint));
 			}
 
 			if (func != null && script.FlowData.timers.TryGetValue(func, out timer))
@@ -326,7 +323,7 @@ namespace Keysharp.Core
 					timer.Stop();
 					timer.Dispose();
 					script.ExitIfNotPersistent();
-					return null;
+					return DefaultObject;
 				}
 				else
 				{
@@ -345,7 +342,7 @@ namespace Keysharp.Core
 					else
 						timer.Interval = (int)p;
 
-					return null;
+					return DefaultObject;
 				}
 			}
 			else if (p != 0)
@@ -358,7 +355,7 @@ namespace Keysharp.Core
 				timer.Interval = (int)p;
 			}
 			else//They tried to stop a timer that didn't exist
-				return null;
+				return DefaultErrorObject;
 
 			timer.Tick += (ss, ee) =>
 			{
@@ -422,7 +419,7 @@ namespace Keysharp.Core
 				timer.PushToMessageQueue();
 
 			//script.mainWindow.CheckedBeginInvoke(timer.Start, true, true);
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -506,7 +503,7 @@ namespace Keysharp.Core
 				}
 			}
 
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -528,7 +525,7 @@ namespace Keysharp.Core
 			if (!(bool)A_IconFrozen && !script.NoTrayIcon)
 				script.Tray.Icon = fd.suspended ? Properties.Resources.Keysharp_s_ico : Properties.Resources.Keysharp_ico;
 
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -557,7 +554,7 @@ namespace Keysharp.Core
 			else if (string.Compare(sf, "interrupt", true) == 0)
 				script.uninterruptibleTime = value1.Ai(script.uninterruptibleTime);
 
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>

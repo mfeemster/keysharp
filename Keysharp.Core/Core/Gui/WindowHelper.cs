@@ -29,7 +29,10 @@ namespace Keysharp.Core
 				if (hwnd is long ll)
 					ptr = new nint(ll);
 				else
-					throw new ValueError($"Invalid hWnd property type {hwnd.GetType().Name}");
+				{
+					_ = Errors.ValueErrorOccurred($"Invalid hWnd property type {hwnd.GetType().Name}");
+					return (false, 0);
+				}
 
 				return (true, ptr);
 			}

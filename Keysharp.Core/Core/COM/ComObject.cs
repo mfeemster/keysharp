@@ -183,7 +183,7 @@ namespace Keysharp.Core.COM
 		public object __Delete()
 		{
 			Dispose();
-			return null;
+			return DefaultObject;
 		}
 
 		public new object __New(params object[] args)
@@ -201,7 +201,7 @@ namespace Keysharp.Core.COM
 
 			Ptr = co.Ptr;
 			tempCo = co;
-			return "";
+			return DefaultObject;
 		}
 
 		public virtual void Dispose()
@@ -301,7 +301,7 @@ namespace Keysharp.Core.COM
 					nint unk = Marshal.ReadIntPtr(dataPtr);
 
 					if (unk == 0)
-						return null;
+						return DefaultErrorObject;
 
 					return new ComObject
 					{

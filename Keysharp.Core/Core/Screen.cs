@@ -105,7 +105,6 @@ namespace Keysharp.Core
 		/// <exception cref="ValueError ">A <see cref="ValueError "/> exception thrown if an invalid parameter was detected or the image could not be loaded.</exception>
 		public static object ImageSearch(ref object outX, ref object outY, object x1, object y1, object x2, object y2, object imageFile, object options = null)
 		{
-			Error err;
 			var _x1 = x1.Ai();
 			var _y1 = y1.Ai();
 			var _x2 = x2.Ai();
@@ -141,18 +140,17 @@ namespace Keysharp.Core
 			if (opts.TryGetValue("h", out var hopt) && hopt != "")
 				_ = int.TryParse(hopt, out h);
 
-
 			try
 			{
 				bmp = ImageHelper.LoadImage(filename, w, h, iconnumber).Item1;
 			}
 			catch (Exception ex)
 			{
-				return Errors.ErrorOccurred(err = new ValueError(ex.Message)) ? throw err : default;
+				return Errors.ValueErrorOccurred(ex.Message);
 			}
 
 			if (bmp == null)
-				return Errors.ErrorOccurred(err = new ValueError($"Loading icon or bitmap from {filename} failed.")) ? throw err : default;
+				return Errors.ValueErrorOccurred($"Loading icon or bitmap from {filename} failed.");
 
 			Mouse.AdjustRect(ref _x1, ref _y1, ref _x2, ref _y2);
 			var start = new Point(_x1, _y1);
@@ -171,7 +169,7 @@ namespace Keysharp.Core
 			}
 			catch (Exception ex)
 			{
-				return Errors.ErrorOccurred(err = new OSError(ex, "Error searching the screen for an image.")) ? throw err : default;
+				return Errors.OSErrorOccurred(ex, "Error searching the screen for an image.");
 			}
 
 			if (location.HasValue)
@@ -186,7 +184,7 @@ namespace Keysharp.Core
 				outY = "";
 			}
 
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -201,7 +199,6 @@ namespace Keysharp.Core
 		/// <exception cref="OSError">An <see cref="OSError"/> exception is thrown if an internal function call fails.</exception>
 		public static string PixelGetColor(object x, object y, object unsed = null)
 		{
-			Error err;
 			PixelFormat format;
 			int pixel;
 			var _x = x.Ai();
@@ -233,7 +230,7 @@ namespace Keysharp.Core
 			}
 			catch (Exception ex)
 			{
-				return Errors.ErrorOccurred(err = new OSError(ex, $"Error getting the pixel color at {_x},{_y}.")) ? throw err : default;
+				return (string)Errors.OSErrorOccurred(ex, $"Error getting the pixel color at {_x},{_y}.", DefaultErrorString);
 			}
 		}
 
@@ -260,7 +257,6 @@ namespace Keysharp.Core
 		/// <exception cref="OSError">An <see cref="OSError"/> exception is thrown if an internal function call fails.</exception>
 		public static long PixelSearch(ref object outX, ref object outY, object obj0, object obj1, object obj2, object obj3, object obj4, object obj5 = null)
 		{
-			Error err;
 			var x1 = obj0.Ai();
 			var y1 = obj1.Ai();
 			var x2 = obj2.Ai();
@@ -290,7 +286,7 @@ namespace Keysharp.Core
 			}
 			catch (Exception ex)
 			{
-				return Errors.ErrorOccurred(err = new OSError(ex, "Error searching a region of the screen for a pixel color.")) ? throw err : default;
+				return (long)Errors.OSErrorOccurred(ex, "Error searching a region of the screen for a pixel color.", DefaultErrorLong);
 			}
 
 			if (location.HasValue)

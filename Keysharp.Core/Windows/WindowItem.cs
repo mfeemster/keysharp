@@ -191,12 +191,12 @@ namespace Keysharp.Core.Windows
 				_ = WindowsAPI.GetWindowThreadProcessId(Handle, out var pid);
 
 				if (pid == 0)
-					return "";
+					return DefaultErrorString;
 
 				var hProc = WindowsAPI.OpenProcess(ProcessAccessTypes.PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
 
 				if (hProc == 0)
-					return "";
+					return DefaultErrorString;
 
 				try
 				{
@@ -213,7 +213,7 @@ namespace Keysharp.Core.Windows
 					_ = WindowsAPI.CloseHandle(hProc);
 				}
 
-				return "";
+				return DefaultObject;
 			}
 		}
 
@@ -314,12 +314,11 @@ namespace Keysharp.Core.Windows
 				}
 				else
 				{
-					Error err;
 					var alpha = Math.Clamp((int)value.Al(), 0, 255);
 
 					if (WindowsAPI.SetWindowLongPtr(Handle, WindowsAPI.GWL_EXSTYLE, new nint(exstyle | WindowsAPI.WS_EX_LAYERED)) == 0 ||
 							!WindowsAPI.SetLayeredWindowAttributes(Handle, 0, (byte)alpha, WindowsAPI.LWA_ALPHA))
-						_ = Errors.ErrorOccurred(err = new OSError("", $"Could not assign transparency with alpha value of {alpha}.")) ? throw err : "";
+						_ = Errors.OSErrorOccurred("", $"Could not assign transparency with alpha value of {alpha}.");
 				}
 			}
 		}
@@ -336,7 +335,6 @@ namespace Keysharp.Core.Windows
 			}
 			set
 			{
-				Error err;
 				var splits = value.As().Split(SpaceTab, StringSplitOptions.RemoveEmptyEntries);
 				var colorstr = splits[0];
 				var exstyle = WindowsAPI.GetWindowLongPtr(Handle, WindowsAPI.GWL_EXSTYLE);
@@ -344,7 +342,7 @@ namespace Keysharp.Core.Windows
 				if (colorstr.ToLower() == "off")
 				{
 					if (WindowsAPI.SetWindowLongPtr(Handle, WindowsAPI.GWL_EXSTYLE, new nint(exstyle.ToInt64() & ~WindowsAPI.WS_EX_LAYERED)) == 0)
-						_ = Errors.ErrorOccurred(err = new OSError("", $"Could not turn transparency off.")) ? throw err : "";
+						_ = Errors.OSErrorOccurred("", $"Could not turn transparency off.");
 				}
 				else
 				{
@@ -364,10 +362,10 @@ namespace Keysharp.Core.Windows
 							color = Color.FromArgb(color.A, color.B, color.G, color.R);//Flip RGB to BGR.
 
 							if (!WindowsAPI.SetLayeredWindowAttributes(Handle, (uint)color.ToArgb() & 0x00FFFFFF, (byte)val, (uint)flags))//Make top byte of color zero.
-								_ = Errors.ErrorOccurred(err = new OSError("", $"Could not assign transparency color {color} with alpha value of {val}.")) ? throw err : "";
+								_ = Errors.OSErrorOccurred("", $"Could not assign transparency color {color} with alpha value of {val}.");
 						}
 						else
-							_ = Errors.ErrorOccurred(err = new OSError("", $"Could not assign transparency color {color} with alpha value of {val}.")) ? throw err : "";
+							_ = Errors.OSErrorOccurred("", $"Could not assign transparency color {color} with alpha value of {val}.");
 					}
 				}
 			}

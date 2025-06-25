@@ -373,14 +373,14 @@ namespace Keysharp.Core
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if the object is not an <see cref="IEnumerable"/> or an <see cref="IEnumerator"/>.</exception>
 		public static IEnumerator MakeBaseEnumerator(object obj)
 		{
-			Error err;
-
 			if (obj is IEnumerable ie)
 				return ie.GetEnumerator();
 			else if (obj is IEnumerator ie2)
 				return ie2;
 			else
-				return Errors.ErrorOccurred(err = new Error($"Object of type {obj.GetType()} was not of a type that could be converted to an IEnumerator.")) ? throw err : default;
+				_ = Errors.ErrorOccurred($"Object of type {obj.GetType()} was not of a type that could be converted to an IEnumerator.");
+
+			return default;
 		}
 
 		/// <summary>
@@ -401,7 +401,6 @@ namespace Keysharp.Core
 		/// <exception cref="UnsetError">An <see cref="UnsetError"/> exception is thrown if the object is null.</exception>
 		public static KeysharpEnumerator MakeEnumerator(object obj, object count)
 		{
-			Error err;
 			var ct = count.Ai();
 
 			if (obj is I__Enum ienum)
@@ -454,7 +453,8 @@ namespace Keysharp.Core
 					}
 				}
 
-				return Errors.ErrorOccurred(err = new UnsetError($"__Enum() could not be located on the object.")) ? throw err : default;
+				_ = Errors.PropertyErrorOccurred("__Enum() could not be located on the object.");
+				return default;
 			}
 
 #if WINDOWS
@@ -465,9 +465,11 @@ namespace Keysharp.Core
 
 #endif
 			else if (obj is null)
-				return Errors.ErrorOccurred(err = new UnsetError($"Object was null and could not be converted to a KeysharpEnumerator.")) ? throw err : default;
+				_ = Errors.UnsetError("object");
 			else
-				return Errors.ErrorOccurred(err = new Error($"Object of type {obj.GetType()} was not of a type that could be converted to a KeysharpEnumerator.")) ? throw err : default;
+				_ = Errors.TypeErrorOccurred(obj.GetType(), typeof(KeysharpEnumerator));
+
+			return default;
 		}
 
 		/// <summary>
@@ -530,7 +532,7 @@ namespace Keysharp.Core
 			var s = Script.TheScript.LoopData.loopStack.Value;
 
 			if (s.Count == 0)
-				return string.Empty;
+				return DefaultObject;
 
 			foreach (var l in s)
 			{
@@ -581,7 +583,7 @@ namespace Keysharp.Core
 			_ = WindowsAPI.GetShortPathName(filename, buffer, buffer.Capacity);
 			return buffer.ToString();
 #else
-			return "";
+			return DefaultObject;
 #endif
 		}
 

@@ -157,7 +157,7 @@
 				}
 			}
 
-			return "";
+			return DefaultObject;
 		}
 
 		internal KeysharpFile(string filename, FileMode mode, FileAccess access, FileShare share, Encoding encoding, long eol) => _ = __New(filename, mode, access, share, encoding, eol);

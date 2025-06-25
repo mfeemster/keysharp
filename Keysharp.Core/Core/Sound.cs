@@ -42,7 +42,7 @@ namespace Keysharp.Core
 #elif WINDOWS
 			Console.Beep(freq, time);
 #endif
-			return null;
+			return DefaultObject;
 		}
 
 #if WINDOWS
@@ -126,7 +126,7 @@ namespace Keysharp.Core
 			{
 				if (!int.TryParse(file.AsSpan(1), out var n))
 				{
-					return null;
+					return DefaultErrorObject;
 				}
 
 				switch (n)
@@ -155,7 +155,7 @@ namespace Keysharp.Core
 						break;
 				}
 
-				return null;
+				return DefaultObject;
 			}
 
 #endif
@@ -174,12 +174,11 @@ namespace Keysharp.Core
 #else
 				$"aplay --quiet {filename}".Bash(doWait);
 #endif
-				return null;
+				return DefaultObject;
 			}
 			catch (Exception ex)
 			{
-				Error err;
-				return Errors.ErrorOccurred(err = new Error(ex.Message)) ? throw err : default;
+				return Errors.ErrorOccurred(ex.Message);
 			}
 		}
 
@@ -199,7 +198,7 @@ namespace Keysharp.Core
 		public static object SoundSetMute(object newSetting, object component = null, object device = null)
 		{
 			_ = DoSound(SoundCommands.SoundSetMute, newSetting, component, device);
-			return null;
+			return DefaultObject;
 		}
 
 
@@ -219,7 +218,7 @@ namespace Keysharp.Core
 		public static object SoundSetVolume(object newSetting, object component = null, object device = null)
 		{
 			_ = DoSound(SoundCommands.SoundSetVolume, newSetting, component, device);
-			return null;
+			return DefaultObject;
 		}
 
 #if LINUX
@@ -282,7 +281,7 @@ namespace Keysharp.Core
 				}
 
 				if (!found)
-					return Errors.ErrorOccurred(err = new TargetError($"{sinkStr} device {device} not found.")) ? throw err : default;
+					return Errors.TargetErrorOccurred($"{sinkStr} device {device} not found.");
 			}
 
 			sinkStr = sinkStr.ToLower();
@@ -310,7 +309,7 @@ namespace Keysharp.Core
 								var val1 = lines0.AsSpan(val1Index + 1, (firstPercent - val1Index) - 1);
 
 								if (!double.TryParse(val1, out prc1))
-									return Errors.ErrorOccurred(err = new OSError("", $"Could not parse first volume value of {val1}.")) ? throw err : default;
+									return Errors.OSErrorOccurred("", $"Could not parse first volume value of {val1}.");
 							}
 						}
 
@@ -323,7 +322,7 @@ namespace Keysharp.Core
 								var val2 = lines0.AsSpan(val2Index + 1, (lastPercent - val2Index) - 1);
 
 								if (!double.TryParse(val2, out prc2))
-									return Errors.ErrorOccurred(err = new OSError("", $"Could not parse second volume value of {val2}.")) ? throw err : default;
+									return Errors.OSErrorOccurred("", $"Could not parse second volume value of {val2}.");
 							}
 						}
 
@@ -347,12 +346,12 @@ namespace Keysharp.Core
 					else if (int.TryParse(devStr, out var deviceIndex))
 					{
 						if (!devices.TryGetValue(deviceIndex, out var deviceName))
-							return Errors.ErrorOccurred(err = new TargetError($"{sinkStr} device {device} not found.")) ? throw err : default;
+							return Errors.TargetErrorOccurred($"{sinkStr} device {device} not found.");
 						else
 							return deviceName;
 					}
 					else
-						return Errors.ErrorOccurred(err = new TargetError($"{devStr} was not a valid integer.")) ? throw err : default;
+						return Errors.TargetErrorOccurred($"{devStr} was not a valid integer.");
 				}
 
 				case SoundCommands.SoundSetVolume:
@@ -378,7 +377,7 @@ namespace Keysharp.Core
 					break;
 			}
 
-			return "";
+			return DefaultObject;
 		}
 
 #elif WINDOWS
@@ -395,7 +394,6 @@ namespace Keysharp.Core
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if the channels, levels or range cannot not found.</exception>
 		private static object DoSound(SoundCommands soundCmd, object obj0, object obj1 = null, object obj2 = null)
 		{
-			Error err;
 			var soundSet = false;
 			var search = new SoundComponentSearch();
 			var comp = obj0;
@@ -442,7 +440,7 @@ namespace Keysharp.Core
 			var mmDev = GetDevice(dev);
 
 			if (mmDev == null)
-				return Errors.ErrorOccurred(err = new TargetError($"Component {comp}, device {dev} not found.")) ? throw err : default;
+				return Errors.TargetErrorOccurred($"Component {comp}, device {dev} not found.");
 
 			if (comp == null || comp.ToString().Length == 0)//Component is Master (omitted).
 			{
@@ -523,7 +521,7 @@ namespace Keysharp.Core
 
 				if (!FindComponent(mmDev, search))
 				{
-					return Errors.ErrorOccurred(err = new TargetError($"Component {comp} not found.")) ? throw err : default;
+					return Errors.TargetErrorOccurred($"Component {comp} not found.");
 				}
 				else if (search.targetControl == SoundControlType.IID)
 				{
@@ -544,7 +542,7 @@ namespace Keysharp.Core
 					if (comobj is IAudioVolumeLevel avl)
 					{
 						if (avl.GetChannelCount(out var channelCount) < 0)
-							return Errors.ErrorOccurred(err = new Error("Could not get channel count.")) ? throw err : default;
+							return Errors.ErrorOccurred("Could not get channel count.");
 
 						float[] level = new float[3 * channelCount];
 						float f, maxLevel = 0;
@@ -553,7 +551,7 @@ namespace Keysharp.Core
 						{
 							if (avl.GetLevel(ii, out var db) < 0 ||
 									avl.GetLevelRange(ii, out var minDb, out var maxDb, out f) < 0)
-								return Errors.ErrorOccurred(err = new Error("Could not get level or level range.")) ? throw err : default;
+								return Errors.ErrorOccurred("Could not get level or level range.");
 
 							//Convert dB to scalar.
 							var levelMin = 0 + ii;
@@ -851,7 +849,7 @@ namespace Keysharp.Core
 #else
 		private static object DoSound(SoundCommands soundCmd, object obj0, object obj1 = null, object obj2 = null)
 		{
-			return null;
+			return DefaultObject;
 		}
 #endif
 

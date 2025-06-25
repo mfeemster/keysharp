@@ -29,7 +29,7 @@
 				winText,
 				excludeTitle,
 				excludeText);
-			return null;
+			return DefaultObject;
 		}
 
 		public static long ControlChooseString(object @string,
@@ -63,7 +63,7 @@
 				options.As(),
 				excludeTitle,
 				excludeText);
-			return null;
+			return DefaultObject;
 		}
 
 		public static object ControlDeleteItem(object n,
@@ -80,7 +80,7 @@
 				winText,
 				excludeTitle,
 				excludeText);
-			return null;
+			return DefaultObject;
 		}
 
 		public static long ControlFindItem(object @string,
@@ -108,7 +108,7 @@
 				winText,
 				excludeTitle,
 				excludeText);
-			return null;
+			return DefaultObject;
 		}
 
 		public static long ControlGetChecked(object control,
@@ -197,7 +197,7 @@
 											   excludeTitle,
 											   excludeText);
 
-		public static Array ControlGetItems(object control,
+		public static object ControlGetItems(object control,
 											object winTitle = null,
 											object winText = null,
 											object excludeTitle = null,
@@ -228,7 +228,7 @@
 				text,
 				excludeTitle,
 				excludeText);
-			return null;
+			return DefaultObject;
 		}
 
 		public static long ControlGetStyle(object control,
@@ -276,7 +276,7 @@
 				winText,
 				excludeTitle,
 				excludeText);
-			return null;
+			return DefaultObject;
 		}
 
 		public static object ControlHideDropDown(object control,
@@ -291,7 +291,7 @@
 				winText,
 				excludeTitle,
 				excludeText);
-			return null;
+			return DefaultObject;
 		}
 
 		public static object ControlMove(object x = null,
@@ -314,7 +314,7 @@
 				winText,
 				excludeTitle,
 				excludeText);
-			return null;
+			return DefaultObject;
 		}
 
 		public static object ControlSend(object keys,
@@ -331,7 +331,7 @@
 				winText,
 				excludeTitle,
 				excludeText);
-			return null;
+			return DefaultObject;
 		}
 
 		public static object ControlSendText(object keys,
@@ -348,7 +348,7 @@
 				winText,
 				excludeTitle,
 				excludeText);
-			return null;
+			return DefaultObject;
 		}
 
 		public static object ControlSetChecked(object newSetting,
@@ -365,7 +365,7 @@
 				winText,
 				excludeTitle,
 				excludeText);
-			return null;
+			return DefaultObject;
 		}
 
 		public static object ControlSetEnabled(object newSetting,
@@ -382,7 +382,7 @@
 				winText,
 				excludeTitle,
 				excludeText);
-			return null;
+			return DefaultObject;
 		}
 
 		public static object ControlSetExStyle(object value,
@@ -399,7 +399,7 @@
 				winText,
 				excludeTitle,
 				excludeText);
-			return null;
+			return DefaultObject;
 		}
 
 		public static object ControlSetStyle(object value,
@@ -416,7 +416,7 @@
 				winText,
 				excludeTitle,
 				excludeText);
-			return null;
+			return DefaultObject;
 		}
 
 		public static object ControlSetText(object newText,
@@ -433,7 +433,7 @@
 				winText,
 				excludeTitle,
 				excludeText);
-			return null;
+			return DefaultObject;
 		}
 
 		public static object ControlShow(object control,
@@ -448,7 +448,7 @@
 				winText,
 				excludeTitle,
 				excludeText);
-			return null;
+			return DefaultObject;
 		}
 
 		public static object ControlShowDropDown(object control,
@@ -463,7 +463,7 @@
 				winText,
 				excludeTitle,
 				excludeText);
-			return null;
+			return DefaultObject;
 		}
 	}
 }

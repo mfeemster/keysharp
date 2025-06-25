@@ -21,7 +21,7 @@ namespace Keysharp.Core.Windows
 			var length = result.ToInt32();
 
 			if (length == 0)
-				return "";
+				return DefaultObject;
 
 			// Low part is the count. High part is the window type. Mask out the high bits.
 			// The returned text will also be unicode so double the length to accomodate our buffer
@@ -88,7 +88,7 @@ namespace Keysharp.Core.Windows
 			if (ksexc != null)
 				throw ksexc;
 
-			return string.Empty;
+			return DefaultObject;
 		}
 
 		/// <summary>

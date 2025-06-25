@@ -80,13 +80,12 @@ namespace Keysharp.Core.COM
 
 		internal Dispatcher(ComObject? cobj)
 		{
-			Error err;
 			ArgumentNullException.ThrowIfNull(cobj);
 			var container = cobj.Ptr;
 
 			if (container is not ct.IConnectionPointContainer cpContainer)
 			{
-				_ = Errors.ErrorOccurred(err = new ValueError($"The passed in COM object of type {container.GetType()} was not of type IConnectionPointContainer.")) ? throw err : "";
+				_ = Errors.ValueErrorOccurred($"The passed in COM object of type {container.GetType()} was not of type IConnectionPointContainer.");
 				return;
 			}
 
@@ -99,13 +98,13 @@ namespace Keysharp.Core.COM
 				_ = idisp.GetTypeInfo(0, 0, out ti);
 			else
 			{
-				_ = Errors.ErrorOccurred(err = new ValueError($"The passed in COM object of type {container.GetType()} was not of type IProvideClassInfo or IDispatch")) ? throw err : "";
+				_ = Errors.ValueErrorOccurred($"The passed in COM object of type {container.GetType()} was not of type IProvideClassInfo or IDispatch");
 				return;
 			}
 
 			if (ti == null)
 			{
-				_ = Errors.ErrorOccurred(err = new ValueError($"COM TypeInfo was null.")) ? throw err : "";
+				_ = Errors.ValueErrorOccurred($"COM TypeInfo was null.");
 				return;
 			}
 
@@ -151,7 +150,7 @@ namespace Keysharp.Core.COM
 			}
 
 			if (connection == null)
-				_ = Errors.ErrorOccurred(err = new Error("Failed to connect dispatcher to COM interface.")) ? throw err : "";
+				_ = Errors.ErrorOccurred("Failed to connect dispatcher to COM interface.");
 		}
 
 		~Dispatcher()

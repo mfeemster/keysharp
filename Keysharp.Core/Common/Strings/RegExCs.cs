@@ -38,7 +38,7 @@
 									   ]));
 			}
 
-			return "";
+			return DefaultObject;
 		}
 
 		public IEnumerator<(object, object)> GetEnumerator() => new RegExIteratorCs(match, 2);

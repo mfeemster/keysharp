@@ -1,4 +1,5 @@
-﻿using static Keysharp.Core.Types;
+﻿using Keysharp.Core.Common.Invoke;
+using static Keysharp.Core.Types;
 using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
 namespace Keysharp.Tests
@@ -175,7 +176,7 @@ namespace Keysharp.Tests
 		public void MiscObject()
 		{
 			var a = Collections.Array(10, 20, 30);
-			var fo = a.GetMethod("Clear");
+			var fo = (IFuncObj)a.GetMethod("Clear");
 			_ = fo.Call();
 			Assert.AreEqual(0L, a.Length);
 			Assert.IsTrue(new KeysharpObject().HasBase(new Any()) == 1L);

@@ -99,7 +99,7 @@
 			if (!Script.TheScript.IsMainWindowClosing)
 				this.CheckedInvoke(Close, false);
 
-			return null;
+			return DefaultObject;
 		}
 
 		internal void Form_DragDrop(object sender, DragEventArgs e)
@@ -213,7 +213,7 @@
 				sizeHandlers.ModifyEventHandlers(del, i);
 			}
 
-			return null;
+			return DefaultObject;
 		}
 
 		protected override void SetVisibleCore(bool value)
