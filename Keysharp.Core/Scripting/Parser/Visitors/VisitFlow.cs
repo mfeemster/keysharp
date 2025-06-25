@@ -1038,12 +1038,11 @@ namespace Keysharp.Scripting
             ExpressionSyntax switchValueToString;
             if (switchValueExists)
             {
-                switchValueToString = SyntaxFactory.InvocationExpression(
-                    SyntaxFactory.MemberAccessExpression(
-                        SyntaxKind.SimpleMemberAccessExpression,
-                        switchValue,
-                        SyntaxFactory.IdentifierName("ToString")
-                    )
+                switchValueToString = ((InvocationExpressionSyntax)InternalMethods.ForceString)
+                .WithArgumentList(
+                    SyntaxFactory.ArgumentList(
+                        SyntaxFactory.SeparatedList(new[] {
+                            SyntaxFactory.Argument(switchValue) }))
                 );
                 switchValueToString = !switchCaseSense
                     ? SyntaxFactory.InvocationExpression(
@@ -1123,13 +1122,14 @@ namespace Keysharp.Scripting
                     var exprSyntax = (ExpressionSyntax)Visit(expr);
 
                     // Convert the case expression to string
-                    var toStringExpr = switchValueExists ? SyntaxFactory.InvocationExpression(
-                        SyntaxFactory.MemberAccessExpression(
-                            SyntaxKind.SimpleMemberAccessExpression,
-                            exprSyntax,
-                            SyntaxFactory.IdentifierName("ToString")
-                        )
-                    ) : exprSyntax;
+                    var toStringExpr = switchValueExists
+					    ? ((InvocationExpressionSyntax)InternalMethods.ForceString)
+				            .WithArgumentList(
+					            SyntaxFactory.ArgumentList(
+						            SyntaxFactory.SeparatedList(new[] {
+							            SyntaxFactory.Argument(exprSyntax) }))
+				            )
+                        : exprSyntax;
 
                     // Handle case-sensitivity by applying ToLower if switchCaseSense is false
                     var comparisonExpr = !switchCaseSense

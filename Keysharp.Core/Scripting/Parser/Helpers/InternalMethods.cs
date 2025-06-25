@@ -44,6 +44,7 @@ namespace Keysharp.Scripting
 			internal static MethodReference ExitIfNotPersistent => new (typeof(Script), "ExitIfNotPersistent");
 			internal static MethodReference ExtendArray => new (typeof(Script), "ExtendArray");
 			internal static MethodReference ForceBool => new (typeof(Script), "ForceBool");
+			internal static MethodReference ForceString => new(typeof(Script), "ForceString");
 			internal static MethodReference FlattenParam => new (typeof(Script), "FlattenParam");
 			internal static MethodReference Func => new (typeof(Functions), "Func");
             internal static MethodReference Closure => new(typeof(Functions), "Closure");
