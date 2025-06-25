@@ -140,7 +140,37 @@
 
 		public bool IsBuiltIn => mi.DeclaringType.Module.Name.StartsWith("keysharp.core", StringComparison.OrdinalIgnoreCase);
 		public bool IsValid => mi != null && mph != null && mph.callFunc != null;
-		public string Name => mi != null ? mi.Name : "";
+		string _name = null;
+		public string Name {
+			get
+			{
+				if (_name != null)
+					return _name;
+
+				if (mi == null)
+					return _name = "";
+
+				string funcName = mi.Name;
+				var prefixes = new[] { "static", "get_", "set_" };
+				foreach (var p in prefixes)
+				{
+					if (funcName.StartsWith(p, StringComparison.Ordinal))
+						funcName = funcName.Substring(p.Length);
+				}
+
+				if (IsBuiltIn || mi.DeclaringType.Name == Keywords.MainClassName)
+					return _name = funcName;
+
+				string declaringType = mi.DeclaringType.FullName;
+
+				var idx = declaringType.IndexOf(Keywords.MainClassName + "+");
+				string nestedPath = idx < 0
+					? declaringType       // no “Program.” found, just return whole
+					: declaringType.Substring(idx + Keywords.MainClassName.Length + 1);
+
+				return _name = $"{nestedPath.Replace('+', '.')}.{funcName}";
+			}
+		}
 		public new (Type, object) super => (typeof(KeysharpObject), this);
 		internal bool IsVariadic => mph.parameters.Length > 0 && mph.parameters[mph.parameters.Length - 1].ParameterType == typeof(object[]);
 		public long MaxParams => mph.MaxParams;
