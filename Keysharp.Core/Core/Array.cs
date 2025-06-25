@@ -174,7 +174,9 @@
 		/// This can be one of several values:<br/>
 		///     null: creates an empty array.<br/>
 		///     object[]: adds each element to the underlying list.<br/>
-		///     <see cref="List{object}"/>: assigns the list directly to the underlying list.<br/>
+		///     <see cref="List{object}"/>: copies each element of the list to the underlying list.<br/>
+		///     <see cref="Array"/>: adds a single element to the underlying list with that element being the passed in <see cref="Array"/>.<br/>
+		///     <see cref="Map"/>: adds a single element to the underlying list with that element being the passed in <see cref="Map"/>.<br/>
 		///     <see cref="ICollection"/>: adds each element to the underlying list.
 		/// </param>
 		/// <returns>Empty string, unused.</returns>
@@ -193,6 +195,14 @@
 			else if (args.Length == 1 && args[0] is List<object> objlist)
 			{
 				array.AddRange(objlist);
+			}
+			else if (args.Length == 1 && args[0] is Array arr)
+			{
+				array.Add(arr);
+			}
+			else if (args.Length == 1 && args[0] is Map map)
+			{
+				array.Add(map);
 			}
 			else if (args.Length == 1 && args[0] is ICollection c)
 			{
