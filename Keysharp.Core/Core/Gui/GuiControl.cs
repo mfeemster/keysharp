@@ -1106,6 +1106,34 @@
 				return null;
 			}
 
+			public object SetCue(object newText, object showWhenFocused = null)
+			{
+				string txt = newText.ToString();
+				int showOnFocus = ForceBool(showWhenFocused ?? false) ? 1 : 0;
+				if (_control is KeysharpTextBox tb)
+				{
+					if (showOnFocus == 0)
+						tb.PlaceholderText = txt;
+#if WINDOWS
+					else
+					{
+						WindowsAPI.SendMessage(tb.Handle, WindowsAPI.EM_SETCUEBANNER, showOnFocus, txt);
+					}
+#endif
+				}
+#if WINDOWS
+				else if (_control is KeysharpComboBox cb)
+				{
+					// Find the embedded Edit control
+					nint editHandle = WindowsAPI.FindWindowEx(cb.Handle, 0, "Edit", null);
+					if (editHandle != 0)
+					{
+						WindowsAPI.SendMessage(editHandle, WindowsAPI.EM_SETCUEBANNER, showOnFocus, txt);
+					}
+				}
+#endif
+				return null;
+			}
 			public object OnCommand(object notifyCode, object callback, object addRemove = null)
 			{
 				HandleOnCommandNotify(notifyCode.Al(), callback, addRemove.Al(1L), ref commandHandlers);
