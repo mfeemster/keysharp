@@ -209,12 +209,13 @@
 				return (long)Errors.ErrorOccurred($"Invalid DelegateHolder pointer passed to Dispatch.", DefaultErrorLong);
 
 			object val = null;
+			var state = (false, (ThreadVariables)null);
 			_ = Flow.TryCatch(() =>
 			{
 				var script = Script.TheScript;
-				var state = holder._fast
-							? (true, (ThreadVariables)null)
-							: script.Threads.BeginThread();
+
+				if (holder._fast)
+					state = script.Threads.BeginThread();
 
 				if (holder._reference)
 				{
@@ -235,9 +236,9 @@
 					val = holder.funcObj.Call(System.Array.ConvertAll(args, item => (object)item));
 				}
 
-				if (!holder._fast)
+				if (state.Item1)
 					_ = script.Threads.EndThread(state.Item1);
-			}, !holder._fast);
+			}, !state.Item1);
 			return ConvertResult(val);
 		}
 

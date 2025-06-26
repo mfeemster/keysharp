@@ -782,6 +782,7 @@ namespace Keysharp.Core.Windows
 		internal const int EM_SETIMESTATUS = 0x00D8;
 		internal const int EM_GETIMESTATUS = 0x00D9;
 		internal const int EM_ENABLEFEATURE = 0x00DA;
+		internal const int EM_SETCUEBANNER = 0x1501;
 
 		internal const int BM_GETCHECK = 0x00F0;
 		internal const int BM_SETCHECK = 0x00F1;
@@ -1304,12 +1305,12 @@ namespace Keysharp.Core.Windows
 
 		[DllImport(kernel32, CharSet = CharSet.Unicode, SetLastError = true)]
 		internal static extern nint CreateFile(string fileName,
-				uint desiredAccess,
-				uint shareMode,
-				nint attributes,
-				uint creationDisposition,
-				uint flagsAndAttributes,
-				nint templateFile);
+											   uint desiredAccess,
+											   uint shareMode,
+											   nint attributes,
+											   uint creationDisposition,
+											   uint flagsAndAttributes,
+											   nint templateFile);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
 		internal static extern bool DestroyWindow(nint hwnd);
@@ -1700,6 +1701,8 @@ namespace Keysharp.Core.Windows
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
 		internal static extern nint SendMessage(nint hWnd, uint msg, int wParam, int[] lParam);
+		[DllImport(user32, CharSet = CharSet.Unicode)]
+		internal static extern nint SendMessage(nint hWnd, uint msg, int wParam, [MarshalAs(UnmanagedType.LPWStr)] string lParam);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
 		internal static extern nint SendLVColMessage(nint hWnd, uint msg, uint wParam, ref LV_COLUMN lParam);
