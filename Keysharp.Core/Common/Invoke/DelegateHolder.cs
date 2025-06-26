@@ -238,7 +238,7 @@
 					val = holder.funcObj.Call(System.Array.ConvertAll(args, item => (object)item));
 				}
 
-				if (!holder._fast)
+				if (state.Item1 && !holder._fast)
 					_ = script.Threads.EndThread(state.Item1);
 			}, !holder._fast);
 			return ConvertResult(val);
