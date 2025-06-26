@@ -1305,12 +1305,12 @@ namespace Keysharp.Core.Windows
 
 		[DllImport(kernel32, CharSet = CharSet.Unicode, SetLastError = true)]
 		internal static extern nint CreateFile(string fileName,
-				uint desiredAccess,
-				uint shareMode,
-				nint attributes,
-				uint creationDisposition,
-				uint flagsAndAttributes,
-				nint templateFile);
+											   uint desiredAccess,
+											   uint shareMode,
+											   nint attributes,
+											   uint creationDisposition,
+											   uint flagsAndAttributes,
+											   nint templateFile);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
 		internal static extern bool DestroyWindow(nint hwnd);

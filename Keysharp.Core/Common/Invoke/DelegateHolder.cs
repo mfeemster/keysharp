@@ -1,6 +1,4 @@
-﻿using static System.Windows.Forms.AxHost;
-
-namespace Keysharp.Core.Common.Invoke
+﻿namespace Keysharp.Core.Common.Invoke
 {
 	internal class DelegateData
 	{
@@ -215,6 +213,7 @@ namespace Keysharp.Core.Common.Invoke
 			_ = Flow.TryCatch(() =>
 			{
 				var script = Script.TheScript;
+
 				if (holder._fast)
 					state = script.Threads.BeginThread();
 

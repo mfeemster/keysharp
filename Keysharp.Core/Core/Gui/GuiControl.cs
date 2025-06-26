@@ -237,9 +237,11 @@
 						return ss.Text;//Unsure if this is what's intended.
 					else if (_control is KeysharpPictureBox pic)
 						return pic.Filename;
+
 #if WINDOWS
 					else if (_control is KeysharpActiveX kax)
 						return kax.Iid;
+
 #endif
 					return DefaultObject;
 				}
@@ -1096,13 +1098,16 @@
 
 				return null;
 			}
+
 			public object SetCue(object newText, object showWhenFocused = null)
 			{
 				string txt = newText.ToString();
 				int showOnFocus = ForceBool(showWhenFocused ?? false) ? 1 : 0;
+
 				if (_control is KeysharpTextBox tb)
 				{
 #if WINDOWS
+
 					if (!tb.Multiline)
 						WindowsAPI.SendMessage(tb.Handle, WindowsAPI.EM_SETCUEBANNER, showOnFocus, txt);
 					else
@@ -1111,11 +1116,13 @@
 
 					return DefaultObject;
 				}
+
 #if WINDOWS
 				else if (_control is KeysharpComboBox cb)
 				{
 					// Find the embedded Edit control
 					nint editHandle = WindowsAPI.FindWindowEx(cb.Handle, 0, "Edit", null);
+
 					if (editHandle != 0)
 					{
 						WindowsAPI.SendMessage(editHandle, WindowsAPI.EM_SETCUEBANNER, showOnFocus, txt);
@@ -1125,7 +1132,6 @@
 
 				return Errors.ValueErrorOccurred($"Only Edit and ComboBox controls implement this method.");
 #else
-
 				return Errors.ValueErrorOccurred($"Only Edit controls implement this method.");
 #endif
 			}

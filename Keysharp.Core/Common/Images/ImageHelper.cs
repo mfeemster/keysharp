@@ -110,7 +110,6 @@
 						if (long.TryParse(hstr, out var handle))
 						{
 							var ptr = new nint(handle);
-
 #if WINDOWS
 							bmp = GetBitmapFromHBitmap(ptr);
 
