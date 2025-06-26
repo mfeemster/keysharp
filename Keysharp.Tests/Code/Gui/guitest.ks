@@ -345,6 +345,7 @@ MyGui.UseGroup(gb2_TabTwo)
 t2g2t1 := MyGui.Add("Text", "xc+10 yc+20 w200 cBlue", "Password entry")
 t2g2t1.SetFont("s10")
 e1 := MyGui.Add("Edit", "w200 xp y+10 +0x20")
+e1.SetCue("Password cue text", 1) ; Does not disappear when control has keyboard focus
 t2g2t2 := MyGui.Add("Text", "xp y+10 w250 cBlue s10", "Alternate password entry (*)")
 t2g2t2.SetFont("s10")
 e2 := MyGui.Add("Edit", "w200 xp y+10 Password*")
@@ -912,6 +913,7 @@ CZ_Text3 := MyGui.Add("Text", "xc+10 y+5", "Edit control testing")
 CZ_Text3.SetFont("s8 CBlue")
 
 CZ_Edit1 := MyGui.Add("Edit", "xc+10 y+5 w160 h100")
+CZ_Edit1.SetCue("Multi-line edit control cue text")
 
 ; ┌─────────────────────────────────────────────┐
 ; │  ControlZoo - end of Group One, Column One  │
@@ -1074,6 +1076,7 @@ gb2_CZ_Text1 := MyGui.Add("Text", "xc+10 yc+20 w325", "ComboBox Control Tests")
 gb2_CZ_Text1.SetFont("s8 cBlue")
 
 gb2_CZ_CB := MyGui.Add("ComboBox", "xc+10 y+10 r5 Limit", ["Orange","Purple","Fuchsia","Lime","Aqua"])
+gb2_CZ_CB.SetCue("ComboBox cue text")
 gb2_CZ_Btn1 := MyGui.Add("Button", "xc+10 y+5 w80 h25", "Add White")
 gb2_CZ_Btn1.OnEvent("Click", "AddWhite2")
 gb2_CZ_Btn2 := MyGui.Add("Button", "xc+90 yp w80 h25", "Delete White")
