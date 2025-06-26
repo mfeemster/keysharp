@@ -128,7 +128,7 @@ namespace Keysharp.Core
 					_ = Sleep(500);
 			}
 
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -168,7 +168,7 @@ namespace Keysharp.Core
 		public static object OnExit(object callback, object addRemove = null)
 		{
 			Script.TheScript.onExitHandlers.ModifyEventHandlers(Functions.GetFuncObj(callback, null, true), addRemove.Al(1L));
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -202,7 +202,7 @@ namespace Keysharp.Core
 			if (mt == 0 && monitor.funcs.Count == 0)
 				_ = gd.onMessageHandlers.TryRemove(msg, out var _);
 
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -211,7 +211,7 @@ namespace Keysharp.Core
 		/// <param name="persist">If omitted, it defaults to true.<br/>
 		/// If true, the script will be kept running after all threads have exited,<br/>
 		/// even if none of the other conditions for keeping the script running are met.<br/>
-		/// If false, the default behaviour is restored.
+		/// If false, the default behavior is restored.
 		/// </param>
 		/// <returns>The previous persistence boolean value.</returns>
 		public static object Persistent(object persist = null)
@@ -220,6 +220,10 @@ namespace Keysharp.Core
 			var script = Script.TheScript;
 			var old = script.persistent;
 			script.persistent = script.FlowData.persistentValueSetByUser = b;
+
+			if (!script.persistent)
+				Script.TheScript.ExitIfNotPersistent();//Will internally call CheckedBeginInvoke().
+
 			return old;
 		}
 
@@ -242,7 +246,7 @@ namespace Keysharp.Core
 			while (!script.hasExited && (DateTime.UtcNow - start).TotalSeconds < 5)
 				_ = Sleep(500);
 
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -293,10 +297,7 @@ namespace Keysharp.Core
 				func = f as FuncObj;
 
 				if (func == null)
-				{
-					Error err;
-					_ = ErrorOccurred(err = new TypeError($"Parameter {f} of type {f.GetType()} was not a string or a function object.")) ? throw err : "";
-				}
+					return (long)Errors.TypeErrorOccurred(f, typeof(nint));
 			}
 
 			if (func != null && script.FlowData.timers.TryGetValue(func, out timer))
@@ -322,7 +323,7 @@ namespace Keysharp.Core
 					timer.Stop();
 					timer.Dispose();
 					script.ExitIfNotPersistent();
-					return null;
+					return DefaultObject;
 				}
 				else
 				{
@@ -341,7 +342,7 @@ namespace Keysharp.Core
 					else
 						timer.Interval = (int)p;
 
-					return null;
+					return DefaultObject;
 				}
 			}
 			else if (p != 0)
@@ -354,7 +355,7 @@ namespace Keysharp.Core
 				timer.Interval = (int)p;
 			}
 			else//They tried to stop a timer that didn't exist
-				return null;
+				return DefaultErrorObject;
 
 			timer.Tick += (ss, ee) =>
 			{
@@ -418,7 +419,7 @@ namespace Keysharp.Core
 				timer.PushToMessageQueue();
 
 			//script.mainWindow.CheckedBeginInvoke(timer.Start, true, true);
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -427,7 +428,7 @@ namespace Keysharp.Core
 		/// </summary>
 		/// <param name="allowExit"/>If true then UserRequestedExitException is allowed through
 		/// so the program can exit, otherwise all exceptions are discarded.
-		public static void TryDoEvents(bool allowExit = true, bool yieldTick = true)
+		internal static void TryDoEvents(bool allowExit = true, bool yieldTick = true)
 		{
 			var start = yieldTick ? Environment.TickCount : default;
 			Script.TheScript.loopShouldDoEvents = false;
@@ -502,7 +503,7 @@ namespace Keysharp.Core
 				}
 			}
 
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -524,7 +525,7 @@ namespace Keysharp.Core
 			if (!(bool)A_IconFrozen && !script.NoTrayIcon)
 				script.Tray.Icon = fd.suspended ? Properties.Resources.Keysharp_s_ico : Properties.Resources.Keysharp_ico;
 
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -553,7 +554,7 @@ namespace Keysharp.Core
 			else if (string.Compare(sf, "interrupt", true) == 0)
 				script.uninterruptibleTime = value1.Ai(script.uninterruptibleTime);
 
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>

@@ -72,7 +72,7 @@ namespace Keysharp.Core.Windows
 		private readonly int[] ctrls = [/*(int)Keys.ShiftKey, */(int)Keys.LShiftKey, (int)Keys.RShiftKey, /*(int)Keys.ControlKey,*/(int)Keys.LControlKey, (int)Keys.RControlKey, (int)Keys.Menu];
 
 		//private static readonly byte[] state = new byte[VKMAX];
-		private readonly nint hookId = 0;
+		//private readonly nint hookId = 0;
 		private bool thisEventHasBeenLogged, thisEventIsScreenCoord;
 		//private bool dead;
 		//private List<uint> deadKeys;
@@ -1695,7 +1695,7 @@ namespace Keysharp.Core.Windows
 			                return;
 
 			*/
-			ht.Invoke(() => Script.TheScript.playbackHook = SetWindowsHookEx(WH_JOURNALPLAYBACK, PlaybackHandler, GetModuleHandle(Process.GetCurrentProcess().MainModule.ModuleName), 0));
+			_ = ht.Invoke(() => Script.TheScript.playbackHook = SetWindowsHookEx(WH_JOURNALPLAYBACK, PlaybackHandler, GetModuleHandle(Process.GetCurrentProcess().MainModule.ModuleName), 0));
 
 			if (script.playbackHook == 0)
 				return;
@@ -1948,8 +1948,6 @@ namespace Keysharp.Core.Windows
 		{
 			if (keys?.Length == 0)
 				return;
-
-			Error err;
 			var script = Script.TheScript;
 			var origLastPeekTime = script.lastPeekTime;
 			var modsExcludedFromBlind = 0u;// For performance and also to reserve future flexibility, recognize {Blind} only when it's the first item in the string.
@@ -2657,7 +2655,7 @@ namespace Keysharp.Core.Windows
 								}
 								else
 								{
-									_ = Errors.ErrorOccurred(err = new Error($"Could not parse {hexsub} as a hexadecimal number when trying to send a unicode character.")) ? throw err : "";
+									_ = Errors.ErrorOccurred($"Could not parse {hexsub} as a hexadecimal number when trying to send a unicode character.");
 									return;
 								}
 							}
@@ -4124,7 +4122,7 @@ namespace Keysharp.Core.Windows
 
 		    if (!keyboardStateStatus)
 		    {
-		        return "";
+		        return DefaultObject;
 		    }
 
 		    uint virtualKeyCode = (uint)key;

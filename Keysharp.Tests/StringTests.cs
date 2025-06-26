@@ -319,6 +319,54 @@ namespace Keysharp.Tests
 		}
 
 		[Test, Category("String")]
+		public void RegExMatchCs()
+		{
+			object match = null;
+			_ = RegEx.RegExMatchCs("abc123abc456", "abc\\d+", ref match, 1);
+			Assert.AreEqual(((RegExMatchInfoCs)match)[0], "abc123");
+			Assert.AreEqual(((RegExMatchInfoCs)match).Pos(), 1);
+			_ = RegEx.RegExMatchCs("abc123abc456", "456", ref match, -1);
+			Assert.AreEqual(((RegExMatchInfoCs)match)[0], "456");
+			Assert.AreEqual(((RegExMatchInfoCs)match).Pos(), 10);
+			_ = RegEx.RegExMatchCs("abc123abc456", "abc", ref match, -1);
+			Assert.AreEqual(((RegExMatchInfoCs)match)[0], "abc");
+			Assert.AreEqual(((RegExMatchInfoCs)match).Pos(), 7);
+			_ = RegEx.RegExMatchCs("abc123abc456", "abc", ref match, -15);
+			Assert.AreEqual(((RegExMatchInfoCs)match)[0], "abc");
+			Assert.AreEqual(((RegExMatchInfoCs)match).Pos(), 7);
+			_ = RegEx.RegExMatchCs("abc123abc456", "abc", ref match, -5);
+			Assert.AreEqual(((RegExMatchInfoCs)match)[0], "abc");
+			Assert.AreEqual(((RegExMatchInfoCs)match).Pos(), 1);
+			_ = RegEx.RegExMatchCs("abc123abc456", "abc\\d+", ref match, 2);
+			Assert.AreEqual(((RegExMatchInfoCs)match)[0], "abc456");
+			Assert.AreEqual(((RegExMatchInfoCs)match).Pos(), 7);
+			_ = RegEx.RegExMatchCs("abc123123", "123$", ref match, 1);
+			Assert.AreEqual(((RegExMatchInfoCs)match).Pos(), 7);
+			_ = RegEx.RegExMatchCs("xxxabc123xyz", "abc.*xyz", ref match, 1);
+			Assert.AreEqual(((RegExMatchInfoCs)match).Pos(), 4);
+			_ = RegEx.RegExMatchCs("abc123123", "123$", ref match);
+			Assert.AreEqual(((RegExMatchInfoCs)match).Pos(), 7);
+			_ = RegEx.RegExMatchCs("abc123", "i)^ABC", ref match);
+			Assert.AreEqual(((RegExMatchInfoCs)match).Pos(), 1);
+			_ = RegEx.RegExMatchCs("abcXYZ123", "abc(.*)123", ref match);
+			Assert.AreEqual(((RegExMatchInfoCs)match)[1], "XYZ");
+			Assert.AreEqual(((RegExMatchInfoCs)match).Pos(1), 4);
+			_ = RegEx.RegExMatchCs("abcXYZ123", "abc(?<testname>.*)123", ref match);
+			Assert.AreEqual(((RegExMatchInfoCs)match)["testname"], "XYZ");
+			Assert.AreEqual(((RegExMatchInfoCs)match).Pos("testname"), 4);
+			Assert.AreEqual(((RegExMatchInfoCs)match).Name("testname"), "testname");
+			_ = RegEx.RegExMatchCs(@"C:\Foo\Bar\Baz.txt", @"\w+$", ref match);
+			Assert.AreEqual(((RegExMatchInfoCs)match)[0], "txt");
+			Assert.AreEqual(((RegExMatchInfoCs)match).Pos(), 16);
+			_ = RegEx.RegExMatchCs("Michiganroad 72", @"(.*) (?<nr>\d+)", ref match);
+			Assert.AreEqual(((RegExMatchInfoCs)match).Count, 3);
+			Assert.AreEqual(((RegExMatchInfoCs)match)[1], "Michiganroad");
+			Assert.AreEqual(((RegExMatchInfoCs)match).Name(2), "nr");
+			Assert.AreEqual(((RegExMatchInfoCs)match)[2], "72");
+			Assert.IsTrue(TestScript("string-regexmatch-cs", false));
+		}
+
+		[Test, Category("String")]
 		public void RegExReplace()
 		{
 			object outputVarCount = null;
@@ -332,6 +380,22 @@ namespace Keysharp.Tests
 			Assert.AreEqual(match, "");
 			Assert.AreEqual(outputVarCount, 2L);
 			Assert.IsTrue(TestScript("string-regexreplace", true));
+		}
+
+		[Test, Category("String")]
+		public void RegExReplaceCs()
+		{
+			object outputVarCount = null;
+			var match = RegEx.RegExReplaceCs("abc123123", "123$", "xyz");
+			Assert.AreEqual(match, "abc123xyz");
+			match = RegEx.RegExReplaceCs("abc123", "i)^ABC");
+			Assert.AreEqual(match, "123");
+			match = RegEx.RegExReplaceCs("abcXYZ123", "abc(.*)123", "aaa$1zzz");
+			Assert.AreEqual(match, "aaaXYZzzz");
+			match = RegEx.RegExReplaceCs("abc123abc456", "abc\\d+", "", ref outputVarCount);
+			Assert.AreEqual(match, "");
+			Assert.AreEqual(outputVarCount, 2L);
+			Assert.IsTrue(TestScript("string-regexreplace-cs", true));
 		}
 
 		[Test, Category("String")]
@@ -799,7 +863,7 @@ namespace Keysharp.Tests
 		{
 			var str1 = "Hello, world!";
 			var b64 = "SGVsbG8sIHdvcmxkIQ==";
-			var conv = KeysharpEnhancements.Base64Decode(b64);
+			var conv = (Keysharp.Core.Array)KeysharpEnhancements.Base64Decode(b64);
 			var barr = conv.ToByteArray().ToArray();
 			var str2 = Encoding.UTF8.GetString(barr);
 			Assert.AreEqual(str1, str2);

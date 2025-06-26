@@ -42,12 +42,10 @@
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown because this function has no meaning in Keysharp.</exception>
 		public static object ObjGetCapacity(object obj)
 		{
-			Error err;
-
 			if (obj is KeysharpObject kso)
 				return kso.GetCapacity();
 
-			return Errors.ErrorOccurred(err = new Error($"Object of type {obj.GetType()} was not of type KeysharpObject.")) ? throw err : null;
+			return Errors.ErrorOccurred($"Object of type {obj.GetType()} was not of type KeysharpObject.");
 		}
 
 		/// <summary>
@@ -67,12 +65,10 @@
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if obj was not of type KeysharpObject.</exception>
 		public static long ObjOwnPropCount(object obj)
 		{
-			Error err;
-
 			if (obj is KeysharpObject kso)
 				return kso.OwnPropCount();
 
-			return Errors.ErrorOccurred(err = new Error($"Object of type {obj.GetType()} was not of type KeysharpObject.")) ? throw err : 0L;
+			return (long)Errors.ErrorOccurred($"Object of type {obj.GetType()} was not of type KeysharpObject.", DefaultErrorLong);
 		}
 
 		/// <summary>
@@ -84,12 +80,10 @@
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if obj was not of type KeysharpObject.</exception>
 		public static object ObjOwnProps(object obj, object userOnly = null)
 		{
-			Error err;
-
 			if (obj is KeysharpObject kso)
 				return kso.OwnProps(userOnly);
 
-			return Errors.ErrorOccurred(err = new Error($"Object of type {obj.GetType()} was not of type KeysharpObject.")) ? throw err : null;
+			return Errors.ErrorOccurred($"Object of type {obj.GetType()} was not of type KeysharpObject.");
 		}
 
 		/// <summary>
@@ -99,8 +93,7 @@
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown because this function has no meaning in Keysharp.</exception>
 		public static object ObjSetBase(params object[] obj)
 		{
-			Error err;
-			return Errors.ErrorOccurred(err = new Error(Any.BaseExc)) ? throw err : null;
+			return Errors.ErrorOccurred(Any.BaseExc);
 		}
 
 		/// <summary>
@@ -112,12 +105,10 @@
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown because this function has no meaning in Keysharp.</exception>
 		public static object ObjSetCapacity(object obj0, object obj1)
 		{
-			Error err;
-
 			if (obj0 is KeysharpObject kso)
 				return kso.SetCapacity(obj1);
 
-			return Errors.ErrorOccurred(err = new Error($"Object of type {obj0.GetType()} was not of type KeysharpObject.")) ? throw err : null;
+			return Errors.ErrorOccurred($"Object of type {obj0.GetType()} was not of type KeysharpObject.");
 		}
 #if WINDOWS
 		/// <summary>
@@ -168,7 +159,7 @@
 				return dispPtr;
 
 			// If the result was a COM object not a managed one then decrease the ref count bumped by GetObjectForIUnknown
-			Marshal.Release((nint)dispPtr);
+			_ = Marshal.Release((nint)dispPtr);
 			return result;
 		}
 
@@ -193,8 +184,6 @@
 		/// </summary>
 		public static bool ObjFree(object value)
 		{
-			Error err;
-
 			if (value is IPointable ip)
 				value = ip.Ptr;
 
@@ -207,7 +196,7 @@
 				}
 			}
 			else
-				return Errors.ErrorOccurred(err = new TypeError($"Argument of type {value.GetType()} was not a pointer.")) ? throw err : false;
+				_ = Errors.TypeErrorOccurred(value, typeof(nint));
 
 			return false;
 		}

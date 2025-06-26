@@ -140,7 +140,7 @@ namespace Keysharp.Core.Linux
 			get
 			{
 				if (!IsSpecified)
-					return "";
+					return DefaultErrorString;
 
 				var hint = new XClassHintStr();
 
@@ -149,7 +149,7 @@ namespace Keysharp.Core.Linux
 					return hint.resClass;
 				}
 
-				return "";
+				return DefaultObject;
 			}
 		}
 
@@ -425,7 +425,7 @@ namespace Keysharp.Core.Linux
 						return text;
 					}
 					else
-						return "";
+						return DefaultObject;
 				}).ToList();
 			}
 		}
@@ -435,7 +435,7 @@ namespace Keysharp.Core.Linux
 			get
 			{
 				if (!IsSpecified)
-					return "";
+					return DefaultObject;
 
 				if (Control.FromHandle(Handle) is Control ctrl)
 					return ctrl.Text;
@@ -449,7 +449,7 @@ namespace Keysharp.Core.Linux
 					Debug.OutputDebug($"XGetWMName() failed: {ex.Message}");
 				}
 
-				return "";
+				return DefaultObject;
 			}
 			set
 			{

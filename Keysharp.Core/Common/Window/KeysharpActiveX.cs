@@ -45,8 +45,7 @@ namespace Keysharp.Core.Common.Window
 
 				if (result == 0)
 				{
-					Error err;
-					_ = Errors.ErrorOccurred(err = new Error($"Initializing ActiveX with AtlAxWinInit() failed.")) ? throw err : "";
+					_ = Errors.ErrorOccurred($"Initializing ActiveX with AtlAxWinInit() failed.");
 				}
 				else
 					loadedDll = true;

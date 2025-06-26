@@ -1,11 +1,13 @@
 ﻿#if WINDOWS
-
+#nullable enable
 namespace Keysharp.Core.Common.ObjectBase
 {
 	public partial class KeysharpObject : Any, IReflect
 	{
 		#region IReflect implementation
-		FieldInfo IReflect.GetField(string name, BindingFlags bindingAttr)
+		private static Type[] emptyTypes = [];
+
+		FieldInfo? IReflect.GetField(string name, BindingFlags bindingAttr)
 		{
 			if (op != null && op.ContainsKey(name) && op[name].Value != null)
 				return new SimpleFieldInfo(name);
@@ -33,8 +35,8 @@ namespace Keysharp.Core.Common.ObjectBase
 
 			return fields.Values.ToArray();
 		}
-		MethodInfo IReflect.GetMethod(string name, BindingFlags bindingAttr) => ((IReflect)this).GetMethod(name, bindingAttr, null, null, null);
-		MethodInfo IReflect.GetMethod(string name, BindingFlags bindingAttr, Binder binder, Type[] types, ParameterModifier[] modifiers)
+		MethodInfo? IReflect.GetMethod(string name, BindingFlags bindingAttr) => ((IReflect)this).GetMethod(name, bindingAttr, null, emptyTypes, null);
+		MethodInfo? IReflect.GetMethod(string name, BindingFlags bindingAttr, Binder? binder, Type[] types, ParameterModifier[]? modifiers)
 		{
 			if (op != null && (bindingAttr & BindingFlags.Instance) != 0 && op.ContainsKey(name) && op[name].Call is FuncObj fo)
 				return new RenamedMethodInfo(fo.Mph.mi, name);
@@ -92,8 +94,8 @@ namespace Keysharp.Core.Common.ObjectBase
 
 			return props.Values.ToArray();
 		}
-		PropertyInfo IReflect.GetProperty(string name, BindingFlags bindingAttr) => null;
-		PropertyInfo IReflect.GetProperty(string name, BindingFlags bindingAttr, Binder? binder, Type? type, Type[] types, ParameterModifier[]? modifiers) => null;
+		PropertyInfo? IReflect.GetProperty(string name, BindingFlags bindingAttr) => null;
+		PropertyInfo? IReflect.GetProperty(string name, BindingFlags bindingAttr, Binder? binder, Type? type, Type[] types, ParameterModifier[]? modifiers) => null;
 		MemberInfo[] IReflect.GetMember(string name, BindingFlags bindingAttr)
 		{
 			var list = new List<MemberInfo>();
@@ -130,15 +132,15 @@ namespace Keysharp.Core.Common.ObjectBase
 		const int DISPID_DESTRUCTOR = -7;
 		const int DISPID_COLLECT = -8;
 
-		object IReflect.InvokeMember(
+		object? IReflect.InvokeMember(
 			string name,
 			BindingFlags invokeAttr,
-			Binder binder,
-			object target,
-			object[] args,
-			ParameterModifier[] modifiers,
-			System.Globalization.CultureInfo culture,
-			string[] namedParameters)
+			Binder? binder,
+			object? target,
+			object?[]? args,
+			ParameterModifier[]? modifiers,
+			System.Globalization.CultureInfo? culture,
+			string[]? namedParameters)
 		{
 			if (name == null || name == "")
 				throw new Error("Invoked member name can't be empty");
@@ -219,7 +221,7 @@ namespace Keysharp.Core.Common.ObjectBase
 				}
 				else
 				{
-					object value = argCount > 0 ? args[ ^ 1] : null;
+					object? value = argCount > 0 ? args[ ^ 1] : null;
 					var indices = new object[argCount > 0 ? argCount - 1 : 0];
 					System.Array.Copy(args, indices, indices.Length);
 					return Script.SetObject(value, target ?? this, indices);
@@ -257,7 +259,7 @@ namespace Keysharp.Core.Common.ObjectBase
 			// property setter?
 			if ((invokeAttr & BindingFlags.SetProperty) != 0)
 			{
-				Script.SetPropertyValue(target, name, argCount > 0 ? args[0] : null);
+				_ = Script.SetPropertyValue(target, name, argCount > 0 ? args[0] : null);
 				return null;
 			}
 
@@ -293,11 +295,11 @@ namespace Keysharp.Core.Common.ObjectBase
 		=> _inner.ReturnTypeCustomAttributes;
 		public override MethodAttributes Attributes
 		=> _inner.Attributes;
-		public override Type DeclaringType
+		public override Type? DeclaringType
 		=> _inner.DeclaringType;
 		public override RuntimeMethodHandle MethodHandle
 		=> _inner.MethodHandle;
-		public override Type ReflectedType
+		public override Type? ReflectedType
 		=> _inner.ReflectedType;
 		public override MethodImplAttributes GetMethodImplementationFlags()
 		=> _inner.GetMethodImplementationFlags();
@@ -309,9 +311,9 @@ namespace Keysharp.Core.Common.ObjectBase
 		=> _inner.GetCustomAttributes(attrType, inherit);
 		public override bool IsDefined(Type attrType, bool inherit)
 		=> _inner.IsDefined(attrType, inherit);
-		public override object Invoke(object obj, BindingFlags invokeAttr, Binder binder, object[] parameters, CultureInfo culture)
+		public override object? Invoke(object? obj, BindingFlags invokeAttr, Binder? binder, object?[]? parameters, CultureInfo? culture)
 		=> _inner.Invoke(obj, invokeAttr, binder, parameters, culture);
-		public new object Invoke(object obj, object[] parameters)
+		public new object? Invoke(object obj, object[] parameters)
 		=> _inner.Invoke(obj, parameters);
 		public override MethodInfo GetBaseDefinition()
 		=> _inner.GetBaseDefinition();
@@ -339,9 +341,9 @@ namespace Keysharp.Core.Common.ObjectBase
 
 		public override string Name => _name;
 		public override Type FieldType => typeof(object);
-		public override object GetValue(object obj) => Script.GetPropertyValue(obj, _name);
-		public override void SetValue(object obj, object val, BindingFlags bindingFlags, Binder binder, CultureInfo ci)
-		=> Script.SetPropertyValue(obj, _name, new object[] { val });
+		public override object GetValue(object? obj) => Script.GetPropertyValue(obj, _name);
+		public override void SetValue(object? obj, object? val, BindingFlags bindingFlags, Binder? binder, CultureInfo? ci)
+		=> Script.SetPropertyValue(obj, _name, new object?[] { val });
 
 		#region All other members just delegate / throw NotSupported
 		public override FieldAttributes Attributes => FieldAttributes.Public;
@@ -374,12 +376,12 @@ namespace Keysharp.Core.Common.ObjectBase
 		public override bool CanWrite => _canWrite;
 		public override Type PropertyType => typeof(object);
 		public override MethodInfo[] GetAccessors(bool nonPublic) => System.Array.Empty<MethodInfo>();
-		public override MethodInfo GetGetMethod(bool nonPublic) => null;
-		public override MethodInfo GetSetMethod(bool nonPublic) => null;
-		public override object GetValue(object obj, BindingFlags bindingFlags, Binder binder, object[] index, CultureInfo ci)
+		public override MethodInfo? GetGetMethod(bool nonPublic) => null;
+		public override MethodInfo? GetSetMethod(bool nonPublic) => null;
+		public override object GetValue(object? obj, BindingFlags bindingFlags, Binder? binder, object?[]? index, CultureInfo? ci)
 		=> Script.GetPropertyValue(obj, _name);
-		public override void SetValue(object obj, object value, BindingFlags bindingFlags, Binder binder, object[] index, CultureInfo ci)
-		=> Script.SetPropertyValue(obj, _name, new object[] { value });
+		public override void SetValue(object? obj, object? value, BindingFlags bindingFlags, Binder? binder, object?[]? index, CultureInfo? ci)
+		=> Script.SetPropertyValue(obj, _name, new object?[] { value });
 
 		#region Other members stubbed out
 		public override ParameterInfo[] GetIndexParameters() => System.Array.Empty<ParameterInfo>();

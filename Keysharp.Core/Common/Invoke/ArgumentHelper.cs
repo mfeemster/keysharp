@@ -47,7 +47,6 @@ namespace Keysharp.Core.Common.Invoke
 
 		protected unsafe void ConvertParameters(object[] parameters)
 		{
-			Error err;
 			Type type = null;
 			int paramCount = parameters.Length;
 			hasReturn = (paramCount & 1) != 0;
@@ -112,7 +111,7 @@ namespace Keysharp.Core.Common.Invoke
 						object kptr;
 
 						if (c0 == 'p' && ((kso is IPointable ip && (kptr = ip.Ptr) != null)
-								|| (Script.GetPropertyValue(kso, "ptr", false) is object tmp && (kptr = tmp) != null)))
+										  || (Script.GetPropertyValue(kso, "ptr", false) is object tmp && (kptr = tmp) != null)))
 						{
 							if (last == '*' || (char)(last | 0x20) == 'p')
 								outputVars[paramIndex] = (typeof(nint), true);
@@ -126,15 +125,16 @@ namespace Keysharp.Core.Common.Invoke
 				{
 					// Remove the suffix
 					span = span.Slice(0, --len);
-					
 					// Make sure the original object isn't directly modified
 					object temp = 0L;
+
 					if (p is long ll)
 						temp = ll;
 					else if (p is bool bl)
 						temp = bl;
 					else if (p is double d)
 						temp = d;
+
 					p = temp;
 					// Pin the object and store its address
 					SetupPointerArg();
@@ -162,7 +162,7 @@ namespace Keysharp.Core.Common.Invoke
 					}
 					else
 					{
-						_ = Errors.ErrorOccurred(err = new TypeError($"Argument had type {tag} but was not a string.")) ? throw err : "";
+						_ = Errors.TypeErrorOccurred(tag, typeof(string));
 						return;
 					}
 
@@ -211,7 +211,7 @@ namespace Keysharp.Core.Common.Invoke
 					}
 					else
 					{
-						_ = Errors.ErrorOccurred(err = new TypeError($"Argument had type {tag} but was not a string.")) ? throw err : "";
+						_ = Errors.TypeErrorOccurred(tag, typeof(string));
 						return;
 					}
 
@@ -413,11 +413,8 @@ namespace Keysharp.Core.Common.Invoke
 
 				InvalidType:
 				// Invalid type tag
-				var ex = new ValueError($"Arg or return type of {tag} is invalid.");
-
-				if (Errors.ErrorOccurred(ex))
-					throw ex;
-
+				_ = Errors.ValueErrorOccurred($"Arg or return type of {tag} is invalid.");
+				
 				TypeDetermined:
 
 				if (isReturn)
@@ -443,7 +440,7 @@ namespace Keysharp.Core.Common.Invoke
 				{
 					var pUnk = Marshal.GetIUnknownForObject(p);
 					args[n] = pUnk;
-					Marshal.Release(pUnk);
+					_ = Marshal.Release(pUnk);
 				}
 				else
 				{

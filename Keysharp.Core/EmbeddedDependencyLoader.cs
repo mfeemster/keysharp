@@ -22,9 +22,9 @@
 		}
 
 #pragma warning disable CA2255 // The 'ModuleInitializer' attribute should not be used in libraries
-        [ModuleInitializer]
+		[ModuleInitializer]
 #pragma warning restore CA2255 // The 'ModuleInitializer' attribute should not be used in libraries
-        public static void Initialize()
+		public static void Initialize()
 		{
 			if (assemblyResources.Count > 0)
 				AppDomain.CurrentDomain.AssemblyResolve += ResolveFromResources;

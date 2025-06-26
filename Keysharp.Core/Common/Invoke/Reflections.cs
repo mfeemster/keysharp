@@ -433,7 +433,6 @@ namespace Keysharp.Core.Common.Invoke
 
 		internal static long GetPtrProperty(object item, bool throwIfZero = false)
 		{
-			Error err;
 			long addr = 0L;
 
 			if (item is long l)
@@ -446,7 +445,7 @@ namespace Keysharp.Core.Common.Invoke
 				addr = item.Al();
 
 			if (throwIfZero && addr == 0L)
-				return Errors.ErrorOccurred(err = new TypeError($"Argument was of type {item.GetType()}. Type must be integer, Buffer or other object with a Ptr property that is an integer.\"")) ? throw err : 0;
+				return (long)Errors.TypeErrorOccurred(item, typeof(long), DefaultErrorLong);
 
 			return addr;
 		}
@@ -579,7 +578,7 @@ namespace Keysharp.Core.Common.Invoke
 			foreach (var t in types)
 			{
 				yield return t;
-				GetNestedTypes(t.GetNestedTypes());
+				_ = GetNestedTypes(t.GetNestedTypes());
 			}
 		}
 	}

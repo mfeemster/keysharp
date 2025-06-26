@@ -393,10 +393,10 @@
 					script.HwndLastUsed = Hwnd;
 			}
 
-			return "";
+			return DefaultObject;
 		}
 
-		public Control Add(object obj0, object obj1 = null, object obj2 = null)
+		public object Add(object obj0, object obj1 = null, object obj2 = null)
 		{
 			var typeo = obj0.As();
 			var options = obj1.As();
@@ -1197,7 +1197,7 @@
 			}
 
 			if (ctrl == null)
-				return null;
+				return DefaultErrorObject;
 
 			if (opts.name != null)
 				ctrl.Name = opts.name;
@@ -1628,57 +1628,57 @@
 			return holder;
 		}
 
-		public Gui.Control AddActiveX(object obj0 = null, object obj1 = null) => Add(Keyword_ActiveX, obj0, obj1);
+		public object AddActiveX(object obj0 = null, object obj1 = null) => Add(Keyword_ActiveX, obj0, obj1);
 
-		public Gui.Control AddButton(object obj0 = null, object obj1 = null) => Add(Keyword_Button, obj0, obj1);
+		public object AddButton(object obj0 = null, object obj1 = null) => Add(Keyword_Button, obj0, obj1);
 
-		public Gui.Control AddCheckbox(object obj0 = null, object obj1 = null) => Add(Keyword_CheckBox, obj0, obj1);
+		public object AddCheckbox(object obj0 = null, object obj1 = null) => Add(Keyword_CheckBox, obj0, obj1);
 
-		public Gui.Control AddComboBox(object obj0 = null, object obj1 = null) => Add(Keyword_ComboBox, obj0, obj1);
+		public object AddComboBox(object obj0 = null, object obj1 = null) => Add(Keyword_ComboBox, obj0, obj1);
 
-		public Gui.Control AddCustom(object obj0 = null, object obj1 = null) => Add(Keyword_Custom, obj0, obj1);
+		public object AddCustom(object obj0 = null, object obj1 = null) => Add(Keyword_Custom, obj0, obj1);
 
-		public Gui.Control AddDateTime(object obj0 = null, object obj1 = null) => Add(Keyword_DateTime, obj0, obj1);
+		public object AddDateTime(object obj0 = null, object obj1 = null) => Add(Keyword_DateTime, obj0, obj1);
 
-		public Gui.Control AddDDL(object obj0 = null, object obj1 = null) => Add(Keyword_DropDownList, obj0, obj1);
+		public object AddDDL(object obj0 = null, object obj1 = null) => Add(Keyword_DropDownList, obj0, obj1);
 
-		public Gui.Control AddDropDownList(object obj0 = null, object obj1 = null) => Add(Keyword_DropDownList, obj0, obj1);
+		public object AddDropDownList(object obj0 = null, object obj1 = null) => Add(Keyword_DropDownList, obj0, obj1);
 
-		public Gui.Control AddEdit(object obj0 = null, object obj1 = null) => Add(Keyword_Edit, obj0, obj1);
+		public object AddEdit(object obj0 = null, object obj1 = null) => Add(Keyword_Edit, obj0, obj1);
 
-		public Gui.Control AddGroupBox(object obj0 = null, object obj1 = null) => Add(Keyword_GroupBox, obj0, obj1);
+		public object AddGroupBox(object obj0 = null, object obj1 = null) => Add(Keyword_GroupBox, obj0, obj1);
 
-		public Gui.Control AddHotKey(object obj0 = null, object obj1 = null) => Add(Keyword_Hotkey, obj0, obj1);
+		public object AddHotKey(object obj0 = null, object obj1 = null) => Add(Keyword_Hotkey, obj0, obj1);
 
-		public Gui.Control AddLink(object obj0 = null, object obj1 = null) => Add(Keyword_Link, obj0, obj1);
+		public object AddLink(object obj0 = null, object obj1 = null) => Add(Keyword_Link, obj0, obj1);
 
-		public Gui.Control AddListBox(object obj0 = null, object obj1 = null) => Add(Keyword_ListBox, obj0, obj1);
+		public object AddListBox(object obj0 = null, object obj1 = null) => Add(Keyword_ListBox, obj0, obj1);
 
-		public Gui.Control AddListView(object obj0 = null, object obj1 = null) => Add(Keyword_ListView, obj0, obj1);
+		public object AddListView(object obj0 = null, object obj1 = null) => Add(Keyword_ListView, obj0, obj1);
 
-		public Gui.Control AddMonthCal(object obj0 = null, object obj1 = null) => Add(Keyword_MonthCal, obj0, obj1);
+		public object AddMonthCal(object obj0 = null, object obj1 = null) => Add(Keyword_MonthCal, obj0, obj1);
 
-		public Gui.Control AddPic(object obj0 = null, object obj1 = null) => Add(Keyword_Picture, obj0, obj1);
+		public object AddPic(object obj0 = null, object obj1 = null) => Add(Keyword_Picture, obj0, obj1);
 
-		public Gui.Control AddPicture(object obj0 = null, object obj1 = null) => Add(Keyword_Picture, obj0, obj1);
+		public object AddPicture(object obj0 = null, object obj1 = null) => Add(Keyword_Picture, obj0, obj1);
 
-		public Gui.Control AddProgress(object obj0 = null, object obj1 = null) => Add(Keyword_Progress, obj0, obj1);
+		public object AddProgress(object obj0 = null, object obj1 = null) => Add(Keyword_Progress, obj0, obj1);
 
-		public Gui.Control AddRadio(object obj0 = null, object obj1 = null) => Add(Keyword_Radio, obj0, obj1);
+		public object AddRadio(object obj0 = null, object obj1 = null) => Add(Keyword_Radio, obj0, obj1);
 
-		public Gui.Control AddSlider(object obj0 = null, object obj1 = null) => Add(Keyword_Slider, obj0, obj1);
+		public object AddSlider(object obj0 = null, object obj1 = null) => Add(Keyword_Slider, obj0, obj1);
 
-		public Gui.Control AddStatusBar(object obj0 = null, object obj1 = null) => Add(Keyword_StatusBar, obj0, obj1);
+		public object AddStatusBar(object obj0 = null, object obj1 = null) => Add(Keyword_StatusBar, obj0, obj1);
 
-		public Gui.Control AddTab(object obj0 = null, object obj1 = null) => Add(Keyword_Tab, obj0, obj1);
+		public object AddTab(object obj0 = null, object obj1 = null) => Add(Keyword_Tab, obj0, obj1);
 
-		public Gui.Control AddText(object obj0 = null, object obj1 = null) => Add(Keyword_Text, obj0, obj1);
+		public object AddText(object obj0 = null, object obj1 = null) => Add(Keyword_Text, obj0, obj1);
 
-		public Gui.Control AddTreeView(object obj0 = null, object obj1 = null) => Add(Keyword_TreeView, obj0, obj1);
+		public object AddTreeView(object obj0 = null, object obj1 = null) => Add(Keyword_TreeView, obj0, obj1);
 
-		public Gui.Control AddUpDown(object obj0 = null, object obj1 = null) => Add(Keyword_UpDown, obj0, obj1);
+		public object AddUpDown(object obj0 = null, object obj1 = null) => Add(Keyword_UpDown, obj0, obj1);
 
-		public Gui.Control AddWebBrowser(object obj0 = null, object obj1 = null) => Add(Keyword_WebBrowser, obj0, obj1);
+		public object AddWebBrowser(object obj0 = null, object obj1 = null) => Add(Keyword_WebBrowser, obj0, obj1);
 
 		public object Destroy() => form?.Destroy();
 
@@ -1687,7 +1687,7 @@
 #if WINDOWS
 			_ = WindowsAPI.FlashWindow(form.Handle, obj.Ab(true));
 #endif
-			return null;
+			return DefaultObject;
 		}
 
 		public object GetClientPos([Optional()][DefaultParameterValue(0)] ref object x,
@@ -1696,7 +1696,7 @@
 								   [Optional()][DefaultParameterValue(0)] ref object height)
 		{
 			Gui.Control.GetClientPos(form, dpiscaling, ref x, ref y, ref width, ref height);
-			return null;
+			return DefaultObject;
 		}
 
 		public IEnumerator<(object, object)> GetEnumerator() => new GuiControlIterator(controls, 2);
@@ -1704,13 +1704,13 @@
 		public object GetPos([Optional()][DefaultParameterValue(0)] ref object x, [Optional()][DefaultParameterValue(0)] ref object y, [Optional()][DefaultParameterValue(0)] ref object width, [Optional()][DefaultParameterValue(0)] ref object height)
 		{
 			Gui.Control.GetPos(form, dpiscaling, ref x, ref y, ref width, ref height);
-			return null;
+			return DefaultObject;
 		}
 
 		public object Hide()
 		{
 			form.Hide();
-			return null;
+			return DefaultObject;
 		}
 
 		public object Maximize() => form.WindowState = FormWindowState.Maximized;
@@ -1737,7 +1737,7 @@
 			if (height != int.MinValue)
 				form.Height = (int)Math.Round(height * scale);
 
-			return null;
+			return DefaultObject;
 		}
 
 		public object OnEvent(object obj0, object obj1, object obj2 = null) => form.OnEvent(obj0, obj1, obj2);
@@ -1800,7 +1800,7 @@
 				}
 			}
 
-			return null;
+			return DefaultObject;
 		}
 
 		public object Restore() => form.WindowState = FormWindowState.Normal;
@@ -1808,7 +1808,7 @@
 		public object SetFont(object obj0 = null, object obj1 = null)
 		{
 			form.SetFont(obj0, obj1);
-			return null;
+			return DefaultObject;
 		}
 
 		public object Show(object obj = null)
@@ -2005,7 +2005,7 @@
 				form.WindowState = FormWindowState.Normal;
 
 			form.Update();//Required for the very first state of the form to always be displayed.
-			return null;
+			return DefaultObject;
 		}
 
 		public Map Submit(object obj = null)
@@ -2082,7 +2082,7 @@
 			else
 				LastContainer = form;
 
-			return null;
+			return DefaultObject;
 		}
 
 		IEnumerator IEnumerable.GetEnumerator() => new GuiControlIterator(controls, 2);
@@ -2386,7 +2386,6 @@
 		{
 			get
 			{
-				Error err;
 				var handle = controlname.ParseLong(false);
 
 				if (handle.HasValue)
@@ -2429,7 +2428,7 @@
 					}
 				}
 
-				return Errors.ErrorOccurred(err = new Error($"No controls matched the handle, name, text, ClassNN or NetClassNN {controlname}.")) ? throw err : null;
+				return Errors.ErrorOccurred($"No controls matched the handle, name, text, ClassNN or NetClassNN {controlname}.");
 			}
 		}
 

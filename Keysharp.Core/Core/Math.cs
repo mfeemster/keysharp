@@ -8,14 +8,14 @@
 		/// <param name="y">A number representing the Y value.</param>
 		/// <param name="x">A number representing the X value.</param>
 		/// <returns>An angle, θ, measured in radians, such that -(y/x)/2 ≤ θ ≤ (y/x)/2.</returns>
-		public static double ATan2(object y, object x) => Math.Atan2(y is double d0 ? d0 : y.Ad(), x is double d1 ? d1 : x.Ad());
+		public static object ATan2(object y, object x) => Math.Atan2(y is double d0 ? d0 : y.Ad(), x is double d1 ? d1 : x.Ad());
 
 		/// <summary>
 		/// Returns the hyperbolic cosine of the specified angle.
 		/// </summary>
 		/// <param name="n">An angle, measured in radians.</param>
 		/// <returns>The hyperbolic cosine of <paramref name="n"/>.</returns>
-		public static double Cosh(object obj) => Math.Cosh(obj is double d ? d : obj.Ad());
+		public static object Cosh(object obj) => Math.Cosh(obj is double d ? d : obj.Ad());
 
 		/// <summary>
 		/// Reinitializes the random number generator for the current thread with the specified numerical seed.
@@ -24,7 +24,7 @@
 		public static object RandomSeed(object obj)
 		{
 			Script.TheScript.Threads.GetThreadVariables().RandomGenerator = new Random(obj.Ai());
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -32,14 +32,14 @@
 		/// </summary>
 		/// <param name="n">An angle, measured in radians.</param>
 		/// <returns>The hyperbolic sine of <paramref name="n"/>.</returns>
-		public static double Sinh(object obj) => Math.Sinh(obj is double d ? d : obj.Ad());
+		public static object Sinh(object obj) => Math.Sinh(obj is double d ? d : obj.Ad());
 
 		/// <summary>
 		/// Returns the hyperbolic tangent of the specified angle.
 		/// </summary>
 		/// <param name="n">An angle, measured in radians.</param>
 		/// <returns>The hyperbolic tangent of <paramref name="n"/>.</returns>
-		public static double Tanh(object obj) => Math.Tanh(obj is double d ? d : obj.Ad());
+		public static object Tanh(object obj) => Math.Tanh(obj is double d ? d : obj.Ad());
 	}
 
 	/// <summary>
@@ -60,7 +60,7 @@
 		/// </summary>
 		/// <param name="number">Any number.</param>
 		/// <returns>The magnitude of <paramref name="n"/>.</returns>
-		public static double Abs(object number) => Math.Abs(number is double d ? d : number.Ad());
+		public static object Abs(object number) => Math.Abs(number is double d ? d : number.Ad());
 
 		/// <summary>
 		/// Returns the angle whose cosine is the specified number.
@@ -68,13 +68,12 @@
 		/// <param name="number">A number representing a cosine, where -1 ≤ <paramref name="n"/> ≤ 1.</param>
 		/// <returns>An angle, θ, measured in radians, such that 0 ≤ θ ≤ π.</returns>
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if the argument was not between -1 and 1.</exception>
-		public static double ACos(object number)
+		public static object ACos(object number)
 		{
-			Error err;
 			var n = number is double d ? d : number.Ad();
 
 			if (n < -1 || n > 1)
-				return Errors.ErrorOccurred(err = new Error($"ACos() argument of {n} was not between -1 and 1.")) ? throw err : 0.0;
+				return Errors.ErrorOccurred($"ACos() argument of {n} was not between -1 and 1.");
 
 			return Math.Acos(n);
 		}
@@ -85,13 +84,12 @@
 		/// <param name="number">A number representing a sine, where -1 ≤ <paramref name="n"/> ≤ 1.</param>
 		/// <returns>An angle, θ, measured in radians, such that -π/2 ≤ θ ≤ π/2.</returns>
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if the argument was not between -1 and 1.</exception>
-		public static double ASin(object number)
+		public static object ASin(object number)
 		{
-			Error err;
 			var n = number is double d ? d : number.Ad();
 
 			if (n < -1 || n > 1)
-				return Errors.ErrorOccurred(err = new Error($"ASin() argument of {n} was not between -1 and 1.")) ? throw err : 0.0;
+				return Errors.ErrorOccurred($"ASin() argument of {n} was not between -1 and 1.");
 
 			return Math.Asin(n);
 		}
@@ -101,21 +99,21 @@
 		/// </summary>
 		/// <param name="number">A number representing a tangent.</param>
 		/// <returns>An angle, θ, measured in radians, such that -π/2 ≤ θ ≤ π/2.</returns>
-		public static double ATan(object number) => Math.Atan(number is double d ? d : number.Ad());
+		public static object ATan(object number) => Math.Atan(number is double d ? d : number.Ad());
 
 		/// <summary>
 		/// Returns the specified number rounded up to the nearest integer.
 		/// </summary>
 		/// <param name="number">A number.</param>
 		/// <returns>The smallest integer greater than or equal to <paramref name="n"/>.</returns>
-		public static long Ceil(object number) => (long)Math.Ceiling(number is double d ? d : number.Ad());
+		public static object Ceil(object number) => (long)Math.Ceiling(number is double d ? d : number.Ad());
 
 		/// <summary>
 		/// Returns the cosine of the specified angle.
 		/// </summary>
 		/// <param name="number">An angle, measured in radians.</param>
 		/// <returns>The cosine of <paramref name="n"/>.</returns>
-		public static double Cos(object number) => Math.Cos(number is double d ? d : number.Ad());
+		public static object Cos(object number) => Math.Cos(number is double d ? d : number.Ad());
 
 		/// <summary>
 		/// Adds or subtracts time from a date-time value.
@@ -164,7 +162,7 @@
 		/// <returns>The difference between the two timestamps, in the units specified by timeUnits.<br/>
 		/// If dateTime1 is earlier than dateTime2, a negative number is returned.
 		/// </returns>
-		public static long DateDiff(object dateTime1, object dateTime2, object timeUnits)
+		public static object DateDiff(object dateTime1, object dateTime2, object timeUnits)
 		{
 			var s1 = dateTime1.As();
 			var s2 = dateTime2.As();
@@ -197,7 +195,7 @@
 		/// </summary>
 		/// <param name="n">A number specifying a power.</param>
 		/// <returns>The number <c>e</c> raised to the power <paramref name="n"/>.</returns>
-		public static double Exp(object n) => Math.Exp(n is double d ? d : n.Ad());
+		public static object Exp(object n) => Math.Exp(n is double d ? d : n.Ad());
 
 		/// <summary>
 		/// Converts a numeric string or integer value to a floating-point number.
@@ -205,16 +203,15 @@
 		/// <param name="value">The object to be converted</param>
 		/// <returns>The converted value as a double.</returns>
 		/// <exception cref="TypeError">A <see cref="TypeError"/> exception is thrown if the conversion failed.</exception>
-		public static double Float(object value)
+		public static object Float(object value)
 		{
 			try
 			{
 				return value is double d ? d : value.Ad();
 			}
-			catch (Exception e)
+			catch (Exception)
 			{
-				Error err;
-				return Errors.ErrorOccurred(err = new TypeError(e.Message)) ? throw err : 0.0;
+				return Errors.TypeErrorOccurred(value, typeof(double));
 			}
 		}
 
@@ -223,7 +220,7 @@
 		/// </summary>
 		/// <param name="number">A number.</param>
 		/// <returns>The largest integer less than or equal to <paramref name="n"/>.</returns>
-		public static long Floor(object number) => (long)Math.Floor(number is double d ? d : number.Ad());
+		public static object Floor(object number) => (long)Math.Floor(number is double d ? d : number.Ad());
 
 		/// <summary>
 		/// Converts a numeric string or floating-point value to an integer.
@@ -231,16 +228,15 @@
 		/// <param name="value">The object to be converted</param>
 		/// <returns>The converted value as a long.</returns>
 		/// <exception cref="TypeError">A <see cref="TypeError"/> exception is thrown if the conversion failed.</exception>
-		public static long Integer(object value)
+		public static object Integer(object value)
 		{
 			try
 			{
 				return (long)(value is double d ? d : value.Ad());
 			}
-			catch (Exception e)
+			catch (Exception)
 			{
-				Error err;
-				return Errors.ErrorOccurred(err = new TypeError(e.Message)) ? throw err : 0L;
+				return Errors.TypeErrorOccurred(value, typeof(double));
 			}
 		}
 
@@ -250,13 +246,12 @@
 		/// <param name="number">A number whose logarithm is to be found.</param>
 		/// <returns>The natural logarithm of <paramref name="n"/> if it's positive, else an exception is thrown.</returns>
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if the argument was negative.</exception>
-		public static double Ln(object number)
+		public static object Ln(object number)
 		{
-			Error err;
 			var n = number is double d ? d : number.Ad();
 
 			if (n < 0)
-				return Errors.ErrorOccurred(err = new Error($"Ln() argument {n} was negative.")) ? throw err : 0.0;
+				return Errors.ErrorOccurred($"Ln() argument {n} was negative.");
 
 			return Math.Log(n);
 		}
@@ -268,14 +263,13 @@
 		/// <param name="base">The base of the logarithm. If unspecified this is <c>10</c>.</param>
 		/// <returns>The logarithm of <paramref name="n"/> to base <paramref name="b"/> if n is positive, else an exception is thrown.</returns>
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if the argument was negative.</exception>
-		public static double Log(object number, object @base = null)
+		public static object Log(object number, object @base = null)
 		{
-			Error err;
 			var n = number.Ad(double.MinValue);
 			var b = @base.Ad(double.MinValue);
 
 			if (n < 0)
-				return Errors.ErrorOccurred(err = new Error($"Log() argument {n} was negative.")) ? throw err : 0.0;
+				return Errors.ErrorOccurred($"Log() argument {n} was negative.");
 
 			if (b != double.MinValue)
 				return b == 10 ? Math.Log10(n) : Math.Log(n, b);
@@ -353,7 +347,7 @@
 					return max;
 			}
 
-			return string.Empty;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -424,7 +418,7 @@
 					return min;
 			}
 
-			return string.Empty;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -437,15 +431,13 @@
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if the divisor == 0.</exception>
 		public static object Mod(object dividend, object divisor)
 		{
-			Error err;
-
 			if (dividend is double || divisor is double)
 			{
 				var divid = dividend.Ad();
 				var divis = divisor.Ad();
 
 				if (divis == 0)
-					return Errors.ErrorOccurred(err = new Error($"Mod() divisor argument of {divis} was 0.")) ? throw err : null;
+					return Errors.ErrorOccurred($"Mod() divisor argument of {divis} was 0.");
 
 				//return Math.IEEERemainder(dividend, divisor);
 				return divid % divis;
@@ -456,7 +448,7 @@
 				var divis = divisor.Al();
 
 				if (divis == 0)
-					return Errors.ErrorOccurred(err = new Error($"Mod() divisor argument of {divis} was 0.")) ? throw err : null;
+					return Errors.ErrorOccurred($"Mod() divisor argument of {divis} was 0.");
 
 				return divid % divis;
 			}
@@ -478,7 +470,6 @@
 				return d;
 			else
 			{
-				Error err;
 				var s = value.As();
 
 				if (s.Contains('.'))
@@ -496,7 +487,7 @@
 						return val.Value;
 				}
 
-				return Errors.ErrorOccurred(err = new TypeError($"Could not convert {s} to an integer or float.")) ? throw err : null;
+				return Errors.TypeErrorOccurred(s, typeof(double));
 			}
 		}
 
@@ -575,7 +566,7 @@
 		/// </summary>
 		/// <param name="number">An angle, measured in radians.</param>
 		/// <returns>The sine of <paramref name="n"/>.</returns>
-		public static double Sin(object number) => Math.Sin(number is double d ? d : number.Ad());
+		public static object Sin(object number) => Math.Sin(number is double d ? d : number.Ad());
 
 		/// <summary>
 		/// Returns the square root of a specified number.
@@ -583,13 +574,12 @@
 		/// <param name="number">A number.</param>
 		/// <returns>The positive square root of <paramref name="n"/> if positive, else an exception is thrown.</returns>
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if the value is negative.</exception>
-		public static double Sqrt(object number)
+		public static object Sqrt(object number)
 		{
-			Error err;
 			var n = number is double d ? d : number.Ad();
 
 			if (n < 0)
-				return Errors.ErrorOccurred(err = new Error($"Sqrt() argument of {n} was negative.")) ? throw err : 0.0;
+				return Errors.ErrorOccurred($"Sqrt() argument of {n} was negative.");
 
 			return Math.Sqrt(n);
 		}
@@ -599,6 +589,6 @@
 		/// </summary>
 		/// <param name="number">An angle, measured in radians.</param>
 		/// <returns>The tangent of <paramref name="n"/>.</returns>
-		public static double Tan(object number) => Math.Tan(number is double d ? d : number.Ad());
+		public static object Tan(object number) => Math.Tan(number is double d ? d : number.Ad());
 	}
 }

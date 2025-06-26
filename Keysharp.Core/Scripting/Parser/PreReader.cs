@@ -100,7 +100,7 @@ namespace Keysharp.Scripting
 			};
 			includePath = name = File.Exists(name) ? Path.GetFullPath(name) : "./";
 
-			if (Env.FindCommandLineArgVal("include") is string cmdinc)
+			if (Env.FindCommandLineArgVal("include") is string cmdinc && cmdinc.Length > 0)
 			{
 				if (File.Exists(cmdinc))
 				{

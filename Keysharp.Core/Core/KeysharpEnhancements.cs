@@ -16,7 +16,7 @@
 		public static object Collect()
 		{
 			GC.Collect();
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -68,7 +68,7 @@
 				Clipboard.SetImage(new Bitmap(bmp));
 			}
 
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -83,6 +83,6 @@
 		/// Shows the debug tab in the main window.
 		/// Using this anywhere in the script will also make it persistent.
 		/// </summary>
-		public static void ShowDebug() => Script.TheScript.mainWindow?.ShowDebug();
+		public static object ShowDebug() => Script.TheScript.mainWindow?.ShowDebug();
 	}
 }

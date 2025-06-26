@@ -265,7 +265,7 @@
 					}
 
 #endif
-					return "";
+					return DefaultObject;
 				};
 				var ret = "";
 				Script.TheScript.mainWindow.CheckedInvoke(() => ret = act(), true);
@@ -354,7 +354,6 @@
 
 			set
 			{
-				Error err;
 				var val = CoordModeType.Client;
 				var script = Script.TheScript;
 
@@ -364,7 +363,7 @@
 					val = cmt;
 				else
 				{
-					_ = Errors.ErrorOccurred(err = new ValueError($"{value} was not in the correct format for coordinate modes.")) ? throw err : "";
+					_ = Errors.ValueErrorOccurred($"{value} was not in the correct format for coordinate modes.");
 					return;
 				}
 
@@ -385,7 +384,6 @@
 
 			set
 			{
-				Error err;
 				var val = CoordModeType.Client;
 				var script = Script.TheScript;
 
@@ -395,7 +393,7 @@
 					val = cmt;
 				else
 				{
-					_ = Errors.ErrorOccurred(err = new ValueError($"{value} was not in the correct format for coordinate modes.")) ? throw err : "";
+					_ = Errors.ValueErrorOccurred($"{value} was not in the correct format for coordinate modes.");
 					return;
 				}
 
@@ -416,7 +414,6 @@
 
 			set
 			{
-				Error err;
 				var val = CoordModeType.Client;
 				var script = Script.TheScript;
 
@@ -426,7 +423,7 @@
 					val = cmt;
 				else
 				{
-					_ = Errors.ErrorOccurred(err = new ValueError($"{value} was not in the correct format for coordinate modes.")) ? throw err : "";
+					_ = Errors.ValueErrorOccurred($"{value} was not in the correct format for coordinate modes.");
 					return;
 				}
 
@@ -447,7 +444,6 @@
 
 			set
 			{
-				Error err;
 				var val = CoordModeType.Client;
 				var script = Script.TheScript;
 
@@ -457,7 +453,7 @@
 					val = cmt;
 				else
 				{
-					_ = Errors.ErrorOccurred(err = new ValueError($"{value} was not in the correct format for coordinate modes.")) ? throw err : "";
+					_ = Errors.ValueErrorOccurred($"{value} was not in the correct format for coordinate modes.");
 					return;
 				}
 
@@ -478,7 +474,6 @@
 
 			set
 			{
-				Error err;
 				var val = CoordModeType.Client;
 				var script = Script.TheScript;
 
@@ -488,7 +483,7 @@
 					val = cmt;
 				else
 				{
-					_ = Errors.ErrorOccurred(err = new ValueError($"{value} was not in the correct format for coordinate modes.")) ? throw err : "";
+					_ = Errors.ValueErrorOccurred($"{value} was not in the correct format for coordinate modes.");
 					return;
 				}
 
@@ -968,7 +963,7 @@
 				var s = Loops.LoopStack;
 
 				if (s.Count == 0)
-					return null;
+					return DefaultObject;
 
 				foreach (var l in s)//Since loop is a stack, this goes in reverse order, which is what we want.
 				{
@@ -980,14 +975,14 @@
 						case LoopType.Each:
 						{
 							if (!(l.result is object[] so))
-								return null;
+								return DefaultObject;
 
-							return so.Length > 0 ? so[1] : null;
+							return so.Length > 0 ? so[1] : DefaultObject;
 						}
 					}
 				}
 
-				return null;
+				return DefaultObject;
 			}
 		}
 
@@ -1033,7 +1028,7 @@
 					return val;
 				}
 
-				return "";
+				return DefaultObject;
 			}
 		}
 
@@ -1110,7 +1105,7 @@
 					return isrel ? Path.GetRelativePath(A_WorkingDir as string, fullpath) : fullpath;
 				}
 
-				return "";
+				return DefaultObject;
 			}
 		}
 
@@ -1199,7 +1194,7 @@
 				var s = Loops.LoopStack;
 
 				if (s.Count == 0)
-					return null;
+					return DefaultObject;
 
 				foreach (var l in s)
 				{
@@ -1208,7 +1203,7 @@
 						case LoopType.Each:
 						{
 							if (!(l.result is object[]))
-								return null;
+								return DefaultObject;
 
 							var pair = (object[])l.result;
 							return pair[0];
@@ -1216,7 +1211,7 @@
 					}
 				}
 
-				return null;
+				return DefaultObject;
 			}
 		}
 
@@ -1230,7 +1225,7 @@
 				var s = Loops.LoopStack;
 
 				if (s.Count == 0)
-					return "";
+					return DefaultObject;
 
 				foreach (var l in s)
 				{
@@ -1241,7 +1236,7 @@
 					}
 				}
 
-				return "";
+				return DefaultObject;
 			}
 		}
 
@@ -1258,7 +1253,7 @@
 				var s = Loops.LoopStack;
 
 				if (s.Count == 0)
-					return "";
+					return DefaultObject;
 
 				foreach (var l in s)//Since loop is a stack, this goes in reverse order, which is what we want.
 				{
@@ -1269,7 +1264,7 @@
 					}
 				}
 
-				return "";
+				return DefaultObject;
 			}
 		}
 
@@ -1284,7 +1279,7 @@
 				var s = Loops.LoopStack;
 
 				if (s.Count == 0)
-					return "";
+					return DefaultObject;
 
 				foreach (var l in s)
 				{
@@ -1295,7 +1290,7 @@
 					}
 				}
 
-				return "";
+				return DefaultObject;
 			}
 		}
 
@@ -1310,7 +1305,7 @@
 				var s = Loops.LoopStack;
 
 				if (s.Count == 0)
-					return "";
+					return DefaultObject;
 
 				foreach (var l in s)
 				{
@@ -1321,7 +1316,7 @@
 					}
 				}
 
-				return "";
+				return DefaultObject;
 			}
 		}
 
@@ -1337,7 +1332,7 @@
 				var s = Loops.LoopStack;
 
 				if (s.Count == 0)
-					return "";
+					return DefaultObject;
 
 				foreach (var l in s)
 				{
@@ -1348,7 +1343,7 @@
 					}
 				}
 
-				return "";
+				return DefaultObject;
 			}
 		}
 
@@ -2057,7 +2052,7 @@
 					return "Screen";
 
 				default:
-					return "";
+					return DefaultErrorString;
 			}
 		}
 	}
@@ -2189,7 +2184,7 @@
 						return "Invalid";
 
 					default:
-						return "";
+						return DefaultErrorString;
 				}
 			}
 		}
@@ -2213,7 +2208,7 @@
 						return "RawText";
 
 					default:
-						return "";
+						return DefaultErrorString;
 				}
 			}
 		}
@@ -2245,7 +2240,7 @@
 				var s = Loops.LoopStack;
 
 				if (s.Count == 0)
-					return "";
+					return DefaultObject;
 
 				foreach (var l in s)
 				{
@@ -2256,7 +2251,7 @@
 					}
 				}
 
-				return "";
+				return DefaultObject;
 			}
 		}
 #endif

@@ -10,18 +10,17 @@
 		/// <param name="str">The Base64 string to decode.</param>
 		/// <returns>The decoded Base64 string as an <see cref="Array"/> of bytes.</returns>
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if any errors occur.</exception>
-		public static Array Base64Decode(object str)
+		public static object Base64Decode(object str)
 		{
 			var s = str.As();
 
 			try
 			{
-				return new (Convert.FromBase64String(s));
+				return new Keysharp.Core.Array(Convert.FromBase64String(s));
 			}
 			catch (Exception ex)
 			{
-				Error err;
-				return Errors.ErrorOccurred(err = new Error($"Error decoding base64 string {s}: {ex.Message}")) ? throw err : null;
+				return Errors.ErrorOccurred($"Error decoding base64 string {s}: {ex.Message}");
 			}
 		}
 
@@ -512,7 +511,7 @@
 			}
 			catch
 			{
-				output = null;
+				output = DefaultErrorString;
 			}
 
 			return output;
@@ -551,7 +550,6 @@
 		/// </returns>
 		public static long InStr(object haystack, object needle, object caseSensitive = null, object startingPos = null, object occurrence = null)
 		{
-			Error err;
 			var input = haystack.As();
 			var n = needle.As();
 			var comp = caseSensitive.As();
@@ -561,7 +559,7 @@
 			if (input != "")
 			{
 				if (string.IsNullOrEmpty(n))
-					return Errors.ErrorOccurred(err = new ValueError("Search string was empty")) ? throw err : 0L;
+					return (long)Errors.ValueErrorOccurred("Search string was empty", null, DefaultErrorLong);
 
 				// 1   1 =>  1
 				//-1   1 =>  1
@@ -999,7 +997,6 @@
 		/// <exception cref="ValueError">Throws a <see cref="ValueError"/> exception if source is null or 0.</exception>
 		public static string StrGet(object source, object length = null, object enc = null)
 		{
-			Error err;
 			var hasThree = enc != null;
 			var encoding = Encoding.Unicode;
 			var len = long.MinValue;
@@ -1030,9 +1027,9 @@
 				ptr = new nint(l);
 
 			if (ptr == 0)
-				return Errors.ErrorOccurred(err = new ValueError($"No valid address or buffer was supplied.")) ? throw err : null;
+				return (string)Errors.ValueErrorOccurred($"No valid address or buffer was supplied.", null, DefaultErrorString);
 			else if (ptr.ToInt64() < 65536)//65536 is the first valid address.
-				return Errors.ErrorOccurred(err = new ValueError($"Address of {ptr.ToInt64()} is less than the minimum allowable address of 65,536.")) ? throw err : null;
+				return (string)Errors.ValueErrorOccurred($"Address of {ptr.ToInt64()} is less than the minimum allowable address of 65,536.", null, DefaultErrorString);
 
 			unsafe
 			{
@@ -1117,7 +1114,7 @@
 			var gch = GCHandle.Alloc(value, GCHandleType.Pinned);
 			var ptr = gch.AddrOfPinnedObject();
 			var script = Script.TheScript;
-			
+
 			if (script.StringsData.gcHandles.Remove(ptr, out var oldGch))
 				oldGch.Free();
 
@@ -1147,7 +1144,6 @@
 		{
 			if (obj.Length > 0 && obj[0] != null)
 			{
-				Error err;
 				var s = obj.As(0) + char.MinValue;
 				var len = long.MinValue;
 				var encoding = Encoding.Unicode;
@@ -1170,7 +1166,7 @@
 				}
 
 				if (ptr != 0 && ptr.ToInt64() < 65536)//65536 is the first valid address.
-					return Errors.ErrorOccurred(err = new ValueError($"Address of {ptr.ToInt64()} is less than the minimum allowable address of 65,536.")) ? throw err : 0L;
+					return (long)Errors.ValueErrorOccurred($"Address of {ptr.ToInt64()} is less than the minimum allowable address of 65,536.", null, DefaultErrorLong);
 
 				if (obj.Length > 2 && !obj[2].IsNullOrEmpty())
 				{
@@ -1187,7 +1183,7 @@
 					encoding = Files.GetEncoding(obj[3]);
 
 				var bytes = encoding.GetBytes(s);
-				int written;
+				var written = 0;
 
 				if (buf != null)
 				{
@@ -1198,12 +1194,12 @@
 					if (len != long.MinValue)
 					{
 						if (len < s.Length || len < bytes.Length)
-							return Errors.ErrorOccurred(err = new ValueError($"Length of {len} is less than the either the length of the string {s.Length} or the length of the converted buffer {bytes.Length}.")) ? throw err : 0L;
+							return (long)Errors.ValueErrorOccurred($"Length of {len} is less than the either the length of the string {s.Length} or the length of the converted buffer {bytes.Length}.", null, DefaultErrorLong);
 					}
 					else if (ptr == 0)
 						return bytes.Length;
 					else if (len == long.MinValue)
-						return Errors.ErrorOccurred(err = new ValueError($"Length was not specified, but the target was not a Buffer object. Either pass a Buffer, or specify a Length.")) ? throw err : 0L;
+						return (long)Errors.ValueErrorOccurred($"Length was not specified, but the target was not a Buffer object. Either pass a Buffer, or specify a Length.", null, DefaultErrorLong);
 
 					written = Math.Min((int)len, bytes.Length);
 				}
@@ -1266,7 +1262,7 @@
 			if (IsAnyBlank(input, search))
 			{
 				outputVarCount = 0L;
-				return "";
+				return DefaultObject;
 			}
 
 			var compare = Conversions.ParseComparisonOption(comp);
@@ -1422,7 +1418,7 @@
 			var length = obj2.Ai(int.MaxValue);
 
 			if (string.IsNullOrEmpty(input) || length == 0 || index == 0 || index > input.Length)
-				return string.Empty;
+				return DefaultObject;
 
 			if (index < 1)
 			{
@@ -1437,7 +1433,7 @@
 			var d = input.Length - index;
 
 			if (index < 0 || index >= input.Length)
-				return string.Empty;
+				return DefaultObject;
 
 			if (length < 0)
 				length += d;
@@ -1462,11 +1458,7 @@
 		/// <param name="obj">Ignored</param>
 		/// <returns>None</returns>
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown because this function has no meaning in Keysharp.</exception>
-		public static long VarSetStrCapacity(params object[] obj)
-		{
-			Error err;
-			return Errors.ErrorOccurred(err = new Error("VarSetStrCapacity() not supported or necessary.")) ? throw err : 0L;
-		}
+		public static long VarSetStrCapacity(params object[] obj) => (long)Errors.ErrorOccurred("VarSetStrCapacity() not supported or necessary.", DefaultErrorLong);
 
 		/// <summary>
 		/// Compares two version strings.
@@ -1483,7 +1475,6 @@
 		{
 			var v1 = versionA.As().Trim();
 			var v2 = versionB.As().Trim();
-			Error err;
 			Exception ex;
 
 			//SemVer cannot parse a C# style version string with 4 numbers.
@@ -1516,7 +1507,7 @@
 				{
 				}
 
-				return Errors.ErrorOccurred(err = new Error($"Error comparing version {versionA} to {versionB}: {ex.Message}")) ? throw err : 0L;
+				return (long)Errors.ErrorOccurred($"Error comparing version {versionA} to {versionB}: {ex.Message}", DefaultErrorLong);
 			}
 			else if (v2.StartsWith('<'))
 			{
@@ -1543,7 +1534,7 @@
 				{
 				}
 
-				return Errors.ErrorOccurred(err = new Error($"Error comparing version {versionA} to {versionB}: {ex.Message}")) ? throw err : 0L;
+				return (long)Errors.ErrorOccurred($"Error comparing version {versionA} to {versionB}: {ex.Message}", DefaultErrorLong);
 			}
 			else if (v2.StartsWith(">="))
 			{
@@ -1570,7 +1561,7 @@
 				{
 				}
 
-				return Errors.ErrorOccurred(err = new Error($"Error comparing version {versionA} to {versionB}: {ex.Message}")) ? throw err : 0L;
+				return (long)Errors.ErrorOccurred($"Error comparing version {versionA} to {versionB}: {ex.Message}", DefaultErrorLong);
 			}
 			else if (v2.StartsWith('>'))
 			{
@@ -1597,7 +1588,7 @@
 				{
 				}
 
-				return Errors.ErrorOccurred(err = new Error($"Error comparing version {versionA} to {versionB}: {ex.Message}")) ? throw err : 0L;
+				return (long)Errors.ErrorOccurred($"Error comparing version {versionA} to {versionB}: {ex.Message}", DefaultErrorLong);
 			}
 			else if (v2.StartsWith('='))
 			{
@@ -1624,7 +1615,7 @@
 				{
 				}
 
-				return Errors.ErrorOccurred(err = new Error($"Error comparing version {versionA} to {versionB}: {ex.Message}")) ? throw err : 0L;
+				return (long)Errors.ErrorOccurred($"Error comparing version {versionA} to {versionB}: {ex.Message}", DefaultErrorLong);
 			}
 			else
 			{
@@ -1649,7 +1640,7 @@
 				{
 				}
 
-				return Errors.ErrorOccurred(err = new Error($"Error comparing version {versionA} to {versionB}: {ex.Message}")) ? throw err : 0L;
+				return (long)Errors.ErrorOccurred($"Error comparing version {versionA} to {versionB}: {ex.Message}", DefaultErrorLong);
 			}
 		}
 

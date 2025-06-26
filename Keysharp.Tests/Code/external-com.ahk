@@ -115,6 +115,52 @@ if (NumGet(var, 0, "int") == 3)
 else
 	FileAppend, "fail", "*"
 
+arr := ComObjArray(VT_VARIANT:=12, 3)
+arr[0] := "Auto"
+arr[1] := "Hot"
+arr[2] := "key"
+t := ""
+Loop arr.MaxIndex() + 1
+	t .= arr[A_Index-1]
+
+if (t == "AutoHotkey")
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+arr := ComObjArray(VT_VARIANT:=12, 3, 4)
+
+; Get the number of dimensions:
+dim := DllCall("oleaut32\SafeArrayGetDim", "ptr", ComObjValue(arr))
+
+if (dim == arr.Dimensions)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+if (arr.MinIndex(1) == 0 && arr.MaxIndex(1) == 2)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+if (arr.MinIndex(2) == 0 && arr.MaxIndex(2) == 3)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+Loop 3 {
+	x := A_Index-1
+	Loop 4 {
+		y := A_Index-1
+		arr[x, y] := x * y
+	}
+}
+
+if (arr[2, 3] == 6)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
 script := "
 (
 	x := ComObjActive("{6B39CAA1-A320-4CB0-8DB4-352AA81E460E}")

@@ -118,7 +118,7 @@ namespace Keysharp.Scripting
 				return $"{code}()";
 			}
 
-			return "";
+			return DefaultObject;
 		}
 
 		private bool ParseCommand(CodeLine codeLine, string code)

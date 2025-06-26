@@ -1988,20 +1988,18 @@ namespace Keysharp.Core.Windows
 			_ = SendMessageTimeout(hwnd, WM_GETTEXTLENGTH, 0, 0, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, timeout, out var length);
 
 			if (length == 0)
-				return null;
+				return DefaultErrorString;
 
 			var val = length.ToInt32();
 
 			if (val == 0)
-			{
-				return null;
-			}
+				return DefaultErrorString;
 
 			var sb = new StringBuilder(val + 1);  // leave room for null-terminator
 			nint ptr = 0;
 
 			if (SendMessageTimeout(hwnd, WM_GETTEXT, sb.Capacity, sb, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, timeout, out ptr) == 0)
-				return null;
+				return DefaultErrorString;
 
 			return sb.ToString();
 		}

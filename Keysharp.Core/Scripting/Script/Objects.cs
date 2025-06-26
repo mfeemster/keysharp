@@ -10,7 +10,6 @@ namespace Keysharp.Scripting
 		public static object SetObject(object value, object item, params object[] index)
 		{
 			object key = null;
-			Error err;
 			Type typetouse;
 
 			try
@@ -53,19 +52,9 @@ namespace Keysharp.Scripting
 						array.SetValue(value, actualindex);
 						return value;
 					}
-
-#if WINDOWS
-					else if (item is ComObjArray coa)
-					{
-						var actualindex = position < 0 ? coa.array.Length + position : position;
-						coa.array.SetValue(value, actualindex);
-						return value;
-					}
-
-#endif
 					else if (item == null)
 					{
-						return null;
+						return DefaultErrorObject;
 					}
 				}
 				else if (index.Length == 0)//Access brackets with no index like item.prop[] := 123.
@@ -78,14 +67,19 @@ namespace Keysharp.Scripting
 				}
 
 #if WINDOWS
-
-				if (item is ComObject co)
+				if (item is ComObjArray coa)
+				{
+					coa[index] = value;
+					return value;
+				}
+				else if (item is ComObject co)
 				{
 					if (index.Length == 0 && (co.vt & VarEnum.VT_BYREF) != 0)
 					{
 						ComObject.WriteVariant(co.Ptr.Al(), co.vt, value);
 						return value;
-					} else
+					}
+					else
 						return co.Ptr.GetType().InvokeMember("Item", BindingFlags.SetProperty, null, co.Ptr, index.Concat([value]));
 				}
 				else if (Marshal.IsComObject(item))
@@ -102,7 +96,7 @@ namespace Keysharp.Scripting
 						return value;
 					}
 					else
-						return Errors.ErrorOccurred(err = new ValueError($"{il1} arguments were passed to a set indexer which only accepts {mph2.ParamLength}.")) ? throw err : null;
+						return Errors.ValueErrorOccurred($"{il1} arguments were passed to a set indexer which only accepts {mph2.ParamLength}.");
 				}
 			}
 			catch (Exception e)
@@ -113,12 +107,11 @@ namespace Keysharp.Scripting
 					throw;
 			}
 
-			return Errors.ErrorOccurred(err = new Error($"Attempting to set index {key} of object {item} to value {value} failed.")) ? throw err : null;
+			return Errors.ErrorOccurred($"Attempting to set index {key} of object {item} to value {value} failed.");
 		}
 
 		private static object IndexAt(object item, params object[] index)
 		{
-			Error err;
 			int len;
 			object key = null;
 
@@ -176,20 +169,14 @@ namespace Keysharp.Scripting
 						var actualindex = position < 0 ? array.Length + position : position - 1;
 						return array.GetValue(actualindex);
 					}
-
-#if WINDOWS
-					else if (item is ComObjArray coa)
-					{
-						var actualindex = position < 0 ? coa.array.Length + position : position;
-						return coa.array.GetValue(actualindex);
-					}
-
-#endif
 				}
 
 #if WINDOWS
-
-				if (item is ComObject co)
+				if (item is ComObjArray coa)
+				{
+					return coa[index];
+				}
+				else if (item is ComObject co)
 				{
 					//Could be an indexer, but MethodPropertyHolder currently doesn't support those
 					if (index.Length == 0 && (co.vt & VarEnum.VT_BYREF) != 0)
@@ -206,7 +193,7 @@ namespace Keysharp.Scripting
 					if (len == mph.ParamLength || mph.IsVariadic)
 						return mph.callFunc(item, index);
 					else
-						return Errors.ErrorOccurred(err = new ValueError($"{len} arguments were passed to a get indexer which only accepts {mph.ParamLength}.")) ? throw err : null;
+						return Errors.ValueErrorOccurred($"{len} arguments were passed to a get indexer which only accepts {mph.ParamLength}.");
 				}
 			}
 			catch (Exception e)
@@ -217,7 +204,7 @@ namespace Keysharp.Scripting
 					throw;
 			}
 
-			return Errors.ErrorOccurred(err = new Error($"Attempting to get index of {key} on item {item} failed.")) ? throw err : null;
+			return Errors.ErrorOccurred($"Attempting to get index of {key} on item {item} failed.");
 		}
 	}
 }

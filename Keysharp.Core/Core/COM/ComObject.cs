@@ -22,7 +22,8 @@ namespace Keysharp.Core.COM
 				if (value is long l)
 					longVal = l;
 
-				if ((vt & VarEnum.VT_BYREF) == VarEnum.VT_BYREF)
+				if ((vt & VarEnum.VT_BYREF) == VarEnum.VT_BYREF
+						|| (vt & VarEnum.VT_ARRAY) == VarEnum.VT_ARRAY)
 				{
 					item = longVal;
 					return;
@@ -86,7 +87,7 @@ namespace Keysharp.Core.COM
 
 						case VarEnum.VT_ARRAY://SAFEARRAY
 							wasObj = true;
-							temp = longVal;
+							temp = longVal != 0L ? longVal : value;
 							break;
 							//case VarEnum.VT_BYREF    ://Pointer to another type of value (0x4000)
 							//  break;
@@ -101,7 +102,7 @@ namespace Keysharp.Core.COM
 					{
 						var nptr = new nint(longVal);
 						temp = Marshal.GetObjectForIUnknown(nptr);
-						Marshal.Release(nptr);
+						_ = Marshal.Release(nptr);
 					}
 
 					//else if (value is long l && l > 0)// && Marshal.IsComObject(value))
@@ -123,7 +124,7 @@ namespace Keysharp.Core.COM
 					if (temp is IDispatch id)
 						item = id;
 					else
-						item = new nint(longVal);//This was put here to prevent the COM tests with the taskbar in guitest.ks from crashing. Unsure if it actually makes sense.
+						item = new nint(longVal != 0 ? longVal : Marshal.GetIUnknownForObject(temp));//This was put here to prevent the COM tests with the taskbar in guitest.ks from crashing. Unsure if it actually makes sense.
 
 					return;
 				}
@@ -182,7 +183,7 @@ namespace Keysharp.Core.COM
 		public object __Delete()
 		{
 			Dispose();
-			return null;
+			return DefaultObject;
 		}
 
 		public new object __New(params object[] args)
@@ -200,10 +201,10 @@ namespace Keysharp.Core.COM
 
 			Ptr = co.Ptr;
 			tempCo = co;
-			return "";
+			return DefaultObject;
 		}
 
-		public void Dispose()
+		public virtual void Dispose()
 		{
 			if (Ptr == null)
 				return;
@@ -213,7 +214,7 @@ namespace Keysharp.Core.COM
 				if (Ptr is long lp && lp != 0L)
 					_ = Marshal.Release((nint)lp);
 				else if (Marshal.IsComObject(Ptr))
-					Marshal.ReleaseComObject(Ptr);
+					_ = Marshal.ReleaseComObject(Ptr);
 			}
 			else if (vt == VarEnum.VT_BSTR && (Flags & F_OWNVALUE) != 0 && Ptr is long)
 			{
@@ -300,7 +301,7 @@ namespace Keysharp.Core.COM
 					nint unk = Marshal.ReadIntPtr(dataPtr);
 
 					if (unk == 0)
-						return null;
+						return DefaultErrorObject;
 
 					return new ComObject
 					{
@@ -315,7 +316,7 @@ namespace Keysharp.Core.COM
 		/// Write a primitive value back into a COM VARIANT payload.
 		/// Supports VT_I1/UI1/I2/UI2/I4/UI4/I8/UI8, VT_BOOL, VT_R4, VT_R8/VT_DATE, VT_VARIANT.
 		/// </summary>
-		public static void WriteVariant(long ptrValue, VarEnum vtRaw, object value)
+		internal static void WriteVariant(long ptrValue, VarEnum vtRaw, object value)
 		{
 			nint dataPtr = new nint(ptrValue);
 			VarEnum vt = vtRaw & ~VarEnum.VT_BYREF;
@@ -422,7 +423,7 @@ namespace Keysharp.Core.COM
 					nint oldPtr = Marshal.ReadIntPtr(dataPtr);
 
 					if (oldPtr != 0)
-						Marshal.Release(oldPtr);
+						_ = Marshal.Release(oldPtr);
 
 					// get new pointer (allow passing either IntPtr or RCW)
 
@@ -431,7 +432,7 @@ namespace Keysharp.Core.COM
 						long ptr => (nint)ptr,
 							null => 0,
 							_ => vt == VarEnum.VT_DISPATCH ? Marshal.GetIDispatchForObject(value) : Marshal.GetIUnknownForObject(value)
-				};
+					};
 
 					Marshal.WriteIntPtr(dataPtr, newPtr);
 				}
@@ -441,6 +442,7 @@ namespace Keysharp.Core.COM
 				{
 					// 1) Choose the right VarEnum for "value"
 					VarEnum innerVt;
+
 					if (value is string)
 					{
 						innerVt = VarEnum.VT_BSTR;
@@ -456,8 +458,8 @@ namespace Keysharp.Core.COM
 					else if (value is long l)
 					{
 						innerVt = (l >= int.MinValue && l <= int.MaxValue)
-									? VarEnum.VT_I4
-									: VarEnum.VT_I8;
+								  ? VarEnum.VT_I4
+								  : VarEnum.VT_I8;
 					}
 					else
 					{
@@ -466,19 +468,16 @@ namespace Keysharp.Core.COM
 					}
 
 					// 2) Clear previous contents, release BSTRs etc
-					VariantHelper.VariantClear(dataPtr);
-
+					_ = VariantHelper.VariantClear(dataPtr);
 					// 3) Write the VT and clear the four reserved words
 					//    [vt:2][res1:2][res2:2][res3:2]  <-- totals 8 bytes header
 					Marshal.WriteInt16(dataPtr, (short)innerVt);
-
 					// 4) Write the payload into the union at offset 8
 					//    we simply recurse into our existing writer,
 					//    passing the address + 8 and the bare innerVt
 					WriteVariant(ptrValue + 8, innerVt, value);
 				}
 				break;
-
 
 				// ── Unsupported ────────────────────────────────────────────────
 				default:
@@ -525,7 +524,7 @@ namespace Keysharp.Core.COM
 				{
 					if ((VarEnum)((int)variant.vt & ~Com.variantTypeMask) == VarEnum.VT_ARRAY && co.Ptr is ComObjArray coa)
 					{
-						variant.Ptr = coa.array.Clone();//Copy array since both sides will call Destroy().
+						variant.Ptr = coa.Clone();//Copy array since both sides will call Destroy().
 					}
 					else if (variant.vt == VarEnum.VT_BSTR)
 					{
@@ -535,9 +534,24 @@ namespace Keysharp.Core.COM
 
 				return;
 			}
+			else if (Marshal.IsComObject(val))
+			{
+				if (val is IDispatch idisp)
+				{
+					variant.vt = VarEnum.VT_DISPATCH;
+					variant.Ptr = idisp;
+				}
+				else
+				{
+					variant.vt = VarEnum.VT_UNKNOWN;
+					variant.Ptr = val;
+				}
+
+				return;
+			}
 
 			variant.vt = VarEnum.VT_DISPATCH;
-			variant.Ptr = val is IDispatch id ? id : val;
+			variant.Ptr = val;
 		}
 
 		internal static ComObject ValueToVarType(object val, VarEnum varType, bool callerIsComValue)
@@ -568,6 +582,11 @@ namespace Keysharp.Core.COM
 					//Ptr = val.Ab() ? -1L : 0L
 					Ptr = val.Ab() ? -1 : 0
 				};
+			}
+
+			if (varType == VarEnum.VT_ARRAY && val is ComObjArray coa )
+			{
+				return coa;//Don't do anything with it, it's already in the correct form.
 			}
 
 			if (val is long l)

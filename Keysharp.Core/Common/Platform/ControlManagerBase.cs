@@ -16,8 +16,8 @@
 					menuItem = strip.Items[n] as ToolStripMenuItem;
 				else
 				{
-					Error err;
-					return Errors.ErrorOccurred(err = new ValueError($"Index {n + 1} was outside the menu length of {strip.Items.Count}.", topLevel)) ? throw err : null;
+					_ = Errors.ValueErrorOccurred($"Index {n + 1} was outside the menu length of {strip.Items.Count}.", topLevel);
+					return default;
 				}
 			}
 			else
@@ -50,8 +50,8 @@
 					}
 					else
 					{
-						Error err;
-						return Errors.ErrorOccurred(err = new ValueError($"Index {n + 1} was outside the menu length of {menuItem.DropDownItems.Count}.", item)) ? throw err : null;
+						_ = Errors.ValueErrorOccurred($"Index {n + 1} was outside the menu length of {menuItem.DropDownItems.Count}.", item);
+						return default;
 					}
 				}
 				else
@@ -119,7 +119,7 @@
 			if (WindowSearch.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItemBase item)
 				return item.ClassNN;
 
-			return "";
+			return DefaultObject;
 		}
 
 		internal virtual long ControlGetEnabled(object ctrl, object title, object text, object excludeTitle, object excludeText)
@@ -144,7 +144,7 @@
 
 		internal abstract long ControlGetIndex(object ctrl, object title, object text, object excludeTitle, object excludeText);
 
-		internal abstract Array ControlGetItems(object ctrl, object title, object text, object excludeTitle, object excludeText);
+		internal abstract object ControlGetItems(object ctrl, object title, object text, object excludeTitle, object excludeText);
 
 		internal abstract void ControlGetPos(ref object outX, ref object outY, ref object outWidth, ref object outHeight, object ctrl = null, object title = null, object text = null, object excludeTitle = null, object excludeText = null);
 

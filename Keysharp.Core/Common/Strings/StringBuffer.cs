@@ -7,7 +7,7 @@
 		/// </summary>
 		private byte* _buffer;
 		/// <summary>
-		/// Capacity of the buffer in character units (not bytes). 
+		/// Capacity of the buffer in character units (not bytes).
 		/// Does not include null terminator.
 		/// </summary>
 		private long _capacity = 0;
@@ -44,8 +44,8 @@
 			_bytesPerChar = _encoding == Encoding.Unicode ? sizeof(char) : 1;
 			_capacity = capacity;
 			_buffer = (byte*)NativeMemory.Alloc((nuint)(_capacity * _bytesPerChar));
-			Append(str);
-			return "";
+			_ = Append(str);
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -69,15 +69,18 @@
 		public object Capacity
 		{
 			get => _capacity;
+
 			set
 			{
 				var newCapacity = (long)value;
 				// ReAllocHGlobal will preserve existing bytes up to the new size
 				_buffer = (byte*)NativeMemory.Realloc(_buffer, (nuint)((newCapacity + 1) * _bytesPerChar));
+
 				if (newCapacity < _capacity)
 				{
 					NativeMemory.Clear(_buffer + (newCapacity * _bytesPerChar), (nuint)_bytesPerChar);
 				}
+
 				_capacity = newCapacity;
 			}
 		}
@@ -90,33 +93,36 @@
 		public object Append(string text)
 		{
 			if (text == null) throw new Error("String cannot be unset");
+
 			int len = text.Length;
 			EnsureCapacity(_position + len);
 
 			if (_bytesPerChar == 1)
 			{
 				byte[] bytes = _encoding.GetBytes(text);
+
 				fixed (byte* src = bytes)
 				{
 					NativeMemory.Copy(src, _buffer + _position, (nuint)bytes.Length);
 				}
-				_position += len;
 
+				_position += len;
 				_buffer[_position] = 0;
 			}
 			else
 			{
 				// Copy chars
 				char[] bytes = text.ToCharArray();
+
 				fixed (char* src = bytes)
 				{
 					NativeMemory.Copy(src, _buffer + (nint)_position * _bytesPerChar, (nuint)(bytes.Length * _bytesPerChar));
 				}
 
 				_position += len;
-
 				*((char*)(_buffer + _position * _bytesPerChar)) = '\0';
 			}
+
 			return _position;
 		}
 
@@ -126,7 +132,7 @@
 		/// </summary>
 		public object AppendLine(string text = "")
 		{
-			Append(text);
+			_ = Append(text);
 			return Append(Environment.NewLine);
 		}
 
@@ -136,11 +142,13 @@
 		public object Clear()
 		{
 			_position = 0;
+
 			if (_bytesPerChar == 1)
 				_buffer[0] = 0;
 			else
 				*((char*)_buffer) = '\0';
-			return "";
+
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -151,6 +159,7 @@
 		public object Seek(object position)
 		{
 			long pos = position.Al();
+
 			if (pos < 0)
 			{
 				if (_bytesPerChar == 1)
@@ -158,6 +167,7 @@
 					// Find length up to first 0 byte
 					byte* p = _buffer;
 					_position = 0;
+
 					while (p[_position] != 0)
 						_position++;
 				}
@@ -166,6 +176,7 @@
 					// Find length up to first 0 wchar
 					char* p = (char*)_buffer;
 					_position = 0;
+
 					while (p[_position] != '\0')
 						_position++;
 				}
@@ -174,6 +185,7 @@
 			{
 				_position = Math.Min(_capacity, pos);
 			}
+
 			return _position;
 		}
 
@@ -207,15 +219,17 @@
 		public override string ToString()
 		{
 			if (_buffer == null)
-				return "";
+				return DefaultErrorString;
 
 			if (_bytesPerChar == 1)
 			{
 				// Find length up to first 0 byte
 				byte* p = _buffer;
 				int len = 0;
+
 				while (p[len] != 0)
 					len++;
+
 				// Decode exactly that many ANSI bytes
 				return _encoding.GetString(new ReadOnlySpan<byte>(_buffer, Math.Max(len, (int)_position)));
 			}
@@ -224,8 +238,10 @@
 				// Find length up to first 0 wchar
 				char* p = (char*)_buffer;
 				int len = 0;
+
 				while (p[len] != '\0')
 					len++;
+
 				// Construct a managed string from that many chars
 				return new string(p, 0, Math.Max(len, (int)_position));
 			}

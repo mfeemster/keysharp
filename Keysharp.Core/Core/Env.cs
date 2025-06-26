@@ -164,12 +164,11 @@ namespace Keysharp.Core
 			try
 			{
 				Environment.SetEnvironmentVariable(name.As(), value as string);
-				return null;
+				return DefaultObject;
 			}
 			catch (Exception ex)
 			{
-				Error err;
-				return Errors.ErrorOccurred(err = new OSError(ex, $@"Error setting environment variable {name} to value ""{value}"".")) ? throw err : null;
+				return Errors.OSErrorOccurred(ex, $@"Error setting environment variable {name} to value ""{value}"".");
 			}
 		}
 
@@ -187,12 +186,11 @@ namespace Keysharp.Core
 			try { _ = WindowsAPI.SendMessageTimeout(new nint(WindowsAPI.HWND_BROADCAST), WindowsAPI.WM_SETTINGCHANGE, 0, 0, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 1000, out var result); }
 			catch (Exception ex)
 			{
-				Error err;
-				return Errors.ErrorOccurred(err = new OSError(ex, "Error updating environment variables.")) ? throw err : null;
+				return Errors.OSErrorOccurred(ex, "Error updating environment variables.");
 			}
 
 #endif
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -212,7 +210,7 @@ namespace Keysharp.Core
 			}
 
 			_ = A_Args.AddRange(args);
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -239,13 +237,12 @@ namespace Keysharp.Core
 
 			string name = obj2.As("DynamicScript");
 			string result = null;
-			Error err;
 			byte[] compiledBytes = null;
 			var ch = new CompilerHelper();
 			(compiledBytes, result) = ch.CompileCodeToByteArray([script], name);
 
 			if (compiledBytes == null)
-				return Errors.ErrorOccurred(err = new Error(result)) ? throw err : null;
+				return Errors.ErrorOccurred(result);
 
 			var scriptProcess = new Process
 			{
@@ -296,13 +293,10 @@ namespace Keysharp.Core
 			if (callback is IFuncObj fo)
 			{
 				Script.TheScript.ClipFunctions.ModifyEventHandlers(fo, addRemove.Al(1));
-				return null;
+				return DefaultObject;
 			}
 			else
-			{
-				Error err;
-				return Errors.ErrorOccurred(err = new TypeError($"Passed in object of type {callback.GetType()} was not a FuncObj.")) ? throw err : null;
-			}
+				return Errors.TypeErrorOccurred(callback, typeof(FuncObj), DefaultErrorObject);
 		}
 
 		/// <summary>
@@ -665,7 +659,7 @@ namespace Keysharp.Core
 						return args[i + 1];
 			}
 
-			return null;
+			return DefaultObject;
 		}
 
 #if WINDOWS
@@ -883,7 +877,7 @@ namespace Keysharp.Core
 		public new object __New(params object[] args)
 		{
 			Save();
-			return "";
+			return DefaultObject;
 		}
 
 		internal void Save()

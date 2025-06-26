@@ -291,7 +291,7 @@ namespace Keysharp.Core
 				script.ProcessesData.runPassword.MakeReadOnly();
 			}
 
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -331,7 +331,7 @@ namespace Keysharp.Core
 		public static object Shutdown(object obj)
 		{
 			_ = Script.TheScript.PlatformProvider.Manager.ExitProgram((uint)obj.Al(), 0);
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -372,7 +372,6 @@ namespace Keysharp.Core
 		private static bool RunAsSpecified()
 		{
 			var script = Script.TheScript;
-			
 			return (script.ProcessesData.runPassword != null && script.ProcessesData.runPassword.Length > 0)
 				   || (!string.IsNullOrEmpty(script.ProcessesData.runUser))
 				   || (!string.IsNullOrEmpty(script.ProcessesData.runDomain));
@@ -384,7 +383,6 @@ namespace Keysharp.Core
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown on failure.</exception>
 		private static long RunInternal(string target, string workingDir, string showMode, ref object outputVarPID, string args, bool wait = false)
 		{
-			Error err;
 			var pid = 0;
 			var useRunAs = RunAsSpecified();
 
@@ -396,7 +394,7 @@ namespace Keysharp.Core
 				workingDir = workingDir.Trim();
 
 				if (!Directory.Exists(workingDir))
-					return Errors.ErrorOccurred(err = new Error($"{workingDir} is not a valid directory.")) ? throw err : 0L;
+					return (long)Errors.ErrorOccurred($"{workingDir} is not a valid directory.", DefaultErrorLong);
 			}
 
 			try
@@ -440,7 +438,7 @@ namespace Keysharp.Core
 				}
 
 				if (useRunAs && !string.IsNullOrEmpty(shellVerb))
-					return Errors.ErrorOccurred(err = new Error("System verbs unsupported with RunAs.")) ? throw err : 0L;
+					return (long)Errors.ErrorOccurred("System verbs unsupported with RunAs.", DefaultErrorLong);
 
 				var parsedArgs = "";
 				var prc = new Process//Unsure what to do about this on linux.//TODO
@@ -579,7 +577,7 @@ namespace Keysharp.Core
 			}
 			catch (Exception ex)
 			{
-				return Errors.ErrorOccurred(err = new Error(ex.Message)) ? throw err : 0L;
+				return (long)Errors.ErrorOccurred(ex.Message, DefaultErrorLong);
 			}
 
 			outputVarPID = pid;
@@ -598,7 +596,7 @@ namespace Keysharp.Core
 		public new object __New(params object[] args)
 		{
 			_process = args[0] as Process;
-			return "";
+			return DefaultObject;
 		}
 
 		public long HasExited => _process.HasExited ? 1L : 0L;
@@ -629,7 +627,7 @@ namespace Keysharp.Core
 		public object Kill()
 		{
 			_process.Kill();
-			return "";
+			return DefaultObject;
 		}
 	}
 }

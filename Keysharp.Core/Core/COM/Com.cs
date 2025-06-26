@@ -26,14 +26,13 @@ namespace Keysharp.Core.COM
 
 		public static object ComObjArray(object varType, object count1, params object[] args)
 		{
-			Error err;
-			var vt = (VarEnum)varType.Ai();//Need a switch statement on type.
+			var vt = (VarEnum)varType.Ai();
 			var dim1Size = count1.Ai();
 			var lengths = new int[args != null ? args.Length + 1 : 1];
 			var t = typeof(object);
 
 			if (lengths.Length > 8)
-				_ = Errors.ErrorOccurred(err = new Error($"COM array dimensions of {lengths.Length} is greater than the maximum allowed number of 8.")) ? throw err : "";
+				return Errors.ErrorOccurred($"COM array dimensions of {lengths.Length} is greater than the maximum allowed number of 8.");
 
 			lengths[0] = dim1Size;
 
@@ -47,13 +46,15 @@ namespace Keysharp.Core.COM
 				switch (vt)
 				{
 					case VarEnum.VT_DISPATCH: t = typeof(DispatchWrapper); break;
+
 					case VarEnum.VT_VARIANT: break;
+
 					default:
-						return Errors.ErrorOccurred(err = new ValueError($"The supplied COM type of {varType} is not supported.")) ? throw err : null;
+						return Errors.ValueErrorOccurred($"The supplied COM type of {varType} is not supported.");
 				}
 			}
 
-			return new ComObjArray(System.Array.CreateInstance(t, lengths));
+			return new ComObjArray(vt, lengths);
 		}
 
 		internal static object ConvertToCOMType(object ret)
@@ -62,27 +63,29 @@ namespace Keysharp.Core.COM
 				ret = (int)ll;
 			else if (ret is bool bl)
 				ret = bl ? 1 : 0;
+
 			return ret;
 		}
 
 		internal static Type ConvertVarTypeToCLRType(VarEnum vt) =>
-			vt switch
-			{
-				VarEnum.VT_I1 => typeof(sbyte),
-				VarEnum.VT_UI1 => typeof(byte),
-				VarEnum.VT_I2 => typeof(short),
-				VarEnum.VT_UI2 => typeof(ushort),
-				VarEnum.VT_I4 or VarEnum.VT_INT => typeof(int),
-				VarEnum.VT_UI4 or VarEnum.VT_UINT or VarEnum.VT_ERROR => typeof(uint),
-				VarEnum.VT_I8 => typeof(long),
-				VarEnum.VT_UI8 => typeof(ulong),
-				VarEnum.VT_R4 => typeof(float),
-				VarEnum.VT_R8 or VarEnum.VT_DATE => typeof(double), //should VT_DATE be converted to DateTime?
-				VarEnum.VT_DECIMAL or VarEnum.VT_CY => typeof(decimal),
-				VarEnum.VT_BOOL => typeof(bool),
-				VarEnum.VT_BSTR => typeof(string),
-				_ => typeof(object),
-			};
+
+		vt switch
+	{
+			VarEnum.VT_I1 => typeof(sbyte),
+							  VarEnum.VT_UI1 => typeof(byte),
+							  VarEnum.VT_I2 => typeof(short),
+							  VarEnum.VT_UI2 => typeof(ushort),
+							  VarEnum.VT_I4 or VarEnum.VT_INT => typeof(int),
+							  VarEnum.VT_UI4 or VarEnum.VT_UINT or VarEnum.VT_ERROR => typeof(uint),
+							  VarEnum.VT_I8 => typeof(long),
+							  VarEnum.VT_UI8 => typeof(ulong),
+							  VarEnum.VT_R4 => typeof(float),
+							  VarEnum.VT_R8 or VarEnum.VT_DATE => typeof(double), //should VT_DATE be converted to DateTime?
+							  VarEnum.VT_DECIMAL or VarEnum.VT_CY => typeof(decimal),
+							  VarEnum.VT_BOOL => typeof(bool),
+							  VarEnum.VT_BSTR => typeof(string),
+							  _ => typeof(object),
+		};
 
 
 		public static object ComObjConnect(object comObj, object prefixOrSink = null, object debug = null)
@@ -90,10 +93,7 @@ namespace Keysharp.Core.COM
 			if (comObj is ComObject co)
 			{
 				if (co.vt != VarEnum.VT_DISPATCH && co.vt != VarEnum.VT_UNKNOWN)// || Marshal.GetIUnknownForObject(co.Ptr) == 0)
-				{
-					Error err;
-					return Errors.ErrorOccurred(err = new ValueError($"COM object type of {co.vt} was not VT_DISPATCH or VT_UNKNOWN, and was not IUnknown.")) ? throw err : null;
-				}
+					return Errors.ValueErrorOccurred($"COM object type of {co.vt} was not VT_DISPATCH or VT_UNKNOWN, and was not IUnknown.");
 
 				//If it existed, whether obj1 was null or not, remove it.
 				if (comEvents.FirstOrDefault(ce => ReferenceEquals(ce.dispatcher.Co, co)) is ComEvent ev)
@@ -107,7 +107,7 @@ namespace Keysharp.Core.COM
 					_ = comEvents.Add(new ComEvent(new Dispatcher(co), prefixOrSink, debug != null ? debug.Ab() : false));
 			}
 
-			return null;
+			return DefaultErrorObject;
 		}
 
 		public static object ComObject(object clsid, object iid = null)//progId, string iid)
@@ -169,7 +169,7 @@ namespace Keysharp.Core.COM
 				};
 			}
 
-			return null;//Should be a call to ComError() here.//TODO
+			return DefaultErrorObject;//Should be a call to ComError() here.//TODO
 		}
 
 		public static object ComObjFlags(object comObj, object newFlags = null, object mask = null)
@@ -197,10 +197,8 @@ namespace Keysharp.Core.COM
 			return 0L;
 		}
 
-		public static ComObject ComObjFromPtr(object dispPtr)
+		public static object ComObjFromPtr(object dispPtr)
 		{
-			Error err;
-
 			if (dispPtr is long l)
 				dispPtr = Marshal.GetObjectForIUnknown(new nint(l));
 
@@ -209,14 +207,13 @@ namespace Keysharp.Core.COM
 			else if (Marshal.IsComObject(dispPtr))
 				return new ComObject(VarEnum.VT_UNKNOWN, dispPtr);
 
-			return Errors.ErrorOccurred(err = new TypeError($"Passed in value {dispPtr} of type {dispPtr.GetType()} was not of type IDispatch.")) ? throw err : null;
+			return Errors.TypeErrorOccurred(dispPtr, typeof(IDispatch), DefaultErrorObject);
 		}
 
 		public static object ComObjGet(object name) => Marshal.BindToMoniker(name.As());
 
 		public static object ComObjQuery(object comObj, object sidiid = null, object iid = null)
 		{
-			Error err;
 			nint ptr;
 
 			if (comObj is KeysharpObject kso && Script.GetPropertyValue(kso, "ptr", false) is object kptr && kptr != null)
@@ -227,7 +224,7 @@ namespace Keysharp.Core.COM
 			else if (comObj is long l)
 				ptr = new nint(l);
 			else
-				return Errors.ErrorOccurred(err = new ValueError($"The passed in object {comObj} of type {comObj.GetType()} was not a ComObject or a raw COM interface.")) ? throw err : null;
+				return Errors.ValueErrorOccurred($"The passed in object {comObj} of type {comObj.GetType()} was not a ComObject or a raw COM interface.");
 
 			nint resultPtr = 0;
 			Guid id = Guid.Empty;
@@ -256,7 +253,7 @@ namespace Keysharp.Core.COM
 			}
 
 			if (resultPtr == 0)
-				return Errors.ErrorOccurred(err = new Error($"Unable to get COM interface with arguments {sidiid}, {iid}.")) ? throw err : null;
+				return Errors.ErrorOccurred($"Unable to get COM interface with arguments {sidiid}, {iid}.");
 
 			return new ComObject(id == IID_IDispatch ? VarEnum.VT_DISPATCH : VarEnum.VT_UNKNOWN, (long)resultPtr);
 		}
@@ -330,7 +327,7 @@ namespace Keysharp.Core.COM
 				}
 			}
 
-			return null;
+			return DefaultErrorObject;
 		}
 
 		public static object ComObjValue(object comObj)
@@ -385,16 +382,11 @@ namespace Keysharp.Core.COM
 					_ = Marshal.Release((nint)ptr);
 				}
 			}
-			
+
 			if (ptr is long l)
-			{
 				ptr = new nint(l);
-			}
 			else
-			{
-				Error err;
-				return Errors.ErrorOccurred(err = new TypeError($"Argument of type {ptr.GetType()} was not a pointer or ComObject.")) ? throw err : false;
-			}
+				return Errors.TypeErrorOccurred(ptr, typeof(ComObject), DefaultErrorObject);
 
 			return (long)Marshal.Release((nint)ptr);
 		}
@@ -404,12 +396,11 @@ namespace Keysharp.Core.COM
 		/// </summary>
 		public static object ComCall(object index, object comObj, params object[] parameters)
 		{
-			Error err;
 			var idx = index.Ai();
 			var indexPlus1 = idx + 1;//Index is zero based, so add 1.
 
 			if (idx < 0)
-				return Errors.ErrorOccurred(err = new ValueError($"Index value of {idx} was less than zero.")) ? throw err : null;
+				return Errors.ValueErrorOccurred($"Index value of {idx} was less than zero.");
 
 			nint pUnk = 0;
 
@@ -424,7 +415,7 @@ namespace Keysharp.Core.COM
 			else if (comObj is long l)
 				pUnk = new nint(l);
 			else
-				return Errors.ErrorOccurred(err = new ValueError($"The passed in object was not a ComObject or a raw COM interface.")) ? throw err : null;
+				return Errors.ValueErrorOccurred($"The passed in object was not a ComObject or a raw COM interface.");
 
 			var pVtbl = Marshal.ReadIntPtr(pUnk);
 			var helper = new ArgumentHelper(parameters);
@@ -440,7 +431,7 @@ namespace Keysharp.Core.COM
 				int hr32 = unchecked((int)hrLong);   // keep only the low 32 bits
 
 				if (hr32 < 0)
-					throw new OSError(hr32);
+					return Errors.OSErrorOccurred(hr32, "");
 			}
 
 			//Special conversion for the return value.

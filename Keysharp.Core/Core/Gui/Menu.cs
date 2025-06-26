@@ -112,7 +112,7 @@
 		/// To change an existing item's options without affecting its callback or submenu, simply omit the CallbackOrSubmenu parameter.
 		/// </param>
 		/// <returns>Null if a separator was added, else the newly added <see cref="ToolStripMenuItem"/>.</returns>
-		public ToolStripMenuItem Add(object menuItemName = null, object callbackOrSubmenu = null, object options = null)
+		public object Add(object menuItemName = null, object callbackOrSubmenu = null, object options = null)
 		{
 			if (menuItemName == null && callbackOrSubmenu == null && options == null)
 			{
@@ -144,25 +144,25 @@
 					mainWindow.WindowState = mainWindow.lastWindowState;
 				}
 
-				return "";
+				return DefaultObject;
 			});
 			var reloadfunc = new Func<object>(() =>
 			{
 				_ = Flow.Reload();
-				return "";
+				return DefaultObject;
 			});
 			var suspend = new Func<object>(() =>
 			{
 				Script.SuspendHotkeys();
-				return "";
+				return DefaultObject;
 			});
 			var exitfunc = new Func<object>(() =>
 			{
 				_ = Flow.ExitAppInternal(Flow.ExitReasons.Menu, null, false);
-				return "";
+				return DefaultObject;
 			});
 			//Won't be a gui target, so won't be marked as IsGui internally, but it's ok because it's only ever called on the gui thread in response to gui events.
-			script.openMenuItem = Add("&Open", new FuncObj(openfunc.Method, openfunc.Target));
+			script.openMenuItem = (ToolStripMenuItem)Add("&Open", new FuncObj(openfunc.Method, openfunc.Target));
 
 			if (!A_AllowMainWindow.Ab())
 				script.openMenuItem.Visible = false;
@@ -180,15 +180,15 @@
 				var editfunc = new Func<object>(() =>
 				{
 					Debug.Edit();
-					return "";
+					return DefaultObject;
 				});
 				_ = Add("&Edit Script", new FuncObj(editfunc.Method, editfunc.Target));
 			}
 
 			_ = menu.Items.Add(new ToolStripSeparator());
-			script.suspendMenuItem = Add("&Suspend Hotkeys", new FuncObj(suspend.Method, suspend.Target));
+			script.suspendMenuItem = (ToolStripMenuItem)Add("&Suspend Hotkeys", new FuncObj(suspend.Method, suspend.Target));
 			_ = Add("&Exit", new FuncObj(exitfunc.Method, exitfunc.Target));
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -227,7 +227,7 @@
 				_ = clickHandlers.Remove(item);
 			}
 
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -263,7 +263,7 @@
 		/// <param name="callbackOrSubmenu">See the <see cref="Add"/> method's callbackOrSubmenu parameter.</param>
 		/// <param name="options">See the <see cref="Add"/> method's options parameter.</param>
 		/// <returns>The newly create <see cref="ToolStripMenuItem"/>.</returns>
-		public ToolStripMenuItem Insert(object menuItemName = null, object itemToInsert = null, object callbackOrSubmenu = null, object options = null) => AddOrInsert(menuItemName.As(), itemToInsert.As(), callbackOrSubmenu, options.As());
+		public object Insert(object menuItemName = null, object itemToInsert = null, object callbackOrSubmenu = null, object options = null) => AddOrInsert(menuItemName.As(), itemToInsert.As(), callbackOrSubmenu, options.As());
 
 		/// <summary>
 		/// Gets the name of a menu item.
@@ -297,7 +297,7 @@
 			if (item is ToolStripItem tsi)
 				tsi.Name = tsi.Text = newname;
 
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -356,7 +356,7 @@
 					tsmi.Image = bmp;
 			}
 
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -377,7 +377,7 @@
 					pt = form.PointToClient(pt);
 
 			MenuItem.Show(pt);
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -448,12 +448,12 @@
 				}
 			}
 
-			return null;
+			return DefaultObject;
 		}
 
 		protected virtual long GetIndex(ToolStripItem tsi) => tsi.GetCurrentParent() is ToolStripDropDownMenu tsddm ? tsddm.Items.IndexOf(tsi) : GetMenu().Items.IndexOf(tsi);
 
-		protected virtual ToolStripItem GetMenuItem(string s)
+		protected virtual object GetMenuItem(string s)
 		{
 			if (s.EndsWith('&') && int.TryParse(s.Trim('&'), out var i) && i > 0)
 			{
@@ -463,10 +463,10 @@
 			else if (GetMenu().Items.Find(s, true).FirstOrDefault() is ToolStripItem tsmi)
 				return tsmi;
 
-			return null;
+			return DefaultErrorObject;
 		}
 
-		private ToolStripMenuItem AddOrInsert(string insertbefore, string name, object funcorsub, string options)
+		private object AddOrInsert(string insertbefore, string name, object funcorsub, string options)
 		{
 			ToolStripMenuItem item = null;
 
@@ -481,7 +481,7 @@
 						if (name?.Length == 0)
 						{
 							tsddm.Items.Insert((int)index, new ToolStripSeparator());
-							return null;
+							return DefaultObject;
 						}
 						else
 						{
@@ -561,7 +561,7 @@
 				}
 			}
 
-			return item;
+			return item != null ? item : "";
 		}
 
 		private bool Check(string s, eCheckToggle checktoggle)

@@ -1,55 +1,47 @@
 ﻿namespace Keysharp.Core.Common.Strings
 {
-	public class RegExMatchInfo : KeysharpObject, I__Enum, IEnumerable<(object, object)>
+	public class RegExMatchInfoCs : KeysharpObject, I__Enum, IEnumerable<(object, object)>
 	{
-		internal PcreMatch match;
-		internal RegexHolder holder;
-		public object Count => match.CaptureCount;
-		public object Mark => match.Mark;
+		private Match match;
+		public object Count => match.Groups.Count;
+		public object Mark => match.Groups.Count > 0 ? match.Groups[ ^ 1].Name : "";
 		public object Success => match.Success;
-		public object pos => Pos(); //Lower-cased because of the naming conflict with the method
 
 		public new (Type, object) super => (typeof(KeysharpObject), this);
 
-		public RegExMatchInfo(params object[] args) => _ = __New(args);
+		public RegExMatchInfoCs(params object[] args) => _ = __New(args);
 
-		public static implicit operator long(RegExMatchInfo r) => r.Pos();
+		public static implicit operator long(RegExMatchInfoCs r) => r.Pos();
+
+		public KeysharpEnumerator __Enum(object count) => new RegExIteratorCs(match, count.Ai());
 
 		public new object __New(params object[] args)
 		{
-			match = args[0] as PcreMatch;
-			holder = args[1] as RegexHolder;
+			match = args[0] as Match;
 
 			for (int i = 0; i < match.Groups.Count; i++)
 			{
-				_ = DefineProp(i,
+				var g = match.Groups[i];
+				_ = DefineProp(g.Name,
 							   Objects.Object(
 								   [
 									   "get",
-									   Functions.GetFuncObj("GetWrapper", this, 2, true).Bind(i)
+									   Functions.GetFuncObj("GetWrapper", this, 2, true).Bind(g.Name)
 								   ]));
-			}
 
-			foreach (var name in holder.info.GroupNames)
-			{
-				if (match.Groups[name] != null)
-					_ = DefineProp(name,
+				if (i.ToString() != g.Name)//No need to add it twice if the name matches the index.
+					_ = DefineProp(i,
 								   Objects.Object(
 									   [
 										   "get",
-										   Functions.GetFuncObj("GetWrapper", this, 2, true).Bind(name)
+										   Functions.GetFuncObj("GetWrapper", this, 2, true).Bind(g.Name)
 									   ]));
 			}
 
 			return DefaultObject;
 		}
 
-		public KeysharpEnumerator __Enum(object count) => new RegExIterator(this, count.Ai());
-
-		public IEnumerator<(object, object)> GetEnumerator() => new RegExIterator(this, 2);
-
-		IEnumerator IEnumerable.GetEnumerator() => new RegExIterator(this, 2);
-
+		public IEnumerator<(object, object)> GetEnumerator() => new RegExIteratorCs(match, 2);
 
 		public object GetWrapper(object obj1, object obj2) => this[obj1];
 
@@ -62,7 +54,7 @@
 		public string Name(object obj)
 		{
 			var g = GetGroup(obj);
-			return g != null && g.Success ? (obj is string o ? o : holder.groupNames[obj.Ai()]) : "";
+			return g != null && g.Success ? g.Name : "";
 		}
 
 		public long Pos(object obj = null)
@@ -73,27 +65,24 @@
 
 		public override string ToString() => Pos().ToString();
 
-		private PcreGroup GetGroup(object obj)
+		IEnumerator IEnumerable.GetEnumerator() => new RegExIteratorCs(match, 2);
+
+		private Group GetGroup(object obj)
 		{
 			var o = obj;
 
-			try
+			if (o == null)
+				return match;
+			else if (o is string s)
+				return match.Groups[s];
+			else
 			{
-				if (o == null)
-					return match.Groups[0];
-				else if (o is string s)
-					return match.Groups[s];
-				else
-				{
-					var index = Convert.ToInt32(o);
+				var index = Convert.ToInt32(o);
 
-					if (index >= 0 && index <= match.Groups.Count)
-						return match.Groups[index];
-				}
-			}
-			catch (ArgumentOutOfRangeException)
-			{
-				return null;
+				if (index == 0)
+					return match;
+				else if (index > 0 && index <= match.Groups.Count)
+					return match.Groups[index];
 			}
 
 			return null;
@@ -109,25 +98,20 @@
 		}
 	}
 
-	internal class RegExIteratorData : BaseIteratorData<RegExIterator>
-	{
-	}
-
 	/// <summary>
-	/// A two component iterator for <see cref="RegExMatchInfo"/> which returns the name and the value as a tuple.
+	/// A two component iterator for <see cref="RegExMatchInfoCs"/> which returns the name and the value as a tuple.
 	/// </summary>
-	internal class RegExIterator : KeysharpEnumerator, IEnumerator<(object, object)>
+	internal class RegExIteratorCs : KeysharpEnumerator, IEnumerator<(object, object)>
 	{
-		/// <summary>
-		/// The internal regex results to be iterated over.
-		/// </summary>
-		private readonly RegExMatchInfo match;
-
 		/// <summary>
 		/// The iterator for the reg ex results.
 		/// </summary>
-		protected IEnumerator<PcreGroup> iter;
-		protected int i = -1;
+		protected IEnumerator<Group> iter;
+
+		/// <summary>
+		/// The internal regex results to be iterated over.
+		/// </summary>
+		private readonly Match match;
 
 		/// <summary>
 		/// The implementation for <see cref="IEnumerator.Current"/> which gets the key,value tuple at the current iterator position.
@@ -143,7 +127,7 @@
 					if (Count == 1)
 						return (g.Value, null);
 					else
-						return (match.holder.groupNames[i] == "" ? (long)i : match.holder.groupNames[i], g.Value);
+						return (g.Name, g.Value);
 				}
 				catch (IndexOutOfRangeException)
 				{
@@ -162,13 +146,13 @@
 		/// </summary>
 		/// <param name="m">The <see cref="Match"/> to iterate over.</param>
 		/// <param name="c">The number of items to return for each iteration.</param>
-		public RegExIterator(RegExMatchInfo m, int c)
+		public RegExIteratorCs(Match m, int c)
 			: base(null, c)
 		{
 			match = m;
-			iter = match.match.Groups.GetEnumerator();
+			iter = ((IEnumerable<Group>)match.Groups).GetEnumerator();
 			var script = Script.TheScript;
-			var p = c <= 1 ? script.RegExIteratorData.p1 : script.RegExIteratorData.p2;
+			var p = c <= 1 ? script.RegExIteratorDataCs.p1 : script.RegExIteratorDataCs.p2;
 			var fo = (FuncObj)p.Clone();
 			fo.Inst = this;
 			CallFunc = fo;
@@ -216,75 +200,30 @@
 		/// The implementation for <see cref="IEnumerator.MoveNext"/> which moves the iterator to the next position.
 		/// </summary>
 		/// <returns>True if the iterator position has not moved past the last element, else false.</returns>
-		public bool MoveNext()
-		{
-			i++;
-			return iter.MoveNext();
-		}
+		public bool MoveNext() => iter.MoveNext();
 
 		/// <summary>
 		/// The implementation for <see cref="IEnumerator.Reset"/> which resets the iterator.
 		/// </summary>
-		public void Reset()
-		{
-			i = -1;
-			iter = match.match.Groups.GetEnumerator();
-		}
+		public void Reset() => iter = ((IEnumerable<Group>)match.Groups).GetEnumerator();
 	}
 
-	internal class RegexHolder
+	internal class RegExIteratorDataCs : BaseIteratorData<RegExIteratorCs>
 	{
-		internal PcreRegex regex;
-		internal PcrePatternInfo info;
-		internal string haystack;
-		internal string needle;//Unmodified RegEx pattern.
-		internal string pattern;//RegEx pattern with AHK settings removed.
-		internal string tag = "";
-		internal PcreRegexSettings opts;
-		internal string[] groupNames;
+	}
 
-		internal RegexHolder(string hs, string n)
+	internal class RegexWithTag : Regex
+	{
+		internal string tag;
+
+		internal RegexWithTag(string s)
+			: base(s)
 		{
-			haystack = hs;
-			needle = n;
-			PcreRegexSettings settings = null;
-			var parenIndex = n.IndexOf(')');
+		}
 
-			if (parenIndex != -1)
-			{
-				var leftParenIndex = n.IndexOf('(');
-
-				if (leftParenIndex == -1 || (leftParenIndex > parenIndex))//Make sure it was just a ) for settings and not a ().
-				{
-					var span = n.AsSpan(0, parenIndex);
-					var substr = n.Substring(parenIndex + 1);
-					settings = Conversions.ToRegexOptions(span);
-
-					if (span.Contains('A'))
-					{
-						substr = "\\A" + substr;
-					}
-
-					pattern = substr;
-				}
-			}
-
-			settings ??= new PcreRegexSettings();
-			settings.Options |= PcreOptions.Compiled;
-			pattern ??= n;
-			opts = settings;
-			regex = new PcreRegex(pattern, opts);
-			info = regex.PatternInfo;
-			groupNames = new string[info.CaptureCount + 1];
-
-			foreach (var name in info.GroupNames)
-			{
-				foreach (var i in info.GetGroupIndexesByName(name))
-					groupNames[i] = name;
-			}
-
-			for (int i = 0; i < groupNames.Length; i++)
-				groupNames[i] ??= "";
+		internal RegexWithTag(string s, RegexOptions options)
+			: base(s, options)
+		{
 		}
 	}
 }

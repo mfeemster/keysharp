@@ -49,7 +49,7 @@
 		/// </summary>
 		/// <param name="source">The string to decode.</param>
 		/// <returns>An associative array.</returns>
-		public static Dictionary<string, object> JsonDecode(string source)
+		public static object JsonDecode(string source)
 		{
 			try
 			{
@@ -57,8 +57,7 @@
 			}
 			catch (Exception ex)
 			{
-				Error err;
-				return Errors.ErrorOccurred(err = new ValueError(ex.Message)) ? throw err : null;
+				return Errors.ValueErrorOccurred(ex.Message);
 			}
 		}
 
@@ -91,7 +90,6 @@
 
 		private static void DecodeObject(ref Dictionary<string, object> parent, string node)
 		{
-			Error err;
 			var key = string.Empty;
 			bool expectVal = false, next = true;
 
@@ -136,7 +134,7 @@
 								_ = ExtractNumber(ref node, ref i, out value);
 							else if (!ExtractBoolean(ref node, ref i, ref value))
 							{
-								_ = Errors.ErrorOccurred(err = new Error(ErrorMessage(ExNoMemberVal, i))) ? throw err : "";
+								_ = Errors.ErrorOccurred(ErrorMessage(ExNoMemberVal, i));
 								return;
 							}
 
@@ -172,7 +170,7 @@
 
 						if (keyip.Length == 0)
 						{
-							_ = Errors.ErrorOccurred(err = new Error(ErrorMessage(ExNoKeyPair, i))) ? throw err : "";
+							_ = Errors.ErrorOccurred(ErrorMessage(ExNoKeyPair, i));
 							return;
 						}
 						else
@@ -191,7 +189,7 @@
 				}
 				else
 				{
-					_ = Errors.ErrorOccurred(err = new Error(ErrorMessage(ExUnexpectedToken, i))) ? throw err : "";
+					_ = Errors.ErrorOccurred(ErrorMessage(ExUnexpectedToken, i));
 					return;
 				}
 			}
@@ -320,7 +318,6 @@
 
 		private static object[] ParseArray(string node)
 		{
-			Error err;
 			var list = new List<object>();
 			object value = null;
 
@@ -360,7 +357,10 @@
 						if (IsNumber(token))
 							_ = ExtractNumber(ref node, ref i, out value);
 						else if (!ExtractBoolean(ref node, ref i, ref value))
-							return Errors.ErrorOccurred(err = new Error(ErrorMessage(ExNoMemberVal, i))) ? throw err : null;
+						{
+							_ = Errors.ErrorOccurred(ErrorMessage(ExNoMemberVal, i));
+							return default;
+						}
 
 						break;
 				}
@@ -374,7 +374,6 @@
 
 		private static string Scan(string node, ref int i, char anchor)
 		{
-			Error err;
 			int start = i + 1, skip = 1;
 			var inStr = false;
 
@@ -394,7 +393,7 @@
 						break;
 
 				if (i == node.Length)
-					return Errors.ErrorOccurred(err = new Error(ErrorMessage(ExUntermField, i))) ? throw err : null;
+					return (string)Errors.ErrorOccurred(ErrorMessage(ExUntermField, i), DefaultErrorString);
 			}
 
 			return node.Substring(start, i - start);

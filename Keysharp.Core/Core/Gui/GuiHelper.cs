@@ -22,7 +22,7 @@
 				if (c.GetGuiControl() is Gui.Control gui)
 					return gui;
 
-			return "";
+			return DefaultObject;
 		}
 
 		public static object GuiFromHwnd(object obj0, object obj1 = null)
@@ -59,7 +59,7 @@
 				}
 			}
 
-			return "";
+			return DefaultObject;
 		}
 
 		public static Menu Menu() => new ();
@@ -77,7 +77,7 @@
 			if ((menu = Control.FromHandle(handle)) != null)
 				return menu;
 
-			return "";
+			return DefaultObject;
 		}
 
 		internal static bool CallMessageHandler(Control control, ref Message m)
@@ -88,7 +88,7 @@
 				{
 					var ret = ctrl.InvokeMessageHandlers(ref m);
 
-					if (ret != null)
+					if (ret.IsCallbackResultNonEmpty())
 						return true;
 				}
 			}
@@ -235,10 +235,11 @@
 		/// <returns></returns>
 		internal static List<(Icon, Bitmap)> SplitIcon(Icon icon)
 		{
-			Error err;
-
 			if (icon == null)
-				return Errors.ErrorOccurred(err = new UnsetError("Icon was null")) ? throw err : null;
+			{
+				_ = Errors.UnsetErrorOccurred("icon");
+				return default;
+			}
 
 			try
 			{
@@ -299,7 +300,8 @@
 			}
 			catch (Exception e)
 			{
-				return Errors.ErrorOccurred(err = new Error($"Error splitting icon: {e.Message}")) ? throw err : null;
+				_ = Errors.ErrorOccurred($"Error splitting icon: {e.Message}");
+				return default;
 			}
 		}
 

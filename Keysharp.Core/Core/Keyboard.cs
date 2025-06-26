@@ -59,7 +59,7 @@ namespace Keysharp.Core
 					// default (NEUTRAL or TOGGLE_INVALID): do nothing.
 			}
 
-			return null;
+			return DefaultObject;
 		}
 
 #if WINDOWS
@@ -158,7 +158,6 @@ namespace Keysharp.Core
 		/// <param name="Mode"></param>
 		public static object GetKeyState(object obj0, object obj1 = null)
 		{
-			Error err;
 			var keyname = obj0.As();
 			var mode = obj1.As();
 			var script = Script.TheScript;
@@ -171,7 +170,7 @@ namespace Keysharp.Core
 			if (vk == 0)
 			{
 				if ((joy = Joystick.ConvertJoy(keyname, ref joystickid)) == 0)
-					return Errors.ErrorOccurred(err = new ValueError("Invalid value.")) ? throw err : null;//It is neither a key name nor a joystick button/axis.
+					return Errors.ValueErrorOccurred("Invalid value.");//It is neither a key name nor a joystick button/axis.
 
 				return Joystick.ScriptGetJoyState(joy, joystickid.Value);
 			}
@@ -225,7 +224,6 @@ namespace Keysharp.Core
 		/// <exception cref="Error">Throws an <see cref="Error"/> exception if an invalid function object or name is specified.</exception>
 		public static object Hotkey(object keyName, object action = null, object options = null)
 		{
-			Error err;
 			var keyname = keyName.As();
 			var label = action.As();
 			var opt = options.As();
@@ -260,7 +258,7 @@ namespace Keysharp.Core
 break_twice:;
 
 					if (fo == null)
-						return Errors.ErrorOccurred(err = new Error($"Unable to find existing hotkey handler: {label}")) ? throw err : null;
+						return Errors.ErrorOccurred($"Unable to find existing hotkey handler: {label}");
 				}
 
 				if (fo == null)
@@ -268,7 +266,7 @@ break_twice:;
 			}
 
 			_ = HotkeyDefinition.Dynamic(keyname, opt, fo, hook_action);
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -295,7 +293,6 @@ break_twice:;
 		/// <exception cref="TargetError">A <see cref="TargetError"/> exception is thrown if the hotstring cannot be found.</exception>
 		public static object Hotstring(object obj0, object obj1 = null, object obj2 = null)
 		{
-			Error err;
 			var name = obj0.As();
 			var replacement = obj1;
 			var script = Script.TheScript;
@@ -344,7 +341,7 @@ break_twice:;
 				HotstringDefinition.ParseOptions(name, ref hm.hsPriority, ref hm.hsKeyDelay, ref hm.hsSendMode, ref hm.hsCaseSensitive
 												 , ref hm.hsConformToCase, ref hm.hsDoBackspace, ref hm.hsOmitEndChar, ref hm.hsSendRaw, ref hm.hsEndCharRequired
 												 , ref hm.hsDetectWhenInsideWord, ref hm.hsDoReset, ref xOption, ref hm.hsSuspendExempt);
-				return null;
+				return DefaultObject;
 			}
 
 			// Parse the hotstring name.
@@ -370,7 +367,7 @@ break_twice:;
 			}
 
 			if (hotstringStart.Length == 0)
-				return Errors.ErrorOccurred(err = new ValueError("Hotstring definition did not contain a hotstring.")) ? throw err : null;
+				return Errors.ValueErrorOccurred("Hotstring definition did not contain a hotstring.");
 
 			// Determine options which affect hotstring identity/uniqueness.
 			var caseSensitive = hm.hsCaseSensitive;
@@ -389,13 +386,13 @@ break_twice:;
 				{
 				}
 				else if (executeAction)
-					return Errors.ErrorOccurred(err = new ValueError("The 'X' option must be used together with a function object.")) ? throw err : null;
+					return Errors.ValueErrorOccurred("The 'X' option must be used together with a function object.");
 			}
 
 			var toggle = ToggleValueType.Neutral;
 
 			if (obj2 != null && (toggle = Conversions.ConvertOnOffToggle(obj2)) == ToggleValueType.Invalid)
-				return Errors.ErrorOccurred(err = new ValueError($"Invalid value of {obj2} for parameter 3.")) ? throw err : null;
+				return Errors.ValueErrorOccurred($"Invalid value of {obj2} for parameter 3.");
 
 			bool wasAlreadyEnabled;
 			var tv = script.Threads.GetThreadVariables();
@@ -440,15 +437,15 @@ break_twice:;
 			else // No matching hotstring yet.
 			{
 				if (ifunc == null && string.IsNullOrEmpty(action))
-					return Errors.ErrorOccurred(err = new TargetError("Nonexistent hotstring.", name)) ? throw err : null;
+					return Errors.TargetErrorOccurred($"Nonexistent hotstring: {name}");
 
 				var initialSuspendState = (toggle == ToggleValueType.Off) ? HotstringDefinition.HS_TURNED_OFF : 0;
 
 				if (A_IsSuspended)
 					initialSuspendState |= HotstringDefinition.HS_SUSPENDED;
 
-				if (HotstringManager.AddHotstring(name, ifunc, hotstringOptions, hotstringStart, action, false, initialSuspendState) == null)
-					return null;
+				if (HotstringManager.AddHotstring(name, ifunc, hotstringOptions, hotstringStart, action, false, initialSuspendState) is not HotstringDefinition)
+					return DefaultErrorObject;
 
 				existing = hm.shs[hm.shs.Count - 1];
 				wasAlreadyEnabled = false; // Because it didn't exist.
@@ -524,7 +521,7 @@ break_twice:;
 				script.mainWindow.CheckedBeginInvoke(() => Script.TheScript.mainWindow.ShowHistory(), false, false);
 			}
 
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -554,9 +551,8 @@ break_twice:;
 		/// </param>
 		/// <returns>0 (false) if the function timed out or 1 (true) otherwise.</returns>
 		/// <exception cref="ValueError">Throws a <see cref="ValueError"/> exception if an invalid joystick button is specified.</exception>
-		public static bool KeyWait(object keyName, object options = null)
+		public static object KeyWait(object keyName, object options = null)
 		{
-			Error err;
 			var keyname = keyName.As();
 			var opts = options.As();
 			bool waitIndefinitely;
@@ -577,7 +573,7 @@ break_twice:;
 				joy = Joystick.ConvertJoy(keyname, ref joystickId);
 
 				if (!Joystick.IsJoystickButton(joy))//Currently, only buttons are supported.
-					return Errors.ErrorOccurred(err = new ValueError($"Invalid keyname parameter: {keyname}")) ? throw err : false;// It's either an invalid key name or an unsupported Joy-something.
+					return Errors.ValueErrorOccurred($"Invalid keyname parameter: {keyname}");// It's either an invalid key name or an unsupported Joy-something.
 			}
 
 			// Set defaults:
@@ -655,7 +651,7 @@ break_twice:;
 		public static object Send(object keys)
 		{
 			Script.TheScript.HookThread.kbdMsSender.SendKeys(keys.As(), SendRawModes.NotRaw, ThreadAccessors.A_SendMode, 0);
-			return null;
+			return DefaultObject;
 		}
 
 		//We initially had these using BeginInvoke(), but that is wrong, because these will often be launched from threads in responde to a hotkey/string.
@@ -667,7 +663,7 @@ break_twice:;
 		//public static void SendInput(object obj) => Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, Accessors.SendMode == SendModes.InputThenPlay ? SendModes.InputThenPlay : SendModes.Input, 0), true, true);
 		//public static void SendPlay(object obj) => Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.NotRaw, SendModes.Play, 0), true, true);
 		//public static void SendText(object obj) => Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() => Keysharp.Scripting.Script.HookThread.kbdMsSender.SendKeys(obj.As(), SendRawModes.RawText, Accessors.SendMode, 0), true, true);
-	
+
 		/// <summary>
 		/// SendEvent sends keystrokes using the Windows keybd_event function (search Microsoft Docs for details).<br/>
 		/// The rate at which keystrokes are sent is determined by <see cref="SetKeyDelay"/>.<br/>
@@ -676,7 +672,7 @@ break_twice:;
 		public static object SendEvent(object keys)
 		{
 			Script.TheScript.HookThread.kbdMsSender.SendKeys(keys.As(), SendRawModes.NotRaw, SendModes.Event, 0);
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -688,7 +684,7 @@ break_twice:;
 		public static object SendInput(object keys)
 		{
 			Script.TheScript.HookThread.kbdMsSender.SendKeys(keys.As(), SendRawModes.NotRaw, ThreadAccessors.A_SendMode == SendModes.InputThenPlay ? SendModes.InputThenPlay : SendModes.Input, 0);
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -725,7 +721,7 @@ break_twice:;
 		public static object SendPlay(object keys)
 		{
 			Script.TheScript.HookThread.kbdMsSender.SendKeys(keys.As(), SendRawModes.NotRaw, SendModes.Play, 0);
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -734,7 +730,7 @@ break_twice:;
 		public static object SendText(object keys)
 		{
 			Script.TheScript.HookThread.kbdMsSender.SendKeys(keys.As(), SendRawModes.RawText, ThreadAccessors.A_SendMode, 0);
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -751,7 +747,7 @@ break_twice:;
 		public static object SetCapsLockState(object state = null)
 		{
 			SetToggleState((uint)Keys.Capital, ref Script.TheScript.KeyboardData.toggleStates.forceCapsLock, state.As());//Shouldn't have windows code in a common location.//TODO
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -797,7 +793,7 @@ break_twice:;
 				A_KeyDuration = dur;
 			}
 
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -806,7 +802,7 @@ break_twice:;
 		public static object SetNumLockState(object state = null)
 		{
 			SetToggleState((uint)Keys.NumLock, ref Script.TheScript.KeyboardData.toggleStates.forceNumLock, state.As());//Shouldn't have windows code in a common location.//TODO
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -815,7 +811,7 @@ break_twice:;
 		public static object SetScrollLockState(object state = null)
 		{
 			SetToggleState((uint)Keys.Scroll, ref Script.TheScript.KeyboardData.toggleStates.forceScrollLock, state.As());//Shouldn't have windows code in a common location.//TODO
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -1013,7 +1009,7 @@ break_twice:;
 			if (!f || i)
 				HotkeyDefinition.ManifestAllHotkeysHotstringsHooks();
 
-			return null;
+			return DefaultObject;
 		}
 
 		private static void RequireHook(HookType whichHook, bool require = true)

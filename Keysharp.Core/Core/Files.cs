@@ -173,12 +173,11 @@
 						tw.Close();
 				}
 
-				return null;
+				return DefaultObject;
 			}
 			catch (Exception ex)
 			{
-				Error err;
-				return Errors.ErrorOccurred(err = new OSError(ex, $"Error appending text to file {file}")) ? throw err : null;
+				return Errors.OSErrorOccurred(ex, $"Error appending text to file {file}");
 			}
 		}
 
@@ -201,7 +200,7 @@
 		public static object FileCopy(object sourcePattern, object destPattern, object overwrite = null)
 		{
 			FileCopyMove(sourcePattern.As(), destPattern.As(), overwrite.Ab(), false);
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -272,7 +271,6 @@
 #endif
 												object iconNumber = null, object runState = null)
 		{
-			Error err;
 			var t = target.As();
 			var l = linkFile.As();
 			var w = workingDir.As();
@@ -281,7 +279,7 @@
 			var icon = iconFile.As();
 
 			if (t == "")
-				return Errors.ErrorOccurred(err = new ValueError("Shortcut target cannot be an empty string.")) ? throw err : null;
+				return Errors.ValueErrorOccurred("Shortcut target cannot be an empty string.");
 
 #if LINUX
 			var type = shortcutType.As();
@@ -374,7 +372,7 @@
 			shortcut.WindowStyle = (int)state;
 			shortcut.Save();
 #endif
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -386,7 +384,6 @@
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if any errors occur.</exception>
 		public static object FileDelete(object filePattern)
 		{
-			Error err;
 			var s = filePattern.As();
 			var path = Path.GetDirectoryName(s);
 			var dir = new DirectoryInfo(path?.Length == 0 ? "./" : path);
@@ -406,9 +403,9 @@
 			}
 
 			if (failures > 0)
-				return Errors.ErrorOccurred(err = new Error($"Failed {failures} times moving or copying files.", "", failures)) ? throw err : null;
+				return Errors.ErrorOccurred($"Failed {failures} times moving or copying files.", "", failures);
 
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -430,7 +427,7 @@
 			if (s != "")
 				A_FileEncoding = s;
 
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -474,7 +471,7 @@
 			{
 			}
 
-			return string.Empty;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -508,11 +505,10 @@
 			}
 			catch (Exception ex)
 			{
-				Error err;
-				return Errors.ErrorOccurred(err = new OSError(ex, $"Error getting file attributes for file {s}")) ? throw err : null;
+				return (string)Errors.OSErrorOccurred(ex, $"Error getting file attributes for file {s}", DefaultErrorString);
 			}
 
-			return string.Empty;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -815,12 +811,11 @@
 			}
 			catch (Exception ex)
 			{
-				Error err;
-				return Errors.ErrorOccurred(err = new OSError(ex, $"Error getting shortcut information for {link}")) ? throw err : null;
+				return Errors.OSErrorOccurred(ex, $"Error getting shortcut information for {link}");
 			}
 
 #endif
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -883,8 +878,7 @@
 			}
 			catch (Exception ex)
 			{
-				Error err;
-				return Errors.ErrorOccurred(err = new OSError(ex, $"Error getting file size for file {file}")) ? throw err : 0L;
+				return (long)Errors.OSErrorOccurred(ex, $"Error getting file size for file {file}", DefaultErrorLong);
 			}
 
 			return result;
@@ -916,7 +910,7 @@
 					file = A_LoopFileFullPath;
 
 				if (!File.Exists(file))
-					return "";
+					return DefaultObject;
 
 				var date = new DateTime();
 				var info = new FileInfo(file);
@@ -932,8 +926,7 @@
 			}
 			catch (Exception ex)
 			{
-				Error err;
-				return Errors.ErrorOccurred(err = new OSError(ex, $"Error getting file time for file {file}")) ? throw err : null;
+				return (string)Errors.OSErrorOccurred(ex, $"Error getting file time for file {file}", DefaultErrorString);
 			}
 		}
 
@@ -959,8 +952,7 @@
 			}
 			catch (Exception ex)
 			{
-				Error err;
-				return Errors.ErrorOccurred(err = new OSError(ex, $"Error getting file version for file {file}")) ? throw err : null;
+				return (string)Errors.OSErrorOccurred(ex, $"Error getting file version for file {file}", DefaultErrorString);
 			}
 		}
 
@@ -968,11 +960,7 @@
 		/// Unsupported functionality which always throws an exception.
 		/// </summary>
 		/// <exception cref="Error">An <see cref="Error"/> is always thrown.</exception>
-		public static string FileInstall(object obj0, object obj1, object obj2 = null)
-		{
-			Error err;
-			return Errors.ErrorOccurred(err = new Error("Compiling files into an executable is not supported in Keysharp")) ? throw err : null;
-		}
+		public static string FileInstall(object obj0, object obj1, object obj2 = null) => (string)Errors.ErrorOccurred("Compiling files into an executable is not supported in Keysharp", DefaultErrorString);
 
 		/// <summary>
 		/// Moves or renames one or more files.
@@ -989,7 +977,7 @@
 		public static object FileMove(object sourcePattern, object destPattern, object overwrite = null)
 		{
 			FileCopyMove(sourcePattern.As(), destPattern.As(), overwrite.Ab(), true);
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -1012,7 +1000,7 @@
 		/// </param>
 		/// <returns>A new KeysharpFile object encapsulating the open handle to the file.</returns>
 		/// <exception cref="OSError">An <see cref="OSError"/> exception is thrown on failure.</exception>
-		public static KeysharpFile FileOpen(object filename, object flags, object encoding = null)
+		public static object FileOpen(object filename, object flags, object encoding = null)
 		{
 			var file = filename.As();
 			var f = flags.As();
@@ -1137,8 +1125,7 @@
 			}
 			catch (Exception ex)
 			{
-				Error err;
-				return Errors.ErrorOccurred(err = new OSError(ex, $"Error opening file {file}")) ? throw err : null;
+				return Errors.OSErrorOccurred(ex, $"Error opening file {file}");
 			}
 		}
 
@@ -1167,14 +1154,13 @@
 		/// <exception cref="OSError">An <see cref="OSError"/> exception is thrown on failure.</exception>
 		public static object FileRead(object filename, object options = null)
 		{
-			Error err;
 			object output = null;
 			var file = filename.As();
 			var opts = options.As();
 			var enc = ThreadAccessors.A_FileEncodingRaw;
 
 			if (string.IsNullOrEmpty(file))
-				return "";
+				return DefaultErrorObject;
 
 			var max = -1;
 			bool binary = false, nocrlf = false;
@@ -1201,7 +1187,7 @@
 			}
 
 			if (max == 0)
-				return "";
+				return DefaultErrorObject;
 
 			if (binary)
 			{
@@ -1212,7 +1198,7 @@
 				}
 				catch (Exception ex)
 				{
-					return Errors.ErrorOccurred(err = new OSError(ex, $"Error reading file {file}")) ? throw err : null;
+					return Errors.OSErrorOccurred(ex, $"Error reading file {file}");
 				}
 			}
 			else
@@ -1237,7 +1223,7 @@
 				}
 				catch (Exception ex)
 				{
-					return Errors.ErrorOccurred(err = new OSError(ex, $"Error reading file {file}")) ? throw err : null;
+					return Errors.OSErrorOccurred(ex, $"Error reading file {file}");
 				}
 
 				if (max != -1)
@@ -1278,12 +1264,11 @@
 					FileSystem.DeleteFile(file.FullName, UIOption.OnlyErrorDialogs, RecycleOption.SendToRecycleBin);
 
 #endif
-				return null;
+				return DefaultObject;
 			}
 			catch (Exception ex)
 			{
-				Error err;
-				return Errors.ErrorOccurred(err = new OSError(ex, $"Error recycling file(s) with pattern {s}")) ? throw err : null;
+				return Errors.OSErrorOccurred(ex, $"Error recycling file(s) with pattern {s}");
 			}
 		}
 
@@ -1303,12 +1288,11 @@
 #elif WINDOWS
 				_ = WindowsAPI.SHEmptyRecycleBin(0, s != "" ? s : null, WindowsAPI.SHERB_NOCONFIRMATION | WindowsAPI.SHERB_NOPROGRESSUI | WindowsAPI.SHERB_NOSOUND);
 #endif
-				return null;
+				return DefaultObject;
 			}
 			catch (Exception ex)
 			{
-				Error err;
-				return Errors.ErrorOccurred(err = new OSError(ex, $"Error emptying recycle bin for drive {s}")) ? throw err : null;
+				return Errors.OSErrorOccurred(ex, $"Error emptying recycle bin for drive {s}");
 			}
 		}
 
@@ -1379,11 +1363,10 @@
 
 			if (failures != 0)
 			{
-				Error err;
-				return Errors.ErrorOccurred(err = new Error($"Failed {failures} times setting file attributes.", "", failures)) ? throw err : null;
+				return Errors.ErrorOccurred($"Failed {failures} times setting file attributes.", "", failures);
 			}
 
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -1415,7 +1398,6 @@
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown on failure.</exception>
 		public static object FileSetTime(object yyyymmddhh24miss = null, object filePattern = null, object whichTime = null, object mode = null)
 		{
-			Error err;
 			var YYYYMMDDHH24MISS = yyyymmddhh24miss.As();
 			var file = filePattern.As();
 			var whichtime = whichTime.As("M");
@@ -1460,7 +1442,7 @@
 							break;
 
 						default:
-							return Errors.ErrorOccurred(err = new Error($"WhichTime value of {whichTime} was not m, c or a.")) ? throw err : null;
+							return Errors.ErrorOccurred($"WhichTime value of {whichTime} was not m, c or a.");
 					}
 
 					if (set != time)
@@ -1470,9 +1452,9 @@
 			}
 
 			if (failures != 0)
-				return Errors.ErrorOccurred(err = new Error($"Failed {failures} times setting file time.", "", failures)) ? throw err : null;
+				return Errors.ErrorOccurred($"Failed {failures} times setting file time.", "", failures);
 
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -1553,7 +1535,6 @@
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown on failure.</exception>
 		private static void FileCopyMove(string source, string dest, bool flag, bool move)
 		{
-			Error err;
 			var failures = 0;
 			var dfull = Path.GetFullPath(dest).TrimEnd(Path.DirectorySeparatorChar);
 			var sfull = Path.GetFullPath(source).TrimEnd(Path.DirectorySeparatorChar);
@@ -1572,13 +1553,13 @@
 
 			if (files.Length == 0 && sfull.AsSpan().IndexOfAny(wildcardsSv) == -1)
 			{
-				_ = Errors.ErrorOccurred(err = new Error($"{sfull} did not contain any files.")) ? throw err : "";
+				_ = Errors.ErrorOccurred($"{sfull} did not contain any files.");
 				return;
 			}
 
 			if (!Directory.Exists(ddname))
 			{
-				_ = Errors.ErrorOccurred(err = new Error($"Folder {ddname} did not exist.")) ? throw err : "";
+				_ = Errors.ErrorOccurred($"Folder {ddname} did not exist.");
 				return;
 			}
 
@@ -1604,7 +1585,7 @@
 
 			if (failures > 0)
 			{
-				_ = Errors.ErrorOccurred(err = new Error($"Failed {failures} times moving or copying files.", "", failures)) ? throw err : "";
+				_ = Errors.ErrorOccurred($"Failed {failures} times moving or copying files.", "", failures);
 				return;
 			}
 		}
