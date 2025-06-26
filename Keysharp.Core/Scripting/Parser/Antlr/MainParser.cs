@@ -3199,6 +3199,12 @@ public partial class MainParser : MainParserBase {
 		[System.Diagnostics.DebuggerNonUserCode] public ElseProductionContext elseProduction() {
 			return GetRuleContext<ElseProductionContext>(0);
 		}
+		[System.Diagnostics.DebuggerNonUserCode] public SContext[] s() {
+			return GetRuleContexts<SContext>();
+		}
+		[System.Diagnostics.DebuggerNonUserCode] public SContext s(int i) {
+			return GetRuleContext<SContext>(i);
+		}
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode[] WS() { return GetTokens(MainParser.WS); }
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode WS(int i) {
 			return GetToken(MainParser.WS, i);
@@ -3229,11 +3235,11 @@ public partial class MainParser : MainParserBase {
 			State = 575;
 			ErrorHandler.Sync(this);
 			_la = TokenStream.LA(1);
-			while (_la==WS) {
+			while (_la==EOL || _la==WS) {
 				{
 				{
 				State = 572;
-				Match(WS);
+				s();
 				}
 				}
 				State = 577;
@@ -13777,7 +13783,7 @@ public partial class MainParser : MainParserBase {
 		558,61,1,0,0,0,559,566,3,166,83,0,560,562,5,137,0,0,561,560,1,0,0,0,562,
 		563,1,0,0,0,563,561,1,0,0,0,563,564,1,0,0,0,564,565,1,0,0,0,565,567,3,
 		154,77,0,566,561,1,0,0,0,566,567,1,0,0,0,567,63,1,0,0,0,568,569,4,32,0,
-		0,569,570,3,158,79,0,570,65,1,0,0,0,571,575,5,101,0,0,572,574,5,137,0,
+		0,569,570,3,158,79,0,570,65,1,0,0,0,571,575,5,101,0,0,572,574,3,212,106,
 		0,573,572,1,0,0,0,574,577,1,0,0,0,575,573,1,0,0,0,575,576,1,0,0,0,576,
 		578,1,0,0,0,577,575,1,0,0,0,578,582,3,164,82,0,579,581,5,137,0,0,580,579,
 		1,0,0,0,581,584,1,0,0,0,582,580,1,0,0,0,582,583,1,0,0,0,583,585,1,0,0,

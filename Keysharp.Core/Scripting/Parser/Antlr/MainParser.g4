@@ -222,7 +222,7 @@ expressionStatement
 // dangling `else` and one without. That would require duplicating all flow rules though, so
 // currently it's not done.
 ifStatement
-    : If WS* singleExpression WS* flowBlock elseProduction
+    : If s* singleExpression WS* flowBlock elseProduction
     ;
 
 flowBlock
