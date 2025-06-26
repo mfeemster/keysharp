@@ -610,5 +610,14 @@
 		/// <returns>The trimmed string if the search string was found, else the original string.</returns>
 		internal static string TrimStartOf(this string str, string s) =>
 		str.StartsWith(s) ? str.Substring(s.Length) : str;
+
+		/// <summary>
+		/// Truncates a string to a maximum length.
+		/// </summary>
+		/// <param name="str">The string to truncate.</param>
+		/// <param name="s">The maximum length of the output string.</param>
+		/// <returns>The truncated string.</returns>
+		internal static string Truncate(this string str, int limit) =>
+		str.Length <= limit ? str : str.Substring(0, limit);
 	}
 }
