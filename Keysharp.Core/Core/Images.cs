@@ -10,8 +10,7 @@
 		/// </summary>
 		public static object LoadPicture(object filename)
 		{
-			object obj = null;
-			return LoadPicture(filename, null, ref obj);
+			return LoadPicture(filename, null);
 		}
 
 		/// <summary>
@@ -19,8 +18,7 @@
 		/// </summary>
 		public static object LoadPicture(object filename, object options)
 		{
-			object obj = null;
-			return LoadPicture(filename, options, ref obj);
+			return LoadPicture(filename, options);
 		}
 
 		/// <summary>
@@ -42,8 +40,9 @@
 		/// Otherwise, specify a reference to the output variable in which to store a number indicating the type of handle being returned: 0 (IMAGE_BITMAP), 1 (IMAGE_ICON) or 2 (IMAGE_CURSOR).
 		/// </param>
 		/// <returns>A bitmap or icon handle depending on whether a picture or icon is specified and whether the &outImageType parameter is present or not.</returns>
-		public static object LoadPicture(object filename, object options, ref object outImageType)
+		public static object LoadPicture(object filename, object options, [ByRef] object outImageType = null)
 		{
+			outImageType ??= VarRef.Empty;
 			var file = filename.As();
 			var opts = options.As();
 			nint handle = 0;
@@ -72,7 +71,7 @@
 			{
 				var cur = new Cursor(file);
 				handle = cur.Handle;
-				outImageType = 2L;
+				Script.SetPropertyValue(outImageType, "__Value", 2L);
 			}
 			else if ((ret = ImageHelper.LoadImage(file, width, height, iconnumber)).Item1 is Bitmap bmp)
 			{
@@ -81,19 +80,19 @@
 				{
 					handle = ic.Handle;
 					disposeHandle = false;
-					outImageType = 1L;
+					Script.SetPropertyValue(outImageType, "__Value", 1L);
 				}
 				else if (ImageHelper.IsIcon(file))
 				{
 					handle = ret.Item1.GetHicon();
 					disposeHandle = true;
-					outImageType = 1L;
+					Script.SetPropertyValue(outImageType, "__Value", 1L);
 				}
 				else
 				{
 					handle = bmp.GetHbitmap();
 					disposeHandle = true;
-					outImageType = 0L;
+					Script.SetPropertyValue(outImageType, "__Value", 0L);
 				}
 			}
 
