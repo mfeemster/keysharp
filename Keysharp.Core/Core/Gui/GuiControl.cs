@@ -1096,6 +1096,39 @@
 
 				return null;
 			}
+			public object SetCue(object newText, object showWhenFocused = null)
+			{
+				string txt = newText.ToString();
+				int showOnFocus = ForceBool(showWhenFocused ?? false) ? 1 : 0;
+				if (_control is KeysharpTextBox tb)
+				{
+#if WINDOWS
+					if (!tb.Multiline)
+						WindowsAPI.SendMessage(tb.Handle, WindowsAPI.EM_SETCUEBANNER, showOnFocus, txt);
+					else
+#endif
+						tb.PlaceholderText = txt;
+
+					return DefaultObject;
+				}
+#if WINDOWS
+				else if (_control is KeysharpComboBox cb)
+				{
+					// Find the embedded Edit control
+					nint editHandle = WindowsAPI.FindWindowEx(cb.Handle, 0, "Edit", null);
+					if (editHandle != 0)
+					{
+						WindowsAPI.SendMessage(editHandle, WindowsAPI.EM_SETCUEBANNER, showOnFocus, txt);
+						return DefaultObject;
+					}
+				}
+
+				return Errors.ValueErrorOccurred($"Only Edit and ComboBox controls implement this method.");
+#else
+
+				return Errors.ValueErrorOccurred($"Only Edit controls implement this method.");
+#endif
+			}
 
 			public object OnCommand(object notifyCode, object callback, object addRemove = null)
 			{
