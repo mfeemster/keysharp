@@ -39,6 +39,49 @@ namespace Keysharp.Tests
 			Assert.IsTrue(Keysharp.Core.Types.Type(1.2) == "Float");
 			Assert.IsTrue(Keysharp.Core.Types.Type(new KeysharpObject()) == "Object");
 			Assert.IsTrue(Keysharp.Core.Types.Type(null) == "unset");
+			//Assure every public static function returns something other than void.
+			var loadedAssemblies = GetLoadedAssemblies();
+			var types = loadedAssemblies.Values.Where(asm => asm.FullName.StartsWith("Keysharp.Core,"))
+						.SelectMany(t => GetNestedTypes(t.GetExportedTypes()))
+						.Where(t => t.GetCustomAttribute<PublicForTestOnly>() == null && t.Namespace != null && t.Namespace.StartsWith("Keysharp.Core")
+							   && t.Namespace != "Keysharp.Core.Properties"
+							   && t.IsClass && (t.IsPublic || t.IsNestedPublic));
+
+			foreach (var method in types
+					 .SelectMany(t => t.GetMethods(BindingFlags.Public | BindingFlags.Static))
+					 .Where(m => !m.IsSpecialName && m.GetCustomAttribute<PublicForTestOnly>() == null))
+			{
+				Assert.IsTrue(method.ReturnType != typeof(void), $"Method {method.DeclaringType?.FullName}.{method.Name} should not return void.");
+			}
+		}
+
+		private static Dictionary<string, Assembly> GetLoadedAssemblies()
+		{
+			var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+			var dkt = new Dictionary<string, Assembly>(assemblies.Length);
+
+			foreach (var assembly in assemblies)
+			{
+				try
+				{
+					if (!assembly.IsDynamic)
+						dkt[assembly.Location] = assembly;
+				}
+				catch (Exception)
+				{
+				}
+			}
+
+			return dkt;
+		}
+
+		private static IEnumerable<Type> GetNestedTypes(Type[] types)
+		{
+			foreach (var t in types)
+			{
+				yield return t;
+				_ = GetNestedTypes(t.GetNestedTypes());
+			}
 		}
 	}
 }

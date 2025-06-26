@@ -198,7 +198,7 @@ namespace Keysharp.Core.Linux
 				WindowItemBase.DoControlDelay();
 			}
 
-			return "";
+			return DefaultObject;
 		}
 
 		internal override long ControlGetExStyle(object ctrl, object title, object text, object excludeTitle, object excludeText) => 1;
@@ -213,6 +213,7 @@ namespace Keysharp.Core.Linux
 						return form.ActiveControl.Handle.ToInt64();
 				}
 			}
+
 			return 0L;
 		}
 
@@ -239,7 +240,7 @@ namespace Keysharp.Core.Linux
 			return index + 1L;
 		}
 
-		internal override Keysharp.Core.Array ControlGetItems(object ctrl, object title, object text, object excludeTitle, object excludeText)
+		internal override object ControlGetItems(object ctrl, object title, object text, object excludeTitle, object excludeText)
 		{
 			if (WindowSearch.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
@@ -399,7 +400,7 @@ namespace Keysharp.Core.Linux
 					var lines = txt.Lines;
 
 					if (n >= lines.Length)
-						return Errors.ErrorOccurred(err = new ValueError($"Requested line of {n + 1} is greater than the number of lines ({lines.Length}) in the text box in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : null;
+						return (string)Errors.ValueErrorOccurred($"Requested line of {n + 1} is greater than the number of lines ({lines.Length}) in the text box in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}", null, DefaultErrorString);
 
 					return lines[n];
 				}
@@ -409,7 +410,7 @@ namespace Keysharp.Core.Linux
 				}
 			}
 
-			return "";
+			return DefaultObject;
 		}
 
 		internal override long EditGetLineCount(object ctrl, object title, object text, object excludeTitle, object excludeText)
@@ -438,7 +439,7 @@ namespace Keysharp.Core.Linux
 					return ctrl2.SelectedText;
 			}
 
-			return "";
+			return DefaultObject;
 		}
 
 		internal override void EditPaste(string str, object ctrl, object title, object text, object excludeTitle, object excludeText)
@@ -501,7 +502,7 @@ namespace Keysharp.Core.Linux
 						if (col >= 0)
 						{
 							if (col >= lv.Columns.Count)
-								return Errors.ErrorOccurred(err = new ValueError($"Column ${col + 1} is greater than list view column count of {lv.Columns.Count} in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : null;
+								return Errors.ValueErrorOccurred($"Column ${col + 1} is greater than list view column count of {lv.Columns.Count} in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
 
 							items.ForEach(templvi => sb.AppendLine(templvi.SubItems[col].Text));
 						}
@@ -530,12 +531,10 @@ namespace Keysharp.Core.Linux
 				{
 					if (form.MainMenuStrip is MenuStrip strip)
 					{
-						Error err;
-
 						if (GetMenuItem(strip, menu, sub1, sub2, sub3, sub4, sub5, sub6) is ToolStripMenuItem item)
 							item.PerformClick();
 						else
-							_ = Errors.ErrorOccurred(err = new ValueError($"Could not find menu.", $"{title}, {text}, {menu}, {sub1}, {sub2}, {sub3}, {sub4}, {sub5}, {sub6}, {excludeTitle}, {excludeText}")) ? throw err : "";
+							_ = Errors.ValueErrorOccurred($"Could not find menu.", $"{title}, {text}, {menu}, {sub1}, {sub2}, {sub3}, {sub4}, {sub5}, {sub6}, {excludeTitle}, {excludeText}");
 					}
 				}
 			}

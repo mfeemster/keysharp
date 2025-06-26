@@ -366,7 +366,7 @@ namespace Keysharp.Core.Common.Threading
 			else if (useFallback && vk != 0)
 				return "vk" + vk.ToString("X2");
 			else
-				return "";
+				return DefaultObject;
 		}
 
 		internal abstract void WaitHookIdle();

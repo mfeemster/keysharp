@@ -35,7 +35,6 @@
 		/// <exception cref="TypeError">A <see cref="TypeError"/> exception is thrown if h was not a string or existing function object.</exception>
 		public static IFuncObj GetFuncObj(object h, object eventObj, object paramCount = null, bool throwIfBad = false)
 		{
-			Error err;
 			IFuncObj del = null;
 			var cachedFuncObj = Script.TheScript.FunctionData.cachedFuncObj;
 
@@ -53,7 +52,10 @@
 						del = null;
 
 						if (throwIfBad)
-							return Errors.ErrorOccurred(err = new MethodError($"Unable to retrieve method {s} when creating a function object.")) ? throw err : null;
+						{
+							_ = Errors.MethodErrorOccurred($"Unable to retrieve method {s} when creating a function object.");
+							return default;
+						}
 					}
 				}//Empty string will just return null, which is a valid value in some cases.
 			}
@@ -66,7 +68,10 @@
 					del = null;
 
 					if (throwIfBad)
-						return Errors.ErrorOccurred(err = new MethodError($"Existing function object was invalid.")) ? throw err : null;
+					{
+						_ = Errors.MethodErrorOccurred($"Existing function object was invalid.");
+						return default;
+					}
 				}
 			}
 			else if (h is Delegate d)
@@ -81,7 +86,10 @@
 					del = null;
 
 					if (throwIfBad)
-						return Errors.ErrorOccurred(err = new MethodError($"Unable to retrieve method info for {d.Method.Name} when creating a function object from delegate.")) ? throw err : null;
+					{
+						_ = Errors.MethodErrorOccurred($"Unable to retrieve method info for {d.Method.Name} when creating a function object from delegate.");
+						return default;
+					}
 				}
 			}
 			else if (h is KeysharpEnumerator ke)
@@ -89,7 +97,10 @@
 				del = ke.CallFunc;
 			}
 			else if (throwIfBad)
-				return Errors.ErrorOccurred(err = new TypeError($"Improper value of {h} was supplied for a function object.")) ? throw err : null;
+			{
+				_ = Errors.TypeErrorOccurred(h, typeof(FuncObj));
+				return null;
+			}
 
 			return del;
 		}
@@ -104,9 +115,8 @@
 		/// <param name="paramCount">The number of parameters the method has. Default: use the first method found.</param>
 		/// <returns>An <see cref="IFuncObj"/> which can later be called like a method.</returns>
 		/// <exception cref="MethodError">A <see cref="MethodError"/> exception is thrown if the method cannot be found.</exception>
-		public static IFuncObj GetMethod(object value, object name = null, object paramCount = null)
+		public static object GetMethod(object value, object name = null, object paramCount = null)
 		{
-			Error err;
 			var v = value;
 			var n = name.As();
 			var count = paramCount.Ai(-1);
@@ -115,7 +125,7 @@
 			if (mph != null && mph.mi != null)
 				return new FuncObj(mph.mi, null);
 
-			return Errors.ErrorOccurred(err = new MethodError($"Unable to retrieve method {n} from object of type {v.GetType()} with parameter count {count}.")) ? throw err : null;
+			return Errors.MethodErrorOccurred($"Unable to retrieve method {n} from object of type {v.GetType()} with parameter count {count}.");
 		}
 
 		/// <summary>
@@ -183,7 +193,7 @@
 		/// <param name="name">A method name. If omitted, the bound function calls obj itself.</param>
 		/// <param name="args">The arguments to bind to the function.</param>
 		/// <returns>An new <see cref="BoundFunc"/> object with the specified arguments bound to it.</returns>
-		public static IFuncObj ObjBindMethod(object obj, object name = null, params object[] args)
+		public static object ObjBindMethod(object obj, object name = null, params object[] args)
 		{
 			var o = obj;
 			var n = name.As("Call");
@@ -193,8 +203,7 @@
 			else if (Reflections.FindAndCacheMethod(o.GetType(), n, -1) is MethodPropertyHolder mph && mph.mi != null)
 				return new BoundFunc(mph.mi, [obj, ..args], o);
 
-			Error err;
-			return Errors.ErrorOccurred(err = new MethodError($"Unable to retrieve method {name} for object.")) ? throw err : null;
+			return Errors.ErrorOccurred($"Unable to retrieve method {name} for object.");
 		}
 	}
 

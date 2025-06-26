@@ -76,7 +76,7 @@
 		public override object __New(params object[] args)
 		{
 			if (args == null || args.Length == 0)
-				return "";
+				return DefaultObject;
 
 			var filename = args[0].As();
 			var m = (FileMode)args[1];
@@ -157,7 +157,7 @@
 				}
 			}
 
-			return "";
+			return DefaultObject;
 		}
 
 		internal KeysharpFile(string filename, FileMode mode, FileAccess access, FileShare share, Encoding encoding, long eol) : base(filename, mode, access, share, encoding, eol) { }

@@ -39,7 +39,7 @@
 									   ]));
 			}
 
-			return "";
+			return DefaultObject;
 		}
 
 		public IFuncObj __Enum(object count) => new RegExIterator(this, count.Ai()).fo;
@@ -237,7 +237,7 @@
 		internal string haystack;
 		internal string needle;//Unmodified RegEx pattern.
 		internal string pattern;//RegEx pattern with AHK settings removed.
-		internal string tag;
+		internal string tag = "";
 		internal PcreRegexSettings opts;
 		internal string[] groupNames;
 

@@ -133,11 +133,7 @@ namespace Keysharp.Core
 		/// <param name="name">Unused.</param>
 		/// <returns>Unused.</returns>
 		/// <exception cref="Error">Throws an <see cref="Error"/> exception because Keysharp does not support querying labels at runtime.</exception>
-		public static long IsLabel(object name)
-		{
-			Error err;
-			return Errors.ErrorOccurred(err = new Error("C# does not allow querying labels at runtime.")) ? throw err : 0L;
-		}
+		public static long IsLabel(object name) => (long)Errors.ErrorOccurred("C# does not allow querying labels at runtime.", DefaultErrorLong);
 
 		/// <summary>
 		/// Returns 1 if value is a string and is empty or contains only lowercase characters.<br/>

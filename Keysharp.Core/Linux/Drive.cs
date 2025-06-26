@@ -30,7 +30,7 @@ namespace Keysharp.Core.Linux
 			get
 			{
 				Debug.OutputDebug($"Obtaining the status of the CD/DVD drive is not supported on linux.");
-				return "";
+				return DefaultObject;
 			}
 		}
 

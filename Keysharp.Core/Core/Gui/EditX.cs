@@ -73,7 +73,7 @@
 				winText,
 				excludeTitle,
 				excludeText);
-			return null;
+			return DefaultObject;
 		}
 	}
 }

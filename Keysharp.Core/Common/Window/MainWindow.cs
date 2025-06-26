@@ -72,34 +72,37 @@
 			});
 		}
 
-		internal void ListHotkeys()
+		internal object ListHotkeys()
 		{
 			_ = this.BeginInvoke(() =>
 			{
 				ShowIfNeeded();
 				SetTextInternal(HotkeyDefinition.GetHotkeyDescriptions(), MainFocusedTab.Hotkeys, txtHotkeys, true);
 			});
+			return DefaultObject;
 		}
 
-		internal void ShowDebug()
+		internal object ShowDebug()
 		{
 			_ = this.BeginInvoke(() =>
 			{
 				ShowIfNeeded();
 				tcMain.SelectedTab = tpDebug;
 			});
+			return DefaultObject;
 		}
 
-		internal void ShowHistory()
+		internal object ShowHistory()
 		{
 			_ = this.BeginInvoke(() =>
 			{
 				ShowIfNeeded();
 				SetTextInternal(Core.Debug.ListKeyHistory(), MainFocusedTab.History, txtHistory, true);
 			});
+			return DefaultObject;
 		}
 
-		internal void ShowInternalVars(bool showTab)
+		internal object ShowInternalVars(bool showTab)
 		{
 			callingInternalVars = true;//Gets called twice if called before first showing.
 			_ = this.BeginInvoke(() =>
@@ -114,6 +117,7 @@
 					callingInternalVars = false;
 				}
 			});
+			return DefaultObject;
 		}
 
 		protected override void WndProc(ref Message m)

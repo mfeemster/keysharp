@@ -117,7 +117,7 @@ namespace Keysharp.Core.COM
 
 		internal static void ClearVariant(ref VARIANT variant)
 		{
-			VariantClear(ref variant);
+			_ = VariantClear(ref variant);
 		}
 	}
 }

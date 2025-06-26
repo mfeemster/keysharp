@@ -319,6 +319,54 @@ namespace Keysharp.Tests
 		}
 
 		[Test, Category("String")]
+		public void RegExMatchCs()
+		{
+			VarRef match = new(null);
+			_ = RegEx.RegExMatchCs("abc123abc456", "abc\\d+", match, 1);
+			Assert.AreEqual(((RegExMatchInfoCs)match.__Value)[0], "abc123");
+			Assert.AreEqual(((RegExMatchInfoCs)match.__Value).Pos(), 1);
+			_ = RegEx.RegExMatchCs("abc123abc456", "456", match, -1);
+			Assert.AreEqual(((RegExMatchInfoCs)match.__Value)[0], "456");
+			Assert.AreEqual(((RegExMatchInfoCs)match.__Value).Pos(), 10);
+			_ = RegEx.RegExMatchCs("abc123abc456", "abc", match, -1);
+			Assert.AreEqual(((RegExMatchInfoCs)match.__Value)[0], "abc");
+			Assert.AreEqual(((RegExMatchInfoCs)match.__Value).Pos(), 7);
+			_ = RegEx.RegExMatchCs("abc123abc456", "abc", match, -15);
+			Assert.AreEqual(((RegExMatchInfoCs)match.__Value)[0], "abc");
+			Assert.AreEqual(((RegExMatchInfoCs)match.__Value).Pos(), 7);
+			_ = RegEx.RegExMatchCs("abc123abc456", "abc", match, -5);
+			Assert.AreEqual(((RegExMatchInfoCs)match.__Value)[0], "abc");
+			Assert.AreEqual(((RegExMatchInfoCs)match.__Value).Pos(), 1);
+			_ = RegEx.RegExMatchCs("abc123abc456", "abc\\d+", match, 2);
+			Assert.AreEqual(((RegExMatchInfoCs)match.__Value)[0], "abc456");
+			Assert.AreEqual(((RegExMatchInfoCs)match.__Value).Pos(), 7);
+			_ = RegEx.RegExMatchCs("abc123123", "123$", match, 1);
+			Assert.AreEqual(((RegExMatchInfoCs)match.__Value).Pos(), 7);
+			_ = RegEx.RegExMatchCs("xxxabc123xyz", "abc.*xyz", match, 1);
+			Assert.AreEqual(((RegExMatchInfoCs)match.__Value).Pos(), 4);
+			_ = RegEx.RegExMatchCs("abc123123", "123$", match);
+			Assert.AreEqual(((RegExMatchInfoCs)match.__Value).Pos(), 7);
+			_ = RegEx.RegExMatchCs("abc123", "i)^ABC", match);
+			Assert.AreEqual(((RegExMatchInfoCs)match.__Value).Pos(), 1);
+			_ = RegEx.RegExMatchCs("abcXYZ123", "abc(.*)123", match);
+			Assert.AreEqual(((RegExMatchInfoCs)match.__Value)[1], "XYZ");
+			Assert.AreEqual(((RegExMatchInfoCs)match.__Value).Pos(1), 4);
+			_ = RegEx.RegExMatchCs("abcXYZ123", "abc(?<testname>.*)123", match);
+			Assert.AreEqual(((RegExMatchInfoCs)match.__Value)["testname"], "XYZ");
+			Assert.AreEqual(((RegExMatchInfoCs)match.__Value).Pos("testname"), 4);
+			Assert.AreEqual(((RegExMatchInfoCs)match.__Value).Name("testname"), "testname");
+			_ = RegEx.RegExMatchCs(@"C:\Foo\Bar\Baz.txt", @"\w+$", match);
+			Assert.AreEqual(((RegExMatchInfoCs)match.__Value)[0], "txt");
+			Assert.AreEqual(((RegExMatchInfoCs)match.__Value).Pos(), 16);
+			_ = RegEx.RegExMatchCs("Michiganroad 72", @"(.*) (?<nr>\d+)", match);
+			Assert.AreEqual(((RegExMatchInfoCs)match.__Value).Count, 3);
+			Assert.AreEqual(((RegExMatchInfoCs)match.__Value)[1], "Michiganroad");
+			Assert.AreEqual(((RegExMatchInfoCs)match.__Value).Name(2), "nr");
+			Assert.AreEqual(((RegExMatchInfoCs)match.__Value)[2], "72");
+			Assert.IsTrue(TestScript("string-regexmatch-cs", false));
+		}
+
+		[Test, Category("String")]
 		public void RegExReplace()
 		{
             VarRef outputVarCount = new(null);
@@ -332,6 +380,22 @@ namespace Keysharp.Tests
 			Assert.AreEqual(match, "");
 			Assert.AreEqual(outputVarCount.__Value, 2L);
 			Assert.IsTrue(TestScript("string-regexreplace", true));
+		}
+
+		[Test, Category("String")]
+		public void RegExReplaceCs()
+		{
+			VarRef outputVarCount = new(null);
+			var match = RegEx.RegExReplaceCs("abc123123", "123$", "xyz");
+			Assert.AreEqual(match, "abc123xyz");
+			match = RegEx.RegExReplaceCs("abc123", "i)^ABC");
+			Assert.AreEqual(match, "123");
+			match = RegEx.RegExReplaceCs("abcXYZ123", "abc(.*)123", "aaa$1zzz");
+			Assert.AreEqual(match, "aaaXYZzzz");
+			match = RegEx.RegExReplaceCs("abc123abc456", "abc\\d+", "", outputVarCount);
+			Assert.AreEqual(match, "");
+			Assert.AreEqual(outputVarCount.__Value, 2L);
+			Assert.IsTrue(TestScript("string-regexreplace-cs", true));
 		}
 
 		[Test, Category("String")]
@@ -799,7 +863,7 @@ namespace Keysharp.Tests
 		{
 			var str1 = "Hello, world!";
 			var b64 = "SGVsbG8sIHdvcmxkIQ==";
-			var conv = KeysharpEnhancements.Base64Decode(b64);
+			var conv = (Keysharp.Core.Array)KeysharpEnhancements.Base64Decode(b64);
 			var barr = conv.ToByteArray().ToArray();
 			var str2 = Encoding.UTF8.GetString(barr);
 			Assert.AreEqual(str1, str2);

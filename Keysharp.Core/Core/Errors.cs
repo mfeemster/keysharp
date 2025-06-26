@@ -12,7 +12,7 @@ namespace Keysharp.Core
 		/// </summary>
 		/// <param name="args">The the parameters to pass to the constructor.</param>
 		/// <returns>An <see cref="Error"/> object.</returns>
-		public static Error Error(params object[] args) => new (args);
+		public static Error Error(params object[] args) => new(args);
 
 		/// <summary>
 		/// Calls all registered error handlers, passing in the exception object to each.
@@ -61,48 +61,39 @@ namespace Keysharp.Core
 		}
 
 		/// <summary>
-		/// Internal helper to handle argument type errors. Throws a <see cref="ValueError"/> or returns true.
-		/// </summary>
-		internal static bool ArgumentErrorOccurred(object arg, int position)
-		{
-			Error err;
-			return ErrorOccurred(err = new ValueError($"Invalid argument of type \"{(arg == null ? "unset" : arg.GetType())}\" at position {position}.")) ? throw err : true;
-		}
-
-		/// <summary>
 		/// Creates and returns a new <see cref="IndexError"/> exception object.
 		/// </summary>
 		/// <param name="args">The the parameters to pass to the constructor.</param>
 		/// <returns>An <see cref="IndexError"/> object.</returns>
-		public static IndexError IndexError(params object[] args) => new (args);
+		public static IndexError IndexError(params object[] args) => new(args);
 
 		/// <summary>
 		/// Creates and returns a new <see cref="KeyError"/> exception object.
 		/// </summary>
 		/// <param name="args">The the parameters to pass to the constructor.</param>
 		/// <returns>An <see cref="KeyError"/> object.</returns>
-		public static KeyError KeyError(params object[] args) => new (args);
+		public static KeyError KeyError(params object[] args) => new(args);
 
-        /// <summary>
-        /// Creates and returns a new <see cref="MemberError"/> exception object.
-        /// </summary>
-        /// <param name="args">The the parameters to pass to the constructor.</param>
-        /// <returns>An <see cref="MemberError"/> object.</returns>
-        public static MemberError MemberError(params object[] args) => new (args);
+		/// <summary>
+		/// Creates and returns a new <see cref="MemberError"/> exception object.
+		/// </summary>
+		/// <param name="args">The the parameters to pass to the constructor.</param>
+		/// <returns>An <see cref="MemberError"/> object.</returns>
+		public static MemberError MemberError(params object[] args) => new(args);
 
 		/// <summary>
 		/// Creates and returns a new <see cref="MemoryError"/> exception object.
 		/// </summary>
 		/// <param name="args">The the parameters to pass to the constructor.</param>
 		/// <returns>An <see cref="MemoryError"/> object.</returns>
-		public static MemoryError MemoryError(params object[] args) => new (args);
+		public static MemoryError MemoryError(params object[] args) => new(args);
 
 		/// <summary>
 		/// Creates and returns a new <see cref="MethodError"/> exception object.
 		/// </summary>
 		/// <param name="args">The the parameters to pass to the constructor.</param>
 		/// <returns>An <see cref="MethodError"/> object.</returns>
-		public static MethodError MethodError(params object[] args) => new (args);
+		public static MethodError MethodError(params object[] args) => new(args);
 
 		/// <summary>
 		/// Registers a function to be called automatically whenever an unhandled error occurs.<br/>
@@ -127,7 +118,7 @@ namespace Keysharp.Core
 				script.onErrorHandlers = [];
 
 			script.onErrorHandlers.ModifyEventHandlers(del, i);
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -135,63 +126,231 @@ namespace Keysharp.Core
 		/// </summary>
 		/// <param name="args">The the parameters to pass to the constructor.</param>
 		/// <returns>An <see cref="OSError"/> object.</returns>
-		public static OSError OSError(params object[] args) => new (args);
+		public static OSError OSError(params object[] args) => new(args);
 
 		/// <summary>
 		/// Creates and returns a new <see cref="PropertyError"/> exception object.
 		/// </summary>
 		/// <param name="args">The the parameters to pass to the constructor.</param>
 		/// <returns>An <see cref="PropertyError"/> object.</returns>
-		public static PropertyError PropertyError(params object[] args) => new (args);
+		public static PropertyError PropertyError(params object[] args) => new(args);
 
 		/// <summary>
 		/// Creates and returns a new <see cref="TargetError"/> exception object.
 		/// </summary>
 		/// <param name="args">The the parameters to pass to the constructor.</param>
 		/// <returns>An <see cref="TargetError"/> object.</returns>
-		public static TargetError TargetError(params object[] args) => new (args);
+		public static TargetError TargetError(params object[] args) => new(args);
 
 		/// <summary>
 		/// Creates and returns a new <see cref="TimeoutError"/> exception object.
 		/// </summary>
 		/// <param name="args">The the parameters to pass to the constructor.</param>
 		/// <returns>An <see cref="TimeoutError"/> object.</returns>
-		public static TimeoutError TimeoutError(params object[] args) => new (args);
+		public static TimeoutError TimeoutError(params object[] args) => new(args);
 
 		/// <summary>
 		/// Creates and returns a new <see cref="TypeError"/> exception object.
 		/// </summary>
 		/// <param name="args">The the parameters to pass to the constructor.</param>
 		/// <returns>An <see cref="TypeError"/> object.</returns>
-		public static TypeError TypeError(params object[] args) => new (args);
+		public static TypeError TypeError(params object[] args) => new(args);
 
 		/// <summary>
 		/// Creates and returns a new <see cref="UnsetError"/> exception object.
 		/// </summary>
 		/// <param name="args">The the parameters to pass to the constructor.</param>
 		/// <returns>An <see cref="UnsetError"/> object.</returns>
-		public static UnsetError UnsetError(params object[] args) => new (args);
+		public static UnsetError UnsetError(params object[] args) => new(args);
 
 		/// <summary>
 		/// Creates and returns a new <see cref="UnsetItemError"/> exception object.
 		/// </summary>
 		/// <param name="args">The the parameters to pass to the constructor.</param>
 		/// <returns>An <see cref="UnsetItemError"/> object.</returns>
-		public static UnsetItemError UnsetItemError(params object[] args) => new (args);
+		public static UnsetItemError UnsetItemError(params object[] args) => new(args);
 
 		/// <summary>
 		/// Creates and returns a new <see cref="ValueError"/> exception object.
 		/// </summary>
 		/// <param name="args">The the parameters to pass to the constructor.</param>
 		/// <returns>An <see cref="ValueError"/> object.</returns>
-		public static ValueError ValueError(params object[] args) => new (args);
+		public static ValueError ValueError(params object[] args) => new(args);
 
 		/// <summary>
 		/// Creates and returns a new <see cref="ZeroDivisionError"/> exception object.
 		/// </summary>
 		/// <param name="args">The the parameters to pass to the constructor.</param>
 		/// <returns>An <see cref="ZeroDivisionError"/> object.</returns>
-		public static ZeroDivisionError ZeroDivisionError(params object[] args) => new (args);
+		public static ZeroDivisionError ZeroDivisionError(params object[] args) => new(args);
+
+		/// <summary>
+		/// Internal helper to handle argument value errors. Throws a <see cref="ValueError"/> or returns <see cref="DefaultErrorObject"/>.
+		/// </summary>
+		[StackTraceHidden]
+		internal static object ArgumentErrorOccurred(object arg, int position)
+		{
+			Error err;
+			return ErrorOccurred(err = new ValueError($"Invalid argument of type \"{(arg == null ? "unset" : arg.GetType())}\" at position {position}.")) ? throw err : DefaultErrorObject;
+		}
+
+		/// <summary>
+		/// Internal helper to handle errors. Throws a <see cref="Error"/> or returns <see cref="DefaultErrorObject"/>.
+		/// </summary>
+		[StackTraceHidden]
+		internal static object ErrorOccurred(string text, object ret = null, string excType = Keyword_Return)
+		{
+			Error err;
+			return ErrorOccurred(err = new Error(text), excType) ? throw err : ret ?? DefaultErrorObject;
+		}
+
+		/// <summary>
+		/// Internal helper to handle errors. Throws a <see cref="Error"/> or returns <see cref="DefaultErrorObject"/>.
+		/// </summary>
+		[StackTraceHidden]
+		internal static object ErrorOccurred(string text, object what, object extra, object ret = null, string excType = Keyword_Return)
+		{
+			Error err;
+			return ErrorOccurred(err = new Error(text, what, extra, excType)) ? throw err : ret ?? DefaultErrorObject;
+		}
+
+		/// <summary>
+		/// Internal helper to handle index errors. Throws a <see cref="IndexError"/> or returns <see cref="DefaultErrorObject"/>.
+		/// </summary>
+		[StackTraceHidden]
+		internal static object IndexErrorOccurred(string text, object ret = null)
+		{
+			Error err;
+			return ErrorOccurred(err = new IndexError(text)) ? throw err : ret ?? DefaultErrorObject;
+		}
+
+		/// <summary>
+		/// Internal helper to handle key errors. Throws a <see cref="KeyError"/> or returns <see cref="DefaultErrorObject"/>.
+		/// </summary>
+		[StackTraceHidden]
+		internal static object KeyErrorOccurred(string text, object ret = null)
+		{
+			Error err;
+			return ErrorOccurred(err = new KeyError(text)) ? throw err : ret ?? DefaultErrorObject;
+		}
+
+		/// <summary>
+		/// Internal helper to handle method errors. Throws a <see cref="MethodError"/> or returns <see cref="DefaultErrorObject"/>.
+		/// </summary>
+		[StackTraceHidden]
+		internal static object MethodErrorOccurred(string text, object ret = null)
+		{
+			Error err;
+			return ErrorOccurred(err = new MethodError(text)) ? throw err : ret ?? DefaultErrorObject;
+		}
+
+		/// <summary>
+		/// Internal helper to handle operating system errors. Throws a <see cref="OSError"/> or returns <see cref="DefaultErrorObject"/>.
+		/// </summary>
+		[StackTraceHidden]
+		internal static object OSErrorOccurred(object obj, string text, object ret = null)
+		{
+			Error err;
+			return ErrorOccurred(err = new OSError(obj, text)) ? throw err : ret ?? DefaultErrorObject;
+		}
+
+		/// <summary>
+		/// Internal helper to handle property errors. Throws a <see cref="PropertyError"/> or returns <see cref="DefaultErrorObject"/>.
+		/// </summary>
+		[StackTraceHidden]
+		internal static object PropertyErrorOccurred(string text, object ret = null)
+		{
+			Error err;
+			return ErrorOccurred(err = new PropertyError(text)) ? throw err : ret ?? DefaultErrorObject;
+		}
+
+		/// <summary>
+		/// Internal helper to handle target errors when searching for a window. Throws a <see cref="TargetError"/> or returns <see cref="DefaultErrorObject"/>.
+		/// </summary>
+		[StackTraceHidden]
+		internal static object TargetErrorOccurred(object winTitle,
+				object winText,
+				object excludeTitle,
+				object excludeText,
+				object ret = null)
+		{
+			return TargetErrorOccurred($"Could not find window with criteria: title: {winTitle}, text: {winText}, exclude title: {excludeTitle}, exclude text: {excludeText}.");
+		}
+
+		/// <summary>
+		/// Internal helper to handle target errors when searching for a control within window. Throws a <see cref="TargetError"/> or returns <see cref="DefaultErrorObject"/>.
+		/// </summary>
+		[StackTraceHidden]
+		internal static object TargetErrorOccurred(string prefix,
+				object winTitle,
+				object winText,
+				object excludeTitle,
+				object excludeText,
+				object ret = null)
+		{
+			return TargetErrorOccurred($"{prefix} in window with criteria: title: {winTitle}, text: {winText}, exclude title: {excludeTitle}, exclude text: {excludeText}.");
+		}
+
+		/// <summary>
+		/// Internal helper to handle target errors. Throws a <see cref="TargetError"/> or returns <see cref="DefaultErrorObject"/>.
+		/// </summary>
+		[StackTraceHidden]
+		internal static object TargetErrorOccurred(string text,
+				object ret = null)
+		{
+			Error err;
+			return ErrorOccurred(err = new TargetError(text)) ? throw err : ret ?? DefaultErrorObject;
+		}
+
+		/// <summary>
+		/// Internal helper to handle type errors. Throws a <see cref="TypeError"/> or returns <see cref="DefaultErrorObject"/>.
+		/// </summary>
+		[StackTraceHidden]
+		internal static object TypeErrorOccurred(object sourceValue, Type targetType, object ret = null)
+		{
+			Error err;
+			return ErrorOccurred(err = new TypeError($"Cannot convert an object of type {(sourceValue != null ? sourceValue.GetType() : "no type/unset")} with value {sourceValue ?? "unset"} to type {targetType}.")) ? throw err : ret ?? DefaultErrorObject;
+		}
+
+		/// <summary>
+		/// Internal helper to handle unset errors. Throws a <see cref="UnsetError"/> or returns <see cref="DefaultErrorObject"/>.
+		/// </summary>
+		[StackTraceHidden]
+		internal static object UnsetErrorOccurred(string text, object ret = null)
+		{
+			Error err;
+			return ErrorOccurred(err = new UnsetError($"{text} is null.")) ? throw err : ret ?? DefaultErrorObject;
+		}
+
+		/// <summary>
+		/// Internal helper to handle unset item errors. Throws a <see cref="UnsetItemError"/> or returns <see cref="DefaultErrorObject"/>.
+		/// </summary>
+		[StackTraceHidden]
+		internal static object UnsetItemErrorOccurred(string text, object ret = null)
+		{
+			Error err;
+			return ErrorOccurred(err = new UnsetItemError(text)) ? throw err : ret ?? DefaultErrorObject;
+		}
+
+		/// <summary>
+		/// Internal helper to handle value errors. Throws a <see cref="ValueError"/> or returns <see cref="DefaultErrorObject"/>.
+		/// </summary>
+		[StackTraceHidden]
+		internal static object ValueErrorOccurred(string text, object val = null, object ret = null)
+		{
+			Error err;
+			return ErrorOccurred(err = new ValueError(text, val)) ? throw err : ret ?? DefaultErrorObject;
+		}
+
+		/// <summary>
+		/// Internal helper to handle zero division errors. Throws a <see cref="ZeroDivisionError"/> or returns <see cref="DefaultErrorObject"/>.
+		/// </summary>
+		[StackTraceHidden]
+		internal static object ZeroDivisionErrorOccurred(string text, object ret = null)
+		{
+			Error err;
+			return ErrorOccurred(err = new ZeroDivisionError($"{text} was 0.")) ? throw err : ret ?? DefaultErrorObject;
+		}
 	}
 
 	/// <summary>

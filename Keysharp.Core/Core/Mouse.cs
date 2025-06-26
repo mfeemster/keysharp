@@ -46,7 +46,7 @@ namespace Keysharp.Core
 			//Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() =>
 			ht.kbdMsSender.PerformMouseCommon(repeatCount < 1 ? Actions.ACT_MOUSEMOVE : Actions.ACT_MOUSECLICK // Treat repeat-count<1 as a move (like {click}).
 											  , vk, x, y, 0, 0, repeatCount, eventType, ThreadAccessors.A_DefaultMouseSpeed, moveOffset);//, true, true);
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -69,7 +69,6 @@ namespace Keysharp.Core
 		/// <exception cref="ValueError">A <see cref="ValueError"/> exception is thrown if targetType or relativeTo do not contain a valid values.</exception>
 		public static object CoordMode(object targetType, object relativeTo = null)
 		{
-			Error err;
 			var target = targetType.As();
 			var mode = relativeTo.As(Keyword_Screen);
 			CoordModeType rel;
@@ -85,7 +84,7 @@ namespace Keysharp.Core
 			else if (Options.IsOption(mode, Keyword_Screen))
 				rel = CoordModeType.Screen;
 			else
-				return Errors.ErrorOccurred(err = new ValueError($"Invalid RelativeTo value of '{mode}' passed to CoordMode().")) ? throw err : null;
+				return Errors.ValueErrorOccurred($"Invalid RelativeTo value of '{mode}' passed to CoordMode().");
 
 			object prev;
 
@@ -117,7 +116,7 @@ namespace Keysharp.Core
 					break;
 
 				default:
-					return Errors.ErrorOccurred(err = new ValueError($"Invalid TargetType value of '{target}' passed to CoordMode().")) ? throw err : null;
+					return Errors.ValueErrorOccurred($"Invalid TargetType value of '{target}' passed to CoordMode().");
 			}
 
 			return prev;
@@ -161,7 +160,7 @@ namespace Keysharp.Core
 			//Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() =>
 			PerformMouse(Actions.ACT_MOUSECLICK, wb, ix, iy, KeyboardMouseSender.CoordUnspecified, KeyboardMouseSender.CoordUnspecified,
 						 ispeed, rel, repeatCount, du);//, true, true);
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -201,7 +200,7 @@ namespace Keysharp.Core
 			//Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() =>
 			PerformMouse(Actions.ACT_MOUSECLICKDRAG, wb, ix1, iy1, ix2, iy2,
 						 ispeed, rel, 1, "");//, true, true);
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -244,7 +243,7 @@ namespace Keysharp.Core
             var child = script.WindowProvider.Manager.WindowFromPoint(pos);
 
 			if (child == null || child.Handle == 0)
-				return null;
+				return DefaultErrorObject;
 
 			var parent = child.NonChildParentWindow;
             Script.SetPropertyValue(outputVarWin, "__Value", (long)parent.Handle);
@@ -264,16 +263,16 @@ namespace Keysharp.Core
 #endif
 
 			if (child.Handle == parent.Handle)//If there's no control per se, make it blank.
-				return null;
+				return DefaultObject;
 
 			if ((mode & 0x02) != 0)
 			{
                 Script.SetPropertyValue(outputVarControl, "__Value", (long)child.Handle);
-				return null;
+				return DefaultObject;
 			}
 
             Script.SetPropertyValue(outputVarControl, "__Value", child.ClassNN);
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -298,7 +297,7 @@ namespace Keysharp.Core
 			//Keysharp.Scripting.Script.mainWindow.CheckedBeginInvoke(() =>
 			PerformMouse(Actions.ACT_MOUSEMOVE, "", ix, iy, KeyboardMouseSender.CoordUnspecified, KeyboardMouseSender.CoordUnspecified,
 						 s, r, 1, "");
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -308,7 +307,7 @@ namespace Keysharp.Core
 		public static object SetDefaultMouseSpeed(object speed)
 		{
 			A_DefaultMouseSpeed = speed;
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -334,7 +333,7 @@ namespace Keysharp.Core
 			else
 				A_MouseDelay = del;
 
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -427,7 +426,6 @@ namespace Keysharp.Core
 		private static void PerformMouse(Actions actionType, string button, int x1, int y1, int x2, int y2
 										 , int speed, string relative, long repeatCount, string downUp)
 		{
-			Error err;
 			uint vk;
 			var ht = Script.TheScript.HookThread;
 
@@ -435,7 +433,7 @@ namespace Keysharp.Core
 				vk = 0;
 			else if ((vk = ht.ConvertMouseButton(button, actionType == Actions.ACT_MOUSECLICK)) == 0)
 			{
-				_ = Errors.ErrorOccurred(err = new ValueError($"Invalid mouse button type of {button}.")) ? throw err : "";
+				_ = Errors.ValueErrorOccurred($"Invalid mouse button type of {button}.");
 				return;
 			}
 
@@ -445,7 +443,10 @@ namespace Keysharp.Core
 			var eventType = KeyEventTypes.KeyDownAndUp;  // Set defaults.
 
 			if (repeatCount < 0)
-				_ = Errors.ErrorOccurred(err = new ValueError($"Invalid repeat count of {repeatCount}. It must be >= 0.")) ? throw err : "";
+			{
+				_ = Errors.ValueErrorOccurred($"Invalid repeat count of {repeatCount}. It must be >= 0.");
+				return;
+			}
 
 			//if (actionType == Actions.ACT_MOUSECLICK)
 			{
@@ -466,7 +467,7 @@ namespace Keysharp.Core
 
 						default:
 						{
-							_ = Errors.ErrorOccurred(err = new ValueError($"Invalid down/up value of {downUp[0]}. It must be 'u' or 'd'.")) ? throw err : "";
+							_ = Errors.ValueErrorOccurred($"Invalid down/up value of {downUp[0]}. It must be 'u' or 'd'.");
 							return;
 						}
 					}
@@ -475,7 +476,7 @@ namespace Keysharp.Core
 
 			if (!string.IsNullOrEmpty(relative) && relative != "R")
 			{
-				_ = Errors.ErrorOccurred(err = new ValueError($"Invalid relative value of {relative}. It must be empty or 'R'.")) ? throw err : "";
+				_ = Errors.ValueErrorOccurred($"Invalid relative value of {relative}. It must be empty or 'R'.");
 				return;
 			}
 
@@ -545,8 +546,6 @@ namespace Keysharp.Core
 		/// <exception cref="ValueError">A <see cref="ValueError"/> exception is thrown if an invalid coordinate operation is specified.</exception>
 		internal CoordModeType GetCoordMode(CoordMode mode)
 		{
-			Error err;
-
 			return mode switch
 		{
 				CoordMode.Caret => Caret,
@@ -554,7 +553,7 @@ namespace Keysharp.Core
 				CoordMode.Mouse => Mouse,
 				CoordMode.Pixel => Pixel,
 				CoordMode.Tooltip => Tooltip,
-				_ => Errors.ErrorOccurred(err = new ValueError($"Invalid coordinate mode type: {mode}")) ? throw err : CoordModeType.Client,
+				_ => (CoordModeType)Errors.ValueErrorOccurred($"Invalid coordinate mode type: {mode}", null, CoordModeType.Client)
 			};
 		}
 	}

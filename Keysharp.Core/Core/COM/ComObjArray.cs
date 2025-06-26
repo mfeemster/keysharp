@@ -28,7 +28,7 @@
 		/// <param name="cDims">The number of dimensions (1-8).</param>
 		/// <param name="rgsabound">Array of bounds for each dimension.</param>
 		/// <returns>A pointer to the new SAFEARRAY; IntPtr.Zero on failure.</returns>
-		[DllImport("oleaut32.dll")]
+		[DllImport(WindowsAPI.oleaut)]
 		public static extern nint SafeArrayCreate(
 			short vt,
 			uint cDims,
@@ -38,13 +38,13 @@
 		/// </summary>
 		/// <param name="psa">Pointer to the SAFEARRAY.</param>
 		/// <returns>The number of dimensions, or a negative error code.</returns>
-		[DllImport("oleaut32.dll")]
+		[DllImport(WindowsAPI.oleaut)]
 		public static extern int SafeArrayGetDim(
 			nint psa);
 		/// <summary>
 		/// Retrieves the upper bound (max index) for a specified dimension.
 		/// </summary>
-		[DllImport("oleaut32.dll")]
+		[DllImport(WindowsAPI.oleaut)]
 		public static extern int SafeArrayGetUBound(
 			nint psa,
 			uint nDim,
@@ -52,7 +52,7 @@
 		/// <summary>
 		/// Retrieves the lower bound for a specified dimension.
 		/// </summary>
-		[DllImport("oleaut32.dll")]
+		[DllImport(WindowsAPI.oleaut)]
 		public static extern int SafeArrayGetLBound(
 			nint psa,
 			uint nDim,
@@ -60,20 +60,20 @@
 		/// <summary>
 		/// Creates a copy of a SafeArray.
 		/// </summary>
-		[DllImport("oleaut32.dll")]
+		[DllImport(WindowsAPI.oleaut)]
 		public static extern int SafeArrayCopy(
 			nint psa,
 			out nint ppsaOut);
 		/// <summary>
 		/// Destroys a SafeArray, releasing its memory.
 		/// </summary>
-		[DllImport("oleaut32.dll")]
+		[DllImport(WindowsAPI.oleaut)]
 		public static extern int SafeArrayDestroy(
 			nint psa);
 		/// <summary>
 		/// Retrieves an element from a SafeArray by index.
 		/// </summary>
-		[DllImport("oleaut32.dll")]
+		[DllImport(WindowsAPI.oleaut)]
 		public static extern int SafeArrayGetElement(
 			nint psa,
 			[In] int[] rgIndices,
@@ -81,7 +81,7 @@
 		/// <summary>
 		/// Stores an element into a SafeArray by index.
 		/// </summary>
-		[DllImport("oleaut32.dll", PreserveSig = true)]
+		[DllImport(WindowsAPI.oleaut, PreserveSig = true)]
 		public static extern int SafeArrayPutElement(
 			nint psa,
 			[In] int[] rgIndices,
@@ -94,12 +94,11 @@
 	/// </summary>
 	public class ComArrayIndexValueEnumerator : KeysharpEnumerator, IEnumerator<(object, object)>
 	{
-		readonly ComObjArray _owner;
-
-		readonly int _count;
-		readonly int[] _indices;
-		readonly int[] _flows; // upper bounds per dimension
-		bool _done;
+		private readonly ComObjArray _owner;
+		private readonly int _count;
+		private readonly int[] _indices;
+		private readonly int[] _flows; // upper bounds per dimension
+		private bool _done;
 
 		/// <summary>
 		/// Initializes a new enumerator over the specified ComObjArray.
@@ -114,6 +113,7 @@
 			int d = owner._dimensions;
 			_indices = new int[d];
 			_flows = new int[d];
+
 			for (int i = 0; i < d; i++)
 			{
 				// start one _below_ zero so first MoveNext() bumps to 0
@@ -170,23 +170,27 @@
 		public bool MoveNext()
 		{
 			if (_done) return false;
+
 			int d = _owner._dimensions;
 
 			// increment the n-dimensional counter:
 			for (int dim = d - 1; dim >= 0; dim--)
 			{
 				_indices[dim]++;
+
 				if (_indices[dim] <= _flows[dim])
 				{
 					// done incrementing
 					break;
 				}
+
 				if (dim == 0)
 				{
 					// we overflowed the first dimension ⇒ end
 					_done = true;
 					return false;
 				}
+
 				// reset this dim and carry to next
 				_indices[dim] = 0;
 			}
@@ -212,8 +216,8 @@
 	/// </summary>
 	public class ComObjArray : ComObject, I__Enum, IEnumerable<(object, object)>
 	{
-		internal nint _psa;			// pointer to the native SAFEARRAY
-		internal int _dimensions;	// number of dimensions
+		internal nint _psa;         // pointer to the native SAFEARRAY
+		internal int _dimensions;   // number of dimensions
 		internal VarEnum _baseType; // element VARTYPE, e.g. VT_VARIANT
 
 		public long Dimensions => _dimensions;
@@ -231,9 +235,9 @@
 
 			_baseType = baseType;
 			_dimensions = counts.Length;
-
 			// Build SAFEARRAYBOUND array, all zero‐based:
 			var sab = new SAFEARRAYBOUND[_dimensions];
+
 			for (int i = 0; i < _dimensions; i++)
 			{
 				sab[i].cElements = (uint)counts[i];
@@ -242,18 +246,17 @@
 
 			// Create the native SafeArray:
 			_psa = OleAuto.SafeArrayCreate(
-				(short)baseType,
-				(uint)_dimensions,
-				sab
-			);
+					   (short)baseType,
+					   (uint)_dimensions,
+					   sab
+				   );
+
 			if (_psa == 0)
 				Marshal.ThrowExceptionForHR(Marshal.GetLastWin32Error());
 
 			// Tell ComObject to own and destroy the SafeArray:
 			this.vt = VarEnum.VT_ARRAY | baseType;
 			this.Flags = F_OWNVALUE;
-
-			// Store the pointer in your existing API (which expects a long):
 			this.Ptr = _psa.ToInt64();
 		}
 
@@ -264,13 +267,14 @@
 		IEnumerator IEnumerable.GetEnumerator() => new ComArrayIndexValueEnumerator(this, 2);
 
 		/// <summary>
-		/// Gets the upper bound (inclusive) of the specified dimension (1-based).
+		/// Gets the upper bound (inclusive) of the specified dimension.
 		/// </summary>
 		public object MaxIndex(object dim = null)
 		{
 			int d = dim.Ai(1);
+
 			if (d < 1 || d > _dimensions)
-				throw new ArgumentOutOfRangeException(nameof(dim));
+				return Errors.ValueErrorOccurred($"Argument out of range.");
 
 			OleAuto.SafeArrayGetUBound(_psa, (uint)d, out int ub);
 			return (long)ub;
@@ -282,8 +286,9 @@
 		public object MinIndex(object dim = null)
 		{
 			int d = dim.Ai(1);
+
 			if (d < 1 || d > _dimensions)
-				throw new ArgumentOutOfRangeException(nameof(dim));
+				return Errors.ValueErrorOccurred($"Argument out of range.");
 
 			OleAuto.SafeArrayGetLBound(_psa, (uint)d, out int lb);
 			return (long)lb;
@@ -316,13 +321,17 @@
 		private int[] ConvertIndices(object[] indices)
 		{
 			int[] idx = new int[indices.Length];
+
 			for (int i = 0; i < idx.Length; i++)
 			{
 				int temp = indices[i].Ai();
+
 				if (temp < 0)
-					temp = (int)MaxIndex((long)(i + 1)) + temp + 1;
+					temp = Convert.ToInt32(MaxIndex((long)(i + 1))) + temp + 1;
+
 				idx[i] = temp;
 			}
+
 			return idx;
 		}
 
@@ -333,9 +342,8 @@
 		{
 			int hr = OleAuto.SafeArrayCopy(_psa, out nint psaCopy);
 			Marshal.ThrowExceptionForHR(hr);
-
 			var copy = (ComObjArray)RuntimeHelpers
-				.GetUninitializedObject(typeof(ComObjArray));
+					   .GetUninitializedObject(typeof(ComObjArray));
 			copy.vt = this.vt;
 			copy.Flags = this.Flags;
 			copy._dimensions = this._dimensions;
@@ -353,6 +361,7 @@
 				// Clear the flag so we don't double‐destroy:
 				Flags &= ~F_OWNVALUE;
 			}
+
 			base.Dispose();
 		}
 	}

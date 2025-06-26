@@ -27,7 +27,7 @@ namespace Keysharp.Core.Linux.X11
 		//  else
 		//      Keysharp.Scripting.Script.OutputDebug($"XTextPropertyToStringList() failed.");
 
-		//  return "";
+		//  return DefaultObject;
 		//}
 
 		internal bool SetText(string value)

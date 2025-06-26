@@ -24,7 +24,7 @@
 			var d = Path.GetFullPath(dest.As());
 			var o = overwrite.Ab();
 			CopyDirectory(s, d, o);
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -38,12 +38,11 @@
 			try
 			{
 				_ = Directory.CreateDirectory(dirName.As());
-				return null;
+				return DefaultObject;
 			}
 			catch (Exception ex)
 			{
-				Error err;
-				return Errors.ErrorOccurred(err = new OSError(ex, $"Error creating directory {dirName}")) ? throw err : null;
+				return Errors.OSErrorOccurred(ex, $"Error creating directory {dirName}");
 			}
 		}
 
@@ -61,12 +60,11 @@
 			try
 			{
 				Directory.Delete(dirName.As(), recurse.Ab());
-				return null;
+				return DefaultObject;
 			}
 			catch (Exception ex)
 			{
-				Error err;
-				return Errors.ErrorOccurred(err = new OSError(ex, $"Error creating directory {dirName}")) ? throw err : null;
+				return Errors.OSErrorOccurred(ex, $"Error creating directory {dirName}");
 			}
 		}
 
@@ -98,7 +96,7 @@
 				//Swallow the exception since we still want to return an empty string even if it doesn't exist.
 			}
 
-			return string.Empty;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -122,7 +120,6 @@
 		/// <exception cref="OSError">An <see cref="OSError"/> exception is thrown if any failure happens while attempting to perform the operation.</exception>
 		public static object DirMove(object source, object dest, object overwriteOrRename = null)
 		{
-			Error err;
 			var s = source.As();
 			var d = dest.As();
 			var flag = overwriteOrRename.As();
@@ -131,7 +128,7 @@
 
 			//If dest exists as a file, never copy.
 			if (File.Exists(d))
-				return Errors.ErrorOccurred(err = new OSError("", $"Cannot move {s} to {d} because destination is a file.")) ? throw err : null;
+				return Errors.OSErrorOccurred("", $"Cannot move {s} to {d} because destination is a file.");
 
 			switch (flag.ToUpperInvariant())
 			{
@@ -149,22 +146,22 @@
 				case "0":
 				default:
 					if (Directory.Exists(d))
-						return null;
+						return Errors.OSErrorOccurred("", $"Cannot use option 0/empty when {d} already exists.");
 
 					break;
 			}
 
 			if (rename && Directory.Exists(d))
-				return Errors.ErrorOccurred(err = new OSError("", $"Cannot rename {s} to {d} because it already exists.")) ? throw err : null;
+				return Errors.OSErrorOccurred("", $"Cannot rename {s} to {d} because it already exists.");
 
 			if (!Directory.Exists(s))
-				return Errors.ErrorOccurred(err = new OSError("", $"Cannot move {s} to {d} because source does not exist.")) ? throw err : null;
+				return Errors.OSErrorOccurred("", $"Cannot move {s} to {d} because source does not exist.");
 
 			if (movein && Directory.Exists(d))
 				d = Path.Combine(d, Path.GetFileName(s.TrimEnd(Path.DirectorySeparatorChar)));
 
 			MoveDirectory(s, d);
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -345,7 +342,7 @@
 				}
 			}
 
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -381,8 +378,6 @@
 		/// <exception cref="OSError">An <see cref="OSError"/> exception is thrown if any failure happens while attempting to perform the operation.</exception>
 		private static void CopyDirectory(string source, string dest, bool overwrite)
 		{
-			Error err;
-
 			try
 			{
 				if (!overwrite && Directory.Exists(dest))
@@ -394,7 +389,7 @@
 			{
 				if (!overwrite)
 				{
-					_ = Errors.ErrorOccurred(err = new OSError(ioe, $"Failed to create directory {dest}: {ioe.Message}")) ? throw err : "";
+					_ = Errors.OSErrorOccurred(ioe, $"Failed to create directory {dest}: {ioe.Message}");
 					return;
 				}
 			}
@@ -438,7 +433,7 @@
 			}
 			catch (Exception ex)
 			{
-				_ = Errors.ErrorOccurred(err = new OSError(ex, $"Failed to copy directory {source} to {dest}: {ex.Message}")) ? throw err : "";
+				_ = Errors.OSErrorOccurred(ex, $"Failed to copy directory {source} to {dest}: {ex.Message}");
 			}
 		}
 
@@ -454,8 +449,6 @@
 		{
 			if (Directory.Exists(source))
 			{
-				Error err;
-
 				if (Directory.GetDirectoryRoot(source) == Directory.GetDirectoryRoot(dest))
 				{
 					try
@@ -464,7 +457,7 @@
 					}
 					catch (Exception ex)
 					{
-						_ = Errors.ErrorOccurred(err = new OSError(ex, $"Failed to move directory {source} to {dest}: {ex.Message}")) ? throw err : "";
+						_ = Errors.OSErrorOccurred(ex, $"Failed to move directory {source} to {dest}: {ex.Message}");
 					}
 				}
 				else
@@ -478,7 +471,7 @@
 					}
 					catch (Exception ex)
 					{
-						_ = Errors.ErrorOccurred(err = new OSError(ex, $"Failed to copy directory {source} to {dest}: {ex.Message}")) ? throw err : "";
+						_ = Errors.OSErrorOccurred(ex, $"Failed to copy directory {source} to {dest}: {ex.Message}");
 					}
 				}
 			}

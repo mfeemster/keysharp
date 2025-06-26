@@ -906,3 +906,26 @@ if (arr[1]() == 1 &&
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
+
+; Ensure creating an array from an existing array or map behaves such that
+; the new array has a single element that is the original array or map.
+a := [1,2,3]
+aa := Array(a)
+
+if (aa.Length == 1 &&
+	aa[1][1] == 1 &&
+	aa[1][2] == 2 &&
+	aa[1][3] == 3)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+
+a := Map(1,2,3,4)
+am := Array(a)
+
+if (am.Length == 1 &&
+	am[1][1] == 2 &&
+	am[1][3] == 4)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"

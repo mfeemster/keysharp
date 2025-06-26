@@ -46,7 +46,7 @@
 					return str;
 				}
 
-				return "";
+				return DefaultObject;
 			}
 		}
 
@@ -99,7 +99,10 @@
 				var val = value.Al();
 
 				if (val < 0 || val > 101)
-					throw new ValueError($"Cannot set InputObject.MinSendLevel to a value outside of the range 0 - 101 ({value}).");
+				{
+					_ = Errors.ValueErrorOccurred($"Cannot set InputObject.MinSendLevel to a value outside of the range 0 - 101 ({value}).");
+					return;
+				}
 
 				input.minSendLevel = (uint)val;
 			}
@@ -174,7 +177,7 @@
 			var endKeys = args[1].ToString();
 			var matchList = args[2].ToString();
 			input = new InputType(this, options, endKeys, matchList);
-			return "";
+			return DefaultObject;
 		}
 
 		public void KeyOpt(object obj0, object obj1)
@@ -182,7 +185,7 @@
 			var keys = obj0.As();
 			var options = obj1.As();
 			var adding = true;
-			uint flag, addFlags = 0u, removeFlags = 0u;
+			uint flag = 0U, addFlags = 0u, removeFlags = 0u;
 
 			for (var i = 0; i < options.Length; ++i)
 			{
@@ -222,7 +225,8 @@
 						continue;
 
 					default:
-						throw new ValueError("Invalid option.", options);
+						_ = Errors.ValueErrorOccurred($"Invalid option.", options);
+						return;
 				}
 
 				if (adding)

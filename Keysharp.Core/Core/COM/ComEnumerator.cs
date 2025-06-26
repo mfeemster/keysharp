@@ -69,8 +69,7 @@ namespace Keysharp.Core.COM
 			}
 			catch (Keysharp.Core.Error ex)
 			{
-				Error err;
-				_ = Errors.ErrorOccurred(err = new Error($"Could not retrieve the _NewEnum() method on a COM object while trying to create an enumerator: {ex}")) ? throw err : "";
+				_ = Errors.ErrorOccurred($"Could not retrieve the _NewEnum() method on a COM object while trying to create an enumerator: {ex}");
 			}
 		}
 

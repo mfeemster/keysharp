@@ -87,7 +87,7 @@ namespace Keysharp.Core
 			if (address is DelegateHolder dh)
 				dh.Clear();
 
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -126,7 +126,6 @@ namespace Keysharp.Core
 		public static unsafe object DllCall(object function, params object[] parameters)
 		{
 			//You should some day add the ability to use this with .NET dlls, exposing some type of reflection to the Script.TheScript.//TODO
-			Error err;
 			nint handle = 0;
 			nint address = 0;
 
@@ -186,7 +185,7 @@ namespace Keysharp.Core
 						}
 					}
 
-					return Errors.ErrorOccurred(err = new Error($"Unable to locate dll with path {path}.")) ? throw err : null;
+					return Errors.ErrorOccurred($"Unable to locate dll with path {path}.");
 				}
 				else if (loadedDlls.Keys.FirstOrDefault(n => path.StartsWith(n, StringComparison.OrdinalIgnoreCase)) is string moduleName && moduleName != null)
 				{
@@ -210,7 +209,7 @@ namespace Keysharp.Core
 					}
 
 					if (address == 0)
-						return Errors.ErrorOccurred(err = new Error($"Unable to locate dll with path {path}.")) ? throw err : null;
+						return Errors.ErrorOccurred($"Unable to locate dll with path {path}.");
 					else
 					{
 #if TL
@@ -227,7 +226,7 @@ namespace Keysharp.Core
 					z++;
 
 					if (z >= path.Length)
-						return Errors.ErrorOccurred(err = new Error($"Improperly formatted path of {path}.")) ? throw err : null;
+						return Errors.ErrorOccurred($"Improperly formatted path of {path}.");
 
 					name = path.Substring(z);
 					path = path.Substring(0, z - 1);
@@ -247,7 +246,7 @@ namespace Keysharp.Core
 			AddressFound:
 
 			if (address == 0)
-				return Errors.ErrorOccurred(err = new TypeError($"Function argument was of type {function.GetType()}. It must be string, StringBuffer, integer, Buffer or other object with a Ptr property that is an integer.")) ? throw err : null;
+				return Errors.TypeErrorOccurred(function, typeof(nint), DefaultErrorObject);
 
 			try
 			{
@@ -280,10 +279,7 @@ namespace Keysharp.Core
 			}
 			catch (Exception ex)
 			{
-				return Errors.ErrorOccurred(err = new Error($"An error occurred when calling {function}(): {ex.Message}")
-				{
-					Extra = "0x" + A_LastError.ToString("X")
-				}) ? throw err : null;
+				return Errors.ErrorOccurred($"An error occurred when calling {function}(): {ex.Message}", "", "0x" + A_LastError.ToString("X"));
 			}
 			finally
 			{

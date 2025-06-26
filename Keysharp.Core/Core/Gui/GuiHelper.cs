@@ -24,7 +24,7 @@ namespace Keysharp.Core
 				if (c.GetGuiControl() is Gui.Control gui)
 					return gui;
 
-			return "";
+			return DefaultObject;
 		}
 
 		public static object GuiFromHwnd(object obj0, object obj1 = null)
@@ -61,7 +61,7 @@ namespace Keysharp.Core
 				}
 			}
 
-			return "";
+			return DefaultObject;
 		}
 
 		public static Menu Menu() => new ();
@@ -79,7 +79,7 @@ namespace Keysharp.Core
 			if ((menu = Control.FromHandle(handle)) != null)
 				return menu;
 
-			return "";
+			return DefaultObject;
 		}
 
 		internal static bool CallMessageHandler(Control control, ref Message m)
@@ -90,7 +90,7 @@ namespace Keysharp.Core
 				{
 					var ret = ctrl.InvokeMessageHandlers(ref m);
 
-					if (ret != null)
+					if (ret.IsCallbackResultNonEmpty())
 						return true;
 				}
 			}
@@ -227,20 +227,21 @@ namespace Keysharp.Core
 			return (newtxt, links);
 		}
 
-        /// <summary>
-        /// The Windows API functions have serious limitations when it comes to loading icons.
-        /// They can't load any of size 256 or larger, plus they are platform specific.
-        /// This loads the desired size and is cross platform.
-        /// Gotten from https://www.codeproject.com/Articles/26824/Extract-icons-from-EXE-or-DLL-files
-        /// </summary>
-        /// <param name="icon"></param>
-        /// <returns></returns>
-        internal static List<(Icon, Bitmap)> SplitIcon(Icon icon)
-        {
-            Error err;
-
-            if (icon == null)
-                return Errors.ErrorOccurred(err = new UnsetError("Icon was null")) ? throw err : null;
+		/// <summary>
+		/// The Windows API functions have serious limitations when it comes to loading icons.
+		/// They can't load any of size 256 or larger, plus they are platform specific.
+		/// This loads the desired size and is cross platform.
+		/// Gotten from https://www.codeproject.com/Articles/26824/Extract-icons-from-EXE-or-DLL-files
+		/// </summary>
+		/// <param name="icon"></param>
+		/// <returns></returns>
+		internal static List<(Icon, Bitmap)> SplitIcon(Icon icon)
+		{
+			if (icon == null)
+			{
+				_ = Errors.UnsetErrorOccurred("icon");
+				return default;
+			}
 
             try
             {
@@ -297,13 +298,14 @@ namespace Keysharp.Core
 					}
 				}
 
-                return splitIcons;
-            }
-            catch (Exception e)
-            {
-                return Errors.ErrorOccurred(err = new Error($"Error splitting icon: {e.Message}")) ? throw err : null;
-            }
-        }
+				return splitIcons;
+			}
+			catch (Exception e)
+			{
+				_ = Errors.ErrorOccurred($"Error splitting icon: {e.Message}");
+				return default;
+			}
+		}
 
         private static Control GuiControlGetFocused(Control parent)
 		{

@@ -36,14 +36,14 @@ namespace Keysharp.Core.Common.Keyboard
 		/// any options (e.g. ::ahk:: has a different aName than :c:ahk::).
 		/// Caller has also ensured that aHotstring is not blank.
 		/// </summary>
-		public static HotstringDefinition AddHotstring(string _name, IFuncObj _funcObj, ReadOnlySpan<char> _options, string _hotstring
+		public static object AddHotstring(string _name, IFuncObj _funcObj, ReadOnlySpan<char> _options, string _hotstring
 				, string _replacement, bool _hasContinuationSection, int _suspend = 0)
 		{
 			var script = Script.TheScript;
 			var hs = new HotstringDefinition(_name, _funcObj, _options, _hotstring, _replacement, _hasContinuationSection, _suspend);
 
 			if (!hs.constructedOK)
-				return null;
+				return DefaultErrorObject;
 
 			var hm = script.HotstringManager;
 			hm.shs.Add(hs);

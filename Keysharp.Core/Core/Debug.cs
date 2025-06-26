@@ -2,14 +2,14 @@ namespace Keysharp.Core
 {
 	public static class Debug
 	{
-		public static void Edit()
+		public static object Edit()
 		{
 			if (A_IsCompiled)
 			{
 				_ = Dialogs.MsgBox("Cannot edit a compiled script.");
-				return;
+				return DefaultErrorObject;
 			}
-			
+
 			var script = Script.TheScript;
 			var title = script.mainWindow != null ? script.mainWindow.Text : "";
 			var tv = script.Threads.GetThreadVariables();
@@ -63,6 +63,8 @@ namespace Keysharp.Core
 			{
 				wi.Active = true;
 			}
+
+			return DefaultObject;
 		}
 
 		public static string GetVars(object obj = null)
@@ -191,17 +193,9 @@ namespace Keysharp.Core
 			return sb.ToString();
 		}
 
-		public static object ListLines(params object[] obj)
-		{
-			_ = OutputDebug("ListLines() is not supported in Keysharp because it's a compiled program, not an interpreted one.");
-			return "";
-		}
+		public static object ListLines(params object[] obj) => OutputDebug("ListLines() is not supported in Keysharp because it's a compiled program, not an interpreted one.");
 
-		public static object ListVars()
-		{
-			Script.TheScript.mainWindow?.ShowInternalVars(true);
-			return "";
-		}
+		public static object ListVars() => Script.TheScript.mainWindow?.ShowInternalVars(true);
 
 		/// <summary>
 		/// Sends a string to the debugger (if any) for display.
@@ -230,7 +224,7 @@ namespace Keysharp.Core
 				else
 					script.mainWindow.AddText(text, MainWindow.MainFocusedTab.Debug, false);
 
-			return "";
+			return DefaultObject;
 		}
 
 	}

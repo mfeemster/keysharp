@@ -13,18 +13,17 @@
 		/// </summary>
 		internal BaseIteratorData()
 		{
-			Error err;
 			var mi1 = Reflections.FindAndCacheMethod(typeof(T), "Call", 1);
 			p1 = new FuncObj(mi1, null);
 
 			if (!p1.IsValid)
-				_ = Errors.ErrorOccurred(err = new MethodError($"Existing function object p1 for type {typeof(T)} was invalid.")) ? throw err : "";
+				_ = Errors.MethodErrorOccurred($"Existing function object p1 for type {typeof(T)} was invalid.");
 
 			var mi2 = Reflections.FindAndCacheMethod(typeof(T), "Call", 2);
 			p2 = new FuncObj(mi2, null);
 
 			if (!p2.IsValid)
-				_ = Errors.ErrorOccurred(err = new MethodError($"Existing function object p2 for type {typeof(T)} was invalid.")) ? throw err : "";
+				_ = Errors.MethodErrorOccurred($"Existing function object p2 for type {typeof(T)} was invalid.");
 		}
 	}
 

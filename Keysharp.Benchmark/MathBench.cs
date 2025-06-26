@@ -29,7 +29,7 @@
 			var total = 0.0;
 
 			for (var i = 0; i < Size; i++)
-				total += Maths.Cos(vals[i]);
+				total += (double)Maths.Cos(vals[i]);
 
 			if (!total.IsAlmostEqual(totalCos))
 				throw new Exception($"{total} was not equal to {totalCos}.");
@@ -53,7 +53,7 @@
 			var total = 0.0;
 
 			for (var i = 0; i < Size; i++)
-				total += Maths.Cos(objvals[i]);
+				total += (double)Maths.Cos(objvals[i]);
 
 			if (!total.IsAlmostEqual(totalCos))
 				throw new Exception($"{total} was not equal to {totalCos}.");

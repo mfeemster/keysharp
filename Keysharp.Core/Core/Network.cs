@@ -37,7 +37,7 @@ namespace Keysharp.Core
 						msg.To.Add((string)item);
 			}
 			else
-				return null;
+				return DefaultErrorObject;
 
 			var smtpHost = "localhost";
 			int? smtpPort = null;
@@ -125,12 +125,11 @@ namespace Keysharp.Core
 			try
 			{
 				client.Send(msg);
-				return null;
+				return DefaultObject;
 			}
 			catch (Exception ex)
 			{
-				Error err;
-				return Errors.ErrorOccurred(err = new Error(ex.Message)) ? throw err : null;
+				return Errors.ErrorOccurred(ex.Message);
 			}
 		}
 
@@ -197,12 +196,12 @@ namespace Keysharp.Core
 				}
 				catch (Exception ex)
 				{
-					Error err;
-					return Errors.ErrorOccurred(err = new Error(ex.Message)) ? throw err : false;
+					_ = Errors.ErrorOccurred(ex.Message);
+					return default;
 				}
 			});
 			t.Wait();
-			return null;
+			return DefaultObject;
 		}
 
 		/// <summary>

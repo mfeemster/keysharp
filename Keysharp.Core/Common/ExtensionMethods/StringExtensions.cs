@@ -93,7 +93,7 @@
 				return result.Trim(CrLf);
 			}
 			else
-				return "";
+				return DefaultObject;
 		}
 
 #endif

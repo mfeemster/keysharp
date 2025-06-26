@@ -121,7 +121,7 @@ arr[1] := "Hot"
 arr[2] := "key"
 t := ""
 Loop arr.MaxIndex() + 1
-    t .= arr[A_Index-1]
+	t .= arr[A_Index-1]
 
 if (t == "AutoHotkey")
 	FileAppend "pass", "*"
@@ -149,11 +149,11 @@ else
 	FileAppend "fail", "*"
 
 Loop 3 {
-    x := A_Index-1
-    Loop 4 {
-        y := A_Index-1
-        arr[x, y] := x * y
-    }
+	x := A_Index-1
+	Loop 4 {
+		y := A_Index-1
+		arr[x, y] := x * y
+	}
 }
 
 if (arr[2, 3] == 6)

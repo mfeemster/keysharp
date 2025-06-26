@@ -38,7 +38,6 @@ namespace Keysharp.Scripting
 
 		public static bool IfLegacy(object subject, string op, string test, bool not = false)
 		{
-			Error err;
 			var variable = ForceString(subject);
 			var varspan = variable.AsSpan();
 			var ret = false;
@@ -48,34 +47,34 @@ namespace Keysharp.Scripting
 				case Between:
 				{
 					if (subject == null)
-						_ = Errors.ErrorOccurred(err = new UnsetError("Left side operand of between was null.")) ? throw err : "";
+						return (bool)Errors.UnsetErrorOccurred($"Left side operand of between", false);
 
 					if (test == null)
-						_ = Errors.ErrorOccurred(err = new UnsetError("Right side operand of between was null.")) ? throw err : "";
+						return (bool)Errors.UnsetErrorOccurred($"Right side operand of between", false);
 
-					var z = test.IndexOf(And, StringComparison.OrdinalIgnoreCase);
+						var z = test.IndexOf(And, StringComparison.OrdinalIgnoreCase);
 
-					if (z == -1)
-						z = variable.Length;
+						if (z == -1)
+							z = variable.Length;
 
-					if (double.TryParse(test.AsSpan(0, z), out var low) && double.TryParse(test.AsSpan(z + And.Length), out var high))
-					{
-						var d = ForceDouble(subject);
-						ret = d >= low && d <= high;
+						if (double.TryParse(test.AsSpan(0, z), out var low) && double.TryParse(test.AsSpan(z + And.Length), out var high))
+						{
+							var d = ForceDouble(subject);
+							ret = d >= low && d <= high;
+						}
+						else if (subject is string s)
+						{
+							ret = string.Compare(test.Substring(0, z), s) < 0 && string.Compare(s, test.Substring(z + And.Length)) < 0;
+						}
 					}
-					else if (subject is string s)
-					{
-						ret = string.Compare(test.Substring(0, z), s) < 0 && string.Compare(s, test.Substring(z + And.Length)) < 0;
-					}
-				}
-				break;
+					break;
 
 				case In:
 					if (subject == null)
-						_ = Errors.ErrorOccurred(err = new UnsetError("Left side operand of in was null.")) ? throw err : "";
+						return (bool)Errors.UnsetErrorOccurred($"Left side operand of in", false);
 
 					if (test == null)
-						_ = Errors.ErrorOccurred(err = new UnsetError("Right side operand of in was null.")) ? throw err : "";
+						return (bool)Errors.UnsetErrorOccurred($"Right side operand of in", false);
 
 					foreach (Range r in test.AsSpan().Split(Delimiter))
 					{
@@ -89,10 +88,10 @@ namespace Keysharp.Scripting
 
 				case Contains:
 					if (subject == null)
-						_ = Errors.ErrorOccurred(err = new UnsetError("Left side operand of contains was null.")) ? throw err : "";
+						return (bool)Errors.UnsetErrorOccurred($"Left side operand of contains", false);
 
 					if (test == null)
-						_ = Errors.ErrorOccurred(err = new UnsetError("Right side operand of contains was null.")) ? throw err : "";
+						return (bool)Errors.UnsetErrorOccurred($"Right side operand of contains", false);
 
 					foreach (Range r in test.AsSpan().Split(Delimiter))
 					{
@@ -179,8 +178,6 @@ namespace Keysharp.Scripting
 
 		public static object Operate(Operator op, object left, object right)
 		{
-			Error err;
-
 			switch (op)
 			{
 				case Operator.Add:
@@ -203,7 +200,7 @@ namespace Keysharp.Scripting
 						}
 					}
 
-					return null;
+					return DefaultErrorObject;
 				}
 
 				case Operator.BitShiftLeft:
@@ -211,94 +208,94 @@ namespace Keysharp.Scripting
 					if (ParseNumericArgs(left, right, ArLeftShift, out var firstIsDouble, out var secondIsDouble, out var firstd, out var firstl, out var secondd, out var secondl))
 					{
 						if (firstIsDouble)
-							return Errors.ErrorOccurred(err = new TypeError($"Left side operand of arithmetic left shift was not an integer, and instead was of type {left.GetType()}.")) ? throw err : null;
+								return Errors.TypeErrorOccurred(left, typeof(long));
 
-						if (secondIsDouble)
-							return Errors.ErrorOccurred(err = new TypeError($"Right side operand of arithmetic left shift was not an integer, and instead was of type {right.GetType()}.")) ? throw err : null;
+							if (secondIsDouble)
+								return Errors.TypeErrorOccurred(right, typeof(long));
 
-						var r = (int)secondl;
+							var r = (int)secondl;
 
-						if (r < 0 || r > 63)
-							return Errors.ErrorOccurred(err = new Error($"Shift operand of {r} for arithmetic left shift was not in the range of [0-63].")) ? throw err : null;
+							if (r < 0 || r > 63)
+								return Errors.ErrorOccurred($"Shift operand of {r} for arithmetic left shift was not in the range of [0-63].");
 
-						return firstl << r;
+							return firstl << r;
+						}
+
+						return DefaultErrorObject;
 					}
-
-					return null;
-				}
 
 				case Operator.BitShiftRight:
 				{
 					if (ParseNumericArgs(left, right, ArRightShift, out var firstIsDouble, out var secondIsDouble, out var firstd, out var firstl, out var secondd, out var secondl))
 					{
 						if (firstIsDouble)
-							return Errors.ErrorOccurred(err = new TypeError($"Left side operand of arithmetic right shift was not an integer, and instead was of type {left.GetType()}.")) ? throw err : null;
+								return Errors.TypeErrorOccurred(left, typeof(long));
 
-						if (secondIsDouble)
-							return Errors.ErrorOccurred(err = new TypeError($"Right side operand of arithmetic right shift was not an integer, and instead was of type {right.GetType()}.")) ? throw err : null;
+							if (secondIsDouble)
+								return Errors.TypeErrorOccurred(right, typeof(long));
 
-						var r = (int)secondl;
+							var r = (int)secondl;
 
-						if (r < 0 || r > 63)
-							return Errors.ErrorOccurred(err = new Error($"Shift operand of {r} for arithmetic right shift was not in the range of [0-63].")) ? throw err : null;
+							if (r < 0 || r > 63)
+								return Errors.ErrorOccurred($"Shift operand of {r} for arithmetic right shift was not in the range of [0-63].");
 
-						return firstl >> r;
+							return firstl >> r;
+						}
+
+						return DefaultErrorObject;
 					}
-
-					return null;
-				}
 
 				case Operator.LogicalBitShiftRight:
 				{
 					if (ParseNumericArgs(left, right, LogicalRightShift, out var firstIsDouble, out var secondIsDouble, out var firstd, out var firstl, out var secondd, out var secondl))
 					{
 						if (firstIsDouble)
-							return Errors.ErrorOccurred(err = new TypeError($"Left side operand of logical right shift was not an integer, and instead was of type {left.GetType()}.")) ? throw err : null;
+								return Errors.TypeErrorOccurred(left, typeof(long));
 
-						if (secondIsDouble)
-							return Errors.ErrorOccurred(err = new TypeError($"Right side operand of logical right shift was not an integer, and instead was of type {right.GetType()}.")) ? throw err : null;
+							if (secondIsDouble)
+								return Errors.TypeErrorOccurred(right, typeof(long));
 
-						var r = (int)secondl;
+							var r = (int)secondl;
 
-						if (r < 0 || r > 63)
-							return Errors.ErrorOccurred(err = new Error($"Shift operand of {r} for logical right shift was not in the range of [0-63].")) ? throw err : null;
+							if (r < 0 || r > 63)
+								return Errors.ErrorOccurred($"Shift operand of {r} for logical right shift was not in the range of [0-63].");
 
-						return (long)((ulong)firstl >> r);
+							return (long)((ulong)firstl >> r);
+						}
+
+						return DefaultErrorObject;
 					}
-
-					return null;
-				}
 
 				case Operator.BitwiseAnd:
 				{
 					if (ParseNumericArgs(left, right, BitwiseAnd, out var firstIsDouble, out var secondIsDouble, out var firstd, out var firstl, out var secondd, out var secondl))
 					{
 						if (firstIsDouble)
-							return Errors.ErrorOccurred(err = new TypeError($"Left side operand of bitwise and was not an integer, and instead was of type {left.GetType()}.")) ? throw err : null;
+								return Errors.TypeErrorOccurred(left, typeof(long));
 
-						if (secondIsDouble)
-							return Errors.ErrorOccurred(err = new TypeError($"Right side operand of bitwise and was not an integer, and instead was of type {right.GetType()}.")) ? throw err : null;
+							if (secondIsDouble)
+								return Errors.TypeErrorOccurred(right, typeof(long));
 
-						return firstl & secondl;
+							return firstl & secondl;
+						}
+
+						return DefaultErrorObject;
 					}
-
-					return null;
-				}
 
 				case Operator.BitwiseOr:
 				{
 					if (ParseNumericArgs(left, right, BitwiseOr, out var firstIsDouble, out var secondIsDouble, out var firstd, out var firstl, out var secondd, out var secondl))
 					{
 						if (firstIsDouble)
-							return Errors.ErrorOccurred(err = new TypeError($"Left side operand of bitwise or was not an integer, and instead was of type {left.GetType()}.")) ? throw err : null;
+							return Errors.TypeErrorOccurred(left, typeof(long));
 
 						if (secondIsDouble)
-							return Errors.ErrorOccurred(err = new TypeError($"Right side operand of bitwise or was not an integer, and instead was of type {right.GetType()}.")) ? throw err : null;
+							return Errors.TypeErrorOccurred(right, typeof(long));
 
-						return firstl | secondl;
+							return firstl | secondl;
 					}
 
-					return null;
+					return DefaultErrorObject;
 				}
 
 				case Operator.BitwiseXor:
@@ -306,26 +303,26 @@ namespace Keysharp.Scripting
 					if (ParseNumericArgs(left, right, BitwiseXor, out var firstIsDouble, out var secondIsDouble, out var firstd, out var firstl, out var secondd, out var secondl))
 					{
 						if (firstIsDouble)
-							return Errors.ErrorOccurred(err = new TypeError($"Left side operand of bitwise xor was not an integer, and instead was of type {left.GetType()}.")) ? throw err : null;
+								return Errors.TypeErrorOccurred(left, typeof(long));
 
-						if (secondIsDouble)
-							return Errors.ErrorOccurred(err = new TypeError($"Right side operand of bitwise xor was not an integer, and instead was of type {right.GetType()}.")) ? throw err : null;
+							if (secondIsDouble)
+								return Errors.TypeErrorOccurred(right, typeof(long));
 
-						return firstl ^ secondl;
+							return firstl ^ secondl;
+						}
+
+						return DefaultErrorObject;
 					}
-
-					return null;
-				}
 
 				case Operator.BooleanAnd:
 				{
 					if (left == null)
-						return Errors.ErrorOccurred(err = new UnsetError("Left side operand of boolean and was null.")) ? throw err : null;
+						return (bool)Errors.UnsetErrorOccurred($"Left side operand of boolean and", false);
 
 					if (right == null)
-						return Errors.ErrorOccurred(err = new UnsetError("Right side operand of boolean and was null.")) ? throw err : null;
+						return (bool)Errors.UnsetErrorOccurred($"Right side operand of boolean and", false);
 
-					var b1 = ForceBool(left);
+						var b1 = ForceBool(left);
 
 						if (!b1)
 							return left;
@@ -336,10 +333,10 @@ namespace Keysharp.Scripting
 				case Operator.BooleanOr:
 				{
 					if (left == null)
-						return Errors.ErrorOccurred(err = new UnsetError("Left side operand of boolean or was null.")) ? throw err : null;
+						return (bool)Errors.UnsetErrorOccurred($"Left side operand of boolean or", false);
 
 					if (right == null)
-						return Errors.ErrorOccurred(err = new UnsetError("Right side operand of boolean or was null.")) ? throw err : null;
+						return (bool)Errors.UnsetErrorOccurred($"Right side operand of boolean or", false);
 
 						var b1 = ForceBool(left);
 
@@ -353,7 +350,7 @@ namespace Keysharp.Scripting
 				{
 					//Do not check the left side for null, AHK allows it.
 					if (right == null)
-						return Errors.ErrorOccurred(err = new UnsetError("Right side operand of concat was null.")) ? throw err : null;
+						return (bool)Errors.UnsetErrorOccurred($"Right side operand of concat", false);
 
 						return string.Concat(ForceString(left), ForceString(right));
 					}
@@ -361,10 +358,10 @@ namespace Keysharp.Scripting
 				case Operator.RegEx:
 				{
 					if (left == null)
-						return Errors.ErrorOccurred(err = new UnsetError("Left side operand of regular expression was null.")) ? throw err : null;
+						return (bool)Errors.UnsetErrorOccurred($"Left side operand of regular expression", false);
 
 					if (right == null)
-						return Errors.ErrorOccurred(err = new UnsetError("Right side operand of regular expression was null.")) ? throw err : null;
+						return (bool)Errors.UnsetErrorOccurred($"Right side operand of regular expression", false);
 
                         VarRef outvar = new VarRef(null);
 						_ = RegEx.RegExMatch(ForceString(left), ForceString(right), outvar, 1);
@@ -376,19 +373,19 @@ namespace Keysharp.Scripting
 					if (ParseNumericArgs(left, right, BitwiseOr, out var firstIsDouble, out var secondIsDouble, out var firstd, out var firstl, out var secondd, out var secondl))
 					{
 						if (firstIsDouble)
-							return Errors.ErrorOccurred(err = new TypeError($"Left side operand of floor divide was not an integer, and instead was of type {left.GetType()}.")) ? throw err : null;
+								return Errors.TypeErrorOccurred(left, typeof(long));
 
-						if (secondIsDouble)
-							return Errors.ErrorOccurred(err = new TypeError($"Right side operand of floor divide was not an integer, and instead was of type {right.GetType()}.")) ? throw err : null;
+							if (secondIsDouble)
+								return Errors.TypeErrorOccurred(right, typeof(long));
 
-						if (secondl == 0L)
-							return Errors.ErrorOccurred(err = new ZeroDivisionError($"Right side operand of floor divide was 0")) ? throw err : null;
+							if (secondl == 0L)
+								return Errors.ZeroDivisionErrorOccurred("Right side operand of floor divide");
 
-						return firstl / secondl;
+							return firstl / secondl;
+						}
+
+						return DefaultErrorObject;
 					}
-
-					return null;
-				}
 
 				case Operator.IdentityInequality:
 					{
@@ -502,7 +499,7 @@ namespace Keysharp.Scripting
 						}
 					}
 
-					return null;
+					return DefaultErrorObject;
 				}
 
 				case Operator.LessThanOrEqual:
@@ -529,7 +526,7 @@ namespace Keysharp.Scripting
 						}
 					}
 
-					return null;
+					return DefaultErrorObject;
 				}
 
 				case Operator.GreaterThan:
@@ -556,7 +553,7 @@ namespace Keysharp.Scripting
 						}
 					}
 
-					return null;
+					return DefaultErrorObject;
 				}
 
 				case Operator.GreaterThanOrEqual:
@@ -583,7 +580,7 @@ namespace Keysharp.Scripting
 						}
 					}
 
-					return null;
+					return DefaultErrorObject;
 				}
 
 				case Operator.ValueInequality://This is for != or <> in a conditional.
@@ -622,7 +619,7 @@ namespace Keysharp.Scripting
 						}
 					}
 
-					return null;
+					return DefaultErrorObject;
 				}
 
 				case Operator.Power:
@@ -645,7 +642,7 @@ namespace Keysharp.Scripting
 						}
 					}
 
-					return null;
+					return DefaultErrorObject;
 				}
 
 				case Operator.Minus:
@@ -669,7 +666,7 @@ namespace Keysharp.Scripting
 						}
 					}
 
-					return null;
+					return DefaultErrorObject;
 				}
 
 				case Operator.Multiply:
@@ -692,7 +689,7 @@ namespace Keysharp.Scripting
 						}
 					}
 
-					return null;
+					return DefaultErrorObject;
 				}
 
 				case Operator.Divide:
@@ -704,39 +701,39 @@ namespace Keysharp.Scripting
 							if (secondIsDouble)
 							{
 								if (secondd == 0.0)
-									return Errors.ErrorOccurred(err = new ZeroDivisionError($"Right side operand of floating point division was 0.0")) ? throw err : null;
+									return Errors.ZeroDivisionErrorOccurred("Right side operand of floating point division");
 
-								return firstd / secondd;
+									return firstd / secondd;
+								}
+								else
+								{
+									if (secondl == 0)
+										return Errors.ZeroDivisionErrorOccurred("Right side operand of floating point division");
+
+									return firstd / secondl;
+								}
 							}
 							else
 							{
-								if (secondl == 0)
-									return Errors.ErrorOccurred(err = new ZeroDivisionError($"Right side operand of floating point division was 0")) ? throw err : null;
+								if (secondIsDouble)
+								{
+									if (secondd == 0.0)
+										return Errors.ZeroDivisionErrorOccurred("Right side operand of floating point division");
 
-								return firstd / secondl;
+									return firstl / secondd;
+								}
+								else
+								{
+									if (secondl == 0)
+										return Errors.ZeroDivisionErrorOccurred("Right side operand of floating point division");
+
+									return (double)firstl / secondl;
+								}
 							}
 						}
-						else
-						{
-							if (secondIsDouble)
-							{
-								if (secondd == 0.0)
-									return Errors.ErrorOccurred(err = new ZeroDivisionError($"Right side operand of floating point division was 0.0")) ? throw err : null;
 
-								return firstl / secondd;
-							}
-							else
-							{
-								if (secondl == 0)
-									return Errors.ErrorOccurred(err = new ZeroDivisionError($"Right side operand of floating point division was 0")) ? throw err : null;
-
-								return (double)firstl / secondl;
-							}
-						}
+						return DefaultErrorObject;
 					}
-
-					return null;
-				}
 
 				case Operator.Is:
 				{ 
@@ -746,13 +743,12 @@ namespace Keysharp.Scripting
 				}
 
 				default:
-					return Errors.ErrorOccurred(err = new ValueError($"Operator {op} cannot be applied to: {left} and {right}")) ? throw err : null;
+					return Errors.ValueErrorOccurred($"Operator {op} cannot be applied to: {left} and {right}");
 			}
 		}
 
 		internal static bool ParseNumericArgs(object left, object right, string desc, out bool firstIsDouble, out bool secondIsDouble, out double firstd, out long firstl, out double secondd, out long secondl, bool throwOnError = true)
 		{
-			Error err;
 			firstIsDouble = false;
 			secondIsDouble = false;
 			firstd = 0.0;
@@ -761,10 +757,10 @@ namespace Keysharp.Scripting
 			secondl = 0L;
 
 			if (left == null)
-				return throwOnError ? (Errors.ErrorOccurred(err = new UnsetError($"Left side operand of {desc} was null.")) ? throw err : false) : false;
+				return throwOnError ? (bool)Errors.UnsetErrorOccurred($"Left side operand of {desc}", false) : default;
 
 			if (right == null)
-				return throwOnError ? (Errors.ErrorOccurred(err = new UnsetError($"Right side operand of {desc} was null.")) ? throw err : false) : false;
+				return throwOnError ? (bool)Errors.UnsetErrorOccurred($"Right side operand of {desc}", false) : default;
 
 			if (left is double ld)//Check non-string types first as a hot path.
 			{
@@ -788,7 +784,7 @@ namespace Keysharp.Scripting
 			}
 			else if (throwOnError)
 			{
-				return Errors.ErrorOccurred(err = new UnsetError($"Left side operand of {desc} could not be converted to a number.")) ? throw err : false;
+				return (bool)Errors.TypeErrorOccurred(left, typeof(double), false);
 			}
 			else
 				return false;
@@ -815,7 +811,7 @@ namespace Keysharp.Scripting
 			}
 			else if (throwOnError)
 			{
-				return Errors.ErrorOccurred(err = new UnsetError($"Right side operand of {desc} could not be converted to a number.")) ? throw err : false;
+				return (bool)Errors.TypeErrorOccurred(right, typeof(double), false);
 			}
 			else
 				return false;
@@ -846,32 +842,28 @@ namespace Keysharp.Scripting
 
         public static object OperateUnary(Operator op, object right)
 		{
-			Error err;
-
 			switch (op)
 			{
 				case Operator.Minus:
 				case Operator.Subtract:
 				{
-					if (right == null)
-						return Errors.ErrorOccurred(err = new UnsetError("Right side operand of subtraction or minus was null.")) ? throw err : null;
+						if (right == null)
+							return Errors.UnsetErrorOccurred($"Right side operand of subtraction or minus");
 
-					var l = 0L;
-					var d = 0.0;
+						var l = 0L;
+						var d = 0.0;
 
-					if (right is double rd)//Check non-string types first as a hot path.
-						return rd == 0d ? rd : -rd;
-					else if (right is long rl)
-						return -rl;
-					else if (right.ParseLong(ref l, false, false))
-						return -l;
-					else if (right.ParseDouble(ref d, false, true))
-						return d == 0d ? d : -d;
-					else
-						_ = Errors.ErrorOccurred(err = new UnsetError("Right side operand of multiply could not be converted to a number.")) ? throw err : "";
-
-					return null;
-				}
+						if (right is double rd)//Check non-string types first as a hot path.
+							return rd == 0d ? rd : -rd;
+						else if (right is long rl)
+							return -rl;
+						else if (right.ParseLong(ref l, false, false))
+							return -l;
+						else if (right.ParseDouble(ref d, false, true))
+							return d == 0d ? d : -d;
+						else
+							return Errors.TypeErrorOccurred(right, typeof(double));
+					}
 
 				case Operator.LogicalNot:
 				case Operator.LogicalNotEx:
@@ -880,18 +872,18 @@ namespace Keysharp.Scripting
 				case Operator.BitwiseNot:
 				{
 					if (right == null)
-						return Errors.ErrorOccurred(err = new UnsetError("Right side operand of bitwise not was null.")) ? throw err : null;
+							return Errors.UnsetErrorOccurred($"Right side operand of bitwise not");
 
-					if (right is double)
-						return Errors.ErrorOccurred(err = new TypeError($"Unary operand of logical not was not an integer, and instead was of type {right.GetType()}.")) ? throw err : null;
+						if (right is double)
+							return Errors.TypeErrorOccurred(right, typeof(long));
 
-					var l = 0L;
+						var l = 0L;
 
-					if (right.ParseLong(ref l, false, false))
-						return ~l;
+						if (right.ParseLong(ref l, false, false))
+							return ~l;
 
-					return Errors.ErrorOccurred(err = new TypeError($"Unary operand of logical not was not an integer, and instead was of type {right.GetType()}.")) ? throw err : null;
-				}
+						return Errors.TypeErrorOccurred(right, typeof(long));
+					}
 
 				//Not supporting references at this time.
 				//case Operator.Dereference:
@@ -901,7 +893,7 @@ namespace Keysharp.Scripting
 				//return GCHandle.Alloc(right, GCHandleType.Pinned).AddrOfPinnedObject().ToInt64();//This seems almost certainly wrong, and would need to be freed elsewhere.
 
 				default:
-					return Errors.ErrorOccurred(err = new ValueError($"Operator {op} cannot be applied to: {right}")) ? throw err : null;
+					return Errors.ValueErrorOccurred($"Operator {op} cannot be applied to: {right}");
 			}
 		}
 

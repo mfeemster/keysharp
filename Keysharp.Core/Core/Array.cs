@@ -175,7 +175,9 @@
 		/// This can be one of several values:<br/>
 		///     null: creates an empty array.<br/>
 		///     object[]: adds each element to the underlying list.<br/>
-		///     <see cref="List{object}"/>: assigns the list directly to the underlying list.<br/>
+		///     <see cref="List{object}"/>: copies each element of the list to the underlying list.<br/>
+		///     <see cref="Array"/>: adds a single element to the underlying list with that element being the passed in <see cref="Array"/>.<br/>
+		///     <see cref="Map"/>: adds a single element to the underlying list with that element being the passed in <see cref="Map"/>.<br/>
 		///     <see cref="ICollection"/>: adds each element to the underlying list.
 		/// </param>
 		/// <returns>Empty string, unused.</returns>
@@ -194,6 +196,14 @@
 			{
 				array.AddRange(objlist);
 			}
+			else if (args.Length == 1 && args[0] is Array arr)
+			{
+				array.Add(arr);
+			}
+			else if (args.Length == 1 && args[0] is Map map)
+			{
+				array.Add(map);
+			}
 			else if (args.Length == 1 && args[0] is ICollection c)
 			{
 				array.AddRange(c.Cast<object>().ToList());
@@ -203,7 +213,7 @@
 				Push(args);
 			}
 
-			return "";
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -250,7 +260,6 @@
 		/// <exception cref="ValueError">A <see cref="ValueError"/> exception is thrown if Index is out of range.</exception>
 		public object Delete(object index)
 		{
-			Error err;
 			var i = index.Ai() - 1;
 
 			if (i < array.Count)
@@ -260,7 +269,7 @@
 				return ob;
 			}
 			else
-				return Errors.ErrorOccurred(err = new ValueError($"Invalid deletion index of {index.Ai()}.")) ? throw err : null;
+				return Errors.ValueErrorOccurred($"Invalid deletion index of {index.Ai()}.");
 		}
 
 		/// <summary>
@@ -274,9 +283,8 @@
 		/// <returns>A new <see cref="Array"/> object consisting of all elements for which the filter callback returned true.</returns>
 		/// <exception cref="ValueError">A <see cref="ValueError"/> exception is thrown if startIndex is out of bounds.</exception>
 		/// <exception cref="TypeError">A <see cref="TypeError"/> exception is thrown if callback is not of type <see cref="FuncObj"/>.</exception>
-		public Array Filter(object callback, object startIndex = null)
+		public object Filter(object callback, object startIndex = null)
 		{
-			Error err;
 			var index = startIndex.Ai(1);
 
 			if (callback is IFuncObj ifo)
@@ -288,7 +296,7 @@
 					if (i >= 0 && i <= array.Count)
 						return new Array(((IEnumerable<object>)array).Reverse().Skip(Math.Abs(index + 1)).Where(x => Script.ForceBool(ifo.Call(x, i--))).ToList());
 					else
-						return Errors.ErrorOccurred(err = new ValueError($"Invalid find start index of {index}.")) ? throw err : null;
+						return Errors.ValueErrorOccurred($"Invalid find start index of {index}.");
 				}
 				else
 				{
@@ -297,11 +305,11 @@
 					if (i >= 0 && i < array.Count)
 						return new Array(array.Skip(i).Where(x => Script.ForceBool(ifo.Call(x, ++i))).ToList());
 					else
-						return Errors.ErrorOccurred(err = new ValueError($"Invalid find start index of {index}.")) ? throw err : null;
+						return Errors.ValueErrorOccurred($"Invalid find start index of {index}.");
 				}
 			}
 
-			return Errors.ErrorOccurred(err = new TypeError($"Passed in object of type {callback.GetType()} was not a FuncObj.")) ? throw err : null;
+			return Errors.TypeErrorOccurred(callback, typeof(FuncObj), DefaultErrorObject);
 		}
 
 		/// <summary>
@@ -315,7 +323,6 @@
 		/// <exception cref="TypeError">A <see cref="TypeError"/> exception is thrown if callback is not of type <see cref="FuncObj"/>.</exception>
 		public long FindIndex(object callback, object startIndex = null)
 		{
-			Error err;
 			var index = startIndex.Ai(1);
 
 			if (callback is IFuncObj ifo)
@@ -339,7 +346,7 @@
 						return 0L;
 					}
 					else
-						return Errors.ErrorOccurred(err = new IndexError($"Invalid find start index of {startIndex.Ai(1)}.")) ? throw err : 0L;
+						return (long)Errors.IndexErrorOccurred($"Invalid find start index of {startIndex.Ai(1)}.", DefaultErrorLong);
 				}
 				else
 				{
@@ -351,11 +358,11 @@
 						return found != -1L ? found + 1L : 0L;
 					}
 					else
-						return Errors.ErrorOccurred(err = new IndexError($"Invalid find start index of {index}.")) ? throw err : 0L;
+						return (long)Errors.IndexErrorOccurred($"Invalid find start index of {index}.", DefaultErrorLong);
 				}
 			}
 
-			return Errors.ErrorOccurred(err = new TypeError($"Passed in object of type {callback.GetType()} was not a FuncObj.")) ? throw err : 0L;
+			return (long)Errors.TypeErrorOccurred(callback, typeof(FuncObj), DefaultErrorLong);
 		}
 
 		/// <summary>
@@ -373,14 +380,13 @@
 		/// <exception cref="UnsetItemError">An <see cref="UnsetItemError"/> exception is thrown if the item is null and no defaults were supplied.</exception>
 		public object Get(object index, object @default = null)
 		{
-			Error err;
 			object val = null;
 			var i = index.Ai(1);
 
 			if ((i = TranslateIndex(i)) != -1)
 				val = array[i];
 			else
-				_ = Errors.ErrorOccurred(err = new IndexError($"Invalid retrieval index of {i}.")) ? throw err : "";
+				return Errors.IndexErrorOccurred($"Invalid retrieval index of {i}.");
 
 			if (val != null)
 				return val;
@@ -389,7 +395,7 @@
 			else if (Default != null)
 				return Default;
 			else
-				return Errors.ErrorOccurred(err = new UnsetItemError($"array[{i}], default and Array.Default were all unset/null.")) ? throw err : null;
+				return Errors.UnsetItemErrorOccurred($"array[{i}], default and Array.Default were all unset/null.");
 		}
 
 		/// <summary>
@@ -454,7 +460,6 @@
 		/// <exception cref="ValueError">A <see cref="ValueError"/> exception is thrown if index is out of bounds.</exception>
 		public void InsertAt(params object[] args)
 		{
-			Error err;
 			var o = args;
 
 			if (o.Length > 1)
@@ -470,7 +475,7 @@
 					index = array.Count + i;
 				else
 				{
-					_ = Errors.ErrorOccurred(err = new ValueError($"Invalid insertion index of {i}.")) ? throw err : "";
+					_ = Errors.ValueErrorOccurred($"Invalid insertion index of {i}.");
 					return;
 				}
 
@@ -494,10 +499,8 @@
 		/// <returns>A new <see cref="Array"/> object consisting of the output of callback applied to all elements starting at startIndex.</returns>
 		/// <exception cref="IndexError">An <see cref="IndexError"/> exception is thrown if startIndex is out of bounds.</exception>
 		/// <exception cref="TypeError">A <see cref="TypeError"/> exception is thrown if callback is not of type <see cref="FuncObj"/>.</exception>
-		public Array MapTo(object callback, object startIndex = null)
+		public object MapTo(object callback, object startIndex = null)
 		{
-			Error err;
-
 			if (callback is IFuncObj ifo)
 			{
 				var index = TranslateIndex(startIndex.Ai(1));
@@ -510,10 +513,10 @@
 					return new Array(list);
 				}
 				else
-					return Errors.ErrorOccurred(err = new IndexError($"Invalid mapping start index of {startIndex.Ai(1)}.")) ? throw err : null;
+					return Errors.IndexErrorOccurred($"Invalid mapping start index of {startIndex.Ai(1)}.");
 			}
 
-			return Errors.ErrorOccurred(err = new TypeError($"Passed in object of type {callback.GetType()} was not a FuncObj.")) ? throw err : null;
+			return Errors.TypeErrorOccurred(callback, typeof(FuncObj), DefaultErrorObject);
 		}
 
 		/// <summary>
@@ -564,8 +567,7 @@
             var index = array.Count - 1;
             if (index < 0)
 			{
-				Error err;
-				return Errors.ErrorOccurred(err = new Error($"Cannot pop an empty array.")) ? throw err : null;
+				return Errors.ErrorOccurred($"Cannot pop an empty array.");
 			}
 
 			var val = array[index];
@@ -682,7 +684,6 @@
 		/// <exception cref="ValueError">A <see cref="ValueError"/> exception is thrown if index or index + length is out of bounds.</exception>
 		public object RemoveAt(params object[] args)
 		{
-			Error err;
 			var o = args;
 
 			if (array.Count > 0 && o.Length > 0)
@@ -691,7 +692,7 @@
 				int i;
 
 				if ((i = TranslateIndex(index)) == -1)
-					return Errors.ErrorOccurred(err = new ValueError($"Invalid removal index of {index}.")) ? throw err : null;
+					return Errors.ValueErrorOccurred($"Invalid removal index of {index}.");
 
 				if (o.Length > 1 && o[1] != null)
 				{
@@ -700,7 +701,7 @@
 					if (i + len <= array.Count)
 						array.RemoveRange(i, len);
 					else
-						_ =  Errors.ErrorOccurred(err = new ValueError($"Invalid removal index of and range of {index} and {len} exceeds array length of {array.Count}.")) ? throw err : "";
+						return Errors.ValueErrorOccurred($"Invalid removal index of and range of {index} and {len} exceeds array length of {array.Count}.");
 				}
 				else if (i < array.Count)
 				{
@@ -710,7 +711,7 @@
 				}
 			}
 
-			return null;
+			return default;
 		}
 
 		/// <summary>
@@ -721,17 +722,15 @@
 		/// </param>
 		/// <returns>this.</returns>
 		/// <exception cref="TypeError">A <see cref="TypeError"/> exception is thrown if callback is not of type <see cref="FuncObj"/>.</exception>
-		public Array Sort(object callback)
+		public object Sort(object callback)
 		{
-			Error err;
-
 			if (callback is IFuncObj ifo)
 			{
 				array.Sort(new FuncObjComparer(ifo));
 				return this;
 			}
 			else
-				return Errors.ErrorOccurred(err = new TypeError($"Passed in object of type {callback.GetType()} was not a FuncObj.")) ? throw err : null;
+				return Errors.TypeErrorOccurred(callback, typeof(FuncObj), DefaultErrorObject);
 		}
 
 		/// <summary>
@@ -799,23 +798,21 @@
 		{
 			get
 			{
-				Error err;
 				var i = index.Ai();
 
 				if ((i = TranslateIndex(i)) != -1)
 					return array[i];
 				else
-					return Errors.ErrorOccurred(err = new IndexError($"Invalid retrieval index of {index} on an array with length {array.Count}.")) ? throw err : null;
+					return Errors.IndexErrorOccurred($"Invalid retrieval index of {index} on an array with length {array.Count}.");
 			}
 			set
 			{
-				Error err;
 				var i = index.Ai();
 
 				if ((i = TranslateIndex(i)) != -1)
 					array[i] = value;
 				else
-					_ = Errors.ErrorOccurred(err = new IndexError($"Invalid set index of {index} on an array with length {array.Count}.")) ? throw err : "";
+					_ = Errors.IndexErrorOccurred($"Invalid set index of {index} on an array with length {array.Count}.");
 			}
 		}
 

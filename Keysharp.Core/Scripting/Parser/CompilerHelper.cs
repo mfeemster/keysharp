@@ -177,7 +177,7 @@ using static Keysharp.Scripting.Script;
 										break;
 
 									default:
-										_compiledScriptDependencies.Add(File.Exists(asmEntry.Name) ? asmEntry.Name : Path.Combine(dir, Path.GetFileName(asmEntry.Name)));
+										_ = _compiledScriptDependencies.Add(File.Exists(asmEntry.Name) ? asmEntry.Name : Path.Combine(dir, Path.GetFileName(asmEntry.Name)));
 										break;
 								}
 
@@ -185,12 +185,12 @@ using static Keysharp.Scripting.Script;
 						// nativeEntry.Name might be "runtimes/win-x64/native/PCRE.NET.Native.dll"
 						if (info.TryGetProperty("native", out var nativeGroup))
 							foreach (var nativeEntry in nativeGroup.EnumerateObject())
-								_compiledScriptDependencies.Add(File.Exists(nativeEntry.Name) ? nativeEntry.Name : Path.Combine(dir, Path.GetFileName(nativeEntry.Name)));
+								_ = _compiledScriptDependencies.Add(File.Exists(nativeEntry.Name) ? nativeEntry.Name : Path.Combine(dir, Path.GetFileName(nativeEntry.Name)));
 
 						if (info.TryGetProperty("runtimeTargets", out var runtimeTargetsGroup))
 							foreach (var nativeEntry in runtimeTargetsGroup.EnumerateObject())
 								if (nativeEntry.Value.TryGetProperty("rid", out var targetRid) && targetRid.ValueEquals(rid))
-									_compiledScriptDependencies.Add(File.Exists(nativeEntry.Name) ? nativeEntry.Name : Path.Combine(dir, Path.GetFileName(nativeEntry.Name)));
+									_ = _compiledScriptDependencies.Add(File.Exists(nativeEntry.Name) ? nativeEntry.Name : Path.Combine(dir, Path.GetFileName(nativeEntry.Name)));
 					}
 				}
 			}
@@ -314,7 +314,7 @@ using static Keysharp.Scripting.Script;
 				return $"{desc} failed.\n\n{sbe}\n{sbw}" + (message != "" ? "\n" + message : "");//Needed to break this up so the AStyle formatter doesn't misformat it.
 			}
 
-			return "";
+			return DefaultObject;
 		}
 
         public (EmitResult, MemoryStream, Exception) Compile(string code, string outputname, string currentDir, bool minimalexeout = false)

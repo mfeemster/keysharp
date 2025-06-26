@@ -55,7 +55,7 @@
 				if (Control.FromHandle(Handle) is Control c)
 					return c.GetType().Name;
 
-				return "";
+				return DefaultErrorString;
 			}
 		}
 		internal virtual string NetClassNN
@@ -90,7 +90,7 @@
 					return classNN;
 				}
 
-				return "";
+				return DefaultErrorString;
 			}
 		}
 		internal abstract WindowItemBase NonChildParentWindow { get; }
@@ -110,7 +110,7 @@
 				}
 				catch
 				{
-					return "";
+					return DefaultErrorString;
 				}
 			}
 		}

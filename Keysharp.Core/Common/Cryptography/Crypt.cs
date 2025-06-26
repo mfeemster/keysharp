@@ -28,7 +28,8 @@ namespace Keysharp.Core.Common.Cryptography
 			}
 			catch (Exception ex)
 			{
-				throw new ValueError(ex.Message);
+				_ = Errors.ValueErrorOccurred(ex.Message);
+				return default;
 			}
 
 			var iv = new byte[alg.IV.Length];
@@ -65,7 +66,8 @@ namespace Keysharp.Core.Common.Cryptography
 			if (value == null)
 				return [];
 
-			throw new TypeError("Cannot serialize an object that was not either a string or byte[].");
+			_ = Errors.TypeErrorOccurred(value, typeof(byte[]));
+			return default;
 		}
 	}
 }

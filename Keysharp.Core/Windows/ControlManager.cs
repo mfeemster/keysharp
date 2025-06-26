@@ -37,7 +37,6 @@ namespace Keysharp.Core.Windows
 		{
 			if (WindowSearch.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
-				Error err;
 				var res = 0L;
 				var ctrl2 = Control.FromHandle(item.Handle);
 
@@ -58,15 +57,15 @@ namespace Keysharp.Core.Windows
 					else if (item.ClassName.Contains("List"))
 						msg = WindowsAPI.LB_ADDSTRING;
 					else
-						return Errors.ErrorOccurred(err = new TargetError($"Class name ${item.ClassName} did not contain Combo or List")) ? throw err : 0L;
+						return (long)Errors.TargetErrorOccurred($"Class name {item.ClassName} did not contain Combo or List", DefaultErrorLong);
 
 					if (WindowsAPI.SendMessageTimeout(item.Handle, (uint)msg, 0, str, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000, out var result) == 0)
-						return Errors.ErrorOccurred(err = new TargetError($"Could not add ${str} to combo or list box in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : 0L;
+						return (long)Errors.TargetErrorOccurred($"Could not add {str} to combo or list box", title, text, excludeTitle, excludeText, DefaultErrorLong);
 
 					res = result.ToInt64();
 
 					if (res == WindowsAPI.CB_ERR || res == WindowsAPI.CB_ERRSPACE)
-						return Errors.ErrorOccurred(err = new Error("Failed")) ? throw err : 0L;
+						return (long)Errors.ErrorOccurred("Failed", DefaultErrorLong);
 				}
 
 				WindowItemBase.DoControlDelay();
@@ -80,7 +79,6 @@ namespace Keysharp.Core.Windows
 		{
 			if (WindowSearch.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
-				Error err;
 				uint msg = 0, x_msg = 0, y_msg = 0;
 				n--;
 
@@ -102,13 +100,13 @@ namespace Keysharp.Core.Windows
 				{
 					if (!WindowsAPI.ControlSetTab(item.Handle, n))
 					{
-						_ = Errors.ErrorOccurred(err = new TargetError($"Could not set tab index to ${n} in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : "";
+						_ = Errors.TargetErrorOccurred($"Could not set tab index to {n}", title, text, excludeTitle, excludeText);
 						return;
 					}
 				}
 				else
 				{
-					_ = Errors.ErrorOccurred(err = new TargetError($"Class name ${item.ClassName} did not contain Combo, List or Tab")) ? throw err : "";
+					_ = Errors.TargetErrorOccurred($"Class name {item.ClassName} did not contain Combo, List or Tab");
 					return;
 				}
 
@@ -118,7 +116,7 @@ namespace Keysharp.Core.Windows
 				{
 					if (WindowsAPI.SendMessageTimeout(item.Handle, msg, n != -1 ? 1 : 0, new nint(n), SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000, out result) == 0)
 					{
-						_ = Errors.ErrorOccurred(err = new TargetError($"Could not set list box selection index to ${n} in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : "";
+						_ = Errors.TargetErrorOccurred($"Could not set list box selection index to {n}", title, text, excludeTitle, excludeText);
 						return;
 					}
 				}
@@ -126,14 +124,14 @@ namespace Keysharp.Core.Windows
 				{
 					if (WindowsAPI.SendMessageTimeout(item.Handle, msg, n, 0, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000, out result) == 0)
 					{
-						_ = Errors.ErrorOccurred(err = new TargetError($"Could not set combo or single selection list box index to ${n} in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : "";
+						_ = Errors.TargetErrorOccurred($"Could not set combo or single selection list box index to {n}", title, text, excludeTitle, excludeText);
 						return;
 					}
 				}
 
 				if (result.ToInt64() == WindowsAPI.CB_ERR && n != -1)//CB_ERR == LB_ERR
 				{
-					_ = Errors.ErrorOccurred(err = new Error("Failed")) ? throw err : "";
+					_ = Errors.ErrorOccurred("Failed");
 					return;
 				}
 
@@ -146,7 +144,6 @@ namespace Keysharp.Core.Windows
 		{
 			if (WindowSearch.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
-				Error err;
 				uint msg = 0, x_msg = 0, y_msg = 0;
 
 				if (item.ClassName.Contains("Combo"))
@@ -164,31 +161,31 @@ namespace Keysharp.Core.Windows
 					y_msg = WindowsAPI.LBN_DBLCLK;
 				}
 				else
-					return Errors.ErrorOccurred(err = new TargetError($"Class name ${item.ClassName} did not contain Combo or List")) ? throw err : 0L;
+					return (long)Errors.TargetErrorOccurred($"Class name {item.ClassName} did not contain Combo or List", DefaultErrorLong);
 
 				nint item_index;
 
 				if (msg == WindowsAPI.LB_FINDSTRING)//Multi-select ListBox (LB_SELECTSTRING is not supported by these).
 				{
 					if (WindowsAPI.SendMessageTimeout(item.Handle, msg, -1, str, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000, out item_index) == 0)
-						return Errors.ErrorOccurred(err = new TargetError($"Could not set list box selection index to ${str} in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : 0L;
+						return (long)Errors.TargetErrorOccurred($"Could not set list box selection index to {str}", title, text, excludeTitle, excludeText, DefaultErrorLong);
 
 					if (item_index.ToInt64() == WindowsAPI.LB_ERR)
-						return Errors.ErrorOccurred(err = new TargetError($"Erroneous item index when setting list box selection index to ${str} in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : 0L;
+						return (long)Errors.TargetErrorOccurred($"Erroneous item index when setting list box selection index to {str}", title, text, excludeTitle, excludeText, DefaultErrorLong);
 
 					if (WindowsAPI.SendMessageTimeout(item.Handle, WindowsAPI.LB_SETSEL, 1, item_index, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000, out var result) == 0)
-						return Errors.ErrorOccurred(err = new TargetError($"Could not set list box selection index to ${item_index.ToInt64()} in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : 0L;
+						return (long)Errors.TargetErrorOccurred($"Could not set list box selection index to {item_index.ToInt64()}", title, text, excludeTitle, excludeText, DefaultErrorLong);
 
 					if (result.ToInt64() == WindowsAPI.LB_ERR)
-						return Errors.ErrorOccurred(err = new TargetError($"Erroneous item index when setting list box selection index to ${item_index.ToInt64()} in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : 0L;
+						return (long)Errors.TargetErrorOccurred($"Erroneous item index when setting list box selection index to {item_index.ToInt64()}", title, text, excludeTitle, excludeText, DefaultErrorLong);
 				}
 				else//ComboBox or single-select ListBox.
 				{
 					if (WindowsAPI.SendMessageTimeout(item.Handle, msg, -1, str, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000, out item_index) == 0)
-						return Errors.ErrorOccurred(err = new TargetError($"Could not set combo box selection index to ${str} in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : 0L;
+						return (long)Errors.TargetErrorOccurred($"Could not set combo box selection index to {str}", title, text, excludeTitle, excludeText, DefaultErrorLong);
 
 					if (item_index.ToInt64() == WindowsAPI.CB_ERR) // CB_ERR == LB_ERR
-						return Errors.ErrorOccurred(err = new TargetError($"Erroneous item index when setting combo box selection index to ${str} in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : 0L;
+						return (long)Errors.TargetErrorOccurred($"Erroneous item index when setting combo box selection index to {str}", title, text, excludeTitle, excludeText, DefaultErrorLong);
 				}
 
 				NotifyParent(item.Handle, x_msg, y_msg);
@@ -201,7 +198,6 @@ namespace Keysharp.Core.Windows
 
 		internal override void ControlClick(object ctrlorpos, object title, object text, string whichButton, int clickCount, string options, object excludeTitle, object excludeText)
 		{
-			Error err;
 			var winx = int.MinValue;
 			var winy = int.MinValue;
 			var ctrlx = int.MinValue;
@@ -261,13 +257,9 @@ namespace Keysharp.Core.Windows
 				if (item == null)
 				{
 					if (winx != int.MinValue && winy != int.MinValue)
-					{
 						getctrlbycoords = true;
-					}
 					else
-					{
-						_ = Errors.ErrorOccurred(err = new TargetError($"Could not get control {ctrlorpos} in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : "";
-					}
+						_ = Errors.TargetErrorOccurred($"Could not get control {ctrlorpos}", title, text, excludeTitle, excludeText);
 				}
 			}
 			else//Override, so always treat ctrlorpos as an x/y.
@@ -300,7 +292,7 @@ namespace Keysharp.Core.Windows
 
 				if (!WindowsAPI.GetWindowRect(item.Handle, out temprect))
 				{
-					_ = Errors.ErrorOccurred(err = new TargetError($"Could not get control rect in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : "";
+					_ = Errors.TargetErrorOccurred($"Could not get control rect {ctrlorpos}", title, text, excludeTitle, excludeText);
 					return;
 				}
 
@@ -381,7 +373,6 @@ namespace Keysharp.Core.Windows
 		{
 			if (WindowSearch.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
-				Error err;
 				uint msg;
 				var ctrl2 = Control.FromHandle(item.Handle);
 				n--;
@@ -402,19 +393,19 @@ namespace Keysharp.Core.Windows
 						msg = WindowsAPI.LB_DELETESTRING;
 					else
 					{
-						_ = Errors.ErrorOccurred(err = new TargetError($"Class name ${item.ClassName} did not contain Combo or List")) ? throw err : "";
+						_ = Errors.TargetErrorOccurred($"Class name {item.ClassName} did not contain Combo or List");
 						return;
 					}
 
 					if (WindowsAPI.SendMessageTimeout(item.Handle, msg, n, 0, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000, out var result) == 0)
 					{
-						_ = Errors.ErrorOccurred(err = new TargetError($"Could not delete combo or list box index ${n} in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : "";
+						_ = Errors.TargetErrorOccurred($"Could not delete combo or list box index {n}", title, text, excludeTitle, excludeText);
 						return;
 					}
 
 					if (result.ToInt64() == WindowsAPI.CB_ERR) // CB_ERR == LB_ERR
 					{
-						_ = Errors.ErrorOccurred(err = new TargetError($"Erroneous item index when deleting combo or list box selection index to ${n} in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : "";
+						_ = Errors.TargetErrorOccurred($"Erroneous item index when deleting combo or list box selection index to {n}", title, text, excludeTitle, excludeText);
 						return;
 					}
 				}
@@ -427,7 +418,6 @@ namespace Keysharp.Core.Windows
 		{
 			if (WindowSearch.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
-				Error err;
 				uint msg = 0;
 				var ctrl2 = Control.FromHandle(item.Handle);
 
@@ -441,10 +431,10 @@ namespace Keysharp.Core.Windows
 				else if (item.ClassName.Contains("List"))
 					msg = WindowsAPI.LB_FINDSTRINGEXACT;
 				else
-					return Errors.ErrorOccurred(err = new TargetError($"Class name ${item.ClassName} did not contain Combo or List")) ? throw err : 0L;
+					return (long)Errors.TargetErrorOccurred($"Class name {item.ClassName} did not contain Combo or List", DefaultErrorLong);
 
 				if (WindowsAPI.SendMessageTimeout(item.Handle, msg, -1, str, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000, out var index) == 0 || index.ToInt64() == WindowsAPI.CB_ERR) // CB_ERR == LB_ERR
-					return Errors.ErrorOccurred(err = new Error($"Could not search for combo or list box item string {str} in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : 0L;
+					return (long)Errors.TargetErrorOccurred($"Could not search for combo or list box item string {str}", title, text, excludeTitle, excludeText, DefaultErrorLong);
 
 				WindowItemBase.DoControlDelay();
 				return index.ToInt64() + 1;
@@ -484,7 +474,6 @@ namespace Keysharp.Core.Windows
 		{
 			if (WindowSearch.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
-				Error err;
 				uint msg = 0, x_msg = 0, y_msg = 0;
 
 				if (item.ClassName.Contains("Combo"))
@@ -500,24 +489,24 @@ namespace Keysharp.Core.Windows
 					y_msg = WindowsAPI.LB_GETTEXT;
 				}
 				else
-					return Errors.ErrorOccurred(err = new TargetError($"Class name ${item.ClassName} did not contain Combo or List")) ? throw err : null;
+					return (string)Errors.TargetErrorOccurred($"Class name {item.ClassName} did not contain Combo or List", DefaultErrorString);
 
 				if (WindowsAPI.SendMessageTimeout(item.Handle, msg, 0, 0, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000, out var index) == 0
 						|| index.ToInt64() == WindowsAPI.CB_ERR  // CB_ERR == LB_ERR.  There is no selection (or very rarely, some other type of problem).
 						|| WindowsAPI.SendMessageTimeout(item.Handle, x_msg, index, 0, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000, out var length) == 0
 						|| length.ToInt64() == WindowsAPI.CB_ERR)  // CB_ERR == LB_ERR
-					return Errors.ErrorOccurred(err = new Error($"Could not get selected item string for combo or list box in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : null;
+					return (string)Errors.ErrorOccurred($"Could not get selected item string for combo or list box in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}", DefaultErrorString);
 
 				var sb = new StringBuilder(length.ToInt32());
 
 				if (WindowsAPI.SendMessageTimeout(item.Handle, y_msg, index, sb, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000, out length) == 0
 						|| length.ToInt64() == WindowsAPI.CB_ERR)//Probably impossible given the way it was called above. Also, CB_ERR == LB_ERR. Relies on short-circuit boolean order.
-					return Errors.ErrorOccurred(err = new Error($"Could not get selected item string for combo or list box in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : null;
+					return (string)Errors.ErrorOccurred($"Could not get selected item string for combo or list box in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}", DefaultErrorString);
 
 				return sb.ToString();
 			}
 
-			return "";
+			return DefaultObject;
 		}
 
 		internal override long ControlGetExStyle(object ctrl, object title, object text, object excludeTitle, object excludeText) => WindowSearch.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item ? item.ExStyle : 0L;
@@ -556,7 +545,6 @@ namespace Keysharp.Core.Windows
 		{
 			if (WindowSearch.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
-				Error err;
 				uint msg = 0;
 
 				if (item.ClassName.Contains("Combo"))
@@ -566,10 +554,11 @@ namespace Keysharp.Core.Windows
 				else if (item.ClassName.Contains("Tab"))
 					msg = WindowsAPI.TCM_GETCURSEL;
 				else
-					return Errors.ErrorOccurred(err = new TargetError($"Class name ${item.ClassName} did not contain Combo, List or Tab")) ? throw err : 0L;
+					return (long)Errors.TargetErrorOccurred($"Class name {item.ClassName} did not contain Combo, List or Tab", DefaultErrorLong);
+
 
 				if (WindowsAPI.SendMessageTimeout(item.Handle, msg, 0, 0, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000, out var index) == 0)
-					return Errors.ErrorOccurred(err = new Error($"Could not get selected item index for combo box, list box or tab control in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : 0L;
+					return (long)Errors.TargetErrorOccurred($"Could not get selected item index for combo box, list box or tab control", title, text, excludeTitle, excludeText, DefaultErrorLong);
 
 				return index.ToInt64() + 1L;
 			}
@@ -577,11 +566,10 @@ namespace Keysharp.Core.Windows
 			return 0L;
 		}
 
-		internal override Array ControlGetItems(object ctrl, object title, object text, object excludeTitle, object excludeText)
+		internal override object ControlGetItems(object ctrl, object title, object text, object excludeTitle, object excludeText)
 		{
 			if (WindowSearch.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
-				Error err;
 				uint msg = 0, x_msg = 0;
 
 				if (item.ClassName.Contains("Combo"))
@@ -595,7 +583,7 @@ namespace Keysharp.Core.Windows
 					x_msg = WindowsAPI.LB_GETTEXT;
 				}
 				else
-					return Errors.ErrorOccurred(err = new TargetError($"Class name ${item.ClassName} did not contain Combo or List")) ? throw err : null;
+					return Errors.TargetErrorOccurred($"Class name {item.ClassName} did not contain Combo or List");
 
 				var cnt = (int)WindowsAPI.SendMessage(item.Handle, msg, 0, 0);
 				var listBoxContent = new List<object>(cnt);
@@ -608,10 +596,10 @@ namespace Keysharp.Core.Windows
 					listBoxContent.Add(sb.ToString());
 				}
 
-				return new Array(listBoxContent);
+				return new Keysharp.Core.Array(listBoxContent);
 			}
 
-			return [];
+			return new Keysharp.Core.Array();
 		}
 
 		internal override void ControlGetPos(ref object outX,
@@ -711,13 +699,12 @@ namespace Keysharp.Core.Windows
 		{
 			if (WindowSearch.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
-				Error err;
 				var onoff = Conversions.ConvertOnOffToggle(val);
 
 				if (Control.FromHandle(item.Handle) is Control ctrl2)
 					ctrl2.Enabled = onoff == ToggleValueType.Toggle ? !ctrl2.Enabled : onoff == ToggleValueType.On;
 				else if (!WindowsAPI.EnableWindow(item.Handle, onoff == ToggleValueType.Toggle ? !WindowsAPI.IsWindowEnabled(item.Handle) : onoff == ToggleValueType.On))
-					_ =  Errors.ErrorOccurred(err = new Error($"Could not enable control in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : "";
+					_ =  Errors.ErrorOccurred($"Could not enable control in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
 
 				WindowItemBase.DoControlDelay();
 			}
@@ -780,18 +767,17 @@ namespace Keysharp.Core.Windows
 		{
 			if (WindowSearch.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
-				Error err;
 				_ = WindowsAPI.SendMessageTimeout(item.Handle, WindowsAPI.EM_GETSEL, 0, 0, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000, out var result);
 				var val = result & 0xFFFF;
 
 				if (WindowsAPI.SendMessageTimeout(item.Handle, WindowsAPI.EM_LINEFROMCHAR, val, 0, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000u, out var result2) == 0)
-					return Errors.ErrorOccurred(err = new Error($"Could not get line form character position for text box in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : 0L;
+					return (long)Errors.ErrorOccurred($"Could not get line form character position for text box in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}", DefaultErrorLong);
 
 				if (result2 == 0)//Since we're on line zero, the column number is simply start+1.
 					return val + 1;
 
 				if (WindowsAPI.SendMessageTimeout(item.Handle, WindowsAPI.EM_LINEINDEX, result2, 0, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000, out var line_start) == 0)
-					return Errors.ErrorOccurred(err = new Error($"Could not get line line index from character position for text box in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : 0L;
+					return (long)Errors.ErrorOccurred($"Could not get line line index from character position for text box in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}", DefaultErrorLong);
 
 				return val - line_start.ToInt64() + 1L;
 			}
@@ -803,10 +789,8 @@ namespace Keysharp.Core.Windows
 		{
 			if (WindowSearch.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
-				Error err;
-
 				if (WindowsAPI.SendMessageTimeout(item.Handle, WindowsAPI.EM_LINEFROMCHAR, -1, 0, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000, out var result) == 0)
-					return Errors.ErrorOccurred(err = new Error($"Could not get current line index for text box in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : 0L;
+					return (long)Errors.ErrorOccurred($"Could not get current line index for text box in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}", DefaultErrorLong);
 
 				return result.ToInt64() + 1L;
 			}
@@ -818,38 +802,36 @@ namespace Keysharp.Core.Windows
 		{
 			if (WindowSearch.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
-				Error err;
 				var buffer = new StringBuilder(32767);
 				n--;
 				_ = buffer.Append((char)buffer.Capacity);
 
 				if (WindowsAPI.SendMessageTimeout(item.Handle, WindowsAPI.EM_GETLINE, n, buffer, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000, out _) == 0)
-					return Errors.ErrorOccurred(err = new Error($"Could not get line for text box in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : null;
+					return (string)Errors.ErrorOccurred($"Could not get line for text box in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}", DefaultErrorString);
 
 				if (buffer.Length == 0)
 				{
 					if (WindowsAPI.SendMessageTimeout(item.Handle, WindowsAPI.EM_GETLINECOUNT, 0, 0, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000, out var linecount) == 0)
-						return Errors.ErrorOccurred(err = new Error($"Could not get line count for text box in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : null;
+						return (string)Errors.ErrorOccurred($"Could not get line count for text box in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}", DefaultErrorString);
 
 					if (n + 1 > linecount.ToInt32())
-						return Errors.ErrorOccurred(err = new ValueError($"Requested line of {n + 1} is greater than the number of lines ({linecount.ToInt32()}) in the text box in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : null;
+						return (string)Errors.ValueErrorOccurred($"Requested line of {n + 1} is greater than the number of lines ({linecount.ToInt32()}) in the text box in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}", null, DefaultErrorString);
 				}
 
 				return buffer.ToString();
 			}
 
-			return "";
+			return DefaultObject;
 		}
 
 		internal override long EditGetLineCount(object ctrl, object title, object text, object excludeTitle, object excludeText)
 		{
 			if (WindowSearch.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
-				Error err;
 
 				//Don't try to cast to TextBox control here because it handles lines differently: wordwrapping doesn't count as a new line, whereas it does with EM_GETLINECOUNT;
 				if (WindowsAPI.SendMessageTimeout(item.Handle, WindowsAPI.EM_GETLINECOUNT, 0, 0, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000, out var result) == 0)
-					return Errors.ErrorOccurred(err = new Error($"Could not get line count for text box in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : 0L;
+					return (long)Errors.ErrorOccurred($"Could not get line count for text box in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}", DefaultErrorLong);
 
 				return result.ToInt64();
 			}
@@ -863,33 +845,29 @@ namespace Keysharp.Core.Windows
 			{
 				if (Control.FromHandle(item.Handle) is TextBoxBase ctrl2)
 					return ctrl2.SelectedText;
-
-				Error err;
 				var start = 0u;
 				var end = 0u;
 				_ = WindowsAPI.SendMessageTimeout(item.Handle, WindowsAPI.EM_GETSEL, ref start, ref end, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000, out var result);
 
 				if (start > end)
-					return Errors.ErrorOccurred(err = new Error($"Start position of {start} was > end position of {end} when querying selected text of an edit control.")) ? throw err : null;
+					return (string)Errors.ErrorOccurred($"Start position of {start} was > end position of {end} when querying selected text of an edit control.", DefaultErrorString);
 
 				if (start == end)
-					return "";
+					return DefaultObject;
 
-				if (WindowsAPI.GetWindowTextTimeout(item.Handle, 2000) is string s)
-					return s[(int)start..(int)end];
+				var s = WindowsAPI.GetWindowTextTimeout(item.Handle, 2000);
+				return s[(int)start..(int)end];
 			}
 
-			return "";
+			return DefaultObject;
 		}
 
 		internal override void EditPaste(string str, object ctrl, object title, object text, object excludeTitle, object excludeText)
 		{
 			if (WindowSearch.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
-				Error err;
-
 				if (WindowsAPI.SendMessageTimeout(item.Handle, WindowsAPI.EM_REPLACESEL, 1, str, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000, out var result) == 0)
-					_ = Errors.ErrorOccurred(err = new Error($"Could not paste into text box in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : "";
+					_ = Errors.ErrorOccurred($"Could not paste into text box in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
 
 				WindowItemBase.DoControlDelay();
 			}
@@ -901,7 +879,6 @@ namespace Keysharp.Core.Windows
 
 			if (WindowSearch.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
-				Error err;
 				var focused = false;
 				var count = false;
 				var sel = false;
@@ -950,7 +927,7 @@ namespace Keysharp.Core.Windows
 						if (col >= 0)
 						{
 							if (col >= lv.Columns.Count)
-								return Errors.ErrorOccurred(err = new ValueError($"Column ${col + 1} is greater than list view column count of {lv.Columns.Count} in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : null;
+								return Errors.ValueErrorOccurred($"Column {col + 1} is greater than list view column count of {lv.Columns.Count} in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
 
 							items.ForEach(templvi => sb.AppendLine(templvi.SubItems[col].Text));
 						}
@@ -963,7 +940,7 @@ namespace Keysharp.Core.Windows
 				else
 				{
 					if (WindowsAPI.SendMessageTimeout(item.Handle, WindowsAPI.LVM_GETITEMCOUNT, 0, 0, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000, out var row_count) == 0)
-						return Errors.ErrorOccurred(err = new TargetError($"Could not get row count for list view in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : null;
+						return Errors.TargetErrorOccurred($"Could not get row count for list view", title, text, excludeTitle, excludeText);
 
 					var col_count = new nint(-1);  // Fix for v1.0.37.01: Use -1 to indicate "undetermined col count".
 
@@ -979,14 +956,14 @@ namespace Keysharp.Core.Windows
 						if (focused) // Listed first so that it takes precedence over include_selected_only.
 						{
 							if (WindowsAPI.SendMessageTimeout(item.Handle, WindowsAPI.LVM_GETNEXTITEM, -1, WindowsAPI.LVNI_FOCUSED, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000, out var result) == 0)
-								return Errors.ErrorOccurred(err = new TargetError($"Could not get next item for list view in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : null;
+								return Errors.TargetErrorOccurred($"Could not get next item for list view", title, text, excludeTitle, excludeText);
 
 							ret = result.ToInt64() + 1L;
 						}
 						else if (sel)
 						{
 							if (WindowsAPI.SendMessageTimeout(item.Handle, WindowsAPI.LVM_GETSELECTEDCOUNT, 0, 0, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000, out var result) == 0)
-								return Errors.ErrorOccurred(err = new TargetError($"Could not get selected item count for list view in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : null;
+								return Errors.TargetErrorOccurred($"Could not get selected item count for list view", title, text, excludeTitle, excludeText);
 
 							ret = result.ToInt64();
 						}
@@ -999,14 +976,14 @@ namespace Keysharp.Core.Windows
 					}
 
 					if (rowct < 1 || colct == 0) // But don't return when col_count == -1 (i.e. always make the attempt when col count is undetermined).
-						return "";  // No text in the control, so indicate success.
+						return DefaultObject;  // No text in the control, so indicate success.
 
 					// allocate buffer for a string to store the text of the list view item we wanted
 					nint remotetext = 0;
 					nint remotelvi = 0;
 
 					if ((remotetext = WindowsAPI.AllocInterProcMem(WindowsAPI.LV_REMOTE_BUF_SIZE, item.Handle, ProcessAccessTypes.PROCESS_QUERY_INFORMATION, out var prochandle)) == 0)
-						return Errors.ErrorOccurred(err = new TargetError($"Could not allocate inter process string memory for list view in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : null;
+						return Errors.TargetErrorOccurred($"Could not allocate inter process string memory for list view", title, text, excludeTitle, excludeText);
 
 					// this is the LVITEM we need to inject
 					var lvItem = new LVITEM
@@ -1026,7 +1003,7 @@ namespace Keysharp.Core.Windows
 					var sb = new StringBuilder(1024);
 
 					if ((remotelvi = WindowsAPI.AllocInterProcMem((uint)lvItemSize, item.Handle, ProcessAccessTypes.PROCESS_QUERY_INFORMATION, out _)) == 0)
-						return Errors.ErrorOccurred(err = new TargetError($"Could not allocate inter process list view item memory for list view in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : null;
+						return Errors.TargetErrorOccurred($"Could not allocate inter process list view item memory for list view", title, text, excludeTitle, excludeText);
 
 					for (i = 0, next = new nint(-1), total_length = 0; i < rowct; ++i) // For each row:
 					{
@@ -1163,14 +1140,13 @@ namespace Keysharp.Core.Windows
 				return ret;
 			}
 
-			return "";
+			return DefaultObject;
 		}
 
 		internal override void MenuSelect(object title, object text, object menu, object sub1, object sub2, object sub3, object sub4, object sub5, object sub6, object excludeTitle, object excludeText)
 		{
 			if (WindowSearch.SearchWindow(title, text, excludeTitle, excludeText, true) is WindowItem win)
 			{
-				Error err;
 				var menuStr = menu.As();
 				var sysMenu = menuStr == "0&";
 
@@ -1181,7 +1157,7 @@ namespace Keysharp.Core.Windows
 						if (GetMenuItem(strip, menu, sub1, sub2, sub3, sub4, sub5, sub6) is ToolStripMenuItem item)
 							item.PerformClick();
 						else
-							_ = Errors.ErrorOccurred(err = new ValueError($"Could not find menu.", $"{title}, {text}, {menu}, {sub1}, {sub2}, {sub3}, {sub4}, {sub5}, {sub6}, {excludeTitle}, {excludeText}")) ? throw err : "";
+							_ = Errors.ValueErrorOccurred($"Could not find menu.", $"{title}, {text}, {menu}, {sub1}, {sub2}, {sub3}, {sub4}, {sub5}, {sub6}, {excludeTitle}, {excludeText}");
 					}
 				}
 				else
@@ -1194,19 +1170,18 @@ namespace Keysharp.Core.Windows
 						WindowItemBase.DoWinDelay();
 					}
 					else
-						_ = Errors.ErrorOccurred(err = new ValueError($"Could not find menu.", $"{title}, {text}, {menu}, {sub1}, {sub2}, {sub3}, {sub4}, {sub5}, {sub6}, {excludeTitle}, {excludeText}")) ? throw err : "";
+						_ = Errors.ValueErrorOccurred($"Could not find menu.", $"{title}, {text}, {menu}, {sub1}, {sub2}, {sub3}, {sub4}, {sub5}, {sub6}, {excludeTitle}, {excludeText}");
 				}
 			}
 		}
 
 		internal void NotifyParent(nint handle, uint x_msg, uint y_msg)
 		{
-			Error err;
 			var immediate_parent = WindowsAPI.GetParent(handle);
 
 			if (immediate_parent == 0)
 			{
-				_ = Errors.ErrorOccurred(err = new TargetError($"Parent is null")) ? throw err : "";
+				_ = Errors.TargetErrorOccurred("Parent is null");
 				return;
 			}
 
@@ -1215,7 +1190,7 @@ namespace Keysharp.Core.Windows
 
 			if (control_id == 0 && WindowsAPI.GetLastError() != 0)
 			{
-				_ = Errors.ErrorOccurred(err = new OSError("", $"Last error was not zero")) ? throw err : "";
+				_ = Errors.OSErrorOccurred("", $"Last error was not zero");
 				return;
 			}
 
@@ -1226,21 +1201,20 @@ namespace Keysharp.Core.Windows
 			if (WindowsAPI.SendMessageTimeout(immediate_parent, WindowsAPI.WM_COMMAND, (nint)KeyboardUtils.MakeLong((short)control_id, (short)x_msg)
 											  , handle, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000, out var result) == 0)
 			{
-				_ = Errors.ErrorOccurred(err = new TargetError($"Could not send WM_COMMAND message of {x_msg} to ${immediate_parent.ToInt64()}")) ? throw err : "";
+				_ = Errors.TargetErrorOccurred($"Could not send WM_COMMAND message of {x_msg} to {immediate_parent.ToInt64()}");
 				return;
 			}
 
 			if (WindowsAPI.SendMessageTimeout(immediate_parent, WindowsAPI.WM_COMMAND, (nint)KeyboardUtils.MakeLong((short)control_id, (short)y_msg)
 											  , handle, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000, out var result2) == 0)
 			{
-				_ = Errors.ErrorOccurred(err = new TargetError($"Could not send WM_COMMAND message of {y_msg} to ${immediate_parent.ToInt64()}")) ? throw err : "";
+				_ = Errors.TargetErrorOccurred($"Could not send WM_COMMAND message of {y_msg} to {immediate_parent.ToInt64()}");
 				return;
 			}
 		}
 
 		internal override void PostMessage(uint msg, nint wparam, nint lparam, object ctrl, object title, object text, object excludeTitle, object excludeText)
 		{
-			Error err;
 			var item = ctrl != null
 					   ? WindowSearch.SearchControl(ctrl, title, text, excludeTitle, excludeText)
 					   : WindowSearch.SearchWindow(title, text, excludeTitle, excludeText, true);
@@ -1248,7 +1222,7 @@ namespace Keysharp.Core.Windows
 			if (item is WindowItem)
 			{
 				if (!WindowsAPI.PostMessage(item.Handle, (uint)msg, new nint(wparam), new nint(lparam)))
-					_ = Errors.ErrorOccurred(err = new Error($"Could not post message with values msg: {msg}, lparam: {lparam}, wparam: {wparam} to control in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : "";
+					_ = Errors.ErrorOccurred($"Could not post message with values msg: {msg}, lparam: {lparam}, wparam: {wparam} to control in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
 			}
 
 			WindowItemBase.DoControlDelay();
@@ -1256,7 +1230,6 @@ namespace Keysharp.Core.Windows
 
 		internal override long SendMessage(uint msg, object wparam, object lparam, object ctrl, object title, object text, object excludeTitle, object excludeText, int timeout)
 		{
-			Error err;
 			long ret;
 			var wptr = (nint)Reflections.GetPtrProperty(wparam);
 			var item = ctrl != null
@@ -1283,7 +1256,7 @@ namespace Keysharp.Core.Windows
 					sendresult = WindowsAPI.SendMessageTimeout(thehandle, msg, wptr, s, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, (uint)timeout, out result);
 
 				if (sendresult == 0)
-					return Errors.ErrorOccurred(err = new OSError("", $"Could not send message with values msg: {msg}, lparam: {lparam}, wparam: {wparam} to control in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : 0L;
+					return (long)Errors.OSErrorOccurred("", $"Could not send message with values msg: {msg}, lparam: {lparam}, wparam: {wparam} to control in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}", DefaultErrorLong);
 
 				ret = result.ToInt64();
 			}
@@ -1292,7 +1265,7 @@ namespace Keysharp.Core.Windows
 				var lptr = (nint)Reflections.GetPtrProperty(lparam);
 
 				if (WindowsAPI.SendMessageTimeout(thehandle, (uint)msg, wptr, lptr, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, (uint)timeout, out var result) == 0)
-					return Errors.ErrorOccurred(err = new OSError("", $"Could not send message with values msg: {msg}, lparam: {lparam}, wparam: {wparam} to control in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : 0L;
+					return (long)Errors.OSErrorOccurred("", $"Could not send message with values msg: {msg}, lparam: {lparam}, wparam: {wparam} to control in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}", DefaultErrorLong);
 
 				ret = result.ToInt64();
 			}
@@ -1305,10 +1278,8 @@ namespace Keysharp.Core.Windows
 		{
 			if (WindowSearch.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
-				Error err;
-
 				if (WindowsAPI.SendMessageTimeout(item.Handle, WindowsAPI.CB_SHOWDROPDOWN, val ? 1 : 0, 0, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000, out var _) == 0)
-					_ = Errors.ErrorOccurred(err = new Error($"Could not hide combo box drop down for in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}")) ? throw err : "";
+					_ = Errors.ErrorOccurred($"Could not hide combo box drop down for in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}");
 
 				WindowItemBase.DoControlDelay();
 			}

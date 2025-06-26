@@ -212,7 +212,6 @@ namespace Keysharp.Scripting
 		public static object SetObject(object value, object item, params object[] index)
 		{
 			object key = null;
-			Error err;
 			Type typetouse = null;
 
 			try
@@ -263,7 +262,7 @@ namespace Keysharp.Scripting
 					}
 					else if (item == null)
 					{
-						return null;
+						return DefaultErrorObject;
 					}
 				}
 
@@ -291,7 +290,8 @@ namespace Keysharp.Scripting
 					{
 						ComObject.WriteVariant(co.Ptr.Al(), co.vt, value);
 						return value;
-					} else
+					}
+					else
 						return co.Ptr.GetType().InvokeMember("Item", BindingFlags.SetProperty, null, co.Ptr, index.Concat([value]));
 				}
 				else if (Marshal.IsComObject(item))
@@ -308,7 +308,7 @@ namespace Keysharp.Scripting
 						return value;
 					}
 					else
-						return Errors.ErrorOccurred(err = new ValueError($"{il1} arguments were passed to a set indexer which only accepts {mph2.ParamLength}.")) ? throw err : null;
+						return Errors.ValueErrorOccurred($"{il1} arguments were passed to a set indexer which only accepts {mph2.ParamLength}.");
 				}
 			}
 			catch (Exception e)
@@ -319,12 +319,11 @@ namespace Keysharp.Scripting
 					throw;
 			}
 
-			return Errors.ErrorOccurred(err = new Error($"Attempting to set index {key} of object {item} to value {value} failed.")) ? throw err : null;
+			return Errors.ErrorOccurred($"Attempting to set index {key} of object {item} to value {value} failed.");
 		}
 
 		private static object IndexAt(object item, params object[] index)
 		{
-			Error err;
 			int len;
 			object key = null;
 
@@ -400,7 +399,7 @@ namespace Keysharp.Scripting
 					throw;
 			}
 
-			return Errors.ErrorOccurred(err = new Error($"Attempting to get index of {key} on item {item} failed.")) ? throw err : null;
+			return Errors.ErrorOccurred($"Attempting to get index of {key} on item {item} failed.");
 		}
 	}
 }

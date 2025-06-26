@@ -55,9 +55,8 @@ namespace Keysharp.Core.COM
 		///<returns>The updated parameters array (including out/ref values) after invocation.</returns>
 		private static object InvokeComMethodWithTypeInfo(object comObject, string methodName, object[] inputParameters)
 		{
-			Error err;
 			nint pUnk = Marshal.GetIUnknownForObject(comObject);
-			Marshal.Release(pUnk);
+			_ = Marshal.Release(pUnk);
 
 			try
 			{
@@ -168,7 +167,7 @@ namespace Keysharp.Core.COM
 
 						modifiers = [modifier];
 						found = true; // Do not cache
-						//return Errors.ErrorOccurred(err = new TypeError($"COM call to '{methodName}()' could not be found in any type-info interface.")) ? throw err : null;
+						//return Errors.ErrorOccurred(err = new TypeError($"COM call to '{methodName}()' could not be found in any type-info interface.");
 					}
 					else
 						found = false; // Set back to false to cache the result
@@ -292,7 +291,7 @@ namespace Keysharp.Core.COM
 					}
 					catch (Exception)
 					{
-						return Errors.ErrorOccurred(err = new TypeError($"COM call to '{methodName}()' failed to convert parameter {i} of type {inputParameters[i].GetType()} to type {expectedTypes[i].FullName}.")) ? throw err : null;
+						return Errors.TypeErrorOccurred(inputParameters[i], expectedTypes[i], DefaultErrorObject);
 					}
 				}
 
@@ -336,7 +335,7 @@ namespace Keysharp.Core.COM
 			}
 			catch (Exception ex)
 			{
-				return Errors.ErrorOccurred(err = new TypeError($"COM call to '{methodName}()' failed: {ex.Message}.")) ? throw err : null;
+				return Errors.ErrorOccurred($"COM call to '{methodName}()' failed: {ex.Message}.");
 			}
 		}
 	}

@@ -79,7 +79,7 @@
 				}
 			}
 
-			return "";
+			return DefaultObject;
 		}
 
 		internal void UpdateKeyEventHistory(bool keyUp, uint vk, uint sc)

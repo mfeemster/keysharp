@@ -9,7 +9,7 @@ namespace Keysharp.Scripting
 		internal static string EscapedString(ReadOnlySpan<char> code, bool resolve)
 		{
 			if (code.Length == 0)
-				return string.Empty;
+				return DefaultObject;
 
 			var buffer = new StringBuilder(code.Length + 32);
 			var escaped = false;
@@ -169,7 +169,7 @@ namespace Keysharp.Scripting
 			}
 
 			if (str.Length == 0)
-				return string.Empty;
+				return DefaultObject;
 
 			_ = str.Remove(str.Length - join.Length, join.Length);
 			return str.ToString();

@@ -9,18 +9,17 @@ namespace Keysharp.Scripting
 	{
 		public static object FindObjectForMethod(object obj, string name, int paramCount)
 		{
-			Error err;
-
 			if (Reflections.FindAndCacheInstanceMethod(obj.GetType(), name, paramCount) is MethodPropertyHolder mph)
 				return obj;
 
 			if (Reflections.FindAndCacheStaticMethod(obj.GetType(), name, paramCount) is MethodPropertyHolder mph2)
-				return null;
+				return null;//This seems like a bug. Wouldn't we want to return the object?
 
 			if (Reflections.FindMethod(name, paramCount) is MethodPropertyHolder mph3)
 				return null;
 
-			return Errors.ErrorOccurred(err = new Error($"Could not find a class, global or built-in method for {name} with param count of {paramCount}.")) ? throw err : null;
+			_ = Errors.ErrorOccurred($"Could not find a class, global or built-in method for {name} with param count of {paramCount}.");
+			return null;
 		}
 
 		[Flags] public enum OwnPropsMapType
@@ -196,13 +195,13 @@ namespace Keysharp.Scripting
 					throw;
 			}
 
-			return Errors.ErrorOccurred(err = new Error($"Attempting to get method or property {key} on object {item} failed.")) ? throw err : (null, null);
+			_ = Errors.ErrorOccurred($"Attempting to get method or property {key} on object {item} failed.");
+			return (null, null);
 		}
 
 		public static object GetPropertyValue(object item, object name, bool throwOnError = true, bool checkBase = true)//Always assume these are not index properties, which we instead handle via method call with get_Item and set_Item.
 		
 		{
-			Error err;
 			Type typetouse = null;
 			var namestr = name.ToString();
 			KeysharpObject kso = null;
@@ -266,9 +265,9 @@ namespace Keysharp.Scripting
 			}
 
 			if (throwOnError)
-				return Errors.ErrorOccurred(err = new Error($"Attempting to get property {namestr} on object {item} failed.")) ? throw err : null;
+				return Errors.ErrorOccurred($"Attempting to get property {namestr} on object {item} failed.");
 			else
-				return null;
+				return null; // Variables.cs depends on this returning null, TODO a better way to detect whether a property exists
 		}
 
         public static bool GetObjectPropertyValue(object inst, object obj, string namestr, out object returnValue)
@@ -293,7 +292,6 @@ namespace Keysharp.Scripting
 
 		public static object GetStaticMemberValueT<T>(object name)
 		{
-			Error err;
 			var namestr = name.ToString();
 
 			try
@@ -319,17 +317,16 @@ namespace Keysharp.Scripting
 					throw;
 			}
 
-			return Errors.ErrorOccurred(err = new Error($"Attempting to get static property or field {namestr} failed.")) ? throw err : null;
+			return Errors.ErrorOccurred($"Attempting to get static property or field {namestr} failed.");
 		}
 
 		public static (object, MethodPropertyHolder) GetStaticMethodT<T>(object name, int paramCount)
 		{
-			Error err;
-
 			if (Reflections.FindAndCacheStaticMethod(typeof(T), name.ToString(), paramCount) is MethodPropertyHolder mph && mph.mi != null && mph.IsStaticFunc)
 				return (null, mph);
 
-			return Errors.ErrorOccurred(err = new Error($"Attempting to get static method {name} failed.")) ? throw err : (null, null);
+			_ = Errors.ErrorOccurred($"Attempting to get static method {name} failed.");
+			return (DefaultErrorObject, null);
 		}
 
 		internal static object InvokeMeta(object obj, string meth)
@@ -432,8 +429,6 @@ namespace Keysharp.Scripting
 
         public static object Invoke((object, object) mitup, params object[] parameters)
 		{
-			Error err;
-
 			try
 			{
 				object ret = null;
@@ -499,13 +494,11 @@ namespace Keysharp.Scripting
 					throw;
 			}
 
-			return Errors.ErrorOccurred(err = new Error($"Attempting to invoke method or property {mitup.Item1},{mitup.Item2} failed.")) ? throw err : null;
+			return Errors.ErrorOccurred($"Attempting to invoke method or property {mitup.Item1},{mitup.Item2} failed.");
 		}
 
 		public static object InvokeWithRefs((object, object) mitup, params object[] parameters)
 		{
-			Error err;
-
 			try
 			{
 				var mph = mitup.Item2 as MethodPropertyHolder;
@@ -596,13 +589,12 @@ namespace Keysharp.Scripting
 					throw;
 			}
 
-			return Errors.ErrorOccurred(err = new Error($"Attempting to invoke method or property {mitup.Item1},{mitup.Item2} with references failed.")) ? throw err : null;
+			return Errors.ErrorOccurred($"Attempting to invoke method or property {mitup.Item1},{mitup.Item2} with references failed.");
 		}
 		public static (object, object) MakeObjectTuple(object obj0, object obj1) => (obj0, obj1);
 
         public static object SetPropertyValue(object item, object name, object value)//Always assume these are not index properties, which we instead handle via method call with get_Item and set_Item.
 		{
-			Error err;
 			Type typetouse = null;
 			var namestr = name.ToString();
             KeysharpObject kso = null;
@@ -632,7 +624,7 @@ namespace Keysharp.Scripting
 						else if (own.Call == null && own.Get == null)
 							return own.Value = value;
 						else
-							return Errors.ErrorOccurred(err = new Error($"Property {namestr} on object {item} is read-only.")) ? throw err : null;
+							return Errors.PropertyErrorOccurred($"Property {namestr} on object {item} is read-only.");
 					}
 					if (TryGetOwnPropsMap(kso, namestr, out var opm))
 					{
@@ -691,12 +683,11 @@ namespace Keysharp.Scripting
 					throw;
 			}
 
-			return Errors.ErrorOccurred(err = new Error($"Attempting to set property {namestr} on object {item} to value {value} failed.")) ? throw err : null;
+			return Errors.ErrorOccurred($"Attempting to set property {namestr} on object {item} to value {value} failed.");
 		}
 
 		public static void SetStaticMemberValueT<T>(object name, object value)
 		{
-			Error err;
 			var namestr = name.ToString();
 
 			try
@@ -720,7 +711,7 @@ namespace Keysharp.Scripting
 					throw;
 			}
 
-			_ = Errors.ErrorOccurred(err = new Error($"Attempting to set static property or field {namestr} to value {value} failed.")) ? throw err : "";
+			_ = Errors.ErrorOccurred($"Attempting to set static property or field {namestr} to value {value} failed.");
 		}
     }
 }

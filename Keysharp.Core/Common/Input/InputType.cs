@@ -252,7 +252,7 @@ namespace Keysharp.Core.Common.Input
 				}
 			}
 
-			return "";
+			return DefaultObject;
 		}
 
 		internal bool InProgress() => status == InputStatusType.InProgress;
