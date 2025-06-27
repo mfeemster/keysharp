@@ -118,8 +118,6 @@
 			const uint BUF_SIZE = 65535;
 			uint read;
 
-
-
 			bool hasKey = !string.IsNullOrEmpty(k);
 			bool hasSec = !string.IsNullOrEmpty(s);
 
@@ -270,8 +268,7 @@
 			{
 				// whole section; convert "\n"-delimited to "\0"-delimited
 				// and append double-null terminator
-				var lines = v
-					.Split(new[] { '\n' }, StringSplitOptions.None);
+				var lines = v.Split('\n', StringSplitOptions.None);
 				var sb = new StringBuilder();
 				foreach (var line in lines)
 				{
