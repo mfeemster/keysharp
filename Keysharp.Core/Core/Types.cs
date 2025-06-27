@@ -262,7 +262,7 @@ namespace Keysharp.Core
 				if (value is KeysharpObject kso && kso.op != null) {
 					if (kso.op.ContainsKey("__Class"))
 						return "Prototype";
-                    else if (Script.GetPropertyValue(kso, "__Class", false) is string name && name != null)
+                    else if (Script.TryGetPropertyValue(kso, "__Class", out object oname) && oname is string name && name != null)
 						type = name;
                     else
 						return "Object";

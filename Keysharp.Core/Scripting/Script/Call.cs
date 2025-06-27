@@ -199,8 +199,17 @@ namespace Keysharp.Scripting
 			return (null, null);
 		}
 
-		public static object GetPropertyValue(object item, object name, bool throwOnError = true, bool checkBase = true)//Always assume these are not index properties, which we instead handle via method call with get_Item and set_Item.
-		
+		public static object GetPropertyValue(object item, object name)
+			=> TryGetPropertyValue(item, name, out object value)
+				? value
+				: Errors.ErrorOccurred($"Attempting to get property {name.ToString()} on object {item} failed.");
+
+		public static object GetPropertyValue(object item, object name, object defaultValue) => 
+			TryGetPropertyValue(item, name, out var value)
+				 ? value 
+				 : defaultValue;
+
+		public static bool TryGetPropertyValue(object item, object name, out object value)//Always assume these are not index properties, which we instead handle via method call with get_Item and set_Item.
 		{
 			Type typetouse = null;
 			var namestr = name.ToString();
@@ -208,41 +217,53 @@ namespace Keysharp.Scripting
 
 			try
 			{
-                if (item is VarRef vr && namestr.Equals("__Value", StringComparison.OrdinalIgnoreCase))
-					return vr.__Value;
+				if (item is VarRef vr && namestr.Equals("__Value", StringComparison.OrdinalIgnoreCase))
+				{
+					value = vr.__Value;
+					return true;
+				}
 
-                if (item is ITuple otup && otup.Length > 1 && otup[0] is KeysharpObject t)
+				if (item is ITuple otup && otup.Length > 1 && otup[0] is KeysharpObject t)
 				{
 					kso = t;
 					item = otup[1];
 				}
 
-                if ((kso != null || (kso = item as KeysharpObject) != null) && kso.op != null && kso.op.Count != 0)
-                {
+				if ((kso != null || (kso = item as KeysharpObject) != null) && kso.op != null && kso.op.Count != 0)
+				{
 					if (TryGetOwnPropsMap(kso, namestr, out var opm))
 					{
 						if (opm.Value != null)
-							return opm.Value;
+							value = opm.Value;
 						else if (opm.Get != null && opm.Get is IFuncObj ifo && ifo != null)
-							return ifo.Call(item);
+							value = ifo.Call(item);
 						else if (opm.Call != null && opm.Call is IFuncObj ifo2 && ifo2 != null)
-							return ifo2;
-						return null;
+							value = ifo2;
+						else
+						{
+							value = null;
+							return false;
+						}
+						return true;
 					}
 					else if (TryGetOwnPropsMap(kso, "__Get", out var protoGet) && (protoGet.Call != null ? protoGet.Call : protoGet.Value) is IFuncObj ifoprotoget && ifoprotoget != null)
-                        return ifoprotoget.Call(item, namestr, new Keysharp.Core.Array());
-                }
+					{
+						value = ifoprotoget.Call(item, namestr, new Keysharp.Core.Array());
+						return true;
+					}
+				}
 
 #if WINDOWS
 				if (item is ComObject co)
 				{
-					return GetPropertyValue(co.Ptr, namestr, throwOnError);
+					return TryGetPropertyValue(co.Ptr, namestr, out value);
 				}
 				else if (Marshal.IsComObject(item))
 				{
 					//Many COM properties are internally stored as methods with 0 parameters.
 					//So try invoking the member as either a property or a method.
-					return item.GetType().InvokeMember(namestr, BindingFlags.InvokeMethod | BindingFlags.GetProperty, null, item, null);
+					value = item.GetType().InvokeMember(namestr, BindingFlags.InvokeMethod | BindingFlags.GetProperty, null, item, null);
+					return true;
 				}
 #endif
 				else if (item != null)
@@ -252,7 +273,8 @@ namespace Keysharp.Scripting
 
 					if (Reflections.FindAndCacheProperty(typetouse, namestr, 0) is MethodPropertyHolder mph2)
 					{
-						return mph2.callFunc(item, null);
+						value = mph2.callFunc(item, null);
+						return true;
 					}
 				}
 			}
@@ -264,13 +286,11 @@ namespace Keysharp.Scripting
 					throw;
 			}
 
-			if (throwOnError)
-				return Errors.ErrorOccurred($"Attempting to get property {namestr} on object {item} failed.");
-			else
-				return null; // Variables.cs depends on this returning null, TODO a better way to detect whether a property exists
+			value = null;
+			return false;
 		}
 
-        public static bool GetObjectPropertyValue(object inst, object obj, string namestr, out object returnValue)
+		public static bool GetObjectPropertyValue(object inst, object obj, string namestr, out object returnValue)
 		{
 			returnValue = null;
 			if (!(obj is KeysharpObject kso) || kso.op == null)
@@ -601,7 +621,7 @@ namespace Keysharp.Scripting
 
             try
 			{
-				if (item is VarRef vr && namestr.Equals("__Value", StringComparison.InvariantCultureIgnoreCase))
+				if (item is VarRef vr && namestr.Equals("__Value", StringComparison.OrdinalIgnoreCase))
 				{
 					vr.__Value = value;
 					return value;

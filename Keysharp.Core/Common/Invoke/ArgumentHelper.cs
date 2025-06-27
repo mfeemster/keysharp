@@ -110,8 +110,8 @@ namespace Keysharp.Core.Common.Invoke
 					{
 						object kptr;
 
-						if (c0 == 'p' && ((kso is IPointable ip && (kptr = ip.Ptr) != null)
-										  || (Script.GetPropertyValue(kso, "ptr", false) is object tmp && (kptr = tmp) != null)))
+						if ((c0 == 'p' || (c0 == 'u') && (char)(span[1] | 0x20) == 'p') && ((kso is IPointable ip && (kptr = ip.Ptr) != null)
+							|| Script.TryGetPropertyValue(kso, "ptr", out kptr)))
 						{
 							if (last == '*' || (char)(last | 0x20) == 'p')
 								outputVars[paramIndex] = (typeof(nint), true);
@@ -128,8 +128,7 @@ namespace Keysharp.Core.Common.Invoke
 
 					if (p is KeysharpObject kso 
 						&& !outputVars.ContainsKey(paramIndex) //must not be a Ptr object
-						&& Script.GetPropertyValue(kso, "__Value", false) is object kptr 
-						&& kptr != null)
+						&& Script.TryGetPropertyValue(kso, "__Value", out object kptr))
 						p = kptr;
 
 					// Pin the object and store its address
@@ -185,7 +184,7 @@ namespace Keysharp.Core.Common.Invoke
 					}
 
 					// Special case for strings passed by reference but not with "str*", since strings are always by reference
-					if (p is KeysharpObject kso2 && Script.GetPropertyValue(kso2, "__Value", false) is object kptr && kptr != null)
+					if (p is KeysharpObject kso2 && Script.TryGetPropertyValue(kso2, "__Value", out object kptr))
 					{
 						outputVars[paramIndex] = (typeof(nint), false);
 						p = kptr;
@@ -229,7 +228,7 @@ namespace Keysharp.Core.Common.Invoke
 						type = isReturn ? typeof(string) : typeof(nint);
 						goto TypeDetermined;
 					}
-					if (p is KeysharpObject kso2 && Script.GetPropertyValue(kso2, "__Value", false) is object kptr && kptr != null)
+					if (p is KeysharpObject kso2 && Script.TryGetPropertyValue(kso2, "__Value", out object kptr))
 					{
 						outputVars[paramIndex] = (typeof(nint), false);
 						p = kptr;
@@ -480,6 +479,8 @@ namespace Keysharp.Core.Common.Invoke
 			{
 				if (p is long lptr)
 					args[n] = lptr;
+				else if (p is string s)
+					args[n] = s.Al();
 				else if (p is Array arrPtr)
 				{
 					SetupPointerArg();

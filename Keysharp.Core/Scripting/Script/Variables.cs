@@ -182,7 +182,7 @@ namespace Keysharp.Scripting
 
 		public object this[object key]
         {
-			get => GetPropertyValue(key, "__Value", false) ?? GetVariable(key.ToString()) ?? "";
+			get => TryGetPropertyValue(key, "__Value", out object val) ? val : GetVariable(key.ToString()) ?? "";
 			set => _ = (key is KeysharpObject kso && Functions.HasProp(kso, "__Value") == 1) ? Script.SetPropertyValue(kso, "__Value", value) : SetVariable(key.ToString(), value);
 		}
 
