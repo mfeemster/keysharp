@@ -61,6 +61,11 @@ namespace Keysharp.Core
 
 				if (childitem == null)//Final attempt, just use title.
 				{
+					//Set DHW unconditionally to true, because otherwise matching will fail
+					//if the parent window was matched by pure hWnd and DHW was false
+					var savedDHW = ThreadAccessors.A_DetectHiddenWindows;
+					ThreadAccessors.A_DetectHiddenWindows = true;
+
 					if (string.IsNullOrEmpty(sc.Text))
 					{
 						sc.Title = sc.ClassName;
@@ -73,6 +78,8 @@ namespace Keysharp.Core
 					}
 
 					childitem = parent.FirstChild(sc);
+
+					ThreadAccessors.A_DetectHiddenWindows = savedDHW;
 				}
 			}
 
