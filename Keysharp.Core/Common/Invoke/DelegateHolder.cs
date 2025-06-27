@@ -214,7 +214,7 @@
 			{
 				var script = Script.TheScript;
 
-				if (holder._fast)
+				if (!holder._fast)
 					state = script.Threads.BeginThread();
 
 				if (holder._reference)
