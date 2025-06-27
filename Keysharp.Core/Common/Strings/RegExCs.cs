@@ -9,7 +9,7 @@
 
 		public new (Type, object) super => (typeof(KeysharpObject), this);
 
-		public RegExMatchInfoCs(params object[] args) => _ = __New(args);
+		public RegExMatchInfoCs(params object[] args) : base(args) { }
 
 		public static implicit operator long(RegExMatchInfoCs r) => r.Pos();
 
@@ -88,11 +88,11 @@
 			return null;
 		}
 
-		public string this[object obj]
+		public string this[params object[] obj]
 		{
 			get
 			{
-				var g = GetGroup(obj);
+				var g = GetGroup(obj.Length == 0 ? null : obj[0]);
 				return g != null && g.Success ? g.Value : "";
 			}
 		}
