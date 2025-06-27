@@ -216,13 +216,17 @@ namespace Keysharp.Tests
 			y = "s";
 			z = Strings.InStr(x, y, 0, 1, 2);
 			Assert.AreEqual(15, z);
+			z = Strings.InStr(x, y, 0, -1, -2);
+			Assert.AreEqual(5, z);
 			z = Strings.InStr(x, y, 0, -1, 2);
-			Assert.AreEqual(15, z);
+			Assert.AreEqual(0, z);
 			z = Strings.InStr(x, y, 0, null, -2);
 			Assert.AreEqual(5, z);
 			z = Strings.InStr(x, y, 0, -8);
 			Assert.AreEqual(5, z);
-			z = Strings.InStr(x, y, 0, 1, -1);//Occurrence direction overrides startPos.
+			z = Strings.InStr(x, y, 0, 1, -1);
+			Assert.AreEqual(0, z);
+			z = Strings.InStr(x, y, 0, -1, -1);
 			Assert.AreEqual(15, z);
 			y = "z";
 			z = Strings.InStr(x, y, 0, -1);
@@ -233,11 +237,11 @@ namespace Keysharp.Tests
 			z = Strings.InStr(x, y, 0, -1, -2);
 			Assert.AreEqual(2, z);
 			z = Strings.InStr(x, y, 0, -1, 2);
-			Assert.AreEqual(20, z);
+			Assert.AreEqual(0, z);
 			y = "t";
 			z = Strings.InStr(x, y, 0, -1, -3);
 			Assert.AreEqual(1, z);
-			z = Strings.InStr(x, y, 0, -1, 3);
+			z = Strings.InStr(x, y, 0, 1, 3);
 			Assert.AreEqual(12, z);
 			Assert.IsTrue(TestScript("string-instr", true));
 		}

@@ -1050,9 +1050,9 @@ namespace Keysharp.Tests
 			val = Ini.IniRead("./testini2.ini", "SectionOne", "keyval");//Ensure the file is processed as case insensitive.
 			Assert.AreEqual("theval", val);
 			val = Ini.IniRead("./testini2.ini", "sectiontwo");
-			Assert.AreEqual($"groupkey1=groupval1{Accessors.A_NewLine}groupkey2=groupval2{Accessors.A_NewLine}groupkey3=groupval3{Accessors.A_NewLine}", val);
+			Assert.AreEqual($"groupkey1=groupval1\ngroupkey2=groupval2\ngroupkey3=groupval3", val);
 			val = Ini.IniRead("./testini2.ini");
-			Assert.AreEqual($"sectionone{Accessors.A_NewLine}sectiontwo{Accessors.A_NewLine}sectionthree{Accessors.A_NewLine}", val);
+			Assert.AreEqual($"sectionone\nsectiontwo\nsectionthree", val);
 			_ = Ini.IniWrite("thevalnew", "./testini2.ini", "sectionone", "keyval");
 			val = Ini.IniRead("./testini2.ini", "sectionone", "keyval");
 			Assert.AreEqual("thevalnew", val);
@@ -1063,12 +1063,12 @@ groupkey13=groupval13
 					  ;
 			_ = Ini.IniWrite(str, "./testini2.ini", "sectiontwo");
 			val = Ini.IniRead("./testini2.ini", "sectiontwo");
-			Assert.AreEqual($"groupkey11=groupval11{Accessors.A_NewLine}groupkey12=groupval12{Accessors.A_NewLine}groupkey13=groupval13{Accessors.A_NewLine}", val);
+			Assert.AreEqual($"groupkey11=groupval11\ngroupkey12=groupval12\ngroupkey13=groupval13", val);
 			_ = Ini.IniDelete("./testini2.ini", "sectiontwo", "groupkey11");
 			val = Ini.IniRead("./testini2.ini", "sectiontwo");
-			Assert.AreEqual($"groupkey12=groupval12{Accessors.A_NewLine}groupkey13=groupval13{Accessors.A_NewLine}", val);
+			Assert.AreEqual($"groupkey12=groupval12\ngroupkey13=groupval13", val);
 			_ = Ini.IniDelete("./testini2.ini", "sectiontwo");
-			val = Ini.IniRead("./testini2.ini", "sectiontwo");
+			val = Ini.IniRead("./testini2.ini", "sectiontwo", null, "");
 			Assert.AreEqual("", val);
 
 			if (File.Exists("./testini2.ini"))

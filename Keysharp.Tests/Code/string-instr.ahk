@@ -44,7 +44,7 @@ if (z = x.Length)
 else
 	FileAppend "fail", "*"
 
-z := InStr(x, y, "of")
+z := InStr(x, y, "off")
 
 if (z = x.Length)
 	FileAppend "pass", "*"
@@ -74,9 +74,16 @@ if (z = 15)
 else
 	FileAppend "fail", "*"
 
+z := InStr(x, y, 0, -1, -2)
+
+if (z = 5)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+
 z := InStr(x, y, 0, -1, 2)
 
-if (z = 15)
+if (z = 0)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -97,6 +104,13 @@ else
 	FileAppend "fail", "*"
 
 z := InStr(x, y, 0, 1, -1)
+
+if (z = 0)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+
+z := InStr(x, y, 0, -1, -1)
 
 if (z = 15)
 	FileAppend "pass", "*"
@@ -128,7 +142,7 @@ else
 
 z := InStr(x, y, 0, -1, 2)
 
-if (z = 20)
+if (z = 0)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -141,7 +155,7 @@ if (z = 1)
 else
 	FileAppend "fail", "*"
 
-z := InStr(x, y, 0, -1, 3)
+z := InStr(x, y, 0, 1, 3)
 
 if (z = 12)
 	FileAppend "pass", "*"

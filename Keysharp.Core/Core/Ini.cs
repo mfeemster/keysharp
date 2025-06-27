@@ -1,4 +1,4 @@
-namespace Keysharp.Core
+﻿namespace Keysharp.Core
 {
 	/// <summary>
 	/// Public interface for Ini-related functions.<br/>
@@ -19,10 +19,29 @@ namespace Keysharp.Core
 			var file = filename.As();
 			var s = section.As();
 			var k = key.As();
+			file = Path.GetFullPath(file);
 
 			if (!File.Exists(file))
 				return DefaultErrorObject;
 
+#if WINDOWS
+			// Pass null for key to delete whole section; or pass the key to delete only that entry
+			bool ok = WindowsAPI.WritePrivateProfileString(s, string.IsNullOrEmpty(k) ? null : k, null, file);
+
+			// Flush the in-memory cache
+			WindowsAPI.WritePrivateProfileString(null, null, null, file);
+
+			if (ok)
+				return DefaultObject;
+			else
+			{
+				var err = Marshal.GetLastWin32Error();
+				return Errors.OSErrorOccurred(
+					new Win32Exception(err),
+					$"Error deleting {(string.IsNullOrEmpty(k) ? "section" : "key")} '{k}' from INI '{file}'"
+				);
+			}
+#else
 			if (s != "")
 				s = string.Format(Keyword_IniSectionOpen + "{0}]", s);
 
@@ -50,7 +69,7 @@ namespace Keysharp.Core
 					writer.WriteLine(kv.Key);
 
 					foreach (DictionaryEntry kv2 in (OrderedDictionary)kv.Value)
-						if (((string)kv2.Key)[0] != '#')
+						if (((string)kv2.Key)[0] != ';')
 							writer.WriteLine($"{kv2.Key}={kv2.Value}");
 						else
 							writer.WriteLine($"{kv2.Key}");
@@ -72,6 +91,7 @@ namespace Keysharp.Core
 			{
 				return Errors.ErrorOccurred(ex.Message);
 			}
+#endif
 		}
 
 		/// <summary>
@@ -89,9 +109,65 @@ namespace Keysharp.Core
 			var k = key.As();
 			var def = @default.As();
 			var result = "";
+			file = Path.GetFullPath(file);
 
 			if (!File.Exists(file))
 				return DefaultErrorObject;
+
+#if WINDOWS
+			const uint BUF_SIZE = 65535;
+			uint read;
+
+
+
+			bool hasKey = !string.IsNullOrEmpty(k);
+			bool hasSec = !string.IsNullOrEmpty(s);
+
+			if (hasKey)
+			{
+				// must specify section
+				if (!hasSec)
+					return Errors.OSErrorOccurred("", "Section name required when reading a single key.");
+
+				var sb = new StringBuilder((int)BUF_SIZE);
+				// lpAppName = section (no brackets), wParam default = def
+				read = WindowsAPI.GetPrivateProfileString(s, k, def, sb, BUF_SIZE, file);
+
+				// error or not found?
+				var err = Marshal.GetLastWin32Error();
+				if (err != 0)
+					return @default != null ? def : Errors.OSErrorOccurred(new Win32Exception(err), $"Failed to read key '{k}' in section '{s}' from '{file}' (0x{err:X}).");
+
+				result = sb.ToString();
+			}
+			else if (hasSec)
+			{
+				// read entire section: returns a double-null–terminated list of "key=value" entries
+				var buf = new char[BUF_SIZE];
+				read = WindowsAPI.GetPrivateProfileSection(s, buf, BUF_SIZE, file);
+
+				var err = Marshal.GetLastWin32Error();
+				if (err != 0)
+					return @default != null ? def : Errors.OSErrorOccurred(new Win32Exception(err), $"Failed to read section '{s}' from '{file}' (0x{err:X}).");
+
+				// convert double-null list into lines
+				result = MultiStringToLines(buf, read);
+			}
+			else
+			{
+				// no section/key → list all section names
+				var buf = new char[BUF_SIZE];
+				read = WindowsAPI.GetPrivateProfileSectionNames(buf, BUF_SIZE, file);
+
+				var err = Marshal.GetLastWin32Error();
+				if (err != 0)
+					return @default != null ? def : Errors.OSErrorOccurred(new Win32Exception(err), $"Failed to list sections in '{file}' (0x{err:X}).");
+
+				result = MultiStringToLines(buf, read);
+			}
+
+			return result;
+#else
 
 			if (s != "")
 				s = $"[{s}]";
@@ -125,12 +201,32 @@ namespace Keysharp.Core
 				var secdkt = inidkt.GetOrAdd<string, OrderedDictionary, IEqualityComparer>(s, StringComparer.CurrentCultureIgnoreCase);
 
 				foreach (DictionaryEntry kv in secdkt)
-					if (((string)kv.Key)[0] != '#')
+					if (((string)kv.Key)[0] != ';')
 						_ = sb.AppendLine($"{kv.Key}={kv.Value}");
 			}
 
-			result = sb.ToString();
+			result = sb.ToString().TrimEnd('\n', '\r');
 			return result;
+#endif
+		}
+
+		// Convert a double-null–terminated char[] into "\n"-delimited string
+		private static string MultiStringToLines(char[] buf, uint length)
+		{
+			var sb = new StringBuilder();
+			int i = 0;
+			while (i < length)
+			{
+				var start = i;
+				while (i < length && buf[i] != '\0')
+					i++;
+				if (i == start)
+					break; // two nulls in a row = end
+				sb.Append(buf, start, i - start);
+				sb.Append('\n');
+				i++;
+			}
+			return sb.ToString().TrimEnd('\r', '\n');
 		}
 
 		/// <summary>
@@ -153,6 +249,55 @@ namespace Keysharp.Core
 			var file = filename.As();
 			var s = section.As();
 			var k = key.As();
+
+#if WINDOWS
+			// On Windows use the native INI APIs directly:
+			file = Path.GetFullPath(file);
+
+			bool ok;
+			if (!File.Exists(file))
+			{
+				// Ensure the file exists so WritePrivateProfile* won’t fail
+				File.WriteAllText(file, "\uFEFF");  // BOM to hint Unicode
+			}
+
+			if (!string.IsNullOrEmpty(k))
+			{
+				// single key
+				ok = WindowsAPI.WritePrivateProfileString(s, k, v, file);
+			}
+			else
+			{
+				// whole section; convert "\n"-delimited to "\0"-delimited
+				// and append double-null terminator
+				var lines = v
+					.Split(new[] { '\n' }, StringSplitOptions.None);
+				var sb = new StringBuilder();
+				foreach (var line in lines)
+				{
+					sb.Append(line.TrimEnd('\r'));
+					sb.Append('\0');
+				}
+				sb.Append('\0');  // extra null for end-of-section
+				ok = WindowsAPI.WritePrivateProfileSection(s, sb.ToString(), file);
+			}
+
+			if (ok)
+			{
+				// flush the cache
+				WindowsAPI.WritePrivateProfileString(null, null, null, file);
+				return DefaultObject;
+			}
+			else
+			{
+				var err = Marshal.GetLastWin32Error();
+				return Errors.OSErrorOccurred(
+					new System.ComponentModel.Win32Exception(err),
+					$"Error writing {(string.IsNullOrEmpty(k) ? "section" : "key")} to INI '{file}'"
+				);
+			}
+#else
+
 			var within = string.IsNullOrEmpty(s);
 			s = string.Format("[{0}]", s ?? string.Empty);
 			var haskey = !string.IsNullOrEmpty(k);
@@ -209,7 +354,7 @@ namespace Keysharp.Core
 						writer.WriteLine(kv.Key);
 
 						foreach (DictionaryEntry kv2 in (OrderedDictionary)kv.Value)
-							if (((string)kv2.Key)[0] != '#')
+							if (((string)kv2.Key)[0] != ';')
 								writer.WriteLine($"{kv2.Key}={kv2.Value}");
 							else
 								writer.WriteLine($"{kv2.Key}");
@@ -219,7 +364,7 @@ namespace Keysharp.Core
 				}
 
 				writer.Flush();
-				var text = writer.ToString();
+				var text = writer.ToString().TrimEnd('\n', '\r');
 
 				if (File.Exists(file))
 					File.Delete(file);
@@ -232,6 +377,7 @@ namespace Keysharp.Core
 			{
 				return Errors.OSErrorOccurred(ex, $"Error writing key {k} with value {v} in section {s} to INI file {file}.");
 			}
+#endif
 		}
 
 		/// <summary>
@@ -253,7 +399,7 @@ namespace Keysharp.Core
 				{
 					var split = ln.Split('=').Select(l => l.Trim(TrimLine)).ToArray();
 
-					if (ln[0] == '#')
+					if (ln[0] == ';')
 					{
 						if (kvdkt == null)
 							_ = inidkt.GetOrAdd<string, OrderedDictionary, IEqualityComparer>(ln, StringComparer.CurrentCultureIgnoreCase);

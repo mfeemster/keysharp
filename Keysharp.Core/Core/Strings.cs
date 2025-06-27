@@ -556,31 +556,35 @@ namespace Keysharp.Core
 			var input = haystack.As();
 			var n = needle.As();
 			var comp = caseSensitive.As();
-			var startPos = startingPos.Ai(1);
 			var o = occurrence.Ai(1);
+			var startPos = startingPos.Ai(o < 0 ? -1 : 1);
 
-			if (input != "")
+			if (string.IsNullOrEmpty(n))
+				return (long)Errors.ValueErrorOccurred("Search string was empty", null, DefaultErrorLong);
+
+			if (startPos == 0 || o == 0)
+				return (long)Errors.ValueErrorOccurred("StartingPos and Occurrence must be non-zero", null, DefaultErrorLong);
+
+			// determine direction:   
+			//  - if Occurrence was omitted and startPos<0, reverse  
+			//  - or if Occurrence was supplied and o<0, reverse  
+			bool reverse = (occurrence == null && startPos < 0)    // default-occurrence + negative startPos
+						|| (occurrence != null && o < 0);           // explicit negative occurrence
+
+			var cs = comp != "" ? Conversions.ParseComparisonOption(comp) : StringComparison.OrdinalIgnoreCase;
+			const int offset = 1;//Everything is 1-based indexing.
+
+			if (reverse)
 			{
-				if (string.IsNullOrEmpty(n))
-					return (long)Errors.ValueErrorOccurred("Search string was empty", null, DefaultErrorLong);
-
-				// 1   1 =>  1
-				//-1   1 =>  1
-				// 1  -1 => -1
-				//-1  -1 => -1
-				//Ensure the sign of startPos equals the sign of o.
-				if (occurrence != null)
-					startPos *= Math.Sign(startPos) * Math.Sign(o);
-
-				var cs = comp != "" ? Conversions.ParseComparisonOption(comp) : StringComparison.OrdinalIgnoreCase;
-				const int offset = 1;//Everything is 1-based indexing.
-				return startPos < 0
-					   ? offset + input.LastNthIndexOf(n, startPos, o, cs)
-					   : startPos == 0 || startPos > input.Length ? 0 :
-					   offset + input.NthIndexOf(n, startPos - 1, o, cs);
+				return offset + input.LastNthIndexOf(n, startPos > 0 ? startPos - input.Length - 1 : startPos, Math.Abs(o), cs);
 			}
+			else
+			{
+				if (startPos > input.Length)
+					return 0;
 
-			return 0L;
+				return offset + input.NthIndexOf(n, startPos > 0 ? startPos - 1 : input.Length + startPos, o, cs);
+			}
 		}
 
 		/// <summary>
@@ -1325,17 +1329,18 @@ namespace Keysharp.Core
 		/// <returns>This function returns an array containing the substrings of the specified string.</returns>
 		public static Array StrSplit(object str, object delimiters = null, object omitChars = null, object maxParts = null)
 		{
-			string del = string.Empty, trim = string.Empty;
+			List<string> del = new();
+			string trim = string.Empty;
 
 			if (str is string input)
 			{
 				var count = maxParts.Ai(-1);
 
 				if (delimiters is string d)
-					del = d;
+					del.Add(d);
 				else if (delimiters is IList il)
 					foreach (var id in il.Flatten(false))
-						del += id.ToString();
+						del.Add(id.ToString());
 
 				if (omitChars is string t)
 					trim = t;
@@ -1343,7 +1348,7 @@ namespace Keysharp.Core
 					foreach (var id in il.Flatten(false))
 						trim += id.ToString();
 
-				if (del.Length == 0)
+				if (del.Count == 0)
 				{
 					var list = new List<string>(input.Length);
 
@@ -1377,8 +1382,7 @@ namespace Keysharp.Core
 					return new Array(list.Cast<object>().ToArray());
 				}
 
-				var cha = del.ToCharArray();
-				var output = count > 0 ? input.Split(cha, count, StringSplitOptions.None) : input.Split(cha, StringSplitOptions.None);
+				var output = count > 0 ? input.Split(del.ToArray(), count, StringSplitOptions.None) : input.Split(del.ToArray(), StringSplitOptions.None);
 
 				if (trim.Length != 0)
 				{

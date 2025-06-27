@@ -28,6 +28,7 @@
 			private long parenthandle;
 			private List<IFuncObj> selectedItemChangedHandlers;
 			internal Size requestedSize = new (int.MinValue, int.MinValue);
+			internal bool eventsActive = true;
 
 			public bool AltSubmit { get; internal set; } = false;
 
@@ -511,62 +512,71 @@
 
 			public object Add(params object[] obj)
 			{
-				if (_control is KeysharpTreeView tv)
+				object result = DefaultObject;
+				eventsActive = false;
+				try
 				{
-					var (name, parent, options) = obj.Sls();
-					var first = false;
-					var n = int.MinValue;
-					TreeNode node;
-					TreeNodeCollection nodes = null;
-					parenthandle = tv.Handle.ToInt64();//By forcing a read of the parent handle, it causes the controls and their handles to properly be created. This is the only way nodes will be properly nested before the window is shown.
-
-					if (parent == 0)
+					if (_control is KeysharpTreeView tv)
 					{
-						nodes = tv.Nodes;
-					}
-					else
-					{
-						var top = TreeViewHelper.TV_FindNode(tv, parent);
-						nodes = top == null ? tv.Nodes : top.Nodes;
-					}
+						var (name, parent, options) = obj.Sls();
+						var first = false;
+						var n = int.MinValue;
+						TreeNode node;
+						TreeNodeCollection nodes = null;
+						parenthandle = tv.Handle.ToInt64();//By forcing a read of the parent handle, it causes the controls and their handles to properly be created. This is the only way nodes will be properly nested before the window is shown.
 
-					foreach (Range r in options.AsSpan().SplitAny(Spaces))
-					{
-						var opt = options.AsSpan(r).Trim();
-
-						if (opt.Length > 0)
+						if (parent == 0)
 						{
-							if (int.TryParse(opt, out var index)) { n = index; }
-							else if (opt.Equals("First", StringComparison.OrdinalIgnoreCase)) { first = true; }
+							nodes = tv.Nodes;
 						}
+						else
+						{
+							var top = TreeViewHelper.TV_FindNode(tv, parent);
+							nodes = top == null ? tv.Nodes : top.Nodes;
+						}
+
+						foreach (Range r in options.AsSpan().SplitAny(Spaces))
+						{
+							var opt = options.AsSpan(r).Trim();
+
+							if (opt.Length > 0)
+							{
+								if (int.TryParse(opt, out var index)) { n = index; }
+								else if (opt.Equals("First", StringComparison.OrdinalIgnoreCase)) { first = true; }
+							}
+						}
+
+						if (first)
+							node = nodes.Insert(0, name);
+						else if (n != int.MinValue && n < nodes.Count)
+							node = nodes.Insert(n, name);
+						else
+							node = nodes.Add(name);
+
+						tv.DelayedExpandParent(node);
+						var id = node.Handle.ToInt64();
+						node.Name = id.ToString();
+						result = TreeViewHelper.TV_NodeOptions(node, parent, options, false);
 					}
+					else if (_control is KeysharpListView lv)
+					{
+						var lvo = obj.Length > 0 && obj[0] is string options && options.Length > 0 ? ListViewHelper.ParseListViewOptions(options) : new ListViewHelper.ListViewOptions();
+						var strs = obj.Cast<object>().Skip(1).Select(x => x.Str()).ToList();
+						result = ListViewHelper.AddOrInsertListViewItem(lv, lvo, strs, int.MinValue);
+					}
+					else if (_control is KeysharpListBox lb)//Using AddRange() relieves the caller of having to set -Redraw first.
+						lb.Items.AddRange(obj.Cast<object>().Select(x => x.Str()).ToArray());
+					else if (_control is KeysharpComboBox cb)
+						cb.Items.AddRange(obj.Cast<object>().Select(x => x.Str()).ToArray());
+					else if (_control is KeysharpTabControl tc)
+						tc.TabPages.AddRange(obj.Cast<object>().Select(x => new TabPage(x.Str())).ToArray());
 
-					if (first)
-						node = nodes.Insert(0, name);
-					else if (n != int.MinValue && n < nodes.Count)
-						node = nodes.Insert(n, name);
-					else
-						node = nodes.Add(name);
-
-					tv.DelayedExpandParent(node);
-					var id = node.Handle.ToInt64();
-					node.Name = id.ToString();
-					return TreeViewHelper.TV_NodeOptions(node, parent, options, false);
-				}
-				else if (_control is KeysharpListView lv)
+				} 
+				finally
 				{
-					var lvo = obj.Length > 0 && obj[0] is string options && options.Length > 0 ? ListViewHelper.ParseListViewOptions(options) : new ListViewHelper.ListViewOptions();
-					var strs = obj.Cast<object>().Skip(1).Select(x => x.Str()).ToList();
-					return ListViewHelper.AddOrInsertListViewItem(lv, lvo, strs, int.MinValue);
+					eventsActive = true;
 				}
-				else if (_control is KeysharpListBox lb)//Using AddRange() relieves the caller of having to set -Redraw first.
-					lb.Items.AddRange(obj.Cast<object>().Select(x => x.Str()).ToArray());
-				else if (_control is KeysharpComboBox cb)
-					cb.Items.AddRange(obj.Cast<object>().Select(x => x.Str()).ToArray());
-				else if (_control is KeysharpTabControl tc)
-					tc.TabPages.AddRange(obj.Cast<object>().Select(x => new TabPage(x.Str())).ToArray());
-
-				return DefaultObject;
+				return result;
 			}
 
 			public object Choose(object value)
@@ -1894,6 +1904,9 @@
 
 			internal void _control_Click(object sender, EventArgs e)
 			{
+				if (!eventsActive)
+					return;
+
 				if (_control is KeysharpTreeView tv)
 					_ = clickHandlers.InvokeEventHandlers(this, GetSelection());
 				else if (_control is KeysharpListView lv)
@@ -1925,6 +1938,9 @@
 
 			internal void _control_DoubleClick(object sender, EventArgs e)
 			{
+				if (!eventsActive)
+					return;
+
 				if (_control is KeysharpTreeView tv)
 					_ = doubleClickHandlers.InvokeEventHandlers(this, GetSelection());
 				else if (_control is KeysharpListView lv)
@@ -1947,24 +1963,35 @@
 				//Status strip items are handled in a separate special handler contained within each item.
 			}
 
-			internal void _control_GotFocus(object sender, EventArgs e) => focusHandlers?.InvokeEventHandlers(this, 0L);
+			internal void _control_GotFocus(object sender, EventArgs e)
+			{
+				if (eventsActive)
+					focusHandlers?.InvokeEventHandlers(this, 0L);
+			}
 
 			internal void _control_KeyDown(object sender, KeyEventArgs e)
 			{
-				if (e.KeyCode == Keys.Apps || (e.KeyCode == Keys.F10 && ((System.Windows.Forms.Control.ModifierKeys & Keys.Shift) == Keys.Shift)))
+				if (eventsActive && e.KeyCode == Keys.Apps || (e.KeyCode == Keys.F10 && ((System.Windows.Forms.Control.ModifierKeys & Keys.Shift) == Keys.Shift)))
 					CallContextMenuChangeHandlers(true, Cursor.Position.X, Cursor.Position.Y);
 			}
 
-			internal void _control_LostFocus(object sender, EventArgs e) => lostFocusHandlers?.InvokeEventHandlers(this, 0L);
+			internal void _control_LostFocus(object sender, EventArgs e)
+			{
+				if (eventsActive)
+					lostFocusHandlers?.InvokeEventHandlers(this, 0L);
+			}
 
 			internal void _control_MouseDown(object sender, MouseEventArgs e)
 			{
-				if (e.Button == MouseButtons.Right)
+				if (eventsActive && e.Button == MouseButtons.Right)
 					CallContextMenuChangeHandlers(false, e.X, e.Y);
 			}
 
 			internal void CallContextMenuChangeHandlers(bool wasRightClick, int x, int y)
 			{
+				if (!eventsActive)
+					return;
+
 				if (_control is KeysharpListBox lb)
 					_ = (contextMenuChangedHandlers?.InvokeEventHandlers(this, lb.SelectedIndex + 1L, wasRightClick, x, y));
 				else if (_control is KeysharpListView lv)
@@ -1977,13 +2004,13 @@
 
 			internal void Cmb_SelectedIndexChanged(object sender, EventArgs e)
 			{
-				if (_control is KeysharpComboBox)
+				if (eventsActive && _control is KeysharpComboBox)
 					_ = (changeHandlers?.InvokeEventHandlers(this, 0L));
 			}
 
 			internal void Dtp_ValueChanged(object sender, EventArgs e)
 			{
-				if (_control is KeysharpDateTimePicker)
+				if (eventsActive && _control is KeysharpDateTimePicker)
 					_ = (changeHandlers?.InvokeEventHandlers(this, 0L));
 			}
 
@@ -2003,7 +2030,7 @@
 
 			internal void Hkb_TextChanged(object sender, EventArgs e)
 			{
-				if (_control is HotkeyBox)
+				if (eventsActive && _control is HotkeyBox)
 					_ = (changeHandlers?.InvokeEventHandlers(this, 0L));
 			}
 
@@ -2047,109 +2074,109 @@
 
 			internal void Lb_SelectedIndexChanged(object sender, EventArgs e)
 			{
-				if (_control is KeysharpListBox)
+				if (eventsActive && _control is KeysharpListBox)
 					_ = (changeHandlers?.InvokeEventHandlers(this, 0L));
 			}
 
 			internal void Lv_AfterLabelEdit(object sender, LabelEditEventArgs e)
 			{
-				if (_control is KeysharpListView)
+				if (eventsActive && _control is KeysharpListView)
 					_ = (itemEditHandlers?.InvokeEventHandlers(this, e.Item + 1L));//The documentation says to pass "item". Not really sure if that means index, or something else.
 			}
 
 			internal void Lv_ColumnClick(object sender, ColumnClickEventArgs e)
 			{
-				if (_control is KeysharpListView)
+				if (eventsActive && _control is KeysharpListView)
 					_ = (columnClickHandlers?.InvokeEventHandlers(this, e.Column + 1L));
 			}
 
 			internal void Lv_ItemChecked(object sender, ItemCheckedEventArgs e)
 			{
-				if (_control is KeysharpListView)
+				if (eventsActive && _control is KeysharpListView)
 					_ = (itemCheckHandlers?.InvokeEventHandlers(this, e.Item.Index + 1L, e.Item.Checked ? 1L : 0L));
 			}
 
 			internal void Lv_ItemSelectionChanged(object sender, ListViewItemSelectionChangedEventArgs e)
 			{
-				if (_control is KeysharpListView)
+				if (eventsActive && _control is KeysharpListView)
 					_ = (selectedItemChangedHandlers?.InvokeEventHandlers(this, e.Item.Index + 1L, e.Item.Selected ? 1L : 0L));
 			}
 
 			internal void Lv_SelectedIndexChanged(object sender, EventArgs e)
 			{
-				if (_control is KeysharpListView lv)
+				if (eventsActive && _control is KeysharpListView lv)
 					_ = (focusedItemChangedHandlers?.InvokeEventHandlers(this, lv.SelectedIndices.Count > 0 ? lv.SelectedIndices[0] + 1L : 0L));
 			}
 
 			internal void Mc_DateChanged(object sender, DateRangeEventArgs e)
 			{
-				if (_control is KeysharpMonthCalendar)
+				if (eventsActive && _control is KeysharpMonthCalendar)
 					_ = (changeHandlers?.InvokeEventHandlers(this, 0L));
 			}
 
 			internal void Nud_ValueChanged(object sender, EventArgs e)
 			{
-				if (_control is KeysharpNumericUpDown)
+				if (eventsActive && _control is KeysharpNumericUpDown)
 					_ = (changeHandlers?.InvokeEventHandlers(this, 0L));
 			}
 
 			internal void Ss_ItemClicked(object sender, ToolStripItemClickedEventArgs e)
 			{
-				if (_control is KeysharpStatusStrip ss)
+				if (eventsActive && _control is KeysharpStatusStrip ss)
 					_ = (clickHandlers?.InvokeEventHandlers(this, ss.Items.IndexOf(e.ClickedItem) + 1L));
 			}
 
 			internal void Tb_MouseCaptureChanged(object sender, EventArgs e)
 			{
-				if (_control is KeysharpTrackBar && !AltSubmit)
+				if (eventsActive && _control is KeysharpTrackBar && !AltSubmit)
 					_ = (changeHandlers?.InvokeEventHandlers(this, 0L));//Winforms doesn't support the ability to pass the method by which the slider was changed.
 			}
 
 			internal void Tb_ValueChanged(object sender, EventArgs e)
 			{
-				if (_control is KeysharpTrackBar && AltSubmit)
+				if (eventsActive && _control is KeysharpTrackBar && AltSubmit)
 					_ = (changeHandlers?.InvokeEventHandlers(this, 0L));//Winforms doesn't support the ability to pass the method by which the slider was changed.
 			}
 
 			internal void Tc_Selected(object sender, TabControlEventArgs e)
 			{
-				if (_control is KeysharpTabControl)
+				if (eventsActive && _control is KeysharpTabControl)
 					_ = (changeHandlers?.InvokeEventHandlers(this, 0L));
 			}
 
 			internal void Tv_AfterCheck(object sender, TreeViewEventArgs e)
 			{
-				if (_control is KeysharpTreeView)
+				if (eventsActive && _control is KeysharpTreeView)
 					_ = (itemCheckHandlers?.InvokeEventHandlers(this, e.Node.Handle.ToInt64(), e.Node.Checked ? 1L : 0L));
 			}
 
 			internal void Tv_AfterExpand(object sender, TreeViewEventArgs e)
 			{
-				if (_control is KeysharpTreeView)
+				if (eventsActive && _control is KeysharpTreeView)
 					_ = (itemExpandHandlers?.InvokeEventHandlers(this, e.Node.Handle.ToInt64(), e.Node.IsExpanded ? 1L : 0L));
 			}
 
 			internal void Tv_AfterLabelEdit(object sender, NodeLabelEditEventArgs e)
 			{
-				if (_control is KeysharpTreeView)
+				if (eventsActive && _control is KeysharpTreeView)
 					_ = (itemEditHandlers?.InvokeEventHandlers(this, e.Node.Handle.ToInt64()));
 			}
 
 			internal void Tv_AfterSelect(object sender, TreeViewEventArgs e)
 			{
-				if (_control is KeysharpTreeView)
+				if (eventsActive && _control is KeysharpTreeView)
 					_ = (selectedItemChangedHandlers?.InvokeEventHandlers(this, e.Node.Handle.ToInt64()));
 			}
 
 			internal void Tv_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)
 			{
-				if (_control is KeysharpTreeView tv && e.Node == tv.SelectedNode)
+				if (eventsActive && _control is KeysharpTreeView tv && e.Node == tv.SelectedNode)
 					_ = (selectedItemChangedHandlers?.InvokeEventHandlers(this, e.Node.Handle.ToInt64()));
 			}
 
 			internal void Txt_TextChanged(object sender, EventArgs e)
 			{
-				if (_control is KeysharpTextBox)
+				if (eventsActive && _control is KeysharpTextBox)
 					_ = (changeHandlers?.InvokeEventHandlers(this, 0L));
 			}
 		}

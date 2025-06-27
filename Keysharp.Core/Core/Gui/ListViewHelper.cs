@@ -40,6 +40,8 @@
 			var lvco = ParseListViewColumnOptions(options);
 			var lv = col.ListView as KeysharpListView;
 
+			lv.BeginUpdate();
+
 			if (lvco.width.HasValue)
 				col.Width = lvco.width.Value;
 
@@ -103,10 +105,10 @@
 				lv.ListViewItemSorter = new ListViewCaseLocaleComparer(col);
 			else if (lvco.logical.IsTrue())
 				lv.ListViewItemSorter = new ListViewLogicalComparer(col);
-			else
+			else if (lvco.sort.IsTrue() || lvco.sortdesc.IsTrue())
 				lv.ListViewItemSorter = new ListViewCaseInsensitiveComparer(col);
 
-			if (lvco.desc.HasValue)
+			if (lvco.desc.HasValue)	
 				lv.Sorting = lvco.desc.Value ? SortOrder.Descending : SortOrder.Ascending;
 
 			if (lvco.nosort.HasValue)
@@ -120,6 +122,8 @@
 
 			if (lvco.uni.HasValue)
 				lv.uni = lvco.uni.Value;
+
+			lv.EndUpdate();
 		}
 
 		internal static ListViewColumnOptions ParseListViewColumnOptions(string options)
