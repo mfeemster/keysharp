@@ -1240,7 +1240,7 @@ namespace Keysharp.Scripting
         public override SyntaxNode VisitLabelledStatement([NotNull] LabelledStatementContext context)
         {
             // Get the label identifier
-            var labelName = context.Identifier().GetText().Trim('"');
+            var labelName = context.identifier().GetText().Trim('"');
 
             // Return a labeled statement with an empty statement as the body
             return SyntaxFactory.LabeledStatement(

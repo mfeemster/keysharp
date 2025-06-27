@@ -462,17 +462,6 @@ public partial class MainParserBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// <return>The visitor result.</return>
 	public virtual Result VisitElseProduction([NotNull] MainParser.ElseProductionContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by the <c>LoopStatement</c>
-	/// labeled alternative in <see cref="MainParser.iterationStatement"/>.
-	/// <para>
-	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
-	/// on <paramref name="context"/>.
-	/// </para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	public virtual Result VisitLoopStatement([NotNull] MainParser.LoopStatementContext context) { return VisitChildren(context); }
-	/// <summary>
 	/// Visit a parse tree produced by the <c>LoopFilesStatement</c>
 	/// labeled alternative in <see cref="MainParser.iterationStatement"/>.
 	/// <para>
@@ -516,6 +505,17 @@ public partial class MainParserBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	public virtual Result VisitLoopParseStatement([NotNull] MainParser.LoopParseStatementContext context) { return VisitChildren(context); }
+	/// <summary>
+	/// Visit a parse tree produced by the <c>LoopStatement</c>
+	/// labeled alternative in <see cref="MainParser.iterationStatement"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitLoopStatement([NotNull] MainParser.LoopStatementContext context) { return VisitChildren(context); }
 	/// <summary>
 	/// Visit a parse tree produced by the <c>WhileStatement</c>
 	/// labeled alternative in <see cref="MainParser.iterationStatement"/>.

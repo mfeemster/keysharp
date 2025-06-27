@@ -241,11 +241,11 @@ elseProduction
     ;
 
 iterationStatement
-    : Loop WS* ({!this.isEmptyObject()}? singleExpression WS*)? flowBlock untilProduction elseProduction      # LoopStatement
-    | LoopFiles WS* singleExpression (WS* ',' singleExpression)? WS* flowBlock untilProduction elseProduction  # LoopFilesStatement
-    | LoopRead WS* singleExpression (WS* ',' singleExpression)? WS* flowBlock untilProduction elseProduction   # LoopReadStatement
-    | LoopReg WS* singleExpression (WS* ',' singleExpression)? WS* flowBlock untilProduction elseProduction    # LoopRegStatement
-    | LoopParse WS* singleExpression (WS* ',' singleExpression?)* WS* flowBlock untilProduction elseProduction # LoopParseStatement
+    : Loop Files WS* singleExpression (WS* ',' singleExpression)? WS* flowBlock untilProduction elseProduction  # LoopFilesStatement
+    | Loop Read WS* singleExpression (WS* ',' singleExpression)? WS* flowBlock untilProduction elseProduction   # LoopReadStatement
+    | Loop Reg WS* singleExpression (WS* ',' singleExpression)? WS* flowBlock untilProduction elseProduction    # LoopRegStatement
+    | Loop Parse WS* singleExpression (WS* ',' singleExpression?)* WS* flowBlock untilProduction elseProduction # LoopParseStatement
+    | Loop WS* ({this.isValidLoopExpression()}? singleExpression WS*)? flowBlock untilProduction elseProduction      # LoopStatement
     | While WS* singleExpression WS* flowBlock untilProduction elseProduction       # WhileStatement
     | For WS* forInParameters WS* flowBlock untilProduction elseProduction          # ForInStatement
     ;
@@ -292,7 +292,7 @@ defaultClause
     ;
 
 labelledStatement
-    : Identifier ':' 
+    : {InputStream.LA(1) != MainLexer.Default}? identifier ':' 
     ;
 
 gotoStatement
@@ -653,7 +653,11 @@ identifier
     | As
     | Class
     | Do
-    | NullLiteral)
+    | NullLiteral
+    | Parse
+    | Reg
+    | Read
+    | Files)
     ;
 
 // None of these can be used as a variable name

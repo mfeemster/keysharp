@@ -522,16 +522,31 @@ namespace Keysharp.Scripting
                             PopWhitespaces(codeTokens.Count);
                             SkipWhitespaces(index);
                             break;
-                        case MainLexer.Try:
+                        case MainLexer.Loop:
+							if (tokens[index + 1].Type == MainLexer.WS)
+							{
+								switch (tokens[index + 2].Type)
+								{
+									case MainLexer.Files:
+									case MainLexer.Parse:
+									case MainLexer.Read:
+									case MainLexer.Reg:
+										index += 2;
+										codeTokens.Add(token);
+                                        token = tokens[index];
+                                        break;
+								}
+							}
+							codeTokens.Add(token);
+                            if (tokens[index + 1].Type == MainLexer.Comma)
+                                index++;
+							AddWhitespaces(index, token.Type == MainLexer.Not || token.Type == MainLexer.VerbalNot);
+                            goto SkipAdd;
+						case MainLexer.Try:
                         case MainLexer.If:
                         case MainLexer.Catch:
                         case MainLexer.Finally:
                         case MainLexer.As:
-                        case MainLexer.Loop:
-                        case MainLexer.LoopFiles:
-                        case MainLexer.LoopParse:
-                        case MainLexer.LoopRead:
-                        case MainLexer.LoopReg:
                         case MainLexer.For:
                         case MainLexer.Switch:
                         case MainLexer.Case:
@@ -545,22 +560,8 @@ namespace Keysharp.Scripting
                         case MainLexer.Static:
 						case MainLexer.Not:
                         case MainLexer.VerbalNot:
-                            i = index;
                             codeTokens.Add(token);
-                            while (++i < tokens.Count)
-                            {
-                                if (tokens[i].Channel == MainLexer.DIRECTIVE)
-                                    break;
-								if ((tokens[i].Channel != Lexer.DefaultTokenChannel) || (tokens[i].Type == MainLexer.EOL && (token.Type == MainLexer.Not || token.Type == MainLexer.VerbalNot)))
-									index++;
-								else if (tokens[i].Type == MainLexer.WS)
-								{
-									codeTokens.Add(tokens[i]);
-                                    index++;
-								}
-								else
-									break;
-                            }
+                            AddWhitespaces(index, token.Type == MainLexer.Not || token.Type == MainLexer.VerbalNot);
                             goto SkipAdd;
                         case MainLexer.CloseBrace:
 							//if (enclosableDepth > 0)
@@ -784,6 +785,25 @@ namespace Keysharp.Scripting
                 }
                 return i;
             }
+
+            int AddWhitespaces(int i, bool condition)
+            {
+				while (++i < tokens.Count)
+				{
+					if (tokens[i].Channel == MainLexer.DIRECTIVE)
+						break;
+					if ((tokens[i].Channel != Lexer.DefaultTokenChannel) || (tokens[i].Type == MainLexer.EOL && condition))
+						index++;
+					else if (tokens[i].Type == MainLexer.WS)
+					{
+						codeTokens.Add(tokens[i]);
+						index++;
+					}
+					else
+						break;
+				}
+                return i;
+			}
 
 			/*
             foreach (var token in codeTokens)

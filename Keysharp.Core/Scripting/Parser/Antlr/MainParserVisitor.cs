@@ -291,13 +291,6 @@ public interface IMainParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitElseProduction([NotNull] MainParser.ElseProductionContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>LoopStatement</c>
-	/// labeled alternative in <see cref="MainParser.iterationStatement"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitLoopStatement([NotNull] MainParser.LoopStatementContext context);
-	/// <summary>
 	/// Visit a parse tree produced by the <c>LoopFilesStatement</c>
 	/// labeled alternative in <see cref="MainParser.iterationStatement"/>.
 	/// </summary>
@@ -325,6 +318,13 @@ public interface IMainParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitLoopParseStatement([NotNull] MainParser.LoopParseStatementContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>LoopStatement</c>
+	/// labeled alternative in <see cref="MainParser.iterationStatement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitLoopStatement([NotNull] MainParser.LoopStatementContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>WhileStatement</c>
 	/// labeled alternative in <see cref="MainParser.iterationStatement"/>.

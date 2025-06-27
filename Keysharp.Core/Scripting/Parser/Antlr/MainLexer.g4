@@ -174,11 +174,11 @@ Continue   : 'continue';
 For        : 'for';
 While      : 'while';
 // For Loop keywords allow optional trailing commas because AHK allows it
-LoopParse  : 'loop parse' ','?;
-LoopReg    : 'loop reg' ','?;
-LoopRead   : 'loop read' ','?;
-LoopFiles  : 'loop files' ','?;
-Loop       : 'loop' ','?;
+Parse      : 'parse';
+Reg        : 'reg';
+Read       : 'read';
+Files      : 'files';
+Loop       : 'loop';
 Until      : 'until';
 This       : 'this';
 If         : 'if';

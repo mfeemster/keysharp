@@ -684,6 +684,43 @@ namespace Keysharp.Scripting
         {
             if (right is AssignmentExpressionSyntax)
                 right = SyntaxFactory.ParenthesizedExpression(right);
+            if (left is InvocationExpressionSyntax ies && CheckInvocationExpressionName(ies, "GetPropertyValue"))
+            {
+				var valueExpr = parser.PushTempVar();
+
+				var origArgs = ies.ArgumentList.Arguments;
+
+				// Build the out-temp third argument: `out temp`
+				var outArg = SyntaxFactory.Argument(valueExpr)
+					.WithRefKindKeyword(
+						SyntaxFactory.Token(SyntaxKind.OutKeyword)
+					);
+
+				// Now build: TryGetPropertyValue(obj, key, out temp)
+				var tryCall = SyntaxFactory.InvocationExpression(
+					SyntaxFactory.IdentifierName("TryGetPropertyValue"),
+					SyntaxFactory.ArgumentList(
+						SyntaxFactory.SeparatedList<ArgumentSyntax>(
+							new[] {
+				                origArgs[0],
+				                origArgs[1],
+				                outArg
+							}
+						)
+					)
+				);
+
+				// Build the conditional: TryGetPropertyValue(...) ? temp0 : right
+				var conditional = SyntaxFactory.ConditionalExpression(
+					tryCall,
+					valueExpr,
+					right
+				);
+
+				parser.PopTempVar();
+
+                return SyntaxFactory.ParenthesizedExpression(conditional);
+			}
 			return SyntaxFactory.BinaryExpression(
 				SyntaxKind.CoalesceExpression,
 				left,

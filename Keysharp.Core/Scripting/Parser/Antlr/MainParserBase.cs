@@ -37,10 +37,6 @@ public abstract class MainParserBase : Antlr4.Runtime.Parser
         MainLexer.If,
         MainLexer.Try,
         MainLexer.Loop,
-        MainLexer.LoopFiles,
-        MainLexer.LoopParse,
-        MainLexer.LoopRead,
-        MainLexer.LoopReg,
         MainLexer.For,
         MainLexer.In,
         MainLexer.Switch,
@@ -125,15 +121,26 @@ public abstract class MainParserBase : Antlr4.Runtime.Parser
         return token;
     }
 
-    protected bool isEmptyObject() {
+    protected bool isValidLoopExpression()
+    {
+        var next = InputStream.LA(1);
+        if (next == MainLexer.Parse || next == MainLexer.Reg || next == MainLexer.Read || next == MainLexer.Files)
+            return false;
+        return !isEmptyObject();
+    }
+
+    protected bool isEmptyObject()
+    {
         int i = 0, token;
-        do {
+        do
+        {
             token = InputStream.LA(++i);
             if (token == Eof) return false;
         } while (token == WS || token == EOL);
         if (token != OpenBrace)
             return false;
-        do {
+        do
+        {
             token = InputStream.LA(++i);
             if (token == Eof) return false;
         } while (token == WS || token == EOL);
