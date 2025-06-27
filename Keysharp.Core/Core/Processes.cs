@@ -11,6 +11,7 @@ namespace Keysharp.Core
 		internal string runDomain;
 		internal SecureString runPassword;
 		internal string runUser;
+		internal ConcurrentLfu<int, ProcessModule> processModuleCache = new(Caching.DefaultCacheCapacity / 2);
 	}
 
 	/// <summary>
