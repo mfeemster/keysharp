@@ -8,7 +8,6 @@ namespace Keysharp.Core.Windows
 	internal class WindowItem : WindowItemBase
 	{
 		private int lastChildCount = 64;
-		private string path = "";
 
 		internal override bool Active
 		{
@@ -185,35 +184,18 @@ namespace Keysharp.Core.Windows
 		{
 			get
 			{
-				if (path.Length > 0)
-					return path;
+				if (!processPath.IsNullOrEmpty())
+					return processPath;
 
 				_ = WindowsAPI.GetWindowThreadProcessId(Handle, out var pid);
 
 				if (pid == 0)
 					return DefaultErrorString;
 
-				var hProc = WindowsAPI.OpenProcess(ProcessAccessTypes.PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
+				if (Processes.GetProcessName(pid, out processPath) == 0)
+					return (string)Errors.OSErrorOccurred(new Win32Exception(Marshal.GetLastWin32Error()), "");
 
-				if (hProc == 0)
-					return DefaultErrorString;
-
-				try
-				{
-					var sb = new StringBuilder(1024);
-
-					if (WindowsAPI.GetProcessImageFileName(hProc, sb, (uint)sb.Capacity) > 0)
-					{
-						// e.g. "C:\Windows\System32\notepad.exe" → "notepad.exe"
-						return path = System.IO.Path.GetFileName(sb.ToString());
-					}
-				}
-				finally
-				{
-					_ = WindowsAPI.CloseHandle(hProc);
-				}
-
-				return DefaultObject;
+				return processPath;
 			}
 		}
 
@@ -223,6 +205,25 @@ namespace Keysharp.Core.Windows
 			{
 				_ = WindowsAPI.GetWindowThreadProcessId(Handle, out var n);
 				return n;
+			}
+		}
+
+		internal override string ProcessName
+		{
+			get
+			{
+				if (!processName.IsNullOrEmpty())
+					return processName;
+
+				_ = WindowsAPI.GetWindowThreadProcessId(Handle, out var pid);
+
+				if (pid == 0)
+					return DefaultErrorString;
+
+				if (Processes.GetProcessName(pid, out processName) == 0)
+					return (string)Errors.OSErrorOccurred(new Win32Exception(Marshal.GetLastWin32Error()), "");
+
+				return processName;
 			}
 		}
 

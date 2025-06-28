@@ -2114,8 +2114,10 @@ namespace Keysharp.Core.Windows
 		[DllImport(user32, CharSet = CharSet.Unicode)]
 		internal static extern int GetSystemMetrics(SystemMetric smIndex);
 
-		[DllImport(psapi, CharSet = CharSet.Unicode)]
+		[DllImport(psapi, CharSet = CharSet.Unicode, SetLastError = true)]
 		internal static extern uint GetProcessImageFileName(nint hProcess, [Out, MarshalAs(UnmanagedType.LPTStr)] StringBuilder lpExeName, uint nSize);
+		[DllImport(kernel32, CharSet = CharSet.Auto, SetLastError = true)]
+		internal static extern uint QueryDosDevice(string lpDeviceName, StringBuilder lpTargetPath, uint ucchMax);
 	}
 }
 #endif
