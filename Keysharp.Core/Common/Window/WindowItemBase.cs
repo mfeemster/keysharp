@@ -103,12 +103,10 @@
 			{
 				try
 				{
-					var pid = (int)PID;
-					//This can be extremely slow in a loop because MainModule calls an underlying method GetModules()
-					//which does a lot of processing, so cache this per PID.
-					var module = TheScript.ProcessesData.processModuleCache.GetOrAdd(pid, _
-						=> Process.GetProcessById((int)PID).MainModule);
-					return module.FileName;
+					var proc = Process.GetProcessById((int)PID);
+					//This will be extremely slow in a loop because MainModule calls an underlying method GetModules()
+					//which does a lot of processing.
+					return proc.MainModule.FileName;
 				}
 				catch
 				{
@@ -127,10 +125,8 @@
 
 				try
 				{
-					var pid = (int)PID;
-					var module = TheScript.ProcessesData.processModuleCache.GetOrAdd(pid, _ 
-						=> Process.GetProcessById((int)PID).MainModule);
-					filename = module.ModuleName;
+					var proc = Process.GetProcessById((int)PID);
+					filename = proc.MainModule.ModuleName;
 				}
 				catch
 				{
