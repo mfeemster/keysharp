@@ -1175,7 +1175,7 @@ namespace Keysharp.Core.Common.Keyboard
 			}
 
 			if (updateAllHotkeys)
-				ManifestAllHotkeysHotstringsHooks(); // See its comments for why it's done in so many of the above situations.
+				_ = ManifestAllHotkeysHotstringsHooks(); // See its comments for why it's done in so many of the above situations.
 
 			return ResultType.Ok;
 		}
@@ -1371,7 +1371,7 @@ namespace Keysharp.Core.Common.Keyboard
 				return;
 
 			// Do more thorough checking to determine whether the hook is still needed:
-			ManifestAllHotkeysHotstringsHooks();
+			_ = ManifestAllHotkeysHotstringsHooks();
 		}
 
 		/// <summary>

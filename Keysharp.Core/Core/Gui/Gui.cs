@@ -1254,7 +1254,7 @@
 			var w = scaledPref;
 			var lastControl = LastControl;
 
-			if (lastControl is KeysharpRadioButton && ctrl is not KeysharpRadioButton)//Pop container if we've ended a radio group.
+			if (lastControl is KeysharpRadioButton && (ctrl is not KeysharpRadioButton || opts.group))//Pop container if we've ended a radio group.
 			{
 				LastContainer = LastContainer.Parent;
 				lastControl = LastControl;//Will retrieve the last control in the LastContainer we just assigned.

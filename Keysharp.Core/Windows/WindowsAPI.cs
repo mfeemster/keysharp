@@ -1528,14 +1528,14 @@ namespace Keysharp.Core.Windows
 		[DllImport(kernel32, CharSet = CharSet.Unicode)]
 		internal static extern nint GetModuleHandle(string lpModuleName);
 
-		[DllImport(kernel32, CharSet = CharSet.Unicode)]
+		[DllImport(kernel32, CharSet = CharSet.Unicode, SetLastError = true)]
 		internal static extern uint GetPrivateProfileString(string lpAppName, string lpKeyName, string lpDefault, StringBuilder lpReturnedString, uint nSize, string lpFileName);
 
-		[DllImport(kernel32, CharSet = CharSet.Unicode)]
-		internal static extern uint GetPrivateProfileSection(string lpAppName, StringBuilder lpszReturnBuffer, uint nSize, string lpFileName);
+		[DllImport(kernel32, CharSet = CharSet.Unicode, SetLastError = true)]
+		internal static extern uint GetPrivateProfileSection(string lpAppName, [Out] char[] lpszReturnBuffer, uint nSize, string lpFileName);
 
-		[DllImport(kernel32, CharSet = CharSet.Unicode)]
-		internal static extern uint GetPrivateProfileSectionNames(StringBuilder lpszReturnBuffer, uint nSize, string lpFileName);
+		[DllImport(kernel32, CharSet = CharSet.Unicode, SetLastError = true)]
+		internal static extern uint GetPrivateProfileSectionNames([Out] char[] lpszReturnBuffer, uint nSize, string lpFileName);
 
 		/// <summary>
 		/// Set this to use ExactSpelling since GetProcAddress() only is available in ANSI.
@@ -1928,10 +1928,10 @@ namespace Keysharp.Core.Windows
 		[DllImport(user32, CharSet = CharSet.Unicode)]
 		internal static extern nint WindowFromPoint(Point Point);
 
-		[DllImport(kernel32, CharSet = CharSet.Unicode)]
+		[DllImport(kernel32, CharSet = CharSet.Unicode, SetLastError = true)]
 		internal static extern bool WritePrivateProfileString(string lpAppName, string lpKeyName, string lpString, string lpFileName);
 
-		[DllImport(kernel32, CharSet = CharSet.Unicode)]
+		[DllImport(kernel32, CharSet = CharSet.Unicode, SetLastError = true)]
 		internal static extern bool WritePrivateProfileSection(string lpAppName, string lpString, string lpFileName);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
@@ -2114,8 +2114,10 @@ namespace Keysharp.Core.Windows
 		[DllImport(user32, CharSet = CharSet.Unicode)]
 		internal static extern int GetSystemMetrics(SystemMetric smIndex);
 
-		[DllImport(psapi, CharSet = CharSet.Unicode)]
+		[DllImport(psapi, CharSet = CharSet.Unicode, SetLastError = true)]
 		internal static extern uint GetProcessImageFileName(nint hProcess, [Out, MarshalAs(UnmanagedType.LPTStr)] StringBuilder lpExeName, uint nSize);
+		[DllImport(kernel32, CharSet = CharSet.Auto, SetLastError = true)]
+		internal static extern uint QueryDosDevice(string lpDeviceName, StringBuilder lpTargetPath, uint ucchMax);
 	}
 }
 #endif

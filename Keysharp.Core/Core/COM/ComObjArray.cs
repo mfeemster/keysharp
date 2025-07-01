@@ -156,11 +156,11 @@
 			{
 				// 1-based AHK index is (idx+1) for the first dimension
 				object idx1 = (long)(_indices[0] + 1);
-				OleAuto.SafeArrayGetElement(
-					_owner._psa,
-					_indices,
-					out object val
-				);
+				_ = OleAuto.SafeArrayGetElement(
+						_owner._psa,
+						_indices,
+						out object val
+					);
 				return (idx1, val);
 			}
 		}
@@ -276,7 +276,7 @@
 			if (d < 1 || d > _dimensions)
 				return Errors.ValueErrorOccurred($"Argument out of range.");
 
-			OleAuto.SafeArrayGetUBound(_psa, (uint)d, out int ub);
+			_ = OleAuto.SafeArrayGetUBound(_psa, (uint)d, out int ub);
 			return (long)ub;
 		}
 
@@ -290,7 +290,7 @@
 			if (d < 1 || d > _dimensions)
 				return Errors.ValueErrorOccurred($"Argument out of range.");
 
-			OleAuto.SafeArrayGetLBound(_psa, (uint)d, out int lb);
+			_ = OleAuto.SafeArrayGetLBound(_psa, (uint)d, out int lb);
 			return (long)lb;
 		}
 
@@ -357,7 +357,7 @@
 		{
 			if ((Flags & F_OWNVALUE) != 0 && _psa != 0)
 			{
-				OleAuto.SafeArrayDestroy(_psa);
+				_ = OleAuto.SafeArrayDestroy(_psa);
 				// Clear the flag so we don't double‐destroy:
 				Flags &= ~F_OWNVALUE;
 			}

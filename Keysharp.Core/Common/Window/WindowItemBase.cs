@@ -16,6 +16,10 @@
 	/// </summary>
 	internal abstract class WindowItemBase
 	{
+		//Cache these on first retrival, because apparently fetching them is a slow operation in all platforms
+		protected string processPath = null;
+		protected string processName = null;
+
 		internal abstract bool Active { get; set; }
 		internal abstract bool AlwaysOnTop { get; set; }
 		internal abstract bool Bottom { set; }
@@ -101,12 +105,18 @@
 		{
 			get
 			{
+				if (!processPath.IsNullOrEmpty())
+					return processPath;
+
 				try
 				{
-					var proc = Process.GetProcessById((int)PID);
-					//This will be extremely slow in a loop because MainModule calls an underlying method GetModules()
-					//which does a lot of processing.
-					return proc.MainModule.FileName;
+					using (var proc = Process.GetProcessById((int)PID))
+					{
+						//This will be extremely slow in a loop because MainModule calls an underlying method GetModules()
+						//which does a lot of processing.
+						using var module = proc.MainModule;
+						return processPath = module.FileName;
+					}
 				}
 				catch
 				{
@@ -121,18 +131,22 @@
 		{
 			get
 			{
-				var filename = "";
+				if (!processName.IsNullOrEmpty())
+					return processName;
 
 				try
 				{
-					var proc = Process.GetProcessById((int)PID);
-					filename = proc.MainModule.ModuleName;
+					using (var proc = Process.GetProcessById((int)PID))
+					{
+						using var module = proc.MainModule;
+						processName = module.ModuleName;
+					}
 				}
 				catch
 				{
 				}
 
-				return filename;
+				return processName;
 			}
 		}
 

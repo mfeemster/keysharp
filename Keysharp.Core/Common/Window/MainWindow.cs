@@ -281,11 +281,11 @@
 		private void refreshToolStripMenuItem_Click(object sender, EventArgs e)
 		{
 			if (tcMain.SelectedTab == tpVars)
-				ShowInternalVars(true);
+				_ = ShowInternalVars(true);
 			else if (tcMain.SelectedTab == tpHotkeys)
-				ListHotkeys();
+				_ = ListHotkeys();
 			else if (tcMain.SelectedTab == tpHistory)
-				ShowHistory();
+				_ = ShowHistory();
 		}
 
 		private void reloadScriptToolStripMenuItem_Click(object sender, EventArgs e) => Flow.Reload();
@@ -327,7 +327,7 @@
 		private void TpVars_HandleCreated(object sender, EventArgs e)
 		{
 			if (!callingInternalVars)
-				ShowInternalVars(false);
+				_ = ShowInternalVars(false);
 		}
 
 		private void userManualToolStripMenuItem_Click(object sender, EventArgs e)
