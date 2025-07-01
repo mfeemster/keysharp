@@ -48,6 +48,7 @@ namespace Keysharp.Core
 		public static long ProcessClose(object pidOrName)
 		{
 			var name = pidOrName.As(); //Will handle name string or pid int.
+
 			using (var proc = string.IsNullOrEmpty(name) ? Process.GetCurrentProcess() : FindProcess(name))
 			{
 				if (proc == null)
@@ -60,6 +61,7 @@ namespace Keysharp.Core
 				}
 				catch (Win32Exception) { }
 			}
+
 			return 0L;
 		}
 
@@ -81,6 +83,7 @@ namespace Keysharp.Core
 		public static long ProcessExist(object pidOrName = null)
 		{
 			var name = pidOrName.As();
+
 			using (var proc = string.IsNullOrEmpty(name) ? Process.GetCurrentProcess() : FindProcess(name))
 			{
 				return proc != null ? proc.Id : 0L;
@@ -104,13 +107,17 @@ namespace Keysharp.Core
 		public static string ProcessGetName(object pidOrName = null)
 		{
 			var name = pidOrName.As();
+
 			using (var proc = string.IsNullOrEmpty(name) ? Process.GetCurrentProcess() : FindProcess(name))
 			{
 				if (proc == null)
 					return (string)Errors.TargetErrorOccurred($"The specified process {pidOrName} was not found");
+
 #if WINDOWS
+
 				if (GetProcessName((uint)proc.Id, out string result) == 0)
-					return (string)Errors.OSErrorOccurred(new Win32Exception(Marshal.GetLastWin32Error()), "");
+					return (string)Errors.OSErrorOccurred(new Win32Exception(Marshal.GetLastWin32Error()), "", DefaultErrorString);
+
 				return result;
 #else
 				using var module = proc.MainModule;
@@ -136,11 +143,14 @@ namespace Keysharp.Core
 		public static string ProcessGetPath(object pidOrName = null)
 		{
 			var name = pidOrName.As();
+
 			using (var proc = string.IsNullOrEmpty(name) ? Process.GetCurrentProcess() : FindProcess(name))
 			{
 #if WINDOWS
+
 				if (GetProcessName((uint)proc.Id, out string result, false) == 0)
-					return (string)Errors.OSErrorOccurred(new Win32Exception(Marshal.GetLastWin32Error()), "");
+					return (string)Errors.OSErrorOccurred(new Win32Exception(Marshal.GetLastWin32Error()), "", DefaultErrorString);
+
 				return result;
 #else
 				using var module = proc.MainModule;
@@ -176,6 +186,7 @@ namespace Keysharp.Core
 			var lvl = level.As();
 			var name = pidOrName.As();
 			var arg = lvl.ToLowerInvariant();
+
 			using (var proc = string.IsNullOrEmpty(name) ? Process.GetCurrentProcess() : FindProcess(name))
 			{
 				if (proc != null)
@@ -251,6 +262,7 @@ namespace Keysharp.Core
 			}
 
 			long id = 0L;
+
 			if (proc != null)
 			{
 				id = proc.Id;
@@ -280,6 +292,7 @@ namespace Keysharp.Core
 		{
 			var name = pidOrName.As();
 			var time = timeout.Ad(-1.0);
+
 			using (var proc = FindProcess(name))
 			{
 				if (proc != null)
@@ -294,6 +307,7 @@ namespace Keysharp.Core
 					return pid;
 				}
 			}
+
 			return 0L;
 		}
 
@@ -456,16 +470,19 @@ namespace Keysharp.Core
 			result = DefaultErrorString;
 			var buf = new StringBuilder(MAX_PATH);
 			nint hProc = WindowsAPI.OpenProcess(ProcessAccessTypes.PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
+
 			if (hProc == 0)
 				return 0;
 
 			try
 			{
 				uint len = WindowsAPI.GetProcessImageFileName(hProc, buf, (uint)buf.Capacity);
+
 				if (len == 0)
 					return 0;
 
 				string path = buf.ToString(0, (int)len);
+
 				if (getNameOnly)
 				{
 					int idx = path.LastIndexOf('\\');
@@ -476,14 +493,17 @@ namespace Keysharp.Core
 				// convert device path (\Device\HarddiskVolumeX\...) to drive letter C:\…
 				var device = new StringBuilder(MAX_PATH);
 				var logicalPath = path;
+
 				for (char drv = 'A'; drv <= 'Z'; drv++)
 				{
 					string drive = drv + ":";
 					uint rc = WindowsAPI.QueryDosDevice(drive, device, (uint)device.Capacity);
+
 					if (rc == 0)
 						continue;
 
 					string devPath = device.ToString();
+
 					if (path.StartsWith(devPath + "\\", StringComparison.OrdinalIgnoreCase))
 					{
 						logicalPath = drive + path.Substring(devPath.Length);
@@ -496,7 +516,7 @@ namespace Keysharp.Core
 			}
 			finally
 			{
-				WindowsAPI.CloseHandle(hProc);
+				_ = WindowsAPI.CloseHandle(hProc);
 			}
 		}
 #endif

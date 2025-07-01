@@ -116,6 +116,7 @@
 		internal static Icon GetIcon(string source, int n)
 		{
 #if WINDOWS
+
 			using (var prc = Process.GetCurrentProcess())
 			{
 				var hPrc = prc.Handle;
@@ -126,6 +127,7 @@
 
 				return Icon.ExtractAssociatedIcon(source);
 			}
+
 #else
 			return null;
 #endif
@@ -276,7 +278,7 @@
 						var icon2 = new Icon(dst.BaseStream);
 #if LINUX
 						var bmp = icon2.BuildBitmapOnWin32();
-#else						
+#else
 						var bmp = icon2.ToBitmap();
 
 						//If there is an alpha channel on this icon, it needs to be applied here,
@@ -294,6 +296,7 @@
 								}
 							}
 						}
+
 #endif
 						splitIcons.Add((icon2, bmp));
 					}

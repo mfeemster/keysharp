@@ -1948,6 +1948,7 @@ namespace Keysharp.Core.Windows
 		{
 			if (keys?.Length == 0)
 				return;
+
 			var script = Script.TheScript;
 			var origLastPeekTime = script.lastPeekTime;
 			var modsExcludedFromBlind = 0u;// For performance and also to reserve future flexibility, recognize {Blind} only when it's the first item in the string.

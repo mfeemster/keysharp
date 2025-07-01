@@ -515,6 +515,7 @@
 			{
 				object result = DefaultObject;
 				eventHandlerActive = false;
+
 				try
 				{
 					if (_control is KeysharpTreeView tv)
@@ -571,12 +572,12 @@
 						cb.Items.AddRange(obj.Cast<object>().Select(x => x.Str()).ToArray());
 					else if (_control is KeysharpTabControl tc)
 						tc.TabPages.AddRange(obj.Cast<object>().Select(x => new TabPage(x.Str())).ToArray());
-
-				} 
+				}
 				finally
 				{
 					eventHandlerActive = true;
 				}
+
 				return result;
 			}
 
@@ -1967,7 +1968,7 @@
 			internal void _control_GotFocus(object sender, EventArgs e)
 			{
 				if (eventHandlerActive)
-					focusHandlers?.InvokeEventHandlers(this, 0L);
+					_ = (focusHandlers?.InvokeEventHandlers(this, 0L));
 			}
 
 			internal void _control_KeyDown(object sender, KeyEventArgs e)
@@ -1979,7 +1980,7 @@
 			internal void _control_LostFocus(object sender, EventArgs e)
 			{
 				if (eventHandlerActive)
-					lostFocusHandlers?.InvokeEventHandlers(this, 0L);
+					_ = (lostFocusHandlers?.InvokeEventHandlers(this, 0L));
 			}
 
 			internal void _control_MouseDown(object sender, MouseEventArgs e)

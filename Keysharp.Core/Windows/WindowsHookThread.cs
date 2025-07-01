@@ -5180,7 +5180,7 @@ namespace Keysharp.Core.Windows
 						//on the thread that a particular function is being called from.
 						if ((kbdHook = SetWindowsHookEx(WH_KEYBOARD_LL,
 														kbdHandlerDel,//This must be a class member or else it will go out of scope and cause the program to crash unpredictably.
-																	  //GetModuleHandle(Process.GetCurrentProcess().MainModule.ModuleName), 0)) == 0)
+														//GetModuleHandle(Process.GetCurrentProcess().MainModule.ModuleName), 0)) == 0)
 														Marshal.GetHINSTANCE(typeof(Script).Module), 0)) == 0)
 							problem_activating_hooks = true;
 					}

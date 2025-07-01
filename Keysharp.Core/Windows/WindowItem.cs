@@ -193,7 +193,7 @@ namespace Keysharp.Core.Windows
 					return DefaultErrorString;
 
 				if (Processes.GetProcessName(pid, out processPath) == 0)
-					return (string)Errors.OSErrorOccurred(new Win32Exception(Marshal.GetLastWin32Error()), "");
+					return (string)Errors.OSErrorOccurred(new Win32Exception(Marshal.GetLastWin32Error()), "", DefaultErrorString);
 
 				return processPath;
 			}
@@ -221,7 +221,7 @@ namespace Keysharp.Core.Windows
 					return DefaultErrorString;
 
 				if (Processes.GetProcessName(pid, out processName) == 0)
-					return (string)Errors.OSErrorOccurred(new Win32Exception(Marshal.GetLastWin32Error()), "");
+					return (string)Errors.OSErrorOccurred(new Win32Exception(Marshal.GetLastWin32Error()), "", DefaultErrorString);
 
 				return processName;
 			}

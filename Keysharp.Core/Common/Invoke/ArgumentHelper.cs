@@ -110,9 +110,9 @@ namespace Keysharp.Core.Common.Invoke
 					{
 						object kptr;
 
-						if ((c0 == 'p' || (c0 == 'u') && (char)(span[1] | 0x20) == 'p') && 
-							((kso is IPointable ip && (kptr = ip.Ptr) != null)
-								|| (Script.GetPropertyValue(kso, "ptr", false) is object tmp && (kptr = tmp) != null)))
+						if ((c0 == 'p' || (c0 == 'u') && (char)(span[1] | 0x20) == 'p') &&
+								((kso is IPointable ip && (kptr = ip.Ptr) != null)
+								 || (Script.GetPropertyValue(kso, "ptr", false) is object tmp && (kptr = tmp) != null)))
 						{
 							if (last == '*' || (char)(last | 0x20) == 'p')
 								outputVars[paramIndex] = (typeof(nint), true);
@@ -415,7 +415,6 @@ namespace Keysharp.Core.Common.Invoke
 				InvalidType:
 				// Invalid type tag
 				_ = Errors.ValueErrorOccurred($"Arg or return type of {tag} is invalid.");
-				
 				TypeDetermined:
 
 				if (isReturn)

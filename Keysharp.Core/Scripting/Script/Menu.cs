@@ -45,7 +45,7 @@
 				var script = Script.TheScript;
 				var suspended = script.flowData.suspended = !script.flowData.suspended;
 				script.HotstringManager.SuspendAll(suspended);//Must do this prior to ManifestAllHotkeysHotstringsHooks() to avoid incorrect removal of hook.
-				HotkeyDefinition.ManifestAllHotkeysHotstringsHooks();//Update the state of all hotkeys based on the complex interdependencies hotkeys have with each another.
+				_ = HotkeyDefinition.ManifestAllHotkeysHotstringsHooks(); //Update the state of all hotkeys based on the complex interdependencies hotkeys have with each another.
 				script.suspendMenuItem.Checked = suspended;
 				script.mainWindow.SuspendHotkeysToolStripMenuItem.Checked = suspended;
 			}, false);

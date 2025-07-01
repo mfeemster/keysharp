@@ -27,7 +27,6 @@
 #if WINDOWS
 			// Pass null for key to delete whole section; or pass the key to delete only that entry
 			bool ok = WindowsAPI.WritePrivateProfileString(s, string.IsNullOrEmpty(k) ? null : k, null, file);
-
 			// Flush the in-memory cache
 			WindowsAPI.WritePrivateProfileString(null, null, null, file);
 
@@ -37,11 +36,13 @@
 			{
 				var err = Marshal.GetLastWin32Error();
 				return Errors.OSErrorOccurred(
-					new Win32Exception(err),
-					$"Error deleting {(string.IsNullOrEmpty(k) ? "section" : "key")} '{k}' from INI '{file}'"
-				);
+						   new Win32Exception(err),
+						   $"Error deleting {(string.IsNullOrEmpty(k) ? "section" : "key")} '{k}' from INI '{file}'"
+					   );
 			}
+
 #else
+
 			if (s != "")
 				s = string.Format(Keyword_IniSectionOpen + "{0}]", s);
 
@@ -91,6 +92,7 @@
 			{
 				return Errors.ErrorOccurred(ex.Message);
 			}
+
 #endif
 		}
 
@@ -117,7 +119,6 @@
 #if WINDOWS
 			const uint BUF_SIZE = 65535;
 			uint read;
-
 			bool hasKey = !string.IsNullOrEmpty(k);
 			bool hasSec = !string.IsNullOrEmpty(s);
 
@@ -130,9 +131,9 @@
 				var sb = new StringBuilder((int)BUF_SIZE);
 				// lpAppName = section (no brackets), wParam default = def
 				read = WindowsAPI.GetPrivateProfileString(s, k, def, sb, BUF_SIZE, file);
-
 				// error or not found?
 				var err = Marshal.GetLastWin32Error();
+
 				if (err != 0)
 					return @default != null ? def : Errors.OSErrorOccurred(new Win32Exception(err), $"Failed to read key '{k}' in section '{s}' from '{file}' (0x{err:X}).");
 
@@ -143,8 +144,8 @@
 				// read entire section: returns a double-null–terminated list of "key=value" entries
 				var buf = new char[BUF_SIZE];
 				read = WindowsAPI.GetPrivateProfileSection(s, buf, BUF_SIZE, file);
-
 				var err = Marshal.GetLastWin32Error();
+
 				if (err != 0)
 					return @default != null ? def : Errors.OSErrorOccurred(new Win32Exception(err), $"Failed to read section '{s}' from '{file}' (0x{err:X}).");
 
@@ -156,8 +157,8 @@
 				// no section/key → list all section names
 				var buf = new char[BUF_SIZE];
 				read = WindowsAPI.GetPrivateProfileSectionNames(buf, BUF_SIZE, file);
-
 				var err = Marshal.GetLastWin32Error();
+
 				if (err != 0)
 					return @default != null ? def : Errors.OSErrorOccurred(new Win32Exception(err), $"Failed to list sections in '{file}' (0x{err:X}).");
 
@@ -208,22 +209,32 @@
 #endif
 		}
 
-		// Convert a double-null–terminated char[] into "\n"-delimited string
+		/// <summary>
+		/// Convert a double-null–terminated char[] into '\n'-delimited string.
+		/// </summary>
+		/// <param name="buf">The multiline buffer to convert.</param>
+		/// <param name="length">The length of buf to process.</param>
+		/// <returns>The new string delimited by '\n'.</returns>
 		private static string MultiStringToLines(char[] buf, uint length)
 		{
-			var sb = new StringBuilder();
+			var sb = new StringBuilder((int)length);
 			int i = 0;
+
 			while (i < length)
 			{
 				var start = i;
+
 				while (i < length && buf[i] != '\0')
 					i++;
+
 				if (i == start)
 					break; // two nulls in a row = end
-				sb.Append(buf, start, i - start);
-				sb.Append('\n');
+
+				_ = sb.Append(buf, start, i - start);
+				_ = sb.Append('\n');
 				i++;
 			}
+
 			return sb.ToString().TrimEnd('\r', '\n');
 		}
 
@@ -247,12 +258,11 @@
 			var file = filename.As();
 			var s = section.As();
 			var k = key.As();
-
 #if WINDOWS
 			// On Windows use the native INI APIs directly:
 			file = Path.GetFullPath(file);
-
 			bool ok;
+
 			if (!File.Exists(file))
 			{
 				// Ensure the file exists so WritePrivateProfile* won’t fail
@@ -270,11 +280,13 @@
 				// and append double-null terminator
 				var lines = v.Split('\n', StringSplitOptions.None);
 				var sb = new StringBuilder();
+
 				foreach (var line in lines)
 				{
 					sb.Append(line.TrimEnd('\r'));
 					sb.Append('\0');
 				}
+
 				sb.Append('\0');  // extra null for end-of-section
 				ok = WindowsAPI.WritePrivateProfileSection(s, sb.ToString(), file);
 			}
@@ -289,12 +301,12 @@
 			{
 				var err = Marshal.GetLastWin32Error();
 				return Errors.OSErrorOccurred(
-					new System.ComponentModel.Win32Exception(err),
-					$"Error writing {(string.IsNullOrEmpty(k) ? "section" : "key")} to INI '{file}'"
-				);
+						   new System.ComponentModel.Win32Exception(err),
+						   $"Error writing {(string.IsNullOrEmpty(k) ? "section" : "key")} to INI '{file}'"
+					   );
 			}
-#else
 
+#else
 			var within = string.IsNullOrEmpty(s);
 			s = string.Format("[{0}]", s ?? string.Empty);
 			var haskey = !string.IsNullOrEmpty(k);
@@ -374,6 +386,7 @@
 			{
 				return Errors.OSErrorOccurred(ex, $"Error writing key {k} with value {v} in section {s} to INI file {file}.");
 			}
+
 #endif
 		}
 

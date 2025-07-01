@@ -562,12 +562,11 @@
 			if (startPos == 0 || o == 0)
 				return (long)Errors.ValueErrorOccurred("StartingPos and Occurrence must be non-zero", null, DefaultErrorLong);
 
-			// determine direction:   
-			//  - if Occurrence was omitted and startPos<0, reverse  
-			//  - or if Occurrence was supplied and o<0, reverse  
+			// determine direction:
+			//  - if Occurrence was omitted and startPos<0, reverse
+			//  - or if Occurrence was supplied and o<0, reverse
 			bool reverse = (occurrence == null && startPos < 0)    // default-occurrence + negative startPos
-						|| (occurrence != null && o < 0);           // explicit negative occurrence
-
+						   || (occurrence != null && o < 0);           // explicit negative occurrence
 			var cs = comp != "" ? Conversions.ParseComparisonOption(comp) : StringComparison.OrdinalIgnoreCase;
 			const int offset = 1;//Everything is 1-based indexing.
 
@@ -1316,7 +1315,7 @@
 		/// <returns>This function returns an array containing the substrings of the specified string.</returns>
 		public static Array StrSplit(object str, object delimiters = null, object omitChars = null, object maxParts = null)
 		{
-			List<string> del = new();
+			List<string> del = new ();
 			string trim = string.Empty;
 
 			if (str is string input)
