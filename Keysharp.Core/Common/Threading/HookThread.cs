@@ -79,7 +79,6 @@ namespace Keysharp.Core.Common.Threading
 		protected internal nint mouseHook = 0;
 		protected internal bool undisguisedMenuInEffect = false;
 		protected volatile bool running;
-		protected internal nint winDestroyEventHook = 0;
 
 		internal HookThread()
 		{
