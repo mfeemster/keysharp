@@ -2,6 +2,6 @@
 {
 	internal class Caching
 	{
-		internal static int DefaultCacheCapacity = 1000;
+		internal static int DefaultCacheCapacity = 1024;
 	}
 }
