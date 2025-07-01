@@ -429,6 +429,6 @@
 
 			return inidkt;
 		}
-	}
 #endif
+	}
 }
