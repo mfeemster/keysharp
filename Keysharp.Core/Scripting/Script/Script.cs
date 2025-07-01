@@ -114,6 +114,7 @@ namespace Keysharp.Scripting
 		public static Keysharp.Scripting.Script TheScript { get; private set; }
 		public HotstringManager HotstringManager => hotstringManager ?? (hotstringManager = new ());
 		public Threads Threads => threads.Value;
+		internal StaThreadWithMessageQueue LowLatencyWorkerThread = new();
 		public Variables Vars { get; private set; }
 		internal AccessorData AccessorData => accessorData ?? (accessorData = new ());
 		internal ArrayIndexValueIteratorData ArrayIndexValueIteratorData => arrayIndexValueIteratorData ?? (arrayIndexValueIteratorData = new ());

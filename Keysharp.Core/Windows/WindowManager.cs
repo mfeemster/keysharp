@@ -6,7 +6,7 @@ namespace Keysharp.Core.Windows
 	/// </summary>
 	internal class WindowManager : WindowManagerBase
 	{
-		internal override WindowItemBase ActiveWindow => new WindowItem(WindowsAPI.GetForegroundWindow());
+		internal override WindowItemBase ActiveWindow => TheScript.WindowProvider.Manager.CreateWindow(WindowsAPI.GetForegroundWindow());
 		private int lastWindowCount = 64;
 
 		/// <summary>
@@ -32,7 +32,8 @@ namespace Keysharp.Core.Windows
 
 		internal WindowManager() => Script.TheScript.ProcessesData.CurrentThreadID = WindowsAPI.GetCurrentThreadId();
 
-		internal override WindowItemBase CreateWindow(nint id) => new WindowItem(id);
+		internal override WindowItemBase CreateWindow(nint id)
+			=> TheScript.WindowProvider.windowCache.GetOrAdd(id, _ => new WindowItem(id));
 
 		internal override IEnumerable<WindowItemBase> FilterForGroups(IEnumerable<WindowItemBase> windows)
 		{
@@ -155,7 +156,7 @@ namespace Keysharp.Core.Windows
 			var ctrl = WindowsAPI.WindowFromPoint(location);
 
 			if (ctrl != 0)
-				return new WindowItem(ctrl);
+				return TheScript.WindowProvider.Manager.CreateWindow(ctrl);
 
 			return null;
 		}

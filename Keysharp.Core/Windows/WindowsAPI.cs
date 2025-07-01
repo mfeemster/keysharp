@@ -1137,6 +1137,11 @@ namespace Keysharp.Core.Windows
 		internal const long ERROR_ALREADY_EXISTS = 183L;
 		internal const long ERROR_INVALID_HOOK_HANDLE = 1404L;
 
+		internal const uint EVENT_OBJECT_DESTROY = 0x8001;
+		internal const uint WINEVENT_OUTOFCONTEXT = 0x0000;
+		internal const uint WINEVENT_SKIPOWNPROCESS = 0x0002;
+		internal const int OBJID_WINDOW = 0;
+
 		internal const string dwmapi = "dwmapi.dll",
 							  kernel32 = "kernel32.dll",
 							  shell32 = "shell32.dll",
@@ -2118,6 +2123,27 @@ namespace Keysharp.Core.Windows
 		internal static extern uint GetProcessImageFileName(nint hProcess, [Out, MarshalAs(UnmanagedType.LPTStr)] StringBuilder lpExeName, uint nSize);
 		[DllImport(kernel32, CharSet = CharSet.Auto, SetLastError = true)]
 		internal static extern uint QueryDosDevice(string lpDeviceName, StringBuilder lpTargetPath, uint ucchMax);
+
+		[DllImport(user32)]
+		internal static extern nint SetWinEventHook(
+			uint eventMin, uint eventMax,
+			nint hmodWinEventProc,
+			WinEventProc lpfnWinEventProc,
+			uint idProcess, uint idThread,
+			uint dwFlags);
+
+		[DllImport(user32)]
+		internal static extern bool UnhookWinEvent(nint hWinEventHook);
+
+		// The delegate for our hook callback
+		internal delegate void WinEventProc(
+			nint hWinEventHook,
+			uint eventType,
+			nint hwnd,
+			int idObject,
+			int idChild,
+			uint dwEventThread,
+			uint dwmsEventTime);
 	}
 }
 #endif

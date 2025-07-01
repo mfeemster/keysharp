@@ -18,9 +18,10 @@ namespace Keysharp.Core.Windows
 	{
 		private readonly LowLevelKeyboardProc kbdHandlerDel;
 		private readonly LowLevelMouseProc mouseHandlerDel;
+		private readonly WinEventProc winEventDel;
 		private bool pendingDeadKeyInvisible;
 		private readonly List<DeadKeyRecord> pendingDeadKeys = [];
-		private StaThreadWithMessageQueue thread;
+		private StaThreadWithMessageQueue thread = TheScript.LowLatencyWorkerThread;
 		private bool uwpAppFocused;
 		private nint uwpHwndChecked = 0;
 		internal WindowsHookThread()
@@ -193,6 +194,12 @@ namespace Keysharp.Core.Windows
 			kbdMsSender = new WindowsKeyboardMouseSender();
 			kbdHandlerDel = new LowLevelKeyboardProc(LowLevelKeybdHandler);
 			mouseHandlerDel = new LowLevelMouseProc(LowLevelMouseHandler);
+			winEventDel = new WinEventProc(WinEventHandler);
+			thread.BeginInvoke(Func<object>() =>
+			{
+				winDestroyEventHook = SetWinEventHook(EVENT_OBJECT_DESTROY, EVENT_OBJECT_DESTROY, 0, winEventDel, 0, 0, WINEVENT_OUTOFCONTEXT);
+				return null;
+			});
 		}
 
 		public override void SimulateKeyPress(uint key)
@@ -4673,6 +4680,8 @@ namespace Keysharp.Core.Windows
 			//WindowsAPI.PostQuitMessage(exitCode);
 			AddRemoveHooks(HookType.None); // Remove all hooks. By contrast, registered hotkeys are unregistered below.
 			Unhook(Script.TheScript.playbackHook); // Would be unusual for this to be installed during exit, but should be checked for completeness.
+			if (winDestroyEventHook != 0)
+				UnhookWinEvent(winDestroyEventHook);
 			thread?.Dispose();
 		}
 
@@ -5212,10 +5221,6 @@ namespace Keysharp.Core.Windows
 				return DefaultObject;
 			};
 
-			//Do this here on the first time through because it's only ever needed if a hook is added.
-			if (thread == null && hooksToBeActive > HookType.None)
-				thread = new ();//This is needed to ensure that the hooks are run on the main thread.
-
 			//Any modifications to the hooks must be done on the hook thread.
 			_ = Invoke(func);
 			return problem_activating_hooks;
@@ -5372,6 +5377,26 @@ namespace Keysharp.Core.Windows
 				mutex.Close();  // This facilitates other instances of the program getting the proper last_error value.
 
 			return last_error == ERROR_ALREADY_EXISTS;
+		}
+
+		private static void WinEventHandler(
+			nint hWinEventHook,
+			uint eventType,
+			nint hwnd,
+			int idObject,
+			int idChild,
+			uint dwEventThread,
+			uint dwmsEventTime)
+		{
+			if (idObject != OBJID_WINDOW)
+				return;
+
+			switch (eventType)
+			{
+				case EVENT_OBJECT_DESTROY:
+					TheScript.WindowProvider.windowCache.TryRemove(hwnd);
+					break;
+			}
 		}
 
 		private class DeadKeyRecord

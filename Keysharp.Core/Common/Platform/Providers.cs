@@ -66,6 +66,8 @@
 
 	internal class WindowProvider
 	{
+		internal ConcurrentLfu<nint, WindowItem> windowCache = new(Caching.DefaultCacheCapacity);
+
 		internal WindowManagerBase Manager { get; } =
 #if WINDOWS
 			new WindowManager()
