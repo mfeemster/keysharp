@@ -116,13 +116,16 @@
 		internal static Icon GetIcon(string source, int n)
 		{
 #if WINDOWS
-			var prc = Process.GetCurrentProcess().Handle;
-			var icon = WindowsAPI.ExtractIcon(prc, source, n);
+			using (var prc = Process.GetCurrentProcess())
+			{
+				var hPrc = prc.Handle;
+				var icon = WindowsAPI.ExtractIcon(hPrc, source, n);
 
-			if (icon != 0)
-				return Icon.FromHandle(icon);
+				if (icon != 0)
+					return Icon.FromHandle(icon);
 
-			return Icon.ExtractAssociatedIcon(source);
+				return Icon.ExtractAssociatedIcon(source);
+			}
 #else
 			return null;
 #endif
