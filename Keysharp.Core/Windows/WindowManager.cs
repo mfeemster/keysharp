@@ -33,7 +33,7 @@ namespace Keysharp.Core.Windows
 
 		internal WindowManager() => Script.TheScript.ProcessesData.CurrentThreadID = WindowsAPI.GetCurrentThreadId();
 
-		internal override WindowItemBase CreateWindow(nint id) => TheScript.WindowProvider.windowCache.GetOrAdd(id, _ => new WindowItem(id));
+		internal override WindowItemBase CreateWindow(nint id) => new WindowItem(id);
 
 		internal override IEnumerable<WindowItemBase> FilterForGroups(IEnumerable<WindowItemBase> windows)
 		{

@@ -20,7 +20,7 @@ namespace Keysharp.Core.Windows
 		private readonly LowLevelMouseProc mouseHandlerDel;
 		private bool pendingDeadKeyInvisible;
 		private readonly List<DeadKeyRecord> pendingDeadKeys = [];
-		private StaThreadWithMessageQueue thread = TheScript.LowLatencyWorkerThread;
+		private StaThreadWithMessageQueue thread;
 		private bool uwpAppFocused;
 		private nint uwpHwndChecked = 0;
 		internal WindowsHookThread()
@@ -5211,6 +5211,10 @@ namespace Keysharp.Core.Windows
 
 				return DefaultObject;
 			};
+
+			//Do this here on the first time through because it's only ever needed if a hook is added.
+			if (thread == null && hooksToBeActive > HookType.None)
+				thread = new();//This is needed to ensure that the hooks are run on the main thread.
 
 			//Any modifications to the hooks must be done on the hook thread.
 			_ = Invoke(func);

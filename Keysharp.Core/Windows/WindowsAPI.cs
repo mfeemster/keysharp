@@ -1137,11 +1137,6 @@ namespace Keysharp.Core.Windows
 		internal const long ERROR_ALREADY_EXISTS = 183L;
 		internal const long ERROR_INVALID_HOOK_HANDLE = 1404L;
 
-		internal const uint EVENT_OBJECT_DESTROY = 0x8001;
-		internal const uint WINEVENT_OUTOFCONTEXT = 0x0000;
-		internal const uint WINEVENT_SKIPOWNPROCESS = 0x0002;
-		internal const int OBJID_WINDOW = 0;
-
 		internal const string dwmapi = "dwmapi.dll",
 							  kernel32 = "kernel32.dll",
 							  shell32 = "shell32.dll",
