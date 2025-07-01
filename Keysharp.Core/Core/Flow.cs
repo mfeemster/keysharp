@@ -431,7 +431,9 @@ namespace Keysharp.Core
 		internal static void TryDoEvents(bool allowExit = true, bool yieldTick = true)
 		{
 			var start = yieldTick ? Environment.TickCount : default;
-			Script.TheScript.loopShouldDoEvents = false;
+			var script = Script.TheScript;
+			script.loopShouldDoEvents = false;
+			script.tickTimer.Start();
 
 			if (allowExit)
 			{
