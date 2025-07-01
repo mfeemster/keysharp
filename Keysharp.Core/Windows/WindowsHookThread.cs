@@ -5214,7 +5214,7 @@ namespace Keysharp.Core.Windows
 
 			//Do this here on the first time through because it's only ever needed if a hook is added.
 			if (thread == null && hooksToBeActive > HookType.None)
-				thread = new ();//This is needed to ensure that the hooks are run on the main thread.
+				thread = new();//This is needed to ensure that the hooks are run on the main thread.
 
 			//Any modifications to the hooks must be done on the hook thread.
 			_ = Invoke(func);

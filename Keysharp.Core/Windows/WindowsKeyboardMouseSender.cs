@@ -787,7 +787,7 @@ namespace Keysharp.Core.Windows
 									// of its title bar buttons is down-clicked.
 									workaroundVK = vk;
 									workaroundHitTest = hitTest;
-									_ = WindowItem.SetForegroundWindowEx(new WindowItem(parentUnderCursor)); // Try to reproduce customary behavior.
+									_ = WindowItem.SetForegroundWindowEx(TheScript.WindowProvider.Manager.CreateWindow(parentUnderCursor)); // Try to reproduce customary behavior.
 									// For simplicity, aRepeatCount>1 is ignored and DoMouseDelay() is not done.
 									return;
 								}
@@ -2055,7 +2055,7 @@ namespace Keysharp.Core.Windows
 			var threadsAreAttached = false; // Set default.
 			uint keybdLayoutThread = 0;     //
 			uint targetThread = 0;
-			var tempitem = new WindowItem(targetWindow);
+			var tempitem = script.WindowProvider.Manager.CreateWindow(targetWindow);
 			var pd = script.ProcessesData;
 
 			if (targetWindow != 0) // Caller has ensured this is NULL for SendInput and SendPlay modes.
