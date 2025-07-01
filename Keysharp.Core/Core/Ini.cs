@@ -201,10 +201,7 @@
 
 				foreach (DictionaryEntry kv in secdkt)
 					if (((string)kv.Key)[0] != ';')
-					{
-						_ = sb.Append($"{kv.Key}={kv.Value}");
-						_ = sb.Append('\n');
-					}
+						_ = sb.Append($"{kv.Key}={kv.Value}\n");
 			}
 
 			result = sb.ToString().TrimEnd('\n');
