@@ -2123,27 +2123,6 @@ namespace Keysharp.Core.Windows
 		internal static extern uint GetProcessImageFileName(nint hProcess, [Out, MarshalAs(UnmanagedType.LPTStr)] StringBuilder lpExeName, uint nSize);
 		[DllImport(kernel32, CharSet = CharSet.Auto, SetLastError = true)]
 		internal static extern uint QueryDosDevice(string lpDeviceName, StringBuilder lpTargetPath, uint ucchMax);
-
-		[DllImport(user32)]
-		internal static extern nint SetWinEventHook(
-			uint eventMin, uint eventMax,
-			nint hmodWinEventProc,
-			WinEventProc lpfnWinEventProc,
-			uint idProcess, uint idThread,
-			uint dwFlags);
-
-		[DllImport(user32)]
-		internal static extern bool UnhookWinEvent(nint hWinEventHook);
-
-		// The delegate for our hook callback
-		internal delegate void WinEventProc(
-			nint hWinEventHook,
-			uint eventType,
-			nint hwnd,
-			int idObject,
-			int idChild,
-			uint dwEventThread,
-			uint dwmsEventTime);
 	}
 }
 #endif

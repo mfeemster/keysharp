@@ -1,4 +1,6 @@
-﻿namespace Keysharp.Core.Common.Platform
+﻿using BitFaster.Caching;
+
+namespace Keysharp.Core.Common.Platform
 {
 	internal class ControlProvider
 	{
@@ -66,7 +68,11 @@
 
 	internal class WindowProvider
 	{
-		internal ConcurrentLfu<nint, WindowItem> windowCache = new(Caching.DefaultCacheCapacity);
+		internal ICache<nint, WindowItem> windowCache = 
+			new ConcurrentLfuBuilder<nint, WindowItem>()
+				.WithCapacity(Caching.DefaultCacheCapacity)
+				.WithExpireAfterAccess(TimeSpan.FromSeconds(60))
+				.Build();
 
 		internal WindowManagerBase Manager { get; } =
 #if WINDOWS
