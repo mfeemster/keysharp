@@ -389,7 +389,8 @@
 
 #endif
 		}
-
+		
+#if !WINDOWS
 		/// <summary>
 		/// Private helper to load an .ini file.
 		/// </summary>
@@ -429,4 +430,5 @@
 			return inidkt;
 		}
 	}
+#endif
 }
