@@ -38,7 +38,7 @@ namespace Keysharp.Core.Common.Threading
 		internal bool storeCapsLockMode = true;
 		internal int threadId;
 		internal DateTime threadStartTime = DateTime.MinValue;
-		internal object titleMatchMode = 2L;
+		internal long titleMatchMode = 2L;
 		internal bool titleMatchModeSpeed = true;
 		internal int UninterruptibleDuration = 17;
 		internal long winDelay = 100L;
