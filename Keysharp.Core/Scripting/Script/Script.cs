@@ -22,7 +22,7 @@ namespace Keysharp.Scripting
 		private static Encoding enc1252 = Encoding.Default;
 #endif
 		public const char dotNetMajorVersion = '9';
-		internal System.Timers.Timer tickTimer = new System.Timers.Timer(SLEEP_INTERVAL);
+		internal System.Timers.Timer tickTimer = new System.Timers.Timer(SLEEP_INTERVAL * 4);
 		internal volatile bool loopShouldDoEvents = false;
 		internal volatile bool hasExited = false;
 		public bool ForceKeybdHook;
@@ -223,6 +223,7 @@ namespace Keysharp.Scripting
 			Reflections = new ();
 			SetInitialFloatFormat();//This must be done intially and not just when A_FormatFloat is referenced for the first time.
 			tickTimer.Elapsed += TickTimerCallback;
+			tickTimer.AutoReset = false;
 			tickTimer.Start();
 		}
 

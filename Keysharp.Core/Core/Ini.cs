@@ -201,10 +201,10 @@
 
 				foreach (DictionaryEntry kv in secdkt)
 					if (((string)kv.Key)[0] != ';')
-						_ = sb.AppendLine($"{kv.Key}={kv.Value}");
+						_ = sb.Append($"{kv.Key}={kv.Value}\n");
 			}
 
-			result = sb.ToString().TrimEnd('\n', '\r');
+			result = sb.ToString().TrimEnd('\n');
 			return result;
 #endif
 		}
@@ -235,7 +235,7 @@
 				i++;
 			}
 
-			return sb.ToString().TrimEnd('\r', '\n');
+			return sb.ToString().TrimEnd('\n');
 		}
 
 		/// <summary>
@@ -301,9 +301,9 @@
 			{
 				var err = Marshal.GetLastWin32Error();
 				return Errors.OSErrorOccurred(
-						   new System.ComponentModel.Win32Exception(err),
-						   $"Error writing {(string.IsNullOrEmpty(k) ? "section" : "key")} to INI '{file}'"
-					   );
+					new System.ComponentModel.Win32Exception(err),
+					$"Error writing {(string.IsNullOrEmpty(k) ? "section" : "key")} to INI '{file}'"
+				);
 			}
 
 #else
@@ -373,7 +373,7 @@
 				}
 
 				writer.Flush();
-				var text = writer.ToString().TrimEnd('\n', '\r');
+				var text = writer.ToString();
 
 				if (File.Exists(file))
 					File.Delete(file);
@@ -389,7 +389,8 @@
 
 #endif
 		}
-
+		
+#if !WINDOWS
 		/// <summary>
 		/// Private helper to load an .ini file.
 		/// </summary>
@@ -428,5 +429,6 @@
 
 			return inidkt;
 		}
+#endif
 	}
 }
