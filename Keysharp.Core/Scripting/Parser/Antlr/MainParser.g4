@@ -292,7 +292,7 @@ defaultClause
     ;
 
 labelledStatement
-    : {InputStream.LA(1) != MainLexer.Default}? identifier ':' 
+    : Identifier ':' // Identifier used instead of identified because it musn't include Default (gets confused with switch default clause)
     ;
 
 gotoStatement

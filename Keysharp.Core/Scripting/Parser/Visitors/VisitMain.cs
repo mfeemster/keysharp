@@ -351,7 +351,7 @@ namespace Keysharp.Scripting
                 LabeledStatementSyntax label = null;
                 if (context.labelledStatement() != null)
                 {
-                    parser.loopLabel = context.labelledStatement().identifier().GetText();
+                    parser.loopLabel = context.labelledStatement().Identifier().GetText();
                     label = (LabeledStatementSyntax)VisitLabelledStatement(context.labelledStatement());
                 }
                 else
