@@ -787,7 +787,7 @@ namespace Keysharp.Core.Windows
 									// of its title bar buttons is down-clicked.
 									workaroundVK = vk;
 									workaroundHitTest = hitTest;
-									_ = WindowItem.SetForegroundWindowEx(new WindowItem(parentUnderCursor)); // Try to reproduce customary behavior.
+									_ = WindowItem.SetForegroundWindowEx(TheScript.WindowProvider.Manager.CreateWindow(parentUnderCursor)); // Try to reproduce customary behavior.
 									// For simplicity, aRepeatCount>1 is ignored and DoMouseDelay() is not done.
 									return;
 								}
@@ -1695,7 +1695,7 @@ namespace Keysharp.Core.Windows
 			                return;
 
 			*/
-			_ = ht.Invoke(() => Script.TheScript.playbackHook = SetWindowsHookEx(WH_JOURNALPLAYBACK, PlaybackHandler, GetModuleHandle(Process.GetCurrentProcess().MainModule.ModuleName), 0));
+			_ = ht.Invoke(() => Script.TheScript.playbackHook = SetWindowsHookEx(WH_JOURNALPLAYBACK, PlaybackHandler, Marshal.GetHINSTANCE(typeof(Script).Module), 0));
 
 			if (script.playbackHook == 0)
 				return;
@@ -1948,6 +1948,7 @@ namespace Keysharp.Core.Windows
 		{
 			if (keys?.Length == 0)
 				return;
+
 			var script = Script.TheScript;
 			var origLastPeekTime = script.lastPeekTime;
 			var modsExcludedFromBlind = 0u;// For performance and also to reserve future flexibility, recognize {Blind} only when it's the first item in the string.
@@ -2054,7 +2055,7 @@ namespace Keysharp.Core.Windows
 			var threadsAreAttached = false; // Set default.
 			uint keybdLayoutThread = 0;     //
 			uint targetThread = 0;
-			var tempitem = new WindowItem(targetWindow);
+			var tempitem = script.WindowProvider.Manager.CreateWindow(targetWindow);
 			var pd = script.ProcessesData;
 
 			if (targetWindow != 0) // Caller has ensured this is NULL for SendInput and SendPlay modes.

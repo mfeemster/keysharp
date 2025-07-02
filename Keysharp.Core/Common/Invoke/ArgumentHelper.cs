@@ -461,7 +461,6 @@ namespace Keysharp.Core.Common.Invoke
 				InvalidType:
 				// Invalid type tag
 				_ = Errors.ValueErrorOccurred($"Arg or return type of {tag} is invalid.");
-				
 				TypeDetermined:
 
 				if (isReturn)

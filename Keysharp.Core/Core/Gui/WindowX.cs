@@ -103,7 +103,8 @@ namespace Keysharp.Core
 		{
 			var name = groupName.As().ToLowerInvariant();
 			var m = mode.As();
-			var windowGroups = Script.TheScript.WindowProvider.Manager.Groups;
+			var mgr = Script.TheScript.WindowProvider.Manager;
+			var windowGroups = mgr.Groups;
 
 			if (windowGroups.TryGetValue(name, out var group))
 			{
@@ -117,26 +118,26 @@ namespace Keysharp.Core
 				{
 					case Keyword_A:
 						while (stack.Count != 0)
-							_ = new WindowItem(new nint(stack.Pop())).Close();
+							_ = mgr.CreateWindow(new nint(stack.Pop())).Close();
 
 						_ = windowGroups.Remove(name);
 						break;
 
 					case Keyword_R:
 						if (stack.Count > 0)
-							_ = new WindowItem(new nint(stack.Pop())).Close();
+							_ = mgr.CreateWindow(new nint(stack.Pop())).Close();
 
 						if (stack.Count > 0 && !windows.Any(w => w.Active))
-							_ = new WindowItem(new nint(stack.Peek())).Active = true;
+							_ = mgr.CreateWindow(new nint(stack.Peek())).Active = true;
 
 						break;
 
 					case "":
 						if (stack.Count > 0)
-							_ = new WindowItem(new nint(stack.Pop())).Close();
+							_ = mgr.CreateWindow(new nint(stack.Pop())).Close();
 
 						if (stack.Count > 0)
-							new WindowItem(new nint(stack.ToArray()[stack.Count - 1])).Active = true;
+							mgr.CreateWindow(new nint(stack.ToArray()[stack.Count - 1])).Active = true;
 
 						break;
 				}

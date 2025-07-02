@@ -8,7 +8,6 @@ namespace Keysharp.Core.Windows
 	internal class WindowItem : WindowItemBase
 	{
 		private int lastChildCount = 64;
-		private string path = "";
 
 		internal override bool Active
 		{
@@ -80,7 +79,7 @@ namespace Keysharp.Core.Windows
 					_ = WindowsAPI.EnumChildWindows(Handle, (nint hwnd, int lParam) =>
 					{
 						//if (detectHiddenText || WindowsAPI.IsWindowVisible(hwnd))
-						_ = children.Add(new WindowItem(hwnd));
+						_ = children.Add(TheScript.WindowProvider.Manager.CreateWindow(hwnd));
 						return true;
 					}, 0);
 				}
@@ -92,7 +91,7 @@ namespace Keysharp.Core.Windows
 					form.Invoke(() =>
 					{
 						foreach (var ctrl in form.GetAllControlsRecursive<Control>())
-							_ = children.Add(new WindowItem(ctrl.Handle));//HashSet takes care of avoiding dupes.
+							_ = children.Add(TheScript.WindowProvider.Manager.CreateWindow(ctrl.Handle));//HashSet takes care of avoiding dupes.
 					});
 				}
 
@@ -177,43 +176,26 @@ namespace Keysharp.Core.Windows
 			}
 		}
 
-		internal override WindowItemBase NonChildParentWindow => new WindowItem(WindowsAPI.GetNonChildParent(Handle));
+		internal override WindowItemBase NonChildParentWindow => TheScript.WindowProvider.Manager.CreateWindow(WindowsAPI.GetNonChildParent(Handle));
 
-		internal override WindowItemBase ParentWindow => new WindowItem(WindowsAPI.GetAncestor(Handle, gaFlags.GA_PARENT));
+		internal override WindowItemBase ParentWindow => TheScript.WindowProvider.Manager.CreateWindow(WindowsAPI.GetAncestor(Handle, gaFlags.GA_PARENT));
 
 		internal override string Path
 		{
 			get
 			{
-				if (path.Length > 0)
-					return path;
+				if (!processPath.IsNullOrEmpty())
+					return processPath;
 
 				_ = WindowsAPI.GetWindowThreadProcessId(Handle, out var pid);
 
 				if (pid == 0)
 					return DefaultErrorString;
 
-				var hProc = WindowsAPI.OpenProcess(ProcessAccessTypes.PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
+				if (Processes.GetProcessName(pid, out processPath) == 0)
+					return (string)Errors.OSErrorOccurred(new Win32Exception(Marshal.GetLastWin32Error()), "", DefaultErrorString);
 
-				if (hProc == 0)
-					return DefaultErrorString;
-
-				try
-				{
-					var sb = new StringBuilder(1024);
-
-					if (WindowsAPI.GetProcessImageFileName(hProc, sb, (uint)sb.Capacity) > 0)
-					{
-						// e.g. "C:\Windows\System32\notepad.exe" → "notepad.exe"
-						return path = System.IO.Path.GetFileName(sb.ToString());
-					}
-				}
-				finally
-				{
-					_ = WindowsAPI.CloseHandle(hProc);
-				}
-
-				return DefaultObject;
+				return processPath;
 			}
 		}
 
@@ -223,6 +205,25 @@ namespace Keysharp.Core.Windows
 			{
 				_ = WindowsAPI.GetWindowThreadProcessId(Handle, out var n);
 				return n;
+			}
+		}
+
+		internal override string ProcessName
+		{
+			get
+			{
+				if (!processName.IsNullOrEmpty())
+					return processName;
+
+				_ = WindowsAPI.GetWindowThreadProcessId(Handle, out var pid);
+
+				if (pid == 0)
+					return DefaultErrorString;
+
+				if (Processes.GetProcessName(pid, out processName) == 0)
+					return (string)Errors.OSErrorOccurred(new Win32Exception(Marshal.GetLastWin32Error()), "", DefaultErrorString);
+
+				return processName;
 			}
 		}
 
@@ -460,7 +461,7 @@ namespace Keysharp.Core.Windows
 
 			if (origForegroundWnd != 0) // Might be NULL from above.
 			{
-				var foregroundwin = new WindowItem(origForegroundWnd);
+				var foregroundwin = TheScript.WindowProvider.Manager.CreateWindow(origForegroundWnd);
 				// Based on MSDN docs, these calls should always succeed due to the other
 				// checks done above (e.g. that none of the HWND's are NULL):
 				foreThread = WindowsAPI.GetWindowThreadProcessId(origForegroundWnd, out var id);

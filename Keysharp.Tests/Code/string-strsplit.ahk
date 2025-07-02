@@ -89,3 +89,21 @@ if (exp = y)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
+
+x := "a | b | c"
+y := StrSplit(x, " | ")
+exp := [ "a", "b", "c" ]
+
+if (exp = y)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+
+x := "a | b , c"
+y := StrSplit(x, [" | ", " , "])
+exp := [ "a", "b", "c" ]
+
+if (exp = y)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"

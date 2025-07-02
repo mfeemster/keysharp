@@ -421,13 +421,14 @@ namespace Keysharp.Main
 
 		private static int Message(string text, bool error)
 		{
+			const string marker = "\nusing static ";
+			int idx = text.IndexOf(marker, StringComparison.Ordinal);
+			if (idx >= 0)
+				text = text.Substring(0, idx);
+
 			if (error)
 			{
-				const string marker = "\nusing static ";
-				int idx = text.IndexOf(marker, StringComparison.Ordinal);
-				ch.PrintCompilerErrors((idx >= 0)
-					 ? text.Substring(0, idx)
-					 : text);
+				ch.PrintCompilerErrors(text);
 			}
 			else
 			{

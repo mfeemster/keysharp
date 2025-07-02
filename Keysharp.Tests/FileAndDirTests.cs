@@ -171,6 +171,7 @@ namespace Keysharp.Tests
 			Assert.IsTrue(File.Exists("./DirCopy3/file2.txt"));
 			Assert.IsTrue(File.Exists("./DirCopy3/file3txt"));
 			var threw = false;
+
 			try
 			{
 				_ = Dir.DirMove("./DirCopy3", "./DirCopy3");//Both of these should throw because ./DirCopy3 already exists.
@@ -182,6 +183,7 @@ namespace Keysharp.Tests
 
 			Assert.AreEqual(threw, true);
 			threw = false;
+
 			try
 			{
 				_ = Dir.DirMove("./DirCopy3", "./DirCopy3", 0);
@@ -190,6 +192,7 @@ namespace Keysharp.Tests
 			{
 				threw = true;
 			}
+
 			Assert.AreEqual(threw, true);
 			_ = Dir.DirCopy(dir, "./DirMove");
 			_ = Dir.DirMove("./DirMove", "./DirCopy3", 1); //Will copy into because ./DirCopy3 already exists.

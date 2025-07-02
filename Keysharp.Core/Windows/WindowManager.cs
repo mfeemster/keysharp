@@ -6,7 +6,7 @@ namespace Keysharp.Core.Windows
 	/// </summary>
 	internal class WindowManager : WindowManagerBase
 	{
-		internal override WindowItemBase ActiveWindow => new WindowItem(WindowsAPI.GetForegroundWindow());
+		internal override WindowItemBase ActiveWindow => TheScript.WindowProvider.Manager.CreateWindow(WindowsAPI.GetForegroundWindow());
 		private int lastWindowCount = 64;
 
 		/// <summary>
@@ -18,10 +18,11 @@ namespace Keysharp.Core.Windows
 			{
 				var windows = new List<WindowItemBase>(lastWindowCount);
 				var doHidden = ThreadAccessors.A_DetectHiddenWindows;
+				var mgr = Script.TheScript.WindowProvider.Manager;
 				_ = WindowsAPI.EnumWindows(delegate (nint hwnd, int lParam)
 				{
 					if (doHidden || WindowsAPI.IsWindowVisible(hwnd))
-						windows.Add(new WindowItem(hwnd));
+						windows.Add(mgr.CreateWindow(hwnd));
 
 					return true;
 				}, 0);
@@ -71,7 +72,7 @@ namespace Keysharp.Core.Windows
 
 				if (mm == 3 || !hasTitle)
 				{
-					found = new WindowItem(hwnd);
+					found = Script.TheScript.WindowProvider.Manager.CreateWindow(hwnd);
 
 					if ((!hasTitle || criteria.Title.Equals(found.Title)) && criteria.ClassName != null && criteria.ClassName.Equals(found.ClassName))
 						return found;
@@ -155,7 +156,7 @@ namespace Keysharp.Core.Windows
 			var ctrl = WindowsAPI.WindowFromPoint(location);
 
 			if (ctrl != 0)
-				return new WindowItem(ctrl);
+				return Script.TheScript.WindowProvider.Manager.CreateWindow(ctrl);
 
 			return null;
 		}

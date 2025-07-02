@@ -850,9 +850,19 @@ MyGui.UseGroup()
 Tab.UseTab("GroupBoxes")
 MyGui.AddText("s14 xm y+10 cBlue", "This should be below.")
 
-	; ┌────────────────┐
-	; │  MENU SECTION  │
-	; └────────────────┘
+; Add some radio groups and also add a dummy GroupBox next to it to ensure they both show.
+; This test whether starting/stopping groups is done properly.
+
+dummyEdit := MyGui.AddEdit("xc+10 w216")
+MyGui.AddRadio("x12 y+5 Checked", "RB11")
+MyGui.AddRadio("x+7", "RB12")
+MyGui.AddRadio("x+69 Checked Group", "RB21")
+MyGui.AddRadio("x+7", "RB22")
+MyGui.AddGroupBox("x+40 y+0 w200 h200 Section", "THIS SHOULD BE VISIBLE")
+
+; ┌────────────────┐
+; │  MENU SECTION  │
+; └────────────────┘
 
 	MyMenu := Menu()
 	MyMenu.Add("Item 1", "MenuHandler")

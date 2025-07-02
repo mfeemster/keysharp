@@ -118,13 +118,18 @@ namespace Keysharp.Core
 		internal static Icon GetIcon(string source, int n)
 		{
 #if WINDOWS
-			var prc = Process.GetCurrentProcess().Handle;
-			var icon = WindowsAPI.ExtractIcon(prc, source, n);
 
-			if (icon != 0)
-				return Icon.FromHandle(icon);
+			using (var prc = Process.GetCurrentProcess())
+			{
+				var hPrc = prc.Handle;
+				var icon = WindowsAPI.ExtractIcon(hPrc, source, n);
 
-			return Icon.ExtractAssociatedIcon(source);
+				if (icon != 0)
+					return Icon.FromHandle(icon);
+
+				return Icon.ExtractAssociatedIcon(source);
+			}
+
 #else
 			return null;
 #endif
@@ -275,7 +280,7 @@ namespace Keysharp.Core
 						var icon2 = new Icon(dst.BaseStream);
 #if LINUX
 						var bmp = icon2.BuildBitmapOnWin32();
-#else						
+#else
 						var bmp = icon2.ToBitmap();
 
 						//If there is an alpha channel on this icon, it needs to be applied here,
@@ -293,6 +298,7 @@ namespace Keysharp.Core
 								}
 							}
 						}
+
 #endif
 						splitIcons.Add((icon2, bmp));
 					}

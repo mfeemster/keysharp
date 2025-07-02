@@ -5181,7 +5181,7 @@ namespace Keysharp.Core.Windows
 						if ((kbdHook = SetWindowsHookEx(WH_KEYBOARD_LL,
 														kbdHandlerDel,//This must be a class member or else it will go out of scope and cause the program to crash unpredictably.
 														//GetModuleHandle(Process.GetCurrentProcess().MainModule.ModuleName), 0)) == 0)
-														Process.GetCurrentProcess().MainModule.BaseAddress, 0)) == 0)
+														Marshal.GetHINSTANCE(typeof(Script).Module), 0)) == 0)
 							problem_activating_hooks = true;
 					}
 				}
@@ -5200,7 +5200,7 @@ namespace Keysharp.Core.Windows
 						if ((mouseHook = SetWindowsHookEx(WH_MOUSE_LL,
 														  mouseHandlerDel,
 														  //GetModuleHandle(Process.GetCurrentProcess().MainModule.ModuleName), 0)) == 0)
-														  Process.GetCurrentProcess().MainModule.BaseAddress, 0)) == 0)
+														  Marshal.GetHINSTANCE(typeof(Script).Module), 0)) == 0)
 							problem_activating_hooks = true;
 					}
 				}
@@ -5214,7 +5214,7 @@ namespace Keysharp.Core.Windows
 
 			//Do this here on the first time through because it's only ever needed if a hook is added.
 			if (thread == null && hooksToBeActive > HookType.None)
-				thread = new ();//This is needed to ensure that the hooks are run on the main thread.
+				thread = new();//This is needed to ensure that the hooks are run on the main thread.
 
 			//Any modifications to the hooks must be done on the hook thread.
 			_ = Invoke(func);

@@ -11,7 +11,6 @@ namespace Keysharp.Core
 		internal string runDomain;
 		internal SecureString runPassword;
 		internal string runUser;
-		internal ConcurrentLfu<int, ProcessModule> processModuleCache = new(Caching.DefaultCacheCapacity / 2);
 	}
 
 	/// <summary>
@@ -48,24 +47,26 @@ namespace Keysharp.Core
 		/// <returns>The Process ID (PID) of the specified process. If a matching process is not found or cannot be manipulated, zero is returned.</returns>
 		public static long ProcessClose(object pidOrName)
 		{
-			var name = pidOrName.As();
-			var proc = string.IsNullOrEmpty(name) ? Process.GetCurrentProcess() : FindProcess(name);//Will handle name string or pid int.
+			var name = pidOrName.As(); //Will handle name string or pid int.
 
-			if (proc == null)
-				return 0L;
-
-			try
+			using (var proc = string.IsNullOrEmpty(name) ? Process.GetCurrentProcess() : FindProcess(name))
 			{
-				proc.Kill();
-				return proc.Id;
+				if (proc == null)
+					return 0L;
+
+				try
+				{
+					proc.Kill();
+					return proc.Id;
+				}
+				catch (Win32Exception) { }
 			}
-			catch (Win32Exception) { }
 
 			return 0L;
 		}
 
 		/// <summary>
-		///Checks if the specified process exists.
+		/// Checks if the specified process exists.
 		/// </summary>
 		/// <param name="pidOrName">
 		/// Specify either a number (the PID) or a process name:<br/>
@@ -82,8 +83,80 @@ namespace Keysharp.Core
 		public static long ProcessExist(object pidOrName = null)
 		{
 			var name = pidOrName.As();
-			var proc = string.IsNullOrEmpty(name) ? Process.GetCurrentProcess() : FindProcess(name);
-			return proc != null ? proc.Id : 0L;
+
+			using (var proc = string.IsNullOrEmpty(name) ? Process.GetCurrentProcess() : FindProcess(name))
+			{
+				return proc != null ? proc.Id : 0L;
+			}
+		}
+
+		/// <summary>
+		/// Returns the executable name of the specified process.
+		/// </summary>
+		/// <param name="pidOrName">
+		/// Specify either a number (the PID) or a process name:<br/>
+		/// PID: The Process ID, which is a number that uniquely identifies one specific process (this number is valid only during the lifetime of that process).<br/>
+		/// The PID of a newly launched process can be determined via the Run function. Similarly, the PID of a window can be determined with <see cref="WinGetPID"/>. <see cref="ProcessExist"/> can also be used to discover a PID.<br/>
+		/// Name: The name of a process is usually the same as its executable (without path), e.g. notepad.exe or winword.exe. Since a name might match multiple running processes, only the first process will be operated upon. The name is not case-sensitive.<br/>
+		/// If omitted, the script’s own process is used.
+		/// </param>
+		/// <returns>
+		/// The executable name of the specified process, for example: <c>notepad.exe</c>.<br/>
+		/// Throws a TargetError if the process could not be found, or an OSError if the name could not be retrieved.
+		/// </returns>
+		public static string ProcessGetName(object pidOrName = null)
+		{
+			var name = pidOrName.As();
+
+			using (var proc = string.IsNullOrEmpty(name) ? Process.GetCurrentProcess() : FindProcess(name))
+			{
+				if (proc == null)
+					return (string)Errors.TargetErrorOccurred($"The specified process {pidOrName} was not found");
+
+#if WINDOWS
+
+				if (GetProcessName((uint)proc.Id, out string result) == 0)
+					return (string)Errors.OSErrorOccurred(new Win32Exception(Marshal.GetLastWin32Error()), "", DefaultErrorString);
+
+				return result;
+#else
+				using var module = proc.MainModule;
+				return module.ModuleName;
+#endif
+			}
+		}
+
+		/// <summary>
+		/// Returns the full path of the specified process’s executable.
+		/// </summary>
+		/// <param name="pidOrName">
+		/// Specify either a number (the PID) or a process name:<br/>
+		/// PID: The Process ID, which is a number that uniquely identifies one specific process (this number is valid only during the lifetime of that process).<br/>
+		/// The PID of a newly launched process can be determined via the Run function. Similarly, the PID of a window can be determined with <see cref="WinGetPID"/>. <see cref="ProcessExist"/> can also be used to discover a PID.<br/>
+		/// Name: The name of a process is usually the same as its executable (without path), e.g. notepad.exe or winword.exe. Since a name might match multiple running processes, only the first process will be operated upon. The name is not case-sensitive.<br/>
+		/// If omitted, the script’s own process is used.
+		/// </param>
+		/// <returns>
+		/// The full path of the specified process’s executable, for example: <c>C:\Windows\notepad.exe</c>.<br/>
+		/// Throws a TargetError if the process could not be found, or an OSError if the path could not be retrieved.
+		/// </returns>
+		public static string ProcessGetPath(object pidOrName = null)
+		{
+			var name = pidOrName.As();
+
+			using (var proc = string.IsNullOrEmpty(name) ? Process.GetCurrentProcess() : FindProcess(name))
+			{
+#if WINDOWS
+
+				if (GetProcessName((uint)proc.Id, out string result, false) == 0)
+					return (string)Errors.OSErrorOccurred(new Win32Exception(Marshal.GetLastWin32Error()), "", DefaultErrorString);
+
+				return result;
+#else
+				using var module = proc.MainModule;
+				return module.FileName;
+#endif
+			}
 		}
 
 		/// <summary>
@@ -113,38 +186,40 @@ namespace Keysharp.Core
 			var lvl = level.As();
 			var name = pidOrName.As();
 			var arg = lvl.ToLowerInvariant();
-			var proc = string.IsNullOrEmpty(name) ? Process.GetCurrentProcess() : FindProcess(name);
 
-			if (proc != null)
+			using (var proc = string.IsNullOrEmpty(name) ? Process.GetCurrentProcess() : FindProcess(name))
 			{
-				if (arg.Length == 1)
+				if (proc != null)
 				{
-					foreach (var mode in new[] { Keyword_Low, Keyword_BelowNormal, Keyword_Normal, Keyword_AboveNormal, Keyword_High, Keyword_Realtime })
+					if (arg.Length == 1)
 					{
-						if (mode[0] == arg[0])
+						foreach (var mode in new[] { Keyword_Low, Keyword_BelowNormal, Keyword_Normal, Keyword_AboveNormal, Keyword_High, Keyword_Realtime })
 						{
-							arg = mode;
-							break;
+							if (mode[0] == arg[0])
+							{
+								arg = mode;
+								break;
+							}
 						}
 					}
+
+					switch (arg)
+					{
+						case Keyword_Low: proc.PriorityClass = ProcessPriorityClass.Idle; break;
+
+						case Keyword_BelowNormal: proc.PriorityClass = ProcessPriorityClass.BelowNormal; break;
+
+						case Keyword_Normal: proc.PriorityClass = ProcessPriorityClass.Normal; break;
+
+						case Keyword_AboveNormal: proc.PriorityClass = ProcessPriorityClass.AboveNormal; break;
+
+						case Keyword_High: proc.PriorityClass = ProcessPriorityClass.High; break;
+
+						case Keyword_Realtime: proc.PriorityClass = ProcessPriorityClass.RealTime; break;
+					}
+
+					return proc.Id;
 				}
-
-				switch (arg)
-				{
-					case Keyword_Low: proc.PriorityClass = ProcessPriorityClass.Idle; break;
-
-					case Keyword_BelowNormal: proc.PriorityClass = ProcessPriorityClass.BelowNormal; break;
-
-					case Keyword_Normal: proc.PriorityClass = ProcessPriorityClass.Normal; break;
-
-					case Keyword_AboveNormal: proc.PriorityClass = ProcessPriorityClass.AboveNormal; break;
-
-					case Keyword_High: proc.PriorityClass = ProcessPriorityClass.High; break;
-
-					case Keyword_Realtime: proc.PriorityClass = ProcessPriorityClass.RealTime; break;
-				}
-
-				return proc.Id;
 			}
 
 			return 0;
@@ -186,7 +261,15 @@ namespace Keysharp.Core
 					break;
 			}
 
-			return proc != null ? proc.Id : 0;
+			long id = 0L;
+
+			if (proc != null)
+			{
+				id = proc.Id;
+				proc.Dispose();
+			}
+
+			return id;
 		}
 
 		/// <summary>
@@ -209,18 +292,20 @@ namespace Keysharp.Core
 		{
 			var name = pidOrName.As();
 			var time = timeout.Ad(-1.0);
-			var proc = FindProcess(name);
 
-			if (proc != null)
+			using (var proc = FindProcess(name))
 			{
-				var pid = proc.Id;
+				if (proc != null)
+				{
+					var pid = proc.Id;
 
-				if (time >= 0)
-					_ = proc.WaitForExit((int)(time * 1000));
-				else
-					proc.WaitForExit();
+					if (time >= 0)
+						_ = proc.WaitForExit((int)(time * 1000));
+					else
+						proc.WaitForExit();
 
-				return pid;
+					return pid;
+				}
 			}
 
 			return 0L;
@@ -368,6 +453,72 @@ namespace Keysharp.Core
 				return null;
 			}
 		}
+
+#if WINDOWS
+		/// <summary>
+		/// Internal helper to get a process name by PID.
+		/// </summary>
+		/// <param name="pid">The PID of the process.</param>
+		/// <param name="result">Set to the name of the process, or error string.</param>
+		/// <param name="getNameOnly">When true then only the name is returned (eg "notepad.exe"),
+		/// otherwise the full path.</param>
+		/// <returns>The length of the returned string.</returns>
+		internal static uint GetProcessName(uint pid, out string result, bool getNameOnly = true)
+		{
+			const int MAX_PATH = 1024;
+			result = DefaultErrorString;
+			var buf = new StringBuilder(MAX_PATH);
+			nint hProc = WindowsAPI.OpenProcess(ProcessAccessTypes.PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
+
+			if (hProc == 0)
+				return 0;
+
+			try
+			{
+				uint len = WindowsAPI.GetProcessImageFileName(hProc, buf, (uint)buf.Capacity);
+
+				if (len == 0)
+					return 0;
+
+				string path = buf.ToString(0, (int)len);
+
+				if (getNameOnly)
+				{
+					int idx = path.LastIndexOf('\\');
+					result = (idx >= 0) ? path.Substring(idx + 1) : path;
+					return (uint)result.Length;
+				}
+
+				// convert device path (\Device\HarddiskVolumeX\...) to drive letter C:\…
+				var device = new StringBuilder(MAX_PATH);
+				var logicalPath = path;
+
+				for (char drv = 'A'; drv <= 'Z'; drv++)
+				{
+					string drive = drv + ":";
+					uint rc = WindowsAPI.QueryDosDevice(drive, device, (uint)device.Capacity);
+
+					if (rc == 0)
+						continue;
+
+					string devPath = device.ToString();
+
+					if (path.StartsWith(devPath + "\\", StringComparison.OrdinalIgnoreCase))
+					{
+						logicalPath = drive + path.Substring(devPath.Length);
+						break;
+					}
+				}
+
+				result = logicalPath;
+				return (uint)result.Length;
+			}
+			finally
+			{
+				_ = WindowsAPI.CloseHandle(hProc);
+			}
+		}
+#endif
 
 		private static bool RunAsSpecified()
 		{

@@ -10,13 +10,13 @@ namespace Keysharp.Core
 			var (parsed, ptr) = CtrlTonint(ctrl);
 			var script = Script.TheScript;
 			var mgr = script.WindowProvider.Manager;
-			
+
 			if (parsed)
 			{
 				if (mgr.IsWindow(ptr))
 					return mgr.CreateWindow(ptr);
 				else if (throwifnull && !script.IsMainWindowClosing)
-					 _ = Errors.TargetErrorOccurred($"Could not find child control with handle: {ptr}");
+					_ = Errors.TargetErrorOccurred($"Could not find child control with handle: {ptr}");
 
 				return null;
 			}
@@ -78,7 +78,6 @@ namespace Keysharp.Core
 					}
 
 					childitem = parent.FirstChild(sc);
-
 					ThreadAccessors.A_DetectHiddenWindows = savedDHW;
 				}
 			}

@@ -327,7 +327,7 @@ break_twice:;
 						hm.hsResetUponMouseClick = val.Value;
 
 						if (hm.hsResetUponMouseClick != previousValue && hm.enabledCount != 0) // No need if there aren't any hotstrings.
-							HotkeyDefinition.ManifestAllHotkeysHotstringsHooks(); // Install the hook if needed, or uninstall if no longer needed.
+							_ = HotkeyDefinition.ManifestAllHotkeysHotstringsHooks(); // Install the hook if needed, or uninstall if no longer needed.
 					}
 				}
 
@@ -474,7 +474,7 @@ break_twice:;
 						hm.ClearBuf();
 
 					if (!isenabled || ht.kbdHook == 0) // Hook may not be needed anymore || hook is needed but not present.
-						HotkeyDefinition.ManifestAllHotkeysHotstringsHooks();
+						_ = HotkeyDefinition.ManifestAllHotkeysHotstringsHooks();
 				}
 			}
 
@@ -1010,7 +1010,7 @@ break_twice:;
 			RequireHook(whichHook, i);
 
 			if (!f || i)
-				HotkeyDefinition.ManifestAllHotkeysHotstringsHooks();
+				_ = HotkeyDefinition.ManifestAllHotkeysHotstringsHooks();
 
 			return DefaultObject;
 		}

@@ -277,7 +277,7 @@ namespace Keysharp.Core.Windows
 				_ = WindowsAPI.ClientToScreen(item.Handle, ref rect);
 				var pah = new PointAndHwnd(rect);
 				item.ChildFindPoint(pah);
-				item = pah.hwndFound != 0 ? new WindowItem(pah.hwndFound) : item;
+				item = pah.hwndFound != 0 ? TheScript.WindowProvider.Manager.CreateWindow(pah.hwndFound) : item;
 			}
 
 			if (item == null)

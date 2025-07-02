@@ -33,7 +33,7 @@
 		internal uint sendLevel = 0;
 		internal SendModes sendMode = SendModes.Input;
 		internal bool storeCapsLockMode = true;
-		internal object titleMatchMode = 2L;
+		internal long titleMatchMode = 2L;
 		internal bool titleMatchModeSpeed = true;
 		internal long winDelay = 100L;
 	}
@@ -1845,11 +1845,19 @@
 			set
 			{
 				var script = Script.TheScript;
+				var val = value.ToString().ToLower() switch
+				{
+					"1" => 1L,
+					"2" => 2L,
+					"3" => 3L,
+					Keyword_RegEx => 4L,
+					_ => 2L
+				};
 
 				if (!script.IsReadyToExecute)
-					script.AccessorData.titleMatchMode = value;
+					script.AccessorData.titleMatchMode = val;
 
-				ThreadAccessors.A_TitleMatchMode = value;
+				script.Threads.GetThreadVariables().titleMatchMode = val;
 			}
 		}
 
@@ -2023,7 +2031,7 @@
 		internal static uint SendLevelDefault => Script.TheScript.AccessorData.sendLevel;
 		internal static SendModes SendModeDefault => Script.TheScript.AccessorData.sendMode;
 		internal static bool StoreCapsLockModeDefault => Script.TheScript.AccessorData.storeCapsLockMode;
-		internal static object TitleMatchModeDefault => Script.TheScript.AccessorData.titleMatchMode;
+		internal static long TitleMatchModeDefault => Script.TheScript.AccessorData.titleMatchMode;
 		internal static bool TitleMatchModeSpeedDefault => Script.TheScript.AccessorData.titleMatchModeSpeed;
 		internal static long WinDelayDefault => Script.TheScript.AccessorData.winDelay;
 
@@ -2514,13 +2522,13 @@
 			get
 			{
 				var l = Script.TheScript.Threads.GetThreadVariables().titleMatchMode;
-				return l.ParseLong(false) == 4L ? Keyword_RegEx : l;
+				return l == 4L ? Keyword_RegEx : l;
 			}
 			set
 			{
 				var vars = Script.TheScript.Threads.GetThreadVariables();
 
-				switch (value.ToString().ToLowerInvariant())
+				switch (value.ToString().ToLower())
 				{
 					case "1": vars.titleMatchMode = 1L; break;
 

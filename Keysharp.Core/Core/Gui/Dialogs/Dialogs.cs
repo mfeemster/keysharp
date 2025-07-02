@@ -391,8 +391,8 @@ namespace Keysharp.Core
 		/// </returns>
 		public static string MsgBox(object text = null, object title = null, object options = null)
 		{
-			var txt = text.As();
-			var caption = title.As();
+			var txt = text.As().Truncate(8192); // 8192 is AHK MSGBOX_TEXT_SIZE
+			var caption = title.As().Truncate(1024); // 1024 is AHK DIALOG_TITLE_SIZE
 			var buttons = MessageBoxButtons.OK;
 			var icon = MessageBoxIcon.None;
 			var defaultbutton = MessageBoxDefaultButton.Button1;
