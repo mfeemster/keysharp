@@ -907,10 +907,15 @@
 		{
 			if (!allowContinue)
 				errorText += $"{Environment.NewLine}The current thread will exit.";
+
+			var scale = A_ScaledScreenDPI;
+
+			this.AutoScaleMode = AutoScaleMode.Dpi;
+			this.AutoScaleDimensions = new SizeF(96F, 96F);
 			this.Text = A_ScriptName;
 			this.StartPosition = FormStartPosition.CenterScreen;
-			this.Size = new Size(800, 500);
-			this.MinimumSize = new Size(400, 200);
+			this.Size = new Size((int)(550 * scale), (int)(300 * scale));
+			this.MinimumSize = new Size((int)(400 * scale), (int)(200 * scale));
 			this.ShowIcon = false;
 			this.KeyPreview = true;
 
@@ -925,7 +930,7 @@
 			var paddingPanel = new Panel
 			{
 				Dock = DockStyle.Fill,
-				Padding = new Padding(15),
+				Padding = new Padding(10),
 				Margin = Padding.Empty,
 				BackColor = Color.White,
 				BorderStyle = BorderStyle.None,
@@ -959,7 +964,7 @@
 			{
 				Dock = DockStyle.Bottom,
 				ColumnCount = 2,
-				Height = 60,
+				Height = (int)(40 * scale),
 			};
 			table.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));      // Left column (Exit)
 			table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F)); // Right column (fills remaining space)
