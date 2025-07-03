@@ -27,11 +27,10 @@
 			if (!err.Processed)
 			{
 				var script = Script.TheScript;
+				err.ExcType = excType;
 
 				if (script.onErrorHandlers != null)
 				{
-					err.ExcType = excType;
-
 					foreach (var handler in script.onErrorHandlers)
 					{
 						var result = handler.Call(err, err.ExcType);
@@ -47,9 +46,26 @@
 							break;
 						}
 					}
+					err.Processed = true;
 				}
-
-				err.Processed = true;
+				else
+				{
+					err.Handled = true;
+					err.Processed = true;
+					switch (ErrorDialog.Show(err))
+					{
+						case ErrorDialog.ErrorDialogResult.Abort:
+							return true;
+						case ErrorDialog.ErrorDialogResult.Exit:
+							_ = Flow.ExitAppInternal(Flow.ExitReasons.Critical, null, false);
+							return true;
+						case ErrorDialog.ErrorDialogResult.Reload:
+							_ = Flow.Reload();
+							return true;
+						case ErrorDialog.ErrorDialogResult.Continue:
+							return false;
+					}
+				}
 			}
 
 			if (err.ExcType == Keyword_ExitApp)
@@ -530,7 +546,7 @@
 		}
 
 		private void EnsureInitialized()
-			{
+		{
 			if (_isInitialized) return;
 			_isInitialized = true;
 
@@ -553,7 +569,7 @@
 		/// </summary>
 		/// <returns>A filtered stack trace.</returns>
 		private static IEnumerable<StackFrame> FilterUserFrames(StackFrame[] frames)
-				{
+		{
 			var builtins = TheScript.ReflectionsData.flatPublicStaticMethods;
 
 			foreach (var frame in frames)
@@ -584,8 +600,8 @@
 				//If we reached the auto-execute section function then don't go further
 				if (method.Name == "_ks_UserMainCode")
 					break;
-				}
 			}
+		}
 
 		/// <summary>
 		/// Helper function to convert the filtered stack trace into a formatted string.
@@ -621,33 +637,6 @@
 			_ = sb.AppendLine($"Line: {Line}");
 			_ = sb.AppendLine($"Stack:{Environment.NewLine}\t{Stack}");
 			return sb.ToString();
-		}
-
-		/// <summary>
-		/// Strip out the full paths and only show the file names.
-		/// </summary>
-		/// <param name="stack">The stack trace string to fix.</param>
-		/// <returns>The stack trace string with full paths removed.</returns>
-		private static string FixStackTrace(string stack)
-		{
-			var delim = " in ";
-			var lines = stack.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-
-			for (var i = 0; i < lines.Length; i++)
-			{
-				var line = lines[i];
-				var firstIn = line.IndexOf(delim) + delim.Length;
-				var lastColon = line.LastIndexOf(':');
-
-				if (firstIn != -1 && lastColon > firstIn)
-				{
-					var path = line.Substring(firstIn, lastColon - firstIn);
-					var filename = Path.GetFileName(path);
-					lines[i] = line.Replace(path, filename).Replace(".cs:line", ".cs, line");
-				}
-			}
-
-			return string.Join("\n\t\t", lines);
 		}
 	}
 
@@ -726,7 +715,7 @@
 					return;
 				}
 
-					w32ex = e.InnerException as Win32Exception;
+				w32ex = e.InnerException as Win32Exception;
 			}
 
 			Number = w32ex != null ? w32ex.ErrorCode : A_LastError;
@@ -899,6 +888,205 @@
 		public ZeroDivisionError(params object[] args)
 			: base(args)
 		{
+		}
+	}
+
+	internal class ErrorDialog : Form
+	{
+		internal enum ErrorDialogResult
+		{
+			Abort,
+			Continue,
+			Exit,
+			Reload,
+		}
+
+		internal ErrorDialogResult Result { get; private set; } = ErrorDialogResult.Exit;
+
+		internal ErrorDialog(string errorText, bool allowContinue = false)
+		{
+			if (!allowContinue)
+				errorText += $"{Environment.NewLine}The current thread will exit.";
+			this.Text = A_ScriptName;
+			this.StartPosition = FormStartPosition.CenterScreen;
+			this.Size = new Size(800, 500);
+			this.MinimumSize = new Size(400, 200);
+			this.ShowIcon = false;
+			this.KeyPreview = true;
+
+			var mainPanel = new TableLayoutPanel
+			{
+				Dock = DockStyle.Fill,
+				Padding = Padding.Empty,
+				RowCount = 2,
+				ColumnCount = 1
+			};
+
+			var paddingPanel = new Panel
+			{
+				Dock = DockStyle.Fill,
+				Padding = new Padding(15),
+				Margin = Padding.Empty,
+				BackColor = Color.White,
+				BorderStyle = BorderStyle.None,
+			};
+
+			var richBox = new RichTextBox
+			{
+				Text = errorText.Replace(Environment.NewLine, "\n").Replace("Stack:\n", "Stack:\n▶"),
+				ReadOnly = true,
+				Multiline = true,
+				ScrollBars = RichTextBoxScrollBars.Both,
+				WordWrap = false,
+				Dock = DockStyle.Fill,
+				BackColor = Color.White,
+				BorderStyle = BorderStyle.None,
+				TabStop = false,
+				ShortcutsEnabled = true,
+				Cursor = Cursors.Default,
+				Margin = Padding.Empty,
+				Padding = Padding.Empty,
+			};
+
+			ApplyFormatting(richBox);
+
+			var contextMenu = new ContextMenuStrip();
+			contextMenu.Items.Add("Copy", null, (_, _) => richBox.Copy());
+
+			richBox.ContextMenuStrip = contextMenu;
+
+			var table = new TableLayoutPanel
+			{
+				Dock = DockStyle.Bottom,
+				ColumnCount = 2,
+				Height = 60,
+			};
+			table.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));      // Left column (Exit)
+			table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F)); // Right column (fills remaining space)
+
+			// === Left button panel (Exit) ===
+			var leftPanel = new FlowLayoutPanel
+			{
+				FlowDirection = FlowDirection.LeftToRight,
+				Anchor = AnchorStyles.Left | AnchorStyles.Bottom,
+				AutoSize = true,
+				WrapContents = false,
+			};
+
+			// === Right button panel (Abort, Continue) ===
+			var rightPanel = new FlowLayoutPanel
+			{
+				FlowDirection = FlowDirection.RightToLeft,
+				Dock = DockStyle.Fill,
+				Anchor = AnchorStyles.Right | AnchorStyles.Bottom,
+				AutoSize = true,
+				WrapContents = false,
+			};
+
+			var btnContinue = new Button
+			{
+				Text = "&Continue",
+				DialogResult = DialogResult.OK,
+				AutoSize = false,
+				Anchor = AnchorStyles.Bottom | AnchorStyles.Right,
+			};
+			Size sizeContinue = TextRenderer.MeasureText(btnContinue.Text, btnContinue.Font);
+			Size uniformSize = new Size(sizeContinue.Width + 24, sizeContinue.Height + 12);
+			btnContinue.Size = uniformSize;
+
+			var btnExit = new Button
+			{
+				Text = "E&xitApp",
+				DialogResult = DialogResult.Cancel,
+				Size = uniformSize,
+			};
+			var btnReload = new Button
+			{
+				Text = "&Reload",
+				DialogResult = DialogResult.Cancel,
+				Size = uniformSize,
+			};
+			var btnAbort = new Button { 
+				Text = "&Abort", 
+				DialogResult = DialogResult.Abort,
+				Size = uniformSize,
+			};
+
+			btnAbort.Click += (_, _) => { Result = ErrorDialogResult.Abort; Close(); };
+			btnExit.Click += (_, _) => { Result = ErrorDialogResult.Exit; Close(); };
+			btnReload.Click += (_, _) => { Result = ErrorDialogResult.Reload; Close(); };
+			btnContinue.Click += (_, _) => { Result = ErrorDialogResult.Continue; Close(); };
+
+			leftPanel.Controls.Add(btnExit);
+			leftPanel.Controls.Add(btnReload);
+			rightPanel.Controls.Add(btnAbort);
+			if (allowContinue)
+				rightPanel.Controls.Add(btnContinue);
+
+			table.Controls.Add(leftPanel, 0, 0);
+			table.Controls.Add(rightPanel, 1, 0);
+
+			paddingPanel.Controls.Add(richBox);
+			mainPanel.Controls.Add(paddingPanel);
+			mainPanel.Controls.Add(table);
+			mainPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+			mainPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+
+			this.Controls.Add(mainPanel);
+
+			this.AcceptButton = btnAbort;
+			this.Shown += (_, _) => btnAbort.Focus();
+		}
+
+		private void ApplyFormatting(RichTextBox box)
+		{
+			string text = box.Text;
+			// First two lines bold orange
+			var lines = text.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
+			if (lines.Length >= 2)
+			{
+				int firstLineStart = 0;
+				int firstLineLength = lines[0].Length;
+
+				int secondLineStart = firstLineLength + 1;
+				int secondLineLength = lines[1].Length;
+
+				box.Select(firstLineStart, firstLineLength);
+				box.SelectionFont = new Font(box.Font, FontStyle.Bold);
+				box.SelectionColor = Color.DarkOrange;
+
+				box.Select(secondLineStart, secondLineLength);
+				box.SelectionFont = new Font(box.Font, FontStyle.Bold);
+				box.SelectionColor = Color.DarkOrange;
+			}
+
+			int fullStackIndex = text.IndexOf("Stack:\n");
+			if (fullStackIndex >= 0)
+			{
+				int startOfLine = text.IndexOf('\n', fullStackIndex);
+				if (startOfLine >= 0)
+				{
+					int nextLineStart = startOfLine + 1;
+					int nextLineEnd = text.IndexOf('\n', nextLineStart);
+					if (nextLineEnd < 0) nextLineEnd = text.Length;
+
+					int highlightLength = nextLineEnd - startOfLine;
+
+					box.Select(startOfLine, highlightLength);
+					box.SelectionBackColor = Color.Yellow;
+				}
+			}
+
+			box.Select(0, 0); // Reset selection
+		}
+
+		[StackTraceHidden]
+		internal static ErrorDialogResult Show(KeysharpException ex)
+		{
+			string msg = ex.ToString();
+			using var dlg = new ErrorDialog(msg, ex.ExcType == Keyword_Return);
+			dlg.ShowDialog();
+			return dlg.Result;
 		}
 	}
 }
