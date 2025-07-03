@@ -246,10 +246,24 @@
 		/// Internal helper to handle operating system errors. Throws a <see cref="OSError"/> or returns <see cref="DefaultErrorObject"/>.
 		/// </summary>
 		[StackTraceHidden]
-		internal static object OSErrorOccurred(object obj, string text, object ret = null)
+		internal static object OSErrorOccurred(object obj, string text = "", object ret = null)
 		{
 			Error err;
-			return ErrorOccurred(err = new OSError(obj, text)) ? throw err : ret ?? DefaultErrorObject;
+			return ErrorOccurred(err = new OSError(obj, text), Keywords.Keyword_ExitThread) ? throw err : ret ?? DefaultErrorObject;
+		}
+
+		/// <summary>
+		/// Internal helper to conditionally throw/handle an <see cref="OSError"/> for a given HR.
+		/// If HR is 0 or positive then returns <see cref="ret"/> or <see cref="hr"/> (cast to long).
+		/// If HR is negative then throws a <see cref="OSError"/> or returns <see cref="DefaultErrorObject"/>.
+		/// </summary>
+		[StackTraceHidden]
+		internal static object OSErrorOccurredForHR(int hr, object ret = null)
+		{
+			if (hr >= 0)
+				return ret ?? (long)hr;
+			Error err;
+			return ErrorOccurred(err = new OSError(Marshal.GetExceptionForHR(hr), ""), Keywords.Keyword_ExitThread) ? throw err : ret ?? DefaultErrorObject;
 		}
 
 		/// <summary>
