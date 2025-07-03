@@ -4,12 +4,14 @@ namespace Keysharp.Core.Common.Invoke
 	internal class ArgumentHelper
 	{
 		protected bool cdecl = false;
+		protected bool hresult = false;
 		protected List<GCHandle> gcHandles = [];
 		protected bool hasReturn = false;
 		protected Type returnType = typeof(int);
 		//int is the index in the argument list, and bool specifies if it's a VarRef (false) or Ptr (true)
 		internal Dictionary<int, (Type, bool)> outputVars = [];
 		internal bool CDecl => cdecl;
+		internal bool HRESULT => hresult;
 		internal bool HasReturn => hasReturn;
 		internal Type ReturnType => returnType;
 		internal long[] args;
@@ -270,6 +272,7 @@ namespace Keysharp.Core.Common.Invoke
 						{
 							if (parseType)
 							{
+								hresult = true;
 								if (isReturn)
 									hasReturn = false; // needed for ComCall OSError
 
