@@ -421,6 +421,23 @@
 		protected string message = "";
 
 		/// <summary>
+		/// Whether the stack trace, file, and line information have been constructed.
+		/// </summary>
+		private bool _isInitialized = false;
+
+		/// <summary>
+		/// Lazily initialized fields.
+		/// </summary>
+		private string _stack = null;
+		private string _file;
+		private long _line = 0;
+
+		/// <summary>
+		/// Stack frames for mostly user-accessible functions (excludes C# built-in methods, some of our helpers etc).
+		/// </summary>
+		private IEnumerable<StackFrame> _stackFrames;
+
+		/// <summary>
 		/// Gets or sets the exception exit type.
 		/// This is used to determine whether the script should exit or not after an exception is thrown.
 		/// Must be ExcType and not Type, else the reflection dictionary sees it as a dupe from the base.
@@ -435,7 +452,15 @@
 		/// <summary>
 		/// Gets or sets the file the exception occurred in.
 		/// </summary>
-		public string File { get; internal set; }
+		public string File
+		{
+			get
+			{
+				EnsureInitialized();
+				return _file;
+			}
+			internal set => _file = value;
+		}
 
 		/// <summary>
 		/// Whether this exception has been handled yet.
@@ -447,13 +472,21 @@
 		/// <summary>
 		/// Gets or sets the line the exception occured on.
 		/// </summary>
-		public long Line { get; internal set; }
+		public long Line
+		{
+			get
+			{
+				EnsureInitialized();
+				return _line;
+			}
+			internal set => _line = value;
+		}
 
 		/// <summary>
 		/// Gets or sets the message.
 		/// Must be done this way, else the reflection dictionary sees it as a dupe from the base.
 		/// </summary>
-		public override string Message => ToString();
+		public override string Message => message;
 
 		/// <summary>
 		/// Whether the global error event handlers have been called as a result
@@ -465,14 +498,17 @@
 		public bool Processed { get; set; }
 
 		/// <summary>
-		/// Gets or sets the raw message.
-		/// </summary>
-		public string RawMessage => message;
-
-		/// <summary>
 		/// Gets or sets the stack trace of where the exception occurred.
 		/// </summary>
-		public string Stack { get; private set; }
+		public string Stack
+		{
+			get
+			{
+				EnsureInitialized();
+				return _stack ??= FormatStack(_stackFrames);
+			}
+			internal set => _stack = value;
+		}
 
 		/// <summary>
 		/// Gets or sets the description of the error that happened.
@@ -488,29 +524,85 @@
 		public KeysharpException(params object[] args)
 		{
 			var (msg, what, extra) = args.L().S3();
-			var frame = new StackFrame(1);
-			var frames = new StackTrace(true).GetFrames();
+			message = args.Length == 0 || args[0] == null ? GetType().Name : msg;
+			What = what;
+			Extra = extra;
+		}
 
-			foreach (var tempframe in frames)
+		private void EnsureInitialized()
 			{
-				var type = tempframe.GetMethod().DeclaringType;
+			if (_isInitialized) return;
+			_isInitialized = true;
 
-				if (!type.IsSubclassOf(typeof(Exception)))
+			var st = new StackTrace(this, true);
+			var frames = (st.FrameCount == 0 ? new StackTrace(1, true) : st).GetFrames();
+			_stackFrames = FilterUserFrames(frames);
+
+			// First user-facing frame
+			var topFrame = _stackFrames.FirstOrDefault() ?? new StackFrame(1, true);
+
+			MethodBase method;
+			if (What.IsNullOrEmpty() && (method = topFrame.GetMethod()) != null)
+				What = $"{method.DeclaringType.FullName}.{method.Name}()";
+			_file = topFrame.GetFileName();
+			_line = topFrame.GetFileLineNumber();
+		}
+
+		/// <summary>
+		/// Helper function to filter out functions from the stack trace which are not exposed to the user.
+		/// </summary>
+		/// <returns>A filtered stack trace.</returns>
+		private static IEnumerable<StackFrame> FilterUserFrames(StackFrame[] frames)
 				{
-					frame = tempframe;
+			var builtins = TheScript.ReflectionsData.flatPublicStaticMethods;
+
+			foreach (var frame in frames)
+			{
+				var method = frame.GetMethod();
+				var type = method?.DeclaringType;
+				if (type == null || type.IsSubclassOf(typeof(Exception)) || type == typeof(Errors))
+					continue;
+
+				string fullName = type.FullName ?? "";
+
+				//Ignore any built-in C# functions
+				if (!fullName.StartsWith("Keysharp.")) 
+					continue;
+
+#if !DEBUG
+				//Ignore most of our internal functions
+				if (fullName.StartsWith("Keysharp.Core") && method is MethodInfo mi && mi != null && !builtins.ContainsValue(mi))
+					continue;	
+#endif
+
+				//Ignore functions marked to be hidden from the stack trace
+				if (method.GetCustomAttributes(typeof(StackTraceHiddenAttribute)).Any())
+					continue;
+
+				yield return frame;
+
+				//If we reached the auto-execute section function then don't go further
+				if (method.Name == "_ks_UserMainCode")
 					break;
 				}
 			}
 
-			var meth = frame.GetMethod();
-			var s = $"{meth.DeclaringType.FullName}.{meth.Name}()";
-			message = msg;
-			What = what != "" ? what : s;
-			Extra = extra;
-			//If this is a parsing error, then File and Line need to be set by the calling code.
-			File = frame.GetFileName();
-			Line = frame.GetFileLineNumber();
-			Stack = FixStackTrace(new StackTrace(frame).ToString());
+		/// <summary>
+		/// Helper function to convert the filtered stack trace into a formatted string.
+		/// </summary>
+		/// <returns>A summary of the stack trace.</returns>
+		private static string FormatStack(IEnumerable<StackFrame> frames)
+		{
+			return string.Join($"{Environment.NewLine}\t", frames.Select(f =>
+			{
+				var m = f.GetMethod();
+				var file = f.GetFileName();
+				var line = f.GetFileLineNumber();
+				var location = !string.IsNullOrEmpty(file)
+					? $" in {Path.GetFileName(file)}, line {line}"
+					: "";
+				return $"at {m.DeclaringType.FullName}.{m.Name}(){location}";
+			}));
 		}
 
 		/// <summary>
@@ -519,17 +611,15 @@
 		/// <returns>A summary of the exception.</returns>
 		public override string ToString()
 		{
-			var trace = StackTrace ?? new StackTrace(new StackFrame(1)).ToString();
-			var st = FixStackTrace(trace);
+			EnsureInitialized();
 			var sb = new StringBuilder(512);
-			_ = sb.AppendLine($"\tException: {GetType().Name}");
-			_ = sb.AppendLine($"\tMessage: {message}");
-			_ = sb.AppendLine($"\tWhat: {What}");
-			_ = sb.AppendLine($"\tExtra/Code: {Extra}");
-			_ = sb.AppendLine($"\tFile: {File}");
-			_ = sb.AppendLine($"\tLine: {Line}");
-			_ = sb.AppendLine($"\tLocal stack:\n\t\t{Stack}\n");
-			_ = sb.AppendLine($"\tFull stack:\n\t\t{st}");
+			_ = sb.AppendLine($"Exception: {GetType().Name}");
+			_ = sb.AppendLine($"Message: {message}");
+			_ = sb.AppendLine($"What: {What}");
+			_ = sb.AppendLine($"Extra/Code: {Extra}");
+			_ = sb.AppendLine($"File: {File}");
+			_ = sb.AppendLine($"Line: {Line}");
+			_ = sb.AppendLine($"Stack:{Environment.NewLine}\t{Stack}");
 			return sb.ToString();
 		}
 
@@ -627,9 +717,17 @@
 			var e = args.Length > 0 ? args[0] as Exception : null;
 			Win32Exception w32ex = null;
 
-			if ((w32ex = e as Win32Exception) == null)
-				if (e != null)
+			if ((w32ex = e as Win32Exception) == null && e != null)
+			{
+				if (e.HResult < 0)
+				{
+					Number = e.HResult;
+					message = $"(0x{e.HResult.ToString("X2")}): {e.Message}";
+					return;
+				}
+
 					w32ex = e.InnerException as Win32Exception;
+			}
 
 			Number = w32ex != null ? w32ex.ErrorCode : A_LastError;
 			message = new Win32Exception((int)Number).Message;

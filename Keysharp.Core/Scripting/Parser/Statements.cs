@@ -440,7 +440,7 @@
 				}
 				catch (ParseException e)
 				{
-					throw new ParseException(e.RawMessage, codeLine);
+					throw new ParseException(e.Message, codeLine);
 				}
 				finally { }
 
