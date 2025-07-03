@@ -255,8 +255,16 @@ namespace Keysharp.Core
 				FixParamTypesAndCopyBack(parameters, helper);
 				helper.Dispose();
 
+				// If the return type was HRESULT and it is a negative value then throw an OSError
+				if (helper.HRESULT)
+				{
+					long hrLong = (long)value;                // unbox the raw long
+					int hr32 = unchecked((int)hrLong);   // keep only the low 32 bits
+
+					return Errors.OSErrorOccurredForHR(hr32);
+				}
 				//Special conversion for the return value.
-				if (helper.ReturnType == typeof(int))
+				else if (helper.ReturnType == typeof(int))
 				{
 					long l = (long)value;
 					int ii = *(int*)&l;
@@ -276,6 +284,10 @@ namespace Keysharp.Core
 				}
 
 				return value;
+			}
+			catch (KeysharpException)
+			{
+				throw;
 			}
 			catch (Exception ex)
 			{

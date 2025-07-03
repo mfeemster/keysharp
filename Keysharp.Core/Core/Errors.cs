@@ -29,11 +29,10 @@ namespace Keysharp.Core
 			if (!err.Processed)
 			{
 				var script = Script.TheScript;
+				err.ExcType = excType;
 
 				if (script.onErrorHandlers != null)
 				{
-					err.ExcType = excType;
-
 					foreach (var handler in script.onErrorHandlers)
 					{
 						var result = handler.Call(err, err.ExcType);
@@ -49,9 +48,26 @@ namespace Keysharp.Core
 							break;
 						}
 					}
+					err.Processed = true;
 				}
-
-				err.Processed = true;
+				else
+				{
+					err.Handled = true;
+					err.Processed = true;
+					switch (ErrorDialog.Show(err))
+					{
+						case ErrorDialog.ErrorDialogResult.Abort:
+							return true;
+						case ErrorDialog.ErrorDialogResult.Exit:
+							_ = Flow.ExitAppInternal(Flow.ExitReasons.Critical, null, false);
+							return true;
+						case ErrorDialog.ErrorDialogResult.Reload:
+							_ = Flow.Reload();
+							return true;
+						case ErrorDialog.ErrorDialogResult.Continue:
+							return false;
+					}
+				}
 			}
 
 			if (err.ExcType == Keyword_ExitApp)
@@ -248,10 +264,24 @@ namespace Keysharp.Core
 		/// Internal helper to handle operating system errors. Throws a <see cref="OSError"/> or returns <see cref="DefaultErrorObject"/>.
 		/// </summary>
 		[StackTraceHidden]
-		internal static object OSErrorOccurred(object obj, string text, object ret = null)
+		internal static object OSErrorOccurred(object obj, string text = "", object ret = null)
 		{
 			Error err;
-			return ErrorOccurred(err = new OSError(obj, text)) ? throw err : ret ?? DefaultErrorObject;
+			return ErrorOccurred(err = new OSError(obj, text), Keywords.Keyword_ExitThread) ? throw err : ret ?? DefaultErrorObject;
+		}
+
+		/// <summary>
+		/// Internal helper to conditionally throw/handle an <see cref="OSError"/> for a given HR.
+		/// If HR is 0 or positive then returns <see cref="ret"/> or <see cref="hr"/> (cast to long).
+		/// If HR is negative then throws a <see cref="OSError"/> or returns <see cref="DefaultErrorObject"/>.
+		/// </summary>
+		[StackTraceHidden]
+		internal static object OSErrorOccurredForHR(int hr, object ret = null)
+		{
+			if (hr >= 0)
+				return ret ?? (long)hr;
+			Error err;
+			return ErrorOccurred(err = new OSError(Marshal.GetExceptionForHR(hr), ""), Keywords.Keyword_ExitThread) ? throw err : ret ?? DefaultErrorObject;
 		}
 
 		/// <summary>
@@ -409,6 +439,23 @@ namespace Keysharp.Core
 		protected string message = "";
 
 		/// <summary>
+		/// Whether the stack trace, file, and line information have been constructed.
+		/// </summary>
+		private bool _isInitialized = false;
+
+		/// <summary>
+		/// Lazily initialized fields.
+		/// </summary>
+		private string _stack = null;
+		private string _file;
+		private long _line = 0;
+
+		/// <summary>
+		/// Stack frames for mostly user-accessible functions (excludes C# built-in methods, some of our helpers etc).
+		/// </summary>
+		private IEnumerable<StackFrame> _stackFrames;
+
+		/// <summary>
 		/// Gets or sets the exception exit type.
 		/// This is used to determine whether the script should exit or not after an exception is thrown.
 		/// Must be ExcType and not Type, else the reflection dictionary sees it as a dupe from the base.
@@ -423,7 +470,15 @@ namespace Keysharp.Core
 		/// <summary>
 		/// Gets or sets the file the exception occurred in.
 		/// </summary>
-		public string File { get; internal set; }
+		public string File
+		{
+			get
+			{
+				EnsureInitialized();
+				return _file;
+			}
+			internal set => _file = value;
+		}
 
 		/// <summary>
 		/// Whether this exception has been handled yet.
@@ -435,13 +490,21 @@ namespace Keysharp.Core
 		/// <summary>
 		/// Gets or sets the line the exception occured on.
 		/// </summary>
-		public long Line { get; internal set; }
+		public long Line
+		{
+			get
+			{
+				EnsureInitialized();
+				return _line;
+			}
+			internal set => _line = value;
+		}
 
 		/// <summary>
 		/// Gets or sets the message.
 		/// Must be done this way, else the reflection dictionary sees it as a dupe from the base.
 		/// </summary>
-		public override string Message => ToString();
+		public override string Message => message;
 
 		/// <summary>
 		/// Whether the global error event handlers have been called as a result
@@ -453,14 +516,17 @@ namespace Keysharp.Core
 		public bool Processed { get; set; }
 
 		/// <summary>
-		/// Gets or sets the raw message.
-		/// </summary>
-		public string RawMessage => message;
-
-		/// <summary>
 		/// Gets or sets the stack trace of where the exception occurred.
 		/// </summary>
-		public string Stack { get; private set; }
+		public string Stack
+		{
+			get
+			{
+				EnsureInitialized();
+				return _stack ??= FormatStack(_stackFrames);
+			}
+			internal set => _stack = value;
+		}
 
 		/// <summary>
 		/// Gets or sets the description of the error that happened.
@@ -476,32 +542,85 @@ namespace Keysharp.Core
 		public KeysharpException(params object[] args)
 		{
 			var (msg, what, extra) = args.L().S3();
-			var frame = new StackFrame(1);
-			var frames = new StackTrace(true).GetFrames();
-
-			foreach (var tempframe in frames)
-			{
-                MethodBase method = tempframe.GetMethod();
-                // Skip if this is a constructor and its declaring type is a subclass of Exception.
-                if (method.IsConstructor &&
-                    method.DeclaringType != null &&
-                    method.DeclaringType.IsSubclassOf(typeof(Exception)))
-                {
-                    continue;
-                }
-                frame = tempframe;
-                break;
-            }
-
-			var meth = frame.GetMethod();
-            var s = $"{(meth.DeclaringType != null ? meth.DeclaringType.FullName + "." : "")}{meth.Name}()";
-            message = msg;
-			What = what != "" ? what : s;
+			message = args.Length == 0 || args[0] == null ? GetType().Name : msg;
+			What = what;
 			Extra = extra;
-			//If this is a parsing error, then File and Line need to be set by the calling code.
-			File = frame.GetFileName();
-			Line = frame.GetFileLineNumber();
-			Stack = FixStackTrace(new StackTrace(frame).ToString());
+		}
+
+		private void EnsureInitialized()
+		{
+			if (_isInitialized) return;
+			_isInitialized = true;
+
+			var st = new StackTrace(this, true);
+			var frames = (st.FrameCount == 0 ? new StackTrace(1, true) : st).GetFrames();
+			_stackFrames = FilterUserFrames(frames);
+
+			// First user-facing frame
+			var topFrame = _stackFrames.FirstOrDefault() ?? new StackFrame(1, true);
+
+			MethodBase method;
+			if (What.IsNullOrEmpty() && (method = topFrame.GetMethod()) != null)
+				What = $"{method.DeclaringType.FullName}.{method.Name}()";
+			_file = topFrame.GetFileName();
+			_line = topFrame.GetFileLineNumber();
+		}
+
+		/// <summary>
+		/// Helper function to filter out functions from the stack trace which are not exposed to the user.
+		/// </summary>
+		/// <returns>A filtered stack trace.</returns>
+		private static IEnumerable<StackFrame> FilterUserFrames(StackFrame[] frames)
+		{
+			var builtins = TheScript.ReflectionsData.flatPublicStaticMethods;
+
+			foreach (var frame in frames)
+			{
+				var method = frame.GetMethod();
+				var type = method?.DeclaringType;
+				if (type == null || type.IsSubclassOf(typeof(Exception)) || type == typeof(Errors))
+					continue;
+
+				string fullName = type.FullName ?? "";
+
+				//Ignore any built-in C# functions
+				if (!fullName.StartsWith("Keysharp.")) 
+					continue;
+
+#if !DEBUG
+				//Ignore most of our internal functions
+				if (fullName.StartsWith("Keysharp.Core") && method is MethodInfo mi && mi != null && !builtins.ContainsValue(mi))
+					continue;	
+#endif
+
+				//Ignore functions marked to be hidden from the stack trace
+				if (method.GetCustomAttributes(typeof(StackTraceHiddenAttribute)).Any())
+					continue;
+
+				yield return frame;
+
+				//If we reached the auto-execute section function then don't go further
+				if (method.Name == Keywords.AutoExecSectionName)
+					break;
+			}
+		}
+
+		/// <summary>
+		/// Helper function to convert the filtered stack trace into a formatted string.
+		/// </summary>
+		/// <returns>A summary of the stack trace.</returns>
+		private static string FormatStack(IEnumerable<StackFrame> frames)
+		{
+			return string.Join($"{Environment.NewLine}\t", frames.Select(f =>
+			{
+				var m = f.GetMethod();
+				var file = f.GetFileName();
+				var line = f.GetFileLineNumber();
+				var location = !string.IsNullOrEmpty(file)
+					? $" in {Path.GetFileName(file)}, line {line}"
+					: "";
+				return $"at {m.DeclaringType.FullName}.{m.Name}(){location}";
+			}));
 		}
 
 		/// <summary>
@@ -510,45 +629,16 @@ namespace Keysharp.Core
 		/// <returns>A summary of the exception.</returns>
 		public override string ToString()
 		{
-			var trace = StackTrace ?? new StackTrace(new StackFrame(1)).ToString();
-			var st = FixStackTrace(trace);
+			EnsureInitialized();
 			var sb = new StringBuilder(512);
-			_ = sb.AppendLine($"\tException: {GetType().Name}");
-			_ = sb.AppendLine($"\tMessage: {message}");
-			_ = sb.AppendLine($"\tWhat: {What}");
-			_ = sb.AppendLine($"\tExtra/Code: {Extra}");
-			_ = sb.AppendLine($"\tFile: {File}");
-			_ = sb.AppendLine($"\tLine: {Line}");
-			_ = sb.AppendLine($"\tLocal stack:\n\t\t{Stack}\n");
-			_ = sb.AppendLine($"\tFull stack:\n\t\t{st}");
+			_ = sb.AppendLine($"Exception: {GetType().Name}");
+			_ = sb.AppendLine($"Message: {message}");
+			_ = sb.AppendLine($"What: {What}");
+			_ = sb.AppendLine($"Extra/Code: {Extra}");
+			_ = sb.AppendLine($"File: {File}");
+			_ = sb.AppendLine($"Line: {Line}");
+			_ = sb.AppendLine($"Stack:{Environment.NewLine}\t{Stack}");
 			return sb.ToString();
-		}
-
-		/// <summary>
-		/// Strip out the full paths and only show the file names.
-		/// </summary>
-		/// <param name="stack">The stack trace string to fix.</param>
-		/// <returns>The stack trace string with full paths removed.</returns>
-		private static string FixStackTrace(string stack)
-		{
-			var delim = " in ";
-			var lines = stack.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-
-			for (var i = 0; i < lines.Length; i++)
-			{
-				var line = lines[i];
-				var firstIn = line.IndexOf(delim) + delim.Length;
-				var lastColon = line.LastIndexOf(':');
-
-				if (firstIn != -1 && lastColon > firstIn)
-				{
-					var path = line.Substring(firstIn, lastColon - firstIn);
-					var filename = Path.GetFileName(path);
-					lines[i] = line.Replace(path, filename).Replace(".cs:line", ".cs, line");
-				}
-			}
-
-			return string.Join("\n\t\t", lines);
 		}
 	}
 
@@ -618,9 +708,17 @@ namespace Keysharp.Core
 			var e = args.Length > 0 ? args[0] as Exception : null;
 			Win32Exception w32ex = null;
 
-			if ((w32ex = e as Win32Exception) == null)
-				if (e != null)
-					w32ex = e.InnerException as Win32Exception;
+			if ((w32ex = e as Win32Exception) == null && e != null)
+			{
+				if (e.HResult < 0)
+				{
+					Number = e.HResult;
+					message = $"(0x{e.HResult.ToString("X2")}): {e.Message}";
+					return;
+				}
+
+				w32ex = e.InnerException as Win32Exception;
+			}
 
 			Number = w32ex != null ? w32ex.ErrorCode : A_LastError;
 			message = new Win32Exception((int)Number).Message;
@@ -792,6 +890,210 @@ namespace Keysharp.Core
 		public ZeroDivisionError(params object[] args)
 			: base(args)
 		{
+		}
+	}
+
+	internal class ErrorDialog : Form
+	{
+		internal enum ErrorDialogResult
+		{
+			Abort,
+			Continue,
+			Exit,
+			Reload,
+		}
+
+		internal ErrorDialogResult Result { get; private set; } = ErrorDialogResult.Exit;
+
+		internal ErrorDialog(string errorText, bool allowContinue = false)
+		{
+			if (!allowContinue)
+				errorText += $"{Environment.NewLine}The current thread will exit.";
+
+			var scale = A_ScaledScreenDPI;
+
+			this.AutoScaleMode = AutoScaleMode.Dpi;
+			this.AutoScaleDimensions = new SizeF(96F, 96F);
+			this.Text = A_ScriptName;
+			this.StartPosition = FormStartPosition.CenterScreen;
+			this.Size = new Size((int)(550 * scale), (int)(300 * scale));
+			this.MinimumSize = new Size((int)(400 * scale), (int)(200 * scale));
+			this.ShowIcon = false;
+			this.KeyPreview = true;
+
+			var mainPanel = new TableLayoutPanel
+			{
+				Dock = DockStyle.Fill,
+				Padding = Padding.Empty,
+				RowCount = 2,
+				ColumnCount = 1
+			};
+
+			var paddingPanel = new Panel
+			{
+				Dock = DockStyle.Fill,
+				Padding = new Padding(10),
+				Margin = Padding.Empty,
+				BackColor = Color.White,
+				BorderStyle = BorderStyle.None,
+			};
+
+			var richBox = new RichTextBox
+			{
+				Text = errorText.Replace(Environment.NewLine, "\n").Replace("Stack:\n", "Stack:\n▶"),
+				ReadOnly = true,
+				Multiline = true,
+				ScrollBars = RichTextBoxScrollBars.Both,
+				WordWrap = false,
+				Dock = DockStyle.Fill,
+				BackColor = Color.White,
+				BorderStyle = BorderStyle.None,
+				TabStop = false,
+				ShortcutsEnabled = true,
+				Cursor = Cursors.Default,
+				Margin = Padding.Empty,
+				Padding = Padding.Empty,
+			};
+
+			ApplyFormatting(richBox);
+
+			var contextMenu = new ContextMenuStrip();
+			contextMenu.Items.Add("Copy", null, (_, _) => richBox.Copy());
+
+			richBox.ContextMenuStrip = contextMenu;
+
+			var table = new TableLayoutPanel
+			{
+				Dock = DockStyle.Bottom,
+				ColumnCount = 2,
+				Height = (int)(40 * scale),
+			};
+			table.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));      // Left column (Exit)
+			table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F)); // Right column (fills remaining space)
+
+			// === Left button panel (Exit) ===
+			var leftPanel = new FlowLayoutPanel
+			{
+				FlowDirection = FlowDirection.LeftToRight,
+				Anchor = AnchorStyles.Left | AnchorStyles.Bottom,
+				AutoSize = true,
+				WrapContents = false,
+			};
+
+			// === Right button panel (Abort, Continue) ===
+			var rightPanel = new FlowLayoutPanel
+			{
+				FlowDirection = FlowDirection.RightToLeft,
+				Dock = DockStyle.Fill,
+				Anchor = AnchorStyles.Right | AnchorStyles.Bottom,
+				AutoSize = true,
+				WrapContents = false,
+			};
+
+			var btnContinue = new Button
+			{
+				Text = "&Continue",
+				DialogResult = DialogResult.OK,
+				AutoSize = false,
+				Anchor = AnchorStyles.Bottom | AnchorStyles.Right,
+			};
+			Size sizeContinue = TextRenderer.MeasureText(btnContinue.Text, btnContinue.Font);
+			Size uniformSize = new Size(sizeContinue.Width + 24, sizeContinue.Height + 12);
+			btnContinue.Size = uniformSize;
+
+			var btnExit = new Button
+			{
+				Text = "E&xitApp",
+				DialogResult = DialogResult.Cancel,
+				Size = uniformSize,
+			};
+			var btnReload = new Button
+			{
+				Text = "&Reload",
+				DialogResult = DialogResult.Cancel,
+				Size = uniformSize,
+			};
+			var btnAbort = new Button { 
+				Text = "&Abort", 
+				DialogResult = DialogResult.Abort,
+				Size = uniformSize,
+			};
+
+			btnAbort.Click += (_, _) => { Result = ErrorDialogResult.Abort; Close(); };
+			btnExit.Click += (_, _) => { Result = ErrorDialogResult.Exit; Close(); };
+			btnReload.Click += (_, _) => { Result = ErrorDialogResult.Reload; Close(); };
+			btnContinue.Click += (_, _) => { Result = ErrorDialogResult.Continue; Close(); };
+
+			leftPanel.Controls.Add(btnExit);
+			leftPanel.Controls.Add(btnReload);
+			rightPanel.Controls.Add(btnAbort);
+			if (allowContinue)
+				rightPanel.Controls.Add(btnContinue);
+
+			table.Controls.Add(leftPanel, 0, 0);
+			table.Controls.Add(rightPanel, 1, 0);
+
+			paddingPanel.Controls.Add(richBox);
+			mainPanel.Controls.Add(paddingPanel);
+			mainPanel.Controls.Add(table);
+			mainPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+			mainPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+
+			this.Controls.Add(mainPanel);
+
+			this.AcceptButton = btnAbort;
+			this.Shown += (_, _) => btnAbort.Focus();
+		}
+
+		private void ApplyFormatting(RichTextBox box)
+		{
+			string text = box.Text;
+			// First two lines bold orange
+			var lines = text.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
+			if (lines.Length >= 2)
+			{
+				int firstLineStart = 0;
+				int firstLineLength = lines[0].Length;
+
+				int secondLineStart = firstLineLength + 1;
+				int secondLineLength = lines[1].Length;
+
+				box.Select(firstLineStart, firstLineLength);
+				box.SelectionFont = new Font(box.Font, FontStyle.Bold);
+				box.SelectionColor = Color.DarkOrange;
+
+				box.Select(secondLineStart, secondLineLength);
+				box.SelectionFont = new Font(box.Font, FontStyle.Bold);
+				box.SelectionColor = Color.DarkOrange;
+			}
+
+			int fullStackIndex = text.IndexOf("Stack:\n");
+			if (fullStackIndex >= 0)
+			{
+				int startOfLine = text.IndexOf('\n', fullStackIndex);
+				if (startOfLine >= 0)
+				{
+					int nextLineStart = startOfLine + 1;
+					int nextLineEnd = text.IndexOf('\n', nextLineStart);
+					if (nextLineEnd < 0) nextLineEnd = text.Length;
+
+					int highlightLength = nextLineEnd - startOfLine;
+
+					box.Select(startOfLine, highlightLength);
+					box.SelectionBackColor = Color.Yellow;
+				}
+			}
+
+			box.Select(0, 0); // Reset selection
+		}
+
+		[StackTraceHidden]
+		internal static ErrorDialogResult Show(KeysharpException ex)
+		{
+			string msg = ex.ToString();
+			using var dlg = new ErrorDialog(msg, ex.ExcType == Keyword_Return);
+			dlg.ShowDialog();
+			return dlg.Result;
 		}
 	}
 }

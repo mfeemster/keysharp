@@ -389,7 +389,7 @@ namespace Keysharp.Core
 				{
 					t.Enabled = false;
 
-					var remove = !TryCatch(() =>
+					_ = TryCatch(() =>
 					{
 						(bool, ThreadVariables) btv = v.PushThreadVariables(pri, true, false, false, true);
 						btv.Item2.currentTimer = timer;
@@ -398,7 +398,7 @@ namespace Keysharp.Core
 						_ = v.EndThread(btv.Item1);
 					}, true);//Pop on exception because EndThread() above won't be called.
 
-					if (once || remove)
+					if (once)
 					{
 						_ = script.FlowData.timers.TryRemove(func, out _);
 						t.Stop();

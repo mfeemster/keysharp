@@ -252,10 +252,13 @@
 				   );
 
 			if (_psa == 0)
-				Marshal.ThrowExceptionForHR(Marshal.GetLastWin32Error());
+			{
+				_ = Errors.OSErrorOccurred(Marshal.GetLastWin32Error());
+				return;
+			}
 
-			// Tell ComObject to own and destroy the SafeArray:
-			this.vt = VarEnum.VT_ARRAY | baseType;
+				// Tell ComObject to own and destroy the SafeArray:
+				this.vt = VarEnum.VT_ARRAY | baseType;
 			this.Flags = F_OWNVALUE;
 			this.Ptr = _psa.ToInt64();
 		}
@@ -304,14 +307,13 @@
 			{
 				int[] idx = ConvertIndices(indices);
 				int hr = OleAuto.SafeArrayGetElement(_psa, idx, out object val);
-				Marshal.ThrowExceptionForHR(hr);
-				return val;
+				return Errors.OSErrorOccurredForHR(hr, val);
 			}
 			set
 			{
 				int[] idx = ConvertIndices(indices);
 				int hr = OleAuto.SafeArrayPutElement(_psa, idx, value!);
-				Marshal.ThrowExceptionForHR(hr);
+				_ = Errors.OSErrorOccurredForHR(hr);
 			}
 		}
 
@@ -341,7 +343,8 @@
 		public new object Clone()
 		{
 			int hr = OleAuto.SafeArrayCopy(_psa, out nint psaCopy);
-			Marshal.ThrowExceptionForHR(hr);
+			if (hr < 0)
+				return Errors.OSErrorOccurred(hr);
 			var copy = (ComObjArray)RuntimeHelpers
 					   .GetUninitializedObject(typeof(ComObjArray));
 			copy.vt = this.vt;

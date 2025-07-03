@@ -169,7 +169,7 @@ namespace Keysharp.Core.COM
 				};
 			}
 
-			return DefaultErrorObject;//Should be a call to ComError() here.//TODO
+			return Errors.OSErrorOccurredForHR(hr);
 		}
 
 		public static object ComObjFlags(object comObj, object newFlags = null, object mask = null)
@@ -228,7 +228,7 @@ namespace Keysharp.Core.COM
 
 			nint resultPtr = 0;
 			Guid id = Guid.Empty;
-			int hr;
+			int hr = 0;
 
 			if (sidiid != null && iid != null)
 			{
@@ -251,6 +251,9 @@ namespace Keysharp.Core.COM
 					hr = Marshal.QueryInterface(ptr, id, out resultPtr);
 				}
 			}
+
+			if (hr < 0)
+				return Errors.OSErrorOccurredForHR(hr);
 
 			if (resultPtr == 0)
 				return Errors.ErrorOccurred($"Unable to get COM interface with arguments {sidiid}, {iid}.");
@@ -425,13 +428,12 @@ namespace Keysharp.Core.COM
 
 			// If the return type was omitted then it should be treated as HRESULT
 			// and if that is a negative value then throw an OSError
-			if (!helper.HasReturn)
+			if (helper.HRESULT || !helper.HasReturn)
 			{
 				long hrLong = (long)value;                // unbox the raw long
 				int hr32 = unchecked((int)hrLong);   // keep only the low 32 bits
 
-				if (hr32 < 0)
-					return Errors.OSErrorOccurred(hr32, "");
+				return Errors.OSErrorOccurredForHR(hr32);
 			}
 
 			//Special conversion for the return value.
