@@ -60,7 +60,7 @@ namespace Keysharp.Core.Windows
 			if (criteria.IsEmpty)
 				return found;
 
-			var mm = Script.TheScript.Threads.GetThreadVariables().titleMatchMode.ParseLong(false);
+			var mm = Script.TheScript.Threads.GetThreadVariables().titleMatchMode;
 			var hasTitle = !criteria.Title.IsNullOrEmpty();
 
 			if (!criteria.ClassName.IsNullOrEmpty() || (mm == 3 && hasTitle))
@@ -70,11 +70,10 @@ namespace Keysharp.Core.Windows
 				if (hwnd == 0)
 					return found;
 
-				if (mm == 3 || !hasTitle)
+				if (mm < 4)
 				{
 					found = Script.TheScript.WindowProvider.Manager.CreateWindow(hwnd);
-
-					if ((!hasTitle || criteria.Title.Equals(found.Title)) && criteria.ClassName != null && criteria.ClassName.Equals(found.ClassName))
+					if (found.Equals(criteria))
 						return found;
 
 					found = null;
