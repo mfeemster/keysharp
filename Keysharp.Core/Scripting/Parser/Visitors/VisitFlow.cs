@@ -886,19 +886,36 @@ namespace Keysharp.Scripting
                           return -1;
                   });
 
+			// Gather every TypeSyntax we need to PushTry
+			var handledTypeSyntaxes = new List<TypeSyntax>();
+			foreach (var catchClause in catchClauses)
+			{
+				// if there's a `when`‐filter, extract all the TypePattern nodes underneath it
+				if (catchClause.Filter is CatchFilterClauseSyntax filterClause)
+				{
+					var patterns = filterClause
+						.FilterExpression
+						.DescendantNodesAndSelf()
+						.OfType<TypePatternSyntax>();
+
+					foreach (var tp in patterns)
+						handledTypeSyntaxes.Add(tp.Type);
+				}
+				// otherwise just use the declared exception type
+				else if (catchClause.Declaration?.Type != null)
+				{
+					handledTypeSyntaxes.Add(catchClause.Declaration.Type);
+				}
+			}
+
 			var pushTryStmt = SyntaxFactory.ExpressionStatement(
                 ((InvocationExpressionSyntax)InternalMethods.PushTry)
 	            .WithArgumentList(
 		            SyntaxFactory.ArgumentList(
 			            SyntaxFactory.SeparatedList<ArgumentSyntax>(
-				            catchClauses.Select(catchClause =>
-					            // typeof(ExceptionType)
-					            SyntaxFactory.Argument(
-						            SyntaxFactory.TypeOfExpression(
-							            catchClause.Declaration.Type
-						            )
-					            )
-				            )
+							handledTypeSyntaxes
+				            .Select(ts => SyntaxFactory.Argument(
+					            SyntaxFactory.TypeOfExpression(ts)))
 			            )
 		            )
 	            )
