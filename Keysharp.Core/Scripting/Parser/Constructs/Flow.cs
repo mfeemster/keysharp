@@ -866,7 +866,7 @@ namespace Keysharp.Scripting
 					tcf.TryStatements.Add(pushTryCall);
 					tcf.TryStatements.Add(innerTry);
 
-					var block = new CodeBlock(codeLine, Scope, innerTry.TryStatements, CodeBlock.BlockKind.Try, blocks.PeekOrNull(), InternalID, InternalID)
+					var block = new CodeBlock(codeLine, Scope, innerTry.TryStatements, CodeBlock.BlockKind.Try, blocks.PeekOrNull())
 					{
 						Type = type
 					};
