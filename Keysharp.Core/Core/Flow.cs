@@ -685,7 +685,7 @@ namespace Keysharp.Core
 				if (!kserr.Handled)
 				{
 					var (__pushed, __btv) = t.BeginThread();
-					_ = Dialogs.MsgBox("Uncaught Keysharp exception:\r\n" + kserr, $"{A_ScriptName}: Unhandled exception", "iconx");
+					_ = ErrorDialog.Show(kserr, false);
 					_ = t.EndThread(__pushed);
 				}
 
@@ -713,14 +713,14 @@ namespace Keysharp.Core
 					if (!kserr.Handled)
 					{
 						var (__pushed, __btv) = t.BeginThread();
-						_ = Dialogs.MsgBox("Uncaught Keysharp exception:\r\n" + kserr, $"{A_ScriptName}: Unhandled exception", "iconx");
+						_ = ErrorDialog.Show(kserr, false);
 						_ = t.EndThread(__pushed);
 					}
 				}
 				else
 				{
 					var (__pushed, __btv) = t.BeginThread();
-					_ = Dialogs.MsgBox("Uncaught exception:\r\n" + "Message: " + ex.Message + "\r\nStack: " + ex.StackTrace, $"{A_ScriptName}: Unhandled exception", "iconx");
+					_ = ErrorDialog.Show(ex);
 					_ = t.EndThread(__pushed);
 				}
 

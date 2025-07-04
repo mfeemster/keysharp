@@ -50,23 +50,11 @@ namespace Keysharp.Core
 					}
 					err.Processed = true;
 				}
-				else
+				else if (!Loops.IsExceptionCaught(err.GetType()))
 				{
 					err.Handled = true;
 					err.Processed = true;
-					switch (ErrorDialog.Show(err))
-					{
-						case ErrorDialog.ErrorDialogResult.Abort:
-							return true;
-						case ErrorDialog.ErrorDialogResult.Exit:
-							_ = Flow.ExitAppInternal(Flow.ExitReasons.Critical, null, false);
-							return true;
-						case ErrorDialog.ErrorDialogResult.Reload:
-							_ = Flow.Reload();
-							return true;
-						case ErrorDialog.ErrorDialogResult.Continue:
-							return false;
-					}
+					return !ErrorDialog.Show(err);
 				}
 			}
 
@@ -1088,12 +1076,27 @@ namespace Keysharp.Core
 		}
 
 		[StackTraceHidden]
-		internal static ErrorDialogResult Show(KeysharpException ex)
+		internal static bool Show(Exception ex, bool allowContinue = true)
 		{
-			string msg = ex.ToString();
-			using var dlg = new ErrorDialog(msg, ex.ExcType == Keyword_Return);
+			KeysharpException kex = ex as KeysharpException;
+			string msg = kex != null ? kex.ToString() : $"Message: {ex.Message}{Environment.NewLine}Stack: {ex.StackTrace}";
+			using var dlg = new ErrorDialog(msg, allowContinue && kex != null ? kex.ExcType == Keyword_Return : false);
 			dlg.ShowDialog();
-			return dlg.Result;
+			switch (dlg.Result)
+			{
+				case ErrorDialog.ErrorDialogResult.Abort:
+					return false;
+				case ErrorDialog.ErrorDialogResult.Exit:
+					_ = Flow.ExitAppInternal(Flow.ExitReasons.Critical, null, false);
+					return false;
+				case ErrorDialog.ErrorDialogResult.Reload:
+					_ = Flow.Reload();
+					return false;
+				case ErrorDialog.ErrorDialogResult.Continue:
+					return true;
+				default:
+					return false;
+			}
 		}
 	}
 }

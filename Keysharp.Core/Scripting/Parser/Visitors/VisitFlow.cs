@@ -886,9 +886,35 @@ namespace Keysharp.Scripting
                           return -1;
                   });
 
-            // Construct the TryStatementSyntax
-            var tryStatement = SyntaxFactory.TryStatement()
-                .WithBlock(tryBlock)
+			var pushTryStmt = SyntaxFactory.ExpressionStatement(
+                ((InvocationExpressionSyntax)InternalMethods.PushTry)
+	            .WithArgumentList(
+		            SyntaxFactory.ArgumentList(
+			            SyntaxFactory.SeparatedList<ArgumentSyntax>(
+				            catchClauses.Select(catchClause =>
+					            // typeof(ExceptionType)
+					            SyntaxFactory.Argument(
+						            SyntaxFactory.TypeOfExpression(
+							            catchClause.Declaration.Type
+						            )
+					            )
+				            )
+			            )
+		            )
+	            )
+            );
+
+			var popTryStmt = SyntaxFactory.ExpressionStatement((InvocationExpressionSyntax)InternalMethods.PopTry);
+
+            var innerTry = SyntaxFactory.TryStatement()
+				.WithBlock(tryBlock)
+				.WithFinally(
+		            SyntaxFactory.FinallyClause(SyntaxFactory.Block(popTryStmt))
+	            );
+
+			// Construct the TryStatementSyntax
+			var tryStatement = SyntaxFactory.TryStatement()
+                .WithBlock(SyntaxFactory.Block(pushTryStmt, innerTry))
                 .WithCatches(SyntaxFactory.List(catchClauses));
 
             if (finallyClause != null)
