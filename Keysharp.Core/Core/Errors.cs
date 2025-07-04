@@ -24,7 +24,7 @@
 		{
 			var exitThread = true;
 
-			if (!err.Processed)
+			if (!err.Processed && !Loops.IsExceptionCaught(err.GetType()))
 			{
 				var script = Script.TheScript;
 				err.ExcType = excType;
@@ -49,7 +49,7 @@
 					err.Processed = true;
 				}
 				
-				if (!err.Handled && !Loops.IsExceptionCaught(err.GetType()) && !TheScript.SuppressErrorOccurredDialog)
+				if (!err.Handled && !script.SuppressErrorOccurredDialog)
 				{
 					err.Handled = true;
 					err.Processed = true;
