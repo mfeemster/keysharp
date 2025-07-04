@@ -490,6 +490,14 @@ namespace Keysharp.Core
 		}
 
 		/// <summary>
+		/// Removes the current try block from the stack.
+		/// This should never be called directly by the user and instead is used<br/>
+		/// in the generated C# code.
+		/// </summary>
+		public static void PopTry() => Script.TheScript.LoopData.tryStack.Value.TryPop(out _);
+
+
+		/// <summary>
 		/// Pushes a new loop onto the stack.
 		/// This should never be called directly by the user and instead is used<br/>
 		/// in the generated C# code.
@@ -501,6 +509,30 @@ namespace Keysharp.Core
 			var info = new LoopInfo { type = t };
 			Script.TheScript.LoopData.loopStack.Value.Push(info);
 			return info;
+		}
+
+		/// <summary>
+		/// Pushes a new try block onto the stack.
+		/// This should never be called directly by the user and instead is used<br/>
+		/// in the generated C# code.
+		/// </summary>
+		public static void PushTry(params Type[] exceptionTypes)
+			=> Script.TheScript.LoopData.tryStack.Value.Push(exceptionTypes);
+
+		/// <summary>
+		/// Determines whether an exception type will be caught in any of the surrounding try blocks.
+		/// </summary>
+		public static bool IsExceptionCaught(Type exceptionType)
+		{
+			foreach (var handled in Script.TheScript.LoopData.tryStack.Value)
+			{
+				foreach (var t in handled)
+				{
+					if (t.IsAssignableFrom(exceptionType))
+						return true;
+				}
+			}
+			return false;
 		}
 
 		/// <summary>
@@ -825,6 +857,11 @@ namespace Keysharp.Core
 		/// This is ThreadLocal<> because it must actually be thread safe for real threads.
 		/// </summary>
 		internal ThreadLocal<Stack<LoopInfo>> loopStack = new (() => new ());
+		/// <summary>
+		/// The stack which keeps track of all try blocks currently running in the script.<br/>
+		/// This is ThreadLocal<> because it must actually be thread safe for real threads.
+		/// </summary>
+		internal ThreadLocal<Stack<Type[]>> tryStack = new(() => new());
 	}
 
 	/// <summary>
