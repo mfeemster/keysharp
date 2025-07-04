@@ -348,129 +348,73 @@ namespace Keysharp.Scripting
             );
         }
 
-        public override SyntaxNode VisitLoopParseStatement([NotNull] LoopParseStatementContext context)
+        public override SyntaxNode VisitSpecializedLoopStatement([NotNull] SpecializedLoopStatementContext context)
         {
-            var loopEnumeratorName = LoopEnumeratorBaseName + parser.loopLabel;
-            var singleExprCount = context.singleExpression().Length;
-            // Determine the `Until` condition
-            ExpressionSyntax untilCondition = context.untilProduction() != null ? (ExpressionSyntax)Visit(context.untilProduction()) : null;
+			string loopType = null;
+            string enumeratorMethodName = null;
+			var loopEnumeratorName = LoopEnumeratorBaseName + parser.loopLabel;
+			var singleExprCount = context.singleExpression().Length;
+			SyntaxNode loopBodyNode = Visit(context.flowBlock());
+			ExpressionSyntax untilCondition = context.untilProduction() != null ? (ExpressionSyntax)Visit(context.untilProduction()) : null;
+			SyntaxNode elseNode = context.elseProduction() != null ? Visit(context.elseProduction()) : null;
+            ExpressionSyntax[] enumeratorArguments = null;
 
-            // Visit the string literals
-            var String = (ExpressionSyntax)Visit(context.singleExpression(0));
-            var DelimiterChars = singleExprCount > 1
-                ? (ExpressionSyntax)Visit(context.singleExpression(1))
-                : SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression);
-            var OmitChars = singleExprCount > 2
-                ? (ExpressionSyntax)Visit(context.singleExpression(2))
-                : SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression);
+			switch (context.type.Type)
+            {
+                case MainLexer.Parse:
+					// Visit the string literals
+					enumeratorArguments = [(ExpressionSyntax)Visit(context.singleExpression(0)) //String
+					    , singleExprCount > 1 //DelimiterChars
+						    ? (ExpressionSyntax)Visit(context.singleExpression(1))
+						    : SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression)
+					    , singleExprCount > 2 //OmitChars
+							? (ExpressionSyntax)Visit(context.singleExpression(2))
+						    : SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression)];
+                    loopType = "Parse";
+                    enumeratorMethodName = "LoopParse";
+                    break;
+                case MainLexer.Files:
+					enumeratorArguments = [(ExpressionSyntax)Visit(context.singleExpression(0)) //FilePattern
+                        , singleExprCount != 1 //Mode
+						    ? (ExpressionSyntax)Visit(context.singleExpression(1))
+						    : SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression)];
 
-            // Visit the loop body
-            SyntaxNode loopBodyNode = Visit(context.flowBlock());
+                    loopType = "Directory";
+                    enumeratorMethodName = "LoopFile";
+                    break;
+                case MainLexer.Read:
+                    enumeratorArguments = [(ExpressionSyntax)Visit(context.singleExpression(0)) //InputFile
+                        , singleExprCount > 1 //OutputFile
+                            ? (ExpressionSyntax)Visit(context.singleExpression(1))
+                            : SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression)];
+                    loopType = "File";
+                    enumeratorMethodName = "LoopRead";
+                    break;
+				case MainLexer.Reg:
+					enumeratorArguments = [(ExpressionSyntax)Visit(context.singleExpression(0)) //KeyName
+					    , singleExprCount > 1 //Mode
+						    ? (ExpressionSyntax)Visit(context.singleExpression(1))
+						    : SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression)];
+                    loopType = "Registry";
+                    enumeratorMethodName = "LoopRegistry";
+                    break;
+                default:
+                    throw new NotImplementedException();
+			}
 
-            // Visit the `Else` clause, if present
-            SyntaxNode elseNode = context.elseProduction() != null ? Visit(context.elseProduction()) : null;
-
-            // Invoke the generic loop handler
-            return VisitLoopGeneric(
-                null,
-                loopBodyNode,
-                untilCondition,
-                elseNode,
-                "Parse",
-                loopEnumeratorName,
-                "System.Collections.IEnumerator",
-                "LoopParse",
-                null, 
-                String, DelimiterChars, OmitChars
-            );
-        }
-
-        public override SyntaxNode VisitLoopFilesStatement([NotNull] LoopFilesStatementContext context)
-        {
-            var loopEnumeratorName = LoopEnumeratorBaseName + parser.loopLabel;
-            // Determine the `Until` condition
-            ExpressionSyntax untilCondition = context.untilProduction() != null ? (ExpressionSyntax)Visit(context.untilProduction()) : null;
-
-            var FilePattern = (ExpressionSyntax)Visit(context.singleExpression(0));
-            var Mode = context.singleExpression().Length != 1
-                ? (ExpressionSyntax)Visit(context.singleExpression(1))
-                : SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression);
-
-            SyntaxNode loopBodyNode = Visit(context.flowBlock());
-            SyntaxNode elseNode = context.elseProduction() != null ? Visit(context.elseProduction()) : null;
-
-            // Invoke the generic loop handler
-            return VisitLoopGeneric(
-                null,
-                loopBodyNode,
-                untilCondition,
-                elseNode,
-                "Directory",
-                loopEnumeratorName,
-                "System.Collections.IEnumerator",
-                "LoopFile",
-                null,
-                FilePattern, Mode
-            );
-        }
-
-        public override SyntaxNode VisitLoopReadStatement([NotNull] LoopReadStatementContext context)
-        {
-            var loopEnumeratorName = LoopEnumeratorBaseName + parser.loopLabel;
-            // Determine the `Until` condition
-            ExpressionSyntax untilCondition = context.untilProduction() != null ? (ExpressionSyntax)Visit(context.untilProduction()) : null;
-
-            var InputFile = (ExpressionSyntax)Visit(context.singleExpression(0));
-            var OutputFile = context.singleExpression().Length > 1
-                ? (ExpressionSyntax)Visit(context.singleExpression(1))
-                : SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression);
-
-            SyntaxNode loopBodyNode = Visit(context.flowBlock());
-            SyntaxNode elseNode = context.elseProduction() != null ? Visit(context.elseProduction()) : null;
-
-            // Invoke the generic loop handler
-            return VisitLoopGeneric(
-                null,
-                loopBodyNode,
-                untilCondition,
-                elseNode,
-                "File",
-                loopEnumeratorName,
-                "System.Collections.IEnumerator",
-                "LoopRead",
-                null,
-                InputFile, OutputFile
-            );
-        }
-
-        public override SyntaxNode VisitLoopRegStatement([NotNull] LoopRegStatementContext context)
-        {
-            var loopEnumeratorName = LoopEnumeratorBaseName + parser.loopLabel;
-            // Determine the `Until` condition
-            ExpressionSyntax untilCondition = context.untilProduction() != null ? (ExpressionSyntax)Visit(context.untilProduction()) : null;
-
-            var KeyName = (ExpressionSyntax)Visit(context.singleExpression(0));
-            var Mode = context.singleExpression().Length > 1
-                ? (ExpressionSyntax)Visit(context.singleExpression(1))
-                : SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression);
-
-            SyntaxNode loopBodyNode = Visit(context.flowBlock());
-            SyntaxNode elseNode = Visit(context.elseProduction());
-
-            // Invoke the generic loop handler
-            return VisitLoopGeneric(
-                null,
-                loopBodyNode,
-                untilCondition,
-                elseNode,
-                "Registry",
-                loopEnumeratorName,
-                "System.Collections.IEnumerator",
-                "LoopRegistry",
-                null,
-                KeyName, Mode
-            );
-        }
+			return VisitLoopGeneric(
+				null,
+				loopBodyNode,
+				untilCondition,
+				elseNode,
+				loopType,
+				loopEnumeratorName,
+				"System.Collections.IEnumerator",
+				enumeratorMethodName,
+				null,
+				enumeratorArguments
+			);
+		}
 
         public override SyntaxNode VisitForInStatement([NotNull] ForInStatementContext context)
         {

@@ -90,6 +90,7 @@ statement
     : variableStatement
     | ifStatement
     | (labelledStatement s*)? iterationStatement
+    | block // This should be higher than expressionStatement or otherwise {} can be object literal instead of flow blocks
     | expressionStatement
     | functionStatement
     | continueStatement
@@ -103,7 +104,6 @@ statement
     | tryStatement
     | awaitStatement
     | deleteStatement
-    | block
 // These are TODO when at some point modules are supported
 //    | importStatement
 //    | exportStatement
@@ -241,11 +241,8 @@ elseProduction
     ;
 
 iterationStatement
-    : Loop Files WS* singleExpression (WS* ',' singleExpression)? WS* flowBlock untilProduction elseProduction  # LoopFilesStatement
-    | Loop Read WS* singleExpression (WS* ',' singleExpression)? WS* flowBlock untilProduction elseProduction   # LoopReadStatement
-    | Loop Reg WS* singleExpression (WS* ',' singleExpression)? WS* flowBlock untilProduction elseProduction    # LoopRegStatement
-    | Loop Parse WS* singleExpression (WS* ',' singleExpression?)* WS* flowBlock untilProduction elseProduction # LoopParseStatement
-    | Loop WS* ({this.isValidLoopExpression()}? singleExpression WS*)? flowBlock untilProduction elseProduction      # LoopStatement
+    : Loop type = (Files | Read | Reg | Parse) WS* singleExpression (WS* ',' singleExpression?)* WS* flowBlock untilProduction elseProduction  # SpecializedLoopStatement
+    | {this.isValidLoopExpression()}? Loop WS* (singleExpression WS*)? flowBlock untilProduction elseProduction      # LoopStatement
     | While WS* singleExpression WS* flowBlock untilProduction elseProduction       # WhileStatement
     | For WS* forInParameters WS* flowBlock untilProduction elseProduction          # ForInStatement
     ;

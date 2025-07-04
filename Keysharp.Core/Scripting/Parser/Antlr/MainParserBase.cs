@@ -123,10 +123,10 @@ public abstract class MainParserBase : Antlr4.Runtime.Parser
 
     protected bool isValidLoopExpression()
     {
-        var next = InputStream.LA(1);
+        var next = InputStream.LA(2);
         if (next == MainLexer.Parse || next == MainLexer.Reg || next == MainLexer.Read || next == MainLexer.Files)
             return false;
-        return !isEmptyObject();
+        return true;
     }
 
     protected bool isEmptyObject()

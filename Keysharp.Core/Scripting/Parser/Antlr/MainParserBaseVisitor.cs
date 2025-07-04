@@ -462,7 +462,7 @@ public partial class MainParserBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// <return>The visitor result.</return>
 	public virtual Result VisitElseProduction([NotNull] MainParser.ElseProductionContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by the <c>LoopFilesStatement</c>
+	/// Visit a parse tree produced by the <c>SpecializedLoopStatement</c>
 	/// labeled alternative in <see cref="MainParser.iterationStatement"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
@@ -471,40 +471,7 @@ public partial class MainParserBaseVisitor<Result> : AbstractParseTreeVisitor<Re
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitLoopFilesStatement([NotNull] MainParser.LoopFilesStatementContext context) { return VisitChildren(context); }
-	/// <summary>
-	/// Visit a parse tree produced by the <c>LoopReadStatement</c>
-	/// labeled alternative in <see cref="MainParser.iterationStatement"/>.
-	/// <para>
-	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
-	/// on <paramref name="context"/>.
-	/// </para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	public virtual Result VisitLoopReadStatement([NotNull] MainParser.LoopReadStatementContext context) { return VisitChildren(context); }
-	/// <summary>
-	/// Visit a parse tree produced by the <c>LoopRegStatement</c>
-	/// labeled alternative in <see cref="MainParser.iterationStatement"/>.
-	/// <para>
-	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
-	/// on <paramref name="context"/>.
-	/// </para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	public virtual Result VisitLoopRegStatement([NotNull] MainParser.LoopRegStatementContext context) { return VisitChildren(context); }
-	/// <summary>
-	/// Visit a parse tree produced by the <c>LoopParseStatement</c>
-	/// labeled alternative in <see cref="MainParser.iterationStatement"/>.
-	/// <para>
-	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
-	/// on <paramref name="context"/>.
-	/// </para>
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	public virtual Result VisitLoopParseStatement([NotNull] MainParser.LoopParseStatementContext context) { return VisitChildren(context); }
+	public virtual Result VisitSpecializedLoopStatement([NotNull] MainParser.SpecializedLoopStatementContext context) { return VisitChildren(context); }
 	/// <summary>
 	/// Visit a parse tree produced by the <c>LoopStatement</c>
 	/// labeled alternative in <see cref="MainParser.iterationStatement"/>.

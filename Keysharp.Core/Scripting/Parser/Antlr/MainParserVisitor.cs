@@ -291,33 +291,12 @@ public interface IMainParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitElseProduction([NotNull] MainParser.ElseProductionContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>LoopFilesStatement</c>
+	/// Visit a parse tree produced by the <c>SpecializedLoopStatement</c>
 	/// labeled alternative in <see cref="MainParser.iterationStatement"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitLoopFilesStatement([NotNull] MainParser.LoopFilesStatementContext context);
-	/// <summary>
-	/// Visit a parse tree produced by the <c>LoopReadStatement</c>
-	/// labeled alternative in <see cref="MainParser.iterationStatement"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitLoopReadStatement([NotNull] MainParser.LoopReadStatementContext context);
-	/// <summary>
-	/// Visit a parse tree produced by the <c>LoopRegStatement</c>
-	/// labeled alternative in <see cref="MainParser.iterationStatement"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitLoopRegStatement([NotNull] MainParser.LoopRegStatementContext context);
-	/// <summary>
-	/// Visit a parse tree produced by the <c>LoopParseStatement</c>
-	/// labeled alternative in <see cref="MainParser.iterationStatement"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitLoopParseStatement([NotNull] MainParser.LoopParseStatementContext context);
+	Result VisitSpecializedLoopStatement([NotNull] MainParser.SpecializedLoopStatementContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>LoopStatement</c>
 	/// labeled alternative in <see cref="MainParser.iterationStatement"/>.
