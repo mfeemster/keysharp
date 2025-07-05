@@ -46,18 +46,18 @@ program
     ;
 
 sourceElements
-    : sourceElement+
+    : (sourceElement eos
+    | WS
+    | EOL)+
     ;
 
 sourceElement
-    : classDeclaration eos
-    | positionalDirective eos
-    | remap eos
-    | hotstring eos
-    | hotkey eos
-    | statement eos
-    | WS
-    | EOL
+    : classDeclaration
+    | positionalDirective
+    | remap
+    | hotstring
+    | hotkey
+    | statement
     ;
 
 // Non-positional directives are handled elsewhere, mainly in PreReader.cs
@@ -89,7 +89,7 @@ hotkey
 statement
     : variableStatement
     | ifStatement
-    | (labelledStatement s*)? iterationStatement
+    | iterationStatement
     | block // This should be higher than expressionStatement or otherwise {} can be object literal instead of flow blocks
     | expressionStatement
     | functionStatement
@@ -273,23 +273,15 @@ switchStatement
     ;
 
 caseBlock
-    : '{' s* caseClauses? (defaultClause caseClauses?)? '}'
-    ;
-
-caseClauses
-    : caseClause+
+    : '{' s* caseClause* '}'
     ;
 
 caseClause
-    : Case WS* expressionSequence WS* ':' (s* statementList | EOL)
-    ;
-
-defaultClause
-    : Default WS* ':' (s* statementList | EOL)
+    : (Case WS* expressionSequence | Default) WS* ':' (s* statementList | EOL)
     ;
 
 labelledStatement
-    : Identifier ':' // Identifier used instead of identified because it musn't include Default (gets confused with switch default clause)
+    : identifier ':'
     ;
 
 gotoStatement

@@ -319,7 +319,7 @@ namespace Keysharp.Scripting
 
         public override SyntaxNode VisitLoopStatement([NotNull] LoopStatementContext context)
         {
-            var loopEnumeratorName = LoopEnumeratorBaseName + parser.loopLabel;
+            var loopEnumeratorName = LoopEnumeratorBaseName + parser.LoopStack.Peek().Label;
             // Determine the loop expression (or -1 for infinite loops)
             ExpressionSyntax loopExpression = context.singleExpression() != null
                 ? (ExpressionSyntax)Visit(context.singleExpression())
@@ -352,7 +352,7 @@ namespace Keysharp.Scripting
         {
 			string loopType = null;
             string enumeratorMethodName = null;
-			var loopEnumeratorName = LoopEnumeratorBaseName + parser.loopLabel;
+			var loopEnumeratorName = LoopEnumeratorBaseName + parser.LoopStack.Peek().Label;
 			var singleExprCount = context.singleExpression().Length;
 			SyntaxNode loopBodyNode = Visit(context.flowBlock());
 			ExpressionSyntax untilCondition = context.untilProduction() != null ? (ExpressionSyntax)Visit(context.untilProduction()) : null;
@@ -418,7 +418,7 @@ namespace Keysharp.Scripting
 
         public override SyntaxNode VisitForInStatement([NotNull] ForInStatementContext context)
         {
-            var loopEnumeratorName = LoopEnumeratorBaseName + parser.loopLabel;
+            var loopEnumeratorName = LoopEnumeratorBaseName + parser.LoopStack.Peek().Label;
 
             // Get the loop expression (e.g., `arr` in `for x in arr`)
             var loopExpression = (ExpressionSyntax)Visit(context.forInParameters().singleExpression());
@@ -546,7 +546,7 @@ namespace Keysharp.Scripting
 
         public override SyntaxNode VisitWhileStatement([NotNull] WhileStatementContext context)
         {
-            var loopEnumeratorName = LoopEnumeratorBaseName + parser.loopLabel;
+            var loopEnumeratorName = LoopEnumeratorBaseName + parser.LoopStack.Peek().Label;
 
             // Visit the singleExpression (loop condition)
             var conditionExpression = (ExpressionSyntax)Visit(context.singleExpression());
@@ -683,7 +683,7 @@ namespace Keysharp.Scripting
 
         public override SyntaxNode VisitContinueStatement([NotNull] ContinueStatementContext context)
         {
-            var targetLabel = parser.loopLabel;
+            var targetLabel = parser.LoopStack.Peek().Label;
             if (context.propertyName() != null)
                 targetLabel = context.propertyName().GetText().Trim('"');
             targetLabel = LoopEnumeratorBaseName + targetLabel + "_next";
@@ -1065,31 +1065,63 @@ namespace Keysharp.Scripting
         {
             var sections = new List<SwitchSectionSyntax>();
             var caseExpressions = new List<ExpressionSyntax>();
+            SwitchSectionSyntax defaultClause = null;
 
-            // Process case clauses
-            if (context.caseClauses() != null)
+            if (context.caseClause().Length > 0)
             {
-                var allCaseClauses = context.caseClauses(0)?.caseClause()
-                    .Concat(context.caseClauses(1)?.caseClause() ?? Enumerable.Empty<CaseClauseContext>())
-                    .ToList() ?? Enumerable.Empty<CaseClauseContext>();
-                foreach (var caseClause in allCaseClauses)
-                {
-                    var caseSection = (SwitchSectionSyntax)VisitCaseClause(caseClause);
-                    sections.Add(caseSection);
+				foreach (var caseClause in context.caseClause())
+				{
+					var fullSection = (SwitchSectionSyntax)VisitCaseClause(caseClause);
 
-                    // Collect case expressions
-                    var clauseExpressions = caseClause.expressionSequence()
-                        .expression()
-                        .Select(expr => (ExpressionSyntax)Visit(expr));
-                    caseExpressions.AddRange(clauseExpressions);
-                }
-            }
+					var stmts = fullSection.Statements;
+					int idx = stmts
+						.Select((s, i) => (stmt: s, idx: i + 1))
+						.FirstOrDefault(t =>
+							t.stmt is LabeledStatementSyntax ls &&
+							ls.Identifier.Text.Equals("default", StringComparison.OrdinalIgnoreCase))
+						.idx;
 
-            // Process default clause
-            if (context.defaultClause() != null)
-            {
-                sections.Add((SwitchSectionSyntax)VisitDefaultClause(context.defaultClause()));
-            }
+
+					if (idx > 0)
+					{
+						// 1) Everything *before* that `default:` stays in the original labels
+						var before = stmts.Take(idx - 1).Append(SyntaxFactory.BreakStatement());
+						var preSection = fullSection
+							.WithStatements(SyntaxFactory.List(before));
+						sections.Add(preSection);
+
+						// 2) Everything *after* becomes the real default‐section
+						var after = stmts.Skip(idx);
+						var defaultLabel = SyntaxFactory.DefaultSwitchLabel();
+						var defaultSection = SyntaxFactory.SwitchSection(
+							labels: SyntaxFactory.SingletonList<SwitchLabelSyntax>(defaultLabel),
+							statements: SyntaxFactory.List(after)
+						);
+						defaultClause = defaultSection;
+					}
+					else if (fullSection.Labels.Any(l =>
+								 l.IsKind(SyntaxKind.DefaultSwitchLabel)))
+					{
+						// It really was a default‐section as given by caseClause
+						defaultClause = fullSection;
+					}
+					else
+					{
+						// A normal case‐section
+						sections.Add(fullSection);
+
+						// And collect its case‐expressions as usual:
+						var exprs = caseClause
+							.expressionSequence()
+							.expression()
+							.Select(e => (ExpressionSyntax)Visit(e));
+						caseExpressions.AddRange(exprs);
+					}
+				}
+			}
+
+            if (defaultClause != null)
+                sections.Add(defaultClause);
 
             // Return the switch statement
             return SyntaxFactory.SwitchStatement(
@@ -1100,123 +1132,112 @@ namespace Keysharp.Scripting
 
         public override SyntaxNode VisitCaseClause([NotNull] CaseClauseContext context)
         {
-            // Visit the case expressions and generate case labels
-            var caseLabels = context.expressionSequence()
-                .expression()
-                .Select(expr =>
-                {
-                    ++caseClauseCount;
-                    var exprSyntax = (ExpressionSyntax)Visit(expr);
+			// Visit the statement list, if present
+			var statements = context.statementList() != null
+				? (StatementSyntax)Visit(context.statementList())
+				: SyntaxFactory.Block();
 
-                    // Convert the case expression to string
-                    var toStringExpr = switchValueExists
-					    ? ((InvocationExpressionSyntax)InternalMethods.ForceString)
-				            .WithArgumentList(
-					            SyntaxFactory.ArgumentList(
-						            SyntaxFactory.SeparatedList(new[] {
-							            SyntaxFactory.Argument(exprSyntax) }))
-				            )
-                        : exprSyntax;
+			// Ensure a break statement is appended
+			statements = EnsureBreakStatement(statements);
 
-                    // Handle case-sensitivity by applying ToLower if switchCaseSense is false
-                    var comparisonExpr = !switchCaseSense
-                        ? SyntaxFactory.InvocationExpression(
-                            SyntaxFactory.MemberAccessExpression(
-                                SyntaxKind.SimpleMemberAccessExpression,
-                                toStringExpr,
-                                SyntaxFactory.IdentifierName("ToLower")
-                            )
-                        )
-                        : toStringExpr;
+            SyntaxList<SwitchLabelSyntax> switchLabels;
 
-                    // Generate either `case true when ...` or `case ...` based on `switchValueExists`
-                    if (!switchValueExists)
+            if (context.Default() != null)
+            {
+                switchLabels = SyntaxFactory.SingletonList<SwitchLabelSyntax>(
+                        SyntaxFactory.DefaultSwitchLabel()
+                    );
+            }
+            else
+            {
+                // Visit the case expressions and generate case labels
+                var caseLabels = context.expressionSequence()
+                    .expression()
+                    .Select(expr =>
                     {
-                        // Create a `case true when ...` label
-                        return SyntaxFactory.CasePatternSwitchLabel(
-                            SyntaxFactory.Token(SyntaxKind.CaseKeyword), // case keyword
-                            SyntaxFactory.ConstantPattern(
-                                SyntaxFactory.LiteralExpression(SyntaxKind.TrueLiteralExpression)
-                            ), // case true
-                            SyntaxFactory.WhenClause(
-                                SyntaxFactory.CastExpression(
-                                    SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.BoolKeyword)),
-                                    ((InvocationExpressionSyntax)InternalMethods.ForceBool)
-                                    .WithArgumentList(
-                                        SyntaxFactory.ArgumentList(
-                                            SyntaxFactory.SeparatedList(new[] {
-                                                SyntaxFactory.Argument(comparisonExpr) }))
-                                    )
+                        ++caseClauseCount;
+                        var exprSyntax = (ExpressionSyntax)Visit(expr);
+
+                        // Convert the case expression to string
+                        var toStringExpr = switchValueExists
+                            ? ((InvocationExpressionSyntax)InternalMethods.ForceString)
+                                .WithArgumentList(
+                                    SyntaxFactory.ArgumentList(
+                                        SyntaxFactory.SeparatedList(new[] {
+                                        SyntaxFactory.Argument(exprSyntax) }))
                                 )
-                            ),
-                            SyntaxFactory.Token(SyntaxKind.ColonToken) // colon
-                        );
-                    }
-                    else
-                    {
-                        // Create a condition for the `when` clause
-                        var whenClause = SyntaxFactory.WhenClause(
-                            SyntaxFactory.InvocationExpression(
+                            : exprSyntax;
+
+                        // Handle case-sensitivity by applying ToLower if switchCaseSense is false
+                        var comparisonExpr = !switchCaseSense
+                            ? SyntaxFactory.InvocationExpression(
                                 SyntaxFactory.MemberAccessExpression(
                                     SyntaxKind.SimpleMemberAccessExpression,
-                                    SyntaxFactory.IdentifierName(InternalPrefix + "string_" + caseClauseCount),
-                                    SyntaxFactory.IdentifierName("Equals")
-                                ),
-                                SyntaxFactory.ArgumentList(
-                                    SyntaxFactory.SingletonSeparatedList(SyntaxFactory.Argument(comparisonExpr))
+                                    toStringExpr,
+                                    SyntaxFactory.IdentifierName("ToLower")
                                 )
                             )
-                        );
+                            : toStringExpr;
 
-                        // Create a `case string s when ...` label
-                        return SyntaxFactory.CasePatternSwitchLabel(
-                            SyntaxFactory.Token(SyntaxKind.CaseKeyword), // case keyword
-                            SyntaxFactory.DeclarationPattern(
-                                SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.StringKeyword)),
-                                SyntaxFactory.SingleVariableDesignation(SyntaxFactory.Identifier(InternalPrefix + "string_" + caseClauseCount))
-                            ),
-                            whenClause, // when condition
-                            SyntaxFactory.Token(SyntaxKind.ColonToken) // colon
-                        );
-                    }
-                })
-                .ToArray();
+                        // Generate either `case true when ...` or `case ...` based on `switchValueExists`
+                        if (!switchValueExists)
+                        {
+                            // Create a `case true when ...` label
+                            return SyntaxFactory.CasePatternSwitchLabel(
+                                SyntaxFactory.Token(SyntaxKind.CaseKeyword), // case keyword
+                                SyntaxFactory.ConstantPattern(
+                                    SyntaxFactory.LiteralExpression(SyntaxKind.TrueLiteralExpression)
+                                ), // case true
+                                SyntaxFactory.WhenClause(
+                                    SyntaxFactory.CastExpression(
+                                        SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.BoolKeyword)),
+                                        ((InvocationExpressionSyntax)InternalMethods.ForceBool)
+                                        .WithArgumentList(
+                                            SyntaxFactory.ArgumentList(
+                                                SyntaxFactory.SeparatedList(new[] {
+                                                SyntaxFactory.Argument(comparisonExpr) }))
+                                        )
+                                    )
+                                ),
+                                SyntaxFactory.Token(SyntaxKind.ColonToken) // colon
+                            );
+                        }
+                        else
+                        {
+                            // Create a condition for the `when` clause
+                            var whenClause = SyntaxFactory.WhenClause(
+                                SyntaxFactory.InvocationExpression(
+                                    SyntaxFactory.MemberAccessExpression(
+                                        SyntaxKind.SimpleMemberAccessExpression,
+                                        SyntaxFactory.IdentifierName(InternalPrefix + "string_" + caseClauseCount),
+                                        SyntaxFactory.IdentifierName("Equals")
+                                    ),
+                                    SyntaxFactory.ArgumentList(
+                                        SyntaxFactory.SingletonSeparatedList(SyntaxFactory.Argument(comparisonExpr))
+                                    )
+                                )
+                            );
 
-            // Visit the statement list, if present
-            var statements = context.statementList() != null
-                ? (StatementSyntax)Visit(context.statementList())
-                : SyntaxFactory.Block();
+                            // Create a `case string s when ...` label
+                            return SyntaxFactory.CasePatternSwitchLabel(
+                                SyntaxFactory.Token(SyntaxKind.CaseKeyword), // case keyword
+                                SyntaxFactory.DeclarationPattern(
+                                    SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.StringKeyword)),
+                                    SyntaxFactory.SingleVariableDesignation(SyntaxFactory.Identifier(InternalPrefix + "string_" + caseClauseCount))
+                                ),
+                                whenClause, // when condition
+                                SyntaxFactory.Token(SyntaxKind.ColonToken) // colon
+                            );
+                        }
+                    })
+                    .ToArray();
 
-            // Ensure a break statement is appended
-            statements = EnsureBreakStatement(statements);
+                switchLabels = SyntaxFactory.List<SwitchLabelSyntax>(caseLabels);
+			}
 
             // Return a switch section for this case
-            return SyntaxFactory.SwitchSection(
-                SyntaxFactory.List<SwitchLabelSyntax>(caseLabels),
-                SyntaxFactory.List<StatementSyntax>(
-                    statements is BlockSyntax blockSyntax
-                        ? blockSyntax.Statements // Unwrap block statements
-                        : new[] { statements }   // Wrap single statement in an array
-                )
-            );
-        }
-
-
-        public override SyntaxNode VisitDefaultClause([NotNull] DefaultClauseContext context)
-        {
-            // Visit the statement list, if present
-            var statements = context.statementList() != null
-                ? (StatementSyntax)Visit(context.statementList())
-                : SyntaxFactory.Block();
-
-            statements = EnsureBreakStatement(statements);
-
-            // Return a switch section for this default clause
-            return SyntaxFactory.SwitchSection(
-                SyntaxFactory.SingletonList<SwitchLabelSyntax>(
-                    SyntaxFactory.DefaultSwitchLabel()
-                ),
-                SyntaxFactory.List<StatementSyntax>(
+            return SyntaxFactory.SwitchSection(switchLabels
+                , SyntaxFactory.List<StatementSyntax>(
                     statements is BlockSyntax blockSyntax
                         ? blockSyntax.Statements // Unwrap block statements
                         : new[] { statements }   // Wrap single statement in an array
@@ -1227,7 +1248,7 @@ namespace Keysharp.Scripting
         public override SyntaxNode VisitLabelledStatement([NotNull] LabelledStatementContext context)
         {
             // Get the label identifier
-            var labelName = context.Identifier().GetText().Trim('"');
+            var labelName = context.identifier().GetText().Trim('"');
 
             // Return a labeled statement with an empty statement as the body
             return SyntaxFactory.LabeledStatement(

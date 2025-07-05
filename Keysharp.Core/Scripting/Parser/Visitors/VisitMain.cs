@@ -233,32 +233,40 @@ namespace Keysharp.Scripting
         {
             List<StatementSyntax> autoExecStatements = [];
             HashSet<string> classNames = new();
+            var sourceElements = context.sourceElement();
+			int childCount = sourceElements.Length;
+            StatementContext stmt;
 
-            for (var i = 0; i < context.ChildCount; i++)
+            for (int i = 0; i < childCount; i++)
             {
-                var child = context.GetChild(i).GetChild(0);
+                var child = sourceElements[i];
+                SyntaxNode element;
+				//var txt = child.GetText();
 
-                if (child is not IRuleNode ruleNode)
-                    continue; // EOL or WS
-
-                //var txt = child.GetText();
-                SyntaxNode element = Visit(child);
-
-                if (element == null)
+				if (i > 0 
+                    && (stmt = child.statement()) != null 
+                    && stmt.iterationStatement() != null 
+                    && autoExecStatements[^1] is LabeledStatementSyntax lss)
                 {
-                    switch (ruleNode.RuleContext.RuleIndex)
+                    parser.LoopStack.Push(new Parser.Loop()
                     {
-                        case RULE_positionalDirective:
-                        case RULE_remap:
-                        case RULE_hotkey:
-                        case RULE_hotstring:
-                            continue;
-                        default:
-                            throw new NoNullAllowedException();
-                    }
-                }
+                        Label = lss.Identifier.Text,
+                        IsInitialized = false,
+                    });
+					BlockSyntax result = (BlockSyntax)Visit(stmt);
+				    element = result.WithStatements(result.Statements.Insert(0, lss));
+                    autoExecStatements.RemoveAt(autoExecStatements.Count - 1);
+				} else
+                    element = Visit(child);
 
-                var ruleContext = ruleNode.RuleContext;
+				if (element == null)
+                {
+                    if (child.positionalDirective() == null 
+                        && child.remap() == null
+                        && child.hotkey() == null
+                        && child.hotstring() == null)
+                        throw new NoNullAllowedException();
+                }
 
                 if (element is MemberDeclarationSyntax)
                 {
@@ -266,27 +274,24 @@ namespace Keysharp.Scripting
                     continue;
                 }
 
-                switch (ruleContext.RuleIndex)
+                if (child.statement() != null)
                 {
-                    case RULE_statement:
-                        if (element is BlockSyntax block)
-                        {
-                            if (block.GetAnnotatedNodes("MergeStart").FirstOrDefault() != null)
-                                autoExecStatements = block.WithoutAnnotations("MergeStart").Statements.Concat(autoExecStatements).ToList();
-                            else if (block.GetAnnotatedNodes("MergeEnd").FirstOrDefault() != null)
-                                autoExecStatements.AddRange(block.WithoutAnnotations("MergeEnd").Statements);
-                            else
-                                autoExecStatements.Add(block);
-                        }
+                    if (element is BlockSyntax block)
+                    {
+                        if (block.GetAnnotatedNodes("MergeStart").FirstOrDefault() != null)
+                            autoExecStatements = block.WithoutAnnotations("MergeStart").Statements.Concat(autoExecStatements).ToList();
+                        else if (block.GetAnnotatedNodes("MergeEnd").FirstOrDefault() != null)
+                            autoExecStatements.AddRange(block.WithoutAnnotations("MergeEnd").Statements);
                         else
-                            autoExecStatements.Add((StatementSyntax)element);
-                        break;
-                    default:
-                        if (element is ClassDeclarationSyntax classDecl)
-                            classNames.Add(classDecl.Identifier.Text.ToLowerInvariant());
+                            autoExecStatements.Add(block);
+                    }
+                    else
+                        autoExecStatements.Add((StatementSyntax)element);
+                } else { 
+                    if (element is ClassDeclarationSyntax classDecl)
+                        classNames.Add(classDecl.Identifier.Text.ToLowerInvariant());
 
-                        parser.mainClass.Body.Add((MemberDeclarationSyntax)element);
-                        break;
+                    parser.mainClass.Body.Add((MemberDeclarationSyntax)element);
                 }
             }
 
@@ -301,7 +306,24 @@ namespace Keysharp.Scripting
 
             foreach (var statementContext in context.statement())
             {
-                var visited = Visit(statementContext);
+                SyntaxNode visited;
+
+				if (statements.Count > 0
+	                && statementContext.iterationStatement() != null
+	                && statements[^1] is LabeledStatementSyntax lss)
+				{
+					parser.LoopStack.Push(new Parser.Loop()
+					{
+						Label = lss.Identifier.Text,
+						IsInitialized = false,
+					});
+					BlockSyntax result = (BlockSyntax)Visit(statementContext);
+					visited = result.WithStatements(result.Statements.Insert(0, lss));
+					statements.RemoveAt(statements.Count - 1);
+				}
+				else
+					visited = Visit(statementContext);
+
                 if (visited == null)
                 {
                     if (statementContext.variableStatement() != null)
@@ -345,23 +367,24 @@ namespace Keysharp.Scripting
         {
             if (context.iterationStatement() != null)
             {
-                var prevLabel = parser.loopLabel;
-                parser.loopDepth++;
-                // May label an iterationStatement
-                LabeledStatementSyntax label = null;
-                if (context.labelledStatement() != null)
+                Parser.Loop loop;
+				parser.loopDepth++;
+                if (parser.LoopStack.Count > 0 && !(loop = parser.LoopStack.Peek()).IsInitialized)
                 {
-                    parser.loopLabel = context.labelledStatement().Identifier().GetText();
-                    label = (LabeledStatementSyntax)VisitLabelledStatement(context.labelledStatement());
+                    loop.IsInitialized = true;
+                } else {
+                    loop = new Parser.Loop()
+                    {
+                        Label = parser.loopDepth.ToString(),
+                        IsInitialized = true,
+                    };
+                    parser.LoopStack.Push(loop);
                 }
-                else
-                    parser.loopLabel = parser.loopDepth.ToString();
 
                 BlockSyntax result = (BlockSyntax)Visit(context.iterationStatement());
-                if (label != null)
-                    result = result.WithStatements(result.Statements.Insert(0, label));
+
                 parser.loopDepth--;
-                parser.loopLabel = prevLabel;
+                _ = parser.LoopStack.Pop();
                 return result;
             }
 

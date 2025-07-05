@@ -361,23 +361,11 @@ public interface IMainParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitCaseBlock([NotNull] MainParser.CaseBlockContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="MainParser.caseClauses"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitCaseClauses([NotNull] MainParser.CaseClausesContext context);
-	/// <summary>
 	/// Visit a parse tree produced by <see cref="MainParser.caseClause"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitCaseClause([NotNull] MainParser.CaseClauseContext context);
-	/// <summary>
-	/// Visit a parse tree produced by <see cref="MainParser.defaultClause"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitDefaultClause([NotNull] MainParser.DefaultClauseContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="MainParser.labelledStatement"/>.
 	/// </summary>

@@ -208,6 +208,7 @@ namespace Keysharp.Scripting
 
         public Stack<(Function, HashSet<string>)> FunctionStack = new();
 		public Stack<Class> ClassStack = new();
+        public Stack<Loop> LoopStack = new();
 
         public Class currentClass;
 
@@ -237,7 +238,6 @@ namespace Keysharp.Scripting
         public HashSet<string> UserFuncs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         public uint loopDepth = 0;
-        public string loopLabel = null;
         public uint functionDepth = 0;
 		public uint classDepth = 0;
         public uint tryDepth = 0;
@@ -571,7 +571,11 @@ namespace Keysharp.Scripting
             }
         }
 
-
+        public class Loop
+        {
+            public string Label = null;
+            public bool IsInitialized = true; //Used to determine if a labelledStatement pushed the loop or not
+        }
         public Parser(CompilerHelper ch)
 		{
 			Ch = ch;
