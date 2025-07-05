@@ -215,28 +215,11 @@
 			if (criteria.IsEmpty)
 				return false;
 
-			if (!string.IsNullOrEmpty(criteria.Group))
-			{
-				if (Script.TheScript.WindowProvider.Manager.Groups.TryGetValue(criteria.Group, out var stack))
-				{
-					if (stack.sc.Count > 0)//An empty group is assumed to want to match all windows.
-					{
-						var anypassed = false;
+			if (criteria.ID != 0 && Handle != criteria.ID)
+				return false;
 
-						foreach (var crit in stack.sc)
-						{
-							if (Equals(crit))//If any criteria in the group matched something, then it's considered a valid match.
-							{
-								anypassed = true;
-								break;
-							}
-						}
-
-						if (!anypassed)
-							return false;
-					}
-				}
-			}
+			if (criteria.PID != 0L && PID != criteria.PID)
+				return false;
 
 			if (!string.IsNullOrEmpty(criteria.Title))//Put title first because it's the most likely.
 			{
@@ -250,23 +233,17 @@
 					return false;
 			}
 
-			if (criteria.ID != 0 && Handle != criteria.ID)
-				return false;
-
-			if (criteria.PID != 0L && PID != criteria.PID)
-				return false;
+			if (!string.IsNullOrEmpty(criteria.ClassName))
+			{
+				if (!TitleCompare(ClassName, criteria.ClassName, StringComparison.CurrentCultureIgnoreCase) && !TitleCompare(ClassNN, criteria.ClassName, StringComparison.CurrentCultureIgnoreCase))//Check both just to be safe because they can be slightly different.
+					return false;
+			}
 
 			if (!string.IsNullOrEmpty(criteria.Path))
 			{
 				var comp = Environment.OSVersion.Platform == PlatformID.Win32NT ? StringComparison.OrdinalIgnoreCase : StringComparison.CurrentCulture;
 
 				if (!TitleCompare(Path, criteria.Path, comp))
-					return false;
-			}
-
-			if (!string.IsNullOrEmpty(criteria.ClassName))
-			{
-				if (!TitleCompare(ClassName, criteria.ClassName) && !TitleCompare(ClassNN, criteria.ClassName))//Check both just to be safe because they can be slightly different.
 					return false;
 			}
 
@@ -290,6 +267,30 @@
 				foreach (var text in Text)
 					if (TitleCompare(text, criteria.ExcludeText))
 						return false;
+			}
+
+			//Potentially the slowest, so match it last
+			if (!string.IsNullOrEmpty(criteria.Group))
+			{
+				if (Script.TheScript.WindowProvider.Manager.Groups.TryGetValue(criteria.Group, out var stack))
+				{
+					if (stack.sc.Count > 0)//An empty group is assumed to want to match all windows.
+					{
+						var anypassed = false;
+
+						foreach (var crit in stack.sc)
+						{
+							if (Equals(crit))//If any criteria in the group matched something, then it's considered a valid match.
+							{
+								anypassed = true;
+								break;
+							}
+						}
+
+						if (!anypassed)
+							return false;
+					}
+				}
 			}
 
 			return true;
