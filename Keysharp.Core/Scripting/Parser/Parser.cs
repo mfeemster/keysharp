@@ -368,7 +368,7 @@ namespace Keysharp.Scripting
 			var ctch2 = new CodeCatchClause("kserr", new CodeTypeReference("Keysharp.Core.Error"));
 			var pushcse = new CodeSnippetExpression($"var ({VarPrefix}pushed, {VarPrefix}btv) = {ScriptObjectName}.Threads.BeginThread()");
 			var msg = new CodeSnippetExpression("MsgBox(\"Uncaught Keysharp exception:\\r\\n\" + kserr, $\"{Accessors.A_ScriptName}: Unhandled exception\", \"iconx\")");
-			var popcse = new CodeSnippetExpression($"{ScriptObjectName}.Threads.EndThread({VarPrefix}pushed)");
+			var popcse = new CodeSnippetExpression($"{ScriptObjectName}.Threads.EndThread(({VarPrefix}pushed, {VarPrefix}btv))");
 			var ccsHandled = new CodeConditionStatement(new CodeSnippetExpression("!kserr.Handled"));
 			var ccsProcessed = new CodeConditionStatement(new CodeSnippetExpression("!kserr.Processed"));
 			_ = ccsProcessed.TrueStatements.Add(new CodeSnippetExpression("_ = ErrorOccurred(kserr, kserr.ExcType)"));
@@ -397,14 +397,14 @@ namespace Keysharp.Scripting
 					{
 						var (_ks_pushed, _ks_btv) = _ks_s.Threads.BeginThread();
 						MsgBox(""Uncaught Keysharp exception:\r\n"" + kserr, $""{Accessors.A_ScriptName}: Unhandled exception"", ""iconx"");
-						_ks_s.Threads.EndThread(_ks_pushed);
+						_ks_s.Threads.EndThread((_ks_pushed, _ks_btv));
 					}
 				}
 				else
 				{
 					var (_ks_pushed, _ks_btv) = _ks_s.Threads.BeginThread();
 					MsgBox(""Uncaught exception:\r\n"" + ""Message: "" + ex.Message + ""\r\nStack: "" + ex.StackTrace, $""{Accessors.A_ScriptName}: Unhandled exception"", ""iconx"");
-					_ks_s.Threads.EndThread(_ks_pushed);
+					_ks_s.Threads.EndThread((_ks_pushed, _ks_btv));
 				}
 "));
 			//_ = ctch.Statements.Add(new CodeSnippetExpression("MsgBox(\"Uncaught exception:\\r\\n\" + \"Message: \" + mainex.Message + \"\\r\\nStack: \" + mainex.StackTrace)"));

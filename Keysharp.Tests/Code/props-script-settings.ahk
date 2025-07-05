@@ -70,7 +70,7 @@ else
 
 SetTitleMatchMode, "dummy"
 
-if (A_TitleMatchMode == "regex") 
+if (A_TitleMatchMode == 2) 
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
@@ -101,7 +101,7 @@ if (A_TitleMatchModeSpeed == "slow")
 else
 	FileAppend, "fail", "*"
 
-if (A_TitleMatchMode == "regex") 
+if (A_TitleMatchMode == 2) 
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"

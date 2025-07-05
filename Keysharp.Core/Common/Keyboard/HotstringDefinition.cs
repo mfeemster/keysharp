@@ -424,11 +424,15 @@
 			VariadicFunction vf = (o) =>
 			{
 				object ret = null;
-				var tv = script.Threads.GetThreadVariables();
-				tv.sendLevel = inputLevel;
-				tv.hwndLastUsed = hwndCritFound;
-				tv.hotCriterion = hotCriterion;// v2: Let the Hotkey command use the criterion of this hotstring by default.
-				var ok = Flow.TryCatch(() => ret = funcObj.Call(o), false);
+				var ok = Flow.TryCatch(() =>
+				{
+					ret = null;
+					var tv = script.Threads.GetThreadVariables();
+					tv.sendLevel = inputLevel;
+					tv.hwndLastUsed = hwndCritFound;
+					tv.hotCriterion = hotCriterion;// v2: Let the Hotkey command use the criterion of this hotstring by default.
+					ret = funcObj.Call(o);
+				}, false, (false, null));
 				_ = Interlocked.Decrement(ref existingThreads);
 				return ret;
 			};

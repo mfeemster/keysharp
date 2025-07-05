@@ -541,7 +541,7 @@ using static Keysharp.Scripting.Script;
 					}
 				}
 
-				_ = script.Threads.EndThread(pushed);
+				_ = script.Threads.EndThread((pushed, btv));
 			}
 
 			return (units, errors);
