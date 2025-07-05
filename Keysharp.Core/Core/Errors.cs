@@ -26,7 +26,7 @@ namespace Keysharp.Core
 		{
 			var exitThread = true;
 
-			if (!err.Processed)
+			if (!err.Processed && !Loops.IsExceptionCaught(err.GetType()))
 			{
 				var script = Script.TheScript;
 				err.ExcType = excType;
@@ -50,11 +50,12 @@ namespace Keysharp.Core
 					}
 					err.Processed = true;
 				}
-				else if (!Loops.IsExceptionCaught(err.GetType()))
+				
+				if (!err.Handled && !script.SuppressErrorOccurredDialog)
 				{
 					err.Handled = true;
 					err.Processed = true;
-					return !ErrorDialog.Show(err);
+					return ErrorDialog.Show(err) != ErrorDialog.ErrorDialogResult.Continue;
 				}
 			}
 
@@ -1075,8 +1076,19 @@ namespace Keysharp.Core
 			box.Select(0, 0); // Reset selection
 		}
 
+		/// <summary>
+		/// Displays an error dialog for the given exception and returns whether execution should abort.
+		/// </summary>
+		/// <param name="ex">The exception to show.</param>
+		/// <param name="allowContinue">
+		/// If <c>true</c>, the dialog will offer a “Continue” button (only enabled for KeysharpException of type Return).
+		/// Otherwise, only Abort/Exit/Reload options are shown.
+		/// </param>
+		/// <returns>
+		/// The ErrorDialogResult value corresponding to the option the user chose.
+		/// </returns>
 		[StackTraceHidden]
-		internal static bool Show(Exception ex, bool allowContinue = true)
+		internal static ErrorDialogResult Show(Exception ex, bool allowContinue = true)
 		{
 			KeysharpException kex = ex as KeysharpException;
 			string msg = kex != null ? kex.ToString() : $"Message: {ex.Message}{Environment.NewLine}Stack: {ex.StackTrace}";
@@ -1084,19 +1096,15 @@ namespace Keysharp.Core
 			dlg.ShowDialog();
 			switch (dlg.Result)
 			{
-				case ErrorDialog.ErrorDialogResult.Abort:
-					return false;
-				case ErrorDialog.ErrorDialogResult.Exit:
+				case ErrorDialogResult.Exit:
 					_ = Flow.ExitAppInternal(Flow.ExitReasons.Critical, null, false);
-					return false;
-				case ErrorDialog.ErrorDialogResult.Reload:
+					break;
+				case ErrorDialogResult.Reload:
 					_ = Flow.Reload();
-					return false;
-				case ErrorDialog.ErrorDialogResult.Continue:
-					return true;
-				default:
-					return false;
+					break;
 			}
+
+			return dlg.Result;
 		}
 	}
 }

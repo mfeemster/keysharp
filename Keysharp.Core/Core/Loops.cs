@@ -515,6 +515,11 @@ namespace Keysharp.Core
 			return info;
 		}
 
+		/// <summary>
+		/// Removes the current try block from the stack.
+		/// This should never be called directly by the user and instead is used<br/>
+		/// in the generated C# code.
+		/// </summary>
 		public static void PopTry() => Script.TheScript.LoopData.tryStack.Value.TryPop(out _);
 
 
