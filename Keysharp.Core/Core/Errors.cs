@@ -24,7 +24,7 @@
 		{
 			var exitThread = true;
 
-			if (!err.Processed)
+			if (!err.Processed && !Loops.IsExceptionCaught(err.GetType()))
 			{
 				var script = Script.TheScript;
 				err.ExcType = excType;
@@ -48,23 +48,12 @@
 					}
 					err.Processed = true;
 				}
-				else
+				
+				if (!err.Handled && !script.SuppressErrorOccurredDialog)
 				{
 					err.Handled = true;
 					err.Processed = true;
-					switch (ErrorDialog.Show(err))
-					{
-						case ErrorDialog.ErrorDialogResult.Abort:
-							return true;
-						case ErrorDialog.ErrorDialogResult.Exit:
-							_ = Flow.ExitAppInternal(Flow.ExitReasons.Critical, null, false);
-							return true;
-						case ErrorDialog.ErrorDialogResult.Reload:
-							_ = Flow.Reload();
-							return true;
-						case ErrorDialog.ErrorDialogResult.Continue:
-							return false;
-					}
+					return ErrorDialog.Show(err) != ErrorDialog.ErrorDialogResult.Continue;
 				}
 			}
 
@@ -1085,12 +1074,34 @@
 			box.Select(0, 0); // Reset selection
 		}
 
+		/// <summary>
+		/// Displays an error dialog for the given exception and returns whether execution should abort.
+		/// </summary>
+		/// <param name="ex">The exception to show.</param>
+		/// <param name="allowContinue">
+		/// If <c>true</c>, the dialog will offer a “Continue” button (only enabled for KeysharpException of type Return).
+		/// Otherwise, only Abort/Exit/Reload options are shown.
+		/// </param>
+		/// <returns>
+		/// The ErrorDialogResult value corresponding to the option the user chose.
+		/// </returns>
 		[StackTraceHidden]
-		internal static ErrorDialogResult Show(KeysharpException ex)
+		internal static ErrorDialogResult Show(Exception ex, bool allowContinue = true)
 		{
-			string msg = ex.ToString();
-			using var dlg = new ErrorDialog(msg, ex.ExcType == Keyword_Return);
+			KeysharpException kex = ex as KeysharpException;
+			string msg = kex != null ? kex.ToString() : $"Message: {ex.Message}{Environment.NewLine}Stack: {ex.StackTrace}";
+			using var dlg = new ErrorDialog(msg, allowContinue && kex != null ? kex.ExcType == Keyword_Return : false);
 			dlg.ShowDialog();
+			switch (dlg.Result)
+			{
+				case ErrorDialogResult.Exit:
+					_ = Flow.ExitAppInternal(Flow.ExitReasons.Critical, null, false);
+					break;
+				case ErrorDialogResult.Reload:
+					_ = Flow.Reload();
+					break;
+			}
+
 			return dlg.Result;
 		}
 	}

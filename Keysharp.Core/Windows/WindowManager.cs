@@ -60,21 +60,21 @@ namespace Keysharp.Core.Windows
 			if (criteria.IsEmpty)
 				return found;
 
-			var mm = Script.TheScript.Threads.GetThreadVariables().titleMatchMode.ParseLong(false);
-			var hasTitle = !criteria.Title.IsNullOrEmpty();
+			var mm = Script.TheScript.Threads.GetThreadVariables().titleMatchMode;
 
-			if (!criteria.ClassName.IsNullOrEmpty() || (mm == 3 && hasTitle))
+			if (mm < 4) //If the matching mode is not RegEx then try to take an optimized path
 			{
-				var hwnd = WindowsAPI.FindWindow(criteria.ClassName == "" ? null : criteria.ClassName, !hasTitle || mm != 3 ? null : criteria.Title);
+				var hasTitle = !criteria.Title.IsNullOrEmpty();
 
-				if (hwnd == 0)
-					return found;
-
-				if (mm == 3 || !hasTitle)
+				if (!criteria.ClassName.IsNullOrEmpty() || (mm == 3 && hasTitle))
 				{
-					found = Script.TheScript.WindowProvider.Manager.CreateWindow(hwnd);
+					var hwnd = WindowsAPI.FindWindow(criteria.ClassName == "" ? null : criteria.ClassName, !hasTitle || mm != 3 ? null : criteria.Title);
 
-					if ((!hasTitle || criteria.Title.Equals(found.Title)) && criteria.ClassName != null && criteria.ClassName.Equals(found.ClassName))
+					if (hwnd == 0) //If there is no match with FindWindow then there can't be a match among AllWindows
+						return found;
+
+					found = Script.TheScript.WindowProvider.Manager.CreateWindow(hwnd);
+					if (found.Equals(criteria)) //Evaluate any other criteria as well before accepting the match
 						return found;
 
 					found = null;

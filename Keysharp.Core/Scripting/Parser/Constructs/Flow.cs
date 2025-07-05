@@ -854,11 +854,26 @@ namespace Keysharp.Scripting
 						SetLineIndexes();
 					}
 
-					var block = new CodeBlock(codeLine, Scope, tcf.TryStatements, CodeBlock.BlockKind.Try, blocks.PeekOrNull())
+					//Wrap the try contents in a try..finally, calling PushTry before it and PopTry inside finally
+					//The argument list gets updated when catch clauses are parsed afterwards
+					var pushTryCallExpr = (CodeMethodInvokeExpression)InternalMethods.PushTry;
+					pushTryCallExpr.Parameters.Add(new CodeTypeOfExpression(ctch.CatchExceptionType));
+					var pushTryCall = new CodeExpressionStatement(pushTryCallExpr);
+					var popTryCall = new CodeExpressionStatement((CodeMethodInvokeExpression)InternalMethods.PopTry);
+
+					var innerTry = new CodeTryCatchFinallyStatement();
+					innerTry.FinallyStatements.Add(popTryCall);
+					tcf.TryStatements.Add(pushTryCall);
+					tcf.TryStatements.Add(innerTry);
+
+					var block = new CodeBlock(codeLine, Scope, innerTry.TryStatements, CodeBlock.BlockKind.Try, blocks.PeekOrNull())
 					{
 						Type = type
 					};
+
+					//_ = CloseTopSingleBlock(); //FlowTryCatch unit test fails if uncommented
 					blocks.Push(block);
+
 					return [tcf];
 				}
 
@@ -975,6 +990,18 @@ namespace Keysharp.Scripting
 							tcf.CatchClauses.Add(new CodeCatchClause("", new CodeTypeReference(extra), new CodeExpressionStatement(new CodeSnippetExpression("throw"))));
 
 						var catches = tcf.CatchClauses.Cast<CodeCatchClause>().ToArray();
+						
+						//Populate the PushTry function arguments with the full list of catch types
+						if (catches.Length > 0 && tcf.TryStatements[0] is CodeExpressionStatement ces && ces.Expression is CodeMethodInvokeExpression cmie)
+						{
+							cmie.Parameters.Clear();
+							foreach (var c in catches)
+							{
+
+								cmie.Parameters.Add(new CodeTypeOfExpression(c.CatchExceptionType));
+							}
+						}
+
 						//Types must be sorted from most derived to least derived.
 						System.Array.Sort(catches,
 										  (c1, c2) =>
