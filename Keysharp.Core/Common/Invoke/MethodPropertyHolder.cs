@@ -365,6 +365,7 @@
 			}
 		}
 
+		[StackTraceHidden]
 		internal object CallFunc(object inst, object[] obj)
 		{
 #if DEBUG
@@ -387,6 +388,7 @@
 			}
 		}
 
+		[StackTraceHidden]
 		internal void SetProp(object inst, object obj)
 		{
 #if DEBUG
