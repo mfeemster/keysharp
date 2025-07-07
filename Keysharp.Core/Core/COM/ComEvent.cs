@@ -113,7 +113,7 @@ namespace Keysharp.Core.COM
 			if (thisObj != null && methodMapper.TryGetValue(e.Name, out var mph))
 			{
 				FixArgs(e.Arguments);
-				var result = mph.callFunc(null, e.Arguments.Concat(thisArg));
+				var result = mph.CallFunc(null, e.Arguments.Concat(thisArg));
 
 				if (result is ComObject co)
 					result = co.Ptr;
@@ -132,7 +132,7 @@ namespace Keysharp.Core.COM
 			if (thisObj != null && methodMapper.TryGetValue(e.Name, out var mph))
 			{
 				FixArgs(e.Arguments);
-				var result = mph.callFunc(sinkObj, e.Arguments.Concat(thisArg));
+				var result = mph.CallFunc(sinkObj, e.Arguments.Concat(thisArg));
 
 				if (result is ComObject co)
 					result = co.Ptr;

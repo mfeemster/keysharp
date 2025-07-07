@@ -80,7 +80,7 @@
 #endif
 				else if (Reflections.FindAndCacheInstanceMethod(typetouse, "get_Item", 1) is MethodPropertyHolder mph)//Last ditch attempt, see if it was a map entry, but was treated as a class property.
 				{
-					var val = mph.callFunc(item, [key]);
+					var val = mph.CallFunc(item, [key]);
 					return (item, val);
 				}
 			}
@@ -125,7 +125,7 @@
 
 				if (Reflections.FindAndCacheProperty(typetouse, namestr, 0) is MethodPropertyHolder mph)
 				{
-					return mph.callFunc(item, null);
+					return mph.CallFunc(item, null);
 				}
 
 				//This is for the case where a Map accesses a key within the Map as if it were a property, so we try to get the indexer property, then pass the name of the passed in property as the key/index.
@@ -174,7 +174,7 @@
 				}
 				else if (Reflections.FindAndCacheProperty(typeof(T), namestr, 0) is MethodPropertyHolder mph && mph.IsStaticProp)
 				{
-					return mph.callFunc(null, null);
+					return mph.CallFunc(null, null);
 				}
 				else if (name is Delegate d)
 				{
@@ -209,7 +209,7 @@
 
 				if (mitup.Item2 is MethodPropertyHolder mph)
 				{
-					ret = mph.callFunc(mitup.Item1, parameters);
+					ret = mph.CallFunc(mitup.Item1, parameters);
 
 					//The following check is done when accessing a class property that is a function object. The user intended to call it.
 					//Catching this during compilation is very hard when calling it from outside of the class definition.
@@ -295,7 +295,7 @@
 				if (mph != null)
 				{
 					called = true;
-					ret = mph.callFunc(mitup.Item1, parameters);//parameters won't have been changes in the case of IFuncObj.Bind().
+					ret = mph.CallFunc(mitup.Item1, parameters);//parameters won't have been changes in the case of IFuncObj.Bind().
 
 					//The following check is done when accessing a class property that is a function object. The user intended to call it.
 					//Catching this during compilation is impossible when calling it from outside of the class definition.
@@ -397,7 +397,7 @@
 
 				if (Reflections.FindAndCacheProperty(typetouse, namestr, 0) is MethodPropertyHolder mph)
 				{
-					mph.setPropFunc(item, value);
+					mph.SetProp(item, value);
 					return value;
 				}
 
@@ -450,7 +450,7 @@
 				}
 				else if (Reflections.FindAndCacheProperty(typeof(T), namestr, 0) is MethodPropertyHolder mph && mph.IsStaticProp)
 				{
-					mph.setPropFunc(null, value);
+					mph.SetProp(null, value);
 					return;
 				}
 			}

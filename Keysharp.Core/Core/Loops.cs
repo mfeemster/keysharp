@@ -431,7 +431,7 @@ namespace Keysharp.Core
 			}
 			else if (Reflections.FindAndCacheMethod(obj.GetType(), "__Enum", -1) is MethodPropertyHolder mph)
 			{
-				var tempEnum = mph.callFunc(obj, [count]);
+				var tempEnum = mph.CallFunc(obj, [count]);
 
 				if (tempEnum is KeysharpEnumerator kse2)
 					return kse2;
