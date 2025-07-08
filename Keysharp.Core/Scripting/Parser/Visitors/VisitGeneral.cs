@@ -28,13 +28,11 @@ namespace Keysharp.Scripting
                 parser.DHHR.Add(SyntaxFactory.ExpressionStatement(
                     ((InvocationExpressionSyntax)InternalMethods.HotIf)
                     .WithArgumentList(
-                        SyntaxFactory.ArgumentList(
-                            SyntaxFactory.SeparatedList(new[] {
-                                SyntaxFactory.Argument(SyntaxFactory.LiteralExpression(
-                                    SyntaxKind.StringLiteralExpression,
-                                    SyntaxFactory.Literal("")
-                                ))
-                            })
+						CreateArgumentList(
+                            SyntaxFactory.LiteralExpression(
+                                SyntaxKind.StringLiteralExpression,
+                                SyntaxFactory.Literal("")
+                            )
                         )
                     )
                 ));
@@ -45,19 +43,23 @@ namespace Keysharp.Scripting
                 // Visit the singleExpression and wrap it in an anonymous function
                 var conditionExpression = (ExpressionSyntax)Visit(context.singleExpression());
                 var hotIfFunction = SyntaxFactory.MethodDeclaration(
-                        SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword)), // Return type: bool
+                        SyntaxFactory.PredefinedType(Parser.PredefinedKeywords.Object), // Return type: bool
                         SyntaxFactory.Identifier(hotIfFunctionName) // Function name
                     )
                     .WithModifiers(
                         SyntaxFactory.TokenList(
-                            SyntaxFactory.Token(SyntaxKind.PublicKeyword),
-                            SyntaxFactory.Token(SyntaxKind.StaticKeyword)
+                            Parser.PredefinedKeywords.PublicToken,
+                            Parser.PredefinedKeywords.StaticToken
                         )
                     )
                     .WithBody(
                         SyntaxFactory.Block(
                             SyntaxFactory.SingletonList<StatementSyntax>(
-                                SyntaxFactory.ReturnStatement(conditionExpression)
+                                SyntaxFactory.ReturnStatement(
+                                    PredefinedKeywords.ReturnToken,
+                                    conditionExpression,
+                                    PredefinedKeywords.SemicolonToken
+                                )
                             )
                         )
                     );
@@ -70,21 +72,11 @@ namespace Keysharp.Scripting
                     SyntaxFactory.ExpressionStatement(
                         ((InvocationExpressionSyntax)InternalMethods.HotIf)
                         .WithArgumentList(
-                            SyntaxFactory.ArgumentList(
-                                SyntaxFactory.SingletonSeparatedList(
-                                    SyntaxFactory.Argument(
-                                        ((InvocationExpressionSyntax)InternalMethods.Func)
-                                        .WithArgumentList(
-                                            SyntaxFactory.ArgumentList(
-                                                SyntaxFactory.SingletonSeparatedList(
-                                                    SyntaxFactory.Argument(
-                                                        SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(hotIfFunctionName))
-                                                    )
-                                                )
-                                            )
-                                        )
+							CreateArgumentList(
+                                ((InvocationExpressionSyntax)InternalMethods.Func)
+                                    .WithArgumentList(
+										CreateArgumentList(SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(hotIfFunctionName)))
                                     )
-                                )
                             )
                         )
                     )
@@ -106,16 +98,9 @@ namespace Keysharp.Scripting
                     SyntaxFactory.ExpressionStatement(
                         invocation
                         .WithArgumentList(
-                            SyntaxFactory.ArgumentList(
-                                SyntaxFactory.SeparatedList(new[]
-                                {
-                                    SyntaxFactory.Argument(
-                                        SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal("MouseReset"))
-                                    ),
-                                    SyntaxFactory.Argument(
-                                        SyntaxFactory.LiteralExpression(SyntaxKind.FalseLiteralExpression)
-                                    )
-                                })
+							CreateArgumentList(
+								SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal("MouseReset")),
+                                SyntaxFactory.LiteralExpression(SyntaxKind.FalseLiteralExpression)
                             )
                         )
                     )
@@ -127,16 +112,9 @@ namespace Keysharp.Scripting
                     SyntaxFactory.ExpressionStatement(
                         invocation
                         .WithArgumentList(
-                            SyntaxFactory.ArgumentList(
-                                SyntaxFactory.SeparatedList(new[]
-                                {
-                                    SyntaxFactory.Argument(
-                                        SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal("ENDCHARS"))
-                                    ),
-                                    SyntaxFactory.Argument(
-                                        SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(endchars))
-                                    )
-                                })
+							CreateArgumentList(
+                                SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal("ENDCHARS")),
+                                SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(endchars))
                             )
                         )
                     )
@@ -149,13 +127,7 @@ namespace Keysharp.Scripting
                             CreateMemberAccess("Keysharp.Core.Keyboard", "HotstringOptions")
                         )
                         .WithArgumentList(
-                            SyntaxFactory.ArgumentList(
-                                SyntaxFactory.SingletonSeparatedList(
-                                    SyntaxFactory.Argument(
-                                        SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(content))
-                                    )
-                                )
-                            )
+							CreateArgumentList(SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(content)))
                         )
                     )
                 );
@@ -171,7 +143,8 @@ namespace Keysharp.Scripting
                 SyntaxFactory.AssignmentExpression(
                     SyntaxKind.SimpleAssignmentExpression,
 					CreateMemberAccess("Keysharp.Core.Accessors", "A_InputLevel"),
-                    (LiteralExpressionSyntax)expr
+					PredefinedKeywords.EqualsToken,
+					(LiteralExpressionSyntax)expr
                 )
             ));
             return null;
@@ -185,7 +158,8 @@ namespace Keysharp.Scripting
                 SyntaxFactory.AssignmentExpression(
                     SyntaxKind.SimpleAssignmentExpression,
 					CreateMemberAccess("Keysharp.Core.Accessors", "A_SuspendExempt"),
-                    (LiteralExpressionSyntax)value
+					PredefinedKeywords.EqualsToken,
+					(LiteralExpressionSyntax)value
                 )
             ));
             return null;
@@ -197,19 +171,14 @@ namespace Keysharp.Scripting
                 ? SyntaxFactory.LiteralExpression(SyntaxKind.FalseLiteralExpression)
                 : ((InvocationExpressionSyntax)InternalMethods.ForceBool)
                     .WithArgumentList(
-                        SyntaxFactory.ArgumentList(
-                            SyntaxFactory.SingletonSeparatedList(
-                                SyntaxFactory.Argument(
-                                    (ExpressionSyntax)Visit(context.GetChild(1))
-                                )
-                            )
-                        )
+						CreateArgumentList((ExpressionSyntax)Visit(context.GetChild(1)))
                     );
             parser.DHHR.Add(SyntaxFactory.ExpressionStatement(
                 SyntaxFactory.AssignmentExpression(
                     SyntaxKind.SimpleAssignmentExpression,
 					CreateMemberAccess("Keysharp.Scripting.Script", "ForceKeybdHook"),
-                    value
+					PredefinedKeywords.EqualsToken,
+					value
                 )
             ));
             return null;
@@ -242,13 +211,13 @@ namespace Keysharp.Scripting
 
                 // Create the hotkey function
                 hotkeyFunction = SyntaxFactory.MethodDeclaration(
-                        SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword)), // Return type: string
+                        SyntaxFactory.PredefinedType(Parser.PredefinedKeywords.Object), // Return type: string
                         SyntaxFactory.Identifier(hotkeyFunctionName) // Function name
                     )
                     .WithModifiers(
                         SyntaxFactory.TokenList(
-                            SyntaxFactory.Token(SyntaxKind.PublicKeyword),
-                            SyntaxFactory.Token(SyntaxKind.StaticKeyword)
+                            Parser.PredefinedKeywords.PublicToken,
+                            Parser.PredefinedKeywords.StaticToken
                         )
                     )
                     .WithParameterList(
@@ -257,7 +226,7 @@ namespace Keysharp.Scripting
                                 SyntaxFactory.Parameter(
                                     SyntaxFactory.Identifier("thishotkey")
                                 )
-                                .WithType(SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword)))
+                                .WithType(SyntaxFactory.PredefinedType(Parser.PredefinedKeywords.Object))
                             )
                         )
                     )
@@ -282,30 +251,16 @@ namespace Keysharp.Scripting
                 var addHotkeyCall = SyntaxFactory.ExpressionStatement(
                     ((InvocationExpressionSyntax)InternalMethods.AddHotkey)
                     .WithArgumentList(
-                        SyntaxFactory.ArgumentList(
-                            SyntaxFactory.SeparatedList(new[]
-                            {
-                        SyntaxFactory.Argument(
-                            ((InvocationExpressionSyntax)InternalMethods.Func)
+						CreateArgumentList(
+							((InvocationExpressionSyntax)InternalMethods.Func)
                             .WithArgumentList(
-                                SyntaxFactory.ArgumentList(
-                                    SyntaxFactory.SingletonSeparatedList(
-                                        SyntaxFactory.Argument(
-                                            SyntaxFactory.IdentifierName(hotkeyFunctionName)
-                                        )
-                                    )
-                                )
-                            )
-                        ),
-                        SyntaxFactory.Argument(
-                            SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(0u))
-                        ),
-                        SyntaxFactory.Argument(
+								CreateArgumentList(SyntaxFactory.IdentifierName(hotkeyFunctionName))
+                            ),
+                            SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(0u)),
                             SyntaxFactory.LiteralExpression(
                                 SyntaxKind.StringLiteralExpression,
                                 SyntaxFactory.Literal(triggerText) // Trim trailing ::
-                            ))
-                            })
+                            )
                         )
                     )
                 );
@@ -355,13 +310,13 @@ namespace Keysharp.Scripting
 
                 // Create the hotstring function
                 var hotstringFunction = SyntaxFactory.MethodDeclaration(
-                        SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword)),
+                        SyntaxFactory.PredefinedType(Parser.PredefinedKeywords.Object),
                         SyntaxFactory.Identifier(functionName)
                     )
                     .WithModifiers(
                         SyntaxFactory.TokenList(
-                            SyntaxFactory.Token(SyntaxKind.PublicKeyword),
-                            SyntaxFactory.Token(SyntaxKind.StaticKeyword)
+                            Parser.PredefinedKeywords.PublicToken,
+                            Parser.PredefinedKeywords.StaticToken
                         )
                     )
                     .WithParameterList(
@@ -370,7 +325,7 @@ namespace Keysharp.Scripting
                                 SyntaxFactory.Parameter(
                                     SyntaxFactory.Identifier("thishotkey")
                                 )
-                                .WithType(SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword)))
+                                .WithType(SyntaxFactory.PredefinedType(Parser.PredefinedKeywords.Object))
                             )
                         )
                     )
@@ -394,39 +349,18 @@ namespace Keysharp.Scripting
                         CreateMemberAccess("Keysharp.Core.Common.Keyboard.HotstringManager", "AddHotstring")
                     )
                     .WithArgumentList(
-                        SyntaxFactory.ArgumentList(
-                            SyntaxFactory.SeparatedList(new[]
-                            {
-                        SyntaxFactory.Argument(
-                            SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(trigger))
-                        ),
-                        SyntaxFactory.Argument(
+						CreateArgumentList(
+							SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(trigger)),
                             hasExpansion
                                 ? SyntaxFactory.LiteralExpression(SyntaxKind.NullLiteralExpression)
                                 : ((InvocationExpressionSyntax)InternalMethods.Func)
                                 .WithArgumentList(
-                                    SyntaxFactory.ArgumentList(
-                                        SyntaxFactory.SingletonSeparatedList(
-                                            SyntaxFactory.Argument(
-                                                SyntaxFactory.IdentifierName(functionName)
-                                            )
-                                        )
-                                    )
-                                )
-                        ),
-                        SyntaxFactory.Argument(
-                            SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal($"{options}:{hotstringKey}"))
-                        ),
-                        SyntaxFactory.Argument(
-                            SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(hotstringKey))
-                        ),
-                        SyntaxFactory.Argument(
-                            SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(expansionText))
-                        ),
-                        SyntaxFactory.Argument(
+									CreateArgumentList(SyntaxFactory.IdentifierName(functionName))
+                                ),
+                            SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal($"{options}:{hotstringKey}")),
+                            SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(hotstringKey)),
+                            SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(expansionText)),
                             SyntaxFactory.LiteralExpression(SyntaxKind.FalseLiteralExpression)
-                        )
-                            })
                         )
                     )
                 );
@@ -604,21 +538,13 @@ namespace Keysharp.Scripting
                 // Generate the Keysharp.Core.Keyboard.GetKeyState invocation
                 var getKeyStateInvocation = SyntaxFactory.InvocationExpression(
 					CreateMemberAccess("Keysharp.Core.Keyboard", "GetKeyState"),
-                    SyntaxFactory.ArgumentList(
-                        SyntaxFactory.SingletonSeparatedList(
-                            SyntaxFactory.Argument(SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(remapDest)))
-                        )
-                    )
+					CreateArgumentList(SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(remapDest)))
                 );
 
                 // Generate the IfElse method invocation
                 var ifElseInvocation = ((InvocationExpressionSyntax)InternalMethods.IfElse)
                     .WithArgumentList(
-                        SyntaxFactory.ArgumentList(
-                            SyntaxFactory.SingletonSeparatedList(
-                                SyntaxFactory.Argument(getKeyStateInvocation)
-                            )
-                        )
+						CreateArgumentList(getKeyStateInvocation)
                     );
 
                 // Generate the condition for the if statement
@@ -637,17 +563,17 @@ namespace Keysharp.Scripting
             }
             else
                 downStatements.Add(GenerateSendInvocation(p)); // Send "{Blind}{b DownR}"};
-            downStatements.Add(SyntaxFactory.ReturnStatement(SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(""))));
+            downStatements.Add(PredefinedKeywords.DefaultReturnStatement);
 
             // Generate the "down" hotkey function
             var downFunction = SyntaxFactory.MethodDeclaration(
-            SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword)), // Return type: object
+            SyntaxFactory.PredefinedType(Parser.PredefinedKeywords.Object), // Return type: object
             SyntaxFactory.Identifier(downFunctionName) // Function name
             )
             .WithModifiers(
                 SyntaxFactory.TokenList(
-                    SyntaxFactory.Token(SyntaxKind.PublicKeyword),
-                    SyntaxFactory.Token(SyntaxKind.StaticKeyword)
+                    Parser.PredefinedKeywords.PublicToken,
+                    Parser.PredefinedKeywords.StaticToken
                 )
             )
             .WithBody(
@@ -658,20 +584,20 @@ namespace Keysharp.Scripting
 
             // Generate the "up" hotkey function
             var upFunction = SyntaxFactory.MethodDeclaration(
-                    SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword)), // Return type: object
+                    SyntaxFactory.PredefinedType(Parser.PredefinedKeywords.Object), // Return type: object
                     SyntaxFactory.Identifier(upFunctionName) // Function name
                 )
                 .WithModifiers(
                     SyntaxFactory.TokenList(
-                        SyntaxFactory.Token(SyntaxKind.PublicKeyword),
-                        SyntaxFactory.Token(SyntaxKind.StaticKeyword)
+                        Parser.PredefinedKeywords.PublicToken,
+                        Parser.PredefinedKeywords.StaticToken
                     )
                 )
                 .WithBody(
                     SyntaxFactory.Block(
                         GenerateSetDelayInvocation(isMouse: remapDestIsMouse), // SetKeyDelay or SetMouseDelay
                         GenerateSendInvocation($"{{Blind}}{{{remapDest} Up}}"), // Send "{Blind}{b Up}"
-                        SyntaxFactory.ReturnStatement(SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal("")))
+                        PredefinedKeywords.DefaultReturnStatement
                     )
                 );
 
@@ -685,18 +611,13 @@ namespace Keysharp.Scripting
                         CreateMemberAccess("Keysharp.Core.Common.Keyboard.HotkeyDefinition", "AddHotkey")
                     )
                     .WithArgumentList(
-                        SyntaxFactory.ArgumentList(
-                            SyntaxFactory.SeparatedList(new[]
-                            {
-                                GenerateFuncObjArgument(downFunctionName),
-                                SyntaxFactory.Argument(SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(0u))),
-                                SyntaxFactory.Argument(
-                                    SyntaxFactory.LiteralExpression(
-                                        SyntaxKind.StringLiteralExpression,
-                                        SyntaxFactory.Literal($"{remapSource}")
-                                    )
-                                )
-                            })
+						CreateArgumentList(
+                            GenerateFuncObjArgument(downFunctionName),
+                            SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(0u)),
+                            SyntaxFactory.LiteralExpression(
+                                SyntaxKind.StringLiteralExpression,
+                                SyntaxFactory.Literal($"{remapSource}")
+                            )
                         )
                     )
                 )
@@ -707,18 +628,13 @@ namespace Keysharp.Scripting
                 SyntaxFactory.ExpressionStatement(
                     ((InvocationExpressionSyntax)InternalMethods.AddHotkey)
                     .WithArgumentList(
-                        SyntaxFactory.ArgumentList(
-                            SyntaxFactory.SeparatedList(new[]
-                            {
-                                GenerateFuncObjArgument(upFunctionName),
-                                SyntaxFactory.Argument(SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(0u))),
-                                SyntaxFactory.Argument(
-                                    SyntaxFactory.LiteralExpression(
-                                        SyntaxKind.StringLiteralExpression,
-                                        SyntaxFactory.Literal($"{remapSource} up")
-                                    )
-                                )
-                            })
+						CreateArgumentList(
+							GenerateFuncObjArgument(upFunctionName),
+                            SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(0u)),
+                            SyntaxFactory.LiteralExpression(
+                                SyntaxKind.StringLiteralExpression,
+                                SyntaxFactory.Literal($"{remapSource} up")
+                            )
                         )
                     )
                 )
@@ -735,12 +651,8 @@ namespace Keysharp.Scripting
                         isMouse ? "SetMouseDelay" : "SetKeyDelay")
                 )
                 .WithArgumentList(
-                    SyntaxFactory.ArgumentList(
-                        SyntaxFactory.SingletonSeparatedList(
-                            SyntaxFactory.Argument(
-                                SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(-1))
-                            )
-                        )
+					CreateArgumentList(
+						SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(-1))
                     )
                 )
             );
@@ -753,14 +665,10 @@ namespace Keysharp.Scripting
 					CreateMemberAccess("Keysharp.Core.Keyboard", "Send")
                 )
                 .WithArgumentList(
-                    SyntaxFactory.ArgumentList(
-                        SyntaxFactory.SingletonSeparatedList(
-                            SyntaxFactory.Argument(
-                                SyntaxFactory.LiteralExpression(
-                                    SyntaxKind.StringLiteralExpression,
-                                    SyntaxFactory.Literal(text)
-                                )
-                            )
+                    CreateArgumentList(
+                        SyntaxFactory.LiteralExpression(
+                            SyntaxKind.StringLiteralExpression,
+                            SyntaxFactory.Literal(text)
                         )
                     )
                 )
@@ -772,12 +680,8 @@ namespace Keysharp.Scripting
             return SyntaxFactory.Argument(
                 ((InvocationExpressionSyntax)InternalMethods.Func)
                 .WithArgumentList(
-                    SyntaxFactory.ArgumentList(
-                        SyntaxFactory.SingletonSeparatedList(
-                            SyntaxFactory.Argument(
-                                SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(functionName))
-                            )
-                        )
+                    CreateArgumentList(
+                        SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(functionName))
                     )
                 )
             );
@@ -808,7 +712,8 @@ namespace Keysharp.Scripting
                             SyntaxFactory.AssignmentExpression(
                                 SyntaxKind.SimpleAssignmentExpression,
 								CreateMemberAccess("Keysharp.Core.Accessors", "A_ClipboardTimeout"),
-                                SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(uint.Parse(item.Value)))
+								PredefinedKeywords.EqualsToken,
+								SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(uint.Parse(item.Value)))
                             )
                         ));
                         break;
@@ -817,7 +722,8 @@ namespace Keysharp.Scripting
                             SyntaxFactory.AssignmentExpression(
                                 SyntaxKind.SimpleAssignmentExpression,
                                 CreateMemberAccess("Keysharp.Core.Accessors", "A_HotIfTimeout"),
-                                SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(uint.Parse(item.Value)))
+								PredefinedKeywords.EqualsToken,
+								SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(uint.Parse(item.Value)))
                             )
                         ));
                         break;
@@ -830,7 +736,8 @@ namespace Keysharp.Scripting
 						            SyntaxFactory.IdentifierName("MainScript"),
 						            SyntaxFactory.IdentifierName("MaxThreadsTotal")
 					            ),
-                                SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(uint.Parse(item.Value)))
+								PredefinedKeywords.EqualsToken,
+								SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(uint.Parse(item.Value)))
                             )
                         ));
                         break;
@@ -841,7 +748,8 @@ namespace Keysharp.Scripting
                             SyntaxFactory.AssignmentExpression(
                                 SyntaxKind.SimpleAssignmentExpression,
 								CreateMemberAccess("Keysharp.Core.Accessors", "A_MaxThreadsBuffer"),
-                                SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(argument))
+								PredefinedKeywords.EqualsToken,
+								SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(argument))
                             )
                         ));
                         break;
@@ -853,7 +761,8 @@ namespace Keysharp.Scripting
                             SyntaxFactory.AssignmentExpression(
                                 SyntaxKind.SimpleAssignmentExpression,
 								CreateMemberAccess("Keysharp.Core.Accessors", "A_MaxThreadsPerHotkey"),
-                                SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(clampedValue))
+								PredefinedKeywords.EqualsToken,
+								SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(clampedValue))
                             )
                         ));
                         break;
@@ -866,7 +775,8 @@ namespace Keysharp.Scripting
 									SyntaxFactory.IdentifierName("MainScript"),
 									SyntaxFactory.IdentifierName("NoTrayIcon")
 								),
-                                SyntaxFactory.LiteralExpression(SyntaxKind.TrueLiteralExpression)
+								PredefinedKeywords.EqualsToken,
+								SyntaxFactory.LiteralExpression(SyntaxKind.TrueLiteralExpression)
                             )
                         ));
                         break;
@@ -879,7 +789,8 @@ namespace Keysharp.Scripting
 									SyntaxFactory.IdentifierName("MainScript"),
 									SyntaxFactory.IdentifierName("WinActivateForce")
 								),
-                                SyntaxFactory.LiteralExpression(SyntaxKind.TrueLiteralExpression)
+								PredefinedKeywords.EqualsToken,
+								SyntaxFactory.LiteralExpression(SyntaxKind.TrueLiteralExpression)
                             )
                         ));
                         break;

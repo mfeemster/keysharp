@@ -1,14 +1,16 @@
+using System;
+using System.Data;
+using System.Reflection;
+using System.Runtime.Serialization;
+using System.Xml.Linq;
 using Antlr4.Runtime;
 using Antlr4.Runtime.Misc;
 using Antlr4.Runtime.Tree;
-using static MainParser;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using System.Data;
-using static Keysharp.Scripting.Parser;
-using System.Reflection;
-using System.Xml.Linq;
 using Microsoft.CodeAnalysis;
-using System.Runtime.Serialization;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Text;
+using static Keysharp.Scripting.Parser;
+using static MainParser;
 
 namespace Keysharp.Scripting
 {
@@ -23,7 +25,7 @@ namespace Keysharp.Scripting
         public override SyntaxNode VisitProgram([NotNull] ProgramContext context)
         {
             // Add CompilationUnit usings 
-            var usingSyntaxTree = CSharpSyntaxTree.ParseText(CompilerHelper.UsingStr);
+            var usingSyntaxTree = CSharpSyntaxTree.ParseText(SourceText.From(CompilerHelper.UsingStr));
             var root = usingSyntaxTree.GetRoot() as CompilationUnitSyntax;
             var usingDirectives = root?.Usings ?? new SyntaxList<UsingDirectiveSyntax>();
 
@@ -72,15 +74,13 @@ namespace Keysharp.Scripting
             var mainFunc = new Function("Main", SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.IntKeyword)));
 
             var mainFuncParam = SyntaxFactory.Parameter(SyntaxFactory.Identifier("args"))
-                .WithType(PredefinedTypes.StringArray);
+                .WithType(PredefinedKeywords.StringArrayType);
 
             var staThreadAttribute = SyntaxFactory.Attribute(
                 SyntaxFactory.ParseName("System.STAThreadAttribute"))
                 .WithArgumentList(SyntaxFactory.AttributeArgumentList());
 
-            var mainMethodSeparatedAttributeList = new SeparatedSyntaxList<AttributeSyntax>();
-            mainMethodSeparatedAttributeList = mainMethodSeparatedAttributeList.Add(staThreadAttribute);
-            var mainMethodAttributeList = SyntaxFactory.AttributeList(mainMethodSeparatedAttributeList);
+            mainFunc.Attributes.Add(staThreadAttribute);
 
             mainFunc.Params.Add(mainFuncParam);
 
@@ -96,65 +96,65 @@ namespace Keysharp.Scripting
             }
 
             string mainBodyCode = $$"""
+		{
+			try
 			{
-					try
-					{
-						{{String.Join(Environment.NewLine, parser.mainFuncInitial)}}
-						if (Keysharp.Scripting.Script.HandleSingleInstance(Accessors.A_ScriptName, eScriptInstance.{{System.Enum.GetName(typeof(eScriptInstance), parser.reader.SingleInstance)}}))
-						{
-							return 0;
-						}
-						Keysharp.Core.Env.HandleCommandLineParams(args);
-						{{MainScriptVariableName}}.CreateTrayMenu();
-						{{MainScriptVariableName}}.RunMainWindow(Accessors.A_ScriptName, {{Keywords.AutoExecSectionName}}, false);
-						{{MainScriptVariableName}}.WaitThreads();
-					}
-                    catch (Keysharp.Core.Flow.UserRequestedExitException)
-                    {
-                    }
-					catch (Keysharp.Core.Error kserr)
-					{
-						if (ErrorOccurred(kserr))
-						{
-							var (_ks_pushed, _ks_btv) = {{MainScriptVariableName}}.Threads.BeginThread();
-							MsgBox("Uncaught Keysharp exception:\r\n" + kserr, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
-							{{MainScriptVariableName}}.Threads.EndThread(_ks_pushed);
-						}
-						Keysharp.Core.Flow.ExitApp(1);
-					}
-					catch (System.Exception mainex)
-					{
-						var ex = mainex.InnerException ?? mainex;
-
-						if (ex is Keysharp.Core.Error kserr)
-						{
-							if (ErrorOccurred(kserr))
-							{
-								var (_ks_pushed, _ks_btv) = {{MainScriptVariableName}}.Threads.BeginThread();
-								MsgBox("Uncaught Keysharp exception:\r\n" + kserr, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
-								{{MainScriptVariableName}}.Threads.EndThread(_ks_pushed);
-							}
-						}
-						else
-						{
-							var (_ks_pushed, _ks_btv) = {{MainScriptVariableName}}.Threads.BeginThread();
-							MsgBox("Uncaught exception:\r\n" + "Message: " + ex.Message + "\r\nStack: " + ex.StackTrace, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
-							{{MainScriptVariableName}}.Threads.EndThread(_ks_pushed);
-						}
-						Keysharp.Core.Flow.ExitApp(1);
-					}
-				return Environment.ExitCode;
+				{{String.Join(Environment.NewLine, parser.mainFuncInitial)}}
+				if (Keysharp.Scripting.Script.HandleSingleInstance(Accessors.A_ScriptName, eScriptInstance.{{System.Enum.GetName(typeof(eScriptInstance), parser.reader.SingleInstance)}}))
+				{
+					return 0;
+				}
+				Keysharp.Core.Env.HandleCommandLineParams(args);
+				{{MainScriptVariableName}}.CreateTrayMenu();
+				{{MainScriptVariableName}}.RunMainWindow(Accessors.A_ScriptName, {{Keywords.AutoExecSectionName}}, false);
+				{{MainScriptVariableName}}.WaitThreads();
 			}
+			catch (Keysharp.Core.Flow.UserRequestedExitException)
+			{
+			}
+			catch (Keysharp.Core.Error kserr)
+			{
+				if (ErrorOccurred(kserr))
+				{
+					var (_ks_pushed, _ks_btv) = {{MainScriptVariableName}}.Threads.BeginThread();
+					MsgBox("Uncaught Keysharp exception:\r\n" + kserr, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
+					{{MainScriptVariableName}}.Threads.EndThread(_ks_pushed);
+				}
+				Keysharp.Core.Flow.ExitApp(1);
+			}
+			catch (System.Exception mainex)
+			{
+				var ex = mainex.InnerException ?? mainex;
+
+				if (ex is Keysharp.Core.Error kserr)
+				{
+					if (ErrorOccurred(kserr))
+					{
+						var (_ks_pushed, _ks_btv) = {{MainScriptVariableName}}.Threads.BeginThread();
+						MsgBox("Uncaught Keysharp exception:\r\n" + kserr, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
+						{{MainScriptVariableName}}.Threads.EndThread(_ks_pushed);
+					}
+				}
+				else
+				{
+					var (_ks_pushed, _ks_btv) = {{MainScriptVariableName}}.Threads.BeginThread();
+					MsgBox("Uncaught exception:\r\n" + "Message: " + ex.Message + "\r\nStack: " + ex.StackTrace, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
+					{{MainScriptVariableName}}.Threads.EndThread(_ks_pushed);
+				}
+				Keysharp.Core.Flow.ExitApp(1);
+			}
+			return Environment.ExitCode;
+		}
 """;
 
             var mainBodyBlock = SyntaxFactory.ParseStatement(mainBodyCode) as BlockSyntax;
             mainFunc.Body = mainBodyBlock.Statements.ToList();
 
-            parser.autoExecFunc = new Function(Keywords.AutoExecSectionName, SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword)));
+            parser.autoExecFunc = new Function(Keywords.AutoExecSectionName, SyntaxFactory.PredefinedType(Parser.PredefinedKeywords.Object));
             parser.currentFunc = parser.autoExecFunc;
             parser.autoExecFunc.Scope = eScope.Global;
             parser.autoExecFunc.Method = parser.autoExecFunc.Method
-                .AddModifiers(SyntaxFactory.Token(SyntaxKind.PublicKeyword), SyntaxFactory.Token(SyntaxKind.StaticKeyword));
+                .AddModifiers(Parser.PredefinedKeywords.PublicToken, Parser.PredefinedKeywords.StaticToken);
 
             // Map out all user class types and also any built-in types they derive from
             var allClassDeclarations = GetClassDeclarationsRecursive(context);
@@ -204,13 +204,10 @@ namespace Keysharp.Scripting
                 .ToList();
     
             // Return "" by default
-            parser.autoExecFunc.Body.Add(SyntaxFactory.ReturnStatement(
-                    SyntaxFactory.LiteralExpression(
-                        SyntaxKind.StringLiteralExpression,
-                        SyntaxFactory.Literal(""))));
+            parser.autoExecFunc.Body.Add(PredefinedKeywords.DefaultReturnStatement);
             parser.autoExecFunc.Method = parser.autoExecFunc.Assemble();
 
-            mainFunc.Method = mainFunc.Assemble().AddAttributeLists(mainMethodAttributeList);
+			mainFunc.Method = mainFunc.Assemble();
             // Add the Main function to the beginning, and AutoExecSection to the end. Keyview requires Main to be at the beginning
             parser.mainClass.Body.Insert(0, mainFunc.Method);
             parser.mainClass.Body.Add(parser.autoExecFunc.Method);
@@ -354,8 +351,8 @@ namespace Keysharp.Scripting
                     statements.Add(EnsureStatementSyntax(visited));
             }
 
-            // Return the statements as a BlockSyntax
-            return SyntaxFactory.Block(statements);
+			// Return the statements as a BlockSyntax
+			return SyntaxFactory.Block(new SyntaxList<StatementSyntax>(statements));
         }
 
         public override SyntaxNode VisitSourceElement([NotNull] SourceElementContext context)
@@ -388,13 +385,13 @@ namespace Keysharp.Scripting
                 return result;
             }
 
-            return Visit(context.GetChild(0));
-        }
+			return Visit(context.GetChild(0));
+		}
 
         // This should always return the identifier in the exact case needed
         // Built-in properties: a_scriptdir -> A_ScriptDir
         // Variables are turned lowercase: HellO -> hello
-        // Static variables get the function name added in upper-case: a -> FUNCNAME_a
+        // StaticToken variables get the function name added in upper-case: a -> FUNCNAME_a
         // Special keywords do not get @ added here
         public override SyntaxNode VisitIdentifier([NotNull] IdentifierContext context)
         {
@@ -403,7 +400,7 @@ namespace Keysharp.Scripting
             switch (text.ToLowerInvariant())
             {
                 case "this":
-                    return SyntaxFactory.IdentifierName("@this");
+                    return PredefinedKeywords.This;
                 case "base":
                     return parser.currentClass.Name == Keywords.MainClassName ? SyntaxFactory.IdentifierName("@base") : SyntaxFactory.BaseExpression();
                 case "super":
@@ -453,17 +450,12 @@ namespace Keysharp.Scripting
                 // If it's a VarRef, access the __Value member
                 return ((InvocationExpressionSyntax)InternalMethods.GetPropertyValue)
                 .WithArgumentList(
-                    SyntaxFactory.ArgumentList(
-                        SyntaxFactory.SeparatedList(new[]
-                        {
-                            SyntaxFactory.Argument(SyntaxFactory.IdentifierName(vr)),
-                            SyntaxFactory.Argument(
-                                SyntaxFactory.LiteralExpression(
-								    SyntaxKind.StringLiteralExpression,
-								    SyntaxFactory.Literal("__Value")
-							    )
-                            )
-                        })
+					CreateArgumentList(
+					    SyntaxFactory.IdentifierName(vr),
+                        SyntaxFactory.LiteralExpression(
+							SyntaxKind.StringLiteralExpression,
+							SyntaxFactory.Literal("__Value")
+						)
                     )
                 );
             }
@@ -685,11 +677,7 @@ namespace Keysharp.Scripting
             if (!containsSpread)
             {
                 // No spread elements present, wrap all elements in ArgumentSyntax and return as ArgumentListSyntax
-                var normalArguments = arguments
-                    .Select(expr => SyntaxFactory.Argument((ExpressionSyntax)expr))
-                    .ToList();
-
-                return SyntaxFactory.ArgumentList(SyntaxFactory.SeparatedList(normalArguments));
+                return CreateArgumentList(arguments);
             }
 
             // If spread elements are present, convert all elements into CollectionElements
@@ -711,11 +699,7 @@ namespace Keysharp.Scripting
             var collectionExpression = SyntaxFactory.CollectionExpression(SyntaxFactory.SeparatedList(collectionElements));
 
             // Wrap in a single argument and return
-            return SyntaxFactory.ArgumentList(
-                SyntaxFactory.SingletonSeparatedList(
-                    SyntaxFactory.Argument(collectionExpression)
-                )
-            );
+            return CreateArgumentList(collectionExpression);
         }
 
         public override SyntaxNode VisitArgument([NotNull] ArgumentContext context)
@@ -732,12 +716,8 @@ namespace Keysharp.Scripting
                 {
                     var invocationExpression = ((InvocationExpressionSyntax)InternalMethods.FlattenParam)
                         .WithArgumentList(
-                        SyntaxFactory.ArgumentList(
-                            SyntaxFactory.SingletonSeparatedList(
-                                SyntaxFactory.Argument(arg) // Passing `arg` as the function argument
-                            )
-                        )
-                    );
+						    CreateArgumentList(arg) // Passing `arg` as the function argument
+                        );
 
                     // Add the spread operator `..`
                     return SyntaxFactory.SpreadElement(invocationExpression);
@@ -866,7 +846,7 @@ namespace Keysharp.Scripting
             // Create the object[] array
             var arrayExpression = SyntaxFactory.ArrayCreationExpression(
                 SyntaxFactory.ArrayType(
-                    SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword)),
+                    SyntaxFactory.PredefinedType(Parser.PredefinedKeywords.Object),
                     SyntaxFactory.SingletonList(
                         SyntaxFactory.ArrayRankSpecifier(
                             SyntaxFactory.SingletonSeparatedList<ExpressionSyntax>(
@@ -881,12 +861,10 @@ namespace Keysharp.Scripting
                 )
             );
 
-            // Wrap the array in Keysharp.Core.Objects.Object
+            // Wrap the array in Keysharp.Core.Objects.ObjectType
             var objectCreationExpression = SyntaxFactory.InvocationExpression(
                 CreateMemberAccess("Keysharp.Core.Objects", "Object"),
-                SyntaxFactory.ArgumentList(
-                    SyntaxFactory.SingletonSeparatedList(SyntaxFactory.Argument(arrayExpression))
-                )
+				CreateArgumentList(arrayExpression)
             );
 
             return objectCreationExpression;
@@ -922,10 +900,16 @@ namespace Keysharp.Scripting
             return base.VisitLiteralExpression(context);
         }
 
+		public override SyntaxNode VisitBlockStatement([NotNull] BlockStatementContext context)
+		{
+			return VisitBlock(context.block());
+		}
+
         public override SyntaxNode VisitBlock([NotNull] BlockContext context)
         {
             if (context.statementList() == null)
                 return SyntaxFactory.Block();
+
             return Visit(context.statementList());
         }
 
@@ -934,20 +918,32 @@ namespace Keysharp.Scripting
             var arguments = new List<ExpressionSyntax>() {
                 (ExpressionSyntax)Visit(context.singleExpression())
             };
-            var argumentList = SyntaxFactory.ArgumentList(
-                SyntaxFactory.SeparatedList(arguments.Select(arg => SyntaxFactory.Argument(arg)))
-            );
+            var argumentList = CreateArgumentList(arguments);
 
-            var ifStatement = SyntaxFactory.IfStatement(
+            BlockSyntax ifBlock = (BlockSyntax)Visit(context.flowBlock());
+			BlockSyntax elseProduction = null;
+
+			var ifStatement = SyntaxFactory.IfStatement(
                 SyntaxFactory.InvocationExpression(
                     CreateMemberAccess("Keysharp.Scripting.Script", "IfTest"),
                     argumentList),
-                (StatementSyntax)Visit(context.flowBlock())
+                ifBlock
             );
 
-            var elseProduction = context.elseProduction() != null ? (BlockSyntax)Visit(context.elseProduction()) : null;
-            if (elseProduction != null)
-                ifStatement = ifStatement.WithElse(SyntaxFactory.ElseClause(elseProduction));
+			if (context.elseProduction() != null)
+            {
+				elseProduction = ((BlockSyntax)Visit(context.elseProduction()));
+
+                if (elseProduction != null)
+                {
+					ifStatement = ifStatement.WithElse(
+                        SyntaxFactory.ElseClause(
+							SyntaxFactory.Token(SyntaxKind.ElseKeyword),
+                            elseProduction
+                        )
+                    );
+                }
+			}
 
             return ifStatement;
         }
@@ -965,10 +961,7 @@ namespace Keysharp.Scripting
                 if (parser.currentFunc.Void)
                     return SyntaxFactory.ReturnStatement();
 
-                returnExpression = SyntaxFactory.LiteralExpression(
-                    SyntaxKind.StringLiteralExpression,
-                    SyntaxFactory.Literal("")
-                );
+                return PredefinedKeywords.DefaultReturnStatement;
             }
 
             if (parser.currentFunc.Void)
@@ -979,16 +972,21 @@ namespace Keysharp.Scripting
                     SyntaxFactory.ReturnStatement()
                 );
 
-            return SyntaxFactory.ReturnStatement(returnExpression);
+            return SyntaxFactory.ReturnStatement(
+                PredefinedKeywords.ReturnToken,
+                returnExpression,
+                PredefinedKeywords.SemicolonToken);
         }
 
         public override SyntaxNode VisitThrowStatement([NotNull] ThrowStatementContext context)
         {
             if (context.singleExpression() == null)
                 return SyntaxFactory.ThrowStatement(
-                    SyntaxFactory.InvocationExpression(
+					SyntaxFactory.Token(SyntaxKind.ThrowKeyword),
+					SyntaxFactory.InvocationExpression(
                         SyntaxFactory.IdentifierName("Error")
-                    )
+                    ),
+                    PredefinedKeywords.SemicolonToken
                 );
 
             var expression = (ExpressionSyntax)Visit(context.singleExpression());
@@ -997,19 +995,23 @@ namespace Keysharp.Scripting
             {
                 // Wrap the literal in Keysharp.Core.Error
                 return SyntaxFactory.ThrowStatement(
+                    SyntaxFactory.Token(SyntaxKind.ThrowKeyword),
                     SyntaxFactory.InvocationExpression(
                         SyntaxFactory.IdentifierName("Error"),
-                        SyntaxFactory.ArgumentList(
-                            SyntaxFactory.SingletonSeparatedList(SyntaxFactory.Argument(expression))
-                        )
-                    )
+						CreateArgumentList(expression)
+                    ),
+                    PredefinedKeywords.SemicolonToken
                 );
             }
             else
                 expression = SyntaxFactory.ParenthesizedExpression(expression);
 
             // Otherwise, return a normal throw statement
-            return SyntaxFactory.ThrowStatement(SyntaxFactory.CastExpression(SyntaxFactory.ParseTypeName("KeysharpException"), expression));
+            return SyntaxFactory.ThrowStatement(
+				SyntaxFactory.Token(SyntaxKind.ThrowKeyword), 
+                SyntaxFactory.CastExpression(SyntaxFactory.ParseTypeName("KeysharpException"), expression),
+                PredefinedKeywords.SemicolonToken
+            );
         }
 
         private SyntaxNode HandleTernaryCondition(ExpressionSyntax condition, ExpressionSyntax trueExpression, ExpressionSyntax falseExpression)
@@ -1017,9 +1019,7 @@ namespace Keysharp.Scripting
             // Wrap the condition in Keysharp.Scripting.Script.IfTest(condition) to force a boolean
             var wrappedCondition = SyntaxFactory.InvocationExpression(
                 CreateMemberAccess("Keysharp.Scripting.Script", "IfTest"),
-                SyntaxFactory.ArgumentList(
-                    SyntaxFactory.SingletonSeparatedList(SyntaxFactory.Argument(condition))
-                )
+                CreateArgumentList(condition)
             );
 
             // Create a ternary conditional expression: condition ? trueExpression : falseExpression
@@ -1044,7 +1044,7 @@ namespace Keysharp.Scripting
             var parameterName = parser.ToValidIdentifier(context.identifier().GetText().Trim().ToLowerInvariant());
 
             ParameterSyntax parameter = SyntaxFactory.Parameter(SyntaxFactory.Identifier(parameterName))
-					.WithType(PredefinedTypes.Object);
+					.WithType(PredefinedKeywords.ObjectType);
 
 			if (context.BitAnd() != null)
             {
@@ -1086,7 +1086,7 @@ namespace Keysharp.Scripting
 
                 // Handle 'Multiply' for variadic arguments (params object[])
                 parameter = SyntaxFactory.Parameter(SyntaxFactory.Identifier(parameterName))
-                    .WithType(PredefinedTypes.ObjectArray)
+                    .WithType(PredefinedKeywords.ObjectArrayType)
                     .WithModifiers(SyntaxFactory.TokenList(SyntaxFactory.Token(SyntaxKind.ParamsKeyword)));
             }
             else if (context.formalParameterArg() != null)
@@ -1205,7 +1205,7 @@ namespace Keysharp.Scripting
             {
                 // Handle 'Multiply' for variadic arguments (params object[])
                 parameter = SyntaxFactory.Parameter(SyntaxFactory.Identifier(parameterName))
-                    .WithType(PredefinedTypes.ObjectArray)
+                    .WithType(PredefinedKeywords.ObjectArrayType)
                     .WithModifiers(SyntaxFactory.TokenList(SyntaxFactory.Token(SyntaxKind.ParamsKeyword)));
             }
             else
@@ -1217,7 +1217,7 @@ namespace Keysharp.Scripting
                     parameterType = SyntaxFactory.ParseTypeName("VarRef");
                 }
                 else
-                    parameterType = PredefinedTypes.Object;
+                    parameterType = PredefinedKeywords.ObjectType;
 
                 parameter = SyntaxFactory.Parameter(SyntaxFactory.Identifier(parameterName))
                     .WithType(parameterType);
@@ -1233,15 +1233,7 @@ namespace Keysharp.Scripting
 
         public SyntaxNode FunctionExpressionCommon(MethodDeclarationSyntax methodDeclaration, ParserRuleContext context)
         {
-            // Case 1: If we are inside the auto-execute section and this is the only expression in the expression sequence
-            // then consider it a top-level function. The method declaration will be added to the main
-            // class in VisitExpressionSequence.
-            if (parser.currentFunc.Name == Keywords.AutoExecSectionName &&
-                context.Parent is ExpressionSequenceContext esc && esc.Parent is ExpressionStatementContext && esc.ChildCount == 1)
-            {
-                return methodDeclaration;
-            }
-            // Case 2: If we are in the main class (not inside a class declaration)
+            // Case 1: If we are in the main class (not inside a class declaration)
             // OR we are inside any method declaration besides the auto-execute one then add it as a closure.
             // Function expressions inside the auto-execute section are added as static nested functions.
             if (parser.currentClass.Name == Keywords.MainClassName || parser.currentFunc.Name != Keywords.AutoExecSectionName)
@@ -1261,7 +1253,7 @@ namespace Keysharp.Scripting
 
                     // Ensure 'static' is included if not already present
                     if (!updatedModifiers.Any(m => m.IsKind(SyntaxKind.StaticKeyword)))
-                        updatedModifiers.Add(SyntaxFactory.Token(SyntaxKind.StaticKeyword));
+                        updatedModifiers.Add(Parser.PredefinedKeywords.StaticToken);
 
                     modifiers = SyntaxFactory.TokenList(updatedModifiers);
                 }
@@ -1295,7 +1287,8 @@ namespace Keysharp.Scripting
                         SyntaxFactory.AssignmentExpression(
                             SyntaxKind.SimpleAssignmentExpression,
                             SyntaxFactory.IdentifierName(variableName), // Target variable
-                            funcObj // Value to assign
+							PredefinedKeywords.EqualsToken,
+							funcObj // Value to assign
                         )
                     ));
                 }
@@ -1334,7 +1327,7 @@ namespace Keysharp.Scripting
             }
             else
 
-            // Case 3: If inside a class declaration and not inside a method, for example
+            // Case 2: If inside a class declaration and not inside a method, for example
             // a class field is being assigned a fat arrow function
             {
                 // Transform the method into an anonymous lambda function
@@ -1349,9 +1342,7 @@ namespace Keysharp.Scripting
                 // Return the Func invocation
                 return SyntaxFactory.InvocationExpression(
                     SyntaxFactory.IdentifierName("Func"),
-                    SyntaxFactory.ArgumentList(
-                        SyntaxFactory.SingletonSeparatedList(SyntaxFactory.Argument(lambdaExpression))
-                    )
+                    CreateArgumentList(lambdaExpression)
                 );
             }
         }
@@ -1371,14 +1362,14 @@ namespace Keysharp.Scripting
                         CreateFuncObjDelegateVariable(parser.currentFunc.Name)
                     ),
                     SyntaxFactory.LocalFunctionStatement(
-                        SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword)), // Assuming return type is void
+                        SyntaxFactory.PredefinedType(Parser.PredefinedKeywords.Object), // Assuming return type is void
                         SyntaxFactory.Identifier(parser.currentFunc.Name) // Function name
                     )
                     .WithParameterList(parser.currentFunc.Params)
                     .WithBody(parser.currentFunc.Body)
                     .WithModifiers(
                     SyntaxFactory.TokenList(
-                        SyntaxFactory.Token(SyntaxKind.StaticKeyword)
+                        Parser.PredefinedKeywords.StaticToken
                     )).WithAdditionalAnnotations(new SyntaxAnnotation("MergeStart"))
                 );
                 PopFunction();
@@ -1386,11 +1377,19 @@ namespace Keysharp.Scripting
             }
             */
 
-				var methodDeclaration = parser.currentFunc.Assemble();
+			var methodDeclaration = parser.currentFunc.Assemble();
             PopFunction();
 
-            return methodDeclaration;
-        }
+            if (parser.currentFunc.Name == Keywords.AutoExecSectionName)
+                return methodDeclaration;
+
+			var commonResult = FunctionExpressionCommon(methodDeclaration, context);
+            if (commonResult is IdentifierNameSyntax ins)
+            {
+                return SyntaxFactory.ExpressionStatement(EnsureValidStatementExpression(ins));
+			}
+            return commonResult;
+		}
 
         public override SyntaxNode VisitFunctionExpression([NotNull] FunctionExpressionContext context)
         {
@@ -1425,7 +1424,13 @@ namespace Keysharp.Scripting
                  );
                 
             } else
-                functionBody = SyntaxFactory.Block(SyntaxFactory.ReturnStatement(returnExpression));
+                functionBody = SyntaxFactory.Block(
+                    SyntaxFactory.ReturnStatement(
+						PredefinedKeywords.ReturnToken,
+                        returnExpression,
+						PredefinedKeywords.SemicolonToken
+                    )
+                );
 
             parser.currentFunc.Body.AddRange(functionBody.Statements.ToArray());
 
@@ -1443,12 +1448,7 @@ namespace Keysharp.Scripting
 
             if (!hasReturn)
             {
-                // Append a default return ""; statement
-                var defaultReturn = SyntaxFactory.ReturnStatement(
-                    SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(""))
-                );
-
-                statements = statements.Add(defaultReturn);
+                statements = statements.Add(PredefinedKeywords.DefaultReturnStatement);
             }
 
             return SyntaxFactory.Block(statements);
@@ -1460,7 +1460,7 @@ namespace Keysharp.Scripting
 
             if (parser.currentClass.Name != Keywords.MainClassName && parser.FunctionStack.Count == 1 && !parser.currentClass.isInitialization)
             {
-                parameters.Add(Parser.ThisParam);
+                parameters.Add(PredefinedKeywords.ThisParam);
             }
 
             if (context != null)
@@ -1486,24 +1486,19 @@ namespace Keysharp.Scripting
 
                     var statement = SyntaxFactory.LocalDeclarationStatement(
                     SyntaxFactory.VariableDeclaration(
-                        SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword))
+                        SyntaxFactory.PredefinedType(Parser.PredefinedKeywords.Object)
                     )
                     .WithVariables(
                         SyntaxFactory.SingletonSeparatedList(
                             SyntaxFactory.VariableDeclarator(SyntaxFactory.Identifier(identifier))
                             .WithInitializer(
                                 SyntaxFactory.EqualsValueClause(
-                                    SyntaxFactory.ObjectCreationExpression(
+									PredefinedKeywords.EqualsToken,
+									SyntaxFactory.ObjectCreationExpression(
                                         SyntaxFactory.IdentifierName("Array")
                                     )
                                     .WithArgumentList(
-                                        SyntaxFactory.ArgumentList(
-                                            SyntaxFactory.SingletonSeparatedList(
-                                                SyntaxFactory.Argument(
-                                                    SyntaxFactory.IdentifierName(substitute)
-                                                )
-                                            )
-                                        )
+                                        CreateArgumentList(SyntaxFactory.IdentifierName(substitute))
                                     )
                                 )
                             )
@@ -1565,17 +1560,19 @@ namespace Keysharp.Scripting
                         SyntaxFactory.ExpressionStatement(EnsureValidStatementExpression(expression)),
                         SyntaxFactory.ReturnStatement()
                     );
-                return SyntaxFactory.Block(SyntaxFactory.ReturnStatement(expression));
-            }
-            else if (context.statementList() == null || context.statementList().ChildCount == 0)
-            {
                 return SyntaxFactory.Block(
                     SyntaxFactory.ReturnStatement(
-                        SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(""))
-                    )
+						PredefinedKeywords.ReturnToken,
+						expression,
+						PredefinedKeywords.SemicolonToken
+					)
                 );
             }
-            return VisitStatementList(context.statementList());
+            else if (context.block().statementList() == null || context.block().statementList().ChildCount == 0)
+            {
+                return SyntaxFactory.Block(PredefinedKeywords.DefaultReturnStatement);
+            }
+            return VisitStatementList(context.block().statementList());
             /*
             var statements = new List<StatementSyntax>();
 
@@ -1642,9 +1639,7 @@ namespace Keysharp.Scripting
             }
 
             // Wrap the expressions in an InitializerExpressionSyntax
-            return SyntaxFactory.ArgumentList(
-                SyntaxFactory.SeparatedList(expressions)
-            );
+            return CreateArgumentList(expressions);
         }
     }
 }

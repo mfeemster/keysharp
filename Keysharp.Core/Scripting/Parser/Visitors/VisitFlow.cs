@@ -36,11 +36,7 @@ namespace Keysharp.Scripting
             // Generate the enumerator initialization
             var loopFunction = SyntaxFactory.InvocationExpression(
 				CreateMemberAccess("Keysharp.Core.Loops", enumeratorMethodName),
-                SyntaxFactory.ArgumentList(
-                    SyntaxFactory.SeparatedList(
-                        enumeratorArguments.Select(SyntaxFactory.Argument)
-                    )
-                )
+				CreateArgumentList(enumeratorArguments)
             );
             var enumeratorVariable = SyntaxFactory.IdentifierName(loopEnumeratorName);
             var enumeratorDeclaration = SyntaxFactory.VariableDeclaration(
@@ -50,7 +46,8 @@ namespace Keysharp.Scripting
                         enumeratorVariable.Identifier,
                         null,
                         SyntaxFactory.EqualsValueClause(
-                            enumeratorMethodName == "MakeEnumerator" ? loopFunction :
+							PredefinedKeywords.EqualsToken,
+							enumeratorMethodName == "MakeEnumerator" ? loopFunction :
                             SyntaxFactory.InvocationExpression(
                                 SyntaxFactory.MemberAccessExpression(
                                     SyntaxKind.SimpleMemberAccessExpression,
@@ -68,12 +65,8 @@ namespace Keysharp.Scripting
                 SyntaxFactory.InvocationExpression(
 					CreateMemberAccess("Keysharp.Core.Loops", "Push"),
                     loopType == null ? SyntaxFactory.ArgumentList() :
-                    SyntaxFactory.ArgumentList(
-                        SyntaxFactory.SingletonSeparatedList(
-                            SyntaxFactory.Argument(
-								CreateMemberAccess("Keysharp.Core.LoopType", loopType)
-                            )
-                        )
+					CreateArgumentList(
+                        CreateMemberAccess("Keysharp.Core.LoopType", loopType)
                     )
                 )
             );
@@ -81,16 +74,12 @@ namespace Keysharp.Scripting
             // Generate the loop condition
             var loopCondition = SyntaxFactory.InvocationExpression(
                 SyntaxFactory.IdentifierName("IsTrueAndRunning"),
-                SyntaxFactory.ArgumentList(
-                    SyntaxFactory.SingletonSeparatedList(
-                        SyntaxFactory.Argument(
-                            SyntaxFactory.InvocationExpression(
-                                SyntaxFactory.MemberAccessExpression(
-                                    SyntaxKind.SimpleMemberAccessExpression,
-                                    enumeratorVariable,
-                                    SyntaxFactory.IdentifierName("MoveNext")
-                                )
-                            )
+				CreateArgumentList(
+					SyntaxFactory.InvocationExpression(
+                        SyntaxFactory.MemberAccessExpression(
+                            SyntaxKind.SimpleMemberAccessExpression,
+                            enumeratorVariable,
+                            SyntaxFactory.IdentifierName("MoveNext")
                         )
                     )
                 )
@@ -104,9 +93,7 @@ namespace Keysharp.Scripting
                 ? SyntaxFactory.IfStatement(
                     SyntaxFactory.InvocationExpression(
 						CreateMemberAccess("Keysharp.Scripting.Script", "IfTest"),
-                        SyntaxFactory.ArgumentList(
-                            SyntaxFactory.SingletonSeparatedList(SyntaxFactory.Argument(untilCondition))
-                        )
+						CreateArgumentList(untilCondition)
                     ),
                     SyntaxFactory.Block(SyntaxFactory.BreakStatement())
                 )
@@ -114,21 +101,30 @@ namespace Keysharp.Scripting
 
             // Add the loop continuation label `_ks_eX_next:`
             loopBody = loopBody.AddStatements(
-                SyntaxFactory.LabeledStatement(loopEnumeratorName + "_next", untilStatement)
+                SyntaxFactory.LabeledStatement(
+                    SyntaxFactory.Identifier(loopEnumeratorName + "_next"), 
+                    SyntaxFactory.Token(SyntaxKind.ColonToken),
+                    untilStatement)
             );
 
             // Generate the `for` loop
             var forLoop = SyntaxFactory.ForStatement(
-                null,
-                SyntaxFactory.SeparatedList<ExpressionSyntax>(), // No initializer
+                SyntaxFactory.Token(SyntaxKind.ForKeyword),
+				SyntaxFactory.Token(SyntaxKind.OpenParenToken),
+                default,
+				SyntaxFactory.SeparatedList<ExpressionSyntax>(), // No initializer
+				SyntaxFactory.Token(SyntaxKind.SemicolonToken),
                 loopCondition,
+				SyntaxFactory.Token(SyntaxKind.SemicolonToken),
                 SyntaxFactory.SeparatedList<ExpressionSyntax>(), // No incrementor
+				SyntaxFactory.Token(SyntaxKind.CloseParenToken),
                 loopBody
             );
 
             // Generate the `_ks_eX_end:` label
             var endLabel = SyntaxFactory.LabeledStatement(
-                loopEnumeratorName + "_end",
+                SyntaxFactory.Identifier(loopEnumeratorName + "_end"),
+                SyntaxFactory.Token(SyntaxKind.ColonToken),
                 SyntaxFactory.EmptyStatement()
             );
 
@@ -175,7 +171,7 @@ namespace Keysharp.Scripting
                 backupDeclaration = SyntaxFactory.LocalDeclarationStatement(
                     SyntaxFactory.VariableDeclaration(
                         SyntaxFactory.ArrayType(
-                            SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword)), // object[]
+                            SyntaxFactory.PredefinedType(Parser.PredefinedKeywords.Object), // object[]
                             SyntaxFactory.SingletonList(
                                 SyntaxFactory.ArrayRankSpecifier(
                                     SyntaxFactory.SingletonSeparatedList<ExpressionSyntax>(
@@ -189,9 +185,10 @@ namespace Keysharp.Scripting
                             SyntaxFactory.VariableDeclarator(backupIdentifier.Identifier)
                             .WithInitializer(
                                 SyntaxFactory.EqualsValueClause(
-                                    SyntaxFactory.ArrayCreationExpression(
+									PredefinedKeywords.EqualsToken,
+									SyntaxFactory.ArrayCreationExpression(
                                         SyntaxFactory.ArrayType(
-                                            SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword)),
+                                            SyntaxFactory.PredefinedType(Parser.PredefinedKeywords.Object),
                                             SyntaxFactory.SingletonList(
                                                 SyntaxFactory.ArrayRankSpecifier(
                                                     SyntaxFactory.SingletonSeparatedList<ExpressionSyntax>(
@@ -219,7 +216,8 @@ namespace Keysharp.Scripting
                         SyntaxFactory.AssignmentExpression(
                             SyntaxKind.SimpleAssignmentExpression,
                             SyntaxFactory.IdentifierName(uniqueVariableNames[0]),
-                            SyntaxFactory.ElementAccessExpression(backupIdentifier)
+							PredefinedKeywords.EqualsToken,
+							SyntaxFactory.ElementAccessExpression(backupIdentifier)
                                 .WithArgumentList(
                                     SyntaxFactory.BracketedArgumentList(
                                         SyntaxFactory.SingletonSeparatedList(
@@ -245,7 +243,8 @@ namespace Keysharp.Scripting
                                     )
                                 )
                             ),
-                            SyntaxFactory.TupleExpression(
+							PredefinedKeywords.EqualsToken,
+							SyntaxFactory.TupleExpression(
                                 SyntaxFactory.SeparatedList<ArgumentSyntax>(
                                     uniqueVariableNames.Select((_, index) =>
                                         SyntaxFactory.Argument(
@@ -277,30 +276,33 @@ namespace Keysharp.Scripting
             var tryFinallyStatement = SyntaxFactory.TryStatement(
                 SyntaxFactory.Block(forLoop), // Try block containing the loop
                 SyntaxFactory.List<CatchClauseSyntax>(), // No catch clauses
-                SyntaxFactory.FinallyClause(finallyBlock) // Finally block
+                SyntaxFactory.FinallyClause(
+                    SyntaxFactory.Token(SyntaxKind.FinallyKeyword),
+                    finallyBlock
+                ) // Finally block
             );
 
-            return backupDeclaration == null 
-                ? SyntaxFactory.Block(
-                    SyntaxFactory.LocalDeclarationStatement(enumeratorDeclaration),
-                    pushStatement,
-                    tryFinallyStatement,
-                    endLabel
-                )
-                : SyntaxFactory.Block(
-                    SyntaxFactory.LocalDeclarationStatement(enumeratorDeclaration),
-                    backupDeclaration,
-                    pushStatement,
-                    tryFinallyStatement,
-                    endLabel
-                );
+            List<StatementSyntax> blockElements = new()
+            {
+				SyntaxFactory.LocalDeclarationStatement(enumeratorDeclaration),
+				pushStatement,
+				tryFinallyStatement,
+				endLabel
+			};
+            if (backupDeclaration != null)
+                blockElements.Insert(1, backupDeclaration);
+
+            return SyntaxFactory.Block(
+                blockElements
+            );
         }
 
         public override SyntaxNode VisitElseProduction([NotNull] ElseProductionContext context)
         {
             return context.Else() != null
                 ? EnsureBlockSyntax(Visit(context.statement()))
-                : null;
+                     //Assume it was increased before visiting
+				: null;
         }
 
         public override SyntaxNode VisitUntilProduction([NotNull] UntilProductionContext context)
@@ -312,9 +314,13 @@ namespace Keysharp.Scripting
 
         public override SyntaxNode VisitFlowBlock([NotNull] FlowBlockContext context)
         {
+            BlockSyntax result;
             if (context.block() != null)
-                return Visit(context.block());
-            return EnsureBlockSyntax(Visit(context.statement()));
+                result = (BlockSyntax)Visit(context.block());
+            else
+                result = EnsureBlockSyntax(Visit(context.statement()));
+
+            return result;
         }
 
         public override SyntaxNode VisitLoopStatement([NotNull] LoopStatementContext context)
@@ -494,32 +500,26 @@ namespace Keysharp.Scripting
                         SyntaxFactory.IdentifierName("Misc"),
                         SyntaxFactory.IdentifierName("MakeVarRef")
                     ),
-                    SyntaxFactory.ArgumentList(
-                        SyntaxFactory.SeparatedList(new[]
-                        {
-                            // Getter lambda: () => variableName
-                            SyntaxFactory.Argument(
-                                SyntaxFactory.ParenthesizedLambdaExpression(
-                                    SyntaxFactory.ParameterList(),
-                                    SyntaxFactory.IdentifierName(variableName)
+					CreateArgumentList(
+						// Getter lambda: () => variableName
+						SyntaxFactory.ParenthesizedLambdaExpression(
+                            SyntaxFactory.ParameterList(),
+                            SyntaxFactory.IdentifierName(variableName)
+                        ),
+                        // Setter lambda: (Val) => variableName = Val
+                        SyntaxFactory.ParenthesizedLambdaExpression(
+                            SyntaxFactory.ParameterList(
+                                SyntaxFactory.SingletonSeparatedList(
+                                    SyntaxFactory.Parameter(SyntaxFactory.Identifier("Val"))
                                 )
                             ),
-                            // Setter lambda: (Val) => variableName = Val
-                            SyntaxFactory.Argument(
-                                SyntaxFactory.ParenthesizedLambdaExpression(
-                                    SyntaxFactory.ParameterList(
-                                        SyntaxFactory.SingletonSeparatedList(
-                                            SyntaxFactory.Parameter(SyntaxFactory.Identifier("Val"))
-                                        )
-                                    ),
-                                    SyntaxFactory.AssignmentExpression(
-                                        SyntaxKind.SimpleAssignmentExpression,
-                                        SyntaxFactory.IdentifierName(variableName),
-                                        SyntaxFactory.IdentifierName("Val")
-                                    )
-                                )
+                            SyntaxFactory.AssignmentExpression(
+                                SyntaxKind.SimpleAssignmentExpression,
+                                SyntaxFactory.IdentifierName(variableName),
+								PredefinedKeywords.EqualsToken,
+								SyntaxFactory.IdentifierName("Val")
                             )
-                        })
+                        )
                     )
                 );
 
@@ -554,17 +554,13 @@ namespace Keysharp.Scripting
             // Wrap the condition in IfTest
             var conditionWrapped = SyntaxFactory.InvocationExpression(
 				CreateMemberAccess("Keysharp.Scripting.Script", "IfTest"),
-                SyntaxFactory.ArgumentList(
-                    SyntaxFactory.SingletonSeparatedList(SyntaxFactory.Argument(conditionExpression))
-                )
+				CreateArgumentList(conditionExpression)
             );
 
             // Generate the loop condition: IsTrueAndRunning(IfTest(...))
             var loopCondition = SyntaxFactory.InvocationExpression(
                 SyntaxFactory.IdentifierName("IsTrueAndRunning"),
-                SyntaxFactory.ArgumentList(
-                    SyntaxFactory.SingletonSeparatedList(SyntaxFactory.Argument(conditionWrapped))
-                )
+				CreateArgumentList(conditionWrapped)
             );
 
             // Generate the loop body
@@ -591,9 +587,7 @@ namespace Keysharp.Scripting
                 untilStatement = SyntaxFactory.IfStatement(
                     SyntaxFactory.InvocationExpression(
 						CreateMemberAccess("Keysharp.Scripting.Script", "IfTest"),
-                        SyntaxFactory.ArgumentList(
-                            SyntaxFactory.SingletonSeparatedList(SyntaxFactory.Argument(untilCondition))
-                        )
+						CreateArgumentList(untilCondition)
                     ),
                     SyntaxFactory.Block(
                         SyntaxFactory.BreakStatement()
@@ -712,7 +706,7 @@ namespace Keysharp.Scripting
             return SyntaxFactory.GotoStatement(
                 SyntaxKind.GotoStatement,
                 SyntaxFactory.IdentifierName(targetLabel)
-            );
+			);
         }
 
         private string exceptionIdentifierName;
@@ -723,23 +717,25 @@ namespace Keysharp.Scripting
             var prevExceptionIdentifierName = exceptionIdentifierName;
             var elseClaudeIdentifier = InternalPrefix + "trythrew_" + parser.tryDepth.ToString();
             // Generate the try block
-            var tryBlock = EnsureBlockSyntax(Visit(context.statement()));
+            BlockSyntax tryBlock = EnsureBlockSyntax(Visit(context.statement()));
 
             // Generate the Else block (if present)
             StatementSyntax elseCondition = null;
             LocalDeclarationStatementSyntax exceptionVariableDeclaration = null;
             if (context.elseProduction()?.Else() != null)
             {
-                var elseBlock = (BlockSyntax)Visit(context.elseProduction());
+                BlockSyntax elseBlock = ((BlockSyntax)Visit(context.elseProduction()));
 
-                // Declare the `exception` variable
-                exceptionVariableDeclaration = SyntaxFactory.LocalDeclarationStatement(
+				// Declare the `exception` variable
+				exceptionVariableDeclaration = SyntaxFactory.LocalDeclarationStatement(
                     SyntaxFactory.VariableDeclaration(
                         SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.BoolKeyword)),
                         SyntaxFactory.SingletonSeparatedList(
                             SyntaxFactory.VariableDeclarator(elseClaudeIdentifier)
                                 .WithInitializer(
-                                    SyntaxFactory.EqualsValueClause(SyntaxFactory.LiteralExpression(SyntaxKind.TrueLiteralExpression))
+                                    SyntaxFactory.EqualsValueClause(
+										PredefinedKeywords.EqualsToken, 
+                                        SyntaxFactory.LiteralExpression(SyntaxKind.TrueLiteralExpression))
                                 )
                         )
                     )
@@ -751,7 +747,8 @@ namespace Keysharp.Scripting
                         SyntaxFactory.AssignmentExpression(
                             SyntaxKind.SimpleAssignmentExpression,
                             SyntaxFactory.IdentifierName(elseClaudeIdentifier),
-                            SyntaxFactory.LiteralExpression(SyntaxKind.FalseLiteralExpression)
+							PredefinedKeywords.EqualsToken,
+							SyntaxFactory.LiteralExpression(SyntaxKind.FalseLiteralExpression)
                         )
                     )
                 );
@@ -764,24 +761,6 @@ namespace Keysharp.Scripting
                     ),
                     elseBlock
                 );
-            }
-
-            // Generate Finally block
-            FinallyClauseSyntax finallyClause = null;
-            if (context.finallyProduction()?.Finally() != null || elseCondition != null)
-            {
-                var finallyStatements = new List<StatementSyntax>();
-                if (elseCondition != null)
-                {
-                    finallyStatements.Add(elseCondition);
-                }
-
-                if (context.finallyProduction().Finally() != null)
-                {
-                    finallyStatements.AddRange(((BlockSyntax)VisitFinallyProduction(context.finallyProduction())).Statements);
-                }
-
-                finallyClause = SyntaxFactory.FinallyClause(SyntaxFactory.Block(finallyStatements));
             }
 
             // Generate Catch clauses
@@ -798,14 +777,15 @@ namespace Keysharp.Scripting
             // Ensure a catch clause for `Keysharp.Core.Error` exists
             if (catchClauses.Count == 0)
             {
-                var keysharpErrorCatch = SyntaxFactory.CatchClause()
-                    .WithDeclaration(
-                        SyntaxFactory.CatchDeclaration(
-                            SyntaxFactory.ParseTypeName("Keysharp.Core.Error"),
-                            SyntaxFactory.Identifier(InternalPrefix + "ex_" + parser.tryDepth.ToString() + "_0")
-                        )
-                    )
-                    .WithBlock(SyntaxFactory.Block());
+                var keysharpErrorCatch = SyntaxFactory.CatchClause(
+					SyntaxFactory.Token(SyntaxKind.CatchKeyword),
+					SyntaxFactory.CatchDeclaration(
+                        SyntaxFactory.ParseTypeName("Keysharp.Core.Error"),
+                        SyntaxFactory.Identifier(InternalPrefix + "ex_" + parser.tryDepth.ToString() + "_0")
+                    ),
+                    default,
+                    SyntaxFactory.Block()
+                );
 
                 catchClauses.Add(keysharpErrorCatch);
             }
@@ -832,8 +812,9 @@ namespace Keysharp.Scripting
 
 			// Gather every TypeSyntax we need to PushTry
 			var handledTypeSyntaxes = new List<TypeSyntax>();
-			foreach (var catchClause in catchClauses)
+			for (int j = 0; j < catchClauses.Count; j++)
 			{
+                var catchClause = catchClauses[j];
 				// if there's a `when`‐filter, extract all the TypePattern nodes underneath it
 				if (catchClause.Filter is CatchFilterClauseSyntax filterClause)
 				{
@@ -852,36 +833,60 @@ namespace Keysharp.Scripting
 				}
 			}
 
+			// Generate Finally block
+			FinallyClauseSyntax finallyClause = null;
+			if (context.finallyProduction()?.Finally() != null || elseCondition != null)
+			{
+				var finallyStatements = new List<StatementSyntax>();
+				if (elseCondition != null)
+				{
+					finallyStatements.Add(elseCondition);
+				}
+
+				if (context.finallyProduction().Finally() != null)
+				{
+					finallyStatements.AddRange(((BlockSyntax)VisitFinallyProduction(context.finallyProduction())).Statements);
+				}
+
+				finallyClause = SyntaxFactory.FinallyClause(
+					SyntaxFactory.Token(SyntaxKind.FinallyKeyword),
+					SyntaxFactory.Block(finallyStatements)
+						
+				);
+			}
+
 			var pushTryStmt = SyntaxFactory.ExpressionStatement(
                 ((InvocationExpressionSyntax)InternalMethods.PushTry)
 	            .WithArgumentList(
-		            SyntaxFactory.ArgumentList(
-			            SyntaxFactory.SeparatedList<ArgumentSyntax>(
-							handledTypeSyntaxes
-				            .Select(ts => SyntaxFactory.Argument(
-					            SyntaxFactory.TypeOfExpression(ts)))
-			            )
+					CreateArgumentList(
+						handledTypeSyntaxes
+				        .Select(ts => SyntaxFactory.Argument(
+					        SyntaxFactory.TypeOfExpression(ts)))
 		            )
 	            )
             );
 
 			var popTryStmt = SyntaxFactory.ExpressionStatement((InvocationExpressionSyntax)InternalMethods.PopTry);
 
-            var innerTry = SyntaxFactory.TryStatement()
-				.WithBlock(tryBlock)
-				.WithFinally(
-		            SyntaxFactory.FinallyClause(SyntaxFactory.Block(popTryStmt))
-	            );
+            var innerTry = SyntaxFactory.TryStatement(
+				SyntaxFactory.Token(SyntaxKind.TryKeyword),
+                tryBlock,
+                default,
+                SyntaxFactory.FinallyClause(
+                    SyntaxFactory.Token(SyntaxKind.FinallyKeyword),
+                    SyntaxFactory.Block(popTryStmt)
+                )
+            );
+           
 
 			// Construct the TryStatementSyntax
-			var tryStatement = SyntaxFactory.TryStatement()
-                .WithBlock(SyntaxFactory.Block(pushTryStmt, innerTry))
-                .WithCatches(SyntaxFactory.List(catchClauses));
-
-            if (finallyClause != null)
-            {
-                tryStatement = tryStatement.WithFinally(finallyClause);
-            }
+			var tryStatement = SyntaxFactory.TryStatement(
+				SyntaxFactory.Token(SyntaxKind.TryKeyword),
+				SyntaxFactory.Block(
+                    pushTryStmt, 
+                    innerTry),
+				SyntaxFactory.List(catchClauses),
+				finallyClause != null ? finallyClause : default);
 
             parser.tryDepth--;
             exceptionIdentifierName = prevExceptionIdentifierName;
@@ -912,7 +917,8 @@ namespace Keysharp.Scripting
                             SyntaxFactory.AssignmentExpression(
                                 SyntaxKind.SimpleAssignmentExpression,
                                 SyntaxFactory.IdentifierName(catchVarName),
-                                SyntaxFactory.IdentifierName(exceptionIdentifierName)
+								PredefinedKeywords.EqualsToken,
+								SyntaxFactory.IdentifierName(exceptionIdentifierName)
                             )
                         );
                         block = SyntaxFactory.Block(
@@ -945,8 +951,9 @@ namespace Keysharp.Scripting
                         // Create condition: `ex is IndexError`
                         typeConditions.Add(
                             SyntaxFactory.IsPatternExpression(
-                                SyntaxFactory.IdentifierName(exceptionIdentifierName),
-                                SyntaxFactory.TypePattern(SyntaxFactory.ParseTypeName(catchClassText))
+								SyntaxFactory.IdentifierName(exceptionIdentifierName),
+								PredefinedKeywords.IsToken,
+								SyntaxFactory.TypePattern(SyntaxFactory.ParseTypeName(catchClassText))
                             )
                         );
                     }
@@ -959,7 +966,8 @@ namespace Keysharp.Scripting
                     typeConditions.Add(
                         SyntaxFactory.IsPatternExpression(
                             SyntaxFactory.IdentifierName(exceptionIdentifierName),
-                            SyntaxFactory.TypePattern(SyntaxFactory.ParseTypeName("Keysharp.Core.Error"))
+							PredefinedKeywords.IsToken,
+							SyntaxFactory.TypePattern(SyntaxFactory.ParseTypeName("Keysharp.Core.Error"))
                         )
                     );
                 }
@@ -975,26 +983,33 @@ namespace Keysharp.Scripting
                     );
                 }
 
-                CatchFilterClauseSyntax? whenClause = typeConditions.Count > 1
-                    ? SyntaxFactory.CatchFilterClause(conditionExpression)
+                CatchFilterClauseSyntax whenClause = typeConditions.Count > 1
+                    ? SyntaxFactory.CatchFilterClause(
+                        SyntaxFactory.Token(SyntaxKind.WhenKeyword),
+                        default,
+                        conditionExpression,
+                        default
+                    )
                     : null;
 
                 return SyntaxFactory.CatchClause(
-                        SyntaxFactory.CatchDeclaration(exceptionType, exceptionIdentifier),
-                        whenClause,
-                        block
-                    );
+                    SyntaxFactory.Token(SyntaxKind.CatchKeyword),
+					SyntaxFactory.CatchDeclaration(exceptionType, exceptionIdentifier),
+                    whenClause,
+                    block
+				);
             }
 
             // Catch-all clause
-            return SyntaxFactory.CatchClause()
-                .WithDeclaration(
-                    SyntaxFactory.CatchDeclaration(
-                        SyntaxFactory.ParseTypeName("Keysharp.Core.Error"),
-                        SyntaxFactory.Identifier(exceptionIdentifierName)
-                    )
-                )
-                .WithBlock(block);
+            return SyntaxFactory.CatchClause(
+				SyntaxFactory.Token(SyntaxKind.CatchKeyword),
+				SyntaxFactory.CatchDeclaration(
+					SyntaxFactory.ParseTypeName("Keysharp.Core.Error"),
+					SyntaxFactory.Identifier(exceptionIdentifierName)
+				),
+                default,
+                block
+			);
         }
 
         public override SyntaxNode VisitFinallyProduction([NotNull] FinallyProductionContext context)
@@ -1027,9 +1042,7 @@ namespace Keysharp.Scripting
             {
                 switchValueToString = ((InvocationExpressionSyntax)InternalMethods.ForceString)
                 .WithArgumentList(
-                    SyntaxFactory.ArgumentList(
-                        SyntaxFactory.SeparatedList(new[] {
-                            SyntaxFactory.Argument(switchValue) }))
+					CreateArgumentList(switchValue)
                 );
                 switchValueToString = !switchCaseSense
                     ? SyntaxFactory.InvocationExpression(
@@ -1051,7 +1064,7 @@ namespace Keysharp.Scripting
                         SyntaxFactory.VariableDeclarator(
                             SyntaxFactory.Identifier("caseIndex"),
                             null,
-                            SyntaxFactory.EqualsValueClause(switchValueToString)
+                            SyntaxFactory.EqualsValueClause(PredefinedKeywords.EqualsToken, switchValueToString)
                         )
                     )
                 )
@@ -1071,7 +1084,7 @@ namespace Keysharp.Scripting
             {
 				foreach (var caseClause in context.caseClause())
 				{
-					var fullSection = (SwitchSectionSyntax)VisitCaseClause(caseClause);
+                    SwitchSectionSyntax fullSection = (SwitchSectionSyntax)VisitCaseClause(caseClause);
 
 					var stmts = fullSection.Statements;
 					int idx = stmts
@@ -1123,11 +1136,17 @@ namespace Keysharp.Scripting
             if (defaultClause != null)
                 sections.Add(defaultClause);
 
-            // Return the switch statement
-            return SyntaxFactory.SwitchStatement(
-                SyntaxFactory.IdentifierName("caseIndex"),
-                SyntaxFactory.List(sections)
-            );
+			// Return the switch statement
+			return SyntaxFactory.SwitchStatement(
+                SyntaxFactory.Token(SyntaxKind.SwitchKeyword),
+				SyntaxFactory.Token(SyntaxKind.OpenParenToken),
+				SyntaxFactory.IdentifierName("caseIndex"),
+				SyntaxFactory.Token(SyntaxKind.CloseParenToken),
+				SyntaxFactory.Token(SyntaxKind.OpenBraceToken),
+				SyntaxFactory.List(sections),
+				SyntaxFactory.Token(SyntaxKind.CloseBraceToken)
+
+			);
         }
 
         public override SyntaxNode VisitCaseClause([NotNull] CaseClauseContext context)
@@ -1162,9 +1181,7 @@ namespace Keysharp.Scripting
                         var toStringExpr = switchValueExists
                             ? ((InvocationExpressionSyntax)InternalMethods.ForceString)
                                 .WithArgumentList(
-                                    SyntaxFactory.ArgumentList(
-                                        SyntaxFactory.SeparatedList(new[] {
-                                        SyntaxFactory.Argument(exprSyntax) }))
+									CreateArgumentList(exprSyntax)
                                 )
                             : exprSyntax;
 
@@ -1184,50 +1201,48 @@ namespace Keysharp.Scripting
                         {
                             // Create a `case true when ...` label
                             return SyntaxFactory.CasePatternSwitchLabel(
-                                SyntaxFactory.Token(SyntaxKind.CaseKeyword), // case keyword
+								SyntaxFactory.Token(SyntaxKind.CaseKeyword), // case keyword
                                 SyntaxFactory.ConstantPattern(
                                     SyntaxFactory.LiteralExpression(SyntaxKind.TrueLiteralExpression)
                                 ), // case true
                                 SyntaxFactory.WhenClause(
+                                    SyntaxFactory.Token(SyntaxKind.WhenKeyword),
                                     SyntaxFactory.CastExpression(
                                         SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.BoolKeyword)),
                                         ((InvocationExpressionSyntax)InternalMethods.ForceBool)
                                         .WithArgumentList(
-                                            SyntaxFactory.ArgumentList(
-                                                SyntaxFactory.SeparatedList(new[] {
-                                                SyntaxFactory.Argument(comparisonExpr) }))
+											CreateArgumentList(comparisonExpr)
                                         )
                                     )
                                 ),
-                                SyntaxFactory.Token(SyntaxKind.ColonToken) // colon
-                            );
+								SyntaxFactory.Token(SyntaxKind.ColonToken) // colon
+							);
                         }
                         else
                         {
                             // Create a condition for the `when` clause
                             var whenClause = SyntaxFactory.WhenClause(
-                                SyntaxFactory.InvocationExpression(
+								SyntaxFactory.Token(SyntaxKind.WhenKeyword),
+								SyntaxFactory.InvocationExpression(
                                     SyntaxFactory.MemberAccessExpression(
                                         SyntaxKind.SimpleMemberAccessExpression,
                                         SyntaxFactory.IdentifierName(InternalPrefix + "string_" + caseClauseCount),
                                         SyntaxFactory.IdentifierName("Equals")
                                     ),
-                                    SyntaxFactory.ArgumentList(
-                                        SyntaxFactory.SingletonSeparatedList(SyntaxFactory.Argument(comparisonExpr))
-                                    )
+									CreateArgumentList(comparisonExpr)
                                 )
                             );
 
                             // Create a `case string s when ...` label
                             return SyntaxFactory.CasePatternSwitchLabel(
-                                SyntaxFactory.Token(SyntaxKind.CaseKeyword), // case keyword
+								SyntaxFactory.Token(SyntaxKind.CaseKeyword), // case keyword
                                 SyntaxFactory.DeclarationPattern(
                                     SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.StringKeyword)),
                                     SyntaxFactory.SingleVariableDesignation(SyntaxFactory.Identifier(InternalPrefix + "string_" + caseClauseCount))
                                 ),
                                 whenClause, // when condition
-                                SyntaxFactory.Token(SyntaxKind.ColonToken) // colon
-                            );
+								SyntaxFactory.Token(SyntaxKind.ColonToken) // colon
+							);
                         }
                     })
                     .ToArray();
@@ -1236,8 +1251,8 @@ namespace Keysharp.Scripting
 			}
 
             // Return a switch section for this case
-            return SyntaxFactory.SwitchSection(switchLabels
-                , SyntaxFactory.List<StatementSyntax>(
+            return SyntaxFactory.SwitchSection(switchLabels, 
+                SyntaxFactory.List<StatementSyntax>(
                     statements is BlockSyntax blockSyntax
                         ? blockSyntax.Statements // Unwrap block statements
                         : new[] { statements }   // Wrap single statement in an array

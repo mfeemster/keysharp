@@ -644,7 +644,6 @@
 		internal static readonly SearchValues<char> SpaceTabOpenParenSv = SearchValues.Create(SpaceTabOpenParen);
 		internal static readonly char[] TrimLine = "\t\r\n ".ToCharArray();
 		internal static readonly char[] TrimSec = "[]".ToCharArray();
-		internal static readonly char[] SpaceMultiDelim;
 		//internal static readonly SearchValues<char> SpaceMultiDelimSv;
 		internal static readonly char[] PlusMinus = ['+', '-'];
 

@@ -26,7 +26,6 @@ namespace Keysharp.Scripting
 		private readonly List<string> includes = [];
 		private readonly Parser parser;
 		private string includePath = "./";
-		private CompilerHelper tempCompiler = null;
 		internal int NextHotIfCount => ++hotifcount;
 		internal List<(string, bool)> PreloadedDlls { get; } = [];
 		

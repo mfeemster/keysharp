@@ -1,17 +1,7 @@
-using tsmd = System.Collections.Generic.Dictionary<System.CodeDom.CodeTypeDeclaration, System.Collections.Generic.Dictionary<string, System.Collections.Generic.List<System.CodeDom.CodeMethodInvokeExpression>>>;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Antlr4.Runtime;
-using static System.Net.Mime.MediaTypeNames;
-using System;
-using System.Reflection.Metadata;
-using System.Security.AccessControl;
-using System.Diagnostics.Metrics;
 using Antlr4.Runtime.Atn;
-using Keysharp.Core;
-using Keysharp.Core.Common.Keyboard;
 using Keysharp.Core.Scripting.Parser.Helpers;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Keysharp.Scripting
 {
@@ -141,7 +131,6 @@ namespace Keysharp.Scripting
 		internal static CodeTypeReference objTypeRef = new (typeof(object));
 		internal static CodeTypeReference ctrpaa = new (typeof(ParamArrayAttribute));
 		internal static CodeTypeReference ctrdva = new (typeof(DefaultValueAttribute));
-		internal static CodeAttributeDeclaration cad;
 		internal static CodePrimitiveExpression emptyStringPrimitive = new ("");
 
 		internal static FrozenSet<string> propKeywords = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
@@ -157,9 +146,7 @@ namespace Keysharp.Scripting
 		internal List<string> mainFuncInitial = new();
 		internal string name = string.Empty;
 
-		internal bool noTrayIcon;
 		internal bool persistent;
-		internal bool persistentValueSetByUser;
 		private const string args = "args";
 		private const string initParams = "initparams";
 		private const string mainScope = "";
@@ -187,9 +174,6 @@ namespace Keysharp.Scripting
         private readonly char[] ops = [Equal, Not, Greater, Less];
 		public List<IToken> codeTokens = [];
 		private List<CodeLine> codeLines = [];
-
-		private uint switchCount;
-		private uint tryCount;
 
         public CompilationUnitSyntax compilationUnit;
         public NamespaceDeclarationSyntax namespaceDeclaration;
@@ -271,37 +255,69 @@ namespace Keysharp.Scripting
 			{ "AssemblyVersion", null }
         };
 
-        public static ParameterSyntax ThisParam = SyntaxFactory.Parameter(SyntaxFactory.Identifier("@this"))
-                    .WithType(PredefinedTypes.Object);
-
-        public static class PredefinedTypes
+		public static class PredefinedKeywords
         {
-            public static TypeSyntax Object = SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword));
+			public static SyntaxToken Object = SyntaxFactory.Token(SyntaxKind.ObjectKeyword);
 
-            public static TypeSyntax ObjectArray = SyntaxFactory.ArrayType(
-                    SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword)))
+			public static TypeSyntax ObjectType = SyntaxFactory.PredefinedType(Object);
+
+            public static TypeSyntax ObjectArrayType = SyntaxFactory.ArrayType(
+                    SyntaxFactory.PredefinedType(Object))
                 .WithRankSpecifiers(
                     SyntaxFactory.SingletonList(
                         SyntaxFactory.ArrayRankSpecifier(
                             SyntaxFactory.SingletonSeparatedList<ExpressionSyntax>(
                                 SyntaxFactory.OmittedArraySizeExpression()))));
 
-            public static TypeSyntax StringArray = SyntaxFactory.ArrayType(
+            public static TypeSyntax StringArrayType = SyntaxFactory.ArrayType(
                     SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.StringKeyword)))
                 .WithRankSpecifiers(
                     SyntaxFactory.SingletonList(
                         SyntaxFactory.ArrayRankSpecifier(
                             SyntaxFactory.SingletonSeparatedList<ExpressionSyntax>(
                                 SyntaxFactory.OmittedArraySizeExpression()))));
-        }
 
-        public class Function
+            public static IdentifierNameSyntax This = SyntaxFactory.IdentifierName("@this");
+
+			public static ParameterSyntax ThisParam = SyntaxFactory.Parameter(SyntaxFactory.Identifier("@this"))
+						.WithType(ObjectType);
+
+            public static SyntaxTriviaList SpaceTrivia = new SyntaxTriviaList(SyntaxFactory.Space);
+
+			public static readonly SyntaxTrivia NewLineTrivia = SyntaxFactory.EndOfLine(Environment.NewLine);
+
+			public static SyntaxToken PublicToken = SyntaxFactory.Token(SyntaxKind.PublicKeyword);
+
+			public static SyntaxToken StaticToken = SyntaxFactory.Token(SyntaxKind.StaticKeyword);
+
+			public static SyntaxToken AsyncToken = SyntaxFactory.Token(SyntaxKind.StaticKeyword);
+
+			public static SyntaxToken NewToken = SyntaxFactory.Token(SyntaxKind.NewKeyword);
+
+			public static SyntaxToken EqualsToken = SyntaxFactory.Token(SyntaxKind.EqualsToken);
+
+            public static SyntaxToken IsToken = SyntaxFactory.Token(SyntaxKind.IsKeyword);
+
+			public static SyntaxToken ReturnToken = SyntaxFactory.Token(SyntaxKind.ReturnKeyword);
+
+			public static SyntaxToken GotoToken = SyntaxFactory.Token(SyntaxKind.GotoKeyword);
+
+			public static SyntaxToken SemicolonToken = SyntaxFactory.Token(SyntaxKind.SemicolonToken);
+
+			public static StatementSyntax DefaultReturnStatement = SyntaxFactory.ReturnStatement(
+                PredefinedKeywords.ReturnToken,
+                SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal("")),
+                PredefinedKeywords.SemicolonToken
+            );
+		}
+		public class Function
         {
-            public MethodDeclarationSyntax Method = null;
+			public MethodDeclarationSyntax Method = null;
             public string Name = null;
             public List<StatementSyntax> Body = new();
             public List<ParameterSyntax> Params = new();
-            public Dictionary<string, StatementSyntax> Locals = new();
+			public List<AttributeSyntax> Attributes = new();
+			public Dictionary<string, StatementSyntax> Locals = new();
             public HashSet<string> Globals = new HashSet<string>();
             public HashSet<string> Statics = new HashSet<string>();
             public HashSet<string> VarRefs = new HashSet<string>();
@@ -321,11 +337,11 @@ namespace Keysharp.Scripting
                     throw new ArgumentException("Name cannot be null or empty.", nameof(name));
 
                 if (returnType == null)
-                    returnType = SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword));
+                    returnType = SyntaxFactory.PredefinedType(Parser.PredefinedKeywords.Object);
 
                 Name = name;
                 Method = SyntaxFactory.MethodDeclaration(returnType, name);
-            }
+			}
 
             public BlockSyntax AssembleBody()
             {
@@ -387,21 +403,14 @@ namespace Keysharp.Scripting
                                 )
                             )
                         ).WithArgumentList(
-                            SyntaxFactory.ArgumentList(
-                                SyntaxFactory.SeparatedList<ArgumentSyntax>(
-                                    new ArgumentSyntax[]
-                                    {
-                                        // First argument: the string array we just created.
-                                        SyntaxFactory.Argument(arrayCreation),
-                                        // Second argument: StringComparer.OrdinalIgnoreCase
-                                        SyntaxFactory.Argument(
-                                            SyntaxFactory.MemberAccessExpression(
-                                                SyntaxKind.SimpleMemberAccessExpression,
-                                                SyntaxFactory.IdentifierName("StringComparer"),
-                                                SyntaxFactory.IdentifierName("OrdinalIgnoreCase")
-                                            )
-                                        )
-                                    }
+							CreateArgumentList(
+								// First argument: the string array we just created.
+								arrayCreation,
+                                // Second argument: StringComparer.OrdinalIgnoreCase
+                                SyntaxFactory.MemberAccessExpression(
+                                    SyntaxKind.SimpleMemberAccessExpression,
+                                    SyntaxFactory.IdentifierName("StringComparer"),
+                                    SyntaxFactory.IdentifierName("OrdinalIgnoreCase")
                                 )
                             )
                         );
@@ -448,12 +457,12 @@ namespace Keysharp.Scripting
                     //   new Keysharp.Scripting.Script.Variables.Dereference()
                     ObjectCreationExpressionSyntax newExpr = SyntaxFactory.ObjectCreationExpression(
                             SyntaxFactory.ParseTypeName("Keysharp.Scripting.Variables.Dereference"))
-                        .WithArgumentList(SyntaxFactory.ArgumentList(SyntaxFactory.SeparatedList(arguments)));
+                        .WithArgumentList(CreateArgumentList(arguments));
 
                     // Create the variable declarator for _ks_Derefs with its initializer.
                     VariableDeclaratorSyntax varDeclarator = SyntaxFactory.VariableDeclarator(
                             SyntaxFactory.Identifier(InternalPrefix + "Derefs"))
-                        .WithInitializer(SyntaxFactory.EqualsValueClause(newExpr));
+                        .WithInitializer(SyntaxFactory.EqualsValueClause(PredefinedKeywords.EqualsToken, newExpr));
 
                     // Create the variable declaration: "Dereference _ks_Derefs = new Keysharp.Scripting.Variables.Dereference();"
                     VariableDeclarationSyntax varDeclaration = SyntaxFactory.VariableDeclaration(SyntaxFactory.ParseTypeName("Keysharp.Scripting.Variables.Dereference"))
@@ -470,39 +479,52 @@ namespace Keysharp.Scripting
 
                     if (!hasReturn)
                     {
-                        // Append a default return ""; statement
-                        var defaultReturn = SyntaxFactory.ReturnStatement(
-                            SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(""))
-                        );
-
-                        statements.Add(defaultReturn);
+                        statements.Add(PredefinedKeywords.DefaultReturnStatement);
                     }
                 }
 
-                return SyntaxFactory.Block(statements);
+				return SyntaxFactory.Block(statements);
             }
 
-            public ParameterListSyntax AssembleParams() => SyntaxFactory.ParameterList(SyntaxFactory.SeparatedList<ParameterSyntax>(Params));
+            public ParameterListSyntax AssembleParams() => SyntaxFactory.ParameterList(
+                SyntaxFactory.SeparatedList<ParameterSyntax>(Params));
 
-            public MethodDeclarationSyntax Assemble()
+			public AttributeListSyntax AssembleAttributes() => SyntaxFactory.AttributeList(
+	            SyntaxFactory.SeparatedList<AttributeSyntax>(
+		            Attributes));
+
+			public MethodDeclarationSyntax Assemble()
             {
                 var modifiers = new List<SyntaxToken>();
 				if (Async)
-                    modifiers.Add(SyntaxFactory.Token(SyntaxKind.AsyncKeyword));
+                    modifiers.Add(Parser.PredefinedKeywords.AsyncToken);
                 if (Public)
-                    modifiers.Add(SyntaxFactory.Token(SyntaxKind.PublicKeyword));
+                    modifiers.Add(Parser.PredefinedKeywords.PublicToken);
 				if (Static)
-                    modifiers.Add(SyntaxFactory.Token(SyntaxKind.StaticKeyword));
+                    modifiers.Add(Parser.PredefinedKeywords.StaticToken);
+
+                var body = AssembleBody();
+
+                Method = Method.WithModifiers(modifiers.Count == 0 ? default : SyntaxFactory.TokenList(modifiers));
+
+				if (Attributes.Count > 0)
+                {
+                    var attributeList = new SyntaxList<AttributeListSyntax>(AssembleAttributes());
+
+					Method = Method
+                        
+                        .WithAttributeLists(attributeList);
+                }
 
                 return Method
-                .WithParameterList(AssembleParams())
-                .WithBody(AssembleBody())
-                .WithModifiers(modifiers.Count == 0 ? default : SyntaxFactory.TokenList(modifiers));
+                    .WithParameterList(AssembleParams())
+                    .WithBody(body);
             }
         }
 
         public class Class
         {
+            public int Indent = 0;
             public string Name = null;
 			public string UserDeclaredName = null;
             public string Base = "KeysharpObject";
@@ -520,8 +542,16 @@ namespace Keysharp.Scripting
                     throw new ArgumentException("Name cannot be null or empty.", nameof(name));
 
                 Name = name;
-                Declaration = SyntaxFactory.ClassDeclaration(name)
-                .WithModifiers(SyntaxFactory.TokenList(SyntaxFactory.Token(SyntaxKind.PublicKeyword)));
+                Declaration = SyntaxFactory.ClassDeclaration(
+                    modifiers: SyntaxFactory.TokenList(PredefinedKeywords.PublicToken),
+                    identifier: SyntaxFactory.Identifier(Name),
+                    attributeLists: default,
+                    typeParameterList: null,
+                    baseList: null,
+                    constraintClauses: default,
+                    members: default
+                    );
+					
                 if (baseName != null)
                     Declaration = Declaration.WithBaseList(
                         SyntaxFactory.BaseList(
@@ -535,7 +565,7 @@ namespace Keysharp.Scripting
 			public ClassDeclarationSyntax Assemble()
 			{
 				return Declaration
-                    .WithBaseList(BaseList.Count > 0 ? SyntaxFactory.BaseList(SyntaxFactory.SeparatedList(BaseList)) : default)
+					.WithBaseList(BaseList.Count > 0 ? SyntaxFactory.BaseList(SyntaxFactory.SeparatedList(BaseList)) : default)
 					.AddMembers(Body.ToArray());
             }
 
@@ -609,7 +639,9 @@ namespace Keysharp.Scripting
 			fileName = name;
             codeTokens = reader.ReadTokens(codeStream, name);
 
-            var codeTokenSource = new ListTokenSource(codeTokens);
+            codeStream.Close();
+
+			var codeTokenSource = new ListTokenSource(codeTokens);
             var codeTokenStream = new CommonTokenStream(codeTokenSource);
 
             /*
@@ -645,7 +677,6 @@ namespace Keysharp.Scripting
             SyntaxNode compilationUnit = visitor.Visit(programContext);
 
             //var decisionInfo = profilingATNSimulator.getDecisionInfo();
-            //Debug.WriteLine(decisionInfo);
 
             var parseOptions = new CSharpParseOptions(
                 languageVersion: LanguageVersion.LatestMajor,

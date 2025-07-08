@@ -90,9 +90,10 @@ statement
     : variableStatement
     | ifStatement
     | iterationStatement
-    | block // This should be higher than expressionStatement or otherwise {} can be object literal instead of flow blocks
-    | expressionStatement
+    | functionDeclaration
+    | blockStatement // This should be higher than expressionStatement or otherwise {} can be object literal instead of flow blocks
     | functionStatement
+    | expressionStatement
     | continueStatement
     | breakStatement
     | returnStatement
@@ -107,6 +108,10 @@ statement
 // These are TODO when at some point modules are supported
 //    | importStatement
 //    | exportStatement
+    ;
+
+blockStatement
+    : block
     ;
 
 block
@@ -215,7 +220,7 @@ functionStatement
 // This could actually be omitted because ANTLR is smart enough to figure out which is which, but it can lead to
 // some serious performance issues because of long lookaheads.
 expressionStatement
-    : {InputStream.LA(1) != MainLexer.OpenBrace && !this.isFunctionCallStatement()}? expressionSequence
+    : startingExpression (WS* ',' expressionSequence)?
     ;
 
 // For maximum performance there should be two separate statement rules, one with possible
@@ -433,6 +438,15 @@ memberIndexArguments
     : '[' s* (arguments s*)? ']'
     ;
 
+startingExpression
+    : left = startingExpression '++'                                                 # PostIncrementStartingExpression
+    | left = startingExpression '--'                                                 # PostDecreaseStartingExpression
+    | '++' right = startingExpression                                                # PreIncrementStartingExpression
+    | '--' right = startingExpression                                                # PreDecreaseStartingExpression
+    | <assoc = right> left = startingExpression op = assignmentOperator right = expression          # AssignmentStartingExpression
+    | primaryExpression                                                            # PrimaryStartingExpression
+    ;
+
 // ifStatement and loops require that they don't contain a bodied function expression.
 // The only way I could solve this was to duplicate the expressions with and without function expressions.
 // expression can contain function expressions, whereas singleExpression can not.
@@ -464,7 +478,7 @@ expression
     | <assoc = right> ternCond = expression (WS | EOL)* '?' (WS | EOL)* ternTrue = expression (WS | EOL)* ':' (WS | EOL)* ternFalse = expression # TernaryExpression 
     | <assoc = right> left = primaryExpression op = assignmentOperator right = expression          # AssignmentExpression
     | fatArrowExpressionHead '=>' expression             # FatArrowExpression // Not sure why, but this needs to be lower than coalesce expression
-    | functionExpressionHead (WS | EOL)* block           # FunctionExpression
+    | functionExpressionHead WS* block                   # FunctionExpression
     | primaryExpression                                  # ExpressionDummy
     ;
 
@@ -499,9 +513,7 @@ singleExpression
     ;
 
 primaryExpression
-    : primaryExpression ('.' | '?.') memberIdentifier                      # MemberDotExpression
-    | primaryExpression '(' arguments? ')'                                 # FunctionCallExpression
-    | primaryExpression '?.'? memberIndexArguments                         # MemberIndexExpression
+    : primaryExpression accessSuffix                                       # AccessExpression
     | BitAnd primaryExpression                                             # VarRefExpression
     | identifier                                                           # IdentifierExpression
     | dynamicIdentifier                                                    # DynamicIdentifierExpression
@@ -510,6 +522,12 @@ primaryExpression
     | mapLiteral                                                           # MapLiteralExpression
     | objectLiteral                                                        # ObjectLiteralExpression
     | '(' expressionSequence ')'                                           # ParenthesizedExpression
+    ;
+
+accessSuffix
+    : modifier = ('.' | '?.') memberIdentifier
+    | (modifier = '?.')? memberIndexArguments
+    | '(' arguments? ')'
     ;
 
 memberDot
@@ -564,7 +582,7 @@ fatArrowExpressionHead
 
 functionBody
     : '=>' expression
-    | (WS | EOL)* '{' s* statementList? '}'
+    | (WS | EOL)* block
     ;
 
 assignmentOperator
