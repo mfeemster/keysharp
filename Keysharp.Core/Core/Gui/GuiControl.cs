@@ -89,7 +89,7 @@
 				}
 			}
 
-			public new (Type, object) super => (typeof(KeysharpObject), this);
+			public (Type, object) super => (typeof(KeysharpObject), this);
 
 			public object Text
 			{

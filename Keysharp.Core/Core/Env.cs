@@ -918,7 +918,7 @@ namespace Keysharp.Core
 		/// <summary>
 		/// The implementation for <see cref="KeysharpObject.super"/> for this class to return this type.
 		/// </summary>
-		public new (Type, object) super => (typeof(KeysharpObject), this);
+		public (Type, object) super => (typeof(KeysharpObject), this);
 
 		public ClipboardAll(params object[] args) => _ = __New(args);
 	}

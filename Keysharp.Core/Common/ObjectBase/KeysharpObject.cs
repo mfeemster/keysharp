@@ -20,7 +20,6 @@ namespace Keysharp.Core.Common.ObjectBase
 	{
 		protected internal Dictionary<string, OwnPropsDesc> op = new Dictionary<string, OwnPropsDesc>(StringComparer.OrdinalIgnoreCase);
 
-        MethodInfo mi;
 		// In some cases we wish to skip the automatic calls to __Init and __New (eg when creating OwnProps),
 		// so in those cases we can initialize with `skipLogic: true`
 		protected bool SkipConstructorLogic { get; }

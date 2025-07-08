@@ -18,7 +18,6 @@ namespace Keysharp.Core.Common.Threading
 		internal Form dialogOwner;
 		internal object eventInfo;
 		internal Encoding fileEncoding = Encoding.Default;
-		internal string formatNumeric;
 		internal IFuncObj hotCriterion;
 		internal long hwndLastUsed = 0;
 		internal bool isCritical = false;

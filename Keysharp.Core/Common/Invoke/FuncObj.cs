@@ -171,7 +171,7 @@
 				return _name = $"{nestedPath.Replace('+', '.')}.{funcName}";
 			}
 		}
-		public new (Type, object) super => (typeof(KeysharpObject), this);
+		public (Type, object) super => (typeof(KeysharpObject), this);
 		internal bool IsVariadic => mph.parameters.Length > 0 && mph.parameters[mph.parameters.Length - 1].ParameterType == typeof(object[]);
 		public long MaxParams => mph.MaxParams;
 		public long MinParams => mph.MinParams;
