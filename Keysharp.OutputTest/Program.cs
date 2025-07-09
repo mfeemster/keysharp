@@ -52,7 +52,7 @@ using static Keysharp.Scripting.Script;
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-[assembly: Keysharp.Scripting.AssemblyBuildVersionAttribute("0.0.0.10")]
+[assembly: Keysharp.Scripting.AssemblyBuildVersionAttribute("0.0.0.11")]
 
 namespace Keysharp.CompiledMain
 {
@@ -66,6 +66,7 @@ namespace Keysharp.CompiledMain
 	using System.Text;
 	using System.Threading.Tasks;
 	using System.Windows.Forms;
+
 	using Keysharp.Core;
 	using Keysharp.Core.Common;
 	using Keysharp.Core.Common.File;
@@ -74,6 +75,7 @@ namespace Keysharp.CompiledMain
 	using Keysharp.Core.Common.Strings;
 	using Keysharp.Core.Common.Threading;
 	using Keysharp.Scripting;
+
 	using Array = Keysharp.Core.Array;
 	using Buffer = Keysharp.Core.Buffer;
 
@@ -113,7 +115,7 @@ namespace Keysharp.CompiledMain
 				{
 					var (_ks_pushed, _ks_btv) = _ks_s.Threads.BeginThread();
 					MsgBox("Uncaught Keysharp exception:\r\n" + kserr, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
-					_ks_s.Threads.EndThread(_ks_pushed);
+					_ks_s.Threads.EndThread((_ks_pushed, _ks_btv));
 				}
 
 				Keysharp.Core.Flow.ExitApp(1);
@@ -136,14 +138,14 @@ namespace Keysharp.CompiledMain
 					{
 						var (_ks_pushed, _ks_btv) = _ks_s.Threads.BeginThread();
 						MsgBox("Uncaught Keysharp exception:\r\n" + kserr, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
-						_ks_s.Threads.EndThread(_ks_pushed);
+						_ks_s.Threads.EndThread((_ks_pushed, _ks_btv));
 					}
 				}
 				else
 				{
 					var (_ks_pushed, _ks_btv) = _ks_s.Threads.BeginThread();
 					MsgBox("Uncaught exception:\r\n" + "Message: " + ex.Message + "\r\nStack: " + ex.StackTrace, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
-					_ks_s.Threads.EndThread(_ks_pushed);
+					_ks_s.Threads.EndThread((_ks_pushed, _ks_btv));
 				}
 
 				;
