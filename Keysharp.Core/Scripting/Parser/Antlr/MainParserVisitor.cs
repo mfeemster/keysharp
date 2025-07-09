@@ -594,48 +594,6 @@ public interface IMainParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitMemberIndexArguments([NotNull] MainParser.MemberIndexArgumentsContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>PostIncrementStartingExpression</c>
-	/// labeled alternative in <see cref="MainParser.startingExpression"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitPostIncrementStartingExpression([NotNull] MainParser.PostIncrementStartingExpressionContext context);
-	/// <summary>
-	/// Visit a parse tree produced by the <c>PreIncrementStartingExpression</c>
-	/// labeled alternative in <see cref="MainParser.startingExpression"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitPreIncrementStartingExpression([NotNull] MainParser.PreIncrementStartingExpressionContext context);
-	/// <summary>
-	/// Visit a parse tree produced by the <c>PrimaryStartingExpression</c>
-	/// labeled alternative in <see cref="MainParser.startingExpression"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitPrimaryStartingExpression([NotNull] MainParser.PrimaryStartingExpressionContext context);
-	/// <summary>
-	/// Visit a parse tree produced by the <c>PostDecreaseStartingExpression</c>
-	/// labeled alternative in <see cref="MainParser.startingExpression"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitPostDecreaseStartingExpression([NotNull] MainParser.PostDecreaseStartingExpressionContext context);
-	/// <summary>
-	/// Visit a parse tree produced by the <c>AssignmentStartingExpression</c>
-	/// labeled alternative in <see cref="MainParser.startingExpression"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitAssignmentStartingExpression([NotNull] MainParser.AssignmentStartingExpressionContext context);
-	/// <summary>
-	/// Visit a parse tree produced by the <c>PreDecreaseStartingExpression</c>
-	/// labeled alternative in <see cref="MainParser.startingExpression"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitPreDecreaseStartingExpression([NotNull] MainParser.PreDecreaseStartingExpressionContext context);
-	/// <summary>
 	/// Visit a parse tree produced by the <c>TernaryExpression</c>
 	/// labeled alternative in <see cref="MainParser.expression"/>.
 	/// </summary>
@@ -957,6 +915,13 @@ public interface IMainParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitVerbalNotExpressionDuplicate([NotNull] MainParser.VerbalNotExpressionDuplicateContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>FatArrowExpressionDuplicate</c>
+	/// labeled alternative in <see cref="MainParser.singleExpression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitFatArrowExpressionDuplicate([NotNull] MainParser.FatArrowExpressionDuplicateContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>TernaryExpressionDuplicate</c>
 	/// labeled alternative in <see cref="MainParser.singleExpression"/>.

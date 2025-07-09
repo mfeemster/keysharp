@@ -11,7 +11,7 @@ class myclass
 
 classobj := myclass.Call()
 
-If (myclass.a == unset)
+If (!IsSet(myclass.a))
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -64,7 +64,7 @@ else
 
 a := 1
 
-If (myclass.a == unset)
+If (!IsSet(myclass.a))
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"

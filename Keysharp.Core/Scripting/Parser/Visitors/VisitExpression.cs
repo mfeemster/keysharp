@@ -143,15 +143,40 @@ namespace Keysharp.Scripting
 				else
 					argumentList = SyntaxFactory.ArgumentList();
 
-				if (methodName.Equals("IsSet", StringComparison.InvariantCultureIgnoreCase)
-					&& argumentList.Arguments.First().Expression is IdentifierNameSyntax identifierName)
+				if (methodName.Equals("IsSet", StringComparison.InvariantCultureIgnoreCase))
 				{
-					var addedName = parser.MaybeAddVariableDeclaration(identifierName.Identifier.Text);
-					if (addedName != null && addedName != identifierName.Identifier.Text)
-					{
-						identifierName = SyntaxFactory.IdentifierName(addedName);
-						argumentList = CreateArgumentList(identifierName);
-					}
+                    var arg = argumentList.Arguments.First().Expression;
+                    if (arg is IdentifierNameSyntax identifierName)
+                    {
+                        var addedName = parser.MaybeAddVariableDeclaration(identifierName.Identifier.Text);
+                        if (addedName != null && addedName != identifierName.Identifier.Text)
+                        {
+                            identifierName = SyntaxFactory.IdentifierName(addedName);
+                            argumentList = CreateArgumentList(identifierName);
+                        }
+                    }
+                    else if (arg is InvocationExpressionSyntax ies && CheckInvocationExpressionName(ies, "GetPropertyValue"))
+                    {
+                        var valueExpr = parser.PushTempVar();
+
+                        var origArgs = ies.ArgumentList.Arguments;
+
+                        // Build the out-temp third argument: `out temp`
+                        var outArg = SyntaxFactory.Argument(valueExpr)
+                            .WithRefKindKeyword(
+                                SyntaxFactory.Token(SyntaxKind.OutKeyword)
+                            );
+						parser.PopTempVar();
+
+						return SyntaxFactory.InvocationExpression(
+                            SyntaxFactory.IdentifierName("TryGetPropertyValue"),
+                            CreateArgumentList(
+                                origArgs[0],
+                                origArgs[1],
+                                outArg
+                            )
+                        );
+                    }
 				}
 				else if (methodName.Equals("StrPtr", StringComparison.InvariantCultureIgnoreCase)
 					&& argumentList.Arguments.First().Expression is ExpressionSyntax strVar
@@ -206,7 +231,7 @@ namespace Keysharp.Scripting
         public override SyntaxNode VisitExpressionStatement([Antlr4.Runtime.Misc.NotNull] ExpressionStatementContext context)
         {
             ArgumentListSyntax argumentList = CreateArgumentList(
-                (ExpressionSyntax)Visit(context.startingExpression())
+                (ExpressionSyntax)Visit(context.singleExpression())
             );
 
             if (context.expressionSequence() != null)
@@ -318,7 +343,7 @@ namespace Keysharp.Scripting
         }
         */
 
-        public ExpressionSyntax ConcatenateExpressions(List<ExpressionSyntax> expressions)
+		public ExpressionSyntax ConcatenateExpressions(List<ExpressionSyntax> expressions)
         {
             ExpressionSyntax finalExpression = expressions[0];
             if (expressions.Count == 1)
@@ -343,12 +368,6 @@ namespace Keysharp.Scripting
 			return HandleCompoundAssignment(expression, SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(1L)), "+=");
 		}
 
-		public override SyntaxNode VisitPreIncrementStartingExpression([NotNull] PreIncrementStartingExpressionContext context)
-		{
-			var expression = (ExpressionSyntax)Visit(context.startingExpression());
-			return HandleCompoundAssignment(expression, SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(1L)), "+=");
-		}
-
 		public override SyntaxNode VisitPreDecreaseExpression([NotNull] PreDecreaseExpressionContext context)
         {
             var expression = (ExpressionSyntax)Visit(context.expression());
@@ -358,12 +377,6 @@ namespace Keysharp.Scripting
 		public override SyntaxNode VisitPreDecreaseExpressionDuplicate([NotNull] PreDecreaseExpressionDuplicateContext context)
 		{
 			var expression = (ExpressionSyntax)Visit(context.singleExpression());
-			return HandleCompoundAssignment(expression, SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(1L)), "-=");
-		}
-
-		public override SyntaxNode VisitPreDecreaseStartingExpression([NotNull] PreDecreaseStartingExpressionContext context)
-		{
-			var expression = (ExpressionSyntax)Visit(context.startingExpression());
 			return HandleCompoundAssignment(expression, SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(1L)), "-=");
 		}
 
@@ -379,12 +392,6 @@ namespace Keysharp.Scripting
 			return HandleCompoundAssignment(expression, SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(1L)), "+=", isPostFix: true);
 		}
 
-		public override SyntaxNode VisitPostIncrementStartingExpression([NotNull] PostIncrementStartingExpressionContext context)
-		{
-			var expression = (ExpressionSyntax)Visit(context.startingExpression());
-			return HandleCompoundAssignment(expression, SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(1L)), "+=", isPostFix: true);
-		}
-
 		public override SyntaxNode VisitPostDecreaseExpression([NotNull] PostDecreaseExpressionContext context)
         {
             var expression = (ExpressionSyntax)Visit(context.expression());
@@ -394,12 +401,6 @@ namespace Keysharp.Scripting
 		public override SyntaxNode VisitPostDecreaseExpressionDuplicate([NotNull] PostDecreaseExpressionDuplicateContext context)
 		{
 			var expression = (ExpressionSyntax)Visit(context.singleExpression());
-			return HandleCompoundAssignment(expression, SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(1L)), "-=", isPostFix: true);
-		}
-
-		public override SyntaxNode VisitPostDecreaseStartingExpression([NotNull] PostDecreaseStartingExpressionContext context)
-		{
-			var expression = (ExpressionSyntax)Visit(context.startingExpression());
 			return HandleCompoundAssignment(expression, SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(1L)), "-=", isPostFix: true);
 		}
 
@@ -814,11 +815,6 @@ namespace Keysharp.Scripting
         {
             return HandleAssignmentExpression(context.left, context.right, context.assignmentOperator().GetText());
         }
-
-		public override SyntaxNode VisitAssignmentStartingExpression([NotNull] AssignmentStartingExpressionContext context)
-		{
-			return HandleAssignmentExpression(context.left, context.right, context.assignmentOperator().GetText());
-		}
 
         private ExpressionSyntax HandleAssignment(ExpressionSyntax leftExpression, ExpressionSyntax rightExpression, string assignmentOperator)
         {

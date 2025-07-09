@@ -678,14 +678,9 @@ namespace Keysharp.Scripting
 
             //var decisionInfo = profilingATNSimulator.getDecisionInfo();
 
-            var parseOptions = new CSharpParseOptions(
-                languageVersion: LanguageVersion.LatestMajor,
-                documentationMode: DocumentationMode.None,
-                kind: SourceCodeKind.Regular);
-
             mainParser.RemoveErrorListeners();
 
-			return (T)(object)SyntaxFactory.SyntaxTree(compilationUnit, parseOptions);
+			return (T)(object)compilationUnit;
 		}
 
         static void ProfileParser(MainParser parser)

@@ -162,12 +162,12 @@
 					path = $".{Path.DirectorySeparatorChar}{namenoext}";
 				}
 
-				var (st, errs) = ch.CreateSyntaxTreeFromFile(scriptName);
+				var (units, errs) = ch.CreateCompilationUnitFromFile(scriptName);
 
-				if (errs.HasErrors || st[0] == null)
+				if (errs.HasErrors || units[0] == null)
 					return HandleCompilerErrors(errs, scriptName, path, "Compiling script to DOM");
 
-				var code = st[0].ToString();
+				var code = units[0].ToString();
 
 				//If they want to write out the code, place it in the same folder as the script, with the same name, and .cs extension.
 				if (codeout)
@@ -176,7 +176,7 @@
 					return 0;
 				}
 
-				var (results, ms, compileexc) = ch.CompileFromTree(st[0], namenoext, exeDir);
+				var (results, ms, compileexc) = ch.Compile(units[0], namenoext, exeDir);
 
 				try
 				{

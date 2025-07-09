@@ -1,4 +1,9 @@
-﻿namespace Keyview
+﻿using Antlr4.Runtime;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using ScintillaNET;
+
+namespace Keyview
 {
 	/// <summary>
 	/// Much of the Scintilla-related code was taken from: https://github.com/robinrodricks/ScintillaNET.Demo
@@ -574,7 +579,7 @@
 					SetStart();
 					tslCodeStatus.Text = "Creating DOM from script...";
 					Refresh();
-					var (st, domerrs) = ch.CreateSyntaxTreeFromFile(txtIn.Text);
+					var (units, domerrs) = ch.CreateCompilationUnitFromFile(txtIn.Text);
 					//var (domunits, domerrs) = ch.CreateDomFromFile([txtIn.Text]);
 
 					if (domerrs.HasErrors)
@@ -596,9 +601,17 @@
 					tslCodeStatus.Text = "Creating C# code from DOM...";
 					Refresh();
 
-					var code = st[0].ToString();
+					var code = PrettyPrinter.Print(units[0]);
+#if DEBUG
+					var normalized = units[0].NormalizeWhitespace("\t").ToString();
+					if (code != normalized)
+					{
+						throw new Exception("Code formatting mismatch");
+					}
+#endif
+
 					tslCodeStatus.Text = "Compiling C# code...";
-					var (results, ms, compileexc) = ch.CompileFromTree(st[0], "Keyview", Path.GetFullPath(Path.GetDirectoryName(Environment.ProcessPath)));
+					var (results, ms, compileexc) = ch.Compile(units[0], "Keyview", Path.GetFullPath(Path.GetDirectoryName(Environment.ProcessPath)));
 
 					if (results == null)
 					{

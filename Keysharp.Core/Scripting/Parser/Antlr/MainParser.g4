@@ -93,7 +93,7 @@ statement
     | functionDeclaration
     | blockStatement // This should be higher than expressionStatement or otherwise {} can be object literal instead of flow blocks
     | functionStatement
-    | expressionStatement
+    | {!this.isFunctionCallStatement()}? expressionStatement
     | continueStatement
     | breakStatement
     | returnStatement
@@ -220,7 +220,7 @@ functionStatement
 // This could actually be omitted because ANTLR is smart enough to figure out which is which, but it can lead to
 // some serious performance issues because of long lookaheads.
 expressionStatement
-    : startingExpression (WS* ',' expressionSequence)?
+    : singleExpression (WS* ',' expressionSequence)?
     ;
 
 // For maximum performance there should be two separate statement rules, one with possible
@@ -438,15 +438,6 @@ memberIndexArguments
     : '[' s* (arguments s*)? ']'
     ;
 
-startingExpression
-    : left = startingExpression '++'                                                 # PostIncrementStartingExpression
-    | left = startingExpression '--'                                                 # PostDecreaseStartingExpression
-    | '++' right = startingExpression                                                # PreIncrementStartingExpression
-    | '--' right = startingExpression                                                # PreDecreaseStartingExpression
-    | <assoc = right> left = startingExpression op = assignmentOperator right = expression          # AssignmentStartingExpression
-    | primaryExpression                                                            # PrimaryStartingExpression
-    ;
-
 // ifStatement and loops require that they don't contain a bodied function expression.
 // The only way I could solve this was to duplicate the expressions with and without function expressions.
 // expression can contain function expressions, whereas singleExpression can not.
@@ -508,7 +499,8 @@ singleExpression
     | left = singleExpression (op = '||' | op = VerbalOr) right = singleExpression   # LogicalOrExpressionDuplicate
     | <assoc = right> left = singleExpression op = '??' right = singleExpression                               # CoalesceExpressionDuplicate
     | <assoc = right> ternCond = singleExpression (WS | EOL)* '?' (WS | EOL)* ternTrue = expression (WS | EOL)* ':' (WS | EOL)* ternFalse = singleExpression # TernaryExpressionDuplicate
-    | <assoc = right> left = primaryExpression op = assignmentOperator right = singleExpression          # AssignmentExpressionDuplicate
+    | <assoc = right> left = primaryExpression op = assignmentOperator right = expression          # AssignmentExpressionDuplicate
+    | fatArrowExpressionHead '=>' singleExpression       # FatArrowExpressionDuplicate
     | primaryExpression                                  # SingleExpressionDummy
     ;
 

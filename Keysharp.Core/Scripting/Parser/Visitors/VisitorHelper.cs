@@ -182,6 +182,16 @@ namespace Keysharp.Scripting
 				return null;
 			}
 
+			public override object VisitFatArrowExpressionDuplicate([NotNull] FatArrowExpressionDuplicateContext context)
+			{
+				var head = context
+					.fatArrowExpressionHead()
+					.functionExpressionHead()?
+					.functionHead();
+				AddFunction(head);
+				return null;
+			}
+
 			public override object VisitFunctionExpression([NotNull] FunctionExpressionContext context)
 			{
 				var head = context.functionExpressionHead().functionHead();
@@ -293,17 +303,6 @@ namespace Keysharp.Scripting
 						_ = parser.MaybeAddVariableDeclaration(identifierNameSyntax.Identifier.Text);
 				}
 				return base.VisitAssignmentExpressionDuplicate(context);
-			}
-
-			public override object VisitAssignmentStartingExpression([NotNull] AssignmentStartingExpressionContext context)
-			{
-				if (context.left is PrimaryStartingExpressionContext psec)
-				{
-					SyntaxNode result = mainVisitor.Visit(psec);
-					if (result is IdentifierNameSyntax identifierNameSyntax)
-						_ = parser.MaybeAddVariableDeclaration(identifierNameSyntax.Identifier.Text);
-				}
-				return base.VisitAssignmentStartingExpression(context);
 			}
 		}
 
@@ -1693,8 +1692,7 @@ namespace Keysharp.Scripting
 
             if (initializationStatement != null)
             {
-                // Add the initialization statement to the beginning of the function body
-                currentFunc.Body.Insert(0, initializationStatement);
+                currentFunc.Body.Add(initializationStatement);
             }
 
             // Add the attributes for Optional and DefaultParameterValue

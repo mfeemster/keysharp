@@ -3,7 +3,7 @@
 y = 5
 x = 0
 
-Loop, %y%
+Loop %y%
 {
 	If A_Index =2
 		Continue
@@ -20,7 +20,7 @@ else
 x = 0
 y := ""
 
-Loop, %y%
+Loop %y%
 {
 	x++
 }
@@ -33,7 +33,7 @@ else
 x = 0
 y = 0
 
-Loop, %y% ; this is a comment
+Loop %y% ; this is a comment
 {
 	x++
 }

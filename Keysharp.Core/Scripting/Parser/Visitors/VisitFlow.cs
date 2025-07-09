@@ -984,12 +984,7 @@ namespace Keysharp.Scripting
                 }
 
                 CatchFilterClauseSyntax whenClause = typeConditions.Count > 1
-                    ? SyntaxFactory.CatchFilterClause(
-                        SyntaxFactory.Token(SyntaxKind.WhenKeyword),
-                        default,
-                        conditionExpression,
-                        default
-                    )
+                    ? SyntaxFactory.CatchFilterClause(conditionExpression)
                     : null;
 
                 return SyntaxFactory.CatchClause(

@@ -220,8 +220,8 @@ namespace Keysharp.Scripting
             // Not normalizing whitespaces is even faster though, but breaks code compilation.
             parser.compilationUnit = parser.compilationUnit
                 .AddMembers(parser.namespaceDeclaration)
-                .AddAttributeLists(attributeList)
-                .NormalizeWhitespace("\t");
+                .AddAttributeLists(attributeList);
+            //.NormalizeWhitespace("\t");
 
 			return parser.compilationUnit;
         }
@@ -1231,7 +1231,7 @@ namespace Keysharp.Scripting
             return null;
         }
 
-        public SyntaxNode FunctionExpressionCommon(MethodDeclarationSyntax methodDeclaration, ParserRuleContext context)
+        public SyntaxNode FunctionExpressionCommon(MethodDeclarationSyntax methodDeclaration)
         {
             // Case 1: If we are in the main class (not inside a class declaration)
             // OR we are inside any method declaration besides the auto-execute one then add it as a closure.
@@ -1383,7 +1383,7 @@ namespace Keysharp.Scripting
             if (parser.currentFunc.Name == Keywords.AutoExecSectionName)
                 return methodDeclaration;
 
-			var commonResult = FunctionExpressionCommon(methodDeclaration, context);
+			var commonResult = FunctionExpressionCommon(methodDeclaration);
             if (commonResult is IdentifierNameSyntax ins)
             {
                 return SyntaxFactory.ExpressionStatement(EnsureValidStatementExpression(ins));
@@ -1405,40 +1405,51 @@ namespace Keysharp.Scripting
             var methodDeclaration = parser.currentFunc.Assemble();
             PopFunction();
 
-            return FunctionExpressionCommon(methodDeclaration, context);
+            return FunctionExpressionCommon(methodDeclaration);
         }
+
+        private SyntaxNode HandleFatArrowExpression(FatArrowExpressionHeadContext head, ParserRuleContext body)
+        {
+			Visit(head);
+
+            ExpressionSyntax returnExpression = (ExpressionSyntax)Visit(body);
+
+			BlockSyntax functionBody;
+
+			if (parser.currentFunc.Void)
+			{
+				functionBody = SyntaxFactory.Block(
+					SyntaxFactory.ExpressionStatement(EnsureValidStatementExpression(returnExpression)),
+					SyntaxFactory.ReturnStatement()
+				 );
+
+			}
+			else
+				functionBody = SyntaxFactory.Block(
+					SyntaxFactory.ReturnStatement(
+						PredefinedKeywords.ReturnToken,
+						returnExpression,
+						PredefinedKeywords.SemicolonToken
+					)
+				);
+
+			parser.currentFunc.Body.AddRange(functionBody.Statements.ToArray());
+
+			var methodDeclaration = parser.currentFunc.Assemble();
+			PopFunction();
+
+			return FunctionExpressionCommon(methodDeclaration);
+		}
 
         public override SyntaxNode VisitFatArrowExpression([Antlr4.Runtime.Misc.NotNull] FatArrowExpressionContext context)
         {
-            Visit(context.fatArrowExpressionHead());
-
-            var returnExpression = (ExpressionSyntax)Visit(context.expression());
-
-            BlockSyntax functionBody;
-
-            if (parser.currentFunc.Void)
-            {
-                functionBody = SyntaxFactory.Block(
-                    SyntaxFactory.ExpressionStatement(EnsureValidStatementExpression(returnExpression)),
-                    SyntaxFactory.ReturnStatement()
-                 );
-                
-            } else
-                functionBody = SyntaxFactory.Block(
-                    SyntaxFactory.ReturnStatement(
-						PredefinedKeywords.ReturnToken,
-                        returnExpression,
-						PredefinedKeywords.SemicolonToken
-                    )
-                );
-
-            parser.currentFunc.Body.AddRange(functionBody.Statements.ToArray());
-
-            var methodDeclaration = parser.currentFunc.Assemble();
-            PopFunction();
-
-            return FunctionExpressionCommon(methodDeclaration, context);
+            return HandleFatArrowExpression(context.fatArrowExpressionHead(), context.expression());
         }
+
+		public override SyntaxNode VisitFatArrowExpressionDuplicate([NotNull] FatArrowExpressionDuplicateContext context)
+		{
+			return HandleFatArrowExpression(context.fatArrowExpressionHead(), context.singleExpression());
+		}
 
         private BlockSyntax EnsureReturnStatement(BlockSyntax functionBody)
         {
