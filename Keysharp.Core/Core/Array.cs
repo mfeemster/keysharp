@@ -36,7 +36,7 @@
 	{
         new public static object __Static { get; set; }
 
-        private int capacity = 64;
+        private int capacity = 4;
 
 		/// <summary>
 		/// The underlying <see cref="List"/> that holds the values.
@@ -188,29 +188,28 @@
 			if (args == null || args.Length == 0)
 			{
 			}
-			else if (args.Length == 1 && args[0] is object[] objarr)
+			else if (args.Length == 1)
 			{
-				array.AddRange(objarr);
-			}
-			else if (args.Length == 1 && args[0] is List<object> objlist)
-			{
-				array.AddRange(objlist);
-			}
-			else if (args.Length == 1 && args[0] is Array arr)
-			{
-				array.Add(arr);
-			}
-			else if (args.Length == 1 && args[0] is Map map)
-			{
-				array.Add(map);
-			}
-			else if (args.Length == 1 && args[0] is ICollection c)
-			{
-				array.AddRange(c.Cast<object>().ToList());
+				if (args[0] is object[] objarr)
+				{
+					array.AddRange(objarr);
+				}
+				else if (args[0] is List<object> objlist)
+				{
+					array.AddRange(objlist);
+				}
+				else if (args[0] is ICollection c && c is not Array && c is not Map)
+				{
+					array.AddRange(c.Cast<object>().ToList());
+				}
+				else
+				{
+					array.Add(args[0]);
+				}
 			}
 			else
 			{
-				Push(args);
+				array.AddRange(args);
 			}
 
 			return DefaultObject;
@@ -688,7 +687,7 @@
 
 			if (array.Count > 0 && o.Length > 0)
 			{
-				var index = o.I1();
+				var index = args[0].Ai(0);
 				int i;
 
 				if ((i = TranslateIndex(index)) == -1)
@@ -696,7 +695,7 @@
 
 				if (o.Length > 1 && o[1] != null)
 				{
-					var len = (int)o.Al(1);
+					var len = o[1].Ai(1);
 
 					if (i + len <= array.Count)
 						array.RemoveRange(i, len);
