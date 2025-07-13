@@ -4,7 +4,7 @@
 	{
 		public long Ptr { get; }
 	}
-	
+
 	public interface IFuncObj
 	{
 		public object Inst { get; }
@@ -142,7 +142,7 @@
 
 		public object Inst { get; internal set; }
 		public bool IsBuiltIn => mi.DeclaringType.Module.Name.StartsWith("keysharp.core", StringComparison.OrdinalIgnoreCase);
-		public bool IsValid => mi != null && mph != null && mph.callFunc != null;
+		public bool IsValid => mi != null && mph != null && mph.IsCallFuncValid;
 		public string Name => mi != null ? mi.Name : "";
 		public new (Type, object) super => (typeof(KeysharpObject), this);
 		internal bool IsVariadic => isVariadic;
@@ -177,7 +177,7 @@
 		public virtual IFuncObj Bind(params object[] args)
 		=> new BoundFunc(mi, args, Inst);
 
-		public virtual object Call(params object[] args) => mph.callFunc(Inst, args);
+		public virtual object Call(params object[] args) => mph.CallFunc(Inst, args);
 
 		public virtual object CallWithRefs(params object[] args)
 		{
@@ -196,7 +196,7 @@
 					argsArray[i] = p;
 			}
 
-			var val = mph.callFunc(Inst, argsArray);
+			var val = mph.CallFunc(Inst, argsArray);
 
 			for (var i = 0; i < args.Length; i++)
 			{

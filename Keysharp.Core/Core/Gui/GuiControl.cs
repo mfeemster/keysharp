@@ -1122,8 +1122,8 @@
 					if (!tb.Multiline)
 						WindowsAPI.SendMessage(tb.Handle, WindowsAPI.EM_SETCUEBANNER, showOnFocus, txt);
 					else
-#endif
 						tb.PlaceholderText = txt;
+#endif
 
 					return DefaultObject;
 				}

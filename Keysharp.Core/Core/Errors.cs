@@ -10,7 +10,7 @@
 		/// </summary>
 		/// <param name="args">The the parameters to pass to the constructor.</param>
 		/// <returns>An <see cref="Error"/> object.</returns>
-		public static Error Error(params object[] args) => new(args);
+		public static Error Error(params object[] args) => new (args);
 
 		/// <summary>
 		/// Calls all registered error handlers, passing in the exception object to each.
@@ -46,9 +46,10 @@
 							break;
 						}
 					}
+
 					err.Processed = true;
 				}
-				
+
 				if (!err.Handled && !script.SuppressErrorOccurredDialog)
 				{
 					err.Handled = true;
@@ -68,35 +69,35 @@
 		/// </summary>
 		/// <param name="args">The the parameters to pass to the constructor.</param>
 		/// <returns>An <see cref="IndexError"/> object.</returns>
-		public static IndexError IndexError(params object[] args) => new(args);
+		public static IndexError IndexError(params object[] args) => new (args);
 
 		/// <summary>
 		/// Creates and returns a new <see cref="KeyError"/> exception object.
 		/// </summary>
 		/// <param name="args">The the parameters to pass to the constructor.</param>
 		/// <returns>An <see cref="KeyError"/> object.</returns>
-		public static KeyError KeyError(params object[] args) => new(args);
+		public static KeyError KeyError(params object[] args) => new (args);
 
 		/// <summary>
 		/// Creates and returns a new <see cref="MemberError"/> exception object.
 		/// </summary>
 		/// <param name="args">The the parameters to pass to the constructor.</param>
 		/// <returns>An <see cref="MemberError"/> object.</returns>
-		public static MemberError MemberError(params object[] args) => new(args);
+		public static MemberError MemberError(params object[] args) => new (args);
 
 		/// <summary>
 		/// Creates and returns a new <see cref="MemoryError"/> exception object.
 		/// </summary>
 		/// <param name="args">The the parameters to pass to the constructor.</param>
 		/// <returns>An <see cref="MemoryError"/> object.</returns>
-		public static MemoryError MemoryError(params object[] args) => new(args);
+		public static MemoryError MemoryError(params object[] args) => new (args);
 
 		/// <summary>
 		/// Creates and returns a new <see cref="MethodError"/> exception object.
 		/// </summary>
 		/// <param name="args">The the parameters to pass to the constructor.</param>
 		/// <returns>An <see cref="MethodError"/> object.</returns>
-		public static MethodError MethodError(params object[] args) => new(args);
+		public static MethodError MethodError(params object[] args) => new (args);
 
 		/// <summary>
 		/// Registers a function to be called automatically whenever an unhandled error occurs.<br/>
@@ -129,63 +130,63 @@
 		/// </summary>
 		/// <param name="args">The the parameters to pass to the constructor.</param>
 		/// <returns>An <see cref="OSError"/> object.</returns>
-		public static OSError OSError(params object[] args) => new(args);
+		public static OSError OSError(params object[] args) => new (args);
 
 		/// <summary>
 		/// Creates and returns a new <see cref="PropertyError"/> exception object.
 		/// </summary>
 		/// <param name="args">The the parameters to pass to the constructor.</param>
 		/// <returns>An <see cref="PropertyError"/> object.</returns>
-		public static PropertyError PropertyError(params object[] args) => new(args);
+		public static PropertyError PropertyError(params object[] args) => new (args);
 
 		/// <summary>
 		/// Creates and returns a new <see cref="TargetError"/> exception object.
 		/// </summary>
 		/// <param name="args">The the parameters to pass to the constructor.</param>
 		/// <returns>An <see cref="TargetError"/> object.</returns>
-		public static TargetError TargetError(params object[] args) => new(args);
+		public static TargetError TargetError(params object[] args) => new (args);
 
 		/// <summary>
 		/// Creates and returns a new <see cref="TimeoutError"/> exception object.
 		/// </summary>
 		/// <param name="args">The the parameters to pass to the constructor.</param>
 		/// <returns>An <see cref="TimeoutError"/> object.</returns>
-		public static TimeoutError TimeoutError(params object[] args) => new(args);
+		public static TimeoutError TimeoutError(params object[] args) => new (args);
 
 		/// <summary>
 		/// Creates and returns a new <see cref="TypeError"/> exception object.
 		/// </summary>
 		/// <param name="args">The the parameters to pass to the constructor.</param>
 		/// <returns>An <see cref="TypeError"/> object.</returns>
-		public static TypeError TypeError(params object[] args) => new(args);
+		public static TypeError TypeError(params object[] args) => new (args);
 
 		/// <summary>
 		/// Creates and returns a new <see cref="UnsetError"/> exception object.
 		/// </summary>
 		/// <param name="args">The the parameters to pass to the constructor.</param>
 		/// <returns>An <see cref="UnsetError"/> object.</returns>
-		public static UnsetError UnsetError(params object[] args) => new(args);
+		public static UnsetError UnsetError(params object[] args) => new (args);
 
 		/// <summary>
 		/// Creates and returns a new <see cref="UnsetItemError"/> exception object.
 		/// </summary>
 		/// <param name="args">The the parameters to pass to the constructor.</param>
 		/// <returns>An <see cref="UnsetItemError"/> object.</returns>
-		public static UnsetItemError UnsetItemError(params object[] args) => new(args);
+		public static UnsetItemError UnsetItemError(params object[] args) => new (args);
 
 		/// <summary>
 		/// Creates and returns a new <see cref="ValueError"/> exception object.
 		/// </summary>
 		/// <param name="args">The the parameters to pass to the constructor.</param>
 		/// <returns>An <see cref="ValueError"/> object.</returns>
-		public static ValueError ValueError(params object[] args) => new(args);
+		public static ValueError ValueError(params object[] args) => new (args);
 
 		/// <summary>
 		/// Creates and returns a new <see cref="ZeroDivisionError"/> exception object.
 		/// </summary>
 		/// <param name="args">The the parameters to pass to the constructor.</param>
 		/// <returns>An <see cref="ZeroDivisionError"/> object.</returns>
-		public static ZeroDivisionError ZeroDivisionError(params object[] args) => new(args);
+		public static ZeroDivisionError ZeroDivisionError(params object[] args) => new (args);
 
 		/// <summary>
 		/// Internal helper to handle argument value errors. Throws a <see cref="ValueError"/> or returns <see cref="DefaultErrorObject"/>.
@@ -267,6 +268,7 @@
 		{
 			if (hr >= 0)
 				return ret ?? (long)hr;
+
 			Error err;
 			return ErrorOccurred(err = new OSError(Marshal.GetExceptionForHR(hr), ""), Keywords.Keyword_ExitThread) ? throw err : ret ?? DefaultErrorObject;
 		}
@@ -464,6 +466,7 @@
 				EnsureInitialized();
 				return _file;
 			}
+
 			internal set => _file = value;
 		}
 
@@ -484,6 +487,7 @@
 				EnsureInitialized();
 				return _line;
 			}
+
 			internal set => _line = value;
 		}
 
@@ -512,6 +516,7 @@
 				EnsureInitialized();
 				return _stack ??= FormatStack(_stackFrames);
 			}
+
 			internal set => _stack = value;
 		}
 
@@ -537,18 +542,18 @@
 		private void EnsureInitialized()
 		{
 			if (_isInitialized) return;
-			_isInitialized = true;
 
+			_isInitialized = true;
 			var st = new StackTrace(this, true);
 			var frames = (st.FrameCount == 0 ? new StackTrace(1, true) : st).GetFrames();
 			_stackFrames = FilterUserFrames(frames);
-
 			// First user-facing frame
 			var topFrame = _stackFrames.FirstOrDefault() ?? new StackFrame(1, true);
-
 			MethodBase method;
+
 			if (What.IsNullOrEmpty() && (method = topFrame.GetMethod()) != null)
 				What = $"{method.DeclaringType.FullName}.{method.Name}()";
+
 			_file = topFrame.GetFileName();
 			_line = topFrame.GetFileLineNumber();
 		}
@@ -565,19 +570,22 @@
 			{
 				var method = frame.GetMethod();
 				var type = method?.DeclaringType;
+
 				if (type == null || type.IsSubclassOf(typeof(Exception)) || type == typeof(Errors))
 					continue;
 
 				string fullName = type.FullName ?? "";
 
 				//Ignore any built-in C# functions
-				if (!fullName.StartsWith("Keysharp.")) 
+				if (!fullName.StartsWith("Keysharp."))
 					continue;
 
 #if !DEBUG
+
 				//Ignore most of our internal functions
 				if (fullName.StartsWith("Keysharp.Core") && method is MethodInfo mi && mi != null && !builtins.ContainsValue(mi))
-					continue;	
+					continue;
+
 #endif
 
 				//Ignore functions marked to be hidden from the stack trace
@@ -604,8 +612,8 @@
 				var file = f.GetFileName();
 				var line = f.GetFileLineNumber();
 				var location = !string.IsNullOrEmpty(file)
-					? $" in {Path.GetFileName(file)}, line {line}"
-					: "";
+							   ? $" in {Path.GetFileName(file)}, line {line}"
+							   : "";
 				return $"at {m.DeclaringType.FullName}.{m.Name}(){location}";
 			}));
 		}
@@ -898,7 +906,6 @@
 				errorText += $"{Environment.NewLine}The current thread will exit.";
 
 			var scale = A_ScaledScreenDPI;
-
 			this.AutoScaleMode = AutoScaleMode.Dpi;
 			this.AutoScaleDimensions = new SizeF(96F, 96F);
 			this.Text = A_ScriptName;
@@ -907,7 +914,6 @@
 			this.MinimumSize = new Size((int)(400 * scale), (int)(200 * scale));
 			this.ShowIcon = false;
 			this.KeyPreview = true;
-
 			var mainPanel = new TableLayoutPanel
 			{
 				Dock = DockStyle.Fill,
@@ -915,7 +921,6 @@
 				RowCount = 2,
 				ColumnCount = 1
 			};
-
 			var paddingPanel = new Panel
 			{
 				Dock = DockStyle.Fill,
@@ -924,7 +929,6 @@
 				BackColor = Color.White,
 				BorderStyle = BorderStyle.None,
 			};
-
 			var richBox = new RichTextBox
 			{
 				Text = errorText.Replace(Environment.NewLine, "\n").Replace("Stack:\n", "Stack:\n▶"),
@@ -941,14 +945,10 @@
 				Margin = Padding.Empty,
 				Padding = Padding.Empty,
 			};
-
 			ApplyFormatting(richBox);
-
 			var contextMenu = new ContextMenuStrip();
 			contextMenu.Items.Add("Copy", null, (_, _) => richBox.Copy());
-
 			richBox.ContextMenuStrip = contextMenu;
-
 			var table = new TableLayoutPanel
 			{
 				Dock = DockStyle.Bottom,
@@ -957,7 +957,6 @@
 			};
 			table.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));      // Left column (Exit)
 			table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F)); // Right column (fills remaining space)
-
 			// === Left button panel (Exit) ===
 			var leftPanel = new FlowLayoutPanel
 			{
@@ -966,7 +965,6 @@
 				AutoSize = true,
 				WrapContents = false,
 			};
-
 			// === Right button panel (Abort, Continue) ===
 			var rightPanel = new FlowLayoutPanel
 			{
@@ -976,7 +974,6 @@
 				AutoSize = true,
 				WrapContents = false,
 			};
-
 			var btnContinue = new Button
 			{
 				Text = "&Continue",
@@ -987,7 +984,6 @@
 			Size sizeContinue = TextRenderer.MeasureText(btnContinue.Text, btnContinue.Font);
 			Size uniformSize = new Size(sizeContinue.Width + 24, sizeContinue.Height + 12);
 			btnContinue.Size = uniformSize;
-
 			var btnExit = new Button
 			{
 				Text = "E&xitApp",
@@ -1000,34 +996,31 @@
 				DialogResult = DialogResult.Cancel,
 				Size = uniformSize,
 			};
-			var btnAbort = new Button { 
-				Text = "&Abort", 
+			var btnAbort = new Button
+			{
+				Text = "&Abort",
 				DialogResult = DialogResult.Abort,
 				Size = uniformSize,
 			};
-
 			btnAbort.Click += (_, _) => { Result = ErrorDialogResult.Abort; Close(); };
 			btnExit.Click += (_, _) => { Result = ErrorDialogResult.Exit; Close(); };
 			btnReload.Click += (_, _) => { Result = ErrorDialogResult.Reload; Close(); };
 			btnContinue.Click += (_, _) => { Result = ErrorDialogResult.Continue; Close(); };
-
 			leftPanel.Controls.Add(btnExit);
 			leftPanel.Controls.Add(btnReload);
 			rightPanel.Controls.Add(btnAbort);
+
 			if (allowContinue)
 				rightPanel.Controls.Add(btnContinue);
 
 			table.Controls.Add(leftPanel, 0, 0);
 			table.Controls.Add(rightPanel, 1, 0);
-
 			paddingPanel.Controls.Add(richBox);
 			mainPanel.Controls.Add(paddingPanel);
 			mainPanel.Controls.Add(table);
 			mainPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
 			mainPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-
 			this.Controls.Add(mainPanel);
-
 			this.AcceptButton = btnAbort;
 			this.Shown += (_, _) => btnAbort.Focus();
 		}
@@ -1037,35 +1030,35 @@
 			string text = box.Text;
 			// First two lines bold orange
 			var lines = text.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
+
 			if (lines.Length >= 2)
 			{
 				int firstLineStart = 0;
 				int firstLineLength = lines[0].Length;
-
 				int secondLineStart = firstLineLength + 1;
 				int secondLineLength = lines[1].Length;
-
 				box.Select(firstLineStart, firstLineLength);
 				box.SelectionFont = new Font(box.Font, FontStyle.Bold);
 				box.SelectionColor = Color.DarkOrange;
-
 				box.Select(secondLineStart, secondLineLength);
 				box.SelectionFont = new Font(box.Font, FontStyle.Bold);
 				box.SelectionColor = Color.DarkOrange;
 			}
 
 			int fullStackIndex = text.IndexOf("Stack:\n");
+
 			if (fullStackIndex >= 0)
 			{
 				int startOfLine = text.IndexOf('\n', fullStackIndex);
+
 				if (startOfLine >= 0)
 				{
 					int nextLineStart = startOfLine + 1;
 					int nextLineEnd = text.IndexOf('\n', nextLineStart);
+
 					if (nextLineEnd < 0) nextLineEnd = text.Length;
 
 					int highlightLength = nextLineEnd - startOfLine;
-
 					box.Select(startOfLine, highlightLength);
 					box.SelectionBackColor = Color.Yellow;
 				}
@@ -1092,11 +1085,13 @@
 			string msg = kex != null ? kex.ToString() : $"Message: {ex.Message}{Environment.NewLine}Stack: {ex.StackTrace}";
 			using var dlg = new ErrorDialog(msg, allowContinue && kex != null ? kex.ExcType == Keyword_Return : false);
 			dlg.ShowDialog();
+
 			switch (dlg.Result)
 			{
 				case ErrorDialogResult.Exit:
 					_ = Flow.ExitAppInternal(Flow.ExitReasons.Critical, null, false);
 					break;
+
 				case ErrorDialogResult.Reload:
 					_ = Flow.Reload();
 					break;

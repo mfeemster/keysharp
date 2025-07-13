@@ -2,24 +2,25 @@
 {
 	public class MethodPropertyHolder
 	{
-		public Func<object, object[], object> callFunc;
 		internal readonly MethodInfo mi;
 		internal readonly ParameterInfo[] parameters;
 		internal readonly PropertyInfo pi;
-		internal readonly Action<object, object> setPropFunc;
+		internal int MaxParams = 9999;
+		internal int MinParams = 0;
 		protected readonly ConcurrentStackArrayPool<object> paramsPool;
-		private readonly bool isGuiType;
+		protected Func<object, object[], object> callFunc;
 		private readonly bool anyOptional;
+		private readonly bool isGuiType;
+		private readonly Action<object, object> setPropFunc;
 		private readonly int startVarIndex = -1;
 		private readonly int stopVarIndexDistanceFromEnd;
 
+		internal bool IsBind { get; private set; }
+		internal bool IsCallFuncValid => callFunc != null;
 		internal bool IsStaticFunc { get; private set; }
 		internal bool IsStaticProp { get; private set; }
-		internal bool IsBind { get; private set; }
 		internal bool IsVariadic => startVarIndex != -1;
 		internal int ParamLength { get; }
-		internal int MinParams = 0;
-		internal int MaxParams = 9999;
 
 		public MethodPropertyHolder(MethodInfo m, PropertyInfo p)
 		{
@@ -361,6 +362,55 @@
 						setPropFunc = pi.SetValue;
 					}
 				}
+			}
+		}
+
+		[StackTraceHidden]
+		internal object CallFunc(object inst, object[] obj)
+		{
+#if DEBUG
+
+			if (callFunc == null)
+				throw new KeysharpException("This method/property holder has no callable function.");
+
+#endif
+
+			try
+			{
+				return callFunc(inst, obj);
+			}
+			catch (Exception e)
+			{
+				if (e.InnerException is KeysharpException ke)
+				{
+					ExceptionDispatchInfo.Capture(ke).Throw();//Can't just throw ke because it would lose the stack trace.
+					return null;//This line will never be reached, but is needed to satisfy the compiler.
+				}
+				else
+					throw;
+			}
+		}
+
+		[StackTraceHidden]
+		internal void SetProp(object inst, object obj)
+		{
+#if DEBUG
+
+			if (setPropFunc == null)
+				throw new KeysharpException("This method/property holder has no settable property function.");
+
+#endif
+
+			try
+			{
+				setPropFunc(inst, obj);
+			}
+			catch (Exception e)
+			{
+				if (e.InnerException is KeysharpException ke)
+					ExceptionDispatchInfo.Capture(ke).Throw();//Can't just throw ke because it would lose the stack trace.
+				else
+					throw;
 			}
 		}
 	}

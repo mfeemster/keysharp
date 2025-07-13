@@ -379,17 +379,17 @@ namespace Keysharp.Scripting
 #endif
 			_ = mainWindow.BeginInvoke(() =>
 			{
+				var ret = Threads.BeginThread();
 				if (!Flow.TryCatch(() =>
-			{
-				var (__pushed, __btv) = Threads.BeginThread();
+				{
 					_ = userInit();
 					//HotkeyDefinition.ManifestAllHotkeysHotstringsHooks() will be called inside of userInit() because it
 					//must be done:
 					//  After the window handle is created and the handle isn't valid until mainWindow.Load() is called.
 					//  Also right after all hotkeys and hotstrings are created.
 					isReadyToExecute = true;
-					_ = Threads.EndThread(__pushed);
-				}, true))//Pop on exception because EndThread() above won't be called.
+					_ = Threads.EndThread(ret);
+				}, true, ret))//Pop on exception because EndThread() above won't be called.
 				{
 					if (!persistent)//An exception was thrown so the generated ExitApp() call in _ks_UserMainCode() will not have been called, so call it here.
 					{

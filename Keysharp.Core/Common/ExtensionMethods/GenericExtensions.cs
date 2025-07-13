@@ -198,6 +198,7 @@
 				//lock (ehLock)
 				{
 					var oldEventInfo = A_EventInfo;
+					var script = Script.TheScript;
 					var (pushed, tv) = Script.TheScript.Threads.BeginThread();
 
 					if (pushed)//If we've exceeded the number of allowable threads, then just do nothing.
@@ -221,8 +222,8 @@
 								}
 							}
 
-							_ = script.Threads.EndThread(true);
-						}, true);//Pop on exception because EndThread() above won't be called.
+							_ = script.Threads.EndThread((pushed, tv));
+						}, true, (pushed, tv));//Pop on exception because EndThread() above won't be called.
 					}
 				}
 			}

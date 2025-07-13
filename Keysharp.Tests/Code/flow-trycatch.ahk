@@ -559,3 +559,46 @@ catch (UnsetItemError,Error,ZeroDivisionError) {
 catch (UnsetError,TimeoutError,TargetError)
 {
 }
+
+; Test invocation exception handling.
+
+b := false
+
+Test() {
+	throw Error()
+}
+
+f := Test.Bind(1)
+try {
+	f()
+}
+catch {
+	b := true
+}
+
+if (b)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+class myclass
+{
+	myfunc()
+	{
+		throw Error("myclass.myfunc()")
+	}
+}
+
+mc := myclass()
+
+try {
+	mc.myfunc()
+}
+catch {
+	b := true
+}
+
+if (b)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"

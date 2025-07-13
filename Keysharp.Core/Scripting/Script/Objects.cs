@@ -61,12 +61,13 @@ namespace Keysharp.Scripting
 				{
 					if (Reflections.FindAndCacheInstanceMethod(typetouse, "set_Item", 0) is MethodPropertyHolder mph1)
 					{
-						_ = mph1.callFunc(item, index.Concat([value]));
+						_ = mph1.CallFunc(item, index.Concat([value]));
 						return value;
 					}
 				}
 
 #if WINDOWS
+
 				if (item is ComObjArray coa)
 				{
 					coa[index] = value;
@@ -92,7 +93,7 @@ namespace Keysharp.Scripting
 				{
 					if (il1 == mph2.ParamLength || mph2.IsVariadic)
 					{
-						_ = mph2.callFunc(item, index.Concat([value]));
+						_ = mph2.CallFunc(item, index.Concat([value]));
 						return value;
 					}
 					else
@@ -172,6 +173,7 @@ namespace Keysharp.Scripting
 				}
 
 #if WINDOWS
+
 				if (item is ComObjArray coa)
 				{
 					return coa[index];
@@ -181,6 +183,7 @@ namespace Keysharp.Scripting
 					//Could be an indexer, but MethodPropertyHolder currently doesn't support those
 					if (index.Length == 0 && (co.vt & VarEnum.VT_BYREF) != 0)
 						return ComObject.ReadVariant(co.Ptr.Al(), co.vt);
+
 					return Invoke((co.Ptr, new ComMethodPropertyHolder("Item")), index);
 				}
 				else if (Marshal.IsComObject(item))
@@ -191,7 +194,7 @@ namespace Keysharp.Scripting
 				if (Reflections.FindAndCacheInstanceMethod(typetouse, "get_Item", len) is MethodPropertyHolder mph)
 				{
 					if (len == mph.ParamLength || mph.IsVariadic)
-						return mph.callFunc(item, index);
+						return mph.CallFunc(item, index);
 					else
 						return Errors.ValueErrorOccurred($"{len} arguments were passed to a get indexer which only accepts {mph.ParamLength}.");
 				}

@@ -1,5 +1,4 @@
-﻿using Keysharp.Core.Windows;
-using static Keysharp.Core.WindowHelper;
+﻿using static Keysharp.Core.WindowHelper;
 
 namespace Keysharp.Core
 {
