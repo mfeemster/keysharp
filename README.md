@@ -186,9 +186,6 @@ testfunc()
 	+ The array for variadic parameters is read only and cannot be manipulated in the way a normal `Array` can.
 * `DllCall()` has the following caveats:
 	+ Use `Ptr` and `StringBuffer` for double pointer parameters such as `LPTSTR*`.
-	+ Passing `GetCommandLine` to `DllCall()` won't work exactly as the examples show. Instead, the type must be `Ptr` and the result must be wrapped in `StrGet()` like:
-		+ `StrGet(DllCall("GetCommandLine", "ptr"))`
-		+ This holds true for any function which returns a pointer to memory which was allocated inside of a Dll.
 * `ImageSearch()` takes an options string as a fifth parameter, rather than inserted in the string before the `imageFile` parameter.
 * In AHK, when applied to a power operation, the unary operators apply to the entire result. So `-x**y` really means `-(x**y)`.
 	+ In Keysharp, this behavior is different due to an inability to resolve bugs in the original code. So follow these rules instead:

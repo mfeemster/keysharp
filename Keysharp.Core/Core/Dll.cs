@@ -271,13 +271,14 @@ namespace Keysharp.Core
 				}
 				else if (helper.ReturnType == typeof(float))
 				{
+					if (value is not double) return _ = Errors.TypeErrorOccurred(value, typeof(double));
 					double d = (double)value;
 					float f = *(float*)&d;
 					return f;
 				}
 				else if (helper.ReturnType == typeof(string))
 				{
-					var str = Marshal.PtrToStringUni((nint)value);
+					var str = Marshal.PtrToStringUni((nint)(long)value);
 					_ = Objects.ObjFree(value);//If this string came from us, it will be freed, else no action.
 					return str;
 				}
