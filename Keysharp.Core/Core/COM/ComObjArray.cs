@@ -1,4 +1,5 @@
-﻿namespace Keysharp.Core.COM
+﻿#if WINDOWS
+namespace Keysharp.Core.COM
 {
 	/// <summary>
 	/// Describes the bounds (element count and lower bound) of a single dimension of a SAFEARRAY.
@@ -257,8 +258,8 @@
 				return;
 			}
 
-				// Tell ComObject to own and destroy the SafeArray:
-				this.vt = VarEnum.VT_ARRAY | baseType;
+			// Tell ComObject to own and destroy the SafeArray:
+			this.vt = VarEnum.VT_ARRAY | baseType;
 			this.Flags = F_OWNVALUE;
 			this.Ptr = _psa.ToInt64();
 		}
@@ -369,3 +370,4 @@
 		}
 	}
 }
+#endif

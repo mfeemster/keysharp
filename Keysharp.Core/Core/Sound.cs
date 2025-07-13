@@ -224,7 +224,6 @@ namespace Keysharp.Core
 #if LINUX
 		private static object DoSound(SoundCommands soundCmd, object obj0, object obj1 = null, object obj2 = null)
 		{
-			Error err;
 			var soundSet = false;
 			var device = obj1;
 			SoundControlType type;

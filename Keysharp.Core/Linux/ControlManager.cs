@@ -391,7 +391,6 @@ namespace Keysharp.Core.Linux
 		{
 			if (WindowSearch.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
-				Error err;
 				var ctrl2 = Control.FromHandle(item.Handle);
 				n--;
 
@@ -457,7 +456,6 @@ namespace Keysharp.Core.Linux
 
 			if (WindowSearch.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
-				Error err;
 				var focused = false;
 				var count = false;
 				var sel = false;
@@ -531,8 +529,6 @@ namespace Keysharp.Core.Linux
 				{
 					if (form.MainMenuStrip is MenuStrip strip)
 					{
-						Error err;
-
 						if (GetMenuItem(strip, menu, sub1, sub2, sub3, sub4, sub5, sub6) is ToolStripMenuItem item)
 							item.PerformClick();
 						else
