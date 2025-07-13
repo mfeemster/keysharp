@@ -61,7 +61,8 @@ namespace Keysharp.Scripting
 				throw new ParseException($"Multiline string length of {line.Length} is not < 1 or the first character of {line[0]} is not '('.", lineNumber, code, name);
 
 			var join = newlineToUse;
-			bool ltrim = false, rtrim = false, stripComments = false, percentResolve = true, literalEscape = false;
+			bool? ltrim = null;
+			bool rtrim = true, stripComments = false, percentResolve = true, literalEscape = false;
 
 			if (line.Length > 2)
 			{
@@ -76,52 +77,53 @@ namespace Keysharp.Scripting
 				foreach (Range r in span.SplitAny(SpacesSv))
 				{
 					var option = span[r];
+					if (option.IsEmpty)
+						continue;
 
-					if (option.Length > 0)
+					if (option.StartsWith(Keyword_Join, StringComparison.OrdinalIgnoreCase))
 					{
-						if (option.StartsWith(Keyword_Join, StringComparison.OrdinalIgnoreCase))
+						join = EscapedString(option.Slice(4), false);
+					}
+					else
+					{
+						switch (option)
 						{
-							join = EscapedString(option.Slice(4), false);
-						}
-						else
-						{
-							switch (option)
-							{
-								case var b when option.Equals("ltrim", StringComparison.OrdinalIgnoreCase):
-									ltrim = true;
-									break;
+							case var b when option.Equals("ltrim", StringComparison.OrdinalIgnoreCase):
+								ltrim = true;
+								break;
 
-								case var b when option.Equals("ltrim0", StringComparison.OrdinalIgnoreCase):
-									break;
+							case var b when option.Equals("ltrim0", StringComparison.OrdinalIgnoreCase):
+								ltrim = false;
+								break;
 
-								case var b when option.Equals("rtrim", StringComparison.OrdinalIgnoreCase):
-									rtrim = true;
-									break;
+							case var b when option.Equals("rtrim", StringComparison.OrdinalIgnoreCase):
+								rtrim = true;
+								break;
 
-								case var b when option.Equals("rtrim0", StringComparison.OrdinalIgnoreCase):
-									break;
+							case var b when option.Equals("rtrim0", StringComparison.OrdinalIgnoreCase):
+								rtrim = false;
+								break;
 
-								case var b when option.Equals("comments", StringComparison.OrdinalIgnoreCase):
-								case var b2 when option.Equals("comment", StringComparison.OrdinalIgnoreCase):
-								case var b3 when option.Equals("com", StringComparison.OrdinalIgnoreCase):
-								case var b4 when option.Equals("c", StringComparison.OrdinalIgnoreCase):
-									stripComments = true;
-									break;
+							case var b when option.Equals("comments", StringComparison.OrdinalIgnoreCase):
+							case var b2 when option.Equals("comment", StringComparison.OrdinalIgnoreCase):
+							case var b3 when option.Equals("com", StringComparison.OrdinalIgnoreCase):
+							case var b4 when option.Equals("c", StringComparison.OrdinalIgnoreCase):
+								stripComments = true;
+								break;
 
-								case var b4 when option.Equals("`", StringComparison.OrdinalIgnoreCase):
-									literalEscape = true;
-									break;
+							case var b4 when option.Equals("`", StringComparison.OrdinalIgnoreCase):
+								literalEscape = true;
+								break;
 
-								default:
-									const string joinOpt = "join";
+							default:
+								const string joinOpt = "join";
 
-									if (option.Length > joinOpt.Length && option.Slice(0, joinOpt.Length).Equals(joinOpt, StringComparison.OrdinalIgnoreCase))
-										join = option.Slice(joinOpt.Length).ToString().Replace("`s", " ");
-									else
-										throw new ParseException(ExMultiStr, lineNumber, code, name);
+								if (option.Length > joinOpt.Length && option.Slice(0, joinOpt.Length).Equals(joinOpt, StringComparison.OrdinalIgnoreCase))
+									join = option.Slice(joinOpt.Length).ToString().Replace("`s", " ");
+								else
+									throw new ParseException(ExMultiStr, lineNumber, code, name);
 
-									break;
-							}
+								break;
 						}
 					}
 				}
@@ -135,6 +137,10 @@ namespace Keysharp.Scripting
 			var escapeEscaped = new string(Escape, 2);
 			var castEscaped = string.Concat(escape, cast);
 
+			// Track default indent from first content line
+			string indentSample = null;
+			bool firstLine = true;
+
 			while ((line = reader.ReadLine()) != null)
 			{
 				var check = line.Trim();
@@ -142,15 +148,45 @@ namespace Keysharp.Scripting
 				if (check.Length > 0 && check[0] == ParenClose)
 					break;
 
-				if (ltrim && rtrim)
-					line = line.Trim(Spaces);
-				else if (ltrim)
-					line = line.TrimStart(Spaces);
+				// On first content line, capture indent sample if trimming
+				if (firstLine)
+				{
+					firstLine = false;
+					if (!ltrim.HasValue)
+					{
+						// Capture only the first run of identical indent characters (space or tab)
+						if (line.Length > 0 && (line[0] == ' ' || line[0] == '\t'))
+						{
+							char indentChar = line[0];
+							int count = 1;
+							while (count < line.Length && line[count] == indentChar)
+								count++;
+							indentSample = new string(indentChar, count);
+						}
+					}
+				}
+
+				if (!ltrim.HasValue && !string.IsNullOrEmpty(indentSample) && line.StartsWith(indentSample))
+				{
+					line = line.Substring(indentSample.Length);
+				}
+
+				if (ltrim.HasValue && ltrim.Value)
+				{
+					if (rtrim)
+						line = line.Trim(Spaces);
+					else
+						line = line.TrimStart(Spaces);
+				}
 				else if (rtrim)
 					line = line.TrimEnd(Spaces);
 
 				if (stripComments)
-					line = StripComment(line);
+				{
+					line = StripComment(line, out bool strippedAny);
+					if (strippedAny && line == "")
+						continue;
+				}
 
 				if (!percentResolve)
 					line = line.Replace(resolve, resolveEscaped);
