@@ -131,7 +131,7 @@
 #if DEBUG
 
 						if (s == "fail")
-							_ = Debug.OutputDebug(s);
+							_ = KeysharpEnhancements.OutputDebugLine(s);
 
 #endif
 
@@ -139,7 +139,7 @@
 							//sw.Write(Encoding.Unicode.GetBytes(s));
 							tw.Write(s.AsSpan());
 						else if (crlf)
-							tw.Write(Regex.Replace(s, @"\r\n|\n\r|\n|\r", "\r\n"));//Gotten from https://stackoverflow.com/questions/140926/normalize-newlines-in-c-sharp
+							tw.Write(s.ReplaceLineEndings("\r\n"));
 						else
 							tw.Write(s);
 					}

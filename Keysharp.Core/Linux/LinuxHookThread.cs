@@ -22,7 +22,7 @@ namespace Keysharp.Core.Linux
 			    {
 			        kb.OnKeyEvent += (s, e) =>
 			        {
-			            Keysharp.Scripting.Script.OutputDebug($"You pressed {e.Key}\tState: {e.Value}");
+			            KeysharpEnhancements.OutputDebugLine($"You pressed {e.Key}\tState: {e.Value}");
 			        };
 			    }
 			*/

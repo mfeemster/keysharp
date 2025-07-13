@@ -127,13 +127,13 @@
 		}
 
 		/// <summary>
-		/// Appends <paramref name="text"/> followed by the system newline.
+		/// Appends <paramref name="text"/> followed by a newline.
 		/// Returns the new position (in chars).
 		/// </summary>
 		public object AppendLine(string text = "")
 		{
 			_ = Append(text);
-			return Append(Environment.NewLine);
+			return Append(DefaultNewLine);
 		}
 
 		/// <summary>

@@ -170,7 +170,7 @@
 							// MATCHING HOTSTRING WAS FOUND (since above didn't continue).
 							//////////////////////////////////////////////////////////////
 							//sw.Stop();
-							//Keysharp.Scripting.Script.OutputDebug($"Detecting hotstring {hs.str} at index {u} took {sw.Elapsed.TotalMilliseconds}ms or {((sw.Elapsed.TotalMilliseconds / (u + 1)) * 1000):F4}us per hotstring.");
+							//KeysharpEnhancements.OutputDebugLine($"Detecting hotstring {hs.str} at index {u} took {sw.Elapsed.TotalMilliseconds}ms or {((sw.Elapsed.TotalMilliseconds / (u + 1)) * 1000):F4}us per hotstring.");
 							found = true;
 						}
 					}
@@ -178,7 +178,7 @@
 			}
 
 			//sw.Stop();
-			//Keysharp.Scripting.Script.OutputDebug($"Detecting hotstring took {sw.Elapsed.TotalMilliseconds}ms.");
+			//KeysharpEnhancements.OutputDebugLine($"Detecting hotstring took {sw.Elapsed.TotalMilliseconds}ms.");
 			return found ? hs : null;
 		}
 

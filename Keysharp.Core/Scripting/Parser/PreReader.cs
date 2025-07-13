@@ -239,7 +239,7 @@ namespace Keysharp.Scripting
 										//sw.Start();
 										var val = EvaluateDefine(parts[1]);
 										//sw.Stop();
-										//Script.OutputDebug($"Evaluating #if took {sw.ElapsedMilliseconds}ms");
+										//KeysharpEnhancements.OutputDebugLine($"Evaluating #if took {sw.ElapsedMilliseconds}ms");
 										currentDefines.Push((val, val));
 										goto LineFinished;
 									}
@@ -256,7 +256,7 @@ namespace Keysharp.Scripting
 										//sw.Start();
 										var val = InNotDefine() && EvaluateDefine(parts[1]);
 										//sw.Stop();
-										//Script.OutputDebug($"Evaluating #elif took {sw.ElapsedMilliseconds}ms");
+										//KeysharpEnhancements.OutputDebugLine($"Evaluating #elif took {sw.ElapsedMilliseconds}ms");
 										var bb = currentDefines.Pop();
 										currentDefines.Push((val, val || bb.Item2));
 										goto LineFinished;
@@ -600,7 +600,7 @@ namespace Keysharp.Scripting
 
 									var buf = new StringBuilder(256);
 									_ = buf.Append(code);
-									_ = buf.Append(newlineToUse);
+									_ = buf.Append(DefaultNewLine);
 
 									while ((code = source.ReadLine()) != null)
 									{
@@ -615,7 +615,7 @@ namespace Keysharp.Scripting
 										else
 										{
 											_ = buf.Append(code);
-											_ = buf.Append(newlineToUse);
+											_ = buf.Append(DefaultNewLine);
 										}
 									}
 

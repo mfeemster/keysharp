@@ -259,7 +259,7 @@
 							return csv;
 
 						if (Clipboard.GetData(DataFormats.FileDrop) is string[] files)
-							return string.Join(Environment.NewLine, files);
+							return string.Join(DefaultNewLine, files);
 
 #if WINDOWS
 					}
@@ -1470,7 +1470,7 @@
 		public static string A_MyDocuments => Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
 
 		/// <summary>
-		/// The native newline string string, i.e. "\n" on linux, "\r\n" on Windows.
+		/// The native newline string, i.e. "\n" on linux, "\r\n" on Windows.
 		/// </summary>
 		public static string A_NewLine => Environment.NewLine;
 

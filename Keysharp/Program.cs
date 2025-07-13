@@ -323,7 +323,7 @@ namespace Keysharp.Main
 				var program = CompilerHelper.compiledasm.GetType("Keysharp.CompiledMain.program");
 				var main = program.GetMethod("Main");
 #if DEBUG
-				Core.Debug.OutputDebug("Running compiled code.");
+				KeysharpEnhancements.OutputDebugLine("Running compiled code.");
 #endif
 				Environment.ExitCode = main.Invoke(null, [scriptArgs]).Ai();
 			}
@@ -411,7 +411,7 @@ namespace Keysharp.Main
 			else
 			{
 				_ = MessageBox.Show(text, "Keysharp", MessageBoxButtons.OK, MessageBoxIcon.Information);
-				_ = Core.Debug.OutputDebug(text);
+				_ = KeysharpEnhancements.OutputDebugLine(text);
 			}
 
 			return error ? 1 : 0;
