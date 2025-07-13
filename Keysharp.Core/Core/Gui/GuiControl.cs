@@ -255,9 +255,9 @@
 					if (_control is KeysharpLabel lbl)
 						lbl.Text = val;
 					else if (_control is KeysharpTextBox txt)
-						txt.Text = KeysharpEnhancements.NormalizeEol(val);
+						txt.Text = KeysharpEnhancements.NormalizeEol(val, Environment.NewLine);
 					else if (_control is KeysharpRichEdit kre)
-						kre.Text = KeysharpEnhancements.NormalizeEol(val);
+						kre.Text = KeysharpEnhancements.NormalizeEol(val, Environment.NewLine);
 					else if (_control is HotkeyBox hk)
 						hk.SetText(val);
 					else if (_control is KeysharpNumericUpDown nud)
