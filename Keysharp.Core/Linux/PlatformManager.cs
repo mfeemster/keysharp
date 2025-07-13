@@ -129,14 +129,14 @@ namespace Keysharp.Core.Linux
 				else if (IsLxqt)
 				{
 					if (force)
-						Debug.OutputDebug($"LXQT doesn't support forced logouts.");
+						KeysharpEnhancements.OutputDebugLine($"LXQT doesn't support forced logouts.");
 
 					cmd = "lxqt-leave";
 				}
 				else if (IsLxde)
 				{
 					if (force)
-						Debug.OutputDebug($"LXDE doesn't support forced logouts.");
+						KeysharpEnhancements.OutputDebugLine($"LXDE doesn't support forced logouts.");
 
 					cmd = "lxde-logout";
 				}

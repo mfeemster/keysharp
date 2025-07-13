@@ -175,19 +175,6 @@ testfunc()
 * `ObjPtr()` returns an IUnknown `ComObject` with the pointer wrapped in it, whereas `ObjPtrAddRef()` returns a raw pointer.
 * Pointers returned by `StrPtr()` must be freed by passing the value to a new function named `ObjFree()`.
 	+ `StrPtr()` does not return the address of the string, instead it returns the address of a copy of the bytes of the string.
-* Threads are not resumable once an exception has been thrown.
-	+ Callbacks set by `OnError()` will properly run, but execution of the current thread will not resume regardless of the exception type or the return value of the callback.
-	+ Errors of type `ExitApp` will exit the script as usual.
-* `ExitApp()` and `Reload()` will not immediately exit the script such that lines appearing after it within a function will not execute.
-	+ Instead of calling `ExitApp()/Reload()` then `Sleep()` afterward to let the script exit, check the value of `A_HasExited` like so:
-```
-	ExitApp()
-	
-	if (!A_HasExited)
-	{
-		MsgBox("Exiting failed")
-	}
-```
 * `Sleep()` will not do any sleeping if shutdown has been initiated.
 * `/Debug` command line switch is not implemented.
 * If a script is compiled then none of Keysharp or AutoHotkey command parameters apply. 
@@ -195,10 +182,6 @@ testfunc()
 ###	Syntax: ###
 * The syntax used in `Format()` is exactly that of `string.Format()` in C#, except with 1-based indexing. Traditional AHK style formatting is not supported.
 	+ Full documentation for the formatting rules can be found [here](https://learn.microsoft.com/en-us/dotnet/api/system.string.format).
-* Function calls on the right side of the `:=` operator must use parentheses and must not use command style.
-	+ `x := func 123 ; not supported`
-	+ `x := func, 123 ; not supported`
-	+ `x := func(123) ; supported`
 * The default name for the array of parameters in a variadic function is `args`, instead of `params`. This is due to `params` being a reserved word in C#.
 	+ The array for variadic parameters is read only and cannot be manipulated in the way a normal `Array` can.
 * `DllCall()` has the following caveats:
@@ -352,6 +335,7 @@ class class1
 * Gui controls support taking a boolean `Autosize` (default: `false`) argument in the `Add()` method to allow them to optimally size themselves.
 * `Gui` has a new property named `Visible` which get/set whether the window is visible or not.
 * A new function `ShowDebug()` to show the main window and focus the debug output tab.
+* A new function `OutputDebugLine()` which is the same as `OutputDebug()` but appends a linebreak at the end of the string.
 * `EnvUpdate()` is retained to provide for a cross platform way to update environment variables.
 * The 40 character limit for hotstring abbreviations has been removed. There is no limit to the length.
 * `FileGetSize()` supports `G` and `T` for gigabytes and terabytes.

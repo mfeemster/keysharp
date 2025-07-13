@@ -2059,7 +2059,7 @@
 					if (commandHandlers != null)
 					{
 						var val = (int)((m.WParam.ToInt64() >> 16) & 0xFFFF);
-						//Debug.OutputDebug($"Received WM_COMMAND {m.Msg}, with val: {val:X}, with lparam: {m.LParam.ToInt64():X}, wparam: {m.WParam.ToInt64():X}");
+						//KeysharpEnhancements.OutputDebugLine($"Received WM_COMMAND {m.Msg}, with val: {val:X}, with lparam: {m.LParam.ToInt64():X}, wparam: {m.WParam.ToInt64():X}");
 
 						if (commandHandlers.TryGetValue(val, out var handler))
 						{

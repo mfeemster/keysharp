@@ -1167,7 +1167,7 @@ namespace Keysharp.Core
 
 			if (SearchWindow(winTitle, winText, excludeTitle, excludeText, true) is WindowItem win)
 			{
-				//Keysharp.Scripting.Script.OutputDebug($"The window to wait for is: {win.Handle.ToInt64()}, {win.Title}");
+				//KeysharpEnhancements.OutputDebugLine($"The window to wait for is: {win.Handle.ToInt64()}, {win.Title}");
 				//Keysharp.Core.File.FileAppend($"The window to wait for is: {win.Handle.ToInt64()}, {win.Title}\n", "out.txt");
 				Script.TheScript.WindowProvider.Manager.LastFound = win;
 

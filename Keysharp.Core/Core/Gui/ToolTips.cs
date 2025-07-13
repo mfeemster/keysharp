@@ -167,7 +167,7 @@
 				_ = mSetTrackPosition.Invoke(tt, [tempx, tempy]);
 				_ = mSetTool.Invoke(tt, [tooltipInvokerForm, t, 2, persistentTooltipsPositions[id]]);
 #endif
-				//Debug.OutputDebug("invoked tooltip");
+				//KeysharpEnhancements.OutputDebugLine("invoked tooltip");
 				//AHK did a large amount of work to make sure the tooltip didn't go off screen
 				//and also to ensure it was not behind the mouse cursor. This seems like overkill
 				//for two reasons.

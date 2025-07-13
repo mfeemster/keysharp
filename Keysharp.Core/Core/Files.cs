@@ -131,7 +131,7 @@
 #if DEBUG
 
 						if (s == "fail")
-							_ = Debug.OutputDebug(s);
+							_ = KeysharpEnhancements.OutputDebugLine(s);
 
 #endif
 

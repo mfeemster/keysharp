@@ -566,7 +566,7 @@ namespace Keysharp.Core.Common.Invoke
 				}
 				catch (Exception ex)
 				{
-					_ = Debug.OutputDebug(ex.Message);
+					_ = KeysharpEnhancements.OutputDebugLine(ex.Message);
 				}
 			}
 

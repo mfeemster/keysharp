@@ -84,5 +84,12 @@
 		/// Using this anywhere in the script will also make it persistent.
 		/// </summary>
 		public static object ShowDebug() => Script.TheScript.mainWindow?.ShowDebug();
+
+		/// <summary>
+		/// Sends a string followed by a newline to the debugger (if any) for display.
+		/// </summary>
+		/// <param name="obj0">The text to send to the debugger for display.</param>
+		/// <param name="obj1">True to first clear the display, else false to append.</param>
+		public static object OutputDebugLine(object obj0, object obj1 = null) => Debug.OutputDebugCommon($"{obj0.As()}{Environment.NewLine}", obj1.Ab());
 	}
 }

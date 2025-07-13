@@ -256,7 +256,7 @@ namespace Keysharp.Core.Linux
 				catch (ArgumentException)
 				{
 					// TODO
-					Debug.OutputDebug("Warning, could not look up key: " + Lookup);
+					KeysharpEnhancements.OutputDebugLine("Warning, could not look up key: " + Lookup);
 					return Keys.None;
 				}
 			}

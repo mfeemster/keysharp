@@ -763,11 +763,11 @@ namespace Keysharp.Core
 			var swapped = false;
 			var deviceNames = "xinput list --name-only".Bash().Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 			//foreach (var name in deviceNames)
-			//  Debug.OutputDebug($"{name}");
+			//  KeysharpEnhancements.OutputDebugLine($"{name}");
 			var deviceIds = "xinput list --id-only".Bash().Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
 			//foreach (var id in deviceIds)
-			//  Debug.OutputDebug($"{id}");
+			//  KeysharpEnhancements.OutputDebugLine($"{id}");
 
 			if (deviceNames.Length == deviceIds.Length)
 			{
@@ -780,7 +780,7 @@ namespace Keysharp.Core
 
 						if (buttonStrSplits.All(sp => int.TryParse(sp, out var _)))
 						{
-							//Debug.OutputDebug($"Device {deviceIds[i]}: {deviceNames[i]} with buttons {buttonStr} getting examined.");
+							//KeysharpEnhancements.OutputDebugLine($"Device {deviceIds[i]}: {deviceNames[i]} with buttons {buttonStr} getting examined.");
 							for (var j = 0; j < 3 && j < buttonStrSplits.Length; j++)
 							{
 								if (int.TryParse(buttonStrSplits[j], out var btn))
@@ -788,7 +788,7 @@ namespace Keysharp.Core
 									if (btn != j + 1)
 									{
 										swapped = true;
-										//Debug.OutputDebug($"\tWas swapped.");
+										//KeysharpEnhancements.OutputDebugLine($"\tWas swapped.");
 										break;
 									}
 								}
