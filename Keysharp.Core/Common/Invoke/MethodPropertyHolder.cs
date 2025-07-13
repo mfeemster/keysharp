@@ -382,7 +382,10 @@
 			catch (Exception e)
 			{
 				if (e.InnerException is KeysharpException ke)
-					throw ke;
+				{
+					ExceptionDispatchInfo.Capture(ke).Throw();//Can't just throw ke because it would lose the stack trace.
+					return null;//This line will never be reached, but is needed to satisfy the compiler.
+				}
 				else
 					throw;
 			}
@@ -405,7 +408,7 @@
 			catch (Exception e)
 			{
 				if (e.InnerException is KeysharpException ke)
-					throw ke;
+					ExceptionDispatchInfo.Capture(ke).Throw();//Can't just throw ke because it would lose the stack trace.
 				else
 					throw;
 			}
