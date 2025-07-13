@@ -600,7 +600,7 @@ namespace Keysharp.Scripting
 
 									var buf = new StringBuilder(256);
 									_ = buf.Append(code);
-									_ = buf.Append(newlineToUse);
+									_ = buf.Append(DefaultNewLine);
 
 									while ((code = source.ReadLine()) != null)
 									{
@@ -615,7 +615,7 @@ namespace Keysharp.Scripting
 										else
 										{
 											_ = buf.Append(code);
-											_ = buf.Append(newlineToUse);
+											_ = buf.Append(DefaultNewLine);
 										}
 									}
 

@@ -39,10 +39,10 @@
 			while ((line = reader.ReadLine()) != null)
 			{
 				_ = buf.Append(StripCommentSingle(line, out strippedAny));
-				_ = buf.Append(newlineToUse);
+				_ = buf.Append(DefaultNewLine);
 			}
 
-			var length = newlineToUse.Length;
+			var length = DefaultNewLine.Length;
 			_ = buf.Remove(buf.Length - length, length);
 			return buf.ToString();
 		}

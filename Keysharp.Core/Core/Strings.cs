@@ -58,17 +58,10 @@
 		/// <returns>A new copy of the string with all line endings set to the specified value.</returns>
 		public static string NormalizeEol(object str, object endOfLine = null)
 		{
-			const string CR = "\r", LF = "\n", CRLF = "\r\n";
 			var text = str.As();
 			var eol = endOfLine.As(Environment.NewLine);
 
-			return eol switch
-		{
-				CR => text.Replace(CRLF, CR).Replace(LF, CR),
-					LF => text.Replace(CRLF, LF).Replace(CR, LF),
-					CRLF => text.Replace(CR, string.Empty).Replace(LF, CRLF),
-					_ => text,
-			};
+			return text.ReplaceLineEndings(eol);
 		}
 
 		/// <summary>

@@ -60,7 +60,7 @@ namespace Keysharp.Scripting
 			if (line.Length < 1 || line[0] != ParenOpen)
 				throw new ParseException($"Multiline string length of {line.Length} is not < 1 or the first character of {line[0]} is not '('.", lineNumber, code, name);
 
-			var join = newlineToUse;
+			var join = DefaultNewLine;
 			bool? ltrim = null;
 			bool rtrim = true, stripComments = false, percentResolve = true, literalEscape = false;
 

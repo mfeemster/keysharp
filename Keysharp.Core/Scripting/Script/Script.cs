@@ -37,6 +37,7 @@ namespace Keysharp.Scripting
 		internal const double DefaultErrorDouble = double.NaN;
 		internal const int DefaultErrorInt = int.MinValue;
 		internal const long DefaultErrorLong = long.MinValue;
+		internal const string DefaultNewLine = "\n";
 		internal const string DefaultObject = "";
 		internal const string DefaultErrorObject = "";
 		internal const string DefaultErrorString = "";
