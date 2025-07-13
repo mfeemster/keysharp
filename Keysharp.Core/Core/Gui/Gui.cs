@@ -404,6 +404,8 @@
 			var type = typeo.ToLowerInvariant();
 			Control holder = null;
 			var text = o as string;
+			if (text != null)
+				text = text.ReplaceLineEndings(Environment.NewLine);
 			var al = o as Array;
 			var dpiscale = !dpiscaling ? 1.0 : A_ScaledScreenDPI;
 			var dpiinv = 1.0 / dpiscale;
