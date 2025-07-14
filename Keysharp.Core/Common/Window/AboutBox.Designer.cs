@@ -123,7 +123,7 @@
 			linkLabel.Size = new System.Drawing.Size(298, 15);
 			linkLabel.TabIndex = 25;
 			linkLabel.TabStop = true;
-			linkLabel.Text = "https://bitbucket.org/mfeemster/keysharp/src/master/";
+			linkLabel.Text = "https://github.com/mfeemster/keysharp/tree/master";
 			linkLabel.LinkClicked += linkLabel_LinkClicked;
 			//
 			// AboutBox
