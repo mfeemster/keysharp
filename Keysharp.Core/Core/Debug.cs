@@ -221,7 +221,7 @@ namespace Keysharp.Core
 			//This will throw when running tests.
 			try
 			{
-				Console.Out.WriteLine(text);//Will print to the console when piped to | more, even though this is a windows application.
+				Console.Out.Write(text);//Will print to the console when piped to | more, even though this is a windows application.
 			}
 			catch
 			{

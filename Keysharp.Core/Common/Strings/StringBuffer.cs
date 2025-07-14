@@ -149,7 +149,11 @@ namespace Keysharp.Core.Common.Strings
 		/// Appends <paramref name="text"/> followed by a newline.
 		/// Returns the new position (in chars).
 		/// </summary>
-		public object AppendLine(string text = "") => Append(text + DefaultNewLine);
+		public object AppendLine(string text = "")
+		{
+			_ = Append(text);
+			return Append(DefaultNewLine);
+		}
 
 		/// <summary>
 		/// Clears the buffer contents and resets position to zero.
