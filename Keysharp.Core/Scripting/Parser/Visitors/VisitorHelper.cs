@@ -350,7 +350,48 @@ namespace Keysharp.Scripting
 
 			return qualifiedName;
         }
-        internal static MemberAccessExpressionSyntax CreateMemberAccess(string baseName, string targetName)
+
+		/// <summary>
+		/// Creates a field declaration like
+		///     [modifiers] [type] [name] = [initializer];
+		/// purely via SyntaxFactory calls.
+		/// </summary>
+		/// <param name="modifierKinds">
+		/// e.g. new[]{ SyntaxKind.PublicKeyword, SyntaxKind.StaticKeyword }
+		/// </param>
+		/// <param name="type">the TypeSyntax for the field’s type</param>
+		/// <param name="name">the field’s identifier</param>
+		/// <param name="initializer">an ExpressionSyntax for the RHS</param>
+		internal static FieldDeclarationSyntax CreateFieldDeclaration(
+			IEnumerable<SyntaxKind> modifierKinds,
+			TypeSyntax type,
+			string name,
+			ExpressionSyntax initializer)
+		{
+			// 1) var identifier = initializer
+			var variable = SyntaxFactory.VariableDeclarator(name)
+				.WithInitializer(
+					SyntaxFactory.EqualsValueClause(initializer)
+				);
+
+			// 2) Type variableList
+			var declaration = SyntaxFactory.VariableDeclaration(type)
+				.WithVariables(
+					SyntaxFactory.SingletonSeparatedList(variable)
+				);
+
+			// 3) Modifiers
+			var tokens = modifierKinds
+				.Select(k => SyntaxFactory.Token(k))
+				.ToArray();
+			var modifiers = SyntaxFactory.TokenList(tokens);
+
+			// 4) FieldDeclaration
+			return SyntaxFactory.FieldDeclaration(declaration)
+				.WithModifiers(modifiers);
+		}
+
+		internal static MemberAccessExpressionSyntax CreateMemberAccess(string baseName, string targetName)
         {
             return SyntaxFactory.MemberAccessExpression(
 	            SyntaxKind.SimpleMemberAccessExpression,
@@ -358,7 +399,73 @@ namespace Keysharp.Scripting
 	            SyntaxFactory.IdentifierName(targetName)
             );
 		}
-        internal UsingDirectiveSyntax CreateUsingDirective(string usingName)
+
+		/// <summary>
+		/// Creates a SyntaxList of UsingDirectiveSyntax from lines like
+		///     using static Foo.Bar;
+		///     using Alias = Baz.Qux;
+		/// </summary>
+		public static SyntaxList<UsingDirectiveSyntax> BuildUsingDirectiveSyntaxList(string text)
+		{
+			var list = new List<UsingDirectiveSyntax>();
+			var lines = text
+				.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+
+			foreach (var raw in lines)
+			{
+				var line = raw.Trim();
+				if (!line.StartsWith("using", StringComparison.Ordinal))
+					continue;
+
+				// drop the "using" prefix and the trailing ";"
+				var body = line.Substring(5).Trim();
+				if (body.EndsWith(";"))
+					body = body.Substring(0, body.Length - 1).Trim();
+
+				// detect "static"
+				bool isStatic = false;
+				if (body.StartsWith("static ", StringComparison.Ordinal))
+				{
+					isStatic = true;
+					body = body.Substring(6).Trim();
+				}
+
+				// detect alias ("Name = Qualified.Name")
+				NameEqualsSyntax alias = null;
+				string nameText;
+				var eqIndex = body.IndexOf('=');
+				if (eqIndex >= 0)
+				{
+					var aliasName = body.Substring(0, eqIndex).Trim();
+					nameText = body.Substring(eqIndex + 1).Trim();
+					alias = SyntaxFactory.NameEquals(
+						SyntaxFactory.IdentifierName(aliasName)
+					);
+				}
+				else
+				{
+					nameText = body;
+				}
+
+				// build the NameSyntax (could be a dotted name)
+				NameSyntax nameSyntax = CreateQualifiedName(nameText);
+
+				// create the directive
+				var u = SyntaxFactory.UsingDirective(nameSyntax)
+									 .WithAlias(alias)
+									 .WithStaticKeyword(
+										 isStatic
+										   ? SyntaxFactory.Token(SyntaxKind.StaticKeyword)
+										   : default
+									  );
+
+				list.Add(u);
+			}
+
+			return SyntaxFactory.List(list);
+		}
+
+		internal UsingDirectiveSyntax CreateUsingDirective(string usingName)
         {
             string alias = null;
 
@@ -581,24 +688,38 @@ namespace Keysharp.Scripting
         // Checks for a field declaration in a specific class
         internal string IsVarDeclaredInClass(Class cls, string name, bool caseSense = true)
         {
-			var allVars = cls.Body
-				.OfType<FieldDeclarationSyntax>()
-				.SelectMany(f => f.Declaration.Variables);
+            var body = cls.Body;
+			var currentCount = body.Count;
 
-			if (caseSense)
-			{
-				foreach (var v in allVars)
-					if (v.Identifier.Text == name)
-						return v.Identifier.Text;
-			}
-			else
-			{
-				foreach (var v in allVars)
-					if (v.Identifier.Text.Equals(name, StringComparison.OrdinalIgnoreCase))
-						return v.Identifier.Text;
-			}
+			if (cls.lastCheckedBodyCount < currentCount)
+            {
+                for (int i = cls.lastCheckedBodyCount; i < currentCount; i++)
+                {
+					FieldDeclarationSyntax fds = body[i] as FieldDeclarationSyntax;
+					if (fds == null)
+						continue;
 
-			return null;
+					foreach (var varSyntax in fds.Declaration.Variables)
+                    {
+                        var identifier = varSyntax.Identifier.Text;
+                        cls.cachedFieldNames.Add(identifier);
+					}
+				}
+                cls.lastCheckedBodyCount = currentCount;
+
+			}
+            if (caseSense)
+            {
+                if (cls.cachedFieldNames.Contains(name))
+                    return name;
+            } 
+            else
+            {
+                var match = cls.cachedFieldNames.FirstOrDefault(s => s.Equals(name, StringComparison.OrdinalIgnoreCase));
+                if (match != null) return match;
+            }
+
+            return null;
 		}
 
         internal string IsVarDeclaredGlobally(string name, bool caseSense = true)

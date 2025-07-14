@@ -14,7 +14,7 @@ namespace Keysharp.Scripting
 		//Need to manually add the using static statements.
 #if WINDOWS
 
-		public static readonly string UsingStr =
+		public static readonly string GlobalUsingStr =
 			@"using static Keysharp.Core.Accessors;
 using static Keysharp.Core.COM.Com;
 using static Keysharp.Core.Collections;
@@ -108,6 +108,29 @@ using static Keysharp.Scripting.Script.Operator;
 using static Keysharp.Scripting.Script;
 ";
 #endif
+
+		public static readonly string NamespaceUsingStr = @"
+using System
+using System.Collections
+using System.Collections.Generic
+using System.Data
+using System.IO
+using System.Reflection
+using System.Runtime.InteropServices
+using System.Text
+using System.Threading.Tasks
+using System.Windows.Forms
+using Keysharp.Core
+using Keysharp.Core.Common
+using Keysharp.Core.Common.File
+using Keysharp.Core.Common.Invoke
+using Keysharp.Core.Common.ObjectBase
+using Keysharp.Core.Common.Strings
+using Keysharp.Core.Common.Threading
+using Keysharp.Scripting
+using Array = Keysharp.Core.Array
+using Buffer = Keysharp.Core.Buffer
+";
 
 		/// <summary>
 		/// Needed as a static here so it can be accessed in other areas of Keysharp.Core, such as in Accessors,

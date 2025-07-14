@@ -24,48 +24,17 @@ namespace Keysharp.Scripting
 
         public override SyntaxNode VisitProgram([NotNull] ProgramContext context)
         {
-            // Add CompilationUnit usings 
-            var usingSyntaxTree = CSharpSyntaxTree.ParseText(SourceText.From(CompilerHelper.UsingStr));
-            var root = usingSyntaxTree.GetRoot() as CompilationUnitSyntax;
-            var usingDirectives = root?.Usings ?? new SyntaxList<UsingDirectiveSyntax>();
+            var usingDirectives = BuildUsingDirectiveSyntaxList(CompilerHelper.GlobalUsingStr);
 
-            parser.AddAssembly("Keysharp.Scripting.AssemblyBuildVersionAttribute", Accessors.A_AhkVersion);
+			parser.AddAssembly("Keysharp.Scripting.AssemblyBuildVersionAttribute", Accessors.A_AhkVersion);
 
             parser.compilationUnit = SyntaxFactory.CompilationUnit()
                 .AddUsings(usingDirectives.ToArray());
 
-            var imports = new[]
-            {
-                "System",
-                "System.Collections",
-                "System.Collections.Generic",
-                "System.Data",
-                "System.IO",
-                "System.Reflection",
-                "System.Runtime.InteropServices",
-                "System.Text",
-                "System.Threading.Tasks",
-                "System.Windows.Forms",
-                "Keysharp.Core",
-                "Keysharp.Core.Common",
-                "Keysharp.Core.Common.File",
-                "Keysharp.Core.Common.Invoke",
-                "Keysharp.Core.Common.ObjectBase",
-                "Keysharp.Core.Common.Strings",
-                "Keysharp.Core.Common.Threading",
-                "Keysharp.Scripting",
-                "Array = Keysharp.Core.Array",
-                "Buffer = Keysharp.Core.Buffer"
-            };
-
             // Create using directives
-            var usings = new List<UsingDirectiveSyntax>();
-            foreach (var import in imports)
-            {
-                usings.Add(parser.CreateUsingDirective(import));
-            }
+            var usings = BuildUsingDirectiveSyntaxList(CompilerHelper.NamespaceUsingStr);
 
-            parser.namespaceDeclaration = SyntaxFactory.NamespaceDeclaration(CreateQualifiedName("Keysharp.CompiledMain"))
+			parser.namespaceDeclaration = SyntaxFactory.NamespaceDeclaration(CreateQualifiedName("Keysharp.CompiledMain"))
                 .AddUsings(usings.ToArray());
 
             parser.currentClass = new Parser.Class(Keywords.MainClassName, null);
@@ -77,17 +46,37 @@ namespace Keysharp.Scripting
                 .WithType(PredefinedKeywords.StringArrayType);
 
             var staThreadAttribute = SyntaxFactory.Attribute(
-                SyntaxFactory.ParseName("System.STAThreadAttribute"))
+                CreateQualifiedName("System.STAThreadAttribute"))
                 .WithArgumentList(SyntaxFactory.AttributeArgumentList());
 
             mainFunc.Attributes.Add(staThreadAttribute);
 
             mainFunc.Params.Add(mainFuncParam);
 
-			parser.mainClass.Body.Add(
-                SyntaxFactory.ParseMemberDeclaration($"private static Keysharp.Scripting.Script {MainScriptVariableName} = new Keysharp.Scripting.Script(typeof({Keywords.MainClassName}));"));
-			parser.mainClass.Body.Add(
-                SyntaxFactory.ParseMemberDeclaration($"private static Keysharp.Core.Common.Keyboard.HotstringManager MainHotstringManager = MainScript.HotstringManager;"));
+            var modifierList = new List<SyntaxKind>() { SyntaxKind.PrivateKeyword, SyntaxKind.StaticKeyword };
+
+			var hsManagerDeclaration = Parser.CreateFieldDeclaration(
+				modifierList, 
+                CreateQualifiedName("Keysharp.Core.Common.Keyboard.HotstringManager"), 
+                "MainHotstringManager",
+				SyntaxFactory.MemberAccessExpression(
+                    SyntaxKind.SimpleMemberAccessExpression,
+                    SyntaxFactory.IdentifierName("MainScript"),
+                    SyntaxFactory.IdentifierName("HotstringManager")
+                )
+            );
+            var mainScriptVarDeclaration = Parser.CreateFieldDeclaration(
+				modifierList,
+                CreateQualifiedName("Keysharp.Scripting.Script"),
+				MainScriptVariableName,
+				SyntaxFactory.ObjectCreationExpression(
+	                CreateQualifiedName("Keysharp.Scripting.Script"),    // the type to construct
+	                CreateArgumentList(SyntaxFactory.TypeOfExpression(SyntaxFactory.IdentifierName(Keywords.MainClassName))),          // the argument list
+	                null           // no initializer
+                )
+			);
+			parser.mainClass.Body.Add(mainScriptVarDeclaration);
+			parser.mainClass.Body.Add(hsManagerDeclaration);
 
 			parser.mainFuncInitial.Add($"{MainScriptVariableName}.SetName(@\"{(parser.fileName == "*" ? "*" : Path.GetFullPath(parser.fileName))}\");");
             foreach (var (p, s) in parser.reader.PreloadedDlls)
@@ -258,11 +247,13 @@ namespace Keysharp.Scripting
 
 				if (element == null)
                 {
-                    if (child.positionalDirective() == null 
+                    if (child.positionalDirective() == null
                         && child.remap() == null
                         && child.hotkey() == null
                         && child.hotstring() == null)
                         throw new NoNullAllowedException();
+                    else
+                        continue;
                 }
 
                 if (element is MemberDeclarationSyntax)

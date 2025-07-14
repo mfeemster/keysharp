@@ -352,7 +352,7 @@ namespace Keysharp.Scripting
                         SyntaxFactory.Argument(
                             SyntaxFactory.MemberAccessExpression(
                                 SyntaxKind.SimpleMemberAccessExpression,
-                                SyntaxFactory.ParseName("Keysharp.Scripting.eScope"),
+                                CreateQualifiedName("Keysharp.Scripting.eScope"),
                                 SyntaxFactory.IdentifierName(Scope.ToString())
                             )
                         )
@@ -528,6 +528,9 @@ namespace Keysharp.Scripting
 			public List<BaseTypeSyntax> BaseList = new();
             public List<MemberDeclarationSyntax> Body = new List<MemberDeclarationSyntax>();
             public ClassDeclarationSyntax Declaration = null;
+
+            public int lastCheckedBodyCount = 0;
+            public HashSet<string> cachedFieldNames = new();
 
             public bool isInitialization = false;
             public readonly List<(ExpressionSyntax BaseExpr, ExpressionSyntax TargetExpr, ExpressionSyntax Initializer)> deferredInitializations = new();
