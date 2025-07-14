@@ -38,7 +38,7 @@ namespace Keysharp.Core.COM
 					else
 						obj[i] = args[i];
 
-					//Debug.OutputDebug($"Parameter {i}: {results[i]} (type: {results[i]?.GetType().Name ?? "null"})");
+					//KeysharpEnhancements.OutputDebugLine($"Parameter {i}: {results[i]} (type: {results[i]?.GetType().Name ?? "null"})");
 				}
 
 				return ret;

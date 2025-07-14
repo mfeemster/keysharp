@@ -2582,7 +2582,7 @@ Finally, ControlSetText operates on the Object created from the Hwnd.
 	obj := GuiCtrlFromHwnd(gb3Hwnd)
 	Result := IsObject(obj)
 	MsgBox(Result, "If '1', the control is an Object")
-	ControlSetText(GB3Text, obj)
+	ControlSetText(StrReplace(GB3Text, "`n", A_NewLine), obj)
 }
 
 ClearGB3() {

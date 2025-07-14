@@ -51,24 +51,17 @@
 		public static string Join(object sep, params object[] args) => string.Join(sep.ToString(), args);
 
 		/// <summary>
-		/// Makes all line endings in a string match the value passed in, or the default for the current environment.
+		/// Makes all line endings in a string match the value passed in, or the default newline (DefaultNewLine).
 		/// </summary>
 		/// <param name="str">The string whose line endings will be normalized.</param>
-		/// <param name="endOfLine">The line ending character to use. Default: newline for the current environment.</param>
+		/// <param name="endOfLine">The line ending character to use. Default: DefaultNewLine.</param>
 		/// <returns>A new copy of the string with all line endings set to the specified value.</returns>
 		public static string NormalizeEol(object str, object endOfLine = null)
 		{
-			const string CR = "\r", LF = "\n", CRLF = "\r\n";
 			var text = str.As();
-			var eol = endOfLine.As(Environment.NewLine);
+			var eol = endOfLine.As(DefaultNewLine);
 
-			return eol switch
-		{
-				CR => text.Replace(CRLF, CR).Replace(LF, CR),
-					LF => text.Replace(CRLF, LF).Replace(CR, LF),
-					CRLF => text.Replace(CR, string.Empty).Replace(LF, CRLF),
-					_ => text,
-			};
+			return text.ReplaceLineEndings(eol);
 		}
 
 		/// <summary>

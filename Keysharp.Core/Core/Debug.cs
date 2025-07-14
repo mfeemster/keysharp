@@ -76,7 +76,7 @@
 			var sb = new StringBuffer();
 			var script = Script.TheScript;
 			var typesToProps = new SortedDictionary<string, List<PropertyInfo>>();
-			_ = sb.AppendLine($"**User defined**\r\n");
+			_ = sb.AppendLine($"**User defined**\n");
 
 			foreach (var typeKv in script.ReflectionsData.staticFields.Where(tkv => tkv.Key.Name.StartsWith("program", StringComparison.OrdinalIgnoreCase)))
 			{
@@ -88,7 +88,7 @@
 				}
 			}
 
-			_ = sb.AppendLine("\r\n--------------------------------------------------\r\n**Internal**\r\n");
+			_ = sb.AppendLine("\n--------------------------------------------------\n**Internal**\n");
 
 			if (doInternal)
 			{
@@ -111,14 +111,14 @@
 					{
 						try
 						{
-							//OutputDebug($"GetVars(): getting prop: {prop.Name}");
+							//OutputDebugLine($"GetVars(): getting prop: {prop.Name}");
 							var val = prop.GetValue(null);
 							var proptype = val != null ? val.GetType().Name : prop.PropertyType.Name;
 							_ = Misc.PrintProps(val, prop.Name, sb, ref tabLevel);
 						}
 						catch (Exception ex)
 						{
-							_ = OutputDebug($"GetVars(): exception thrown inside of nested loop inside of second internal loop: {ex.Message}");
+							_ = OutputDebugLine($"GetVars(): exception thrown inside of nested loop inside of second internal loop: {ex.Message}");
 						}
 					}
 
@@ -129,7 +129,7 @@
 
 			var s = sb.ToString();
 			//sw.Stop();
-			//OutputDebug($"GetVars(): took {sw.Elapsed.TotalMilliseconds}ms.");
+			//OutputDebugLine($"GetVars(): took {sw.Elapsed.TotalMilliseconds}ms.");
 			return s;
 		}
 
@@ -193,7 +193,7 @@
 			return sb.ToString();
 		}
 
-		public static object ListLines(params object[] obj) => OutputDebug("ListLines() is not supported in Keysharp because it's a compiled program, not an interpreted one.");
+		public static object ListLines(params object[] obj) => OutputDebugLine("ListLines() is not supported in Keysharp because it's a compiled program, not an interpreted one.");
 
 		public static object ListVars() => Script.TheScript.mainWindow?.ShowInternalVars(true);
 
@@ -202,12 +202,21 @@
 		/// </summary>
 		/// <param name="obj0">The text to send to the debugger for display.</param>
 		/// <param name="obj1">True to first clear the display, else false to append.</param>
-		public static object OutputDebug(object obj0, object obj1 = null)
+		public static object OutputDebug(object obj0, object obj1 = null) => OutputDebugCommon(obj0.As(), obj1.Ab());
+
+		/// <summary>
+		/// Internal helper to send a string to the debugger (if any) for display.
+		/// Used by OutputDebug and OutputDebugLine.
+		/// </summary>
+		/// <param name="text">The text to send to the debugger for display.</param>
+		/// <param name="clear">True to first clear the display, else false to append.</param>
+		internal static object OutputDebugCommon(string text, bool clear = false)
 		{
-			var text = obj0.As();
-			var clear = obj1.Ab();
+			if (text == null)
+				return DefaultObject;
+
 			var script = Script.TheScript;
-			System.Diagnostics.Debug.WriteLine(text);//Will print only in debug mode.
+			System.Diagnostics.Debug.Write(text);//Will print only in debug mode to the debugger so we can see it in Visual Studio.
 
 			//This will throw when running tests.
 			try
@@ -226,6 +235,5 @@
 
 			return DefaultObject;
 		}
-
 	}
 }

@@ -10,7 +10,6 @@
 #endif
 			;
 
-		public static readonly string newlineToUse = Environment.NewLine;
 		public static readonly char[] BothBraces = "{}".ToCharArray();
 		public static readonly char[] BothParens = "()".ToCharArray();
 		public static readonly char[] BothBrackets = "[]".ToCharArray();

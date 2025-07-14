@@ -193,7 +193,7 @@
 				"SysMenu", (f, o) => { if (o is bool b) f.form.ControlBox = b; }
 			},
 			{
-				"Theme", (f, o) => _ = Debug.OutputDebug("Themes are not supported", false)
+				"Theme", (f, o) => _ = KeysharpEnhancements.OutputDebugLine("Themes are not supported", false)
 			},
 			{
 				"ToolWindow", (f, o) => {
@@ -404,6 +404,10 @@
 			var type = typeo.ToLowerInvariant();
 			Control holder = null;
 			var text = o as string;
+
+			if (text != null)
+				text = text.ReplaceLineEndings(Environment.NewLine);
+
 			var al = o as Array;
 			var dpiscale = !dpiscaling ? 1.0 : A_ScaledScreenDPI;
 			var dpiinv = 1.0 / dpiscale;

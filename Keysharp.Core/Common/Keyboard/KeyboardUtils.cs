@@ -46,12 +46,12 @@ namespace Keysharp.Core.Common.Keyboard
 			mouseList.Clear();
 			keyboardList.Clear();
 			kbMouseList.Clear();
-			
+
 			foreach (Range r in inputStr.AsSpan().SplitAny(CrLf))
 			{
 				var split = inputStr.AsSpan(r).Trim();
 
-				//Keysharp.Scripting.Script.OutputDebug($"Examining split xinput string: {split}");
+				//KeysharpEnhancements.OutputDebugLine($"Examining split xinput string: {split}");
 				if (split.Length > 0 && !split.Contains("XTEST", StringComparison.OrdinalIgnoreCase))
 				{
 					var mouse = split.Contains("slave  pointer", StringComparison.OrdinalIgnoreCase);//The double spaces are intentional.
@@ -62,7 +62,7 @@ namespace Keysharp.Core.Common.Keyboard
 						foreach (Range r2 in split.SplitAny(SpaceTab))
 						{
 							var lineSplit = split[r2].Trim();
-							//Keysharp.Scripting.Script.OutputDebug($"Examining {(mouse ? "mouse" : "kb")} line split: {lineSplit}");
+							//KeysharpEnhancements.OutputDebugLine($"Examining {(mouse ? "mouse" : "kb")} line split: {lineSplit}");
 
 							if (lineSplit.StartsWith("id=", StringComparison.OrdinalIgnoreCase))
 							{

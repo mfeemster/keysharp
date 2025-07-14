@@ -432,7 +432,6 @@ namespace Keysharp.Core.COM
 			{
 				long hrLong = (long)value;                // unbox the raw long
 				int hr32 = unchecked((int)hrLong);   // keep only the low 32 bits
-
 				return Errors.OSErrorOccurredForHR(hr32);
 			}
 
@@ -451,7 +450,7 @@ namespace Keysharp.Core.COM
 			}
 			else if (helper.ReturnType == typeof(string))
 			{
-				var str = Marshal.PtrToStringUni((nint)((long)value));
+				var str = Marshal.PtrToStringUni((nint)(long)value);
 				_ = Objects.ObjFree(value);//If this string came from us, it will be freed, else no action.
 				return str;
 			}

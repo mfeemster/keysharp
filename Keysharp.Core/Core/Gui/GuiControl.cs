@@ -255,9 +255,9 @@
 					if (_control is KeysharpLabel lbl)
 						lbl.Text = val;
 					else if (_control is KeysharpTextBox txt)
-						txt.Text = KeysharpEnhancements.NormalizeEol(val);
+						txt.Text = KeysharpEnhancements.NormalizeEol(val, Environment.NewLine);
 					else if (_control is KeysharpRichEdit kre)
-						kre.Text = KeysharpEnhancements.NormalizeEol(val);
+						kre.Text = KeysharpEnhancements.NormalizeEol(val, Environment.NewLine);
 					else if (_control is HotkeyBox hk)
 						hk.SetText(val);
 					else if (_control is KeysharpNumericUpDown nud)
@@ -1123,8 +1123,8 @@
 						WindowsAPI.SendMessage(tb.Handle, WindowsAPI.EM_SETCUEBANNER, showOnFocus, txt);
 					else
 						tb.PlaceholderText = txt;
-#endif
 
+#endif
 					return DefaultObject;
 				}
 
@@ -2059,7 +2059,7 @@
 					if (commandHandlers != null)
 					{
 						var val = (int)((m.WParam.ToInt64() >> 16) & 0xFFFF);
-						//Debug.OutputDebug($"Received WM_COMMAND {m.Msg}, with val: {val:X}, with lparam: {m.LParam.ToInt64():X}, wparam: {m.WParam.ToInt64():X}");
+						//KeysharpEnhancements.OutputDebugLine($"Received WM_COMMAND {m.Msg}, with val: {val:X}, with lparam: {m.LParam.ToInt64():X}, wparam: {m.WParam.ToInt64():X}");
 
 						if (commandHandlers.TryGetValue(val, out var handler))
 						{

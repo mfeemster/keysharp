@@ -24,8 +24,11 @@
 			return true;
 		}
 
-		internal static string StripComment(string code)
+		internal static string StripComment(string code) => StripComment(code, out bool _);
+		internal static string StripComment(string code, out bool strippedAny)
 		{
+			strippedAny = false;
+
 			if (string.IsNullOrEmpty(code))
 				return code;
 
@@ -35,22 +38,24 @@
 
 			while ((line = reader.ReadLine()) != null)
 			{
-				_ = buf.Append(StripCommentSingle(line));
-				_ = buf.Append(newlineToUse);
+				_ = buf.Append(StripCommentSingle(line, out strippedAny));
+				_ = buf.Append(DefaultNewLine);
 			}
 
-			var length = newlineToUse.Length;
+			var length = DefaultNewLine.Length;
 			_ = buf.Remove(buf.Length - length, length);
 			return buf.ToString();
 		}
 
-		internal static string StripCommentSingle(string code)
+		internal static string StripCommentSingle(string code) => StripCommentSingle(code, out bool _);
+		internal static string StripCommentSingle(string code, out bool strippedAny)
 		{
 			var spaced = false;
+			strippedAny = false;
 
 			for (var i = 0; i < code.Length; i++)
 			{
-				if (IsCommentAt(code, i))
+				if (strippedAny = IsCommentAt(code, i))
 					return code.Substring(0, i - (spaced ? 1 : 0));
 
 				spaced = IsSpace(code[i]);
