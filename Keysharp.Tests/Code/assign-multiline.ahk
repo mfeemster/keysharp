@@ -76,26 +76,18 @@ arr := [
 ]
 
 FileDelete("./multilines.txt")
-#if WINDOWS
-FileAppend( "
-(
-Line 1 of the text.
-Line 2 of the text. By default, a linefeed (`r`n) is present between lines.
-)", "./multilines.txt")
-#else
 FileAppend( "
 (
 Line 1 of the text.
 Line 2 of the text. By default, a linefeed (`n) is present between lines.
 )", "./multilines.txt")
-#endif
 
 if (FileExist("./multilines.txt"))
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
 
-teststr := "Line 1 of the text." . A_NewLine . "Line 2 of the text. By default, a linefeed (" . A_NewLine . ") is present between lines."
+teststr := "Line 1 of the text.`nLine 2 of the text. By default, a linefeed (`n) is present between lines."
 data2 := FileRead("./multilines.txt")
 
 if (data2 = teststr)
@@ -107,11 +99,11 @@ FileDelete("./multilines.txt")
 
 Var := "
 (
-	A line of text beginning in a tab which should not be removed.
+	A line of text beginning in a tab which should be removed.
 A second line not beginning in a tab.
 )"
 
-teststr := "`tA line of text beginning in a tab which should not be removed." . A_NewLine . "A second line not beginning in a tab."
+teststr := "A line of text beginning in a tab which should be removed.`nA second line not beginning in a tab."
 
 if (Var = teststr)
 	FileAppend "pass", "*"
@@ -124,7 +116,22 @@ Var := "
 A second line not ending in a tab.
 )"
 
-teststr := "`tA line of text not ending in a tab." . A_NewLine . "A second line not ending in a tab."
+teststr := "`tA line of text not ending in a tab.`nA second line not ending in a tab."
+
+if (Var = teststr)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+		
+Var := "
+(
+A line of text.
+By default, the hard carriage return (Enter) between the previous line and this one will be stored.
+	This line is indented with a tab; by default, that tab will also be stored.
+Additionally, "quote marks" are automatically escaped when appropriate.
+)"
+
+teststr := "A line of text.`nBy default, the hard carriage return (Enter) between the previous line and this one will be stored.`n`tThis line is indented with a tab; by default, that tab will also be stored.`nAdditionally, `"quote marks`" are automatically escaped when appropriate."
 
 if (Var = teststr)
 	FileAppend "pass", "*"
@@ -137,7 +144,7 @@ A line of text ending in a tab.
 A second line ending in a tab.	
 )"
 
-teststr := "A line of text ending in a tab.`t" . A_NewLine . "A second line ending in a tab.`t"
+teststr := "A line of text ending in a tab.`t`nA second line ending in a tab.`t"
 
 if (Var = teststr)
 	FileAppend "pass", "*"
@@ -197,14 +204,14 @@ else
 Var := "
 (comment
 this is
-; comments
+ ; comments
 )
 (Join
 more 
 string
 )"
 
-teststr := "this is" . A_NewLine . "more string"
+teststr := "this ismorestring" ; By default trailing spaces are removed, and a lone comment is stripped with any leading newline, spaces, and trailing spaces
 
 if (Var = teststr)
 	FileAppend "pass", "*"
@@ -214,10 +221,10 @@ else
 Var := "
 ( `
 Line 1 of the text.
-Line 2 of the text. By default, a linefeed (`r`n) is present between lines.
+Line 2 of the text. By default, a linefeed (`n) is present between lines.
 )"
 
-teststr := "Line 1 of the text." . A_NewLine . "Line 2 of the text. By default, a linefeed (``r``n) is present between lines."
+teststr := "Line 1 of the text.`nLine 2 of the text. By default, a linefeed (``n) is present between lines."
 
 if (Var = teststr)
 	FileAppend "pass", "*"

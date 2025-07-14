@@ -388,15 +388,14 @@ namespace Keysharp.Core
 				if (pri >= tv.priority)
 				{
 					t.Enabled = false;
-
+					var btv = v.PushThreadVariables(pri, true, false, false, true);
 					_ = TryCatch(() =>
 					{
-						(bool, ThreadVariables) btv = v.PushThreadVariables(pri, true, false, false, true);
 						btv.Item2.currentTimer = timer;
 						btv.Item2.eventInfo = func;
 						var ret = func.Call();
-						_ = v.EndThread(btv.Item1);
-					}, true);//Pop on exception because EndThread() above won't be called.
+						_ = v.EndThread(btv);
+					}, true, btv);//Pop on exception because EndThread() above won't be called.
 
 					if (once)
 					{
@@ -655,18 +654,19 @@ namespace Keysharp.Core
 			}
 		}
 
-        /// <summary>
-        /// Internal helper to wrap an <see cref="Action"/> within a try/catch block.<br/>
-        /// This is done because the try/catch blocks have a lot of scaffolding code that is needed for handling<br/>
-        /// threads and error conditions and it would be very verbose and unmaintainable to repeat it everywhere.
-        /// </summary>
-        /// <param name="action">The action to perform in the try block.</param>
-        /// <param name="pop">True to pop the current thread by calling <see cref="Threads.EndThread(bool, bool)"/> when an exception is caught.<br/>
-        /// Pass true for this when the action internally calls <see cref="Threads.BeginThread(bool)"/> before executing code that<br/>
-        /// could potentially thrown an exception.
-        /// </param>
-        /// <returns>True if no errors occurred, else false if any catch blocks were reached.</returns>
-        internal static bool TryCatch(Action action, bool pop)
+		/// <summary>
+		/// Internal helper to wrap an <see cref="Action"/> within a try/catch block.<br/>
+		/// This is done because the try/catch blocks have a lot of scaffolding code that is needed for handling<br/>
+		/// threads and error conditions and it would be very verbose and unmaintainable to repeat it everywhere.
+		/// </summary>
+		/// <param name="action">The action to perform in the try block.</param>
+		/// <param name="pop">True to pop the current thread by calling <see cref="Threads.EndThread(bool, bool)"/> when an exception is caught.<br/>
+		/// Pass true for this when the action internally calls <see cref="Threads.BeginThread(bool)"/> before executing code that<br/>
+		/// could potentially thrown an exception.
+		/// </param>
+		/// <param name="btv">The thread object that was created before calling this function.</param>
+		/// <returns>True if no errors occurred, else false if any catch blocks were reached.</returns>
+		internal static bool TryCatch(Action action, bool pop, (bool, ThreadVariables) btv)
 		{
 			var t = Script.TheScript.Threads;
 
@@ -686,11 +686,11 @@ namespace Keysharp.Core
 				{
 					var (__pushed, __btv) = t.BeginThread();
 					_ = ErrorDialog.Show(kserr, false);
-					_ = t.EndThread(__pushed);
+					_ = t.EndThread((__pushed, __btv));
 				}
 
 				if (pop)
-					_ = t.EndThread(true);
+					_ = t.EndThread(btv);
 
 				return false;
 			}
@@ -701,7 +701,7 @@ namespace Keysharp.Core
 				if (ex is UserRequestedExitException)
 				{
 					if (pop)
-						_ = t.EndThread(true);
+						_ = t.EndThread(btv);
 
 					return true;
 				}
@@ -714,18 +714,18 @@ namespace Keysharp.Core
 					{
 						var (__pushed, __btv) = t.BeginThread();
 						_ = ErrorDialog.Show(kserr, false);
-						_ = t.EndThread(__pushed);
+						_ = t.EndThread((__pushed, __btv));
 					}
 				}
 				else
 				{
 					var (__pushed, __btv) = t.BeginThread();
 					_ = ErrorDialog.Show(ex);
-					_ = t.EndThread(__pushed);
+					_ = t.EndThread((__pushed, __btv));
 				}
 
 				if (pop)
-					_ = t.EndThread(true);
+					_ = t.EndThread(btv);
 
 				return false;
 			}

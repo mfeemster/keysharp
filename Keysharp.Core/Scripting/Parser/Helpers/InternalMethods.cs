@@ -82,8 +82,8 @@ namespace Keysharp.Scripting
 			internal static MethodReference Parameters => new (typeof(Script), "Parameters");
 			internal static MethodReference Pop => new (typeof(Loops), "Pop");
 			internal static MethodReference Push => new (typeof(Loops), "Push");
-			internal static MethodReference PopTry => new(typeof(Loops), "PopTry");
-			internal static MethodReference PushTry => new(typeof(Loops), "PushTry");
+			internal static MethodReference PopTry => new (typeof(Loops), "PopTry");
+			internal static MethodReference PushTry => new (typeof(Loops), "PushTry");
 			internal static MethodReference RunMainWindow => new (typeof(Script), "RunMainWindow");
 			internal static MethodReference Send => new (typeof(Keyboard), "Send");
 			internal static MethodReference SetObject => new (typeof(Script), "SetObject");

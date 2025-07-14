@@ -237,8 +237,8 @@
 				}
 
 				if (state.Item1)
-					_ = script.Threads.EndThread(state.Item1);
-			}, !state.Item1);
+					_ = script.Threads.EndThread(state);
+			}, !state.Item1, state);
 			return ConvertResult(val);
 		}
 

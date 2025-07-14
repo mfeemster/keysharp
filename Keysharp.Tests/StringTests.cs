@@ -447,7 +447,7 @@ namespace Keysharp.Tests
 			for (var i = 0; i < 10; i++)
 			{
 				var z = Strings.Sort(x, "D, n random");
-				_ = Core.Debug.OutputDebug(z);
+				_ = KeysharpEnhancements.OutputDebugLine(z);
 				Assert.AreNotEqual(z, y);
 				y = z;
 			}

@@ -2154,7 +2154,7 @@ namespace Keysharp.Core.Common.Keyboard
 				tv.hwndLastUsed = new nint(critFoundHwnd);
 				tv.hotCriterion = variant.hotCriterion;
 				object ret = null;
-				var ok = Flow.TryCatch(() => ret = variant.callback.Call(o), false);
+				var ok = Flow.TryCatch(() => ret = variant.callback.Call(o), false, (false, null));
 
 				if (!ok)
 					variant.runAgainAfterFinished = false;  // Ensure this is reset due to the error.

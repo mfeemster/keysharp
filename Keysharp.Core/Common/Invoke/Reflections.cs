@@ -494,6 +494,7 @@ namespace Keysharp.Core.Common.Invoke
 						_ = FindAndCacheInstanceMethod(type, "", -1);
 						_ = FindAndCacheStaticMethod(type, "", -1);
 					}
+
 			_ = FindAndCacheInstanceMethod(typeof(object[]), "", -1, BindingFlags.Public | BindingFlags.Instance);//Needs to be done manually because many of the properties are declared in a base class.
 			_ = FindAndCacheStaticMethod(typeof(object[]), "", -1, BindingFlags.Public | BindingFlags.Static);
 
@@ -502,6 +503,7 @@ namespace Keysharp.Core.Common.Invoke
 				foreach (var methkv in typekv.Value)
 					_ = rd.stringToTypeMethods.GetOrAdd(methkv.Key).GetOrAdd(typekv.Key, methkv.Value);
 			}
+
 			foreach (var typekv in rd.typeToStringStaticMethods)
 			{
 				foreach (var methkv in typekv.Value)
@@ -574,7 +576,7 @@ namespace Keysharp.Core.Common.Invoke
 				}
 				catch (Exception ex)
 				{
-					_ = Debug.OutputDebug(ex.Message);
+					_ = KeysharpEnhancements.OutputDebugLine(ex.Message);
 				}
 			}
 

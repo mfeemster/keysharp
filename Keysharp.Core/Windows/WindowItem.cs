@@ -15,7 +15,7 @@ namespace Keysharp.Core.Windows
 			{
 				if (IsSpecified && Script.TheScript.WindowProvider.Manager.ActiveWindow is WindowItem item)
 				{
-					//Keysharp.Scripting.Script.OutputDebug($"item.Handle: {item.Handle.ToInt64()}, item.Title: {item.Title}, Handle: {Handle.ToInt64()}, Title: {Title}");
+					//KeysharpEnhancements.OutputDebugLine($"item.Handle: {item.Handle.ToInt64()}, item.Title: {item.Title}, Handle: {Handle.ToInt64()}, Title: {Title}");
 					//Keysharp.Core.File.FileAppend($"item.Handle: {item.Handle.ToInt64()}, item.Title: {item.Title}, Handle: {Handle.ToInt64()}, Title: {Title}\n", "out.txt");
 					if (item.Handle.ToInt64() == Handle.ToInt64())
 						return true;

@@ -2569,21 +2569,21 @@ svgToHBITMAP(svgPath,width,height) {
 	; │  GroupBox Tab - Functions  │
 	; └────────────────────────────┘
 
-	SendToGB3(*) {
-	GB3Text := "
-	(
-	This uses 'ControlSetText' from a button in GroupBox 4 to populate this edit.
-	The first message box shows the Hwnd of this Edit.
-	The second message box shows '1' (True) if GuiCtrlFromHwnd created an
-	object from the Hwnd.
-	Finally, ControlSetText operates on the Object created from the Hwnd.
-	)"
-		MsgBox(gb3Hwnd, "Hwnd of Groupbox 3 Edit")
-		obj := GuiCtrlFromHwnd(gb3Hwnd)
-		Result := IsObject(obj)
-		MsgBox(Result, "If '1', the control is an Object")
-		ControlSetText(GB3Text, obj)
-	}
+SendToGB3(*) {
+GB3Text := "
+(
+This uses 'ControlSetText' from a button in GroupBox 4 to populate this edit.
+The first message box shows the Hwnd of this Edit.
+The second message box shows '1' (True) if GuiCtrlFromHwnd created an
+object from the Hwnd.
+Finally, ControlSetText operates on the Object created from the Hwnd.
+)"
+	MsgBox(gb3Hwnd, "Hwnd of Groupbox 3 Edit")
+	obj := GuiCtrlFromHwnd(gb3Hwnd)
+	Result := IsObject(obj)
+	MsgBox(Result, "If '1', the control is an Object")
+	ControlSetText(StrReplace(GB3Text, "`n", A_NewLine), obj)
+}
 
 	ClearGB3(*) {
 		ControlSetText(, gb3Edit)

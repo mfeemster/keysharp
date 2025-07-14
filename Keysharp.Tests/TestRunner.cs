@@ -35,13 +35,13 @@ namespace Keysharp.Tests
 		{
 			SetupBeforeEachTest();
 			s.SetName(name);
-			_ = Core.Debug.OutputDebug(Environment.CurrentDirectory);
+			_ = KeysharpEnhancements.OutputDebugLine(Environment.CurrentDirectory);
 			var ch = new CompilerHelper();
 			var (arr, code) = ch.CompileCodeToByteArray([source], name);
 
 			if (arr == null)
 			{
-				_ = Core.Debug.OutputDebug(code);
+				_ = KeysharpEnhancements.OutputDebugLine(code);
 				return string.Empty;
 			}
 
@@ -100,7 +100,7 @@ namespace Keysharp.Tests
 						_ = error.AppendLine();
 						_ = error.AppendLine(ex.StackTrace);
 						var msg = error.ToString();
-						_ = Core.Debug.OutputDebug(msg);
+						_ = KeysharpEnhancements.OutputDebugLine(msg);
 						Console.Write("fail");
 						Assert.IsTrue(false);
 					}

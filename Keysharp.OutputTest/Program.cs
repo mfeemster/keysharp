@@ -67,6 +67,7 @@ namespace Keysharp.CompiledMain
 	using Keysharp.Core.Common.Strings;
 	using Keysharp.Core.Common.Threading;
 	using Keysharp.Scripting;
+
 	using Array = Keysharp.Core.Array;
 	using Buffer = Keysharp.Core.Buffer;
 

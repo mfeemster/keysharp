@@ -150,19 +150,6 @@ testfunc()
 * `ObjPtr()` returns an IUnknown `ComObject` with the pointer wrapped in it, whereas `ObjPtrAddRef()` returns a raw pointer.
 * Pointers returned by `StrPtr()` must be freed by passing the value to a new function named `ObjFree()`.
 	+ `StrPtr()` does not return the address of the string, instead it returns the address of a copy of the bytes of the string.
-* Threads are not resumable once an exception has been thrown.
-	+ Callbacks set by `OnError()` will properly run, but execution of the current thread will not resume regardless of the exception type or the return value of the callback.
-	+ Errors of type `ExitApp` will exit the script as usual.
-* `Reload()` will not immediately exit the script such that lines appearing after it within a function will not execute.
-	+ Instead of calling `Reload()` then `Sleep()` afterward to let the script exit, check the value of `A_HasExited` like so:
-```
-	Reload()
-	
-	if (!A_HasExited)
-	{
-		MsgBox("Exiting failed")
-	}
-```
 * `Sleep()` will not do any sleeping if shutdown has been initiated.
 * `/Debug` command line switch is not implemented.  
 * If a script is compiled then none of Keysharp or AutoHotkey command parameters apply. 
@@ -274,6 +261,7 @@ testfunc()
 * Gui controls support taking a boolean `Autosize` (default: `false`) argument in the `Add()` method to allow them to optimally size themselves.
 * `Gui` has a new property named `Visible` which get/set whether the window is visible or not.
 * A new function `ShowDebug()` to show the main window and focus the debug output tab.
+* A new function `OutputDebugLine()` which is the same as `OutputDebug()` but appends a linebreak at the end of the string.
 * `EnvUpdate()` is retained to provide for a cross platform way to update environment variables.
 * The 40 character limit for hotstring abbreviations has been removed. There is no limit to the length.
 * `FileGetSize()` supports `G` and `T` for gigabytes and terabytes.

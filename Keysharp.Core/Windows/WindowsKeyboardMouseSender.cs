@@ -966,7 +966,7 @@ namespace Keysharp.Core.Windows
 				PutMouseEventIntoArray(eventFlags, data, x, y);
 			else
 			{
-				//Keysharp.Scripting.Script.OutputDebug($"Sending mouse_event() with sendlevel {ThreadAccessors.A_SendLevel}");
+				//KeysharpEnhancements.OutputDebugLine($"Sending mouse_event() with sendlevel {ThreadAccessors.A_SendLevel}");
 				mouse_event(eventFlags
 							, x == CoordUnspecified ? 0 : x // v1.0.43.01: Must be zero if no change in position is desired
 							, y == CoordUnspecified ? 0 : y // (fixes compatibility with certain apps/games).

@@ -74,6 +74,7 @@ namespace Keysharp.Core.Windows
 						return found;
 
 					found = Script.TheScript.WindowProvider.Manager.CreateWindow(hwnd);
+
 					if (found.Equals(criteria)) //Evaluate any other criteria as well before accepting the match
 						return found;
 

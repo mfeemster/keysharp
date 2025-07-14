@@ -182,7 +182,7 @@ namespace Keysharp.Scripting
 					}
 					else if (Reflections.FindAndCacheInstanceMethod(typetouse, "get_Item", 1) is MethodPropertyHolder mph)//Last ditch attempt, see if it was a map entry, but was treated as a class property.
 					{
-						var val = mph.callFunc(item, [key]);
+						var val = mph.CallFunc(item, [key]);
 						return (item, val);
 					}
 				}
@@ -273,7 +273,7 @@ namespace Keysharp.Scripting
 
 					if (Reflections.FindAndCacheProperty(typetouse, namestr, 0) is MethodPropertyHolder mph2)
 					{
-						value = mph2.callFunc(item, null);
+						value = mph2.CallFunc(item, null);
 						return true;
 					}
 				}
@@ -322,7 +322,7 @@ namespace Keysharp.Scripting
 				}
 				else if (Reflections.FindAndCacheProperty(typeof(T), namestr, 0) is MethodPropertyHolder mph && mph.IsStaticProp)
 				{
-					return mph.callFunc(null, null);
+					return mph.CallFunc(null, null);
 				}
 				else if (name is Delegate d)
 				{
@@ -355,7 +355,7 @@ namespace Keysharp.Scripting
 				var mitup = GetMethodOrProperty(obj, meth, -1);
 
 				if (mitup.Item2 is MethodPropertyHolder mph)
-					return mph.callFunc(mitup.Item1, null);
+					return mph.CallFunc(mitup.Item1, null);
 				else if (mitup.Item2 is IFuncObj ifo2)
 				{
 					if (mitup.Item1 == null) // __Call was found
@@ -407,7 +407,7 @@ namespace Keysharp.Scripting
 
 				if (mitup.Item2 is MethodPropertyHolder mph)
 				{
-					ret = mph.callFunc(mitup.Item1, parameters);
+					ret = mph.CallFunc(mitup.Item1, parameters);
 
 					//The following check is done when accessing a class property that is a function object. The user intended to call it.
 					//Catching this during compilation is very hard when calling it from outside of the class definition.
@@ -455,7 +455,7 @@ namespace Keysharp.Scripting
 
 				if (mitup.Item2 is MethodPropertyHolder mph)
 				{
-					ret = mph.callFunc(mitup.Item1, parameters);
+					ret = mph.CallFunc(mitup.Item1, parameters);
 
 					//The following check is done when accessing a class property that is a function object. The user intended to call it.
 					//Catching this during compilation is very hard when calling it from outside of the class definition.
@@ -548,7 +548,7 @@ namespace Keysharp.Scripting
 				if (mph != null)
 				{
 					called = true;
-					ret = mph.callFunc(mitup.Item1, parameters);//parameters won't have been changes in the case of IFuncObj.Bind().
+					ret = mph.CallFunc(mitup.Item1, parameters);//parameters won't have been changes in the case of IFuncObj.Bind().
 
 					//The following check is done when accessing a class property that is a function object. The user intended to call it.
 					//Catching this during compilation is impossible when calling it from outside of the class definition.
@@ -666,8 +666,8 @@ namespace Keysharp.Scripting
 
                 if (Reflections.FindAndCacheProperty(typetouse, namestr, 0) is MethodPropertyHolder mph && namestr.ToLower() != "base")
 				{
-					mph.setPropFunc(item, value);
-                    return value;
+					mph.SetProp(item, value);
+					return value;
 				}
 
 #if WINDOWS
@@ -692,7 +692,7 @@ namespace Keysharp.Scripting
 				}
 				else if (Reflections.FindAndCacheInstanceMethod(typetouse, "set_Item", 2) is MethodPropertyHolder mph1 && mph1.ParamLength == 2)
 				{
-					return mph1.callFunc(item, [namestr, value]) ?? value;
+					return mph1.CallFunc(item, [namestr, value]) ?? value;
 				}
             }
 			catch (Exception e)
@@ -719,7 +719,7 @@ namespace Keysharp.Scripting
 				}
 				else if (Reflections.FindAndCacheProperty(typeof(T), namestr, 0) is MethodPropertyHolder mph && mph.IsStaticProp)
 				{
-					mph.setPropFunc(null, value);
+					mph.SetProp(null, value);
 					return;
 				}
 			}

@@ -118,7 +118,7 @@ namespace Keysharp.Scripting
 				{
 					var (_ks_pushed, _ks_btv) = {{MainScriptVariableName}}.Threads.BeginThread();
 					MsgBox("Uncaught Keysharp exception:\r\n" + kserr, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
-					{{MainScriptVariableName}}.Threads.EndThread(_ks_pushed);
+					{{MainScriptVariableName}}.Threads.EndThread((_ks_pushed, _ks_btv));
 				}
 				Keysharp.Core.Flow.ExitApp(1);
 			}
@@ -132,14 +132,14 @@ namespace Keysharp.Scripting
 					{
 						var (_ks_pushed, _ks_btv) = {{MainScriptVariableName}}.Threads.BeginThread();
 						MsgBox("Uncaught Keysharp exception:\r\n" + kserr, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
-						{{MainScriptVariableName}}.Threads.EndThread(_ks_pushed);
+						{{MainScriptVariableName}}.Threads.EndThread((_ks_pushed, _ks_btv));
 					}
 				}
 				else
 				{
 					var (_ks_pushed, _ks_btv) = {{MainScriptVariableName}}.Threads.BeginThread();
 					MsgBox("Uncaught exception:\r\n" + "Message: " + ex.Message + "\r\nStack: " + ex.StackTrace, $"{Accessors.A_ScriptName}: Unhandled exception", "iconx");
-					{{MainScriptVariableName}}.Threads.EndThread(_ks_pushed);
+					{{MainScriptVariableName}}.Threads.EndThread((_ks_pushed, _ks_btv));
 				}
 				Keysharp.Core.Flow.ExitApp(1);
 			}

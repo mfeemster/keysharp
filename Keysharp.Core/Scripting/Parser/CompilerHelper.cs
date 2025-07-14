@@ -565,8 +565,8 @@ using static Keysharp.Scripting.Script;
                     finally { }
                 }
 
-                _ = script.Threads.EndThread(pushed);
-            }
+				_ = script.Threads.EndThread((pushed, btv));
+			}
 
             return (units, errors);
         }
@@ -574,11 +574,13 @@ using static Keysharp.Scripting.Script;
 		public void PrintCompilerErrors(string s, bool stdout = false)
 		{
 			if (parser.errorStdOut || Env.FindCommandLineArg("errorstdout") != null)
-				_ = Core.Debug.OutputDebug(s); //For this to show on the command line, they need to pipe to more like: | more
+			{
+				Console.Error.WriteLine(s);//For this to show on the command line, they need to pipe to more like: | more
+			}
 			else
 			{
 				if (stdout)
-					Console.Write(s);
+					Console.WriteLine(s);
 				else
 					_ = MessageBox.Show(s, "Keysharp", MessageBoxButtons.OK, MessageBoxIcon.Error);
 			}

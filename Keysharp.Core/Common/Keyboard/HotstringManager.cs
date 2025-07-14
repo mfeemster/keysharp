@@ -37,7 +37,7 @@ namespace Keysharp.Core.Common.Keyboard
 		/// Caller has also ensured that aHotstring is not blank.
 		/// </summary>
 		public static object AddHotstring(string _name, IFuncObj _funcObj, ReadOnlySpan<char> _options, string _hotstring
-				, string _replacement, bool _hasContinuationSection, int _suspend = 0)
+										  , string _replacement, bool _hasContinuationSection, int _suspend = 0)
 		{
 			var script = Script.TheScript;
 			var hs = new HotstringDefinition(_name, _funcObj, _options, _hotstring, _replacement, _hasContinuationSection, _suspend);
@@ -172,7 +172,7 @@ namespace Keysharp.Core.Common.Keyboard
 							// MATCHING HOTSTRING WAS FOUND (since above didn't continue).
 							//////////////////////////////////////////////////////////////
 							//sw.Stop();
-							//Keysharp.Scripting.Script.OutputDebug($"Detecting hotstring {hs.str} at index {u} took {sw.Elapsed.TotalMilliseconds}ms or {((sw.Elapsed.TotalMilliseconds / (u + 1)) * 1000):F4}us per hotstring.");
+							//KeysharpEnhancements.OutputDebugLine($"Detecting hotstring {hs.str} at index {u} took {sw.Elapsed.TotalMilliseconds}ms or {((sw.Elapsed.TotalMilliseconds / (u + 1)) * 1000):F4}us per hotstring.");
 							found = true;
 						}
 					}
@@ -180,7 +180,7 @@ namespace Keysharp.Core.Common.Keyboard
 			}
 
 			//sw.Stop();
-			//Keysharp.Scripting.Script.OutputDebug($"Detecting hotstring took {sw.Elapsed.TotalMilliseconds}ms.");
+			//KeysharpEnhancements.OutputDebugLine($"Detecting hotstring took {sw.Elapsed.TotalMilliseconds}ms.");
 			return found ? hs : null;
 		}
 

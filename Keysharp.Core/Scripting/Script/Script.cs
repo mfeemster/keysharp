@@ -26,6 +26,7 @@ namespace Keysharp.Scripting
 		internal volatile bool loopShouldDoEvents = false;
 		internal volatile bool hasExited = false;
 		public bool ForceKeybdHook;
+		public string[] ScriptArgs = [];
 		public string[] KeysharpArgs = [];
 		public uint MaxThreadsTotal = 12u;
 		public bool NoTrayIcon = false;
@@ -37,6 +38,7 @@ namespace Keysharp.Scripting
 		internal const double DefaultErrorDouble = double.NaN;
 		internal const int DefaultErrorInt = int.MinValue;
 		internal const long DefaultErrorLong = long.MinValue;
+		internal const string DefaultNewLine = "\n";
 		internal const string DefaultObject = "";
 		internal const string DefaultErrorObject = "";
 		internal const string DefaultErrorString = "";
@@ -382,17 +384,18 @@ namespace Keysharp.Scripting
 #endif
 			_ = mainWindow.BeginInvoke(() =>
 			{
+				var ret = Threads.BeginThread();
+
 				if (!Flow.TryCatch(() =>
-			{
-				var (__pushed, __btv) = Threads.BeginThread();
+				{
 					_ = userInit();
 					//HotkeyDefinition.ManifestAllHotkeysHotstringsHooks() will be called inside of userInit() because it
 					//must be done:
 					//  After the window handle is created and the handle isn't valid until mainWindow.Load() is called.
 					//  Also right after all hotkeys and hotstrings are created.
 					isReadyToExecute = true;
-					_ = Threads.EndThread(__pushed);
-				}, true))//Pop on exception because EndThread() above won't be called.
+					_ = Threads.EndThread(ret);
+				}, true, ret))//Pop on exception because EndThread() above won't be called.
 				{
 					if (!persistent)//An exception was thrown so the generated ExitApp() call in _ks_UserMainCode() will not have been called, so call it here.
 					{

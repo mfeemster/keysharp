@@ -7,7 +7,7 @@ namespace Keysharp.Core.Common.Invoke
 	public class MethodPropertyHolder
 	{
 		public Func<object, object[], object> _callFunc;
-		public Func<object, object[], object> callFunc
+		public Func<object, object[], object> CallFunc
         {
             get
             {
@@ -38,10 +38,10 @@ namespace Keysharp.Core.Common.Invoke
 		internal readonly MethodInfo mi;
 		internal readonly ParameterInfo[] parameters;
 		internal readonly PropertyInfo pi;
-		internal readonly Action<object, object> setPropFunc;
+		internal readonly Action<object, object> SetProp;
 		protected readonly ConcurrentStackArrayPool<object> paramsPool;
-		private readonly bool isGuiType;
 		private readonly bool anyOptional;
+		private readonly bool isGuiType;
 		private readonly int startVarIndex = -1;
 		private readonly int stopVarIndexDistanceFromEnd;
 
@@ -53,15 +53,15 @@ namespace Keysharp.Core.Common.Invoke
 		internal static Dictionary<PropertyInfo, MethodPropertyHolder> propertyCache = new();
 #endif
 
+		internal bool IsBind { get; private set; }
 		internal bool IsStaticFunc { get; private set; }
 		internal bool IsStaticProp { get; private set; }
-		internal bool IsBind { get; private set; }
 		internal bool IsVariadic => startVarIndex != -1;
 		internal int ParamLength { get; }
 		internal int MinParams = 0;
 		internal int MaxParams = 9999;
-
-        public static MethodPropertyHolder GetOrAdd(MethodInfo mi)
+		
+		public static MethodPropertyHolder GetOrAdd(MethodInfo mi)
         {
 #if CONCURRENT
             return methodCache.GetOrAdd(mi, key => new MethodPropertyHolder(mi));
@@ -131,7 +131,7 @@ namespace Keysharp.Core.Common.Invoke
 				{
 					if (isGuiType)
 					{
-						callFunc = (inst, obj) =>
+						CallFunc = (inst, obj) =>
 						{
 							object ret = null;
 							var ctrl = inst.GetControl();//If it's a gui control, then invoke on the gui thread.
@@ -143,7 +143,7 @@ namespace Keysharp.Core.Common.Invoke
 						};
 					}
 					else
-						callFunc = (inst, obj) => mi.Invoke(inst, null);
+						CallFunc = (inst, obj) => mi.Invoke(inst, null);
 				}
 				else
 				{
@@ -151,7 +151,7 @@ namespace Keysharp.Core.Common.Invoke
 
 					if (IsVariadic)
 					{
-                        callFunc = (inst, obj) =>
+                        CallFunc = (inst, obj) =>
 						{
 							object[] newobj = null;
 							object[] lastArr = null;
@@ -269,7 +269,7 @@ namespace Keysharp.Core.Common.Invoke
 					}
 					else
 					{
-                        callFunc = (inst, obj) =>
+                        CallFunc = (inst, obj) =>
 						{
 							object ret = null;
 							var objLength = obj.Length;
@@ -363,7 +363,7 @@ namespace Keysharp.Core.Common.Invoke
 
 							return ret;
 						};
-						setPropFunc = (inst, obj) =>
+						SetProp = (inst, obj) =>
 						{
 							var ctrl = inst.GetControl();//If it's a gui control, then invoke on the gui thread.
 							ctrl.CheckedInvoke(() => pi.SetValue(null, obj), true);//This can be null if called before a Gui object is fully initialized.
@@ -386,7 +386,7 @@ namespace Keysharp.Core.Common.Invoke
 					else
 						_callFunc = (inst, obj) => pi.GetValue(null);
 
-					setPropFunc = (inst, obj) => pi.SetValue(null, obj);
+					SetProp = (inst, obj) => pi.SetValue(null, obj);
 				}
 			}
 			else
@@ -407,7 +407,7 @@ namespace Keysharp.Core.Common.Invoke
 
 							return ret;
 						};
-						setPropFunc = (inst, obj) =>
+						SetProp = (inst, obj) =>
 						{
 							var ctrl = inst.GetControl();//If it's a gui control, then invoke on the gui thread.
 							ctrl.CheckedInvoke(() => pi.SetValue(inst, obj), true);//This can be null if called before a Gui object is fully initialized.
@@ -430,7 +430,7 @@ namespace Keysharp.Core.Common.Invoke
 					else
 						_callFunc = (inst, obj) => pi.GetValue(inst);
 
-					setPropFunc = pi.SetValue;
+					SetProp = pi.SetValue;
 				}
 			}
 		}

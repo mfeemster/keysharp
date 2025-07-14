@@ -29,7 +29,7 @@
 					}
 
 					if (kv.Value is MethodPropertyHolder mph)
-						return (kv.Key, mph.callFunc(obj, null));
+						return (kv.Key, mph.CallFunc(obj, null));
 					else if (kv.Value is FuncObj fo)//ParamLength was verified when this was created in OwnProps().
 						return (kv.Key, fo.Call(obj));
 					else

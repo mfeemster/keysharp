@@ -842,11 +842,6 @@ namespace Keysharp.Scripting
             if (assignmentOperator == ":=" || assignmentOperator == "??=")
             {
                 var assignmentKind = (assignmentOperator == ":=") ? SyntaxKind.SimpleAssignmentExpression : SyntaxKind.CoalesceAssignmentExpression;
-                var assignmentToken = assignmentKind == SyntaxKind.SimpleAssignmentExpression ? Parser.PredefinedKeywords.EqualsToken : SyntaxFactory.Token(
-				    leading: PredefinedKeywords.SpaceTrivia,
-				    kind: SyntaxKind.CoalesceAssignmentExpression,
-				    trailing: PredefinedKeywords.SpaceTrivia
-			    );
 				if ((leftExpression is ObjectCreationExpressionSyntax objectExpression)
                 && objectExpression.Type is IdentifierNameSyntax objectName
                 && objectName.Identifier.Text == "VarRef")
@@ -859,7 +854,6 @@ namespace Keysharp.Scripting
 								SyntaxFactory.AssignmentExpression(
                                     assignmentKind,
                                     leftExpression,
-									assignmentToken,
 									varRefExpression
                                 ),
                                 ((InvocationExpressionSyntax)InternalMethods.SetPropertyValue)
@@ -899,7 +893,6 @@ namespace Keysharp.Scripting
                     return SyntaxFactory.AssignmentExpression(
                         assignmentKind,
                         leftExpression,
-						assignmentToken,
 						rightExpression
                     );
                 }

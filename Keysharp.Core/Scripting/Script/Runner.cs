@@ -32,7 +32,6 @@
 				var gotscript = false;
 				var fromstdin = false;
 				var validate = false;
-				string[] scriptArgs = [];
 
 				for (var i = 0; i < args.Length; i++)
 				{
@@ -46,7 +45,7 @@
 						{
 							scriptName = args[i] == "*" ? "*" : Path.GetFullPath(args[i]);
 							gotscript = true;
-							scriptArgs = [.. args.Skip(i + 1)];
+							script.ScriptArgs = [.. args.Skip(i + 1)];
 							script.KeysharpArgs = [.. args.Take(i + 1)];
 							continue;
 						}
@@ -125,7 +124,7 @@
 						if (method == null)
 							return Message($"Could not find method {assemblyMethod}", true);
 
-						return method.Invoke(null, [scriptArgs]).Ai();
+						return method.Invoke(null, [script.ScriptArgs]).Ai();
 					}
 				}
 
@@ -210,7 +209,7 @@
 
 				var program = CompilerHelper.compiledasm.GetType($"Keysharp.CompiledMain.{Keywords.MainClassName}");
 				var main = program.GetMethod("Main");
-				return main.Invoke(null, [scriptArgs]).Ai();
+				return main.Invoke(null, [script.ScriptArgs]).Ai();
 			}
 			catch (Exception ex)
 			{

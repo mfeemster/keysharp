@@ -16,7 +16,7 @@ else
 
 text := FileRead("./continuation.txt")
 
-if (text == "A line of text." . A_NewLine . "By default, the hard carriage return (Enter) between the previous line and this one will be stored.")
+if (text == "A line of text.`nBy default, the hard carriage return (Enter) between the previous line and this one will be stored.")
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -44,7 +44,7 @@ else
 
 text := FileRead("./continuation.txt")
 
-if (text == "A line of text." . A_NewLine . "By default, the hard carriage return (Enter) between the previous line and this one will be stored." . A_NewLine . "`tThis line is indented with a tab; by default, that tab will also be stored." . A_NewLine . "Additionally, `"quote marks`" are automatically escaped when appropriate.")
+if (text == "A line of text.`nBy default, the hard carriage return (Enter) between the previous line and this one will be stored.`n`tThis line is indented with a tab; by default, that tab will also be stored.`nAdditionally, `"quote marks`" are automatically escaped when appropriate.")
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"

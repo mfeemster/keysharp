@@ -11,7 +11,7 @@ namespace Keysharp.Scripting
 			if (code.Length == 0)
 				return DefaultObject;
 
-			var buffer = new StringBuilder(code.Length + 32);
+			var sb = new StringBuilder(code.Length + 32);
 			var escaped = false;
 
 			foreach (var sym in code)
@@ -20,38 +20,38 @@ namespace Keysharp.Scripting
 				{
 
 					_ = sym switch
-				{
-						'n' => buffer.Append('\n'),
-							'r' => buffer.Append('\r'),
-							'b' => buffer.Append('\b'),
-							't' => buffer.Append('\t'),
-							'v' => buffer.Append('\v'),
-							'a' => buffer.Append('\a'),
-							'f' => buffer.Append('\f'),
-							's' => buffer.Append(' '),
-							'0' => buffer.Append('\0'),
-							//case '"': _ = buffer.Append('"'); break;
-							//
-							//case '\'': _ = buffer.Append('\''); break;
-							//
-							//case ';': _ = buffer.Append(';'); break;
-							//
-							//case ':': _ = buffer.Append(':'); break;
-							//
-							//case '{': _ = buffer.Append('{'); break;
-							_ => buffer.Append(sym),//if (sym == Resolve)//This was likely here to parse legacy style syntax, but makes it impossible to send "'%", so we omit it.
-							//_ = buffer.Append(Escape);
-					};
+					{
+						'n' => sb.Append('\n'),
+						'r' => sb.Append('\r'),
+						'b' => sb.Append('\b'),
+						't' => sb.Append('\t'),
+						'v' => sb.Append('\v'),
+						'a' => sb.Append('\a'),
+						'f' => sb.Append('\f'),
+						's' => sb.Append(' '),
+						'0' => sb.Append('\0'),
+						//case '"': _ = buffer.Append('"'); break;
+						//
+						//case '\'': _ = buffer.Append('\''); break;
+						//
+						//case ';': _ = buffer.Append(';'); break;
+						//
+						//case ':': _ = buffer.Append(':'); break;
+						//
+						//case '{': _ = buffer.Append('{'); break;
+						_ => sb.Append(sym),//if (sym == Resolve)//This was likely here to parse legacy style syntax, but makes it impossible to send "'%", so we omit it.
+						//_ = buffer.Append(Escape);
+						};
 
 					escaped = false;
 				}
 				else if (sym == Escape)
 					escaped = true;
 				else
-					_ = buffer.Append(sym);
+					_ = sb.Append(sym);
 			}
 
-			return buffer.ToString();
+			return sb.ToString();
 		}
 
 		internal static string MultilineString(string code, int lineNumber, string name)
@@ -62,8 +62,9 @@ namespace Keysharp.Scripting
 			if (line.Length < 1 || line[0] != ParenOpen)
 				throw new ParseException($"Multiline string length of {line.Length} is not < 1 or the first character of {line[0]} is not '('.", lineNumber, code, name);
 
-			var join = newlineToUse;
-			bool ltrim = false, rtrim = false, stripComments = false, percentResolve = true, literalEscape = false;
+			var join = DefaultNewLine;
+			bool? ltrim = null;
+			bool rtrim = true, stripComments = false, percentResolve = true, literalEscape = false;
 
 			if (line.Length > 2)
 			{
@@ -79,65 +80,68 @@ namespace Keysharp.Scripting
 				{
 					var option = span[r];
 
-					if (option.Length > 0)
+					if (option.IsEmpty)
+						continue;
+
+					if (option.StartsWith(Keyword_Join, StringComparison.OrdinalIgnoreCase))
 					{
-						if (option.StartsWith(Keyword_Join, StringComparison.OrdinalIgnoreCase))
+						join = EscapedString(option.Slice(4), false);
+					}
+					else
+					{
+						switch (option)
 						{
-							join = EscapedString(option.Slice(4), false);
-						}
-						else if (option.StartsWith(";"))
-							break;
-						else
-						{
-							switch (option)
-							{
-								case var b when option.Equals("ltrim", StringComparison.OrdinalIgnoreCase):
-									ltrim = true;
-									break;
+							case var b when option.Equals("ltrim", StringComparison.OrdinalIgnoreCase):
+								ltrim = true;
+								break;
 
-								case var b when option.Equals("ltrim0", StringComparison.OrdinalIgnoreCase):
-									break;
+							case var b when option.Equals("ltrim0", StringComparison.OrdinalIgnoreCase):
+								ltrim = false;
+								break;
 
-								case var b when option.Equals("rtrim", StringComparison.OrdinalIgnoreCase):
-									rtrim = true;
-									break;
+							case var b when option.Equals("rtrim", StringComparison.OrdinalIgnoreCase):
+								rtrim = true;
+								break;
 
-								case var b when option.Equals("rtrim0", StringComparison.OrdinalIgnoreCase):
-									break;
+							case var b when option.Equals("rtrim0", StringComparison.OrdinalIgnoreCase):
+								rtrim = false;
+								break;
 
-								case var b when option.Equals("comments", StringComparison.OrdinalIgnoreCase):
-								case var b2 when option.Equals("comment", StringComparison.OrdinalIgnoreCase):
-								case var b3 when option.Equals("com", StringComparison.OrdinalIgnoreCase):
-								case var b4 when option.Equals("c", StringComparison.OrdinalIgnoreCase):
-									stripComments = true;
-									break;
+							case var b when option.Equals("comments", StringComparison.OrdinalIgnoreCase):
+							case var b2 when option.Equals("comment", StringComparison.OrdinalIgnoreCase):
+							case var b3 when option.Equals("com", StringComparison.OrdinalIgnoreCase):
+							case var b4 when option.Equals("c", StringComparison.OrdinalIgnoreCase):
+								stripComments = true;
+								break;
 
-								case var b4 when option.Equals("`", StringComparison.OrdinalIgnoreCase):
-									literalEscape = true;
-									break;
+							case var b4 when option.Equals("`", StringComparison.OrdinalIgnoreCase):
+								literalEscape = true;
+								break;
 
-								default:
-									const string joinOpt = "join";
+							default:
+								const string joinOpt = "join";
 
-									if (option.Length > joinOpt.Length && option.Slice(0, joinOpt.Length).Equals(joinOpt, StringComparison.OrdinalIgnoreCase))
-										join = option.Slice(joinOpt.Length).ToString().Replace("`s", " ");
-									else
-										throw new ParseException(ExMultiStr, lineNumber, code, name);
+								if (option.Length > joinOpt.Length && option.Slice(0, joinOpt.Length).Equals(joinOpt, StringComparison.OrdinalIgnoreCase))
+									join = option.Slice(joinOpt.Length).ToString().Replace("`s", " ");
+								else
+									throw new ParseException(ExMultiStr, lineNumber, code, name);
 
-									break;
-							}
+								break;
 						}
 					}
 				}
 			}
 
-			var str = new StringBuilder(code.Length);
+			var sb = new StringBuilder(code.Length);
 			var resolve = Resolve.ToString();
 			var escape = Escape.ToString();
 			var cast = Multicast.ToString();
 			var resolveEscaped = string.Concat(escape, resolve);
 			var escapeEscaped = new string(Escape, 2);
 			var castEscaped = string.Concat(escape, cast);
+			// Track default indent from first content line
+			string indentSample = null;
+			bool firstLine = true;
 
 			while ((line = reader.ReadLine()) != null)
 			{
@@ -146,15 +150,49 @@ namespace Keysharp.Scripting
 				if (check.Length > 0 && check[0] == ParenClose)
 					break;
 
-				if (ltrim && rtrim)
-					line = line.Trim(Spaces);
-				else if (ltrim)
-					line = line.TrimStart(Spaces);
+				// On first content line, capture indent sample if trimming
+				if (firstLine)
+				{
+					firstLine = false;
+
+					if (!ltrim.HasValue)
+					{
+						// Capture only the first run of identical indent characters (space or tab)
+						if (line.Length > 0 && (line[0] == ' ' || line[0] == '\t'))
+						{
+							char indentChar = line[0];
+							int count = 1;
+
+							while (count < line.Length && line[count] == indentChar)
+								count++;
+
+							indentSample = new string(indentChar, count);
+						}
+					}
+				}
+
+				if (!ltrim.HasValue && !string.IsNullOrEmpty(indentSample) && line.StartsWith(indentSample))
+				{
+					line = line.Substring(indentSample.Length);
+				}
+
+				if (ltrim.HasValue && ltrim.Value)
+				{
+					if (rtrim)
+						line = line.Trim(Spaces);
+					else
+						line = line.TrimStart(Spaces);
+				}
 				else if (rtrim)
 					line = line.TrimEnd(Spaces);
 
 				if (stripComments)
-					line = StripComment(line);
+				{
+					line = StripComment(line, out bool strippedAny);
+
+					if (strippedAny && line == "")
+						continue;
+				}
 
 				if (!percentResolve)
 					line = line.Replace(resolve, resolveEscaped);
@@ -164,15 +202,15 @@ namespace Keysharp.Scripting
 
 				line = line.Replace("\"", Escape + "\"");//Can't use interpolated string here because the AStyle formatter misinterprets it.
 				line = line.Replace(cast, castEscaped);
-				_ = str.Append(line);
-				_ = str.Append(join);
+				_ = sb.Append(line);
+				_ = sb.Append(join);
 			}
 
-			if (str.Length == 0)
+			if (sb.Length == 0)
 				return DefaultObject;
 
-			_ = str.Remove(str.Length - join.Length, join.Length);
-			return str.ToString();
+			_ = sb.Remove(sb.Length - join.Length, join.Length);
+			return sb.ToString();
 		}
 
 		private int FindNextBalanced(string s, char ch1, char ch2)
@@ -350,23 +388,23 @@ namespace Keysharp.Scripting
 
 		//private string Replace(string input, string search, string replace)
 		//{
-		//  var buf = new StringBuilder(input.Length);
+		//  var sb = new StringBuilder(input.Length);
 		//  int z = 0, n = 0, l = search.Length;
 		//
 		//  while (z < input.Length && (z = input.IndexOf(search, z, System.StringComparison.OrdinalIgnoreCase)) != -1)
 		//  {
 		//      if (n < z)
-		//          _ = buf.Append(input, n, z - n);
+		//          _ = sb.Append(input, n, z - n);
 		//
-		//      _ = buf.Append(replace);
+		//      _ = sb.Append(replace);
 		//      z += l;
 		//      n = z;
 		//  }
 		//
 		//  if (n < input.Length)
-		//      _ = buf.Append(input, n, input.Length - n);
+		//      _ = sb.Append(input, n, input.Length - n);
 		//
-		//  return buf.ToString();
+		//  return sb.ToString();
 		//}
 	}
 }

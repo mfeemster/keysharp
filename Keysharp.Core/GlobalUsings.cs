@@ -32,6 +32,7 @@ global using global::System.Net.Sockets;
 global using global::System.Reflection;
 global using global::System.Reflection.Emit;
 global using global::System.Runtime.CompilerServices;
+global using global::System.Runtime.ExceptionServices;
 global using global::System.Runtime.InteropServices;
 global using global::System.Runtime.Loader;
 global using global::System.Security;
@@ -44,7 +45,6 @@ global using global::System.Threading;
 global using global::System.Threading.Channels;
 global using global::System.Threading.Tasks;
 global using global::System.Windows.Forms;
-
 
 //Our usings.
 global using global::Keysharp.Core;

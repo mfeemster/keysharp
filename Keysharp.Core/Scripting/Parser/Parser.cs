@@ -282,9 +282,6 @@ namespace Keysharp.Scripting
 			public static ParameterSyntax ThisParam = SyntaxFactory.Parameter(SyntaxFactory.Identifier("@this"))
 						.WithType(ObjectType);
 
-            public static SyntaxTriviaList SpaceTrivia = new SyntaxTriviaList(SyntaxFactory.Space);
-
-			public static readonly SyntaxTrivia NewLineTrivia = SyntaxFactory.EndOfLine(Environment.NewLine);
 
 			public static SyntaxToken PublicToken = SyntaxFactory.Token(SyntaxKind.PublicKeyword);
 

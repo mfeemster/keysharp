@@ -279,6 +279,7 @@ namespace Keysharp.Scripting
                 }
 
 #if WINDOWS
+
 				if (item is ComObjArray coa)
 				{
 					coa[index] = value;
@@ -304,7 +305,7 @@ namespace Keysharp.Scripting
 				{
 					if (il1 == mph2.ParamLength || mph2.IsVariadic)
 					{
-						_ = mph2.callFunc(item, index.Concat([value]));
+						_ = mph2.CallFunc(item, index.Concat([value]));
 						return value;
 					}
 					else
@@ -375,6 +376,7 @@ namespace Keysharp.Scripting
 				}
 
 #if WINDOWS
+
 				if (item is ComObjArray coa)
 				{
 					return coa[index];
@@ -384,6 +386,7 @@ namespace Keysharp.Scripting
 					//Could be an indexer, but MethodPropertyHolder currently doesn't support those
 					if (index.Length == 0 && (co.vt & VarEnum.VT_BYREF) != 0)
 						return ComObject.ReadVariant(co.Ptr.Al(), co.vt);
+
 					return Invoke((co.Ptr, new ComMethodPropertyHolder("Item")), index);
 				}
 				else if (Marshal.IsComObject(item))

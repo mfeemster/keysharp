@@ -139,7 +139,7 @@
 		public bool IsClosure => Inst != null && mi.DeclaringType?.DeclaringType == Inst.GetType();
 
 		public bool IsBuiltIn => mi.DeclaringType.Module.Name.StartsWith("keysharp.core", StringComparison.OrdinalIgnoreCase);
-		public bool IsValid => mi != null && mph != null && mph.callFunc != null;
+		public bool IsValid => mi != null && mph != null && mph.CallFunc != null;
 		string _name = null;
 		public string Name {
 			get
@@ -177,7 +177,7 @@
 		public long MinParams => mph.MinParams;
 		internal MethodPropertyHolder Mph => mph;
 
-		public Func<object, object[], object> Delegate => mph.callFunc;
+		public Func<object, object[], object> Delegate => mph.CallFunc;
 
 		internal FuncObj(string s, object o = null, object paramCount = null)
 			: this(GetMethodInfo(s, o, paramCount), o)
@@ -244,18 +244,18 @@
 		public virtual IFuncObj Bind(params object[] args)
 		=> new BoundFunc(mi, args, Inst);
 
-		public virtual object Call(params object[] obj) => mph.callFunc(Inst, obj);
+		public virtual object Call(params object[] obj) => mph.CallFunc(Inst, obj);
 		public virtual object CallInst(object inst, params object[] obj)
 		{
 			if (Inst == null)
-				return mph.callFunc(inst, obj);
+				return mph.CallFunc(inst, obj);
 			else
 			{
                 int count = obj.Length;
                 object[] args = new object[count + 1];
                 args[0] = inst;
                 System.Array.Copy(obj, 0, args, 1, count);
-                return mph.callFunc(Inst, args);
+                return mph.CallFunc(Inst, args);
             }
 		}
         public virtual object CallWithRefs(params object[] args)
@@ -275,7 +275,7 @@
 					argsArray[i] = p;
 			}
 
-			var val = mph.callFunc(Inst, argsArray);
+			var val = mph.CallFunc(Inst, argsArray);
 
 			for (var i = 0; i < args.Length; i++)
 			{

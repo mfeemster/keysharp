@@ -33,10 +33,6 @@ namespace Keysharp.Main
 			Task writeExeTask = null;
 			Task writeCodeTask = null;
 
-#if DEBUG
-			var sw = new Stopwatch();
-			sw.Start();
-#endif
 
 			try
 			{
@@ -60,7 +56,6 @@ namespace Keysharp.Main
 				var gotscript = false;
 				var fromstdin = false;
 				var validate = false;
-				string[] scriptArgs = [];
 
 				for (var i = 0; i < args.Length; i++)
 				{
@@ -74,7 +69,7 @@ namespace Keysharp.Main
 						{
 							scriptName = args[i] == "*" ? "*" : Path.GetFullPath(args[i]);
 							gotscript = true;
-							scriptArgs = [.. args.Skip(i + 1)];
+							script.ScriptArgs = [.. args.Skip(i + 1)];
 							script.KeysharpArgs = [.. args.Take(i + 1)];
 							continue;
 						}
@@ -182,7 +177,7 @@ namespace Keysharp.Main
 						if (method == null)
 							return Message($"Could not find method {assemblyMethod}", true);
 
-						Environment.ExitCode = method.Invoke(null, [scriptArgs]).Ai();
+						Environment.ExitCode = method.Invoke(null, [script.ScriptArgs]).Ai();
 						return Environment.ExitCode;
 					}
 				}
@@ -223,11 +218,6 @@ namespace Keysharp.Main
 				byte[] arr = null;
 				string result = null;
 				(arr, result) = ch.CompileCodeToByteArray([scriptName], namenoext, exeDir, minimalexeout);
-
-#if DEBUG
-				Core.Debug.OutputDebug($"Compile time: {sw.ElapsedMilliseconds} ms");
-				sw.Restart();
-#endif
 
 				if (arr == null)
 					return Message(result, true);
@@ -334,15 +324,9 @@ namespace Keysharp.Main
 				var program = CompilerHelper.compiledasm.GetType($"Keysharp.CompiledMain.{Keywords.MainClassName}");
 				var main = program.GetMethod("Main");
 #if DEBUG
-				Core.Debug.OutputDebug($"Assembly load time: {sw.ElapsedMilliseconds} ms");
-				sw.Restart();
+				KeysharpEnhancements.OutputDebugLine("Running compiled code.");
 #endif
-				Environment.ExitCode = main.Invoke(null, [scriptArgs]).Ai();
-
-#if DEBUG
-				Core.Debug.OutputDebug($"Run time: {sw.ElapsedMilliseconds} ms");
-				sw.Restart();
-#endif
+				Environment.ExitCode = main.Invoke(null, [script.ScriptArgs]).Ai();
 			}
 			catch (Exception ex)
 			{
@@ -423,6 +407,7 @@ namespace Keysharp.Main
 		{
 			const string marker = "\nusing static ";
 			int idx = text.IndexOf(marker, StringComparison.Ordinal);
+
 			if (idx >= 0)
 				text = text.Substring(0, idx);
 
@@ -433,7 +418,7 @@ namespace Keysharp.Main
 			else
 			{
 				_ = MessageBox.Show(text, "Keysharp", MessageBoxButtons.OK, MessageBoxIcon.Information);
-				_ = Core.Debug.OutputDebug(text);
+				_ = KeysharpEnhancements.OutputDebugLine(text);
 			}
 
 			return error ? 1 : 0;

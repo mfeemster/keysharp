@@ -28,11 +28,16 @@
 			}
 		}
 
-		public object EndThread(bool pushed, bool checkThread = false)
+		public object EndThread((bool, ThreadVariables) btv, bool checkThread = false)
 		{
 			lock (locker)
 			{
 				var script = Script.TheScript;
+				var pushed = btv.Item1;
+				
+				if (pushed)
+					btv.Item2.task = false;
+
 				PopThreadVariables(pushed, checkThread);
 
 				// Resume timers since we are about to have a free thread
@@ -57,9 +62,6 @@
 			{
 				var script = Script.TheScript;
 
-				if (inc)
-					_ = Interlocked.Increment(ref script.totalExistingThreads);//Will be decremented in EndThread().
-
 				// Pause all timers if out of available threads. This is done here instead of BeginThread
 				// because not all threads are started with it (eg timer threads)
 				if (script.totalExistingThreads == script.MaxThreadsTotal)
@@ -70,7 +72,17 @@
 					}
 				}
 
-				return tvm.PushThreadVariables(priority, skipUninterruptible, isCritical, onlyIfEmpty);
+				var ret = tvm.PushThreadVariables(priority, skipUninterruptible, isCritical, onlyIfEmpty);
+
+				if (ret.Item1)
+				{
+					if (inc)
+						_ = Interlocked.Increment(ref script.totalExistingThreads);//Will be decremented in EndThread().
+
+					ret.Item2.task = true;
+				}
+
+				return ret;
 			}
 		}
 
@@ -128,28 +140,22 @@
 		internal void LaunchInThread(int priority, bool skipUninterruptible,
 									 bool isCritical, object func, object[] o, bool tryCatch)//Determine later the optimal threading model.//TODO
 		{
-			//Task<object> tsk = null;
 			try
 			{
 				var existingTv = GetThreadVariables();
 				existingTv.WaitForCriticalToFinish();//Cannot launch a new task while a critical one is running.
-				//void AssignTask(ThreadVariables localTv) => localTv.task = tsk;//Needed to capture tsk so it can be used from within the Task.
-				//tsk = Task.Factory.StartNew(() =>
-				//tsk = StaTask.Run(() =>//This appears to be necessary to use the clipboard within hotkey/string events.
 				Script.TheScript.mainWindow.CheckedBeginInvoke(() =>
 				{
 					object ret = null;
-					(bool, ThreadVariables) btv = (false, null);
-					btv = PushThreadVariables(priority, skipUninterruptible, isCritical, false, true);//Always start each thread with one entry.
-					btv.Item2.task = true;
-
+					var script = Script.TheScript;
+					var btv = PushThreadVariables(priority, skipUninterruptible, isCritical, false, true);//Always start each thread with one entry.
+					
 					if (btv.Item1)
 					{
 						if (tryCatch)
 						{
 							_ = Flow.TryCatch(() =>
 							{
-								//AssignTask(btv.Item2);
 								if (func is VariadicFunction vf)
 									ret = vf(o);
 								else if (func is IFuncObj ifo)
@@ -157,12 +163,13 @@
 								else
 									ret = "";
 
-								_ = EndThread(btv.Item1);
-							}, true);//Pop on exception because EndThread() above won't be called.
+								_ = EndThread(btv);
+							}, true, btv);//Pop on exception because EndThread() above won't be called.
 						}
 						else
 						{
-							//AssignTask(btv.Item2);
+							//Because this is not used in a try/catch block, we assume the function internally handles exceptions.
+							//So even if an exception occurs, we will manually pop the thread variables with EndThread().
 							if (func is VariadicFunction vf)
 								ret = vf(o);
 							else if (func is IFuncObj ifo)
@@ -170,31 +177,19 @@
 							else
 								ret = "";
 
-							_ = EndThread(btv.Item1);
+							_ = EndThread(btv);
 						}
 					}
 
-					btv.Item2.task = false;
-					//return ret;
 				}, true, false);
-				//,
-				//This is needed to make a variety of functionality work inside of hotkey/string handlers.
-				//Such as clipboard and window functions.
-				//CancellationToken.None, TaskCreationOptions.None,
-				//SynchronizationContext.Current != null ? TaskScheduler.FromCurrentSynchronizationContext() : TaskScheduler.Current);
-				//tsk.Wait();
 			}
-			//catch (AggregateException aex)
 			catch (Exception ex)
 			{
-				//tvm.PopThreadVariables(false);
 				if (ex.InnerException != null)
 					throw ex.InnerException;
 				else
 					throw;//Do not pass ex because it will reset the stack information.
 			}
-
-			//return tsk;
 		}
 
 		internal void PopThreadVariables(bool pushed, bool checkThread = false) => tvm.PopThreadVariables(pushed, checkThread);

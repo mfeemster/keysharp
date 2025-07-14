@@ -200,15 +200,14 @@ namespace System.Collections.Generic
 				//lock (ehLock)
 				{
 					var oldEventInfo = A_EventInfo;
-					var (pushed, tv) = Script.TheScript.Threads.BeginThread();
+					var script = Script.TheScript;
+					var (pushed, tv) = script.Threads.BeginThread();
 
 					if (pushed)//If we've exceeded the number of allowable threads, then just do nothing.
 					{
 						tv.eventInfo = oldEventInfo;
 						_ = Flow.TryCatch(() =>
 						{
-							var script = Script.TheScript;
-							
 							if (inst is Control ctrl && ctrl.FindForm() is Form form)
 								script.HwndLastUsed = form.Handle;
 
@@ -223,9 +222,8 @@ namespace System.Collections.Generic
 								}
 							}
 
-							_ = script.Threads.EndThread(true);
-						}, true);//Pop on exception because EndThread() above won't be called.
-						TheScript.ExitIfNotPersistent();
+							_ = script.Threads.EndThread((pushed, tv));
+						}, true, (pushed, tv));//Pop on exception because EndThread() above won't be called.
 					}
 				}
 			}

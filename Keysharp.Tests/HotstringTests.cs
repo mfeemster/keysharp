@@ -443,9 +443,9 @@ namespace Keysharp.Tests
 			Assert.AreEqual(hs.Replacement, ":8");
 			_ = Keyboard.Hotstring("Reset");
 			//
-			var val = "Any text between the top and bottom parentheses is treated literally.\r\nBy default" +
+			var val = "Any text between the top and bottom parentheses is treated literally.\nBy default" +
 					  ", the hard carriage return (Enter) between the previous line and this one is als" +
-					  "o preserved.\r\n    By default, the indentation (tab) to the left of this line is " +
+					  "o preserved.\n    By default, the indentation (tab) to the left of this line is " +
 					  "preserved.";
 			hsm.AddChars("text1 ");
 			hs = hsm.MatchHotstring();

@@ -42,7 +42,7 @@
 			//Such as with a hotkey that prints on mouse click, which will cause a print when the X is clicked to close.
 			this.CheckedBeginInvoke(() =>
 			{
-				GetText(tab).AppendText($"{s}\r\n");//This should scroll to the bottom, if not, try this:
+				GetText(tab).AppendText($"{s.ReplaceLineEndings(Environment.NewLine)}");//This should scroll to the bottom, if not, try this:
 
 				if (focus)
 				{
@@ -60,7 +60,7 @@
 		{
 			_ = this.BeginInvoke(() => //These need to be BeginInvoke(), otherwise they can freeze if called within a COM event.
 			{
-				GetText(tab).Text = s;
+				GetText(tab).Text = s.ReplaceLineEndings(Environment.NewLine);
 
 				if (focus)
 				{
