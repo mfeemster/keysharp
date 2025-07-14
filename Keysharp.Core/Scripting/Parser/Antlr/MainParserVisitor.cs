@@ -916,13 +916,6 @@ public interface IMainParserVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitVerbalNotExpressionDuplicate([NotNull] MainParser.VerbalNotExpressionDuplicateContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>FatArrowExpressionDuplicate</c>
-	/// labeled alternative in <see cref="MainParser.singleExpression"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitFatArrowExpressionDuplicate([NotNull] MainParser.FatArrowExpressionDuplicateContext context);
-	/// <summary>
 	/// Visit a parse tree produced by the <c>TernaryExpressionDuplicate</c>
 	/// labeled alternative in <see cref="MainParser.singleExpression"/>.
 	/// </summary>

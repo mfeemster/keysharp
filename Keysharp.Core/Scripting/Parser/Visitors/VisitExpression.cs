@@ -230,15 +230,8 @@ namespace Keysharp.Scripting
 
         public override SyntaxNode VisitExpressionStatement([Antlr4.Runtime.Misc.NotNull] ExpressionStatementContext context)
         {
-            ArgumentListSyntax argumentList = CreateArgumentList(
-                (ExpressionSyntax)Visit(context.singleExpression())
-            );
-
-            if (context.expressionSequence() != null)
-            {
-                var sequenceArgList = (ArgumentListSyntax)Visit(context.expressionSequence());
-				argumentList = argumentList.AddArguments(sequenceArgList.Arguments.ToArray());
-			}
+            var sequenceArgList = (ArgumentListSyntax)Visit(context.expressionSequence());
+			ArgumentListSyntax argumentList = CreateArgumentList(sequenceArgList.Arguments.ToArray());
 
             ExpressionSyntax singleExpression = null;
             if (argumentList.Arguments.Count == 0)

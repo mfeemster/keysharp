@@ -220,7 +220,7 @@ functionStatement
 // This could actually be omitted because ANTLR is smart enough to figure out which is which, but it can lead to
 // some serious performance issues because of long lookaheads.
 expressionStatement
-    : singleExpression (WS* ',' expressionSequence)?
+    : {InputStream.LA(1) != MainLexer.OpenBrace && !this.isFunctionCallStatement()}? expressionSequence
     ;
 
 // For maximum performance there should be two separate statement rules, one with possible
@@ -499,8 +499,7 @@ singleExpression
     | left = singleExpression (op = '||' | op = VerbalOr) right = singleExpression   # LogicalOrExpressionDuplicate
     | <assoc = right> left = singleExpression op = '??' right = singleExpression                               # CoalesceExpressionDuplicate
     | <assoc = right> ternCond = singleExpression (WS | EOL)* '?' (WS | EOL)* ternTrue = expression (WS | EOL)* ':' (WS | EOL)* ternFalse = singleExpression # TernaryExpressionDuplicate
-    | <assoc = right> left = primaryExpression op = assignmentOperator right = expression          # AssignmentExpressionDuplicate
-    | fatArrowExpressionHead '=>' singleExpression       # FatArrowExpressionDuplicate
+    | <assoc = right> left = primaryExpression op = assignmentOperator right = singleExpression          # AssignmentExpressionDuplicate
     | primaryExpression                                  # SingleExpressionDummy
     ;
 

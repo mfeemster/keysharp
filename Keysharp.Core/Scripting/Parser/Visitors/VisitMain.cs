@@ -9,6 +9,7 @@ using Antlr4.Runtime.Tree;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.Tab;
 using static Keysharp.Scripting.Parser;
 using static MainParser;
 
@@ -1222,12 +1223,20 @@ namespace Keysharp.Scripting
             return null;
         }
 
-        public SyntaxNode FunctionExpressionCommon(MethodDeclarationSyntax methodDeclaration)
+        public SyntaxNode FunctionExpressionCommon(MethodDeclarationSyntax methodDeclaration, ParserRuleContext context)
         {
-            // Case 1: If we are in the main class (not inside a class declaration)
-            // OR we are inside any method declaration besides the auto-execute one then add it as a closure.
-            // Function expressions inside the auto-execute section are added as static nested functions.
-            if (parser.currentClass.Name == Keywords.MainClassName || parser.currentFunc.Name != Keywords.AutoExecSectionName)
+			// Case 1: If we are inside the auto-execute section and this is the only expression in the expression sequence
+			// then consider it a top-level function. The method declaration will be added to the main
+			// class in VisitExpressionSequence.
+			if (parser.currentFunc.Name == Keywords.AutoExecSectionName &&
+				context.Parent is ExpressionSequenceContext esc && esc.Parent is ExpressionStatementContext && esc.ChildCount == 1)
+			{
+				return methodDeclaration;
+			}
+			// Case 2: If we are in the main class (not inside a class declaration)
+			// OR we are inside any method declaration besides the auto-execute one then add it as a closure.
+			// Function expressions inside the auto-execute section are added as static nested functions.
+			if (parser.currentClass.Name == Keywords.MainClassName || parser.currentFunc.Name != Keywords.AutoExecSectionName)
             {
                 var methodName = methodDeclaration.Identifier.Text;
                 var variableName = methodName.ToLowerInvariant();
@@ -1374,7 +1383,7 @@ namespace Keysharp.Scripting
             if (parser.currentFunc.Name == Keywords.AutoExecSectionName)
                 return methodDeclaration;
 
-			var commonResult = FunctionExpressionCommon(methodDeclaration);
+			var commonResult = FunctionExpressionCommon(methodDeclaration, context);
             if (commonResult is IdentifierNameSyntax ins)
             {
                 return SyntaxFactory.ExpressionStatement(EnsureValidStatementExpression(ins));
@@ -1396,14 +1405,14 @@ namespace Keysharp.Scripting
             var methodDeclaration = parser.currentFunc.Assemble();
             PopFunction();
 
-            return FunctionExpressionCommon(methodDeclaration);
+            return FunctionExpressionCommon(methodDeclaration, context);
         }
 
-        private SyntaxNode HandleFatArrowExpression(FatArrowExpressionHeadContext head, ParserRuleContext body)
+        public override SyntaxNode VisitFatArrowExpression([Antlr4.Runtime.Misc.NotNull] FatArrowExpressionContext context)
         {
-			Visit(head);
+			Visit(context.fatArrowExpressionHead());
 
-            ExpressionSyntax returnExpression = (ExpressionSyntax)Visit(body);
+			ExpressionSyntax returnExpression = (ExpressionSyntax)Visit(context.expression());
 
 			BlockSyntax functionBody;
 
@@ -1429,17 +1438,7 @@ namespace Keysharp.Scripting
 			var methodDeclaration = parser.currentFunc.Assemble();
 			PopFunction();
 
-			return FunctionExpressionCommon(methodDeclaration);
-		}
-
-        public override SyntaxNode VisitFatArrowExpression([Antlr4.Runtime.Misc.NotNull] FatArrowExpressionContext context)
-        {
-            return HandleFatArrowExpression(context.fatArrowExpressionHead(), context.expression());
-        }
-
-		public override SyntaxNode VisitFatArrowExpressionDuplicate([NotNull] FatArrowExpressionDuplicateContext context)
-		{
-			return HandleFatArrowExpression(context.fatArrowExpressionHead(), context.singleExpression());
+			return FunctionExpressionCommon(methodDeclaration, context);
 		}
 
         private BlockSyntax EnsureReturnStatement(BlockSyntax functionBody)

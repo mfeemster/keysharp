@@ -182,16 +182,6 @@ namespace Keysharp.Scripting
 				return null;
 			}
 
-			public override object VisitFatArrowExpressionDuplicate([NotNull] FatArrowExpressionDuplicateContext context)
-			{
-				var head = context
-					.fatArrowExpressionHead()
-					.functionExpressionHead()?
-					.functionHead();
-				AddFunction(head);
-				return null;
-			}
-
 			public override object VisitFunctionExpression([NotNull] FunctionExpressionContext context)
 			{
 				var head = context.functionExpressionHead().functionHead();
