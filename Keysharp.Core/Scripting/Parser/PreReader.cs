@@ -599,8 +599,7 @@ namespace Keysharp.Scripting
 										throw new ParseException(ExUnexpected, lineNumber, code);
 
 									var buf = new StringBuilder(256);
-									_ = buf.Append(code);
-									_ = buf.Append(DefaultNewLine);
+									_ = buf.Append(code + DefaultNewLine);
 
 									while ((code = source.ReadLine()) != null)
 									{
@@ -613,10 +612,7 @@ namespace Keysharp.Scripting
 											break;
 										}
 										else
-										{
-											_ = buf.Append(code);
-											_ = buf.Append(DefaultNewLine);
-										}
+											_ = buf.Append(code + DefaultNewLine);
 									}
 
 									var str = buf.ToString();

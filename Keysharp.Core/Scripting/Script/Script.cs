@@ -26,6 +26,7 @@ namespace Keysharp.Scripting
 		internal volatile bool loopShouldDoEvents = false;
 		internal volatile bool hasExited = false;
 		public bool ForceKeybdHook;
+		public string[] ScriptArgs = [];
 		public string[] KeysharpArgs = [];
 		public uint MaxThreadsTotal = 12u;
 		public bool NoTrayIcon = false;
@@ -381,6 +382,7 @@ namespace Keysharp.Scripting
 			_ = mainWindow.BeginInvoke(() =>
 			{
 				var ret = Threads.BeginThread();
+
 				if (!Flow.TryCatch(() =>
 				{
 					_ = userInit();

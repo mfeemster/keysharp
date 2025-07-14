@@ -272,6 +272,7 @@ namespace Keysharp.Core
 				else if (helper.ReturnType == typeof(float))
 				{
 					if (value is not double) return _ = Errors.TypeErrorOccurred(value, typeof(double));
+
 					double d = (double)value;
 					float f = *(float*)&d;
 					return f;

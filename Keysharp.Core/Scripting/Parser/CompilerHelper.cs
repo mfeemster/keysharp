@@ -550,7 +550,9 @@ using static Keysharp.Scripting.Script;
 		public void PrintCompilerErrors(string s, bool stdout = false)
 		{
 			if (parser.errorStdOut || Env.FindCommandLineArg("errorstdout") != null)
-				Console.Error.WriteLine(s); //For this to show on the command line, they need to pipe to more like: | more
+			{
+				Console.Error.WriteLine(s);//For this to show on the command line, they need to pipe to more like: | more
+			}
 			else
 			{
 				if (stdout)

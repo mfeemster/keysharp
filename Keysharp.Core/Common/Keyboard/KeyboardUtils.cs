@@ -46,7 +46,7 @@ namespace Keysharp.Core.Common.Keyboard
 			mouseList.Clear();
 			keyboardList.Clear();
 			kbMouseList.Clear();
-			
+
 			foreach (Range r in inputStr.AsSpan().SplitAny(CrLf))
 			{
 				var split = inputStr.AsSpan(r).Trim();

@@ -432,7 +432,6 @@ namespace Keysharp.Core.COM
 			{
 				long hrLong = (long)value;                // unbox the raw long
 				int hr32 = unchecked((int)hrLong);   // keep only the low 32 bits
-
 				return Errors.OSErrorOccurredForHR(hr32);
 			}
 

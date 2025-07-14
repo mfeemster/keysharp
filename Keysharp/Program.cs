@@ -54,7 +54,6 @@ namespace Keysharp.Main
 				var gotscript = false;
 				var fromstdin = false;
 				var validate = false;
-				string[] scriptArgs = [];
 
 				for (var i = 0; i < args.Length; i++)
 				{
@@ -68,7 +67,7 @@ namespace Keysharp.Main
 						{
 							scriptName = args[i] == "*" ? "*" : Path.GetFullPath(args[i]);
 							gotscript = true;
-							scriptArgs = [.. args.Skip(i + 1)];
+							script.ScriptArgs = [.. args.Skip(i + 1)];
 							script.KeysharpArgs = [.. args.Take(i + 1)];
 							continue;
 						}
@@ -176,7 +175,7 @@ namespace Keysharp.Main
 						if (method == null)
 							return Message($"Could not find method {assemblyMethod}", true);
 
-						Environment.ExitCode = method.Invoke(null, [scriptArgs]).Ai();
+						Environment.ExitCode = method.Invoke(null, [script.ScriptArgs]).Ai();
 						return Environment.ExitCode;
 					}
 				}
@@ -325,7 +324,7 @@ namespace Keysharp.Main
 #if DEBUG
 				KeysharpEnhancements.OutputDebugLine("Running compiled code.");
 #endif
-				Environment.ExitCode = main.Invoke(null, [scriptArgs]).Ai();
+				Environment.ExitCode = main.Invoke(null, [script.ScriptArgs]).Ai();
 			}
 			catch (Exception ex)
 			{
@@ -401,6 +400,7 @@ namespace Keysharp.Main
 		{
 			const string marker = "\nusing static ";
 			int idx = text.IndexOf(marker, StringComparison.Ordinal);
+
 			if (idx >= 0)
 				text = text.Substring(0, idx);
 

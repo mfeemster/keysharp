@@ -1123,8 +1123,8 @@
 						WindowsAPI.SendMessage(tb.Handle, WindowsAPI.EM_SETCUEBANNER, showOnFocus, txt);
 					else
 						tb.PlaceholderText = txt;
-#endif
 
+#endif
 					return DefaultObject;
 				}
 

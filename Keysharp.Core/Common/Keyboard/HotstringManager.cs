@@ -35,7 +35,7 @@
 		/// Caller has also ensured that aHotstring is not blank.
 		/// </summary>
 		public static object AddHotstring(string _name, IFuncObj _funcObj, ReadOnlySpan<char> _options, string _hotstring
-				, string _replacement, bool _hasContinuationSection, int _suspend = 0)
+										  , string _replacement, bool _hasContinuationSection, int _suspend = 0)
 		{
 			var script = Script.TheScript;
 			var hs = new HotstringDefinition(_name, _funcObj, _options, _hotstring, _replacement, _hasContinuationSection, _suspend);

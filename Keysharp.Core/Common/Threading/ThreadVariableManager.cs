@@ -93,11 +93,12 @@
 						}
 					}
 				}
+
 #if DEBUG
 				else
 					_ = KeysharpEnhancements.OutputDebugLine($"Thread stack limit exceeded");
-#endif
 
+#endif
 				return (pushed, tv);
 			}
 			else

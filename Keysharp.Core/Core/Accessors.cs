@@ -1842,6 +1842,7 @@
 			set
 			{
 				var script = Script.TheScript;
+
 				var val = value.ToString().ToLower() switch
 				{
 					"1" => 1L,

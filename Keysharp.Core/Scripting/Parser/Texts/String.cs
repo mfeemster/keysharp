@@ -9,7 +9,7 @@ namespace Keysharp.Scripting
 			if (code.Length == 0)
 				return DefaultObject;
 
-			var buffer = new StringBuilder(code.Length + 32);
+			var sb = new StringBuilder(code.Length + 32);
 			var escaped = false;
 
 			foreach (var sym in code)
@@ -18,38 +18,38 @@ namespace Keysharp.Scripting
 				{
 
 					_ = sym switch
-				{
-						'n' => buffer.Append('\n'),
-							'r' => buffer.Append('\r'),
-							'b' => buffer.Append('\b'),
-							't' => buffer.Append('\t'),
-							'v' => buffer.Append('\v'),
-							'a' => buffer.Append('\a'),
-							'f' => buffer.Append('\f'),
-							's' => buffer.Append(' '),
-							'0' => buffer.Append('\0'),
-							//case '"': _ = buffer.Append('"'); break;
-							//
-							//case '\'': _ = buffer.Append('\''); break;
-							//
-							//case ';': _ = buffer.Append(';'); break;
-							//
-							//case ':': _ = buffer.Append(':'); break;
-							//
-							//case '{': _ = buffer.Append('{'); break;
-							_ => buffer.Append(sym),//if (sym == Resolve)//This was likely here to parse legacy style syntax, but makes it impossible to send "'%", so we omit it.
-							//_ = buffer.Append(Escape);
-					};
+					{
+						'n' => sb.Append('\n'),
+						'r' => sb.Append('\r'),
+						'b' => sb.Append('\b'),
+						't' => sb.Append('\t'),
+						'v' => sb.Append('\v'),
+						'a' => sb.Append('\a'),
+						'f' => sb.Append('\f'),
+						's' => sb.Append(' '),
+						'0' => sb.Append('\0'),
+						//case '"': _ = buffer.Append('"'); break;
+						//
+						//case '\'': _ = buffer.Append('\''); break;
+						//
+						//case ';': _ = buffer.Append(';'); break;
+						//
+						//case ':': _ = buffer.Append(':'); break;
+						//
+						//case '{': _ = buffer.Append('{'); break;
+						_ => sb.Append(sym),//if (sym == Resolve)//This was likely here to parse legacy style syntax, but makes it impossible to send "'%", so we omit it.
+						//_ = buffer.Append(Escape);
+						};
 
 					escaped = false;
 				}
 				else if (sym == Escape)
 					escaped = true;
 				else
-					_ = buffer.Append(sym);
+					_ = sb.Append(sym);
 			}
 
-			return buffer.ToString();
+			return sb.ToString();
 		}
 
 		internal static string MultilineString(string code, int lineNumber, string name)
@@ -77,6 +77,7 @@ namespace Keysharp.Scripting
 				foreach (Range r in span.SplitAny(SpacesSv))
 				{
 					var option = span[r];
+
 					if (option.IsEmpty)
 						continue;
 
@@ -129,14 +130,13 @@ namespace Keysharp.Scripting
 				}
 			}
 
-			var str = new StringBuilder(code.Length);
+			var sb = new StringBuilder(code.Length);
 			var resolve = Resolve.ToString();
 			var escape = Escape.ToString();
 			var cast = Multicast.ToString();
 			var resolveEscaped = string.Concat(escape, resolve);
 			var escapeEscaped = new string(Escape, 2);
 			var castEscaped = string.Concat(escape, cast);
-
 			// Track default indent from first content line
 			string indentSample = null;
 			bool firstLine = true;
@@ -152,6 +152,7 @@ namespace Keysharp.Scripting
 				if (firstLine)
 				{
 					firstLine = false;
+
 					if (!ltrim.HasValue)
 					{
 						// Capture only the first run of identical indent characters (space or tab)
@@ -159,8 +160,10 @@ namespace Keysharp.Scripting
 						{
 							char indentChar = line[0];
 							int count = 1;
+
 							while (count < line.Length && line[count] == indentChar)
 								count++;
+
 							indentSample = new string(indentChar, count);
 						}
 					}
@@ -184,6 +187,7 @@ namespace Keysharp.Scripting
 				if (stripComments)
 				{
 					line = StripComment(line, out bool strippedAny);
+
 					if (strippedAny && line == "")
 						continue;
 				}
@@ -196,15 +200,15 @@ namespace Keysharp.Scripting
 
 				line = line.Replace("\"", Escape + "\"");//Can't use interpolated string here because the AStyle formatter misinterprets it.
 				line = line.Replace(cast, castEscaped);
-				_ = str.Append(line);
-				_ = str.Append(join);
+				_ = sb.Append(line);
+				_ = sb.Append(join);
 			}
 
-			if (str.Length == 0)
+			if (sb.Length == 0)
 				return DefaultObject;
 
-			_ = str.Remove(str.Length - join.Length, join.Length);
-			return str.ToString();
+			_ = sb.Remove(sb.Length - join.Length, join.Length);
+			return sb.ToString();
 		}
 
 		private int FindNextBalanced(string s, char ch1, char ch2)
@@ -406,23 +410,23 @@ namespace Keysharp.Scripting
 
 		//private string Replace(string input, string search, string replace)
 		//{
-		//  var buf = new StringBuilder(input.Length);
+		//  var sb = new StringBuilder(input.Length);
 		//  int z = 0, n = 0, l = search.Length;
 		//
 		//  while (z < input.Length && (z = input.IndexOf(search, z, System.StringComparison.OrdinalIgnoreCase)) != -1)
 		//  {
 		//      if (n < z)
-		//          _ = buf.Append(input, n, z - n);
+		//          _ = sb.Append(input, n, z - n);
 		//
-		//      _ = buf.Append(replace);
+		//      _ = sb.Append(replace);
 		//      z += l;
 		//      n = z;
 		//  }
 		//
 		//  if (n < input.Length)
-		//      _ = buf.Append(input, n, input.Length - n);
+		//      _ = sb.Append(input, n, input.Length - n);
 		//
-		//  return buf.ToString();
+		//  return sb.ToString();
 		//}
 	}
 }

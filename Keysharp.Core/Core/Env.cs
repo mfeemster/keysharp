@@ -633,11 +633,13 @@ namespace Keysharp.Core
 		/// <returns>The matched argument if found, else null.</returns>
 		internal static string FindCommandLineArg(string arg, bool startsWith = true)
 		{
+			var script = Script.TheScript;
+
 			if (startsWith)
-				return Script.TheScript.KeysharpArgs.FirstOrDefault(x => (x.StartsWith('-')
+				return script.ScriptArgs.FirstOrDefault(x => (x.StartsWith('-')
 						|| x.StartsWith('/')) && x.Trim(DashSlash).StartsWith(arg, StringComparison.OrdinalIgnoreCase));
 			else
-				return Script.TheScript.KeysharpArgs.FirstOrDefault(x => (x.StartsWith('-')
+				return script.ScriptArgs.FirstOrDefault(x => (x.StartsWith('-')
 						|| x.StartsWith('/')) && x.Trim(DashSlash).Contains(arg, StringComparison.OrdinalIgnoreCase));
 		}
 
@@ -650,7 +652,8 @@ namespace Keysharp.Core
 		/// <returns>The matched value if found, else null.</returns>
 		internal static string FindCommandLineArgVal(string arg, bool startsWith = true)
 		{
-			var args = Script.TheScript.KeysharpArgs;
+			var script = Script.TheScript;
+			var args = script.ScriptArgs;
 
 			for (var i = 0; i < args.Length; i++)
 			{
