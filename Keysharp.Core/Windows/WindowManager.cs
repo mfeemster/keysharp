@@ -1,4 +1,4 @@
-#if WINDOWS
+ï»¿#if WINDOWS
 namespace Keysharp.Core.Windows
 {
 	/// <summary>
@@ -110,7 +110,7 @@ namespace Keysharp.Core.Windows
 				// Get thread of aWindow (which should be the foreground window).
 				thread_id = WindowsAPI.GetWindowThreadProcessId(aWindow, out var _);
 				// Get focus.  Benchmarks showed this additional step added only 6% to the time,
-				// and the total was only around 4µs per iteration anyway (on a Core i5-4460).
+				// and the total was only around 4ï¿½s per iteration anyway (on a Core i5-4460).
 				// It is necessary for UWP apps such as Microsoft Edge, and any others where
 				// the top-level window belongs to a different thread than the focused control.
 				var thread_info = GUITHREADINFO.Default;

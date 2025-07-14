@@ -59,9 +59,8 @@ namespace Keysharp.Core.COM
 			com = o;
 			var script = Script.TheScript;
 			var p = c <= 1 ? script.ComEnumeratorData.p1 : script.ComEnumeratorData.p2;
-			var fo = (FuncObj)p.Clone();
+			fo = (FuncObj)p.Clone();
 			fo.Inst = this;
-			CallFunc = fo;
 
 			try
 			{
@@ -84,11 +83,11 @@ namespace Keysharp.Core.COM
 		/// </summary>
 		/// <param name="value">A reference to the value.</param>
 		/// <returns>True if the iterator position has not moved past the last element, else false.</returns>
-		public override object Call(ref object value)
+		public override object Call([ByRef] object value)
 		{
 			if (MoveNext())
 			{
-				(value, _) = Current;
+				Script.SetPropertyValue(value, "__Value", Current.Item1);
 				return true;
 			}
 
@@ -101,21 +100,22 @@ namespace Keysharp.Core.COM
 		/// <param name="type">A reference to the COM type value.</param>
 		/// <param name="val">A reference to the object value.</param>
 		/// <returns>True if the iterator position has not moved past the last element, else false.</returns>
-		public override object Call(ref object type, ref object val)
+		public override object Call([ByRef] object type, [ByRef] object val)
 		{
 			if (MoveNext())
 			{
-				(type, val) = Current;
+				Script.SetPropertyValue(type, "__Value", Current.Item1);
+				Script.SetPropertyValue(val, "__Value", Current.Item2);
 				return true;
 			}
 
 			return false;
 		}
 
-		/// <summary>
-		/// The implementation for <see cref="IComparer.Dispose"/> which internally resets the iterator.
-		/// </summary>
-		public void Dispose() => Reset();
+        /// <summary>
+        /// The implementation for <see cref="IComparer.Dispose"/> which internally resets the iterator.
+        /// </summary>
+        public void Dispose() => Reset();
 
 		/// <summary>
 		/// The implementation for <see cref="IEnumerator.MoveNext"/> which moves the iterator to the next position.

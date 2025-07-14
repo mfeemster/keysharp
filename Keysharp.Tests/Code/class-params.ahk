@@ -7,9 +7,9 @@ class testclass
 	__New(_a, _b, _c)
 	{
 		global
-		a := _a
-		b := _b
-		c := _c
+		this.a := _a
+		this.b := _b
+		this.c := _c
 	}
 }
 
@@ -24,10 +24,10 @@ class testsubclass extends testclass
 	{
 		global
 		super.__New(p1, p2, p3)
-		x := p1 * 10
-		y := p2 * 10
-		z := p3 * 10
-		zz := p4 * 10
+		this.x := p1 * 10
+		this.y := p2 * 10
+		this.z := p3 * 10
+		this.zz := p4 * 10
 	}
 }
 
@@ -37,72 +37,72 @@ testsubclassobj := testsubclass(1, 2, 3, 4)
 val := testclassobj.a
 
 If (val == 1)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 val := testclassobj.b
 
 If (val == 2)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 val := testclassobj.c
 
 If (val == 3)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 val := testsubclassobj.a
 
 If (val == 1)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 val := testsubclassobj.b
 
 If (val == 2)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 val := testsubclassobj.c
 
 If (val == 3)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 val := testsubclassobj.x
 
 If (val == 10)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 val := testsubclassobj.y
 
 If (val == 20)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 val := testsubclassobj.z
 
 If (val == 30)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 val := testsubclassobj.zz
 
 If (val == 40)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 class testclassnoargs
 {
@@ -113,9 +113,9 @@ class testclassnoargs
 	__New()
 	{
 		global
-		a := 1
-		b := 2
-		c := 3
+		this.a := 1
+		this.b := 2
+		this.c := 3
 	}
 }
 
@@ -128,8 +128,8 @@ class testsubclassfourargs extends testclassnoargs
 	{
 		global
 		super.__New()
-		x := p1 * 10
-		y := p2 * 10
+		this.x := p1 * 10
+		this.y := p2 * 10
 	}
 }
 
@@ -139,37 +139,37 @@ testsubclassobj := testsubclassfourargs(1, 2)
 val := testclassobj.a
 
 If (val == 1)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 val := testclassobj.b
 
 If (val == 2)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 val := testclassobj.c
 
 If (val == 3)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 val := testsubclassobj.x
 
 If (val == 10)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 val := testsubclassobj.y
 
 If (val == 20)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 class testclassthreeargs
 {
@@ -180,9 +180,9 @@ class testclassthreeargs
 	__New(_a, _b, _c)
 	{
 		global
-		a := _a
-		b := _b
-		c := _c
+		this.a := _a
+		this.b := _b
+		this.c := _c
 	}
 }
 
@@ -191,102 +191,102 @@ class testsubclassnoargs extends testclassthreeargs
 	x := ""
 	y := ""
 	
-	__New()
+	__New(a, b, c)
 	{
 		global
-		super.__New()
-		x := 100
-		y := 200
+		super.__New(a, b, c)
+		this.x := 100
+		this.y := 200
 	}
 }
 
 testclassobj := testclassthreeargs(4, 5, 6)
-testsubclassobj := testsubclassnoargs()
+testsubclassobj := testsubclassnoargs(1, 2, 3)
 
 val := testclassobj.a
 
 If (val == 4)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 val := testclassobj.b
 
 If (val == 5)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 val := testclassobj.c
 
 If (val == 6)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 val := testsubclassobj.x
 
 If (val == 100)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 val := testsubclassobj.y
 
 If (val == 200)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 val := testsubclassobj.a
 
-If (val == unset)
-	FileAppend, "pass", "*"
+If (IsSet(val))
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 val := testsubclassobj.b
 
-If (val == unset)
-	FileAppend, "pass", "*"
+If (IsSet(val))
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 val := testsubclassobj.c
 
-If (val == unset)
-	FileAppend, "pass", "*"
+If (IsSet(val))
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 testsubclassobj := testsubclassnoargs(7, 8, 9) ; No constructor parameters defined in the subclass, so just forward them to the base.
 
 val := testsubclassobj.a
 
 If (val == 7)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 val := testsubclassobj.b
 
 If (val == 8)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 val := testsubclassobj.c
 
 If (val == 9)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 class class1
 {
 	sum := 0
 
-	__New()
+	__New(args*)
 	{
 		global sum
 		local temp := 0
@@ -296,7 +296,7 @@ class class1
 			temp += n
 		}
 
-		sum := temp
+		this.sum := temp
 	}
 }
 
@@ -304,30 +304,30 @@ arr := [1, 2, 3]
 c1 := class1()
 
 if (c1.sum == 0)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 c1 := class1(arr*)
 
 if (c1.sum == 6)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 c1 := class1(1, arr*)
 		
 if (c1.sum == 7)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 c1 := class1(1, 2, arr*)
 
 if (c1.sum == 9)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 c1 := ""
 
@@ -335,7 +335,7 @@ class class2
 {
 	sum := 0
 
-	__New(*)
+	__New(args*)
 	{
 		global sum
 		local temp := 0
@@ -345,37 +345,37 @@ class class2
 			temp += n
 		}
 
-		sum := temp
+		this.sum := temp
 	}
 }
 
 c2 := class2()
 
 if (c2.sum == 0)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 c2 := class2(1, 2, 3)
 
 if (c2.sum == 6)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 c2 := class2(arr*)
 
 if (c2.sum == 6)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 c2 := class2(1, 2, arr*)
 
 if (c2.sum == 9)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 c2 := ""
 
@@ -393,30 +393,30 @@ class class3
 			temp += n
 		}
 
-		sum := temp
+		this.sum := temp
 	}
 }
 
 c3 := class3(1, 2, 3)
 
 if (c3.sum == 6)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 c3 := class3(arr*)
 
 if (c3.sum == 6)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 c3 := class3(1, 2, arr*)
 
 if (c3.sum == 9)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 c3 := ""
 
@@ -429,7 +429,7 @@ class class4
 		global sum
 		local temp := p1 + p2
 
-		if (theparams != unset)
+		if (theparams.Length)
 		{
 			for n in theparams
 			{
@@ -437,23 +437,23 @@ class class4
 			}
 		}
 
-		sum := temp
+		this.sum := temp
 	}
 }
 
 c4 := class4(1, 2)
 
 if (c4.sum == 3)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 c4 := class4(1, 2, arr*)
 
 if (c4.sum == 9)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 class class5
 {
@@ -467,6 +467,6 @@ c5 := class5()
 val := c5.func()
 
 if (val == "`r`n`t")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"

@@ -7,6 +7,6 @@
 			
 	if (val >= 0)
 #endif
- 	FileAppend, "pass", "*"
+ 	FileAppend "pass", "*"
 else
-  	FileAppend, "fail", "*"
+  	FileAppend "fail", "*"

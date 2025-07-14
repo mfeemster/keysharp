@@ -14,37 +14,37 @@ func()
 	static z := 33
 
 	If (x == 11)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 
 	If (y == 22)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 
 	If (z == 33)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 }
 
 func()
 
 If (x == 11)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 If (y == 2)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 If (z == 3)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := 1
 y := 2
@@ -58,57 +58,57 @@ func2()
 	static z := 33, zz := 333
 
 	If (x == 11)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 
 	If (xx == 111)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 
 	If (y == 22)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 	
 	If (yy == 222)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 
 	If (z == 33)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 
 	If (zz == 333)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 }
 
 func2()
 
 If (x == 11)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 If (xx == 111)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 If (y == 2)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 If (z == 3)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := 1
 y := 2
@@ -122,54 +122,54 @@ func3()
 	static z := initfunc(9, 10) * 4, zz := initfunc(11, 12) * 5
 
 	If (x == 3)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 
 	If (xx == 14)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 
 	If (y == 11)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 	
 	If (yy == 45)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 
 	If (z == 76)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 
 	If (zz == 115)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 }
 
 func3()
 
 If (x == 3)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 If (xx == 14)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 If (y == 2)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 If (z == 3)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"

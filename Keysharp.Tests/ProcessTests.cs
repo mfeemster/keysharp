@@ -8,22 +8,22 @@ namespace Keysharp.Tests
 		[Test, Category("Process")]
 		public void ProcessRunWaitClose()
 		{
-			object pid = null;
+			VarRef pid = new(null);
 #if WINDOWS
-			_ = Run("notepad.exe", "", "max", ref pid);
-			_ = ProcessWait(pid);
-			_ = ProcessSetPriority("H", pid);
+			_ = Run("notepad.exe", "", "max", pid);
+			_ = ProcessWait(pid.__Value);
+			_ = ProcessSetPriority("H", pid.__Value);
 
-			if (ProcessExist(pid) != 0)
+			if (ProcessExist(pid.__Value) != 0)
 			{
 				Thread.Sleep(2000);
-				_ = ProcessClose(pid);
-				_ = ProcessWaitClose(pid);
+				_ = ProcessClose(pid.__Value);
+				_ = ProcessWaitClose(pid.__Value);
 			}
 
 			Thread.Sleep(1000);
-			pid = ProcessExist("notepad.exe");
-			Assert.AreEqual(0L, pid);
+			pid.__Value = ProcessExist("notepad.exe");
+			Assert.AreEqual(0L, pid.__Value);
 			_ = RunWait("notepad.exe", "", "max");
 			Thread.Sleep(1000);
 			Assert.AreEqual(0L, ProcessExist("notepad.exe"));
@@ -57,7 +57,7 @@ namespace Keysharp.Tests
 			Assert.IsTrue(TestScript("process-run-wait-close", false));
 			//Can't really test RunAs() or Shutdown(), but they have been manually tested individually.
 #else
-			_ = Run("xed", "", "max", ref pid);
+			_ = Run("xed", "", "max", pid);
 			_ = ProcessWait(pid);
 
 			//Skip process priority raising on linux, it can't be raised

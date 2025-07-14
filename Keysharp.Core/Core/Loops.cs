@@ -1,3 +1,4 @@
+using System.Security.AccessControl;
 using EnumerationOptions = System.IO.EnumerationOptions;
 
 namespace Keysharp.Core
@@ -399,18 +400,18 @@ namespace Keysharp.Core
 		///     <see cref="IEnumerable"/><br/>
 		/// </exception>
 		/// <exception cref="UnsetError">An <see cref="UnsetError"/> exception is thrown if the object is null.</exception>
-		public static KeysharpEnumerator MakeEnumerator(object obj, object count)
+		public static Common.Containers.KeysharpEnumerator MakeEnumerator(object obj, object count)
 		{
 			var ct = count.Ai();
 
 			if (obj is I__Enum ienum)
-				return ienum.__Enum(ct);
+				return (KeysharpEnumerator)ienum.__Enum(ct).Inst;
 			else if (obj is OwnPropsIterator opi)
 			{
 				opi.GetVal = ct != 1;
 				return opi;
 			}
-			else if (obj is KeysharpEnumerator kse)
+			else if (obj is Common.Containers.KeysharpEnumerator kse)
 				return kse;
 			//else if (obj is IEnumerable<(object, object)> ie0)
 			//  return ie0.GetEnumerator();
@@ -419,7 +420,7 @@ namespace Keysharp.Core
 			//else if (obj is IEnumerable ie)
 			//  return ie.Cast<object>().Select(o => (o, o)).GetEnumerator();
 			else if (obj is object[] oa)
-				return new Array(oa).__Enum(count.Ai());
+				return (KeysharpEnumerator)new Array(oa).__Enum(count.Ai()).Inst;
 			else if (Functions.GetFuncObj(obj, null) is FuncObj fo)
 			{
 				//if (fo is BoundFunc bfo)
@@ -433,7 +434,7 @@ namespace Keysharp.Core
 			{
 				var tempEnum = mph.CallFunc(obj, [count]);
 
-				if (tempEnum is KeysharpEnumerator kse2)
+				if (tempEnum is Common.Containers.KeysharpEnumerator kse2)
 					return kse2;
 				else
 					return MakeEnumerator(tempEnum, count);
@@ -446,7 +447,7 @@ namespace Keysharp.Core
 					{
 						var tempEnum = ifocall.Call(obj, count);
 
-						if (tempEnum is KeysharpEnumerator kse3)
+						if (tempEnum is Common.Containers.KeysharpEnumerator kse3)
 							return kse3;
 						else
 							return MakeEnumerator(tempEnum, count);
@@ -472,14 +473,39 @@ namespace Keysharp.Core
 			return default;
 		}
 
-		/// <summary>
-		/// Removes the current loop from the stack.
-		/// This should never be called directly by the user and instead is used<br/>
-		/// in the generated C# code.
-		/// If the loop type was <see cref="LoopType.File"/>, the file is closed before returning.
-		/// </summary>
-		/// <returns>The popped loop if any, else null.</returns>
-		public static LoopInfo Pop()
+        /// <summary>
+        /// Calls obj.__Enum, enumerates the function, and returns an array of the values of the VarRefs
+        /// </summary>
+        /// <param name="obj">The object to query.</param>
+        /// <param name="args">An array of VarRefs.</param>
+        /// <returns>Each element of the <see cref="IEnumerable"/>.</returns>
+        public static IEnumerable MakeEnumerable(object obj, params object[] args)
+        {
+            var numOfVars = args.Length;
+            KeysharpEnumerator ke = MakeEnumerator(obj, numOfVars == 0 ? 1 : numOfVars);
+
+			if (numOfVars == 0)
+			{
+				object temp = null;
+				args = new object[] { new VarRef(() => temp, (v) => temp = v) };
+				while (ke.Call(args).IsCallbackResultNonEmpty())
+					yield return temp;
+			}
+			else
+			{
+				while (ke.Call(args).IsCallbackResultNonEmpty())
+					yield return true;
+			}
+        }
+
+        /// <summary>
+        /// Removes the current loop from the stack.
+        /// This should never be called directly by the user and instead is used<br/>
+        /// in the generated C# code.
+        /// If the loop type was <see cref="LoopType.File"/>, the file is closed before returning.
+        /// </summary>
+        /// <returns>The popped loop if any, else null.</returns>
+        public static LoopInfo Pop()
 		{
 			var s = Script.TheScript.LoopData.loopStack.Value;
 

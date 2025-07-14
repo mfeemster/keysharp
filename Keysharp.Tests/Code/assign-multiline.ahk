@@ -1,15 +1,15 @@
 product := "Prod"
 color := "Red"
 
-x := 
+x := "
 (
 123
-)
+)"
 
 If (x = 123)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 Var := "
 (
@@ -24,27 +24,27 @@ ProductIsAvailable := ProductIsAvailable := (Color = "Red") ?
 	ProductIsAvailableInColor(Product, Color)
 
 If (ProductIsAvailable == false)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 ProductIsAvailable := (Color = "Green")
 	? false  ; We don't have any red products, so don't bother calling the function.
 	: ProductIsAvailableInColor(Product, Color)
 
 If (ProductIsAvailable == 123)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (Color = "Red" or Color = "Green"  or Color = "Blue"   ; Comment.
 	or Color = "Black" or Color = "Gray" or Color = "White"   ; Comment.
 	and ProductIsAvailableInColor(Product, Color))   ; Comment.
 {
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 }
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 arr :=  ; The assignment operator causes continuation.
 [  ; Brackets enclose the following two lines.
@@ -53,19 +53,22 @@ arr :=  ; The assignment operator causes continuation.
 ]
 
 if (arr[1] = "item 1")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (arr[2] == "item 2")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-if (arr[3] == unset)
-	FileAppend, "pass", "*"
-else
-	FileAppend, "fail", "*"
+try {
+	if (arr[3] == unset)
+		FileAppend "fail", "*"
+	FileAppend "fail", "*"
+} catch {
+	FileAppend "pass", "*"
+}
 
 arr := [
   "item 1",
@@ -80,17 +83,17 @@ Line 2 of the text. By default, a linefeed (`n) is present between lines.
 )", "./multilines.txt")
 
 if (FileExist("./multilines.txt"))
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 teststr := "Line 1 of the text.`nLine 2 of the text. By default, a linefeed (`n) is present between lines."
 data2 := FileRead("./multilines.txt")
 
 if (data2 = teststr)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 FileDelete("./multilines.txt")
 
@@ -103,9 +106,9 @@ A second line not beginning in a tab.
 teststr := "A line of text beginning in a tab which should be removed.`nA second line not beginning in a tab."
 
 if (Var = teststr)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 Var := "
 ( LTrim0
@@ -116,10 +119,10 @@ A second line not ending in a tab.
 teststr := "`tA line of text not ending in a tab.`nA second line not ending in a tab."
 
 if (Var = teststr)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
-
+	FileAppend "fail", "*"
+		
 Var := "
 (
 A line of text.
@@ -144,9 +147,9 @@ A second line ending in a tab.
 teststr := "A line of text ending in a tab.`t`nA second line ending in a tab.`t"
 
 if (Var = teststr)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 Var := "   ; Comment.
 (
@@ -156,9 +159,9 @@ Var := "   ; Comment.
 teststr := "; This is not a comment; it is literal. Include the word Comments in the line above to make it a comment."
 
 if (Var = teststr)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 Var := "   ; Comment.
 ( Comments
@@ -168,9 +171,9 @@ Var := "   ; Comment.
 teststr := ""
 
 if (Var = teststr)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 Var := "
 ( Join|
@@ -182,9 +185,9 @@ Line 3
 teststr := "Line 1|Line 2|Line 3"
 
 if (Var = teststr)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 Var := "
 (
@@ -194,9 +197,9 @@ Var := "
 teststr := ")Escaped closing paren."
 
 if (Var = teststr)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 Var := "
 (comment
@@ -211,9 +214,9 @@ string
 teststr := "this ismorestring" ; By default trailing spaces are removed, and a lone comment is stripped with any leading newline, spaces, and trailing spaces
 
 if (Var = teststr)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 Var := "
 ( `
@@ -224,115 +227,115 @@ Line 2 of the text. By default, a linefeed (`n) is present between lines.
 teststr := "Line 1 of the text.`nLine 2 of the text. By default, a linefeed (``n) is present between lines."
 
 if (Var = teststr)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 a := true
 b := false
 c := a AND b
 
 if (!c)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 c := true
 c := a AND
 b
 
 if (!c)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 c := true
 c := a
 and b
 
 if (!c)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 a := true
 b := false
 c := a OR b
 
 if (c)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 c := false
 c := a OR
 b
 
 if (c)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 c := false
 c := a
 or b
 
 if (c)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 a := true
 b := false
 c := a OR b
 
 if (c)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 c := false
 c := a OR
 b
 
 if (c)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 c := false
 c := a
 or b
 
 if (c)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 c := NOT
 c
 
 if (!c)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 c := true
 c := NOT a OR b
 
 if (!c)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 c := true
 c := NOT a
 OR b
 
 if (!c)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 c := true
 c := NOT
@@ -340,27 +343,27 @@ a
 OR b
 
 if (!c)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 c := true
 c := NOT
 (a OR b)
 
 if (!c)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 c := true
 c := NOT (a OR
 b)
 
 if (!c)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 c := true
 c := NOT (a
@@ -368,17 +371,17 @@ OR
 b)
 
 if (!c)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 obj := Map()
 
 If (obj is
 KeysharpObject)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 c := obj is
 KeysharpObject AND
@@ -387,17 +390,17 @@ OR
 b
 
 If (c)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 c := NOT (obj
 is KeysharpObject)
 
 If (!c)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := "asdf"
 y := "qwer"
@@ -405,35 +408,33 @@ z := x
 . y
 
 If (z == "asdfqwer")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 z := ""
 z := x .
 y
 
 If (z == "asdfqwer")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-x := 123.
-456
+x := 123.456
 
 If (x == 123.456)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := 0
-x := 123
-.456
+x := 123.456
 
 If (x == 123.456)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 ProductIsAvailableInColor(a, b)
 {

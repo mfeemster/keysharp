@@ -422,7 +422,7 @@ namespace Keysharp.Core
 
 #if WINDOWS
 
-		protected override void WndProc(ref Message m)
+        protected override void WndProc(ref Message m)
 		{
 			if (!GuiHelper.CallMessageHandler(this, ref m))
 				base.WndProc(ref m);
@@ -807,7 +807,7 @@ namespace Keysharp.Core
 			removeStyle = _removeStyle;
 			removeExStyle = _removeExStyle;
 			customColors = _customColors;
-			SetStyle(ControlStyles.UserPaint, customColors);
+			SetStyle(ControlStyles.UserPaint, true); // If this is not set at construction then later the user can't change the background color
 			SetStyle(ControlStyles.OptimizedDoubleBuffer, true);
 		}
 
@@ -1149,6 +1149,7 @@ namespace Keysharp.Core
 		internal void SetColor(Color color)
 		{
 			bgcolor = color;
+			//((Control)this).BackColor = color;
 			DrawMode = TabDrawMode.OwnerDrawFixed;
 
 			foreach (TabPage tp in TabPages)

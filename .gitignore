@@ -6,7 +6,9 @@
 /Keysharp.Tests/obj
 /.vs/Keysharp
 /bin
+/Keysharp/bin
 /Keysharp/obj
+/Keysharp.Core/bin
 /Keysharp.Core/obj
 /Keysharp.Forms/bin
 /Keysharp.Forms/obj
@@ -26,9 +28,9 @@
 *.zip
 /Keysharp.Tests/Code/Gui/methpropskeysharp.txt
 /Keysharp.Tests/Code/test-text-file-out.txt
-/Keysharp/bin
-/Keysharp.Core/bin
-/Keysharp.OutputTest/bin
-/Keysharp.Tests/bin
+/Keysharp.Core/Scripting/Parser/Antlr/.antlr
+/Keysharp.Core/bin/x64/Debug/net9.0-windows
+/Keysharp/bin/x64/Debug/net9.0-windows
 /Keysharp.Tests/Code/Gui/guitest.deps.json
 /Keysharp.Tests/Code/Gui/guitest.runtimeconfig.json
+/.vs

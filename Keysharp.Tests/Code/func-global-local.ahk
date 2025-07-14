@@ -13,44 +13,44 @@ func()
 	local z := 33
 
 	If (x == 11)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 
 	If (y == 22)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 
 	If (z == 33)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 
 	z := 44
 
 	If (z == 44)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 }
 
 func()
 
 If (x == 11)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 If (y == 22)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 If (z == 3)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := 1
 y := 2
@@ -63,37 +63,37 @@ func2()
 	local z := 33
 
 	If (x == 11)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 
 	If (y == 22)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 
 	If (z == 33)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 }
 
 func2()
 
 If (x == 11)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 If (y == 22)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 If (z == 3)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := 1
 y := 2
@@ -106,37 +106,37 @@ func3()
 	local x := 11, z := 33
 
 	If (x == 11)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 
 	If (y == 22)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 
 	If (z == 33)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 }
 
 func3()
 
 If (x == 1)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 If (y == 22)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 If (z == 3)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := 1
 y := 2
@@ -149,37 +149,37 @@ func4()
 	local x := initfunc(3, 4) * 2, z := initfunc(5, 6) * 3
 
 	If (x == 14)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 
 	If (y == 3)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 
 	If (z == 33)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 }
 
 func4()
 
 If (x == 1)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 If (y == 3)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 If (z == 3)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 funcretval(xx)
 {
@@ -197,9 +197,9 @@ y := 0
 func5()
 
 If (y == 123)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 clrs := Map()
 clrs["Red"] := "ff0000"
@@ -211,9 +211,9 @@ func6()
 	x := clrs["Red"]
 
 	if (x == "ff0000")
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 }
 
 func6()
@@ -223,9 +223,9 @@ func7()
 	x := clrs.Count
 
 	if (x == 3)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 }
 
 func7()
@@ -238,9 +238,9 @@ func8()
 func8()
 
 if (clrs["Red"] == 123)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-  	FileAppend, "fail", "*"
+  	FileAppend "fail", "*"
 
 func9()
 {
@@ -250,26 +250,26 @@ func9()
 func9()
 
 if (clrs.Count == 3)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-  	FileAppend, "fail", "*"
+  	FileAppend "fail", "*"
 
 func10()
 {
 	clrs.Clear()
 
 	if (clrs.Count == 0)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 }
 
 func10()
 
 if (clrs.Count == 0)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-  	FileAppend, "fail", "*"
+  	FileAppend "fail", "*"
 
 funcretexpr()
 {
@@ -279,9 +279,9 @@ funcretexpr()
 x := funcretexpr()
 
 if (x == 999)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-  	FileAppend, "fail", "*"
+  	FileAppend "fail", "*"
 
 func11()
 {
@@ -293,6 +293,6 @@ x := 5
 func11()
 
 if (x == 12)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-  	FileAppend, "fail", "*"
+  	FileAppend "fail", "*"

@@ -873,11 +873,9 @@ namespace Keysharp.Core
 		IDataObject dataObject = Clipboard.GetDataObject();
 		string[] formats;
 
-		public new (Type, object) super => (typeof(KeysharpObject), this);
+		public ClipboardAll(params object[] args) : base(args) { }
 
-		public ClipboardAll(params object[] args) => _ = __New(args);
-
-		public new object __New(params object[] args)
+		public override object __New(params object[] args)
 		{
 			Save();
 			return DefaultObject;
@@ -905,11 +903,11 @@ namespace Keysharp.Core
 	}
 #elif WINDOWS
 
-	/// <summary>
-	/// A class that represents clipboard data.
-	/// This is just a thin derivation of <see cref="Buffer"/>.
-	/// </summary>
-	public class ClipboardAll : Buffer
+    /// <summary>
+    /// A class that represents clipboard data.
+    /// This is just a thin derivation of <see cref="Buffer"/>.
+    /// </summary>
+    public class ClipboardAll : Buffer
 	{
 		/// <summary>
 		/// Constructor that just passes the data to the base.
@@ -923,7 +921,7 @@ namespace Keysharp.Core
 		/// <summary>
 		/// The implementation for <see cref="KeysharpObject.super"/> for this class to return this type.
 		/// </summary>
-		public new (Type, object) super => (typeof(KeysharpObject), this);
+		public (Type, object) super => (typeof(KeysharpObject), this);
 
 		public ClipboardAll(params object[] args) => _ = __New(args);
 	}

@@ -18,6 +18,12 @@
 		/// <returns>An <see cref="IFuncObj"/> which can later be called like a function.</returns>
 		public static IFuncObj Func(object funcName, object obj = null, object paramCount = null) => GetFuncObj(funcName, obj, paramCount);
 
+		public static IFuncObj Func(object funcName, Type t, object paramCount = null) => new FuncObj(funcName.As(), t, paramCount);
+
+		public static IFuncObj Func(Delegate del, object obj = null) => new FuncObj(del, obj ?? del.Target);
+
+		public static IFuncObj Closure(Delegate del, object obj = null) => new Closure(del, obj ?? del.Target);
+
 		/// <summary>
 		/// Internal helper to get a function object which supports different ways of identifying such.
 		/// </summary>
@@ -117,7 +123,7 @@
 			var mph = Reflections.FindAndCacheMethod(v.GetType(), n.Length > 0 ? n : "Call", count);
 
 			if (mph != null && mph.mi != null)
-				return new FuncObj(mph.mi, v);
+				return new FuncObj(mph.mi, null);
 
 			return Errors.MethodErrorOccurred($"Unable to retrieve method {n} from object of type {v.GetType()} with parameter count {count}.");
 		}
@@ -133,10 +139,14 @@
 		/// <returns>1 if the method was found on the object, else 0.</returns>
 		public static long HasMethod(object value, object name = null, object paramCount = null)
 		{
-			var val = value;
 			var n = name.As();
 			var count = paramCount.Ai(-1);
-			var mph = Reflections.FindAndCacheMethod(val.GetType(), n.Length > 0 ? n : "Call", count);
+			if (value is FuncObj)
+				return 1L;
+			else if (value is KeysharpObject kso)
+                return n == "" ? HasProp(value, "Call") : (kso.op != null && Script.TryGetOwnPropsMap(kso, n, out var opm) && opm != null && opm.Call != null ? 1L : 0L);
+				
+			var mph = Reflections.FindAndCacheMethod(value.GetType(), n.Length > 0 ? n : "Call", count);
 			return mph != null && mph.mi != null ? 1L : 0L;
 		}
 
@@ -149,7 +159,7 @@
 		/// This is used for indexers which can take 1 or more parameters. Default: 0.
 		/// </param>
 		/// <returns>1 if the property was found on the object, else 0.</returns>
-		public static long HasProp(object value, object name, object paramCount = null)
+		public static long HasProp(object value, object name, object paramCount = null, bool checkBase = true)
 		{
 			var val = value;
 			var n = name.As();
@@ -159,6 +169,17 @@
 			{
 				if (kso.op != null && kso.op.ContainsKey(n))
 					return 1L;
+
+				if (checkBase)
+				{
+                    var Base = kso;
+                    while (Script.GetObjectPropertyValue(kso, Base, "base", out var nextBase) && nextBase != null && nextBase is KeysharpObject)
+                    {
+                        Base = (KeysharpObject)nextBase;
+						if (Base != null && Base.op.ContainsKey(n))
+							return 1L;
+                    }
+                }
 			}
 
 			var mph = Reflections.FindAndCacheProperty(val.GetType(), n, count);
@@ -170,25 +191,24 @@
 		/// </summary>
 		/// <param name="obj">The object to find the method on.</param>
 		/// <param name="name">A method name. If omitted, the bound function calls obj itself.</param>
-		/// <param name="paramCount">The number of parameters the property takes. Default: use the first function found.</param>
 		/// <param name="args">The arguments to bind to the function.</param>
 		/// <returns>An new <see cref="BoundFunc"/> object with the specified arguments bound to it.</returns>
-		public static object ObjBindMethod(object obj, object name = null, object paramCount = null, params object[] args)
+		public static object ObjBindMethod(object obj, object name = null, params object[] args)
 		{
 			var o = obj;
-			var n = name.As();
-			var count = paramCount.Ai(-1);
-			object[] a = args;
+			var n = name.As("Call");
 
-			if (Reflections.FindAndCacheMethod(o.GetType(), n, count) is MethodPropertyHolder mph && mph.mi != null)
-				return new BoundFunc(mph.mi, a, o);
+			if (obj is KeysharpObject kso && Script.TryGetPropertyValue(kso, name, out object oifo) && oifo is IFuncObj ifo && ifo != null)
+				return ifo.Bind([obj, ..args]);
+			else if (Reflections.FindAndCacheMethod(o.GetType(), n, -1) is MethodPropertyHolder mph && mph.mi != null)
+				return new BoundFunc(mph.mi, [obj, ..args], o);
 
-			return DefaultObject;
+			return Errors.ErrorOccurred($"Unable to retrieve method {name} for object.");
 		}
 	}
 
 	internal class FunctionData
 	{
-		internal ConcurrentLfu<object, IFuncObj> cachedFuncObj = new (Caching.DefaultCacheCapacity, Environment.ProcessorCount, new ThreadPoolScheduler(), new CaseEqualityComp(eCaseSense.Off));
+		internal ConcurrentLfu<object, IFuncObj> cachedFuncObj = new (2000, Environment.ProcessorCount, new ThreadPoolScheduler(), new CaseEqualityComp(eCaseSense.Off));
 	}
 }

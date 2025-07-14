@@ -1,4 +1,6 @@
-﻿namespace Keysharp.Core.Common.Keyboard
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace Keysharp.Core.Common.Keyboard
 {
 	public class HotstringManager
 	{
@@ -271,6 +273,6 @@
 	{
 		public bool Equals(char x, char y) => char.ToLower(x) == char.ToLower(y);
 
-		public int GetHashCode([DisallowNull] char obj) => char.ToLower(obj).GetHashCode();
+		public int GetHashCode([System.Diagnostics.CodeAnalysis.DisallowNull] char obj) => char.ToLower(obj).GetHashCode();
 	}
 }

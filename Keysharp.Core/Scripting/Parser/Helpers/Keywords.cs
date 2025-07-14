@@ -56,11 +56,32 @@
 		internal const string DirvIncludeAgain = "includeagain";
 		internal const char Divide = '/';
 
-		//internal const string BitShiftLeft = "<<";
-		//internal const string BitShiftRight = ">>";
-		//internal const string GreaterOrEqual = ">=";
-		//internal const string LessOrEqual = "<=";
-		internal const char Equal = '=';
+        internal const string ClassStaticPrefix = "static";
+		internal const string InternalPrefix = "_ks_";
+        internal const string TempVariablePrefix = InternalPrefix + "temp";
+        internal const string AnonymousLambdaPrefix = InternalPrefix + "AnonLambda_";
+        internal const string AnonymousFatArrowLambdaPrefix = InternalPrefix + "AnonFatArrowLambda_";
+
+		public const string MainClassName = "Program";
+		public const string AutoExecSectionName = "AutoExecSection";
+		public const string MainScriptVariableName = "MainScript";
+
+		public static Dictionary<string, string> TypeNameAliases = new(StringComparer.OrdinalIgnoreCase)
+		{
+			{ "int64", "Integer" },
+			{ "double", "Float" },
+			{ "KeysharpObject", "Object" },
+			{ "FuncObj", "Func" }
+		};
+
+		internal static FrozenSet<string> ClassReservedKeywords = FrozenSet.Create(StringComparer.OrdinalIgnoreCase,
+				"Call", "__New", "__Init", "__Get", "__Set", "__Item", "__Class", "__StaticInit");
+
+        //internal const string BitShiftLeft = "<<";
+        //internal const string BitShiftRight = ">>";
+        //internal const string GreaterOrEqual = ">=";
+        //internal const string LessOrEqual = "<=";
+        internal const char Equal = '=';
 
 		internal const string ErrorLevelStr = "ErrorLevel";
 		internal const string ExCommand = "Invalid command name";
@@ -622,18 +643,48 @@
 		internal static readonly SearchValues<char> SpaceTabOpenParenSv = SearchValues.Create(SpaceTabOpenParen);
 		internal static readonly char[] TrimLine = "\t\r\n ".ToCharArray();
 		internal static readonly char[] TrimSec = "[]".ToCharArray();
-		internal static readonly char[] SpaceMultiDelim;
 		//internal static readonly SearchValues<char> SpaceMultiDelimSv;
-		internal static readonly char[] FlowDelimiters;
-		internal static readonly SearchValues<char> FlowDelimitersSv;
-		internal static readonly char[] FlowDelimiters2;
 		internal static readonly char[] PlusMinus = ['+', '-'];
+
+		internal static FrozenSet<string> keywords = FrozenSet.Create(
+			AndTxt,
+			OrTxt,
+			NotTxt,
+			TrueTxt,
+			FalseTxt,
+			NullTxt,
+			IsTxt,
+			FlowBreak,
+			FlowContinue,
+			FlowCase,
+			FlowClass,
+			FlowDefault,
+			FlowFor,
+			FlowElse,
+			FlowExtends,
+			FlowGosub,
+			FlowGoto,
+			FlowIf,
+			FlowLoop,
+			FlowReturn,
+			FlowWhile,
+			FunctionLocal,
+			FunctionGlobal,
+			FunctionStatic,
+			FlowTry,
+			FlowCatch,
+			FlowFinally,
+			FlowUntil,
+			FlowSwitch,
+			FlowThrow);
+
+        public static string GetKeywords() => string.Join(' ', keywords);
 
 
 #if !LEGACY
 		internal const char LastVar = '$';
 #endif
-		internal static readonly char[] zerochars = ['0'];
+        internal static readonly char[] zerochars = ['0'];
 #if !LEGACY
 		internal const char Escape = DefaultEscape;
 #else
@@ -657,25 +708,5 @@
 		internal const char Multicast = DefaultMulticast;
 #else
 #endif
-
-		static Keywords()
-		{
-			var offset = 2;
-			FlowDelimiters = new char[Spaces.Length + offset];
-			FlowDelimiters[0] = Multicast;
-			FlowDelimiters[1] = HotkeyBound;
-			Spaces.CopyTo(FlowDelimiters, offset);
-			FlowDelimitersSv = SearchValues.Create(FlowDelimiters);
-			offset = 4;
-			FlowDelimiters2 = new char[Spaces.Length + offset];
-			FlowDelimiters2[0] = Multicast;
-			FlowDelimiters2[1] = BlockOpen;
-			FlowDelimiters2[2] = ParenOpen;
-			FlowDelimiters2[3] = HotkeyBound;//Need ':' colon for default: statements. Unsure if this breaks anything else.
-			Spaces.CopyTo(FlowDelimiters2, offset);
-			SpaceMultiDelim = new char[Spaces.Length + 1];
-			SpaceMultiDelim[0] = Multicast;
-			Spaces.CopyTo(SpaceMultiDelim, 1);
-		}
 	}
 }

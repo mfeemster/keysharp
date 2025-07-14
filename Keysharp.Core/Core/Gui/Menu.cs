@@ -5,7 +5,7 @@
 	/// Menu objects are used to define, modify and display popup menus. <see cref="Menu()"/>, <see cref="MenuFromHandle"/><br/>
 	/// and <see cref="A_TrayMenu"/> return an object of this type.
 	/// </summary>
-	public class Menu
+	public class Menu : KeysharpObject
 	{
 		/// <summary>
 		/// The default item in the menu.
@@ -68,17 +68,20 @@
 		/// </summary>
 		internal ContextMenuStrip MenuItem { get; set; }
 
+		public Menu(params object[] args) : base(args) { }
+
 		/// <summary>
 		/// Initializes a new instance of the <see cref="Menu"/> class.
 		/// </summary>
 		/// <param name="strip">Optional existing <see cref="ContextMenuStrip"/>. Default: false.</param>
-		public Menu(ContextMenuStrip strip = null)
+		public override object __New(params object[] args)
 		{
-			MenuItem = strip ?? new ContextMenuStrip();
+			MenuItem = (args.Length > 0 ? (ContextMenuStrip)args[0] : null) ?? new ContextMenuStrip();
 			//GetMenu().ImageScalingSize = new System.Drawing.Size(28, 28);//Don't set scaling, it makes the checked icons look funny.
 			var newCount = Interlocked.Increment(ref Script.TheScript.GuiData.menuCount);
 			GetMenu().Name = $"Menu_{newCount}";
 			dummyHandle = Handle;//Must access the handle once to force creation.
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -146,21 +149,21 @@
 
 				return DefaultObject;
 			});
-			var reloadfunc = new Func<object>(() =>
+			var reloadfunc = (params object[] args) =>
 			{
 				_ = Flow.Reload();
 				return DefaultObject;
-			});
-			var suspend = new Func<object>(() =>
+			};
+			var suspend = (params object[] args) =>
 			{
 				Script.SuspendHotkeys();
 				return DefaultObject;
-			});
-			var exitfunc = new Func<object>(() =>
+			};
+			var exitfunc = (params object[] args) =>
 			{
 				_ = Flow.ExitAppInternal(Flow.ExitReasons.Menu, null, false);
 				return DefaultObject;
-			});
+			};
 			//Won't be a gui target, so won't be marked as IsGui internally, but it's ok because it's only ever called on the gui thread in response to gui events.
 			script.openMenuItem = (ToolStripMenuItem)Add("&Open", new FuncObj(openfunc.Method, openfunc.Target));
 
@@ -177,11 +180,11 @@
 
 			if (!A_IsCompiled)
 			{
-				var editfunc = new Func<object>(() =>
+				var editfunc = (params object[] args) =>
 				{
 					_ = Debug.Edit();
 					return DefaultObject;
-				});
+				};
 				_ = Add("&Edit Script", new FuncObj(editfunc.Method, editfunc.Target));
 			}
 

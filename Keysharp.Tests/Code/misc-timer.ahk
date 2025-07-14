@@ -5,7 +5,7 @@ x := 0
 fo1 := Func("TimerHandler")
 SetTimer(fo1, 100)
 
-TimerHandler()
+TimerHandler(*)
 {
 global
 	x++
@@ -19,15 +19,15 @@ global
 Sleep(1000)
 
 if (x == 5)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := 0
 fo1 := Func("TimerHandler2")
 SetTimer(fo1, 10)
 
-TimerHandler2()
+TimerHandler2(*)
 {
 global x
 	x++
@@ -38,9 +38,9 @@ global x
 Sleep(100)
 
 if (x == 1)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 ExitApp()
 
@@ -58,18 +58,18 @@ TimerHandler3()
 Sleep(50)
 
 if (x == 1)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := 0
 SetTimer(TimerHandler3, -1) ; Ensure the timer is called immediately if the period is 1
 Sleep(-1)
 
 if (x == 1)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := 0, doDelayEnd := 0
 ; Fill max threads with TimerHandler4, and ensure TimerHandler3 was queued
@@ -84,11 +84,11 @@ TimerHandler4() {
 }
 
 if (A_TickCount == doDelayEnd)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (x == 1)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"

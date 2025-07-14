@@ -1,4 +1,9 @@
-﻿namespace Keyview
+﻿using Antlr4.Runtime;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using ScintillaNET;
+
+namespace Keyview
 {
 	/// <summary>
 	/// Much of the Scintilla-related code was taken from: https://github.com/robinrodricks/ScintillaNET.Demo
@@ -38,7 +43,7 @@
 		/// </summary>
 		private const int NUMBER_MARGIN = 1;
 
-		private static readonly string keywords1 = "true false this thishotkey super unset isset " + Parser.GetKeywords();
+		private static readonly string keywords1 = "true false this thishotkey super unset isset " + Keywords.GetKeywords();
 		private readonly string keywords2;
 		private readonly Button btnCopyFullCode = new ();
 		private readonly CheckBox chkFullCode = new ();
@@ -574,7 +579,8 @@
 					SetStart();
 					tslCodeStatus.Text = "Creating DOM from script...";
 					Refresh();
-					var (domunits, domerrs) = ch.CreateDomFromFile([txtIn.Text]);
+					var (units, domerrs) = ch.CreateCompilationUnitFromFile(txtIn.Text);
+					//var (domunits, domerrs) = ch.CreateDomFromFile([txtIn.Text]);
 
 					if (domerrs.HasErrors)
 					{
@@ -594,18 +600,18 @@
 
 					tslCodeStatus.Text = "Creating C# code from DOM...";
 					Refresh();
-					var (code, exc) = ch.CreateCodeFromDom(domunits);
 
-					if (exc is Exception ex)
+					var code = PrettyPrinter.Print(units[0]);
+#if DEBUG
+					var normalized = units[0].NormalizeWhitespace("\t").ToString();
+					if (code != normalized)
 					{
-						SetFailure();
-						SetTxtOut($"Error creating C# code from DOM:\n{ex.Message}");
-						goto theend;
+						throw new Exception("Code formatting mismatch");
 					}
+#endif
 
-					code = CompilerHelper.UsingStr + code;
 					tslCodeStatus.Text = "Compiling C# code...";
-					var (results, ms, compileexc) = ch.Compile(code, "Keyview", Path.GetFullPath(Path.GetDirectoryName(Environment.ProcessPath)));
+					var (results, ms, compileexc) = ch.Compile(units[0], "Keyview", Path.GetFullPath(Path.GetDirectoryName(Environment.ProcessPath)));
 
 					if (results == null)
 					{

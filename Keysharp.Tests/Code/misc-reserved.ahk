@@ -1,9 +1,9 @@
 char := 123
 
 if (char == 123)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 resfunc(short, float, double)
 {
@@ -13,9 +13,9 @@ resfunc(short, float, double)
 int := resfunc(1, 2, 3)
 
 if (int == 6)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 class myclass
 {
@@ -42,9 +42,9 @@ mc := myclass(4, 5, 6)
 sbyte := mc.GetSum()
 
 if (sbyte == 15)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 resfunc2()
 {
@@ -55,6 +55,6 @@ resfunc2()
 xx := resfunc2()
 
 if (xx == 123)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"

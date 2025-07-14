@@ -7,9 +7,9 @@ Loop
 Until x > y
 
 if (x == 32)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := 1
 y := 20
@@ -18,9 +18,9 @@ Loop
 Until (x > y)
 
 if (x == 32)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := 1
 y := 20
@@ -34,9 +34,9 @@ Loop
 Until (x > y)
 
 if (x == 32)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := 1
 Loop
@@ -46,9 +46,9 @@ Loop
 Until (A_Index == 5)
 
 if (x == 6)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := 1
 
@@ -59,14 +59,15 @@ while true
 Until (A_Index == 5)
 
 if (x == 6)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := 1
 y := 5
+z := "y"
 
-Loop %y%
+Loop %z%
 {
 	x++
 
@@ -76,14 +77,15 @@ Loop %y%
 Until (A_Index == 5)
 
 if (x == 6)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := 1
 y := 5
+z := "y"
 
-Loop %y%
+Loop %z%
 {
 	x++
 
@@ -93,15 +95,15 @@ Loop %y%
 Until (A_Index == 10)
 
 if (x == 6)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := 1
 y := 5
 str := ""
 
-Loop %y%
+Loop y
 {
 	x++
 
@@ -111,9 +113,9 @@ Loop %y%
 Until (str != "")
 
 if (x == 6)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := 1
 y := 20
@@ -130,14 +132,14 @@ Loop ; this is a comment
 Until x > y ; last comment
 
 if (x == 32)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (z == 33)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 arr := [10, 20, 30]
 x := 0
@@ -149,6 +151,6 @@ for , in arr
 until x > 1
 
 if (x == 2)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"

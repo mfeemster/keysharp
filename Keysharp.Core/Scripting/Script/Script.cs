@@ -66,7 +66,7 @@ namespace Keysharp.Scripting
 		internal bool persistent;
 		internal nint playbackHook = 0;
 		internal DateTime priorHotkeyStartTime = DateTime.UtcNow;
-		internal string scriptName = "";
+		public string scriptName = "";
 		internal Icon suspendedIcon;
 		internal string thisHotkeyName, priorHotkeyName;
 		internal DateTime thisHotkeyStartTime;
@@ -199,14 +199,17 @@ namespace Keysharp.Scripting
 			SetInitialFloatFormat();//This must be done intially and not just when A_FormatFloat is referenced for the first time.
 		}
 
-		public Script()
+		public Script(Type program = null)
 		{
 			Script.TheScript = this;//Everywhere in the script will reference this.
 			timeLastInputPhysical = DateTime.UtcNow;
 			timeLastInputKeyboard = timeLastInputPhysical;
 			timeLastInputMouse = timeLastInputPhysical;
-			threads = new (() => new ());
-			Vars = new Variables();
+			threads = new(() => new());
+			Reflections = new Reflections();
+			Vars = new Variables(program);
+			Vars.InitPrototypes();
+
 			_ = Script.TheScript.Threads.PushThreadVariables(0, true, false, true);//Ensure there is always one thread in existence for reference purposes, but do not increment the actual thread counter.
 			var pd = this.ProcessesData;
 			mgr = this.PlatformProvider.Manager;

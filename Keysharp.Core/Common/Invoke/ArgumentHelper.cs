@@ -112,9 +112,8 @@ namespace Keysharp.Core.Common.Invoke
 					{
 						object kptr;
 
-						if ((c0 == 'p' || (c0 == 'u') && (char)(span[1] | 0x20) == 'p') &&
-								((kso is IPointable ip && (kptr = ip.Ptr) != null)
-								 || (Script.GetPropertyValue(kso, "ptr", false) is object tmp && (kptr = tmp) != null)))
+						if ((c0 == 'p' || (c0 == 'u') && (char)(span[1] | 0x20) == 'p') && ((kso is IPointable ip && (kptr = ip.Ptr) != null)
+							|| Script.TryGetPropertyValue(kso, "ptr", out kptr)))
 						{
 							if (last == '*' || (char)(last | 0x20) == 'p')
 								outputVars[paramIndex] = (typeof(nint), true);
@@ -128,7 +127,13 @@ namespace Keysharp.Core.Common.Invoke
 				{
 					// Remove the suffix
 					span = span.Slice(0, --len);
-					// Make sure the original object isn't directly modified
+
+					if (p is KeysharpObject kso 
+						&& !outputVars.ContainsKey(paramIndex) //must not be a Ptr object
+						&& Script.TryGetPropertyValue(kso, "__Value", out object kptr))
+						p = kptr;
+
+					// Pin the object and store its address
 					object temp = 0L;
 
 					if (p is long ll)
@@ -139,7 +144,6 @@ namespace Keysharp.Core.Common.Invoke
 						temp = d;
 
 					p = temp;
-					// Pin the object and store its address
 					SetupPointerArg();
 					// Determine the type only
 					parseType = true;
@@ -181,9 +185,31 @@ namespace Keysharp.Core.Common.Invoke
 						goto TypeDetermined;
 					}
 
+					// Special case for strings passed by reference but not with "str*", since strings are always by reference
+					if (p is KeysharpObject kso2 && Script.TryGetPropertyValue(kso2, "__Value", out object kptr))
+					{
+						outputVars[paramIndex] = (typeof(nint), false);
+						p = kptr;
+					}
+
 					if (p is string s)
 					{
-						SetupPointerArg();
+						if (outputVars.ContainsKey(paramIndex) && parameters[paramIndex] is KeysharpObject kso)
+						{
+							var sb = new StringBuffer(s);
+							gcHandles.Add(GCHandle.Alloc(sb, GCHandleType.Normal));
+							sb.EntangledString = kso;
+							parameters[paramIndex] = sb;
+							args[n] = sb.Ptr;
+						}
+						else
+							SetupPointerArg();
+					}
+					else if (p is StringBuffer sb)
+					{
+						parameters[paramIndex] = sb;
+						sb.UpdateBufferFromEntangledString();
+						args[n] = sb.Ptr;
 					}
 					else
 					{
@@ -204,13 +230,33 @@ namespace Keysharp.Core.Common.Invoke
 						type = isReturn ? typeof(string) : typeof(nint);
 						goto TypeDetermined;
 					}
+					if (p is KeysharpObject kso2 && Script.TryGetPropertyValue(kso2, "__Value", out object kptr))
+					{
+						outputVars[paramIndex] = (typeof(nint), false);
+						p = kptr;
+					}
 
 					if (p is string s)
 					{
-						byte[] ascii = Encoding.ASCII.GetBytes(s);
-						var gch = GCHandle.Alloc(ascii, GCHandleType.Pinned);
-						gcHandles.Add(gch);
-						args[n] = gch.AddrOfPinnedObject();
+						if (outputVars.ContainsKey(paramIndex) && parameters[paramIndex] is KeysharpObject kso)
+						{
+							var sb = new StringBuffer(s, null, "ANSI");
+							gcHandles.Add(GCHandle.Alloc(sb, GCHandleType.Normal));
+							sb.EntangledString = kso;
+							parameters[paramIndex] = sb;
+							args[n] = sb.Ptr;
+						}
+						else
+						{
+							p = Encoding.ASCII.GetBytes(s);
+							SetupPointerArg();
+						}
+					}
+					else if (p is StringBuffer sb)
+					{
+						parameters[paramIndex] = sb;
+						sb.UpdateBufferFromEntangledString();
+						args[n] = sb.Ptr;
 					}
 					else
 					{

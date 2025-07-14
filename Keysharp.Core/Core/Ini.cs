@@ -373,7 +373,7 @@
 				}
 
 				writer.Flush();
-				var text = writer.ToString();
+				var text = writer.ToString().TrimEnd('\n', '\r');
 
 				if (File.Exists(file))
 					File.Delete(file);

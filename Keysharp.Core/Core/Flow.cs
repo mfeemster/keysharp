@@ -289,7 +289,7 @@ namespace Keysharp.Core
 				if (script.FlowData.cachedFuncObj.TryGetValue(s, out var tempfunc))
 					func = tempfunc;
 				else
-					script.FlowData.cachedFuncObj[s] = func = Functions.Func(s);
+					script.FlowData.cachedFuncObj[s] = func = Functions.GetFuncObj(s, null);
 			}
 
 			if (f != null && func == null)
@@ -731,13 +731,13 @@ namespace Keysharp.Core
 			}
 		}
 
-		/// <summary>
-		/// Special exception class to signal that the user has requested exiting the script
-		/// via ExitApp().
-		/// Note this does not derive from Error so that it can be properly distinguished in
-		/// catch statements.
-		/// </summary>
-		public class UserRequestedExitException : Exception
+        /// <summary>
+        /// Special exception class to signal that the user has requested exiting the script
+        /// via ExitApp().
+        /// Note this does not derive from Error so that it can be properly distinguished in
+        /// catch statements.
+        /// </summary>
+        public class UserRequestedExitException : Exception
 		{
 			public UserRequestedExitException()
 			{ }
@@ -781,6 +781,7 @@ namespace Keysharp.Core
 		internal Timer1 mainTimer;
 		internal int NoSleep = -1;
 		internal bool persistentValueSetByUser;
+		internal HashSet<object> initializedUserStaticVariables = new();
 
 		/// <summary>
 		/// Internal property to track whether the script's hotkeys and hotstrings are suspended.

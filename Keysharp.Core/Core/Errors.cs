@@ -1,9 +1,11 @@
-﻿namespace Keysharp.Core
+﻿using Keysharp.Core.Scripting.Parser.Helpers;
+
+namespace Keysharp.Core
 {
-	/// <summary>
-	/// Public interface for error-related functions and classes.
-	/// </summary>
-	public static class Errors
+    /// <summary>
+    /// Public interface for error-related functions and classes.
+    /// </summary>
+    public static class Errors
 	{
 		/// <summary>
 		/// Creates and returns a new <see cref="Error"/> exception object.
@@ -387,10 +389,10 @@
 		}
 	}
 
-	/// <summary>
-	/// An exception class for indexing errors.
-	/// </summary>
-	public class IndexError : Error
+    /// <summary>
+    /// An exception class for indexing errors.
+    /// </summary>
+    public class IndexError : Error
 	{
 		/// <summary>
 		/// Initializes a new instance of the <see cref="IndexError"/> class.
@@ -595,7 +597,7 @@
 				yield return frame;
 
 				//If we reached the auto-execute section function then don't go further
-				if (method.Name == "_ks_UserMainCode")
+				if (method.Name == Keywords.AutoExecSectionName)
 					break;
 			}
 		}

@@ -6,6 +6,6 @@ split := StrSplit(ver, ".")
 len := split.Length
 
 if (len == 4)
- 	FileAppend, "pass", "*"
+ 	FileAppend "pass", "*"
 else
-  	FileAppend, "fail", "*"
+  	FileAppend "fail", "*"

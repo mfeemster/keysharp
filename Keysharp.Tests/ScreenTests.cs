@@ -1,4 +1,5 @@
-﻿using static Keysharp.Core.Mouse;
+﻿using static Keysharp.Core.Misc;
+using static Keysharp.Core.Mouse;
 using static Keysharp.Core.Screen;
 using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
@@ -12,10 +13,10 @@ namespace Keysharp.Tests
 			_ = CoordMode("Mouse", "Screen");
 			var screen = System.Windows.Forms.Screen.PrimaryScreen;
 			_ = GetScreenClip(10, 10, 500, 500, "./imagesearch.bmp");
-			object x = null, y = null;
-			_ = Core.Screen.ImageSearch(ref x, ref y, 0, 0, screen.Bounds.Width, screen.Bounds.Height, "./imagesearch.bmp"); //This implies this pattern won't be present before 1000,1000.
+			VarRef x = new(null), y = new(null);
+			_ = Core.Screen.ImageSearch(x, y, 0, 0, screen.Bounds.Width, screen.Bounds.Height, "./imagesearch.bmp"); //This implies this pattern won't be present before 1000,1000.
 
-			if (x is long lx && lx == 10 && y is long ly && ly == 10)
+			if (x.__Value is long lx && lx == 10 && y.__Value is long ly && ly == 10)
 				Assert.IsTrue(true);
 			else
 				Assert.IsTrue(false);
@@ -36,7 +37,7 @@ namespace Keysharp.Tests
 				for (var j = 0; j < System.Windows.Forms.Screen.PrimaryScreen.Bounds.Width; j++)
 				{
 					var pix = Core.Screen.PixelGetColor(j, i);
-					Assert.IsTrue(int.TryParse(pix.AsSpan(2), NumberStyles.HexNumber, Parser.inv, out var ii));
+					Assert.IsTrue(int.TryParse(pix.AsSpan(2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var ii));
 
 					if (ii != last && ii != white && ii != black)
 						goto pass;
@@ -64,15 +65,15 @@ namespace Keysharp.Tests
 				for (var j = 0; j < System.Windows.Forms.Screen.PrimaryScreen.Bounds.Width; j++)
 				{
 					var pix = Core.Screen.PixelGetColor(j, i);
-					Assert.IsTrue(int.TryParse(pix.AsSpan(2), NumberStyles.HexNumber, Parser.inv, out var ii));
+					Assert.IsTrue(int.TryParse(pix.AsSpan(2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var ii));
 
 					if (ii != last && ii != white && ii != black)
 					{
-						object outX = null;
-						object outY = null;
-						var ret = Core.Screen.PixelSearch(ref outX, ref outY, j, i, j + 1, i + 1, pix);
+						VarRef outX = new(null);
+						VarRef outY = new(null);
+						var ret = Core.Screen.PixelSearch(outX, outY, j, i, j + 1, i + 1, pix);
 
-						if (ret == 1L && (long)outX == j && (long)outY == i)
+						if (ret == 1L && (long)outX.__Value == j && (long)outY.__Value == i)
 							goto pass;
 						else
 							goto fail;

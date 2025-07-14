@@ -6,10 +6,9 @@ namespace Keysharp.Core.COM
 		public string Name { get; private set; }
 
 		public ComMethodPropertyHolder(string name)
-			: base(null, null)
 		{
 			Name = name;
-			callFunc = (inst, obj) =>
+			_callFunc = (inst, obj) =>
 			{
 				var t = inst.GetType();
 				var args = new object[obj.Length];
@@ -65,6 +64,7 @@ namespace Keysharp.Core.COM
 				var paramCount = -1;
 				Type[] expectedTypes = null;
 				ParameterModifier[] modifiers = null;
+				Dictionary<int, object> refs = new();
 
 				if (Script.TheScript.ComMethodData.comMethodCache.TryGet(pUnk, out var objDkt))
 				{
@@ -131,7 +131,7 @@ namespace Keysharp.Core.COM
 
 									if (name.Equals(methodName, StringComparison.OrdinalIgnoreCase))
 									{
-										found = true;
+                                        found = true;
 										methodName = name;
 										PopulateModifiers(funcDesc);
 										i = int.MaxValue - 1;
@@ -218,7 +218,12 @@ namespace Keysharp.Core.COM
 									modifier[i] = isByRef;
 									expectedTypes[i] = Com.ConvertVarTypeToCLRType(vtBase);
 								}
-							}
+								if (modifier[i] && i < inputParameters.Length && inputParameters[i] is KeysharpObject)
+								{
+									refs[i] = inputParameters[i];
+									inputParameters[i] = Script.GetPropertyValue(inputParameters[i], "__Value");
+                                }
+                            }
 
 							modifiers = [modifier];
 						}
@@ -232,7 +237,9 @@ namespace Keysharp.Core.COM
 				{
 					try
 					{
-						var et = expectedTypes[i];
+						inputParameters[i] ??= "";
+
+                        var et = expectedTypes[i];
 						var it = inputParameters[i].GetType();
 
 						if (et == it)
@@ -308,6 +315,9 @@ namespace Keysharp.Core.COM
 							  modifiers,
 							  CultureInfo.CurrentCulture,
 							  null);
+
+				foreach (var r in refs)
+					Script.SetPropertyValue(r.Value, "__Value", inputParameters[r.Key]);
 
 				//If no exception thrown and it wasn't cached, cache the info.
 				if (!found)

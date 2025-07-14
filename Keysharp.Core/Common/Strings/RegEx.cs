@@ -9,13 +9,11 @@
 		public object Success => match.Success;
 		public object pos => Pos(); //Lower-cased because of the naming conflict with the method
 
-		public new (Type, object) super => (typeof(KeysharpObject), this);
-
-		public RegExMatchInfo(params object[] args) => _ = __New(args);
+		public RegExMatchInfo(params object[] args) : base(args) { }
 
 		public static implicit operator long(RegExMatchInfo r) => r.Pos();
 
-		public new object __New(params object[] args)
+		public override object __New(params object[] args)
 		{
 			match = args[0] as PcreMatch;
 			holder = args[1] as RegexHolder;
@@ -44,7 +42,7 @@
 			return DefaultObject;
 		}
 
-		public KeysharpEnumerator __Enum(object count) => new RegExIterator(this, count.Ai());
+		public IFuncObj __Enum(object count) => new RegExIterator(this, count.Ai()).fo;
 
 		public IEnumerator<(object, object)> GetEnumerator() => new RegExIterator(this, 2);
 
@@ -99,11 +97,11 @@
 			return null;
 		}
 
-		public string this[object obj]
+		public string this[params object[] obj]
 		{
 			get
 			{
-				var g = GetGroup(obj);
+				var g = GetGroup(obj.Length == 0 ? null : obj[0]);
 				return g != null && g.Success ? g.Value : "";
 			}
 		}
@@ -169,9 +167,8 @@
 			iter = match.match.Groups.GetEnumerator();
 			var script = Script.TheScript;
 			var p = c <= 1 ? script.RegExIteratorData.p1 : script.RegExIteratorData.p2;
-			var fo = (FuncObj)p.Clone();
+			fo = (FuncObj)p.Clone();
 			fo.Inst = this;
-			CallFunc = fo;
 		}
 
 		/// <summary>
@@ -179,11 +176,11 @@
 		/// </summary>
 		/// <param name="key">A reference to the key value.</param>
 		/// <returns>True if the iterator position has not moved past the last element, else false.</returns>
-		public override object Call(ref object value)
+		public override object Call([ByRef] object value)
 		{
 			if (MoveNext())
 			{
-				value = Current.Item1;
+				Script.SetPropertyValue(value, "__Value", Current.Item1);
 				return true;
 			}
 
@@ -196,11 +193,12 @@
 		/// <param name="name">A reference to the name of the current match.</param>
 		/// <param name="value">A reference to the value of the current match.</param>
 		/// <returns>True if the iterator position has not moved past the last element, else false.</returns>
-		public override object Call(ref object name, ref object value)
+		public override object Call([ByRef] object name, [ByRef] object value)
 		{
 			if (MoveNext())
 			{
-				(name, value) = Current;
+				Script.SetPropertyValue(name, "__Value", Current.Item1);
+				Script.SetPropertyValue(value, "__Value", Current.Item2);
 				return true;
 			}
 

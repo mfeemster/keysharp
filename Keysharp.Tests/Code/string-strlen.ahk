@@ -4,14 +4,14 @@ x := "test"
 y := StrLen(x)
 
 if (y = 4)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 x := ""
 y := StrLen(x)
 
 if (y = 0)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"

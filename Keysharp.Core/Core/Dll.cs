@@ -2,6 +2,7 @@
 #define TL
 
 #if WINDOWS
+
 namespace Keysharp.Core
 {
 	internal class DllData
@@ -498,64 +499,64 @@ namespace Keysharp.Core
 		{
 			if (t == typeof(uint))
 			{
-				var tempui = *(uint*)aip.ToPointer();
+				var tempui = *(uint*)aip;
 				var templ = (long)tempui;
 				p = templ;
 			}
 			else if (t == typeof(int))
 			{
-				var tempi = *(int*)aip.ToPointer();
+				var tempi = *(int*)aip;
 				var templ = (long)tempi;
 				p = templ;
 			}
 			else if (t == typeof(long))
 			{
-				var templ = *(long*)aip.ToPointer();
+				var templ = *(long*)aip;
 				p = templ;
 			}
 			else if (t == typeof(double))
 			{
-				var tempd = *(double*)aip.ToPointer();
+				var tempd = *(double*)aip;
 				p = tempd;
 			}
 			else if (t == typeof(float))
 			{
-				var tempf = *(float*)aip.ToPointer();
+				var tempf = *(float*)aip;
 				var tempd = (double)tempf;
 				p = tempd;
 			}
 			else if (t == typeof(ushort))
 			{
-				var tempus = *(ushort*)aip.ToPointer();
+				var tempus = *(ushort*)aip;
 				var templ = (long)tempus;
 				p = templ;
 			}
 			else if (t == typeof(short))
 			{
-				var temps = *(short*)aip.ToPointer();
+				var temps = *(short*)aip;
 				var templ = (long)temps;
 				p = templ;
 			}
 			else if (t == typeof(byte))
 			{
-				var tempub = *(byte*)aip.ToPointer();
+				var tempub = *(byte*)aip;
 				var templ = (long)tempub;
 				p = templ;
 			}
 			else if (t == typeof(sbyte))
 			{
-				var tempb = *(sbyte*)aip.ToPointer();
+				var tempb = *(sbyte*)aip;
 				var templ = (long)tempb;
 				p = templ;
 			}
 			else if (t == typeof(string))
 			{
-				var s = (long*)aip.ToPointer();
+				var s = (long*)aip;
 				p = Strings.StrGet(new nint(*s));
 			}
 			else
 			{
-				var pp = (long*)aip.ToPointer();
+				var pp = (long*)aip;
 				p = *pp;
 			}
 		}
@@ -569,11 +570,19 @@ namespace Keysharp.Core
 				var n = pi / 2;
 				var arg = helper.args[n];
 
-				if (parameters[pi] is KeysharpObject kso && pair.Value.Item2)
+				if (parameters[pi] is StringBuffer sb)
+				{
+					sb.UpdateEntangledStringFromBuffer();
+					parameters[pi] = sb.EntangledString;
+				}
+				else if (parameters[pi] is KeysharpObject kso)
 				{
 					object temp = arg;
 					FixParamTypeAndCopyBack(ref temp, pair.Value.Item1, (nint)arg);
-					_ = Script.SetPropertyValue(kso, "ptr", temp);//Write it back to the ptr property of the KeysharpObject.
+					if (pair.Value.Item2)
+						_ = Script.SetPropertyValue(kso, "ptr", temp);
+					else
+						_ = Script.SetPropertyValue(kso, "__Value", temp);
 				}
 				else
 				{

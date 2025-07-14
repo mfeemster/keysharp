@@ -103,9 +103,10 @@ namespace Keysharp.Core
 		/// </param>
 		/// <exception cref="OSError">An <see cref="OSError"/> exception is thrown if an internal function call fails.</exception>
 		/// <exception cref="ValueError ">A <see cref="ValueError "/> exception thrown if an invalid parameter was detected or the image could not be loaded.</exception>
-		public static object ImageSearch(ref object outX, ref object outY, object x1, object y1, object x2, object y2, object imageFile, object options = null)
+		public static object ImageSearch([ByRef] object outX, [ByRef] object outY, object x1, object y1, object x2, object y2, object imageFile, object options = null)
 		{
-			var _x1 = x1.Ai();
+            outX ??= VarRef.Empty; outY ??= VarRef.Empty;
+            var _x1 = x1.Ai();
 			var _y1 = y1.Ai();
 			var _x2 = x2.Ai();
 			var _y2 = y2.Ai();
@@ -175,13 +176,13 @@ namespace Keysharp.Core
 			if (location.HasValue)
 			{
 				location = Mouse.RevertPoint(location.Value, Script.TheScript.Coords.Mouse);
-				outX = (long)location.Value.X;
-				outY = (long)location.Value.Y;
+				Script.SetPropertyValue(outX, "__Value", (long)location.Value.X);
+                Script.SetPropertyValue(outY, "__Value", (long)location.Value.Y);
 			}
 			else
 			{
-				outX = "";
-				outY = "";
+                Script.SetPropertyValue(outX, "__Value", "");
+                Script.SetPropertyValue(outY, "__Value", "");
 			}
 
 			return DefaultObject;
@@ -255,8 +256,9 @@ namespace Keysharp.Core
 		/// </param>
 		/// <returns>This function returns 1 if the color was found in the specified region, or 0 if it was not found.</returns>
 		/// <exception cref="OSError">An <see cref="OSError"/> exception is thrown if an internal function call fails.</exception>
-		public static long PixelSearch(ref object outX, ref object outY, object obj0, object obj1, object obj2, object obj3, object obj4, object obj5 = null)
+		public static long PixelSearch(object outX, object outY, object obj0, object obj1, object obj2, object obj3, object obj4, object obj5 = null)
 		{
+			outX ??= VarRef.Empty; outY ??= VarRef.Empty;
 			var x1 = obj0.Ai();
 			var y1 = obj1.Ai();
 			var x2 = obj2.Ai();
@@ -292,14 +294,14 @@ namespace Keysharp.Core
 			if (location.HasValue)
 			{
 				location = Mouse.RevertPoint(location.Value, Script.TheScript.Coords.Mouse);
-				outX = (long)location.Value.X;
-				outY = (long)location.Value.Y;
+				Script.SetPropertyValue(outX, "__Value", (long)location.Value.X);
+                Script.SetPropertyValue(outY, "__Value", (long)location.Value.Y);
 				return 1L;
 			}
 			else
 			{
-				outX = 0L;
-				outY = 0L;
+                Script.SetPropertyValue(outX, "__Value", 0L);
+                Script.SetPropertyValue(outY, "__Value", 0L);
 				return 0L;
 			}
 		}

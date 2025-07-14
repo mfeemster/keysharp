@@ -11,6 +11,6 @@ monget := MonitorGetWorkArea(, &l, &t, &r, &b)
 ImageSearch(&x, &y, 0, 0, r, b, "./imagesearch.bmp")
 
 if (x == 10 && y == 10)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"

@@ -5,6 +5,6 @@
 #endif
 
 if (val == "Fixed" || val == "RAMDisk")
- 	FileAppend, "pass", "*"
+ 	FileAppend "pass", "*"
 else
-  	FileAppend, "fail", "*"
+  	FileAppend "fail", "*"

@@ -1,4 +1,8 @@
-﻿namespace Keysharp.Core.Common.Strings
+﻿using System;
+using System.Configuration;
+using System.Drawing;
+
+namespace Keysharp.Core.Common.Strings
 {
 	unsafe public class StringBuffer : KeysharpObject, IPointable
 	{
@@ -17,6 +21,7 @@
 		private long _position = 0;
 		private Encoding _encoding;
 		private int _bytesPerChar;
+		public object EntangledString { get; set; }
 
 		public StringBuffer(params object[] args) => __New(args);
 
@@ -83,6 +88,20 @@
 
 				_capacity = newCapacity;
 			}
+		}
+
+		public object UpdateEntangledStringFromBuffer() => EntangledString != null ? Script.SetPropertyValue(EntangledString, "__Value", ToString()) : null;
+		public object UpdateBufferFromEntangledString()
+		{
+			if (EntangledString == null)
+				return null;
+			var str = Script.GetPropertyValue(EntangledString, "__Value") as string;
+			str ??= "";
+			var requiredCapacity = Math.Max(_capacity, str.Length);
+			EnsureCapacity(requiredCapacity);
+			Clear();
+			Append(str);
+			return str;
 		}
 
 		/// <summary>

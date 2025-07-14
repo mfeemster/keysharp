@@ -124,27 +124,27 @@ namespace Keysharp.Core.COM
 
 			var script = Script.TheScript;
 			var p = c <= 1 ? script.ComArrayIndexValueEnumeratorData.p1 : script.ComArrayIndexValueEnumeratorData.p2;
-			var fo = (FuncObj)p.Clone();
+			fo = (FuncObj)p.Clone();
 			fo.Inst = this;
-			CallFunc = fo;
 		}
 
-		public override object Call(ref object pos)
+		public override object Call([ByRef] object pos)
 		{
 			if (MoveNext())
 			{
-				(pos, _) = Current;
+				Script.SetPropertyValue(pos, "__Value", Current.Item1);
 				return true;
 			}
 
 			return false;
 		}
 
-		public override object Call(ref object pos, ref object val)
+		public override object Call([ByRef] object pos, [ByRef] object val)
 		{
 			if (MoveNext())
 			{
-				(pos, val) = Current;
+				Script.SetPropertyValue(pos, "__Value", Current.Item1);
+				Script.SetPropertyValue(val, "__Value", Current.Item2);
 				return true;
 			}
 
@@ -264,7 +264,7 @@ namespace Keysharp.Core.COM
 			this.Ptr = _psa.ToInt64();
 		}
 
-		public KeysharpEnumerator __Enum(object count) => new ComArrayIndexValueEnumerator(this, count.Ai());
+		public IFuncObj __Enum(object count) => new ComArrayIndexValueEnumerator(this, count.Ai()).fo;
 
 		public IEnumerator<(object, object)> GetEnumerator() => new ComArrayIndexValueEnumerator(this, 2);
 

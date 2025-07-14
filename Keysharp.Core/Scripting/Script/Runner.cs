@@ -26,7 +26,7 @@
 				var exeDir = Path.GetFullPath(Path.GetDirectoryName(exePath));
 				var codeout = false;
 				var assembly = false;
-				var assemblyType = "Keysharp.CompiledMain.program";
+				var assemblyType = $"Keysharp.CompiledMain.{Keywords.MainClassName}";
 				var assemblyMethod = "Main";
 				var scriptName = string.Empty;
 				var gotscript = false;
@@ -146,7 +146,6 @@
 				if (!fromstdin && !File.Exists(scriptName))
 					return Message($"Could not find the script file {scriptName}.", true);
 
-				var (domunits, domerrs) = ch.CreateDomFromFile(scriptName);
 				string namenoext, path, scriptdir;
 
 				if (!fromstdin)
@@ -162,15 +161,12 @@
 					path = $".{Path.DirectorySeparatorChar}{namenoext}";
 				}
 
-				if (domerrs.HasErrors)
-					return HandleCompilerErrors(domerrs, scriptName, path, "Compiling script to DOM");
+				var (units, errs) = ch.CreateCompilationUnitFromFile(scriptName);
 
-				var (code, exc) = ch.CreateCodeFromDom(domunits);
+				if (errs.HasErrors || units[0] == null)
+					return HandleCompilerErrors(errs, scriptName, path, "Compiling script to DOM");
 
-				if (exc is Exception e)
-					return Message($"Creating C# code from DOM: {e.Message}", true);
-
-				code = CompilerHelper.UsingStr + code;//Need to manually add the using static statements.
+				var code = units[0].ToString();
 
 				//If they want to write out the code, place it in the same folder as the script, with the same name, and .cs extension.
 				if (codeout)
@@ -179,7 +175,7 @@
 					return 0;
 				}
 
-				var (results, ms, compileexc) = ch.Compile(code, namenoext, exeDir);
+				var (results, ms, compileexc) = ch.Compile(units[0], namenoext, exeDir);
 
 				try
 				{
@@ -211,7 +207,7 @@
 				if (CompilerHelper.compiledasm == null)
 					throw new Exception("Compilation failed.");
 
-				var program = CompilerHelper.compiledasm.GetType("Keysharp.CompiledMain.program");
+				var program = CompilerHelper.compiledasm.GetType($"Keysharp.CompiledMain.{Keywords.MainClassName}");
 				var main = program.GetMethod("Main");
 				return main.Invoke(null, [script.ScriptArgs]).Ai();
 			}

@@ -1,4 +1,4 @@
-﻿namespace Keysharp.Core
+namespace Keysharp.Core
 {
 	public static class Debug
 	{
@@ -52,10 +52,10 @@
 				{
 					var prcIndex = ed.IndexOf('%');
 					ed = prcIndex != -1 ? ed.Substring(0, prcIndex) : ed;
-					_ = Processes.Run(ed, A_ScriptDir, "", ref pid, A_ScriptFullPath);
+					_ = Processes.Run(ed, A_ScriptDir, "", pid, A_ScriptFullPath);
 				}
 				else
-					_ = Processes.Run($"Notepad.exe", A_ScriptDir, "", ref pid, A_ScriptFullPath);
+					_ = Processes.Run($"Notepad.exe", A_ScriptDir, "", pid, A_ScriptFullPath);
 
 #endif
 			}

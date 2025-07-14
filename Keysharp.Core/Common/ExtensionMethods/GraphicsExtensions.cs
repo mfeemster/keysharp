@@ -1,4 +1,6 @@
-﻿namespace System.Drawing
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace System.Drawing
 {
 	/// <summary>
 	/// An improved color structure that allows the values to be set after construction.<br/>
@@ -62,9 +64,9 @@
 			set => a = value;
 		}
 
-		public bool Equals([AllowNull] FastColor other) => this == other;
+		public bool Equals([System.Diagnostics.CodeAnalysis.AllowNull] FastColor other) => this == other;
 
-		public override bool Equals([AllowNull] object other) => other is FastColor fc&& this == fc;
+		public override bool Equals([System.Diagnostics.CodeAnalysis.AllowNull] object other) => other is FastColor fc&& this == fc;
 
 		public override int GetHashCode() => Value.GetHashCode();
 	}

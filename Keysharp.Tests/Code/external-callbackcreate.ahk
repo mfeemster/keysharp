@@ -9,9 +9,9 @@ TheFunc(args)
 }
 
 if (val == 52.5)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 val := ""
 CallbackFree(callback)
@@ -25,9 +25,9 @@ FuncNoParams()
 }
 
 if (val == 123)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 CallbackFree(callback)
 EnumAddress := CallbackCreate("EnumWindowsProc")
@@ -35,7 +35,7 @@ DetectHiddenWindows(True)
 ct := 0
 DllCall("EnumWindows", "Ptr", EnumAddress, "Ptr", 0)
 
-EnumWindowsProc(hwnd, lParam)
+EnumWindowsProc(hwnd, lParam, *)
 {
 	global ct
 	win_title := WinGetTitle(hwnd)
@@ -49,9 +49,9 @@ EnumWindowsProc(hwnd, lParam)
 }
 
 if (ct == 5)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 CallbackFree(EnumAddress)
 

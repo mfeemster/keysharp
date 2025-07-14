@@ -17,7 +17,6 @@ global using global::System.Collections.ObjectModel;
 global using global::System.Collections.Specialized;
 global using global::System.ComponentModel;
 global using global::System.Diagnostics;
-global using global::System.Diagnostics.CodeAnalysis;
 global using global::System.Drawing;
 global using global::System.Drawing.Drawing2D;
 global using global::System.Drawing.Imaging;

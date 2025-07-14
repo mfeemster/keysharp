@@ -22,52 +22,52 @@ Clear()
 SplitPath(path, &filename, &dir, &ext, &namenoext, &drive)
 
 if (filename == "file1.txt")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 if (ext == "txt")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 if (namenoext == "file1")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 #if WINDOWS
 	if (StrLower("D:\Dev\keysharp\Keysharp.Tests\Code\DirCopy") == StrLower(dir))
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 
 	if (StrLower("D:") == StrLower(drive))
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 
 	SplitPath("C:\Windows", &filename, &dir, &ext, &namenoext, &drive)
 
 	if (StrLower("c:") == StrLower(drive))
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 
 	if (StrLower("c:") == StrLower(dir))
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 #else
 	if (StrLower("/home/" . A_UserName . "/Dev/Keysharp/Keysharp.Tests/Code/DirCopy") == StrLower(dir))
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 
 	if ("/" == StrLower(drive))
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 
 #endif
 
@@ -76,171 +76,171 @@ url := "https://domain.com"
 SplitPath(url, &filename, &dir, &ext, &namenoext, &drive)
 
 if ("" == filename)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if ("https://domain.com" == dir)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 if ("" == ext)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if ("" == namenoext)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if ("https://domain.com" == drive)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 Clear()
 url := "https://domain.com/images"
 SplitPath(url, &filename, &dir, &ext, &namenoext, &drive)
 
 if ("" == filename)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if ("https://domain.com/images" == dir)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if ("" == ext)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if ("" == namenoext)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if ("https://domain.com" == drive)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 Clear()
 url := "https://domain.com/images/afile.jpg"
 SplitPath(url, &filename, &dir, &ext, &namenoext, &drive)
 
 if ("afile.jpg" == filename)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if ("https://domain.com/images" == dir)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if ("jpg" == ext)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if ("afile" == namenoext)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if ("https://domain.com" == drive)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 Clear()
 path := "\\machinename"
 SplitPath(path, &filename, &dir, &ext, &namenoext, &drive)
 
 if ("" == filename)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if ("\\machinename" == dir)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if ("" == ext)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if ("" == namenoext)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if ("\\machinename" == drive)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 Clear()
 path := "\\machinename\dir"
 SplitPath(path, &filename, &dir, &ext, &namenoext, &drive)
 
 if ("" == filename)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if ("\\machinename\dir" == dir)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if ("" == ext)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if ("" == namenoext)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if ("\\machinename" == drive)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 Clear()
 path := "\\machinename\dir\filename.txt"
 SplitPath(path, &filename, &dir, &ext, &namenoext, &drive)
 
 if ("filename.txt" == filename)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if ("\\machinename\dir" == dir)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if ("txt" == ext)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if ("filename" == namenoext)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if ("\\machinename" == drive)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"

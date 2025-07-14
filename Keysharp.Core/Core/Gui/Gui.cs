@@ -1,4 +1,9 @@
-﻿namespace Keysharp.Core
+﻿using System;
+using System.Windows.Forms;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.TextBox;
+
+namespace Keysharp.Core
 {
 	internal class GuiData
 	{
@@ -272,8 +277,6 @@
 
 		public KeysharpForm ParentForm => form.FindParent<KeysharpForm>();
 
-		public new (Type, object) super => (typeof(KeysharpObject), this);
-
 		public object Title
 		{
 			get => form.Text;
@@ -325,9 +328,9 @@
 
 		internal StatusStrip StatusStrip { get; set; }
 
-		public Gui(params object[] args) => _ = __New(args);
+		public Gui(params object[] args) : base(args) { }
 
-		internal Gui(object obj0 = null, object obj1 = null, object obj2 = null, object obj3 = null)//The last parameter is hidden and is only for internal use for when we wrap the main window in a Gui object.
+		internal Gui(object obj0 = null, object obj1 = null, object obj2 = null, object obj3 = null) : base(skipLogic:true)//The last parameter is hidden and is only for internal use for when we wrap the main window in a Gui object.
 		{
 			var script = Script.TheScript;
 
@@ -351,13 +354,12 @@
 			Script.TheScript.ExitIfNotPersistent();//May not be necessary, but try anyway.
 		}
 
-		public KeysharpEnumerator __Enum(object count) => new GuiControlIterator(controls, count.Ai());
+		public IFuncObj __Enum(object count) => (new GuiControlIterator(controls, count.Ai())).fo;
 
-		public new object __New(params object[] obj)
+		public override object __New(params object[] obj)
 		{
 			if (form == null)//Don't allow derived classes to init twice.
 			{
-				Init__Item();
 				var options = obj.Length > 0 ? obj[0].As() : null;
 				var caption = obj.Length > 1 ? obj[1].As() : null;
 				var eventObj = obj.Length > 2 ? obj[2] : null;
@@ -682,9 +684,9 @@
 				break;
 
 				case Keyword_ComboBox:
-				case Keyword_DDL:
 				case Keyword_DropDownList:
-				{
+                case Keyword_DDL:
+                    {
 					bool isCombo = type == Keyword_ComboBox;
 					KeysharpComboBox ddl;
 
@@ -839,7 +841,7 @@
 						lv.HeaderStyle = opts.sortheader.IsFalse() ? ColumnHeaderStyle.Nonclickable : ColumnHeaderStyle.Clickable;
 
 					lv.AutoResizeColumns(ColumnHeaderAutoResizeStyle.HeaderSize);
-					ctrl = lv;
+                    ctrl = lv;
 					holder = new ListView(this, ctrl, typeo);
 				}
 				break;
@@ -853,7 +855,7 @@
 #endif
 					tv.Font = Conversions.ConvertFont(form.Font);
 
-					if (opts.buttons.HasValue)
+                    if (opts.buttons.HasValue)
 						tv.ShowPlusMinus = opts.buttons.Value;
 
 					tv.CheckBoxes = opts.ischecked.HasValue && opts.ischecked.Value != 0;
@@ -1100,7 +1102,6 @@
 						Font = Conversions.ConvertFont(form.Font)
 					};//This will also support image lists just like TreeView for setting icons on tabs, instead of using SendMessage().
 					kstc.TabPages.AddRange(al.Cast<(object, object)>().Select(x => x.Item2).Select(x => new TabPage(x.Str())).ToArray());
-
 					if (opts.leftj.IsTrue())
 						kstc.Alignment = TabAlignment.Left;
 					else if (opts.rightj.IsTrue())
@@ -1399,10 +1400,10 @@
 				}
 			}
 
-			heightdone:
+		heightdone:
 			Point loc;
-			int lcLeft = 0, lcTop = 0, lcBottom = 0, lcRight = 0, lcWidth = 0, lcHeight = 0;
 
+			int lcLeft = 0, lcTop = 0, lcBottom = 0, lcRight = 0, lcWidth = 0, lcHeight = 0;
 			if (lastControl != null)
 			{
 				lcLeft = lastControl.Left; lcTop = lastControl.Top; lcBottom = lastControl.Bottom; lcRight = lastControl.Right; lcWidth = lastControl.Width; lcHeight = lastControl.Height;
@@ -1694,20 +1695,20 @@
 			return DefaultObject;
 		}
 
-		public object GetClientPos([Optional()][DefaultParameterValue(0)] ref object x,
-								   [Optional()][DefaultParameterValue(0)] ref object y,
-								   [Optional()][DefaultParameterValue(0)] ref object width,
-								   [Optional()][DefaultParameterValue(0)] ref object height)
+		public object GetClientPos([Optional()][DefaultParameterValue(null)] object outX,
+								   [Optional()][DefaultParameterValue(null)] object outY,
+								   [Optional()][DefaultParameterValue(null)] object outWidth,
+								   [Optional()][DefaultParameterValue(null)] object outHeight)
 		{
-			Gui.Control.GetClientPos(form, dpiscaling, ref x, ref y, ref width, ref height);
+			Gui.Control.GetClientPos(form, dpiscaling, outX, outY, outWidth, outHeight);
 			return DefaultObject;
 		}
 
 		public IEnumerator<(object, object)> GetEnumerator() => new GuiControlIterator(controls, 2);
 
-		public object GetPos([Optional()][DefaultParameterValue(0)] ref object x, [Optional()][DefaultParameterValue(0)] ref object y, [Optional()][DefaultParameterValue(0)] ref object width, [Optional()][DefaultParameterValue(0)] ref object height)
+		public object GetPos([Optional()][DefaultParameterValue(null)] object outX, [Optional()][DefaultParameterValue(null)] object outY, [Optional()][DefaultParameterValue(null)] object outWidth, [Optional()][DefaultParameterValue(null)] object outHeight)
 		{
-			Gui.Control.GetPos(form, dpiscaling, ref x, ref y, ref width, ref height);
+			Gui.Control.GetPos(form, dpiscaling, outX, outY, outWidth, outHeight);
 			return DefaultObject;
 		}
 
@@ -1927,11 +1928,11 @@
 			{
 				KeysharpStatusStrip ss = null;
 
-				if (status.Length > 0)
-				{
-					ss = status[0];
-					ssHeight = ss.Height;
-				}
+                if (status.Length > 0)
+                {
+                    ss = status[0];
+                    ssHeight = ss.Height;
+                }
 
 				(maxx, maxy) = FixStatusStrip(ss);
 			}
@@ -2012,7 +2013,7 @@
 			return DefaultObject;
 		}
 
-		public Map Submit(object obj = null)
+        public Map Submit(object obj = null)
 		{
 			var hide = obj.Ab(true);
 			var panels = new HashSet<Panel>();
@@ -2491,7 +2492,6 @@
 
 		public class WebBrowser(params object[] args) : Gui.Control(args) { }
 
-
 		internal class GuiOptions
 		{
 			internal int addexstyle = 0;
@@ -2503,7 +2503,7 @@
 			internal bool bgtrans = false;
 			internal bool bottom = false;
 
-			//Control specific.
+			//Ctrl specific.
 			//Button.
 			internal bool? btndef;
 
@@ -2667,13 +2667,13 @@
 		/// </summary>
 		/// <param name="key">A reference to the control value.</param>
 		/// <returns>True if the iterator position has not moved past the last element, else false.</returns>
-		public override object Call(ref object key)
+		public override object Call(object key)
 		{
 			if (MoveNext())
 			{
 				try
 				{
-					key = iter.Current.Value;
+					Script.SetPropertyValue(key, "__Value", iter.Current.Value);
 				}
 				catch (IndexOutOfRangeException)
 				{
@@ -2692,15 +2692,15 @@
 		/// <param name="key">A reference to the handle value.</param>
 		/// <param name="value">A reference to the control value.</param>
 		/// <returns>True if the iterator position has not moved past the last element, else false.</returns>
-		public override object Call(ref object key, ref object value)
+		public override object Call(object key, object value)
 		{
 			if (MoveNext())
 			{
 				try
 				{
 					var kv = iter.Current;
-					key = kv.Key;
-					value = kv.Value;
+					Script.SetPropertyValue(key, "__Value", kv.Key);
+					Script.SetPropertyValue(value, "__Value", kv.Value);
 				}
 				catch (IndexOutOfRangeException)
 				{
@@ -2712,5 +2712,5 @@
 
 			return false;
 		}
-	}
+    }
 }

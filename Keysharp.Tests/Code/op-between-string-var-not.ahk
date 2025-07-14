@@ -1,26 +1,26 @@
 
-b = blue
-o = ooo
-r = red
-x = xxx
-z = zzz
+b := "blue"
+o := "ooo"
+r := "red"
+x := "xxx"
+z := "zzz"
 
-If o not between %b% and %r%
-	FileAppend, "fail", "*"
+If not (StrCompare(o, b) > 0 and StrCompare(o, r) < 0)
+	FileAppend "fail", "*"
 else
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 	
-If o not between %r% and %b%
-	FileAppend, "pass", "*"
+If not (StrCompare(o, r) > 0 and StrCompare(o, b) < 0)
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-If o not between %x% and %z%
-	FileAppend, "pass", "*"
+If not (StrCompare(o, x) > 0 and StrCompare(o, z) < 0)
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
-If o not between %z% and %x%
-	FileAppend, "pass", "*"	
+If not (StrCompare(o, z) > 0 and StrCompare(o, x) < 0)
+	FileAppend "pass", "*"	
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"

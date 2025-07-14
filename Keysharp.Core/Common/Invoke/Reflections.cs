@@ -1,12 +1,13 @@
-// #define CONCURRENT
+//#define CONCURRENT
 #if CONCURRENT
 
-	using sttd = System.Collections.Concurrent.ConcurrentDictionary<string, System.Collections.Concurrent.ConcurrentDictionary<System.Type, System.Collections.Concurrent.ConcurrentDictionary<int, Keysharp.Core.Common.Invoke.MethodPropertyHolder>>>;
-	using ttsd = System.Collections.Concurrent.ConcurrentDictionary<System.Type, System.Collections.Concurrent.ConcurrentDictionary<string, System.Collections.Concurrent.ConcurrentDictionary<int, Keysharp.Core.Common.Invoke.MethodPropertyHolder>>>;
+using sttd = System.Collections.Concurrent.ConcurrentDictionary<string, System.Collections.Concurrent.ConcurrentDictionary<System.Type, System.Collections.Concurrent.ConcurrentDictionary<int, Keysharp.Core.Common.Invoke.MethodPropertyHolder>>>;
+using ttsd = System.Collections.Concurrent.ConcurrentDictionary<System.Type, System.Collections.Concurrent.ConcurrentDictionary<string, System.Collections.Concurrent.ConcurrentDictionary<int, Keysharp.Core.Common.Invoke.MethodPropertyHolder>>>;
 
 #else
-	using sttd = System.Collections.Generic.Dictionary<string, System.Collections.Generic.Dictionary<System.Type, System.Collections.Generic.Dictionary<int, Keysharp.Core.Common.Invoke.MethodPropertyHolder>>>;
-	using ttsd = System.Collections.Generic.Dictionary<System.Type, System.Collections.Generic.Dictionary<string, System.Collections.Generic.Dictionary<int, Keysharp.Core.Common.Invoke.MethodPropertyHolder>>>;
+
+using sttd = System.Collections.Generic.Dictionary<string, System.Collections.Generic.Dictionary<System.Type, System.Collections.Generic.Dictionary<int, Keysharp.Core.Common.Invoke.MethodPropertyHolder>>>;
+using ttsd = System.Collections.Generic.Dictionary<System.Type, System.Collections.Generic.Dictionary<string, System.Collections.Generic.Dictionary<int, Keysharp.Core.Common.Invoke.MethodPropertyHolder>>>;
 
 #endif
 
@@ -68,7 +69,7 @@ namespace Keysharp.Core.Common.Invoke
 			CacheAllMethods(ignoreMainAssembly);
 			CacheAllPropertiesAndFields();
 			var types = rd.loadedAssemblies.Values.Where(asm => asm.FullName.StartsWith("Keysharp.Core,"))
-						.SelectMany(t => GetNestedTypes(t.GetExportedTypes()))
+						.SelectMany(t => t.GetExportedTypes())
 						.Where(t => t.GetCustomAttribute<PublicForTestOnly>() == null && t.Namespace != null && t.Namespace.StartsWith("Keysharp.Core")
 							   && t.Namespace != "Keysharp.Core.Properties"
 							   && t.IsClass && (t.IsPublic || t.IsNestedPublic));
@@ -194,7 +195,7 @@ namespace Keysharp.Core.Common.Invoke
 							foreach (var meth in meths)
 								typeToMethods.GetOrAdd(meth.ReflectedType,
 													   (tp) => new ConcurrentDictionary<string, ConcurrentDictionary<int, MethodPropertyHolder>>(StringComparer.OrdinalIgnoreCase))
-								.GetOrAdd(meth.Name)[meth.GetParameters().Length] = new MethodPropertyHolder(meth, null);
+								.GetOrAdd(meth.Name)[meth.GetParameters().Length] = MethodPropertyHolder.GetOrAdd(meth);
 						}
 						else//Make a dummy entry because this type has no methods. This saves us additional searching later on when we encounter a type derived from this one. It will make the first Dictionary lookup above return true.
 						{
@@ -208,9 +209,12 @@ namespace Keysharp.Core.Common.Invoke
 						if (meths.Length > 0)
 						{
 							foreach (var meth in meths)
+							{
+								var mph = MethodPropertyHolder.GetOrAdd(meth);
 								typeToMethods.GetOrAdd(meth.ReflectedType,
 													   () => new Dictionary<string, Dictionary<int, MethodPropertyHolder>>(meths.Length, StringComparer.OrdinalIgnoreCase))
-								.GetOrAdd(meth.Name)[meth.GetParameters().Length] = new MethodPropertyHolder(meth, null);
+								.GetOrAdd(meth.Name)[mph.ParamLength] = mph;
+							}
 						}
 						else//Make a dummy entry because this type has no methods. This saves us additional searching later on when we encounter a type derived from this one. It will make the first Dictionary lookup above return true.
 						{
@@ -270,7 +274,7 @@ namespace Keysharp.Core.Common.Invoke
 								foreach (var prop in props)
 									typeToStringProperties.GetOrAdd(prop.ReflectedType,
 																	(tp) => new ConcurrentDictionary<string, ConcurrentDictionary<int, MethodPropertyHolder>>(StringComparer.OrdinalIgnoreCase))
-									.GetOrAdd(prop.Name)[prop.GetIndexParameters().Length] = new MethodPropertyHolder(null, prop);
+									.GetOrAdd(prop.Name)[prop.GetIndexParameters().Length] = MethodPropertyHolder.GetOrAdd(prop);
 							}
 							else//Make a dummy entry because this type has no properties. This saves us additional searching later on when we encounter a type derived from this one. It will make the first Dictionary lookup above return true.
 							{
@@ -284,9 +288,12 @@ namespace Keysharp.Core.Common.Invoke
 							if (props.Length > 0)
 							{
 								foreach (var prop in props)
+								{
+									var mph = MethodPropertyHolder.GetOrAdd(prop);
 									rd.typeToStringProperties.GetOrAdd(prop.ReflectedType,
-																	   () => new Dictionary<string, Dictionary<int, MethodPropertyHolder>>(props.Length, StringComparer.OrdinalIgnoreCase))
-									.GetOrAdd(prop.Name)[prop.GetIndexParameters().Length] = new MethodPropertyHolder(null, prop);
+																	() => new Dictionary<string, Dictionary<int, MethodPropertyHolder>>(props.Length, StringComparer.OrdinalIgnoreCase))
+									.GetOrAdd(prop.Name)[mph.ParamLength] = mph;
+								}
 							}
 							else//Make a dummy entry because this type has no properties. This saves us additional searching later on when we encounter a type derived from this one. It will make the first Dictionary lookup above return true.
 							{
@@ -348,7 +355,7 @@ namespace Keysharp.Core.Common.Invoke
 
 					if (Script.TheScript.ReflectionsData.typeToStringProperties.TryGetValue(t, out var dkt))
 					{
-						if (name != "__Class" && name != "super")
+						if (name != "__Class" && name != "__Static")
 							if (dkt.TryGetValue(name, out var prop))
 								return true;
 					}
@@ -378,7 +385,7 @@ namespace Keysharp.Core.Common.Invoke
 					if (Script.TheScript.ReflectionsData.typeToStringProperties.TryGetValue(t, out var dkt))
 					{
 						foreach (var kv in dkt)
-							if (kv.Value.Count > 0 && kv.Key != "__Class" && kv.Key != "super")
+							if (kv.Value.Count > 0 && kv.Key != "__Class" && kv.Key != "__Static")
 							{
 								var mph = kv.Value.First().Value;
 
@@ -411,9 +418,9 @@ namespace Keysharp.Core.Common.Invoke
 
 					if (Script.TheScript.ReflectionsData.typeToStringProperties.TryGetValue(t, out var dkt))
 					{
-						ct += dkt.Count;//Subtract 1 because of the auto generated __Class property.
+						ct += dkt.Count;
 
-						if (dkt.ContainsKey("super"))
+                        if (dkt.ContainsKey("__Static"))
 							--ct;
 
 						if (dkt.ContainsKey("__Class"))
@@ -439,7 +446,7 @@ namespace Keysharp.Core.Common.Invoke
 				addr = l;
 			else if (item is IPointable buf)//Put Buffer, StringBuffer etc check first because it's faster and more likely.
 				addr = buf.Ptr;
-			else if (item is KeysharpObject kso && Script.GetPropertyValue(kso, "ptr", false) is object p && p != null)
+			else if (item is KeysharpObject kso && Script.TryGetPropertyValue(kso, "ptr", out object p))
 				addr = p.Al();
 			else
 				addr = item.Al();
@@ -467,18 +474,19 @@ namespace Keysharp.Core.Common.Invoke
 			if (AppDomain.CurrentDomain.FriendlyName == "testhost")//When running unit tests, the assembly names are changed for the auto generated program.
 				assemblies = loadedAssembliesList.ToList();
 			else if (Assembly.GetEntryAssembly().FullName.StartsWith("Keysharp,", StringComparison.OrdinalIgnoreCase))//Running from Keysharp.exe which compiled this script and launched it as a dynamically loaded assembly.
-				assemblies = loadedAssembliesList.Where(assy => assy.Location.Length == 0 || assy.FullName.StartsWith("Keysharp.", StringComparison.OrdinalIgnoreCase)).ToList();//The . is important, it means only inspect Keysharp.Core because Keysharp, is the main Keysharp program, which we don't want to inspect. An assembly with an empty location is the compiled exe.
+				assemblies = loadedAssembliesList.Where(assy => assy.GetCustomAttribute<PublicForTestOnly>() == null && (assy.Location.Length == 0 || assy.FullName.StartsWith("Keysharp.", StringComparison.OrdinalIgnoreCase))).ToList();//The . is important, it means only inspect Keysharp.Core because Keysharp, is the main Keysharp program, which we don't want to inspect. An assembly with an empty location is the compiled exe.
 			else//Running as a standalone executable.
-				assemblies = loadedAssembliesList.Where(assy => assy.FullName.StartsWith("Keysharp.", StringComparison.OrdinalIgnoreCase) ||
+				assemblies = loadedAssembliesList.Where(assy => assy.GetCustomAttribute<PublicForTestOnly>() == null && (assy.FullName.StartsWith("Keysharp.", StringComparison.OrdinalIgnoreCase) ||
 														(assy.EntryPoint != null &&
 																assy.EntryPoint.DeclaringType != null &&
 																assy.EntryPoint.DeclaringType.Namespace.StartsWith("Keysharp.CompiledMain", StringComparison.OrdinalIgnoreCase)
-														)).ToList();
+														))).ToList();
 
 			//_ = MessageBox.Show(string.Join('\n', assemblies.Select(assy => assy.FullName)));
 			foreach (var asm in assemblies)
-				foreach (var type in GetNestedTypes(asm.GetExportedTypes()))
-					if (type.IsClass && type.IsPublic && type.Namespace != null && (!ignoreMainAssembly || type.Name != Parser.mainClassName) &&
+				foreach (var type in asm.GetExportedTypes())
+					if (type.GetCustomAttribute<PublicForTestOnly>() == null &&
+						type.IsClass && type.IsPublic && type.Namespace != null && (!ignoreMainAssembly || type.Name != Keywords.MainClassName) &&
 							(type.Namespace.StartsWith("Keysharp.Core", StringComparison.OrdinalIgnoreCase) ||
 							 type.Namespace.StartsWith("Keysharp.CompiledMain", StringComparison.OrdinalIgnoreCase) ||
 							 type.Namespace.StartsWith("Keysharp.Tests", StringComparison.OrdinalIgnoreCase)))//Allow tests so we can use function objects inside of unit tests.
@@ -520,7 +528,7 @@ namespace Keysharp.Core.Common.Invoke
 			//The compiled and running output of a script will have the name of the script file without the extension.
 			//So we can't just use "Keysharp" to identify it.
 			foreach (var asm in rd.loadedAssemblies.Values.Where(assy => assy.FullName.StartsWith("Keysharp", StringComparison.OrdinalIgnoreCase) || exeAssembly == assy))
-				foreach (var type in GetNestedTypes(asm.GetExportedTypes()))
+				foreach (var type in asm.GetExportedTypes())
 					if (type.IsClass && type.IsPublic && type.Namespace != null &&
 							(type.Namespace.StartsWith("Keysharp.Core", StringComparison.OrdinalIgnoreCase) ||
 							 type.Namespace.StartsWith("Keysharp.CompiledMain", StringComparison.OrdinalIgnoreCase)))

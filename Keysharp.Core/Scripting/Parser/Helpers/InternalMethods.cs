@@ -1,8 +1,39 @@
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+
 namespace Keysharp.Scripting
 {
-	public partial class Parser
+	internal partial class Parser
 	{
-		internal class InternalMethods
+        internal class MethodReference
+        {
+            internal string MethodName { get; set; }
+
+            internal Type TargetObject { get; set; }
+
+            internal Type[] TypeArguments { get; set; }
+
+            internal MethodReference(Type targetObject, string methodName)
+                : this(targetObject, methodName, null) { }
+
+            internal MethodReference(Type targetObject, string methodName, Type[] typeArguments)
+            {
+                TargetObject = targetObject;
+                MethodName = methodName;
+                TypeArguments = typeArguments;
+            }
+
+            public static explicit operator InvocationExpressionSyntax(MethodReference source)
+            {
+                return SyntaxFactory.InvocationExpression(Parser.CreateMemberAccess(source.TargetObject.FullName, source.MethodName));
+            }
+
+            public static explicit operator MethodInfo(MethodReference source)
+            {
+                return source.TypeArguments == null ? source.TargetObject.GetMethod(source.MethodName) : source.TargetObject.GetMethod(source.MethodName, source.TypeArguments);
+            }
+        }
+
+        internal class InternalMethods
 		{
 			internal static MethodReference AddHotkey => new (typeof(HotkeyDefinition), "AddHotkey");
 			internal static MethodReference AddHotstring => new (typeof(HotstringManager), "AddHotstring");
@@ -13,15 +44,17 @@ namespace Keysharp.Scripting
 			internal static MethodReference ExitIfNotPersistent => new (typeof(Script), "ExitIfNotPersistent");
 			internal static MethodReference ExtendArray => new (typeof(Script), "ExtendArray");
 			internal static MethodReference ForceBool => new (typeof(Script), "ForceBool");
+			internal static MethodReference ForceString => new(typeof(Script), "ForceString");
 			internal static MethodReference FlattenParam => new (typeof(Script), "FlattenParam");
 			internal static MethodReference Func => new (typeof(Functions), "Func");
-			internal static MethodReference GetMethodOrProperty => new (typeof(Script), "GetMethodOrProperty");
+            internal static MethodReference Closure => new(typeof(Functions), "Closure");
+            internal static MethodReference GetMethodOrProperty => new (typeof(Script), "GetMethodOrProperty");
 			internal static MethodReference GetPropertyValue => new (typeof(Script), "GetPropertyValue");
 			internal static MethodReference HandleSingleInstance => new (typeof(Script), "HandleSingleInstance");
 			internal static MethodReference HotIf => new (typeof(HotkeyDefinition), "HotIf");
 			internal static MethodReference Hotkey => new (typeof(Keyboard), "Hotkey");
 			internal static MethodReference Hotstring => new (typeof(Keyboard), "Hotstring");
-			internal static MethodReference IfElse => new (typeof(Script), "IfTest");
+            internal static MethodReference IfElse => new (typeof(Script), "IfTest");
 			internal static MethodReference IfLegacy => new (typeof(Script), "IfLegacy");
 			internal static MethodReference Inc => new (typeof(Loops), "Inc");
 			internal static MethodReference Index => new (typeof(Script), "Index");
@@ -57,6 +90,7 @@ namespace Keysharp.Scripting
 			internal static MethodReference SetPropertyValue => new (typeof(Script), "SetPropertyValue");
 			internal static MethodReference SetReady => new (typeof(Script), "SetReady");
 			internal static MethodReference StringConcat => new (typeof(string), "Concat", [typeof(object)]);
+			internal static MethodReference Super => new(typeof(Script), "Super");
 			internal static MethodReference WaitThreads => new (typeof(Script), "WaitThreads");
 		}
 	}

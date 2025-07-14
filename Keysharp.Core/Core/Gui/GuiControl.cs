@@ -89,7 +89,7 @@
 				}
 			}
 
-			public new (Type, object) super => (typeof(KeysharpObject), this);
+			public (Type, object) super => (typeof(KeysharpObject), this);
 
 			public object Text
 			{
@@ -415,10 +415,9 @@
 				}
 			}
 
+			public Control(params object[] args) : base(args) { }
 
-			public Control(params object[] args) => _ = __New(args);
-
-			public new object __New(params object[] args)
+			public override object __New(params object[] args)
 			{
 				if (args.Length == 0) return DefaultErrorObject;
 
@@ -757,12 +756,12 @@
 				return 0L;
 			}
 
-			public object GetClientPos([Optional()][DefaultParameterValue(0)] ref object x,
-									   [Optional()][DefaultParameterValue(0)] ref object y,
-									   [Optional()][DefaultParameterValue(0)] ref object width,
-									   [Optional()][DefaultParameterValue(0)] ref object height)
+			public object GetClientPos([Optional()][DefaultParameterValue(null)] object outX,
+									   [Optional()][DefaultParameterValue(null)] object outY,
+									   [Optional()][DefaultParameterValue(null)] object outWidth,
+									   [Optional()][DefaultParameterValue(null)] object outHeight)
 			{
-				GetClientPos(_control, DpiScaling, ref x, ref y, ref width, ref height);
+				GetClientPos(_control, DpiScaling, outX, outY, outWidth, outHeight);
 				return DefaultObject;
 			}
 
@@ -872,12 +871,12 @@
 				return DefaultErrorLong;
 			}
 
-			public object GetPos([Optional()][DefaultParameterValue(0)] ref object x,
-								 [Optional()][DefaultParameterValue(0)] ref object y,
-								 [Optional()][DefaultParameterValue(0)] ref object width,
-								 [Optional()][DefaultParameterValue(0)] ref object height)
+			public object GetPos([Optional()][DefaultParameterValue(null)] object outX,
+								 [Optional()][DefaultParameterValue(null)] object outY,
+								 [Optional()][DefaultParameterValue(null)] object outWidth,
+								 [Optional()][DefaultParameterValue(null)] object outHeight)
 			{
-				GetPos(_control, DpiScaling, ref x, ref y, ref width, ref height);
+				GetPos(_control, DpiScaling, outX, outY, outWidth, outHeight);
 				return DefaultObject;
 			}
 
@@ -1107,7 +1106,7 @@
 				if (h != long.MinValue)//Unsure if it's needed here too.
 					_control.Height = (int)Math.Round(h * scale) - (hasScrollBars ? SystemInformation.HorizontalScrollBarHeight : 0);
 
-				return null;
+				return DefaultObject;
 			}
 
 			public object SetCue(object newText, object showWhenFocused = null)
@@ -1873,14 +1872,14 @@
 				return DefaultObject;
 			}
 
-			internal static void GetClientPos(System.Windows.Forms.Control control, bool scaling, ref object x, ref object y, ref object w, ref object h) => GetPosHelper(control, scaling, true, ref x, ref y, ref w, ref h);
+			internal static void GetClientPos(System.Windows.Forms.Control control, bool scaling, [ByRef] object outX, [ByRef] object outY, [ByRef] object outWidth, [ByRef] object outHeight) => GetPosHelper(control, scaling, true, outX, outY, outWidth, outHeight);
 
-			internal static void GetPos(System.Windows.Forms.Control control, bool scaling, ref object x, ref object y, ref object w, ref object h) => GetPosHelper(control, scaling, false, ref x, ref y, ref w, ref h);
+			internal static void GetPos(System.Windows.Forms.Control control, bool scaling, [ByRef] object outX, [ByRef] object outY, [ByRef] object outWidth, [ByRef] object outHeight) => GetPosHelper(control, scaling, false, outX, outY, outWidth, outHeight);
 
-			internal static void GetPosHelper(System.Windows.Forms.Control control, bool scaling, bool client, ref object x, ref object y, ref object w, ref object h)
+			internal static void GetPosHelper(System.Windows.Forms.Control control, bool scaling, bool client, [ByRef] object outX, [ByRef] object outY, [ByRef] object outWidth, [ByRef] object outHeight)
 			{
+				outX ??= VarRef.Empty; outY ??= VarRef.Empty; outWidth ??= VarRef.Empty; outHeight ??= VarRef.Empty;
 				var rect = client ? control.ClientRectangle : control.Bounds;
-
 				if (!client && control?.Parent != null)
 				{
 					Point p = control.Parent.GetLocationRelativeToForm();
@@ -1889,18 +1888,18 @@
 
 				if (!scaling)
 				{
-					x = (long)rect.X;
-					y = (long)rect.Y;
-					w = (long)rect.Width;
-					h = (long)rect.Height;
+					Script.SetPropertyValue(outX, "__Value", (long)rect.X);
+					Script.SetPropertyValue(outY, "__Value", (long)rect.Y);
+					Script.SetPropertyValue(outWidth, "__Value", (long)rect.Width);
+					Script.SetPropertyValue(outHeight, "__Value", (long)rect.Height);
 				}
 				else
 				{
-					var scale = 1.0 / A_ScaledScreenDPI;
-					x = (long)(rect.X * scale);
-					y = (long)(rect.Y * scale);
-					w = (long)(rect.Width * scale);
-					h = (long)(rect.Height * scale);
+					var scale = 1.0 / Accessors.A_ScaledScreenDPI;
+					Script.SetPropertyValue(outX, "__Value", (long)(rect.X * scale));
+					Script.SetPropertyValue(outY, "__Value", (long)(rect.Y * scale));
+					Script.SetPropertyValue(outWidth, "__Value", (long)(rect.Width * scale));
+					Script.SetPropertyValue(outHeight, "__Value", (long)(rect.Height * scale));
 				}
 			}
 

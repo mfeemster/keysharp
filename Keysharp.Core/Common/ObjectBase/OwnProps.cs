@@ -53,7 +53,7 @@
 				{
 					_getVal = value;
 					var p = value ? Script.TheScript.OwnPropsIteratorData.p2 : Script.TheScript.OwnPropsIteratorData.p1;
-					var fo = (FuncObj)p.Clone();
+					fo = (FuncObj)p.Clone();
 					fo.Inst = this;
 					CallFunc = fo;
 				}
@@ -70,31 +70,38 @@
 			iter = map.GetEnumerator();
 		}
 
-		public override object Call(ref object obj0)
+		public override object Call([ByRef] object obj0)
 		{
 			if (MoveNext())
 			{
 				GetVal = false;
-				(obj0, _) = Current;
+				Script.SetPropertyValue(obj0, "__Value", Current.Item1);
 				return true;
 			}
 
 			return false;
 		}
 
-		public override object Call(ref object obj0, ref object obj1)
+		public override object Call([ByRef] object obj0, [ByRef] object obj1 = null)
 		{
+			GetVal = obj1 != null;
+
 			if (MoveNext())
 			{
-				GetVal = true;
-				(obj0, obj1) = Current;
+				if (GetVal)
+				{
+					Script.SetPropertyValue(obj0, "__Value", Current.Item1);
+					Script.SetPropertyValue(obj1, "__Value", Current.Item2);
+				} 
+				else
+					Script.SetPropertyValue(obj0, "__Value", Current.Item1);
 				return true;
 			}
 
 			return false;
 		}
 
-		public void Dispose() => Reset();
+        public void Dispose() => Reset();
 
 		public bool MoveNext() => iter.MoveNext();
 

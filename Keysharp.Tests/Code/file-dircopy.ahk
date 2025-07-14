@@ -19,33 +19,33 @@ catch
 }
 
 if (b)
- 	FileAppend, "pass", "*"
+ 	FileAppend "pass", "*"
 else
-  	FileAppend, "fail", "*"
+  	FileAppend "fail", "*"
 
 VerifyAndDelete(true)
 
 VerifyAndDelete(del)
 {
     if (DirExist("./DirCopy2"))
- 	    FileAppend, "pass", "*"
+ 	    FileAppend "pass", "*"
     else
-  	    FileAppend, "fail", "*"
+  	    FileAppend "fail", "*"
 
     if (FileExist("./DirCopy2/file1.txt"))
- 	    FileAppend, "pass", "*"
+ 	    FileAppend "pass", "*"
     else
-  	    FileAppend, "fail", "*"
+  	    FileAppend "fail", "*"
 
     if (FileExist("./DirCopy2/file2.txt"))
- 	    FileAppend, "pass", "*"
+ 	    FileAppend "pass", "*"
     else
-  	    FileAppend, "fail", "*"
+  	    FileAppend "fail", "*"
 
     if (FileExist("./DirCopy2/file3txt"))
- 	    FileAppend, "pass", "*"
+ 	    FileAppend "pass", "*"
     else
-  	    FileAppend, "fail", "*"
+  	    FileAppend "fail", "*"
 
     if (del)
     {
@@ -53,8 +53,8 @@ VerifyAndDelete(del)
 	        DirDelete("./DirCopy2", true)
 
         if (DirExist("./DirCopy2"))
- 	        FileAppend, "fail", "*"
+ 	        FileAppend "fail", "*"
         else
-  	        FileAppend, "pass", "*"
+  	        FileAppend "pass", "*"
     }
 }

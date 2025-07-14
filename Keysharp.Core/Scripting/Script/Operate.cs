@@ -134,8 +134,12 @@ namespace Keysharp.Scripting
 							goto done;
 					}
 
-					//Traverse class hierarchy to see if there is a match.
-					if (subject != null)
+					var alias = Keywords.TypeNameAliases.FirstOrDefault(kvp => kvp.Value.Equals(test, StringComparison.OrdinalIgnoreCase)).Key;
+					if (alias != null)
+						test = alias;
+
+                    //Traverse class hierarchy to see if there is a match.
+                    if (subject != null)
 					{
 						var type = subject.GetType();
 
@@ -359,9 +363,9 @@ namespace Keysharp.Scripting
 					if (right == null)
 						return (bool)Errors.UnsetErrorOccurred($"Right side operand of regular expression", false);
 
-						object outvar = null;
-						_ = RegEx.RegExMatch(ForceString(left), ForceString(right), ref outvar, 1);
-						return outvar;
+                        VarRef outvar = new VarRef(null);
+						_ = RegEx.RegExMatch(ForceString(left), ForceString(right), outvar, 1);
+						return outvar.__Value;
 					}
 
 				case Operator.FloorDivide:
@@ -384,92 +388,92 @@ namespace Keysharp.Scripting
 					}
 
 				case Operator.IdentityInequality:
-				{
-					if (left == null)
-						return right != null;
+					{
+						if (left == null)
+							return right != null;
 
-					if (right == null)
-						return left != null;
+						if (right == null)
+							return left != null;
 
-					_ = MatchTypes(ref left, ref right);
+						_ = MatchTypes(ref left, ref right);
 
-					if (left is string s1 && right is string s2)
-						return Strings.StrCmp(s1, s2, true) != 0;
+						if (left is string s1 && right is string s2)
+							return Strings.StrCmp(s1, s2, true) != 0;
 
-					return !left.Equals(right);
-				}
+						return !left.Equals(right);
+					}
 
 				case Operator.IdentityEquality://This is for a double equal sign in a conditional, and uses case sensitive comparison for strings.
-				{
-					if (left == null)
-						return right == null;
+					{
+						if (left == null)
+							return right == null;
 
-					if (right == null)
-						return left == null;
+						if (right == null)
+							return left == null;
 
-					_ = MatchTypes(ref left, ref right);
+						_ = MatchTypes(ref left, ref right);
 
-					if (left is string s1 && right is string s2)
-						return Strings.StrCmp(s1, s2, true) == 0;
+						if (left is string s1 && right is string s2)
+							return Strings.StrCmp(s1, s2, true) == 0;
 
-					return left.Equals(right);
-				}
+						return left.Equals(right);
+					}
 
 				case Operator.ValueEquality://This is for a single equal sign in a conditional, and uses the case insensitive comparison type for strings.
-				{
-					if (left == null)
-						return right == null;
-
-					if (right == null)
-						return left == null;
-
-					_ = MatchTypes(ref left, ref right);
-
-					if (left is string s1 && right is string s2)
-						return Strings.StrCmp(s1, s2, false) == 0;
-					else if (left is Core.Array al1 && right is Core.Array al2)
 					{
-						var len1 = (long)al1.Length;
-						var len2 = (long)al2.Length;
+						if (left == null)
+							return right == null;
 
-						if (len1 != len2)
-							return false;
+						if (right == null)
+							return left == null;
 
-						for (var i = 1; i <= len1; i++)
+						_ = MatchTypes(ref left, ref right);
+
+						if (left is string s1 && right is string s2)
+							return Strings.StrCmp(s1, s2, false) == 0;
+						else if (left is Core.Array al1 && right is Core.Array al2)
 						{
-							if (IsNumeric(al1[i]) && IsNumeric(al2[i]))
-							{
-								var d1 = Convert.ToDouble(al1[i]);
-								var d2 = Convert.ToDouble(al2[i]);
+							var len1 = (long)al1.Length;
+							var len2 = (long)al2.Length;
 
-								if (d1 != d2)
+							if (len1 != len2)
+								return false;
+
+							for (var i = 1; i <= len1; i++)
+							{
+								if (IsNumeric(al1[i]) && IsNumeric(al2[i]))
+								{
+									var d1 = Convert.ToDouble(al1[i]);
+									var d2 = Convert.ToDouble(al2[i]);
+
+									if (d1 != d2)
+										return false;
+								}
+								else if (!al1[i].Equals(al2[i]))
 									return false;
 							}
-							else if (!al1[i].Equals(al2[i]))
-								return false;
+
+							return true;
 						}
-
-						return true;
-					}
-					else if (left is Core.Buffer buf1 && right is Core.Buffer buf2)
-					{
-						var len1 = (long)buf1.Size;
-						var len2 = (long)buf2.Size;
-
-						if (len1 != len2)
-							return false;
-
-						for (var i = 1; i <= len1; i++)
+						else if (left is Core.Buffer buf1 && right is Core.Buffer buf2)
 						{
-							if (buf1[i] != buf2[i])
-								return false;
-						}
+							var len1 = (long)buf1.Size;
+							var len2 = (long)buf2.Size;
 
-						return true;
+							if (len1 != len2)
+								return false;
+
+							for (var i = 1; i <= len1; i++)
+							{
+								if (buf1[i] != buf2[i])
+									return false;
+							}
+
+							return true;
+						}
+						else
+							return left.Equals(right);//Will go here if both are double or decimal.
 					}
-					else
-						return left.Equals(right);//Will go here if both are double or decimal.
-				}
 
 				case Operator.LessThan:
 				{
@@ -580,20 +584,20 @@ namespace Keysharp.Scripting
 				}
 
 				case Operator.ValueInequality://This is for != or <> in a conditional.
-				{
-					if (left == null)
-						return right != null;
+					{
+						if (left == null)
+							return right != null;
 
-					if (right == null)
-						return left != null;
+						if (right == null)
+							return left != null;
 
-					_ = MatchTypes(ref left, ref right);
+						_ = MatchTypes(ref left, ref right);
 
-					if (left is string s1 && right is string s2)
-						return Strings.StrCmp(s1, s2, false) != 0;
-					else
-						return left == null ? right != null : !left.Equals(right);//Will go here if both are double or decimal.
-				}
+						if (left is string s1 && right is string s2)
+							return Strings.StrCmp(s1, s2, false) != 0;
+						else
+							return left == null ? right != null : !left.Equals(right);//Will go here if both are double or decimal.
+					}
 
 				case Operator.Modulus:
 				{
@@ -732,7 +736,9 @@ namespace Keysharp.Scripting
 					}
 
 				case Operator.Is:
-				{
+				{ 
+					if (left == null || right == null)
+						return left == right;
 					return IfLegacy(left, "is", ForceString(right));
 				}
 
@@ -815,9 +821,26 @@ namespace Keysharp.Scripting
 
 		public static object OperateTernary(bool result, ExpressionDelegate x, ExpressionDelegate y) => result ? x() : y();
 
-		public static object MultiStatement(params object[] args) => args[ ^ 1];
+		public static object MultiStatement(object arg1) => arg1;
+        public static object MultiStatement(object arg1, object arg2) => arg2;
+        public static object MultiStatement(object arg1, object arg2, object arg3) => arg3;
+        public static object MultiStatement(object arg1, object arg2, object arg3, object arg4) => arg4;
+        public static object MultiStatement(object arg1, object arg2, object arg3, object arg4, object arg5) => arg5;
+        public static object MultiStatement(object arg1, object arg2, object arg3, object arg4, object arg5, object arg6) => arg6;
+        public static object MultiStatement(object arg1, object arg2, object arg3, object arg4, object arg5, object arg6, object arg7) => arg7;
+        public static object MultiStatement(object arg1, object arg2, object arg3, object arg4, object arg5, object arg6, object arg7, object arg8) => arg8;
 
-		public static object OperateUnary(Operator op, object right)
+        public static object MultiStatement(params object[] args) => args[ ^ 1];
+
+        public static void InitStaticVariable(ref object variable, string name, Func<object> initFunc)
+        {
+            if (Script.TheScript.FlowData.initializedUserStaticVariables.Contains(name))
+                return;
+			Script.TheScript.FlowData.initializedUserStaticVariables.Add(name);
+            variable = initFunc();
+        }
+
+        public static object OperateUnary(Operator op, object right)
 		{
 			switch (op)
 			{

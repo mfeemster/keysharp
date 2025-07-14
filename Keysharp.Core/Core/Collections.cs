@@ -55,5 +55,12 @@
 			map.Set(obj);
 			return map;
 		}
-	}
+
+        public static Map MapWithoutBase(params object[] obj)
+        {
+            var map = new Map(skipLogic: true);
+            map.Set(obj);
+            return map;
+        }
+    }
 }

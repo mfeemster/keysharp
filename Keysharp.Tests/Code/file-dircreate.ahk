@@ -7,29 +7,29 @@ dir := "./DirCreate/SubDir1/SubDir2/SubDir3"
 DirCreate(dir)
 	
 if (DirExist("./DirCreate"))
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 if (DirExist("./DirCreate/SubDir1"))
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 if (DirExist("./DirCreate/SubDir1/SubDir2"))
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 if (DirExist("./DirCreate/SubDir1/SubDir2/SubDir3"))
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (DirExist("./DirCreate"))
 	DirDelete("./DirCreate", true)
 
 if (DirExist("./DirCreate"))
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 else
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"

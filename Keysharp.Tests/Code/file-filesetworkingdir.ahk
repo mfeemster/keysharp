@@ -6,9 +6,9 @@ fullpath := FileFullPath(dir)
 SetWorkingDir(fullpath)
 
 if (A_WorkingDir == fullpath)
- 	FileAppend, "pass", "*"
+ 	FileAppend "pass", "*"
 else
-  	FileAppend, "fail", "*"
+  	FileAppend "fail", "*"
 
 #if WINDOWS
 	SetWorkingDir("C:\a\fake\path") ; Non-existent folders don't get assigned.
@@ -17,8 +17,8 @@ else
 #endif
 
 if (A_WorkingDir == fullpath) ; So it should remain unchanged.
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-  	FileAppend, "fail", "*"
+  	FileAppend "fail", "*"
 
 SetWorkingDir(origdir)

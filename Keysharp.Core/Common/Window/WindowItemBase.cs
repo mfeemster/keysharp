@@ -383,9 +383,9 @@
 
 				case 4:
 				{
-					object outvar = null;
-					_ = RegEx.RegExMatch(a, b, ref outvar, 1);
-					RegExMatchInfo output = (RegExMatchInfo)outvar;
+					VarRef outvar = new VarRef(null);
+					_ = RegEx.RegExMatch(a, b, outvar, 1);
+					RegExMatchInfo output = (RegExMatchInfo)(outvar.__Value);
 					return output.Count.Ai() > 0 && !string.IsNullOrEmpty(output[0]);
 				}
 			}

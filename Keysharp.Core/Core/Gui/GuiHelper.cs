@@ -1,4 +1,6 @@
-﻿namespace Keysharp.Core
+﻿using System.Drawing;
+
+namespace Keysharp.Core
 {
 	public static class GuiHelper
 	{
@@ -246,25 +248,25 @@
 				return default;
 			}
 
-			try
-			{
-				//Get an .ico file in memory, then split it into separate icons and bitmaps.
-				byte[] src = null;
+            try
+            {
+                //Get an .ico file in memory, then split it into separate icons and bitmaps.
+                byte[] src = null;
 
-				using (var stream = new MemoryStream())
-				{
-					icon.Save(stream);
-					src = stream.ToArray();
-				}
+                using (var stream = new MemoryStream())
+                {
+                    icon.Save(stream);
+                    src = stream.ToArray();
+                }
 
-				int count = BitConverter.ToInt16(src, 4);
-				var splitIcons = new List<(Icon, Bitmap)>(count);
+                int count = BitConverter.ToInt16(src, 4);
+                var splitIcons = new List<(Icon, Bitmap)>(count);
 
-				for (var i = 0; i < count; i++)
-				{
-					var bpp = BitConverter.ToInt16(src, 6 + (16 * i) + 6);//ICONDIRENTRY.wBitCount
-					var length = BitConverter.ToInt32(src, 6 + (16 * i) + 8);//ICONDIRENTRY.dwBytesInRes
-					var offset = BitConverter.ToInt32(src, 6 + (16 * i) + 12);//ICONDIRENTRY.dwImageOffset
+                for (var i = 0; i < count; i++)
+                {
+                    var bpp = BitConverter.ToInt16(src, 6 + (16 * i) + 6);//ICONDIRENTRY.wBitCount
+                    var length = BitConverter.ToInt32(src, 6 + (16 * i) + 8);//ICONDIRENTRY.dwBytesInRes
+                    var offset = BitConverter.ToInt32(src, 6 + (16 * i) + 12);//ICONDIRENTRY.dwImageOffset
 
 					using (var dst = new BinaryWriter(new MemoryStream(6 + 16 + length)))
 					{
@@ -311,7 +313,7 @@
 			}
 		}
 
-		private static Control GuiControlGetFocused(Control parent)
+        private static Control GuiControlGetFocused(Control parent)
 		{
 			foreach (Control child in parent.Controls)
 			{

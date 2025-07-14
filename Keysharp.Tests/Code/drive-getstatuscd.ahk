@@ -3,6 +3,6 @@
 val := DriveGetStatusCD("C:\\")
 			
 if (val == "error")
- 	FileAppend, "pass", "*"
+ 	FileAppend "pass", "*"
 else
-  	FileAppend, "fail", "*"
+  	FileAppend "fail", "*"

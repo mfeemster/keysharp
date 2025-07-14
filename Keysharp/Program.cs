@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -32,6 +33,7 @@ namespace Keysharp.Main
 			Task writeExeTask = null;
 			Task writeCodeTask = null;
 
+
 			try
 			{
 				var script = new Script();//One Script object will exist here, then another will be created when the script runs.
@@ -48,7 +50,7 @@ namespace Keysharp.Main
 				var exeout = false;
 				var minimalexeout = false;
 				var assembly = false;
-				var assemblyType = "Keysharp.CompiledMain.program";
+				var assemblyType = "Keysharp.CompiledMain." + Keywords.MainClassName;
 				var assemblyMethod = "Main";
 				var scriptName = string.Empty;
 				var gotscript = false;
@@ -198,7 +200,7 @@ namespace Keysharp.Main
 				if (!fromstdin && !File.Exists(scriptName))
 					return Message($"Could not find the script file {scriptName}.", true);
 
-				string namenoext, path, scriptdir;
+                string namenoext, path, scriptdir;
 
 				if (!fromstdin)
 				{
@@ -319,7 +321,7 @@ namespace Keysharp.Main
 				if (CompilerHelper.compiledasm == null)
 					throw new Exception("Compilation failed.");
 
-				var program = CompilerHelper.compiledasm.GetType("Keysharp.CompiledMain.program");
+				var program = CompilerHelper.compiledasm.GetType($"Keysharp.CompiledMain.{Keywords.MainClassName}");
 				var main = program.GetMethod("Main");
 #if DEBUG
 				KeysharpEnhancements.OutputDebugLine("Running compiled code.");
@@ -360,6 +362,11 @@ namespace Keysharp.Main
 
 			writeExeTask?.Wait();
 			writeCodeTask?.Wait();
+
+#if DEBUG
+			Core.Debug.OutputDebug("Running compiled code.");
+#endif
+
 			return Environment.ExitCode;
 		}
 

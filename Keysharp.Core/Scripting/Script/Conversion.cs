@@ -2,7 +2,7 @@ namespace Keysharp.Scripting
 {
 	public partial class Script
 	{
-		internal static bool ForceBool(object input)
+		public static bool ForceBool(object input)
 		{
 			if (input == null)
 				return (bool)Errors.UnsetErrorOccurred("input", false);
@@ -110,7 +110,7 @@ namespace Keysharp.Scripting
 			return l;
 		}
 
-		internal static string ForceString(object input)
+		public static string ForceString(object input)
 		{
 			if (input == null)
 				return string.Empty;

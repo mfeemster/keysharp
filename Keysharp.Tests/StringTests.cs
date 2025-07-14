@@ -278,43 +278,43 @@ namespace Keysharp.Tests
 		public void RegExMatch()
 		{
 			object match = null;
-			_ = RegEx.RegExMatch("abc123abc456", "abc\\d+", ref match, 1);
+			_ = RegEx.RegExMatch("abc123abc456", "abc\\d+", new VarRef(() => match, value => match = value), 1);
 			Assert.AreEqual(((RegExMatchInfo)match)[0], "abc123");
 			Assert.AreEqual(((RegExMatchInfo)match).Pos(), 1);
 			match = null;
-			_ = RegEx.RegExMatch("abc123abc456", "456", ref match, -1);
+			_ = RegEx.RegExMatch("abc123abc456", "456", new VarRef(() => match, value => match = value), -1);
 			Assert.AreEqual(match, "");
-			_ = RegEx.RegExMatch("abc123abc456", "456", ref match, -3);
+			_ = RegEx.RegExMatch("abc123abc456", "456", new VarRef(() => match, value => match = value), -3);
 			Assert.AreEqual(((RegExMatchInfo)match)[0], "456");
 			Assert.AreEqual(((RegExMatchInfo)match).Pos(), 10);
-			_ = RegEx.RegExMatch("abc123abc456", "abc", ref match, -6);
+			_ = RegEx.RegExMatch("abc123abc456", "abc", new VarRef(() => match, value => match = value), -6);
 			Assert.AreEqual(((RegExMatchInfo)match)[0], "abc");
 			Assert.AreEqual(((RegExMatchInfo)match).Pos(), 7);
-			_ = RegEx.RegExMatch("abc123abc456", "abc", ref match, -15);
+			_ = RegEx.RegExMatch("abc123abc456", "abc", new VarRef(() => match, value => match = value), -15);
 			Assert.AreEqual(((RegExMatchInfo)match)[0], "abc");
 			Assert.AreEqual(((RegExMatchInfo)match).Pos(), 1);
-			_ = RegEx.RegExMatch("abc123abc456", "abc\\d+", ref match, 2);
+			_ = RegEx.RegExMatch("abc123abc456", "abc\\d+", new VarRef(() => match, value => match = value), 2);
 			Assert.AreEqual(((RegExMatchInfo)match)[0], "abc456");
 			Assert.AreEqual(((RegExMatchInfo)match).Pos(), 7);
-			_ = RegEx.RegExMatch("abc123123", "123$", ref match, 1);
+			_ = RegEx.RegExMatch("abc123123", "123$", new VarRef(() => match, value => match = value), 1);
 			Assert.AreEqual(((RegExMatchInfo)match).Pos(), 7);
-			_ = RegEx.RegExMatch("xxxabc123xyz", "abc.*xyz", ref match, 1);
+			_ = RegEx.RegExMatch("xxxabc123xyz", "abc.*xyz", new VarRef(() => match, value => match = value), 1);
 			Assert.AreEqual(((RegExMatchInfo)match).Pos(), 4);
-			_ = RegEx.RegExMatch("abc123123", "123$", ref match);
+			_ = RegEx.RegExMatch("abc123123", "123$", new VarRef(() => match, value => match = value));
 			Assert.AreEqual(((RegExMatchInfo)match).Pos(), 7);
-			_ = RegEx.RegExMatch("abc123", "i)^ABC", ref match);
+			_ = RegEx.RegExMatch("abc123", "i)^ABC", new VarRef(() => match, value => match = value));
 			Assert.AreEqual(((RegExMatchInfo)match).Pos(), 1);
-			_ = RegEx.RegExMatch("abcXYZ123", "abc(.*)123", ref match);
+			_ = RegEx.RegExMatch("abcXYZ123", "abc(.*)123", new VarRef(() => match, value => match = value));
 			Assert.AreEqual(((RegExMatchInfo)match)[1], "XYZ");
 			Assert.AreEqual(((RegExMatchInfo)match).Pos(1), 4);
-			_ = RegEx.RegExMatch("abcXYZ123", "abc(?<testname>.*)123", ref match);
+			_ = RegEx.RegExMatch("abcXYZ123", "abc(?<testname>.*)123", new VarRef(() => match, value => match = value));
 			Assert.AreEqual(((RegExMatchInfo)match)["testname"], "XYZ");
 			Assert.AreEqual(((RegExMatchInfo)match).Pos("testname"), 4);
 			Assert.AreEqual(((RegExMatchInfo)match).Name("testname"), "testname");
-			_ = RegEx.RegExMatch(@"C:\Foo\Bar\Baz.txt", @"\w+$", ref match);
+			_ = RegEx.RegExMatch(@"C:\Foo\Bar\Baz.txt", @"\w+$", new VarRef(() => match, value => match = value));
 			Assert.AreEqual(((RegExMatchInfo)match)[0], "txt");
 			Assert.AreEqual(((RegExMatchInfo)match).Pos(), 16);
-			_ = RegEx.RegExMatch("Michiganroad 72", @"(.*) (?<nr>\d+)", ref match);
+			_ = RegEx.RegExMatch("Michiganroad 72", @"(.*) (?<nr>\d+)", new VarRef(() => match, value => match = value));
 			Assert.AreEqual(((RegExMatchInfo)match).Count, 2);
 			Assert.AreEqual(((RegExMatchInfo)match)[1], "Michiganroad");
 			Assert.AreEqual(((RegExMatchInfo)match).Name(2), "nr");
@@ -325,80 +325,80 @@ namespace Keysharp.Tests
 		[Test, Category("String")]
 		public void RegExMatchCs()
 		{
-			object match = null;
-			_ = RegEx.RegExMatchCs("abc123abc456", "abc\\d+", ref match, 1);
-			Assert.AreEqual(((RegExMatchInfoCs)match)[0], "abc123");
-			Assert.AreEqual(((RegExMatchInfoCs)match).Pos(), 1);
-			_ = RegEx.RegExMatchCs("abc123abc456", "456", ref match, -1);
-			Assert.AreEqual(((RegExMatchInfoCs)match)[0], "456");
-			Assert.AreEqual(((RegExMatchInfoCs)match).Pos(), 10);
-			_ = RegEx.RegExMatchCs("abc123abc456", "abc", ref match, -1);
-			Assert.AreEqual(((RegExMatchInfoCs)match)[0], "abc");
-			Assert.AreEqual(((RegExMatchInfoCs)match).Pos(), 7);
-			_ = RegEx.RegExMatchCs("abc123abc456", "abc", ref match, -15);
-			Assert.AreEqual(((RegExMatchInfoCs)match)[0], "abc");
-			Assert.AreEqual(((RegExMatchInfoCs)match).Pos(), 7);
-			_ = RegEx.RegExMatchCs("abc123abc456", "abc", ref match, -5);
-			Assert.AreEqual(((RegExMatchInfoCs)match)[0], "abc");
-			Assert.AreEqual(((RegExMatchInfoCs)match).Pos(), 1);
-			_ = RegEx.RegExMatchCs("abc123abc456", "abc\\d+", ref match, 2);
-			Assert.AreEqual(((RegExMatchInfoCs)match)[0], "abc456");
-			Assert.AreEqual(((RegExMatchInfoCs)match).Pos(), 7);
-			_ = RegEx.RegExMatchCs("abc123123", "123$", ref match, 1);
-			Assert.AreEqual(((RegExMatchInfoCs)match).Pos(), 7);
-			_ = RegEx.RegExMatchCs("xxxabc123xyz", "abc.*xyz", ref match, 1);
-			Assert.AreEqual(((RegExMatchInfoCs)match).Pos(), 4);
-			_ = RegEx.RegExMatchCs("abc123123", "123$", ref match);
-			Assert.AreEqual(((RegExMatchInfoCs)match).Pos(), 7);
-			_ = RegEx.RegExMatchCs("abc123", "i)^ABC", ref match);
-			Assert.AreEqual(((RegExMatchInfoCs)match).Pos(), 1);
-			_ = RegEx.RegExMatchCs("abcXYZ123", "abc(.*)123", ref match);
-			Assert.AreEqual(((RegExMatchInfoCs)match)[1], "XYZ");
-			Assert.AreEqual(((RegExMatchInfoCs)match).Pos(1), 4);
-			_ = RegEx.RegExMatchCs("abcXYZ123", "abc(?<testname>.*)123", ref match);
-			Assert.AreEqual(((RegExMatchInfoCs)match)["testname"], "XYZ");
-			Assert.AreEqual(((RegExMatchInfoCs)match).Pos("testname"), 4);
-			Assert.AreEqual(((RegExMatchInfoCs)match).Name("testname"), "testname");
-			_ = RegEx.RegExMatchCs(@"C:\Foo\Bar\Baz.txt", @"\w+$", ref match);
-			Assert.AreEqual(((RegExMatchInfoCs)match)[0], "txt");
-			Assert.AreEqual(((RegExMatchInfoCs)match).Pos(), 16);
-			_ = RegEx.RegExMatchCs("Michiganroad 72", @"(.*) (?<nr>\d+)", ref match);
-			Assert.AreEqual(((RegExMatchInfoCs)match).Count, 3);
-			Assert.AreEqual(((RegExMatchInfoCs)match)[1], "Michiganroad");
-			Assert.AreEqual(((RegExMatchInfoCs)match).Name(2), "nr");
-			Assert.AreEqual(((RegExMatchInfoCs)match)[2], "72");
+			VarRef match = new(null);
+			_ = RegEx.RegExMatchCs("abc123abc456", "abc\\d+", match, 1);
+			Assert.AreEqual(((RegExMatchInfoCs)match.__Value)[0], "abc123");
+			Assert.AreEqual(((RegExMatchInfoCs)match.__Value).Pos(), 1);
+			_ = RegEx.RegExMatchCs("abc123abc456", "456", match, -1);
+			Assert.AreEqual(((RegExMatchInfoCs)match.__Value)[0], "456");
+			Assert.AreEqual(((RegExMatchInfoCs)match.__Value).Pos(), 10);
+			_ = RegEx.RegExMatchCs("abc123abc456", "abc", match, -1);
+			Assert.AreEqual(((RegExMatchInfoCs)match.__Value)[0], "abc");
+			Assert.AreEqual(((RegExMatchInfoCs)match.__Value).Pos(), 7);
+			_ = RegEx.RegExMatchCs("abc123abc456", "abc", match, -15);
+			Assert.AreEqual(((RegExMatchInfoCs)match.__Value)[0], "abc");
+			Assert.AreEqual(((RegExMatchInfoCs)match.__Value).Pos(), 7);
+			_ = RegEx.RegExMatchCs("abc123abc456", "abc", match, -5);
+			Assert.AreEqual(((RegExMatchInfoCs)match.__Value)[0], "abc");
+			Assert.AreEqual(((RegExMatchInfoCs)match.__Value).Pos(), 1);
+			_ = RegEx.RegExMatchCs("abc123abc456", "abc\\d+", match, 2);
+			Assert.AreEqual(((RegExMatchInfoCs)match.__Value)[0], "abc456");
+			Assert.AreEqual(((RegExMatchInfoCs)match.__Value).Pos(), 7);
+			_ = RegEx.RegExMatchCs("abc123123", "123$", match, 1);
+			Assert.AreEqual(((RegExMatchInfoCs)match.__Value).Pos(), 7);
+			_ = RegEx.RegExMatchCs("xxxabc123xyz", "abc.*xyz", match, 1);
+			Assert.AreEqual(((RegExMatchInfoCs)match.__Value).Pos(), 4);
+			_ = RegEx.RegExMatchCs("abc123123", "123$", match);
+			Assert.AreEqual(((RegExMatchInfoCs)match.__Value).Pos(), 7);
+			_ = RegEx.RegExMatchCs("abc123", "i)^ABC", match);
+			Assert.AreEqual(((RegExMatchInfoCs)match.__Value).Pos(), 1);
+			_ = RegEx.RegExMatchCs("abcXYZ123", "abc(.*)123", match);
+			Assert.AreEqual(((RegExMatchInfoCs)match.__Value)[1], "XYZ");
+			Assert.AreEqual(((RegExMatchInfoCs)match.__Value).Pos(1), 4);
+			_ = RegEx.RegExMatchCs("abcXYZ123", "abc(?<testname>.*)123", match);
+			Assert.AreEqual(((RegExMatchInfoCs)match.__Value)["testname"], "XYZ");
+			Assert.AreEqual(((RegExMatchInfoCs)match.__Value).Pos("testname"), 4);
+			Assert.AreEqual(((RegExMatchInfoCs)match.__Value).Name("testname"), "testname");
+			_ = RegEx.RegExMatchCs(@"C:\Foo\Bar\Baz.txt", @"\w+$", match);
+			Assert.AreEqual(((RegExMatchInfoCs)match.__Value)[0], "txt");
+			Assert.AreEqual(((RegExMatchInfoCs)match.__Value).Pos(), 16);
+			_ = RegEx.RegExMatchCs("Michiganroad 72", @"(.*) (?<nr>\d+)", match);
+			Assert.AreEqual(((RegExMatchInfoCs)match.__Value).Count, 3);
+			Assert.AreEqual(((RegExMatchInfoCs)match.__Value)[1], "Michiganroad");
+			Assert.AreEqual(((RegExMatchInfoCs)match.__Value).Name(2), "nr");
+			Assert.AreEqual(((RegExMatchInfoCs)match.__Value)[2], "72");
 			Assert.IsTrue(TestScript("string-regexmatch-cs", false));
 		}
 
 		[Test, Category("String")]
 		public void RegExReplace()
 		{
-			object outputVarCount = null;
+            VarRef outputVarCount = new(null);
 			var match = RegEx.RegExReplace("abc123123", "123$", "xyz");
 			Assert.AreEqual(match, "abc123xyz");
 			match = RegEx.RegExReplace("abc123", "i)^ABC");
 			Assert.AreEqual(match, "123");
 			match = RegEx.RegExReplace("abcXYZ123", "abc(.*)123", "aaa$1zzz");
 			Assert.AreEqual(match, "aaaXYZzzz");
-			match = RegEx.RegExReplace("abc123abc456", "abc\\d+", "", ref outputVarCount);
+			match = RegEx.RegExReplace("abc123abc456", "abc\\d+", "", outputVarCount);
 			Assert.AreEqual(match, "");
-			Assert.AreEqual(outputVarCount, 2L);
+			Assert.AreEqual(outputVarCount.__Value, 2L);
 			Assert.IsTrue(TestScript("string-regexreplace", true));
 		}
 
 		[Test, Category("String")]
 		public void RegExReplaceCs()
 		{
-			object outputVarCount = null;
+			VarRef outputVarCount = new(null);
 			var match = RegEx.RegExReplaceCs("abc123123", "123$", "xyz");
 			Assert.AreEqual(match, "abc123xyz");
 			match = RegEx.RegExReplaceCs("abc123", "i)^ABC");
 			Assert.AreEqual(match, "123");
 			match = RegEx.RegExReplaceCs("abcXYZ123", "abc(.*)123", "aaa$1zzz");
 			Assert.AreEqual(match, "aaaXYZzzz");
-			match = RegEx.RegExReplaceCs("abc123abc456", "abc\\d+", "", ref outputVarCount);
+			match = RegEx.RegExReplaceCs("abc123abc456", "abc\\d+", "", outputVarCount);
 			Assert.AreEqual(match, "");
-			Assert.AreEqual(outputVarCount, 2L);
+			Assert.AreEqual(outputVarCount.__Value, 2L);
 			Assert.IsTrue(TestScript("string-regexreplace-cs", true));
 		}
 
@@ -631,7 +631,7 @@ namespace Keysharp.Tests
 		{
 			var x = "a,b,c,d,e,f";//Can't test the ref var which holds the count here because those must be global. However it is tested in the script.
 			var y = Strings.StrReplace(x, ",");
-			object outputVarCount = 0L;
+            VarRef outputVarCount = new(0L);
 			Assert.AreEqual("abcdef", y);
 			y = Strings.StrReplace(x, ",", "");
 			Assert.AreEqual("abcdef", y);
@@ -639,12 +639,12 @@ namespace Keysharp.Tests
 			Assert.AreEqual("a.b.c.d.e.f", y);
 			y = Strings.StrReplace(x, ",", ".", "On");
 			Assert.AreEqual("a.b.c.d.e.f", y);
-			y = Strings.StrReplace(x, ",", ".", null, ref outputVarCount);
+			y = Strings.StrReplace(x, ",", ".", null, outputVarCount);
 			Assert.AreEqual("a.b.c.d.e.f", y);
-			Assert.AreEqual(5L, outputVarCount);
-			y = Strings.StrReplace(x, ",", ".", null, ref outputVarCount, 3);
+			Assert.AreEqual(5L, outputVarCount.__Value);
+			y = Strings.StrReplace(x, ",", ".", null, outputVarCount, 3);
 			Assert.AreEqual("a.b.c.d,e,f", y);
-			Assert.AreEqual(3L, outputVarCount);
+			Assert.AreEqual(3L, outputVarCount.__Value);
 			y = Strings.StrReplace(x, "");
 			Assert.AreEqual("", y);
 			y = Strings.StrReplace(x, "a", "A", 1L);
@@ -659,9 +659,9 @@ namespace Keysharp.Tests
 			Assert.AreEqual("1,b,c,d,e,f", y);
 			y = Strings.StrReplace(x, "a", "1", false);
 			Assert.AreEqual("1,b,c,d,e,f", y);
-			y = Strings.StrReplace(x, "a", "A", "On", ref outputVarCount, 9);
+			y = Strings.StrReplace(x, "a", "A", "On", outputVarCount, 9);
 			Assert.AreEqual("A,b,c,d,e,f", y);
-			Assert.AreEqual(1L, outputVarCount);
+			Assert.AreEqual(1L, outputVarCount.__Value);
 			Assert.IsTrue(TestScript("string-strreplace", false));//Don't test func version because the ref var must be global.
 		}
 

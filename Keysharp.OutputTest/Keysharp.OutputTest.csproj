@@ -12,7 +12,7 @@
   
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <StartupObject>Keysharp.CompiledMain.program</StartupObject>
+    <StartupObject>Keysharp.CompiledMain.Program</StartupObject>
     <ApplicationIcon>..\Keysharp.ico</ApplicationIcon>
     <Version>0.0.0.11</Version>
     <Authors>Matt Feemster</Authors>

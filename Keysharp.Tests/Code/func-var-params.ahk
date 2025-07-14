@@ -11,33 +11,33 @@ x := false
 varfunc1()
 
 If (x == true)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := false
 varfunc1("firstparam")
 
 If (x == true)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := false
 varfunc1("firstparam", "secondparam")
 
 If (x == true)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := false
 varfunc1("firstparam", ,"thirdparam")
 
 If (x == true)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 varfo1 := Func("varfunc1")
 
@@ -45,33 +45,33 @@ x := false
 varfo1()
 
 If (x == true)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := false
 varfo1("firstparam")
 
 If (x == true)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := false
 varfo1("firstparam", "secondparam")
 
 If (x == true)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x := false
 varfo1("firstparam", ,"thirdparam")
 
 If (x == true)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 varfuncimplicit(*)
 {
@@ -89,32 +89,32 @@ arr := [1, 2, 3]
 val := varfuncimplicit(arr*)
 
 If (val == 6)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 val := varfuncimplicit()
 
 If (val == 0)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 fo := Func("varfuncimplicit")
 val := fo(arr*)
 
 If (val == 6)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 fo := Func("varfuncimplicit")
 val := fo()
 
 If (val == 0)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 varfunc2(p1, theparams*)
 {
@@ -131,9 +131,9 @@ varfunc2(p1, theparams*)
 val := varfunc2(1, 2, 3)
 
 If (val == 6)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 varfunc3(p1, theparams*)
 {
@@ -150,9 +150,9 @@ varfunc3(p1, theparams*)
 val := varfunc3(1, 2, 3)
 
 If (val == 6)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 varfunc4(*)
 {
@@ -162,24 +162,24 @@ varfunc4(*)
 val := varfunc3(1, 2, 3)
 
 If (val == 6)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 arr := [1, 2, 3]
 val := varfunc3(1, arr*)
 
 If (val == 7)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 val := varfunc4(arr*)
 
 If (val == 6)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 varfunc5(p1, p2, theparams*)
 {
@@ -196,33 +196,33 @@ varfunc5(p1, p2, theparams*)
 val := varfunc5(1, 2, arr*)
 
 If (val == 9)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 fo := Func("varfunc3")
 val := fo(1, arr*)
 
 If (val == 7)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 fo := Func("varfunc4")
 val := fo(arr*)
 
 If (val == 6)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 fo := Func("varfunc5")
 val := fo(1, 2, arr*)
 
 If (val == 9)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 varfunc6(args*)
 {
@@ -241,23 +241,23 @@ arr := [1, 2, 3]
 val := Func("varfunc6").Call(1, 2, arr*)
 
 If (val == 9)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 ; This tests the proper casting of a variadic argument to object, so that it can be properly passed to a non variadic function.
 first(args*)
 {
 	second(args)
-	Func(second).Call(args) ; This should not create a local variable named second, because it's not a ref or assign.
+	second.Call(args) ; This should not create a local variable named second, because it's not a ref or assign.
 }
 
 second(args)
 {
 	If (args[1] == "hello")
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 }
 
 first("hello")
@@ -269,9 +269,9 @@ m := Map("three", 3, arr*)
 if (m["one"] == 1 &&
 	m["two"] == 2 &&
 	m["three"] == 3)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 funca(a:=1)
 {
@@ -282,6 +282,6 @@ funca(a:=1)
 val := Func("funca").Call(unset)
 
 If (val == 1)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"

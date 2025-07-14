@@ -316,8 +316,8 @@ namespace Keysharp.Core
 		/// </summary>
 		public static long Run(object target, object workingDir = null, object options = null)
 		{
-			object pid = null;
-			return Run(target, workingDir, options, ref pid, null);
+			object pid = VarRef.Empty;
+			return Run(target, workingDir, options, pid, null);
 		}
 
 		/// <summary>
@@ -339,9 +339,9 @@ namespace Keysharp.Core
 		/// <returns>Unlike <see cref="Run"/>, <see cref="RunWait"/> will wait until target is closed or exits,<br/>
 		/// at which time the return value will be the program's exit code.
 		/// </returns>
-		public static long Run(object target, object workingDir, object options, ref object outputVarPID, object args = null)
+		public static long Run(object target, object workingDir, object options, object outputVarPID, object args = null)
 		{
-			return RunInternal(target.As(), workingDir.As(), options.As(), ref outputVarPID, args.As());
+			return RunInternal(target.As(), workingDir.As(), options.As(), outputVarPID, args.As());
 		}
 
 		/// <summary>
@@ -385,8 +385,7 @@ namespace Keysharp.Core
 		/// </summary>
 		public static long RunWait(object target, object workingDir = null, object options = null)
 		{
-			object pid = null;
-			return RunWait(target, workingDir, options, ref pid, null);
+			return RunWait(target, workingDir, options, null, null);
 		}
 
 		/// <summary>
@@ -394,9 +393,9 @@ namespace Keysharp.Core
 		/// Unlike Run, <see cref="RunWait"/> will wait until the program finishes before continuing.
 		/// <see cref="Run"/>.
 		/// </summary>
-		public static long RunWait(object target, object workingDir, object options, ref object outputVarPID, object args = null)
+		public static long RunWait(object target, object workingDir, object options, [ByRef] object outputVarPID, object args = null)
 		{
-			return RunInternal(target.As(), workingDir.As(), options.As(), ref outputVarPID, args.As(), true);
+			return RunInternal(target.As(), workingDir.As(), options.As(), outputVarPID, args.As(), true);
 		}
 
 		/// <summary>
@@ -533,8 +532,9 @@ namespace Keysharp.Core
 		/// Internal helper to run a process. <see cref="Run"/>, <see cref="RunAs"/>, <see cref="RunWait"/>
 		/// </summary>
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown on failure.</exception>
-		private static long RunInternal(string target, string workingDir, string showMode, ref object outputVarPID, string args, bool wait = false)
+		private static long RunInternal(string target, string workingDir, string showMode, [ByRef] object outputVarPID, string args, bool wait = false)
 		{
+			outputVarPID ??= VarRef.Empty;
 			var pid = 0;
 			var useRunAs = RunAsSpecified();
 
@@ -721,8 +721,8 @@ namespace Keysharp.Core
 
 					if (wait)
 					{
-						prc.WaitForExit();
-						outputVarPID = pid;
+                        prc.WaitForExit();
+						Script.SetPropertyValue(outputVarPID, "__Value", pid);
 						return prc.ExitCode;
 					}
 				}
@@ -732,8 +732,8 @@ namespace Keysharp.Core
 				return (long)Errors.ErrorOccurred(ex.Message, DefaultErrorLong);
 			}
 
-			outputVarPID = pid;
-			return 0L;
+            Script.SetPropertyValue(outputVarPID, "__Value", pid);
+            return 0L;
 		}
 	}
 
@@ -743,9 +743,9 @@ namespace Keysharp.Core
 	public class ProcessInfo : KeysharpObject
 	{
 		private Process _process;
-		public ProcessInfo(object p) => _ = __New(p);
+		public ProcessInfo(params object[] args) : base(args) { }
 
-		public new object __New(params object[] args)
+		public override object __New(params object[] args)
 		{
 			_process = args[0] as Process;
 			return DefaultObject;

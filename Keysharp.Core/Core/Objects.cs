@@ -24,9 +24,8 @@
 		{
 			var kso = new KeysharpObject();
 			var count = (args.Length / 2) * 2;
-			kso.op = new Dictionary<string, OwnPropsDesc>(StringComparer.OrdinalIgnoreCase);
 
-			for (var i = 0; i < count; i += 2)
+            for (var i = 0; i < count; i += 2)
 			{
 				kso.op[args[i].ToString()] = new OwnPropsDesc(kso, args[i + 1]);
 			}
@@ -56,6 +55,8 @@
 		/// <returns>Returns 1 if an object owns a property by the specified name, otherwise 0.</returns>
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if obj was not of type KeysharpObject.</exception>
 		public static long ObjHasOwnProp(object obj, object name) => obj is KeysharpObject kso ? kso.HasOwnProp(name) : 0L;
+
+		public static long ObjHasProp(object obj, object name) => obj is KeysharpObject kso ? kso.HasProp(name) : 0L;
 
 		/// <summary>
 		/// Returns the number of properties owned by an object.

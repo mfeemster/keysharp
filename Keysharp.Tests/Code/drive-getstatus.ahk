@@ -5,6 +5,6 @@
 #endif
 			
 if (val == "Ready")
- 	FileAppend, "pass", "*"
+ 	FileAppend "pass", "*"
 else
-  	FileAppend, "fail", "*"
+  	FileAppend "fail", "*"

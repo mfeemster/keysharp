@@ -62,23 +62,26 @@
 			}
 		}
 
-		/// <summary>
-		/// The implementation for <see cref="KeysharpObject.super"/> for this class to return this type.
-		/// </summary>
-		public new (Type, object) super => (typeof(KeysharpObject), this);
 
 		/// <summary>
 		/// Calls <see cref="__New"/> to initialize a new instance of the <see cref="Buffer"/> class.
 		/// </summary>
 		/// <param name="args">The data to initially store in the buffer</param>
-		public Buffer(params object[] args) => _ = __New(args);
+		public Buffer(params object[] args) : base(args) { }
 
-		/// <summary>
-		/// Destructor that manually calls <see cref="Dispose"/> to free the raw memory contained in the buffer.
-		/// </summary>
-		~Buffer()
+        /// <summary>
+        /// Destructor that manually calls <see cref="Dispose"/> to free the raw memory contained in the buffer.
+        /// </summary>
+        ~Buffer()
 		{
 			Dispose(true);
+		}
+
+		public static object Call(object @this, object byteCount = null, object fillByte = null)
+		{
+			Type t = @this.GetType();
+			return Activator.CreateInstance(t, [byteCount, fillByte]);
+			//new Buffer(byteCount, fillByte);
 		}
 
 		/// <summary>
@@ -91,10 +94,8 @@
 		///     Integer[, Integer]: Sets length to the first value and optionally sets each byte to the second value.
 		/// </param>
 		/// <returns>Empty string, unused.</returns>
-		public new unsafe object __New(params object[] obj)
+		public override unsafe object __New(params object[] obj)
 		{
-			Init__Item();
-
 			if (obj == null || obj.Length == 0)
 			{
 				Size = 0;

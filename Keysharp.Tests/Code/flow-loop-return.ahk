@@ -5,9 +5,9 @@ Loop 5 {
 	f1()
 
 	if (i == A_Index)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 }
 
 f1() {
@@ -23,9 +23,9 @@ Loop 5 {
 	f2()
 
 	if (i == A_Index)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 }
 
 f2() {
@@ -43,9 +43,9 @@ Loop 5 {
 	f3()
 
 	if (i == A_Index)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 }
 
 f3()
@@ -63,9 +63,9 @@ Loop 5 {
 	f4()
 
 	if (i == A_Index)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 }
 
 f4()
@@ -88,9 +88,9 @@ while i < 5
 	f4()
 	
 	if (i == A_Index)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 }
 
 i := 0
@@ -100,9 +100,9 @@ Loop 5 {
 	w1()
 
 	if (i == A_Index)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 }
 
 w1() {
@@ -118,9 +118,9 @@ Loop 5 {
 	w2()
 
 	if (i == A_Index)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 }
 
 w2() {
@@ -138,9 +138,9 @@ Loop 5 {
 	flu1()
 
 	if (i == A_Index)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 }
 
 flu1() {
@@ -157,9 +157,9 @@ Loop 5 {
 	fwu1()
 
 	if (i == A_Index)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 }
 
 fwu1() {
@@ -176,9 +176,9 @@ Loop 5 {
 	ffu3()
 
 	if (i == A_Index)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 }
 
 ffu3()
@@ -198,10 +198,10 @@ for (loopvar in arr)
 {
 }
 
-if (loopvar == 30)
-	FileAppend, "pass", "*"
+if (loopvar == 0)
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 aglobalvar := 0
 
@@ -213,10 +213,10 @@ testglobalvarfunc()
 	{
 	}
 
-	if (aglobalvar == 30)
-		FileAppend, "pass", "*"
+	if (aglobalvar == 0)
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 }
 
 testglobalvarfunc()

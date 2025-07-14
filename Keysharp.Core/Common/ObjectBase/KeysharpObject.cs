@@ -1,8 +1,12 @@
-﻿namespace Keysharp.Core.Common.ObjectBase
+﻿#if WINDOWS
+[assembly: ComVisible(true)]
+#endif
+
+namespace Keysharp.Core.Common.ObjectBase
 {
 	internal interface I__Enum
 	{
-		public KeysharpEnumerator __Enum(object count);
+		public IFuncObj __Enum(object count);
 	}
 
 #if WINDOWS
@@ -14,16 +18,49 @@
 	public class KeysharpObject : Any
 #endif
 	{
-		protected internal Dictionary<string, OwnPropsDesc> op;
+		protected internal Dictionary<string, OwnPropsDesc> op = new Dictionary<string, OwnPropsDesc>(StringComparer.OrdinalIgnoreCase);
 
-		public new (Type, object) super => (typeof(Any), this);
+		// In some cases we wish to skip the automatic calls to __Init and __New (eg when creating OwnProps),
+		// so in those cases we can initialize with `skipLogic: true`
+		protected bool SkipConstructorLogic { get; }
 
-		public KeysharpObject()
+        public KeysharpObject(params object[] args)
 		{
-			__Init();
-		}
+			// Skip Map and OwnPropsMap because SetPropertyValue will cause recursive stack overflow
+			// (if the property doesn't exist then a new Map is created which calls this function again)
+			if (Script.TheScript.Vars.Prototypes == null || SkipConstructorLogic
+                // Hack way to check that Prototypes/Statics are initialized
+                || Script.TheScript.Vars.Statics.Count < 10)
+            {
+				__New(args);
+				return;
+			}
 
-		public object __New(params object[] args) => "";
+            var t = GetType();
+			Script.TheScript.Vars.Statics.TryGetValue(t, out KeysharpObject value);
+			if (value == null)
+			{
+				__New(args);
+                return;
+			}
+
+			this.op["base"] = new OwnPropsDesc(this, value.op["prototype"].Value);
+			GC.SuppressFinalize(this); // Otherwise if the constructor throws then the destructor is called
+            Script.Invoke(this, "__Init");
+            Script.Invoke(this, "__New", args);
+			GC.ReRegisterForFinalize(this);
+        }
+
+        public KeysharpObject(bool skipLogic)
+        {
+            SkipConstructorLogic = skipLogic;
+        }
+
+		public virtual object static__New(params object[] args) => "";
+
+		public virtual object __New(params object[] args) => "";
+
+		public virtual object static__Call(params object[] args) => Activator.CreateInstance(this.GetType(), args);
 
 		/// <summary>
 		/// Return a cloned copy of the object.
@@ -59,7 +96,7 @@
 			{
 				if (kso.op != null)//&& kso.op.TryGetValue(name, out var opm))
 				{
-					if (kso.op.Count > 1 && kso.op.Any(k => k.Key.ToString().Equals("value", StringComparison.OrdinalIgnoreCase)))
+					if (kso.op.Count > 2 && kso.op.Any(k => k.Key.ToString().Equals("value", StringComparison.OrdinalIgnoreCase)))
 						return Errors.ValueErrorOccurred("Value can't be defined along with get, set, or call.");
 
 					if (op.TryGetValue(name, out var currProp))
@@ -68,7 +105,7 @@
 					}
 					else
 					{
-						op[name] = new OwnPropsDesc(this);
+						op[name] = new OwnPropsDesc();
 						op[name].MergeOwnPropsValues(kso.op);
 					}
 
@@ -92,7 +129,7 @@
 				if (op.Count == 0)
 					op = null;//Make all subsequent member access faster because this won't have to be checked first.
 
-				return map;
+				return map.Value;
 			}
 
 			return DefaultObject;
@@ -137,7 +174,7 @@
 			var isMapOnly = GetType() == typeof(Map);
 
 			if (op != null)
-				ct += op.Count;
+				ct += op.Count - 1; // Substract 1 to account for the auto-generated base property
 
 			if (!isMapOnly)
 			{
@@ -158,24 +195,21 @@
 			{
 				foreach (var kv in op)
 				{
+					if (kv.Key == "base"
+						|| kv.Key == "__Static") //This throws if the value is tried to access because "this" is passed
+						continue;
+
 					props[kv.Key] = kv.Value;
 				}
 			}
 
-			_ = Reflections.FindAndCacheProperty(GetType(), "", -1);
-			var valProps = Reflections.GetOwnProps(GetType(), user);
-
-			foreach (var mph in valProps)
-				if (mph.pi != null && mph.ParamLength == 0)
-					props[mph.pi.Name] = mph;
-
-			return new OwnPropsIterator(this, props, vals);
+			return new OwnPropsIterator(this, props, vals).fo;
 		}
 
 		public virtual void PrintProps(string name, StringBuffer sb, ref int tabLevel)
 		{
 			var fieldType = GetType().Name;
-			var opi = (OwnPropsIterator)OwnProps(true, false);
+			var opi = (OwnPropsIterator)((FuncObj)OwnProps(true, false)).Inst;
 			var indent = new string('\t', tabLevel);
 
 			if (name.Length == 0)
@@ -222,32 +256,11 @@
 
 		public object Wrap(object obj) => obj;
 
-		protected static object __StaticInit() => "";
-
-		protected internal void Init__Item()
-		{
-			_ = DefineProp("__Item",
-						   Objects.Object(
-							   [
-								   "get",
-								   Functions.GetFuncObj("ItemWrapper", this, 1, true),
-								   "set",
-								   Functions.GetFuncObj("ItemWrapper", this, 1, true)
-							   ]));
-		}
-
-		/// <summary>
-		/// Wrapper so that querying for the __Item property will succeed.
-		/// </summary>
-		/// <param name="obj">Unused.</param>
-		/// <returns>this</returns>
-		public object ItemWrapper(object obj) => this;
+		public virtual object static__Init() => "";
 
 		/// <summary>
 		/// Placeholder for property initialization code that derived classes will call *before* __New() gets called.
 		/// </summary>
-		protected virtual void __Init()
-		{
-		}
+		public virtual object __Init() => "";
 	}
 }

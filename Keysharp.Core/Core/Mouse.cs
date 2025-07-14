@@ -1,3 +1,5 @@
+using static Keysharp.Core.Misc;
+
 namespace Keysharp.Core
 {
 	/// <summary>
@@ -221,29 +223,30 @@ namespace Keysharp.Core
 		///     application such as SysEdit or TextPad. However, it is less accurate for other purposes such as detecting controls inside a GroupBox control.<br/>
 		///     2: Stores the control's HWND in OutputVarControl rather than the control's ClassNN.
 		/// </param>
-		public static object MouseGetPos([Optional()][DefaultParameterValue(0)] ref object outputVarX,
-										 [Optional()][DefaultParameterValue(0)] ref object outputVarY,
-										 [Optional()][DefaultParameterValue(0)] ref object outputVarWin,
-										 [Optional()][DefaultParameterValue(0)] ref object outputVarControl,
+		public static object MouseGetPos([ByRef][Optional()][DefaultParameterValue(null)] object outputVarX,
+										 [ByRef][Optional()][DefaultParameterValue(null)] object outputVarY,
+										 [ByRef][Optional()][DefaultParameterValue(null)] object outputVarWin,
+										 [ByRef][Optional()][DefaultParameterValue(null)] object outputVarControl,
 										 object flag = null)
 		{
+			outputVarX ??= VarRef.Empty; outputVarY ??= VarRef.Empty; outputVarWin ??= VarRef.Empty; outputVarControl ??= VarRef.Empty;
 			var mode = flag.Al(0L);
 			var pos = Cursor.Position;
 			var aX = 0;
 			var aY = 0;
 			var script = Script.TheScript;
 			script.PlatformProvider.Manager.CoordToScreen(ref aX, ref aY, Core.CoordMode.Mouse);//Determine where 0,0 in window or client coordinates are on the screen.
-			var child = script.WindowProvider.Manager.WindowFromPoint(pos);
-			outputVarX = (long)(pos.X - aX);//Convert the mouse position in screen coordinates to window coordinates.
-			outputVarY = (long)(pos.Y - aY);
-			outputVarWin = null;
-			outputVarControl = null;
+			Script.SetPropertyValue(outputVarX, "__Value", (long)(pos.X - aX));//Convert the mouse position in screen coordinates to window coordinates.
+            Script.SetPropertyValue(outputVarY, "__Value", (long)(pos.Y - aY));
+            Script.SetPropertyValue(outputVarWin, "__Value", null);
+            Script.SetPropertyValue(outputVarControl, "__Value", null);
+            var child = script.WindowProvider.Manager.WindowFromPoint(pos);
 
 			if (child == null || child.Handle == 0)
 				return DefaultErrorObject;
 
 			var parent = child.NonChildParentWindow;
-			outputVarWin = (long)parent.Handle;
+            Script.SetPropertyValue(outputVarWin, "__Value", (long)parent.Handle);
 #if WINDOWS
 
 			//Doing it this way overcomes the limitations of WindowFromPoint() and ChildWindowFromPoint()
@@ -264,11 +267,11 @@ namespace Keysharp.Core
 
 			if ((mode & 0x02) != 0)
 			{
-				outputVarControl = (long)child.Handle;
+                Script.SetPropertyValue(outputVarControl, "__Value", (long)child.Handle);
 				return DefaultObject;
 			}
 
-			outputVarControl = child.ClassNN;
+            Script.SetPropertyValue(outputVarControl, "__Value", child.ClassNN);
 			return DefaultObject;
 		}
 

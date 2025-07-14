@@ -24,9 +24,9 @@ while (gval != 999)
 }
 
 If (gval == 999)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 class enumclass
 {
@@ -34,7 +34,7 @@ class enumclass
 
 	__Enum(ct)
 	{
-		return arr.__Enum(ct)
+		return this.arr.__Enum(ct)
 	}
 }
 
@@ -47,9 +47,9 @@ for i,v in testclassobj
 }
 
 If (gval == 6)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 class subenumclass extends enumclass
 {
@@ -57,7 +57,7 @@ class subenumclass extends enumclass
 
 	__Enum(ct)
 	{
-		return subarr.__Enum(ct)
+		return this.subarr.__Enum(ct)
 	}
 }
 
@@ -70,9 +70,9 @@ for i,v in testclassobj
 }
 
 If (gval == 15)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 class testclass2
 {
@@ -85,19 +85,19 @@ testclassobj := testclass2()
 cloneobj := testclassobj.Clone()
 
 If (cloneobj.a == 1)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 If (cloneobj.b == 2)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 If (cloneobj.c == 3)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 class testclass3 {
 	static Call(a) {
@@ -108,24 +108,24 @@ class testclass3 {
 val := testclass3(10)
 
 If (val == 100)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 
 val := TestWithCustomStaticCall() ; internally calls the custom Call() to return 123 instead of a new object
 
 if (val == 123)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 val := TestWithCustomStaticCall.Call() ; also returns 123
 
 if (val == 123)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 ; class with one custom static Call() method which replaces the default one.
 ; this prevents an instance of this class from every being created.
@@ -148,23 +148,23 @@ class TestWithCustomInstanceCall
 obj := TestWithCustomInstanceCall() ; creates an instance of the class.
 
 if (obj is TestWithCustomInstanceCall)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 val := obj.Call() ; intelligent enough to resolve to the instance Call() to return 123, instead of the default static one.
 
 if (val == 123)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-Gfunc123()
+Gfunc123(*)
 {
 	return 123
 }
 
-Gfunc456()
+Gfunc456(*)
 {
 	return 456
 }
@@ -174,11 +174,11 @@ class foclass
 {
 	static sg123 := true ? gfunc123 : gfunc456
 	static sg456 := true ? gfunc456 : gfunc123
-	static stestmemberfunc := sclassfunc789
+	static stestmemberfunc := this.sclassfunc789
 
 	ig123 := true ? gfunc123 : gfunc456
 	ig456 := true ? gfunc456 : gfunc123
-	iginit123 := classfunc123
+	iginit123 := this.classfunc123
 
 	classfunc()
 	{
@@ -188,24 +188,24 @@ class foclass
 		val := lg123()
 		
 		if (val == 123)
-			FileAppend, "pass", "*"
+			FileAppend "pass", "*"
 		else
-			FileAppend, "fail", "*"
+			FileAppend "fail", "*"
 
 		val := lg456()
 		
 		if (val == 456)
-			FileAppend, "pass", "*"
+			FileAppend "pass", "*"
 		else
-			FileAppend, "fail", "*"
+			FileAppend "fail", "*"
 
-		testfunc := classfunc123
-		val := testfunc()
+		testfunc := this.classfunc123
+		val := testfunc(this)
 		
 		if (val == 123)
-			FileAppend, "pass", "*"
+			FileAppend "pass", "*"
 		else
-			FileAppend, "fail", "*"
+			FileAppend "fail", "*"
 	}
 
 	ClassFunc123()
@@ -225,41 +225,41 @@ fc.classfunc()
 val := fc.ig123()
 
 if (val == 123)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 val := fc.ig456()
 
 if (val == 456)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 val := fc.iginit123()
 
 if (val == 123)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 val := foclass.sg123.Call()
 
 if (val == 123)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 val := foclass.sg456.Call()
 
 if (val == 456)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-val := foclass.stestmemberfunc.Call()
+val := foclass.stestmemberfunc.Call(foclass)
 
 if (val == 789)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"

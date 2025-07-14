@@ -1,4 +1,6 @@
-﻿namespace Keysharp.Core
+﻿using static Antlr4.Runtime.Atn.SemanticContext;
+
+namespace Keysharp.Core
 {
 	internal class ToolTipData
 	{

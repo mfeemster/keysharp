@@ -4,7 +4,6 @@
 	ProcessWait(pid)
 	ProcessSetPriority("H", pid)
 	exists := ProcessExist(pid)
-
 	if (exists != 0)
 	{
 		Sleep(2000)
@@ -16,18 +15,18 @@
 	exists := ProcessExist("notepad.exe")
 
 	if (exists == 0)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 
 	pid := RunWait("notepad.exe", "", "max")
 	Sleep(1000)
 	exists := ProcessExist("notepad.exe")
 
 	if (exists == 0)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 #else
 	pid := 0
 	Run("xed", "", "max", &pid)
@@ -45,16 +44,16 @@
 	exists := ProcessExist("xed")
 
 	if (exists == 0)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 
 	pid := RunWait("xed", "", "max")
 	Sleep(1000)
 	exists := ProcessExist("xed")
 
 	if (exists == 0)
-		FileAppend, "pass", "*"
+		FileAppend "pass", "*"
 	else
-		FileAppend, "fail", "*"
+		FileAppend "fail", "*"
 #endif

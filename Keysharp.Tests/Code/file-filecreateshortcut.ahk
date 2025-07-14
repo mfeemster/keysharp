@@ -16,9 +16,9 @@ if (FileExist("./fileappend.txt"))
 FileCreateShortcut("./FileCreateShortcut/file1.txt", "./testshortcut.lnk", "", "", "TestDescription", "../../../Keysharp.ico", "")
 
 if (FileExist("./testshortcut.lnk"))
- 	FileAppend, "pass", "*"
+ 	FileAppend "pass", "*"
 else
-  	FileAppend, "fail", "*"
+  	FileAppend "fail", "*"
 
 if (DirExist("./FileCreateShortcut"))
 	DirDelete("./FileCreateShortcut", true)

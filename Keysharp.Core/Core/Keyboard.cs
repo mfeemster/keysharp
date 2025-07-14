@@ -77,15 +77,17 @@ namespace Keysharp.Core
 		/// and the output variables are made blank. It returns 1 (true) if the system returned a caret position,<br/>
 		/// but this does not necessarily mean a caret is visible.
 		/// </returns>
-		public static bool CaretGetPos([Optional()][DefaultParameterValue(0)] ref object outputVarX,
-									   [Optional()][DefaultParameterValue(0)] ref object outputVarY)
+		public static bool CaretGetPos([ByRef][Optional()][DefaultParameterValue(null)] object outputVarX,
+									   [ByRef][Optional()][DefaultParameterValue(null)] object outputVarY)
 		{
-			// I believe only the foreground window can have a caret position due to relationship with focused control.
-			var targetWindow = WindowsAPI.GetForegroundWindow(); // Variable must be named targetwindow for ATTACH_THREAD_INPUT.
+			outputVarX ??= VarRef.Empty; outputVarY ??= VarRef.Empty;
+            // I believe only the foreground window can have a caret position due to relationship with focused control.
+            var targetWindow = WindowsAPI.GetForegroundWindow(); // Variable must be named targetwindow for ATTACH_THREAD_INPUT.
 
 			if (targetWindow == 0) // No window is in the foreground, report blank coordinate.
 			{
-				outputVarX = outputVarY = 0L;
+				Script.SetPropertyValue(outputVarX, "__Value", 0L);
+                Script.SetPropertyValue(outputVarY, "__Value", 0L);
 				return false;
 			}
 
@@ -95,8 +97,9 @@ namespace Keysharp.Core
 
 			if (!result)
 			{
-				outputVarX = outputVarY = 0L;
-				return false;
+                Script.SetPropertyValue(outputVarX, "__Value", 0L);
+                Script.SetPropertyValue(outputVarY, "__Value", 0L);
+                return false;
 			}
 
 			var pt = new Point
@@ -111,8 +114,8 @@ namespace Keysharp.Core
 			script.PlatformProvider.Manager.CoordToScreen(ref x, ref y, CoordMode.Caret);// Now convert back to whatever is expected for the current mode.
 			pt.X -= x;
 			pt.Y -= y;
-			outputVarX = (long)pt.X;
-			outputVarY = (long)pt.Y;
+            Script.SetPropertyValue(outputVarX, "__Value", (long)pt.X);
+            Script.SetPropertyValue(outputVarY, "__Value", (long)pt.Y);
 			return true;
 		}
 

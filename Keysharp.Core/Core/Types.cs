@@ -1,4 +1,6 @@
-﻿namespace Keysharp.Core
+﻿using System.Windows.Forms;
+
+namespace Keysharp.Core
 {
 	/// <summary>
 	/// Public interface for class/object reflection-related functions.
@@ -11,7 +13,24 @@
 		/// <param name="value">The object to examine.</param>
 		/// <param name="baseObj">The potential base object to test.</param>
 		/// <returns>This function returns 1 if baseObj is in value's chain of base objects, else 0.</returns>
-		public static long HasBase(object value, object baseObj) => baseObj.GetType().IsAssignableFrom(value.GetType()) ? 1L : 0L;
+		public static long HasBase(object value, object baseObj) {
+            if (value is not KeysharpObject kso)
+				return baseObj.GetType().IsAssignableFrom(value.GetType()) ? 1L : 0L;
+			
+            while (kso != null)
+            {
+				if (baseObj == kso)
+					return 1L;
+                if (kso.op == null || !kso.op.TryGetValue("base", out var baseDesc) || baseDesc.Value == null)
+                    return 0L;
+				if (baseDesc.Value is not KeysharpObject kso2)
+				{
+                    return baseObj.GetType().IsAssignableFrom(baseDesc.Value.GetType()) ? 1L : 0L;
+                }
+				kso = kso2;
+            }
+			return 0L;
+        }
 
 		/// <summary>
 		/// Same as <see cref="IsAlpha"/> except that integers and characters 0 through 9 are also allowed.
@@ -148,7 +167,7 @@
 		/// </summary>
 		/// <param name="value">The object to examine.</param>
 		/// <returns>1 if value is not null, else 0.</returns>
-		public static long IsSet(object value) => value != UnsetArg.Default&& value != null ? 1L : 0L;
+		public static long IsSet(object value) => value != null ? 1L : 0L;
 
 		/// <summary>
 		/// 1 if value is a string and is empty or contains only whitespace consisting of the following characters, else false:<br/>
@@ -239,7 +258,16 @@
 		{
 			if (value != null)
 			{
-				var type = value.GetType().Name;
+				string type = null;
+				if (value is KeysharpObject kso && kso.op != null) {
+					if (kso.op.ContainsKey("__Class"))
+						return "Prototype";
+                    else if (Script.TryGetPropertyValue(kso, "__Class", out object oname) && oname is string name && name != null)
+						type = name;
+                    else
+						return "Object";
+				} else
+					type = value.GetType().Name;
 
 				return type switch
 			{

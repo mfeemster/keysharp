@@ -310,8 +310,8 @@ namespace Keysharp.Core
 				Prompt = p,
 				Title = t?.Length == 0 ? A_ScriptName : t
 			};
-			object wl = null, wt = null, wr = null, wb = null;
-			var workarea = Monitor.MonitorGetWorkArea(null, ref wl, ref wt, ref wr, ref wb);
+			VarRef wl = new(null), wt = new(null), wr = new(null), wb = new(null);
+			var workarea = Monitor.MonitorGetWorkArea(null, wl, wt, wr, wb);
 			var w = int.MinValue;
 			var h = int.MinValue;
 			var x = int.MinValue;
@@ -339,8 +339,8 @@ namespace Keysharp.Core
 				var width = w != int.MinValue ? w : input.ClientSize.Width;
 				var height = h != int.MinValue ? h : input.ClientSize.Height;
 				input.ClientSize = new Size(width, height);
-				input.Left = x != int.MinValue ? x : (((wr.Ai() - wl.Ai()) / 2) - (input.Width / 2));
-				input.Top = y != int.MinValue ? y : (((wb.Ai() - wt.Ai()) / 2) - (input.Height / 2));
+				input.Left = x != int.MinValue ? x : (((wr.__Value.Ai() - wl.__Value.Ai()) / 2) - (input.Width / 2));
+				input.Top = y != int.MinValue ? y : (((wb.__Value.Ai() - wt.__Value.Ai()) / 2) - (input.Height / 2));
 			};
 			Script.TheScript.mainWindow.CheckedInvoke(() =>
 			{

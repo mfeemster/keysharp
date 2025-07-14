@@ -1,22 +1,22 @@
 
-o = ooo
+o := "ooo"
 
-If o not between blue and red
-	FileAppend, "fail", "*"
+If not (StrCompare(o, "blue") > 0 and StrCompare(o, "red") < 0)
+	FileAppend "fail", "*"
 else
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 
-If o not between red and blue
-	FileAppend, "pass", "*"
+If not (StrCompare(o, "red") > 0 and StrCompare(o, "blue") < 0)
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-If o not between xxx and zzz
-	FileAppend, "pass", "*"
+If not (StrCompare(o, "xxx") > 0 and StrCompare(o, "zzz") < 0)
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
-If o not between zzz and xxx
-	FileAppend, "pass", "*"	
+If not (StrCompare(o, "zzz") > 0 and StrCompare(o, "xxx") < 0)
+	FileAppend "pass", "*"	
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"

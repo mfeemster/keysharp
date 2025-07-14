@@ -138,8 +138,6 @@
 			set => onKeyUp = Functions.GetFuncObj(value, null, true);
 		}
 
-		public new (Type, object) super => (typeof(KeysharpObject), this);
-
 		public object Timeout
 		{
 			get => input.timeout / 1000.0;
@@ -171,9 +169,9 @@
 			set => input.visibleText = value.Ab();
 		}
 
-		public InputObject(params object[] args) => _ = __New(args);
+		public InputObject(params object[] args) : base(args) { }
 
-		public new object __New(params object[] args)
+		public override object __New(params object[] args)
 		{
 			var options = args[0].ToString();
 			var endKeys = args[1].ToString();

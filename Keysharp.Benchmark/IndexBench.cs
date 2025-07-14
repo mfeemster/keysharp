@@ -34,10 +34,10 @@ namespace Keysharp.Benchmark
 			var e0 = keysharparray;
 			var e2 = Loops.MakeEnumerator(e0, 1);
 			_ = Loops.Push();
+			object val = null;
+			object vr = new VarRef(() => val, value => val = value);
 
-			for (object? val = null
-							   ; Flow.IsTrueAndRunning(e2.Call(ref val));
-				)
+			for (; Flow.IsTrueAndRunning(e2.Call(vr));)
 			{
 				_ = Keysharp.Core.Loops.Inc();
 				total += (double)val;

@@ -74,7 +74,7 @@ namespace Keysharp.Tests
 							throw new Exception("Compilation failed.");
 
 						//Environment.SetEnvironmentVariable("SCRIPT", script);
-						var program = CompilerHelper.compiledasm.GetType("Keysharp.CompiledMain.program");
+						var program = CompilerHelper.compiledasm.GetType($"Keysharp.CompiledMain.{Keywords.MainClassName}");
 						var main = program.GetMethod("Main");
 						var temp = new string[] { };
 						var result = main.Invoke(null, [temp]);

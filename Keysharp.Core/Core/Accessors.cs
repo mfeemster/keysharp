@@ -818,9 +818,13 @@
 		{
 			get
 			{
+#if DEBUG
+				return false;
+#else
 				var path = Path.GetFileName(Application.ExecutablePath).ToLowerInvariant();
 				return path != "keysharp.dll" && path != "keysharp.exe" && path != "testhost.exe"
 					   && path != "keysharp" && path != "testhost" && path != "testhost.dll";
+#endif
 			}
 		}
 
@@ -943,13 +947,12 @@
 		/// </summary>
 		public static long A_LastError => Marshal.GetLastWin32Error();//This apparently works on linux too.
 
-		/// <summary>
-		/// ListLines is never true.
-		/// </summary>
-		public static object A_ListLines
+        /// <summary>
+        /// ListLines is never true.
+        /// </summary>
+        public static object A_ListLines
 		{
 			get => 0L;
-
 			set { }
 		}
 

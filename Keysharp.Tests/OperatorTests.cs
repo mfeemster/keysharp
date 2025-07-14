@@ -56,7 +56,7 @@ namespace Keysharp.Tests
 		public void IncDec() => Assert.IsTrue(TestScript("op-inc-dec", false));
 
 		[Test, Category("Operator"), NonParallelizable]
-		public void Is() => Assert.IsTrue(TestScript("op-is", true));
+		public void Is() => Assert.IsTrue(TestScript("op-is", false));
 
 		[Test, Category("Operator")]
 		public void LeftShift() => Assert.IsTrue(TestScript("op-lsh", true));

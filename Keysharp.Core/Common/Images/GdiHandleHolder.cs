@@ -5,8 +5,6 @@
 		private readonly bool disposeHandle = true;
 		private readonly nint handle;
 
-		public new (Type, object) super => (typeof(KeysharpObject), this);
-
 		internal GdiHandleHolder(nint h, bool d)
 		{
 			handle = h;

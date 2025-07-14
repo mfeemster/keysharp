@@ -157,8 +157,6 @@ namespace Keysharp.Core.COM
 			*/
 		}
 
-		public new (Type, object) super => (typeof(KeysharpObject), this);
-
 		public VarEnum vt;
 		public long VarType
 		{
@@ -167,18 +165,9 @@ namespace Keysharp.Core.COM
 		}
 		internal long Flags { get; set; }
 
-		public ComObject(params object[] args) => _ = __New(args);
+		public ComObject(params object[] args) : base(args) { }
 
-		internal ComObject(object varType, object value, object flags = null) => _ = __New(varType, value, flags);
-
-		internal ComObject()
-		{
-		}
-
-		~ComObject()
-		{
-			Dispose();
-		}
+		internal ComObject(object varType, object value, object flags = null) : base(varType, value, flags) { }
 
 		public object __Delete()
 		{
@@ -186,8 +175,9 @@ namespace Keysharp.Core.COM
 			return DefaultObject;
 		}
 
-		public new object __New(params object[] args)
+		public override object __New(params object[] args)
 		{
+			if (args.Length == 0 || args[0] == null) return DefaultObject;
 			var varType = args[0];
 			var value = args[1];
 			var flags = args.Length > 2 ? args[2] : null;
@@ -530,6 +520,21 @@ namespace Keysharp.Core.COM
 					{
 						variant.Ptr = co.Ptr.ToString().Clone();//Copy the string.
 					}
+				}
+
+				return;
+			} 
+			else if (Marshal.IsComObject(val))
+			{
+				if (val is IDispatch idisp)
+				{
+					variant.vt = VarEnum.VT_DISPATCH;
+					variant.Ptr = idisp;
+				} 
+				else
+				{
+					variant.vt = VarEnum.VT_UNKNOWN;
+					variant.Ptr = val;
 				}
 
 				return;

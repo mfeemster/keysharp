@@ -17,12 +17,12 @@
 
 		public static object MCode(object mcode)
 		{
-			object? m = null;
+			object? m = new VarRef(() => v, value => v = value); ;
 			object? s = null;
 			object? p = null;
 			object? op = null;
 
-			if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.OperateUnary(Keysharp.Scripting.Script.Operator.LogicalNot, Keysharp.Core.RegEx.RegExMatch(mcode, Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.Concat, "^([0-9]+),(", Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.Concat, Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.Concat, Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.Concat, mcode_c, ":|.*?,"), mcode_c), ":)([^,]+)")), ref m))))
+			if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.OperateUnary(Keysharp.Scripting.Script.Operator.LogicalNot, Keysharp.Core.RegEx.RegExMatch(mcode, Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.Concat, "^([0-9]+),(", Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.Concat, Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.Concat, Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.Concat, mcode_c, ":|.*?,"), mcode_c), ":)([^,]+)")), m))))
 			{
 				return _ = "";
 			}

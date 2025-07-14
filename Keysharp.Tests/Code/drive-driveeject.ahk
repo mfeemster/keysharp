@@ -3,4 +3,4 @@
 DriveEject("C:\", false)
 DriveEject("C:\", true)
 
-FileAppend, "pass", "*"
+FileAppend "pass", "*"

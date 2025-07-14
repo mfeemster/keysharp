@@ -3,7 +3,7 @@
 y = 5
 x = 0
 
-Loop, %y%
+Loop %y%
 {
 	If A_Index =2
 		Continue
@@ -13,32 +13,32 @@ Loop, %y%
 }
 
 If x =8
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x = 0
 y := ""
 
-Loop, %y%
+Loop %y%
 {
 	x++
 }
 
 If x = 0
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 x = 0
 y = 0
 
-Loop, %y% ; this is a comment
+Loop %y% ; this is a comment
 {
 	x++
 }
 
 If x = 0
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"

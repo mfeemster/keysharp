@@ -5,10 +5,27 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "C#: Keysharp.OutputTest Debug",
-            "type": "dotnet",
+            "name": ".NET Launch (console)",
+            "type": "coreclr",
+            "preLaunchTask": "build",
             "request": "launch",
-            "projectPath": "${workspaceFolder}/Keysharp.OutputTest/Keysharp.OutputTest.csproj",
+            "program":"${workspaceFolder}/bin/Debug/net9.0-windows/Keysharp.exe",
+            "args": [],
+            "cwd": "${workspaceFolder}/bin/Debug/net9.0-windows",
+            // For more information about the 'console' field, see https://github.com/OmniSharp/omnisharp-vscode/blob/master/debugger-launchjson.md#console-terminal-window
+            "console": "internalConsole",
+            "stopAtEntry": false,
+            "internalConsoleOptions": "openOnSessionStart"
+        },
+        {
+            "name": "Debug ANTLR4 grammar",
+            "type": "antlr-debug",
+            "request": "launch",
+            "input": "Keysharp.Tests/Code/antlr-test.txt",
+            "grammar": "Keysharp.Core/Scripting/Parser/Antlr/MainParser.g4",
+            "startRule": "program",
+            "printParseTree": true,
+            "visualParseTree": true
         }
 
     ]

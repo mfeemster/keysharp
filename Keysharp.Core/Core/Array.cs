@@ -34,7 +34,9 @@
 	/// </summary>
 	public class Array : KeysharpObject, I__Enum, IEnumerable<(object, object)>, IList
 	{
-		private int capacity = 64;
+        new public static object __Static { get; set; }
+
+        private int capacity = 4;
 
 		/// <summary>
 		/// The underlying <see cref="List"/> that holds the values.
@@ -111,11 +113,6 @@
 		}
 
 		/// <summary>
-		/// The implementation for <see cref="KeysharpObject.super"/> for this class to return this type.
-		/// </summary>
-		public new (Type, object) super => (typeof(KeysharpObject), this);
-
-		/// <summary>
 		/// The implementation for <see cref="IList.IsFixedSize"/> which returns array.IsFixedSize.
 		/// </summary>
 		bool IList.IsFixedSize => ((IList)array).IsFixedSize;
@@ -139,7 +136,7 @@
 		/// Initializes a new instance of the <see cref="Array"/> class.
 		/// See <see cref="__New(object[])"/>.
 		/// </summary>
-		public Array(params object[] args) => _ = __New(args);
+		public Array(params object[] args) : base(args) { }
 
 		/// <summary>
 		/// Translates a 1-based index which allows negative nubmers to a 0-based positive only index.<br/>
@@ -165,7 +162,11 @@
 		///     2: Return the index in the first element, and the value in the second.
 		/// </param>
 		/// <returns><see cref="KeysharpEnumerator"/></returns>
-		public KeysharpEnumerator __Enum(object count) => new ArrayIndexValueIterator(array, count.Ai());
+		public IFuncObj __Enum(object count)
+		{
+			var iter = new ArrayIndexValueIterator(array, count.Ai());
+			return iter.fo;
+		}
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="Array"/> class.
@@ -180,37 +181,35 @@
 		///     <see cref="ICollection"/>: adds each element to the underlying list.
 		/// </param>
 		/// <returns>Empty string, unused.</returns>
-		public new object __New(params object[] args)
+		public override object __New(params object[] args)
 		{
 			array = new List<object>(capacity);
-			Init__Item();
 
 			if (args == null || args.Length == 0)
 			{
 			}
-			else if (args.Length == 1 && args[0] is object[] objarr)
+			else if (args.Length == 1)
 			{
-				array.AddRange(objarr);
-			}
-			else if (args.Length == 1 && args[0] is List<object> objlist)
-			{
-				array.AddRange(objlist);
-			}
-			else if (args.Length == 1 && args[0] is Array arr)
-			{
-				array.Add(arr);
-			}
-			else if (args.Length == 1 && args[0] is Map map)
-			{
-				array.Add(map);
-			}
-			else if (args.Length == 1 && args[0] is ICollection c)
-			{
-				array.AddRange(c.Cast<object>().ToList());
+				if (args[0] is object[] objarr)
+				{
+					array.AddRange(objarr);
+				}
+				else if (args[0] is List<object> objlist)
+				{
+					array.AddRange(objlist);
+				}
+				else if (args[0] is ICollection c && c is not Array && c is not Map)
+				{
+					array.AddRange(c.Cast<object>().ToList());
+				}
+				else
+				{
+					array.Add(args[0]);
+				}
 			}
 			else
 			{
-				Push(args);
+				array.AddRange(args);
 			}
 
 			return DefaultObject;
@@ -564,12 +563,12 @@
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if the array is empty.</exception>
 		public object Pop()
 		{
-			if (array.Count < 1)
+            var index = array.Count - 1;
+            if (index < 0)
 			{
 				return Errors.ErrorOccurred($"Cannot pop an empty array.");
 			}
 
-			var index = array.Count - 1;
 			var val = array[index];
 			array.RemoveAt(index);
 			return val;
@@ -631,7 +630,7 @@
 					_ = sb.AppendLine($"{indent}{name}: [] ({GetType().Name})");
 			}
 
-			var opi = (OwnPropsIterator)OwnProps(true, false);
+			var opi = (OwnPropsIterator)((FuncObj)OwnProps(true, false)).Inst;
 			tabLevel++;
 			indent = new string('\t', tabLevel);
 
@@ -688,7 +687,7 @@
 
 			if (array.Count > 0 && o.Length > 0)
 			{
-				var index = o.I1();
+				var index = args[0].Ai(0);
 				int i;
 
 				if ((i = TranslateIndex(index)) == -1)
@@ -696,7 +695,7 @@
 
 				if (o.Length > 1 && o[1] != null)
 				{
-					var len = (int)o.Al(1);
+					var len = o[1].Ai(1);
 
 					if (i + len <= array.Count)
 						array.RemoveRange(i, len);
@@ -890,21 +889,20 @@
 		{
 			arr = a;
 			var p = c <= 1 ? Script.TheScript.ArrayIndexValueIteratorData.p1 : Script.TheScript.ArrayIndexValueIteratorData.p2;
-			var fo = (FuncObj)p.Clone();
+			fo = (FuncObj)p.Clone();
 			fo.Inst = this;
-			CallFunc = fo;
 		}
 
 		/// <summary>
 		/// Calls <see cref="Current"/> and places the position value in the passed in object reference.
 		/// </summary>
-		/// <param name="pos">A reference to the position value.</param>
+		/// <param name="pos">A reference to the value.</param>
 		/// <returns>True if the iterator position has not moved past the last element, else false.</returns>
-		public override object Call(ref object pos)
+		public override object Call([ByRef] object pos)
 		{
 			if (MoveNext())
 			{
-				(pos, _) = Current;
+				Script.SetPropertyValue(pos, "__Value", Current.Item1);
 				return true;
 			}
 
@@ -917,21 +915,22 @@
 		/// <param name="pos">A reference to the position value.</param>
 		/// <param name="val">A reference to the object value.</param>
 		/// <returns>True if the iterator position has not moved past the last element, else false.</returns>
-		public override object Call(ref object pos, ref object val)
+		public override object Call([ByRef] object pos, [ByRef] object val)
 		{
 			if (MoveNext())
 			{
-				(pos, val) = Current;
+				Script.SetPropertyValue(pos, "__Value", Current.Item1);
+				Script.SetPropertyValue(val, "__Value", Current.Item2);
 				return true;
 			}
 
 			return false;
 		}
 
-		/// <summary>
-		/// The implementation for <see cref="IComparer.Dispose"/> which internally resets the iterator.
-		/// </summary>
-		public void Dispose() => Reset();
+        /// <summary>
+        /// The implementation for <see cref="IComparer.Dispose"/> which internally resets the iterator.
+        /// </summary>
+        public void Dispose() => Reset();
 
 		/// <summary>
 		/// The implementation for <see cref="IEnumerator.MoveNext"/> which moves the iterator to the next position.

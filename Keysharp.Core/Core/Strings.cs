@@ -1,4 +1,7 @@
-﻿namespace Keysharp.Core
+﻿using System.Configuration;
+using System.Formats.Tar;
+
+namespace Keysharp.Core
 {
 	public static partial class KeysharpEnhancements
 	{
@@ -1100,12 +1103,22 @@
 		/// Returns the current memory address of a string.
 		/// Note, this does not actually point to the string. Instead, it
 		/// points to a copy of the bytes of the string.
-		/// Note, the caller will have to manually free the returned pointer by calling FreeStrPtr.
+		/// Note, the caller will have to manually free the returned pointer by calling ObjFree.
 		/// </summary>
 		/// <param name="value">The string to return a pointer to.</param>
 		/// <returns>The memory address of a copy of the string bytes.</returns>
-		public static long StrPtr(object value)
+		public static object StrPtr(object value)
 		{
+			if (value is StringBuffer sb) {
+				return sb;
+			} 
+			else if (value is KeysharpObject kso)
+			{
+				var str = Script.GetPropertyValue(kso, "__Value");
+				var sbr = new StringBuffer(str);
+				sbr.EntangledString = kso;
+				return sbr;
+			}
 			value = Encoding.Unicode.GetBytes(value.ToString());
 			var gch = GCHandle.Alloc(value, GCHandleType.Pinned);
 			var ptr = gch.AddrOfPinnedObject();
@@ -1208,22 +1221,22 @@
 		}
 
 		/// <summary>
-		/// <see cref="StrReplace(object, object, object, object, ref object, object)"/>
+		/// <see cref="StrReplace(object, object, object, object, VarRef, object)"/>
 		/// </summary>
 		public static string StrReplace(object haystack, object needle, object replaceText = null, object caseSense = null)
 		{
 			object obj4 = null;
-			object outputVarCount = null;
-			return StrReplace(haystack, needle, replaceText, caseSense, ref outputVarCount, obj4);
+			object outputVarCount = new VarRef(null);
+			return StrReplace(haystack, needle, replaceText, caseSense, outputVarCount, obj4);
 		}
 
 		/// <summary>
-		/// <see cref="StrReplace(object, object, object, object, ref object, object)"/>
+		/// <see cref="StrReplace(object, object, object, object, VarRef, object)"/>
 		/// </summary>
-		public static string StrReplace(object haystack, object needle, object replaceText, object caseSense, ref object outputVarCount)
+		public static string StrReplace(object haystack, object needle, object replaceText, object caseSense, object outputVarCount)
 		{
 			object obj4 = null;
-			return StrReplace(haystack, needle, replaceText, caseSense, ref outputVarCount, obj4);
+			return StrReplace(haystack, needle, replaceText, caseSense, outputVarCount, obj4);
 		}
 
 		/// <summary>
@@ -1247,7 +1260,7 @@
 		/// Otherwise, specify the maximum number of replacements to allow.
 		/// </param>
 		/// <returns>The newly modified string.</returns>
-		public static string StrReplace(object haystack, object needle, object replaceText, object caseSense, ref object outputVarCount, object limit)
+		public static string StrReplace(object haystack, object needle, object replaceText, object caseSense, [ByRef] object outputVarCount, object limit)
 		{
 			var input = haystack.As();
 			var search = needle.As();
@@ -1257,8 +1270,8 @@
 
 			if (IsAnyBlank(input, search))
 			{
-				outputVarCount = 0L;
-				return DefaultObject;
+                Script.SetPropertyValue(outputVarCount, "__Value", 0L);
+                return DefaultObject;
 			}
 
 			var compare = Conversions.ParseComparisonOption(comp);
@@ -1282,7 +1295,7 @@
 			if (n < input.Length)
 				_ = buf.Append(input, n, input.Length - n);
 
-			outputVarCount = ct;
+			Script.SetPropertyValue(outputVarCount, "__Value", ct);
 			return buf.ToString();
 		}
 
@@ -1449,12 +1462,51 @@
 		public static string Trim(object str, object omitChars = null) => str.As().Trim(omitChars.As(" \t").ToCharArray());
 
 		/// <summary>
-		/// Unsupported.
+		/// Sets a string capacity by replacing it with a StringBuffer instance.
 		/// </summary>
-		/// <param name="obj">Ignored</param>
-		/// <returns>None</returns>
-		/// <exception cref="Error">An <see cref="Error"/> exception is thrown because this function has no meaning in Keysharp.</exception>
-		public static long VarSetStrCapacity(params object[] obj) => (long)Errors.ErrorOccurred("VarSetStrCapacity() not supported or necessary.", DefaultErrorLong);
+		/// <param name="targetVar">The string to wrap</param>
+		/// <param name="requestedCapacity">Capacity for the StringBuffer. If this is -1 then
+		/// <paramref name="targetVar"/> contents are replaced with the content of the StringBuffer.</param>
+		/// <returns>StringBuffer</returns>
+		public static object VarSetStrCapacity([ByRef] object targetVar, object requestedCapacity = null)
+		{
+			if (!(targetVar is KeysharpObject))
+				throw new TypeError($"Expected argument of type VarRef, but received {targetVar.GetType()}");
+
+			var target = Script.GetPropertyValue(targetVar, "__Value");
+			int capacity;
+			if (target is string targetStr)
+			{
+				if (requestedCapacity == null)
+					return (long)targetStr.Length;
+				capacity = requestedCapacity.Ai();
+				if (capacity < 0)
+					return (long)targetStr.Length;
+                var sbr = new StringBuffer(targetStr, capacity);
+				Script.SetPropertyValue(targetVar, "__Value", sbr);
+				return (long)capacity;
+			}
+			else if (target is StringBuffer sbr)
+			{
+				if (requestedCapacity == null)
+					return sbr.Capacity;
+
+				capacity = requestedCapacity.Ai();
+				if (capacity == -1)
+				{
+					var str = sbr.ToString();
+					Script.SetPropertyValue(targetVar, "__Value", str);
+					return (long)str.Length;
+				}
+				else
+				{
+					sbr.Capacity = capacity;
+					return sbr.Capacity;
+				}
+			}
+
+            throw new TypeError($"Expected referred argument of type string or StringBuffer, but received {target.GetType()}");
+        }
 
 		/// <summary>
 		/// Compares two version strings.

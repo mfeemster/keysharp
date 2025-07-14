@@ -146,7 +146,7 @@ namespace Keysharp.Core.Common.Threading
 			mouseDelay = MouseDelayDefault;
 			mouseDelayPlay = MouseDelayPlayDefault;
 			peekFrequency = PeekFrequencyDefault;
-			priority = A_Priority.Al();
+			priority = (long)A_Priority;
 			randomGenerator = null;
 			_ = (regsb?.Clear());
 #if WINDOWS

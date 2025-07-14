@@ -3,20 +3,6 @@
 	public static partial class RegEx
 	{
 		/// <summary>
-		/// <see cref="RegExMatchCs(object, object, ref object, object)"/>
-		/// </summary>
-		public static long RegExMatchCs(object haystack, object needle)
-		{
-			object outvar = null;
-			return RegExMatchCs(haystack, needle, ref outvar, null);
-		}
-
-		/// <summary>
-		/// <see cref="RegExMatchCs(object, object, ref object, object)"/>
-		/// </summary>
-		public static long RegExMatchCs(object haystack, object needle, ref object outvar) => RegExMatchCs(haystack, needle, ref outvar, null);
-
-		/// <summary>
 		/// Determines whether a string contains a pattern (regular expression).
 		/// </summary>
 		/// <param name="haystack">The string whose content is searched.</param>
@@ -44,8 +30,9 @@
 		/// </param>
 		/// <returns>The <see cref="RegExMatchInfoCs"/> object which contains the matches, if any.</returns>
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown on failure.</exception>
-		public static long RegExMatchCs(object haystack, object needle, ref object outputVar, object startingPos)
+		public static long RegExMatchCs(object haystack, object needle, [ByRef] object outputVar = null, object startingPos = null)
 		{
+			outputVar ??= VarRef.Empty;
 			var input = haystack.As();
 			var n = needle.As();
 			var index = startingPos.Ai(1);
@@ -89,7 +76,7 @@
 			try
 			{
 				var res = new RegExMatchInfoCs(exp.Match(input, index));
-				outputVar = res;
+				Script.SetPropertyValue(outputVar, "__Value", res);
 				return res.Pos();
 			}
 			catch (Exception ex)
@@ -97,25 +84,6 @@
 				return (long)Errors.ErrorOccurred("Regular expression execution error", "", ex.Message, DefaultErrorLong);
 			}
 		}
-
-		/// <summary>
-		/// <see cref="RegExReplaceCs(object, object, object, ref object, object, object)"/>
-		/// </summary>
-		public static string RegExReplaceCs(object haystack, object needleRegEx, object replacement = null)
-		{
-			object outputVarCount = null;
-			return RegExReplaceCs(haystack, needleRegEx, replacement, ref outputVarCount);
-		}
-
-		/// <summary>
-		/// <see cref="RegExReplaceCs(object, object, object, ref object, object, object)"/>
-		/// </summary>
-		public static string RegExReplaceCs(object haystack, object needleRegEx, object replacement, ref object outputVarCount) => RegExReplaceCs(haystack, needleRegEx, replacement, ref outputVarCount, null, null);
-
-		/// <summary>
-		/// <see cref="RegExReplaceCs(object, object, object, ref object, object, object)"/>
-		/// </summary>
-		public static string RegExReplaceCs(object haystack, object needleRegEx, object replacement, ref object outputVarCount, object limit) => RegExReplaceCs(haystack, needleRegEx, replacement, ref outputVarCount, limit, null);
 
 		/// <summary>
 		/// Replaces occurrences of a pattern (regular expression) inside a string.
@@ -153,11 +121,12 @@
 		/// </param>
 		/// <returns>A version of haystack whose contents have been replaced by the operation. If no replacements are needed, haystack is returned unaltered.</returns>
 		/// <exception cref="Error">An <see cref="Error"/> exception is thrown on failure.</exception>
-		public static string RegExReplaceCs(object haystack, object needleRegEx, object replacement, ref object outputVarCount, object limit, object startingPos)
+		public static string RegExReplaceCs(object haystack, object needleRegEx, object replacement = null, [ByRef] object outputVarCount = null, object limit = null, object startingPos = null)
 		{
 			var input = haystack.As();
 			var needle = needleRegEx.As();
 			var replace = replacement.As();
+			outputVarCount ??= VarRef.Empty;
 			var l = limit.Ai(-1);
 			var index = startingPos.Ai(1);
 			var n = 0;
@@ -210,7 +179,7 @@
 			try
 			{
 				var result = exp.Replace(input, match, l, index);
-				outputVarCount = (long)n;
+				Script.SetPropertyValue(outputVarCount, "__Value", (long)n);
 				return result;
 			}
 			catch (Exception ex)

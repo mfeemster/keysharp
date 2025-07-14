@@ -7,13 +7,13 @@
 		public object Mark => match.Groups.Count > 0 ? match.Groups[ ^ 1].Name : "";
 		public object Success => match.Success;
 
-		public new (Type, object) super => (typeof(KeysharpObject), this);
+		public (Type, object) super => (typeof(KeysharpObject), this);
 
-		public RegExMatchInfoCs(params object[] args) => _ = __New(args);
+		public RegExMatchInfoCs(params object[] args) : base(args) { }
 
 		public static implicit operator long(RegExMatchInfoCs r) => r.Pos();
 
-		public KeysharpEnumerator __Enum(object count) => new RegExIteratorCs(match, count.Ai());
+		public IFuncObj __Enum(object count) => new RegExIteratorCs(match, count.Ai()).fo;
 
 		public new object __New(params object[] args)
 		{
@@ -88,11 +88,11 @@
 			return null;
 		}
 
-		public string this[object obj]
+		public string this[params object[] obj]
 		{
 			get
 			{
-				var g = GetGroup(obj);
+				var g = GetGroup(obj.Length == 0 ? null : obj[0]);
 				return g != null && g.Success ? g.Value : "";
 			}
 		}
@@ -153,7 +153,7 @@
 			iter = ((IEnumerable<Group>)match.Groups).GetEnumerator();
 			var script = Script.TheScript;
 			var p = c <= 1 ? script.RegExIteratorDataCs.p1 : script.RegExIteratorDataCs.p2;
-			var fo = (FuncObj)p.Clone();
+			fo = (FuncObj)p.Clone();
 			fo.Inst = this;
 			CallFunc = fo;
 		}
@@ -163,11 +163,11 @@
 		/// </summary>
 		/// <param name="key">A reference to the key value.</param>
 		/// <returns>True if the iterator position has not moved past the last element, else false.</returns>
-		public override object Call(ref object value)
+		public override object Call([ByRef] object value)
 		{
 			if (MoveNext())
 			{
-				value = Current.Item1;
+				Script.SetPropertyValue(value, "__Value", Current.Item1);
 				return true;
 			}
 
@@ -180,11 +180,12 @@
 		/// <param name="name">A reference to the name of the current match.</param>
 		/// <param name="value">A reference to the value of the current match.</param>
 		/// <returns>True if the iterator position has not moved past the last element, else false.</returns>
-		public override object Call(ref object name, ref object value)
+		public override object Call([ByRef] object name, [ByRef] object value)
 		{
 			if (MoveNext())
 			{
-				(name, value) = Current;
+				Script.SetPropertyValue(name, "__Value", Current.Item1);
+				Script.SetPropertyValue(value, "__Value", Current.Item2);
 				return true;
 			}
 

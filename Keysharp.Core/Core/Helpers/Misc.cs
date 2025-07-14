@@ -18,6 +18,14 @@ namespace Keysharp.Core
 		/// <returns>A <see cref="RefHolder"/> object that contains all of the passed in info, which will be passed to the method call.</returns>
 		public static RefHolder Mrh(int i, object o, Action<object> r) => new (i, o, r);
 
+		public static object MakeVarRef(Func<object> getter, Action<object> setter)
+		{
+			var v = getter();
+			if (v is VarRef || (v is KeysharpObject kso && kso.HasProp("__Value") != 0))
+				return v;
+			return new VarRef(getter, setter);
+		}
+
 		/// <summary>
 		/// Returns a string showing all of the properties of an object.
 		/// The string is also appended to sbuf.

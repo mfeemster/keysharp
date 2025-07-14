@@ -4,91 +4,91 @@ class myclass
 	static b := ""
 	static c := "asdf"
 	static x := 123
-	static y := x
+	static y := this.x
 	static arr := [1, 2, 3]
 	static m := {one : 1, two : 2, three : 3}
 }
 
 classobj := myclass.Call()
 
-If (myclass.a == unset)
-	FileAppend, "pass", "*"
+If (!IsSet(myclass.a))
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 If (myclass.b == "")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 If (myclass.c == "asdf")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 If (myclass.x == 123)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 If (myclass.y == myclass.x)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 myclass.x := 456
 
 If (myclass.x == 456)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 If (myclass.y == 123)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 classobj2 := myclass.Call()
 
 If (myclass.x == 456)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 classobj3 := myclass()
 
-If (classobj3.x == 456)
-	FileAppend, "pass", "*"
+If (!classobj3.HasProp("x"))
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 a := 1
 
-If (myclass.a == unset)
-	FileAppend, "pass", "*"
+If (!IsSet(myclass.a))
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 myclass.a := 123
 
 If (a == 1)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 if (myclass.arr is Array && myclass.arr.Length == 3)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
-if (myclass.m is KeysharpObject && myclass.m.one == 1 && myclass.m.two == 2 && myclass.m.three == 3)
-	FileAppend, "pass", "*"
+if (myclass.m is Object && myclass.m.one == 1 && myclass.m.two == 2 && myclass.m.three == 3)
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 ; test static member initialized in a complex way.
 class TypeSizeMapper {
-	static NumTypeSize := MapInit()
+	static NumTypeSize := this.MapInit()
 	
 	static MapInit()
 	{
@@ -117,32 +117,32 @@ class TypeSizeMapper {
 val := TypeSizeMapper.NumTypeSize["char"]
 
 If (val == 1)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 val := TypeSizeMapper.NumTypeSize["int64"]
 
 If (val == 8)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 val := TypeSizeMapper.NumTypeSize["ptr"]
 
 If (val == A_PtrSize)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
-; do the same, but using __StaticInit()
+; do the same, but using static __Init()
 class TypeSizeMapper2 {
 	static NumTypeSize := ""
 	
-	static __StaticInit()
+	static __New()
 	{
 global
-		NumTypeSize := Map()
+		this.NumTypeSize := Map()
 		for t in [
 			[1,         'Int8' ,   'char'  ],
 			[1,         'UInt8' ,  'uchar' ],
@@ -157,7 +157,7 @@ global
 			[A_PtrSize, 'IntPtr',  'ptr'   ],
 			[A_PtrSize, 'UIntPtr', 'uptr'  ]
 		] {
-			NumTypeSize[t[3]] := t[1]
+			this.NumTypeSize[t[3]] := t[1]
 		}
 	}
 }
@@ -165,23 +165,23 @@ global
 val := TypeSizeMapper2.NumTypeSize["char"]
 
 If (val == 1)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 val := TypeSizeMapper2.NumTypeSize["int64"]
 
 If (val == 8)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 val := TypeSizeMapper2.NumTypeSize["ptr"]
 
 If (val == A_PtrSize)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 class sclass1
 {
@@ -195,12 +195,12 @@ class sclass2
 
 sc1 := sclass1()
 
-If (sc1.c2.x == 1)
-	FileAppend, "pass", "*"
+If (!sc1.HasProp("c2"))
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 If (sclass1.c2.x == 1)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"

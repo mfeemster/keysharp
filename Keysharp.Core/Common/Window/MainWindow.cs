@@ -346,9 +346,9 @@
 			var exe = path + "/Keysharp";
 #endif
 			var opt = path + "/Scripts/WindowSpy.ks";
-			object pid = 0;
+			object pid = VarRef.Empty;
 			//Keysharp.Core.Dialogs.MsgBox(exe + "\r\n" + path + "\r\n" + opt);
-			_ = Processes.Run("\"" + exe + "\"", path, "", ref pid, "\"" + opt + "\"");
+			_ = Processes.Run("\"" + exe + "\"", path, "", pid, "\"" + opt + "\"");
 		}
 
 		public enum MainFocusedTab

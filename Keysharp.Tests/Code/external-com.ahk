@@ -9,43 +9,43 @@ dict.Add("Age", 30)
 dict.Add("Country", "USA")
 
 if (dict.Item("Name") == "Alice")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if dict.Exists("Age")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (dict.Item("Age") == 30)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 if (dict.Item("Country") == "USA")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (dict["Name"] == "Alice" && dict["Age"] == 30 && dict["Country"] == "USA")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 dict["Age"] := 50
 
 if (dict.Item("Age") == 50 && dict["Age"] == 50)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 dict["newval"] := 75
 
 if (dict.Item("newval") == 75 && dict["newval"] == 75)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 totalKeys := ""
 totalVals := ""
@@ -57,21 +57,21 @@ for key in dict.Keys
 }
 
 if totalKeys == "NameAgeCountrynewval"
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if totalVals == "Alice50USA75"
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 dict.Remove("Country")
 
 if (dict.Count == 3)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 SIZEOF_VARIANT := 8 + (2 * A_PtrSize)
 var := Buffer(SIZEOF_VARIANT, 0)
@@ -80,40 +80,40 @@ cv := ComValue(0x4000 | 0x3, var.Ptr)
 cv[] := 5
 
 if (cv[] == 5)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (NumGet(var, 0, "int") == 5)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 cv := ComValue(0x4000 | 0xB, var.Ptr)
 cv[] := true
 
 if (cv[] == true)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (NumGet(var, 0, "int") == 65535)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 cv := ComValue(0x4000 | 0xC, var.Ptr) ; VT_VARIANT
 cv[] := 5
 
 if (cv[] == 5)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (NumGet(var, 0, "int") == 3)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 arr := ComObjArray(VT_VARIANT:=12, 3)
 arr[0] := "Auto"
@@ -124,9 +124,9 @@ Loop arr.MaxIndex() + 1
 	t .= arr[A_Index-1]
 
 if (t == "AutoHotkey")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 arr := ComObjArray(VT_VARIANT:=12, 3, 4)
 
@@ -134,19 +134,19 @@ arr := ComObjArray(VT_VARIANT:=12, 3, 4)
 dim := DllCall("oleaut32\SafeArrayGetDim", "ptr", ComObjValue(arr))
 
 if (dim == arr.Dimensions)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (arr.MinIndex(1) == 0 && arr.MaxIndex(1) == 2)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if (arr.MinIndex(2) == 0 && arr.MaxIndex(2) == 3)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 Loop 3 {
 	x := A_Index-1
@@ -157,9 +157,9 @@ Loop 3 {
 }
 
 if (arr[2, 3] == 6)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 script := "
 (
@@ -175,14 +175,14 @@ ObjRegisterActive(m, "{6B39CAA1-A320-4CB0-8DB4-352AA81E460E}")
 pi := RunScript(script,,, "Keysharp.exe")
 
 if m.1
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 if !m.Has(3)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 ObjRegisterActive(obj, CLSID, Flags:=0) {
 	static cookieJar := Map()

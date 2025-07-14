@@ -9,55 +9,55 @@ dir := "../../../Keysharp.Tests/Code/DirCopy"
 FileCopy(dir . "/*", "./FileRecycle/")
 
 if (FileExist("./FileRecycle/file1.txt"))
- 	FileAppend, "pass", "*"
+ 	FileAppend "pass", "*"
 else
-  	FileAppend, "fail", "*"
+  	FileAppend "fail", "*"
 
 if (FileExist("./FileRecycle/file2.txt"))
- 	FileAppend, "pass", "*"
+ 	FileAppend "pass", "*"
 else
-  	FileAppend, "fail", "*"
+  	FileAppend "fail", "*"
 
 if (FileExist("./FileRecycle/file3txt"))
- 	FileAppend, "pass", "*"
+ 	FileAppend "pass", "*"
 else
-  	FileAppend, "fail", "*"
+  	FileAppend "fail", "*"
 
 FileRecycle("./FileRecycle/file1.txt")
 
 if (!FileExist("./FileRecycle/file1.txt"))
- 	FileAppend, "pass", "*"
+ 	FileAppend "pass", "*"
 else
-  	FileAppend, "fail", "*"
+  	FileAppend "fail", "*"
 
 if (FileExist("./FileRecycle/file2.txt"))
- 	FileAppend, "pass", "*"
+ 	FileAppend "pass", "*"
 else
-  	FileAppend, "fail", "*"
+  	FileAppend "fail", "*"
 
 if (FileExist("./FileRecycle/file3txt"))
- 	FileAppend, "pass", "*"
+ 	FileAppend "pass", "*"
 else
-  	FileAppend, "fail", "*"
+  	FileAppend "fail", "*"
 
 FileRecycle("./FileRecycle/*.txt")
 
 if (!FileExist("./FileRecycle/file2.txt"))
- 	FileAppend, "pass", "*"
+ 	FileAppend "pass", "*"
 else
-  	FileAppend, "fail", "*"
+  	FileAppend "fail", "*"
 
 if (FileExist("./FileRecycle/file3txt"))
- 	FileAppend, "pass", "*"
+ 	FileAppend "pass", "*"
 else
-  	FileAppend, "fail", "*"
+  	FileAppend "fail", "*"
 
 FileRecycle("./FileRecycle/*")
 
 if (!FileExist("./FileRecycle/file3txt"))
- 	FileAppend, "pass", "*"
+ 	FileAppend "pass", "*"
 else
-  	FileAppend, "fail", "*"
+  	FileAppend "fail", "*"
 
 if (DirExist("./FileRecycle"))
 	DirDelete("./FileRecycle", true)

@@ -4,30 +4,28 @@
 	{
 		public long Ptr { get; }
 	}
-
-	public interface IFuncObj
-	{
-		public object Inst { get; }
+    public interface IFuncObj
+    {
+        public object Inst { get; set; }
 		public bool IsBuiltIn { get; }
 		public bool IsValid { get; }
 		public string Name { get; }
 
 		public IFuncObj Bind(params object[] obj);
 
-		public object Call(params object[] obj);
+        public object Call(params object[] obj);
+		public object CallInst(object inst, params object[] obj);
 
-		public object CallWithRefs(params object[] obj);
+        public object CallWithRefs(params object[] obj);
 
-		public bool IsByRef(object obj = null);
+        public bool IsByRef(object obj = null);
 
 		public bool IsOptional(object obj = null);
 	}
 
-	internal class BoundFunc : FuncObj
+	public class BoundFunc : FuncObj
 	{
 		internal object[] boundargs;
-
-		public new (Type, object) super => (typeof(FuncObj), this);
 
 		internal BoundFunc(MethodInfo m, object[] ba, object o = null)
 			: base(m, o)
@@ -47,9 +45,10 @@
 		/// </summary>
 		/// <param name="args">Forwarded on to <see cref="CallWithRefs(object[])"/></param>
 		/// <returns>The return value of the bound function.</returns>
-		public override object Call(params object[] args) => CallWithRefs(args);
+		public override object Call(params object[] args) => base.Call(CreateArgs(args).ToArray());
+		public override object CallInst(object inst, params object[] args) => base.Call(inst, CreateArgs(args).ToArray());
 
-		public override object CallWithRefs(params object[] args)
+        public override object CallWithRefs(params object[] args)
 		{
 			var argsList = CreateArgs(args);
 			var argsArray = new object[argsList.Count];
@@ -108,16 +107,8 @@
 					argsList.Add(null);
 			}
 
-			if (mph.IsVariadic)
-			{
-				for (; argsused < args.Length; argsused++)
-					argsList.Add(args[argsused]);
-			}
-			else
-			{
-				for (; argsused < args.Length && argsList.Count < mph.parameters.Length; argsused++)
-					argsList.Add(args[argsused]);
-			}
+			for (; argsused < args.Length; argsused++)
+				argsList.Add(args[argsused]);
 
 			while (argsList.Count < mph.parameters.Length)
 			{
@@ -126,49 +117,125 @@
 				if (param.Attributes.HasFlag(ParameterAttributes.HasDefault))
 					argsList.Add(param.DefaultValue);
 				else
-					argsList.Add(null);
+					break;
 			}
 
 			return argsList;
 		}
 	}
 
-	internal class FuncObj : KeysharpObject, IFuncObj
+	public class Closure : FuncObj
 	{
-		protected bool anyRef;
-		protected bool isVariadic;
+        internal Closure(Delegate m, object o = null) : base(m, o) { }
+    }
+
+	public class FuncObj : KeysharpObject, IFuncObj
+	{
 		protected MethodInfo mi;
 		protected MethodPropertyHolder mph;
+		new public static object __Static { get; set; }
+		public object Inst { get; set; }
+		public Type DeclaringType => mi.DeclaringType;
+		public bool IsClosure => Inst != null && mi.DeclaringType?.DeclaringType == Inst.GetType();
 
-		public object Inst { get; internal set; }
 		public bool IsBuiltIn => mi.DeclaringType.Module.Name.StartsWith("keysharp.core", StringComparison.OrdinalIgnoreCase);
-		public bool IsValid => mi != null && mph != null && mph.IsCallFuncValid;
-		public string Name => mi != null ? mi.Name : "";
-		public new (Type, object) super => (typeof(KeysharpObject), this);
-		internal bool IsVariadic => isVariadic;
-		public long MaxParams { get; internal set; } = 9999;
-		public long MinParams { get; internal set; } = 0;
+		public bool IsValid => mi != null && mph != null && mph.CallFunc != null;
+		string _name = null;
+		public string Name {
+			get
+			{
+				if (_name != null)
+					return _name;
+
+				if (mi == null)
+					return _name = "";
+
+				string funcName = mi.Name;
+				var prefixes = new[] { "static", "get_", "set_" };
+				foreach (var p in prefixes)
+				{
+					if (funcName.StartsWith(p, StringComparison.Ordinal))
+						funcName = funcName.Substring(p.Length);
+				}
+
+				if (IsBuiltIn || mi.DeclaringType.Name == Keywords.MainClassName)
+					return _name = funcName;
+
+				string declaringType = mi.DeclaringType.FullName;
+
+				var idx = declaringType.IndexOf(Keywords.MainClassName + "+");
+				string nestedPath = idx < 0
+					? declaringType       // no “Program.” found, just return whole
+					: declaringType.Substring(idx + Keywords.MainClassName.Length + 1);
+
+				return _name = $"{nestedPath.Replace('+', '.')}.{funcName}";
+			}
+		}
+		public (Type, object) super => (typeof(KeysharpObject), this);
+		internal bool IsVariadic => mph.parameters.Length > 0 && mph.parameters[mph.parameters.Length - 1].ParameterType == typeof(object[]);
+		public long MaxParams => mph.MaxParams;
+		public long MinParams => mph.MinParams;
 		internal MethodPropertyHolder Mph => mph;
 
+		public Func<object, object[], object> Delegate => mph.CallFunc;
+
 		internal FuncObj(string s, object o = null, object paramCount = null)
-			: this(o != null ? Reflections.FindAndCacheMethod(o.GetType(), s, paramCount.Ai(-1)) : Reflections.FindMethod(s, paramCount.Ai(-1)), o)
+			: this(GetMethodInfo(s, o, paramCount), o)
 		{
 		}
 
-		internal FuncObj(MethodPropertyHolder m, object o = null)
+        private static MethodInfo GetMethodInfo(string s, object o, object paramCount)
+        {
+            if (o != null)
+            {
+				var mitup = Script.GetMethodOrProperty(o, s, paramCount.Ai(-1));
+				if (mitup.Item2 is FuncObj fo)
+					return fo.mph.mi;
+				else if (mitup.Item2 is MethodPropertyHolder mph)
+					return mph.mi;
+                // Try to find and cache the method
+                var method = Reflections.FindAndCacheMethod(o.GetType(), s, paramCount.Ai(-1));
+                if (method != null)
+                    return method.mi;
+
+				throw new TargetError("Unable to find a method object for the requested method " + s);
+            }
+
+            // Fallback to finding the method without an object
+            return Reflections.FindMethod(s, paramCount.Ai(-1))?.mi;
+        }
+
+        internal FuncObj(string s, string t, object paramCount = null)
+		: this(Reflections.FindAndCacheMethod(Script.TheScript.ReflectionsData.stringToTypes[t], s, paramCount.Ai(-1)))
+        {
+        }
+
+        internal FuncObj(string s, Type t, object paramCount = null)
+		: this(Reflections.FindAndCacheMethod(t, s, paramCount.Ai(-1)))
+        {
+        }
+
+        internal FuncObj(MethodPropertyHolder m, object o = null)
 			: this(m?.mi, o)
 		{
 		}
 
-		internal FuncObj(Delegate d, object o = null)
-			: this(d.Method, o)
-		{
-		}
+		internal FuncObj(Delegate m, object o = null)
+		: this(m?.GetMethodInfo(), o)
+        {
+			this.Inst = m.Target;
+        }
 
 		internal FuncObj(MethodInfo m, object o = null)
 		{
 			mi = m;
 			Inst = o;
+
+			if (Script.TheScript.Vars.Prototypes.Count > 1)
+			{
+				Script.TheScript.Vars.Prototypes.TryGetValue(GetType(), out KeysharpObject value);
+				op["base"] = new OwnPropsDesc(this, value);
+			}
 
 			if (mi != null)
 				Init();
@@ -177,9 +244,21 @@
 		public virtual IFuncObj Bind(params object[] args)
 		=> new BoundFunc(mi, args, Inst);
 
-		public virtual object Call(params object[] args) => mph.CallFunc(Inst, args);
-
-		public virtual object CallWithRefs(params object[] args)
+		public virtual object Call(params object[] obj) => mph.CallFunc(Inst, obj);
+		public virtual object CallInst(object inst, params object[] obj)
+		{
+			if (Inst == null)
+				return mph.CallFunc(inst, obj);
+			else
+			{
+                int count = obj.Length;
+                object[] args = new object[count + 1];
+                args[0] = inst;
+                System.Array.Copy(obj, 0, args, 1, count);
+                return mph.CallFunc(Inst, args);
+            }
+		}
+        public virtual object CallWithRefs(params object[] args)
 		{
 			var argsArray = new object[args.Length];
 
@@ -228,12 +307,12 @@
 				index--;
 
 				if (index < funcParams.Length)
-					return funcParams[index].ParameterType.IsByRef;
+					return funcParams[index].ParameterType.IsByRef || funcParams[index].GetCustomAttribute(typeof(ByRefAttribute)) != null;
 			}
 			else
 			{
 				for (var i = 0; i < funcParams.Length; i++)
-					if (funcParams[i].ParameterType.IsByRef)
+					if (funcParams[i].ParameterType.IsByRef || funcParams[index].GetCustomAttribute(typeof(ByRefAttribute)) != null)
 						return true;
 			}
 
@@ -264,21 +343,7 @@
 
 		private void Init()
 		{
-			mph = new MethodPropertyHolder(mi, null);
-			var parameters = mph.parameters;
-			MinParams = mph.MinParams;
-			MaxParams = mph.MaxParams;
-
-			foreach (var p in parameters)
-			{
-				if (p.ParameterType.IsByRef)
-				{
-					anyRef = true;
-					break;
-				}
-			}
-
-			isVariadic = parameters.Length > 0 && parameters[parameters.Length - 1].ParameterType == typeof(object[]);
+			mph = MethodPropertyHolder.GetOrAdd(mi);
 		}
 	}
 

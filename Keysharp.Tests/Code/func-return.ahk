@@ -4,9 +4,9 @@ func0() {
 x := func0()
 
 If (x == "")
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 
 func1(a)
 {
@@ -16,9 +16,9 @@ func1(a)
 x := func1(123)
 
 If (x == 123)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 func2(a) {
 	return a * 2
@@ -27,9 +27,9 @@ func2(a) {
 x := func2(4)
 
 If (x == 8)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 func3()
 {
@@ -39,9 +39,9 @@ func3()
 x := func3()
 
 If (x = [10, 20, 30])
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 func4()
 {
@@ -51,9 +51,9 @@ func4()
 x := func4()
 
 If (x.one == 1)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
 	
 func5()
 {
@@ -65,6 +65,6 @@ func5()
 x := func5()
 
 If (x.two == 2)
-	FileAppend, "pass", "*"
+	FileAppend "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"

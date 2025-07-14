@@ -41,8 +41,8 @@
 				address = abuf.Ptr;
 				size = abuf.Size.Al();
 			}
-			else if (address is KeysharpObject kso && Script.GetPropertyValue(kso, "ptr", false) is object p && p != null
-					 && Script.GetPropertyValue(kso, "size", false) is object s && s != null)
+			else if (address is KeysharpObject kso && Script.TryGetPropertyValue(kso, "ptr", out object p)
+					 && Script.TryGetPropertyValue(kso, "size", out object s))
 			{
 				address = p;
 				size = s.Al();

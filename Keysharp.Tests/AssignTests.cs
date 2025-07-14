@@ -38,9 +38,6 @@ namespace Keysharp.Tests
 		public void AssignStringConcat() => Assert.IsTrue(TestScript("assign-string-concat", true));
 
 		[Test, Category("Assign")]
-		public void AssignUnquoted() => Assert.IsTrue(TestScript("assign-unquoted", true));
-
-		[Test, Category("Assign")]
 		public void AssignVar() => Assert.IsTrue(TestScript("assign-var", false));//Dynamic variables only work as global statics, not function variables.
 	}
 }

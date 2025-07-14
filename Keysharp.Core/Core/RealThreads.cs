@@ -19,7 +19,7 @@
 			lock (lockObj)
 			{
 				var funcObj = Functions.GetFuncObj(obj1, null, true);
-				return funcObj.Call(args);
+				return funcObj.Call(funcObj.Inst == null ? args : new[] { funcObj.Inst }.Concat(args));
 			}
 		}
 
@@ -43,11 +43,6 @@
 	public sealed class RealThread : KeysharpObject
 	{
 		internal Task<object> task;
-
-		/// <summary>
-		/// The implementation for <see cref="KeysharpObject.super"/> for this class to return this type.
-		/// </summary>
-		public new (Type, object) super => (typeof(KeysharpObject), this);
 
 		/// <summary>
 		/// Constructor that takes a task to keep a reference to.

@@ -553,17 +553,20 @@ namespace Keysharp.Core
 										 object excludeTitle = null,
 										 object excludeText = null) => SearchWindow(winTitle, winText, excludeTitle, excludeText, true) is WindowItem win ? win.ClassName : "";
 
-		public static object WinGetClientPos([Optional()][DefaultParameterValue(0)] ref object outX,
-											 [Optional()][DefaultParameterValue(0)] ref object outY,
-											 [Optional()][DefaultParameterValue(0)] ref object outWidth,
-											 [Optional()][DefaultParameterValue(0)] ref object outHeight,
+		public static object WinGetClientPos([ByRef][Optional()][DefaultParameterValue(null)] object outX,
+											 [ByRef][Optional()][DefaultParameterValue(null)] object outY,
+											 [ByRef][Optional()][DefaultParameterValue(null)] object outWidth,
+											 [ByRef][Optional()][DefaultParameterValue(null)] object outHeight,
 											 object winTitle = null,
 											 object winText = null,
 											 object excludeTitle = null,
 											 object excludeText = null)
 		{
-			WinPosHelper(true, ref outX, ref outY, ref outWidth, ref outHeight, winTitle, winText, excludeTitle, excludeText);
-			return DefaultObject;
+            outX ??= VarRef.Empty; outY ??= VarRef.Empty; outWidth ??= VarRef.Empty; outHeight ??= VarRef.Empty;
+            object valX = Script.GetPropertyValue(outX, "__Value"), valY = Script.GetPropertyValue(outY, "__Value"), valWidth = Script.GetPropertyValue(outWidth, "__Value"), valHeight = Script.GetPropertyValue(outHeight, "__Value");
+            WinPosHelper(true, ref valX, ref valY, ref valWidth, ref valHeight, winTitle, winText, excludeTitle, excludeText);
+            Script.SetPropertyValue(outX, "__Value", valX); Script.SetPropertyValue(outY, "__Value", valY); Script.SetPropertyValue(outWidth, "__Value", valWidth); Script.SetPropertyValue(outHeight, "__Value", valHeight);
+			return null;
 		}
 
 		public static object WinGetControls(object winTitle = null,
@@ -654,17 +657,21 @@ namespace Keysharp.Core
 									   object excludeText = null) =>
 		SearchWindow(winTitle, winText, excludeTitle, excludeText, true) is WindowItem win ? win.PID : 0L;
 
-		public static object WinGetPos([Optional()][DefaultParameterValue(0)] ref object outX,
-									   [Optional()][DefaultParameterValue(0)] ref object outY,
-									   [Optional()][DefaultParameterValue(0)] ref object outWidth,
-									   [Optional()][DefaultParameterValue(0)] ref object outHeight,
+		public static object WinGetPos([Optional()][DefaultParameterValue(null)] object outX,
+									   [Optional()][DefaultParameterValue(null)] object outY,
+									   [Optional()][DefaultParameterValue(null)] object outWidth,
+									   [Optional()][DefaultParameterValue(null)] object outHeight,
 									   object winTitle = null,
 									   object winText = null,
 									   object excludeTitle = null,
 									   object excludeText = null)
 		{
-			WinPosHelper(false, ref outX, ref outY, ref outWidth, ref outHeight, winTitle, winText, excludeTitle, excludeText);
-			return DefaultObject;
+            outX ??= VarRef.Empty; outY ??= VarRef.Empty; outWidth ??= VarRef.Empty; outHeight ??= VarRef.Empty;
+            object valX = Script.GetPropertyValue(outX, "__Value"), valY = Script.GetPropertyValue(outY, "__Value"), valWidth = Script.GetPropertyValue(outWidth, "__Value"), valHeight = Script.GetPropertyValue(outHeight, "__Value");
+
+            WinPosHelper(false, ref valX, ref valY, ref valWidth, ref valHeight, winTitle, winText, excludeTitle, excludeText);
+            Script.SetPropertyValue(outX, "__Value", valX); Script.SetPropertyValue(outY, "__Value", valY); Script.SetPropertyValue(outWidth, "__Value", valWidth); Script.SetPropertyValue(outHeight, "__Value", valHeight);
+            return null;
 		}
 
 		public static string WinGetProcessName(object winTitle = null,

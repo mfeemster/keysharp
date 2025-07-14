@@ -60,15 +60,15 @@
 		}
 	}
 
-	/// <summary>
-	/// Map class that wraps a <see cref="Dictionary{object, object}"/>.
-	/// </summary>
-	public class Map : KeysharpObject, I__Enum, IEnumerable<(object, object)>, ICollection
+    /// <summary>
+    /// Map class that wraps a <see cref="Dictionary{object, object}"/>.
+    /// </summary>
+    public class Map : KeysharpObject, I__Enum, IEnumerable<(object, object)>, ICollection
 	{
-		/// <summary>
-		/// The underlying <see cref="Dictionary"/> that holds the values.
-		/// </summary>
-		internal Dictionary<object, object> map;
+        /// <summary>
+        /// The underlying <see cref="Dictionary"/> that holds the values.
+        /// </summary>
+        internal Dictionary<object, object> map;
 
 		/// <summary>
 		/// The case comparison to use for string keys.
@@ -127,11 +127,6 @@
 		public object Default { get; set; }
 
 		/// <summary>
-		/// The implementation for <see cref="KeysharpObject.super"/> for this class to return this type.
-		/// </summary>
-		public new (Type, object) super => (typeof(KeysharpObject), this);
-
-		/// <summary>
 		/// Gets a value indicating whether synchronized.
 		/// </summary>
 		bool ICollection.IsSynchronized => ((ICollection)map).IsSynchronized;
@@ -145,11 +140,7 @@
 		/// Initializes a new instance of the <see cref="Map"/> class.
 		/// See <see cref="__New(object[])"/>.
 		/// </summary>
-		public Map(params object[] args)
-		{
-			Init__Item();
-			_ = __New(args);
-		}
+		public Map(params object[] args) : base(args) { }
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="Map"/> class without creating the __Item dynamic property.
@@ -159,15 +150,17 @@
 		/// <param name="make__Item">True to create __Item, else false. Always specify false.</param>
 		internal Map(bool make__Item, params object[] args) => _ = __New(args);
 
-		/// <summary>
-		/// Gets the enumerator object which returns a key,value tuple for each element
-		/// </summary>
-		/// <param name="count">The number of items each element should contain:<br/>
-		///     1: Return the key in the first element, with the second being null.<br/>
-		///     2: Return the key in the first element, and the value in the second.
-		/// </param>
-		/// <returns><see cref="KeysharpEnumerator"/></returns>
-		public KeysharpEnumerator __Enum(object count) => new MapKeyValueIterator(map, count.Ai());
+		public Map(bool skipLogic) : base(skipLogic: skipLogic) => _ = __New();
+
+        /// <summary>
+        /// Gets the enumerator object which returns a key,value tuple for each element
+        /// </summary>
+        /// <param name="count">The number of items each element should contain:<br/>
+        ///     1: Return the key in the first element, with the second being null.<br/>
+        ///     2: Return the key in the first element, and the value in the second.
+        /// </param>
+        /// <returns><see cref="KeysharpEnumerator"/></returns>
+		public IFuncObj __Enum(object count) => (new MapKeyValueIterator(map, count.Ai())).fo;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="Map"/> class.
@@ -180,7 +173,7 @@
 		///     <see cref="Dictionary{object, object}"/>: assigns the dictionary directly to the underlying dictionary.
 		/// </param>
 		/// <returns>Empty string, unused.</returns>
-		public new object __New(params object[] args)
+		public override object __New(params object[] args)
 		{
 			Set(args);
 			return DefaultObject;
@@ -385,7 +378,7 @@
 				else
 					_ = sb.AppendLine($"{indent}{name}: {{}} ({GetType().Name})");
 			}
-			var opi = (OwnPropsIterator)OwnProps(true, false);
+			var opi = (OwnPropsIterator)((FuncObj)OwnProps(true, false)).Inst;
 			tabLevel++;
 			indent = new string('\t', tabLevel);
 
@@ -595,6 +588,8 @@
 		/// </summary>
 		protected IEnumerator<KeyValuePair<object, object>> iter;
 
+
+
 		/// <summary>
 		/// The implementation for <see cref="IEnumerator.Current"/> which gets the key,value tuple at the current iterator position.
 		/// </summary>
@@ -635,9 +630,8 @@
 			iter = map.GetEnumerator();
 			var script = Script.TheScript;
 			var p = c <= 1 ? script.MapKeyValueIteratorData.p1 : script.MapKeyValueIteratorData.p2;
-			var fo = (FuncObj)p.Clone();
+			fo = (FuncObj)p.Clone();
 			fo.Inst = this;
-			CallFunc = fo;
 		}
 
 		/// <summary>
@@ -645,11 +639,11 @@
 		/// </summary>
 		/// <param name="key">A reference to the key value.</param>
 		/// <returns>True if the iterator position has not moved past the last element, else false.</returns>
-		public override object Call(ref object key)
+		public override object Call([ByRef] object key)
 		{
 			if (MoveNext())
 			{
-				(key, _) = Current;
+				Script.SetPropertyValue(key, "__Value", Current.Item1);
 				return true;
 			}
 
@@ -662,21 +656,40 @@
 		/// <param name="key">A reference to the key value.</param>
 		/// <param name="value">A reference to the object value.</param>
 		/// <returns>True if the iterator position has not moved past the last element, else false.</returns>
-		public override object Call(ref object key, ref object value)
+		public override object Call([ByRef] object key, [ByRef] object value)
 		{
 			if (MoveNext())
 			{
-				(key, value) = Current;
+				Script.SetPropertyValue(key, "__Value", Current.Item1);
+				Script.SetPropertyValue(value, "__Value", Current.Item2);
 				return true;
 			}
 
 			return false;
 		}
 
-		/// <summary>
-		/// The implementation for <see cref="IComparer.Dispose"/> which internally resets the iterator.
-		/// </summary>
-		public void Dispose() => Reset();
+        public override object Call([ByRef] params object[] args)
+        {
+            if (MoveNext())
+            {
+                if (args.Length == 1)
+                {
+                    Script.SetPropertyValue(args[0], "__Value", Current.Item1);
+                }
+                else if (args.Length >= 2)
+                {
+                    Script.SetPropertyValue(args[0], "__Value", Current.Item1);
+                    Script.SetPropertyValue(args[1], "__Value", Current.Item2);
+                }
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// The implementation for <see cref="IComparer.Dispose"/> which internally resets the iterator.
+        /// </summary>
+        public void Dispose() => Reset();
 
 		/// <summary>
 		/// The implementation for <see cref="IEnumerator.MoveNext"/> which moves the iterator to the next position.
