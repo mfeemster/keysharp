@@ -583,12 +583,13 @@ namespace Keysharp.Core.Common.Invoke
 			return dkt;
 		}
 
-		private static IEnumerable<Type> GetNestedTypes(Type[] types)
+		internal static IEnumerable<Type> GetNestedTypes(Type[] types)
 		{
 			foreach (var t in types)
 			{
 				yield return t;
-				_ = GetNestedTypes(t.GetNestedTypes());
+				foreach (var nested in GetNestedTypes(t.GetNestedTypes()))
+					yield return nested;
 			}
 		}
 	}

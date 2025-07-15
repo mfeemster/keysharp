@@ -94,13 +94,27 @@ namespace Keysharp.Scripting
             MemberDeclarationSyntax fieldDeclaration = null;
             SyntaxToken[] fieldDeclarationModifiers = [Parser.PredefinedKeywords.PublicToken, Parser.PredefinedKeywords.StaticToken];
             var fieldDeclarationArrowClause = SyntaxFactory.ArrowExpressionClause(
-                CreateMemberAccess(
-					string.Join(".",
-						parser.ClassStack.Reverse()               // Outer-to-inner order.
-						.Select(cls => cls.Name)
-					) + "." + parser.currentClass.Name,
-					"__Static")
-                );
+                SyntaxFactory.ElementAccessExpression(
+                    CreateMemberAccess($"{MainScriptVariableName}.Vars", "Statics")
+                )
+                .WithArgumentList(
+                    SyntaxFactory.BracketedArgumentList(
+                        SyntaxFactory.SingletonSeparatedList(
+                            SyntaxFactory.Argument(
+                                SyntaxFactory.TypeOfExpression(
+                                    CreateQualifiedName(
+                                        string.Join(".",
+                                            parser.ClassStack.Reverse()               // Outer-to-inner order.
+                                            .Select(cls => cls.Name)
+                                        ) + "." + parser.currentClass.Name
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
+            );
+
             if (parser.ClassStack.Count == 1)
             {
                 fieldDeclaration = SyntaxFactory.PropertyDeclaration(
@@ -119,9 +133,6 @@ namespace Keysharp.Scripting
 
             // Add the constructor
             parser.currentClass.Body.Add(CreateConstructor(parser.currentClass.Name));
-
-            // Add __Class and __Static
-            AddClassProperties(userDeclaredName);
 
             // Process class elements
             if (context.classTail().classElement() != null)
@@ -445,63 +456,7 @@ namespace Keysharp.Scripting
         {
             return SyntaxFactory.ConstructorDeclaration(className)
                 .WithModifiers(SyntaxFactory.TokenList(Parser.PredefinedKeywords.StaticToken))
-                .WithBody(
-                    SyntaxFactory.Block(
-                        // Script.InitStaticInstance(typeof(Myclass));
-                        SyntaxFactory.ExpressionStatement(
-                            SyntaxFactory.InvocationExpression(
-                                SyntaxFactory.MemberAccessExpression(
-                                    SyntaxKind.SimpleMemberAccessExpression,
-                                    SyntaxFactory.IdentifierName("Script"),
-                                    SyntaxFactory.IdentifierName("InitStaticInstance")
-                                ),
-								CreateArgumentList(
-									SyntaxFactory.TypeOfExpression(
-                                        SyntaxFactory.IdentifierName(className)
-                                    )
-                                )
-                            )
-                        ),
-                        // SetPropertyValue(Variables.Prototypes[typeof(ClassName)], "__Class", "UserDeclaredClassname");
-                        SyntaxFactory.ExpressionStatement(
-                            ((InvocationExpressionSyntax)InternalMethods.SetPropertyValue)
-                            .WithArgumentList(
-								CreateArgumentList(
-									SyntaxFactory.ElementAccessExpression(
-                                        SyntaxFactory.MemberAccessExpression(
-                                            SyntaxKind.SimpleMemberAccessExpression,
-											VarsNameSyntax,
-                                            SyntaxFactory.IdentifierName("Prototypes")
-                                        ),
-                                        SyntaxFactory.BracketedArgumentList(
-                                            SyntaxFactory.SingletonSeparatedList(
-                                                SyntaxFactory.Argument(
-                                                    SyntaxFactory.TypeOfExpression(
-                                                        SyntaxFactory.IdentifierName(className)
-                                                    )
-                                                )
-                                            )
-                                        )
-                                    ),
-                                    SyntaxFactory.LiteralExpression(
-                                        SyntaxKind.StringLiteralExpression,
-                                        SyntaxFactory.Literal("__Class")
-                                    ),
-                                    SyntaxFactory.LiteralExpression(
-                                        SyntaxKind.StringLiteralExpression,
-                                        SyntaxFactory.Literal(
-                                            parser.ClassStack.Count == 1 ? parser.currentClass.UserDeclaredName :
-                                            string.Join(".",
-                                                parser.ClassStack.Reverse().Skip(1)
-                                                .Select(cls => cls.UserDeclaredName)
-                                            ) + "." + parser.currentClass.UserDeclaredName
-                                        )
-                                    )
-                                )
-                            )
-                        )
-                    )
-                );
+                .WithBody(SyntaxFactory.Block());
         }
 
         private void AddInitMethods(string className)
@@ -556,6 +511,47 @@ namespace Keysharp.Scripting
             // Check if static __Init method already exists
             if (!parser.currentClass.ContainsMethod("__Init", true, true))
             {
+                List<ExpressionStatementSyntax> staticBody = new()
+                {
+                    // SetPropertyValue(Variables.Prototypes[typeof(ClassName)], "__Class", "UserDeclaredClassname");
+                    SyntaxFactory.ExpressionStatement(
+                        ((InvocationExpressionSyntax)InternalMethods.SetPropertyValue)
+                        .WithArgumentList(
+                            CreateArgumentList(
+                                SyntaxFactory.ElementAccessExpression(
+                                    SyntaxFactory.MemberAccessExpression(
+                                        SyntaxKind.SimpleMemberAccessExpression,
+                                        VarsNameSyntax,
+                                        SyntaxFactory.IdentifierName("Prototypes")
+                                    ),
+                                    SyntaxFactory.BracketedArgumentList(
+                                        SyntaxFactory.SingletonSeparatedList(
+                                            SyntaxFactory.Argument(
+                                                SyntaxFactory.TypeOfExpression(
+                                                    SyntaxFactory.IdentifierName(className)
+                                                )
+                                            )
+                                        )
+                                    )
+                                ),
+                                SyntaxFactory.LiteralExpression(
+                                    SyntaxKind.StringLiteralExpression,
+                                    SyntaxFactory.Literal("__Class")
+                                ),
+                                SyntaxFactory.LiteralExpression(
+                                    SyntaxKind.StringLiteralExpression,
+                                    SyntaxFactory.Literal(
+                                        parser.ClassStack.Count == 1 ? parser.currentClass.UserDeclaredName :
+                                        string.Join(".",
+                                            parser.ClassStack.Reverse().Skip(1)
+                                            .Select(cls => cls.UserDeclaredName)
+                                        ) + "." + parser.currentClass.UserDeclaredName
+                                    )
+                                )
+                            )
+                        )
+                    )
+                };
                 // Static __Init method
                 var staticInitMethod = SyntaxFactory.MethodDeclaration(
                     SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.VoidKeyword)),
@@ -565,14 +561,16 @@ namespace Keysharp.Scripting
                 .WithParameterList(SyntaxFactory.ParameterList(SyntaxFactory.SingletonSeparatedList(Parser.PredefinedKeywords.ThisParam)))
                 .WithBody(
                     SyntaxFactory.Block(
-                        parser.currentClass.deferredStaticInitializations.Select(deferred =>
-                            SyntaxFactory.ExpressionStatement(
-                                ((InvocationExpressionSyntax)InternalMethods.SetPropertyValue)
-                                .WithArgumentList(
-									CreateArgumentList(
-                                        deferred.Item1,
-                                        deferred.Item2,
-                                        deferred.Item3
+						staticBody.Concat(
+					        parser.currentClass.deferredStaticInitializations.Select(deferred =>
+                                SyntaxFactory.ExpressionStatement(
+                                    ((InvocationExpressionSyntax)InternalMethods.SetPropertyValue)
+                                    .WithArgumentList(
+								        CreateArgumentList(
+                                            deferred.Item1,
+                                            deferred.Item2,
+                                            deferred.Item3
+                                        )
                                     )
                                 )
                             )
@@ -582,58 +580,6 @@ namespace Keysharp.Scripting
 
                 parser.currentClass.Body.Add(staticInitMethod);
             }
-        }
-
-        private void AddClassProperties(string className)
-        {
-            /*
-            parser.currentClass.Body.Add(
-                SyntaxFactory.PropertyDeclaration(
-                    SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.StringKeyword)),
-                    "__Class"
-                )
-                .WithModifiers(SyntaxFactory.TokenList(Parser.PredefinedKeywords.PublicToken, Parser.PredefinedKeywords.StaticToken))
-                .WithAccessorList(
-                    SyntaxFactory.AccessorList(
-                        SyntaxFactory.SingletonList(
-                            SyntaxFactory.AccessorDeclaration(SyntaxKind.GetAccessorDeclaration)
-                                .WithBody(
-                                    SyntaxFactory.Block(
-                                        SyntaxFactory.ReturnStatement(
-                                            SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(className))
-                                        )
-                                    )
-                                )
-                        )
-                    )
-                )
-            );
-            */
-
-            parser.currentClass.Body.Add(
-                SyntaxFactory.PropertyDeclaration(
-                    PredefinedKeywords.ObjectType, // Type of the property
-                    "__Static" // Property name
-                )
-                .WithModifiers(
-                    SyntaxFactory.TokenList(
-                        Parser.PredefinedKeywords.NewToken,
-                        Parser.PredefinedKeywords.PublicToken,
-                        Parser.PredefinedKeywords.StaticToken
-                    )
-                )
-                .WithAccessorList(
-                    SyntaxFactory.AccessorList(
-                        SyntaxFactory.List(new[]
-                        {
-                SyntaxFactory.AccessorDeclaration(SyntaxKind.GetAccessorDeclaration)
-                    .WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken)),
-                SyntaxFactory.AccessorDeclaration(SyntaxKind.SetAccessorDeclaration)
-                    .WithSemicolonToken(SyntaxFactory.Token(SyntaxKind.SemicolonToken))
-                        })
-                    )
-                )
-            );
         }
 
         private MethodDeclarationSyntax CreateCallFactoryMethod(string className)
