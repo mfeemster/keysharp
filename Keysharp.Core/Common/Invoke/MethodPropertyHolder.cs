@@ -440,14 +440,16 @@ namespace Keysharp.Core.Common.Invoke
             propertyCache.Clear();
 		}
 	}
-    class ArgumentError : Error
+    public class ArgumentError : Error
     {
         public ArgumentError()
             : base(new TargetParameterCountException().Message)
         {
         }
     }
-    public static class DelegateFactory
+
+	[PublicForTestOnly]
+	internal static class DelegateFactory
     {
 
         /// <summary>

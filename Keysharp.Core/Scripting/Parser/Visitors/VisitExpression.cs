@@ -230,7 +230,12 @@ namespace Keysharp.Scripting
 
         public override SyntaxNode VisitExpressionStatement([Antlr4.Runtime.Misc.NotNull] ExpressionStatementContext context)
         {
-            var sequenceArgList = (ArgumentListSyntax)Visit(context.expressionSequence());
+			var sequence = context.expressionSequence();
+			if (parser.currentFunc.Name == Keywords.AutoExecSectionName && sequence.ChildCount == 1 && (sequence.expression(0) is FunctionExpressionContext || sequence.expression(0) is FatArrowExpressionContext))
+			{
+				return (MethodDeclarationSyntax)Visit(sequence.expression(0));
+			}
+			var sequenceArgList = (ArgumentListSyntax)Visit(sequence);
 			ArgumentListSyntax argumentList = CreateArgumentList(sequenceArgList.Arguments.ToArray());
 
             ExpressionSyntax singleExpression = null;
@@ -315,8 +320,10 @@ namespace Keysharp.Scripting
 
                     goto ShouldVisitNextChild;
                 }
-                ExpressionSyntax expr = (ExpressionSyntax)Visit((ExpressionContext)child);
-                arguments.Add(expr);
+                SyntaxNode expr = Visit((ExpressionContext)child);
+				if (expr is MethodDeclarationSyntax)
+					return expr;
+				arguments.Add((ExpressionSyntax)expr);
 
                 ShouldVisitNextChild:
                 lastWasComma = isComma;

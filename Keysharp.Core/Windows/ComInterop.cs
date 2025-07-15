@@ -468,7 +468,7 @@ namespace Keysharp.Core.Common.ObjectBase
 		#endregion
 	}
 
-	public static class ByRefWrapper
+	internal static class ByRefWrapper
 	{
 		/// <summary>
 		/// Given a MethodInfo whose parameters may be marked [ByRef],

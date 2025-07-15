@@ -90,10 +90,6 @@ statement
     : variableStatement
     | ifStatement
     | iterationStatement
-    | functionDeclaration
-    | blockStatement // This should be higher than expressionStatement or otherwise {} can be object literal instead of flow blocks
-    | functionStatement
-    | {!this.isFunctionCallStatement()}? expressionStatement
     | continueStatement
     | breakStatement
     | returnStatement
@@ -105,6 +101,9 @@ statement
     | tryStatement
     | awaitStatement
     | deleteStatement
+    | {!this.isEmptyObject() && !this.isFunctionCallStatement()}? expressionStatement
+    | functionStatement
+    | blockStatement
 // These are TODO when at some point modules are supported
 //    | importStatement
 //    | exportStatement
@@ -220,7 +219,7 @@ functionStatement
 // This could actually be omitted because ANTLR is smart enough to figure out which is which, but it can lead to
 // some serious performance issues because of long lookaheads.
 expressionStatement
-    : {InputStream.LA(1) != MainLexer.OpenBrace && !this.isFunctionCallStatement()}? expressionSequence
+    : expressionSequence
     ;
 
 // For maximum performance there should be two separate statement rules, one with possible
@@ -469,7 +468,7 @@ expression
     | <assoc = right> ternCond = expression (WS | EOL)* '?' (WS | EOL)* ternTrue = expression (WS | EOL)* ':' (WS | EOL)* ternFalse = expression # TernaryExpression 
     | <assoc = right> left = primaryExpression op = assignmentOperator right = expression          # AssignmentExpression
     | fatArrowExpressionHead '=>' expression             # FatArrowExpression // Not sure why, but this needs to be lower than coalesce expression
-    | functionExpressionHead WS* block                   # FunctionExpression
+    | functionExpressionHead (WS | EOL)* block                   # FunctionExpression
     | primaryExpression                                  # ExpressionDummy
     ;
 

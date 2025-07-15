@@ -106,8 +106,11 @@ public abstract class MainParserBase : Antlr4.Runtime.Parser
     }
 
     protected int prevVisible() {
-        int i = 0, token;
-        do {
+        int i = 0, token = -1;
+        var currentIndex = CurrentToken.TokenIndex;
+		do {
+            if (currentIndex - i <= 0)
+                break;
             token = InputStream.LA(--i);
         } while (token == WS || token == EOL);
         return token;

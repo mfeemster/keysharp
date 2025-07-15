@@ -206,6 +206,7 @@ namespace Keysharp.Scripting
 			timeLastInputKeyboard = timeLastInputPhysical;
 			timeLastInputMouse = timeLastInputPhysical;
 			threads = new(() => new());
+			//Init the API classes, passing in this which will be used to access their respective data objects.
 			Reflections = new Reflections();
 			Vars = new Variables(program);
 			Vars.InitPrototypes();
@@ -227,8 +228,6 @@ namespace Keysharp.Scripting
 			_ = InitHook();//Why is this always being initialized even when there are no hooks? This is very inefficient.//TODO
 			//Init the data objects that the API classes will use.
 			Coords = Threads.GetThreadVariables().Coords;
-			//Init the API classes, passing in this which will be used to access their respective data objects.
-			Reflections = new ();
 			SetInitialFloatFormat();//This must be done intially and not just when A_FormatFloat is referenced for the first time.
 			tickTimer.Elapsed += TickTimerCallback;
 			tickTimer.AutoReset = false;

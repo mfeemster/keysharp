@@ -529,7 +529,7 @@ namespace Keysharp.Core.Common.Invoke
 			//So we can't just use "Keysharp" to identify it.
 			foreach (var asm in rd.loadedAssemblies.Values.Where(assy => assy.FullName.StartsWith("Keysharp", StringComparison.OrdinalIgnoreCase) || exeAssembly == assy))
 				foreach (var type in asm.GetExportedTypes())
-					if (type.IsClass && type.IsPublic && type.Namespace != null &&
+					if (type.IsClass && type.IsPublic && type.Namespace != null && type.GetCustomAttribute<PublicForTestOnly>() == null &&
 							(type.Namespace.StartsWith("Keysharp.Core", StringComparison.OrdinalIgnoreCase) ||
 							 type.Namespace.StartsWith("Keysharp.CompiledMain", StringComparison.OrdinalIgnoreCase)))
 					{
