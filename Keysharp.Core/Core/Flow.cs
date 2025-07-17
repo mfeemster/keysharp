@@ -1,3 +1,5 @@
+using Keysharp.Core.Common.Cryptography;
+using Keysharp.Scripting;
 using static Keysharp.Core.Errors;
 
 using Timer1 = System.Timers.Timer;
@@ -682,7 +684,7 @@ namespace Keysharp.Core
 				if (!kserr.Processed)
 					_ = ErrorOccurred(kserr, kserr.ExcType);
 
-				if (!kserr.Handled)
+				if (!kserr.Handled && !TheScript.SuppressErrorOccurredDialog)
 				{
 					var (__pushed, __btv) = t.BeginThread();
 					_ = ErrorDialog.Show(kserr, false);
@@ -710,14 +712,14 @@ namespace Keysharp.Core
 					if (!kserr.Processed)
 						_ = ErrorOccurred(kserr, kserr.ExcType);
 
-					if (!kserr.Handled)
+					if (!kserr.Handled && !TheScript.SuppressErrorOccurredDialog)
 					{
 						var (__pushed, __btv) = t.BeginThread();
 						_ = ErrorDialog.Show(kserr, false);
 						_ = t.EndThread((__pushed, __btv));
 					}
 				}
-				else
+				else if (!TheScript.SuppressErrorOccurredDialog)
 				{
 					var (__pushed, __btv) = t.BeginThread();
 					_ = ErrorDialog.Show(ex);
