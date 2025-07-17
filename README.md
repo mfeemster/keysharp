@@ -11,13 +11,13 @@
 * If .NET 9 is not installed on your machine, you need to download and run the x64 ".NET Desktop Runtime" installer from [here](https://dotnet.microsoft.com/en-us/download/dotnet/9.0).
 
 ### Installing on Windows ###
-* Download and run the Keysharp installer from the [Downloads](https://bitbucket.org/mfeemster/keysharp/downloads/) page.
+* Download and run the Keysharp installer from the [Releases](https://github.com/mfeemster/keysharp/releases) page.
 	+ The install path can be optionally added to the $PATH varible, so you can run it from the command line from anywhere.
 		+ The path entry will be removed upon uninstall.
 	+ It also registers Keysharp.exe as the default program to open `.ks` files. So after installing, double click any `.ks` file to run it.
 	
 ### Portable run on Windows ###
-* Download and unzip the zip file from the [Downloads](https://bitbucket.org/mfeemster/keysharp/downloads/) page.
+* Download and unzip the zip file from the [Releases](https://github.com/mfeemster/keysharp/releases) page.
 	+ CD to the unzipped folder.
 	+ Run `.\Keysharp.exe yourfilename.ahk`
 	
