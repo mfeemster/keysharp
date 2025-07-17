@@ -329,7 +329,7 @@ namespace Keysharp.Tests
 			hsm.ClearHotstrings();
 			hsm.RestoreDefaults(true);
 			_ = Keyboard.Hotstring("Reset");
-			_ = Keysharp.Core.Common.Keyboard.HotstringManager.AddHotstring("::btw", Functions.Func("label_9F201721", null), ":btw", "btw", "", false);
+			_ = Keysharp.Core.Common.Keyboard.HotstringManager.AddHotstring("::btw", Functions.Func(label_9F201721, null), ":btw", "btw", "", false);
 			_ = HotkeyDefinition.ManifestAllHotkeysHotstringsHooks();
 			Assert.IsTrue(A_KeybdHookInstalled == 1L);//Will fail if system has another hook, so exit your scripts before running this.
 			Assert.IsTrue(A_MouseHookInstalled == 1L);//Because there is a hotstring and mouse reset is true by default, the mouse hook gets installed.

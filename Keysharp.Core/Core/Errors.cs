@@ -52,11 +52,12 @@ namespace Keysharp.Core
 					err.Processed = true;
 				}
 
-				if (!err.Handled && !script.SuppressErrorOccurredDialog)
+				if (!err.Handled)
 				{
 					err.Handled = true;
 					err.Processed = true;
-					return ErrorDialog.Show(err) != ErrorDialog.ErrorDialogResult.Continue;
+					if (!script.SuppressErrorOccurredDialog)
+						return ErrorDialog.Show(err) != ErrorDialog.ErrorDialogResult.Continue;
 				}
 			}
 

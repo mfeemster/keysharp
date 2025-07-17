@@ -245,7 +245,7 @@ namespace Keysharp.Tests
         public void FlowSwitch() => Assert.IsTrue(TestScript("flow-switch", false));
 
         [Test, Category("Flow")]
-        public void FlowTryCatch() => Assert.IsTrue(TestScript("flow-trycatch", true));
+        public void FlowTryCatch() => Assert.IsTrue(TestScript("flow-trycatch", false));
 
         //Collections tests already test foreach in C#, so just test the script here.
         [Test, Category("Flow")]

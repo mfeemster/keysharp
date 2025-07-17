@@ -238,6 +238,8 @@ public abstract class MainParserBase : Antlr4.Runtime.Parser
             switch (nextToken)
             {
                 case MainLexer.Identifier:
+                case MainLexer.This:
+                case MainLexer.Super:
                 case MainLexer.Dot:
                     continue;
                 case MainLexer.WS:

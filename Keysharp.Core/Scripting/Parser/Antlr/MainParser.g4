@@ -53,7 +53,7 @@ sourceElements
 
 sourceElement
     : classDeclaration
-    | positionalDirective
+    | '#' positionalDirective
     | remap
     | hotstring
     | hotkey
@@ -62,9 +62,12 @@ sourceElement
 
 // Non-positional directives are handled elsewhere, mainly in PreReader.cs
 positionalDirective
-    : HotIf singleExpression?       # HotIfDirective
-    | HotstringOptions              # HotstringDirective
-    | InputLevel numericLiteral?     # InputLevelDirective
+    : HotIf singleExpression?                      # HotIfDirective
+    | Hotstring 
+        ( HotstringOptions 
+        | NoMouse 
+        | EndChars HotstringOptions )              # HotstringDirective
+    | InputLevel numericLiteral?                   # InputLevelDirective
     | UseHook (numericLiteral | boolean)?          # UseHookDirective
     | SuspendExempt (numericLiteral | boolean)?    # SuspendExemptDirective
     ;
@@ -101,9 +104,9 @@ statement
     | tryStatement
     | awaitStatement
     | deleteStatement
-    | {!this.isEmptyObject() && !this.isFunctionCallStatement()}? expressionStatement
-    | functionStatement
+    | {this.isFunctionCallStatement()}? functionStatement
     | blockStatement
+    | expressionStatement
 // These are TODO when at some point modules are supported
 //    | importStatement
 //    | exportStatement
@@ -441,17 +444,12 @@ memberIndexArguments
 // The only way I could solve this was to duplicate the expressions with and without function expressions.
 // expression can contain function expressions, whereas singleExpression can not.
 expression
-    : left = expression '++'                                                 # PostIncrementExpression
-    | left = expression '--'                                                 # PostDecreaseExpression
-    | '++' right = expression                                                # PreIncrementExpression
-    | '--' right = expression                                                # PreDecreaseExpression
-    | <assoc = right> left = expression op = '**' right = expression      # PowerExpression
-    | '-' right = expression                                                 # UnaryMinusExpression
-    | '!' WS* right = expression                                             # NotExpression
-    | '+' right = expression                                                 # UnaryPlusExpression
-    | '~' right = expression                                                 # BitNotExpression
+    : left = expression op = ('++' | '--')                                   # PostIncrementDecrementExpression
+    | op = ('--' | '++') right = expression                                  # PreIncrementDecrementExpression
+    | <assoc = right> left = expression op = '**' right = expression         # PowerExpression
+    | (WS | EOL)* op = ('-' | '+' | '!' | '~') right = expression            # UnaryExpression
     | left = expression (op = ('*' | '/' | '//') (WS | EOL)*) right = expression  # MultiplicativeExpression
-    | left = expression (op = ('+' | '-') (WS | EOL)*) right = expression   # AdditiveExpression
+    | left = expression ((WS | EOL)* op = ('+' | '-') (WS | EOL)*) right = expression   # AdditiveExpression
     | left = expression op = ('<<' | '>>' | '>>>') right = expression              # BitShiftExpression
     | left = expression ((WS | EOL)* op = '&' (WS | EOL)*) right = expression      # BitAndExpression
     | left = expression op = '^' right = expression                                # BitXOrExpression
@@ -461,7 +459,7 @@ expression
     | left = expression op = ('<' | '>' | '<=' | '>=') right = expression          # RelationalExpression
     | left = expression op = ('=' | '!=' | '==' | '!==') right = expression        # EqualityExpression
     | left = expression ((WS | EOL)* op = (Instanceof | Is | In | Contains) (WS | EOL)*) right = primaryExpression  # ContainExpression
-    | VerbalNot WS* right = expression                                                         # VerbalNotExpression
+    | op = VerbalNot WS* right = expression                                                         # VerbalNotExpression
     | left = expression (op = '&&' | op = VerbalAnd) right = expression  # LogicalAndExpression
     | left = expression (op = '||' | op = VerbalOr) right = expression   # LogicalOrExpression
     | <assoc = right> left = expression op = '??' right = expression                               # CoalesceExpression
@@ -473,17 +471,12 @@ expression
     ;
 
 singleExpression
-    : left = singleExpression '++'                                                 # PostIncrementExpressionDuplicate
-    | left = singleExpression '--'                                                 # PostDecreaseExpressionDuplicate
-    | '++' right = singleExpression                                                # PreIncrementExpressionDuplicate
-    | '--' right = singleExpression                                                # PreDecreaseExpressionDuplicate
-    | <assoc = right> left = singleExpression op ='**' right = singleExpression      # PowerExpressionDuplicate
-    | '-' right = singleExpression                                                 # UnaryMinusExpressionDuplicate
-    | '!' WS* right = singleExpression                                             # NotExpressionDuplicate
-    | '+' right = singleExpression                                                 # UnaryPlusExpressionDuplicate
-    | '~' right = singleExpression                                                 # BitNotExpressionDuplicate
+    : left = singleExpression op = ('++' | '--')                                              # PostIncrementDecrementExpressionDuplicate
+    | op = ('--' | '++') right = singleExpression                                             # PreIncrementDecrementExpressionDuplicate
+    | <assoc = right> left = singleExpression op = '**' right = singleExpression              # PowerExpressionDuplicate
+    | (WS | EOL)* op = ('-' | '+' | '!' | '~') right = singleExpression                       # UnaryExpressionDuplicate
     | left = singleExpression (op = ('*' | '/' | '//') (WS | EOL)*) right = singleExpression  # MultiplicativeExpressionDuplicate
-    | left = singleExpression (op = ('+' | '-') (WS | EOL)*) right = singleExpression   # AdditiveExpressionDuplicate
+    | left = singleExpression ((WS | EOL)* op = ('+' | '-') (WS | EOL)*) right = singleExpression   # AdditiveExpressionDuplicate
     | left = singleExpression op = ('<<' | '>>' | '>>>') right = singleExpression              # BitShiftExpressionDuplicate
     | left = singleExpression ((WS | EOL)* op = '&' (WS | EOL)*) right = singleExpression      # BitAndExpressionDuplicate
     | left = singleExpression op = '^' right = singleExpression                                # BitXOrExpressionDuplicate
@@ -493,7 +486,7 @@ singleExpression
     | left = singleExpression op = ('<' | '>' | '<=' | '>=') right = singleExpression          # RelationalExpressionDuplicate
     | left = singleExpression op = ('=' | '!=' | '==' | '!==') right = singleExpression        # EqualityExpressionDuplicate
     | left = singleExpression ((WS | EOL)* op = (Instanceof | Is | In | Contains) (WS | EOL)*) right = primaryExpression  # ContainExpressionDuplicate
-    | VerbalNot WS* right = singleExpression                                                         # VerbalNotExpressionDuplicate
+    | op = VerbalNot WS* right = singleExpression                                                         # VerbalNotExpressionDuplicate
     | left = singleExpression (op = '&&' | op = VerbalAnd) right = singleExpression  # LogicalAndExpressionDuplicate
     | left = singleExpression (op = '||' | op = VerbalOr) right = singleExpression   # LogicalOrExpressionDuplicate
     | <assoc = right> left = singleExpression op = '??' right = singleExpression                               # CoalesceExpressionDuplicate
@@ -516,8 +509,8 @@ primaryExpression
 
 accessSuffix
     : modifier = ('.' | '?.') memberIdentifier
-    | (modifier = '?.')? memberIndexArguments
-    | '(' arguments? ')'
+    | (modifier = '?.')? (memberIndexArguments | '(' arguments? ')')
+    | modifier = '?'
     ;
 
 memberDot

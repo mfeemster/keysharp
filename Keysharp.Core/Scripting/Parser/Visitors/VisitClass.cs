@@ -1,25 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
+﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Antlr4.Runtime.Misc;
 using static MainParser;
-using Microsoft.CodeAnalysis;
-using System.Drawing.Imaging;
-using Antlr4.Runtime;
-using System.IO;
-using System.Collections;
-using System.Reflection;
-using static System.Windows.Forms.AxHost;
 using static Keysharp.Scripting.Parser;
 
 namespace Keysharp.Scripting
 {
     internal partial class VisitMain : MainParserBaseVisitor<SyntaxNode>
     {
-        public ParameterSyntax VariadicParam = SyntaxFactory.Parameter(SyntaxFactory.Identifier("args")) // Default name for spread argument
+		// params object[] args
+		public ParameterSyntax VariadicParam = SyntaxFactory.Parameter(SyntaxFactory.Identifier("args")) // Default name for spread argument
         .WithType(SyntaxFactory.ArrayType(
             SyntaxFactory.PredefinedType(Parser.PredefinedKeywords.Object), // object[]
             SyntaxFactory.SingletonList(SyntaxFactory.ArrayRankSpecifier(
@@ -33,7 +22,7 @@ namespace Keysharp.Scripting
         public override SyntaxNode VisitClassDeclaration([NotNull] ClassDeclarationContext context)
         {
             string userDeclaredName = context.identifier().GetText();
-            PushClass(parser.NormalizeIdentifier(userDeclaredName, eNameCase.Title));
+            parser.PushClass(parser.NormalizeIdentifier(userDeclaredName, eNameCase.Title));
             parser.currentClass.UserDeclaredName = userDeclaredName;
 
             // Determine the base class (Extends clause)
@@ -57,37 +46,6 @@ namespace Keysharp.Scripting
                 // Default base class is KeysharpObject
                 parser.currentClass.BaseList.Add(SyntaxFactory.SimpleBaseType(CreateQualifiedName("KeysharpObject")));
             }
-
-			// Add `public static object myclass = Myclass.__Static;` global field
-			/*var fieldDeclaration = SyntaxFactory.FieldDeclaration(
-                SyntaxFactory.VariableDeclaration(
-                    Parser.PredefinedKeywords.ObjectType,
-                    SyntaxFactory.SingletonSeparatedList(
-                        SyntaxFactory.VariableDeclarator(parser.currentClass.Name.ToLower())
-                            .WithInitializer(
-                                SyntaxFactory.EqualsValueClause(
-                                    PredefinedKeywords.EqualsToken,
-                                    SyntaxFactory.MemberAccessExpression(
-                                        SyntaxKind.SimpleMemberAccessExpression,
-                                        CreateQualifiedName(
-                                            string.Join(".",
-                                                parser.ClassStack
-                                                .Reverse()               // reverse to get outer-to-inner order
-                                                .Select(cls => cls.Name) // extract the Name property
-                                            ) + "." + parser.currentClass.Name
-                                        ),
-                                        SyntaxFactory.IdentifierName("__Static")
-                                    )
-                                )
-                            )
-                    )
-                )
-            )
-            .AddModifiers(
-                Parser.PredefinedKeywords.PublicToken,
-                Parser.PredefinedKeywords.StaticToken
-            );
-            */
 
 			string fieldDeclarationName = parser.NormalizeIdentifier(parser.currentClass.Name);
 
@@ -177,7 +135,7 @@ namespace Keysharp.Scripting
 
             var newClass = parser.currentClass.Assemble();
 
-            PopClass();
+            parser.PopClass();
             return newClass;
         }
 
@@ -208,6 +166,10 @@ namespace Keysharp.Scripting
                 // Handle regular property
                 propertyName = propertyNameSyntax.propertyName().GetText();
             }
+
+            // Getters and setters are created as normal methods with "static" +- "get_"/"set_" prefixes.
+            // This is to allow arbitrary "this" parameters. When the script is ran then Script.InitClasses
+            // will initialize the prototype and static instance with the prefixes trimmed.
 
             // Generate getter method
             MethodDeclarationSyntax getterMethod = null;
@@ -243,20 +205,6 @@ namespace Keysharp.Scripting
                 getterMethod = parser.currentFunc.Assemble();
                 PopFunction();
                 parser.currentClass.Body.Add(getterMethod);
-
-                var initializerValue = ((InvocationExpressionSyntax)InternalMethods.Func)
-                .WithArgumentList(
-					CreateArgumentList(
-                        SyntaxFactory.IdentifierName((isStatic ? Keywords.ClassStaticPrefix : "") + "get_" + propertyName)
-                    )
-                );
-
-                /*
-                if (isStatic)
-                    parser.currentClass.deferredStaticInitializations.Add((propertyName, "get", initializerValue));
-                else
-                    parser.currentClass.deferredInitializations.Add((propertyName, "get", initializerValue));
-                */
             }
 
             // Generate setter method
@@ -299,27 +247,13 @@ namespace Keysharp.Scripting
                 setterMethod = parser.currentFunc.Assemble();
                 PopFunction();
                 parser.currentClass.Body.Add(setterMethod);
-
-                var initializerValue = ((InvocationExpressionSyntax)InternalMethods.Func)
-                .WithArgumentList(
-					CreateArgumentList(
-                        SyntaxFactory.IdentifierName((isStatic ? Keywords.ClassStaticPrefix : "") + "set_" + propertyName)
-                    )
-                );
-
-                /*
-                if (isStatic)
-                    parser.currentClass.deferredStaticInitializations.Add((propertyName, "set", initializerValue));
-                else
-                    parser.currentClass.deferredInitializations.Add((propertyName, "set", initializerValue));
-                */
             }
             return null;
         }
 
         public override SyntaxNode VisitClassFieldDeclaration([NotNull] ClassFieldDeclarationContext context)
         {
-            parser.currentClass.isInitialization = true;
+            parser.currentClass.isInitialization = true; // If the field initializer contains closures then they shouldn't get the "this" parameter added, this keeps track of that
             var fieldDeclarations = new List<PropertyDeclarationSyntax>();
 
             var isStatic = context.Static() != null;
@@ -357,9 +291,6 @@ namespace Keysharp.Scripting
                     else
                         parser.currentClass.deferredInitializations.Add((baseExpression, targetExpression, initializerValue));
                 }
-
-                //if (parser.PropertyExistsInBuiltinBase(fieldName) != null)
-                //    continue;
             }
             parser.currentClass.isInitialization = false;
             return null;
@@ -368,7 +299,6 @@ namespace Keysharp.Scripting
 
         public override SyntaxNode VisitPropertyGetterDefinition([Antlr4.Runtime.Misc.NotNull] PropertyGetterDefinitionContext context)
         {
-            //Console.WriteLine("PropertyGetterDefinition: " + context.GetText());
             return VisitFunctionBody(context.functionBody());
         }
 
@@ -387,7 +317,7 @@ namespace Keysharp.Scripting
             var fieldName = methodName.ToLowerInvariant();
             var isStatic = context.methodDefinition().functionHead().functionHeadPrefix()?.Static() != null;
 
-            // parser.currentFunc.Static can't be used here, because all user-defined class methods must be non-static
+            // parser.currentFunc.Static can't be used here, because all user-defined class methods must be static
             if (isStatic)
                 methodName = Keywords.ClassStaticPrefix + methodName;
 
@@ -649,20 +579,6 @@ namespace Keysharp.Scripting
                     )
                 )
             );
-        }
-
-
-        private void PushClass(string className, string baseName = "KeysharpObject")
-        {
-            parser.ClassStack.Push(parser.currentClass);
-            parser.classDepth++;
-            parser.currentClass = new Parser.Class(className, baseName);
-        }
-
-        private void PopClass()
-        {
-            parser.currentClass = parser.ClassStack.Pop();
-            parser.classDepth--;
         }
     }
 }

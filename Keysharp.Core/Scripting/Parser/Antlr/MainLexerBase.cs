@@ -80,10 +80,14 @@ public abstract class MainLexerBase : Lexer
         return intermediate == -1 ? _hotstringIsLiteral : intermediate == 0;
     }
 
-    protected void ProcessHotstringOptions() {
+    protected bool ProcessHotstringOptions()
+    {
+        if (base.Text.StartsWith("NoMouse", StringComparison.OrdinalIgnoreCase) || base.Text.StartsWith("EndChars", StringComparison.OrdinalIgnoreCase))
+            return false;
         int intermediate = _processHotstringOptions(base.Text);
         if (intermediate != -1)
             _hotstringIsLiteral = intermediate == 0;
+        return true;
     }
 
     protected void ProcessOpenBrace()
