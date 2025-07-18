@@ -2291,7 +2291,7 @@
 		public static object A_SuspendExempt
 		{
 			get => Script.TheScript.HotstringManager.hsSuspendExempt;
-			set => Script.TheScript.HotstringManager.hsSuspendExempt = value.Ab();
+			set => Script.TheScript.HotstringManager.hsSuspendExempt = ForceBool(value);
 		}
 
 		/// <summary>

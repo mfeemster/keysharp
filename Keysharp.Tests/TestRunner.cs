@@ -13,7 +13,6 @@ namespace Keysharp.Tests
 		public void SetupBeforeEachTest()
 		{
 			s = new Script();
-			s.SuppressErrorOccurredDialog = true;
 			hsm = s.HotstringManager;
 		}
 
