@@ -3,7 +3,7 @@
 	public class MathBench : BaseTest
 	{
 		private double totalCos;
-		private IFuncObj fo = Func("Cos");
+		private IFuncObj? fo;
 		private List<double> vals = [];
 		private List<object> objvals = [];
 		private Keysharp.Scripting.Script? _ks_s;
@@ -41,7 +41,7 @@
 			var total = 0.0;
 
 			for (var i = 0; i < Size; i++)
-				total += (double)fo.Call(vals[i]);
+				total += (double)fo!.Call(vals[i]);
 
 			if (!total.IsAlmostEqual(totalCos))
 				throw new Exception($"{total} was not equal to {totalCos}.");

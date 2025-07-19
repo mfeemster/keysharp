@@ -19,7 +19,7 @@ namespace Keysharp.Benchmark
 	public class MapReadBenchmark : BaseTest
 	{
 		private Dictionary<object, object> dkt = [];
-		private Map map = Collections.Map(), mapScript = Collections.Map();
+		private Map? map, mapScript;
 		private List<string> strings = [];
 		private Keysharp.Scripting.Script? _ks_s;
 
@@ -30,7 +30,7 @@ namespace Keysharp.Benchmark
 		public void MapRead()
 		{
 			foreach (var s in strings)
-				_ = map[s];
+				_ = map![s];
 		}
 
 		[Benchmark]
@@ -70,7 +70,7 @@ namespace Keysharp.Benchmark
 	public class MapWriteBenchmark : BaseTest
 	{
 		private readonly Dictionary<object, object> dkt = [];
-		private readonly Map map = Collections.Map(), mapScript = Collections.Map();
+		private readonly Map? map, mapScript;
 		private readonly List<string> strings = [];
 		private readonly Keysharp.Scripting.Script _ks_s;
 
@@ -98,7 +98,7 @@ namespace Keysharp.Benchmark
 		[Benchmark]
 		public void MapScriptSetObjectWrite()
 		{
-			mapScript.Clear();
+			mapScript!.Clear();
 
 			for (var i = 0; i < Size; i++)
 				_ = SetObject(strings[i], mapScript, i);

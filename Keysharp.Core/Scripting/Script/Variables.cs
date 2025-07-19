@@ -53,7 +53,7 @@ namespace Keysharp.Scripting
 
 			if (MainProgram != null)
 			{
-				var nested = Reflections.GetNestedTypes(MainProgram.GetNestedTypes());
+				var nested = Reflections.GetNestedTypes(MainProgram.GetNestedTypes()).Where(type => type.IsClass && anyType.IsAssignableFrom(type));
 				types = types.Concat(nested);
 			}
 
