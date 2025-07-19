@@ -464,8 +464,8 @@
 	/// Manages executable memory in 512-byte pages, providing fixed 64-byte chunks for DelegateHolder.
 	/// Automatically allocates new pages when needed and reuses freed chunks.
 	/// This is needed because VirtualAlloc is quite a heavy function, best called as few times as possible.
-	/// 
-	/// The implementation uses a Treiber stack to keep it mostly lock-free. 
+	///
+	/// The implementation uses a Treiber stack to keep it mostly lock-free.
 	/// </summary>
 	public sealed class ExecutableMemoryPoolManager
 	{
@@ -519,6 +519,7 @@
 
 			// 2) Fast bump‑pointer carve
 			FastCarve:
+
 			while (true)
 			{
 				// use CAS to bump _currentOffset, and we use the old offset as our memory
@@ -533,6 +534,7 @@
 						var page = Volatile.Read(ref _currentPage);
 						return page + oldOffset;
 					}
+
 					// else another thread won the CAS — retry
 					continue;
 				}
@@ -556,7 +558,6 @@
 				Volatile.Write(ref _currentPage, page);
 				Volatile.Write(ref _currentOffset, ChunkSize);
 				_pages.Add(page);
-
 				// return the first chunk
 				return page;
 			}
@@ -567,6 +568,7 @@
 			while (true)
 			{
 				var head = Volatile.Read(ref _freeList);
+
 				if (head == 0)
 				{
 					// no reusable chunks available
@@ -583,6 +585,7 @@
 					ptr = head;
 					return true;
 				}
+
 				// else retry
 			}
 		}
@@ -608,6 +611,7 @@
 		public void Return(nint ptr)
 		{
 			if (ptr == 0) return;
+
 			PushFree(ptr);
 		}
 

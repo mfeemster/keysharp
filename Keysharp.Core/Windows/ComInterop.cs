@@ -221,7 +221,7 @@ namespace Keysharp.Core.Common.ObjectBase
 				}
 				else
 				{
-					object? value = argCount > 0 ? args[ ^ 1] : null;
+					object ? value = argCount > 0 ? args[ ^ 1] : null;
 					var indices = new object[argCount > 0 ? argCount - 1 : 0];
 					System.Array.Copy(args, indices, indices.Length);
 					return Script.SetObject(value, target ?? this, indices);

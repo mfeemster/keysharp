@@ -36,7 +36,6 @@
 				btv.Item2.task = false;
 
 			PopThreadVariables(pushed, checkThread);
-
 			var newCount = Interlocked.Decrement(ref script.totalExistingThreads);
 
 			// Resume timers since we have a free thread
@@ -44,7 +43,7 @@
 			{
 				_ = ResumeAllTimers();
 			}
-				
+
 			return null;
 		}
 
@@ -63,9 +62,11 @@
 
 			// If we should count this thread, bump the counter and maybe pause timers
 			bool didPause = false;
+
 			if (inc)
 			{
 				var newCount = Interlocked.Increment(ref script.totalExistingThreads);
+
 				if (newCount == max)
 				{
 					// Pause all timers if out of available threads. This is done here instead of BeginThread
@@ -82,6 +83,7 @@
 				if (inc)
 				{
 					var oldCount = Interlocked.Decrement(ref script.totalExistingThreads);
+
 					if (didPause && oldCount == max - 1)
 						_ = ResumeAllTimers();
 				}
@@ -90,7 +92,6 @@
 			}
 
 			//We successfully pushed—and if inc == true, we’ve already counted it
-
 			tv.task = true;
 			return (true, tv);
 		}
@@ -103,8 +104,10 @@
 				{
 					timer.Pause();
 				}
+
 				return true;
 			}
+
 			return false;
 		}
 
@@ -116,8 +119,10 @@
 				{
 					timer.Resume();
 				}
+
 				return true;
 			}
+
 			return false;
 		}
 
@@ -149,7 +154,7 @@
 					&& tv.UninterruptibleDuration > -1 // Must take precedence over the below.  g_script.mUninterruptibleTime is not checked because it's supposed to go into effect during thread creation, not after the thread is running and has possibly changed the timeout via 'Thread "Interrupt"'.
 					&& (DateTime.UtcNow - tv.threadStartTime).TotalMilliseconds >= tv.UninterruptibleDuration// See big comment section above.
 					&& !script.FlowData.callingCritical // In case of "Critical" on the first line.  See v2.0 comment above.
-				)
+			   )
 			{
 				// Once the thread becomes interruptible by any means, g->ThreadStartTime/UninterruptibleDuration
 				// can never matter anymore because only Critical (never "Thread Interrupt") can turn off the
@@ -175,7 +180,7 @@
 					object ret = null;
 					var script = Script.TheScript;
 					var btv = PushThreadVariables(priority, skipUninterruptible, isCritical, false, true);//Always start each thread with one entry.
-					
+
 					if (btv.Item1)
 					{
 						if (tryCatch)
@@ -206,7 +211,6 @@
 							_ = EndThread(btv);
 						}
 					}
-
 				}, true, false);
 			}
 			catch (Exception ex)
