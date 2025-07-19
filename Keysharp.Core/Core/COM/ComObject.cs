@@ -1,7 +1,7 @@
 ﻿#if WINDOWS
-namespace Keysharp.Core.COM
+namespace Keysharp.Core
 {
-	public unsafe class ComObject : KeysharpObject, IDisposable//ComValue
+	public unsafe class ComObject : Any, IDisposable//ComValue
 	{
 		internal static readonly long F_OWNVALUE = 1;
 		internal static readonly int MaxVtableLen = 16;

@@ -449,7 +449,7 @@ namespace Keysharp.Core.Common.Invoke
     }
 
 	[PublicForTestOnly]
-	internal static class DelegateFactory
+	public static class DelegateFactory
     {
 
         /// <summary>

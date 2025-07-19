@@ -4,7 +4,7 @@ using static Keysharp.Scripting.Script;
 
 namespace Keysharp.Core.Common.ObjectBase
 {
-	public partial class KeysharpObject : Any, IReflect
+	public partial class Any : IReflect
 	{
 		#region IReflect implementation
 		private static Type[] emptyTypes = [];
@@ -41,7 +41,7 @@ namespace Keysharp.Core.Common.ObjectBase
 		MethodInfo[] IReflect.GetMethods(BindingFlags bindingAttr)
 		{
 			List<MethodInfo> meths = new();
-			KeysharpObject kso = this;
+			Any kso = this;
 
 			if (kso is FuncObj sfo && sfo != null)
 			{

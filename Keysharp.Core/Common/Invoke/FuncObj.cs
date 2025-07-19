@@ -133,7 +133,6 @@
 	{
 		protected MethodInfo mi;
 		protected MethodPropertyHolder mph;
-		new public static object __Static { get; set; }
 		public object Inst { get; set; }
 		public Type DeclaringType => mi.DeclaringType;
 		public bool IsClosure => Inst != null && mi.DeclaringType?.DeclaringType == Inst.GetType();
@@ -233,8 +232,8 @@
 
 			if (Script.TheScript.Vars.Prototypes.Count > 1)
 			{
-				Script.TheScript.Vars.Prototypes.TryGetValue(GetType(), out KeysharpObject value);
-				op["base"] = new OwnPropsDesc(this, value);
+				Script.TheScript.Vars.Prototypes.TryGetValue(GetType(), out Any value);
+				_base = value;
 			}
 
 			if (mi != null)

@@ -110,7 +110,7 @@
 
 	public class OwnPropsDesc
 	{
-		public KeysharpObject Parent { get; private set; }
+		public Any Parent { get; private set; }
 		public object Value;
 		public object Get;
 		public object Set;
@@ -121,7 +121,7 @@
 			Parent = null;
 		}
 
-		public OwnPropsDesc(KeysharpObject kso, object set_Value = null, object set_Get = null, object set_Set = null, object set_Call = null)
+		public OwnPropsDesc(Any kso, object set_Value = null, object set_Get = null, object set_Set = null, object set_Call = null)
 		{
 			Parent = kso;
 			Value = set_Value;
@@ -131,7 +131,7 @@
 		}
 
 
-		public OwnPropsDesc(KeysharpObject kso, Map map)
+		public OwnPropsDesc(Any kso, Map map)
 		{
 			Parent = kso;
 			Merge(map);

@@ -446,7 +446,7 @@ namespace Keysharp.Core.Common.Invoke
 				addr = l;
 			else if (item is IPointable buf)//Put Buffer, StringBuffer etc check first because it's faster and more likely.
 				addr = buf.Ptr;
-			else if (item is KeysharpObject kso && Script.TryGetPropertyValue(kso, "ptr", out object p))
+			else if (item is Any kso && Script.TryGetPropertyValue(kso, "ptr", out object p))
 				addr = p.Al();
 			else
 				addr = item.Al();

@@ -477,8 +477,9 @@ namespace Keysharp.Scripting
                                             .Select(cls => cls.UserDeclaredName)
                                         ) + "." + parser.currentClass.UserDeclaredName
                                     )
-                                )
-                            )
+                                ),
+                                SyntaxFactory.LiteralExpression(SyntaxKind.TrueLiteralExpression)
+							)
                         )
                     )
                 };

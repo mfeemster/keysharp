@@ -87,23 +87,120 @@
 			return Errors.ErrorOccurred($"Object of type {obj.GetType()} was not of type KeysharpObject.");
 		}
 
-		/// <summary>
-		/// Unsupported.
-		/// </summary>
-		/// <param name="obj">Ignored</param>
-		/// <exception cref="Error">An <see cref="Error"/> exception is thrown because this function has no meaning in Keysharp.</exception>
-		public static object ObjSetBase(params object[] obj)
+		private static Type GetNativeType(Any obj)
 		{
-			return Errors.ErrorOccurred(Any.BaseExc);
+			while (obj != null)
+			{
+				var t = obj.GetType();
+				if (!string.Equals(t.Namespace, "Keysharp.CompiledMain",
+								   StringComparison.OrdinalIgnoreCase))
+				{
+					// we found a built‑in prototype object
+					return t;
+				}
+
+				// follow the “base” link:
+				obj = obj.Base;
+			}
+			// fallback?
+			return typeof(object);
 		}
 
 		/// <summary>
-		/// Unsupported.
+		/// Sets an object's base object. No meta-functions or property functions are called.
 		/// </summary>
-		/// <param name="obj0">Ignored</param>
-		/// <param name="obj1">Ignored</param>
-		/// <returns>None</returns>
-		/// <exception cref="Error">An <see cref="Error"/> exception is thrown because this function has no meaning in Keysharp.</exception>
+		/// <param name="obj0">The object</param>
+		/// <param name="obj1">New base</param>
+		/// <returns>The default return value</returns>
+		public static object ObjSetBase(object object0, object object1)
+		{
+			KeysharpObject obj = object0 as KeysharpObject;
+			KeysharpObject baseObj = object1 as KeysharpObject;
+			if (obj == null) return Errors.ErrorOccurred($"Object of type {object0.GetType()} was not of type KeysharpObject.");
+			if (baseObj == null) return Errors.ErrorOccurred($"Object of type {object1.GetType()} was not of type KeysharpObject.");
+
+			// find each object's "native" (built‐in) prototype type
+			var nativeObj = GetNativeType(obj);
+			var nativeBase = GetNativeType(baseObj);
+
+			if (nativeObj != nativeBase)
+				return Errors.ErrorOccurred(
+					$"Cannot rebase: native types differ ({nativeObj.Name} vs {nativeBase.Name}).");
+
+			obj._base = baseObj;
+
+			return DefaultObject;
+		}
+
+		/// <summary>
+		/// Returns the value's base object. No meta-functions or property functions are called.
+		/// </summary>
+		/// <param name="obj0">The object</param>
+		/// <returns>The value's base object</returns>
+		public static object ObjGetBase(object object0)
+		{
+			KeysharpObject obj = object0 as KeysharpObject;
+			if (obj == null || obj._base == null) return "";
+			return obj._base;
+		}
+
+		public static object ObjDefineProp(object obj0, object obj1, object obj2) 
+		{
+			var target = obj0 as Any;
+			if (target == null) return Errors.ArgumentErrorOccurred(obj2, 1);
+			var name = obj1.As();
+
+			var op = target.op;
+
+			if (op == null)
+				op = new Dictionary<string, OwnPropsDesc>(StringComparer.OrdinalIgnoreCase);
+
+			if (obj2 is Map map)
+			{
+				if (!op.ContainsKey(name))
+					op[name] = new OwnPropsDesc(target, map);
+				else
+				{
+					if (map.map.Count > 1 && map.map.Any(k => k.Key.ToString().Equals("value", StringComparison.OrdinalIgnoreCase)))
+						return Errors.ValueErrorOccurred("Value can't be defined along with get, set, or call.");
+
+					op[name].Merge(map);
+				}
+			}
+			else if (obj2 is Any kso)
+			{
+				if (kso.op != null)//&& kso.op.TryGetValue(name, out var opm))
+				{
+					if (kso.op.Count > 2 && kso.op.Any(k => k.Key.ToString().Equals("value", StringComparison.OrdinalIgnoreCase)))
+						return Errors.ValueErrorOccurred("Value can't be defined along with get, set, or call.");
+
+					if (op.TryGetValue(name, out var currProp))
+					{
+						currProp.MergeOwnPropsValues(kso.op);
+					}
+					else
+					{
+						op[name] = new OwnPropsDesc();
+						op[name].MergeOwnPropsValues(kso.op);
+					}
+
+					kso.op.Clear();
+				}
+			}
+			else
+			{
+				return Errors.ArgumentErrorOccurred(obj2, 2);
+			}
+
+			return target;
+		}
+
+		/// <summary>
+		/// Sets the current capacity of the object's internal array of own properties.
+		/// </summary>
+		/// <param name="obj0">The object</param>
+		/// <param name="obj1">New capacity</param>
+		/// <returns>The new capacity</returns>
 		public static object ObjSetCapacity(object obj0, object obj1)
 		{
 			if (obj0 is KeysharpObject kso)

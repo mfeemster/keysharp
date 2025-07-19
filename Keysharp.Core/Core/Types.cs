@@ -14,20 +14,14 @@ namespace Keysharp.Core
 		/// <param name="baseObj">The potential base object to test.</param>
 		/// <returns>This function returns 1 if baseObj is in value's chain of base objects, else 0.</returns>
 		public static long HasBase(object value, object baseObj) {
-            if (value is not KeysharpObject kso)
+            if (value is not Any any)
 				return baseObj.GetType().IsAssignableFrom(value.GetType()) ? 1L : 0L;
 			
-            while (kso != null)
+            while (any != null)
             {
-				if (baseObj == kso)
+				if (baseObj == any)
 					return 1L;
-                if (kso.op == null || !kso.op.TryGetValue("base", out var baseDesc) || baseDesc.Value == null)
-                    return 0L;
-				if (baseDesc.Value is not KeysharpObject kso2)
-				{
-                    return baseObj.GetType().IsAssignableFrom(baseDesc.Value.GetType()) ? 1L : 0L;
-                }
-				kso = kso2;
+				any = any.Base;
             }
 			return 0L;
         }

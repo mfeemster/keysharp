@@ -1,66 +1,26 @@
-﻿#if WINDOWS
-[assembly: ComVisible(true)]
-#endif
-
-namespace Keysharp.Core.Common.ObjectBase
+﻿namespace Keysharp.Core.Common.ObjectBase
 {
 	internal interface I__Enum
 	{
 		public IFuncObj __Enum(object count);
 	}
-
-#if WINDOWS
-	[Guid("98D592E1-0CE8-4892-82C5-F219B040A390")]
-	[ClassInterface(ClassInterfaceType.AutoDispatch)]
-	[ProgId("Keysharp.Script")]
-	public partial class KeysharpObject : Any, IReflect
-#else
 	public class KeysharpObject : Any
-#endif
 	{
-		protected internal Dictionary<string, OwnPropsDesc> op = new Dictionary<string, OwnPropsDesc>(StringComparer.OrdinalIgnoreCase);
+		public KeysharpObject(params object[] args) : base(args) { }
+		public KeysharpObject(bool skipLogic) : base(skipLogic) { }
 
-		// In some cases we wish to skip the automatic calls to __Init and __New (eg when creating OwnProps),
-		// so in those cases we can initialize with `skipLogic: true`
-		protected bool SkipConstructorLogic { get; }
-
-        public KeysharpObject(params object[] args)
+		public object staticCall(params object[] args)
 		{
-			// Skip Map and OwnPropsMap because SetPropertyValue will cause recursive stack overflow
-			// (if the property doesn't exist then a new Map is created which calls this function again)
-			if (Script.TheScript.Vars.Prototypes == null || SkipConstructorLogic
-                // Hack way to check that Prototypes/Statics are initialized
-                || Script.TheScript.Vars.Statics.Count < 10)
-            {
-				__New(args);
-				return;
-			}
+			var kso = new KeysharpObject();
+			var count = (args.Length / 2) * 2;
 
-            var t = GetType();
-			Script.TheScript.Vars.Statics.TryGetValue(t, out KeysharpObject value);
-			if (value == null)
+			for (var i = 0; i < count; i += 2)
 			{
-				__New(args);
-                return;
+				kso.op[args[i].ToString()] = new OwnPropsDesc(kso, args[i + 1]);
 			}
 
-			this.op["base"] = new OwnPropsDesc(this, value.op["prototype"].Value);
-			GC.SuppressFinalize(this); // Otherwise if the constructor throws then the destructor is called
-            Script.Invoke(this, "__Init");
-            Script.Invoke(this, "__New", args);
-			GC.ReRegisterForFinalize(this);
-        }
-
-        public KeysharpObject(bool skipLogic)
-        {
-            SkipConstructorLogic = skipLogic;
-        }
-
-		public virtual object static__New(params object[] args) => "";
-
-		public virtual object __New(params object[] args) => "";
-
-		public virtual object static__Call(params object[] args) => Activator.CreateInstance(this.GetType(), args);
+			return kso;
+		}
 
 		/// <summary>
 		/// Return a cloned copy of the object.
@@ -68,57 +28,12 @@ namespace Keysharp.Core.Common.ObjectBase
 		/// as the OwnProps object op.
 		/// </summary>
 		/// <returns>A cloned copy of the object.</returns>
-		public virtual object Clone()
+		public new object Clone()
 		{
 			return MemberwiseClone();
 		}
 
-		public object DefineProp(object obj0, object obj1)
-		{
-			var name = obj0.As();
-
-			if (op == null)
-				op = new Dictionary<string, OwnPropsDesc>(StringComparer.OrdinalIgnoreCase);
-
-			if (obj1 is Map map)
-			{
-				if (!op.ContainsKey(name))
-					op[name] = new OwnPropsDesc(this, map);
-				else
-				{
-					if (map.map.Count > 1 && map.map.Any(k => k.Key.ToString().Equals("value", StringComparison.OrdinalIgnoreCase)))
-						return Errors.ValueErrorOccurred("Value can't be defined along with get, set, or call.");
-
-					op[name].Merge(map);
-				}
-			}
-			else if (obj1 is KeysharpObject kso)
-			{
-				if (kso.op != null)//&& kso.op.TryGetValue(name, out var opm))
-				{
-					if (kso.op.Count > 2 && kso.op.Any(k => k.Key.ToString().Equals("value", StringComparison.OrdinalIgnoreCase)))
-						return Errors.ValueErrorOccurred("Value can't be defined along with get, set, or call.");
-
-					if (op.TryGetValue(name, out var currProp))
-					{
-						currProp.MergeOwnPropsValues(kso.op);
-					}
-					else
-					{
-						op[name] = new OwnPropsDesc();
-						op[name].MergeOwnPropsValues(kso.op);
-					}
-
-					kso.op.Clear();
-				}
-			}
-			else
-			{
-				return Errors.ArgumentErrorOccurred(obj1, 2);
-			}
-
-			return this;
-		}
+		public object DefineProp(object obj0, object obj1) => Objects.ObjDefineProp(this, obj0, obj1);
 
 		public object DeleteProp(object obj)
 		{
@@ -174,7 +89,7 @@ namespace Keysharp.Core.Common.ObjectBase
 			var isMapOnly = GetType() == typeof(Map);
 
 			if (op != null)
-				ct += op.Count - 1; // Substract 1 to account for the auto-generated base property
+				ct += op.Count;
 
 			if (!isMapOnly)
 			{
@@ -195,8 +110,7 @@ namespace Keysharp.Core.Common.ObjectBase
 			{
 				foreach (var kv in op)
 				{
-					if (kv.Key == "base"
-						|| kv.Key == "__Static") //This throws if the value is tried to access because "this" is passed
+					if (kv.Key == "__Static") //This throws if the value is tried to access because "this" is passed
 						continue;
 
 					props[kv.Key] = kv.Value;
@@ -246,21 +160,17 @@ namespace Keysharp.Core.Common.ObjectBase
 			tabLevel--;
 		}
 
-		public void SetBase(params object[] obj) => _ = Errors.ErrorOccurred(BaseExc);
+		[PublicForTestOnly]
+		public override Any Base
+		{
+			get => _base;
+			set => Objects.ObjSetBase(this, value);
+		}
 
 		public long SetCapacity(object obj)
 		{
 			var err = new Error("SetCapacity() is not supported or needed in Keysharp. The C# runtime handles all memory.");
 			return Errors.ErrorOccurred(err) ? throw err : DefaultErrorLong;
 		}
-
-		public object Wrap(object obj) => obj;
-
-		public virtual object static__Init() => "";
-
-		/// <summary>
-		/// Placeholder for property initialization code that derived classes will call *before* __New() gets called.
-		/// </summary>
-		public virtual object __Init() => "";
 	}
 }

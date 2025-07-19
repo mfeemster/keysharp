@@ -34,8 +34,6 @@
 	/// </summary>
 	public class Array : KeysharpObject, I__Enum, IEnumerable<(object, object)>, IList
 	{
-        new public static object __Static { get; set; }
-
         private int capacity = 4;
 
 		/// <summary>

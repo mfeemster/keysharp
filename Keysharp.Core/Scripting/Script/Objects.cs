@@ -14,8 +14,8 @@ namespace Keysharp.Scripting
 			if (store.Prototypes.IsInitialized(t))
 				return;
 
-			var proto = (KeysharpObject)RuntimeHelpers.GetUninitializedObject(actual);
-			KeysharpObject staticInst = (KeysharpObject)RuntimeHelpers.GetUninitializedObject(actual);
+			var proto = (Any)RuntimeHelpers.GetUninitializedObject(actual);
+			Any staticInst = (Any)RuntimeHelpers.GetUninitializedObject(actual);
 
 			store.Statics.AddLazy(t, () =>
 			{
@@ -36,15 +36,25 @@ namespace Keysharp.Scripting
 				proto.op = new Dictionary<string, OwnPropsDesc>(StringComparer.OrdinalIgnoreCase);
 				staticInst.op = new Dictionary<string, OwnPropsDesc>(StringComparer.OrdinalIgnoreCase);
 
-				// Get all instance methods
+				// Get all static and instance methods
 				MethodInfo[] methods;
 
-				if (isBuiltin && script.ReflectionsData.typeToStringMethods.ContainsKey(t))
-					methods = script.ReflectionsData.typeToStringMethods[t]
+				if (isBuiltin && (script.ReflectionsData.typeToStringMethods.ContainsKey(t) || script.ReflectionsData.typeToStringStaticMethods.ContainsKey(t)))
+				{
+					var builtinInstMeths = script.ReflectionsData.typeToStringMethods[t]
 						.Values // Get Dictionary<string, Dictionary<int, MethodPropertyHolder>>
 						.SelectMany(m => m.Values) // Flatten to IEnumerable<Dictionary<int, MethodPropertyHolder>>
-						.Select(mph => mph.mi) // Flatten to IEnumerable<MethodPropertyHolder>
+						.Select(mph => mph.mi); // Flatten to IEnumerable<MethodPropertyHolder>
+
+					var builtinStaticMeths = script.ReflectionsData.typeToStringStaticMethods[t]
+						.Values // Get Dictionary<string, Dictionary<int, MethodPropertyHolder>>
+						.SelectMany(m => m.Values) // Flatten to IEnumerable<Dictionary<int, MethodPropertyHolder>>
+						.Select(mph => mph.mi); // Flatten to IEnumerable<MethodPropertyHolder>
+
+					methods = builtinInstMeths
+						.Concat(builtinStaticMeths)
 						.ToArray();
+				}
 				else
 					methods = t.GetMethods(BindingFlags.Instance | BindingFlags.Static | BindingFlags.Public | BindingFlags.DeclaredOnly);
 
@@ -104,21 +114,6 @@ namespace Keysharp.Scripting
 					DefineProp(proto, methodName, new OwnPropsDesc(proto, null, null, null, new FuncObj(method)));
 				}
 
-				// Get all static methods
-				if (isBuiltin && script.ReflectionsData.typeToStringStaticMethods.ContainsKey(t))
-					methods = script.ReflectionsData.typeToStringStaticMethods[t]
-						.Values // Get Dictionary<string, Dictionary<int, MethodPropertyHolder>>
-						.SelectMany(m => m.Values) // Flatten to IEnumerable<Dictionary<int, MethodPropertyHolder>>
-						.Select(mph => mph.mi) // Flatten to IEnumerable<MethodPropertyHolder>
-						.ToArray();
-				else
-					methods = [];
-
-				foreach (var method in methods)
-				{
-					DefineProp(staticInst, method.Name, new OwnPropsDesc(staticInst, new FuncObj(method)));
-				}
-
 				// Get all instance and static properties
 
 				PropertyInfo[] properties;
@@ -140,6 +135,10 @@ namespace Keysharp.Scripting
 					{
 						if (propertyName.StartsWith(Keywords.ClassStaticPrefix))
 							propertyName = propertyName.Substring(Keywords.ClassStaticPrefix.Length);
+
+						if (propertyName.StartsWith("get_") || propertyName.StartsWith("set_"))
+							propertyName = propertyName.Substring(4);
+
 						propertyMap = staticInst.op != null && staticInst.op.TryGetValue(propertyName, out OwnPropsDesc staticPropDesc) ? staticPropDesc : new OwnPropsDesc();
 
 						if (prop.GetMethod != null)
@@ -174,8 +173,8 @@ namespace Keysharp.Scripting
 						proto.op[propertyName] = propertyMap;
 				}
 
-				if (!(t == typeof(Any) || t == typeof(FuncObj) || t == typeof(Class)))
-					proto.op["base"] = new OwnPropsDesc(proto, script.Vars.Prototypes[t.BaseType]);
+				if (t != typeof(FuncObj) && t != typeof(Any))
+					proto._base = script.Vars.Prototypes[t.BaseType];
 
 				if (isBuiltin)
 				{
@@ -187,8 +186,8 @@ namespace Keysharp.Scripting
 
 				staticInst.op["prototype"] = new OwnPropsDesc(staticInst, proto);
 
-				if (t != typeof(FuncObj) && t != typeof(Any) && t != typeof(Class))
-					staticInst.op["base"] = new OwnPropsDesc(staticInst, t.BaseType == typeof(KeysharpObject) ? script.Vars.Prototypes[typeof(Class)] : script.Vars.Statics[t.BaseType]);
+				if (t != typeof(FuncObj) && t != typeof(Any))
+					staticInst._base = t.BaseType == typeof(KeysharpObject) ? script.Vars.Prototypes[typeof(Class)] : script.Vars.Statics[t.BaseType];
 
 				if (!isBuiltin)
 				{
@@ -210,14 +209,14 @@ namespace Keysharp.Scripting
 						);
 					}
 
-					Script.InvokeMeta(staticInst, "__Init");
-					Script.InvokeMeta(staticInst, "__New");
+					_ = Script.InvokeMeta(staticInst, "__Init");
+					_ = Script.InvokeMeta(staticInst, "__New");
 				}
 				return proto;
 			});
         }
 
-		internal static void DefineProp(KeysharpObject kso, string name, OwnPropsDesc desc)
+		internal static void DefineProp(Any kso, string name, OwnPropsDesc desc)
 		{
 			if (kso.op == null)
 				kso.op = new Dictionary<string, OwnPropsDesc>(StringComparer.OrdinalIgnoreCase);
@@ -359,9 +358,9 @@ namespace Keysharp.Scripting
 				else
 					len = 1;
 
-				KeysharpObject type = item as KeysharpObject;
+				Any type = item as Any;
 
-                if (item is ITuple otup && otup.Length > 1 && otup[0] is KeysharpObject t)
+                if (item is ITuple otup && otup.Length > 1 && otup[0] is Any t)
 				{
 					type = t; item = otup[1];
 				}

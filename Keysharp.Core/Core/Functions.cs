@@ -164,8 +164,9 @@
 			var val = value;
 			var n = name.As();
 			var count = paramCount.Ai(-1);
+			Any nextBase = null;
 
-			if (value is KeysharpObject kso)
+			if (value is Any kso)
 			{
 				if (kso.op != null && kso.op.ContainsKey(n))
 					return 1L;
@@ -173,7 +174,7 @@
 				if (checkBase)
 				{
                     var Base = kso;
-                    while (Script.GetObjectPropertyValue(kso, Base, "base", out var nextBase) && nextBase != null && nextBase is KeysharpObject)
+                    while ((nextBase = Base.Base) != null && nextBase != null && nextBase is KeysharpObject)
                     {
                         Base = (KeysharpObject)nextBase;
 						if (Base != null && Base.op.ContainsKey(n))

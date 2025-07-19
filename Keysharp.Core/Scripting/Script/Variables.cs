@@ -1,13 +1,14 @@
 using System.Collections.Generic;
 using System.Reflection;
 using System.Xml.Linq;
+using Keysharp.Core.Common.Cryptography;
 
 namespace Keysharp.Scripting
 {
 	public class Variables
 	{
-        public LazyDictionary<Type, KeysharpObject> Prototypes = new();
-		public LazyDictionary<Type, KeysharpObject> Statics = new();
+        public LazyDictionary<Type, Any> Prototypes = new();
+		public LazyDictionary<Type, Any> Statics = new();
         internal List<(string, bool)> preloadedDlls = [];
 		internal DateTime startTime = DateTime.UtcNow;
 		private readonly Dictionary<string, MemberInfo> globalVars = new (StringComparer.OrdinalIgnoreCase);
@@ -72,29 +73,42 @@ namespace Keysharp.Scripting
 			{
 				var opm = op.Value;
 				if (opm.Value is FuncObj fov && fov != null)
-					fov.op["base"] = new OwnPropsDesc(fov, fop);
+					fov._base = fop;
 				if (opm.Get is FuncObj fog && fog != null)
-					fog.op["base"] = new OwnPropsDesc(fog, fop);
+					fog._base = fop;
 				if (opm.Set is FuncObj fos && fos != null)
-					fos.op["base"] = new OwnPropsDesc(fos, fop);
+					fos._base = fop;
 				if (opm.Call is FuncObj foc && foc != null)
-					foc.op["base"] = new OwnPropsDesc(foc, fop);
+					foc._base = fop;
 			}
-			InitClass(typeof(Any), typeof(KeysharpObject));
-
+			InitClass(typeof(Any));
+			InitClass(typeof(KeysharpObject));
 			InitClass(typeof(Class));
 
-			Statics[typeof(Class)].DefineProp("base", Collections.Map("value", Statics[typeof(Any)]));
-			InitClass(typeof(KeysharpObject));
-			Prototypes[typeof(Class)].DefineProp("base", Collections.Map("value", Prototypes[typeof(KeysharpObject)]));
-			Statics[typeof(KeysharpObject)] = (KeysharpObject)Prototypes[typeof(KeysharpObject)].Clone();
-			Statics[typeof(KeysharpObject)].DefineProp("prototype", Collections.Map("value", Prototypes[typeof(KeysharpObject)]));
-			Prototypes[typeof(FuncObj)].DefineProp("base", Collections.Map("value", Prototypes[typeof(KeysharpObject)]));
-			Statics[typeof(FuncObj)].DefineProp("base", Collections.Map("value", Statics[typeof(KeysharpObject)]));
+			// The static instance of Object is copied from Object prototype
+			Statics[typeof(KeysharpObject)] = (Any)Prototypes[typeof(KeysharpObject)].Clone();
+			// Class.Base == Object
+			Statics[typeof(Class)]._base = Statics[typeof(KeysharpObject)];
+			// Any.Base == Class.Prototype
+			Statics[typeof(Any)]._base = Prototypes[typeof(Class)];
 
+			// Manually define Object static instance prototype property to be the Object prototype
+			var ksoStatic = Statics[typeof(KeysharpObject)];
+			if (ksoStatic.op == null)
+				ksoStatic.op = new Dictionary<string, OwnPropsDesc>(StringComparer.OrdinalIgnoreCase);
+			ksoStatic.op["prototype"] = new OwnPropsDesc(ksoStatic, Prototypes[typeof(KeysharpObject)]);
+			// Object.Base == Any
+			ksoStatic._base = Statics[typeof(Any)];
 
+			//FuncObj was initialized when Object wasn't, so define the bases
+			Prototypes[typeof(FuncObj)]._base = Prototypes[typeof(KeysharpObject)];
+			Statics[typeof(FuncObj)]._base = Prototypes[typeof(Class)];
+
+			// Do not initialize the core types again
 			var typesToRemoveSet = new HashSet<Type>(new[] { typeof(Any), typeof(FuncObj), typeof(KeysharpObject), typeof(Class) });
 			var orderedTypes = types.Where(type => !typesToRemoveSet.Contains(type)).OrderBy(GetInheritanceDepth);
+
+			// Lazy-initialize all other classes
 			foreach (var t in orderedTypes)
 			{
 				Script.InitClass(t);
