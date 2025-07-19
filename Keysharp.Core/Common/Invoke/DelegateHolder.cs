@@ -464,21 +464,24 @@
 	/// Manages executable memory in 512-byte pages, providing fixed 64-byte chunks for DelegateHolder.
 	/// Automatically allocates new pages when needed and reuses freed chunks.
 	/// This is needed because VirtualAlloc is quite a heavy function, best called as few times as possible.
+	/// 
+	/// The implementation uses a Treiber stack to keep it mostly lock-free. 
 	/// </summary>
 	public sealed class ExecutableMemoryPoolManager
 	{
 		private const int PageSize = 512;
 		private const int ChunkSize = 64;
-		private readonly object _lock = new object();
+		private readonly Lock _lock = new ();
+
+		// Treiber‑stack head of free chunks (0 == empty)
+		private nint _freeList;
 
 		// All allocated pages
 		private readonly List<nint> _pages = new List<nint>();
-		// Free chunk addresses
-		private readonly Stack<nint> _freeChunks = new Stack<nint>();
 
 		// Current page and offset
 		private nint _currentPage;
-		private int _currentOffset;
+		private int _currentOffset = 0;
 
 #if LINUX || OSX
 		[DllImport("libc", SetLastError = true)]
@@ -493,42 +496,119 @@
 		private const int MAP_ANONYMOUS = 0x20;
 #endif
 
+		public ExecutableMemoryPoolManager()
+		{
+			lock (_lock)
+			{
+				// eagerly allocate first page so _currentPage != 0
+				var page = AllocatePage();
+				Volatile.Write(ref _currentPage, page);
+				// leave _currentOffset == 0
+				_pages.Add(page);
+			}
+		}
+
 		/// <summary>
 		/// Rents a 32-byte executable chunk.
 		/// </summary>
 		public nint Rent()
 		{
-			lock (_lock)
-			{
-				if (_freeChunks.Count > 0)
-					return _freeChunks.Pop();
+			// 1) Try lock‑free pop from the free list
+			if (TryPopFree(out var recycled))
+				return recycled;
 
-				// Carve from current page
-				if (_currentPage == 0 || _currentOffset + ChunkSize > PageSize)
+			// 2) Fast bump‑pointer carve
+			FastCarve:
+			while (true)
+			{
+				// use CAS to bump _currentOffset, and we use the old offset as our memory
+				int oldOffset = Volatile.Read(ref _currentOffset);
+				int newOffset = oldOffset + ChunkSize;
+
+				if (newOffset <= PageSize) // this means we wouldn't fit inside the current page
 				{
-					var page = AllocatePage();
-					_pages.Add(page);
-					_currentPage = page;
-					_currentOffset = 0;
+					// try to claim [oldOffset, newOffset)
+					if (Interlocked.CompareExchange(ref _currentOffset, newOffset, oldOffset) == oldOffset)
+					{
+						var page = Volatile.Read(ref _currentPage);
+						return page + oldOffset;
+					}
+					// else another thread won the CAS — retry
+					continue;
 				}
 
-				var ptr = _currentPage + _currentOffset;
-				_currentOffset += ChunkSize;
-				return ptr;
+				// fall through to slow‑path to grab lock and allocate a fresh page
+				break;
+			}
+
+			// 3) Slow path: need a new page
+			lock (_lock)
+			{
+				// it's possible another thread already replaced the page,
+				// so check one more time if there's room on the current page:
+				if (_currentOffset + ChunkSize <= PageSize)
+				{
+					goto FastCarve;
+				}
+
+				// allocate brand‑new page, reset offset
+				var page = AllocatePage();
+				Volatile.Write(ref _currentPage, page);
+				Volatile.Write(ref _currentOffset, ChunkSize);
+				_pages.Add(page);
+
+				// return the first chunk
+				return page;
 			}
 		}
 
-		/// <summary>
-		/// Returns a previously rented chunk for reuse.
-		/// </summary>
+		private bool TryPopFree(out nint ptr)
+		{
+			while (true)
+			{
+				var head = Volatile.Read(ref _freeList);
+				if (head == 0)
+				{
+					// no reusable chunks available
+					ptr = 0;
+					return false;
+				}
+
+				// read the next pointer stored at address head
+				var next = Marshal.ReadIntPtr(head);
+
+				// try to swing _freeList from head → next
+				if (Interlocked.CompareExchange(ref _freeList, next, head) == head)
+				{
+					ptr = head;
+					return true;
+				}
+				// else retry
+			}
+		}
+
+		private void PushFree(nint ptr)
+		{
+			while (true)
+			{
+				var head = Volatile.Read(ref _freeList);
+				// write the old head into the first pointer‑sized bytes of the freed chunk,
+				// using the chunk as a node in the Treiber stack
+				Marshal.WriteIntPtr(ptr, head);
+
+				// try to swing _freeList from head → ptr
+				if (Interlocked.CompareExchange(ref _freeList, ptr, head) == head)
+					return;
+
+				// else another thread modified it — retry
+			}
+		}
+
+
 		public void Return(nint ptr)
 		{
 			if (ptr == 0) return;
-
-			lock (_lock)
-			{
-				_freeChunks.Push(ptr);
-			}
+			PushFree(ptr);
 		}
 
 		/// <summary>
@@ -550,7 +630,6 @@
 
 #endif
 				_pages.Clear();
-				_freeChunks.Clear();
 				_currentPage = 0;
 				_currentOffset = 0;
 			}
