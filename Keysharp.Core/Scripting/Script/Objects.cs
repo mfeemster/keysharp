@@ -7,9 +7,9 @@ namespace Keysharp.Scripting
 	{
 		public static void InitClass(Type t, Type alias = null)
 		{
-			var store = Script.TheScript.Vars;
-			Type actual = alias ?? t;
 			var script = Script.TheScript;
+			var store = script.Vars;
+			Type actual = alias ?? t;
 
 			if (store.Prototypes.IsInitialized(t))
 				return;
@@ -31,7 +31,7 @@ namespace Keysharp.Scripting
 				store.Prototypes[t] = proto;
 				store.Statics[t] = staticInst;
 
-				var isBuiltin = !t.Namespace.Equals("Keysharp.CompiledMain", StringComparison.OrdinalIgnoreCase);
+				var isBuiltin = script.ProgramType.Namespace != t.Namespace;
 
 				proto.op = new Dictionary<string, OwnPropsDesc>(StringComparer.OrdinalIgnoreCase);
 				staticInst.op = new Dictionary<string, OwnPropsDesc>(StringComparer.OrdinalIgnoreCase);

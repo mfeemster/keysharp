@@ -117,6 +117,7 @@ namespace Keysharp.Scripting
 
 		[PublicForTestOnly]
 		public static Keysharp.Scripting.Script TheScript { get; private set; }
+		public Type ProgramType;
 		public HotstringManager HotstringManager => hotstringManager ?? (hotstringManager = new ());
 		public Threads Threads => threads.Value;
 		public Variables Vars { get; private set; }
@@ -201,6 +202,7 @@ namespace Keysharp.Scripting
 
 		public Script(Type program = null)
 		{
+			ProgramType = program ?? GetCallingType();
 			Script.TheScript = this;//Everywhere in the script will reference this.
 			timeLastInputPhysical = DateTime.UtcNow;
 			timeLastInputKeyboard = timeLastInputPhysical;
@@ -208,7 +210,7 @@ namespace Keysharp.Scripting
 			threads = new(() => new());
 			//Init the API classes, passing in this which will be used to access their respective data objects.
 			Reflections = new Reflections();
-			Vars = new Variables(program);
+			Vars = new Variables();
 			Vars.InitClasses();
 
 			_ = Script.TheScript.Threads.PushThreadVariables(0, true, false, true);//Ensure there is always one thread in existence for reference purposes, but do not increment the actual thread counter.
@@ -232,6 +234,18 @@ namespace Keysharp.Scripting
 			tickTimer.Elapsed += TickTimerCallback;
 			tickTimer.AutoReset = false;
 			tickTimer.Start();
+		}
+
+		[MethodImpl(MethodImplOptions.NoInlining)]  // prevent inlining from collapsing frames
+		public static Type GetCallingType(int skipFrames = 2)
+		{
+			var st = new StackTrace();
+			// skip the requested frames (defaults: 0=this, 1=GetCallingType, 2=your caller)
+			var frame = st.GetFrame(skipFrames);
+			if (frame == null) return null;
+
+			var method = frame.GetMethod();
+			return method.DeclaringType;
 		}
 
 		[DebuggerStepThrough]

@@ -12,7 +12,6 @@ namespace Keysharp.Scripting
         internal List<(string, bool)> preloadedDlls = [];
 		internal DateTime startTime = DateTime.UtcNow;
 		private readonly Dictionary<string, MemberInfo> globalVars = new (StringComparer.OrdinalIgnoreCase);
-		public Type MainProgram = null;
 
 		/// <summary>
 		/// Will be a generated call within Main which calls into this class to add DLLs.
@@ -21,25 +20,21 @@ namespace Keysharp.Scripting
 		/// <param name="s"></param>
 		public void AddPreLoadedDll(string p, bool s) => preloadedDlls.Add((p, s));
 
-		public Variables(Type program = null)
+		public Variables()
 		{
-			if (program != null)
-			{
-				MainProgram = program;
-				var fields = program.GetFields(BindingFlags.Static |
+			var fields = TheScript.ProgramType.GetFields(BindingFlags.Static |
+										BindingFlags.NonPublic |
+										BindingFlags.Public);
+			var props = TheScript.ProgramType.GetProperties(BindingFlags.Static |
 											BindingFlags.NonPublic |
 											BindingFlags.Public);
-				var props = program.GetProperties(BindingFlags.Static |
-												BindingFlags.NonPublic |
-												BindingFlags.Public);
-				_ = globalVars.EnsureCapacity(fields.Length + props.Length);
+			_ = globalVars.EnsureCapacity(fields.Length + props.Length);
 
-				foreach (var field in fields)
-					globalVars[field.Name] = field;
+			foreach (var field in fields)
+				globalVars[field.Name] = field;
 
-				foreach (var prop in props)
-					globalVars[prop.Name] = prop;
-			}
+			foreach (var prop in props)
+				globalVars[prop.Name] = prop;
 		}
 
 		public void InitClasses()
@@ -48,12 +43,13 @@ namespace Keysharp.Scripting
 			Dictionary<Type, KeysharpObject> protos = new();
 
 			var anyType = typeof(Any);
-			var types = Script.TheScript.ReflectionsData.stringToTypes.Values
+			var script = Script.TheScript;
+			var types = script.ReflectionsData.stringToTypes.Values
 				.Where(type => type.IsClass && !type.IsAbstract && anyType.IsAssignableFrom(type));
 
-			if (MainProgram != null)
+			if (script.ProgramType != null)
 			{
-				var nested = Reflections.GetNestedTypes(MainProgram.GetNestedTypes()).Where(type => type.IsClass && anyType.IsAssignableFrom(type));
+				var nested = Reflections.GetNestedTypes(script.ProgramType.GetNestedTypes()).Where(type => type.IsClass && anyType.IsAssignableFrom(type));
 				types = types.Concat(nested);
 			}
 

@@ -487,9 +487,8 @@ namespace Keysharp.Core.Common.Invoke
 				foreach (var type in asm.GetExportedTypes())
 					if (type.GetCustomAttribute<PublicForTestOnly>() == null &&
 						type.IsClass && type.IsPublic && type.Namespace != null && (!ignoreMainAssembly || type.Name != Keywords.MainClassName) &&
-							(type.Namespace.StartsWith("Keysharp.Core", StringComparison.OrdinalIgnoreCase) ||
-							 type.Namespace.StartsWith("Keysharp.CompiledMain", StringComparison.OrdinalIgnoreCase) ||
-							 type.Namespace.StartsWith("Keysharp.Tests", StringComparison.OrdinalIgnoreCase)))//Allow tests so we can use function objects inside of unit tests.
+							(type.Namespace.StartsWith("Keysharp.", StringComparison.OrdinalIgnoreCase) &&
+							!type.Namespace.StartsWith("Keysharp.Scripting", StringComparison.OrdinalIgnoreCase)))
 					{
 						_ = FindAndCacheInstanceMethod(type, "", -1);
 						_ = FindAndCacheStaticMethod(type, "", -1);
