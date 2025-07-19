@@ -23,14 +23,14 @@ namespace Keysharp.Benchmark
 		public void CreateTreeFromFile()
 		{
 			var ch = new CompilerHelper();
-			var (st, errs) = ch.CreateSyntaxTreeFromFile("./Keysharp.ks");
+			var (st, errs) = ch.CreateCompilationUnitFromFile("./Keysharp.ks");
 		}
 
 		[GlobalSetup]
 		public void Setup()
 		{
 			_ks_s = new();
-			_ks_s.Vars.InitPrototypes();
+			_ks_s.Vars.InitClasses();
 		}
 	}
 }
