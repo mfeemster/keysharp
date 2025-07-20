@@ -34,6 +34,37 @@ namespace Keysharp.Core.Common.Threading
 		internal long winDelay = 100L;
 
 		public ThreadConfigData Clone() => (ThreadConfigData)MemberwiseClone();
+
+		internal void CopyFromPrototypeConfigData()
+		{
+			var protoConfigData = Script.TheScript.AccessorData.threadConfigDataPrototype;
+			controlDelay = protoConfigData.controlDelay;
+			coordModeCaret = protoConfigData.coordModeCaret;
+			coordModeMenu = protoConfigData.coordModeMenu;
+			coordModeMouse = protoConfigData.coordModeMouse;
+			coordModePixel = protoConfigData.coordModePixel;
+			coordModeToolTip = protoConfigData.coordModeToolTip;
+			defaultMouseSpeed = protoConfigData.defaultMouseSpeed;
+			detectHiddenText = protoConfigData.detectHiddenText;
+			detectHiddenWindows = protoConfigData.detectHiddenWindows;
+			fileEncoding = protoConfigData.fileEncoding;
+			keyDelay = protoConfigData.keyDelay;
+			keyDelayPlay = protoConfigData.keyDelayPlay;
+			keyDuration = protoConfigData.keyDuration;
+			keyDurationPlay = protoConfigData.keyDurationPlay;
+			mouseDelay = protoConfigData.mouseDelay;
+			mouseDelayPlay = protoConfigData.mouseDelayPlay;
+			peekFrequency = protoConfigData.peekFrequency;
+#if WINDOWS
+			regView = protoConfigData.regView;
+#endif
+			sendLevel = protoConfigData.sendLevel;
+			sendMode = protoConfigData.sendMode;
+			storeCapsLockMode = protoConfigData.storeCapsLockMode;
+			titleMatchMode = protoConfigData.titleMatchMode;
+			titleMatchModeSpeed = protoConfigData.titleMatchModeSpeed;
+			winDelay = protoConfigData.winDelay;
+		}
 	}
 	public class ThreadVariables
 	{
@@ -61,7 +92,7 @@ namespace Keysharp.Core.Common.Threading
 
 		// These describe the configuration defaults of the pseudo-thread,
 		// inherited from (and set by) the auto-execute section thread
-		internal ThreadConfigData configData;
+		internal ThreadConfigData configData = new ();
 
 		internal Random RandomGenerator
 		{
@@ -110,7 +141,8 @@ namespace Keysharp.Core.Common.Threading
 			_ = (regsb?.Clear());
 			priority = 0L;
 			threadId = 0;
-			configData = null;
+			titleMatchModeSpeed = true;
+			winDelay = 100L;
 		}
 
 		public void Init()
@@ -129,9 +161,12 @@ namespace Keysharp.Core.Common.Threading
 			lastFoundForm = 0;
 			randomGenerator = null;
 			_ = (regsb?.Clear());
-			priority = (long)A_Priority;
-			threadId = 0;
-			configData = Script.TheScript.AccessorData.threadConfigDataPrototype.Clone();
+
+			// Instead of cloning the instance, copy the data because
+			// allocating the memory for new instances is expensive
+			configData.CopyFromPrototypeConfigData();
+			titleMatchModeSpeed = TitleMatchModeSpeedDefault;
+			winDelay = WinDelayDefault;
 		}
 	}
 }
