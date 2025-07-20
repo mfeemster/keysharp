@@ -695,7 +695,7 @@ break_twice:;
 		public static object SendLevel(object level)
 		{
 			var old = A_SendLevel;
-			A_SendLevel = level;
+			A_SendLevel = level.Al();
 			return old;
 		}
 

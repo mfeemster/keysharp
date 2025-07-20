@@ -72,3 +72,44 @@ If tot == 10000
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
+CoordMode "Mouse", "Screen"
+
+StartRealThread(RealThreadEntry)
+
+cb2 := CallbackCreate(SetCoordModeMouseClient)
+Loop 10000 {
+	DllCall(cb2)
+}
+
+if A_CoordModeMouse = "Screen"
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+
+RealThreadEntry() {
+	CoordMode "Mouse", "Screen"
+	cb1 := CallbackCreate(SetCoordModeMouseWindow)
+
+	Loop 10000 {
+		DllCall(cb1)
+	}
+}
+
+SetCoordModeMouseWindow() {
+	if A_CoordModeMouse = "Client" {
+		FileAppend "fail", "*"
+		ExitApp()
+	}
+
+	CoordMode "Mouse", "Window"
+}
+
+SetCoordModeMouseClient() {
+	if A_CoordModeMouse = "Window" {
+		FileAppend "fail", "*"
+		ExitApp()
+	}
+
+	CoordMode "Mouse", "Client"
+}

@@ -598,4 +598,36 @@ Suspend, true
 if (A_IsSuspended == true) 
 	FileAppend, "pass", "*"
 else
-	FileAppend, "fail", "*"
+	FileAppend "fail", "*"
+
+CoordMode "Mouse", "Screen"
+
+DllCall(CallbackCreate(SetCoordModeMouse)) ; Execute in new pseudo-thread
+
+if (A_CoordModeMouse = "Screen")
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+
+DllCall(CallbackCreate(CheckCoordModeMouse))
+
+SetCoordModeMouse() {
+	if (A_CoordModeMouse = "Screen")
+		FileAppend "pass", "*"
+	else
+		FileAppend "fail", "*"
+
+	CoordMode("Mouse", "Window")
+
+	if (A_CoordModeMouse = "Window")
+		FileAppend "pass", "*"
+	else
+		FileAppend "fail", "*"
+}
+
+CheckCoordModeMouse() {
+	if (A_CoordModeMouse = "Screen")
+		FileAppend "pass", "*"
+	else
+		FileAppend "fail", "*"
+}

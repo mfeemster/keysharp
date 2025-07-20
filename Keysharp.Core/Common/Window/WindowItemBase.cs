@@ -370,7 +370,7 @@
 			if (string.IsNullOrEmpty(a))
 				return false;
 
-			switch (Script.TheScript.Threads.GetThreadVariables().titleMatchMode.ParseLong(false))
+			switch (ThreadAccessors.A_TitleMatchMode)
 			{
 				case 1:
 					return a.StartsWith(b, comp);

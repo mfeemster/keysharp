@@ -128,7 +128,6 @@ namespace Keysharp.Scripting
 		internal ComMethodData ComMethodData => comMethodData ?? (comMethodData = new ());
 #endif
 		internal ControlProvider ControlProvider => controlProvider ?? (controlProvider = new ());
-		internal CoordModes Coords { get; private set; }
 		internal DelegateData DelegateData => delegateData ?? (delegateData = new ());
 #if WINDOWS
 		internal DllData DllData => dllData ?? (dllData = new ());
@@ -222,8 +221,6 @@ namespace Keysharp.Scripting
 			LoadDlls();
 			Application.AddMessageFilter(new MessageFilter());
 			_ = InitHook();//Why is this always being initialized even when there are no hooks? This is very inefficient.//TODO
-			//Init the data objects that the API classes will use.
-			Coords = Threads.GetThreadVariables().Coords;
 			//Init the API classes, passing in this which will be used to access their respective data objects.
 			Reflections = new ();
 			SetInitialFloatFormat();//This must be done intially and not just when A_FormatFloat is referenced for the first time.
@@ -382,6 +379,7 @@ namespace Keysharp.Scripting
 			_ = mainWindow.BeginInvoke(() =>
 			{
 				var ret = Threads.BeginThread();
+				ret.Item2.configData = AccessorData.threadConfigDataPrototype;
 
 				if (!Flow.TryCatch(() =>
 				{

@@ -343,13 +343,13 @@ namespace Keysharp.Core
 		{
 			var script = Script.TheScript;
 
-			if (script.Coords.Mouse == CoordModeType.Window)
+			if (ThreadAccessors.A_CoordModeMouse == CoordModeType.Window)
 			{
 				var rect = script.WindowProvider.Manager.ActiveWindow.Location;
 				x += rect.Left;
 				y += rect.Top;
 			}
-			else if (script.Coords.Mouse == CoordModeType.Client)
+			else if (ThreadAccessors.A_CoordModeMouse == CoordModeType.Client)
 			{
 				var pt = script.WindowProvider.Manager.ActiveWindow.ClientToScreen();
 				x += pt.X;
@@ -369,7 +369,7 @@ namespace Keysharp.Core
 		{
 			var script = Script.TheScript;
 
-			if (script.Coords.Mouse == CoordModeType.Window)
+			if (ThreadAccessors.A_CoordModeMouse == CoordModeType.Window)
 			{
 				var rect = script.WindowProvider.Manager.ActiveWindow.Location;
 				x1 += rect.Left;
@@ -377,7 +377,7 @@ namespace Keysharp.Core
 				x2 += rect.Left;
 				y2 += rect.Top;
 			}
-			else if (script.Coords.Mouse == CoordModeType.Client)
+			else if (ThreadAccessors.A_CoordModeMouse == CoordModeType.Client)
 			{
 				var pt = script.WindowProvider.Manager.ActiveWindow.ClientToScreen();
 				x1 += pt.X;
@@ -488,70 +488,6 @@ namespace Keysharp.Core
 											  , eventType
 											  , speed
 											  , relative.Length > 0 && char.ToUpper(relative[0]) == 'R');
-		}
-	}
-
-	/// <summary>
-	/// Class to hold the coordinate modes for various operations.
-	/// The properties will start with the default values set in the auto exec section.
-	/// A new instance of this class will be lazily instantiated in each thread.
-	/// </summary>
-	internal class CoordModes
-	{
-		/// <summary>
-		/// Constructor that starts each field off with the global default set by the auto exec section.
-		/// </summary>
-		internal CoordModes()
-		{
-			Caret = CoordModeCaretDefault;
-			Menu = CoordModeMenuDefault;
-			Mouse = CoordModeMouseDefault;
-			Pixel = CoordModePixelDefault;
-			Tooltip = CoordModeToolTipDefault;
-		}
-
-		/// <summary>
-		/// The coordinate mode for caret operations.
-		/// </summary>
-		internal CoordModeType Caret { get; set; }
-
-		/// <summary>
-		/// The coordinate mode for menu operations.
-		/// </summary>
-		internal CoordModeType Menu { get; set; }
-
-		/// <summary>
-		/// The coordinate mode for mouse operations.
-		/// </summary>
-		internal CoordModeType Mouse { get; set; }
-
-		/// <summary>
-		/// The coordinate mode for pixel operations.
-		/// </summary>
-		internal CoordModeType Pixel { get; set; }
-
-		/// <summary>
-		/// The coordinate mode for tool tip operations.
-		/// </summary>
-		internal CoordModeType Tooltip { get; set; }
-
-		/// <summary>
-		/// Retrieves the coordinate mode for the specified operation.
-		/// </summary>
-		/// <param name="mode">The operation to retrieve the coordinate mode for.</param>
-		/// <returns>The coordinate mode for the specified operation.</returns>
-		/// <exception cref="ValueError">A <see cref="ValueError"/> exception is thrown if an invalid coordinate operation is specified.</exception>
-		internal CoordModeType GetCoordMode(CoordMode mode)
-		{
-			return mode switch
-		{
-				CoordMode.Caret => Caret,
-				CoordMode.Menu => Menu,
-				CoordMode.Mouse => Mouse,
-				CoordMode.Pixel => Pixel,
-				CoordMode.Tooltip => Tooltip,
-				_ => (CoordModeType)Errors.ValueErrorOccurred($"Invalid coordinate mode type: {mode}", null, CoordModeType.Client)
-			};
 		}
 	}
 
