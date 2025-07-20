@@ -12,7 +12,7 @@ namespace Keysharp.Core
 
 			var script = Script.TheScript;
 			var title = script.mainWindow != null ? script.mainWindow.Text : "";
-			var tv = script.Threads.GetThreadVariables();
+			var tv = script.Threads.GetThreadVariables().configData;
 			var mm = tv.titleMatchMode;
 			tv.titleMatchMode = 2L;//Match anywhere.
 			var hwnd = WindowX.WinExist(A_ScriptName, "", title, "");

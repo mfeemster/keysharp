@@ -1054,7 +1054,7 @@ namespace Keysharp.Core
 									 object excludeTitle = null,
 									 object excludeText = null)
 		{
-			var tv = Script.TheScript.Threads.GetThreadVariables();
+			var tv = Script.TheScript.Threads.GetThreadVariables().configData;
 			var prev = tv.detectHiddenWindows;
 			tv.detectHiddenWindows = true;
 			SearchWindows(winTitle, winText, excludeTitle, excludeText).ForEach(win => win.Show());

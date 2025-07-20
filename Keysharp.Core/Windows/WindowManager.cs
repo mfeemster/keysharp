@@ -60,7 +60,7 @@ namespace Keysharp.Core.Windows
 			if (criteria.IsEmpty)
 				return found;
 
-			var mm = Script.TheScript.Threads.GetThreadVariables().titleMatchMode;
+			var mm = ThreadAccessors.A_TitleMatchMode;
 
 			if (mm < 4) //If the matching mode is not RegEx then try to take an optimized path
 			{

@@ -375,7 +375,7 @@
 			var _y = y.Ai(Cursor.Position.Y);
 			var pt = new Point(_x, _y);
 
-			if (Script.TheScript.Coords.Menu == CoordModeType.Screen)
+			if (ThreadAccessors.A_CoordModeMenu == CoordModeType.Screen)
 				if (Form.ActiveForm is Form form)
 					pt = form.PointToClient(pt);
 

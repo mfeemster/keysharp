@@ -157,7 +157,7 @@
 				tv.allowThreadToBeInterrupted = true; // Avoids issues with 49.7 day limit of 32-bit TickCount, and also helps performance future callers of this function (they can skip most of the checking above).
 
 				if (!tv.isCritical)
-					tv.peekFrequency = ThreadVariables.DefaultPeekFrequency;
+					tv.configData.peekFrequency = ThreadVariables.DefaultPeekFrequency;
 			}
 
 			return tv.allowThreadToBeInterrupted;

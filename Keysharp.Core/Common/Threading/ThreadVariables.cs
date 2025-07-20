@@ -2,51 +2,66 @@
 
 namespace Keysharp.Core.Common.Threading
 {
-	public class ThreadVariables
+	public class ThreadConfigData
 	{
-		//internal Task<object> task = null;
-		internal bool task = false;
-		internal bool allowThreadToBeInterrupted = true;
+		public ThreadConfigData() { }
+
 		internal long controlDelay = 20L;
-		internal Timer currentTimer;
-		internal string defaultGui;
+		internal CoordModeType coordModeCaret = CoordModeType.Client;
+		internal CoordModeType coordModeMenu = CoordModeType.Client;
+		internal CoordModeType coordModeMouse = CoordModeType.Client;
+		internal CoordModeType coordModePixel = CoordModeType.Client;
+		internal CoordModeType coordModeToolTip = CoordModeType.Client;
 		internal long defaultMouseSpeed = 2L;
-		internal static readonly long DefaultPeekFrequency = 5L;
-		internal static readonly long DefaultUninterruptiblePeekFrequency = 16L;
 		internal bool detectHiddenText = true;
 		internal bool detectHiddenWindows;
-		internal Form dialogOwner;
-		internal object eventInfo;
 		internal Encoding fileEncoding = Encoding.Default;
-		internal IFuncObj hotCriterion;
-		internal long hwndLastUsed = 0;
-		internal bool isCritical = false;
 		internal long keyDelay = 10L;
 		internal long keyDelayPlay = -1L;
 		internal long keyDuration = -1L;
 		internal long keyDurationPlay = -1L;
-		internal long lastFoundForm;
 		internal long mouseDelay = 10L;
 		internal long mouseDelayPlay = -1L;
 		internal long peekFrequency = 5L;
-		internal long priority;
 #if WINDOWS
 		internal long regView = 64L;
 #endif
 		internal uint sendLevel;
 		internal SendModes sendMode = SendModes.Input;
 		internal bool storeCapsLockMode = true;
-		internal int threadId;
-		internal DateTime threadStartTime = DateTime.MinValue;
 		internal long titleMatchMode = 2L;
 		internal bool titleMatchModeSpeed = true;
-		internal int UninterruptibleDuration = 17;
 		internal long winDelay = 100L;
-		private CoordModes coords;
+
+		public ThreadConfigData Clone() => (ThreadConfigData)MemberwiseClone();
+	}
+	public class ThreadVariables
+	{
+		internal static readonly long DefaultPeekFrequency = 5L;
+		internal static readonly long DefaultUninterruptiblePeekFrequency = 16L;
+
+		// These describe the runtime state of the pseudo-thread
+		//internal Task<object> task = null;
+		internal bool task = false;
+		internal bool isCritical = false;
+		internal bool allowThreadToBeInterrupted = true;
+		internal int UninterruptibleDuration = 17;
+		internal DateTime threadStartTime = DateTime.MinValue;
+		internal Timer currentTimer;
+		internal string defaultGui;
+		internal Form dialogOwner;
+		internal object eventInfo;
+		internal IFuncObj hotCriterion;
+		internal long hwndLastUsed = 0;
+		internal long lastFoundForm;
 		private Random randomGenerator;
 		private StringBuilder regsb = null;
+		internal long priority;
+		internal int threadId;
 
-		internal CoordModes Coords => coords != null ? coords : coords = new CoordModes();
+		// These describe the configuration defaults of the pseudo-thread,
+		// inherited from (and set by) the auto-execute section thread
+		internal ThreadConfigData configData;
 
 		internal Random RandomGenerator
 		{
@@ -84,39 +99,18 @@ namespace Keysharp.Core.Common.Threading
 			allowThreadToBeInterrupted = true;
 			UninterruptibleDuration = 17;
 			threadStartTime = DateTime.MinValue;
-			controlDelay = 20L;
-			coords = null;
 			currentTimer = null;
 			defaultGui = null;
-			defaultMouseSpeed = 2L;
-			detectHiddenText = true;
-			detectHiddenWindows = false;
 			dialogOwner = null;
 			eventInfo = null;
-			fileEncoding = Encoding.Default;
 			hotCriterion = null;
 			hwndLastUsed = 0;
-			keyDelay = 10L;
-			keyDelayPlay = -1L;
-			keyDuration = -1L;
-			keyDurationPlay = -1L;
 			lastFoundForm = 0L;
-			mouseDelay = 10L;
-			mouseDelayPlay = -1L;
-			peekFrequency = 5L;
-			priority = 0L;
 			randomGenerator = null;
 			_ = (regsb?.Clear());
-#if WINDOWS
-			regView = 64L;
-#endif
-			sendLevel = 0;
-			sendMode = SendModes.Input;
-			storeCapsLockMode = true;
+			priority = 0L;
 			threadId = 0;
-			titleMatchMode = 2L;
-			titleMatchModeSpeed = true;
-			winDelay = 100L;
+			configData = null;
 		}
 
 		public void Init()
@@ -126,39 +120,18 @@ namespace Keysharp.Core.Common.Threading
 			allowThreadToBeInterrupted = true;
 			UninterruptibleDuration = Script.TheScript.uninterruptibleTime;
 			threadStartTime = DateTime.MinValue;
-			controlDelay = ControlDelayDefault;
-			coords = null;
 			currentTimer = null;
 			defaultGui = null;
-			defaultMouseSpeed = DefaultMouseSpeedDefault;
-			detectHiddenText = DetectHiddenTextDefault;
-			detectHiddenWindows = DetectHiddenWindowsDefault;
 			dialogOwner = null;
 			eventInfo = null;
-			fileEncoding = FileEncodingDefault;
 			hotCriterion = null;
 			hwndLastUsed = 0;
-			keyDelay = KeyDelayDefault;
-			keyDelayPlay = KeyDelayPlayDefault;
-			keyDuration = KeyDurationDefault;
-			keyDurationPlay = KeyDurationPlayDefault;
 			lastFoundForm = 0;
-			mouseDelay = MouseDelayDefault;
-			mouseDelayPlay = MouseDelayPlayDefault;
-			peekFrequency = PeekFrequencyDefault;
-			priority = (long)A_Priority;
 			randomGenerator = null;
 			_ = (regsb?.Clear());
-#if WINDOWS
-			regView = RegViewDefault;
-#endif
-			sendLevel = SendLevelDefault;
-			sendMode = SendModeDefault;
-			storeCapsLockMode = StoreCapsLockModeDefault;
+			priority = (long)A_Priority;
 			threadId = 0;
-			titleMatchMode = TitleMatchModeDefault;
-			titleMatchModeSpeed = TitleMatchModeSpeedDefault;
-			winDelay = WinDelayDefault;
+			configData = Script.TheScript.AccessorData.threadConfigDataPrototype.Clone();
 		}
 	}
 }

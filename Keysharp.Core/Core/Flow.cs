@@ -45,7 +45,7 @@ namespace Keysharp.Core
 				}
 			}
 
-			var ret = tv.isCritical ? tv.peekFrequency : 0L;
+			var ret = tv.isCritical ? tv.configData.peekFrequency : 0L;
 			// v1.0.46: When the current thread is critical, have the script check messages less often to
 			// reduce situations where an OnMessage or GUI message must be discarded due to "thread already
 			// running".  Using 16 rather than the default of 5 solves reliability problems in a custom-menu-draw
@@ -67,7 +67,7 @@ namespace Keysharp.Core
 
 			if (tv.isCritical) // Critical has been turned on. (For simplicity even if it was already on, the following is done.)
 			{
-				tv.peekFrequency = freq;
+				tv.configData.peekFrequency = freq;
 				tv.allowThreadToBeInterrupted = false;
 				// Ensure uninterruptibility never times out.  IsInterruptible() relies on this to avoid the
 				// need to check g->ThreadIsCritical, which in turn allows global_maximize_interruptibility()
@@ -82,7 +82,7 @@ namespace Keysharp.Core
 			{
 				// Since Critical is being turned off, allow thread to be immediately interrupted regardless of
 				// any "Thread Interrupt" settings.
-				tv.peekFrequency = 5;
+				tv.configData.peekFrequency = 5;
 				tv.allowThreadToBeInterrupted = true;
 			}
 

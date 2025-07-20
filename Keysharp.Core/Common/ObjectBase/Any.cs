@@ -59,8 +59,8 @@ namespace Keysharp.Core.Common.ObjectBase
 			SkipConstructorLogic = skipLogic;
 		}
 
-		public virtual object static__New(params object[] args) => "";
 		public virtual object __New(params object[] args) => "";
+		public virtual object static__New(params object[] args) => "";
 		public virtual object __Init() => "";
 		public virtual object static__Init() => "";
 

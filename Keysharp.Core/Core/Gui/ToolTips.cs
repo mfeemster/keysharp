@@ -111,7 +111,7 @@ namespace Keysharp.Core
 #endif
 			}, false);
 			// CheckedBeginInvoke might run in a different thread with a different CoordMode
-			var coordModeToolTip = script.Coords.Tooltip;
+			var coordModeToolTip = ThreadAccessors.A_CoordModeToolTip;
 			tooltipInvokerForm.CheckedBeginInvoke(() =>
 			{
 #if LINUX
