@@ -93,16 +93,7 @@ namespace Keysharp.Scripting
 				if (!searchBase)
 					break;
 
-				if (!ownProps.TryGetValue("base", out var baseEntry) || (baseEntry.Value == null && baseEntry.Get == null))
-					break;
-				if (baseEntry.Get != null && baseEntry.Get is FuncObj fo && fo != null && fo.Call(baseObj) is KeysharpObject kso)
-				{
-					baseObj = kso;
-				}
-				else
-				{
-					baseObj = (KeysharpObject)baseEntry.Value;
-				}
+				baseObj = baseObj.Base;
 				if (baseObj == null)
 					break;
 				ownProps = baseObj.op;
@@ -157,7 +148,7 @@ namespace Keysharp.Scripting
 				else if (item is ComObject co)
 				{
 					var ptr = co.Ptr;
-					if (ptr != null && Marshal.IsComObject(item))
+					if (ptr != null && Marshal.IsComObject(ptr))
 						return (ptr, new ComMethodPropertyHolder(key));
 				}
 #endif

@@ -108,7 +108,7 @@ namespace Keysharp.Core.Common.Invoke
 					n++;
 					p = parameters[paramIndex];
 
-					if (p is KeysharpObject kso)
+					if (p is Any kso)
 					{
 						object kptr;
 

@@ -516,7 +516,7 @@ namespace Keysharp.Core.COM
 				_ = CLSIDFromProgIDEx(progId, out clsid);
 
 			GetActiveObject(ref clsid, 0, out var obj);
-			return obj;
+			return new ComObject(13L, obj);
 		}
 
 		[DllImport(WindowsAPI.oleaut, CharSet = CharSet.Unicode, PreserveSig = false)]
