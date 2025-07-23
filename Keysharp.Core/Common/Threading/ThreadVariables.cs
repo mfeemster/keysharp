@@ -92,7 +92,7 @@ namespace Keysharp.Core.Common.Threading
 
 		// These describe the configuration defaults of the pseudo-thread,
 		// inherited from (and set by) the auto-execute section thread
-		internal ThreadConfigData configData = new ();
+		internal ThreadConfigData configData = new();
 
 		internal Random RandomGenerator
 		{
@@ -141,8 +141,6 @@ namespace Keysharp.Core.Common.Threading
 			_ = (regsb?.Clear());
 			priority = 0L;
 			threadId = 0;
-			titleMatchModeSpeed = true;
-			winDelay = 100L;
 		}
 
 		public void Init()
@@ -161,12 +159,12 @@ namespace Keysharp.Core.Common.Threading
 			lastFoundForm = 0;
 			randomGenerator = null;
 			_ = (regsb?.Clear());
+			priority = (long)A_Priority;
+			threadId = 0;
 
 			// Instead of cloning the instance, copy the data because
 			// allocating the memory for new instances is expensive
 			configData.CopyFromPrototypeConfigData();
-			titleMatchModeSpeed = TitleMatchModeSpeedDefault;
-			winDelay = WinDelayDefault;
 		}
 	}
 }
