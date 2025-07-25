@@ -565,12 +565,18 @@
 						var strs = obj.Cast<object>().Skip(1).Select(x => x.Str()).ToList();
 						result = ListViewHelper.AddOrInsertListViewItem(lv, lvo, strs, int.MinValue);
 					}
-					else if (_control is KeysharpListBox lb)//Using AddRange() relieves the caller of having to set -Redraw first.
-						lb.Items.AddRange(obj.Cast<object>().Select(x => x.Str()).ToArray());
-					else if (_control is KeysharpComboBox cb)
-						cb.Items.AddRange(obj.Cast<object>().Select(x => x.Str()).ToArray());
-					else if (_control is KeysharpTabControl tc)
-						tc.TabPages.AddRange(obj.Cast<object>().Select(x => new TabPage(x.Str())).ToArray());
+					else
+					{
+						if (obj.Length > 0 && obj[0] is Array arr)
+							obj = arr.array.ToArray();
+
+						if (_control is KeysharpListBox lb)//Using AddRange() relieves the caller of having to set -Redraw first.
+							lb.Items.AddRange(obj.Cast<object>().Select(x => x.Str()).ToArray());
+						else if (_control is KeysharpComboBox cb)
+							cb.Items.AddRange(obj.Cast<object>().Select(x => x.Str()).ToArray());
+						else if (_control is KeysharpTabControl tc)
+							tc.TabPages.AddRange(obj.Cast<object>().Select(x => new TabPage(x.Str())).ToArray());
+					}
 				}
 				finally
 				{
@@ -993,7 +999,7 @@
 			public long Modify(object rowNumber, object options = null, params object[] obj)
 			{
 				var opts = options == null ? null : options.ToString();
-				var rownumber = rowNumber.Ai();
+				var rownumber = rowNumber.Al();
 
 				if (_control is KeysharpTreeView tv)
 				{
@@ -1026,7 +1032,7 @@
 
 							for (rownumber = start; rownumber < end; rownumber++)
 							{
-								var item = lv.Items[rownumber];
+								var item = lv.Items[(int)rownumber];
 
 								for (int i = 0, j = lvo.colstart; i < strs.Count && j < item.SubItems.Count; i++, j++)
 									item.SubItems[j].Text = strs[i];
