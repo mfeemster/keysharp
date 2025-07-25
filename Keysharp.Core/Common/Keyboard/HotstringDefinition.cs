@@ -358,7 +358,7 @@
 
 			// For the following, mSendMode isn't checked because the backup/restore is needed to varying extents
 			// by every mode.
-			var tv = script.Threads.GetThreadVariables();
+			var tv = script.Threads.GetThreadVariables().configData;
 			var oldDelay = tv.keyDelay;
 			var oldPressDuration = tv.keyDuration;
 			var oldDelayPlay = tv.keyDelayPlay;
@@ -428,7 +428,7 @@
 				{
 					ret = null;
 					var tv = script.Threads.GetThreadVariables();
-					tv.sendLevel = inputLevel;
+					tv.configData.sendLevel = inputLevel;
 					tv.hwndLastUsed = hwndCritFound;
 					tv.hotCriterion = hotCriterion;// v2: Let the Hotkey command use the criterion of this hotstring by default.
 					ret = funcObj.Call(o);
