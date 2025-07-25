@@ -859,6 +859,7 @@
 					tv.CheckBoxes = opts.ischecked.HasValue && opts.ischecked.Value != 0;
 					tv.ShowLines = opts.lines ?? true;
 					tv.LabelEdit = opts.rdonly.IsFalse();
+					tv.HideSelection = false;
 
 					if (tv.LabelEdit && !opts.wantf2.IsFalse())//Note that checking !IsFalse() is not the same as IsTrue().
 						tv.KeyDown += Tv_Lv_KeyDown;
