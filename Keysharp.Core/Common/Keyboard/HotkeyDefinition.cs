@@ -1146,7 +1146,7 @@ namespace Keysharp.Core.Common.Keyboard
 							break;
 
 						case 'I':
-							if (variant != null && uint.TryParse(options.AsSpan(i + 1), out var newInputLevel))
+							if (variant != null && long.TryParse(options.AsSpan(i + 1), out var newInputLevel))
 							{
 								variant.maxThreads = newInputLevel;
 
@@ -2295,7 +2295,7 @@ namespace Keysharp.Core.Common.Keyboard
 			}
 
 			string levelStr;
-			uint minLevel = 100u, maxLevel = 0u;
+			long minLevel = 100L, maxLevel = 0L;
 
 			for (vp = firstVariant; vp != null; vp = vp.nextVariant)
 			{
@@ -2603,8 +2603,8 @@ namespace Keysharp.Core.Common.Keyboard
 		internal int existingThreads;
 		internal IFuncObj hotCriterion;
 		internal int index;
-		internal uint inputLevel;
-		internal uint maxThreads = uint.MaxValue;//Don't really care about max threads in Keysharp, so just make it a huge number.
+		internal long inputLevel;
+		internal long maxThreads = long.MaxValue;//Don't really care about max threads in Keysharp, so just make it a huge number.
 		internal bool maxThreadsBuffer;
 		internal HotkeyVariant nextVariant;
 		internal uint noSuppress;

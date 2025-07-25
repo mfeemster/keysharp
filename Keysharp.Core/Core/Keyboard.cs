@@ -372,11 +372,11 @@ break_twice:;
 			// Determine options which affect hotstring identity/uniqueness.
 			var caseSensitive = hm.hsCaseSensitive;
 			var detectInsideWord = hm.hsDetectWhenInsideWord;
-			var un = false; var iun = 0; var sm = SendModes.Event; var sr = SendRawModes.NotRaw; // Unused.
+			var un = false; var lun = 0L; var sm = SendModes.Event; var sr = SendRawModes.NotRaw; // Unused.
 			var executeAction = false;
 
 			if (hotstringOptions.Length > 0)
-				HotstringDefinition.ParseOptions(hotstringOptions, ref iun, ref iun, ref sm, ref caseSensitive, ref un, ref un, ref un, ref sr, ref un, ref detectInsideWord, ref un, ref executeAction, ref un);
+				HotstringDefinition.ParseOptions(hotstringOptions, ref lun, ref lun, ref sm, ref caseSensitive, ref un, ref un, ref un, ref sr, ref un, ref detectInsideWord, ref un, ref executeAction, ref un);
 
 			IFuncObj ifunc = null;
 

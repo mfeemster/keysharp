@@ -48,7 +48,7 @@
 		}
 
 		[PublicForTestOnly]
-		public (bool, ThreadVariables) PushThreadVariables(int priority, bool skipUninterruptible,
+		public (bool, ThreadVariables) PushThreadVariables(long priority, bool skipUninterruptible,
 				bool isCritical = false, bool onlyIfEmpty = false, bool inc = false)
 		{
 			var script = Script.TheScript;
@@ -168,7 +168,7 @@
 			return tv.allowThreadToBeInterrupted;
 		}
 
-		internal void LaunchInThread(int priority, bool skipUninterruptible,
+		internal void LaunchInThread(long priority, bool skipUninterruptible,
 									 bool isCritical, object func, object[] o, bool tryCatch)//Determine later the optimal threading model.//TODO
 		{
 			try

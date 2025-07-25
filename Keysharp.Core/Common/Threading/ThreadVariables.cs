@@ -26,7 +26,7 @@ namespace Keysharp.Core.Common.Threading
 #if WINDOWS
 		internal long regView = 64L;
 #endif
-		internal uint sendLevel;
+		internal long sendLevel;
 		internal SendModes sendMode = SendModes.Input;
 		internal bool storeCapsLockMode = true;
 		internal long titleMatchMode = 2L;
@@ -161,7 +161,6 @@ namespace Keysharp.Core.Common.Threading
 			_ = (regsb?.Clear());
 			priority = (long)A_Priority;
 			threadId = 0;
-
 			// Instead of cloning the instance, copy the data because
 			// allocating the memory for new instances is expensive
 			configData.CopyFromPrototypeConfigData();

@@ -9,7 +9,7 @@
 		internal bool allowMainWindow = true;
 		internal bool? iconFrozen;
 		internal bool iconHidden;
-		internal uint inputLevel;
+		internal long inputLevel;
 		internal string menuMaskKey = "";
 		internal Icon prevTrayIcon;
 		internal ThreadConfigData threadConfigDataPrototype = new (); // Used (and set by) the auto-execute section
@@ -308,7 +308,6 @@
 		public static object A_ControlDelay
 		{
 			get => ThreadAccessors.A_ControlDelay;
-
 			set => ThreadAccessors.A_ControlDelay = value.Al();
 		}
 
@@ -692,7 +691,7 @@
 		public static object A_InputLevel
 		{
 			get => Script.TheScript.AccessorData.inputLevel;
-			set => Script.TheScript.AccessorData.inputLevel = (uint)Math.Clamp(value.Al(), 0L, 100L);
+			set => Script.TheScript.AccessorData.inputLevel = Math.Clamp(value.Al(), 0L, 100L);
 		}
 
 		/// <summary>
@@ -795,7 +794,6 @@
 		public static object A_KeyDelayPlay
 		{
 			get => ThreadAccessors.A_KeyDelayPlay;
-
 			set => ThreadAccessors.A_KeyDelayPlay = value.Al();
 		}
 
@@ -1299,7 +1297,6 @@
 		public static object A_MouseDelay
 		{
 			get => ThreadAccessors.A_MouseDelay;
-
 			set => ThreadAccessors.A_MouseDelay = value.Al();
 		}
 
@@ -1502,7 +1499,7 @@
 		public static long A_SendLevel
 		{
 			get => ThreadAccessors.A_SendLevel;
-			set => ThreadAccessors.A_SendLevel = (uint)Math.Clamp(value.Al(), 0L, 100L);
+			set => ThreadAccessors.A_SendLevel = Math.Clamp(value.Al(), 0L, 100L);
 		}
 
 		/// <summary>
@@ -1672,7 +1669,6 @@
 				var l = ThreadAccessors.A_TitleMatchMode;
 				return l == 4L ? Keyword_RegEx : l;
 			}
-
 			set
 			{
 				var script = Script.TheScript;
@@ -2407,7 +2403,7 @@
 		/// The send level to use when sending keys.<br/>
 		/// The range is 0-100.
 		/// </summary>
-		internal static uint A_SendLevel
+		internal static long A_SendLevel
 		{
 			get => Script.TheScript.Threads.GetThreadVariables().configData.sendLevel;
 			set => Script.TheScript.Threads.GetThreadVariables().configData.sendLevel = value;

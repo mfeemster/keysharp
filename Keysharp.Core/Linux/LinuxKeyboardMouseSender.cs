@@ -137,7 +137,7 @@ namespace Keysharp.Core.Linux
 		{
 		}
 
-		internal override void SendKeyEventMenuMask(KeyEventTypes eventType, uint extraInfo = KeyIgnoreAllExceptModifier)
+		internal override void SendKeyEventMenuMask(KeyEventTypes eventType, long extraInfo = KeyIgnoreAllExceptModifier)
 		{
 		}
 
@@ -191,7 +191,7 @@ namespace Keysharp.Core.Linux
 		//{
 		//  // TODO disposal
 		//}
-		protected internal override void SendKeyEvent(KeyEventTypes eventType, uint vk, uint sc = 0u, nint targetWindow = default, bool doKeyDelay = false, uint extraInfo = KeyIgnoreAllExceptModifier)
+		protected internal override void SendKeyEvent(KeyEventTypes eventType, uint vk, uint sc = 0u, nint targetWindow = default, bool doKeyDelay = false, long extraInfo = KeyIgnoreAllExceptModifier)
 		{
 		}
 
