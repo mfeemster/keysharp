@@ -1933,7 +1933,7 @@ namespace Keysharp.Core.Common.Keyboard
 				maxThreads = A_MaxThreadsPerHotkey.Aui(),    // The values of these can vary during load-time.
 				maxThreadsBuffer = A_MaxThreadsBuffer.Ab(),
 				inputLevel = (uint)A_InputLevel,
-				hotCriterion = Script.TheScript.Threads.GetThreadVariables().hotCriterion, // If this hotkey is an alt-tab one (mHookAction), this is stored but ignored until/unless the Hotkey command converts it into a non-alt-tab hotkey.
+				hotCriterion = Script.TheScript.Threads.CurrentThread.hotCriterion, // If this hotkey is an alt-tab one (mHookAction), this is stored but ignored until/unless the Hotkey command converts it into a non-alt-tab hotkey.
 				suspendExempt = A_SuspendExempt.Ab(),
 				noSuppress = _noSuppress,
 				enabled = true
@@ -2037,7 +2037,7 @@ namespace Keysharp.Core.Common.Keyboard
 		/// <returns></returns>
 		internal HotkeyVariant FindVariant()
 		{
-			var tv = Script.TheScript.Threads.GetThreadVariables();
+			var tv = Script.TheScript.Threads.CurrentThread;
 
 			for (var vp = firstVariant; vp != null; vp = vp.nextVariant)
 				if (vp.hotCriterion == tv.hotCriterion)
