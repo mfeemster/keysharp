@@ -6,14 +6,14 @@ namespace Keysharp.Core
 	{
 		internal static string DefaultGuiId
 		{
-			get => Script.TheScript.Threads.GetThreadVariables().defaultGui ?? "1";
-			set => Script.TheScript.Threads.GetThreadVariables().defaultGui = value;
+			get => Script.TheScript.Threads.CurrentThread.defaultGui ?? "1";
+			set => Script.TheScript.Threads.CurrentThread.defaultGui = value;
 		}
 
 		internal static Form DialogOwner
 		{
-			get => Script.TheScript.Threads.GetThreadVariables().dialogOwner;
-			set => Script.TheScript.Threads.GetThreadVariables().dialogOwner = value;
+			get => Script.TheScript.Threads.CurrentThread.dialogOwner;
+			set => Script.TheScript.Threads.CurrentThread.dialogOwner = value;
 		}
 
 		public static Gui Gui(object obj0 = null, object obj1 = null, object obj2 = null) => new ([obj0, obj1, obj2]);
