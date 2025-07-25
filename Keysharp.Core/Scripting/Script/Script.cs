@@ -206,11 +206,13 @@ namespace Keysharp.Scripting
 			timeLastInputPhysical = DateTime.UtcNow;
 			timeLastInputKeyboard = timeLastInputPhysical;
 			timeLastInputMouse = timeLastInputPhysical;
-			threads = new(() => new());
+			
 			//Init the API classes, passing in this which will be used to access their respective data objects.
 			Reflections = new Reflections();
 			Vars = new Variables();
 			Vars.InitClasses();
+
+			threads = new(() => new());
 
 			_ = Script.TheScript.Threads.PushThreadVariables(0, true, false, true);//Ensure there is always one thread in existence for reference purposes, but do not increment the actual thread counter.
 			var pd = this.ProcessesData;

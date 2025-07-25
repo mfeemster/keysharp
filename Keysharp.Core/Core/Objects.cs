@@ -27,7 +27,11 @@
 
             for (var i = 0; i < count; i += 2)
 			{
-				kso.op[args[i].ToString()] = new OwnPropsDesc(kso, args[i + 1]);
+				var name = args[i].ToString();
+				if (name.Equals("base", StringComparison.OrdinalIgnoreCase))
+					kso._base = (Any)args[i + 1];
+				else
+					kso.op[name] = new OwnPropsDesc(kso, args[i + 1]);
 			}
 
 			return kso;

@@ -102,7 +102,7 @@ namespace Keysharp.Scripting
 			return props.Count != 0;
 		}
 
-		public static (object, object) GetMethodOrProperty(object item, string key, int paramCount, bool checkBase = true, bool throwIfMissing = true)//This has to be public because the script will emit it in Main().
+		public static (object, object) GetMethodOrProperty(object item, string key, int paramCount, bool checkBase = true, bool throwIfMissing = true, bool invokeMeta = true)//This has to be public because the script will emit it in Main().
 		{
 			Error err;
 			Any kso = null;
@@ -131,7 +131,7 @@ namespace Keysharp.Scripting
                             return (item, ifoset);
 
                         return Errors.ErrorOccurred(err = new Error($"Attempting to get method or property {key} on object {val} failed.")) ? throw err : (null, null);
-                    } else if (TryGetOwnPropsMap(kso, "__Call", out var protoCall) && protoCall.Call != null && protoCall.Call is IFuncObj ifoprotocall)
+                    } else if (invokeMeta && TryGetOwnPropsMap(kso, "__Call", out var protoCall) && protoCall.Call != null && protoCall.Call is IFuncObj ifoprotocall)
                         return (null, ifoprotocall.Bind(item, key));
                 }
 
@@ -343,7 +343,7 @@ namespace Keysharp.Scripting
 				(object, object) mitup = (null, null);
 				var methName = (string)meth;
 
-				mitup = GetMethodOrProperty(obj, methName, -1, true, false);
+				mitup = GetMethodOrProperty(obj, methName, -1, checkBase: true, throwIfMissing: false, invokeMeta: false);
 
 				if (mitup.Item2 == null)
 					return null;

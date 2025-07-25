@@ -88,6 +88,9 @@ namespace Keysharp.Scripting
 			// Any.Base == Class.Prototype
 			Statics[typeof(Any)]._base = Prototypes[typeof(Class)];
 
+			// Remove __New because it's only for internal overrides
+			Prototypes[typeof(Any)].op.Remove("__New");
+
 			// Manually define Object static instance prototype property to be the Object prototype
 			var ksoStatic = Statics[typeof(KeysharpObject)];
 			if (ksoStatic.op == null)
