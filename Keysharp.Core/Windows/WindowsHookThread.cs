@@ -4960,7 +4960,7 @@ namespace Keysharp.Core.Windows
 							// NO BREAK IN ABOVE, FALL INTO NEXT CASE:
 							// ********
 							var script = Script.TheScript;
-							var tv = script.Threads.GetThreadVariables();
+							var tv = script.Threads.CurrentThread;
 							tv.WaitForCriticalToFinish();//Must wait until the previous critical task finished before proceeding.
 
 							switch (msg.message)

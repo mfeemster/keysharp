@@ -23,7 +23,7 @@
 		/// <param name="obj">The numerical seed to create the random number generator with.</param>
 		public static object RandomSeed(object obj)
 		{
-			Script.TheScript.Threads.GetThreadVariables().RandomGenerator = new Random(obj.Ai());
+			Script.TheScript.Threads.CurrentThread.RandomGenerator = new Random(obj.Ai());
 			return DefaultObject;
 		}
 
@@ -53,7 +53,7 @@
 		/// <summary>
 		/// Internal helper to get a random number generator for the current thread.
 		/// </summary>
-		private static Random RandomGenerator => Script.TheScript.Threads.GetThreadVariables().RandomGenerator;
+		private static Random RandomGenerator => Script.TheScript.Threads.CurrentThread.RandomGenerator;
 
 		/// <summary>
 		/// Returns the absolute value of a number.

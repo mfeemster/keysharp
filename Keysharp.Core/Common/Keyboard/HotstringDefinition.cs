@@ -74,7 +74,7 @@
 			var script = Script.TheScript;
 			var hm = script.HotstringManager;
 			funcObj = _funcObj;
-			hotCriterion = script.Threads.GetThreadVariables().hotCriterion;
+			hotCriterion = script.Threads.CurrentThread.hotCriterion;
 			suspended = _suspend;
 			maxThreads = A_MaxThreadsPerHotkey.Aui();  // The value of g_MaxThreadsPerHotkey can vary during load-time.
 			priority = hm.hsPriority;
@@ -358,7 +358,7 @@
 
 			// For the following, mSendMode isn't checked because the backup/restore is needed to varying extents
 			// by every mode.
-			var tv = script.Threads.GetThreadVariables().configData;
+			var tv = script.Threads.CurrentThread.configData;
 			var oldDelay = tv.keyDelay;
 			var oldPressDuration = tv.keyDuration;
 			var oldDelayPlay = tv.keyDelayPlay;
@@ -416,7 +416,7 @@
 			if (!AnyThreadsAvailable())//Then test local thread count.
 				return ResultType.Fail;
 
-			var tv = script.Threads.GetThreadVariables();
+			var tv = script.Threads.CurrentThread;
 
 			if (priority < tv.priority)//Finally, test priority.
 				return ResultType.Fail;
@@ -427,7 +427,7 @@
 				var ok = Flow.TryCatch(() =>
 				{
 					ret = null;
-					var tv = script.Threads.GetThreadVariables();
+					var tv = script.Threads.CurrentThread;
 					tv.configData.sendLevel = inputLevel;
 					tv.hwndLastUsed = hwndCritFound;
 					tv.hotCriterion = hotCriterion;// v2: Let the Hotkey command use the criterion of this hotstring by default.

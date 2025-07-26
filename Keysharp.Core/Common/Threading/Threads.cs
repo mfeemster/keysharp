@@ -13,6 +13,8 @@
 		/// </summary>
 		private readonly ThreadVariableManager tvm = new ((int)Script.TheScript.MaxThreadsTotal + 1);
 
+		internal ThreadVariables CurrentThread;
+
 		int _timersPaused = 0;
 
 		public Threads()
@@ -91,6 +93,8 @@
 				return (success, tv);
 			}
 
+			CurrentThread = tv;
+
 			//We successfully pushed—and if inc == true, we’ve already counted it
 			tv.task = true;
 			return (true, tv);
@@ -147,7 +151,7 @@
 			if (Volatile.Read(ref script.totalExistingThreads) == 0)//Before _ks_UserMainCode() starts to run.1
 				return true;
 
-			var tv = GetThreadVariables();
+			var tv = CurrentThread;
 
 			if (!tv.isCritical//Added this whereas AHK doesn't check it. We should never make a critical thread interruptible.
 					&& !tv.allowThreadToBeInterrupted // Those who check whether g->AllowThreadToBeInterrupted==false should then check whether it should be made true.
@@ -222,6 +226,10 @@
 			}
 		}
 
-		internal void PopThreadVariables(bool pushed, bool checkThread = false) => tvm.PopThreadVariables(pushed, checkThread);
+		internal void PopThreadVariables(bool pushed, bool checkThread = false)
+		{
+			tvm.PopThreadVariables(pushed, checkThread);
+			CurrentThread = GetThreadVariables();
+		}
 	}
 }

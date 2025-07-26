@@ -268,7 +268,7 @@ namespace Keysharp.Core.Windows
 					return [];
 
 				var items = new List<string>(64);
-				var tv = Script.TheScript.Threads.GetThreadVariables().configData;
+				var tv = Script.TheScript.Threads.CurrentThread.configData;
 				_ = WindowsAPI.EnumChildWindows(Handle, (nint hwnd, int lParam) =>
 				{
 					if (tv.detectHiddenText || WindowsAPI.IsWindowVisible(hwnd))

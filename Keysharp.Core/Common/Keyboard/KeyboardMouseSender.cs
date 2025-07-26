@@ -366,7 +366,7 @@
 					return;
 				}
 
-				var tv = script.Threads.GetThreadVariables();
+				var tv = script.Threads.CurrentThread;
 
 				// Now that above has ensured variant is non-NULL:
 				if (variant.priority >= tv.priority)//Finally, test priority.

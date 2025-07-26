@@ -56,7 +56,7 @@
 								tv.RemoveMarkForExpansion(node);
 							}
 						}
-						else if (opt.Equals("Select ", StringComparison.OrdinalIgnoreCase)) { tv.SelectedNode = node; }
+						else if (opt.Equals("Select", StringComparison.OrdinalIgnoreCase)) { tv.SelectedNode = node; }
 						else if (opt.Equals("Vis", StringComparison.OrdinalIgnoreCase)) { node.EnsureVisible(); }
 						else if (opt.Equals("VisFirst", StringComparison.OrdinalIgnoreCase)) { node.EnsureVisible(); tv.TopNode = node; }
 						else if (Options.TryParse(opt, "Icon", ref icon))

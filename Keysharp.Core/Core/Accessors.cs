@@ -753,7 +753,7 @@
 		{
 			get
 			{
-				var tv = Script.TheScript.Threads.GetThreadVariables();
+				var tv = Script.TheScript.Threads.CurrentThread;
 				return tv.isCritical ? tv.configData.peekFrequency : 0L;
 			}
 		}
@@ -2169,8 +2169,8 @@
 		/// <exception cref="ValueError">A <see cref="ValueError"/> exception is thrown if the value couldn't be converted to a <see cref="CoordModeType"/>.</exception>
 		public static CoordModeType A_CoordModeCaret
 		{
-			get => Script.TheScript.Threads.GetThreadVariables().configData.coordModeCaret;
-			set => Script.TheScript.Threads.GetThreadVariables().configData.coordModeCaret = value;
+			get => Script.TheScript.Threads.CurrentThread.configData.coordModeCaret;
+			set => Script.TheScript.Threads.CurrentThread.configData.coordModeCaret = value;
 		}
 
 		/// <summary>
@@ -2179,8 +2179,8 @@
 		/// <exception cref="ValueError">A <see cref="ValueError"/> exception is thrown if the value couldn't be converted to a <see cref="CoordModeType"/>.</exception>
 		public static CoordModeType A_CoordModeMenu
 		{
-			get => Script.TheScript.Threads.GetThreadVariables().configData.coordModeMenu;
-			set => Script.TheScript.Threads.GetThreadVariables().configData.coordModeMenu = value;
+			get => Script.TheScript.Threads.CurrentThread.configData.coordModeMenu;
+			set => Script.TheScript.Threads.CurrentThread.configData.coordModeMenu = value;
 		}
 
 		/// <summary>
@@ -2189,8 +2189,8 @@
 		/// <exception cref="ValueError">A <see cref="ValueError"/> exception is thrown if the value couldn't be converted to a <see cref="CoordModeType"/>.</exception>
 		public static CoordModeType A_CoordModeMouse
 		{
-			get => Script.TheScript.Threads.GetThreadVariables().configData.coordModeMouse;
-			set => Script.TheScript.Threads.GetThreadVariables().configData.coordModeMouse = value;
+			get => Script.TheScript.Threads.CurrentThread.configData.coordModeMouse;
+			set => Script.TheScript.Threads.CurrentThread.configData.coordModeMouse = value;
 		}
 
 		/// <summary>
@@ -2199,8 +2199,8 @@
 		/// <exception cref="ValueError">A <see cref="ValueError"/> exception is thrown if the value couldn't be converted to a <see cref="CoordModeType"/>.</exception>
 		public static CoordModeType A_CoordModePixel
 		{
-			get => Script.TheScript.Threads.GetThreadVariables().configData.coordModePixel;
-			set => Script.TheScript.Threads.GetThreadVariables().configData.coordModePixel = value;
+			get => Script.TheScript.Threads.CurrentThread.configData.coordModePixel;
+			set => Script.TheScript.Threads.CurrentThread.configData.coordModePixel = value;
 		}
 
 		/// <summary>
@@ -2209,8 +2209,8 @@
 		/// <exception cref="ValueError">A <see cref="ValueError"/> exception is thrown if the value couldn't be converted to a <see cref="CoordModeType"/>.</exception>
 		public static CoordModeType A_CoordModeToolTip
 		{
-			get => Script.TheScript.Threads.GetThreadVariables().configData.coordModeToolTip;
-			set => Script.TheScript.Threads.GetThreadVariables().configData.coordModeToolTip = value;
+			get => Script.TheScript.Threads.CurrentThread.configData.coordModeToolTip;
+			set => Script.TheScript.Threads.CurrentThread.configData.coordModeToolTip = value;
 		}
 
 		/// <summary>
@@ -2248,8 +2248,8 @@
 		/// </summary>
 		public static long A_DefaultMouseSpeed
 		{
-			get => Script.TheScript.Threads.GetThreadVariables().configData.defaultMouseSpeed;
-			set => Script.TheScript.Threads.GetThreadVariables().configData.defaultMouseSpeed = value;
+			get => Script.TheScript.Threads.CurrentThread.configData.defaultMouseSpeed;
+			set => Script.TheScript.Threads.CurrentThread.configData.defaultMouseSpeed = value;
 		}
 
 		/// <summary>
@@ -2258,8 +2258,8 @@
 		/// </summary>
 		internal static long A_ControlDelay
 		{
-			get => Script.TheScript.Threads.GetThreadVariables().configData.controlDelay;
-			set => Script.TheScript.Threads.GetThreadVariables().configData.controlDelay = value;
+			get => Script.TheScript.Threads.CurrentThread.configData.controlDelay;
+			set => Script.TheScript.Threads.CurrentThread.configData.controlDelay = value;
 		}
 
 		/// <summary>
@@ -2267,8 +2267,8 @@
 		/// </summary>
 		internal static bool A_DetectHiddenText
 		{
-			get => Script.TheScript.Threads.GetThreadVariables().configData.detectHiddenText;
-			set => Script.TheScript.Threads.GetThreadVariables().configData.detectHiddenText = value;
+			get => Script.TheScript.Threads.CurrentThread.configData.detectHiddenText;
+			set => Script.TheScript.Threads.CurrentThread.configData.detectHiddenText = value;
 		}
 
 		/// <summary>
@@ -2276,8 +2276,8 @@
 		/// </summary>
 		internal static bool A_DetectHiddenWindows
 		{
-			get => Script.TheScript.Threads.GetThreadVariables().configData.detectHiddenWindows;
-			set => Script.TheScript.Threads.GetThreadVariables().configData.detectHiddenWindows = value;
+			get => Script.TheScript.Threads.CurrentThread.configData.detectHiddenWindows;
+			set => Script.TheScript.Threads.CurrentThread.configData.detectHiddenWindows = value;
 		}
 
 		/// <summary>
@@ -2285,8 +2285,8 @@
 		/// </summary>
 		internal static object A_EventInfo
 		{
-			get => Script.TheScript.Threads.GetThreadVariables().eventInfo;
-			set => Script.TheScript.Threads.GetThreadVariables().eventInfo = value;
+			get => Script.TheScript.Threads.CurrentThread.eventInfo;
+			set => Script.TheScript.Threads.CurrentThread.eventInfo = value;
 		}
 
 		/// <summary>
@@ -2314,22 +2314,22 @@
 			}
 			set
 			{
-				Script.TheScript.Threads.GetThreadVariables().configData.fileEncoding = value is Encoding enc ? enc : Files.GetEncoding(value.ToString());
+				Script.TheScript.Threads.CurrentThread.configData.fileEncoding = value is Encoding enc ? enc : Files.GetEncoding(value.ToString());
 			}
 		}
 
 		/// <summary>
 		/// Wrapper to retrieve the file encoding as an <see cref="Encoding"/> object.
 		/// </summary>
-		internal static Encoding A_FileEncodingRaw => Script.TheScript.Threads.GetThreadVariables().configData.fileEncoding;
+		internal static Encoding A_FileEncodingRaw => Script.TheScript.Threads.CurrentThread.configData.fileEncoding;
 
 		/// <summary>
 		/// The delay in milliseconds between SendEvent keystrokes.
 		/// </summary>
 		internal static long A_KeyDelay
 		{
-			get => Script.TheScript.Threads.GetThreadVariables().configData.keyDelay;
-			set => Script.TheScript.Threads.GetThreadVariables().configData.keyDelay = value;
+			get => Script.TheScript.Threads.CurrentThread.configData.keyDelay;
+			set => Script.TheScript.Threads.CurrentThread.configData.keyDelay = value;
 		}
 
 		/// <summary>
@@ -2337,8 +2337,8 @@
 		/// </summary>
 		internal static long A_KeyDelayPlay
 		{
-			get => Script.TheScript.Threads.GetThreadVariables().configData.keyDelayPlay;
-			set => Script.TheScript.Threads.GetThreadVariables().configData.keyDelayPlay = value;
+			get => Script.TheScript.Threads.CurrentThread.configData.keyDelayPlay;
+			set => Script.TheScript.Threads.CurrentThread.configData.keyDelayPlay = value;
 		}
 
 		/// <summary>
@@ -2346,8 +2346,8 @@
 		/// </summary>
 		internal static long A_KeyDuration
 		{
-			get => Script.TheScript.Threads.GetThreadVariables().configData.keyDuration;
-			set => Script.TheScript.Threads.GetThreadVariables().configData.keyDuration = value;
+			get => Script.TheScript.Threads.CurrentThread.configData.keyDuration;
+			set => Script.TheScript.Threads.CurrentThread.configData.keyDuration = value;
 		}
 
 		/// <summary>
@@ -2355,8 +2355,8 @@
 		/// </summary>
 		internal static long A_KeyDurationPlay
 		{
-			get => Script.TheScript.Threads.GetThreadVariables().configData.keyDurationPlay;
-			set => Script.TheScript.Threads.GetThreadVariables().configData.keyDurationPlay = value;
+			get => Script.TheScript.Threads.CurrentThread.configData.keyDurationPlay;
+			set => Script.TheScript.Threads.CurrentThread.configData.keyDurationPlay = value;
 		}
 
 		/// <summary>
@@ -2364,8 +2364,8 @@
 		/// </summary>
 		internal static long A_MouseDelay
 		{
-			get => Script.TheScript.Threads.GetThreadVariables().configData.mouseDelay;
-			set => Script.TheScript.Threads.GetThreadVariables().configData.mouseDelay = value;
+			get => Script.TheScript.Threads.CurrentThread.configData.mouseDelay;
+			set => Script.TheScript.Threads.CurrentThread.configData.mouseDelay = value;
 		}
 
 		/// <summary>
@@ -2373,8 +2373,8 @@
 		/// </summary>
 		internal static long A_MouseDelayPlay
 		{
-			get => Script.TheScript.Threads.GetThreadVariables().configData.mouseDelayPlay;
-			set => Script.TheScript.Threads.GetThreadVariables().configData.mouseDelayPlay = value;
+			get => Script.TheScript.Threads.CurrentThread.configData.mouseDelayPlay;
+			set => Script.TheScript.Threads.CurrentThread.configData.mouseDelayPlay = value;
 		}
 
 		/// <summary>
@@ -2382,8 +2382,8 @@
 		/// Unused because Keysharp is compiled and not interpreted.
 		internal static long A_PeekFrequency
 		{
-			get => Script.TheScript.Threads.GetThreadVariables().configData.peekFrequency;
-			set => Script.TheScript.Threads.GetThreadVariables().configData.peekFrequency = value;
+			get => Script.TheScript.Threads.CurrentThread.configData.peekFrequency;
+			set => Script.TheScript.Threads.CurrentThread.configData.peekFrequency = value;
 		}
 
 #if WINDOWS
@@ -2393,8 +2393,8 @@
 		/// </summary>
 		internal static long A_RegView
 		{
-			get => Script.TheScript.Threads.GetThreadVariables().configData.regView;
-			set => Script.TheScript.Threads.GetThreadVariables().configData.regView = value;
+			get => Script.TheScript.Threads.CurrentThread.configData.regView;
+			set => Script.TheScript.Threads.CurrentThread.configData.regView = value;
 		}
 
 #endif
@@ -2405,8 +2405,8 @@
 		/// </summary>
 		internal static long A_SendLevel
 		{
-			get => Script.TheScript.Threads.GetThreadVariables().configData.sendLevel;
-			set => Script.TheScript.Threads.GetThreadVariables().configData.sendLevel = value;
+			get => Script.TheScript.Threads.CurrentThread.configData.sendLevel;
+			set => Script.TheScript.Threads.CurrentThread.configData.sendLevel = value;
 		}
 
 		/// <summary>
@@ -2415,8 +2415,8 @@
 		/// </summary>
 		internal static SendModes A_SendMode
 		{
-			get => Script.TheScript.Threads.GetThreadVariables().configData.sendMode;
-			set => Script.TheScript.Threads.GetThreadVariables().configData.sendMode = value;
+			get => Script.TheScript.Threads.CurrentThread.configData.sendMode;
+			set => Script.TheScript.Threads.CurrentThread.configData.sendMode = value;
 		}
 
 		/// <summary>
@@ -2424,20 +2424,20 @@
 		/// </summary>
 		internal static bool A_StoreCapsLockMode
 		{
-			get => Script.TheScript.Threads.GetThreadVariables().configData.storeCapsLockMode;
-			set => Script.TheScript.Threads.GetThreadVariables().configData.storeCapsLockMode = value;
+			get => Script.TheScript.Threads.CurrentThread.configData.storeCapsLockMode;
+			set => Script.TheScript.Threads.CurrentThread.configData.storeCapsLockMode = value;
 		}
 
 		internal static long A_TitleMatchMode
 		{
-			get => Script.TheScript.Threads.GetThreadVariables().configData.titleMatchMode;
-			set => Script.TheScript.Threads.GetThreadVariables().configData.titleMatchMode = value;
+			get => Script.TheScript.Threads.CurrentThread.configData.titleMatchMode;
+			set => Script.TheScript.Threads.CurrentThread.configData.titleMatchMode = value;
 		}
 
 		internal static bool A_TitleMatchModeSpeed
 		{
-			get => Script.TheScript.Threads.GetThreadVariables().configData.titleMatchModeSpeed;
-			set => Script.TheScript.Threads.GetThreadVariables().configData.titleMatchModeSpeed = value;
+			get => Script.TheScript.Threads.CurrentThread.configData.titleMatchModeSpeed;
+			set => Script.TheScript.Threads.CurrentThread.configData.titleMatchModeSpeed = value;
 		}
 
 		/// <summary>
@@ -2445,8 +2445,8 @@
 		/// </summary>
 		internal static long A_WinDelay
 		{
-			get => Script.TheScript.Threads.GetThreadVariables().configData.winDelay;
-			set => Script.TheScript.Threads.GetThreadVariables().configData.winDelay = value;
+			get => Script.TheScript.Threads.CurrentThread.configData.winDelay;
+			set => Script.TheScript.Threads.CurrentThread.configData.winDelay = value;
 		}
 	}
 }
