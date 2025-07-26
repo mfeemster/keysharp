@@ -30,7 +30,7 @@ namespace Keysharp.Core
 		{
 			var script = Script.TheScript;
 			script.FlowData.callingCritical = true;
-			var tv = script.Threads.GetThreadVariables();
+			var tv = script.Threads.CurrentThread;
 			var on = onOffNumeric == null;
 			long freq = !on ? (onOffNumeric.ParseLong(false) ?? 0L) : 0L;
 
@@ -306,7 +306,7 @@ namespace Keysharp.Core
 			{
 			}
 			else if (f == null)
-				timer = script.Threads.GetThreadVariables().currentTimer;//This means: use the timer which has already been created for this thread/timer event which we are currently inside of.
+				timer = script.Threads.CurrentThread.currentTimer;//This means: use the timer which has already been created for this thread/timer event which we are currently inside of.
 
 			if (timer != null)
 			{
@@ -385,7 +385,7 @@ namespace Keysharp.Core
 				}
 
 				var pri = t.Tag.Ai();
-				var tv = v.GetThreadVariables();
+				var tv = v.CurrentThread;
 
 				if (pri >= tv.priority)
 				{
@@ -553,7 +553,7 @@ namespace Keysharp.Core
 			if (string.Compare(sf, "notimers", true) == 0)
 				A_AllowTimers = !(Options.OnOff(value1.As()) ?? false);
 			else if (string.Compare(sf, "priority", true) == 0)
-				script.Threads.GetThreadVariables().priority = value1.Al();
+				script.Threads.CurrentThread.priority = value1.Al();
 			else if (string.Compare(sf, "interrupt", true) == 0)
 				script.uninterruptibleTime = value1.Ai(script.uninterruptibleTime);
 

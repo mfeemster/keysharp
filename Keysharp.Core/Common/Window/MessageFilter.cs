@@ -8,7 +8,7 @@
 			
 			if (script.GuiData.onMessageHandlers.TryGetValue(m.Msg, out var monitor))
 			{
-				var tv = script.Threads.GetThreadVariables();
+				var tv = script.Threads.CurrentThread;
 
 				if (!script.Threads.AnyThreadsAvailable() || tv.priority > 0)
 					return false;

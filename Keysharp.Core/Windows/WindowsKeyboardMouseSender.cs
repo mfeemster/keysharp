@@ -1799,7 +1799,7 @@ namespace Keysharp.Core.Windows
 			var modifiersLRSpecified = (modifiersLR | modifiersLRPersistent);
 			var script = Script.TheScript;
 			var vkIsMouse = script.HookThread.IsMouseVK(vk); // Caller has ensured that VK is non-zero when it wants a mouse click.
-			var tv = script.Threads.GetThreadVariables().configData;
+			var tv = script.Threads.CurrentThread.configData;
 			var sendLevel = tv.sendLevel;
 
 			for (var i = 0L; i < repeatCount; ++i)
@@ -2002,7 +2002,7 @@ namespace Keysharp.Core.Windows
 				sub = sub.Slice(6);
 			}
 
-			var tv = script.Threads.GetThreadVariables().configData;
+			var tv = script.Threads.CurrentThread.configData;
 			var origKeyDelay = tv.keyDelay;
 			var origPressDuration = tv.keyDuration;
 
