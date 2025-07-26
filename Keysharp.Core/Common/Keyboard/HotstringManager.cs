@@ -13,9 +13,9 @@ namespace Keysharp.Core.Common.Keyboard
 		internal bool hsDoBackspace = true;
 		internal bool hsDoReset;
 		internal bool hsEndCharRequired = true;
-		internal int hsKeyDelay;
+		internal long hsKeyDelay;
 		internal bool hsOmitEndChar;
-		internal int hsPriority;
+		internal long hsPriority;
 		internal bool hsResetUponMouseClick = true;
 		internal bool hsSameLineAction;
 		internal SendModes hsSendMode = SendModes.Input;

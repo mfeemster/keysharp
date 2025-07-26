@@ -42,28 +42,28 @@
 		internal const int HookFail = 0xFF;
 		internal const int HookKeyboard = 0x01;
 		internal const int HookMouse = 0x02;
-		internal const uint KeyBlockThis = KeyIgnore + 1;
+		internal const long KeyBlockThis = KeyIgnore + 1;
 
 		// Below uses a pseudo-random value.It's best that this be constant so that if multiple instances
 		// of the app are running, they will all ignore each other's keyboard & mouse events.  Also, a value
 		// close to UINT_MAX might be a little better since it's might be less likely to be used as a pointer
 		// value by any apps that send keybd events whose ExtraInfo is really a pointer value.
-		internal const uint KeyIgnore = 0xFFC3D44F;
+		internal const long KeyIgnore = 0xFFC3D44F;
 
-		internal const uint KeyIgnoreAllExceptModifier = KeyIgnore - 2;
-		internal const uint KeyIgnoreMax = KeyIgnore;
-		internal const uint KeyPhysIgnore = KeyIgnore - 1;
-		internal const int MaxMouseSpeed = 100;
+		internal const long KeyIgnoreAllExceptModifier = KeyIgnore - 2;
+		internal const long KeyIgnoreMax = KeyIgnore;
+		internal const long KeyPhysIgnore = KeyIgnore - 1;
+		internal const long MaxMouseSpeed = 100L;
 		internal const string ModLRString = "<^>^<!>!<+>+<#>#";
 		internal const uint MsgOffsetMouseMove = 0x80000000;
-		internal const uint SendLevelMax = 100u;
+		internal const long SendLevelMax = 100L;
 		internal const int StateDown = 0x80;
 		internal const int StateOn = 0x01;
 		internal static char[] bracechars = "{}".ToCharArray();
 		internal static string[] CoordModes = ["Client", "Window", "Screen"];
 		internal static char[] llChars = "Ll".ToCharArray();
 		internal bool abortArraySend = false;
-		internal uint altGrExtraInfo = 0u;
+		internal long altGrExtraInfo = 0L;
 		internal SearchValues<char> bracecharsSv = SearchValues.Create(bracechars);
 		internal SearchValues<char> llCharsSv = SearchValues.Create(llChars);
 		internal int maxEvents = 0;
@@ -135,9 +135,9 @@
 			}
 		}
 
-		internal static bool HotInputLevelAllowsFiring(uint inputLevel, ulong aEventExtraInfo, ref char? aKeyHistoryChar)
+		internal static bool HotInputLevelAllowsFiring(long inputLevel, ulong aEventExtraInfo, ref char? aKeyHistoryChar)
 		{
-			if (InputLevelFromInfo(aEventExtraInfo) <= inputLevel)
+			if (InputLevelFromInfo((long)aEventExtraInfo) <= inputLevel)
 			{
 				if (aKeyHistoryChar != null)
 					aKeyHistoryChar = 'i'; // Mark as ignored in KeyHistory
@@ -148,12 +148,12 @@
 			return true;
 		}
 
-		internal static int InputLevelFromInfo(ulong aExtraInfo)
+		internal static long InputLevelFromInfo(long aExtraInfo)
 		{
 			if (aExtraInfo >= KeyIgnoreMin() && aExtraInfo <= KeyIgnoreMax)
-				return (int)(KeyIgnoreLevel(0) - aExtraInfo);
+				return KeyIgnoreLevel(0) - aExtraInfo;
 
-			return (int)(SendLevelMax + 1);
+			return SendLevelMax + 1;
 		}
 
 		/// <summary>
@@ -182,11 +182,11 @@
 		// Note that there are no "level" equivalents for KEY_IGNORE or KEY_PHYS_IGNORE (only KEY_IGNORE_ALL_EXCEPT_MODIFIER).
 		// For the KEY_IGNORE_LEVEL use cases, there isn't a need to ignore modifiers or differentiate between physical
 		// and non-physical, and leaving them out keeps the code much simpler.
-		internal static uint KeyIgnoreLevel(uint level) => KeyIgnoreAllExceptModifier - level;
+		internal static long KeyIgnoreLevel(long level) => KeyIgnoreAllExceptModifier - level;
 
-		internal static uint KeyIgnoreMin() => KeyIgnoreLevel(SendLevelMax);
+		internal static long KeyIgnoreMin() => KeyIgnoreLevel(SendLevelMax);
 
-		internal static bool SendLevelIsValid(uint level) => level >= 0 && level <= SendLevelMax;
+		internal static bool SendLevelIsValid(long level) => level >= 0 && level <= SendLevelMax;
 
 		internal HotkeyDefinition Add(HotkeyDefinition hotkey)
 		{
@@ -343,7 +343,7 @@
 				char? dummy = null;
 				var criterion_found_hwnd = 0L;
 
-				if (!(variant != null || (variant = hk.CriterionAllowsFiring(ref criterion_found_hwnd, msg == (uint)UserMessages.AHK_HOOK_HOTKEY ? KeyIgnoreLevel((uint)Conversions.HighWord(lParamVal)) : 0, ref dummy)) != null))
+				if (!(variant != null || (variant = hk.CriterionAllowsFiring(ref criterion_found_hwnd, (ulong)(msg == (uint)UserMessages.AHK_HOOK_HOTKEY ? KeyIgnoreLevel((uint)Conversions.HighWord(lParamVal)) : 0L), ref dummy)) != null))
 					return;
 
 				if (!script.Threads.AnyThreadsAvailable())//First test global thread count.
@@ -387,7 +387,7 @@
 									   , long aRepeatCount, KeyEventTypes aEventType, uint aKeyAsModifiersLR, nint aTargetWindow
 									   , int aX = CoordUnspecified, int aY = CoordUnspecified, bool aMoveOffset = false);
 
-		internal abstract void SendKeyEventMenuMask(KeyEventTypes aEventType, uint aExtraInfo = KeyIgnoreAllExceptModifier);
+		internal abstract void SendKeyEventMenuMask(KeyEventTypes aEventType, long aExtraInfo = KeyIgnoreAllExceptModifier);
 
 		internal abstract void SendKeys(string aKeys, SendRawModes aSendRaw, SendModes aSendModeOrig, nint aTargetWindow);
 
@@ -404,7 +404,7 @@
 		//protected internal abstract void Send(string keys);
 
 		//protected internal abstract void Send(Keys key);
-		protected internal abstract void SendKeyEvent(KeyEventTypes aEventType, uint aVK, uint aSC = 0u, nint aTargetWindow = default, bool aDoKeyDelay = false, uint aExtraInfo = KeyIgnoreAllExceptModifier);
+		protected internal abstract void SendKeyEvent(KeyEventTypes aEventType, uint aVK, uint aSC = 0u, nint aTargetWindow = default, bool aDoKeyDelay = false, long aExtraInfo = KeyIgnoreAllExceptModifier);
 
 		protected abstract void RegisterHook();
 	}

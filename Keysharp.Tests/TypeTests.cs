@@ -80,7 +80,9 @@ namespace Keysharp.Tests
 			foreach (var t in types)
 			{
 				yield return t;
-				_ = GetNestedTypes(t.GetNestedTypes());
+
+				foreach (var nested in GetNestedTypes(t.GetNestedTypes()))
+					yield return nested;
 			}
 		}
 	}

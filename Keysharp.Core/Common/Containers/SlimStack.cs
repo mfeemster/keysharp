@@ -41,6 +41,7 @@
 		public SlimStack(int capacity, Func<T> factory)
 		{
 			if (capacity <= 0) throw new ArgumentOutOfRangeException(nameof(capacity));
+
 			index = 0;
 			size = capacity;
 			list = new T[size];//All will be null to begin with.
@@ -48,7 +49,7 @@
 		}
 		/// <summary>
 		/// Attempts to push a new object onto the stack.
-		/// Any initialization of the object'capacity internal state must be done by the caller after this function exits.
+		/// Any initialization of the object's internal state must be done by the caller after this function exits.
 		/// </summary>
 		/// <param name="obj">The object to push onto the stack.</param>
 		/// <returns>True if the object was pushed, else false if there was no available space.</returns>
@@ -56,10 +57,12 @@
 		{
 			// Use CAS to bump the count and reserve a slot, then we can safely create the thread object there
 			int slot;
+
 			while (true)
 			{
 				// 1) grab the current count
 				int oldCount = Volatile.Read(ref index);
+
 				if (oldCount >= size)
 				{
 					// stack is full
@@ -80,6 +83,7 @@
 			// 3) now initialize or reuse the element at `list[slot]`.
 			//    No other thread can touch this `slot` until it'capacity popped.
 			obj = Volatile.Read(ref list[slot]);
+
 			if (obj == null)
 			{
 				obj = create();
@@ -98,6 +102,7 @@
 		public T TryPeek()
 		{
 			int cnt = Volatile.Read(ref index);
+
 			if (cnt <= 0 || cnt > list.Length)
 				return null;
 
@@ -105,7 +110,7 @@
 		}
 		/// <summary>
 		/// Removes and returns the most recent element in the stack if it exists.
-		/// Any clearing/destruction of the object'capacity internal state must be done by the caller after this function exits.
+		/// Any clearing/destruction of the object's internal state must be done by the caller after this function exits.
 		/// </summary>
 		/// <param name="obj">A reference to the object which will hold the popped element.
 		/// This will be null if no element was popped.
@@ -115,10 +120,12 @@
 		{
 			// Use CAS to decrease the count and free the current slot
 			int slot;
+
 			while (true)
 			{
 				// 1) read count
 				int oldCount = Volatile.Read(ref index);
+
 				if (oldCount <= 0)
 				{
 					obj = null;
@@ -126,12 +133,14 @@
 				}
 
 				int newCount = oldCount - 1;
+
 				// 2) try to decrement
 				if (Interlocked.CompareExchange(ref index, newCount, oldCount) == oldCount)
 				{
 					slot = newCount;  // this is the top slot
 					break;
 				}
+
 				// else retry
 			}
 

@@ -9,12 +9,12 @@
 		{
 			trampolinePtrs = Enumerable.Range(0, 33)
 							 .Select(n =>
-			{
-				var mi = typeof(DelegateHolder)
-						 .GetMethod($"SharedTrampoline{n}", BindingFlags.Static | BindingFlags.NonPublic);
-				RuntimeHelpers.PrepareMethod(mi.MethodHandle);
-				return mi.MethodHandle.GetFunctionPointer();
-			}).ToArray();
+							 {
+								 var mi = typeof(DelegateHolder)
+										  .GetMethod($"SharedTrampoline{n}", BindingFlags.Static | BindingFlags.NonPublic);
+								 RuntimeHelpers.PrepareMethod(mi.MethodHandle);
+								 return mi.MethodHandle.GetFunctionPointer();
+							 }).ToArray();
 		}
 	}
 
@@ -146,7 +146,7 @@
 
 		[UnmanagedCallersOnly]
 		private static long SharedTrampoline21(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, nint ctx)
-		=> Dispatch(ctx, new[] {p0, p1, p2, p3, p4,  p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20 });
+		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20 });
 
 		[UnmanagedCallersOnly]
 		private static long SharedTrampoline22(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, nint ctx)
@@ -159,39 +159,39 @@
 
 		[UnmanagedCallersOnly]
 		private static long SharedTrampoline24(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, long p23, nint ctx)
-		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4,  p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23 });
+		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23 });
 
 		[UnmanagedCallersOnly]
 		private static long SharedTrampoline25(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, long p23, long p24, nint ctx)
-		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4,  p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24 });
+		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24 });
 
 		[UnmanagedCallersOnly]
 		private static long SharedTrampoline26(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, long p23, long p24, long p25, nint ctx)
-		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4,  p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25 });
+		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25 });
 
 		[UnmanagedCallersOnly]
 		private static long SharedTrampoline27(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, long p23, long p24, long p25, long p26, nint ctx)
-		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4,  p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26 });
+		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26 });
 
 		[UnmanagedCallersOnly]
 		private static long SharedTrampoline28(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, long p23, long p24, long p25, long p26, long p27, nint ctx)
-		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4,  p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26, p27 });
+		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26, p27 });
 
 		[UnmanagedCallersOnly]
 		private static long SharedTrampoline29(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, long p23, long p24, long p25, long p26, long p27, long p28, nint ctx)
-		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4,  p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26, p27, p28 });
+		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26, p27, p28 });
 
 		[UnmanagedCallersOnly]
 		private static long SharedTrampoline30(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, long p23, long p24, long p25, long p26, long p27, long p28, long p29, nint ctx)
-		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4,  p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26, p27, p28, p29 });
+		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26, p27, p28, p29 });
 
 		[UnmanagedCallersOnly]
 		private static long SharedTrampoline31(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, long p23, long p24, long p25, long p26, long p27, long p28, long p29, long p30, nint ctx)
-		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4,  p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26, p27, p28, p29, p30 });
+		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26, p27, p28, p29, p30 });
 
 		[UnmanagedCallersOnly]
 		private static long SharedTrampoline32(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, long p23, long p24, long p25, long p26, long p27, long p28, long p29, long p30, long p31, nint ctx)
-		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4,  p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26, p27, p28, p29, p30, p31 });
+		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26, p27, p28, p29, p30, p31 });
 
 		/// <summary>
 		/// SharedTrampoline calls this function with the arguments packed into an array.
@@ -243,12 +243,12 @@
 		}
 
 		internal static long ConvertResult(object val) => val switch
-	{
+		{
 			long l => l,
-				 bool b => b ? 1L : 0L,
-				 double d => (long)d,
-					 string s => s.Length == 0 ? 0L : 0L,
-					 _ => 0L
+			bool b => b ? 1L : 0L,
+			double d => (long)d,
+			string s => s.Length == 0 ? 0L : 0L,
+			_ => 0L
 		};
 
 		/// <summary>Frees the native stub and drops references.</summary>
@@ -429,10 +429,10 @@
 						*((uint*)ptr) = ldrCtxX8; ptr += 4;
 						// 2) SUB SP, SP, #16            ; carve out an 8-byte slot (aligned)
 						*((uint*)ptr) = 0x910043FF; ptr += 4;  // encoding for SUB SP,SP,#16
-						// 3) STR X8, [SP], #0           ; store ctx at top of stack
-						//    (STR Xt, [SP, #imm]) imm=0
+															   // 3) STR X8, [SP], #0           ; store ctx at top of stack
+															   //    (STR Xt, [SP, #imm]) imm=0
 						*((uint*)ptr) = 0xF90003E8; ptr += 4;  // encoding for STR X8, [SP,#0]
-						// 4) LDR X16, [PC, #imm1]       ; load trampPtr
+															   // 4) LDR X16, [PC, #imm1]       ; load trampPtr
 						uint imm1 = 2;
 						uint ldrTrampX16 = 0x58000000u
 										   | (imm1 << 5)
@@ -464,14 +464,14 @@
 	/// Manages executable memory in 512-byte pages, providing fixed 64-byte chunks for DelegateHolder.
 	/// Automatically allocates new pages when needed and reuses freed chunks.
 	/// This is needed because VirtualAlloc is quite a heavy function, best called as few times as possible.
-	/// 
-	/// The implementation uses a Treiber stack to keep it mostly lock-free. 
+	///
+	/// The implementation uses a Treiber stack to keep it mostly lock-free.
 	/// </summary>
 	public sealed class ExecutableMemoryPoolManager
 	{
 		private const int PageSize = 512;
 		private const int ChunkSize = 64;
-		private readonly Lock _lock = new ();
+		private readonly Lock _lock = new();
 
 		// Treiber‑stack head of free chunks (0 == empty)
 		private nint _freeList;
@@ -519,6 +519,7 @@
 
 			// 2) Fast bump‑pointer carve
 			FastCarve:
+
 			while (true)
 			{
 				// use CAS to bump _currentOffset, and we use the old offset as our memory
@@ -533,6 +534,7 @@
 						var page = Volatile.Read(ref _currentPage);
 						return page + oldOffset;
 					}
+
 					// else another thread won the CAS — retry
 					continue;
 				}
@@ -556,7 +558,6 @@
 				Volatile.Write(ref _currentPage, page);
 				Volatile.Write(ref _currentOffset, ChunkSize);
 				_pages.Add(page);
-
 				// return the first chunk
 				return page;
 			}
@@ -567,6 +568,7 @@
 			while (true)
 			{
 				var head = Volatile.Read(ref _freeList);
+
 				if (head == 0)
 				{
 					// no reusable chunks available
@@ -583,6 +585,7 @@
 					ptr = head;
 					return true;
 				}
+
 				// else retry
 			}
 		}
@@ -608,6 +611,7 @@
 		public void Return(nint ptr)
 		{
 			if (ptr == 0) return;
+
 			PushFree(ptr);
 		}
 

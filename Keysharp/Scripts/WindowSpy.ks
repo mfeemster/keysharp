@@ -26,21 +26,21 @@ WinSpyGui() {
   
     oGui.Add("Text",,"Window Title, Class and Process:")
     oGui.Add("Checkbox","yp xp+200 w120 Right vCtrl_FollowMouse","Follow Mouse").Value := 1
-    oGui.Add("Edit","xm w320 r5 ReadOnly -Wrap vCtrl_Title")
+    oGui.Add("Edit","xm w320 r6 ReadOnly -Wrap vCtrl_Title")
     oGui.Add("Text",,"Mouse Position")
-    oGui.Add("Edit","w320 r4 ReadOnly -Wrap vCtrl_MousePos")
+    oGui.Add("Edit","w320 r5 ReadOnly -Wrap vCtrl_MousePos")
     oGui.Add("Text","w320 vCtrl_CtrlLabel",(txtFocusCtrl := "Focused Control") ":")
-    oGui.Add("Edit","w320 r4 ReadOnly -Wrap vCtrl_Ctrl")
+    oGui.Add("Edit","w320 r6 ReadOnly -Wrap vCtrl_Ctrl")
     oGui.Add("Text",,"Active Window Postition:")
-    oGui.Add("Edit","w320 r2 ReadOnly -Wrap vCtrl_Pos")
+    oGui.Add("Edit","w320 r3 ReadOnly -Wrap vCtrl_Pos")
     oGui.Add("Text",,"Status Bar Text:")
-    oGui.Add("Edit","w320 r2 ReadOnly -Wrap vCtrl_SBText")
+    oGui.Add("Edit","w320 r3 ReadOnly -Wrap vCtrl_SBText")
     oGui.Add("Checkbox","vCtrl_IsSlow","Slow TitleMatchMode")
     oGui.Add("Text",,"Visible Text:")
-    oGui.Add("Edit","w320 r2 ReadOnly -Wrap vCtrl_VisText")
+    oGui.Add("Edit","w320 r3 ReadOnly -Wrap vCtrl_VisText")
     oGui.Add("Text",,"All Text:")
-    oGui.Add("Edit","w320 r2 ReadOnly -Wrap vCtrl_AllText")
-    oGui.Add("Text","w320 r1 vCtrl_Freeze",(txtNotFrozen := "(Hold Ctrl or Shift to suspend updates)"))
+    oGui.Add("Edit","w320 r3 ReadOnly -Wrap vCtrl_AllText")
+    oGui.Add("Text","w320 r2 vCtrl_Freeze",(txtNotFrozen := "(Hold Ctrl or Shift to suspend updates)"))
   
     oGui.Show("NoActivate")
     WinGetClientPos(&x_temp, &y_temp2,,,"ahk_id " oGui.hwnd)
@@ -66,10 +66,11 @@ WinSpySize(GuiObj, MinMax, Width, Height) {
     ctrlW := Width - (oGui.MarginX * 2) ; ctrlW := Width - horzMargin
     list := "Title,MousePos,Ctrl,Pos,SBText,VisText,AllText,Freeze"
     Loop Parse list, ","
-{
-    ctrl := oGui["Ctrl_" A_LoopField]
-    ctrl.Move(,,ctrlW)
-}
+	{
+		ctrl := oGui["Ctrl_" A_LoopField]
+
+		ctrl.Move(,,ctrlW)
+	}
 }
 
 WinSpyClose(GuiObj) {

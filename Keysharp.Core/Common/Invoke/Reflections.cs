@@ -587,6 +587,7 @@ namespace Keysharp.Core.Common.Invoke
 			foreach (var t in types)
 			{
 				yield return t;
+
 				foreach (var nested in GetNestedTypes(t.GetNestedTypes()))
 					yield return nested;
 			}
