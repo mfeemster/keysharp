@@ -1932,7 +1932,7 @@ namespace Keysharp.Core.Common.Keyboard
 				originalCallback = Proc,
 				maxThreads = A_MaxThreadsPerHotkey.Aui(),    // The values of these can vary during load-time.
 				maxThreadsBuffer = A_MaxThreadsBuffer.Ab(),
-				inputLevel = (uint)A_InputLevel,
+				inputLevel = (long)A_InputLevel,
 				hotCriterion = Script.TheScript.Threads.CurrentThread.hotCriterion, // If this hotkey is an alt-tab one (mHookAction), this is stored but ignored until/unless the Hotkey command converts it into a non-alt-tab hotkey.
 				suspendExempt = A_SuspendExempt.Ab(),
 				noSuppress = _noSuppress,
