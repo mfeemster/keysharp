@@ -52,7 +52,17 @@ namespace Keysharp.Scripting
                             Parser.PredefinedKeywords.StaticToken
                         )
                     )
-                    .WithBody(
+					.WithParameterList(
+						SyntaxFactory.ParameterList(
+							SyntaxFactory.SingletonSeparatedList(
+								SyntaxFactory.Parameter(
+									SyntaxFactory.Identifier("thishotkey")
+								)
+								.WithType(SyntaxFactory.PredefinedType(Parser.PredefinedKeywords.Object))
+							)
+						)
+					)
+					.WithBody(
                         SyntaxFactory.Block(
                             SyntaxFactory.SingletonList<StatementSyntax>(
                                 SyntaxFactory.ReturnStatement(
