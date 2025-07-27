@@ -1040,7 +1040,7 @@ namespace Keysharp.Scripting
 				var copy = code;
 				var isstatic = false;
 
-				if (copy.StartsWith("static "))
+				if (copy.StartsWith("static ", StringComparison.OrdinalIgnoreCase))
 				{
 					copy = copy.Substring(7, code.Length - 7);
 					isstatic = true;

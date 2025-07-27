@@ -1956,7 +1956,7 @@ namespace Keysharp.Core.Windows
 			var sub = keys.AsSpan();
 			var ht = script.HookThread;
 
-			if (inBlindMode = ((sendRaw == SendRawModes.NotRaw) && keys.StartsWith("{Blind"))) // Don't allow {Blind} while in raw mode due to slight chance {Blind} is intended to be sent as a literal string.
+			if (inBlindMode = ((sendRaw == SendRawModes.NotRaw) && keys.StartsWith("{Blind", StringComparison.OrdinalIgnoreCase))) // Don't allow {Blind} while in raw mode due to slight chance {Blind} is intended to be sent as a literal string.
 			{
 				// Blind Mode (since this seems too obscure to document, it's mentioned here):  Blind Mode relies
 				// on modifiers already down for something like ^c because ^c is saying "manifest a ^c", which will
@@ -1995,7 +1995,7 @@ namespace Keysharp.Core.Windows
 				sub = keySpan.Slice(i);
 			}
 
-			if ((sendRaw == SendRawModes.NotRaw) && sub.StartsWith("{Text}"))
+			if ((sendRaw == SendRawModes.NotRaw) && sub.StartsWith("{Text}", StringComparison.OrdinalIgnoreCase))
 			{
 				// Setting this early allows CapsLock and the Win+L workaround to be skipped:
 				sendRaw = SendRawModes.RawText;
@@ -2454,7 +2454,7 @@ namespace Keysharp.Core.Windows
 										{
 											eventType = KeyEventTypes.KeyUp;
 										}
-										else if (!subspan.StartsWith("ASC"))
+										else if (!subspan.StartsWith("ASC", StringComparison.OrdinalIgnoreCase))
 										{
 											if (long.TryParse(nextWord, out var templ))
 											{

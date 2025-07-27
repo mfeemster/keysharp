@@ -189,7 +189,7 @@
 			{
 				var trimSplit = split.TrimStart();
 
-				if (trimSplit.StartsWith("href=") || trimSplit.StartsWith("id="))
+				if (trimSplit.StartsWith("href=", StringComparison.OrdinalIgnoreCase) || trimSplit.StartsWith("id=", StringComparison.OrdinalIgnoreCase))
 				{
 					var id = "";
 					var url = "";

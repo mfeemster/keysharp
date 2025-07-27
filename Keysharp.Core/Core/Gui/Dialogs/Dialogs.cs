@@ -180,7 +180,7 @@ namespace Keysharp.Core
 				}
 			}
 
-			if (!f.Contains("All Files (*.*)|*.*"))
+			if (!f.Contains("All Files (*.*)|*.*", StringComparison.OrdinalIgnoreCase))
 				f += "|All Files (*.*)|*.*";
 
 			if (save)
