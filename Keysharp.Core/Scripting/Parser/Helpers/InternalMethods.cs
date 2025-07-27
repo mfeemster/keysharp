@@ -59,7 +59,6 @@ namespace Keysharp.Scripting
 			internal static MethodReference Inc => new (typeof(Loops), "Inc");
 			internal static MethodReference Index => new (typeof(Script), "Index");
 			internal static MethodReference Invoke => new (typeof(Script), "Invoke");
-			internal static MethodReference InvokeWithRefs => new (typeof(Script), "InvokeWithRefs");
 			internal static MethodReference LabelCall => new (typeof(Script), "LabelCall");
 			internal static MethodReference Loop => new (typeof(Loops), "Loop");
 			internal static MethodReference LoopFile => new (typeof(Loops), "LoopFile");

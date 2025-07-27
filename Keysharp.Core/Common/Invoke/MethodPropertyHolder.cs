@@ -1,4 +1,5 @@
 ﻿//#define CONCURRENT
+using Antlr4.Runtime.Misc;
 using Label = System.Reflection.Emit.Label;
 
 namespace Keysharp.Core.Common.Invoke
@@ -14,23 +15,27 @@ namespace Keysharp.Core.Common.Invoke
                 if (_callFunc != null)
                     return _callFunc;
 
-				var del = DelegateFactory.CreateDelegate(mi);
+				var del = DelegateFactory.CreateDelegate(this);
 
 				if (isGuiType)
 				{
-					_callFunc = (inst, obj) =>
+					_callFunc = (inst, args) =>
 					{
-						var ctrl = (inst ?? obj[0]).GetControl();
+						var ctrl = (inst ?? args[0]).GetControl();
 						object ret = null;
+                        ValidateArgCount(inst, args);
 						ctrl.CheckedInvoke(() =>
 						{
-							ret = del(inst, obj);
+							ret = del(inst, args);
 						}, true);
 						return ret;
 					};
 				}
 				else
-					_callFunc = del;
+					_callFunc = (inst, args) => {
+                        ValidateArgCount(inst, args);
+                        return del(inst, args);
+                    };
 
                 return _callFunc;
 			}
@@ -40,10 +45,11 @@ namespace Keysharp.Core.Common.Invoke
 		internal readonly PropertyInfo pi;
 		internal readonly Action<object, object> SetProp;
 		protected readonly ConcurrentStackArrayPool<object> paramsPool;
-		private readonly bool anyOptional;
-		private readonly bool isGuiType;
-		private readonly int startVarIndex = -1;
-		private readonly int stopVarIndexDistanceFromEnd;
+		internal readonly bool anyOptional;
+		internal readonly bool isGuiType;
+		internal readonly bool isSetter;
+		internal readonly bool isItemSetter;
+		internal readonly int variadicParamIndex = -1;
 
 #if CONCURRENT
         internal static ConcurrentDictionary<MethodInfo, MethodPropertyHolder> methodCache = new();
@@ -56,11 +62,15 @@ namespace Keysharp.Core.Common.Invoke
 		internal bool IsBind { get; private set; }
 		internal bool IsStaticFunc { get; private set; }
 		internal bool IsStaticProp { get; private set; }
-		internal bool IsVariadic => startVarIndex != -1;
+		internal bool IsVariadic => variadicParamIndex != -1;
 		internal int ParamLength { get; }
 		internal int MinParams = 0;
 		internal int MaxParams = 9999;
-		
+
+        private const string setterPrefix = "set_";
+        private const string classSetterPrefix = Keywords.ClassStaticPrefix + setterPrefix;
+
+
 		public static MethodPropertyHolder GetOrAdd(MethodInfo mi)
         {
 #if CONCURRENT
@@ -83,34 +93,40 @@ namespace Keysharp.Core.Common.Invoke
 #endif
         }
 
-        internal MethodPropertyHolder() { }
+        public MethodPropertyHolder() { }
 
-		internal MethodPropertyHolder(MethodInfo m)
+		public MethodPropertyHolder(MethodInfo m)
         {
             mi = m;
 
+			IsStaticFunc = mi.Attributes.HasFlag(MethodAttributes.Static);
+			isGuiType = Gui.IsGuiType(mi.DeclaringType);
+
 			parameters = mi.GetParameters();
 			ParamLength = parameters.Length;
-			isGuiType = Gui.IsGuiType(mi.DeclaringType);
-			anyOptional = parameters.Any(p => p.IsOptional || p.IsVariadic());
+
+			// Determine if the method is a set_Item overload.
+			isSetter = mi.Name.StartsWith(setterPrefix) || mi.Name.StartsWith(classSetterPrefix);
+			isItemSetter = mi.Name == "set_Item";
 
 			for (var i = 0; i < parameters.Length; i++)
 			{
 				var pmi = parameters[i];
 
-			    if (pmi.ParameterType == typeof(object[]))
-					startVarIndex = i;
-				else if (startVarIndex != -1 && stopVarIndexDistanceFromEnd == 0)
-					stopVarIndexDistanceFromEnd = parameters.Length - i;
-
-				if (!(pmi.IsOptional || pmi.IsVariadic() || pmi.ParameterType == typeof(object[])))
-					MinParams++;
+                if (pmi.IsVariadic() || ((pmi.ParameterType == typeof(object[])) && (i == (isItemSetter ? parameters.Length - 2 : parameters.Length - 1))))
+                    variadicParamIndex = i;
+                else
+                {
+					if (!pmi.IsOptional)
+						MinParams++;
+				}
 			}
 
-			if (startVarIndex == -1)
+			if (variadicParamIndex == -1)
 				MaxParams = parameters.Length;
 
-			IsStaticFunc = mi.Attributes.HasFlag(MethodAttributes.Static);
+            anyOptional = MinParams != MaxParams;
+
 			var isFuncObj = typeof(IFuncObj).IsAssignableFrom(mi.DeclaringType);
 
 			if (isFuncObj && mi.Name == "Bind")
@@ -120,222 +136,9 @@ namespace Keysharp.Core.Common.Invoke
 			{
 				_callFunc = (inst, obj) => ((IFuncObj)inst).Call(obj);
 			}
-			else
-			{
-
-			}
-
-
-			/*
-				if (ParamLength == 0)
-				{
-					if (isGuiType)
-					{
-						CallFunc = (inst, obj) =>
-						{
-							object ret = null;
-							var ctrl = inst.GetControl();//If it's a gui control, then invoke on the gui thread.
-							ctrl.CheckedInvoke(() =>
-							{
-								ret = mi.Invoke(inst, null);
-							}, true);//This can be null if called before a Gui object is fully initialized.
-							return ret;
-						};
-					}
-					else
-						CallFunc = (inst, obj) => mi.Invoke(inst, null);
-				}
-				else
-				{
-					paramsPool = new ConcurrentStackArrayPool<object>(ParamLength);
-
-					if (IsVariadic)
-					{
-                        CallFunc = (inst, obj) =>
-						{
-							object[] newobj = null;
-							object[] lastArr = null;
-							var objLength = obj.Length;
-
-							if (ParamLength == 1)
-							{
-								if (obj.Length == 1)
-									newobj = [obj];
-								else
-									newobj = [obj.FlattenNativeArray(true).ToArray()];
-							}
-							else
-							{
-								//The slowest case: a function is trying to be called with a different number of parameters than it actually has, or it's variadic,
-								//so manually create an array of parameters that matches the required size.
-								var oi = 0;
-								var pi = 0;
-								_ = paramsPool.TryPush(out newobj, true);
-
-								for (; oi < objLength && pi < ParamLength; pi++)
-								{
-									if (pi == startVarIndex)
-									{
-										if (objLength == ParamLength && obj[pi] is object[] obarr)//There was just one variadic parameter and it was already an array, usuall from a call like func(arr*).
-										{
-											newobj[pi] = obarr;
-										}
-										else
-										{
-											var om1 = obj[pi] == null ? 0 : (objLength - startVarIndex) - stopVarIndexDistanceFromEnd;//obj[pi] == null means null was passed for the variadic parameter.
-											lastArr = new object[om1];//Can't really use a pool here because we don't know the exact size ahead of time.
-
-											for (var i = 0; i < om1; i++)
-											{
-												lastArr[i] = obj[pi + i];
-												oi++;
-											}
-
-											newobj[pi] = lastArr;
-										}
-									}
-									else
-									{
-										var ooi = obj[oi++];
-										var ppi = parameters[pi];
-
-										if (ooi == null && ppi.IsOptional)
-											newobj[pi] = ppi.DefaultValue;
-										else
-											newobj[pi] = ooi;
-									}
-								}
-                                //newobj[^1] ??= new object[] { };
-
-								if (anyOptional)
-									for (; pi < ParamLength; pi++)
-										if (parameters[pi].IsOptional)
-											newobj[pi] = parameters[pi].DefaultValue;
-										else if (parameters[pi].IsVariadic())
-											newobj[pi] = System.Array.Empty<object>();
-							}
-
-							//Any remaining items in newobj are null by default.
-							object ret = null;
-
-							if (!isGuiType)
-							{
-								ret = mi.Invoke(inst, newobj);
-							}
-							else//If it's a gui control, then invoke on the gui thread.
-							{
-								var ctrl = inst.GetControl();
-								ctrl.CheckedInvoke(() =>
-								{
-									ret = mi.Invoke(inst, newobj);
-								}, true);//This can be null if called before a Gui object is fully initialized.
-							}
-
-							//In case any params were references.
-							if (ParamLength > 1)
-							{
-								var len = Math.Min(newobj.Length, obj.Length);
-
-								if (startVarIndex != -1)
-								{
-									for (var pi = 0; pi < len; pi++)
-									{
-										if (pi == startVarIndex)//Expand the variadic args back into the flat array.
-										{
-											var arr = newobj[pi] as object[];
-
-											if (objLength == ParamLength)
-											{
-												obj[pi] = arr;
-											}
-											else
-											{
-												for (var vi = 0; pi < obj.Length && vi < arr.Length; pi++, vi++)
-													obj[pi] = arr[vi];
-											}
-										}
-										else
-											obj[pi] = newobj[pi];
-									}
-								}
-								else
-									System.Array.Copy(newobj, obj, len);
-
-								_ = paramsPool.TryPop(out newobj, true);
-							}
-
-							return ret;
-						};
-					}
-					else
-					{
-                        CallFunc = (inst, obj) =>
-						{
-							object ret = null;
-							var objLength = obj.Length;
-
-							if (ParamLength == objLength)
-							{
-								if (anyOptional)
-									for (var pi = 0; pi < ParamLength; ++pi)
-										if (obj[pi] == null && parameters[pi].IsOptional)
-											obj[pi] = parameters[pi].DefaultValue;
-
-                                if (!isGuiType)
-								{
-									ret = mi.Invoke(inst, obj);
-								}
-								else//If it's a gui control, then invoke on the gui thread.
-								{
-									var ctrl = inst.GetControl();
-									ctrl.CheckedInvoke(() =>
-									{
-										ret = mi.Invoke(inst, obj);
-									}, true);//This can be null if called before a Gui object is fully initialized.
-								}
-							}
-							else
-							{
-								var pi = 0;//The slower case: a function is trying to be called with a different number of parameters than it actually has, so manually create an array of parameters that matches the required size.
-								_ = paramsPool.TryPush(out var newobj, true);
-
-								for (; pi < objLength && pi < ParamLength; ++pi)
-									if (obj[pi] == null && parameters[pi].IsOptional)
-										newobj[pi] = parameters[pi].DefaultValue;
-									else
-										newobj[pi] = obj[pi];
-
-								if (anyOptional)
-									for (; pi < ParamLength; ++pi)
-										if (parameters[pi].IsOptional)
-											newobj[pi] = parameters[pi].DefaultValue;
-
-                                //Any remaining items in newobj are null by default.
-                                if (!isGuiType)
-								{
-									ret = mi.Invoke(inst, newobj);
-								}
-								else//If it's a gui control, then invoke on the gui thread.
-								{
-									var ctrl = inst.GetControl();
-									ctrl.CheckedInvoke(() =>
-									{
-										ret = mi.Invoke(inst, newobj);
-									}, true);//This can be null if called before a Gui object is fully initialized.
-								}
-
-								System.Array.Copy(newobj, obj, Math.Min(newobj.Length, objLength));//In case any params were references.
-								_ = paramsPool.TryPop(out newobj, true);
-							}
-
-							return ret;
-						};
-					}
-				}
-            */
 		}
 
-		internal MethodPropertyHolder(PropertyInfo p)
+		public MethodPropertyHolder(PropertyInfo p)
 		{
             pi = p;
 			isGuiType = Gui.IsGuiType(pi.DeclaringType);
@@ -363,17 +166,17 @@ namespace Keysharp.Core.Common.Invoke
 
 							return ret;
 						};
-						SetProp = (inst, obj) =>
+						SetProp = (inst, arg) =>
 						{
 							var ctrl = inst.GetControl();//If it's a gui control, then invoke on the gui thread.
-							ctrl.CheckedInvoke(() => pi.SetValue(null, obj), true);//This can be null if called before a Gui object is fully initialized.
+							ctrl.CheckedInvoke(() => pi.SetValue(null, arg), true);//This can be null if called before a Gui object is fully initialized.
 						};
 					}
 					else
 					{
 						if (pi.PropertyType == typeof(int))
 						{
-							_callFunc = (inst, obj) =>
+							_callFunc = (inst, arg) =>
 							{
 								var ret = pi.GetValue(null);
 
@@ -393,13 +196,13 @@ namespace Keysharp.Core.Common.Invoke
 			{
 				if (isGuiType)
 				{
-					_callFunc = (inst, obj) =>
+					_callFunc = (inst, args) =>
 					{
 						object ret = null;
-						var ctrl = (inst ?? obj[0]).GetControl();//If it's a gui control, then invoke on the gui thread.
+						var ctrl = (inst ?? args[0]).GetControl();//If it's a gui control, then invoke on the gui thread.
 						ctrl.CheckedInvoke(() =>
 						{
-							ret = pi.GetValue(inst ?? obj[0]);
+							ret = pi.GetValue(inst ?? args[0]);
 						}, true);//This can be null if called before a Gui object is fully initialized.
 
 						if (ret is int i)
@@ -439,6 +242,29 @@ namespace Keysharp.Core.Common.Invoke
 			methodCache.Clear();
             propertyCache.Clear();
 		}
+
+		internal void ValidateArgCount(object inst, object[] args)
+		{
+            int lastProvided = args?.Length ?? 0;
+			var provided = lastProvided + (inst == null ? 0 : 1);
+
+            if (!mi.IsStatic)
+                provided--;
+
+            for (int i = lastProvided - 1; i >= 0; i--)
+            {
+                if (args[i] == null)
+                    provided--;
+                else
+                    break;
+            }
+
+			if (provided < MinParams)
+				throw new ValueError("Too few arguments provided");
+
+			if (!IsVariadic && provided > MaxParams)
+				throw new ValueError("Too many arguments provided");
+		}
 	}
     public class ArgumentError : Error
     {
@@ -451,13 +277,15 @@ namespace Keysharp.Core.Common.Invoke
 	[PublicForTestOnly]
 	public static class DelegateFactory
     {
-
-        /// <summary>
-        /// Creates a delegate of type Func<object, object[], object></object>that will call the given MethodInfo.
-        /// It will check for missing parameters and if the parameter is optional, it uses its DefaultValue.
-        /// </summary>
-        public static Func<object, object[], object> CreateDelegate(MethodInfo method)
+        public static Func<object, object[], object> CreateDelegate(MethodInfo mi) => CreateDelegate(new MethodPropertyHolder(mi));
+		/// <summary>
+		/// Creates a delegate of type Func<object, object[], object></object>that will call the given MethodInfo.
+		/// It will check for missing parameters and if the parameter is optional, it uses its DefaultValue.
+		/// </summary>
+		public static Func<object, object[], object> CreateDelegate(MethodPropertyHolder mph)
         {
+            var method = mph.mi;
+
             if (method == null)
                 throw new ArgumentNullException(nameof(method));
 
@@ -610,111 +438,6 @@ namespace Keysharp.Core.Common.Invoke
             il.Emit(OpCodes.Conv_I4);
             il.Emit(OpCodes.Stloc, providedCountLocal);
 
-            // Compute available argument count for parameters:
-            LocalBuilder availableCountLocal = il.DeclareLocal(typeof(int));
-            il.Emit(OpCodes.Ldloc, providedCountLocal);
-            il.Emit(OpCodes.Ldloc, paramOffset);
-            il.Emit(OpCodes.Sub);
-            il.Emit(OpCodes.Stloc, availableCountLocal);
-
-            // Determine if the method is a set_Item overload.
-            bool isSetter = method.Name.StartsWith("set_") || method.Name.StartsWith(Keywords.ClassStaticPrefix + "set_");
-            bool isSetItem = (method.Name == "set_Item");
- 
-            // Parameter count pre-check
-            int formalCount = parameters.Length;
-            if (isSetItem)
-            {
-                // Compute nonOptionalIndexCount over parameters[0 .. formalCount-2]:
-                int nonOptionalIndexCount = 0;
-                for (int j = 0; j < formalCount - 1; j++)
-                {
-                    if (!parameters[j].IsOptional)
-                        nonOptionalIndexCount++;
-                }
-				// Determine if this is the special case: the index parameter is an object[]
-				// (i.e. the second-to-last parameter is of type object[])
-				bool isSpecialSetItem = (formalCount > 1 &&
-										 parameters[formalCount - 2].ParameterType == typeof(object[]));
-
-				if (isSpecialSetItem)
-					nonOptionalIndexCount -= 1;
-
-				int minRequired = nonOptionalIndexCount + 1; // at least one for the "value"
-
-                // --- Emit IL to check that availableCountLocal >= minRequired ---
-                il.Emit(OpCodes.Ldloc, availableCountLocal);          // push availableCountLocal
-                il.Emit(OpCodes.Ldc_I4, minRequired);                  // push minRequired
-                Label setItemOkLabel = il.DefineLabel();
-                il.Emit(OpCodes.Bge_S, setItemOkLabel);                // if availableCountLocal >= minRequired, branch
-                il.Emit(OpCodes.Newobj, typeof(ArgumentError)
-                                         .GetConstructor(Type.EmptyTypes));
-                il.Emit(OpCodes.Throw);
-                il.MarkLabel(setItemOkLabel);
-
-                // --- For non-special set_Item, also check that availableCountLocal <= formalCount ---
-                if (!isSpecialSetItem)
-                {
-                    il.Emit(OpCodes.Ldloc, availableCountLocal);
-                    il.Emit(OpCodes.Ldc_I4, formalCount);
-                    Label setItemOkLabel2 = il.DefineLabel();
-                    il.Emit(OpCodes.Ble_S, setItemOkLabel2);           // if availableCountLocal <= formalCount, ok
-                    il.Emit(OpCodes.Newobj, typeof(ArgumentError)
-                                             .GetConstructor(Type.EmptyTypes));
-                    il.Emit(OpCodes.Throw);
-                    il.MarkLabel(setItemOkLabel2);
-                }
-            }
-            else
-            {
-                // For normal methods:
-                bool hasParams = false;
-                if (formalCount > 0)
-                {
-                    ParameterInfo lastParam = parameters[formalCount - 1];
-                    hasParams = lastParam.ParameterType.IsArray;
-                }
-
-                // If there is a params parameter, only parameters before it are required.
-                int requiredCount = 0;
-                int paramLimit = formalCount;
-                if (hasParams)
-                {
-                    paramLimit = formalCount - 1;
-                }
-                for (int j = 0; j < paramLimit; j++)
-                {
-                    if (!parameters[j].IsOptional)
-                        requiredCount++;
-                }
-
-                if (isSetter)
-                    requiredCount--; // Allow value to be null
-
-                // Check that availableCountLocal >= requiredCount.
-                il.Emit(OpCodes.Ldloc, availableCountLocal);
-                il.Emit(OpCodes.Ldc_I4, requiredCount);
-                Label normalOkLabel = il.DefineLabel();
-                il.Emit(OpCodes.Bge_S, normalOkLabel);
-                il.Emit(OpCodes.Newobj, typeof(ArgumentError)
-                                         .GetConstructor(Type.EmptyTypes));
-                il.Emit(OpCodes.Throw);
-                il.MarkLabel(normalOkLabel);
-
-                // Now, if there is no params parameter, ensure that availableCountLocal is not greater than formalCount.
-                if (!hasParams)
-                {
-                    il.Emit(OpCodes.Ldloc, availableCountLocal);
-                    il.Emit(OpCodes.Ldc_I4, formalCount);
-                    Label normalOkLabel2 = il.DefineLabel();
-                    il.Emit(OpCodes.Ble_S, normalOkLabel2);  // if availableCountLocal <= formalCount, ok
-                    il.Emit(OpCodes.Newobj, typeof(ArgumentError)
-                                             .GetConstructor(Type.EmptyTypes));
-                    il.Emit(OpCodes.Throw);
-                    il.MarkLabel(normalOkLabel2);
-                }
-            }
-
             // --- Parameter Processing ---
             // For each formal parameter at index i, load the effective argument from:
             //    argsLocal[paramOffset + i]
@@ -725,18 +448,12 @@ namespace Keysharp.Core.Common.Invoke
 
                 // Determine special flags.
                 // For set_Item, the final parameter ("value") should come from the last argument.
-                bool isSetItemValue = isSetItem && (i == parameters.Length - 1);
-                // For set_Item, if the second-to-last parameter is of type object[],
-                // treat it as a params parameter.
-                bool isSpecialParams = isSetItem && (i == parameters.Length - 2) && (pi.ParameterType == typeof(object[]));
+                bool isSetItemValue = mph.isItemSetter && (i == parameters.Length - 1);
                 // For non-set_Item methods, a normal params parameter is the last parameter marked with [ParamArray].
-                bool isParams = (!isSetItem) &&
-                                (i == parameters.Length - 1) &&
-                                //pi.IsDefined(typeof(ParamArrayAttribute), false) &&
-                                pi.ParameterType.IsArray;
+                bool isParams = i == mph.variadicParamIndex;
 
                 // --- Branch for Params (or special set_Item params) ---
-                if (isParams || isSpecialParams)
+                if (isParams)
                 {
                     // Compute count: the number of arguments to pack.
                     // For special params, reserve one argument for the final "value":
@@ -744,7 +461,7 @@ namespace Keysharp.Core.Common.Invoke
                     // For normal params:
                     //    count = argsLocal.Length - (paramOffset + i)
                     LocalBuilder countLocal = il.DeclareLocal(typeof(int));
-                    if (isSpecialParams)
+                    if (mph.isItemSetter)
                     {
                         il.Emit(OpCodes.Ldloc, argsLocal);   // push argsLocal
                         il.Emit(OpCodes.Ldlen);                // push argsLocal.Length
@@ -843,7 +560,7 @@ namespace Keysharp.Core.Common.Invoke
                     il.Emit(OpCodes.Blt_S, argProvided);
 
                     // No argument provided for this parameter.
-                    if (pi.IsOptional || (isSetter && i == (parameters.Length - 1)))
+                    if (pi.IsOptional || (mph.isSetter && i == (parameters.Length - 1)))
                     {
                         // Load the default value.
                         object defVal = pi.DefaultValue;
@@ -881,7 +598,7 @@ namespace Keysharp.Core.Common.Invoke
 
                     // It is null: remove the null value.
                     il.Emit(OpCodes.Pop);
-                    if (pi.IsOptional || (isSetter && i == (parameters.Length - 1)))
+                    if (pi.IsOptional || (mph.isSetter && i == (parameters.Length - 1)))
                     {
                         // Load the default value.
                         object defVal = pi.DefaultValue;
@@ -941,7 +658,7 @@ namespace Keysharp.Core.Common.Invoke
             if (getter == null)
                 throw new ArgumentException("The provided property does not have a getter.", nameof(property));
 
-            return CreateDelegate(getter);
+            return CreateDelegate(new MethodPropertyHolder(getter));
         }
 
         public static void EmitThrowError(ILGenerator il, string errorMessage, string methodName, LocalBuilder code)
