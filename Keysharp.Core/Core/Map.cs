@@ -1,4 +1,6 @@
-﻿namespace Keysharp.Core
+﻿using System.Linq;
+
+namespace Keysharp.Core
 {
 	/// <summary>
 	/// A comparer which allows the caller to specify the case comparison mode for comparing strings.
@@ -20,21 +22,21 @@
 			//Choose an appropriate built-in StringComparer.
 
 			stringComparer = caseSense switch
-		{
-				eCaseSense.On => StringComparer.Ordinal,
-				eCaseSense.Off => StringComparer.OrdinalIgnoreCase,
-				_ => StringComparer.CurrentCultureIgnoreCase,
-		};
-	}
+			{
+					eCaseSense.On => StringComparer.Ordinal,
+					eCaseSense.Off => StringComparer.OrdinalIgnoreCase,
+					_ => StringComparer.CurrentCultureIgnoreCase,
+			};
+		}
 
-	/// <summary>
-	/// The implementation for <see cref="IEqualityComparer.Equals"/> which compares two objects.
-	/// If both objects are strings, then the case sensitivity mode specified in the constructor is used.
-	/// </summary>
-	/// <param name="x">The first object to compare.</param>
-	/// <param name="y">The second object to compare.</param>
-	/// <returns>True if the two objects are equal, else false.</returns>
-	public new bool Equals(object x, object y)
+		/// <summary>
+		/// The implementation for <see cref="IEqualityComparer.Equals"/> which compares two objects.
+		/// If both objects are strings, then the case sensitivity mode specified in the constructor is used.
+		/// </summary>
+		/// <param name="x">The first object to compare.</param>
+		/// <param name="y">The second object to compare.</param>
+		/// <returns>True if the two objects are equal, else false.</returns>
+		public new bool Equals(object x, object y)
 		{
 			//If both are strings, use the built-in comparer.
 			if (x is string s1 && y is string s2)
@@ -60,15 +62,55 @@
 		}
 	}
 
-    /// <summary>
-    /// Map class that wraps a <see cref="Dictionary{object, object}"/>.
-    /// </summary>
-    public class Map : KeysharpObject, I__Enum, IEnumerable<(object, object)>, ICollection
+	class MapComparer : IComparer<object>
+	{
+		private readonly StringComparer stringComparer;
+		public MapComparer(eCaseSense caseSense)
+		{
+			stringComparer = caseSense switch
+			{
+				eCaseSense.On => StringComparer.Ordinal,
+				eCaseSense.Off => StringComparer.OrdinalIgnoreCase,
+				_ => StringComparer.CurrentCultureIgnoreCase,
+			};
+		}
+		public int Compare(object x, object y)
+		{
+			if (x is long ll1)
+			{
+				if (y is long ll2)
+					return ll1.CompareTo(ll2);
+				else
+					return -1;
+			}
+			else if (y is long)
+				return 1;
+
+			if (x is string s1)
+			{
+				if (y is string s2)
+					return stringComparer.Compare(s1, s2);
+				else
+					return 1;
+			}
+			else if (y is string)
+				return -1;
+
+			var h1 = x.GetHashCode();
+			var h2 = y.GetHashCode();
+			return h1.CompareTo(h2);
+		}
+	}
+
+	/// <summary>
+	/// Map class that wraps a <see cref="Dictionary{object, object}"/>.
+	/// </summary>
+	public class Map : KeysharpObject, I__Enum, IEnumerable<(object, object)>, ICollection
 	{
         /// <summary>
         /// The underlying <see cref="Dictionary"/> that holds the values.
         /// </summary>
-        internal Dictionary<object, object> map;
+        internal SortedList<object, object> map;
 
 		/// <summary>
 		/// The case comparison to use for string keys.
@@ -78,10 +120,9 @@
 		/// <summary>
 		/// Gets or sets the capacity of the map.
 		/// </summary>
-		public object Capacity
-		{
-			get => map != null ? map.Capacity : 0L;
-			set => map?.EnsureCapacity(value.Ai());
+		public long Capacity { 
+			get => map.Capacity;
+			set => map.Capacity = value.Ai();
 		}
 
 		/// <summary>
@@ -112,7 +153,7 @@
 				}
 
 				if (caseSense != oldVal)
-					map = new Dictionary<object, object>(new CaseEqualityComp(caseSense));
+					map = new SortedList<object, object>(new MapComparer(caseSense));
 			}
 		}
 
@@ -418,7 +459,7 @@
 			if (args == null || args.Length == 0)
 			{
 				if (map == null)
-					map = new Dictionary<object, object>(new CaseEqualityComp(caseSense));
+					map = new SortedList<object, object>(new MapComparer(caseSense));
 				else
 					map.Clear();
 			}
@@ -432,7 +473,7 @@
 						caseSense = m.caseSense;
 						return;
 					}
-					else if (args[0] is Dictionary<object, object> dkt)
+					else if (args[0] is SortedList<object, object> dkt)
 					{
 						map = dkt;
 					}
@@ -441,9 +482,7 @@
 						var count = (temp.Count / 2) * 2;//Do not flatten here because the caller may want a map of maps, or a map of arrays.
 
 						if (map == null)
-							map = new Dictionary<object, object>(new CaseEqualityComp(caseSense));
-
-						_ = map.EnsureCapacity(count);
+							map = new SortedList<object, object>(new MapComparer(caseSense));
 
 						for (var i = 0; i < count - 1; i += 2)
 							Insert(temp.array[i], temp.array[i + 1]);//Access the underlying ArrayList directly for performance.
@@ -451,9 +490,7 @@
 					else if (args[0] is Dictionary<string, object> tempm)
 					{
 						if (map == null)
-							map = new Dictionary<object, object>(new CaseEqualityComp(caseSense));
-
-						_ = map.EnsureCapacity(tempm.Count);
+							map = new SortedList<object, object>(new MapComparer(caseSense));
 
 						foreach (var kv in tempm)
 							Insert(kv.Key, kv.Value);
@@ -469,7 +506,7 @@
 					var count = (args.Length / 2) * 2;
 
 					if (map == null)
-						map = new Dictionary<object, object>(new CaseEqualityComp(caseSense));
+						map = new SortedList<object, object>(new MapComparer(caseSense));
 
 					for (var i = 0; i < count; i += 2)
 						Insert(args[i], args[i + 1]);
@@ -581,7 +618,7 @@
 		/// <summary>
 		/// The internal map to be iterated over.
 		/// </summary>
-		private readonly Dictionary<object, object> map;
+		private readonly IEnumerable<KeyValuePair<object, object>> map;
 
 		/// <summary>
 		/// The iterator for the map.
@@ -623,7 +660,7 @@
 		/// </summary>
 		/// <param name="m">The <see cref="Dictionary{object,object}"/> to iterate over.</param>
 		/// <param name="c">The number of items to return for each iteration.</param>
-		public MapKeyValueIterator(Dictionary<object, object> m, int c)
+		public MapKeyValueIterator(IEnumerable<KeyValuePair<object, object>> m, int c)
 			: base(null, c)
 		{
 			map = m;

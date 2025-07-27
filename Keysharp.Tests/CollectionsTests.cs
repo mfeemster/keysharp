@@ -131,18 +131,18 @@ namespace Keysharp.Tests
 			arr.CopyTo(sa, 0);
 			Assert.AreEqual(sa.GetValue(0), "one");
 			Assert.AreEqual(sa.GetValue(1), 1L);
-			Assert.AreEqual(sa.GetValue(2), "two");
-			Assert.AreEqual(sa.GetValue(3), 2L);
-			Assert.AreEqual(sa.GetValue(4), "three");
-			Assert.AreEqual(sa.GetValue(5), 3L);
+			Assert.AreEqual(sa.GetValue(2), "three");
+			Assert.AreEqual(sa.GetValue(3), 3L);
+			Assert.AreEqual(sa.GetValue(4), "two");
+			Assert.AreEqual(sa.GetValue(5), 2L);
 			//
 			sa = new object[3];
 			arr.CopyTo(sa, 0);
 			Assert.AreEqual(sa.GetValue(0), "one");
 			Assert.AreEqual(sa.GetValue(1), 1L);
-			Assert.AreEqual(sa.GetValue(2), "two");
+			Assert.AreEqual(sa.GetValue(2), "three");
 			//
-			Assert.AreEqual(arr.ToString(), "{\"one\": 1, \"two\": 2, \"three\": 3}");
+			Assert.AreEqual(arr.ToString(), "{\"one\": 1, \"three\": 3, \"two\": 2}");
 			Assert.IsTrue(TestScript("collections-map", true));
 		}
 

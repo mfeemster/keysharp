@@ -1,7 +1,7 @@
 ; #Include %A_ScriptDir%/header.ahk
 
 x := "one"
-m := { %x% : 1, "two" : 2, "three" : 3 }
+m := { %x% : 1, two : 2, three : 3 }
 val := m.%x%
 
 if (val = 1)
@@ -19,7 +19,7 @@ else
 
 x := "one"
 y := 1
-m := { %x% : y, "two" : 2, "three" : 3 }
+m := { %x% : y, two : 2, three : 3 }
 val := m.one
 
 if (val = 1)
@@ -69,7 +69,7 @@ if (b == true)
 else
 	FileAppend "fail", "*"
 
-m := { "one" : 1, "two" : 2, "three" : 3 }
+m := { one : 1, two : 2, three : 3 }
 val := m.one
 
 if (val = 1)
@@ -101,7 +101,7 @@ else
 
 str := m.ToString()
 
-if (str == '{"one": 1, "two": 2, "three": 3}')
+if (str == '{"one": 1, "three": 3, "two": 2}')
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -150,7 +150,7 @@ if (val = 1)
 else
 	FileAppend "fail", "*"
 
-m := Map(str1, 1, %str2%, 2, %str3%, 3)
+m := Map(str1, 1, str2, 2, str3, 3)
 val := m[str1]
 
 if (val = 1)
@@ -664,7 +664,7 @@ else
 	FileAppend "fail", "*"
 
 val := ""
-m := {"CAPSLOCK":1}
+m := {CAPSLOCK:1}
 
 for k, v in m.OwnProps()
 	val := k
