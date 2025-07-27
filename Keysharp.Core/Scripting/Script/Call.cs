@@ -353,19 +353,8 @@ namespace Keysharp.Scripting
 					if (otup[1] is not ComObject)
 						mitup.Item1 = otup[1];
 				}
-
-				object ret = null;
-
-				if (mitup.Item2 is MethodPropertyHolder mph)
-				{
-					ret = mph.CallFunc(mitup.Item1, parameters);
-
-					if (ret is IFuncObj ifo1 && mph != null && mph.pi != null)
-						return ifo1.Call(parameters);
-
-					return ret;
-				}
-				else if (mitup.Item2 is IFuncObj ifo2)
+				
+				if (mitup.Item2 is IFuncObj ifo2)
 				{
 					if (mitup.Item1 == null) // This means __Call was found and should be invoked
 						return ifo2.Call(new Keysharp.Core.Array(parameters));
@@ -422,19 +411,10 @@ namespace Keysharp.Scripting
                     mitup = GetMethodOrProperty(obj, methName, -1);
                 }
 
-                object ret = null;
-
 				if (mitup.Item2 is MethodPropertyHolder mph)
 				{
-					ret = mph.CallFunc(mitup.Item1, parameters);
-
-					//The following check is done when accessing a class property that is a function object. The user intended to call it.
-					//Catching this during compilation is very hard when calling it from outside of the class definition.
-					//So catch it here instead.
-					if (ret is IFuncObj ifo1 && mph != null && mph.pi != null)
-						return ifo1.Call(parameters);
-
-					return ret;
+					//Mostly used by COM
+					return mph.CallFunc(mitup.Item1, parameters);
 				}
 				else if (mitup.Item2 is IFuncObj ifo2)
 				{
@@ -474,15 +454,8 @@ namespace Keysharp.Scripting
 
 				if (mitup.Item2 is MethodPropertyHolder mph)
 				{
-					ret = mph.CallFunc(mitup.Item1, parameters);
-
-					//The following check is done when accessing a class property that is a function object. The user intended to call it.
-					//Catching this during compilation is very hard when calling it from outside of the class definition.
-					//So catch it here instead.
-					if (ret is IFuncObj ifo1 && mph != null && mph.pi != null)
-						return ifo1.Call(parameters);
-
-					return ret;
+					//Mostly used by COM
+					return mph.CallFunc(mitup.Item1, parameters);
 				}
 				else if (mitup.Item2 is IFuncObj ifo2)
 				{

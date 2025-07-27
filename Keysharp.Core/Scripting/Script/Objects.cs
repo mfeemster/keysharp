@@ -368,7 +368,7 @@ namespace Keysharp.Scripting
 				if (type != null)
 				{
 					if (TryGetOwnPropsMap(type, "__Item", out var opm, true, OwnPropsMapType.Get) && opm.Get is IFuncObj ifo)
-						return ifo.Call([item, .. index]);
+						return ifo.CallInst(item, index);
 					else if (TryGetOwnPropsMap(type, "__Get", out var opm2, true, OwnPropsMapType.Call) && opm2.Call is IFuncObj ifo2)
 						return ifo2.Call(item, new Keysharp.Core.Array(index));
 				}

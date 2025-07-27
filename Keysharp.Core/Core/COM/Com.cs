@@ -407,7 +407,7 @@ namespace Keysharp.Core.COM
 
 			nint pUnk = 0;
 
-			if (comObj is KeysharpObject kso && Script.TryGetPropertyValue(comObj, "ptr", out object propPtr))
+			if (comObj is Any kso && Script.TryGetPropertyValue(comObj, "ptr", out object propPtr))
 				comObj = propPtr;
 
 			if (Marshal.IsComObject(comObj))
