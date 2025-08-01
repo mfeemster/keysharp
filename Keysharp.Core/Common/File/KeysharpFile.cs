@@ -105,7 +105,7 @@
 			{
 				var exists = false;
 
-				if (filename.StartsWith("h*"))
+				if (filename.StartsWith("h*", StringComparison.OrdinalIgnoreCase))
 				{
 					var handle = filename.Substring(2).ParseLong(false);
 

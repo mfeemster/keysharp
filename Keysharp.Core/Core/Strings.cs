@@ -396,18 +396,18 @@
 			else
 			{
 				s = splits[0];
-				var haslsys = splits.Contains("LSys");
+				var haslsys = splits.Contains("LSys", StringComparer.OrdinalIgnoreCase);
 
 				if (haslsys)
 					ci = new CultureInfo(ci.LCID, false);
 
 				for (var i = 1; i < splits.Length; i++)
 				{
-					if (!haslsys && splits[i].StartsWith("L"))
+					if (!haslsys && splits[i].StartsWith("L", StringComparison.OrdinalIgnoreCase))
 					{
 						ci = new CultureInfo(splits[i].Substring(1).ParseInt(false).Value, false);
 					}
-					else if (splits[i].StartsWith("D"))
+					else if (splits[i].StartsWith("D", StringComparison.OrdinalIgnoreCase))
 					{
 						var di = splits[i].Substring(1).ParseLong(false).Value;
 
@@ -415,7 +415,7 @@
 							if (!haslsys)
 								ci = new CultureInfo(ci.LCID, false);//No user overrides, if we haven't already done this above.
 					}
-					else if (splits[i].StartsWith("T"))
+					else if (splits[i].StartsWith("T", StringComparison.OrdinalIgnoreCase))
 					{
 						var ti = splits[i].Substring(1).ParseLong(false).Value;
 
@@ -492,7 +492,7 @@
 			}
 			else
 			{
-				if (splits.Contains("R"))
+				if (splits.Contains("R", StringComparer.OrdinalIgnoreCase))
 					f = "f";
 				else
 					f = "h:mm tt dddd, MMMM d, yyyy";

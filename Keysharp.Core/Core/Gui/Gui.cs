@@ -1759,7 +1759,7 @@
 				{
 					var val = "";
 
-					if (str.StartsWith("MinSize"))
+					if (str.StartsWith("MinSize", StringComparison.OrdinalIgnoreCase))
 					{
 						if (split[0] == '+')
 							val = str.Substring(7);
@@ -1767,7 +1767,7 @@
 						if (showOptionsDkt.TryGetValue("MinSize", out var func))
 							func(this, val);
 					}
-					else if (str.StartsWith("MaxSize"))
+					else if (str.StartsWith("MaxSize", StringComparison.OrdinalIgnoreCase))
 					{
 						if (split[0] == '+')
 							val = str.Substring(7);
@@ -1775,7 +1775,7 @@
 						if (showOptionsDkt.TryGetValue("MaxSize", out var func))
 							func(this, val);
 					}
-					else if (str.StartsWith("Owner"))
+					else if (str.StartsWith("Owner", StringComparison.OrdinalIgnoreCase))
 					{
 						if (split[0] == '+')
 							val = str.Substring(5);
@@ -1783,7 +1783,7 @@
 						if (showOptionsDkt.TryGetValue("Owner", out var func))
 							func(this, val);
 					}
-					else if (str.StartsWith("Parent"))
+					else if (str.StartsWith("Parent", StringComparison.OrdinalIgnoreCase))
 					{
 						if (split[0] == '+')
 							val = str.Substring(6);

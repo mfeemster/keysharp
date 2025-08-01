@@ -21,19 +21,19 @@ namespace Keysharp.Core.Linux
 		{
 			var session = "echo $DESKTOP_SESSION".Bash().ToLower();
 
-			if (session.Contains("gnome"))
+			if (session.Contains("gnome", StringComparison.OrdinalIgnoreCase))
 				isGnome = true;
-			else if (session.Contains("kde"))
+			else if (session.Contains("kde", StringComparison.OrdinalIgnoreCase))
 				isKde = true;
-			else if (session.Contains("xfce"))
+			else if (session.Contains("xfce", StringComparison.OrdinalIgnoreCase))
 				isXfce = true;
-			else if (session.Contains("mate"))
+			else if (session.Contains("mate", StringComparison.OrdinalIgnoreCase))
 				isMate = true;
-			else if (session.Contains("cinnamon"))
+			else if (session.Contains("cinnamon", StringComparison.OrdinalIgnoreCase))
 				isCinnamon = true;
-			else if (session.Contains("lxqt"))
+			else if (session.Contains("lxqt", StringComparison.OrdinalIgnoreCase))
 				isLxqt = true;
-			else if (session.Contains("lxde"))
+			else if (session.Contains("lxde", StringComparison.OrdinalIgnoreCase))
 				isLxde = true;
 			else
 				isGnome = true;//Assume Gnome if no other DE was found.
