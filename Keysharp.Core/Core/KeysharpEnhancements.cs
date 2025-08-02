@@ -91,5 +91,17 @@
 		/// <param name="obj0">The text to send to the debugger for display.</param>
 		/// <param name="obj1">True to first clear the display, else false to append.</param>
 		public static object OutputDebugLine(object obj0, object obj1 = null) => Debug.OutputDebugCommon($"{obj0.As()}{Environment.NewLine}", obj1.Ab());
+
+		/// <summary>
+		/// Creates a new <see cref="HashMap"/> object.
+		/// </summary>
+		/// <param name="obj">The optional data to initialize the <see cref="HashMap"/> with. This can be:<br/>
+		///     An existing <see cref="HashMap"/> object.<br/>
+		///     An <see cref="Array"/> of key,value pairs.<br/>
+		///     An existing <see cref="Dictionary{string, object}"/> object.<br/>
+		///     An object[] of key,value pairs.
+		/// </param>
+		/// <returns>A new <see cref="Map"/> object.</returns>
+		public static HashMap HashMap(params object[] obj) => new HashMap(obj);
 	}
 }

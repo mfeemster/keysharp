@@ -49,11 +49,6 @@
 		///     An object[] of key,value pairs.
 		/// </param>
 		/// <returns>A new <see cref="Map"/> object.</returns>
-		public static Map Map(params object[] obj)
-		{
-			var map = new Map();
-			map.Set(obj);
-			return map;
-		}
+		public static Map Map(params object[] obj) => new Map(obj);
 	}
 }

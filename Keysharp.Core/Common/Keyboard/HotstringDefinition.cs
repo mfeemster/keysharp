@@ -88,7 +88,7 @@
 			endCharRequired = hm.hsEndCharRequired;
 			detectWhenInsideWord = hm.hsDetectWhenInsideWord;
 			doReset = hm.hsDoReset;
-			inputLevel = (uint)A_InputLevel;
+			inputLevel = (long)A_InputLevel;
 			suspendExempt = A_SuspendExempt.Ab();
 			constructedOK = false;
 			var unusedX = false; // do not assign  mReplacement if execute_action is true.
