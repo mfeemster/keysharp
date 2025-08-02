@@ -28,6 +28,12 @@
 			}
 		}
 
+		protected override void WndProc(ref Message m)
+		{
+			if (!TheScript.msgFilter.CallEventHandlers(ref m, false))
+				base.WndProc(ref m);
+		}
+
 		[Browsable(false)]
 		protected override bool ShowWithoutActivation => showWithoutActivation;
 
@@ -231,5 +237,7 @@
 			else
 				ClearThis();
 		}
+
+
 	}
 }

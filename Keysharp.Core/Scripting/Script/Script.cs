@@ -23,6 +23,7 @@ namespace Keysharp.Scripting
 #endif
 		public const char dotNetMajorVersion = '9';
 		internal System.Timers.Timer tickTimer = new System.Timers.Timer(SLEEP_INTERVAL * 4);
+		internal MessageFilter msgFilter;
 		internal volatile bool loopShouldDoEvents = false;
 		internal volatile bool hasExited = false;
 		public bool ForceKeybdHook;
@@ -219,7 +220,8 @@ namespace Keysharp.Scripting
 
 			//Preload dlls requested with #DllLoad
 			LoadDlls();
-			Application.AddMessageFilter(new MessageFilter());
+			msgFilter = new MessageFilter(this);
+			Application.AddMessageFilter(msgFilter);
 			_ = InitHook();//Why is this always being initialized even when there are no hooks? This is very inefficient.//TODO
 			//Init the API classes, passing in this which will be used to access their respective data objects.
 			Reflections = new ();
@@ -227,6 +229,12 @@ namespace Keysharp.Scripting
 			tickTimer.Elapsed += TickTimerCallback;
 			tickTimer.AutoReset = false;
 			tickTimer.Start();
+		}
+		
+		~Script()
+		{
+			tickTimer?.Dispose();
+			Application.RemoveMessageFilter(msgFilter);
 		}
 
 		[DebuggerStepThrough]
