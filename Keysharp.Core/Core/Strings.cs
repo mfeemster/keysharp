@@ -1033,25 +1033,45 @@
 				{
 					return encoding == Encoding.Unicode ? Marshal.PtrToStringUni(ptr) : Marshal.PtrToStringAnsi(ptr);
 				}
-				else if (len < 0)//Length is negative, copy exactly the absolute value of len, regardless of 0s. Clamp to buf size of buf.
+				else
 				{
+					//If length is negative, copy exactly the absolute value of len, regardless of 0s. Clamp to buf size of buf.
+					//If length is positive, copy as long as length is not reached and value is not 0.
 					var raw = (byte*)ptr.ToPointer();
-					var abs = Math.Abs(len);
+					var abs = (int)Math.Abs(len);
 
-					if (encoding != Encoding.ASCII)//Sort of crude, UTF-8 can require up to 4 bytes per char.
-						abs *= 2;
+					abs = encoding.GetMaxByteCount(abs);
+					int maxBytes = buf != null ? (int)Math.Min((long)buf.Size, abs) : abs;
 
-					var finalLen = (int)(buf != null ? Math.Min((long)buf.Size, abs) : abs);
-					var bytes = new byte[finalLen];
+					Span<byte> span = new Span<byte>(raw, maxBytes);
 
-					for (var i = 0; i < finalLen; i++)
-						bytes[i] = raw[i];
+					if (len > 0)
+					{
+						int terminatorIndex;
+						if (encoding is UnicodeEncoding) // UTF-16, 2-byte code‐units
+						{
+							// reinterpret as chars, look for '\0', then convert back to byte‐index
+							var charSpan = MemoryMarshal.Cast<byte, char>(span);
+							int ci = charSpan.IndexOf('\0');
+							terminatorIndex = (ci >= 0) ? ci * sizeof(char) : -1;
+						}
+						else if (encoding is UTF32Encoding) // UTF-32, 4-byte code‐units
+						{
+							// reinterpret as ints, look for 0, then convert back to byte‐index
+							var intSpan = MemoryMarshal.Cast<byte, int>(span);
+							int ii = intSpan.IndexOf(0);
+							terminatorIndex = (ii >= 0) ? ii * sizeof(int) : -1;
+						}
+						else // all single-byte encodings (ANSI, UTF-8, etc.)
+						{
+							terminatorIndex = span.IndexOf((byte)0);
+						}
 
-					return encoding.GetString(bytes);
-				}
-				else//Positive length was passed, copy as long as length is not reached and value is not 0.
-				{
-					return encoding == Encoding.Unicode ? Marshal.PtrToStringUni(ptr, (int)len) : Marshal.PtrToStringAnsi(ptr, (int)len);
+						if (terminatorIndex != -1)
+							span = span.Slice(0, terminatorIndex);
+					}
+
+					return encoding.GetString(span);
 				}
 			}
 		}
