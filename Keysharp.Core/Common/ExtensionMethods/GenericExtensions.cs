@@ -199,8 +199,7 @@
 				{
 					var oldEventInfo = A_EventInfo;
 					var script = Script.TheScript;
-					var (pushed, tv) = Script.TheScript.Threads.BeginThread();
-
+					var (pushed, tv) = script.Threads.BeginThread();
 					if (pushed)//If we've exceeded the number of allowable threads, then just do nothing.
 					{
 						tv.eventInfo = oldEventInfo;
@@ -225,6 +224,7 @@
 							_ = script.Threads.EndThread((pushed, tv));
 						}, true, (pushed, tv));//Pop on exception because EndThread() above won't be called.
 					}
+					script.ExitIfNotPersistent();
 				}
 			}
 

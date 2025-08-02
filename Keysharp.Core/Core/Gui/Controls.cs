@@ -862,7 +862,7 @@ namespace Keysharp.Core
 							rect.Height -= inset * 2;
 							bx = rect.Width + inset;
 							by = inset;
-							bw = Width - rect.Width - inset;
+							bw = Width - rect.Width - inset * 2;
 							bh = rect.Height;
 						}
 
