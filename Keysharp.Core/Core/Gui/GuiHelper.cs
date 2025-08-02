@@ -107,6 +107,10 @@
 					control.BackColor = requestedColor;
 					m.Result = new nint(colorValue);
 					return true;
+
+				case WindowsAPI.STM_SETIMAGE:
+					control.BackgroundImage = Image.FromHbitmap(m.LParam);
+					return true;
 			}
 
 #endif
