@@ -231,7 +231,8 @@ namespace Keysharp.Scripting
 				//var txt = child.GetText();
 
 				if (i > 0 
-                    && (stmt = child.statement()) != null 
+                    && autoExecStatements.Count > 0
+					&& (stmt = child.statement()) != null 
                     && stmt.iterationStatement() != null 
                     && autoExecStatements[^1] is LabeledStatementSyntax lss)
                 {
