@@ -5,5 +5,6 @@
 		internal int instanceCount;
 		internal int maxInstances = 1;
 		internal List<IFuncObj> funcs = [];
+		internal bool isPrefiltered = false;
 	}
 }

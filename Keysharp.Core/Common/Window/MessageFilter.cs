@@ -2,12 +2,21 @@
 {
 	internal class MessageFilter : IMessageFilter
 	{
-		public bool PreFilterMessage(ref Message m)
+		Script script;
+		internal MessageFilter(Script associatedScript)
 		{
-			var script = Script.TheScript;
-			
+			script = associatedScript;
+		}
+
+		internal bool CallEventHandlers(ref Message m, bool isPreFilter = true)
+		{
 			if (script.GuiData.onMessageHandlers.TryGetValue(m.Msg, out var monitor))
 			{
+				if (isPreFilter && !monitor.isPrefiltered)
+					monitor.isPrefiltered = true;
+				else if (!isPreFilter && monitor.isPrefiltered)
+					return false;
+
 				var tv = script.Threads.CurrentThread;
 
 				if (!script.Threads.AnyThreadsAvailable() || tv.priority > 0)
@@ -40,5 +49,7 @@
 
 			return false;
 		}
+
+		public bool PreFilterMessage(ref Message m) => CallEventHandlers(ref m);
 	}
 }
