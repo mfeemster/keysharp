@@ -1034,48 +1034,49 @@ namespace Keysharp.Core
 			{
 				if (len == long.MinValue)//No length specified, only copy up to the first 0.
 				{
-					return encoding == Encoding.Unicode ? Marshal.PtrToStringUni(ptr) : Marshal.PtrToStringAnsi(ptr);
+					if (buf != null)
+						len = (long)buf.Size;
+					else
+						return encoding == Encoding.Unicode ? Marshal.PtrToStringUni(ptr) : Marshal.PtrToStringAnsi(ptr);
 				}
-				else
+
+				//If length is negative, copy exactly the absolute value of len, regardless of 0s. Clamp to buf size of buf.
+				//If length is positive, copy as long as length is not reached and value is not 0.
+				var raw = (byte*)ptr.ToPointer();
+				var abs = (int)Math.Abs(len);
+
+				abs = encoding.GetMaxByteCount(abs);
+				int maxBytes = buf != null ? (int)Math.Min((long)buf.Size, abs) : abs;
+
+				Span<byte> span = new Span<byte>(raw, maxBytes);
+
+				if (len > 0)
 				{
-					//If length is negative, copy exactly the absolute value of len, regardless of 0s. Clamp to buf size of buf.
-					//If length is positive, copy as long as length is not reached and value is not 0.
-					var raw = (byte*)ptr.ToPointer();
-					var abs = (int)Math.Abs(len);
-
-					abs = encoding.GetMaxByteCount(abs);
-					int maxBytes = buf != null ? (int)Math.Min((long)buf.Size, abs) : abs;
-
-					Span<byte> span = new Span<byte>(raw, maxBytes);
-
-					if (len > 0)
+					int terminatorIndex;
+					if (encoding is UnicodeEncoding) // UTF-16, 2-byte code‐units
 					{
-						int terminatorIndex;
-						if (encoding is UnicodeEncoding) // UTF-16, 2-byte code‐units
-						{
-							// reinterpret as chars, look for '\0', then convert back to byte‐index
-							var charSpan = MemoryMarshal.Cast<byte, char>(span);
-							int ci = charSpan.IndexOf('\0');
-							terminatorIndex = (ci >= 0) ? ci * sizeof(char) : -1;
-						}
-						else if (encoding is UTF32Encoding) // UTF-32, 4-byte code‐units
-						{
-							// reinterpret as ints, look for 0, then convert back to byte‐index
-							var intSpan = MemoryMarshal.Cast<byte, int>(span);
-							int ii = intSpan.IndexOf(0);
-							terminatorIndex = (ii >= 0) ? ii * sizeof(int) : -1;
-						}
-						else // all single-byte encodings (ANSI, UTF-8, etc.)
-						{
-							terminatorIndex = span.IndexOf((byte)0);
-						}
-
-						if (terminatorIndex != -1)
-							span = span.Slice(0, terminatorIndex);
+						// reinterpret as chars, look for '\0', then convert back to byte‐index
+						var charSpan = MemoryMarshal.Cast<byte, char>(span);
+						int ci = charSpan.IndexOf('\0');
+						terminatorIndex = (ci >= 0) ? ci * sizeof(char) : -1;
+					}
+					else if (encoding is UTF32Encoding) // UTF-32, 4-byte code‐units
+					{
+						// reinterpret as ints, look for 0, then convert back to byte‐index
+						var intSpan = MemoryMarshal.Cast<byte, int>(span);
+						int ii = intSpan.IndexOf(0);
+						terminatorIndex = (ii >= 0) ? ii * sizeof(int) : -1;
+					}
+					else // all single-byte encodings (ANSI, UTF-8, etc.)
+					{
+						terminatorIndex = span.IndexOf((byte)0);
 					}
 
-					return encoding.GetString(span);
+					if (terminatorIndex != -1)
+						span = span.Slice(0, terminatorIndex);
 				}
+
+				return encoding.GetString(span);
 			}
 		}
 
