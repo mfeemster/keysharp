@@ -226,8 +226,6 @@ namespace Keysharp.Scripting
 			if (path != "testhost.exe" && path != "testhost.dll" && !A_IsCompiled)
 				_ = Dir.SetWorkingDir(A_ScriptDir);
 
-			//Preload dlls requested with #DllLoad
-			LoadDlls();
 			msgFilter = new MessageFilter(this);
 			Application.AddMessageFilter(msgFilter);
 			_ = InitHook();//Why is this always being initialized even when there are no hooks? This is very inefficient.//TODO
@@ -262,53 +260,55 @@ namespace Keysharp.Scripting
 			loopShouldDoEvents = true;
 		}
 
-		private void LoadDlls()
+		/// <summary>
+		/// Will be a generated call within Main which calls into this class to add DLLs.
+		/// </summary>
+		/// <param name="p"></param>
+		/// <param name="s"></param>
+		public void LoadDll(string dll, bool throwOnFailure = true)
 		{
-			foreach (var dll in Vars.preloadedDlls)
+			if (dll.Length == 0)
 			{
-				if (dll.Item1.Length == 0)
-				{
-					if (!mgr.SetDllDirectory(null))//An empty #DllLoad restores the default search order.
-						if (!dll.Item2)
-						{
-							_ = Errors.ErrorOccurred("PlatformProvider.Manager.SetDllDirectory(null) failed.", null, Keyword_ExitApp);
-							return;
-						}
-				}
-				else if (Directory.Exists(dll.Item1))
-				{
-					if (!mgr.SetDllDirectory(dll.Item1))
-						if (!dll.Item2)
-						{
-							_ = Errors.ErrorOccurred($"PlatformProvider.Manager.SetDllDirectory({dll.Item1}) failed.", null, Keyword_ExitApp);
-							return;
-						}
-				}
-				else
-				{
-					var dllname = dll.Item1;
-#if WINDOWS
-
-					if (!dllname.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
-						dllname += ".dll";
-
-#endif
-					var hmodule = mgr.LoadLibrary(dllname);
-
-					if (hmodule != 0)
+				if (!mgr.SetDllDirectory(null))//An empty #DllLoad restores the default search order.
+					if (throwOnFailure)
 					{
-#if WINDOWS
-						// "Pin" the dll so that the script cannot unload it with FreeLibrary.
-						// This is done to avoid undefined behavior when DllCall optimizations
-						// resolves a proc address in a dll loaded by this directive.
-						_ = WindowsAPI.GetModuleHandleEx(WindowsAPI.GET_MODULE_HANDLE_EX_FLAG_PIN, dllname, out hmodule);  // MSDN regarding hmodule: "If the function fails, this parameter is NULL."
-#endif
-					}
-					else if (!dll.Item2)
-					{
-						_ = Errors.ErrorOccurred($"Failed to load DLL {dllname}.", null, Keyword_ExitApp);
+						_ = Errors.ErrorOccurred("PlatformProvider.Manager.SetDllDirectory(null) failed.", null, Keyword_ExitApp);
 						return;
 					}
+			}
+			else if (Directory.Exists(dll))
+			{
+				if (!mgr.SetDllDirectory(dll))
+					if (throwOnFailure)
+					{
+						_ = Errors.ErrorOccurred($"PlatformProvider.Manager.SetDllDirectory({dll}) failed.", null, Keyword_ExitApp);
+						return;
+					}
+			}
+			else
+			{
+				var dllname = dll;
+#if WINDOWS
+
+				if (!dllname.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
+					dllname += ".dll";
+
+#endif
+				var hmodule = mgr.LoadLibrary(dllname);
+
+				if (hmodule != 0)
+				{
+#if WINDOWS
+					// "Pin" the dll so that the script cannot unload it with FreeLibrary.
+					// This is done to avoid undefined behavior when DllCall optimizations
+					// resolves a proc address in a dll loaded by this directive.
+					_ = WindowsAPI.GetModuleHandleEx(WindowsAPI.GET_MODULE_HANDLE_EX_FLAG_PIN, dllname, out hmodule);  // MSDN regarding hmodule: "If the function fails, this parameter is NULL."
+#endif
+				}
+				else if (throwOnFailure)
+				{
+					_ = Errors.ErrorOccurred($"Failed to load DLL {dllname}.", null, Keyword_ExitApp);
+					return;
 				}
 			}
 		}

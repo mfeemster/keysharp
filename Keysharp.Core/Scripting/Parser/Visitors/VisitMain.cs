@@ -82,7 +82,7 @@ namespace Keysharp.Scripting
 			parser.mainFuncInitial.Add($"{MainScriptVariableName}.SetName(@\"{(parser.fileName == "*" ? "*" : Path.GetFullPath(parser.fileName))}\");");
             foreach (var (p, s) in parser.reader.PreloadedDlls)
             {
-                parser.mainFuncInitial.Add($"{Keywords.MainScriptVariableName}.Vars.AddPreLoadedDll(\"{p}\", {s.ToString().ToLower()});");
+                parser.mainFuncInitial.Add($"{Keywords.MainScriptVariableName}.LoadDll(\"{p}\", {s.ToString().ToLower()});");
             }
 
             string mainBodyCode = $$"""
