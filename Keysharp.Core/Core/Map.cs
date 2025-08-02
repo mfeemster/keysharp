@@ -20,21 +20,21 @@
 			//Choose an appropriate built-in StringComparer.
 
 			stringComparer = caseSense switch
-		{
-				eCaseSense.On => StringComparer.Ordinal,
-				eCaseSense.Off => StringComparer.OrdinalIgnoreCase,
-				_ => StringComparer.CurrentCultureIgnoreCase,
-		};
-	}
+			{
+					eCaseSense.On => StringComparer.Ordinal,
+					eCaseSense.Off => StringComparer.OrdinalIgnoreCase,
+					_ => StringComparer.CurrentCultureIgnoreCase,
+			};
+		}
 
-	/// <summary>
-	/// The implementation for <see cref="IEqualityComparer.Equals"/> which compares two objects.
-	/// If both objects are strings, then the case sensitivity mode specified in the constructor is used.
-	/// </summary>
-	/// <param name="x">The first object to compare.</param>
-	/// <param name="y">The second object to compare.</param>
-	/// <returns>True if the two objects are equal, else false.</returns>
-	public new bool Equals(object x, object y)
+		/// <summary>
+		/// The implementation for <see cref="IEqualityComparer.Equals"/> which compares two objects.
+		/// If both objects are strings, then the case sensitivity mode specified in the constructor is used.
+		/// </summary>
+		/// <param name="x">The first object to compare.</param>
+		/// <param name="y">The second object to compare.</param>
+		/// <returns>True if the two objects are equal, else false.</returns>
+		public new bool Equals(object x, object y)
 		{
 			//If both are strings, use the built-in comparer.
 			if (x is string s1 && y is string s2)
@@ -60,8 +60,72 @@
 		}
 	}
 
+	class MapComparer : IComparer<object>
+	{
+		private readonly StringComparer stringComparer;
+		public MapComparer(eCaseSense caseSense)
+		{
+			stringComparer = caseSense switch
+			{
+				eCaseSense.On => StringComparer.Ordinal,
+				eCaseSense.Off => StringComparer.OrdinalIgnoreCase,
+				_ => StringComparer.CurrentCultureIgnoreCase,
+			};
+		}
+		public int Compare(object x, object y)
+		{
+			if (x is long ll1)
+			{
+				if (y is long ll2)
+					return ll1.CompareTo(ll2);
+				else
+					return -1;
+			}
+			else if (y is long)
+				return 1;
+
+			if (x is string s1)
+			{
+				if (y is string s2)
+					return stringComparer.Compare(s1, s2);
+				else
+					return y is double ? -1 : 1;
+			}
+			else if (y is string)
+				return x is double ? 1 : -1;
+
+			if (x is double d1)
+			{
+				if (y is double d2)
+					return d1.CompareTo(d2);
+				else
+					return 1;
+			}
+			else if (y is double)
+				return -1;
+
+			return 0;
+		}
+	}
+
 	/// <summary>
 	/// Map class that wraps a <see cref="Dictionary{object, object}"/>.
+	/// </summary>
+	public class HashMap : Map
+	{
+		/// <summary>
+		/// Initializes a new instance of the <see cref="HashMap"/> class, which does not sort
+		/// the entries before enumeration.
+		/// See <see cref="__New(object[])"/>.
+		/// </summary>
+		public HashMap(params object[] args) : base(args) { }
+		internal HashMap(bool make__Item, params object[] args) : base(make__Item, args) { }
+		protected override IEnumerable<KeyValuePair<object, object>> enumerableMap => map;
+	}
+
+	/// <summary>
+	/// Map class that wraps a <see cref="Dictionary{object, object}"/> which is sorted before enumeration
+	/// using MapComparer to keep compatibility with AutoHotkey.
 	/// </summary>
 	public class Map : KeysharpObject, I__Enum, IEnumerable<(object, object)>, ICollection
 	{
@@ -69,6 +133,29 @@
 		/// The underlying <see cref="Dictionary"/> that holds the values.
 		/// </summary>
 		internal Dictionary<object, object> map;
+
+		/// <summary>
+		/// The underlying <see cref="Dictionary"/> sorted in the order AHK does it.
+		/// </summary>
+		private IEnumerable<KeyValuePair<object, object>> _enumerableMap;
+		protected virtual IEnumerable<KeyValuePair<object, object>> enumerableMap
+		{
+			get
+			{
+				if (isDirty)
+				{
+					isDirty = false;
+					_enumerableMap = map.OrderBy(kv => kv.Key, new MapComparer(caseSense));
+				}
+				return _enumerableMap;
+			}
+		}
+
+		/// <summary>
+		/// Tracks whether any changes have been made to the underlying <see cref="Dictionary"/>
+		/// after the last access of the ordered dictionary.
+		/// </summary>
+		private bool isDirty = true;
 
 		/// <summary>
 		/// The case comparison to use for string keys.
@@ -107,12 +194,16 @@
 
 				if (Count > 0)
 				{
+					caseSense = oldVal;
 					_ = Errors.PropertyErrorOccurred("Attempted to change case sensitivity of a map which was not empty.");
 					return;
 				}
 
 				if (caseSense != oldVal)
+				{
+					isDirty = true;
 					map = new Dictionary<object, object>(new CaseEqualityComp(caseSense));
+				}
 			}
 		}
 
@@ -167,7 +258,7 @@
 		///     2: Return the key in the first element, and the value in the second.
 		/// </param>
 		/// <returns><see cref="KeysharpEnumerator"/></returns>
-		public KeysharpEnumerator __Enum(object count) => new MapKeyValueIterator(map, count.Ai());
+		public KeysharpEnumerator __Enum(object count) => new MapKeyValueIterator(enumerableMap, count.Ai());
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="Map"/> class.
@@ -189,7 +280,11 @@
 		/// <summary>
 		/// Clears all elements from the map.
 		/// </summary>
-		public void Clear() => map.Clear();
+		public void Clear()
+		{
+			isDirty = true;
+			map.Clear();
+		}
 
 		/// <summary>
 		/// Returns whether the map contains the specified key.
@@ -209,7 +304,7 @@
 		{
 			var kvs = new List<object>(map.Count * 2);
 
-			foreach (var kv in map)
+			foreach (var kv in enumerableMap)
 			{
 				kvs.Add(kv.Key);
 				kvs.Add(kv.Value);
@@ -228,7 +323,11 @@
 		public object Delete(object key)
 		{
 			if (map.Remove(key, out var val))
+			{
+				if (!isDirty)
+					isDirty = true;
 				return val;
+			}
 
 			return Errors.KeyErrorOccurred($"Key {key} was not present in the map.");
 		}
@@ -265,7 +364,7 @@
 		/// The implementation for <see cref="IEnumerable{(object, object)}.GetEnumerator()"/> which returns an <see cref="MapKeyValueIterator"/>.
 		/// </summary>
 		/// <returns>An <see cref="IEnumerator{(object, object)}"/> which is a <see cref="MapKeyValueIterator"/>.</returns>
-		public IEnumerator<(object, object)> GetEnumerator() => new MapKeyValueIterator(map, 2);
+		public IEnumerator<(object, object)> GetEnumerator() => new MapKeyValueIterator(enumerableMap, 2);
 
 		/// <summary>
 		/// Returns true if the specified key has an associated value within a map, otherwise false.
@@ -331,7 +430,7 @@
 				else
 					_ = sb.Append(indent + name + ": " + "\t {");//Need to put this in multiple steps because the AStyle formatter misinterprets it.
 
-				foreach (var kv in map)
+				foreach (var kv in enumerableMap)
 				{
 					string key;
 
@@ -422,6 +521,8 @@
 		/// <exception cref="ValueError">A <see cref="ValueError"/> exception is thrown if values was not of a supported type.</exception>
 		public void Set(params object[] args)
 		{
+			if (!isDirty)
+				isDirty = true;
 			if (args == null || args.Length == 0)
 			{
 				if (map == null)
@@ -496,7 +597,7 @@
 				_ = sb.Append('{');
 				var i = 0;
 
-				foreach (var kv in map)
+				foreach (var kv in enumerableMap)
 				{
 					string key;
 
@@ -530,7 +631,7 @@
 		/// The implementation for <see cref="IEnumerable.GetEnumerator"/> which just calls <see cref="__Enum"/>.
 		/// </summary>
 		/// <returns><see cref="MapKeyValueIterator"/></returns>
-		IEnumerator IEnumerable.GetEnumerator() => new MapKeyValueIterator(map, 2);
+		IEnumerator IEnumerable.GetEnumerator() => new MapKeyValueIterator(enumerableMap, 2);
 		/// <summary>
 		/// Internal helper to insert a key,value pair into the map.
 		/// </summary>
@@ -572,7 +673,12 @@
 				return Default ?? Errors.UnsetItemErrorOccurred($"Key {key} was not present in the map.");
 			}
 
-			set => Insert(key, value);
+			set
+			{
+				if (!isDirty)
+					isDirty = true;
+				Insert(key, value);
+			}
 		}
 	}
 
@@ -588,7 +694,7 @@
 		/// <summary>
 		/// The internal map to be iterated over.
 		/// </summary>
-		private readonly Dictionary<object, object> map;
+		private readonly IEnumerable<KeyValuePair<object, object>> map;
 
 		/// <summary>
 		/// The iterator for the map.
@@ -628,7 +734,7 @@
 		/// </summary>
 		/// <param name="m">The <see cref="Dictionary{object,object}"/> to iterate over.</param>
 		/// <param name="c">The number of items to return for each iteration.</param>
-		public MapKeyValueIterator(Dictionary<object, object> m, int c)
+		public MapKeyValueIterator(IEnumerable<KeyValuePair<object, object>> m, int c)
 			: base(null, c)
 		{
 			map = m;
