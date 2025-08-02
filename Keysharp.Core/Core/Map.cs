@@ -183,14 +183,6 @@ namespace Keysharp.Core
 		/// </summary>
 		public Map(params object[] args) : base(args) { }
 
-		/// <summary>
-		/// Initializes a new instance of the <see cref="Map"/> class without creating the __Item dynamic property.
-		/// This is needed so Map doesn't enter an infinite recursion loop because dynamic properties themselves have Maps.
-		/// See <see cref="__New(object[])"/>.
-		/// </summary>
-		/// <param name="make__Item">True to create __Item, else false. Always specify false.</param>
-		internal Map(bool make__Item, params object[] args) => _ = __New(args);
-
 		public Map(bool skipLogic) : base(skipLogic: skipLogic) => _ = __New();
 
         /// <summary>
