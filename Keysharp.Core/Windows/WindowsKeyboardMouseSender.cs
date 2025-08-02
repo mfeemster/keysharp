@@ -1799,7 +1799,7 @@ namespace Keysharp.Core.Windows
 			var modifiersLRSpecified = (modifiersLR | modifiersLRPersistent);
 			var script = Script.TheScript;
 			var vkIsMouse = script.HookThread.IsMouseVK(vk); // Caller has ensured that VK is non-zero when it wants a mouse click.
-			var tv = script.Threads.GetThreadVariables().configData;
+			var tv = script.Threads.CurrentThread.configData;
 			var sendLevel = tv.sendLevel;
 
 			for (var i = 0L; i < repeatCount; ++i)
@@ -1956,7 +1956,7 @@ namespace Keysharp.Core.Windows
 			var sub = keys.AsSpan();
 			var ht = script.HookThread;
 
-			if (inBlindMode = ((sendRaw == SendRawModes.NotRaw) && keys.StartsWith("{Blind"))) // Don't allow {Blind} while in raw mode due to slight chance {Blind} is intended to be sent as a literal string.
+			if (inBlindMode = ((sendRaw == SendRawModes.NotRaw) && keys.StartsWith("{Blind", StringComparison.OrdinalIgnoreCase))) // Don't allow {Blind} while in raw mode due to slight chance {Blind} is intended to be sent as a literal string.
 			{
 				// Blind Mode (since this seems too obscure to document, it's mentioned here):  Blind Mode relies
 				// on modifiers already down for something like ^c because ^c is saying "manifest a ^c", which will
@@ -1995,14 +1995,14 @@ namespace Keysharp.Core.Windows
 				sub = keySpan.Slice(i);
 			}
 
-			if ((sendRaw == SendRawModes.NotRaw) && sub.StartsWith("{Text}"))
+			if ((sendRaw == SendRawModes.NotRaw) && sub.StartsWith("{Text}", StringComparison.OrdinalIgnoreCase))
 			{
 				// Setting this early allows CapsLock and the Win+L workaround to be skipped:
 				sendRaw = SendRawModes.RawText;
 				sub = sub.Slice(6);
 			}
 
-			var tv = script.Threads.GetThreadVariables().configData;
+			var tv = script.Threads.CurrentThread.configData;
 			var origKeyDelay = tv.keyDelay;
 			var origPressDuration = tv.keyDuration;
 
@@ -2454,7 +2454,7 @@ namespace Keysharp.Core.Windows
 										{
 											eventType = KeyEventTypes.KeyUp;
 										}
-										else if (!subspan.StartsWith("ASC"))
+										else if (!subspan.StartsWith("ASC", StringComparison.OrdinalIgnoreCase))
 										{
 											if (long.TryParse(nextWord, out var templ))
 											{

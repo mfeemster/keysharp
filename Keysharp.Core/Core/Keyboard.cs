@@ -237,7 +237,7 @@ namespace Keysharp.Core
 			{
 				fo = Functions.GetFuncObj(action, null);//Don't throw on failure because returning null is a valid action.
 				var script = Script.TheScript;
-				var tv = script.Threads.GetThreadVariables();
+				var tv = script.Threads.CurrentThread;
 
 				if (fo == null && !string.IsNullOrEmpty(label) && ((hook_action = HotkeyDefinition.ConvertAltTab(label, true)) == 0))
 				{
@@ -398,7 +398,7 @@ break_twice:;
 				return Errors.ValueErrorOccurred($"Invalid value of {obj2} for parameter 3.");
 
 			bool wasAlreadyEnabled;
-			var tv = script.Threads.GetThreadVariables();
+			var tv = script.Threads.CurrentThread;
 			var existing = hm.FindHotstring(hotstringStart, caseSensitive, detectInsideWord, tv.hotCriterion);
 
 			if (existing != null)

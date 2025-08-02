@@ -290,10 +290,10 @@ namespace Keysharp.Core.Common.Keyboard
 				if (cp == null && funcobj != null)
 					AddHotkeyIfExpr(cp = funcobj);
 
-				script.Threads.GetThreadVariables().hotCriterion = cp;
+				script.Threads.CurrentThread.hotCriterion = cp;
 			}
 			else
-				script.Threads.GetThreadVariables().hotCriterion = null;
+				script.Threads.CurrentThread.hotCriterion = null;
 
 			return DefaultObject;
 		}
@@ -2150,7 +2150,7 @@ namespace Keysharp.Core.Common.Keyboard
 
 				A_SendLevel = variant.inputLevel;
 				var script = Script.TheScript;
-				var tv = script.Threads.GetThreadVariables();
+				var tv = script.Threads.CurrentThread;
 				tv.hwndLastUsed = new nint(critFoundHwnd);
 				tv.hotCriterion = variant.hotCriterion;
 				object ret = null;
@@ -2413,10 +2413,10 @@ namespace Keysharp.Core.Common.Keyboard
 				if (FindHotkeyCriterion(bf) == null)
 					AddHotkeyCriterion(bf);
 
-				script.Threads.GetThreadVariables().hotCriterion = bf;
+				script.Threads.CurrentThread.hotCriterion = bf;
 			}
 			else
-				script.Threads.GetThreadVariables().hotCriterion = null;
+				script.Threads.CurrentThread.hotCriterion = null;
 
 			return null;
 		}

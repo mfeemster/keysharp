@@ -1067,19 +1067,19 @@
 					}
 					else if (flag.StartsWith('-'))
 					{
-						if (flag.Contains('r'))
+						if (flag.Contains("r", StringComparison.OrdinalIgnoreCase))
 						{
 							share &= ~FileShare.Read;
 							shareset = true;
 						}
 
-						if (flag.Contains('w'))
+						if (flag.Contains("w", StringComparison.OrdinalIgnoreCase))
 						{
 							share &= ~FileShare.Write;
 							shareset = true;
 						}
 
-						if (flag.Contains('d'))
+						if (flag.Contains("d", StringComparison.OrdinalIgnoreCase))
 						{
 							share &= ~FileShare.Delete;
 							shareset = true;

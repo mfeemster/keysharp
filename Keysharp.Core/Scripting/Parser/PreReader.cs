@@ -233,8 +233,8 @@ namespace Keysharp.Scripting
                                 {
                                     p1 = p1.Trim(libBrackets).Split('_', StringSplitOptions.None)[0];
 
-                                    if (!p1.EndsWith(".ahk"))
-                                        p1 += ".ahk";
+											if (!p1.EndsWith(".ahk", StringComparison.OrdinalIgnoreCase))
+												p1 += ".ahk";
 
                                     isLib = true;
                                 }
@@ -330,9 +330,9 @@ namespace Keysharp.Scripting
                         case "REQUIRES":
                         {
                             var p1 = tokens[index + 2].Text;
-                            var reqAhk = p1.StartsWith("AutoHotkey");
+                            var reqAhk = p1.StartsWith("AutoHotkey", StringComparison.OrdinalIgnoreCase);
 
-                            if (reqAhk || p1.StartsWith("Keysharp"))
+                            if (reqAhk || p1.StartsWith("Keysharp", StringComparison.OrdinalIgnoreCase))
                             {
                                 var splits = p1.Split(' ', StringSplitOptions.RemoveEmptyEntries);
 

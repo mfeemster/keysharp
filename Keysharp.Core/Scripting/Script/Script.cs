@@ -143,8 +143,8 @@ namespace Keysharp.Scripting
 
 		internal long HwndLastUsed
 		{
-			get => Threads.GetThreadVariables().hwndLastUsed;
-			set => Threads.GetThreadVariables().hwndLastUsed = value;
+			get => Threads.CurrentThread.hwndLastUsed;
+			set => Threads.CurrentThread.hwndLastUsed = value;
 		}
 
 		internal ImageListData ImageListData => imageListData ?? (imageListData = new ());
