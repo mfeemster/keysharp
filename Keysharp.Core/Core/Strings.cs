@@ -1473,7 +1473,7 @@ namespace Keysharp.Core
 			if (!(targetVar is KeysharpObject))
 				throw new TypeError($"Expected argument of type VarRef, but received {targetVar.GetType()}");
 
-			var target = Script.GetPropertyValue(targetVar, "__Value");
+			var target = Script.GetPropertyValue(targetVar, "__Value") ?? "";
 			int capacity;
 			if (target is string targetStr)
 			{
