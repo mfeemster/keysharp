@@ -1,8 +1,16 @@
 ﻿#if WINDOWS
 namespace Keysharp.Core.Common.Invoke
 {
-	internal class ArgumentHelper
+	internal class ComArgumentHelper : ArgumentHelper
 	{
+		internal ComArgumentHelper(object[] parameters) : base(parameters)
+		{
+			isCom = true;
+		}
+	}
+	internal class ArgumentHelper : IDisposable
+	{
+		protected bool isCom = false;
 		protected bool cdecl = false;
 		protected bool hresult = false;
 		protected List<GCHandle> gcHandles = [];
@@ -201,7 +209,7 @@ namespace Keysharp.Core.Common.Invoke
 				{
 					if (parseType)
 					{
-						type = isReturn ? typeof(string) : typeof(nint);
+						type = isReturn ? typeof(char[]) : typeof(nint);
 						goto TypeDetermined;
 					}
 
@@ -452,6 +460,49 @@ namespace Keysharp.Core.Common.Invoke
 					SetupPointerArg();
 				}
 			}
+		}
+
+		internal unsafe object ConvertReturnValue(object value)
+		{
+			// If the return type was omitted then it should be treated as HRESULT
+			// and if that is a negative value then throw an OSError
+			if (HRESULT || (isCom && !HasReturn))
+			{
+				long hrLong = (long)value;                // unbox the raw long
+				int hr32 = unchecked((int)hrLong);   // keep only the low 32 bits
+				return Errors.OSErrorOccurredForHR(hr32);
+			}
+
+			//Special conversion for the return value.
+			else if (ReturnType == typeof(int))
+			{
+				long l = (long)value;
+				int ii = *(int*)&l;
+				value = ii;
+			}
+			else if (ReturnType == typeof(float))
+			{
+				if (value is not double) return _ = Errors.TypeErrorOccurred(value, typeof(double));
+
+				double d = (double)value;
+				float f = *(float*)&d;
+				return f;
+			}
+			else if (ReturnType == typeof(char[]))
+			{
+				nint ptr = (nint)(long)value;
+				var str = Marshal.PtrToStringAnsi(ptr);
+				Marshal.FreeHGlobal(ptr);
+				return str;
+			}
+			else if (ReturnType == typeof(string))
+			{
+				var str = Marshal.PtrToStringUni((nint)(long)value);
+				_ = Objects.ObjFree(value);//If this string came from us, it will be freed, else no action.
+				return str;
+			}
+
+			return value;
 		}
 	}
 }
