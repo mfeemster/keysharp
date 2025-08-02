@@ -1054,12 +1054,14 @@ namespace Keysharp.Core
 					if (opts.vertical)
 						opts.addstyle |= 0x04;
 
-					var prg = new KeysharpProgressBar(opts.bgcolor.HasValue || opts.c != System.Windows.Forms.Control.DefaultForeColor,
+					bool smooth = opts.smooth.IsTrue();
+
+					var prg = new KeysharpProgressBar(smooth || opts.bgcolor.HasValue || opts.c != System.Windows.Forms.Control.DefaultForeColor,
 													  opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle)
 					{
 						Font = Conversions.ConvertFont(form.Font)
 					};
-					prg.Style = opts.smooth.IsTrue() ? ProgressBarStyle.Continuous : ProgressBarStyle.Blocks;
+					prg.Style = smooth ? ProgressBarStyle.Continuous : ProgressBarStyle.Blocks;
 
 					if (opts.nudlow.HasValue)
 						prg.Minimum = opts.nudlow.Value;
@@ -1076,7 +1078,7 @@ namespace Keysharp.Core
 #if WINDOWS
 
 					if (opts.vertical && opts.width == int.MinValue && opts.height == int.MinValue)
-						(prg.Height, prg.Width) = (prg.Width, prg.Height);
+							(prg.Height, prg.Width) = (prg.Width, prg.Height);
 
 #endif
 					ctrl = prg;
@@ -1321,11 +1323,11 @@ namespace Keysharp.Core
 						r = 3;
 					else if (ctrl is KeysharpListView || ctrl is KeysharpTreeView || (ctrl is KeysharpProgressBar kpb2 && ((kpb2.AddStyle & 0x04) == 0x04)))
 						r = 5;
-					else if (ctrl is KeysharpGroupBox || ctrl is KeysharpProgressBar)
+					else if (ctrl is KeysharpGroupBox)
 						r = 2;
 					else if (ctrl is KeysharpTextBox tb)
 						r = tb.Multiline ? 3 : 1;
-					else if (ctrl is KeysharpDateTimePicker || ctrl is HotkeyBox)
+					else if (ctrl is KeysharpDateTimePicker || ctrl is HotkeyBox || ctrl is KeysharpProgressBar)
 						r = 1;
 					else if (ctrl is TabPage || ctrl is KeysharpTabControl)
 						r = 10;
