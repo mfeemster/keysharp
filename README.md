@@ -188,6 +188,8 @@ testfunc()
 	+ RegEx operator ~= returns a RegExMatchInfo, which is treated as an integer in comparison or math operations
 
 ###	Additions/Improvements: ###
+* `Map` internally uses a real hashmap, which means item access, insertions and removals are faster, which is especially true for larger datasets. To keep at least partial compatibility with AutoHotkey the `Map` object is copied and sorted before enumeration, which means modifying the `Map` during enumeration will not have the same effect as in AHK. 
+	+ A new `HashMap` class has been added which extends `Map` and does not perform sorting before enumeration.
 * The spread operator `*` may be used multiple times in one function call. `MyFunc(arr1*, arr2*)` is allowed.
 * Buffer has an `__Item[]` indexer which can be used to read a byte at a 1-based offset.
 * A new class named `StringBuffer` which can be used for passing string memory to `DllCall()` which will be written to inside of the call.

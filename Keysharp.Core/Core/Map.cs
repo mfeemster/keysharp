@@ -91,26 +91,73 @@ namespace Keysharp.Core
 				if (y is string s2)
 					return stringComparer.Compare(s1, s2);
 				else
-					return 1;
+					return y is double ? -1 : 1;
 			}
 			else if (y is string)
+				return x is double ? 1 : -1;
+
+			if (x is double d1)
+			{
+				if (y is double d2)
+					return d1.CompareTo(d2);
+				else
+					return 1;
+			}
+			else if (y is double)
 				return -1;
 
-			var h1 = x.GetHashCode();
-			var h2 = y.GetHashCode();
-			return h1.CompareTo(h2);
+			return 0;
 		}
 	}
 
 	/// <summary>
 	/// Map class that wraps a <see cref="Dictionary{object, object}"/>.
 	/// </summary>
+	public class HashMap : Map
+	{
+		/// <summary>
+		/// Initializes a new instance of the <see cref="HashMap"/> class, which does not sort
+		/// the entries before enumeration.
+		/// See <see cref="__New(object[])"/>.
+		/// </summary>
+		public HashMap(params object[] args) : base(args) { }
+		internal HashMap(bool make__Item, params object[] args) : base(make__Item, args) { }
+		protected override IEnumerable<KeyValuePair<object, object>> enumerableMap => map;
+	}
+
+	/// <summary>
+	/// Map class that wraps a <see cref="Dictionary{object, object}"/> which is sorted before enumeration
+	/// using MapComparer to keep compatibility with AutoHotkey.
+	/// </summary>
 	public class Map : KeysharpObject, I__Enum, IEnumerable<(object, object)>, ICollection
 	{
         /// <summary>
         /// The underlying <see cref="Dictionary"/> that holds the values.
         /// </summary>
-        internal SortedList<object, object> map;
+        internal Dictionary<object, object> map;
+
+		/// <summary>
+		/// The underlying <see cref="Dictionary"/> sorted in the order AHK does it.
+		/// </summary>
+		private IEnumerable<KeyValuePair<object, object>> _enumerableMap;
+		protected virtual IEnumerable<KeyValuePair<object, object>> enumerableMap
+		{
+			get
+			{
+				if (isDirty)
+				{
+					isDirty = false;
+					_enumerableMap = map.OrderBy(kv => kv.Key, new MapComparer(caseSense));
+				}
+				return _enumerableMap;
+			}
+		}
+
+		/// <summary>
+		/// Tracks whether any changes have been made to the underlying <see cref="Dictionary"/>
+		/// after the last access of the ordered dictionary.
+		/// </summary>
+		private bool isDirty = true;
 
 		/// <summary>
 		/// The case comparison to use for string keys.
@@ -120,9 +167,10 @@ namespace Keysharp.Core
 		/// <summary>
 		/// Gets or sets the capacity of the map.
 		/// </summary>
-		public long Capacity { 
-			get => map.Capacity;
-			set => map.Capacity = value.Ai();
+		public long Capacity
+		{
+			get => map != null ? map.Capacity : 0L;
+			set => map?.EnsureCapacity(value.Ai());
 		}
 
 		/// <summary>
@@ -148,12 +196,16 @@ namespace Keysharp.Core
 
 				if (Count > 0)
 				{
+					caseSense = oldVal;
 					_ = Errors.PropertyErrorOccurred("Attempted to change case sensitivity of a map which was not empty.");
 					return;
 				}
 
 				if (caseSense != oldVal)
-					map = new SortedList<object, object>(new MapComparer(caseSense));
+				{
+					isDirty = true;
+					map = new Dictionary<object, object>(new CaseEqualityComp(caseSense));
+				}
 			}
 		}
 
@@ -215,7 +267,11 @@ namespace Keysharp.Core
 		/// <summary>
 		/// Clears all elements from the map.
 		/// </summary>
-		public void Clear() => map.Clear();
+		public void Clear()
+		{
+			isDirty = true;
+			map.Clear();
+		}
 
 		/// <summary>
 		/// Returns whether the map contains the specified key.
@@ -235,7 +291,7 @@ namespace Keysharp.Core
 		{
 			var kvs = new List<object>(map.Count * 2);
 
-			foreach (var kv in map)
+			foreach (var kv in enumerableMap)
 			{
 				kvs.Add(kv.Key);
 				kvs.Add(kv.Value);
@@ -254,7 +310,11 @@ namespace Keysharp.Core
 		public object Delete(object key)
 		{
 			if (map.Remove(key, out var val))
+			{
+				if (!isDirty)
+					isDirty = true;
 				return val;
+			}
 
 			return Errors.KeyErrorOccurred($"Key {key} was not present in the map.");
 		}
@@ -291,7 +351,7 @@ namespace Keysharp.Core
 		/// The implementation for <see cref="IEnumerable{(object, object)}.GetEnumerator()"/> which returns an <see cref="MapKeyValueIterator"/>.
 		/// </summary>
 		/// <returns>An <see cref="IEnumerator{(object, object)}"/> which is a <see cref="MapKeyValueIterator"/>.</returns>
-		public IEnumerator<(object, object)> GetEnumerator() => new MapKeyValueIterator(map, 2);
+		public IEnumerator<(object, object)> GetEnumerator() => new MapKeyValueIterator(enumerableMap, 2);
 
 		/// <summary>
 		/// Returns true if the specified key has an associated value within a map, otherwise false.
@@ -357,7 +417,7 @@ namespace Keysharp.Core
 				else
 					_ = sb.Append(indent + name + ": " + "\t {");//Need to put this in multiple steps because the AStyle formatter misinterprets it.
 
-				foreach (var kv in map)
+				foreach (var kv in enumerableMap)
 				{
 					string key;
 
@@ -448,10 +508,12 @@ namespace Keysharp.Core
 		/// <exception cref="ValueError">A <see cref="ValueError"/> exception is thrown if values was not of a supported type.</exception>
 		public void Set(params object[] args)
 		{
+			if (!isDirty)
+				isDirty = true;
 			if (args == null || args.Length == 0)
 			{
 				if (map == null)
-					map = new SortedList<object, object>(new MapComparer(caseSense));
+					map = new Dictionary<object, object>(new CaseEqualityComp(caseSense));
 				else
 					map.Clear();
 			}
@@ -465,7 +527,7 @@ namespace Keysharp.Core
 						caseSense = m.caseSense;
 						return;
 					}
-					else if (args[0] is SortedList<object, object> dkt)
+					else if (args[0] is Dictionary<object, object> dkt)
 					{
 						map = dkt;
 					}
@@ -474,7 +536,7 @@ namespace Keysharp.Core
 						var count = (temp.Count / 2) * 2;//Do not flatten here because the caller may want a map of maps, or a map of arrays.
 
 						if (map == null)
-							map = new SortedList<object, object>(new MapComparer(caseSense));
+							map = new Dictionary<object, object>(new CaseEqualityComp(caseSense));
 
 						for (var i = 0; i < count - 1; i += 2)
 							Insert(temp.array[i], temp.array[i + 1]);//Access the underlying ArrayList directly for performance.
@@ -482,7 +544,7 @@ namespace Keysharp.Core
 					else if (args[0] is Dictionary<string, object> tempm)
 					{
 						if (map == null)
-							map = new SortedList<object, object>(new MapComparer(caseSense));
+							map = new Dictionary<object, object>(new CaseEqualityComp(caseSense));
 
 						foreach (var kv in tempm)
 							Insert(kv.Key, kv.Value);
@@ -498,7 +560,7 @@ namespace Keysharp.Core
 					var count = (args.Length / 2) * 2;
 
 					if (map == null)
-						map = new SortedList<object, object>(new MapComparer(caseSense));
+						map = new Dictionary<object, object>(new CaseEqualityComp(caseSense));
 
 					for (var i = 0; i < count; i += 2)
 						Insert(args[i], args[i + 1]);
@@ -518,7 +580,7 @@ namespace Keysharp.Core
 				_ = sb.Append('{');
 				var i = 0;
 
-				foreach (var kv in map)
+				foreach (var kv in enumerableMap)
 				{
 					string key;
 
@@ -552,7 +614,7 @@ namespace Keysharp.Core
 		/// The implementation for <see cref="IEnumerable.GetEnumerator"/> which just calls <see cref="__Enum"/>.
 		/// </summary>
 		/// <returns><see cref="MapKeyValueIterator"/></returns>
-		IEnumerator IEnumerable.GetEnumerator() => new MapKeyValueIterator(map, 2);
+		IEnumerator IEnumerable.GetEnumerator() => new MapKeyValueIterator(enumerableMap, 2);
 		/// <summary>
 		/// Internal helper to insert a key,value pair into the map.
 		/// </summary>
@@ -594,7 +656,12 @@ namespace Keysharp.Core
 				return Default ?? Errors.UnsetItemErrorOccurred($"Key {key} was not present in the map.");
 			}
 
-			set => Insert(key, value);
+			set
+			{
+				if (!isDirty)
+					isDirty = true;
+				Insert(key, value);
+			}
 		}
 	}
 

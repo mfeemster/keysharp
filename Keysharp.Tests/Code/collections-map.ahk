@@ -700,3 +700,20 @@ if (mkey1 == "one" && mval1 == 1 &&
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
+
+; Test correct sorting order
+m := Map(1.0, "double", 1, "integer", "1", "string", {}, "object")
+i := 0
+for k, v in m {
+	i++
+	if (i == 1 && v == "integer")
+		FileAppend "pass", "*"
+	else if (i == 2 && v == "object")
+		FileAppend "pass", "*"
+	else if (i == 3 && v == "string")
+		FileAppend "pass", "*"
+	else if (i == 4 && v == "double")
+		FileAppend "pass", "*"
+	else
+		FileAppend "fail", "*"
+}
