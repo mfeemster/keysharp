@@ -144,20 +144,13 @@ namespace Keysharp.Core
 		{
 			get
 			{
-				if (isDirty)
+				if (_enumerableMap == null)
 				{
-					isDirty = false;
 					_enumerableMap = map.OrderBy(kv => kv.Key, new MapComparer(caseSense));
 				}
 				return _enumerableMap;
 			}
 		}
-
-		/// <summary>
-		/// Tracks whether any changes have been made to the underlying <see cref="Dictionary"/>
-		/// after the last access of the ordered dictionary.
-		/// </summary>
-		private bool isDirty = true;
 
 		/// <summary>
 		/// The case comparison to use for string keys.
@@ -203,7 +196,8 @@ namespace Keysharp.Core
 
 				if (caseSense != oldVal)
 				{
-					isDirty = true;
+					if (_enumerableMap != null)
+						_enumerableMap = null;
 					map = new Dictionary<object, object>(new CaseEqualityComp(caseSense));
 				}
 			}
@@ -269,7 +263,8 @@ namespace Keysharp.Core
 		/// </summary>
 		public void Clear()
 		{
-			isDirty = true;
+			if (_enumerableMap != null)
+				_enumerableMap = null;
 			map.Clear();
 		}
 
@@ -311,8 +306,8 @@ namespace Keysharp.Core
 		{
 			if (map.Remove(key, out var val))
 			{
-				if (!isDirty)
-					isDirty = true;
+				if (_enumerableMap != null)
+					_enumerableMap = null;
 				return val;
 			}
 
@@ -508,8 +503,9 @@ namespace Keysharp.Core
 		/// <exception cref="ValueError">A <see cref="ValueError"/> exception is thrown if values was not of a supported type.</exception>
 		public void Set(params object[] args)
 		{
-			if (!isDirty)
-				isDirty = true;
+			if (_enumerableMap != null)
+				_enumerableMap = null;
+
 			if (args == null || args.Length == 0)
 			{
 				if (map == null)
@@ -658,8 +654,8 @@ namespace Keysharp.Core
 
 			set
 			{
-				if (!isDirty)
-					isDirty = true;
+				if (_enumerableMap != null)
+					_enumerableMap = null;
 				Insert(key, value);
 			}
 		}
