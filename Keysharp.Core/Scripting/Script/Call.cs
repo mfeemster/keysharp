@@ -590,12 +590,12 @@ namespace Keysharp.Scripting
 #endif
 				else if (item is KeysharpObject kso)//No property was present, so create one and assign the value to it.
 				{
-					_ = kso.DefineProp(namestr, Collections.MapWithoutBase("value", value));
+					_ = kso.op[namestr] = new OwnPropsDesc(kso, value);
 					return value;
 				}
 				else if (setAny && any != null)
 				{
-					_ = Objects.ObjDefineProp(any, namestr, Collections.MapWithoutBase("value", value));
+					any.op[namestr] = new OwnPropsDesc(any, value);
 					return value;
 				}
 				else if (Reflections.FindAndCacheInstanceMethod(typetouse, "set_Item", 2) is MethodPropertyHolder mph1 && mph1.ParamLength == 2)
