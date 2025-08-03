@@ -1239,15 +1239,16 @@ namespace Keysharp.Scripting
 			_ = initial.Add(new CodeSnippetExpression($"{ScriptObject.Name}.SetName(name)"));
 			_ = initial.Add(new CodeAssignStatement(HotstringManagerObjectSnippet, new CodeSnippetExpression($"{ScriptObjectName}.HotstringManager")));
 			_ = initial.Add(condInst);
-			_ = initial.Add(new CodeAssignStatement(ScriptObjectSnippet, new CodeObjectCreateExpression(typeof(Keysharp.Scripting.Script))));
 
-			foreach (var (p, s) in preReader.PreloadedDlls)//Add after Script.Init() call above, because the statements will be added in reverse order.
+			foreach (var (p, s) in preReader.PreloadedDlls)//Add before Script.Init() call below, because the statements will be added in reverse order.
 			{
-				var cmie = new CodeMethodInvokeExpression(new CodeTypeReferenceExpression("Keysharp.Scripting.Script.Variables"), "AddPreLoadedDll");
+				var cmie = new CodeMethodInvokeExpression(ScriptObjectSnippet, "LoadDll");
 				_ = cmie.Parameters.Add(new CodePrimitiveExpression(p));
 				_ = cmie.Parameters.Add(new CodePrimitiveExpression(s));
 				initial.Add(new CodeExpressionStatement(cmie));
 			}
+
+			_ = initial.Add(new CodeAssignStatement(ScriptObjectSnippet, new CodeObjectCreateExpression(typeof(Keysharp.Scripting.Script))));
 
 			var namevar = new CodeVariableDeclarationStatement("System.String", "name", new CodePrimitiveExpression(name));
 			_ = initial.Add(namevar);
