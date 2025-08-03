@@ -165,8 +165,11 @@ namespace Keysharp.Core.Common.Invoke
 						goto TypeDetermined;
 					}
 
-					if (p is string s)
+					if (p is IPointable ip)
+						args[n] = ip.Ptr;
+					else if (p is not Any)
 					{
+						string s = ForceString(p);
 						nint bstr = Marshal.StringToBSTR(s);
 						_bstrs.Add(bstr);
 						args[n] = bstr;
@@ -189,13 +192,17 @@ namespace Keysharp.Core.Common.Invoke
 						goto TypeDetermined;
 					}
 
-					if (p is string s)
+					if (p is IPointable ip)
+						args[n] = ip.Ptr;
+					else if (p is not Any)
 					{
+						p = ForceString(p);
 						SetupPointerArg();
 					}
 					else
 					{
-						ConvertPtr();
+						_ = Errors.TypeErrorOccurred(tag, typeof(string));
+						return;
 					}
 
 					continue;
@@ -213,8 +220,11 @@ namespace Keysharp.Core.Common.Invoke
 						goto TypeDetermined;
 					}
 
-					if (p is string s)
+					if (p is IPointable ip)
+						args[n] = ip.Ptr;
+					else if (p is not Any)
 					{
+						string s = ForceString(p);
 						byte[] ascii = Encoding.ASCII.GetBytes(s);
 						var gch = GCHandle.Alloc(ascii, GCHandleType.Pinned);
 						gcHandles.Add(gch);
@@ -445,6 +455,8 @@ namespace Keysharp.Core.Common.Invoke
 					args[n] = lptr;
 				else if (p is string s)
 					args[n] = s.Al();
+				else if (p is IPointable ip)
+					args[n] = ip.Ptr;
 				else if (p is Array arrPtr)
 				{
 					SetupPointerArg();
