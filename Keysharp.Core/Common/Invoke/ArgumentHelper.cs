@@ -169,6 +169,9 @@ namespace Keysharp.Core.Common.Invoke
 						goto TypeDetermined;
 					}
 
+					if (p is not StringBuffer)
+						p = ForceString(p);
+
 					if (p is string s)
 					{
 						nint bstr = Marshal.StringToBSTR(s);
@@ -199,6 +202,9 @@ namespace Keysharp.Core.Common.Invoke
 						outputVars[paramIndex] = (typeof(nint), false);
 						p = kptr;
 					}
+
+					if (p is not StringBuffer)
+						p = ForceString(p);
 
 					if (p is string s)
 					{
@@ -243,6 +249,9 @@ namespace Keysharp.Core.Common.Invoke
 						outputVars[paramIndex] = (typeof(nint), false);
 						p = kptr;
 					}
+
+					if (p is not StringBuffer)
+						p = ForceString(p);
 
 					if (p is string s)
 					{
