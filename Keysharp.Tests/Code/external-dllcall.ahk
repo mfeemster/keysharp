@@ -264,3 +264,23 @@ if (result == 3) ; This is testing the conversion of long back to int.
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
+
+Base64ToString(Base64)
+{
+	static CRYPT_STRING_BASE64 := 0x00000001
+
+	if !(DllCall("crypt32\CryptStringToBinaryW", "Str", Base64, "UInt", 0, "UInt", CRYPT_STRING_BASE64, "Ptr", 0, "UInt*", &Size := 0, "Ptr", 0, "Ptr", 0))
+		throw OSError()
+
+	String := Buffer(Size)
+	if !(DllCall("crypt32\CryptStringToBinaryW", "Str", Base64, "UInt", 0, "UInt", CRYPT_STRING_BASE64, "Ptr", String, "UInt*", Size, "Ptr", 0, "Ptr", 0))
+		throw OSError()
+
+	return StrGet(String, "UTF-8")
+}
+
+str := Base64ToString("VGhlIHF1aWNrIGJyb3duIGZveCBqdW1wcyBvdmVyIHRoZSBsYXp5IGRvZw==")
+if (str == "The quick brown fox jumps over the lazy dog")
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"

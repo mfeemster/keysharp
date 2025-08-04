@@ -7,6 +7,7 @@
 #NOTRAYICON
 #SUSPENDEXEMPT 1
 #WINACTIVATEFORCE
+#DLLLOAD user32.dll
 
 if (A_ClipboardTimeout == 2000)
 	FileAppend, "pass", "*"
