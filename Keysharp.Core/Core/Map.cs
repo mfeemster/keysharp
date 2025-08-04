@@ -120,7 +120,7 @@
 		/// </summary>
 		public HashMap(params object[] args) : base(args) { }
 		internal HashMap(bool make__Item, params object[] args) : base(make__Item, args) { }
-		protected override IEnumerable<KeyValuePair<object, object>> enumerableMap => map;
+		protected override IEnumerable<KeyValuePair<object, object>> EnumerableMap => map;
 	}
 
 	/// <summary>
@@ -137,16 +137,16 @@
 		/// <summary>
 		/// The underlying <see cref="Dictionary"/> sorted in the order AHK does it.
 		/// </summary>
-		private IEnumerable<KeyValuePair<object, object>> _enumerableMap;
-		protected virtual IEnumerable<KeyValuePair<object, object>> enumerableMap
+		private IEnumerable<KeyValuePair<object, object>> enumerableMap;
+		protected virtual IEnumerable<KeyValuePair<object, object>> EnumerableMap
 		{
 			get
 			{
-				if (_enumerableMap == null)
+				if (enumerableMap == null)
 				{
-					_enumerableMap = map.OrderBy(kv => kv.Key, new MapComparer(caseSense));
+					enumerableMap = map.OrderBy(kv => kv.Key, new MapComparer(caseSense));
 				}
-				return _enumerableMap;
+				return enumerableMap;
 			}
 		}
 
@@ -194,8 +194,8 @@
 
 				if (caseSense != oldVal)
 				{
-					if (_enumerableMap != null)
-						_enumerableMap = null;
+					if (enumerableMap != null)
+						enumerableMap = null;
 					map = new Dictionary<object, object>(new CaseEqualityComp(caseSense));
 				}
 			}
@@ -252,7 +252,7 @@
 		///     2: Return the key in the first element, and the value in the second.
 		/// </param>
 		/// <returns><see cref="KeysharpEnumerator"/></returns>
-		public KeysharpEnumerator __Enum(object count) => new MapKeyValueIterator(enumerableMap, count.Ai());
+		public KeysharpEnumerator __Enum(object count) => new MapKeyValueIterator(EnumerableMap, count.Ai());
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="Map"/> class.
@@ -276,8 +276,8 @@
 		/// </summary>
 		public void Clear()
 		{
-			if (_enumerableMap != null)
-				_enumerableMap = null;
+			if (enumerableMap != null)
+				enumerableMap = null;
 			map.Clear();
 		}
 
@@ -299,7 +299,7 @@
 		{
 			var kvs = new List<object>(map.Count * 2);
 
-			foreach (var kv in enumerableMap)
+			foreach (var kv in EnumerableMap)
 			{
 				kvs.Add(kv.Key);
 				kvs.Add(kv.Value);
@@ -319,8 +319,8 @@
 		{
 			if (map.Remove(key, out var val))
 			{
-				if (_enumerableMap != null)
-					_enumerableMap = null;
+				if (enumerableMap != null)
+					enumerableMap = null;
 				return val;
 			}
 
@@ -359,7 +359,7 @@
 		/// The implementation for <see cref="IEnumerable{(object, object)}.GetEnumerator()"/> which returns an <see cref="MapKeyValueIterator"/>.
 		/// </summary>
 		/// <returns>An <see cref="IEnumerator{(object, object)}"/> which is a <see cref="MapKeyValueIterator"/>.</returns>
-		public IEnumerator<(object, object)> GetEnumerator() => new MapKeyValueIterator(enumerableMap, 2);
+		public IEnumerator<(object, object)> GetEnumerator() => new MapKeyValueIterator(EnumerableMap, 2);
 
 		/// <summary>
 		/// Returns true if the specified key has an associated value within a map, otherwise false.
@@ -425,7 +425,7 @@
 				else
 					_ = sb.Append(indent + name + ": " + "\t {");//Need to put this in multiple steps because the AStyle formatter misinterprets it.
 
-				foreach (var kv in enumerableMap)
+				foreach (var kv in EnumerableMap)
 				{
 					string key;
 
@@ -516,8 +516,8 @@
 		/// <exception cref="ValueError">A <see cref="ValueError"/> exception is thrown if values was not of a supported type.</exception>
 		public void Set(params object[] args)
 		{
-			if (_enumerableMap != null)
-				_enumerableMap = null;
+			if (enumerableMap != null)
+				enumerableMap = null;
 
 			if (args == null || args.Length == 0)
 			{
@@ -593,7 +593,7 @@
 				_ = sb.Append('{');
 				var i = 0;
 
-				foreach (var kv in enumerableMap)
+				foreach (var kv in EnumerableMap)
 				{
 					string key;
 
@@ -627,7 +627,7 @@
 		/// The implementation for <see cref="IEnumerable.GetEnumerator"/> which just calls <see cref="__Enum"/>.
 		/// </summary>
 		/// <returns><see cref="MapKeyValueIterator"/></returns>
-		IEnumerator IEnumerable.GetEnumerator() => new MapKeyValueIterator(enumerableMap, 2);
+		IEnumerator IEnumerable.GetEnumerator() => new MapKeyValueIterator(EnumerableMap, 2);
 		/// <summary>
 		/// Internal helper to insert a key,value pair into the map.
 		/// </summary>
@@ -671,8 +671,8 @@
 
 			set
 			{
-				if (_enumerableMap != null)
-					_enumerableMap = null;
+				if (enumerableMap != null)
+					enumerableMap = null;
 				Insert(key, value);
 			}
 		}
