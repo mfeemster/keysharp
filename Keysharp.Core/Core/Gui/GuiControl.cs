@@ -2055,7 +2055,7 @@
 						if (notifyHandlers.TryGetValue((int)nmhdr.code, out var handler))
 						{
 							var ret = handler?.InvokeEventHandlers(this, m.LParam.ToInt64());
-							m.Result = ret.IsCallbackResultNonEmpty() ? 1 : 0;
+							m.Result = (nint)Script.ForceLong(ret);
 							return true;
 						}
 					}
@@ -2070,7 +2070,7 @@
 						if (commandHandlers.TryGetValue(val, out var handler))
 						{
 							var ret = handler?.InvokeEventHandlers(this);
-							m.Result = ret.IsCallbackResultNonEmpty() ? 1 : 0;
+							m.Result = (nint)Script.ForceLong(ret);
 							return true;
 						}
 					}

@@ -121,7 +121,7 @@
 					var result = closedHandlers?.InvokeEventHandlers(g);
 					e.Cancel = true;
 
-					if (result.IsCallbackResultNonEmpty() && (result is long || result is bool))
+					if (Script.ForceLong(result) != 0L)
 						return;
 
 					Hide();

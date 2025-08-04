@@ -216,7 +216,7 @@
 								{
 									result = handler.Call(obj);
 
-									if (result.IsCallbackResultNonEmpty())
+									if (Script.ForceLong(result) != 0L)
 										break;
 								}
 							}
