@@ -3,6 +3,7 @@
 	internal class MessageFilter : IMessageFilter
 	{
 		Script script;
+		internal Message lastMsg;
 		internal MessageFilter(Script associatedScript)
 		{
 			script = associatedScript;
@@ -12,11 +13,6 @@
 		{
 			if (script.GuiData.onMessageHandlers.TryGetValue(m.Msg, out var monitor))
 			{
-				if (isPreFilter && !monitor.isPrefiltered)
-					monitor.isPrefiltered = true;
-				else if (!isPreFilter && monitor.isPrefiltered)
-					return false;
-
 				var tv = script.Threads.CurrentThread;
 
 				if (!script.Threads.AnyThreadsAvailable() || tv.priority > 0)
@@ -50,6 +46,16 @@
 			return false;
 		}
 
-		public bool PreFilterMessage(ref Message m) => CallEventHandlers(ref m);
+		public bool PreFilterMessage(ref Message m)
+		{
+			if (m.HWnd != 0)
+			{
+				var ctl = Control.FromHandle(m.HWnd);
+				if (ctl == null || !(ctl.FindForm() is KeysharpForm))
+					return false;
+			}
+			lastMsg = m;
+			return CallEventHandlers(ref m);
+		}
 	}
 }

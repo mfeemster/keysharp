@@ -30,8 +30,10 @@
 
 		protected override void WndProc(ref Message m)
 		{
-			if (!TheScript.msgFilter.CallEventHandlers(ref m, false))
-				base.WndProc(ref m);
+			var msgFilter = TheScript.msgFilter;
+			if (msgFilter.lastMsg != m && msgFilter.CallEventHandlers(ref m, false))
+				return;
+			base.WndProc(ref m);
 		}
 
 		[Browsable(false)]
