@@ -379,9 +379,13 @@ namespace Keysharp.Scripting
 			_ = mainWindow.BeginInvoke(() =>
 			{
 				var ret = Threads.BeginThread();
+				// Replace configData with the prototype, which will later be used to initialize all
+				// subsequent pseudo-threads. After the auto-execute thread has finished, restore the
+				// original configData object because the thread variables object may be reused later.
+				var prevConfigData = ret.Item2.configData;
 				ret.Item2.configData = AccessorData.threadConfigDataPrototype;
 
-				if (!Flow.TryCatch(() =>
+				bool autoExecResult = Flow.TryCatch(() =>
 				{
 					_ = userInit();
 					//HotkeyDefinition.ManifestAllHotkeysHotstringsHooks() will be called inside of userInit() because it
@@ -389,9 +393,12 @@ namespace Keysharp.Scripting
 					//  After the window handle is created and the handle isn't valid until mainWindow.Load() is called.
 					//  Also right after all hotkeys and hotstrings are created.
 					isReadyToExecute = true;
-					_ = Threads.EndThread(ret);
-				}, true, ret))//Pop on exception because EndThread() above won't be called.
-				{
+				}, false, ret);
+
+				ret.Item2.configData = prevConfigData;
+				_ = Threads.EndThread(ret);
+
+				if (!autoExecResult) {
 					if (!persistent)//An exception was thrown so the generated ExitApp() call in _ks_UserMainCode() will not have been called, so call it here.
 					{
 						_ = Flow.ExitApp(1);

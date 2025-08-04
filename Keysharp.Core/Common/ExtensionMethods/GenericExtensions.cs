@@ -199,32 +199,32 @@
 				{
 					var oldEventInfo = A_EventInfo;
 					var script = Script.TheScript;
-					var (pushed, tv) = Script.TheScript.Threads.BeginThread();
 
-					if (pushed)//If we've exceeded the number of allowable threads, then just do nothing.
+					foreach (var handler in handlers)
 					{
-						tv.eventInfo = oldEventInfo;
-						_ = Flow.TryCatch(() =>
+						if (handler != null)
 						{
-							var script = Script.TheScript;
-							
-							if (inst is Control ctrl && ctrl.FindForm() is Form form)
-								script.HwndLastUsed = form.Handle;
-
-							foreach (var handler in handlers)
+							var (pushed, tv) = script.Threads.BeginThread();
+							if (pushed)//If we've exceeded the number of allowable threads, then just do nothing.
 							{
-								if (handler != null)
+								tv.eventInfo = oldEventInfo;
+								_ = Flow.TryCatch(() =>
 								{
-									result = handler.Call(obj);
+									var script = Script.TheScript;
+							
+									if (inst is Control ctrl && ctrl.FindForm() is Form form)
+										script.HwndLastUsed = form.Handle;
 
-									if (result.IsCallbackResultNonEmpty())
-										break;
-								}
+										result = handler.Call(obj);
+									_ = script.Threads.EndThread((pushed, tv));
+								}, true, (pushed, tv));//Pop on exception because EndThread() above won't be called.
+
+								if (Script.ForceLong(result) != 0L)
+									break;
 							}
-
-							_ = script.Threads.EndThread((pushed, tv));
-						}, true, (pushed, tv));//Pop on exception because EndThread() above won't be called.
+						}
 					}
+					script.ExitIfNotPersistent();
 				}
 			}
 

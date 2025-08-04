@@ -107,7 +107,7 @@
 		/// </summary>
 		/// <param name="result">The callback result to examine.</param>
 		/// <returns>True if non-empty, else false.</returns>
-		public static bool IsCallbackResultNonEmpty(this object result) => result != null&& ((result.ParseLong(false) is long l&& l != 0) || result.ParseBool().IsTrue() || (result is string s&& s != ""));
+		public static bool IsCallbackResultNonEmpty(this object result) => result != null && ((result.ParseLong(false) is long l && l != 0) || (result.ParseDouble(false) is double dl && dl != 0.0) || result.ParseBool().IsTrue() || (result is string s && s != ""));
 
 		/// <summary>
 		/// Returns whether an object is a <see cref="Gui"/>, <see cref="GuiControl"/> or <see cref="Menu"/>.

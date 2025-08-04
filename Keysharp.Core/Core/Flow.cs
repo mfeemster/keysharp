@@ -583,7 +583,7 @@ namespace Keysharp.Core
 			var result = script.onExitHandlers.InvokeEventHandlers(A_ExitReason, exitCode);
 
 			//If it wasn't a critical shutdown and any exit handlers returned a non empty value, abort the exit.
-			if (exitReason >= ExitReasons.None && result.IsCallbackResultNonEmpty())
+			if (exitReason >= ExitReasons.None && Script.ForceLong(result) != 0L)
 			{
 				A_ExitReason = "";
 				fd.allowInterruption = allowInterruption_prev;
