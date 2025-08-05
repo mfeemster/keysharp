@@ -305,7 +305,6 @@ namespace Keysharp.Scripting
 			if (Env.FindCommandLineArg("restart") != null || Env.FindCommandLineArg("r") != null)
 				inst = eScriptInstance.Force;
 
-			title = MakeTitleWithVersion(title);
 			var exit = false;
 			var oldDetect = WindowX.DetectHiddenWindows(true);
 			var oldMatchMode = WindowX.SetTitleMatchMode(3);//Require exact match.
@@ -372,7 +371,7 @@ namespace Keysharp.Scripting
 			mainWindow = new MainWindow();
 
 			if (!string.IsNullOrEmpty(title))
-				mainWindow.Text = MakeTitleWithVersion(title);
+				mainWindow.Text = title;
 
 			mainWindow.ClipboardUpdate += PrivateClipboardUpdate;
 			mainWindow.Icon = Core.Properties.Resources.Keysharp_ico;
