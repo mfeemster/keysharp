@@ -101,7 +101,7 @@ else
 
 str := m.ToString()
 
-if (str == '{"one": 1, "two": 2, "three": 3}')
+if (str == '{"one": 1, "three": 3, "two": 2}')
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
@@ -700,3 +700,46 @@ if (mkey1 == "one" && mval1 == 1 &&
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
+; Test correct sorting order
+m := Map(1.0, "double", 1, "integer", "1", "string", {}, "object")
+i := 0
+for k, v in m {
+	i++
+	if (i == 1 && v == "integer")
+		FileAppend "pass", "*"
+	else if (i == 2 && v == "object")
+		FileAppend "pass", "*"
+	else if (i == 3 && v == "string")
+		FileAppend "pass", "*"
+	else if (i == 4 && v == "double")
+		FileAppend "pass", "*"
+	else
+		FileAppend "fail", "*"
+}
+
+a := HashMap() ; Map with a key and property each with the same name.
+a["test"] := 3
+a.test := 2
+
+if (a["test"] == 3)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+; HashMap should be unsorted, usually in insertion order (although this is an implementation detail)
+m := HashMap(1.0, "double", 1, "integer", "1", "string", {}, "object")
+i := 0
+for k, v in m {
+	i++
+	if (i == 1 && v == "double")
+		FileAppend "pass", "*"
+	else if (i == 2 && v == "integer")
+		FileAppend "pass", "*"
+	else if (i == 3 && v == "string")
+		FileAppend "pass", "*"
+	else if (i == 4 && v == "object")
+		FileAppend "pass", "*"
+	else
+		FileAppend "fail", "*"
+}

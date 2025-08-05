@@ -88,7 +88,7 @@
 				{
 					var ret = ctrl.InvokeMessageHandlers(ref m);
 
-					if (ret.IsCallbackResultNonEmpty())
+					if (Script.ForceLong(ret) != 0L)
 						return true;
 				}
 			}
@@ -106,6 +106,10 @@
 											   (colorValue >> 16) & 0xFF);
 					control.BackColor = requestedColor;
 					m.Result = new nint(colorValue);
+					return true;
+
+				case WindowsAPI.STM_SETIMAGE:
+					control.BackgroundImage = Image.FromHbitmap(m.LParam);
 					return true;
 			}
 
