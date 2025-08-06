@@ -19,12 +19,17 @@ namespace Keysharp.Benchmark
 	public class MapReadBenchmark : BaseTest
 	{
 		private Dictionary<object, object> dkt = [];
-		private Map map, mapScript;
+		private readonly Map map, mapScript;//These must be initialized in the constructor *after* the base constructor has been called.
 		private List<string> strings = [];
-		private Keysharp.Scripting.Script? _ks_s;
 
 		[Params(100000)]
 		public int Size { get; set; }
+
+		public MapReadBenchmark()
+		{
+			map = Collections.Map();
+			mapScript = Collections.Map();
+		}
 
 		[Benchmark]
 		public void MapRead()
@@ -50,12 +55,6 @@ namespace Keysharp.Benchmark
 		[GlobalSetup]
 		public void Setup()
 		{
-			_ks_s = new ();
-			map = Collections.Map();
-			mapScript = Collections.Map();
-			dkt = [];
-			strings = [];
-
 			for (var i = 0; i < Size; i++)
 			{
 				var s = i.ToString();
@@ -70,20 +69,16 @@ namespace Keysharp.Benchmark
 	public class MapWriteBenchmark : BaseTest
 	{
 		private readonly Dictionary<object, object> dkt = [];
-		private readonly Map map, mapScript;
+		private readonly Map map, mapScript;//These must be initialized in the constructor *after* the base constructor has been called.
 		private readonly List<string> strings = [];
-		private readonly Keysharp.Scripting.Script _ks_s;
 
 		[Params(100000)]
 		public int Size { get; set; }
 
 		public MapWriteBenchmark()
 		{
-			_ks_s = new ();
 			map = Collections.Map();
 			mapScript = Collections.Map();
-			dkt = [];
-			strings = [];
 		}
 
 		[Benchmark]
