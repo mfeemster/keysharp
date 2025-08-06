@@ -165,7 +165,7 @@ namespace Keysharp.Core.Common.Invoke
 						goto TypeDetermined;
 					}
 
-					if (p is IPointable ip)
+					if (p is IPointable ip) // Allow IPointable because of StringBuffer
 						args[n] = ip.Ptr;
 					else if (p is not Any)
 					{
@@ -192,7 +192,7 @@ namespace Keysharp.Core.Common.Invoke
 						goto TypeDetermined;
 					}
 
-					if (p is IPointable ip)
+					if (p is IPointable ip) // Allow IPointable because of StringBuffer
 						args[n] = ip.Ptr;
 					else if (p is not Any)
 					{
@@ -220,7 +220,7 @@ namespace Keysharp.Core.Common.Invoke
 						goto TypeDetermined;
 					}
 
-					if (p is IPointable ip)
+					if (p is IPointable ip) // Allow IPointable because of StringBuffer
 						args[n] = ip.Ptr;
 					else if (p is not Any)
 					{
