@@ -361,6 +361,8 @@ namespace Keysharp.Core
 			else
 				result = ((Func<nint, long[], long>)del)(fnPtr, args);
 
+			Marshal.SetLastPInvokeError(Marshal.GetLastSystemError());
+
 			if (shim != 0)
 				script.ExecutableMemoryPoolManager.Return(shim);
 
