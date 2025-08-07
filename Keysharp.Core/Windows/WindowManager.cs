@@ -130,7 +130,7 @@ namespace Keysharp.Core.Windows
 
 		internal override nint GetForeGroundWindowHwnd() => WindowsAPI.GetForegroundWindow();
 
-		internal override bool IsWindow(nint handle) => WindowsAPI.IsWindow(handle);
+		internal override bool IsWindow(nint handle) => WindowsAPI.IsWindow(handle) || handle == WindowsAPI.HWND_BROADCAST;
 
 		internal override void MaximizeAll()
 		{

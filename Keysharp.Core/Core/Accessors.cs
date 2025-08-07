@@ -823,7 +823,7 @@
 		/// <summary>
 		/// The result from the Windows GetLastError() function.
 		/// </summary>
-		public static long A_LastError => Marshal.GetLastWin32Error();//This apparently works on linux too.
+		public static long A_LastError => Marshal.GetLastPInvokeError();//This apparently works on linux too.
 
 		/// <summary>
 		/// ListLines is never true.

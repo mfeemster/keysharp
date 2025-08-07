@@ -2,16 +2,8 @@ namespace Keysharp.Scripting
 {
 	public class Variables
 	{
-		internal List<(string, bool)> preloadedDlls = [];
 		internal DateTime startTime = DateTime.UtcNow;
 		private readonly Dictionary<string, MemberInfo> globalVars = new (StringComparer.OrdinalIgnoreCase);
-
-		/// <summary>
-		/// Will be a generated call within Main which calls into this class to add DLLs.
-		/// </summary>
-		/// <param name="p"></param>
-		/// <param name="s"></param>
-		public void AddPreLoadedDll(string p, bool s) => preloadedDlls.Add((p, s));
 
 		public Variables()
 		{

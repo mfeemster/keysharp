@@ -252,39 +252,9 @@ namespace Keysharp.Core
 				var helper = new ArgumentHelper(parameters);
 				var value = NativeInvoke(address, helper.args, helper.floatingTypeMask);
 				FixParamTypesAndCopyBack(parameters, helper);
+				var result = helper.ConvertReturnValue(value);
 				helper.Dispose();
-
-				// If the return type was HRESULT and it is a negative value then throw an OSError
-				if (helper.HRESULT)
-				{
-					long hrLong = (long)value;                // unbox the raw long
-					int hr32 = unchecked((int)hrLong);   // keep only the low 32 bits
-
-					return Errors.OSErrorOccurredForHR(hr32);
-				}
-				//Special conversion for the return value.
-				else if (helper.ReturnType == typeof(int))
-				{
-					long l = (long)value;
-					int ii = *(int*)&l;
-					value = ii;
-				}
-				else if (helper.ReturnType == typeof(float))
-				{
-					if (value is not double) return _ = Errors.TypeErrorOccurred(value, typeof(double));
-
-					double d = (double)value;
-					float f = *(float*)&d;
-					return f;
-				}
-				else if (helper.ReturnType == typeof(string))
-				{
-					var str = Marshal.PtrToStringUni((nint)(long)value);
-					_ = Objects.ObjFree(value);//If this string came from us, it will be freed, else no action.
-					return str;
-				}
-
-				return value;
+				return result;
 			}
 			catch (KeysharpException)
 			{
@@ -390,6 +360,8 @@ namespace Keysharp.Core
 				result = ((Func<nint, long[], double>)del)(fnPtr, args);
 			else
 				result = ((Func<nint, long[], long>)del)(fnPtr, args);
+
+			Marshal.SetLastPInvokeError(Marshal.GetLastSystemError());
 
 			if (shim != 0)
 				script.ExecutableMemoryPoolManager.Return(shim);

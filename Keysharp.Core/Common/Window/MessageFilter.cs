@@ -2,10 +2,15 @@
 {
 	internal class MessageFilter : IMessageFilter
 	{
-		public bool PreFilterMessage(ref Message m)
+		Script script;
+		internal Message? handledMsg;
+		internal MessageFilter(Script associatedScript)
 		{
-			var script = Script.TheScript;
-			
+			script = associatedScript;
+		}
+
+		internal bool CallEventHandlers(ref Message m)
+		{
 			if (script.GuiData.onMessageHandlers.TryGetValue(m.Msg, out var monitor))
 			{
 				var tv = script.Threads.CurrentThread;
@@ -34,11 +39,28 @@
 					monitor.instanceCount--;
 				}
 
-				if (res != null && res.IsNotNullOrEmpty())
+				m.Result = (nint)Script.ForceLong(res);
+
+				if (m.Result != 0)
 					return true;
 			}
 
 			return false;
+		}
+
+		public bool PreFilterMessage(ref Message m)
+		{
+			if (m.HWnd != 0)
+			{
+				// Ignore IME windows and other helper forms
+				var ctl = Control.FromHandle(m.HWnd);
+				if (ctl == null || !(ctl.FindForm() is KeysharpForm))
+					return false;
+			}
+			// Stash the message for later comparison in WndProc to determine whether it's already
+			// been handled here. See more thorough description in KeysharpForm.cs WndProc.
+			handledMsg = m;
+			return CallEventHandlers(ref m);
 		}
 	}
 }
