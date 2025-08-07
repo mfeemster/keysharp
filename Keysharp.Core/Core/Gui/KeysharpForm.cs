@@ -45,6 +45,7 @@
 			// Additionally if any messages get lost for some reason or another message arrives here
 			// before the MessageFilter processed message has had time to arrive then we'd confuse the two.
 			var msgFilter = TheScript.msgFilter;
+
 			if (msgFilter.handledMsg == m)
 				msgFilter.handledMsg = null;
 			else if (msgFilter.CallEventHandlers(ref m))

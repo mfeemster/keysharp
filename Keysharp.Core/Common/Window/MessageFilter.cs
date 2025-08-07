@@ -54,9 +54,11 @@
 			{
 				// Ignore IME windows and other helper forms
 				var ctl = Control.FromHandle(m.HWnd);
+
 				if (ctl == null || !(ctl.FindForm() is KeysharpForm))
 					return false;
 			}
+
 			// Stash the message for later comparison in WndProc to determine whether it's already
 			// been handled here. See more thorough description in KeysharpForm.cs WndProc.
 			handledMsg = m;

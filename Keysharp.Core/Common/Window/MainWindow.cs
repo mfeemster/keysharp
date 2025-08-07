@@ -129,6 +129,7 @@
 				case WindowsAPI.WM_CLIPBOARDUPDATE:
 					if (clipSuccess)
 						ClipboardUpdate?.Invoke(null);
+
 					break;
 
 				case WindowsAPI.WM_ENDSESSION:

@@ -1249,7 +1249,6 @@ namespace Keysharp.Scripting
 			}
 
 			_ = initial.Add(new CodeAssignStatement(ScriptObjectSnippet, new CodeObjectCreateExpression(typeof(Keysharp.Scripting.Script))));
-
 			var namevar = new CodeVariableDeclarationStatement("System.String", "name", new CodePrimitiveExpression(name));
 			_ = initial.Add(namevar);
 

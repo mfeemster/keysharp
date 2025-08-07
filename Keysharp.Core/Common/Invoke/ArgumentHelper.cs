@@ -291,6 +291,7 @@ namespace Keysharp.Core.Common.Invoke
 							if (parseType)
 							{
 								hresult = true;
+
 								if (isReturn)
 									hasReturn = false; // needed for ComCall OSError
 

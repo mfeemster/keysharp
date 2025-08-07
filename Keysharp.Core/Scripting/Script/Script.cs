@@ -228,7 +228,7 @@ namespace Keysharp.Scripting
 			tickTimer.AutoReset = false;
 			tickTimer.Start();
 		}
-		
+
 		~Script()
 		{
 			tickTimer?.Dispose();
@@ -391,7 +391,6 @@ namespace Keysharp.Scripting
 				// original configData object because the thread variables object may be reused later.
 				var prevConfigData = ret.Item2.configData;
 				ret.Item2.configData = AccessorData.threadConfigDataPrototype;
-
 				bool autoExecResult = Flow.TryCatch(() =>
 				{
 					_ = userInit();
@@ -401,16 +400,17 @@ namespace Keysharp.Scripting
 					//  Also right after all hotkeys and hotstrings are created.
 					isReadyToExecute = true;
 				}, false, ret);
-
 				ret.Item2.configData = prevConfigData;
 				_ = Threads.EndThread(ret);
 
-				if (!autoExecResult) {
+				if (!autoExecResult)
+				{
 					if (!persistent)//An exception was thrown so the generated ExitApp() call in _ks_UserMainCode() will not have been called, so call it here.
 					{
 						_ = Flow.ExitApp(1);
 					}
 				}
+
 				ExitIfNotPersistent();
 			});
 			Application.Run(mainWindow);
