@@ -36,13 +36,14 @@ namespace Keysharp.Core
 					foreach (var handler in script.onErrorHandlers)
 					{
 						var result = handler.Call(err, err.ExcType);
+						var lresult = Script.ForceLong(result);
 
-						if (result.IsCallbackResultNonEmpty())
+						if (lresult != 0L)
 						{
 							err.Handled = true;
 
 							//Calling code will not throw if this is true.
-							if (result.ParseLong(false) == -1L && err.ExcType == Keyword_Return)
+							if (lresult == -1L && err.ExcType == Keyword_Return)
 								exitThread = false;
 
 							break;

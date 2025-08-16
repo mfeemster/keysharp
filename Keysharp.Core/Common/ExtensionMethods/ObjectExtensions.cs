@@ -107,45 +107,7 @@
 		/// </summary>
 		/// <param name="result">The callback result to examine.</param>
 		/// <returns>True if non-empty, else false.</returns>
-		public static bool IsCallbackResultNonEmpty(this object result)
-        {
-            if (result == null)
-                return false;
-
-            switch (result)
-            {
-                case bool b:
-                    return b;
-                case string s:
-                    // Trim and check for empty or "0"
-                    s = s.Trim();
-                    return s != "" && s != "0";
-                case long l:
-                    return l != 0;
-                case byte bt:
-                    return bt != 0;
-                case sbyte sb:
-                    return sb != 0;
-                case short sh:
-                    return sh != 0;
-                case ushort ush:
-                    return ush != 0;
-                case int i:
-                    return i != 0;
-                case uint ui:
-                    return ui != 0;
-                case ulong ul:
-                    return ul != 0;
-                case float f:
-                    return f != 0;
-                case double d:
-                    return d != 0;
-                case decimal m:
-                    return m != 0;
-                default:
-					return true;
-            }
-        }
+		public static bool IsCallbackResultNonEmpty(this object result) => result != null && ((result.ParseLong(false) is long l && l != 0) || (result.ParseDouble(false) is double dl && dl != 0.0) || result.ParseBool().IsTrue() || (result is string s && s != ""));
 
 		/// <summary>
 		/// Returns whether an object is a <see cref="Gui"/>, <see cref="GuiControl"/> or <see cref="Menu"/>.

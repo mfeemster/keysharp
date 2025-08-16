@@ -122,6 +122,9 @@ namespace Keysharp.Core.Common.Invoke
 				}
 			}
 
+            if (isSetter) // Allow value to be unset
+                MinParams--;
+
 			if (variadicParamIndex == -1)
 				MaxParams = parameters.Length;
 

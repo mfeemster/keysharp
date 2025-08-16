@@ -138,7 +138,6 @@ namespace Keysharp.Benchmark
 		[GlobalSetup]
 		public void Setup()
 		{
-			_ks_s = new ();
 			Size = 500000L;
 			totalSum = Size;
 			cl = (Myclass)Invoke(myclass, "Call");

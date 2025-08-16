@@ -90,7 +90,7 @@ namespace Keysharp.Core
 				{
 					var ret = ctrl.InvokeMessageHandlers(ref m);
 
-					if (ret.IsCallbackResultNonEmpty())
+					if (Script.ForceLong(ret) != 0L)
 						return true;
 				}
 			}

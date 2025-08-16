@@ -1762,7 +1762,7 @@ namespace Keysharp.Core.Windows
 			public nint dwData;
 			public int cbData;
 
-			[MarshalAs(UnmanagedType.LPStr)]
+			[MarshalAs(UnmanagedType.LPWStr)]
 			public string lpData;
 		}
 

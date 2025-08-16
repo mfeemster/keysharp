@@ -69,7 +69,7 @@ try
 }
 catch
 {
-	threw = true;
+	threw := true
 }
 
 if (threw)
@@ -77,14 +77,14 @@ if (threw)
 else
   	FileAppend "fail", "*"
 
-threw = false;
+threw := false
 try
 {
     DirMove("./DirCopy3", "./DirCopy3", 0)
 }
 catch
 {
-	threw = true;
+	threw := true
 }
 
 if (threw)

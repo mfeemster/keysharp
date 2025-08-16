@@ -5,7 +5,6 @@
 	[WarmupCount(15)]
 	public class DllBench : BaseTest
 	{
-		private Keysharp.Scripting.Script? _ks_s;
 		private static readonly object mcode_e = Keysharp.Core.Collections.Map("1", 4L, "2", 1L);
 		private static readonly object mcode_c = (_ = Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.ValueEquality, Accessors.A_PtrSize, 8L)) ? (object)(_ = "x64") : (object)(_ = "x86"));
 		private static object p = 0L, ptr = 0L, result = 0L;
@@ -80,7 +79,6 @@
 		[GlobalSetup]
 		public void Setup()
 		{
-			_ks_s = new ();
 			ptr = MCode("2,x64:SInIidFEicJI/+A=");
 		}
 	}

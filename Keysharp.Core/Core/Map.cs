@@ -62,67 +62,24 @@ namespace Keysharp.Core
 		}
 	}
 
-	class MapComparer : IComparer<object>
-	{
-		private readonly StringComparer stringComparer;
-		public MapComparer(eCaseSense caseSense)
-		{
-			stringComparer = caseSense switch
-			{
-				eCaseSense.On => StringComparer.Ordinal,
-				eCaseSense.Off => StringComparer.OrdinalIgnoreCase,
-				_ => StringComparer.CurrentCultureIgnoreCase,
-			};
-		}
-		public int Compare(object x, object y)
-		{
-			if (x is long ll1)
-			{
-				if (y is long ll2)
-					return ll1.CompareTo(ll2);
-				else
-					return -1;
-			}
-			else if (y is long)
-				return 1;
-
-			if (x is string s1)
-			{
-				if (y is string s2)
-					return stringComparer.Compare(s1, s2);
-				else
-					return y is double ? -1 : 1;
-			}
-			else if (y is string)
-				return x is double ? 1 : -1;
-
-			if (x is double d1)
-			{
-				if (y is double d2)
-					return d1.CompareTo(d2);
-				else
-					return 1;
-			}
-			else if (y is double)
-				return -1;
-
-			return 0;
-		}
-	}
-
 	/// <summary>
-	/// Map class that wraps a <see cref="Dictionary{object, object}"/>.
+	/// Map class that wraps a <see cref="Dictionary{object, object}"/> which does not sort the
+	/// entries before enumeration.
 	/// </summary>
 	public class HashMap : Map
 	{
+		/// <summary>
+		/// Returns the underlying unsorted map instead of the custom sorted enumerable returned by <see cref="Map"/>.
+		/// </summary>
+		protected override IEnumerable<KeyValuePair<object, object>> EnumerableMap => map;
+
 		/// <summary>
 		/// Initializes a new instance of the <see cref="HashMap"/> class, which does not sort
 		/// the entries before enumeration.
 		/// See <see cref="__New(object[])"/>.
 		/// </summary>
+		/// <param name="args">See <see cref="Map.__New(object[])"/>.</param>
 		public HashMap(params object[] args) : base(args) { }
-		internal HashMap(bool make__Item, params object[] args) : base(make__Item, args) { }
-		protected override IEnumerable<KeyValuePair<object, object>> enumerableMap => map;
 	}
 
 	/// <summary>
@@ -137,25 +94,19 @@ namespace Keysharp.Core
         internal Dictionary<object, object> map;
 
 		/// <summary>
-		/// The underlying <see cref="Dictionary"/> sorted in the order AHK does it.
-		/// </summary>
-		private IEnumerable<KeyValuePair<object, object>> _enumerableMap;
-		protected virtual IEnumerable<KeyValuePair<object, object>> enumerableMap
-		{
-			get
-			{
-				if (_enumerableMap == null)
-				{
-					_enumerableMap = map.OrderBy(kv => kv.Key, new MapComparer(caseSense));
-				}
-				return _enumerableMap;
-			}
-		}
-
-		/// <summary>
 		/// The case comparison to use for string keys.
 		/// </summary>
 		private eCaseSense caseSense = eCaseSense.On;
+
+		/// <summary>
+		/// The comparer to use when enumerating with <see cref="EnumerableMap"/>
+		/// </summary>
+		private MapComparer mapComparer;
+
+		/// <summary>
+		/// The underlying <see cref="Dictionary"/> sorted in the order AHK does it.
+		/// </summary>
+		private IEnumerable<KeyValuePair<object, object>> enumerableMap;
 
 		/// <summary>
 		/// Gets or sets the capacity of the map.
@@ -196,8 +147,9 @@ namespace Keysharp.Core
 
 				if (caseSense != oldVal)
 				{
-					if (_enumerableMap != null)
-						_enumerableMap = null;
+					if (enumerableMap != null)
+						enumerableMap = null;
+
 					map = new Dictionary<object, object>(new CaseEqualityComp(caseSense));
 				}
 			}
@@ -224,22 +176,35 @@ namespace Keysharp.Core
 		object ICollection.SyncRoot => ((ICollection)map).SyncRoot;
 
 		/// <summary>
+		/// Returns the key,value pairs in sorted order using <see cref="MapComparer"/> which is the way AHK does it.<br/>
+		/// </summary>
+		protected virtual IEnumerable<KeyValuePair<object, object>> EnumerableMap
+		{
+			get
+			{
+				if (mapComparer == null || mapComparer.CaseSense != caseSense)
+					mapComparer = new MapComparer(caseSense);
+
+				return enumerableMap ??= map.OrderBy(kv => kv.Key, mapComparer);
+			}
+		}
+
+		/// <summary>
 		/// Initializes a new instance of the <see cref="Map"/> class.
 		/// See <see cref="__New(object[])"/>.
 		/// </summary>
 		public Map(params object[] args) : base(args) { }
-
 		public Map(bool skipLogic) : base(skipLogic: skipLogic) => _ = __New();
 
-        /// <summary>
-        /// Gets the enumerator object which returns a key,value tuple for each element
-        /// </summary>
-        /// <param name="count">The number of items each element should contain:<br/>
-        ///     1: Return the key in the first element, with the second being null.<br/>
-        ///     2: Return the key in the first element, and the value in the second.
-        /// </param>
-        /// <returns><see cref="KeysharpEnumerator"/></returns>
-		public IFuncObj __Enum(object count) => (new MapKeyValueIterator(map, count.Ai())).fo;
+		/// <summary>
+		/// Gets the enumerator object which returns a key,value tuple for each element
+		/// </summary>
+		/// <param name="count">The number of items each element should contain:<br/>
+		///     1: Return the key in the first element, with the second being null.<br/>
+		///     2: Return the key in the first element, and the value in the second.
+		/// </param>
+		/// <returns><see cref="KeysharpEnumerator"/></returns>
+		public IFuncObj __Enum(object count) => new MapKeyValueIterator(EnumerableMap, count.Ai()).fo;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="Map"/> class.
@@ -263,8 +228,9 @@ namespace Keysharp.Core
 		/// </summary>
 		public void Clear()
 		{
-			if (_enumerableMap != null)
-				_enumerableMap = null;
+			if (enumerableMap != null)
+				enumerableMap = null;
+
 			map.Clear();
 		}
 
@@ -286,7 +252,7 @@ namespace Keysharp.Core
 		{
 			var kvs = new List<object>(map.Count * 2);
 
-			foreach (var kv in enumerableMap)
+			foreach (var kv in EnumerableMap)
 			{
 				kvs.Add(kv.Key);
 				kvs.Add(kv.Value);
@@ -306,8 +272,9 @@ namespace Keysharp.Core
 		{
 			if (map.Remove(key, out var val))
 			{
-				if (_enumerableMap != null)
-					_enumerableMap = null;
+				if (enumerableMap != null)
+					enumerableMap = null;
+
 				return val;
 			}
 
@@ -346,7 +313,7 @@ namespace Keysharp.Core
 		/// The implementation for <see cref="IEnumerable{(object, object)}.GetEnumerator()"/> which returns an <see cref="MapKeyValueIterator"/>.
 		/// </summary>
 		/// <returns>An <see cref="IEnumerator{(object, object)}"/> which is a <see cref="MapKeyValueIterator"/>.</returns>
-		public IEnumerator<(object, object)> GetEnumerator() => new MapKeyValueIterator(enumerableMap, 2);
+		public IEnumerator<(object, object)> GetEnumerator() => new MapKeyValueIterator(EnumerableMap, 2);
 
 		/// <summary>
 		/// Returns true if the specified key has an associated value within a map, otherwise false.
@@ -412,7 +379,7 @@ namespace Keysharp.Core
 				else
 					_ = sb.Append(indent + name + ": " + "\t {");//Need to put this in multiple steps because the AStyle formatter misinterprets it.
 
-				foreach (var kv in enumerableMap)
+				foreach (var kv in EnumerableMap)
 				{
 					string key;
 
@@ -503,8 +470,8 @@ namespace Keysharp.Core
 		/// <exception cref="ValueError">A <see cref="ValueError"/> exception is thrown if values was not of a supported type.</exception>
 		public void Set(params object[] args)
 		{
-			if (_enumerableMap != null)
-				_enumerableMap = null;
+			if (enumerableMap != null)
+				enumerableMap = null;
 
 			if (args == null || args.Length == 0)
 			{
@@ -563,7 +530,6 @@ namespace Keysharp.Core
 				}
 			}
 		}
-
 		/// <summary>
 		/// Returns the string representation of all elements in the map.
 		/// </summary>
@@ -576,7 +542,7 @@ namespace Keysharp.Core
 				_ = sb.Append('{');
 				var i = 0;
 
-				foreach (var kv in enumerableMap)
+				foreach (var kv in EnumerableMap)
 				{
 					string key;
 
@@ -606,11 +572,13 @@ namespace Keysharp.Core
 			else
 				return "{}";
 		}
+
 		/// <summary>
 		/// The implementation for <see cref="IEnumerable.GetEnumerator"/> which just calls <see cref="__Enum"/>.
 		/// </summary>
 		/// <returns><see cref="MapKeyValueIterator"/></returns>
-		IEnumerator IEnumerable.GetEnumerator() => new MapKeyValueIterator(enumerableMap, 2);
+		IEnumerator IEnumerable.GetEnumerator() => new MapKeyValueIterator(EnumerableMap, 2);
+
 		/// <summary>
 		/// Internal helper to insert a key,value pair into the map.
 		/// </summary>
@@ -623,6 +591,7 @@ namespace Keysharp.Core
 			//else
 			map[key] = value;
 		}
+
 		/// <summary>
 		/// Internal helper to wrap <see cref="Dictionary{object,object}.TryGetValue(object, out object)"/>.
 		/// </summary>
@@ -630,6 +599,7 @@ namespace Keysharp.Core
 		/// <param name="value">The value found.</param>
 		/// <returns>True if key was found else false.</returns>
 		private bool TryGetValue(object key, out object value) => map.TryGetValue(key, out value);
+
 		/// <summary>
 		/// Indexer which retrieves or sets the value of an array element.
 		/// </summary>
@@ -651,18 +621,106 @@ namespace Keysharp.Core
 
 				return Default ?? Errors.UnsetItemErrorOccurred($"Key {key} was not present in the map.");
 			}
-
 			set
 			{
-				if (_enumerableMap != null)
-					_enumerableMap = null;
+				if (enumerableMap != null)
+					enumerableMap = null;
+
 				Insert(key, value);
 			}
 		}
 	}
 
-	internal class MapKeyValueIteratorData : BaseIteratorData<MapKeyValueIterator>
+	/// <summary>
+	/// A special comparer for map key sorting.
+	/// </summary>
+	internal class MapComparer : IComparer<object>
 	{
+		/// <summary>
+		/// The string comparer used for comparing string keys, which is determined by
+		/// the value passed to the constructor.
+		/// </summary>
+		private readonly StringComparer stringComparer;
+
+		/// <summary>
+		/// The cases sensitivity value passed to the constructor.
+		/// </summary>
+		internal eCaseSense CaseSense { get; }
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="MapComparer"/> class with the specified case sensitivity setting.
+		/// </summary>
+		/// <remarks>The <paramref name="caseSense"/> parameter determines the string comparison behavior: <list
+		/// type="bullet"> <item><description><see cref="eCaseSense.On"/> uses a case-sensitive
+		/// comparison.</description></item> <item><description><see cref="eCaseSense.Off"/> uses a case-insensitive
+		/// comparison.</description></item> <item><description>Any other value defaults to a culture-insensitive,
+		/// case-insensitive comparison.</description></item> </list></remarks>
+		/// <param name="caseSense">Specifies whether the comparison should be case-sensitive or case-insensitive.</param>
+		public MapComparer(eCaseSense caseSense)
+		{
+			CaseSense = caseSense;
+			stringComparer = caseSense switch
+			{
+				eCaseSense.On => StringComparer.Ordinal,
+				eCaseSense.Off => StringComparer.OrdinalIgnoreCase,
+				_ => StringComparer.CurrentCultureIgnoreCase,
+			};
+		}
+
+		/// <summary>
+		/// Compares two objects and determines their relative order based on their types and values.
+		/// </summary>
+		/// <remarks>The comparison is performed based on the following rules: <list type="number">
+		/// <item><description>If both objects are of type <see langword="long"/>, their values are compared using <see
+		/// cref="long.CompareTo(long)"/>.</description></item> <item><description>If both objects are of type <see
+		/// cref="string"/>, their values are compared using a string comparer.</description></item> <item><description>If
+		/// both objects are of type <see langword="double"/>, their values are compared using <see
+		/// cref="double.CompareTo(double)"/>.</description></item> <item><description>If the objects are of different types,
+		/// their relative order is determined based on a predefined type precedence: <see langword="long"/> &gt; <see
+		/// cref="string"/> &gt; <see langword="double"/>.</description></item> <item><description>If neither object is of a
+		/// supported type, they are considered equal.</description></item> </list></remarks>
+		/// <param name="x">The first object to compare. Can be of type <see langword="long"/>, <see cref="string"/>, or <see
+		/// langword="double"/>.</param>
+		/// <param name="y">The second object to compare. Can be of type <see langword="long"/>, <see cref="string"/>, or <see
+		/// langword="double"/>.</param>
+		/// <returns>A signed integer that indicates the relative order of the objects: <list type="bullet"> <item><description>Less
+		/// than zero if <paramref name="x"/> is less than <paramref name="y"/>.</description></item> <item><description>Zero
+		/// if <paramref name="x"/> is equal to <paramref name="y"/>.</description></item> <item><description>Greater than
+		/// zero if <paramref name="x"/> is greater than <paramref name="y"/>.</description></item> </list></returns>
+		public int Compare(object x, object y)
+		{
+			if (x is long ll1)
+			{
+				if (y is long ll2)
+					return ll1.CompareTo(ll2);
+				else
+					return -1;
+			}
+			else if (y is long)
+				return 1;
+
+			if (x is string s1)
+			{
+				if (y is string s2)
+					return stringComparer.Compare(s1, s2);
+				else
+					return y is double ? -1 : 1;
+			}
+			else if (y is string)
+				return x is double ? 1 : -1;
+
+			if (x is double d1)
+			{
+				if (y is double d2)
+					return d1.CompareTo(d2);
+				else
+					return 1;
+			}
+			else if (y is double)
+				return -1;
+
+			return 0;
+		}
 	}
 
 	/// <summary>
@@ -671,14 +729,14 @@ namespace Keysharp.Core
 	internal class MapKeyValueIterator : KeysharpEnumerator, IEnumerator<(object, object)>
 	{
 		/// <summary>
-		/// The internal map to be iterated over.
-		/// </summary>
-		private readonly IEnumerable<KeyValuePair<object, object>> map;
-
-		/// <summary>
 		/// The iterator for the map.
 		/// </summary>
 		protected IEnumerator<KeyValuePair<object, object>> iter;
+
+		/// <summary>
+		/// The internal map to be iterated over.
+		/// </summary>
+		private readonly IEnumerable<KeyValuePair<object, object>> map;
 
 
 
@@ -793,6 +851,10 @@ namespace Keysharp.Core
 		/// The implementation for <see cref="IEnumerator.Reset"/> which resets the iterator.
 		/// </summary>
 		public void Reset() => iter = map.GetEnumerator();
+	}
+
+	internal class MapKeyValueIteratorData : BaseIteratorData<MapKeyValueIterator>
+	{
 	}
 
 	/// <summary>

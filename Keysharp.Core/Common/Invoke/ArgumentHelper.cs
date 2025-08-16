@@ -169,14 +169,17 @@ namespace Keysharp.Core.Common.Invoke
 						goto TypeDetermined;
 					}
 
-					if (p is not StringBuffer)
-						p = ForceString(p);
-
 					if (p is string s)
 					{
 						nint bstr = Marshal.StringToBSTR(s);
 						_bstrs.Add(bstr);
 						args[n] = bstr;
+					}
+					else if (p is StringBuffer sb)
+					{
+						parameters[paramIndex] = sb;
+						sb.UpdateBufferFromEntangledString();
+						args[n] = sb.Ptr;
 					}
 					else
 					{
@@ -203,9 +206,6 @@ namespace Keysharp.Core.Common.Invoke
 						p = kptr;
 					}
 
-					if (p is not StringBuffer)
-						p = ForceString(p);
-
 					if (p is string s)
 					{
 						if (outputVars.ContainsKey(paramIndex) && parameters[paramIndex] is KeysharpObject kso)
@@ -227,7 +227,8 @@ namespace Keysharp.Core.Common.Invoke
 					}
 					else
 					{
-						ConvertPtr();
+						_ = Errors.TypeErrorOccurred(tag, typeof(string));
+						return;
 					}
 
 					continue;
@@ -249,9 +250,6 @@ namespace Keysharp.Core.Common.Invoke
 						outputVars[paramIndex] = (typeof(nint), false);
 						p = kptr;
 					}
-
-					if (p is not StringBuffer)
-						p = ForceString(p);
 
 					if (p is string s)
 					{
@@ -336,6 +334,7 @@ namespace Keysharp.Core.Common.Invoke
 							if (parseType)
 							{
 								hresult = true;
+
 								if (isReturn)
 									hasReturn = false; // needed for ComCall OSError
 
@@ -500,6 +499,8 @@ namespace Keysharp.Core.Common.Invoke
 					args[n] = lptr;
 				else if (p is string s)
 					args[n] = s.Al();
+				else if (p is IPointable ip)
+					args[n] = ip.Ptr;
 				else if (p is Array arrPtr)
 				{
 					SetupPointerArg();

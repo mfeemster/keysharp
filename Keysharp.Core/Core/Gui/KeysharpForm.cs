@@ -32,8 +32,28 @@ namespace Keysharp.Core
 
 		protected override void WndProc(ref Message m)
 		{
-			if (!TheScript.msgFilter.CallEventHandlers(ref m, false))
-				base.WndProc(ref m);
+			// In Windows queued messages (eg sent with PostMessage) arrive in the message queue and
+			// are read with GetMessage, then when DispatchMessage is called (after TranslateMessage)
+			// WndProc is called with the translated message. Non-queued message (eg sent with SendMessage)
+			// arrive directly in WndProc.
+			// In C# MessageFilter processes the message after GetMessage has received it, and if let through
+			// then TranslateMessage and DispatchMessage are called, which then in turn call WndProc.
+			// The problem is how to determine whether a message has already been processed in MessageFilter to
+			// avoid double-handing. AutoHotkey uses a global variable before DispatchMessage and nulls it
+			// afterwards, and we use a similar approach here. MessageFilter stashes the handled
+			// message (only messages which target a KeysharpForm) and then we compare here for
+			// equality. A simple boolean like isHandled wouldn't be enough because for example
+			// WM_KEYDOWN will get translated to WM_CHAR and the user may want to capture that as well.
+			// Additionally if any messages get lost for some reason or another message arrives here
+			// before the MessageFilter processed message has had time to arrive then we'd confuse the two.
+			var msgFilter = TheScript.msgFilter;
+
+			if (msgFilter.handledMsg == m)
+				msgFilter.handledMsg = null;
+			else if (msgFilter.CallEventHandlers(ref m))
+				return;
+
+			base.WndProc(ref m);
 		}
 
 		[Browsable(false)]
@@ -129,7 +149,7 @@ namespace Keysharp.Core
 					var result = closedHandlers?.InvokeEventHandlers(g);
 					e.Cancel = true;
 
-					if (result.IsCallbackResultNonEmpty() && (result is long || result is bool))
+					if (Script.ForceLong(result) != 0L)
 						return;
 
 					Hide();

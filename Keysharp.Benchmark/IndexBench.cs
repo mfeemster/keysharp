@@ -10,10 +10,15 @@ namespace Keysharp.Benchmark
 		private object[]? nativearray;
 		private double[]? nativedoublearray;
 		private double totalSum;
-		private Keysharp.Scripting.Script? _ks_s;
 
 		[Params(500000)]
 		public int Size { get; set; }
+
+		public IndexBench()
+		{
+			dynamickeysharparray = new Array();
+			keysharparray = Collections.Array();
+		}
 
 		[Benchmark]
 		public void KeysharpArrayIndexRead()
@@ -118,13 +123,14 @@ namespace Keysharp.Benchmark
 		[GlobalSetup]
 		public void Setup()
 		{
-			_ks_s  = new ();
 			totalSum = 0;
 			Size = 1000000;
 			nativearray = new object[Size];
 			nativedoublearray = new double[Size];
-			keysharparray = new Array();
-			keysharparray.Capacity = Size;
+			keysharparray = new Array
+			{
+				Capacity = Size
+			};
 			dynamickeysharparray = new Array();
 			dynamickeysharparray.Capacity = Size;
 
@@ -143,13 +149,17 @@ namespace Keysharp.Benchmark
 
 	public class ListAddBench : BaseTest
 	{
-		private Keysharp.Core.Array keysharparray = Collections.Array();
+		private Keysharp.Core.Array keysharparray;
 		private List<object> nativelist = [];
 		private readonly object o = 123L;
-		private Keysharp.Scripting.Script? _ks_s;
 
 		[Params(500000)]
 		public int Size { get; set; }
+
+		public ListAddBench()
+		{
+			keysharparray = Collections.Array();
+		}
 
 		[Benchmark]
 		public void KeysharpArrayDirectAdd()
@@ -229,10 +239,7 @@ namespace Keysharp.Benchmark
 		[GlobalSetup]
 		public void Setup()
 		{
-			_ks_s = new ();
 			Size = 500000;
-			nativelist = [];
-			keysharparray = Collections.Array();
 		}
 	}
 }

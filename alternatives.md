@@ -287,7 +287,8 @@ It would serve no valuable purpose to create yet another experimental project. I
 	
 	
 	
-	https://sharphook.tolik.io/v5.3.6/
+	https://sharphook.tolik.io/v5.3.6/ https://sharphook.tolik.io/articles/native.html (this is probably what we'll use)
+	
 	https://pythonawesome.com/hook-and-simulate-global-keyboard-events-on-windows-and-linux/
 	https://github.com/boppreh/keyboard
 	https://github.com/Skycoder42/QHotkey/tree/master/QHotkey
