@@ -1496,7 +1496,7 @@
 		/// The send level to use when sending keys.<br/>
 		/// The range is 0-100.
 		/// </summary>
-		public static long A_SendLevel
+		public static object A_SendLevel
 		{
 			get => ThreadAccessors.A_SendLevel;
 			set => ThreadAccessors.A_SendLevel = Math.Clamp(value.Al(), 0L, 100L);
