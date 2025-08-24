@@ -183,7 +183,7 @@
 		/// </summary>
 		public byte[] ToByteArray()
 		{
-			int size = (int)Size;
+			int size = (int)(long)Size;
 			byte[] dataArray = new byte[size];
 			Marshal.Copy(_ptr.DangerousGetHandle(), dataArray, 0, size);
 			return dataArray;
