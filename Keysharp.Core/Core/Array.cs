@@ -34,7 +34,7 @@
 	/// </summary>
 	public class Array : KeysharpObject, I__Enum, IEnumerable<(object, object)>, IList
 	{
-		private int capacity = 64;
+		private int capacity = 4;
 
 		/// <summary>
 		/// The underlying <see cref="List"/> that holds the values.
