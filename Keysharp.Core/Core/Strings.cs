@@ -16,7 +16,7 @@
 
 			try
 			{
-				return new Keysharp.Core.Array(Convert.FromBase64String(s));
+				return new Keysharp.Core.Buffer(Convert.FromBase64String(s));
 			}
 			catch (Exception ex)
 			{

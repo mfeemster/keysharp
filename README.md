@@ -342,7 +342,7 @@ class class1
 	+ See the new accessors `A_NowMs`/`A_NowUTCMs`.
 * `SubStr()` uses a default of 1 for the second parameter, `startingPos`, to relieve the caller of always having to specify it.
 * New string functions:
-	+ `Base64Decode(str) => Array` to convert a Base64 string to a byte array.
+	+ `Base64Decode(str) => Array` to convert a Base64 string to a Buffer containing the decoded bytes.
 	+ `Base64Encode(value) => String` to convert a byte array to a Base64 string.
 	+ `NormalizeEol(str, eol) => String` to make all line endings in a string match the value passed in, or the default for the current environment.
 	+ `StartsWith(value, token [,comparison]) => Boolean` and `EndsWith(value, token [,comparison]) => Boolean` to determine if the beginning or end of a string start/end with a given string.
