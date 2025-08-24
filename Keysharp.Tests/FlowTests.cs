@@ -135,7 +135,7 @@ namespace Keysharp.Tests
 			//
 			_ = Registrys.RegWrite("AABBCCDD", "REG_BINARY", @"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest\ks_sub2", "bin1");
 			val = Registrys.RegRead(@"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest\ks_sub2", "bin1");
-			Assert.AreEqual(Collections.Array(0xAA, 0xBB, 0xCC, 0xDD), val);
+			Assert.AreEqual(new byte[] { 0xAA, 0xBB, 0xCC, 0xDD }, ((Core.Buffer)val).ToByteArray());
 			//
 			var i = 0;
 			_ = Push(LoopType.Registry);
@@ -167,7 +167,7 @@ namespace Keysharp.Tests
 				}
 				else if (i == 3)
 				{
-					Assert.AreEqual(Collections.Array(0xAA, 0xBB, 0xCC, 0xDD), val);
+					Assert.AreEqual(new byte[] { 0xAA, 0xBB, 0xCC, 0xDD }, ((Core.Buffer)val).ToByteArray());
 					Assert.AreEqual("REG_BINARY", Accessors.A_LoopRegType);
 					Assert.AreEqual("bin1", Accessors.A_LoopRegName);
 					Assert.AreEqual("HKEY_CURRENT_USER\\SOFTWARE\\KeysharpTest\\ks_sub2", Accessors.A_LoopRegKey);

@@ -142,7 +142,7 @@ namespace Keysharp.Core
 				else if (reg is string[] sa)
 					reg = new Array(sa);
 				else if (reg is byte[] ba)
-					reg = new Array(ba.Select(b => (long)b).ToArray());
+					return new Buffer(ba);
 				else if (reg is null)
 				{
 					if (!string.IsNullOrEmpty(def))
