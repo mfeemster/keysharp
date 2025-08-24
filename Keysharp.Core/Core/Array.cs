@@ -188,29 +188,27 @@
 			if (args == null || args.Length == 0)
 			{
 			}
-			else if (args.Length == 1 && args[0] is object[] objarr)
-			{
-				array.AddRange(objarr);
-			}
-			else if (args.Length == 1 && args[0] is List<object> objlist)
-			{
-				array.AddRange(objlist);
-			}
-			else if (args.Length == 1 && args[0] is Array arr)
-			{
-				array.Add(arr);
-			}
-			else if (args.Length == 1 && args[0] is Map map)
-			{
-				array.Add(map);
-			}
-			else if (args.Length == 1 && args[0] is ICollection c)
-			{
-				array.AddRange(c.Cast<object>().ToList());
+			else if (args.Length == 1) {
+				if (args[0] is object[] objarr)
+				{
+					array.AddRange(objarr);
+				}
+				else if (args[0] is List<object> objlist)
+				{
+					array.AddRange(objlist);
+				}
+				else if (args[0] is IEnumerable c && c is not Array && c is not Map)
+				{
+					array.AddRange(c.Cast<object>());
+				}
+				else
+				{
+					array.Add(args[0]);
+				}
 			}
 			else
 			{
-				Push(args);
+				array.AddRange(args);
 			}
 
 			return DefaultObject;
