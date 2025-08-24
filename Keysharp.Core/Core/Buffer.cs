@@ -115,13 +115,13 @@
 					Size = bytearray.Length;//Performs the allocation.
 
 					if (size > 0)
-						Marshal.Copy(bytearray, 0, (nint)_ptr.DangerousGetHandle(), Math.Min((int)size, bytearray.Length));
+						Marshal.Copy(bytearray, 0, _ptr.DangerousGetHandle(), Math.Min((int)size, bytearray.Length));
 				}
 				else if (obj0 is Array array)
 				{
 					var ct = array.array.Count;
 					Size = ct;
-					var bp = (nint)_ptr.DangerousGetHandle();
+					var bp = _ptr.DangerousGetHandle();
 
 					for (var i = 0; i < ct; i++)
 						Unsafe.Write((void*)nint.Add(bp, i), (byte)Script.ForceLong(array.array[i]));//Access the underlying array[] directly for performance.
@@ -165,6 +165,28 @@
 		{
 			Dispose(true);
 			GC.SuppressFinalize(this);
+		}
+
+		/// <summary>
+		/// Converts the contents of the buffer to a hex string.
+		/// </summary>
+		/// 
+		public string ToHex() => BitConverter.ToString(ToByteArray()).Replace("-", string.Empty);
+
+		/// <summary>
+		/// Converts the contents of the buffer to a base64 string.
+		/// </summary>
+		public string ToBase64() => Convert.ToBase64String(ToByteArray());
+
+		/// <summary>
+		/// Returns the contents of the buffer as a byte array.
+		/// </summary>
+		public byte[] ToByteArray()
+		{
+			int size = (int)Size;
+			byte[] dataArray = new byte[size];
+			Marshal.Copy(_ptr.DangerousGetHandle(), dataArray, 0, size);
+			return dataArray;
 		}
 
 		/// <summary>
