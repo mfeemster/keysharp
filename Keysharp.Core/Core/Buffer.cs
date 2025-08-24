@@ -18,9 +18,18 @@
 		private long size;
 
 		/// <summary>
+		/// SafeHandle wrapper for the native memory pointer.
+		/// </summary>
+		private NativeMemoryHandle _ptr;
+
+		/// <summary>
 		/// Gets the pointer to the memory.
 		/// </summary>
-		public long Ptr { get; private set; }
+		public long Ptr
+		{
+			get => _ptr?.DangerousGetHandle() ?? 0L;
+			private set => _ptr = new NativeMemoryHandle((nint)value);
+		}
 
 		/// <summary>
 		/// Gets or sets the size of the buffer.<br/>
@@ -38,24 +47,22 @@
 
 				if (val > size)
 				{
-					//var newptr = Marshal.AllocCoTaskMem((int)val);
 					var newptr = Marshal.AllocHGlobal((int)val);
 
-					if (Ptr != 0)
+					if (_ptr != null)
 					{
 						unsafe
 						{
-							var src = (byte*)Ptr;
+							var src = (byte*)_ptr.DangerousGetHandle();
 							var dst = (byte*)newptr.ToPointer();
 							System.Buffer.MemoryCopy(src, dst, val, size);
 						}
-						var old = Ptr;
-						Ptr = newptr;
-						Marshal.FreeHGlobal((nint)old);
-						//Marshal.FreeCoTaskMem(old);
+						var old = _ptr;
+						_ptr = new NativeMemoryHandle(newptr);
+						old.Dispose();
 					}
 					else
-						Ptr = newptr;
+						_ptr = new NativeMemoryHandle(newptr);
 				}
 
 				size = val;
@@ -108,13 +115,13 @@
 					Size = bytearray.Length;//Performs the allocation.
 
 					if (size > 0)
-						Marshal.Copy(bytearray, 0, (nint)Ptr, Math.Min((int)size, bytearray.Length));
+						Marshal.Copy(bytearray, 0, (nint)_ptr.DangerousGetHandle(), Math.Min((int)size, bytearray.Length));
 				}
 				else if (obj0 is Array array)
 				{
 					var ct = array.array.Count;
 					Size = ct;
-					var bp = (nint)Ptr;
+					var bp = (nint)_ptr.DangerousGetHandle();
 
 					for (var i = 0; i < ct; i++)
 						Unsafe.Write((void*)nint.Add(bp, i), (byte)Script.ForceLong(array.array[i]));//Access the underlying array[] directly for performance.
@@ -128,7 +135,7 @@
 					if (bytecount > 0)
 					{
 						byte val = fill != long.MinValue ? (byte)(fill & 255) : (byte)0;
-						Unsafe.InitBlockUnaligned((void*)Ptr, val, (uint)bytecount);
+						Unsafe.InitBlockUnaligned((void*)_ptr.DangerousGetHandle(), val, (uint)bytecount);
 					}
 				}
 			}
@@ -140,16 +147,15 @@
 		/// Dispose the object and set a flag so it doesn't get disposed twice.
 		/// </summary>
 		/// <param name="disposing">If true, disposing already, so skip, else dispose.</param>
-		public virtual void Dispose(bool disposing)
+		public object Dispose(bool disposing)
 		{
 			if (!disposed)
 			{
-				Marshal.FreeHGlobal((nint)Ptr);
-				//Marshal.FreeCoTaskMem(Ptr);
-				Ptr = 0;
+				_ptr.Dispose();
 				Size = 0;
 				disposed = true;
 			}
+			return DefaultObject;
 		}
 
 		/// <summary>
@@ -175,13 +181,38 @@
 				{
 					unsafe
 					{
-						var ptr = (byte*)Ptr;
+						var ptr = (byte*)_ptr.DangerousGetHandle();
 						return ptr[index - 1];
 					}
 				}
 				else
 					return (long)Errors.IndexErrorOccurred($"Invalid index of {index} for buffer of size {Size}.", DefaultErrorLong);
 			}
+		}
+	}
+
+	/// <summary>
+	/// Wrapper for native memory pointers. It's used for two reasons: firstly, classes derived from
+	/// CriticalFinalizerObject (like SafeHandle) are guaranteed to have finalizers executed so
+	/// this prevents memory leaks if the assembly is unexpectedly unloaded. Second, critical finalizers
+	/// are ran after regular ones which gives user-code time to run any __Delete methods before the
+	/// memory is released. This is important in cases like an object holding a Buffer with the destructor
+	/// set up to clean resources up (eg VariantClear). Without using SafeHandle the Buffer finalizer
+	/// may be called first causing the resource-cleanup to fail.
+	/// </summary>
+	sealed class NativeMemoryHandle : SafeHandleZeroOrMinusOneIsInvalid
+	{
+		public NativeMemoryHandle() : base(ownsHandle: true) { }
+
+		public NativeMemoryHandle(nint p, bool owns = true) : base(owns)
+		{
+			SetHandle(p);
+		}
+
+		protected override bool ReleaseHandle()
+		{
+			Marshal.FreeHGlobal(handle);
+			return true;
 		}
 	}
 }
