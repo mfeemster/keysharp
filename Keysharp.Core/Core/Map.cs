@@ -520,7 +520,7 @@
 						foreach (var kv in tempm)
 							Insert(kv.Key, kv.Value);
 					}
-					else if (args[0] is IEnumerable ie)
+					else if (args[0] is IEnumerable ie && ie is not string)
 					{
 						if (map == null)
 							map = new Dictionary<object, object>(new CaseEqualityComp(caseSense));

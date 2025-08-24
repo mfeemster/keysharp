@@ -197,7 +197,7 @@
 				{
 					array.AddRange(objlist);
 				}
-				else if (args[0] is IEnumerable c && c is not Array && c is not Map)
+				else if (args[0] is IEnumerable c && c is not string && c is not KeysharpObject)
 				{
 					array.AddRange(c.Cast<object>());
 				}
