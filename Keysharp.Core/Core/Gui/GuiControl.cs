@@ -210,7 +210,7 @@
 					{
 						return lb.SelectionMode == SelectionMode.One
 							   ? (long)lb.SelectedIndex + 1
-							   : new Array(lb.SelectedIndices.Cast<int>().Select(x => x + 1).ToList());
+							   : new Array(lb.SelectedIndices.Cast<int>().Select(x => (long)x + 1));
 					}
 					else if (_control is KeysharpDateTimePicker dtp)
 						return Conversions.ToYYYYMMDDHH24MISS(dtp.Value);

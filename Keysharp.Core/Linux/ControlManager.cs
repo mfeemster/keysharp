@@ -247,9 +247,9 @@ namespace Keysharp.Core.Linux
 				var ctrl2 = Control.FromHandle(item.Handle);
 
 				if (ctrl2 is ComboBox cb)
-					return new Keysharp.Core.Array(cb.Items.Cast<object>().Select(item => (object)item.ToString()).ToList());
+					return new Keysharp.Core.Array(cb.Items.Cast<object>().Select(item => (object)item.ToString()));
 				else if (ctrl2 is ListBox lb)
-					return new Keysharp.Core.Array(lb.Items.Cast<object>().Select(item => (object)item.ToString()).ToList());
+					return new Keysharp.Core.Array(lb.Items.Cast<object>().Select(item => (object)item.ToString()));
 				else
 				{
 					//How to do the equivalent of what the Windows derivation does, but on linux?
