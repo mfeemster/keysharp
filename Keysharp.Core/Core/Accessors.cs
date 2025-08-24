@@ -2121,12 +2121,12 @@
 		/// <summary>
 		/// The value specified by #UseHook.
 		/// </summary>
-		public static object A_UseHook => Script.TheScript.ForceKeybdHook;
+		public static bool A_UseHook => Script.TheScript.ForceKeybdHook;
 
 		/// <summary>
 		/// Whether #WinActivateForce was specified.
 		/// </summary>
-		public static object A_WinActivateForce => Script.TheScript.WinActivateForce;
+		public static bool A_WinActivateForce => Script.TheScript.WinActivateForce;
 
 		/// <summary>
 		/// The height of the working area of the primary screen.
