@@ -108,7 +108,7 @@
 			get
 			{
 				var ver = GetAssembly().GetCustomAttribute<AssemblyCompanyAttribute>();
-				return ver != null ? ver.Company : "";
+				return ver != null ? ver.Company : DefaultObject;
 			}
 		}
 
@@ -120,7 +120,7 @@
 			get
 			{
 				var ver = GetAssembly().GetCustomAttribute<AssemblyConfigurationAttribute>();
-				return ver != null ? ver.Configuration : "";
+				return ver != null ? ver.Configuration : DefaultObject;
 			}
 		}
 
@@ -132,7 +132,7 @@
 			get
 			{
 				var ver = GetAssembly().GetCustomAttribute<AssemblyCopyrightAttribute>();
-				return ver != null ? ver.Copyright : "";
+				return ver != null ? ver.Copyright : DefaultObject;
 			}
 		}
 
@@ -144,7 +144,7 @@
 			get
 			{
 				var ver = GetAssembly().GetCustomAttribute<AssemblyDescriptionAttribute>();
-				return ver != null ? ver.Description : "";
+				return ver != null ? ver.Description : DefaultObject;
 			}
 		}
 
@@ -156,7 +156,7 @@
 			get
 			{
 				var ver = GetAssembly().GetCustomAttribute<AssemblyProductAttribute>();
-				return ver != null ? ver.Product : "";
+				return ver != null ? ver.Product : DefaultObject;
 			}
 		}
 
@@ -168,7 +168,7 @@
 			get
 			{
 				var ver = GetAssembly().GetCustomAttribute<AssemblyTitleAttribute>();
-				return ver != null ? ver.Title : "";
+				return ver != null ? ver.Title : DefaultObject;
 			}
 		}
 
@@ -192,7 +192,7 @@
 			get
 			{
 				var ver = GetAssembly().GetCustomAttribute<AssemblyFileVersionAttribute>();//For some reason it likes AssemblyFileVersionAttribute better than AssemblyVersionAttribute.
-				return ver != null ? ver.Version : "";
+				return ver != null ? ver.Version : DefaultObject;
 			}
 		}
 
