@@ -568,7 +568,7 @@ Test() {
 	throw Error()
 }
 
-f := Test.Bind(1)
+f := Test
 try {
 	f()
 }
