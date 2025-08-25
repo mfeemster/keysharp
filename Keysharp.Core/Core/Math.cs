@@ -230,14 +230,12 @@
 		/// <exception cref="TypeError">A <see cref="TypeError"/> exception is thrown if the conversion failed.</exception>
 		public static object Integer(object value)
 		{
-			try
-			{
-				return (long)(value is double d ? d : value.Ad());
-			}
-			catch (Exception)
-			{
-				return Errors.TypeErrorOccurred(value, typeof(double));
-			}
+			long l = 0; double d = 0.0;
+			if (value.ParseLong(ref l))
+				return l;
+			else if (value.ParseDouble(ref d, false, true))
+				return (long)d;
+			return Errors.TypeErrorOccurred(value, typeof(double));
 		}
 
 		/// <summary>
