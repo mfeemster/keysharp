@@ -151,7 +151,7 @@
 		{
 			if (!disposed)
 			{
-				_ptr.Dispose();
+				_ptr?.Dispose();
 				Size = 0;
 				disposed = true;
 			}
