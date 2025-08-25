@@ -150,11 +150,11 @@ namespace Keysharp.Core
 		public static long IsNumber(object value) => IsInteger(value) | IsFloat(value);
 
 		/// <summary>
-		/// Returns 1 if the specified value is derived from KeysharpObject, else 0.
+		/// Returns 1 if the specified value is derived from Any, else 0.
 		/// </summary>
 		/// <param name="value">The object to examine.</param>
 		/// <returns>1 if value is derived from KeysharpObject, else 0.</returns>
-		public static long IsObject(object value) => value is KeysharpObject ? 1L : 0L;
+		public static long IsObject(object value) => value is Any ? 1L : 0L;
 
 		/// <summary>
 		/// Returns 1 if the specified variable has been assigned a value, meaning it is not null, else 0.
