@@ -229,24 +229,23 @@ namespace Keysharp.Core
 										 [ByRef][Optional()][DefaultParameterValue(null)] object outputVarControl,
 										 object flag = null)
 		{
-			outputVarX ??= VarRef.Empty; outputVarY ??= VarRef.Empty; outputVarWin ??= VarRef.Empty; outputVarControl ??= VarRef.Empty;
 			var mode = flag.Al(0L);
 			var pos = Cursor.Position;
 			var aX = 0;
 			var aY = 0;
 			var script = Script.TheScript;
 			script.PlatformProvider.Manager.CoordToScreen(ref aX, ref aY, Core.CoordMode.Mouse);//Determine where 0,0 in window or client coordinates are on the screen.
-			Script.SetPropertyValue(outputVarX, "__Value", (long)(pos.X - aX));//Convert the mouse position in screen coordinates to window coordinates.
-            Script.SetPropertyValue(outputVarY, "__Value", (long)(pos.Y - aY));
-            Script.SetPropertyValue(outputVarWin, "__Value", null);
-            Script.SetPropertyValue(outputVarControl, "__Value", null);
+			if (outputVarX != null) Script.SetPropertyValue(outputVarX, "__Value", (long)(pos.X - aX));//Convert the mouse position in screen coordinates to window coordinates.
+			if (outputVarY != null) Script.SetPropertyValue(outputVarY, "__Value", (long)(pos.Y - aY));
+			if (outputVarWin != null) Script.SetPropertyValue(outputVarWin, "__Value", DefaultObject);
+			if (outputVarControl != null) Script.SetPropertyValue(outputVarControl, "__Value", DefaultObject);
             var child = script.WindowProvider.Manager.WindowFromPoint(pos);
 
 			if (child == null || child.Handle == 0)
 				return DefaultErrorObject;
 
 			var parent = child.NonChildParentWindow;
-            Script.SetPropertyValue(outputVarWin, "__Value", (long)parent.Handle);
+			if (outputVarWin != null) Script.SetPropertyValue(outputVarWin, "__Value", (long)parent.Handle);
 #if WINDOWS
 
 			//Doing it this way overcomes the limitations of WindowFromPoint() and ChildWindowFromPoint()
@@ -267,11 +266,11 @@ namespace Keysharp.Core
 
 			if ((mode & 0x02) != 0)
 			{
-                Script.SetPropertyValue(outputVarControl, "__Value", (long)child.Handle);
+				if (outputVarControl != null) Script.SetPropertyValue(outputVarControl, "__Value", (long)child.Handle);
 				return DefaultObject;
 			}
 
-            Script.SetPropertyValue(outputVarControl, "__Value", child.ClassNN);
+			if (outputVarControl != null) Script.SetPropertyValue(outputVarControl, "__Value", child.ClassNN);
 			return DefaultObject;
 		}
 
