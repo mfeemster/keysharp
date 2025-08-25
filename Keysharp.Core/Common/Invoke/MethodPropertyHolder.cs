@@ -65,7 +65,7 @@ namespace Keysharp.Core.Common.Invoke
 		internal bool IsVariadic => variadicParamIndex != -1;
 		internal int ParamLength { get; }
 		internal int MinParams = 0;
-		internal int MaxParams = 9999;
+		internal int MaxParams = 0;
 
         private const string setterPrefix = "set_";
         private const string classSetterPrefix = Keywords.ClassStaticPrefix + setterPrefix;
@@ -125,10 +125,9 @@ namespace Keysharp.Core.Common.Invoke
             if (isSetter) // Allow value to be unset
                 MinParams--;
 
-			if (variadicParamIndex == -1)
-				MaxParams = parameters.Length;
+			MaxParams = parameters.Length - (variadicParamIndex == -1 ? 0 : 1);
 
-            anyOptional = MinParams != MaxParams;
+			anyOptional = variadicParamIndex != -1 || MinParams != MaxParams;
 
 			var isFuncObj = typeof(IFuncObj).IsAssignableFrom(mi.DeclaringType);
 

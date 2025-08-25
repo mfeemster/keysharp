@@ -47,9 +47,7 @@
 			_fast = fast;
 			_reference = reference;
 			_arity = Math.Clamp(paramCount < 0
-								? (_reference ? 32 : (funcObj is FuncObj fo
-										? (int)fo.MaxParams - ((fo is BoundFunc bo) ? bo.boundargs.Count() : 0)
-										: 0))
+								? (!_reference && funcObj is FuncObj fo ? (int)fo.MinParams : 32)
 								: paramCount,
 								0, 32);
 			// Pin self and store handle as context

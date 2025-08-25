@@ -192,6 +192,7 @@ testfunc()
 	+ A new `HashMap` class has been added which extends `Map` and does not perform sorting before enumeration.
 * The spread operator `*` may be used multiple times in one function call. `MyFunc(arr1*, arr2*)` is allowed.
 * Buffer has an `__Item[]` indexer which can be used to read a byte at a 1-based offset.
+* Buffer has `ToHex()`, `ToBase64()`, and `ToByteArray()` methods which can be used to convert the contents to string (hex or base64), or a byte-array to for example write to a file.
 * A new class named `StringBuffer` which can be used for passing string memory to `DllCall()` which will be written to inside of the call.
 	+ There are two methods for creating a `StringBuffer`:
 		+ `StringBuffer(str := "") => StringBuffer`: Creates a `StringBuffer` with a string of `str` and a capacity of 256.
@@ -273,7 +274,7 @@ testfunc()
 	+ Full documentation for the formatting rules can be found [here](https://learn.microsoft.com/en-us/dotnet/api/system.string.format).
 * `SubStr()` uses a default of 1 for the second parameter, `startingPos`, to relieve the caller of always having to specify it.
 * New string functions:
-	+ `Base64Decode(str) => Array` to convert a Base64 string to a byte array.
+	+ `Base64Decode(str) => Array` to convert a Base64 string to a Buffer containing the decoded bytes.
 	+ `Base64Encode(value) => String` to convert a byte array to a Base64 string.
 	+ `NormalizeEol(str, eol) => String` to make all line endings in a string match the value passed in, or the default for the current environment.
 	+ `StartsWith(value, token [,comparison]) => Boolean` and `EndsWith(value, token [,comparison]) => Boolean` to determine if the beginning or end of a string start/end with a given string.

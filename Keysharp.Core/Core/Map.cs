@@ -248,6 +248,7 @@ namespace Keysharp.Core
 		/// </summary>
 		/// <param name="array">The <see cref="System.Array"/> to copy elements to.</param>
 		/// <param name="index">The index in the array to start copying to.</param>
+		[PublicForTestOnly]
 		public void CopyTo(System.Array array, int index)
 		{
 			var kvs = new List<object>(map.Count * 2);
@@ -511,6 +512,21 @@ namespace Keysharp.Core
 
 						foreach (var kv in tempm)
 							Insert(kv.Key, kv.Value);
+					}
+					else if (args[0] is IEnumerable ie && ie is not string)
+					{
+						if (map == null)
+							map = new Dictionary<object, object>(new CaseEqualityComp(caseSense));
+						bool isKey = true;
+						object key = null;
+						foreach (var k in ie)
+						{
+							if (isKey)
+								key = k;
+							else
+								Insert(key, k);
+							isKey = !isKey;
+						}
 					}
 					else
 					{

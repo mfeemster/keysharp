@@ -34,7 +34,7 @@
 	/// </summary>
 	public class Array : KeysharpObject, I__Enum, IEnumerable<(object, object)>, IList
 	{
-        private int capacity = 4;
+		private int capacity = 4;
 
 		/// <summary>
 		/// The underlying <see cref="List"/> that holds the values.
@@ -186,8 +186,7 @@
 			if (args == null || args.Length == 0)
 			{
 			}
-			else if (args.Length == 1)
-			{
+			else if (args.Length == 1) {
 				if (args[0] is object[] objarr)
 				{
 					array.AddRange(objarr);
@@ -196,9 +195,9 @@
 				{
 					array.AddRange(objlist);
 				}
-				else if (args[0] is ICollection c && c is not Array && c is not Map)
+				else if (args[0] is IEnumerable c && c is not string && c is not KeysharpObject)
 				{
-					array.AddRange(c.Cast<object>().ToList());
+					array.AddRange(c.Cast<object>());
 				}
 				else
 				{

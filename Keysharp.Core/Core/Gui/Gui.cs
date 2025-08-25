@@ -722,7 +722,7 @@ namespace Keysharp.Core
 						}
 					}
 
-					ddl.Items.AddRange(al.Cast<(object, object)>().Select(x => x.Item2).Select(x => opts.lowercase.IsTrue() ? x.Str().ToLower() : opts.uppercase.IsTrue() ? x.Str().ToUpper() : x.Str()).ToArray());
+					ddl.Items.AddRange(al.Cast<(object, object)>().Select(x => x.Item2).Select(x => opts.lowercase.IsTrue() ? x.Str().ToLower() : opts.uppercase.IsTrue() ? x.Str().ToUpper() : x.Str()));
 
 					if (opts.choose.Any())
 						ddl.SelectedIndex = opts.choose[0];
@@ -2047,7 +2047,7 @@ namespace Keysharp.Core
 									   ? guictrl.Value
 									   : lb.SelectionMode == SelectionMode.One
 									   ? lb.SelectedItem as string ?? ""
-									   : new Array(lb.SelectedItems.Cast<object>().Where(xx => xx is string).Select(x => x as string).ToList());
+									   : new Array(lb.SelectedItems.Cast<object>().Where(xx => xx is string).Select(x => x as string));
 					}
 					else if (control is RadioButton rb)//This is supposed to do something special if it's part of a group, but unsure how to determine that.
 					{
