@@ -2,7 +2,7 @@
 {
 	public partial class MainWindow : KeysharpForm
 	{
-		public static Font OurDefaultFont = new ("Microsoft Sans Serif", 9F);
+		public static Font OurDefaultFont = new ("MS Shell Dlg", 8F);
 		internal FormWindowState lastWindowState = FormWindowState.Normal;
 #if WINDOWS
 		private readonly bool clipSuccess;
