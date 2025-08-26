@@ -439,7 +439,7 @@ namespace Keysharp.Core
 				else
 					return MakeEnumerator(tempEnum, count);
 			}
-			else if (obj is KeysharpObject kso)
+			else if (obj is Any kso)
 			{
 				if (kso.op.TryGetValue("__Enum", out var map))
 				{
