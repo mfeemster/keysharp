@@ -226,6 +226,17 @@ namespace Keysharp.Core
 			nint dataPtr = (nint)ptrValue;
 			VarEnum vt = vtRaw & ~VarEnum.VT_BYREF;
 
+			if ((vt & VarEnum.VT_ARRAY) != 0)
+			{
+				VarEnum elemVt = vt & ~VarEnum.VT_ARRAY;
+				nint parray = Marshal.ReadIntPtr(dataPtr);
+				if (parray == 0)
+					return DefaultErrorObject;
+
+				// Wrap without owning: the VARIANT will destroy it on VariantClear.
+				return new ComObjArray(elemVt, parray, takeOwnership: false);
+			}
+
 			switch (vt)
 			{
 				// ── Integers → long ───────────────────────────────────────────────
@@ -448,6 +459,10 @@ namespace Keysharp.Core
 					{
 						innerVt = VarEnum.VT_DISPATCH;
 					}
+					else if (value is ComObjArray coa)
+					{
+						innerVt = VarEnum.VT_ARRAY | coa._baseType;
+					}
 					else if (value is double)
 					{
 						innerVt = VarEnum.VT_R8;
@@ -476,9 +491,43 @@ namespace Keysharp.Core
 				}
 				break;
 
+				// ── SAFEARRAYs (VT_ARRAY | T) ─────────────────────────────────────────────
+				case var _ when (vt & VarEnum.VT_ARRAY) != 0:
+				{
+					// vt holds VT_ARRAY|elemVT, payload is a SAFEARRAY*
+					VarEnum elemVt = vt & ~VarEnum.VT_ARRAY;
+
+					nint psaToStore = 0;
+
+					if (value is ComObjArray coa)
+					{
+						// Defensive: if element type differs, still allow but clone regardless.
+						// Clone so that the VARIANT owns its *own* SAFEARRAY (avoids double-destroy).
+						int hr = OleAuto.SafeArrayCopy(coa._psa, out nint psaCopy);
+						if (hr < 0)
+							throw Errors.OSError("SafeArrayCopy failed.", hr);
+
+						psaToStore = psaCopy;
+					}
+					else if (value is long lp)
+					{
+						psaToStore = (nint)lp; // caller gave us a raw SAFEARRAY*
+					}
+					else if (value is nint ip2)
+					{
+						psaToStore = ip2;
+					}
+					else
+					{
+						throw Errors.Error($"Cannot write VT_ARRAY payload from {value?.GetType().Name}.");
+					}
+
+					Marshal.WriteIntPtr(dataPtr, psaToStore);
+					break;
+				}
 				// ── Unsupported ────────────────────────────────────────────────
 				default:
-					throw new NotSupportedException($"Writing VARTYPE {vt} is not supported.");
+					throw Errors.Error($"Writing VARTYPE {vt} is not supported.");
 			}
 		}
 
@@ -678,7 +727,14 @@ namespace Keysharp.Core
 			else if (Ptr is string str)
 				v.data.bstrVal = Marshal.StringToBSTR(str);
 			else if (Ptr is nint ip)
-				v.data.pdispVal = ip;//Works for COM interfaces, safearray and other pointer types.
+			{
+				if ((vt & VarEnum.VT_ARRAY) != 0)
+					v.data.parray = ip;     // SAFEARRAY*
+				else if (vt == VarEnum.VT_DISPATCH || vt == VarEnum.VT_UNKNOWN)
+					v.data.pdispVal = ip;   // IDispatch*/IUnknown*
+				else
+					v.data.pdispVal = ip;   // fallback
+			}
 			else if (Ptr is int i)
 				v.data.lVal = i;
 			else if (Ptr is uint ui)
