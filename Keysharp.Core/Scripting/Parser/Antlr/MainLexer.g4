@@ -52,7 +52,7 @@ tokens {
 }
 
 SingleLineBlockComment  : '/*' NonEOLCharacter*? '*/' -> skip;
-MultiLineComment  : '/*' .*? '*/' -> type(EOL);
+MultiLineComment  : '/*' .*? ('*/' | EOF) -> type(EOL);
 SingleLineComment : ';' NonEOLCharacter* EOLCharacter {this.IsCommentPossible()}? -> type(EOL);
 
 // First try consuming a hotstring 
@@ -274,7 +274,7 @@ Include                : 'include' WhiteSpace    -> channel(DIRECTIVE), mode(DIR
 IncludeAgain           : 'includeagain' WhiteSpace         -> channel(DIRECTIVE), mode(DIRECTIVE_TEXT);
 DllLoad                : 'dllload' WhiteSpace    -> channel(DIRECTIVE), mode(DIRECTIVE_TEXT);
 Requires               : 'requires' WhiteSpace   -> channel(DIRECTIVE), mode(DIRECTIVE_TEXT);
-SingleInstance         : 'singleinstance' WhiteSpace       -> channel(DIRECTIVE), mode(DIRECTIVE_TEXT);
+SingleInstance         : 'singleinstance' WhiteSpace?      -> channel(DIRECTIVE), mode(DIRECTIVE_TEXT);
 Persistent             : 'persistent' WhiteSpace?          -> channel(DIRECTIVE);
 Warn                   : 'warn' WhiteSpace?                -> channel(DIRECTIVE), mode(DIRECTIVE_TEXT);
 NoDynamicVars          : 'nodynamicvars'         -> channel(DIRECTIVE);
