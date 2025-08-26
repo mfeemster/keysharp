@@ -33,6 +33,7 @@ namespace Keysharp.Core
 		internal Dictionary<object, object> controls = [];
 		internal bool dpiscaling = true;
 		internal MenuBar menuBar;
+		bool marginsInit = false;
 
 		private static readonly Dictionary<string, Action<Gui, object>> showOptionsDkt = new ()
 		{
@@ -247,14 +248,30 @@ namespace Keysharp.Core
 
 		public long MarginX
 		{
-			get => form.Margin.Left;
-			set => form.Margin = new Padding((int)value, form.Margin.Top, (int)value, form.Margin.Bottom);
+			get
+			{
+				EnsureDefaultMargins();
+				return form.Margin.Left;
+			}
+			set
+			{
+				EnsureDefaultMargins();
+				form.Margin = new Padding((int)value, form.Margin.Top, (int)value, form.Margin.Bottom);
+			}
 		}
 
 		public long MarginY
 		{
-			get => form.Margin.Top;
-			set => form.Margin = new Padding(form.Margin.Left, (int)value, form.Margin.Right, (int)value);
+			get
+			{
+				EnsureDefaultMargins();
+				return form.Margin.Top;
+			}
+			set
+			{
+				EnsureDefaultMargins();
+				form.Margin = new Padding(form.Margin.Left, (int)value, form.Margin.Right, (int)value);
+			}
 		}
 
 		public MenuBar MenuBar
@@ -384,9 +401,6 @@ namespace Keysharp.Core
 				_ = Opt(options);
 				var formHandle = form.Handle;//Force the creation.
 				var handleStr = $"{formHandle}";
-				var x = (int)Math.Round(form.Font.Size * 1.25f);//Not really sure if Size is the same as height, like the documentation says.//TODO
-				var y = (int)Math.Round(form.Font.Size * 0.75f);
-				form.Margin = new Padding(x, y, x, y);
 				LastContainer = form;
 
 				//This will be added to allGuiHwnds on show.
@@ -398,8 +412,21 @@ namespace Keysharp.Core
 			return DefaultObject;
 		}
 
+		void EnsureDefaultMargins()
+		{
+			if (marginsInit) return;
+			float dpi = dpiscaling ? (float)A_ScreenDPI : 96f;
+			float dpiinv = 96F / dpi;
+			float fh = form.Font.GetHeight(dpi) * dpiinv;
+			int mx = (int)Math.Round(fh * 1.25f);
+			int my = (int)Math.Round(fh * 0.75f);
+			form.Margin = new Padding(mx, my, mx, my);
+			marginsInit = true;
+		}
+
 		public object Add(object obj0, object obj1 = null, object obj2 = null)
 		{
+			EnsureDefaultMargins();
 			var typeo = obj0.As();
 			var options = obj1.As();
 			var o = obj2;//The third argument needs to account for being an array in the case of combo/list boxes.
@@ -422,7 +449,8 @@ namespace Keysharp.Core
 				{
 					var lbl = new KeysharpLabel(opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle)
 					{
-						Font = Conversions.ConvertFont(form.Font)
+						Font = Conversions.ConvertFont(form.Font),
+						UseCompatibleTextRendering = true
 					};
 					ctrl = lbl;
 					holder = new Text(this, ctrl, typeo);
@@ -1383,8 +1411,25 @@ namespace Keysharp.Core
 							}
 							else if (ctrl is KeysharpLabel lbl)
 							{
-								lbl.MaximumSize = new Size(lbl.Width, 0);//This enforces wrapping at the specified width.
-								lbl.AutoSize = true;
+								bool hasW = opts.width != int.MinValue || opts.wp != int.MinValue;
+								bool hasH = opts.height != int.MinValue || opts.hp != int.MinValue;
+
+								if (hasW && !hasH)
+								{
+									lbl.AutoSize = true;
+									lbl.MinimumSize = new Size(lbl.Width, 0);
+									lbl.MaximumSize = new Size(lbl.Width, int.MaxValue);
+								}
+								else if (!hasW && hasH)
+								{
+									lbl.AutoSize = true;
+									lbl.MinimumSize = new Size(0, lbl.Height);
+									lbl.MaximumSize = new Size(int.MaxValue, lbl.Height);
+								} 
+								else if (!hasW && !hasH)
+								{
+									lbl.AutoSize = true;
+								}
 								goto heightdone;
 							}
 						}
@@ -1821,6 +1866,7 @@ namespace Keysharp.Core
 
 		public object Show(object obj = null)
 		{
+			EnsureDefaultMargins();
 			var s = obj.As();
 			bool /*center = false, cX = false, cY = false,*/ auto = false, min = false, max = false, restore = false, hide = false;
 			int?[] pos = [null, null, null, null];
