@@ -16,8 +16,6 @@
 			_ = insert >= 0 ? lv.Items.Insert(row = Math.Min(insert, lv.Items.Count), item) : lv.Items.Add(item);
 			ApplyListViewOptions(lv, item, lvo);
 
-			if (lv.Items.Count == 1)//Resize on the first item, don't do it for subsequent items because it takes too long. It will be done again when setting opts to +Redraw.
-				lv.SetListViewColumnSizes();
 
 			return row;
 		}
@@ -43,7 +41,10 @@
 			lv.BeginUpdate();
 
 			if (lvco.width.HasValue)
-				col.Width = lvco.width.Value;
+			{
+				var scale = !lv.GetGuiControl().DpiScaling ? 1.0 : A_ScaledScreenDPI;
+				col.Width = (int)(lvco.width.Value * scale);
+			}
 
 			if (lvco.auto.HasValue)
 				lv.AutoResizeColumns(ColumnHeaderAutoResizeStyle.ColumnContent);
