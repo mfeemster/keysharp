@@ -226,7 +226,7 @@
 			public DelegateHolder[] Slots = new DelegateHolder[64];
 			public int[] Generations = new int[64];
 			public Stack<int> Free = new Stack<int>(Enumerable.Range(0, 64).Reverse());
-			public readonly object Lock = new();
+			public readonly Lock Lock = new();
 		}
 
 		private static readonly SlotBucket[] _buckets = Enumerable.Range(0, 33).Select(_ => new SlotBucket()).ToArray();
