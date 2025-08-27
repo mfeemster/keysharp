@@ -5,14 +5,14 @@
 		internal readonly MethodInfo mi;
 		internal readonly ParameterInfo[] parameters;
 		internal readonly PropertyInfo pi;
-		internal int MaxParams = 9999;
+		internal int MaxParams = 0;
 		internal int MinParams = 0;
 		protected readonly ConcurrentStackArrayPool<object> paramsPool;
 		protected Func<object, object[], object> callFunc;
 		private readonly bool anyOptional;
 		private readonly bool isGuiType;
 		private readonly Action<object, object> setPropFunc;
-		private readonly int startVarIndex = -1;
+		internal readonly int startVarIndex = -1;
 		private readonly int stopVarIndexDistanceFromEnd;
 
 		internal bool IsBind { get; private set; }
@@ -47,8 +47,7 @@
 						MinParams++;
 				}
 
-				if (startVarIndex == -1)
-					MaxParams = parameters.Length;
+				MaxParams = parameters.Length - (startVarIndex == -1 ? 0 : 1);
 
 				IsStaticFunc = mi.Attributes.HasFlag(MethodAttributes.Static);
 				var isFuncObj = typeof(IFuncObj).IsAssignableFrom(mi.DeclaringType);

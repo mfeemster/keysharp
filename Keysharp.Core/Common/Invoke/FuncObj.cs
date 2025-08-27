@@ -33,12 +33,59 @@
 			: base(m, o)
 		{
 			boundargs = ba;
+			int argCount = ba.Length;
+			// Find last non-null argument which determines the actual provided argument count
+			for (; argCount > 0; argCount--)
+			{
+				if (ba[argCount - 1] != null)
+					break;
+			}
+			if (argCount < ba.Length)
+				System.Array.Resize(ref boundargs, argCount);
+
+
+			if (argCount > MaxParams && !IsVariadic)
+				throw new Error("Too many arguments bound to function");
+
+			// Now calculate the new MinParams/MaxParams
+			int minParams = (int)MinParams;
+			int maxParams = (int)MaxParams;
+			for (int i = 0; i < argCount && i < maxParams; i++)
+			{
+				// Empty slots do not change the counts
+				if (ba[i] == null)
+					continue;
+				// If the index is greater than minimum param count then only MaxParams can be decreased.
+				// We don't overflow into the variadic parameter because of the maxParams check above.
+				if (i < minParams)
+				{
+					if (MinParams > 0)
+						MinParams--;
+				}
+				if (MaxParams > 0)
+					MaxParams--;
+			}
 		}
 
 		public override IFuncObj Bind(params object[] args)
 		{
-			boundargs = boundargs.Concat(args);
-			return this;
+			object[] newbound = new object[boundargs.Length + args.Length];
+			System.Array.Copy(boundargs, newbound, boundargs.Length);
+			int skipped = 0;
+			for (int i = 0; i < boundargs.Length && skipped < args.Length; i++)
+			{
+				if (newbound[i] == null)
+				{
+					newbound[i] = args[skipped];
+					skipped++;
+				}
+			}
+			int leftCount = args.Length - skipped;
+			if (leftCount > 0)
+			{
+				System.Array.Copy(args, args.Length - leftCount, newbound, boundargs.Length, leftCount);
+			}
+			return new BoundFunc(mi, newbound, Inst);
 		}
 
 		/// <summary>
@@ -140,14 +187,16 @@
 		protected MethodInfo mi;
 		protected MethodPropertyHolder mph;
 
+		[PublicForTestOnly]
 		public object Inst { get; internal set; }
 		public bool IsBuiltIn => mi.DeclaringType.Module.Name.StartsWith("keysharp.core", StringComparison.OrdinalIgnoreCase);
 		public bool IsValid => mi != null && mph != null && mph.IsCallFuncValid;
 		public string Name => mi != null ? mi.Name : "";
 		public new (Type, object) super => (typeof(KeysharpObject), this);
-		internal bool IsVariadic => isVariadic;
-		public long MaxParams { get; internal set; } = 9999;
+		public bool IsVariadic => isVariadic;
+		public long MaxParams { get; internal set; } = 0;
 		public long MinParams { get; internal set; } = 0;
+		internal int VariadicIndex => mph.startVarIndex;
 		internal MethodPropertyHolder Mph => mph;
 
 		internal FuncObj(string s, object o = null, object paramCount = null)

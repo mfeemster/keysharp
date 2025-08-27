@@ -60,6 +60,9 @@ namespace Keysharp.Core.Common.Cryptography
 			if (value is byte[] b)
 				return b;
 
+			if (value is Buffer buf)
+				return buf.ToByteArray();
+
 			if (value is Array arr)
 				return arr.ToByteArray().ToArray();
 

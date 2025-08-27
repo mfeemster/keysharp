@@ -180,7 +180,7 @@
 					else if (_control is HotkeyBox hk)
 						return hk.GetText();
 					else if (_control is KeysharpNumericUpDown nud)
-						return nud.Value;
+						return (double)nud.Value;
 					else if (_control is KeysharpButton btn)
 						return btn.Text;
 					else if (_control is KeysharpCheckBox cb)
@@ -210,7 +210,7 @@
 					{
 						return lb.SelectionMode == SelectionMode.One
 							   ? (long)lb.SelectedIndex + 1
-							   : new Array(lb.SelectedIndices.Cast<int>().Select(x => x + 1).ToList());
+							   : new Array(lb.SelectedIndices.Cast<int>().Select(x => (long)x + 1));
 					}
 					else if (_control is KeysharpDateTimePicker dtp)
 						return Conversions.ToYYYYMMDDHH24MISS(dtp.Value);
@@ -229,9 +229,9 @@
 						}
 					}
 					else if (_control is KeysharpTrackBar tb)
-						return tb.Value;
+						return (long)tb.Value;
 					else if (_control is KeysharpProgressBar pb)
-						return pb.Value;
+						return (long)pb.Value;
 					else if (_control is KeysharpTabControl tc)
 						return (long)tc.SelectedIndex + 1;
 					else if (_control is KeysharpStatusStrip ss)
@@ -1113,7 +1113,7 @@
 				if (h != long.MinValue)//Unsure if it's needed here too.
 					_control.Height = (int)Math.Round(h * scale) - (hasScrollBars ? SystemInformation.HorizontalScrollBarHeight : 0);
 
-				return null;
+				return DefaultObject;
 			}
 
 			public object SetCue(object newText, object showWhenFocused = null)

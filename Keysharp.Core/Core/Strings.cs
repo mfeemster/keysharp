@@ -16,7 +16,7 @@
 
 			try
 			{
-				return new Keysharp.Core.Array(Convert.FromBase64String(s));
+				return new Keysharp.Core.Buffer(Convert.FromBase64String(s));
 			}
 			catch (Exception ex)
 			{
@@ -1040,10 +1040,14 @@
 				//If length is negative, copy exactly the absolute value of len, regardless of 0s. Clamp to buf size of buf.
 				//If length is positive, copy as long as length is not reached and value is not 0.
 				var raw = (byte*)ptr.ToPointer();
-				var abs = (int)Math.Abs(len);
+				int abs = (int)Math.Abs(len);
+				int byteCount;
 
-				abs = encoding.GetMaxByteCount(abs);
-				int maxBytes = buf != null ? (int)Math.Min((long)buf.Size, abs) : abs;
+				if (encoding is UnicodeEncoding) byteCount = abs * 2;
+				else if (encoding is UTF32Encoding) byteCount = abs * 4;
+				else byteCount = abs; // ANSI, UTF-8 (approx: 1 char ≈ 1 byte)
+
+				int maxBytes = buf != null ? (int)Math.Min((long)buf.Size, byteCount) : byteCount;
 
 				Span<byte> span = new Span<byte>(raw, maxBytes);
 
@@ -1379,7 +1383,7 @@
 								list.Add(letter.ToString());
 					}
 
-					return new Array(list.Cast<object>().ToArray());
+					return new Array(list.Cast<object>());
 				}
 
 				var output = count > 0 ? input.Split(del.ToArray(), count, StringSplitOptions.None) : input.Split(del.ToArray(), StringSplitOptions.None);
@@ -1392,7 +1396,7 @@
 						output[i] = output[i].Trim(omit);
 				}
 
-				return new Array(output.Cast<object>().ToArray());
+				return new Array(output.Cast<object>());
 			}
 
 			return [];

@@ -660,13 +660,13 @@ namespace Keysharp.Tests
 				uint val = 0x01020304;
 				var count = f.WriteUInt(val);
 				f.Seek(0);
-				var r = f.ReadUInt();
+				var r = (long)f.ReadUInt();
 				Assert.AreEqual(val, (uint)r);
 				Assert.AreEqual(sizeof(uint), (int)count);
 				var val2 = -12345678;
 				count = f.WriteInt(val2);
 				f.Seek(-4, 1);//Test seeking from current.
-				var r2 = f.ReadInt();
+				var r2 = (long)f.ReadInt();
 				Assert.AreEqual(val2, (int)r2);
 				Assert.AreEqual(sizeof(int), (int)count);
 			}
