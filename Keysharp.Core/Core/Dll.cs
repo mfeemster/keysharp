@@ -82,7 +82,6 @@ namespace Keysharp.Core
 								   ? (!reference && fo is FuncObj f ? (int)f.MinParams : 32)
 								   : paramCount.Ai(-1), 0, 32);
 
-			// Reuse or create
 			return new DelegateHolder(fo, arity, fast, reference);
 		}
 
@@ -92,7 +91,6 @@ namespace Keysharp.Core
 		/// <param name="address">The <see cref="DelegateHolder"/> to be freed.</param>
 		public static object CallbackFree(object address)
 		{
-			// Periodically remove dead entries (garbage-collected DelegateHolder instances)
 			if (address is DelegateHolder dh)
 				dh.Dispose();
 
