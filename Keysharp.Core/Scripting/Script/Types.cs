@@ -10,8 +10,14 @@
 				right = br ? 1L : 0L;
 
 			var lt = left.GetType();
-			if (lt == right.GetType())
+			var rt = right.GetType();
+			if (lt == rt)
 				return lt;
+
+			if (left is Any)
+				return lt;
+			else if (right is Any)
+				return rt;
 
 			if (ParseNumericArgs(left, right, "value compare", out bool leftIsDouble, out bool rightIsDouble, out double leftd, out long leftl, out double rightd, out long rightl, false))
 			{
