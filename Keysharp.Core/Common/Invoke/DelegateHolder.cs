@@ -1,210 +1,177 @@
 ﻿namespace Keysharp.Core.Common.Invoke
 {
-	internal class DelegateData
-	{
-		// Precomputed trampolines for parameter counts 0..32
-		internal readonly nint[] trampolinePtrs;
-
-		internal DelegateData()
-		{
-			trampolinePtrs = Enumerable.Range(0, 33)
-							 .Select(n =>
-			{
-				var mi = typeof(DelegateHolder)
-						 .GetMethod($"SharedTrampoline{n}", BindingFlags.Static | BindingFlags.NonPublic);
-				RuntimeHelpers.PrepareMethod(mi.MethodHandle);
-				return mi.MethodHandle.GetFunctionPointer();
-			}).ToArray();
-		}
-	}
-
 	/// <summary>
 	/// Creates a native callback pointer which can be used to call the target function object.
-	/// The callback starts from a stub which inserts the pointer to this DelegateHolder
-	/// instance to the end of the argument list and forwards the call to SharedTrampoline,
-	/// which in turn packs the arguments into an array and calls Dispatch, which then
-	/// pushes a new green thread (unless Fast mode is used) and calls the target function.
+	/// The callback starts from a closed delegate which contains a slot id and forwards the
+	/// arguments to Dispatch, where the arity and slot id are used to get the corresponding
+	/// DelegateHolder, then pushes a new green thread (unless Fast mode is used) and calls 
+	/// the target function. The DelegateHolder itself is not bound because GetFunctionPointerForDelegate
+	/// is a heavy operation (performance tests show >10x slowdowns compared to caching it), so instead
+	/// we reserve "slots" for each arity. For example CallbackCreate with argument count 1 gets 
+	/// slot id 0 for arity 1, a subsequent CallbackCreate gets slot id 1 etc, and later if the
+	/// pointer is freed with CallbackFree and another CallbackCreate is done then the previously 
+	/// created delegate for the slot is reused. The worst case scenario is a lot of CallbackCreate
+	/// calls without any freeing, which the user shouldn't do anyway because it means a memory leak.
 	/// </summary>
-	public sealed class DelegateHolder : KeysharpObject, IDisposable, IPointable
+	public sealed class DelegateHolder : KeysharpObject, IPointable, IDisposable
 	{
 		internal IFuncObj funcObj;
 		readonly bool _fast, _reference;
 		readonly int _arity;
-
-		// Self GCHandle & pointer to self
-		readonly GCHandle _selfHandle;
-		readonly nint _ctx;
+		private int _slotId;
+		// Used to prevent slot reuse collisions
+		internal int _assignedGeneration;
 
 		// Native function pointer to pass into unmanaged code.
-		public long Ptr { get; }
+		public long Ptr { get; internal set; }
 
 		/// <summary>
-		/// Creates a holder and allocates a native stub that embeds its context.
+		/// Creates a holder and receiving a delegate.
 		/// </summary>
-		public DelegateHolder(object function, bool fast, bool reference, int paramCount)
+		public DelegateHolder(IFuncObj function, int arity, bool fast, bool reference)
 		{
-			funcObj = Functions.GetFuncObj(function, null, true);
+			funcObj = function;
 			_fast = fast;
 			_reference = reference;
-			_arity = Math.Clamp(paramCount < 0
-								? (!_reference && funcObj is FuncObj fo ? (int)fo.MinParams : 32)
-								: paramCount,
-								0, 32);
-			// Pin self and store handle as context
-			_selfHandle = GCHandle.Alloc(this, GCHandleType.Normal);
-			_ctx = GCHandle.ToIntPtr(_selfHandle);
-			// Create native stub which inserts context and calls SharedTrampoline
-			Ptr = NativeThunkFactory.CreateThunk(Script.TheScript.DelegateData.trampolinePtrs[_arity], _ctx, _arity);
+			_arity = arity;
+
+			int slotId = AritySlots.Rent(arity, this, out _assignedGeneration);
+			_slotId = slotId;
+
+			Ptr = AritySlotPointerCache.GetOrCreate(arity, slotId);
 		}
 
-		// Shared unmanaged-callable trampolines
-		[UnmanagedCallersOnly]
-		private static long SharedTrampoline0(nint ctx)
-		=> Dispatch(ctx, System.Array.Empty<long>());
+		// Should only be called in CallbackFree. DelegateHolder shouldn't need a finalizer because
+		// the reference is held in AritySlotPointerCache until it's explicitly freed.
+		public void Dispose()
+		{
+			if (Ptr != 0) { 
+				AritySlots.Return(_arity, _slotId);
+				Ptr = 0;
+			}
+		}
 
-		[UnmanagedCallersOnly]
-		private static long SharedTrampoline1(long p0, nint ctx)
-		=> Dispatch(ctx, new[] { p0 });
+		// Delegate defintions for arities 0..32
+		[UnmanagedFunctionPointer(CallingConvention.Winapi)] private delegate long NativeCallbackArity0();
+		[UnmanagedFunctionPointer(CallingConvention.Winapi)] private delegate long NativeCallbackArity1(long p0);
+		[UnmanagedFunctionPointer(CallingConvention.Winapi)] private delegate long NativeCallbackArity2(long p0, long p1);
+		[UnmanagedFunctionPointer(CallingConvention.Winapi)] private delegate long NativeCallbackArity3(long p0, long p1, long p2);
+		[UnmanagedFunctionPointer(CallingConvention.Winapi)] private delegate long NativeCallbackArity4(long p0, long p1, long p2, long p3);
+		[UnmanagedFunctionPointer(CallingConvention.Winapi)] private delegate long NativeCallbackArity5(long p0, long p1, long p2, long p3, long p4);
+		[UnmanagedFunctionPointer(CallingConvention.Winapi)] private delegate long NativeCallbackArity6(long p0, long p1, long p2, long p3, long p4, long p5);
+		[UnmanagedFunctionPointer(CallingConvention.Winapi)] private delegate long NativeCallbackArity7(long p0, long p1, long p2, long p3, long p4, long p5, long p6);
+		[UnmanagedFunctionPointer(CallingConvention.Winapi)] private delegate long NativeCallbackArity8(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7);
+		[UnmanagedFunctionPointer(CallingConvention.Winapi)] private delegate long NativeCallbackArity9(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8);
+		[UnmanagedFunctionPointer(CallingConvention.Winapi)] private delegate long NativeCallbackArity10(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9);
+		[UnmanagedFunctionPointer(CallingConvention.Winapi)] private delegate long NativeCallbackArity11(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10);
+		[UnmanagedFunctionPointer(CallingConvention.Winapi)] private delegate long NativeCallbackArity12(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11);
+		[UnmanagedFunctionPointer(CallingConvention.Winapi)] private delegate long NativeCallbackArity13(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12);
+		[UnmanagedFunctionPointer(CallingConvention.Winapi)] private delegate long NativeCallbackArity14(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13);
+		[UnmanagedFunctionPointer(CallingConvention.Winapi)] private delegate long NativeCallbackArity15(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14);
+		[UnmanagedFunctionPointer(CallingConvention.Winapi)] private delegate long NativeCallbackArity16(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15);
+		[UnmanagedFunctionPointer(CallingConvention.Winapi)] private delegate long NativeCallbackArity17(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16);
+		[UnmanagedFunctionPointer(CallingConvention.Winapi)] private delegate long NativeCallbackArity18(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17);
+		[UnmanagedFunctionPointer(CallingConvention.Winapi)] private delegate long NativeCallbackArity19(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18);
+		[UnmanagedFunctionPointer(CallingConvention.Winapi)] private delegate long NativeCallbackArity20(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19);
+		[UnmanagedFunctionPointer(CallingConvention.Winapi)] private delegate long NativeCallbackArity21(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20);
+		[UnmanagedFunctionPointer(CallingConvention.Winapi)] private delegate long NativeCallbackArity22(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21);
+		[UnmanagedFunctionPointer(CallingConvention.Winapi)] private delegate long NativeCallbackArity23(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22);
+		[UnmanagedFunctionPointer(CallingConvention.Winapi)] private delegate long NativeCallbackArity24(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, long p23);
+		[UnmanagedFunctionPointer(CallingConvention.Winapi)] private delegate long NativeCallbackArity25(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, long p23, long p24);
+		[UnmanagedFunctionPointer(CallingConvention.Winapi)] private delegate long NativeCallbackArity26(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, long p23, long p24, long p25);
+		[UnmanagedFunctionPointer(CallingConvention.Winapi)] private delegate long NativeCallbackArity27(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, long p23, long p24, long p25, long p26);
+		[UnmanagedFunctionPointer(CallingConvention.Winapi)] private delegate long NativeCallbackArity28(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, long p23, long p24, long p25, long p26, long p27);
+		[UnmanagedFunctionPointer(CallingConvention.Winapi)] private delegate long NativeCallbackArity29(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, long p23, long p24, long p25, long p26, long p27, long p28);
+		[UnmanagedFunctionPointer(CallingConvention.Winapi)] private delegate long NativeCallbackArity30(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, long p23, long p24, long p25, long p26, long p27, long p28, long p29);
+		[UnmanagedFunctionPointer(CallingConvention.Winapi)] private delegate long NativeCallbackArity31(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, long p23, long p24, long p25, long p26, long p27, long p28, long p29, long p30);
+		[UnmanagedFunctionPointer(CallingConvention.Winapi)] private delegate long NativeCallbackArity32(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, long p23, long p24, long p25, long p26, long p27, long p28, long p29, long p30, long p31);
 
-		[UnmanagedCallersOnly]
-		private static long SharedTrampoline2(long p0, long p1, nint ctx)
-		=> Dispatch(ctx, new[] { p0, p1 });
+		// Produces a closed delegate bound to slotId, which is then used to query the correct DelegateHolder.
+		internal static Delegate CreateDelegateFor(int arity, int slotId) => arity switch
+		{
+			0 => (NativeCallbackArity0)(() 
+				=> Dispatch(slotId)),
+			1 => (NativeCallbackArity1)((a0) 
+				=> Dispatch(slotId, a0)),
+			2 => (NativeCallbackArity2)((a0, a1) 
+				=> Dispatch(slotId, a0, a1)),
+			3 => (NativeCallbackArity3)((a0, a1, a2) 
+				=> Dispatch(slotId, a0, a1, a2)),
+			4 => (NativeCallbackArity4)((a0, a1, a2, a3) 
+				=> Dispatch(slotId, a0, a1, a2, a3)),
+			5 => (NativeCallbackArity5)((a0, a1, a2, a3, a4) 
+				=> Dispatch(slotId, a0, a1, a2, a3, a4)),
+			6 => (NativeCallbackArity6)((a0, a1, a2, a3, a4, a5) 
+				=> Dispatch(slotId, a0, a1, a2, a3, a4, a5)),
+			7 => (NativeCallbackArity7)((a0, a1, a2, a3, a4, a5, a6) 
+				=> Dispatch(slotId, a0, a1, a2, a3, a4, a5, a6)),
+			8 => (NativeCallbackArity8)((a0, a1, a2, a3, a4, a5, a6, a7) 
+				=> Dispatch(slotId, a0, a1, a2, a3, a4, a5, a6, a7)),
+			9 => (NativeCallbackArity9)((a0, a1, a2, a3, a4, a5, a6, a7, a8) 
+				=> Dispatch(slotId, a0, a1, a2, a3, a4, a5, a6, a7, a8)),
+			10 => (NativeCallbackArity10)((a0, a1, a2, a3, a4, a5, a6, a7, a8, a9) 
+				=> Dispatch(slotId, a0, a1, a2, a3, a4, a5, a6, a7, a8, a9)),
+			11 => (NativeCallbackArity11)((a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10) 
+				=> Dispatch(slotId, a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10)),
+			12 => (NativeCallbackArity12)((a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11) 
+				=> Dispatch(slotId, a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11)),
+			13 => (NativeCallbackArity13)((a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12) 
+				=> Dispatch(slotId, a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12)),
+			14 => (NativeCallbackArity14)((a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13) 
+				=> Dispatch(slotId, a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13)),
+			15 => (NativeCallbackArity15)((a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14) 
+				=> Dispatch(slotId, a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14)),
+			16 => (NativeCallbackArity16)((a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15) 
+				=> Dispatch(slotId, a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15)),
+			17 => (NativeCallbackArity17)((a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16) 
+				=> Dispatch(slotId, a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16)),
+			18 => (NativeCallbackArity18)((a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17) 
+				=> Dispatch(slotId, a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17)),
+			19 => (NativeCallbackArity19)((a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18) 
+				=> Dispatch(slotId, a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18)),
+			20 => (NativeCallbackArity20)((a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19) 
+				=> Dispatch(slotId, a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19)),
+			21 => (NativeCallbackArity21)((a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20) 
+				=> Dispatch(slotId, a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20)),
+			22 => (NativeCallbackArity22)((a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21) 
+				=> Dispatch(slotId, a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21)),
+			23 => (NativeCallbackArity23)((a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22) 
+				=> Dispatch(slotId, a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22)),
+			24 => (NativeCallbackArity24)((a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23) 
+				=> Dispatch(slotId, a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23)),
+			25 => (NativeCallbackArity25)((a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24) 
+				=> Dispatch(slotId, a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24)),
+			26 => (NativeCallbackArity26)((a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25) 
+				=> Dispatch(slotId, a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25)),
+			27 => (NativeCallbackArity27)((a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26) 
+				=> Dispatch(slotId, a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26)),
+			28 => (NativeCallbackArity28)((a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26, a27) 
+				=> Dispatch(slotId, a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26, a27)),
+			29 => (NativeCallbackArity29)((a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26, a27, a28) 
+				=> Dispatch(slotId, a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26, a27, a28)),
+			30 => (NativeCallbackArity30)((a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26, a27, a28, a29) 
+				=> Dispatch(slotId, a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26, a27, a28, a29)),
+			31 => (NativeCallbackArity31)((a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26, a27, a28, a29, a30) 
+				=> Dispatch(slotId, a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26, a27, a28, a29, a30)),
+			32 => (NativeCallbackArity32)((a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26, a27, a28, a29, a30, a31)
+				=> Dispatch(slotId, a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17, a18, a19, a20, a21, a22, a23, a24, a25, a26, a27, a28, a29, a30, a31)),
+			_ => throw new ArgumentOutOfRangeException(nameof(arity))
+		};
 
-		[UnmanagedCallersOnly]
-		private static long SharedTrampoline3(long p0, long p1, long p2, nint ctx)
-		=> Dispatch(ctx, new[] { p0, p1, p2 });
-
-		[UnmanagedCallersOnly]
-		private static long SharedTrampoline4(long p0, long p1, long p2, long p3, nint ctx)
-		=> Dispatch(ctx, new[] { p0, p1, p2, p3 });
-
-		[UnmanagedCallersOnly]
-		private static long SharedTrampoline5(long p0, long p1, long p2, long p3, long p4, nint ctx)
-		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4 });
-
-		[UnmanagedCallersOnly]
-		private static long SharedTrampoline6(long p0, long p1, long p2, long p3, long p4, long p5, nint ctx)
-		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5 });
-
-		[UnmanagedCallersOnly]
-		private static long SharedTrampoline7(long p0, long p1, long p2, long p3, long p4, long p5, long p6, nint ctx)
-		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5, p6 });
-
-		[UnmanagedCallersOnly]
-		private static long SharedTrampoline8(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, nint ctx)
-		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5, p6, p7 });
-
-		[UnmanagedCallersOnly]
-		private static long SharedTrampoline9(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, nint ctx)
-		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5, p6, p7, p8 });
-
-		[UnmanagedCallersOnly]
-		private static long SharedTrampoline10(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, nint ctx)
-		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5, p6, p7, p8, p9 });
-
-		[UnmanagedCallersOnly]
-		private static long SharedTrampoline11(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, nint ctx)
-		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10 });
-
-		[UnmanagedCallersOnly]
-		private static long SharedTrampoline12(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, nint ctx)
-		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11 });
-
-		[UnmanagedCallersOnly]
-		private static long SharedTrampoline13(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, nint ctx)
-		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12 });
-
-		[UnmanagedCallersOnly]
-		private static long SharedTrampoline14(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, nint ctx)
-		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13 });
-
-		[UnmanagedCallersOnly]
-		private static long SharedTrampoline15(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, nint ctx)
-		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14 });
-
-		[UnmanagedCallersOnly]
-		private static long SharedTrampoline16(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, nint ctx)
-		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15 });
-
-		[UnmanagedCallersOnly]
-		private static long SharedTrampoline17(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, nint ctx)
-		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16 });
-
-		[UnmanagedCallersOnly]
-		private static long SharedTrampoline18(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, nint ctx)
-		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17 });
-
-		[UnmanagedCallersOnly]
-		private static long SharedTrampoline19(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, nint ctx)
-		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18 });
-
-		[UnmanagedCallersOnly]
-		private static long SharedTrampoline20(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, nint ctx)
-		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19 });
-
-		[UnmanagedCallersOnly]
-		private static long SharedTrampoline21(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, nint ctx)
-		=> Dispatch(ctx, new[] {p0, p1, p2, p3, p4,  p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20 });
-
-		[UnmanagedCallersOnly]
-		private static long SharedTrampoline22(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, nint ctx)
-		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21 });
-
-		[UnmanagedCallersOnly]
-		private static long SharedTrampoline23(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, nint ctx)
-		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4,  p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22
-							   });
-
-		[UnmanagedCallersOnly]
-		private static long SharedTrampoline24(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, long p23, nint ctx)
-		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4,  p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23 });
-
-		[UnmanagedCallersOnly]
-		private static long SharedTrampoline25(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, long p23, long p24, nint ctx)
-		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4,  p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24 });
-
-		[UnmanagedCallersOnly]
-		private static long SharedTrampoline26(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, long p23, long p24, long p25, nint ctx)
-		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4,  p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25 });
-
-		[UnmanagedCallersOnly]
-		private static long SharedTrampoline27(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, long p23, long p24, long p25, long p26, nint ctx)
-		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4,  p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26 });
-
-		[UnmanagedCallersOnly]
-		private static long SharedTrampoline28(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, long p23, long p24, long p25, long p26, long p27, nint ctx)
-		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4,  p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26, p27 });
-
-		[UnmanagedCallersOnly]
-		private static long SharedTrampoline29(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, long p23, long p24, long p25, long p26, long p27, long p28, nint ctx)
-		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4,  p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26, p27, p28 });
-
-		[UnmanagedCallersOnly]
-		private static long SharedTrampoline30(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, long p23, long p24, long p25, long p26, long p27, long p28, long p29, nint ctx)
-		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4,  p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26, p27, p28, p29 });
-
-		[UnmanagedCallersOnly]
-		private static long SharedTrampoline31(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, long p23, long p24, long p25, long p26, long p27, long p28, long p29, long p30, nint ctx)
-		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4,  p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26, p27, p28, p29, p30 });
-
-		[UnmanagedCallersOnly]
-		private static long SharedTrampoline32(long p0, long p1, long p2, long p3, long p4, long p5, long p6, long p7, long p8, long p9, long p10, long p11, long p12, long p13, long p14, long p15, long p16, long p17, long p18, long p19, long p20, long p21, long p22, long p23, long p24, long p25, long p26, long p27, long p28, long p29, long p30, long p31, nint ctx)
-		=> Dispatch(ctx, new[] { p0, p1, p2, p3, p4,  p5, p6, p7, p8, p9, p10, p11, p12, p13, p14, p15, p16, p17, p18, p19, p20, p21, p22, p23, p24, p25, p26, p27, p28, p29, p30, p31 });
 
 		/// <summary>
-		/// SharedTrampoline calls this function with the arguments packed into an array.
-		/// We then create a new green thread an run the target function there with the received arguments.
+		/// NativeCallback delegate calls this function with its bound slot id, which we use in combination
+		/// with the arity (args.Length) to query the corresponding DelegateHolder. We then create a new green 
+		/// thread an run the target function there with the received arguments.
 		/// </summary>
-		/// <param name="ctx">Pointer to this DelegateHolder instance.</param>
+		/// <param name="slotId">Slot id for arity N corresponding to the DelegateHolder.</param>
 		/// <param name="args">Argument list for the target function.</param>
 		/// <returns>Result of the target function converted to a long.</returns>
-		private static long Dispatch(nint ctx, long[] args)
+		private static long Dispatch(int slotId, params long[] args)
 		{
-			// Recover the DelegateHolder by reversing the GCHandle
-			var handle = GCHandle.FromIntPtr(ctx);
-
-			if (!(handle.Target is DelegateHolder holder))
-				return (long)Errors.ErrorOccurred($"Invalid DelegateHolder pointer passed to Dispatch.", DefaultErrorLong);
+			var (dh, gen) = AritySlots.Get(args.Length, slotId);
+			if (dh == null || gen != dh._assignedGeneration)
+				throw new Error("Stale callback pointer");
 
 			object val = null;
 			var state = (false, (ThreadVariables)null);
@@ -212,10 +179,10 @@
 			{
 				var script = Script.TheScript;
 
-				if (!holder._fast)
+				if (!dh._fast)
 					state = script.Threads.BeginThread();
 
-				if (holder._reference)
+				if (dh._reference)
 				{
 					var gh = GCHandle.Alloc(args, GCHandleType.Pinned);
 
@@ -224,14 +191,14 @@
 						unsafe
 						{
 							long* ptr = (long*)gh.AddrOfPinnedObject().ToPointer();
-							val = holder.funcObj.Call((long)ptr);
+							val = dh.funcObj.Call((long)ptr);
 						}
 					}
 					finally { gh.Free(); }
 				}
 				else
 				{
-					val = holder.funcObj.Call(System.Array.ConvertAll(args, item => (object)item));
+					val = dh.funcObj.Call(System.Array.ConvertAll(args, item => (object)item));
 				}
 
 				if (state.Item1)
@@ -241,220 +208,92 @@
 		}
 
 		internal static long ConvertResult(object val) => val switch
-	{
-			long l => l,
-				 bool b => b ? 1L : 0L,
-				 double d => (long)d,
-					 string s => s.Length == 0 ? 0L : 0L,
-					 _ => 0L
-		};
-
-		/// <summary>Frees the native stub and drops references.</summary>
-		public void Clear()
 		{
-			// Free the handle and context
-			_selfHandle.Free();
-			NativeThunkFactory.FreeThunk((nint)Ptr);
-			funcObj = null;
-		}
-
-		public void Dispose() => Clear();
+			long l => l,
+			bool b => b ? 1L : 0L,
+			double d => (long)d,
+			string s => s.Length == 0 ? 0L : 0L,
+			_ => 0L
+		};
 	}
 
-	/// <summary>
-	/// Allocates and frees small 64-byte native thunks which insert a context pointer to the end of the argument list
-	/// and then calls SharedTrampoline.
-	///
-	/// WARNING: THIS HAS BEEN TESTED ONLY ON 64-BIT WINDOWS
-	/// </summary>
-	static class NativeThunkFactory
+	// Thread-safe way to reserve a slot for a given arity. Additionally keeps track of the generation
+	// for the slot to prevent accidental reuses of previous slots.
+	static class AritySlots
 	{
-		public static unsafe nint CreateThunk(nint trampPtr, nint ctx, int arity)
+		private sealed class SlotBucket
 		{
-			nint mem = Script.TheScript.ExecutableMemoryPoolManager.Rent();
-			byte* ptr = (byte*)mem;
-			int disp;
-
-			switch (RuntimeInformation.ProcessArchitecture)
-			{
-				case Architecture.X64:
-#if WINDOWS
-					if (arity < 4)
-					{
-						// opcode for MOV reg,imm64 depends on register:
-						//    RCX=48 B9, RDX=48 BA, R8=49 B8, R9=49 B9
-						switch (arity)
-						{
-							case 0: *ptr++ = 0x48; *ptr++ = 0xB9; break; // mov rcx
-
-							case 1: *ptr++ = 0x48; *ptr++ = 0xBA; break; // mov rdx
-
-							case 2: *ptr++ = 0x49; *ptr++ = 0xB8; break; // mov r8
-
-							default: *ptr++ = 0x49; *ptr++ = 0xB9; break; // mov r9
-						}
-
-						*((ulong*)ptr) = (ulong)ctx.ToInt64(); ptr += 8;
-					}
-					else
-					{
-						disp = 8 * (arity + 1);
-						// 1) mov rax, ctx
-						*ptr++ = 0x48; *ptr++ = 0xB8;
-						*((ulong*)ptr) = (ulong)ctx.ToInt64(); ptr += 8;
-						// 2) mov qword ptr [rsp+disp], rax
-						*ptr++ = 0x48; *ptr++ = 0x89; *ptr++ = 0x84; *ptr++ = 0x24;
-						*((uint*)ptr) = (uint)disp; ptr += 4;
-					}
-
-					// mov rax, trampPtr
-					*ptr++ = 0x48; *ptr++ = 0xB8;
-					*((ulong*)ptr) = (ulong)trampPtr.ToInt64(); ptr += 8;
-					// jmp rax
-					*ptr++ = 0xFF; *ptr++ = 0xE0;
-					break;
-#else
-
-					// On SystemV x86-64 the first six integer args go in
-					//   RDI, RSI, RDX, RCX, R8, R9
-					// beyond that they spill onto the stack (in the 128-byte red zone).
-					if (arity < 6)
-					{
-						// MOV <reg>, imm64
-						switch (arity)
-						{
-							case 0: // RDI ← ctx
-								*ptr++ = 0x48; *ptr++ = 0xBF;
-								break;
-
-							case 1: // RSI ← ctx
-								*ptr++ = 0x48; *ptr++ = 0xBE;
-								break;
-
-							case 2: // RDX ← ctx
-								*ptr++ = 0x48; *ptr++ = 0xBA;
-								break;
-
-							case 3: // RCX ← ctx
-								*ptr++ = 0x48; *ptr++ = 0xB9;
-								break;
-
-							case 4: // R8  ← ctx
-								*ptr++ = 0x49; *ptr++ = 0xB8;
-								break;
-
-							default: // case 5: R9  ← ctx
-								*ptr++ = 0x49; *ptr++ = 0xB9;
-								break;
-						}
-
-						// imm64 for ctx
-						*((ulong*)ptr) = (ulong)ctx.ToInt64();
-						ptr += 8;
-					}
-					else
-					{
-						// spill into the red zone at [RSP + disp]
-						// 7th argument slot lives at [RSP+8], 8th at [RSP+16], …
-						disp = 8 * (arity + 1);
-						// MOV RAX, ctx
-						*ptr++ = 0x48; *ptr++ = 0xB8;
-						*((ulong*)ptr) = (ulong)ctx.ToInt64();
-						ptr += 8;
-						// MOV [RSP+disp], RAX
-						// opcode: 48 89 84 24 <disp:32>
-						*ptr++ = 0x48;
-						*ptr++ = 0x89;
-						*ptr++ = 0x84;
-						*ptr++ = 0x24;
-						*((uint*)ptr) = (uint)disp;
-						ptr += 4;
-					}
-
-					// Now tail-jump into the real function:
-					// MOV RAX, trampPtr
-					*ptr++ = 0x48; *ptr++ = 0xB8;
-					*((ulong*)ptr) = (ulong)trampPtr.ToInt64();
-					ptr += 8;
-					// JMP RAX
-					*ptr++ = 0xFF; *ptr++ = 0xE0;
-					break;
-#endif
-
-				case Architecture.X86:
-					// write ctx at [esp + 4*(arity+1)]
-					disp = 4 * (arity + 1);
-					// mov dword ptr [esp+disp], imm32
-					*ptr++ = 0xC7;
-					*ptr++ = 0x44;
-					*ptr++ = 0x24;
-					*ptr++ = (byte)disp;
-					*((uint*)ptr) = (uint)ctx.ToInt32(); ptr += 4;
-					// then jmp to the trampoline
-					*ptr++ = 0xB8;                                   // mov eax, imm32
-					*((uint*)ptr) = (uint)trampPtr.ToInt32(); ptr += 4;
-					*ptr++ = 0xFF; *ptr++ = 0xE0;                   // jmp eax
-					break;
-
-				case Architecture.Arm64:
-					if (arity < 8)
-					{
-						// Case A: extra arg fits in a register X<arity>
-						// 1) LDR X<arity>, [PC, #imm0]   ; imm0 = 1 → literal at +12
-						uint imm0 = 1;
-						uint ldrCtxReg = 0x58000000u        // LDR literal opcode
-										 | (imm0 << 5)        // imm19 = 1
-										 | (uint)arity;       // Rt = arity
-						*((uint*)ptr) = ldrCtxReg; ptr += 4;
-						// 2) LDR X16, [PC, #imm1]        ; imm1 = 2 → literal at +20
-						uint imm1 = 2;
-						uint ldrTramp = 0x58000000u
-										| (imm1 << 5)
-										| 16u;               // Rt = 16 for X16
-						*((uint*)ptr) = ldrTramp; ptr += 4;
-						// 3) BR X16
-						*((uint*)ptr) = 0xD61F0200; ptr += 4;
-					}
-					else
-					{
-						// Case B: extra arg must go on the stack
-						// 1) Load ctx into X8
-						//    LDR X8, [PC, #imm0] with imm0 = 1
-						uint imm0 = 1;
-						uint ldrCtxX8 = 0x58000000u
-										| (imm0 << 5)
-										| 8u;                // Rt = 8 for X8
-						*((uint*)ptr) = ldrCtxX8; ptr += 4;
-						// 2) SUB SP, SP, #16            ; carve out an 8-byte slot (aligned)
-						*((uint*)ptr) = 0x910043FF; ptr += 4;  // encoding for SUB SP,SP,#16
-						// 3) STR X8, [SP], #0           ; store ctx at top of stack
-						//    (STR Xt, [SP, #imm]) imm=0
-						*((uint*)ptr) = 0xF90003E8; ptr += 4;  // encoding for STR X8, [SP,#0]
-						// 4) LDR X16, [PC, #imm1]       ; load trampPtr
-						uint imm1 = 2;
-						uint ldrTrampX16 = 0x58000000u
-										   | (imm1 << 5)
-										   | 16u;
-						*((uint*)ptr) = ldrTrampX16; ptr += 4;
-						// 5) BR X16
-						*((uint*)ptr) = 0xD61F0200; ptr += 4;
-					}
-
-					// 6) Literal pool: ctx then trampPtr
-					*((ulong*)ptr) = (ulong)ctx.ToInt64(); ptr += 8;
-					*((ulong*)ptr) = (ulong)trampPtr.ToInt64(); ptr += 8;
-					break;
-
-				default:
-					throw new PlatformNotSupportedException($"Architecture {RuntimeInformation.ProcessArchitecture} not supported");
-			}
-
-			return mem;
+			public DelegateHolder[] Slots = new DelegateHolder[64];
+			public int[] Generations = new int[64];
+			public Stack<int> Free = new Stack<int>(Enumerable.Range(0, 64).Reverse());
+			public readonly Lock Lock = new();
 		}
 
-		public static void FreeThunk(nint ptr)
+		private static readonly SlotBucket[] _buckets = Enumerable.Range(0, 33).Select(_ => new SlotBucket()).ToArray();
+
+		public static int Rent(int arity, DelegateHolder holder, out int genOut)
 		{
-			Script.TheScript.ExecutableMemoryPoolManager.Return(ptr);
+			var b = _buckets[arity];
+			lock (b.Lock)
+			{
+				if (b.Free.Count == 0)
+					Grow(b);
+				int id = b.Free.Pop();
+				genOut = b.Generations[id];
+				Volatile.Write(ref b.Slots[id], holder);
+				return id;
+			}
+		}
+
+		public static void Return(int arity, int id)
+		{
+			var b = _buckets[arity];
+			lock (b.Lock)
+			{
+				Volatile.Write(ref b.Slots[id], null);
+				unchecked { b.Generations[id]++; }
+				b.Free.Push(id);
+			}
+		}
+
+		public static (DelegateHolder holder, int gen) Get(int arity, int id)
+		{
+			var b = _buckets[arity];
+			var h = Volatile.Read(ref b.Slots[id]);
+			var g = Volatile.Read(ref b.Generations[id]);
+			return (h, g);
+		}
+
+		private static void Grow(SlotBucket b)
+		{
+			int oldLen = b.Slots.Length;
+			System.Array.Resize(ref b.Slots, oldLen * 2);
+			System.Array.Resize(ref b.Generations, oldLen * 2);
+			for (int i = b.Slots.Length - 1; i >= oldLen; --i)
+				b.Free.Push(i);
+		}
+	}
+
+	// Thread-safe cache to store delegates for a given arity-slotId combination
+	static class AritySlotPointerCache
+	{
+		private static readonly Lock _lock = new();
+		private static readonly Dictionary<long, (Delegate keepAlive, nint ptr)> _map = new();
+
+		public static nint GetOrCreate(int arity, int slotId)
+		{
+			long key = ((long)arity << 40) | (uint)slotId;
+			lock (_lock)
+			{
+				if (_map.TryGetValue(key, out var hit))
+					return hit.ptr;
+
+				var del = DelegateHolder.CreateDelegateFor(arity, slotId);
+				RuntimeHelpers.PrepareDelegate(del);
+				var ptr = Marshal.GetFunctionPointerForDelegate(del);
+				_map[key] = (del, ptr);
+				return ptr;
+			}
 		}
 	}
 
@@ -469,7 +308,7 @@
 	{
 		private const int PageSize = 512;
 		private const int ChunkSize = 64;
-		private readonly Lock _lock = new ();
+		private readonly Lock _lock = new();
 
 		// Treiber‑stack head of free chunks (0 == empty)
 		private nint _freeList;
