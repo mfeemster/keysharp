@@ -133,9 +133,9 @@
 		public object AddStandard()
 		{
 			var menu = GetMenu();
-			var emptyfunc = new Func<object>(() => "");
+			var emptyfunc = (params object[] args) => "";
 			var script = Script.TheScript;
-			var openfunc = new Func<object>(() =>
+			var openfunc = (params object[] args) =>
 			{
 				var mainWindow = script.mainWindow;
 
@@ -148,7 +148,7 @@
 				}
 
 				return DefaultObject;
-			});
+			};
 			var reloadfunc = (params object[] args) =>
 			{
 				_ = Flow.Reload();
