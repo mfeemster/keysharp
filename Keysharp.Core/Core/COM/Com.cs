@@ -39,21 +39,6 @@ namespace Keysharp.Core.COM
 			for (var i = 0; i < args.Length; i++)
 				lengths[i + 1] = args[i].Ai();
 
-			t = ConvertVarTypeToCLRType(vt);
-
-			if (t == typeof(object)) //Some special handling for objects
-			{
-				switch (vt)
-				{
-					case VarEnum.VT_DISPATCH: t = typeof(DispatchWrapper); break;
-
-					case VarEnum.VT_VARIANT: break;
-
-					default:
-						return Errors.ValueErrorOccurred($"The supplied COM type of {varType} is not supported.");
-				}
-			}
-
 			return new ComObjArray(vt, lengths);
 		}
 
@@ -348,7 +333,15 @@ namespace Keysharp.Core.COM
 			}
 		}
 
-		public static ComObject ComValue(object varType, object value, object flags = null) => new (varType, value, flags);
+		public static ComObject ComValue(object varType, object value, object flags = null)
+		{
+			var vt = (VarEnum)varType.Al();
+			if ((vt & VarEnum.VT_ARRAY) != 0) {
+				nint psa = (nint)Reflections.GetPtrProperty(value);
+				return new ComObjArray(vt & ~VarEnum.VT_ARRAY, psa, flags.Ab());
+			}
+			return new (varType, value, flags);
+		}
 
 		public static object ObjAddRef(object ptr)
 		{

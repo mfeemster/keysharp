@@ -301,7 +301,21 @@ namespace Keysharp.Core.Common.Strings
 				}
 			}
 
-			return ConvertFont(new Font(family, size, display));
+			FontFamily fam;
+			try
+			{
+				// new Font() doesn't throw if the font family is not found and just defaults
+				// to Microsoft Sans Serif, so do this roundabout way instead which does throw
+				fam = new FontFamily(family);
+			}
+			catch
+			{
+				return standard;
+			}
+			if (!fam.IsStyleAvailable(display))
+				display = FontStyle.Regular;
+
+			return ConvertFont(new Font(fam, size, display));
 		}
 
 		internal static List<int> ParseRange(string[] splits)

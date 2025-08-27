@@ -8,7 +8,7 @@
 			private WeakReference<Gui> gui;
 			private readonly List<IFuncObj> clickHandlers = [];
 			private readonly List<IFuncObj> doubleClickHandlers = [];
-			private bool DpiScaling => ((Gui)Gui).dpiscaling;
+			internal bool DpiScaling => ((Gui)Gui).dpiscaling;
 			private System.Windows.Forms.Control _control;
 
 			//Normal event handlers can't be used becaused they need to return a value.
