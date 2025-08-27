@@ -86,7 +86,6 @@ namespace Keysharp.Scripting
 		private ComMethodData comMethodData;
 #endif
 		private ControlProvider controlProvider;
-		private DelegateData delegateData;
 #if WINDOWS
 		private DllData dllData;
 #endif
@@ -129,7 +128,6 @@ namespace Keysharp.Scripting
 		internal ComMethodData ComMethodData => comMethodData ?? (comMethodData = new ());
 #endif
 		internal ControlProvider ControlProvider => controlProvider ?? (controlProvider = new ());
-		internal DelegateData DelegateData => delegateData ?? (delegateData = new ());
 #if WINDOWS
 		internal DllData DllData => dllData ?? (dllData = new ());
 #endif
