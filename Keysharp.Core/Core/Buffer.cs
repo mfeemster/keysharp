@@ -1,4 +1,6 @@
-﻿namespace Keysharp.Core
+﻿using Keysharp.Core.Common.Keyboard;
+
+namespace Keysharp.Core
 {
 	/// <summary>
 	/// Encapsulates a block of memory for use with advanced techniques such as DllCall, structures, StrPut and raw file I/O.<br/>
@@ -171,12 +173,12 @@
 		/// Converts the contents of the buffer to a hex string.
 		/// </summary>
 		/// 
-		public string ToHex() => BitConverter.ToString(ToByteArray()).Replace("-", string.Empty);
+		public string ToHex() => Convert.ToHexString(AsSpan());
 
 		/// <summary>
 		/// Converts the contents of the buffer to a base64 string.
 		/// </summary>
-		public string ToBase64() => Convert.ToBase64String(ToByteArray());
+		public string ToBase64() => Convert.ToBase64String(AsSpan());
 
 		/// <summary>
 		/// Returns the contents of the buffer as a byte array.
@@ -188,6 +190,11 @@
 			Marshal.Copy(_ptr.DangerousGetHandle(), dataArray, 0, size);
 			return dataArray;
 		}
+
+		/// <summary>
+		/// Returns a mutable Span wrapper for the raw buffer.
+		/// </summary>
+		public unsafe Span<byte> AsSpan() => new Span<byte>((byte*)_ptr.DangerousGetHandle(), (int)(long)Size);
 
 		/// <summary>
 		/// Indexer which retrieves or sets the value of an array element.
