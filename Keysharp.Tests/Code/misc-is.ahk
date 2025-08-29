@@ -215,6 +215,11 @@ if (IsObject(m) == 1)
 else
 	FileAppend "fail", "*"
 
+if (IsObject(ComObjArray(13, 1)) == 1)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+
 if (IsDigit(1) == 1)
 	FileAppend "pass", "*"
 else

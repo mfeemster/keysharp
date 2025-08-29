@@ -161,6 +161,35 @@ if (arr[2, 3] == 6)
 else
 	FileAppend "fail", "*"
 
+arr := ComObjArray(VT_I4:=3, 3, 4)
+
+Loop 3 {
+	x := A_Index-1
+	Loop 4 {
+		y := A_Index-1
+		arr[x, y] := x * y
+	}
+}
+
+if (arr[2, 3] == 6)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+
+IID_IUnknown := "{00000000-0000-0000-C000-000000000046}"
+CLSID_FileOpenDialog := "{DC1C5A9C-E88A-4DDE-A5A1-60F82A20AEF7}"
+p := ComObject(CLSID_FileOpenDialog, IID_IUnknown)  ; VT_UNKNOWN
+ObjAddRef(p.Ptr), before := ObjRelease(p.Ptr)
+arr := ComObjArray(13, 1)
+arr[0] := p
+ObjAddRef(p.Ptr), after := ObjRelease(p.Ptr)
+
+; Ref count should increase after adding it to the safe-array
+if (after == (before + 1))
+    FileAppend "pass", "*"
+else
+    FileAppend "fail", "*"
+
 script := "
 (
 	x := ComObjActive("{6B39CAA1-A320-4CB0-8DB4-352AA81E460E}")

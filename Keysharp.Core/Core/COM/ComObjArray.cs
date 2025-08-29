@@ -281,6 +281,7 @@ namespace Keysharp.Core.COM
 			this.Ptr = _psa.ToInt64();
 		}
 
+		
 		public ComObjArray(VarEnum baseType, nint psa, bool takeOwnership)
 		{
 			_baseType = baseType;
