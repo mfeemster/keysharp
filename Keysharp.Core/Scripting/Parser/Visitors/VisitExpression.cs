@@ -113,7 +113,7 @@ namespace Keysharp.Scripting
             {
 				return GenerateMemberIndexAccess(context.primaryExpression(), accessSuffix.memberIndexArguments(), accessSuffix.modifier != null);
 			} 
-            else if (accessSuffix.modifier != null && accessSuffix.modifier.TokenIndex == MainLexer.QuestionMark)
+            else if (accessSuffix.modifier != null && accessSuffix.modifier.Type == MainLexer.QuestionMark)
             {
                 return Visit(context.primaryExpression());
             }
