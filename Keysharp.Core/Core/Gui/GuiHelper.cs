@@ -1,4 +1,5 @@
 ﻿using System.Drawing;
+using System.Drawing.Interop;
 
 namespace Keysharp.Core
 {
@@ -113,6 +114,30 @@ namespace Keysharp.Core
 				case WindowsAPI.STM_SETIMAGE:
 					control.BackgroundImage = Image.FromHbitmap(m.LParam);
 					return true;
+
+				case WindowsAPI.WM_GETFONT:
+					m.Result = HFontCache.Get(control);
+					return true;
+
+				case WindowsAPI.WM_SETFONT:
+				{
+					var hfont = m.WParam;
+					var redraw = m.LParam != 0;
+
+					if (hfont != 0)
+					{
+						// Create a new managed Font so we don't own/call DeleteObject on caller's HFONT.
+						// Using LOGFONT avoids stealing ownership of hfont.
+						LOGFONT lf; HFontCache.GetObject(hfont, Marshal.SizeOf<LOGFONT>(), out lf);
+						var newFont = Font.FromLogFont(lf);
+						control.Font = newFont;
+					}
+
+					HFontCache.Release(control); // ensure our cached HFONT matches new Font
+					if (redraw) control.Invalidate();
+					m.Result = 0;
+					return true;
+				}
 			}
 
 #endif
@@ -360,5 +385,69 @@ namespace Keysharp.Core
 		//      e.Handled = true;
 		//  }
 		//}
+
+#if WINDOWS
+		internal static class HFontCache
+		{
+			private sealed class Entry : IDisposable
+			{
+				public Font Font { get; }
+				public nint HFont { get; private set; }
+
+				public Entry(Font f) { Font = f; HFont = f.ToHfont(); }
+				public void Dispose()
+				{
+					if (HFont != 0)
+					{
+						DeleteObject(HFont);
+						HFont = 0;
+					}
+				}
+			}
+
+			private static readonly ConditionalWeakTable<Control, Entry> table = new();
+
+			public static nint Get(Control c)
+			{
+				if (!table.TryGetValue(c, out var e) || !ReferenceEquals(e.Font, c.Font))
+				{
+					e?.Dispose();
+					e = new Entry(c.Font);
+					table.Remove(c);
+					table.Add(c, e);
+
+					// ensure cleanup on change/dispose
+					c.FontChanged -= OnFontChanged;
+					c.Disposed -= OnDisposed;
+					c.HandleDestroyed -= OnDisposed;
+
+					c.FontChanged += OnFontChanged;
+					c.Disposed += OnDisposed;
+					c.HandleDestroyed += OnDisposed;
+				}
+				return e.HFont;
+			}
+
+			private static void OnFontChanged(object sender, EventArgs e) => Release((Control)sender);
+			private static void OnDisposed(object sender, EventArgs e) => Release((Control)sender);
+
+			public static void Release(Control c)
+			{
+				if (table.TryGetValue(c, out var e))
+				{
+					e.Dispose();
+					table.Remove(c);
+				}
+			}
+
+			[DllImport("gdi32.dll", CharSet = CharSet.Unicode)]
+			public static extern int GetObject(nint hgdiobj, int cbBuffer, out LOGFONT lpvObject);
+
+			[System.Runtime.InteropServices.DllImport("gdi32.dll")]
+			internal static extern bool DeleteObject(nint hObject);
+
+
+		}
+#endif
 	}
 }
