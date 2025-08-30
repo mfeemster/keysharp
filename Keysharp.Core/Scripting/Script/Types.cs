@@ -8,6 +8,10 @@
 				left = bl ? 1L : 0L;
 			if (right is bool br)
 				right = br ? 1L : 0L;
+			if (left is StringBuffer sbl)
+				left = sbl.ToString();
+			if (right is StringBuffer sbr)
+				right = sbr.ToString();
 
 			var lt = left.GetType();
 			var rt = right.GetType();
