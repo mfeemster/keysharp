@@ -14,6 +14,7 @@ namespace Keysharp.Core
 		internal List<IFuncObj> sizeHandlers;
 		private readonly int addStyle, addExStyle, removeStyle, removeExStyle;
 		private bool beenShown = false;
+		internal bool beenConstructed = false;
 		private bool closingFromDestroy;
 		internal bool BeenShown => beenShown;
 
@@ -28,6 +29,12 @@ namespace Keysharp.Core
 				cp.ExStyle &= ~removeExStyle;
 				return cp;
 			}
+		}
+
+		protected override void CreateHandle()
+		{
+			base.CreateHandle();
+			beenConstructed = true;
 		}
 
 		protected override void WndProc(ref Message m)
@@ -50,7 +57,7 @@ namespace Keysharp.Core
 
 			if (msgFilter.handledMsg == m)
 				msgFilter.handledMsg = null;
-			else if (msgFilter.CallEventHandlers(ref m))
+			else if (beenConstructed && msgFilter.CallEventHandlers(ref m))
 				return;
 
 			base.WndProc(ref m);
