@@ -20,9 +20,9 @@
 
 		public static IFuncObj Func(object funcName, Type t, object paramCount = null) => new FuncObj(funcName.As(), t, paramCount);
 
-		public static IFuncObj Func(Delegate del, object obj = null) => new FuncObj(del, obj ?? del.Target);
+		public static IFuncObj Func(Delegate del, object obj = null) => new FuncObj(del, obj);
 
-		public static IFuncObj Closure(Delegate del, object obj = null) => new Closure(del, obj ?? del.Target);
+		public static IFuncObj Closure(Delegate del, object obj = null) => new Closure(del, obj);
 
 		/// <summary>
 		/// Internal helper to get a function object which supports different ways of identifying such.
