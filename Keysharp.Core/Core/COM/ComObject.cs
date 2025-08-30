@@ -9,6 +9,12 @@ namespace Keysharp.Core
 		internal object item;
 		private ComObject tempCo;//Must keep a reference else it will throw an exception about the RCW being separated from the object.
 
+		~ComObject()
+		{
+			Script.InvokeMeta(this, "__Delete");
+			Dispose();
+		}
+
 		public object Ptr
 		{
 			get => item;
@@ -168,12 +174,6 @@ namespace Keysharp.Core
 		public ComObject(params object[] args) : base(args) { }
 
 		internal ComObject(object varType, object value, object flags = null) : base(varType, value, flags) { }
-
-		public override object __Delete()
-		{
-			Dispose();
-			return DefaultObject;
-		}
 
 		public override object __New(params object[] args)
 		{

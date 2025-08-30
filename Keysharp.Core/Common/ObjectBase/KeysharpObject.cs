@@ -9,6 +9,11 @@
 		public KeysharpObject(params object[] args) : base(args) { }
 		public KeysharpObject(bool skipLogic) : base(skipLogic) { }
 
+		~KeysharpObject()
+		{
+			Script.InvokeMeta(this, "__Delete");
+		}
+
 		public object staticCall(params object[] args)
 		{
 			var kso = new KeysharpObject();
