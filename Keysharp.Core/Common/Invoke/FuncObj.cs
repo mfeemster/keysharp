@@ -93,7 +93,7 @@
 		/// <param name="args">Forwarded on to <see cref="CallWithRefs(object[])"/></param>
 		/// <returns>The return value of the bound function.</returns>
 		public override object Call(params object[] args) => base.Call(CreateArgs(args).ToArray());
-		public override object CallInst(object inst, params object[] args) => base.Call(inst, CreateArgs(args).ToArray());
+		public override object CallInst(object inst, params object[] args) => base.Call(CreateArgs([inst, ..args]).ToArray());
 
         public override object CallWithRefs(params object[] args)
 		{
