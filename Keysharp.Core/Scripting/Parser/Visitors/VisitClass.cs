@@ -110,25 +110,6 @@ namespace Keysharp.Scripting
             AddInitMethods(parser.currentClass.Name);
             parser.currentClass.Body.Add(CreateStaticConstructor(parser.currentClass.Name));
 
-            if (parser.currentClass.ContainsMethod("__Delete"))
-            {
-                parser.currentClass.Body.Add(
-                    SyntaxFactory.DestructorDeclaration(SyntaxFactory.Identifier(parser.currentClass.Name))
-                        .WithBody(SyntaxFactory.Block(
-                            SyntaxFactory.SingletonList<StatementSyntax>(
-                                SyntaxFactory.ExpressionStatement(
-                                    ((InvocationExpressionSyntax)InternalMethods.Invoke)
-                                    .WithArgumentList(
-										CreateArgumentList(
-                                            SyntaxFactory.ThisExpression(),
-                                            SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal("__Delete"))
-                                    ))
-                                )
-                            )
-                        ))
-                    );
-            }
-
             // Add the Call factory method
             if (!parser.currentClass.ContainsMethod("Call", true))
                 parser.currentClass.Body.Add(CreateCallFactoryMethod(parser.currentClass.Name));

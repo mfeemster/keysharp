@@ -169,12 +169,7 @@ namespace Keysharp.Core
 
 		internal ComObject(object varType, object value, object flags = null) : base(varType, value, flags) { }
 
-		~ComObject()
-		{
-			Dispose();
-		}
-
-		public object __Delete()
+		public override object __Delete()
 		{
 			Dispose();
 			return DefaultObject;

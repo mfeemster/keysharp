@@ -76,14 +76,6 @@
 		/// <param name="args">The data to initially store in the buffer</param>
 		public Buffer(params object[] args) : base(args) { }
 
-        /// <summary>
-        /// Destructor that manually calls <see cref="Dispose"/> to free the raw memory contained in the buffer.
-        /// </summary>
-        ~Buffer()
-		{
-			Dispose(true);
-		}
-
 		public static object Call(object @this, object byteCount = null, object fillByte = null)
 		{
 			Type t = @this.GetType();
@@ -141,6 +133,15 @@
 				}
 			}
 
+			return DefaultObject;
+		}
+
+		/// <summary>
+		/// Destructor that manually calls <see cref="Dispose"/> to free the raw memory contained in the buffer.
+		/// </summary>
+		public override object __Delete()
+		{
+			Dispose(true);
 			return DefaultObject;
 		}
 
