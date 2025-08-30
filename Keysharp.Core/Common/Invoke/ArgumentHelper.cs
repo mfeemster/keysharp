@@ -485,13 +485,12 @@ namespace Keysharp.Core.Common.Invoke
 				int hr32 = unchecked((int)hrLong);   // keep only the low 32 bits
 				return Errors.OSErrorOccurredForHR(hr32);
 			}
-
 			//Special conversion for the return value.
 			else if (ReturnType == typeof(int))
 			{
 				long l = (long)value;
 				int ii = *(int*)&l;
-				value = ii;
+				value = (long)ii;
 			}
 			else if (ReturnType == typeof(float))
 			{
@@ -499,7 +498,7 @@ namespace Keysharp.Core.Common.Invoke
 
 				double d = (double)value;
 				float f = *(float*)&d;
-				return f;
+				return (double)f;
 			}
 			else if (ReturnType == typeof(char[]))
 			{
