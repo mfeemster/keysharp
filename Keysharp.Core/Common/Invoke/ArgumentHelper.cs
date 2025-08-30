@@ -534,7 +534,7 @@ namespace Keysharp.Core.Common.Invoke
 			{
 				long l = (long)value;
 				int ii = *(int*)&l;
-				value = ii;
+				value = (long)ii;
 			}
 			else if (ReturnType == typeof(float))
 			{
@@ -542,7 +542,7 @@ namespace Keysharp.Core.Common.Invoke
 
 				double d = (double)value;
 				float f = *(float*)&d;
-				return f;
+				return (double)f;
 			}
 			else if (ReturnType == typeof(char[]))
 			{
