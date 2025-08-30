@@ -67,6 +67,10 @@
 			}
 		}
 
+		public override bool Equals(object obj) => ReferenceEquals(this, obj);
+
+		public override int GetHashCode() => RuntimeHelpers.GetHashCode(this);
+
 		public override IFuncObj Bind(params object[] args)
 		{
 			object[] newbound = new object[boundargs.Length + args.Length];
@@ -261,11 +265,21 @@
 			return val;
 		}
 
-		public override bool Equals(object obj) => obj is FuncObj fo ? fo.mi == mi : false;
+		public override bool Equals(object obj)
+		{
+			if (obj is BoundFunc)
+				return false; // BoundFunc has its own Equals override and considers all instances unique
+			return obj is FuncObj fo ? fo.mi == mi && fo.Inst == Inst : false;
+		}
 
-		public bool Equals(FuncObj value) => value.mi == mi;
-
-		public override int GetHashCode() => mi.GetHashCode();
+		public override int GetHashCode()
+		{
+			unchecked
+			{
+				int h = mi?.GetHashCode() ?? 0;
+				return (h * 31) ^ (Inst != null ? RuntimeHelpers.GetHashCode(Inst) : 0);
+			}
+		}
 
 		public bool IsByRef(object obj = null)
 		{
