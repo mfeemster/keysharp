@@ -1151,9 +1151,11 @@ namespace Keysharp.Scripting
 
         public override SyntaxNode VisitFunctionHead([NotNull] FunctionHeadContext context)
         {
-            PushFunction(CultureInfo.CurrentCulture.TextInfo.ToTitleCase(context.identifierName().GetText()));
+            string userName = context.identifierName().GetText();
+			PushFunction(CultureInfo.CurrentCulture.TextInfo.ToTitleCase(userName));
+            parser.currentFunc.UserDeclaredName = userName;
 
-            VisitFunctionHeadPrefix(context.functionHeadPrefix());
+			VisitFunctionHeadPrefix(context.functionHeadPrefix());
 
             parser.currentFunc.Params.AddRange(((ParameterListSyntax)VisitFormalParameterList(context.formalParameterList())).Parameters);
 

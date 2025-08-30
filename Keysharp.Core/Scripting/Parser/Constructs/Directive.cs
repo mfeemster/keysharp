@@ -18,6 +18,13 @@ namespace Keysharp.Scripting
 	[AttributeUsage(AttributeTargets.Parameter)]
 	public sealed class ByRefAttribute : Attribute { }
 
+	[AttributeUsage(AttributeTargets.Method | AttributeTargets.Class)]
+	public sealed class UserDeclaredNameAttribute : Attribute
+	{
+		public string Name { get; }
+		public UserDeclaredNameAttribute(string name) => Name = name;
+	}
+
 	// This always writes to the parent console window and also to a redirected stdout if there is one.
 	// It would be better to do the relevant thing (eg write to the redirected file if there is one, otherwise
 	// write to the console) but it doesn't seem possible.

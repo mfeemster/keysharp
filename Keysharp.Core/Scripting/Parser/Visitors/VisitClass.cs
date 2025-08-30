@@ -293,6 +293,8 @@ namespace Keysharp.Scripting
             var methodDefinition = context.methodDefinition();
             Visit(methodDefinition.functionHead());
             var rawMethodName = methodDefinition.functionHead().identifierName().GetText();
+
+            parser.currentFunc.UserDeclaredName = rawMethodName;
             var methodName = parser.currentFunc.Name = parser.NormalizeClassIdentifier(rawMethodName);
 
             var fieldName = methodName.ToLowerInvariant();
@@ -307,23 +309,13 @@ namespace Keysharp.Scripting
             parser.currentFunc.Body.AddRange(methodBody.Statements);
 
             // Create method declaration
-            var methodDeclaration = SyntaxFactory.MethodDeclaration(
+            parser.currentFunc.Method = SyntaxFactory.MethodDeclaration(
                     SyntaxFactory.PredefinedType(Parser.PredefinedKeywords.Object), // Return type is object
                     SyntaxFactory.Identifier(methodName)
-                )
-                .WithModifiers(
-                    SyntaxFactory.TokenList(
-                        new List<SyntaxToken> {
-                            parser.currentFunc.Async ? SyntaxFactory.Token(SyntaxKind.AsyncKeyword) : default,
-                            Parser.PredefinedKeywords.PublicToken,
-                            Parser.PredefinedKeywords.StaticToken }
-                        .Where(token => token != default)
-                    )
-                )
-                .WithParameterList(parser.currentFunc.AssembleParams())
-            .WithBody(parser.currentFunc.AssembleBody());
+                );
+            var methodDeclaration = parser.currentFunc.Assemble();
 
-            PopFunction();
+			PopFunction();
 
             return methodDeclaration;
         }

@@ -18,6 +18,7 @@ namespace Keysharp.Scripting
 			public string Base = "KeysharpObject";
 			public List<BaseTypeSyntax> BaseList = new();
 			public List<MemberDeclarationSyntax> Body = new List<MemberDeclarationSyntax>();
+			public List<AttributeSyntax> Attributes = new();
 			public ClassDeclarationSyntax Declaration = null;
 
 			public int lastCheckedBodyCount = 0;
@@ -52,9 +53,30 @@ namespace Keysharp.Scripting
 						)
 					);
 			}
+			public AttributeListSyntax AssembleAttributes() => SyntaxFactory.AttributeList(
+			SyntaxFactory.SeparatedList<AttributeSyntax>(
+				Attributes));
 
 			public ClassDeclarationSyntax Assemble()
 			{
+				if (UserDeclaredName != null && UserDeclaredName != Name)
+				{
+					var value = SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(UserDeclaredName));
+					var nameAttr = SyntaxFactory.Attribute(
+						SyntaxFactory.IdentifierName("UserDeclaredName"),
+						SyntaxFactory.AttributeArgumentList(
+							SyntaxFactory.SingletonSeparatedList(
+								SyntaxFactory.AttributeArgument(value)
+							)
+						)
+					);
+					Attributes.Add(nameAttr);
+				}
+				if (Attributes.Count > 0)
+				{
+					var attributeList = new SyntaxList<AttributeListSyntax>(AssembleAttributes());
+					Declaration = Declaration.WithAttributeLists(attributeList);
+				}
 				return Declaration
 					.WithBaseList(BaseList.Count > 0 ? SyntaxFactory.BaseList(SyntaxFactory.SeparatedList(BaseList)) : default)
 					.AddMembers(Body.ToArray());

@@ -198,6 +198,12 @@
 				if (mi == null)
 					return _name = "";
 
+				var nameAttrs = mi.GetCustomAttributes(typeof(UserDeclaredNameAttribute));
+				if (nameAttrs.Any())
+				{
+					return _name = ((UserDeclaredNameAttribute)nameAttrs.First()).Name;
+				}
+
 				string funcName = mi.Name;
 				var prefixes = new[] { "static", "get_", "set_" };
 				foreach (var p in prefixes)

@@ -104,6 +104,12 @@ namespace Keysharp.Scripting
 						continue;
 					}
 
+					var nameAttrs = method.GetCustomAttributes(typeof(UserDeclaredNameAttribute));
+					if (nameAttrs.Any())
+					{
+						methodName = ((UserDeclaredNameAttribute)nameAttrs.First()).Name;
+					}
+
 					if (isStatic)
 					{
 						DefineProp(staticInst, methodName, new OwnPropsDesc(staticInst, null, null, null, new FuncObj(method)));

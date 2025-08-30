@@ -157,6 +157,11 @@ namespace Keysharp.Scripting
 
 		public override void VisitClassDeclaration(ClassDeclarationSyntax node)
 		{
+			foreach (var attrs in node.AttributeLists)
+			{
+				Visit(attrs);
+			}
+
 			WriteIndent();
 			// modifiers + “class”
 			foreach (var mod in node.Modifiers)

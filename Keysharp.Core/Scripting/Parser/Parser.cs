@@ -311,7 +311,8 @@ namespace Keysharp.Scripting
         {
 			public MethodDeclarationSyntax Method = null;
             public string Name = null;
-            public List<StatementSyntax> Body = new();
+			public string UserDeclaredName = null;
+			public List<StatementSyntax> Body = new();
             public List<ParameterSyntax> Params = new();
 			public List<AttributeSyntax> Attributes = new();
 			public Dictionary<string, StatementSyntax> Locals = new();
@@ -504,13 +505,24 @@ namespace Keysharp.Scripting
 
                 Method = Method.WithModifiers(modifiers.Count == 0 ? default : SyntaxFactory.TokenList(modifiers));
 
+                if (UserDeclaredName != null && UserDeclaredName != Name)
+                {
+                    var value = SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(UserDeclaredName));
+                    var nameAttr = SyntaxFactory.Attribute(
+                        SyntaxFactory.IdentifierName("UserDeclaredName"),
+                        SyntaxFactory.AttributeArgumentList(
+                            SyntaxFactory.SingletonSeparatedList(
+                                SyntaxFactory.AttributeArgument(value)
+                            )
+                        )
+                    );
+                    Attributes.Add(nameAttr);
+				}
+
 				if (Attributes.Count > 0)
                 {
                     var attributeList = new SyntaxList<AttributeListSyntax>(AssembleAttributes());
-
-					Method = Method
-                        
-                        .WithAttributeLists(attributeList);
+					Method = Method.WithAttributeLists(attributeList);
                 }
 
                 return Method
