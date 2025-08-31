@@ -750,7 +750,8 @@ namespace Keysharp.Core
 						}
 					}
 
-					ddl.Items.AddRange(al.Cast<(object, object)>().Select(x => x.Item2).Select(x => opts.lowercase.IsTrue() ? x.Str().ToLower() : opts.uppercase.IsTrue() ? x.Str().ToUpper() : x.Str()).ToArray());
+					if (al != null)
+						ddl.Items.AddRange(al.Cast<(object, object)>().Select(x => x.Item2).Select(x => opts.lowercase.IsTrue() ? x.Str().ToLower() : opts.uppercase.IsTrue() ? x.Str().ToUpper() : x.Str()).ToArray());
 
 					if (opts.choose.Any())
 						ddl.SelectedIndex = opts.choose[0];
@@ -832,7 +833,8 @@ namespace Keysharp.Core
 					{
 						Font = Conversions.ConvertFont(form.Font)
 					};
-					lv.Columns.AddRange(al.Cast<(object, object)>().Select(x => x.Item2).Select(x => new ColumnHeader { Text = x.Str() }).ToArray());
+					if (al != null)
+						lv.Columns.AddRange(al.Cast<(object, object)>().Select(x => x.Item2).Select(x => new ColumnHeader { Text = x.Str() }).ToArray());
 					lv.CheckBoxes = opts.ischecked.HasValue && opts.ischecked.Value > 0;
 					lv.GridLines = opts.grid.IsTrue();
 					lv.LabelEdit = opts.rdonly.IsFalse();
@@ -1132,7 +1134,8 @@ namespace Keysharp.Core
 					{
 						Font = Conversions.ConvertFont(form.Font)
 					};//This will also support image lists just like TreeView for setting icons on tabs, instead of using SendMessage().
-					kstc.TabPages.AddRange(al.Cast<(object, object)>().Select(x => x.Item2).Select(x => new TabPage(x.Str())).ToArray());
+					if (al != null)
+						kstc.TabPages.AddRange(al.Cast<(object, object)>().Select(x => x.Item2).Select(x => new TabPage(x.Str())).ToArray());
 					if (opts.leftj.IsTrue())
 						kstc.Alignment = TabAlignment.Left;
 					else if (opts.rightj.IsTrue())
