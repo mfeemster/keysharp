@@ -343,7 +343,8 @@ namespace Keysharp.Core
 					}
 					else
 					{
-						timer.Interval = int.MaxValue;
+						if (timer.Interval == p)
+							timer.Interval = int.MaxValue;
 						timer.Interval = (int)p;
 					}
 
