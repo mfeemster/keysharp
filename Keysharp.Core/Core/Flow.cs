@@ -342,7 +342,10 @@ namespace Keysharp.Core
 						}
 					}
 					else
+					{
+						timer.Interval = int.MaxValue;
 						timer.Interval = (int)p;
+					}
 
 					return DefaultObject;
 				}
