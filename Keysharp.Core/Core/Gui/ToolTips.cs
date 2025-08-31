@@ -45,13 +45,18 @@ namespace Keysharp.Core
 			var script = Script.TheScript;
 			var persistentTooltips = script.ToolTipData.persistentTooltips;
 			var persistentTooltipsPositions = script.ToolTipData.persistentTooltipsPositions;
+
+			if (id < 1 || id > ToolTipData.MaxToolTips)
+				return Errors.ErrorOccurred($"ToolTip index must be 1-{ToolTipData.MaxToolTips} but was {id}");
+
 			id--;
 
 			if (t == "") // Clear tooltip and return
 			{
-				if (id < persistentTooltips.Length && persistentTooltips[id] != null)
+				if (persistentTooltips[id] != null)
 				{
 					persistentTooltips[id].Active = false;
+					persistentTooltips[id].Dispose();
 					persistentTooltips[id] = null;
 					persistentTooltipsPositions[id] = null;
 				}
