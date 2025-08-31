@@ -234,9 +234,9 @@ UnexpectedCharacter : . -> channel(ERROR);
 mode HOTSTRING_MODE;
 HotstringEOL: LineBreak -> type(EOL), popMode;
 HotstringOpenBrace: '{' {this.ProcessHotstringOpenBrace();} -> type(OpenBrace), popMode;
-HotstringWhitespaces: WhiteSpace+ -> channel(HIDDEN);
+HotstringWhitespaces: WhiteSpace+ (';' NonEOLCharacter*)? -> channel(HIDDEN);
 HotstringMultiLineExpansion: ContinuationSection -> popMode;
-HotstringSingleLineExpansion:  (~[;`\r\n\u2028\u2029{] | '`' EscapeSequence) RawString? -> popMode;
+HotstringSingleLineExpansion: (~[`\r\n\u2028\u2029{] | '`' EscapeSequence) RawString? -> popMode;
 HotstringUnexpectedCharacter: . -> channel(ERROR);
 
 mode DIRECTIVE_MODE;

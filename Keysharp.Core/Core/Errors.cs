@@ -1,4 +1,5 @@
-﻿using Keysharp.Core.Scripting.Parser.Helpers;
+﻿using Antlr4.Runtime;
+using Keysharp.Core.Scripting.Parser.Helpers;
 
 namespace Keysharp.Core
 {
@@ -441,7 +442,7 @@ namespace Keysharp.Core
 		/// </summary>
 		private string _stack = null;
 		private string _file;
-		private long _line = 0;
+		private long _line = long.MinValue;
 
 		/// <summary>
 		/// Stack frames for mostly user-accessible functions (excludes C# built-in methods, some of our helpers etc).
@@ -558,8 +559,10 @@ namespace Keysharp.Core
 			if (What.IsNullOrEmpty() && (method = topFrame.GetMethod()) != null)
 				What = $"{method.DeclaringType.FullName}.{method.Name}()";
 
-			_file = topFrame.GetFileName();
-			_line = topFrame.GetFileLineNumber();
+			if (_file == null)
+				_file = topFrame.GetFileName();
+			if (_line == long.MinValue)
+				_line = topFrame.GetFileLineNumber();
 		}
 
 		/// <summary>
@@ -732,12 +735,13 @@ namespace Keysharp.Core
 	/// </summary>
 	public class ParseException : Error
 	{
+		public int Column = 0;
 		/// <summary>
 		/// Initializes a new instance of the <see cref="ParseException"/> class.
 		/// </summary>
 		/// <param name="message">The message describing the error.</param>
 		public ParseException(string message)
-			: this(message, default, "") { }
+			: this(message, 0, "") { }
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="ParseException"/> class.
@@ -769,6 +773,22 @@ namespace Keysharp.Core
 			Line = line;
 			File = file;
 			Extra = code;
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="ParseException"/> class.
+		/// </summary>
+		/// <param name="message">The message describing the error.</param>
+		/// <param name="ParserRuleContext">The context which caused the error.</param>
+		/// <param name="extra">The code where the error occurred. If omitted then the first line of the context will be used.</param>
+		public ParseException(string message, ParserRuleContext ctx, string extra = null) : base(message)
+		{
+			Line = ctx?.Start?.Line ?? 0;
+			File = ctx?.Start?.TokenSource?.SourceName ?? "";
+			Column = ctx?.Start?.Column ?? 0;
+			var ctxText = ctx.GetText();
+			int idx = ctxText.IndexOfAny(new char[] { '\r', '\n' });
+			Extra = extra ?? (idx == -1 ? ctxText : ctxText.Substring(0, idx));
 		}
 	}
 

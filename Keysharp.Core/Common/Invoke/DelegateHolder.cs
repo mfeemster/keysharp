@@ -13,7 +13,7 @@
 	/// created delegate for the slot is reused. The worst case scenario is a lot of CallbackCreate
 	/// calls without any freeing, which the user shouldn't do anyway because it means a memory leak.
 	/// </summary>
-	public sealed class DelegateHolder : KeysharpObject, IPointable, IDisposable
+	public class DelegateHolder : KeysharpObject, IPointable, IDisposable
 	{
 		internal IFuncObj funcObj;
 		readonly bool _fast, _reference;

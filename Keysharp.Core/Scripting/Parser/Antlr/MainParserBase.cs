@@ -20,7 +20,7 @@ public class MainParserErrorListener : IAntlrErrorListener<IToken>
 		string fileName = Path.GetFileName(fullPath);
 
 		// Throw an exception to stop parsing
-		throw new InvalidOperationException($"Syntax error in file {fileName} at line {line}:{charPositionInLine} \"{offendingSymbol.Text}\" - {msg}", e);
+		throw new InvalidOperationException($"Syntax error{(fileName != "" ? " in file " + fileName : "")} at line {line}:{charPositionInLine} \"{offendingSymbol.Text}\" - {msg}", e);
     }
 }
 

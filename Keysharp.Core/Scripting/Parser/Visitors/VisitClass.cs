@@ -1,7 +1,8 @@
-﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
+﻿using System.Xml.Linq;
 using Antlr4.Runtime.Misc;
-using static MainParser;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using static Keysharp.Scripting.Parser;
+using static MainParser;
 
 namespace Keysharp.Scripting
 {
@@ -21,7 +22,10 @@ namespace Keysharp.Scripting
 
         public override SyntaxNode VisitClassDeclaration([NotNull] ClassDeclarationContext context)
         {
-            string userDeclaredName = context.identifier().GetText();
+			if (parser.currentFunc != parser.autoExecFunc)
+				throw new ParseException("Classes cannot be declared inside functions", context);
+
+			string userDeclaredName = context.identifier().GetText();
             parser.PushClass(parser.NormalizeIdentifier(userDeclaredName, eNameCase.Title));
             parser.currentClass.UserDeclaredName = userDeclaredName;
 

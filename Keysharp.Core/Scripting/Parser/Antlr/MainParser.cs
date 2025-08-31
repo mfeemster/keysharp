@@ -1369,11 +1369,11 @@ public partial class MainParser : MainParserBase {
 	}
 
 	public partial class StatementListContext : ParserRuleContext {
-		[System.Diagnostics.DebuggerNonUserCode] public StatementContext[] statement() {
-			return GetRuleContexts<StatementContext>();
+		[System.Diagnostics.DebuggerNonUserCode] public SourceElementContext[] sourceElement() {
+			return GetRuleContexts<SourceElementContext>();
 		}
-		[System.Diagnostics.DebuggerNonUserCode] public StatementContext statement(int i) {
-			return GetRuleContext<StatementContext>(i);
+		[System.Diagnostics.DebuggerNonUserCode] public SourceElementContext sourceElement(int i) {
+			return GetRuleContext<SourceElementContext>(i);
 		}
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode[] EOL() { return GetTokens(MainParser.EOL); }
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode EOL(int i) {
@@ -1409,7 +1409,7 @@ public partial class MainParser : MainParserBase {
 					{
 					{
 					State = 348;
-					statement();
+					sourceElement();
 					State = 349;
 					Match(EOL);
 					}
@@ -13210,7 +13210,7 @@ public partial class MainParser : MainParserBase {
 		336,340,5,11,0,0,337,339,3,212,106,0,338,337,1,0,0,0,339,342,1,0,0,0,340,
 		338,1,0,0,0,340,341,1,0,0,0,341,344,1,0,0,0,342,340,1,0,0,0,343,345,3,
 		22,11,0,344,343,1,0,0,0,344,345,1,0,0,0,345,346,1,0,0,0,346,347,5,12,0,
-		0,347,21,1,0,0,0,348,349,3,16,8,0,349,350,5,131,0,0,350,352,1,0,0,0,351,
+		0,347,21,1,0,0,0,348,349,3,4,2,0,349,350,5,131,0,0,350,352,1,0,0,0,351,
 		348,1,0,0,0,352,353,1,0,0,0,353,351,1,0,0,0,353,354,1,0,0,0,354,23,1,0,
 		0,0,355,363,7,1,0,0,356,358,5,132,0,0,357,356,1,0,0,0,358,361,1,0,0,0,
 		359,357,1,0,0,0,359,360,1,0,0,0,360,362,1,0,0,0,361,359,1,0,0,0,362,364,

@@ -122,7 +122,7 @@ block
 
 // Only to be used inside of a block, cannot meet EOF
 statementList
-    : (statement EOL)+
+    : (sourceElement EOL)+
     ;
 
 variableStatement

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Reflection;
 using System.Runtime.Serialization;
@@ -218,135 +219,88 @@ namespace Keysharp.Scripting
 
         public override SyntaxNode VisitSourceElements([NotNull] SourceElementsContext context)
         {
-            List<StatementSyntax> autoExecStatements = [];
-            HashSet<string> classNames = new();
-            var sourceElements = context.sourceElement();
-			int childCount = sourceElements.Length;
-            StatementContext stmt;
-
-            for (int i = 0; i < childCount; i++)
-            {
-                var child = sourceElements[i];
-                SyntaxNode element;
-				//var txt = child.GetText();
-
-				if (i > 0 
-                    && autoExecStatements.Count > 0
-					&& (stmt = child.statement()) != null 
-                    && stmt.iterationStatement() != null 
-                    && autoExecStatements[^1] is LabeledStatementSyntax lss)
-                {
-                    parser.LoopStack.Push(new Parser.Loop()
-                    {
-                        Label = lss.Identifier.Text,
-                        IsInitialized = false,
-                    });
-					BlockSyntax result = (BlockSyntax)Visit(stmt);
-				    element = result.WithStatements(result.Statements.Insert(0, lss));
-                    autoExecStatements.RemoveAt(autoExecStatements.Count - 1);
-				} else
-                    element = Visit(child);
-
-				if (element == null)
-                {
-                    if (child.positionalDirective() == null
-                        && child.remap() == null
-                        && child.hotkey() == null
-                        && child.hotstring() == null)
-                        throw new NoNullAllowedException();
-                    else
-                        continue;
-                }
-
-                if (element is MemberDeclarationSyntax)
-                {
-                    parser.mainClass.Body.Add((MemberDeclarationSyntax)element);
-                    continue;
-                }
-
-                if (child.statement() != null)
-                {
-                    if (element is BlockSyntax block)
-                    {
-                        if (block.GetAnnotatedNodes("MergeStart").FirstOrDefault() != null)
-                            autoExecStatements = block.WithoutAnnotations("MergeStart").Statements.Concat(autoExecStatements).ToList();
-                        else if (block.GetAnnotatedNodes("MergeEnd").FirstOrDefault() != null)
-                            autoExecStatements.AddRange(block.WithoutAnnotations("MergeEnd").Statements);
-                        else
-                            autoExecStatements.Add(block);
-                    }
-                    else
-                        autoExecStatements.Add((StatementSyntax)element);
-                } else { 
-                    if (element is ClassDeclarationSyntax classDecl)
-                        classNames.Add(classDecl.Identifier.Text.ToLowerInvariant());
-
-                    parser.mainClass.Body.Add((MemberDeclarationSyntax)element);
-                }
-            }
-
-            parser.autoExecFunc.Body.AddRange(autoExecStatements);
+            parser.autoExecFunc.Body.AddRange(HandleSourceElements(context.sourceElement()));
             return parser.mainClass.Declaration;
         }
 
         public override SyntaxNode VisitStatementList(StatementListContext context)
         {
-            // Collect all visited statements
-            var statements = new List<StatementSyntax>();
+			return SyntaxFactory.Block(new SyntaxList<StatementSyntax>(HandleSourceElements(context.sourceElement())));
+        }
 
-            foreach (var statementContext in context.statement())
-            {
-                SyntaxNode visited;
+        private List<StatementSyntax> HandleSourceElements(SourceElementContext[] sourceElements)
+        {
+			// Collect all visited statements
+			var statements = new List<StatementSyntax>();
+			StatementContext stmt;
+
+            for (int i = 0; i < sourceElements.Length; i++)
+			{
+				var child = sourceElements[i];
+				SyntaxNode visited;
+				stmt = child.statement();
 
 				if (statements.Count > 0
-	                && statementContext.iterationStatement() != null
-	                && statements[^1] is LabeledStatementSyntax lss)
+					&& stmt != null
+					&& stmt.iterationStatement() != null
+					&& statements[^1] is LabeledStatementSyntax lss)
 				{
 					parser.LoopStack.Push(new Parser.Loop()
 					{
 						Label = lss.Identifier.Text,
 						IsInitialized = false,
 					});
-					BlockSyntax result = (BlockSyntax)Visit(statementContext);
+					BlockSyntax result = (BlockSyntax)Visit(stmt);
 					visited = result.WithStatements(result.Statements.Insert(0, lss));
 					statements.RemoveAt(statements.Count - 1);
 				}
 				else
-					visited = Visit(statementContext);
+					visited = Visit(child);
 
-                if (visited == null)
-                {
-                    if (statementContext.variableStatement() != null)
+				if (visited == null)
+				{
+					if (stmt != null && stmt.variableStatement() != null)
+						continue;
+
+                    if (child.positionalDirective() == null
+                        && child.remap() == null
+                        && child.hotkey() == null
+                        && child.hotstring() == null)
+                        throw new NoNullAllowedException();
+                    else
                     {
+                        if (parser.functionDepth > 0 || (parser.currentClass != null && parser.currentClass != parser.mainClass))
+                            throw new ParseException("Directives, remaps, hotkeys, and hotstrings cannot be declared inside functions and classes", child);
                         continue;
                     }
-                }
-                if (visited is BlockSyntax block)
-                {
-                    if (block.GetAnnotatedNodes("MergeStart").FirstOrDefault() != null)
-                        statements = block.WithoutAnnotations("MergeStart").Statements.Concat(statements).ToList();
-                    else if (block.GetAnnotatedNodes("MergeEnd").FirstOrDefault() != null)
-                        statements.AddRange(block.WithoutAnnotations("MergeEnd").Statements);
-                    else
-                        statements.Add(EnsureStatementSyntax(visited));
-                } 
-                else if (visited is MemberDeclarationSyntax memberDeclarationSyntax)
-                {
-                    // This shouldn't happen anywhere else but the auto-execute section
-                    // when the function declaration is inside a block for example
-                    parser.mainClass.Body.Add(memberDeclarationSyntax);
+				}
+				if (visited is BlockSyntax block)
+				{
+					if (block.GetAnnotatedNodes("MergeStart").FirstOrDefault() != null)
+						statements = block.WithoutAnnotations("MergeStart").Statements.Concat(statements).ToList();
+					else if (block.GetAnnotatedNodes("MergeEnd").FirstOrDefault() != null)
+						statements.AddRange(block.WithoutAnnotations("MergeEnd").Statements);
+					else
+						statements.Add(EnsureStatementSyntax(visited));
+				}
+				else if (visited is MemberDeclarationSyntax memberDeclarationSyntax)
+				{
+					// This shouldn't happen anywhere else but the auto-execute section
+					// when the function declaration is inside a block for example
+					parser.mainClass.Body.Add(memberDeclarationSyntax);
 				}
 				else if (visited is ClassDeclarationSyntax classDeclarationSyntax)
-                {
-                    // In case a class is declared inside a function (such as some unit tests)
-                    parser.mainClass.Body.Add(classDeclarationSyntax);
-                } else
-                    statements.Add(EnsureStatementSyntax(visited));
-            }
+				{
+					// In case a class is declared inside a function (such as some unit tests)
+					parser.mainClass.Body.Add(classDeclarationSyntax);
+				}
+				else
+					statements.Add(EnsureStatementSyntax(visited));
+			}
 
 			// Return the statements as a BlockSyntax
-			return SyntaxFactory.Block(new SyntaxList<StatementSyntax>(statements));
-        }
+			return statements;
+		}
 
         public override SyntaxNode VisitSourceElement([NotNull] SourceElementContext context)
         {

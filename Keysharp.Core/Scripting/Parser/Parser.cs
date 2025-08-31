@@ -183,7 +183,7 @@ namespace Keysharp.Scripting
         public Function currentFunc;
         public SeparatedSyntaxList<AttributeSyntax> assemblies = new();
         public List<StatementSyntax> DHHR = new(); // positional directives, hotkeys, hotstrings, remaps
-        public uint hotIfCount = 0;
+		public uint hotIfCount = 0;
         public uint hotkeyCount = 0;
         public uint hotstringCount = 0;
         public bool isHotkeyDefinition = false;
