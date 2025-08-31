@@ -594,6 +594,7 @@ namespace Keysharp.Core
 				script.onExitHandlers.Clear();
 
 			script.hasExited = true;//At this point, we are clear to exit, so do not allow any more calls to this function.
+			script.SuppressErrorOccurredDialog = true;
 			fd.allowInterruption = allowInterruption_prev;
 			HotkeyDefinition.AllDestruct();
 			StopMainTimer();
