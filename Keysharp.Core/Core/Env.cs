@@ -610,9 +610,9 @@ namespace Keysharp.Core
 #elif WINDOWS
 
 			if (property is SystemMetric en)
-				return WindowsAPI.GetSystemMetrics(en);
+				return (long)WindowsAPI.GetSystemMetrics(en);
 
-			return WindowsAPI.GetSystemMetrics((SystemMetric)property.Ai());
+			return (long)WindowsAPI.GetSystemMetrics((SystemMetric)property.Ai());
 #else
 			return 0L;
 #endif
