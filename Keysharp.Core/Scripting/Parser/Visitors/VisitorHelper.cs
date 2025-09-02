@@ -970,8 +970,20 @@ namespace Keysharp.Scripting
                 )
             );
 
+            string identifier = ToValidIdentifier(functionName);
+
+			for (int i = 0; i < mainClass.Body.Count; i++)
+            {
+                var mds = mainClass.Body[i];
+                if (mds is FieldDeclarationSyntax fds && fds.Declaration.Variables.First().Identifier.Text == identifier)
+                {
+                    mainClass.Body[i] = fds;
+                    return identifier;
+                }
+            }
+
             mainClass.Body.Add(funcObjVariable);
-            return ToValidIdentifier(functionName);
+            return identifier;
         }
 
         // Used to create function object variables for closures. The closure is cast to a Delegate
