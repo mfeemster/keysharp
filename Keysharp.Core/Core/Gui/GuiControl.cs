@@ -180,7 +180,12 @@
 					else if (_control is HotkeyBox hk)
 						return hk.GetText();
 					else if (_control is KeysharpNumericUpDown nud)
-						return (double)nud.Value;
+					{
+						decimal v = decimal.Round(nud.Value, nud.DecimalPlaces);
+						if (v == decimal.Truncate(v) && v >= long.MinValue && v <= long.MaxValue)
+							return (long)v;
+						return (double)v;
+					}
 					else if (_control is KeysharpButton btn)
 						return btn.Text;
 					else if (_control is KeysharpCheckBox cb)
