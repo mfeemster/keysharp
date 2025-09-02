@@ -1,26 +1,26 @@
-	If (FileExist(A_Desktop . "/MyScreenClip.png"))
-		FileDelete(A_Desktop . "/MyScreenClip.png")
+If (FileExist(A_Desktop . "/MyScreenClip.png"))
+	FileDelete(A_Desktop . "/MyScreenClip.png")
 
-	GuiBGColor := "BackgroundFF9A9A"
-	;BGColor2 := "0xFFFFAA"
+GuiBGColor := "BackgroundFF9A9A"
+;BGColor2 := "0xFFFFAA"
 
-	Gui2 := ""
+Gui2 := ""
 
-	; Second GUI
+; Second GUI
 
 
 
-	; ┌───────────┐
-	; │  Globals  │
-	; └───────────┘
+; ┌───────────┐
+; │  Globals  │
+; └───────────┘
 
-	global gb3Hwnd, gui2StyleButtonHwnd
+global gb3Hwnd, gui2StyleButtonHwnd
 
-	winposx := ""
-	winposy := ""
-	winposw := ""
-	winposh := ""
-	origBackColor := ""
+winposx := ""
+winposy := ""
+winposw := ""
+winposh := ""
+origBackColor := ""
 
 ; ┌────────────────┐
 ; │  Tab One Menu  │
@@ -52,41 +52,41 @@ MyMenuBar := MenuBar()
 MyMenuBar.Add("&Menu Icon Test", FileMenu)
 MyMenuBar.Add("&Image Search", ImgSrchMenu)
 
-	MyGui := Gui(, "KEYSHARP TESTS")
-	MyGui.OnEvent("Close", "CloseApp")
+MyGui := Gui(, "KEYSHARP TESTS")
+MyGui.OnEvent("Close", "CloseApp")
 
-CloseApp() {
+CloseApp(*) {
 #if WINDOWS
  	global shell := ""
 #endif
 	ExitApp
 }
 
-	; ┌───────────────────┐
-	; │  Add Menu to GUI  │
-	; └───────────────────┘
+; ┌───────────────────┐
+; │  Add Menu to GUI  │
+; └───────────────────┘
 
-	MyGui.MenuBar := MyMenuBar
+MyGui.MenuBar := MyMenuBar
 
-	; ┌──────────────┐
-	; │  Status Bar  │
-	; └──────────────┘
-	MySB := MyGui.Add("StatusBar", "h36", "                       ")
+; ┌──────────────┐
+; │  Status Bar  │
+; └──────────────┘
+MySB := MyGui.Add("StatusBar", "h36", "                       ")
 
-	; ┌─────────────┐
-	; │  Start TAB  │
-	; └─────────────┘
+; ┌─────────────┐
+; │  Start TAB  │
+; └─────────────┘
 
-	Tab := MyGui.Add("Tab3", , ["First","Second","Third", "GroupBoxes", "ControlZoo", "Send & Hotkey", "Dll & COM", "Sound"])
+Tab := MyGui.Add("Tab3", , ["First","Second","Third", "GroupBoxes", "ControlZoo", "Send & Hotkey", "Dll & COM", "Sound"])
 
-	Tab.UseTab("First")
+Tab.UseTab("First")
 
-	; ┌──────────────────────┐
-	; │  Create the window:  │
-	; └──────────────────────┘
+; ┌──────────────────────┐
+; │  Create the window:  │
+; └──────────────────────┘
 
-	MyGui.SetFont("cBlack s8", "Arial")
-	TEST_HEADER := MyGui.Add("Text", "s20 w1200","Keysharp GUI Tests")
+MyGui.SetFont("cBlack s8", "Arial")
+TEST_HEADER := MyGui.Add("Text", "s20 w1200","Keysharp GUI Tests")
 
 ; ┌────────────────────────────────────┐
 ; │  Add button to change header font  │
@@ -94,27 +94,27 @@ CloseApp() {
 headerBtn := MyGui.Add("Button", "s8 xc+10 y+10", "Make header font larger Comic Sans MS")
 headerBtn.OnEvent("Click", "ChangeFont")
 
-	; ┌──────────────────────────────┐
-	; │  Add button to restore font  │
-	; └──────────────────────────────┘
-	headerBtn2 := MyGui.Add("Button", "s8 x+10 yp", "Restore header font")
-	headerBtn2.OnEvent("Click", "ChangeFontBack")
+; ┌──────────────────────────────┐
+; │  Add button to restore font  │
+; └──────────────────────────────┘
+headerBtn2 := MyGui.Add("Button", "s8 x+10 yp", "Restore header font")
+headerBtn2.OnEvent("Click", "ChangeFontBack")
 
-	; ┌───────────────────────────────────┐
-	; │  Add button to change background  │
-	; └───────────────────────────────────┘
-	bgBtn := MyGui.Add("Button", "s8 x+10 yp", "Change GUI Backgroud")
-	bgBtn.OnEvent("Click", "ChangeBG")
+; ┌───────────────────────────────────┐
+; │  Add button to change background  │
+; └───────────────────────────────────┘
+bgBtn := MyGui.Add("Button", "s8 x+10 yp", "Change GUI Backgroud")
+bgBtn.OnEvent("Click", "ChangeBG")
 
-	; ┌────────────────────────────────────┐
-	; │  Add button to restore background  │
-	; └────────────────────────────────────┘
-	bgBtn2 := MyGui.Add("Button", "s8 x+10 yp", "Restore GUI Backgroud")
-	bgBtn2.OnEvent("Click", "RestoreBG")
+; ┌────────────────────────────────────┐
+; │  Add button to restore background  │
+; └────────────────────────────────────┘
+bgBtn2 := MyGui.Add("Button", "s8 x+10 yp", "Restore GUI Backgroud")
+bgBtn2.OnEvent("Click", "RestoreBG")
 
-	; ┌─────────────────┐
-	; │  GroupBox test  │
-	; └─────────────────┘
+; ┌─────────────────┐
+; │  GroupBox test  │
+; └─────────────────┘
 
 gb1_TabOne := MyGui.Add("GroupBox", "xc+10 y+10 w325 h815", "Tab One - Group One") ; 
 MyGui.UseGroup(gb1_TabOne)
@@ -128,16 +128,16 @@ LV_Label.SetFont("cBlue s10")
 ; Create the ListView with two columns, Name and Size:
 LV := MyGui.Add("ListView", "r15 w300 xc+10 y+5 BackgroundTeal", ["Name","Size (KB)"])
 
-	; ┌────────────────────────────────────────────────────────────┐
-	; │  Notify the script whenever the user double clicks a row:  │
-	; └────────────────────────────────────────────────────────────┘
-	LV.OnEvent("DoubleClick", "LV_DoubleClick")
+; ┌────────────────────────────────────────────────────────────┐
+; │  Notify the script whenever the user double clicks a row:  │
+; └────────────────────────────────────────────────────────────┘
+LV.OnEvent("DoubleClick", "LV_DoubleClick")
 
-	; ┌─────────────────────────────────────────────────────────────────────────────┐
-	; │  Gather a list of file names from a folder and put them into the ListView:  │
-	; └─────────────────────────────────────────────────────────────────────────────┘
-	Loop Files A_MyDocuments . A_DirSeparator . "*.*"
-		LV.Add(, A_LoopFileName, A_LoopFileSizeKB)
+; ┌─────────────────────────────────────────────────────────────────────────────┐
+; │  Gather a list of file names from a folder and put them into the ListView:  │
+; └─────────────────────────────────────────────────────────────────────────────┘
+Loop Files A_MyDocuments . A_DirSeparator . "*.*"
+	LV.Add(, A_LoopFileName, A_LoopFileSizeKB)
 
 ; ┌─────────────────────────────────────────────┐
 ; │  Show an input box and retrieve the result  │
@@ -147,12 +147,12 @@ InputBtn.OnEvent("Click", "InputTest")
 
 ; GetContentBtn := MyGui.Add("Button", "xc+100 yp", "Get LV Content")
 
-	;LV.ModifyCol()  ; Auto-size each column to fit its contents.
-	LV.ModifyCol(2, "Integer")  ; For sorting purposes, indicate that column 2 is an integer.
+;LV.ModifyCol()  ; Auto-size each column to fit its contents.
+LV.ModifyCol(2, "Integer")  ; For sorting purposes, indicate that column 2 is an integer.
 
-	; ┌─────────────────────┐
-	; │  Add a radio group  │
-	; └─────────────────────┘
+; ┌─────────────────────┐
+; │  Add a radio group  │
+; └─────────────────────┘
 
 RadioText := MyGui.Add("Text", "w200 h20 xc+10", "Radio group tests")
 RadioText.SetFont("cBlue s10")
@@ -182,16 +182,16 @@ Menu_Label.SetFont("cBlue s14")
 checkBtn := MyGui.Add("Button", "xc+10 y+3", "ControlSetChecked")
 checkBtn.OnEvent("Click", "SetChecked")
 
-	menuIndexBtn := MyGui.Add("Button", "x+5 yp", "Select menu by index")
-	menuIndexBtn.OnEvent("Click", "SelectMenuByIndex")
+menuIndexBtn := MyGui.Add("Button", "x+5 yp", "Select menu by index")
+menuIndexBtn.OnEvent("Click", "SelectMenuByIndex")
 
 menuStringBtn := MyGui.Add("Button", "xc+10 y+3", "Select menu by string")
 menuStringBtn.OnEvent("Click", "SelectByString")
 
-	#if WINDOWS
-	sysMenuMinimizeBtn := MyGui.Add("Button", "x+5 yp", "Minimize by system menu")
-	sysMenuMinimizeBtn.OnEvent("Click", "MinimizeBySystemMenu")
-	#endif
+#if WINDOWS
+sysMenuMinimizeBtn := MyGui.Add("Button", "x+5 yp", "Minimize by system menu")
+sysMenuMinimizeBtn.OnEvent("Click", "MinimizeBySystemMenu")
+#endif
 
 MyGui.UseGroup()
 Tab.UseTab("First")
@@ -209,8 +209,8 @@ g2Btn1.SetFont("s10 cBlue")
 g2Btn2 := MyGui.Add("Button", "xc+100 yp", "Reset")
 g2Btn2.SetFont("s10 cBlue")
 
-	g2Btn1.OnEvent("Click", "Set_Style")
-	g2Btn2.OnEvent("Click", "Reset_Style")
+g2Btn1.OnEvent("Click", "Set_Style")
+g2Btn2.OnEvent("Click", "Reset_Style")
 
 g2Label3 := MyGui.Add("Text", "xc+10 w200 cBlue S10", "Click buttons to alter Edit style")
 g2Label4 := MyGui.Add("Text", "xc+10", "Uppercase - restrict or reset")
@@ -223,8 +223,8 @@ g2Btn3.SetFont("s8 cBlue")
 g2Btn4 := MyGui.Add("Button", "xc+100 yp", "Unrestrict")
 g2Btn4.SetFont("s8 cBlue")
 
-	g2Btn3.OnEvent("Click", "Set_Edit_Style")
-	g2Btn4.OnEvent("Click", "Reset_Edit_Style")
+g2Btn3.OnEvent("Click", "Set_Edit_Style")
+g2Btn4.OnEvent("Click", "Reset_Edit_Style")
 
 
 iniLabel := MyGui.Add("Text", "xm y+5 cRed", "Click to read kstests.ini`nKey = PRIMATE2`nValue = BONOBO")
@@ -263,11 +263,11 @@ WriteINI(*) {
 }
 
 
-	;;;;;;;;;
-	; ┌──────────────────────┐
-	; │  Second Tab section  │
-	; └──────────────────────┘
-	Tab.UseTab("Second")
+;;;;;;;;;
+; ┌──────────────────────┐
+; │  Second Tab section  │
+; └──────────────────────┘
+Tab.UseTab("Second")
 
 ; ┌─────────────────────────────┐
 ; │  Add group boxes - 8/23/22  │
