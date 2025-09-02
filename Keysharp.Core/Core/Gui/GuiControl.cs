@@ -1319,14 +1319,14 @@
 					}
 				}
 
-				if (opts.c != _control.ForeColor && opts.c != System.Windows.Forms.Control.DefaultForeColor)
+				if (opts.c.HasValue && opts.c.Value != _control.ForeColor)
 				{
 					if (_control is KeysharpDateTimePicker dtp)
-						dtp.CalendarForeColor = opts.c;
+						dtp.CalendarForeColor = opts.c.Value;
 					else if (_control is KeysharpMonthCalendar mc)
-						mc.TitleForeColor = opts.c;
+						mc.TitleForeColor = opts.c.Value;
 
-					_control.ForeColor = opts.c;
+					_control.ForeColor = opts.c.Value;
 				}
 
 				if (_control is KeysharpButton)

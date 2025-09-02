@@ -945,7 +945,9 @@ namespace Keysharp.Core
 						dtp.DropDownAlign = LeftRightAlignment.Right;
 
 					dtp.ShowUpDown = opts.dtopt1;
-					dtp.CalendarForeColor = opts.c;//This will only have an effect if visual styles are disabled.
+
+					if (opts.c.HasValue)
+						dtp.CalendarForeColor = opts.c.Value;//This will only have an effect if visual styles are disabled.
 
 					if (opts.dtlow != System.DateTime.MinValue)
 						dtp.MinDate = opts.dtlow;
@@ -1005,7 +1007,8 @@ namespace Keysharp.Core
 						cal.SelectionRange = new SelectionRange(opts.dtselstart, opts.dtselend);
 
 					//Note that colors do not work here is visual styles are enabled.
-					cal.TitleForeColor = opts.c;
+					if (opts.c.HasValue)
+						cal.TitleForeColor = opts.c.Value;
 
 					if (opts.bgcolor.HasValue)
 						cal.TitleBackColor = opts.bgcolor.Value;
@@ -1178,7 +1181,6 @@ namespace Keysharp.Core
 					{
 						var tsl = new KeysharpToolStripStatusLabel(text)
 						{
-							ForeColor = opts.c,//Contrary to the documentation, the foreground *can* be set.
 							AutoSize = true,
 							Name = $"AutoToolStripLabel{ss.Items.Count}",
 							Font = Conversions.ConvertFont(form.Font)
@@ -1264,7 +1266,10 @@ namespace Keysharp.Core
 			if (opts.enabled.HasValue)
 				ctrl.Enabled = opts.enabled.Value;
 
-			ctrl.ForeColor = opts.c;
+			if (opts.c.HasValue)
+				ctrl.ForeColor = opts.c.Value;
+			else
+				ctrl.ForeColor = form.ForeColor;
 
 			if (opts.tabstop.HasValue)
 				ctrl.TabStop = opts.tabstop.Value;
@@ -2081,7 +2086,13 @@ namespace Keysharp.Core
 					else if (control is KeysharpRichEdit)
 						dkt[control.Name] = !guictrl.AltSubmit ? guictrl.Value : guictrl.RichText;
 					else if (control is KeysharpNumericUpDown nud)
-						dkt[nud.Name] = (double)nud.Value;
+					{
+						decimal v = decimal.Round(nud.Value, nud.DecimalPlaces);
+						if (v == decimal.Truncate(v) && v >= long.MinValue && v <= long.MaxValue)
+							dkt[nud.Name]= (long)v;
+						else
+							dkt[nud.Name] = (double)v;
+					}
 					else if (control is KeysharpCheckBox cb)
 						dkt[cb.Name] = cb.Checked ? 1L : 0L;
 					else if (control is KeysharpTabControl tc)
@@ -2250,7 +2261,7 @@ namespace Keysharp.Core
 					}
 					else if (Options.TryParse(opt, "Choose", ref options.ddlchoose)) { options.ddlchoose--; options.choose.Add(options.ddlchoose); }
 					//
-					else if (Options.TryParse(opt, "c", ref options.c)) { }
+					else if (Options.TryParse(opt, "c", ref tempcolor)) { options.c = tempcolor; }
 					else if (Options.TryParse(opt, "Vertical", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.vertical = tempbool; }
 					else if (Options.TryParseString(opt, "v", ref options.name)) { }
 					else if (Options.TryParse(opt, "Disabled", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.enabled = !tempbool; }
@@ -2562,7 +2573,7 @@ namespace Keysharp.Core
 			//Tab.
 			internal bool? buttons;
 
-			internal Color c = System.Windows.Forms.Control.DefaultForeColor;
+			internal Color? c;
 			internal bool? center;
 
 			//Checkbox.
