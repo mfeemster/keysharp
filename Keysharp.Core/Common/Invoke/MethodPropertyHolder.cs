@@ -70,6 +70,44 @@ namespace Keysharp.Core.Common.Invoke
         private const string setterPrefix = "set_";
         private const string classSetterPrefix = Keywords.ClassStaticPrefix + setterPrefix;
 
+		string _name = null;
+		internal string Name
+		{
+			get
+			{
+				if (_name != null)
+					return _name;
+
+				if (mi == null)
+					return _name = "";
+
+				var nameAttrs = mi.GetCustomAttributes(typeof(UserDeclaredNameAttribute));
+				if (nameAttrs.Any())
+				{
+					return _name = ((UserDeclaredNameAttribute)nameAttrs.First()).Name;
+				}
+
+				string funcName = mi.Name;
+				var prefixes = new[] { "static", "get_", "set_" };
+				foreach (var p in prefixes)
+				{
+					if (funcName.StartsWith(p, StringComparison.Ordinal))
+						funcName = funcName.Substring(p.Length);
+				}
+
+				if (mi.DeclaringType.Namespace != TheScript.ProgramType.Namespace || mi.DeclaringType.Name == Keywords.MainClassName)
+					return _name = funcName;
+
+				string declaringType = mi.DeclaringType.FullName;
+
+				var idx = declaringType.IndexOf(Keywords.MainClassName + "+");
+				string nestedPath = idx < 0
+					? declaringType       // no “Program.” found, just return whole
+					: declaringType.Substring(idx + Keywords.MainClassName.Length + 1);
+
+				return _name = $"{nestedPath.Replace('+', '.')}.{funcName}";
+			}
+		}
 
 		public static MethodPropertyHolder GetOrAdd(MethodInfo mi)
         {
@@ -262,10 +300,10 @@ namespace Keysharp.Core.Common.Invoke
             }
 
 			if (provided < MinParams)
-				throw new ValueError("Too few arguments provided");
+				throw new ValueError($"Too few arguments provided for function {Name}");
 
 			if (!IsVariadic && provided > MaxParams)
-				throw new ValueError("Too many arguments provided");
+				throw new ValueError($"Too many arguments provided for function {Name}");
 		}
 	}
     public class ArgumentError : Error

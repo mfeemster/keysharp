@@ -192,43 +192,7 @@
 
 		public bool IsBuiltIn => mi.DeclaringType.Namespace != TheScript.ProgramType.Namespace;
 		public bool IsValid => mi != null && mph != null && mph.CallFunc != null;
-		string _name = null;
-		public string Name {
-			get
-			{
-				if (_name != null)
-					return _name;
-
-				if (mi == null)
-					return _name = "";
-
-				var nameAttrs = mi.GetCustomAttributes(typeof(UserDeclaredNameAttribute));
-				if (nameAttrs.Any())
-				{
-					return _name = ((UserDeclaredNameAttribute)nameAttrs.First()).Name;
-				}
-
-				string funcName = mi.Name;
-				var prefixes = new[] { "static", "get_", "set_" };
-				foreach (var p in prefixes)
-				{
-					if (funcName.StartsWith(p, StringComparison.Ordinal))
-						funcName = funcName.Substring(p.Length);
-				}
-
-				if (IsBuiltIn || mi.DeclaringType.Name == Keywords.MainClassName)
-					return _name = funcName;
-
-				string declaringType = mi.DeclaringType.FullName;
-
-				var idx = declaringType.IndexOf(Keywords.MainClassName + "+");
-				string nestedPath = idx < 0
-					? declaringType       // no “Program.” found, just return whole
-					: declaringType.Substring(idx + Keywords.MainClassName.Length + 1);
-
-				return _name = $"{nestedPath.Replace('+', '.')}.{funcName}";
-			}
-		}
+		public string Name => mph.Name;
 		public (Type, object) super => (typeof(KeysharpObject), this);
 		public bool IsVariadic => mph.variadicParamIndex != -1;
 		public long MaxParams { get; internal set; } = 0;
