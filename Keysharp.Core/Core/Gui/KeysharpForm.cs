@@ -102,13 +102,13 @@ namespace Keysharp.Core
 				var control = ActiveControl;
 
 				if (control is ListBox lb)
-					_ = (contextMenuChangedHandlers?.InvokeEventHandlers(g, control, lb.SelectedIndex + 1L, wasRightClick, x, y));
+					_ = (contextMenuChangedHandlers?.InvokeEventHandlers(g, control, lb.SelectedIndex + 1L, wasRightClick, (long)x, (long)y));
 				else if (control is ListView lv)
-					_ = (contextMenuChangedHandlers?.InvokeEventHandlers(g, control, lv.SelectedIndices.Count > 0 ? lv.SelectedIndices[0] + 1L : 0L, wasRightClick, x, y));
+					_ = (contextMenuChangedHandlers?.InvokeEventHandlers(g, control, lv.SelectedIndices.Count > 0 ? lv.SelectedIndices[0] + 1L : 0L, wasRightClick, (long)x, (long)y));
 				else if (control is TreeView tv)
-					_ = (contextMenuChangedHandlers?.InvokeEventHandlers(g, control, tv.SelectedNode.Handle, wasRightClick, x, y));
+					_ = (contextMenuChangedHandlers?.InvokeEventHandlers(g, control, tv.SelectedNode.Handle, wasRightClick, (long)x, (long)y));
 				else
-					_ = (contextMenuChangedHandlers?.InvokeEventHandlers(g, control, control != null ? control.Handle.ToInt64().ToString() : "", wasRightClick, x, y));//Unsure what to pass for Item, so just pass handle.
+					_ = (contextMenuChangedHandlers?.InvokeEventHandlers(g, control, control != null ? control.Handle.ToInt64().ToString() : "", wasRightClick, (long)x, (long)y));//Unsure what to pass for Item, so just pass handle.
 			}
 		}
 
