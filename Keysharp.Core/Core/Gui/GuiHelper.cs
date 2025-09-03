@@ -111,6 +111,10 @@
 				case WindowsAPI.STM_SETIMAGE:
 					control.BackgroundImage = Image.FromHbitmap(m.LParam);
 					return true;
+
+				case WindowsAPI.WM_GETFONT:
+					m.Result = HFontCache.Get(control);
+					return true;
 			}
 
 #endif

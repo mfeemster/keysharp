@@ -1730,6 +1730,9 @@
 		public object AddStatusBar(object obj0 = null, object obj1 = null) => Add(Keyword_StatusBar, obj0, obj1);
 
 		public object AddTab(object obj0 = null, object obj1 = null) => Add(Keyword_Tab, obj0, obj1);
+		// Just for compatibility
+		public object AddTab2(object obj0 = null, object obj1 = null) => Add(Keyword_Tab, obj0, obj1);
+		public object AddTab3(object obj0 = null, object obj1 = null) => Add(Keyword_Tab, obj0, obj1);
 
 		public object AddText(object obj0 = null, object obj1 = null) => Add(Keyword_Text, obj0, obj1);
 
@@ -1874,7 +1877,7 @@
 		{
 			EnsureDefaultMargins();
 			var s = obj.As();
-			bool /*center = false, cX = false, cY = false,*/ auto = false, min = false, max = false, restore = false, hide = false;
+			bool /*center = false, cX = false, cY = false,*/ auto = false, min = false, max = false, restore = true, hide = false;
 			int?[] pos = [null, null, null, null];
 			var dpiscale = !dpiscaling ? 1.0 : A_ScaledScreenDPI;
 
@@ -1927,11 +1930,12 @@
 							case var b when opt.Equals(Keyword_NoActivate, StringComparison.OrdinalIgnoreCase):
 							case var b2 when opt.Equals(Keyword_NA, StringComparison.OrdinalIgnoreCase):
 								form.showWithoutActivation = true;
-								restore = true;
+								restore = false;
 								break;
 
 							case var b when opt.Equals(Keyword_Hide, StringComparison.OrdinalIgnoreCase):
 								hide = true;
+								restore = false;
 								break;
 						}
 					}
@@ -1952,7 +1956,7 @@
 				}
 			}
 
-			ResizeTabControls();
+			//ResizeTabControls();
 			var status = form.Controls.OfType<KeysharpStatusStrip>().ToArray();
 			(int, int) FixStatusStrip(KeysharpStatusStrip ss)
 			{
@@ -2724,55 +2728,20 @@
 		{
 		}
 
-		/// <summary>
-		/// Places the control into key.
-		/// </summary>
-		/// <param name="key">A reference to the control value.</param>
-		/// <returns>True if the iterator position has not moved past the last element, else false.</returns>
-		public override object Call(ref object key)
+		public override (object, object) Current
 		{
-			if (MoveNext())
-			{
-				try
-				{
-					key = iter.Current.Value;
-				}
-				catch (IndexOutOfRangeException)
-				{
-					throw new InvalidOperationException();//Should never happen when using regular loops.
-				}
-
-				return true;
-			}
-
-			return false;
-		}
-
-		/// <summary>
-		/// Places the handle in key and the control in value.
-		/// </summary>
-		/// <param name="key">A reference to the handle value.</param>
-		/// <param name="value">A reference to the control value.</param>
-		/// <returns>True if the iterator position has not moved past the last element, else false.</returns>
-		public override object Call(ref object key, ref object value)
-		{
-			if (MoveNext())
+			get
 			{
 				try
 				{
 					var kv = iter.Current;
-					key = kv.Key;
-					value = kv.Value;
+					return Count == 1 ? (kv.Value, null) : (kv.Key, kv.Value);
 				}
 				catch (IndexOutOfRangeException)
 				{
 					throw new InvalidOperationException();
 				}
-
-				return true;
 			}
-
-			return false;
 		}
 	}
 }
