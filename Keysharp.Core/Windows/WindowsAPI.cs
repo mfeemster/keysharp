@@ -1690,6 +1690,9 @@ namespace Keysharp.Core.Windows
 		internal static extern bool PostMessage(nint hWnd, uint msg, string wParam, nint lParam);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
+		internal static extern long GetMessageTime();
+
+		[DllImport(user32, CharSet = CharSet.Unicode)]
 		internal static extern nint RealChildWindowFromPoint(nint hwndParent, Point ptParentClientCoords);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
