@@ -118,26 +118,6 @@ namespace Keysharp.Core
 				case WindowsAPI.WM_GETFONT:
 					m.Result = HFontCache.Get(control);
 					return true;
-
-				case WindowsAPI.WM_SETFONT:
-				{
-					var hfont = m.WParam;
-					var redraw = m.LParam != 0;
-
-					if (hfont != 0)
-					{
-						// Create a new managed Font so we don't own/call DeleteObject on caller's HFONT.
-						// Using LOGFONT avoids stealing ownership of hfont.
-						LOGFONT lf; HFontCache.GetObject(hfont, Marshal.SizeOf<LOGFONT>(), out lf);
-						var newFont = Font.FromLogFont(lf);
-						control.Font = newFont;
-					}
-
-					HFontCache.Release(control); // ensure our cached HFONT matches new Font
-					if (redraw) control.Invalidate();
-					m.Result = 0;
-					return true;
-				}
 			}
 
 #endif

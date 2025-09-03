@@ -759,7 +759,7 @@ namespace Keysharp.Core
 		/// <summary>
 		/// The implementation for <see cref="IEnumerator.Current"/> which gets the key,value tuple at the current iterator position.
 		/// </summary>
-		public (object, object) Current
+		public virtual (object, object) Current
 		{
 			get
 			{
