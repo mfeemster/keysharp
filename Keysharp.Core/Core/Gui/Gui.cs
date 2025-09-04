@@ -34,6 +34,7 @@ namespace Keysharp.Core
 		internal bool dpiscaling = true;
 		internal MenuBar menuBar;
 		bool marginsInit = false;
+		internal nint owner = 0;
 
 		private static readonly Dictionary<string, Action<Gui, object>> showOptionsDkt = new ()
 		{
@@ -161,8 +162,11 @@ namespace Keysharp.Core
 					{
 						if (int.TryParse(s, out var hwnd))
 						{
+							f.owner = hwnd;
+#if !WINDOWS
 							if (System.Windows.Forms.Control.FromHandle(new nint(hwnd)) is Form theform)
 								f.form.Owner = theform;
+#endif
 						}
 					}
 				}
@@ -1867,7 +1871,13 @@ namespace Keysharp.Core
 			return DefaultObject;
 		}
 
-		public object Restore() => form.WindowState = FormWindowState.Normal;
+		public object Restore()
+		{
+			if (!form.Visible)
+				form.Show();
+			form.WindowState = FormWindowState.Normal;
+			return DefaultObject;
+		}
 
 		public object SetFont(object obj0 = null, object obj1 = null)
 		{
@@ -2060,6 +2070,13 @@ namespace Keysharp.Core
 
 			if (hide)
 				form.Hide();
+#if WINDOWS
+			else if (!form.BeenShown && owner != 0)
+			{
+				form.Show(new WindowItem(owner));
+				form.beenShown = true;
+			}
+#endif
 			else
 				form.Show();
 

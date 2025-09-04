@@ -13,7 +13,7 @@ namespace Keysharp.Core
 		internal bool showWithoutActivation;
 		internal List<IFuncObj> sizeHandlers;
 		private readonly int addStyle, addExStyle, removeStyle, removeExStyle;
-		private bool beenShown = false;
+		internal bool beenShown = false;
 		internal bool beenConstructed = false;
 		private bool closingFromDestroy;
 		internal bool BeenShown => beenShown;
