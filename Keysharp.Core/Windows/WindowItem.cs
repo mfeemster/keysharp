@@ -5,7 +5,7 @@ namespace Keysharp.Core.Windows
 	/// <summary>
 	/// Concrete implementation of WindowItem for the Windows platfrom.
 	/// </summary>
-	internal class WindowItem : WindowItemBase
+	internal class WindowItem : WindowItemBase, IWin32Window
 	{
 		private int lastChildCount = 64;
 

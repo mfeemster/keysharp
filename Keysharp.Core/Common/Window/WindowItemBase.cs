@@ -48,7 +48,7 @@
 		internal abstract bool Enabled { get; set; }
 		internal abstract bool Exists { get; }
 		internal abstract long ExStyle { get; set; }
-		internal nint Handle { get; set; } = 0;
+		public nint Handle { get; set; } = 0;
 		internal abstract bool IsHung { get; }
 		internal bool IsSpecified => Handle != 0;
 		internal abstract Rectangle Location { get; set; }
