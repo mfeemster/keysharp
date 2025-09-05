@@ -107,7 +107,7 @@
 				obj = obj.Base;
 			}
 			// fallback?
-			return typeof(object);
+			return typeof(Any);
 		}
 
 		/// <summary>
@@ -124,10 +124,10 @@
 			if (baseObj == null) return Errors.ErrorOccurred($"Object of type {object1.GetType()} was not of type KeysharpObject.");
 
 			// find each object's "native" (built‐in) prototype type
-			var nativeObj = GetNativeType(obj);
+			var nativeObj = GetNativeType(obj.Base);
 			var nativeBase = GetNativeType(baseObj);
 
-			if (nativeObj != nativeBase)
+			if (nativeObj != nativeBase && !nativeBase.IsSubclassOf(nativeObj))
 				return Errors.ErrorOccurred(
 					$"Cannot rebase: native types differ ({nativeObj.Name} vs {nativeBase.Name}).");
 
