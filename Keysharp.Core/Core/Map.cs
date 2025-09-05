@@ -224,6 +224,17 @@ namespace Keysharp.Core
 		}
 
 		/// <summary>
+		/// Clones the instance as well as the internal container.
+		/// </summary>
+		public new object Clone()
+		{
+			var clone = (Map)MemberwiseClone();
+			clone.map = new Dictionary<object, object>(clone.map);
+			clone.enumerableMap = null;
+			return clone;
+		}
+
+		/// <summary>
 		/// Clears all elements from the map.
 		/// </summary>
 		public void Clear()
