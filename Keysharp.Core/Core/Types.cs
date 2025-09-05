@@ -123,10 +123,14 @@
 		/// </summary>
 		/// <param name="value">The object to examine.</param>
 		/// <returns>1 if value contained all lowercase characters, else 0.</returns>
-		public static long IsLower(object value)
+		public static long IsLower(object value, object locale = null)
 		{
 			var s = value.As();
-			return s?.Length == 0 || s.All(ch => char.IsLetter(ch) && char.IsLower(ch)) ? 1L : 0L;
+			if (s.Any((c) => !char.IsLetter(c)))
+				return 0L;
+			if (locale != null && locale.As().Equals("locale", StringComparison.OrdinalIgnoreCase))
+				return s.ToLower() == s ? 1L : 0L;
+			return s.ToLower(CultureInfo.InvariantCulture) == s ? 1L : 0L;
 		}
 
 		/// <summary>
@@ -197,10 +201,14 @@
 		/// </summary>
 		/// <param name="value">The object to examine.</param>
 		/// <returns>1 if value contained all uppercase characters, else 0.</returns>
-		public static long IsUpper(object value)
+		public static long IsUpper(object value, object locale = null)
 		{
 			var s = value.As();
-			return s?.Length == 0 || s.All(ch => char.IsLetter(ch) && char.IsUpper(ch)) ? 1L : 0L;
+			if (s.Any((c) => !char.IsLetter(c)))
+				return 0L;
+			if (locale != null && locale.As().Equals("locale", StringComparison.OrdinalIgnoreCase))
+				return s.ToUpper() == s ? 1L : 0L;
+			return s.ToUpper(CultureInfo.InvariantCulture) == s ? 1L : 0L;
 		}
 
 		/// <summary>
