@@ -5110,7 +5110,7 @@ namespace Keysharp.Core.Windows
 											&& script.Threads.AnyThreadsAvailable())
 									{
 										var args = msg.message == (uint)UserMessages.AHK_INPUT_CHAR ?//AHK_INPUT_CHAR passes the chars as a string, whereas the rest pass them individually.
-												   new object[] { input_hook.scriptObject, new string(new char[] { (char)lParamVal, (char)wParamVal }) }
+												   new object[] { input_hook.scriptObject, new string(wParamVal == 0 ? new char[] { (char)lParamVal } : new char[] { (char)lParamVal, (char)wParamVal }) }
 												   : [input_hook.scriptObject, lParamVal, wParamVal];
 										script.Threads.LaunchInThread(0, false, false, ifo, args, true);
 									}
