@@ -97,7 +97,7 @@ namespace Keysharp.Scripting
 			replace[1, 1] = Path.GetDirectoryName(parser.name);
 			replace[2, 1] = parser.name;
 
-            includePath = name = File.Exists(name) ? Path.GetFullPath(name) : "./";
+            includePath = File.Exists(name) ? Path.GetFullPath(name) : "./";
 
 			String codeText = source.ReadToEnd() + "\n";
             var codeLines = Regex.Split(codeText, "\r\n|\r|\n");
