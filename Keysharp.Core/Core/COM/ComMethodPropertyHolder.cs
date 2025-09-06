@@ -26,13 +26,11 @@ namespace Keysharp.Core.COM
 				for (int i = 0; i < args.Length; i++)
 				{
 					var o = args[i];
-					var l = 0L;
-					var d = 0.0;
 
 					//Convert back to types Keysharp uses.
-					if (o.ParseLong(ref l, false, false))
+					if (o.ParseLong(out long l, false, false))
 						obj[i] = l;
-					else if (o.ParseDouble(ref d, false, true))
+					else if (o.ParseDouble(out double d, false, true))
 						obj[i] = d;
 					else
 						obj[i] = args[i];

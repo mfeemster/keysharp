@@ -775,10 +775,10 @@ namespace Keysharp.Scripting
 			{
 				firstl = b ? 1L : 0L;
 			}
-			else if (left.ParseLong(ref firstl, false, false))
+			else if (left.ParseLong(out firstl, false, false))
 			{
 			}
-			else if (left.ParseDouble(ref firstd, false, true))
+			else if (left.ParseDouble(out firstd, false, true))
 			{
 				firstIsDouble = true;
 			}
@@ -802,10 +802,10 @@ namespace Keysharp.Scripting
 			{
 				secondl = b ? 1L : 0L;
 			}
-			else if (right.ParseLong(ref secondl, false, false))
+			else if (right.ParseLong(out secondl, false, false))
 			{
 			}
-			else if (right.ParseDouble(ref secondd, false, true))
+			else if (right.ParseDouble(out secondd, false, true))
 			{
 				secondIsDouble = true;
 			}
@@ -850,16 +850,13 @@ namespace Keysharp.Scripting
 						if (right == null)
 							return Errors.UnsetErrorOccurred($"Right side operand of subtraction or minus");
 
-						var l = 0L;
-						var d = 0.0;
-
 						if (right is double rd)//Check non-string types first as a hot path.
 							return rd == 0d ? rd : -rd;
 						else if (right is long rl)
 							return -rl;
-						else if (right.ParseLong(ref l, false, false))
+						else if (right.ParseLong(out long l, false, false))
 							return -l;
-						else if (right.ParseDouble(ref d, false, true))
+						else if (right.ParseDouble(out double d, false, true))
 							return d == 0d ? d : -d;
 						else
 							return Errors.TypeErrorOccurred(right, typeof(double));
@@ -877,9 +874,7 @@ namespace Keysharp.Scripting
 						if (right is double)
 							return Errors.TypeErrorOccurred(right, typeof(long));
 
-						var l = 0L;
-
-						if (right.ParseLong(ref l, false, false))
+						if (right.ParseLong(out long l, false, false))
 							return ~l;
 
 						return Errors.TypeErrorOccurred(right, typeof(long));

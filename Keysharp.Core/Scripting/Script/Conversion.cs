@@ -7,9 +7,6 @@ namespace Keysharp.Scripting
 			if (input == null)
 				return (bool)Errors.UnsetErrorOccurred("input", false);
 
-			var d = 0.0;
-			var l = 0L;
-
 			if (input is bool b)
 				return b;
 
@@ -17,9 +14,9 @@ namespace Keysharp.Scripting
 
 			if (pb.HasValue)
 				return pb.Value;
-			else if (input.ParseLong(ref l, false, false))
+			else if (input.ParseLong(out long l, false, false))
 				return l != 0;
-			else if (input.ParseDouble(ref d, false, true))
+			else if (input.ParseDouble(out double d, false, true))
 				return d != 0.0;
 			else if (input is string s)
 				return !string.IsNullOrEmpty(s);
@@ -37,19 +34,16 @@ namespace Keysharp.Scripting
 
 		internal static double ForceDouble(object input)
 		{
-			var d = 0.0;
-			var l = 0L;
-
 			if (input == null)
+				return 0.0D;
+			else if (input.ParseDouble(out double d, false, true))
 				return d;
-			else if (input.ParseDouble(ref d, false, true))
-				return d;
-			else if (input.ParseLong(ref l, false, false))
+			else if (input.ParseLong(out long l, false, false))
 				return l;
 			else if (input.ParseBool() is bool b)
 				return b ? 1.0 : 0.0;
 			else if (input is string)
-				return 0.0;
+				return 0.0D;
 			else if (input.GetType().GetMethods(BindingFlags.Static | BindingFlags.Public) is MethodInfo[] mis)
 			{
 				foreach (var mi in mis)
@@ -59,19 +53,16 @@ namespace Keysharp.Scripting
 			else if (input is IConvertible)
 				return Convert.ToDouble(input);
 
-			return 0.0;
+			return 0.0D;
 		}
 
 		internal static int ForceInt(object input)
 		{
-			var d = 0.0;
-			var l = 0L;
-
 			if (input == null)
 				return 0;
-			else if (input.ParseLong(ref l, false, false))
+			else if (input.ParseLong(out long l, false, false))
 				return (int)l;
-			else if (input.ParseDouble(ref d, false, true))
+			else if (input.ParseDouble(out double d, false, true))
 				return (int)d;
 			else if (input.ParseBool() is bool b)
 				return b ? 1 : 0;
@@ -91,19 +82,16 @@ namespace Keysharp.Scripting
 
 		public static long ForceLong(object input)
 		{
-			var d = 0.0;
-			var l = 0L;
-
 			if (input == null)
+				return 0L;
+			else if (input.ParseLong(out long l, false, false))
 				return l;
-			else if (input.ParseLong(ref l, false, false))
-				return l;
-			else if (input.ParseDouble(ref d, false, true))
+			else if (input.ParseDouble(out double d, false, true))
 				return (long)d;
 			else if (input.ParseBool() is bool b)
 				return b ? 1L : 0L;
 			else if (input is string)
-				return 0;
+				return 0L;
 			else if (input.GetType().GetMethods(BindingFlags.Static | BindingFlags.Public) is MethodInfo[] mis)
 			{
 				foreach (var mi in mis)
@@ -113,7 +101,7 @@ namespace Keysharp.Scripting
 			else if (input is IConvertible)
 				return Convert.ToInt64(input);
 
-			return l;
+			return 0L;
 		}
 
 		public static string ForceString(object input)

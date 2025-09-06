@@ -230,6 +230,7 @@ namespace Keysharp.Core
 		{
 			var clone = (Map)MemberwiseClone();
 			clone.map = new Dictionary<object, object>(clone.map);
+			clone.map.EnsureCapacity(map.Capacity);
 			clone.enumerableMap = null;
 			return clone;
 		}

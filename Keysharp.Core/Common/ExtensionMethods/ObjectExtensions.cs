@@ -19,7 +19,7 @@
 		/// <param name="obj">The object to convert.</param>
 		/// <param name="def">A default value to use if obj is null.</param>
 		/// <returns>The object as a double if it was not null, else def.</returns>
-		public static double Ad(this object obj, double def = default) => obj?.ParseDouble() ?? def;
+		public static double Ad(this object obj, double def = default) => obj != null && obj.ParseDouble(out double d) ? d : def;
 
 		/// <summary>
 		/// Converts an object to a float.
@@ -43,7 +43,7 @@
 		/// <param name="obj">The object to convert.</param>
 		/// <param name="def">A default value to use if obj is null.</param>
 		/// <returns>The object as a long if it was not null, else def.</returns>
-		public static long Al(this object obj, long def = default) => obj?.ParseLong() ?? def;
+		public static long Al(this object obj, long def = default) => obj != null && obj.ParseLong(out long l) ? l : def;
 
 		/// <summary>
 		/// Converts an object to a string.
@@ -107,7 +107,7 @@
 		/// </summary>
 		/// <param name="result">The callback result to examine.</param>
 		/// <returns>True if non-empty, else false.</returns>
-		public static bool IsCallbackResultNonEmpty(this object result) => result != null && ((result.ParseLong(false) is long l && l != 0) || (result.ParseDouble(false) is double dl && dl != 0.0) || result.ParseBool().IsTrue() || (result is string s && s != ""));
+		public static bool IsCallbackResultNonEmpty(this object result) => result != null && ((result.ParseLong(out long l, false) && l != 0) || (result.ParseDouble(out double dl, false) && dl != 0.0) || result.ParseBool().IsTrue() || (result is string s && s != ""));
 
 		/// <summary>
 		/// Returns whether an object is a <see cref="Gui"/>, <see cref="GuiControl"/> or <see cref="Menu"/>.
@@ -206,17 +206,8 @@
 		/// <param name="doconvert">Whether to attempt using the <see cref="Convert"/> class if all other attempts fail.</param>
 		/// <param name="requiredot">Whether to require a . character in the string when parsing after other attempts have failed.</param>
 		/// <returns>The converted value as a nullable double.</returns>
-		public static double? ParseDouble(this object obj, bool doconvert = true, bool requiredot = false)
-		{
-			var d = 0.0;
-
-			if (obj.ParseDouble(ref d, doconvert, requiredot))
-				return d;
-			else
-				return new double? ();
-		}
-
-		public static bool ParseDouble(this object obj, ref double outvar, bool doconvert = true, bool requiredot = false)
+		public static double? ParseDouble(this object obj, bool doconvert = true, bool requiredot = false) => obj.ParseDouble(out double d, doconvert, requiredot) ? d : null;
+		public static bool ParseDouble(this object obj, out double outvar, bool doconvert = true, bool requiredot = false)
 		{
 			if (obj is double d)
 			{
@@ -232,7 +223,7 @@
 
 			if (obj is BoolResult br)
 			{
-				return br.o.ParseDouble(ref outvar, doconvert, requiredot);
+				return br.o.ParseDouble(out outvar, doconvert, requiredot);
 			}
 
 			if (obj is int i)//int is seldom used in Keysharp, so check last.
@@ -244,10 +235,16 @@
 			var s = obj.ToString().AsSpan().Trim();
 
 			if (s.Length == 0)
+			{
+				outvar = 0.0D;
 				return false;
+			}
 
 			if (requiredot && !s.Contains('.'))
+			{
+				outvar = 0.0D;
 				return false;
+			}
 
 			if (double.TryParse(s, out outvar))
 				return true;
@@ -392,17 +389,9 @@
 		/// <param name="doconvert">Whether to attempt using the <see cref="Convert"/> class if all other attempts fail.</param>
 		/// <param name="donoprefixhex">Whether to treat a hexadecimal string without an 0x prefix as valid.</param>
 		/// <returns>The converted value as a nullable long.</returns>
-		public static long? ParseLong(this object obj, bool doconvert = true, bool donoprefixhex = true)
-		{
-			long l = 0;
+		public static long? ParseLong(this object obj, bool doconvert = true, bool donoprefixhex = true) => obj.ParseLong(out long l, doconvert, donoprefixhex) ? l : null;
 
-			if (obj.ParseLong(ref l, doconvert, donoprefixhex))
-				return l;
-			else
-				return new long? ();
-		}
-
-		public static bool ParseLong(this object obj, ref long outvar, bool doconvert = true, bool donoprefixhex = true)
+		public static bool ParseLong(this object obj, out long outvar, bool doconvert = true, bool donoprefixhex = true)
 		{
 			if (obj is long l)
 			{
@@ -411,12 +400,15 @@
 			}
 
 			if (obj is BoolResult br)
-				return br.o.ParseLong(ref outvar, doconvert);
+				return br.o.ParseLong(out outvar, doconvert);
 
             ReadOnlySpan<char> s = (obj as string ?? obj.ToString()).AsSpan().Trim();
 
 			if (s.Length == 0)
+			{
+				outvar = 0L;
 				return false;
+			}
 
 			if (long.TryParse(s, out l))
 			{
@@ -465,9 +457,9 @@
 			catch
 			{
 				_ = Errors.TypeErrorOccurred(obj, typeof(long));
-				return default;
 			}
 
+			outvar = 0L;
 			return false;
 		}
 
