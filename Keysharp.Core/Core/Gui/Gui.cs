@@ -34,7 +34,12 @@
 		private static readonly Dictionary<string, Action<Gui, object>> showOptionsDkt = new ()
 		{
 			{
-				"AlwaysOnTop", (f, o) => { if (o is bool b) f.form.TopMost = b; }
+				"AlwaysOnTop", (f, o) => {
+					// AlwaysOnTop in Windows is handled with an ExStyle
+#if !WINDOWS
+					if (o is bool b) f.form.TopMost = b; 
+#endif
+				}
 			},
 			{
 				"Border", (f, o) =>
@@ -2424,6 +2429,7 @@
 		{
 #if WINDOWS
 			var options = obj.As();
+			var tempbool = false;
 
 			//Special style, windows only. Need to figure out how to make this cross platform.//TODO
 			foreach (var split in Options.ParseOptions(options))
@@ -2449,6 +2455,13 @@
 					else if (Options.TryParse(split, "+", ref temp))
 					{
 						addStyle |= temp;
+					}
+					else if (Options.TryParse(split, "AlwaysOnTop", ref tempbool, StringComparison.OrdinalIgnoreCase, true, false))
+					{
+						if (tempbool)
+							addExStyle |= 0x00000008;
+						else
+							addExStyle &= ~0x00000008;
 					}
 					else if (Options.TryParse(split, "", ref temp))
 					{
