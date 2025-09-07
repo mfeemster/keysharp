@@ -379,6 +379,11 @@
 
 									if (height < 0 && pic.ScaleHeight)
 										pic.Height = (int)(pic.Width / ratio);
+								} 
+								else if (pic.SizeMode == PictureBoxSizeMode.AutoSize && DpiScaling)
+								{
+									pic.Width = (int)(pic.Width * A_ScaledScreenDPI);
+									pic.Height = (int)(pic.Height * A_ScaledScreenDPI);
 								}
 
 								var oldimage = pic.Image;
@@ -1302,7 +1307,7 @@
 				if (gui == null || !gui.TryGetTarget(out var g))
 					return DefaultErrorObject;
 
-				var opts = Core.Gui.ParseOpt(typename, _control.Text, options.As());
+				var opts = g.ParseOpt(typename, _control.Text, options.As());
 
 				if (opts.redraw.HasValue)
 				{
