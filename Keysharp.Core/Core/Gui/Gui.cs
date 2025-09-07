@@ -1431,15 +1431,15 @@
 
 								if (hasW && !hasH)
 								{
-									lbl.AutoSize = true;
 									lbl.MinimumSize = new Size(lbl.Width, 0);
 									lbl.MaximumSize = new Size(lbl.Width, int.MaxValue);
+									lbl.AutoSize = true;
 								}
 								else if (!hasW && hasH)
 								{
-									lbl.AutoSize = true;
 									lbl.MinimumSize = new Size(0, lbl.Height);
 									lbl.MaximumSize = new Size(int.MaxValue, lbl.Height);
+									lbl.AutoSize = true;
 								} 
 								else if (!hasW && !hasH)
 								{
@@ -1675,6 +1675,12 @@
 							pbox.Width = (int)(pbox.Height * ratio);
 						else
 							pbox.Height = (int)(pbox.Width / ratio);
+					}
+					else if (pbox.SizeMode == PictureBoxSizeMode.AutoSize && dpiscaling && dpiscale != 1.0)
+					{
+						pbox.SizeMode = PictureBoxSizeMode.Zoom;
+						pbox.Width = (int)(bmp.Width * dpiscale);
+						pbox.Height = (int)(bmp.Height * dpiscale);
 					}
 
 					pbox.Image = bmp;
@@ -2204,7 +2210,7 @@
 
 		internal static bool IsGuiType(Type type) => GuiTypes.Any(t => t.IsAssignableFrom(type));
 
-		internal static GuiOptions ParseOpt(string type, string text, string optionsstr)
+		internal GuiOptions ParseOpt(string type, string text, string optionsstr)
 		{
 			var options = new GuiOptions();
 
@@ -2302,6 +2308,8 @@
 					else if (Options.TryParse(opt, "yp", ref options.y, StringComparison.OrdinalIgnoreCase, true)) { options.ypos = GuiOptions.Positioning.PreviousTopLeft; }
 					else if (Options.TryParse(opt, "xm", ref options.x, StringComparison.OrdinalIgnoreCase, true)) { options.xpos = GuiOptions.Positioning.Margin; }
 					else if (Options.TryParse(opt, "ym", ref options.y, StringComparison.OrdinalIgnoreCase, true)) { options.ypos = GuiOptions.Positioning.Margin; }
+					else if (Options.TryParse(opt, "x+m", ref options.x, StringComparison.OrdinalIgnoreCase, true)) { options.x = form.Margin.Left; options.xpos = GuiOptions.Positioning.PreviousBottomRight; }
+					else if (Options.TryParse(opt, "y+m", ref options.y, StringComparison.OrdinalIgnoreCase, true)) { options.y = form.Margin.Bottom; options.ypos = GuiOptions.Positioning.PreviousBottomRight; }
 					else if (Options.TryParse(opt, "xs", ref options.x, StringComparison.OrdinalIgnoreCase, true)) { options.xpos = GuiOptions.Positioning.Section; }
 					else if (Options.TryParse(opt, "ys", ref options.y, StringComparison.OrdinalIgnoreCase, true)) { options.ypos = GuiOptions.Positioning.Section; }
 					else if (Options.TryParse(opt, "xc", ref options.x, StringComparison.OrdinalIgnoreCase, true)) { options.xpos = GuiOptions.Positioning.Container; }
