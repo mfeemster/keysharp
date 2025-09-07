@@ -374,10 +374,6 @@ namespace Keysharp.Scripting
                     case "a_linefile":
                         string file = context.Start.InputStream.SourceName;
 						return SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(File.Exists(file) ? Path.GetFullPath(file) : file));
-
-                    case "a_scriptfullpath":
-                        parser.mainClass.Body.Add(CreatePublicConstant("A_ScriptFullPath", typeof(string), Path.GetFullPath(parser.fileName)));
-                        break;
                 }
             }
 
