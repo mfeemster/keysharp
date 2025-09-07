@@ -1,4 +1,6 @@
-﻿namespace Keysharp.Core
+﻿using System.Drawing.Interop;
+
+namespace Keysharp.Core
 {
 	public static class GuiHelper
 	{
@@ -363,4 +365,68 @@
 		//  }
 		//}
 	}
+
+#if WINDOWS
+	internal static class HFontCache
+	{
+		private sealed class Entry : IDisposable
+		{
+			public Font Font { get; }
+			public nint HFont { get; private set; }
+
+			public Entry(Font f) { Font = f; HFont = f.ToHfont(); }
+			public void Dispose()
+			{
+				if (HFont != 0)
+				{
+					DeleteObject(HFont);
+					HFont = 0;
+				}
+			}
+		}
+
+		private static readonly ConditionalWeakTable<Control, Entry> table = new();
+
+		public static nint Get(Control c)
+		{
+			if (!table.TryGetValue(c, out var e) || !ReferenceEquals(e.Font, c.Font))
+			{
+				e?.Dispose();
+				e = new Entry(c.Font);
+				table.Remove(c);
+				table.Add(c, e);
+
+				// ensure cleanup on change/dispose
+				c.FontChanged -= OnFontChanged;
+				c.Disposed -= OnDisposed;
+				c.HandleDestroyed -= OnDisposed;
+
+				c.FontChanged += OnFontChanged;
+				c.Disposed += OnDisposed;
+				c.HandleDestroyed += OnDisposed;
+			}
+			return e.HFont;
+		}
+
+		private static void OnFontChanged(object sender, EventArgs e) => Release((Control)sender);
+		private static void OnDisposed(object sender, EventArgs e) => Release((Control)sender);
+
+		public static void Release(Control c)
+		{
+			if (table.TryGetValue(c, out var e))
+			{
+				e.Dispose();
+				table.Remove(c);
+			}
+		}
+
+		[DllImport("gdi32.dll", CharSet = CharSet.Unicode)]
+		public static extern int GetObject(nint hgdiobj, int cbBuffer, out LOGFONT lpvObject);
+
+		[System.Runtime.InteropServices.DllImport("gdi32.dll")]
+		internal static extern bool DeleteObject(nint hObject);
+
+
+	}
+#endif
 }
