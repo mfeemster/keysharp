@@ -1977,7 +1977,7 @@
 				}
 			}
 
-			//ResizeTabControls();
+			ResizeTabControls();
 			var status = form.Controls.OfType<KeysharpStatusStrip>().ToArray();
 			(int, int) FixStatusStrip(KeysharpStatusStrip ss)
 			{
