@@ -190,7 +190,7 @@
 				Size client = ClientSize;
 
 				if (g.dpiscaling)
-					_ = sizeHandlers?.InvokeEventHandlers(g, state, (long)client.Width / A_ScaledScreenDPI, (long)client.Height / A_ScaledScreenDPI);
+					_ = sizeHandlers?.InvokeEventHandlers(g, state, (long)(client.Width / A_ScaledScreenDPI), (long)(client.Height / A_ScaledScreenDPI));
 				else
 					_ = sizeHandlers?.InvokeEventHandlers(g, state, (long)client.Width, (long)client.Height);
 			}
