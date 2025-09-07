@@ -352,6 +352,7 @@ if (arr2[1] == 1)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"
+
 if (arr2[2] == 2)
 	FileAppend, "pass", "*"
 else
@@ -373,6 +374,12 @@ else
 	FileAppend, "fail", "*"
 	
 if (arr2.c == 789)
+	FileAppend, "pass", "*"
+else
+	FileAppend, "fail", "*"
+
+arr[1] := 4
+if (arr2[1] == 1)
 	FileAppend, "pass", "*"
 else
 	FileAppend, "fail", "*"

@@ -148,6 +148,7 @@
 		{
 			var clone = (Array)MemberwiseClone();
 			clone.array = clone.array.ToList();
+			clone.array.Capacity = array.Capacity;
 			return clone;
 		}
 

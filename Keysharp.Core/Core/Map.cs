@@ -233,6 +233,7 @@
 		{
 			var clone = (Map)MemberwiseClone();
 			clone.map = new Dictionary<object, object>(clone.map);
+			_ = clone.map.EnsureCapacity(map.Capacity);
 			clone.enumerableMap = null;
 			return clone;
 		}
