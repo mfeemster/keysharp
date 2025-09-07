@@ -31,7 +31,7 @@
 		bool marginsInit = false;
 		internal nint owner = 0;
 
-		private static readonly Dictionary<string, Action<Gui, object>> showOptionsDkt = new ()
+		private static readonly Dictionary<string, Action<Gui, object>> showOptionsDkt = new (StringComparer.OrdinalIgnoreCase)
 		{
 			{
 				"AlwaysOnTop", (f, o) => {
