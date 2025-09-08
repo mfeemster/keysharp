@@ -17,25 +17,29 @@
 		/// Same as <see cref="IsAlpha"/> except that integers and characters 0 through 9 are also allowed.
 		/// </summary>
 		/// <param name="value">The object to examine.</param>
+		/// <param name="locale">If set to "Locale" then Unicode letters are considered as well.</param>
 		/// <returns>1 if the object was a string which contained all alpha numeric characters, else 0.</returns>
-		public static long IsAlnum(object value)
+		public static long IsAlnum(object value, object locale = null)
 		{
 			var s = value.As();
-			return s?.Length == 0 || s.All(ch => char.IsLetter(ch) || char.IsNumber(ch)) ? 1L : 0L;
+			Func<char, bool> predicate = locale != null && locale.As().Equals("locale", StringComparison.OrdinalIgnoreCase) ? char.IsLetterOrDigit : char.IsAsciiLetterOrDigit;
+			return s?.Length == 0 || s.All(predicate) ? 1L : 0L;
 		}
 
 		/// <summary>
 		/// Returns 1 if value is a string and is empty or contains only alphabetic characters. 0 if there are any digits, spaces, tabs, punctuation,<br/>
 		/// or other non-alphabetic characters anywhere in the string.<br/>
 		/// For example, if Value contains a space followed by a letter, it is not considered to be alpha.<br/>
-		/// Locale is always considered.
+		/// By default only ASCII letters are considered.
 		/// </summary>
 		/// <param name="value">The object to examine.</param>
+		/// <param name="locale">If set to "Locale" then Unicode letters are considered as well.</param>
 		/// <returns>1 if the object was a string which contained all alpha characters, else 0.</returns>
-		public static long IsAlpha(object value)
+		public static long IsAlpha(object value, object locale = null)
 		{
 			var s = value.As();
-			return s?.Length == 0 || s.All(char.IsLetter) ? 1L : 0L;
+			Func<char, bool> predicate = locale != null && locale.As().Equals("locale", StringComparison.OrdinalIgnoreCase) ? char.IsLetterOrDigit : char.IsLetterOrDigit;
+			return s?.Length == 0 || s.All(predicate) ? 1L : 0L;
 		}
 
 		/// <summary>
@@ -61,7 +65,7 @@
 			var o = value;
 
 			if (o is double)// || o is float || o is decimal)
-				return 1;
+				return 1L;
 
 			double? val;
 
@@ -119,18 +123,27 @@
 		/// <summary>
 		/// Returns 1 if value is a string and is empty or contains only lowercase characters.<br/>
 		/// 0 if there are any digits, spaces, tabs, punctuation, or other non-lowercase characters anywhere in the string.
-		/// Locale is always considered.
+		/// By default only ASCII letters are considered.
 		/// </summary>
 		/// <param name="value">The object to examine.</param>
+		/// <param name="locale">If set to "Locale" then Unicode letters are considered as well.</param>
 		/// <returns>1 if value contained all lowercase characters, else 0.</returns>
 		public static long IsLower(object value, object locale = null)
 		{
 			var s = value.As();
-			if (s.Any((c) => !char.IsLetter(c)))
-				return 0L;
 			if (locale != null && locale.As().Equals("locale", StringComparison.OrdinalIgnoreCase))
-				return s.ToLower() == s ? 1L : 0L;
-			return s.ToLower(CultureInfo.InvariantCulture) == s ? 1L : 0L;
+			{
+				foreach (var ch in s)
+					if (!char.IsLower(ch))
+						return 0L;
+			}
+			else
+			{
+				foreach (var ch in s)
+					if (!char.IsAsciiLetterLower(ch))
+						return 0L;
+			}
+			return 1L;
 		}
 
 		/// <summary>
@@ -152,7 +165,7 @@
 		/// </summary>
 		/// <param name="value">The object to examine.</param>
 		/// <returns>1 if value is not null, else 0.</returns>
-		public static long IsSet(object value) => value != UnsetArg.Default&& value != null ? 1L : 0L;
+		public static long IsSet(object value) => value != UnsetArg.Default && value != null ? 1L : 0L;
 
 		/// <summary>
 		/// 1 if value is a string and is empty or contains only whitespace consisting of the following characters, else false:<br/>
@@ -197,18 +210,27 @@
 		/// <summary>
 		/// Returns 1 if value is a string and is empty or contains only uppercase characters.<br/>
 		/// 0 if there are any digits, spaces, tabs, punctuation, or other non-lowercase characters anywhere in the string.
-		/// Locale is always considered.
+		/// By default only ASCII letters are considered.
 		/// </summary>
 		/// <param name="value">The object to examine.</param>
+		/// <param name="locale">If set to "Locale" then Unicode letters are considered as well.</param>
 		/// <returns>1 if value contained all uppercase characters, else 0.</returns>
 		public static long IsUpper(object value, object locale = null)
 		{
 			var s = value.As();
-			if (s.Any((c) => !char.IsLetter(c)))
-				return 0L;
 			if (locale != null && locale.As().Equals("locale", StringComparison.OrdinalIgnoreCase))
-				return s.ToUpper() == s ? 1L : 0L;
-			return s.ToUpper(CultureInfo.InvariantCulture) == s ? 1L : 0L;
+			{
+				foreach (var ch in s)
+					if (!char.IsUpper(ch))
+						return 0L;
+			}
+			else
+			{
+				foreach (var ch in s)
+					if (!char.IsAsciiLetterUpper(ch))
+						return 0L;
+			}
+			return 1L;
 		}
 
 		/// <summary>
@@ -225,7 +247,7 @@
 				sp = sp.Slice(2);
 
 			foreach (var ch in sp)
-				if (!((ch >= '0' && ch <= '9') || (ch >= 'A' && ch <= 'F') || (ch >= 'a' && ch <= 'f')))
+				if (!char.IsAsciiHexDigit(ch))
 					return 0L;
 
 			return 1L;
