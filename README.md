@@ -593,11 +593,10 @@ class class1
 * `ListLines()` is omitted because C# doesn't support it.
 * `ObjPtr()` is not implemented because objects can be moved by the GC.
 * There is no such thing as dereferencing in C#, so the `*` dereferencing operator is not supported.		
-* The `R`, `Dn` or `Tn` parameters in `FormatDateTime()` are not supported, except for 0x80000000 to disallow user overrides.
+* The `R`, `Dn` or `Tn` parameters in `FormatTime()` are not supported, except for 0x80000000 to disallow user overrides.
 	+ If you want to specify a particular format or order, do it in the format argument. There is no need or reason to have one argument alter the other.
 	+ [Here](https://docs.microsoft.com/en-us/dotnet/standard/base-types/custom-date-and-time-format-strings) is a list of the C# style DateTime formatters which are supported.
 * Static text controls do not send the Windows `API WM_CTLCOLORSTATIC (0x0138)` message to their parent controls like they do in AHK.
-* `IsAlpha()`, `IsUpper()`, `IsLower()` do not accept a locale parameter because all strings are Unicode.
 * Renaming Keysharp.exe to run a specific script by default will not work.
 * Double click handlers for buttons are not supported.
 * UpDown controls with paired buddy controls are not supported. Keysharp just uses the regular NumericUpDown control in C#.

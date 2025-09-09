@@ -765,16 +765,7 @@ namespace Keysharp.Core
 		/// Iterates through all timers in existence and returns the number of them which are enabled.
 		/// </summary>
 		/// <returns>The number of currently enabled timers.</returns>
-		public static long EnabledTimerCount()
-		{
-			var ct = 0L;
-
-			foreach (var kv in Script.TheScript.FlowData.timers)
-				if (kv.Value.Enabled)//This won't work if we're enabling and disabling timers in the tick event.//TODO
-					ct++;
-
-			return ct;
-		}
+		public static long EnabledTimerCount() => Script.TheScript.FlowData.timers.Count(kv => kv.Value.Enabled);
 	}
 
 	internal class FlowData
