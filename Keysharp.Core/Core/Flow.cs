@@ -342,7 +342,11 @@ namespace Keysharp.Core
 						}
 					}
 					else
+					{
+						if (timer.Interval == p)
+							timer.Interval = int.MaxValue;
 						timer.Interval = (int)p;
+					}
 
 					return DefaultObject;
 				}
@@ -593,6 +597,7 @@ namespace Keysharp.Core
 				script.onExitHandlers.Clear();
 
 			script.hasExited = true;//At this point, we are clear to exit, so do not allow any more calls to this function.
+			script.SuppressErrorOccurredDialog = true;
 			fd.allowInterruption = allowInterruption_prev;
 			HotkeyDefinition.AllDestruct();
 			StopMainTimer();
