@@ -237,7 +237,7 @@ namespace Keysharp.Core
 			{
 				fo = Functions.GetFuncObj(action, null);//Don't throw on failure because returning null is a valid action.
 				var script = Script.TheScript;
-				var tv = script.Threads.GetThreadVariables();
+				var tv = script.Threads.CurrentThread;
 
 				if (fo == null && !string.IsNullOrEmpty(label) && ((hook_action = HotkeyDefinition.ConvertAltTab(label, true)) == 0))
 				{
@@ -375,11 +375,11 @@ break_twice:;
 			// Determine options which affect hotstring identity/uniqueness.
 			var caseSensitive = hm.hsCaseSensitive;
 			var detectInsideWord = hm.hsDetectWhenInsideWord;
-			var un = false; var iun = 0; var sm = SendModes.Event; var sr = SendRawModes.NotRaw; // Unused.
+			var un = false; var lun = 0L; var sm = SendModes.Event; var sr = SendRawModes.NotRaw; // Unused.
 			var executeAction = false;
 
 			if (hotstringOptions.Length > 0)
-				HotstringDefinition.ParseOptions(hotstringOptions, ref iun, ref iun, ref sm, ref caseSensitive, ref un, ref un, ref un, ref sr, ref un, ref detectInsideWord, ref un, ref executeAction, ref un);
+				HotstringDefinition.ParseOptions(hotstringOptions, ref lun, ref lun, ref sm, ref caseSensitive, ref un, ref un, ref un, ref sr, ref un, ref detectInsideWord, ref un, ref executeAction, ref un);
 
 			IFuncObj ifunc = null;
 
@@ -398,7 +398,7 @@ break_twice:;
 				return Errors.ValueErrorOccurred($"Invalid value of {obj2} for parameter 3.");
 
 			bool wasAlreadyEnabled;
-			var tv = script.Threads.GetThreadVariables();
+			var tv = script.Threads.CurrentThread;
 			var existing = hm.FindHotstring(hotstringStart, caseSensitive, detectInsideWord, tv.hotCriterion);
 
 			if (existing != null)
@@ -698,7 +698,7 @@ break_twice:;
 		public static object SendLevel(object level)
 		{
 			var old = A_SendLevel;
-			A_SendLevel = level;
+			A_SendLevel = level.Al();
 			return old;
 		}
 

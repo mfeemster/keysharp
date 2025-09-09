@@ -2,43 +2,104 @@
 {
 	internal class MessageFilter : IMessageFilter
 	{
-		public bool PreFilterMessage(ref Message m)
+		Script script;
+		internal Message? handledMsg;
+		internal MessageFilter(Script associatedScript)
 		{
-			var script = Script.TheScript;
-			
+			script = associatedScript;
+		}
+
+		internal bool CallEventHandlers(ref Message m)
+		{
 			if (script.GuiData.onMessageHandlers.TryGetValue(m.Msg, out var monitor))
 			{
-				var tv = script.Threads.GetThreadVariables();
+				var ptv = script.Threads.CurrentThread;
 
-				if (!script.Threads.AnyThreadsAvailable() || tv.priority > 0)
+				if (!script.Threads.AnyThreadsAvailable() || ptv.priority > 0)
 					return false;
 
 				if (monitor.instanceCount >= monitor.maxInstances)
 					return false;
 
-#if WINDOWS
-				script.HwndLastUsed = WindowsAPI.GetNonChildParent(m.HWnd);//Assign parent window as the last found window (it's ok if it's hidden).
-#endif
-				var now = DateTime.UtcNow;
-				script.lastPeekTime = now;
-				A_EventInfo = now;//AHK used msg.time, but the C# version does not have a time field.
 				monitor.instanceCount++;
 				object res = null;
+				object eventInfo = 0L;
+				long hwnd = m.HWnd;
+#if WINDOWS
+				hwnd = WindowsAPI.GetNonChildParent((nint)hwnd);
+#endif
+
+				if (handledMsg == m)
+				{
+#if WINDOWS
+					eventInfo = WindowsAPI.GetMessageTime();
+#else
+					eventInfo = A_TickCount;
+#endif
+				}
 
 				try
 				{
-					res = monitor.funcs.InvokeEventHandlers(m.WParam.ToInt64(), m.LParam.ToInt64(), m.Msg, m.HWnd.ToInt64());
+					// The following is a modified version of InvokeEventHandlers, because
+					// we need to assign both hwndLastUsed and eventInfo some custom values.
+					var handlers = monitor.funcs;
+					object[] args = [m.WParam.ToInt64(), m.LParam.ToInt64(), (long)m.Msg, m.HWnd.ToInt64()];
+					if (handlers.Any())
+					{
+						var script = Script.TheScript;
+
+						foreach (var handler in handlers)
+						{
+							if (handler != null)
+							{
+								var (pushed, tv) = script.Threads.BeginThread();
+								if (pushed)//If we've exceeded the number of allowable threads, then just do nothing.
+								{
+									tv.eventInfo = eventInfo;
+									tv.hwndLastUsed = (long)hwnd;
+									_ = Flow.TryCatch(() =>
+									{
+										res = handler.Call(args);
+										_ = script.Threads.EndThread((pushed, tv));
+									}, true, (pushed, tv));//Pop on exception because EndThread() above won't be called.
+
+									if (Script.ForceLong(res) != 0L)
+										break;
+								}
+							}
+						}
+						script.ExitIfNotPersistent();
+					}
 				}
 				finally
 				{
 					monitor.instanceCount--;
 				}
 
-				if (res != null && res.IsNotNullOrEmpty())
+				m.Result = (nint)Script.ForceLong(res);
+
+				if (m.Result != 0)
 					return true;
 			}
 
 			return false;
+		}
+
+		public bool PreFilterMessage(ref Message m)
+		{
+			if (m.HWnd != 0)
+			{
+				// Ignore IME windows and other helper forms
+				var ctl = Control.FromHandle(m.HWnd);
+
+				if (ctl == null || !(ctl.FindForm() is KeysharpForm))
+					return false;
+			}
+
+			// Stash the message for later comparison in WndProc to determine whether it's already
+			// been handled here. See more thorough description in KeysharpForm.cs WndProc.
+			handledMsg = m;
+			return CallEventHandlers(ref m);
 		}
 	}
 }

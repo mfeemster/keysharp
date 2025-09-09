@@ -18,8 +18,8 @@
 		internal uint existingThreads, maxThreads;
 		internal IFuncObj funcObj;
 		internal IFuncObj hotCriterion;
-		internal uint inputLevel;
-		internal int priority, keyDelay;
+		internal long inputLevel;
+		internal long priority, keyDelay;
 		internal SendModes sendMode;
 		internal SendRawModes sendRaw;
 		internal string str, replacement;
@@ -74,7 +74,7 @@
 			var script = Script.TheScript;
 			var hm = script.HotstringManager;
 			funcObj = _funcObj;
-			hotCriterion = script.Threads.GetThreadVariables().hotCriterion;
+			hotCriterion = script.Threads.CurrentThread.hotCriterion;
 			suspended = _suspend;
 			maxThreads = A_MaxThreadsPerHotkey.Aui();  // The value of g_MaxThreadsPerHotkey can vary during load-time.
 			priority = hm.hsPriority;
@@ -88,7 +88,7 @@
 			endCharRequired = hm.hsEndCharRequired;
 			detectWhenInsideWord = hm.hsDetectWhenInsideWord;
 			doReset = hm.hsDoReset;
-			inputLevel = (uint)A_InputLevel;
+			inputLevel = (long)A_InputLevel;
 			suspendExempt = A_SuspendExempt.Ab();
 			constructedOK = false;
 			var unusedX = false; // do not assign  mReplacement if execute_action is true.
@@ -107,7 +107,7 @@
 
 		public override string ToString() => Name;
 
-		internal static void ParseOptions(ReadOnlySpan<char> _options, ref int _priority, ref int _keyDelay, ref SendModes _sendMode
+		internal static void ParseOptions(ReadOnlySpan<char> _options, ref long _priority, ref long _keyDelay, ref SendModes _sendMode
 										  , ref bool _caseSensitive, ref bool _conformToCase, ref bool _doBackspace, ref bool _omitEndChar, ref SendRawModes _sendRaw
 										  , ref bool _endCharRequired, ref bool _detectWhenInsideWord, ref bool _doReset, ref bool _executeAction, ref bool _suspendExempt)
 		{
@@ -176,7 +176,7 @@
 						while (j < next.Length && (next[j] == '-' || char.IsNumber(next[j])))
 							j++;
 
-						if (int.TryParse(next.Slice(0, j), out var val))
+						if (long.TryParse(next.Slice(0, j), out var val))
 						{
 							if (ch == 'K')
 								_keyDelay = val;
@@ -358,7 +358,7 @@
 
 			// For the following, mSendMode isn't checked because the backup/restore is needed to varying extents
 			// by every mode.
-			var tv = script.Threads.GetThreadVariables();
+			var tv = script.Threads.CurrentThread.configData;
 			var oldDelay = tv.keyDelay;
 			var oldPressDuration = tv.keyDuration;
 			var oldDelayPlay = tv.keyDelayPlay;
@@ -371,7 +371,7 @@
 			// Setting the SendLevel to 0 rather than this->mInputLevel since auto-replace hotstrings are used for text replacement rather than
 			// key remapping, which means the user almost always won't want the generated input to trigger other hotkeys or hotstrings.
 			// Action hotstrings (not using auto-replace) do get their thread's SendLevel initialized to the hotstring's InputLevel.
-			tv.sendLevel = 0u;
+			tv.sendLevel = 0L;
 
 			// v1.0.43: The following section gives time for the hook to pass the final keystroke of the hotstring to the
 			// system.  This is necessary only for modes other than the original/SendEvent mode because that one takes
@@ -416,7 +416,7 @@
 			if (!AnyThreadsAvailable())//Then test local thread count.
 				return ResultType.Fail;
 
-			var tv = script.Threads.GetThreadVariables();
+			var tv = script.Threads.CurrentThread;
 
 			if (priority < tv.priority)//Finally, test priority.
 				return ResultType.Fail;
@@ -427,8 +427,8 @@
 				var ok = Flow.TryCatch(() =>
 				{
 					ret = null;
-					var tv = script.Threads.GetThreadVariables();
-					tv.sendLevel = inputLevel;
+					var tv = script.Threads.CurrentThread;
+					tv.configData.sendLevel = inputLevel;
 					tv.hwndLastUsed = hwndCritFound;
 					tv.hotCriterion = hotCriterion;// v2: Let the Hotkey command use the criterion of this hotstring by default.
 					ret = funcObj.Call(o);

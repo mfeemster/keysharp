@@ -97,7 +97,7 @@ namespace Keysharp.Scripting
 			replace[1, 1] = Path.GetDirectoryName(parser.name);
 			replace[2, 1] = parser.name;
 
-            includePath = name = File.Exists(name) ? Path.GetFullPath(name) : "./";
+            includePath = File.Exists(name) ? Path.GetFullPath(name) : "./";
 
 			String codeText = source.ReadToEnd() + "\n";
             var codeLines = Regex.Split(codeText, "\r\n|\r|\n");
@@ -126,7 +126,15 @@ namespace Keysharp.Scripting
             while (index < tokenCount)
             {
                 var token = tokens[index];
-                if (token.Type == MainLexer.Hashtag)
+
+                if (token.Channel == MainLexer.ERROR)
+                {
+                    if (token.Text == "\"" || token.Text == "'")
+						throw new ParseException($"Unterminated string literal at {token.Line}:{token.Column}", token.Line, token.Text, token.TokenSource.SourceName);
+					throw new ParseException($"Unexpected token at {token.Line}:{token.Column}: {token.Text}", token.Line, token.Text, token.TokenSource.SourceName);
+                }
+
+                if (token.Type == MainLexer.Hashtag && (index + 1) < tokenCount && tokens[index + 1].Channel != Lexer.DefaultTokenChannel)
                 {
                     directiveTokens.Clear();
                     int directiveTokenIndex = index + 1;
@@ -225,8 +233,8 @@ namespace Keysharp.Scripting
                                 {
                                     p1 = p1.Trim(libBrackets).Split('_', StringSplitOptions.None)[0];
 
-                                    if (!p1.EndsWith(".ahk"))
-                                        p1 += ".ahk";
+											if (!p1.EndsWith(".ahk", StringComparison.OrdinalIgnoreCase))
+												p1 += ".ahk";
 
                                     isLib = true;
                                 }
@@ -322,9 +330,9 @@ namespace Keysharp.Scripting
                         case "REQUIRES":
                         {
                             var p1 = tokens[index + 2].Text;
-                            var reqAhk = p1.StartsWith("AutoHotkey");
+                            var reqAhk = p1.StartsWith("AutoHotkey", StringComparison.OrdinalIgnoreCase);
 
-                            if (reqAhk || p1.StartsWith("Keysharp"))
+                            if (reqAhk || p1.StartsWith("Keysharp", StringComparison.OrdinalIgnoreCase))
                             {
                                 var splits = p1.Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
@@ -454,12 +462,16 @@ namespace Keysharp.Scripting
 							//enclosableDepth--;
 							PopWhitespaces(codeTokens.Count);
                             break;
-						case MainLexer.Plus:
-						case MainLexer.Minus:
 						//case MainLexer.BitAnd: // Can't be here because of VarRefs
 						case MainLexer.Multiply:
 							PopWhitespaces(codeTokens.Count);
 							break;
+                        case MainLexer.Not:
+                        case MainLexer.BitNot:
+					    case MainLexer.Plus: // Can't pop whitespaces because of function call statement
+						case MainLexer.Minus:
+							SkipWhitespaces(index);
+                            break;
 						case MainLexer.EOL:
                             /*
 							if (maybeIsFunctionCallStatement > -1)
@@ -557,7 +569,6 @@ namespace Keysharp.Scripting
                         case MainLexer.Throw:
                         case MainLexer.Async:
                         case MainLexer.Static:
-						case MainLexer.Not:
                         case MainLexer.VerbalNot:
                             codeTokens.Add(token);
                             AddWhitespaces(index, token.Type == MainLexer.Not || token.Type == MainLexer.VerbalNot);

@@ -5,15 +5,20 @@ namespace Keysharp.Benchmark
 {
 	public class IndexBench : BaseTest
 	{
-		private dynamic dynamickeysharparray = new Array();
-		private Array keysharparray = Collections.Array();
-		private object[] nativearray = System.Array.Empty<object>();
-		private double[] nativedoublearray = System.Array.Empty<double>();
+		private dynamic? dynamickeysharparray;
+		private Array? keysharparray;
+		private object[]? nativearray;
+		private double[]? nativedoublearray;
 		private double totalSum;
-		private Keysharp.Scripting.Script? _ks_s;
 
 		[Params(500000)]
 		public int Size { get; set; }
+
+		public IndexBench()
+		{
+			dynamickeysharparray = new Array();
+			keysharparray = Collections.Array();
+		}
 
 		[Benchmark]
 		public void KeysharpArrayIndexRead()
@@ -21,7 +26,7 @@ namespace Keysharp.Benchmark
 			var total = 0.0;
 
 			for (var i = 1; i <= Size; i++)
-				total += (double)keysharparray[i];
+				total += (double)keysharparray![i];
 
 			if (!total.IsAlmostEqual(totalSum))
 				throw new Exception($"{total} was not equal to {totalSum}.");
@@ -40,7 +45,7 @@ namespace Keysharp.Benchmark
 			for (; Flow.IsTrueAndRunning(e2.Call(vr));)
 			{
 				_ = Keysharp.Core.Loops.Inc();
-				total += (double)val;
+				total += (double)val!;
 				e3:
 				;
 			}
@@ -70,7 +75,7 @@ namespace Keysharp.Benchmark
 			var total = 0.0;
 
 			for (var i = 1; i <= Size; i++)
-				total += (double)dynamickeysharparray[i];
+				total += (double)dynamickeysharparray![i];
 
 			if (!total.IsAlmostEqual(totalSum))
 				throw new Exception($"{total} was not equal to {totalSum}.");
@@ -82,7 +87,7 @@ namespace Keysharp.Benchmark
 			var total = 0.0;
 
 			for (var i = 0; i < Size; i++)
-				total += nativedoublearray[i];
+				total += nativedoublearray![i];
 
 			if (!total.IsAlmostEqual(totalSum))
 				throw new Exception($"{total} was not equal to {totalSum}.");
@@ -94,7 +99,7 @@ namespace Keysharp.Benchmark
 			var total = 0.0;
 
 			for (var i = 0; i < Size; i++)
-				total += (double)nativearray[i];
+				total += (double)nativearray![i];
 
 			if (!total.IsAlmostEqual(totalSum))
 				throw new Exception($"{total} was not equal to {totalSum}.");
@@ -118,13 +123,14 @@ namespace Keysharp.Benchmark
 		[GlobalSetup]
 		public void Setup()
 		{
-			_ks_s  = new ();
 			totalSum = 0;
 			Size = 1000000;
 			nativearray = new object[Size];
 			nativedoublearray = new double[Size];
-			keysharparray = new Array();
-			keysharparray.Capacity = Size;
+			keysharparray = new Array
+			{
+				Capacity = Size
+			};
 			dynamickeysharparray = new Array();
 			dynamickeysharparray.Capacity = Size;
 
@@ -143,13 +149,17 @@ namespace Keysharp.Benchmark
 
 	public class ListAddBench : BaseTest
 	{
-		private Keysharp.Core.Array keysharparray = Collections.Array();
+		private Keysharp.Core.Array keysharparray;
 		private List<object> nativelist = [];
 		private readonly object o = 123L;
-		private Keysharp.Scripting.Script? _ks_s;
 
 		[Params(500000)]
 		public int Size { get; set; }
+
+		public ListAddBench()
+		{
+			keysharparray = Collections.Array();
+		}
 
 		[Benchmark]
 		public void KeysharpArrayDirectAdd()
@@ -229,10 +239,7 @@ namespace Keysharp.Benchmark
 		[GlobalSetup]
 		public void Setup()
 		{
-			_ks_s = new ();
 			Size = 500000;
-			nativelist = [];
-			keysharparray = Collections.Array();
 		}
 	}
 }

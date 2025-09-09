@@ -133,9 +133,9 @@
 		public object AddStandard()
 		{
 			var menu = GetMenu();
-			var emptyfunc = new Func<object>(() => "");
+			var emptyfunc = (params object[] args) => "";
 			var script = Script.TheScript;
-			var openfunc = new Func<object>(() =>
+			var openfunc = (params object[] args) =>
 			{
 				var mainWindow = script.mainWindow;
 
@@ -148,7 +148,7 @@
 				}
 
 				return DefaultObject;
-			});
+			};
 			var reloadfunc = (params object[] args) =>
 			{
 				_ = Flow.Reload();
@@ -375,7 +375,7 @@
 			var _y = y.Ai(Cursor.Position.Y);
 			var pt = new Point(_x, _y);
 
-			if (Script.TheScript.Coords.Menu == CoordModeType.Screen)
+			if (ThreadAccessors.A_CoordModeMenu == CoordModeType.Screen)
 				if (Form.ActiveForm is Form form)
 					pt = form.PointToClient(pt);
 

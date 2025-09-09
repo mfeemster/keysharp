@@ -174,7 +174,7 @@
 				size = buf.Size.Al();
 				target = buf.Ptr;
 			}
-			else if (target is KeysharpObject kso && Script.GetPropertyValue(kso, "ptr", false) is object p && p != null
+			else if (target is Any kso && Script.GetPropertyValue(kso, "ptr", false) is object p && p != null
 					 && Script.GetPropertyValue(kso, "size", false) is object s && s != null)
 			{
 				size = s.Al();
@@ -243,7 +243,7 @@
 					case "uint64":
 					case "ptr":
 					case "uptr":
-						if (number is KeysharpObject kso)
+						if (number is Any kso)
 							number = Reflections.GetPtrProperty(kso);
 
 						bytes = BitConverter.GetBytes(number.Al());

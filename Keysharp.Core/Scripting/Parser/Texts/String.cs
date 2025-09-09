@@ -51,6 +51,9 @@ namespace Keysharp.Scripting
 					_ = sb.Append(sym);
 			}
 
+			if (escaped)
+				_ = sb.Append(Escape);
+
 			return sb.ToString();
 		}
 

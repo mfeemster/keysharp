@@ -1343,7 +1343,7 @@ namespace Keysharp.Core.Windows
 		/// <param name="sc"></param>
 		/// <param name="eventFlags"></param>
 		/// <param name="extraInfo"></param>
-		internal void PutKeybdEventIntoArray(uint keyAsModifiersLR, uint vk, uint sc, uint eventFlags, uint extraInfo)
+		internal void PutKeybdEventIntoArray(uint keyAsModifiersLR, uint vk, uint sc, uint eventFlags, long extraInfo)
 		{
 			var key_up = (eventFlags & KEYEVENTF_KEYUP) != 0;
 
@@ -1378,7 +1378,7 @@ namespace Keysharp.Core.Windows
 				thisEvent.i.k.wVk = (ushort)vk;
 				thisEvent.i.k.wScan = (ushort)((eventFlags & KEYEVENTF_UNICODE) != 0 ? sc : sc & 0xFF);
 				thisEvent.i.k.dwFlags = eventFlags;
-				thisEvent.i.k.dwExtraInfo = extraInfo; // Although our hook won't be installed (or won't detect, in the case of playback), that of other scripts might be, so set this for them.
+				thisEvent.i.k.dwExtraInfo = (ulong)extraInfo; // Although our hook won't be installed (or won't detect, in the case of playback), that of other scripts might be, so set this for them.
 				thisEvent.i.k.time = 0; // Let the system provide its own timestamp, which might be more accurate for individual events if this will be a very long SendInput.
 				eventSi.Add(thisEvent);
 				hooksToRemoveDuringSendInput |= HookKeyboard; // Presence of keyboard hook defeats uninterruptibility of keystrokes.
@@ -1392,7 +1392,7 @@ namespace Keysharp.Core.Windows
 					// Although delays at the tail end of the playback array can't be implemented by the playback
 					// itself, caller wants them put in too.
 					thisEvent.messagetype = 0; // Message number zero flags it as a delay rather than an actual event.
-					thisEvent.time_to_wait = extraInfo;
+					thisEvent.time_to_wait = (uint)extraInfo;
 				}
 				else // A normal (non-delay) event for playback.
 				{
@@ -1448,7 +1448,7 @@ namespace Keysharp.Core.Windows
 				thisEvent.i.m.dy = (y == CoordUnspecified) ? 0 : y; // desired (fixes compatibility with certain apps/games).
 				thisEvent.i.m.dwFlags = eventFlags;
 				thisEvent.i.m.mouseData = data;
-				thisEvent.i.m.dwExtraInfo = KeyIgnoreLevel(sendLevel); // Although our hook won't be installed (or won't detect, in the case of playback), that of other scripts might be, so set this for them.
+				thisEvent.i.m.dwExtraInfo = (ulong)KeyIgnoreLevel(sendLevel); // Although our hook won't be installed (or won't detect, in the case of playback), that of other scripts might be, so set this for them.
 				thisEvent.i.m.time = 0; // Let the system provide its own timestamp, which might be more accurate for individual events if this will be a very long SendInput.
 				eventSi.Add(thisEvent);
 				hooksToRemoveDuringSendInput |= HookMouse; // Presence of mouse hook defeats uninterruptibility of mouse clicks/moves.
@@ -1799,7 +1799,7 @@ namespace Keysharp.Core.Windows
 			var modifiersLRSpecified = (modifiersLR | modifiersLRPersistent);
 			var script = Script.TheScript;
 			var vkIsMouse = script.HookThread.IsMouseVK(vk); // Caller has ensured that VK is non-zero when it wants a mouse click.
-			var tv = script.Threads.GetThreadVariables();
+			var tv = script.Threads.CurrentThread.configData;
 			var sendLevel = tv.sendLevel;
 
 			for (var i = 0L; i < repeatCount; ++i)
@@ -1931,7 +1931,7 @@ namespace Keysharp.Core.Windows
 		}
 
 		// For #MenuMaskKey.
-		internal override void SendKeyEventMenuMask(KeyEventTypes eventType, uint extraInfo = KeyIgnoreAllExceptModifier) => SendKeyEvent(eventType, menuMaskKeyVK, menuMaskKeySC, 0, false, extraInfo);
+		internal override void SendKeyEventMenuMask(KeyEventTypes eventType, long extraInfo = KeyIgnoreAllExceptModifier) => SendKeyEvent(eventType, menuMaskKeyVK, menuMaskKeySC, 0, false, extraInfo);
 
 		/// <summary>
 		/// thisHotkeyModifiersLR, if non-zero,
@@ -1956,7 +1956,7 @@ namespace Keysharp.Core.Windows
 			var sub = keys.AsSpan();
 			var ht = script.HookThread;
 
-			if (inBlindMode = ((sendRaw == SendRawModes.NotRaw) && keys.StartsWith("{Blind"))) // Don't allow {Blind} while in raw mode due to slight chance {Blind} is intended to be sent as a literal string.
+			if (inBlindMode = ((sendRaw == SendRawModes.NotRaw) && keys.StartsWith("{Blind", StringComparison.OrdinalIgnoreCase))) // Don't allow {Blind} while in raw mode due to slight chance {Blind} is intended to be sent as a literal string.
 			{
 				// Blind Mode (since this seems too obscure to document, it's mentioned here):  Blind Mode relies
 				// on modifiers already down for something like ^c because ^c is saying "manifest a ^c", which will
@@ -1995,14 +1995,14 @@ namespace Keysharp.Core.Windows
 				sub = keySpan.Slice(i);
 			}
 
-			if ((sendRaw == SendRawModes.NotRaw) && sub.StartsWith("{Text}"))
+			if ((sendRaw == SendRawModes.NotRaw) && sub.StartsWith("{Text}", StringComparison.OrdinalIgnoreCase))
 			{
 				// Setting this early allows CapsLock and the Win+L workaround to be skipped:
 				sendRaw = SendRawModes.RawText;
 				sub = sub.Slice(6);
 			}
 
-			var tv = script.Threads.GetThreadVariables();
+			var tv = script.Threads.CurrentThread.configData;
 			var origKeyDelay = tv.keyDelay;
 			var origPressDuration = tv.keyDuration;
 
@@ -2454,7 +2454,7 @@ namespace Keysharp.Core.Windows
 										{
 											eventType = KeyEventTypes.KeyUp;
 										}
-										else if (!subspan.StartsWith("ASC"))
+										else if (!subspan.StartsWith("ASC", StringComparison.OrdinalIgnoreCase))
 										{
 											if (long.TryParse(nextWord, out var templ))
 											{
@@ -3050,13 +3050,13 @@ namespace Keysharp.Core.Windows
 			uInput[0].i.k.dwFlags = KEYEVENTF_UNICODE;
 			uInput[0].i.k.time = 0;
 			// L25: Set dwExtraInfo to ensure AutoHotkey ignores the event; otherwise it may trigger a SCxxx hotkey (where xxx is u_code).
-			uInput[0].i.k.dwExtraInfo = KeyIgnoreLevel(sendLevel);
+			uInput[0].i.k.dwExtraInfo = (ulong)KeyIgnoreLevel(sendLevel);
 			uInput[1].type = INPUT_KEYBOARD;
 			uInput[1].i.k.wVk = 0;
 			uInput[1].i.k.wScan = ch;
 			uInput[1].i.k.dwFlags = KEYEVENTF_UNICODE | KEYEVENTF_KEYUP;
 			uInput[1].i.k.time = 0;
-			uInput[1].i.k.dwExtraInfo = KeyIgnoreLevel(sendLevel);
+			uInput[1].i.k.dwExtraInfo = (ulong)KeyIgnoreLevel(sendLevel);
 			_ = SendInput(2, uInput, 40);// sizeof(INPUT));
 		}
 
@@ -3081,7 +3081,7 @@ namespace Keysharp.Core.Windows
 		/// <param name="disguiseUpWinAlt"></param>
 		/// <param name="extraInfo"></param>
 		internal void SetModifierLRState(uint modifiersLRnew, uint modifiersLRnow, nint targetWindow
-										 , bool disguiseDownWinAlt, bool disguiseUpWinAlt, uint extraInfo = KeyIgnoreAllExceptModifier)
+										 , bool disguiseDownWinAlt, bool disguiseUpWinAlt, long extraInfo = KeyIgnoreAllExceptModifier)
 		{
 			if (modifiersLRnow == modifiersLRnew) // They're already in the right state, so avoid doing all the checks.
 				return; // Especially avoids the aTargetWindow check at the bottom.
@@ -3719,7 +3719,7 @@ namespace Keysharp.Core.Windows
 		/// <param name="doKeyDelay"></param>
 		/// <param name="extraInfo"></param>
 		///
-		protected internal override void SendKeyEvent(KeyEventTypes eventType, uint vk, uint sc = 0u, nint targetWindow = default, bool doKeyDelay = false, uint extraInfo = KeyIgnoreAllExceptModifier)
+		protected internal override void SendKeyEvent(KeyEventTypes eventType, uint vk, uint sc = 0u, nint targetWindow = default, bool doKeyDelay = false, long extraInfo = KeyIgnoreAllExceptModifier)
 		{
 			if ((vk | sc) == 0)//If neither VK nor SC was specified, return.
 				return;
@@ -3903,7 +3903,7 @@ namespace Keysharp.Core.Windows
 						if (hookableAltGr)
 							altGrExtraInfo = extraInfo;
 
-						keybd_event((byte)vk, (byte)scLowByte, eventFlags, extraInfo);// naked scan code (the 0xE0 prefix, if any, is omitted)
+						keybd_event((byte)vk, (byte)scLowByte, eventFlags, (uint)extraInfo);// naked scan code (the 0xE0 prefix, if any, is omitted)
 						altGrExtraInfo = 0; // Unconditional reset.
 					}
 
@@ -3928,7 +3928,7 @@ namespace Keysharp.Core.Windows
 						if (hookableAltGr) // See comments in similar section above for details.
 							altGrExtraInfo = extraInfo;
 
-						keybd_event((byte)vk, (byte)scLowByte, eventFlags, extraInfo);
+						keybd_event((byte)vk, (byte)scLowByte, eventFlags, (uint)extraInfo);
 						altGrExtraInfo = 0; // Unconditional reset.
 					}
 

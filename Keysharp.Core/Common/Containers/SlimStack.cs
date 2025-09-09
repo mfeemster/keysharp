@@ -36,14 +36,16 @@
 		/// All stack elements start off as null and will be created as needed
 		/// by calling create().
 		/// </summary>
-		/// <param name="s">The maximum size of the stack.</param>
-		/// <param name="c">The creation function used to create each element.</param>
-		public SlimStack(int s, Func<T> c)
+		/// <param name="capacity">The maximum size of the stack.</param>
+		/// <param name="factory">The creation function used to create each element.</param>
+		public SlimStack(int capacity, Func<T> factory)
 		{
+			if (capacity <= 0) throw new ArgumentOutOfRangeException(nameof(capacity));
+
 			index = 0;
-			size = s;
+			size = capacity;
 			list = new T[size];//All will be null to begin with.
-			create = c;
+			create = factory ?? throw new ArgumentNullException(nameof(factory));
 		}
 		/// <summary>
 		/// Attempts to push a new object onto the stack.
@@ -53,21 +55,42 @@
 		/// <returns>True if the object was pushed, else false if there was no available space.</returns>
 		public bool TryPush(out T obj)
 		{
-			var next = Interlocked.Increment(ref index);//This is probably not actually thread safe: push, push, mid-push, pop, push.//TODO
+			// Use CAS to bump the count and reserve a slot, then we can safely create the thread object there
+			int slot;
 
-			if (next > 0 && next <= size)
+			while (true)
 			{
-				obj = list[next - 1];
+				// 1) grab the current count
+				int oldCount = Volatile.Read(ref index);
 
-				if (obj == null)
-					list[next - 1] = obj = create();
+				if (oldCount >= size)
+				{
+					// stack is full
+					obj = null;
+					return false;
+				}
 
-				return true;
+				// 2) try to bump it
+				if (Interlocked.CompareExchange(ref index, oldCount + 1, oldCount) == oldCount)
+				{
+					slot = oldCount;  // reserved this slot
+					break;
+				}
+
+				// else: contention, retry
 			}
 
-			obj = null;
-			_ = Interlocked.Decrement(ref index);//Went too far up, so bump back down.
-			return false;//No room, so just don't return the object and let the GC handle it.
+			// 3) now initialize or reuse the element at `list[slot]`.
+			//    No other thread can touch this `slot` until it'capacity popped.
+			obj = Volatile.Read(ref list[slot]);
+
+			if (obj == null)
+			{
+				obj = create();
+				Volatile.Write(ref list[slot], obj);
+			}
+
+			return true;
 		}
 		/// <summary>
 		/// Returns the most recent element in the stack if it exists.<br/>
@@ -78,8 +101,12 @@
 		/// <returns>The most recent element, else null if empty.</returns>
 		public T TryPeek()
 		{
-			var i = index;
-			return i > 0 && i <= list.Length ? list[i - 1] : null;
+			int cnt = Volatile.Read(ref index);
+
+			if (cnt <= 0 || cnt > list.Length)
+				return null;
+
+			return Volatile.Read(ref list[cnt - 1]);
 		}
 		/// <summary>
 		/// Removes and returns the most recent element in the stack if it exists.
@@ -91,18 +118,35 @@
 		/// <returns>True if an element was successfully removed and assigned to obj, else false.</returns>
 		public bool TryPop(out T obj)
 		{
-			var next = Interlocked.Decrement(ref index);
+			// Use CAS to decrease the count and free the current slot
+			int slot;
 
-			if (next >= 0 && next < size)
+			while (true)
 			{
-				obj = list[next];
-				return true;
-			}
-			else
-				_ = Interlocked.Increment(ref index);//Went too far down, so bump back up.
+				// 1) read count
+				int oldCount = Volatile.Read(ref index);
 
-			obj = null;
-			return false;
+				if (oldCount <= 0)
+				{
+					obj = null;
+					return false;
+				}
+
+				int newCount = oldCount - 1;
+
+				// 2) try to decrement
+				if (Interlocked.CompareExchange(ref index, newCount, oldCount) == oldCount)
+				{
+					slot = newCount;  // this is the top slot
+					break;
+				}
+
+				// else retry
+			}
+
+			// 3) return whatever lives at `list[slot]`
+			obj = Volatile.Read(ref list[slot]);
+			return obj != null;
 		}
 	}
 }

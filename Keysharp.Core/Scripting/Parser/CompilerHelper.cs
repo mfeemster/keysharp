@@ -300,9 +300,19 @@ using Buffer = Keysharp.Core.Buffer
 				if (file.Length == 0)
 					file = "*";
 
+				string lineinfo = "";
+				if (file != "*")
+					lineinfo += file;
+				if (error.Line != 0 || error.Column != 0)
+				{
+					if (lineinfo != "")
+						lineinfo += " ";
+					lineinfo += $"{error.Line}:{error.Column}";
+				}
+
 				_ = !error.IsWarning
-					? sbe.AppendLine($"\n{error.ErrorText}")
-					: sbw.AppendLine($"\n{error.ErrorText}");
+					? sbe.AppendLine($"\n{(lineinfo != "" ? lineinfo + ": " : "")}{error.ErrorText}")
+					: sbw.AppendLine($"\n{(lineinfo != "" ? lineinfo + ": " : "")}{error.ErrorText}");
 			}
 
 			return (sbe.ToString(), sbw.ToString());
@@ -579,7 +589,7 @@ using Buffer = Keysharp.Core.Buffer
                     }
                     catch (ParseException e)
                     {
-                        _ = errors.Add(new CompilerError(e.File, (int)e.Line, 0, "0", e.Message));
+                        _ = errors.Add(new CompilerError(e.File, (int)e.Line, e.Column, "0", e.Message));
                     }
                     catch (Exception e)
                     {

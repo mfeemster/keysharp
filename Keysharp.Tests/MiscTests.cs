@@ -179,7 +179,7 @@ namespace Keysharp.Tests
 			var fo = (IFuncObj)a.GetMethod("Clear");
 			_ = fo.Call(a);
 			Assert.AreEqual(0L, a.Length);
-			Assert.IsTrue(new KeysharpObject().HasBase(new Any()) == 1L);
+			Assert.IsTrue(new KeysharpObject().Base.Base.GetType() == typeof(Any));
 			Assert.IsTrue(TestScript("misc-object", true));
 		}
 

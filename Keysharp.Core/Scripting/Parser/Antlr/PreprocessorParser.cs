@@ -55,23 +55,24 @@ public partial class PreprocessorParser : PreprocessorParserBase {
 		BigHexIntegerLiteral=77, BigOctalIntegerLiteral=78, BigBinaryIntegerLiteral=79, 
 		BigDecimalIntegerLiteral=80, Break=81, Do=82, Instanceof=83, Switch=84, 
 		Case=85, Default=86, Else=87, Catch=88, Finally=89, Return=90, Continue=91, 
-		For=92, While=93, LoopParse=94, LoopReg=95, LoopRead=96, LoopFiles=97, 
-		Loop=98, Until=99, This=100, If=101, Throw=102, Delete=103, In=104, Try=105, 
-		Yield=106, Is=107, Contains=108, VerbalAnd=109, VerbalNot=110, VerbalOr=111, 
-		Goto=112, Get=113, Set=114, Class=115, Enum=116, Extends=117, Super=118, 
-		Base=119, Export=120, Import=121, From=122, As=123, Async=124, Await=125, 
-		Static=126, Global=127, Local=128, HotIf=129, InputLevel=130, SuspendExempt=131, 
-		UseHook=132, HotstringOptions=133, Identifier=134, StringLiteral=135, 
-		EOL=136, WS=137, UnexpectedCharacter=138, HotstringWhitespaces=139, HotstringMultiLineExpansion=140, 
-		HotstringSingleLineExpansion=141, HotstringUnexpectedCharacter=142, DirectiveWhitespaces=143, 
-		DirectiveContent=144, DirectiveUnexpectedCharacter=145, PreprocessorDirectiveWS=146, 
-		Digits=147, Define=148, Undef=149, ElIf=150, EndIf=151, Line=152, Error=153, 
-		Warning=154, Region=155, EndRegion=156, Pragma=157, Nullable=158, Include=159, 
-		IncludeAgain=160, DllLoad=161, Requires=162, SingleInstance=163, Persistent=164, 
-		Warn=165, NoDynamicVars=166, ErrorStdOut=167, ClipboardTimeout=168, HotIfTimeout=169, 
-		MaxThreads=170, MaxThreadsBuffer=171, MaxThreadsPerHotkey=172, Assembly=173, 
-		DirectiveHidden=174, ConditionalSymbol=175, DirectiveSingleLineComment=176, 
-		DirectiveNewline=177, Text=178;
+		For=92, While=93, Parse=94, Reg=95, Read=96, Files=97, Loop=98, Until=99, 
+		This=100, If=101, Throw=102, Delete=103, In=104, Try=105, Yield=106, Is=107, 
+		Contains=108, VerbalAnd=109, VerbalNot=110, VerbalOr=111, Goto=112, Get=113, 
+		Set=114, Class=115, Enum=116, Extends=117, Super=118, Base=119, Export=120, 
+		Import=121, From=122, As=123, Async=124, Await=125, Static=126, Global=127, 
+		Local=128, Identifier=129, StringLiteral=130, EOL=131, WS=132, UnexpectedCharacter=133, 
+		HotstringWhitespaces=134, HotstringMultiLineExpansion=135, HotstringSingleLineExpansion=136, 
+		HotstringUnexpectedCharacter=137, DirectiveWhitespaces=138, DirectiveContent=139, 
+		DirectiveUnexpectedCharacter=140, Digits=141, HotIf=142, InputLevel=143, 
+		SuspendExempt=144, UseHook=145, Hotstring=146, Define=147, Undef=148, 
+		ElIf=149, EndIf=150, Line=151, Error=152, Warning=153, Region=154, EndRegion=155, 
+		Pragma=156, Nullable=157, Include=158, IncludeAgain=159, DllLoad=160, 
+		Requires=161, SingleInstance=162, Persistent=163, Warn=164, NoDynamicVars=165, 
+		ErrorStdOut=166, ClipboardTimeout=167, HotIfTimeout=168, MaxThreads=169, 
+		MaxThreadsBuffer=170, MaxThreadsPerHotkey=171, WinActivateForce=172, NoTrayIcon=173, 
+		Assembly=174, DirectiveHidden=175, ConditionalSymbol=176, DirectiveSingleLineComment=177, 
+		DirectiveNewline=178, UnexpectedDirectiveCharacter=179, Text=180, UnexpectedTextDirectiveCharacter=181, 
+		NoMouse=182, EndChars=183, HotstringOptions=184, UnexpectedHotstringOptionsCharacter=185;
 	public const int
 		RULE_preprocessor_directive = 0, RULE_directive_new_line_or_sharp = 1, 
 		RULE_preprocessor_expression = 2;
@@ -83,23 +84,24 @@ public partial class PreprocessorParser : PreprocessorParserBase {
 		null, null, null, null, null, null, null, "'['", "']'", "'('", "')'", 
 		"'{'", "'}'", "','", "':='", "'?'", "'?.'", "':'", "'::'", "'...'", "'.'", 
 		null, "'++'", "'--'", "'+'", "'-'", "'~'", "'!'", "'*'", "'/'", "'//'", 
-		"'%'", "'**'", "'??'", null, "'>>'", "'<<'", "'>>>'", "'<'", "'>'", "'<='", 
+		"'%'", "'**'", "'??'", "'#'", "'>>'", "'<<'", "'>>>'", "'<'", "'>'", "'<='", 
 		"'>='", "'='", "'!='", "'=='", "'!=='", "'~='", "'&'", "'^'", "'|'", "'&&'", 
 		"'||'", "'*='", "'/='", "'%='", "'+='", "'-='", "'<<='", "'>>='", "'>>>='", 
 		"'//='", "'.='", "'&='", "'^='", "'|='", "'**='", "'??='", "'=>'", "'null'", 
 		"'unset'", "'true'", "'false'", null, null, null, null, null, null, null, 
 		null, null, "'break'", "'do'", "'instanceof'", "'switch'", "'case'", "'default'", 
 		"'else'", "'catch'", "'finally'", "'return'", "'continue'", "'for'", "'while'", 
-		null, null, null, null, null, "'until'", "'this'", "'if'", "'throw'", 
-		"'delete'", "'in'", "'try'", "'yield'", "'is'", "'contains'", "'and'", 
-		"'not'", "'or'", "'goto'", "'get'", "'set'", "'class'", "'enum'", "'extends'", 
-		"'super'", "'base'", "'export'", "'import'", "'from'", "'as'", "'async'", 
-		"'await'", "'static'", "'global'", "'local'", "'#hotif'", "'#inputlevel'", 
-		"'#suspendexempt'", "'#usehook'", null, null, null, null, null, null, 
-		null, null, null, null, null, null, null, null, null, "'define'", "'undef'", 
-		"'elif'", "'endif'", "'line'", null, null, null, null, null, null, null, 
-		null, null, null, null, null, null, "'nodynamicvars'", "'errorstdout'", 
-		null, null, null, null, null, null, "'hidden'"
+		"'parse'", "'reg'", "'read'", "'files'", "'loop'", "'until'", "'this'", 
+		"'if'", "'throw'", "'delete'", "'in'", "'try'", "'yield'", "'is'", "'contains'", 
+		"'and'", "'not'", "'or'", "'goto'", "'get'", "'set'", "'class'", "'enum'", 
+		"'extends'", "'super'", "'base'", "'export'", "'import'", "'from'", "'as'", 
+		"'async'", "'await'", "'static'", "'global'", "'local'", null, null, null, 
+		null, null, null, null, null, null, null, null, null, null, "'hotif'", 
+		"'inputlevel'", "'suspendexempt'", "'usehook'", "'hotstring'", "'define'", 
+		"'undef'", "'elif'", "'endif'", "'line'", null, null, null, null, null, 
+		null, null, null, null, null, null, null, null, "'nodynamicvars'", "'errorstdout'", 
+		null, null, null, null, null, "'winactivateforce'", "'notrayicon'", null, 
+		"'hidden'", null, null, null, null, null, null, "'NoMouse'", "'EndChars'"
 	};
 	private static readonly string[] _SymbolicNames = {
 		null, "DerefStart", "DerefEnd", "SingleLineBlockComment", "HotstringTrigger", 
@@ -120,21 +122,22 @@ public partial class PreprocessorParser : PreprocessorParserBase {
 		"BigHexIntegerLiteral", "BigOctalIntegerLiteral", "BigBinaryIntegerLiteral", 
 		"BigDecimalIntegerLiteral", "Break", "Do", "Instanceof", "Switch", "Case", 
 		"Default", "Else", "Catch", "Finally", "Return", "Continue", "For", "While", 
-		"LoopParse", "LoopReg", "LoopRead", "LoopFiles", "Loop", "Until", "This", 
-		"If", "Throw", "Delete", "In", "Try", "Yield", "Is", "Contains", "VerbalAnd", 
-		"VerbalNot", "VerbalOr", "Goto", "Get", "Set", "Class", "Enum", "Extends", 
-		"Super", "Base", "Export", "Import", "From", "As", "Async", "Await", "Static", 
-		"Global", "Local", "HotIf", "InputLevel", "SuspendExempt", "UseHook", 
-		"HotstringOptions", "Identifier", "StringLiteral", "EOL", "WS", "UnexpectedCharacter", 
+		"Parse", "Reg", "Read", "Files", "Loop", "Until", "This", "If", "Throw", 
+		"Delete", "In", "Try", "Yield", "Is", "Contains", "VerbalAnd", "VerbalNot", 
+		"VerbalOr", "Goto", "Get", "Set", "Class", "Enum", "Extends", "Super", 
+		"Base", "Export", "Import", "From", "As", "Async", "Await", "Static", 
+		"Global", "Local", "Identifier", "StringLiteral", "EOL", "WS", "UnexpectedCharacter", 
 		"HotstringWhitespaces", "HotstringMultiLineExpansion", "HotstringSingleLineExpansion", 
 		"HotstringUnexpectedCharacter", "DirectiveWhitespaces", "DirectiveContent", 
-		"DirectiveUnexpectedCharacter", "PreprocessorDirectiveWS", "Digits", "Define", 
-		"Undef", "ElIf", "EndIf", "Line", "Error", "Warning", "Region", "EndRegion", 
-		"Pragma", "Nullable", "Include", "IncludeAgain", "DllLoad", "Requires", 
-		"SingleInstance", "Persistent", "Warn", "NoDynamicVars", "ErrorStdOut", 
-		"ClipboardTimeout", "HotIfTimeout", "MaxThreads", "MaxThreadsBuffer", 
-		"MaxThreadsPerHotkey", "Assembly", "DirectiveHidden", "ConditionalSymbol", 
-		"DirectiveSingleLineComment", "DirectiveNewline", "Text"
+		"DirectiveUnexpectedCharacter", "Digits", "HotIf", "InputLevel", "SuspendExempt", 
+		"UseHook", "Hotstring", "Define", "Undef", "ElIf", "EndIf", "Line", "Error", 
+		"Warning", "Region", "EndRegion", "Pragma", "Nullable", "Include", "IncludeAgain", 
+		"DllLoad", "Requires", "SingleInstance", "Persistent", "Warn", "NoDynamicVars", 
+		"ErrorStdOut", "ClipboardTimeout", "HotIfTimeout", "MaxThreads", "MaxThreadsBuffer", 
+		"MaxThreadsPerHotkey", "WinActivateForce", "NoTrayIcon", "Assembly", "DirectiveHidden", 
+		"ConditionalSymbol", "DirectiveSingleLineComment", "DirectiveNewline", 
+		"UnexpectedDirectiveCharacter", "Text", "UnexpectedTextDirectiveCharacter", 
+		"NoMouse", "EndChars", "HotstringOptions", "UnexpectedHotstringOptionsCharacter"
 	};
 	public static readonly IVocabulary DefaultVocabulary = new Vocabulary(_LiteralNames, _SymbolicNames);
 
@@ -182,6 +185,19 @@ public partial class PreprocessorParser : PreprocessorParserBase {
 			this.value = context.value;
 		}
 	}
+	public partial class PreprocessorNoTrayIconContext : Preprocessor_directiveContext {
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode NoTrayIcon() { return GetToken(PreprocessorParser.NoTrayIcon, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public Directive_new_line_or_sharpContext directive_new_line_or_sharp() {
+			return GetRuleContext<Directive_new_line_or_sharpContext>(0);
+		}
+		public PreprocessorNoTrayIconContext(Preprocessor_directiveContext context) { CopyFrom(context); }
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IPreprocessorParserVisitor<TResult> typedVisitor = visitor as IPreprocessorParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitPreprocessorNoTrayIcon(this);
+			else return visitor.VisitChildren(this);
+		}
+	}
 	public partial class PreprocessorNullableContext : Preprocessor_directiveContext {
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode Nullable() { return GetToken(PreprocessorParser.Nullable, 0); }
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode Text() { return GetToken(PreprocessorParser.Text, 0); }
@@ -193,20 +209,6 @@ public partial class PreprocessorParser : PreprocessorParserBase {
 		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
 			IPreprocessorParserVisitor<TResult> typedVisitor = visitor as IPreprocessorParserVisitor<TResult>;
 			if (typedVisitor != null) return typedVisitor.VisitPreprocessorNullable(this);
-			else return visitor.VisitChildren(this);
-		}
-	}
-	public partial class PreprocessorWarnContext : Preprocessor_directiveContext {
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode Warn() { return GetToken(PreprocessorParser.Warn, 0); }
-		[System.Diagnostics.DebuggerNonUserCode] public Directive_new_line_or_sharpContext directive_new_line_or_sharp() {
-			return GetRuleContext<Directive_new_line_or_sharpContext>(0);
-		}
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode Text() { return GetToken(PreprocessorParser.Text, 0); }
-		public PreprocessorWarnContext(Preprocessor_directiveContext context) { CopyFrom(context); }
-		[System.Diagnostics.DebuggerNonUserCode]
-		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
-			IPreprocessorParserVisitor<TResult> typedVisitor = visitor as IPreprocessorParserVisitor<TResult>;
-			if (typedVisitor != null) return typedVisitor.VisitPreprocessorWarn(this);
 			else return visitor.VisitChildren(this);
 		}
 	}
@@ -252,6 +254,19 @@ public partial class PreprocessorParser : PreprocessorParserBase {
 			else return visitor.VisitChildren(this);
 		}
 	}
+	public partial class PreprocessorWinActivateForceContext : Preprocessor_directiveContext {
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode WinActivateForce() { return GetToken(PreprocessorParser.WinActivateForce, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public Directive_new_line_or_sharpContext directive_new_line_or_sharp() {
+			return GetRuleContext<Directive_new_line_or_sharpContext>(0);
+		}
+		public PreprocessorWinActivateForceContext(Preprocessor_directiveContext context) { CopyFrom(context); }
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IPreprocessorParserVisitor<TResult> typedVisitor = visitor as IPreprocessorParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitPreprocessorWinActivateForce(this);
+			else return visitor.VisitChildren(this);
+		}
+	}
 	public partial class PreprocessorLineContext : Preprocessor_directiveContext {
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode Line() { return GetToken(PreprocessorParser.Line, 0); }
 		[System.Diagnostics.DebuggerNonUserCode] public Directive_new_line_or_sharpContext directive_new_line_or_sharp() {
@@ -278,7 +293,6 @@ public partial class PreprocessorParser : PreprocessorParserBase {
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode IncludeAgain() { return GetToken(PreprocessorParser.IncludeAgain, 0); }
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode DllLoad() { return GetToken(PreprocessorParser.DllLoad, 0); }
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode Requires() { return GetToken(PreprocessorParser.Requires, 0); }
-		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode SingleInstance() { return GetToken(PreprocessorParser.SingleInstance, 0); }
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode Assembly() { return GetToken(PreprocessorParser.Assembly, 0); }
 		public PreprocessorTextualDirectiveContext(Preprocessor_directiveContext context) { CopyFrom(context); }
 		[System.Diagnostics.DebuggerNonUserCode]
@@ -347,6 +361,21 @@ public partial class PreprocessorParser : PreprocessorParserBase {
 			else return visitor.VisitChildren(this);
 		}
 	}
+	public partial class PreprocessorOptionalTextualDirectiveContext : Preprocessor_directiveContext {
+		[System.Diagnostics.DebuggerNonUserCode] public Directive_new_line_or_sharpContext directive_new_line_or_sharp() {
+			return GetRuleContext<Directive_new_line_or_sharpContext>(0);
+		}
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode Warn() { return GetToken(PreprocessorParser.Warn, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode SingleInstance() { return GetToken(PreprocessorParser.SingleInstance, 0); }
+		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode Text() { return GetToken(PreprocessorParser.Text, 0); }
+		public PreprocessorOptionalTextualDirectiveContext(Preprocessor_directiveContext context) { CopyFrom(context); }
+		[System.Diagnostics.DebuggerNonUserCode]
+		public override TResult Accept<TResult>(IParseTreeVisitor<TResult> visitor) {
+			IPreprocessorParserVisitor<TResult> typedVisitor = visitor as IPreprocessorParserVisitor<TResult>;
+			if (typedVisitor != null) return typedVisitor.VisitPreprocessorOptionalTextualDirective(this);
+			else return visitor.VisitChildren(this);
+		}
+	}
 	public partial class PreprocessorConditionalContext : Preprocessor_directiveContext {
 		public Preprocessor_expressionContext expr;
 		[System.Diagnostics.DebuggerNonUserCode] public ITerminalNode If() { return GetToken(PreprocessorParser.If, 0); }
@@ -392,7 +421,7 @@ public partial class PreprocessorParser : PreprocessorParserBase {
 		EnterRule(_localctx, 0, RULE_preprocessor_directive);
 		int _la;
 		try {
-			State = 100;
+			State = 104;
 			ErrorHandler.Sync(this);
 			switch (TokenStream.LA(1)) {
 			case Define:
@@ -612,14 +641,13 @@ public partial class PreprocessorParser : PreprocessorParserBase {
 			case IncludeAgain:
 			case DllLoad:
 			case Requires:
-			case SingleInstance:
 			case Assembly:
 				_localctx = new PreprocessorTextualDirectiveContext(_localctx);
 				EnterOuterAlt(_localctx, 14);
 				{
 				State = 80;
 				_la = TokenStream.LA(1);
-				if ( !(((((_la - 159)) & ~0x3f) == 0 && ((1L << (_la - 159)) & 16415L) != 0)) ) {
+				if ( !(((((_la - 158)) & ~0x3f) == 0 && ((1L << (_la - 158)) & 65551L) != 0)) ) {
 				ErrorHandler.RecoverInline(this);
 				}
 				else {
@@ -659,12 +687,20 @@ public partial class PreprocessorParser : PreprocessorParserBase {
 				directive_new_line_or_sharp();
 				}
 				break;
+			case SingleInstance:
 			case Warn:
-				_localctx = new PreprocessorWarnContext(_localctx);
+				_localctx = new PreprocessorOptionalTextualDirectiveContext(_localctx);
 				EnterOuterAlt(_localctx, 16);
 				{
 				State = 88;
-				Match(Warn);
+				_la = TokenStream.LA(1);
+				if ( !(_la==SingleInstance || _la==Warn) ) {
+				ErrorHandler.RecoverInline(this);
+				}
+				else {
+					ErrorHandler.ReportMatch(this);
+				    Consume();
+				}
 				State = 90;
 				ErrorHandler.Sync(this);
 				_la = TokenStream.LA(1);
@@ -699,26 +735,46 @@ public partial class PreprocessorParser : PreprocessorParserBase {
 				directive_new_line_or_sharp();
 				}
 				break;
+			case WinActivateForce:
+				_localctx = new PreprocessorWinActivateForceContext(_localctx);
+				EnterOuterAlt(_localctx, 19);
+				{
+				State = 97;
+				Match(WinActivateForce);
+				State = 98;
+				directive_new_line_or_sharp();
+				}
+				break;
+			case NoTrayIcon:
+				_localctx = new PreprocessorNoTrayIconContext(_localctx);
+				EnterOuterAlt(_localctx, 20);
+				{
+				State = 99;
+				Match(NoTrayIcon);
+				State = 100;
+				directive_new_line_or_sharp();
+				}
+				break;
 			case ClipboardTimeout:
 			case HotIfTimeout:
 			case MaxThreads:
 			case MaxThreadsBuffer:
 			case MaxThreadsPerHotkey:
 				_localctx = new PreprocessorNumericDirectiveContext(_localctx);
-				EnterOuterAlt(_localctx, 19);
+				EnterOuterAlt(_localctx, 21);
 				{
-				State = 97;
+				State = 101;
 				_la = TokenStream.LA(1);
-				if ( !(((((_la - 168)) & ~0x3f) == 0 && ((1L << (_la - 168)) & 31L) != 0)) ) {
+				if ( !(((((_la - 167)) & ~0x3f) == 0 && ((1L << (_la - 167)) & 31L) != 0)) ) {
 				ErrorHandler.RecoverInline(this);
 				}
 				else {
 					ErrorHandler.ReportMatch(this);
 				    Consume();
 				}
-				State = 98;
+				State = 102;
 				Match(Digits);
-				State = 99;
+				State = 103;
 				directive_new_line_or_sharp();
 				}
 				break;
@@ -761,7 +817,7 @@ public partial class PreprocessorParser : PreprocessorParserBase {
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 102;
+			State = 106;
 			_la = TokenStream.LA(1);
 			if ( !(_la==Eof || _la==DirectiveNewline) ) {
 			ErrorHandler.RecoverInline(this);
@@ -834,53 +890,53 @@ public partial class PreprocessorParser : PreprocessorParserBase {
 			int _alt;
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 122;
+			State = 126;
 			ErrorHandler.Sync(this);
 			switch (TokenStream.LA(1)) {
 			case True:
 				{
-				State = 105;
+				State = 109;
 				Match(True);
 				 this.OnPreprocessorExpressionTrue(); 
 				}
 				break;
 			case False:
 				{
-				State = 107;
+				State = 111;
 				Match(False);
 				 this.OnPreprocessorExpressionFalse(); 
 				}
 				break;
 			case Digits:
 				{
-				State = 109;
+				State = 113;
 				Match(Digits);
 				 this.OnPreprocessorExpressionDigits(); 
 				}
 				break;
 			case ConditionalSymbol:
 				{
-				State = 111;
+				State = 115;
 				Match(ConditionalSymbol);
 				 this.OnPreprocessorExpressionConditionalSymbol(); 
 				}
 				break;
 			case OpenParen:
 				{
-				State = 113;
+				State = 117;
 				Match(OpenParen);
-				State = 114;
+				State = 118;
 				_localctx.expr = preprocessor_expression(0);
-				State = 115;
+				State = 119;
 				Match(CloseParen);
 				 this.OnPreprocessorExpressionConditionalOpenParens(); 
 				}
 				break;
 			case Not:
 				{
-				State = 118;
+				State = 122;
 				Match(Not);
-				State = 119;
+				State = 123;
 				_localctx.expr = preprocessor_expression(5);
 				 this.OnPreprocessorExpressionConditionalNot(); 
 				}
@@ -889,7 +945,7 @@ public partial class PreprocessorParser : PreprocessorParserBase {
 				throw new NoViableAltException(this);
 			}
 			Context.Stop = TokenStream.LT(-1);
-			State = 146;
+			State = 150;
 			ErrorHandler.Sync(this);
 			_alt = Interpreter.AdaptivePredict(TokenStream,9,Context);
 			while ( _alt!=2 && _alt!=global::Antlr4.Runtime.Atn.ATN.INVALID_ALT_NUMBER ) {
@@ -898,7 +954,7 @@ public partial class PreprocessorParser : PreprocessorParserBase {
 						TriggerExitRuleEvent();
 					_prevctx = _localctx;
 					{
-					State = 144;
+					State = 148;
 					ErrorHandler.Sync(this);
 					switch ( Interpreter.AdaptivePredict(TokenStream,8,Context) ) {
 					case 1:
@@ -906,11 +962,11 @@ public partial class PreprocessorParser : PreprocessorParserBase {
 						_localctx = new Preprocessor_expressionContext(_parentctx, _parentState);
 						_localctx.expr1 = _prevctx;
 						PushNewRecursionContext(_localctx, _startState, RULE_preprocessor_expression);
-						State = 124;
+						State = 128;
 						if (!(Precpred(Context, 4))) throw new FailedPredicateException(this, "Precpred(Context, 4)");
-						State = 125;
+						State = 129;
 						Match(IdentityEquals);
-						State = 126;
+						State = 130;
 						_localctx.expr2 = preprocessor_expression(5);
 						 this.OnPreprocessorExpressionConditionalEq(); 
 						}
@@ -920,11 +976,11 @@ public partial class PreprocessorParser : PreprocessorParserBase {
 						_localctx = new Preprocessor_expressionContext(_parentctx, _parentState);
 						_localctx.expr1 = _prevctx;
 						PushNewRecursionContext(_localctx, _startState, RULE_preprocessor_expression);
-						State = 129;
+						State = 133;
 						if (!(Precpred(Context, 3))) throw new FailedPredicateException(this, "Precpred(Context, 3)");
-						State = 130;
+						State = 134;
 						Match(NotEquals);
-						State = 131;
+						State = 135;
 						_localctx.expr2 = preprocessor_expression(4);
 						 this.OnPreprocessorExpressionConditionalNe(); 
 						}
@@ -934,11 +990,11 @@ public partial class PreprocessorParser : PreprocessorParserBase {
 						_localctx = new Preprocessor_expressionContext(_parentctx, _parentState);
 						_localctx.expr1 = _prevctx;
 						PushNewRecursionContext(_localctx, _startState, RULE_preprocessor_expression);
-						State = 134;
+						State = 138;
 						if (!(Precpred(Context, 2))) throw new FailedPredicateException(this, "Precpred(Context, 2)");
-						State = 135;
+						State = 139;
 						Match(And);
-						State = 136;
+						State = 140;
 						_localctx.expr2 = preprocessor_expression(3);
 						 this.OnPreprocessorExpressionConditionalAnd(); 
 						}
@@ -948,11 +1004,11 @@ public partial class PreprocessorParser : PreprocessorParserBase {
 						_localctx = new Preprocessor_expressionContext(_parentctx, _parentState);
 						_localctx.expr1 = _prevctx;
 						PushNewRecursionContext(_localctx, _startState, RULE_preprocessor_expression);
-						State = 139;
+						State = 143;
 						if (!(Precpred(Context, 1))) throw new FailedPredicateException(this, "Precpred(Context, 1)");
-						State = 140;
+						State = 144;
 						Match(Or);
-						State = 141;
+						State = 145;
 						_localctx.expr2 = preprocessor_expression(2);
 						 this.OnPreprocessorExpressionConditionalOr(); 
 						}
@@ -960,7 +1016,7 @@ public partial class PreprocessorParser : PreprocessorParserBase {
 					}
 					} 
 				}
-				State = 148;
+				State = 152;
 				ErrorHandler.Sync(this);
 				_alt = Interpreter.AdaptivePredict(TokenStream,9,Context);
 			}
@@ -994,56 +1050,58 @@ public partial class PreprocessorParser : PreprocessorParserBase {
 	}
 
 	private static int[] _serializedATN = {
-		4,1,178,150,2,0,7,0,2,1,7,1,2,2,7,2,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,
+		4,1,185,154,2,0,7,0,2,1,7,1,2,2,7,2,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,
 		0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,
 		1,0,1,0,1,0,1,0,1,0,3,0,38,8,0,1,0,1,0,3,0,42,8,0,1,0,1,0,1,0,1,0,1,0,
 		1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,3,0,59,8,0,1,0,1,0,1,0,1,0,1,0,
 		3,0,66,8,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,
 		1,0,1,0,1,0,3,0,86,8,0,1,0,1,0,1,0,3,0,91,8,0,1,0,1,0,1,0,1,0,1,0,1,0,
-		1,0,1,0,3,0,101,8,0,1,1,1,1,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,
-		2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,3,2,123,8,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,
-		1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,5,2,145,8,2,10,2,12,
-		2,148,9,2,1,2,0,1,4,3,0,2,4,0,4,2,0,159,163,173,173,2,0,70,71,147,147,
-		1,0,168,172,1,1,177,177,180,0,100,1,0,0,0,2,102,1,0,0,0,4,122,1,0,0,0,
-		6,7,5,148,0,0,7,8,5,175,0,0,8,9,3,2,1,0,9,10,6,0,-1,0,10,101,1,0,0,0,11,
-		12,5,149,0,0,12,13,5,175,0,0,13,14,3,2,1,0,14,15,6,0,-1,0,15,101,1,0,0,
-		0,16,17,5,101,0,0,17,18,3,4,2,0,18,19,3,2,1,0,19,20,6,0,-1,0,20,101,1,
-		0,0,0,21,22,5,150,0,0,22,23,3,4,2,0,23,24,3,2,1,0,24,25,6,0,-1,0,25,101,
-		1,0,0,0,26,27,5,87,0,0,27,28,3,2,1,0,28,29,6,0,-1,0,29,101,1,0,0,0,30,
-		31,5,151,0,0,31,32,3,2,1,0,32,33,6,0,-1,0,33,101,1,0,0,0,34,41,5,152,0,
-		0,35,37,5,147,0,0,36,38,5,135,0,0,37,36,1,0,0,0,37,38,1,0,0,0,38,42,1,
-		0,0,0,39,42,5,86,0,0,40,42,5,174,0,0,41,35,1,0,0,0,41,39,1,0,0,0,41,40,
-		1,0,0,0,42,43,1,0,0,0,43,44,3,2,1,0,44,45,6,0,-1,0,45,101,1,0,0,0,46,47,
-		5,153,0,0,47,48,5,178,0,0,48,49,3,2,1,0,49,50,6,0,-1,0,50,101,1,0,0,0,
-		51,52,5,154,0,0,52,53,5,178,0,0,53,54,3,2,1,0,54,55,6,0,-1,0,55,101,1,
-		0,0,0,56,58,5,155,0,0,57,59,5,178,0,0,58,57,1,0,0,0,58,59,1,0,0,0,59,60,
-		1,0,0,0,60,61,3,2,1,0,61,62,6,0,-1,0,62,101,1,0,0,0,63,65,5,156,0,0,64,
-		66,5,178,0,0,65,64,1,0,0,0,65,66,1,0,0,0,66,67,1,0,0,0,67,68,3,2,1,0,68,
-		69,6,0,-1,0,69,101,1,0,0,0,70,71,5,157,0,0,71,72,5,178,0,0,72,73,3,2,1,
-		0,73,74,6,0,-1,0,74,101,1,0,0,0,75,76,5,158,0,0,76,77,5,178,0,0,77,78,
-		3,2,1,0,78,79,6,0,-1,0,79,101,1,0,0,0,80,81,7,0,0,0,81,82,5,178,0,0,82,
-		101,3,2,1,0,83,85,5,164,0,0,84,86,7,1,0,0,85,84,1,0,0,0,85,86,1,0,0,0,
-		86,87,1,0,0,0,87,101,3,2,1,0,88,90,5,165,0,0,89,91,5,178,0,0,90,89,1,0,
-		0,0,90,91,1,0,0,0,91,92,1,0,0,0,92,101,3,2,1,0,93,94,5,166,0,0,94,101,
-		3,2,1,0,95,96,5,167,0,0,96,101,3,2,1,0,97,98,7,2,0,0,98,99,5,147,0,0,99,
-		101,3,2,1,0,100,6,1,0,0,0,100,11,1,0,0,0,100,16,1,0,0,0,100,21,1,0,0,0,
-		100,26,1,0,0,0,100,30,1,0,0,0,100,34,1,0,0,0,100,46,1,0,0,0,100,51,1,0,
-		0,0,100,56,1,0,0,0,100,63,1,0,0,0,100,70,1,0,0,0,100,75,1,0,0,0,100,80,
-		1,0,0,0,100,83,1,0,0,0,100,88,1,0,0,0,100,93,1,0,0,0,100,95,1,0,0,0,100,
-		97,1,0,0,0,101,1,1,0,0,0,102,103,7,3,0,0,103,3,1,0,0,0,104,105,6,2,-1,
-		0,105,106,5,70,0,0,106,123,6,2,-1,0,107,108,5,71,0,0,108,123,6,2,-1,0,
-		109,110,5,147,0,0,110,123,6,2,-1,0,111,112,5,175,0,0,112,123,6,2,-1,0,
-		113,114,5,9,0,0,114,115,3,4,2,0,115,116,5,10,0,0,116,117,6,2,-1,0,117,
-		123,1,0,0,0,118,119,5,27,0,0,119,120,3,4,2,5,120,121,6,2,-1,0,121,123,
-		1,0,0,0,122,104,1,0,0,0,122,107,1,0,0,0,122,109,1,0,0,0,122,111,1,0,0,
-		0,122,113,1,0,0,0,122,118,1,0,0,0,123,146,1,0,0,0,124,125,10,4,0,0,125,
-		126,5,44,0,0,126,127,3,4,2,5,127,128,6,2,-1,0,128,145,1,0,0,0,129,130,
-		10,3,0,0,130,131,5,43,0,0,131,132,3,4,2,4,132,133,6,2,-1,0,133,145,1,0,
-		0,0,134,135,10,2,0,0,135,136,5,50,0,0,136,137,3,4,2,3,137,138,6,2,-1,0,
-		138,145,1,0,0,0,139,140,10,1,0,0,140,141,5,51,0,0,141,142,3,4,2,2,142,
-		143,6,2,-1,0,143,145,1,0,0,0,144,124,1,0,0,0,144,129,1,0,0,0,144,134,1,
-		0,0,0,144,139,1,0,0,0,145,148,1,0,0,0,146,144,1,0,0,0,146,147,1,0,0,0,
-		147,5,1,0,0,0,148,146,1,0,0,0,10,37,41,58,65,85,90,100,122,144,146
+		1,0,1,0,1,0,1,0,1,0,1,0,3,0,105,8,0,1,1,1,1,1,2,1,2,1,2,1,2,1,2,1,2,1,
+		2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,3,2,127,8,2,1,2,1,2,1,2,
+		1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,1,2,5,
+		2,149,8,2,10,2,12,2,152,9,2,1,2,0,1,4,3,0,2,4,0,5,2,0,158,161,174,174,
+		2,0,70,71,141,141,2,0,162,162,164,164,1,0,167,171,1,1,178,178,186,0,104,
+		1,0,0,0,2,106,1,0,0,0,4,126,1,0,0,0,6,7,5,147,0,0,7,8,5,176,0,0,8,9,3,
+		2,1,0,9,10,6,0,-1,0,10,105,1,0,0,0,11,12,5,148,0,0,12,13,5,176,0,0,13,
+		14,3,2,1,0,14,15,6,0,-1,0,15,105,1,0,0,0,16,17,5,101,0,0,17,18,3,4,2,0,
+		18,19,3,2,1,0,19,20,6,0,-1,0,20,105,1,0,0,0,21,22,5,149,0,0,22,23,3,4,
+		2,0,23,24,3,2,1,0,24,25,6,0,-1,0,25,105,1,0,0,0,26,27,5,87,0,0,27,28,3,
+		2,1,0,28,29,6,0,-1,0,29,105,1,0,0,0,30,31,5,150,0,0,31,32,3,2,1,0,32,33,
+		6,0,-1,0,33,105,1,0,0,0,34,41,5,151,0,0,35,37,5,141,0,0,36,38,5,130,0,
+		0,37,36,1,0,0,0,37,38,1,0,0,0,38,42,1,0,0,0,39,42,5,86,0,0,40,42,5,175,
+		0,0,41,35,1,0,0,0,41,39,1,0,0,0,41,40,1,0,0,0,42,43,1,0,0,0,43,44,3,2,
+		1,0,44,45,6,0,-1,0,45,105,1,0,0,0,46,47,5,152,0,0,47,48,5,180,0,0,48,49,
+		3,2,1,0,49,50,6,0,-1,0,50,105,1,0,0,0,51,52,5,153,0,0,52,53,5,180,0,0,
+		53,54,3,2,1,0,54,55,6,0,-1,0,55,105,1,0,0,0,56,58,5,154,0,0,57,59,5,180,
+		0,0,58,57,1,0,0,0,58,59,1,0,0,0,59,60,1,0,0,0,60,61,3,2,1,0,61,62,6,0,
+		-1,0,62,105,1,0,0,0,63,65,5,155,0,0,64,66,5,180,0,0,65,64,1,0,0,0,65,66,
+		1,0,0,0,66,67,1,0,0,0,67,68,3,2,1,0,68,69,6,0,-1,0,69,105,1,0,0,0,70,71,
+		5,156,0,0,71,72,5,180,0,0,72,73,3,2,1,0,73,74,6,0,-1,0,74,105,1,0,0,0,
+		75,76,5,157,0,0,76,77,5,180,0,0,77,78,3,2,1,0,78,79,6,0,-1,0,79,105,1,
+		0,0,0,80,81,7,0,0,0,81,82,5,180,0,0,82,105,3,2,1,0,83,85,5,163,0,0,84,
+		86,7,1,0,0,85,84,1,0,0,0,85,86,1,0,0,0,86,87,1,0,0,0,87,105,3,2,1,0,88,
+		90,7,2,0,0,89,91,5,180,0,0,90,89,1,0,0,0,90,91,1,0,0,0,91,92,1,0,0,0,92,
+		105,3,2,1,0,93,94,5,165,0,0,94,105,3,2,1,0,95,96,5,166,0,0,96,105,3,2,
+		1,0,97,98,5,172,0,0,98,105,3,2,1,0,99,100,5,173,0,0,100,105,3,2,1,0,101,
+		102,7,3,0,0,102,103,5,141,0,0,103,105,3,2,1,0,104,6,1,0,0,0,104,11,1,0,
+		0,0,104,16,1,0,0,0,104,21,1,0,0,0,104,26,1,0,0,0,104,30,1,0,0,0,104,34,
+		1,0,0,0,104,46,1,0,0,0,104,51,1,0,0,0,104,56,1,0,0,0,104,63,1,0,0,0,104,
+		70,1,0,0,0,104,75,1,0,0,0,104,80,1,0,0,0,104,83,1,0,0,0,104,88,1,0,0,0,
+		104,93,1,0,0,0,104,95,1,0,0,0,104,97,1,0,0,0,104,99,1,0,0,0,104,101,1,
+		0,0,0,105,1,1,0,0,0,106,107,7,4,0,0,107,3,1,0,0,0,108,109,6,2,-1,0,109,
+		110,5,70,0,0,110,127,6,2,-1,0,111,112,5,71,0,0,112,127,6,2,-1,0,113,114,
+		5,141,0,0,114,127,6,2,-1,0,115,116,5,176,0,0,116,127,6,2,-1,0,117,118,
+		5,9,0,0,118,119,3,4,2,0,119,120,5,10,0,0,120,121,6,2,-1,0,121,127,1,0,
+		0,0,122,123,5,27,0,0,123,124,3,4,2,5,124,125,6,2,-1,0,125,127,1,0,0,0,
+		126,108,1,0,0,0,126,111,1,0,0,0,126,113,1,0,0,0,126,115,1,0,0,0,126,117,
+		1,0,0,0,126,122,1,0,0,0,127,150,1,0,0,0,128,129,10,4,0,0,129,130,5,44,
+		0,0,130,131,3,4,2,5,131,132,6,2,-1,0,132,149,1,0,0,0,133,134,10,3,0,0,
+		134,135,5,43,0,0,135,136,3,4,2,4,136,137,6,2,-1,0,137,149,1,0,0,0,138,
+		139,10,2,0,0,139,140,5,50,0,0,140,141,3,4,2,3,141,142,6,2,-1,0,142,149,
+		1,0,0,0,143,144,10,1,0,0,144,145,5,51,0,0,145,146,3,4,2,2,146,147,6,2,
+		-1,0,147,149,1,0,0,0,148,128,1,0,0,0,148,133,1,0,0,0,148,138,1,0,0,0,148,
+		143,1,0,0,0,149,152,1,0,0,0,150,148,1,0,0,0,150,151,1,0,0,0,151,5,1,0,
+		0,0,152,150,1,0,0,0,10,37,41,58,65,85,90,104,126,148,150
 	};
 
 	public static readonly ATN _ATN =

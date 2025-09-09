@@ -8,7 +8,7 @@
 			private WeakReference<Gui> gui;
 			private readonly List<IFuncObj> clickHandlers = [];
 			private readonly List<IFuncObj> doubleClickHandlers = [];
-			private bool DpiScaling => ((Gui)Gui).dpiscaling;
+			internal bool DpiScaling => ((Gui)Gui).dpiscaling;
 			private System.Windows.Forms.Control _control;
 
 			//Normal event handlers can't be used becaused they need to return a value.
@@ -180,7 +180,12 @@
 					else if (_control is HotkeyBox hk)
 						return hk.GetText();
 					else if (_control is KeysharpNumericUpDown nud)
-						return nud.Value;
+					{
+						decimal v = decimal.Round(nud.Value, nud.DecimalPlaces);
+						if (v == decimal.Truncate(v) && v >= long.MinValue && v <= long.MaxValue)
+							return (long)v;
+						return (double)v;
+					}
 					else if (_control is KeysharpButton btn)
 						return btn.Text;
 					else if (_control is KeysharpCheckBox cb)
@@ -210,7 +215,7 @@
 					{
 						return lb.SelectionMode == SelectionMode.One
 							   ? (long)lb.SelectedIndex + 1
-							   : new Array(lb.SelectedIndices.Cast<int>().Select(x => x + 1).ToList());
+							   : new Array(lb.SelectedIndices.Cast<int>().Select(x => (long)x + 1));
 					}
 					else if (_control is KeysharpDateTimePicker dtp)
 						return Conversions.ToYYYYMMDDHH24MISS(dtp.Value);
@@ -229,9 +234,9 @@
 						}
 					}
 					else if (_control is KeysharpTrackBar tb)
-						return tb.Value;
+						return (long)tb.Value;
 					else if (_control is KeysharpProgressBar pb)
-						return pb.Value;
+						return (long)pb.Value;
 					else if (_control is KeysharpTabControl tc)
 						return (long)tc.SelectedIndex + 1;
 					else if (_control is KeysharpStatusStrip ss)
@@ -374,6 +379,11 @@
 
 									if (height < 0 && pic.ScaleHeight)
 										pic.Height = (int)(pic.Width / ratio);
+								} 
+								else if (pic.SizeMode == PictureBoxSizeMode.AutoSize && DpiScaling)
+								{
+									pic.Width = (int)(pic.Width * A_ScaledScreenDPI);
+									pic.Height = (int)(pic.Height * A_ScaledScreenDPI);
 								}
 
 								var oldimage = pic.Image;
@@ -565,12 +575,18 @@
 						var strs = obj.Cast<object>().Skip(1).Select(x => x.Str()).ToList();
 						result = ListViewHelper.AddOrInsertListViewItem(lv, lvo, strs, int.MinValue);
 					}
-					else if (_control is KeysharpListBox lb)//Using AddRange() relieves the caller of having to set -Redraw first.
-						lb.Items.AddRange(obj.Cast<object>().Select(x => x.Str()).ToArray());
-					else if (_control is KeysharpComboBox cb)
-						cb.Items.AddRange(obj.Cast<object>().Select(x => x.Str()).ToArray());
-					else if (_control is KeysharpTabControl tc)
-						tc.TabPages.AddRange(obj.Cast<object>().Select(x => new TabPage(x.Str())).ToArray());
+					else
+					{
+						if (obj.Length > 0 && obj[0] is Array arr)
+							obj = arr.array.ToArray();
+
+						if (_control is KeysharpListBox lb)//Using AddRange() relieves the caller of having to set -Redraw first.
+							lb.Items.AddRange(obj.Cast<object>().Select(x => x.Str()).ToArray());
+						else if (_control is KeysharpComboBox cb)
+							cb.Items.AddRange(obj.Cast<object>().Select(x => x.Str()).ToArray());
+						else if (_control is KeysharpTabControl tc)
+							tc.TabPages.AddRange(obj.Cast<object>().Select(x => new TabPage(x.Str())).ToArray());
+					}
 				}
 				finally
 				{
@@ -993,7 +1009,7 @@
 			public long Modify(object rowNumber, object options = null, params object[] obj)
 			{
 				var opts = options == null ? null : options.ToString();
-				var rownumber = rowNumber.Ai();
+				var rownumber = rowNumber.Al();
 
 				if (_control is KeysharpTreeView tv)
 				{
@@ -1026,7 +1042,7 @@
 
 							for (rownumber = start; rownumber < end; rownumber++)
 							{
-								var item = lv.Items[rownumber];
+								var item = lv.Items[(int)rownumber];
 
 								for (int i = 0, j = lvo.colstart; i < strs.Count && j < item.SubItems.Count; i++, j++)
 									item.SubItems[j].Text = strs[i];
@@ -1291,7 +1307,7 @@
 				if (gui == null || !gui.TryGetTarget(out var g))
 					return DefaultErrorObject;
 
-				var opts = Core.Gui.ParseOpt(typename, _control.Text, options.As());
+				var opts = g.ParseOpt(typename, _control.Text, options.As());
 
 				if (opts.redraw.HasValue)
 				{
@@ -1308,14 +1324,14 @@
 					}
 				}
 
-				if (opts.c != _control.ForeColor && opts.c != System.Windows.Forms.Control.DefaultForeColor)
+				if (opts.c.HasValue && opts.c.Value != _control.ForeColor)
 				{
 					if (_control is KeysharpDateTimePicker dtp)
-						dtp.CalendarForeColor = opts.c;
+						dtp.CalendarForeColor = opts.c.Value;
 					else if (_control is KeysharpMonthCalendar mc)
-						mc.TitleForeColor = opts.c;
+						mc.TitleForeColor = opts.c.Value;
 
-					_control.ForeColor = opts.c;
+					_control.ForeColor = opts.c.Value;
 				}
 
 				if (_control is KeysharpButton)
@@ -1994,13 +2010,13 @@
 					return;
 
 				if (_control is KeysharpListBox lb)
-					_ = (contextMenuChangedHandlers?.InvokeEventHandlers(this, lb.SelectedIndex + 1L, wasRightClick, x, y));
+					_ = (contextMenuChangedHandlers?.InvokeEventHandlers(this, lb.SelectedIndex + 1L, wasRightClick, (long)x, (long)y));
 				else if (_control is KeysharpListView lv)
-					_ = (contextMenuChangedHandlers?.InvokeEventHandlers(this, lv.SelectedIndices.Count > 0 ? lv.SelectedIndices[0] + 1L : 0L, wasRightClick, x, y));
+					_ = (contextMenuChangedHandlers?.InvokeEventHandlers(this, lv.SelectedIndices.Count > 0 ? lv.SelectedIndices[0] + 1L : 0L, wasRightClick, (long)x, (long)y));
 				else if (_control is KeysharpTreeView tv)
-					_ = (contextMenuChangedHandlers?.InvokeEventHandlers(this, tv.SelectedNode.Handle.ToInt64(), wasRightClick, x, y));
+					_ = (contextMenuChangedHandlers?.InvokeEventHandlers(this, tv.SelectedNode.Handle.ToInt64(), wasRightClick, (long)x, (long)y));
 				else
-					_ = (contextMenuChangedHandlers?.InvokeEventHandlers(this, _control.Handle.ToInt64().ToString(), wasRightClick, x, y));//Unsure what to pass for Item, so just pass handle.
+					_ = (contextMenuChangedHandlers?.InvokeEventHandlers(this, _control.Handle.ToInt64().ToString(), wasRightClick, (long)x, (long)y));//Unsure what to pass for Item, so just pass handle.
 			}
 
 			internal void Cmb_SelectedIndexChanged(object sender, EventArgs e)
@@ -2048,7 +2064,7 @@
 						if (notifyHandlers.TryGetValue((int)nmhdr.code, out var handler))
 						{
 							var ret = handler?.InvokeEventHandlers(this, m.LParam.ToInt64());
-							m.Result = ret.IsCallbackResultNonEmpty() ? 1 : 0;
+							m.Result = (nint)Script.ForceLong(ret);
 							return true;
 						}
 					}
@@ -2063,7 +2079,7 @@
 						if (commandHandlers.TryGetValue(val, out var handler))
 						{
 							var ret = handler?.InvokeEventHandlers(this);
-							m.Result = ret.IsCallbackResultNonEmpty() ? 1 : 0;
+							m.Result = (nint)Script.ForceLong(ret);
 							return true;
 						}
 					}

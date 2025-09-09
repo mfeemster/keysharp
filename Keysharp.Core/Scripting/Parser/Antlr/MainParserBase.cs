@@ -20,7 +20,7 @@ public class MainParserErrorListener : IAntlrErrorListener<IToken>
 		string fileName = Path.GetFileName(fullPath);
 
 		// Throw an exception to stop parsing
-		throw new InvalidOperationException($"Syntax error in file {fileName} at line {line}:{charPositionInLine} \"{offendingSymbol.Text}\" - {msg}", e);
+		throw new InvalidOperationException($"Syntax error{(fileName != "" ? " in file " + fileName : "")} at line {line}:{charPositionInLine} \"{offendingSymbol.Text}\" - {msg}", e);
     }
 }
 
@@ -106,8 +106,11 @@ public abstract class MainParserBase : Antlr4.Runtime.Parser
     }
 
     protected int prevVisible() {
-        int i = 0, token;
-        do {
+        int i = 0, token = -1;
+        var currentIndex = CurrentToken.TokenIndex;
+		do {
+            if (currentIndex - i <= 0)
+                break;
             token = InputStream.LA(--i);
         } while (token == WS || token == EOL);
         return token;
@@ -235,6 +238,8 @@ public abstract class MainParserBase : Antlr4.Runtime.Parser
             switch (nextToken)
             {
                 case MainLexer.Identifier:
+                case MainLexer.This:
+                case MainLexer.Super:
                 case MainLexer.Dot:
                     continue;
                 case MainLexer.WS:

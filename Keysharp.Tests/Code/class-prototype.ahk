@@ -80,3 +80,43 @@ if (b == 2)
     FileAppend "pass", "*"
 else
     FileAppend "fail", "*"
+
+c := Class()
+
+if (c.Base == Class.Prototype)
+    FileAppend "pass", "*"
+else
+    FileAppend "fail", "*"
+
+if (c.Base.Base == Object.Prototype)
+    FileAppend "pass", "*"
+else
+    FileAppend "fail", "*"
+
+if (c.Base.Base.Base == Any.Prototype)
+    FileAppend "pass", "*"
+else
+    FileAppend "fail", "*"
+
+t := Test()
+
+if (t.Base.__Class == "Test")
+    FileAppend "pass", "*"
+else
+    FileAppend "fail", "*"
+
+
+if Object.Base == Any
+    FileAppend "pass", "*"
+else
+    FileAppend "fail", "*"
+
+if Any.Base == Class.Prototype
+    FileAppend "pass", "*"
+else
+    FileAppend "fail", "*"
+
+if Class.Base == Object
+    FileAppend "pass", "*"
+else
+    FileAppend "fail", "*"

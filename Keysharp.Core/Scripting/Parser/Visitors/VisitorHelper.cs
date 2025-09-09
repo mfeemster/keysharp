@@ -884,21 +884,26 @@ namespace Keysharp.Scripting
         // // Adds `public static object myclass = Myclass.__Static;` as a global variable (the class static instance declaration)
         internal string MaybeAddClassStaticVariable(string className, bool caseSense = false)
         {
-            className = className.TrimStart('@');
             string name = IsVarDeclaredGlobally(className, caseSense);
             if (name != null) return name;
 
-            // Only add built-in classes, because user-defined classes are handled in the constructor
-            if (!Parser.BuiltinTopLevelTypes.ContainsKey(className))
+            var nonescapedClassName = className.TrimStart('@');
+
+            string alias = Keywords.TypeNameAliases.SingleOrDefault(kv => kv.Value.Equals(nonescapedClassName, StringComparison.OrdinalIgnoreCase)).Key;
+            if (alias != null)
+                nonescapedClassName = alias;
+
+			// Only add built-in classes, because user-defined classes are handled in the constructor
+			if (!Parser.BuiltinTopLevelTypes.ContainsKey(nonescapedClassName))
                 return null;
-            string casedName = Parser.BuiltinTopLevelTypes.SingleOrDefault(kv => kv.Key.Equals(className, StringComparison.OrdinalIgnoreCase)).Key;
+            string casedName = Parser.BuiltinTopLevelTypes.SingleOrDefault(kv => kv.Key.Equals(nonescapedClassName, StringComparison.OrdinalIgnoreCase)).Key;
 
             // Add `internal static object myclass = Myclass.__Static;` global field
             var fieldDeclaration = SyntaxFactory.FieldDeclaration(
                 SyntaxFactory.VariableDeclaration(
                     Parser.PredefinedKeywords.ObjectType,
                     SyntaxFactory.SingletonSeparatedList(
-                        SyntaxFactory.VariableDeclarator(className.ToLower())
+                        SyntaxFactory.VariableDeclarator(className)
                             .WithInitializer(
                                 SyntaxFactory.EqualsValueClause(
 									PredefinedKeywords.EqualsToken,
@@ -965,8 +970,20 @@ namespace Keysharp.Scripting
                 )
             );
 
+            string identifier = ToValidIdentifier(functionName);
+
+			for (int i = 0; i < mainClass.Body.Count; i++)
+            {
+                var mds = mainClass.Body[i];
+                if (mds is FieldDeclarationSyntax fds && fds.Declaration.Variables.First().Identifier.Text == identifier)
+                {
+                    mainClass.Body[i] = fds;
+                    return identifier;
+                }
+            }
+
             mainClass.Body.Add(funcObjVariable);
-            return ToValidIdentifier(functionName);
+            return identifier;
         }
 
         // Used to create function object variables for closures. The closure is cast to a Delegate

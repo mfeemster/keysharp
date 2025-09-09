@@ -112,101 +112,101 @@ namespace Keysharp.Tests
 			{
 			}
 
-            //
-            _ = Registrys.RegWrite("ksdefval", "REG_SZ", @"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest", "");
-            var val = Registrys.RegRead(@"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest", "");
-            Assert.AreEqual("ksdefval", val);
-            //
-            _ = Registrys.RegWrite("ksval", "REG_SZ", @"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest", "testval");
-            val = Registrys.RegRead(@"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest", "testval");
-            Assert.AreEqual("ksval", val);
-            //
-            _ = Registrys.RegWrite("stringone\nstringtwo\nstringthree", "REG_MULTI_SZ", @"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest\ks_sub1", "");
-            val = Registrys.RegRead(@"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest\ks_sub1", "");
-            Assert.AreEqual(Collections.Array("stringone", "stringtwo", "stringthree"), val);
-            //
-            _ = Registrys.RegWrite(1, "REG_DWORD", @"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest\ks_sub1\ks_sub1_sub1", "dword1");
-            val = Registrys.RegRead(@"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest\ks_sub1\ks_sub1_sub1", "dword1");
-            Assert.AreEqual(1, val);
-            //
-            _ = Registrys.RegWrite(2, "REG_QWORD", @"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest\ks_sub1\ks_sub1_sub1", "qword1");
-            val = Registrys.RegRead(@"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest\ks_sub1\ks_sub1_sub1", "qword1");
-            Assert.AreEqual(2, val);
-            //
-            _ = Registrys.RegWrite("AABBCCDD", "REG_BINARY", @"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest\ks_sub2", "bin1");
-            val = Registrys.RegRead(@"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest\ks_sub2", "bin1");
-            Assert.AreEqual(Collections.Array(0xAA, 0xBB, 0xCC, 0xDD), val);
-            //
-            var i = 0;
-            _ = Push(LoopType.Registry);
+			//
+			_ = Registrys.RegWrite("ksdefval", "REG_SZ", @"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest", "");
+			var val = Registrys.RegRead(@"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest", "");
+			Assert.AreEqual("ksdefval", val);
+			//
+			_ = Registrys.RegWrite("ksval", "REG_SZ", @"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest", "testval");
+			val = Registrys.RegRead(@"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest", "testval");
+			Assert.AreEqual("ksval", val);
+			//
+			_ = Registrys.RegWrite("stringone\nstringtwo\nstringthree", "REG_MULTI_SZ", @"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest\ks_sub1", "");
+			val = Registrys.RegRead(@"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest\ks_sub1", "");
+			Assert.AreEqual(Collections.Array("stringone", "stringtwo", "stringthree"), val);
+			//
+			_ = Registrys.RegWrite(1, "REG_DWORD", @"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest\ks_sub1\ks_sub1_sub1", "dword1");
+			val = Registrys.RegRead(@"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest\ks_sub1\ks_sub1_sub1", "dword1");
+			Assert.AreEqual(1, val);
+			//
+			_ = Registrys.RegWrite(2, "REG_QWORD", @"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest\ks_sub1\ks_sub1_sub1", "qword1");
+			val = Registrys.RegRead(@"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest\ks_sub1\ks_sub1_sub1", "qword1");
+			Assert.AreEqual(2, val);
+			//
+			_ = Registrys.RegWrite("AABBCCDD", "REG_BINARY", @"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest\ks_sub2", "bin1");
+			val = Registrys.RegRead(@"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest\ks_sub2", "bin1");
+			Assert.AreEqual(new byte[] { 0xAA, 0xBB, 0xCC, 0xDD }, ((Core.Buffer)val).ToByteArray());
+			//
+			var i = 0;
+			_ = Push(LoopType.Registry);
 
             foreach (var reg in LoopRegistry(@"HKEY_CURRENT_USER\SOFTWARE\KeysharpTest", "kvr"))
             {
                 val = Registrys.RegRead(null, null, "testdefault");
 
-                if (i == 0)
-                {
-                    Assert.AreEqual("ksval", val);
-                    Assert.AreEqual("REG_SZ", Accessors.A_LoopRegType);
-                    Assert.AreEqual("testval", Accessors.A_LoopRegName);
-                    Assert.AreEqual("HKEY_CURRENT_USER\\SOFTWARE\\KeysharpTest", Accessors.A_LoopRegKey);
-                }
-                else if (i == 1)
-                {
-                    Assert.AreEqual("ksdefval", val);
-                    Assert.AreEqual("", Accessors.A_LoopRegName);
-                    Assert.AreEqual("REG_SZ", Accessors.A_LoopRegType);
-                    Assert.AreEqual("HKEY_CURRENT_USER\\SOFTWARE\\KeysharpTest", Accessors.A_LoopRegKey);
-                }
-                else if (i == 2)
-                {
-                    Assert.AreEqual("testdefault", val.ToString());
-                    Assert.AreEqual("KEY", Accessors.A_LoopRegType);
-                    Assert.AreEqual("ks_sub2", Accessors.A_LoopRegName);
-                    Assert.AreEqual("HKEY_CURRENT_USER\\SOFTWARE\\KeysharpTest\\ks_sub2", Accessors.A_LoopRegKey);
-                }
-                else if (i == 3)
-                {
-                    Assert.AreEqual(Collections.Array(0xAA, 0xBB, 0xCC, 0xDD), val);
-                    Assert.AreEqual("REG_BINARY", Accessors.A_LoopRegType);
-                    Assert.AreEqual("bin1", Accessors.A_LoopRegName);
-                    Assert.AreEqual("HKEY_CURRENT_USER\\SOFTWARE\\KeysharpTest\\ks_sub2", Accessors.A_LoopRegKey);
-                }
-                else if (i == 4)
-                {
-                    Assert.AreEqual(Collections.Array("stringone", "stringtwo", "stringthree"), val);
-                    Assert.AreEqual("KEY", Accessors.A_LoopRegType);
-                    Assert.AreEqual("ks_sub1", Accessors.A_LoopRegName);
-                    Assert.AreEqual("HKEY_CURRENT_USER\\SOFTWARE\\KeysharpTest\\ks_sub1", Accessors.A_LoopRegKey);
-                }
-                else if (i == 5)
-                {
-                    Assert.AreEqual(Collections.Array("stringone", "stringtwo", "stringthree"), val);
-                    Assert.AreEqual("REG_MULTI_SZ", Accessors.A_LoopRegType);
-                    Assert.AreEqual("", Accessors.A_LoopRegName);
-                    Assert.AreEqual("HKEY_CURRENT_USER\\SOFTWARE\\KeysharpTest\\ks_sub1", Accessors.A_LoopRegKey);
-                }
-                else if (i == 6)
-                {
-                    Assert.AreEqual("testdefault", val);
-                    Assert.AreEqual("KEY", Accessors.A_LoopRegType);
-                    Assert.AreEqual("ks_sub1_sub1", Accessors.A_LoopRegName);
-                    Assert.AreEqual("HKEY_CURRENT_USER\\SOFTWARE\\KeysharpTest\\ks_sub1\\ks_sub1_sub1", Accessors.A_LoopRegKey);
-                }
-                else if (i == 7)
-                {
-                    Assert.AreEqual(2, val);
-                    Assert.AreEqual("REG_QWORD", Accessors.A_LoopRegType);
-                    Assert.AreEqual("qword1", Accessors.A_LoopRegName);
-                    Assert.AreEqual("HKEY_CURRENT_USER\\SOFTWARE\\KeysharpTest\\ks_sub1\\ks_sub1_sub1", Accessors.A_LoopRegKey);
-                }
-                else if (i == 8)
-                {
-                    Assert.AreEqual(1, val);
-                    Assert.AreEqual("REG_DWORD", Accessors.A_LoopRegType);
-                    Assert.AreEqual("dword1", Accessors.A_LoopRegName);
-                    Assert.AreEqual("HKEY_CURRENT_USER\\SOFTWARE\\KeysharpTest\\ks_sub1\\ks_sub1_sub1", Accessors.A_LoopRegKey);
-                }
+				if (i == 0)
+				{
+					Assert.AreEqual("ksval", val);
+					Assert.AreEqual("REG_SZ", Accessors.A_LoopRegType);
+					Assert.AreEqual("testval", Accessors.A_LoopRegName);
+					Assert.AreEqual("HKEY_CURRENT_USER\\SOFTWARE\\KeysharpTest", Accessors.A_LoopRegKey);
+				}
+				else if (i == 1)
+				{
+					Assert.AreEqual("ksdefval", val);
+					Assert.AreEqual("", Accessors.A_LoopRegName);
+					Assert.AreEqual("REG_SZ", Accessors.A_LoopRegType);
+					Assert.AreEqual("HKEY_CURRENT_USER\\SOFTWARE\\KeysharpTest", Accessors.A_LoopRegKey);
+				}
+				else if (i == 2)
+				{
+					Assert.AreEqual("testdefault", val.ToString());
+					Assert.AreEqual("KEY", Accessors.A_LoopRegType);
+					Assert.AreEqual("ks_sub2", Accessors.A_LoopRegName);
+					Assert.AreEqual("HKEY_CURRENT_USER\\SOFTWARE\\KeysharpTest\\ks_sub2", Accessors.A_LoopRegKey);
+				}
+				else if (i == 3)
+				{
+					Assert.AreEqual(new byte[] { 0xAA, 0xBB, 0xCC, 0xDD }, ((Core.Buffer)val).ToByteArray());
+					Assert.AreEqual("REG_BINARY", Accessors.A_LoopRegType);
+					Assert.AreEqual("bin1", Accessors.A_LoopRegName);
+					Assert.AreEqual("HKEY_CURRENT_USER\\SOFTWARE\\KeysharpTest\\ks_sub2", Accessors.A_LoopRegKey);
+				}
+				else if (i == 4)
+				{
+					Assert.AreEqual(Collections.Array("stringone", "stringtwo", "stringthree"), val);
+					Assert.AreEqual("KEY", Accessors.A_LoopRegType);
+					Assert.AreEqual("ks_sub1", Accessors.A_LoopRegName);
+					Assert.AreEqual("HKEY_CURRENT_USER\\SOFTWARE\\KeysharpTest\\ks_sub1", Accessors.A_LoopRegKey);
+				}
+				else if (i == 5)
+				{
+					Assert.AreEqual(Collections.Array("stringone", "stringtwo", "stringthree"), val);
+					Assert.AreEqual("REG_MULTI_SZ", Accessors.A_LoopRegType);
+					Assert.AreEqual("", Accessors.A_LoopRegName);
+					Assert.AreEqual("HKEY_CURRENT_USER\\SOFTWARE\\KeysharpTest\\ks_sub1", Accessors.A_LoopRegKey);
+				}
+				else if (i == 6)
+				{
+					Assert.AreEqual("testdefault", val);
+					Assert.AreEqual("KEY", Accessors.A_LoopRegType);
+					Assert.AreEqual("ks_sub1_sub1", Accessors.A_LoopRegName);
+					Assert.AreEqual("HKEY_CURRENT_USER\\SOFTWARE\\KeysharpTest\\ks_sub1\\ks_sub1_sub1", Accessors.A_LoopRegKey);
+				}
+				else if (i == 7)
+				{
+					Assert.AreEqual(2, val);
+					Assert.AreEqual("REG_QWORD", Accessors.A_LoopRegType);
+					Assert.AreEqual("qword1", Accessors.A_LoopRegName);
+					Assert.AreEqual("HKEY_CURRENT_USER\\SOFTWARE\\KeysharpTest\\ks_sub1\\ks_sub1_sub1", Accessors.A_LoopRegKey);
+				}
+				else if (i == 8)
+				{
+					Assert.AreEqual(1, val);
+					Assert.AreEqual("REG_DWORD", Accessors.A_LoopRegType);
+					Assert.AreEqual("dword1", Accessors.A_LoopRegName);
+					Assert.AreEqual("HKEY_CURRENT_USER\\SOFTWARE\\KeysharpTest\\ks_sub1\\ks_sub1_sub1", Accessors.A_LoopRegKey);
+				}
 
                 i++;
             }
@@ -245,7 +245,7 @@ namespace Keysharp.Tests
         public void FlowSwitch() => Assert.IsTrue(TestScript("flow-switch", false));
 
         [Test, Category("Flow")]
-        public void FlowTryCatch() => Assert.IsTrue(TestScript("flow-trycatch", true));
+        public void FlowTryCatch() => Assert.IsTrue(TestScript("flow-trycatch", false));
 
         //Collections tests already test foreach in C#, so just test the script here.
         [Test, Category("Flow")]

@@ -5,7 +5,7 @@ namespace Keysharp.Core
 	/// </summary>
 	public static partial class Screen
 	{
-		private static readonly Dictionary<string, Regex> optsItems = new ()
+		private static readonly Dictionary<string, Regex> optsItems = new (StringComparer.OrdinalIgnoreCase)
 		{
 			{ Keyword_Icon, IconRegex() },
 			{ Keyword_Trans, TransRegex() },
@@ -175,7 +175,7 @@ namespace Keysharp.Core
 
 			if (location.HasValue)
 			{
-				location = Mouse.RevertPoint(location.Value, Script.TheScript.Coords.Mouse);
+				location = Mouse.RevertPoint(location.Value, ThreadAccessors.A_CoordModePixel);
 				Script.SetPropertyValue(outX, "__Value", (long)location.Value.X);
                 Script.SetPropertyValue(outY, "__Value", (long)location.Value.Y);
 			}
@@ -293,7 +293,7 @@ namespace Keysharp.Core
 
 			if (location.HasValue)
 			{
-				location = Mouse.RevertPoint(location.Value, Script.TheScript.Coords.Mouse);
+				location = Mouse.RevertPoint(location.Value, ThreadAccessors.A_CoordModePixel);
 				Script.SetPropertyValue(outX, "__Value", (long)location.Value.X);
                 Script.SetPropertyValue(outY, "__Value", (long)location.Value.Y);
 				return 1L;
@@ -306,19 +306,19 @@ namespace Keysharp.Core
 			}
 		}
 
-		[GeneratedRegex(@"\*h([-0-9]*)")]
+		[GeneratedRegex(@"\*[hH]([-0-9]*)")]
 		private static partial Regex HeightRegex();
 
-		[GeneratedRegex(@"\*Icon([0-9a-zA-Z]*)")]
+		[GeneratedRegex(@"\*Icon([0-9a-zA-Z]*)", RegexOptions.IgnoreCase)]
 		private static partial Regex IconRegex();
 
-		[GeneratedRegex(@"\*Trans([0-9a-zA-Z]*)")]
+		[GeneratedRegex(@"\*Trans([0-9a-zA-Z]*)", RegexOptions.IgnoreCase)]
 		private static partial Regex TransRegex();
 
 		[GeneratedRegex(@"\*([0-9]*)")]
 		private static partial Regex VariationRegex();
 
-		[GeneratedRegex(@"\*w([-0-9]*)")]
+		[GeneratedRegex(@"\*[wW]([-0-9]*)")]
 		private static partial Regex WidthRegex();
 	}
 }

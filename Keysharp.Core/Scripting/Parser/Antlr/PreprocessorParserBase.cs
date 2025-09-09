@@ -9,13 +9,17 @@ public abstract class PreprocessorParserBase : Antlr4.Runtime.Parser
         : base(input)
     {
         conditions.Push(true);
-    }
+		RemoveErrorListeners();
+		AddErrorListener(new MainParserErrorListener());
+	}
 
     protected PreprocessorParserBase(ITokenStream input, TextWriter output, TextWriter errorOutput)
         : base(input, output, errorOutput)
     {
         conditions.Push(true);
-    }
+		RemoveErrorListeners();
+		AddErrorListener(new MainParserErrorListener());
+	}
 
     Stack<bool> conditions = new Stack<bool>();
     public HashSet<string> ConditionalSymbols  =

@@ -31,12 +31,63 @@
 			: base(m, o)
 		{
 			boundargs = ba;
+			int argCount = ba.Length;
+			// Find last non-null argument which determines the actual provided argument count
+			for (; argCount > 0; argCount--)
+			{
+				if (ba[argCount - 1] != null)
+					break;
+			}
+			if (argCount < ba.Length)
+				System.Array.Resize(ref boundargs, argCount);
+
+
+			if (argCount > MaxParams && !IsVariadic)
+				throw new Error("Too many arguments bound to function");
+
+			// Now calculate the new MinParams/MaxParams
+			int minParams = (int)MinParams;
+			int maxParams = (int)MaxParams;
+			for (int i = 0; i < argCount && i < maxParams; i++)
+			{
+				// Empty slots do not change the counts
+				if (ba[i] == null)
+					continue;
+				// If the index is greater than minimum param count then only MaxParams can be decreased.
+				// We don't overflow into the variadic parameter because of the maxParams check above.
+				if (i < minParams)
+				{
+					if (MinParams > 0)
+						MinParams--;
+				}
+				if (MaxParams > 0)
+					MaxParams--;
+			}
 		}
+
+		public override bool Equals(object obj) => ReferenceEquals(this, obj);
+
+		public override int GetHashCode() => RuntimeHelpers.GetHashCode(this);
 
 		public override IFuncObj Bind(params object[] args)
 		{
-			boundargs = boundargs.Concat(args);
-			return this;
+			object[] newbound = new object[boundargs.Length + args.Length];
+			System.Array.Copy(boundargs, newbound, boundargs.Length);
+			int skipped = 0;
+			for (int i = 0; i < boundargs.Length && skipped < args.Length; i++)
+			{
+				if (newbound[i] == null)
+				{
+					newbound[i] = args[skipped];
+					skipped++;
+				}
+			}
+			int leftCount = args.Length - skipped;
+			if (leftCount > 0)
+			{
+				System.Array.Copy(args, args.Length - leftCount, newbound, boundargs.Length, leftCount);
+			}
+			return new BoundFunc(mi, newbound, Inst);
 		}
 
 		/// <summary>
@@ -46,7 +97,7 @@
 		/// <param name="args">Forwarded on to <see cref="CallWithRefs(object[])"/></param>
 		/// <returns>The return value of the bound function.</returns>
 		public override object Call(params object[] args) => base.Call(CreateArgs(args).ToArray());
-		public override object CallInst(object inst, params object[] args) => base.Call(inst, CreateArgs(args).ToArray());
+		public override object CallInst(object inst, params object[] args) => base.Call(CreateArgs([inst, ..args]).ToArray());
 
         public override object CallWithRefs(params object[] args)
 		{
@@ -133,51 +184,21 @@
 	{
 		protected MethodInfo mi;
 		protected MethodPropertyHolder mph;
-		new public static object __Static { get; set; }
+
+		[PublicForTestOnly]
 		public object Inst { get; set; }
 		public Type DeclaringType => mi.DeclaringType;
 		public bool IsClosure => Inst != null && mi.DeclaringType?.DeclaringType == Inst.GetType();
 
-		public bool IsBuiltIn => mi.DeclaringType.Module.Name.StartsWith("keysharp.core", StringComparison.OrdinalIgnoreCase);
+		public bool IsBuiltIn => mi.DeclaringType.Namespace != TheScript.ProgramType.Namespace;
 		public bool IsValid => mi != null && mph != null && mph.CallFunc != null;
-		string _name = null;
-		public string Name {
-			get
-			{
-				if (_name != null)
-					return _name;
-
-				if (mi == null)
-					return _name = "";
-
-				string funcName = mi.Name;
-				var prefixes = new[] { "static", "get_", "set_" };
-				foreach (var p in prefixes)
-				{
-					if (funcName.StartsWith(p, StringComparison.Ordinal))
-						funcName = funcName.Substring(p.Length);
-				}
-
-				if (IsBuiltIn || mi.DeclaringType.Name == Keywords.MainClassName)
-					return _name = funcName;
-
-				string declaringType = mi.DeclaringType.FullName;
-
-				var idx = declaringType.IndexOf(Keywords.MainClassName + "+");
-				string nestedPath = idx < 0
-					? declaringType       // no “Program.” found, just return whole
-					: declaringType.Substring(idx + Keywords.MainClassName.Length + 1);
-
-				return _name = $"{nestedPath.Replace('+', '.')}.{funcName}";
-			}
-		}
+		public string Name => mph.Name;
 		public (Type, object) super => (typeof(KeysharpObject), this);
-		internal bool IsVariadic => mph.parameters.Length > 0 && mph.parameters[mph.parameters.Length - 1].ParameterType == typeof(object[]);
-		public long MaxParams => mph.MaxParams;
-		public long MinParams => mph.MinParams;
+		public bool IsVariadic => mph.variadicParamIndex != -1;
+		public long MaxParams { get; internal set; } = 0;
+		public long MinParams { get; internal set; } = 0;
+		internal int VariadicIndex => mph.variadicParamIndex;
 		internal MethodPropertyHolder Mph => mph;
-
-		public Func<object, object[], object> Delegate => mph.CallFunc;
 
 		internal FuncObj(string s, object o = null, object paramCount = null)
 			: this(GetMethodInfo(s, o, paramCount), o)
@@ -223,7 +244,7 @@
 		internal FuncObj(Delegate m, object o = null)
 		: this(m?.GetMethodInfo(), o)
         {
-			this.Inst = m.Target;
+			this.Inst = o ?? m.Target;
         }
 
 		internal FuncObj(MethodInfo m, object o = null)
@@ -233,8 +254,8 @@
 
 			if (Script.TheScript.Vars.Prototypes.Count > 1)
 			{
-				Script.TheScript.Vars.Prototypes.TryGetValue(GetType(), out KeysharpObject value);
-				op["base"] = new OwnPropsDesc(this, value);
+				Script.TheScript.Vars.Prototypes.TryGetValue(GetType(), out Any value);
+				_base = value;
 			}
 
 			if (mi != null)
@@ -248,15 +269,17 @@
 		public virtual object CallInst(object inst, params object[] obj)
 		{
 			if (Inst == null)
+			{
 				return mph.CallFunc(inst, obj);
+			}
 			else
 			{
-                int count = obj.Length;
-                object[] args = new object[count + 1];
-                args[0] = inst;
-                System.Array.Copy(obj, 0, args, 1, count);
-                return mph.CallFunc(Inst, args);
-            }
+				int count = obj.Length;
+				object[] args = new object[count + 1];
+				args[0] = inst;
+				System.Array.Copy(obj, 0, args, 1, count);
+				return mph.CallFunc(Inst, args);
+			}
 		}
         public virtual object CallWithRefs(params object[] args)
 		{
@@ -291,11 +314,21 @@
 			return val;
 		}
 
-		public override bool Equals(object obj) => obj is FuncObj fo ? fo.mi == mi : false;
+		public override bool Equals(object obj)
+		{
+			if (obj is BoundFunc)
+				return false; // BoundFunc has its own Equals override and considers all instances unique
+			return obj is FuncObj fo ? fo.mi == mi && fo.Inst == Inst : false;
+		}
 
-		public bool Equals(FuncObj value) => value.mi == mi;
-
-		public override int GetHashCode() => mi.GetHashCode();
+		public override int GetHashCode()
+		{
+			unchecked
+			{
+				int h = mi?.GetHashCode() ?? 0;
+				return (h * 31) ^ (Inst != null ? RuntimeHelpers.GetHashCode(Inst) : 0);
+			}
+		}
 
 		public bool IsByRef(object obj = null)
 		{
@@ -344,6 +377,8 @@
 		private void Init()
 		{
 			mph = MethodPropertyHolder.GetOrAdd(mi);
+			MinParams = mph.MinParams;
+			MaxParams = mph.MaxParams;
 		}
 	}
 

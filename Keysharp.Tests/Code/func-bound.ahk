@@ -378,3 +378,84 @@ if (val == 123)
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
+
+TwoParams(a, b) => a - b
+
+a := TwoParams
+if (a.MinParams == 2 && a.MaxParams == 2)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+
+b := TwoParams.Bind(, 2)
+if (b.MinParams == 1 && b.MaxParams == 1)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+
+c := b.Bind(1)
+if (c.MinParams == 0 && c.MaxParams == 0)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+
+if (c() == -1)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+
+if (b.MinParams == 1 && b.MaxParams == 1)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+
+overflow := false
+try {
+	c := TwoParams.Bind(1,2,3)
+} catch {
+	overflow := true
+}
+
+if (overflow)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+
+overflow := false
+try {
+	c := TwoParams.Bind(,,3)
+} catch {
+	overflow := true
+}
+
+if (overflow)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+
+c := TwoParams.Bind(,2,,,) ; should not throw
+
+FourParams(a, b, c?, d?) => a - b - (c ?? 0) - (d ?? 0)
+
+a := FourParams
+if (a.MinParams == 2 && a.MaxParams == 4)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+
+b := FourParams.Bind(,, 3)
+if (b.MinParams == 2 && b.MaxParams == 3)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+
+c := b.Bind(1,, 4)
+if (c.MinParams == 1 && c.MaxParams == 1)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"
+
+if (c(2) == -8)
+	FileAppend "pass", "*"
+else
+	FileAppend "fail", "*"

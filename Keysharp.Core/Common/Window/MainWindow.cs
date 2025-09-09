@@ -2,7 +2,7 @@
 {
 	public partial class MainWindow : KeysharpForm
 	{
-		public static Font OurDefaultFont = new ("Microsoft Sans Serif", 9F);
+		public static Font OurDefaultFont = new ("MS Shell Dlg", 8F);
 		internal FormWindowState lastWindowState = FormWindowState.Normal;
 #if WINDOWS
 		private readonly bool clipSuccess;
@@ -122,7 +122,6 @@
 
 		protected override void WndProc(ref Message m)
 		{
-			var handled = false;
 #if WINDOWS
 
 			switch (m.Msg)
@@ -131,23 +130,10 @@
 					if (clipSuccess)
 						ClipboardUpdate?.Invoke(null);
 
-					handled = true;
 					break;
-
-				case WindowsAPI.WM_COPYDATA:
-				{
-					if (Script.TheScript.GuiData.onMessageHandlers.TryGetValue(m.Msg, out var msgMonitor))//Needs to be handled here instead of MessageFilter because that one doesn't seem to intercept it.
-					{
-						var copyStruct = (WindowsAPI.COPYDATASTRUCT)m.GetLParam(typeof(WindowsAPI.COPYDATASTRUCT));
-						_ = msgMonitor.funcs.InvokeEventHandlers(m.WParam.ToInt64(), copyStruct.lpData, m.Msg, m.HWnd.ToInt64());
-						handled = true;
-					}
-				}
-				break;
 
 				case WindowsAPI.WM_ENDSESSION:
 					_ = Flow.ExitAppInternal((m.Msg & WindowsAPI.ENDSESSION_LOGOFF) != 0 ? Flow.ExitReasons.LogOff : Flow.ExitReasons.Shutdown, null, false);
-					handled = true;
 					break;
 
 				case WindowsAPI.WM_HOTKEY://We will need to find a cross platform way to do this. At the moment, hotkeys appear to be a built in feature in Windows.//TODO
@@ -158,15 +144,11 @@
 						wParam = m.WParam,
 						lParam = m.LParam,
 					});
-					handled = true;
 					break;
 			}
 
 #endif
 			base.WndProc(ref m);
-
-			if (handled)
-				m.Result = new nint(1);
 		}
 
 		private void aboutToolStripMenuItem_Click(object sender, EventArgs e)

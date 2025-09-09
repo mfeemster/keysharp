@@ -47,7 +47,7 @@
 			}
 		}
 
-		internal (bool, ThreadVariables) PushThreadVariables(int priority, bool skipUninterruptible,
+		internal (bool, ThreadVariables) PushThreadVariables(long priority, bool skipUninterruptible,
 				bool isCritical = false, bool onlyIfEmpty = false)
 		{
 			if (!onlyIfEmpty || threadVars.Index == 0)

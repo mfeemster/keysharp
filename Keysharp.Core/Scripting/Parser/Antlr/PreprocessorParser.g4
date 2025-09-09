@@ -32,12 +32,14 @@ preprocessor_directive
       | IncludeAgain
       | DllLoad
       | Requires
-      | SingleInstance
       | Assembly ) Text directive_new_line_or_sharp                                                                          # preprocessorTextualDirective
     | Persistent (True | False | Digits)? directive_new_line_or_sharp                                                        # preprocessorPersistent
-    | Warn Text? directive_new_line_or_sharp                                                                                 # preprocessorWarn
+    | ( Warn
+      | SingleInstance ) Text? directive_new_line_or_sharp                                                                   # preprocessorOptionalTextualDirective
     | NoDynamicVars directive_new_line_or_sharp                                                                              # preprocessorNoDynamicVars
     | ErrorStdOut directive_new_line_or_sharp                                                                                # preprocessorErrorStdOut
+    | WinActivateForce directive_new_line_or_sharp                                                                           # preprocessorWinActivateForce
+    | NoTrayIcon directive_new_line_or_sharp                                                                                 # preprocessorNoTrayIcon
     | ( HotIfTimeout
       | MaxThreads
       | MaxThreadsBuffer

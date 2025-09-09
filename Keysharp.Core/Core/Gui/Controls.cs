@@ -807,7 +807,7 @@ namespace Keysharp.Core
 			removeStyle = _removeStyle;
 			removeExStyle = _removeExStyle;
 			customColors = _customColors;
-			SetStyle(ControlStyles.UserPaint, true); // If this is not set at construction then later the user can't change the background color
+			SetStyle(ControlStyles.UserPaint, customColors);
 			SetStyle(ControlStyles.OptimizedDoubleBuffer, true);
 		}
 
@@ -862,7 +862,7 @@ namespace Keysharp.Core
 							rect.Height -= inset * 2;
 							bx = rect.Width + inset;
 							by = inset;
-							bw = Width - rect.Width - inset;
+							bw = Width - rect.Width - inset * 2;
 							bh = rect.Height;
 						}
 

@@ -406,7 +406,7 @@ namespace Keysharp.Core.Linux
 
 				var prop = new XTextProperty();
 				var attr = new XWindowAttributes();
-				var tv = Script.TheScript.Threads.GetThreadVariables();
+				var tv = Script.TheScript.Threads.CurrentThread;
 				var doHidden = ThreadAccessors.A_DetectHiddenWindows;
 				var filter = (long id) =>
 				{

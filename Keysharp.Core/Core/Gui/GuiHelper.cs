@@ -1,4 +1,5 @@
 ﻿using System.Drawing;
+using System.Drawing.Interop;
 
 namespace Keysharp.Core
 {
@@ -6,14 +7,14 @@ namespace Keysharp.Core
 	{
 		internal static string DefaultGuiId
 		{
-			get => Script.TheScript.Threads.GetThreadVariables().defaultGui ?? "1";
-			set => Script.TheScript.Threads.GetThreadVariables().defaultGui = value;
+			get => Script.TheScript.Threads.CurrentThread.defaultGui ?? "1";
+			set => Script.TheScript.Threads.CurrentThread.defaultGui = value;
 		}
 
 		internal static Form DialogOwner
 		{
-			get => Script.TheScript.Threads.GetThreadVariables().dialogOwner;
-			set => Script.TheScript.Threads.GetThreadVariables().dialogOwner = value;
+			get => Script.TheScript.Threads.CurrentThread.dialogOwner;
+			set => Script.TheScript.Threads.CurrentThread.dialogOwner = value;
 		}
 
 		public static Gui Gui(object obj0 = null, object obj1 = null, object obj2 = null) => new ([obj0, obj1, obj2]);
@@ -90,7 +91,7 @@ namespace Keysharp.Core
 				{
 					var ret = ctrl.InvokeMessageHandlers(ref m);
 
-					if (ret.IsCallbackResultNonEmpty())
+					if (Script.ForceLong(ret) != 0L)
 						return true;
 				}
 			}
@@ -108,6 +109,14 @@ namespace Keysharp.Core
 											   (colorValue >> 16) & 0xFF);
 					control.BackColor = requestedColor;
 					m.Result = new nint(colorValue);
+					return true;
+
+				case WindowsAPI.STM_SETIMAGE:
+					control.BackgroundImage = Image.FromHbitmap(m.LParam);
+					return true;
+
+				case WindowsAPI.WM_GETFONT:
+					m.Result = HFontCache.Get(control);
 					return true;
 			}
 
@@ -191,7 +200,7 @@ namespace Keysharp.Core
 			{
 				var trimSplit = split.TrimStart();
 
-				if (trimSplit.StartsWith("href=") || trimSplit.StartsWith("id="))
+				if (trimSplit.StartsWith("href=", StringComparison.OrdinalIgnoreCase) || trimSplit.StartsWith("id=", StringComparison.OrdinalIgnoreCase))
 				{
 					var id = "";
 					var url = "";
@@ -356,5 +365,69 @@ namespace Keysharp.Core
 		//      e.Handled = true;
 		//  }
 		//}
+
+#if WINDOWS
+		internal static class HFontCache
+		{
+			private sealed class Entry : IDisposable
+			{
+				public Font Font { get; }
+				public nint HFont { get; private set; }
+
+				public Entry(Font f) { Font = f; HFont = f.ToHfont(); }
+				public void Dispose()
+				{
+					if (HFont != 0)
+					{
+						DeleteObject(HFont);
+						HFont = 0;
+					}
+				}
+			}
+
+			private static readonly ConditionalWeakTable<Control, Entry> table = new();
+
+			public static nint Get(Control c)
+			{
+				if (!table.TryGetValue(c, out var e) || !ReferenceEquals(e.Font, c.Font))
+				{
+					e?.Dispose();
+					e = new Entry(c.Font);
+					table.Remove(c);
+					table.Add(c, e);
+
+					// ensure cleanup on change/dispose
+					c.FontChanged -= OnFontChanged;
+					c.Disposed -= OnDisposed;
+					c.HandleDestroyed -= OnDisposed;
+
+					c.FontChanged += OnFontChanged;
+					c.Disposed += OnDisposed;
+					c.HandleDestroyed += OnDisposed;
+				}
+				return e.HFont;
+			}
+
+			private static void OnFontChanged(object sender, EventArgs e) => Release((Control)sender);
+			private static void OnDisposed(object sender, EventArgs e) => Release((Control)sender);
+
+			public static void Release(Control c)
+			{
+				if (table.TryGetValue(c, out var e))
+				{
+					e.Dispose();
+					table.Remove(c);
+				}
+			}
+
+			[DllImport("gdi32.dll", CharSet = CharSet.Unicode)]
+			public static extern int GetObject(nint hgdiobj, int cbBuffer, out LOGFONT lpvObject);
+
+			[System.Runtime.InteropServices.DllImport("gdi32.dll")]
+			internal static extern bool DeleteObject(nint hObject);
+
+
+		}
+#endif
 	}
 }

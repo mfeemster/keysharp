@@ -6,14 +6,21 @@ namespace Keysharp.Benchmark
 	[MemoryDiagnoser]
 	[InProcess]
 	[Orderer(SummaryOrderPolicy.FastestToSlowest)] // Order the result
-	[IterationCount(30)]
+	//[IterationCount(30)]
 	//[IterationCount(3)]
-	[InvocationCount(50)]
+	//[InvocationCount(50)]
 	//[InvocationCount(3)]
-	[WarmupCount(15)]
+	//[WarmupCount(15)]
 	[HideColumns("Error", "StdDev", "RatioSD", "Gen0", "Gen1", "Gen2")]
 	public class BaseTest
 	{
+		private static Keysharp.Scripting.Script _ks_s = new ();
+
+		public BaseTest()
+		{
+			if (_ks_s == null)
+				_ks_s = new ();
+		}
 	}
 
 	public sealed class Program
@@ -23,15 +30,20 @@ namespace Keysharp.Benchmark
 		{
 			BenchmarkDotNet.Reports.Summary summary;
 			var logger = ConsoleLogger.Default;
-			//var config = new BenchmarkDotNet.Configs.DebugInProcessConfig();
+#if DEBUG
+			var config = new BenchmarkDotNet.Configs.DebugInProcessConfig();
+#else
 			var config = new ManualConfig();
+#endif
 			_ = config.AddColumnProvider([.. DefaultConfig.Instance.GetColumnProviders()]);
 			_ = config.AddExporter([.. DefaultConfig.Instance.GetExporters()]);
 			_ = config.AddDiagnoser([.. DefaultConfig.Instance.GetDiagnosers()]);
 			_ = config.AddAnalyser([.. DefaultConfig.Instance.GetAnalysers()]);
-			_ = config.AddJob([.. DefaultConfig.Instance.GetJobs()]);
 			_ = config.AddValidator([.. DefaultConfig.Instance.GetValidators()]);
+#if !DEBUG
+			_ = config.AddJob([.. DefaultConfig.Instance.GetJobs()]);
 			config.UnionRule = ConfigUnionRule.AlwaysUseGlobal; // Overriding the default
+#endif
 			/*
 			    summary = BenchmarkRunner.Run<MapReadBenchmark>(config);
 			    MarkdownExporter.Console.ExportToLog(summary, logger);
@@ -50,7 +62,7 @@ namespace Keysharp.Benchmark
 				summary = BenchmarkRunner.Run<DllBench>();
 				MarkdownExporter.Console.ExportToLog(summary, logger);
 			*/
-			summary = BenchmarkRunner.Run<ReflectionBench>();
+			summary = BenchmarkRunner.Run<FuncBench>();
 			MarkdownExporter.Console.ExportToLog(summary, logger);
 			//ConclusionHelper.Print(logger, summary.BenchmarksCases.First().Config.GetCompositeAnalyser().Analyse(summary).ToList());
 			_ = Console.ReadLine();

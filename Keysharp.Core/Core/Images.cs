@@ -6,22 +6,6 @@
 	public static class Images
 	{
 		/// <summary>
-		/// <see cref="LoadPicture(object, object, ref object)"/>
-		/// </summary>
-		public static object LoadPicture(object filename)
-		{
-			return LoadPicture(filename, null);
-		}
-
-		/// <summary>
-		/// <see cref="LoadPicture(object, object, ref object)"/>
-		/// </summary>
-		public static object LoadPicture(object filename, object options)
-		{
-			return LoadPicture(filename, options);
-		}
-
-		/// <summary>
 		/// Loads a picture from file and returns a bitmap or icon handle.
 		/// </summary>
 		/// <param name="filename">The filename of the picture, which is usually assumed to be in <see cref="A_WorkingDir"/> if an absolute path isn't specified.<br/>
@@ -40,9 +24,8 @@
 		/// Otherwise, specify a reference to the output variable in which to store a number indicating the type of handle being returned: 0 (IMAGE_BITMAP), 1 (IMAGE_ICON) or 2 (IMAGE_CURSOR).
 		/// </param>
 		/// <returns>A bitmap or icon handle depending on whether a picture or icon is specified and whether the &outImageType parameter is present or not.</returns>
-		public static object LoadPicture(object filename, object options, [ByRef] object outImageType = null)
+		public static object LoadPicture(object filename, object options = null, [ByRef] object outImageType = null)
 		{
-			outImageType ??= VarRef.Empty;
 			var file = filename.As();
 			var opts = options.As();
 			nint handle = 0;
@@ -71,7 +54,7 @@
 			{
 				var cur = new Cursor(file);
 				handle = cur.Handle;
-				Script.SetPropertyValue(outImageType, "__Value", 2L);
+				if (outImageType != null) Script.SetPropertyValue(outImageType, "__Value", 2L);
 			}
 			else if ((ret = ImageHelper.LoadImage(file, width, height, iconnumber)).Item1 is Bitmap bmp)
 			{
@@ -80,19 +63,19 @@
 				{
 					handle = ic.Handle;
 					disposeHandle = false;
-					Script.SetPropertyValue(outImageType, "__Value", 1L);
+					if (outImageType != null) Script.SetPropertyValue(outImageType, "__Value", 1L);
 				}
 				else if (ImageHelper.IsIcon(file))
 				{
 					handle = ret.Item1.GetHicon();
 					disposeHandle = true;
-					Script.SetPropertyValue(outImageType, "__Value", 1L);
+					if (outImageType != null) Script.SetPropertyValue(outImageType, "__Value", 1L);
 				}
 				else
 				{
 					handle = bmp.GetHbitmap();
 					disposeHandle = true;
-					Script.SetPropertyValue(outImageType, "__Value", 0L);
+					if (outImageType != null) Script.SetPropertyValue(outImageType, "__Value", 0L);
 				}
 			}
 

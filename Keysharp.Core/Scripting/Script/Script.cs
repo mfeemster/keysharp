@@ -23,6 +23,7 @@ namespace Keysharp.Scripting
 #endif
 		public const char dotNetMajorVersion = '9';
 		internal System.Timers.Timer tickTimer = new System.Timers.Timer(SLEEP_INTERVAL * 4);
+		internal MessageFilter msgFilter;
 		internal volatile bool loopShouldDoEvents = false;
 		internal volatile bool hasExited = false;
 		public bool ForceKeybdHook;
@@ -34,7 +35,7 @@ namespace Keysharp.Scripting
 		public bool WinActivateForce = false;
 		//Some unit tests use try..catch in non-script code, which causes ErrorOccurred to display the error dialog.
 		//This allows to suppress it, but only inside ErrorOccurred (not in TryCatch etc).
-		public bool SuppressErrorOccurredDialog = false;
+		public bool SuppressErrorOccurredDialog = AppDomain.CurrentDomain.FriendlyName == "testhost";
 		internal const double DefaultErrorDouble = double.NaN;
 		internal const int DefaultErrorInt = int.MinValue;
 		internal const long DefaultErrorLong = long.MinValue;
@@ -85,7 +86,6 @@ namespace Keysharp.Scripting
 		private ComMethodData comMethodData;
 #endif
 		private ControlProvider controlProvider;
-		private DelegateData delegateData;
 #if WINDOWS
 		private DllData dllData;
 #endif
@@ -117,6 +117,7 @@ namespace Keysharp.Scripting
 
 		[PublicForTestOnly]
 		public static Keysharp.Scripting.Script TheScript { get; private set; }
+		public Type ProgramType;
 		public HotstringManager HotstringManager => hotstringManager ?? (hotstringManager = new ());
 		public Threads Threads => threads.Value;
 		public Variables Vars { get; private set; }
@@ -128,8 +129,6 @@ namespace Keysharp.Scripting
 		internal ComMethodData ComMethodData => comMethodData ?? (comMethodData = new ());
 #endif
 		internal ControlProvider ControlProvider => controlProvider ?? (controlProvider = new ());
-		internal CoordModes Coords { get; private set; }
-		internal DelegateData DelegateData => delegateData ?? (delegateData = new ());
 #if WINDOWS
 		internal DllData DllData => dllData ?? (dllData = new ());
 #endif
@@ -143,8 +142,8 @@ namespace Keysharp.Scripting
 
 		internal long HwndLastUsed
 		{
-			get => Threads.GetThreadVariables().hwndLastUsed;
-			set => Threads.GetThreadVariables().hwndLastUsed = value;
+			get => Threads.CurrentThread.hwndLastUsed;
+			set => Threads.CurrentThread.hwndLastUsed = value;
 		}
 
 		internal ImageListData ImageListData => imageListData ?? (imageListData = new ());
@@ -201,14 +200,18 @@ namespace Keysharp.Scripting
 
 		public Script(Type program = null)
 		{
+			ProgramType = program ?? GetCallingType();
 			Script.TheScript = this;//Everywhere in the script will reference this.
 			timeLastInputPhysical = DateTime.UtcNow;
 			timeLastInputKeyboard = timeLastInputPhysical;
 			timeLastInputMouse = timeLastInputPhysical;
-			threads = new(() => new());
+			
+			//Init the API classes, passing in this which will be used to access their respective data objects.
 			Reflections = new Reflections();
-			Vars = new Variables(program);
-			Vars.InitPrototypes();
+			Vars = new Variables();
+			Vars.InitClasses();
+
+			threads = new(() => new());
 
 			_ = Script.TheScript.Threads.PushThreadVariables(0, true, false, true);//Ensure there is always one thread in existence for reference purposes, but do not increment the actual thread counter.
 			var pd = this.ProcessesData;
@@ -221,18 +224,32 @@ namespace Keysharp.Scripting
 			if (path != "testhost.exe" && path != "testhost.dll" && !A_IsCompiled)
 				_ = Dir.SetWorkingDir(A_ScriptDir);
 
-			//Preload dlls requested with #DllLoad
-			LoadDlls();
-			Application.AddMessageFilter(new MessageFilter());
+			msgFilter = new MessageFilter(this);
+			Application.AddMessageFilter(msgFilter);
 			_ = InitHook();//Why is this always being initialized even when there are no hooks? This is very inefficient.//TODO
 			//Init the data objects that the API classes will use.
-			Coords = Threads.GetThreadVariables().Coords;
-			//Init the API classes, passing in this which will be used to access their respective data objects.
-			Reflections = new ();
 			SetInitialFloatFormat();//This must be done intially and not just when A_FormatFloat is referenced for the first time.
 			tickTimer.Elapsed += TickTimerCallback;
 			tickTimer.AutoReset = false;
 			tickTimer.Start();
+		}
+		
+		~Script()
+		{
+			tickTimer?.Dispose();
+			Application.RemoveMessageFilter(msgFilter);
+		}
+
+		[MethodImpl(MethodImplOptions.NoInlining)]  // prevent inlining from collapsing frames
+		public static Type GetCallingType(int skipFrames = 2)
+		{
+			var st = new StackTrace();
+			// skip the requested frames (defaults: 0=this, 1=GetCallingType, 2=your caller)
+			var frame = st.GetFrame(skipFrames);
+			if (frame == null) return null;
+
+			var method = frame.GetMethod();
+			return method.DeclaringType;
 		}
 
 		[DebuggerStepThrough]
@@ -241,53 +258,55 @@ namespace Keysharp.Scripting
 			loopShouldDoEvents = true;
 		}
 
-		private void LoadDlls()
+		/// <summary>
+		/// Will be a generated call within Main which calls into this class to add DLLs.
+		/// </summary>
+		/// <param name="p"></param>
+		/// <param name="s"></param>
+		public void LoadDll(string dll, bool throwOnFailure = true)
 		{
-			foreach (var dll in Vars.preloadedDlls)
+			if (dll.Length == 0)
 			{
-				if (dll.Item1.Length == 0)
-				{
-					if (!mgr.SetDllDirectory(null))//An empty #DllLoad restores the default search order.
-						if (!dll.Item2)
-						{
-							_ = Errors.ErrorOccurred("PlatformProvider.Manager.SetDllDirectory(null) failed.", null, Keyword_ExitApp);
-							return;
-						}
-				}
-				else if (Directory.Exists(dll.Item1))
-				{
-					if (!mgr.SetDllDirectory(dll.Item1))
-						if (!dll.Item2)
-						{
-							_ = Errors.ErrorOccurred($"PlatformProvider.Manager.SetDllDirectory({dll.Item1}) failed.", null, Keyword_ExitApp);
-							return;
-						}
-				}
-				else
-				{
-					var dllname = dll.Item1;
-#if WINDOWS
-
-					if (!dllname.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
-						dllname += ".dll";
-
-#endif
-					var hmodule = mgr.LoadLibrary(dllname);
-
-					if (hmodule != 0)
+				if (!mgr.SetDllDirectory(null))//An empty #DllLoad restores the default search order.
+					if (throwOnFailure)
 					{
-#if WINDOWS
-						// "Pin" the dll so that the script cannot unload it with FreeLibrary.
-						// This is done to avoid undefined behavior when DllCall optimizations
-						// resolves a proc address in a dll loaded by this directive.
-						_ = WindowsAPI.GetModuleHandleEx(WindowsAPI.GET_MODULE_HANDLE_EX_FLAG_PIN, dllname, out hmodule);  // MSDN regarding hmodule: "If the function fails, this parameter is NULL."
-#endif
-					}
-					else if (!dll.Item2)
-					{
-						_ = Errors.ErrorOccurred($"Failed to load DLL {dllname}.", null, Keyword_ExitApp);
+						_ = Errors.ErrorOccurred("PlatformProvider.Manager.SetDllDirectory(null) failed.", null, Keyword_ExitApp);
 						return;
 					}
+			}
+			else if (Directory.Exists(dll))
+			{
+				if (!mgr.SetDllDirectory(dll))
+					if (throwOnFailure)
+					{
+						_ = Errors.ErrorOccurred($"PlatformProvider.Manager.SetDllDirectory({dll}) failed.", null, Keyword_ExitApp);
+						return;
+					}
+			}
+			else
+			{
+				var dllname = dll;
+#if WINDOWS
+
+				if (!dllname.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
+					dllname += ".dll";
+
+#endif
+				var hmodule = mgr.LoadLibrary(dllname);
+
+				if (hmodule != 0)
+				{
+#if WINDOWS
+					// "Pin" the dll so that the script cannot unload it with FreeLibrary.
+					// This is done to avoid undefined behavior when DllCall optimizations
+					// resolves a proc address in a dll loaded by this directive.
+					_ = WindowsAPI.GetModuleHandleEx(WindowsAPI.GET_MODULE_HANDLE_EX_FLAG_PIN, dllname, out hmodule);  // MSDN regarding hmodule: "If the function fails, this parameter is NULL."
+#endif
+				}
+				else if (throwOnFailure)
+				{
+					_ = Errors.ErrorOccurred($"Failed to load DLL {dllname}.", null, Keyword_ExitApp);
+					return;
 				}
 			}
 		}
@@ -303,7 +322,6 @@ namespace Keysharp.Scripting
 			if (Env.FindCommandLineArg("restart") != null || Env.FindCommandLineArg("r") != null)
 				inst = eScriptInstance.Force;
 
-			title = MakeTitleWithVersion(title);
 			var exit = false;
 			var oldDetect = WindowX.DetectHiddenWindows(true);
 			var oldMatchMode = WindowX.SetTitleMatchMode(3);//Require exact match.
@@ -370,7 +388,7 @@ namespace Keysharp.Scripting
 			mainWindow = new MainWindow();
 
 			if (!string.IsNullOrEmpty(title))
-				mainWindow.Text = MakeTitleWithVersion(title);
+				mainWindow.Text = title;
 
 			mainWindow.ClipboardUpdate += PrivateClipboardUpdate;
 			mainWindow.Icon = Core.Properties.Resources.Keysharp_ico;
@@ -385,8 +403,12 @@ namespace Keysharp.Scripting
 			_ = mainWindow.BeginInvoke(() =>
 			{
 				var ret = Threads.BeginThread();
-
-				if (!Flow.TryCatch(() =>
+				// Replace configData with the prototype, which will later be used to initialize all
+				// subsequent pseudo-threads. After the auto-execute thread has finished, restore the
+				// original configData object because the thread variables object may be reused later.
+				var prevConfigData = ret.Item2.configData;
+				ret.Item2.configData = AccessorData.threadConfigDataPrototype;
+				bool autoExecResult = Flow.TryCatch(() =>
 				{
 					_ = userInit();
 					//HotkeyDefinition.ManifestAllHotkeysHotstringsHooks() will be called inside of userInit() because it
@@ -394,14 +416,18 @@ namespace Keysharp.Scripting
 					//  After the window handle is created and the handle isn't valid until mainWindow.Load() is called.
 					//  Also right after all hotkeys and hotstrings are created.
 					isReadyToExecute = true;
-					_ = Threads.EndThread(ret);
-				}, true, ret))//Pop on exception because EndThread() above won't be called.
+				}, false, ret);
+				ret.Item2.configData = prevConfigData;
+				_ = Threads.EndThread(ret);
+
+				if (!autoExecResult)
 				{
 					if (!persistent)//An exception was thrown so the generated ExitApp() call in _ks_UserMainCode() will not have been called, so call it here.
 					{
 						_ = Flow.ExitApp(1);
 					}
 				}
+
 				ExitIfNotPersistent();
 			});
 			Application.Run(mainWindow);

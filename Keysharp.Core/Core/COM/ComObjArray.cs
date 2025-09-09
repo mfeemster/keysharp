@@ -88,6 +88,13 @@ namespace Keysharp.Core.COM
 			[In] int[] rgIndices,
 			[MarshalAs(UnmanagedType.Struct)] object pv
 		);
+
+		// Raw-pointer version: for all non-VARIANT base types.
+		[DllImport(WindowsAPI.oleaut, EntryPoint = "SafeArrayGetElement")]
+		public static extern int SafeArrayGetElementPtr(nint psa, [In] int[] rgIndices, IntPtr pv);
+
+		[DllImport(WindowsAPI.oleaut, EntryPoint = "SafeArrayPutElement")]
+		public static extern int SafeArrayPutElementPtr(nint psa, [In] int[] rgIndices, IntPtr pv);
 	}
 
 	/// <summary>
@@ -99,6 +106,7 @@ namespace Keysharp.Core.COM
 		private readonly int _count;
 		private readonly int[] _indices;
 		private readonly int[] _flows; // upper bounds per dimension
+		private readonly int[] _lows;  // lower bounds per dimension
 		private bool _done;
 
 		/// <summary>
@@ -114,13 +122,21 @@ namespace Keysharp.Core.COM
 			int d = owner._dimensions;
 			_indices = new int[d];
 			_flows = new int[d];
+			_lows = new int[d];
 
 			for (int i = 0; i < d; i++)
 			{
-				// start one _below_ zero so first MoveNext() bumps to 0
-				_indices[i] = -1;
-				_flows[i] = (int)owner.MaxIndex(i + 1);
+				_flows[i] = (int)(long)owner.MaxIndex(i + 1);
+				_lows[i] = (int)(long)owner.MinIndex(i + 1);
 			}
+
+			// Initialize counter to just before the first element:
+			// set all but the last dimension to their low bound;
+			// set the last dimension to (low - 1) so first MoveNext() brings it to 'low'.
+			for (int i = 0; i < d; i++)
+				_indices[i] = _lows[i];
+
+			_indices[d - 1] = _lows[d - 1] - 1;
 
 			var script = Script.TheScript;
 			var p = c <= 1 ? script.ComArrayIndexValueEnumeratorData.p1 : script.ComArrayIndexValueEnumeratorData.p2;
@@ -155,14 +171,9 @@ namespace Keysharp.Core.COM
 		{
 			get
 			{
-				// 1-based AHK index is (idx+1) for the first dimension
-				object idx1 = (long)(_indices[0] + 1);
-				_ = OleAuto.SafeArrayGetElement(
-						_owner._psa,
-						_indices,
-						out object val
-					);
-				return (idx1, val);
+				long idx0 = (long)(_indices[0] - _lows[0]);
+				object val = _owner.GetElementAtIndices(_indices);
+				return (idx0, val);
 			}
 		}
 
@@ -174,34 +185,40 @@ namespace Keysharp.Core.COM
 
 			int d = _owner._dimensions;
 
-			// increment the n-dimensional counter:
+			// Increment the n-dimensional counter (row-major):
 			for (int dim = d - 1; dim >= 0; dim--)
 			{
-				_indices[dim]++;
+				int next = _indices[dim] + 1;
 
-				if (_indices[dim] <= _flows[dim])
+				if (next <= _flows[dim])
 				{
-					// done incrementing
-					break;
+					_indices[dim] = next;
+					// Reset trailing dimensions to their low bound.
+					for (int j = dim + 1; j < d; j++)
+						_indices[j] = _lows[j];
+
+					return true;
 				}
 
 				if (dim == 0)
 				{
-					// we overflowed the first dimension ⇒ end
 					_done = true;
 					return false;
 				}
-
-				// reset this dim and carry to next
-				_indices[dim] = 0;
 			}
 
-			return true;
+			_done = true;
+			return false;
 		}
 
 		public void Reset()
 		{
-			System.Array.Clear(_indices, 0, _indices.Length);
+			int d = _owner._dimensions;
+
+			for (int i = 0; i < d; i++)
+				_indices[i] = _lows[i];
+
+			_indices[d - 1] = _lows[d - 1] - 1;
 			_done = false;
 		}
 
@@ -264,6 +281,17 @@ namespace Keysharp.Core.COM
 			this.Ptr = _psa.ToInt64();
 		}
 
+		
+		public ComObjArray(VarEnum baseType, nint psa, bool takeOwnership)
+		{
+			_baseType = baseType;
+			_dimensions = OleAuto.SafeArrayGetDim(psa);
+			_psa = psa;
+			this.vt = VarEnum.VT_ARRAY | baseType;
+			this.Flags = takeOwnership ? F_OWNVALUE : 0; ;
+			this.Ptr = _psa.ToInt64();
+		}
+
 		public IFuncObj __Enum(object count) => new ComArrayIndexValueEnumerator(this, count.Ai()).fo;
 
 		public IEnumerator<(object, object)> GetEnumerator() => new ComArrayIndexValueEnumerator(this, 2);
@@ -299,7 +327,7 @@ namespace Keysharp.Core.COM
 		}
 
 		/// <summary>
-		/// Indexer for direct element access using 1-based indices.
+		/// Indexer for direct element access using 0-based indices.
 		/// Negative indices count from the end.
 		/// </summary>
 		public object this[params object[] indices]
@@ -307,35 +335,15 @@ namespace Keysharp.Core.COM
 			get
 			{
 				int[] idx = ConvertIndices(indices);
-				int hr = OleAuto.SafeArrayGetElement(_psa, idx, out object val);
-				return Errors.OSErrorOccurredForHR(hr, val);
+				object val = GetElementAtIndices(idx);
+				return val;
 			}
 			set
 			{
 				int[] idx = ConvertIndices(indices);
-				int hr = OleAuto.SafeArrayPutElement(_psa, idx, value!);
+				int hr = PutElementAtIndices(idx, value!);
 				_ = Errors.OSErrorOccurredForHR(hr);
 			}
-		}
-
-		/// <summary>
-		/// Converts indices to ints and handles negative indices
-		/// </summary>
-		private int[] ConvertIndices(object[] indices)
-		{
-			int[] idx = new int[indices.Length];
-
-			for (int i = 0; i < idx.Length; i++)
-			{
-				int temp = indices[i].Ai();
-
-				if (temp < 0)
-					temp = Convert.ToInt32(MaxIndex((long)(i + 1))) + temp + 1;
-
-				idx[i] = temp;
-			}
-
-			return idx;
 		}
 
 		/// <summary>
@@ -362,12 +370,241 @@ namespace Keysharp.Core.COM
 			if ((Flags & F_OWNVALUE) != 0 && _psa != 0)
 			{
 				_ = OleAuto.SafeArrayDestroy(_psa);
+				_psa = 0;
 				// Clear the flag so we don't double‐destroy:
 				Flags &= ~F_OWNVALUE;
 			}
 
 			base.Dispose();
 		}
+
+
+		#region Helpers
+		/// <summary>
+		/// Converts indices to ints and handles negative indices
+		/// </summary>
+		private int[] ConvertIndices(object[] indices)
+		{
+			if (indices == null || indices.Length != _dimensions)
+				throw new Error($"Expected {_dimensions} index(es), got {indices?.Length ?? 0}.");
+
+			int[] idx = new int[indices.Length];
+
+			for (int i = 0; i < idx.Length; i++)
+			{
+				int temp = indices[i].Ai();
+
+				int lb = (int)(long)MinIndex(i + 1); // SAFEARRAY is 1-based for the dim parameter
+				int ub = (int)(long)MaxIndex(i + 1);
+
+				if (temp < 0)              // negative from end
+					temp = ub + temp + 1;  // e.g. -1 -> ub
+				else                       // 0-based to SAFEARRAY base
+					temp = lb + temp;
+
+				if (temp < lb || temp > ub)
+					throw new Error($"Index {i} out of range [{lb}, {ub}]");
+
+				idx[i] = temp;
+			}
+
+			return idx;
+		}
+
+		internal object GetElementAtIndices(int[] idx)
+		{
+			if (_baseType == VarEnum.VT_VARIANT)
+			{
+				int hrVar = OleAuto.SafeArrayGetElement(_psa, idx, out object val);
+				return Errors.OSErrorOccurredForHR(hrVar, val);
+			}
+
+			// Non-VARIANT element types: use pointer variant and marshal manually.
+			int bytes = ByteSizeForVarType(_baseType);
+			IntPtr pv = Marshal.AllocCoTaskMem(bytes);
+
+			try
+			{
+				int hr = OleAuto.SafeArrayGetElementPtr(_psa, idx, pv);
+
+				if (hr < 0)
+					return Errors.OSErrorOccurredForHR(hr);
+
+				return ReadVariant(pv, _baseType);
+			}
+			finally
+			{
+				Marshal.FreeCoTaskMem(pv);
+			}
+		}
+
+		internal int PutElementAtIndices(int[] idx, object value)
+		{
+			// VT_VARIANT arrays, let the marshaller coerce the type
+			if (_baseType == VarEnum.VT_VARIANT)
+				return OleAuto.SafeArrayPutElement(_psa, idx, value);
+
+			// Pointer element types: pass the pointer value directly (no staging buffer).
+			if (_baseType == VarEnum.VT_UNKNOWN || _baseType == VarEnum.VT_DISPATCH)
+			{
+				nint pIface = 0;
+				bool releaseInterface = false;
+
+				// Accept Ptr properties or a plain RCW
+				if (Marshal.IsComObject(value))
+				{
+					object src = value is ComObject c ? c.Ptr : value;
+					// Get a temporary COM pointer we own; SafeArray will AddRef its own copy.
+					pIface = (_baseType == VarEnum.VT_DISPATCH)
+							 ? Marshal.GetIDispatchForObject(src)
+							 : Marshal.GetIUnknownForObject(src);
+					releaseInterface = true;
+				}
+				else
+				{
+					// raw interface pointer → pass as-is; SafeArrayPutElement will AddRef.
+					pIface = (nint)Reflections.GetPtrProperty(value);
+					releaseInterface = false;
+				}
+
+				try
+				{
+					int hr = OleAuto.SafeArrayPutElementPtr(_psa, idx, pIface);
+					_ = Errors.OSErrorOccurredForHR(hr);
+					return hr;
+				}
+				finally
+				{
+					if (releaseInterface && pIface != 0)
+					{
+						try { Marshal.Release(pIface); } catch { }
+					}
+				}
+			}
+
+			if (_baseType == VarEnum.VT_BSTR)
+			{
+				// For BSTR, pass the BSTR pointer directly; the array will own & free it.
+				nint bstr = value == null ? 0 : Marshal.StringToBSTR(value.As());
+				int hr = OleAuto.SafeArrayPutElementPtr(_psa, idx, bstr);
+				_ = Errors.OSErrorOccurredForHR(hr);
+				return hr;
+			}
+
+			// All other (non-pointer) element types need to be put in a temporary buffer
+			// used by SafeArrayPutElement.
+			int bytes = ByteSizeForVarType(_baseType);
+			IntPtr pv = Marshal.AllocCoTaskMem(bytes);
+			try
+			{
+				WriteValueToBuffer(pv, _baseType, value);
+				int hr = OleAuto.SafeArrayPutElementPtr(_psa, idx, pv);
+				_ = Errors.OSErrorOccurredForHR(hr);
+				return hr;
+			}
+			finally
+			{
+				Marshal.FreeCoTaskMem(pv);
+			}
+		}
+
+		private static int ByteSizeForVarType(VarEnum vt)
+		{
+			switch (vt)
+			{
+				case VarEnum.VT_I1:
+				case VarEnum.VT_UI1:
+					return 1;
+				case VarEnum.VT_I2:
+				case VarEnum.VT_UI2:
+				case VarEnum.VT_BOOL:    // VARIANT_BOOL (short)
+					return 2;
+				case VarEnum.VT_I4:
+				case VarEnum.VT_UI4:
+					return 4;
+				case VarEnum.VT_R4:
+					return Marshal.SizeOf<float>();
+				case VarEnum.VT_I8:
+				case VarEnum.VT_UI8:
+					return 8;
+				case VarEnum.VT_R8:
+				case VarEnum.VT_DATE:    // DATE is a double (8 bytes)
+					return Marshal.SizeOf<double>();
+				case VarEnum.VT_DECIMAL:
+					return Marshal.SizeOf<decimal>();
+				case VarEnum.VT_BSTR:
+				case VarEnum.VT_UNKNOWN:
+				case VarEnum.VT_DISPATCH:
+					return IntPtr.Size; // pointer-sized storage
+				default:
+					// Fallback for other pointer-like types if ever needed.
+					return IntPtr.Size;
+			}
+		}
+
+		private static void WriteValueToBuffer(IntPtr pv, VarEnum vt, object value)
+		{
+			switch (vt)
+			{
+				case VarEnum.VT_I1:
+					Marshal.WriteByte(pv, unchecked((byte)Convert.ToSByte(value)));
+					break;
+				case VarEnum.VT_UI1:
+					Marshal.WriteByte(pv, Convert.ToByte(value));
+					break;
+				case VarEnum.VT_I2:
+					Marshal.WriteInt16(pv, Convert.ToInt16(value));
+					break;
+				case VarEnum.VT_UI2:
+					Marshal.WriteInt16(pv, unchecked((short)Convert.ToUInt16(value)));
+					break;
+				case VarEnum.VT_I4:
+					Marshal.WriteInt32(pv, Convert.ToInt32(value));
+					break;
+				case VarEnum.VT_UI4:
+					Marshal.WriteInt32(pv, unchecked((int)Convert.ToUInt32(value)));
+					break;
+				case VarEnum.VT_I8:
+					Marshal.WriteInt64(pv, Convert.ToInt64(value));
+					break;
+				case VarEnum.VT_UI8:
+					Marshal.WriteInt64(pv, unchecked((long)Convert.ToUInt64(value)));
+					break;
+				case VarEnum.VT_R4:
+					Marshal.StructureToPtr(Convert.ToSingle(value), pv, false);
+					break;
+				case VarEnum.VT_R8:
+					Marshal.StructureToPtr(Convert.ToDouble(value), pv, false);
+					break;
+				case VarEnum.VT_BOOL:
+					{
+						bool b = value is bool bb ? bb : (Convert.ToInt32(value) != 0);
+						Marshal.WriteInt16(pv, (short)(b ? -1 : 0));
+						break;
+					}
+				case VarEnum.VT_DATE:
+					{
+						double oa = value is DateTime dt ? dt.ToOADate() : Convert.ToDouble(value);
+						Marshal.StructureToPtr(oa, pv, false);
+						break;
+					}
+				case VarEnum.VT_DECIMAL:
+					Marshal.StructureToPtr(Convert.ToDecimal(value), pv, false);
+					break;
+				default:
+					{
+						// For any other pointer-like types, try to write pointer-sized data.
+						if (value is IntPtr ip)
+							Marshal.WriteIntPtr(pv, ip);
+						else if (value is nint nip)
+							Marshal.WriteIntPtr(pv, (IntPtr)nip);
+						else
+							Marshal.WriteIntPtr(pv, IntPtr.Zero);
+						break;
+					}
+			}
+		}
+		#endregion
 	}
 }
 #endif

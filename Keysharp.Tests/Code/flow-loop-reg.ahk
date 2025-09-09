@@ -51,7 +51,7 @@ else
 RegWrite("AABBCCDD", "REG_BINARY", "HKEY_CURRENT_USER\SOFTWARE\KeysharpTest\ks_sub2", "bin1")
 val := RegRead("HKEY_CURRENT_USER\SOFTWARE\KeysharpTest\ks_sub2", "bin1")
 
-if (val = [ 0xAA, 0xBB, 0xCC, 0xDD ])
+if (val.ToHex() = "AABBCCDD")
 	FileAppend "pass", "*"
 else
 	FileAppend "fail", "*"
@@ -130,7 +130,7 @@ Loop Reg "HKEY_CURRENT_USER\SOFTWARE\KeysharpTest", "kvr" ; this is a comment
 	}
 	else if (i == 3)
 	{
-		if (val = [ 0xAA, 0xBB, 0xCC, 0xDD ])
+		if (val.ToHex() = "AABBCCDD")
 			FileAppend "pass", "*"
 		else
 			FileAppend "fail", "*"

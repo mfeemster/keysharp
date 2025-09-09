@@ -4,7 +4,7 @@ using static Keysharp.Scripting.Script;
 
 namespace Keysharp.Core.Common.ObjectBase
 {
-	public partial class KeysharpObject : Any, IReflect
+	public partial class Any : IReflect
 	{
 		#region IReflect implementation
 		private static Type[] emptyTypes = [];
@@ -41,7 +41,7 @@ namespace Keysharp.Core.Common.ObjectBase
 		MethodInfo[] IReflect.GetMethods(BindingFlags bindingAttr)
 		{
 			List<MethodInfo> meths = new();
-			KeysharpObject kso = this;
+			Any kso = this;
 
 			if (kso is FuncObj sfo && sfo != null)
 			{
@@ -221,18 +221,36 @@ namespace Keysharp.Core.Common.ObjectBase
 					invokeAttr |= BindingFlags.InvokeMethod;
 					name = "Call";
 				}
-				else if ((invokeAttr & BindingFlags.GetProperty) != 0
-						|| (invokeAttr & BindingFlags.GetField) != 0)
-				{
-					return Com.ConvertToCOMType(Script.Index(target ?? this, usedArgs));
-				}
 				else
 				{
-					object value = argCount > 0 ? usedArgs[ ^ 1] : null;
-					var indices = new object[argCount > 0 ? argCount - 1 : 0];
-					System.Array.Copy(usedArgs, indices, indices.Length);
+					if (DISPID_VALUE == 0 && HasProp("__Item") != 0L)
+					{
+						if ((invokeAttr & BindingFlags.GetProperty) != 0
+							|| (invokeAttr & BindingFlags.GetField) != 0)
+						{
+							return Com.ConvertToCOMType(Script.Index(target ?? this, usedArgs));
+						}
+						else
+						{
+							object value = argCount > 0 ? usedArgs[^1] : null;
+							var indices = new object[argCount > 0 ? argCount - 1 : 0];
+							System.Array.Copy(usedArgs, indices, indices.Length);
 
-					return Com.ConvertToCOMType(Script.SetObject(value, target ?? this, indices));
+							return Com.ConvertToCOMType(Script.SetObject(value, target ?? this, indices));
+						}
+					} else
+					{
+						if ((invokeAttr & BindingFlags.GetProperty) != 0
+							|| (invokeAttr & BindingFlags.GetField) != 0)
+						{
+							return Com.ConvertToCOMType(Script.GetPropertyValue(target ?? this, usedArgs[0]));
+						}
+						else
+						{
+							object value = argCount > 0 ? usedArgs[^1] : null;
+							return Com.ConvertToCOMType(Script.SetPropertyValue(target ?? this, usedArgs[0], value));
+						}
+					}
 				}
 			}
 
@@ -468,7 +486,7 @@ namespace Keysharp.Core.Common.ObjectBase
 		#endregion
 	}
 
-	public static class ByRefWrapper
+	internal static class ByRefWrapper
 	{
 		/// <summary>
 		/// Given a MethodInfo whose parameters may be marked [ByRef],

@@ -13,7 +13,8 @@ namespace Keysharp.Core
 		internal bool showWithoutActivation;
 		internal List<IFuncObj> sizeHandlers;
 		private readonly int addStyle, addExStyle, removeStyle, removeExStyle;
-		private bool beenShown = false;
+		internal bool beenShown = false;
+		internal bool beenConstructed = false;
 		private bool closingFromDestroy;
 		internal bool BeenShown => beenShown;
 
@@ -28,6 +29,38 @@ namespace Keysharp.Core
 				cp.ExStyle &= ~removeExStyle;
 				return cp;
 			}
+		}
+
+		protected override void CreateHandle()
+		{
+			base.CreateHandle();
+			beenConstructed = true;
+		}
+
+		protected override void WndProc(ref Message m)
+		{
+			// In Windows queued messages (eg sent with PostMessage) arrive in the message queue and
+			// are read with GetMessage, then when DispatchMessage is called (after TranslateMessage)
+			// WndProc is called with the translated message. Non-queued message (eg sent with SendMessage)
+			// arrive directly in WndProc.
+			// In C# MessageFilter processes the message after GetMessage has received it, and if let through
+			// then TranslateMessage and DispatchMessage are called, which then in turn call WndProc.
+			// The problem is how to determine whether a message has already been processed in MessageFilter to
+			// avoid double-handing. AutoHotkey uses a global variable before DispatchMessage and nulls it
+			// afterwards, and we use a similar approach here. MessageFilter stashes the handled
+			// message (only messages which target a KeysharpForm) and then we compare here for
+			// equality. A simple boolean like isHandled wouldn't be enough because for example
+			// WM_KEYDOWN will get translated to WM_CHAR and the user may want to capture that as well.
+			// Additionally if any messages get lost for some reason or another message arrives here
+			// before the MessageFilter processed message has had time to arrive then we'd confuse the two.
+			var msgFilter = TheScript.msgFilter;
+
+			if (msgFilter.handledMsg == m)
+				msgFilter.handledMsg = null;
+			else if (beenConstructed && msgFilter.CallEventHandlers(ref m))
+				return;
+
+			base.WndProc(ref m);
 		}
 
 		[Browsable(false)]
@@ -69,13 +102,13 @@ namespace Keysharp.Core
 				var control = ActiveControl;
 
 				if (control is ListBox lb)
-					_ = (contextMenuChangedHandlers?.InvokeEventHandlers(g, control, lb.SelectedIndex + 1L, wasRightClick, x, y));
+					_ = (contextMenuChangedHandlers?.InvokeEventHandlers(g, control, lb.SelectedIndex + 1L, wasRightClick, (long)x, (long)y));
 				else if (control is ListView lv)
-					_ = (contextMenuChangedHandlers?.InvokeEventHandlers(g, control, lv.SelectedIndices.Count > 0 ? lv.SelectedIndices[0] + 1L : 0L, wasRightClick, x, y));
+					_ = (contextMenuChangedHandlers?.InvokeEventHandlers(g, control, lv.SelectedIndices.Count > 0 ? lv.SelectedIndices[0] + 1L : 0L, wasRightClick, (long)x, (long)y));
 				else if (control is TreeView tv)
-					_ = (contextMenuChangedHandlers?.InvokeEventHandlers(g, control, tv.SelectedNode.Handle, wasRightClick, x, y));
+					_ = (contextMenuChangedHandlers?.InvokeEventHandlers(g, control, tv.SelectedNode.Handle, wasRightClick, (long)x, (long)y));
 				else
-					_ = (contextMenuChangedHandlers?.InvokeEventHandlers(g, control, control != null ? control.Handle.ToInt64().ToString() : "", wasRightClick, x, y));//Unsure what to pass for Item, so just pass handle.
+					_ = (contextMenuChangedHandlers?.InvokeEventHandlers(g, control, control != null ? control.Handle.ToInt64().ToString() : "", wasRightClick, (long)x, (long)y));//Unsure what to pass for Item, so just pass handle.
 			}
 		}
 
@@ -123,7 +156,7 @@ namespace Keysharp.Core
 					var result = closedHandlers?.InvokeEventHandlers(g);
 					e.Cancel = true;
 
-					if (result.IsCallbackResultNonEmpty())
+					if (Script.ForceLong(result) != 0L)
 						return;
 
 					Hide();
@@ -165,7 +198,7 @@ namespace Keysharp.Core
 				Size client = ClientSize;
 
 				if (g.dpiscaling)
-					_ = sizeHandlers?.InvokeEventHandlers(g, state, (long)client.Width / A_ScaledScreenDPI, (long)client.Height / A_ScaledScreenDPI);
+					_ = sizeHandlers?.InvokeEventHandlers(g, state, (long)(client.Width / A_ScaledScreenDPI), (long)(client.Height / A_ScaledScreenDPI));
 				else
 					_ = sizeHandlers?.InvokeEventHandlers(g, state, (long)client.Width, (long)client.Height);
 			}
@@ -233,5 +266,7 @@ namespace Keysharp.Core
 			else
 				ClearThis();
 		}
+
+
 	}
 }

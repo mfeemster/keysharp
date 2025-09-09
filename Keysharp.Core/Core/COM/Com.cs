@@ -39,21 +39,6 @@ namespace Keysharp.Core.COM
 			for (var i = 0; i < args.Length; i++)
 				lengths[i + 1] = args[i].Ai();
 
-			t = ConvertVarTypeToCLRType(vt);
-
-			if (t == typeof(object)) //Some special handling for objects
-			{
-				switch (vt)
-				{
-					case VarEnum.VT_DISPATCH: t = typeof(DispatchWrapper); break;
-
-					case VarEnum.VT_VARIANT: break;
-
-					default:
-						return Errors.ValueErrorOccurred($"The supplied COM type of {varType} is not supported.");
-				}
-			}
-
 			return new ComObjArray(vt, lengths);
 		}
 
@@ -348,7 +333,15 @@ namespace Keysharp.Core.COM
 			}
 		}
 
-		public static ComObject ComValue(object varType, object value, object flags = null) => new (varType, value, flags);
+		public static ComObject ComValue(object varType, object value, object flags = null)
+		{
+			var vt = (VarEnum)varType.Al();
+			if ((vt & VarEnum.VT_ARRAY) != 0) {
+				nint psa = (nint)Reflections.GetPtrProperty(value);
+				return new ComObjArray(vt & ~VarEnum.VT_ARRAY, psa, flags.Ab());
+			}
+			return new (varType, value, flags);
+		}
 
 		public static object ObjAddRef(object ptr)
 		{
@@ -407,7 +400,7 @@ namespace Keysharp.Core.COM
 
 			nint pUnk = 0;
 
-			if (comObj is KeysharpObject kso && Script.TryGetPropertyValue(comObj, "ptr", out object propPtr))
+			if (comObj is Any kso && Script.TryGetPropertyValue(comObj, "ptr", out object propPtr))
 				comObj = propPtr;
 
 			if (Marshal.IsComObject(comObj))
@@ -421,41 +414,12 @@ namespace Keysharp.Core.COM
 				return Errors.ValueErrorOccurred($"The passed in object was not a ComObject or a raw COM interface.");
 
 			var pVtbl = Marshal.ReadIntPtr(pUnk);
-			var helper = new ArgumentHelper(parameters);
+			var helper = new ComArgumentHelper(parameters);
 			var value = NativeInvoke(pUnk.ToInt64(), Marshal.ReadIntPtr(nint.Add(pVtbl, idx * sizeof(nint))), helper.args, helper.floatingTypeMask);
 			Dll.FixParamTypesAndCopyBack(parameters, helper);
+			var result = helper.ConvertReturnValue(value);
 			helper.Dispose();
-
-			// If the return type was omitted then it should be treated as HRESULT
-			// and if that is a negative value then throw an OSError
-			if (helper.HRESULT || !helper.HasReturn)
-			{
-				long hrLong = (long)value;                // unbox the raw long
-				int hr32 = unchecked((int)hrLong);   // keep only the low 32 bits
-				return Errors.OSErrorOccurredForHR(hr32);
-			}
-
-			//Special conversion for the return value.
-			if (helper.ReturnType == typeof(int))
-			{
-				long l = (long)value;
-				int ii = *(int*)&l;
-				value = ii;
-			}
-			else if (helper.ReturnType == typeof(float))
-			{
-				double d = (double)value;
-				float f = *(float*)&d;
-				return f;
-			}
-			else if (helper.ReturnType == typeof(string))
-			{
-				var str = Marshal.PtrToStringUni((nint)(long)value);
-				_ = Objects.ObjFree(value);//If this string came from us, it will be freed, else no action.
-				return str;
-			}
-
-			return value;
+			return result;
 		}
 
 		internal static object NativeInvoke(long objPtr, nint vtbl, long[] args, ulong mask)
@@ -516,7 +480,7 @@ namespace Keysharp.Core.COM
 				_ = CLSIDFromProgIDEx(progId, out clsid);
 
 			GetActiveObject(ref clsid, 0, out var obj);
-			return obj;
+			return new ComObject(13L, obj);
 		}
 
 		[DllImport(WindowsAPI.oleaut, CharSet = CharSet.Unicode, PreserveSig = false)]

@@ -95,12 +95,12 @@ public interface IPreprocessorParserVisitor<Result> : IParseTreeVisitor<Result> 
 	/// <return>The visitor result.</return>
 	Result VisitPreprocessorPersistent([NotNull] PreprocessorParser.PreprocessorPersistentContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>preprocessorWarn</c>
+	/// Visit a parse tree produced by the <c>preprocessorOptionalTextualDirective</c>
 	/// labeled alternative in <see cref="PreprocessorParser.preprocessor_directive"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitPreprocessorWarn([NotNull] PreprocessorParser.PreprocessorWarnContext context);
+	Result VisitPreprocessorOptionalTextualDirective([NotNull] PreprocessorParser.PreprocessorOptionalTextualDirectiveContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>preprocessorNoDynamicVars</c>
 	/// labeled alternative in <see cref="PreprocessorParser.preprocessor_directive"/>.
@@ -115,6 +115,20 @@ public interface IPreprocessorParserVisitor<Result> : IParseTreeVisitor<Result> 
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitPreprocessorErrorStdOut([NotNull] PreprocessorParser.PreprocessorErrorStdOutContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>preprocessorWinActivateForce</c>
+	/// labeled alternative in <see cref="PreprocessorParser.preprocessor_directive"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitPreprocessorWinActivateForce([NotNull] PreprocessorParser.PreprocessorWinActivateForceContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>preprocessorNoTrayIcon</c>
+	/// labeled alternative in <see cref="PreprocessorParser.preprocessor_directive"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitPreprocessorNoTrayIcon([NotNull] PreprocessorParser.PreprocessorNoTrayIconContext context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>preprocessorNumericDirective</c>
 	/// labeled alternative in <see cref="PreprocessorParser.preprocessor_directive"/>.

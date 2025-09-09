@@ -5,7 +5,6 @@
 	[WarmupCount(15)]
 	public class DllBench : BaseTest
 	{
-		private Keysharp.Scripting.Script? _ks_s;
 		private static readonly object mcode_e = Keysharp.Core.Collections.Map("1", 4L, "2", 1L);
 		private static readonly object mcode_c = (_ = Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.ValueEquality, Accessors.A_PtrSize, 8L)) ? (object)(_ = "x64") : (object)(_ = "x86"));
 		private static object p = 0L, ptr = 0L, result = 0L;
@@ -17,19 +16,19 @@
 
 		public static object MCode(object mcode)
 		{
-			object? m = new VarRef(() => v, value => v = value); ;
+			object? m = null;
 			object? s = null;
 			object? p = null;
 			object? op = null;
 
-			if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.OperateUnary(Keysharp.Scripting.Script.Operator.LogicalNot, Keysharp.Core.RegEx.RegExMatch(mcode, Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.Concat, "^([0-9]+),(", Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.Concat, Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.Concat, Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.Concat, mcode_c, ":|.*?,"), mcode_c), ":)([^,]+)")), m))))
+			if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.OperateUnary(Keysharp.Scripting.Script.Operator.LogicalNot, Keysharp.Core.RegEx.RegExMatch(mcode, Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.Concat, "^([0-9]+),(", Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.Concat, Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.Concat, Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.Concat, mcode_c, ":|.*?,"), mcode_c), ":)([^,]+)")), new VarRef(() => m, v => m = v)))))
 			{
 				return _ = "";
 			}
 
 			s = 0L;
 
-			if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.OperateUnary(Keysharp.Scripting.Script.Operator.LogicalNot, Keysharp.Scripting.Script.InvokeWithRefs(Keysharp.Scripting.Script.GetMethodOrProperty(null, "DllCall", 15), "crypt32\\CryptStringToBinary", "str", Keysharp.Scripting.Script.GetPropertyValue(m, "3"), "uint", 0L, "uint", Keysharp.Scripting.Script.Index(mcode_e, Keysharp.Scripting.Script.GetPropertyValue(m, "1")), "ptr", 0L, "uint*", Misc.Mrh(10, s, v => s = v), "ptr", 0L, "ptr", 0L))))
+			if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.OperateUnary(Keysharp.Scripting.Script.Operator.LogicalNot, Keysharp.Core.Dll.DllCall("crypt32\\CryptStringToBinary", "str", Keysharp.Scripting.Script.GetPropertyValue(m, "3"), "uint", 0L, "uint", Keysharp.Scripting.Script.Index(mcode_e, Keysharp.Scripting.Script.GetPropertyValue(m, "1")), "ptr", 0L, "uint*", new VarRef(() => s, v => s = v), "ptr", 0L, "ptr", 0L))))
 			{
 				return _ = "";
 			}
@@ -39,10 +38,10 @@
 			if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.ValueEquality, mcode_c, "x64")))
 			{
 				op = 0L;
-				_ = Keysharp.Scripting.Script.InvokeWithRefs(Keysharp.Scripting.Script.GetMethodOrProperty(null, "DllCall", 9), "VirtualProtect", "ptr", p, "ptr", s, "uint", 64L, "uint*", Misc.Mrh(8, op, v => op = v));
+				_ = Keysharp.Core.Dll.DllCall("VirtualProtect", "ptr", p, "ptr", s, "uint", 64L, "uint*", new VarRef(() => op, value => op = value));
 			}
 
-			if (Keysharp.Scripting.Script.IfTest(Keysharp.Scripting.Script.InvokeWithRefs(Keysharp.Scripting.Script.GetMethodOrProperty(null, "DllCall", 15), "crypt32\\CryptStringToBinary", "str", Keysharp.Scripting.Script.GetPropertyValue(m, "3"), "uint", 0L, "uint", Keysharp.Scripting.Script.Index(mcode_e, Keysharp.Scripting.Script.GetPropertyValue(m, "1")), "ptr", p, "uint*", Misc.Mrh(10, s, v => s = v), "ptr", 0L, "ptr", 0L)))
+			if (Keysharp.Scripting.Script.IfTest(Keysharp.Core.Dll.DllCall("crypt32\\CryptStringToBinary", "str", Keysharp.Scripting.Script.GetPropertyValue(m, "3"), "uint", 0L, "uint", Keysharp.Scripting.Script.Index(mcode_e, Keysharp.Scripting.Script.GetPropertyValue(m, "1")), "ptr", p, "uint*", new VarRef(() => s, v => s = v), "ptr", 0L, "ptr", 0L)))
 			{
 				return _ = p;
 			}
@@ -80,7 +79,6 @@
 		[GlobalSetup]
 		public void Setup()
 		{
-			_ks_s = new ();
 			ptr = MCode("2,x64:SInIidFEicJI/+A=");
 		}
 	}

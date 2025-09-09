@@ -197,35 +197,32 @@ namespace System.Collections.Generic
 			if (handlers.Any())
 			{
 				var inst = obj.Length > 0 ? obj[0].GetControl() : null;
-				//lock (ehLock)
+				var script = Script.TheScript;
+				var oldEventInfo = A_EventInfo;
+
+				foreach (var handler in handlers)
 				{
-					var oldEventInfo = A_EventInfo;
-					var script = Script.TheScript;
-					var (pushed, tv) = script.Threads.BeginThread();
-
-					if (pushed)//If we've exceeded the number of allowable threads, then just do nothing.
+					if (handler != null)
 					{
-						tv.eventInfo = oldEventInfo;
-						_ = Flow.TryCatch(() =>
+						var (pushed, tv) = script.Threads.BeginThread();
+						if (pushed)//If we've exceeded the number of allowable threads, then just do nothing.
 						{
-							if (inst is Control ctrl && ctrl.FindForm() is Form form)
-								script.HwndLastUsed = form.Handle;
+							tv.eventInfo = oldEventInfo;
+							_ = Flow.TryCatch(() =>
+							{			
+								if (inst is Control ctrl && ctrl.FindForm() is Form form)
+									script.HwndLastUsed = form.Handle;
 
-							foreach (var handler in handlers)
-							{
-								if (handler != null)
-								{
-									result = handler.Call(obj);
+								result = handler.Call(obj);
+								_ = script.Threads.EndThread((pushed, tv));
+							}, true, (pushed, tv));//Pop on exception because EndThread() above won't be called.
 
-									if (result.IsCallbackResultNonEmpty())
-										break;
-								}
-							}
-
-							_ = script.Threads.EndThread((pushed, tv));
-						}, true, (pushed, tv));//Pop on exception because EndThread() above won't be called.
+							if (Script.ForceLong(result) != 0L)
+								break;
+						}
 					}
 				}
+				script.ExitIfNotPersistent();
 			}
 
 			return result;

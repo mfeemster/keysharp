@@ -14,20 +14,14 @@ namespace Keysharp.Core
 		/// <param name="baseObj">The potential base object to test.</param>
 		/// <returns>This function returns 1 if baseObj is in value's chain of base objects, else 0.</returns>
 		public static long HasBase(object value, object baseObj) {
-            if (value is not KeysharpObject kso)
+            if (value is not Any any)
 				return baseObj.GetType().IsAssignableFrom(value.GetType()) ? 1L : 0L;
 			
-            while (kso != null)
+            while (any != null)
             {
-				if (baseObj == kso)
+				if (baseObj == any)
 					return 1L;
-                if (kso.op == null || !kso.op.TryGetValue("base", out var baseDesc) || baseDesc.Value == null)
-                    return 0L;
-				if (baseDesc.Value is not KeysharpObject kso2)
-				{
-                    return baseObj.GetType().IsAssignableFrom(baseDesc.Value.GetType()) ? 1L : 0L;
-                }
-				kso = kso2;
+				any = any.Base;
             }
 			return 0L;
         }
@@ -142,10 +136,14 @@ namespace Keysharp.Core
 		/// </summary>
 		/// <param name="value">The object to examine.</param>
 		/// <returns>1 if value contained all lowercase characters, else 0.</returns>
-		public static long IsLower(object value)
+		public static long IsLower(object value, object locale = null)
 		{
 			var s = value.As();
-			return s?.Length == 0 || s.All(ch => char.IsLetter(ch) && char.IsLower(ch)) ? 1L : 0L;
+			if (s.Any((c) => !char.IsLetter(c)))
+				return 0L;
+			if (locale != null && locale.As().Equals("locale", StringComparison.OrdinalIgnoreCase))
+				return s.ToLower() == s ? 1L : 0L;
+			return s.ToLower(CultureInfo.InvariantCulture) == s ? 1L : 0L;
 		}
 
 		/// <summary>
@@ -156,11 +154,11 @@ namespace Keysharp.Core
 		public static long IsNumber(object value) => IsInteger(value) | IsFloat(value);
 
 		/// <summary>
-		/// Returns 1 if the specified value is derived from KeysharpObject, else 0.
+		/// Returns 1 if the specified value is derived from Any, else 0.
 		/// </summary>
 		/// <param name="value">The object to examine.</param>
 		/// <returns>1 if value is derived from KeysharpObject, else 0.</returns>
-		public static long IsObject(object value) => value is KeysharpObject ? 1L : 0L;
+		public static long IsObject(object value) => value is Any ? 1L : 0L;
 
 		/// <summary>
 		/// Returns 1 if the specified variable has been assigned a value, meaning it is not null, else 0.
@@ -216,10 +214,14 @@ namespace Keysharp.Core
 		/// </summary>
 		/// <param name="value">The object to examine.</param>
 		/// <returns>1 if value contained all uppercase characters, else 0.</returns>
-		public static long IsUpper(object value)
+		public static long IsUpper(object value, object locale = null)
 		{
 			var s = value.As();
-			return s?.Length == 0 || s.All(ch => char.IsLetter(ch) && char.IsUpper(ch)) ? 1L : 0L;
+			if (s.Any((c) => !char.IsLetter(c)))
+				return 0L;
+			if (locale != null && locale.As().Equals("locale", StringComparison.OrdinalIgnoreCase))
+				return s.ToUpper() == s ? 1L : 0L;
+			return s.ToUpper(CultureInfo.InvariantCulture) == s ? 1L : 0L;
 		}
 
 		/// <summary>

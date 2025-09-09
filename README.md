@@ -11,13 +11,13 @@
 * If .NET 9 is not installed on your machine, you need to download and run the x64 ".NET Desktop Runtime" installer from [here](https://dotnet.microsoft.com/en-us/download/dotnet/9.0).
 
 ### Installing on Windows ###
-* Download and run the Keysharp installer from the [Downloads](https://bitbucket.org/mfeemster/keysharp/downloads/) page.
+* Download and run the Keysharp installer from the [Releases](https://github.com/mfeemster/keysharp/releases) page.
 	+ The install path can be optionally added to the $PATH varible, so you can run it from the command line from anywhere.
 		+ The path entry will be removed upon uninstall.
 	+ It also registers Keysharp.exe as the default program to open `.ks` files. So after installing, double click any `.ks` file to run it.
 	
 ### Portable run on Windows ###
-* Download and unzip the zip file from the [Downloads](https://bitbucket.org/mfeemster/keysharp/downloads/) page.
+* Download and unzip the zip file from the [Releases](https://github.com/mfeemster/keysharp/releases) page.
 	+ CD to the unzipped folder.
 	+ Run `.\Keysharp.exe yourfilename.ahk`
 	
@@ -188,8 +188,11 @@ testfunc()
 	+ RegEx operator ~= returns a RegExMatchInfo, which is treated as an integer in comparison or math operations
 
 ###	Additions/Improvements: ###
+* `Map` internally uses a real hashmap, which means item access, insertions and removals are faster, which is especially true for larger datasets. To keep at least partial compatibility with AutoHotkey the `Map` object is copied and sorted before enumeration, which means modifying the `Map` during enumeration will not have the same effect as in AHK. 
+	+ A new `HashMap` class has been added which extends `Map` and does not perform sorting before enumeration.
 * The spread operator `*` may be used multiple times in one function call. `MyFunc(arr1*, arr2*)` is allowed.
 * Buffer has an `__Item[]` indexer which can be used to read a byte at a 1-based offset.
+* Buffer has `ToHex()`, `ToBase64()`, and `ToByteArray()` methods which can be used to convert the contents to string (hex or base64), or a byte-array to for example write to a file.
 * A new class named `StringBuffer` which can be used for passing string memory to `DllCall()` which will be written to inside of the call.
 	+ There are two methods for creating a `StringBuffer`:
 		+ `StringBuffer(str := "") => StringBuffer`: Creates a `StringBuffer` with a string of `str` and a capacity of 256.
@@ -271,7 +274,7 @@ testfunc()
 	+ Full documentation for the formatting rules can be found [here](https://learn.microsoft.com/en-us/dotnet/api/system.string.format).
 * `SubStr()` uses a default of 1 for the second parameter, `startingPos`, to relieve the caller of always having to specify it.
 * New string functions:
-	+ `Base64Decode(str) => Array` to convert a Base64 string to a byte array.
+	+ `Base64Decode(str) => Array` to convert a Base64 string to a Buffer containing the decoded bytes.
 	+ `Base64Encode(value) => String` to convert a byte array to a Base64 string.
 	+ `NormalizeEol(str, eol) => String` to make all line endings in a string match the value passed in, or the default for the current environment.
 	+ `StartsWith(value, token [,comparison]) => Boolean` and `EndsWith(value, token [,comparison]) => Boolean` to determine if the beginning or end of a string start/end with a given string.
@@ -329,6 +332,7 @@ testfunc()
 	+ `IsClipboardEmpty() => Boolean` returns whether the clipboard is truly empty.
 * When sending a string through `SendMessage()` using the `WM_COPYDATA` message type, the caller is no longer responsible for creating the special `COPYDATA` struct.
 	+ Instead, just pass `WM_COPYDATA (0x4A)` as the message type and the string as the `lparam`, and `SendMessage()` will handle it internally.
+	+ Note, this will send the string as UTF-16 Unicode. If you need to send to a program which expects ASCII, then you'll need to manually create the `COPYDATA` struct.
 * A new function `Collect()` which calls `GC.Collect()` to force a memory collection.
 	+ This rarely ever has to be used in properly written code.
 	+ Calling `Collect()` may not always have an immediate effect. For example if an object is assigned to a variable inside a function and then the variable is assigned an empty string then calling `Collect()` after it will not cause the object destructor to be called. Only after the function has returned will the object be considered to have no references and `Collect()` starts working.

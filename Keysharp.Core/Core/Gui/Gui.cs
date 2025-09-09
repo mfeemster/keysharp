@@ -1,9 +1,4 @@
-﻿using System;
-using System.Windows.Forms;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.TextBox;
-
-namespace Keysharp.Core
+﻿namespace Keysharp.Core
 {
 	internal class GuiData
 	{
@@ -33,11 +28,18 @@ namespace Keysharp.Core
 		internal Dictionary<object, object> controls = [];
 		internal bool dpiscaling = true;
 		internal MenuBar menuBar;
+		bool marginsInit = false;
+		internal nint owner = 0;
 
-		private static readonly Dictionary<string, Action<Gui, object>> showOptionsDkt = new ()
+		private static readonly Dictionary<string, Action<Gui, object>> showOptionsDkt = new (StringComparer.OrdinalIgnoreCase)
 		{
 			{
-				"AlwaysOnTop", (f, o) => { if (o is bool b) f.form.TopMost = b; }
+				"AlwaysOnTop", (f, o) => {
+					// AlwaysOnTop in Windows is handled with an ExStyle
+#if !WINDOWS
+					if (o is bool b) f.form.TopMost = b; 
+#endif
+				}
 			},
 			{
 				"Border", (f, o) =>
@@ -160,8 +162,11 @@ namespace Keysharp.Core
 					{
 						if (int.TryParse(s, out var hwnd))
 						{
+							f.owner = hwnd;
+#if !WINDOWS
 							if (System.Windows.Forms.Control.FromHandle(new nint(hwnd)) is Form theform)
 								f.form.Owner = theform;
+#endif
 						}
 					}
 				}
@@ -247,14 +252,30 @@ namespace Keysharp.Core
 
 		public long MarginX
 		{
-			get => form.Margin.Left;
-			set => form.Margin = new Padding((int)value, form.Margin.Top, (int)value, form.Margin.Bottom);
+			get
+			{
+				EnsureDefaultMargins();
+				return form.Margin.Left;
+			}
+			set
+			{
+				EnsureDefaultMargins();
+				form.Margin = new Padding((int)value, form.Margin.Top, (int)value, form.Margin.Bottom);
+			}
 		}
 
 		public long MarginY
 		{
-			get => form.Margin.Top;
-			set => form.Margin = new Padding(form.Margin.Left, (int)value, form.Margin.Right, (int)value);
+			get
+			{
+				EnsureDefaultMargins();
+				return form.Margin.Top;
+			}
+			set
+			{
+				EnsureDefaultMargins();
+				form.Margin = new Padding(form.Margin.Left, (int)value, form.Margin.Right, (int)value);
+			}
 		}
 
 		public MenuBar MenuBar
@@ -384,9 +405,6 @@ namespace Keysharp.Core
 				_ = Opt(options);
 				var formHandle = form.Handle;//Force the creation.
 				var handleStr = $"{formHandle}";
-				var x = (int)Math.Round(form.Font.Size * 1.25f);//Not really sure if Size is the same as height, like the documentation says.//TODO
-				var y = (int)Math.Round(form.Font.Size * 0.75f);
-				form.Margin = new Padding(x, y, x, y);
 				LastContainer = form;
 
 				//This will be added to allGuiHwnds on show.
@@ -398,8 +416,21 @@ namespace Keysharp.Core
 			return DefaultObject;
 		}
 
+		void EnsureDefaultMargins()
+		{
+			if (marginsInit) return;
+			float dpi = dpiscaling ? (float)A_ScreenDPI : 96f;
+			float dpiinv = 96F / dpi;
+			float fh = form.Font.GetHeight(dpi) * dpiinv;
+			int mx = (int)Math.Round(fh * 1.25f);
+			int my = (int)Math.Round(fh * 0.75f);
+			form.Margin = new Padding(mx, my, mx, my);
+			marginsInit = true;
+		}
+
 		public object Add(object obj0, object obj1 = null, object obj2 = null)
 		{
+			EnsureDefaultMargins();
 			var typeo = obj0.As();
 			var options = obj1.As();
 			var o = obj2;//The third argument needs to account for being an array in the case of combo/list boxes.
@@ -422,7 +453,8 @@ namespace Keysharp.Core
 				{
 					var lbl = new KeysharpLabel(opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle)
 					{
-						Font = Conversions.ConvertFont(form.Font)
+						Font = Conversions.ConvertFont(form.Font),
+						UseCompatibleTextRendering = true
 					};
 					ctrl = lbl;
 					holder = new Text(this, ctrl, typeo);
@@ -722,7 +754,8 @@ namespace Keysharp.Core
 						}
 					}
 
-					ddl.Items.AddRange(al.Cast<(object, object)>().Select(x => x.Item2).Select(x => opts.lowercase.IsTrue() ? x.Str().ToLower() : opts.uppercase.IsTrue() ? x.Str().ToUpper() : x.Str()).ToArray());
+					if (al != null)
+						ddl.Items.AddRange(al.Cast<(object, object)>().Select(x => x.Item2).Select(x => opts.lowercase.IsTrue() ? x.Str().ToLower() : opts.uppercase.IsTrue() ? x.Str().ToUpper() : x.Str()).ToArray());
 
 					if (opts.choose.Any())
 						ddl.SelectedIndex = opts.choose[0];
@@ -804,7 +837,8 @@ namespace Keysharp.Core
 					{
 						Font = Conversions.ConvertFont(form.Font)
 					};
-					lv.Columns.AddRange(al.Cast<(object, object)>().Select(x => x.Item2).Select(x => new ColumnHeader { Text = x.Str() }).ToArray());
+					if (al != null)
+						lv.Columns.AddRange(al.Cast<(object, object)>().Select(x => x.Item2).Select(x => new ColumnHeader { Text = x.Str() }).ToArray());
 					lv.CheckBoxes = opts.ischecked.HasValue && opts.ischecked.Value > 0;
 					lv.GridLines = opts.grid.IsTrue();
 					lv.LabelEdit = opts.rdonly.IsFalse();
@@ -861,6 +895,7 @@ namespace Keysharp.Core
 					tv.CheckBoxes = opts.ischecked.HasValue && opts.ischecked.Value != 0;
 					tv.ShowLines = opts.lines ?? true;
 					tv.LabelEdit = opts.rdonly.IsFalse();
+					tv.HideSelection = false;
 
 					if (tv.LabelEdit && !opts.wantf2.IsFalse())//Note that checking !IsFalse() is not the same as IsTrue().
 						tv.KeyDown += Tv_Lv_KeyDown;
@@ -914,7 +949,9 @@ namespace Keysharp.Core
 						dtp.DropDownAlign = LeftRightAlignment.Right;
 
 					dtp.ShowUpDown = opts.dtopt1;
-					dtp.CalendarForeColor = opts.c;//This will only have an effect if visual styles are disabled.
+
+					if (opts.c.HasValue)
+						dtp.CalendarForeColor = opts.c.Value;//This will only have an effect if visual styles are disabled.
 
 					if (opts.dtlow != System.DateTime.MinValue)
 						dtp.MinDate = opts.dtlow;
@@ -974,7 +1011,8 @@ namespace Keysharp.Core
 						cal.SelectionRange = new SelectionRange(opts.dtselstart, opts.dtselend);
 
 					//Note that colors do not work here is visual styles are enabled.
-					cal.TitleForeColor = opts.c;
+					if (opts.c.HasValue)
+						cal.TitleForeColor = opts.c.Value;
 
 					if (opts.bgcolor.HasValue)
 						cal.TitleBackColor = opts.bgcolor.Value;
@@ -1053,12 +1091,14 @@ namespace Keysharp.Core
 					if (opts.vertical)
 						opts.addstyle |= 0x04;
 
-					var prg = new KeysharpProgressBar(opts.bgcolor.HasValue || opts.c != System.Windows.Forms.Control.DefaultForeColor,
+					bool smooth = opts.smooth.IsTrue();
+
+					var prg = new KeysharpProgressBar(smooth || opts.bgcolor.HasValue || opts.c != System.Windows.Forms.Control.DefaultForeColor,
 													  opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle)
 					{
 						Font = Conversions.ConvertFont(form.Font)
 					};
-					prg.Style = opts.smooth.IsTrue() ? ProgressBarStyle.Continuous : ProgressBarStyle.Blocks;
+					prg.Style = smooth ? ProgressBarStyle.Continuous : ProgressBarStyle.Blocks;
 
 					if (opts.nudlow.HasValue)
 						prg.Minimum = opts.nudlow.Value;
@@ -1075,7 +1115,7 @@ namespace Keysharp.Core
 #if WINDOWS
 
 					if (opts.vertical && opts.width == int.MinValue && opts.height == int.MinValue)
-						(prg.Height, prg.Width) = (prg.Width, prg.Height);
+							(prg.Height, prg.Width) = (prg.Width, prg.Height);
 
 #endif
 					ctrl = prg;
@@ -1101,7 +1141,8 @@ namespace Keysharp.Core
 					{
 						Font = Conversions.ConvertFont(form.Font)
 					};//This will also support image lists just like TreeView for setting icons on tabs, instead of using SendMessage().
-					kstc.TabPages.AddRange(al.Cast<(object, object)>().Select(x => x.Item2).Select(x => new TabPage(x.Str())).ToArray());
+					if (al != null)
+						kstc.TabPages.AddRange(al.Cast<(object, object)>().Select(x => x.Item2).Select(x => new TabPage(x.Str())).ToArray());
 					if (opts.leftj.IsTrue())
 						kstc.Alignment = TabAlignment.Left;
 					else if (opts.rightj.IsTrue())
@@ -1144,7 +1185,6 @@ namespace Keysharp.Core
 					{
 						var tsl = new KeysharpToolStripStatusLabel(text)
 						{
-							ForeColor = opts.c,//Contrary to the documentation, the foreground *can* be set.
 							AutoSize = true,
 							Name = $"AutoToolStripLabel{ss.Items.Count}",
 							Font = Conversions.ConvertFont(form.Font)
@@ -1230,7 +1270,10 @@ namespace Keysharp.Core
 			if (opts.enabled.HasValue)
 				ctrl.Enabled = opts.enabled.Value;
 
-			ctrl.ForeColor = opts.c;
+			if (opts.c.HasValue)
+				ctrl.ForeColor = opts.c.Value;
+			else
+				ctrl.ForeColor = form.ForeColor;
 
 			if (opts.tabstop.HasValue)
 				ctrl.TabStop = opts.tabstop.Value;
@@ -1320,11 +1363,11 @@ namespace Keysharp.Core
 						r = 3;
 					else if (ctrl is KeysharpListView || ctrl is KeysharpTreeView || (ctrl is KeysharpProgressBar kpb2 && ((kpb2.AddStyle & 0x04) == 0x04)))
 						r = 5;
-					else if (ctrl is KeysharpGroupBox || ctrl is KeysharpProgressBar)
+					else if (ctrl is KeysharpGroupBox)
 						r = 2;
 					else if (ctrl is KeysharpTextBox tb)
 						r = tb.Multiline ? 3 : 1;
-					else if (ctrl is KeysharpDateTimePicker || ctrl is HotkeyBox)
+					else if (ctrl is KeysharpDateTimePicker || ctrl is HotkeyBox || ctrl is KeysharpProgressBar)
 						r = 1;
 					else if (ctrl is TabPage || ctrl is KeysharpTabControl)
 						r = 10;
@@ -1380,8 +1423,25 @@ namespace Keysharp.Core
 							}
 							else if (ctrl is KeysharpLabel lbl)
 							{
-								lbl.MaximumSize = new Size(lbl.Width, 0);//This enforces wrapping at the specified width.
-								lbl.AutoSize = true;
+								bool hasW = opts.width != int.MinValue || opts.wp != int.MinValue;
+								bool hasH = opts.height != int.MinValue || opts.hp != int.MinValue;
+
+								if (hasW && !hasH)
+								{
+									lbl.MinimumSize = new Size(lbl.Width, 0);
+									lbl.MaximumSize = new Size(lbl.Width, int.MaxValue);
+									lbl.AutoSize = true;
+								}
+								else if (!hasW && hasH)
+								{
+									lbl.MinimumSize = new Size(0, lbl.Height);
+									lbl.MaximumSize = new Size(int.MaxValue, lbl.Height);
+									lbl.AutoSize = true;
+								} 
+								else if (!hasW && !hasH)
+								{
+									lbl.AutoSize = true;
+								}
 								goto heightdone;
 							}
 						}
@@ -1613,6 +1673,12 @@ namespace Keysharp.Core
 						else
 							pbox.Height = (int)(pbox.Width / ratio);
 					}
+					else if (pbox.SizeMode == PictureBoxSizeMode.AutoSize && dpiscaling && dpiscale != 1.0)
+					{
+						pbox.SizeMode = PictureBoxSizeMode.Zoom;
+						pbox.Width = (int)(bmp.Width * dpiscale);
+						pbox.Height = (int)(bmp.Height * dpiscale);
+					}
 
 					pbox.Image = bmp;
 					//pbox.BackgroundImage = bmp;
@@ -1676,6 +1742,9 @@ namespace Keysharp.Core
 		public object AddStatusBar(object obj0 = null, object obj1 = null) => Add(Keyword_StatusBar, obj0, obj1);
 
 		public object AddTab(object obj0 = null, object obj1 = null) => Add(Keyword_Tab, obj0, obj1);
+		// Just for compatibility
+		public object AddTab2(object obj0 = null, object obj1 = null) => Add(Keyword_Tab, obj0, obj1);
+		public object AddTab3(object obj0 = null, object obj1 = null) => Add(Keyword_Tab, obj0, obj1);
 
 		public object AddText(object obj0 = null, object obj1 = null) => Add(Keyword_Text, obj0, obj1);
 
@@ -1759,7 +1828,7 @@ namespace Keysharp.Core
 				{
 					var val = "";
 
-					if (str.StartsWith("MinSize"))
+					if (str.StartsWith("MinSize", StringComparison.OrdinalIgnoreCase))
 					{
 						if (split[0] == '+')
 							val = str.Substring(7);
@@ -1767,7 +1836,7 @@ namespace Keysharp.Core
 						if (showOptionsDkt.TryGetValue("MinSize", out var func))
 							func(this, val);
 					}
-					else if (str.StartsWith("MaxSize"))
+					else if (str.StartsWith("MaxSize", StringComparison.OrdinalIgnoreCase))
 					{
 						if (split[0] == '+')
 							val = str.Substring(7);
@@ -1775,7 +1844,7 @@ namespace Keysharp.Core
 						if (showOptionsDkt.TryGetValue("MaxSize", out var func))
 							func(this, val);
 					}
-					else if (str.StartsWith("Owner"))
+					else if (str.StartsWith("Owner", StringComparison.OrdinalIgnoreCase))
 					{
 						if (split[0] == '+')
 							val = str.Substring(5);
@@ -1783,7 +1852,7 @@ namespace Keysharp.Core
 						if (showOptionsDkt.TryGetValue("Owner", out var func))
 							func(this, val);
 					}
-					else if (str.StartsWith("Parent"))
+					else if (str.StartsWith("Parent", StringComparison.OrdinalIgnoreCase))
 					{
 						if (split[0] == '+')
 							val = str.Substring(6);
@@ -1808,7 +1877,13 @@ namespace Keysharp.Core
 			return DefaultObject;
 		}
 
-		public object Restore() => form.WindowState = FormWindowState.Normal;
+		public object Restore()
+		{
+			if (!form.Visible)
+				form.Show();
+			form.WindowState = FormWindowState.Normal;
+			return DefaultObject;
+		}
 
 		public object SetFont(object obj0 = null, object obj1 = null)
 		{
@@ -1818,8 +1893,9 @@ namespace Keysharp.Core
 
 		public object Show(object obj = null)
 		{
+			EnsureDefaultMargins();
 			var s = obj.As();
-			bool /*center = false, cX = false, cY = false,*/ auto = false, min = false, max = false, restore = false, hide = false;
+			bool /*center = false, cX = false, cY = false,*/ auto = false, min = false, max = false, restore = true, hide = false;
 			int?[] pos = [null, null, null, null];
 			var dpiscale = !dpiscaling ? 1.0 : A_ScaledScreenDPI;
 
@@ -1872,11 +1948,12 @@ namespace Keysharp.Core
 							case var b when opt.Equals(Keyword_NoActivate, StringComparison.OrdinalIgnoreCase):
 							case var b2 when opt.Equals(Keyword_NA, StringComparison.OrdinalIgnoreCase):
 								form.showWithoutActivation = true;
-								restore = true;
+								restore = false;
 								break;
 
 							case var b when opt.Equals(Keyword_Hide, StringComparison.OrdinalIgnoreCase):
 								hide = true;
+								restore = false;
 								break;
 						}
 					}
@@ -1999,6 +2076,13 @@ namespace Keysharp.Core
 
 			if (hide)
 				form.Hide();
+#if WINDOWS
+			else if (!form.BeenShown && owner != 0)
+			{
+				form.Show(new WindowItem(owner));
+				form.beenShown = true;
+			}
+#endif
 			else
 				form.Show();
 
@@ -2029,7 +2113,13 @@ namespace Keysharp.Core
 					else if (control is KeysharpRichEdit)
 						dkt[control.Name] = !guictrl.AltSubmit ? guictrl.Value : guictrl.RichText;
 					else if (control is KeysharpNumericUpDown nud)
-						dkt[nud.Name] = (double)nud.Value;
+					{
+						decimal v = decimal.Round(nud.Value, nud.DecimalPlaces);
+						if (v == decimal.Truncate(v) && v >= long.MinValue && v <= long.MaxValue)
+							dkt[nud.Name]= (long)v;
+						else
+							dkt[nud.Name] = (double)v;
+					}
 					else if (control is KeysharpCheckBox cb)
 						dkt[cb.Name] = cb.Checked ? 1L : 0L;
 					else if (control is KeysharpTabControl tc)
@@ -2044,7 +2134,7 @@ namespace Keysharp.Core
 									   ? guictrl.Value
 									   : lb.SelectionMode == SelectionMode.One
 									   ? lb.SelectedItem as string ?? ""
-									   : new Array(lb.SelectedItems.Cast<object>().Where(xx => xx is string).Select(x => x as string).ToList());
+									   : new Array(lb.SelectedItems.Cast<object>().Where(xx => xx is string).Select(x => x as string));
 					}
 					else if (control is RadioButton rb)//This is supposed to do something special if it's part of a group, but unsure how to determine that.
 					{
@@ -2117,7 +2207,7 @@ namespace Keysharp.Core
 
 		internal static bool IsGuiType(Type type) => GuiTypes.Any(t => t.IsAssignableFrom(type));
 
-		internal static GuiOptions ParseOpt(string type, string text, string optionsstr)
+		internal GuiOptions ParseOpt(string type, string text, string optionsstr)
 		{
 			var options = new GuiOptions();
 
@@ -2198,7 +2288,7 @@ namespace Keysharp.Core
 					}
 					else if (Options.TryParse(opt, "Choose", ref options.ddlchoose)) { options.ddlchoose--; options.choose.Add(options.ddlchoose); }
 					//
-					else if (Options.TryParse(opt, "c", ref options.c)) { }
+					else if (Options.TryParse(opt, "c", ref tempcolor)) { options.c = tempcolor; }
 					else if (Options.TryParse(opt, "Vertical", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.vertical = tempbool; }
 					else if (Options.TryParseString(opt, "v", ref options.name)) { }
 					else if (Options.TryParse(opt, "Disabled", ref tempbool, StringComparison.OrdinalIgnoreCase, true, true)) { options.enabled = !tempbool; }
@@ -2215,6 +2305,8 @@ namespace Keysharp.Core
 					else if (Options.TryParse(opt, "yp", ref options.y, StringComparison.OrdinalIgnoreCase, true)) { options.ypos = GuiOptions.Positioning.PreviousTopLeft; }
 					else if (Options.TryParse(opt, "xm", ref options.x, StringComparison.OrdinalIgnoreCase, true)) { options.xpos = GuiOptions.Positioning.Margin; }
 					else if (Options.TryParse(opt, "ym", ref options.y, StringComparison.OrdinalIgnoreCase, true)) { options.ypos = GuiOptions.Positioning.Margin; }
+					else if (Options.TryParse(opt, "x+m", ref options.x, StringComparison.OrdinalIgnoreCase, true)) { options.x = form.Margin.Left; options.xpos = GuiOptions.Positioning.PreviousBottomRight; }
+					else if (Options.TryParse(opt, "y+m", ref options.y, StringComparison.OrdinalIgnoreCase, true)) { options.y = form.Margin.Bottom; options.ypos = GuiOptions.Positioning.PreviousBottomRight; }
 					else if (Options.TryParse(opt, "xs", ref options.x, StringComparison.OrdinalIgnoreCase, true)) { options.xpos = GuiOptions.Positioning.Section; }
 					else if (Options.TryParse(opt, "ys", ref options.y, StringComparison.OrdinalIgnoreCase, true)) { options.ypos = GuiOptions.Positioning.Section; }
 					else if (Options.TryParse(opt, "xc", ref options.x, StringComparison.OrdinalIgnoreCase, true)) { options.xpos = GuiOptions.Positioning.Container; }
@@ -2342,6 +2434,7 @@ namespace Keysharp.Core
 		{
 #if WINDOWS
 			var options = obj.As();
+			var tempbool = false;
 
 			//Special style, windows only. Need to figure out how to make this cross platform.//TODO
 			foreach (var split in Options.ParseOptions(options))
@@ -2367,6 +2460,13 @@ namespace Keysharp.Core
 					else if (Options.TryParse(split, "+", ref temp))
 					{
 						addStyle |= temp;
+					}
+					else if (Options.TryParse(split, "AlwaysOnTop", ref tempbool, StringComparison.OrdinalIgnoreCase, true, false))
+					{
+						if (tempbool)
+							addExStyle |= 0x00000008;
+						else
+							addExStyle &= ~0x00000008;
 					}
 					else if (Options.TryParse(split, "", ref temp))
 					{
@@ -2510,7 +2610,7 @@ namespace Keysharp.Core
 			//Tab.
 			internal bool? buttons;
 
-			internal Color c = System.Windows.Forms.Control.DefaultForeColor;
+			internal Color? c;
 			internal bool? center;
 
 			//Checkbox.
@@ -2662,55 +2762,20 @@ namespace Keysharp.Core
 		{
 		}
 
-		/// <summary>
-		/// Places the control into key.
-		/// </summary>
-		/// <param name="key">A reference to the control value.</param>
-		/// <returns>True if the iterator position has not moved past the last element, else false.</returns>
-		public override object Call(object key)
+		public override (object, object) Current
 		{
-			if (MoveNext())
-			{
-				try
-				{
-					Script.SetPropertyValue(key, "__Value", iter.Current.Value);
-				}
-				catch (IndexOutOfRangeException)
-				{
-					throw new InvalidOperationException();//Should never happen when using regular loops.
-				}
-
-				return true;
-			}
-
-			return false;
-		}
-
-		/// <summary>
-		/// Places the handle in key and the control in value.
-		/// </summary>
-		/// <param name="key">A reference to the handle value.</param>
-		/// <param name="value">A reference to the control value.</param>
-		/// <returns>True if the iterator position has not moved past the last element, else false.</returns>
-		public override object Call(object key, object value)
-		{
-			if (MoveNext())
+			get
 			{
 				try
 				{
 					var kv = iter.Current;
-					Script.SetPropertyValue(key, "__Value", kv.Key);
-					Script.SetPropertyValue(value, "__Value", kv.Value);
+					return Count == 1 ? (kv.Value, null) : (kv.Key, kv.Value);
 				}
 				catch (IndexOutOfRangeException)
 				{
 					throw new InvalidOperationException();
 				}
-
-				return true;
 			}
-
-			return false;
 		}
-    }
+	}
 }

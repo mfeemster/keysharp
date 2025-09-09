@@ -52,7 +52,17 @@ namespace Keysharp.Scripting
                             Parser.PredefinedKeywords.StaticToken
                         )
                     )
-                    .WithBody(
+					.WithParameterList(
+						SyntaxFactory.ParameterList(
+							SyntaxFactory.SingletonSeparatedList(
+								SyntaxFactory.Parameter(
+									SyntaxFactory.Identifier("thishotkey")
+								)
+								.WithType(SyntaxFactory.PredefinedType(Parser.PredefinedKeywords.Object))
+							)
+						)
+					)
+					.WithBody(
                         SyntaxFactory.Block(
                             SyntaxFactory.SingletonList<StatementSyntax>(
                                 SyntaxFactory.ReturnStatement(
@@ -88,11 +98,11 @@ namespace Keysharp.Scripting
 
         public override SyntaxNode VisitHotstringDirective([NotNull] HotstringDirectiveContext context)
         {
-            var content = context.HotstringOptions().GetText().Substring("#hotstring ".Length);
             var invocation = SyntaxFactory.InvocationExpression(
                 CreateMemberAccess("Keysharp.Core.Keyboard", "Hotstring")
             );
-            if (content.StartsWith("NoMouse", StringComparison.InvariantCultureIgnoreCase))
+
+            if (context.NoMouse() != null)
             {
                 parser.DHHR.Insert(0,
                     SyntaxFactory.ExpressionStatement(
@@ -105,21 +115,22 @@ namespace Keysharp.Scripting
                         )
                     )
                 );
-            } else if (content.StartsWith("EndChars", StringComparison.InvariantCultureIgnoreCase))
+            } else if (context.EndChars() != null)
             {
-                var endchars = EscapedString(content.Substring("EndChars ".Length), false);
+                var endchars = EscapedString(context.HotstringOptions().GetText().Trim(), false);
                 parser.DHHR.Insert(0,
                     SyntaxFactory.ExpressionStatement(
                         invocation
                         .WithArgumentList(
 							CreateArgumentList(
-                                SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal("ENDCHARS")),
+                                SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal("EndChars")),
                                 SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(endchars))
                             )
                         )
                     )
                 );
-            } else
+            } 
+            else
             {
                 parser.DHHR.Add(
                     SyntaxFactory.ExpressionStatement(
@@ -127,7 +138,7 @@ namespace Keysharp.Scripting
                             CreateMemberAccess("Keysharp.Core.Keyboard", "HotstringOptions")
                         )
                         .WithArgumentList(
-							CreateArgumentList(SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(content)))
+							CreateArgumentList(SyntaxFactory.LiteralExpression(SyntaxKind.StringLiteralExpression, SyntaxFactory.Literal(context.HotstringOptions().GetText().Trim())))
                         )
                     )
                 );
@@ -157,7 +168,7 @@ namespace Keysharp.Scripting
             parser.DHHR.Add(SyntaxFactory.ExpressionStatement(
                 SyntaxFactory.AssignmentExpression(
                     SyntaxKind.SimpleAssignmentExpression,
-					CreateMemberAccess("Keysharp.Core.Accessors", "A_SuspendExempt"),
+					CreateMemberAccess("Keysharp.Core.KeysharpEnhancements", "A_SuspendExempt"),
 					PredefinedKeywords.EqualsToken,
 					(LiteralExpressionSyntax)value
                 )
@@ -176,7 +187,7 @@ namespace Keysharp.Scripting
             parser.DHHR.Add(SyntaxFactory.ExpressionStatement(
                 SyntaxFactory.AssignmentExpression(
                     SyntaxKind.SimpleAssignmentExpression,
-					CreateMemberAccess("Keysharp.Scripting.Script", "ForceKeybdHook"),
+					CreateMemberAccess(MainScriptVariableName, "ForceKeybdHook"),
 					PredefinedKeywords.EqualsToken,
 					value
                 )
@@ -376,10 +387,15 @@ namespace Keysharp.Scripting
         {
             int index = -1;
             bool escape = false;
+            int lastIndex = remapKey.Length - 2;
 
-            for (int i = 0; i < remapKey.Length - 1; i++)
+			for (int i = 0; i < remapKey.Length - 1; i++)
             {
-                if (remapKey[i] == '`' && remapKey[i + 1] != ':') // Detect escape character
+                if (i == lastIndex)
+                {
+                    escape = false;
+                }
+                else if (remapKey[i] == '`' && remapKey[i + 1] != ':') // Detect escape character
                 {
                     escape = !escape; // Toggle escape mode
                 }
@@ -451,8 +467,11 @@ namespace Keysharp.Scripting
                             (tempcp1.Length == 1 && char.IsUpper(tempcp1[0]) ? "+" : "") +// Allow A::b to be different than a::b.
                             hotName;// Include any modifiers too, e.g. ^b::c.
 
-            if (remapName[0] == '"' || remapName[0] == Escape) // Need to escape these.
-                remapDest = $"{Escape}{remapName[0]}";
+			//Escaping is done differently here than in AHK.
+			//There, the generated code is escaped, then has to be unescaped every time the hotkey is processed.
+			//Instead, we only escape quotes, and we do so in the C# way, not the AHK way.
+			if (remapName[0] == '"')
+                remapDest = $"\"";
             else
                 remapDest = remapName;// But exclude modifiers here; they're wanted separately.
 
@@ -570,7 +589,16 @@ namespace Keysharp.Scripting
             SyntaxFactory.PredefinedType(Parser.PredefinedKeywords.Object), // Return type: object
             SyntaxFactory.Identifier(downFunctionName) // Function name
             )
-            .WithModifiers(
+			.WithParameterList(
+				SyntaxFactory.ParameterList(
+					SyntaxFactory.SingletonSeparatedList(
+						SyntaxFactory.Parameter(SyntaxFactory.Identifier("args"))
+						.WithType(PredefinedKeywords.ObjectArrayType)
+						.WithModifiers(SyntaxFactory.TokenList(SyntaxFactory.Token(SyntaxKind.ParamsKeyword)))
+					)
+				)
+			)
+			.WithModifiers(
                 SyntaxFactory.TokenList(
                     Parser.PredefinedKeywords.PublicToken,
                     Parser.PredefinedKeywords.StaticToken
@@ -586,6 +614,15 @@ namespace Keysharp.Scripting
             var upFunction = SyntaxFactory.MethodDeclaration(
                     SyntaxFactory.PredefinedType(Parser.PredefinedKeywords.Object), // Return type: object
                     SyntaxFactory.Identifier(upFunctionName) // Function name
+                )
+                .WithParameterList(
+                    SyntaxFactory.ParameterList(
+                        SyntaxFactory.SingletonSeparatedList(
+                            SyntaxFactory.Parameter(SyntaxFactory.Identifier("args"))
+					        .WithType(PredefinedKeywords.ObjectArrayType)
+					        .WithModifiers(SyntaxFactory.TokenList(SyntaxFactory.Token(SyntaxKind.ParamsKeyword)))
+                        )
+                    )
                 )
                 .WithModifiers(
                     SyntaxFactory.TokenList(

@@ -4960,7 +4960,7 @@ namespace Keysharp.Core.Windows
 							// NO BREAK IN ABOVE, FALL INTO NEXT CASE:
 							// ********
 							var script = Script.TheScript;
-							var tv = script.Threads.GetThreadVariables();
+							var tv = script.Threads.CurrentThread;
 							tv.WaitForCriticalToFinish();//Must wait until the previous critical task finished before proceeding.
 
 							switch (msg.message)
@@ -5110,7 +5110,7 @@ namespace Keysharp.Core.Windows
 											&& script.Threads.AnyThreadsAvailable())
 									{
 										var args = msg.message == (uint)UserMessages.AHK_INPUT_CHAR ?//AHK_INPUT_CHAR passes the chars as a string, whereas the rest pass them individually.
-												   new object[] { input_hook.scriptObject, new string(new char[] { (char)lParamVal, (char)wParamVal }) }
+												   new object[] { input_hook.scriptObject, new string(wParamVal == 0 ? new char[] { (char)lParamVal } : new char[] { (char)lParamVal, (char)wParamVal }) }
 												   : [input_hook.scriptObject, lParamVal, wParamVal];
 										script.Threads.LaunchInThread(0, false, false, ifo, args, true);
 									}
@@ -5214,7 +5214,7 @@ namespace Keysharp.Core.Windows
 
 			//Do this here on the first time through because it's only ever needed if a hook is added.
 			if (thread == null && hooksToBeActive > HookType.None)
-				thread = new();//This is needed to ensure that the hooks are run on the main thread.
+				thread = new (); //This is needed to ensure that the hooks are run on the main thread.
 
 			//Any modifications to the hooks must be done on the hook thread.
 			_ = Invoke(func);
@@ -5303,7 +5303,7 @@ namespace Keysharp.Core.Windows
 			{
 				// This LCtrl is a result of sending RAlt, which hasn't been received yet.
 				// Override dwExtraInfo, though it will only affect this hook instance.
-				lParam.dwExtraInfo = kbdMsSender.altGrExtraInfo;
+				lParam.dwExtraInfo = (ulong)kbdMsSender.altGrExtraInfo;
 			}
 
 			MSDLLHOOKSTRUCT tempstruct = default;
@@ -5314,7 +5314,7 @@ namespace Keysharp.Core.Windows
 		{
 			if (hotkeyIDToPost != HotkeyDefinition.HOTKEY_ID_INVALID)
 			{
-				var inputLevel = InputLevelFromInfo(extraInfo);
+				var inputLevel = InputLevelFromInfo((long)extraInfo);
 				_ = channel.Writer.TryWrite(new KeysharpMsg()
 				{
 					message = (uint)UserMessages.AHK_HOOK_HOTKEY,

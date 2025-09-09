@@ -34,9 +34,7 @@
 	/// </summary>
 	public class Array : KeysharpObject, I__Enum, IEnumerable<(object, object)>, IList
 	{
-        new public static object __Static { get; set; }
-
-        private int capacity = 4;
+		private int capacity = 4;
 
 		/// <summary>
 		/// The underlying <see cref="List"/> that holds the values.
@@ -139,6 +137,17 @@
 		public Array(params object[] args) : base(args) { }
 
 		/// <summary>
+		/// Clones the instance as well as the internal container.
+		/// </summary>
+		public new object Clone()
+		{
+			var clone = (Array)MemberwiseClone();
+			clone.array = clone.array.ToList();
+			clone.array.Capacity = array.Capacity;
+			return clone;
+		}
+
+		/// <summary>
 		/// Translates a 1-based index which allows negative nubmers to a 0-based positive only index.<br/>
 		/// This is used internally to do index conversions.
 		/// </summary>
@@ -188,8 +197,7 @@
 			if (args == null || args.Length == 0)
 			{
 			}
-			else if (args.Length == 1)
-			{
+			else if (args.Length == 1) {
 				if (args[0] is object[] objarr)
 				{
 					array.AddRange(objarr);
@@ -198,9 +206,9 @@
 				{
 					array.AddRange(objlist);
 				}
-				else if (args[0] is ICollection c && c is not Array && c is not Map)
+				else if (args[0] is IEnumerable c && c is not string && c is not KeysharpObject)
 				{
-					array.AddRange(c.Cast<object>().ToList());
+					array.AddRange(c.Cast<object>());
 				}
 				else
 				{

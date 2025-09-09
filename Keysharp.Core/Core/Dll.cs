@@ -74,18 +74,26 @@ namespace Keysharp.Core
 		/// </returns>
 		public static object CallbackCreate(object function, object options = null, object paramCount = null)
 		{
+			var fo = Functions.GetFuncObj(function, null, true);
+
 			var o = options.As();
-			return new DelegateHolder(function, o.Contains('f', StringComparison.OrdinalIgnoreCase), o.Contains('&'), paramCount.Ai(-1));
+			bool fast = o.Contains('f', StringComparison.OrdinalIgnoreCase);
+			bool reference = o.Contains('&');
+			int arity = Math.Clamp(paramCount.Ai(-1) < 0
+								   ? (!reference && fo is FuncObj f ? (int)f.MinParams : 32)
+								   : paramCount.Ai(-1), 0, 32);
+
+			return new DelegateHolder(fo, arity, fast, reference);
 		}
 
 		/// <summary>
-		/// Frees the specified callback by internally setting it to null.
+		/// Frees the specified callback.
 		/// </summary>
 		/// <param name="address">The <see cref="DelegateHolder"/> to be freed.</param>
 		public static object CallbackFree(object address)
 		{
 			if (address is DelegateHolder dh)
-				dh.Clear();
+				dh.Dispose();
 
 			return DefaultObject;
 		}
@@ -253,39 +261,9 @@ namespace Keysharp.Core
 				var helper = new ArgumentHelper(parameters);
 				var value = NativeInvoke(address, helper.args, helper.floatingTypeMask);
 				FixParamTypesAndCopyBack(parameters, helper);
+				var result = helper.ConvertReturnValue(value);
 				helper.Dispose();
-
-				// If the return type was HRESULT and it is a negative value then throw an OSError
-				if (helper.HRESULT)
-				{
-					long hrLong = (long)value;                // unbox the raw long
-					int hr32 = unchecked((int)hrLong);   // keep only the low 32 bits
-
-					return Errors.OSErrorOccurredForHR(hr32);
-				}
-				//Special conversion for the return value.
-				else if (helper.ReturnType == typeof(int))
-				{
-					long l = (long)value;
-					int ii = *(int*)&l;
-					value = ii;
-				}
-				else if (helper.ReturnType == typeof(float))
-				{
-					if (value is not double) return _ = Errors.TypeErrorOccurred(value, typeof(double));
-
-					double d = (double)value;
-					float f = *(float*)&d;
-					return f;
-				}
-				else if (helper.ReturnType == typeof(string))
-				{
-					var str = Marshal.PtrToStringUni((nint)(long)value);
-					_ = Objects.ObjFree(value);//If this string came from us, it will be freed, else no action.
-					return str;
-				}
-
-				return value;
+				return result;
 			}
 			catch (KeysharpException)
 			{
@@ -391,6 +369,8 @@ namespace Keysharp.Core
 				result = ((Func<nint, long[], double>)del)(fnPtr, args);
 			else
 				result = ((Func<nint, long[], long>)del)(fnPtr, args);
+
+			Marshal.SetLastPInvokeError(Marshal.GetLastSystemError());
 
 			if (shim != 0)
 				script.ExecutableMemoryPoolManager.Return(shim);

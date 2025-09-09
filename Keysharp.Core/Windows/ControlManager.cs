@@ -6,33 +6,6 @@ namespace Keysharp.Core.Windows
 	/// </summary>
 	internal class ControlManager : ControlManagerBase
 	{
-		internal static uint ConvertMouseButton(string buf, bool allowWheel = true)
-		{
-			if (buf?.Length == 0 || buf.StartsWith("L"))
-				return VirtualKeys.VK_LBUTTON;
-
-			if (buf.StartsWith("R")) return VirtualKeys.VK_RBUTTON;
-
-			if (buf.StartsWith("M")) return VirtualKeys.VK_MBUTTON;
-
-			if (buf == "X1" || buf == "XButton1") return VirtualKeys.VK_XBUTTON1;
-
-			if (buf == "X2" || buf == "XButton2") return VirtualKeys.VK_XBUTTON2;
-
-			if (allowWheel)
-			{
-				if (buf == "WheelUp" || buf == "WU") return VirtualKeys.VK_WHEEL_UP;
-
-				if (buf == "WheelDown" || buf == "WD") return VirtualKeys.VK_WHEEL_DOWN;
-
-				if (buf == "WheelLeft" || buf == "WL") return VirtualKeys.VK_WHEEL_LEFT;
-
-				if (buf == "WheelRight" || buf == "WR") return VirtualKeys.VK_WHEEL_RIGHT;
-			}
-
-			return 0;
-		}
-
 		internal override long ControlAddItem(string str, object ctrl, object title, object text, object excludeTitle, object excludeText)
 		{
 			if (WindowSearch.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
@@ -202,7 +175,7 @@ namespace Keysharp.Core.Windows
 			var winy = int.MinValue;
 			var ctrlx = int.MinValue;
 			var ctrly = int.MinValue;
-			var vk = ConvertMouseButton(whichButton);
+			var vk = TheScript.HookThread.ConvertMouseButton(whichButton);
 			var posoverride = options.Contains("pos", StringComparison.OrdinalIgnoreCase);
 			bool d = false, u = false, na = false;
 

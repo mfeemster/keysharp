@@ -229,24 +229,23 @@ namespace Keysharp.Core
 										 [ByRef][Optional()][DefaultParameterValue(null)] object outputVarControl,
 										 object flag = null)
 		{
-			outputVarX ??= VarRef.Empty; outputVarY ??= VarRef.Empty; outputVarWin ??= VarRef.Empty; outputVarControl ??= VarRef.Empty;
 			var mode = flag.Al(0L);
 			var pos = Cursor.Position;
 			var aX = 0;
 			var aY = 0;
 			var script = Script.TheScript;
 			script.PlatformProvider.Manager.CoordToScreen(ref aX, ref aY, Core.CoordMode.Mouse);//Determine where 0,0 in window or client coordinates are on the screen.
-			Script.SetPropertyValue(outputVarX, "__Value", (long)(pos.X - aX));//Convert the mouse position in screen coordinates to window coordinates.
-            Script.SetPropertyValue(outputVarY, "__Value", (long)(pos.Y - aY));
-            Script.SetPropertyValue(outputVarWin, "__Value", null);
-            Script.SetPropertyValue(outputVarControl, "__Value", null);
+			if (outputVarX != null) Script.SetPropertyValue(outputVarX, "__Value", (long)(pos.X - aX));//Convert the mouse position in screen coordinates to window coordinates.
+			if (outputVarY != null) Script.SetPropertyValue(outputVarY, "__Value", (long)(pos.Y - aY));
+			if (outputVarWin != null) Script.SetPropertyValue(outputVarWin, "__Value", DefaultObject);
+			if (outputVarControl != null) Script.SetPropertyValue(outputVarControl, "__Value", DefaultObject);
             var child = script.WindowProvider.Manager.WindowFromPoint(pos);
 
 			if (child == null || child.Handle == 0)
 				return DefaultErrorObject;
 
 			var parent = child.NonChildParentWindow;
-            Script.SetPropertyValue(outputVarWin, "__Value", (long)parent.Handle);
+			if (outputVarWin != null) Script.SetPropertyValue(outputVarWin, "__Value", (long)parent.Handle);
 #if WINDOWS
 
 			//Doing it this way overcomes the limitations of WindowFromPoint() and ChildWindowFromPoint()
@@ -267,11 +266,11 @@ namespace Keysharp.Core
 
 			if ((mode & 0x02) != 0)
 			{
-                Script.SetPropertyValue(outputVarControl, "__Value", (long)child.Handle);
+				if (outputVarControl != null) Script.SetPropertyValue(outputVarControl, "__Value", (long)child.Handle);
 				return DefaultObject;
 			}
 
-            Script.SetPropertyValue(outputVarControl, "__Value", child.ClassNN);
+			if (outputVarControl != null) Script.SetPropertyValue(outputVarControl, "__Value", child.ClassNN);
 			return DefaultObject;
 		}
 
@@ -346,13 +345,13 @@ namespace Keysharp.Core
 		{
 			var script = Script.TheScript;
 
-			if (script.Coords.Mouse == CoordModeType.Window)
+			if (ThreadAccessors.A_CoordModeMouse == CoordModeType.Window)
 			{
 				var rect = script.WindowProvider.Manager.ActiveWindow.Location;
 				x += rect.Left;
 				y += rect.Top;
 			}
-			else if (script.Coords.Mouse == CoordModeType.Client)
+			else if (ThreadAccessors.A_CoordModeMouse == CoordModeType.Client)
 			{
 				var pt = script.WindowProvider.Manager.ActiveWindow.ClientToScreen();
 				x += pt.X;
@@ -372,7 +371,7 @@ namespace Keysharp.Core
 		{
 			var script = Script.TheScript;
 
-			if (script.Coords.Mouse == CoordModeType.Window)
+			if (ThreadAccessors.A_CoordModeMouse == CoordModeType.Window)
 			{
 				var rect = script.WindowProvider.Manager.ActiveWindow.Location;
 				x1 += rect.Left;
@@ -380,7 +379,7 @@ namespace Keysharp.Core
 				x2 += rect.Left;
 				y2 += rect.Top;
 			}
-			else if (script.Coords.Mouse == CoordModeType.Client)
+			else if (ThreadAccessors.A_CoordModeMouse == CoordModeType.Client)
 			{
 				var pt = script.WindowProvider.Manager.ActiveWindow.ClientToScreen();
 				x1 += pt.X;
@@ -491,70 +490,6 @@ namespace Keysharp.Core
 											  , eventType
 											  , speed
 											  , relative.Length > 0 && char.ToUpper(relative[0]) == 'R');
-		}
-	}
-
-	/// <summary>
-	/// Class to hold the coordinate modes for various operations.
-	/// The properties will start with the default values set in the auto exec section.
-	/// A new instance of this class will be lazily instantiated in each thread.
-	/// </summary>
-	internal class CoordModes
-	{
-		/// <summary>
-		/// Constructor that starts each field off with the global default set by the auto exec section.
-		/// </summary>
-		internal CoordModes()
-		{
-			Caret = CoordModeCaretDefault;
-			Menu = CoordModeMenuDefault;
-			Mouse = CoordModeMouseDefault;
-			Pixel = CoordModePixelDefault;
-			Tooltip = CoordModeToolTipDefault;
-		}
-
-		/// <summary>
-		/// The coordinate mode for caret operations.
-		/// </summary>
-		internal CoordModeType Caret { get; set; }
-
-		/// <summary>
-		/// The coordinate mode for menu operations.
-		/// </summary>
-		internal CoordModeType Menu { get; set; }
-
-		/// <summary>
-		/// The coordinate mode for mouse operations.
-		/// </summary>
-		internal CoordModeType Mouse { get; set; }
-
-		/// <summary>
-		/// The coordinate mode for pixel operations.
-		/// </summary>
-		internal CoordModeType Pixel { get; set; }
-
-		/// <summary>
-		/// The coordinate mode for tool tip operations.
-		/// </summary>
-		internal CoordModeType Tooltip { get; set; }
-
-		/// <summary>
-		/// Retrieves the coordinate mode for the specified operation.
-		/// </summary>
-		/// <param name="mode">The operation to retrieve the coordinate mode for.</param>
-		/// <returns>The coordinate mode for the specified operation.</returns>
-		/// <exception cref="ValueError">A <see cref="ValueError"/> exception is thrown if an invalid coordinate operation is specified.</exception>
-		internal CoordModeType GetCoordMode(CoordMode mode)
-		{
-			return mode switch
-		{
-				CoordMode.Caret => Caret,
-				CoordMode.Menu => Menu,
-				CoordMode.Mouse => Mouse,
-				CoordMode.Pixel => Pixel,
-				CoordMode.Tooltip => Tooltip,
-				_ => (CoordModeType)Errors.ValueErrorOccurred($"Invalid coordinate mode type: {mode}", null, CoordModeType.Client)
-			};
 		}
 	}
 

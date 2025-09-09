@@ -446,7 +446,7 @@ namespace Keysharp.Core.Common.Invoke
 				addr = l;
 			else if (item is IPointable buf)//Put Buffer, StringBuffer etc check first because it's faster and more likely.
 				addr = buf.Ptr;
-			else if (item is KeysharpObject kso && Script.TryGetPropertyValue(kso, "ptr", out object p))
+			else if (item is Any kso && Script.TryGetPropertyValue(kso, "ptr", out object p))
 				addr = p.Al();
 			else
 				addr = item.Al();
@@ -487,9 +487,8 @@ namespace Keysharp.Core.Common.Invoke
 				foreach (var type in asm.GetExportedTypes())
 					if (type.GetCustomAttribute<PublicForTestOnly>() == null &&
 						type.IsClass && type.IsPublic && type.Namespace != null && (!ignoreMainAssembly || type.Name != Keywords.MainClassName) &&
-							(type.Namespace.StartsWith("Keysharp.Core", StringComparison.OrdinalIgnoreCase) ||
-							 type.Namespace.StartsWith("Keysharp.CompiledMain", StringComparison.OrdinalIgnoreCase) ||
-							 type.Namespace.StartsWith("Keysharp.Tests", StringComparison.OrdinalIgnoreCase)))//Allow tests so we can use function objects inside of unit tests.
+							(type.Namespace.StartsWith("Keysharp.", StringComparison.OrdinalIgnoreCase) &&
+							!type.Namespace.StartsWith("Keysharp.Scripting", StringComparison.OrdinalIgnoreCase)))
 					{
 						_ = FindAndCacheInstanceMethod(type, "", -1);
 						_ = FindAndCacheStaticMethod(type, "", -1);
@@ -529,7 +528,7 @@ namespace Keysharp.Core.Common.Invoke
 			//So we can't just use "Keysharp" to identify it.
 			foreach (var asm in rd.loadedAssemblies.Values.Where(assy => assy.FullName.StartsWith("Keysharp", StringComparison.OrdinalIgnoreCase) || exeAssembly == assy))
 				foreach (var type in asm.GetExportedTypes())
-					if (type.IsClass && type.IsPublic && type.Namespace != null &&
+					if (type.IsClass && type.IsPublic && type.Namespace != null && type.GetCustomAttribute<PublicForTestOnly>() == null &&
 							(type.Namespace.StartsWith("Keysharp.Core", StringComparison.OrdinalIgnoreCase) ||
 							 type.Namespace.StartsWith("Keysharp.CompiledMain", StringComparison.OrdinalIgnoreCase)))
 					{
@@ -583,12 +582,14 @@ namespace Keysharp.Core.Common.Invoke
 			return dkt;
 		}
 
-		private static IEnumerable<Type> GetNestedTypes(Type[] types)
+		internal static IEnumerable<Type> GetNestedTypes(Type[] types)
 		{
 			foreach (var t in types)
 			{
 				yield return t;
-				_ = GetNestedTypes(t.GetNestedTypes());
+
+				foreach (var nested in GetNestedTypes(t.GetNestedTypes()))
+					yield return nested;
 			}
 		}
 	}

@@ -5,7 +5,7 @@ namespace Keysharp.Core.Windows
 	/// <summary>
 	/// Concrete implementation of WindowItem for the Windows platfrom.
 	/// </summary>
-	internal class WindowItem : WindowItemBase
+	internal class WindowItem : WindowItemBase, IWin32Window
 	{
 		private int lastChildCount = 64;
 
@@ -268,7 +268,7 @@ namespace Keysharp.Core.Windows
 					return [];
 
 				var items = new List<string>(64);
-				var tv = Script.TheScript.Threads.GetThreadVariables();
+				var tv = Script.TheScript.Threads.CurrentThread.configData;
 				_ = WindowsAPI.EnumChildWindows(Handle, (nint hwnd, int lParam) =>
 				{
 					if (tv.detectHiddenText || WindowsAPI.IsWindowVisible(hwnd))

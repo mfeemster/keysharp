@@ -19,7 +19,7 @@ namespace Keysharp.Core
 
 			try
 			{
-				return new Keysharp.Core.Array(Convert.FromBase64String(s));
+				return new Keysharp.Core.Buffer(Convert.FromBase64String(s));
 			}
 			catch (Exception ex)
 			{
@@ -399,18 +399,18 @@ namespace Keysharp.Core
 			else
 			{
 				s = splits[0];
-				var haslsys = splits.Contains("LSys");
+				var haslsys = splits.Contains("LSys", StringComparer.OrdinalIgnoreCase);
 
 				if (haslsys)
 					ci = new CultureInfo(ci.LCID, false);
 
 				for (var i = 1; i < splits.Length; i++)
 				{
-					if (!haslsys && splits[i].StartsWith("L"))
+					if (!haslsys && splits[i].StartsWith("L", StringComparison.OrdinalIgnoreCase))
 					{
 						ci = new CultureInfo(splits[i].Substring(1).ParseInt(false).Value, false);
 					}
-					else if (splits[i].StartsWith("D"))
+					else if (splits[i].StartsWith("D", StringComparison.OrdinalIgnoreCase))
 					{
 						var di = splits[i].Substring(1).ParseLong(false).Value;
 
@@ -418,7 +418,7 @@ namespace Keysharp.Core
 							if (!haslsys)
 								ci = new CultureInfo(ci.LCID, false);//No user overrides, if we haven't already done this above.
 					}
-					else if (splits[i].StartsWith("T"))
+					else if (splits[i].StartsWith("T", StringComparison.OrdinalIgnoreCase))
 					{
 						var ti = splits[i].Substring(1).ParseLong(false).Value;
 
@@ -495,7 +495,7 @@ namespace Keysharp.Core
 			}
 			else
 			{
-				if (splits.Contains("R"))
+				if (splits.Contains("R", StringComparer.OrdinalIgnoreCase))
 					f = "f";
 				else
 					f = "h:mm tt dddd, MMMM d, yyyy";
@@ -1034,28 +1034,53 @@ namespace Keysharp.Core
 			{
 				if (len == long.MinValue)//No length specified, only copy up to the first 0.
 				{
-					return encoding == Encoding.Unicode ? Marshal.PtrToStringUni(ptr) : Marshal.PtrToStringAnsi(ptr);
+					if (buf != null)
+						len = (long)buf.Size;
+					else
+						return encoding == Encoding.Unicode ? Marshal.PtrToStringUni(ptr) : Marshal.PtrToStringAnsi(ptr);
 				}
-				else if (len < 0)//Length is negative, copy exactly the absolute value of len, regardless of 0s. Clamp to buf size of buf.
+
+				//If length is negative, copy exactly the absolute value of len, regardless of 0s. Clamp to buf size of buf.
+				//If length is positive, copy as long as length is not reached and value is not 0.
+				var raw = (byte*)ptr.ToPointer();
+				int abs = (int)Math.Abs(len);
+				int byteCount;
+
+				if (encoding is UnicodeEncoding) byteCount = abs * 2;
+				else if (encoding is UTF32Encoding) byteCount = abs * 4;
+				else byteCount = abs; // ANSI, UTF-8 (approx: 1 char ≈ 1 byte)
+
+				int maxBytes = buf != null ? (int)Math.Min((long)buf.Size, byteCount) : byteCount;
+
+				Span<byte> span = new Span<byte>(raw, maxBytes);
+
+				if (len > 0)
 				{
-					var raw = (byte*)ptr.ToPointer();
-					var abs = Math.Abs(len);
+					int terminatorIndex;
+					if (encoding is UnicodeEncoding) // UTF-16, 2-byte code‐units
+					{
+						// reinterpret as chars, look for '\0', then convert back to byte‐index
+						var charSpan = MemoryMarshal.Cast<byte, char>(span);
+						int ci = charSpan.IndexOf('\0');
+						terminatorIndex = (ci >= 0) ? ci * sizeof(char) : -1;
+					}
+					else if (encoding is UTF32Encoding) // UTF-32, 4-byte code‐units
+					{
+						// reinterpret as ints, look for 0, then convert back to byte‐index
+						var intSpan = MemoryMarshal.Cast<byte, int>(span);
+						int ii = intSpan.IndexOf(0);
+						terminatorIndex = (ii >= 0) ? ii * sizeof(int) : -1;
+					}
+					else // all single-byte encodings (ANSI, UTF-8, etc.)
+					{
+						terminatorIndex = span.IndexOf((byte)0);
+					}
 
-					if (encoding != Encoding.ASCII)//Sort of crude, UTF-8 can require up to 4 bytes per char.
-						abs *= 2;
-
-					var finalLen = (int)(buf != null ? Math.Min((long)buf.Size, abs) : abs);
-					var bytes = new byte[finalLen];
-
-					for (var i = 0; i < finalLen; i++)
-						bytes[i] = raw[i];
-
-					return encoding.GetString(bytes);
+					if (terminatorIndex != -1)
+						span = span.Slice(0, terminatorIndex);
 				}
-				else//Positive length was passed, copy as long as length is not reached and value is not 0.
-				{
-					return encoding == Encoding.Unicode ? Marshal.PtrToStringUni(ptr, (int)len) : Marshal.PtrToStringAnsi(ptr, (int)len);
-				}
+
+				return encoding.GetString(span);
 			}
 		}
 
@@ -1371,7 +1396,7 @@ namespace Keysharp.Core
 								list.Add(letter.ToString());
 					}
 
-					return new Array(list.Cast<object>().ToArray());
+					return new Array(list.Cast<object>());
 				}
 
 				var output = count > 0 ? input.Split(del.ToArray(), count, StringSplitOptions.None) : input.Split(del.ToArray(), StringSplitOptions.None);
@@ -1384,7 +1409,7 @@ namespace Keysharp.Core
 						output[i] = output[i].Trim(omit);
 				}
 
-				return new Array(output.Cast<object>().ToArray());
+				return new Array(output.Cast<object>());
 			}
 
 			return [];
@@ -1473,7 +1498,7 @@ namespace Keysharp.Core
 			if (!(targetVar is KeysharpObject))
 				throw new TypeError($"Expected argument of type VarRef, but received {targetVar.GetType()}");
 
-			var target = Script.GetPropertyValue(targetVar, "__Value");
+			var target = Script.GetPropertyValue(targetVar, "__Value") ?? "";
 			int capacity;
 			if (target is string targetStr)
 			{

@@ -28,7 +28,7 @@ namespace Keysharp.Core
 		{
 			var script = Script.TheScript;
 			script.FlowData.callingCritical = true;
-			var tv = script.Threads.GetThreadVariables();
+			var tv = script.Threads.CurrentThread;
 			var on = onOffNumeric == null;
 			long freq = !on ? (onOffNumeric.ParseLong(false) ?? 0L) : 0L;
 
@@ -45,7 +45,7 @@ namespace Keysharp.Core
 				}
 			}
 
-			var ret = tv.isCritical ? tv.peekFrequency : 0L;
+			var ret = tv.isCritical ? tv.configData.peekFrequency : 0L;
 			// v1.0.46: When the current thread is critical, have the script check messages less often to
 			// reduce situations where an OnMessage or GUI message must be discarded due to "thread already
 			// running".  Using 16 rather than the default of 5 solves reliability problems in a custom-menu-draw
@@ -67,7 +67,7 @@ namespace Keysharp.Core
 
 			if (tv.isCritical) // Critical has been turned on. (For simplicity even if it was already on, the following is done.)
 			{
-				tv.peekFrequency = freq;
+				tv.configData.peekFrequency = freq;
 				tv.allowThreadToBeInterrupted = false;
 				// Ensure uninterruptibility never times out.  IsInterruptible() relies on this to avoid the
 				// need to check g->ThreadIsCritical, which in turn allows global_maximize_interruptibility()
@@ -82,7 +82,7 @@ namespace Keysharp.Core
 			{
 				// Since Critical is being turned off, allow thread to be immediately interrupted regardless of
 				// any "Thread Interrupt" settings.
-				tv.peekFrequency = 5;
+				tv.configData.peekFrequency = 5;
 				tv.allowThreadToBeInterrupted = true;
 			}
 
@@ -304,7 +304,7 @@ namespace Keysharp.Core
 			{
 			}
 			else if (f == null)
-				timer = script.Threads.GetThreadVariables().currentTimer;//This means: use the timer which has already been created for this thread/timer event which we are currently inside of.
+				timer = script.Threads.CurrentThread.currentTimer;//This means: use the timer which has already been created for this thread/timer event which we are currently inside of.
 
 			if (timer != null)
 			{
@@ -340,7 +340,10 @@ namespace Keysharp.Core
 						}
 					}
 					else
+					{
+						timer.Interval = int.MaxValue;
 						timer.Interval = (int)p;
+					}
 
 					return DefaultObject;
 				}
@@ -383,7 +386,7 @@ namespace Keysharp.Core
 				}
 
 				var pri = t.Tag.Ai();
-				var tv = v.GetThreadVariables();
+				var tv = v.CurrentThread;
 
 				if (pri >= tv.priority)
 				{
@@ -551,7 +554,7 @@ namespace Keysharp.Core
 			if (string.Compare(sf, "notimers", true) == 0)
 				A_AllowTimers = !(Options.OnOff(value1.As()) ?? false);
 			else if (string.Compare(sf, "priority", true) == 0)
-				script.Threads.GetThreadVariables().priority = value1.Al();
+				script.Threads.CurrentThread.priority = value1.Al();
 			else if (string.Compare(sf, "interrupt", true) == 0)
 				script.uninterruptibleTime = value1.Ai(script.uninterruptibleTime);
 
@@ -581,7 +584,7 @@ namespace Keysharp.Core
 			var result = script.onExitHandlers.InvokeEventHandlers(A_ExitReason, exitCode);
 
 			//If it wasn't a critical shutdown and any exit handlers returned a non empty value, abort the exit.
-			if (exitReason >= ExitReasons.None && result.IsCallbackResultNonEmpty())
+			if (exitReason >= ExitReasons.None && Script.ForceLong(result) != 0L)
 			{
 				A_ExitReason = "";
 				fd.allowInterruption = allowInterruption_prev;
@@ -591,6 +594,7 @@ namespace Keysharp.Core
 				script.onExitHandlers.Clear();
 
 			script.hasExited = true;//At this point, we are clear to exit, so do not allow any more calls to this function.
+			script.SuppressErrorOccurredDialog = true;
 			fd.allowInterruption = allowInterruption_prev;
 			HotkeyDefinition.AllDestruct();
 			StopMainTimer();
@@ -682,7 +686,7 @@ namespace Keysharp.Core
 				if (!kserr.Processed)
 					_ = ErrorOccurred(kserr, kserr.ExcType);
 
-				if (!kserr.Handled)
+				if (!kserr.Handled && !TheScript.SuppressErrorOccurredDialog)
 				{
 					var (__pushed, __btv) = t.BeginThread();
 					_ = ErrorDialog.Show(kserr, false);
@@ -710,14 +714,14 @@ namespace Keysharp.Core
 					if (!kserr.Processed)
 						_ = ErrorOccurred(kserr, kserr.ExcType);
 
-					if (!kserr.Handled)
+					if (!kserr.Handled && !TheScript.SuppressErrorOccurredDialog)
 					{
 						var (__pushed, __btv) = t.BeginThread();
 						_ = ErrorDialog.Show(kserr, false);
 						_ = t.EndThread((__pushed, __btv));
 					}
 				}
-				else
+				else if (!TheScript.SuppressErrorOccurredDialog)
 				{
 					var (__pushed, __btv) = t.BeginThread();
 					_ = ErrorDialog.Show(ex);
@@ -776,7 +780,7 @@ namespace Keysharp.Core
 		/// Whether a thread can be interrupted/preempted by subsequent thread.
 		/// </summary>
 		internal bool allowInterruption = true;
-		internal ConcurrentDictionary<string, IFuncObj> cachedFuncObj = new ();
+		internal ConcurrentDictionary<string, IFuncObj> cachedFuncObj = new (StringComparer.OrdinalIgnoreCase);
 		internal bool callingCritical;
 		internal Timer1 mainTimer;
 		internal int NoSleep = -1;

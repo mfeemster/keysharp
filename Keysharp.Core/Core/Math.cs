@@ -23,7 +23,7 @@
 		/// <param name="obj">The numerical seed to create the random number generator with.</param>
 		public static object RandomSeed(object obj)
 		{
-			Script.TheScript.Threads.GetThreadVariables().RandomGenerator = new Random(obj.Ai());
+			Script.TheScript.Threads.CurrentThread.RandomGenerator = new Random(obj.Ai());
 			return DefaultObject;
 		}
 
@@ -53,14 +53,20 @@
 		/// <summary>
 		/// Internal helper to get a random number generator for the current thread.
 		/// </summary>
-		private static Random RandomGenerator => Script.TheScript.Threads.GetThreadVariables().RandomGenerator;
+		private static Random RandomGenerator => Script.TheScript.Threads.CurrentThread.RandomGenerator;
 
 		/// <summary>
 		/// Returns the absolute value of a number.
 		/// </summary>
 		/// <param name="number">Any number.</param>
 		/// <returns>The magnitude of <paramref name="n"/>.</returns>
-		public static object Abs(object number) => Math.Abs(number is double d ? d : number.Ad());
+		public static object Abs(object number)
+		{
+			number = Number(number);
+			if (number is long ll)
+				return Math.Abs(ll);
+			return Math.Abs((double)number);
+		}
 
 		/// <summary>
 		/// Returns the angle whose cosine is the specified number.
@@ -230,14 +236,11 @@
 		/// <exception cref="TypeError">A <see cref="TypeError"/> exception is thrown if the conversion failed.</exception>
 		public static object Integer(object value)
 		{
-			try
-			{
-				return (long)(value is double d ? d : value.Ad());
-			}
-			catch (Exception)
-			{
-				return Errors.TypeErrorOccurred(value, typeof(double));
-			}
+			if (value.ParseLong(out long l))
+				return l;
+			else if (value.ParseDouble(out double d, false, true))
+				return (long)d;
+			return Errors.TypeErrorOccurred(value, typeof(double));
 		}
 
 		/// <summary>

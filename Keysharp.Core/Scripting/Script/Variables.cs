@@ -1,52 +1,50 @@
 using System.Collections.Generic;
 using System.Reflection;
 using System.Xml.Linq;
+using Keysharp.Core.Common.Cryptography;
 
 namespace Keysharp.Scripting
 {
 	public class Variables
 	{
-        public Dictionary<Type, KeysharpObject> Prototypes = new();
-		public Dictionary<Type, KeysharpObject> Statics = new();
+        public LazyDictionary<Type, Any> Prototypes = new();
+		public LazyDictionary<Type, Any> Statics = new();
         internal List<(string, bool)> preloadedDlls = [];
 		internal DateTime startTime = DateTime.UtcNow;
 		private readonly Dictionary<string, MemberInfo> globalVars = new (StringComparer.OrdinalIgnoreCase);
 
-		/// <summary>
-		/// Will be a generated call within Main which calls into this class to add DLLs.
-		/// </summary>
-		/// <param name="p"></param>
-		/// <param name="s"></param>
-		public void AddPreLoadedDll(string p, bool s) => preloadedDlls.Add((p, s));
-
-		public Variables(Type program = null)
+		public Variables()
 		{
-			if (program != null)
-			{
-				var fields = program.GetFields(BindingFlags.Static |
+			var fields = TheScript.ProgramType.GetFields(BindingFlags.Static |
+										BindingFlags.NonPublic |
+										BindingFlags.Public);
+			var props = TheScript.ProgramType.GetProperties(BindingFlags.Static |
 											BindingFlags.NonPublic |
 											BindingFlags.Public);
-				var props = program.GetProperties(BindingFlags.Static |
-												BindingFlags.NonPublic |
-												BindingFlags.Public);
-				_ = globalVars.EnsureCapacity(fields.Length + props.Length);
+			_ = globalVars.EnsureCapacity(fields.Length + props.Length);
 
-				foreach (var field in fields)
-					globalVars[field.Name] = field;
+			foreach (var field in fields)
+				globalVars[field.Name] = field;
 
-				foreach (var prop in props)
-					globalVars[prop.Name] = prop;
-			}
+			foreach (var prop in props)
+				globalVars[prop.Name] = prop;
 		}
 
-		public void InitPrototypes()
+		public void InitClasses()
 		{
 			// Initialize prototypes 
 			Dictionary<Type, KeysharpObject> protos = new();
 
 			var anyType = typeof(Any);
-			var types = Script.TheScript.ReflectionsData.stringToTypes.Values
+			var script = Script.TheScript;
+			var types = script.ReflectionsData.stringToTypes.Values
 				.Where(type => type.IsClass && !type.IsAbstract && anyType.IsAssignableFrom(type));
+
+			if (script.ProgramType != null)
+			{
+				var nested = Reflections.GetNestedTypes(script.ProgramType.GetNestedTypes()).Where(type => type.IsClass && anyType.IsAssignableFrom(type));
+				types = types.Concat(nested);
+			}
 
 			/*
             var types = AppDomain.CurrentDomain.GetAssemblies()
@@ -55,7 +53,7 @@ namespace Keysharp.Scripting
 			*/
 
 			// Initiate necessary base types in specific order
-			InitStaticInstance(typeof(FuncObj));
+			InitClass(typeof(FuncObj));
 			// Need to do this so that FuncObj methods contain themselves in the prototype,
 			// meaning a circular reference. This shouldn't prevent garbage collection, but
 			// I haven't verified that.
@@ -64,42 +62,48 @@ namespace Keysharp.Scripting
 			{
 				var opm = op.Value;
 				if (opm.Value is FuncObj fov && fov != null)
-					fov.op["base"] = new OwnPropsDesc(fov, fop);
+					fov._base = fop;
 				if (opm.Get is FuncObj fog && fog != null)
-					fog.op["base"] = new OwnPropsDesc(fog, fop);
+					fog._base = fop;
 				if (opm.Set is FuncObj fos && fos != null)
-					fos.op["base"] = new OwnPropsDesc(fos, fop);
+					fos._base = fop;
 				if (opm.Call is FuncObj foc && foc != null)
-					foc.op["base"] = new OwnPropsDesc(foc, fop);
+					foc._base = fop;
 			}
-			InitStaticInstance(typeof(Any), typeof(KeysharpObject));
+			InitClass(typeof(Any));
+			InitClass(typeof(KeysharpObject));
+			InitClass(typeof(Class));
 
-			InitStaticInstance(typeof(Class));
+			// The static instance of Object is copied from Object prototype
+			Statics[typeof(KeysharpObject)] = (Any)Prototypes[typeof(KeysharpObject)].Clone();
+			// Class.Base == Object
+			Statics[typeof(Class)]._base = Statics[typeof(KeysharpObject)];
+			// Any.Base == Class.Prototype
+			Statics[typeof(Any)]._base = Prototypes[typeof(Class)];
 
-			Statics[typeof(Class)].DefineProp("base", Collections.Map("value", Statics[typeof(Any)]));
-			InitStaticInstance(typeof(KeysharpObject));
-			Prototypes[typeof(Class)].DefineProp("base", Collections.Map("value", Prototypes[typeof(KeysharpObject)]));
-			Statics[typeof(KeysharpObject)] = (KeysharpObject)Prototypes[typeof(KeysharpObject)].Clone();
-			Statics[typeof(KeysharpObject)].DefineProp("prototype", Collections.Map("value", Prototypes[typeof(KeysharpObject)]));
-			Prototypes[typeof(FuncObj)].DefineProp("base", Collections.Map("value", Prototypes[typeof(KeysharpObject)]));
-			Statics[typeof(FuncObj)].DefineProp("base", Collections.Map("value", Statics[typeof(KeysharpObject)]));
+			// Remove __New because it's only for internal overrides
+			Prototypes[typeof(Any)].op.Remove("__New");
 
+			// Manually define Object static instance prototype property to be the Object prototype
+			var ksoStatic = Statics[typeof(KeysharpObject)];
+			if (ksoStatic.op == null)
+				ksoStatic.op = new Dictionary<string, OwnPropsDesc>(StringComparer.OrdinalIgnoreCase);
+			ksoStatic.op["prototype"] = new OwnPropsDesc(ksoStatic, Prototypes[typeof(KeysharpObject)]);
+			// Object.Base == Any
+			ksoStatic._base = Statics[typeof(Any)];
 
+			//FuncObj was initialized when Object wasn't, so define the bases
+			Prototypes[typeof(FuncObj)]._base = Prototypes[typeof(KeysharpObject)];
+			Statics[typeof(FuncObj)]._base = Prototypes[typeof(Class)];
+
+			// Do not initialize the core types again
 			var typesToRemoveSet = new HashSet<Type>(new[] { typeof(Any), typeof(FuncObj), typeof(KeysharpObject), typeof(Class) });
 			var orderedTypes = types.Where(type => !typesToRemoveSet.Contains(type)).OrderBy(GetInheritanceDepth);
-			foreach (var t in orderedTypes)
-			{
-				Script.InitStaticInstance(t);
-			}
 
-			// Now that the static objects are created, loop the types again and call __Init and __New for all built-in classes
+			// Lazy-initialize all other classes
 			foreach (var t in orderedTypes)
 			{
-				if (t.Namespace.Equals("Keysharp.CompiledMain", StringComparison.InvariantCultureIgnoreCase))
-				{
-					Script.Invoke(Statics[t], "__Init");
-					Script.Invoke(Statics[t], "__New");
-				}
+				Script.InitClass(t);
 			}
 		}
 

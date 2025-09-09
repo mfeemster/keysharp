@@ -105,7 +105,7 @@
 			{
 				var exists = false;
 
-				if (filename.StartsWith("h*"))
+				if (filename.StartsWith("h*", StringComparison.OrdinalIgnoreCase))
 				{
 					var handle = filename.Substring(2).ParseLong(false);
 
@@ -281,15 +281,15 @@
 			return s;
 		}
 
-		public object ReadChar() => br != null ? br.ReadByte() : "";
+		public object ReadChar() => br != null ? (long)br.ReadByte() : DefaultObject;
 
-		public object ReadDouble() => br != null ? br.ReadDouble() : "";
+		public object ReadDouble() => br != null ? br.ReadDouble() : DefaultObject;
 
-		public object ReadFloat() => br != null ? br.ReadSingle() : "";
+		public object ReadFloat() => br != null ? (double)br.ReadSingle() : DefaultObject;
 
-		public object ReadInt() => br != null ? br.ReadInt32() : "";
+		public object ReadInt() => br != null ? (long)br.ReadInt32() : DefaultObject;
 
-		public object ReadInt64() => br != null ? br.ReadInt64() : "";
+		public object ReadInt64() => br != null ? br.ReadInt64() : DefaultObject;
 
 		public string ReadLine()
 		{
@@ -303,16 +303,16 @@
 			return s;
 		}
 
-		public object ReadShort() => br != null ? br.ReadInt16() : "";
+		public object ReadShort() => br != null ? (long)br.ReadInt16() : DefaultObject;
 
 		//Char in this case is meant to be 1 byte, according to the AHK DllCall() documentation.
-		public object ReadUChar() => br != null ? br.ReadByte() : "";
+		public object ReadUChar() => br != null ? (long)br.ReadByte() : DefaultObject;
 
-		public object ReadUInt() => br != null ? br.ReadUInt32() : "";
+		public object ReadUInt() => br != null ? (long)br.ReadUInt32() : DefaultObject;
 
-		public object ReadUShort() => br != null ? br.ReadUInt16() : "";
+		public object ReadUShort() => br != null ? (long)br.ReadUInt16() : DefaultObject;
 
-		public void Seek(object obj0, object obj1 = null)
+		public object Seek(object obj0, object obj1 = null)
 		{
 			var distance = obj0.Al();
 			var origin = obj1.Al(long.MinValue);
@@ -333,6 +333,8 @@
 				_ = br.BaseStream.Seek(distance, so);
 			else if (bw != null)//Only need to do 1, because they both have the same underlying stream.
 				_ = bw.Seek((int)distance, so);
+
+			return DefaultObject;
 		}
 
 		public long Write(object obj)

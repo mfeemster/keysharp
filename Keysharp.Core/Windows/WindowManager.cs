@@ -60,7 +60,7 @@ namespace Keysharp.Core.Windows
 			if (criteria.IsEmpty)
 				return found;
 
-			var mm = Script.TheScript.Threads.GetThreadVariables().titleMatchMode;
+			var mm = ThreadAccessors.A_TitleMatchMode;
 
 			if (mm < 4) //If the matching mode is not RegEx then try to take an optimized path
 			{
@@ -130,7 +130,7 @@ namespace Keysharp.Core.Windows
 
 		internal override nint GetForeGroundWindowHwnd() => WindowsAPI.GetForegroundWindow();
 
-		internal override bool IsWindow(nint handle) => WindowsAPI.IsWindow(handle);
+		internal override bool IsWindow(nint handle) => WindowsAPI.IsWindow(handle) || handle == WindowsAPI.HWND_BROADCAST;
 
 		internal override void MaximizeAll()
 		{

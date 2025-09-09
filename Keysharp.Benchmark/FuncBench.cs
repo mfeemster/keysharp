@@ -1,4 +1,5 @@
-﻿using static Keysharp.Core.Flow;
+﻿using System.Windows.Forms;
+using static Keysharp.Core.Flow;
 using static Keysharp.Core.Loops;
 using static Keysharp.Scripting.Script;
 using static Keysharp.Scripting.Script.Operator;
@@ -7,9 +8,9 @@ namespace Keysharp.Benchmark
 {
 	public class FuncBench : BaseTest
 	{
-		private myclass cl = new ();
+		private Myclass? cl;
 		private long totalSum;
-		private Keysharp.Scripting.Script? _ks_s;
+		private static Keysharp.Scripting.Script? _ks_s;
 
 		[Params(500000L)]
 		public long Size { get; set; }
@@ -25,10 +26,10 @@ namespace Keysharp.Benchmark
 		[Benchmark]
 		public void KeysharpClassFuncLoopIncrement()
 		{
-			cl.x = 0;
-			_ = cl.ClassIncTestFuncScript();
+			_ = SetPropertyValue(cl, "x", 0);
+			_ = Invoke(cl, "ClassIncTestFuncScript");
 
-			if ((long)cl.x != totalSum)
+			if ((long)GetPropertyValue(cl, "x") != totalSum)
 				throw new Exception($"{x} was not equal to {totalSum}.");
 		}
 
@@ -137,60 +138,78 @@ namespace Keysharp.Benchmark
 		[GlobalSetup]
 		public void Setup()
 		{
-			_ks_s = new ();
 			Size = 500000L;
 			totalSum = Size;
-			cl = new myclass();
+			cl = (Myclass)Invoke(myclass, "Call");
+
+			var mc = _ks_s.Vars.Prototypes[typeof(Myclass)];
+		}
+
+		public object myclass => _ks_s.Vars.Statics[typeof(Myclass)];
+
+		public class Myclass : KeysharpObject
+		{
+			public Myclass(params object[] args) : base(args)
+			{
+			}
+
+			public static object Classinc(object @this)
+			{
+				object _ks_temp1 = null;
+				object _ks_temp2 = null;
+				return Keysharp.Scripting.Script.MultiStatement(_ks_temp1 = @this, _ks_temp2 = "x", Keysharp.Scripting.Script.SetPropertyValue(_ks_temp1, _ks_temp2, Keysharp.Scripting.Script.Operate(Keysharp.Scripting.Script.Operator.Add, Keysharp.Scripting.Script.GetPropertyValue(_ks_temp1, _ks_temp2), 1L)));
+			}
+
+			public static object Classinctestfuncscript(object @this)
+			{
+				object size = null;
+				size = 500000L;
+				Keysharp.Scripting.Script.SetPropertyValue(@this, "x", 0L);
+				{
+					System.Collections.IEnumerator _ks_e1 = Keysharp.Core.Loops.Loop(size).GetEnumerator();
+					Keysharp.Core.Loops.Push(Keysharp.Core.LoopType.Normal);
+					try
+					{
+						for (; IsTrueAndRunning(_ks_e1.MoveNext());)
+						{
+							Keysharp.Scripting.Script.Invoke(@this, "ClassInc");
+						_ks_e1_next:
+							;
+						}
+					}
+					finally
+					{
+						Keysharp.Core.Loops.Pop();
+					}
+
+				_ks_e1_end:
+					;
+				}
+
+				return "";
+			}
+
+			public static void __Init(object @this)
+			{
+				Keysharp.Scripting.Script.Invoke((object)(_ks_s.Vars.Prototypes[typeof(KeysharpObject)], @this), "__Init");
+				Keysharp.Scripting.Script.SetPropertyValue(@this, "x", 0L);
+			}
+
+			public static void static__Init(object @this)
+			{
+				Keysharp.Scripting.Script.SetPropertyValue(_ks_s.Vars.Prototypes[typeof(Myclass)], "__Class", "myclass", true);
+			}
+
+			static Myclass()
+			{
+			}
+
+			public static Myclass staticCall(object @this, params object[] args)
+			{
+				return new Myclass(args);
+			}
 		}
 	}
 
 	//[MemoryDiagnoser]
-	public class myclass : KeysharpObject
-	{
-		public static string @__Class
-		{
-			get
-			{
-				return "myclass";
-			}
-		}
-
-		public object? x { get; set; }
-
-		public myclass()
-		{
-			x = 0L;
-		}
-
-		public static myclass Call()
-		{
-			return new myclass();
-		}
-
-		public object ClassInc()
-		{
-			x = Operate(Add, x, 1L);
-			return "";
-		}
-
-		public object ClassIncTestFuncScript()
-		{
-			var size = 500000L;
-			x = 0L;
-			_ = Push(Keysharp.Core.LoopType.Normal);
-
-			for (System.Collections.IEnumerator e0 = Loop(size).GetEnumerator();
-					IsTrueAndRunning(e0.MoveNext());
-				)
-			{
-				_ = Invoke(GetMethodOrProperty(this, "ClassInc", 0));
-				e1:
-				;
-			}
-
-			e2:
-			_ = Pop();
-			return "";
-		}
-	}
 }
