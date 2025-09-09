@@ -637,6 +637,8 @@ namespace Keysharp.Core.Windows
 		internal const int WM_DESTROY = 0x0002;
 		internal const int WM_COPYDATA = 0x004A;
 		internal const int WM_PAINT = 0x000F;
+		internal const int WM_GETFONT = 0x0031;
+		internal const int WM_SETFONT = 0x0030;
 
 		internal const uint ENDSESSION_LOGOFF = 0x80000000;
 
@@ -1688,6 +1690,9 @@ namespace Keysharp.Core.Windows
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
 		internal static extern bool PostMessage(nint hWnd, uint msg, string wParam, nint lParam);
+
+		[DllImport(user32, CharSet = CharSet.Unicode)]
+		internal static extern long GetMessageTime();
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
 		internal static extern nint RealChildWindowFromPoint(nint hwndParent, Point ptParentClientCoords);

@@ -60,7 +60,18 @@
 		/// </summary>
 		/// <param name="number">Any number.</param>
 		/// <returns>The magnitude of <paramref name="n"/>.</returns>
-		public static object Abs(object number) => Math.Abs(number is double d ? d : number.Ad());
+		public static object Abs(object number)
+		{
+			number = Number(number);
+			if (number is long ll)
+				return Math.Abs(ll);
+			else if (number is bool bl)
+				return bl;
+			else if (number is double dd)
+				return Math.Abs(dd);
+			else
+				return Errors.ErrorOccurred($"Abs() argument of {number} was not numeric");
+		}
 
 		/// <summary>
 		/// Returns the angle whose cosine is the specified number.

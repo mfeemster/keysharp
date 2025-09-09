@@ -180,7 +180,12 @@
 					else if (_control is HotkeyBox hk)
 						return hk.GetText();
 					else if (_control is KeysharpNumericUpDown nud)
-						return (double)nud.Value;
+					{
+						decimal v = decimal.Round(nud.Value, nud.DecimalPlaces);
+						if (v == decimal.Truncate(v) && v >= long.MinValue && v <= long.MaxValue)
+							return (long)v;
+						return (double)v;
+					}
 					else if (_control is KeysharpButton btn)
 						return btn.Text;
 					else if (_control is KeysharpCheckBox cb)
@@ -374,6 +379,11 @@
 
 									if (height < 0 && pic.ScaleHeight)
 										pic.Height = (int)(pic.Width / ratio);
+								} 
+								else if (pic.SizeMode == PictureBoxSizeMode.AutoSize && DpiScaling)
+								{
+									pic.Width = (int)(pic.Width * A_ScaledScreenDPI);
+									pic.Height = (int)(pic.Height * A_ScaledScreenDPI);
 								}
 
 								var oldimage = pic.Image;
@@ -1298,7 +1308,7 @@
 				if (gui == null || !gui.TryGetTarget(out var g))
 					return DefaultErrorObject;
 
-				var opts = Core.Gui.ParseOpt(typename, _control.Text, options.As());
+				var opts = g.ParseOpt(typename, _control.Text, options.As());
 
 				if (opts.redraw.HasValue)
 				{
@@ -1315,14 +1325,14 @@
 					}
 				}
 
-				if (opts.c != _control.ForeColor && opts.c != System.Windows.Forms.Control.DefaultForeColor)
+				if (opts.c.HasValue && opts.c.Value != _control.ForeColor)
 				{
 					if (_control is KeysharpDateTimePicker dtp)
-						dtp.CalendarForeColor = opts.c;
+						dtp.CalendarForeColor = opts.c.Value;
 					else if (_control is KeysharpMonthCalendar mc)
-						mc.TitleForeColor = opts.c;
+						mc.TitleForeColor = opts.c.Value;
 
-					_control.ForeColor = opts.c;
+					_control.ForeColor = opts.c.Value;
 				}
 
 				if (_control is KeysharpButton)
@@ -2001,13 +2011,13 @@
 					return;
 
 				if (_control is KeysharpListBox lb)
-					_ = (contextMenuChangedHandlers?.InvokeEventHandlers(this, lb.SelectedIndex + 1L, wasRightClick, x, y));
+					_ = (contextMenuChangedHandlers?.InvokeEventHandlers(this, lb.SelectedIndex + 1L, wasRightClick, (long)x, (long)y));
 				else if (_control is KeysharpListView lv)
-					_ = (contextMenuChangedHandlers?.InvokeEventHandlers(this, lv.SelectedIndices.Count > 0 ? lv.SelectedIndices[0] + 1L : 0L, wasRightClick, x, y));
+					_ = (contextMenuChangedHandlers?.InvokeEventHandlers(this, lv.SelectedIndices.Count > 0 ? lv.SelectedIndices[0] + 1L : 0L, wasRightClick, (long)x, (long)y));
 				else if (_control is KeysharpTreeView tv)
-					_ = (contextMenuChangedHandlers?.InvokeEventHandlers(this, tv.SelectedNode.Handle.ToInt64(), wasRightClick, x, y));
+					_ = (contextMenuChangedHandlers?.InvokeEventHandlers(this, tv.SelectedNode.Handle.ToInt64(), wasRightClick, (long)x, (long)y));
 				else
-					_ = (contextMenuChangedHandlers?.InvokeEventHandlers(this, _control.Handle.ToInt64().ToString(), wasRightClick, x, y));//Unsure what to pass for Item, so just pass handle.
+					_ = (contextMenuChangedHandlers?.InvokeEventHandlers(this, _control.Handle.ToInt64().ToString(), wasRightClick, (long)x, (long)y));//Unsure what to pass for Item, so just pass handle.
 			}
 
 			internal void Cmb_SelectedIndexChanged(object sender, EventArgs e)

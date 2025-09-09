@@ -142,6 +142,17 @@
 		public Array(params object[] args) => _ = __New(args);
 
 		/// <summary>
+		/// Clones the instance as well as the internal container.
+		/// </summary>
+		public new object Clone()
+		{
+			var clone = (Array)MemberwiseClone();
+			clone.array = clone.array.ToList();
+			clone.array.Capacity = array.Capacity;
+			return clone;
+		}
+
+		/// <summary>
 		/// Translates a 1-based index which allows negative nubmers to a 0-based positive only index.<br/>
 		/// This is used internally to do index conversions.
 		/// </summary>

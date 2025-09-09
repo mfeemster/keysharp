@@ -783,7 +783,7 @@ namespace Keysharp.Core
 		/// Whether a thread can be interrupted/preempted by subsequent thread.
 		/// </summary>
 		internal bool allowInterruption = true;
-		internal ConcurrentDictionary<string, IFuncObj> cachedFuncObj = new ();
+		internal ConcurrentDictionary<string, IFuncObj> cachedFuncObj = new (StringComparer.OrdinalIgnoreCase);
 		internal bool callingCritical;
 		internal Timer1 mainTimer;
 		internal int NoSleep = -1;

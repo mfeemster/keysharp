@@ -227,6 +227,18 @@
 		}
 
 		/// <summary>
+		/// Clones the instance as well as the internal container.
+		/// </summary>
+		public new object Clone()
+		{
+			var clone = (Map)MemberwiseClone();
+			clone.map = new Dictionary<object, object>(clone.map);
+			_ = clone.map.EnsureCapacity(map.Capacity);
+			clone.enumerableMap = null;
+			return clone;
+		}
+
+		/// <summary>
 		/// Clears all elements from the map.
 		/// </summary>
 		public void Clear()
@@ -764,7 +776,7 @@
 		/// <summary>
 		/// The implementation for <see cref="IEnumerator.Current"/> which gets the key,value tuple at the current iterator position.
 		/// </summary>
-		public (object, object) Current
+		public virtual (object, object) Current
 		{
 			get
 			{
