@@ -457,7 +457,7 @@
 					var lbl = new KeysharpLabel(opts.addstyle, opts.addexstyle, opts.remstyle, opts.remexstyle)
 					{
 						Font = Conversions.ConvertFont(form.Font),
-						UseCompatibleTextRendering = true
+						//UseCompatibleTextRendering = true // Using this will cause some fonts to display boxes instead of the proper characters
 					};
 					ctrl = lbl;
 					holder = new Text(this, ctrl, typeo);
@@ -1316,7 +1316,7 @@
 
 			if (opts.wp != int.MinValue)
 			{
-				w = lastControl != null ? lastControl.Width + opts.wp : 0.0;
+				w = lastControl != null ? lastControl.Width + opts.wp * dpiscale : 0.0;
 			}
 			else if (opts.width != int.MinValue)
 			{
@@ -1343,11 +1343,11 @@
 				w = fontpixels * 10;
 
 #endif
-			ctrl.Width = opts.width == int.MinValue ? Math.Max((int)w, (int)Math.Round(scaledPref)) : (holder.requestedSize.Width = (int)Math.Round(w));
+			ctrl.Width = opts.width == int.MinValue && opts.wp == int.MinValue ? Math.Max((int)w, (int)Math.Round(scaledPref)) : (holder.requestedSize.Width = (int)Math.Round(w));
 
 			if (opts.hp != int.MinValue)
 			{
-				ctrl.Height = lastControl != null ? lastControl.Height + opts.hp : 0;
+				ctrl.Height = lastControl != null ? lastControl.Height + (int)(opts.hp * dpiscale) : 0;
 			}
 			else
 			{
