@@ -252,8 +252,8 @@
 			if (w <= 0 && h <= 0)
 				return bmp;
 
-			if (w <= 0) w = bmp.Width;
-			if (h <= 0) h = bmp.Height;
+			if (w <= 0) w = h > 0 ? h : bmp.Width;
+			if (h <= 0) h = w > 0 ? w : bmp.Height;
 
 			if (bmp.Width != w || bmp.Height != h)
 				bmp = bmp.Resize(w, h);
