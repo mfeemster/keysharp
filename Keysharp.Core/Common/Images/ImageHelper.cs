@@ -90,6 +90,7 @@
 					{
 						var tempico = Icon.FromHandle(new nint(handle));
 						bmp = tempico.ToBitmap();
+						bmp = ResizeBitmap(bmp, w, h);
 
 						if (!dontClear)
 							_ = WindowsAPI.DestroyIcon(tempico.Handle);
@@ -112,9 +113,10 @@
 							var ptr = new nint(handle);
 #if WINDOWS
 							bmp = GetBitmapFromHBitmap(ptr);
+							bmp = ResizeBitmap(bmp, w, h);
 
 							if (!dontClear)
-								_ = WindowsAPI.DeleteObject(ptr);
+									_ = WindowsAPI.DeleteObject(ptr);
 
 #else
 							bmp = Image.FromHbitmap(ptr);
@@ -139,7 +141,10 @@
 
 #if WINDOWS
 						else
-							ico = GuiHelper.GetIcon(filename, iconindex.Ai());
+						{
+							var idx = iconindex.Ai();
+							ico = ExtractIconWithSizeFromModule(filename, idx, w, h) ?? GuiHelper.GetIcon(filename, idx);
+						}
 
 #endif
 
@@ -149,8 +154,7 @@
 
 							if (w > 0 || h > 0)
 							{
-								if (bmp.Width != w || bmp.Height != h)
-									bmp = bmp.Resize(w, h);
+								bmp = ResizeBitmap(bmp, w, h);
 							}
 							else if (bmp.Size != SystemInformation.IconSize)
 							{
@@ -162,7 +166,16 @@
 					}
 					else if (ext == ".ico")
 					{
-						var ico = new Icon(filename);
+						Icon ico = null;
+
+#if WINDOWS
+						// If a size was requested, load a sized HICON directly from the .ico file.
+						if (w > 0 || h > 0)
+							ico = ExtractIconWithSizeFromIco(filename, w, h);
+
+						if (ico == null)				
+#endif
+						ico = new Icon(filename);
 						var icos = GuiHelper.SplitIcon(ico);
 
 						if (w > 0 && h > 0)
@@ -197,8 +210,7 @@
 
 						if (w > 0 || h > 0)
 						{
-							if (bmp.Width > w || bmp.Height > h)
-								bmp = bmp.Resize(w, h);
+							bmp = ResizeBitmap(bmp, w, h);
 						}
 						else if (bmp.Size != SystemInformation.IconSize)
 						{
@@ -222,12 +234,7 @@
 						using (var tempBmp = (Bitmap)Image.FromFile(filename))//Must make a copy because the original will keep the file locked.
 						{
 							bmp = new Bitmap(tempBmp);
-
-							if (w > 0 || h > 0)
-							{
-								if (bmp.Width != w || bmp.Height != h)
-									bmp = bmp.Resize(w, h);
-							}
+							bmp = ResizeBitmap(bmp, w, h);
 						}
 					}
 				}
@@ -240,7 +247,59 @@
 			return (bmp, temp);
 		}
 
+		private static Bitmap ResizeBitmap(Bitmap bmp, int w, int h)
+		{
+			if (w <= 0 && h <= 0)
+				return bmp;
+
+			if (w <= 0) w = bmp.Width;
+			if (h <= 0) h = bmp.Height;
+
+			if (bmp.Width != w || bmp.Height != h)
+				bmp = bmp.Resize(w, h);
+
+			return bmp;
+		}
+
 #if WINDOWS
+		internal static Icon ExtractIconWithSizeFromIco(string path, int w, int h)
+		{
+			// Normalize target size (icons are square)
+			if (w <= 0 && h > 0) w = h;
+			if (h <= 0 && w > 0) h = w;
+			if (w <= 0 || h <= 0)
+			{
+				w = SystemInformation.IconSize.Width;
+				h = SystemInformation.IconSize.Height;
+			}
+
+			var hicon = WindowsAPI.LoadImage(
+				0,
+				path,
+				WindowsAPI.IMAGE_ICON,
+				w, h,
+				WindowsAPI.LR_LOADFROMFILE | WindowsAPI.LR_CREATEDIBSECTION);
+
+			return hicon != 0 ? Icon.FromHandle(hicon) : null;
+		}
+
+		internal static Icon ExtractIconWithSizeFromModule(string path, int index, int w, int h)
+		{
+			if (w <= 0 && h > 0) w = h;
+			if (h <= 0 && w > 0) h = w;
+			if (w <= 0 || h <= 0)
+			{
+				w = SystemInformation.IconSize.Width;
+				h = SystemInformation.IconSize.Height;
+			}
+
+			var hicons = new nint[1];
+			var ids = new uint[1];
+			var count = WindowsAPI.PrivateExtractIcons(path, index, w, h, hicons, ids, 1, 0);
+
+			return (count > 0 && hicons[0] != 0) ? Icon.FromHandle(hicons[0]) : null;
+		}
+
 		// Image.FromHbitmap doesn't support transparency, so the following code is used as a workaround.
 		// Source: https://stackoverflow.com/questions/9275738/convert-hbitmap-to-bitmap-preserving-alpha-channel
 		internal static Bitmap GetBitmapFromHBitmap(nint nativeHBitmap)

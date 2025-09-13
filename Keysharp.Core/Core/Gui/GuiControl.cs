@@ -354,38 +354,22 @@
 								}
 							}
 
-							//If neither were set, make one set and the other unset to force a resize internally
-							//so it will match the dimensions of what's already loaded.
-							if (width < 0 && height < 0)
-								width = pic.Height;
+							// If the value of a PictureBox is changed then the size of the box
+							// should remain the same and the picture should be centered in it.
+							// Otherwise the picture sizing logic is mostly the same as when initializing
+							// a PictureBox: negative width/height means fit to the size of the box,
+							// w0/h0 means use original size, positive size uses the custom size.
+
+							if (pic.SizeMode != PictureBoxSizeMode.CenterImage)
+								pic.SizeMode = PictureBoxSizeMode.CenterImage;
+
+							if (width == int.MinValue)
+								width = pic.Width;
+							if (height == int.MinValue)
+								height = pic.Height;
 
 							if (ImageHelper.LoadImage(filename, width, height, iconnumber).Item1 is Bitmap bmp)
 							{
-								if (pic.SizeMode == PictureBoxSizeMode.Zoom)
-								{
-									var ratio = bmp.Height != 0 ? (double)bmp.Width / bmp.Height : 1;
-
-									if (ratio == 0)
-										ratio = 1;
-
-									if (width > 0)
-										pic.Width = width;
-
-									if (height > 0)
-										pic.Height = height;
-
-									if (width < 0 && pic.ScaleWidth)
-										pic.Width = (int)(pic.Height * ratio);
-
-									if (height < 0 && pic.ScaleHeight)
-										pic.Height = (int)(pic.Width / ratio);
-								} 
-								else if (pic.SizeMode == PictureBoxSizeMode.AutoSize && DpiScaling)
-								{
-									pic.Width = (int)(pic.Width * A_ScaledScreenDPI);
-									pic.Height = (int)(pic.Height * A_ScaledScreenDPI);
-								}
-
 								var oldimage = pic.Image;
 								pic.Image = bmp;
 

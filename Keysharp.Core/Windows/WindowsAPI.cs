@@ -1141,6 +1141,11 @@ namespace Keysharp.Core.Windows
 		internal const long ERROR_ALREADY_EXISTS = 183L;
 		internal const long ERROR_INVALID_HOOK_HANDLE = 1404L;
 
+		public const int IMAGE_ICON = 1;
+		public const int LR_DEFAULTCOLOR = 0x0000_0000;
+		public const int LR_LOADFROMFILE = 0x0000_0010;
+		public const int LR_CREATEDIBSECTION = 0x0000_2000;
+
 		internal const string dwmapi = "dwmapi.dll",
 							  kernel32 = "kernel32.dll",
 							  shell32 = "shell32.dll",
@@ -2109,6 +2114,12 @@ namespace Keysharp.Core.Windows
 
 		[DllImport(gdi32, CharSet = CharSet.Unicode)]
 		internal static extern bool DeleteObject(nint hObject);
+
+		[DllImport(user32, CharSet = CharSet.Unicode, SetLastError = true)]
+		internal static extern IntPtr LoadImage(nint hinst, string lpszName, uint uType, int cxDesired, int cyDesired, uint fuLoad);
+
+		[DllImport(user32, CharSet = CharSet.Unicode, SetLastError = true)]
+		internal static extern uint PrivateExtractIcons(string lpszFile, int nIconIndex, int cxIcon, int cyIcon, [Out] nint[] phicon, [Out] uint[] piconid, uint nIcons, uint flags);
 
 		internal delegate bool _EnumWindowsProc(nint hwnd, int lParam);//Add an underscore to this name because some sample programs use EnumWindowsProc as a function name.
 

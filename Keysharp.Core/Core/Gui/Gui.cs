@@ -1676,12 +1676,6 @@
 						else
 							pbox.Height = (int)(pbox.Width / ratio);
 					}
-					else if (pbox.SizeMode == PictureBoxSizeMode.AutoSize && dpiscaling && dpiscale != 1.0)
-					{
-						pbox.SizeMode = PictureBoxSizeMode.Zoom;
-						pbox.Width = (int)(bmp.Width * dpiscale);
-						pbox.Height = (int)(bmp.Height * dpiscale);
-					}
 
 					pbox.Image = bmp;
 					//pbox.BackgroundImage = bmp;
