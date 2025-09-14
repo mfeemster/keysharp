@@ -383,10 +383,7 @@
 
 				case 4:
 				{
-					object outvar = null;
-					_ = RegEx.RegExMatch(a, b, ref outvar, 1);
-					RegExMatchInfo output = (RegExMatchInfo)outvar;
-					return output.Count.Ai() > 0 && !string.IsNullOrEmpty(output[0]);
+					return RegEx.RegExMatch(a, b) is long ll && ll > 0L;
 				}
 			}
 
