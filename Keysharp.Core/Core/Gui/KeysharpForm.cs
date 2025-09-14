@@ -21,8 +21,7 @@
 			get
 			{
 				var cp = base.CreateParams;
-				cp.Style &= ~0x02000000; // Remove WS_CLIPCHILDREN
-				cp.ExStyle |= 0x02000000; // Add WM_EX_COMPOSITED
+				cp.ExStyle |= 0x02000000; // Add WS_EX_COMPOSITED
 				cp.Style |= addStyle;
 				cp.ExStyle |= addExStyle;
 				cp.Style &= ~removeStyle;
