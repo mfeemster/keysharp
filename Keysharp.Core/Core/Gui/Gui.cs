@@ -427,8 +427,8 @@
 			float dpi = dpiscaling ? (float)A_ScreenDPI : 96f;
 			float dpiinv = 96F / dpi;
 			float fh = form.Font.GetHeight(dpi) * dpiinv;
-			int mx = (int)Math.Round(fh * 1.25f);
-			int my = (int)Math.Round(fh * 0.75f);
+			int mx = (int)Math.Ceiling(fh * 1.25f);
+			int my = (int)Math.Ceiling(fh * 0.75f);
 			form.Margin = new Padding(mx, my, mx, my);
 			marginsInit = true;
 		}
@@ -2078,6 +2078,12 @@
 			{
 				hadLocation = true;
 				location.Y = ((screen.Height - form.Size.Height) / 2) + screen.Y;
+			}
+
+			if (!form.BeenShown)
+			{
+				if (requestedSize.Width == int.MinValue) requestedSize.Width = (int)Math.Ceiling(form.Size.Width / dpiscale);
+				if (requestedSize.Height == int.MinValue) requestedSize.Height = (int)Math.Ceiling(form.Size.Height / dpiscale);
 			}
 
 			showCalled = true;
