@@ -60,6 +60,13 @@ namespace Keysharp.Core.Windows
 			if (criteria.IsEmpty)
 				return found;
 
+			if (criteria.ID != 0)
+			{
+				if (IsWindow(criteria.ID) && CreateWindow(criteria.ID) is WindowItemBase temp && temp.Equals(criteria))
+					return temp;
+				return null;
+			}
+
 			var mm = ThreadAccessors.A_TitleMatchMode;
 
 			if (mm < 4) //If the matching mode is not RegEx then try to take an optimized path
