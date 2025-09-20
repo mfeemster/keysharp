@@ -486,8 +486,10 @@ namespace Keysharp.Core
 			//Be careful with Application.DoEvents(), it has caused spurious crashes in my years of programming experience.
 			if (d == 0L)
 			{
-				TryDoEvents();
-				System.Threading.Thread.Sleep(0);
+				var tc = Environment.TickCount;
+				TryDoEvents(true, false);
+				if (Environment.TickCount - tc == 0)
+					System.Threading.Thread.Sleep(0);
 			}
 			else if (d == -1L)
 			{
