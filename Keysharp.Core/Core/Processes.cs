@@ -468,7 +468,7 @@ namespace Keysharp.Core
 		{
 			const int MAX_PATH = 1024;
 			result = DefaultErrorString;
-			var buf = new StringBuilder(MAX_PATH);
+			var buf = new char[MAX_PATH];
 			nint hProc = WindowsAPI.OpenProcess(ProcessAccessTypes.PROCESS_QUERY_LIMITED_INFORMATION, false, pid);
 
 			if (hProc == 0)
@@ -476,12 +476,12 @@ namespace Keysharp.Core
 
 			try
 			{
-				uint len = WindowsAPI.GetProcessImageFileName(hProc, buf, (uint)buf.Capacity);
+				uint len = WindowsAPI.GetProcessImageFileName(hProc, buf, (uint)buf.Length);
 
 				if (len == 0)
 					return 0;
 
-				string path = buf.ToString(0, (int)len);
+				string path = new string(buf, 0, (int)len);
 
 				if (getNameOnly)
 				{
@@ -491,18 +491,18 @@ namespace Keysharp.Core
 				}
 
 				// convert device path (\Device\HarddiskVolumeX\...) to drive letter C:\…
-				var device = new StringBuilder(MAX_PATH);
+				var device = new char[MAX_PATH];
 				var logicalPath = path;
 
 				for (char drv = 'A'; drv <= 'Z'; drv++)
 				{
 					string drive = drv + ":";
-					uint rc = WindowsAPI.QueryDosDevice(drive, device, (uint)device.Capacity);
+					uint rc = WindowsAPI.QueryDosDevice(drive, device, (uint)device.Length);
 
 					if (rc == 0)
 						continue;
 
-					string devPath = device.ToString();
+					string devPath = new string(device, 0, (int)rc);
 
 					if (path.StartsWith(devPath + "\\", StringComparison.OrdinalIgnoreCase))
 					{

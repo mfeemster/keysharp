@@ -42,7 +42,7 @@ namespace Keysharp.Core.Linux
 		internal override nint GetKeyboardLayout(uint idThread)
 		=> throw new NotImplementedException();
 
-		internal override int ToUnicodeEx(uint wVirtKey, uint wScanCode, byte[] lpKeyState, [Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder pwszBuff, int cchBuff, uint wFlags, nint dwhkl)
+		internal override int ToUnicodeEx(uint wVirtKey, uint wScanCode, byte[] lpKeyState, [Out] char[] pwszBuff, int cchBuff, uint wFlags, nint dwhkl)
 		=> throw new NotImplementedException();
 
 		internal override bool SetDllDirectory(string path)

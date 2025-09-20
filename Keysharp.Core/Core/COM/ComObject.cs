@@ -674,9 +674,8 @@ namespace Keysharp.Core.COM
 			if (co.vt != varType)//Attempt to coerce var to the correct type.
 			{
 				var origVal = co.Ptr;
-				var newVal = co.Ptr;
 
-				if (Com.VariantChangeTypeEx(out newVal, ref origVal, Thread.CurrentThread.CurrentCulture.LCID, 0, (short)varType) < 0)
+				if (Com.VariantChangeTypeEx(out object newVal, origVal, Thread.CurrentThread.CurrentCulture.LCID, 0, (ushort)varType) != 0)
 				{
 					co.Clear();
 					return null;

@@ -915,7 +915,7 @@ namespace Keysharp.Core
 			var rh = 30;
 			var ellipse = false;
 			var wind = false;
-			var points = new List<Point>(16);
+			var points = new List<POINT>(16);
 
 			foreach (Range r in opts.AsSpan().SplitAny(SpaceTabSv))
 			{
@@ -943,7 +943,7 @@ namespace Keysharp.Core
 					var vals = Conversions.ParseRange(splits);
 
 					if (vals.Count > 1)
-						points.Add(new Point(vals[0], vals[1]));
+						points.Add(new POINT(vals[0], vals[1]));
 				}
 			}
 
@@ -970,7 +970,7 @@ namespace Keysharp.Core
 					hrgn = WindowsAPI.CreateRectRgn(points[0].X, points[0].Y, w, h);
 			}
 			else
-				hrgn = WindowsAPI.CreatePolygonRgn(points.Select(p => new POINT { x = p.X, y = p.Y }).ToArray(), points.Count, wind ? WindowsAPI.WINDING : WindowsAPI.ALTERNATE);
+				hrgn = WindowsAPI.CreatePolygonRgn(points.Select(p => new POINT { X = p.X, Y = p.Y }).ToArray(), points.Count, wind ? WindowsAPI.WINDING : WindowsAPI.ALTERNATE);
 
 			if (hrgn != 0)
 			{

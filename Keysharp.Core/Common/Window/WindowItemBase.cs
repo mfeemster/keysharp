@@ -5,10 +5,11 @@
 		internal double distanceFound = 0.0;
 		internal nint hwndFound = 0;
 		internal bool ignoreDisabled = false;
-		internal Point pt;
+		internal POINT pt;
 		internal Rectangle rectFound = new ();
 
-		internal PointAndHwnd(Point p) => pt = p;
+		internal PointAndHwnd(POINT p) => pt = p;
+		internal PointAndHwnd(Point p) => pt = new POINT(p);
 	}
 
 	/// <summary>
@@ -193,9 +194,9 @@
 		/// <param name="location"></param>
 		internal abstract void ClickRight(Point? location = null);
 
-		internal abstract Point ClientToScreen();
+		internal abstract POINT ClientToScreen();
 
-		internal virtual void ClientToScreen(ref Point pt)
+		internal virtual void ClientToScreen(ref POINT pt)
 		{
 			var screenPt = ClientToScreen();
 			pt.X += screenPt.X;

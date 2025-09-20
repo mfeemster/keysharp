@@ -73,13 +73,13 @@ namespace Keysharp.Core.COM
 		internal const ushort VT_UNKNOWN = 13;
 		//Extend as needed…
 	}
-	internal static class VariantHelper
+	internal static partial class VariantHelper
 	{
 		//Clears the VARIANT and frees any allocated memory (such as BSTRs).
-		[DllImport(WindowsAPI.oleaut, PreserveSig = false)]
-		internal static extern int VariantClear(ref VARIANT variant);
-		[DllImport(WindowsAPI.oleaut, PreserveSig = true)]
-		internal static extern int VariantClear(nint pvarg);
+		[LibraryImport(WindowsAPI.oleaut, EntryPoint = "VariantClear")]
+		internal static partial int VariantClear(ref VARIANT variant);
+		[LibraryImport(WindowsAPI.oleaut, EntryPoint = "VariantClear")]
+		internal static partial int VariantClear(nint pvarg);
 
 		internal static VARIANT CreateVariantFromInt(int value)
 		{

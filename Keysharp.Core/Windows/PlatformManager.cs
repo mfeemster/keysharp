@@ -27,7 +27,7 @@ namespace Keysharp.Core.Windows
 
 		internal override bool SetDllDirectory(string path) => WindowsAPI.SetDllDirectory(path);
 
-		internal override int ToUnicodeEx(uint wVirtKey, uint wScanCode, byte[] lpKeyState, StringBuilder pwszBuff, int cchBuff, uint wFlags, nint dwhkl)
+		internal override int ToUnicodeEx(uint wVirtKey, uint wScanCode, byte[] lpKeyState, [Out] char[] pwszBuff, int cchBuff, uint wFlags, nint dwhkl)
 		=> WindowsAPI.ToUnicodeEx(wVirtKey, wScanCode, lpKeyState, pwszBuff, cchBuff, wFlags, dwhkl);
 
 		internal override bool UnregisterHotKey(nint hWnd, uint id) => WindowsAPI.UnregisterHotKey(hWnd, id);

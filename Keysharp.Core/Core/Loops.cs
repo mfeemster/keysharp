@@ -614,9 +614,9 @@ namespace Keysharp.Core
 		internal static string GetShortPath(string filename)
 		{
 #if WINDOWS
-			var buffer = new StringBuilder(1024);
-			_ = WindowsAPI.GetShortPathName(filename, buffer, buffer.Capacity);
-			return buffer.ToString();
+			var buffer = new char[1024];
+			var len = WindowsAPI.GetShortPathName(filename, buffer, buffer.Length);
+			return new string(buffer, 0, len);
 #else
 			return DefaultObject;
 #endif

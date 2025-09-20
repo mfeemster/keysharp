@@ -159,7 +159,7 @@ namespace Keysharp.Core.Windows
 			WindowItemBase.DoWinDelay();
 		}
 
-		internal override WindowItemBase WindowFromPoint(Point location)
+		internal override WindowItemBase WindowFromPoint(POINT location)
 		{
 			var ctrl = WindowsAPI.WindowFromPoint(location);
 

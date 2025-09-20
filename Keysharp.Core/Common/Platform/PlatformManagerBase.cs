@@ -65,7 +65,7 @@
 
 		internal abstract bool SetDllDirectory(string path);
 
-		internal abstract int ToUnicodeEx(uint wVirtKey, uint wScanCode, byte[] lpKeyState, StringBuilder pwszBuff, int cchBuff, uint wFlags, nint dwhkl);
+		internal abstract int ToUnicodeEx(uint wVirtKey, uint wScanCode, byte[] lpKeyState, [Out] char[] pwszBuff, int cchBuff, uint wFlags, nint dwhkl);
 
 		internal abstract bool UnregisterHotKey(nint hWnd, uint id);
 	}

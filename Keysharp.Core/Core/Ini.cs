@@ -128,16 +128,16 @@
 				if (!hasSec)
 					return Errors.OSErrorOccurred("", "Section name required when reading a single key.");
 
-				var sb = new StringBuilder((int)BUF_SIZE);
+				var chars = new char[BUF_SIZE];
 				// lpAppName = section (no brackets), wParam default = def
-				read = WindowsAPI.GetPrivateProfileString(s, k, def, sb, BUF_SIZE, file);
+				read = WindowsAPI.GetPrivateProfileString(s, k, def, chars, BUF_SIZE, file);
 				// error or not found?
 				var err = Marshal.GetLastWin32Error();
 
-				if (err != 0)
+				if (err != 0 || read < 0)
 					return @default != null ? def : Errors.OSErrorOccurred(new Win32Exception(err), $"Failed to read key '{k}' in section '{s}' from '{file}' (0x{err:X}).");
 
-				result = sb.ToString();
+				result = new string(chars, 0, (int)read);
 			}
 			else if (hasSec)
 			{

@@ -233,7 +233,7 @@ namespace Keysharp.Core
 			var aY = 0;
 			var script = Script.TheScript;
 			script.PlatformProvider.Manager.CoordToScreen(ref aX, ref aY, Core.CoordMode.Mouse);//Determine where 0,0 in window or client coordinates are on the screen.
-			var child = script.WindowProvider.Manager.WindowFromPoint(pos);
+			var child = script.WindowProvider.Manager.WindowFromPoint(new POINT(pos));
 			outputVarX = (long)(pos.X - aX);//Convert the mouse position in screen coordinates to window coordinates.
 			outputVarY = (long)(pos.Y - aY);
 			outputVarWin = null;
