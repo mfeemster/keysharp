@@ -21,6 +21,7 @@
 			get
 			{
 				var cp = base.CreateParams;
+				cp.ExStyle |= 0x02000000; // Add WS_EX_COMPOSITED
 				cp.Style |= addStyle;
 				cp.ExStyle |= addExStyle;
 				cp.Style &= ~removeStyle;

@@ -38,7 +38,7 @@
 		public static long IsAlpha(object value, object locale = null)
 		{
 			var s = value.As();
-			Func<char, bool> predicate = locale != null && locale.As().Equals("locale", StringComparison.OrdinalIgnoreCase) ? char.IsLetterOrDigit : char.IsLetterOrDigit;
+			Func<char, bool> predicate = locale != null && locale.As().Equals("locale", StringComparison.OrdinalIgnoreCase) ? char.IsLetter : char.IsAsciiLetter;
 			return s?.Length == 0 || s.All(predicate) ? 1L : 0L;
 		}
 
