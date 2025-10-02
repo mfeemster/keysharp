@@ -676,9 +676,9 @@ namespace Keysharp.Core.Windows
 			SendMouseEvent((uint)MOUSEEVENTF.RIGHTUP, location);
 		}
 
-		internal override Point ClientToScreen()
+		internal override POINT ClientToScreen()
 		{
-			var pt = new Point();
+			var pt = new POINT();
 			_ = WindowsAPI.ClientToScreen(Handle, ref pt);
 #if DPI
 			var scale = 1.0 / Accessors.A_ScaledScreenDPI;

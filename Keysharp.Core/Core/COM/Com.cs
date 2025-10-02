@@ -1,7 +1,7 @@
 ﻿#if WINDOWS
 namespace Keysharp.Core.COM
 {
-	unsafe public static class Com
+	unsafe public static partial class Com
 	{
 		public const int variantTypeMask = 0xfff;
 		internal static Guid IID_IDispatch = new (0x00020400, 0x0000, 0x0000, 0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46);
@@ -456,15 +456,54 @@ namespace Keysharp.Core.COM
 		}
 
 
-		[DllImport(WindowsAPI.oleaut, CharSet = CharSet.Unicode)]
-		internal static extern int VariantChangeTypeEx([MarshalAs(UnmanagedType.Struct)] out object pvargDest,
-				[In, MarshalAs(UnmanagedType.Struct)] ref object pvarSrc, int lcid, short wFlags, [MarshalAs(UnmanagedType.I2)] short vt);
+		[LibraryImport(WindowsAPI.ole32, EntryPoint = "VariantChangeTypeEx")]
+		internal static partial int VariantChangeTypeEx(nint pvargDest, nint pvarSrc, int lcid, ushort wFlags, ushort vt);
 
-		[DllImport(WindowsAPI.ole32, CharSet = CharSet.Unicode)]
-		private static extern int CLSIDFromProgIDEx([MarshalAs(UnmanagedType.LPWStr)] string lpszProgID, out Guid clsid);
+		[LibraryImport(WindowsAPI.ole32, EntryPoint = "VariantInit")]
+		internal static partial void VariantInit(nint pvar);
 
-		[DllImport(WindowsAPI.ole32, CharSet = CharSet.Unicode)]
-		private static extern int CLSIDFromString(string lpsz, out Guid guid);
+		[LibraryImport(WindowsAPI.ole32, EntryPoint = "VariantClear")]
+		internal static partial int VariantClear(nint pvar);
+
+		[LibraryImport(WindowsAPI.ole32, EntryPoint = "CLSIDFromProgIDEx", StringMarshalling = StringMarshalling.Utf16)]
+		private static partial int CLSIDFromProgIDEx(string lpszProgID, out Guid clsid);
+
+		[LibraryImport(WindowsAPI.ole32, EntryPoint = "CLSIDFromString", StringMarshalling = StringMarshalling.Utf16)]
+		private static partial int CLSIDFromString(string lpsz, out Guid guid);
+
+		internal static int VariantChangeTypeEx(out object dest, object src, int lcid, ushort wFlags, ushort vt /* VARTYPE */)
+		{
+			nint pSrc = Marshal.AllocHGlobal(16 * 2);   // big enough for VARIANT (x86/x64). Oversize for simplicity.
+			nint pDst = Marshal.AllocHGlobal(16 * 2);
+			try
+			{
+				VariantInit(pSrc);
+				VariantInit(pDst);
+
+				// Fill native VARIANT from managed object
+				Marshal.GetNativeVariantForObject(src, pSrc);
+
+				int hr = VariantChangeTypeEx(pDst, pSrc, lcid, wFlags, vt);
+				if (hr != 0) // FAILED(hr)
+				{  
+					dest = null;
+					return hr;
+				}
+
+				// Convert resulting native VARIANT back to managed object
+				dest = Marshal.GetObjectForNativeVariant(pDst);
+
+			}
+			finally
+			{
+				// Clean up native VARIANTs
+				_ = VariantClear(pSrc);
+				_ = VariantClear(pDst);
+				Marshal.FreeHGlobal(pSrc);
+				Marshal.FreeHGlobal(pDst);
+			}
+			return 0;
+		}
 
 		/// <summary>
 		/// This used to be a built in function in earlier versions of .NET but now needs to be added manually.

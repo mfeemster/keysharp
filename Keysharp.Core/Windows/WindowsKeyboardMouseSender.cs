@@ -45,7 +45,7 @@ namespace Keysharp.Core.Windows
 		internal KeyEventTypes prevEventType;
 		internal uint prevVK;
 		// Tracks this script's own lifetime/persistent modifiers (the ones it caused to be persistent and thus is responsible for tracking).
-		internal Point sendInputCursorPos;
+		internal POINT sendInputCursorPos;
 
 		internal nint targetKeybdLayout;
 		// Set by SendKeys() for use by the functions it calls directly and indirectly.
@@ -162,11 +162,11 @@ namespace Keysharp.Core.Windows
 
 			if (oldLayout != 0)
 			{
-				var sb = new StringBuilder();
+				var chars = new char[16];
 
-				if (GetKeyboardLayoutName(sb))
+				if (GetKeyboardLayoutName(chars))
 				{
-					using (var key = Registry.LocalMachine.OpenSubKey($"SYSTEM\\CurrentControlSet\\Control\\Keyboard Layouts\\{sb}"))
+					using (var key = Registry.LocalMachine.OpenSubKey($"SYSTEM\\CurrentControlSet\\Control\\Keyboard Layouts\\{new string(chars, 0, System.Array.IndexOf(chars, '\0'))}"))
 					{
 						if (key != null)
 						{
@@ -1030,7 +1030,7 @@ namespace Keysharp.Core.Windows
 
 			// The playback mode returned from above doesn't need these flags added because they're ignored for clicks:
 			eventFlags |= (uint)MOUSEEVENTF.MOVE | (uint)MOUSEEVENTF.ABSOLUTE;//Done here for caller, for easier maintenance.
-			Point cursor_pos;
+			POINT cursor_pos;
 
 			if (moveOffset)  // We're moving the mouse cursor relative to its current position.
 			{

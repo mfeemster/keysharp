@@ -99,7 +99,7 @@ namespace Keysharp.Core
 				return false;
 			}
 
-			var pt = new Point
+			var pt = new POINT
 			{
 				X = info.rcCaret.Left,
 				Y = info.rcCaret.Top

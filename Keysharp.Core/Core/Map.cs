@@ -222,7 +222,7 @@
 		public new object __New(params object[] args)
 		{
 			Init__Item();
-			Set(args);
+			_ = Set(args);
 			return DefaultObject;
 		}
 
@@ -484,7 +484,7 @@
 		/// </summary>
 		/// <param name="args">The values to set, arranged as key,value,key2,value2,etc...</param>
 		/// <exception cref="ValueError">A <see cref="ValueError"/> exception is thrown if values was not of a supported type.</exception>
-		public void Set(params object[] args)
+		public Map Set(params object[] args)
 		{
 			if (enumerableMap != null)
 				enumerableMap = null;
@@ -504,7 +504,7 @@
 					{
 						map = m.map;
 						caseSense = m.caseSense;
-						return;
+						return this;
 					}
 					else if (args[0] is Dictionary<object, object> dkt)
 					{
@@ -550,7 +550,7 @@
 					else
 					{
 						_ = Errors.ValueErrorOccurred($"Improper object type of {args[0].GetType()} passed to Map constructor.");
-						return;
+						return this;
 					}
 				}
 				else
@@ -564,6 +564,7 @@
 						Insert(args[i], args[i + 1]);
 				}
 			}
+			return this;
 		}
 		/// <summary>
 		/// Returns the string representation of all elements in the map.

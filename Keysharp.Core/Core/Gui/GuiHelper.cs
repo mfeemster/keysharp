@@ -367,7 +367,7 @@ namespace Keysharp.Core
 	}
 
 #if WINDOWS
-	internal static class HFontCache
+	internal static partial class HFontCache
 	{
 		private sealed class Entry : IDisposable
 		{
@@ -420,11 +420,12 @@ namespace Keysharp.Core
 			}
 		}
 
-		[DllImport("gdi32.dll", CharSet = CharSet.Unicode)]
+		[DllImport(WindowsAPI.gdi32)]
 		public static extern int GetObject(nint hgdiobj, int cbBuffer, out LOGFONT lpvObject);
 
-		[System.Runtime.InteropServices.DllImport("gdi32.dll")]
-		internal static extern bool DeleteObject(nint hObject);
+		[LibraryImport(WindowsAPI.gdi32, EntryPoint = "DeleteObject")]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool DeleteObject(nint hObject);
 
 
 	}

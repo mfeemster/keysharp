@@ -1,5 +1,6 @@
 ﻿#if WINDOWS
 
+using System.Drawing;
 using static Keysharp.Core.Common.Keyboard.KeyboardMouseSender;
 using static Keysharp.Core.Common.Keyboard.KeyboardUtils;
 using static Keysharp.Core.Common.Keyboard.ScanCodes;
@@ -1596,7 +1597,7 @@ namespace Keysharp.Core.Windows
 						&& !CollectHotstring(ref ev, ch, charCount, activeWindow, keyHistoryCurr,
 											 ref hsOut, ref caseConformMode, ref endChar))
 				{
-					var ignored = new StringBuilder(8);
+					var ignored = new char[8];
 
 					if (state.used_dead_key_non_destructively)
 					{
@@ -1604,8 +1605,7 @@ namespace Keysharp.Core.Windows
 						// this keystroke which we're suppressing.  Flush it out, otherwise a hotstring like the following
 						// would insert an extra accent character:
 						//   :*:jsá::jsmith@somedomain.com
-						_ = ignored.Clear();
-						ignored.Capacity = 8;
+						System.Array.Clear(ignored, 0, ignored.Length);
 
 						while (ToUnicodeOrAsciiEx(VK_DECIMAL, 0, physicalKeyState, ignored, 1, activeWindowKeybdLayout) == -1) ;
 					}
@@ -1916,14 +1916,13 @@ namespace Keysharp.Core.Windows
 			if (uwpHwndChecked != activeWindow)
 			{
 				uwpHwndChecked = activeWindow;
-				var className = new StringBuilder(32);
-				_ = GetClassName(activeWindow, className, 32);
-				uwpAppFocused = string.Compare(className.ToString(), "ApplicationFrameWindow", true) == 0;
+				char[] className = new char[32];
+				int len = GetClassName(activeWindow, className, className.Length);
+				uwpAppFocused = string.Compare(new string(className, 0, len), "ApplicationFrameWindow", true) == 0;
 			}
 
 			int charCount;
-			var ch = new char[3];
-			var sb = new StringBuilder(8);
+			var ch = new char[8];
 
 			if (vk == VK_PACKET)
 			{
@@ -1946,10 +1945,8 @@ namespace Keysharp.Core.Windows
 						var dead_key = pendingDeadKeys[i];
 						AdjustKeyState(keyState, dead_key.modLR);
 						keyState[VK_CAPITAL] = (byte)dead_key.caps;
-						_ = sb.Clear();
-						sb.Capacity = 8;
-						_ = ToUnicodeOrAsciiEx(dead_key.vk, dead_key.sc, keyState, sb, 0, activeWindowKeybdLayout);
-						ch = sb.ToString().ToCharArray();
+						System.Array.Clear(ch, 0, ch.Length);
+						_ = ToUnicodeOrAsciiEx(dead_key.vk, dead_key.sc, keyState, ch, 0, activeWindowKeybdLayout);
 					}
 				}
 
@@ -1966,9 +1963,8 @@ namespace Keysharp.Core.Windows
 				// Provide the correct logical modifier and CapsLock state for any translation below.
 				AdjustKeyState(keyState, kbdMsSender.modifiersLRLogical);
 				keyState[VK_CAPITAL] = (byte)(IsKeyToggledOn(VK_CAPITAL) ? 1 : 0);
-				_ = sb.Clear();
-				sb.Capacity = 8;
-				charCount = ToUnicodeOrAsciiEx(vk, scanCode, keyState, sb, flags, activeWindowKeybdLayout);
+				System.Array.Clear(ch, 0, ch.Length);
+				charCount = ToUnicodeOrAsciiEx(vk, scanCode, keyState, ch, flags, activeWindowKeybdLayout);
 
 				if (charCount == 0 && (kbdMsSender.modifiersLRLogical & (MOD_LALT | MOD_RALT)) != 0 && (kbdMsSender.modifiersLRLogical & (MOD_LCONTROL | MOD_RCONTROL)) == 0u && !interfere)
 				{
@@ -1976,15 +1972,14 @@ namespace Keysharp.Core.Windows
 					// For consistency with prior versions (and Win, but not Ctrl/Shift), let the Alt state be ignored under these
 					// conditions.  transcribe_key and modifier state checked above imply that the M option was used.
 					keyState[VK_MENU] = 0;
-					_ = sb.Clear();
-					sb.Capacity = 8;
-					charCount = ToUnicodeOrAsciiEx(vk, scanCode, keyState, sb, flags, activeWindowKeybdLayout);
+					System.Array.Clear(ch, 0, ch.Length);
+					charCount = ToUnicodeOrAsciiEx(vk, scanCode, keyState, ch, flags, activeWindowKeybdLayout);
 				}
 
 				if (charCount <= 0 && interfere) // A key with no text translation, or possibly a chained dead key (if < 0).
 				{
 					// Flush the dead key which was buffered either by the ToUnicodeEx call above or the dead key loop further up.
-					var ignored = new StringBuilder(8);
+					var ignored = new char[8];
 
 					// Michael S. Kaplan blogged that he would explain in a later post why he used VK_SPACE to clear the buffer,
 					// but then changed to using VK_DECIMAL and apparently never explained either choice.  Still, VK_DECIMAL
@@ -2011,8 +2006,6 @@ namespace Keysharp.Core.Windows
 					};
 					pendingDeadKeys.Add(deadKey);
 				}
-
-				ch = sb.ToString().ToCharArray();
 
 				if ((kbdMsSender.modifiersLRLogical & (MOD_LCONTROL | MOD_RCONTROL)) == 0) // i.e. must not replace '\r' with '\n' if it is the result of Ctrl+M.
 				{
@@ -4830,8 +4823,8 @@ namespace Keysharp.Core.Windows
 				return (char)MapVirtualKeyEx(vk, MAPVK_VK_TO_CHAR, keybdLayout);
 
 			// For any other keys,
-			var ch = new StringBuilder();
-			var chNotUsed = new StringBuilder();
+			var ch = new char[3];
+			var chNotUsed = new char[3];
 			var keyState = new byte[256];
 			var deadChar = (char)0;
 			int n;
@@ -4843,7 +4836,7 @@ namespace Keysharp.Core.Windows
 			if (ToUnicodeOrAsciiEx(VK_DECIMAL, 0, keyState, ch, 0, keybdLayout) == 2)
 			{
 				// Save the char to be later re-injected.
-				deadChar = ch.ToString()[0];
+				deadChar = ch[0];
 			}
 
 			// Retrieve the character that corresponds to aVK, if any.
@@ -4872,7 +4865,7 @@ namespace Keysharp.Core.Windows
 			}
 
 			// ch[0] is set even for n < 0, but might not be for n == 0.
-			return n != 0 ? ch.ToString()[0] : (char)0;
+			return n != 0 ? ch[0] : (char)0;
 		}
 
 		internal override void WaitHookIdle()

@@ -34,6 +34,13 @@ namespace Keysharp.Core.Common.Platform
 			if (criteria.IsEmpty)
 				return found;
 
+			if (criteria.ID != 0)
+			{
+				if (IsWindow(criteria.ID) && CreateWindow(criteria.ID) is WindowItemBase temp && temp.Equals(criteria))
+					return temp;
+				return null;
+			}
+
 			foreach (var window in AllWindows)
 			{
 				if (window.Equals(criteria))
@@ -163,6 +170,6 @@ namespace Keysharp.Core.Common.Platform
 
 		internal abstract void MinimizeAllUndo();
 
-		internal abstract WindowItemBase WindowFromPoint(Point location);
+		internal abstract WindowItemBase WindowFromPoint(POINT location);
 	}
 }

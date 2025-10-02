@@ -246,7 +246,7 @@ namespace Keysharp.Core.Windows
 			if (getctrlbycoords)
 			{
 				item = WindowSearch.SearchWindow(title, text, excludeTitle, excludeText, true);
-				var rect = new Point(winx, winx);
+				var rect = new POINT(winx, winx);
 				_ = WindowsAPI.ClientToScreen(item.Handle, ref rect);
 				var pah = new PointAndHwnd(rect);
 				item.ChildFindPoint(pah);
@@ -470,13 +470,13 @@ namespace Keysharp.Core.Windows
 						|| length.ToInt64() == WindowsAPI.CB_ERR)  // CB_ERR == LB_ERR
 					return (string)Errors.ErrorOccurred($"Could not get selected item string for combo or list box in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}", DefaultErrorString);
 
-				var sb = new StringBuilder(length.ToInt32());
+				var buffer = new char[length.ToInt32()];
 
-				if (WindowsAPI.SendMessageTimeout(item.Handle, y_msg, index, sb, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000, out length) == 0
+				if (WindowsAPI.SendMessageTimeout(item.Handle, y_msg, index, buffer, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000, out length) == 0
 						|| length.ToInt64() == WindowsAPI.CB_ERR)//Probably impossible given the way it was called above. Also, CB_ERR == LB_ERR. Relies on short-circuit boolean order.
 					return (string)Errors.ErrorOccurred($"Could not get selected item string for combo or list box in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}", DefaultErrorString);
 
-				return sb.ToString();
+				return new string(buffer, 0, length.ToInt32());
 			}
 
 			return DefaultObject;
@@ -560,13 +560,14 @@ namespace Keysharp.Core.Windows
 
 				var cnt = (int)WindowsAPI.SendMessage(item.Handle, msg, 0, 0);
 				var listBoxContent = new List<object>(cnt);
-				var sb = new StringBuilder(256);
+				var chars = new char[256];
 
 				for (var i = 0; i < cnt; i++)
 				{
-					_ = sb.Clear();
-					_ = WindowsAPI.SendMessage(item.Handle, x_msg, i, sb);
-					listBoxContent.Add(sb.ToString());
+					System.Array.Clear(chars, 0, chars.Length);
+					int len = WindowsAPI.SendMessage(item.Handle, x_msg, i, chars);
+					if (len > 0)
+						listBoxContent.Add(new string(chars, 0, len));
 				}
 
 				return new Keysharp.Core.Array(listBoxContent);
@@ -775,14 +776,14 @@ namespace Keysharp.Core.Windows
 		{
 			if (WindowSearch.SearchControl(ctrl, title, text, excludeTitle, excludeText) is WindowItem item)
 			{
-				var buffer = new StringBuilder(32767);
+				var buffer = new char[32767];
 				n--;
-				_ = buffer.Append((char)buffer.Capacity);
+				buffer[0] = (char)buffer.Length;
 
-				if (WindowsAPI.SendMessageTimeout(item.Handle, WindowsAPI.EM_GETLINE, n, buffer, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000, out _) == 0)
+				if (WindowsAPI.SendMessageTimeout(item.Handle, WindowsAPI.EM_GETLINE, n, buffer, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000, out nint result) == 0 && result < 0)
 					return (string)Errors.ErrorOccurred($"Could not get line for text box in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}", DefaultErrorString);
 
-				if (buffer.Length == 0)
+				if (result == 0)
 				{
 					if (WindowsAPI.SendMessageTimeout(item.Handle, WindowsAPI.EM_GETLINECOUNT, 0, 0, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, 2000, out var linecount) == 0)
 						return (string)Errors.ErrorOccurred($"Could not get line count for text box in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}", DefaultErrorString);
@@ -791,7 +792,7 @@ namespace Keysharp.Core.Windows
 						return (string)Errors.ValueErrorOccurred($"Requested line of {n + 1} is greater than the number of lines ({linecount.ToInt32()}) in the text box in window with criteria: title: {title}, text: {text}, exclude title: {excludeTitle}, exclude text: {excludeText}", null, DefaultErrorString);
 				}
 
-				return buffer.ToString();
+				return new string(buffer, 0, result.ToInt32());
 			}
 
 			return DefaultObject;

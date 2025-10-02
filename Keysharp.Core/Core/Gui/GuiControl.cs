@@ -1897,10 +1897,10 @@
 				else
 				{
 					var scale = 1.0 / A_ScaledScreenDPI;
-					x = (long)(rect.X * scale);
-					y = (long)(rect.Y * scale);
-					w = (long)(rect.Width * scale);
-					h = (long)(rect.Height * scale);
+					x = (long)Math.Ceiling(rect.X * scale);
+					y = (long)Math.Ceiling(rect.Y * scale);
+					w = (long)Math.Ceiling(rect.Width * scale);
+					h = (long)Math.Ceiling(rect.Height * scale);
 				}
 			}
 

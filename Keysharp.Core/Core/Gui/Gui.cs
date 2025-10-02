@@ -30,6 +30,8 @@
 		internal MenuBar menuBar;
 		bool marginsInit = false;
 		internal nint owner = 0;
+		internal Size requestedSize = new(int.MinValue, int.MinValue);
+		internal Point requestedLocation = new(int.MinValue, int.MinValue);
 
 		private static readonly Dictionary<string, Action<Gui, object>> showOptionsDkt = new (StringComparer.OrdinalIgnoreCase)
 		{
@@ -425,8 +427,8 @@
 			float dpi = dpiscaling ? (float)A_ScreenDPI : 96f;
 			float dpiinv = 96F / dpi;
 			float fh = form.Font.GetHeight(dpi) * dpiinv;
-			int mx = (int)Math.Round(fh * 1.25f);
-			int my = (int)Math.Round(fh * 0.75f);
+			int mx = (int)Math.Ceiling(fh * 1.25f);
+			int my = (int)Math.Ceiling(fh * 0.75f);
 			form.Margin = new Padding(mx, my, mx, my);
 			marginsInit = true;
 		}
@@ -1893,7 +1895,6 @@
 			EnsureDefaultMargins();
 			var s = obj.As();
 			bool /*center = false, cX = false, cY = false,*/ auto = false, min = false, max = false, restore = true, hide = false;
-			int?[] pos = [null, null, null, null];
 			var dpiscale = !dpiscaling ? 1.0 : A_ScaledScreenDPI;
 
 			foreach (Range r in s.AsSpan().SplitAny(Spaces))
@@ -1966,7 +1967,15 @@
 							//  cY = true;
 						}
 						else if (modeval.Length != 0 && int.TryParse(modeval, out var n))
-							pos[select] = n;
+						{
+							switch (select)
+							{
+								case 0: requestedSize.Width = n; break;
+								case 1: requestedSize.Height = n; break;
+								case 2: requestedLocation.X = n; break;
+								case 3: requestedLocation.Y = n; break;
+							}
+						}
 					}
 				}
 			}
@@ -1998,7 +2007,7 @@
 			}
 			int maxx = 0, maxy = 0, ssHeight = 0;
 
-			if (auto || pos[0] == null || pos[1] == null)
+			if (auto || requestedSize.Width == int.MinValue || requestedSize.Height == int.MinValue)
 			{
 				KeysharpStatusStrip ss = null;
 
@@ -2011,7 +2020,7 @@
 				(maxx, maxy) = FixStatusStrip(ss);
 			}
 
-			if (auto || (!form.BeenShown && !showCalled && pos[0] == null && pos[1] == null))//The calculations in this block are not exact, but are as close as we can possibly get in a generic way.
+			if (auto || (!form.BeenShown && !showCalled && requestedSize.Width == int.MinValue && requestedSize.Height == int.MinValue))//The calculations in this block are not exact, but are as close as we can possibly get in a generic way.
 			{
 				//AHK always autosizes on first show when no dimensions are specified.
 				form.ClientSize = new Size(maxx + form.Margin.Left,
@@ -2021,13 +2030,13 @@
 			{
 				var size = (form.BeenShown || showCalled) ? form.Size : new Size(800, 500);//Using this size because PreferredSize is so small it just shows the title bar.
 
-				if (pos[0] != null)
-					size.Width = (int)Math.Ceiling(pos[0].Value * dpiscale);
+				if (requestedSize.Width != int.MinValue)
+					size.Width = (int)Math.Ceiling(requestedSize.Width * dpiscale);
 				else
 					size.Width = (int)(maxx + MarginX);
 
-				if (pos[1] != null)
-					size.Height = (int)Math.Ceiling(pos[1].Value * dpiscale);
+				if (requestedSize.Height != int.MinValue)
+					size.Height = (int)Math.Ceiling(requestedSize.Height * dpiscale);
 				else
 					size.Height = (int)(maxy + ssHeight + MarginY);
 
@@ -2043,10 +2052,10 @@
 			//Then called Show() again to actually show the window.
 			//So don't set the location if it wasn't specified and Show() has already been called once.
 			//Same above with size.
-			if (pos[2] != null)//Strangely, the position does not need to be scaled by DPI.
+			if (requestedLocation.X != int.MinValue)//Strangely, the position does not need to be scaled by DPI.
 			{
 				hadLocation = true;
-				location.X = (int)pos[2];
+				location.X = requestedLocation.X;
 			}
 			else if (!showCalled && !form.BeenShown)
 			{
@@ -2054,15 +2063,21 @@
 				location.X = ((screen.Width - form.Size.Width) / 2) + screen.X;
 			}
 
-			if (pos[3] != null)
+			if (requestedLocation.Y != int.MinValue)
 			{
 				hadLocation = true;
-				location.Y = (int)pos[3];
+				location.Y = requestedLocation.Y;
 			}
 			else if (!showCalled && !form.BeenShown)
 			{
 				hadLocation = true;
 				location.Y = ((screen.Height - form.Size.Height) / 2) + screen.Y;
+			}
+
+			if (!form.BeenShown)
+			{
+				if (requestedSize.Width == int.MinValue) requestedSize.Width = (int)Math.Ceiling(form.Size.Width / dpiscale);
+				if (requestedSize.Height == int.MinValue) requestedSize.Height = (int)Math.Ceiling(form.Size.Height / dpiscale);
 			}
 
 			showCalled = true;

@@ -20,7 +20,7 @@ namespace Keysharp.Core.COM
 	/// <summary>
 	/// Contains P/Invoke declarations for OLE Automation SafeArray APIs.
 	/// </summary>
-	static class OleAuto
+	static partial class OleAuto
 	{
 		/// <summary>
 		/// Creates a new SafeArray of the specified variant type and dimensions.
@@ -29,8 +29,8 @@ namespace Keysharp.Core.COM
 		/// <param name="cDims">The number of dimensions (1-8).</param>
 		/// <param name="rgsabound">Array of bounds for each dimension.</param>
 		/// <returns>A pointer to the new SAFEARRAY; IntPtr.Zero on failure.</returns>
-		[DllImport(WindowsAPI.oleaut)]
-		public static extern nint SafeArrayCreate(
+		[LibraryImport(WindowsAPI.oleaut, EntryPoint = "SafeArrayCreate")]
+		public static partial nint SafeArrayCreate(
 			short vt,
 			uint cDims,
 			[In] SAFEARRAYBOUND[] rgsabound);
@@ -39,37 +39,37 @@ namespace Keysharp.Core.COM
 		/// </summary>
 		/// <param name="psa">Pointer to the SAFEARRAY.</param>
 		/// <returns>The number of dimensions, or a negative error code.</returns>
-		[DllImport(WindowsAPI.oleaut)]
-		public static extern int SafeArrayGetDim(
+		[LibraryImport(WindowsAPI.oleaut, EntryPoint = "SafeArrayGetDim")]
+		public static partial int SafeArrayGetDim(
 			nint psa);
 		/// <summary>
 		/// Retrieves the upper bound (max index) for a specified dimension.
 		/// </summary>
-		[DllImport(WindowsAPI.oleaut)]
-		public static extern int SafeArrayGetUBound(
+		[LibraryImport(WindowsAPI.oleaut, EntryPoint = "SafeArrayGetUBound")]
+		public static partial int SafeArrayGetUBound(
 			nint psa,
 			uint nDim,
 			out int plUbound);
 		/// <summary>
 		/// Retrieves the lower bound for a specified dimension.
 		/// </summary>
-		[DllImport(WindowsAPI.oleaut)]
-		public static extern int SafeArrayGetLBound(
+		[LibraryImport(WindowsAPI.oleaut, EntryPoint = "SafeArrayGetLBound")]
+		public static partial int SafeArrayGetLBound(
 			nint psa,
 			uint nDim,
 			out int plLbound);
 		/// <summary>
 		/// Creates a copy of a SafeArray.
 		/// </summary>
-		[DllImport(WindowsAPI.oleaut)]
-		public static extern int SafeArrayCopy(
+		[LibraryImport(WindowsAPI.oleaut, EntryPoint = "SafeArrayCopy")]
+		public static partial int SafeArrayCopy(
 			nint psa,
 			out nint ppsaOut);
 		/// <summary>
 		/// Destroys a SafeArray, releasing its memory.
 		/// </summary>
-		[DllImport(WindowsAPI.oleaut)]
-		public static extern int SafeArrayDestroy(
+		[LibraryImport(WindowsAPI.oleaut, EntryPoint = "SafeArrayDestroy")]
+		public static partial int SafeArrayDestroy(
 			nint psa);
 		/// <summary>
 		/// Retrieves an element from a SafeArray by index.
@@ -90,11 +90,11 @@ namespace Keysharp.Core.COM
 		);
 
 		// Raw-pointer version: for all non-VARIANT base types.
-		[DllImport(WindowsAPI.oleaut, EntryPoint = "SafeArrayGetElement")]
-		public static extern int SafeArrayGetElementPtr(nint psa, [In] int[] rgIndices, IntPtr pv);
+		[LibraryImport(WindowsAPI.oleaut, EntryPoint = "SafeArrayGetElement")]
+		public static partial int SafeArrayGetElementPtr(nint psa, [In] int[] rgIndices, IntPtr pv);
 
-		[DllImport(WindowsAPI.oleaut, EntryPoint = "SafeArrayPutElement")]
-		public static extern int SafeArrayPutElementPtr(nint psa, [In] int[] rgIndices, IntPtr pv);
+		[LibraryImport(WindowsAPI.oleaut, EntryPoint = "SafeArrayPutElement")]
+		public static partial int SafeArrayPutElementPtr(nint psa, [In] int[] rgIndices, IntPtr pv);
 	}
 
 	/// <summary>

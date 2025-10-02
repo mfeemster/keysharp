@@ -219,11 +219,11 @@ namespace Keysharp.Core.Common.Input
 							// between a key press and a key release. The scan code is used for translating ALT+
 							// number key combinations.
 							var state = new byte[256];
-							var sb = new StringBuilder();
+							var ch = new char[2];
 							state[(int)Keys.ShiftKey] |= 0x80; // Indicate that the neutral shift key is down for conversion purposes.
 							var active_window_keybd_layout = hook.kbdMsSender.GetFocusedKeybdLayout(0);
 							var count = script.PlatformProvider.Manager.ToUnicodeEx(endingVK, hook.MapVkToSc(endingVK), state // Nothing is done about ToAsciiEx's dead key side-effects here because it seems to rare to be worth it (assuming its even a problem).
-										, sb, 2, script.menuIsVisible != MenuType.None ? 1u : 0u, active_window_keybd_layout); // v1.0.44.03: Changed to call ToAsciiEx() so that active window's layout can be specified (see hook.cpp for details).
+										, ch, 2, script.menuIsVisible != MenuType.None ? 1u : 0u, active_window_keybd_layout); // v1.0.44.03: Changed to call ToAsciiEx() so that active window's layout can be specified (see hook.cpp for details).
 							keyName = keyName.Substring(0, count);
 						}
 						else

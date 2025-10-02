@@ -1,5 +1,7 @@
 ﻿#if WINDOWS
 
+using System.Runtime.InteropServices.Marshalling;
+
 namespace Keysharp.Core.Windows
 {
 	internal enum GetAncestorFlags
@@ -362,8 +364,11 @@ namespace Keysharp.Core.Windows
 	[StructLayout(LayoutKind.Sequential)]
 	internal struct POINT
 	{
-		internal int x;
-		internal int y;
+		internal int X;
+		internal int Y;
+
+		internal POINT(int x, int y) { X = x; Y = y; }
+		internal POINT(Point p) { X = p.X; Y = p.Y; }
 	}
 
 	[StructLayout(LayoutKind.Sequential)]
@@ -463,7 +468,7 @@ namespace Keysharp.Core.Windows
 		SOUND = 0xFFFFFFF5,
 	}
 
-	public static class WindowsAPI
+	public static partial class WindowsAPI
 	{
 		// File / Device IO
 		internal const uint GENERICREAD = 0x80000000;
@@ -1172,8 +1177,8 @@ namespace Keysharp.Core.Windows
 		[DllImport(oleacc, CharSet = CharSet.Unicode)]
 		internal static extern int AccessibleObjectFromWindow(nint hwnd, uint id, ref Guid iid, [In, Out, MarshalAs(UnmanagedType.IUnknown)] ref object ppvObject);
 
-		[DllImport(oleaut, CharSet = CharSet.Unicode)]
-		internal static extern void SysFreeString(nint bstr);
+		[LibraryImport(oleaut, EntryPoint = "SysFreeString")]
+		internal static partial void SysFreeString(nint bstr);
 
 
 		//[DllImport(oleaut)]
@@ -1200,14 +1205,17 @@ namespace Keysharp.Core.Windows
 			return false;
 		}
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool PeekMessage(out Msg message, nint handle, uint filterMin, uint filterMax, uint flags);
+		[LibraryImport(user32, EntryPoint = "PeekMessageW", StringMarshalling = StringMarshalling.Utf16)]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool PeekMessage(out Msg message, nint handle, uint filterMin, uint filterMax, uint flags);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool OpenClipboard(nint hWndNewOwner);
+		[LibraryImport(user32, EntryPoint = "OpenClipboard")]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool OpenClipboard(nint hWndNewOwner);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool CloseClipboard();
+		[LibraryImport(user32, EntryPoint = "CloseClipboard")]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool CloseClipboard();
 
 		internal static bool OpenClipboard(long ms)
 		{
@@ -1264,23 +1272,24 @@ namespace Keysharp.Core.Windows
 			return GetClipboardData((uint)format);
 		}
 
-		[DllImport(kernel32, CharSet = CharSet.Unicode)]
-		internal static extern nint GlobalSize(nint handle);
+		[LibraryImport(kernel32, EntryPoint = "GlobalSize")]
+		internal static partial nint GlobalSize(nint handle);
 
-		[DllImport(kernel32, CharSet = CharSet.Unicode)]
-		internal static extern nint GlobalLock(nint hMem);
+		[LibraryImport(kernel32, EntryPoint = "GlobalLock")]
+		internal static partial nint GlobalLock(nint hMem);
 
-		[DllImport(kernel32, CharSet = CharSet.Unicode)]
-		internal static extern bool GlobalUnlock(nint hMem);
+		[LibraryImport(kernel32, EntryPoint = "GlobalUnlock")]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool GlobalUnlock(nint hMem);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern nint GetClipboardData(uint uFormat);
+		[LibraryImport(user32, EntryPoint = "GetClipboardData")]
+		internal static partial nint GetClipboardData(uint uFormat);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern nint SetClipboardData(uint uFormat, nint hMem);
+		[LibraryImport(user32, EntryPoint = "SetClipboardData")]
+		internal static partial nint SetClipboardData(uint uFormat, nint hMem);
 
-		[DllImport(dwmapi, CharSet = CharSet.Unicode)]
-		internal static extern uint DwmGetWindowAttribute(nint hwnd, DWMWINDOWATTRIBUTE dwAttribute, ref int pvAttribute, int cbsize);
+		[LibraryImport(dwmapi, EntryPoint = "DwmGetWindowAttribute")]
+		internal static partial uint DwmGetWindowAttribute(nint hwnd, DWMWINDOWATTRIBUTE dwAttribute, ref int pvAttribute, int cbsize);
 
 		internal static bool IsWindowCloaked(nint hwnd)
 		{
@@ -1288,32 +1297,34 @@ namespace Keysharp.Core.Windows
 			return DwmGetWindowAttribute(hwnd, DWMWINDOWATTRIBUTE.DWMWA_CLOAKED, ref cloaked, 4) >= 0 && cloaked >= 0;
 		}
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern nint GetLastActivePopup(nint hWnd);
+		[LibraryImport(user32, EntryPoint = "GetLastActivePopup")]
+		internal static partial nint GetLastActivePopup(nint hWnd);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern nint GetShellWindow();
+		[LibraryImport(user32, EntryPoint = "GetShellWindow")]
+		internal static partial nint GetShellWindow();
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool BlockInput(bool fBlockIt);
+		[LibraryImport(user32, EntryPoint = "BlockInput")]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool BlockInput([MarshalAs(UnmanagedType.Bool)] bool fBlockIt);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern nint CallNextHookEx(nint hhk, int nCode, nint wParam, ref EventMsg lParam);
+		[LibraryImport(user32, EntryPoint = "CallNextHookEx")]
+		internal static partial nint CallNextHookEx(nint hhk, int nCode, nint wParam, ref EventMsg lParam);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern nint CallNextHookEx(nint hhk, int nCode, nint wParam, ref KBDLLHOOKSTRUCT lParam);
+		[LibraryImport(user32, EntryPoint = "CallNextHookEx")]
+		internal static partial nint CallNextHookEx(nint hhk, int nCode, nint wParam, ref KBDLLHOOKSTRUCT lParam);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern nint CallNextHookEx(nint hhk, int nCode, nint wParam, ref MSDLLHOOKSTRUCT lParam);
+		[LibraryImport(user32, EntryPoint = "CallNextHookEx")]
+		internal static partial nint CallNextHookEx(nint hhk, int nCode, nint wParam, ref MSDLLHOOKSTRUCT lParam);
 
-		[DllImport(kernel32, CharSet = CharSet.Unicode)]
-		internal static extern bool CloseHandle(nint hObject);
+		[LibraryImport(kernel32, EntryPoint = "CloseHandle")]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool CloseHandle(nint hObject);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern int CloseWindow(nint hWnd);
+		[LibraryImport(user32, EntryPoint = "CloseWindow")]
+		internal static partial int CloseWindow(nint hWnd);
 
-		[DllImport(kernel32, CharSet = CharSet.Unicode, SetLastError = true)]
-		internal static extern nint CreateFile(string fileName,
+		[LibraryImport(kernel32, EntryPoint = "CreateFileW", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
+		internal static partial nint CreateFile(string fileName,
 											   uint desiredAccess,
 											   uint shareMode,
 											   nint attributes,
@@ -1321,8 +1332,9 @@ namespace Keysharp.Core.Windows
 											   uint flagsAndAttributes,
 											   nint templateFile);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool DestroyWindow(nint hwnd);
+		[LibraryImport(user32, EntryPoint = "DestroyWindow")]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool DestroyWindow(nint hwnd);
 
 		[DllImport(kernel32, CharSet = CharSet.Unicode, SetLastError = true)]
 		internal static extern bool DeviceIoControl(
@@ -1335,8 +1347,9 @@ namespace Keysharp.Core.Windows
 			ref int pBytesReturned,
 			[In] ref NativeOverlapped lpOverlapped);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool DestroyIcon(nint handle);
+		[LibraryImport(user32, EntryPoint = "DestroyIcon")]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool DestroyIcon(nint handle);
 
 		//[DllImport(kernel32, SetLastError = true)]
 		//internal static extern bool DeviceIoControl(nint driveHandle,
@@ -1350,52 +1363,59 @@ namespace Keysharp.Core.Windows
 		[DllImport(winmm, CharSet = CharSet.Unicode)]
 		internal static extern int mciSendString(string command, StringBuilder buffer, int bufferSize, nint hwndCallback);
 
-		[DllImport(winmm, CharSet = CharSet.Unicode)]
-		internal static extern int joyGetPosEx(int uJoyID, ref JOYINFOEX pji);
+		[LibraryImport(winmm, EntryPoint = "joyGetPosEx")]
+		internal static partial int joyGetPosEx(int uJoyID, ref JOYINFOEX pji);
 
 		[DllImport(winmm, CharSet = CharSet.Unicode)]
 		internal static extern int joyGetDevCaps(nint id, ref JOYCAPS lpCaps, uint uSize);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool SetProcessDPIAware();
-
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool IsHungAppWindow(nint hWnd);
-
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool EnableWindow(nint hWnd, bool bEnable);
-
-		[DllImport(user32, CharSet = CharSet.Unicode)]
+		[LibraryImport(user32, EntryPoint = "SetProcessDPIAware")]
 		[return: MarshalAs(UnmanagedType.Bool)]
-		internal static extern bool EnumChildWindows(nint hwndParent, _EnumWindowsProc lpEnumFunc, object lParam);
+		internal static partial bool SetProcessDPIAware();
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern int EnumWindows(_EnumWindowsProc lpEnumFunc, int lParam);
+		[LibraryImport(user32, EntryPoint = "IsHungAppWindow")]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool IsHungAppWindow(nint hWnd);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool ExitWindowsEx(uint uFlags, uint dwReason);
+		[LibraryImport(user32, EntryPoint = "EnableWindow")]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool EnableWindow(nint hWnd, [MarshalAs(UnmanagedType.Bool)] bool bEnable);
 
-		[DllImport(shell32, CharSet = CharSet.Unicode)]
-		internal static extern nint ExtractIcon(nint hInst, string lpszExeFileName, int nIconIndex);
+		[LibraryImport(user32, EntryPoint = "EnumChildWindows")]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool EnumChildWindows(nint hwndParent, _EnumWindowsProc lpEnumFunc, nint lParam);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
+		[LibraryImport(user32, EntryPoint = "EnumWindows")]
+		internal static partial int EnumWindows(_EnumWindowsProc lpEnumFunc, nint lParam);
+
+		[LibraryImport(user32, EntryPoint = "ExitWindowsEx")]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool ExitWindowsEx(uint uFlags, uint dwReason);
+
+		[LibraryImport(shell32, EntryPoint = "ExtractIconW", StringMarshalling = StringMarshalling.Utf16)]
+		internal static partial nint ExtractIcon(nint hInst, string lpszExeFileName, int nIconIndex);
+
+		[LibraryImport(user32, EntryPoint = "FindWindowW", StringMarshalling = StringMarshalling.Utf16)]
 		[PublicForTestOnly]
-		public static extern nint FindWindow(string className, string windowName);
+		public static partial nint FindWindow(string className, string windowName);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern nint FindWindowEx(nint parentHandle, nint childAfter, string className, string windowTitle);
+		[LibraryImport(user32, EntryPoint = "FindWindowExW", StringMarshalling = StringMarshalling.Utf16)]
+		internal static partial nint FindWindowEx(nint parentHandle, nint childAfter, string className, string windowTitle);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool FlashWindow(nint hWnd, bool bInvert);
+		[LibraryImport(user32, EntryPoint = "FlashWindow")]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool FlashWindow(nint hWnd, [MarshalAs(UnmanagedType.Bool)] bool bInvert);
 
-		[DllImport(kernel32, CharSet = CharSet.Unicode)]
-		internal static extern bool FreeLibrary(nint hModule);
+		[LibraryImport(kernel32, EntryPoint = "FreeLibrary")]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool FreeLibrary(nint hModule);
 
-		[DllImport(kernel32, CharSet = CharSet.Unicode)]
-		internal static extern uint GetCurrentThreadId();
+		[LibraryImport(kernel32, EntryPoint = "GetCurrentThreadId")]
+		internal static partial uint GetCurrentThreadId();
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool AttachThreadInput(uint idAttach, uint idAttachTo, bool fAttach);
+		[LibraryImport(user32, EntryPoint = "AttachThreadInput")]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool AttachThreadInput(uint idAttach, uint idAttachTo, [MarshalAs(UnmanagedType.Bool)] bool fAttach);
 
 		internal static (bool, uint) AttachThreadInput(nint targetWindow, bool setActive)
 		{
@@ -1442,109 +1462,116 @@ namespace Keysharp.Core.Windows
 			return mem;
 		}
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern nint GetActiveWindow(nint hWnd);
+		[LibraryImport(user32, EntryPoint = "GetActiveWindow")]
+		internal static partial nint GetActiveWindow(nint hWnd);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern nint GetActiveWindow();
+		[LibraryImport(user32, EntryPoint = "GetActiveWindow")]
+		internal static partial nint GetActiveWindow();
 
-		[DllImport(user32, CharSet = CharSet.Unicode, ExactSpelling = true)]
-		internal static extern nint GetAncestor(nint hWnd, gaFlags gaFlags);
+		[LibraryImport(user32, EntryPoint = "GetAncestor")]
+		internal static partial nint GetAncestor(nint hWnd, gaFlags gaFlags);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern int GetClassName(nint hWnd, StringBuilder lpClassName, int nMaxCount);
+		[LibraryImport(user32, EntryPoint = "GetClassNameW", StringMarshalling = StringMarshalling.Utf16)]
+		internal static unsafe partial int GetClassName(nint hWnd, [Out] char[] lpClassName, int nMaxCount);
 
 		internal static string GetClassName(nint hwnd)
 		{
-			var buf = new StringBuilder(64);
-			_ = GetClassName(hwnd, buf, buf.Capacity);
-			return buf.ToString();
+			var buffer = new char[256];
+			int len = GetClassName(hwnd, buffer, buffer.Length);
+			return new string(buffer, 0, len);
 		}
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool GetCursorPos(out Point lpPoint);
+		[LibraryImport(user32, EntryPoint = "GetCursorPos")]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool GetCursorPos(out POINT lpPoint);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
+		[LibraryImport(user32, EntryPoint = "GetDesktopWindow")]
 		[PublicForTestOnly]
-		public static extern long GetDesktopWindow();
+		public static partial long GetDesktopWindow();
 
-		[DllImport(version, CharSet = CharSet.Unicode)]
-		internal static extern bool GetFileVersionInfo(string sFileName, int handle, int size, byte[] infoBuffer);
+		[LibraryImport(version, EntryPoint = "GetFileVersionInfoW", StringMarshalling = StringMarshalling.Utf16)]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool GetFileVersionInfo(string sFileName, int handle, int size, byte[] infoBuffer);
 
-		[DllImport(version, CharSet = CharSet.Unicode)]
-		internal static extern int GetFileVersionInfoSize(string sFileName, out int handle);
+		[LibraryImport(version, EntryPoint = "GetFileVersionInfoSizeW", StringMarshalling = StringMarshalling.Utf16)]
+		internal static partial int GetFileVersionInfoSize(string sFileName, out int handle);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern nint GetFocus();
+		[LibraryImport(user32, EntryPoint = "GetFocus")]
+		internal static partial nint GetFocus();
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern nint GetParent(nint hWnd);
+		[LibraryImport(user32, EntryPoint = "GetParent")]
+		internal static partial nint GetParent(nint hWnd);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern nint GetForegroundWindow();
+		[LibraryImport(user32, EntryPoint = "GetForegroundWindow")]
+		internal static partial nint GetForegroundWindow();
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool GetGUIThreadInfo(uint idThread, out GUITHREADINFO lpgui);
+		[LibraryImport(user32, EntryPoint = "GetGUIThreadInfo")]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool GetGUIThreadInfo(uint idThread, out GUITHREADINFO lpgui);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern int ActivateKeyboardLayout(nint hkl, uint Flags);
+		[LibraryImport(user32, EntryPoint = "ActivateKeyboardLayout")]
+		internal static partial int ActivateKeyboardLayout(nint hkl, uint Flags);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern nint GetKeyboardLayout(uint idThread);
+		[LibraryImport(user32, EntryPoint = "GetKeyboardLayout")]
+		internal static partial nint GetKeyboardLayout(uint idThread);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool GetKeyboardLayoutName([Out] StringBuilder pwszKLID);
+		[LibraryImport(user32, EntryPoint = "GetKeyboardLayoutNameW", StringMarshalling = StringMarshalling.Utf16)]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool GetKeyboardLayoutName([Out] char[] pwszKLID);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool GetKeyboardState(byte[] lpKeyState);
+		[LibraryImport(user32, EntryPoint = "GetKeyboardState")]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool GetKeyboardState(byte[] lpKeyState);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool SetKeyboardState(byte[] lpKeyState);
+		[LibraryImport(user32, EntryPoint = "SetKeyboardState")]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool SetKeyboardState(byte[] lpKeyState);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern short GetKeyState(int nVirtKey);
+		[LibraryImport(user32, EntryPoint = "GetKeyState")]
+		internal static partial short GetKeyState(int nVirtKey);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern short GetAsyncKeyState(int nVirtKey);
+		[LibraryImport(user32, EntryPoint = "GetAsyncKeyState")]
+		internal static partial short GetAsyncKeyState(int nVirtKey);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern void keybd_event(byte bVk, byte bScan, uint dwFlags, uint dwExtraInfo);
+		[LibraryImport(user32, EntryPoint = "keybd_event")]
+		internal static partial void keybd_event(byte bVk, byte bScan, uint dwFlags, uint dwExtraInfo);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern nint GetMenu(nint hWnd);
+		[LibraryImport(user32, EntryPoint = "GetMenu")]
+		internal static partial nint GetMenu(nint hWnd);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern nint GetSystemMenu(nint hWnd, bool revert);
+		[LibraryImport(user32, EntryPoint = "GetSystemMenu")]
+		internal static partial nint GetSystemMenu(nint hWnd, [MarshalAs(UnmanagedType.Bool)] bool revert);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern int GetMenuItemCount(nint hMenu);
+		[LibraryImport(user32, EntryPoint = "GetMenuItemCount")]
+		internal static partial int GetMenuItemCount(nint hMenu);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
 		internal static extern int GetMenuString(nint hMenu, uint uIDItem, [Out] StringBuilder lpString, int nMaxCount, uint uFlag);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern unsafe bool IsDialogMessage(nint hDlg, Msg lpMsg);
+		[LibraryImport(user32, EntryPoint = "IsDialogMessageW")]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool IsDialogMessage(nint hDlg, Msg lpMsg);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern int GetMessage(out Msg lpMsg, nint hWnd, uint wMsgFilterMin, uint wMsgFilterMax);
+		[LibraryImport(user32, EntryPoint = "GetMessageW")]
+		internal static partial int GetMessage(out Msg lpMsg, nint hWnd, uint wMsgFilterMin, uint wMsgFilterMax);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern nint GetMessageExtraInfo();
+		[LibraryImport(user32, EntryPoint = "GetMessageExtraInfo")]
+		internal static partial nint GetMessageExtraInfo();
 
-		[DllImport(kernel32, CharSet = CharSet.Unicode)]
-		internal static extern int GetModuleHandleEx(uint dwFlags, string lpModuleName, out nint phModule);
+		[LibraryImport(kernel32, EntryPoint = "GetModuleHandleExW", StringMarshalling = StringMarshalling.Utf16)]
+		internal static partial int GetModuleHandleEx(uint dwFlags, string lpModuleName, out nint phModule);
 
-		[DllImport(kernel32, CharSet = CharSet.Unicode)]
-		internal static extern nint GetModuleHandle(string lpModuleName);
+		[LibraryImport(kernel32, EntryPoint = "GetModuleHandleW", StringMarshalling = StringMarshalling.Utf16)]
+		internal static partial nint GetModuleHandle(string lpModuleName);
 
-		[DllImport(kernel32, CharSet = CharSet.Unicode, SetLastError = true)]
-		internal static extern uint GetPrivateProfileString(string lpAppName, string lpKeyName, string lpDefault, StringBuilder lpReturnedString, uint nSize, string lpFileName);
+		[LibraryImport(kernel32, EntryPoint = "GetPrivateProfileStringW", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
+		internal static partial uint GetPrivateProfileString(string lpAppName, string lpKeyName, string lpDefault, [Out] char[] lpReturnedString, uint nSize, string lpFileName);
 
-		[DllImport(kernel32, CharSet = CharSet.Unicode, SetLastError = true)]
-		internal static extern uint GetPrivateProfileSection(string lpAppName, [Out] char[] lpszReturnBuffer, uint nSize, string lpFileName);
+		[LibraryImport(kernel32, EntryPoint = "GetPrivateProfileSectionW", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
+		internal static partial uint GetPrivateProfileSection(string lpAppName, [Out] char[] lpszReturnBuffer, uint nSize, string lpFileName);
 
-		[DllImport(kernel32, CharSet = CharSet.Unicode, SetLastError = true)]
-		internal static extern uint GetPrivateProfileSectionNames([Out] char[] lpszReturnBuffer, uint nSize, string lpFileName);
+		[LibraryImport(kernel32, EntryPoint = "GetPrivateProfileSectionNamesW", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
+		internal static partial uint GetPrivateProfileSectionNames([Out] char[] lpszReturnBuffer, uint nSize, string lpFileName);
 
 		/// <summary>
 		/// Set this to use ExactSpelling since GetProcAddress() only is available in ANSI.
@@ -1552,55 +1579,61 @@ namespace Keysharp.Core.Windows
 		/// <param name="hModule"></param>
 		/// <param name="procName"></param>
 		/// <returns></returns>
-		[DllImport(kernel32, CharSet = CharSet.Ansi, ExactSpelling = true, SetLastError = true)]
-		internal static extern nint GetProcAddress(nint hModule, string procName);
+		[LibraryImport(kernel32, EntryPoint = "GetProcAddress", SetLastError = true)]
+		internal static partial nint GetProcAddress(nint hModule, [MarshalAs(UnmanagedType.LPStr)] string procName);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern nint GetSubMenu(nint hMenu, int nPos);
+		[LibraryImport(user32, EntryPoint = "GetSubMenu")]
+		internal static partial nint GetSubMenu(nint hMenu, int nPos);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern uint GetMenuItemID(nint hMenu, int nPos);
+		[LibraryImport(user32, EntryPoint = "GetMenuItemID")]
+		internal static partial uint GetMenuItemID(nint hMenu, int nPos);
 
-		[DllImport(kernel32, CharSet = CharSet.Unicode)]
-		internal static extern void SetLastError(uint dwErrCode);
+		[LibraryImport(kernel32, EntryPoint = "SetLastError")]
+		internal static partial void SetLastError(uint dwErrCode);
 
-		[DllImport(kernel32, CharSet = CharSet.Unicode)]
-		internal static extern uint GetLastError();
+		[LibraryImport(kernel32, EntryPoint = "GetLastError")]
+		internal static partial uint GetLastError();
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern int GetDlgCtrlID(nint hwndCtl);
+		[LibraryImport(user32, EntryPoint = "GetDlgCtrlID")]
+		internal static partial int GetDlgCtrlID(nint hwndCtl);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern nint GetWindow(nint hWnd, uint uCmd);
+		[LibraryImport(user32, EntryPoint = "GetWindow")]
+		internal static partial nint GetWindow(nint hWnd, uint uCmd);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool GetLastInputInfo(ref LASTINPUTINFO plii);
-
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool GetLayeredWindowAttributes(nint hwnd, out uint crKey, out byte bAlpha, out uint dwFlags);
-
-		[DllImport(user32, CharSet = CharSet.Unicode)]
+		[LibraryImport(user32, EntryPoint = "GetLastInputInfo")]
 		[return: MarshalAs(UnmanagedType.Bool)]
-		internal static extern bool GetWindowPlacement(nint hWnd, out WINDOWPLACEMENT lpwndpl);
+		internal static partial bool GetLastInputInfo(ref LASTINPUTINFO plii);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
+		[LibraryImport(user32, EntryPoint = "GetLayeredWindowAttributes")]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool GetLayeredWindowAttributes(nint hwnd, out uint crKey, out byte bAlpha, out uint dwFlags);
+
+		[LibraryImport(user32, EntryPoint = "GetWindowPlacement")]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool GetWindowPlacement(nint hWnd, out WINDOWPLACEMENT lpwndpl);
+
+		[LibraryImport(user32, EntryPoint = "GetWindowRect")]
+		[return: MarshalAs(UnmanagedType.Bool)]
 		[PublicForTestOnly]
-		public static extern bool GetWindowRect(nint hWnd, out RECT lpRect);
+		public static partial bool GetWindowRect(nint hWnd, out RECT lpRect);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool GetClientRect(nint hWnd, out RECT lpRect);
+		[LibraryImport(user32, EntryPoint = "GetClientRect")]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool GetClientRect(nint hWnd, out RECT lpRect);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern int MapWindowPoints(nint hWndFrom, nint hWndTo, [In, Out] ref RECT rect, [MarshalAs(UnmanagedType.U4)] int cPoints);
+		[LibraryImport(user32, EntryPoint = "MapWindowPoints")]
+		internal static partial int MapWindowPoints(nint hWndFrom, nint hWndTo, ref RECT rect, uint cPoints);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool ClientToScreen(nint hWnd, ref Point lpPoint);
+		[LibraryImport(user32, EntryPoint = "ClientToScreen")]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool ClientToScreen(nint hWnd, ref POINT lpPoint);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool ScreenToClient(nint hWnd, ref Point lpPoint);
+		[LibraryImport(user32, EntryPoint = "ScreenToClient")]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool ScreenToClient(nint hWnd, ref POINT lpPoint);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern int GetWindowText(nint hWnd, StringBuilder lpString, int nMaxCount);
+		[LibraryImport(user32, EntryPoint = "GetWindowTextW", StringMarshalling = StringMarshalling.Utf16)]
+		internal static partial int GetWindowText(nint hWnd, [Out] char[] lpString, int nMaxCount);
 
 		//void CoordToScreen(POINT &aPoint, int aWhichMode)
 		//// For convenience. See function above for comments.
@@ -1608,20 +1641,21 @@ namespace Keysharp.Core.Windows
 		//  CoordToScreen((int &)aPoint.x, (int &)aPoint.y, aWhichMode);
 		//}
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern void mouse_event(uint dwFlags, int dx, int dy, uint dwData, nint dwExtraInfo);
+		[LibraryImport(user32, EntryPoint = "mouse_event")]
+		internal static partial void mouse_event(uint dwFlags, int dx, int dy, uint dwData, nint dwExtraInfo);
 
 		/// <summary>
 		/// See http://msdn.microsoft.com/en-us/library/ms632599%28VS.85%29.aspx#message_only
 		/// </summary>
 		/// <param name="hwnd"></param>
 		/// <returns></returns>
-		[DllImport(user32, CharSet = CharSet.Unicode)]
+		[LibraryImport(user32, EntryPoint = "AddClipboardFormatListener")]
 		[return: MarshalAs(UnmanagedType.Bool)]
-		internal static extern bool AddClipboardFormatListener(nint hwnd);
+		internal static partial bool AddClipboardFormatListener(nint hwnd);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool RemoveClipboardFormatListener(nint hwnd);
+		[LibraryImport(user32, EntryPoint = "RemoveClipboardFormatListener")]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool RemoveClipboardFormatListener(nint hwnd);
 
 		internal static string GetWindowText(nint hwnd)
 		{
@@ -1630,104 +1664,118 @@ namespace Keysharp.Core.Windows
 			if (textLength == 0)
 				return string.Empty;
 
-			StringBuilder outText = new StringBuilder(textLength + 1);
-			int a = GetWindowText(hwnd, outText, outText.Capacity);
-			return outText.ToString();
+			char[] outText = new char[textLength + 1];
+			int a = GetWindowText(hwnd, outText, outText.Length);
+			return new string(outText, 0, a);
 		}
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern int GetWindowTextLength(nint hWnd);
+		[LibraryImport(user32, EntryPoint = "GetWindowTextLengthW")]
+		internal static partial int GetWindowTextLength(nint hWnd);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern uint GetWindowThreadProcessId(nint hWnd, out uint lpdwProcessId);
+		[LibraryImport(user32, EntryPoint = "GetWindowThreadProcessId")]
+		internal static partial uint GetWindowThreadProcessId(nint hWnd, out uint lpdwProcessId);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool InvalidateRect(nint hWnd, nint lpRect, bool bErase);
-
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool IsWindow(nint hWnd);
-
-		[DllImport(user32, CharSet = CharSet.Unicode)]
+		[LibraryImport(user32, EntryPoint = "InvalidateRect")]
 		[return: MarshalAs(UnmanagedType.Bool)]
-		internal static extern bool IsWindowEnabled(nint hWnd);
+		internal static partial bool InvalidateRect(nint hWnd, nint lpRect, [MarshalAs(UnmanagedType.Bool)] bool bErase);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool IsWindowVisible(nint hWnd);
+		[LibraryImport(user32, EntryPoint = "IsWindow")]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool IsWindow(nint hWnd);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool IsChild(nint hWndParent, nint hWnd);
+		[LibraryImport(user32, EntryPoint = "IsWindowEnabled")]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool IsWindowEnabled(nint hWnd);
 
-		[DllImport(kernel32, CharSet = CharSet.Unicode)]
-		internal static extern bool SetDllDirectory(string lpPathName);
+		[LibraryImport(user32, EntryPoint = "IsWindowVisible")]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool IsWindowVisible(nint hWnd);
 
-		[DllImport(kernel32, CharSet = CharSet.Unicode)]
-		internal static extern nint LoadLibrary(string lpFileName);
+		[LibraryImport(user32, EntryPoint = "IsChild")]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool IsChild(nint hWndParent, nint hWnd);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern short VkKeyScanEx(char ch, nint dwhkl);
+		[LibraryImport(kernel32, EntryPoint = "SetDllDirectoryW", StringMarshalling = StringMarshalling.Utf16)]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool SetDllDirectory(string lpPathName);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern uint MapVirtualKey(uint uCode, uint uMapType);
+		[LibraryImport(kernel32, EntryPoint = "LoadLibraryW", StringMarshalling = StringMarshalling.Utf16)]
+		internal static partial nint LoadLibrary(string lpFileName);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern uint MapVirtualKeyEx(uint uCode, uint uMapType, nint dwhkl);
+		[LibraryImport(user32, EntryPoint = "VkKeyScanExW")]
+		internal static partial short VkKeyScanEx([MarshalAs(UnmanagedType.U2)] char ch, nint dwhkl);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool MoveWindow(nint hWnd, int X, int Y, int nWidth, int nHeight, bool bRepaint);
+		[LibraryImport(user32, EntryPoint = "MapVirtualKeyW")]
+		internal static partial uint MapVirtualKey(uint uCode, uint uMapType);
+
+		[LibraryImport(user32, EntryPoint = "MapVirtualKeyExW")]
+		internal static partial uint MapVirtualKeyEx(uint uCode, uint uMapType, nint dwhkl);
+
+		[LibraryImport(user32, EntryPoint = "MoveWindow")]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool MoveWindow(nint hWnd, int X, int Y, int nWidth, int nHeight, [MarshalAs(UnmanagedType.Bool)] bool bRepaint);
 
 		//[DllImport(kernel32, CharSet = CharSet.Unicode)]
 		//internal static extern nint OpenProcess(uint dwDesiredAccess, bool bInheritHandle, uint dwProcessId);
 
-		[DllImport(kernel32, CharSet = CharSet.Unicode)]
-		internal static extern void OutputDebugString(string lpOutputString);
+		[LibraryImport(kernel32, EntryPoint = "OutputDebugStringW", StringMarshalling = StringMarshalling.Utf16)]
+		internal static partial void OutputDebugString(string lpOutputString);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern void PostQuitMessage(int nExitCode);
+		[LibraryImport(user32, EntryPoint = "PostQuitMessage")]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial void PostQuitMessage(int nExitCode);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool PostThreadMessage(uint threadId, uint msg, nint wParam, nint lParam);
+		[LibraryImport(user32, EntryPoint = "PostThreadMessageW")]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool PostThreadMessage(uint threadId, uint msg, nint wParam, nint lParam);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool PostMessage(nint hWnd, uint msg, nint wParam, nint lParam);
+		[LibraryImport(user32, EntryPoint = "PostMessageW", StringMarshalling = StringMarshalling.Utf16)]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool PostMessage(nint hWnd, uint msg, nint wParam, nint lParam);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool PostMessage(nint hWnd, uint msg, uint wParam, uint lParam);
+		[LibraryImport(user32, EntryPoint = "PostMessageW")]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool PostMessage(nint hWnd, uint msg, uint wParam, uint lParam);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool PostMessage(nint hWnd, uint msg, string wParam, nint lParam);
+		[LibraryImport(user32, EntryPoint = "PostMessageW", StringMarshalling = StringMarshalling.Utf16)]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool PostMessage(nint hWnd, uint msg, string wParam, nint lParam);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern long GetMessageTime();
+		[LibraryImport(user32, EntryPoint = "GetMessageTime")]
+		internal static partial long GetMessageTime();
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern nint RealChildWindowFromPoint(nint hwndParent, Point ptParentClientCoords);
+		[LibraryImport(user32, EntryPoint = "RealChildWindowFromPoint")]
+		internal static partial nint RealChildWindowFromPoint(nint hwndParent, POINT ptParentClientCoords);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
+		[LibraryImport(user32, EntryPoint = "SendInput")]
+		internal static partial uint SendInput(uint nInputs, INPUT[] pInputs, int cbSize);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern uint SendMessage(nint hWnd, uint msg, uint wParam, uint lParam);
+		[LibraryImport(user32, EntryPoint = "SendMessageW")]
+		internal static partial uint SendMessage(nint hWnd, uint msg, uint wParam, uint lParam);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern nint SendMessage(nint hWnd, uint msg, nint wParam, nint lParam);
+		[LibraryImport(user32, EntryPoint = "SendMessageW")]
+		internal static partial nint SendMessage(nint hWnd, uint msg, nint wParam, nint lParam);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern nint SendMessage(nint hWnd, uint msg, int wParam, int[] lParam);
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern nint SendMessage(nint hWnd, uint msg, int wParam, [MarshalAs(UnmanagedType.LPWStr)] string lParam);
+		[LibraryImport(user32, EntryPoint = "SendMessageW")]
+		internal static partial nint SendMessage(nint hWnd, uint msg, int wParam, int[] lParam);
+
+		[LibraryImport(user32, EntryPoint = "SendMessageW")]
+		internal static partial nint SendMessage(nint hWnd, uint msg, int wParam, [MarshalAs(UnmanagedType.LPWStr)] string lParam);
 
 		[DllImport(user32, CharSet = CharSet.Unicode)]
 		internal static extern nint SendLVColMessage(nint hWnd, uint msg, uint wParam, ref LV_COLUMN lParam);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool IsIconic(nint Hwnd);
+		[LibraryImport(user32, EntryPoint = "IsIconic")]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool IsIconic(nint Hwnd);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool IsZoomed(nint hWnd);
+		[LibraryImport(user32, EntryPoint = "IsZoomed")]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool IsZoomed(nint hWnd);
 
-		[DllImport(shell32, CharSet = CharSet.Unicode, SetLastError = true)]
-		internal static extern int SHGetKnownFolderPath(
-			[MarshalAs(UnmanagedType.LPStruct)] Guid rfid,
+		[LibraryImport(shell32, EntryPoint = "SHGetKnownFolderPath", SetLastError = true)]
+		internal static partial int SHGetKnownFolderPath(
+			Guid rfid,
 			uint dwFlags,
 			nint hToken,
 			out nint pszPath);
@@ -1787,18 +1835,9 @@ namespace Keysharp.Core.Windows
 		[DllImport(user32, CharSet = CharSet.Unicode)]
 		internal static extern int PostMessage(nint hWnd, uint Msg, nint wParam, ref COPYDATASTRUCT lParam);
 
-		[DllImport(user32, SetLastError = true, CharSet = CharSet.Unicode)]
-		internal static extern long SendMessageTimeout(
-			nint hWnd,
-			uint Msg,
-			object wParam,
-			string lParam,
-			SendMessageTimeoutFlags flags,
-			uint timeout,
-			out nint result);
 
-		[DllImport(user32, SetLastError = true, CharSet = CharSet.Unicode)]
-		internal static extern long SendMessageTimeout(
+		[LibraryImport(user32, EntryPoint = "SendMessageTimeoutW", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
+		internal static partial long SendMessageTimeout(
 			nint hWnd,
 			uint Msg,
 			nint wParam,
@@ -1807,8 +1846,8 @@ namespace Keysharp.Core.Windows
 			uint timeout,
 			out nint result);
 
-		[DllImport(user32, SetLastError = true, CharSet = CharSet.Unicode)]
-		internal static extern long SendMessageTimeout(
+		[LibraryImport(user32, EntryPoint = "SendMessageTimeoutW", SetLastError = true)]
+		internal static partial long SendMessageTimeout(
 			nint hWnd,
 			uint Msg,
 			ref uint wParam,
@@ -1817,8 +1856,8 @@ namespace Keysharp.Core.Windows
 			uint timeout,
 			out nint result);
 
-		[DllImport(user32, SetLastError = true, CharSet = CharSet.Unicode)]
-		internal static extern long SendMessageTimeout(
+		[LibraryImport(user32, EntryPoint = "SendMessageTimeoutW", SetLastError = true)]
+		internal static partial long SendMessageTimeout(
 			nint hWnd,
 			uint Msg,
 			ref nint wParam,
@@ -1827,8 +1866,8 @@ namespace Keysharp.Core.Windows
 			uint timeout,
 			out nint result);
 
-		[DllImport(user32, SetLastError = true, CharSet = CharSet.Unicode)]
-		internal static extern long SendMessageTimeout(
+		[LibraryImport(user32, EntryPoint = "SendMessageTimeoutW", SetLastError = true)]
+		internal static partial long SendMessageTimeout(
 			nint hWnd,
 			uint Msg,
 			nint wParam,
@@ -1837,12 +1876,12 @@ namespace Keysharp.Core.Windows
 			uint timeout,
 			out nint result);
 
-		[DllImport(user32, SetLastError = true, CharSet = CharSet.Unicode)]
-		internal static extern int SendMessageTimeout(
+		[LibraryImport(user32, EntryPoint = "SendMessageTimeoutW", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
+		internal static partial long SendMessageTimeout(
 			nint hWnd,
 			uint Msg,
 			nint wParam,
-			StringBuilder lParam,
+			char[] lParam,
 			SendMessageTimeoutFlags flags,
 			uint timeout,
 			out nint result);
@@ -1862,104 +1901,117 @@ namespace Keysharp.Core.Windows
 			nint lpcbSecurityDescriptor,
 			out long lpftLastWriteTime);
 
-		[DllImport(kernel32, CharSet = CharSet.Unicode)]
-		internal static extern int GetShortPathName(string longPath, StringBuilder shortPath, int bufSize);
+		[LibraryImport(kernel32, EntryPoint = "GetShortPathNameW", StringMarshalling = StringMarshalling.Utf16)]
+		internal static partial int GetShortPathName(string longPath, [Out] char[] shortPath, int bufSize);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern int SetActiveWindow(nint handle);
+		[LibraryImport(user32, EntryPoint = "SetActiveWindow")]
+		internal static partial int SetActiveWindow(nint handle);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool BringWindowToTop(nint hWnd);
+		[LibraryImport(user32, EntryPoint = "BringWindowToTop")]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool BringWindowToTop(nint hWnd);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern nint SetFocus(nint hWnd);
+		[LibraryImport(user32, EntryPoint = "SetFocus")]
+		internal static partial nint SetFocus(nint hWnd);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
+		[LibraryImport(user32, EntryPoint = "SetForegroundWindow")]
+		[return: MarshalAs(UnmanagedType.Bool)]
 		[PublicForTestOnly]
-		public static extern bool SetForegroundWindow(nint hWnd);
+		public static partial bool SetForegroundWindow(nint hWnd);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool SetLayeredWindowAttributes(nint hwnd, uint crKey, byte bAlpha, uint dwFlags);
+		[LibraryImport(user32, EntryPoint = "SetLayeredWindowAttributes")]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool SetLayeredWindowAttributes(nint hwnd, uint crKey, byte bAlpha, uint dwFlags);
 
 		//[DllImport(user32, CharSet = CharSet.Unicode)]
 		//internal static extern int SetWindowLong(nint hWnd, int nIndex, int dwNewLong);
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern nint GetWindowLongPtr(nint hWnd, int nIndex);
+		[LibraryImport(user32, EntryPoint = "GetWindowLongPtrW")]
+		internal static partial nint GetWindowLongPtr(nint hWnd, int nIndex);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern nint SetWindowLongPtr(nint hWnd, int nIndex, nint dwNewLong);
+		[LibraryImport(user32, EntryPoint = "SetWindowLongPtrW")]
+		internal static partial nint SetWindowLongPtr(nint hWnd, int nIndex, nint dwNewLong);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
+		[LibraryImport(user32, EntryPoint = "SetWindowPos")]
 		[return: MarshalAs(UnmanagedType.Bool)]
-		internal static extern bool SetWindowPos(nint hWnd, nint hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
+		internal static partial bool SetWindowPos(nint hWnd, nint hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern nint SetWindowsHookEx(int idHook, LowLevelKeyboardProc lpfn, nint hMod, uint dwThreadId);
+		[LibraryImport(user32, EntryPoint = "SetWindowsHookExW")]
+		internal static partial nint SetWindowsHookEx(int idHook, LowLevelKeyboardProc lpfn, nint hMod, uint dwThreadId);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern nint SetWindowsHookEx(int idHook, LowLevelMouseProc lpfn, nint hMod, uint dwThreadId);
+		[LibraryImport(user32, EntryPoint = "SetWindowsHookExW")]
+		internal static partial nint SetWindowsHookEx(int idHook, LowLevelMouseProc lpfn, nint hMod, uint dwThreadId);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern nint SetWindowsHookEx(int idHook, PlaybackProc lpfn, nint hMod, uint dwThreadId);
+		[LibraryImport(user32, EntryPoint = "SetWindowsHookExW")]
+		internal static partial nint SetWindowsHookEx(int idHook, PlaybackProc lpfn, nint hMod, uint dwThreadId);
 
 		//[DllImport(user32, CharSet = CharSet.Unicode)]
 		//internal static extern nint CallNextHookEx(nint hhk, int nCode, int wParam, [In] KBDLLHOOKSTRUCT lParam);
 		//[DllImport(user32, CharSet = CharSet.Unicode)]
 		//internal static extern nint CallNextHookEx(nint hhk, int nCode, int wParam, [In] MSDLLHOOKSTRUCT lParam);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool SetWindowText(nint hWnd, string lpString);
+		[LibraryImport(user32, EntryPoint = "SetWindowTextW", StringMarshalling = StringMarshalling.Utf16)]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool SetWindowText(nint hWnd, string lpString);
 
-		[DllImport(shell32)]
-		internal static extern int SHEmptyRecycleBin(nint hWnd, string pszRootPath, uint dwFlags);
+		[LibraryImport(shell32, EntryPoint = "SHEmptyRecycleBinW", StringMarshalling = StringMarshalling.Utf16)]
+		internal static partial int SHEmptyRecycleBin(nint hWnd, string pszRootPath, uint dwFlags);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool ShowWindow(nint hWnd, int nCmdShow);
+		[LibraryImport(user32, EntryPoint = "ShowWindow")]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool ShowWindow(nint hWnd, int nCmdShow);
 
-		[DllImport(kernel32, CharSet = CharSet.Unicode)]
-		internal static extern bool TerminateProcess(nint hProcess, uint uExitCode);
+		[LibraryImport(kernel32, EntryPoint = "TerminateProcess")]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool TerminateProcess(nint hProcess, uint uExitCode);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern int ToUnicodeEx(uint wVirtKey, uint wScanCode, byte[] lpKeyState, [Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder pwszBuff, int cchBuff, uint wFlags, nint dwhkl);
+		[LibraryImport(user32, StringMarshalling = StringMarshalling.Utf16)]
+		internal static partial int ToUnicodeEx(uint wVirtKey, uint wScanCode, byte[] lpKeyState, [Out] char[] pwszBuff, int cchBuff, uint wFlags, nint dwhkl);
 
-		internal static int ToUnicodeOrAsciiEx(uint wVirtKey, uint wScanCode, byte[] lpKeyState, [Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder pwszBuff, uint wFlags, nint dwhkl) =>
-		ToUnicodeEx(wVirtKey, wScanCode, lpKeyState, pwszBuff, pwszBuff.Capacity, wFlags, dwhkl);
+		internal static int ToUnicodeOrAsciiEx(uint wVirtKey, uint wScanCode, byte[] lpKeyState, [Out] char[] pwszBuff, uint wFlags, nint dwhkl) =>
+		ToUnicodeEx(wVirtKey, wScanCode, lpKeyState, pwszBuff, pwszBuff.Length, wFlags, dwhkl);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool UnhookWindowsHookEx(nint hhk);
+		[LibraryImport(user32, EntryPoint = "UnhookWindowsHookEx")]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool UnhookWindowsHookEx(nint hhk);
 
-		[DllImport(version, CharSet = CharSet.Unicode)]
-		internal static extern bool VerQueryValue(byte[] pBlock, string pSubBlock, out string pValue, out uint len);
+		[LibraryImport(version, EntryPoint = "VerQueryValueW", StringMarshalling = StringMarshalling.Utf16)]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool VerQueryValue(byte[] pBlock, string pSubBlock, out string pValue, out uint len);
 
-		[DllImport(winmm, CharSet = CharSet.Unicode)]
-		internal static extern uint waveOutGetVolume(nint hwo, out uint dwVolume);
+		[LibraryImport(winmm, EntryPoint = "waveOutGetVolume")]
+		internal static partial uint waveOutGetVolume(nint hwo, out uint dwVolume);
 
-		[DllImport(winmm, CharSet = CharSet.Unicode)]
-		internal static extern int waveOutSetVolume(nint hwo, uint dwVolume);
+		[LibraryImport(winmm, EntryPoint = "waveOutSetVolume")]
+		internal static partial int waveOutSetVolume(nint hwo, uint dwVolume);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern nint WindowFromPoint(Point Point);
+		[LibraryImport(user32, EntryPoint = "WindowFromPoint")]
+		internal static partial nint WindowFromPoint(POINT Point);
 
-		[DllImport(kernel32, CharSet = CharSet.Unicode, SetLastError = true)]
-		internal static extern bool WritePrivateProfileString(string lpAppName, string lpKeyName, string lpString, string lpFileName);
+		[LibraryImport(kernel32, EntryPoint = "WritePrivateProfileStringW", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool WritePrivateProfileString(string lpAppName, string lpKeyName, string lpString, string lpFileName);
 
-		[DllImport(kernel32, CharSet = CharSet.Unicode, SetLastError = true)]
-		internal static extern bool WritePrivateProfileSection(string lpAppName, string lpString, string lpFileName);
+		[LibraryImport(kernel32, EntryPoint = "WritePrivateProfileSectionW", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool WritePrivateProfileSection(string lpAppName, string lpString, string lpFileName);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern int SendMessage(nint hwnd, uint msg, int wParam, StringBuilder sb);
+		[LibraryImport(user32, EntryPoint = "SendMessageW", StringMarshalling = StringMarshalling.Utf16)]
+		internal static partial int SendMessage(nint hwnd, uint msg, int wParam, [Out] char[] chars);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern nint GetAncestor(nint hwnd, GetAncestorFlags flags);
+		[LibraryImport(user32, EntryPoint = "GetAncestor")]
+		internal static partial nint GetAncestor(nint hwnd, GetAncestorFlags flags);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool RegisterHotKey(nint hWnd, uint id, KeyModifiers fsModifiers, uint vk);
+		[LibraryImport(user32, EntryPoint = "RegisterHotKey")]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool RegisterHotKey(nint hWnd, uint id, KeyModifiers fsModifiers, uint vk);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool UnregisterHotKey(nint hWnd, uint id);
+		[LibraryImport(user32, EntryPoint = "UnregisterHotKey")]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool UnregisterHotKey(nint hWnd, uint id);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern bool IsCharAlphaNumeric(char ch);
+		[LibraryImport(user32, EntryPoint = "IsCharAlphaNumericW")]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool IsCharAlphaNumeric([MarshalAs(UnmanagedType.U2)] char ch);
 
 		/// <summary>
 		/// Returns the first ancestor of aWnd that isn't itself a child.  aWnd itself is returned if
@@ -2010,13 +2062,13 @@ namespace Keysharp.Core.Windows
 			if (val == 0)
 				return DefaultErrorString;
 
-			var sb = new StringBuilder(val + 1);  // leave room for null-terminator
+			var buffer = new char[val + 1];  // leave room for null-terminator
 			nint ptr = 0;
 
-			if (SendMessageTimeout(hwnd, WM_GETTEXT, sb.Capacity, sb, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, timeout, out ptr) == 0)
+			if (SendMessageTimeout(hwnd, WM_GETTEXT, buffer.Length, buffer, SendMessageTimeoutFlags.SMTO_ABORTIFHUNG, timeout, out ptr) == 0)
 				return DefaultErrorString;
 
-			return sb.ToString();
+			return new string(buffer, 0, unchecked((int)ptr));
 		}
 
 		internal static bool ControlSetTab(nint hwnd, int tabIndex)
@@ -2066,54 +2118,65 @@ namespace Keysharp.Core.Windows
 			return true;
 		}
 
-		[DllImport(kernel32, CharSet = CharSet.Unicode)]
-		internal static extern bool GetStringTypeEx(uint Locale, uint dwInfoType, string lpSrcStr, int cchSrc, [Out] ushort[] lpCharType);
+		[LibraryImport(kernel32, EntryPoint = "GetStringTypeExW", StringMarshalling = StringMarshalling.Utf16)]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool GetStringTypeEx(uint Locale, uint dwInfoType, string lpSrcStr, int cchSrc, [Out] ushort[] lpCharType);
 
-		[DllImport(kernel32, CharSet = CharSet.Unicode)]
-		internal static extern bool GetExitCodeThread(nint hThread, out uint lpExitCode);
+		[LibraryImport(kernel32, EntryPoint = "GetExitCodeThread")]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool GetExitCodeThread(nint hThread, out uint lpExitCode);
 
-		[DllImport(kernel32, CharSet = CharSet.Unicode)]
-		internal static extern bool SetThreadPriority(nint hThread, int priority);
+		[LibraryImport(kernel32, EntryPoint = "SetThreadPriority")]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool SetThreadPriority(nint hThread, int priority);
 
-		[DllImport(kernel32, CharSet = CharSet.Unicode)]
-		internal static extern nint OpenProcess(ProcessAccessTypes desiredAccess, bool inheritHandle, uint processId);
+		[LibraryImport(kernel32, EntryPoint = "OpenProcess")]
+		internal static partial nint OpenProcess(ProcessAccessTypes desiredAccess, [MarshalAs(UnmanagedType.Bool)] bool inheritHandle, uint processId);
 
-		[DllImport(kernel32, CharSet = CharSet.Unicode)]
-		internal static extern bool QueryFullProcessImageName(nint hProcess, uint dwFlags, [Out, MarshalAs(UnmanagedType.LPTStr)] StringBuilder lpExeName, ref uint lpdwSize);
-		[DllImport(kernel32, CharSet = CharSet.Unicode)]
-		internal static extern nint VirtualAlloc(nint lpAddress, nint dwSize, uint flAllocationType, uint flProtect);
-		[DllImport(kernel32, CharSet = CharSet.Unicode)]
-		internal static extern bool VirtualFree(nint lpAddress, nint dwSize, uint dwFreeType);
+		[LibraryImport(kernel32, EntryPoint = "QueryFullProcessImageNameW", StringMarshalling = StringMarshalling.Utf16)]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static unsafe partial bool QueryFullProcessImageName(nint hProcess, uint dwFlags, [Out] char[] lpExeName, ref uint lpdwSize);
 
-		[DllImport(kernel32, CharSet = CharSet.Unicode)]
-		internal static extern nint VirtualAllocEx(nint hProcess, nint address, uint size, VirtualAllocExTypes allocationType, AccessProtectionFlags flags);
+		[LibraryImport(kernel32, EntryPoint = "VirtualAlloc")]
+		internal static partial nint VirtualAlloc(nint lpAddress, nint dwSize, uint flAllocationType, uint flProtect);
 
-		[DllImport(kernel32, CharSet = CharSet.Unicode)]
-		internal static extern bool VirtualFreeEx(nint hProcess, nint address, uint size, VirtualAllocExTypes dwFreeType);
+		[LibraryImport(kernel32, EntryPoint = "VirtualFree")]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool VirtualFree(nint lpAddress, nint dwSize, uint dwFreeType);
 
-		[DllImport(kernel32, CharSet = CharSet.Unicode)]
-		internal static extern bool ReadProcessMemory(nint hProcess, nint baseAddress, byte[] buffer, uint dwSize, out uint numberOfBytesRead);
+		[LibraryImport(kernel32, EntryPoint = "VirtualAllocEx")]
+		internal static partial nint VirtualAllocEx(nint hProcess, nint address, uint size, VirtualAllocExTypes allocationType, AccessProtectionFlags flags);
 
-		[DllImport(kernel32, CharSet = CharSet.Unicode)]
-		internal static extern bool WriteProcessMemory(nint hProcess, nint lpBaseAddress, nint lpBuffer, int nSize, out nint lpNumberOfBytesWritten);
+		[LibraryImport(kernel32, EntryPoint = "VirtualFreeEx")]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool VirtualFreeEx(nint hProcess, nint address, uint size, VirtualAllocExTypes dwFreeType);
 
-		[DllImport(gdi32, CharSet = CharSet.Unicode)]
-		internal static extern nint CreateEllipticRgn(int nLeftRect, int nTopRect, int nRightRect, int nBottomRect);
+		[LibraryImport(kernel32, EntryPoint = "ReadProcessMemory")]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool ReadProcessMemory(nint hProcess, nint baseAddress, byte[] buffer, uint dwSize, out uint numberOfBytesRead);
 
-		[DllImport(gdi32, CharSet = CharSet.Unicode)]
-		internal static extern nint CreateRoundRectRgn(int x1, int y1, int x2, int y2, int cx, int cy);
+		[LibraryImport(kernel32, EntryPoint = "WriteProcessMemory")]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool WriteProcessMemory(nint hProcess, nint lpBaseAddress, nint lpBuffer, int nSize, out nint lpNumberOfBytesWritten);
 
-		[DllImport(gdi32, CharSet = CharSet.Unicode)]
-		internal static extern nint CreateRectRgn(int nLeftRect, int nTopRect, int nRightRect, int nBottomRect);
+		[LibraryImport(gdi32, EntryPoint = "CreateEllipticRgn")]
+		internal static partial nint CreateEllipticRgn(int nLeftRect, int nTopRect, int nRightRect, int nBottomRect);
 
-		[DllImport(gdi32, CharSet = CharSet.Unicode)]
-		internal static extern nint CreatePolygonRgn(POINT[] lppt, int cPoints, int fnPolyFillMode);
+		[LibraryImport(gdi32, EntryPoint = "CreateRoundRectRgn")]
+		internal static partial nint CreateRoundRectRgn(int x1, int y1, int x2, int y2, int cx, int cy);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern int SetWindowRgn(nint hWnd, nint hRgn, bool bRedraw);
+		[LibraryImport(gdi32, EntryPoint = "CreateRectRgn")]
+		internal static partial nint CreateRectRgn(int nLeftRect, int nTopRect, int nRightRect, int nBottomRect);
 
-		[DllImport(gdi32, CharSet = CharSet.Unicode)]
-		internal static extern bool DeleteObject(nint hObject);
+		[LibraryImport(gdi32, EntryPoint = "CreatePolygonRgn")]
+		internal static partial nint CreatePolygonRgn(POINT[] lppt, int cPoints, int fnPolyFillMode);
+
+		[LibraryImport(user32, EntryPoint = "SetWindowRgn")]
+		internal static partial int SetWindowRgn(nint hWnd, nint hRgn, [MarshalAs(UnmanagedType.Bool)] bool bRedraw);
+
+		[LibraryImport(gdi32, EntryPoint = "DeleteObject")]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool DeleteObject(nint hObject);
 
 		[DllImport(user32, CharSet = CharSet.Unicode, SetLastError = true)]
 		internal static extern IntPtr LoadImage(nint hinst, string lpszName, uint uType, int cxDesired, int cyDesired, uint fuLoad);
@@ -2129,13 +2192,14 @@ namespace Keysharp.Core.Windows
 
 		internal delegate nint PlaybackProc(int nCode, nint wParam, ref EventMsg lParam);
 
-		[DllImport(user32, CharSet = CharSet.Unicode)]
-		internal static extern int GetSystemMetrics(SystemMetric smIndex);
+		[LibraryImport(user32, EntryPoint = "GetSystemMetrics")]
+		internal static partial int GetSystemMetrics(SystemMetric smIndex);
 
-		[DllImport(psapi, CharSet = CharSet.Unicode, SetLastError = true)]
-		internal static extern uint GetProcessImageFileName(nint hProcess, [Out, MarshalAs(UnmanagedType.LPTStr)] StringBuilder lpExeName, uint nSize);
-		[DllImport(kernel32, CharSet = CharSet.Auto, SetLastError = true)]
-		internal static extern uint QueryDosDevice(string lpDeviceName, StringBuilder lpTargetPath, uint ucchMax);
+		[LibraryImport(psapi, EntryPoint = "GetProcessImageFileNameW", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
+		internal static partial uint GetProcessImageFileName(nint hProcess, [Out] char[] lpExeName, uint nSize);
+
+		[LibraryImport(kernel32, EntryPoint = "QueryDosDeviceW", SetLastError = true, StringMarshalling = StringMarshalling.Utf16)]
+		internal static partial uint QueryDosDevice(string lpDeviceName, [Out] char[] lpTargetPath, uint ucchMax);
 	}
 }
 #endif
