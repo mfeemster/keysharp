@@ -883,13 +883,13 @@ MyMenu.Add("Item 3", "MenuHandler")  ; Add another menu item beneath the submenu
 MenuHandler(Item, *) {
 	MsgBox("You selected " Item, "ITEM SELECTED")
 	
-	if (Item == "Script Icon")
+	if (Item == "S&cript Icon")
 		TraySetIcon(A_KeysharpCorePath, "Keysharp.ico")
-	else if (Item == "Suspend Icon")
+	else if (Item == "S&uspend Icon")
 		TraySetIcon(A_KeysharpCorePath, "Keysharp_s.ico")
-	else if (Item == "Pause Icon")
+	else if (Item == "&Pause Icon")
 		TraySetIcon(A_KeysharpCorePath, "Keysharp_p.ico")
-	else if (Item == "System")
+	else if (Item == "&System")
 		TraySetIcon("Shell32.dll", 174L)
 	else
 		TraySetIcon(A_KeysharpCorePath, "Keysharp.ico")

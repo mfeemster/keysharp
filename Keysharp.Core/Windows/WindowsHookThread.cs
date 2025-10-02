@@ -1,6 +1,4 @@
 ﻿#if WINDOWS
-
-using System.Drawing;
 using static Keysharp.Core.Common.Keyboard.KeyboardMouseSender;
 using static Keysharp.Core.Common.Keyboard.KeyboardUtils;
 using static Keysharp.Core.Common.Keyboard.ScanCodes;
