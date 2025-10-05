@@ -923,7 +923,7 @@ CZ_Text3 := MyGui.Add("Text", "xc+10 y+5", "Edit control testing")
 CZ_Text3.SetFont("s8 CBlue")
 
 CZ_Edit1 := MyGui.Add("Edit", "xc+10 y+5 w160 h100")
-CZ_Edit1.SetCue("Multi-line edit control cue text")
+;CZ_Edit1.SetCue("Multi-line edit control cue text")
 
 ; ┌─────────────────────────────────────────────┐
 ; │  ControlZoo - end of Group One, Column One  │
