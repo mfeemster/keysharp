@@ -299,6 +299,21 @@
 			nums.Sensitive = true;
 			nums.Mask = 0;
 			txt.MarginClick += txtIn_MarginClick;
+
+			UpdateNumberMarginWidth(txt);
+		}
+
+		private void UpdateNumberMarginWidth(Scintilla txt)
+		{
+			// how many lines do we have?
+			int maxLine = Math.Max(1, txt.Lines.Count);      // avoid 0
+			int digits = (int)Math.Log10(maxLine) + 1;       // 1 for 1..9, 2 for 10..99, etc.
+
+			// width in pixels needed to render that many '9' with the line-number style
+			int px = txt.TextWidth(Style.LineNumber, new string('9', digits));
+
+			// a little breathing room for padding glyphs
+			txt.Margins[NUMBER_MARGIN].Width = px + 8;
 		}
 
 		private void InitSyntaxColoring(Scintilla txt)
@@ -532,6 +547,7 @@
 			txtOut.ReadOnly = false;
 			txtOut.Text = txt;
 			txtOut.ReadOnly = true;
+			UpdateNumberMarginWidth(txtOut);
 		}
 
 		private void splitContainer_DoubleClick(object sender, EventArgs e) => splitContainer.SplitterDistance = Width / 2;
@@ -765,7 +781,16 @@
 			}
 		}
 
-		private void txtIn_TextChanged(object sender, EventArgs e) => lastKeyTime = DateTime.UtcNow;
+		private void txtIn_TextChanged(object sender, EventArgs e)
+		{
+			UpdateNumberMarginWidth(txtIn);
+			lastKeyTime = DateTime.UtcNow;
+		}
+
+		private void txtOut_TextChanged(object sender, EventArgs e)
+		{
+			UpdateNumberMarginWidth(txtOut);
+		}
 
 		private void txtOut_KeyDown(object sender, KeyEventArgs e) => txtIn_KeyDown(sender, e);
 
@@ -813,6 +838,8 @@
 		{
 			txtIn.ZoomIn();
 			txtOut.ZoomIn();
+			UpdateNumberMarginWidth(txtIn);
+			UpdateNumberMarginWidth(txtOut);
 		}
 
 		private void zoomInToolStripMenuItem_Click(object sender, EventArgs e) => ZoomIn();
@@ -821,6 +848,8 @@
 		{
 			txtIn.ZoomOut();
 			txtOut.ZoomOut();
+			UpdateNumberMarginWidth(txtIn);
+			UpdateNumberMarginWidth(txtOut);
 		}
 
 		private void zoomOutToolStripMenuItem_Click(object sender, EventArgs e) => ZoomOut();
