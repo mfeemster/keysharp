@@ -455,21 +455,17 @@ namespace Keysharp.Core.COM
 			return ret;
 		}
 
-
-		[LibraryImport(WindowsAPI.ole32, EntryPoint = "VariantChangeTypeEx")]
+		[LibraryImport(WindowsAPI.oleaut, EntryPoint = "VariantChangeTypeEx")]
 		internal static partial int VariantChangeTypeEx(nint pvargDest, nint pvarSrc, int lcid, ushort wFlags, ushort vt);
 
-		[LibraryImport(WindowsAPI.ole32, EntryPoint = "VariantInit")]
+		[LibraryImport(WindowsAPI.oleaut, EntryPoint = "VariantInit")]
 		internal static partial void VariantInit(nint pvar);
 
-		[LibraryImport(WindowsAPI.ole32, EntryPoint = "VariantClear")]
-		internal static partial int VariantClear(nint pvar);
-
 		[LibraryImport(WindowsAPI.ole32, EntryPoint = "CLSIDFromProgIDEx", StringMarshalling = StringMarshalling.Utf16)]
-		private static partial int CLSIDFromProgIDEx(string lpszProgID, out Guid clsid);
+		internal static partial int CLSIDFromProgIDEx(string lpszProgID, out Guid clsid);
 
 		[LibraryImport(WindowsAPI.ole32, EntryPoint = "CLSIDFromString", StringMarshalling = StringMarshalling.Utf16)]
-		private static partial int CLSIDFromString(string lpsz, out Guid guid);
+		internal static partial int CLSIDFromString(string lpsz, out Guid guid);
 
 		internal static int VariantChangeTypeEx(out object dest, object src, int lcid, ushort wFlags, ushort vt /* VARTYPE */)
 		{
@@ -497,8 +493,8 @@ namespace Keysharp.Core.COM
 			finally
 			{
 				// Clean up native VARIANTs
-				_ = VariantClear(pSrc);
-				_ = VariantClear(pDst);
+				_ = VariantHelper.VariantClear(pSrc);
+				_ = VariantHelper.VariantClear(pDst);
 				Marshal.FreeHGlobal(pSrc);
 				Marshal.FreeHGlobal(pDst);
 			}

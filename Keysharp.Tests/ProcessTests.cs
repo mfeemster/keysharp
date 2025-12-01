@@ -36,7 +36,12 @@ namespace Keysharp.Tests
 			//explore verb.
 			Run("explore " + Accessors.A_ProgramFiles.ToString());
 			//find verb.
-			Run("find D:\\");
+			if (Directory.Exists("D:\\"))
+				Run("find D:\\");
+			else if (Directory.Exists("C:\\"))
+				Run("find C:\\");
+			else
+				throw new Exception("Cannot test find verb");
 			//Open file with default.
 			Run("..\\..\\..\\Keysharp.Tests\\Code\\test-text-file.txt");
 			//Run program as admin to open file.

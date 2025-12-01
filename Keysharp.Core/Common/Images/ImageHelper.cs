@@ -166,21 +166,16 @@
 					}
 					else if (ext == ".ico")
 					{
-						Icon ico = null;
+						if (w > 0 && h < 0) h = w;
+						if (h > 0 && w < 0) w = h;
 
-#if WINDOWS
-						// If a size was requested, load a sized HICON directly from the .ico file.
-						if (w > 0 || h > 0)
-							ico = ExtractIconWithSizeFromIco(filename, w, h);
+						Icon ico = (w <= 0 || h <= 0) ? new Icon(filename) : new Icon(filename, w, h);
 
-						if (ico == null)				
-#endif
-						ico = new Icon(filename);
 						var icos = GuiHelper.SplitIcon(ico);
 
-						if (w > 0 && h > 0)
+						if (w > 0 || h > 0)
 						{
-							var tempIcoBmp = icos.FirstOrDefault(tempico => tempico.Item1.Width == w && tempico.Item1.Height == h);
+							var tempIcoBmp = icos.FirstOrDefault(tempico => (w <= 0 || tempico.Item1.Width == w) && (h <= 0 || tempico.Item1.Height == h));
 							var tempIco = tempIcoBmp.Item1;
 
 							if (tempIco == null)
@@ -209,13 +204,9 @@
 						}
 
 						if (w > 0 || h > 0)
-						{
 							bmp = ResizeBitmap(bmp, w, h);
-						}
 						else if (bmp.Size != SystemInformation.IconSize)
-						{
 							bmp = bmp.Resize(SystemInformation.IconSize.Width, SystemInformation.IconSize.Height);
-						}
 					}
 					else if (ext == ".cur")
 					{
@@ -252,8 +243,8 @@
 			if (w <= 0 && h <= 0)
 				return bmp;
 
-			if (w <= 0) w = h > 0 ? h : bmp.Width;
-			if (h <= 0) h = w > 0 ? w : bmp.Height;
+			if (w <= 0) w = h > 0 && w != 0 ? h : bmp.Width;
+			if (h <= 0) h = w > 0 && h != 0 ? w : bmp.Height;
 
 			if (bmp.Width != w || bmp.Height != h)
 				bmp = bmp.Resize(w, h);
@@ -262,27 +253,6 @@
 		}
 
 #if WINDOWS
-		internal static Icon ExtractIconWithSizeFromIco(string path, int w, int h)
-		{
-			// Normalize target size (icons are square)
-			if (w <= 0 && h > 0) w = h;
-			if (h <= 0 && w > 0) h = w;
-			if (w <= 0 || h <= 0)
-			{
-				w = SystemInformation.IconSize.Width;
-				h = SystemInformation.IconSize.Height;
-			}
-
-			var hicon = WindowsAPI.LoadImage(
-				0,
-				path,
-				WindowsAPI.IMAGE_ICON,
-				w, h,
-				WindowsAPI.LR_LOADFROMFILE | WindowsAPI.LR_CREATEDIBSECTION);
-
-			return hicon != 0 ? Icon.FromHandle(hicon) : null;
-		}
-
 		internal static Icon ExtractIconWithSizeFromModule(string path, int index, int w, int h)
 		{
 			if (w <= 0 && h > 0) w = h;
