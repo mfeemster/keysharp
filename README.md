@@ -180,8 +180,6 @@ testfunc()
 * If a script is compiled then none of Keysharp or AutoHotkey command parameters apply. 
 	
 ###	Syntax: ###
-* The syntax used in `Format()` is exactly that of `string.Format()` in C#, except with 1-based indexing. Traditional AHK style formatting is not supported.
-	+ Full documentation for the formatting rules can be found [here](https://learn.microsoft.com/en-us/dotnet/api/system.string.format).
 * The default name for the array of parameters in a variadic function is `args`, instead of `params`. This is due to `params` being a reserved word in C#.
 	+ The array for variadic parameters is read only and cannot be manipulated in the way a normal `Array` can.
 * `DllCall()` has the following caveats:
@@ -345,10 +343,12 @@ class class1
 * New string functions:
 	+ `Base64Decode(str) => Array` to convert a Base64 string to a Buffer containing the decoded bytes.
 	+ `Base64Encode(value) => String` to convert a byte array to a Base64 string.
-	+ `NormalizeEol(str, eol) => String` to make all line endings in a string match the value passed in, or the default for the current environment.
-	+ `StartsWith(value, token [,comparison]) => Boolean` and `EndsWith(value, token [,comparison]) => Boolean` to determine if the beginning or end of a string start/end with a given string.
+	+ `FormatCs()` which uses the same formatting syntax and rules as `string.Format()` in C#, except with 1-based indexing.
+		+ Full documentation for the formatting rules can be found [here](https://learn.microsoft.com/en-us/dotnet/api/system.string.format).
 	+ `Join(separator, params*) => String` to join each parameter together as a string, separated by `separator`.
 		+ Pass params as `params*` if it's a collection.
+	+ `NormalizeEol(str, eol) => String` to make all line endings in a string match the value passed in, or the default for the current environment.
+	+ `StartsWith(value, token [,comparison]) => Boolean` and `EndsWith(value, token [,comparison]) => Boolean` to determine if the beginning or end of a string start/end with a given string.
 * New RegEx functions `RegExMatchCs()` and `RegExReplaceCs()` which use the C# style regular expression syntax rather than PCRE2.
 	+ `OutputVar` in `RegExMatchCs()` will be of type `RegExMatchInfoCs`.
 	+ PCRE exceptions are not thrown when there is an error, instead C# regex exceptions are thrown.
