@@ -857,7 +857,7 @@ namespace Keysharp.Core.Common.Keyboard
 							&& hk2.hookAction == 0// Might be unnecessary to check this; but just in case.
 							&& hk2.id != hotkeyId // Don't consider the original hotkey because it was already found ineligible.
 							&& (hk2.modifiers & ~modifiers) == 0 // All neutral modifiers required by the candidate are pressed.
-							&& (hk2.modifiersLR & ~kbdMouseSender.modifiersLRLogicalNonIgnored) != 0 // All left-right specific modifiers required by the candidate are pressed.
+							&& (hk2.modifiersLR & ~kbdMouseSender.modifiersLRLogicalNonIgnored) == 0 // All left-right specific modifiers required by the candidate are pressed.
 							//&& hk2.mType != HK_JOYSTICK // Seems unnecessary since joystick hotkeys don't call us and even if they did, probably shouldn't be included.
 							//&& hk2.mParentEnabled   ) // CriterionAllowsFiring() will check this for us.
 					   )
