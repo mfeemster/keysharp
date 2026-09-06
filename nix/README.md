@@ -15,7 +15,13 @@ provides, and listing one of those here fails the build.
 `flake.nix` pins nixpkgs and Eto to exact revisions. Every other packager builds the tip of Eto's
 `Keysharp` branch, so move the Eto pin when that moves.
 
-The `nixos` job in `.github/workflows/ci.yml` builds the package, checks what it contains, and
-regenerates `deps.json` to compare against the committed one.
+CI has a NixOS leg that builds the package and checks what it contains, but it is not part of the push
+gate: run the CI workflow manually and pick `nixos` (or `all`) after touching these expressions, a project
+reference, or the install payload. The same thing locally is:
+
+```sh
+nix flake check -L --all-systems
+nix build .#keysharp
+```
 
 `docs/linux-nixos.md` covers installing and running Keysharp on NixOS.

@@ -122,6 +122,10 @@ buildDotnetModule rec {
   dotnet-sdk = dotnetCorePackages.sdk_10_0;
   dotnet-runtime = dotnet-sdk.runtime;
 
+  # Without this buildDotnetModule restores with --disable-parallel and builds at -maxcpucount:1, which
+  # serialises a nine-project graph over one core.
+  enableParallelBuilding = true;
+
   nativeBuildInputs = [ wrapGAppsHook3 ];
   runtimeDeps = runtimeLibraries;
   # buildDotnetModule's own wrapper already applies gappsWrapperArgs.
