@@ -1377,6 +1377,43 @@ namespace Keysharp.Tests
 #endif
 		}
 
+#if WINDOWS
+		[Test, Category("Gui")]
+		[Apartment(ApartmentState.STA)]
+		public void ErrorDialogThemeColors()
+		{
+			var originalTheme = Ks.A_GuiTheme.ToString();
+
+			try
+			{
+				Ks.A_GuiTheme = "Dark";
+				using var dialog = new ErrorDialog(
+					$"Message: test{Environment.NewLine}What: test{Environment.NewLine}Stack:{Environment.NewLine}\ttest",
+					allowContinue: true);
+				var mainPanel = (TableLayoutPanel)dialog.Controls[0];
+				var paddingPanel = (Panel)mainPanel.GetControlFromPosition(0, 0);
+				var richBox = (RichTextBox)paddingPanel.Controls[0];
+
+				Assert.AreEqual(SystemColors.Window.ToArgb(), paddingPanel.BackColor.ToArgb());
+				Assert.AreEqual(SystemColors.Window.ToArgb(), richBox.BackColor.ToArgb());
+				Assert.AreEqual(SystemColors.WindowText.ToArgb(), richBox.ForeColor.ToArgb());
+				Assert.AreNotEqual(richBox.BackColor.ToArgb(), richBox.ForeColor.ToArgb());
+				if (Application.IsDarkModeEnabled)
+					Assert.AreNotEqual(Color.White.ToArgb(), richBox.BackColor.ToArgb());
+
+				var marker = richBox.Text.IndexOf('▶');
+				Assert.GreaterOrEqual(marker, 0);
+				richBox.Select(marker, 1);
+				Assert.AreEqual(Color.Yellow.ToArgb(), richBox.SelectionBackColor.ToArgb());
+				Assert.AreEqual(Color.Black.ToArgb(), richBox.SelectionColor.ToArgb());
+			}
+			finally
+			{
+				Ks.A_GuiTheme = originalTheme;
+			}
+		}
+#endif
+
 		private void Form_Shown(object sender, EventArgs e)
 		{
 			var ret = Dialogs.MsgBox("ok, hand, def: 1", MsgBoxTitle, "0 16");

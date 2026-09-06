@@ -7,7 +7,7 @@
     double-clicked Keysharp.exe, Keysharp.app, or `keysharp` with no arguments. Every package
     compiles this to Keysharp.cks at the app root, which the ordinary <exe-name>.ahk/.ks/.cks
     probe finds; the source keeps its own name so it cannot shadow that .cks (the probe prefers
-    .ks). A repo checkout runs it, minus the demo cards - Demos\ is CopyToPublishDirectory only.
+    .ks). A repo checkout runs it, minus the Demos tool - Demos\ is CopyToPublishDirectory only.
 
     `#Requires Keysharp` rather than `AutoHotkey`: `#import KS` on the next line means this
     cannot run on AutoHotkey at all, so claiming otherwise would be a lie. The v2.0 line is
@@ -87,21 +87,10 @@ SplitPath(A_AhkPath, , &ExeDir)
 KeyviewPath := FindKeyview()
 WindowSpyPath := FileExist(ExeDir Sep "Scripts" Sep "WindowSpy.cks") ? ExeDir Sep "Scripts" Sep "WindowSpy.cks"
     : FileExist(ExeDir Sep "Scripts" Sep "WindowSpy.ks") ? ExeDir Sep "Scripts" Sep "WindowSpy.ks" : ""
+PackagesPath := FileExist(ExeDir Sep "Scripts" Sep "Packages.cks") ? ExeDir Sep "Scripts" Sep "Packages.cks"
+    : FileExist(ExeDir Sep "Scripts" Sep "Packages.ks") ? ExeDir Sep "Scripts" Sep "Packages.ks" : ""
 DemosDir := ExeDir Sep "Demos"
 LogoPath := ExeDir Sep "Keysharp.png"
-
-; One entry per demo the packages ship (see the Demos\ item group in Keysharp.csproj). A demo the
-; user drops into the folder themselves still gets a card, with the generic blurb and scroll glyph.
-DemoBlurbs := Map(
-    "ClipboardHistory", "Ctrl+Alt+V picks from everything you copied",
-    "InputHUD", "on-screen keyboard that lights up as you type",
-    "WindowGrab", "Super+drag moves or fades any window",
-    "WindowTiler", "CapsLock chords snap windows to grids")
-DemoGlyphs := Map(
-    "ClipboardHistory", Chr(0x1F4CB),   ; clipboard
-    "InputHUD", Chr(0x2328),            ; keyboard
-    "WindowGrab", Chr(0x270B),          ; hand
-    "WindowTiler", Chr(0x1F4D0))        ; triangle ruler
 
 DemoRows := []
 if DirExist(DemosDir) {
@@ -112,7 +101,7 @@ if DirExist(DemosDir) {
         SplitPath(A_LoopFileName, , , , &DemoName)
         DemoSourcePath := A_LoopFileFullPath
         DemoCompiledPath := RegExReplace(DemoSourcePath, "i)\.ks$", ".cks")
-        DemoRows.Push({name: DemoName, sourcePath: DemoSourcePath,
+        DemoRows.Push({name: DemoName,
             launchPath: FileExist(DemoCompiledPath) ? DemoCompiledPath : DemoSourcePath})
     }
 }
@@ -128,7 +117,6 @@ ClrText := "0xFFEAEDF4"
 ClrDim := "0xFF8C96A8"
 ClrFaint := "0xFF5A6478"
 ClrAccent := "0xFF82A7FF"
-ClrAccentDark := "0xFF16203A"
 ClrPrim := "0xFF212C46"
 ClrPrimHov := "0xFF2A3A5E"
 FontUi := Font.Ui.Name
@@ -151,8 +139,7 @@ PollSlow := 150   ; cursor elsewhere: only has to notice it coming back
 ;
 ; Add(): id, rect, draw callback, optional click callback. The rect is the ONLY place a
 ; coordinate is written; draw receives it back as `m` and must not recompute one, so a
-; nudged card moves its artwork and its hit box together. Later entries win a hit test, so
-; the chips are added after the demo card they sit on.
+; nudged card moves its artwork and its hit box together.
 ; ---------------------------------------------------------------------------
 Model := []
 HoverId := ""
@@ -177,18 +164,19 @@ if KeyviewPath != ""
     Tools.Push({glyph: Chr(0x270F), label: "Keyview editor", cb: (*) => Run('"' KeyviewPath '"')})
 Tools.Push({glyph: Chr(0x1F4D6), label: "Documentation", cb: (*) => Run(DocsUrl)})
 Tools.Push({glyph: Chr(0x1F310), label: "GitHub", cb: (*) => Run(GithubUrl)})
+DemoPackagePair := DemoRows.Length > 0 && PackagesPath != "" ? Tools.Length + 1 : 0
+if DemoRows.Length > 0
+    Tools.Push({glyph: Chr(0x1F3AC), label: "Demos", cb: ShowDemosMenu})
+if PackagesPath != ""
+    Tools.Push({glyph: Chr(0x1F4E6), label: "Package Manager", cb: LaunchPackageManager})
 
 ToolY := PrimY + PrimH + CardGap
 ToolH := 40
-ToolRows := (Tools.Length + 1) // 2
+StandaloneTools := DemoPackagePair > 0 ? DemoPackagePair - 1 : Tools.Length
+StandaloneRows := (StandaloneTools + 1) // 2
+ToolRows := StandaloneRows + (DemoPackagePair > 0 ? 1 : 0)
 ToolsBottom := ToolY + ToolRows * ToolH + (ToolRows - 1) * 10
-
-DemoHdrY := ToolsBottom + 18
-DemoY := DemoHdrY + 26
-DemoH := 46
-DemoGap := 8
-DemosBottom := DemoRows.Length > 0 ? DemoY + DemoRows.Length * (DemoH + DemoGap) - DemoGap : ToolsBottom
-FooterY := DemosBottom + 16
+FooterY := ToolsBottom + 16
 H := FooterY + 30
 
 ; header
@@ -201,25 +189,13 @@ Add("open", Pad + PrimW + CardGap, PrimY, PrimW, PrimH,
     DrawPrimary.Bind(Chr(0x25B6), "Run a script", "browse for a .ks / .ahk file"), PickAndRunScript)
 ; tool cards
 for i, T in Tools {
-    Tx := Pad + (Mod(i - 1, 2)) * (PrimW + CardGap)
-    Ty := ToolY + ((i - 1) // 2) * (ToolH + 10)
-    Add("tool" i, Tx, Ty, PrimW, ToolH, DrawTool.Bind(T), T.cb)
-}
-; demos
-if DemoRows.Length > 0 {
-    Add("demohdr", Pad, DemoHdrY, InnerW, 22, DrawDemoHeading)
-    ; Width measured, not assumed: the label is right-aligned to the panel edge, so a font that
-    ; renders it wider or narrower would otherwise leave the hover box off the text.
-    FolderW := Ceil(MeasureUi("open folder", "s8"))
-    Add("folder", W - Pad - FolderW, DemoHdrY - 4, FolderW, 22, DrawFolderLink, (*) => ShowFolder(DemosDir))
-    for i, D in DemoRows {
-        Dy := DemoY + (i - 1) * (DemoH + DemoGap)
-        Add("demo" i, Pad, Dy, InnerW, DemoH, DrawDemoCard.Bind(i, D), RunDemoAt.Bind(i))
-        Add("src" i, Pad + InnerW - 100, Dy + 12, 40, 22,
-            DrawChip.Bind("</>", false), ViewDemoSourceAt.Bind(i))
-        Add("run" i, Pad + InnerW - 56, Dy + 12, 44, 22,
-            DrawChip.Bind("Run", true), RunDemoAt.Bind(i))
-    }
+    InDemoPackagePair := DemoPackagePair > 0 && i >= DemoPackagePair
+    Wide := !InDemoPackagePair && i = StandaloneTools && Mod(StandaloneTools, 2) = 1
+    Column := InDemoPackagePair ? i - DemoPackagePair : Mod(i - 1, 2)
+    Row := InDemoPackagePair ? StandaloneRows : (i - 1) // 2
+    Tx := Wide ? Pad : Pad + Column * (PrimW + CardGap)
+    Ty := ToolY + Row * (ToolH + 10)
+    Add("tool" i, Tx, Ty, Wide ? InnerW : PrimW, ToolH, DrawTool.Bind(T), T.cb)
 }
 Add("footer", 0, FooterY, W, 30, DrawFooter)
 
@@ -260,16 +236,6 @@ Render() {
     img.Dispose()
 }
 
-; Text width in authored units, for the few elements sized to their own label. Uses a throwaway
-; 1x1 canvas because layout runs before the first Render() has an image to measure on.
-MeasureUi(text, options) {
-    local probe := Image.Create(1, 1)
-    try
-        return probe.MeasureText(text, options, FontUi).Width
-    finally
-        probe.Dispose()
-}
-
 ; --- draw callbacks: (img, m, hov), where m is the model entry's own rect -----
 DrawHeader(img, m, hov) {
     TitleX := Pad
@@ -305,36 +271,6 @@ DrawTool(tool, img, m, hov) {
     img.DrawText(tool.label, m.X + 44, m.Y + 10, hov ? ClrText : ClrDim, "s10", FontUi)
 }
 
-DrawDemoHeading(img, m, hov) {
-    img.DrawText("DEMOS", m.X, m.Y, ClrFaint, "s8 bold", FontUi)
-}
-
-DrawFolderLink(img, m, hov) {
-    img.DrawText("open folder", m.X, m.Y + 3, hov ? ClrAccent : ClrFaint, "s8", FontUi)
-}
-
-; Hovering either chip lights the card behind it too, so the row reads as one target.
-DrawDemoCard(i, demo, img, m, hov) {
-    CardHov := hov || HoverId = ("src" i) || HoverId = ("run" i)
-    img.FillRoundRect(m.X, m.Y, m.Width, m.Height, 9, CardHov ? ClrCardHov : ClrCard)
-    Glyph := DemoGlyphs.Has(demo.name) ? DemoGlyphs[demo.name] : Chr(0x1F4DC)
-    img.DrawText(Glyph, m.X + 15, m.Y + 12, ClrDim, "s11", FontGlyph)
-    img.DrawText(demo.name, m.X + 48, m.Y + 6, ClrText, "s10 bold", FontUi)
-    Blurb := DemoBlurbs.Has(demo.name) ? DemoBlurbs[demo.name] : "a Keysharp demo script"
-    img.DrawText(Blurb, m.X + 48, m.Y + 25, ClrDim, "s8", FontUi)
-}
-
-DrawChip(label, accent, img, m, hov) {
-    if accent {
-        img.FillRoundRect(m.X, m.Y, m.Width, m.Height, 11, hov ? ClrAccent : ClrAccentDark)
-        img.DrawRoundRect(m.X, m.Y, m.Width, m.Height, 11, ClrAccent, 1)
-    } else if hov
-        img.FillRoundRect(m.X, m.Y, m.Width, m.Height, 11, ClrEdge)
-    Lw := img.MeasureText(label, "s8 bold", FontUi).Width   ; float - and v2's // throws on floats
-    img.DrawText(label, m.X + Round((m.Width - Lw) / 2), m.Y + 4,
-        accent ? (hov ? "0xFF10141E" : ClrAccent) : (hov ? ClrText : ClrFaint), "s8 bold", FontUi)
-}
-
 DrawFooter(img, m, hov) {
     img.DrawText(StatusMsg, Pad, m.Y + 6, ClrFaint, "s8", FontUi)
     Hint := "Ctrl+Alt+Shift+Q exits a demo"
@@ -345,10 +281,10 @@ DrawFooter(img, m, hov) {
 ; ---------------------------------------------------------------------------
 ; interaction
 ; ---------------------------------------------------------------------------
-; Decorative entries (header rule, DEMOS heading, footer) carry no cb and are skipped, so the area
-; they cover still drags the window, exactly as it did when only clickables were modelled.
+; Decorative entries (the header rule and footer) carry no cb and are skipped, so the area they
+; cover still drags the window, exactly as it did when only clickables were modelled.
 HitTest(px, py) {
-    ; physical client px -> authored units; last match wins so chips beat their card
+    ; physical client px -> authored units
     Ax := px / Scale
     Ay := py / Scale
     Found := ""
@@ -486,17 +422,45 @@ RunDemoAt(i, *) {
     SetStatus("launched " DemoRows[i].name)
 }
 
-ViewDemoSourceAt(i, *) {
-    EditFile(DemoRows[i].sourcePath)
-    SetStatus("opened " DemoRows[i].name " source")
+ShowDemosMenu(*) {
+    popup := Menu()
+    for i, Demo in DemoRows
+        popup.Add(StrReplace(RegExReplace(Demo.name, "([a-z0-9])([A-Z])", "$1 $2"), "&", "&&"), RunDemoAt.Bind(i))
+    popup.Add()
+    popup.Add("Open demos folder", OpenDemosFolder)
+    popup.Show()
+}
+
+OpenDemosFolder(*) {
+    ShowFolder(DemosDir)
 }
 
 LaunchScript(ScriptPath) {
     if ScriptPath = "" || !FileExist(ScriptPath) {
         MsgBox("Could not find: " ScriptPath, "Keysharp Dash", "Iconx")
+        return 0
+    }
+    ; Keep the executable and its arguments separate so paths containing spaces are not reparsed as
+    ; part of the target command line by Run().
+    return Run(A_AhkPath, , , , '"' ScriptPath '"')
+}
+
+LaunchPackageManager(*) {
+    if WinExist("Keysharp Package Manager") {
+        WinActivate("Keysharp Package Manager")
+        SetStatus("opened Keysharp Package Manager")
         return
     }
-    Run('"' A_AhkPath '" "' ScriptPath '"')
+    Pid := LaunchScript(PackagesPath)
+    if !Pid
+        return
+    SetStatus("opening Keysharp Package Manager")
+    if WinWait("ahk_pid " Pid, , 5)
+        WinActivate("ahk_pid " Pid)
+    else if ProcessExist(Pid)
+        SetStatus("Keysharp Package Manager started in the background")
+    else
+        SetStatus("Keysharp Package Manager exited before opening")
 }
 
 EditFile(FilePath) {

@@ -21,9 +21,8 @@
 		<_DashFallback>$(_Out)Keysharp.ks</_DashFallback>
 		<!-- The kpm release whose library to ship. Pinned, so a Keysharp release states which package
 		     manager it carried. Must be a release that carries Kpm.Cli.CommandRunner - v0.1.2 and earlier
-		     kept the commands in the kpm executable, where the host cannot reach them. Until that tag
-		     exists the download simply fails, which is not fatal: packaging warns and the install says
-		     package management is unavailable. -->
+		     kept the commands in the kpm executable, where the host cannot reach them. A failed download
+		     is not fatal: packaging warns and the install says package management is unavailable. -->
 		<KpmVersion Condition="'$(KpmVersion)' == ''">v0.2.0</KpmVersion>
 		<KpmRepository Condition="'$(KpmRepository)' == ''">keysharp-org/KPM</KpmRepository>
 		<!-- Only the archive is per-runtime; the one file taken out of it is a managed library and is the
@@ -128,10 +127,11 @@
 			<!-- Shell.ks is the demos' shared #include, so it ships as source with no entry point of its own.
 			     OCRSnip is absent: it #includes OCR.ks by repo-relative path and needs an engine no package has. -->
 			<_Demo Include="$(_Repo)demos/Shell.ks;$(_Repo)demos/ClipboardHistory.ks;$(_Repo)demos/InputHUD.ks;$(_Repo)demos/WindowGrab.ks;$(_Repo)demos/WindowTiler.ks" />
-			<!-- The Dash, and the one new-script seed shared by its "New script" button and the ShellNew
-			     registrations in the MSI, the MSIX manifest and the CLI install switch. Both live here rather
-			     than in Keysharp\Scripts because neither is part of Keysharp. -->
-			<_InstallScript Include="$(MSBuildThisFileDirectory)Dash.ks;$(MSBuildThisFileDirectory)Template.ks" />
+			<!-- The Dash, the one new-script seed shared by its "New script" button and the ShellNew
+			     registrations in the MSI, the MSIX manifest and the CLI install switch, and the package-manager
+			     GUI the Dash launches. All live here rather than in Keysharp\Scripts because none is part of
+			     Keysharp. -->
+			<_InstallScript Include="$(MSBuildThisFileDirectory)Dash.ks;$(MSBuildThisFileDirectory)Template.ks;$(MSBuildThisFileDirectory)Packages.ks" />
 		</ItemGroup>
 		<Copy SourceFiles="@(_InstallScript)" DestinationFolder="$(_Out)Scripts" SkipUnchangedFiles="true" />
 		<Copy SourceFiles="@(_Demo)" DestinationFolder="$(_Out)Demos" SkipUnchangedFiles="true" />
@@ -141,6 +141,7 @@
 		<ItemGroup>
 			<!-- OCR.ks and Demos/Shell.ks are absent: pure #include libraries, no entry point. -->
 			<_InPlaceScript Include="$(_Out)Scripts/WindowSpy.ks" Condition="Exists('$(_Out)Scripts/WindowSpy.ks')" />
+			<_InPlaceScript Include="$(_Out)Scripts/Packages.ks" Condition="Exists('$(_Out)Scripts/Packages.ks')" />
 			<_InPlaceScript Include="$(_Out)Scripts/AtSpi.ks" Condition="Exists('$(_Out)Scripts/AtSpi.ks')" />
 			<_InPlaceScript Include="$(_Out)Scripts/Ax.ks" Condition="Exists('$(_Out)Scripts/Ax.ks')" />
 			<_InPlaceScript Include="$(_Out)Demos/*.ks" Exclude="$(_Out)Demos/Shell.ks" />

@@ -1462,7 +1462,7 @@ namespace Keysharp.Builtins
 				Dock = DockStyle.Fill,
 				Padding = new Padding(10),
 				Margin = Padding.Empty,
-				BackColor = Color.White,
+				BackColor = SystemColors.Window,
 				BorderStyle = BorderStyle.None,
 			};
 			var richBox = new RichTextBox
@@ -1473,7 +1473,8 @@ namespace Keysharp.Builtins
 				ScrollBars = RichTextBoxScrollBars.Both,
 				WordWrap = false,
 				Dock = DockStyle.Fill,
-				BackColor = Color.White,
+				BackColor = SystemColors.Window,
+				ForeColor = SystemColors.WindowText,
 				BorderStyle = BorderStyle.None,
 				TabStop = false,
 				ShortcutsEnabled = true,
@@ -1645,6 +1646,7 @@ namespace Keysharp.Builtins
 				if (lineEnd < 0) lineEnd = text.Length;
 				box.Select(lineStart, lineEnd - lineStart);
 				box.SelectionBackColor = Color.Yellow;
+				box.SelectionColor = Color.Black;
 			}
 
 			box.Select(0, 0); // Reset selection
@@ -1834,6 +1836,7 @@ namespace Keysharp.Builtins
 				if (lineEnd < 0) lineEnd = text.Length;
 				box.Selection = new Eto.Forms.Range<int>(lineStart, lineEnd - 1);
 				box.SelectionBackground = Eto.Drawing.Colors.Yellow;
+				box.SelectionForeground = Eto.Drawing.Colors.Black;
 			}
 
 			ClearSelection(box);

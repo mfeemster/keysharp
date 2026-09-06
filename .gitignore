@@ -6,6 +6,7 @@
 /bin
 /obj
 /dist
+/Keysharp.Install/payload/obj/
 /.claude/worktrees
 /native/*/build
 /.vs/ProjectEvaluation
