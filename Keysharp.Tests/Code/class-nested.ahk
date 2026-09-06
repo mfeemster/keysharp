@@ -87,4 +87,46 @@ outer.empty.Prototype.__Class := "Override"
 AssertEq(Type(renamed), "Override", A_LineNumber)
 AssertEq(Type(outer.empty()), "Override", A_LineNumber)
 
+; A built-in nested class is named the same way (AutoHotkey reports Gui.Text for a text control), and the
+; short name of a nested class resolves nowhere: dynamically it is an ordinary undefined name, and the
+; declaring class is what reaches it.
+AssertEq(Gui.Control.Prototype.__Class, "Gui.Control", A_LineNumber)
+AssertEq(Gui.Text.Prototype.__Class, "Gui.Text", A_LineNumber)
+AssertEq(Type(Gui.Text.Prototype), "Prototype", A_LineNumber)
+
+_undefinedTag := ""
+try
+    %"NoSuchNameAtAll"%
+catch as _e
+    _undefinedTag := Type(_e)
+
+_nestedTag := ""
+try
+    %"empty"%
+catch as _e
+    _nestedTag := Type(_e)
+AssertEq(_nestedTag, _undefinedTag, A_LineNumber)
+
+_builtinNestedTag := ""
+try
+    %"Control"%
+catch as _e
+    _builtinNestedTag := Type(_e)
+AssertEq(_builtinNestedTag, _undefinedTag, A_LineNumber)
+
+; A top-level class still resolves dynamically, and a nested one through its declaring class.
+AssertEq(Type(%"outer"%), "Class", A_LineNumber)
+AssertEq(Type(%"Gui"%), "Class", A_LineNumber)
+AssertEq(Type(outer.%"field"%), "Class", A_LineNumber)
+AssertEq(Type(Gui.%"Control"%), "Class", A_LineNumber)
+
+; `is` names a class through the class itself: a string is a type error, so a dynamic reference has to
+; resolve the class first.
+AssertEq(outer.empty() is outer.empty, 1, A_LineNumber)
+AssertEq(outer.empty() is %"outer"%.empty, 1, A_LineNumber)
+AssertEq(c1.c2() is c1.c2, 1, A_LineNumber)
+AssertEq(c1.c2() is c1, 0, A_LineNumber)
+Throws(() => outer.empty() is "outer.empty", A_LineNumber, TypeError)
+Throws(() => [] is "Array", A_LineNumber, TypeError)
+
 FileAppend "pass", "*"

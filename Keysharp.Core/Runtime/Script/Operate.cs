@@ -754,13 +754,13 @@ namespace Keysharp.Runtime
 		{
 			if (left == null || right == null)
 				return left == right;
-			if (Builtins.Primitive.IsNative(right))
-				right = TheScript.Vars.Prototypes[Builtins.Primitive.MapPrimitiveToNativeType(right)];
-			else if (right is Any kso && kso.op is var op && op != null && op.ContainsKey("Prototype"))
-				right = GetPropertyValue(right, "Prototype");
-			else
-				return Errors.ErrorOccurred("Invalid is operator right-side operand");
-			return Keysharp.Builtins.Types.HasBase(left, right);
+
+			// The right operand names a class through the class itself, never through its name: `x is "Array"`
+			// is a type error, and a dynamic reference has to resolve the class first (`x is %"Array"%`).
+			if (right is not Any kso || kso.op == null || !kso.op.ContainsKey("Prototype"))
+				return Errors.TypeErrorOccurred($"Expected Class but got {Keysharp.Builtins.Types.Type(right)}.", false);
+
+			return Keysharp.Builtins.Types.HasBase(left, GetPropertyValue(right, "Prototype"));
 		}
 
 		internal static bool ParseNumericArgs(object left, object right, string desc, out bool firstIsDouble, out bool secondIsDouble, out double firstd, out long firstl, out double secondd, out long secondl, bool throwOnError = true)

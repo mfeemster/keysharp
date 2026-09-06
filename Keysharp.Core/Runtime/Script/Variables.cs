@@ -287,6 +287,12 @@ namespace Keysharp.Runtime
 				if (Struct.IsAutoPointerClass(type))
 					continue;
 
+				// A class nested in another class is reached through its declaring class (Gui.Control,
+				// Audio.Device, Test.Nested), never as a name of its own, so its short name must not become a
+				// global variable that `%"Device"%` or a named-argument check could resolve.
+				if (Script.IsNestedInClass(type, script))
+					continue;
+
 				var name = Script.GetUserDeclaredName(type) ?? type.Name;
 
 				if (!string.IsNullOrEmpty(name))

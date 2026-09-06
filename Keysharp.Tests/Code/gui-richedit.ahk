@@ -11,9 +11,9 @@
 g := Gui()
 re := g.Add("RichEdit", "w400 h200 -Wrap")
 
-AssertEq(Type(re), "RichEdit", A_LineNumber)
+AssertEq(Type(re), "Gui.RichEdit", A_LineNumber)
 Assert(re.Type = "richedit", A_LineNumber)   ; Type echoes the caller's spelling, so match case-insensitively
-AssertEq(Type(g.AddRichEdit("w10 h10")), "RichEdit", A_LineNumber)
+AssertEq(Type(g.AddRichEdit("w10 h10")), "Gui.RichEdit", A_LineNumber)
 
 ; --- positions line up with Value -------------------------------------------------------------------------
 

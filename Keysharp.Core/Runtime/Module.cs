@@ -86,6 +86,22 @@ namespace Keysharp.Runtime
 	{
 		public Ahk(params object[] args) : base(args) { }
 
+		/// <summary>
+		/// Resolves a class the way a global name resolves. This module is AutoHotkey's global namespace, and a
+		/// class nested in another class (Gui.Control, Clr.ManagedType) is named only through the class that
+		/// declares it, so its short name resolves to nothing here.
+		/// </summary>
+		private static bool TryGetGlobalClass(string name, out System.Type type)
+		{
+			var script = Script.TheScript;
+
+			if (script.ReflectionsData.stringToTypes.TryGetValue(name, out type) && !Script.IsNestedInClass(type, script))
+				return true;
+
+			type = null;
+			return false;
+		}
+
 		object IMetaObject.Get(string name, object[] args)
 		{
 			var rd = Script.TheScript.ReflectionsData;
@@ -95,7 +111,7 @@ namespace Keysharp.Runtime
 				value = prop.GetValue(null);
 			else if (rd.flatPublicStaticMethods.TryGetValue(name, out var mi))
 				value = Keysharp.Builtins.Functions.GetKeysharpFuncByName(name, mi.DeclaringType, throwIfBad: true);
-			else if (rd.stringToTypes.TryGetValue(name, out var type))
+			else if (TryGetGlobalClass(name, out var type))
 				value = Script.TheScript.Vars.Statics[type];
 			else
 				return null;
@@ -127,7 +143,7 @@ namespace Keysharp.Runtime
 				return;
 			}
 
-			if (rd.stringToTypes.TryGetValue(name, out var type))
+			if (TryGetGlobalClass(name, out var type))
 			{
 				var target = Script.TheScript.Vars.Statics[type];
 				if (args != null && args.Length > 0)
@@ -162,7 +178,7 @@ namespace Keysharp.Runtime
 				return Keysharp.Runtime.Script.Invoke(target, null, args);
 			}
 
-			if (rd.stringToTypes.TryGetValue(name, out var type))
+			if (TryGetGlobalClass(name, out var type))
 			{
 				// Statics is typed as Class, which is unrelated to KeysharpFunc, so the test needs an object
 				// operand; a class object whose static side is callable still takes the Invoke path below.

@@ -227,12 +227,20 @@ namespace Keysharp.Runtime
 				if (t != typeof(KeysharpFunc) && t != typeof(Any))
 					proto.SetBaseInternal(script.Vars.Prototypes[t.BaseType]);
 
-				if (isBuiltin)
+				// A built-in implemented under a different CLR name (KeysharpObject, StructInt32, ...) declares
+				// the name scripts know it by, and that is the name __Class - and so Type() - must report. A class
+				// nested in another class is named by its full dotted path (Gui.Text, Audio.Device, Test.Nested),
+				// which is what makes the name unambiguous once the short one is not a global.
+				var className = GetUserDeclaredName(t) ?? t.Name;
+
+				if (IsNestedInClass(t, script))
 				{
-					// A built-in implemented under a different CLR name (KeysharpObject, StructInt32, ...) declares
-					// the name scripts know it by, and that is the name __Class - and so Type() - must report.
-					proto.DefinePropInternal("__Class", new OwnPropsDesc(proto, GetUserDeclaredName(t) ?? t.Name));
+					script.Vars.Prototypes[t.DeclaringType].op.TryGetValue("__Class", out var declClassNameDesc);
+					className = $"{declClassNameDesc?.Value}.{className}";
 				}
+
+				if (isBuiltin)
+					proto.DefinePropInternal("__Class", new OwnPropsDesc(proto, className));
 
 				staticInst.DefinePropInternal("Prototype", new OwnPropsDesc(staticInst, proto));
 
@@ -268,13 +276,6 @@ namespace Keysharp.Runtime
 							ifo.Call((object)staticInst);
 					}
 
-					// Construct full class name (skip module container types)
-					var className = GetUserDeclaredName(t) ?? t.Name;
-					if (t.DeclaringType != null && t.DeclaringType != script.ProgramType && !IsModuleContainer(t.DeclaringType, script))
-					{
-						script.Vars.Prototypes[t.DeclaringType].op.TryGetValue("__Class", out var declClassNameDesc);
-						className = $"{declClassNameDesc?.Value}.{className}";
-					}
 					proto.DefinePropInternal("__Class", new OwnPropsDesc(proto, className));
 
 					_ = Script.InvokeMeta(staticInst, "__Init");
@@ -288,9 +289,21 @@ namespace Keysharp.Runtime
 			});
         }
 
+		// A module holds classes without naming them: the built-in Ks and Ahk sit at the top level, a generated
+		// script module inside the program type.
 		internal static bool IsModuleContainer(Type type, Script script) =>
-			type.DeclaringType == script.ProgramType
-			&& typeof(Module).IsAssignableFrom(type);
+			typeof(Module).IsAssignableFrom(type)
+			&& (type.DeclaringType == null || type.DeclaringType == script.ProgramType);
+
+		/// <summary>
+		/// Whether a type is declared inside another script-visible CLASS, which is what earns it a dotted name
+		/// (Gui.Text, Audio.Device, Test.Nested) and keeps its short name out of the global namespace. A class a
+		/// module or the program type merely contains is a global class under its own name.
+		/// </summary>
+		internal static bool IsNestedInClass(Type type, Script script) =>
+			type.DeclaringType != null
+			&& type.DeclaringType != script.ProgramType
+			&& !IsModuleContainer(type.DeclaringType, script);
 
 		public static string GetUserDeclaredName(MemberInfo mb)
 		{

@@ -46,6 +46,14 @@ AssertEq(FromAhk(), 2, A_LineNumber)
 AssertEq(Ceil(0.2), "custom", A_LineNumber)
 
 
+; ---- The AHK module is the global namespace, so it names top-level classes and not nested ones: a nested
+; class is reached through the class that declares it, and its short name resolves here as any unknown does.
+AssertEq(Type(AHK.Array), "Class", A_LineNumber)
+AssertEq(Type(AHK.Gui), "Class", A_LineNumber)
+AssertEq(Type(AHK.Gui.Control), "Class", A_LineNumber)
+Throws(() => AHK.Control, A_LineNumber, PropertyError)
+Throws(() => AHK.NoSuchNameAtAll, A_LineNumber, PropertyError)
+
 FileAppend "pass", "*"
 
 #Module Other

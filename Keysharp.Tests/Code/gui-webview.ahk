@@ -17,7 +17,7 @@ catch {
     ExitApp()
 }
 
-AssertEq(Type(wv), "WebView", A_LineNumber)
+AssertEq(Type(wv), "Gui.WebView", A_LineNumber)
 Assert(wv.Type = "webview", A_LineNumber)   ; Type echoes the caller's spelling, so match it case-insensitively
 
 ; Which engine is behind it depends on the platform and, on Windows, on whether the script asked for the
