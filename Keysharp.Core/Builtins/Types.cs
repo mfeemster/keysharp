@@ -283,15 +283,16 @@ namespace Keysharp.Builtins
 			// exception would replace the diagnostic being reported. Any failure falls back to the CLR name.
 			try
 			{
-				if (value is KeysharpObject kso && kso.op != null)
+				if (value is KeysharpObject kso)
 				{
-					if (kso.op.ContainsKey("__Class"))
+					// An own __Class names the class a prototype belongs to, not the prototype's own type.
+					// Everything else is named by the first base that declares one, so an instance carrying no
+					// own properties is still named by its class, and reassigning Prototype.__Class renames it.
+					if (kso.op != null && kso.op.ContainsKey("__Class"))
 						return "Prototype";
 
 					if (Script.GetPropertyValueOrNull(kso, "__Class") is string name)
 						return AhkName(name);
-
-					return "Object";
 				}
 			}
 			catch (Exception)
