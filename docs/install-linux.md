@@ -1,62 +1,82 @@
 # Install Keysharp on Linux
 
-Download `keysharp-linux-setup.sh` and `SHA256SUMS` from a
-[release](https://github.com/keysharp-org/Keysharp/releases). In that directory,
-verify the script with either command before running it:
+## Install
 
-```sh
-sha256sum --check --ignore-missing SHA256SUMS
-gh attestation verify keysharp-linux-setup.sh --repo keysharp-org/Keysharp
-```
+Download `keysharp-linux-setup.sh` from a
+[release](https://github.com/keysharp-org/Keysharp/releases), then run:
 
 ```sh
 sudo sh ./keysharp-linux-setup.sh
-keysharp hello.ks
+keysharp --version
 ```
 
-Setup is a system-wide installer and requires root when it changes the machine;
-`--diagnose` and `--dry-run` remain unprivileged. It installs Keysharp and its
-optional input and desktop components from each project's own release. It verifies
-every download before installing anything.
-Debian and Ubuntu use packages; other supported systemd distributions use archives.
-Archive dependency checks run before application files are changed. GNOME or
-Cinnamon extensions may need a logout after installation or upgrade.
+Setup installs Keysharp system-wide, together with the optional `keysharp-input`
+and `keysharp-desktop` components by default. It verifies every download before
+installing anything and chooses one of these channels:
 
-## Select or update components
+- On systems with both `apt-get` and `dpkg`, it installs `.deb` packages through apt.
+- On other supported systems, it runs the projects' archive installers under
+  `/usr/local`.
 
-A healthy component with a compatible client ABI is kept. ABI compatibility,
-installation health and release version are separate checks. Keysharp needs
-input ABI 0.2+ and desktop ABI 0.8+ within ABI major 0;
-downloaded artifacts are checked too, including explicitly selected versions.
-Setup discovers root-protected installations under `/usr`, `/usr/local` and the Nix system profile.
-It preserves each component's install channel; Nix and other system packages must
-be repaired or upgraded through their owner.
+If Keysharp is already installed under `/usr/local`, setup keeps using the archive
+channel. A healthy compatible component also keeps its existing channel, so its
+channel can differ from Keysharp's. Setup prints the selected Keysharp channel and
+the detected channel for each component.
+
+## Update, repair or customize
+
+Rerun setup to update or reinstall Keysharp and to install or repair missing or
+unhealthy components:
 
 ```sh
-sh ./keysharp-linux-setup.sh --diagnose
+sudo sh ./keysharp-linux-setup.sh
+```
+
+A healthy component with a compatible client ABI stays at its installed version.
+Preview the plan without changing the machine, or request component updates too:
+
+```sh
 sh ./keysharp-linux-setup.sh --dry-run
 sudo sh ./keysharp-linux-setup.sh --upgrade-components
 ```
 
-`--diagnose` reads local metadata and service state without network access,
-permission dialogs or starting services. Run each component's `probe` command as
-your graphical user for live compositor/device capabilities.
-`--dry-run` resolves releases and prints the plan without downloading artifacts.
-`--input-version` and `--desktop-version` pin component releases even when an
-installed ABI is compatible.
-The version may include its `v` prefix. `--keysharp-version` selects Keysharp;
-`--channel deb|tar` selects its channel and the default for missing components.
+- `--skip-input` or `--skip-desktop` skips that component for this run. It does not
+  uninstall an existing component.
+- `--keysharp-version`, `--input-version` and `--desktop-version` select a release
+  for this run. A version may include its `v` prefix.
+- `--channel deb|tar` forces Keysharp's channel and the default for missing
+  components. Existing components remain on their detected channels.
 
-Use `--skip-input` or `--skip-desktop` to omit a component. Keysharp runs without
-them; their operations are unavailable. Each project's own `.deb` and archive
-installs just that project. Downloaded packages do not configure an update
-repository. Rerun setup with `--upgrade-components` to receive broker fixes and
-new capabilities; ordinary setup deliberately retains healthy existing brokers.
+Downloaded packages do not add an update repository, so rerun setup when you want
+a newer release.
+
+## Diagnose
+
+Run setup's offline diagnosis without `sudo` to see the Keysharp channel and each
+component's channel, version, client ABI and service health:
+
+```sh
+sh ./keysharp-linux-setup.sh --diagnose
+```
+
+Run the component probes as your graphical user to inspect live device and desktop
+capabilities:
+
+```sh
+keysharp-input probe
+keysharp-desktop probe
+```
+
+Rerun setup to repair a `deb` or `tar` installation. Components reported as `nix`
+or `system` must be repaired or upgraded through their owning configuration or
+package manager. Avoid mixing package and archive copies of the same project.
+GNOME or Cinnamon extensions may need a logout after installation or upgrade.
 
 ## Requirements and alternatives
 
-Setup needs `curl`, `sha256sum`, root privileges and an x64 or ARM64 Linux system.
-The archive channel also needs `bash` and `tar`.
+System-wide installation needs root; `--diagnose` and `--dry-run` do not. Setup
+supports x64 and ARM64 Linux and requires `curl` and `sha256sum`. The archive
+channel also needs `bash` and `tar`.
 The broker services need systemd and polkit. The archive installers support apt,
 dnf, zypper and pacman for runtime dependencies. On another distribution, install
 the documented dependencies through its package manager first.
@@ -72,28 +92,54 @@ If an explicitly selected older broker archive has no `check-runtime.sh`, the
 combined setup stops before installing files. Install that version through its own
 documented installer after satisfying its dependencies.
 
-## Diagnose and repair
+On NixOS, use the [NixOS and COSMIC guide](linux-nixos.md) instead of the setup
+script. Arch users can alternatively install the
+[`keysharp-git` AUR package](https://aur.archlinux.org/packages/keysharp-git).
+
+## Uninstall
+
+For a system-wide installation created by setup, check its channels before removing
+anything:
 
 ```sh
 sh ./keysharp-linux-setup.sh --diagnose
-keysharp-input probe
-keysharp-desktop probe
 ```
 
-The diagnosis reports the install channel, product version, client ABI and service health
-separately. A compatible library does not prove the service is installed correctly.
-Repair missing files through their owning installer; repair disabled services
-using the [input instructions](https://github.com/keysharp-org/keysharp-input/blob/main/docs/install.md)
-or [desktop instructions](https://github.com/keysharp-org/keysharp-desktop/blob/main/docs/install.md).
-Avoid mixing package and archive copies of the same project.
+If it reports `Keysharp channel: deb`, remove the package with:
 
-## Remove
+```sh
+sudo apt remove keysharp
+```
 
-Remove a package with `sudo apt remove keysharp`. For an archive installation,
-run the archive's `uninstall.sh` using the same privilege level and `PREFIX` as
-the installation. Neither removes the independently installed brokers or shared
-permission grants. Use each component's package manager or its own uninstaller
-when you want to remove it too.
+If it reports `Keysharp channel: tar`, download and extract the Keysharp Linux
+archive matching the installed version and architecture from the
+[Releases](https://github.com/keysharp-org/Keysharp/releases) page. Setup removes
+its temporary copy after installation, so you need to download the archive again
+unless you kept one. From the extracted `keysharp-linux-*` directory, run:
+
+```sh
+sudo bash ./uninstall.sh
+```
+
+For any other archive installation, run the same uninstaller with the same privilege
+level and `PREFIX` used to install it. A per-user installation does not need `sudo`.
+Remove NixOS, AUR and other package-manager installations through their owner
+instead.
+
+Removing Keysharp does not remove the independently installed components because
+other applications may use them. If you also want to remove a component, follow
+the `channel=` value reported for that component:
+
+- For `deb`, remove it through apt. Components installed by setup use
+  `sudo apt remove keysharp-input keysharp-desktop`; a retained compatible provider
+  may have a different package name.
+- For `tar`, run `sudo /usr/local/share/doc/keysharp-input/uninstall.sh` and/or
+  `sudo /usr/local/share/doc/keysharp-desktop/uninstall.sh`.
+- For `nix` or `system`, remove it through the configuration or package manager
+  that owns it.
+
+The uninstallers retain shared permission grants under
+`/var/lib/keysharp-permissions/v1`.
 
 ## VS Code
 

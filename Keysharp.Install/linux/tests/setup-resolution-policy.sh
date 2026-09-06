@@ -27,6 +27,10 @@ for forbidden in \
   fi
 done
 
+if grep -Eq '(^|[^[:alnum:]_])gh([^[:alnum:]_]|$)' "${SETUP}"; then
+  fail "the setup script must not invoke or require the GitHub CLI"
+fi
+
 for repository in \
     'keysharp-org/Keysharp' \
     'keysharp-org/keysharp-input' \

@@ -143,8 +143,7 @@ verify_checksum() {
         | (cd "$verify_dir" && sha256sum -c -) >/dev/null 2>&1
 }
 
-# SHA256SUMS detects transfer corruption. GitHub provenance, when available,
-# additionally binds both downloads to the owning project's release workflow.
+# SHA256SUMS detects transfer corruption before an artifact is installed.
 download_verified() {
     download_repository=$1
     download_tag=$2
@@ -161,18 +160,6 @@ download_verified() {
         echo "Could not download SHA256SUMS from $download_repository $download_tag." >&2
         return 1
     }
-    if command -v gh >/dev/null 2>&1; then
-        gh attestation verify "$download_dir/SHA256SUMS" \
-            --repo "$download_repository" >/dev/null || {
-            echo "Provenance verification failed for SHA256SUMS from $download_repository $download_tag." >&2
-            return 1
-        }
-        gh attestation verify "$download_dir/$download_asset" \
-            --repo "$download_repository" >/dev/null || {
-            echo "Provenance verification failed for $download_asset from $download_repository $download_tag." >&2
-            return 1
-        }
-    fi
     verify_checksum "$download_dir" "$download_asset" "$download_dir/SHA256SUMS" || {
         echo "Checksum verification failed for $download_asset from $download_repository $download_tag." >&2
         return 1
