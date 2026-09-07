@@ -16,28 +16,29 @@ namespace Keysharp.Tests
 				Assert.IsTrue(IPAddress.TryParse(address.As(), out var ip) && ip.AddressFamily == AddressFamily.InterNetwork);
 		}
 
+		/// <summary>
+		/// Transfers over http, https and ftp are covered against loopback servers by <see cref="HttpClass"/>.
+		/// This pins the script-visible entry point and the input it refuses, without depending on a host being
+		/// reachable.
+		/// </summary>
 		[Test, Category("Network")]
 		public void NetDownload()
 		{
-			var filename = @"./asciiart.txt";
-			var attr = Files.FileExist(filename);
-
-			if (attr.StartsWith('A') || attr.StartsWith('N'))
-				_ = Files.FileDelete(filename);
-
-			_ = Download("http://textfiles.com/art/asciiart.txt", filename);
-			Assert.IsTrue(File.Exists(filename));
-			Assert.AreEqual(16048L, Files.FileGetSize(filename));
-			Thread.Sleep(1000);
-			attr = Files.FileExist(filename);
-
-			if (attr.StartsWith('A') || attr.StartsWith('N'))
-				_ = Files.FileDelete(filename);
-
-			_ = Download("*0 http://textfiles.com/art/asciiart.txt", filename);
-			Assert.IsTrue(File.Exists(filename));
-			Assert.AreEqual(16048L, Files.FileGetSize(filename));
-			Assert.IsTrue(TestScript("network-download", true));
+			var filename = @"./download-target.txt";
+			_ = Files.FileDelete(filename);
+			Assert.IsInstanceOf<ValueError>(ScriptError(() => Download("not-a-url", filename)));
+			Assert.IsInstanceOf<ValueError>(ScriptError(() => Download("gopher://example.com/x", filename)));
+			Assert.IsInstanceOf<ValueError>(ScriptError(() => Download("*1 http://127.0.0.1/x", filename)));
+			Assert.IsFalse(File.Exists(filename));
 		}
+
+		private static Error ScriptError(TestDelegate action) => Assert.Throws<KeysharpException>(action).UserError;
+
+		/// <summary>
+		/// <c>Ks.Http</c> plus the <c>Url</c> and <c>Base64</c> codecs, against a loopback server the script
+		/// starts itself, so the suite never depends on the network being reachable.
+		/// </summary>
+		[Test, Category("Network"), NonParallelizable]
+		public void HttpClass() => Assert.IsTrue(TestScript("http", true));
 	}
 }

@@ -144,18 +144,21 @@ namespace Keysharp.Builtins
 		/// Downloads a resource from the internet.
 		/// AHK difference: does not allow specifying flags other than 0.
 		/// </summary>
-		/// <param name="address">URL of the file to download.<br/>
-		/// For example, "https://someorg.org" might retrieve the welcome page for that organization.
+		/// <param name="url">URL of the file to download, over http, https or ftp.<br/>
+		/// For example, "https://someorg.org" might retrieve the welcome page for that organization.<br/>
+		/// An ftp URL may carry credentials as "ftp://user:pass@host/path"; without them the login is anonymous.
 		/// </param>
 		/// <param name="filename">Specify the name of the file to be created locally, which is assumed to be in <see cref="A_WorkingDir"/> if an absolute path isn't specified.<br/>
 		/// Any existing file will be overwritten by the new file.<br/>
 		/// </param>
-		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if any errors occur.</exception>
+		/// <exception cref="OSError">The transfer failed, or the server refused the request.</exception>
+		/// <exception cref="ValueError">The URL is not absolute, its scheme is not one of http, https and ftp, or a
+		/// cache flag other than <c>*0</c> was given.</exception>
 		public static object Download(object url, object filename)
 		{
 			var address = url.As();
 			var file = filename.As();
-			var flags = -1;
+			var noCache = true;
 
 			if (address.StartsWith('*'))
 			{
@@ -163,45 +166,108 @@ namespace Keysharp.Builtins
 
 				if (splits.Length == 2)
 				{
-					flags = splits[0].TrimStart('*').Ai();
+					if (splits[0].TrimStart('*').Ai() != 0)
+						return Errors.ValueErrorOccurred("Download supports only the *0 cache flag.", splits[0]);
+
+					noCache = false;
 					address = splits[1];
 				}
 			}
 
-			var t = Task.Run(async () =>//We explicitly do NOT use Task.Factory.StartNew() here, because it does not understand async delegates.
+			if (!Uri.TryCreate(address, UriKind.Absolute, out var uri))
+				return Errors.ValueErrorOccurred($"\"{address}\" is not an absolute URL.");
+
+			// Both paths stream to the file rather than buffering, so a download's size does not become the
+			// script's memory, and both wait the way AutoHotkey waits: pumping, so timers and the GUI stay alive.
+			if (uri.Scheme == Uri.UriSchemeFtp)
+				return Ks.Await(Ks.KeysharpTask.Wrap(FtpToFileAsync(uri, file)));
+
+			if (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps)
+				return Ks.Http.DownloadTo(uri, file, noCache);
+
+			return Errors.ValueErrorOccurred($"\"{uri.Scheme}\" is not a supported scheme. Download takes http, https and ftp.");
+		}
+
+		/// <summary>How long an FTP transfer may stall before it is abandoned, matching Http's default.</summary>
+		private const int FtpTimeoutMs = 30_000;
+
+		/// <summary>
+		/// Fetches an ftp URL to a file. A path the server refuses as a plain file is listed instead, which is
+		/// what AutoHotkey's WinInet download does for a directory URL.
+		/// </summary>
+		private static async Task<object> FtpToFileAsync(Uri uri, string path)
+		{
+			try
 			{
 				try
 				{
-					using (var client = new HttpClient())
-					{
-						if (flags != 0)
-						{
-							client.DefaultRequestHeaders.CacheControl = new CacheControlHeaderValue
-							{
-								NoCache = true
-							};
-						}
-
-						var uri = new Uri(address);
-
-						using (var response = await client.GetStreamAsync(address))
-						{
-							using (var fs = new FileStream(file, FileMode.Create))
-							{
-								await response.CopyToAsync(fs);
-								return true;
-							}
-						}
-					}
+					await FtpCopyAsync(uri, WebRequestMethods.Ftp.DownloadFile, path).ConfigureAwait(false);
 				}
-				catch (Exception ex)
+				catch (WebException ex) when ((ex.Response as FtpWebResponse)?.StatusCode
+											  == FtpStatusCode.ActionNotTakenFileUnavailable)
 				{
-					_ = Errors.ErrorOccurred(ex.Message);
-					return default;
+					// A listing is small, so it is read whole before the file is touched: an empty one means the
+					// path is neither a file nor a directory, and reporting the server's refusal beats leaving a
+					// zero-byte file behind and calling it a success.
+					var listing = await FtpReadAsync(uri, WebRequestMethods.Ftp.ListDirectoryDetails).ConfigureAwait(false);
+
+					if (listing.Length == 0)
+						throw;
+
+					await File.WriteAllBytesAsync(path, listing).ConfigureAwait(false);
 				}
-			});
-			t.WaitWithoutInterruption();
-			return DefaultObject;
+
+				return DefaultObject;
+			}
+			catch (Exception ex) when (ex is WebException or IOException)
+			{
+				throw (Exception)new OSError(ex, "Download");
+			}
+		}
+
+		private static async Task FtpCopyAsync(Uri uri, string method, string path)
+		{
+			// The response is obtained before the file is opened, so a refused request leaves any existing file alone.
+			using var response = await FtpRespondAsync(uri, method).ConfigureAwait(false);
+			using var source = response.GetResponseStream();
+			using var destination = new FileStream(path, FileMode.Create);
+			await source.CopyToAsync(destination).ConfigureAwait(false);
+		}
+
+		private static async Task<byte[]> FtpReadAsync(Uri uri, string method)
+		{
+			using var response = await FtpRespondAsync(uri, method).ConfigureAwait(false);
+			using var source = response.GetResponseStream();
+			using var buffer = new MemoryStream();
+			await source.CopyToAsync(buffer).ConfigureAwait(false);
+			return buffer.ToArray();
+		}
+
+		/// <summary>
+		/// Obtains the response on a pool thread with the synchronous call, which is the only one
+		/// <see cref="FtpWebRequest.Timeout"/> applies to: on GetResponseAsync it is documented as having no
+		/// effect, and a server that stalls mid-login would hang the transfer for good.
+		/// </summary>
+		private static Task<WebResponse> FtpRespondAsync(Uri uri, string method)
+			=> Task.Run(() => NewFtpRequest(uri, method).GetResponse());
+
+		private static FtpWebRequest NewFtpRequest(Uri uri, string method)
+		{
+			// FtpWebRequest is the only FTP client in the shared framework. It is obsolete rather than removed, and
+			// it is what keeps Download's inherited ftp:// URLs working without taking on a dependency.
+#pragma warning disable SYSLIB0014
+			var request = (FtpWebRequest)WebRequest.Create(new UriBuilder(uri) { UserName = "", Password = "" }.Uri);
+#pragma warning restore SYSLIB0014
+			request.Method = method;
+			request.UseBinary = true;
+			request.KeepAlive = false;
+			request.Timeout = FtpTimeoutMs;
+			request.ReadWriteTimeout = FtpTimeoutMs;
+
+			if (Ks.Http.UserInfoCredentials(uri) is { } credentials)
+				request.Credentials = credentials;
+
+			return request;
 		}
 
 		/// <summary>
