@@ -91,16 +91,33 @@ namespace Keysharp.Internals.Window.Linux.Wayland
 		}
 
 		private static IWaylandBackend ProbeReportedBackend()
+			=> DesktopClient.TryProbeBackend(out var backend) ? Select(backend) : null;
+
+		/// <summary>Maps a broker-reported backend onto its handler. Only ever called on a Wayland session
+		/// (see <see cref="Probe"/>), which is what makes the X11 report below mean what it does. Separate from
+		/// the probe so the rule can be exercised without a live broker.</summary>
+		internal static IWaylandBackend Select(DesktopClient.Backend backend)
 		{
-			if (!DesktopClient.TryProbeBackend(out var backend))
+			// A broker reporting X11 here is describing a session that is not this one. Its process was started
+			// under an earlier X11 login and a systemd user manager that outlived the logout carried it into
+			// this Wayland session, where its own session identity is frozen at the values it was exec'd with.
+			// Taking it at its word would pin this script to XWayland for as long as it runs, because a backend
+			// is probed once and then cached for the life of the process. Report none instead and let the
+			// backoff re-probe: the broker restarts itself once it notices the same mismatch.
+			if (backend == DesktopClient.Backend.X11)
+			{
+				WaylandBridgeDiagnostics.Failure("keysharp-desktop", "session backend probe",
+					"the broker reports an X11 session while this one is Wayland, so it is left over from a "
+					+ "previous session. It should restart itself; if it does not, run "
+					+ "\"systemctl --user restart keysharp-desktop.service\".");
 				return null;
+			}
 
 			return backend switch
 			{
 				DesktopClient.Backend.Kwin => new KWinBrokerBackend(),
 				DesktopClient.Backend.Gnome => new GnomeBackend(),
 				DesktopClient.Backend.Cinnamon => new CinnamonBackend(),
-				DesktopClient.Backend.X11 => DesktopBackend.X11,
 				DesktopClient.Backend.Generic => new DesktopBackend("generic",
 					"generic Wayland (keysharp-desktop)"),
 				_ => null,
