@@ -208,6 +208,15 @@ AssertEq(target.SetPixelData(buffer, 4), target, A_LineNumber)
 AssertEq(target.GetPixel(1, 1), 0x80AABBCC, A_LineNumber)
 Throws(() => Image.Create(8, 8).SetPixelData(buffer, 4), A_LineNumber)
 
+; GetPixelData, SetPixelData and FromBuffer share one default, so all three compose without a bpp.
+defaulted := bufferSource.GetPixelData()
+AssertEq(defaulted.Size, buffer.Size, A_LineNumber)
+roundTrip := Image.Create(4, 3)
+roundTrip.SetPixelData(bufferSource.GetPixelData())
+AssertEq(roundTrip.GetPixel(0, 0), bufferSource.GetPixel(0, 0), A_LineNumber)
+AssertEq(roundTrip.GetPixel(1, 1), 0x80AABBCC, A_LineNumber)
+AssertEq(Image.FromBuffer(bufferSource.GetPixelData(), 4, 3).GetPixel(1, 1), 0x80AABBCC, A_LineNumber)
+
 view := {Ptr: buffer.Ptr, Size: buffer.Size}
 fromView := Image.FromBuffer(view, 4, 3, 4)
 AssertEq(fromView.GetPixel(1, 1), 0x80AABBCC, A_LineNumber)

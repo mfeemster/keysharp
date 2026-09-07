@@ -502,6 +502,15 @@ namespace Keysharp.Runtime
 		/// <summary>Registry of live CLR event subscriptions made through <c>Clr</c>.s <c>OnEvent</c>.</summary>
 		internal ClrEventManager ClrEventManager { get; }
 
+		/// <summary>Per-script owner of the audio engine: the platform backend, the open outputs and their native
+		/// streams. Created with the Script, but its backend stays unbuilt until a script first touches audio, so a
+		/// script that never does pays nothing.</summary>
+		internal Keysharp.Internals.Audio.AudioService AudioService { get; }
+
+		/// <summary>Per-script engine for <c>Audio.OnDeviceChange</c> subscriptions; its backend notification stays
+		/// uninstalled until the first subscription.</summary>
+		internal Keysharp.Internals.Audio.AudioEventManager AudioEventManager { get; }
+
 #if OSX
 		internal string ldLibraryPath = Environment.GetEnvironmentVariable("DYLD_LIBRARY_PATH") ?? "";
 #elif LINUX
@@ -591,6 +600,8 @@ namespace Keysharp.Runtime
 			MonitorEventManager = new(this);
 			ClipboardEventManager = new(this);
 			ClrEventManager = new();
+			AudioService = new(this);
+			AudioEventManager = new(this);
 #if WINDOWS
 			ComMethodData = new(this);
 #endif
@@ -1581,6 +1592,10 @@ namespace Keysharp.Runtime
 			// SystemEvents.DisplaySettingsChanged, so it has to be detached explicitly or it roots this Script.
 			Teardown(MonitorEventManager.Dispose);
 			Teardown(ClipboardEventManager.Dispose);
+			// Stops every open output and releases the backend. An output that a script dropped without closing
+			// still owns a native stream by design, so nothing else in teardown would reach it.
+			Teardown(AudioEventManager.Dispose);
+			Teardown(AudioService.Dispose);
 			// Before anything else managed goes away: a subscription to a *static* CLR event is a root the runtime
 			// holds indefinitely, so leaving one attached keeps the callback -- and the engine behind it -- alive past
 			// dispose. This is the orphaned-callback case teardown has to cover.

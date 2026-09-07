@@ -1860,11 +1860,13 @@ namespace Keysharp.Builtins
 			/// native imaging/OCR library through DllCall (e.g. Tesseract's <c>SetImage</c>).
 			/// <paramref name="bytesPerPixel"/> selects the layout:
 			/// <list type="bullet">
-			///   <item><c>1</c> (default): 8-bit grayscale, one luminance byte per pixel
+			///   <item><c>4</c> (default): 32-bit color in R, G, B, A byte order (the layout Leptonica/Tesseract use
+			///   for <c>bytes_per_pixel = 4</c>), preserving color and alpha. It is the default so that
+			///   <c>img.SetPixelData(img.GetPixelData())</c> round-trips: <see cref="SetPixelData"/> and
+			///   <see cref="FromBuffer"/> default to the same layout.</item>
+			///   <item><c>1</c>: 8-bit grayscale, one luminance byte per pixel
 			///   (<c>0.30 R + 0.59 G + 0.11 B</c>). Unambiguous across byte orders — this is what
 			///   Tesseract expects for <c>bytes_per_pixel = 1</c>, and what OCR engines threshold anyway.</item>
-			///   <item><c>4</c>: 32-bit color in R, G, B, A byte order (the layout Leptonica/Tesseract use
-			///   for <c>bytes_per_pixel = 4</c>), preserving color and alpha.</item>
 			/// </list>
 			/// The returned Buffer owns its memory; keep a reference to it for as long as the native side
 			/// reads from <c>buf.Ptr</c>. The pixel dimensions are this image's <see cref="Width"/>/<see cref="Height"/>.
@@ -1881,7 +1883,7 @@ namespace Keysharp.Builtins
 			public object GetPixelData(object bytesPerPixel = null, object buffer = null)
 			{
 				ThrowIfDisposed();
-				var bpp = (int)(bytesPerPixel == null ? 1L : bytesPerPixel.Al());
+				var bpp = (int)(bytesPerPixel == null ? 4L : bytesPerPixel.Al());
 
 				if (bpp != 1 && bpp != 4)
 					return Errors.ValueErrorOccurred("GetPixelData supports only 1 (grayscale) or 4 (RGBA) bytes per pixel.");

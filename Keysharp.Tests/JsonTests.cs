@@ -16,6 +16,14 @@ namespace Keysharp.Tests
 
 		private static Error ScriptError(TestDelegate action) => Assert.Throws<KeysharpException>(action).UserError;
 
+		/// <summary>
+		/// The object literal <c>{Value: value}</c>, which is what <see cref="Objects.DefineProp"/> reads. It has to
+		/// be built the way the lowerer builds one, because DefineProp takes the slot from an OWN PROPERTY: a Map
+		/// carrying a "Value" item has no own property by that name and is rejected.
+		/// </summary>
+		private static object Descriptor(object value)
+			=> KeysharpObject.staticCall(Script.TheScript.Vars.Statics[typeof(KeysharpObject)], "Value", value);
+
 		/// <summary>A marker a script would supply for null: an object, so it cannot collide with data.</summary>
 		private static readonly KeysharpObject NullMarker = new ();
 
@@ -60,8 +68,8 @@ namespace Keysharp.Tests
 		public void EncodeObjectOwnProps()
 		{
 			var obj = new KeysharpObject();
-			_ = Objects.DefineProp(obj, "name", new Map("Value", "x"));
-			_ = Objects.DefineProp(obj, "n", new Map("Value", 3L));
+			_ = Objects.DefineProp(obj, "name", Descriptor("x"));
+			_ = Objects.DefineProp(obj, "n", Descriptor(3L));
 			Assert.AreEqual("{\"name\":\"x\",\"n\":3}", Enc(obj));
 		}
 

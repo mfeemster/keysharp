@@ -13,7 +13,6 @@ CZ_LbBtn1 := MyGui.Add("Button", "x180 yp", "Choose красный")
 CZ_LbBtn1.OnEvent("Click", ChooseString)
 ;CZ_LbBtn2 := MyGui.Add("Button", "x180 yp+40", "Delete Fuchsia")
 ;CZ_LbBtn2.OnEvent("Click", DeleteFuchsia)
-;CZ_LbBtn2.OnEvent("Focus", FuchsiaDeleteTrayTip)
 
 MyGui.Show()
 

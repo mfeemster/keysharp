@@ -171,7 +171,7 @@ MySB := MyGui.Add("StatusBar", "h36", "                       ")
 ; │  Start TAB  │
 ; └─────────────┘
 
-Tab := MyGui.Add("Tab3", , ["Lists, Menus && Styles", "Edits && Messages", "Pickers && Sliders", "ControlZoo", "Send && Hotkey", "Dll && COM", "Image", "Windows", "Shell", "Monitors", "Clipboard", "Sound"])
+Tab := MyGui.Add("Tab3", , ["Lists, Menus && Styles", "Edits && Messages", "Pickers && Sliders", "ControlZoo", "Send && Hotkey", "Dll && COM", "Image", "Windows", "Shell", "Monitors", "Audio", "Clipboard"])
 
 Tab.UseTab("Lists, Menus & Styles")
 
@@ -2925,132 +2925,76 @@ OnExit (*) => SystemCursor("Show")  ; Ensure the cursor is made visible when the
 #endif
 
 ; ┌──────────────────┐
-; │  Sound Tab       │
+; │  Audio Tab       │
 ; └──────────────────┘
+; Two halves, like the Monitors tab: the left enumerates devices and operates the selected one, the right
+; exercises playback through the mixer and keeps the AHK-compatible Sound* functions side by side, so a
+; difference between the two surfaces is visible rather than inferred. Every action writes to the shared log
+; at the bottom of the window, because most of what this tab does has no other visible result.
 MyGui.UseGroup()
-Tab.UseTab("Sound")
+Tab.UseTab("Audio")
+audioDevGroup := MyGui.AddGroupBox("xc+16 yc+10 w560 h470", "Devices (Ks.Audio)")
+MyGui.UseGroup(audioDevGroup)
+MyGui.AddText("xc+16 yc+24 w528 h30", "Every output and input endpoint this host reports. Select one to see what it reports about itself; a fact the backend cannot determine is shown as (cannot determine) rather than guessed at.")
+gAudioList := MyGui.Add("ListBox", "xc+16 y+8 w528 r6")
+gAudioList.OnEvent("Change", (*) => ShowSelectedAudioDevice())
+gAudioSummary := MyGui.AddText("xc+16 y+8 w528 h20 cBlue", "Selected: none")
+btnAudioRefresh := MyGui.AddButton("xc+16 y+8 w170 h28", "Refresh Devices")
+btnAudioRefresh.OnEvent("Click", (*) => RefreshAudioDevices(true))
+btnAudioDefault := MyGui.AddButton("x+8 yp w170 h28", "Select Default Output")
+btnAudioDefault.OnEvent("Click", (*) => SelectDefaultAudioDevice())
+btnAudioRefreshObj := MyGui.AddButton("x+8 yp w170 h28", "Refresh() Selected")
+btnAudioRefreshObj.OnEvent("Click", (*) => RefreshSelectedAudioDevice())
+gAudioDetails := MyGui.AddEdit("xc+16 y+10 w528 h140 +ReadOnly -Wrap", "")
 
-	#if WINDOWS
-		audioMeter := SoundGetInterface("{C02216F6-8C67-4B5B-9D00-D008E73E0064}")
-	#endif
+MyGui.AddText("xc+16 y+10 w528 h20 cBlue", "Dragging the slider sets the selected device's own volume:")
+gAudioVolSlider := MyGui.Add("Slider", "xc+16 y+6 w528 +AltSubmit Page10 ToolTip Range0-100", 50)
+gAudioVolSlider.OnEvent("Change", (*) => AudioVolumeSliderMoved())
+btnAudioMute := MyGui.AddButton("xc+16 y+10 w170 h28", "Mute Selected")
+btnAudioMute.OnEvent("Click", (*) => SetSelectedAudioMute(true))
+btnAudioUnmute := MyGui.AddButton("x+8 yp w170 h28", "Unmute Selected")
+btnAudioUnmute.OnEvent("Click", (*) => SetSelectedAudioMute(false))
+btnAudioActivity := MyGui.AddButton("x+8 yp w170 h28", "Start Activity Monitor")
+btnAudioActivity.OnEvent("Click", (*) => ToggleAudioActivityMonitor())
+MyGui.AddText("xc+16 y+8 w528 h46", "The activity monitor polls IsRunning twice a second and logs every device that starts or stops carrying audio. Play or record something in any application to see it. Running means a stream is open, which is not the same as audible.")
+audioDeviceStatus := MyGui.AddText("xc+16 y+6 w528 h24", "Devices: not listed yet")
+gStatus["audio_devices"] := audioDeviceStatus
+MyGui.UseGroup()
+Tab.UseTab()
 
-txtMasterName := MyGui.Add("Text", "xc+10 y+10 w400", "Master: " . TrySoundGetName())
+Tab.UseTab("Audio")
+audioPlayGroup := MyGui.AddGroupBox("xc+590 yc+10 w540 h470", "Playback, Sessions && Sound* Compatibility")
+MyGui.UseGroup(audioPlayGroup)
+MyGui.AddText("xc+16 yc+24 w508 h32", "Ks.Audio mixes many sounds into one stream, so the overlap button proves what SoundPlay cannot do: eight tones at once from memory, with no file on disk.")
+btnAudioOpen := MyGui.AddButton("xc+16 y+8 w160 h28", "Open Output")
+btnAudioOpen.OnEvent("Click", (*) => OpenAudioOutput())
+btnAudioOverlap := MyGui.AddButton("x+8 yp w160 h28", "Play 8 Overlapping")
+btnAudioOverlap.OnEvent("Click", (*) => PlayOverlappingTones())
+btnAudioStopAll := MyGui.AddButton("x+8 yp w150 h28", "StopAll")
+btnAudioStopAll.OnEvent("Click", (*) => StopAudioOutput())
+gAudioOutInfo := MyGui.AddEdit("xc+16 y+10 w508 h84 +ReadOnly -Wrap", "No output open.")
+audioOutputStatus := MyGui.AddText("xc+16 y+6 w508 h24", "Output: not opened")
+gStatus["audio_output"] := audioOutputStatus
 
-txtMasterVol := MyGui.Add("Text", "xp y+10 w200", "Volume: " . TrySoundGetVolume())
-txtMasterMute := MyGui.Add("Text", "xp y+10 w200", "Muted: " . TrySoundGetMute())
-#if WINDOWS
-	txtMasterPeak := MyGui.Add("Text", "xp y+10 w200", "Peak: " . MasterPeak())
-#endif
-btnMasterMute := MyGui.Add("Button", "xp y+10", "Mute")
-btnMasterUnmute := MyGui.Add("Button", "xp y+10", "Unmute")
-btnMasterRefresh := MyGui.Add("Button", "xp y+10", "Refresh")
+MyGui.AddText("xc+16 y+10 w508 h32", "Application sessions are per-app volume and mute. Windows and PulseAudio expose them; macOS has no public per-application model and reports the capability false.")
+gAudioSessionList := MyGui.Add("ListBox", "xc+16 y+6 w508 r4")
+btnAudioSessions := MyGui.AddButton("xc+16 y+8 w160 h28", "List Sessions")
+btnAudioSessions.OnEvent("Click", (*) => RefreshAudioSessions())
+btnAudioSessionMute := MyGui.AddButton("x+8 yp w160 h28", "Toggle Session Mute")
+btnAudioSessionMute.OnEvent("Click", (*) => ToggleSelectedSessionMute())
+btnAudioSessionHalf := MyGui.AddButton("x+8 yp w150 h28", "Session Volume 50%")
+btnAudioSessionHalf.OnEvent("Click", (*) => HalveSelectedSessionVolume())
+audioSessionStatus := MyGui.AddText("xc+16 y+8 w508 h24", "Sessions: not listed")
+gStatus["audio_sessions"] := audioSessionStatus
 
-btnMasterMute.OnEvent("Click", MasterMute)
-MasterMute(*)
-{
-	TrySoundSetMute(true)
-}
-
-btnMasterUnmute.OnEvent("Click", MasterUnmute)
-MasterUnmute(*)
-{
-	TrySoundSetMute(false)
-}
-
-btnMasterRefresh.OnEvent("Click", RefreshSound)
-RefreshSound(*)
-{
-	txtMasterName.Text := "Master: " . TrySoundGetName()
-	txtMasterVol.Text := "Volume: " . TrySoundGetVolume()
-	txtMasterMute.Text := "Muted: " . TrySoundGetMute()
-#if WINDOWS
-	txtMasterPeak.Text := "Peak: " . MasterPeak()
-#endif
-}
-
-txtMasterVolumeSlider := MyGui.Add("Text", "xc+10 cBlue s10", "Moving slider sets master volume")
-sldMasterVolume := MyGui.Add("Slider", "xp y+10 +AltSubmit Page10 ToolTip Range0-100", 100)
-sldMasterVolume.OnEvent("Change", MasterVolumeSliderPos)
-
-MasterVolumeSliderPos(*)
-{
-	val := sldMasterVolume.Value
-	TrySoundSetVolume(val)
-	txtMasterVol.Text := "Volume: " . TrySoundGetVolume()
-}
-
-txtAdjMasterVolumeSlider := MyGui.Add("Text", "xc+10 cBlue s10", "Moving slider adjusts master volume")
-sldAdjMasterVolume := MyGui.Add("Slider", "xp y+10 +AltSubmit Page10 ToolTip Range-100-100", 100)
-sldAdjMasterVolume.OnEvent("Change", AdjustMasterVolumeSliderPos)
-
-AdjustMasterVolumeSliderPos(*)
-{
-	val := sldAdjMasterVolume.Value
-
-	if (val >= 0)
-		val := "+" . val
-
-	TrySoundSetVolume(val)
-	txtMasterVol.Text := "Volume: " . TrySoundGetVolume()
-}
-
-TrySoundGetName()
-{
-	try
-		return SoundGetName()
-	catch
-		return "Unavailable"
-}
-
-TrySoundGetVolume()
-{
-	try
-		return SoundGetVolume()
-	catch
-		return "Unavailable"
-}
-
-TrySoundGetMute()
-{
-	try
-		return SoundGetMute()
-	catch
-		return "Unavailable"
-}
-
-TrySoundSetMute(mute)
-{
-	try
-		SoundSetMute(mute)
-}
-
-TrySoundSetVolume(volume)
-{
-	try
-		SoundSetVolume(volume)
-}
-
-#if WINDOWS
-MasterPeak()
-{
-	global audioMeter
-	ComCall 3, audioMeter, "float*", &peak := 0
-	return peak
-}
-#endif
-
-beepBtn := MyGui.Add("Button", "xp y+10", "Beep")
+MyGui.AddText("xc+16 y+10 w508 h32", "The AHK-compatible functions are unchanged and use their own fuzzy device selector. They are here so the two surfaces can be compared on the same machine.")
+beepBtn := MyGui.AddButton("xc+16 y+8 w120 h28", "SoundBeep")
 beepBtn.OnEvent("Click", DoBeep)
-
-DoBeep(*)
-{
-	SoundBeep(1500, 1000)
-}
-
-wavBtn := MyGui.Add("Button", "xp y+10", "Play wav")
+wavBtn := MyGui.AddButton("x+8 yp w120 h28", "SoundPlay")
 wavBtn.OnEvent("Click", DoWav)
-
-wavTxt := MyGui.Add("Edit", "x+10 yp+2 w400")
+btnAudioPlayFile := MyGui.AddButton("x+8 yp w160 h28", "Audio.Play same file")
+btnAudioPlayFile.OnEvent("Click", (*) => PlayFileThroughAudio())
+wavTxt := MyGui.AddEdit("xc+16 y+8 w508 h24")
 
 #if LINUX
 	wavTxt.Text := "/usr/share/sounds/linuxmint-login.wav"
@@ -3060,9 +3004,512 @@ wavTxt := MyGui.Add("Edit", "x+10 yp+2 w400")
 	wavTxt.Text := "C:\Windows\Media\Windows Shutdown.wav"
 #endif
 
+audioCompatStatus := MyGui.AddText("xc+16 y+6 w508 h24", "Sound*: not used yet")
+gStatus["audio_compat"] := audioCompatStatus
+MyGui.UseGroup()
+Tab.UseTab()
+
+; ── Audio tab state and handlers ──────────────────────────────────────────────────────────────────
+global gAudioDevices := []
+global gAudioSessions := []
+global gAudioOutput := ""
+global gAudioToneClips := Map()
+global gAudioActivityOn := false
+global gAudioRunning := Map()          ; device id -> last observed IsRunning, so only changes are logged
+
+; Re-selects whatever was selected before, by identity rather than by position, so a refresh that reorders or
+; adds entries does not move the selection out from under the buttons that act on it.
+AudioReselect(ListCtrl, Items, Ids, WantedId)
+{
+	ListCtrl.Delete()
+	if (Items.Length = 0)
+		return 0
+	ListCtrl.Add(Items)
+	for i, id in Ids
+	{
+		if (id == WantedId)
+		{
+			ListCtrl.Value := i
+			return i
+		}
+	}
+	; Nothing to restore, so select the first entry, as the Monitors list does.
+	ListCtrl.Value := 1
+	return 1
+}
+
+RefreshAudioDevices(Announce := false)
+{
+	global gAudioDevices
+	previous := SelectedAudioDevice() != "" ? SelectedAudioDevice().Id : ""
+	gAudioDevices := Audio.Devices("All")
+	items := [], ids := []
+	for d in gAudioDevices
+	{
+		items.Push("[" d.Kind "] " d.Name (d.IsDefault ? "   *default*" : ""))
+		ids.Push(d.Id)
+	}
+	AudioReselect(gAudioList, items, ids, previous)
+	gStatus["audio_devices"].Text := "Devices: " gAudioDevices.Length " listed"
+	if (Announce)
+		AppendLog("Audio: enumerated " gAudioDevices.Length " devices")
+	if (gAudioDevices.Length = 0 && !Audio.IsPlaybackSupported)
+		gStatus["audio_devices"].Text := "Devices: this host reports no audio backend"
+	ShowSelectedAudioDevice()
+}
+
+SelectedAudioDevice()
+{
+	global gAudioDevices
+	i := gAudioList.Value
+	return (i > 0 && i <= gAudioDevices.Length) ? gAudioDevices[i] : ""
+}
+
+ShowSelectedAudioDevice()
+{
+	d := SelectedAudioDevice()
+	if (d == "")
+	{
+		gAudioDetails.Text := "No device selected."
+		gAudioSummary.Text := "Selected: none"
+		return
+	}
+
+	vol := AudioSafe(() => Round(d.Volume, 1))
+	mute := AudioSafe(() => d.Mute ? "muted" : "unmuted")
+	; The one-line summary is the at-a-glance answer; the box below is the full record.
+	gAudioSummary.Text := "Selected: " d.Name "  |  " AudioTriState(d.IsRunning, "running", "idle")
+					   . "  |  volume " vol "  |  " mute
+
+	lines := []
+	lines.Push("Name       : " d.Name)
+	lines.Push("Id         : " d.Id)
+	lines.Push("Kind       : " d.Kind)
+	lines.Push("IsDefault  : " (d.IsDefault ? "yes" : "no"))
+	lines.Push("IsRunning  : " AudioTriState(d.IsRunning, "yes", "no"))
+	lines.Push("Volume     : " vol)
+	lines.Push("Mute       : " mute)
+	gAudioDetails.Text := AudioJoinLines(lines)
+
+	if (vol is Number)
+		gAudioVolSlider.Value := Round(vol)
+}
+
+; Blank is a real answer here: it means the backend could not determine the fact, which is different from false.
+AudioTriState(v, TrueWord, FalseWord)
+{
+	if (v == "")
+		return "(cannot determine)"
+	return v ? TrueWord : FalseWord
+}
+
+; Every device operation can fail on hardware that does not support it, and an OSError is the expected result
+; there, so each read is reported rather than allowed to abort the handler.
+AudioSafe(fn)
+{
+	try
+		return fn()
+	catch Error as e
+		return "(" e.Message ")"
+}
+
+; CRLF because a multi-line Edit needs it to break a line, as the Monitors details box does.
+AudioJoinLines(lines)
+{
+	out := ""
+	for line in lines
+		out .= line "`r`n"
+	return out
+}
+
+SelectDefaultAudioDevice()
+{
+	global gAudioDevices
+	d := Audio.DefaultDevice("Output")
+	if (d == "")
+	{
+		gStatus["audio_devices"].Text := "Devices: this host has no default output"
+		AppendLog("Audio: no default output device")
+		return
+	}
+	RefreshAudioDevices()
+	for i, item in gAudioDevices
+	{
+		if (item.Id == d.Id)
+		{
+			gAudioList.Value := i
+			ShowSelectedAudioDevice()
+			gStatus["audio_devices"].Text := "Devices: selected default output"
+			AppendLog("Audio: default output is " d.Name)
+			return
+		}
+	}
+}
+
+RefreshSelectedAudioDevice()
+{
+	d := SelectedAudioDevice()
+	if (d == "")
+		return
+	if (d.Refresh() == "")
+	{
+		gStatus["audio_devices"].Text := "Devices: " d.Name " is gone"
+		AppendLog("Audio: Refresh() found " d.Name " gone")
+	}
+	else
+	{
+		gStatus["audio_devices"].Text := "Devices: refreshed " d.Name
+		AppendLog("Audio: Refresh() re-read " d.Name)
+	}
+	ShowSelectedAudioDevice()
+}
+
+AudioVolumeSliderMoved()
+{
+	d := SelectedAudioDevice()
+	if (d == "")
+		return
+	try
+	{
+		d.Volume := gAudioVolSlider.Value
+		gStatus["audio_devices"].Text := "Devices: set " d.Name " to " Round(d.Volume, 1) "%"
+	}
+	catch Error as e
+	{
+		gStatus["audio_devices"].Text := "Devices: " e.Message
+		AppendLog("Audio: setting volume failed - " e.Message)
+	}
+	ShowSelectedAudioDevice()
+}
+
+SetSelectedAudioMute(state)
+{
+	d := SelectedAudioDevice()
+	if (d == "")
+		return
+	try
+	{
+		d.Mute := state
+		gStatus["audio_devices"].Text := "Devices: " d.Name (state ? " muted" : " unmuted")
+		AppendLog("Audio: " d.Name (state ? " muted" : " unmuted"))
+	}
+	catch Error as e
+	{
+		gStatus["audio_devices"].Text := "Devices: " e.Message
+		AppendLog("Audio: mute failed - " e.Message)
+	}
+	ShowSelectedAudioDevice()
+}
+
+ToggleAudioActivityMonitor()
+{
+	global gAudioActivityOn, gAudioRunning
+	gAudioActivityOn := !gAudioActivityOn
+	if (gAudioActivityOn)
+	{
+		btnAudioActivity.Text := "Stop Activity Monitor"
+		gAudioRunning := Map()
+		AppendLog("Audio: activity monitor started, polling IsRunning every 500 ms")
+		SetTimer(PollAudioActivity, 500)
+		PollAudioActivity()
+	}
+	else
+	{
+		btnAudioActivity.Text := "Start Activity Monitor"
+		SetTimer(PollAudioActivity, 0)
+		gStatus["audio_devices"].Text := "Devices: activity monitor stopped"
+		AppendLog("Audio: activity monitor stopped")
+	}
+}
+
+; Logs transitions rather than every poll, so the log stays readable while the status line always shows the
+; current set. A device the backend cannot answer for is counted as unknown rather than as idle.
+PollAudioActivity()
+{
+	global gAudioDevices, gAudioRunning
+	running := [], unknown := 0
+	for d in gAudioDevices
+	{
+		state := d.IsRunning
+		if (state == "")
+		{
+			unknown++
+			continue
+		}
+		if (state)
+			running.Push("[" d.Kind "] " d.Name)
+		if (!gAudioRunning.Has(d.Id) || gAudioRunning[d.Id] != state)
+		{
+			if (gAudioRunning.Has(d.Id))
+				AppendLog("Audio: " d.Name " " (state ? "started" : "stopped") " carrying audio")
+			gAudioRunning[d.Id] := state
+		}
+	}
+	names := ""
+	for n in running
+		names .= (names = "" ? "" : ", ") n
+	gStatus["audio_devices"].Text := running.Length = 0
+		? "Activity: nothing running" (unknown > 0 ? " (" unknown " unknown)" : "")
+		: "Activity: " names
+	ShowSelectedAudioDevice()
+}
+
+OpenAudioOutput()
+{
+	global gAudioOutput
+	if (!Audio.IsPlaybackSupported)
+	{
+		gStatus["audio_output"].Text := "Output: playback is unsupported on this host"
+		AppendLog("Audio: playback unsupported on this host")
+		return
+	}
+	if (gAudioOutput != "")
+	{
+		try gAudioOutput.Dispose()
+		gAudioOutput := ""
+	}
+	d := SelectedAudioDevice()
+	selector := (d != "" && d.Kind == "Output") ? d : ""
+	AppendLog("Audio: opening output on " (selector = "" ? "the default device" : d.Name))
+	try
+	{
+		gAudioOutput := Audio.Output(selector, 8, "Oldest", 20)
+		if (!gAudioOutput.TryOpen())
+		{
+			gStatus["audio_output"].Text := "Output: no device available to open"
+			AppendLog("Audio: TryOpen() found no available device")
+			gAudioOutput := ""
+			ShowAudioOutputInfo()
+			return
+		}
+	}
+	catch Error as e
+	{
+		gStatus["audio_output"].Text := "Output: " e.Message
+		AppendLog("Audio: opening the output failed - " e.Message)
+		gAudioOutput := ""
+		ShowAudioOutputInfo()
+		return
+	}
+	name := gAudioOutput.Device == "" ? "the default device" : gAudioOutput.Device.Name
+	gStatus["audio_output"].Text := "Output: open on " name
+	AppendLog("Audio: output open on " name " at " gAudioOutput.SampleRate " Hz, " gAudioOutput.Channels " ch")
+	ShowAudioOutputInfo()
+}
+
+ShowAudioOutputInfo()
+{
+	global gAudioOutput
+	if (gAudioOutput == "")
+	{
+		gAudioOutInfo.Text := "No output open."
+		return
+	}
+	lines := []
+	lines.Push("Status  : " gAudioOutput.Status "   Voices: " gAudioOutput.ActiveVoiceCount " of " gAudioOutput.VoiceLimit)
+	lines.Push("Device  : " (gAudioOutput.Device == "" ? "(default)" : gAudioOutput.Device.Name))
+	lines.Push("Format  : " gAudioOutput.SampleRate " Hz, " gAudioOutput.Channels " ch")
+	lines.Push("Latency : requested " gAudioOutput.RequestedLatencyMilliseconds " ms, measured " AudioRound(gAudioOutput.LatencyMilliseconds))
+	lines.Push("Counters: dropped " gAudioOutput.DroppedPlayCount ", underruns " gAudioOutput.UnderrunCount ", peak " AudioRound(gAudioOutput.Peak))
+	gAudioOutInfo.Text := AudioJoinLines(lines)
+}
+
+AudioRound(v)
+{
+	return v == "" ? "(none)" : Round(v, 1)
+}
+
+; Eight short tones a fifth apart, synthesized into Buffers and played at once. Nothing is written to disk,
+; which is the point: SoundPlay takes a path and plays one thing at a time.
+PlayOverlappingTones()
+{
+	global gAudioOutput, gAudioToneClips
+	if (gAudioOutput == "" || gAudioOutput.Status != "Open")
+	{
+		OpenAudioOutput()
+		if (gAudioOutput == "" || gAudioOutput.Status != "Open")
+			return
+	}
+
+	freqs := [262, 330, 392, 494, 587, 698, 784, 988]
+	started := 0
+	for f in freqs
+	{
+		if (!gAudioToneClips.Has(f))
+		{
+			clip := Audio.FromPcm(MakeToneBuffer(f, 900, 22050), 22050, 1, "Signed16")
+			gAudioToneClips[f] := clip
+			gAudioOutput.Prepare(clip)
+		}
+		if (gAudioOutput.Play(gAudioToneClips[f], 35) != "")
+			started++
+	}
+	gStatus["audio_output"].Text := "Output: started " started " overlapping voices"
+	AppendLog("Audio: started " started " overlapping voices on one stream")
+	ShowAudioOutputInfo()
+}
+
+; A 16-bit mono sine with a short fade at each end, so a tone neither clicks on nor clicks off.
+MakeToneBuffer(Freq, Ms, Rate)
+{
+	frames := Round(Ms * Rate / 1000)
+	buf := Buffer(frames * 2, 0)
+	fade := Round(Rate * 0.005)
+	step := 2 * 3.141592653589793 * Freq / Rate
+	loop frames
+	{
+		i := A_Index - 1
+		env := 0.35
+		if (i < fade)
+			env *= i / fade
+		else if (i >= frames - fade)
+			env *= (frames - 1 - i) / fade
+		NumPut("Short", Round(Sin(step * i) * env * 32000), buf, i * 2)
+	}
+	return buf
+}
+
+StopAudioOutput()
+{
+	global gAudioOutput
+	if (gAudioOutput == "")
+	{
+		AppendLog("Audio: StopAll() ignored, no output is open")
+		return
+	}
+	gAudioOutput.StopAll()
+	gStatus["audio_output"].Text := "Output: StopAll() silenced every voice"
+	AppendLog("Audio: StopAll() silenced every voice")
+	ShowAudioOutputInfo()
+}
+
+PlayFileThroughAudio()
+{
+	try
+	{
+		Audio.Play(wavTxt.Text)
+		gStatus["audio_compat"].Text := "Audio.Play: started"
+		AppendLog("Audio.Play: started " wavTxt.Text)
+	}
+	catch Error as e
+	{
+		gStatus["audio_compat"].Text := "Audio.Play: " e.Message
+		AppendLog("Audio.Play: " e.Message)
+	}
+}
+
+RefreshAudioSessions(Announce := false)
+{
+	global gAudioSessions
+	if (!Audio.IsSessionControlSupported)
+	{
+		gAudioSessionList.Delete()
+		gStatus["audio_sessions"].Text := "Sessions: unsupported on this platform"
+		AppendLog("Audio: application sessions are unsupported on this platform")
+		return
+	}
+	previous := SelectedAudioSession() != "" ? SelectedAudioSession().Id : ""
+	gAudioSessions := Audio.Sessions()
+	items := [], ids := []
+	for s in gAudioSessions
+	{
+		who := s.ProcessName != "" ? s.ProcessName : (s.DisplayName != "" ? s.DisplayName : s.Id)
+		vol := AudioSafe(() => Round(s.Volume))
+		mute := AudioSafe(() => s.Mute ? "muted" : "unmuted")
+		items.Push(who "   [" s.Status "]   vol " vol "   " mute (s.IsSystemSounds ? "   (system sounds)" : ""))
+		ids.Push(s.Id)
+	}
+	; Restoring by session id keeps the same application selected, so the mute button can be pressed twice.
+	AudioReselect(gAudioSessionList, items, ids, previous)
+	gStatus["audio_sessions"].Text := "Sessions: " gAudioSessions.Length " live"
+	if (Announce)
+		AppendLog("Audio: " gAudioSessions.Length " application sessions")
+}
+
+SelectedAudioSession()
+{
+	global gAudioSessions
+	i := gAudioSessionList.Value
+	return (i > 0 && i <= gAudioSessions.Length) ? gAudioSessions[i] : ""
+}
+
+ToggleSelectedSessionMute()
+{
+	s := SelectedAudioSession()
+	if (s == "")
+	{
+		gStatus["audio_sessions"].Text := "Sessions: select one first"
+		return
+	}
+	try
+	{
+		if (s.Refresh() == "")
+		{
+			gStatus["audio_sessions"].Text := "Sessions: that session expired"
+			AppendLog("Audio: the selected session expired")
+			RefreshAudioSessions()
+			return
+		}
+		s.Mute := !s.Mute
+		gStatus["audio_sessions"].Text := "Sessions: " s.ProcessName (s.Mute ? " muted" : " unmuted")
+		AppendLog("Audio: session " s.ProcessName (s.Mute ? " muted" : " unmuted"))
+	}
+	catch Error as e
+	{
+		gStatus["audio_sessions"].Text := "Sessions: " e.Message
+		AppendLog("Audio: session mute failed - " e.Message)
+	}
+	RefreshAudioSessions()
+}
+
+HalveSelectedSessionVolume()
+{
+	s := SelectedAudioSession()
+	if (s == "")
+	{
+		gStatus["audio_sessions"].Text := "Sessions: select one first"
+		return
+	}
+	try
+	{
+		if (s.Refresh() == "")
+		{
+			gStatus["audio_sessions"].Text := "Sessions: that session expired"
+			RefreshAudioSessions()
+			return
+		}
+		s.Volume := 50
+		gStatus["audio_sessions"].Text := "Sessions: " s.ProcessName " set to 50%"
+		AppendLog("Audio: session " s.ProcessName " set to 50%")
+	}
+	catch Error as e
+	{
+		gStatus["audio_sessions"].Text := "Sessions: " e.Message
+		AppendLog("Audio: session volume failed - " e.Message)
+	}
+	RefreshAudioSessions()
+}
+
+DoBeep(*)
+{
+	SoundBeep(1500, 1000)
+	gStatus["audio_compat"].Text := "Sound*: SoundBeep returned"
+	AppendLog("Sound*: SoundBeep(1500, 1000) returned")
+}
+
 DoWav(*)
 {
-	SoundPlay(wavTxt.Text, 1)
+	try
+	{
+		SoundPlay(wavTxt.Text, 1)
+		gStatus["audio_compat"].Text := "Sound*: SoundPlay finished"
+		AppendLog("Sound*: SoundPlay finished " wavTxt.Text)
+	}
+	catch Error as e
+	{
+		gStatus["audio_compat"].Text := "Sound*: " e.Message
+		AppendLog("Sound*: " e.Message)
+	}
 }
 
 ; ── Image tab: OCR probe alongside the image / pixel controls. ──
@@ -3640,6 +4087,9 @@ RegisterInputProbes()
 ; Populate the Monitors tab up front: it is pure enumeration with no device I/O, so it costs nothing at
 ; startup and the tab is useful the moment it is opened.
 RefreshMonitorList()
+; The Audio device list is the same kind of cheap enumeration, and a tab that opens already showing the
+; machine's endpoints is far more useful than one that opens empty.
+RefreshAudioDevices()
 AppendLog("Manual suite ready.")
 MyGui.Show("Autosize")
 
