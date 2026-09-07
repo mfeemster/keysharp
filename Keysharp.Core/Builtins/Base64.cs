@@ -12,8 +12,8 @@ namespace Keysharp.Builtins
 			/// Encodes binary data as Base64 text.
 			/// </summary>
 			/// <param name="this">The class object, supplied by the script-static call.</param>
-			/// <param name="Value">A <see cref="Buffer"/>, an <see cref="Array"/> of bytes, or a string.</param>
-			/// <param name="Encoding">The encoding a string <paramref name="Value"/> is taken in, named as for
+			/// <param name="Value">A <see cref="Buffer"/>, an <see cref="Array"/> of bytes, a <see cref="StringBuffer"/> or a string.</param>
+			/// <param name="Encoding">The encoding a string or StringBuffer <paramref name="Value"/> is taken in, named as for
 			/// <see cref="A_FileEncoding"/>. Defaults to UTF-8.</param>
 			/// <returns>The Base64 text.</returns>
 			/// <exception cref="ValueError">Thrown if the encoding cannot be resolved.</exception>
@@ -21,7 +21,13 @@ namespace Keysharp.Builtins
 			[Static]
 			public static object Encode(object @this, object Value, object Encoding = null)
 			{
-				var raw = Conversions.ToByteArray(Value, Files.GetEncodingOrDefault(Encoding, System.Text.Encoding.UTF8));
+				var enc = Files.GetEncodingOrDefault(Encoding, System.Text.Encoding.UTF8);//Resolved first, so a misspelled name is reported even where no string is being converted.
+
+				//A Buffer encodes straight out of its own memory; the general byte conversion would copy the whole of it first.
+				if (Value is Buffer b)
+					return Convert.ToBase64String(b.AsSpan());
+
+				var raw = Conversions.ToByteArray(Value, enc);
 				return raw == null ? "" : Convert.ToBase64String(raw);
 			}
 
@@ -39,11 +45,11 @@ namespace Keysharp.Builtins
 
 				try
 				{
-					return new Keysharp.Builtins.Buffer(Convert.FromBase64String(s));
+					return new Buffer(Convert.FromBase64String(s));
 				}
-				catch (FormatException ex)
+				catch (FormatException)
 				{
-					return Errors.ValueErrorOccurred($"Cannot decode Base64 text: {ex.Message}", s);
+					return Errors.ValueErrorOccurred("The text is not well-formed Base64.", s);
 				}
 			}
 		}

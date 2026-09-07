@@ -3502,26 +3502,6 @@
                      "notes":  "Constructs a new Buffer object."
                  },
                  {
-                     "category":  "Core Language",
-                     "feature":  "Buffer.ToBase64()",
-                     "syntax":  "",
-                     "windows":  "full",
-                     "linux_x11":  "full",
-                     "linux_wayland":  "full",
-                     "macos":  "full",
-                     "notes":  "Returns Buffer contents as a Base64 string."
-                 },
-                 {
-                     "category":  "Core Language",
-                     "feature":  "Buffer.ToHex()",
-                     "syntax":  "",
-                     "windows":  "full",
-                     "linux_x11":  "full",
-                     "linux_wayland":  "full",
-                     "macos":  "full",
-                     "notes":  "Returns Buffer contents as a hexadecimal string."
-                 },
-                 {
                      "category":  "Interop/Memory",
                      "feature":  "CallbackCreate()",
                      "syntax":  "",
@@ -11760,12 +11740,12 @@
                  {
                      "category":  "Keysharp Module (Ks)",
                      "feature":  "Http",
-                     "syntax":  "Http.Get(Url, Options?) / Http.Post(Url, Body?, Options?) / Http.Request(Method, Url, Body?, Options?) / Http(Options?)",
+                     "syntax":  "Http.Get(Url, Options?) / Http.Post(Url, Body?, Options?) / Http.Request(Method, Url, Body?, Options?) / Http.Download(Url, Path, Options?) / Http(Options?)",
                      "windows":  "full",
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "full",
-                     "notes":  "HTTP requests, as static shortcuts on a shared stateless client or as a session carrying default headers, credentials and cookies. A non-2xx status is an answer rather than an error. Options: Headers, Body, Json, Timeout (idle, seconds) and OnData per request; BaseUrl, Auth, Proxy, IgnoreCertificateErrors and Handler on a session, where the connection is configured. An unknown option key raises. Each method has an Async twin returning a Task. OnData(Chunk, Received, Total) streams the body and stops the transfer when it returns a non-zero Integer. Session.Close() releases connections, and ToClr() on the session and the response are the escape hatches.",
+                     "notes":  "HTTP requests, as static shortcuts on a shared stateless client or as a session carrying default headers, credentials and cookies. A non-2xx status is an answer rather than an error. Options: Headers, Body, Json, Timeout (idle, seconds) and OnData per request; BaseUrl, Auth, Proxy, IgnoreCertificateErrors and Handler on a session, where the connection is configured. An unknown option key raises. Each method has an Async twin returning a Task. Download() fetches straight to a file, opened only once the response headers arrive. OnData(Chunk, Received, Total) streams the body and stops the transfer when it returns a non-zero Integer. Session.Close() releases connections, and ToClr() on the session and the response are the escape hatches.",
                      "tested-by":  "http.ahk"
                  },
                  {

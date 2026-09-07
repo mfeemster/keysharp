@@ -159,17 +159,6 @@ namespace Keysharp.Builtins
 		}
 
 		/// <summary>
-		/// Converts the contents of the buffer to a hex string.
-		/// </summary>
-		///
-		public string ToHex() => Convert.ToHexString(AsSpan());
-
-		/// <summary>
-		/// Converts the contents of the buffer to a base64 string.
-		/// </summary>
-		public string ToBase64() => Convert.ToBase64String(AsSpan());
-
-		/// <summary>
 		/// Returns the contents of the buffer as a byte array.
 		/// </summary>
 		internal byte[] ToByteArray()

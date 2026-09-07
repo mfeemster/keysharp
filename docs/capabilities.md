@@ -351,8 +351,6 @@ Status legend:
 | Break | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Exits the current loop. |
 | Buffer.__Item[] | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Indexer for reading/writing bytes in Buffer by offset. |
 | Buffer.__New() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Constructs a new Buffer object. |
-| Buffer.ToBase64() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Returns Buffer contents as a Base64 string. |
-| Buffer.ToHex() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Returns Buffer contents as a hexadecimal string. |
 | Buffer() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | The Buffer object encapsulates a block of memory for use with advanced techniques such as DllCall, structures, StrPut and raw file I/O. |
 | CallbackCreate() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Creates a native callback address which redirects to a script function. Supports both parameter-count callbacks and typed parameter/return signatures on every platform. |
 | CallbackFree() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Releases a callback created by CallbackCreate on every platform. |
@@ -666,7 +664,7 @@ Status legend:
 | Hotkey() | 🟢 Full | 🟡 Partial | 🟡 Partial | 🟡 Partial | The Hotkey function creates, modifies, enables, or disables a hotkey while the script is running. |
 | Hotkeys/Hotstrings | 🟢 Full | 🟡 Partial | 🟡 Partial | 🟡 Partial | Linux and macOS use a suppression-capable global hook, which requires InputMonitoring and InputControl. |
 | Hotstring() | 🟢 Full | 🟡 Partial | 🟡 Partial | 🟡 Partial | The Hotstring function creates, modifies, enables, or disables a hotstring while the script is running. |
-| Http | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | HTTP requests, as static shortcuts on a shared stateless client or as a session carrying default headers, credentials and cookies. A non-2xx status is an answer rather than an error. Options: Headers, Body, Json, Timeout (idle, seconds) and OnData per request; BaseUrl, Auth, Proxy, IgnoreCertificateErrors and Handler on a session, where the connection is configured. An unknown option key raises. Each method has an Async twin returning a Task. OnData(Chunk, Received, Total) streams the body and stops the transfer when it returns a non-zero Integer. Session.Close() releases connections, and ToClr() on the session and the response are the escape hatches. |
+| Http | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | HTTP requests, as static shortcuts on a shared stateless client or as a session carrying default headers, credentials and cookies. A non-2xx status is an answer rather than an error. Options: Headers, Body, Json, Timeout (idle, seconds) and OnData per request; BaseUrl, Auth, Proxy, IgnoreCertificateErrors and Handler on a session, where the connection is configured. An unknown option key raises. Each method has an Async twin returning a Task. Download() fetches straight to a file, opened only once the response headers arrive. OnData(Chunk, Received, Total) streams the body and stops the transfer when it returns a non-zero Integer. Session.Close() releases connections, and ToClr() on the session and the response are the escape hatches. |
 | Http.Response | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | What a server answered. Headers merges the response and content headers case-insensitively, Text decodes per the response charset, and Body is the raw bytes. Both are empty when OnData took the body. |
 | If | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Conditional statement. |
 | IL_Add() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Adds an image to an image list, optionally can resize or split the image. |

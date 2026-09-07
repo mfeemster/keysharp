@@ -522,9 +522,9 @@ namespace Keysharp.Internals.Strings
 		/// <summary>
 		/// Converts a script value to the bytes an API which works in bytes operates on.
 		/// </summary>
-		/// <param name="value">A String, <see cref="Keysharp.Builtins.Buffer"/>,
+		/// <param name="value">A String, <see cref="Keysharp.Builtins.Ks.StringBuffer"/>, <see cref="Keysharp.Builtins.Buffer"/>,
 		/// <see cref="Keysharp.Builtins.Array"/> or byte array. Unset is no bytes at all.</param>
-		/// <param name="enc">The encoding a string is taken in.</param>
+		/// <param name="enc">The encoding a string or StringBuffer is taken in.</param>
 		/// <returns>The bytes, or null if value is none of those. Null rather than an empty array, so that a
 		/// caller which is not throwing reports nothing instead of operating on no bytes at all.</returns>
 		/// <exception cref="TypeError">Thrown if value is none of those.</exception>
@@ -538,6 +538,12 @@ namespace Keysharp.Internals.Strings
 
 			if (value is string s)
 				return (enc ?? Encoding.Default).GetBytes(s);
+
+			//A StringBuffer holds text, so its bytes are its content in the requested encoding, exactly as for the
+			//equivalent string. The Ptr/Size probe below would otherwise claim it and read the whole allocation,
+			//whose tail past the terminator is uninitialized.
+			if (value is Keysharp.Builtins.Ks.StringBuffer sb)
+				return (enc ?? Encoding.Default).GetBytes(sb.ToString());
 
 			if (value is Any any && Reflections.TryGetPtrProperty(any, out long ptr) && Reflections.TryGetSizeProperty(any, out long size))
 			{

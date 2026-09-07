@@ -37,7 +37,7 @@ Assert(val = 2, A_LineNumber)
 RegWrite("AABBCCDD", "REG_BINARY", "HKEY_CURRENT_USER\SOFTWARE\KeysharpTest\ks_sub2", "bin1")
 val := RegRead("HKEY_CURRENT_USER\SOFTWARE\KeysharpTest\ks_sub2", "bin1")
 
-Assert(val.ToHex() = "AABBCCDD", A_LineNumber)
+Assert(val.Size = 4 && val[1] = 0xAA && val[2] = 0xBB && val[3] = 0xCC && val[4] = 0xDD, A_LineNumber)
 
 i := 0
 
@@ -77,7 +77,7 @@ Loop Reg "HKEY_CURRENT_USER\SOFTWARE\KeysharpTest", "kvr" ; this is a comment
 	}
 	else if (i == 3)
 	{
-		Assert(val.ToHex() = "AABBCCDD", A_LineNumber)
+		Assert(val.Size = 4 && val[1] = 0xAA && val[2] = 0xBB && val[3] = 0xCC && val[4] = 0xDD, A_LineNumber)
 		
 		AssertEq(A_LoopRegType, "REG_BINARY", A_LineNumber)
 			

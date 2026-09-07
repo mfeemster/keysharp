@@ -643,7 +643,7 @@ Controlling another application needs **Automation** permission, granted per tar
 	+ `ShowDebug()`: Shows the main window and focuses the debug output tab.
 	+ `OutputDebugLine()`: The same as `OutputDebug()` but appends a linebreak at the end of the string.
 * New `Crypt` class, holding hashing, key derivation, symmetric encryption and cryptographically secure random values (`#Import "Ks" { Crypt }`):
-	+ A String is taken as its **UTF-8** bytes, so a digest is the one any other tool prints for the same text. Pass an `encoding` — the names `A_FileEncoding` takes — to use a different one, and note that a name which cannot be resolved raises rather than falling back. A `Buffer` or an `Array` of bytes is used as it stands; an open `File` is accepted by anything that hashes, but not by `Crypt.Encrypt`.
+	+ A String or `StringBuffer` is taken as its **UTF-8** bytes, so a digest is the one any other tool prints for the same text. Pass an `encoding` — the names `A_FileEncoding` takes — to use a different one, and note that a name which cannot be resolved raises rather than falling back. A `Buffer` or an `Array` of bytes is used as it stands; an open `File` is accepted by anything that hashes, but not by `Crypt.Encrypt`.
 	+ A digest is returned as uppercase hexadecimal; compare digests case-insensitively, since the tool a checksum came from may print it in lowercase.
 	+ `Crypt.Hash(value, algorithm := "SHA256", encoding := "UTF-8") => String`: hashes with `MD5`, `SHA1`, `SHA256`, `SHA384`, `SHA512` or `CRC32`, spelled with or without the `-`. An open `File` is read as a stream and left at the position it was on.
 	+ `Crypt.HashFile(path, algorithm := "SHA256") => String`: the same over a file, read as a stream so that its size does not matter.
@@ -719,9 +719,6 @@ Controlling another application needs **Automation** permission, granted per tar
 	+ `Buffer`:
 		+ `__Item[]`: Indexer which can be used to read a byte at a 1-based offset.
 			+ Throws an `IndexError` if the offset out of range.
-		+ `ToHex()`: Converts the contents to a hexadecimal string.
-		+ `ToBase64()`: Converts the contents to a base64 string
-		+ `ToByteArray()`: Converts the contents to a raw C# `byte[]`.
 	+ `Object`:
 		+ `OwnPropCount()`: Corresponds to the global function `ObjOwnPropCount()`.
 	+ `Map`:
@@ -786,11 +783,11 @@ Controlling another application needs **Automation** permission, granted per tar
 		+ `App.ExitReason` and `App.ExitCode` report an exit in progress to code that is **not** an `OnExit` callback — a `__Delete`, a timer, a library — and stay readable through the whole teardown. `ExitReason` is `""` when nothing is exiting and `""` again once a callback cancels an exit. Inside a callback the pending code for that exit is the callback's second parameter, which remains the authority; `App.ExitCode` reports the status currently armed.
 		+ The `#App` keys `Icon`, `TrayIcon`, `GuiTheme`, `ConsoleApp`, `ErrorStdOut`, `SingleInstance`, `HookMutexName`, `DesktopEntry` and `Files` are deliberately absent: each either already has a live spelling that would disagree with the declared one, or is a build decision with no runtime state to report.
 	+ `Base64`: Converts between binary data and Base64 text. Available from the `KS` module: `#Import "Ks" { Base64 }`.
-		+ `Base64.Encode(value [, encoding := "UTF-8"]) => String`: Converts a `Buffer` or `Array` of bytes — or a string, taken as its **UTF-8** bytes unless another `encoding` is named — to Base64 text.
-		+ `Base64.Decode(text) => Buffer`: Returns the bytes Base64 text stands for. Text which is not well-formed Base64 raises a `ValueError`.
+		+ `Base64.Encode(Value [, Encoding := "UTF-8"]) => String`: Converts a `Buffer` or `Array` of bytes — or a string or `StringBuffer`, taken as its **UTF-8** bytes unless another `Encoding` is named — to Base64 text.
+		+ `Base64.Decode(Text) => Buffer`: Returns the bytes Base64 text stands for. Text which is not well-formed Base64 raises a `ValueError`.
 	+ `Url`: Percent-encoding, as URLs and form bodies use it. Available from the `KS` module: `#Import "Ks" { Url }`. Named `Url` rather than `Uri` because the CLR's own `Uri` is reachable through `Clr` and the two should not collide.
-		+ `Url.Encode(text [, encoding := "UTF-8"]) => String`: Percent-encodes everything outside the RFC 3986 unreserved set (`A-Z a-z 0-9 - . _ ~`), which is what a path segment, a query value and a form field each need. A space becomes `%20` and never `+`, since `+` means a space only inside a form body and would corrupt a path or a query value. Escaping is per byte, so `Url.Encode("ä")` is `%C3%A4` by default and `Url.Encode("ab", "UTF-16")` is `a%00b%00`.
-		+ `Url.Decode(text [, encoding := "UTF-8"]) => String`: Resolves percent-escapes. A `%` which is not followed by two hexadecimal digits stands for itself, since a real URL commonly carries one, and `+` stands for itself for the same reason it is never produced.
+		+ `Url.Encode(Text [, Encoding := "UTF-8"]) => String`: Percent-encodes everything outside the RFC 3986 unreserved set (`A-Z a-z 0-9 - . _ ~`), which is what a path segment, a query value and a form field each need. A space becomes `%20` and never `+`, since `+` means a space only inside a form body and would corrupt a path or a query value. Escaping is per byte, so `Url.Encode("ä")` is `%C3%A4` by default and `Url.Encode("ab", "UTF-16")` is `a%00b%00`.
+		+ `Url.Decode(Text [, Encoding := "UTF-8"]) => String`: Resolves percent-escapes. A `%` which is not followed by two hexadecimal digits stands for itself, since a real URL commonly carries one, and `+` stands for itself for the same reason it is never produced.
 		+ There is no query-string builder: with these, one is `"?q=" Url.Encode(q)`.
 	+ `Boolean`: The type of a truth value, extending `Integer`. Available from the `KS` module.
 		+ Every operator that yields a truth value yields a `Boolean`: a comparison (`a > b`, `a = b`, `a != b`), a negation (`!a`), and `Map.Has()`. The `true` and `false` keywords are `Boolean` values too.
@@ -849,12 +846,13 @@ Controlling another application needs **Automation** permission, granted per tar
 			static Get(Url [, Options])            => Http.Response
 			static Post(Url [, Body, Options])     => Http.Response
 			static Request(Method, Url [, Body, Options]) => Http.Response
-			static GetAsync / PostAsync / RequestAsync   ; the same three, returning a Task
+			static Download(Url, Path [, Options]) => Http.Response   ; straight to a file
+			static GetAsync / PostAsync / RequestAsync / DownloadAsync   ; the same four, returning a Task
 			__New([Options])                       ; a session
 			Headers => Map                         ; live session defaults
 			Timeout => Number                      ; seconds; -1 waits indefinitely
 			BaseUrl => String
-			Get / Post / Request / *Async          ; as above, through this session
+			Get / Post / Request / Download / *Async ; as above, through this session
 			Close()                                ; release this session's connections
 			ToClr()  => Any                        ; the underlying HttpClient
 		}
@@ -871,10 +869,15 @@ Controlling another application needs **Automation** permission, granted per tar
 			ToClr()    => Any                      ; the underlying HttpResponseMessage
 		}
 		```
-		+ **A non-2xx status is not an error.** The server answered, and the body of a failed request is usually where the reason is; `IsSuccess` is the test. What does raise: a transport failure as an `OSError`, an elapsed timeout as a `TimeoutError`, and a bad URL, method, header or option as a `ValueError`.
+		+ **A non-2xx status is not an error.** The server answered, and the body of a failed request is usually where the reason is; `IsSuccess` is the test. What does raise:
+			+ an `OSError` when the request never reached a reply — the host does not resolve, the connection is refused or drops, TLS fails;
+			+ a `TimeoutError` when nothing arrives within `Timeout`;
+			+ a `ValueError` for an empty or non-absolute URL that no `BaseUrl` completes, a scheme other than http and https, an unusable method, header, proxy or option value, an unrecognized option key, a session option given per request, and `Handler` given alongside the options it would override;
+			+ a `TypeError` for a `Body` that is an object other than a `Buffer`, `Headers` that is not a `Map`, an `OnData` that is not callable, or a `Handler` that is not an `HttpMessageHandler`;
+			+ an `Error` when a session has been closed, or when `OnData` stopped the transfer — the task is canceled, and the synchronous form raises what `Await` raises for canceled work.
 		+ Options are given as a `Map` or an object, with **PascalCase** keys. An unrecognized key raises a `ValueError` rather than being ignored, so a typo is reported where it is written. The request options may be given per request or as session defaults, where a request's own value wins and `Headers` merges key by key — a request value of `""` removes a header for that request.
 			+ `Headers`: a `Map` of header names to values, compared case-insensitively as HTTP compares them. `Content-Type` is applied to the body, and a request with no body ignores every `Content-*` name because there is nothing to describe; every other name is sent as given, including one .NET's own parser would refuse. Unless it is overridden a request carries `User-Agent: Keysharp/<version>`, which `""` removes like any other header.
-			+ `Body`: a String, sent as UTF-8 `text/plain`, or a `Buffer`, sent as `application/octet-stream`. `Post`'s and `Request`'s third-from-last parameter is the same thing positionally. Body and Json are one slot, so a request naming either replaces both of the session's defaults.
+			+ `Body`: a String, sent as UTF-8 `text/plain`, or a `Buffer`, sent as `application/octet-stream`. `Post(Url, Body)` and `Request(Method, Url, Body)` take the same thing positionally. Body and Json are one slot, so a request naming either replaces both of the session's defaults.
 			+ `Json`: any value, encoded with `Json.Encode` and sent as `application/json`. Giving both `Body` and `Json` raises, since each *is* the body.
 			+ `Timeout`: a positive number of seconds, default 30, or `-1` to wait indefinitely; anything else raises. It bounds the wait for the response headers and then each further piece of the body — an **idle** timeout, not a total one, so a slow large download is not cut off while a dead connection still is.
 			+ `OnData`: see below.
@@ -882,13 +885,13 @@ Controlling another application needs **Automation** permission, granted per tar
 			+ `Auth`: `[User, Password]`, or the documented string `"Default"` for the logged-in user's credentials. The server's challenge then selects Basic, Digest, NTLM, Negotiate or Kerberos — which is also the only way to reach the latter two. An API that answers with something other than a 401 challenge never gets asked, so preemptive Basic is `Headers` with `"Basic " Base64.Encode(user ":" password)`.
 			+ `Proxy`: a proxy URL, with credentials in the usual `http://user:pass@host:port` userinfo form. `""` forces a direct connection; omitting it uses the system proxy.
 			+ `IgnoreCertificateErrors`: accepts any server certificate, for a self-signed host on a private network.
-			+ `Handler`: an `HttpMessageHandler` built through `Clr`, used as-is. Client certificates, TLS version pinning, a custom validation callback, connection limits and HTTP/2 settings are all reachable this way rather than through options of their own.
+			+ `Handler`: an `HttpMessageHandler` built through `Clr`, used as-is. Client certificates, TLS version pinning, a custom validation callback, redirect policy, connection limits and HTTP/2 settings are all reachable this way rather than through options of their own. It **is** the connection, so giving `Auth`, `Proxy` or `IgnoreCertificateErrors` with it raises rather than silently doing nothing, and a handler the script built is not disposed by `Close`.
 		+ `OnData(Chunk, Received, Total)` receives the body as it arrives, so a large response never has to be a large script value. `Chunk` is a `Buffer`, `Received` counts the bytes so far, and `Total` is the declared length or `-1` when the server declares none. Bytes accumulate for about 100 ms before each call, which bounds the callback rate without ever dropping one. Since the body went to the callback, `Body` and `Text` on the response are then empty.
 			+ It runs as a pseudo-thread on the script thread that asked for the request, so `A_*`, GUI access and error reporting all behave normally, and the transfer waits for it — which is what keeps memory bounded. The wait does not occupy a thread, and the idle `Timeout` is not charged for the callback's own runtime, so a slow callback is never reported as a dead server. Uninterruptibility is skipped, as it is for a message AutoHotkey *sends* rather than posts, so a `Critical` section cannot cost the transfer a chunk. As with any callback, it may declare fewer than three parameters.
 			+ **Returning a non-zero Integer stops the transfer**, as it prevents an exit from `OnExit`. The task is then canceled, and the synchronous form raises what `Await` raises for canceled work. Take care with a fat arrow, whose value is its last expression: `(chunk, *) => f.RawWrite(chunk)` returns the byte count and therefore stops after the first chunk. Write `(chunk, *) => (f.RawWrite(chunk), 0)`.
-		+ `Download` is this, streamed to a file. Streaming to any other sink is `OnData`:
+		+ `Http.Download(Url, Path [, Options])` fetches straight to a file, carrying the session's headers, credentials and timeout — which the global `Download` cannot. The file is opened only once the response headers arrive, so a request that never reaches a reply leaves an existing file alone, and the `Response` it returns carries the status and headers with an empty `Body`. The global `Download` is the same thing with AutoHotkey's signature and its `ftp` support. Streaming to any other sink is `OnData`:
 			```
-			#Import "Ks" { Http, Url, Base64 }
+			#Import "Ks" { Http, Url }
 
 			r := Http.Get("https://api.github.com/search/issues?q=" Url.Encode("repo:x/y is:open"))
 			if r.IsSuccess
