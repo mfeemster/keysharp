@@ -1,0 +1,51 @@
+namespace Keysharp.Builtins
+{
+	public partial class Ks
+	{
+		/// <summary>
+		/// Converts between binary data and Base64 text. Scripts reach it through the KS module:
+		/// <c>#Import "Ks" { Base64 }</c>, then <c>Base64.Encode(value)</c> and <c>Base64.Decode(text)</c>.
+		/// </summary>
+		public class Base64 : KeysharpObject
+		{
+			/// <summary>
+			/// Encodes binary data as Base64 text.
+			/// </summary>
+			/// <param name="this">The class object, supplied by the script-static call.</param>
+			/// <param name="Value">A <see cref="Buffer"/>, an <see cref="Array"/> of bytes, or a string.</param>
+			/// <param name="Encoding">The encoding a string <paramref name="Value"/> is taken in, named as for
+			/// <see cref="A_FileEncoding"/>. Defaults to UTF-8.</param>
+			/// <returns>The Base64 text.</returns>
+			/// <exception cref="ValueError">Thrown if the encoding cannot be resolved.</exception>
+			/// <exception cref="TypeError">Thrown if the value holds no bytes.</exception>
+			[Static]
+			public static object Encode(object @this, object Value, object Encoding = null)
+			{
+				var raw = Conversions.ToByteArray(Value, Files.GetEncodingOrDefault(Encoding, System.Text.Encoding.UTF8));
+				return raw == null ? "" : Convert.ToBase64String(raw);
+			}
+
+			/// <summary>
+			/// Decodes Base64 text to bytes.
+			/// </summary>
+			/// <param name="this">The class object, supplied by the script-static call.</param>
+			/// <param name="Text">The Base64 text to decode.</param>
+			/// <returns>A <see cref="Buffer"/> holding the decoded bytes.</returns>
+			/// <exception cref="ValueError">Thrown if the text is not well-formed Base64.</exception>
+			[Static]
+			public static object Decode(object @this, object Text)
+			{
+				var s = Text.As();
+
+				try
+				{
+					return new Keysharp.Builtins.Buffer(Convert.FromBase64String(s));
+				}
+				catch (FormatException ex)
+				{
+					return Errors.ValueErrorOccurred($"Cannot decode Base64 text: {ex.Message}", s);
+				}
+			}
+		}
+	}
+}

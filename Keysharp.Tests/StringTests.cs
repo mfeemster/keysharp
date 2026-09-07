@@ -903,11 +903,11 @@ namespace Keysharp.Tests
 		{
 			var str1 = "Hello, world!";
 			var b64 = "SGVsbG8sIHdvcmxkIQ==";
-			var conv = (Keysharp.Builtins.Buffer)Ks.Base64Decode(b64);
+			var conv = (Keysharp.Builtins.Buffer)Ks.Base64.Decode(null, b64);
 			var barr = conv.ToByteArray();
 			var str2 = Encoding.UTF8.GetString(barr);
 			Assert.AreEqual(str1, str2);
-			var enc = Ks.Base64Encode(conv);
+			var enc = Ks.Base64.Encode(null, conv);
 			Assert.AreEqual(enc, b64);
 			Assert.IsTrue(TestScript("string-base64", true));
 		}

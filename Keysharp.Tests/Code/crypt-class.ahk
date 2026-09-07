@@ -1,5 +1,5 @@
 #NoTrayIcon
-#import KS { Crypt, Base64Encode, A_DirSeparator }
+#import KS { Crypt, Base64, A_DirSeparator }
 #Include <assert>
 
 ; The Crypt class through real dynamic dispatch. A String is taken as its UTF-8 bytes, so every digest here
@@ -99,8 +99,8 @@ AssertEq(Crypt.Decrypt(again, "key").Size, 5, A_LineNumber)
 
 ; With a vector supplied, the ciphertext itself is pinned rather than only the round trip, so a silent
 ; change to the key padding or to the vector handling has to fail here. It is not prepended in this form.
-AssertEq(Base64Encode(Crypt.Encrypt("hello", "key", , , "0123456789abcdef")), "g1TwShPvFGwTdenQrf+wew==", A_LineNumber)
-AssertEq(Base64Encode(Crypt.Encrypt("hello", "key", "AES", "ECB")), "V/rlD0HpNugob35tzHnxCw==", A_LineNumber)
+AssertEq(Base64.Encode(Crypt.Encrypt("hello", "key", , , "0123456789abcdef")), "g1TwShPvFGwTdenQrf+wew==", A_LineNumber)
+AssertEq(Base64.Encode(Crypt.Encrypt("hello", "key", "AES", "ECB")), "V/rlD0HpNugob35tzHnxCw==", A_LineNumber)
 
 ; A supplied vector round-trips, and decrypting needs the same one back.
 fixed := Crypt.Encrypt("hello", "key", , , "0123456789abcdef")
@@ -150,7 +150,7 @@ for offset in [14, 20, 3] {
 Throws(() => Crypt.Encrypt("hello", "key", , "GCM", "0123456789abcdef"), A_LineNumber, ValueError)
 
 ; PBKDF2 against RFC 6070's second test vector, which pins the iteration count and the output length.
-AssertEq(Base64Encode(Crypt.PBKDF2("password", "salt", 2, 20, "SHA1")), "6mwBTcctb4zNHtkqzh1B8NjeiVc=", A_LineNumber)
+AssertEq(Base64.Encode(Crypt.PBKDF2("password", "salt", 2, 20, "SHA1")), "6mwBTcctb4zNHtkqzh1B8NjeiVc=", A_LineNumber)
 
 ; A derived key is what makes a passphrase usable as one, and it is what Encrypt should be handed.
 salt := Crypt.RandomBytes(16)

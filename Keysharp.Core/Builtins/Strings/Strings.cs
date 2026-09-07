@@ -10,42 +10,6 @@ namespace Keysharp.Builtins
 		private static readonly object[] nullPlaceholder = [null];
 
 		/// <summary>
-		/// Decodes a Base64 character string to an <see cref="Array"/> of binary data.
-		/// </summary>
-		/// <param name="str">The Base64 string to decode.</param>
-		/// <returns>The decoded Base64 string as an <see cref="Array"/> of bytes.</returns>
-		/// <exception cref="Error">An <see cref="Error"/> exception is thrown if any errors occur.</exception>
-		public static object Base64Decode(object str)
-		{
-			var s = str.As();
-
-			try
-			{
-				return new Keysharp.Builtins.Buffer(Convert.FromBase64String(s));
-			}
-			catch (Exception ex)
-			{
-				return Errors.ErrorOccurred($"Error decoding base64 string {s}: {ex.Message}");
-			}
-		}
-
-		/// <summary>
-		/// Encodes binary data to a Base64 character string.
-		/// </summary>
-		/// <param name="value">The data to encode: a String, <see cref="Buffer"/> or <see cref="Array"/> of bytes.</param>
-		/// <param name="encoding">The encoding a string <paramref name="value"/> is taken in, named as for
-		/// <see cref="A_FileEncoding"/>. Defaults to UTF-8, which is what any other tool means by the Base64 of
-		/// a text.</param>
-		/// <returns>A Base64 string representation of the given binary data.</returns>
-		/// <exception cref="ValueError">Thrown if the encoding cannot be resolved.</exception>
-		/// <exception cref="TypeError">Thrown if the value holds no bytes.</exception>
-		public static string Base64Encode(object value, object encoding = null)
-		{
-			var raw = Conversions.ToByteArray(value, Files.GetEncodingOrDefault(encoding, Encoding.UTF8));
-			return raw == null ? "" : Convert.ToBase64String(raw);
-		}
-
-		/// <summary>
 		/// Formats a string using the same syntax used by string.Format(), except it uses 1-based indexing.
 		/// This is made available for users who prefer standard C# style formatting over the AHK
 		/// style used in Format().
