@@ -307,12 +307,12 @@ namespace Keysharp.Internals.Threading
 
 		/// <summary>
 		/// The running thread's priority. A thread whose priority is lower than the running one's cannot
-		/// interrupt it, and is not buffered while it is blocked.
+		/// interrupt it. Overdue timers wait until their priority allows them to run.
 		/// </summary>
 		internal static long A_Priority
 		{
 			get => Script.TheScript.Threads.CurrentThread.priority;
-			set => Script.TheScript.Threads.CurrentThread.priority = value;
+			set => Script.TheScript.Threads.SetPriority(Script.TheScript.Threads.CurrentThread, value);
 		}
 
 		/// <summary>

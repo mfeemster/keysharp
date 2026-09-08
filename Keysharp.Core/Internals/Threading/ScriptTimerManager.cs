@@ -14,10 +14,9 @@ namespace Keysharp.Internals.Threading
 		internal long PeriodMs { get; set; }
 		internal long NextDueTick { get; set; }
 		internal bool RunOnce { get; set; }
-		internal bool Enabled { get; set; }
 		internal bool Queued { get; set; }
+		internal bool WakeRequested { get; set; }
 		internal int RunningCount { get; set; }
-		internal bool DeletePending { get; set; }
 	}
 
 	internal sealed class ScriptTimerKeyComparer : IEqualityComparer<(KeysharpFunc Callback, ScriptEventScheduler OwnerScheduler)>
@@ -43,9 +42,6 @@ namespace Keysharp.Internals.Threading
 
 	internal sealed class ScriptTimerManager : IDisposable
 	{
-		// Backoff before re-checking a run-once timer that was deferred because its priority was below the current
-		// thread's (it has no period of its own). Small so it fires promptly once the higher-priority thread ends.
-		private const long PriorityBlockedRetryMs = 15;
 		private readonly object gate = new();
 		private readonly Dictionary<(KeysharpFunc Callback, ScriptEventScheduler OwnerScheduler), ScriptTimerState> timers = new(ScriptTimerKeyComparer.Instance);
 		private readonly AutoResetEvent wakeEvent = new(false);
@@ -68,10 +64,6 @@ namespace Keysharp.Internals.Threading
 				lock (gate)
 					return timers.Count == 0;
 			}
-		}
-
-		internal ScriptTimerManager()
-		{
 		}
 
 		internal ScriptTimerState[] GetSnapshot()
@@ -119,15 +111,15 @@ namespace Keysharp.Internals.Threading
 				//has already turned a period of 0 into "disable", so 1 is the only value needing this.
 				timer.PeriodMs = periodMs == 1 ? 0 : periodMs;
 				timer.NextDueTick = Environment.TickCount64 + timer.PeriodMs;
+				timer.WakeRequested = false;
 				timer.Priority = priority;
 				timer.RunOnce = runOnce;
-				timer.Enabled = true;
-				timer.DeletePending = false;
 				timer.SetActive(true);
 				EnsureThreadStarted();
 			}
 
 			Wake();
+			ownerScheduler?.WakeForTimerCheck();
 			return timer;
 		}
 
@@ -142,12 +134,12 @@ namespace Keysharp.Internals.Threading
 					return;
 
 				timer.NextDueTick = Environment.TickCount64 + timer.PeriodMs;
-				timer.Enabled = true;
-				timer.DeletePending = false;
+				timer.WakeRequested = false;
 				timer.SetActive(true);
 			}
 
 			Wake();
+			timer.OwnerScheduler?.WakeForTimerCheck();
 		}
 
 		internal void UpdatePriority(ScriptTimerState timer, long priority)
@@ -162,6 +154,8 @@ namespace Keysharp.Internals.Threading
 
 				timer.Priority = priority;
 			}
+
+			timer.OwnerScheduler?.WakeForTimerCheck();
 		}
 
 		internal void DisableOrDelete(ScriptTimerState timer)
@@ -174,20 +168,17 @@ namespace Keysharp.Internals.Threading
 				if (disposed)
 					return;
 
-				timer.Enabled = false;
 				timer.SetActive(false);
 
-				if (timer.Queued || timer.RunningCount > 0)
+				if (!timer.Queued && timer.RunningCount == 0)
 				{
-					timer.DeletePending = true;
-					return;
+					_ = timers.Remove((timer.Callback, timer.OwnerScheduler));
+					ClearTimerState(timer);
 				}
-
-				_ = timers.Remove((timer.Callback, timer.OwnerScheduler));
-				ClearTimerState(timer);
 			}
 
 			Wake();
+			timer.OwnerScheduler?.WakeForTimerCheck();
 		}
 
 		internal void MarkCallbackStarted(ScriptTimerState timer)
@@ -201,39 +192,14 @@ namespace Keysharp.Internals.Threading
 					return;
 
 				timer.Queued = false;
+				timer.WakeRequested = false;
 
 				if (timer.RunOnce)
-				{
-					timer.Enabled = false;
-					timer.DeletePending = true;
 					timer.SetActive(false);
-				}
 				else
-				{
 					timer.NextDueTick = Environment.TickCount64 + timer.PeriodMs;
-				}
 
 				timer.RunningCount++;
-			}
-		}
-
-		// A due timer whose priority is lower than the current thread's cannot run yet (a lower-priority thread may
-		// not interrupt a higher-priority one). Re-arm it WITHOUT consuming it — so a run-once timer isn't destroyed
-		// (MarkCallbackStarted would set DeletePending) but instead fires once the higher-priority thread ends. A
-		// run-once retries after a short backoff (it has no period); a periodic waits its normal period. The forward
-		// NextDueTick also keeps the pump from re-serving it in a tight loop.
-		internal void DeferPriorityBlocked(ScriptTimerState timer)
-		{
-			if (timer == null)
-				return;
-
-			lock (gate)
-			{
-				if (disposed)
-					return;
-
-				timer.Queued = false;
-				timer.NextDueTick = Environment.TickCount64 + (timer.RunOnce ? PriorityBlockedRetryMs : timer.PeriodMs);
 			}
 
 			Wake();
@@ -244,6 +210,8 @@ namespace Keysharp.Internals.Threading
 			if (timer == null)
 				return;
 
+			bool wake;
+
 			lock (gate)
 			{
 				if (disposed)
@@ -252,14 +220,18 @@ namespace Keysharp.Internals.Threading
 				if (timer.RunningCount > 0)
 					timer.RunningCount--;
 
-				if (!timer.Enabled && timer.DeletePending && timer.RunningCount == 0 && !timer.Queued)
+				// Preserve a future wait: restarting it at completion can add another coarse timer interval.
+				wake = timer.RunningCount == 0 && (!timer.IsActive || Environment.TickCount64 >= timer.NextDueTick);
+
+				if (!timer.IsActive && timer.RunningCount == 0 && !timer.Queued)
 				{
 					_ = timers.Remove((timer.Callback, timer.OwnerScheduler));
 					ClearTimerState(timer);
 				}
 			}
 
-			Wake();
+			if (wake)
+				Wake();
 		}
 
 		internal void ReleaseQueuedTimer(ScriptTimerState timer)
@@ -273,8 +245,9 @@ namespace Keysharp.Internals.Threading
 					return;
 
 				timer.Queued = false;
+				timer.WakeRequested = false;
 
-				if (!timer.Enabled && timer.DeletePending && timer.RunningCount == 0)
+				if (!timer.IsActive && timer.RunningCount == 0)
 				{
 					_ = timers.Remove((timer.Callback, timer.OwnerScheduler));
 					ClearTimerState(timer);
@@ -301,18 +274,14 @@ namespace Keysharp.Internals.Threading
 					if (!ReferenceEquals(timer.OwnerScheduler, ownerScheduler))
 						continue;
 
-					timer.Enabled = false;
 					timer.SetActive(false);
 
-					if (timer.RunningCount > 0)
+					if (timer.RunningCount == 0)
 					{
-						timer.DeletePending = true;
-						removed = true;
-						continue;
+						_ = timers.Remove((timer.Callback, timer.OwnerScheduler));
+						ClearTimerState(timer);
 					}
 
-					_ = timers.Remove((timer.Callback, timer.OwnerScheduler));
-					ClearTimerState(timer);
 					removed = true;
 				}
 			}
@@ -360,10 +329,7 @@ namespace Keysharp.Internals.Threading
 			wakeEvent.Dispose();
 		}
 
-		// This thread is a WAKER: it does not decide which timers fire or enqueue anything. It finds the next due time
-		// and, when a timer is due, wakes that timer's owner scheduler via WakeForTimerCheck. The scheduler's pump then
-		// runs the due-check itself (EnqueueDueTimers -> EnqueueTimer). Timers that are already Queued or running are
-		// skipped here, so once the pump has enqueued a due timer this loop stops waking for it.
+		// Notify the owner once per due callback. Queued callbacks wait for scheduler admission without polling.
 		private void Run()
 		{
 			var dueOwners = new HashSet<ScriptEventScheduler>();
@@ -372,7 +338,6 @@ namespace Keysharp.Internals.Threading
 			{
 				dueOwners.Clear();
 				var waitMs = Timeout.Infinite;
-				var anyDue = false;
 
 				lock (gate)
 				{
@@ -384,7 +349,11 @@ namespace Keysharp.Internals.Threading
 
 					foreach (var timer in timers.Values)
 					{
-						if (!timer.Enabled || timer.Queued || timer.RunningCount > 0)
+						if (!timer.IsActive || timer.Queued || timer.WakeRequested)
+							continue;
+
+						// Plan the next wake from callback start; an overrun waits for callback completion.
+						if (timer.RunningCount > 0 && now >= timer.NextDueTick)
 							continue;
 
 						if (now < timer.NextDueTick)
@@ -394,17 +363,14 @@ namespace Keysharp.Internals.Threading
 							continue;
 						}
 
-						anyDue = true;
-
 						if (timer.OwnerScheduler != null)
+						{
+							timer.WakeRequested = true;
 							_ = dueOwners.Add(timer.OwnerScheduler);
+						}
 					}
 
-					if (anyDue)
-						// The wake only triggers the pump; until its EnqueueDueTimers marks these Queued they stay due here,
-						// so re-evaluate after a short wait rather than busy-spinning. Once Queued they're skipped above.
-						waitMs = 1;
-					else if (nextDueTick != long.MaxValue)
+					if (nextDueTick != long.MaxValue)
 					{
 						var delay = nextDueTick - now;
 						waitMs = delay >= int.MaxValue ? int.MaxValue : Math.Max(1, (int)delay);
@@ -454,16 +420,20 @@ namespace Keysharp.Internals.Threading
 
 				foreach (var timer in timers.Values)
 				{
-					if (!timer.Enabled || timer.Queued || timer.RunningCount > 0)
+					if (!timer.IsActive || timer.Queued || timer.RunningCount > 0)
 						continue;
 
 					if (!ReferenceEquals(timer.OwnerScheduler, scheduler) || now < timer.NextDueTick)
 						continue;
 
 					timer.Queued = true;
+					timer.WakeRequested = false;
 					buffer.Add(timer);
 				}
 			}
+
+			if (buffer.Count != 0)
+				Wake();
 
 			return buffer;
 		}
@@ -490,10 +460,9 @@ namespace Keysharp.Internals.Threading
 			if (timer == null)
 				return;
 
-			timer.Enabled = false;
 			timer.Queued = false;
+			timer.WakeRequested = false;
 			timer.RunningCount = 0;
-			timer.DeletePending = false;
 			timer.Set(null, null, false);
 		}
 	}

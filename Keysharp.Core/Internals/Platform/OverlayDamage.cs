@@ -9,7 +9,7 @@ namespace Keysharp.Internals
 		/// <summary>The rectangle reported by <see cref="DamageList.Union"/> changed.</summary>
 		Region,
 
-		/// <summary>The whole canvas changed (a Clear, a content replacement, or a resize).</summary>
+		/// <summary>The whole canvas changed (a background change, a content replacement, or a resize).</summary>
 		All
 	}
 

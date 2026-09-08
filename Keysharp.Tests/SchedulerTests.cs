@@ -348,6 +348,51 @@ namespace Keysharp.Tests
 			Assert.That(order, Is.EqualTo(new[] { "N1", "H1" }));
 		}
 
+		[TestCase(false), Category("Threading")]
+		[TestCase(true)]
+		public void LocalBlocksBothQueues(bool includeDispatch)
+		{
+			var context = UseQueuedMainContext();
+			var scheduler = s.EventScheduler;
+			var order = new List<string>();
+			var blocked = true;
+			var attempts = 0;
+
+			ScriptEventExecutionResult TryEntry(string name)
+			{
+				if (blocked)
+				{
+					Assert.Less(++attempts, 16, "A pass must stop after both queues are locally blocked.");
+					return ScriptEventExecutionResult.LocalBlocked;
+				}
+
+				order.Add(name);
+				return ScriptEventExecutionResult.Executed;
+			}
+
+			scheduler.Enqueue(ScriptEventQueue.Interactive, 0, () => TryEntry("hotkey"));
+			scheduler.Enqueue(ScriptEventQueue.Normal, 0, () => TryEntry("timer1"));
+			scheduler.Enqueue(ScriptEventQueue.Normal, 0, () => TryEntry("timer2"));
+
+			if (includeDispatch)
+				scheduler.EnqueueCallback(() => order.Add("dispatch"), ScriptEventQueue.Normal, false);
+
+			// Pump directly so an assertion inside an entry escapes the UI exception boundary.
+			scheduler.PumpThreadQueuedEventsCore();
+			Assert.That(order, Is.EqualTo(includeDispatch ? new[] { "dispatch" } : System.Array.Empty<string>()));
+			Assert.IsTrue(scheduler.HasBlockedQueuedWork);
+
+			blocked = false;
+			scheduler.SchedulePump();
+			context.DrainAll();
+
+			Assert.That(order, Is.EqualTo(includeDispatch
+				? new[] { "dispatch", "hotkey", "timer1", "timer2" }
+				: new[] { "hotkey", "timer1", "timer2" }));
+			Assert.IsFalse(scheduler.HasBlockedQueuedWork);
+			Assert.AreEqual(0, context.PendingCount);
+		}
+
 		[Test, Category("Threading")]
 		public void BlockedLaunchDoesNotStarveDispatch()
 		{

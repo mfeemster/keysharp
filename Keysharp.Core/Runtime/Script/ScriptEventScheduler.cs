@@ -276,6 +276,7 @@ namespace Keysharp.Runtime
 		private int persistentRegistrationCount;
 		private bool blockedQueuedWork;
 		private bool pumpScheduled;
+		private bool timerCheckPending;
 		private int pumpDepth;
 		private readonly bool isUiScheduler;
 		private readonly int ownerManagedThreadId;
@@ -471,8 +472,14 @@ internal bool HasBlockedQueuedWork
 			if (IsDisposed)
 				return;
 
+			lock (gate)
+				timerCheckPending = false;
+
 			foreach (var timer in script.FlowData.timers.TakeDueTimers(this, dueTimerBuffer))
-				_ = EnqueueTimer(timer);
+			{
+				if (!EnqueueTimer(timer))
+					script.FlowData.timers.ReleaseQueuedTimer(timer);
+			}
 		}
 
 		internal bool EnqueueThreadLaunch(long priority, bool skipUninterruptible, bool isCritical, Action action, ThreadKind kind = ThreadKind.None)
@@ -558,7 +565,6 @@ internal bool HasBlockedQueuedWork
 				return;
 
 			bool blocked = false;
-			bool stalledOnLocalBlock = false;
 			var consecutiveInteractiveLocalBlocks = 0;
 			var consecutiveNormalLocalBlocks = 0;
 			var preferNormalOnce = false;
@@ -585,7 +591,7 @@ internal bool HasBlockedQueuedWork
 							blocked = true;
 							continue;
 						case ScriptEventExecutionResult.LocalBlocked:
-							stalledOnLocalBlock = true;
+							blocked = true;
 							return;
 						case ScriptEventExecutionResult.Dropped:
 							return;
@@ -594,7 +600,7 @@ internal bool HasBlockedQueuedWork
 			}
 			finally
 			{
-				EndPump(blocked, stalledOnLocalBlock);
+				EndPump(blocked);
 			}
 		}
 
@@ -632,42 +638,21 @@ internal bool HasBlockedQueuedWork
 					// rather than serving one more entry on the way out.
 					if (script.hasExited || IsDisposed || IsWorkerExitRequested)
 						continue;
-
-					// Then retry. TryBeginPump/EndPump are the only writers of the blocked flag, so a pump is the
-					// only thing that can clear it -- going back to the top without one leaves this loop waiting
-					// for a condition only it can produce. That outlives whatever caused the block: an entry
-					// whose registration is later removed (SetTimer(fn, 0) while it sits parked) can never become
-					// runnable again, and only a pump discovers that and drops it. The worker then spins forever
-					// after its body has returned, so its completion -- published past this loop -- never lands.
-					// The main thread is not exposed: its pump is driven from outside by PostToUIThread, which
-					// does not consult this gate.
-					PumpThreadQueuedEventsCore();
-
-					// Same hand-off the normal path makes below: a pseudo-thread left running on this thread
-					// owns the loop from here.
-					if (script.Threads.ActivePseudoThreadCount > 0)
-						return;
-
-					continue;
 				}
 
-				// The timer waker only signals us (WakeForTimerCheck) when a timer is due; enqueue those due timers
-				// here so the gate below sees them as queued work and we pump them instead of going back to sleep.
-				EnqueueDueTimers();
-
-				if (!HasQueuedEvents())
-				{
-					if (script.Threads.ActivePseudoThreadCount == 0 && Volatile.Read(ref persistentRegistrationCount) == 0)
-						return;
-
-					_ = WaitForWorkerPumpSignal();
-					continue;
-				}
-
+				// Pump after every wake to release the scheduled flag and discard cancelled blocked work.
 				PumpThreadQueuedEventsCore();
 
 				if (script.Threads.ActivePseudoThreadCount > 0)
 					return;
+
+				if (!HasQueuedEvents())
+				{
+					if (Volatile.Read(ref persistentRegistrationCount) == 0)
+						return;
+
+					_ = WaitForWorkerPumpSignal();
+				}
 			}
 		}
 
@@ -699,7 +684,13 @@ internal bool HasBlockedQueuedWork
 		// Wakes this scheduler so its pump runs the timer due-check (EnqueueDueTimers), even when the queue is currently
 		// empty — the timer manager's waker calls this when a timer is due but not yet enqueued. Coalesced via
 		// pumpScheduled, so repeated wakes before the pump runs collapse into one post.
-		internal void WakeForTimerCheck() => SchedulePump(requireQueued: false);
+		internal void WakeForTimerCheck()
+		{
+			lock (gate)
+				timerCheckPending = true;
+
+			SchedulePump(requireQueued: false);
+		}
 
 		private void SchedulePump(bool requireQueued)
 		{
@@ -739,9 +730,9 @@ internal bool HasBlockedQueuedWork
 			}
 		}
 
-		private void EndPump(bool blocked, bool stalledOnLocalBlock)
+		private void EndPump(bool blocked)
 		{
-			var isOuterPump = false;
+			bool checkTimers;
 
 			lock (gate)
 			{
@@ -750,11 +741,14 @@ internal bool HasBlockedQueuedWork
 				if (pumpDepth != 0)
 					return;
 
-				isOuterPump = true;
-				blockedQueuedWork = blocked || stalledOnLocalBlock;
+				blockedQueuedWork = blocked;
+				checkTimers = timerCheckPending;
 			}
 
-			if (isOuterPump && !blocked && !stalledOnLocalBlock)
+			// A timer notification can arrive after this pass's due-check, including during a callback.
+			if (checkTimers)
+				SchedulePump(requireQueued: false);
+			else if (!blocked)
 				SchedulePump();
 		}
 
@@ -852,25 +846,16 @@ internal bool HasBlockedQueuedWork
 			}
 
 			if (queueType == ScriptEventQueue.Interactive)
-			{
 				consecutiveInteractiveLocalBlocks++;
-				consecutiveNormalLocalBlocks = 0;
+			else
+				consecutiveNormalLocalBlocks++;
 
-				// If every currently queued interactive event is only locally blocked, allow normal
-				// queued work to proceed rather than stalling the entire pump behind one hotkey/hotstring.
-				if (normalCount != 0 && consecutiveInteractiveLocalBlocks >= interactiveCount)
-				{
-					consecutiveInteractiveLocalBlocks = 0;
-					preferNormalOnce = true;
-					return false;
-				}
+			var interactiveBlocked = consecutiveInteractiveLocalBlocks >= interactiveCount;
+			var normalBlocked = consecutiveNormalLocalBlocks >= normalCount;
 
-				return consecutiveInteractiveLocalBlocks >= interactiveCount;
-			}
-
-			consecutiveNormalLocalBlocks++;
-			consecutiveInteractiveLocalBlocks = 0;
-			return consecutiveNormalLocalBlocks >= normalCount;
+			// Keep each queue's progress while checking the other, so two blocked queues finish a pass.
+			preferNormalOnce = interactiveBlocked && !normalBlocked;
+			return interactiveBlocked && normalBlocked;
 		}
 
 		private bool HasQueuedEvents()
@@ -934,7 +919,7 @@ internal bool HasBlockedQueuedWork
 				var callback = timer.Callback;
 				var timerRegistration = timers.Find(callback, timer.OwnerScheduler);
 
-				if (!ReferenceEquals(timerRegistration, timer) || callback == null || !timer.Enabled)
+				if (!ReferenceEquals(timerRegistration, timer) || callback == null || !timer.IsActive)
 				{
 					timers.ReleaseQueuedTimer(timer);
 					return ScriptEventExecutionResult.Dropped;
@@ -958,21 +943,16 @@ internal bool HasBlockedQueuedWork
 				if (!threads.AnyThreadsAvailable() || !threads.IsInterruptible() || script.IsMenuVisible)
 					return ScriptEventExecutionResult.GlobalBlocked;
 
-				// Timers are disabled (A_AllowTimers) but other, non-timer queued work may still run, so drop just this
-				// timer and let the pump continue. The timer thread reschedules it once timers are re-enabled.
-				if (!threads.AllowTimers && script.totalExistingThreads > 0)
+				// Keep the overdue callback queued while other eligible events continue. Admission changes and
+				// pseudo-thread completion wake the scheduler without resetting the timer or polling its owner.
+				if ((!threads.AllowTimers && script.totalExistingThreads > 0)
+					|| timer.Priority < threads.CurrentThread.priority)
+					return ScriptEventExecutionResult.LocalBlocked;
+
+				// SetTimer can reset a callback which is already parked in this queue.
+				if (Environment.TickCount64 < timer.NextDueTick)
 				{
 					timers.ReleaseQueuedTimer(timer);
-					return ScriptEventExecutionResult.Dropped;
-				}
-
-				// Per-event priority admission (the global conditions were handled above): a lower-priority timer may
-				// not interrupt a higher-priority current thread. Defer it (re-arm, NOT consume) so a run-once timer is
-				// preserved and fires once the higher thread ends — the forward NextDueTick avoids a tight re-serve
-				// loop — then drop THIS event so the pump keeps serving other (possibly higher-priority) queued work.
-				if (timer.Priority < threads.CurrentThread.priority)
-				{
-					timers.DeferPriorityBlocked(timer);
 					return ScriptEventExecutionResult.Dropped;
 				}
 

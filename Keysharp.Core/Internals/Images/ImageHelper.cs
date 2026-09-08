@@ -781,12 +781,11 @@ namespace Keysharp.Internals.Images
 		}
 
 		/// <summary>
-		/// Overwrites every pixel of <paramref name="bmp"/> with <paramref name="argb"/> without replacing the
-		/// bitmap. A live Overlay canvas is presented from these exact pixels, so a clear must not hand back a
-		/// different surface. Fully transparent — the common case, once a frame — takes a straight memory wipe
-		/// rather than a GDI+/Cairo fill.
+		/// Restores the background in <paramref name="region"/> without replacing the bitmap. Pixels outside
+		/// the region must already have <paramref name="argb"/>. Windows transparent clears wipe just these rows;
+		/// other paths can clear the full bitmap with the same result.
 		/// </summary>
-		internal static void ClearInPlace(Bitmap bmp, int argb)
+		internal static void ClearInPlace(Bitmap bmp, int argb, PixelRect region)
 		{
 			if (bmp == null)
 				return;
@@ -794,17 +793,21 @@ namespace Keysharp.Internals.Images
 #if WINDOWS
 			if (((uint)argb >> 24) == 0)
 			{
-				var data = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height), ImageLockMode.WriteOnly, bmp.PixelFormat);
+				var data = bmp.LockBits(new Rectangle(region.X, region.Y, region.Width, region.Height), ImageLockMode.WriteOnly, bmp.PixelFormat);
 
 				try
 				{
 					unsafe
 					{
-						// Stride can exceed the row's pixels and may be negative for a bottom-up bitmap; Scan0
-						// then points at the last row, so walk from the lowest address either way.
 						var stride = Math.Abs(data.Stride);
-						var start = data.Stride < 0 ? (byte*)data.Scan0 - (long)stride * (data.Height - 1) : (byte*)data.Scan0;
-						NativeMemory.Clear(start, (nuint)((long)stride * data.Height));
+						var rowBytes = data.Width * 4;
+						var start = data.Stride < 0 ? (byte*)data.Scan0 + (long)data.Stride * (data.Height - 1) : (byte*)data.Scan0;
+
+						if (stride == rowBytes)
+							NativeMemory.Clear(start, (nuint)((long)stride * data.Height));
+						else
+							for (var row = 0; row < data.Height; row++)
+								NativeMemory.Clear(start + (long)row * stride, (nuint)rowBytes);
 					}
 				}
 				finally
@@ -817,6 +820,7 @@ namespace Keysharp.Internals.Images
 
 #endif
 			using var g = MakeGraphics(bmp, highQuality: false);
+			// Outside region the pixels already have this color; a full clear is equivalent.
 			g.Clear(ArgbToColor(argb));
 		}
 

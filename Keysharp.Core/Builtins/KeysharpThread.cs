@@ -60,7 +60,7 @@ namespace Keysharp.Builtins
 			if (string.Compare(sf, "notimers", true) == 0)
 				script.Threads.AllowTimers = !(Options.OnOff(value1.As()) ?? false);
 			else if (string.Compare(sf, "priority", true) == 0)
-				script.Threads.CurrentThread.priority = value1.Al();
+				script.Threads.SetPriority(script.Threads.CurrentThread, value1.Al());
 			else if (string.Compare(sf, "interrupt", true) == 0)
 				script.uninterruptibleTime = value1.Ai(script.uninterruptibleTime);
 
@@ -110,7 +110,7 @@ namespace Keysharp.Builtins
 		public object Priority
 		{
 			get => Live().priority;
-			set => Mutable().priority = value.Al();
+			set => manager.Owner.Threads.SetPriority(Mutable(), value.Al());
 		}
 
 		/// <summary>

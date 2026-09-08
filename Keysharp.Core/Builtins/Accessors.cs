@@ -1978,7 +1978,7 @@ namespace Keysharp.Builtins
 				{
 					if (timer.Callback is KeysharpFunc func)
 					{
-						timerData.AddRange(func, timer.Enabled);
+						timerData.AddRange(func, timer.IsActive);
 					}
 				}
 

@@ -86,6 +86,9 @@ namespace Keysharp.Builtins
 			//
 			// Presentation damage is independent of whether drawing is eager.
 			private DamageList damage;
+			// Content survives Present; damage only survives until the next successful Present.
+			private DamageList drawn;
+			private int? clearColor;
 
 			// Keeps a borrowed canvas's owner reachable for as long as a script retains the canvas view.
 			// Destroy still disposes the surface and invalidates the view immediately.
@@ -101,6 +104,7 @@ namespace Keysharp.Builtins
 			public object ToClr()
 			{
 				ThrowIfDisposed();
+				drawn = null; // External bitmap writes cannot be bounded by our drawing operations.
 				return ManagedInvoke.WrapManaged(PrepareForRead());
 			}
 
@@ -113,6 +117,7 @@ namespace Keysharp.Builtins
 			// pens. Every lease resets the accumulated transform before applying drawScale.
 			private Graphics liveGraphics;
 			private Bitmap liveGraphicsFor;
+			private bool liveHighQuality;
 			private Dictionary<int, SolidBrush> brushCache;
 			private Dictionary<(int argb, float width), Pen> penCache;
 
@@ -165,10 +170,12 @@ namespace Keysharp.Builtins
 						ReleaseLiveGraphics();
 						liveGraphics = ImageHelper.MakeGraphics(b, highQuality);
 						liveGraphicsFor = b;
+						liveHighQuality = highQuality;
 					}
-					else
+					else if (liveHighQuality != highQuality)
 					{
 						ImageHelper.ConfigureGraphics(liveGraphics, highQuality);
+						liveHighQuality = highQuality;
 					}
 
 					g = liveGraphics;
@@ -332,11 +339,17 @@ namespace Keysharp.Builtins
 				// too much, so an unusable bound means the whole surface.
 				if (!double.IsFinite(left) || !double.IsFinite(top) || !double.IsFinite(right) || !double.IsFinite(bottom))
 				{
-					damage.AddAll();
+					DamageAll();
 					return;
 				}
 
-				damage.Add(PixelRect.FromBounds(left, top, right, bottom, pad, new PixelSize(b.Width, b.Height)));
+				Damage(PixelRect.FromBounds(left, top, right, bottom, pad, new PixelSize(b.Width, b.Height)));
+			}
+
+			private void Damage(PixelRect rect)
+			{
+				damage?.Add(rect);
+				drawn?.Add(rect);
 			}
 
 			// Same, for the two-point ops that have no rectangle of their own. Built from a corner and a size
@@ -355,6 +368,7 @@ namespace Keysharp.Builtins
 					return;
 
 				damage.AddAll();
+				drawn?.AddAll();
 			}
 
 
@@ -845,13 +859,25 @@ namespace Keysharp.Builtins
 				// allocation on every animation frame.
 				if (eagerDraw)
 				{
-					ReleaseLiveGraphics();
-					QueueDraw(b =>
+					var partial = clearColor == argb && drawn != null && drawn.Kind != DamageKind.All;
+					var region = partial ? drawn.Union() : new PixelRect(0, 0, baseBitmap.Width, baseBitmap.Height);
+
+					if (!region.IsEmpty)
 					{
-						ImageHelper.ClearInPlace(b, argb);
-						return b;
-					});
-					DamageAll();
+						ReleaseLiveGraphics();
+						QueueDraw(b =>
+						{
+							ImageHelper.ClearInPlace(b, argb, region);
+							return b;
+						});
+						if (partial)
+							damage?.Add(region);
+						else
+							damage?.AddAll();
+					}
+
+					clearColor = argb;
+					drawn?.Reset();
 					return this;
 				}
 
@@ -1214,26 +1240,25 @@ namespace Keysharp.Builtins
 			public object DrawImage(object image, object x = null, object y = null, object width = null, object height = null)
 			{
 				ThrowIfDisposed();
-				var (source, _, _) = LoadFromSource(image);
+				// Immediate draws can borrow a different image. Queued draws and self-draws need a snapshot.
+				var borrowed = eagerDraw && image is KeysharpImage && !ReferenceEquals(image, this);
+				var source = borrowed ? ((KeysharpImage)image).PrepareForRead() : LoadFromSource(image).bmp;
 
 				if (source == null)
 					return Errors.ValueErrorOccurred("DrawImage source must be an Image, file path, or bitmap handle.");
 
-				var px = x.Ad(0.0);
-				var py = y.Ad(0.0);
-				var requestedW = width == null ? source.Width : width.Ad();
-				var requestedH = height == null ? source.Height : height.Ad();
-
-				if (requestedW <= 0 || requestedH <= 0)
-				{
-					source.Dispose();
-					return this;
-				}
-
-				var retained = false;
+				var ownedSource = borrowed ? null : source;
 
 				try
 				{
+					var px = x.Ad(0.0);
+					var py = y.Ad(0.0);
+					var requestedW = width == null ? source.Width : width.Ad();
+					var requestedH = height == null ? source.Height : height.Ad();
+
+					if (requestedW <= 0 || requestedH <= 0)
+						return this;
+
 					QueueDraw(b =>
 					{
 						using var gl = DrawG(b);
@@ -1251,13 +1276,13 @@ namespace Keysharp.Builtins
 					if (!eagerDraw)
 					{
 						pendingResources.Add(source);
-						retained = true;
+						ownedSource = null;
 					}
 				}
 				finally
 				{
-					if (!retained)
-						source.Dispose();
+					ownedSource?.Dispose();
+					GC.KeepAlive(image);
 				}
 
 				return this;
@@ -1608,7 +1633,7 @@ namespace Keysharp.Builtins
 				// In canvas pixels already, so it bypasses Damage()'s draw-unit scaling. The one pixel is
 				// reported as a 1x1 rect; without this it is the only mutating op that changes a presented
 				// surface without saying so.
-				damage?.Add(PixelRect.FromEdges(px, py, px + 1, py + 1));
+				Damage(PixelRect.FromEdges(px, py, px + 1, py + 1));
 
 				return this;
 			}
@@ -2310,6 +2335,7 @@ namespace Keysharp.Builtins
 					// Shared with the surface, not owned: the backing reads it to decide what to transfer, and
 					// clears it only once a present has actually reached the screen.
 					damage = surface.Damage,
+					drawn = new DamageList(),
 				};
 			}
 
@@ -2366,7 +2392,7 @@ namespace Keysharp.Builtins
 					try { result = op(baseBitmap); }   // in-place ops mutate and return baseBitmap
 					catch
 					{
-						damage?.AddAll();
+						DamageAll();
 						throw;
 					}
 

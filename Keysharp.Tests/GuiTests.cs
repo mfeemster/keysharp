@@ -262,9 +262,35 @@ namespace Keysharp.Tests
 			Assert.AreEqual(DamageKind.Region, surface.Damage.Kind, "many draws stay one region");
 
 			_ = canvas.Clear();
-			Assert.AreEqual(DamageKind.All, surface.Damage.Kind, "a clear changes every pixel");
+			Assert.AreEqual(DamageKind.All, surface.Damage.Kind, "the first clear establishes the background");
 			surface.Damage.Reset();
 			Assert.AreEqual(DamageKind.None, surface.Damage.Kind);
+
+			_ = canvas.FillRect(10L, 10L, 20L, 20L, "Red");
+			surface.Damage.Reset();
+			_ = canvas.SetPixel(150L, 75L, "Blue");
+			surface.Damage.Reset();
+			_ = canvas.Clear();
+			Assert.AreEqual(DamageKind.Region, surface.Damage.Kind);
+			var erased = surface.Damage.Union();
+			Assert.IsTrue(erased.X <= 10 && erased.Y <= 10 && erased.Right >= 151 && erased.Bottom >= 76,
+				"Clear must include content from every present since the previous clear");
+			Assert.IsTrue(erased.Width < 200 && erased.Height < 100);
+			Assert.AreEqual(0L, canvas.GetPixel(20L, 20L));
+			Assert.AreEqual(0L, canvas.GetPixel(150L, 75L));
+			_ = canvas.FillRect(175L, 80L, 10L, 10L, "Red");
+			Assert.IsTrue(surface.Damage.Union().Right >= 185, "new content joins the erased region");
+			_ = canvas.Clear();
+			surface.Damage.Reset();
+			_ = canvas.Clear();
+			Assert.AreEqual(DamageKind.None, surface.Damage.Kind, "clearing an unchanged background does no work");
+
+			_ = canvas.Clear("Blue");
+			Assert.AreEqual(DamageKind.All, surface.Damage.Kind, "changing background affects every pixel");
+			surface.Damage.Reset();
+			_ = canvas.ToClr();
+			_ = canvas.Clear("Blue");
+			Assert.AreEqual(DamageKind.All, surface.Damage.Kind, "an exposed bitmap can be modified outside drawing bounds");
 		}
 
 		// Redraw builds a replacement surface and draws only part of it. If that surface were handed to a

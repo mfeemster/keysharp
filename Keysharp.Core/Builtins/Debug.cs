@@ -197,7 +197,7 @@ namespace Keysharp.Builtins
 
 			foreach (var timer in script.FlowData.timers.GetSnapshot())
 			{
-				if (timer.Enabled)
+				if (timer.IsActive)
 				{
 					enabledTimers++;
 					_ = sb.Append($"{timer.Callback?.Name} ");

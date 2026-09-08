@@ -20,5 +20,26 @@ namespace Keysharp.Tests
 
 		[Test, Category("Threading")]
 		public void CallbackSleep() => Assert.IsTrue(TestScript("timer-during-callback-sleep", false));
+
+		[Test, Category("Threading")]
+		public void BlockedAdmission() => Assert.IsTrue(TestScript("timer-blocked-admission", false));
+
+		[Test, Category("Threading"), Category("Internal")]
+		public void NotificationDuringPump()
+		{
+			var context = UseQueuedMainContext();
+			var scheduler = s.EventScheduler;
+			scheduler.EnqueueCallback(() =>
+			{
+				scheduler.WakeForTimerCheck();
+				scheduler.WakeForTimerCheck();
+			});
+
+			scheduler.PumpThreadQueuedEventsCore();
+			// The original post is still in the test transport; the active pass must add one follow-up.
+			Assert.AreEqual(2, context.PendingCount);
+			context.DrainAll();
+			Assert.AreEqual(0, context.PendingCount);
+		}
 	}
 }

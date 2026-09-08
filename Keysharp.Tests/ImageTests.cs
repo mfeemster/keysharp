@@ -1,4 +1,5 @@
 using Keysharp.Internals;
+using Keysharp.Internals.Images;
 using Assert = NUnit.Framework.Legacy.ClassicAssert;
 
 namespace Keysharp.Tests
@@ -56,6 +57,43 @@ namespace Keysharp.Tests
 			using var snapshot = new Bitmap(surface.PrepareForRead());
 			Assert.AreEqual(expected, (uint)snapshot.GetPixel(1, 1).ToArgb());
 		}
+
+#if WINDOWS
+		[TestCase(1), TestCase(-1), Category("Image"), Category("Internal")]
+		public void RegionalClearStride(int direction)
+		{
+			const int width = 7, height = 5, stride = 40, guard = 16;
+			var expected = Enumerable.Repeat((byte)0xA5, guard * 2 + stride * height).ToArray();
+			var memory = Marshal.AllocHGlobal(expected.Length);
+
+			try
+			{
+				Marshal.Copy(expected, 0, memory, expected.Length);
+				var firstRow = memory + guard + (direction < 0 ? stride * (height - 1) : 0);
+				using var bitmap = new Bitmap(width, height, direction * stride,
+					System.Drawing.Imaging.PixelFormat.Format32bppPArgb, firstRow);
+				var region = new PixelRect(2, 1, 3, 2);
+				ImageHelper.ClearInPlace(bitmap, 0, region);
+
+				for (var y = region.Y; y < region.Bottom; y++)
+				{
+					var row = direction > 0 ? y : height - 1 - y;
+					expected.AsSpan(guard + row * stride + region.X * 4, region.Width * 4).Clear();
+				}
+
+				var actual = new byte[expected.Length];
+				Marshal.Copy(memory, actual, 0, actual.Length);
+
+				// Include surrounding pixels, row padding and allocation guards in the comparison.
+				for (var i = 0; i < actual.Length; i++)
+					Assert.AreEqual(expected[i], actual[i], $"byte {i}, stride {direction * stride}");
+			}
+			finally
+			{
+				Marshal.FreeHGlobal(memory);
+			}
+		}
+#endif
 
 #if LINUX
 		[Test, Category("Image"), Category("Internal")]

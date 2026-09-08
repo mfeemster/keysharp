@@ -38,7 +38,19 @@ namespace Keysharp.Internals.Threading
 			{
 				if (CurrentThread is { } tv)
 					tv.configData.allowTimers = value;
+
+				if (value)
+					script.CurrentSchedulerIfCreated?.WakeForTimerCheck();
 			}
+		}
+
+		internal void SetPriority(ThreadVariables target, long value)
+		{
+			var previous = target.priority;
+			target.priority = value;
+
+			if (value < previous)
+				script.CurrentSchedulerIfCreated?.WakeForTimerCheck();
 		}
 
 		internal Threads(Script script)
