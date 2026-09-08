@@ -32,10 +32,10 @@ namespace Keysharp.Internals.Window
 		: EventManagerBase<MonitorEventRegistration, IMonitorEventBackend, MonitorEventManager.Payload>(script)
 	{
 		/// <summary>The set of attached monitors changed — one was plugged in, unplugged, or the session docked.</summary>
-		internal const string KindTopology = "topology";
+		internal const string KindTopology = "Topology";
 		/// <summary>The same monitors are attached, but something about them changed — resolution, position,
 		/// scale or which one is primary.</summary>
-		internal const string KindSettings = "settings";
+		internal const string KindSettings = "Settings";
 
 		/// <summary>What a classified change carries to the callback: the monitor count after it. A plain long, so
 		/// nothing is allocated to reach <c>A_EventInfo</c>.</summary>

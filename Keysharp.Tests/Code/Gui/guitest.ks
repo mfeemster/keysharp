@@ -3655,7 +3655,7 @@ vcpStatus := MyGui.AddText("xc+16 y+10 w508 h24", "VCP: not read")
 gStatus["monitor_vcp"] := vcpStatus
 MyGui.AddText("xc+16 y+6 w508 h28", "Writing an input-source or power code will switch the monitor away from this computer. Verify a code against the monitor's own documentation first.")
 
-MyGui.AddText("xc+16 y+14 w508 h44", "Monitor.OnChange subscribes to display-configuration changes. After starting, plug or unplug a monitor (or dock/undock) for a 'topology' event, and change resolution, scale, arrangement or the primary monitor for a 'settings' event. The list above refreshes itself on every event.")
+MyGui.AddText("xc+16 y+14 w508 h44", "Monitor.OnChange subscribes to display-configuration changes. After starting, plug or unplug a monitor (or dock/undock) for a 'Topology' event, and change resolution, scale, arrangement or the primary monitor for a 'Settings' event. The list above refreshes itself on every event.")
 btnStartMonitorChange := MyGui.AddButton("xc+16 y+8 w200 h28", "Start Monitor Change Probe")
 btnStartMonitorChange.OnEvent("Click", (*) => StartMonitorChangeProbe())
 btnStopMonitorChange := MyGui.AddButton("x+10 yp w200 h28", "Stop Monitor Change Probe")
@@ -4280,7 +4280,7 @@ RefreshSelectedMonitor() {
 		return
 
 	; Refresh() returns falsy when this monitor has been unplugged since the object was built, which is the
-	; state a Monitor.OnChange "topology" handler is in — it reports the loss instead of throwing.
+	; state a Monitor.OnChange "Topology" handler is in — it reports the loss instead of throwing.
 	if (!m.Refresh()) {
 		SetStatus("monitor_list", "Monitors: monitor " m.Index " (" m.Name ") is no longer attached")
 		AppendLog("Monitor.Refresh() reported monitor " m.Index " (" m.Name ") as detached.")
@@ -4458,8 +4458,8 @@ VcpCode() {
 }
 
 ; Monitor.OnChange cannot be exercised by a unit test — it needs a real display reconfiguration — so it gets a
-; manual probe. Start it, then plug/unplug a monitor (or dock/undock) to see "topology", and change resolution,
-; scale, arrangement or the primary monitor to see "settings".
+; manual probe. Start it, then plug/unplug a monitor (or dock/undock) to see "Topology", and change resolution,
+; scale, arrangement or the primary monitor to see "Settings".
 StartMonitorChangeProbe() {
 	global gMonitorHook, gMonitorChangeCount
 
@@ -4470,7 +4470,7 @@ StartMonitorChangeProbe() {
 		gMonitorHook := Monitor.OnChange(OnMonitorChange)
 		SetStatus("monitor_change", "Monitor.OnChange: watching — now re-plug a monitor or change resolution")
 		AppendLog("Monitor.OnChange probe started with " Monitor.Count " monitor(s). Plug/unplug a display for "
-			. "'topology'; change resolution, scale, arrangement or the primary display for 'settings'.")
+			. "'Topology'; change resolution, scale, arrangement or the primary display for 'Settings'.")
 	} catch as err {
 		SetStatus("monitor_change", "Monitor.OnChange: BLOCKED/ERROR")
 		AppendLog("Monitor.OnChange probe failed: " err.Message)

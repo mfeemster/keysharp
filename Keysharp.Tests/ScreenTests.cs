@@ -8,6 +8,9 @@ namespace Keysharp.Tests
 {
 	public partial class ScreenTests : TestRunner
 	{
+		[Test, Category("Screen"), Category("Curated")]
+		public void ImageSearchOptions() => Assert.IsTrue(TestScript("screen-imagesearch-options", false));
+
 		[Test, Category("Screen")]
 		public void ImageSearch()
 		{

@@ -29,7 +29,8 @@ namespace Keysharp.Builtins
 
 				/// <summary>
 				/// Configures a recorder without touching the device. Every bound is checked here, so a bad option
-				/// is a ValueError before anything is opened.
+				/// is a ValueError before anything is opened. Source defaults to "Microphone" and SampleFormat to
+				/// "Signed16"; their tokens are matched without regard to case.
 				/// </summary>
 				public object __New(object Source = null, object Path = null, object Device = null,
 									object SampleRate = null, object Channels = null, object SampleFormat = null,
@@ -43,7 +44,7 @@ namespace Keysharp.Builtins
 					else if (string.Equals(sourceText, "SystemOutput", StringComparison.OrdinalIgnoreCase))
 						source = Engine.AudioCaptureSource.SystemOutput;
 					else
-						return Errors.ValueErrorOccurred($"Source must be \"Microphone\" or \"SystemOutput\", not {sourceText}.");
+						return Errors.ValueErrorOccurred($"Unknown Source \"{sourceText}\". Expected Microphone or SystemOutput.");
 
 					configuredPath = Path.As();
 
@@ -81,7 +82,7 @@ namespace Keysharp.Builtins
 						formatToken = Engine.AudioFormats.Signed16;
 
 					if (!Engine.AudioFormats.TryResolve(formatToken, out format, out _))
-						return Errors.ValueErrorOccurred($"SampleFormat must be one of Unsigned8, Signed16, Signed24, Signed32 or Float32, not {formatToken}.");
+						return Errors.ValueErrorOccurred($"Unknown SampleFormat \"{formatToken}\". Expected Unsigned8, Signed16, Signed24, Signed32 or Float32.");
 
 					chunkMs = ChunkMilliseconds == null ? 100L : ChunkMilliseconds.Al();
 
@@ -106,6 +107,7 @@ namespace Keysharp.Builtins
 					return DefaultObject;
 				}
 
+				/// <summary>"Microphone" or "SystemOutput".</summary>
 				public string Source => source == Engine.AudioCaptureSource.SystemOutput ? "SystemOutput" : "Microphone";
 
 				public object Device
@@ -135,6 +137,7 @@ namespace Keysharp.Builtins
 
 				public object Channels => (long)(core?.Channels ?? channels);
 
+				/// <summary>"Unsigned8", "Signed16", "Signed24", "Signed32" or "Float32".</summary>
 				public string SampleFormat => format;
 
 				public object ChunkMilliseconds => chunkMs;
@@ -318,6 +321,7 @@ namespace Keysharp.Builtins
 
 				public object Channels => (long)channels;
 
+				/// <summary>"Float32" for an in-memory result; otherwise the recorder's configured SampleFormat.</summary>
 				public string SampleFormat => format;
 
 				public override string ToString() => "Audio.Recording";

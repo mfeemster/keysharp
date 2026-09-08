@@ -1717,7 +1717,13 @@ namespace Keysharp.Builtins
 			}
 
 			if (ctrl == null)
-				return Errors.ValueErrorOccurred($"Invalid control type: {type}.");
+			{
+				var controlTypes = "Text, Edit, RichEdit, UpDown, Pic, Picture, Button, CheckBox, Radio, ComboBox, DropDownList, DDL, ListBox, ListView, TreeView, Link, Hotkey, DateTime, MonthCal, Slider, Progress, GroupBox, Tab, Tab2, Tab3, StatusBar, WebView";
+#if WINDOWS
+				controlTypes += ", ActiveX, Custom";
+#endif
+				return Errors.ValueErrorOccurred($"Invalid control type: {type}. Expected {controlTypes}.");
+			}
 
 			if (opts.name != null)
 				ctrl.Name = opts.name;

@@ -553,7 +553,10 @@ namespace Keysharp.Builtins
 			var e = obj0.As();
 			var h = obj1;
 			var i = obj2.Al(1);
-			e = e.ToLower();
+			e = e.ToLowerInvariant();
+			if (e is not ("close" or "contextmenu" or "dropfiles" or "dpichange" or "dpichanged" or "escape" or "size"))
+				return Errors.ValueErrorOccurred($"Unknown EventName \"{Errors.Describe(obj0)}\". Expected Close, ContextMenu, DropFiles, DpiChange, DpiChanged, Escape or Size.", obj0);
+
 			var del = ResolveHandler(h, eventObj);
 
 			// ModifyEventHandlers ignores a null delegate, so a callback that did not resolve would otherwise

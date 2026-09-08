@@ -99,14 +99,28 @@ namespace Keysharp.Builtins
 
 			// ---- instance surface ----------------------------------------------------------------------------
 
-			/// <summary>The event type this subscription listens for (e.g. "Active", "Move"). Survives Stop — it
-			/// describes the subscription, not its state.</summary>
-			public string EventType => sub is WinEventRegistration reg ? reg.type.ToString() : "";
+			/// <summary>The event this subscription listens for: "Active", "Exist", "NotExist", "Move",
+			/// "Minimize", "Restore", "TitleChange" or "CaretMove". Survives Stop because it describes the
+			/// subscription, not its state.</summary>
+			public string EventType => sub is WinEventRegistration reg ? EventTypeName(reg.type) : "";
 
 			// Status, IsActive, Count, Paused, Pause, Stop and __Delete come from Ks.EventHook. The manager-wide
 			// WinEvent.Paused folds into Status through WinEventRegistration.Suppressed.
 
 			// ---- helpers -------------------------------------------------------------------------------------
+
+			private static string EventTypeName(WindowEventType type) => type switch
+			{
+				WindowEventType.Active => "Active",
+				WindowEventType.Exist => "Exist",
+				WindowEventType.NotExist => "NotExist",
+				WindowEventType.Move => "Move",
+				WindowEventType.Minimize => "Minimize",
+				WindowEventType.Restore => "Restore",
+				WindowEventType.TitleChange => "TitleChange",
+				WindowEventType.CaretMove => "CaretMove",
+				_ => (string)Errors.ErrorOccurred($"Unknown window event type \"{type}\". Expected Active, Exist, NotExist, Move, Minimize, Restore, TitleChange or CaretMove.", DefaultErrorString)
+			};
 
 			private static object Subscribe(WindowEventType type, object callback, object winTitle, object winText, object excludeTitle, object excludeText, object count)
 			{
@@ -120,7 +134,7 @@ namespace Keysharp.Builtins
 				if (!EventSubscriptionBase.IsValidCount(remaining))
 					return Errors.ValueErrorOccurred(EventSubscriptionBase.CountErrorMessage, remaining);
 
-				_ = Script.TheScript.Permissions.EnsureWindowMonitoring(operation: $"WinEvent.{type}");
+				_ = Script.TheScript.Permissions.EnsureWindowMonitoring(operation: $"WinEvent.{EventTypeName(type)}");
 				var criteria = BuildCriteria(winTitle, winText, excludeTitle, excludeText);
 				var script = Script.TheScript;
 				var manager = script.WinEventManager;

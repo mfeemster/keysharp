@@ -90,14 +90,23 @@ namespace Keysharp.Builtins
 		/// <c>"Event"</c> covers every registered handler — GUI events, menu items, OnExit, OnClipboardChange —
 		/// because they all dispatch through one registry.
 		/// </summary>
-		public string Kind
+		public string Kind => Live().kind switch
 		{
-			get
-			{
-				var value = Live().kind;
-				return value == ThreadKind.None ? "" : value.ToString();
-			}
-		}
+			ThreadKind.None => "",
+			ThreadKind.Auto => "Auto",
+			ThreadKind.Hotkey => "Hotkey",
+			ThreadKind.Hotstring => "Hotstring",
+			ThreadKind.Timer => "Timer",
+			ThreadKind.Event => "Event",
+			ThreadKind.Message => "Message",
+			ThreadKind.Callback => "Callback",
+			ThreadKind.Input => "Input",
+			ThreadKind.WinEvent => "WinEvent",
+			ThreadKind.Com => "Com",
+			ThreadKind.Clr => "Clr",
+			ThreadKind.RealThread => "RealThread",
+			var kind => (string)Errors.ErrorOccurred($"Unknown thread launch kind \"{kind}\". Expected Auto, Hotkey, Hotstring, Timer, Event, Message, Callback, Input, WinEvent, Com, Clr, RealThread or an empty string.", DefaultErrorString)
+		};
 
 		/// <summary>Milliseconds elapsed since this thread was launched.</summary>
 		public long Elapsed => Environment.TickCount64 - Live().threadStartTick;

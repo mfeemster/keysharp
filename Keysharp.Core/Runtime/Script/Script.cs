@@ -1097,7 +1097,14 @@ namespace Keysharp.Runtime
 		internal string GetGuiTheme()
 		{
 #if WINDOWS
-			return InvokeOnUIThread(() => Application.ColorMode.ToString());
+			var theme = InvokeOnUIThread(() => Application.ColorMode);
+			return theme switch
+			{
+				System.Windows.Forms.SystemColorMode.Classic => "Classic",
+				System.Windows.Forms.SystemColorMode.System => "System",
+				System.Windows.Forms.SystemColorMode.Dark => "Dark",
+				_ => (string)Errors.ErrorOccurred($"Unknown GUI theme \"{theme}\". Expected Classic, System or Dark.", DefaultErrorString)
+			};
 #else
 			var app = Application.Instance;
 

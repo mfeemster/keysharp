@@ -61,7 +61,7 @@ namespace Keysharp.Builtins.COM
 			if (string.Equals(what, "Path", StringComparison.OrdinalIgnoreCase))
 				return co.path;
 
-			return Errors.ValueErrorOccurred($"Unknown ComObjType request '{what}'.");
+			return Errors.ValueErrorOccurred($"Unknown ComObjType request '{what}'. Expected IID, Name, Path, or an empty string.");
 		}
 
 		/// <summary>Subscribes every signal the object publishes; pass no sink to disconnect.</summary>

@@ -315,8 +315,8 @@ namespace Keysharp.Internals.Strings
 
 		/// <summary>
 		/// Parses a CaseSense option the way <c>Map.CaseSense</c> spells it, which is also the spelling
-		/// <c>Json.Decode</c> takes. Returns null for anything that is neither on/off nor "locale", leaving
-		/// the caller to choose between a default and an error -- Map keeps its previous mode, Json raises.
+		/// <c>Json.Decode</c> takes. Returns null for anything that is neither on/off nor "locale".
+		/// Map and Json reject an unrecognized value without changing an existing mode.
 		/// </summary>
 		/// <param name="option">The option as the script supplied it.</param>
 		/// <returns>The mode, or null if option named none.</returns>
@@ -342,12 +342,25 @@ namespace Keysharp.Internals.Strings
 			_ => StringComparer.CurrentCultureIgnoreCase,
 		};
 
-		internal static StringComparison ParseComparisonOption(object option) => option.ToString().Trim().ToLowerInvariant() switch
-	{
-			"1" or TrueTxt or Keyword_On => StringComparison.Ordinal,
-			Keyword_Locale => StringComparison.CurrentCulture,
-			_ => StringComparison.OrdinalIgnoreCase,
-	};
+		internal static StringComparison ParseComparisonOption(object option, string additionalDiagnosticChoice = null)
+		{
+			var text = option.As().AsSpan().Trim();
+
+			if (text.Equals("1", StringComparison.Ordinal) || text.Equals(TrueTxt, StringComparison.OrdinalIgnoreCase)
+					|| text.Equals(Keyword_On, StringComparison.OrdinalIgnoreCase))
+				return StringComparison.Ordinal;
+
+			if (text.IsEmpty || text.Equals("0", StringComparison.Ordinal) || text.Equals(FalseTxt, StringComparison.OrdinalIgnoreCase)
+					|| text.Equals(Keyword_Off, StringComparison.OrdinalIgnoreCase))
+				return StringComparison.OrdinalIgnoreCase;
+
+			if (text.Equals(Keyword_Locale, StringComparison.OrdinalIgnoreCase))
+				return StringComparison.CurrentCultureIgnoreCase;
+
+			var additional = additionalDiagnosticChoice == null ? "" : $", {additionalDiagnosticChoice}";
+			_ = Errors.ValueErrorOccurred($"Unknown CaseSense \"{Errors.Describe(option)}\". Expected On, Off, Locale{additional}, 1, 0, True, False or an empty string.", option);
+			return StringComparison.OrdinalIgnoreCase;
+		}
 
 #if WINDOWS
 		internal static Font ParseFont(Font standard, string styles, string family = null)
@@ -886,7 +899,7 @@ namespace Keysharp.Internals.Strings
 
 			(RegistryKey, string, string) HandleError()//Hack to work around pattern matching switch statements not supporting multiple lines in the default case.
 			{
-				_ = Errors.ValueErrorOccurred($"{root} was not a valid registry type.");
+				_ = Errors.ValueErrorOccurred($"{root} was not a valid registry type. Expected HKEY_LOCAL_MACHINE (HKLM), HKEY_USERS (HKU), HKEY_CURRENT_USER (HKCU), HKEY_CLASSES_ROOT (HKCR), HKEY_CURRENT_CONFIG (HKCC) or HKEY_PERFORMANCE_DATA (HKPD).");
 				return (default, default, default);
 			}
 

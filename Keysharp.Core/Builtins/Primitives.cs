@@ -42,7 +42,7 @@ namespace Keysharp.Builtins
 		/// <param name="caseSense">If omitted, it defaults to Off (case-insensitive). Otherwise, one of:<br/>
 		///     On/1/True: case-sensitive, culture-invariant.<br/>
 		///     Off/0/False: case-insensitive, culture-invariant.<br/>
-		///     Locale: case-sensitive, compared according to the current user's locale.
+		///     Locale: case-insensitive, compared according to the current user's locale.
 		/// </param>
 		/// <returns>1 if the string started with <paramref name="token"/>, else 0.</returns>
 		public static long StartsWith(object @this, object token, object caseSense = null) =>
@@ -60,9 +60,9 @@ namespace Keysharp.Builtins
 
 		/// <summary>
 		/// The comparison mode for a <c>CaseSense</c> argument, routed through the same helper InStr and StrCompare
-		/// use rather than inventing a second convention: omitted or Off is case-INSENSITIVE, On/1/True is
+		/// use rather than inventing a second convention: omitted or Off is case-insensitive, On/1/True is
 		/// case-sensitive, and both are Ordinal (culture-invariant); only the explicit <c>Locale</c> option
-		/// consults the current culture, and it compares case-sensitively.
+		/// consults the current culture, and it compares case-insensitively.
 		/// </summary>
 		private static StringComparison CaseSenseComparison(object caseSense)
 		{

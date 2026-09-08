@@ -2476,7 +2476,9 @@ namespace Keysharp.Compilation.Syntax
 			string AsString()
 			{
 				if (val is string s && s.Length > 0) return s;
-				Diag($"{anchor}#App '{canon}' must be a non-empty string");
+				Diag(canon == "GuiTheme"
+					? $"{anchor}#App: Unknown GuiTheme \"{Keysharp.Builtins.Errors.Describe(val)}\". Expected Classic, System or Dark."
+					: $"{anchor}#App '{canon}' must be a non-empty string");
 				return null;
 			}
 			bool? AsBool() => val switch
@@ -2539,7 +2541,7 @@ namespace Keysharp.Compilation.Syntax
 					{
 						var t = theme.Trim().ToUpperInvariant() switch
 						{ "CLASSIC" => "Classic", "SYSTEM" => "System", "DARK" => "Dark", _ => null };
-						if (t == null) Diag($"{anchor}#App 'GuiTheme' must be Classic, System or Dark");
+						if (t == null) Diag($"{anchor}#App: Unknown GuiTheme \"{theme}\". Expected Classic, System or Dark.");
 						else _manifest.GuiTheme = t;
 					}
 					break;

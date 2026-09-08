@@ -11,7 +11,6 @@ namespace Keysharp.Builtins
 		{
 			{ Keyword_Icon, IconRegex() },
 			{ Keyword_Trans, TransRegex() },
-			{ Keyword_Dir, DirectionRegex() },
 			{ Keyword_Variation, VariationRegex() },
 			{ "w", WidthRegex() },
 			{ "h", HeightRegex() }
@@ -106,16 +105,24 @@ namespace Keysharp.Builtins
 			int w = 0, h = 0;
 			long trans = -1;
 			byte variation = 0;
-			// Scan direction (see ImageFinder.Find). 1 = the legacy top-left, row-major scan,
-			// used when *Dir is absent or specifies an invalid value.
+			// Direction 1 is the top-left, row-major scan when *Dir is omitted.
 			var direction = 1;
+			var hasDirection = false;
 
 			if (opts.TryGetValue(Keyword_Icon, out var iconopt) && iconopt != "")
 				iconnumber = ImageHelper.PrepareIconNumber(iconopt);
 
-			if (opts.TryGetValue(Keyword_Dir, out var diropt) && diropt != ""
-					&& int.TryParse(diropt, out var d) && d >= 1 && d <= 9)
-				direction = d;
+			foreach (Match match in DirectionRegex().Matches(o))
+			{
+				if (!int.TryParse(match.Groups[1].Value, NumberStyles.None, CultureInfo.InvariantCulture, out var parsedDirection)
+						|| parsedDirection < 1 || parsedDirection > 9)
+					return Errors.ValueErrorOccurred("ImageSearch *Dir requires a direction from 1 to 9.", match.Value);
+
+				if (!hasDirection)
+					direction = parsedDirection;
+
+				hasDirection = true;
+			}
 
 			if (opts.TryGetValue(Keyword_Variation, out var varopt) && varopt != "")
 				_ = byte.TryParse(varopt, out variation);
@@ -348,7 +355,7 @@ namespace Keysharp.Builtins
 			return SearchBoundsFailure.None;
 		}
 
-		[GeneratedRegex(@"\*Dir([0-9]*)", RegexOptions.IgnoreCase)]
+		[GeneratedRegex(@"(?:^|\s)\*Dir(\S*)", RegexOptions.IgnoreCase)]
 		private static partial Regex DirectionRegex();
 
 		[GeneratedRegex(@"\*[hH]([-0-9]*)")]

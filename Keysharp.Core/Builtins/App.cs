@@ -158,7 +158,7 @@ namespace Keysharp.Builtins
 			/// which is what a <c>__Delete</c>, a timer or a library should guard on.</para>
 			/// </summary>
 			public static object staticget_ExitReason(object @this)
-				=> Script.TheScript is Script s ? s.FlowData?.exitReason?.ToString() ?? "" : "";
+				=> Script.TheScript?.FlowData?.exitReason is Flow.ExitReasons reason ? Keysharp.Internals.Flow.ExitReasonName(reason) : "";
 
 			/// <summary>
 			/// The exit status this process will return to whoever launched it.

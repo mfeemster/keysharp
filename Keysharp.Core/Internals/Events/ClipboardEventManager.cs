@@ -30,7 +30,7 @@ namespace Keysharp.Internals.Events
 	internal sealed class ClipboardEventManager(Script script)
 		: EventManagerBase<ClipboardEventRegistration, ClipboardEventManager.NativeSource, ClipboardEventManager.Payload>(script)
 	{
-		/// <summary>What a change carries: 0 = the clipboard is now empty, 1 = text or files, 2 = anything else.</summary>
+		/// <summary>0 = empty, 1 = text or files, 2 = other content.</summary>
 		internal readonly record struct Payload(long DataType);
 
 		/// <summary>
@@ -88,7 +88,6 @@ namespace Keysharp.Internals.Events
 			if (scheduler == null)
 				return;
 
-			// Callback shape (locked): (hook, type), matching the AHK-shaped OnClipboardChange type codes.
 			object[] args = [reg.scriptObject, dataType];
 			var payload = new Payload(dataType);
 			_ = scheduler.Enqueue(ScriptEventQueue.Normal, 0, () => RunCallback(scheduler, reg, args, payload));

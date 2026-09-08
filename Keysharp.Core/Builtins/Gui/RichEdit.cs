@@ -977,7 +977,7 @@ namespace Keysharp.Builtins
 				var file = path.As();
 
 				if (!ParseFormat(format, file, out var rtf))
-					return Errors.ValueErrorOccurred($"Unrecognized rich text format \"{format.As()}\".");
+					return Errors.ValueErrorOccurred($"Unrecognized rich text format \"{format.As()}\". Expected RTF, Text, or an empty string to infer the format from the file extension.");
 
 				if (rtf && Unsupported(RichEditGaps.Rtf, "LoadFile in RTF") is { } err)
 					return err;
@@ -1000,7 +1000,7 @@ namespace Keysharp.Builtins
 				var file = path.As();
 
 				if (!ParseFormat(format, file, out var rtf))
-					return Errors.ValueErrorOccurred($"Unrecognized rich text format \"{format.As()}\".");
+					return Errors.ValueErrorOccurred($"Unrecognized rich text format \"{format.As()}\". Expected RTF, Text, or an empty string to infer the format from the file extension.");
 
 				if (rtf && Unsupported(RichEditGaps.Rtf, "SaveFile in RTF") is { } err)
 					return err;

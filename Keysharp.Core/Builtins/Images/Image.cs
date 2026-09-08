@@ -445,32 +445,32 @@ namespace Keysharp.Builtins
 			/// compositor-reported on-screen window rectangle when the extension can't capture (older
 			/// installed extension, minimized window), in which case the window must be unobscured.
 			///
-			/// <para><paramref name="options"/> selects the Windows capture technique (matching OCR.ahk),
-			/// either as a bare mode number or an object with a <c>mode</c> property. Modes: 0 = GetDC +
-			/// BitBlt; 1 = same, with window transparency turned off first; 2 = PrintWindow; 3 = same,
-			/// transparency off first; 4 (default) = PrintWindow with the undocumented PW_RENDERFULLCONTENT
-			/// flag (captures hardware-accelerated windows); 5 = UWP Direct3D capture (not yet implemented).
-			/// The mode is ignored on macOS/Linux. The <c>decorations</c> property (default false) controls
+			/// <para><paramref name="Options"/> selects the Windows capture technique, either as a string or
+			/// an object with a <c>Mode</c> property: <c>BitBlt</c>, <c>BitBltOpaque</c>, <c>PrintWindow</c>,
+			/// <c>PrintWindowOpaque</c>, or <c>FullContent</c> (default). The Opaque modes turn off window
+			/// transparency first; FullContent uses PrintWindow with PW_RENDERFULLCONTENT. Names are
+			/// case-insensitive and unknown values raise ValueError. The technique is ignored on macOS/Linux.
+			/// The <c>Decorations</c> property (default false) controls
 			/// whether the title bar/borders are captured; it is honored only on KWin Wayland (false = client
 			/// area only, true = full window) and ignored elsewhere, where each backend captures a fixed extent.</para>
 			/// </summary>
-			[Static] public static object FromWindow(object @this, object winTitle = null, object options = null, object winText = null, object excludeTitle = null, object excludeText = null)
+			[Static] public static object FromWindow(object @this, object WinTitle = null, object Options = null, object WinText = null, object ExcludeTitle = null, object ExcludeText = null)
 			{
-				var mode = ParseCaptureMode(options);
+				var mode = ParseCaptureMode(Options, out var modeName);
 
-				if (mode == 5)
-					return Errors.ValueErrorOccurred("Capture mode 5 (UWP/Direct3D) is not yet implemented; use mode 0-4.");
+				if (mode < 0)
+					return Errors.ValueErrorOccurred($"Unknown Mode \"{modeName}\". Expected BitBlt, BitBltOpaque, PrintWindow, PrintWindowOpaque or FullContent.", Options);
 
-				var win = WindowSearch.SearchWindow(winTitle, winText, excludeTitle, excludeText, true);
+				var win = WindowSearch.SearchWindow(WinTitle, WinText, ExcludeTitle, ExcludeText, true);
 
 				if (win is not WindowInfoBase w)
-					return Errors.TargetErrorOccurred(winTitle, winText, excludeTitle, excludeText);
+					return Errors.TargetErrorOccurred(WinTitle, WinText, ExcludeTitle, ExcludeText);
 
 				// Whether to capture the title bar/borders. The default (false) captures only the client area
 				// where the backend supports it (KWin); excluding decorations avoids the shadow-padded buffer whose
 				// margin can't be mapped back to screen reliably. Honored only on KWin; on Windows/macOS/GNOME/X11
 				// each backend captures a fixed extent and the flag is ignored.
-				var includeDeco = ParseIncludeDecoration(options);
+				var includeDeco = ParseIncludeDecoration(Options);
 
 				// The window's screen-absolute frame rectangle. Its top-left is the on-screen origin recorded on
 				// the Image so OCR (and any other consumer) can map image coordinates back to the screen.
@@ -547,30 +547,31 @@ namespace Keysharp.Builtins
 				return Wrap(bmp, sx, sy, originX: bounds.X, originY: bounds.Y);
 			}
 
-			// Parses the window-capture mode (0-5) from an options argument: a bare integer, or an object
-			// with a `mode` property (OCR.ahk style). Defaults to 4 (PrintWindow + PW_RENDERFULLCONTENT).
-			private static int ParseCaptureMode(object options)
+			private static int ParseCaptureMode(object options, out string modeName)
 			{
-				if (options == null)
-					return 4;
-
-				if (options is long || options is int || options is double)
-					return (int)Math.Clamp(options.Al(4), 0, 5);
-
-				var m = Script.GetPropertyValueOrNull(options, "mode");
-				return m == null ? 4 : (int)Math.Clamp(m.Al(4), 0, 5);
+				var mode = options is KeysharpObject ? Script.GetPropertyValueOrNull(options, "Mode") : options;
+				modeName = mode.As("FullContent");
+				return modeName.ToLowerInvariant() switch
+				{
+					"bitblt" => 0,
+					"bitbltopaque" => 1,
+					"printwindow" => 2,
+					"printwindowopaque" => 3,
+					"fullcontent" => 4,
+					_ => -1
+				};
 			}
 
 			// Whether the capture should include the window's title bar/borders, read from an options object's
-			// `decorations` property (e.g. Image.FromWindow("A", {decorations: true})). Defaults to false (client
+			// `Decorations` property (e.g. Image.FromWindow("A", {Decorations: true})). Defaults to false (client
 			// area only): on KWin a decoration-inclusive capture returns the window's shadow-padded buffer, and the
-			// shadow margin can't be mapped back to screen reliably. A bare integer or no options keeps the default.
+			// shadow margin can't be mapped back to screen reliably. A bare string or no options keeps the default.
 			private static bool ParseIncludeDecoration(object options)
 			{
-				if (options == null || options is long or int or double)
+				if (options is not KeysharpObject)
 					return false;
 
-				var d = Script.GetPropertyValueOrNull(options, "decorations");
+				var d = Script.GetPropertyValueOrNull(options, "Decorations");
 				return d != null && d.Ab();
 			}
 
@@ -1639,35 +1640,42 @@ namespace Keysharp.Builtins
 			}
 
 			/// <summary>
-			/// Searches this image for <paramref name="needle"/> (an Image, a file path, or a bitmap handle)
+			/// Searches this image for <paramref name="Needle"/> (an Image, a file path, or a bitmap handle)
 			/// and returns the first match as an object whose <c>X</c>/<c>Y</c> are the match's top-left as
 			/// 0-based, absolute image pixels (see <see cref="ScaleX"/>), or "" (falsy) when there is no
 			/// match — so <c>if m := img.Search(needle)</c> is the idiomatic use.
 			///
-			/// <para><paramref name="x"/>/<paramref name="y"/>/<paramref name="width"/>/<paramref name="height"/>
+			/// <para><paramref name="X"/>/<paramref name="Y"/>/<paramref name="Width"/>/<paramref name="Height"/>
 			/// restrict the search to a region, clamped to the image. Each is independently optional: omitted
 			/// values default to 0 / the far edge, so <c>Search(n, 100, 100)</c> searches from (100, 100) to
 			/// the bottom-right corner. Returned coordinates stay absolute image pixels, never region-relative.</para>
 			///
-			/// <para>Matching is RGB-only (alpha is ignored). <paramref name="variation"/> is the 0-255
-			/// per-channel tolerance; <paramref name="trans"/> a needle color that matches anything
-			/// (ImageSearch's *TransN); <paramref name="direction"/> (1-9, ImageSearch's *DirN) the scan
-			/// order that decides which match wins.</para>
+			/// <para>Matching is RGB-only (alpha is ignored). <paramref name="Variation"/> is the 0-255
+			/// per-channel tolerance; <paramref name="Trans"/> a needle color that matches anything
+			/// (ImageSearch's *TransN); <paramref name="Direction"/> selects the scan order:
+			/// TopLeft (default), TopRight, BottomLeft, BottomRight scan rows; LeftTop, LeftBottom,
+			/// RightTop, RightBottom scan columns; Center starts nearest the center. Names are
+			/// case-insensitive and unknown values raise ValueError.</para>
 			/// </summary>
-			public object Search(object needle, object x = null, object y = null, object width = null, object height = null,
-				object variation = null, object trans = null, object direction = null)
+			public object Search(object Needle, object X = null, object Y = null, object Width = null, object Height = null,
+				object Variation = null, object Trans = null, object Direction = null)
 			{
 				ThrowIfDisposed();
 
-				if (needle == null)
+				if (Needle == null)
 					return Errors.ValueErrorOccurred("Search requires a needle image.");
+
+				var dir = ParseSearchDirection(Direction);
+
+				if (dir < 1)
+					return Errors.ValueErrorOccurred($"Unknown Direction \"{Errors.Describe(Direction)}\". Expected TopLeft, TopRight, BottomLeft, BottomRight, LeftTop, LeftBottom, RightTop, RightBottom or Center.", Direction);
 
 				var haystack = PrepareForRead();
 
 				if (haystack == null)
 					return Errors.ValueErrorOccurred("There is no image to search.");
 
-				var (needleBmp, own) = ResolveNeedle(needle);
+				var (needleBmp, own) = ResolveNeedle(Needle);
 
 				if (needleBmp == null)
 					return Errors.ValueErrorOccurred("Could not load the search image.");
@@ -1679,7 +1687,7 @@ namespace Keysharp.Builtins
 
 				try
 				{
-					(surface, var offX, var offY, ownedSurface) = ResolveRegion(haystack, x, y, width, height);
+					(surface, var offX, var offY, ownedSurface) = ResolveRegion(haystack, X, Y, Width, Height);
 
 					// Empty region -> zero pixels -> no match.
 					if (surface == null)
@@ -1687,11 +1695,10 @@ namespace Keysharp.Builtins
 
 					var transColor = -1L;
 
-					if (trans != null && trans is not string { Length: 0 })
-						transColor = ParseColorArg(trans) & 0xFFFFFF;
+					if (Trans != null && Trans is not string { Length: 0 })
+						transColor = ParseColorArg(Trans) & 0xFFFFFF;
 
-					var dir = direction == null ? 1 : (int)Math.Clamp(direction.Al(), 1L, 9L);
-					var finder = new ImageFinder(surface) { Variation = (byte)Math.Clamp(variation?.Al() ?? 0L, 0, 255) };
+					var finder = new ImageFinder(surface) { Variation = (byte)Math.Clamp(Variation?.Al() ?? 0L, 0, 255) };
 					var loc = finder.Find(needleBmp, transColor, dir);
 					return loc.HasValue ? MakePoint(loc.Value.X + offX, loc.Value.Y + offY) : "";
 				}
@@ -1706,27 +1713,32 @@ namespace Keysharp.Builtins
 			}
 
 			/// <summary>
-			/// Searches this image for every occurrence of <paramref name="needle"/> and returns them as an
+			/// Searches this image for every occurrence of <paramref name="Needle"/> and returns them as an
 			/// array of <c>{X, Y}</c> match objects (absolute image pixels) — empty when there are none, so
 			/// check <c>matches.Length</c>. The region and matching arguments work exactly as in
-			/// <see cref="Search"/>. Matches are ordered by <paramref name="direction"/> (ImageSearch's *DirN,
-			/// 1-9); overlapping matches are all returned. When every needle pixel is the <paramref name="trans"/>
+			/// <see cref="Search"/>. Matches are ordered by <paramref name="Direction"/>;
+			/// overlapping matches are all returned. When every needle pixel is the <paramref name="Trans"/>
 			/// wildcard color, a single match at the region origin is returned. Matching is RGB-only.
 			/// </summary>
-			public object SearchAll(object needle, object x = null, object y = null, object width = null, object height = null,
-				object variation = null, object trans = null, object direction = null)
+			public object SearchAll(object Needle, object X = null, object Y = null, object Width = null, object Height = null,
+				object Variation = null, object Trans = null, object Direction = null)
 			{
 				ThrowIfDisposed();
 
-				if (needle == null)
+				if (Needle == null)
 					return Errors.ValueErrorOccurred("SearchAll requires a needle image.");
+
+				var dir = ParseSearchDirection(Direction);
+
+				if (dir < 1)
+					return Errors.ValueErrorOccurred($"Unknown Direction \"{Errors.Describe(Direction)}\". Expected TopLeft, TopRight, BottomLeft, BottomRight, LeftTop, LeftBottom, RightTop, RightBottom or Center.", Direction);
 
 				var haystack = PrepareForRead();
 
 				if (haystack == null)
 					return Errors.ValueErrorOccurred("There is no image to search.");
 
-				var (needleBmp, own) = ResolveNeedle(needle);
+				var (needleBmp, own) = ResolveNeedle(Needle);
 
 				if (needleBmp == null)
 					return Errors.ValueErrorOccurred("Could not load the search image.");
@@ -1739,7 +1751,7 @@ namespace Keysharp.Builtins
 
 				try
 				{
-					(surface, var offX, var offY, ownedSurface) = ResolveRegion(haystack, x, y, width, height);
+					(surface, var offX, var offY, ownedSurface) = ResolveRegion(haystack, X, Y, Width, Height);
 
 					// Empty region -> zero pixels -> no matches.
 					if (surface == null)
@@ -1747,11 +1759,10 @@ namespace Keysharp.Builtins
 
 					var transColor = -1L;
 
-					if (trans != null && trans is not string { Length: 0 })
-						transColor = ParseColorArg(trans) & 0xFFFFFF;
+					if (Trans != null && Trans is not string { Length: 0 })
+						transColor = ParseColorArg(Trans) & 0xFFFFFF;
 
-					var dir = direction == null ? 1 : (int)Math.Clamp(direction.Al(), 1L, 9L);
-					var finder = new ImageFinder(surface) { Variation = (byte)Math.Clamp(variation?.Al() ?? 0L, 0, 255) };
+					var finder = new ImageFinder(surface) { Variation = (byte)Math.Clamp(Variation?.Al() ?? 0L, 0, 255) };
 					var found = finder.FindAll(needleBmp, transColor, dir);
 
 					foreach (var p in found)
@@ -1778,23 +1789,22 @@ namespace Keysharp.Builtins
 			/// RGB-only (alpha is ignored).
 			///
 			/// <para>The optional region works exactly as in <see cref="Search"/>.
-			/// <paramref name="variation"/> (0-255) allows per-channel tolerance. <paramref name="direction"/>
-			/// selects the scan's starting corner: 1 = top-left (default), 2 = top-right, 3 = bottom-left,
-			/// 4 = bottom-right; the image-search directions 5-9 do not apply to a pixel scan and raise a
-			/// ValueError.</para>
+			/// <paramref name="Variation"/> (0-255) allows per-channel tolerance. <paramref name="Direction"/>
+			/// selects the scan's starting corner: TopLeft (default), TopRight, BottomLeft or BottomRight.
+			/// Names are case-insensitive and unknown values raise ValueError.</para>
 			/// </summary>
-			public object SearchPixel(object color, object x = null, object y = null, object width = null, object height = null,
-				object variation = null, object direction = null)
+			public object SearchPixel(object Color, object X = null, object Y = null, object Width = null, object Height = null,
+				object Variation = null, object Direction = null)
 			{
 				ThrowIfDisposed();
 
-				if (color == null)
+				if (Color == null)
 					return Errors.ValueErrorOccurred("SearchPixel requires a color.");
 
-				var dir = direction == null ? 1L : direction.Al();
+				var dir = ParseSearchDirection(Direction);
 
 				if (dir < 1 || dir > 4)
-					return Errors.ValueErrorOccurred("SearchPixel supports directions 1-4 (the scan's starting corner); 5-9 apply only to image search.");
+					return Errors.ValueErrorOccurred($"Unknown Direction \"{Errors.Describe(Direction)}\". Expected TopLeft, TopRight, BottomLeft or BottomRight.", Direction);
 
 				var haystack = PrepareForRead();
 
@@ -1806,14 +1816,14 @@ namespace Keysharp.Builtins
 
 				try
 				{
-					(surface, var offX, var offY, ownedSurface) = ResolveRegion(haystack, x, y, width, height);
+					(surface, var offX, var offY, ownedSurface) = ResolveRegion(haystack, X, Y, Width, Height);
 
 					// Empty region -> zero pixels -> no match (and avoids reading a phantom pixel off-image).
 					if (surface == null)
 						return "";
 
-					var finder = new ImageFinder(surface) { Variation = (byte)Math.Clamp(variation?.Al() ?? 0L, 0, 255) };
-					var loc = finder.Find(ImageHelper.ArgbToColor(ParseColorArg(color, unchecked((int)0xFF000000), allowTransparentEmpty: false)),
+					var finder = new ImageFinder(surface) { Variation = (byte)Math.Clamp(Variation?.Al() ?? 0L, 0, 255) };
+					var loc = finder.Find(ImageHelper.ArgbToColor(ParseColorArg(Color, unchecked((int)0xFF000000), allowTransparentEmpty: false)),
 						ltr: dir is 1 or 3, ttb: dir is 1 or 2);
 
 					if (loc.HasValue)
@@ -1832,6 +1842,20 @@ namespace Keysharp.Builtins
 						surface.Dispose();
 				}
 			}
+
+			private static int ParseSearchDirection(object direction) => direction.As("TopLeft").ToLowerInvariant() switch
+			{
+				"topleft" => 1,
+				"topright" => 2,
+				"bottomleft" => 3,
+				"bottomright" => 4,
+				"lefttop" => 5,
+				"leftbottom" => 6,
+				"righttop" => 7,
+				"rightbottom" => 8,
+				"center" => 9,
+				_ => 0
+			};
 
 			// Resolves the optional (x, y, width, height) region arguments into the bitmap the finder scans: the
 			// full materialized haystack when all four are omitted, else a clamped crop (each argument defaults

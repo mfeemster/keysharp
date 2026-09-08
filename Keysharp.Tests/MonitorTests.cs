@@ -279,7 +279,7 @@ namespace Keysharp.Tests
 
 		/// <summary>
 		/// Refresh() must not throw when the monitor it is holding has been unplugged: that is exactly the state a
-		/// Monitor.OnChange "topology" handler is in, and OnChange's own documentation tells such a handler to call
+		/// Monitor.OnChange "Topology" handler is in, and OnChange's own documentation tells such a handler to call
 		/// Refresh(). It reports the loss as a falsy return, the same way FromId reports a monitor that is not
 		/// attached. The matching rule itself is pure logic over a snapshot, so it is tested directly.
 		/// </summary>
@@ -385,10 +385,10 @@ namespace Keysharp.Tests
 				"A session-local native ID is not a display change.");
 
 			DisplayInfo[] resized = [Display("DP-1", 0, 0, 1920, 1080, nativeId: 94)];
-			Assert.AreEqual("settings", MonitorEventManager.Classify(original, resized));
+			Assert.AreEqual("Settings", MonitorEventManager.Classify(original, resized));
 
 			DisplayInfo[] replacement = [Display("HDMI-1", 0, 0, 2560, 1440)];
-			Assert.AreEqual("topology", MonitorEventManager.Classify(original, replacement),
+			Assert.AreEqual("Topology", MonitorEventManager.Classify(original, replacement),
 				"Replacing a panel without changing the count is still a topology change.");
 
 			DisplayInfo[] duplicates =
@@ -396,7 +396,7 @@ namespace Keysharp.Tests
 				Display("DP-1", 0, 0, 1920, 1080),
 				Display("DP-1", 1920, 0, 1920, 1080, primary: false)
 			];
-			Assert.AreEqual("topology", MonitorEventManager.Classify(duplicates, [duplicates[0]]),
+			Assert.AreEqual("Topology", MonitorEventManager.Classify(duplicates, [duplicates[0]]),
 				"Display names are a multiset; removing one duplicate must be detected.");
 		}
 	}

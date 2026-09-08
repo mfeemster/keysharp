@@ -265,7 +265,7 @@ namespace Keysharp.Builtins
 
 			/// <summary>
 			/// Calls <paramref name="callback"/> as <c>callback(hook, type)</c> whenever the clipboard changes, where
-			/// type is 0 (now empty), 1 (text or files) or 2 (anything else). Returns a hook whose
+			/// type is 0 (empty), 1 (text or files) or 2 (other content). Returns a hook whose
 			/// <c>Stop()</c> ends the subscription — which is the reason to prefer this over the AHK-compatible
 			/// <c>OnClipboardChange</c>, since unregistering there needs the very same function object back.
 			/// <paramref name="count"/> (default -1 = unlimited) stops the hook automatically after that many calls.

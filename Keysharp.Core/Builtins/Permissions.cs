@@ -37,7 +37,15 @@ namespace Keysharp.Builtins
 			foreach (KeysharpCapability cap in Enum.GetValues<KeysharpCapability>())
 			{
 				var permission = CapabilityRequests.QueryStatus(cap);
-				result.DefinePropInternal(CapabilityRequests.NameOf(cap), new OwnPropsDesc(result, permission.Status.ToString()));
+				var status = permission.Status switch
+				{
+					PermissionStatus.Granted => "Granted",
+					PermissionStatus.Denied => "Denied",
+					PermissionStatus.NotApplicable => "NotApplicable",
+					PermissionStatus.Unsupported => "Unsupported",
+					_ => (string)Errors.ErrorOccurred($"Unknown permission status \"{permission.Status}\". Expected Granted, Denied, NotApplicable or Unsupported.", DefaultErrorString)
+				};
+				result.DefinePropInternal(CapabilityRequests.NameOf(cap), new OwnPropsDesc(result, status));
 
 				if (requested == null || requested.Contains(cap))
 					allGranted &= permission.IsGranted;

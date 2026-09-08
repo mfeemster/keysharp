@@ -156,7 +156,7 @@ needle := Image.Create(3, 3, "Red")
 
 first := haystack.Search(needle)
 Assert(first.x == 2 && first.y == 2, A_LineNumber)
-last := haystack.Search(needle, direction: 4)
+last := haystack.Search(needle, Direction: "BottomRight")
 Assert(last.x == 10 && last.y == 6, A_LineNumber)
 wild := haystack.Search(needle, trans: "Red")
 Assert(wild.x == 0 && wild.y == 0, A_LineNumber)
@@ -167,7 +167,50 @@ Assert(pixel.x == 2 && pixel.y == 2 && pixel.color == 0xFFFF0000, A_LineNumber)
 near := haystack.SearchPixel(0xFE0202, variation: 4)
 Assert(near.x == 2 && near.y == 2, A_LineNumber)
 AssertEq(haystack.SearchPixel("White"), "", A_LineNumber)
-Throws(() => haystack.SearchPixel("Red", direction: 5), A_LineNumber)
+Throws(() => haystack.SearchPixel("Red", Direction: "Center"), A_LineNumber, ValueError)
+
+directions := Map(
+    "TopLeft", [0, 4, 12, 20, 24],
+    "TopRight", [4, 0, 12, 24, 20],
+    "BottomLeft", [20, 24, 12, 0, 4],
+    "BottomRight", [24, 20, 12, 4, 0],
+    "LeftTop", [0, 20, 12, 4, 24],
+    "LeftBottom", [20, 0, 12, 24, 4],
+    "RightTop", [4, 24, 12, 0, 20],
+    "RightBottom", [24, 4, 12, 20, 0])
+corners := Image.Create(5, 5, "Black")
+for position in [0, 4, 12, 20, 24]
+    corners.SetPixel(Mod(position, 5), position // 5, "Red")
+dot := Image.Create(1, 1, "Red")
+for direction, expected in directions {
+    found := corners.Search(dot, Direction: direction)
+    AssertEq(found.X + found.Y * 5, expected[1], A_LineNumber)
+    matches := corners.SearchAll(dot, Direction: direction)
+    AssertEq(matches.Length, expected.Length, A_LineNumber)
+    for index, match in matches
+        AssertEq(match.X + match.Y * 5, expected[index], A_LineNumber)
+    if InStr(direction, "Top") == 1 || InStr(direction, "Bottom") == 1 {
+        pixel := corners.SearchPixel("Red", Direction: direction)
+        AssertEq(pixel.X + pixel.Y * 5, expected[1], A_LineNumber)
+    }
+}
+center := corners.Search(dot, Direction: "Center")
+Assert(center.X == 2 && center.Y == 2, A_LineNumber)
+center := corners.SearchAll(dot, Direction: "Center")[1]
+Assert(center.X == 2 && center.Y == 2, A_LineNumber)
+AssertEq(corners.Search(dot, Direction: "bOtToMrIgHt").X, 4, A_LineNumber)
+AssertEq(corners.SearchPixel("Red", Direction: "bOtToMrIgHt").Y, 4, A_LineNumber)
+for invalid in [0, 1, 4, 9, 10, "", "1", "TopLef", " TopLeft "] {
+    Throws(() => corners.Search(dot, Direction: invalid), A_LineNumber, ValueError)
+    Throws(() => corners.SearchAll(dot, Direction: invalid), A_LineNumber, ValueError)
+    Throws(() => corners.SearchPixel("Red", Direction: invalid), A_LineNumber, ValueError)
+}
+Throws(() => corners.Search(dot, Width: 0, Direction: "bad"), A_LineNumber, ValueError)
+Throws(() => corners.SearchAll(dot, Width: 0, Direction: "bad"), A_LineNumber, ValueError)
+for invalid in [0, 4, 5, "", "4", "FullContnt", "Direct3D", " FullContent "] {
+    Throws(() => Image.FromWindow("ahk_id -1", invalid), A_LineNumber, ValueError)
+    Throws(() => Image.FromWindow("ahk_id -1", {Mode: invalid}), A_LineNumber, ValueError)
+}
 
 all := haystack.SearchAll(needle)
 AssertEq(all.Length, 2, A_LineNumber)

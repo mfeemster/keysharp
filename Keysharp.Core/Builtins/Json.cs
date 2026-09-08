@@ -109,7 +109,7 @@ namespace Keysharp.Builtins
 					if (Conversions.ParseCaseSense(caseSense) is eCaseSense parsed)
 						cs = parsed;
 					else
-						return Errors.ValueErrorOccurred($"caseSense must be true, false or \"Locale\", not \"{caseSense}\".");
+						return Errors.ValueErrorOccurred($"Unknown CaseSense \"{Errors.Describe(caseSense)}\". Expected On, Off, Locale, true, false, 1 or 0.");
 				}
 
 				try

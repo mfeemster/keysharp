@@ -104,7 +104,7 @@ namespace Keysharp.Builtins
 				if (Conversions.ConvertClipboardKind(s) is { } kind)
 					return () => clip.HasKind(kind);
 
-				_ = Errors.ValueErrorOccurred($"Invalid clipboard wait kind: {s}");
+				_ = Errors.ValueErrorOccurred($"Invalid clipboard wait kind: {s}. Expected Text, Any, Image, Files, Html, Rtf, or a numeric flag.");
 			}
 
 			return waitFor.Ab() ? () => !clip.IsEmpty : () => clip.ChangeType() == 1;
@@ -604,7 +604,7 @@ namespace Keysharp.Builtins
 			};
 
 			return parsed == Keysharp.Components.Scripting.ScriptingCapability.None
-				? Errors.ValueErrorOccurred($"Unknown scripting component capability: {capability}")
+				? Errors.ValueErrorOccurred($"Unknown scripting component capability: {Errors.Describe(capability)}. Expected Parser, Parsing, Compiler, or Compilation.")
 				: ScriptingComponentRegistry.IsAvailable(parsed);
 		}
 

@@ -144,7 +144,13 @@ namespace Keysharp.Builtins
 
 				//Checked once here rather than per branch, so the branches below can assume the pair is valid.
 				if (!SupportsEvent(e))
-					return Errors.ValueErrorOccurred($"A {Type} control does not support the {eventName.As()} event.");
+				{
+					string[] eventNames = ["Change", "Click", "DoubleClick", "ColClick", "ContextMenu", "Focus", "LoseFocus",
+						"ItemCheck", "ItemEdit", "ItemSelect", "ItemExpand", "ItemFocus", "SelectionChange", "LinkClick",
+						"Navigated", "DocumentLoaded", "DocumentLoading", "OpenNewWindow", "DocumentTitleChanged", "MessageReceived"];
+					var supported = string.Join(", ", eventNames.Where(name => SupportsEvent(name.ToLowerInvariant())));
+					return Errors.ValueErrorOccurred($"A {Type} control does not support the {eventName.As()} event. Expected {supported}.");
+				}
 
 				if (this is WebView wv && WebView.IsWebViewEvent(e))
 				{

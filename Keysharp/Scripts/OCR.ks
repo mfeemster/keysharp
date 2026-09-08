@@ -229,13 +229,12 @@ class OCR {
      * on-screen origin becomes the result's screen offset, so Highlight/Click land on screen.
      * @param WinTitle,WinText,ExcludeTitle,ExcludeText Standard window-matching criteria.
      * @param Options Optional. Forwarded to OCR() ({lang, datapath, x, y, w, h, scale, rotate, flip}); its
-     *   `mode`/`decorations` properties also select the Image.FromWindow capture technique (see Image.FromWindow).
+     *   `Mode`/`Decorations` properties also select the Image.FromWindow capture technique. Mode is BitBlt,
+     *   BitBltOpaque, PrintWindow, PrintWindowOpaque or FullContent (default); names are case-insensitive.
      * @returns {OCR.Result}
      */
     static FromWindow(WinTitle := "", Options := 0, WinText := "", ExcludeTitle := "", ExcludeText := "") {
-        ; Only forward Options as Image's capture-options when it's an object (so its mode/decorations are
-        ; honored). A bare default 0 would be read by Image.FromWindow as capture mode 0, overriding its
-        ; default mode 4 — so in that case let Image.FromWindow pick its own default.
+        ; OCR's default 0 means no options; Image.FromWindow expects a mode name or an options object.
         local img := IsObject(Options) ? Image.FromWindow(WinTitle, Options, WinText, ExcludeTitle, ExcludeText)
                                        : Image.FromWindow(WinTitle, , WinText, ExcludeTitle, ExcludeText)
         return OCR(img, Options)

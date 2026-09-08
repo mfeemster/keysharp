@@ -5,6 +5,25 @@ namespace Keysharp.Builtins
 	/// </summary>
 	public static class Dialogs
 	{
+		internal static string MessageBoxResultName(DialogResult result) => result switch
+		{
+#if WINDOWS
+			DialogResult.OK => "OK",
+			DialogResult.TryAgain => "TryAgain",
+			DialogResult.Continue => "Continue",
+#else
+			DialogResult.Ok => "OK",
+#endif
+			DialogResult.Cancel => "Cancel",
+			DialogResult.Abort => "Abort",
+			DialogResult.Retry => "Retry",
+			DialogResult.Ignore => "Ignore",
+			DialogResult.Yes => "Yes",
+			DialogResult.No => "No",
+			DialogResult.None => "None",
+			_ => (string)Errors.ErrorOccurred($"Unknown message box result \"{result}\". Expected OK, Cancel, Abort, Retry, Ignore, Yes, No, TryAgain, Continue, None or Timeout.", DefaultErrorString)
+		};
+
 		internal static readonly Guid computer = new ("0AC0837C-BBF8-452A-850D-79D08E667CA7"); //Computer (/).
 		internal static readonly Guid desktop = new ("B4BFCC3A-DB2C-424C-B029-7FE99A87C641"); //Desktop (~/Desktop).
 		internal static readonly Guid documents = new ("FDD39AD0-238F-46AF-ADB4-6C85480369C7"); //Documents (~/Documents).
@@ -201,7 +220,7 @@ namespace Keysharp.Builtins
 			owner.ScheduleBlockedEventSchedulers();
 		}
 
-		private static string ShowWindowsMsgBox(Script script, IWin32Window ownerWindow, string txt, string caption, MessageBoxButtons buttons, MessageBoxIcon icon, MessageBoxDefaultButton defaultbutton, MessageBoxOptions mbopts, uint timeoutMs)
+		private static (DialogResult Result, bool TimedOut) ShowWindowsMsgBox(Script script, IWin32Window ownerWindow, string txt, string caption, MessageBoxButtons buttons, MessageBoxIcon icon, MessageBoxDefaultButton defaultbutton, MessageBoxOptions mbopts, uint timeoutMs)
 		{
 			var request = new WindowsMsgBoxRequest()
 			{
@@ -221,7 +240,7 @@ namespace Keysharp.Builtins
 				_ = WindowsAPI.PostMessage(script.MainWindowHandle, (uint)WindowsAPI.WM_COMMNOTIFY, (nint)(uint)UserMessages.AHK_DIALOG, (nint)request.RequestId);
 
 				var ret = MessageBox.Show(ownerWindow, txt, caption, buttons, icon, defaultbutton, mbopts);
-				return request.TimedOut || (timeoutMs != 0 && ret == DialogResult.None) ? "Timeout" : ret.ToString();
+				return (ret, request.TimedOut || (timeoutMs != 0 && ret == DialogResult.None));
 			}
 			finally
 			{
@@ -262,14 +281,15 @@ namespace Keysharp.Builtins
 		private static string ShowEtoMsgBox(Control owner, string txt, string caption, MessageBoxButtons buttons, MessageBoxType icon, MessageBoxDefaultButton defaultbutton, double timeout)
 		{
 			var ownerControl = owner ?? Application.Instance?.MainForm;
-			return ShowEtoDialog(token =>
+			var result = ShowEtoDialog<DialogResult?>(token =>
 			{
 				ActivateAppForMessageBox(ownerControl);
 				return ShowMessageBoxAsync(token);
-			}, timeout, timeout != 0 ? "Timeout" : "");
+			}, timeout);
+			return result.HasValue ? MessageBoxResultName(result.Value) : timeout != 0 ? "Timeout" : "";
 
-			async Task<string> ShowMessageBoxAsync(CancellationToken token)
-				=> (await MessageBox.ShowAsync(ownerControl, txt, caption, buttons, icon, defaultbutton, token)).ToString();
+			async Task<DialogResult?> ShowMessageBoxAsync(CancellationToken token)
+				=> await MessageBox.ShowAsync(ownerControl, txt, caption, buttons, icon, defaultbutton, token);
 		}
 #endif
 
@@ -1056,7 +1076,7 @@ namespace Keysharp.Builtins
 #endif
 
 #if WINDOWS
-			return RunInterruptibleUIDialog(() =>
+			var result = RunInterruptibleUIDialog(() =>
 			{
 				script.nMessageBoxes++;
 
@@ -1071,6 +1091,7 @@ namespace Keysharp.Builtins
 					script.nMessageBoxes--;
 				}
 			});
+			return result.TimedOut ? "Timeout" : MessageBoxResultName(result.Result);
 #else
 			return RunInterruptibleDialog(() =>
 			{

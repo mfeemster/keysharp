@@ -455,12 +455,12 @@ namespace Keysharp.Builtins
 				var name = rawName.ToLowerInvariant();
 
 				if (System.Array.IndexOf(supportedEvents, name) < 0)
-					return Errors.ValueErrorOccurred($"Overlay.OnEvent: unknown event \"{rawName}\". Supported: Click, DoubleClick, ContextMenu, MouseMove.");
+					return Errors.ValueErrorOccurred($"Unknown EventName \"{rawName}\". Expected Click, DoubleClick, ContextMenu or MouseMove.");
 
 				var mode = AddRemove == null ? 1L : AddRemove.Al();
 
 				if (mode is not (1L or -1L or 0L))
-					return Errors.ValueErrorOccurred("Overlay.OnEvent: AddRemove must be 1, -1 or 0.");
+					return Errors.ValueErrorOccurred($"Invalid AddRemove \"{mode}\". Expected 1, -1 or 0.");
 
 				var fo = Functions.GetKeysharpFunc(Callback, null, true);
 

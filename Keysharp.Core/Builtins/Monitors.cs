@@ -148,9 +148,9 @@ namespace Keysharp.Builtins
 			/// Calls <paramref name="callback"/> whenever the display configuration changes, and returns a
 			/// <see cref="MonitorHook"/> whose <c>Stop()</c> cancels the subscription
 			/// (script: <c>hook := Monitor.OnChange(MyCallback)</c>).
-			/// <para>The callback takes <c>(hook, kind)</c>, where <c>kind</c> is <c>"topology"</c> when the set of
+			/// <para>The callback takes <c>(Hook, Kind)</c>, where <c>Kind</c> is <c>"Topology"</c> when the set of
 			/// attached monitors changed (one was plugged in or unplugged, or the machine docked) and
-			/// <c>"settings"</c> when the same monitors are attached but something about them changed — resolution,
+			/// <c>"Settings"</c> when the same monitors are attached but something about them changed — resolution,
 			/// position, scale, or which one is primary. <c>A_EventInfo</c> holds the monitor count after the
 			/// change.</para>
 			/// <para><c>count</c> limits how many times it fires (default -1 = unlimited), matching
@@ -220,7 +220,16 @@ namespace Keysharp.Builtins
 
 			/// <summary>How the monitor is attached: "HDMI", "DisplayPort", "eDP", "DVI", "VGA", "Internal", or ""
 			/// when the platform does not say.</summary>
-			public object Connection => Text(Details.Connection);
+			public object Connection => Details.Connection switch
+			{
+				"HDMI" => "HDMI",
+				"DisplayPort" => "DisplayPort",
+				"eDP" => "eDP",
+				"DVI" => "DVI",
+				"VGA" => "VGA",
+				"Internal" => "Internal",
+				_ => ""
+			};
 
 			/// <summary>Whether this is the primary monitor.</summary>
 			public bool IsPrimary => display.IsPrimary;

@@ -284,7 +284,12 @@ namespace Keysharp.Internals.Scripting
 				("singleInstance", SingleInstance), ("hookMutexName", HookMutexName), ("desktopEntry", DesktopEntry)
 			})
 				if (value is { Length: 0 })
-					throw new InvalidDataException($"'{name}' must not be empty");
+					throw new InvalidDataException(name switch
+					{
+						"guiTheme" => "Unknown guiTheme \"\". Expected Classic, System or Dark.",
+						"singleInstance" => "Unknown singleInstance \"\". Expected Force, Ignore, Prompt or Off.",
+						_ => $"'{name}' must not be empty"
+					});
 
 			if (Version != null && !IsValidAssemblyVersion(Version))
 				throw new InvalidDataException("'version' must contain 2 to 4 decimal components from 0 to 65534");
@@ -327,10 +332,10 @@ namespace Keysharp.Internals.Scripting
 				throw new InvalidDataException("a tray icon selector requires a custom 'trayIcon' source");
 
 			if (GuiTheme != null && !Keysharp.Runtime.Script.TryNormalizeGuiTheme(GuiTheme, out _))
-				throw new InvalidDataException("'guiTheme' must be Classic, System or Dark");
+				throw new InvalidDataException($"Unknown guiTheme \"{GuiTheme}\". Expected Classic, System or Dark.");
 
 			if (SingleInstance != null && !new[] { "Force", "Ignore", "Prompt", "Off" }.Contains(SingleInstance, StringComparer.OrdinalIgnoreCase))
-				throw new InvalidDataException("'singleInstance' must be Force, Ignore, Prompt or Off");
+				throw new InvalidDataException($"Unknown singleInstance \"{SingleInstance}\". Expected Force, Ignore, Prompt or Off.");
 
 			if (Files == null)
 				throw new InvalidDataException("'files' must be an array");

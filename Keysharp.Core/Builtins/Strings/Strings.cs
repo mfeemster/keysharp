@@ -910,22 +910,10 @@ namespace Keysharp.Builtins
 			var s2 = string2.As();
 			var s3 = caseSense.As();
 
-			if (s1 != "" || s2 != "")
-			{
-				var cs = StringComparison.OrdinalIgnoreCase;
+			if (s3.Equals("Logical", StringComparison.OrdinalIgnoreCase))
+				return NaturalComparer.NaturalCompare(s1, s2);
 
-				if (s3 != "")
-				{
-					if (string.Compare(s3, "logical", true) == 0)
-						return NaturalComparer.NaturalCompare(s1, s2);
-
-					cs = Conversions.ParseComparisonOption(s3);
-				}
-
-				return string.Compare(s1, s2, cs);
-			}
-
-			return 0L;
+			return string.Compare(s1, s2, Conversions.ParseComparisonOption(s3, additionalDiagnosticChoice: "Logical"));
 		}
 
 		/// <summary>
@@ -1281,6 +1269,7 @@ namespace Keysharp.Builtins
 			var replace = replaceText.As();
 			var comp = caseSense.As("Off");
 			var lim = limit.Al(-1);
+			var compare = Conversions.ParseComparisonOption(comp);
 
 			if (IsAnyBlank(input, search))
 			{
@@ -1288,7 +1277,6 @@ namespace Keysharp.Builtins
                 return input;
 			}
 
-			var compare = Conversions.ParseComparisonOption(comp);
 			var ct = 0L;
 			var buf = new StringBuilder(input.Length);
 			int z = 0, n = 0, l = search.Length;

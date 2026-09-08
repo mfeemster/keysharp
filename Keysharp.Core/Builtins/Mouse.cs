@@ -99,7 +99,7 @@ namespace Keysharp.Builtins
 			else if (Options.IsOption(mode, Keyword_Screen))
 				rel = CoordModeType.Screen;
 			else
-				return Errors.ValueErrorOccurred($"Invalid RelativeTo value of '{mode}' passed to CoordMode().");
+				return Errors.ValueErrorOccurred($"Invalid RelativeTo \"{mode}\". Expected Screen, Window, Client or Relative.");
 
 			object prev;
 
@@ -131,7 +131,7 @@ namespace Keysharp.Builtins
 					break;
 
 				default:
-					return Errors.ValueErrorOccurred($"Invalid TargetType value of '{target}' passed to CoordMode().");
+					return Errors.ValueErrorOccurred($"Invalid TargetType \"{target}\". Expected ToolTip, Pixel, Mouse, Caret or Menu.");
 			}
 
 			return prev;
@@ -425,7 +425,12 @@ namespace Keysharp.Builtins
 				vk = 0;
 			else if ((vk = HookThread.ConvertMouseButton(button, actionType == Actions.ACT_MOUSECLICK)) == 0)
 			{
-				_ = Errors.ValueErrorOccurred($"Invalid mouse button type of {button}.");
+				var choices = "Left (L), Right (R), Middle (M), X1 or X2";
+
+				if (actionType == Actions.ACT_MOUSECLICK)
+					choices += ", WheelUp (WU), WheelDown (WD), WheelLeft (WL) or WheelRight (WR)";
+
+				_ = Errors.ValueErrorOccurred($"Invalid mouse button \"{button}\". Expected {choices}.");
 				return;
 			}
 
@@ -459,7 +464,7 @@ namespace Keysharp.Builtins
 
 						default:
 						{
-							_ = Errors.ValueErrorOccurred($"Invalid down/up value of {downUp[0]}. It must be 'u' or 'd'.");
+							_ = Errors.ValueErrorOccurred($"Invalid DownUp \"{downUp}\". Expected Down (D), Up (U) or an empty string.");
 							return;
 						}
 					}
@@ -468,7 +473,7 @@ namespace Keysharp.Builtins
 
 			if (!string.IsNullOrEmpty(relative) && relative != "R")
 			{
-				_ = Errors.ValueErrorOccurred($"Invalid relative value of {relative}. It must be empty or 'R'.");
+				_ = Errors.ValueErrorOccurred($"Invalid Relative \"{relative}\". Expected R or an empty string.");
 				return;
 			}
 

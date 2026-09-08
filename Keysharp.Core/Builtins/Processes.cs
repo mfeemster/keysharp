@@ -180,38 +180,28 @@ namespace Keysharp.Builtins
 		{
 			var lvl = level.As();
 			var name = pidOrName.As();
-			var arg = lvl.ToLowerInvariant();
+			ProcessPriorityClass? priority = lvl.ToLowerInvariant() switch
+			{
+				"l" or Keyword_Low => ProcessPriorityClass.Idle,
+				"b" or Keyword_BelowNormal => ProcessPriorityClass.BelowNormal,
+				"n" or Keyword_Normal => ProcessPriorityClass.Normal,
+				"a" or Keyword_AboveNormal => ProcessPriorityClass.AboveNormal,
+				"h" or Keyword_High => ProcessPriorityClass.High,
+				"r" or Keyword_Realtime => ProcessPriorityClass.RealTime,
+				_ => null
+			};
+
+			if (priority == null)
+			{
+				_ = Errors.ValueErrorOccurred($"Unknown Level \"{Errors.Describe(level)}\". Expected Low (L), BelowNormal (B), Normal (N), AboveNormal (A), High (H) or Realtime (R).", level);
+				return 0;
+			}
 
 			using (var proc = string.IsNullOrEmpty(name) ? Process.GetCurrentProcess() : FindProcess(name))
 			{
 				if (proc != null)
 				{
-					if (arg.Length == 1)
-					{
-						foreach (var mode in new[] { Keyword_Low, Keyword_BelowNormal, Keyword_Normal, Keyword_AboveNormal, Keyword_High, Keyword_Realtime })
-						{
-							if (mode[0] == arg[0])
-							{
-								arg = mode;
-								break;
-							}
-						}
-					}
-
-					switch (arg)
-					{
-						case Keyword_Low: proc.PriorityClass = ProcessPriorityClass.Idle; break;
-
-						case Keyword_BelowNormal: proc.PriorityClass = ProcessPriorityClass.BelowNormal; break;
-
-						case Keyword_Normal: proc.PriorityClass = ProcessPriorityClass.Normal; break;
-
-						case Keyword_AboveNormal: proc.PriorityClass = ProcessPriorityClass.AboveNormal; break;
-
-						case Keyword_High: proc.PriorityClass = ProcessPriorityClass.High; break;
-
-						case Keyword_Realtime: proc.PriorityClass = ProcessPriorityClass.RealTime; break;
-					}
+					proc.PriorityClass = priority.Value;
 
 					return proc.Id;
 				}

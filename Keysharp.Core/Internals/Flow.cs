@@ -81,6 +81,22 @@ namespace Keysharp.Internals
 			return scope;
 		}
 
+		internal static string ExitReasonName(Keysharp.Builtins.Flow.ExitReasons reason) => reason switch
+		{
+			Keysharp.Builtins.Flow.ExitReasons.Critical => "Critical",
+			Keysharp.Builtins.Flow.ExitReasons.Destroy => "Destroy",
+			Keysharp.Builtins.Flow.ExitReasons.None => "None",
+			Keysharp.Builtins.Flow.ExitReasons.Error => "Error",
+			Keysharp.Builtins.Flow.ExitReasons.Logoff => "Logoff",
+			Keysharp.Builtins.Flow.ExitReasons.Shutdown => "Shutdown",
+			Keysharp.Builtins.Flow.ExitReasons.Close => "Close",
+			Keysharp.Builtins.Flow.ExitReasons.Menu => "Menu",
+			Keysharp.Builtins.Flow.ExitReasons.Exit => "Exit",
+			Keysharp.Builtins.Flow.ExitReasons.Reload => "Reload",
+			Keysharp.Builtins.Flow.ExitReasons.Single => "Single",
+			_ => (string)Errors.ErrorOccurred($"Unknown exit reason \"{reason}\". Expected Critical, Destroy, None, Error, Logoff, Shutdown, Close, Menu, Exit, Reload or Single.", DefaultErrorString)
+		};
+
 		internal static bool ExitAppInternal(Script script, Keysharp.Builtins.Flow.ExitReasons exitReason, object exitCode = null, bool useThrow = true)
 		{
 			if (script == null || script.IsDisposed)
@@ -89,6 +105,11 @@ namespace Keysharp.Internals
 			var fd = script.FlowData;
 
 			if (script.hasExited)
+				return false;
+
+			var reasonName = ExitReasonName(exitReason);
+
+			if (reasonName.Length == 0)
 				return false;
 
 			Dialogs.CloseDialogs(script);
@@ -112,7 +133,7 @@ namespace Keysharp.Internals
 				{
 					// The callbacks are told the PROPOSED reason as an argument. Ks.App.ExitReason stays empty
 					// throughout, because until the veto check below the exit is only proposed, not certain.
-					result = script.onExitHandlers.InvokeExitHandlers(exitReason.ToString(), ec);
+					result = script.onExitHandlers.InvokeExitHandlers(reasonName, ec);
 				}
 				finally
 				{

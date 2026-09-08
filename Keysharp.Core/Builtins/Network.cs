@@ -187,7 +187,7 @@ namespace Keysharp.Builtins
 			if (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps)
 				return Ks.Http.DownloadTo(uri, file, noCache);
 
-			return Errors.ValueErrorOccurred($"\"{uri.Scheme}\" is not a supported scheme. Download takes http, https and ftp.");
+			return Errors.ValueErrorOccurred($"Unsupported URL scheme \"{uri.Scheme}\". Expected http, https or ftp.");
 		}
 
 		/// <summary>How long an FTP transfer may stall before it is abandoned, matching Http's default.</summary>

@@ -126,6 +126,50 @@ namespace Keysharp.Tests
 		}
 
 		[Test, Category("Internal"), NonParallelizable]
+		public void InvalidEventTypeErrorRecovery()
+		{
+			var script = Script.TheScript;
+			script.ErrorStdOut = true;
+			// Scripts cannot create a registration whose native event has no public name.
+			var reg = new WinEventRegistration(unchecked((WindowEventType)(-1)), null, Callback(), -1L,
+				script.EventScheduler, script.WinEventManager);
+			var hook = new Ks.WinEvent { sub = reg };
+			reg.scriptObject = hook;
+			var handled = new List<(object Error, object Mode)>();
+			var handler = new KeysharpFunc((Func<object, object, object>)((error, mode) =>
+			{
+				handled.Add((error, mode));
+				return -1L;
+			}));
+			_ = Errors.OnError(handler);
+
+			try
+			{
+				Assert.AreEqual("", hook.EventType);
+				Assert.AreEqual(1, handled.Count);
+				Assert.AreEqual(typeof(Error), handled[0].Error.GetType());
+				Assert.AreEqual("Return", handled[0].Mode);
+				var words = ((Error)handled[0].Error).Message.Split([' ', ',', '.'], StringSplitOptions.RemoveEmptyEntries);
+
+				foreach (var name in new[] { "Active", "Exist", "NotExist", "Move", "Minimize", "Restore", "TitleChange", "CaretMove" })
+					Assert.IsTrue(words.Contains(name, StringComparer.Ordinal), $"The diagnostic must list the public event type {name}.");
+
+				foreach (var name in new[] { "Create", "Close", "Show" })
+					Assert.IsFalse(words.Contains(name, StringComparer.Ordinal), $"The diagnostic must not suggest the internal event type {name}.");
+
+				using (new Loops.TryScope(typeof(Error)))
+					Assert.AreEqual(typeof(Error), Assert.Throws<KeysharpException>(() => _ = hook.EventType).UserError.GetType());
+
+				Assert.AreEqual(1, handled.Count, "a caught error does not reach OnError");
+			}
+			finally
+			{
+				_ = Errors.OnError(handler, 0L);
+				_ = hook.Stop();
+			}
+		}
+
+		[Test, Category("Internal"), NonParallelizable]
 		public void HookSurfaceIsIdenticalWithAFiniteCount()
 		{
 			foreach (var (name, create) in Factories)

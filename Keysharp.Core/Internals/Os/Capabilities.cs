@@ -119,7 +119,7 @@ namespace Keysharp.Internals.Os
 				"audiocapture" => KeysharpCapability.AudioCapture,
 				"cameracapture" => KeysharpCapability.CameraCapture,
 				"clipboardmonitoring" => KeysharpCapability.ClipboardMonitoring,
-				_ => throw new ValueError($"Unknown capability name: {name}.")
+				_ => throw new ValueError($"Unknown capability name: {name}. Expected InputMonitoring, InputControl, WindowMonitoring, WindowControl, ScreenCapture, AudioCapture, CameraCapture or ClipboardMonitoring.")
 			};
 		}
 
@@ -134,7 +134,7 @@ namespace Keysharp.Internals.Os
 				KeysharpCapability.AudioCapture => "AudioCapture",
 				KeysharpCapability.CameraCapture => "CameraCapture",
 				KeysharpCapability.ClipboardMonitoring => "ClipboardMonitoring",
-				_ => capability.ToString()
+				_ => (string)Errors.ErrorOccurred($"Unknown capability \"{capability}\". Expected InputMonitoring, InputControl, WindowMonitoring, WindowControl, ScreenCapture, AudioCapture, CameraCapture or ClipboardMonitoring.", DefaultErrorString)
 			};
 	}
 }

@@ -52,7 +52,12 @@ namespace Keysharp.Internals.Audio
 		private string backendFailure;
 		private bool disposed;
 
-		internal AudioService(Script owner) => this.owner = owner;
+		internal AudioService(Script owner, IAudioBackend backend = null)
+		{
+			this.owner = owner;
+			this.backend = backend;
+			backendResolved = backend != null;
+		}
 
 		internal Script Owner => owner;
 

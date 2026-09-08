@@ -99,7 +99,7 @@ namespace Keysharp.Tests
 			Rejects("#App { SingleInstance: \"Force\" }\nx := 1\n", "unknown #App key");
 			Rejects("#App { ErrorStdOut: true }\nx := 1\n", "unknown #App key");
 			Rejects("#App { ErrorStdOut: A_ScriptDir }\nx := 1\n", "unknown #App key");
-			Rejects("#App { GuiTheme: \"Neon\" }\nx := 1\n", "must be Classic, System or Dark");
+			Rejects("#App { GuiTheme: \"Neon\" }\nx := 1\n", "Unknown GuiTheme \"Neon\"");
 			Rejects("#App { Version: \"not-a-version\" }\nx := 1\n", "2 to 4 decimal components");
 			Rejects("#App { Version: \"1\" }\nx := 1\n", "2 to 4 decimal components");
 			Rejects("#App { Version: \"1.2.3.4.5\" }\nx := 1\n", "2 to 4 decimal components");

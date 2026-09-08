@@ -1346,12 +1346,8 @@ break_twice:;
 		/// <summary>
 		/// Retrieves Keysharp's platform-specific identifier for the current keyboard layout.
 		/// </summary>
-		/// <returns>A stable, readable platform-native layout string.</returns>
-		public static string GetKeyboardLayout()
-		{
-			var layout = Platform.Keys.GetKeyboardLayoutName();
-			return layout == "" ? "unknown" : layout;
-		}
+		/// <returns>A stable, readable platform-native layout string, or blank when unavailable.</returns>
+		public static string GetKeyboardLayout() => Platform.Keys.GetKeyboardLayoutName();
 
 		/// <summary>
 		/// Retrieves layout-aware key information for a key name or single character.

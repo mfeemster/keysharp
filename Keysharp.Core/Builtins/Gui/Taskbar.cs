@@ -181,7 +181,7 @@ namespace Keysharp.Builtins
 				};
 
 				if (parsed == null)
-					return Errors.ValueErrorOccurred("State must be None, Normal, Indeterminate, Paused or Error.", name);
+					return Errors.ValueErrorOccurred($"Unknown State \"{name}\". Expected None, Normal, Indeterminate, Paused or Error.", name);
 
 				if (window is nint w)
 					TaskbarService.SetProgressState(w, parsed.Value);

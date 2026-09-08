@@ -356,8 +356,11 @@ namespace Keysharp.Tests
 		private sealed class LosableBackend : IAudioBackend
 		{
 			internal LosableStream Opened;
+			internal bool Available = true;
+			internal bool Present = true;
+			internal bool? Running;
 
-			public bool IsAvailable => true;
+			public bool IsAvailable => Available;
 			public bool Supports(AudioCapability capability)
 				=> capability is AudioCapability.Playback or AudioCapability.DeviceEnumeration;
 			public string UnsupportedReason(AudioCapability capability) => "";
@@ -372,7 +375,7 @@ namespace Keysharp.Tests
 			public bool TryGetDevice(string id, out AudioDeviceDescriptor device)
 			{
 				device = Descriptor(AudioDeviceKind.Output);
-				return id == device.Id;
+				return Present && id == device.Id;
 			}
 
 			public bool TryOpenOutput(in AudioOutputRequest request, IAudioRenderSource source, out IAudioOutputStream stream, out string error)
@@ -387,7 +390,7 @@ namespace Keysharp.Tests
 			public bool TrySetVolume(AudioDeviceKind kind, string id, double volume) => false;
 			public bool TryGetMute(AudioDeviceKind kind, string id, out bool mute) { mute = false; return false; }
 			public bool TrySetMute(AudioDeviceKind kind, string id, bool mute) => false;
-			public bool TryGetIsRunning(AudioDeviceKind kind, string id, out bool running) { running = false; return false; }
+			public bool TryGetIsRunning(AudioDeviceKind kind, string id, out bool running) { running = Running.GetValueOrDefault(); return Running.HasValue; }
 			public object GetNativeDeviceObject(AudioDeviceKind kind, string id) => null;
 			public IAudioDeviceWatcher WatchDevices(Action sink) => null;
 
@@ -441,6 +444,43 @@ namespace Keysharp.Tests
 			public void Start() { }
 			public void Stop() { }
 			public void Dispose() { }
+		}
+
+		[Test]
+		public void DeviceStatus()
+		{
+			var backend = new LosableBackend();
+			using var service = new AudioService(null, backend);
+			Assert.IsTrue(backend.TryGetDefaultDevice(AudioDeviceKind.Output, out var descriptor));
+			var device = Ks.Audio.Device.Wrap(service, descriptor);
+
+			foreach (var (running, status) in new (bool?, string)[] { (true, "Running"), (false, "Idle"), (null, "Unknown") })
+			{
+				backend.Running = running;
+				Assert.AreEqual(status, device.Status);
+				Assert.AreEqual(running == true, device.IsRunning);
+			}
+
+			backend.Running = true;
+			backend.Available = false;
+			Assert.AreEqual("", device.Refresh());
+			Assert.AreEqual("Unknown", device.Status, "an unavailable backend cannot establish device removal");
+			Assert.AreEqual(false, device.IsRunning);
+
+			backend.Available = true;
+			backend.Present = false;
+			Assert.AreEqual("", device.Refresh());
+			Assert.AreEqual("Missing", device.Status);
+			Assert.AreEqual(false, device.IsRunning);
+
+			backend.Present = true;
+			Assert.AreSame(device, device.Refresh());
+			Assert.AreEqual("Running", device.Status);
+			Assert.AreEqual(true, device.IsRunning);
+
+			var removed = Ks.Audio.Device.WrapMissing(service, descriptor);
+			Assert.AreEqual("Missing", removed.Status);
+			Assert.AreEqual(false, removed.IsRunning);
 		}
 
 		[Test]

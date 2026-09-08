@@ -337,8 +337,6 @@ namespace Keysharp.Builtins
 			/// derivation asks for, which a checksum has none of. The error messages are spelled from this table
 			/// so that adding a row cannot leave them claiming something else.
 			/// </summary>
-			/// <remarks>The tables come before the names spelled from them because a static initializer runs in
-			/// the order it is written, so sorting this block would leave the names reading an empty table.</remarks>
 			private static readonly (string Name, Func<HashAlgorithm> Create, HashAlgorithmName? Derivation)[] algorithms =
 			[
 				// Every factory is qualified because this class has a method of each of these names, which hides
@@ -403,21 +401,6 @@ namespace Keysharp.Builtins
 			/// The tag <see cref="AeadMode"/> produces, and the shortest an authenticated message can be.
 			/// </summary>
 			private const int TagLength = 16;
-
-			/// <summary>
-			/// The algorithms <see cref="CreateAlgorithm"/> knows, spelled for an error message.
-			/// </summary>
-			private static string AlgorithmNames { get; } = Spell(algorithms.Select(a => a.Name));
-
-			/// <summary>
-			/// The modes <see cref="Transform"/> knows, spelled for an error message.
-			/// </summary>
-			private static string CipherModes { get; } = Spell(cipherModes.Select(m => m.Name).Append(AeadMode));
-
-			/// <summary>
-			/// The algorithms <see cref="DeriveKey"/> accepts, spelled for an error message.
-			/// </summary>
-			private static string DerivationNames { get; } = Spell(algorithms.Where(a => a.Derivation.HasValue).Select(a => a.Name));
 
 			/// <summary>
 			/// Encrypts or decrypts with AES-GCM, which authenticates what it encrypts.
@@ -606,7 +589,7 @@ namespace Keysharp.Builtins
 			/// </summary>
 			/// <param name="name">The algorithm name, matched case-insensitively. An embedded "-" is ignored, so
 			/// "SHA-256" — the spelling external tools print — resolves as well as "SHA256".</param>
-			/// <returns>The algorithm, or null if the name is not one of <see cref="AlgorithmNames"/>.</returns>
+			/// <returns>The algorithm, or null if the name is unknown.</returns>
 			private static HashAlgorithm CreateAlgorithm(string name) => TryFind(name, out var entry) ? entry.Create() : null;
 
 			/// <summary>
@@ -616,14 +599,14 @@ namespace Keysharp.Builtins
 			/// <param name="salt">The salt, which need not be secret but must differ per password.</param>
 			/// <param name="iterations">How many times to iterate. The cost of a guess rises with it.</param>
 			/// <param name="length">How many bytes to produce.</param>
-			/// <param name="algorithm">The hash to iterate, one of <see cref="DerivationNames"/>.</param>
+			/// <param name="algorithm">The hash algorithm used by PBKDF2.</param>
 			/// <param name="enc">The encoding a string password or salt is taken in.</param>
 			/// <returns>The derived bytes, or null if anything was rejected.</returns>
 			private static byte[] DeriveKey(object password, object salt, long iterations, long length, string algorithm, Encoding enc)
 			{
 				if (!TryFind(algorithm, out var entry) || !entry.Derivation.HasValue)
 				{
-					_ = Errors.ValueErrorOccurred($"Unknown derivation algorithm. Specify {DerivationNames}.", algorithm);
+					_ = Errors.ValueErrorOccurred($"Unknown derivation algorithm \"{algorithm}\". Expected {string.Join(", ", algorithms.Where(a => a.Derivation.HasValue).Select(a => a.Name))}.", algorithm);
 					return null;
 				}
 
@@ -755,15 +738,6 @@ namespace Keysharp.Builtins
 			private static Encoding ResolveEncoding(object encoding) => Files.GetEncodingOrDefault(encoding, Encoding.UTF8);
 
 			/// <summary>
-			/// Writes a list of names the way an error message reads them out.
-			/// </summary>
-			private static string Spell(IEnumerable<string> names)
-			{
-				var all = names.ToArray();
-				return all.Length == 1 ? all[0] : $"{string.Join(", ", all[..^1])} or {all[^1]}";
-			}
-
-			/// <summary>
 			/// Encrypts or decrypts with a symmetric cipher, dispatching on the mode: the authenticated one is a
 			/// different construction from the chaining ones, not a variation of them.
 			/// </summary>
@@ -771,7 +745,7 @@ namespace Keysharp.Builtins
 			/// <param name="key">The secret key.</param>
 			/// <param name="decrypt">true to decrypt, false to encrypt.</param>
 			/// <param name="cipherName">The cipher, one of <see cref="CipherNames"/>.</param>
-			/// <param name="modeName">The mode, one of <see cref="CipherModes"/>.</param>
+			/// <param name="modeName">The cipher mode.</param>
 			/// <param name="iv">The initialization vector or nonce, or null to let it travel with the ciphertext:
 			/// encrypting then draws a random one and writes it in front of the result, and decrypting reads it back
 			/// off the front. A mode which uses none, such as ECB, accepts only null.</param>
@@ -781,7 +755,7 @@ namespace Keysharp.Builtins
 			{
 				if (Normalize(cipherName) != CipherNames)
 				{
-					_ = Errors.ValueErrorOccurred($"Unknown cipher. Specify {CipherNames}.", cipherName);
+					_ = Errors.ValueErrorOccurred($"Unknown cipher \"{cipherName}\". Expected {CipherNames}.", cipherName);
 					return null;
 				}
 
@@ -798,7 +772,7 @@ namespace Keysharp.Builtins
 
 				if (!TryGetCipherMode(mode, out var cipherMode))
 				{
-					_ = Errors.ValueErrorOccurred($"Unknown cipher mode. Specify {CipherModes}.", modeName);
+					_ = Errors.ValueErrorOccurred($"Unknown cipher mode \"{modeName}\". Expected {string.Join(", ", cipherModes.Select(m => m.Name).Append(AeadMode))}.", modeName);
 					return null;
 				}
 
@@ -847,7 +821,7 @@ namespace Keysharp.Builtins
 			/// Raises the error for an algorithm name that is not one of the supported ones.
 			/// </summary>
 			private static object UnknownAlgorithm(string name)
-				=> Errors.ValueErrorOccurred($"Unknown hash algorithm. Specify one of {AlgorithmNames}.", name, "");
+				=> Errors.ValueErrorOccurred($"Unknown hash algorithm \"{name}\". Expected {string.Join(", ", algorithms.Select(a => a.Name))}.", name, "");
 		}
 	}
 }

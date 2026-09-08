@@ -2711,7 +2711,7 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "full",
-                     "notes":  "Unsure at the moment because send modes aren\u0027t quite clear."
+                     "notes":  "Gets or sets the default send mode."
                  },
                  {
                      "category":  "Environment/System",
@@ -2918,7 +2918,7 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "full",
-                     "notes":  "Sets or returns 1 for matching the start of a title, 2 for matching anywhere in a title, 3 for matching exactly a title, or \"regex\" for matching using a regular expression.",
+                     "notes":  "Sets or returns 1 for matching the start of a title, 2 for matching anywhere in a title, 3 for matching exactly a title, or \"RegEx\" for matching using a regular expression.",
                      "tested-by":  "props-script-settings.ahk"
                  },
                  {
@@ -2929,7 +2929,7 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "full",
-                     "notes":  "Sets or returns \"fast\" for fast window title matching, or \"slow\" for slow window title matching.",
+                     "notes":  "Sets or returns \"Fast\" for fast window title matching, or \"Slow\" for slow window title matching.",
                      "tested-by":  "props-script-settings.ahk"
                  },
                  {
@@ -3715,7 +3715,7 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "unknown",
-                     "notes":  "Returns a ClipboardHook with Stop/Pause/Paused/Status/IsActive/Count, matching Ks.WinEvent. Independent of the OnClipboardChange handler chain - its return value is discarded and its callback runs on its own pseudo-thread - though both drive one native clipboard monitor. The callback is called as callback(hook, type). No callback has been observed firing from a real clipboard change on Linux or macOS.",
+                     "notes":  "Calls Callback(Hook, Type) with 0 (empty), 1 (text or files), or 2 (other); A_EventInfo has the same value. Returns a ClipboardHook and runs independently of OnClipboardChange. Native callbacks are unverified on Linux and macOS.",
                      "tested-by":  "clipboard-class.ahk"
                  },
                  {
@@ -6677,7 +6677,7 @@
                      "linux_x11":  "partial",
                      "linux_wayland":  "partial",
                      "macos":  "partial",
-                     "notes":  "Cross-platform image class for capturing, loading, or creating an image, then drawing, transforming, searching, and reading/writing its pixels before saving it or handing out a bitmap handle. Search/SearchAll/SearchPixel return match objects ({X, Y[, Color]}, \"\" or an empty array on a miss) with an optional flat (x, y, width, height) region; MeasureText returns {Width, Height}; fonts use Gui.SetFont-style (Options, FontName) arguments; the capture origin/density metadata is exposed as OriginX/OriginY/ScaleX/ScaleY (\"\" after Rotate/Flip until SetOrigin re-anchors); the per-pixel alpha transform is Alpha(0..1); ToClr() hands out the live underlying toolkit bitmap as a Ks.Clr object with pending work materialized (stale after the next transform or Dispose). Full on Windows, partial on Linux (X11); Wayland and macOS are unverified. Replaces the earlier ImageCapture() function.",
+                     "notes":  "Captures, loads, creates, edits and searches images. Search methods return match objects. FromWindow Mode and search Direction use string names instead of numeric codes. Supports saving and CLR bitmap access. Full on Windows, partial on Linux (X11); Wayland and macOS are unverified.",
                      "tested-by":  "Gui/guitest.ks"
                  },
                  {
@@ -6688,7 +6688,7 @@
                      "linux_x11":  "partial",
                      "linux_wayland":  "partial",
                      "macos":  "partial",
-                     "notes":  "Searches a region of the screen for an image, with the AHK signature (writes the found position to the ByRef output variables and returns true/false). Does not support file types of .ani, .emf, .exif or .wmf. Only 32-bit color is supported. For searching a captured/loaded image instead of the live screen, see the Image class's Search/SearchAll/SearchPixel.",
+                     "notes":  "Searches a screen region for an image, writing the position to ByRef outputs and returning true/false. Only 32-bit color is supported; .ani, .emf, .exif and .wmf files are unsupported. The Keysharp *DirN option uses numeric directions. For searches within an Image, use its Search/SearchAll/SearchPixel methods.",
                      "tested-by":  "Gui/guitest.ks"
                  },
                  {
@@ -8302,7 +8302,7 @@
                      "linux_x11":  "unknown",
                      "linux_wayland":  "unknown",
                      "macos":  "planned",
-                     "notes":  "Every present output and input endpoint, with Id, Name, Kind, Status, IsDefault and Refresh(). The Id is opaque, exact and unique across both kinds, and is the only durable selector: prefixes, enumeration indexes and Name:Index are deliberately not accepted, so a device that changes position cannot be mistaken for another.",
+                     "notes":  "Lists present input and output endpoints. Devices expose an opaque Id, Name, Kind, Status, IsRunning, IsDefault and Refresh(); selection uses the exact Id.",
                      "tested-by":  "audio-class.ahk; Gui/guitest.ks"
                  },
                  {
@@ -8318,13 +8318,24 @@
                  },
                  {
                      "category":  "Keysharp Module (Ks)",
+                     "feature":  "Audio.Device.Status",
+                     "syntax":  "Status := Device.Status",
+                     "windows":  "full",
+                     "linux_x11":  "unknown",
+                     "linux_wayland":  "unknown",
+                     "macos":  "planned",
+                     "notes":  "Reports Running, Idle, Unknown or Missing. Unknown means activity cannot be determined; Missing means removal was observed.",
+                     "tested-by":  "audio-class.ahk; AudioInternalsTests.DeviceStatus"
+                 },
+                 {
+                     "category":  "Keysharp Module (Ks)",
                      "feature":  "Audio.Device.IsRunning",
                      "syntax":  "if (mic.IsRunning)",
                      "windows":  "full",
                      "linux_x11":  "unknown",
                      "linux_wayland":  "unknown",
                      "macos":  "planned",
-                     "notes":  "Whether any application currently holds a live stream on this device, which is what answers \"is my microphone being recorded\". Blank means the backend could not determine it, which stays distinct from a confident false. Running is not the same as audible: a stream that is open but emitting silence reports true. Windows reads the endpoint's session states; Linux the sink or source RUNNING state; macOS kAudioDevicePropertyDeviceIsRunningSomewhere, which is reported not to track Bluetooth inputs.",
+                     "notes":  "Returns a Boolean indicating whether any application holds a live stream, including silent streams. False includes idle, unknown and missing devices; use Status to distinguish them. macOS may not track Bluetooth inputs.",
                      "tested-by":  "audio-class.ahk; Gui/guitest.ks"
                  },
                  {
@@ -8478,7 +8489,7 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "full",
-                     "notes":  "Re-reads this monitor's topology and metadata in place and returns the same object. Matches by name first so the monitor is still tracked after the display order changes, falling back to the index. Returns blank (falsy) instead, leaving the object's last-known values untouched, when the monitor is no longer attached - the state a Monitor.OnChange 'topology' handler is in after the display it was holding is unplugged, so it reports the loss the same way FromId does rather than throwing.",
+                     "notes":  "Updates this monitor in place and returns the same object. Returns blank when detached, preserving the last-known properties.",
                      "tested-by":  "MonitorTests.cs"
                  },
                  {
@@ -8555,7 +8566,7 @@
                      "linux_x11":  "unknown",
                      "linux_wayland":  "unknown",
                      "macos":  "unknown",
-                     "notes":  "Calls Callback(hook, kind) whenever the display configuration changes, returning a MonitorHook whose Stop() cancels it (Count limits the number of fires, default -1 = unlimited). kind is 'topology' when the set of attached monitors changed (plug/unplug, dock/undock) and 'settings' when the same monitors are attached but their resolution, position, scale or primary assignment changed; A_EventInfo holds the monitor count after the change. The classification is done by diffing topology snapshots rather than by decoding native change flags, so it is identical on every platform and duplicate notifications that change nothing are dropped. Windows listens to SystemEvents.DisplaySettingsChanged, Linux to GDK's monitor signals (which cover X11 and Wayland alike), macOS to CGDisplayRegisterReconfigurationCallback. The Linux and macOS backends are written but have never been run against a real display change - hence unknown.",
+                     "notes":  "Calls Callback(Hook, Kind) with \"Topology\" for attachment changes or \"Settings\" for changes to resolution, position, scale or primary monitor. Returns a MonitorHook; A_EventInfo is the current monitor count. Duplicate notifications with no changes are suppressed. Native callbacks are unverified on Linux and macOS.",
                      "tested-by":  "MonitorTests.cs"
                  },
                  {
@@ -8707,7 +8718,7 @@
                      "linux_x11":  "partial",
                      "linux_wayland":  "partial",
                      "macos":  "partial",
-                     "notes":  "Displays the specified text in a small window containing one or more buttons. Option values 6, 768, 4096, 8192, 262144 and 16384 are not supported on any platform (there is no help button), and when a timeout or an owner window is used the text is right justified. On Linux and macOS the toolkit offers only the OK, OK/Cancel, Yes/No and Yes/No/Cancel button sets, so button options 2 (Abort/Retry/Ignore), 5 (Retry/Cancel) and 6 (Cancel/Try Again/Continue) are unavailable there and fall back to OK. The four icon options behave the same everywhere.",
+                     "notes":  "Displays the specified text in a small window containing one or more buttons. Option values 6, 768, 4096, 8192, 262144 and 16384 are not supported on any platform (there is no help button), and when a timeout or an owner window is used the text is right justified. On Linux and macOS the toolkit offers only the OK, OK/Cancel, Yes/No and Yes/No/Cancel button sets, so button options 2 (Abort/Retry/Ignore), 5 (Retry/Cancel) and 6 (Cancel/Try Again/Continue) are unavailable there and fall back to OK. The four icon options behave the same everywhere. The OK result uses AHK casing on every platform.",
                      "tested-by":  "ControlTests/control_add_delete_item.ahk"
                  },
                  {
@@ -9522,7 +9533,7 @@
                      "linux_wayland":  "full",
                      "macos":  "full",
                      "notes":  "The event kind this subscription listens for, e.g. \"Active\" or \"Move\".",
-                     "tested-by":  "Gui/guitest.ks"
+                     "tested-by":  "Gui/guitest.ks; EventHookTests.InvalidEventTypeErrorRecovery"
                  },
                  {
                      "category":  "Automation",
@@ -11693,7 +11704,7 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "full",
-                     "notes":  "Returns a readable platform-native identifier for the active keyboard layout."
+                     "notes":  "Returns a readable platform-native keyboard layout identifier, or an empty string when unavailable."
                  },
                  {
                      "category":  "Keysharp Module (Ks)",

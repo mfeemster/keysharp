@@ -1,3 +1,5 @@
+#ErrorStdOut
+#Warn All, StdOut
 #Include <assert>
 #if OSX
 #NoTrayIcon
@@ -42,27 +44,27 @@ AssertEq(A_TitleMatchMode, 3, A_LineNumber)
 	
 SetTitleMatchMode "RegEx"
 
-AssertEq(A_TitleMatchMode, "regex", A_LineNumber)
+AssertEq(A_TitleMatchMode, "RegEx", A_LineNumber)
 
-SetTitleMatchMode "dummy"
+Throws(() => SetTitleMatchMode("dummy"), A_LineNumber, ValueError)
 
-AssertEq(A_TitleMatchMode, 2, A_LineNumber)
+AssertEq(A_TitleMatchMode, "RegEx", A_LineNumber)
 
-AssertEq(A_TitleMatchModeSpeed, "fast", A_LineNumber)
+AssertEq(A_TitleMatchModeSpeed, "Fast", A_LineNumber)
 
 SetTitleMatchMode "fast"
 
-AssertEq(A_TitleMatchModeSpeed, "fast", A_LineNumber)
+AssertEq(A_TitleMatchModeSpeed, "Fast", A_LineNumber)
 
 SetTitleMatchMode "slow"
 
-AssertEq(A_TitleMatchModeSpeed, "slow", A_LineNumber)
+AssertEq(A_TitleMatchModeSpeed, "Slow", A_LineNumber)
 
-SetTitleMatchMode "dummy"
+Throws(() => SetTitleMatchMode("dummy"), A_LineNumber, ValueError)
 
-AssertEq(A_TitleMatchModeSpeed, "slow", A_LineNumber)
+AssertEq(A_TitleMatchModeSpeed, "Slow", A_LineNumber)
 
-AssertEq(A_TitleMatchMode, 2, A_LineNumber)
+AssertEq(A_TitleMatchMode, "RegEx", A_LineNumber)
 
 SetTitleMatchMode 2 ; Reset it back for the function version of this test.
 SetTitleMatchMode "fast"

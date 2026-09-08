@@ -201,19 +201,8 @@ namespace Keysharp.Builtins
 
 			set
 			{
-				var val = CoordModeType.Client;
-
-				if (value is CoordModeType cmt)
-					val = cmt;
-				else if (Enum.TryParse(value.As(), out cmt))
-					val = cmt;
-				else
-				{
-					_ = Errors.ValueErrorOccurred($"{value} was not in the correct format for coordinate modes.");
-					return;
-				}
-
-				ThreadAccessors.A_CoordModeCaret = val;
+				if (TryParseCoordMode(value, out var mode))
+					ThreadAccessors.A_CoordModeCaret = mode;
 			}
 		}
 
@@ -227,19 +216,8 @@ namespace Keysharp.Builtins
 
 			set
 			{
-				var val = CoordModeType.Client;
-
-				if (value is CoordModeType cmt)
-					val = cmt;
-				else if (Enum.TryParse(value.As(), out cmt))
-					val = cmt;
-				else
-				{
-					_ = Errors.ValueErrorOccurred($"{value} was not in the correct format for coordinate modes.");
-					return;
-				}
-
-				ThreadAccessors.A_CoordModeMenu = val;
+				if (TryParseCoordMode(value, out var mode))
+					ThreadAccessors.A_CoordModeMenu = mode;
 			}
 		}
 
@@ -253,19 +231,8 @@ namespace Keysharp.Builtins
 
 			set
 			{
-				var val = CoordModeType.Client;
-
-				if (value is CoordModeType cmt)
-					val = cmt;
-				else if (Enum.TryParse(value.As(), out cmt))
-					val = cmt;
-				else
-				{
-					_ = Errors.ValueErrorOccurred($"{value} was not in the correct format for coordinate modes.");
-					return;
-				}
-
-				ThreadAccessors.A_CoordModeMouse = val;
+				if (TryParseCoordMode(value, out var mode))
+					ThreadAccessors.A_CoordModeMouse = mode;
 			}
 		}
 
@@ -279,19 +246,8 @@ namespace Keysharp.Builtins
 
 			set
 			{
-				var val = CoordModeType.Client;
-
-				if (value is CoordModeType cmt)
-					val = cmt;
-				else if (Enum.TryParse(value.As(), out cmt))
-					val = cmt;
-				else
-				{
-					_ = Errors.ValueErrorOccurred($"{value} was not in the correct format for coordinate modes.");
-					return;
-				}
-
-				ThreadAccessors.A_CoordModePixel = val;
+				if (TryParseCoordMode(value, out var mode))
+					ThreadAccessors.A_CoordModePixel = mode;
 			}
 		}
 
@@ -305,19 +261,8 @@ namespace Keysharp.Builtins
 
 			set
 			{
-				var val = CoordModeType.Client;
-
-				if (value is CoordModeType cmt)
-					val = cmt;
-				else if (Enum.TryParse(value.As(), out cmt))
-					val = cmt;
-				else
-				{
-					_ = Errors.ValueErrorOccurred($"{value} was not in the correct format for coordinate modes.");
-					return;
-				}
-
-				ThreadAccessors.A_CoordModeToolTip = val;
+				if (TryParseCoordMode(value, out var mode))
+					ThreadAccessors.A_CoordModeToolTip = mode;
 			}
 		}
 
@@ -1378,14 +1323,24 @@ namespace Keysharp.Builtins
 		/// </summary>
 		public static object A_SendMode
 		{
-			get => ThreadAccessors.A_SendMode.ToString();
+			get => SendModeToString(ThreadAccessors.A_SendMode);
 
 			set
 			{
-				if (Enum.TryParse<SendModes>(value.As(), out var val))
+				var text = value.As();
+				var mode = text.Equals("Event", StringComparison.OrdinalIgnoreCase) ? SendModes.Event
+						   : text.Equals("Input", StringComparison.OrdinalIgnoreCase) ? SendModes.Input
+						   : text.Equals("Play", StringComparison.OrdinalIgnoreCase) ? SendModes.Play
+						   : text.Equals("InputThenPlay", StringComparison.OrdinalIgnoreCase) ? SendModes.InputThenPlay
+						   : SendModes.Invalid;
+
+				if (mode == SendModes.Invalid)
 				{
-					ThreadAccessors.A_SendMode = val;
+					_ = Errors.ValueErrorOccurred($"Unknown send mode \"{Errors.Describe(value)}\". Expected Event, Input, Play or InputThenPlay.", value);
+					return;
 				}
+
+				ThreadAccessors.A_SendMode = mode;
 			}
 		}
 
@@ -1532,44 +1487,49 @@ namespace Keysharp.Builtins
 			get
 			{
 				var l = ThreadAccessors.A_TitleMatchMode;
-				return l == 4L ? Keyword_RegEx : l;
+				return l == 4L ? "RegEx" : l;
 			}
 			set
 			{
-				var script = Script.TheScript;
-
-				var val = value.ToString().ToLower() switch
+				var val = value.As().ToLowerInvariant() switch
 				{
 					"1" => 1L,
 					"2" => 2L,
 					"3" => 3L,
 					Keyword_RegEx => 4L,
-					_ => 2L
+					_ => 0L
 				};
+
+				if (val == 0L)
+				{
+					_ = Errors.ValueErrorOccurred($"Unknown title match mode \"{Errors.Describe(value)}\". Expected 1, 2, 3 or RegEx.", value);
+					return;
+				}
 
 				ThreadAccessors.A_TitleMatchMode = val;
 			}
 		}
 
 		/// <summary>
-		/// The current match speed (fast or slow) set by <see cref="SetTitleMatchMode"/>.
+		/// The current match speed (Fast or Slow) set by <see cref="SetTitleMatchMode"/>.
 		/// </summary>
 		public static object A_TitleMatchModeSpeed
 		{
-			get => ThreadAccessors.A_TitleMatchModeSpeed ? Keyword_Fast : Keyword_Slow;
+			get => ThreadAccessors.A_TitleMatchModeSpeed ? "Fast" : "Slow";
 
 			set
 			{
-				var val = false;
-				var script = Script.TheScript;
-				var str = value.ToString();
-				switch (str)
+				var text = value.As();
+				bool? fast = text.Equals("Fast", StringComparison.OrdinalIgnoreCase) ? true
+							 : text.Equals("Slow", StringComparison.OrdinalIgnoreCase) ? false : null;
+
+				if (fast == null)
 				{
-					case var x when x.Equals(Keyword_Fast, StringComparison.OrdinalIgnoreCase): val = true; break;
-					case var x when x.Equals(Keyword_Slow, StringComparison.OrdinalIgnoreCase): val = false; break;
+					_ = Errors.ValueErrorOccurred($"Unknown title match speed \"{Errors.Describe(value)}\". Expected Fast or Slow.", value);
+					return;
 				}
 
-				ThreadAccessors.A_TitleMatchModeSpeed = val;
+				ThreadAccessors.A_TitleMatchModeSpeed = fast.Value;
 			}
 		}
 
@@ -1721,8 +1681,7 @@ namespace Keysharp.Builtins
 			?? Assembly.GetEntryAssembly() ?? Assembly.GetExecutingAssembly();
 
 		/// <summary>
-		/// Wrapper to get a string representation of the <see cref="CordModeType"/> enum because using
-		/// ToString() is slow because it uses reflection.
+		/// Maps the internal coordinate mode to its script spelling.
 		/// </summary>
 		/// <param name="mode">The enum to return the string for.</param>
 		/// <returns>The string representation of mode.</returns>
@@ -1740,10 +1699,38 @@ namespace Keysharp.Builtins
 					return "Screen";
 
 				default:
-					return DefaultErrorString;
+					return (string)Errors.ErrorOccurred($"Unknown coordinate mode \"{mode}\". Expected Screen, Window or Client.", DefaultErrorString);
 			}
 		}
 
+		private static bool TryParseCoordMode(object value, out CoordModeType mode)
+		{
+			if (value is CoordModeType typed)
+				mode = typed;
+			else
+			{
+				var text = value.As();
+				mode = text.Equals("Screen", StringComparison.OrdinalIgnoreCase) ? CoordModeType.Screen
+					 : text.Equals("Window", StringComparison.OrdinalIgnoreCase) ? CoordModeType.Window
+					 : text.Equals("Client", StringComparison.OrdinalIgnoreCase) ? CoordModeType.Client
+					 : (CoordModeType)(-1);
+			}
+
+			if (mode is CoordModeType.Screen or CoordModeType.Window or CoordModeType.Client)
+				return true;
+
+			_ = Errors.ValueErrorOccurred($"Unknown coordinate mode \"{Errors.Describe(value)}\". Expected Screen, Window or Client.", value);
+			return false;
+		}
+
+		internal static string SendModeToString(SendModes mode) => mode switch
+		{
+			SendModes.Event => "Event",
+			SendModes.Input => "Input",
+			SendModes.Play => "Play",
+			SendModes.InputThenPlay => "InputThenPlay",
+			_ => (string)Errors.ErrorOccurred($"Unknown send mode \"{mode}\". Expected Event, Input, Play or InputThenPlay.", DefaultErrorString),
+		};
 
 	}
 
@@ -1961,7 +1948,7 @@ namespace Keysharp.Builtins
 			{
 				if (!Script.TheScript.TrySetGuiTheme(value?.ToString()))
 				{
-					_ = Errors.ValueErrorOccurred($"Invalid gui theme {value}");
+					_ = Errors.ValueErrorOccurred($"Invalid gui theme \"{Errors.Describe(value)}\". Expected Classic, System or Dark.");
 				}
 			}
 		}
@@ -2042,37 +2029,12 @@ namespace Keysharp.Builtins
 		public static long A_DefaultHotstringPriority => Script.TheScript.HotstringManager.hsPriority;
 
 		/// <summary>
-		/// The default send mode of hotstrings.
+		/// The default send mode of hotstrings: Event, Input, Play or InputThenPlay.
 		/// </summary>
-		public static string A_DefaultHotstringSendMode
-		{
-			get
-			{
-				switch (Script.TheScript.HotstringManager.hsSendMode)
-				{
-					case SendModes.Event:
-						return "Event";
-
-					case SendModes.Input:
-						return "Input";
-
-					case SendModes.Play:
-						return "Play";
-
-					case SendModes.InputThenPlay:
-						return "InputThenPlay";
-
-					case SendModes.Invalid:
-						return "Invalid";
-
-					default:
-						return DefaultErrorString;
-				}
-			}
-		}
+		public static string A_DefaultHotstringSendMode => Accessors.SendModeToString(Script.TheScript.HotstringManager.hsSendMode);
 
 		/// <summary>
-		/// The default send raw mode of hotstrings.
+		/// The default send raw mode of hotstrings: NotRaw, Raw or RawText.
 		/// </summary>
 		public static string A_DefaultHotstringSendRaw
 		{
@@ -2090,7 +2052,7 @@ namespace Keysharp.Builtins
 						return "RawText";
 
 					default:
-						return DefaultErrorString;
+						return (string)Errors.ErrorOccurred($"Unknown hotstring raw mode \"{Script.TheScript.HotstringManager.hsSendRaw}\". Expected NotRaw, Raw or RawText.", DefaultErrorString);
 				}
 			}
 		}

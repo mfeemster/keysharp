@@ -416,7 +416,7 @@ namespace Keysharp.Tests
 			var calls = new List<object[]>();
 			var cb = new KeysharpFunc((Func<object, object, object>)((hook, type) =>
 			{
-				calls.Add([hook, type]);
+				calls.Add([hook, type, Accessors.A_EventInfo, Environment.CurrentManagedThreadId]);
 				return "";
 			}));
 
@@ -439,10 +439,29 @@ namespace Keysharp.Tests
 				Assert.AreEqual(1, calls.Count);
 				Assert.AreSame(hook, calls[0][0], "The callback receives the hook as its first argument.");
 				Assert.AreEqual(1L, calls[0][1]);
+				Assert.AreEqual(1L, calls[0][2]);
+				DispatchClipboardChange(0L);
+				Assert.AreEqual(0L, calls[1][1]);
+				Assert.AreEqual(0L, calls[1][2]);
+				DispatchClipboardChange(2L);
+				Assert.AreEqual(2L, calls[2][1]);
+				Assert.AreEqual(2L, calls[2][2]);
+
+				var ownerThread = Environment.CurrentManagedThreadId;
+				var script = Script.TheScript;
+				var dispatch = System.Threading.Tasks.Task.Run(() => script.ClipboardEventManager.Dispatch(0L));
+				Assert.IsTrue(dispatch.Wait(TimeSpan.FromSeconds(5)), "The native producer only queues the notification.");
+				Assert.AreEqual(3, calls.Count, "The callback waits for its owning thread.");
+				Keysharp.Internals.Flow.TryDoEvents(script.EventScheduler, propagateExit: false, yieldTick: false, pumpUi: false);
+				Assert.AreEqual(4, calls.Count);
+				Assert.AreEqual(0L, calls[3][1]);
+				Assert.AreEqual(0L, calls[3][2]);
+				Assert.AreEqual(ownerThread, calls[3][3]);
+
 				_ = hook.Stop();
 				Assert.IsFalse(hook.IsActive);
 				DispatchClipboardChange(1L);
-				Assert.AreEqual(1, calls.Count, "A stopped hook must not fire.");
+				Assert.AreEqual(4, calls.Count, "A stopped hook must not fire.");
 			}
 			finally
 			{
@@ -492,10 +511,11 @@ namespace Keysharp.Tests
 		[Test, Category("Clipboard"), Category("Internal"), NonParallelizable]
 		public void OnChangeHookDoesNotSuppressTheHandlerChain()
 		{
-			var chainCalls = 0;
-			var chain = new KeysharpFunc((Func<object, object>)(_ => { chainCalls++; return ""; }));
+			var chainValues = new List<object>();
+			var chain = new KeysharpFunc((Func<object, object>)(type => { chainValues.Add(type); return ""; }));
+			var hookValues = new List<object>();
 			// A hook that returns non-zero — the value that stops the OnClipboardChange chain.
-			var hookCb = new KeysharpFunc((Func<object, object, object>)((_, _) => 1L));
+			var hookCb = new KeysharpFunc((Func<object, object, object>)((_, type) => { hookValues.Add(type); return 1L; }));
 
 			if (Ks.KeysharpClipboard.OnChange(null, hookCb) is not Ks.ClipboardHook hook)
 			{
@@ -507,10 +527,16 @@ namespace Keysharp.Tests
 			{
 				_ = Env.OnClipboardChange(chain);
 				var script = Script.TheScript;
-				script.ClipFunctions.InvokeEventHandlers(1L);
-				script.ClipboardEventManager.Dispatch(1L);
-				Keysharp.Internals.Flow.TryDoEvents(script.EventScheduler, propagateExit: false, yieldTick: false, pumpUi: false);
-				Assert.AreEqual(1, chainCalls, "The chain handler runs regardless of what a hook returns.");
+
+				foreach (var dataType in new[] { 0, 1, 2 })
+				{
+					script.ClipFunctions.InvokeEventHandlers(dataType);
+					script.ClipboardEventManager.Dispatch(dataType);
+					Keysharp.Internals.Flow.TryDoEvents(script.EventScheduler, propagateExit: false, yieldTick: false, pumpUi: false);
+				}
+
+				CollectionAssert.AreEqual(new[] { 0L, 1L, 2L }, chainValues, "The chain receives numeric types regardless of what a hook returns.");
+				CollectionAssert.AreEqual(new[] { 0L, 1L, 2L }, hookValues, "The hook receives the same numeric types.");
 			}
 			finally
 			{

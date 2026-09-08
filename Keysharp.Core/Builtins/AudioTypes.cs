@@ -30,7 +30,7 @@ namespace Keysharp.Builtins
 
 				public object Channels => (long)Data.Channels;
 
-				/// <summary>The canonical token this clip's samples arrived as.</summary>
+				/// <summary>The samples' original format: "Unsigned8", "Signed16", "Signed24", "Signed32" or "Float32".</summary>
 				public string SampleFormat => Data.SampleFormat;
 
 				public override string ToString() => "Audio.Clip";
@@ -72,23 +72,25 @@ namespace Keysharp.Builtins
 				public object IsDefault => Snapshot.IsDefault;
 
 				/// <summary>
-				/// Whether any application currently holds a live stream on this device, or blank when the backend
-				/// cannot determine it. Running is not the same as audible: a stream that is open but silent still
-				/// reports true.
+				/// "Running" while any application holds a live stream, "Idle" when none does, "Unknown" when
+				/// the backend cannot determine it, or "Missing" after removal is observed. A silent stream is running.
 				/// </summary>
-				public object IsRunning
+				public string Status
 				{
 					get
 					{
 						if (missing)
-							return "";
+							return "Missing";
 
-						var backend = service.Backend;
+						var backend = service?.Backend;
 						return backend is { IsAvailable: true } && backend.TryGetIsRunning(Snapshot.Kind, Snapshot.Id, out var running)
-							   ? running
-							   : "";
+							   ? running ? "Running" : "Idle"
+							   : "Unknown";
 					}
 				}
+
+				/// <summary>Whether a live stream is known to be open. Read Status to distinguish Idle, Unknown and Missing.</summary>
+				public object IsRunning => Status == "Running";
 
 				/// <summary>This endpoint's own volume, from 0 through 100.</summary>
 				public object Volume
@@ -150,21 +152,25 @@ namespace Keysharp.Builtins
 				}
 
 				/// <summary>
-				/// Re-reads this exact device. Returns the receiver when it is still present, or blank after marking
-				/// it Missing. It never switches to a same-named replacement, which is the whole point of the id.
+				/// Re-reads this exact device. Returns the receiver when present, or blank otherwise. An absent
+				/// device is marked Missing; an unavailable backend does not establish removal.
 				/// </summary>
 				public object Refresh()
 				{
 					var backend = service.Backend;
 
-					if (backend is { IsAvailable: true } && backend.TryGetDevice(Snapshot.Id, out var fresh))
+					if (backend is { IsAvailable: true })
 					{
-						Snapshot = fresh;
-						missing = false;
-						return this;
+						if (backend.TryGetDevice(Snapshot.Id, out var fresh))
+						{
+							Snapshot = fresh;
+							missing = false;
+							return this;
+						}
+
+						missing = true;
 					}
 
-					missing = true;
 					return "";
 				}
 
@@ -227,7 +233,8 @@ namespace Keysharp.Builtins
 
 				/// <summary>
 				/// Configures a closed output. Nothing native is touched until <c>Open</c> or <c>TryOpen</c>, so
-				/// construction cannot fail for an absent device.
+				/// construction cannot fail for an absent device. VoicePolicy is "Oldest" (the default), "RoundRobin"
+				/// or "Reject", matched without regard to case.
 				/// </summary>
 				public object __New(object Device = null, object VoiceLimit = null, object VoicePolicy = null, object LatencyMilliseconds = null)
 				{
@@ -247,7 +254,7 @@ namespace Keysharp.Builtins
 							 : null;
 
 					if (policy == null)
-						return Errors.ValueErrorOccurred("VoicePolicy must be \"Oldest\", \"RoundRobin\" or \"Reject\".", VoicePolicy);
+						return Errors.ValueErrorOccurred($"Unknown VoicePolicy \"{Errors.Describe(VoicePolicy)}\". Expected Oldest, RoundRobin or Reject.", VoicePolicy);
 
 					var latency = LatencyMilliseconds == null ? 20.0 : LatencyMilliseconds.Ad();
 
@@ -368,7 +375,7 @@ namespace Keysharp.Builtins
 
 						if (policy == null)
 						{
-							_ = Errors.ValueErrorOccurred("VoicePolicy must be \"Oldest\", \"RoundRobin\" or \"Reject\".", value);
+							_ = Errors.ValueErrorOccurred($"Unknown VoicePolicy \"{text}\". Expected Oldest, RoundRobin or Reject.", value);
 							return;
 						}
 
@@ -586,7 +593,7 @@ namespace Keysharp.Builtins
 					}
 				}
 
-				/// <summary>True while this sound still holds a voice, which includes queued and paused.</summary>
+				/// <summary>True while this sound is playing or queued. False while paused or after it ends.</summary>
 				public object IsPlaying
 				{
 					get

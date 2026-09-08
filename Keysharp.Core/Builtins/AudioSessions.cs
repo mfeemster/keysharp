@@ -165,7 +165,8 @@ namespace Keysharp.Builtins
 			/// Subscribes to device arrivals, removals, renames and default changes. The callback receives
 			/// <c>(hook, kind, device)</c>, where kind is "Added", "Removed", "Changed" or "DefaultChanged". The
 			/// subscription is rooted until <c>Stop()</c>, count exhaustion or script teardown, so dropping the
-			/// returned hook does not unsubscribe it.
+			/// returned hook does not unsubscribe it. The Kind filter is "Output", "Input" or "All" (the default),
+			/// matched without regard to case.
 			/// </summary>
 			[Static]
 			public static object OnDeviceChange(object @this, object Callback, object Kind = null, object Count = null)

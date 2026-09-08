@@ -179,9 +179,7 @@ namespace Keysharp.Builtins
 					return true;
 				}
 
-				failure = Errors.ValueErrorOccurred(allowAll
-													? $"Kind must be \"Output\", \"Input\" or \"All\", not {text}."
-													: $"Kind must be \"Output\" or \"Input\", not {text}.");
+				failure = Errors.ValueErrorOccurred($"Unknown Kind \"{text}\". Expected {(allowAll ? "Output, Input or All" : "Output or Input")}.");
 				return false;
 			}
 
@@ -290,6 +288,8 @@ namespace Keysharp.Builtins
 			/// <summary>
 			/// Copies headerless PCM out of a script <c>Buffer</c> into an immutable clip. The copy is synchronous
 			/// and complete, so the caller may reuse or free its buffer the moment this returns.
+			/// SampleFormat is "Unsigned8", "Signed16" (the default), "Signed24", "Signed32" or "Float32",
+			/// matched without regard to case.
 			/// </summary>
 			[Static]
 			public static object FromPcm(object @this, object Data, object SampleRate, object Channels = null, object SampleFormat = null)
@@ -311,7 +311,7 @@ namespace Keysharp.Builtins
 					return Errors.ValueErrorOccurred("Channels must be 1 or 2.", channels);
 
 				if (!Engine.AudioFormats.TryResolve(formatToken, out var canonical, out var bytesPerSample))
-					return Errors.ValueErrorOccurred($"SampleFormat must be one of Unsigned8, Signed16, Signed24, Signed32 or Float32, not {formatToken}.");
+					return Errors.ValueErrorOccurred($"Unknown SampleFormat \"{formatToken}\". Expected Unsigned8, Signed16, Signed24, Signed32 or Float32.");
 
 				// The size is checked before the bytes are read: an empty Buffer has no allocation behind it, so
 				// reading it first would fail natively instead of raising the ValueError this contract promises.
@@ -442,7 +442,8 @@ namespace Keysharp.Builtins
 
 			// ---- devices -------------------------------------------------------------------------
 
-			/// <summary>Every currently present, usable device of one kind, outputs before inputs for "All".</summary>
+			/// <summary>Every usable device of Kind "Output", "Input" or "All" (the default), matched without regard
+			/// to case. Outputs precede inputs for "All".</summary>
 			[Static]
 			public static object Devices(object @this, object Kind = null)
 			{
@@ -466,7 +467,8 @@ namespace Keysharp.Builtins
 				return result;
 			}
 
-			/// <summary>The current default device of one kind, or blank when the host has none.</summary>
+			/// <summary>The default device of Kind "Output" (the default) or "Input", matched without regard to case,
+			/// or blank when the host has none.</summary>
 			[Static]
 			public static object DefaultDevice(object @this, object Kind = null)
 			{

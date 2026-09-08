@@ -1,3 +1,5 @@
+#ErrorStdOut
+#Warn All, StdOut
 #NoTrayIcon
 #import KS { Audio }
 #Include <assert>
@@ -123,8 +125,12 @@ Throws(() => Audio.DefaultDevice("All"), A_LineNumber)      ; a role default is 
 ; Reading IsRunning on every device exercises the session-enumeration path on Windows. A wrong COM vtable slot
 ; there is an access violation rather than an exception, so this is deliberately run against every endpoint
 ; instead of just the first.
-for d in devices
-    Assert(d.IsRunning == true || d.IsRunning == false || d.IsRunning == "", A_LineNumber)
+for d in devices {
+    running := d.IsRunning
+    Assert(running == true || running == false, A_LineNumber)
+    status := d.Status
+    Assert(status == "Running" || status == "Idle" || status == "Unknown" || status == "Missing", A_LineNumber)
+}
 
 ; The probes are Booleans and never prompt or open anything.
 Assert(Audio.IsPlaybackSupported == true || Audio.IsPlaybackSupported == false, A_LineNumber)
@@ -138,8 +144,6 @@ if (devices.Length > 0) {
     Assert(d is Audio.Device, A_LineNumber)
     Assert(d.Id != "" && d.Name != "", A_LineNumber)
     Assert(d.Kind == "Output" || d.Kind == "Input", A_LineNumber)
-    ; IsRunning is a Boolean, or blank when the backend cannot tell. It is never a guess.
-    Assert(d.IsRunning == true || d.IsRunning == false || d.IsRunning == "", A_LineNumber)
     ; Refresh returns the receiver for a device that is still present.
     ; Refresh is the existence test: the receiver while the device is there, blank once it is gone.
     AssertEq(d.Refresh(), d, A_LineNumber)
@@ -316,7 +320,7 @@ if (Audio.IsDeviceChangeSupported) {
     AssertEq(hook.IsActive, false, A_LineNumber)
 }
 
-DeviceChanged(Hook, Kind, Device) {
+DeviceChanged(ChangedHook, Kind, Device) {
 }
 
 ; ---- cleanup -----------------------------------------------------------------------------------

@@ -114,31 +114,36 @@ namespace Keysharp.Builtins
 		}
 
 		/// <summary>
-		/// Gets or sets the case sensitivity comparison mode for string keys.
+		/// Gets or sets the case sensitivity for string keys: On, Off or Locale. Boolean inputs are also accepted.
 		/// </summary>
 		public object CaseSense
 		{
-			get => caseSense.ToString();
+			get => caseSense switch
+			{
+				eCaseSense.On => "On",
+				eCaseSense.Off => "Off",
+				eCaseSense.Locale => "Locale",
+				_ => (string)Errors.ErrorOccurred($"Unknown CaseSense \"{caseSense}\". Expected On, Off or Locale.", DefaultErrorString),
+			};
 
 			set
 			{
-				var oldVal = caseSense;
-
-				//An unrecognized value leaves the mode alone, which is how this has always behaved.
-				if (Conversions.ParseCaseSense(value) is eCaseSense parsed)
-					caseSense = parsed;
-
-				if (map == null)
-					return;
-
 				if (Count > 0)
 				{
-					caseSense = oldVal;
 					_ = Errors.PropertyErrorOccurred("Attempted to change case sensitivity of a map which was not empty.");
 					return;
 				}
 
-				if (caseSense != oldVal)
+				if (Conversions.ParseCaseSense(value) is not eCaseSense parsed)
+				{
+					_ = Errors.ValueErrorOccurred($"Unknown CaseSense \"{Errors.Describe(value)}\". Expected On, Off, Locale, 1, 0, True or False.", value);
+					return;
+				}
+
+				var oldVal = caseSense;
+				caseSense = parsed;
+
+				if (map != null && caseSense != oldVal)
 				{
 					if (enumerableMap != null)
 						enumerableMap = null;
