@@ -29,6 +29,9 @@ namespace Keysharp.Builtins
 			/// </summary>
 			private const int MaxChunkBytes = 1024 * 1024;
 
+			/// <summary>Read once: the assembly attribute behind it costs microseconds and never changes.</summary>
+			private static readonly string userAgent = $"Keysharp/{Ks.A_KsVersion}";
+
 			/// <summary>The characters RFC 9110 allows in a method token.</summary>
 			private static readonly SearchValues<char> MethodChars =
 				SearchValues.Create("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!#$%&'*+-.^_`|~");
@@ -58,7 +61,7 @@ namespace Keysharp.Builtins
 			/// <exception cref="ValueError">Thrown for an unknown option key or an unusable option value.</exception>
 			public object __New(object Options = null)
 			{
-				if (RequestOptions.Parse(Options, true) is not { } parsed)
+				if (RequestOptions.Parse(Options, isSession: true) is not { } parsed)
 				{
 					// The options were reported as they were read. This session keeps a usable shape so a later
 					// member access names the real cause rather than failing on a half-built object.
@@ -103,11 +106,33 @@ namespace Keysharp.Builtins
 				set => session.Timeout = RequestOptions.ParseTimeout(value) ?? session.Timeout;
 			}
 
-			/// <summary>Prefixed to a request URL which is not already absolute.</summary>
+			/// <summary>
+			/// Resolved against a request URL which is not already absolute, as a browser resolves a link: a
+			/// <c>BaseUrl</c> ending in <c>/</c> keeps its whole path, and one that does not loses its last segment.
+			/// </summary>
 			public object BaseUrl
 			{
 				get => session.BaseUrl ?? "";
 				set => session.BaseUrl = value.As();
+			}
+
+			/// <summary>
+			/// The callback every request through this session streams its body to, unless the request names its
+			/// own. Reads back as <c>""</c> when there is none. A download ignores it: the file is the body's sink.
+			/// </summary>
+			public object OnData
+			{
+				get => (object)session.OnData ?? "";
+
+				set
+				{
+					if (value is null || (value is string s && s.Length == 0))
+						session.OnData = null;
+					else if (Functions.GetKeysharpFunc(value, null, true) is { } callback)
+						session.OnData = callback;
+					else
+						_ = Errors.TypeErrorOccurred(value, typeof(KeysharpFunc));
+				}
 			}
 
 			/// <summary>The underlying <see cref="HttpClient"/>, for settings this class does not surface.</summary>
@@ -122,15 +147,12 @@ namespace Keysharp.Builtins
 				unusable ??= "This Http session has been closed.";
 				client?.Dispose();
 				client = null;
+				HasFinalizer = false;
 				return DefaultObject;
 			}
 
 			[PublicHiddenFromUser]
-			public void Dispose()
-			{
-				_ = Close();
-				GC.SuppressFinalize(this);
-			}
+			public void Dispose() => _ = Close();
 
 			// ---- session requests ----------------------------------------------------------------------------
 
@@ -141,7 +163,7 @@ namespace Keysharp.Builtins
 			/// <exception cref="OSError">The request never reached a reply.</exception>
 			/// <exception cref="TimeoutError">Nothing arrived within <see cref="Timeout"/>.</exception>
 			/// <exception cref="ValueError">The URL, an option or a header is unusable.</exception>
-			public object Get(object Url, object Options = null) => Run("GET", Url, null, Options, false);
+			public object Get(object Url, object Options = null) => Run("GET", Url, null, Options, async: false);
 
 			/// <summary>Sends a POST and waits for the response.</summary>
 			/// <param name="Url">Absolute, or relative to <see cref="BaseUrl"/>.</param>
@@ -149,7 +171,7 @@ namespace Keysharp.Builtins
 			/// bytes. Positional sugar for the <c>Body</c> option.</param>
 			/// <param name="Options">Per-request options, merged over the session's.</param>
 			/// <inheritdoc cref="Get"/>
-			public object Post(object Url, object Body = null, object Options = null) => Run("POST", Url, Body, Options, false);
+			public object Post(object Url, object Body = null, object Options = null) => Run("POST", Url, Body, Options, async: false);
 
 			/// <summary>Sends any method and waits for the response.</summary>
 			/// <param name="Method">The HTTP method, uppercased. <c>PUT</c>, <c>PATCH</c>, <c>DELETE</c> and
@@ -159,17 +181,17 @@ namespace Keysharp.Builtins
 			/// <param name="Options">Per-request options, merged over the session's.</param>
 			/// <inheritdoc cref="Get"/>
 			public object Request(object Method, object Url, object Body = null, object Options = null)
-				=> Run(Method.As(), Url, Body, Options, false);
+				=> Run(Method.As(), Url, Body, Options, async: false);
 
 			/// <summary>The same as <see cref="Get"/>, but returns a <c>Task</c> rather than waiting.</summary>
-			public object GetAsync(object Url, object Options = null) => Run("GET", Url, null, Options, true);
+			public object GetAsync(object Url, object Options = null) => Run("GET", Url, null, Options, async: true);
 
 			/// <summary>The same as <see cref="Post"/>, but returns a <c>Task</c> rather than waiting.</summary>
-			public object PostAsync(object Url, object Body = null, object Options = null) => Run("POST", Url, Body, Options, true);
+			public object PostAsync(object Url, object Body = null, object Options = null) => Run("POST", Url, Body, Options, async: true);
 
 			/// <summary>The same as <see cref="Request"/>, but returns a <c>Task</c> rather than waiting.</summary>
 			public object RequestAsync(object Method, object Url, object Body = null, object Options = null)
-				=> Run(Method.As(), Url, Body, Options, true);
+				=> Run(Method.As(), Url, Body, Options, async: true);
 
 			/// <summary>Fetches a URL straight to a file, without it ever being a script value.</summary>
 			/// <param name="Url">Absolute, or relative to <see cref="BaseUrl"/>.</param>
@@ -180,49 +202,49 @@ namespace Keysharp.Builtins
 			/// <returns>The <see cref="Response"/>, whose <c>Body</c> is empty because the file took it.</returns>
 			/// <inheritdoc cref="Get"/>
 			public object Download(object Url, object Path, object Options = null)
-				=> Run("GET", Url, null, Options, false, Path.As());
+				=> Run("GET", Url, null, Options, async: false, path: Path.As());
 
 			/// <summary>The same as <see cref="Download"/>, but returns a <c>Task</c> rather than waiting.</summary>
 			public object DownloadAsync(object Url, object Path, object Options = null)
-				=> Run("GET", Url, null, Options, true, Path.As());
+				=> Run("GET", Url, null, Options, async: true, path: Path.As());
 
 			// ---- stateless shortcuts -------------------------------------------------------------------------
 
 			/// <summary>Sends a GET on the shared stateless client and waits for the response.</summary>
 			/// <inheritdoc cref="Get"/>
 			public static object staticGet(object @this, object Url, object Options = null)
-				=> RunShared("GET", Url, null, Options, false);
+				=> RunShared("GET", Url, null, Options, async: false);
 
 			/// <summary>Sends a POST on the shared stateless client and waits for the response.</summary>
 			/// <inheritdoc cref="Post"/>
 			public static object staticPost(object @this, object Url, object Body = null, object Options = null)
-				=> RunShared("POST", Url, Body, Options, false);
+				=> RunShared("POST", Url, Body, Options, async: false);
 
 			/// <summary>Sends any method on the shared stateless client and waits for the response.</summary>
 			/// <inheritdoc cref="Request"/>
 			public static object staticRequest(object @this, object Method, object Url, object Body = null, object Options = null)
-				=> RunShared(Method.As(), Url, Body, Options, false);
+				=> RunShared(Method.As(), Url, Body, Options, async: false);
 
 			/// <summary>The same as <c>Http.Get</c>, but returns a <c>Task</c> rather than waiting.</summary>
 			public static object staticGetAsync(object @this, object Url, object Options = null)
-				=> RunShared("GET", Url, null, Options, true);
+				=> RunShared("GET", Url, null, Options, async: true);
 
 			/// <summary>The same as <c>Http.Post</c>, but returns a <c>Task</c> rather than waiting.</summary>
 			public static object staticPostAsync(object @this, object Url, object Body = null, object Options = null)
-				=> RunShared("POST", Url, Body, Options, true);
+				=> RunShared("POST", Url, Body, Options, async: true);
 
 			/// <summary>The same as <c>Http.Request</c>, but returns a <c>Task</c> rather than waiting.</summary>
 			public static object staticRequestAsync(object @this, object Method, object Url, object Body = null, object Options = null)
-				=> RunShared(Method.As(), Url, Body, Options, true);
+				=> RunShared(Method.As(), Url, Body, Options, async: true);
 
 			/// <summary>Fetches a URL straight to a file on the shared stateless client.</summary>
 			/// <inheritdoc cref="Download"/>
 			public static object staticDownload(object @this, object Url, object Path, object Options = null)
-				=> RunShared("GET", Url, null, Options, false, Path.As());
+				=> RunShared("GET", Url, null, Options, async: false, path: Path.As());
 
 			/// <summary>The same as <c>Http.Download</c>, but returns a <c>Task</c> rather than waiting.</summary>
 			public static object staticDownloadAsync(object @this, object Url, object Path, object Options = null)
-				=> RunShared("GET", Url, null, Options, true, Path.As());
+				=> RunShared("GET", Url, null, Options, async: true, path: Path.As());
 
 			// ---- dispatch ------------------------------------------------------------------------------------
 
@@ -238,7 +260,7 @@ namespace Keysharp.Builtins
 			private static object Send(HttpClient client, RequestOptions session, string method, object url,
 									   object body, object options, bool async, string path)
 			{
-				if (RequestOptions.Parse(options, false) is not { } request)
+				if (RequestOptions.Parse(options, isSession: false) is not { } request)
 					return DefaultObject;
 
 				if (body != null)
@@ -250,7 +272,22 @@ namespace Keysharp.Builtins
 					request.HasBody = true;
 				}
 
+				// A download's body goes to the file, so a request that also asks for OnData is asking for the
+				// same bytes twice. A session-level default is left alone: it belongs to that session's other calls.
+				if (path != null && request.OnData != null)
+					return Errors.ValueErrorOccurred(
+						"OnData and a download both take the body, so only one of them may be given.");
+
 				var merged = request.MergeOver(session);
+				Func<Stream> sink = null;
+
+				if (path != null)
+				{
+					// The file is the body's sink, so a session's OnData default has nothing to do here.
+					merged.OnData = null;
+					sink = () => new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None,
+												ReadBufferSize, FileOptions.Asynchronous);
+				}
 
 				if (!TryBuildRequest(merged, method, url.As(), out var message, out var error))
 					return error.Length == 0 ? DefaultObject : Errors.ValueErrorOccurred(error);
@@ -266,13 +303,36 @@ namespace Keysharp.Builtins
 					return Errors.ErrorOccurred("OnData needs a script thread to run on, and this call has none.");
 				}
 
-				var sink = path == null
-						   ? (Func<Stream>)null
-						   : () => new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None,
-												  ReadBufferSize, FileOptions.Asynchronous);
-				var task = KeysharpTask.Wrap(SendAsync(client, message, merged, scheduler,
-													   script?.Threads.CurrentThread.priority ?? 0, sink));
-				return async ? task : Await(task);
+				var work = SendAsync(client, message, merged, scheduler,
+									 script?.Threads.CurrentThread.priority ?? 0, sink);
+
+				// A streaming transfer roots the script for as long as it runs, the way a pending Task.Then does:
+				// its callback is still to come, so an otherwise idle script must not exit out from under it.
+				if (scheduler != null)
+					Root(scheduler, work);
+
+				return async ? KeysharpTask.Wrap(work) : Await(KeysharpTask.Wrap(work));
+			}
+
+			/// <summary>
+			/// Keeps <paramref name="scheduler"/> alive until <paramref name="work"/> settles, and fails the
+			/// transfer rather than leaving it hanging if the scheduler is torn down first.
+			/// </summary>
+			private static void Root(ScriptEventScheduler scheduler, Task work)
+			{
+				// Nothing to undo on teardown: the delivery in flight registers its own callback and fails there,
+				// and this one exists only to hold the root while the transfer is between chunks.
+				static void Invalidated() { }
+
+				if (!scheduler.RegisterPendingCallback(Invalidated))
+					return;
+
+				_ = work.ContinueWith(static (_, state) =>
+				{
+					var (owner, release) = ((ScriptEventScheduler, Action))state;
+					owner.ReleasePendingCallback(release);
+				}, (scheduler, (Action)Invalidated), CancellationToken.None,
+				TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
 			}
 
 			/// <summary>
@@ -317,7 +377,7 @@ namespace Keysharp.Builtins
 					return false;
 				}
 				else if (options.Body is Buffer buf)
-					content = new ByteArrayContent(buf.ToByteArray())
+					content = new ByteArrayContent(buf.Size.Al() == 0 ? [] : buf.ToByteArray())
 				{
 					Headers = { ContentType = new MediaTypeHeaderValue("application/octet-stream") }
 				};
@@ -382,7 +442,7 @@ namespace Keysharp.Builtins
 
 					// Hands one accumulated chunk to the script and unwinds the transfer if it asked to stop. The
 					// idle timer measures the connection, so it does not run while the script's own callback does.
-					async Task Flush(byte[] chunk)
+					async Task Flush(Buffer chunk)
 					{
 						cts.CancelAfter(System.Threading.Timeout.Infinite);
 
@@ -396,6 +456,12 @@ namespace Keysharp.Builtins
 						ResetIdle();
 					}
 
+					async Task FlushPending()
+					{
+						await Flush(Drain(pending)).ConfigureAwait(false);
+						pending.SetLength(0);
+					}
+
 					while (true)
 					{
 						var read = await stream.ReadAsync(buffer.AsMemory(0, ReadBufferSize), cts.Token).ConfigureAwait(false);
@@ -403,7 +469,6 @@ namespace Keysharp.Builtins
 						if (read == 0)
 							break;
 
-						received += read;
 						ResetIdle();
 
 						if (sink != null)
@@ -418,44 +483,48 @@ namespace Keysharp.Builtins
 							continue;
 						}
 
+						// Held bytes go out before the read that would push them past the cap, and before Received
+						// counts that read, so Received always names exactly what the script has been handed.
+						if (pending.Length > 0 && pending.Length + read > MaxChunkBytes)
+							await FlushPending().ConfigureAwait(false);
+
+						received += read;
+
 						// Delivery is due on time so a slow trickle still reports progress, and on size so a fast
 						// link does not hand the script an ever larger chunk -- on time alone, a gigabit would.
-						var due = Environment.TickCount64 - lastFlush >= DataFlushIntervalMs
-								  || pending.Length + read >= MaxChunkBytes;
-
-						if (due && pending.Length == 0)
+						if (Environment.TickCount64 - lastFlush < DataFlushIntervalMs
+								&& pending.Length + read < MaxChunkBytes)
 						{
-							await Flush(buffer.AsSpan(0, read).ToArray()).ConfigureAwait(false);
+							pending.Write(buffer, 0, read);
+							continue;
+						}
+
+						if (pending.Length == 0)
+						{
+							await Flush(Chunk(buffer, read)).ConfigureAwait(false);
 							continue;
 						}
 
 						pending.Write(buffer, 0, read);
-
-						if (due)
-						{
-							await Flush(pending.ToArray()).ConfigureAwait(false);
-							pending.SetLength(0);
-						}
+						await FlushPending().ConfigureAwait(false);
 					}
 
 					if (onData != null && pending.Length > 0)
-						await Flush(pending.ToArray()).ConfigureAwait(false);
+						await FlushPending().ConfigureAwait(false);
 
 					// A streamed request still answers with its status and headers; the body is empty because
 					// OnData or the file took it.
 					kept = true;
 					return Response.From(message, body == null ? [] : Exact(body));
 				}
-				catch (OperationCanceledException) when (aborted)
-				{
-					throw;
-				}
-				catch (OperationCanceledException)
+				// Only a fired idle timer is a timeout. An abort, and an Exit inside the callback, are cancellations
+				// and travel as themselves.
+				catch (OperationCanceledException) when (!aborted && cts.IsCancellationRequested)
 				{
 					throw (Exception)new TimeoutError(
 						$"The HTTP request to {request.RequestUri} timed out after {timeoutMs / 1000.0} s without progress.");
 				}
-				catch (HttpRequestException ex)
+				catch (Exception ex) when (ex is HttpRequestException or IOException)
 				{
 					throw (Exception)new OSError(ex, "Http");
 				}
@@ -463,7 +532,7 @@ namespace Keysharp.Builtins
 				{
 					// Cleared on return: a pooled buffer holds the response body, and the next renter is unrelated.
 					if (buffer != null)
-						ArrayPool<byte>.Shared.Return(buffer, true);
+						ArrayPool<byte>.Shared.Return(buffer, clearArray: true);
 
 					// A Response is the only thing that keeps the message, for its headers and its ToClr.
 					if (!kept)
@@ -473,50 +542,72 @@ namespace Keysharp.Builtins
 				}
 			}
 
+			/// <summary>
+			/// One chunk, copied straight into the Buffer's own memory. Nothing managed is allocated for it, which
+			/// keeps a fast transfer's chunks -- up to <see cref="MaxChunkBytes"/> -- off the large object heap.
+			/// </summary>
+			private static Buffer Chunk(byte[] source, int count)
+			{
+				// Sized rather than constructed from the array: the Size setter allocates without filling, and the
+				// copy below writes every byte of it.
+				var chunk = new Buffer();
+				chunk.Size = (long)count;
+
+				if (count > 0)
+					Marshal.Copy(source, 0, (nint)chunk.Ptr, count);
+
+				return chunk;
+			}
+
+			/// <summary>The accumulated chunk. The stream keeps its capacity, so it is allocated once per transfer.</summary>
+			private static Buffer Drain(MemoryStream pending)
+			{
+				_ = pending.TryGetBuffer(out var segment);//Always succeeds: the stream is one of ours.
+				return Chunk(segment.Array, (int)pending.Length);
+			}
+
 			/// <summary>The stream's own array when it is exactly full, so a sized read is not copied again.</summary>
 			private static byte[] Exact(MemoryStream body)
-				=> body.Length == body.Capacity && body.TryGetBuffer(out var segment) && segment.Offset == 0
+				=> body.Length == body.Capacity && body.TryGetBuffer(out var segment)
 				   ? segment.Array
 				   : body.ToArray();
 
 			/// <summary>
 			/// Hands one chunk to <c>OnData</c> on the script thread that asked for the request, and reports whether
 			/// it asked to stop. The transfer awaits the answer rather than occupying a thread with it.
-			/// <para>Delivery is an ordinary thread launch, so <c>#MaxThreads</c>, <c>Critical</c> and a
-			/// higher-priority thread park it and the pump retries: the transfer stalls where it is rather than
-			/// losing a chunk. Registering it as a pending callback both roots the script while a transfer is in
-			/// flight and settles the wait if the scheduler is torn down first.</para>
+			/// <para>It is queued as dispatch, so the pump serves it in arrival order even while thread launches
+			/// are parked, and the pseudo-thread it starts is admitted unconditionally. Registering it as a pending
+			/// callback settles the wait if the scheduler is torn down while a chunk is in the air.</para>
 			/// </summary>
 			private static async Task<bool> DeliverAsync(KeysharpFunc onData, int arity, ScriptEventScheduler scheduler,
-														 long priority, byte[] chunk, long received, long total)
+														 long priority, Buffer chunk, long received, long total)
 			{
 				var completion = new TaskCompletionSource<object>(TaskCreationOptions.RunContinuationsAsynchronously);
 				object[] args = arity switch
 				{
 					0 => [],
-					1 => [new Keysharp.Builtins.Buffer(chunk)],
-					2 => [new Keysharp.Builtins.Buffer(chunk), received],
-					_ => [new Keysharp.Builtins.Buffer(chunk), received, total],
+					1 => [chunk],
+					2 => [chunk, received],
+					_ => [chunk, received, total],
 				};
 				void Invalidated() => completion.TrySetException(
 					(Exception)new Error("The Http transfer stopped because its script thread went away."));
 
 				if (!scheduler.RegisterPendingCallback(Invalidated))
-					throw (Exception)new Error("The Http transfer stopped because its script thread is no longer available.");
+					throw (Exception)new Error("The Http transfer stopped because its script thread is gone.");
 
-				var queued = scheduler.Enqueue(ScriptEventQueue.Normal, priority, () =>
+				// Queued as dispatch rather than as a launch, so the pump keeps serving it while launches are
+				// parked, and served in arrival order as a sent message is.
+				var queued = scheduler.EnqueueCallback(() =>
 				{
-					var parked = false;
-
 					try
 					{
-						var status = scheduler.TryInvokePseudoThread(priority, false, false,
-									 _ => onData.Call(args), out var value);
-						parked = status == ScriptEventExecutionResult.GlobalBlocked;
-
-						if (parked)
-							return status;
-
+						// Admitted unconditionally: this is data that has already arrived and that the transfer is
+						// already waiting on, so refusing it for Critical, #MaxThreads or a higher-priority thread
+						// would stall a synchronous request against the very thread that has to serve it.
+						// AutoHotkey serves a sent message on the same terms.
+						var status = scheduler.TryInvokePseudoThread(priority, skipUninterruptible: true, isCritical: false,
+									 _ => onData.Call(args), out var value, allowEmergencyOverflow: true);
 						_ = status == ScriptEventExecutionResult.Executed
 							? completion.TrySetResult(value)
 							: completion.TrySetException(
@@ -529,7 +620,6 @@ namespace Keysharp.Builtins
 						if (Keysharp.Internals.Flow.TryGetException(ex, out Keysharp.Builtins.Flow.UserRequestedExitException _))
 						{
 							_ = completion.TrySetCanceled();
-							scheduler.ReleasePendingCallback(Invalidated);
 							throw;
 						}
 
@@ -537,12 +627,9 @@ namespace Keysharp.Builtins
 					}
 					finally
 					{
-						if (!parked)
-							scheduler.ReleasePendingCallback(Invalidated);
+						scheduler.ReleasePendingCallback(Invalidated);
 					}
-
-					return ScriptEventExecutionResult.Executed;
-				});
+				}, ScriptEventQueue.Interactive, priority);
 
 				if (!queued)
 				{
@@ -558,43 +645,21 @@ namespace Keysharp.Builtins
 			// ---- Download ------------------------------------------------------------------------------------
 
 			/// <summary>
-			/// Streams a URL to a file on the shared client, which is what the global <c>Download</c> is over http
-			/// and https. It shares <see cref="SendAsync"/>, so it gets the same idle timeout and never holds the
-			/// resource in memory.
+			/// What the global <c>Download</c> is over http and https: the ordinary send path with a file as its
+			/// sink, so it shares the headers, the idle timeout and the streaming.
 			/// </summary>
 			/// <param name="uri">The resource to fetch, already known to be absolute http or https.</param>
 			/// <param name="path">The file to create, overwriting any existing one.</param>
 			/// <param name="noCache">True to ask every cache along the way for a fresh copy.</param>
 			internal static object DownloadTo(Uri uri, string path, bool noCache)
 			{
-				var options = new RequestOptions();
-
-				if (noCache)
-					options.Headers = new Map(eCaseSense.Off) { ["Cache-Control"] = "no-cache" };
-
-				// Built the same way every other request is, so a download carries the same default User-Agent.
-				if (!TryBuildRequest(options, "GET", uri.ToString(), out var request, out var error))
-					return error.Length == 0 ? DefaultObject : Errors.ValueErrorOccurred(error);
-
-				_ = Await(KeysharpTask.Wrap(DownloadToAsync(request, options, path)));
+				var options = noCache
+							  ? new Map(eCaseSense.Off) { ["Cache-Control"] = "no-cache" }
+							  : null;
+				_ = Send(SharedClient(), null, "GET", uri.ToString(), null,
+						 options == null ? null : new Map(eCaseSense.Off) { ["Headers"] = options },
+						 async: false, path: path);
 				return DefaultObject;
-			}
-
-			private static async Task<object> DownloadToAsync(HttpRequestMessage request, RequestOptions options, string path)
-			{
-				try
-				{
-					// The file is opened by SendAsync once the response headers have arrived, so a request that
-					// never reaches a reply leaves an existing file alone.
-					return await SendAsync(SharedClient(), request, options, null, 0,
-										   () => new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None,
-																ReadBufferSize, FileOptions.Asynchronous))
-						   .ConfigureAwait(false);
-				}
-				catch (IOException ex)
-				{
-					throw (Exception)new OSError(ex, "Download");
-				}
 			}
 
 			// ---- plumbing ------------------------------------------------------------------------------------
@@ -665,10 +730,14 @@ namespace Keysharp.Builtins
 				return true;
 			}
 
+			/// <summary>Headers .NET keeps on the content although their names do not say so.</summary>
+			private static readonly FrozenSet<string> contentOnlyNames =
+				new[] { "Expires", "Last-Modified", "Allow" }.ToFrozenSet(StringComparer.OrdinalIgnoreCase);
+
 			/// <summary>
 			/// Applies header entries, returning a message for the first value that cannot be sent. A value of
-			/// <c>""</c> removes a header a session had set. Content-* headers belong to the content, which is
-			/// also why a response merges the two collections back together.
+			/// <c>""</c> removes a header a session had set. Content headers belong to the content, which is also
+			/// why a response merges the two collections back together.
 			/// </summary>
 			private static string ApplyHeaders(HttpRequestMessage request, Map headers)
 			{
@@ -691,8 +760,9 @@ namespace Keysharp.Builtins
 
 						var onContent = name.StartsWith("Content-", StringComparison.OrdinalIgnoreCase);
 
-						// A Content-* header describes a body, so a request without one has nothing to put it on.
-						if (onContent && request.Content == null)
+						// These describe a body, so a request without one has nothing to put them on. .NET files a
+						// few names that do not begin with Content- under the content too, hence the second set.
+						if (request.Content == null && (onContent || contentOnlyNames.Contains(name)))
 							continue;
 
 						if (onContent && name.Equals("Content-Type", StringComparison.OrdinalIgnoreCase))
@@ -721,7 +791,7 @@ namespace Keysharp.Builtins
 				// Set per request rather than on the client, so `Headers["User-Agent"] := ""` removes it as the
 				// documented "" rule says. HttpClient sends no User-Agent at all, which several APIs answer with 403.
 				if (!agent)
-					_ = request.Headers.TryAddWithoutValidation("User-Agent", $"Keysharp/{Ks.A_KsVersion}");
+					_ = request.Headers.TryAddWithoutValidation("User-Agent", userAgent);
 
 				return null;
 			}
@@ -756,31 +826,21 @@ namespace Keysharp.Builtins
 					return seconds < 0 ? -1 : (int)Math.Min(int.MaxValue, seconds * 1000);
 				}
 
-				/// <summary>
-				/// This request's options over a session's defaults. Body and Json are one slot, so naming either
-				/// here replaces both of the session's rather than colliding with the other.
-				/// </summary>
+				/// <summary>This request's options over a session's defaults.</summary>
 				internal RequestOptions MergeOver(RequestOptions defaults)
+					=> defaults == null
+					   ? this
+					   : new RequestOptions
 				{
-					if (defaults == null)
-						return this;
-
-					var merged = new RequestOptions
-					{
-						BaseUrl = BaseUrl ?? defaults.BaseUrl,
-						Timeout = Timeout ?? defaults.Timeout,
-						OnData = OnData ?? defaults.OnData,
-						Headers = Merge(defaults.Headers, Headers),
-					};
-
-					if (HasBody || HasJson)
-						(merged.Body, merged.HasBody, merged.Json, merged.HasJson) = (Body, HasBody, Json, HasJson);
-					else
-						(merged.Body, merged.HasBody, merged.Json, merged.HasJson)
-							= (defaults.Body, defaults.HasBody, defaults.Json, defaults.HasJson);
-
-					return merged;
-				}
+					BaseUrl = BaseUrl ?? defaults.BaseUrl,
+					Timeout = Timeout ?? defaults.Timeout,
+					OnData = OnData ?? defaults.OnData,
+					Headers = Merge(defaults.Headers, Headers),
+					Body = Body,
+					HasBody = HasBody,
+					Json = Json,
+					HasJson = HasJson,
+				};
 
 				private static Map Merge(Map session, Map request)
 				{
@@ -877,11 +937,14 @@ namespace Keysharp.Builtins
 
 				/// <summary>The options that configure the connection, and so belong only to a session.</summary>
 				private static readonly FrozenSet<string> connectionKeys =
-					new[] { "baseurl", "auth", "proxy", "ignorecertificateerrors", "handler" }.ToFrozenSet();
+					new[] { "auth", "proxy", "ignorecertificateerrors", "handler" }.ToFrozenSet();
+
+				/// <summary>The options that describe one request, and so cannot be a session's default.</summary>
+				private static readonly FrozenSet<string> requestOnlyKeys = new[] { "body", "json" }.ToFrozenSet();
 
 				/// <summary>
 				/// Reads an options <see cref="Map"/> or object, or returns null once anything in it is unusable.
-				/// An unknown key raises rather than being ignored, so a typo is reported where it is written.
+				/// An unknown key raises, so a typo is reported where it is written.
 				/// </summary>
 				/// <param name="isSession">Whether the connection options are allowed here.</param>
 				internal static RequestOptions Parse(object options, bool isSession)
@@ -895,11 +958,18 @@ namespace Keysharp.Builtins
 					{
 						var name = key.ToLowerInvariant();
 
+						// Each message names the reason rather than only the rule, which looks arbitrary alone.
 						if (!isSession && connectionKeys.Contains(name))
 						{
-							// The message names the reason rather than only the rule, which looks arbitrary alone.
 							_ = Errors.ValueErrorOccurred(
 								$"{key} configures the connection, so it belongs to Http(Options) rather than to one request.");
+							return null;
+						}
+
+						if (isSession && requestOnlyKeys.Contains(name))
+						{
+							_ = Errors.ValueErrorOccurred(
+								$"{key} is one request's body, so it belongs to that request rather than to the session.");
 							return null;
 						}
 
@@ -1058,7 +1128,7 @@ namespace Keysharp.Builtins
 				private byte[] bytes;
 				private Map headers;
 				private string text;
-				private Keysharp.Builtins.Buffer body;
+				private Buffer body;
 
 				internal Response() : base(null) { }
 
@@ -1107,7 +1177,7 @@ namespace Keysharp.Builtins
 				public object Text => text ??= Decode();
 
 				/// <summary>The body's raw bytes. Empty when <c>OnData</c> took them instead.</summary>
-				public object Body => body ??= new Keysharp.Builtins.Buffer(bytes);
+				public object Body => body ??= new Buffer(bytes);
 
 				/// <summary>
 				/// The body decoded as JSON, the same as <c>Json.Decode(response.Text)</c>. Call

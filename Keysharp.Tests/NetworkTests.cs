@@ -35,8 +35,8 @@ namespace Keysharp.Tests
 		private static Error ScriptError(TestDelegate action) => Assert.Throws<KeysharpException>(action).UserError;
 
 		/// <summary>
-		/// <c>Ks.Http</c> plus the <c>Url</c> and <c>Base64</c> codecs, against a loopback server the script
-		/// starts itself, so the suite never depends on the network being reachable.
+		/// <c>Ks.Http</c> and the <c>Url</c> codec, against loopback HTTP and FTP servers the script starts
+		/// itself, so the suite never depends on the network being reachable.
 		/// </summary>
 		[Test, Category("Network"), NonParallelizable]
 		public void HttpClass() => Assert.IsTrue(TestScript("http", true));

@@ -1,7 +1,7 @@
 #ErrorStdOut
 #Warn All, StdOut
 #NoTrayIcon
-#import KS { Http, Url, Base64, Await, Task, A_KsVersion }
+#import KS { Http, Url, Await, Task, Clr, A_KsVersion }
 #Include <assert>
 
 #CSharp
@@ -341,7 +341,7 @@ static void WriteWith(NetworkStream stream, int status, string reason, string co
 port := StartServer()
 root := "http://127.0.0.1:" port
 
-; ---- Url and Base64 codecs -----------------------------------------------------------------------------
+; ---- Url codec -----------------------------------------------------------------------------
 
 AssertEq(Url.Encode("a b&c=d"), "a%20b%26c%3Dd", A_LineNumber)
 AssertEq(Url.Encode("aA0-._~"), "aA0-._~", A_LineNumber)         ; the unreserved set is never escaped
@@ -453,11 +453,12 @@ AssertEq(Http.Get(root "/cookie").Text, "-", A_LineNumber)
 ; An absolute URL ignores BaseUrl.
 AssertEq(api.Get(root "/text").Text, "hello", A_LineNumber)
 
-; Body and Json are one slot, so a request naming either replaces both session defaults.
-bodied := Http({BaseUrl: root "/", Body: "default"})
-AssertEq(bodied.Post("echo").Text, "POST|text/plain; charset=utf-8|default", A_LineNumber)
-AssertEq(bodied.Post("echo", , {Json: 5}).Text, "POST|application/json; charset=utf-8|5", A_LineNumber)
-AssertEq(bodied.Post("echo", "own").Text, "POST|text/plain; charset=utf-8|own", A_LineNumber)
+; A body describes one request, so it is not something a session can default.
+Throws(() => Http({BaseUrl: root "/", Body: "default"}), A_LineNumber, ValueError)
+Throws(() => Http({Json: 5}), A_LineNumber, ValueError)
+
+; BaseUrl is resolved at send time, not baked into the connection, so a request may carry its own.
+AssertEq(Http.Get("text", {BaseUrl: root "/"}).Text, "hello", A_LineNumber)
 
 ; ---- option validation ---------------------------------------------------------------------------------
 
@@ -473,8 +474,14 @@ Throws(() => Http({Proxy: "not a url"}), A_LineNumber, ValueError)
 Throws(() => Http.Post(root "/echo", Map("a", 1)), A_LineNumber, TypeError)
 Throws(() => Http.Post(root "/echo", , {Body: [1, 2]}), A_LineNumber, TypeError)
 
-; A supplied Handler is the connection, so the options that would configure one are refused, not ignored.
+; A Handler has to be an HttpMessageHandler, not any value that happens to be given.
 Throws(() => Http({Handler: 1}), A_LineNumber, TypeError)
+
+; It is the connection, so the options that would configure one are refused rather than ignored.
+handler := Clr.Load("System.Net.Http").System.Net.Http.SocketsHttpHandler()
+Throws(() => Http({Handler: handler, Auth: ["u", "p"]}), A_LineNumber, ValueError)
+Throws(() => Http({Handler: handler, Proxy: ""}), A_LineNumber, ValueError)
+AssertEq(Http({Handler: handler}).Get(root "/text").Text, "hello", A_LineNumber)
 Throws(() => Http.Request("bad method", root "/text"), A_LineNumber, ValueError)
 Throws(() => Http.Get(root "/text", {Timeout: "soon"}), A_LineNumber, ValueError)
 Throws(() => Http.Get(root "/text", {Timeout: 0}), A_LineNumber, ValueError)
@@ -525,6 +532,13 @@ acc.calls := 0
 Http.Get(root "/big", {OnData: () => (acc.calls += 1, 0)})
 Assert(acc.calls >= 1, A_LineNumber)
 
+; The delivered bytes are the body, reassembled across whatever chunk boundaries the flush rules produced.
+acc.text := ""
+Http.Get(root "/big", {OnData: (chunk, *) => (acc.text .= StrGet(chunk, chunk.Size, "CP0"), 0)})
+AssertEq(StrLen(acc.text), 300000, A_LineNumber)
+AssertEq(SubStr(acc.text, 1, 3), "abc", A_LineNumber)
+AssertEq(SubStr(acc.text, 27, 1), "a", A_LineNumber)      ; the pattern wraps every 26 bytes
+
 ; /slow arrives in pieces, so a streaming callback is called several times with a Received that only grows.
 acc.calls := 0, acc.seen := 0, acc.total := 0
 Http.Get(root "/slow", {OnData: (chunk, received) => (acc.calls += 1,
@@ -551,6 +565,20 @@ t := Http.GetAsync(root "/big", {OnData: (*) => 1})
 Throws(() => Await(t), A_LineNumber)
 AssertEq(t.Status, "Canceled", A_LineNumber)
 
+; Delivery is dispatch of data that has already arrived, so Critical does not stall it and a raised thread
+; priority does not drop it. Either would hang or fail a synchronous streamed request.
+acc.seen := 0
+Critical "On"
+Http.Get(root "/slow", {OnData: (chunk, *) => (acc.seen += chunk.Size, 0)})
+Critical "Off"
+AssertEq(acc.seen, 300000, A_LineNumber)
+
+acc.seen := 0
+Thread "Priority", 1
+Http.Get(root "/big", {OnData: (chunk, *) => (acc.seen += chunk.Size, 0)})
+Thread "Priority", 0
+AssertEq(acc.seen, 300000, A_LineNumber)
+
 ; ---- Http.Download -------------------------------------------------------------------------------------
 
 ; Straight to a file, carrying the session's headers and credentials, which the global Download cannot do.
@@ -563,13 +591,37 @@ AssertEq(api.Download("header", dl).Status, 200, A_LineNumber)
 AssertEq(FileRead(dl), "changed|Keysharp/" A_KsVersion, A_LineNumber)
 AssertEq(Await(Http.DownloadAsync(root "/text", dl)).Status, 200, A_LineNumber)
 AssertEq(FileRead(dl), "hello", A_LineNumber)
+; The file and OnData are both the body's sink, so asking for both is an error rather than a silent winner,
+; and the file is left as it was.
+FileDelete(dl)
+FileAppend("keep", dl)
+Throws(() => Http.Download(root "/text", dl, {OnData: (*) => 0}), A_LineNumber, ValueError)
+AssertEq(FileRead(dl), "keep", A_LineNumber)
+
+; A session's OnData default belongs to its other calls: a download ignores it and reads back as a property.
+streamer := Http({BaseUrl: root "/", OnData: (chunk, *) => (acc.seen += chunk.Size, 0)})
+Assert(streamer.OnData is Func, A_LineNumber)
+acc.seen := 0
+AssertEq(streamer.Get("text").Body.Size, 0, A_LineNumber)
+AssertEq(acc.seen, 5, A_LineNumber)
+acc.seen := 0
+AssertEq(streamer.Download("text", dl).Status, 200, A_LineNumber)
+AssertEq(FileRead(dl), "hello", A_LineNumber)
+AssertEq(acc.seen, 0, A_LineNumber)
+streamer.OnData := ""
+AssertEq(streamer.OnData, "", A_LineNumber)
+AssertEq(streamer.Get("text").Text, "hello", A_LineNumber)
+
+; A non-2xx body is saved like any other, so IsSuccess is the test before trusting the file.
+AssertEq(Http.Download(root "/missing", dl).Status, 404, A_LineNumber)
+AssertEq(FileRead(dl), "nope", A_LineNumber)
 FileDelete(dl)
 
 ; ---- timeouts and transport failures ------------------------------------------------------------------
 
-; The timeout is idle rather than total: /slow takes well over a second in 60 ms steps and still completes
-; under a 1 s timeout, while /stall answers nothing at all and raises.
-AssertEq(Http.Get(root "/slow", {Timeout: 1}).Body.Size, 300000, A_LineNumber)
+; The timeout is idle rather than total. /slow takes about 600 ms in 60 ms steps, so a 0.3 s budget is under
+; the total and over every gap: a total timeout would raise here, and an idle one does not.
+AssertEq(Http.Get(root "/slow", {Timeout: 0.3}).Body.Size, 300000, A_LineNumber)
 Throws(() => Http.Get(root "/stall", {Timeout: 1}), A_LineNumber, TimeoutError)
 
 ; A host that cannot be reached is an OSError, not a status.

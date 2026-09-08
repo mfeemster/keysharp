@@ -37,9 +37,10 @@ namespace Keysharp.Builtins
 				if (s.Length == 0)
 					return "";
 
-				// An already-safe segment is the common case, and under an encoding whose ASCII is one byte per
-				// character the string answers for its own bytes, so nothing has to be encoded to find out.
-				if (enc.IsSingleByte || enc is UTF8Encoding)
+				// An already-safe segment is the common case, and under an encoding that agrees with ASCII the
+				// string answers for its own bytes, so nothing has to be encoded to find out. Width alone is not
+				// enough: a single-byte encoding need not map A-Z to the ASCII values.
+				if (enc is UTF8Encoding or ASCIIEncoding)
 				{
 					var clean = true;
 

@@ -162,11 +162,13 @@ namespace Keysharp.Builtins
 
 			if (address.StartsWith('*'))
 			{
-				var splits = address.Split(SpaceTab);
+				var splits = address.Split(SpaceTab, 2, StringSplitOptions.RemoveEmptyEntries);
 
 				if (splits.Length == 2)
 				{
-					if (splits[0].TrimStart('*').Ai() != 0)
+					// Read as text rather than through a numeric conversion, which answers 0 for anything it
+					// cannot make sense of and would let "*abc" pass for "*0".
+					if (splits[0] != "*0")
 						return Errors.ValueErrorOccurred("Download supports only the *0 cache flag.", splits[0]);
 
 					noCache = false;
@@ -201,7 +203,14 @@ namespace Keysharp.Builtins
 			{
 				try
 				{
-					await FtpCopyAsync(uri, WebRequestMethods.Ftp.DownloadFile, path).ConfigureAwait(false);
+					await FtpTransferAsync(uri, WebRequestMethods.Ftp.DownloadFile, source =>
+					{
+						// The response arrives before the file is opened, so a refused request leaves any
+						// existing file alone.
+						using var destination = new FileStream(path, FileMode.Create);
+						source.CopyTo(destination);
+						return null;
+					}).ConfigureAwait(false);
 				}
 				catch (WebException ex) when ((ex.Response as FtpWebResponse)?.StatusCode
 											  == FtpStatusCode.ActionNotTakenFileUnavailable)
@@ -209,7 +218,12 @@ namespace Keysharp.Builtins
 					// A listing is small, so it is read whole before the file is touched: an empty one means the
 					// path is neither a file nor a directory, and reporting the server's refusal beats leaving a
 					// zero-byte file behind and calling it a success.
-					var listing = await FtpReadAsync(uri, WebRequestMethods.Ftp.ListDirectoryDetails).ConfigureAwait(false);
+					var listing = await FtpTransferAsync(uri, WebRequestMethods.Ftp.ListDirectoryDetails, source =>
+									  {
+										  using var buffer = new MemoryStream();
+										  source.CopyTo(buffer);
+										  return buffer.ToArray();
+									  }).ConfigureAwait(false);
 
 					if (listing.Length == 0)
 						throw;
@@ -225,31 +239,20 @@ namespace Keysharp.Builtins
 			}
 		}
 
-		private static async Task FtpCopyAsync(Uri uri, string method, string path)
-		{
-			// The response is obtained before the file is opened, so a refused request leaves any existing file alone.
-			using var response = await FtpRespondAsync(uri, method).ConfigureAwait(false);
-			using var source = response.GetResponseStream();
-			using var destination = new FileStream(path, FileMode.Create);
-			await source.CopyToAsync(destination).ConfigureAwait(false);
-		}
-
-		private static async Task<byte[]> FtpReadAsync(Uri uri, string method)
-		{
-			using var response = await FtpRespondAsync(uri, method).ConfigureAwait(false);
-			using var source = response.GetResponseStream();
-			using var buffer = new MemoryStream();
-			await source.CopyToAsync(buffer).ConfigureAwait(false);
-			return buffer.ToArray();
-		}
 
 		/// <summary>
-		/// Obtains the response on a pool thread with the synchronous call, which is the only one
-		/// <see cref="FtpWebRequest.Timeout"/> applies to: on GetResponseAsync it is documented as having no
-		/// effect, and a server that stalls mid-login would hang the transfer for good.
+		/// Runs the whole exchange on a pool thread with the synchronous calls, which are the only ones
+		/// <see cref="FtpWebRequest.Timeout"/> and <see cref="FtpWebRequest.ReadWriteTimeout"/> apply to: on the
+		/// async pair they have no effect, and a server that stalls after answering would hang the transfer for
+		/// good.
 		/// </summary>
-		private static Task<WebResponse> FtpRespondAsync(Uri uri, string method)
-			=> Task.Run(() => NewFtpRequest(uri, method).GetResponse());
+		private static Task<byte[]> FtpTransferAsync(Uri uri, string method, Func<Stream, byte[]> consume)
+			=> Task.Run(() =>
+		{
+			using var response = NewFtpRequest(uri, method).GetResponse();
+			using var source = response.GetResponseStream();
+			return consume(source);
+		});
 
 		private static FtpWebRequest NewFtpRequest(Uri uri, string method)
 		{
