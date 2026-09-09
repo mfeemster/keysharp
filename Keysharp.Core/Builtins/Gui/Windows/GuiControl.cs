@@ -546,11 +546,13 @@ namespace Keysharp.Builtins
 					case KeysharpListView lv:
 						if (index < 0)
 						{
+							_ = (this as ListView)?.ClearColors();
 							lv.Items.Clear();
 							return 1L;
 						}
 						else if (index < lv.Items.Count)
 						{
+							_ = (this as ListView)?.ClearColors();
 							lv.Items.RemoveAt(index);
 							return 1L;
 						}
@@ -569,6 +571,7 @@ namespace Keysharp.Builtins
 
 					if (index >= 0 && index < lv.Columns.Count)
 					{
+						_ = (this as ListView)?.ClearColors();
 						lv.Columns.RemoveAt(index);
 						return 1L;
 					}
@@ -672,6 +675,7 @@ namespace Keysharp.Builtins
 
 					var lvo = opts is string options ? ListViewHelper.ParseListViewOptions(options) : new ListViewHelper.ListViewOptions();
 					var strs = obj.Length > 1 ? obj.Cast<object>().Skip(1).Select(x => x.Str()).ToList() : [];
+					_ = (this as ListView)?.ClearColors();
 					return ListViewHelper.AddOrInsertListViewItem(lv, lvo, strs, rownumber - 1) + 1;
 				}
 
@@ -690,6 +694,7 @@ namespace Keysharp.Builtins
 					{
 						Text = title
 					};
+					_ = (this as ListView)?.ClearColors();
 
 					if (index < lv.Columns.Count)
 					{
@@ -1152,9 +1157,15 @@ namespace Keysharp.Builtins
 						lv.FullRowSelect = false;
 
 					if (opts.sort.IsTrue())
+					{
+						_ = (this as ListView)?.ClearColors();
 						lv.Sorting = SortOrder.Ascending;
+					}
 					else if (opts.sortdesc.IsTrue())
+					{
+						_ = (this as ListView)?.ClearColors();
 						lv.Sorting = SortOrder.Descending;
+					}
 					else if (opts.sort.IsFalse() || opts.sortdesc.IsFalse())//If either were reset, just set to none.
 						lv.Sorting = SortOrder.None;
 

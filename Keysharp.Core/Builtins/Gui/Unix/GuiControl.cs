@@ -664,6 +664,7 @@ namespace Keysharp.Builtins
 					case KeysharpListView lv:
 						if (index < 0)
 						{
+							_ = (this as ListView)?.ClearColors();
 							lv.Items.Clear();
 							lv.RefreshDataStore();
 							lv.SelectedItems.Clear();
@@ -675,6 +676,7 @@ namespace Keysharp.Builtins
 						}
 						else if (index < lv.Items.Count)
 						{
+							_ = (this as ListView)?.ClearColors();
 							lv.Items.RemoveAt(index);
 							lv.RefreshDataStore();
 							lv.SelectedItems.Clear();
@@ -700,6 +702,7 @@ namespace Keysharp.Builtins
 					if (index >= 0 && index < lv.Columns.Count)
 					{
 						var oldCount = lv.Columns.Count;
+						_ = (this as ListView)?.ClearColors();
 						lv.Columns.RemoveAt(index);
 						lv.RemoveColumnState(index);
 						var newCount = lv.Columns.Count;
@@ -924,6 +927,7 @@ namespace Keysharp.Builtins
 					{
 						Text = title ?? ""
 					};
+					_ = (this as ListView)?.ClearColors();
 
 					var oldCount = lv.Columns.Count;
 					if (index < oldCount)

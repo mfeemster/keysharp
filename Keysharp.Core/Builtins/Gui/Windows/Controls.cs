@@ -630,6 +630,43 @@ namespace Keysharp.Builtins
 			ColumnClick += KeysharpListView_ColumnClick;
 		}
 
+		internal void RefreshColors(int row = -1)
+		{
+			if (this.GetGuiControl() is not Gui.ListView owner)
+				return;
+
+			for (var i = row < 0 ? 0 : row; i < (row < 0 ? Items.Count : row + 1); i++)
+			{
+				var item = Items[i];
+				var rowColors = owner.GetColors(i + 1, 0);
+				item.UseItemStyleForSubItems = !owner.HasColors;
+				item.ForeColor = rowColors.Text ?? Color.Empty;
+				item.BackColor = rowColors.Back ?? Color.Empty;
+
+				for (var j = 0; j < item.SubItems.Count; j++)
+				{
+					var cellColors = owner.GetColors(i + 1, j + 1);
+					// Subitem zero shares the item's style, so every other cell needs its own inherited colors.
+					item.SubItems[j].ForeColor = cellColors.Text ?? (owner.HasColors ? ForeColor : Color.Empty);
+					item.SubItems[j].BackColor = cellColors.Back ?? (owner.HasColors ? BackColor : Color.Empty);
+				}
+			}
+
+			Invalidate();
+		}
+
+		protected override void OnForeColorChanged(EventArgs e)
+		{
+			base.OnForeColorChanged(e);
+			RefreshColors();
+		}
+
+		protected override void OnBackColorChanged(EventArgs e)
+		{
+			base.OnBackColorChanged(e);
+			RefreshColors();
+		}
+
 #if LINUX
 		//Linux has a bug where it will not draw the headers if the control is not initially shown.
 		//Eg: a ListView on a tab that is not selected.
@@ -661,6 +698,8 @@ namespace Keysharp.Builtins
 		{
 			if (Sorting == SortOrder.None)
 				return;
+
+			_ = (this.GetGuiControl() as Gui.ListView)?.ClearColors();
 
 			if (e.Column != sortColumn)//Determine whether the column is the same as the last column clicked.
 			{

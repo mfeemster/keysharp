@@ -4250,7 +4250,7 @@ namespace Keysharp.Builtins
 
 		public class Tab(params object[] args) : Gui.List(args) { }
 
-		public class ListView(params object[] args) : Gui.Control(args) { }
+		public partial class ListView(params object[] args) : Gui.Control(args) { }
 
 		public class MonthCal(params object[] args) : Gui.Control(args) { }
 

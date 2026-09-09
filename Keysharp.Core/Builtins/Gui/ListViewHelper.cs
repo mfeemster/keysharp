@@ -5,6 +5,9 @@ namespace Keysharp.Builtins
 	{
 		internal static long AddOrInsertListViewItem(ListView lv, ListViewOptions lvo, List<string> strs, int insert)
 		{
+			if (insert >= 0 || lv.Sorting != SortOrder.None || lv.ListViewItemSorter is not null)
+				_ = (lv.GetGuiControl() as Gui.ListView)?.ClearColors();
+
 			var item = new ListViewItem();
 
 			while (item.SubItems.Count < lv.Columns.Count)
@@ -40,6 +43,11 @@ namespace Keysharp.Builtins
 		{
 			var lvco = ParseListViewColumnOptions(options);
 			var lv = col.ListView as KeysharpListView;
+
+			if (lvco.inttype.HasValue || lvco.floattype.HasValue || lvco.texttype.IsTrue()
+				|| lvco.casesensitive.IsTrue() || lvco.caselocale.IsTrue() || lvco.logical.IsTrue()
+				|| lvco.desc.HasValue || lvco.nosort.HasValue || lvco.sort.IsTrue() || lvco.sortdesc.IsTrue())
+				_ = (lv.GetGuiControl() as Gui.ListView)?.ClearColors();
 
 			lv.BeginUpdate();
 

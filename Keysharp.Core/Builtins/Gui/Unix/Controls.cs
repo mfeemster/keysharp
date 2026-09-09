@@ -1088,6 +1088,32 @@ namespace Keysharp.Builtins
 			ShowHeader = true;
 			SelectedRowsChanged += (_, _) => SyncSelection();
 			ColumnHeaderClick += OnColumnHeaderClickInternal;
+			CellFormatting += FormatColors;
+		}
+
+		internal void RefreshColors(int row = -1)
+		{
+			if (row >= 0)
+				ReloadData(row);
+			else
+				ReloadData(Enumerable.Range(0, Items.Count));
+
+			Invalidate();
+		}
+
+		internal void FormatColors(object sender, GridCellFormatEventArgs e)
+		{
+			if (this.GetGuiControl() is not Gui.ListView owner)
+				return;
+
+			// The checkbox column is outside the script's column numbering and takes the row style.
+			var column = etoColumns.IndexOf(e.Column) + 1;
+			var colors = owner.GetColors(e.Row + 1, column);
+
+			e.ForegroundColor = colors.Text ?? this.ForeColor;
+
+			if (colors.Back is { } back)
+				e.BackgroundColor = back;
 		}
 
 		internal void SyncColumns()
@@ -1176,6 +1202,8 @@ namespace Keysharp.Builtins
 		{
 			if (columnIndex < 0 || columnIndex >= Columns.Count)
 				return;
+
+			_ = (this.GetGuiControl() as Gui.ListView)?.ClearColors();
 
 			var mode = columnSortModes.TryGetValue(columnIndex, out var m) ? m : ListViewSortMode.Text;
 			var list = Items.ToList();
@@ -1348,6 +1376,7 @@ namespace Keysharp.Builtins
 
 	internal int InsertRow(int index, IReadOnlyList<string> values, bool isChecked = false, int colStart = 0)
 	{
+			_ = (this.GetGuiControl() as Gui.ListView)?.ClearColors();
 			if (base.Columns.Count == 0 && Columns.Count > 0)
 				SyncColumns();
 
