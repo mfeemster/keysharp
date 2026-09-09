@@ -147,6 +147,18 @@ Homepage: https://github.com/keysharp-org/Keysharp
 Depends: dotnet-runtime-10.0, libx11-6, libxtst6, libxinerama1, libxt6, libx11-xcb1, libxkbcommon-x11-0, libxcb-xtest0, libgtk-3-0, libglib2.0-0, libnotify4, libatspi2.0-0, at-spi2-core, pulseaudio-utils
 Recommends: ${INPUT_CLIENT_ABI_PACKAGE}, ${DESKTOP_CLIENT_ABI_PACKAGE}
 Description: A cross-platform C# port and enhancement of the AutoHotkey program
+ Keysharp runs on its own, but its privileged Linux features live in two
+ standalone components. Full functionality needs both.
+ .
+ keysharp-input supplies global hotkeys and hotstrings, input hooks and
+ synthesis, BlockInput, and idle and device-state queries.
+ .
+ keysharp-desktop supplies authorized screen capture, foreign-window queries
+ and control, and clipboard integration.
+ .
+ keysharp-linux-setup.sh, from
+ https://github.com/keysharp-org/Keysharp/releases, installs Keysharp together
+ with both components.
 EOF
 }
 
@@ -173,6 +185,7 @@ fi
 command -v udevadm >/dev/null 2>&1 && udevadm control --reload-rules || true
 command -v udevadm >/dev/null 2>&1 && udevadm trigger --subsystem-match=i2c-dev || true
 EOF
+  cat "${ASSETS_DIR}/component-notice.sh" >> "$1"
   chmod 0755 "$1"
 }
 
@@ -286,13 +299,15 @@ verify_dash_present
 normalize_app_permissions
 verify_no_local_paths "${APP_DIR}"
 
-cp "${ASSETS_DIR}/install.sh" "${ASSETS_DIR}/uninstall.sh" "${PKG_DIR}/"
+cp "${ASSETS_DIR}/install.sh" "${ASSETS_DIR}/uninstall.sh" \
+	"${ASSETS_DIR}/component-notice.sh" "${PKG_DIR}/"
 cp "${ASSETS_DIR}/keyview.desktop" "${ASSETS_DIR}/keysharp.desktop" \
 	"${ASSETS_DIR}/keysharp.xml" "${ASSETS_DIR}/70-keysharp-i2c-uaccess.rules" "${PKG_DIR}/"
 cp "${ROOT}/assets/Keysharp.png" "${PKG_DIR}/"
 chmod 0755 "${PKG_DIR}/install.sh" "${PKG_DIR}/uninstall.sh"
 chmod 0644 "${PKG_DIR}/keyview.desktop" "${PKG_DIR}/keysharp.desktop" \
-	"${PKG_DIR}/keysharp.xml" "${PKG_DIR}/70-keysharp-i2c-uaccess.rules" "${PKG_DIR}/Keysharp.png"
+	"${PKG_DIR}/keysharp.xml" "${PKG_DIR}/70-keysharp-i2c-uaccess.rules" "${PKG_DIR}/Keysharp.png" \
+	"${PKG_DIR}/component-notice.sh"
 
 build_tarball
 build_deb

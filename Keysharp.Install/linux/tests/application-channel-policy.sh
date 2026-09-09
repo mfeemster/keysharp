@@ -42,6 +42,10 @@ require_literal "${PACKAGER}" 'install -m 0755 "${ASSETS_DIR}/debian/preinst" "$
 require_literal "${PACKAGER}" 'write_deb_preinst "${debian_dir}/preinst"'
 require_literal "${PACKAGER}" '"${debian_dir}/preinst" "${debian_dir}/postinst"'
 require_literal "${PACKAGER}" '-p:PublishDir="${PUBLISH_DIR}/${project}/"'
+# Both channels name the missing standalone components from one shared notice.
+require_literal "${PACKAGER}" 'cat "${ASSETS_DIR}/component-notice.sh" >> "$1"'
+require_literal "${PACKAGER}" '"${ASSETS_DIR}/component-notice.sh" "${PKG_DIR}/"'
+require_literal "${INSTALLER}" '. "${SCRIPT_DIR}/component-notice.sh"'
 require_literal "${PACKAGER}" '${INPUT_CLIENT_ABI_PACKAGE}'
 require_literal "${PACKAGER}" '${DESKTOP_CLIENT_ABI_PACKAGE}'
 

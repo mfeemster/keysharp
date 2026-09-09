@@ -307,3 +307,4 @@ maybe_run update-mime-database "${MIME_ROOT}" || true
 maybe_run gtk-update-icon-cache -f "${ICON_ROOT}" || true
 
 echo "Install complete. Run 'keysharp' with no arguments, or pick Keysharp from the applications menu."
+. "${SCRIPT_DIR}/component-notice.sh"
