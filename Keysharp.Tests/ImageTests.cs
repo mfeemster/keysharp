@@ -15,6 +15,15 @@ namespace Keysharp.Tests
 			Assert.IsTrue(TestScript("image", false));
 		}
 
+		[Test, Category("Image")]
+		public void VectorDrawing()
+		{
+			if (Script.IsHeadless)
+				Assert.Ignore("Image tests need an initialized graphics backend.");
+
+			Assert.IsTrue(TestScript("image-vector", false));
+		}
+
 		[Test, Category("Image"), Category("Internal")]
 		public void DrawImageResources()
 		{

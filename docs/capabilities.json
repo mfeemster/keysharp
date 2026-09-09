@@ -6725,6 +6725,17 @@
                      "tested-by":  "Gui/guitest.ks"
                  },
                  {
+                     "category":  "Keysharp Module (Ks)",
+                     "feature":  "Image vector drawing",
+                     "syntax":  "Path := Image.Path([FillRule]); Image.FillPath(Path [, ColorOrBrush]); Image.DrawPath(Path [, ColorOrBrush, Thickness])",
+                     "windows":  "full",
+                     "linux_x11":  "unknown",
+                     "linux_wayland":  "unknown",
+                     "macos":  "unknown",
+                     "notes":  "Builds reusable paths from lines, cubic curves, arcs and basic shapes; supports linear and radial gradient brushes, affine drawing transforms, intersecting path clips, and saved drawing state. Windows rendering is verified; Linux and macOS build but remain unverified at runtime.",
+                     "tested-by":  "image-vector.ahk"
+                 },
+                 {
                      "category":  "Core Language",
                      "feature":  "ImageSearch()",
                      "syntax":  "found := ImageSearch(&x, &y, 0, 0, 1000, 1000, \"file.bmp\")",

@@ -293,6 +293,34 @@ namespace Keysharp.Tests
 			Assert.AreEqual(DamageKind.All, surface.Damage.Kind, "an exposed bitmap can be modified outside drawing bounds");
 		}
 
+		[Test, Category("Gui"), Category("Curated")]
+		public void VectorSurfaceDamage()
+		{
+			using var surface = OverlaySurface.Plain(new PixelSize(200, 100));
+			var canvas = surface.Image;
+			var transform = new KeysharpObject();
+			transform.DefinePropInternal("OffsetX", new OwnPropsDesc(transform, 30L));
+			transform.DefinePropInternal("SkewX", new OwnPropsDesc(transform, 0.5));
+			canvas.Transform = transform;
+
+			var path = new Ks.KeysharpImage.KeysharpPath();
+			_ = path.AddRect(10L, 10L, 20L, 10L);
+			surface.Damage.Reset();
+			_ = canvas.FillPath(path, "Red");
+
+			Assert.AreEqual(DamageKind.Region, surface.Damage.Kind);
+			var bounds = surface.Damage.Union();
+			Assert.IsTrue(bounds.X <= 45 && bounds.Y <= 10 && bounds.Right >= 70 && bounds.Bottom >= 20,
+				$"damage {bounds.X},{bounds.Y} {bounds.Width}x{bounds.Height} must cover the transformed path");
+			Assert.IsTrue(bounds.Width < 200 && bounds.Height < 100);
+
+			var empty = new Ks.KeysharpImage.KeysharpPath();
+			_ = canvas.Clip(empty);
+			surface.Damage.Reset();
+			_ = canvas.FillPath(path, "Blue");
+			Assert.AreEqual(DamageKind.None, surface.Damage.Kind, "an empty clip cannot damage the surface");
+		}
+
 		// Redraw builds a replacement surface and draws only part of it. If that surface were handed to a
 		// backing carrying only the damage the callback produced, a dirty-rect present would top up the old
 		// frame instead of replacing it, and everything the callback did not draw would keep showing the

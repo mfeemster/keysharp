@@ -32,7 +32,7 @@ namespace Keysharp.Builtins
 		/// finishing with it first, or give each its own.
 		/// </summary>
 		[UserDeclaredName("Image")]
-		public class KeysharpImage : KeysharpObject, IDisposable
+		public partial class KeysharpImage : KeysharpObject, IDisposable
 		{
 			// The current materialized pixels. An owned image folds pending work into this bitmap; a borrowed
 			// overlay canvas keeps the platform bitmap identity fixed.
@@ -148,7 +148,7 @@ namespace Keysharp.Builtins
 
 			// Graphics for a user-facing draw op, honoring the canvas-to-draw-unit scales. Shapes/transforms that operate on whole
 			// bitmaps (Create, Clear, Scale/Rotate/Flip) use ImageHelper.MakeGraphics directly and are unscaled.
-			private GraphicsLease DrawG(Bitmap b, bool highQuality = true)
+			private GraphicsLease DrawG(Bitmap b, VectorDrawingState state, bool highQuality = true)
 			{
 				Graphics g;
 				// A Graphics is reusable only while its bitmap identity is stable. Borrowed bases and transform
@@ -181,14 +181,24 @@ namespace Keysharp.Builtins
 					g = liveGraphics;
 				}
 
-				// A reused Graphics accumulates ScaleTransform; resetting a fresh one is harmless.
-				// The lease unwinds the corresponding backend transform state.
+				// Every operation reapplies its captured transform and clip state.
 				ImageHelper.PushDrawTransform(g);
+				var lease = new GraphicsLease(g, !reusable);
 
-				if (drawScaleX != 1.0 || drawScaleY != 1.0)
-					g.ScaleTransform((float)drawScaleX, (float)drawScaleY);
+				try
+				{
+					ApplyDrawingState(g, state);
+					return lease;
+				}
+				catch
+				{
+					lease.Dispose();
 
-				return new GraphicsLease(g, !reusable);
+					if (reusable)
+						ReleaseLiveGraphics();
+
+					throw;
+				}
 			}
 
 			/// <summary>A brush for <paramref name="argb"/>, created once per colour and reused. Never disposed by
@@ -288,6 +298,7 @@ namespace Keysharp.Builtins
 			private void ReleaseDrawState()
 			{
 				ReleaseLiveGraphics();
+				drawingClip = null;
 
 				if (brushCache != null)
 				{
@@ -352,16 +363,6 @@ namespace Keysharp.Builtins
 				drawn?.Add(rect);
 			}
 
-			// Same, for the two-point ops that have no rectangle of their own. Built from a corner and a size
-			// rather than RectangleF.FromLTRB, which System.Drawing has and Eto.Drawing does not.
-			private void DamageSegment(double x1, double y1, double x2, double y2, double pad)
-			{
-				var left = Math.Min(x1, x2);
-				var top = Math.Min(y1, y2);
-				Damage(new RectangleF((float)left, (float)top,
-									  (float)(Math.Max(x1, x2) - left), (float)(Math.Max(y1, y2) - top)), pad);
-			}
-
 			internal void DamageAll()
 			{
 				if (damage == null)
@@ -370,12 +371,6 @@ namespace Keysharp.Builtins
 				damage.AddAll();
 				drawn?.AddAll();
 			}
-
-
-			// A stroke of `thickness` draw units is at most this many canvas pixels wide on either axis. The pen
-			// is centred on the path, so a caller pads by half of this for a line and by all of it for a closed
-			// path, where a join can reach a full stroke past the geometry.
-			private double StrokePad(double thickness) => thickness * Math.Max(drawScaleX, drawScaleY);
 
 			#endregion
 
@@ -946,15 +941,16 @@ namespace Keysharp.Builtins
 				if (t == 0 || ((uint)argb >> 24) == 0)
 					return this;
 
+				var state = SnapshotDrawingState();
 				QueueDraw(b =>
 				{
-					using var gl = DrawG(b);
+					using var gl = DrawG(b, state);
 					var g = gl.Graphics;
 					var pen = GetPen(argb, (float)t);
 					g.DrawLine(pen, (float)px1, (float)py1, (float)px2, (float)py2);
 					return b;
 				});
-				DamageSegment(px1, py1, px2, py2, StrokePad(t) / 2 + 1);   // pen is centred on the path
+				DamageVector(MakeRectF(Math.Min(px1, px2), Math.Min(py1, py2), Math.Abs(px2 - px1), Math.Abs(py2 - py1)), t / 2, state);
 				return this;
 			}
 
@@ -969,11 +965,12 @@ namespace Keysharp.Builtins
 				if (rect.Width <= 0 || rect.Height <= 0 || t == 0 || ((uint)argb >> 24) == 0)
 					return this;
 
+				var state = SnapshotDrawingState();
 				QueueDraw(b =>
 				{
 					// Axis-aligned rectangle strokes should land on exact pixels; antialiasing can slightly
 					// dim corner pixels and make GetPixel() nondeterministic.
-					using var gl = DrawG(b, highQuality: false);
+					using var gl = DrawG(b, state, highQuality: !state.Transform.IsAxisAligned);
 					var g = gl.Graphics;
 					var brush = Brush(argb);
 					var stroke = (float)Math.Min(t, Math.Min(rect.Width, rect.Height));
@@ -983,7 +980,7 @@ namespace Keysharp.Builtins
 					g.FillRectangle(brush, new RectangleF(rect.Right - stroke, rect.Y, stroke, rect.Height));
 					return b;
 				});
-				Damage(rect);   // The stroke is drawn inside rect, so the rect itself bounds it.
+				DamageVector(rect, 0, state);   // The stroke is drawn inside rect, so the rect itself bounds it.
 				return this;
 			}
 
@@ -997,16 +994,17 @@ namespace Keysharp.Builtins
 				if (rect.Width <= 0 || rect.Height <= 0 || ((uint)argb >> 24) == 0)
 					return this;
 
+				var state = SnapshotDrawingState();
 				QueueDraw(b =>
 				{
 					// Axis-aligned fill: antialiasing would only fuzz the edges, so draw it hard (highQuality:false).
-					using var gl = DrawG(b, highQuality: false);
+					using var gl = DrawG(b, state, highQuality: !state.Transform.IsAxisAligned);
 					var g = gl.Graphics;
 					var brush = Brush(argb);
 					g.FillRectangle(brush, rect);
 					return b;
 				});
-				Damage(rect);
+				DamageVector(rect, 0, state);
 				return this;
 			}
 
@@ -1021,15 +1019,16 @@ namespace Keysharp.Builtins
 				if (rect.Width <= 0 || rect.Height <= 0 || t == 0 || ((uint)argb >> 24) == 0)
 					return this;
 
+				var state = SnapshotDrawingState();
 				QueueDraw(b =>
 				{
-					using var gl = DrawG(b);
+					using var gl = DrawG(b, state);
 					var g = gl.Graphics;
 					var pen = GetPen(argb, (float)t);
 					g.DrawEllipse(pen, rect);
 					return b;
 				});
-				Damage(rect, StrokePad(t) + 1);
+				DamageVector(rect, t, state);
 				return this;
 			}
 
@@ -1043,15 +1042,16 @@ namespace Keysharp.Builtins
 				if (rect.Width <= 0 || rect.Height <= 0 || ((uint)argb >> 24) == 0)
 					return this;
 
+				var state = SnapshotDrawingState();
 				QueueDraw(b =>
 				{
-					using var gl = DrawG(b);
+					using var gl = DrawG(b, state);
 					var g = gl.Graphics;
 					var brush = Brush(argb);
 					g.FillEllipse(brush, rect);
 					return b;
 				});
-				Damage(rect);
+				DamageVector(rect, 0, state);
 				return this;
 			}
 
@@ -1068,16 +1068,17 @@ namespace Keysharp.Builtins
 				if (rect.Width <= 0 || rect.Height <= 0 || t == 0 || ((uint)argb >> 24) == 0)
 					return this;
 
+				var state = SnapshotDrawingState();
 				QueueDraw(b =>
 				{
-					using var gl = DrawG(b);
+					using var gl = DrawG(b, state);
 					var g = gl.Graphics;
 					var pen = GetPen(argb, (float)t);
 					using var path = MakeRoundRectPath(rect, r);
 					g.DrawPath(pen, path);
 					return b;
 				});
-				Damage(rect, StrokePad(t) + 1);
+				DamageVector(rect, t, state);
 				return this;
 			}
 
@@ -1092,16 +1093,17 @@ namespace Keysharp.Builtins
 				if (rect.Width <= 0 || rect.Height <= 0 || ((uint)argb >> 24) == 0)
 					return this;
 
+				var state = SnapshotDrawingState();
 				QueueDraw(b =>
 				{
-					using var gl = DrawG(b);
+					using var gl = DrawG(b, state);
 					var g = gl.Graphics;
 					var brush = Brush(argb);
 					using var path = MakeRoundRectPath(rect, r);
 					g.FillPath(brush, path);
 					return b;
 				});
-				Damage(rect);
+				DamageVector(rect, 0, state);
 				return this;
 			}
 
@@ -1140,30 +1142,55 @@ namespace Keysharp.Builtins
 				if (string.IsNullOrEmpty(s))
 					return this;
 
-				var px = x.Ad();
-				var py = y.Ad();
+				if (!TryVectorPoint(x, y, out var textOrigin))
+					return this;
+
+				var px = textOrigin.X;
+				var py = textOrigin.Y;
 				//A Ks.Font in the options slot carries its own colour, which is the one thing the option string
 				//cannot express here, so it seeds the colour argument when that was left out.
 				var (fontOptions, fontFamily) = SplitFontArgs(options, fontName);
 				var defaultArgb = options is Font sf && sf.color.HasValue
 								  ? unchecked((int)(0xFF000000u | (uint)(sf.color.Value.ToArgb() & 0x00FFFFFF)))
 								  : unchecked((int)0xFF000000u);
-				var argb = ParseColorArg(color, defaultArgb, allowTransparentEmpty: false);
-
-				if (((uint)argb >> 24) == 0)
+				if (!TryVectorPaint(color, defaultArgb, out var paint))
 					return this;
+
+				if (paint.IsTransparent)
+					return this;
+
+				var state = SnapshotDrawingState();
 
 				QueueDraw(b =>
 				{
-					using var gl = DrawG(b);
+					using var gl = DrawG(b, state);
 					var g = gl.Graphics;
 					var f = CreateFont(fontOptions, fontFamily);   // cached & reused; never disposed (see CreateFont)
+					var sz = default(SizeF);
+					var measured = !paint.IsSolid || damage != null;
+
+					if (measured)
+						sz = ImageHelper.MeasureText(g, f, s);
+
+					if (paint.IsSolid)
+					{
 #if WINDOWS
-					var brush = Brush(argb);
-					g.DrawString(s, f, brush, (float)px, (float)py);
+						g.DrawString(s, f, Brush(paint.Solid), (float)px, (float)py);
 #else
-					g.DrawText(f, ImageHelper.ArgbToColor(argb), (float)px, (float)py, s);
+						g.DrawText(f, Brush(paint.Solid), (float)px, (float)py, s);
 #endif
+					}
+					else
+					{
+						var coverage = ExpandBounds(new RectangleF((float)px, (float)py, sz.Width, sz.Height),
+							Math.Max(2, sz.Height / 2));
+						using var brush = CreateVectorBrush(paint.Brush, coverage);
+#if WINDOWS
+						g.DrawString(s, f, brush, (float)px, (float)py);
+#else
+						g.DrawText(f, brush, (float)px, (float)py, s);
+#endif
+					}
 
 					// Measure on the Graphics that just drew, rather than through MeasureTextCore: that builds a
 					// throwaway surface and a Graphics for it, so tracking damage for a HUD's text cost more than
@@ -1171,12 +1198,11 @@ namespace Keysharp.Builtins
 					// Graphics is in hand — which is also why only a presented surface pays for it at all.
 					if (damage != null)
 					{
-						var sz = ImageHelper.MeasureText(g, f, s);
 						// Measured extents are the logical box; italics, swashes and negative-left-bearing
 						// glyphs paint outside it, and neither backend reports ink extents cheaply. Pad by half
 						// the line height, which covers a full-height overhang on either side.
-						Damage(new RectangleF((float)px, (float)py, sz.Width, sz.Height),
-							   Math.Max(2.0, sz.Height * Math.Max(drawScaleX, drawScaleY) / 2));
+						DamageVector(new RectangleF((float)px, (float)py, sz.Width, sz.Height),
+							Math.Max(2.0, sz.Height / 2), state);
 					}
 
 					return b;
@@ -1260,9 +1286,10 @@ namespace Keysharp.Builtins
 					if (requestedW <= 0 || requestedH <= 0)
 						return this;
 
+					var state = SnapshotDrawingState();
 					QueueDraw(b =>
 					{
-						using var gl = DrawG(b);
+						using var gl = DrawG(b, state);
 						var g = gl.Graphics;
 #if WINDOWS
 						g.DrawImage(source, new RectangleF((float)px, (float)py, (float)requestedW, (float)requestedH),
@@ -1272,7 +1299,7 @@ namespace Keysharp.Builtins
 #endif
 						return b;
 					});
-					Damage(new RectangleF((float)px, (float)py, (float)requestedW, (float)requestedH));
+					DamageVector(new RectangleF((float)px, (float)py, (float)requestedW, (float)requestedH), 1, state);
 
 					if (!eagerDraw)
 					{
