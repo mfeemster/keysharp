@@ -93,8 +93,8 @@ jobs:
       - name: Checkout keysharp
         uses: actions/checkout@v7
 
-      # The NixOS leg takes no part in the .NET setup below: the flake pins its own SDK and its own
-      # Eto revision, and builds through nix rather than the solution. Its steps are at the end.
+      # The NixOS leg takes no part in the .NET setup below: the flake selects its own SDK and resolves
+      # Eto separately, then builds through nix rather than the solution. Its steps are at the end.
       - name: Setup .NET SDK
         if: ${{ matrix.platform != 'nixos' }}
         uses: actions/setup-dotnet@v5
@@ -234,15 +234,21 @@ jobs:
         run: |
           dotnet build Keysharp.sln -c Debug --nologo
 
-      # The NixOS leg. It shares only the checkout above: the flake pins its own SDK and Eto revision, so
-      # what this checks is that Keysharp still packages, which the compile legs cannot see. Not on the
-      # gate - it costs minutes rather than seconds, so it runs when someone asks for it.
+      # The NixOS leg. It shares only the checkout above: the flake selects its own SDK and resolves the
+      # latest Eto Keysharp revision once for this job. This checks that Keysharp still packages, which the
+      # compile legs cannot see. Not on the gate - it runs when someone asks for it.
       - name: Install Nix
         if: ${{ matrix.platform == 'nixos' }}
         uses: cachix/install-nix-action@v31
         with:
           extra_nix_config: |
             experimental-features = nix-command flakes
+
+      - name: Resolve latest Eto for Nix
+        id: nix-inputs
+        if: ${{ matrix.platform == 'nixos' }}
+        shell: bash
+        run: nix flake update --refresh eto
 
       # Evaluates every output for both supported architectures and builds checks.nixos-module, which
       # composes nixosModules.default into a real NixOS system. Only this runner's architecture is built;
@@ -313,7 +319,7 @@ jobs:
       # a corrected file. On a green run this would be a minute of restore that proves nothing.
       - name: Regenerate the offline NuGet set
         id: regen
-        if: ${{ matrix.platform == 'nixos' && failure() }}
+        if: ${{ matrix.platform == 'nixos' && failure() && steps.nix-inputs.outcome == 'success' }}
         shell: bash
         run: |
           set -euo pipefail

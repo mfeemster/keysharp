@@ -76,12 +76,13 @@ The currently supported COSMIC portal has no RemoteDesktop path for Keysharp's g
 For a local source checkout:
 
 ```sh
+nix flake update --refresh eto
 nix build .#keysharp
 nix run .#keysharp -- hello.ks
 nix develop
 ```
 
-The development shell supplies .NET 10 and the managed application's Linux development/runtime libraries, and puts a writable copy of the pinned Keysharp Eto fork in the user cache, exported through `EtoRoot`. This is necessary because MSBuild writes `obj` data beside Eto's project files while flake inputs themselves are immutable. Native component development uses the shells in the two standalone repositories.
+The development shell supplies .NET 10 and the managed application's Linux development/runtime libraries, and puts a writable copy of the resolved Keysharp Eto fork in the user cache, exported through `EtoRoot`. This is necessary because MSBuild writes `obj` data beside Eto's project files while flake inputs themselves are immutable. Native component development uses the shells in the two standalone repositories.
 
 Real-machine COSMIC smoke test:
 

@@ -38,6 +38,7 @@ demos/*.gif
 # Design/working notes stay local; they are not part of what ships.
 /docs/design-*.md
 
-# nix build result symlinks.
+# Nix locks and build outputs stay local.
+/flake.lock
 /result
 /result-*

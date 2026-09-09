@@ -12,8 +12,15 @@ nix build .#keysharp
 Use that command rather than editing the file by hand. It knows which packages the .NET SDK already
 provides, and listing one of those here fails the build.
 
-`flake.nix` pins nixpkgs and Eto to exact revisions. Every other packager builds the tip of Eto's
-`Keysharp` branch, so move the Eto pin when that moves.
+`flake.nix` pins nixpkgs and follows Eto's `Keysharp` branch. Resolve the latest Eto revision once
+before local validation:
+
+```sh
+nix flake update --refresh eto
+```
+
+The generated `flake.lock` stays local. It keeps every Nix command in the checkout on the same Eto
+revision; rerun the update when starting a new validation.
 
 CI has a NixOS leg that builds the package and checks what it contains, but it is not part of the push
 gate: run the CI workflow manually and pick `nixos` (or `all`) after touching these expressions, a project

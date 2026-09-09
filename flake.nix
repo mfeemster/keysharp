@@ -4,7 +4,7 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/e5bdc4a41d4c072fe1e3787eaa0320a384741d44";
     eto = {
-      url = "github:keysharp-org/Eto/d2f0dbe939972550f3ae865c07aa0c305ee7eb24";
+      url = "github:keysharp-org/Eto/Keysharp";
       flake = false;
     };
   };
