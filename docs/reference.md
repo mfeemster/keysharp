@@ -1437,6 +1437,12 @@ HMAC accepts `SHA1`, `SHA256`, `SHA384` and `SHA512` with the same case-insensit
 
 Base32 encodes with the RFC 4648 alphabet and `=` padding. Decode accepts lowercase and unpadded secrets, returns a Buffer, and rejects invalid characters (including whitespace), malformed padding, impossible lengths and nonzero unused bits with `ValueError`. The RFC 4648, RFC 2202, RFC 4231 and RFC 6238 script vectors are verified on Windows; Linux and macOS remain unverified. The user-facing Crypt reference includes a TOTP example that uses `Hex.Decode(Crypt.Hmac(...))` for dynamic truncation.
 
+### ListView row and cell colours
+
+`Gui.ListView.SetRowColor(Row, TextColor?, BackColor?)`, `SetCellColor(Row, Column, TextColor?, BackColor?)` and `ClearColors()` are Keysharp extensions. Setters accept the existing GUI colour names, hexadecimal strings and RGB integers. Rows and columns are existing 1-based indices. An omitted, empty or `"Default"` colour clears that component's override; a cell inherits the row component and then the control default. An invalid index or malformed colour string raises `ValueError` without applying either colour. All three methods return the control.
+
+Colours are indexed assignments: every successful `Insert`, `Delete`, `InsertCol`, `DeleteCol` and sort clears all row and cell colours. An unsorted `Add` or ordinary `Modify` retains them; adding into a sorted control can invalidate them through sorting. Reapply assignments after changing row or column structure. WinForms uses native row/subitem colours without owner drawing; Eto uses cell formatting. Selected-row rendering follows the platform's selection theme. Windows native colour properties and invalidation are verified without showing a window; Linux/macOS rendering remains unverified.
+
 ## Code acknowledgements
 
 * The initial IronAHK developers 2010 - 2015
