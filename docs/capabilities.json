@@ -3428,6 +3428,39 @@
                  },
                  {
                      "category":  "Keysharp Module (Ks)",
+                     "feature":  "Base32",
+                     "syntax":  "#Import Ks { Base32 }",
+                     "windows":  "full",
+                     "linux_x11":  "unknown",
+                     "linux_wayland":  "unknown",
+                     "macos":  "unknown",
+                     "notes":  "Class methods Encode and Decode convert RFC 4648 Base32 text and raw bytes, including unpadded TOTP secrets. Windows verified; Linux and macOS unverified.",
+                     "tested-by":  "string-base32.ahk; crypt-totp.ahk"
+                 },
+                 {
+                     "category":  "Keysharp Module (Ks)",
+                     "feature":  "Base32.Decode()",
+                     "syntax":  "Bytes := Base32.Decode(Text)",
+                     "windows":  "full",
+                     "linux_x11":  "unknown",
+                     "linux_wayland":  "unknown",
+                     "macos":  "unknown",
+                     "notes":  "Decodes RFC 4648 Base32 to a Buffer; accepts lowercase and omitted padding, rejects malformed alphabet, padding and nonzero pad bits. Windows verified; Linux and macOS unverified.",
+                     "tested-by":  "string-base32.ahk; crypt-totp.ahk"
+                 },
+                 {
+                     "category":  "Keysharp Module (Ks)",
+                     "feature":  "Base32.Encode()",
+                     "syntax":  "Text := Base32.Encode(Value [, Encoding := \"UTF-8\"])",
+                     "windows":  "full",
+                     "linux_x11":  "unknown",
+                     "linux_wayland":  "unknown",
+                     "macos":  "unknown",
+                     "notes":  "Encodes a String, StringBuffer, Buffer or byte Array as uppercase padded RFC 4648 Base32. Windows verified; Linux and macOS unverified.",
+                     "tested-by":  "string-base32.ahk"
+                 },
+                 {
+                     "category":  "Keysharp Module (Ks)",
                      "feature":  "Base64.Decode()",
                      "syntax":  "Bytes := Base64.Decode(Text)",
                      "windows":  "full",
@@ -4493,6 +4526,17 @@
                      "macos":  "full",
                      "notes":  "Hashes a file, reading it as a stream so that its size does not matter. Takes the same algorithm names as Crypt.Hash.",
                      "tested-by":  "crypt-class.ahk"
+                 },
+                 {
+                     "category":  "Keysharp Module (Ks)",
+                     "feature":  "Crypt.Hmac()",
+                     "syntax":  "Digest := Crypt.Hmac(Value, Key [, Algorithm := \"SHA256\", Encoding := \"UTF-8\"])",
+                     "windows":  "full",
+                     "linux_x11":  "unknown",
+                     "linux_wayland":  "unknown",
+                     "macos":  "unknown",
+                     "notes":  "Computes HMAC with SHA1, SHA256, SHA384 or SHA512, accepting the same case-insensitive, hyphen-tolerant names as Hash. Returns uppercase hexadecimal; Hex.Decode converts the digest to a Buffer. A File Value is streamed and its position restored. Windows RFC vectors verified; Linux and macOS unverified.",
+                     "tested-by":  "crypt-hmac.ahk; crypt-totp.ahk"
                  },
                  {
                      "category":  "Keysharp Module (Ks)",
@@ -11715,6 +11759,39 @@
                      "linux_wayland":  "full",
                      "macos":  "full",
                      "notes":  "Returns layout-aware portable VK, platform-native SC, key name, and modifier information on every platform."
+                 },
+                 {
+                     "category":  "Keysharp Module (Ks)",
+                     "feature":  "Hex",
+                     "syntax":  "#Import Ks { Hex }",
+                     "windows":  "full",
+                     "linux_x11":  "unknown",
+                     "linux_wayland":  "unknown",
+                     "macos":  "unknown",
+                     "notes":  "Class methods Encode and Decode convert hexadecimal text and raw bytes. Windows verified; Linux and macOS unverified.",
+                     "tested-by":  "string-hex.ahk; crypt-hmac.ahk; crypt-totp.ahk"
+                 },
+                 {
+                     "category":  "Keysharp Module (Ks)",
+                     "feature":  "Hex.Decode()",
+                     "syntax":  "Bytes := Hex.Decode(Text)",
+                     "windows":  "full",
+                     "linux_x11":  "unknown",
+                     "linux_wayland":  "unknown",
+                     "macos":  "unknown",
+                     "notes":  "Decodes an even number of hexadecimal digits to a Buffer. Accepts either letter case and empty text; invalid characters, whitespace, prefixes and odd lengths raise ValueError. Windows verified; Linux and macOS unverified.",
+                     "tested-by":  "string-hex.ahk; crypt-hmac.ahk; crypt-totp.ahk"
+                 },
+                 {
+                     "category":  "Keysharp Module (Ks)",
+                     "feature":  "Hex.Encode()",
+                     "syntax":  "Text := Hex.Encode(Value [, Encoding := \"UTF-8\"])",
+                     "windows":  "full",
+                     "linux_x11":  "unknown",
+                     "linux_wayland":  "unknown",
+                     "macos":  "unknown",
+                     "notes":  "Encodes a String, StringBuffer, Buffer or byte Array as uppercase hexadecimal without separators or prefix. Windows verified; Linux and macOS unverified.",
+                     "tested-by":  "string-hex.ahk; crypt-hmac.ahk"
                  },
                  {
                      "category":  "Keysharp Module (Ks)",

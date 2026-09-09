@@ -165,14 +165,17 @@ namespace Keysharp.Builtins
 		{
 			int size = (int)(long)Size;
 			byte[] dataArray = new byte[size];
-			Marshal.Copy(_ptr.DangerousGetHandle(), dataArray, 0, size);
+
+			if (size > 0)
+				Marshal.Copy(_ptr.DangerousGetHandle(), dataArray, 0, size);
+
 			return dataArray;
 		}
 
 		/// <summary>
 		/// Returns a mutable Span wrapper for the raw buffer.
 		/// </summary>
-		internal unsafe Span<byte> AsSpan() => new Span<byte>((byte*)_ptr.DangerousGetHandle(), (int)size);
+		internal unsafe Span<byte> AsSpan() => size == 0 ? Span<byte>.Empty : new Span<byte>((byte*)_ptr.DangerousGetHandle(), (int)size);
 
 		/// <summary>
 		/// Indexer which retrieves or sets the value of an array element.

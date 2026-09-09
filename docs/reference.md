@@ -1424,6 +1424,17 @@ Controlling another application needs **Automation** permission, granted per tar
 			+ A GUI object is required for `OnMessage()` to be used.
 			+ Off Windows there is no native message queue to monitor, so the input messages are synthesized from the toolkit events the script's own GUI raises: `WM_MOUSEMOVE`, the left/right/middle button down, up and double-click messages, `WM_MOUSEWHEEL`, `WM_KEYDOWN`/`WM_KEYUP`, `WM_SYSKEYDOWN`/`WM_SYSKEYUP` and `WM_CHAR`. They carry the same payloads as on Windows — the control's handle, `MK_*` flags and packed coordinates in `wParam`/`lParam`, a virtual key code for the key messages — and the callback's last-found window is the GUI the control belongs to. Any other message number is never delivered, messages sent to windows the script does not own cannot be observed at all, and a click on a single-line `Edit` is missed because GTK's entry consumes the button press before the toolkit raises an event for it. `Gui.OnMessage()` and `GuiCtrl.OnMessage()` are fed from the same source after the global monitors, and are addressed the way Windows addresses them: a message that went to the GUI window reaches the former, one that went to a control reaches the latter. This is verified on X11 and Wayland; macOS runs the same code but is untested.
 		
+
+### HMAC, Base32 and hexadecimal conversion
+
+`#Import Ks { Crypt, Base32, Hex }` exposes the Keysharp extensions `Crypt.Hmac(Value, Key, Algorithm := "SHA256", Encoding := "UTF-8")`, `Base32.Encode(Value, Encoding := "UTF-8")` and `Base32.Decode(Text)`.
+
+HMAC accepts `SHA1`, `SHA256`, `SHA384` and `SHA512` with the same case-insensitive, hyphen-tolerant names as `Hash`; `MD5` and `CRC32` raise `ValueError`. Its result is uppercase hexadecimal, matching `Hash`. Use `Hex.Decode()` to convert a digest to raw bytes in a Buffer. String and `StringBuffer` inputs use the chosen encoding; Buffers and byte Arrays retain their bytes. A File is accepted as `Value` with the same streaming and position-preservation rules as `Hash`, but cannot serve as `Key`.
+
+`Hex.Encode(Value, Encoding := "UTF-8")` accepts the same input types as Base32 and Base64 and returns uppercase hexadecimal without separators or a prefix. `Hex.Decode(Text)` accepts an even number of hexadecimal digits in either case and returns a Buffer, including an empty Buffer for empty text. Whitespace, `0x` prefixes, odd lengths and other invalid characters raise `ValueError`. Text can be read from the decoded bytes with `StrGet(Bytes, Bytes.Size, "UTF-8")`.
+
+Base32 encodes with the RFC 4648 alphabet and `=` padding. Decode accepts lowercase and unpadded secrets, returns a Buffer, and rejects invalid characters (including whitespace), malformed padding, impossible lengths and nonzero unused bits with `ValueError`. The RFC 4648, RFC 2202, RFC 4231 and RFC 6238 script vectors are verified on Windows; Linux and macOS remain unverified. The user-facing Crypt reference includes a TOTP example that uses `Hex.Decode(Crypt.Hmac(...))` for dynamic truncation.
+
 ## Code acknowledgements
 
 * The initial IronAHK developers 2010 - 2015

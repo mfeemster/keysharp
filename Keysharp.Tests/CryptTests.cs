@@ -10,5 +10,17 @@ namespace Keysharp.Tests
 		/// </summary>
 		[Test, Category("Crypt"), Category("Curated")]
 		public void ScriptSurface() => Assert.IsTrue(TestScript("crypt-class", true));
+
+		[Test, Category("Crypt"), Category("Curated")]
+		public void Base32Vectors() => Assert.IsTrue(TestScript("string-base32", true));
+
+		[Test, Category("Crypt"), Category("Curated")]
+		public void HexVectors() => Assert.IsTrue(TestScript("string-hex", true));
+
+		[Test, Category("Crypt"), Category("Curated")]
+		public void HmacVectors() => Assert.IsTrue(TestScript("crypt-hmac", true));
+
+		[Test, Category("Crypt"), Category("Curated")]
+		public void TotpVectors() => Assert.IsTrue(TestScript("crypt-totp", true));
 	}
 }

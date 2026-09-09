@@ -10,8 +10,8 @@ namespace Keysharp.Builtins
 		/// pass <c>Encoding</c> to choose a different one. A Buffer or an Array of bytes is used as it stands,
 		/// so no encoding applies to those, and anything that hashes also accepts an open File.</para>
 		/// <para>
-		/// A digest is returned as uppercase hexadecimal. Compare digests case-insensitively — the tool a
-		/// checksum came from may well print it in lowercase.</para>
+		/// A digest is returned as uppercase hexadecimal. Compare digests case-insensitively because an
+		/// external checksum may be lowercase; <see cref="Hex.Decode"/> converts a digest to raw bytes.</para>
 		/// <para>
 		/// The per-algorithm methods are a closed set carried over from the global functions they replaced. An
 		/// algorithm added later is a name <see cref="Hash"/> accepts, not another method.</para>
@@ -150,6 +150,44 @@ namespace Keysharp.Builtins
 						ThreadAccessors.A_LastError = Marshal.GetLastSystemError();
 						return Errors.OSErrorOccurred(ex, $"Error reading file {file}", "");
 					}
+				}
+			}
+
+			/// <summary>
+			/// Authenticates a value with a secret key using HMAC.
+			/// </summary>
+			/// <param name="this">The class object, supplied by the script-static call.</param>
+			/// <param name="Value">The value to authenticate, as <see cref="Hash"/> takes it.</param>
+			/// <param name="Key">The secret key: a string, StringBuffer, Buffer or Array of bytes.</param>
+			/// <param name="Algorithm">SHA1, SHA256 (the default), SHA384 or SHA512, with the same name
+			/// matching as <see cref="Hash"/>.</param>
+			/// <param name="Encoding">The encoding of a string Value or Key, defaulting to UTF-8.</param>
+			/// <returns>The authentication code as uppercase hexadecimal.</returns>
+			/// <exception cref="ValueError">Thrown if the algorithm or encoding cannot be resolved,
+			/// the File is not open for reading, or authentication fails.</exception>
+			/// <exception cref="TypeError">Thrown if the value or key holds no bytes.</exception>
+			[Static]
+			public static object Hmac(object @this, object Value, object Key, object Algorithm = null, object Encoding = null)
+			{
+				var name = Named(Algorithm, DefaultAlgorithm);
+
+				if (!TryFind(name, out var entry) || entry.Authenticate == null)
+					return Errors.ValueErrorOccurred($"Unknown HMAC algorithm \"{name}\". Expected {string.Join(", ", algorithms.Where(a => a.Authenticate != null).Select(a => a.Name))}.", name, "");
+
+				var enc = ResolveEncoding(Encoding);
+				var key = Conversions.ToByteArray(Key, enc);
+
+				if (key == null)
+					return "";
+
+				try
+				{
+					using var alg = entry.Authenticate(key);
+					return Digest(Value, alg, enc);
+				}
+				catch (CryptographicException ex)
+				{
+					return Errors.ValueErrorOccurred($"HMAC failed: {ex.Message}", null, "");
 				}
 			}
 
@@ -333,22 +371,20 @@ namespace Keysharp.Builtins
 			public static object SHA512(object @this, object value, object encoding = null) => Hash(@this, value, "SHA512", encoding);
 
 			/// <summary>
-			/// Every hash this class knows: the name a script writes, how to build it, and the name a key
-			/// derivation asks for, which a checksum has none of. The error messages are spelled from this table
-			/// so that adding a row cannot leave them claiming something else.
+			/// Hash, HMAC and derivation share name resolution and derive their accepted choices from this table.
 			/// </summary>
-			private static readonly (string Name, Func<HashAlgorithm> Create, HashAlgorithmName? Derivation)[] algorithms =
+			private static readonly (string Name, Func<HashAlgorithm> Create, HashAlgorithmName? Derivation, Func<byte[], HMAC> Authenticate)[] algorithms =
 			[
 				// Every factory is qualified because this class has a method of each of these names, which hides
 				// the type name here.
 				// MD5 hashes but does not derive: .NET's PBKDF2 rejects it on every platform, measured on Windows
 				// and Linux alike, so offering it would only produce an error at the point of use.
-				("MD5", System.Security.Cryptography.MD5.Create, null),
-				("SHA1", System.Security.Cryptography.SHA1.Create, HashAlgorithmName.SHA1),
-				("SHA256", System.Security.Cryptography.SHA256.Create, HashAlgorithmName.SHA256),
-				("SHA384", System.Security.Cryptography.SHA384.Create, HashAlgorithmName.SHA384),
-				("SHA512", System.Security.Cryptography.SHA512.Create, HashAlgorithmName.SHA512),
-				("CRC32", () => new Keysharp.Internals.Cryptography.CRC32(), null),
+				("MD5", System.Security.Cryptography.MD5.Create, null, null),
+				("SHA1", System.Security.Cryptography.SHA1.Create, HashAlgorithmName.SHA1, key => new HMACSHA1(key)),
+				("SHA256", System.Security.Cryptography.SHA256.Create, HashAlgorithmName.SHA256, key => new HMACSHA256(key)),
+				("SHA384", System.Security.Cryptography.SHA384.Create, HashAlgorithmName.SHA384, key => new HMACSHA384(key)),
+				("SHA512", System.Security.Cryptography.SHA512.Create, HashAlgorithmName.SHA512, key => new HMACSHA512(key)),
+				("CRC32", () => new Keysharp.Internals.Cryptography.CRC32(), null, null),
 			];
 
 			/// <summary>
@@ -782,7 +818,7 @@ namespace Keysharp.Builtins
 			/// <summary>
 			/// Looks a hash algorithm up by the name a script wrote.
 			/// </summary>
-			private static bool TryFind(string name, out (string Name, Func<HashAlgorithm> Create, HashAlgorithmName? Derivation) found)
+			private static bool TryFind(string name, out (string Name, Func<HashAlgorithm> Create, HashAlgorithmName? Derivation, Func<byte[], HMAC> Authenticate) found)
 			{
 				var normalized = Normalize(name);
 
