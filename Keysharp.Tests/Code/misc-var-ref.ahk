@@ -21,23 +21,23 @@ t := "abc"
 AssertEq(VarSetStrCapacity(&t, 100), 100, A_LineNumber)
 
 f := ""
-SplitPath("C:\a\b.txt", &f)
+SplitPath("C:/a/b.txt", &f)
 AssertEq(f, "b.txt", A_LineNumber)
 
 ; --- 2. ... and so does a virtual reference -----------------------------------
 vr := VRef()
-SplitPath("C:\a\b.txt", vr)
+SplitPath("C:/a/b.txt", vr)
 AssertEq(vr.__Value, "b.txt", A_LineNumber)
 AssertEq(VarSetStrCapacity(VRef(), 100), 100, A_LineNumber)
 
 ; --- 3. Anything else is a TypeError, not a silently absorbed output ----------
-Throws(() => SplitPath("C:\a\b.txt", Map()), A_LineNumber, TypeError)
-Throws(() => SplitPath("C:\a\b.txt", [1, 2]), A_LineNumber, TypeError)
-Throws(() => SplitPath("C:\a\b.txt", "notaref"), A_LineNumber, TypeError)
+Throws(() => SplitPath("C:/a/b.txt", Map()), A_LineNumber, TypeError)
+Throws(() => SplitPath("C:/a/b.txt", [1, 2]), A_LineNumber, TypeError)
+Throws(() => SplitPath("C:/a/b.txt", "notaref"), A_LineNumber, TypeError)
 Throws(() => VarSetStrCapacity(Map(), 100), A_LineNumber, TypeError)
 
 m := Map()
-try SplitPath("C:\a\b.txt", m)
+try SplitPath("C:/a/b.txt", m)
 Assert(!m.HasOwnProp("__Value"), A_LineNumber)        ; the failed write defined nothing
 
 ; --- 4. A user function's &param holds to the same rule -----------------------
@@ -92,7 +92,7 @@ class Holder {
 	p := "orig"
 }
 h := Holder()
-SplitPath("C:\a\b.txt", &h.p)
+SplitPath("C:/a/b.txt", &h.p)
 AssertEq(h.p, "b.txt", A_LineNumber)
 
 FileAppend "pass", "*"

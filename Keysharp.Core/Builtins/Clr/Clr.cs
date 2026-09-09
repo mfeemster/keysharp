@@ -136,8 +136,8 @@ namespace Keysharp.Builtins
 
 				internal override object Get(string name, object[] args)
 				{
-					// Prefer unique simple-name in preferred assemblies; then global index.
-					if (TypeResolver.TryResolveSimpleNameUnique(name, _assemblies, out var t, out var ambiguous))
+					// Prefer unique simple-name in preferred assemblies.
+					if (TypeResolver.TryResolveSimpleNameUnique(name, _assemblies, out var t, out var ambiguous, globalFallback: false))
 					{
 						return new Clr.ManagedType(t);
 					}
@@ -146,11 +146,25 @@ namespace Keysharp.Builtins
 						return Errors.ErrorOccurred($"Type name '{name}' is ambiguous in these assemblies.");
 					}
 
+					// A namespace root these assemblies actually declare outranks a same-named type from an unrelated
+					// assembly: on macOS, Eto's MonoMac.Libraries+System is the process's only type called "System",
+					// so the global index below answers Clr.Load("System.Net.Http").System with it.
+					if (TypeResolver.IsKnownNamespaceIn(_assemblies, name))
+						return new Clr.ManagedNamespace(_assemblies, name);
+
+					// Then any unique type elsewhere in the process.
+					if (TypeResolver.TryResolveSimpleNameUnique(name, null, out t, out ambiguous))
+					{
+						return new Clr.ManagedType(t);
+					}
+					if (ambiguous)
+					{
+						return Errors.ErrorOccurred($"Type name '{name}' is ambiguous across loaded assemblies.");
+					}
+
 					// Not a type: start a namespace walk rooted at this assembly scope, but only if the name can still
 					// lead somewhere. The global check is enough here -- these assemblies are loaded, so their
-					// namespaces are indexed, and a name that is a namespace nowhere is dead for them too. Narrowing
-					// it to these assemblies would only cost a full type scan to reject a case ManagedNamespace.Get
-					// catches on the next step anyway.
+					// namespaces are indexed, and a name that is a namespace nowhere is dead for them too.
 					if (!TypeResolver.IsKnownNamespace(name))
 						return Errors.ErrorOccurred($"'{name}' is neither a type nor a namespace in these assemblies.");
 

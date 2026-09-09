@@ -72,8 +72,9 @@ TimerHandler4() {
 	doDelayEnd := A_TickCount
 }
 
-; Sleep(-1) returns only once TimerHandler4 has finished, so no time has passed since it stamped the tick.
-AssertEq(A_TickCount, doDelayEnd, A_LineNumber)
+; Sleep(-1) returns only once TimerHandler4 has finished, so only unwinding the dispatch separates that stamp
+; from this line. A return that skipped the handler leaves doDelayEnd at 0, which no tolerance hides.
+Assert(doDelayEnd != 0 && A_TickCount - doDelayEnd < 50, A_LineNumber)
 
 ; TimerHandler3 came due while TimerHandler4 held the thread, so it must be queued rather than dropped, and
 ; must still run exactly once. WHEN it runs is deliberately not asserted: Keysharp drains it before Sleep(-1)

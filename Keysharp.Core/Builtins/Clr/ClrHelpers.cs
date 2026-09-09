@@ -151,14 +151,17 @@ namespace Keysharp.Builtins
 
 		/// <summary>
 		/// Prefer matches from preferredAssemblies; if unique, return it.
-		/// Otherwise fall back to the global simple-name index.
+		/// Otherwise fall back to the global simple-name index, unless globalFallback says not to -- a caller
+		/// holding a better candidate of its own for the same name needs the preferred-set verdict alone, since
+		/// the global index answers with any type in the process that happens to share the name.
 		/// Returns true if a unique match was found; ambiguous flagged via out param.
 		/// </summary>
 		internal static bool TryResolveSimpleNameUnique(
 			string simpleName,
 			IEnumerable<Assembly> preferredAssemblies,
 			out Type t,
-			out bool ambiguous)
+			out bool ambiguous,
+			bool globalFallback = true)
 		{
 			EnsureIndex();
 			t = null;
@@ -180,6 +183,9 @@ namespace Keysharp.Builtins
 
 			// 2) Global simple-name index. Any deferred assembly declaring the name is loaded first, so the
 			// unique-vs-ambiguous verdict below accounts for all of them rather than just those already loaded.
+			if (!globalFallback)
+				return false;
+
 			_ = Materialize(simpleName);
 			var global = GetBySimpleName(simpleName);
 			if (global.Count == 1) { t = global[0]; return true; }

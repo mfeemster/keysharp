@@ -239,6 +239,9 @@ jobs:
       - name: Install Linux package dependencies
         if: ${{ matrix.platform == 'linux' }}
         run: |
+          # Third-party repos on the runner image (Chrome, MS) periodically serve a stale
+          # index and fail the whole update; nothing installed here comes from them.
+          sudo rm -f /etc/apt/sources.list.d/google-chrome.list /etc/apt/sources.list.d/microsoft-prod.list
           sudo apt-get update
           sudo apt-get install -y \
             curl \
