@@ -1328,17 +1328,10 @@ break_twice:;
 			};
 
 		private static void EnsureInputPermissions(bool monitoring, bool control, string operation)
-		{
-			var result = Script.TheScript.Permissions.RequestCapabilities(
+			=> _ = Script.TheScript.Permissions.EnsureCapabilities(
 				inputMonitoring: monitoring,
 				inputControl: control,
 				operation: operation);
-
-			if (!result.IsGranted)
-				throw new InvalidOperationException(result.Message.IsNullOrEmpty()
-					? $"Permission is required for '{operation}'."
-					: result.Message);
-		}
 	}
 
 	public partial class Ks

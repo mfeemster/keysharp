@@ -7,18 +7,13 @@ namespace Keysharp.Builtins
 		internal static void EnsureWindowMonitoringPermission(string operation)
 			=> _ = Script.TheScript.Permissions.EnsureWindowMonitoring(operation: operation);
 
+		// Through the shared Ensure gate, which lets an uninstalled component degrade to the empty result its
+		// backend returns -- WinActivate then reports the window it could not find -- and errors only on a refusal.
 		internal static void EnsureWindowControlPermission(string operation)
-		{
-			var result = Script.TheScript.Permissions.RequestCapabilities(
+			=> _ = Script.TheScript.Permissions.EnsureCapabilities(
 				windowMonitoring: true,
 				windowControl: true,
 				operation: operation);
-
-			if (!result.IsGranted)
-				throw new InvalidOperationException(result.Message.IsNullOrEmpty()
-					? $"Permission is required for '{operation}'."
-					: result.Message);
-		}
 
 		internal static object WindowOperationUnsupported(string commandName)
 			=> Errors.OSErrorOccurredWithMessage($"{commandName} is not implemented on {WindowOperationPlatformName()}.");

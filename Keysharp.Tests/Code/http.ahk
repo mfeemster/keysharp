@@ -1,7 +1,7 @@
 #ErrorStdOut
 #Warn All, StdOut
 #NoTrayIcon
-#import KS { Http, Url, Await, Task, Clr, A_KsVersion }
+#import KS { Http, Url, Await, Task, Clr, A_KsVersion, A_DirSeparator }
 #Include <assert>
 
 #CSharp
@@ -582,7 +582,7 @@ AssertEq(acc.seen, 300000, A_LineNumber)
 ; ---- Http.Download -------------------------------------------------------------------------------------
 
 ; Straight to a file, carrying the session's headers and credentials, which the global Download cannot do.
-dl := A_Temp "\ks-http-dl.bin"
+dl := A_Temp A_DirSeparator "ks-http-dl.bin"
 saved := Http.Download(root "/text", dl)
 AssertEq(FileRead(dl), "hello", A_LineNumber)
 AssertEq(saved.Status, 200, A_LineNumber)
@@ -632,7 +632,7 @@ AssertEq(Type(Http.Get(root "/text")), "Http.Response", A_LineNumber)
 
 ; ---- Download ------------------------------------------------------------------------------------------
 
-tmp := A_Temp "\ks-http-test.bin"
+tmp := A_Temp A_DirSeparator "ks-http-test.bin"
 Download(root "/text", tmp)
 AssertEq(FileRead(tmp), "hello", A_LineNumber)
 FileDelete(tmp)

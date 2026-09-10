@@ -1733,17 +1733,10 @@ namespace Keysharp.Internals.Input.Hooks
 
 		/// <summary>Requests permissions needed to monitor and enforce cursor clipping.</summary>
 		protected virtual void EnsureCursorClipPermissions()
-		{
-			var result = script.Permissions.RequestCapabilities(
+			=> _ = script.Permissions.EnsureCapabilities(
 				inputMonitoring: true,
 				inputControl: true,
 				operation: "ClipCursor");
-
-			if (!result.IsGranted)
-				throw new InvalidOperationException(result.Message.IsNullOrEmpty()
-					? "Permission is required for 'ClipCursor'."
-					: result.Message);
-		}
 
 		/// <summary>Whether ClipCursor can work in the current platform/environment.</summary>
 		protected virtual bool CanClipCursor(out string reason) { reason = ""; return true; }

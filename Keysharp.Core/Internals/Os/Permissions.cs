@@ -62,6 +62,17 @@ namespace Keysharp.Internals.Os
 		PermissionResult EnsureCameraCapture(bool? prompt = null, string operation = null);
 		PermissionResult EnsureClipboardMonitoring(bool? prompt = null, string operation = null);
 		PermissionResult EnsureFileAccess(string path, FilePermissionAccess access, bool? prompt = null, string operation = null);
+		PermissionResult EnsureCapabilities(
+			bool inputMonitoring = false,
+			bool inputControl = false,
+			bool windowMonitoring = false,
+			bool windowControl = false,
+			bool screenCapture = false,
+			bool audioCapture = false,
+			bool cameraCapture = false,
+			bool clipboardMonitoring = false,
+			bool? prompt = null,
+			string operation = null);
 	}
 
 	internal class DefaultPermissionManager : IPermissionManager
@@ -125,6 +136,23 @@ namespace Keysharp.Internals.Os
 			=> EnsureGranted(RequestClipboardMonitoring(prompt, operation), operation ?? "clipboard monitoring");
 		public virtual PermissionResult EnsureFileAccess(string path, FilePermissionAccess access, bool? prompt = null, string operation = null)
 			=> EnsureGranted(RequestFileAccess(path, access, prompt, operation), operation ?? "file access");
+
+		// Everything an operation needs, in the one request RequestCapabilities is overridden to batch -- a
+		// caller that asked for each scope separately would cost a prompt apiece.
+		public virtual PermissionResult EnsureCapabilities(
+			bool inputMonitoring = false,
+			bool inputControl = false,
+			bool windowMonitoring = false,
+			bool windowControl = false,
+			bool screenCapture = false,
+			bool audioCapture = false,
+			bool cameraCapture = false,
+			bool clipboardMonitoring = false,
+			bool? prompt = null,
+			string operation = null)
+			=> EnsureGranted(RequestCapabilities(inputMonitoring, inputControl, windowMonitoring, windowControl,
+				screenCapture, audioCapture, cameraCapture, clipboardMonitoring, prompt, operation),
+				operation ?? "the requested capabilities");
 
 		private static readonly HashSet<string> reportedUnavailable = [];
 
