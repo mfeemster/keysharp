@@ -201,7 +201,7 @@ namespace Keysharp.Internals.Input.Windows
 			// middle of a NEXT/SKIP pair by user pressing Ctrl-Esc, etc, which would make it unreliable.
 		}
 
-		internal override bool MouseClickPreLRButton(KeyEventTypes eventType, uint vk) {
+		internal override bool MouseClickPreLRButton(ref KeyEventTypes eventType, uint vk) {
 			// v1.0.43 The first line below means: We're not in SendInput/Play mode or we are but this
 			// will be the first event inside the array.  The latter case also implies that no initial
 			// mouse-move was done above (otherwise there would already be a MouseMove event in the array,
