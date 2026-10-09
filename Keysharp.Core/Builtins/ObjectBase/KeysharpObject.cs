@@ -126,7 +126,7 @@ namespace Keysharp.Builtins
 			? Errors.TypeErrorOccurred("An object holding a native resource cannot be cloned.")
 			: MemberwiseClone();
 
-		public static object DefineProp(object @this, object name, object descriptor) => Objects.DefineProp(@this, name, descriptor);
+		public static object DefineProp(object @this, object name, object descriptor) => Objects.DefineProp(@this, name, descriptor, true);
 
 		public static object DeleteProp(object @this, object name)
 		{

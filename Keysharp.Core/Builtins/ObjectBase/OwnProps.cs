@@ -57,7 +57,7 @@ namespace Keysharp.Builtins
 			return entry switch
 			{
 				//NoEnumGet already means "this getter needs more than the receiver", set where the descriptor is built.
-				OwnPropsDesc op => op.Value != null || (op.Get != null && !op.NoEnumGet),
+				OwnPropsDesc op => op.Value != null || (op.Get != null && !op.NoEnumGet) || (op.StructField != null && obj is Struct),
 				MethodPropertyHolder mph => mph.MinParams + mph.ReceiverCorrection(obj) <= 0,
 				KeysharpFunc fo => fo.MinParams <= 1,
 				_ => true
@@ -70,6 +70,8 @@ namespace Keysharp.Builtins
 			{
 				if (op.Value != null)
 					return (kv.Key, op.Value);
+				else if (op.StructField != null)
+					return (kv.Key, obj is Struct st ? st.GetFieldValue(op.StructField) : null);
 				else if (op.Get is KeysharpFunc fo)
 					return (kv.Key, fo.Call(obj));
 				else if (op.Get != null)
@@ -222,6 +224,8 @@ namespace Keysharp.Builtins
 
 		internal OwnPropsMapType Type { get; private set; }
 		internal OwnPropAccessFlags AccessFlags { get; private set; }
+		// False hides the property from Props, as DefineProp's Enumerable sets it. [v2.1-alpha.34+]
+		internal bool Enumerable { get; set; } = true;
 		internal bool NoParamGet => AccessFlags.HasFlag(OwnPropAccessFlags.NoParamGet);
 		internal bool NoParamSet => AccessFlags.HasFlag(OwnPropAccessFlags.NoParamSet);
 		internal bool NoEnumGet => AccessFlags.HasFlag(OwnPropAccessFlags.NoEnumGet);

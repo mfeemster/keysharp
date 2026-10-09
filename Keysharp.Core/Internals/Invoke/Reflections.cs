@@ -396,35 +396,6 @@ namespace Keysharp.Internals.Invoke
 			return false;
 		}
 
-		internal static List<MethodPropertyHolder> GetOwnProps(Type t, bool userOnly = true)
-		{
-			var props = new List<MethodPropertyHolder>();
-
-			// KeysharpObject is not the root -- it derives from Any -- so a walk that starts at or above it runs off
-			// the top of the hierarchy. Only the userOnly break stopped that, and Props() does not take it.
-			while (t != null && t != typeof(KeysharpObject))
-			{
-				if (userOnly && t.Assembly == typeof(Any).Assembly)
-					break;
-
-				if (Script.TheScript.ReflectionsData.typeToStringProperties.TryGetValue(t, out var dkt))
-				{
-					foreach (var kv in dkt)
-						if (kv.Value.Count > 0 && kv.Key != "__Class" && kv.Key != "__Static")
-						{
-							var mph = kv.Value.First().Value;
-
-							if (mph.ParamLength == 0)//Do not add Index[] properties.
-								props.Add(mph);
-						}
-				}
-
-				t = t.BaseType;
-			}
-
-			return props;
-		}
-
 		internal static long OwnPropCount(Type t, bool userOnly = true)
 		{
 			var ct = 0L;

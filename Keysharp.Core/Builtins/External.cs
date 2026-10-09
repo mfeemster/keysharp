@@ -24,37 +24,33 @@ namespace Keysharp.Builtins
 		/// <param name="offset">If blank or omitted (or when using 2-parameter mode), it defaults to 0.<br/>
 		/// Otherwise, specify an offset in bytes which is added to source to determine the source address.
 		/// </param>
-		/// <param name="type">One of the following strings: UInt, Int, Int64, UInt64, Short, UShort, Char, UChar, Double, Float, Ptr or UPtr</param>
+		/// <param name="type">One of the following strings: UInt, Int, Int64, UInt64, Short, UShort, Char, UChar, Double, Float, Ptr or UPtr, or a numeric type class such as UInt32.</param>
 		/// <returns>The binary number at the specified address+offset.</returns>
 		/// <exception cref="TypeError">A <see cref="TypeError"/> exception is thrown the address could not be determined.</exception>
 		/// <exception cref="ValueError">A <see cref="ValueError"/> exception is thrown if type does not name a number.</exception>
 		/// <exception cref="IndexError">An <see cref="IndexError"/> exception is thrown if the offset exceeds the bounds of the memory.</exception>
 		public unsafe static object NumGet(object source, object offset, object type = null)
 		{
-			long off;
-			string t;
+			long off = 0;
 
+			//Read as a long, not an int: a truncated offset can come back negative, which would slip past the bounds
+			//check below and read far outside the buffer.
 			if (type == null)
-			{
-				off = 0;
-
-				if (!offset.CoerceString(out t, "UInt"))
-					return DefaultObject;
-			}
+				type = offset;
 			else
-			{
-				//Read as a long, not an int: a truncated offset can come back negative, which would slip past
-				//the bounds check below and read far outside the buffer.
 				_ = offset.TryCoerceLong(out off);
 
-				if (!type.CoerceString(out t, "UInt"))
-					return DefaultObject;
-			}
+			NativeTypeCode code;
 
-			var code = NativeType.Parse(t);
+			if (type is Class cls)
+				code = Struct.GetNumericTypeCode(cls);
+			else if (type.CoerceString(out var name, "UInt"))
+				code = NativeType.Parse(name);
+			else
+				return DefaultObject;
 
 			if (!NativeType.IsNumeric(code))
-				return Errors.ValueErrorOccurred($"Type of {t} is not a number that can be read from memory.", t, DefaultObject);
+				return Errors.ValueErrorOccurred($"Type of {Errors.Describe(type)} is not a number that can be read from memory.", type, DefaultObject);
 
 			if (!TryResolveTarget(source, out var addr, out var size) && !TryResolveReadOnlyTarget(source, code, out addr))
 				return Errors.TypeErrorOccurred(source, typeof(nint), DefaultObject);
@@ -73,7 +69,7 @@ namespace Keysharp.Builtins
 		/// <summary>
 		/// Stores one or more numbers in binary format at the specified address+offset.
 		/// </summary>
-		/// <param name="type">One of the following strings: UInt, UInt64, Int, Int64, Short, UShort, Char, UChar, Double, Float, Ptr or UPtr.</param>
+		/// <param name="type">One of the following strings: UInt, UInt64, Int, Int64, Short, UShort, Char, UChar, Double, Float, Ptr or UPtr, or a numeric type class such as UInt32.</param>
 		/// <param name="number">The number to store.</param>
 		/// <param name="target">A <see cref="Buffer"/>-like object or memory address.</param>
 		/// <param name="offset">If omitted, it defaults to 0. Otherwise, specify an offset in bytes which is added to Target to determine the target address.</param>
@@ -105,11 +101,10 @@ namespace Keysharp.Builtins
 
 			for (var i = 0; i <= lastPairIndex; i += 2)
 			{
-				var t = obj[i] as string;
-				var code = NativeType.Parse(t);
+				var code = obj[i] is Class cls ? Struct.GetNumericTypeCode(cls) : NativeType.Parse(obj[i] as string);
 
 				if (!NativeType.IsNumeric(code))
-					return (long)Errors.ValueErrorOccurred($"Type of {t ?? obj[i]} is not a number that can be written to memory.", obj[i], DefaultErrorLong);
+					return (long)Errors.ValueErrorOccurred($"Type of {Errors.Describe(obj[i])} is not a number that can be written to memory.", obj[i], DefaultErrorLong);
 
 				var width = NativeType.SizeOf(code);
 

@@ -22,6 +22,8 @@ namespace Keysharp.Parsing.Syntax
 	{
 		// Order in the expanded source, including directives in nested bodies.
 		public long SourceOrder;
+		// The #Include splice a top-level statement came from (see Token.Inclusion).
+		public int Inclusion;
 	}
 
 	internal enum LiteralKind { Number, String }
@@ -36,6 +38,8 @@ namespace Keysharp.Parsing.Syntax
 		public bool ErrorStdOut;
 		/// <summary>The text of each #included file as it was lexed, by full path.</summary>
 		public IReadOnlyDictionary<string, string> IncludedSources = new Dictionary<string, string>();
+		/// <summary>For each #Include splice, in splice order, the splice holding its #Include (0 for the file parsed).</summary>
+		public IReadOnlyList<int> IncludeParents = [];
 		public ProgramNode(List<Stmt> body) => Body = body;
 	}
 
@@ -401,7 +405,9 @@ namespace Keysharp.Parsing.Syntax
 		public readonly bool Static;
 		public readonly Expr TypeExpr;     // for a typed struct field `name : TypeExpression`; null otherwise
 		public readonly long Pack;         // #StructPack alignment in effect for this typed field (0 = default)
-		public ClassField(string name, Expr init, bool isStatic, Expr typeExpr = null, long pack = 0) { Name = name; Init = init; Static = isStatic; TypeExpr = typeExpr; Pack = pack; }
+		public readonly string OffsetOf;   // the field whose offset this one shares, for each but the first in a union block
+		public ClassField(string name, Expr init, bool isStatic, Expr typeExpr = null, long pack = 0, string offsetOf = null)
+		{ Name = name; Init = init; Static = isStatic; TypeExpr = typeExpr; Pack = pack; OffsetOf = offsetOf; }
 	}
 
 	internal sealed class ClassMethod

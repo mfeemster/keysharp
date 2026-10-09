@@ -82,4 +82,23 @@ Assert(outputArray is Int32[10], A_LineNumber)
 AssertEq(outputArray[1], 42, A_LineNumber)
 CallbackFree(writeArrayCb)
 
+; An array of exactly the pointer's target class decays to the address of its first element, both in a typed
+; property, which then reads back as the same array, and in a DllCall argument. [v2.1-alpha.34+]
+struct BytePointer {
+    Target : UInt8.Ptr
+}
+bytes := UInt8[4]()
+pointer := BytePointer()
+pointer.Target := bytes
+Assert(pointer.Target == bytes, A_LineNumber)
+AssertEq(NumGet(pointer, "ptr"), bytes.Ptr, A_LineNumber)
+Throws(() => pointer.Target := Int8[4](), A_LineNumber, TypeError)
+pointer.Target := unset
+AssertEq(pointer.Target ?? "none", "none", A_LineNumber)
+pointer.Target := bytes
+fillCb := CallbackCreate(address => NumPut("UChar", 65, address), "Fast", [IntPtr, "void"])
+DllCall(fillCb, UInt8.Ptr, bytes, "void")
+AssertEq(bytes[1], 65, A_LineNumber)
+CallbackFree(fillCb)
+
 FileAppend "pass", "*"

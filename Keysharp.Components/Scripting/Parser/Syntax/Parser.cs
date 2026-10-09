@@ -65,6 +65,7 @@ namespace Keysharp.Parsing.Syntax
 			System.OperatingSystem.IsWindows() || System.OperatingSystem.IsMacOS() ? System.StringComparer.OrdinalIgnoreCase : System.StringComparer.Ordinal;
 		private readonly HashSet<string> _included = new(SourcePathComparer);   // #include dedup
 		private readonly Dictionary<string, string> _includedSources = new(SourcePathComparer);
+		private readonly List<int> _includeParents = [];   // see ProgramNode.IncludeParents
 		private int _includeDepth;             // current #include nesting depth (guards against circular #includeagain)
 		private const int MaxIncludeDepth = 100;
 
@@ -101,7 +102,9 @@ namespace Keysharp.Parsing.Syntax
 
 				if (_included.Add(includeFile))
 				{
-					_ = Preprocess(LexIncludedFile(includeFile, out var includedDiagnostics), System.IO.Path.GetDirectoryName(includeFile), includedDiagnostics, outp);
+					var included = LexIncludedFile(includeFile, out var includedDiagnostics);
+					MarkInclusion(included, 0);
+					_ = Preprocess(included, System.IO.Path.GetDirectoryName(includeFile), includedDiagnostics, outp);
 					outp.Add(new Token(TokenKind.Newline, "\n", 0, 0, 0, 0, true, includeFile));
 				}
 			}
@@ -135,6 +138,7 @@ namespace Keysharp.Parsing.Syntax
 				prog.Defines = parser._defines;
 				prog.ErrorStdOut = parser._errorStdOut;
 				prog.IncludedSources = parser._includedSources;
+				prog.IncludeParents = parser._includeParents;
 				return (prog, parser.Diagnostics);
 			}
 			catch (Keysharp.Builtins.ParseException ex)
@@ -242,6 +246,7 @@ namespace Keysharp.Parsing.Syntax
 		// name is the parts concatenated (`Concat("a", x, "b")`); a single plain identifier/number is a static name.
 		private Expr MakeMember(Expr target, bool nullConditional)
 		{
+			var start = Current;
 			Expr nameExpr = null;       // accumulated name (concatenation) — used when dynamic
 			string firstStatic = null;  // the lone identifier/number when the run is a single static part
 			bool dynamic = false, first = true;
@@ -267,7 +272,8 @@ namespace Keysharp.Parsing.Syntax
 				if (Current.LeadingWhitespace || !(At(TokenKind.Identifier) || At(TokenKind.Number) || (At(TokenKind.Percent) && !_inDerefInner))) break;
 			}
 			if (nameExpr == null) { Error($"expected a member name in member access but found {Got()}"); return new MemberExpr(target, "«error»", nullConditional); }
-			return dynamic ? new DynMemberExpr(target, nameExpr, nullConditional) : new MemberExpr(target, firstStatic, nullConditional);
+			return dynamic ? new DynMemberExpr(target, nameExpr, nullConditional) { Line = start.Line, Column = start.Column, File = start.File }
+				: new MemberExpr(target, firstStatic, nullConditional);
 		}
 
 		// Keywords that can start a statement — used to disambiguate a trailing `?` (maybe operator) from a ternary.
@@ -325,11 +331,14 @@ namespace Keysharp.Parsing.Syntax
 			while (!At(TokenKind.EOF))
 			{
 				var p = _pos;
+				var (inclusion, added) = (Current.Inclusion, body.Count);
 				var s = ParseStatement(programScope: true);
 				if (s != null) body.Add(s);
 				// Drain directives lifted out of an object literal in this statement at THIS position, so they stay in
 				// the correct #Module segment (appending at the end would misplace them into the last module).
 				if (_hoistedStmts.Count > 0) { body.AddRange(_hoistedStmts); _hoistedStmts.Clear(); }
+				for (var i = added; i < body.Count; i++)
+					body[i].Inclusion = inclusion;
 				if (_pos == p) Advance();  // guarantee progress on error
 				SkipNewlines();
 			}
@@ -1086,6 +1095,7 @@ namespace Keysharp.Parsing.Syntax
 							throw new Keysharp.Builtins.ParseException(Diagnostic(t,
 								"Too many nested #include directives (possible circular #includeagain)"));
 						outp.Add(new Token(TokenKind.Newline, "\n", 0, 0, 0, 0, true, includedPath));   // keep line separation from the host
+						MarkInclusion(included, t.Inclusion);
 						_ = Preprocess(included, includedDir, includedDiagnostics, outp);
 						_includeDepth--;
 					}
@@ -1247,6 +1257,16 @@ namespace Keysharp.Parsing.Syntax
 		}
 
 		// The lexer stamps each token with the file's full path for diagnostics and A_LineFile.
+		// Numbers a splice and marks its tokens with that number, so each top-level statement knows which inclusion it came
+		// from; parent is the inclusion holding the #Include.
+		private void MarkInclusion(List<Token> tokens, int parent)
+		{
+			_includeParents.Add(parent);
+
+			for (var i = 0; i < tokens.Count; i++)
+				tokens[i] = tokens[i] with { Inclusion = _includeParents.Count };
+		}
+
 		private List<Token> LexIncludedFile(string path, out IReadOnlyList<string> lexDiagnostics)
 		{
 			var lexer = new Lexing.Lexer(_includedSources[path] = System.IO.File.ReadAllText(path), path);
@@ -1761,7 +1781,10 @@ namespace Keysharp.Parsing.Syntax
 						SkipNewlines();
 						if (At(TokenKind.LBrace))   // property body, possibly with the brace on the next line
 						{
-							properties.Add(ParsePropertyBody(fname, indexParams, isStatic));
+							if (!isStatic && indexParams.Count == 0 && fname.Equals("union", System.StringComparison.OrdinalIgnoreCase) && IsUnionBlock())
+								ParseUnionBlock(fields, structPack);
+							else
+								properties.Add(ParsePropertyBody(fname, indexParams, isStatic));
 							break;
 						}
 						_pos = save;   // field initializer / shorthand getter are on the same line
@@ -1783,14 +1806,7 @@ namespace Keysharp.Parsing.Syntax
 						else if (At(TokenKind.Colon))   // typed struct field `name : Type [:= init]`
 						{
 							Advance();
-							// v2.1-alpha.30 permits a parenthesized expression, or a name followed by calls,
-							// property access and indexing. It is evaluated in the class's static initializer
-							// with `this` bound to the class object.
-							Expr typeExpr;
-							if (At(TokenKind.LParen))
-								typeExpr = ParsePostfix(ParsePrimary());
-							else
-								typeExpr = ParsePostfix(new NameExpr(ExpectIdentifier("struct field type")));
+							var typeExpr = ParseFieldType();
 							Expr tinit = Match(TokenKind.Assign) ? ParseExpression(1) : null;
 							fields.Add(new ClassField(fname, tinit, isStatic, typeExpr, structPack));
 						}
@@ -1831,6 +1847,46 @@ namespace Keysharp.Parsing.Syntax
 				Requires = classRequires, Imports = classImports, StaticInit = staticInits, InstanceInit = instanceInits, CSharpBlocks = classCSharp,
 				Line = start.Line, Column = start.Column, File = start.File,
 			};
+		}
+
+		// v2.1-alpha.30 permits a parenthesized expression, or a name followed by calls, property access and indexing.
+		// It is evaluated in the class's static initializer with `this` bound to the class object.
+		private Expr ParseFieldType() =>
+			At(TokenKind.LParen) ? ParsePostfix(ParsePrimary()) : ParsePostfix(new NameExpr(ExpectIdentifier("struct field type")));
+
+		// `union {` opens a union block unless the block is empty or starts as a property body: "union" is also a valid
+		// property name, so those keep their meaning. [v2.1-alpha.34+]
+		private bool IsUnionBlock()
+		{
+			var save = _pos;
+			Advance();   // {
+			SkipNewlines();
+			var union = !At(TokenKind.RBrace) && !((AtKeyword("get") || AtKeyword("set")) && Peek(1).Kind != TokenKind.Colon);
+			_pos = save;
+			return union;
+		}
+
+		// A union block holds only typed field declarations, each but the first taking the first one's offset, so the
+		// union is as large as its largest member. [v2.1-alpha.34+]
+		private void ParseUnionBlock(List<ClassField> fields, long structPack)
+		{
+			Expect(TokenKind.LBrace, "union block");
+			SkipNewlines();
+			string first = null;
+			while (!At(TokenKind.RBrace) && !At(TokenKind.EOF))
+			{
+				if (!At(TokenKind.Identifier) || Peek(1).Kind != TokenKind.Colon)
+					Error($"a union block may contain only typed property declarations, but found {Got()}");
+				var name = Advance().Text;
+				Advance();   // :
+				var typeExpr = ParseFieldType();
+				Expr init = Match(TokenKind.Assign) ? ParseExpression(1) : null;
+				fields.Add(new ClassField(name, init, false, typeExpr, structPack, first));
+				first ??= name;
+				_ = Match(TokenKind.Comma);
+				SkipNewlines();
+			}
+			Expect(TokenKind.RBrace, "union block");
 		}
 
 		// Property body: { get [=> expr | { ... }]  set [=> expr | { ... }] }
@@ -2109,12 +2165,13 @@ namespace Keysharp.Parsing.Syntax
 					Advance();   // consume '?'
 					// `?` is the maybe (unset-permissive) operator when the next SIGNIFICANT token (skipping newlines;
 					// whitespace/comments are already stripped) is one of ) ] } , : ? . or a statement-starting
-					// keyword; otherwise it's the ternary conditional. (So `x := 1?\n2:\n3` is the ternary 1?2:3.)
+					// keyword, or the % closing a %…% it is inside; otherwise it's the ternary conditional. (So
+					// `x := 1?\n2:\n3` is the ternary 1?2:3.)
 					var qSave = _pos;
 					SkipNewlines();
 					if (At(TokenKind.RParen) || At(TokenKind.RBracket) || At(TokenKind.RBrace) || At(TokenKind.Comma)
 						|| At(TokenKind.Colon) || At(TokenKind.Question) || At(TokenKind.Dot) || At(TokenKind.EOF)
-						|| IsStatementKeyword())
+						|| _inDerefInner && At(TokenKind.Percent) || IsStatementKeyword())
 					{
 						_pos = qSave;   // leave any trailing newline in place — the maybe value ends here
 						left = new UnaryExpr("?", left, true);
@@ -2257,7 +2314,7 @@ namespace Keysharp.Parsing.Syntax
 					// `pre%mid%…` with no intervening whitespace is dynamic name-building, not a plain variable —
 					// but a '%' that closes the enclosing %…% is a delimiter, not the start of a new name.
 					if (!_inDerefInner && !Current.LeadingWhitespace && At(TokenKind.Percent))
-						return ParseNameBuild(new LiteralExpr(LiteralKind.String, "\"" + t.Text + "\""));
+						return ParseNameBuild(t, new LiteralExpr(LiteralKind.String, "\"" + t.Text + "\""));
 					return new NameExpr(t.Text, t.Line) { File = t.File };
 				case TokenKind.LParen:
 					Advance();
@@ -2283,8 +2340,8 @@ namespace Keysharp.Parsing.Syntax
 					_inDerefInner = savedDeref;
 					Expect(TokenKind.Percent, "dereference");
 					if (!Current.LeadingWhitespace && (At(TokenKind.Identifier) || At(TokenKind.Number) || At(TokenKind.Percent)))
-						return ParseNameBuild(nameExpr);
-					return new DerefExpr(nameExpr);
+						return ParseNameBuild(t, nameExpr);
+					return new DerefExpr(nameExpr) { Line = t.Line, Column = t.Column, File = t.File };
 				default:
 					Error($"unexpected {Got()}");
 					// Resync to an expression/statement boundary so one bad token can't cascade via auto-concat.
@@ -2297,7 +2354,7 @@ namespace Keysharp.Parsing.Syntax
 
 		// Dynamic name-building: a run of adjacent identifier/number/%expr% parts forms a variable name at
 		// runtime (`z%y%` -> deref of "z" . y). Lowered as a DerefExpr over the concatenation of the parts.
-		private Expr ParseNameBuild(Expr firstPart)
+		private Expr ParseNameBuild(Token start, Expr firstPart)
 		{
 			var parts = new List<Expr> { firstPart };
 			while (!Current.LeadingWhitespace)
@@ -2317,7 +2374,7 @@ namespace Keysharp.Parsing.Syntax
 			}
 			Expr name = parts[0];
 			for (int i = 1; i < parts.Count; i++) name = new BinaryExpr(".", name, parts[i]);
-			return new DerefExpr(name);
+			return new DerefExpr(name) { Line = start.Line, Column = start.Column, File = start.File };
 		}
 
 		/// <param name="namedError">

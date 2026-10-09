@@ -89,42 +89,27 @@ namespace Keysharp.Builtins
 			var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 			var anyPrototype = script.Vars.Prototypes[typeof(Any)];
 
+			// Built-in properties are registered in their prototypes' own properties, so walking those covers them too.
 			for (var cursor = current; cursor != null; cursor = cursor._base)
 			{
-				// Dynamic properties stay in the map even for a Prototype: naming them is harmless and useful, and it
-				// is only asking for their VALUE that has no valid receiver, which the enumerator decides per call.
-				if (cursor.op != null)
+				if (cursor.op == null)
+					continue;
+
+				// A property is listed when it has a value or a getter the receiver alone satisfies. One that is hidden or
+				// cannot be listed is skipped before it is marked seen, so it does not shadow a base's, as in AutoHotkey.
+				// Dynamic properties stay in the map even for a Prototype: naming them is harmless and useful, and it is
+				// only asking for their VALUE that has no valid receiver, which the enumerator decides per call.
+				foreach (var (name, desc) in cursor.op)
 				{
-					foreach (var (name, desc) in cursor.op)
-					{
-						if (name.Equals("__Class", StringComparison.OrdinalIgnoreCase) ||
-							name.Equals("__Static", StringComparison.OrdinalIgnoreCase) ||
-							(ReferenceEquals(cursor, anyPrototype) && name.Equals("Base", StringComparison.OrdinalIgnoreCase)))
-							continue;
-
-						if (!seen.Add(name))
-							continue;
-
-						if (desc.Value != null)
-							props[name] = desc;
-						else if (desc.Get is KeysharpFunc && !desc.NoEnumGet)
-							props[name] = desc;
-					}
-				}
-
-				foreach (var mph in Reflections.GetOwnProps(cursor.type, false))
-				{
-					//Bare because GetOwnProps yields property-backed holders only, whose Name is unqualified;
-					//a method-backed one would arrive here already carrying its Class.Prototype. prefix.
-					var name = mph.Name;
-
-					if (name.Equals("__Class", StringComparison.OrdinalIgnoreCase) ||
-						name.Equals("__Static", StringComparison.OrdinalIgnoreCase) ||
-						(ReferenceEquals(cursor, anyPrototype) && name.Equals("Base", StringComparison.OrdinalIgnoreCase)))
+					if (!desc.Enumerable
+							|| !(desc.Value != null || desc.StructField != null || desc.Get is KeysharpFunc && !desc.NoEnumGet)
+							|| name.Equals("__Class", StringComparison.OrdinalIgnoreCase)
+							|| name.Equals("__Static", StringComparison.OrdinalIgnoreCase)
+							|| ReferenceEquals(cursor, anyPrototype) && name.Equals("Base", StringComparison.OrdinalIgnoreCase))
 						continue;
 
 					if (seen.Add(name))
-						props[name] = mph;
+						props[name] = desc;
 				}
 			}
 
@@ -208,8 +193,13 @@ namespace Keysharp.Builtins
 		private static object DescriptorSlot(Any descriptor, string slot) =>
 			descriptor.op != null && descriptor.op.TryGetValue(slot, out var desc) ? desc.Value : null;
 
-		public static object DefineProp(object obj, object name, object descriptor)
+		public static object DefineProp(object obj, object name, object descriptor) => DefineProp(obj, name, descriptor, false);
+
+		// The method form numbers its parameters from Name, so its errors name a parameter one lower, as AutoHotkey's do.
+		internal static object DefineProp(object obj, object name, object descriptor, bool isMethod)
 		{
+			var (function, nameIndex) = isMethod ? ("Object.Prototype.DefineProp", 1) : ("DefineProp", 2);
+
 			if (obj is Struct)
 				return Errors.TypeErrorOccurred(obj, typeof(KeysharpObject));
 
@@ -219,28 +209,41 @@ namespace Keysharp.Builtins
 			if (!name.CoerceString(out var nameVal))
 				return DefaultObject;
 
-			if (Struct.TryDefineFieldOnPrototype(target, nameVal, descriptor, out var structResult))
-				return structResult ?? Errors.ValueErrorOccurred("Type is only valid for struct fields.");
+			if (nameVal.Length == 0)
+				return Errors.InvalidParameterErrorOccurred(nameIndex, function, name);
 
+			// Each slot is read as an own value property; Get, Set, Call and Type count only when they hold an object.
+			// The slots present then have to form exactly one kind of property, as in AutoHotkey.
 			if (descriptor is not Any kso)
-				return Errors.ArgumentErrorOccurred(descriptor, 2);
+				return Errors.InvalidParameterErrorOccurred(nameIndex + 1, function, descriptor);
 
 			var value = DescriptorSlot(kso, "Value");
-			var get = DescriptorSlot(kso, "Get");
-			var set = DescriptorSlot(kso, "Set");
-			var call = DescriptorSlot(kso, "Call");
+			var get = DescriptorSlot(kso, "Get") as Any;
+			var set = DescriptorSlot(kso, "Set") as Any;
+			var call = DescriptorSlot(kso, "Call") as Any;
+			var type = DescriptorSlot(kso, "Type") as Any;
+			var pack = DescriptorSlot(kso, "Pack");
+			var offset = DescriptorSlot(kso, "Offset");
+			var dynamic = get != null || set != null || call != null;
+			var typed = type != null;
+			var layout = pack != null || offset != null;
+			var isValue = value != null && !dynamic && !typed && !layout;
+			var isTyped = typed && !dynamic && value == null;
+			var isDynamic = dynamic && value == null && !layout;
 
-			// What AutoHotkey rejects, checked before the property is touched so a bad descriptor leaves nothing
-			// half-defined: one naming none of the four, a Value alongside any of the other three, and a Get, Set or
-			// Call that is not an object.
-			if (value == null && get == null && set == null && call == null)
-				return Errors.ValueErrorOccurred("A property descriptor must define Value, Get, Set or Call.", descriptor);
+			if (!(isValue || isTyped || isDynamic))
+				return Errors.InvalidParameterErrorOccurred(nameIndex + 1, function, descriptor);
 
-			if (value != null && (get != null || set != null || call != null))
-				return Errors.ValueErrorOccurred("Value can't be defined along with get, set, or call.", descriptor);
+			var enumerable = DescriptorSlot(kso, "Enumerable").Ab(true);
 
-			if (get is not (null or Any) || set is not (null or Any) || call is not (null or Any))
-				return Errors.ValueErrorOccurred("Get, Set and Call must each be a function object.", descriptor);
+			if (typed)
+			{
+				// As AutoHotkey reads it, a Pack which is not a number is 0. Only a struct class's Prototype can take a typed
+				// property.
+				_ = pack.TryCoerceLong(out var packValue);
+				return Struct.DefineFieldOnPrototype(target, nameVal, Struct.TryResolveClass(type, out var fieldType) ? fieldType : null,
+						   packValue, offset, false, enumerable) ?? Errors.ErrorOccurred("Cannot add typed property.");
+			}
 
 			var op = target.EnsureOwnProps();
 
@@ -249,6 +252,7 @@ namespace Keysharp.Builtins
 			else
 				op[nameVal] = currProp = new OwnPropsDesc(value, get, set, call);
 
+			currProp.Enumerable = enumerable;
 			target.OnPropertyChanged(nameVal);
 
 			return target;
@@ -295,8 +299,9 @@ namespace Keysharp.Builtins
 			return result ?? Errors.ValueErrorOccurred("Type is only valid for struct fields.");
 		}
 
+		// offsetOf names the field whose offset a union block's member after the first shares.
 		[PublicHiddenFromUser]
-		public static object DefineStructFieldOnPrototype(object obj0, object obj1, object type, long pack)
+		public static object DefineStructFieldOnPrototype(object obj0, object obj1, object type, long pack, string offsetOf = null)
 		{
 			if (obj0 is not Any target)
 				return Errors.ArgumentErrorOccurred(obj0, 1);
@@ -305,7 +310,7 @@ namespace Keysharp.Builtins
 				return DefaultObject;
 
 			var result = Struct.DefineFieldOnPrototype(target, fieldName,
-						 Struct.TryResolveClass(type, out var resolved) ? resolved : null, pack, null, true);
+						 Struct.TryResolveClass(type, out var resolved) ? resolved : null, pack, offsetOf, true);
 			return result ?? Errors.ValueErrorOccurred("Type is only valid for struct fields.");
 		}
 

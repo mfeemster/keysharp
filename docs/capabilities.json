@@ -422,7 +422,8 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "full",
-                     "notes":  "The #Requires directive displays an error and quits if a version requirement is not met."
+                     "notes":  "The #Requires directive displays an error and quits if a version requirement is not met. A version requirement also sets the compatibility mode of the definitions after it, and a module's first one outside functions and classes, in the file that declares the module, sets the module's.",
+                     "tested-by":  "module-compatibility-mode.ahk"
                  },
                  {
                      "category":  "Environment/System",
@@ -1300,7 +1301,7 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "full",
-                     "notes":  "AutoHotkey compatibility target: 2.1-alpha.33.",
+                     "notes":  "AutoHotkey compatibility target: 2.1-alpha.34.",
                      "tested-by":  "props-script-properties.ahk"
                  },
                  {
@@ -8865,8 +8866,8 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "full",
-                     "notes":  "The NumGet function returns the binary number stored at the specified address+offset. A type which does not name a number raises a ValueError, and the name is matched in full where AutoHotkey reads only its first character.",
-                     "tested-by":  "external-callbackcreate.ahk"
+                     "notes":  "The NumGet function returns the binary number stored at the specified address+offset. The type is a name or a numeric type class such as UInt32; one which does not name a number raises a ValueError, and a name is matched in full where AutoHotkey reads only its first character.",
+                     "tested-by":  "external-numput-numget.ahk; external-callbackcreate.ahk"
                  },
                  {
                      "category":  "Interop/Memory",
@@ -8876,8 +8877,8 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "full",
-                     "notes":  "The NumPut function stores one or more numbers in binary format at the specified address+offset. A type or value which does not name a number raises a ValueError.",
-                     "tested-by":  "external-dllcall.ahk"
+                     "notes":  "The NumPut function stores one or more numbers in binary format at the specified address+offset. Each type is a name or a numeric type class such as UInt32; a type or value which does not name a number raises a ValueError.",
+                     "tested-by":  "external-numput-numget.ahk; external-dllcall.ahk"
                  },
                  {
                      "category":  "Collections",
@@ -10645,7 +10646,8 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "full",
-                     "notes":  "User-defined structures via the struct keyword: typed fields, nesting, At, numeric types, pointer classes, #StructPack alignment, and structured arrays (Int32[10] / Struct.Array)."
+                     "notes":  "User-defined structures via the struct keyword: typed fields, union blocks, nesting, At, numeric types, pointer classes, #StructPack alignment, and structured arrays (Int32[10] / Struct.Array).",
+                     "tested-by":  "struct-basic.ahk; struct-pack.ahk; struct-array.ahk"
                  },
                  {
                      "category":  "Interop/Memory",
@@ -11751,7 +11753,7 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "full",
-                     "notes":  "Defines own properties with callable accessors; struct instances raise TypeError.",
+                     "notes":  "Defines own properties with callable accessors; Enumerable: false hides one from Props. Struct instances raise TypeError.",
                      "tested-by":  "struct-basic.ahk; class-props.ahk; class-ownprops.ahk"
                  },
                  {
@@ -12020,7 +12022,7 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "full",
-                     "notes":  "Fixed-length typed arrays; DllCall parameters pass their storage address.",
+                     "notes":  "Fixed-length typed arrays; DllCall parameters pass their storage address, and an array is accepted where a pointer to its element class is expected.",
                      "tested-by":  "struct-array.ahk"
                  },
                  {

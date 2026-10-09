@@ -36,7 +36,7 @@ namespace Keysharp.Runtime
 			}
 			if (StringComparer.OrdinalIgnoreCase.Equals(key, "base"))
 			{
-				opm = new OwnPropsDesc(baseObj.Base);
+				opm = new OwnPropsDesc((object)baseObj.Base ?? DefaultObject);
 				return true;
 			}
 			if (!searchBase)
@@ -83,7 +83,7 @@ namespace Keysharp.Runtime
 				// the descriptors along it hold.
 				if (cur == baseObj && StringComparer.OrdinalIgnoreCase.Equals(key, "base"))
 				{
-					opm = new OwnPropsDesc(baseObj.Base);
+					opm = new OwnPropsDesc((object)baseObj.Base ?? DefaultObject);
 					return true;
 				}
 

@@ -81,7 +81,7 @@ Status legend:
 | #Package | 🟢 Full | ⚪ Unknown | ⚪ Unknown | ⚪ Unknown | Keysharp-only. Resolves NuGet packages at compile time for Clr and inline C#. Supports managed, resource and native assets, but not package build hooks. Windows verified. |
 | #Pragma | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Accepted; preprocessor pragma options are a no-op. |
 | #Region | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Accepted; a source-folding marker with no runtime semantics. |
-| #Requires | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | The #Requires directive displays an error and quits if a version requirement is not met. |
+| #Requires | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | The #Requires directive displays an error and quits if a version requirement is not met. A version requirement also sets the compatibility mode of the definitions after it, and a module's first one outside functions and classes, in the file that declares the module, sets the module's. |
 | #SingleInstance | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | The #SingleInstance directive determines whether a script is allowed to run again when it is already running. |
 | #StructPack | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Sets the maximum alignment for subsequent typed struct fields. |
 | #SuspendExempt | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Exempts physically subsequent hotkey and hotstring declarations from suspension. It does not affect Hotkey() or Hotstring() calls made while the script runs. |
@@ -119,7 +119,7 @@ Status legend:
 | ~= | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Regex match operator |
 | 1, 2, 3 | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Comma operator evaluates expressions left-to-right and returns the last value. |
 | A_AhkPath | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | The full path to the executable compiling the script. For compiled scripts, it's the path to the compiled executable. |
-| A_AhkVersion | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | AutoHotkey compatibility target: 2.1-alpha.33. |
+| A_AhkVersion | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | AutoHotkey compatibility target: 2.1-alpha.34. |
 | A_AllowMainWindow | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Built-in variable. |
 | A_AppData | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Built-in variable. %APPDATA% on Windows; $XDG_CONFIG_HOME else ~/.config on Linux; ~/Library/Application Support on macOS. |
 | A_AppDataCommon | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Built-in variable. %ProgramData% on Windows; the first entry of $XDG_CONFIG_DIRS else /etc/xdg on Linux; /Library/Application Support on macOS. Writable only by an administrator, like %ProgramData%. |
@@ -456,7 +456,7 @@ Status legend:
 | DateAdd() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | The DateAdd function adds or subtracts time from a date-time value. |
 | DateDiff() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | The DateDiff function compares two date-time values and returns the difference. |
 | Default | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Default branch label used by switch. |
-| DefineProp() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Defines own properties with callable accessors; struct instances raise TypeError. |
+| DefineProp() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Defines own properties with callable accessors; Enumerable: false hides one from Props. Struct instances raise TypeError. |
 | DetectHiddenText() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | The DetectHiddenText function determines whether invisible text in a window is "seen" for the purpose of finding the window. |
 | DetectHiddenWindows() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Determines whether invisible windows are seen by the script. On macOS, application hiding affects title searches; direct handles still work. |
 | DirCopy() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Copies a folder along with all its sub-folders and files (similar to xcopy). A .zip, .tar, .tar.gz or .tgz source is extracted into the destination folder; a plain .gz is decompressed to the destination as a single file. |
@@ -870,8 +870,8 @@ Status legend:
 | Named parameters | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Keysharp extension. Binds an argument to the callee's parameter of that name instead of by position; must trail the positional arguments. Works for script functions, built-ins, methods, constructors (built-in classes included: Buffer(ByteCount: 16), Error(Message: msg)), bound functions, COM objects (via IDispatch DISPIDs) and Clr calls (where they also drive overload selection). Not available in '[]' (that is the map literal), and not for the receiver. A call's named arguments travel as one first-class value (Ks.NamedArgs, a case-insensitive Map whose keys are the names; the last argument slot is reserved for it): any variadic parameter collects the ones it does not declare as an ordinary trailing element and a variadic call re-emits it, so a wrapper forwards names without knowing they exist, and NamedArgs(name, value) — imported from the Ks module — makes a named call dynamically; a variadic that consumes its tail as values (Format, Push, Max) receives it as data. See #Warn NamedArg. |
 | not | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Logical NOT operator. |
 | Number() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | The Number function converts a numeric string to a pure integer or floating-point number. |
-| NumGet() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | The NumGet function returns the binary number stored at the specified address+offset. A type which does not name a number raises a ValueError, and the name is matched in full where AutoHotkey reads only its first character. |
-| NumPut() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | The NumPut function stores one or more numbers in binary format at the specified address+offset. A type or value which does not name a number raises a ValueError. |
+| NumGet() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | The NumGet function returns the binary number stored at the specified address+offset. The type is a name or a numeric type class such as UInt32; one which does not name a number raises a ValueError, and a name is matched in full where AutoHotkey reads only its first character. |
+| NumPut() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | The NumPut function stores one or more numbers in binary format at the specified address+offset. Each type is a name or a numeric type class such as UInt32; a type or value which does not name a number raises a ValueError. |
 | ObjAddRef() | 🟢 Full | 🔴 Unsupported | 🔴 Unsupported | 🔴 Unsupported | The ObjAddRef and ObjRelease functions increment or decrement an object's reference count. |
 | ObjBindMethod() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | The ObjBindMethod function creates a BoundFunc object which calls a method of a given object. |
 | Object.__Ref() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Returns a property-reference (PropRef) object. |
@@ -1017,9 +1017,9 @@ Status legend:
 | StrTitle() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | The StrLower, StrUpper and StrTitle functions convert a string to lowercase, uppercase or title case. |
 | Struct.__Ref() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Retrieves a nested struct or virtual property reference. |
 | struct.__Value | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Backing value property for struct instances. |
-| Struct.Array | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Fixed-length typed arrays; DllCall parameters pass their storage address. |
+| Struct.Array | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Fixed-length typed arrays; DllCall parameters pass their storage address, and an array is accepted where a pointer to its element class is expected. |
 | Struct.Ptr | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Pointer class/property used for pointer-to-struct fields, native parameters and struct addresses. |
-| structures | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | User-defined structures via the struct keyword: typed fields, nesting, At, numeric types, pointer classes, #StructPack alignment, and structured arrays (Int32[10] / Struct.Array). |
+| structures | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | User-defined structures via the struct keyword: typed fields, union blocks, nesting, At, numeric types, pointer classes, #StructPack alignment, and structured arrays (Int32[10] / Struct.Array). |
 | StrUpper() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Converts a string to uppercase. |
 | SubStr() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Retrieves one or more characters from the specified position in a string. |
 | super | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Keyword that accesses base-class methods and properties. |

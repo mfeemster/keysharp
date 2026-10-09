@@ -720,6 +720,11 @@ namespace Keysharp.Internals.Interop
 				return pointerValue.GetPrimitiveValue();
 			}
 
+			// An array of the target type decays to the address of its first element. A reference is not looked
+			// through for this, as in AutoHotkey. [v2.1-alpha.34+]
+			if (targetRef == null && pointerType != null && Struct.IsArrayOf(input, targetType))
+				return input;
+
 			var structValue = GetStructValue(targetType, input);
 
 			if (targetRef != null)

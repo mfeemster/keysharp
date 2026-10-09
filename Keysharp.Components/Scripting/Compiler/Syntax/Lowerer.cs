@@ -145,6 +145,7 @@ namespace Keysharp.Compilation.Syntax
 		private static readonly Semver.SemVersion[] CompatCandidates = { new(2, 0, 0), new(2, 1, 0) };
 		private Semver.SemVersion _moduleCompat = Keysharp.Runtime.Script.DefaultCompatibilityVersion;   // current module's mode
 		private Semver.SemVersion _currentCompat = Keysharp.Runtime.Script.DefaultCompatibilityVersion;  // current scope's mode
+		private readonly Dictionary<Stmt, Semver.SemVersion> _definitionCompat = new();   // see MapDefinitionModes
 		private string _currentModuleClass = "__Main";   // the module class being lowered — used to qualify module-level
 														 // field references from inside a (nested) class method (`Program.<Mod>.field`)
 		// Hotkey/hotstring/remap support: callbacks in their declaring module and the DHHR list
@@ -235,6 +236,21 @@ namespace Keysharp.Compilation.Syntax
 					access(Id(t)))));
 		}
 
+		// `obj.%name%` in a chain that may yield unset. Either the target or the name can short-circuit the access, the
+		// way `%name?%` does, and the target is still evaluated before the name. [v2.1-alpha.34+]
+		private ExpressionSyntax DynMemberWrap(DynMemberExpr member, System.Func<ExpressionSyntax, ExpressionSyntax, ExpressionSyntax> access)
+		{
+			ExpressionSyntax WithName(ExpressionSyntax target) => MayYieldUnset(member.NameExpr)
+				? NullCondWrap(member.NameExpr, name => access(target, name))
+				: access(target, LowerExpr(member.NameExpr));
+
+			if (member.NullConditional || MayYieldUnset(member.Target))
+				return NullCondWrap(member.Target, WithName);
+
+			var t = NewTemp();
+			return Op("MultiStatement", Assign(Id(t), LowerExpr(member.Target)), WithName(Id(t)));
+		}
+
 		private static bool IsUnsetKeyword(Expr expr) =>
 			expr is NameExpr name && StringComparer.OrdinalIgnoreCase.Equals(name.Name, "unset");
 
@@ -272,9 +288,10 @@ namespace Keysharp.Compilation.Syntax
 			AssignExpr assign => MayYieldUnset(assign.Value),
 			TernaryExpr ternary => MayYieldUnset(ternary.Cond) || MayYieldUnset(ternary.Then) || MayYieldUnset(ternary.Else),
 			MemberExpr member => member.NullConditional || MayYieldUnset(member.Target),
-			DynMemberExpr member => member.NullConditional || MayYieldUnset(member.Target),
+			DynMemberExpr member => member.NullConditional || MayYieldUnset(member.Target) || MayYieldUnset(member.NameExpr),
 			IndexExpr index => index.NullConditional || MayYieldUnset(index.Target),
 			CallExpr call => call.NullConditional || MayYieldUnset(call.Callee),
+			DerefExpr deref => MayYieldUnset(deref.Name),
 			GroupExpr group => MayYieldUnset(group.Inner),
 			SequenceExpr sequence => sequence.Items.Count > 0 && MayYieldUnset(sequence.Items[^1]),
 			_ => false
@@ -354,6 +371,7 @@ namespace Keysharp.Compilation.Syntax
 			public ModuleGroup Group;
 			public bool IsAhk;
 			public string Dir;   // directory of the source file this module came from (for "importing file dir first")
+			public int MainInclusion;   // the #Include splice holding a named module's first #Module directive
 			public List<Stmt> Body = new();
 			// Top-level and control-flow imports bind in the module; callable/class imports retain their lexical scope.
 			public List<ImportDirective> ModuleBindings = new();
@@ -602,7 +620,7 @@ namespace Keysharp.Compilation.Syntax
 		private CompilationUnitSyntax BuildMultiModule(ProgramNode prog, string name)
 		{
 			AppendSourceOrder(prog);
-			_mainGroup = new ModuleGroup { Path = MainScriptPath };
+			_mainGroup = new ModuleGroup { Path = MainScriptPath, IncludeParents = prog.IncludeParents };
 			_mainGroup.Root = new ModInfo { Name = "__Main", CodeName = "__Main", Group = _mainGroup, Dir = _includeDir };
 			if (MainScriptPath != null) _moduleFiles[System.IO.Path.GetFullPath(MainScriptPath)] = _mainGroup;
 			var mods = PartitionModules(prog.Body, _mainGroup);
@@ -636,16 +654,18 @@ namespace Keysharp.Compilation.Syntax
 
 			var execOrder = ComputeExecOrder(mods);
 
-			// A top-level `#Requires` (in __Main, before any #Module) sets the script-wide default that other modules
-			// inherit; each module may override it with its own `#Requires`.
-			var globalCompat = ScanRequires(mods[0].Body) ?? Keysharp.Runtime.Script.DefaultCompatibilityVersion;
+			// __Main's mode is the script-wide default that other modules inherit; each module may override it with its own
+			// `#Requires`.
+			Semver.SemVersion globalCompat = null;
 
 			var moduleClasses = new List<MemberDeclarationSyntax>();
 			foreach (var m in mods)
 			{
 				ClearPerModuleState();
 				_currentModuleClass = m.CodeName;
-				_moduleCompat = ScanRequires(m.Body) ?? globalCompat;
+				var inherited = globalCompat ?? Keysharp.Runtime.Script.DefaultCompatibilityVersion;
+				_moduleCompat = MapDefinitionModes(m.Body, inherited, m.MainInclusion, m.Group.IncludeParents) ?? inherited;
+				globalCompat ??= _moduleCompat;
 				_currentCompat = _moduleCompat;
 				RegisterInlineFunctionsFor(m.CodeName);
 				_moduleOwnVars = m.DirectVariables;
@@ -929,6 +949,7 @@ namespace Keysharp.Compilation.Syntax
 			for (int i = 0; i < body.Count; i++)
 			{
 				var s = body[i];
+				_currentCompat = _definitionCompat.GetValueOrDefault(s, _moduleCompat);
 				if (s is FunctionDecl fd) { _emittedFuncImpls.Add(NameMangler.FunctionMethod(fd.Name)); members.Add(LowerFunction(fd)); }
 				else if (s is ClassDecl cd)
 				{
@@ -948,6 +969,7 @@ namespace Keysharp.Compilation.Syntax
 					AddStmt(auto, s);
 				}
 			}
+			_currentCompat = _moduleCompat;
 			_labelScopes.RemoveAt(_labelScopes.Count - 1);
 			WrapBodyWithKeepAlive(auto, [], _scopeKeptTemps, 0, auto.Count);
 			// Declare temps introduced by postfix ++/-- in the top-level (auto-execute) scope.
@@ -992,15 +1014,47 @@ namespace Keysharp.Compilation.Syntax
 		}
 
 		// The last `#Requires` directive among a statement list (its mode), or null if none — used to resolve a
-		// module/function body's compatibility mode (a later directive wins).
+		// function body's compatibility mode (a later directive wins).
 		private static Semver.SemVersion ScanRequires(IEnumerable<Stmt> body)
 		{
 			Semver.SemVersion result = null;
 			if (body != null)
 				foreach (var s in body)
-					if (s is DirectiveStmt d && StringComparer.OrdinalIgnoreCase.Equals(d.Name, "Requires") && MapRequires(d.Args) is { } m)
+					if (RequiresMode(s) is { } m)
 						result = m;
 			return result;
+		}
+
+		private static Semver.SemVersion RequiresMode(Stmt s) =>
+			s is DirectiveStmt d && StringComparer.OrdinalIgnoreCase.Equals(d.Name, "Requires") ? MapRequires(d.Args) : null;
+
+		/// <summary>
+		/// Gives each top-level definition the mode of the version directives before it in its own inclusion of its file,
+		/// and returns the module's own mode: that of its first directive in <paramref name="mainInclusion"/>, or null.
+		/// The main inclusion starts in <paramref name="initial"/>, and any other in the mode its includer had at the
+		/// #Include, so a directive in an included file ends with that inclusion. [v2.1-alpha.34+]
+		/// </summary>
+		private Semver.SemVersion MapDefinitionModes(List<Stmt> body, Semver.SemVersion initial, int mainInclusion, IReadOnlyList<int> includeParents)
+		{
+			_definitionCompat.Clear();
+			Semver.SemVersion moduleMode = null;
+			var modes = new Dictionary<int, Semver.SemVersion> { [mainInclusion] = initial };
+
+			// An inclusion's statements directly follow its #Include, so when the first is met its includer is still in
+			// the mode it had there.
+			Semver.SemVersion ModeOf(int inclusion) => modes.TryGetValue(inclusion, out var mode) ? mode
+				: modes[inclusion] = inclusion == 0 ? initial : ModeOf(includeParents[inclusion - 1]);
+
+			foreach (var s in body)
+			{
+				if (RequiresMode(s) is { } mode)
+				{
+					modes[s.Inclusion] = mode;
+					if (s.Inclusion == mainInclusion) moduleMode ??= mode;
+				}
+				else if (s is FunctionDecl or ClassDecl or HotkeyDef or HotstringDef) _definitionCompat[s] = ModeOf(s.Inclusion);
+			}
+			return moduleMode;
 		}
 
 		// The default/implicit return value for the current scope: unset (null) under v2.1+, "" under v2.0.
@@ -3848,8 +3902,8 @@ namespace Keysharp.Compilation.Syntax
 						? NullCondWrap(mem.Target, tt => Op("GetPropertyValueOrNull", tt, Str(mem.Name)))
 						: Op("GetPropertyValue", LowerExpr(mem.Target), Str(mem.Name));
 				case DynMemberExpr dmem:
-					return dmem.NullConditional || MayYieldUnset(dmem.Target)
-						? NullCondWrap(dmem.Target, tt => Op("GetPropertyValueOrNull", tt, LowerExpr(dmem.NameExpr)))
+					return MayYieldUnset(dmem)
+						? DynMemberWrap(dmem, (tt, name) => Op("GetPropertyValueOrNull", tt, name))
 						: Op("GetPropertyValue", LowerExpr(dmem.Target), LowerExpr(dmem.NameExpr));
 				case IndexExpr ix:
 					// `obj.member[args]` folds the index into the member access (`GetPropertyValue(obj, "member", args)`)
@@ -3867,8 +3921,8 @@ namespace Keysharp.Compilation.Syntax
 							? NullCondWrap(im.Target, tt => Op("GetPropertyValue", [ tt, Str(im.Name), ..IdxArgs() ]))
 							: Op("GetPropertyValue", [ LowerExpr(im.Target), Str(im.Name), ..IdxArgs() ]);
 					if (ix.Args.Count > 0 && !ix.NullConditional && ix.Target is DynMemberExpr { NullConditional: false } idm)
-						return MayYieldUnset(idm.Target)
-							? NullCondWrap(idm.Target, tt => Op("GetPropertyValue", [ tt, LowerExpr(idm.NameExpr), ..IdxArgs()]))
+						return MayYieldUnset(idm)
+							? DynMemberWrap(idm, (tt, name) => Op("GetPropertyValue", [ tt, name, ..IdxArgs()]))
 							: Op("GetPropertyValue", [ LowerExpr(idm.Target), LowerExpr(idm.NameExpr), ..IdxArgs()]);
 					return ix.NullConditional || MayYieldUnset(ix.Target)
 						? NullCondWrap(ix.Target, tt => Op("GetIndexOrNull", Cons(tt, IdxArgs())))
@@ -3885,7 +3939,9 @@ namespace Keysharp.Compilation.Syntax
 				case ObjectExpr o: return LowerObject(o);
 				case FatArrowExpr fa: return LowerFatArrow(fa);
 				case DerefExpr dr:   // %name% read -> DerefGet(name); the maybe forms rewrite it to DerefGetOrNull
-					return DerefGet(dr.Name);
+					return MayYieldUnset(dr.Name)
+						? NullCondWrap(dr.Name, name => Op("DerefGetOrNull", DerefScope, name))
+						: DerefGet(dr.Name);
 				case CallExpr c: return LowerCall(c, statement: false);
 				default: Diag($"expression not yet lowerable: {e.GetType().Name}"); return Str("");
 			}
@@ -3893,6 +3949,7 @@ namespace Keysharp.Compilation.Syntax
 
 		private ExpressionSyntax LowerAssign(AssignExpr a, VarUsage use = VarUsage.Assign)
 		{
+			RejectMaybeTarget(a.Target, true);
 			if (a.Target is UnaryExpr amp && amp.Op == "&")   // &x := v  ->  assign, then pass a ref to x
 				return MakeRefFor(new AssignExpr(a.Op, amp.Operand, a.Value));
 			if (a.Target is DerefExpr dt)
@@ -4154,7 +4211,9 @@ namespace Keysharp.Compilation.Syntax
 						var operand => Op("Minus", operand)
 					};
 				case "+": return propagate ? PropagateUnary(u.Operand, value => Op("Plus", value)) : Op("Plus", LowerExpr(u.Operand));
-				case "&": return MakeRefFor(u.Operand, _implicitRefs.Contains(u));
+				case "&":
+					RejectMaybeTarget(u.Operand, false);
+					return MakeRefFor(u.Operand, _implicitRefs.Contains(u));
 				case "~": return propagate ? PropagateUnary(u.Operand, value => Op("BitwiseNot", value)) : Op("BitwiseNot", LowerExpr(u.Operand));
 				default: Diag($"unary '{u.Op}' not yet lowerable"); return Str("");
 			}
@@ -4176,6 +4235,7 @@ namespace Keysharp.Compilation.Syntax
 		// Postfix saves the value before applying the operator; receivers, indices and getters run once.
 		private ExpressionSyntax LowerIncDec(UnaryExpr u)
 		{
+			RejectMaybeTarget(u.Operand, u.Postfix);
 			var op = u.Op == "++" ? "Increment" : "Decrement";
 			var setup = new List<ExpressionSyntax>();   // temp captures so a member/index target runs exactly once
 			ExpressionSyntax read;
@@ -4414,8 +4474,8 @@ namespace Keysharp.Compilation.Syntax
 			// if unset, short-circuit to null without evaluating the call (or its args). Matches the canonical chain.
 			if (c.Callee is MemberExpr mc && (mc.NullConditional || MayYieldUnset(mc.Target)))
 				return NullCondWrap(mc.Target, tt => Op("Invoke", Cons2(tt, Str(mc.Name), CallArgs())));
-			if (c.Callee is DynMemberExpr dmc && (dmc.NullConditional || MayYieldUnset(dmc.Target)))
-				return NullCondWrap(dmc.Target, tt => Op("Invoke", Cons2(tt, LowerExpr(dmc.NameExpr), CallArgs())));
+			if (c.Callee is DynMemberExpr dmc && MayYieldUnset(dmc))
+				return DynMemberWrap(dmc, (tt, name) => Op("Invoke", Cons2(tt, name, CallArgs())));
 			if (c.NullConditional || MayYieldUnset(c.Callee))
 				return NullCondWrap(c.Callee, tt => Op("Invoke", Cons2(tt, Null, CallArgs())));
 
@@ -5191,10 +5251,12 @@ namespace Keysharp.Compilation.Syntax
 				.WithArgumentList(SyntaxFactory.BracketedArgumentList(SyntaxFactory.SingletonSeparatedList(Arg(SyntaxFactory.TypeOfExpression(Ty(_structTypeName))))));
 			var typeValue = LowerExpr(f.TypeExpr);
 
-			// Pass the #StructPack alignment as a 4th argument when one is in effect (0 = default packing).
-			return f.Pack != 0
-				? ExprStmt(Inv(Access("Keysharp.Builtins.Objects.DefineStructFieldOnPrototype"), proto, Str(f.Name), typeValue, Num(f.Pack.ToString())))
-				: ExprStmt(Inv(Access("Keysharp.Builtins.Objects.DefineStructFieldOnPrototype"), proto, Str(f.Name), typeValue));
+			// Pass the #StructPack alignment as a 4th argument when one is in effect (0 = default packing), and a union
+			// member's shared offset as a 5th.
+			ExpressionSyntax[] args = f.OffsetOf != null ? [proto, Str(f.Name), typeValue, Num(f.Pack.ToString()), Str(f.OffsetOf)]
+				: f.Pack != 0 ? [proto, Str(f.Name), typeValue, Num(f.Pack.ToString())]
+				: [proto, Str(f.Name), typeValue];
+			return ExprStmt(Inv(Access("Keysharp.Builtins.Objects.DefineStructFieldOnPrototype"), args));
 		}
 
 		private static bool HasInlineCSharp(ClassDecl c) =>
@@ -6789,6 +6851,20 @@ namespace Keysharp.Compilation.Syntax
 				SyntaxFactory.ParenthesizedLambdaExpression()
 					.WithParameterList(SyntaxFactory.ParameterList(SyntaxFactory.SingletonSeparatedList(SyntaxFactory.Parameter(SyntaxFactory.Identifier("KS_value")))))
 					.WithBlock(SyntaxFactory.Block()));
+
+		// A maybe-named target, `obj.%name?%` or `%name?%`, has nothing to write to when the name is unset, which
+		// AutoHotkey rejects at load time.
+		private void RejectMaybeTarget(Expr target, bool leftOperand)
+		{
+			while (target is GroupExpr g)
+				target = g.Inner;
+
+			if (target is IndexExpr { Target: DynMemberExpr indexed })
+				target = indexed;
+
+			if (MayYieldUnset(target switch { DynMemberExpr d => d.NameExpr, DerefExpr d => d.Name, _ => null }))
+				Diag($"{NodeAnchor(target)}This operator's {(leftOperand ? "left" : "right")} operand must not be unset.");
+		}
 
 		// &lvalue : a VarRef whose getter reads and whose setter writes the lvalue (variable, member or index). A naked
 		// variable is one NativeStringArguments passes by reference (see VariableRef).

@@ -3,11 +3,12 @@
 #Warn All, StdOut
 
 #Requires AutoHotkey v2.1-alpha
-#import Compat21 { NoReturn21, EmptyReturn21, ReturnNoReturn21, ReturnMaybeNoReturn21, PropertyNoReturn21, PropertyMaybeNoReturn21, NestedDefault20, NestedDefault21, NestedRestore21, RuntimeDefault20 }
-#import Compat20 { NoReturn20, OverrideAfterModuleCall }
+#import Compat21 { NoReturn21, EmptyReturn21, ReturnNoReturn21, ReturnMaybeNoReturn21, PropertyNoReturn21, PropertyMaybeNoReturn21, NestedDefault20, NestedDefault21, NestedRestore21, RuntimeDefault20, RootBase21 }
+#import Compat20 { NoReturn20, OverrideAfterModuleCall, RootBase20 }
 #import InheritMain { NoReturnInherited }
 #import ClassMode { ClassNoReturn }
 #import CompatKeysharp { NoReturnKeysharp }
+#import IncludedModule
 #import KS { CompileScript }
 #Include <assert>
 
@@ -41,6 +42,8 @@ Assert(!IsSet(x), A_LineNumber)
 
 x := NoReturn20()
 Assert(IsSet(x) && x == "", A_LineNumber)
+AssertEq(RootBase20(), "String", A_LineNumber)
+AssertEq(RootBase21(), "none", A_LineNumber)
 
 ; A Keysharp requirement selects the newest AutoHotkey line, whatever Keysharp version it names.
 x := (NoReturnKeysharp()?)
@@ -48,19 +51,24 @@ Assert(!IsSet(x), A_LineNumber)
 
 ; As in AutoHotkey, a requirement this build does not meet stops the script from loading, and the error names it. An
 ; AutoHotkey version is compared with A_AhkVersion, a Keysharp one with A_KsVersion, and a pre-release is below its release.
-RequirementError(requirement)
+LoadErrors(code)
 {
 	errors := ""
-	for message in CompileScript("#NoTrayIcon`n#Requires " requirement "`nx := 1`n").Errors
+	for message in CompileScript("#NoTrayIcon`n" code "`n").Errors
 		errors .= message
 	return errors
 }
+RequirementError(requirement) => LoadErrors("#Requires " requirement "`nx := 1")
 
 bitness := A_PtrSize = 8 ? "64-bit" : "32-bit", otherBitness := A_PtrSize = 8 ? "32-bit" : "64-bit"
 for requirement in ["AutoHotkey", "AutoHotkey v2.0", "AutoHotkey v2.0 `; a comment", "AutoHotkey v2.1-alpha " bitness, "AutoHotkey >=2.0 <2.2", "Keysharp >=0.0.0.1"]
 	AssertEq(RequirementError(requirement), "", A_LineNumber)
 for requirement in ["AutoHotkey v2.1", "AutoHotkey v2.2-", "AutoHotkey <2.0", "AutoHotkey v2.0 " otherBitness, "Keysharp >=99", "AHK v2"]
 	Assert(InStr(RequirementError(requirement), "This script requires " requirement "."), A_LineNumber)
+
+; A maybe-named target has nothing to write to when its name is unset, so it is rejected at load time. [v2.1-alpha.34+]
+for code, side in Map("o := {}, o.%n?% := 1", "left", "%n?% := 1", "left", "o := {}, o.%n?%++", "left", "o := {}, ++o.%n?%", "right", "o := {}, r := &o.%n?%", "right")
+	Assert(InStr(LoadErrors(code), "This operator's " side " operand must not be unset."), A_LineNumber)
 
 ; The caller's function override survives a call into another module, even when its module defaults to v2.0.
 Assert(OverrideAfterModuleCall(), A_LineNumber)
@@ -302,7 +310,59 @@ AssertEq(outDrive?, "", A_LineNumber)
 ; A_HotIf with no criterion is "", not unset.
 AssertEq(A_HotIf, "", A_LineNumber)
 
+; A version directive sets the mode of the definitions after it in its own file, and only a module's first one sets the
+; module's. An included file starts in the mode of the file including it and its directives end with it, which
+; Lib/compat_mode_include.ahk and the file it includes twice check. A directive in a class body sets the mode of that
+; class alone. [v2.1-alpha.34+]
+DefinedMode(NoReturn) {
+	try {
+		returned := NoReturn()
+		return "v2.0"
+	} catch UnsetError
+		return "v2.1"
+}
+AssertEq(IncludedModule.StartupMode, "v2.0", A_LineNumber)
+AssertEq(DefinedMode(IncludedModule.NestedFirstNoReturn), "v2.1", A_LineNumber)
+AssertEq(DefinedMode(IncludedModule.NestedSecondBeforeNoReturn), "v2.0", A_LineNumber)
+AssertEq(DefinedMode(IncludedModule.NestedSecondAfterNoReturn), "v2.1", A_LineNumber)
+AssertEq(DefinedMode(IncludedModule.AfterNestedNoReturn), "v2.0", A_LineNumber)
+AssertEq(DefinedMode(LaterDirectiveNoReturn), "v2.0", A_LineNumber)
+AssertEq(DefinedMode(AfterClassScoped20), "v2.1", A_LineNumber)
+AssertEq(DefinedMode(HotkeyNoReturn21.Bind("F23")), "v2.1", A_LineNumber)
+AssertEq(DefinedMode(HotkeyNoReturn20.Bind("F24")), "v2.0", A_LineNumber)
+AssertEq(DefinedMode(HotstringNoReturn20.Bind("::ksmodecheck")), "v2.0", A_LineNumber)
+x := ClassScoped20().NoReturn()
+Assert(IsSet(x) && x == "", A_LineNumber)
+
+try {
+	Map().Get("absent")
+	startupMode := "v2.1"
+} catch
+	startupMode := "v2.0"
+AssertEq(startupMode, "v2.1", A_LineNumber)
+
 FileAppend "pass", "*"
+ExitApp()   ; the hotkeys below would keep the script running
+
+class ClassScoped20 {
+	#Requires AutoHotkey v2.0
+	NoReturn() {
+	}
+}
+AfterClassScoped20() {
+}
+F23::
+HotkeyNoReturn21(ThisHotkey) {
+}
+#Requires AutoHotkey v2.0
+LaterDirectiveNoReturn() {
+}
+F24::
+HotkeyNoReturn20(ThisHotkey) {
+}
+::ksmodecheck::
+HotstringNoReturn20(ThisHotkey) {
+}
 
 #Module Compat21
 #Requires AutoHotkey v2.1-alpha
@@ -348,6 +408,10 @@ NestedDefault21() {
 	}
 	return Inner()
 }
+; Having no base, Any.Prototype reads its Base as blank-unset.
+RootBase21() {
+	return Any.Prototype.Base ?? "none"
+}
 NestedRestore21() {
 	#Requires AutoHotkey v2.1-alpha
 	Middle() {
@@ -367,6 +431,10 @@ NestedRestore21() {
 #Requires AutoHotkey v2.0
 #import Compat21 { NoReturn21 }
 NoReturn20() {
+}
+; Having no base, Any.Prototype reads its Base as "" in v2.0 mode.
+RootBase20() {
+	return Type(Any.Prototype.Base)
 }
 OverrideAfterModuleCall() {
 	#Requires AutoHotkey v2.1-alpha
@@ -395,3 +463,6 @@ ClassNoReturn() {
 	c := CompatClass()
 	return c.NoReturn()
 }
+
+; Kept last, so that no later line of this script falls inside the module the file declares.
+#Include Lib/compat_mode_include.ahk

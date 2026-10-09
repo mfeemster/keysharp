@@ -242,4 +242,20 @@ sized := {Ptr: buf.Ptr, Size: 0}
 Throws(() => NumGet(sized, 0, "int"), A_LineNumber, IndexError)
 Throws(() => NumPut("int", 1, sized), A_LineNumber, IndexError)
 
+; A numeric type class names the same type as its string. A pointer to one reads its target's kind of number at pointer
+; size, and any other class is not a number type. [v2.1-alpha.34+]
+classBuf := Buffer(16, 0)
+AssertEq(NumPut(Int8, 1, UInt16, 515, classBuf), classBuf.Ptr + 3, A_LineNumber)
+AssertEq(NumGet(classBuf, 1, UInt16), 515, A_LineNumber)
+NumPut(Int32, -5, classBuf)
+AssertEq(NumGet(classBuf, UInt32), 4294967291, A_LineNumber)
+AssertEq(NumGet(classBuf, Int32), -5, A_LineNumber)
+NumPut(Float64, 1.5, classBuf, 8)
+AssertEq(NumGet(classBuf, 8, Float64), 1.5, A_LineNumber)
+AssertEq(NumGet(classBuf, 8, Int64.Ptr), NumGet(classBuf, 8, "ptr"), A_LineNumber)
+if A_PtrSize = 8
+	AssertEq(NumGet(classBuf, 8, Float32.Ptr), 1.5, A_LineNumber)
+Throws(() => NumGet(classBuf, Struct), A_LineNumber, ValueError)
+Throws(() => NumPut(Struct, 1, classBuf), A_LineNumber, ValueError)
+
 FileAppend "pass", "*"

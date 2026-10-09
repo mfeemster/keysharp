@@ -12,6 +12,7 @@ namespace Keysharp.Compilation.Syntax
 			public string Path;
 			public int Index;
 			public ModInfo Root;
+			public IReadOnlyList<int> IncludeParents = [];   // see ProgramNode.IncludeParents
 			public readonly Dictionary<string, ModInfo> Names = new(StringComparer.OrdinalIgnoreCase);
 		}
 
@@ -71,7 +72,7 @@ namespace Keysharp.Compilation.Syntax
 					current = FindNamedModule(group, name)?.Script;
 					if (current == null)
 					{
-						current = new ModInfo { Name = name, Group = group, Dir = System.IO.Path.GetDirectoryName(group.Path) ?? _includeDir,
+						current = new ModInfo { Name = name, Group = group, Dir = System.IO.Path.GetDirectoryName(group.Path) ?? _includeDir, MainInclusion = directive.Inclusion,
 							IsAhk = StringComparer.OrdinalIgnoreCase.Equals(name, "AHK"),
 							CodeName = StringComparer.OrdinalIgnoreCase.Equals(name, "AHK") ? "AHK"
 								: group == _mainGroup ? NameMangler.ModuleClass(name) : "__KSFile" + group.Index + "_" + NameMangler.ModuleClass(name) };
@@ -138,6 +139,7 @@ namespace Keysharp.Compilation.Syntax
 									if (diagnostics.Count > 0) continue;
 									AppendSourceOrder(program);
 									AddSourceTexts(file, text, program);
+									group.IncludeParents = program.IncludeParents;
 									foreach (var discovered in PartitionModules(program.Body, group))
 									{
 										if (!mods.Contains(discovered)) mods.Add(discovered);

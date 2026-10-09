@@ -2,7 +2,7 @@
 
 This document contains detailed platform, implementation, and AutoHotkey v2 compatibility notes. For the concise project introduction and quick-start instructions, see the [main README](../README.md).
 
-The compatibility target is AutoHotkey v2.1-alpha.33. `A_AhkVersion` reports this target; `A_KsVersion` identifies the Keysharp release.
+The compatibility target is AutoHotkey v2.1-alpha.34. `A_AhkVersion` reports this target; `A_KsVersion` identifies the Keysharp release.
 
 Jump directly to:
 
@@ -394,6 +394,7 @@ Some general notes about Keysharp's implementation of the [AutoHotkey v2 specifi
 * Indexing an unset result from a parameterless property getter, for retrieval or assignment, raises `UnsetError` with `No value was returned.` and the property name in `Extra`, including in a `??` expression.
 * An unset final getter or indexed result can use `??` or `IsSet`; an absent indexed property still raises `PropertyError`. Callable-object property accessors honor `MinParams`, `MaxParams` and `IsVariadic`, including forwarding indices to a parameterless getter's result.
 * A structured array class used as a `DllCall` parameter type passes the array's storage address regardless of its size. A structured array return type raises `ValueError`.
+* Typed properties can be declared only in a struct class. Declaring one in another class, which AutoHotkey allows, raises an error, so an `Object`, `Map` or `Array` never has typed properties and its `Clone` never raises `TypeError` for them.
 * The operation of Keysharp is different than AutoHotkey. While AutoHotkey is an interpreted scripting language, Keysharp actually creates a compiled .NET executable and runs it.
 
 * The process for reading and running a script is:
@@ -593,6 +594,7 @@ Controlling another application needs **Automation** permission, granted per tar
 * `Goto` statements being called as a function like `Goto("Label")` are not supported. Instead, just use `goto Label`.
 * The `#Requires` directive differs in the following ways:
 	+ In addition to supporting `AutoHotkey`, it also supports `Keysharp`. A `Keysharp` version requirement is checked against `A_KsVersion` by AutoHotkey's rules, and selects the v2.1 compatibility mode whatever version it names.
+	+ A version requirement in a function body sets the compatibility mode of that function as well as its nested functions; in AutoHotkey it affects only the nested ones. One in a class body sets the mode of that class's methods, properties and nested classes and reverts at the end of the class, as a class-body `#Import` is scoped to the class. In AutoHotkey a class body is not a scope for it: the mode carries on to the definitions after the class, and a class-body directive can set the module's mode. A directive outside them sets the mode of the function, class, hotkey and hotstring definitions after it; a fat-arrow function or closure in a module's startup code runs in the module's mode, where AutoHotkey gives it the mode in effect at its position.
 	+ A new `capability` form requests one or more platform permissions together at script startup, before hotkeys are registered. A platform can still show one authorization dialog per independent system service:
 		```
 		#Requires capability InputMonitoring, ScreenCapture

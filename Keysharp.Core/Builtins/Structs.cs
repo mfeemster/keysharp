@@ -61,6 +61,7 @@ namespace Keysharp.Builtins
 		private long borrowedPtr;
 		private bool isPointerView;
 		private bool disposed;
+		// The structs handed out for nested and pointer fields, by field name, so a field reads back as the same object.
 		private Dictionary<string, Struct> nestedViews;
 		// The layout, locked once the struct has memory, so its accessors take no lock.
 		private StructInfo layout;
@@ -136,7 +137,10 @@ namespace Keysharp.Builtins
 		// Base class for structured arrays (fixed-size, single element type). `Int32[10]` etc. are subclasses of this.
 		[PublicHiddenFromUser]
 		[UserDeclaredName("Array")]
-		public class StructArray(params object[] args) : Struct(args) { }
+		public class StructArray(params object[] args) : Struct(args)
+		{
+			public object get_Length() => GetLayoutInfo(StructType, true).ArrayLength;
+		}
 
 		// Class-level indexing `StructClass[N]` yields the structured-array class with N elements of StructClass.
 		public static object staticget___Item(object @this, object index)
@@ -191,13 +195,6 @@ namespace Keysharp.Builtins
 				arrayTypes[(elementType, length)] = created;
 				return created;
 			}
-		}
-
-		// Length of a structured-array instance (number of elements); errors for a non-array struct.
-		public object get_Length()
-		{
-			var info = GetLayoutInfo(StructType, true);
-			return info.IsArray ? info.ArrayLength : Errors.PropertyErrorOccurred("This struct is not a structured array.");
 		}
 
 		internal static bool IsAutoPointerClass(Type type) => type != null && pointerTargets.ContainsKey(type);
@@ -434,36 +431,8 @@ namespace Keysharp.Builtins
 		// Item setters take the index keys first and the assigned value last: set___Item(keys[], value).
 		public object set___Item(object[] keys, object value) => SetPrimitiveItem(keys, value);
 
-		internal static bool TryDefineFieldOnPrototype(Any proto, string fieldName, object descriptor, out object result)
-		{
-			result = null;
-
-			if (!TryGetDescriptorValue(descriptor, "type", out var typeValue))
-				return false;
-
-			if (GetStructType(proto) == null)
-				return true;
-
-			if (HasDescriptorValue(descriptor, "value", "get", "set", "call"))
-			{
-				result = Errors.ValueErrorOccurred("Type can't be defined along with value, get, set, or call.");
-				return true;
-			}
-
-			var pack = 0L;
-
-			if (TryGetDescriptorValue(descriptor, "pack", out var packValue) && !packValue.CoerceLong(out pack))
-			{
-				result = DefaultObject;
-				return true;
-			}
-
-			var offsetSpec = TryGetDescriptorValue(descriptor, "offset", out var offsetValue) ? offsetValue : null;
-			result = DefineFieldOnPrototype(proto, fieldName, ResolveFieldType(typeValue), pack, offsetSpec);
-			return true;
-		}
-
-		internal static object DefineFieldOnPrototype(Any proto, string fieldName, Type fieldType, long pack = 0, object offsetSpec = null, bool ignoreExisting = false)
+		internal static object DefineFieldOnPrototype(Any proto, string fieldName, Type fieldType, long pack = 0, object offsetSpec = null,
+				bool ignoreExisting = false, bool enumerable = true)
 		{
 			var structType = GetStructType(proto);
 
@@ -481,9 +450,14 @@ namespace Keysharp.Builtins
 				var op = proto.EnsureOwnProps();
 
 				if (op.TryGetValue(fieldName, out var existing))
+				{
 					existing.Merge(desc);
+					desc = existing;
+				}
 				else
 					op[fieldName] = desc;
+
+				desc.Enumerable = enumerable;
 			}
 			catch (Exception ex)
 			{
@@ -500,7 +474,7 @@ namespace Keysharp.Builtins
 			if (field.PointerTarget is Type targetType)
 			{
 				_ = ReadPrimitive(StructPrimitiveKind.Ptr, address).TryCoerceLong(out var ptr);
-				return CreatePointerValue(targetType, ptr);
+				return GetPointedValue(field.Name, targetType, ptr);
 			}
 
 			if (field.Kind != StructPrimitiveKind.None)
@@ -521,7 +495,7 @@ namespace Keysharp.Builtins
 			var address = GetDataPointer() + field.Offset;
 
 			if (field.PointerTarget is Type targetType)
-				return SetPointerValue(address, value, targetType, field.FieldType);
+				return SetPointerValue(address, value, targetType, field.FieldType, field.Name);
 
 			if (field.Kind != StructPrimitiveKind.None)
 			{
@@ -607,6 +581,26 @@ namespace Keysharp.Builtins
 				StructPrimitiveKind.Float32 => NativeTypeCode.Float,
 				StructPrimitiveKind.Float64 => NativeTypeCode.Double,
 				_ => NativeTypeCode.Invalid
+			};
+		}
+
+		// The memory type a numeric type class names to NumGet and NumPut, or Invalid for any other class. A pointer
+		// to a numeric class names its target's kind of number at pointer size, as AutoHotkey reads it: Float64.Ptr
+		// reads a Double on a 64-bit process, and a pointer to an unsigned integer reads signed there. [v2.1-alpha.34+]
+		internal static NativeTypeCode GetNumericTypeCode(Class cls)
+		{
+			if (Script.GetPropertyValueOrNull(cls, "Prototype") is not Any proto || GetStructType(proto) is not Type structType)
+				return NativeTypeCode.Invalid;
+
+			if (!pointerTargets.TryGetValue(structType, out var target))
+				return GetPrimitiveTypeCode(structType);
+
+			return GetPrimitiveTypeCode(target) switch
+			{
+				NativeTypeCode.Invalid => NativeTypeCode.Invalid,
+				NativeTypeCode.Float or NativeTypeCode.Double => IntPtr.Size == 8 ? NativeTypeCode.Double : NativeTypeCode.Float,
+				NativeTypeCode.UChar or NativeTypeCode.UShort or NativeTypeCode.UInt => IntPtr.Size == 8 ? NativeTypeCode.Int64 : NativeTypeCode.UInt,
+				_ => IntPtr.Size == 8 ? NativeTypeCode.Int64 : NativeTypeCode.Int
 			};
 		}
 
@@ -839,7 +833,7 @@ namespace Keysharp.Builtins
 				return GetPrimitiveValue();
 
 			_ = GetPrimitiveValue().TryCoerceLong(out var ptr);
-			return CreatePointerValue(targetType, ptr);
+			return GetPointedValue("__Value", targetType, ptr);
 		}
 
 		internal object GetPrimitiveValue()
@@ -855,7 +849,7 @@ namespace Keysharp.Builtins
 		internal object SetPrimitiveValue(object value)
 		{
 			if (pointerTargets.TryGetValue(StructType, out var targetType))
-				return SetPointerValue(GetDataPointer(), value, targetType);
+				return SetPointerValue(GetDataPointer(), value, targetType, null, "__Value");
 
 			var info = GetCurrentLayoutInfo();
 
@@ -1064,22 +1058,47 @@ namespace Keysharp.Builtins
 		private static object CreatePointerValue(Type targetType, long ptr) =>
 			ptr == 0 ? null : CreatePointerView(targetType, Script.TheScript.Vars.Prototypes[targetType], ptr);
 
-		private static object SetPointerValue(long address, object value, Type targetType, Type pointerType = null)
+		private object SetPointerValue(long address, object value, Type targetType, Type pointerType, string key)
 		{
-			if (value == null)
-			{
-				WritePrimitive(StructPrimitiveKind.Ptr, address, 0L);
-				return null;
-			}
+			Struct pointed = null;
 
-			if (pointerType != null && IsStructInstance(value, pointerType))
+			if (value == null)
+				WritePrimitive(StructPrimitiveKind.Ptr, address, 0L);
+			else if (pointerType != null && IsStructInstance(value, pointerType))
 				WritePrimitive(StructPrimitiveKind.Ptr, address, ((Struct)value).GetPrimitiveValue());
-			else if (IsStructInstance(value, targetType))
-				WritePrimitive(StructPrimitiveKind.Ptr, address, ((Struct)value).Ptr);
+			else if (IsStructInstance(value, targetType) || IsArrayOf(value, targetType))
+				WritePrimitive(StructPrimitiveKind.Ptr, address, (pointed = (Struct)value).Ptr);
 			else
 				return Errors.TypeErrorOccurred(value, targetType);
 
+			// The object stored is kept, and any earlier one released, so the pointer keeps alive only what it points to.
+			if (pointed != null)
+				(nestedViews ??= new(StringComparer.OrdinalIgnoreCase))[key] = pointed;
+			else
+				_ = nestedViews?.Remove(key);
+
 			return value;
+		}
+
+		// Whether value is a structured array whose element class is exactly elementType. Such an array decays to the
+		// address of its first element wherever an elementType.Ptr is expected. [v2.1-alpha.34+]
+		internal static bool IsArrayOf(object value, Type elementType) =>
+			value is Struct st && st.GetCurrentLayoutInfo() is { IsArray: true } info && info.ArrayElementType == elementType;
+
+		// The struct a pointer reads back as: the one last stored or handed out while the pointer still holds its address,
+		// as AutoHotkey keeps it, so an assigned struct or array reads back as the same object.
+		private object GetPointedValue(string key, Type targetType, long ptr)
+		{
+			if (ptr != 0 && nestedViews?.TryGetValue(key, out var pointed) == true && pointed.Ptr == ptr)
+				return pointed;
+
+			if (CreatePointerValue(targetType, ptr) is not Struct view)
+			{
+				_ = nestedViews?.Remove(key);
+				return null;
+			}
+
+			return (nestedViews ??= new(StringComparer.OrdinalIgnoreCase))[key] = view;
 		}
 
 		private void ReleaseOwnedStorage()
@@ -1175,30 +1194,6 @@ namespace Keysharp.Builtins
 			return null;
 		}
 
-		private static bool HasDescriptorValue(object descriptor, params string[] names) =>
-			names.Any(name => TryGetDescriptorValue(descriptor, name, out _));
-
-		private static bool TryGetDescriptorValue(object descriptor, string name, out object value)
-		{
-			if (descriptor is Map map && map.map != null)
-			{
-				foreach (var (key, val) in map.map)
-					if (key.ToString().Equals(name, StringComparison.OrdinalIgnoreCase))
-					{
-						value = val;
-						return true;
-					}
-			}
-			else if (descriptor is Any any && any.op != null && any.op.TryGetValue(name, out var desc))
-			{
-				value = desc.Value ?? desc.Get ?? desc.Set ?? desc.Call;
-				return true;
-			}
-
-			value = null;
-			return false;
-		}
-
 		private static bool TryResolveOffset(Type structType, object offsetSpec, out long offset)
 		{
 			offset = 0;
@@ -1206,7 +1201,7 @@ namespace Keysharp.Builtins
 			if (offsetSpec == null)
 				return false;
 
-			if (offsetSpec is string name && !long.TryParse(name, out offset))
+			if (offsetSpec is string name)
 			{
 				var existing = FindField(structType, name, true);
 				if (existing == null)

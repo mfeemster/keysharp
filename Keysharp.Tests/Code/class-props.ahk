@@ -381,4 +381,67 @@ Assert(SuperDataChild.HasOwnProp("Value") && (SuperDataChild.Value ?? "missing")
 Assert(!HasMethod(SuperDataChild, "Handler"), A_LineNumber)
 Throws(() => SuperDataChild.Handler(), A_LineNumber)
 
+; A descriptor has to describe exactly one kind of property. A Get, Set or Call that is not an object counts as
+; absent rather than as an error. [v2.1-alpha.34+]
+descriptorTarget := {}
+Throws(() => descriptorTarget.DefineProp("A", {Value: 1, Pack: 4}), A_LineNumber, ValueError)
+Throws(() => descriptorTarget.DefineProp("A", {Get: 1}), A_LineNumber, ValueError)
+Throws(() => descriptorTarget.DefineProp("A", {Offset: 0}), A_LineNumber, ValueError)
+Throws(() => descriptorTarget.DefineProp("", {Value: 1}), A_LineNumber, ValueError)
+Throws(() => descriptorTarget.DefineProp("A", {Type: Int32}), A_LineNumber, Error)
+MessageOf(callback) {
+	try
+		callback()
+	catch Error as err
+		return err.Message
+	return "none"
+}
+AssertEq(MessageOf(() => DefineProp(descriptorTarget, "A", {})), "Parameter #3 of DefineProp is invalid.", A_LineNumber)
+AssertEq(MessageOf(() => descriptorTarget.DefineProp("A", {})), "Parameter #2 of Object.Prototype.DefineProp is invalid.", A_LineNumber)
+descriptorTarget.DefineProp("B", {Get: 1, Value: 5})
+AssertEq(descriptorTarget.B, 5, A_LineNumber)
+descriptorTarget.DefineProp("C", {Get: (*) => 7, Set: "x"})
+AssertEq(descriptorTarget.C, 7, A_LineNumber)
+
+; Enumerable: false hides a property from Props, though not from OwnProps. Assigning the property keeps it hidden,
+; and redefining it without Enumerable shows it again. A hidden property does not shadow its base's. [v2.1-alpha.34+]
+PropNames(obj) {
+	names := ""
+	for enumeratedName in obj.Props()
+		names .= enumeratedName ","
+	return names
+}
+enumerated := {}
+enumerated.DefineProp("Hidden", {Value: 1, Enumerable: false})
+enumerated.DefineProp("Shown", {Value: 2})
+enumerated.DefineProp("HiddenGetter", {Get: (*) => 3, Enumerable: 0})
+AssertEq(PropNames(enumerated), "Shown,", A_LineNumber)
+ownNames := ""
+for ownName in enumerated.OwnProps()
+	ownNames .= ownName ","
+Assert(InStr(ownNames, "Hidden,") && InStr(ownNames, "HiddenGetter,"), A_LineNumber)
+enumerated.Hidden := 4
+AssertEq(PropNames(enumerated), "Shown,", A_LineNumber)
+enumerated.DefineProp("Hidden", {Value: 5})
+Assert(InStr(PropNames(enumerated), "Hidden,"), A_LineNumber)
+shadowed := {base: {X: 1}}
+shadowed.DefineProp("X", {Value: 2, Enumerable: false})
+for shadowName, shadowValue in shadowed.Props()
+	AssertEq(shadowName "=" shadowValue, "X=1", A_LineNumber)
+; A method has no value to list, so it does not shadow a base's property either.
+class PropsBase {
+	X => 1
+}
+class PropsDerived extends PropsBase {
+	X() => 2
+}
+AssertEq(PropNames(PropsDerived()), "X,", A_LineNumber)
+struct HiddenField {
+	Shown : Int32
+}
+DefineProp(HiddenField.Prototype, "Hidden", {Type: Int32, Enumerable: false})
+fieldNames := PropNames(HiddenField())
+Assert(InStr(fieldNames, "Shown,") && !InStr(fieldNames, "Hidden,"), A_LineNumber)
+AssertEq(HiddenField.Prototype.Size, 8, A_LineNumber)
+
 FileAppend "pass", "*"

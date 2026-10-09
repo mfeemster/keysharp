@@ -25,6 +25,9 @@ namespace Keysharp.Parsing.Lexing
 		/// <see cref="Line"/>/<see cref="Column"/> are relative to that file, so diagnostics can be reported per file.</summary>
 		public readonly string File;
 
+		/// <summary>The #Include splice this token came from, numbered from 1 in splice order; 0 for the file parsed.</summary>
+		public int Inclusion { get; init; }
+
 		public Token(TokenKind kind, string text, int line, int column, int offset, int length, bool leadingWhitespace,
 			string file = null)
 		{
