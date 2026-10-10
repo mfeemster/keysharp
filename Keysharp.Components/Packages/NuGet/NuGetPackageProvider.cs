@@ -47,7 +47,7 @@ public sealed class NuGetPackageProvider : IPackageProvider
 			timeout.CancelAfter(context.Timeout);
 
 		var resolveToken = timeout.Token;
-		Directory.CreateDirectory(context.CacheDirectory);
+		_ = Directory.CreateDirectory(context.CacheDirectory);
 		var logger = new CollectingLogger();
 
 		try
@@ -60,7 +60,7 @@ public sealed class NuGetPackageProvider : IPackageProvider
 			var configFiles = settings.GetConfigFilePaths().ToList();
 			var fingerprint = Fingerprint(context, packages, sources, packagesPath, fallbackFolders, configFiles);
 			var graphDirectory = Path.Combine(context.CacheDirectory, fingerprint[..24]);
-			Directory.CreateDirectory(graphDirectory);
+			_ = Directory.CreateDirectory(graphDirectory);
 			var assetsPath = Path.Combine(graphDirectory, "project.assets.json");
 			var cachePath = Path.Combine(graphDirectory, "project.nuget.cache");
 			var stampPath = Path.Combine(graphDirectory, "keysharp.restore.sha256");
@@ -159,14 +159,14 @@ public sealed class NuGetPackageProvider : IPackageProvider
 			OriginalTargetFrameworks = [context.TargetFramework],
 			TargetFrameworks = [new ProjectRestoreMetadataFrameworkInfo(framework) { TargetAlias = context.TargetFramework }],
 			ValidateRuntimeAssets = true,
-			SkipContentFileWrite = true
-		};
-		metadata.RestoreAuditProperties = new RestoreAuditProperties
-		{
-			EnableAudit = "true",
-			AuditLevel = "low",
-			AuditMode = "all",
-			SuppressedAdvisories = []
+			SkipContentFileWrite = true,
+			RestoreAuditProperties = new RestoreAuditProperties
+			{
+				EnableAudit = "true",
+				AuditLevel = "low",
+				AuditMode = "all",
+				SuppressedAdvisories = []
+			}
 		};
 
 		return new PackageSpec([target])

@@ -10,11 +10,13 @@ namespace Keysharp.Compilation
 		readonly StringBuilder _sb;
 		bool _locations;
 		int _indent;
+		string punctuation = "+-*/<>&|=?:.";
+		List<string> _indents = Enumerable.Range(0, 10).Select(i => new string('\t', i)).ToList();
 
 		public PrettyPrinter(int initialIndent = 0)
 			: base(SyntaxWalkerDepth.StructuredTrivia)
 		{
-			_sb = new StringBuilder();
+			_sb = new StringBuilder(64 * 1024);
 			_indent = initialIndent;
 		}
 
@@ -41,7 +43,10 @@ namespace Keysharp.Compilation
 		// helper to emit current indent
 		void WriteIndent()
 		{
-			_sb.Append(new string('\t', _indent));
+			while (_indent >= _indents.Count)
+				_indents.Add(new string('\t', _indents.Count));
+
+			_sb.Append(_indents[_indent]);
 		}
 
 		// write a token (its text) and maybe a trailing space
@@ -70,7 +75,7 @@ namespace Keysharp.Compilation
 				var prev = _sb[^1];
 
 				if ((IsIdentifierChar(prev) && IsIdentifierChar(text[0]))
-						|| (prev == text[0] && "+-*/<>&|=?:.".IndexOf(prev) >= 0))
+						|| (prev == text[0] && punctuation.Contains(prev)))
 					_sb.Append(' ');
 			}
 
@@ -1552,20 +1557,26 @@ namespace Keysharp.Compilation
 					=> true,
 
 				// Block-bodied local functions get a trailing blank line (matching Roslyn); arrow-bodied ones end in `;`.
-			LocalFunctionStatementSyntax lf => lf.Body != null,
+				LocalFunctionStatementSyntax lf => lf.Body != null,
 
 				_ => false
 			};
 		}
 
-			void TrimTrailingNewLine()
+		void TrimTrailingNewLine()
 		{
 			var nl = Environment.NewLine;
-			if (_sb.Length >= nl.Length &&
-				_sb.ToString(_sb.Length - nl.Length, nl.Length) == nl)
+			var len = nl.Length;
+
+			if (_sb.Length < len) return;
+
+			for (var i = 0; i < len; i++)
 			{
-				_sb.Length -= nl.Length;
+				if (_sb[_sb.Length - len + i] != nl[i])
+					return;
 			}
+
+			_sb.Length -= len;
 		}
 
 		void TrimTrailingSpace()
