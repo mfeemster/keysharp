@@ -257,6 +257,27 @@ public class ParserTests : TestRunner
 	[Test, Category("Parser")]
 	public void ImportErrors()
 	{
+		foreach (var source in new[]
+		{
+			"Foo() {\n#Import Export KS { Cosh }\n}\n",
+			"Foo() => {\n#Import Export KS { Cosh }\nValue: 1\n}\n",
+			"class C {\nMethod() {\n#Import Export KS { Cosh }\n}\n}\n",
+			"class C {\nMethod() => {\n#Import Export KS { Cosh }\nValue: 1\n}\n}\n",
+			"class C {\n+(Other) {\n#Import Export KS { Cosh }\n}\n}\n",
+			"class C {\n+(Other) => {\n#Import Export KS { Cosh }\nValue: 1\n}\n}\n",
+			"class C {\nProperty {\nget {\n#Import Export KS { Cosh }\n}\n}\n}\n",
+			"class C {\nProperty {\nget => {\n#Import Export KS { Cosh }\nValue: 1\n}\n}\n}\n",
+			"class C {\nProperty {\nset {\n#Import Export KS { Cosh }\n}\n}\n}\n",
+			"class C {\nProperty {\nset => {\n#Import Export KS { Cosh }\nValue: 1\n}\n}\n}\n",
+			"class C {\nProperty => {\n#Import Export KS { Cosh }\nValue: 1\n}\n}\n",
+			"Holder := () {\n#Import Export KS { Cosh }\n}\n",
+			"Holder := () => {\n#Import Export KS { Cosh }\nValue: 1\n}\n",
+			"^F12::{\n#Import Export KS { Cosh }\n}\n",
+			"^F12:: Value := {\n#Import Export KS { Cosh }\nValue: 1\n}\n",
+			":X:word::{\n#Import Export KS { Cosh }\n}\n",
+			":X:word:: Value := {\n#Import Export KS { Cosh }\nValue: 1\n}\n",
+		})
+			AssertCompileError(source, "after #import");
 		AssertCompileError(
 			"EncodeDecodeURI(str){\n#import Ks { Clr } static Web := Clr.Load(\"x\") return Web.Url(str)\n}\n",
 			"after #import");
@@ -496,7 +517,7 @@ public class ParserTests : TestRunner
 		var root = Path.Combine(Path.GetTempPath(), "ks_case_modules_" + Guid.NewGuid().ToString("N"));
 		var first = Path.Combine(root, "Modules");
 		var second = Path.Combine(root, "modules");
-		var previousPath = Environment.GetEnvironmentVariable("AhkImportPath");
+		var previousPath = Environment.GetEnvironmentVariable("AhkLibPath");
 		_ = Directory.CreateDirectory(first);
 		_ = Directory.CreateDirectory(second);
 
@@ -506,13 +527,13 @@ public class ParserTests : TestRunner
 			var main = Path.Combine(root, "main.ahk");
 			File.WriteAllText(module, "Value := 1\n");
 			File.WriteAllText(main, "#ErrorStdOut\n#Warn All, StdOut\n#Import SearchTarget { Value }\nanswer := Value\n");
-			Environment.SetEnvironmentVariable("AhkImportPath", first + ";" + second);
+			Environment.SetEnvironmentVariable("AhkLibPath", first + ";" + second);
 			var (_, _, files) = CompileFile(main);
 			Assert.That(files, Has.Member(module));
 		}
 		finally
 		{
-			Environment.SetEnvironmentVariable("AhkImportPath", previousPath);
+			Environment.SetEnvironmentVariable("AhkLibPath", previousPath);
 			Directory.Delete(root, true);
 		}
 #endif

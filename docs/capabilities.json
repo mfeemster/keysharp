@@ -120,7 +120,7 @@
                      "linux_x11":  "unknown",
                      "linux_wayland":  "unknown",
                      "macos":  "unknown",
-                     "notes":  "Embeds C# at module or class scope; public module members support imports and dynamic lookup. Libraries use #Include search rules.",
+                     "notes":  "Embeds C# at module or class scope; public module members support imports and dynamic lookup. Library files use the shared include directories and AhkLibPath, with a .cs suffix and underscore fallback in either compatibility mode.",
                      "tested-by":  "directive-csharp.ahk; directive-csharp-clr.ahk; directive-csharp-errors.ahk; directive-csharp-class.ahk; directive-csharp-modules.ahk; directive-csharp-module-scopes.ahk; directive-csharp-symbols.ahk; module-object-members.ahk; DirectiveTests.CSharpLibraryFile; DirectiveTests.CSharpFileScopes; ProviderDeploymentTests.InlineNamesFromPackageConstants"
                  },
                  {
@@ -261,8 +261,8 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "full",
-                     "notes":  "Imports modules or names with shared variable storage. Function imports are lexical; class and block imports are Keysharp extensions.",
-                     "tested-by":  "module-export.ahk; module-basic.ahk; module-import.ahk; module-scoped-import.ahk; module-object-members.ahk; module-extends.ahk; module-wildcard-own-vars.ahk; ModuleTests.FileIdentity; directive-csharp-modules.ahk; ParserTests.DistinctCaseModuleSearchDirectories"
+                     "notes":  "Imports modules or names with shared variable storage. Function imports are lexical and reject the Export modifier; class and block imports are Keysharp extensions. Lookup searches the directive file directory, module directory and main script directory, then AhkLibPath or the default library directories. Relative AhkLibPath entries and A_LineFile use the module root file.",
+                     "tested-by":  "module-export.ahk; module-basic.ahk; module-import.ahk; module-scoped-import.ahk; module-object-members.ahk; module-extends.ahk; module-wildcard-own-vars.ahk; ModuleTests.FileIdentity; ModuleTests.SearchPaths; ModuleTests.ImportDiagnostics; directive-csharp-modules.ahk; ParserTests.DistinctCaseModuleSearchDirectories"
                  },
                  {
                      "category":  "Environment/System",
@@ -272,8 +272,8 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "full",
-                     "notes":  "The #Include and #IncludeAgain directives cause the script to behave as though the specified file\u0027s contents are present at this exact position. Path separators are platform-independent: a backslash in an #Include, #Import or #CSharp path separates directories on Linux and macOS too, so `#Include Lib\\Thing.ahk` resolves everywhere.",
-                     "tested-by":  "directive-include.ahk"
+                     "notes":  "Includes the specified file at this position. Library lookup keeps module-root/Lib and main-script/Lib first, followed by AhkLibPath or the default libraries. v2.1 library includes search the directive file directory first, try exact filenames before suffixes and have no underscore fallback; v2.0 uses suffixes and repeated last-underscore fallback. Backslash path separators work on all platforms.",
+                     "tested-by":  "directive-include.ahk; DirectiveTests.IncludeSearchPaths"
                  },
                  {
                      "category":  "Environment/System",
@@ -283,8 +283,8 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "full",
-                     "notes":  "The #Include and #IncludeAgain directives cause the script to behave as though the specified file\u0027s contents are present at this exact position. Path separators are platform-independent: a backslash in an #Include, #Import or #CSharp path separates directories on Linux and macOS too, so `#Include Lib\\Thing.ahk` resolves everywhere.",
-                     "tested-by":  "directive-include.ahk"
+                     "notes":  "Includes the specified file at this position even if already included. Uses the same library search path, compatibility-mode rules and cross-platform path separators as #Include.",
+                     "tested-by":  "directive-include.ahk; DirectiveTests.IncludeSearchPaths"
                  },
                  {
                      "category":  "Environment/System",
@@ -1301,7 +1301,7 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "full",
-                     "notes":  "AutoHotkey compatibility target: 2.1-alpha.34.",
+                     "notes":  "AutoHotkey compatibility target: 2.1-alpha.35.",
                      "tested-by":  "props-script-properties.ahk"
                  },
                  {
@@ -3109,8 +3109,8 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "full",
-                     "notes":  "Ordered collection object.",
-                     "tested-by":  "assign-dyn-var.ahk"
+                     "notes":  "Ordered collection object. In v2.1 mode, index access, Get, Has, Delete, InsertAt and RemoveAt require an integer index and reject Float or nonnumeric values with TypeError; integer strings are accepted. v2.0 mode retains Float truncation and its index error categories.",
+                     "tested-by":  "assign-dyn-var.ahk; collections-array.ahk"
                  },
                  {
                      "category":  "Collections",
@@ -3131,7 +3131,7 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "full",
-                     "notes":  "Indexer property for getting or setting array elements.",
+                     "notes":  "Indexer property for getting or setting array elements. In v2.1 mode, a non-integer index raises TypeError; an integer outside the bounds raises IndexError.",
                      "tested-by":  "collections-array.ahk"
                  },
                  {
@@ -3197,7 +3197,7 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "full",
-                     "notes":  "Sets the element at the specified index to null, returns the element at that index before it was cleared.",
+                     "notes":  "Unsets an element and returns its previous value. In v2.1 mode, a non-integer index raises TypeError; an integer outside the bounds raises ValueError.",
                      "tested-by":  "collections-array.ahk"
                  },
                  {
@@ -3230,7 +3230,7 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "full",
-                     "notes":  "Gets the value at an index with optional fallback default.",
+                     "notes":  "Gets the value at an index with optional fallback default. In v2.1 mode, a non-integer index raises TypeError before default lookup; an integer outside the bounds raises IndexError.",
                      "tested-by":  "collections-array.ahk"
                  },
                  {
@@ -3241,7 +3241,7 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "full",
-                     "notes":  "Returns whether an array contains a non-empty value at the given index.",
+                     "notes":  "Returns whether an array element has a value. In v2.1 mode, a non-integer index raises TypeError; an integer outside the bounds returns false.",
                      "tested-by":  "collections-array.ahk"
                  },
                  {
@@ -3263,7 +3263,7 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "full",
-                     "notes":  "Inserts an element or range of elements at a given index.",
+                     "notes":  "Inserts an element or range of elements at a given index. In v2.1 mode, a non-integer index raises TypeError; an integer outside the insertion range raises ValueError.",
                      "tested-by":  "collections-array.ahk"
                  },
                  {
@@ -3340,7 +3340,7 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "full",
-                     "notes":  "Removes the element at a given index, plus optionally a length. Returns the removed item if no length was specified. Returns the null if a length was specified.",
+                     "notes":  "Removes an element or range. Returns the removed item when Length is omitted, otherwise blank-unset. In v2.1 mode, a non-integer index raises TypeError; an integer outside the removal range raises ValueError.",
                      "tested-by":  "collections-array.ahk"
                  },
                  {
@@ -7852,8 +7852,8 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "full",
-                     "notes":  "Map object type.",
-                     "tested-by":  "assign-multiline.ahk"
+                     "notes":  "Map object type. Float keys remain Float keys in both compatibility modes, distinct from Integer and String keys. Unlike AutoHotkey v2.1-alpha.35, v2.1 mode accepts Float keys.",
+                     "tested-by":  "assign-multiline.ahk; collections-map.ahk"
                  },
                  {
                      "category":  "Collections",
@@ -10822,7 +10822,7 @@
                      "linux_x11":  "partial",
                      "linux_wayland":  "partial",
                      "macos":  "partial",
-                     "notes":  "Linux requires a StatusNotifier/AppIndicator host and exposes no activation events. Eto activation cannot cancel menu opening; macOS activation is unverified.",
+                     "notes":  "Linux requires a StatusNotifier/AppIndicator host and exposes no activation events. COSMIC 1.2.0 leaves its host-owned tray menu open after an item callback; click the tray icon again to dismiss it. Eto activation cannot cancel menu opening; macOS activation is unverified.",
                      "tested-by":  "docs/linux-cosmic.md (native tray smoke check); BuiltInVarsTests.PropsMenuCommands; props-menu-commands.ahk; MessageFilterTests.TrayNotifications; MessageFilterTests.TrayActivations"
                  },
                  {

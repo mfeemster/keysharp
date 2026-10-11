@@ -390,7 +390,6 @@ namespace Keysharp.Compilation.Syntax
 		// File names tried for a module reference, Keysharp-native first then AHK-compatible.
 		private static readonly string[] moduleExts = { ".ks", ".ahk" };
 		private static readonly string[] moduleInitNames = { "__Init.ks", "__Init.ahk" };
-		private List<string> _moduleSearchPath;
 
 		// The local name introduced by a bare unquoted import. A path import such as `#import Lib/OCR` binds its leaf
 		// (`OCR`), while the full specifier remains the module identity used for file lookup and generated type mapping.
@@ -411,38 +410,11 @@ namespace Keysharp.Compilation.Syntax
 			}
 		}
 
-		// The #import search path, mirroring AutoHotkey's InitModuleSearchPath: the AhkImportPath environment variable
-		// (a ';'-delimited list) or, when unset, the default below. Built-in %vars% are expanded (environment variables
-		// are NOT, matching AHK); relative items resolve against A_ScriptDir; nonexistent directories are dropped. It is
-		// resolved once per build (so %A_LineFile% consistently refers to the main script).
-		private List<string> ModuleSearchPath()
-		{
-			if (_moduleSearchPath != null) return _moduleSearchPath;
-			_moduleSearchPath = new List<string>();
-			var spec = System.Environment.GetEnvironmentVariable("AhkImportPath");
-			if (string.IsNullOrEmpty(spec))
-				spec = ".;%A_MyDocuments%\\Keysharp;%A_MyDocuments%\\AutoHotkey;%A_AhkPath%\\..";
-			var baseDir = string.IsNullOrEmpty(_includeDir) ? System.IO.Directory.GetCurrentDirectory() : _includeDir;
-			foreach (var raw in spec.Split(';'))
-			{
-				// The default spec is written with '\' (AHK's own), so without this the user-Documents and exe-adjacent
-				// tiers expand to non-existent directories on Unix and are silently dropped from the search path.
-				var item = Parser.NormalizeDirectiveSeparators(Parser.ExpandPathVars(raw.Trim(), _includeDir, _scriptPath, MainScriptPath).Trim());
-				if (item.Length == 0) continue;
-				string full;
-				try { full = System.IO.Path.GetFullPath(System.IO.Path.IsPathRooted(item) ? item : System.IO.Path.Combine(baseDir, item)); }
-				catch { continue; }
-				if (System.IO.Directory.Exists(full) && !_moduleSearchPath.Contains(full, SourcePathComparer))
-					_moduleSearchPath.Add(full);
-			}
-			return _moduleSearchPath;
-		}
-
 		// Resolves an `#import <name>` to a module file, mirroring AutoHotkey's FindModuleFileIndex: the importing file's
 		// own directory is searched first, then each directory of the module search path in order. Within a directory the
 		// candidates are tried as: <name> (an exact existing file), then <name>\__Init.ks/.ahk (when <name> is a
 		// directory), then <name>.ks/.ahk. Returns the full path of the first match, or null.
-		private string ResolveModuleFile(string modName, string localDir)
+		private string ResolveModuleFile(string modName, string localDir, ModuleGroup group)
 		{
 			if (string.IsNullOrEmpty(modName)) return null;
 
@@ -451,7 +423,7 @@ namespace Keysharp.Compilation.Syntax
 
 			// The directory walk itself lives in SearchModulePath, shared with the `#CSharp "file.cs"` form; only
 			// these candidates are specific to a module NAME.
-			return SearchModulePath(localDir, dir =>
+			return SearchModulePath(localDir, group, dir =>
 			{
 				var exact = System.IO.Path.Combine(dir, modName);
 				var cands = new List<string> { exact };                                   // <name> exact file
@@ -645,7 +617,7 @@ namespace Keysharp.Compilation.Syntax
 				PrescanPackageDirectives(m.Body);
 				PrescanCapabilityRequirements(m.Body);
 				// Attribute blocks to their declaring module.
-				PrescanCSharpDirectives(m.Body, m.CodeName, m.Dir);
+				PrescanCSharpDirectives(m);
 			}
 			if (!PrepareInlineDeclarations(mods)) return null;
 			foreach (var module in mods) RegisterInlineModuleMembers(module);
@@ -989,14 +961,12 @@ namespace Keysharp.Compilation.Syntax
 		// if it names no AutoHotkey or Keysharp version. As in AutoHotkey, v2.0 mode is kept only if 2.0.x would meet the
 		// requirement. A Keysharp requirement selects the newest line, since Keysharp's version numbers say nothing about
 		// AutoHotkey's.
-		private static Semver.SemVersion MapRequires(string args)
+		private static Semver.SemVersion MapRequires(string args) => Parser.RequiresBackCompat(args) switch
 		{
-			var words = (args ?? "").Split([' ', '\t'], System.StringSplitOptions.RemoveEmptyEntries);
-			if (words.Length < 2) return null;
-			if (words[0].Equals("Keysharp", System.StringComparison.OrdinalIgnoreCase)) return CompatCandidates[^1];
-			if (!words[0].Equals("AutoHotkey", System.StringComparison.OrdinalIgnoreCase)) return null;
-			return Keysharp.Runtime.CompatibilityVersions.MeetsRequirement("2.0.x", words.AsSpan(1)) ? CompatCandidates[0] : CompatCandidates[^1];
-		}
+			true => CompatCandidates[0],
+			false => CompatCandidates[^1],
+			_ => null
+		};
 
 		// AutoHotkey refuses to load a script whose version requirement the running version does not meet.
 		private void ReportUnmetRequirement(string requirement, Node at)
@@ -2574,26 +2544,26 @@ namespace Keysharp.Compilation.Syntax
 		}
 
 		// ---- #CSharp ----
-		private void PrescanCSharpDirectives(List<Stmt> body, string moduleName, string moduleDir)
+		private void PrescanCSharpDirectives(ModInfo module)
 		{
-			foreach (var s in body)
+			foreach (var s in module.Body)
 				if (s is ClassDecl cd)
-					PrescanClassCSharp(cd, moduleName, moduleDir, null);
+					PrescanClassCSharp(cd, module, null);
 
-			foreach (var s in body)
+			foreach (var s in module.Body)
 			{
 				if (s is not CSharpDirective d || !(_csharpSeen ??= new(ReferenceEqualityComparer.Instance)).Add(d))
 					continue;
 
-				if (!ResolveInlineBlockSource(d, moduleDir))
+				if (!ResolveInlineBlockSource(d, module))
 					continue;
 
-				(_inlineBlocks ??= []).Add((moduleName, null, d));
+				(_inlineBlocks ??= []).Add((module.CodeName, null, d));
 			}
 			_inlineBlocks?.Sort((left, right) => left.Dir.SourceOrder.CompareTo(right.Dir.SourceOrder));
 		}
 
-		private bool ResolveInlineBlockSource(CSharpDirective d, string moduleDir)
+		private bool ResolveInlineBlockSource(CSharpDirective d, ModInfo module)
 		{
 			if (d.Args.Length > 0)
 				Diag($"{NodeAnchor(d)}#CSharp takes no options"
@@ -2603,8 +2573,8 @@ namespace Keysharp.Compilation.Syntax
 
 			if (d.IsFileForm)
 			{
-				var baseDir = d.File != null ? System.IO.Path.GetDirectoryName(d.File) : moduleDir ?? _includeDir;
-				var path = ResolveInlineFile(d, baseDir);
+				var baseDir = d.File != null ? System.IO.Path.GetDirectoryName(d.File) : module.Dir ?? _includeDir;
+				var path = ResolveInlineFile(d, baseDir, module.Group);
 
 				if (path == null)
 					return false;
@@ -2628,12 +2598,12 @@ namespace Keysharp.Compilation.Syntax
 			return true;
 		}
 
-		private string ResolveInlineFile(CSharpDirective d, string baseDir)
+		private string ResolveInlineFile(CSharpDirective d, string baseDir, ModuleGroup group)
 		{
 			if (d.LibraryForm)
 			{
 				var name = Parser.NormalizeDirectiveSeparators((d.FilePath ?? "").Trim());
-				var library = Parser.FindLibraryFile(name, baseDir, [".cs"]);
+				var library = Parser.FindLibraryFile(name, _includeDir, [".cs"], baseDir, group.Path, MainScriptPath);
 
 				if (library != null)
 					return library;
@@ -2662,7 +2632,7 @@ namespace Keysharp.Compilation.Syntax
 
 			var tried = new List<string>();
 			// A file path is used verbatim; module suffix rules do not apply.
-			var found = SearchModulePath(baseDir, dir => [System.IO.Path.Combine(dir, raw)], tried);
+			var found = SearchModulePath(baseDir, group, dir => [System.IO.Path.Combine(dir, raw)], tried);
 
 			if (found != null)
 				return found;
@@ -2671,14 +2641,14 @@ namespace Keysharp.Compilation.Syntax
 			return null;
 		}
 
-		private string SearchModulePath(string localDir, System.Func<string, IEnumerable<string>> candidates, List<string> tried = null)
+		private string SearchModulePath(string localDir, ModuleGroup group, System.Func<string, IEnumerable<string>> candidates, List<string> tried = null)
 		{
 			var dirs = new List<string>();
 
 			if (!string.IsNullOrEmpty(localDir))
 				dirs.Add(localDir);
 
-			dirs.AddRange(ModuleSearchPath());
+			dirs.AddRange(group.SearchPath ??= Parser.DirectiveSearchPath(false, _includeDir, group.Path, MainScriptPath));
 
 			foreach (var dir in dirs)
 			{
@@ -3092,7 +3062,7 @@ namespace Keysharp.Compilation.Syntax
 			}
 		}
 
-		private void PrescanClassCSharp(ClassDecl cd, string moduleName, string moduleDir, string outerPath)
+		private void PrescanClassCSharp(ClassDecl cd, ModInfo module, string outerPath)
 		{
 			var path = outerPath == null ? NameMangler.ClassType(cd.Name) : outerPath + "." + NameMangler.ClassType(cd.Name);
 
@@ -3101,14 +3071,14 @@ namespace Keysharp.Compilation.Syntax
 				if (!(_csharpSeen ??= new(ReferenceEqualityComparer.Instance)).Add(d))
 					continue;
 
-				if (!ResolveInlineBlockSource(d, moduleDir))
+				if (!ResolveInlineBlockSource(d, module))
 					continue;
 
-				(_inlineBlocks ??= []).Add((moduleName, path, d));
+				(_inlineBlocks ??= []).Add((module.CodeName, path, d));
 			}
 
 			foreach (var nested in cd.Nested)
-				PrescanClassCSharp(nested, moduleName, moduleDir, path);
+				PrescanClassCSharp(nested, module, path);
 		}
 
 		private sealed record InlineEmission(string ClassPath, System.Text.StringBuilder Body);
@@ -5501,6 +5471,8 @@ namespace Keysharp.Compilation.Syntax
 			System.Func<ExpressionSyntax> savedAlias = null;
 			bool hadAlias = aliasInBody && _inlineAliases.TryGetValue(selfName, out savedAlias);
 			if (aliasInBody) _inlineAliases[selfName] = () => ArrowSelfRef(implName);
+			var savedCompat = _currentCompat;
+			_currentCompat = ScanRequires(fa.BlockBody?.Body) ?? _currentCompat;
 			var body = LowerCallableBody(paramLowers, fa.BlockBody, fa.BlockBody == null ? fa.Body : null, implName,
 				thisFuncName, out var scope, byRefParams, fa.Params, capturing: true);
 			if (aliasInBody) { if (hadAlias) _inlineAliases[selfName] = savedAlias; else _inlineAliases.Remove(selfName); }
@@ -5509,7 +5481,9 @@ namespace Keysharp.Compilation.Syntax
 				.WithBody(body);
 			// Always stamped, "" for an anonymous lambda: Roslyn renames a local function to `<Outer>g__name|n_m`,
 			// and the attribute is what spares the runtime having to read that scheme back.
-			localFunction = localFunction.AddAttributeLists(Attr("Keysharp.Runtime.UserDeclaredName", Str(fa.Name ?? "")));
+			localFunction = localFunction.AddAttributeLists(Attr("Keysharp.Runtime.UserDeclaredName", Str(fa.Name ?? "")),
+				Attr("Keysharp.Runtime.CompatibilityMode", Str(_currentCompat.ToString())));
+			_currentCompat = savedCompat;
 			return EmitClosure(scope, localFunction);
 		}
 
@@ -5555,12 +5529,13 @@ namespace Keysharp.Compilation.Syntax
 			_currentCompat = ScanRequires(fd.Body?.Body) ?? _currentCompat;   // nested-function `#Requires` (restored after)
 			var body = LowerCallableBody(paramLowers, fd.Body, fd.ArrowBody, implName, fd.Name,
 				out var scope, byRefParams, fd.Params, capturing: true, staticNested: fd.Static);
-			_currentCompat = savedCompat;
 			(_scope.Functions ??= new(StringComparer.OrdinalIgnoreCase))[nameLower] = scope;
 			var fn = SyntaxFactory.LocalFunctionStatement(ObjType, SyntaxFactory.Identifier(implName))
 				.WithParameterList(ParamDecls(fd.Params, includeThis: false, wrapVariadics: true))
 				.WithBody(body)
-				.AddAttributeLists(Attr("Keysharp.Runtime.UserDeclaredName", Str(fd.Name)));
+				.AddAttributeLists(Attr("Keysharp.Runtime.UserDeclaredName", Str(fd.Name)),
+					Attr("Keysharp.Runtime.CompatibilityMode", Str(_currentCompat.ToString())));
+			_currentCompat = savedCompat;
 			// Assign (not declare — the var is hoisted) at the scope TOP so forward-referenced calls work and a
 			// self-recursive binding doesn't trip definite assignment; the delegate's captures read lazily.
 			var local = LocalValue(_scope.Find(nameLower));
@@ -5581,7 +5556,7 @@ namespace Keysharp.Compilation.Syntax
 		{
 			var t = trigger;
 			if (t.Length > 0 && t[^1] == '`' && (t.Length < 2 || t[^2] != '`')) t += '`';
-			return Keysharp.Parsing.Parser.EscapedString(t, true);
+			return Keysharp.Parsing.Parser.EscapedString(t);
 		}
 
 		// Copilot is a declaration-time convenience alias, not a key name. Expanding it here keeps runtime
@@ -5655,7 +5630,7 @@ namespace Keysharp.Compilation.Syntax
 		{
 			_persistent = true;
 			bool hasExpansion = hs.Expansion != null;
-			string expansionText = hasExpansion ? Keysharp.Parsing.Parser.EscapedString(hs.Expansion, true) : "";
+			string expansionText = hasExpansion ? Keysharp.Parsing.Parser.EscapedString(hs.Expansion) : "";
 			ExpressionSyntax funcArg = Null;
 			if (!hasExpansion)
 			{
@@ -5702,8 +5677,8 @@ namespace Keysharp.Compilation.Syntax
 		{
 			_persistent = true;
 			// The lexer already split the remap into its source/target key text; just decode the backtick escapes.
-			var sourceKey = ExpandCopilotDeclarationAlias(Keysharp.Parsing.Parser.EscapedString(rm.Source, true), out var sourceUsesCopilotAlias);
-			var targetKey = ExpandCopilotDeclarationAlias(Keysharp.Parsing.Parser.EscapedString(rm.Target, true), out _);
+			var sourceKey = ExpandCopilotDeclarationAlias(Keysharp.Parsing.Parser.EscapedString(rm.Source), out var sourceUsesCopilotAlias);
+			var targetKey = ExpandCopilotDeclarationAlias(Keysharp.Parsing.Parser.EscapedString(rm.Target), out _);
 			// A physical Copilot key releases its synthetic LWin+LShift before F23 comes up. Keep releasing those
 			// modifiers when a modifier is the remap target, but do not synthesize them back down afterward. The
 			// literal `<#<+F23` spelling retains the generic chord behavior and therefore still restores them.
@@ -5901,7 +5876,7 @@ namespace Keysharp.Compilation.Syntax
 				_dhhrPrelude.Add(CallStmt("Keysharp.Builtins.Keyboard.Hotstring", Str("MouseReset"), False));
 			else if (args.StartsWith("EndChars", System.StringComparison.OrdinalIgnoreCase))
 				_dhhrPrelude.Add(CallStmt("Keysharp.Builtins.Keyboard.Hotstring", Str("EndChars"),
-					Str(Keysharp.Parsing.Parser.EscapedString(args.Substring("EndChars".Length).Trim().Trim('"', '\''), false))));
+					Str(Keysharp.Parsing.Parser.EscapedString(args.Substring("EndChars".Length).Trim().Trim('"', '\'')))));
 			else
 				AddDhhr(d, CallStmt("Keysharp.Builtins.Keyboard.Hotstring", Str(args.Trim('"', '\''))));
 		}

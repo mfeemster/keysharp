@@ -368,6 +368,112 @@ public class DirectiveTests : TestRunner
 	public void Include() => Assert.IsTrue(TestScript("directive-include", false));
 
 	[Test, Category("Directives")]
+	public void IncludeSearchPaths()
+	{
+		var root = Path.Combine(Path.GetTempPath(), "ks-include-search-" + Guid.NewGuid().ToString("N"));
+		var previousPath = Environment.GetEnvironmentVariable("AhkLibPath");
+		var files = new (string Name, string Source)[]
+		{
+			("main.ahk", $$"""
+				#NoTrayIcon
+				#ErrorStdOut
+				#Warn All, StdOut
+				#Include "{{Path.Combine(path, "Lib", "assert.ahk")}}"
+				#Include <Group_Item_Action>
+				#Include <Choose_Full>
+				#Include <Suffix>
+				#Include "Nested/Importer.ahk"
+				#Include <After>
+				ReadLocal() {
+				    #Requires AutoHotkey v2.1-alpha.35
+				    #Include <LocalInFunction>
+				    return LocalValue
+				}
+				class Holder {
+				    #Requires AutoHotkey v2.1-alpha.35
+				}
+				#Include <CallableAfter>
+				AssertEq(GroupValue, 1, A_LineNumber)
+				AssertEq(ChooseValue, 2, A_LineNumber)
+				AssertEq(SuffixValue, 3, A_LineNumber)
+				AssertEq(NestedValue, 4, A_LineNumber)
+				AssertEq(AfterValue, 5, A_LineNumber)
+				AssertEq(ReadLocal(), 6, A_LineNumber)
+				AssertEq(CallableValue, 7, A_LineNumber)
+				FallbackLoaded := 0
+				#Requires AutoHotkey v2.1-alpha.35
+				#Include "Nested/Latest.ahk"
+				#Include <Exact.data>
+				#Include <ModernSuffix>
+				#Include *i <Modern_Fallback>
+				AssertEq(NearestValue, 8, A_LineNumber)
+				AssertEq(ExactValue, 9, A_LineNumber)
+				AssertEq(ModernValue, 10, A_LineNumber)
+				AssertEq(FallbackLoaded, 0, A_LineNumber)
+				get := true
+				if get {
+				    #Requires AutoHotkey v2.0
+				}
+				#Include <AfterGetCondition>
+				AssertEq(GetConditionValue, 11, A_LineNumber)
+				class := true
+				if class {
+				    #Requires AutoHotkey v2.1-alpha.35
+				}
+				#Include <AfterClassCondition>
+				AssertEq(ClassConditionValue, 12, A_LineNumber)
+				FileAppend "pass", "*"
+				"""),
+			("Lib/Group_Item.ahk", "GroupValue := 1\n"),
+			("Lib/Group.ahk", "GroupValue := -1\n"),
+			("Lib/Choose.ahk", "ChooseValue := -2\n"),
+			("Libraries/Choose_Full.ahk", "ChooseValue := 2\n"),
+			("Suffix", "SuffixValue := -3\n"),
+			("Lib/Suffix.ahk", "SuffixValue := 3\n"),
+			("Nested/Importer.ahk", "#Include <NestedChoice>\n#Requires AutoHotkey v2.1-alpha.35\n"),
+			("Nested/NestedChoice", "NestedValue := -4\n"),
+			("Nested/Lib/NestedChoice.ahk", "NestedValue := -4\n"),
+			("Lib/NestedChoice.ahk", "NestedValue := 4\n"),
+			("After", "AfterValue := -5\n"),
+			("Lib/After.ahk", "AfterValue := 5\n"),
+			("LocalInFunction", "LocalValue := 6\n"),
+			("Lib/LocalInFunction.ahk", "LocalValue := -6\n"),
+			("CallableAfter", "CallableValue := -7\n"),
+			("Lib/CallableAfter.ahk", "CallableValue := 7\n"),
+			("Nested/Latest.ahk", "#Include <Nearest>\n"),
+			("Nested/Nearest", "NearestValue := 8\n"),
+			("Lib/Nearest.ahk", "NearestValue := -8\n"),
+			("Exact.data", "ExactValue := 9\n"),
+			("Lib/Exact.data.ahk", "ExactValue := -9\n"),
+			("ModernSuffix.ahk", "ModernValue := 10\n"),
+			("Lib/ModernSuffix.ahk", "ModernValue := -10\n"),
+			("Lib/Modern.ahk", "FallbackLoaded := 1\n"),
+			("AfterGetCondition", "GetConditionValue := -11\n"),
+			("Lib/AfterGetCondition.ahk", "GetConditionValue := 11\n"),
+			("AfterClassCondition", "ClassConditionValue := 12\n"),
+			("Lib/AfterClassCondition.ahk", "ClassConditionValue := -12\n"),
+		};
+		try
+		{
+			foreach (var (name, source) in files)
+			{
+				var file = Path.Combine(root, name);
+				_ = Directory.CreateDirectory(Path.GetDirectoryName(file));
+				File.WriteAllText(file, "#ErrorStdOut\n#Warn All, StdOut\n" + source);
+			}
+			Environment.SetEnvironmentVariable("AhkLibPath", "Libraries");
+			var output = RunScript(Path.Combine(root, "main.ahk"), "include_search_paths", true, false);
+			Assert.That(output.Trim(), Is.EqualTo("pass"), output);
+		}
+		finally
+		{
+			Environment.SetEnvironmentVariable("AhkLibPath", previousPath);
+			try { Directory.Delete(root, true); }
+			catch { }
+		}
+	}
+
+	[Test, Category("Directives")]
 	public void Defines() => Assert.IsTrue(TestScript("directive-defines", true));
 
 	[Test, Category("Directives")]
@@ -1594,7 +1700,7 @@ public class DirectiveTests : TestRunner
 		var root = Path.Combine(Path.GetTempPath(), "ks_csfilescope_" + Guid.NewGuid().ToString("N"));
 		var mods = Path.Combine(root, "mods");
 		_ = Directory.CreateDirectory(mods);
-		var savedPath = Environment.GetEnvironmentVariable("AhkImportPath");
+		var savedPath = Environment.GetEnvironmentVariable("AhkLibPath");
 
 		try
 		{
@@ -1611,7 +1717,7 @@ public class DirectiveTests : TestRunner
 			File.WriteAllText(Path.Combine(mods, "impl.cs"), "public static object Crunch() => \"file-mod\";");
 			var main = Path.Combine(root, "main.ks");
 			File.WriteAllText(main, "#NoTrayIcon\n#import \"Fast\" { Crunch, BlockSymbol }\nx := Crunch()\ny := BlockSymbol()\n");
-			Environment.SetEnvironmentVariable("AhkImportPath", mods);
+			Environment.SetEnvironmentVariable("AhkLibPath", mods);
 			var (arr2, code2, compilation2) = new CompilerHelper().CompileCodeToByteArray(main, "main");
 			Assert.That(arr2, Is.Not.Null, "a module file's file form must resolve beside the module file:\n" + code2);
 			Assert.IsTrue(compilation2.InlineCode.Contains("file-mod"), "the module file's member must be emitted:\n" + compilation2.InlineCode);
@@ -1644,7 +1750,7 @@ public class DirectiveTests : TestRunner
 		}
 		finally
 		{
-			Environment.SetEnvironmentVariable("AhkImportPath", savedPath);
+			Environment.SetEnvironmentVariable("AhkLibPath", savedPath);
 
 			try
 			{ Directory.Delete(root, true); }
@@ -1695,14 +1801,14 @@ public class DirectiveTests : TestRunner
 		var shared = Path.Combine(root, "shared");
 		_ = Directory.CreateDirectory(local);
 		_ = Directory.CreateDirectory(shared);
-		var savedPath = Environment.GetEnvironmentVariable("AhkImportPath");
+		var savedPath = Environment.GetEnvironmentVariable("AhkLibPath");
 		var savedCwd = Directory.GetCurrentDirectory();
 
 		try
 		{
 			var script = Path.Combine(local, "s.ks");
 			File.WriteAllText(script, "#NoTrayIcon\n#CSharp \"helper.cs\"\nHelp()\n");
-			Environment.SetEnvironmentVariable("AhkImportPath", shared);
+			Environment.SetEnvironmentVariable("AhkLibPath", shared);
 
 			File.WriteAllText(Path.Combine(shared, "helper.cs"), "public static object Help() => \"shared\";");
 			var (arr, code, _) = new CompilerHelper().CompileCodeToByteArray(script, "s");
@@ -1719,7 +1825,7 @@ public class DirectiveTests : TestRunner
 			_ = Directory.CreateDirectory(cwd);
 			File.WriteAllText(Path.Combine(cwd, "helper.cs"), "public static object Help() => \"cwd\";");
 			Directory.SetCurrentDirectory(cwd);
-			Environment.SetEnvironmentVariable("AhkImportPath", "");
+			Environment.SetEnvironmentVariable("AhkLibPath", "");
 			var (arr3, code3, _) = new CompilerHelper().CompileCodeToByteArray(script, "s");
 			Assert.IsNull(arr3, "the working directory must not be searched; generated:\n" + code3);
 			Assert.IsTrue(code3.Contains("cannot find") && code3.Contains("Looked in:"),
@@ -1728,7 +1834,7 @@ public class DirectiveTests : TestRunner
 		finally
 		{
 			Directory.SetCurrentDirectory(savedCwd);
-			Environment.SetEnvironmentVariable("AhkImportPath", savedPath);
+			Environment.SetEnvironmentVariable("AhkLibPath", savedPath);
 
 			try
 			{ Directory.Delete(root, true); }

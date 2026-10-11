@@ -15,10 +15,10 @@ namespace Keysharp.Main;
 internal static class CompileServer
 {
 	// The environment variables a compile reads: those behind the A_ variables #Include and #Import paths use, and
-	// the #Import search path. Package settings are not among them: NuGet caches those on first use.
+	// the library search path. Package settings are not among them: NuGet caches those on first use.
 	internal static readonly string[] CompileEnvironment =
 	[
-		"AhkImportPath", "COMSPEC", "HOME", "TEMP", "TMP", "TMPDIR", "USERPROFILE",
+		"AhkLibPath", "COMSPEC", "HOME", "TEMP", "TMP", "TMPDIR", "USERPROFILE",
 		"XDG_CONFIG_DIRS", "XDG_CONFIG_HOME", "XDG_DESKTOP_DIR", "XDG_DOCUMENTS_DIR"
 	];
 

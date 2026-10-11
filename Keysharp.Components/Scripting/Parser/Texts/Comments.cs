@@ -11,8 +11,6 @@ namespace Keysharp.Parsing
 
  		internal static bool IsSpace(char sym) => SpacesSv.Contains(sym);
 
-		internal static string StripCommentSingle(string code) => StripCommentSingle(code, out bool _);
-
 		internal static string StripCommentSingle(string code, out bool strippedAny)
 		{
 			var spaced = false;

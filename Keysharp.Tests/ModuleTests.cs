@@ -169,8 +169,89 @@ public partial class ModuleTests : TestRunner
 	public void Import() => Assert.IsTrue(TestScript("module-import", false));
 
 	[Test, Category("Module")]
+	public void SearchPaths()
+	{
+		var root = Path.Combine(Path.GetTempPath(), "ks-module-search-" + Guid.NewGuid().ToString("N"));
+		var previousPath = Environment.GetEnvironmentVariable("AhkLibPath");
+		var files = new (string Name, string Source)[]
+		{
+			("main.ahk", $$"""
+				#NoTrayIcon
+				#ErrorStdOut
+				#Warn All, StdOut
+				#Include "{{Path.Combine(path, "Lib", "assert.ahk")}}"
+				#Import "Package/Outer" as Outer
+				#Import "Package/Outer:Named" as Named
+				#Import EnvOnly as MainEnv
+				#Import "Exact.raw" as Exact
+				#Import Folder
+				AssertEq(Outer.FromMain, 11, A_LineNumber)
+				AssertEq(Outer.FromEnv, 22, A_LineNumber)
+				AssertEq(Outer.FromLine, 33, A_LineNumber)
+				AssertEq(Outer.FromIncluded, 44, A_LineNumber)
+				AssertEq(Outer.FromLibrary, 55, A_LineNumber)
+				AssertEq(Named.Value, 22, A_LineNumber)
+				AssertEq(MainEnv.Value, 66, A_LineNumber)
+				AssertEq(Exact.Value, 77, A_LineNumber)
+				AssertEq(Folder.Value, 88, A_LineNumber)
+				FileAppend "pass", "*"
+				"""),
+			("Package/Outer.ahk", """
+				#Include "included/Importer.ahk"
+				#Include <ModuleLibrary>
+				#Import MainOnly
+				#Import EnvOnly
+				FromMain := MainOnly.Value
+				FromEnv := EnvOnly.Value
+				FromLine := LineOnly.Value
+				FromIncluded := IncludedOnly.Value
+				FromLibrary := LibraryValue
+				#Module Named
+				#Import EnvOnly
+				Value := EnvOnly.Value
+				"""),
+			("Package/included/Importer.ahk", "#Import IncludedOnly\n#Import LineOnly\n"),
+			("Package/included/IncludedOnly.ahk", "Value := 44\n"),
+			("Package/IncludedOnly.ahk", "Value := -44\n"),
+			("MainOnly.ahk", "Value := 11\n"),
+			("Package/Libraries/MainOnly.ahk", "Value := -11\n"),
+			("Libraries/EnvOnly.ahk", "Value := 66\n"),
+			("Package/Libraries/EnvOnly.ahk", "Value := 22\n"),
+			("Package/LineLibraries/LineOnly.ahk", "Value := 33\n"),
+			("Package/included/LineLibraries/LineOnly.ahk", "Value := -33\n"),
+			("Package/Lib/ModuleLibrary.ahk", "LibraryValue := 55\n"),
+			("Lib/ModuleLibrary.ahk", "LibraryValue := -55\n"),
+			("Exact.raw", "Value := 77\n"),
+			("Exact.raw.ahk", "Value := -77\n"),
+			("Folder/__Init.ahk", "Value := 88\n"),
+			("Folder.ahk", "Value := -88\n"),
+		};
+		try
+		{
+			foreach (var (name, source) in files)
+			{
+				var file = Path.Combine(root, name);
+				_ = Directory.CreateDirectory(Path.GetDirectoryName(file));
+				File.WriteAllText(file, "#ErrorStdOut\n#Warn All, StdOut\n" + source);
+			}
+			Environment.SetEnvironmentVariable("AhkLibPath", "Libraries;%A_LineFile%\\..\\LineLibraries");
+			var output = RunScript(Path.Combine(root, "main.ahk"), "module_search_paths", true, false);
+			Assert.That(output.Trim(), Is.EqualTo("pass"), output);
+		}
+		finally
+		{
+			Environment.SetEnvironmentVariable("AhkLibPath", previousPath);
+			try { Directory.Delete(root, true); }
+			catch { }
+		}
+	}
+
+	[Test, Category("Module")]
 	public void ImportDiagnostics()
 	{
+		Assert.IsEmpty(LoweringDiagnostics.Diagnostics("Foo() {\n#Import Export { Value }\n#Import Export as Source\nreturn Value\n}\n#Module Export\nValue := 1\n"),
+			"Export remains a valid module name inside a function");
+
 		foreach (var source in new[]
 		{
 			"Foo() {\n#Import KS { Cosh as Shared }\n#Import KS { Sinh as Shared }\n}\n",

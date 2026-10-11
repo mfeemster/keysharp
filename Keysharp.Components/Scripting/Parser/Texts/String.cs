@@ -4,9 +4,9 @@ namespace Keysharp.Parsing
 {
     internal partial class Parser
 	{
-		internal static string EscapedString(string code, bool resolve) => EscapedString(code.AsSpan(), resolve);
+		internal static string EscapedString(string code) => EscapedString(code.AsSpan());
 
-		internal static string EscapedString(ReadOnlySpan<char> code, bool resolve)
+		internal static string EscapedString(ReadOnlySpan<char> code)
 		{
 			if (code.Length == 0)
 				return DefaultObject;
@@ -30,18 +30,8 @@ namespace Keysharp.Parsing
 						'f' => sb.Append('\f'),
 						's' => sb.Append(' '),
 						'0' => sb.Append('\0'),
-						//case '"': _ = buffer.Append('"'); break;
-						//
-						//case '\'': _ = buffer.Append('\''); break;
-						//
-						//case ';': _ = buffer.Append(';'); break;
-						//
-						//case ':': _ = buffer.Append(':'); break;
-						//
-						//case '{': _ = buffer.Append('{'); break;
-						_ => sb.Append(sym),//if (sym == Resolve)//This was likely here to parse legacy style syntax, but makes it impossible to send "'%", so we omit it.
-						//_ = buffer.Append(Escape);
-						};
+						_ => sb.Append(sym),
+					};
 
 					escaped = false;
 				}

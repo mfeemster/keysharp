@@ -1,4 +1,6 @@
 #NoTrayIcon
+#ErrorStdOut
+#Warn All, StdOut
 #Include <assert>
 
 x := "one"
@@ -537,5 +539,42 @@ ci := Map()
 ci.CaseSense := "Off"
 ci["Key"] := 1
 AssertEq(ci.Clone()["KEY"], 1, A_LineNumber)
+
+CheckFloatKeys(legacyKeys) {
+	#Requires AutoHotkey v2.1-alpha
+	keyed := Map(1, "integer", "1.0", "string", "1e0", "exponent", {}, "object")
+	keyed.Default := "fallback"
+	for floatKey in [1.0, 1.5, -1.0] {
+		created := Map(floatKey, "created")
+		AssertEq(created[floatKey], "created", A_LineNumber)
+		AssertEq(keyed[floatKey], "fallback", A_LineNumber)
+		AssertEq(keyed.Get(floatKey, "explicit"), "explicit", A_LineNumber)
+		Assert(!keyed.Has(floatKey), A_LineNumber)
+		keyed[floatKey] := "assigned"
+		AssertEq(keyed[floatKey], "assigned", A_LineNumber)
+		Assert(keyed.Has(floatKey), A_LineNumber)
+		AssertEq(keyed.Delete(floatKey), "assigned", A_LineNumber)
+		Assert(!keyed.Has(floatKey), A_LineNumber)
+		keyed.Set(floatKey, "set")
+		AssertEq(keyed.Get(floatKey), "set", A_LineNumber)
+		keyed[floatKey] := unset
+		Assert(!keyed.Has(floatKey), A_LineNumber)
+	}
+	AssertEq(keyed.Count, 4, A_LineNumber)
+	keyed.Set(1.0, "float")
+	AssertEq(keyed[1.0], "float", A_LineNumber)
+	AssertEq(keyed[1], "integer", A_LineNumber)
+	AssertEq(keyed["1.0"], "string", A_LineNumber)
+	AssertEq(keyed["1e0"], "exponent", A_LineNumber)
+	AssertEq(keyed.Count, 5, A_LineNumber)
+	AssertEq(legacyKeys[1.0], "legacy", A_LineNumber)
+	AssertEq(legacyKeys.Get(1.0), "legacy", A_LineNumber)
+	Assert(legacyKeys.Has(1.0), A_LineNumber)
+	AssertEq(legacyKeys.Delete(1.0), "legacy", A_LineNumber)
+	legacyKeys[1.0] := "legacy"
+}
+legacyMap := Map(1.0, "legacy")
+CheckFloatKeys(legacyMap)
+AssertEq(legacyMap[1.0], "legacy", A_LineNumber)
 
 FileAppend "pass", "*"

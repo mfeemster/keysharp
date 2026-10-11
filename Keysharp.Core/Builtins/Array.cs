@@ -145,14 +145,43 @@ public class Array : KeysharpObject, I__Enum, IEnumerable<object>, IEnumerable<(
 	/// </summary>
 	/// <param name="i">The index to translate.</param>
 	/// <returns>The translated index, else -1 if out of bounds.</returns>
-	internal int TranslateIndex(int i)
+	internal int TranslateIndex(long i)
 	{
 		if (i > 0 && i <= array.Count)
-			return i - 1;
+			return (int)i - 1;
 		else if (i < 0 && i >= -array.Count)
-			return array.Count + i;
+			return array.Count + (int)i;
 		else
 			return -1;
+	}
+
+	private bool TryConvertIndex(object index, out int converted, string method = null, bool inserting = false, string what = null)
+	{
+		var strict = Script.CompatReturnsUnsetForMissing;
+		var numeric = index.TryCoerceLong(out var value, allowFloat: !strict);
+		converted = -1;
+		if (numeric)
+			converted = inserting && (value == 0 || value == (long)array.Count + 1) ? array.Count : TranslateIndex(value);
+
+		if (converted >= 0)
+			return true;
+
+		if (!numeric && strict)
+		{
+			if (method != null)
+				_ = Errors.ExpectedTypeErrorOccurred("Integer", index);
+			else
+			{
+				Error error = new TypeError("Invalid index.", what, Error.FieldText(index));
+				if (Errors.ErrorOccurred(error)) throw error;
+			}
+		}
+		else if (method == null)
+			_ = Errors.InvalidIndexErrorOccurred(index, what);
+		else if (method != nameof(Has))
+			_ = Errors.InvalidParameterErrorOccurred(1, $"Array.Prototype.{method}", index);
+
+		return false;
 	}
 
 	/// <summary>
@@ -269,17 +298,12 @@ public class Array : KeysharpObject, I__Enum, IEnumerable<object>, IEnumerable<(
 	/// <exception cref="ValueError">A <see cref="ValueError"/> exception is thrown if Index is out of range.</exception>
 	public object Delete(object index)
 	{
-		_ = index.TryCoerceInt(out var ii);
-		var i = TranslateIndex(ii);
+		if (!TryConvertIndex(index, out var i, nameof(Delete)))
+			return DefaultObject;
 
-		if (i != -1)
-		{
-			var ob = array[i];
-			array[i] = null;
-			return ob ?? DefaultObject;
-		}
-		else
-			return Errors.InvalidParameterErrorOccurred(1, "Array.Prototype.Delete", index);
+		var ob = array[i];
+		array[i] = null;
+		return ob ?? DefaultObject;
 	}
 
 	/// <summary>
@@ -434,13 +458,10 @@ public class Array : KeysharpObject, I__Enum, IEnumerable<object>, IEnumerable<(
 	/// <exception cref="UnsetItemError">An <see cref="UnsetItemError"/> exception is thrown if the item is null and no defaults were supplied.</exception>
 	public object Get(object index, object @default = null)
 	{
-		object val;
-		_ = index.TryCoerceInt(out var i, 1);
+		if (!TryConvertIndex(index, out var i))
+			return DefaultObject;
 
-		if ((i = TranslateIndex(i)) != -1)
-			val = array[i];
-		else
-			return Errors.InvalidIndexErrorOccurred(index);
+		var val = array[i];
 
 		if (val != null)
 			return val;
@@ -473,15 +494,7 @@ public class Array : KeysharpObject, I__Enum, IEnumerable<object>, IEnumerable<(
 	/// </summary>
 	/// <param name="index">The index in the array to examine.</param>
 	/// <returns>1 if the index is valid and there is a valid value stored there, else 0.</returns>
-	public long Has(object index)
-	{
-		_ = index.TryCoerceInt(out var i, 1);
-
-		if ((i = TranslateIndex(i)) != -1)
-			return array[i] != null ? 1L : 0L;
-		else
-			return 0L;
-	}
+	public long Has(object index) => TryConvertIndex(index, out var i, nameof(Has)) && array[i] != null ? 1L : 0L;
 
 	/// <summary>
 	/// Implementation of <see cref="IList.IndexOf"/> which just calls IndexOf(value, 1).
@@ -538,24 +551,12 @@ public class Array : KeysharpObject, I__Enum, IEnumerable<object>, IEnumerable<(
 	{
 		var o = args;
 
-		if (o.Length > 1)
+		if (o.Length > 0)
 		{
-			int index;
-			_ = o[0].TryCoerceInt(out var i);
-
-			if (i == 0)//Can't use TranslateIndex() here because the index is slightly different for inserting.
-				index = array.Count;
-			else if (i > 0 && i <= array.Count + 1)
-				index = i - 1;
-			else if (i < 0 && i >= -array.Count)
-				index = array.Count + i;
-			else
-			{
-				_ = Errors.InvalidParameterErrorOccurred(1, "Array.Prototype.InsertAt", i);
+			if (!TryConvertIndex(o[0], out var index, nameof(InsertAt), inserting: true))
 				return DefaultObject;
-			}
 
-			for (i = 1; i < args.Length; i++)//Need to use values here and not o because the enumerator will make the elements into Tuples because of the special enumerator.
+			for (var i = 1; i < args.Length; i++)//Need to use values here and not o because the enumerator will make the elements into Tuples because of the special enumerator.
 				array.Insert(index++, args[i]);
 		}
 
@@ -694,11 +695,8 @@ public class Array : KeysharpObject, I__Enum, IEnumerable<object>, IEnumerable<(
 
 		if (o.Length > 0)
 		{
-			_ = args[0].TryCoerceInt(out var index);
-			int i;
-
-			if ((i = TranslateIndex(index)) == -1)
-				return Errors.InvalidParameterErrorOccurred(1, "Array.Prototype.RemoveAt", index);
+			if (!TryConvertIndex(args[0], out var i, nameof(RemoveAt)))
+				return DefaultObject;
 
 			if (o.Length > 1 && o[1] != null)
 			{
@@ -832,28 +830,11 @@ public class Array : KeysharpObject, I__Enum, IEnumerable<object>, IEnumerable<(
 	/// <exception cref="IndexError">An <see cref="IndexError"/> exception is thrown if index is zero or out of range.</exception>
 	public object this[object index]
 	{
-		get
-		{
-			_ = index.TryCoerceInt(out var i);
-
-			if ((i = TranslateIndex(i)) != -1)
-				// A Default the script defined stands in for an element that has no value, for __Item exactly as
-				// for Get. It cannot rescue an out-of-range index below: that still throws, as AutoHotkey documents.
-				return array[i] ?? Script.GetPropertyValueOrNull(this, "Default")
-					?? (Script.CompatReturnsUnsetForMissing ? null : Errors.UnsetItemErrorOccurred(index));
-			else
-				// An out-of-range index always throws IndexError, in both v2.0 and v2.1 mode (AHK alpha.30 Array::Invoke);
-				// only an in-range-but-unset *element* yields unset in v2.1 — see Array.Get.
-				return Errors.InvalidIndexErrorOccurred(index);
-		}
+		get => Get(index);
 		set
 		{
-			_ = index.TryCoerceInt(out var i);
-
-			if ((i = TranslateIndex(i)) != -1)
+			if (TryConvertIndex(index, out var i, what: "Array.Prototype.__Item.Set"))
 				array[i] = value;
-			else
-				_ = Errors.InvalidIndexErrorOccurred(index, "Array.Prototype.__Item.Set");
 		}
 	}
 

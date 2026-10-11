@@ -849,4 +849,59 @@ Assert(literalArr.Length == 1 && !literalArr.Has(1), A_LineNumber)
 ; An Array method called on a value of another type is a TypeError.
 Throws(() => Array.Prototype.Push.Call({}, 1), A_LineNumber, TypeError)
 
+; v2.0 accepts Float indices by truncating them, including numeric strings.
+legacyIndices := [10, 20, 30]
+AssertEq(legacyIndices[1.9], 10, A_LineNumber)
+AssertEq(legacyIndices.Get("2.9"), 20, A_LineNumber)
+Assert(legacyIndices.Has(-1.9), A_LineNumber)
+Throws(() => legacyIndices["bad"], A_LineNumber, IndexError)
+Throws(() => legacyIndices.Delete("bad"), A_LineNumber, ValueError)
+Assert(!legacyIndices.Has("bad"), A_LineNumber)
+
+strictIndexBlock := () {
+	#Requires AutoHotkey v2.1-alpha
+	return legacyIndices[1.0]
+}
+Throws(strictIndexBlock, A_LineNumber, TypeError)
+
+CheckIntegerIndices() {
+	#Requires AutoHotkey v2.1-alpha
+	indexed := [10, 20, 30]
+	LegacyNestedIndex() {
+		#Requires AutoHotkey v2.0
+		return indexed[1.9]
+	}
+	legacyIndexBlock := () {
+		#Requires AutoHotkey v2.0
+		return indexed[1.9]
+	}
+	AssertEq(LegacyNestedIndex(), 10, A_LineNumber)
+	AssertEq(legacyIndexBlock(), 10, A_LineNumber)
+	convertible := {ToString: (*) => "1"}
+	for badIndex in [1.0, 1.9, -1.0, "1.0", "1e0", "bad", "", {}, convertible] {
+		Throws(() => indexed[badIndex], A_LineNumber, TypeError)
+		Throws(() => indexed[badIndex] := 99, A_LineNumber, TypeError)
+		Throws(() => indexed.Get(badIndex, 99), A_LineNumber, TypeError)
+		Throws(() => indexed.Has(badIndex), A_LineNumber, TypeError)
+		Throws(() => indexed.Delete(badIndex), A_LineNumber, TypeError)
+		Throws(() => indexed.InsertAt(badIndex, 99), A_LineNumber, TypeError)
+		Throws(() => indexed.InsertAt(badIndex), A_LineNumber, TypeError)
+		Throws(() => indexed.RemoveAt(badIndex), A_LineNumber, TypeError)
+	}
+	Assert(indexed.Length == 3 && indexed[1] == 10 && indexed[2] == 20 && indexed[3] == 30, A_LineNumber)
+	AssertEq(indexed["  +1`t"], 10, A_LineNumber)
+	AssertEq(indexed.Get("0x2"), 20, A_LineNumber)
+	Assert(indexed.Has("-1"), A_LineNumber)
+	for badIndex in [0, 4, -4, 4294967297, -4294967295] {
+		Throws(() => indexed[badIndex], A_LineNumber, IndexError)
+		Throws(() => indexed.Get(badIndex, 99), A_LineNumber, IndexError)
+		Throws(() => indexed.Delete(badIndex), A_LineNumber, ValueError)
+		Throws(() => indexed.RemoveAt(badIndex), A_LineNumber, ValueError)
+		Assert(!indexed.Has(badIndex), A_LineNumber)
+	}
+	indexed.InsertAt("0", 40)
+	AssertEq(indexed[-1], 40, A_LineNumber)
+}
+CheckIntegerIndices()
+
 FileAppend "pass", "*"

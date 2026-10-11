@@ -5,15 +5,6 @@ namespace Keysharp.Parsing.Syntax
 {
 	/// <summary>
 	/// Hand-written recursive-descent / Pratt parser producing the strongly-typed AST.
-	///
-	/// Tracer-bullet scope: the full expression grammar (precedence taken from the authoritative
-	/// AHK v2 source — bitwise binds tighter than comparison), calls, member/index
-	/// access, fat-arrow lambdas, and the core statements (if/else, while, return, blocks,
-	/// local/global/static decls, function definitions).
-	///
-	/// Deliberately deferred (later increments): implicit space-concatenation, dynamic vars
-	/// (%...%), object/map literals, classes, switch/try/loop variants, hotkeys/directives,
-	/// and no-parentheses command-style calls.
 	/// </summary>
 	internal sealed partial class Parser
 	{
@@ -22,6 +13,7 @@ namespace Keysharp.Parsing.Syntax
 		private long _nextSourceOrder;
 		private bool _errorStdOut;
 		private readonly string _mainScriptPath;   // the compiled script's full path, or null for source text
+		private bool _inFunction;
 		private int _groupDepth;   // >0 inside ()/[] — newlines are insignificant
 		private int _exprDepth;    // recursion guard for ParseExpression (defensive cap against malformed/unsupported input)
 		private const int MaxExprDepth = 250;
@@ -57,7 +49,6 @@ namespace Keysharp.Parsing.Syntax
 			, ProcessArchitectureSymbol()
 		};
 		private Queue<IReadOnlyCollection<string>> _csharpDefineSnapshots;
-		public readonly List<string> Diagnostics = new();
 
 		private readonly string _includeDir;   // directory used to resolve relative #include paths (null => disabled)
 		// The default Windows and macOS file systems ignore case; Linux paths are case-sensitive.
@@ -66,7 +57,6 @@ namespace Keysharp.Parsing.Syntax
 		private readonly HashSet<string> _included = new(SourcePathComparer);   // #include dedup
 		private readonly Dictionary<string, string> _includedSources = new(SourcePathComparer);
 		private readonly List<int> _includeParents = [];   // see ProgramNode.IncludeParents
-		private int _includeDepth;             // current #include nesting depth (guards against circular #includeagain)
 		private const int MaxIncludeDepth = 100;
 
 		private static string ProcessArchitectureSymbol() => RuntimeInformation.ProcessArchitecture switch
@@ -88,28 +78,9 @@ namespace Keysharp.Parsing.Syntax
 				foreach (var d in defines) _ = _defines.Add(d);
 		}
 
-		private void LoadTokens(List<Token> tokens, IReadOnlyList<string> lexDiagnostics = null, string includeFile = null)
+		private void LoadTokens(List<Token> tokens, IReadOnlyList<string> lexDiagnostics = null, string includeFile = null, string scriptDir = null)
 		{
-			var outp = new List<Token>(tokens.Count);
-
-			// As AutoHotkey's /include: one file, included before the main script's first line as a plain #Include is.
-			if (!string.IsNullOrEmpty(includeFile))
-			{
-				includeFile = System.IO.Path.GetFullPath(includeFile);
-
-				if (!System.IO.File.Exists(includeFile))
-					throw new Keysharp.Builtins.ParseException($"--include file not found: {includeFile}");
-
-				if (_included.Add(includeFile))
-				{
-					var included = LexIncludedFile(includeFile, out var includedDiagnostics);
-					MarkInclusion(included, 0);
-					_ = Preprocess(included, System.IO.Path.GetDirectoryName(includeFile), includedDiagnostics, outp);
-					outp.Add(new Token(TokenKind.Newline, "\n", 0, 0, 0, 0, true, includeFile));
-				}
-			}
-
-			_t = Preprocess(tokens, _includeDir, lexDiagnostics, outp);
+			_t = Preprocess(tokens, lexDiagnostics, includeFile, scriptDir);
 			JoinContinuationLines(_t);
 		}
 
@@ -118,7 +89,7 @@ namespace Keysharp.Parsing.Syntax
 		// #include resolves to the real file (not just its directory) and diagnostics name the file. mainScriptPath is the
 		// compiled script's path, for %A_ScriptFullPath% and %A_ScriptName%; it is null when that script is source text,
 		// including for the module files such a script imports. includeFile is the file --include names.
-		public static (ProgramNode program, List<string> diagnostics) ParseWithDiagnostics(string source, string includeDir = null, string scriptFile = null, IEnumerable<string> defines = null, string mainScriptPath = null, string includeFile = null)
+		public static (ProgramNode program, List<string> diagnostics) ParseWithDiagnostics(string source, string includeDir = null, string scriptFile = null, IEnumerable<string> defines = null, string mainScriptPath = null, string includeFile = null, string scriptDir = null)
 		{
 			var diags = new List<string>();
 			var parser = new Parser(includeDir, defines, mainScriptPath);
@@ -129,7 +100,7 @@ namespace Keysharp.Parsing.Syntax
 			{
 				var lexer = new Lexer(source, scriptFile);
 				var tokens = LexForParsing(lexer);
-				parser.LoadTokens(tokens, lexer.Diagnostics, includeFile);
+				parser.LoadTokens(tokens, lexer.Diagnostics, includeFile, scriptDir);
 				// Preprocessing has finished. Parse directives again in statement order so a later #ErrorStdOut cannot
 				// retroactively route an earlier syntax error.
 				parser._errorStdOut = false;
@@ -139,7 +110,7 @@ namespace Keysharp.Parsing.Syntax
 				prog.ErrorStdOut = parser._errorStdOut;
 				prog.IncludedSources = parser._includedSources;
 				prog.IncludeParents = parser._includeParents;
-				return (prog, parser.Diagnostics);
+				return (prog, diags);
 			}
 			catch (Keysharp.Builtins.ParseException ex)
 			{
@@ -181,7 +152,7 @@ namespace Keysharp.Parsing.Syntax
 				if (!parser.At(TokenKind.EOF))
 					parser.Error($"unexpected {parser.Got()} after the expression");
 
-				return (parser.Diagnostics.Count == 0 ? expr : null, parser.Diagnostics);
+				return (expr, diags);
 			}
 			catch (Keysharp.Builtins.ParseException ex)
 			{
@@ -232,14 +203,6 @@ namespace Keysharp.Parsing.Syntax
 			TokenKind.Newline => "end of line",
 			_ => $"'{Current.Text}'"
 		};
-
-		// A member name after `.` — an identifier or a numeric index (`match.0` accesses property "0").
-		private string ExpectMemberName(string ctx)
-		{
-			if (At(TokenKind.Identifier) || At(TokenKind.Number)) return Advance().Text;
-			Error($"expected a member name in {ctx} but found {Got()}");
-			return "«error»";
-		}
 
 		// Member access after a consumed `.`/`?.`. The member name is a run of adjacent parts: identifiers/numbers
 		// (literal text) and `%expr%` derefs. A run containing any deref is DYNAMIC (`obj.%x%`, `obj.a%x%b`) and the
@@ -364,7 +327,6 @@ namespace Keysharp.Parsing.Syntax
 
 		private Stmt ParseStatementCore(bool programScope)
 		{
-			SkipNewlines();
 			if (At(TokenKind.RemapSourceKey))
 			{
 				var src = Advance().Text;
@@ -443,6 +405,14 @@ namespace Keysharp.Parsing.Syntax
 			return At(TokenKind.LBrace) ? ParseBlock() : ParseStatement();
 		}
 
+		private T ParseCallable<T>(Func<T> parse)
+		{
+			var outer = _inFunction;
+			_inFunction = true;
+			try { return parse(); }
+			finally { _inFunction = outer; }
+		}
+
 		// Parses a control-flow header expression: a trailing `(…){` is the flow body, not an anon block fn.
 		private Expr ParseCondExpr()
 		{
@@ -473,12 +443,7 @@ namespace Keysharp.Parsing.Syntax
 			Advance(); // if
 			var cond = ParseCondExpr();
 			var then = ParseBodyStatement();
-			Stmt els = null;
-			var save = _pos;
-			SkipNewlines();
-			if (AtKeyword("else")) { Advance(); els = ParseBodyStatement(); }
-			else _pos = save;
-			return new IfStmt(cond, then, els);
+			return new IfStmt(cond, then, ParseOptionalElse());
 		}
 
 		private Stmt ParseWhile()
@@ -486,17 +451,19 @@ namespace Keysharp.Parsing.Syntax
 			Advance();
 			var cond = ParseCondExpr();
 			var body = ParseBodyStatement();
-			Expr until = null;
-			var save = _pos;
-			SkipNewlines();
-			if (AtKeyword("until")) { Advance(); until = ParseCondExpr(); }
-			else _pos = save;
-			return new WhileStmt(cond, body, until) { Else = ParseOptionalLoopElse() };
+			return new WhileStmt(cond, body, ParseOptionalUntil()) { Else = ParseOptionalElse() };
 		}
 
-		// A loop may be followed by `else { … }` (or `else <stmt>`), which runs iff the loop body never executed.
-		// Returns the else body or null (restoring position when no else is present).
-		private Stmt ParseOptionalLoopElse()
+		private Expr ParseOptionalUntil()
+		{
+			var save = _pos;
+			SkipNewlines();
+			if (AtKeyword("until")) { Advance(); return ParseCondExpr(); }
+			_pos = save;
+			return null;
+		}
+
+		private Stmt ParseOptionalElse()
 		{
 			var save = _pos;
 			SkipNewlines();
@@ -526,23 +493,11 @@ namespace Keysharp.Parsing.Syntax
 					if (!Match(TokenKind.Comma)) break;
 				}
 				var sbody = ParseBodyStatement();
-				var ssave = _pos;
-				SkipNewlines();
-				var sl = new SpecialLoopStmt(kind, args, sbody);
-				if (AtKeyword("until")) { Advance(); sl.Until = ParseCondExpr(); }
-				else _pos = ssave;
-				sl.Else = ParseOptionalLoopElse();
-				return sl;
+				return new SpecialLoopStmt(kind, args, sbody) { Until = ParseOptionalUntil(), Else = ParseOptionalElse() };
 			}
 			Expr count = (At(TokenKind.LBrace) || At(TokenKind.Newline) || At(TokenKind.EOF)) ? null : ParseCondExpr();
 			var body = ParseBodyStatement();
-			// Optional trailing `Until cond` (on its own line) turns the loop into a do-until.
-			Expr lpUntil = null;
-			var save = _pos;
-			SkipNewlines();
-			if (AtKeyword("until")) { Advance(); lpUntil = ParseCondExpr(); }
-			else _pos = save;
-			return new LoopStmt(count, body, lpUntil) { Else = ParseOptionalLoopElse() };
+			return new LoopStmt(count, body, ParseOptionalUntil()) { Else = ParseOptionalElse() };
 		}
 
 		// True when the token after a Loop sub-keyword starts an argument list (or ends the header), i.e. the
@@ -565,13 +520,7 @@ namespace Keysharp.Parsing.Syntax
 			else Advance();
 			var enumerable = ParseCondExpr();
 			if (paren) Expect(TokenKind.RParen, "for header");
-			var forStmt = new ForStmt(vars, enumerable, ParseBodyStatement());
-			var fsave = _pos;
-			SkipNewlines();
-			if (AtKeyword("until")) { Advance(); forStmt.Until = ParseCondExpr(); }
-			else _pos = fsave;
-			forStmt.Else = ParseOptionalLoopElse();
-			return forStmt;
+			return new ForStmt(vars, enumerable, ParseBodyStatement()) { Until = ParseOptionalUntil(), Else = ParseOptionalElse() };
 		}
 
 		// A for-loop variable, or null if omitted (e.g. `for (, v in arr)` discards the first value).
@@ -608,7 +557,7 @@ namespace Keysharp.Parsing.Syntax
 					Expect(TokenKind.Colon, "default");
 					defaultBody = ParseCaseBody();
 				}
-				else { Error($"expected 'case' or 'default' in switch but found {Got()}"); Advance(); }
+				else Error($"expected 'case' or 'default' in switch but found {Got()}");
 				SkipNewlines();
 			}
 			Expect(TokenKind.RBrace, "switch body");
@@ -882,7 +831,7 @@ namespace Keysharp.Parsing.Syntax
 				return new ImportDirective(args, module, alias, named, quoted, reExport);   // nameless `#import` — a no-op for the lowerer
 			// Preserve imports from a module literally named Export. The word is a modifier only when another module
 			// specifier follows it, rather than `{` or `as`.
-			if (toks.Count > 1 && toks[0].IsKeyword("Export")
+			if (!_inFunction && toks.Count > 1 && toks[0].IsKeyword("Export")
 				&& toks[1].LeadingWhitespace
 				&& toks[1].Kind != TokenKind.LBrace
 				&& !toks[1].IsKeyword("as"))
@@ -986,7 +935,7 @@ namespace Keysharp.Parsing.Syntax
 			if (IsFunctionDefinition()) return new HotkeyDef(triggers, null, (FunctionDecl)ParseFunctionDecl());
 			if (At(TokenKind.EOF) || At(TokenKind.HotkeyTrigger) || At(TokenKind.HotstringTrigger) || At(TokenKind.RemapSourceKey))
 				return new HotkeyDef(triggers, new Block(new List<Stmt>()), null);
-			return new HotkeyDef(triggers, ParseBodyStatement(), null);
+			return new HotkeyDef(triggers, ParseCallable(ParseBodyStatement), null);
 		}
 
 		// hotstring : HotstringTrigger (EOL HotstringTrigger)* WS* (Expansion | EOL? functionDeclaration | EOL? statement)
@@ -1009,178 +958,228 @@ namespace Keysharp.Parsing.Syntax
 			if (IsFunctionDefinition()) return new HotstringDef(triggers, null, null, (FunctionDecl)ParseFunctionDecl());
 			if (At(TokenKind.EOF) || At(TokenKind.HotkeyTrigger) || At(TokenKind.HotstringTrigger) || At(TokenKind.RemapSourceKey))
 				return new HotstringDef(triggers, "", null, null);
-			return new HotstringDef(triggers, null, ParseBodyStatement(), null);
+			return new HotstringDef(triggers, null, ParseCallable(ParseBodyStatement), null);
 		}
 
 		// ---- conditional-compilation preprocessor ----
-		// Resolves #if/#elif/#else/#endif and #define/#undef on the token stream BEFORE parsing, so a directive can
-		// split a single statement — the branches need not each be a whole statement:
-		//     if (
-		//     #if WINDOWS
-		//         cond1
-		//     #else
-		//         cond2
-		//     #endif
-		//     )
-		// Each directive still owns its own line, though: the condition is everything up to the newline, so the
-		// one-line form (`if (#if WINDOWS cond1 #else cond2 #endif)`) does NOT work — the first directive swallows
-		// the rest of the line. Only tokens in the active branch survive; the directive lines themselves are removed.
-		private List<Token> Preprocess(List<Token> src) => Preprocess(src, _includeDir, null);
-
-		// `includeDir` is the directory relative includes in THIS token stream resolve against (the main script dir, or
-		// an #included file's own dir for its nested includes). An included file's tokens go straight into its host's
-		// `outp` rather than through a list per nesting level.
-		private List<Token> Preprocess(List<Token> src, string includeDir, IReadOnlyList<string> lexDiagnostics, List<Token> outp = null)
+		// Includes and conditional branches are expanded before parsing, so a branch may split a statement.
+		// Each directive consumes its physical line; only active source tokens reach the parser.
+		private List<Token> Preprocess(List<Token> sourceTokens, IReadOnlyList<string> sourceDiagnostics, string includeFile, string scriptDir)
 		{
-			outp ??= new List<Token>(src.Count);
-			var lexDiagnostic = lexDiagnostics?.FirstOrDefault();
-			var (diagnosticLine, diagnosticColumn) = LexDiagnosticPosition(lexDiagnostic);
-			var diagnosticFile = src.Count > 0 ? src[0].File : null;
-
-			void ThrowLexDiagnostic(Token token)
+			scriptDir ??= System.IO.Path.GetDirectoryName(_mainScriptPath) ?? _includeDir;
+			var moduleFile = sourceTokens.Count > 0 ? sourceTokens[0].File : null;
+			var scopes = new Stack<(bool Definition, bool BackCompat)>();
+			var modules = new Dictionary<string, (bool BackCompat, string File, bool Set)>(StringComparer.OrdinalIgnoreCase)
 			{
-				if (lexDiagnostic != null && (token.Line > diagnosticLine
-						|| (token.Line == diagnosticLine && token.Column >= diagnosticColumn)))
-				{
-					if (Emit())
-						throw new Keysharp.Builtins.ParseException(PrefixDiagnostic(token.File ?? diagnosticFile, lexDiagnostic));
+				["__Init"] = (true, moduleFile, false)
+			};
+			var outp = new List<Token>(sourceTokens.Count);
+			var includeDepth = 0;
 
-					lexDiagnostic = null;
+			// --include precedes the main script and shares ordinary #Include deduplication.
+			if (!string.IsNullOrEmpty(includeFile))
+			{
+				includeFile = System.IO.Path.GetFullPath(includeFile);
+
+				if (!System.IO.File.Exists(includeFile))
+					throw new Keysharp.Builtins.ParseException($"--include file not found: {includeFile}");
+
+				if (_included.Add(includeFile))
+				{
+					var included = LexIncludedFile(includeFile, out var includedDiagnostics);
+					MarkInclusion(included, 0);
+					PreprocessFile(included, System.IO.Path.GetDirectoryName(includeFile), includedDiagnostics, true, "__Init");
+					outp.Add(new Token(TokenKind.Newline, "\n", 0, 0, 0, 0, true, includeFile));
 				}
 			}
-			// `dirIdx` indexes the opening #if's name token in `src`, so an unterminated block can point back at it
-			// (an index, not the Token itself: this tuple is copied on every Emit() below); `seenElse` rejects a
-			// duplicate #else and an #elif that follows one.
-			var stack = new Stack<(bool parentActive, bool taken, bool active, bool seenElse, int dirIdx)>();
-			// Every `active` pushed below already folds in its parent's, so the innermost frame answers for all of them.
-			bool Emit() => stack.Count == 0 || stack.Peek().active;
 
-			int i = 0;
-			var curDir = includeDir;   // base dir for THIS file's relative includes; `#Include <dir>` updates it
-			while (i < src.Count)
+			PreprocessFile(sourceTokens, _includeDir, sourceDiagnostics, true, "__Init");
+			return outp;
+
+			void PreprocessFile(List<Token> src, string includeDir, IReadOnlyList<string> lexDiagnostics, bool backCompat, string module)
 			{
-				var t = src[i];
-				ThrowLexDiagnostic(t);
-				// #include / #includeagain <file>: read the file, lex it, and splice its tokens in (recursing into the
-				// outer loop handles nested includes). Plain #include dedups already-included files; #includeagain doesn't.
-				if (_includeDir != null && t.Kind == TokenKind.Hash && i + 1 < src.Count
-					&& (src[i + 1].IsKeyword("include") || src[i + 1].IsKeyword("includeagain")) && Emit())
+				var lexDiagnostic = lexDiagnostics?.FirstOrDefault();
+				var (diagnosticLine, diagnosticColumn) = LexDiagnosticPosition(lexDiagnostic);
+				var diagnosticFile = src.Count > 0 ? src[0].File : null;
+
+				// Keep the opening directive's index for unterminated-block diagnostics.
+				var stack = new Stack<(bool parentActive, bool taken, bool active, bool seenElse, int dirIdx)>();
+				bool Emit() => stack.Count == 0 || stack.Peek().active;
+
+				int i = 0;
+				var curDir = includeDir;
+				while (i < src.Count)
 				{
-					bool again = src[i + 1].IsKeyword("includeagain");
-					int j = i + 2;
-					var fileToks = new List<Token>();
-					while (j < src.Count && src[j].Kind != TokenKind.Newline && src[j].Kind != TokenKind.EOF) fileToks.Add(src[j++]);
-					if (fileToks.Count == 0)   // continuation form: `#include` <nl> `(` file `)`
+					var t = src[i];
+					bool emit = Emit();
+					if (lexDiagnostic != null && (t.Line > diagnosticLine || (t.Line == diagnosticLine && t.Column >= diagnosticColumn)))
 					{
-						while (j < src.Count && src[j].Kind == TokenKind.Newline) j++;
-						if (j < src.Count && src[j].Kind == TokenKind.LParen)
-						{
-							j++;
-							while (j < src.Count && src[j].Kind != TokenKind.RParen && src[j].Kind != TokenKind.EOF)
-							{ if (src[j].Kind != TokenKind.Newline) fileToks.Add(src[j]); j++; }
-							if (j < src.Count && src[j].Kind == TokenKind.RParen) j++;
-						}
+						if (emit)
+							throw new Keysharp.Builtins.ParseException(PrefixDiagnostic(t.File ?? diagnosticFile, lexDiagnostic));
+						lexDiagnostic = null;
 					}
-					var included = ResolveAndLexInclude(fileToks, again, curDir, t, out var includedDir,
-						out var includedPath, out var dirChange, out var includedDiagnostics);
-					// `#Include <dir>` names a directory rather than a file: it changes the base directory for the rest
-					// of THIS file's relative includes and splices no content. Otherwise recursively preprocess the
-					// included tokens against THEIR directory (so nested relative includes resolve correctly) and emit.
-					if (dirChange != null) curDir = dirChange;
-					else if (included != null && Emit())
+					var nameTok = t.Kind == TokenKind.Hash && i + 1 < src.Count ? src[i + 1] : default;
+					if (_includeDir != null && emit && (nameTok.IsKeyword("include") || nameTok.IsKeyword("includeagain")))
 					{
-						// Depth-guard the recursion so a circular #includeagain (which, unlike #include, never dedups)
-						// fails with a clean error instead of overflowing the stack and crashing the process.
-						if (++_includeDepth > MaxIncludeDepth)
+						int j = i + 2;
+						var fileToks = new List<Token>();
+						while (j < src.Count && src[j].Kind != TokenKind.Newline && src[j].Kind != TokenKind.EOF) fileToks.Add(src[j++]);
+						if (fileToks.Count == 0)   // continuation form: `#include` <nl> `(` file `)`
+						{
+							while (j < src.Count && src[j].Kind == TokenKind.Newline) j++;
+							if (j < src.Count && src[j].Kind == TokenKind.LParen)
+							{
+								j++;
+								while (j < src.Count && src[j].Kind != TokenKind.RParen && src[j].Kind != TokenKind.EOF)
+								{ if (src[j].Kind != TokenKind.Newline) fileToks.Add(src[j]); j++; }
+								if (j < src.Count && src[j].Kind == TokenKind.RParen) j++;
+							}
+						}
+						i = j;
+						var path = ResolveIncludePath(fileToks, curDir, t, backCompat, out var ignoreMissing);
+						if (path == null) continue;
+						if (System.IO.Directory.Exists(path))
+						{
+							curDir = path;
+							continue;
+						}
+						// Missing *i paths also count as included; #IncludeAgain can retry them.
+						if (!_included.Add(path) && !nameTok.IsKeyword("includeagain")) continue;
+						if (!System.IO.File.Exists(path))
+						{
+							if (!ignoreMissing) throw IncludeNotFound(t, path);
+							continue;
+						}
+						var included = LexIncludedFile(path, out var diagnostics);
+						if (++includeDepth > MaxIncludeDepth)
 							throw new Keysharp.Builtins.ParseException(Diagnostic(t,
 								"Too many nested #include directives (possible circular #includeagain)"));
-						outp.Add(new Token(TokenKind.Newline, "\n", 0, 0, 0, 0, true, includedPath));   // keep line separation from the host
+						outp.Add(new Token(TokenKind.Newline, "\n", 0, 0, 0, 0, true, path));
 						MarkInclusion(included, t.Inclusion);
-						_ = Preprocess(included, includedDir, includedDiagnostics, outp);
-						_includeDepth--;
+						PreprocessFile(included, System.IO.Path.GetDirectoryName(path), diagnostics, backCompat, module);
+						includeDepth--;
+						continue;
 					}
-					i = j;
-					continue;
+					if (nameTok.Kind == TokenKind.Identifier && IsCondDirective(nameTok.Text))
+					{
+						var name = nameTok.Text;
+						int j = i + 2;
+						var cond = new List<Token>();
+						while (j < src.Count && src[j].Kind != TokenKind.Newline && src[j].Kind != TokenKind.EOF) cond.Add(src[j++]);
+						// Validate conditions even when their branch is inactive.
+						if (nameTok.IsKeyword("if"))
+						{ bool c = EvalCond(cond, nameTok); bool v = emit && c; stack.Push((emit, v, v, false, i + 1)); }
+						else if (nameTok.IsKeyword("define") || nameTok.IsKeyword("undef"))
+						{
+							if (emit && cond.Count > 0 && cond[0].Kind == TokenKind.Identifier)
+							{
+								if (nameTok.IsKeyword("define")) _defines.Add(cond[0].Text);
+								else _defines.Remove(cond[0].Text);
+							}
+						}
+						else
+						{
+							if (stack.Count == 0) ErrorAt(nameTok, $"#{name} without a matching #If");
+							if (nameTok.IsKeyword("elif"))
+							{
+								var f = stack.Pop();
+								if (f.seenElse) ErrorAt(nameTok, "#ElIf after #Else");
+								bool c = EvalCond(cond, nameTok); bool v = f.parentActive && !f.taken && c;
+								stack.Push((f.parentActive, f.taken || v, v, false, f.dirIdx));
+							}
+							else
+							{
+								bool isElse = nameTok.IsKeyword("else");
+								if (cond.Count > 0)
+									ErrorAt(cond[0], $"#{name} takes no condition" + (isElse ? " (did you mean #ElIf?)" : ""));
+								var f = stack.Pop();
+								if (isElse)
+								{
+									if (f.seenElse) ErrorAt(nameTok, "duplicate #Else");
+									stack.Push((f.parentActive, true, f.parentActive && !f.taken, true, f.dirIdx));
+								}
+							}
+						}
+						i = j;   // leave the trailing newline to be emitted normally, preserving line separation
+						continue;
+					}
+					if (emit)
+					{
+						if (t.Kind == TokenKind.LBrace)
+							scopes.Push((BeginsDefinitionBlock(src, i), backCompat));
+						else if (t.Kind == TokenKind.RBrace && scopes.TryPop(out var scope) && scope.Definition)
+							backCompat = scope.BackCompat;
+						if (i + 2 < src.Count && nameTok.IsKeyword("requires") && RequiresBackCompat(src[i + 2].Text) is { } compatible)
+						{
+							backCompat = compatible;
+							var mode = modules[module];
+							if (!mode.Set && SourcePathComparer.Equals(mode.File, t.File) && !scopes.Any(scope => scope.Definition))
+								modules[module] = (compatible, mode.File, true);
+						}
+						else if (i + 2 < src.Count && nameTok.IsKeyword("module"))
+						{
+							var argument = src[i + 2].Text;
+							if (argument.Equals("__Main", StringComparison.OrdinalIgnoreCase) && SourcePathComparer.Equals(moduleFile, _mainScriptPath)) argument = "__Init";
+							if (!modules.TryGetValue(argument, out var mode))
+								modules[argument] = mode = (modules["__Init"].BackCompat, t.File, false);
+							module = argument;
+							backCompat = mode.BackCompat;
+						}
+
+						if (nameTok.IsKeyword("errorstdout"))
+							_errorStdOut = true;
+
+						if (nameTok.IsKeyword("csharp"))
+							(_csharpDefineSnapshots ??= new()).Enqueue([.. _defines]);
+
+						outp.Add(t);
+					}
+					i++;
 				}
-				if (t.Kind == TokenKind.Hash && i + 1 < src.Count && src[i + 1].Kind == TokenKind.Identifier && IsCondDirective(src[i + 1].Text))
+				if (lexDiagnostic != null && Emit())
+					throw new Keysharp.Builtins.ParseException(PrefixDiagnostic(diagnosticFile, lexDiagnostic));
+				if (stack.Count > 0)
 				{
-					var nameTok = src[i + 1];
-					var name = nameTok.Text;
-					int j = i + 2;
-					var cond = new List<Token>();
-					while (j < src.Count && src[j].Kind != TokenKind.Newline && src[j].Kind != TokenKind.EOF) cond.Add(src[j++]);
-					bool emit = Emit();
-					// Every closing/continuing directive needs an open #if to act on; the message echoes what was written.
-					void RequireOpenIf() { if (stack.Count == 0) ErrorAt(nameTok, $"#{name} without a matching #If"); }
-
-					// #Else/#EndIf take no condition, and quietly dropping one is the very failure this grammar is
-					// strict to avoid: `#else OSX` reads as "the OSX case" but compiles its block on every platform.
-					void RejectCondition()
-					{
-						if (cond.Count > 0)
-							ErrorAt(cond[0], $"#{name} takes no condition"
-								   + (name.Equals("else", System.StringComparison.OrdinalIgnoreCase) ? " (did you mean #ElIf?)" : ""));
-					}
-
-					// EvalCond is called before being AND-ed rather than short-circuited into the result, so a dead
-					// branch's condition is still validated — a malformed one is then caught on every platform, not
-					// only on the platform that happens to take that branch.
-					if (name.Equals("if", System.StringComparison.OrdinalIgnoreCase))
-					{ bool c = EvalCond(cond, nameTok); bool v = emit && c; stack.Push((emit, v, v, false, i + 1)); }
-					else if (name.Equals("elif", System.StringComparison.OrdinalIgnoreCase))
-					{
-						RequireOpenIf();
-						var f = stack.Pop();
-						if (f.seenElse) ErrorAt(nameTok, "#ElIf after #Else");
-						bool c = EvalCond(cond, nameTok); bool v = f.parentActive && !f.taken && c;
-						stack.Push((f.parentActive, f.taken || v, v, false, f.dirIdx));
-					}
-					else if (name.Equals("else", System.StringComparison.OrdinalIgnoreCase))
-					{
-						RequireOpenIf();
-						RejectCondition();
-						var f = stack.Pop();
-						if (f.seenElse) ErrorAt(nameTok, "duplicate #Else");
-						stack.Push((f.parentActive, true, f.parentActive && !f.taken, true, f.dirIdx));
-					}
-					else if (name.Equals("endif", System.StringComparison.OrdinalIgnoreCase))
-					{
-						RequireOpenIf();
-						RejectCondition();
-						stack.Pop();
-					}
-					else if (name.Equals("define", System.StringComparison.OrdinalIgnoreCase))
-					{ if (emit && cond.Count > 0 && cond[0].Kind == TokenKind.Identifier) _defines.Add(cond[0].Text); }
-					else if (name.Equals("undef", System.StringComparison.OrdinalIgnoreCase))
-					{ if (emit && cond.Count > 0 && cond[0].Kind == TokenKind.Identifier) _defines.Remove(cond[0].Text); }
-					i = j;   // leave the trailing newline to be emitted normally, preserving line separation
-					continue;
+					var open = src[stack.Peek().dirIdx];
+					ErrorAt(open, $"#{open.Text} without a matching #EndIf");
 				}
-				if (Emit())
-				{
-					if (t.Kind == TokenKind.Hash && i + 1 < src.Count
-						&& src[i + 1].IsKeyword("errorstdout"))
-						_errorStdOut = true;
-
-					if (t.Kind == TokenKind.Hash && i + 1 < src.Count && src[i + 1].IsKeyword("csharp"))
-						(_csharpDefineSnapshots ??= new()).Enqueue([.. _defines]);
-
-					outp.Add(t);
-				}
-				i++;
 			}
-			if (lexDiagnostic != null && Emit())
-				throw new Keysharp.Builtins.ParseException(PrefixDiagnostic(diagnosticFile, lexDiagnostic));
-			if (stack.Count > 0)   // innermost unterminated block; without this its excluded region silently eats the rest of the file
+
+			string ResolveIncludePath(List<Token> fileToks, string baseDir, Token directive, bool backCompat, out bool ignoreMissing)
 			{
-				var open = src[stack.Peek().dirIdx];
-				ErrorAt(open, $"#{open.Text} without a matching #EndIf");
+				ignoreMissing = false;
+				if (fileToks.Count == 0) return null;
+				string file;
+				// The lexer takes the rest of the line as one token; only the continuation-section form arrives as code.
+				if (fileToks.Count == 1)
+					file = fileToks[0].Text;
+				else
+				{
+					var sb = new System.Text.StringBuilder();
+					for (int k = 0; k < fileToks.Count; k++) { if (k > 0 && fileToks[k].LeadingWhitespace) sb.Append(' '); sb.Append(fileToks[k].Text); }
+					file = sb.ToString();
+				}
+				// As in AutoHotkey: a matching pair of quote marks around the whole argument is dropped, then a leading "*i"
+				// and the one space or tab after it mean "ignore the file if it cannot be read".
+				file = file.Trim();
+				if (file.Length >= 2 && file[0] is '"' or '\'' && file[^1] == file[0])
+					file = file[1..^1];
+				ignoreMissing = file.Length > 2 && file[0] == '*' && file[1] is 'i' or 'I' && file[2] is ' ' or '\t';
+				if (ignoreMissing)
+					file = file[3..];
+				// Library names are literal; ordinary paths expand built-in variables.
+				if (file.Length >= 2 && file[0] == '<' && file[^1] == '>')
+				{
+					var path = FindLibraryFile(file[1..^1].Trim(), scriptDir, libExts,
+						directive.File == null ? baseDir : System.IO.Path.GetDirectoryName(directive.File), moduleFile, _mainScriptPath, backCompat);
+					if (path == null && !ignoreMissing)
+						throw new Keysharp.Builtins.ParseException(Diagnostic(directive, $"#Include library not found: {file}"));
+					return path;
+				}
+				file = NormalizeDirectiveSeparators(ExpandPathVars(file, scriptDir, directive.File ?? _includeDir, _mainScriptPath));
+				try { return System.IO.Path.GetFullPath(System.IO.Path.IsPathRooted(file) ? file : System.IO.Path.Combine(baseDir, file)); }
+				catch { if (ignoreMissing) return null; throw IncludeNotFound(directive, file); }
 			}
-			// The parser indexes off the trailing EOF token, so a stream that conditionals emptied still needs it.
-			// (Returning `src` instead would resurrect every token the conditionals just excluded — and an #included
-			// stream carries no EOF, so leaving it genuinely empty is the right answer there.)
-			if (outp.Count == 0 && src.Count > 0 && src[^1].Kind == TokenKind.EOF) outp.Add(src[^1]);
-			return outp;
 		}
 
 		private static (int Line, int Column) LexDiagnosticPosition(string diagnostic)
@@ -1193,67 +1192,6 @@ namespace Keysharp.Parsing.Syntax
 				&& int.TryParse(diagnostic.AsSpan(first + 1, second - first - 1), out var column)
 				? (line, column)
 				: (int.MaxValue, int.MaxValue);
-		}
-
-		// Reconstructs the include filename from its tokens, expands %BuiltInVar% references, and resolves it against
-		// the include dir, returning the included file's tokens (minus EOF). Returns null with `dirChange` set for the
-		// `#Include <dir>` directory form, and null for a deduped or *i-ignored file. A missing file/dir WITHOUT the
-		// *i flag throws, so a broken #include fails loudly instead of silently doing nothing.
-		private List<Token> ResolveAndLexInclude(List<Token> fileToks, bool again, string baseDir, Token directive,
-			out string includedDir, out string includedPath, out string dirChange, out IReadOnlyList<string> lexDiagnostics)
-		{
-			includedDir = baseDir;
-			includedPath = null;
-			dirChange = null;
-			lexDiagnostics = null;
-			if (fileToks.Count == 0) return null;
-			string file;
-			// The lexer takes the rest of the line as one token; only the continuation-section form arrives as code.
-			if (fileToks.Count == 1)
-				file = fileToks[0].Text;
-			else
-			{
-				var sb = new System.Text.StringBuilder();
-				for (int k = 0; k < fileToks.Count; k++) { if (k > 0 && fileToks[k].LeadingWhitespace) sb.Append(' '); sb.Append(fileToks[k].Text); }
-				file = sb.ToString();
-			}
-			// As in AutoHotkey: a matching pair of quote marks around the whole argument is dropped, then a leading "*i"
-			// and the one space or tab after it mean "ignore the file if it cannot be read".
-			file = file.Trim();
-			if (file.Length >= 2 && file[0] is '"' or '\'' && file[^1] == file[0])
-				file = file[1..^1];
-			bool ignoreMissing = file.Length > 2 && file[0] == '*' && file[1] is 'i' or 'I' && file[2] is ' ' or '\t';
-			if (ignoreMissing)
-				file = file[3..];
-			string path;
-			// Library form: `#include <Name>` searches the Lib folders for Name.ks/.ahk (no %var% expansion — AHK
-			// disallows variable references here). Everything else expands %BuiltInVar% and resolves against the
-			// including file's directory (baseDir) so nested relative includes work; %A_ScriptDir% is the MAIN dir.
-			if (file.Length >= 2 && file[0] == '<' && file[^1] == '>')
-			{
-				path = FindLibraryFile(file.Substring(1, file.Length - 2).Trim());
-				if (path == null)
-				{
-					if (ignoreMissing) return null;
-					throw new Keysharp.Builtins.ParseException(Diagnostic(directive, $"#Include library not found: {file}"));
-				}
-			}
-			else
-			{
-				// Built-in variables enclosed in percent signs are expanded (e.g. "%A_ScriptDir%\Lib"); a "%name%" that
-				// is not a recognized built-in is interpreted literally, matching AutoHotkey.
-				file = NormalizeDirectiveSeparators(ExpandIncludeVars(file, directive));   // '\' separates on every platform
-				try { path = System.IO.Path.GetFullPath(System.IO.Path.IsPathRooted(file) ? file : System.IO.Path.Combine(baseDir, file)); }
-				catch { if (ignoreMissing) return null; throw IncludeNotFound(directive, file); }
-				// Directory form: change the base dir used by the rest of this file's relative includes (no content spliced).
-				if (System.IO.Directory.Exists(path)) { dirChange = path; return null; }
-			}
-			if (!again && !_included.Add(path)) return null;   // already included (plain #include dedups)
-			else if (again) _included.Add(path);
-			if (!System.IO.File.Exists(path)) { if (ignoreMissing) return null; throw IncludeNotFound(directive, path); }
-			includedDir = System.IO.Path.GetDirectoryName(path);   // nested includes in this file resolve against its dir
-			includedPath = path;
-			return LexIncludedFile(path, out lexDiagnostics);
 		}
 
 		// The lexer stamps each token with the file's full path for diagnostics and A_LineFile.
@@ -1334,22 +1272,10 @@ namespace Keysharp.Parsing.Syntax
 			tokens.RemoveRange(w, tokens.Count - w);
 		}
 
-		private static bool StartsOperatorDeclaration(List<Token> tokens, int index)
-		{
-			if (index + 1 >= tokens.Count || !Keysharp.Runtime.OperatorCatalog.Supports(tokens[index].Text) || tokens[index + 1].Kind != TokenKind.LParen)
-				return false;
-			var depth = 0;
-			for (var i = index + 1; i < tokens.Count; i++)
-			{
-				if (tokens[i].Kind == TokenKind.LParen) depth++;
-				else if (tokens[i].Kind == TokenKind.RParen && --depth == 0)
-				{
-					while (++i < tokens.Count && tokens[i].Kind == TokenKind.Newline) { }
-					return i < tokens.Count && tokens[i].Kind is TokenKind.FatArrow or TokenKind.LBrace;
-				}
-			}
-			return false;
-		}
+		private static bool StartsOperatorDeclaration(List<Token> tokens, int index) =>
+			index + 1 < tokens.Count && Keysharp.Runtime.OperatorCatalog.Supports(tokens[index].Text)
+			&& tokens[index + 1].Kind == TokenKind.LParen
+			&& KindAfterParen(tokens, index + 1) is TokenKind.FatArrow or TokenKind.LBrace;
 
 		// AutoHotkey's CONTINUATION_LINE_SYMBOLS less `++`, `--` and `::`, and the word operators unless something
 		// adjoins them (`and(x)` is a call). A word operator alone on its line, which AutoHotkey rejects, continues too.
@@ -1391,51 +1317,6 @@ namespace Keysharp.Parsing.Syntax
 		// File extensions tried for a library include, Keysharp-native first then AHK-compatible.
 		private static readonly string[] libExts = { ".ks", ".ahk" };
 
-		// Resolves `#include <Name>` to a Lib-folder file, mirroring AutoHotkey's search order: local (A_ScriptDir\Lib),
-		// the user libs (Documents\Keysharp\Lib then Documents\AutoHotkey\Lib), then the standard lib next to the
-		// executable (<exe>\Lib). Each directory is tried for Name.ks/.ahk; if nothing matches and Name contains an
-		// underscore, the part before the FIRST underscore is tried too (so <lib_func> resolves to lib). Returns the
-		// full path of the first existing candidate, or null.
-		private string FindLibraryFile(string name) => FindLibraryFile(name, _includeDir, libExts);
-
-		// Shared with #CSharp <Name>, whose library files use the same directories and fallback rule but a .cs extension.
-		internal static string FindLibraryFile(string name, string scriptDir, IReadOnlyList<string> extensions)
-		{
-			if (string.IsNullOrEmpty(name))
-				return null;
-
-			// A library name may carry a subdirectory (`<Aris/Author/Lib>`, `<Lib\UIA>`); both separators work anywhere.
-			name = NormalizeDirectiveSeparators(name);
-
-			var libDirs = new List<string>();
-
-			if (!string.IsNullOrEmpty(scriptDir))
-				libDirs.Add(System.IO.Path.Combine(scriptDir, "Lib"));
-
-			libDirs.AddRange(SharedLibraryDirs().Select(lib => lib.Dir));
-
-			// AHK searches every Lib dir for the full name before falling back to the underscore-truncated name.
-			var candidates = new List<string> { name };
-			var us = name.IndexOf('_');
-
-			if (us > 0)
-				candidates.Add(name.Substring(0, us));
-
-			foreach (var candidate in candidates)
-				foreach (var dir in libDirs)
-					foreach (var ext in extensions)
-					{
-						string p;
-						try { p = System.IO.Path.GetFullPath(System.IO.Path.Combine(dir, candidate + ext)); }
-						catch { continue; }   // invalid chars in the name -> not a match
-
-						if (System.IO.File.Exists(p))
-							return p;
-					}
-
-			return null;
-		}
-
 		// The Lib folders searched after the script's own: the user libraries, then the standard library beside the
 		// executable. Compiled output names a file in one by its marker rather than by its path.
 		internal static IEnumerable<(string Dir, string Marker)> SharedLibraryDirs()
@@ -1464,10 +1345,6 @@ namespace Keysharp.Parsing.Syntax
 			"A_ScriptDir", "A_ScriptFullPath", "A_ScriptName", "A_Space", "A_StartMenu", "A_StartMenuCommon",
 			"A_Startup", "A_StartupCommon", "A_Tab", "A_Temp", "A_UserName", "A_WinDir"
 		};
-
-		// Expands %BuiltInVar% references in an #include path. A_ScriptDir is the main-script dir; A_LineFile is the
-		// directive's own file. Delegates to the shared ExpandPathVars (also used by the #import search path).
-		private string ExpandIncludeVars(string s, Token directive) => ExpandPathVars(s, _includeDir, directive.File ?? _includeDir, _mainScriptPath);
 
 		// Expands %BuiltInVar% references in a path string. The script's own variables come from the caller (the parse
 		// context), which is the script being compiled, whatever script is running; the rest come from the Accessors
@@ -1524,79 +1401,75 @@ namespace Keysharp.Parsing.Syntax
 		private bool EvalCond(List<Token> toks, Token dir)
 		{
 			if (toks.Count == 0) ErrorAt(dir, $"#{dir.Text} requires a condition");
-			int p = 0;
-			_condDepth = 0;
-			var v = EvalCondOr(toks, ref p, dir);
+			int p = 0, depth = 0;
+			var result = Or();
 			if (p < toks.Count) ErrorAt(toks[p], CondErr(dir, toks[p]));
-			return v;
+			return result;
+
+			bool Or()
+			{
+				var v = And();
+				while (p < toks.Count && (toks[p].Kind == TokenKind.LogicalOr || toks[p].IsKeyword("or"))) { p++; v = And() || v; }
+				return v;
+			}
+
+			bool And()
+			{
+				var v = Unary();
+				while (p < toks.Count && (toks[p].Kind == TokenKind.LogicalAnd || toks[p].IsKeyword("and"))) { p++; v = Unary() && v; }
+				return v;
+			}
+
+			bool Unary()
+			{
+				if (p >= toks.Count) { ErrorAt(dir, $"incomplete #{dir.Text} condition"); return false; }
+				if (++depth > MaxCondDepth) ErrorAt(toks[p], $"#{dir.Text} condition is nested too deeply");
+
+				try
+				{
+					if (toks[p].Kind == TokenKind.Not || toks[p].IsKeyword("not")) { p++; return !Unary(); }
+					if (toks[p].Kind == TokenKind.LParen)
+					{
+						p++;
+						var v = Or();
+						if (p < toks.Count && toks[p].Kind == TokenKind.RParen) p++;
+						else ErrorAt(dir, $"missing ')' in the #{dir.Text} condition");
+						return v;
+					}
+					// Parse source literals invariantly. Only zero is false; an overflowing literal cannot be zero.
+					if (toks[p].Kind == TokenKind.Number)
+					{
+						var r = toks[p++].Text;
+						return r.StartsWith("0x", System.StringComparison.OrdinalIgnoreCase)
+							   ? !long.TryParse(r.AsSpan(2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var hex) || hex != 0
+							   : !double.TryParse(r, NumberStyles.Float, CultureInfo.InvariantCulture, out var num) || num != 0;
+					}
+
+					if (toks[p].Kind == TokenKind.Identifier)
+					{
+						// A defined symbol wins over the true/false literals. Symbols are case-insensitive here, so
+						// `#define FALSE` names the same thing as the literal `false`; letting the literal win would
+						// silently flip a branch that used to be taken. Only when nothing defines the name do they read
+						// as the value keywords they are everywhere else, so `#if true` keeps its block.
+						var s = toks[p++].Text;
+						return _defines.Contains(s) || s.Equals(Keywords.TrueTxt, System.StringComparison.OrdinalIgnoreCase);
+					}
+
+					ErrorAt(toks[p], CondErr(dir, toks[p]));
+					return false;
+				}
+				finally { depth--; }
+			}
 		}
 
 		// Recursion guard for the condition grammar, mirroring MaxExprDepth for expressions. Conditions are evaluated
 		// even in excluded branches, so without this a deeply parenthesized one anywhere in a file — including in dead
 		// code the script never uses — overflows the stack, and a StackOverflowException cannot be caught and turned
 		// into a diagnostic: the whole process dies with nothing the user can act on.
-		private int _condDepth;
 		private const int MaxCondDepth = 250;
 
 		private static string CondErr(Token dir, Token t) => $"unexpected '{t.Text}' in the #{dir.Text} condition "
 			+ "(only defined symbols, true/false, integers, !, &&, ||, and parentheses are supported)";
-
-		private bool EvalCondOr(List<Token> t, ref int p, Token dir)
-		{
-			var v = EvalCondAnd(t, ref p, dir);
-			while (p < t.Count && (t[p].Kind == TokenKind.LogicalOr || t[p].IsKeyword("or"))) { p++; v = EvalCondAnd(t, ref p, dir) || v; }
-			return v;
-		}
-
-		private bool EvalCondAnd(List<Token> t, ref int p, Token dir)
-		{
-			var v = EvalCondUnary(t, ref p, dir);
-			while (p < t.Count && (t[p].Kind == TokenKind.LogicalAnd || t[p].IsKeyword("and"))) { p++; v = EvalCondUnary(t, ref p, dir) && v; }
-			return v;
-		}
-
-		private bool EvalCondUnary(List<Token> t, ref int p, Token dir)
-		{
-			if (p >= t.Count) { ErrorAt(dir, $"incomplete #{dir.Text} condition"); return false; }
-			if (++_condDepth > MaxCondDepth) ErrorAt(t[p], $"#{dir.Text} condition is nested too deeply");
-
-			try
-			{
-				if (t[p].Kind == TokenKind.Not || t[p].IsKeyword("not")) { p++; return !EvalCondUnary(t, ref p, dir); }
-				if (t[p].Kind == TokenKind.LParen)
-				{
-					p++;
-					var v = EvalCondOr(t, ref p, dir);
-					if (p < t.Count && t[p].Kind == TokenKind.RParen) p++;
-					else ErrorAt(dir, $"missing ')' in the #{dir.Text} condition");
-					return v;
-				}
-				// A numeric literal is false only when its VALUE is zero: comparing the text against "0" made 0x0 and
-				// 00 true. Parsed invariantly because this is source text, and a literal too large for the type fails
-				// to parse — which is certainly not zero, hence the leading `!`.
-				if (t[p].Kind == TokenKind.Number)
-				{
-					var r = t[p++].Text;
-					return r.StartsWith("0x", System.StringComparison.OrdinalIgnoreCase)
-						   ? !long.TryParse(r.AsSpan(2), NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var hex) || hex != 0
-						   : !double.TryParse(r, NumberStyles.Float, CultureInfo.InvariantCulture, out var num) || num != 0;
-				}
-
-				if (t[p].Kind == TokenKind.Identifier)
-				{
-					// A defined symbol wins over the true/false literals. Symbols are case-insensitive here, so
-					// `#define FALSE` names the same thing as the literal `false`; letting the literal win would
-					// silently flip a branch that used to be taken. Only when nothing defines the name do they read
-					// as the value keywords they are everywhere else, so `#if true` keeps its block.
-					var s = t[p++].Text;
-					return _defines.Contains(s) || s.Equals(Keywords.TrueTxt, System.StringComparison.OrdinalIgnoreCase);
-				}
-
-				ErrorAt(t[p], CondErr(dir, t[p]));
-				return false;
-			}
-			finally { _condDepth--; }
-		}
 
 		private Stmt ParseThrow()
 		{
@@ -1750,9 +1623,9 @@ namespace Keysharp.Parsing.Syntax
 					SkipNewlines();
 					ClassMethod method;
 					if (Match(TokenKind.FatArrow))
-						method = new ClassMethod(symbol, ps, null, ParseExpression(1), isStatic, true);
+						method = new ClassMethod(symbol, ps, null, ParseCallable(() => ParseExpression(1)), isStatic, true);
 					else
-						method = new ClassMethod(symbol, ps, ParseBlock(), null, isStatic, true);
+						method = new ClassMethod(symbol, ps, ParseCallable(ParseBlock), null, isStatic, true);
 					methods.Add(method);
 					operatorTokens.Add(method, symbolToken);
 				}
@@ -1762,9 +1635,9 @@ namespace Keysharp.Parsing.Syntax
 					var ps = ParseParamList();
 					SkipNewlines();
 					if (Match(TokenKind.FatArrow))
-						methods.Add(new ClassMethod(mname, ps, null, ParseExpression(1), isStatic));
+						methods.Add(new ClassMethod(mname, ps, null, ParseCallable(() => ParseExpression(1)), isStatic));
 					else
-						methods.Add(new ClassMethod(mname, ps, ParseBlock(), null, isStatic));
+						methods.Add(new ClassMethod(mname, ps, ParseCallable(ParseBlock), null, isStatic));
 				}
 				else if (At(TokenKind.Identifier))
 				{
@@ -1800,7 +1673,7 @@ namespace Keysharp.Parsing.Syntax
 						}
 						else if (Match(TokenKind.FatArrow))
 						{
-							properties.Add(new ClassProperty(fname, indexParams, null, ParseExpression(1), null, null, isStatic));
+							properties.Add(new ClassProperty(fname, indexParams, null, ParseCallable(() => ParseExpression(1)), null, null, isStatic));
 							break;
 						}
 						else if (At(TokenKind.Colon))   // typed struct field `name : Type [:= init]`
@@ -1899,8 +1772,8 @@ namespace Keysharp.Parsing.Syntax
 			while (!At(TokenKind.RBrace) && !At(TokenKind.EOF))
 			{
 				var p = _pos;
-				if (AtKeyword("get")) { Advance(); if (Match(TokenKind.FatArrow)) getArrow = ParseExpression(1); else { SkipNewlines(); getBody = ParseBlock(); } }
-				else if (AtKeyword("set")) { Advance(); if (Match(TokenKind.FatArrow)) setArrow = ParseExpression(1); else { SkipNewlines(); setBody = ParseBlock(); } }
+				if (AtKeyword("get")) { Advance(); if (Match(TokenKind.FatArrow)) getArrow = ParseCallable(() => ParseExpression(1)); else { SkipNewlines(); getBody = ParseCallable(ParseBlock); } }
+				else if (AtKeyword("set")) { Advance(); if (Match(TokenKind.FatArrow)) setArrow = ParseCallable(() => ParseExpression(1)); else { SkipNewlines(); setBody = ParseCallable(ParseBlock); } }
 				else Error($"expected 'get' or 'set' in property but found {Got()}");
 				if (_pos == p) Advance();
 				SkipNewlines();
@@ -1979,16 +1852,7 @@ namespace Keysharp.Parsing.Syntax
 			var named = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase);
 			while (!At(TokenKind.Newline) && !At(TokenKind.EOF) && !At(TokenKind.RBrace))
 			{
-				if (At(TokenKind.Comma))
-				{
-					if (AnyNamed(args)) Error("an omitted argument cannot follow a named argument");
-					args.Add(new Argument(null, false)); Advance(); SkipNewlines(); continue;
-				}
-				var name = TryTakeArgName(null, named);   // `MsgBox "text", Options: "OK"`
-				var ex = ParseExpression(1);
-				var nameExpr = name == null ? TryTakeDynamicArgName(null, ref ex) : null;
-				var spread = Match(TokenKind.Star);
-				args.Add(NewArgSlot(ex, spread, name, nameExpr, args));
+				args.Add(ParseArgument(args, named));
 				if (!Match(TokenKind.Comma)) break;
 				SkipNewlines();
 			}
@@ -1999,18 +1863,8 @@ namespace Keysharp.Parsing.Syntax
 		{
 			if (!At(TokenKind.Identifier)) return false;
 			var lp = Peek(1);
-			if (lp.Kind != TokenKind.LParen || lp.LeadingWhitespace) return false; // name( must be adjacent
-
-			var i = _pos + 1;
-			var depth = 0;
-			for (; i < _t.Count; i++)
-			{
-				if (_t[i].Kind == TokenKind.LParen) depth++;
-				else if (_t[i].Kind == TokenKind.RParen) { depth--; if (depth == 0) { i++; break; } }
-			}
-			while (i < _t.Count && _t[i].Kind == TokenKind.Newline) i++;
-			if (i >= _t.Count) return false;
-			return _t[i].Kind == TokenKind.LBrace || _t[i].Kind == TokenKind.FatArrow;
+			return lp.Kind == TokenKind.LParen && !lp.LeadingWhitespace
+				&& KindAfterParen(_t, _pos + 1) is TokenKind.LBrace or TokenKind.FatArrow;
 		}
 
 		private Stmt ParseFunctionDecl(bool isStatic = false)
@@ -2021,8 +1875,8 @@ namespace Keysharp.Parsing.Syntax
 			var ps = ParseParamList();
 			SkipNewlines();
 			if (Match(TokenKind.FatArrow))
-				return new FunctionDecl(name, ps, null, ParseExpression(1), isStatic);
-			return new FunctionDecl(name, ps, ParseBlock(), null, isStatic);
+				return new FunctionDecl(name, ps, null, ParseCallable(() => ParseExpression(1)), isStatic);
+			return new FunctionDecl(name, ps, ParseCallable(ParseBlock), null, isStatic);
 		}
 
 		private List<Param> ParseParamList() => ParseParamList(TokenKind.LParen, TokenKind.RParen);
@@ -2069,11 +1923,11 @@ namespace Keysharp.Parsing.Syntax
 
 		private readonly struct Infix
 		{
-			public readonly int Prec; public readonly bool Right; public readonly bool Assign; public readonly bool Concat;
-			public Infix(int prec, bool right, bool assign, bool concat) { Prec = prec; Right = right; Assign = assign; Concat = concat; }
+			public readonly int Prec; public readonly bool Right; public readonly bool Assign;
+			public Infix(int prec, bool right = false, bool assign = false) { Prec = prec; Right = right; Assign = assign; }
 		}
 
-		private Infix GetInfix(Token t)
+		private static Infix GetInfix(Token t)
 		{
 			switch (t.Kind)
 			{
@@ -2084,42 +1938,42 @@ namespace Keysharp.Parsing.Syntax
 				case TokenKind.BitAndAssign: case TokenKind.BitOrAssign: case TokenKind.BitXorAssign:
 				case TokenKind.ShiftLeftAssign: case TokenKind.ShiftRightAssign: case TokenKind.ShiftRightLogicalAssign:
 				case TokenKind.NullCoalesceAssign:
-					return new Infix(1, true, true, false);
+					return new Infix(1, true, true);
 
-				case TokenKind.NullCoalesce: return new Infix(3, true, false, false);
-				case TokenKind.LogicalOr: return new Infix(4, false, false, false);
-				case TokenKind.LogicalAnd: return new Infix(5, false, false, false);
+				case TokenKind.NullCoalesce: return new Infix(3, true);
+				case TokenKind.LogicalOr: return new Infix(4);
+				case TokenKind.LogicalAnd: return new Infix(5);
 
 				case TokenKind.Equal: case TokenKind.Identity:
 				case TokenKind.NotEqual: case TokenKind.NotIdentity:
-					return new Infix(7, false, false, false);
+					return new Infix(7);
 
 				case TokenKind.Less: case TokenKind.Greater:
 				case TokenKind.LessEqual: case TokenKind.GreaterEqual:
-					return new Infix(8, false, false, false);
+					return new Infix(8);
 
 				case TokenKind.RegexMatch: case TokenKind.NotRegexMatch:
-					return new Infix(9, false, false, false);
+					return new Infix(9);
 
-				case TokenKind.Dot:   // any Dot reaching the binary loop is a spaced concat (adjacent dots
-					return new Infix(10, false, false, true);  // are consumed as member access in ParsePostfix)
+				case TokenKind.Dot:   // Member-access dots are consumed by ParsePostfix.
+					return new Infix(10);
 
-				case TokenKind.BitOr: return new Infix(11, false, false, false);
-				case TokenKind.BitXor: return new Infix(12, false, false, false);
-				case TokenKind.BitAnd: return new Infix(13, false, false, false);
+				case TokenKind.BitOr: return new Infix(11);
+				case TokenKind.BitXor: return new Infix(12);
+				case TokenKind.BitAnd: return new Infix(13);
 
 				case TokenKind.ShiftLeft: case TokenKind.ShiftRight: case TokenKind.ShiftRightLogical:
-					return new Infix(14, false, false, false);
+					return new Infix(14);
 
-				case TokenKind.Plus: case TokenKind.Minus: return new Infix(15, false, false, false);
-				case TokenKind.Star: case TokenKind.Slash: case TokenKind.IntDiv: return new Infix(16, false, false, false);
-				case TokenKind.Power: return new Infix(PrecPower, true, false, false);
+				case TokenKind.Plus: case TokenKind.Minus: return new Infix(15);
+				case TokenKind.Star: case TokenKind.Slash: case TokenKind.IntDiv: return new Infix(16);
+				case TokenKind.Power: return new Infix(PrecPower, true);
 
 				case TokenKind.Identifier:
-					if (t.IsKeyword("or")) return new Infix(4, false, false, false);
-					if (t.IsKeyword("and")) return new Infix(5, false, false, false);
+					if (t.IsKeyword("or")) return new Infix(4);
+					if (t.IsKeyword("and")) return new Infix(5);
 					if (t.IsKeyword("is") || t.IsKeyword("in") || t.IsKeyword("contains"))
-						return new Infix(6, false, false, false);
+						return new Infix(6);
 					return default;
 
 				default: return default;
@@ -2131,11 +1985,7 @@ namespace Keysharp.Parsing.Syntax
 			// Guard against unbounded recursion from unsupported/malformed continuations (e.g. non-string `(…)`
 			// continuation sections) so a bad parse fails cleanly instead of overflowing the stack.
 			if (_exprDepth >= MaxExprDepth)
-			{
 				Error("expression nested too deeply (unterminated grouping or unsupported continuation?)");
-				while (!At(TokenKind.Newline) && !At(TokenKind.EOF) && !At(TokenKind.RParen) && !At(TokenKind.RBracket) && !At(TokenKind.RBrace)) Advance();
-				return new NameExpr("«error»");
-			}
 			_exprDepth++;
 			// Positioned like a statement, so code the lowering runs outside any statement, such as a case value or a
 			// field initializer, still has a line to report.
@@ -2204,7 +2054,6 @@ namespace Keysharp.Parsing.Syntax
 				SkipNewlines();   // a dangling operator continues onto the next line
 				var rhs = ParseExpression(inf.Right ? inf.Prec : inf.Prec + 1);
 				left = inf.Assign ? AttachAssign(t.Text, left, rhs)
-					 : inf.Concat ? new BinaryExpr(".", left, rhs)
 					 : new BinaryExpr(t.Text, left, rhs);
 			}
 			return left;
@@ -2344,11 +2193,7 @@ namespace Keysharp.Parsing.Syntax
 					return new DerefExpr(nameExpr) { Line = t.Line, Column = t.Column, File = t.File };
 				default:
 					Error($"unexpected {Got()}");
-					// Resync to an expression/statement boundary so one bad token can't cascade via auto-concat.
-					Advance();
-					while (!At(TokenKind.Newline) && !At(TokenKind.EOF) && !At(TokenKind.RParen)
-						&& !At(TokenKind.RBracket) && !At(TokenKind.RBrace) && !At(TokenKind.Comma)) Advance();
-					return new NameExpr("«error»");
+					return null;
 			}
 		}
 
@@ -2395,23 +2240,10 @@ namespace Keysharp.Parsing.Syntax
 			{
 				while (true)
 				{
-					if (At(TokenKind.Comma) || At(close) || At(TokenKind.EOF))
-					{
-						if (AnyNamed(args)) Error("an omitted argument cannot follow a named argument");
-						args.Add(new Argument(null, false));   // omitted slot
-					}
-					else
-					{
-						// Named arguments are a call-parenthesis form only: inside '[]' a leading `name:` belongs to the
-						// map-creation literal, so allowing it here would blur two different meanings of the same syntax.
-						var name = TryTakeArgName(namedError, named);
-						var ex = ParseExpression(1);
-						var nameExpr = name == null ? TryTakeDynamicArgName(namedError, ref ex) : null;
-						args.Add(NewArgSlot(ex, Match(TokenKind.Star), name, nameExpr, args));
-					}
+					args.Add(ParseArgument(args, named, namedError));
 					SkipNewlines();
-					if (!At(TokenKind.Comma)) break;
-					Advance(); SkipNewlines();
+					if (!Match(TokenKind.Comma)) break;
+					SkipNewlines();
 					if (At(close)) break;   // trailing comma: no extra slot
 				}
 			}
@@ -2471,28 +2303,26 @@ namespace Keysharp.Parsing.Syntax
 			return name;
 		}
 
-		// Whether any slot parsed so far is named -- what the ordering rules below are stated against. Counting the
-		// args rather than the seen-names set is what keeps dynamic names, which contribute no name to that set,
-		// subject to the same rules.
-		private static bool AnyNamed(List<Argument> args)
+		private Argument ParseArgument(List<Argument> args, HashSet<string> names, string namedError = null)
 		{
-			foreach (var a in args)
-				if (a.IsNamed)
-					return true;
+			// Named arguments are trailing, including names resolved at runtime.
+			var followsNamed = args.Count > 0 && args[^1].IsNamed;
+			if (At(TokenKind.Comma) || At(TokenKind.EOF))
+			{
+				if (followsNamed) Error("an omitted argument cannot follow a named argument");
+				return new Argument(null, false);
+			}
 
-			return false;
-		}
-
-		// Named arguments always TRAIL the positional ones. Enforcing that here is what lets the runtime find them with a
-		// single test on the last element of the argument array, and keeps the reading order of a call site unambiguous.
-		private Argument NewArgSlot(Expr value, bool spread, string name, Expr nameExpr, List<Argument> args)
-		{
+			var name = TryTakeArgName(namedError, names);
+			var value = ParseExpression(1);
+			var nameExpr = name == null ? TryTakeDynamicArgName(namedError, ref value) : null;
+			var spread = Match(TokenKind.Star);
 			var named = name != null || nameExpr != null;
 
 			if (spread && named)
 				Error("a named argument cannot be spread with '*'");
 
-			if (!named && AnyNamed(args))
+			if (!named && followsNamed)
 				Error(spread ? "a spread argument cannot follow a named argument"
 							 : "a positional argument cannot follow a named argument");
 
@@ -2589,29 +2419,31 @@ namespace Keysharp.Parsing.Syntax
 
 		private bool IsFatArrowHead()
 		{
-			if (At(TokenKind.Identifier) && Peek(1).Kind == TokenKind.FatArrow) return true;   // a => …
-			// named arrow/block fn `name(params) => …` or `name(params) { … }` (name adjacent to its '(')
-			if (At(TokenKind.Identifier) && Peek(1).Kind == TokenKind.LParen && !Peek(1).LeadingWhitespace)
-				return ParenMatchFollowedBy(TokenKind.FatArrow, _pos + 1) || (!_inFlowCond && ParenMatchFollowedBy(TokenKind.LBrace, _pos + 1));
-			// anonymous `(params) => …`, or `(params) { … }` (the block form is ambiguous with a control-flow body)
-			if (At(TokenKind.LParen))
-				return ParenMatchFollowedBy(TokenKind.FatArrow, _pos) || (!_inFlowCond && ParenMatchFollowedBy(TokenKind.LBrace, _pos));
-			return false;
+			var i = _pos;
+			if (At(TokenKind.Identifier))
+			{
+				if (Peek(1).Kind == TokenKind.FatArrow) return true;
+				if (Peek(1).Kind != TokenKind.LParen || Peek(1).LeadingWhitespace) return false;
+				i++;
+			}
+			else if (!At(TokenKind.LParen)) return false;
+			var next = KindAfterParen(_t, i);
+			return next == TokenKind.FatArrow || (next == TokenKind.LBrace && !_inFlowCond);
 		}
 
-		private bool ParenMatchFollowedBy(TokenKind kind, int i)
+		private static TokenKind KindAfterParen(List<Token> tokens, int i)
 		{
 			// i is at '('
 			var depth = 0;
-			for (; i < _t.Count; i++)
+			for (; i < tokens.Count; i++)
 			{
-				var k = _t[i].Kind;
+				var k = tokens[i].Kind;
 				if (k == TokenKind.LParen) depth++;
 				else if (k == TokenKind.RParen) { depth--; if (depth == 0) { i++; break; } }
-				else if (k == TokenKind.EOF) return false;
+				else if (k == TokenKind.EOF) return TokenKind.EOF;
 			}
-			while (i < _t.Count && _t[i].Kind == TokenKind.Newline) i++;
-			return i < _t.Count && _t[i].Kind == kind;
+			while (i < tokens.Count && tokens[i].Kind == TokenKind.Newline) i++;
+			return i < tokens.Count ? tokens[i].Kind : TokenKind.EOF;
 		}
 
 		private Expr ParseFatArrow()
@@ -2628,9 +2460,9 @@ namespace Keysharp.Parsing.Syntax
 			else
 				ps = ParseParamList();
 			if (At(TokenKind.LBrace))   // anonymous block-bodied function `(params) { … }`
-				return new FatArrowExpr(ps, ParseBlock()) { Name = faName, Line = start.Line, Column = start.Column, File = start.File };
+				return new FatArrowExpr(ps, ParseCallable(ParseBlock)) { Name = faName, Line = start.Line, Column = start.Column, File = start.File };
 			Expect(TokenKind.FatArrow, "fat-arrow function");
-			return new FatArrowExpr(ps, ParseExpression(1)) { Name = faName, Line = start.Line, Column = start.Column, File = start.File };
+			return new FatArrowExpr(ps, ParseCallable(() => ParseExpression(1))) { Name = faName, Line = start.Line, Column = start.Column, File = start.File };
 		}
 
 		[GeneratedRegex("%([A-Za-z_][A-Za-z0-9_]*)%")]

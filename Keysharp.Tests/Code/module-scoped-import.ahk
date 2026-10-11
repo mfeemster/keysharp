@@ -111,13 +111,13 @@ FnShadow() {
 }
 AssertEq(FnShadow(), 5, A_LineNumber)
 
-; Aliases remain independent across functions, including exported scoped imports.
+; Aliases remain independent across functions.
 FnA() {
     #import KS { Cosh as Shared }
     return Shared(0)
 }
 FnB() {
-    #import Export KS { Sinh as Shared }
+    #import KS { Sinh as Shared }
     return Shared(0)
 }
 Assert(FnA() == 1 && FnB() == 0, A_LineNumber)

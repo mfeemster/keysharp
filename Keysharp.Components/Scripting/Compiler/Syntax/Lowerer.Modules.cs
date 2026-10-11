@@ -12,6 +12,7 @@ namespace Keysharp.Compilation.Syntax
 			public string Path;
 			public int Index;
 			public ModInfo Root;
+			public List<string> SearchPath;
 			public IReadOnlyList<int> IncludeParents = [];   // see ProgramNode.IncludeParents
 			public readonly Dictionary<string, ModInfo> Names = new(StringComparer.OrdinalIgnoreCase);
 		}
@@ -119,7 +120,7 @@ namespace Keysharp.Compilation.Syntax
 						if (path.Length > 0)
 						{
 							var localDir = import.File == null ? module.Dir : System.IO.Path.GetDirectoryName(import.File);
-							var file = ResolveModuleFile(path, localDir ?? _includeDir);
+							var file = ResolveModuleFile(path, localDir ?? _includeDir, module.Group);
 							if (file == null) { _importModules[import] = null; continue; }
 							file = System.IO.Path.GetFullPath(file);
 							if (!_moduleFiles.TryGetValue(file, out group))
@@ -131,7 +132,7 @@ namespace Keysharp.Compilation.Syntax
 								try
 								{
 									var text = System.IO.File.ReadAllText(file);
-									var (program, diagnostics) = Parser.ParseWithDiagnostics(text, group.Root.Dir, file, _defines, MainScriptPath);
+									var (program, diagnostics) = Parser.ParseWithDiagnostics(text, group.Root.Dir, file, _defines, MainScriptPath, scriptDir: _includeDir);
 									_errorStdOutActive |= program.ErrorStdOut;
 									var fileName = System.IO.Path.GetFileName(file);
 									foreach (var diagnostic in diagnostics)
