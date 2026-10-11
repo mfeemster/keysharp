@@ -280,6 +280,6 @@ _ks_e1_end:
 		}
 	}
 
-	// Subclassing is the one thing that makes a ref non-plain, so this is what the dispatching case must be.
-	private sealed class DerivedRef(object x) : VarRef(x);
+	// Public so the benchmark script discovers its prototype and dispatches to the inherited __Value setter.
+	public sealed class DerivedRef(object x) : VarRef(x);
 }
