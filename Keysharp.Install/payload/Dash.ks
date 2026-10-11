@@ -14,7 +14,7 @@
     Keysharp release numbers are separate from AutoHotkey compatibility versions.
 
     The UI is one Image-rendered surface (the same drawing layer the demos' Shell.ks cards
-    use) inside a dark Gui with a native title bar. Hover uses a mouse poll; native mouse events deliver clicks.
+    use) inside a dark Gui with a native title bar. Linux hover uses local mouse events; other platforms poll.
     The title bar handles dragging and closing. Rendering with Keysharp's own Image class is the point:
     the Dash is itself a demo of what a Keysharp script can draw. The cost is accessibility:
     a bitmap has no focusable controls, so there is no keyboard navigation and nothing for a
@@ -130,9 +130,15 @@ W := 520
 Pad := 20
 InnerW := W - Pad * 2
 
+; Linux mouse events use logical widget units; raster density comes from the GUI.
+#if LINUX
+Scale := 1
+RasterScale := 1
+#else
 ; Native screen units determine layout and hit-testing. macOS backing pixels have a separate density.
 Scale := Monitor.Primary.Scale
 RasterScale := Scale
+#endif
 
 PollFast := 25    ; cursor over the window: hover must feel immediate
 PollSlow := 150   ; cursor elsewhere: only has to notice it coming back
@@ -226,12 +232,19 @@ Dash.OnEvent("Escape", (*) => ExitApp())
 Pic := Dash.AddPicture("x0 y0 w" W " h" H)
 ; Mouse events retain brief taps and the original client coordinates.
 Pic.OnMessage(0x0201, ClickCard)
+#if LINUX
+Pic.OnMessage(0x0200, HoverCard)
+Pic.OnMessage(0x02A3, ClearHover)
+RasterScale := Dash.PixelScale
+#endif
 
 Render()
 Dash.Show("w" W " h" H)
 SyncScale()
 
+#if !LINUX
 SetTimer(PollMouse, PollFast)
+#endif
 
 ; ---------------------------------------------------------------------------
 ; rendering
@@ -339,6 +352,30 @@ ClickCard(Control, WParam, LParam, Message) {
     return 0
 }
 
+#if LINUX
+HoverCard(Control, WParam, LParam, Message) {
+    global HoverId
+    if ActionBusy
+        return
+    SyncScale()
+    X := (LParam << 48) >> 48
+    Y := (LParam << 32) >> 48
+    M := HitTest(X, Y)
+    NewId := M = "" ? "" : M.id
+    if NewId != HoverId {
+        HoverId := NewId
+        Render()
+    }
+}
+
+ClearHover(*) {
+    global HoverId
+    if HoverId != "" {
+        HoverId := ""
+        Render()
+    }
+}
+#else
 PollMouse() {
     global HoverId
     static Interval := PollFast
@@ -370,11 +407,16 @@ PollMouse() {
         Render()
     }
 }
+#endif
 
-; Follow the window's monitor so raster density and hit-testing stay correct after a move.
+; Keep raster density and hit-testing aligned with the window's current scale.
 SyncScale() {
     global Scale, RasterScale
+#if LINUX
+    Now := 1
+#else
     Now := Monitor.FromWindow("ahk_id " Dash.Hwnd).Scale
+#endif
     NowRaster := Dash.PixelScale
     if Now != Scale || NowRaster != RasterScale {
         Scale := Now

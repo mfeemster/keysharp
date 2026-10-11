@@ -1,3 +1,7 @@
+#if !WINDOWS
+using Keysharp.Internals.Os.Windows;
+#endif
+
 namespace Keysharp.Tests;
 
 [TestFixture, NonParallelizable, Category("Internal"), Category("Curated")]
@@ -110,6 +114,69 @@ public class MessageFilterTests : TestRunner
 	}
 
 #else
+	[Test, Category("Gui")]
+	public void EtoMouseLeave()
+	{
+		SkipIfUiInitializationBlocked("Mouse leave routing requires a usable UI toolkit.");
+		s.InvokeOnUIThread(() =>
+		{
+			var gui = new Gui();
+
+			try
+			{
+				var control = (Gui.Control)gui.Add("Picture", "w80 h24");
+				var globalCalls = new List<object[]>();
+				var controlCalls = new List<object[]>();
+				var windowCalls = new List<object[]>();
+				_ = Keysharp.Builtins.Flow.OnMessage(WindowsAPI.WM_MOUSELEAVE, new KeysharpFunc((Func<object, object, object, object, object>)((wParam, lParam, msg, handle) =>
+				{
+					globalCalls.Add([wParam, lParam, msg, handle]);
+					return "";
+				})));
+				var controlHandler = new KeysharpFunc((Func<object, object, object, object, object>)((owner, wParam, lParam, msg) =>
+				{
+					controlCalls.Add([owner, wParam, lParam, msg]);
+					return 0L;
+				}));
+				_ = control.OnMessage(WindowsAPI.WM_MOUSELEAVE, controlHandler);
+				_ = gui.OnMessage(WindowsAPI.WM_MOUSELEAVE, new KeysharpFunc((Func<object, object, object, object, object>)((owner, wParam, lParam, msg) =>
+				{
+					windowCalls.Add([owner, wParam, lParam, msg]);
+					return "";
+				})));
+				EtoMessageSource.Attach(control.Ctrl);
+				var controlCallback = (Eto.Forms.Control.ICallback)((Eto.ICallbackSource)control.Ctrl).Callback;
+				var leave = new MouseEventArgs(MouseButtons.Primary, Keys.Shift, new PointF(12, 34));
+				controlCallback.OnMouseLeave(control.Ctrl, leave);
+
+				Assert.That(globalCalls.Count, Is.EqualTo(1));
+				Assert.That(globalCalls[0], Is.EqualTo(new object[] { 0L, 0L, (long)WindowsAPI.WM_MOUSELEAVE, control.Hwnd }));
+				Assert.That(controlCalls.Count, Is.EqualTo(1));
+				Assert.That(controlCalls[0], Is.EqualTo(new object[] { control, 0L, 0L, (long)WindowsAPI.WM_MOUSELEAVE }));
+				Assert.That(windowCalls, Is.Empty, "a control leave is addressed to the control, not its window");
+				Assert.That(leave.Handled, Is.True, "a zero callback return claims the synthesized message");
+
+				var windowCallback = (Eto.Forms.Control.ICallback)((Eto.ICallbackSource)gui.form).Callback;
+				windowCallback.OnMouseLeave(gui.form, new MouseEventArgs(MouseButtons.None, Keys.None, PointF.Empty));
+				Assert.That(globalCalls.Count, Is.EqualTo(2));
+				Assert.That(globalCalls[1], Is.EqualTo(new object[] { 0L, 0L, (long)WindowsAPI.WM_MOUSELEAVE, gui.Hwnd }));
+				Assert.That(windowCalls.Count, Is.EqualTo(1));
+				Assert.That(windowCalls[0], Is.EqualTo(new object[] { gui, 0L, 0L, (long)WindowsAPI.WM_MOUSELEAVE }));
+
+				_ = control.OnMessage(WindowsAPI.WM_MOUSELEAVE, controlHandler, 0L);
+				leave = new MouseEventArgs(MouseButtons.None, Keys.None, PointF.Empty);
+				controlCallback.OnMouseLeave(control.Ctrl, leave);
+				Assert.That(globalCalls.Count, Is.EqualTo(3));
+				Assert.That(controlCalls.Count, Is.EqualTo(1));
+				Assert.That(leave.Handled, Is.False);
+			}
+			finally
+			{
+				_ = gui.Destroy();
+			}
+		});
+	}
+
 	[TestCase(1L), TestCase(2L)]
 	[Category("Threading")]
 	public void TrayActivations(long clickCount)

@@ -180,6 +180,7 @@ namespace Keysharp.Internals.Os.Windows
 		internal const int WM_NCXBUTTONUP = 0x00AC;
 		internal const int WM_XBUTTONDBLCLK = 0x020D;
 		internal const int WM_MOUSELAST = 0x020E;
+		internal const int WM_MOUSELEAVE = 0x02A3;
 		internal const int WM_CLIPBOARDUPDATE = 0x031D;
 		internal const int WM_NCCREATE = 0x0081;
 		internal const int WM_NCDESTROY = 0x0082;

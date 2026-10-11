@@ -5663,7 +5663,7 @@
                      "linux_x11":  "partial",
                      "linux_wayland":  "partial",
                      "macos":  "unknown",
-                     "notes":  "Optional font attributes and system font selections. GUI/image weights map to normal or bold; Windows RichEdit preserves numeric weights. Windows applies quality to GUI fonts and image text; other platforms reject non-default quality, as does per-range RichEdit formatting.",
+                     "notes":  "Optional font attributes and system font selections. Linux resolves unavailable GTK theme fonts through Pango substitution. GUI/image weights map to normal or bold; Windows RichEdit preserves numeric weights. Windows applies quality to GUI fonts and image text; other platforms reject non-default quality, as does per-range RichEdit formatting.",
                      "tested-by":  "ks-font.ahk"
                  },
                  {
@@ -6083,11 +6083,11 @@
                      "feature":  "Gui.Control.OnMessage()",
                      "syntax":  "GuiCtrlObj.OnMessage(MsgNumber, Callback [, AddRemove])",
                      "windows":  "full",
-                     "linux_x11":  "unsupported",
-                     "linux_wayland":  "unsupported",
-                     "macos":  "unsupported",
-                     "notes":  "Registers Callback(GuiCtrlObj, wParam, lParam, Msg) for a window message the control receives, ahead of WM_COMMAND/WM_NOTIFY reflection and default processing; a non-empty return, 0 included, is the reply and ends the message's processing. On Linux and macOS the registration is accepted but never invoked.",
-                     "tested-by":  "GuiTests.MessageHandlers"
+                     "linux_x11":  "partial",
+                     "linux_wayland":  "partial",
+                     "macos":  "unknown",
+                     "notes":  "Registers Callback(GuiCtrlObj, wParam, lParam, Msg) for a window message the control receives, ahead of WM_COMMAND/WM_NOTIFY reflection and default processing; a non-empty return, 0 included, is the reply and ends the message's processing. Off Windows only the script's own synthesized GUI input messages are delivered, after the global monitors. WM_MOUSELEAVE reports toolkit pointer exit with zero wParam/lParam; native leave delivery is verified on X11 under Xvfb; Wayland and macOS delivery remain unverified.",
+                     "tested-by":  "GuiTests.MessageHandlers; MessageFilterTests.EtoMouseLeave"
                  },
                  {
                      "category":  "Windowing/GUI",
@@ -6396,8 +6396,8 @@
                      "linux_x11":  "partial",
                      "linux_wayland":  "partial",
                      "macos":  "unknown",
-                     "notes":  "Registers Callback(GuiObj, wParam, lParam, Msg) for a window message the GUI receives, ahead of the default window procedure; a non-empty return, 0 included, is the reply and ends the message's processing. Off Windows only the synthesized input messages OnMessage() receives are delivered, after the global monitors.",
-                     "tested-by":  "GuiTests.MessageHandlers"
+                     "notes":  "Registers Callback(GuiObj, wParam, lParam, Msg) for a window message the GUI receives, ahead of the default window procedure; a non-empty return, 0 included, is the reply and ends the message's processing. Off Windows only the script's own synthesized GUI input messages are delivered, after the global monitors. WM_MOUSELEAVE reports toolkit pointer exit with zero wParam/lParam; native leave delivery is verified on X11 under Xvfb; Wayland and macOS delivery remain unverified.",
+                     "tested-by":  "GuiTests.MessageHandlers; MessageFilterTests.EtoMouseLeave"
                  },
                  {
                      "category":  "Windowing/GUI",
@@ -9124,8 +9124,8 @@
                      "linux_x11":  "partial",
                      "linux_wayland":  "partial",
                      "macos":  "unknown",
-                     "notes":  "Windows monitors the hidden main window, GUIs, controls and tray events. Linux/macOS synthesize toolkit messages; menu interception verified on Linux X11, unverified on Wayland/macOS.",
-                     "tested-by":  "MessageFilterTests.cs; ExternalTests.OnMessage; external-onmessage.ahk; BuiltInVarsTests.PropsMenuCommands; props-menu-commands.ahk; MessageFilterTests.TrayNotifications; MessageFilterTests.TrayActivations"
+                     "notes":  "Windows monitors the hidden main window, GUIs, controls and tray events. Linux/macOS synthesize toolkit messages from the script's own GUI, including WM_MOUSELEAVE with zero wParam/lParam. Native leave delivery is verified on X11 under Xvfb; Wayland and macOS delivery remain unverified. Menu interception verified on Linux X11, unverified on Wayland/macOS.",
+                     "tested-by":  "MessageFilterTests.cs; ExternalTests.OnMessage; external-onmessage.ahk; BuiltInVarsTests.PropsMenuCommands; props-menu-commands.ahk; MessageFilterTests.TrayNotifications; MessageFilterTests.TrayActivations; MessageFilterTests.EtoMouseLeave"
                  },
                  {
                      "category":  "Core Language",

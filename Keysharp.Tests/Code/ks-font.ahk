@@ -13,6 +13,21 @@ public static string FontTestCulture(string name)
 }
 #EndCSharp
 
+#if LINUX
+#CSharp
+public static string FontTestGtkTheme(string name)
+{
+	var settingsType = System.Type.GetType("Gtk.Settings, GtkSharp", true);
+	var settings = settingsType.GetProperty("Default").GetValue(null);
+	var fontName = settingsType.GetProperty("FontName");
+	var previous = (string)fontName.GetValue(settings);
+	fontName.SetValue(settings, name);
+	Eto.Drawing.SystemFonts.ClearCache();
+	return previous;
+}
+#EndCSharp
+#endif
+
 failed := 0
 report := ""
 
@@ -153,6 +168,23 @@ Check("Exists(nonsense)", Font.Exists("No Such Family At All"), false)
 Check("Exists('')", Font.Exists(""), false)
 Check("Families is an Array", Font.Families is Array, true)
 Check("Families is populated", Font.Families.Length > 0, true)
+
+#if LINUX
+; A desktop theme can retain a family that was removed from the machine.
+previousGtkFont := FontTestGtkTheme("Keysharp Missing Theme Font 8C797EBB 11")
+try
+{
+	nativeDefault := Font.UiDefault
+	Check("missing theme font resolves installed family", Font.Exists(nativeDefault.Name), true)
+	themeImage := Image.Create(80, 20)
+	try
+		Check("missing theme font measures image text", themeImage.MeasureText("Keysharp", nativeDefault).Width > 0, true)
+	finally
+		themeImage.Dispose()
+}
+finally
+	FontTestGtkTheme(previousGtkFont)
+#endif
 
 ; ---- value equality ------------------------------------------------------------------------------
 Check("equal fonts", Font("s10 bold", "Arial") = Font("s10 bold", "Arial"), true)

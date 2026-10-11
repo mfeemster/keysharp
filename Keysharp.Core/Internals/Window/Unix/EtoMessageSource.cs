@@ -39,6 +39,7 @@ namespace Keysharp.Internals.Window.Unix
 			control.MouseUp += OnMouseUp;
 			control.MouseDoubleClick += OnMouseDoubleClick;
 			control.MouseWheel += OnMouseWheel;
+			control.MouseLeave += OnMouseLeave;
 			control.KeyDown += OnKeyDown;
 			control.KeyUp += OnKeyUp;
 			control.TextInput += OnTextInput;
@@ -203,6 +204,13 @@ namespace Keysharp.Internals.Window.Unix
 			if (sender is Forms.Control control
 					&& ClaimNativeEvent(WindowsAPI.WM_MOUSEMOVE)
 					&& Dispatch(control, WindowsAPI.WM_MOUSEMOVE, MouseKeyState(e), PackPoint(e.Location)))
+				e.Handled = true;
+		}
+
+		private static void OnMouseLeave(object sender, Forms.MouseEventArgs e)
+		{
+			//Each widget leaving the pointer needs its own notification, even at the same native event time.
+			if (sender is Forms.Control control && Dispatch(control, WindowsAPI.WM_MOUSELEAVE, 0, 0))
 				e.Handled = true;
 		}
 
