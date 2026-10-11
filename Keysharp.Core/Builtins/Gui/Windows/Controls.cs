@@ -509,6 +509,9 @@ namespace Keysharp.Builtins
 	{
 		private readonly int addStyle, removeStyle;
 		private readonly int addExStyle, removeExStyle;
+		private readonly nint[] nativeImageLists = new nint[3];
+
+		internal int SmallImageCount => SmallImageList?.Images.Count ?? WindowsAPI.ImageList_GetImageCount(nativeImageLists[1]);
 
 		protected override CreateParams CreateParams
 		{
@@ -532,12 +535,68 @@ namespace Keysharp.Builtins
 			ColumnClick += KeysharpListView_ColumnClick;
 		}
 
+		internal long ReplaceImageList(ImageList list, nint handle, int type)
+		{
+			var managed = type switch
+			{
+				0 => LargeImageList,
+				1 => SmallImageList,
+				_ => StateImageList
+			};
+
+			var old = WindowsAPI.SendMessage(Handle, WindowsAPI.LVM_SETIMAGELIST, (nint)type, 0);
+			var oldId = managed != null && managed.Handle == old ? ImageLists.IL_GetId(managed) : old.ToInt64();
+			nativeImageLists[type] = 0;
+
+			switch (type)
+			{
+				case 0:
+					LargeImageList = list;
+					break;
+
+				case 1:
+					SmallImageList = list;
+					break;
+
+				default:
+					StateImageList = list;
+					break;
+			}
+
+			nativeImageLists[type] = list == null ? handle : 0;
+			_ = WindowsAPI.SendMessage(Handle, WindowsAPI.LVM_SETIMAGELIST, (nint)type, handle);
+			return oldId;
+		}
+
 		protected override void Dispose(bool disposing)
 		{
 			if (disposing)
+			{
 				ImageLists.DestroyWithListView(addStyle, LargeImageList, SmallImageList, StateImageList);
+				SyncNativeImageLists(false);
+
+				if ((addStyle & 0x40) == 0)
+					foreach (var handle in nativeImageLists.Distinct())
+						if (handle != 0)
+							_ = WindowsAPI.ImageList_Destroy(handle);
+
+				System.Array.Clear(nativeImageLists);
+			}
 
 			base.Dispose(disposing);
+		}
+
+		protected override void OnHandleCreated(EventArgs e)
+		{
+			base.OnHandleCreated(e);
+			SyncNativeImageLists(true);
+		}
+
+		protected override void DestroyHandle()
+		{
+			// Native checkbox state lists can be destroyed with the handle even when LVS_SHAREIMAGELISTS is set.
+			SyncNativeImageLists(false);
+			base.DestroyHandle();
 		}
 
 		internal void RefreshColors(int row = -1)
@@ -591,6 +650,14 @@ namespace Keysharp.Builtins
 
 		//Subscribed ahead of the holder's ColClick, so the rows are sorted by the time the script hears of the click.
 		private void KeysharpListView_ColumnClick(object sender, ColumnClickEventArgs e) => (this.GetGuiControl() as Gui.ListView)?.SortByHeader(e.Column);
+
+		private void SyncNativeImageLists(bool attach)
+		{
+			if (IsHandleCreated)
+				for (var type = 0; type < nativeImageLists.Length; type++)
+					if (nativeImageLists[type] != 0)
+						_ = WindowsAPI.SendMessage(Handle, WindowsAPI.LVM_SETIMAGELIST, (nint)type, attach ? nativeImageLists[type] : 0);
+		}
 	}
 
 	public class KeysharpMonthCalendar : MonthCalendar

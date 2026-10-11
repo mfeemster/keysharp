@@ -81,6 +81,17 @@ myfunc()
 
 Assert(A_NewLine = "`n" || A_NewLine = "`r`n", A_LineNumber)
 
+AssertEq(Type(A_Language), "String", A_LineNumber)
+Assert(A_Language ~= "^[0-9A-F]{4}$", A_LineNumber)
+languageId := Integer("0x" A_Language)
+
+#if WINDOWS
+AssertEq(languageId, DllCall("GetSystemDefaultUILanguage", "UShort"), A_LineNumber)
+localeName := Buffer(85 * 2, 0)
+Assert(DllCall("LCIDToLocaleName", "UInt", languageId, "Ptr", localeName, "Int", 85, "UInt", 0), A_LineNumber)
+Assert(StrGet(localeName) != "", A_LineNumber)
+#endif
+
 ; The AutoHotkey version Keysharp implements.
 Assert(A_AhkVersion = "2.1-alpha.35", A_LineNumber)
 

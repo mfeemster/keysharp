@@ -14,7 +14,6 @@ namespace Keysharp.Builtins
 #endif
 		internal bool? iconFrozen;
 		internal string iconFile = "";
-		internal bool iconHidden;
 		internal object iconNumber = 1L;
 		internal string iconTip;
 		internal long inputLevel;
@@ -363,6 +362,16 @@ namespace Keysharp.Builtins
 		}
 
 		/// <summary>
+		/// The system's default UI language as a four-digit hexadecimal language identifier.
+		/// </summary>
+		public static string A_Language =>
+#if WINDOWS
+			WindowsAPI.GetSystemDefaultUILanguage().ToString("X4", CultureInfo.InvariantCulture);
+#else
+			(CultureInfo.InstalledUICulture.LCID & 0xFFFF).ToString("X4", CultureInfo.InvariantCulture);
+#endif
+
+		/// <summary>
 		/// The result from last Windows GetLastError() function call which is stored after certain
 		/// function calls such as DllCall and file functions.
 		/// </summary>
@@ -441,40 +450,32 @@ namespace Keysharp.Builtins
 		}
 
 		/// <summary>
-		/// Contains true if the tray icon is currently hidden or false otherwise. The icon can be hidden via #NoTrayIcon or the Menu command.
+		/// Contains true if the tray icon is hidden. #NoTrayIcon sets the initial state; assigning false shows it.
 		/// </summary>
 		public static object A_IconHidden
 		{
-			get => Script.TheScript.AccessorData.iconHidden;
+			get => Script.TheScript.NoTrayIcon;
 
 			set
 			{
-				var script = Script.TheScript;
-
-				if (script.NoTrayIcon)
+				if (Options.OnOff(value) is not bool hidden)
 					return;
 
-				var val = Options.OnOff(value);
+				var script = Script.TheScript;
 
-				if (val.HasValue)
+				script.InvokeOnUIThread(() =>
 				{
-					if (!val.Value && script.AccessorData.iconHidden)//Was true, switching to false, so show.
-					{
-						if (script.EnsureTrayIcon())
-						{
-							script.Tray.Visible = true;
-							script.AccessorData.iconHidden = val.Value;
-						}
-					}
-					else if (val.Value && !script.AccessorData.iconHidden)//Was false, switching to true, so hide.
-					{
-						if (script.Tray != null)
-						{
-							script.Tray.Visible = false;
-							script.AccessorData.iconHidden = val.Value;
-						}
-					}
-				}
+					script.NoTrayIcon = hidden;
+
+					if (!hidden && !script.EnsureTrayIcon())
+						return;
+
+					if (!hidden)
+						script.ApplyTrayIcon();
+
+					if (script.Tray != null)
+						script.Tray.Visible = !hidden;
+				});
 			}
 		}
 
@@ -1970,7 +1971,7 @@ namespace Keysharp.Builtins
 		public static object A_MaxThreads => (long)Script.TheScript.MaxThreadsTotal;
 
 		/// <summary>
-		/// The value specified by #NoTrayIcon.
+		/// Whether the tray icon is hidden, initially set by #NoTrayIcon and updated by A_IconHidden.
 		/// Disables the showing of a tray icon.
 		/// </summary>
 		public static bool A_NoTrayIcon => Script.TheScript.NoTrayIcon;

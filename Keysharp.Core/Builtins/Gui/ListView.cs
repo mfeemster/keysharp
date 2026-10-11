@@ -500,7 +500,14 @@ namespace Keysharp.Builtins
 				if (!imageListID.CoerceLong(out var id) || !iconType.CoerceLong(out var type, -1))
 					return 0L;
 
-				return ImageLists.IL_Get(id) is ImageList il ? ReplaceImageList(il, type) : 0L;
+				if (ImageLists.IL_Get(id) is ImageList il)
+					return ReplaceImageList(il, type);
+
+#if WINDOWS
+				return ReplaceNativeImageList(id, type);
+#else
+				return 0L;
+#endif
 			}
 
 			/// <summary>

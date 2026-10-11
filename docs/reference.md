@@ -511,6 +511,7 @@ Controlling another application needs **Automation** permission, granted per tar
 * `Reload` compiles a replacement before asking the old instance to exit (`WM_CLOSE` on Windows, `SIGTERM` on Linux/macOS); `OnExit` may veto. Windows headless scripts exit first.
 * Linux/macOS `SIGTERM` runs `OnExit` with `Close` (`Reload` during a pending reload); a second signal during exit forces termination. On Windows, title-bar close hides the main window; external `WM_CLOSE` exits.
 * `A_Args` is a built-in variable which every module and function shares and a script may assign any value, unset included. In AutoHotkey it is a variable of the main module only, so another module has its own, and assigning it in a function without a global declaration creates a local variable.
+* `A_Language` returns a read-only four-digit uppercase hex string. Windows uses the system default UI language ID; Linux/macOS use .NET's system locale LCID (low 16 bits; unverified).
 * `throw` and `Throw()` pass any value unchanged to `catch`, including an instance of a class which does not extend `Error`. A bare `catch` matches only `Error` values; `catch Any` matches every value. An uncaught non-`Error` value is still wrapped as `Error(Value)` for `OnError` and the default diagnostic, while AutoHotkey passes the original value to `OnError`. An object's own `Message` value property supplies the wrapper's message; inherited properties and getters are ignored.
 * A built-in whose error the script continues, as `OnError` returning -1 or the error dialog's Continue button does, returns at once, as in AutoHotkey, and the call yields an empty string. A built-in which returns a number yields 0, and one which returns an object yields no value.
 * An exception which is not a Keysharp error, such as a .NET exception escaping a built-in function, ends its thread and reaches `OnError` as an `Error` describing it, or its inner exception when it wraps one. Its `Extra` is the exception's .NET type, and its `What`, `File`, `Line` and `Stack` describe where it was thrown.
@@ -546,12 +547,13 @@ Controlling another application needs **Automation** permission, granted per tar
 * `Sleep()` works, but uses `Application.DoEvents()` internally which is not a good programming practice and can lead to hard to solve bugs.
 	+ For this reason, it's recommended that users use timers for repeated execution rather than a loop with calls to `Sleep()`.
 	+ It will not do any sleeping if shutdown has been initiated.
+	+ On Windows, `NM_CUSTOMDRAW` (`-12`) callbacks defer native UI pumping until return, including through nested timers. Script timers and exits still run.
 * `StrPtr(Var)` returns the address of memory `Var` keeps for native code, because .NET strings are immutable.
 	+ `StrPtr(Var)` and a `Str` argument copy `Var`'s value into that memory only when `Var` holds a different string than the memory last did, so what native code wrote there survives another `StrPtr(Var)`. Assigning the very string `Var` holds does not count: after `Var := ""` on a variable already empty, as right after `VarSetStrCapacity()`, the memory keeps what native code wrote, where AutoHotkey would clear it.
 	+ The memory starts with room for 259 characters, MAX_PATH with the terminator, unless `VarSetStrCapacity()` sized it. Its address stays the same while the variable exists and its value fits.
 	+ What native code writes there reaches `Var`, up to the first null, at `VarSetStrCapacity(&Var, -1)` or when `Var` is next passed as a `Str` or `WStr` argument, unless `Var` was assigned a different string since. AutoHotkey shows a write which keeps the length at once, as with `DllCall("CharUpper", "Ptr", StrPtr(Var))`; pass `Var` as `Str` there instead.
 	+ A literal, an expression's result, a property's value or the value of another object with `__Value` is copied to pinned memory instead, at an address which stays the same as long as the string exists. Dynamic references to locals or statics and imported aliases retain their original variable's memory. A temporary passed straight to `StrPtr()` lasts at least until the statement using it finishes, as in AutoHotkey.
-* `A_IconHidden` changes tray visibility without clearing its image or menu. An icon selected while hidden is retained when shown again. Linux tray hosts must honor the AppIndicator status for hiding to take effect.
+* `A_IconHidden` follows the final tray directive at startup; assigning `false` shows it even after `#NoTrayIcon`. It retains image changes and menus while hidden. Linux tray hosts must honor AppIndicator visibility requests.
 * `TrayTip()` functions slightly differently.
 	+ Muting the sound played by the tip is not supported with the `Mute` option. The sound will be whatever the user has configured in their system settings.
 	+ The option `4` to use the program's tray icon is not supported. It is always shown in the title of the tip.
@@ -1367,6 +1369,7 @@ Controlling another application needs **Automation** permission, granted per tar
 			+ `MenuItemCount`: Gets the number of sub items within a menu.
 		+ `ListView`:
 			+ `DeleteCol(Column) => Boolean` Removes a column and returns `true` if the column was found and deleted, else `false`.
+			+ `SetImageList(ImageListID [, IconType])`: Windows accepts `IL_Create` IDs or valid native `HIMAGELIST` handles; `0` detaches. Returns the previous ID/handle. Omitted `IconType` selects large/small by width. Native lists belong to the control unless `+0x40` shares them; destroy detached/shared handles with `ImageList_Destroy`. Linux/macOS accept only `IL_Create` IDs and use one icon list.
 		+ `Gui.Tab`:
 			+ `SetImageList(ImageListID)`: Sets the image list the tab icons come from and returns the previous list's ID.
 			+ `SetTabIcon(TabIndex, ImageIndex)`: Shows an image of that list on a tab, relieving the caller of having to use `SendMessage()`. Both numbers are 1-based, as tab and icon numbers are elsewhere, and an image number of 0 or past the list removes the icon.

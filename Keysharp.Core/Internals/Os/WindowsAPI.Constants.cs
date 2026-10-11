@@ -528,6 +528,7 @@ namespace Keysharp.Internals.Os.Windows
 
 		internal const int LVM_FIRST = 0x1000;//ListView messages
 		internal const int TV_FIRST = 0x1100;//TreeView messages
+		internal const uint LVM_SETIMAGELIST = LVM_FIRST + 3;
 		internal const int LVM_GETITEMCOUNT = LVM_FIRST + 4;
 		internal const int LVM_GETHEADER = LVM_FIRST + 31;
 		internal const int LVM_GETNEXTITEM = LVM_FIRST + 12;
@@ -577,6 +578,7 @@ namespace Keysharp.Internals.Os.Windows
 		internal const int NM_CLICK = NM_FIRST - 2;
 		internal const int NM_RCLICK = NM_FIRST - 5;
 		internal const int NM_RDBLCLK = NM_FIRST - 6;
+		internal const int NM_CUSTOMDRAW = NM_FIRST - 12;
 		internal const int WM_REFLECT = 0x2000;
 		internal const int WM_NOTIFY = 0x004e;
 

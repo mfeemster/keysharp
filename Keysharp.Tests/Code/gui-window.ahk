@@ -307,7 +307,98 @@ Throws(() => EditGetLine(0, ed), A_LineNumber, ValueError)
 Throws(() => EditGetLine(9, ed), A_LineNumber, ValueError)
 num := lists.AddEdit("Number w100", "1a2")
 AssertEq(num.Value, "1a2", A_LineNumber)
+
+#if WINDOWS
+; Native image lists set row height and icons, and survive control handle recreation.
+CreateImageList(Width, Height) => DllCall("comctl32\ImageList_Create", "Int", Width, "Int", Height,
+	"UInt", 0x21, "Int", 1, "Int", 1, "Ptr")
+small := CreateImageList(1, 48)
+large := CreateImageList(64, 64)
+managed := IL_Create()
+Assert(small != 0 && large != 0 && managed != 0, A_LineNumber)
+AssertEq(rows.SetImageList(small, 1), 0, A_LineNumber)
+AssertEq(rows.SetImageList(small, 1), small, A_LineNumber)
+lists.Show("Hide")
+rect := Buffer(16, 0)
+AssertEq(SendMessage(0x100E, 0, rect, rows), 1, A_LineNumber)   ; LVM_GETITEMRECT
+Assert(NumGet(rect, 12, "Int") - NumGet(rect, 4, "Int") >= 48, A_LineNumber)
+icon := DllCall("LoadIcon", "Ptr", 0, "Ptr", 32512, "Ptr")
+AssertEq(DllCall("comctl32\ImageList_ReplaceIcon", "Ptr", small, "Int", -1, "Ptr", icon, "Int"), 0, A_LineNumber)
+rows.Modify(1, "Icon1")
+item := Buffer(96, 0)
+NumPut("UInt", 2, item)   ; LVIF_IMAGE
+AssertEq(SendMessage(0x104B, 0, item, rows), 1, A_LineNumber)   ; LVM_GETITEMW
+AssertEq(NumGet(item, 20 + 2 * A_PtrSize, "Int"), 0, A_LineNumber)
+AssertEq(rows.SetImageList(large), 0, A_LineNumber)
+rows.Opt("Sort")
+AssertEq(SendMessage(0x1002, 0, 0, rows), large, A_LineNumber)   ; LVM_GETIMAGELIST
+AssertEq(SendMessage(0x1002, 1, 0, rows), small, A_LineNumber)
+AssertEq(rows.SetImageList(managed, 1), small, A_LineNumber)
+managedHandle := SendMessage(0x1002, 1, 0, rows)
+AssertEq(rows.SetImageList(managed, 1), managed, A_LineNumber)
+AssertEq(SendMessage(0x1002, 1, 0, rows), managedHandle, A_LineNumber)
+AssertEq(rows.SetImageList(small, 1), managed, A_LineNumber)
+AssertEq(rows.SetImageList(0, 1), small, A_LineNumber)
+AssertEq(SendMessage(0x1002, 1, 0, rows), 0, A_LineNumber)
+AssertEq(rows.SetImageList(0, 0), large, A_LineNumber)
+DllCall("comctl32\ImageList_Destroy", "Ptr", large)
+IL_Destroy(managed)
+
+; Shared lists outlive the GUI; an owned handle used by several slots is released once.
+shared := CreateImageList(16, 16)
+sharedGui := Gui()
+sharedList := sharedGui.AddListView("+0x40 Checked", ["Result"])
+Loop 3
+	sharedList.SetImageList(shared, A_Index - 1)
+sharedList.Opt("Sort")
+AssertEq(SendMessage(0x1002, 2, 0, sharedList), shared, A_LineNumber)
+sharedGui.Destroy()
+AssertEq(DllCall("comctl32\ImageList_Destroy", "Ptr", shared), 1, A_LineNumber)
+Loop 3
+	rows.SetImageList(small, A_Index - 1)
+
+; Custom drawing permits nested timers while deferring posted native messages until it returns.
+Thread("Interrupt", 0)
+paintMessages := 0
+paintTimerRan := false
+lists.OnMessage(0x8001, PaintMessage)
+rows.OnNotify(-12, DrawPolling)
+notification := Buffer(A_PtrSize * 3 + 4, 0)
+NumPut("Ptr", rows.Hwnd, "UPtr", 0, "Int", -12, notification)
+NumPut("UInt", 1, notification, A_PtrSize * 3)
+AssertEq(DllCall("SendMessageW", "Ptr", rows.Hwnd, "UInt", 0x204E, "Ptr", 0, "Ptr", notification, "Ptr"), 4, A_LineNumber)
+Assert(paintTimerRan, A_LineNumber)
+AssertEq(paintMessages, 0, A_LineNumber)
+Sleep(-1)
+AssertEq(paintMessages, 1, A_LineNumber)
+rows.OnNotify(-12, DrawPolling, 0)
+lists.OnMessage(0x8001, PaintMessage, 0)
+
+DrawPolling(ctrl, lParam) {
+	DllCall("PostMessageW", "Ptr", ctrl.Gui.Hwnd, "UInt", 0x8001, "Ptr", 0, "Ptr", 0)
+	SetTimer(PaintTimer, -1)
+	start := A_TickCount
+	while (A_TickCount - start < 100)
+		DllCall("GetTickCount", "UInt")
+	return 4
+}
+PaintTimer() {
+	global paintTimerRan
+	paintTimerRan := true
+	start := A_TickCount
+	while (A_TickCount - start < 25)
+		DllCall("GetTickCount", "UInt")
+}
+PaintMessage(*) {
+	global paintMessages
+	paintMessages++
+	return 0
+}
+#endif
 lists.Destroy()
+#if WINDOWS
+AssertEq(DllCall("comctl32\ImageList_GetIconSize", "Ptr", small, "Ptr", item, "Ptr", item.Ptr + 4), 0, A_LineNumber)
+#endif
 
 #if WINDOWS
 ; A handler named as a method of the Gui's event sink runs as AutoHotkey runs it: looked up on the sink when the

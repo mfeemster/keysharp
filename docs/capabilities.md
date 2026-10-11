@@ -42,7 +42,7 @@ Status legend:
 | #MaxThreadsBuffer | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | The #MaxThreadsBuffer directive causes some or all hotkeys to buffer rather than ignore keypresses when their #MaxThreadsPerHotkey limit has been reached. |
 | #MaxThreadsPerHotkey | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | The #MaxThreadsPerHotkey directive sets the maximum number of simultaneous threads per hotkey or hotstring. |
 | #Module | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Starts or reopens a file-local module; names use Unicode ordinal case-insensitive comparison. |
-| #NoTrayIcon | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Disables the startup tray icon. #NoTrayIcon and #TrayIcon apply in source order, so the later directive determines visibility. |
+| #NoTrayIcon | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Hides the startup tray icon; the last #NoTrayIcon/#TrayIcon wins. A_IconHidden := 0 shows it at runtime. |
 | #Nullable | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Accepted; nullable-context state is a no-op in Keysharp. |
 | #Package | 🟢 Full | ⚪ Unknown | ⚪ Unknown | ⚪ Unknown | Keysharp-only. Resolves NuGet packages at compile time for Clr and inline C#. Supports managed, resource and native assets, but not package build hooks. Windows verified. |
 | #Pragma | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Accepted; preprocessor pragma options are a no-op. |
@@ -167,7 +167,7 @@ Status legend:
 | A_HotkeyModifierTimeout | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Built-in variable. |
 | A_Hour | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | The current 2 digit hour 00 - 23. |
 | A_IconFile | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | The full path of a runtime custom tray icon selected by TraySetIcon; blank while the script's embedded/default tray icon is active, including one selected by #TrayIcon. |
-| A_IconHidden | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Gets or sets tray icon visibility: 1 hides it, 0 shows it. Hiding retains the icon image and menu; icon changes made while hidden are retained when shown again. Visibility depends on the desktop tray host honoring the request. |
+| A_IconHidden | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Gets/sets tray visibility: 1 hides, 0 shows, including after #NoTrayIcon. Starts from the final tray directive. Retains image changes and menu while hidden; display depends on the desktop tray host. |
 | A_IconNumber | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | The selector of a runtime custom tray icon. Reads 1 while the script's embedded/default tray icon is active, including one selected by #TrayIcon, and when TraySetIcon omits its selector. |
 | A_IconTip | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Sets or returns the tool tip text of the system tray icon. |
 | A_Index | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | The current loop iteration. Outside a loop it is a value of the current pseudo-thread, 0 when it starts, which a script may assign. |
@@ -185,7 +185,7 @@ Status legend:
 | A_KeyDurationPlay | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Sets or returns the delay that will occur between the key down and key up events of each keystroke sent by Send and ControlSend in SendPlay mode. |
 | A_KsCorePath | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Gets the path to Keysharp.Core. |
 | A_KsVersion | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Gets the Keysharp runtime version. |
-| A_Language | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Built-in variable. |
+| A_Language | 🟢 Full | ⚪ Unknown | ⚪ Unknown | ⚪ Unknown | Read-only four-digit uppercase hex string. Windows: system default UI language ID. Linux/macOS: .NET system locale LCID low 16 bits (unverified). |
 | A_LastError | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Built-in variable. |
 | A_LineFile | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | The full path of the current source file. Source runs retain #Include paths. A .cks resolves each included file relative to its assembly output directory, then from its runtime directory; an include on another drive falls back to A_ScriptFullPath. Main-script lines and all lines in a standalone compiled executable use A_ScriptFullPath. |
 | A_LineNumber | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | The exact line number in the script, including comment lines. |
@@ -228,7 +228,7 @@ Status legend:
 | A_MSec | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Current 3 digit millisecond 000 - 999. |
 | A_MyDocuments | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Built-in variable. |
 | A_NewLine | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Platform-native newline sequence. |
-| A_NoTrayIcon | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Gets/sets whether the tray icon is hidden. |
+| A_NoTrayIcon | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Read-only tray-hidden state, updated by A_IconHidden. |
 | A_Now | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | The current local time in YYYYMMDDHH24MISS format. |
 | A_NowMs | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Gets current local timestamp including milliseconds. |
 | A_NowUTC | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | The current Coordinated Universal Time (UTC) in YYYYMMDDHH24MISS format. |
@@ -607,7 +607,7 @@ Status legend:
 | Gui.Control.OnCommand() | 🟢 Full | 🔴 Unsupported | 🔴 Unsupported | 🔴 Unsupported | Registers a WM_COMMAND callback for the control. WM_COMMAND is a Win32 concept; the non-Windows implementation accepts the call, registers nothing and never fires. |
 | Gui.Control.OnEvent() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Registers a control event callback. |
 | Gui.Control.OnMessage() | 🟢 Full | 🟡 Partial | 🟡 Partial | ⚪ Unknown | Registers Callback(GuiCtrlObj, wParam, lParam, Msg) for a window message the control receives, ahead of WM_COMMAND/WM_NOTIFY reflection and default processing; a non-empty return, 0 included, is the reply and ends the message's processing. Off Windows only the script's own synthesized GUI input messages are delivered, after the global monitors. WM_MOUSELEAVE reports toolkit pointer exit with zero wParam/lParam; native leave delivery is verified on X11 under Xvfb; Wayland and macOS delivery remain unverified. |
-| Gui.Control.OnNotify() | 🟢 Full | 🔴 Unsupported | 🔴 Unsupported | 🔴 Unsupported | Registers a WM_NOTIFY callback for the control. WM_NOTIFY is a Win32 concept; the non-Windows implementation accepts the call, registers nothing and never fires. |
+| Gui.Control.OnNotify() | 🟢 Full | 🔴 Unsupported | 🔴 Unsupported | 🔴 Unsupported | Registers a Windows WM_NOTIFY callback; off Windows, accepts the call without firing. NM_CUSTOMDRAW (-12) defers native UI pumping until return, including through nested timers; script timers and exits still run. |
 | Gui.Control.Opt() | 🟢 Full | 🟡 Partial | 🟡 Partial | 🟡 Partial | Sets options for the control. Changing a ListView to a view other than Report (+Icon, +IconSmall, +Tile, +List) is not implemented on Linux or macOS and raises. Raw Win32 style options (+0x..., +E0x...) have no portable equivalent and are ignored. |
 | Gui.Control.Redraw() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Redraws the control. |
 | Gui.Control.SetFont() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Sets the control font. |
@@ -769,7 +769,7 @@ Status legend:
 | ListView.Modify() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Changes the text and the named states of a row, or of every row for row 0, leaving other states and omitted columns as they are. |
 | ListView.ModifyCol() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Changes a column's options and title as AutoHotkey does, the per-column sort settings applying to header clicks, Auto and AutoHdr sizing only that column, and Sort sorting once. |
 | ListView.SetCellColor() | 🟢 Full | ⚪ Unknown | ⚪ Unknown | ⚪ Unknown | Sets a cell foreground and background using GUI color names, hexadecimal strings or RGB integers. Omitted, empty or Default components inherit the row then control. Requires existing 1-based indices; returns the control. Windows native properties verified; Linux and macOS unverified. |
-| ListView.SetImageList() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Assigns an image list for ListView icons. |
+| ListView.SetImageList() | 🟢 Full | 🟡 Partial | 🟡 Partial | 🟡 Partial | Windows accepts IL_Create IDs or valid native HIMAGELIST; 0 detaches. Returns the previous ID/handle. Native lists belong to the control unless +0x40 shares them; destroy detached/shared handles with ImageList_Destroy. Linux/macOS accept IL_Create IDs only and use one icon list. |
 | ListView.SetRowColor() | 🟢 Full | ⚪ Unknown | ⚪ Unknown | ⚪ Unknown | Sets a row foreground and background using GUI colors. Omitted, empty or Default components inherit the control; cell overrides take precedence. Requires an existing 1-based row; returns the control. Structural edits and sorting clear assignments. Windows native properties verified; Linux and macOS unverified. |
 | ListViewGetContent() | 🟢 Full | 🟡 Partial | 🟡 Partial | 🟡 Partial | The ListViewGetContent function returns content data from a list-view control, such as rows, columns, or count values. |
 | Ln() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Computes the base e (natural) logarithm of a number. Throws an exception if a negative number is passed in. |

@@ -75,9 +75,9 @@ namespace Keysharp.Builtins
 			}
 
 			//Icon numbers are 1-based, image indexes 0-based.
-			private static void SetIcon(System.Windows.Forms.ListView lv, ListViewItem item, int? icon)
+			private static void SetIcon(KeysharpListView lv, ListViewItem item, int? icon)
 			{
-				if (icon is int n && n >= 1 && lv.SmallImageList != null && n <= lv.SmallImageList.Images.Count)
+				if (icon is int n && n >= 1 && n <= lv.SmallImageCount)
 					item.ImageIndex = n - 1;
 			}
 
@@ -171,38 +171,22 @@ namespace Keysharp.Builtins
 				lv.ListViewItemSorter = null;
 			}
 
-			private partial long ReplaceImageList(ImageList il, long type)
+			private partial long ReplaceImageList(ImageList il, long type) => ReplaceImageList(il, il.Handle, type);
+
+			private long ReplaceImageList(ImageList il, nint handle, long type)
 			{
-				var lv = Lv;
+				var width = 0;
+
+				if (handle != 0 && !WindowsAPI.ImageList_GetIconSize(handle, out width, out _))
+					return 0L;
 
 				if (type is < 0 or > 2)
-				{
-					_ = Env.SysGet(SystemMetric.SM_CXSMICON).TryCoerceLong(out var cxSmIcon);
-					type = il.ImageSize.Width > cxSmIcon ? 0 : 1;
-				}
+					type = width > SystemInformation.SmallIconSize.Width ? 0 : 1;
 
-				long old;
-
-				switch (type)
-				{
-					case 0:
-						old = ImageLists.IL_GetId(lv.LargeImageList);
-						lv.LargeImageList = il;
-						break;
-
-					case 1:
-						old = ImageLists.IL_GetId(lv.SmallImageList);
-						lv.SmallImageList = il;
-						break;
-
-					default:
-						old = ImageLists.IL_GetId(lv.StateImageList);
-						lv.StateImageList = il;
-						break;
-				}
-
-				return old;
+				return Lv.ReplaceImageList(il, handle, (int)type);
 			}
+
+			private long ReplaceNativeImageList(long id, long type) => ReplaceImageList(null, (nint)id, type);
 
 			private sealed class RowComparer(int column, Comparison<string> compare) : IComparer
 			{

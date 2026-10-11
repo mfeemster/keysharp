@@ -788,6 +788,17 @@ namespace Keysharp.Internals.Os.Windows
 											   uint flagsAndAttributes,
 											   nint templateFile);
 
+		[LibraryImport(comctl32, EntryPoint = "ImageList_Destroy")]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool ImageList_Destroy(nint handle);
+
+		[LibraryImport(comctl32, EntryPoint = "ImageList_GetImageCount")]
+		internal static partial int ImageList_GetImageCount(nint handle);
+
+		[LibraryImport(comctl32, EntryPoint = "ImageList_GetIconSize")]
+		[return: MarshalAs(UnmanagedType.Bool)]
+		internal static partial bool ImageList_GetIconSize(nint handle, out int width, out int height);
+
 		[LibraryImport(comctl32, EntryPoint = "InitCommonControlsEx", SetLastError = true)]
 		[return: MarshalAs(UnmanagedType.Bool)]
 		internal static partial bool InitCommonControlsEx(in INITCOMMONCONTROLSEX icce);
@@ -878,6 +889,9 @@ namespace Keysharp.Internals.Os.Windows
 
 		[LibraryImport(kernel32, EntryPoint = "GetCurrentThread")]
 		internal static partial nint GetCurrentThread();
+
+		[LibraryImport(kernel32, EntryPoint = "GetSystemDefaultUILanguage")]
+		internal static partial ushort GetSystemDefaultUILanguage();
 
 		[LibraryImport(user32, EntryPoint = "AttachThreadInput")]
 		[return: MarshalAs(UnmanagedType.Bool)]

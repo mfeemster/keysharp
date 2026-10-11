@@ -7,6 +7,7 @@
 ; The tray menu and its tooltip belong to the script, not to the icon: #NoTrayIcon withholds only the icon,
 ; and both stay readable and settable without one, as they are in AutoHotkey.
 
+AssertEq(A_IconHidden, true, A_LineNumber)
 AssertEq(Type(A_TrayMenu), "Menu", A_LineNumber)
 Assert(A_TrayMenu.Handle > 0, A_LineNumber)
 
@@ -16,6 +17,20 @@ Assert(A_TrayMenu.Handle > 0, A_LineNumber)
 
 A_IconTip := "custom tip"
 AssertEq(A_IconTip, "custom tip", A_LineNumber)
+
+; Toggling visibility preserves the configured tray.
+menuHandle := A_TrayMenu.Handle
+#if WINDOWS
+TraySetIcon(A_WinDir "\System32\shell32.dll", 1)
+#endif
+iconFile := A_IconFile
+for hidden in [true, false, false, true, false, true] {
+	A_IconHidden := hidden
+	AssertEq(A_IconHidden, hidden, A_LineNumber)
+}
+AssertEq(A_TrayMenu.Handle, menuHandle, A_LineNumber)
+AssertEq(A_IconTip, "custom tip", A_LineNumber)
+AssertEq(A_IconFile, iconFile, A_LineNumber)
 
 Noop(*) {
 }

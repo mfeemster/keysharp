@@ -921,13 +921,24 @@ namespace Keysharp.Builtins
 
 					if (notifyHandlers != null && notifyHandlers.TryGetValue(notification, out var handler))
 					{
-						var ret = handler?.InvokeWindowMessageHandlers(this, m.LParam.ToInt64());
+						// Custom drawing must finish before another native UI message can run.
+						var score = notification == WindowsAPI.NM_CUSTOMDRAW ? 1 : 0;
+						Keysharp.Internals.Flow.noUiPumpScore += score;
 
-						if (CallbackStop.NonEmpty(ret))
+						try
 						{
-							_ = ret.TryCoerceLong(out var resultCode);
-							m.Result = (nint)resultCode;
-							return true;
+							var ret = handler?.InvokeWindowMessageHandlers(this, m.LParam.ToInt64());
+
+							if (CallbackStop.NonEmpty(ret))
+							{
+								_ = ret.TryCoerceLong(out var resultCode);
+								m.Result = (nint)resultCode;
+								return true;
+							}
+						}
+						finally
+						{
+							Keysharp.Internals.Flow.noUiPumpScore -= score;
 						}
 					}
 

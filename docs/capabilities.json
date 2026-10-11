@@ -370,8 +370,8 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "full",
-                     "notes":  "Disables the startup tray icon. #NoTrayIcon and #TrayIcon apply in source order, so the later directive determines visibility.",
-                     "tested-by":  "directive-misc.ahk; DirectiveTests.TrayIcon"
+                     "notes":  "Hides the startup tray icon; the last #NoTrayIcon/#TrayIcon wins. A_IconHidden := 0 shows it at runtime.",
+                     "tested-by":  "directive-misc.ahk; DirectiveTests.TrayIcon; BuiltInVarsTests.PropsTrayMenuWithoutIcon"
                  },
                  {
                      "category":  "Environment/System",
@@ -1817,8 +1817,8 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "full",
-                     "notes":  "Gets or sets tray icon visibility: 1 hides it, 0 shows it. Hiding retains the icon image and menu; icon changes made while hidden are retained when shown again. Visibility depends on the desktop tray host honoring the request.",
-                     "tested-by":  "Gui/guitest.ks"
+                     "notes":  "Gets/sets tray visibility: 1 hides, 0 shows, including after #NoTrayIcon. Starts from the final tray directive. Retains image changes and menu while hidden; display depends on the desktop tray host.",
+                     "tested-by":  "Gui/guitest.ks; BuiltInVarsTests.PropsTrayMenuWithoutIcon"
                  },
                  {
                      "category":  "Environment/System",
@@ -2044,12 +2044,13 @@
                  {
                      "category":  "Environment/System",
                      "feature":  "A_Language",
-                     "syntax":  "",
+                     "syntax":  "A_Language",
                      "windows":  "full",
-                     "linux_x11":  "full",
-                     "linux_wayland":  "full",
-                     "macos":  "full",
-                     "notes":  "Built-in variable."
+                     "linux_x11":  "unknown",
+                     "linux_wayland":  "unknown",
+                     "macos":  "unknown",
+                     "notes":  "Read-only four-digit uppercase hex string. Windows: system default UI language ID. Linux/macOS: .NET system locale LCID low 16 bits (unverified).",
+                     "tested-by":  "BuiltInVarsTests.PropsScriptProperties"
                  },
                  {
                      "category":  "Environment/System",
@@ -2470,8 +2471,8 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "full",
-                     "notes":  "Gets/sets whether the tray icon is hidden.",
-                     "tested-by":  "directive-misc.ahk"
+                     "notes":  "Read-only tray-hidden state, updated by A_IconHidden.",
+                     "tested-by":  "directive-misc.ahk; BuiltInVarsTests.PropsTrayMenuWithoutIcon"
                  },
                  {
                      "category":  "Environment/System",
@@ -6092,12 +6093,13 @@
                  {
                      "category":  "Windowing/GUI",
                      "feature":  "Gui.Control.OnNotify()",
-                     "syntax":  "",
+                     "syntax":  "GuiCtrl.OnNotify(NotifyCode, Callback [, AddRemove])",
                      "windows":  "full",
                      "linux_x11":  "unsupported",
                      "linux_wayland":  "unsupported",
                      "macos":  "unsupported",
-                     "notes":  "Registers a WM_NOTIFY callback for the control. WM_NOTIFY is a Win32 concept; the non-Windows implementation accepts the call, registers nothing and never fires."
+                     "notes":  "Registers a Windows WM_NOTIFY callback; off Windows, accepts the call without firing. NM_CUSTOMDRAW (-12) defers native UI pumping until return, including through nested timers; script timers and exits still run.",
+                     "tested-by":  "GuiTests.GuiWindow"
                  },
                  {
                      "category":  "Windowing/GUI",
@@ -7620,12 +7622,13 @@
                  {
                      "category":  "Windowing/GUI",
                      "feature":  "ListView.SetImageList()",
-                     "syntax":  "",
+                     "syntax":  "LV.SetImageList(ImageListID [, IconType])",
                      "windows":  "full",
-                     "linux_x11":  "full",
-                     "linux_wayland":  "full",
-                     "macos":  "full",
-                     "notes":  "Assigns an image list for ListView icons."
+                     "linux_x11":  "partial",
+                     "linux_wayland":  "partial",
+                     "macos":  "partial",
+                     "notes":  "Windows accepts IL_Create IDs or valid native HIMAGELIST; 0 detaches. Returns the previous ID/handle. Native lists belong to the control unless +0x40 shares them; destroy detached/shared handles with ImageList_Destroy. Linux/macOS accept IL_Create IDs only and use one icon list.",
+                     "tested-by":  "GuiTests.GuiWindow"
                  },
                  {
                      "category":  "Windowing/GUI",

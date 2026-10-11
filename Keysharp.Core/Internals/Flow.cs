@@ -5,6 +5,9 @@ namespace Keysharp.Internals
 {
 	internal static class Flow
 	{
+		[ThreadStatic]
+		internal static int noUiPumpScore;
+
 		private sealed class DialogInterruptibilityScope : IDisposable
 		{
 			private readonly ThreadVariables threadVariables;
@@ -394,7 +397,7 @@ namespace Keysharp.Internals
 				{
 					scheduler ??= script.EventScheduler;
 
-					if (pumpUi && script.IsOnMainThread)
+					if (pumpUi && noUiPumpScore == 0 && script.IsOnMainThread)
 					{
 #if WINDOWS
 						Application.DoEvents();
