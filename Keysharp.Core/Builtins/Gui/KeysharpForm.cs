@@ -223,18 +223,16 @@ namespace Keysharp.Builtins
 			//and it rescales every child unconditionally, which cannot honor a per-control "-DPIResize".
 			AutoScaleMode = AutoScaleMode.None;
 			//See Gui.Show() for where the remainder of the properties get set, such as scaling values.
-			Font = MainWindow.OurDefaultFont;
 			StartPosition = FormStartPosition.CenterScreen;
 			KeyPreview = true;
 			DoubleBuffered = true;
 			SetStyle(ControlStyles.StandardClick, true);
 			SetStyle(ControlStyles.StandardDoubleClick, true);
-#else
-			this.Font = MainWindow.OurDefaultFont;
 #endif
 
             if (this is not MainWindow)
 			{
+				this.Font = MainWindow.OurDefaultFont;
 #if WINDOWS
 				FormClosing += Form_FormClosing;
 				DpiChanged += Form_DpiChanged;

@@ -173,6 +173,9 @@ namespace Keysharp.Internals
 			if (Control.FromHandle(h) is Form form)
 				form.Invoke(() =>
 				{
+					if (form is MainWindow window)
+						window.EnsureDebugUi();
+
 					foreach (var ctrl in form.GetAllControlsRecursive<Control>())
 						_ = ctrl.Handle;
 				});

@@ -11,11 +11,13 @@ public static object MainWindowForTests()
     var flags = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
     var field = typeof(Keysharp.Runtime.Script).GetField("mainWindow", flags);
     var window = field.GetValue(script);
-    if (window != null)
-        return window;
-    window = System.Activator.CreateInstance(typeof(Keysharp.Internals.UI.Unix.MainWindow), flags, null, new object[] { script }, null);
-    typeof(Keysharp.Internals.UI.Unix.MainWindow).GetMethod("InitializeHidden", flags).Invoke(window, null);
-    field.SetValue(script, window);
+    if (window == null)
+    {
+        window = System.Activator.CreateInstance(typeof(Keysharp.Internals.UI.Unix.MainWindow), flags, null, new object[] { script }, null);
+        typeof(Keysharp.Internals.UI.Unix.MainWindow).GetMethod("InitializeHidden", flags).Invoke(window, null);
+        field.SetValue(script, window);
+    }
+    typeof(Keysharp.Internals.UI.Unix.MainWindow).GetMethod("EnsureDebugUi", flags).Invoke(window, null);
     return window;
 }
 
@@ -42,6 +44,15 @@ window := MainWindowForTests()
 AssertEq(window.Visible, 0, A_LineNumber)
 #if WINDOWS
 controlHwnd := window.Controls.Find("txtDebug", true).GetValue(0).Handle
+mainGui := GuiFromHwnd(A_ScriptHwnd)
+debugControl := GuiCtrlFromHwnd(controlHwnd)
+Assert(debugControl is Gui.Control, A_LineNumber)
+Assert(debugControl = mainGui[controlHwnd], A_LineNumber)
+foundDebug := 0
+for control in mainGui
+    if control = debugControl
+        foundDebug++
+AssertEq(foundDebug, 1, A_LineNumber)
 #endif
 OnMessage(0x111, Command)
 

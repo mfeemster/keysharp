@@ -187,7 +187,7 @@ namespace Keysharp.Runtime
 				_ = HotkeyDefinition.ManifestAllHotkeysHotstringsHooks(this);
 
 				suspendMenuItem?.Checked = suspended;
-				mainWindow?.SuspendHotkeysToolStripMenuItem.Checked = suspended;
+				mainWindow?.SetSuspendState(suspended);
 				if (!(bool)A_IconFrozen && !NoTrayIcon && EnsureTrayIcon())
 					ApplyTrayIcon();
 			});
@@ -262,7 +262,7 @@ namespace Keysharp.Runtime
 
 			showsPaused = paused;
 			pauseMenuItem?.Checked = paused;
-			mainWindow?.PauseScriptToolStripMenuItem.Checked = paused;
+			mainWindow?.SetPauseState(paused);
 
 			if (!(bool)A_IconFrozen)
 				ApplyTrayIcon();

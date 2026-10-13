@@ -4,11 +4,17 @@ namespace Keysharp.Internals.UI.Windows
 	public partial class MainWindow : KeysharpForm
 	{
 		private const int WmQueryEndSession = 0x0011;
-		public static Font OurDefaultFont = new ("MS Shell Dlg", 8F);
+		private const int WmWindowPosChanged = 0x0047;
+		private static Font ourDefaultFont;
+		public static Font OurDefaultFont => ourDefaultFont ??= new ("MS Shell Dlg", 8F);
 		internal FormWindowState lastWindowState = FormWindowState.Normal;
 		private readonly bool clipSuccess;
 		private AboutBox about;
 		private bool selectingTab;
+		private bool debugUiInitialized;
+		private bool initializingDebugUi;
+		private bool paused;
+		private bool suspended;
 
 		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 		public bool IsClosing { get; private set; }
@@ -18,39 +24,95 @@ namespace Keysharp.Internals.UI.Windows
 
 		internal MainWindow(Script owner) : base(owner)
 		{
-			InitializeComponent();
-			SetMenuStrip(mainMenu);
+			InitializeHost();
 			//FormBorderStyle = FormBorderStyle.SizableToolWindow;
 			SetStyle(ControlStyles.StandardClick, true);
 			SetStyle(ControlStyles.StandardDoubleClick, true);
 			SetStyle(ControlStyles.EnableNotifyMessage, true);
 			// The main window keeps a single, constant handle for its whole lifetime (ShowInTaskbar is already
-			// set to its final value by the designer, so nothing forces a handle recreation), which lots of other
+			// set to its final value before creation, so nothing forces a handle recreation), which lots of other
 			// logic relies on (e.g. hotkeys). Registering the clipboard listener here against that handle is safe.
 			// Cross-platform counterpart lives in the Unix MainWindow, which subscribes to Eto's Clipboard.Changed
 			// and raises the same ClipboardUpdate event; this Win32 listener is the Windows-specific implementation.
 			clipSuccess = WindowsAPI.AddClipboardFormatListener(Handle);
-			//Every tab shows a snapshot of live data (variables, hotkeys, key history, buffered debug output),
-			//so it's regenerated whenever the user brings that tab into view, not just when a View menu item
-			//is clicked. Without this, switching tabs in a freshly opened window shows empty text boxes.
-			tcMain.SelectedIndexChanged += (_, _) =>
+		}
+
+		internal bool EnsureDebugUi()
+		{
+			if (initializingDebugUi || ShouldSkipUiUpdate())
+				return false;
+
+			if (debugUiInitialized)
+				return true;
+
+			if (InvokeRequired)
+				return this.CheckedInvoke(EnsureDebugUi, false);
+
+			initializingDebugUi = true;
+
+			try
 			{
-				if (!selectingTab)
-					RefreshSelectedTab();
-			};
-			editScriptToolStripMenuItem.Visible = !A_IsCompiled;
+				if (ReferenceEquals(Font, Control.DefaultFont))
+					Font = OurDefaultFont;
+
+				InitializeComponent();
+
+				SetMenuStrip(MainMenuStrip ?? mainMenu);
+				tcMain.SelectedIndexChanged += (_, _) =>
+				{
+					if (!selectingTab)
+						RefreshSelectedTab();
+				};
+				editScriptToolStripMenuItem.Visible = !A_IsCompiled;
+				pauseScriptToolStripMenuItem.Checked = paused;
+				suspendHotkeysToolStripMenuItem.Checked = suspended;
+				OwnerScript.mainWindowGui?.WrapMainWindowControls();
+				OwnerScript.DebugOutput.ResetShown();
+				debugUiInitialized = true;
+				return true;
+			}
+			catch
+			{
+				if (MainMenuStrip == mainMenu)
+					MainMenuStrip = null;
+
+				tcMain?.Dispose();
+				mainMenu?.Dispose();
+				ResumeLayout(false);
+				throw;
+			}
+			finally
+			{
+				initializingDebugUi = false;
+			}
+		}
+
+		internal void SetPauseState(bool value)
+		{
+			paused = value;
+
+			if (debugUiInitialized && !ShouldSkipUiUpdate())
+				pauseScriptToolStripMenuItem.Checked = value;
+		}
+
+		internal void SetSuspendState(bool value)
+		{
+			suspended = value;
+
+			if (debugUiInitialized && !ShouldSkipUiUpdate())
+				suspendHotkeysToolStripMenuItem.Checked = value;
 		}
 
 		public void AddText(string s, MainFocusedTab tab, bool focus)
 		{
 			//Use CheckedBeginInvoke() because CheckedInvoke() seems to crash if this is called right as the window is closing.
 			//Such as with a hotkey that prints on mouse click, which will cause a print when the X is clicked to close.
-			this.CheckedBeginInvoke(() =>
+			QueueUiUpdate(() =>
 			{
 				GetText(tab).AppendText($"{s.ReplaceLineEndings(Environment.NewLine)}");//This should scroll to the bottom, if not, try this:
 				if (focus)
 					SelectTab(GetTab(tab));
-			}, false, false);
+			}, false);
 		}
 
 		public void ClearText(MainFocusedTab tab) => SetText(string.Empty, tab, false);
@@ -59,6 +121,9 @@ namespace Keysharp.Internals.UI.Windows
 		// order; SetText defers and AddText does not.
 		internal void ShowDebugOutput(string text, bool replace)
 		{
+			if (!EnsureDebugUi())
+				return;
+
 			var s = text.ReplaceLineEndings(Environment.NewLine);
 
 			if (replace)
@@ -69,7 +134,7 @@ namespace Keysharp.Internals.UI.Windows
 
 		public void SetText(string s, MainFocusedTab tab, bool focus)
 		{
-			_ = this.BeginInvoke(() => //These need to be BeginInvoke(), otherwise they can freeze if called within a COM event.
+			QueueUiUpdate(() => //These need to be BeginInvoke(), otherwise they can freeze if called within a COM event.
 			{
 				GetText(tab).Text = s.ReplaceLineEndings(Environment.NewLine);
 
@@ -80,7 +145,7 @@ namespace Keysharp.Internals.UI.Windows
 
 		internal object ListHotkeys()
 		{
-			_ = this.BeginInvoke(() =>
+			QueueUiUpdate(() =>
 			{
 				ShowIfNeeded();
 				SetTextInternal(HotkeyDefinition.GetHotkeyDescriptions(OwnerScript), MainFocusedTab.Hotkeys, txtHotkeys, true);
@@ -90,7 +155,7 @@ namespace Keysharp.Internals.UI.Windows
 
 		internal object ShowDebug()
 		{
-			_ = this.BeginInvoke(() =>
+			QueueUiUpdate(() =>
 			{
 				ShowIfNeeded();
 				SelectTab(tpDebug);
@@ -104,7 +169,7 @@ namespace Keysharp.Internals.UI.Windows
 
 		internal object ShowHistory()
 		{
-			_ = this.BeginInvoke(() =>
+			QueueUiUpdate(() =>
 			{
 				ShowIfNeeded();
 				SetTextInternal(Builtins.Debug.ListKeyHistory(), MainFocusedTab.History, txtHistory, true);
@@ -119,7 +184,7 @@ namespace Keysharp.Internals.UI.Windows
 			var execScope = CallStack.Current.ExecutionScope;
 			var execLocals = execScope?.Enumerate().ToList();
 			var execName = execScope?.Name;
-			_ = this.BeginInvoke(() =>
+			QueueUiUpdate(() =>
 			{
 				ShowIfNeeded();
 				SetTextInternal(Builtins.Debug.GetVars(null, execLocals, execName), MainFocusedTab.Vars, txtVars, showTab);
@@ -148,7 +213,11 @@ namespace Keysharp.Internals.UI.Windows
 		/// <summary>
 		/// Regenerates the contents of the tab the user is currently looking at.
 		/// </summary>
-		internal void RefreshSelectedTab() => RefreshTab(GetFocusedTab(tcMain.SelectedTab));
+		internal void RefreshSelectedTab()
+		{
+			if (EnsureDebugUi())
+				RefreshTab(GetFocusedTab(tcMain.SelectedTab));
+		}
 
 		/// <summary>
 		/// Brings a tab into view on behalf of the code that is filling it in, rather than on behalf of the
@@ -174,12 +243,22 @@ namespace Keysharp.Internals.UI.Windows
 
 		protected override void OnVisibleChanged(EventArgs e)
 		{
+			var refresh = Visible && EnsureDebugUi();
+
 			base.OnVisibleChanged(e);
 
 			//Opening the window (tray menu, WinShow(), restoring it) must show current data, rather than
 			//whatever happened to be generated the last time a View menu item was clicked.
-			if (Visible && !IsClosing && IsHandleCreated)
-				RefreshSelectedTab();
+			if (refresh && Visible && IsHandleCreated)
+				RefreshTab(GetFocusedTab(tcMain.SelectedTab));
+		}
+
+		protected override void SetVisibleCore(bool value)
+		{
+			if (value && AllowShowDisplay && !EnsureDebugUi())
+				return;
+
+			base.SetVisibleCore(value);
 		}
 
 		protected override void WndProc(ref Message m)
@@ -278,6 +357,13 @@ namespace Keysharp.Internals.UI.Windows
 			}
 
 			base.WndProc(ref m);
+
+			// SW_SHOWNORMAL can omit WM_SHOWWINDOW, leaving WinForms' visibility state stale.
+			if (m.Msg == WmWindowPosChanged && !Visible && WindowsAPI.IsWindowVisible(m.HWnd) && EnsureDebugUi())
+			{
+				AllowShowDisplay = true;
+				Visible = true;
+			}
 		}
 
 		private void SendMenuCommand(MenuCommand command) =>
@@ -421,12 +507,11 @@ namespace Keysharp.Internals.UI.Windows
 
 		private void MainWindow_Load(object sender, EventArgs e)
 		{
-			Visible = false;
-			WindowState = FormWindowState.Minimized;
-		}
-
-		private void MainWindow_Shown(object sender, EventArgs e)
-		{
+			if (!AllowShowDisplay)
+			{
+				Visible = false;
+				WindowState = FormWindowState.Minimized;
+			}
 		}
 
 		private void MainWindow_SizeChanged(object sender, EventArgs e)
@@ -459,7 +544,7 @@ namespace Keysharp.Internals.UI.Windows
 			var newCharIndex = oldLineIndex == 0 ? 0 : txt.GetFirstCharIndexFromLine(Math.Max(0, oldLineIndex + (int)linesPerPage));
 			//txtDebug.Text += $"lineHeight: {lineHeight}, linesPerPage: {linesPerPage}, oldCharIndex: {oldCharIndex}, oldLineIndex: {oldLineIndex}, newCharIndex: {newCharIndex}\r\n";
 			//This must be done with BeginInvoke() or else it won't reposition the scroll bars.
-			_ = this.BeginInvoke(() =>
+			QueueUiUpdate(() =>
 			{
 				txt.Select(Math.Max(0, newCharIndex), 0);
 				txt.ScrollToCaret();
@@ -468,7 +553,7 @@ namespace Keysharp.Internals.UI.Windows
 
 		private void ShowIfNeeded()
 		{
-			if (!AllowShowDisplay || WindowState == FormWindowState.Minimized)
+			if (!Visible || !AllowShowDisplay || WindowState == FormWindowState.Minimized)
 			{
 				AllowShowDisplay = true;
 				Show();
@@ -476,6 +561,22 @@ namespace Keysharp.Internals.UI.Windows
 				WindowState = FormWindowState.Normal;
 			}
 		}
+
+		private void QueueUiUpdate(Action action, bool forceInvoke = true)
+		{
+			if (ShouldSkipUiUpdate())
+				return;
+
+			this.CheckedBeginInvoke(() =>
+			{
+				if (!EnsureDebugUi())
+					return;
+
+				action();
+			}, false, forceInvoke);
+		}
+
+		private bool ShouldSkipUiUpdate() => IsClosing || Disposing || IsDisposed || OwnerScript.IsTearingDown || OwnerScript.IsDisposed;
 
 		private void suspendHotkeysToolStripMenuItem_Click(object sender, EventArgs e) => SendMenuCommand(MenuCommand.FileSuspend);
 

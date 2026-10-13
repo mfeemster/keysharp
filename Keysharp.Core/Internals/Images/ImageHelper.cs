@@ -29,15 +29,28 @@ namespace Keysharp.Internals.Images
 			return (a << 24) | (r << 16) | (g << 8) | b;
 		}
 
-		internal static Icon IconFromByteArray(byte[] bytes)
+		internal static Icon IconFromByteArray(byte[] bytes, bool deferFrames = false)
 		{
-#if WINDOWS
-			using (var ms = new MemoryStream(bytes))
-				return new Icon(ms);
-#else
-			using (var ms = new MemoryStream(bytes, writable: false))
-				return new Icon(ms);
+			using var stream = new MemoryStream(bytes, writable: false);
+#if LINUX
+			if (deferFrames)
+			{
+				var handler = new Eto.GtkSharp.Drawing.IconHandler();
+				handler.CreateDeferred(stream);
+				return new Icon(handler);
+			}
 #endif
+			return new Icon(stream);
+		}
+
+		internal static Icon WithStockTrayImage(Icon icon, string fileName)
+		{
+#if LINUX
+			var path = Path.Combine(AppContext.BaseDirectory, fileName);
+			if (File.Exists(path))
+				icon.Properties["Eto.Gtk.TrayImageFile"] = path;
+#endif
+			return icon;
 		}
 
 		private static byte[] IconToByteArray(Icon icon)

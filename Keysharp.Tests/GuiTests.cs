@@ -5,6 +5,107 @@ public class GuiTests : TestRunner
 {
 	private const string MsgBoxTitle = "this is a sample title";
 
+	[TestCase(false), TestCase(true), Category("Gui")]
+#if WINDOWS
+	[Apartment(ApartmentState.STA)]
+#endif
+	public void MainWindowLazyContents(bool show)
+	{
+		SkipIfUiInitializationBlocked("Main window initialization requires a usable UI toolkit.");
+		s.InvokeOnUIThread(() =>
+		{
+#if WINDOWS
+			using var window = new Keysharp.Internals.UI.Windows.MainWindow(s);
+			var handle = window.Handle;
+			window.Text = "Lazy main window";
+#else
+			using var window = new Keysharp.Internals.UI.Unix.MainWindow(s);
+			window.InitializeHidden();
+			var handle = EtoExtensions.GetHandle(window);
+			window.Title = "Lazy main window";
+#endif
+			s.mainWindow = window;
+			s.mainWindowGui = new Gui(s, null, null, null, window);
+			window.ClientSize = new Size(700, 400);
+#if WINDOWS
+			using var font = new System.Drawing.Font(FontFamily.GenericSansSerif, 13F);
+			window.Font = font;
+#else
+			using var font = SystemFonts.Default(Conversions.ScaleFontSize(13F));
+			window.Properties["Font"] = font;
+#endif
+			window.SetPauseState(true);
+			window.SetSuspendState(true);
+			s.DebugOutput.Append("Buffered before display", false);
+			Assert.That(handle, Is.Not.EqualTo(nint.Zero));
+			Assert.AreSame(s.mainWindowGui, GuiHelper.GuiFromHwnd(handle.ToInt64()));
+			Assert.IsFalse(window.Visible);
+#if WINDOWS
+			Assert.That(window.Controls.Count, Is.Zero);
+#else
+			Assert.IsNull(window.Content);
+			Assert.IsNull(window.Menu);
+#endif
+			if (show)
+			{
+#if WINDOWS
+				_ = WindowsAPI.ShowWindow(handle, WindowsAPI.SW_SHOWNORMAL);
+#else
+				window.AllowShowDisplay = true;
+				window.Show();
+#endif
+			}
+			else
+				_ = s.mainWindowGui.ToClr();
+
+#if WINDOWS
+			Assert.That(window.Controls.Count, Is.GreaterThan(0));
+			Assert.IsTrue(window.PauseScriptToolStripMenuItem.Checked);
+			Assert.IsTrue(window.SuspendHotkeysToolStripMenuItem.Checked);
+			var content = window.Controls[0];
+			var debugText = window.Controls.Find("txtDebug", true)[0];
+#else
+			Assert.That(window.Content, Is.InstanceOf<TabControl>());
+			var items = window.Menu.Items.OfType<ButtonMenuItem>().SelectMany(item => item.Items).OfType<CheckMenuItem>();
+			Assert.IsTrue(items.Single(item => item.Text.Contains("Pause")).Checked);
+			Assert.IsTrue(items.Single(item => item.Text.Contains("Suspend")).Checked);
+			var content = window.Content;
+			var debugText = (TextArea)((TabControl)content).Pages[0].Content;
+#endif
+			if (show)
+				Assert.IsTrue(Keysharp.Internals.Flow.WaitUntil(() => window.Visible && debugText.Text == "Buffered before display", 2000));
+
+			Assert.That(window.Visible, Is.EqualTo(show));
+			Assert.That(debugText.Text, Is.EqualTo(show ? "Buffered before display" : ""));
+			window.EnsureDebugUi();
+#if WINDOWS
+			Assert.That(window.Handle, Is.EqualTo(handle));
+			Assert.That(window.Text, Is.EqualTo("Lazy main window"));
+			Assert.That(window.Font, Is.EqualTo(font));
+			Assert.That(window.ClientSize, Is.EqualTo(new Size(700, 400)));
+			Assert.AreSame(content, window.Controls[0]);
+#else
+			Assert.That(EtoExtensions.GetHandle(window), Is.EqualTo(handle));
+			Assert.That(window.Title, Is.EqualTo("Lazy main window"));
+			Assert.That(window.Properties["Font"], Is.EqualTo(font));
+			Assert.AreSame(content, window.Content);
+#endif
+			window.Hide();
+			_ = window.ShowDebug();
+			Assert.IsTrue(Keysharp.Internals.Flow.WaitUntil(() => window.Visible, 2000), "A debug command must redisplay a hidden main window.");
+#if WINDOWS
+			Assert.That(window.Handle, Is.EqualTo(handle));
+#else
+			Assert.That(EtoExtensions.GetHandle(window), Is.EqualTo(handle));
+#endif
+			window.Hide();
+			window.Dispose();
+			window.SetPauseState(false);
+			window.SetSuspendState(false);
+			Assert.IsFalse(window.EnsureDebugUi());
+		});
+	}
+
 	[Test, Category("Gui"), NonParallelizable]
 #if WINDOWS
 	[Apartment(ApartmentState.STA)]

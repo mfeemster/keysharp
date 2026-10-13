@@ -14,15 +14,37 @@ namespace Keysharp.Internals.UI.Windows
 		/// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
 		protected override void Dispose(bool disposing)
 		{
-			if (disposing && (components != null))
+			if (IsDisposed)
+				return;
+
+			if (disposing)
 			{
-				components.Dispose();
+				IsClosing = true;
+				components?.Dispose();
+				// A custom menu can leave the default menu unattached.
+				mainMenu?.Dispose();
 			}
 
 			base.Dispose(disposing);
 		}
 
 		#region Windows Form Designer generated code
+
+		private void InitializeHost()
+		{
+			AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
+			AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
+			ClientSize = new System.Drawing.Size(843, 535);
+			Margin = new System.Windows.Forms.Padding(2);
+			Name = "MainWindow";
+			// Changing ShowInTaskbar after handle creation would orphan clipboard, Gui and hotkey registrations.
+			ShowInTaskbar = true;
+			StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
+			Text = "Keysharp";
+			FormClosing += MainWindow_FormClosing;
+			Load += MainWindow_Load;
+			SizeChanged += MainWindow_SizeChanged;
+		}
 
 		/// <summary>
 		/// Required method for Designer support - do not modify
@@ -324,24 +346,7 @@ namespace Keysharp.Internals.UI.Windows
 			//
 			// MainWindow
 			//
-			AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
-			AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
-			ClientSize = new System.Drawing.Size(843, 535);
-			Controls.Add(tcMain);
-			Controls.Add(mainMenu);
-			MainMenuStrip = mainMenu;
-			Margin = new System.Windows.Forms.Padding(2);
-			Name = "MainWindow";
-			// Create the window already showing in the taskbar (the value AttachMainWindowChrome applies).
-			// Changing ShowInTaskbar after the handle exists forces a full handle recreation, which would
-			// orphan everything bound to the original handle (clipboard listener, allGuiHwnds key, hotkeys).
-			ShowInTaskbar = true;
-			StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-			Text = "Keysharp";
-			FormClosing += MainWindow_FormClosing;
-			Load += MainWindow_Load;
-			Shown += MainWindow_Shown;
-			SizeChanged += MainWindow_SizeChanged;
+			ContentContainer.Controls.Add(tcMain);
 			mainMenu.ResumeLayout(false);
 			mainMenu.PerformLayout();
 			tcMain.ResumeLayout(false);

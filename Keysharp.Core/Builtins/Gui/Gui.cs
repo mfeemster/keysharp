@@ -89,6 +89,7 @@ namespace Keysharp.Builtins
 				{
 					if (o is bool b)
 					{
+						f.EnsureMainWindowControls();
 #if WINDOWS
 						f.form.ContentContainer.AutoScroll = b;
 #else
@@ -398,7 +399,17 @@ namespace Keysharp.Builtins
 		/// The backing toolkit window as an ordinary <c>Ks.Clr</c> object. Its concrete type is platform-dependent
 		/// and unspecified; changes made through it bypass this class's own state and event wiring.
 		/// </summary>
-		public object ToClr() => ManagedInvoke.WrapManaged(form);
+		public object ToClr()
+		{
+			EnsureMainWindowControls();
+			return ManagedInvoke.WrapManaged(form);
+		}
+
+		private void EnsureMainWindowControls()
+		{
+			if (form is MainWindow window)
+				window.EnsureDebugUi();
+		}
 
 		//The margins are kept in pixels, in form.Margin, and scaled by the Gui's DPI on the way in and out, as in AHK.
 		public long MarginX
@@ -446,6 +457,7 @@ namespace Keysharp.Builtins
 					return;
 				}
 
+				EnsureMainWindowControls();
 				menuBar = bar;
 #if WINDOWS
 				form.SetMenuStrip(bar?.MenuStrip);
@@ -583,12 +595,12 @@ namespace Keysharp.Builtins
 				{
 					form = kf;
 
-					foreach (var ctrl in form.GetAllControlsRecursive<Forms.Control>())//In order for searches that use allGuiHwnds, we must make all of the child controls point here.
-						ctrl.Tag = new Gui.Control(this, ctrl, ctrl.Name, true);//Supposed to be name like "label", "edit" etc, but just pass the name since this is only used with the main window.
+					WrapMainWindowControls();
 				}
 #if !WINDOWS
 				// Preserve prebuilt window content (e.g. main window tabs/menu container).
-				form.Content ??= new PixelLayout();
+				if (form is not MainWindow)
+					form.Content ??= new PixelLayout();
 #endif
 				LastContainer = form;
 				form.Register(this);//Calling handle forces the creation of the window.
@@ -602,6 +614,16 @@ namespace Keysharp.Builtins
 		{
 			_ = count.TryCoerceInt(out var c);
 			return CreateEnumerator(c);
+		}
+
+		internal void WrapMainWindowControls()
+		{
+			var wrappers = form.GetAllControlsRecursive<Forms.Control>()
+				.Select(ctrl => KeyValuePair.Create(ctrl.Handle.ToInt64(), ctrl.GetGuiControl() ?? new Gui.Control(this, ctrl, ctrl.Name, true)))
+				.ToArray();
+
+			foreach (var wrapper in wrappers)
+				controls[wrapper.Key] = wrapper.Value;
 		}
 
 		public object __New(object options = null, object title = null, object eventObj = null)
@@ -659,6 +681,7 @@ namespace Keysharp.Builtins
 		void EnsureDefaultMargins()
 		{
 			if (marginsInit) return;
+			EnsureMainWindowControls();
 			//AHK's defaults, 1.25 and 0.75 times the font's point size, taken as it takes them from the font's pixel
 			//height: that follows the monitor's DPI even for a -DPIScale Gui, and the margins with it.
 #if WINDOWS
@@ -3015,10 +3038,15 @@ namespace Keysharp.Builtins
 		/// </summary>
 		public object Font
 		{
-			get => Ks.Font.FromControl(form);
+			get
+			{
+				EnsureMainWindowControls();
+				return Ks.Font.FromControl(form);
+			}
 
 			set
 			{
+				EnsureMainWindowControls();
 				if (value is Ks.Font f)
 					form.SetFont(f.fontOptions);
 				else
@@ -3028,6 +3056,7 @@ namespace Keysharp.Builtins
 
 		public object SetFont(object options = null, object fontName = null)
 		{
+			EnsureMainWindowControls();
 			if (Conversions.ParseFontOptions(options is Ks.Font f ? f.fontOptions : options, fontName) is { } fontOptions)
 				form.SetFont(fontOptions);
 
@@ -3043,6 +3072,7 @@ namespace Keysharp.Builtins
 			get
 			{
 				if (form.IsDisposed) return Errors.ErrorOccurred("GUI window is no longer available.");
+				EnsureMainWindowControls();
 #if WINDOWS
 				return (long)HFontCache.Get(form);
 #elif LINUX
@@ -3160,6 +3190,7 @@ namespace Keysharp.Builtins
 
 		public object Show(object options = null)
 		{
+			EnsureMainWindowControls();
 			ResumeAddLayout();
 			EnsureDefaultMargins();
 
@@ -3544,6 +3575,7 @@ namespace Keysharp.Builtins
 #endif
         public KeysharpObject Submit(object hide = null)
 		{
+			EnsureMainWindowControls();
 			var hideVal = ForceBool(hide ?? true);
 			var panels = new HashSet<Panel>();
 			var ctrls = form.GetControls().Flatten(true);
@@ -3722,6 +3754,7 @@ namespace Keysharp.Builtins
 
 		private Enumerator CreateEnumerator(int count)
 		{
+			EnsureMainWindowControls();
 			var iter = controls.GetEnumerator();
 
 			return new Enumerator(
@@ -4244,6 +4277,7 @@ namespace Keysharp.Builtins
 		{
 			get
 			{
+				EnsureMainWindowControls();
 				var handle = controlName.ParseLong();
 
 				if (handle.HasValue)

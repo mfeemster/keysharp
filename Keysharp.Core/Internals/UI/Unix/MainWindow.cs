@@ -5,31 +5,17 @@ namespace Keysharp.Internals.UI.Unix
 {
 	public class MainWindow : KeysharpForm
 	{
-		private readonly ToolStripMenuItem pauseScriptToolStripMenuItem = new ("&Pause Script");
-		private readonly ToolStripMenuItem suspendHotkeysToolStripMenuItem = new ("&Suspend Hotkeys");
-		private readonly Eto.Forms.MenuBar mainMenu = new ();
+		private Eto.Forms.MenuBar mainMenu;
 		private CheckMenuItem pauseScriptMenuItem;
 		private CheckMenuItem suspendHotkeysMenuItem;
 
-		private readonly TabControl tcMain = new ();
-		private readonly TabPage tpDebug = new () { Text = "Debug" };
-		private readonly TabPage tpVars = new () { Text = "Vars" };
-		private readonly TabPage tpHotkeys = new () { Text = "Hotkeys" };
-		private readonly TabPage tpHistory = new () { Text = "History" };
-		// Conversions.ScaleFontSize scales the base point size on macOS (no-op elsewhere) so these debug-window
-		// text areas match the other platforms visually. Safe here because instance initializers run at
-		// construction, after Eto's platform is up.
-		private readonly TextArea txtDebug = new () { Font = SystemFonts.Default(Conversions.ScaleFontSize(10F)), Wrap = false };
-		private readonly TextArea txtVars = new () { Font = SystemFonts.Default(Conversions.ScaleFontSize(10F)), Wrap = false };
-		private readonly TextArea txtHotkeys = new () { Font = SystemFonts.Default(Conversions.ScaleFontSize(10F)), Wrap = false };
-		private readonly TextArea txtHistory = new () { Font = SystemFonts.Default(Conversions.ScaleFontSize(10F)), Wrap = false };
+		private TabControl tcMain;
+		private TabPage tpDebug, tpVars, tpHotkeys, tpHistory;
+		private TextArea txtDebug, txtVars, txtHotkeys, txtHistory;
 
 		private static Font ourDefaultFont;
 
-		// Lazily initialized: SystemFonts.Default() requires Eto's platform to already be detected/running,
-		// which is not the case at MainWindow's static-initialization time in headless/test contexts
-		// (referencing it eagerly as a static field initializer throws NullReferenceException there).
-		// ScaleFontSize scales the 8pt base on macOS (~11pt) to match other platforms; no-op elsewhere.
+		// The default font needs a running Eto platform; ScaleFontSize adjusts its point size on macOS.
 		public static Font OurDefaultFont => ourDefaultFont ??= SystemFonts.Default(Conversions.ScaleFontSize(8F));
 
 		internal FormWindowState lastWindowState = FormWindowState.Normal;
@@ -37,23 +23,92 @@ namespace Keysharp.Internals.UI.Unix
 		private int clipboardMonitoringEnabled;
 		private long clipboardMonitoringGeneration;
 		private bool selectingTab;
+		private bool debugUiInitialized;
+		private bool initializingDebugUi;
+		private bool paused;
+		private bool suspended;
 
 		[DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
 		public bool IsClosing { get; private set; }
-
-		internal ToolStripMenuItem PauseScriptToolStripMenuItem => pauseScriptToolStripMenuItem;
-		internal ToolStripMenuItem SuspendHotkeysToolStripMenuItem => suspendHotkeysToolStripMenuItem;
 
 		internal MainWindow(Script owner) : base(owner)
 		{
 			Title = "Keysharp";
 			ShowInTaskbar = true;
 			ClientSize = new Size(843, 535);
-			BuildUi();
 
 			Closing += MainWindow_Closing;
 			Shown += MainWindow_Shown;
 			SizeChanged += MainWindow_SizeChanged;
+		}
+
+		internal bool EnsureDebugUi()
+		{
+			if (initializingDebugUi || ShouldSkipUiUpdate())
+				return false;
+
+			if (debugUiInitialized)
+				return true;
+
+			if (!OwnerScript.IsOnMainThread)
+				return OwnerScript.InvokeOnUIThread(EnsureDebugUi);
+
+			initializingDebugUi = true;
+
+			try
+			{
+				mainMenu = new Eto.Forms.MenuBar();
+				tcMain = new TabControl();
+				tpDebug = new TabPage { Text = "Debug" };
+				tpVars = new TabPage { Text = "Vars" };
+				tpHotkeys = new TabPage { Text = "Hotkeys" };
+				tpHistory = new TabPage { Text = "History" };
+				var textFont = SystemFonts.Default(Conversions.ScaleFontSize(10F));
+				txtDebug = new TextArea { Font = textFont, Wrap = false };
+				txtVars = new TextArea { Font = textFont, Wrap = false };
+				txtHotkeys = new TextArea { Font = textFont, Wrap = false };
+				txtHistory = new TextArea { Font = textFont, Wrap = false };
+				BuildUi();
+				OwnerScript.mainWindowGui?.WrapMainWindowControls();
+				OwnerScript.DebugOutput.ResetShown();
+				debugUiInitialized = true;
+				return true;
+			}
+			catch
+			{
+				Content = null;
+				if (Menu == mainMenu)
+					Menu = null;
+				tcMain?.Dispose();
+				mainMenu?.Dispose();
+				throw;
+			}
+			finally
+			{
+				initializingDebugUi = false;
+			}
+		}
+
+		internal void SetPauseState(bool value)
+		{
+			paused = value;
+
+			if (debugUiInitialized && !ShouldSkipUiUpdate())
+				pauseScriptMenuItem.Checked = value;
+		}
+
+		internal void SetSuspendState(bool value)
+		{
+			suspended = value;
+
+			if (debugUiInitialized && !ShouldSkipUiUpdate())
+				suspendHotkeysMenuItem.Checked = value;
+		}
+
+		protected override void OnPreLoad(EventArgs e)
+		{
+			EnsureDebugUi();
+			base.OnPreLoad(e);
 		}
 
 		internal void InitializeHidden()
@@ -98,40 +153,25 @@ namespace Keysharp.Internals.UI.Unix
 			//Hidden rather than disabled, to match the WinForms main window.
 			var editScriptItem = new ButtonMenuItem { Text = "&Edit Script", Shortcut = Eto.Forms.Application.Instance.CommonModifier | Eto.Forms.Keys.E, Visible = !A_IsCompiled };
 			var windowSpyItem = new ButtonMenuItem { Text = "&Window Spy" };
-			pauseScriptMenuItem = new CheckMenuItem { Text = "&Pause Script" };
-			suspendHotkeysMenuItem = new CheckMenuItem { Text = "&Suspend Hotkeys" };
+			pauseScriptMenuItem = new CheckMenuItem { Text = "&Pause Script", Checked = paused };
+			suspendHotkeysMenuItem = new CheckMenuItem { Text = "&Suspend Hotkeys", Checked = suspended };
 			var exitItem = new ButtonMenuItem { Text = "E&xit" };
 
 			reloadScriptItem.Click += reloadScriptToolStripMenuItem_Click;
 			editScriptItem.Click += editScriptToolStripMenuItem_Click;
 			windowSpyItem.Click += windowSpyToolStripMenuItem_Click;
-			// The toggle runs in a thread launched for it, which updates the checkmark through the stub once it has.
+			// CheckMenuItem toggles before Click; retain the runtime state until its command changes it.
 			pauseScriptMenuItem.Click += (_, _) =>
 			{
-				pauseScriptMenuItem.Checked = pauseScriptToolStripMenuItem.Checked;
+				pauseScriptMenuItem.Checked = paused;
 				pauseScriptToolStripMenuItem_Click(this, EventArgs.Empty);
-				pauseScriptMenuItem.Checked = pauseScriptToolStripMenuItem.Checked;
-			};
-			pauseScriptToolStripMenuItem.CheckedChanged += (_, _) =>
-			{
-				if (pauseScriptMenuItem != null)
-					pauseScriptMenuItem.Checked = pauseScriptToolStripMenuItem.Checked;
 			};
 			suspendHotkeysMenuItem.Click += (_, _) =>
 			{
-				suspendHotkeysMenuItem.Checked = suspendHotkeysToolStripMenuItem.Checked;
+				suspendHotkeysMenuItem.Checked = suspended;
 				suspendHotkeysToolStripMenuItem_Click(this, EventArgs.Empty);
-				suspendHotkeysMenuItem.Checked = suspendHotkeysToolStripMenuItem.Checked;
 			};
 			exitItem.Click += exitToolStripMenuItem_Click;
-
-			suspendHotkeysToolStripMenuItem.CheckedChanged += (_, _) =>
-			{
-				if (suspendHotkeysMenuItem != null)
-					suspendHotkeysMenuItem.Checked = suspendHotkeysToolStripMenuItem.Checked;
-			};
-
-			suspendHotkeysMenuItem.Checked = suspendHotkeysToolStripMenuItem.Checked;
 
 			fileMenu.Items.Add(reloadScriptItem);
 			fileMenu.Items.Add(editScriptItem);
@@ -171,12 +211,25 @@ namespace Keysharp.Internals.UI.Unix
 			helpMenu.Items.Add(userManualItem);
 			helpMenu.Items.Add(aboutItem);
 
-			mainMenu.Items.Clear();
 			mainMenu.Items.Add(fileMenu);
 			mainMenu.Items.Add(viewMenu);
 			mainMenu.Items.Add(helpMenu);
 
-			Menu = mainMenu;
+			Menu ??= mainMenu;
+		}
+
+		protected override void Dispose(bool disposing)
+		{
+			if (IsDisposed)
+				return;
+
+			if (disposing)
+			{
+				IsClosing = true;
+				mainMenu?.Dispose();
+			}
+
+			base.Dispose(disposing);
 		}
 
 		private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
@@ -195,7 +248,7 @@ namespace Keysharp.Internals.UI.Unix
 
 		public void AddText(string s, MainFocusedTab tab, bool focus)
 		{
-			_ = QueueUiUpdate(() =>
+			QueueUiUpdate(() =>
 			{
 				GetText(tab).Append($"{s.ReplaceLineEndings(Environment.NewLine)}");//This should scroll to the bottom, if not, try this:
 				if (focus)
@@ -209,6 +262,9 @@ namespace Keysharp.Internals.UI.Unix
 		// order.
 		internal void ShowDebugOutput(string text, bool replace)
 		{
+			if (!EnsureDebugUi())
+				return;
+
 			var s = text.ReplaceLineEndings(Environment.NewLine);
 
 			if (replace)
@@ -219,7 +275,7 @@ namespace Keysharp.Internals.UI.Unix
 
 		public void SetText(string s, MainFocusedTab tab, bool focus)
 		{
-			_ = QueueUiUpdate(() => //These need to be BeginInvoke(), otherwise they can freeze if called within a COM event.
+			QueueUiUpdate(() => //These need to be BeginInvoke(), otherwise they can freeze if called within a COM event.
 			{
 				GetText(tab).Text = s.ReplaceLineEndings(Environment.NewLine);
 
@@ -230,7 +286,7 @@ namespace Keysharp.Internals.UI.Unix
 
 		internal object ListHotkeys()
 		{
-			_ = QueueUiUpdate(() =>
+			QueueUiUpdate(() =>
 			{
 				ShowIfNeeded();
 				SetTextInternal(HotkeyDefinition.GetHotkeyDescriptions(OwnerScript), MainFocusedTab.Hotkeys, true);
@@ -240,7 +296,7 @@ namespace Keysharp.Internals.UI.Unix
 
 		internal object ShowDebug()
 		{
-			_ = QueueUiUpdate(() =>
+			QueueUiUpdate(() =>
 			{
 				ShowIfNeeded();
 				SelectTab(tpDebug);
@@ -254,7 +310,7 @@ namespace Keysharp.Internals.UI.Unix
 
 		internal object ShowHistory()
 		{
-			_ = QueueUiUpdate(() =>
+			QueueUiUpdate(() =>
 			{
 				ShowIfNeeded();
 				SetTextInternal(Builtins.Debug.ListKeyHistory(), MainFocusedTab.History, true);
@@ -269,7 +325,7 @@ namespace Keysharp.Internals.UI.Unix
 			var execScope = CallStack.Current.ExecutionScope;
 			var execLocals = execScope?.Enumerate().ToList();
 			var execName = execScope?.Name;
-			_ = QueueUiUpdate(() =>
+			QueueUiUpdate(() =>
 			{
 				ShowIfNeeded();
 				SetTextInternal(Builtins.Debug.GetVars(null, execLocals, execName), MainFocusedTab.Vars, showTab);
@@ -298,7 +354,11 @@ namespace Keysharp.Internals.UI.Unix
 		/// <summary>
 		/// Regenerates the contents of the tab the user is currently looking at.
 		/// </summary>
-		internal void RefreshSelectedTab() => RefreshTab(GetFocusedTab(tcMain.SelectedTab));
+		internal void RefreshSelectedTab()
+		{
+			if (EnsureDebugUi())
+				RefreshTab(GetFocusedTab(tcMain.SelectedTab));
+		}
 
 		/// <summary>
 		/// Brings a tab into view on behalf of the code that is filling it in, rather than on behalf of the
@@ -348,7 +408,6 @@ namespace Keysharp.Internals.UI.Unix
 
 		private TabPage GetTab(MainFocusedTab tab)
 		{
-
 			return tab switch
 			{
 					MainFocusedTab.Debug => tpDebug,
@@ -361,8 +420,7 @@ namespace Keysharp.Internals.UI.Unix
 
 		private TextArea GetText(MainFocusedTab tab)
 		{
-
-				return tab switch
+			return tab switch
 			{
 					MainFocusedTab.Debug => txtDebug,
 					MainFocusedTab.Vars => txtVars,
@@ -397,16 +455,17 @@ namespace Keysharp.Internals.UI.Unix
 				(int)(area.Y + (area.Height - Size.Height) / 2)
 			);
 
-				if (!AllowShowDisplay)
+			if (!AllowShowDisplay)
+			{
+				QueueUiUpdate(() =>
 				{
-					_ = QueueUiUpdate(() => {
-						beenShown = false;
-						// Hide directly instead of minimizing; minimizing creates a Dock/taskbar entry on macOS.
-						WindowState = WindowState.Normal;
-						this.Hide();
-						beenShown = true;
-					});
-				}
+					beenShown = false;
+					// Minimizing creates a Dock/taskbar entry on macOS.
+					WindowState = WindowState.Normal;
+					this.Hide();
+					beenShown = true;
+				});
+			}
 
 			if (AllowShowDisplay && Visible)
 				RefreshSelectedTab();
@@ -458,9 +517,6 @@ namespace Keysharp.Internals.UI.Unix
 
 		private void ShowIfNeeded()
 		{
-			if (ShouldSkipUiUpdate())
-				return;
-
 			if (beenShown && (!Visible || !AllowShowDisplay || WindowState == WindowState.Minimized))
 			{
 				AllowShowDisplay = true;
@@ -474,22 +530,21 @@ namespace Keysharp.Internals.UI.Unix
 		private void suspendHotkeysToolStripMenuItem_Click(object sender, EventArgs e)
 			=> RunMenuCommand(MenuCommand.FileSuspend, Script.SuspendHotkeys);
 
-		private bool QueueUiUpdate(Action action)
+		private void QueueUiUpdate(Action action)
 		{
 			if (ShouldSkipUiUpdate())
-				return false;
+				return;
 
 			_ = this.BeginInvoke(() =>
 			{
-				if (ShouldSkipUiUpdate())
+				if (!EnsureDebugUi())
 					return;
 
 				action();
 			});
-			return true;
 		}
 
-		private bool ShouldSkipUiUpdate() => IsClosing || IsDisposed || OwnerScript.hasExited;
+		private bool ShouldSkipUiUpdate() => IsClosing || IsDisposed || OwnerScript.IsTearingDown || OwnerScript.IsDisposed;
 
 		private void SetTextInternal(string s, MainFocusedTab tab, bool focus)
 		{

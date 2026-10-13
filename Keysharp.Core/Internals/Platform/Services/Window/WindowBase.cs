@@ -104,6 +104,9 @@ namespace Keysharp.Internals
 #if !WINDOWS
 			if (TryOwnControl(h, out var control))
 			{
+				if (control is MainWindow window)
+					window.EnsureDebugUi();
+
 				children = OwnChildHandles(control);
 				return true;
 			}
