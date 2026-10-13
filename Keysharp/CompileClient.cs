@@ -83,11 +83,12 @@ internal static class CompileClient
 		// A shared dotnet host does not identify which managed application the server runs.
 		if (CompileServer.IsPrivileged && Path.GetFileNameWithoutExtension(Environment.ProcessPath).Equals("dotnet", StringComparison.OrdinalIgnoreCase))
 			return DaemonReply.Unavailable;
+		// Client I/O is synchronous, so it does not need an overlapped pipe handle.
 		using var client = new NamedPipeClientStream(".", CompileServer.PipeName, PipeDirection.InOut,
-			PipeOptions.Asynchronous, TokenImpersonationLevel.Identification);
+			PipeOptions.None, TokenImpersonationLevel.Identification);
 #else
 		using var client = new NamedPipeClientStream(".", CompileServer.PipeName, PipeDirection.InOut,
-			PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly);
+			PipeOptions.CurrentUserOnly);
 #endif
 
 		try
