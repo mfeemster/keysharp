@@ -1,13 +1,8 @@
 namespace Keysharp.Main;
 
 /// <summary>
-/// Ensures at most one compile daemon runs per user: a starting daemon kills any live daemon of a
-/// DIFFERENT build and takes over, and defers (exits) only if an IDENTICAL build is already running.
-/// Build identity is the fingerprint-keyed pipe name (distinct MVIDs => distinct pipe), so "different
-/// build" is just "different pipe name" — no version ordering is implied; the most recently started
-/// daemon wins. Coordination is a tiny per-user lock file guarded by a named mutex so the
-/// compare-and-kill is atomic across processes. Stale entries (dead PID, or a reused PID whose process
-/// name no longer matches) are treated as no owner, so the scheme self-heals.
+/// Keeps one daemon per user through a mutex-guarded ownership file. The latest build started replaces
+/// a different build; an identical build reuses its owner. PID and start time distinguish stale records.
 /// </summary>
 internal static class DaemonCoordinator
 {

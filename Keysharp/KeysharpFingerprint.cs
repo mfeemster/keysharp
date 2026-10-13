@@ -1,14 +1,9 @@
 ﻿namespace Keysharp.Main;
 
 /// <summary>
-/// Identifies the exact Keysharp build, used to key the compile-server pipe. A client must only ever
-/// talk to a daemon running the SAME Keysharp.exe AND Keysharp.Core.dll, otherwise it could receive
-/// assembly bytes compiled against different references/runtime. We fingerprint both modules by their
-/// Module Version IDs (MVIDs): the compiler stamps a distinct MVID into every build of an assembly, so
-/// any change to either binary changes the fingerprint and a mismatched client simply spawns its own
-/// daemon instead of reusing an incompatible one. The compiler component the daemon loads, which a rebuild
-/// or update can replace alone, counts too: its Keysharp assemblies by the MVID in their metadata, and its
-/// other files by name and size.
+/// Keys the pipe to the launcher's and runtime's MVIDs and the compiler component's files, keeping
+/// clients and daemons on compatible wire formats and references. Keysharp component assemblies contribute
+/// their MVIDs; other payload files contribute their names and sizes.
 /// </summary>
 internal static class KeysharpFingerprint
 {

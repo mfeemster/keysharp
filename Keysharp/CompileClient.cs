@@ -16,40 +16,16 @@ internal static class CompileClient
 	private const int STD_OUTPUT_HANDLE = -11;
 #endif
 
-	// How long to wait for a freshly spawned daemon to finish warmup and start listening before giving up
-	// and compiling in-process instead. The warmup is one Roslyn compile, ~2 s, so this is generous; the
-	// cap exists so that a daemon which never becomes healthy cannot hold the user's script hostage. It
-	// was 30 s, which is long enough that a stuck daemon looks like a hang.
+	// A daemon that cannot start promptly leaves compilation to the caller.
 	private static readonly TimeSpan SpawnWaitTimeout = TimeSpan.FromSeconds(10);
 
 	/// <summary>
-	/// Compiles <paramref name="command"/>'s script via a running daemon, spawning one and waiting for it when
-	/// none is reachable. Returns <see cref="CompileDaemonStatus.Unavailable"/> if no daemon can be
-	/// started or one does not become ready within <see cref="SpawnWaitTimeout"/>, and the caller then
-	/// compiles in-process.
-	///
-	/// Waiting is deliberate, and was measured against the alternative of spawning the daemon and
-	/// immediately compiling in-process instead (8 cores):
-	///
-	///   single cold start (n=5, median)   wait 3 636 ms | no wait 3 710 ms | no daemon 3 041 ms
-	///   4 concurrent cold (n=4, mean)     wait 5 167 ms | no wait 7 464 ms
-	///
-	/// Not waiting is no faster for one script and markedly slower for several at once, because waiting
-	/// funnels every client through the one warm daemon - whose accept loop is single-threaded, so the
-	/// compiles serialise and share warm Roslyn - whereas not waiting has every client run its own
-	/// Roslyn compile at the same time, alongside the daemon's warmup, all competing for cores.
-	///
-	/// Concurrency is safe: several clients starting at once each spawn a daemon, but DaemonCoordinator
-	/// arbitrates with a named mutex and a pid/procname lock file and the losers exit inside
-	/// TryBecomeOwner, before Listen and therefore before any warmup work. The winner does not create its
-	/// pipe until warmup has finished, so no client can reach a half-initialised daemon; its connect attempt
-	/// just keeps waiting.
+	/// Compiles through the shared daemon, starting one if needed. Waiting lets concurrent launches share one
+	/// compiler; DaemonCoordinator resolves racing spawns. Unavailable leaves compilation to the caller.
 	/// </summary>
 	internal static DaemonReply CompileViaServer(CliCommand command)
 	{
-		// A warm daemon answers at once. Otherwise one is spawned, unless the lock file names one for this build which
-		// is still warming up or busy, and Connect waits for its pipe. A request the daemon dropped only once its
-		// deadline passed is not sent again, as the next daemon would end the same way.
+		// Wait for an existing owner before spawning; do not retry a request that exhausted its deadline.
 		var sw = Stopwatch.StartNew();
 
 		if (TryCompile(command, 0) is { } reply)
@@ -200,23 +176,10 @@ internal static class CompileClient
 				return CompileDaemonSecurity.TryStartUnelevated(psi);
 #endif
 
-			// The daemon must not inherit this process's standard handles. It outlives us by up to four
-			// hours, so a handle it keeps open is a pipe that never reaches end-of-stream: piping a
-			// Keysharp run and reading to EOF hangs long after the script exited (`keysharp x.ks | more`
-			// never returns), and redirecting to a file leaves that file locked.
-			//
-			// On Windows, redirecting the child's streams does not fix this. .NET calls CreateProcess with
-			// bInheritHandles=TRUE, so the child
-			// receives a copy of *every* inheritable handle we hold, whatever its own std handles are set
-			// to - including the pipe someone handed us as our stdout. The handles have to stop being
-			// inheritable instead, which is what this does, restoring them immediately afterwards so
-			// nothing else in the process is affected.
-			//
-			// Scope, precisely: this covers the three standard handles, which are the ones that cause the
-			// visible hang. Any OTHER inheritable handle open at this moment is still copied into the
-			// daemon. That is acceptable only because of where this runs - Program.Main, before any script
-			// is loaded, so the process holds little else - and because the flags are process-global, this
-			// must stay on a path with no concurrent Process.Start.
+			// Windows copies inheritable handles even when the child's streams are redirected. Clear inheritance
+			// on our standard handles so the daemon cannot keep pipelines and files open after the caller exits.
+			// This runs before script loading; other handles are not covered, and Process.Start must not run
+			// concurrently while these process-wide flags are changed.
 #if !WINDOWS
 			psi.RedirectStandardInput = psi.RedirectStandardOutput = psi.RedirectStandardError = true;
 #endif

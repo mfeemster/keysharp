@@ -6,11 +6,8 @@ namespace Keysharp.Main;
 /// returns compiled assembly bytes so a thin launcher can run them in a lean process that never loads
 /// the parser/Roslyn (see <see cref="CompileClient"/> and Program.RunCompiledBytes).
 ///
-/// Correctness constraints:
-///   - <see cref="Script.TheScript"/> is process-global, so compiles MUST be serialized. The accept
-///     loop is single-threaded and runs on the (STA) thread that created the Script.
-///   - Parsing only reads the built-in-only ReflectionsData and ensures thread vars, so one Script is
-///     reused across parses.
+/// Compiles are serialized on the Script's original STA thread because its state is process-global.
+/// Parsing only needs built-in reflection data and thread variables, so the parse context can be reused.
 /// </summary>
 internal static class CompileServer
 {
@@ -22,9 +19,7 @@ internal static class CompileServer
 		"XDG_CONFIG_DIRS", "XDG_CONFIG_HOME", "XDG_DESKTOP_DIR", "XDG_DOCUMENTS_DIR"
 	];
 
-	// Far beyond any real request (a 24k-line script compiles in seconds): one which runs longer, such as an
-	// #Include of a FIFO, a compiler hang or a stalled client, holds the single pipe instance, so the daemon exits
-	// and the next client spawns a healthy one.
+	// A stalled compile or client must release the single daemon slot.
 	internal static readonly TimeSpan RequestDeadline = TimeSpan.FromSeconds(60);
 
 	// The folder for the daemon's lock file and, off Windows, its socket. $XDG_RUNTIME_DIR is the user's own; the temp
