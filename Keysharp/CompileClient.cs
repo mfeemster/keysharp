@@ -81,7 +81,7 @@ internal static class CompileClient
 
 #if WINDOWS
 		// A shared dotnet host does not identify which managed application the server runs.
-		if (CompileServer.IsPrivileged && Path.GetFileNameWithoutExtension(Environment.ProcessPath).Equals("dotnet", StringComparison.OrdinalIgnoreCase))
+		if (CompileDaemonSecurity.IsElevated && Path.GetFileNameWithoutExtension(Environment.ProcessPath).Equals("dotnet", StringComparison.OrdinalIgnoreCase))
 			return DaemonReply.Unavailable;
 		// Client I/O is synchronous, so it does not need an overlapped pipe handle.
 		using var client = new NamedPipeClientStream(".", CompileServer.PipeName, PipeDirection.InOut,
@@ -116,7 +116,13 @@ internal static class CompileClient
 
 		try
 		{
-			writer.Write(Path.GetFullPath(command.ScriptName));
+			// A stdin script's ScriptName holds its text, and its ScriptDir the working directory it compiles in.
+			writer.Write(command.FromStdin);
+			writer.Write(command.FromStdin ? command.ScriptName : Path.GetFullPath(command.ScriptName));
+
+			if (command.FromStdin)
+				writer.Write(command.ScriptDir);
+
 			CompileServer.WriteStrings(writer, command.Defines);
 			CompileServer.WriteStrings(writer, command.IncludeComponents);
 			CompileServer.WriteStrings(writer, command.ExcludeComponents);
@@ -190,11 +196,8 @@ internal static class CompileClient
 			psi.Environment.TryAdd("DOTNET_gcConcurrent", "0");
 
 #if WINDOWS
-			if (CompileServer.IsPrivileged)
+			if (CompileDaemonSecurity.IsElevated)
 				return CompileDaemonSecurity.TryStartUnelevated(psi);
-#else
-			if (CompileServer.IsPrivileged)
-				return false;
 #endif
 
 			// The daemon must not inherit this process's standard handles. It outlives us by up to four

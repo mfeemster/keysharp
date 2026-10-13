@@ -45,17 +45,6 @@ internal static class CompileServer
 	// Idle shutdown so an abandoned daemon does not linger forever (mirrors VBCSCompiler behavior).
 	private static readonly TimeSpan IdleTimeout = TimeSpan.FromHours(4);
 
-	internal static bool IsPrivileged =>
-#if WINDOWS
-		CompileDaemonSecurity.IsElevated;
-
-#else
-		GetEffectiveUserId() == 0;
-
-	[System.Runtime.InteropServices.DllImport("libc", EntryPoint = "geteuid")]
-	private static extern uint GetEffectiveUserId();
-#endif
-
 	/// <summary>
 	/// Pipe name keyed on build fingerprint + user, so a client only connects to its own user's daemon of the
 	/// same Keysharp and compiler component, which therefore speaks the same wire format. Null when the build
@@ -75,13 +64,15 @@ internal static class CompileServer
 
 	internal static int Run()
 	{
-		if (IsPrivileged)
+#if WINDOWS
+		if (CompileDaemonSecurity.IsElevated)
 		{
 			if (CompileClient.TrySpawnServer())
 				return 0;
 			Log("a normal compile daemon could not be started; scripts will compile in the requesting process.");
 			return 1;
 		}
+#endif
 
 		if (PipeName == null)
 		{
@@ -127,7 +118,8 @@ internal static class CompileServer
 	}
 
 	// Wire format (length-prefixed, BinaryReader/Writer):
-	//   request : string scriptPath, string[] defines, string[] additionalComponents, string[] excludedComponents,
+	//   request : bool fromStdin, then string scriptPath, or string sourceText + string the caller's working directory
+	//             when fromStdin, then string[] defines, string[] additionalComponents, string[] excludedComponents,
 	//             int32 codePage, string includeFile ("" when none), string[] the caller's value of each
 	//             CompileEnvironment variable ("" when unset); a string[] is an int32 count, then the strings
 	//   response: byte CompileDaemonStatus, then
@@ -149,11 +141,15 @@ internal static class CompileServer
 		}, null, RequestDeadline, Timeout.InfiniteTimeSpan);
 		using var reader = new BinaryReader(server, Encoding.UTF8, leaveOpen: true);
 		using var writer = new BinaryWriter(server, Encoding.UTF8, leaveOpen: true);
-		var scriptPath = reader.ReadString();
+		var fromStdin = reader.ReadBoolean();
+		var script = reader.ReadString();
+		var workingDirectory = fromStdin ? reader.ReadString() : null;
+		var logName = fromStdin ? "<stdin>" : script;
 		var request = new ScriptCompileRequest
 		{
-			ScriptPath = scriptPath,
-			CompilationName = Path.GetFileNameWithoutExtension(scriptPath),
+			ScriptPath = fromStdin ? null : script,
+			SourceText = fromStdin ? script : null,
+			CompilationName = fromStdin ? null : Path.GetFileNameWithoutExtension(script), // Stdin compiles as "*".
 			Defines = ReadStrings(reader),
 			AdditionalComponents = ReadStrings(reader),
 			ExcludedComponents = ReadStrings(reader),
@@ -177,11 +173,21 @@ internal static class CompileServer
 			for (var i = 0; i < CompileEnvironment.Length; i++)
 				Environment.SetEnvironmentVariable(CompileEnvironment[i], callerValues[i]);
 
+			// Compile where an in-process compile would: the working directory is a stdin script's #Include base,
+			// A_ScriptDir and package-settings folder. Compiles are serialized, so each can borrow it.
+			if (workingDirectory != null)
+				Directory.SetCurrentDirectory(workingDirectory);
+
 			compilation = ch.Compile(request);
 		}
 		catch (Exception ex)
 		{
 			fault = $"{ex.GetType().Name}: {ex.Message}";
+		}
+		finally
+		{
+			if (workingDirectory != null)
+				SetDaemonWorkingDirectory(exeDir);
 		}
 
 		sw.Stop();
@@ -190,13 +196,13 @@ internal static class CompileServer
 		// in-process instead, as it does when no daemon answers.
 		if (fault != null)
 		{
-			Log($"compiling '{scriptPath}' failed in the daemon after {sw.ElapsedMilliseconds} ms: {fault}");
+			Log($"compiling '{logName}' failed in the daemon after {sw.ElapsedMilliseconds} ms: {fault}");
 			writer.Write((byte)CompileDaemonStatus.Unavailable);
 			writer.Write(fault);
 		}
 		else if (compilation.AssemblyBytes is { } bytes)
 		{
-			Log($"compiled '{scriptPath}' ({bytes.Length} bytes) in {sw.ElapsedMilliseconds} ms.");
+			Log($"compiled '{logName}' ({bytes.Length} bytes) in {sw.ElapsedMilliseconds} ms.");
 			writer.Write((byte)CompileDaemonStatus.Compiled);
 			writer.Write(bytes.Length);
 			writer.Write(bytes);
@@ -204,7 +210,7 @@ internal static class CompileServer
 		}
 		else
 		{
-			Log($"compile error for '{scriptPath}' in {sw.ElapsedMilliseconds} ms.");
+			Log($"compile error for '{logName}' in {sw.ElapsedMilliseconds} ms.");
 			writer.Write((byte)(compilation.PackageRestoreNeeded ? CompileDaemonStatus.PackageRestoreNeeded : CompileDaemonStatus.CompileFailed));
 			writer.Write(compilation.ErrorText ?? "Unknown compile error.");
 			writer.Write(compilation.ErrorStdOut);

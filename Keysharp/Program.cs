@@ -34,7 +34,6 @@ public static class Program
 		// compilation to the shared daemon, so this lean launcher never loads the parser/Roslyn.
 		// KEYSHARP_DAEMON forces it on/off; if unset, release builds use it and debug builds do not.
 		if (command.Kind == CliCommandKind.RunSource
-				&& !command.FromStdin
 				&& !command.Transpile
 				&& !command.SyntaxOnly
 				&& ShouldUseDaemon())
@@ -50,8 +49,9 @@ public static class Program
 						Console.Error.WriteLine(reply.WarningText);
 
 					// The daemon compiled the source but this process runs it: point A_ScriptFullPath/A_ScriptDir at
-					// the source the user launched, not at a path baked in by the daemon.
-					ScriptExecutionState.SourcePath = command.ScriptName;
+					// the source the user launched, not at a path baked in by the daemon, or leave them to the
+					// compiled "*" marker for stdin.
+					ScriptExecutionState.SourcePath = command.FromStdin ? null : command.ScriptName;
 					ScriptExecutionState.KeysharpArgs = command.KeysharpArgs;
 
 					if (command.Validate)
@@ -62,10 +62,14 @@ public static class Program
 					else
 						return RunCompiledBytes(reply.AssemblyBytes, command.ScriptArgs);
 
-				// Privileged callers retry locally because source and package lookup can hide access denial.
+				// Elevated Windows callers retry locally because source and package lookup can hide access denial.
 				// Ordinary runs with unrestored packages also retry, allowing restoration.
-				case CompileDaemonStatus.CompileFailed when !CompileServer.IsPrivileged:
-				case CompileDaemonStatus.PackageRestoreNeeded when command.Validate && !CompileServer.IsPrivileged:
+				case CompileDaemonStatus.CompileFailed:
+				case CompileDaemonStatus.PackageRestoreNeeded when command.Validate:
+#if WINDOWS
+					if (CompileDaemonSecurity.IsElevated)
+						break;
+#endif
 					return Runner.ReportCompileFailure(command, reply.ErrorText, reply.ErrorStdOut);
 
 					// Anything else, a run with unrestored packages or no daemon to answer, compiles in-process below.

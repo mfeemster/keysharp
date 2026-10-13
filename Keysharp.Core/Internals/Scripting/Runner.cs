@@ -718,7 +718,8 @@ namespace Keysharp.Internals.Scripting
 			{
 				SourceText = command.FromStdin ? command.ScriptName : null,
 				ScriptPath = command.FromStdin ? null : command.ScriptName,
-				CompilationName = command.NameNoExt,
+				// Stdin compiles with the "*" script name.
+				CompilationName = command.FromStdin ? null : command.NameNoExt,
 				RuntimeDirectory = command.ExeDir,
 				Defines = command.Defines,
 				AdditionalComponents = command.IncludeComponents,
