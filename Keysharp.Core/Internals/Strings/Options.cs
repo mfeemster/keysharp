@@ -20,7 +20,7 @@ namespace Keysharp.Internals.Strings
 		{
 			return string.IsNullOrEmpty(options) || string.IsNullOrEmpty(search)
 				   ? false
-				   : options.Trim().Equals(search, StringComparison.OrdinalIgnoreCase);
+				   : options.AsSpan().Trim().Equals(search, StringComparison.OrdinalIgnoreCase);
 		}
 
 		internal static Dictionary<char, string> KeyValues(string Options, bool Lowercase, char[] Exceptions)

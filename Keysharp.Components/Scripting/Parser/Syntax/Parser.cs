@@ -1581,7 +1581,7 @@ namespace Keysharp.Parsing.Syntax
 					if (dir.Name.Equals("Requires", System.StringComparison.OrdinalIgnoreCase)) classRequires = dir.Args;
 					// #StructPack [1|2|4|8] sets the max alignment for subsequent typed fields (0/omitted resets to default).
 					else if (dir.Name.Equals("StructPack", System.StringComparison.OrdinalIgnoreCase))
-						structPack = long.TryParse((dir.Args ?? "").Trim(), out var sp) ? sp : 0;
+						structPack = long.TryParse((dir.Args ?? "").AsSpan().Trim(), out var sp) ? sp : 0;
 					// A class-body `#import` scopes its bindings to this class (retained for the Lowerer instead of
 					// being silently discarded).
 					else if (dir is ImportDirective imp) classImports.Add(imp);

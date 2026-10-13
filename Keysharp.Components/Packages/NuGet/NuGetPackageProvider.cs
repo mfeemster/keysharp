@@ -236,7 +236,7 @@ public sealed class NuGetPackageProvider : IPackageProvider
 	private static LockFile TryReadWarm(string assetsPath, string cachePath, string stampPath, string fingerprint)
 	{
 		if (!RestoreCacheSucceeded(cachePath) || !File.Exists(stampPath)
-			|| !File.ReadAllText(stampPath).Trim().Equals(fingerprint, StringComparison.Ordinal))
+			|| !File.ReadAllText(stampPath).AsSpan().Trim().Equals(fingerprint, StringComparison.Ordinal))
 			return null;
 
 		return ReadLockFile(assetsPath);
@@ -293,7 +293,7 @@ public sealed class NuGetPackageProvider : IPackageProvider
 			_ = text.AppendLine(File.Exists(file) ? Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(file))) : "missing");
 		}
 
-		return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(text.ToString()))).ToLowerInvariant();
+		return Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(text.ToString())));
 	}
 
 	private static void WriteStamp(string path, string fingerprint)

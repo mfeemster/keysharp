@@ -1253,12 +1253,12 @@ namespace Keysharp.Builtins
 
 			foreach (var raw in File.ReadLines(desktopFile))
 			{
-				var line = raw.Trim();
+				var line = raw.AsSpan().Trim();
 
-				if (line.StartsWith('[') && line.EndsWith(']'))
-					inEntry = line == "[Desktop Entry]"; // Ignore "Desktop Action" groups.
+				if (line.StartsWith("[", StringComparison.Ordinal) && line.EndsWith("]", StringComparison.Ordinal))
+					inEntry = line.SequenceEqual("[Desktop Entry]"); // Ignore "Desktop Action" groups.
 				else if (inEntry && line.StartsWith("Exec=", StringComparison.Ordinal))
-					return line.Substring("Exec=".Length);
+					return line["Exec=".Length..].ToString();
 			}
 
 			return null;

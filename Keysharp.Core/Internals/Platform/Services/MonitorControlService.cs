@@ -375,8 +375,8 @@ namespace Keysharp.Internals
 			try
 			{
 				var dir = Path.Combine(BacklightRoot, device);
-				return int.TryParse(File.ReadAllText(Path.Combine(dir, "brightness")).Trim(), out current)
-					&& int.TryParse(File.ReadAllText(Path.Combine(dir, "max_brightness")).Trim(), out max);
+				return int.TryParse(File.ReadAllText(Path.Combine(dir, "brightness")).AsSpan().Trim(), out current)
+					&& int.TryParse(File.ReadAllText(Path.Combine(dir, "max_brightness")).AsSpan().Trim(), out max);
 			}
 			catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or FormatException)
 			{

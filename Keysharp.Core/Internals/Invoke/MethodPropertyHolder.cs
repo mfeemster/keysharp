@@ -152,7 +152,7 @@ namespace Keysharp.Internals.Invoke
 		/// index outside the argument array.
 		/// </summary>
 		private static bool IsExplicitThis(ParameterInfo p) =>
-			p.Name?.TrimStart('@').Equals("this", StringComparison.OrdinalIgnoreCase) ?? false;
+			p.Name.AsSpan().TrimStart('@').Equals("this", StringComparison.OrdinalIgnoreCase);
 
 		// Our own accessor convention for a hand-written Core member, which has no property to pair with:
 		// `Clipboard.staticget_Text`, `Structs.get_Size`. NameMangler.StaticGetter emits the same shape.

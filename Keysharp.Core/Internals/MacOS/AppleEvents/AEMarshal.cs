@@ -341,7 +341,7 @@ namespace Keysharp.Internals.AppleEvents
 		/// Events epoch counts it.</summary>
 		private static AEValue FromTimestamp(string timestamp)
 		{
-			var text = (timestamp ?? "").Trim();
+			var text = timestamp.AsSpan().Trim();
 			// The shorter forms an AutoHotkey timestamp may be truncated to, longest first.
 			string[] formats = ["yyyyMMddHHmmss", "yyyyMMddHHmm", "yyyyMMddHH", "yyyyMMdd", "yyyyMM", "yyyy"];
 

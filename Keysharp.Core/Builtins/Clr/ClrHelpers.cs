@@ -343,7 +343,7 @@ namespace Keysharp.Builtins
 			// We do NOT try to parse more complex shapes here (like arrays, pointers).
 			var wantsNullable = s.Length > 1 && s.EndsWith("?", StringComparison.Ordinal);
 			if (wantsNullable)
-				s = s.Substring(0, s.Length - 1).TrimEnd();
+				s = s.AsSpan(0, s.Length - 1).TrimEnd().ToString();
 
 			// ---- Non-nullable resolution (the original logic), refactored into a local ----
 			Type ResolveNonNullable(string id)

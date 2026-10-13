@@ -253,7 +253,7 @@ namespace Keysharp.Builtins
 		[PublicHiddenFromUser]
 		public static object HandleCommandLineParams(string[] args)
 		{
-			if (args.Length > 0 && args[0].TrimStart(Keywords.DashSlash).ToUpper() == "SCRIPT")
+			if (args.Length > 0 && args[0].AsSpan().TrimStart(Keywords.DashSlash).Equals("script", StringComparison.OrdinalIgnoreCase))
 			{
 				string[] newArgs = new string[args.Length - 1];
 				System.Array.Copy(args, 1, newArgs, 0, args.Length - 1);
@@ -472,10 +472,10 @@ namespace Keysharp.Builtins
 
 			if (startsWith)
 				return args.FirstOrDefault(x => (x.StartsWith('-')
-						|| x.StartsWith('/')) && x.Trim(DashSlash).StartsWith(arg, StringComparison.OrdinalIgnoreCase));
+						|| x.StartsWith('/')) && x.AsSpan().Trim(DashSlash).StartsWith(arg ?? throw new ArgumentNullException("value"), StringComparison.OrdinalIgnoreCase));
 			else
 				return args.FirstOrDefault(x => (x.StartsWith('-')
-						|| x.StartsWith('/')) && x.Trim(DashSlash).Contains(arg, StringComparison.OrdinalIgnoreCase));
+						|| x.StartsWith('/')) && x.AsSpan().Trim(DashSlash).Contains(arg ?? throw new ArgumentNullException("value"), StringComparison.OrdinalIgnoreCase));
 		}
 
 		/// <summary>
@@ -494,7 +494,7 @@ namespace Keysharp.Builtins
 
 			for (var i = 0; i < args.Length; i++)
 			{
-				if ((args[i].StartsWith('-') || args[i].StartsWith('/')) && (startsWith ? args[i].TrimStart(DashSlash).StartsWith(arg, StringComparison.OrdinalIgnoreCase) : args[i].Contains(arg, StringComparison.OrdinalIgnoreCase)))
+				if ((args[i].StartsWith('-') || args[i].StartsWith('/')) && (startsWith ? args[i].AsSpan().TrimStart(DashSlash).StartsWith(arg ?? throw new ArgumentNullException("value"), StringComparison.OrdinalIgnoreCase) : args[i].Contains(arg, StringComparison.OrdinalIgnoreCase)))
 					if (i < args.Length - 1)
 						return args[i + 1];
 			}

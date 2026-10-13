@@ -86,8 +86,7 @@ namespace Keysharp.Internals.Window
 				}
 
 				var next = FindNextCriterionStart(mixed, i + Keyword_ahk.Length);
-				var segment = next == -1 ? mixed[i..] : mixed[i..(next - 1)];
-				var span = segment.AsSpan();
+				var span = next == -1 ? mixed.AsSpan(i) : mixed.AsSpan(i, next - i - 1);
 				var recognized = false;
 
 				if (span.StartsWith(Keyword_ahk_class, StringComparison.OrdinalIgnoreCase))
@@ -141,10 +140,10 @@ namespace Keysharp.Internals.Window
 
 				if (recognized && !foundFirstCriterion)
 				{
-					var pre = i == 0 ? string.Empty : mixed.Substring(0, i - 1);
+					var pre = mixed.AsSpan(0, i == 0 ? 0 : i - 1);
 
-					if (pre.Trim(SpaceTab).Length != 0)
-						criteria.Title = pre;
+					if (!pre.Trim(SpaceTab).IsEmpty)
+						criteria.Title = pre.ToString();
 				}
 
 				if (recognized)

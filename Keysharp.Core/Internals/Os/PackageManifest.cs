@@ -99,7 +99,7 @@ namespace Keysharp.Internals.Os
 
 			// Only synthetic/custom resolvers lack a package root. Keep even those collision-free without reading
 			// the asset contents: the source path is already the resolver's unique identity for this build.
-			var key = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(Path.GetFullPath(source)))).ToLowerInvariant();
+			var key = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(Path.GetFullPath(source))));
 			return Path.Combine("_external", key, Path.GetFileName(source));
 		}
 
@@ -108,8 +108,7 @@ namespace Keysharp.Internals.Os
 			value ??= "";
 			var readable = new string(value.Select(c => char.IsAsciiLetterOrDigit(c) || c is '.' or '_' or '-' ? c : '_')
 				.Take(32).ToArray()).Trim('.', '_');
-			var hash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(value)))[..32]
-				.ToLowerInvariant();
+			var hash = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(value)).AsSpan(0, 16));
 			return $"{(readable.Length == 0 ? "package" : readable)}-{hash}";
 		}
 

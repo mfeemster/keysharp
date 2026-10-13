@@ -293,7 +293,8 @@ namespace System
 
 				if (!inquote)
 				{
-					if (str.Substring(i).StartsWith(s, StringComparison.OrdinalIgnoreCase))
+					ArgumentNullException.ThrowIfNull(s, "value");
+					if (str.AsSpan(i).StartsWith(s, StringComparison.OrdinalIgnoreCase))
 					{
 						return i;
 					}

@@ -74,6 +74,13 @@ public class RunnerTests : TestRunner
 			s.KeysharpArgs = command.KeysharpArgs;
 			Assert.That(Env.FindCommandLineArg("errorstdout"), Is.EqualTo("/ErrorStdOut=UTF-8"));
 			Assert.That(Env.FindCommandLineArgVal("include"), Is.EqualTo(includePath));
+			foreach (var startsWith in new[] { true, false })
+			{
+				Assert.That(Assert.Throws<ArgumentNullException>(() => Env.FindCommandLineArg(null, startsWith)).ParamName,
+					Is.EqualTo("value"));
+				Assert.That(Assert.Throws<ArgumentNullException>(() => Env.FindCommandLineArgVal(null, startsWith)).ParamName,
+					Is.EqualTo("value"));
+			}
 		}
 		finally
 		{

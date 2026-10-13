@@ -257,8 +257,8 @@ namespace Keysharp.Runtime
 			if (i + lenF > s.Length) return null;
 			if (funcName != null)
 			{
-				var funcInField = s.Substring(i, lenF);
-				if (!string.Equals(funcInField, funcName, StringComparison.OrdinalIgnoreCase))
+				var funcInField = s.AsSpan(i, lenF);
+				if (!funcInField.Equals(funcName, StringComparison.OrdinalIgnoreCase))
 					return null; // function name doesn't match
 			}
 			i += lenF;

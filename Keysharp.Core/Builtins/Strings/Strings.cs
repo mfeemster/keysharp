@@ -2299,7 +2299,7 @@ namespace Keysharp.Builtins
 					var ptrVal = ToUnsignedBits(arg);
 
 					// For example, output as 0x followed by 16 hexadecimal digits.
-					string ptrStr = ptrVal.ToString("x16", CultureInfo.InvariantCulture).ToUpperInvariant();
+					string ptrStr = ptrVal.ToString("X16", CultureInfo.InvariantCulture);
 
 					if (spec.Width.HasValue && ptrStr.Length < spec.Width.Value)
 					{

@@ -209,7 +209,7 @@ namespace Keysharp.Internals.Os
 			foreach (var asset in entry.Files.OrderBy(asset => asset.Deployed, StringComparer.Ordinal))
 				_ = text.Append(asset.Deployed?.Replace('\\', '/')).Append('\0').Append(asset.Hash?.ToUpperInvariant()).Append('\0');
 
-			return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(text.ToString()))).ToLowerInvariant();
+			return Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(text.ToString())));
 		}
 
 		private static bool TryRead(Assembly assembly, out CompiledPackageProviderManifest manifest, out bool present, out string failure)

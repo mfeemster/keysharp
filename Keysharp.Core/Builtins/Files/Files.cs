@@ -610,8 +610,8 @@ namespace Keysharp.Builtins
 						else//It was quoted.
 						{
 							var firstArgIndex = s.FindFirstNotInQuotes(" ");
-							var tempArgs = firstArgIndex != -1 && firstArgIndex < s.Length - 1 ? s.Substring(firstArgIndex + 1) : "";
-							Refs.SetValue(outArgs, tempArgs.Trim());
+							var tempArgs = firstArgIndex != -1 && firstArgIndex < s.Length - 1 ? s.AsSpan(firstArgIndex + 1) : ReadOnlySpan<char>.Empty;
+							Refs.SetValue(outArgs, tempArgs.Trim().ToString());
 						}
 					}
 					else if (outArgs != null)

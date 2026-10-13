@@ -85,14 +85,14 @@ namespace Keysharp.Parsing
 		/// <summary>
 		/// Parses the option text to the right of a continuation section's <c>(</c> (the <c>(</c> itself excluded).
 		/// </summary>
-		internal static ContinuationOptions ParseContinuationOptions(string optionText, int lineNumber, string code, string name)
+		internal static ContinuationOptions ParseContinuationOptions(ReadOnlySpan<char> optionText, int lineNumber, string code, string name)
 		{
 			var opts = new ContinuationOptions();
 
-			if (string.IsNullOrEmpty(optionText))
+			if (optionText.IsEmpty)
 				return opts;
 
-			var span = optionText.AsSpan().Trim();
+			var span = optionText.Trim();
 
 			foreach (Range r in span.SplitAny(SpacesSv))
 			{
@@ -152,22 +152,22 @@ namespace Keysharp.Parsing
 		{
 			var reader = new StringReader(code);
 			string line = null;
+			ReadOnlySpan<char> opening = default;
 
 			while ((line = reader.ReadLine()) != null)
 			{
-				var trimmed = line.AsSpan().Trim();
+				opening = line.AsSpan().Trim();
 
-				if (trimmed.IsEmpty)
+				if (opening.IsEmpty)
 					continue;
 
-				line = trimmed.ToString();
 				break;
 			}
 
-			if (line == null || line.Length < 1 || line[0] != ParenOpen)
+			if (opening.IsEmpty || opening[0] != ParenOpen)
 				throw new ParseException("Multiline string must start with '(' after optional leading blank lines.", lineNumber, code, name);
 
-			var opts = ParseContinuationOptions(line.Substring(1), lineNumber, code, name);
+			var opts = ParseContinuationOptions(opening[1..], lineNumber, code, name);
 			var join = opts.Join;
 			var ltrim = opts.LTrim;
 			bool rtrim = opts.RTrim, stripComments = opts.Comments, literalEscape = opts.LiteralEscape;
@@ -178,7 +178,7 @@ namespace Keysharp.Parsing
 
 			while ((line = reader.ReadLine()) != null)
 			{
-				var check = line.Trim();
+				var check = line.AsSpan().Trim();
 
 				if (check.Length > 0 && check[0] == ParenClose)
 					break;

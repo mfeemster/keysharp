@@ -1173,7 +1173,7 @@ namespace Keysharp.Internals.Os.Windows
 				//A path which goes on past an item without a submenu names nothing, as one with an unmatched element does.
 				if (menu != 0)
 				{
-					if (item.EndsWith('&') && int.TryParse(item.Trim('&'), out var n) && n > 0)
+					if (item.EndsWith('&') && int.TryParse(item.AsSpan().Trim('&'), out var n) && n > 0)
 					{
 						if (n <= WindowsAPI.GetMenuItemCount(menu))
 							pos = n - 1;

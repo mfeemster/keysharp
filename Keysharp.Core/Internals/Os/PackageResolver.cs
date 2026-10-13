@@ -201,7 +201,7 @@ namespace Keysharp.Internals.Os
 				.Select(p => $"{PackageProviderRegistry.Identity(p.Provider)}|{p.Id.ToLowerInvariant()}|{p.Version.ToLowerInvariant()}")
 				.OrderBy(s => s, StringComparer.Ordinal));
 			settingsDirectory = string.IsNullOrWhiteSpace(settingsDirectory) ? "" : Path.GetFullPath(settingsDirectory);
-			return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes($"{tfm}\n{rid}\n{settingsDirectory}\n{identity}")))[..16].ToLowerInvariant();
+			return Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes($"{tfm}\n{rid}\n{settingsDirectory}\n{identity}")).AsSpan(0, 8));
 		}
 
 		private static string CacheRoot()

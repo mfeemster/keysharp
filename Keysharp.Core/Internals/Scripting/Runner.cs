@@ -1167,7 +1167,7 @@ namespace Keysharp.Internals.Scripting
 			//onto its parse Script.
 			if (errorStdOut || Env.FindCommandLineArg("errorstdout") != null
 					|| (Script.TheScript == null && Environment.GetCommandLineArgs().Any(
-						a => a.TrimStart('-', '/').Equals("errorstdout", StringComparison.OrdinalIgnoreCase))))
+						a => a.AsSpan().TrimStart(Keywords.DashSlash).Equals("errorstdout", StringComparison.OrdinalIgnoreCase))))
 			{
 				Console.Error.WriteLine(text);
 				return false;

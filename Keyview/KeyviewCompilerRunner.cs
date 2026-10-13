@@ -42,7 +42,7 @@ internal static class KeyviewCompilerRunner
 
 				const string token = "[System.STAThread]";
 				var start = code.IndexOf(token, StringComparison.Ordinal);
-				var display = start < 0 ? code : code[(start + token.Length)..].TrimStart('\r', '\n');
+				var display = start < 0 ? code : code.AsSpan(start + token.Length).TrimStart("\r\n").ToString();
 				var trimmed = new StringBuilder(display.Length);
 				foreach (var line in display.SplitLines())
 					_ = trimmed.AppendLine(line.TrimNofAnyFromStart("{}\t", 2));

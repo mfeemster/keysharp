@@ -489,7 +489,7 @@ namespace Keysharp.Builtins
 				dir = true;
 			}
 
-			if (int.TryParse(opts.Trim(), out var result))
+			if (int.TryParse(opts.AsSpan().Trim(), out var result))
 			{
 #if WINDOWS
 				if ((result & 1) == 1 || (result & 2) == 2)

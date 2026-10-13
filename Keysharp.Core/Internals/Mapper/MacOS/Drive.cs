@@ -28,7 +28,7 @@ namespace Keysharp.Internals.Mapper.MacOS
 					{
 						var uuid = components[1].Trim().Replace("-", "");
 
-						if (uuid.Length >= 8 && long.TryParse(uuid.Substring(0, 8), System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture, out var l))
+						if (uuid.Length >= 8 && long.TryParse(uuid.AsSpan(0, 8), System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture, out var l))
 							return l;
 					}
 				}

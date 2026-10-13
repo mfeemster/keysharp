@@ -820,7 +820,7 @@ namespace Keysharp.Parsing.Lexing
 
 			if (cmt >= 0) AddTrivia(trivia, os + cmt, lineEnd, pl, pc + 1 + cmt);
 
-			try { return Keysharp.Parsing.Parser.ParseContinuationOptions(optEnd > os ? _s[os..optEnd] : "", pl, null, _file); }
+			try { return Keysharp.Parsing.Parser.ParseContinuationOptions(optEnd > os ? _s.AsSpan(os, optEnd - os) : ReadOnlySpan<char>.Empty, pl, null, _file); }
 			catch (System.Exception ex) { Diagnostics.Add($"{pl}:{pc}: {ex.Message}"); return new(); }
 		}
 

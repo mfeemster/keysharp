@@ -1920,7 +1920,7 @@ namespace Keysharp.Compilation.Syntax
 				{
 					var lib = args.Trim('"', '\'');
 					bool ignoreMissing = false;
-					if (lib.StartsWith("*i", System.StringComparison.OrdinalIgnoreCase)) { ignoreMissing = true; lib = lib.Substring(2).Trim().Trim('"', '\''); }
+					if (lib.StartsWith("*i", System.StringComparison.OrdinalIgnoreCase)) { ignoreMissing = true; lib = lib.AsSpan(2).Trim().Trim("\"'").ToString(); }
 					return ExprStmt(Inv(Access("MainScript.LoadDll"), Str(lib), ignoreMissing ? False : True));
 				}
 				// Prescanned blocks are emitted separately; unseen ones are nested in an unsupported scope.
@@ -2532,24 +2532,24 @@ namespace Keysharp.Compilation.Syntax
 
 		private static readonly HashSet<string> WarnModeNames = new(System.StringComparer.OrdinalIgnoreCase)
 		{ "MsgBox", "StdOut", "OutputDebug", "Off", "On" };
-		private static string CanonWarnMode(string m) => m switch
+		private static string CanonWarnMode(ReadOnlySpan<char> m) => m switch
 		{
-			string s when s.Equals("stdout", System.StringComparison.OrdinalIgnoreCase) => "StdOut",
-			string s when s.Equals("outputdebug", System.StringComparison.OrdinalIgnoreCase) => "OutputDebug",
+			var s when s.Equals("stdout", System.StringComparison.OrdinalIgnoreCase) => "StdOut",
+			var s when s.Equals("outputdebug", System.StringComparison.OrdinalIgnoreCase) => "OutputDebug",
 			_ => "MsgBox"
 		};
 
 		// Applies one `#Warn [Type], [Mode]` directive to the per-type mode config (see the field declarations).
-		private void ApplyWarnDirective(string args)
+		private void ApplyWarnDirective(ReadOnlySpan<char> args)
 		{
-			args = (args ?? "").Trim();
+			args = args.Trim();
 			if (args.Length == 0)   // bare `#Warn`: VarUnset + Unreachable + NamedArg on (default mode), LSAG off.
 			{ _warnVarUnset = _warnUnreachable = _warnNamedArg = _warnDefaultMode; _warnLocalSameAsGlobal = null; return; }
 			int comma = args.IndexOf(',');
-			var typeStr = (comma < 0 ? args : args.Substring(0, comma)).Trim();
-			var modeStr = comma < 0 ? "" : args.Substring(comma + 1).Trim();
+			var typeStr = comma < 0 ? args : args[..comma].Trim();
+			var modeStr = comma < 0 ? ReadOnlySpan<char>.Empty : args[(comma + 1)..].Trim();
 			// A lone mode (`#Warn StdOut` / `#Warn Off` / `#Warn On`) sets the program-wide default + the on warnings.
-			if (comma < 0 && WarnModeNames.Contains(typeStr))
+			if (comma < 0 && WarnModeNames.GetAlternateLookup<ReadOnlySpan<char>>().Contains(typeStr))
 			{
 				if (typeStr.Equals("On", System.StringComparison.OrdinalIgnoreCase))
 				{ _warnVarUnset = _warnUnreachable = _warnNamedArg = _warnDefaultMode; return; }
@@ -2603,7 +2603,7 @@ namespace Keysharp.Compilation.Syntax
 		{
 			if (d.Args.Length > 0)
 				Diag($"{NodeAnchor(d)}#CSharp takes no options"
-					 + (d.Args.Trim().Equals("unsafe", System.StringComparison.OrdinalIgnoreCase)
+					 + (d.Args.AsSpan().Trim().Equals("unsafe", System.StringComparison.OrdinalIgnoreCase)
 						? " - `unsafe` is no longer needed, pointer code is always allowed"
 						: $"; got `{d.Args}`"));
 
@@ -5679,7 +5679,7 @@ namespace Keysharp.Compilation.Syntax
 					continue;
 				}
 
-				text = text.Substring(0, index) + CopilotDeclarationChord + text.Substring(after);
+				text = string.Concat(text.AsSpan(0, index), CopilotDeclarationChord, text.AsSpan(after));
 				searchFrom = index + CopilotDeclarationChord.Length;
 				usedAlias = true;
 			}
@@ -5971,7 +5971,7 @@ namespace Keysharp.Compilation.Syntax
 				_dhhrPrelude.Add(CallStmt("Keysharp.Builtins.Keyboard.Hotstring", Str("MouseReset"), False));
 			else if (args.StartsWith("EndChars", System.StringComparison.OrdinalIgnoreCase))
 				_dhhrPrelude.Add(CallStmt("Keysharp.Builtins.Keyboard.Hotstring", Str("EndChars"),
-					Str(Keysharp.Parsing.Parser.EscapedString(args.Substring("EndChars".Length).Trim().Trim('"', '\'')))));
+					Str(Keysharp.Parsing.Parser.EscapedString(args.AsSpan("EndChars".Length).Trim().Trim("\"'")))));
 			else
 				AddDhhr(d, CallStmt("Keysharp.Builtins.Keyboard.Hotstring", Str(args.Trim('"', '\''))));
 		}
@@ -7167,7 +7167,7 @@ namespace Keysharp.Compilation.Syntax
 		private static string DecodeString(string raw)
 		{
 			if (raw.Length < 2) return "";
-			var inner = raw.Substring(1, raw.Length - 2);
+			var inner = raw.AsSpan(1, raw.Length - 2);
 			var sb = new System.Text.StringBuilder(inner.Length);
 			for (var i = 0; i < inner.Length; i++)
 			{

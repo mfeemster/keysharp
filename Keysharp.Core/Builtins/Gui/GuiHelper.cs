@@ -412,7 +412,7 @@ namespace Keysharp.Builtins
 
 			if (z != -1)
 			{
-				pre = command.Substring(0, z).Trim();
+				pre = command.AsSpan(0, z).Trim().ToString();
 				z++;
 				command = z == command.Length ? string.Empty : command.Substring(z);
 			}
