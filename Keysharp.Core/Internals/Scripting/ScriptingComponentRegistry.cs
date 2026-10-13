@@ -5,7 +5,7 @@ using Keysharp.Components.Scripting;
 namespace Keysharp.Internals.Scripting
 {
 	/// <summary>Discovers fixed optional first-party scripting units without statically referencing their implementations.</summary>
-	internal static class ScriptingComponentRegistry
+	internal static partial class ScriptingComponentRegistry
 	{
 		internal const int SupportedDescriptorSchema = 1;
 		internal const int SupportedContractVersion = 1;
@@ -34,6 +34,10 @@ namespace Keysharp.Internals.Scripting
 			[JsonPropertyName("capabilities")] public List<string> Capabilities { get; set; } = [];
 			[JsonPropertyName("files")] public List<string> Files { get; set; } = [];
 		}
+
+		// Avoid reflection setup when reading component descriptors.
+		[JsonSerializable(typeof(Descriptor), GenerationMode = JsonSourceGenerationMode.Metadata)]
+		private sealed partial class DescriptorJson : JsonSerializerContext { }
 
 		internal sealed record Payload(string Id, string Root, string DescriptorPath,
 			ScriptingCapability Capabilities, IReadOnlyList<string> Files);
@@ -281,7 +285,7 @@ namespace Keysharp.Internals.Scripting
 
 		private static Descriptor ReadDescriptor(string path)
 		{
-			var descriptor = JsonSerializer.Deserialize<Descriptor>(File.ReadAllText(path))
+			var descriptor = JsonSerializer.Deserialize(File.ReadAllText(path), DescriptorJson.Default.Descriptor)
 				?? throw new InvalidDataException($"'{path}' is empty or invalid");
 
 			if (descriptor.SchemaVersion != SupportedDescriptorSchema)
