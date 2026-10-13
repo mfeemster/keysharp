@@ -109,7 +109,9 @@ internal static class CompileClient
 			return DaemonReply.Unavailable;
 		}
 
-		using var writer = new BinaryWriter(client, Encoding.UTF8, leaveOpen: true);
+		// Serialize first so sending takes one pipe write and disposal only flushes memory.
+		using var request = new MemoryStream();
+		using var writer = new BinaryWriter(request, Encoding.UTF8, leaveOpen: true);
 		using var reader = new BinaryReader(client, Encoding.UTF8, leaveOpen: true);
 
 		try
@@ -122,6 +124,7 @@ internal static class CompileClient
 			writer.Write(command.IncludeFile ?? "");
 			CompileServer.WriteStrings(writer, System.Array.ConvertAll(CompileServer.CompileEnvironment, name => Environment.GetEnvironmentVariable(name) ?? ""));
 			writer.Flush();
+			request.WriteTo(client);
 
 			switch ((CompileDaemonStatus)reader.ReadByte())
 			{
