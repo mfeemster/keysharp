@@ -96,13 +96,13 @@ namespace Keysharp.Runtime
 					// A member is static if it carries [Static] or if its C# name has the "static" prefix.
 					// The attribute lets the prefix be omitted when there is no instance member to disambiguate from.
 					bool isStatic = method.IsDefined(typeof(StaticAttribute), false);
-					if (methodName.StartsWith(Keywords.ClassStaticPrefix))
+					if (methodName.StartsWith(Keywords.ClassStaticPrefix, StringComparison.Ordinal))
 					{
 						isStatic = true;
 						methodName = methodName.Substring(Keywords.ClassStaticPrefix.Length);
 					}
 
-					if (methodName.StartsWith("get_") || methodName.StartsWith("set_"))
+					if (methodName.StartsWith("get_", StringComparison.Ordinal) || methodName.StartsWith("set_", StringComparison.Ordinal))
 					{
 						if (method.IsSpecialName) continue; // Handled below as property
 
@@ -126,7 +126,7 @@ namespace Keysharp.Runtime
 								propertyMap = propDesc;
 						}
 
-						if (methodName.StartsWith("get_"))
+						if (methodName.StartsWith("get_", StringComparison.Ordinal))
 							propertyMap.Get = new KeysharpFunc(method);
 						else
 							propertyMap.Set = new KeysharpFunc(method);
@@ -175,14 +175,14 @@ namespace Keysharp.Runtime
 
 					OwnPropsDesc propertyMap = null;
 					bool isStaticProp = prop.IsDefined(typeof(StaticAttribute), false);
-					if (isStaticProp || propertyName.StartsWith(Keywords.ClassStaticPrefix))
+					if (isStaticProp || propertyName.StartsWith(Keywords.ClassStaticPrefix, StringComparison.Ordinal))
 					{
 						if (userDeclaredName == null)
 						{
-							if (propertyName.StartsWith(Keywords.ClassStaticPrefix))
+							if (propertyName.StartsWith(Keywords.ClassStaticPrefix, StringComparison.Ordinal))
 								propertyName = propertyName.Substring(Keywords.ClassStaticPrefix.Length);
 
-							if (propertyName.StartsWith("get_") || propertyName.StartsWith("set_"))
+							if (propertyName.StartsWith("get_", StringComparison.Ordinal) || propertyName.StartsWith("set_", StringComparison.Ordinal))
 								propertyName = propertyName.Substring(4);
 						}
 						else

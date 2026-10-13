@@ -120,8 +120,8 @@ namespace Keysharp.Runtime
 					else
 					{
 						if (name.StartsWith("@", StringComparison.Ordinal)) name = name.Substring(1);
-						if (name.StartsWith(Keywords.EscapePrefix)) name = name.Substring(Keywords.EscapePrefix.Length);
-						if (name.StartsWith(Keywords.StaticLocalFieldPrefix))
+						if (name.StartsWith(Keywords.EscapePrefix, StringComparison.Ordinal)) name = name.Substring(Keywords.EscapePrefix.Length);
+						if (name.StartsWith(Keywords.StaticLocalFieldPrefix, StringComparison.Ordinal))
 						{
 							if (wantnormal) continue;
 							name = ExtractStaticLocalUserName(name, funcName);

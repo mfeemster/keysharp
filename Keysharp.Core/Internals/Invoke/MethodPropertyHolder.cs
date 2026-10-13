@@ -489,7 +489,7 @@ namespace Keysharp.Internals.Invoke
 			ParamLength = parameters.Length;
 
 			// Determine if the method is a set_Item overload.
-			isSetter = mi.Name.StartsWith(setterPrefix) || mi.Name.StartsWith(classSetterPrefix);
+			isSetter = mi.Name.StartsWith(setterPrefix, StringComparison.Ordinal) || mi.Name.StartsWith(classSetterPrefix, StringComparison.Ordinal);
 			isItemSetter = isSetter && (mi.Name == "set_Item" || mi.Name.Equals("set___Item", StringComparison.OrdinalIgnoreCase));
 			var req = new List<int>(ParamLength);
 
