@@ -1,3 +1,7 @@
+#ErrorStdOut
+#Warn All, StdOut
+; These tests deliberately shadow global variables.
+#Warn LocalSameAsGlobal, Off
 #NoTrayIcon
 #Include <assert>
 
@@ -239,6 +243,23 @@ RegExHelper(text) {
 f1 := RegExHelper("a"), f2 := RegExHelper("b")
 Assert(SameFunc(f1, f2), A_LineNumber)
 Assert(f1("12"), A_LineNumber)
+
+; A callout can reach an enclosing closure named later in the helper's body.
+LateRegexClosure() {
+    hits := 0
+    LocalRegexCallout(*) {
+        hits++
+        return 0
+    }
+    MatchBeforeReference() {
+        RegExMatch("x", "^x(?C:LocalRegexCallout)$")
+        return LocalRegexCallout
+    }
+    MatchBeforeReference()
+    return hits
+}
+
+AssertEq(LateRegexClosure(), 1, A_LineNumber)
 
 DynamicUpVar() {
     x := 1, y := 2

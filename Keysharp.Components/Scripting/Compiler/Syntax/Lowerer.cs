@@ -1125,6 +1125,7 @@ namespace Keysharp.Compilation.Syntax
 			public readonly List<FunctionDecl> Nested = new();
 			public IReadOnlyList<Stmt> Body;
 			public Expr Arrow;
+			public bool HasDeref, HasDerefWrite, HasDerefReference, HasListVars, HasRegex;
 			private HashSet<string> spellings;
 
 			// The nearest variable of that name. A static nested function sees no enclosing local, which still hides the name
@@ -6046,8 +6047,8 @@ namespace Keysharp.Compilation.Syntax
 			var savedDerefReferences = _derefReferences;
 			// A writer is needed only when the body assigns a dynamic name (`%n% := v`, `%n%++`, `&%n%`). INVARIANT: IsDerefWrite
 			// must match every form the lowering emits a write or DerefRef for; RequireWriter reports a missed one.
-			_derefScope = BodyHas(bodyBlock, arrowBody, IsDeref) ? BodyHas(bodyBlock, arrowBody, IsDerefWrite) : null;
-			_derefReferences = BodyHas(bodyBlock, arrowBody, IsDerefReference);
+			_derefScope = scope.HasDeref ? scope.HasDerefWrite : null;
+			_derefReferences = scope.HasDerefReference;
 			// Declared here once the body is lowered, which shows the enclosing variables the scope reaches.
 			var scopeAt = body.Count;
 
@@ -6093,8 +6094,8 @@ namespace Keysharp.Compilation.Syntax
 
 			// A function calling ListVars publishes its scope too, and so does one calling RegExMatch/RegExReplace when it
 			// reaches closures a callout could resolve by name.
-			if (_derefScope != null || BodyHas(bodyBlock, arrowBody, IsListVarsTrigger)
-				|| (BodyHas(bodyBlock, arrowBody, IsRegexTrigger) && scope.Visible().Any(v => v.Storage == VarStorage.Closure && scope.Reaches(v))))
+			if (_derefScope != null || scope.HasListVars
+				|| (scope.HasRegex && scope.Visible().Any(v => v.Storage == VarStorage.Closure && scope.Reaches(v))))
 			{
 				body.Insert(scopeAt, LocalDecl(Ty("Keysharp.Runtime.FuncScope"), "KS_scope", Op("EnterScope", NewScope(thisFuncName ?? "", _derefScope == true))));
 				setupEnd++;
@@ -6301,9 +6302,6 @@ namespace Keysharp.Compilation.Syntax
 		private static IEnumerable<Node> ScopeChildren(Node node) =>
 			node is FunctionDecl or ClassDecl or HotkeyDef or HotstringDef or FatArrowExpr or DirectiveStmt ? [] : AstChildren.Of(node);
 
-		private static bool BodyHas(Block body, Expr arrow, Func<Expr, bool> pred) =>
-			AnyNode(body, pred) || AnyNode(arrow, pred);
-
 		private static bool AnyNode(Node node, Func<Expr, bool> pred)
 		{
 			if (node is Expr expression && pred(expression)) return true;
@@ -6371,7 +6369,22 @@ namespace Keysharp.Compilation.Syntax
 								}
 				});
 
-			scope.Nested.AddRange(NamedArrows(body, arrow));
+			// Collect body features during the named-arrow scan; nested callables have their own scopes.
+			Func<Expr, bool> collect = expression =>
+			{
+				if (expression is FatArrowExpr { Name: not null } fa)
+					scope.Nested.Add(ArrowDecl(fa));
+
+				scope.HasDeref = scope.HasDeref || IsDeref(expression);
+				scope.HasDerefWrite = scope.HasDerefWrite || IsDerefWrite(expression);
+				scope.HasDerefReference = scope.HasDerefReference || IsDerefReference(expression);
+				scope.HasListVars = scope.HasListVars || IsListVarsTrigger(expression);
+				scope.HasRegex = scope.HasRegex || IsRegexTrigger(expression);
+				return false;
+			};
+
+			foreach (var st in body ?? []) _ = AnyNode(st, collect);
+			_ = AnyNode(arrow, collect);
 
 			foreach (var fd in scope.Nested)
 			{

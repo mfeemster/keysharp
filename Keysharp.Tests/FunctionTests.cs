@@ -224,6 +224,25 @@ public class FunctionTests : TestRunner
 	[Test, Category("Function"), NonParallelizable]
 	public void GlobalStaticInFunc() => Assert.IsTrue(TestScript("func-global-static", false));
 
+	// ListVars opens a window, so check scope publication without executing it.
+	[TestCase("Probe() => lIsTvArS()", 1)]
+	[TestCase("Probe() => () => ListVars()", 0)]
+	[Category("Function"), Category("Internal")]
+	public void ListVarsScope(string source, int expected)
+	{
+		var (program, diagnostics) = Keysharp.Parsing.Syntax.Parser.ParseWithDiagnostics(source);
+		Assert.IsEmpty(diagnostics, string.Join("; ", diagnostics));
+		var generated = new Keysharp.Compilation.Syntax.Lowerer().Build(program, "Test");
+		var method = generated.DescendantNodes().OfType<MethodDeclarationSyntax>()
+			.Single(method => method.Identifier.ValueText == "FN_Probe");
+		var calls = method.Body.DescendantNodes(node => node is not LocalFunctionStatementSyntax)
+			.OfType<InvocationExpressionSyntax>()
+			.Count(call => call.Expression is MemberAccessExpressionSyntax member && member.Name.Identifier.ValueText == "EnterScope");
+		Assert.That(calls, Is.EqualTo(expected));
+		Assert.That(generated.DescendantNodes().OfType<InvocationExpressionSyntax>()
+			.Count(call => call.Expression is MemberAccessExpressionSyntax member && member.Name.Identifier.ValueText == "EnterScope"), Is.EqualTo(1));
+	}
+
 	// RequiresHook: registers a real global hotkey, which needs the keysharp-input hook and, on a desktop
 	// with the daemon, prompts for input-access permission. Excluded from the non-interactive curated CI set.
 	[Test, Category("Function"), Category("RequiresHook"), NonParallelizable]
