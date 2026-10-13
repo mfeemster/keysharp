@@ -238,6 +238,9 @@ internal static class CompileServer
 
 		var exeDir = Path.GetFullPath(Path.GetDirectoryName(Environment.ProcessPath));
 		SetDaemonWorkingDirectory(exeDir);
+#if WINDOWS
+		ShutdownWindow.StartShutdownListener();
+#endif
 
 		// Deliberately no priority tuning here. Lowering the process to BelowNormal for the duration of
 		// the warmup - on the theory that it should yield to the client compiling the same script in the

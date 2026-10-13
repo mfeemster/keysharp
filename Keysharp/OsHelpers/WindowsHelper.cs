@@ -378,48 +378,18 @@ internal sealed class ShutdownWindow : System.Windows.Forms.NativeWindow
 	private const int WM_QUERYENDSESSION = 0x0011;
 
 	/// <summary>
-	/// Roots the shutdown window for the life of the process. NativeWindow destroys its handle from its
-	/// finalizer, and the local in <see cref="StartShutdownListener"/> is dead the moment CreateHandle
-	/// returns - Application.Run does not reference it - so without this the window is collected and
-	/// silently unregistered. The warmup compile allocates enough to make that a certainty rather than
-	/// a race, and the symptom is invisible: the handle is logged, the message loop keeps running, and
-	/// the window is simply gone from EnumWindows.
+	/// Application.Run does not root NativeWindow; keep it alive so its finalizer cannot destroy the handle.
 	/// </summary>
-	/// 
 	private static ShutdownWindow shutdownWindow;
 
 	/// <summary>
-	/// Lets Windows shut the daemon down cleanly instead of having it killed.
-	///
-	/// The daemon holds Keysharp.exe and Keysharp.Core.dll open, so an installer replacing or removing
-	/// them has to close it first. The Restart Manager, which every modern MSI uses, does that by
-	/// *asking* a process to exit: it enumerates the process's top-level windows and sends
-	/// WM_QUERYENDSESSION / WM_ENDSESSION. A daemon with no window has nothing to ask, so the Restart
-	/// Manager reports it as blocking the operation and then leaves it running - which is exactly how
-	/// an uninstall came to fail until the daemon was killed by hand.
-	///
-	/// Two details matter, and both are easy to get wrong:
-	///
-	///  * the window must be a genuine TOP-LEVEL window. A message-only window (HWND_MESSAGE parent) is
-	///    not returned by EnumWindows and never receives session messages, so it would look right and
-	///    silently do nothing. Default CreateParams gives a top-level window; it is never shown, so
-	///    without WS_VISIBLE it stays out of the taskbar and Alt-Tab anyway.
-	///  * session messages are SENT to windows, not posted to the thread queue, so a bare message loop
-	///    on a window-less thread would never see them either.
-	///
-	/// The window lives on its own thread because Listen() blocks on the pipe from the warm parse-context
-	/// STA thread and must keep doing so - compilation depends on running there.
-	///
-	/// This also covers WM_CLOSE, which is what the installer's util:CloseApplication sends before it
-	/// resorts to terminating the process, so an up-to-date daemon now exits on its own during an
-	/// upgrade or uninstall and never reaches the force-kill path.
+	/// Gives Restart Manager and the installer a hidden top-level window to request shutdown.
+	/// A message-only window would miss session messages. A dedicated STA pumps those sent messages
+	/// while the compiler's STA waits on the pipe.
 	/// </summary>
 	internal static void StartShutdownListener()
 	{
-		// Nothing downstream reads the window, so there is nothing to wait for: the pump thread is started
-		// and the caller goes straight on to warm up. An earlier version blocked here for up to five
-		// seconds, which at best only ordered the log lines and at worst spent half the client's patience
-		// before the daemon had begun its warmup.
+		// Window initialization must not delay pipe startup.
 		var thread = new Thread(() =>
 		{
 			try
@@ -432,8 +402,7 @@ internal sealed class ShutdownWindow : System.Windows.Forms.NativeWindow
 			}
 			catch (Exception ex)
 			{
-				// Best effort: a daemon without the window still works, it just has to be terminated
-				// rather than asked to leave, which is what every build before this one did.
+				// The daemon can still compile without this window.
 				CompileServer.Log($"could not create the shutdown window ({ex.Message}); the daemon will have to be terminated to close it.");
 			}
 		})
@@ -458,6 +427,9 @@ internal sealed class ShutdownWindow : System.Windows.Forms.NativeWindow
 				// Non-zero means "nothing here needs saving, go ahead". Returning without calling
 				// base keeps DefWindowProc from answering for us.
 				m.Result = 1;
+				return;
+
+			case WM_ENDSESSION when m.WParam == 0:
 				return;
 
 			case WM_ENDSESSION:
