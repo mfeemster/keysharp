@@ -115,6 +115,56 @@ public class MessageFilterTests : TestRunner
 
 #else
 	[Test, Category("Gui")]
+	public void EtoMouseEnter()
+	{
+		SkipIfUiInitializationBlocked("Mouse enter routing requires a usable UI toolkit.");
+		s.InvokeOnUIThread(() =>
+		{
+			var gui = new Gui();
+
+			try
+			{
+				var control = (Gui.Control)gui.Add("Picture", "w80 h24");
+				var calls = new List<object[]>();
+				var callback = (Eto.Forms.Control.ICallback)((Eto.ICallbackSource)control.Ctrl).Callback;
+				var handler = new KeysharpFunc((Func<object, object, object, object, object>)((owner, wParam, lParam, msg) =>
+				{
+					calls.Add([owner, wParam, lParam, msg]);
+					return 0L;
+				}));
+
+				Assert.That(Enter().Handled, Is.False);
+				Assert.That(calls, Is.Empty);
+
+				for (var cycle = 0; cycle < 2; cycle++)
+				{
+					_ = control.OnMessage(WindowsAPI.WM_MOUSEMOVE, handler);
+					EtoMessageSource.Attach(control.Ctrl);
+					EtoMessageSource.SyncMotionHooks(s);
+					Assert.That(Enter().Handled, Is.True, "a zero return claims entry's synthesized mouse move");
+					Assert.That(calls.Count, Is.EqualTo(cycle + 1), "reattaching must not duplicate entry notifications");
+					Assert.That(calls[^1], Is.EqualTo(new object[] { control, 5L, 0xFFF7FFF9L, (long)WindowsAPI.WM_MOUSEMOVE }));
+
+					_ = control.OnMessage(WindowsAPI.WM_MOUSEMOVE, handler, 0L);
+					Assert.That(Enter().Handled, Is.False);
+					Assert.That(calls.Count, Is.EqualTo(cycle + 1));
+				}
+
+				MouseEventArgs Enter()
+				{
+					var entered = new MouseEventArgs(MouseButtons.Primary, Keys.Shift, new PointF(-7, -9));
+					callback.OnMouseEnter(control.Ctrl, entered);
+					return entered;
+				}
+			}
+			finally
+			{
+				_ = gui.Destroy();
+			}
+		});
+	}
+
+	[Test, Category("Gui")]
 	public void EtoMouseLeave()
 	{
 		SkipIfUiInitializationBlocked("Mouse leave routing requires a usable UI toolkit.");

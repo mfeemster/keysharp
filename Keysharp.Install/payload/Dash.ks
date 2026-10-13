@@ -1,6 +1,6 @@
 #Requires Keysharp v0.0.0.17
 #SingleInstance Force
-#import KS { A_DirSeparator, A_KsVersion, Font, Image, Monitor, WinFromPoint }
+#import KS { A_DirSeparator, A_KsVersion, Font, Image }
 #App { GuiTheme: "Dark" }
 
 /*
@@ -14,7 +14,7 @@
     Keysharp release numbers are separate from AutoHotkey compatibility versions.
 
     The UI is one Image-rendered surface (the same drawing layer the demos' Shell.ks cards
-    use) inside a dark Gui with a native title bar. Linux hover uses local mouse events; other platforms poll.
+    use) inside a dark Gui with a native title bar. Local mouse events update hover and activate cards.
     The title bar handles dragging and closing. Rendering with Keysharp's own Image class is the point:
     the Dash is itself a demo of what a Keysharp script can draw. The cost is accessibility:
     a bitmap has no focusable controls, so there is no keyboard navigation and nothing for a
@@ -130,19 +130,6 @@ W := 520
 Pad := 20
 InnerW := W - Pad * 2
 
-; Linux mouse events use logical widget units; raster density comes from the GUI.
-#if LINUX
-Scale := 1
-RasterScale := 1
-#else
-; Native screen units determine layout and hit-testing. macOS backing pixels have a separate density.
-Scale := Monitor.Primary.Scale
-RasterScale := Scale
-#endif
-
-PollFast := 25    ; cursor over the window: hover must feel immediate
-PollSlow := 150   ; cursor elsewhere: only has to notice it coming back
-
 ; ---------------------------------------------------------------------------
 ; model: every visual element, its geometry, how it draws and (if clickable) what it does
 ;
@@ -232,19 +219,14 @@ Dash.OnEvent("Escape", (*) => ExitApp())
 Pic := Dash.AddPicture("x0 y0 w" W " h" H)
 ; Mouse events retain brief taps and the original client coordinates.
 Pic.OnMessage(0x0201, ClickCard)
-#if LINUX
 Pic.OnMessage(0x0200, HoverCard)
 Pic.OnMessage(0x02A3, ClearHover)
 RasterScale := Dash.PixelScale
-#endif
+Dash.OnEvent("DpiChanged", (*) => SyncScale())
 
 Render()
 Dash.Show("w" W " h" H)
 SyncScale()
-
-#if !LINUX
-SetTimer(PollMouse, PollFast)
-#endif
 
 ; ---------------------------------------------------------------------------
 ; rendering
@@ -334,13 +316,7 @@ ClickCard(Control, WParam, LParam, Message) {
     if ActionBusy
         return 0
     SyncScale()
-    X := (LParam << 48) >> 48
-    Y := (LParam << 32) >> 48
-#if WINDOWS
-    X /= Scale
-    Y /= Scale
-#endif
-    Target := HitTest(X, Y)
+    Target := CardAt(LParam)
     if Target = ""
         return
     ActionBusy := true
@@ -352,15 +328,21 @@ ClickCard(Control, WParam, LParam, Message) {
     return 0
 }
 
-#if LINUX
-HoverCard(Control, WParam, LParam, Message) {
-    global HoverId
-    if ActionBusy
-        return
-    SyncScale()
+CardAt(LParam) {
     X := (LParam << 48) >> 48
     Y := (LParam << 32) >> 48
-    M := HitTest(X, Y)
+#if WINDOWS
+    ; Native client pixels must match the model's logical GUI coordinates.
+    X /= Dash.PixelScale
+    Y /= Dash.PixelScale
+#endif
+    return HitTest(X, Y)
+}
+
+HoverCard(Control, WParam, LParam, Message) {
+    global HoverId
+    SyncScale()
+    M := CardAt(LParam)
     NewId := M = "" ? "" : M.id
     if NewId != HoverId {
         HoverId := NewId
@@ -375,52 +357,12 @@ ClearHover(*) {
         Render()
     }
 }
-#else
-PollMouse() {
-    global HoverId
-    static Interval := PollFast
-    if ActionBusy
-        return
-    CoordMode("Mouse", "Screen")
-    MouseGetPos(&Mx, &My)
-    WinGetClientPos(&Cx, &Cy, &Cw, &Ch, "ahk_id " Dash.Hwnd)   ; native screen units, like MouseGetPos
-    ; Another window may cover us, so hover also checks the window under the cursor.
-    Inside := Mx >= Cx && Mx < Cx + Cw && My >= Cy && My < Cy + Ch
-    if Inside
-        Inside := WinFromPoint(Mx, My) = Dash.Hwnd
-
-    ; Hover only happens with the cursor over the window, so away from it the poll
-    ; drops to a rate that just notices the cursor coming back. A launcher left open otherwise
-    ; spends the whole day at 40 window queries a second for nothing.
-    Want := Inside ? PollFast : PollSlow
-    if Want != Interval {
-        Interval := Want
-        SetTimer(PollMouse, Interval)
-    }
-
-    if Inside
-        SyncScale()
-    M := Inside ? HitTest((Mx - Cx) / Scale, (My - Cy) / Scale) : ""
-    NewId := M = "" ? "" : M.id
-    if NewId != HoverId {
-        HoverId := NewId
-        Render()
-    }
-}
-#endif
-
-; Keep raster density and hit-testing aligned with the window's current scale.
+; Keep raster density aligned with the window's current scale.
 SyncScale() {
-    global Scale, RasterScale
-#if LINUX
-    Now := 1
-#else
-    Now := Monitor.FromWindow("ahk_id " Dash.Hwnd).Scale
-#endif
-    NowRaster := Dash.PixelScale
-    if Now != Scale || NowRaster != RasterScale {
-        Scale := Now
-        RasterScale := NowRaster
+    global RasterScale
+    Now := Dash.PixelScale
+    if Now != RasterScale {
+        RasterScale := Now
         Render()
     }
 }

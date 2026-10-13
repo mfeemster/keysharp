@@ -118,6 +118,8 @@ namespace Keysharp.Internals.Window.Unix
 				return;
 
 			control.Properties[motionHookedKey] = true;
+			//Eto emits entry once per widget, even when several entries share a native timestamp.
+			control.MouseEnter += DispatchMotion;
 			control.MouseMove += OnMouseMove;
 		}
 
@@ -127,6 +129,7 @@ namespace Keysharp.Internals.Window.Unix
 				return;
 
 			_ = control.Properties.Remove(motionHookedKey);
+			control.MouseEnter -= DispatchMotion;
 			control.MouseMove -= OnMouseMove;
 		}
 
@@ -201,8 +204,13 @@ namespace Keysharp.Internals.Window.Unix
 
 		private static void OnMouseMove(object sender, Forms.MouseEventArgs e)
 		{
+			if (ClaimNativeEvent(WindowsAPI.WM_MOUSEMOVE))
+				DispatchMotion(sender, e);
+		}
+
+		private static void DispatchMotion(object sender, Forms.MouseEventArgs e)
+		{
 			if (sender is Forms.Control control
-					&& ClaimNativeEvent(WindowsAPI.WM_MOUSEMOVE)
 					&& Dispatch(control, WindowsAPI.WM_MOUSEMOVE, MouseKeyState(e), PackPoint(e.Location)))
 				e.Handled = true;
 		}
