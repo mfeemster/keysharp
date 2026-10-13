@@ -18,9 +18,12 @@ namespace Keysharp.Compilation.Syntax
 
 		// Declared before a body's location stamps. The dispatcher pushed the function's frame before calling it,
 		// and the frame stays at its depth until the function returns.
-		private static readonly StatementSyntax LocationDecl =
-			SyntaxFactory.ParseStatement("ref int " + LocationLocal + " = ref Keysharp.Runtime.CallStack.Top.Location;")
-				.WithAdditionalAnnotations(LocationAnnotation);
+		// Build the ref local directly to avoid initializing Roslyn's C# parser for generated syntax.
+		private static readonly StatementSyntax LocationDecl = SyntaxFactory.LocalDeclarationStatement(
+				SyntaxFactory.VariableDeclaration(SyntaxFactory.RefType(SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.IntKeyword))))
+					.AddVariables(SyntaxFactory.VariableDeclarator(LocationLocal).WithInitializer(SyntaxFactory.EqualsValueClause(
+						SyntaxFactory.RefExpression(Access("Keysharp.Runtime.CallStack.Top.Location"))))))
+			.WithAdditionalAnnotations(LocationAnnotation);
 
 		private static readonly System.StringComparer SourcePathComparer = Parser.SourcePathComparer;
 		// The text each file was parsed from, by path.

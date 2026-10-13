@@ -2,11 +2,13 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Keysharp.Compilation
 {
-	internal sealed record InlineCSharpSource(string Module, string Code);
+	internal sealed record InlineCSharpSource(string Module, CompilationUnitSyntax Unit);
 
 	/// <summary>Outputs and diagnostics for one script compilation.</summary>
 	public sealed class ScriptCompilationResult
 	{
+		private string inlineCode;
+
 		/// <summary>The lowered tree, or null on failure.</summary>
 		public CompilationUnitSyntax Unit { get; internal set; }
 
@@ -16,7 +18,8 @@ namespace Keysharp.Compilation
 		public CompilerErrorCollection Errors { get; } = new();
 
 		/// <summary>The generated inline C# tree source, if any.</summary>
-		public string InlineCode { get; internal set; }
+		public string InlineCode => inlineCode ??= InlineSources.Count == 0 ? null
+			: string.Join(System.Environment.NewLine + System.Environment.NewLine, InlineSources.Select(source => source.Unit.ToFullString()));
 
 		internal IReadOnlyList<InlineCSharpSource> InlineSources { get; set; } = [];
 

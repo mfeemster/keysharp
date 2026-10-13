@@ -7,7 +7,7 @@ namespace Keysharp.Compilation.Syntax
 	internal sealed partial class Lowerer
 	{
 		private int _boxCounter;
-		private static readonly TypeSyntax BoxType = SyntaxFactory.ParseTypeName("Keysharp.Builtins.VarRef");
+		private static readonly TypeSyntax BoxType = Ty("Keysharp.Builtins.VarRef");
 		private static ExpressionSyntax NewBox(ExpressionSyntax value) =>
 			SyntaxFactory.ObjectCreationExpression(BoxType).WithArgumentList(
 				SyntaxFactory.ArgumentList(SyntaxFactory.SingletonSeparatedList(Arg(value))));

@@ -134,8 +134,6 @@ namespace Keysharp.Compilation.Syntax
 		// Inline C# is emitted as one additional tree per script module; identity tracking catches unsupported nesting.
 		private List<(string Module, string ClassPath, CSharpDirective Dir)> _inlineBlocks;
 		private HashSet<Stmt> _csharpSeen;
-		/// <summary>The combined tooling view of the module-scoped inline C# compilation units, if any.</summary>
-		public string InlineSource;
 		public IReadOnlyList<InlineCSharpSource> InlineSources = [];
 		private Dictionary<string, HashSet<string>> _moduleGlobals;
 		private HashSet<string> _inlineFuncNames;
@@ -3196,10 +3194,9 @@ namespace Keysharp.Compilation.Syntax
 				var text = sb.ToString();
 				var unit = SyntaxFactory.ParseCompilationUnit(text, options: new CSharpParseOptions(
 							   LanguageVersion.LatestMajor, DocumentationMode.None, SourceCodeKind.Regular, _inlineDefines));
-				var code = unit.GetDiagnostics().Any(x => x.Severity == Microsoft.CodeAnalysis.DiagnosticSeverity.Error)
-						   ? text
-						   : unit.NormalizeWhitespace("\t", System.Environment.NewLine).ToFullString();
-				sources.Add(new InlineCSharpSource(module, code));
+				if (!unit.GetDiagnostics().Any(x => x.Severity == Microsoft.CodeAnalysis.DiagnosticSeverity.Error))
+					unit = unit.NormalizeWhitespace("\t", System.Environment.NewLine);
+				sources.Add(new InlineCSharpSource(module, unit));
 			}
 
 			return sources;
@@ -6577,8 +6574,6 @@ namespace Keysharp.Compilation.Syntax
 			programMembers.Add(BuildOuterAuto(execOrder));
 
 			InlineSources = BuildInlineSources();
-			InlineSource = InlineSources.Count == 0 ? null
-				: string.Join(System.Environment.NewLine + System.Environment.NewLine, InlineSources.Select(source => source.Code));
 			var programClass = SyntaxFactory.ClassDeclaration("Program").AddModifiers(PublicTok).WithMembers(SyntaxFactory.List(programMembers))
 				.AddAttributeLists(SourceFilesAttribute());
 			if (_inlineBlocks != null) programClass = programClass.AddModifiers(PartialTok);

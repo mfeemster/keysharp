@@ -422,7 +422,7 @@ namespace Keysharp.Compilation
 
 			var options = parseOptions.WithPreprocessorSymbols(compilation.InlineDefines);
 			return [.. compilation.InlineSources.Select((source, index) =>
-				SyntaxFactory.ParseSyntaxTree(source.Code, options, path: InlineTreePath(compilation, source, index)))];
+				SyntaxFactory.SyntaxTree(source.Unit, options, path: InlineTreePath(compilation, source, index)))];
 		}
 
 		/// <summary>Binds with the production compilation configuration without emitting IL.</summary>
@@ -859,7 +859,6 @@ namespace Keysharp.Compilation
 					};
 					compilation.Unit = lowerer.Build(prog, buildName, scriptPath, startupName, includeDir, source, output, defines, outputDirectory);
 					compilation.Manifest = lowerer.Manifest;
-					compilation.InlineCode = lowerer.InlineSource;
 					compilation.InlineSources = lowerer.InlineSources;
 					compilation.InlineDefines = lowerer.InlineDefines;
 					compilation.RequiredProviders = lowerer.RequiredProviders;
@@ -977,7 +976,7 @@ namespace Keysharp.Compilation
 				}
 				else if (results.Success)
 				{
-					if (compilation.InlineCode != null)
+					if (compilation.InlineSources.Count != 0)
 					{
 						var inlinePaths = compilation.InlineSources.Select((source, index) => InlineTreePath(compilation, source, index))
 										 .ToHashSet(StringComparer.Ordinal);
