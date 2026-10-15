@@ -233,10 +233,7 @@ namespace Keysharp.Runtime
 				if (t != typeof(KeysharpFunc) && t != typeof(Any))
 					proto.SetBaseInternal(script.Vars.Prototypes[t.BaseType]);
 
-				// A built-in implemented under a different CLR name (KeysharpObject, StructInt32, ...) declares
-				// the name scripts know it by, and that is the name __Class - and so Type() - must report. A class
-				// nested in another class is named by its full dotted path (Gui.Text, Audio.Device, Test.Nested),
-				// which is what makes the name unambiguous once the short one is not a global.
+				// Type() and __Class use script names, including the declaring class for nested types.
 				var className = GetUserDeclaredName(t) ?? t.Name;
 
 				if (IsNestedInClass(t, script))
@@ -302,9 +299,7 @@ namespace Keysharp.Runtime
 			&& (type.DeclaringType == null || type.DeclaringType == script.ProgramType);
 
 		/// <summary>
-		/// Whether a type is declared inside another script-visible CLASS, which is what earns it a dotted name
-		/// (Gui.Text, Audio.Device, Test.Nested). A class a module or the program type merely contains is named by
-		/// its short name.
+		/// Whether a type belongs to a script-visible class rather than a module or generated program type.
 		/// </summary>
 		internal static bool IsNestedInClass(Type type, Script script) =>
 			type.DeclaringType != null

@@ -9,10 +9,11 @@ namespace Keysharp.Internals.Audio
 	/// only by kind, so that is all it adds to the shared subscription base.
 	/// </summary>
 	internal sealed class AudioEventRegistration(object callback, ScriptEventScheduler ownerScheduler,
-		AudioEventManager manager, string kind)
+		AudioEventManager manager, string kind, Func<AudioDeviceDescriptor, bool, object> wrapDevice)
 		: EventSubscriptionBase(callback, ownerScheduler, manager.KeepsScriptRunning)
 	{
 		internal readonly AudioEventManager manager = manager;
+		internal readonly Func<AudioDeviceDescriptor, bool, object> wrapDevice = wrapDevice;
 
 		/// <summary>"Output", "Input" or "All"; anything else was rejected before this was constructed.</summary>
 		internal readonly string kind = kind;
@@ -186,9 +187,6 @@ namespace Keysharp.Internals.Audio
 
 		private void DispatchAll(string kind, AudioDeviceDescriptor device)
 		{
-			// Resolved once per dispatch rather than per registration, and from the script this manager was built
-			// for, which is the captured-service rule every object this class hands out already follows.
-			var service = script.AudioService;
 			AudioEventRegistration[] toFire;
 
 			lock (gate)
@@ -204,11 +202,7 @@ namespace Keysharp.Internals.Audio
 				if (!reg.IsActive || !KindMatches(reg.kind, device.Kind))
 					continue;
 
-				// A removed device is wrapped as gone, so operating on it inside the handler raises the
-				// actionable "no longer available" error.
-				var wrapped = kind == KindRemoved
-							  ? Ks.Audio.Device.WrapMissing(service, device)
-							  : Ks.Audio.Device.Wrap(service, device);
+				var wrapped = reg.wrapDevice(device, kind == KindRemoved);
 				Fire(reg, reg.Callback, [reg.scriptObject, kind, wrapped]);
 			}
 		}

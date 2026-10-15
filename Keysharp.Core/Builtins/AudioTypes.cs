@@ -34,186 +34,160 @@ namespace Keysharp.Builtins
 				public string SampleFormat => Data.SampleFormat;
 			}
 
-			/// <summary>
-			/// A snapshot of one audio endpoint, plus the controls that endpoint owns. The <c>Id</c> is the durable
-			/// identity: names repeat and enumeration order changes, so every operation resolves by id.
-			/// </summary>
-			public class Device : KeysharpObject
+			internal Engine.AudioDeviceDescriptor Snapshot;
+			internal bool missing;
+			internal Engine.AudioService service;
+
+			internal static Audio Wrap(Engine.AudioService owner, Engine.AudioDeviceDescriptor d) => new (null) { service = owner, Snapshot = d };
+
+			/// <summary>Removed callbacks reject controls until Refresh finds the endpoint again.</summary>
+			internal static Audio WrapMissing(Engine.AudioService owner, Engine.AudioDeviceDescriptor d)
+				=> new (null) { service = owner, Snapshot = d, missing = true };
+
+			/// <summary>The endpoint's native identity. Names can repeat and enumeration order can change.</summary>
+			public string Id => Snapshot.Id ?? "";
+
+			public string Name => Snapshot.Name ?? "";
+
+			/// <summary>"Output" or "Input".</summary>
+			public string Kind => KindName(Snapshot.Kind);
+
+			public object IsDefault => Snapshot.IsDefault;
+
+			/// <summary>"Running", "Idle", "Unknown" or "Missing". Any open stream, including silence, counts as running.</summary>
+			public string Status
 			{
-				internal Engine.AudioDeviceDescriptor Snapshot;
-				internal bool missing;
-
-				public Device(params object[] args) : base(args) { }
-
-				public override object __New(params object[] args)
-					=> Errors.ErrorOccurred("Audio.Device is produced by Audio.Devices() or Audio.DefaultDevice(), not constructed.");
-
-				internal Engine.AudioService service;
-
-				internal static Device Wrap(Engine.AudioService owner, Engine.AudioDeviceDescriptor d) => new (null) { service = owner, Snapshot = d };
-
-				/// <summary>
-				/// A snapshot marked gone, for the device handed to a "Removed" callback. Operating on it inside
-				/// the handler raises the actionable "no longer available" error.
-				/// </summary>
-				internal static Device WrapMissing(Engine.AudioService owner, Engine.AudioDeviceDescriptor d)
-					=> new (null) { service = owner, Snapshot = d, missing = true };
-
-				public string Id => Snapshot.Id ?? "";
-
-				public string Name => Snapshot.Name ?? "";
-
-				/// <summary>"Output" or "Input". A device carries audio in exactly one direction.</summary>
-				public string Kind => KindName(Snapshot.Kind);
-
-
-				public object IsDefault => Snapshot.IsDefault;
-
-				/// <summary>
-				/// "Running" while any application holds a live stream, "Idle" when none does, "Unknown" when
-				/// the backend cannot determine it, or "Missing" after removal is observed. A silent stream is running.
-				/// </summary>
-				public string Status
+				get
 				{
-					get
-					{
-						if (missing)
-							return "Missing";
+					if (missing)
+						return "Missing";
 
-						var backend = service?.Backend;
-						return backend is { IsAvailable: true } && backend.TryGetIsRunning(Snapshot.Kind, Snapshot.Id, out var running)
-							   ? running ? "Running" : "Idle"
-							   : "Unknown";
-					}
+					var backend = service?.Backend;
+					return backend is { IsAvailable: true } && backend.TryGetIsRunning(Snapshot.Kind, Snapshot.Id, out var running)
+						   ? running ? "Running" : "Idle"
+						   : "Unknown";
 				}
+			}
 
-				/// <summary>Whether a live stream is known to be open. Read Status to distinguish Idle, Unknown and Missing.</summary>
-				public object IsRunning => Status == "Running";
+			/// <summary>Whether a live stream is known to be open. Read Status to distinguish Idle, Unknown and Missing.</summary>
+			public object IsRunning => Status == "Running";
 
-				/// <summary>This endpoint's own volume, from 0 through 100.</summary>
-				public object Volume
-				{
-					get
-					{
-						var backend = RequireLive(out var failure);
-
-						if (backend == null)
-							return failure;
-
-						if (!backend.TryGetVolume(Snapshot.Kind, Snapshot.Id, out var linear))
-							return Errors.OSErrorOccurredWithMessage($"Cannot read the volume of {Name}: {service.UnsupportedReason(Engine.AudioCapability.EndpointVolume)}");
-
-						return Level(Math.Clamp(linear, 0.0, 1.0));
-					}
-
-					set
-					{
-						var backend = RequireLive(out _);
-
-						if (backend == null)
-							return;
-
-						if (!TryLevel(value, "Volume", out var scalar, out _))
-							return;
-
-						if (!backend.TrySetVolume(Snapshot.Kind, Snapshot.Id, scalar))
-							_ = Errors.OSErrorOccurredWithMessage($"Cannot set the volume of {Name}: {service.UnsupportedReason(Engine.AudioCapability.EndpointVolume)}");
-					}
-				}
-
-				/// <summary>This endpoint's own mute state.</summary>
-				public object Mute
-				{
-					get
-					{
-						var backend = RequireLive(out var failure);
-
-						if (backend == null)
-							return failure;
-
-						if (!backend.TryGetMute(Snapshot.Kind, Snapshot.Id, out var mute))
-							return Errors.OSErrorOccurredWithMessage($"Cannot read the mute state of {Name}: {service.UnsupportedReason(Engine.AudioCapability.EndpointVolume)}");
-
-						return mute;
-					}
-
-					set
-					{
-						var backend = RequireLive(out _);
-
-						if (backend == null)
-							return;
-
-						if (!backend.TrySetMute(Snapshot.Kind, Snapshot.Id, value.Ab()))
-							_ = Errors.OSErrorOccurredWithMessage($"Cannot set the mute state of {Name}: {service.UnsupportedReason(Engine.AudioCapability.EndpointVolume)}");
-					}
-				}
-
-				/// <summary>
-				/// Re-reads this exact device. Returns the receiver when present, or blank otherwise. An absent
-				/// device is marked Missing; an unavailable backend does not establish removal.
-				/// </summary>
-				public object Refresh()
-				{
-					var backend = service.Backend;
-
-					if (backend is { IsAvailable: true })
-					{
-						if (backend.TryGetDevice(Snapshot.Id, out var fresh))
-						{
-							Snapshot = fresh;
-							missing = false;
-							return this;
-						}
-
-						missing = true;
-					}
-
-					return "";
-				}
-
-				/// <summary>
-				/// The platform's own device object, for the controls this class does not model. Its concrete type
-				/// is platform-dependent and unspecified, and work done through it bypasses this class's caching.
-				/// </summary>
-				public object ToClr()
+			/// <summary>This endpoint's own volume, from 0 through 100.</summary>
+			public object Volume
+			{
+				get
 				{
 					var backend = RequireLive(out var failure);
 
 					if (backend == null)
 						return failure;
 
-					var native = backend.GetNativeDeviceObject(Snapshot.Kind, Snapshot.Id);
+					if (!backend.TryGetVolume(Snapshot.Kind, Snapshot.Id, out var linear))
+						return Errors.OSErrorOccurredWithMessage($"Cannot read the volume of {Name}: {service.UnsupportedReason(Engine.AudioCapability.EndpointVolume)}");
 
-					return native == null
-						   ? Errors.OSErrorOccurredWithMessage($"This platform exposes no native object for {Name}: {service.UnsupportedReason(Engine.AudioCapability.NativeObject)}")
-						   : ManagedInvoke.WrapManaged(native);
+					return Level(Math.Clamp(linear, 0.0, 1.0));
 				}
 
-				private Engine.IAudioBackend RequireLive(out object failure)
+				set
 				{
-					failure = null;
+					var backend = RequireLive(out _);
 
-					if (missing)
-					{
-						failure = Errors.OSErrorOccurredWithMessage($"The device {Name} is no longer available; call Refresh() first.");
-						return null;
-					}
+					if (backend == null)
+						return;
 
-					var backend = service.Backend;
+					if (!TryLevel(value, "Volume", out var scalar, out _))
+						return;
 
-					if (backend == null || !backend.IsAvailable)
-					{
-						failure = Unsupported(service, Engine.AudioCapability.DeviceEnumeration, "This device");
-						return null;
-					}
+					if (!backend.TrySetVolume(Snapshot.Kind, Snapshot.Id, scalar))
+						_ = Errors.OSErrorOccurredWithMessage($"Cannot set the volume of {Name}: {service.UnsupportedReason(Engine.AudioCapability.EndpointVolume)}");
+				}
+			}
 
-					return backend;
+			public object Mute
+			{
+				get
+				{
+					var backend = RequireLive(out var failure);
+
+					if (backend == null)
+						return failure;
+
+					if (!backend.TryGetMute(Snapshot.Kind, Snapshot.Id, out var mute))
+						return Errors.OSErrorOccurredWithMessage($"Cannot read the mute state of {Name}: {service.UnsupportedReason(Engine.AudioCapability.EndpointVolume)}");
+
+					return mute;
 				}
 
-				[PublicHiddenFromUser]
-				public override string ToString() => Name;
+				set
+				{
+					var backend = RequireLive(out _);
+
+					if (backend == null)
+						return;
+
+					if (!backend.TrySetMute(Snapshot.Kind, Snapshot.Id, value.Ab()))
+						_ = Errors.OSErrorOccurredWithMessage($"Cannot set the mute state of {Name}: {service.UnsupportedReason(Engine.AudioCapability.EndpointVolume)}");
+				}
 			}
+
+			/// <summary>Updates this Id, returning the receiver or blank. Only confirmed absence marks it Missing.</summary>
+			public object Refresh()
+			{
+				var backend = service.Backend;
+
+				if (backend is { IsAvailable: true })
+				{
+					if (backend.TryGetDevice(Snapshot.Id, out var fresh))
+					{
+						Snapshot = fresh;
+						missing = false;
+						return this;
+					}
+
+					missing = true;
+				}
+
+				return "";
+			}
+
+			/// <summary>The platform's native endpoint object. Its type is unspecified; unavailable objects raise an error.</summary>
+			public object ToClr()
+			{
+				var backend = RequireLive(out var failure);
+
+				if (backend == null)
+					return failure;
+
+				var native = backend.GetNativeDeviceObject(Snapshot.Kind, Snapshot.Id);
+
+				return native == null
+					   ? Errors.OSErrorOccurredWithMessage($"This platform exposes no native object for {Name}: {service.UnsupportedReason(Engine.AudioCapability.NativeObject)}")
+					   : ManagedInvoke.WrapManaged(native);
+			}
+
+			private Engine.IAudioBackend RequireLive(out object failure)
+			{
+				failure = null;
+
+				if (missing)
+				{
+					failure = Errors.OSErrorOccurredWithMessage($"The device {Name} is no longer available; call Refresh() first.");
+					return null;
+				}
+
+				var backend = service.Backend;
+
+				if (backend == null || !backend.IsAvailable)
+				{
+					failure = Unsupported(service, Engine.AudioCapability.DeviceEnumeration, "This device");
+					return null;
+				}
+
+				return backend;
+			}
+
+			[PublicHiddenFromUser]
+			public override string ToString() => Name;
 
 			/// <summary>
 			/// An explicit mixer and its one native stream. This is the object a game or any latency-sensitive
@@ -266,12 +240,12 @@ namespace Keysharp.Builtins
 					var deviceId = "";
 					var deviceText = "";
 
-					if (device is not Ks.Audio.Device && !device.CoerceString(out deviceText))
+					if (device is not Ks.Audio && !device.CoerceString(out deviceText))
 						return DefaultObject;
 
-					if (device is Ks.Audio.Device || deviceText.Length > 0)
+					if (device is Ks.Audio || deviceText.Length > 0)
 					{
-						if (!TryResolveDevice(device, Engine.AudioDeviceKind.Output, true, out var resolved, out var failure))
+						if (!TryResolveDevice(device, Engine.AudioDeviceKind.Output, out var resolved, out var failure))
 							return failure;
 
 						deviceId = resolved.Id;
@@ -310,7 +284,7 @@ namespace Keysharp.Builtins
 							return "";
 
 						var backend = service.Backend;
-						return backend is { IsAvailable: true } && backend.TryGetDevice(core.BoundDeviceId, out var d) ? Ks.Audio.Device.Wrap(service, d) : "";
+						return backend is { IsAvailable: true } && backend.TryGetDevice(core.BoundDeviceId, out var d) ? Ks.Audio.Wrap(service, d) : "";
 					}
 				}
 
@@ -552,7 +526,7 @@ namespace Keysharp.Builtins
 				internal Engine.AudioOutputCore owner;
 				internal Engine.AudioClipData source;
 
-				/// <summary>The service this sound was admitted under, captured for the same reason Device captures it.</summary>
+				/// <summary>Retains the owning script's audio service.</summary>
 				internal Engine.AudioService service;
 
 				public Playback(params object[] args) : base(args) { }
@@ -570,7 +544,7 @@ namespace Keysharp.Builtins
 					{
 						var backend = service.Backend;
 						return owner != null && backend is { IsAvailable: true } && backend.TryGetDevice(owner.BoundDeviceId, out var d)
-							   ? Ks.Audio.Device.Wrap(service, d)
+							   ? Ks.Audio.Wrap(service, d)
 							   : "";
 					}
 				}

@@ -13,18 +13,16 @@
 
 ; Qualified lookup resolves each nested type.
 Assert(Audio.Clip is Class, A_LineNumber)
-Assert(Audio.Device is Class, A_LineNumber)
 Assert(Audio.Output is Class, A_LineNumber)
 Assert(Audio.Playback is Class, A_LineNumber)
 
 ; ---- construction rules ------------------------------------------------------------------------
 
-; Audio itself wraps the one audio system and has no instances.
+; Audio endpoint instances come from enumeration and audio resources.
 Throws(() => Audio(), A_LineNumber)
 
 ; Factory-owned results cannot be constructed directly.
 Throws(() => Audio.Clip(), A_LineNumber)
-Throws(() => Audio.Device(), A_LineNumber)
 Throws(() => Audio.Playback(), A_LineNumber)
 
 ; An Output is constructible and starts closed, touching nothing native.
@@ -116,17 +114,32 @@ Throws(() => Audio.Load(A_Temp "/keysharp-audio-bogus.wav"), A_LineNumber)
 ; ---- devices -----------------------------------------------------------------------------------
 
 ; Enumeration always answers with an Array, even on a host with no audio at all.
-devices := Audio.Devices()
+devices := Audio.Devices
 Assert(devices is Array, A_LineNumber)
-Assert(Audio.Devices("Output") is Array, A_LineNumber)
-Assert(Audio.Devices("Input") is Array, A_LineNumber)
-Throws(() => Audio.Devices("Sideways"), A_LineNumber)
-Throws(() => Audio.DefaultDevice("All"), A_LineNumber)      ; a role default is one device, not a set
+outputs := devices.Filter((Device) => Device.Kind == "Output")
+inputs := devices.Filter((Device) => Device.Kind == "Input")
+Assert(outputs is Array && inputs is Array, A_LineNumber)
+AssertEq(outputs.Length + inputs.Length, devices.Length, A_LineNumber)
+defaultOutputs := devices.Filter((Device) => Device.Kind == "Output" && Device.IsDefault)
+for d in defaultOutputs
+    Assert(d is Audio && d.Kind == "Output" && d.IsDefault, A_LineNumber)
+
+; Each read lists new objects, which compare by identity as in AutoHotkey; Id matches an endpoint.
+Again := Audio.Devices
+for Device in devices {
+    Matches := Again.Filter((Candidate) => Candidate.Id == Device.Id)
+    if Matches.Length > 0 {
+        Assert(Device != Matches[1] && Device !== Matches[1], A_LineNumber)
+        Lookup := Map(Device, "Endpoint")
+        Assert(!Lookup.Has(Matches[1]) && Lookup[Device] == "Endpoint", A_LineNumber)
+    }
+}
 
 ; Reading IsRunning on every device exercises the session-enumeration path on Windows. A wrong COM vtable slot
 ; there is an access violation rather than an exception, so this is deliberately run against every endpoint
 ; instead of just the first.
 for d in devices {
+    Assert(d is Audio, A_LineNumber)
     running := d.IsRunning
     Assert(running == true || running == false, A_LineNumber)
     status := d.Status
@@ -142,7 +155,7 @@ Assert(Audio.IsDeviceChangeSupported == true || Audio.IsDeviceChangeSupported ==
 ; Everything below needs a real endpoint, so it is skipped where there is none.
 if (devices.Length > 0) {
     d := devices[1]
-    Assert(d is Audio.Device, A_LineNumber)
+    Assert(d is Audio, A_LineNumber)
     Assert(d.Id != "" && d.Name != "", A_LineNumber)
     Assert(d.Kind == "Output" || d.Kind == "Input", A_LineNumber)
     ; Refresh returns the receiver for a device that is still present.
@@ -156,8 +169,10 @@ if (devices.Length > 0) {
     Throws(() => d.Volume := -1, A_LineNumber)
     d.Volume := before
 
-    ; An exact Id resolves; an unknown one does not.
-    Assert(Audio.Devices(d.Kind).Length > 0, A_LineNumber)
+    ; Ordinary array filtering finds the endpoint by Id; an unknown selector is refused.
+    matches := devices.Filter((Candidate) => Candidate.Id == d.Id)
+    Assert(matches.Length > 0, A_LineNumber)
+    AssertEq(matches.Filter((Candidate) => Candidate == d).Length, 1, A_LineNumber)
     Throws(() => Audio.Output("no-such-device-id-12345"), A_LineNumber)
 }
 
@@ -168,7 +183,7 @@ if (Audio.IsPlaybackSupported && Audio.IsOutputAvailable) {
     if (o.TryOpen()) {
         AssertEq(o.Status, "Open", A_LineNumber)
         Assert(o.SampleRate > 0 && (o.Channels == 1 || o.Channels == 2), A_LineNumber)
-        Assert(o.Device is Audio.Device, A_LineNumber)
+        Assert(o.Device is Audio, A_LineNumber)
 
         ; Prepare is idempotent and observable.
         AssertEq(o.IsPrepared(clip), false, A_LineNumber)
@@ -188,7 +203,7 @@ if (Audio.IsPlaybackSupported && Audio.IsOutputAvailable) {
         Assert(p.IsPlaying, A_LineNumber)
         AssertEq(p.Volume, 100, A_LineNumber)
         AssertEq(p.Loop, false, A_LineNumber)
-        Assert(p.Device is Audio.Device, A_LineNumber)
+        Assert(p.Device is Audio, A_LineNumber)
         Assert(p.DurationMilliseconds > 0, A_LineNumber)
 
         ; Controls are validated the same way everywhere.
@@ -223,15 +238,15 @@ if (Audio.IsPlaybackSupported && Audio.IsOutputAvailable) {
         ; A wrong argument type is a TypeError, not a blank.
         Throws(() => o.Play("a path, which explicit outputs do not take"), A_LineNumber)
 
-        ; Binding to an explicit Device object rather than the default is what the manual GUI probe does,
+        ; Binding to an explicit Audio object rather than the default is what the manual GUI probe does,
         ; so it is exercised here too: the output must report that device rather than following the default.
-        outDevices := Audio.Devices("Output")
+        outDevices := Audio.Devices.Filter((Device) => Device.Kind == "Output")
         if (outDevices.Length > 0) {
             bound := Audio.Output(outDevices[1], 2)
             AssertEq(bound.IsFollowingDefault, false, A_LineNumber)
             if (bound.TryOpen()) {
                 AssertEq(bound.Status, "Open", A_LineNumber)
-                Assert(bound.Device is Audio.Device, A_LineNumber)
+                Assert(bound.Device is Audio, A_LineNumber)
                 AssertEq(bound.Device.Id, outDevices[1].Id, A_LineNumber)
             }
             bound.Dispose()
@@ -276,6 +291,37 @@ if (Audio.IsSessionControlSupported && sessions.Length > 0) {
 ; A meter is configured without opening anything, and validates its interval.
 Throws(() => Audio.Meter("", 5), A_LineNumber)
 Throws(() => Audio.Meter("", 5000), A_LineNumber)
+Throws(() => Audio.Meter("no-such-device-id-12345"), A_LineNumber, OSError)
+for d in devices {
+    selectors := [d, d.Id]
+    names := devices.Filter((Candidate) => Candidate.Name = d.Name)
+    if (d.Name != "" && !devices.FindIndex((Candidate) => Candidate.Id == d.Name)) {
+        if (names.Length == 1)
+            selectors.Push(d.Name)
+        else if (names[1] == d)
+            Throws(() => Audio.Meter(d.Name), A_LineNumber, ValueError)
+    }
+
+    for selector in selectors {
+        probe := Audio.Meter(selector)
+        Assert(probe.Target is Audio, A_LineNumber)
+        AssertEq(probe.Target.Id, d.Id, A_LineNumber)
+        AssertEq(probe.Status, "Stopped", A_LineNumber)
+        probe.Dispose()
+    }
+}
+
+; Continuing a failed selector reports once and leaves the meter unbound.
+selectionErrors := []
+continueSelection := (Error, Mode) => (selectionErrors.Push(Error), -1)
+OnError(continueSelection)
+refused := Audio.Meter("no-such-device-id-12345")
+OnError(continueSelection, 0)
+AssertEq(selectionErrors.Length, 1, A_LineNumber)
+Assert(selectionErrors[1] is OSError, A_LineNumber)
+AssertEq(refused.Target, "", A_LineNumber)
+refused.Dispose()
+
 m := Audio.Meter()
 Assert(m is Audio.Meter, A_LineNumber)
 AssertEq(m.Status, "Stopped", A_LineNumber)

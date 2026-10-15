@@ -3063,7 +3063,7 @@ RefreshAudioDevices(Announce := false)
 {
 	global gAudioDevices
 	previous := SelectedAudioDevice() != "" ? SelectedAudioDevice().Id : ""
-	gAudioDevices := Audio.Devices("All")
+	gAudioDevices := Audio.Devices
 	items := [], ids := []
 	for d in gAudioDevices
 	{
@@ -3146,13 +3146,14 @@ AudioJoinLines(lines)
 SelectDefaultAudioDevice()
 {
 	global gAudioDevices
-	d := Audio.DefaultDevice("Output")
-	if (d == "")
+	defaults := Audio.Devices.Filter((Device) => Device.Kind == "Output" && Device.IsDefault)
+	if (defaults.Length == 0)
 	{
 		gStatus["audio_devices"].Text := "Devices: this host has no default output"
 		AppendLog("Audio: no default output device")
 		return
 	}
+	d := defaults[1]
 	RefreshAudioDevices()
 	for i, item in gAudioDevices
 	{
@@ -4203,18 +4204,17 @@ OnWinEvent(eventName, hook, *) {
 ; asserting anything: a field a display does not report reads as "(not reported)", and brightness/VCP failures
 ; are shown as the OSError they throw, which is the correct outcome on a monitor or platform without support.
 
-; One enumeration builds both the list and the objects behind it. Monitor.All is used rather than a loop of
-; Monitor(i) so every row comes from the same snapshot.
+; One enumeration builds both the list and its objects from the same snapshot.
 RefreshMonitorList() {
 	global gMonitorObjects, gMonitorList
 
 	previous := gMonitorList.Value      ; keep the selection across a refresh where possible
 
 	try {
-		gMonitorObjects := Monitor.All
+		gMonitorObjects := Monitor.Devices
 	} catch as err {
 		SetStatus("monitor_list", "Monitors: ENUMERATION FAILED")
-		AppendLog("Monitor.All failed: " err.Message)
+		AppendLog("Monitor.Devices failed: " err.Message)
 		return
 	}
 
@@ -4490,7 +4490,7 @@ StartMonitorChangeProbe() {
 	try {
 		gMonitorHook := Monitor.OnChange(OnMonitorChange)
 		SetStatus("monitor_change", "Monitor.OnChange: watching — now re-plug a monitor or change resolution")
-		AppendLog("Monitor.OnChange probe started with " Monitor.Count " monitor(s). Plug/unplug a display for "
+		AppendLog("Monitor.OnChange probe started with " Monitor.Devices.Length " monitor(s). Plug/unplug a display for "
 			. "'Topology'; change resolution, scale, arrangement or the primary display for 'Settings'.")
 	} catch as err {
 		SetStatus("monitor_change", "Monitor.OnChange: BLOCKED/ERROR")
@@ -4514,10 +4514,10 @@ OnMonitorChange(hook, kind) {
 	global gMonitorChangeCount
 
 	gMonitorChangeCount += 1
-	; A_EventInfo carries the monitor count after the change; Monitor.All re-reads the layout as it is now.
+	; Re-read the current layout after the display configuration changes.
 	names := ""
 
-	for m in Monitor.All
+	for m in Monitor.Devices
 		names .= (names = "" ? "" : ", ") m.Name " " m.Width "x" m.Height (m.IsPrimary ? " (primary)" : "")
 
 	SetStatus("monitor_change", "Monitor.OnChange: " gMonitorChangeCount " event(s), last=" kind)

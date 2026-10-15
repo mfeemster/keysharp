@@ -8393,57 +8393,46 @@
                  },
                  {
                      "category":  "Keysharp Module (Ks)",
-                     "feature":  "Audio.Devices() / Audio.DefaultDevice() / Audio.Device",
-                     "syntax":  "for d in Audio.Devices(\"Output\")",
+                     "feature":  "Audio.Devices",
+                     "syntax":  "for Device in Audio.Devices",
                      "windows":  "full",
                      "linux_x11":  "unknown",
                      "linux_wayland":  "unknown",
-                     "macos":  "planned",
-                     "notes":  "Lists present input and output endpoints. Devices expose an opaque Id, Name, Kind, Status, IsRunning, IsDefault and Refresh(); selection uses the exact Id.",
+                     "macos":  "unknown",
+                     "notes":  "Snapshot Array of usable Audio endpoints with completed identity metadata. Filter by Kind and IsDefault; Refresh updates a snapshot in place.",
                      "tested-by":  "audio-class.ahk; Gui/guitest.ks"
                  },
                  {
                      "category":  "Audio",
-                     "feature":  "Audio.Device.ToClr() / Audio.Session.ToClr()",
-                     "syntax":  "native := Audio.DefaultDevice().ToClr()",
+                     "feature":  "Audio.ToClr() / Audio.Session.ToClr()",
+                     "syntax":  "Native := Device.ToClr()",
                      "windows":  "full",
                      "linux_x11":  "unsupported",
                      "linux_wayland":  "unsupported",
-                     "macos":  "planned",
-                     "notes":  "The platform's own device or session object, for the Core Audio surface this class does not model such as ducking, per-channel volume and endpoint form factor. Its concrete type is platform-dependent and unspecified, and work done through it bypasses this class's caching. PulseAudio exposes no object of comparable reach, so Linux raises an actionable OSError instead."
+                     "macos":  "unknown",
+                     "notes":  "Returns the platform's device or session object, with an unspecified concrete type. Direct access bypasses snapshot caching. Linux raises OSError because PulseAudio exposes no comparable object."
                  },
                  {
                      "category":  "Keysharp Module (Ks)",
-                     "feature":  "Audio.Device.Volume / Audio.Device.Mute",
-                     "syntax":  "Audio.DefaultDevice().Volume := 50",
+                     "feature":  "Audio.Volume / Audio.Mute",
+                     "syntax":  "Device.Volume := 50",
                      "windows":  "full",
                      "linux_x11":  "unknown",
                      "linux_wayland":  "unknown",
-                     "macos":  "planned",
-                     "notes":  "The endpoint's own volume from 0 through 100 and its mute state, operated on an exactly identified device rather than through the SoundSetVolume name match. Out-of-range input raises a ValueError rather than being clamped. Windows uses IAudioEndpointVolume, Linux the libpulse sink and source controls, macOS the Core Audio virtual master volume.",
+                     "macos":  "unknown",
+                     "notes":  "Live endpoint volume from 0 through 100 and mute state. Out-of-range volume raises ValueError. Linux uses mixer slider percentages.",
                      "tested-by":  "audio-class.ahk; Gui/guitest.ks"
                  },
                  {
                      "category":  "Keysharp Module (Ks)",
-                     "feature":  "Audio.Device.Status",
+                     "feature":  "Audio.Status / Audio.IsRunning",
                      "syntax":  "Status := Device.Status",
                      "windows":  "full",
                      "linux_x11":  "unknown",
                      "linux_wayland":  "unknown",
-                     "macos":  "planned",
-                     "notes":  "Reports Running, Idle, Unknown or Missing. Unknown means activity cannot be determined; Missing means removal was observed.",
-                     "tested-by":  "audio-class.ahk; AudioInternalsTests.DeviceStatus"
-                 },
-                 {
-                     "category":  "Keysharp Module (Ks)",
-                     "feature":  "Audio.Device.IsRunning",
-                     "syntax":  "if (mic.IsRunning)",
-                     "windows":  "full",
-                     "linux_x11":  "unknown",
-                     "linux_wayland":  "unknown",
-                     "macos":  "planned",
-                     "notes":  "Returns a Boolean indicating whether any application holds a live stream, including silent streams. False includes idle, unknown and missing devices; use Status to distinguish them. macOS may not track Bluetooth inputs.",
-                     "tested-by":  "audio-class.ahk; Gui/guitest.ks"
+                     "macos":  "unknown",
+                     "notes":  "Status is Running, Idle, Unknown or Missing; IsRunning is true only for Running, including silent streams. Unknown means activity cannot be determined; Missing means removal was observed. macOS may not track Bluetooth inputs.",
+                     "tested-by":  "audio-class.ahk; AudioInternalsTests.DeviceStatus; Gui/guitest.ks"
                  },
                  {
                      "category":  "Keysharp Module (Ks)",
@@ -8508,29 +8497,18 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "partial",
-                     "notes":  "Keysharp-specific Ks class for one display: identity and metadata beyond the AHK MonitorGet* functions, plus brightness and DDC/CI control. A Monitor is a snapshot of the topology (call Refresh() to re-read) plus a live handle to the device. On macOS the geometry, identity and change events are verified, but Model and Adapter are always empty (CoreGraphics exposes no product-name or adapter API) and Connection only distinguishes the built-in panel.",
+                     "notes":  "Display snapshots with identity, metadata, brightness and DDC/CI control. On macOS Model and Adapter are blank; Connection identifies built-in panels only.",
                      "tested-by":  "MonitorTests.cs"
                  },
                  {
                      "category":  "Keysharp Module (Ks)",
-                     "feature":  "Monitor.All",
-                     "syntax":  "for m in Monitor.All",
+                     "feature":  "Monitor.Devices",
+                     "syntax":  "for MonitorDevice in Monitor.Devices",
                      "windows":  "full",
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "unknown",
-                     "notes":  "Every monitor in index order, built from one topology enumeration. Preferred over a loop of Monitor(i), which re-enumerates per monitor and can be shifted by a hotplug midway through.",
-                     "tested-by":  "MonitorTests.cs"
-                 },
-                 {
-                     "category":  "Keysharp Module (Ks)",
-                     "feature":  "Monitor.Count",
-                     "syntax":  "n := Monitor.Count",
-                     "windows":  "full",
-                     "linux_x11":  "full",
-                     "linux_wayland":  "full",
-                     "macos":  "unknown",
-                     "notes":  "The number of monitors; the same value as MonitorGetCount().",
+                     "notes":  "Snapshot Array of monitors in index order from one topology enumeration, with geometry and metadata completed before return.",
                      "tested-by":  "MonitorTests.cs"
                  },
                  {
@@ -8568,17 +8546,6 @@
                  },
                  {
                      "category":  "Keysharp Module (Ks)",
-                     "feature":  "Monitor.FromId()",
-                     "syntax":  "m := Monitor.FromId(savedId)",
-                     "windows":  "full",
-                     "linux_x11":  "full",
-                     "linux_wayland":  "full",
-                     "macos":  "unknown",
-                     "notes":  "The monitor whose Id matches, or blank when that monitor is not attached - the lookup that makes a persisted Id useful. Unlike the other factories this must resolve metadata for every attached display, since an id is not part of the topology snapshot.",
-                     "tested-by":  "MonitorTests.cs"
-                 },
-                 {
-                     "category":  "Keysharp Module (Ks)",
                      "feature":  "Monitor.FromMouse()",
                      "syntax":  "m := Monitor.FromMouse()",
                      "windows":  "full",
@@ -8596,8 +8563,8 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "full",
-                     "notes":  "Updates this monitor in place and returns the same object. Returns blank when detached, preserving the last-known properties.",
-                     "tested-by":  "MonitorTests.cs"
+                     "notes":  "Updates this snapshot in place and returns it. If the display is unavailable or its known Id cannot be verified, returns blank and preserves every property.",
+                     "tested-by":  "monitor-class.ahk; MonitorTests.RefreshIdentity"
                  },
                  {
                      "category":  "Keysharp Module (Ks)",

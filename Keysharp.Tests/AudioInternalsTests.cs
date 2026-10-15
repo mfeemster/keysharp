@@ -493,7 +493,7 @@ public partial class AudioInternalsTests
 		var backend = new LosableBackend();
 		using var service = new AudioService(null, backend);
 		Assert.IsTrue(backend.TryGetDefaultDevice(AudioDeviceKind.Output, out var descriptor));
-		var device = Ks.Audio.Device.Wrap(service, descriptor);
+		var device = Ks.Audio.Wrap(service, descriptor);
 
 		foreach (var (running, status) in new (bool?, string)[] { (true, "Running"), (false, "Idle"), (null, "Unknown") })
 		{
@@ -519,7 +519,7 @@ public partial class AudioInternalsTests
 		Assert.That(device.Status, Is.EqualTo("Running"));
 		Assert.That(device.IsRunning, Is.True);
 
-		var removed = Ks.Audio.Device.WrapMissing(service, descriptor);
+		var removed = Ks.Audio.WrapMissing(service, descriptor);
 		Assert.That(removed.Status, Is.EqualTo("Missing"));
 		Assert.That(removed.IsRunning, Is.False);
 	}

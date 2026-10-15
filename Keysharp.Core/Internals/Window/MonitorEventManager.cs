@@ -150,8 +150,8 @@ namespace Keysharp.Internals.Window
 				toFire = [.. registrations];
 			}
 
-			// Callback shape: (Hook, Change). Everything else a handler needs is a plain read of Monitor.All or
-			// Monitor.Count at callback time, the only consistent way to get it, since the layout can change again first.
+			// Callback shape: (Hook, Change). A handler reads Monitor.Devices at callback time because the layout
+			// can change again before the callback runs.
 			foreach (var reg in toFire)
 				Fire(reg, reg.Callback, [reg.scriptObject, kind]);
 		}

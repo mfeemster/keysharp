@@ -627,7 +627,8 @@ public class EventHookTests : TestRunner
 	{
 		var script = Script.TheScript;
 		var callback = Callback();
-		var reg = new AudioEventRegistration(callback, script.EventScheduler, script.AudioEventManager, "All");
+		var reg = new AudioEventRegistration(callback, script.EventScheduler, script.AudioEventManager, "All",
+			(device, removed) => removed ? Ks.Audio.WrapMissing(script.AudioService, device) : Ks.Audio.Wrap(script.AudioService, device));
 		var hook = new Ks.Audio.DeviceHook(callback, "All") { sub = reg };
 		reg.scriptObject = hook;
 		return hook;

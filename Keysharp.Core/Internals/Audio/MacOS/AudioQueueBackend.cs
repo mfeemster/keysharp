@@ -1463,7 +1463,7 @@ namespace Keysharp.Internals.Audio
 
 		// ---- per-application sessions -------------------------------------------------------------------
 
-		private const string SessionReason = "macOS exposes no public per-application audio API. Core Audio models devices and streams, not application sessions, so per-application volume, mute, metering and session events have nothing to build on, and a process list would name applications this backend still could not control. Use the endpoint volume and mute on Audio.Device, or the application's own volume control.";
+		private const string SessionReason = "macOS exposes no public per-application audio API. Core Audio models devices and streams, not application sessions, so per-application volume, mute, metering and session events have nothing to build on, and a process list would name applications this backend still could not control. Use the endpoint volume and mute on Audio, or the application's own volume control.";
 
 		/// <summary>
 		/// Always false: this is the honest "none" cell the design's support matrix records for macOS, and the

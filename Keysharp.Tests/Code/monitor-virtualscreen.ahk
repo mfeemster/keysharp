@@ -1,3 +1,6 @@
+#ErrorStdOut
+#Warn All, StdOut
+#Warn Experimental, Off
 #NoTrayIcon
 #Include <assert>
 #import KS { Monitor }
@@ -17,7 +20,7 @@ Assert(v.Y + v.Height >= p.Y + p.Height, A_LineNumber)
 ; display sits left of the primary.
 left := "", top := "", right := "", bottom := ""
 
-for m in Monitor.All
+for m in Monitor.Devices
 {
 	left := (left = "") ? m.X : Min(left, m.X)
 	top := (top = "") ? m.Y : Min(top, m.Y)

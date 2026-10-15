@@ -7,7 +7,6 @@
 
 count := MonitorGetCount()
 primary := MonitorGetPrimary()
-AssertEq(Monitor.Count, count, A_LineNumber)
 
 ; Index 0 and an omitted index both mean the primary; any other index outside the count is a ValueError, as in AHK.
 AssertEq(MonitorGet(0), primary, A_LineNumber)
@@ -16,14 +15,15 @@ Throws(() => MonitorGet(count + 1), A_LineNumber, ValueError)
 Throws(() => MonitorGet(-1), A_LineNumber, ValueError)
 Throws(() => MonitorGetWorkArea(count + 1), A_LineNumber, ValueError)
 Throws(() => MonitorGetName(count + 1), A_LineNumber, ValueError)
-Throws(() => Monitor(count + 1), A_LineNumber, ValueError)
+Throws(() => Monitor(), A_LineNumber)
 
-monitors := Monitor.All
+monitors := Monitor.Devices
 Assert(monitors is Array, A_LineNumber)
 AssertEq(monitors.Length, count, A_LineNumber)
 
 for i, m in monitors
 {
+	Assert(m is Monitor, A_LineNumber)
 	AssertEq(m.Index, i, A_LineNumber)
 	AssertEq(m.Name, MonitorGetName(i), A_LineNumber)
 	MonitorGet(i, &l, &t, &r, &b)
@@ -51,24 +51,21 @@ for i, m in monitors
 	else
 		Throws(() => m.Brightness, A_LineNumber, OSError)
 
-	; Whatever Id a monitor reports must find that same monitor again.
+	; Filtering by identity includes this snapshot even if the platform cannot distinguish identical panels.
 	if ((id := m.Id) != "")
 	{
-		found := Monitor.FromId(id)
-		Assert(found is Monitor, A_LineNumber)
-
-		if (found is Monitor)
-		{
-			AssertEq(found.Index, m.Index, A_LineNumber)
-			AssertEq(found.Name, m.Name, A_LineNumber)
-		}
+		matches := monitors.Filter((Candidate) => Candidate.Id == id)
+		Assert(matches is Array && matches.Length > 0, A_LineNumber)
+		AssertEq(matches.Filter((Candidate) => Candidate.Index == m.Index).Length, 1, A_LineNumber)
 	}
 }
 
-AssertEq(Monitor.FromId("no-such-monitor-id"), "", A_LineNumber)
-AssertEq(Monitor.FromId(""), "", A_LineNumber)
+AssertEq(monitors.Filter((Candidate) => Candidate.Id == "no-such-monitor-id").Length, 0, A_LineNumber)
 
 p := Monitor.Primary
+; Each read is a new snapshot, which compares by identity as in AutoHotkey; Id matches a display.
+again := Monitor.Primary
+Assert(p != again && p !== again && p.Id == again.Id, A_LineNumber)
 AssertEq(p.Index, primary, A_LineNumber)
 Assert(p.IsPrimary && p.Scale > 0, A_LineNumber)
 AssertEq(Monitor.FromPoint(p.X + p.Width // 2, p.Y + p.Height // 2).Index, primary, A_LineNumber)

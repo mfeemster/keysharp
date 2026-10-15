@@ -110,14 +110,14 @@ namespace Keysharp.Builtins
 
 					var deviceText = "";
 
-					if (device is not Ks.Audio.Device && !device.CoerceString(out deviceText))
+					if (device is not Ks.Audio && !device.CoerceString(out deviceText))
 						return DefaultObject;
 
-					if (device is Ks.Audio.Device || deviceText.Length > 0)
+					if (device is Ks.Audio || deviceText.Length > 0)
 					{
 						var kind = this.source == Engine.AudioCaptureSource.Microphone ? Engine.AudioDeviceKind.Input : Engine.AudioDeviceKind.Output;
 
-						if (!TryResolveDevice(device, kind, true, out var resolved, out var failure))
+						if (!TryResolveDevice(device, kind, out var resolved, out var failure))
 							return failure;
 
 						deviceSelector = resolved.Id;
@@ -139,7 +139,7 @@ namespace Keysharp.Builtins
 							return "";
 
 						var backend = service?.Backend;
-						return backend is { IsAvailable: true } && backend.TryGetDevice(id, out var d) ? Ks.Audio.Device.Wrap(service, d) : "";
+						return backend is { IsAvailable: true } && backend.TryGetDevice(id, out var d) ? Ks.Audio.Wrap(service, d) : "";
 					}
 				}
 

@@ -293,7 +293,7 @@ namespace Keysharp.Internals.Audio
 		public string UnsupportedReason(AudioCapability capability)
 		{
 			if (capability == AudioCapability.NativeObject)
-				return "PulseAudio exposes no per-device object; Clr.Wrap over an Audio.Device is available on Windows only.";
+				return "PulseAudio exposes no per-device object; Audio.ToClr() is available on Windows only.";
 
 			lock (sync)
 			{

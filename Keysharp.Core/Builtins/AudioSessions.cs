@@ -41,12 +41,12 @@ namespace Keysharp.Builtins
 				var deviceId = "";
 				string deviceText = null;
 
-				if (device is not Ks.Audio.Device && !device.CoerceString(out deviceText))
+				if (device is not Ks.Audio && !device.CoerceString(out deviceText))
 					return DefaultObject;
 
-				if (device is Ks.Audio.Device || deviceText.Length > 0)
+				if (device is Ks.Audio || deviceText.Length > 0)
 				{
-					if (!TryResolveDeviceAnyKind(device, out var resolved, out var failure))
+					if (!TryResolveDevice(device, null, out var resolved, out var failure))
 						return failure;
 
 					deviceId = resolved.Id;
@@ -90,12 +90,12 @@ namespace Keysharp.Builtins
 				var deviceId = "";
 				string deviceText = null;
 
-				if (device is not Ks.Audio.Device && !device.CoerceString(out deviceText))
+				if (device is not Ks.Audio && !device.CoerceString(out deviceText))
 					return DefaultObject;
 
-				if (device is Ks.Audio.Device || deviceText.Length > 0)
+				if (device is Ks.Audio || deviceText.Length > 0)
 				{
-					if (!TryResolveDeviceAnyKind(device, out var resolved, out var deviceFailure))
+					if (!TryResolveDevice(device, null, out var resolved, out var deviceFailure))
 						return deviceFailure;
 
 					deviceId = resolved.Id;
@@ -185,7 +185,7 @@ namespace Keysharp.Builtins
 				if (Functions.CheckedCallback(callback, 3) is not { } fo)
 					return DefaultObject;
 
-				if (!TryKind(kind, "All", true, out var deviceKind, out var all, out var failure))
+				if (!TryKind(kind, out var deviceKind, out var all, out var failure))
 					return failure;
 
 				if (!Service.Supports(Engine.AudioCapability.DeviceChange))
@@ -210,35 +210,17 @@ namespace Keysharp.Builtins
 				}
 
 				private protected override EventSubscriptionBase NewRun(ScriptEventScheduler owner)
-					=> new Engine.AudioEventRegistration(callback, owner, Script.TheScript.AudioEventManager, kind);
+				{
+					var script = Script.TheScript;
+					var service = script.AudioService;
+					return new Engine.AudioEventRegistration(callback, owner, script.AudioEventManager, kind,
+						(device, removed) => removed ? WrapMissing(service, device) : Wrap(service, device));
+				}
 			}
 
 			/// <summary>Every running <c>Audio.OnDeviceChange</c> hook, in start order (script: <c>Audio.Hooks</c>) —
 			/// a snapshot to iterate and drop. Device-change hooks only, never voices or meters.</summary>
 			public static object staticget_Hooks(object @this) => Script.TheScript.AudioEventManager.Hooks();
-
-			/// <summary>A device selector that accepts either kind, used where a session may live on either.</summary>
-			internal static bool TryResolveDeviceAnyKind(object selector, out Engine.AudioDeviceDescriptor device, out object failure)
-			{
-				if (TryResolveDevice(selector, Engine.AudioDeviceKind.Output, true, out device, out var outputFailure))
-				{
-					failure = null;
-					return true;
-				}
-
-				if (TryResolveDevice(selector, Engine.AudioDeviceKind.Input, true, out device, out var inputFailure))
-				{
-					failure = null;
-					return true;
-				}
-
-				// Reporting only the input attempt would tell a script that named an output that no INPUT device
-				// matched, which points at the wrong thing entirely.
-				failure = Errors.OSErrorOccurredWithMessage($"No audio device matches that selector. As an output: {Describe(outputFailure)} As an input: {Describe(inputFailure)}");
-				return false;
-			}
-
-			private static string Describe(object failure) => failure is Error e ? e.Message : "no match.";
 
 			/// <summary>
 			/// One application's audio on one device. The snapshot is generation-bound: it never rebinds to a
@@ -268,7 +250,7 @@ namespace Keysharp.Builtins
 					{
 						var backend = service?.Backend;
 						return backend is { IsAvailable: true } && backend.TryGetDevice(Snapshot.DeviceId, out var d)
-							   ? Ks.Audio.Device.Wrap(service, d)
+							   ? Ks.Audio.Wrap(service, d)
 							   : "";
 					}
 				}
@@ -448,15 +430,15 @@ namespace Keysharp.Builtins
 
 					string targetText = null;
 
-					if (target is not Ks.Audio.Device && !target.CoerceString(out targetText))
+					if (target is not Ks.Audio && !target.CoerceString(out targetText))
 						return DefaultObject;
 
-					if (target is Ks.Audio.Device || targetText.Length > 0)
+					if (target is Ks.Audio || targetText.Length > 0)
 					{
-						if (!TryResolveDeviceAnyKind(target, out var d, out var failure))
+						if (!TryResolveDevice(target, null, out var d, out var failure))
 							return failure;
 
-						this.target = Ks.Audio.Device.Wrap(service, d);
+						this.target = Ks.Audio.Wrap(service, d);
 						targetId = d.Id;
 						return DefaultObject;
 					}
@@ -465,7 +447,7 @@ namespace Keysharp.Builtins
 
 					if (backend is { IsAvailable: true } && backend.TryGetDefaultDevice(Engine.AudioDeviceKind.Output, out var def))
 					{
-						this.target = Ks.Audio.Device.Wrap(service, def);
+						this.target = Ks.Audio.Wrap(service, def);
 						targetId = def.Id;
 					}
 

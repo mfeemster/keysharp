@@ -4,33 +4,19 @@ namespace Keysharp.Builtins
 {
 	public partial class Ks
 	{
-		/// <summary>
-		/// The cross-platform audio surface: polyphonic playback from files or memory, device discovery and
-		/// endpoint control. Use as <c>#Import Ks { Audio }</c>.
-		/// <para>
-		/// <c>Audio</c> itself is the static front door and the container for its related types, reached as
-		/// <c>Audio.Clip</c>, <c>Audio.Device</c>, <c>Audio.Output</c> and <c>Audio.Playback</c>. The AHK-compatible
-		/// <c>Sound*</c> functions are unchanged and unrelated: they keep their fuzzy device selector and their
-		/// monophonic file playback, while this class works from exactly identified devices and can overlap sounds.
-		/// </para>
-		/// </summary>
+		/// <summary>Polyphonic playback, device snapshots and endpoint controls. Import with <c>#Import Ks { Audio }</c>.</summary>
 		[Experimental]
 		public partial class Audio : KeysharpObject
 		{
 			public Audio(params object[] args) : base(args) { }
 
-			/// <summary>There is one audio system per script, so this class wraps <em>the</em> thing and has no instances.</summary>
+			/// <summary>Audio endpoint instances are produced by <c>Audio.Devices</c> and audio resources.</summary>
 			public override object __New(params object[] args)
-				=> Errors.ErrorOccurred("Audio has no instances; use its members directly, e.g. Audio.Play(\"beep.wav\").");
+				=> Errors.ErrorOccurred("Audio instances are produced by Audio.Devices, not constructed.");
 
 			// ---- shared helpers ---------------------------------------------------------------
 
-			/// <summary>
-			/// The calling script's audio service. Correct for a static entry point, which by definition runs on
-			/// the script that called it, and it is the only place the current script is resolved. Every object
-			/// this class hands out captures the service it was created from instead, so a later Script swap
-			/// cannot make a Device or an Output start operating on a different script's backend.
-			/// </summary>
+			/// <summary>Static calls use the current script; returned objects retain their owning service.</summary>
 			internal static Engine.AudioService Service => Script.TheScript.AudioService;
 
 			/// <summary>Raises an OSError naming what the host is missing, which is the only honest answer for an
@@ -91,9 +77,8 @@ namespace Keysharp.Builtins
 				return true;
 			}
 
-			/// <summary>Resolves the one device selector every member accepts: a Device, an exact Id, an exact
-			/// unique Name, or blank for the current default.</summary>
-			internal static bool TryResolveDevice(object selector, Engine.AudioDeviceKind kind, bool allowBlank,
+			/// <summary>Accepts an Audio instance, exact Id, unique Name or blank for the default. A null kind accepts either direction.</summary>
+			internal static bool TryResolveDevice(object selector, Engine.AudioDeviceKind? kind,
 												  out Engine.AudioDeviceDescriptor device, out object failure)
 			{
 				device = default;
@@ -106,11 +91,11 @@ namespace Keysharp.Builtins
 					return false;
 				}
 
-				if (selector is Device d)
+				if (selector is Audio d)
 				{
-					if (d.Kind != KindName(kind))
+					if (kind.HasValue && d.Snapshot.Kind != kind.Value)
 					{
-						failure = Errors.ValueErrorOccurred($"That device is an {d.Kind} device, but an {KindName(kind)} device is required.");
+						failure = Errors.ValueErrorOccurred($"That device is an {d.Kind} device, but an {KindName(kind.Value)} device is required.");
 						return false;
 					}
 
@@ -131,15 +116,11 @@ namespace Keysharp.Builtins
 
 				if (text.Length == 0)
 				{
-					if (!allowBlank)
-					{
-						failure = Errors.ValueErrorOccurred("A device is required here.");
-						return false;
-					}
+					var defaultKind = kind ?? Engine.AudioDeviceKind.Output;
 
-					if (!backend.TryGetDefaultDevice(kind, out device))
+					if (!backend.TryGetDefaultDevice(defaultKind, out device))
 					{
-						failure = Errors.OSErrorOccurredWithMessage($"This host has no default {KindName(kind).ToLowerInvariant()} device.");
+						failure = Errors.OSErrorOccurredWithMessage($"This host has no default {KindName(defaultKind).ToLowerInvariant()} device.");
 						return false;
 					}
 
@@ -147,29 +128,49 @@ namespace Keysharp.Builtins
 				}
 
 				// An exact opaque id wins; ids are case-sensitive because they are backend identity.
-				if (backend.TryGetDevice(text, out device) && device.Kind == kind)
+				if (backend.TryGetDevice(text, out device) && (!kind.HasValue || device.Kind == kind.Value))
 					return true;
 
-				var matches = backend.EnumerateDevices(kind)
-							  .Where(x => string.Equals(x.Name, text, StringComparison.OrdinalIgnoreCase))
-							  .ToArray();
+				Engine.AudioDeviceDescriptor match = default;
+				List<string> matchingIds = null;
+				FindMatches(kind ?? Engine.AudioDeviceKind.Output);
 
-				if (matches.Length == 1)
+				if (!kind.HasValue)
+					FindMatches(Engine.AudioDeviceKind.Input);
+
+				if (match.Id != null && matchingIds == null)
 				{
-					device = matches[0];
+					device = match;
 					return true;
 				}
 
-				failure = matches.Length == 0
-						  ? Errors.OSErrorOccurredWithMessage($"No {KindName(kind).ToLowerInvariant()} device matches {text}.")
-						  : Errors.ValueErrorOccurred($"The name {text} matches {matches.Length} devices; use an exact Id instead: "
-													  + string.Join(", ", matches.Select(x => x.Id)));
+				failure = matchingIds == null
+						  ? Errors.OSErrorOccurredWithMessage($"No {(kind.HasValue ? KindName(kind.Value).ToLowerInvariant() : "audio")} device matches {text}.")
+						  : Errors.ValueErrorOccurred($"The name {text} matches {matchingIds.Count} devices; use an exact Id instead: "
+													  + string.Join(", ", matchingIds));
 				return false;
+
+				void FindMatches(Engine.AudioDeviceKind candidateKind)
+				{
+					foreach (var candidate in backend.EnumerateDevices(candidateKind))
+					{
+						if (!string.Equals(candidate.Name, text, StringComparison.OrdinalIgnoreCase))
+							continue;
+
+						if (match.Id == null)
+							match = candidate;
+						else
+						{
+							matchingIds ??= [match.Id];
+							matchingIds.Add(candidate.Id);
+						}
+					}
+				}
 			}
 
 			internal static string KindName(Engine.AudioDeviceKind kind) => kind == Engine.AudioDeviceKind.Input ? "Input" : "Output";
 
-			internal static bool TryKind(object value, string fallback, bool allowAll, out Engine.AudioDeviceKind kind, out bool all, out object failure)
+			internal static bool TryKind(object value, out Engine.AudioDeviceKind kind, out bool all, out object failure)
 			{
 				kind = Engine.AudioDeviceKind.Output;
 				all = false;
@@ -182,7 +183,7 @@ namespace Keysharp.Builtins
 				}
 
 				if (text.Length == 0)
-					text = fallback;
+					text = "All";
 
 				if (string.Equals(text, "Output", StringComparison.OrdinalIgnoreCase))
 					return true;
@@ -193,13 +194,13 @@ namespace Keysharp.Builtins
 					return true;
 				}
 
-				if (allowAll && string.Equals(text, "All", StringComparison.OrdinalIgnoreCase))
+				if (string.Equals(text, "All", StringComparison.OrdinalIgnoreCase))
 				{
 					all = true;
 					return true;
 				}
 
-				failure = Errors.ValueErrorOccurred($"Unknown Kind \"{text}\". Expected {(allowAll ? "Output, Input or All" : "Output or Input")}.");
+				failure = Errors.ValueErrorOccurred($"Unknown Kind \"{text}\". Expected Output, Input or All.");
 				return false;
 			}
 
@@ -446,10 +447,10 @@ namespace Keysharp.Builtins
 				string deviceId = "";
 				string deviceText = null;
 
-				if (device is not Device && !device.CoerceString(out deviceText))
+				if (device is not Audio && !device.CoerceString(out deviceText))
 					return DefaultObject;
 
-				if (device is Device selected)
+				if (device is Audio selected)
 				{
 					if (selected.Snapshot.Kind != Engine.AudioDeviceKind.Output)
 						return Errors.ValueErrorOccurred("Audio.Play requires an output device.", device);
@@ -458,7 +459,7 @@ namespace Keysharp.Builtins
 				}
 				else if (deviceText.Length > 0)
 				{
-					if (!TryResolveDevice(device, Engine.AudioDeviceKind.Output, true, out var resolved, out failure))
+					if (!TryResolveDevice(device, Engine.AudioDeviceKind.Output, out var resolved, out failure))
 						return failure;
 
 					deviceId = resolved.Id;
@@ -484,41 +485,23 @@ namespace Keysharp.Builtins
 
 			// ---- devices -------------------------------------------------------------------------
 
-			/// <summary>Every usable device of Kind "Output", "Input" or "All" (the default), matched without regard
-			/// to case. Outputs precede inputs for "All".</summary>
-			[Static]
-			public static object Devices(object @this, object kind = null)
+			/// <summary>A snapshot array of every usable audio device. Outputs precede inputs.</summary>
+			public static object staticget_Devices(object @this)
 			{
-				if (!TryKind(kind, "All", true, out var deviceKind, out var all, out var failure))
-					return failure;
-
 				var result = new Array();
-				var backend = Service.Backend;
+				var service = Service;
+				var backend = service.Backend;
 
 				if (backend == null || !backend.IsAvailable)
 					return result;
 
-				if (all || deviceKind == Engine.AudioDeviceKind.Output)
-					foreach (var d in backend.EnumerateDevices(Engine.AudioDeviceKind.Output))
-						_ = result.Push(Device.Wrap(Service, d));
+				foreach (var d in backend.EnumerateDevices(Engine.AudioDeviceKind.Output))
+					_ = result.Push(Wrap(service, d));
 
-				if (all || deviceKind == Engine.AudioDeviceKind.Input)
-					foreach (var d in backend.EnumerateDevices(Engine.AudioDeviceKind.Input))
-						_ = result.Push(Device.Wrap(Service, d));
+				foreach (var d in backend.EnumerateDevices(Engine.AudioDeviceKind.Input))
+					_ = result.Push(Wrap(service, d));
 
 				return result;
-			}
-
-			/// <summary>The default device of Kind "Output" (the default) or "Input", matched without regard to case,
-			/// or blank when the host has none.</summary>
-			[Static]
-			public static object DefaultDevice(object @this, object kind = null)
-			{
-				if (!TryKind(kind, "Output", false, out var deviceKind, out _, out var failure))
-					return failure;
-
-				var backend = Service.Backend;
-				return backend is { IsAvailable: true } && backend.TryGetDefaultDevice(deviceKind, out var d) ? Device.Wrap(Service, d) : "";
 			}
 		}
 	}

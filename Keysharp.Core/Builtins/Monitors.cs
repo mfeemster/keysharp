@@ -6,65 +6,41 @@ namespace Keysharp.Builtins
 	public partial class Ks
 	{
 		/// <summary>
-		/// One display, with the metadata and device control the AHK-compatible <c>MonitorGet*</c> functions do not
-		/// expose: model and manufacturer, a stable id that survives replugging, refresh rate, physical size,
-		/// orientation, connection kind, and brightness / raw DDC-CI control.
-		/// <para>
-		/// Use as: <c>#import "Ks" { Monitor }</c> then <c>m := Monitor()</c> (the primary monitor),
-		/// <c>Monitor(2)</c>, <c>Monitor.Primary</c>, <c>Monitor.FromWindow("A")</c>, or
-		/// <c>for m in Monitor.All</c>.</para>
-		/// <para>
-		/// A Monitor is a SNAPSHOT of the topology plus a live handle to the device. Identity and geometry are read
-		/// once, when the object is created, so a loop over <c>Monitor.All</c> sees one consistent picture instead of
-		/// re-enumerating (and possibly re-ordering) on every property; call <see cref="Refresh"/> to re-read them.
-		/// <c>Brightness</c> and the VCP methods always talk to the hardware at the moment they are called.</para>
-		/// <para>
-		/// Metadata beyond plain geometry (model, serial, refresh rate, ...) costs a native query, so it is resolved
-		/// on the first property that needs it and then cached on the object. Constructing a Monitor, or reading only
-		/// its geometry, never pays for it.</para>
-		/// <para>
-		/// The C# type is named <c>KeysharpMonitor</c> to avoid colliding with the AHK-compatible
-		/// <c>Keysharp.Builtins.Monitor</c> function holder and with <c>System.Threading.Monitor</c>; scripts see it
-		/// as <c>Monitor</c>.</para>
+		/// One display, with metadata and device controls beyond the AHK-compatible <c>MonitorGet*</c> functions.
+		/// Use <c>#Import Ks { Monitor }</c>, then <c>Monitor.Primary</c>, <c>Monitor.FromWindow("A")</c> or
+		/// <c>Monitor.Devices</c>.
+		/// <para>Each object contains a completed snapshot of the display's descriptive metadata and geometry.
+		/// <see cref="Refresh"/> updates that snapshot. Brightness and VCP controls query the hardware when called.</para>
+		/// <para>The C# type is named <c>KeysharpMonitor</c> to avoid colliding with the AHK-compatible
+		/// <c>Keysharp.Builtins.Monitor</c> function holder; scripts see it as <c>Monitor</c>.</para>
 		/// </summary>
 		[UserDeclaredName("Monitor"), Experimental]
 		public class KeysharpMonitor : KeysharpObject
 		{
 			private DisplayInfo display;
 			private long index;
-
-			// Resolved on first use, not at construction: see the class remarks.
 			private DisplayDetails details;
 
 			public KeysharpMonitor(params object[] args) : base(args) { }
 
-			/// <summary>
-			/// <c>Monitor(n)</c> selects a monitor by its 1-based index, the same numbering
-			/// <c>MonitorGet</c>/<c>MonitorGetCount</c> use. <c>Monitor()</c> selects the primary monitor. An index
-			/// outside the current monitor count throws a ValueError.
-			/// </summary>
-			public object __New(object n = null)
+			internal KeysharpMonitor(DisplayInfo display, long index, DisplayDetails details) : base(null)
 			{
-				var (info, monitorIndex) = Monitor.ResolveDisplay(n, Monitor.AllDisplays);
-				display = Snapshot(info);
-				index = monitorIndex;
-				return DefaultObject;
+				this.display = display;
+				this.index = index;
+				this.details = details;
 			}
+
+			/// <summary>Monitor instances are produced by <c>Monitor.Devices</c>, <c>Primary</c> and the spatial factories.</summary>
+			public override object __New(params object[] args)
+				=> Errors.ErrorOccurred("Monitor instances are produced by Monitor.Devices, Primary or a spatial factory, not constructed.");
 
 			// ---- static factories --------------------------------------------------------------------------
 
-			/// <summary>The number of monitors (script: <c>Monitor.Count</c>).</summary>
-			public static object staticget_Count(object @this) => (long)Monitor.AllDisplays.Length;
-
 			/// <summary>The primary monitor (script: <c>Monitor.Primary</c>).</summary>
-			public static object staticget_Primary(object @this) => Create(null);
+			public static object staticget_Primary(object @this) => From(Monitor.ResolveDisplay(null, Monitor.AllDisplays));
 
-			/// <summary>
-			/// Every monitor, in index order, built from ONE topology enumeration (script: <c>Monitor.All</c>).
-			/// This is the reason to prefer it over a loop of <c>Monitor(i)</c>: the latter re-enumerates per
-			/// monitor, and a hotplug midway through would shift the indices under the loop.
-			/// </summary>
-			public static object staticget_All(object @this)
+			/// <summary>A snapshot array of every monitor in index order, from one topology enumeration.</summary>
+			public static object staticget_Devices(object @this)
 			{
 				var displays = Monitor.AllDisplays;
 				var result = new Array(new List<object>(displays.Length));
@@ -122,35 +98,6 @@ namespace Keysharp.Builtins
 			}
 
 			/// <summary>
-			/// The monitor whose <see cref="Id"/> matches, or "" (falsy) when that monitor is not currently
-			/// attached — the lookup that makes a persisted <c>Id</c> useful, e.g. restoring a saved window layout
-			/// onto the display it was authored on. Matching is case-insensitive.
-			/// <para>This is the one factory that has to resolve metadata for every monitor, because an id is not
-			/// part of the topology snapshot; it costs one metadata query per attached display.</para>
-			/// </summary>
-			[Static]
-			public static object FromId(object @this, object id)
-			{
-				if (!id.CoerceString(out var wanted))
-					return DefaultObject;
-
-				if (wanted.Length == 0)
-					return "";
-
-				var displays = Monitor.AllDisplays;
-
-				for (var i = 0; i < displays.Length; i++)
-				{
-					var details = Platform.Screen.GetDisplayDetails(displays[i]);
-
-					if (details != null && string.Equals(details.StableId, wanted, StringComparison.OrdinalIgnoreCase))
-						return new KeysharpMonitor { display = Snapshot(displays[i]), index = i + 1L, details = details };
-				}
-
-				return "";
-			}
-
-			/// <summary>
 			/// Calls <paramref name="callback"/> whenever the display configuration changes, and returns a started
 			/// <see cref="MonitorHook"/> whose <c>Stop()</c> ends the subscription
 			/// (script: <c>hook := Monitor.OnChange(MyCallback)</c>).
@@ -158,11 +105,8 @@ namespace Keysharp.Builtins
 			/// attached monitors changed (one was plugged in or unplugged, or the machine docked) and
 			/// <c>"Settings"</c> when the same monitors are attached but something about them changed — resolution,
 			/// position, scale, or which one is primary.</para>
-			/// <para>A running hook does not keep the script running, as an AHK script's OnMessage for WM_DISPLAYCHANGE
-			/// does not; dropping the handle does not stop it. Because the monitor objects a script already holds are
-			/// snapshots, a handler that keeps one should call its <c>Refresh()</c> — which returns falsy if that monitor
-			/// is the one that was just unplugged — or just re-read <c>Monitor.All</c>, which is what the layout looks
-			/// like *now* rather than at event time.</para>
+			/// <para>A running hook does not keep the script running; dropping the handle does not stop it.
+			/// Read <c>Monitor.Devices</c> or call <c>Refresh()</c> on held snapshots to get the current layout.</para>
 			/// </summary>
 			[Static]
 			public static object OnChange(object @this, object callback)
@@ -192,33 +136,28 @@ namespace Keysharp.Builtins
 			public string Name => display.Name ?? "";
 
 			/// <summary>The panel's model name from EDID ("U2720Q"), or "" when the display reports none.</summary>
-			public object Model => Text(Details.Model);
+			public object Model => Text(details.Model);
 
 			/// <summary>The three-letter PNP manufacturer code from EDID ("DEL", "SAM"), or "".</summary>
-			public object Manufacturer => Text(Details.Manufacturer);
+			public object Manufacturer => Text(details.Manufacturer);
 
 			/// <summary>The panel's serial number, or "" when it reports none.</summary>
-			public object Serial => Text(Details.Serial);
+			public object Serial => Text(details.Serial);
 
 			/// <summary>
-			/// An identifier for this physical monitor that survives reboots and re-plugging, suitable for
-			/// persisting in a settings file (for example, to restore a window layout per monitor set); pass it
-			/// back to <c>Monitor.FromId</c> to find the display again. Derived from the panel's EDID identity.
-			/// Monitors that report no serial number — two identical panels from one batch often do not — are
-			/// disambiguated by connector on Windows and Linux, so for those the id is stable per PORT rather than
-			/// per panel; on macOS, where CoreGraphics exposes no port identity, such a panel falls back to a
-			/// per-MODEL id that two identical displays would share. "" when the display exposes no usable
-			/// identity at all.
+			/// Persistent display identifier, or "" when unavailable. Filter <c>Monitor.Devices</c> by this value to
+			/// restore a saved selection. EDID identifies the panel when it supplies a unique serial; otherwise
+			/// Windows and Linux distinguish connectors, while macOS uses a model identifier identical panels can share.
 			/// </summary>
-			public object Id => Text(Details.StableId);
+			public object Id => Text(details.StableId);
 
 			/// <summary>The graphics adapter driving this monitor: its marketing name on Windows, the DRM driver
 			/// name ("amdgpu", "i915") on Linux. "" where the platform exposes none.</summary>
-			public object Adapter => Text(Details.Adapter);
+			public object Adapter => Text(details.Adapter);
 
 			/// <summary>How the monitor is attached: "HDMI", "DisplayPort", "eDP", "DVI", "VGA", "Internal", or ""
 			/// when the platform does not say.</summary>
-			public object Connection => Details.Connection switch
+			public object Connection => details.Connection switch
 			{
 				"HDMI" => "HDMI",
 				"DisplayPort" => "DisplayPort",
@@ -234,7 +173,7 @@ namespace Keysharp.Builtins
 
 			/// <summary>Whether this is a built-in panel (a laptop or all-in-one screen) rather than an external
 			/// monitor.</summary>
-			public bool IsInternal => Details.IsInternal;
+			public bool IsInternal => details.IsInternal;
 
 			// ---- geometry ----------------------------------------------------------------------------------
 
@@ -262,8 +201,8 @@ namespace Keysharp.Builtins
 			public double Scale => ScaleFactor.Normalize(display.SizeScale);
 
 			/// <summary>
-			/// Dots per inch, computed from the panel's physical size. Expressed in the SAME units as <c>W</c> and
-			/// <c>H</c> — physical pixels on Windows and X11, logical units on Wayland and macOS — so on the latter
+			/// Dots per inch, computed from the panel's physical size. Expressed in the same units as <c>Width</c> and
+			/// <c>Height</c> — physical pixels on Windows and X11, logical units on Wayland and macOS — so on the latter
 			/// two it is a logical DPI rather than the panel's true pixel density. "" when the display does not
 			/// report a physical size.
 			/// </summary>
@@ -271,10 +210,10 @@ namespace Keysharp.Builtins
 			{
 				get
 				{
-					// On a 90/270-rotated display the panel's physical WIDTH spans the desktop rectangle's HEIGHT,
+					// On a 90/270-rotated display the panel's physical width spans the desktop rectangle's height,
 					// so pairing Bounds.Width with PhysicalWidthMm would report the density of the wrong axis.
-					var rotated = Details.Orientation is 90 or 270;
-					var mm = rotated ? Details.PhysicalHeightMm : Details.PhysicalWidthMm;
+					var rotated = details.Orientation is 90 or 270;
+					var mm = rotated ? details.PhysicalHeightMm : details.PhysicalWidthMm;
 
 					return mm > 0 && display.Bounds.Width > 0
 						? (object)Math.Round(display.Bounds.Width / (mm / 25.4), 1) : "";
@@ -282,49 +221,76 @@ namespace Keysharp.Builtins
 			}
 
 			/// <summary>The panel's physical width in millimetres, or "" when it reports none.</summary>
-			public object PhysicalWidth => Details.PhysicalWidthMm > 0 ? (object)(long)Details.PhysicalWidthMm : "";
+			public object PhysicalWidth => details.PhysicalWidthMm > 0 ? (object)(long)details.PhysicalWidthMm : "";
 
 			/// <summary>The panel's physical height in millimetres, or "" when it reports none.</summary>
-			public object PhysicalHeight => Details.PhysicalHeightMm > 0 ? (object)(long)Details.PhysicalHeightMm : "";
+			public object PhysicalHeight => details.PhysicalHeightMm > 0 ? (object)(long)details.PhysicalHeightMm : "";
 
 			/// <summary>Vertical refresh rate in Hz as a float — 59.94, not 59 — or "" when unknown.</summary>
-			public object RefreshRate => Details.RefreshRate > 0 ? (object)Math.Round(Details.RefreshRate, 3) : "";
+			public object RefreshRate => details.RefreshRate > 0 ? (object)Math.Round(details.RefreshRate, 3) : "";
 
 			/// <summary>Clockwise rotation of the desktop content in degrees: 0, 90, 180 or 270.</summary>
-			public long Orientation => Details.Orientation;
+			public long Orientation => details.Orientation;
 
 			/// <summary>
-			/// Re-reads this monitor's topology and metadata in place, then returns the same object so it can be
-			/// chained. The monitor is matched by name first so it is still tracked after the display order changes,
-			/// falling back to the index.
-			/// <para>Returns "" (falsy) instead, leaving this object's last-known values untouched, when the monitor
-			/// is no longer attached — which is exactly what a <c>Monitor.OnChange</c> handler sees after the display
-			/// it was holding is unplugged, so the recommended pattern there must not be an exception. Use
-			/// <c>if !m.Refresh()</c> to branch on it; <see cref="FromId"/> reports a missing monitor the same way.</para>
+			/// Updates this snapshot and returns the same object. A known Id must still match; otherwise name and
+			/// index select the display. Returns "" without changing the snapshot if the display is unavailable or
+			/// its identity cannot be verified. A later call can recover after a transient metadata failure.
 			/// </summary>
-			public object Refresh()
+			public object Refresh() => Refresh(Platform.Screen);
+
+			internal object Refresh(IScreen screen)
 			{
-				var displays = Monitor.AllDisplays;
+				var displays = screen.GetDisplays().ToArray();
 				var matched = MatchIndex(displays, display.Name, index);
 
-				if (matched == 0)
+				if (matched == 0 && string.IsNullOrEmpty(details.StableId))
 					return "";
 
-				display = Snapshot(displays[(int)matched - 1]);
+				var updatedDetails = matched != 0
+					? screen.GetDisplayDetails(displays[(int)matched - 1]) ?? DisplayDetails.Empty
+					: DisplayDetails.Empty;
+
+				if (!string.IsNullOrEmpty(details.StableId) && !string.Equals(details.StableId, updatedDetails.StableId, StringComparison.Ordinal))
+				{
+					var preferred = matched;
+					matched = 0;
+
+					for (var i = 0; i < displays.Length; i++)
+					{
+						if (i + 1L == preferred)
+							continue;
+
+						var candidate = screen.GetDisplayDetails(displays[i]) ?? DisplayDetails.Empty;
+
+						if (string.Equals(details.StableId, candidate.StableId, StringComparison.Ordinal))
+						{
+							matched = i + 1L;
+							updatedDetails = candidate;
+							break;
+						}
+					}
+
+					if (matched == 0)
+						return "";
+				}
+
+				var updatedDisplay = displays[(int)matched - 1];
+				display = updatedDisplay with { WorkArea = screen.GetWorkArea(updatedDisplay) };
 				index = matched;
-				details = null;                                   // re-resolved on the next property that needs it
+				details = updatedDetails;
 				return this;
 			}
 
 			/// <summary>
-			/// Where a monitor identified by <paramref name="name"/> (and previously at <paramref name="index"/>)
-			/// sits in a fresh snapshot, as a 1-based index, or 0 when it is no longer attached. Name wins so the
-			/// monitor stays tracked when the display order changes; the index is the fallback for platforms that
-			/// report no usable name (Xinerama, a toolkit fallback) or report the same name twice, and is only
-			/// trusted while it is still in range.
+			/// Selects a 1-based candidate by name, retaining the index among duplicate names. Falls back to a valid
+			/// index when the platform supplies no matching name; returns 0 when neither selects a display.
 			/// </summary>
 			internal static long MatchIndex(DisplayInfo[] displays, string name, long index)
 			{
+				if (index >= 1 && index <= displays.Length && displays[(int)index - 1].Name == name)
+					return index;
+
 				if (!string.IsNullOrEmpty(name))
 					for (var i = 0; i < displays.Length; i++)
 						if (displays[i].Name == name)
@@ -344,7 +310,7 @@ namespace Keysharp.Builtins
 			/// </summary>
 			public object Brightness
 			{
-				get => Platform.MonitorControl.TryGetBrightness(display, Details, out var percent)
+				get => Platform.MonitorControl.TryGetBrightness(display, details, out var percent)
 					? (object)(long)percent
 					: Errors.OSErrorOccurredWithMessage(BrightnessError("read"));
 				set
@@ -360,14 +326,14 @@ namespace Keysharp.Builtins
 
 					var percent = (int)requested;
 
-					if (!Platform.MonitorControl.TrySetBrightness(display, Details, percent))
+					if (!Platform.MonitorControl.TrySetBrightness(display, details, percent))
 						_ = Errors.OSErrorOccurredWithMessage(BrightnessError("set"));
 				}
 			}
 
 			/// <summary>Whether <see cref="Brightness"/> works for this monitor. This is a real probe of the device,
 			/// not a platform guess, so it costs one brightness read.</summary>
-			public bool IsBrightnessSupported => Platform.MonitorControl.TryGetBrightness(display, Details, out _);
+			public bool IsBrightnessSupported => Platform.MonitorControl.TryGetBrightness(display, details, out _);
 
 			/// <summary>
 			/// Reads one DDC/CI VCP feature, returning <c>{Current, Maximum}</c>. VCP codes are defined by the MCCS
@@ -385,7 +351,7 @@ namespace Keysharp.Builtins
 
 				var feature = (byte)c;
 
-				if (!Platform.MonitorControl.TryGetVcp(display, Details, feature, out var current, out var max))
+				if (!Platform.MonitorControl.TryGetVcp(display, details, feature, out var current, out var max))
 					return Errors.OSErrorOccurredWithMessage(VcpError($"read VCP feature 0x{feature:X2} from"));
 
 				var result = new KeysharpObject();
@@ -419,7 +385,7 @@ namespace Keysharp.Builtins
 
 				var feature = (byte)c;
 
-				if (!Platform.MonitorControl.TrySetVcp(display, Details, feature, (int)v))
+				if (!Platform.MonitorControl.TrySetVcp(display, details, feature, (int)v))
 					return Errors.OSErrorOccurredWithMessage(VcpError($"write VCP feature 0x{feature:X2} to"));
 
 				return DefaultObject;
@@ -427,19 +393,13 @@ namespace Keysharp.Builtins
 
 			// ---- helpers -----------------------------------------------------------------------------------
 
-			private DisplayDetails Details => details ??= Platform.Screen.GetDisplayDetails(display)
-				?? DisplayDetails.Empty;
-
-			private static KeysharpMonitor Create(object n)
-			{
-				var monitor = new KeysharpMonitor();
-				_ = monitor.__New(n);
-				return monitor;
-			}
-
-			/// <summary>Captures the selected display and its current work area.</summary>
+			/// <summary>Captures the selected display, work area and descriptive metadata.</summary>
 			private static KeysharpMonitor From((DisplayInfo Display, long MonitorIndex) resolved)
-				=> new () { display = Snapshot(resolved.Display), index = resolved.MonitorIndex };
+			{
+				var display = Snapshot(resolved.Display);
+				var details = Platform.Screen.GetDisplayDetails(display) ?? DisplayDetails.Empty;
+				return new (display, resolved.MonitorIndex, details);
+			}
 
 			private static DisplayInfo Snapshot(DisplayInfo info)
 				=> info with { WorkArea = Platform.Screen.GetWorkArea(info) };
@@ -451,11 +411,11 @@ namespace Keysharp.Builtins
 
 			private string BrightnessError(string verb)
 				=> $"Could not {verb} the brightness of monitor {index} ({Name}): "
-					+ Platform.MonitorControl.UnsupportedReason(display, Details);
+					+ Platform.MonitorControl.UnsupportedReason(display, details);
 
 			private string VcpError(string verb)
 				=> $"Could not {verb} monitor {index} ({Name}): "
-					+ Platform.MonitorControl.UnsupportedReason(display, Details);
+					+ Platform.MonitorControl.UnsupportedReason(display, details);
 		}
 
 		/// <summary>

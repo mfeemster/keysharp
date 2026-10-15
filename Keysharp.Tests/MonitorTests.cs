@@ -84,13 +84,7 @@ public partial class MonitorTests : TestRunner
 		Assert.IsTrue(TestScript("monitor-virtualscreen", true));
 	}
 
-	/// <summary>
-	/// Refresh() must not throw when the monitor it is holding has been unplugged: that is exactly the state a
-	/// Monitor.OnChange "Topology" handler is in, and OnChange's own documentation tells such a handler to call
-	/// Refresh(). It reports the loss as a falsy return, the same way FromId reports a monitor that is not
-	/// attached. The matching rule itself is pure logic over a snapshot, so it is tested directly.
-	/// </summary>
-	[Test, Category("Monitor")]
+	[Test, Category("Monitor"), Category("Internal"), Category("Curated")]
 	public void RefreshMatching()
 	{
 		DisplayInfo[] two =
@@ -98,20 +92,108 @@ public partial class MonitorTests : TestRunner
 			new("DP-1", new ScreenRect(0, 0, 2560, 1440), new ScreenRect(0, 0, 2560, 1440), 1.0, true),
 			new("HDMI-1", new ScreenRect(2560, 0, 1920, 1080), new ScreenRect(2560, 0, 1920, 1080), 1.0, false),
 		];
-		// Name wins over the remembered index, so a monitor stays tracked when the display order changes.
 		Assert.That(Builtins.Ks.KeysharpMonitor.MatchIndex(two, "HDMI-1", 1L), Is.EqualTo(2L));
 		Assert.That(Builtins.Ks.KeysharpMonitor.MatchIndex(two, "DP-1", 2L), Is.EqualTo(1L));
 
-		// No usable name (Xinerama, a toolkit fallback): the index is the fallback while it is in range.
 		Assert.That(Builtins.Ks.KeysharpMonitor.MatchIndex(two, "", 2L), Is.EqualTo(2L));
 		Assert.That(Builtins.Ks.KeysharpMonitor.MatchIndex(two, "", 3L), Is.Zero);
 
-		// The monitor was unplugged: gone, and reported as gone rather than as some other monitor.
 		DisplayInfo[] one = [two[0]];
 		Assert.That(Builtins.Ks.KeysharpMonitor.MatchIndex(one, "HDMI-1", 2L), Is.Zero);
 		Assert.That(Builtins.Ks.KeysharpMonitor.MatchIndex([], "DP-1", 1L), Is.Zero);
-		// ...but a rename that keeps the position still resolves through the index rather than dropping it.
 		Assert.That(Builtins.Ks.KeysharpMonitor.MatchIndex(one, "HDMI-1", 1L), Is.EqualTo(1L));
+
+		DisplayInfo[] duplicates = [two[0], two[1] with { Name = "DP-1" }];
+		Assert.That(Builtins.Ks.KeysharpMonitor.MatchIndex(duplicates, "DP-1", 2L), Is.EqualTo(2L));
+	}
+
+	[Test, Category("Monitor"), Category("Internal"), Category("Curated")]
+	public void RefreshIdentity()
+	{
+		var first = Display("Display", 0, 0, 1920, 1080, nativeId: 1);
+		var second = Display("Display", 1920, 0, 2560, 1440, primary: false, nativeId: 2);
+		var firstDetails = new DisplayDetails { StableId = "A", Model = "First" };
+		var secondDetails = new DisplayDetails { StableId = "B", Model = "Second" };
+		var monitor = new Builtins.Ks.KeysharpMonitor(second, 2, secondDetails);
+		var screen = new MonitorScreen();
+
+		screen.Set((first, firstDetails), (second, secondDetails));
+		Assert.That(monitor.Refresh(screen), Is.SameAs(monitor));
+		Assert.That(monitor.Index, Is.EqualTo(2));
+		Assert.That(screen.DetailReads, Is.EqualTo(1));
+		Assert.That(screen.WorkAreaReads, Is.EqualTo(1));
+
+		// Names and indices can both change while the physical monitor stays attached.
+		screen.Set((second with { Name = "Renamed" }, secondDetails), (first, firstDetails));
+		Assert.That(monitor.Refresh(screen), Is.SameAs(monitor));
+		Assert.That(monitor.Index, Is.EqualTo(1));
+		Assert.That(monitor.Name, Is.EqualTo("Renamed"));
+		Assert.That(screen.DetailReads, Is.EqualTo(2));
+		Assert.That(screen.WorkAreaReads, Is.EqualTo(1));
+
+		var replacement = Display("Renamed", 0, 0, 1280, 720, nativeId: 3);
+
+		foreach (var unavailable in new[] { new DisplayDetails { StableId = "C" }, DisplayDetails.Empty })
+		{
+			screen.Set((replacement, unavailable));
+			Assert.That(monitor.Refresh(screen), Is.EqualTo(""));
+			Assert.That(monitor.Id, Is.EqualTo("B"));
+			Assert.That(monitor.Model, Is.EqualTo("Second"));
+			Assert.That(monitor.Width, Is.EqualTo(2560));
+			Assert.That(monitor.Index, Is.EqualTo(1));
+			Assert.That(screen.DetailReads, Is.EqualTo(1));
+			Assert.That(screen.WorkAreaReads, Is.Zero);
+		}
+
+		screen.Set((replacement, secondDetails));
+		Assert.That(monitor.Refresh(screen), Is.SameAs(monitor));
+		Assert.That(monitor.Width, Is.EqualTo(1280));
+		Assert.That(screen.DetailReads, Is.EqualTo(1));
+
+		var displaced = new Builtins.Ks.KeysharpMonitor(second, 2, secondDetails);
+		screen.Set((replacement, secondDetails));
+		Assert.That(displaced.Refresh(screen), Is.SameAs(displaced));
+		Assert.That(displaced.Index, Is.EqualTo(1));
+		Assert.That(screen.DetailReads, Is.EqualTo(1));
+
+		var unidentified = new Builtins.Ks.KeysharpMonitor(replacement, 1, DisplayDetails.Empty);
+		Assert.That(unidentified.Refresh(screen), Is.SameAs(unidentified));
+		Assert.That(unidentified.Id, Is.EqualTo("B"));
+
+		screen.Set();
+		Assert.That(monitor.Refresh(screen), Is.EqualTo(""));
+		Assert.That(monitor.Id, Is.EqualTo("B"));
+		Assert.That(monitor.Width, Is.EqualTo(1280));
+		Assert.That(screen.DetailReads, Is.Zero);
+	}
+
+	private sealed class MonitorScreen : IScreen
+	{
+		private (DisplayInfo Display, DisplayDetails Details)[] devices = [];
+		internal int DetailReads { get; private set; }
+		internal int WorkAreaReads { get; private set; }
+
+		internal void Set(params (DisplayInfo Display, DisplayDetails Details)[] devices)
+		{
+			this.devices = devices;
+			DetailReads = WorkAreaReads = 0;
+		}
+
+		public IReadOnlyList<DisplayInfo> GetDisplays() => devices.Select(device => device.Display).ToArray();
+		public DisplayDetails GetDisplayDetails(DisplayInfo display)
+		{
+			DetailReads++;
+			return devices.First(device => device.Display == display).Details;
+		}
+		public ScreenRect GetWorkArea(DisplayInfo display)
+		{
+			WorkAreaReads++;
+			return display.WorkArea;
+		}
+		public ScreenRect GetVirtualScreenBounds() => throw new NotSupportedException();
+		public bool TryCaptureRegion(ScreenRect bounds, out Bitmap bmp) => throw new NotSupportedException();
+		public bool TryCaptureWindow(nint handle, bool includeDecoration, out Bitmap bmp, out PixelScale pixelScale)
+			=> throw new NotSupportedException();
 	}
 
 	[Test, Category("Monitor"), Category("Internal"), Category("Curated")]

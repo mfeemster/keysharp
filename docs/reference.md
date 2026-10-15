@@ -838,13 +838,13 @@ Controlling another application needs **Automation** permission, granted per tar
 	+ `A_WinActivateForce` returns whether the forceful method of activating a window is in effect because `#WinActivateForce` was specified.
 	+ `A_Timers` returns a `Map` from each timer's callback, the object passed to `SetTimer`, to its enabled state.
 * New classes:
-	+ `Audio`: Cross-platform audio — polyphonic playback, device discovery and endpoint control. Available from the `KS` module: `#Import Ks { Audio }`. It is independent of the AutoHotkey `Sound*` functions, which are unchanged and keep their own fuzzy device selector and monophonic file playback.
+	+ `Audio`: Cross-platform polyphonic playback, device discovery and endpoint control. Import with `#Import Ks { Audio }`. The AutoHotkey `Sound*` functions retain their fuzzy device selector and monophonic playback.
 		+ `Audio.Clip` is an immutable decoded sound, from `Audio.Load(path)` or `Audio.FromPcm(buffer, rate, channels, format)`. `FromPcm` copies the bytes synchronously, so the caller may reuse its `Buffer` immediately. Only WAV is decoded without a platform codec; `Audio.IsFormatSupported()` reports what this host can actually decode, and every other container is refused by name rather than played as noise.
 		+ `Audio.Output` is an explicit mixer and one native stream. `Open()`, `Prepare(clip)` and then `Play(clip)` — after preparation a play performs no decode, resample or blocking call, so it is safe to call from a frame timer. `VoicePolicy` is `"Oldest"`, `"RoundRobin"` or `"Reject"`, and `StopAll()` silences every voice immediately. One script may hold 16 outputs open, because dropping an output does not close it.
 		+ `Audio.Play(source)` is the one-line convenience: it plays a clip or a path through a hidden per-script output and raises rather than returning blank, since a convenience call has nowhere to report a bounded refusal.
 		+ Every admitted play returns a stable `Audio.Playback` with `Volume`, `Pan`, `Loop`, `Mute`, `PositionMilliseconds`, `Peak`, `Pause`, `Resume` and `Stop`. Its identity never rebinds, so a handle kept after its voice was stolen controls nothing rather than controlling a stranger. A bounded refusal from `Audio.Output.Play` is a blank return; callers who do not need control ignore the result.
-		+ `Audio.Devices()` and `Audio.DefaultDevice()` return `Audio.Device` snapshots carrying `Id`, `Name`, `Kind`, `Status`, `IsDefault`, `IsRunning`, `Volume`, `Mute`, `Refresh()` and `ToClr()`. The `Id` is opaque, exact and unique across outputs and inputs, and is the only durable selector: prefixes, enumeration indexes and `Name:Index` are deliberately not accepted.
-		+ `IsRunning` answers whether any application currently holds a live stream on a device, which is what makes "is my microphone being recorded" expressible. It always returns a Boolean. `Status` distinguishes `"Running"`, `"Idle"`, `"Unknown"` and `"Missing"`; `IsRunning` is true only for `"Running"`. An unavailable backend does not establish removal. Running is not the same as audible.
+		+ `Audio.Devices` returns an Array of `Audio` endpoint snapshots with completed descriptive metadata and live volume, mute and status controls. Filter by `Kind` (`"Output"` or `"Input"`) and `IsDefault`. Device selectors accept an `Audio` instance, an exact `Id`, a unique exact `Name`, or blank for the default; names are case-insensitive, IDs are case-sensitive.
+		+ `Status` is `"Running"`, `"Idle"`, `"Unknown"` or `"Missing"`; `IsRunning` is true only for a live stream, including a silent one. An unavailable backend does not establish removal. `Refresh()` updates the endpoint snapshot in place.
 		+ `Audio.OnDeviceChange(callback, kind)` fires `callback(hook, change, device)` for `"Added"`, `"Removed"`, `"Changed"` and `"DefaultChanged"`, returning a started `Audio.DeviceHook`, an `EventHook` that, like an `OnMessage` for `WM_DEVICECHANGE`, does not keep the script running; `Audio.Hooks` lists the running ones. `Audio.Sessions()` and `Audio.SetApplicationVolume()` control other applications where the platform has a per-application model; `Audio.Meter` gives native level observation an explicit lifetime; `Audio.Recorder` captures a microphone or system output to a WAV file or to memory.
 		+ Levels are 0 through 100 and pan is -100 through 100, matching `SoundSetVolume` rather than the 0..1 the platform APIs use. Out-of-range input raises a `ValueError` rather than being clamped. An absent value reads as `""`, and an unsupported capability raises an `OSError` naming what the host is missing.
 		+ Platform support: Windows uses WASAPI and is verified on hardware. The Linux libpulse backend compiles and has been exercised against a real PulseAudio server for enumeration, playback and recording, though its volume, session and meter paths have not; the macOS AudioQueue backend compiles against the audio contracts but has never been run. macOS has no public per-application audio model, so `Audio.IsSessionControlSupported` is false there.
@@ -889,7 +889,7 @@ Controlling another application needs **Automation** permission, granted per tar
 		+ `Clr.GetNamespaceName(ManagedNamespace)` returns the full intenal namespace name of the namespace wrapped by `ManagedNamespace`.
 		+ `Clr.GetTypeName(ManagedType)` returns the full internal type name of the type wrapped by `ManagedType`.
 		+ `Clr.Wrap(Value)` returns any value as an ordinary `Ks.Clr` object, so its own full CLR surface is reachable late-bound. This is how a `Map` and an `Array` reach theirs — a `Map` is a CLR `IDictionary<object, object>` and an `Array` an `IList`, so a CLR API declaring one accepts them directly. The result is always a view over the value itself, and wrapping something already wrapped is the identity.
-		+ To reach the .NET object a built-in is a facade over, call that type's own `ToClr()`. It exists only on the types which have one, so its presence is the signal that there is a native object behind the class: `Ks.Task` (the underlying CLR task), `Gui`, `Gui.Control` and `Menu` (the backing toolkit object, whose concrete type is platform-dependent and unspecified), `Ks.Http` and `Ks.Http.Response` (the `HttpClient` and `HttpResponseMessage`), `Ks.Image` (the live underlying bitmap, with pending work materialized; stale after the next transform or `Dispose`), and `Ks.Audio.Device` and `Ks.Audio.Session` (the platform's own object, or an `OSError` where the platform has none). `ToClr()` is a deliberate escape hatch: work done through the result bypasses the owning class's own state and event wiring.
+		+ To reach the .NET object a built-in is a facade over, call that type's own `ToClr()`. It exists only on the types which have one, so its presence is the signal that there is a native object behind the class: `Ks.Task` (the underlying CLR task), `Gui`, `Gui.Control` and `Menu` (the backing toolkit object, whose concrete type is platform-dependent and unspecified), `Ks.Http` and `Ks.Http.Response` (the `HttpClient` and `HttpResponseMessage`), `Ks.Image` (the live underlying bitmap, with pending work materialized; stale after the next transform or `Dispose`), and `Ks.Audio` and `Ks.Audio.Session` (the platform's own object, or an `OSError` where the platform has none). `ToClr()` is a deliberate escape hatch: work done through the result bypasses the owning class's own state and event wiring.
 		+ Inline C# (`#CSharp`) holding a `ManagedInstance` reads the raw wrapped object from its `Native` property. Script member access on a wrapper always dispatches to the wrapped object, so `Native` is unreachable from script.
 	+ `Font`: A font as a value object, carrying the same information `Gui.SetFont(Options, FontName)` takes but addressable one property at a time. Available from the `KS` module: `#Import "Ks" { Font }`.
 		+ `Font(Options := "", Name := "")` takes SetFont's two arguments in SetFont's order, so an existing call converts by moving its arguments across.
@@ -1397,61 +1397,18 @@ Controlling another application needs **Automation** permission, granted per tar
 			+ A stopped hook can be restarted with the same callback and filter. Its run belongs to the thread that called `Start()` and normally ends with that thread. `InputHook` retains its AutoHotkey callback-thread and lifetime rules.
 			+ `EndReason` is `"Stopped"`, `"Exit"` or `"Failed"`; `InputHook` also retains its AutoHotkey end reasons. Stopping drops callbacks queued for that run, except `InputHook.OnEnd`.
 			+ `WinEvent`, `ClipboardHook` and `InputHook` keep the script persistent. `MonitorHook`, `Audio.DeviceHook` and `Clr.EventSubscription` do not. Each host class exposes a `Hooks` snapshot of its running hooks.
-		+ `Monitor`: One display, carrying the metadata and device control the AHK-compatible `MonitorGet*` functions do not expose — model, manufacturer, serial, a stable id, refresh rate, physical size, orientation, connection kind, and brightness / raw DDC-CI control.
-			+ It is part of the `KS` module; import it with `#import KS { Monitor }`. It does not replace the AHK `MonitorGet*` functions, which are unchanged apart from now raising a `ValueError` on an out-of-range monitor index instead of silently substituting the primary (matching AutoHotkey v2). `Image.FromMonitor()` inherits that same validation.
-			+ It is where the Keysharp-specific screen facts live: the primary monitor's work area is `Monitor.Primary.WorkArea`, its scale is `Monitor.Primary.Scale`, and the whole desktop is `Monitor.VirtualScreen` — each available for *any* monitor, not just the primary. The AHK-standard `A_ScreenWidth`, `A_ScreenHeight` and `A_ScreenDPI` remain global. Note `A_ScreenDPI` is **not** `Monitor.Dpi`: the former is the system's logical text-size DPI (normally 96), the latter is computed from the panel's physical size. Hoist the rect when reading more than one field — `wa := Monitor.Primary.WorkArea` once, then `wa.Width`/`wa.Height` — since each read re-enumerates the topology.
-			+ A `Monitor` is a **snapshot** of the topology plus a **live** handle to the device: identity and geometry are read once when the object is created, so a loop over `Monitor.All` sees one consistent picture, while `Brightness` and the VCP methods always talk to the hardware at the moment they are called. `Refresh()` re-reads the snapshot in place and returns the same object, or `""` when that monitor is no longer attached.
-			+ Metadata beyond plain geometry costs a native query, so it is resolved on the first property that needs it and then cached on the object; constructing a `Monitor`, or reading only its geometry, never pays for it. Any field the display does not report is `""` rather than a fabricated value.
-			+ `Id` is derived from the panel's EDID identity and is the value to persist (for example, to restore a window layout per monitor set); pass it back to `Monitor.FromId()`. Panels that report no serial are disambiguated by connector on Windows and Linux, making the id stable per *port* rather than per panel; on macOS such a panel falls back to a per-*model* id that two identical displays would share.
-				```
-				class Monitor
-				{
-					static Call([n]) => Monitor    ; By 1-based index, matching MonitorGet's numbering; omitted = the primary monitor.
-					static Count => Integer        ; The number of monitors.
-					static Primary => Monitor
-					static All => Array            ; Every monitor, in index order, from ONE topology enumeration.
-					static VirtualScreen => Object ; The union of every monitor: { X, Y, Width, Height }. The origin is negative when a display sits left of/above the primary.
-					static FromPoint(x, y) => Monitor    ; The monitor containing a native screen point, or the nearest one when it falls in a gap.
-					static FromMouse() => Monitor
-					static FromWindow([winTitle, winText, excludeTitle, excludeText]) => Monitor  ; The monitor a window overlaps most.
-					static FromId(id) => Monitor   ; The monitor whose Id matches, or "" when it is not attached.
-					static OnChange(callback) => MonitorHook  ; Display-configuration changes; see below.
-					static Hooks => Array          ; Every running OnChange hook, in start order. A snapshot.
-
-					; Identity
-					Index => Integer             ; 1-based, matching MonitorGet's numbering.
-					Name => String               ; The OS name: "\\.\DISPLAY1", "DP-1", or the localized name on macOS.
-					Model, Manufacturer, Serial  ; EDID panel identity, or "".
-					Id => String                 ; Stable across reboot and re-plug; the value to persist.
-					Adapter => String            ; The graphics adapter driving this monitor, or "".
-					Connection => String         ; "HDMI" | "DisplayPort" | "eDP" | "DVI" | "VGA" | "Internal" | "".
-					IsPrimary => Boolean
-					IsInternal => Boolean        ; A built-in laptop/all-in-one panel rather than an external monitor.
-
-					; Geometry, in the same native screen coordinates MonitorGet reports
-					X, Y, Width, Height => Integer
-					Bounds, WorkArea => Object   ; { X, Y, Width, Height }
-					Scale => Float               ; Authored-size scale; 1.0 is 100%. Scales dimensions, never absolute positions.
-					Dpi                          ; Derived from the physical size, in the same units as W/H; "" if unknown.
-					PhysicalWidth, PhysicalHeight ; Millimetres, or "".
-					RefreshRate => Float         ; Hz — 59.94, not 59 — or "".
-					Orientation => Integer       ; Clockwise rotation of the desktop content: 0, 90, 180 or 270.
-					Refresh() => Monitor         ; Re-read in place; returns this object, or "" if the monitor is gone.
-
-					; Device control — each is a real hardware transaction, deliberately not cached
-					Brightness => Integer        ; Get/set, 0-100. OSError naming the reason where unsupported.
-					IsBrightnessSupported => Boolean ; A real probe of the device, so it costs one brightness read.
-					GetVCP(Code) => Object       ; Raw DDC/CI (MCCS) feature => { Current, Maximum }. Code 0-255.
-					SetVCP(Code, Value)          ; Code 0-255, Value 0-65535. See the warning below.
-				}
-				```
-			+ `Monitor.OnChange(Callback)` returns a started `MonitorHook`, an `EventHook` that does not keep the script running. The callback receives `(Hook, Change)`, where `Change` is `"Topology"` when the set of attached monitors changed (plug/unplug, dock/undock) and `"Settings"` when the same monitors are attached but their resolution, position, scale or primary assignment changed; `Monitor.Count` gives the number attached after the change. Both kinds are reported on every platform, and a notification that changes nothing is dropped. A handler holding a `Monitor` should call its `Refresh()` — which returns falsy if that is the display that was just unplugged — or simply re-read `Monitor.All`.
-			+ **`SetVCP()` is a foot-gun.** Writing an input-source or power code will switch the monitor away from this computer, and a few displays react badly to codes they document but mishandle; verify a code against the monitor's own MCCS documentation first. The feature is read back before it is written, so a code the monitor does not implement raises an `OSError` rather than reporting a success the display silently ignored.
-			+ Platform support for `Monitor`:
-				+ Windows: Metadata from the DisplayConfig API plus the EDID Windows caches under the monitor's registry key; brightness through WMI for the built-in panel and DDC/CI (dxva2) for external monitors.
-				+ Linux: EDID from `/sys/class/drm/*/edid`, identical under X11 and Wayland; refresh rate and rotation from XRandR or `wl_output`. Brightness uses the kernel backlight class for the built-in panel (a direct sysfs write where permitted, else logind's `SetBrightness`) and DDC/CI over `/dev/i2c-*` for external monitors, which needs `i2c-dev` loaded and access to the bus — the packaged udev rule grants it, and the error message names the fix when it is missing.
-				+ macOS: CoreGraphics answers identity, physical size, rotation and refresh rate directly, so no EDID parsing is involved; `Model` and `Adapter` are always `""` because CoreGraphics exposes no product-name or adapter API, and `Connection` only distinguishes the built-in panel. Brightness uses DisplayServices for the built-in panel and Apple's own displays, and DDC/CI for every other external monitor.
-				+ Display-change events come from `SystemEvents.DisplaySettingsChanged` on Windows, GDK's monitor signals on Linux (covering X11 and Wayland alike), and `CGDisplayRegisterReconfigurationCallback` on macOS.
+		+ `Monitor`: Display snapshots, identity, brightness and DDC/CI control. Import with `#Import Ks { Monitor }`; see the [Monitor reference](https://keysharp-org.github.io/KeysharpDocs/lib/Monitor.htm#KS) for members and examples.
+			+ `Monitor.Devices`, `Primary` and the spatial factories resolve geometry and metadata before returning snapshots. Unreported text and measurements are `""`. Keep a snapshot when reading several fields; use `MonitorGetCount()`, `MonitorGet()` and `MonitorGetWorkArea()` for frequent polling.
+			+ `Refresh()` updates the snapshot and returns the same object. It matches name and index first, then searches by a previously known `Id` on mismatch. If the display is unavailable or that identity cannot be verified, it returns `""` and preserves every property.
+			+ Filter `Monitor.Devices` by `Id` to find a saved display. Without a panel serial, Windows and Linux identify the connector; macOS identifies the model, so identical displays may share an ID.
+			+ Geometry uses native screen coordinates. `Scale` scales authored dimensions, never absolute positions. `Dpi` derives from physical size, using physical pixels on Windows/X11 and logical units on Wayland/macOS; `A_ScreenDPI` remains the system's logical text-size DPI.
+			+ Brightness and VCP controls query hardware on every call. `IsBrightnessSupported` performs a brightness read. `SetVCP()` reads the feature before writing; unsupported controls raise `OSError`. Input-source and power codes can disconnect the display; check the monitor's MCCS documentation before writing them.
+			+ `Monitor.OnChange(Callback)` returns a started, nonpersistent `MonitorHook`. The callback receives `(Hook, Change)` with `"Topology"` or `"Settings"`; unchanged notifications are dropped. Read `Monitor.Devices` or call `Refresh()` to inspect the new layout.
+			+ Platform support:
+				+ Windows: DisplayConfig and cached EDID metadata; WMI brightness for built-in panels and DDC/CI for external monitors.
+				+ Linux: EDID from `/sys/class/drm/*/edid`; refresh rate and rotation from keysharp-desktop on X11, `wl_output` on Wayland. Built-in brightness uses sysfs or logind. External DDC/CI requires `i2c-dev` and bus access granted by the packaged udev rule.
+				+ macOS: CoreGraphics metadata; `Model` and `Adapter` are blank, and `Connection` only identifies built-in panels. Brightness uses DisplayServices for built-in and Apple displays, DDC/CI for other external monitors. Intel DDC/CI remains unverified.
+				+ Change notifications use Windows SystemEvents, Linux GDK signals and macOS CoreGraphics callbacks; native Linux and macOS notifications remain unverified.
 
 ### Removals
 * Removed/reduced functions:
