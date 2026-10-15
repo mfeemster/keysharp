@@ -4119,7 +4119,7 @@ namespace Keysharp.Compilation.Syntax
 
 		private StatementSyntax LowerDecl(DeclStmt d)
 		{
-			var stmts = new List<StatementSyntax>();
+			var stmts = _scratchListStatements.Get();
 			foreach (var item in d.Items)
 			{
 				var name = DeclItemName(item);
@@ -4152,8 +4152,10 @@ namespace Keysharp.Compilation.Syntax
 				else if (item is UnaryExpr)
 					stmts.Add(LowerStmt(new ExpressionStmt(item)));
 			}
-			if (stmts.Count == 0) return null;
-			return stmts.Count == 1 ? stmts[0] : SyntaxFactory.Block(stmts);
+
+			var result = stmts.Count == 0 ? null : stmts.Count == 1 ? stmts[0] : SyntaxFactory.Block(stmts);
+			_scratchListStatements.Return(stmts);
+			return result;
 		}
 
 		// The variable name a declaration item refers to (`x`, `x := v`, `x += v`, `x++`).
