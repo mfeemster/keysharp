@@ -1,6 +1,3 @@
-using System.Collections.Generic;
-using Keysharp.Parsing.Lexing;
-
 namespace Keysharp.Parsing.Syntax
 {
 	/// <summary>
@@ -2237,7 +2234,7 @@ namespace Keysharp.Parsing.Syntax
 			Expect(open, "argument list");
 			var inFlowCond = EnterGroup();
 			var args = new List<Argument>();
-			var named = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase);
+			var named = _scratchHashStrings.Get();
 			SkipNewlines();
 			// Comma-separated slots: each slot is an expression or omitted (empty). A TRAILING comma is ignored (it does
 			// not add a slot), so `f(a,)`/`f(x,&y,)` keep their arg count and `f()` is zero, while `f(,a)`/`f(a,,b)` keep
@@ -2255,6 +2252,7 @@ namespace Keysharp.Parsing.Syntax
 			}
 			Expect(close, "argument list");
 			LeaveGroup(inFlowCond);
+			_scratchHashStrings.Return(named);
 			return args;
 		}
 
