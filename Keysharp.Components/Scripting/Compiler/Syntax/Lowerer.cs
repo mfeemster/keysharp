@@ -2015,16 +2015,16 @@ namespace Keysharp.Compilation.Syntax
 
 		// ---- application startup directives ----
 
-		private void PrescanManifestDirectives(IEnumerable<Stmt> body)
+		private void PrescanManifestDirectives(List<Stmt> body)
 		{
-			var directives = new List<DirectiveStmt>();
+			_scratchManifestDirectives.Clear();
 
-			foreach (var stmt in body ?? [])
-				CollectStatements(stmt, directives);
+			foreach (var stmt in body ?? emptyStmts)
+				CollectStatements(stmt, _scratchManifestDirectives);
 
 			var active = _errorStdOutActive;
 
-			foreach (var directive in directives.OrderBy(directive => directive.SourceOrder))
+			foreach (var directive in _scratchManifestDirectives.OrderBy(directive => directive.SourceOrder))
 				if (StringComparer.OrdinalIgnoreCase.Equals(directive.Name, "ErrorStdOut"))
 					_errorStdOutActive = true;
 				else if (IsCanonicalManifestDirective(directive))
