@@ -535,7 +535,7 @@ namespace Keysharp.Compilation.Syntax
 
 		// The first spelling of each name the statements and arrow body read or write, outside the functions
 		// nested in them, a loop or catch variable included.
-		private static void CollectSpellings(IEnumerable<Stmt> body, Expr arrow, HashSet<string> into)
+		private static void CollectSpellings(List<Stmt> body, Expr arrow, HashSet<string> into)
 		{
 			void Add(string name)
 			{
@@ -1150,7 +1150,7 @@ namespace Keysharp.Compilation.Syntax
 			// The source a variable's declared spelling is read from: the parameters, the nested functions and the body.
 			public List<Param> Params;
 			public readonly List<FunctionDecl> Nested = new();
-			public IReadOnlyList<Stmt> Body;
+			public List<Stmt> Body;
 			public Expr Arrow;
 			public bool HasDeref, HasDerefWrite, HasDerefReference, HasListVars, HasRegex;
 			private HashSet<string> spellings;
@@ -1635,22 +1635,30 @@ namespace Keysharp.Compilation.Syntax
 			}
 
 			// Most sites stand as emitted, and the body is only walked when one does not.
-			var stale = new HashSet<SyntaxAnnotation>();
+			_scratchSettleStale.Clear();
 
 			foreach (var (annotation, site) in settlement.Sites)
 				if (site.Changed())
-					stale.Add(annotation);
+					_scratchSettleStale.Add(annotation);
 				else
 					site.Stands?.Invoke();
 
-			return stale.Count == 0 ? block : block.ReplaceNodes(
-				block.GetAnnotatedNodes(SettleAnnotation).Where(n => n.GetAnnotations(SettleAnnotation).Any(stale.Contains)),
-				(_, node) =>
+			if (_scratchSettleStale.Count == 0)
+				return block;
+
+			var nodes = block.GetAnnotatedNodes(SettleAnnotation)
+				.Where(n => n.GetAnnotations(SettleAnnotation).Any(_scratchSettleStale.Contains))
+				.ToList();
+
+			return block.ReplaceNodes(nodes, (_, node) =>
+			{
+				var current = node;
+				while (current.GetAnnotations(SettleAnnotation).LastOrDefault(_scratchSettleStale.Contains) is { } annotation)
 				{
-					while (node.GetAnnotations(SettleAnnotation).LastOrDefault(stale.Contains) is { } annotation)
-						node = settlement.Sites[annotation].Settle(node).WithoutAnnotations(annotation);
-					return node;
-				});
+					current = settlement.Sites[annotation].Settle(current).WithoutAnnotations(annotation);
+				}
+				return current;
+			});
 		}
 
 		// A fat arrow's or nested function's local function, emitted static unless it is a closure, and its function object.
@@ -3189,7 +3197,7 @@ namespace Keysharp.Compilation.Syntax
 					emissions.Add(new InlineEmission(classPath, body));
 				}
 
-				var sb = new System.Text.StringBuilder();
+				var sb = new System.Text.StringBuilder(emissions.Sum(e => e.Body.Length + 200) + usings.Sum(d => d.Length));
 				_ = sb.AppendLine("namespace Keysharp.CompiledMain");
 				_ = sb.AppendLine("{");
 
