@@ -5635,11 +5635,12 @@ namespace Keysharp.Compilation.Syntax
 		// Emits a callback method (`public static object <name>(object thishotkey) { … }`) in the declaring module.
 		private string EmitHotCallback(Block body, string name)
 		{
-			var ps = new List<Param> { new Param("thishotkey", null, false, false, false) };
+			_scratchHotParam.Clear();
+			_scratchHotParam.Add(new Param("thishotkey", null, false, false, false));
 			// AutoHotkey builds every hotkey, hotstring and #HotIf body from one `<Hotkey>(ThisHotkey)` template
 			// (Script::CreateHotFunc), so that is the name A_ThisFunc reports inside all three.
 			var lowered = LowerCallableBody(new HashSet<string> { "thishotkey" }, body, null, name, "<Hotkey>", out _);
-			_hotMembers.Add(ObjMethod(name, ParamDecls(ps, includeThis: false), lowered));
+			_hotMembers.Add(ObjMethod(name, ParamDecls(_scratchHotParam, includeThis: false), lowered));
 			return name;
 		}
 
