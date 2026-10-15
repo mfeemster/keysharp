@@ -5047,7 +5047,7 @@ namespace Keysharp.Compilation.Syntax
 
 		private StatementSyntax BuildTry(BlockSyntax body, List<CatchBlock> catchBlocks, BlockSyntax finallyBlock)
 		{
-			var catches = new List<CatchClauseSyntax>();
+			var catches = _scratchListCatchClauses.Get();
 			foreach (var cb in catchBlocks)
 				catches.Add(LowerCatch(cb));
 			// Bare `try` has an implicit catch for Error values.
@@ -5068,6 +5068,7 @@ namespace Keysharp.Compilation.Syntax
 
 			var stmt = SyntaxFactory.TryStatement().WithBlock(body).WithCatches(SyntaxFactory.List(catches));
 			if (finallyBlock != null) stmt = stmt.WithFinally(SyntaxFactory.FinallyClause(finallyBlock));
+			_scratchListCatchClauses.Return(catches);
 			return stmt;
 		}
 
