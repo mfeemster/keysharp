@@ -5974,8 +5974,10 @@ namespace Keysharp.Compilation.Syntax
 		// `params` must become `KS_params`, never the invalid `KS_@params`).
 		private ParameterListSyntax ParamDecls(List<Param> ps, bool includeThis, bool wrapVariadics = false)
 		{
-			var list = new List<ParameterSyntax>();
-			if (includeThis) list.Add(ThisParam());
+			_scratchParameterList.Clear();
+
+			if (includeThis)
+				_scratchParameterList.Add(ThisParam());
 			foreach (var p in ps)
 			{
 				var lowered = p.Name;
@@ -6001,9 +6003,9 @@ namespace Keysharp.Compilation.Syntax
 					}
 					else if (p.Optional) param = param.AddAttributeLists(Attr("System.Runtime.InteropServices.Optional"));
 				}
-				list.Add(param);
+				_scratchParameterList.Add(param);
 			}
-			return SyntaxFactory.ParameterList(SyntaxFactory.SeparatedList(list));
+			return SyntaxFactory.ParameterList(SyntaxFactory.SeparatedList(_scratchParameterList));
 		}
 
 		private ExpressionSyntax LowerParamDefault(Expr expr)
