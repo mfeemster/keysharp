@@ -13,6 +13,7 @@ namespace Keysharp.Internals.Scripting
 		internal const string RelativeRoot = "components/scripting";
 		private static readonly ConcurrentDictionary<string, ComponentHandle> components = new(PathComparer);
 		private static readonly List<string> additionalRoots = [];
+		private static readonly List<string> emptyStrings = [];
 		private static readonly Lock sync = new();
 		private static readonly IReadOnlyDictionary<string, Assembly> sharedAssemblies = new[]
 		{
@@ -309,10 +310,10 @@ namespace Keysharp.Internals.Scripting
 			return descriptor;
 		}
 
-		private static ScriptingCapability ParseCapabilities(IEnumerable<string> values)
+		private static ScriptingCapability ParseCapabilities(List<string> values)
 		{
 			var result = ScriptingCapability.None;
-			foreach (var value in values ?? [])
+			foreach (var value in values ?? emptyStrings)
 			{
 				if (!Enum.TryParse<ScriptingCapability>(value, true, out var parsed) || parsed == ScriptingCapability.None)
 					throw new InvalidDataException($"Unknown scripting capability '{value}'.");
