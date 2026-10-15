@@ -702,6 +702,7 @@ namespace Keysharp.Parsing.Lexing
 					Advance(cp - _pos);
 					trivia.Add(Tok(TokenKind.ContinuationDelimiter, null, _line, _col, _pos, 1, true));
 					Advance();
+
 					var tail = pe;
 
 					while (tail > _pos && (_s[tail - 1] == ' ' || _s[tail - 1] == '\t')) tail--;
