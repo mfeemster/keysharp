@@ -2,23 +2,19 @@ namespace Keysharp.Benchmark;
 
 public class ParserBench : BaseTest
 {
-	private new Keysharp.Runtime.Script _ks_s = default!;
-
-	[Params(1000)]
-	public int Size { get; set; }
+	private const string testScriptPath = @"../../../Keysharp.Tests/Code/Gui/guitest.ks";
+	private CompilerHelper ch = new();
 
 	[Benchmark]
-	public void CreateTreeFromFile()
+	public void FullParse()
 	{
-		var ch = new CompilerHelper();
-
-		_ = ch.CreateCompilationUnitFromFile("./Keysharp.ks");
+		CompilerHelper tempCh = new();
+		_ = tempCh.CreateCompilationUnitFromFile(testScriptPath);
 	}
+
+	[Benchmark(Baseline = true)]
+	public void PartialParse() => _ = ch.CreateCompilationUnitFromFile(testScriptPath);
 
 	[GlobalSetup]
-	public void Setup()
-	{
-		_ks_s = new();
-		_ks_s.Vars.InitClasses();
-	}
+	public void Setup() => ch = new();
 }

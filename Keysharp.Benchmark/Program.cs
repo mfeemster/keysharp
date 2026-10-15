@@ -57,7 +57,7 @@ public sealed class Program
 		//RunAndPrint<FuncBench>(config);
 		//RunAndPrint<OverlayBench>(config);
 		//RunAndPrint<DllBench>(config);
-		//RunAndPrint<ParserBench>(config);
+		RunAndPrint<ParserBench>(config);
 		//RunReflectionBenchmarks(config);
 		//RunReflectionRefBenchmarks(config);
 
