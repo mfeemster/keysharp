@@ -2033,14 +2033,14 @@ namespace Keysharp.Compilation.Syntax
 			_errorStdOutActive = active;
 		}
 
-		private void ActivateErrorStdOutBefore(IEnumerable<Stmt> body, long sourceOrder)
+		private void ActivateErrorStdOutBefore(List<Stmt> body, long sourceOrder)
 		{
-			var directives = new List<DirectiveStmt>();
+			_scratchErrorStdOutBeforeDirectives.Clear();
 
-			foreach (var stmt in body ?? [])
-				CollectStatements(stmt, directives);
+			foreach (var stmt in body ?? emptyStmts)
+				CollectStatements(stmt, _scratchErrorStdOutBeforeDirectives);
 
-			if (directives.Any(directive => directive.SourceOrder < sourceOrder
+			if (_scratchErrorStdOutBeforeDirectives.Any(directive => directive.SourceOrder < sourceOrder
 					&& StringComparer.OrdinalIgnoreCase.Equals(directive.Name, "ErrorStdOut")))
 				_errorStdOutActive = true;
 		}
