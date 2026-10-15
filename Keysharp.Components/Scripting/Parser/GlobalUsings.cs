@@ -20,6 +20,7 @@ global using Keysharp.Builtins;
 global using Keysharp.Internals.Containers;
 global using Keysharp.Internals.ExtensionMethods;
 global using Keysharp.Language;
+global using Keysharp.Parsing.Lexing;
 global using Keysharp.Runtime;
 
 //Static
@@ -28,3 +29,4 @@ global using static Keysharp.Runtime.Script;
 
 //Aliases
 global using String = System.String;
+

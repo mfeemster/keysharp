@@ -57,6 +57,9 @@ namespace Keysharp.Parsing.Syntax
 		private readonly HashSet<string> _included = new(SourcePathComparer);   // #include dedup
 		private readonly Dictionary<string, string> _includedSources = new(SourcePathComparer);
 		private readonly List<int> _includeParents = [];   // see ProgramNode.IncludeParents
+		private ObjectStackPool<HashSet<string>> _scratchHashStrings = new(() => new(System.StringComparer.OrdinalIgnoreCase), item => item.Clear());
+		private ObjectStackPool<List<Token>> _scratchListTokens = new(() => [], item => item.Clear());
+
 		private const int MaxIncludeDepth = 100;
 
 		private static string ProcessArchitectureSymbol() => RuntimeInformation.ProcessArchitecture switch
@@ -1849,13 +1852,16 @@ namespace Keysharp.Parsing.Syntax
 		private List<Argument> ParseCommandArgs()
 		{
 			var args = new List<Argument>();
-			var named = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase);
+			var named = _scratchHashStrings.Get();
+
 			while (!At(TokenKind.Newline) && !At(TokenKind.EOF) && !At(TokenKind.RBrace))
 			{
 				args.Add(ParseArgument(args, named));
 				if (!Match(TokenKind.Comma)) break;
 				SkipNewlines();
 			}
+
+			_scratchHashStrings.Return(named);
 			return args;
 		}
 
