@@ -5301,11 +5301,11 @@ namespace Keysharp.Compilation.Syntax
 		// __Init / static__Init: optionally chain the base prototype's __Init, then run extra prologue statements
 		// (typed struct-field registrations) and set each field.
 		private MemberDeclarationSyntax InitMethod(string name, string baseProtoType, IEnumerable<ClassField> fields,
-			IEnumerable<StatementSyntax> prologue = null, IEnumerable<Stmt> extra = null, bool staticCtx = false)
+			IEnumerable<StatementSyntax> prologue = null, List<Stmt> extra = null, bool staticCtx = false)
 		{
 			var savedStamped = _stamped; _stamped = false;
 			var fieldList = fields as IList<ClassField> ?? fields.ToList();
-			var extraList = extra as IList<Stmt> ?? extra?.ToList();
+			var extraList = extra;
 			var savedThisFuncName = _currentThisFuncName;
 			_currentThisFuncName = ClassMemberFuncName("__Init", staticCtx);
 			var savedScopeFuncs = _pendingScopeFuncs; _pendingScopeFuncs = new();   // field-init fat-arrow local funcs
@@ -6225,9 +6225,9 @@ namespace Keysharp.Compilation.Syntax
 		// read while native code still uses its Ptr. KeepAlive restores that lifetime on every exit path.
 		private static void WrapBodyWithKeepAlive(List<StatementSyntax> body, IEnumerable<ScopeVar> declared, List<string> keptTemps, int execStart, int execEnd)
 		{
-			var roots = declared.Select(LifetimeRoot).Concat(keptTemps.Select(Id)).ToList();
+			var roots = declared.Select(LifetimeRoot).Concat(keptTemps.Select(Id));
 
-			if (roots.Count == 0 || execEnd <= execStart)
+			if (!roots.Any() || execEnd <= execStart)
 				return;
 
 			var keep = roots.Chunk(8).Select(chunk =>
@@ -6524,7 +6524,7 @@ namespace Keysharp.Compilation.Syntax
 
 		// A named fat arrow is a function definition in expression form, which AutoHotkey declares as a function of the
 		// callable holding it, or of the module outside any function: bound on entry, whether or not the expression runs.
-		private List<FunctionDecl> NamedArrows(IEnumerable<Stmt> body, Expr arrow)
+		private List<FunctionDecl> NamedArrows(List<Stmt> body, Expr arrow)
 		{
 			var named = new List<FunctionDecl>();
 
@@ -6536,7 +6536,7 @@ namespace Keysharp.Compilation.Syntax
 				return false;
 			}
 
-			foreach (var st in body ?? [])
+			foreach (var st in body ?? emptyStmts)
 				_ = AnyNode(st, Collect);
 
 			_ = AnyNode(arrow, Collect);
@@ -6596,9 +6596,9 @@ namespace Keysharp.Compilation.Syntax
 
 		// Builds a `className : Keysharp.Runtime.Module` class: import bindings, fields, member functions, lambdas,
 		// hotkey callbacks, then its AutoExecSection and constructor.
-		private MemberDeclarationSyntax BuildModuleClass(ModInfo module, IEnumerable<MemberDeclarationSyntax> fieldDecls,
-			IEnumerable<MemberDeclarationSyntax> members, IEnumerable<MemberDeclarationSyntax> lambdas,
-			IEnumerable<MemberDeclarationSyntax> hotMembers, List<StatementSyntax> autoStmts, IEnumerable<MemberDeclarationSyntax> importMembers,
+		private MemberDeclarationSyntax BuildModuleClass(ModInfo module, List<MemberDeclarationSyntax> fieldDecls,
+			List<MemberDeclarationSyntax> members, List<MemberDeclarationSyntax> lambdas,
+			List<MemberDeclarationSyntax> hotMembers, List<StatementSyntax> autoStmts, List<MemberDeclarationSyntax> importMembers,
 			Semver.SemVersion compat = null)
 		{
 			// The C# class name is the module name, disambiguated if it shadows a framework/structural root; the runtime
@@ -6646,7 +6646,7 @@ namespace Keysharp.Compilation.Syntax
 
 		// Wraps the module classes in the Program class (with Main, MainScript and the outer AutoExecSection that drives
 		// DHHR + per-module auto-exec in execution order) and the compilation unit (+ #Assembly* attributes).
-		private CompilationUnitSyntax AssembleProgram(string name, IEnumerable<MemberDeclarationSyntax> moduleClasses, IReadOnlyList<string> execOrder)
+		private CompilationUnitSyntax AssembleProgram(string name, List<MemberDeclarationSyntax> moduleClasses, List<string> execOrder)
 		{
 			// The Script constructor reads the manifest (hook mutex name, tray icon, theme, …) from the Program
 			// type's assembly itself, so nothing manifest-driven is passed here.
@@ -6758,7 +6758,7 @@ namespace Keysharp.Compilation.Syntax
 				.WithBody(body);
 		}
 
-		private MemberDeclarationSyntax BuildOuterAuto(IReadOnlyList<string> execOrder)
+		private MemberDeclarationSyntax BuildOuterAuto(List<string> execOrder)
 		{
 			var stmts = new List<StatementSyntax>();
 			// #Warn output runs first (at load time, before any script logic), per the configured mode.
@@ -6842,6 +6842,9 @@ namespace Keysharp.Compilation.Syntax
 		// arguments are wrapped into an array first.
 		private static ArgumentListSyntax ArgList(IReadOnlyList<ExpressionSyntax> args)
 		{
+			if (args.Count == 0)
+				return SyntaxFactory.ArgumentList(SyntaxFactory.SeparatedList(Array.Empty<ArgumentSyntax>()));//Explicitly pass an empty array to avoid Roslyn internally creating an empty array on each call.
+
 			var nodes = new ArgumentSyntax[args.Count];
 
 			for (var i = 0; i < nodes.Length; i++)
