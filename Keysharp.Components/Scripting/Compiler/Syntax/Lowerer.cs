@@ -184,8 +184,8 @@ namespace Keysharp.Compilation.Syntax
 		// The globals the module assigns, and the unset reads found, which are warned about once every assignment is known
 		// (see AnalyzeWarnings). Unheld is a read of a name the reading function holds no variable of, and Global one worded
 		// as a global's.
-		private HashSet<string> _warnAssignedGlobals;
-		private List<(NameExpr Read, bool Unheld, bool Global)> _warnUnsetReads;
+		private HashSet<string> _warnAssignedGlobals = new(StringComparer.OrdinalIgnoreCase);
+		private List<(NameExpr Read, bool Unheld, bool Global)> _warnUnsetReads = new();
 		// The function scope enclosing the one analyzed, for its assume-global mode and declared globals.
 		private FunctionScope _warnScope;
 		// `line` is relative to `file` — the #included file the warned-about node came from, or null for the main
@@ -3448,16 +3448,34 @@ namespace Keysharp.Compilation.Syntax
 			if (_warnVarUnset == null && _warnUnreachable == null && _warnLocalSameAsGlobal == null) return;
 			_warnGlobalReadable = null;
 			// What the top level assigns in any form is a global, as is what a function assigns while it is global.
-			var assigned = new List<string>();
-			foreach (var s in body) CollectAssigned(s, assigned, new HashSet<string>(StringComparer.OrdinalIgnoreCase));
-			_warnAssignedGlobals = new(assigned, StringComparer.OrdinalIgnoreCase);
-			_warnUnsetReads = new();
-			var globals = _warnLocalSameAsGlobal != null ? new HashSet<string>(assigned, StringComparer.OrdinalIgnoreCase) : null;
+			var assigned = _scratchListStrings.Get();
+			foreach (var s in body)
+			{
+				var temp = _scratchCaseInsensitiveHashStrings.Get();
+				CollectAssigned(s, assigned, temp);
+				_scratchCaseInsensitiveHashStrings.Return(temp);
+			}
+			_warnAssignedGlobals.Clear();
+			_warnAssignedGlobals.AddRange(assigned);
+			_warnUnsetReads.Clear();
+			HashSet<string> globals = null;
+
+			if (_warnLocalSameAsGlobal != null)
+			{
+				globals = _scratchCaseInsensitiveHashStrings.Get();
+				globals.AddRange(assigned);
+			}
+
 			AnalyzeScope(body, null, System.Array.Empty<string>(), globals, topLevel: true);
 			// A read of a global the module assigns is no unset read, which is known once every function is analyzed.
 			foreach (var (read, unheld, global) in _warnUnsetReads)
 				if (!unheld || !_warnAssignedGlobals.Contains(read.Name))
 					Warn(_warnVarUnset, read.Line, $"This {(global ? "global" : "local")} variable appears to never be assigned a value: {read.Name}.", read.File);
+
+			if (_warnLocalSameAsGlobal != null)
+				_scratchCaseInsensitiveHashStrings.Return(globals);
+
+			_scratchListStrings.Return(assigned);
 		}
 
 		// Analyzes one scope (a statement list and/or an arrow expression) plus recurses into the scopes nested in it.
