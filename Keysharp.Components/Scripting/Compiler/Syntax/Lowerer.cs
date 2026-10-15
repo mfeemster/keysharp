@@ -4884,7 +4884,7 @@ namespace Keysharp.Compilation.Syntax
 			frame.NeedsNext = true; return SyntaxFactory.GotoStatement(SyntaxKind.GotoStatement, Id("KS_e" + frame.Id + "_next"));
 		}
 
-		private static HashSet<string> CollectDirectLabels(System.Collections.Generic.IEnumerable<Stmt> stmts)
+		private static HashSet<string> CollectDirectLabels(List<Stmt> stmts)
 		{
 			var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 			foreach (var s in stmts) if (s is LabelStmt l) set.Add(l.Name);
@@ -4893,7 +4893,7 @@ namespace Keysharp.Compilation.Syntax
 
 		// Lowers a statement sequence in its own label scope, associating a `name:` label that immediately precedes a
 		// loop with that loop (so `break name`/`continue name` can target it). Labels also emit a plain C# label.
-		private List<StatementSyntax> LowerStmtList(System.Collections.Generic.IReadOnlyList<Stmt> stmts)
+		private List<StatementSyntax> LowerStmtList(List<Stmt> stmts)
 		{
 			_labelScopes.Add(CollectDirectLabels(stmts));
 			var result = _scratchLowerStmtListStatementsDangerous.Get();
@@ -4918,12 +4918,12 @@ namespace Keysharp.Compilation.Syntax
 		{
 			var info = "KS_loop" + id;
 			var push = Inv(Access("Keysharp.Runtime.Loops.Push"), Access("Keysharp.Runtime.LoopType." + loopType));
-			var block = new List<StatementSyntax>();
+			var block = _scratchListStatements.Get();
 			if (header != null) block.AddRange(header);
 			if (disposedEnumerator != null) block.Add(DeclLocal(Ty("System.Collections.IEnumerator"), disposedEnumerator, Null));
 			block.Add(elseStmt != null ? LocalDeclVar(info, push) : ExprStmt(push));
 			if (backups != null) block.AddRange(backups);
-			var finallyStmts = new List<StatementSyntax>();
+			var finallyStmts = _scratchListStatements.Get();
 			if (disposedEnumerator != null)
 				finallyStmts.Add(ExprStmt(SyntaxFactory.ConditionalAccessExpression(
 					SyntaxFactory.ParenthesizedExpression(SyntaxFactory.BinaryExpression(SyntaxKind.AsExpression, Id(disposedEnumerator), Ty("System.IDisposable"))),
@@ -4936,7 +4936,10 @@ namespace Keysharp.Compilation.Syntax
 					SyntaxFactory.BinaryExpression(SyntaxKind.EqualsExpression, Member(Id(info), "index"), Num("0")),
 					LowerBody(elseStmt)));
 			if (frame.NeedsEnd) block.Add(EndLabel(id));
-			return SyntaxFactory.Block(block);
+			var result = SyntaxFactory.Block(block);
+			_scratchListStatements.Return(finallyStmts);
+			_scratchListStatements.Return(block);
+			return result;
 		}
 
 		private StatementSyntax LowerFor(ForStmt fr)
