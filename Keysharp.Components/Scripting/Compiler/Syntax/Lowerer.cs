@@ -3463,7 +3463,7 @@ namespace Keysharp.Compilation.Syntax
 		// Analyzes one scope (a statement list and/or an arrow expression) plus recurses into the scopes nested in it.
 		// `outerProvided` is the union of names provided by all ENCLOSING function/lambda scopes (params, locals, nested
 		// functions): a nested function or fat-arrow closes over them, so reading one is not "unset" (null at top level).
-		private void AnalyzeScope(IReadOnlyList<Stmt> body, Expr arrow, System.Collections.Generic.IEnumerable<string> paramNames, HashSet<string> globals, bool topLevel, HashSet<string> outerProvided = null, bool isStatic = false)
+		private void AnalyzeScope(List<Stmt> body, Expr arrow, System.Collections.Generic.IEnumerable<string> paramNames, HashSet<string> globals, bool topLevel, HashSet<string> outerProvided = null, bool isStatic = false)
 		{
 			if (_warnUnreachable != null && body != null) CheckUnreachable(body);
 			var savedScope = _warnScope;
@@ -3478,8 +3478,8 @@ namespace Keysharp.Compilation.Syntax
 				// import frame is pushed here, so a name a function both imports and assigns counts as its variable, which at
 				// most keeps back a VarUnset warning for a global of that name.
 				var paramLowers = paramNames.ToList();
-				List<string> assigned = null;
-				scope = topLevel ? new FunctionScope(null) : ClassifyScope(_warnScope, isStatic, paramLowers, null, body, arrow, null, out assigned);
+				var assigned = _scratchListStrings.Get();
+				scope = topLevel ? new FunctionScope(null) : ClassifyScope(_warnScope, isStatic, paramLowers, null, body, arrow, null, ref assigned);
 				_warnScope = topLevel ? null : scope;
 				// In an assume-global scope every bare name is a GLOBAL, which may be assigned in another scope we can't
 				// see here. We can't locally prove such a global is never assigned, so skip both VarUnset and
@@ -3500,7 +3500,7 @@ namespace Keysharp.Compilation.Syntax
 				var readable = provided;
 				// This scope's own `#import` names (control-flow-nested and direct) are readable here — a reference to an
 				// imported function/type/variable is not "never assigned". Class-body imports arrive via outerProvided.
-				var ownImports = new List<ImportDirective>();
+				var ownImports = _scratchListImports.Get();
 				if (body != null) foreach (var s in body) { if (s is ImportDirective id) ownImports.Add(id); else CollectNestedImports(s, ownImports); }
 				HashSet<string> imported = null;
 				if (ownImports.Count > 0) AddImportProvidedNames(ownImports, imported = new(StringComparer.OrdinalIgnoreCase));
@@ -3512,9 +3512,10 @@ namespace Keysharp.Compilation.Syntax
 				}
 				if (_warnVarUnset != null && !scope.AssumeGlobal)
 				{
-					var warned = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+					var warned = _scratchCaseInsensitiveHashStrings.Get();
 					if (body != null) foreach (var s in body) CheckReads(s, readable, warned);
 					if (arrow != null) CheckReads(arrow, readable, warned);
+					_scratchCaseInsensitiveHashStrings.Return(warned);
 				}
 				// LocalSameAsGlobal compares only THIS scope's own undeclared locals against the globals: as in AHK, a
 				// parameter or a local or static declaration already says the name is meant to be local. A global is any
@@ -3527,6 +3528,8 @@ namespace Keysharp.Compilation.Syntax
 							Warn(_warnLocalSameAsGlobal, 0, $"This local variable has the same name as a global variable: {n}.");
 				// The module globals reach nested scopes through _warnGlobalReadable, so the top level hands down its imports only.
 				visible = topLevel ? imported : readable;
+				_scratchListImports.Return(ownImports);
+				_scratchListStrings.Return(assigned);
 			}
 			// Recurse into nested scopes (their bodies are separate scopes), passing this scope's visible names down so
 			// closures over our locals aren't flagged.
@@ -6029,18 +6032,19 @@ namespace Keysharp.Compilation.Syntax
 			var savedLoweringParamDefault = _loweringParamDefault;
 			_currentThisFuncName = thisFuncName;
 			_loweringParamDefault = false;
-			var savedKept = _scopeKeptTemps; _scopeKeptTemps = new();
-			var savedTemps = _scopeTemps; _scopeTemps = new();
-			var savedScopeFuncs = _pendingScopeFuncs; _pendingScopeFuncs = new();   // fat-arrow local funcs for THIS scope
-			var savedClosureInits = _pendingScopeClosureInits; _pendingScopeClosureInits = new();
+			var savedKept = _scopeKeptTemps; _scopeKeptTemps = _scratchListStrings.Get();
+			var savedTemps = _scopeTemps; _scopeTemps = _scratchListStrings.Get();
+			var savedScopeFuncs = _pendingScopeFuncs; _pendingScopeFuncs = _scratchListStatements.Get();   // fat-arrow local funcs for THIS scope
+			var savedClosureInits = _pendingScopeClosureInits; _pendingScopeClosureInits = _scratchListStatements.Get();
 			// This callable's own `#import` frame (control-flow-nested imports included) is pushed before its variables are
 			// classified, so a name it explicitly binds is written through rather than made a local.
-			var bodyImports = new List<ImportDirective>();
+			var bodyImports = _scratchListImports.Get();
 			if (bodyBlock != null) foreach (var st in bodyBlock.Body) CollectNestedImports(st, bodyImports);
 			var importFrame = bodyImports.Count > 0 ? BuildImportScope(bodyImports) : null;
 			if (importFrame != null) _importScopes.Add(importFrame);
+			var assignedOrdered = _scratchListStrings.Get();
 			// Only a closure (fat arrow or nested function) sees the enclosing callable's variables.
-			var scope = ClassifyScope(capturing ? _scope : null, staticNested, paramLowers, byRefParams, bodyBlock?.Body, arrowBody, funcName, out var assignedOrdered);
+			var scope = ClassifyScope(capturing ? _scope : null, staticNested, paramLowers, byRefParams, bodyBlock?.Body, arrowBody, funcName, ref assignedOrdered);
 			if (importFrame != null)
 			{
 				importFrame.Owner = scope;
@@ -6057,12 +6061,14 @@ namespace Keysharp.Compilation.Syntax
 			var savedScope = _scope;
 			_scope = scope;
 			var savedSettlement = _settlement;
-			if (scope.Parent == null) _settlement = new();
+			if (scope.Parent == null) _settlement = _scratchLowerCallableBodySettlements.Get();
 
-			var body = new List<StatementSyntax>();
-			var hoisted = new HashSet<string>(paramLowers, StringComparer.OrdinalIgnoreCase);
+			var body = _scratchListStatements.Get();
+			var hoisted = _scratchCaseInsensitiveHashStrings.Get();
+			hoisted.UnionWith(paramLowers);
+
 			// Variables whose managed lifetime must span the scope.
-			var declared = new List<ScopeVar>();
+			var declared = _scratchLowerCallableBodyDeclared.Get();
 			if (_inMethod && !capturing) declared.Add(Receiver());
 			void Hoist(string n) { if (scope.Locals.Contains(n) && hoisted.Add(n)) { declared.Add(scope.Find(n)); body.Add(DeclareVariable(scope, n, Null)); } }
 			foreach (var n in assignedOrdered) Hoist(n);
@@ -6160,15 +6166,28 @@ namespace Keysharp.Compilation.Syntax
 			var block = SyntaxFactory.Block(body);
 			if (scope.Parent == null) block = Settle(block);
 
-			_settlement = savedSettlement;
+			if (_settlement != savedSettlement)
+			{
+				_scratchLowerCallableBodySettlements.Return(_settlement);
+				_settlement = savedSettlement;
+			}
 			_derefScope = savedDeref;
 			_derefReferences = savedDerefReferences;
 			_scope = savedScope;
+			_scratchListStatements.Return(_pendingScopeClosureInits);
+			_scratchListStatements.Return(_pendingScopeFuncs);
+			_scratchListStrings.Return(_scopeKeptTemps);
+			_scratchListStrings.Return(_scopeTemps);
 			_scopeTemps = savedTemps; _pendingScopeFuncs = savedScopeFuncs; _pendingScopeClosureInits = savedClosureInits; _scopeKeptTemps = savedKept;
 			_currentThisFuncName = savedThisFuncName;
 			_loweringParamDefault = savedLoweringParamDefault;
 			_stamped = savedStamped;
 			if (importFrame != null) _importScopes.RemoveAt(_importScopes.Count - 1);
+			_scratchLowerCallableBodyDeclared.Return(declared);
+			_scratchCaseInsensitiveHashStrings.Return(hoisted);
+			_scratchListStatements.Return(body);
+			_scratchListStrings.Return(assignedOrdered);
+			_scratchListImports.Return(bodyImports);
 			return block;
 		}
 
@@ -6381,7 +6400,7 @@ namespace Keysharp.Compilation.Syntax
 		// is an implicit static, global or local by its assume mode. `assigned` is every name it assigns, in order, and a null
 		// funcName backs no static with a field.
 		private FunctionScope ClassifyScope(FunctionScope parent, bool isStatic, IEnumerable<string> paramLowers, HashSet<string> byRef,
-			IReadOnlyList<Stmt> body, Expr arrow, string funcName, out List<string> assigned)
+			List<Stmt> body, Expr arrow, string funcName, ref List<string> assigned)
 		{
 			var scope = new FunctionScope(parent, isStatic) { Body = body, Arrow = arrow };
 
@@ -6394,7 +6413,10 @@ namespace Keysharp.Compilation.Syntax
 			if (byRef != null)
 				scope.ByRef.UnionWith(byRef);
 
-			foreach (var st in body ?? [])
+			if (body == null)
+				body = emptyStmts;
+
+			foreach (var st in body)
 				VisitScope(st, statement =>
 				{
 					if (statement is FunctionDecl fd)
@@ -6424,7 +6446,7 @@ namespace Keysharp.Compilation.Syntax
 				return false;
 			};
 
-			foreach (var st in body ?? []) _ = AnyNode(st, collect);
+			foreach (var st in body) _ = AnyNode(st, collect);
 			_ = AnyNode(arrow, collect);
 
 			foreach (var fd in scope.Nested)
@@ -6434,13 +6456,14 @@ namespace Keysharp.Compilation.Syntax
 				_ = scope.Kinds.TryAdd(lower, VarKind.Constant);
 			}
 
-			assigned = new();
-			var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+			assigned ??= [];
+
+			var seen = _scratchCaseInsensitiveHashStrings.Get();
 			if (arrow != null) CollectAssigned(arrow, assigned, seen);
-			else foreach (var st in body ?? []) CollectAssigned(st, assigned, seen);
+			else foreach (var st in body) CollectAssigned(st, assigned, seen);
 
 			// A bare `global` makes it assume-global and a bare `static` assume-static; otherwise it inherits assume-global.
-			bool Bare(string keyword) => body?.Any(st => st is DeclStmt { Items.Count: 0 } d && d.Keyword == keyword) == true;
+			bool Bare(string keyword) => body.Any(st => st is DeclStmt { Items.Count: 0 } d && d.Keyword == keyword) == true;
 			scope.DeclaresGlobal = Bare("global");
 			var assumeStatic = !scope.DeclaresGlobal && Bare("static");
 			scope.AssumeGlobal = scope.DeclaresGlobal || !assumeStatic && parent?.AssumeGlobal == true;
@@ -6468,6 +6491,7 @@ namespace Keysharp.Compilation.Syntax
 				_ = scope.Globals.Remove("this");
 			}
 
+			_scratchCaseInsensitiveHashStrings.Return(seen);
 			return scope;
 		}
 
