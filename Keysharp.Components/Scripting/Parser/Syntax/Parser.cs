@@ -73,9 +73,8 @@ namespace Keysharp.Parsing.Syntax
 		{
 			_includeDir = includeDir;
 			_mainScriptPath = string.IsNullOrWhiteSpace(mainScriptPath) ? null : System.IO.Path.GetFullPath(mainScriptPath);
-
 			if (defines != null)
-				foreach (var d in defines) _ = _defines.Add(d);
+				_defines.AddRange(defines);
 		}
 
 		private void LoadTokens(List<Token> tokens, IReadOnlyList<string> lexDiagnostics = null, string includeFile = null, string scriptDir = null)
