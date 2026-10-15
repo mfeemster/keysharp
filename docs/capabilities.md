@@ -75,6 +75,7 @@ Status legend:
 | //= | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Compound assignment operator |
 | /= | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Compound assignment operator |
 | := | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Assignment operator |
+| ? / ?. | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Maybe and optional chaining. Missing properties and unset getter, index or call results end the chain at ?.; later accesses remain strict unless also marked optional. |
 | ?: | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Ternary operator |
 | ?? | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Null coalescing operator |
 | ??= | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Null-coalescing assignment operator |

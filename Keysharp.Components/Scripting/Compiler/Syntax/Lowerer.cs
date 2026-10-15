@@ -249,14 +249,14 @@ namespace Keysharp.Compilation.Syntax
 
 		private string NewTemp(bool hoist = true) { var n = "KS_temp" + (++_tempCounter); if (hoist) _scopeTemps.Add(n); return n; }
 
-		// Null-conditional access `target?.<access>`: evaluate target once into a temp; if it is unset (null),
-		// short-circuit the whole access (and any nested args/calls) to C# null — which reads back as unset —
-		// otherwise apply `access` to the temp. Nested `?.` compose because each wrap yields null on short-circuit.
-		private ExpressionSyntax NullCondWrap(Expr target, System.Func<ExpressionSyntax, ExpressionSyntax> access)
+		// Evaluate the target once. An explicit ? permits its final access to be unset;
+		// a propagated unset only skips the remaining access and its arguments.
+		private ExpressionSyntax NullCondWrap(Expr target, System.Func<ExpressionSyntax, ExpressionSyntax> access, bool maybe = false)
 		{
 			var t = NewTemp();
+			var value = LowerExpr(target);
 			return Op("MultiStatement",
-				Assign(Id(t), LowerExpr(target)),
+				Assign(Id(t), maybe ? RewriteToOrNull(value, throughChain: target is MemberExpr or DynMemberExpr or IndexExpr or CallExpr) : value),
 				SyntaxFactory.ParenthesizedExpression(SyntaxFactory.ConditionalExpression(
 					SyntaxFactory.BinaryExpression(SyntaxKind.EqualsExpression, Id(t), Null),
 					Null,
@@ -272,7 +272,7 @@ namespace Keysharp.Compilation.Syntax
 				: access(target, LowerExpr(member.NameExpr));
 
 			if (member.NullConditional || MayYieldUnset(member.Target))
-				return NullCondWrap(member.Target, WithName);
+				return NullCondWrap(member.Target, WithName, member.NullConditional);
 
 			var t = NewTemp();
 			return Op("MultiStatement", Assign(Id(t), LowerExpr(member.Target)), WithName(Id(t)));
@@ -3919,17 +3919,15 @@ namespace Keysharp.Compilation.Syntax
 							SyntaxFactory.ConditionalExpression(IfTest(cond), LowerExpr(t.Then), LowerExpr(t.Else))))
 						: SyntaxFactory.ParenthesizedExpression(
 							SyntaxFactory.ConditionalExpression(IfTest(LowerExpr(t.Cond)), LowerExpr(t.Then), LowerExpr(t.Else)));
-				// `?.` chains are unset-lenient: the base is guarded non-null by NullCondWrap, and the access itself uses
-				// the *OrNull form so an unset-VALUED member yields null (which short-circuits the next `?.`) rather than
-				// raising (e.g. `optObj?.prop?.inner` when `prop` is unset).
+				// A chain permits only operands followed by ? to be unset.
 				case MemberExpr mem:
 					TrackLoadPackageMember(mem);
 					return mem.NullConditional || MayYieldUnset(mem.Target)
-						? NullCondWrap(mem.Target, tt => Op("GetPropertyValueOrNull", tt, Str(mem.Name)))
+						? NullCondWrap(mem.Target, tt => Op("GetPropertyValue", tt, Str(mem.Name)), mem.NullConditional)
 						: Op("GetPropertyValue", LowerExpr(mem.Target), Str(mem.Name));
 				case DynMemberExpr dmem:
 					return MayYieldUnset(dmem)
-						? DynMemberWrap(dmem, (tt, name) => Op("GetPropertyValueOrNull", tt, name))
+						? DynMemberWrap(dmem, (tt, name) => Op("GetPropertyValue", tt, name))
 						: Op("GetPropertyValue", LowerExpr(dmem.Target), LowerExpr(dmem.NameExpr));
 				case IndexExpr ix:
 					// `obj.member[args]` folds the index into the member access (`GetPropertyValue(obj, "member", args)`)
@@ -3942,16 +3940,16 @@ namespace Keysharp.Compilation.Syntax
 						ix.Args.Any(ia => ia.Spread) ? [SpreadParams(ix.Args)] : LowerArgs(ix.Args);
 
 					// Literal `obj.member[]` indexes the member's value; even an empty spread still addresses the property.
-					if (ix.Args.Count > 0 && !ix.NullConditional && ix.Target is MemberExpr { NullConditional: false } im)
-						return MayYieldUnset(im.Target)
-							? NullCondWrap(im.Target, tt => Op("GetPropertyValue", [ tt, Str(im.Name), ..IdxArgs() ]))
+					if (ix.Args.Count > 0 && !ix.NullConditional && ix.Target is MemberExpr im)
+						return im.NullConditional || MayYieldUnset(im.Target)
+							? NullCondWrap(im.Target, tt => Op("GetPropertyValue", [ tt, Str(im.Name), ..IdxArgs() ]), im.NullConditional)
 							: Op("GetPropertyValue", [ LowerExpr(im.Target), Str(im.Name), ..IdxArgs() ]);
-					if (ix.Args.Count > 0 && !ix.NullConditional && ix.Target is DynMemberExpr { NullConditional: false } idm)
+					if (ix.Args.Count > 0 && !ix.NullConditional && ix.Target is DynMemberExpr idm)
 						return MayYieldUnset(idm)
 							? DynMemberWrap(idm, (tt, name) => Op("GetPropertyValue", [ tt, name, ..IdxArgs()]))
 							: Op("GetPropertyValue", [ LowerExpr(idm.Target), LowerExpr(idm.NameExpr), ..IdxArgs()]);
 					return ix.NullConditional || MayYieldUnset(ix.Target)
-						? NullCondWrap(ix.Target, tt => Op("GetIndexOrNull", Cons(tt, IdxArgs())))
+						? NullCondWrap(ix.Target, tt => Op("GetIndex", Cons(tt, IdxArgs())), ix.NullConditional)
 						: Op("GetIndex", Cons(LowerExpr(ix.Target), IdxArgs()));
 				case ArrayExpr ar:
 					var arArgs = ar.Elements.Any(el => el.Spread)
@@ -3996,14 +3994,14 @@ namespace Keysharp.Compilation.Syntax
 			{
 				if (a.Op == ":=")   // target evaluated once — no temp needed
 					return me.NullConditional || MayYieldUnset(me.Target)
-						? NullCondWrap(me.Target, target => Op("SetPropertyValue", target, Str(me.Name), LowerExpr(a.Value)))
+						? NullCondWrap(me.Target, target => Op("SetPropertyValue", target, Str(me.Name), LowerExpr(a.Value)), me.NullConditional)
 						: Op("SetPropertyValue", LowerExpr(me.Target), Str(me.Name), LowerExpr(a.Value));
 				if (me.NullConditional || MayYieldUnset(me.Target))
 					return NullCondWrap(me.Target, target =>
 					{
 						var value = CompoundValue(a.Op[..^1], Op("GetPropertyValue", target, Str(me.Name)), LowerExpr(a.Value));
 						return value == null ? Str("") : Op("SetPropertyValue", target, Str(me.Name), value);
-					});
+					}, me.NullConditional);
 				// Compound: capture the target once so a side-effecting target expression runs a single time.
 				var t = NewTemp();
 				var mval = CompoundValue(a.Op[..^1], Op("GetPropertyValue", Id(t), Str(me.Name)), LowerExpr(a.Value));
@@ -4015,7 +4013,7 @@ namespace Keysharp.Compilation.Syntax
 			{
 				if (a.Op == ":=")
 					return dme.NullConditional || MayYieldUnset(dme.Target)
-						? NullCondWrap(dme.Target, target => Op("SetPropertyValue", target, LowerExpr(dme.NameExpr), LowerExpr(a.Value)))
+						? NullCondWrap(dme.Target, target => Op("SetPropertyValue", target, LowerExpr(dme.NameExpr), LowerExpr(a.Value)), dme.NullConditional)
 						: Op("SetPropertyValue", LowerExpr(dme.Target), LowerExpr(dme.NameExpr), LowerExpr(a.Value));
 				if (dme.NullConditional || MayYieldUnset(dme.Target))
 					return NullCondWrap(dme.Target, target =>
@@ -4025,16 +4023,17 @@ namespace Keysharp.Compilation.Syntax
 						return value == null ? Str("") : Op("MultiStatement",
 							Assign(Id(name), LowerExpr(dme.NameExpr)),
 							Op("SetPropertyValue", target, Id(name), value));
-					});
+					}, dme.NullConditional);
 				var dmt = NewTemp(); var dmn = NewTemp();
 				var dmval = CompoundValue(a.Op[..^1], Op("GetPropertyValue", Id(dmt), Id(dmn)), LowerExpr(a.Value));
 				if (dmval == null) { Diag($"compound assignment to a member ('{a.Op}') not yet lowerable"); return Str(""); }
 				return Op("MultiStatement", Assign(Id(dmt), LowerExpr(dme.Target)), Assign(Id(dmn), LowerExpr(dme.NameExpr)),
 					Op("SetPropertyValue", Id(dmt), Id(dmn), dmval));
 			}
-			if (a.Target is IndexExpr mie && IsMemberIndex(mie, out var owner, out var dynamicName, out var propName))
+			if (a.Target is IndexExpr mie && IsMemberIndex(mie, out var owner, out var dynamicName, out var propName, allowOptional: true))
 			{
 				var spread = mie.Args.Any(x => x.Spread);
+				var maybeOwner = mie.Target is MemberExpr { NullConditional: true } or DynMemberExpr { NullConditional: true };
 
 				if (a.Op == ":=")
 				{
@@ -4045,7 +4044,7 @@ namespace Keysharp.Compilation.Syntax
 							return Op("SetPropertyValue", target, name, SpreadParams(mie.Args, trailing: LowerExpr(a.Value)));
 						return Op("SetPropertyValue", [ target, name, ..LowerArgs(mie.Args), LowerExpr(a.Value) ]);
 					}
-					return MayYieldUnset(owner) ? NullCondWrap(owner, SetMember) : SetMember(LowerExpr(owner));
+					return maybeOwner || MayYieldUnset(owner) ? NullCondWrap(owner, SetMember, maybeOwner) : SetMember(LowerExpr(owner));
 				}
 
 				if (spread)
@@ -4055,7 +4054,7 @@ namespace Keysharp.Compilation.Syntax
 				ExpressionSyntax UpdateMember(ExpressionSyntax target)
 				{
 					var ops = new List<ExpressionSyntax>();
-					ExpressionSyntax name = Str(propName);
+					ExpressionSyntax name = dynamicName == null ? Str(propName) : null;
 					if (dynamicName != null)
 					{
 						var nameTemp = NewTemp();
@@ -4074,8 +4073,8 @@ namespace Keysharp.Compilation.Syntax
 					ops.Add(Op("SetPropertyValue", [ target, name, ..ids, updated ]));
 					return Op("MultiStatement", ops.ToArray());
 				}
-				if (MayYieldUnset(owner))
-					return NullCondWrap(owner, UpdateMember);
+				if (maybeOwner || MayYieldUnset(owner))
+					return NullCondWrap(owner, UpdateMember, maybeOwner);
 				var ownerTemp = NewTemp();
 				return Op("MultiStatement", Assign(Id(ownerTemp), LowerExpr(owner)), UpdateMember(Id(ownerTemp)));
 			}
@@ -4092,7 +4091,7 @@ namespace Keysharp.Compilation.Syntax
 						return Op("SetObject", argv);
 					}
 					return ie.NullConditional || MayYieldUnset(ie.Target)
-						? NullCondWrap(ie.Target, SetIndex)
+						? NullCondWrap(ie.Target, SetIndex, ie.NullConditional)
 						: SetIndex(LowerExpr(ie.Target));
 				}
 				// The compound forms capture each index into its own temp for the read-then-write; a spread would need
@@ -4116,7 +4115,7 @@ namespace Keysharp.Compilation.Syntax
 						ExpressionSyntax[] set = [ target, ..ids, newValue ];
 						ops[temps.Length] = Op("SetObject", set);
 						return Op("MultiStatement", ops);
-					});
+					}, ie.NullConditional);
 				// Compound: capture the target and each index once.
 				var tt = NewTemp();
 				var loweredArgs = LowerArgs(ie.Args);
@@ -4222,7 +4221,7 @@ namespace Keysharp.Compilation.Syntax
 			{
 				// Maybe / unset-permissive `expr?`: the inner call/member/index must not raise on an unset result, so
 				// rewrite it to its *OrNull variant (`f()?` -> InvokeOrNull, `obj.p?` -> GetPropertyValueOrNull).
-				if (u.Op == "?") return RewriteToOrNull(LowerExpr(u.Operand));
+				if (u.Op == "?") return RewriteToOrNull(LowerExpr(u.Operand), throughChain: u.Operand is MemberExpr or DynMemberExpr or IndexExpr or CallExpr);
 				Diag($"postfix '{u.Op}' not yet lowerable"); return Str("");
 			}
 			var propagate = MayYieldUnset(u.Operand);
@@ -4249,12 +4248,12 @@ namespace Keysharp.Compilation.Syntax
 
 		// `obj.name[args]` and `obj.%name%[args]` address the parameterized property itself, as the read folds them into
 		// GetPropertyValue(obj, name, args), so a write reaches its setter, COM propput or __Set with the index.
-		private static bool IsMemberIndex(IndexExpr ie, out Expr owner, out Expr dynamicName, out string name)
+		private static bool IsMemberIndex(IndexExpr ie, out Expr owner, out Expr dynamicName, out string name, bool allowOptional = false)
 		{
 			(owner, dynamicName, name) = ie.NullConditional || ie.Args.Count == 0 ? default : ie.Target switch
 			{
-				MemberExpr { NullConditional: false } m => (m.Target, (Expr)null, m.Name),
-				DynMemberExpr { NullConditional: false } d => (d.Target, d.NameExpr, null),
+				MemberExpr m when allowOptional || !m.NullConditional => (m.Target, (Expr)null, m.Name),
+				DynMemberExpr d when allowOptional || !d.NullConditional => (d.Target, d.NameExpr, null),
 				_ => default((Expr, Expr, string))
 			};
 			return owner != null;
@@ -4354,11 +4353,25 @@ namespace Keysharp.Compilation.Syntax
 		private static readonly Dictionary<string, string> ArrowOrNull = new(System.StringComparer.Ordinal)
 		{ { "Invoke", "InvokeOrNull" } };
 
-		private static ExpressionSyntax RewriteToOrNull(ExpressionSyntax e, Dictionary<string, string> map = null)
+		// Explicit ? follows a chain's result; IsSet and ?? leave its final access strict.
+		private static ExpressionSyntax RewriteToOrNull(ExpressionSyntax e, Dictionary<string, string> map = null, bool throughChain = false)
 		{
-			if (e is InvocationExpressionSyntax inv && inv.Expression is MemberAccessExpressionSyntax ma
-				&& (map ?? IsSetOrNull).TryGetValue(ma.Name.Identifier.Text, out var orNull))
+			if (throughChain && e is ParenthesizedExpressionSyntax paren)
+				return paren.WithExpression(RewriteToOrNull(paren.Expression, map, throughChain));
+			if (throughChain && e is ConditionalExpressionSyntax conditional)
+				return conditional.WithWhenTrue(RewriteToOrNull(conditional.WhenTrue, map, true))
+					.WithWhenFalse(RewriteToOrNull(conditional.WhenFalse, map, true));
+			if (e is not InvocationExpressionSyntax inv || inv.Expression is not MemberAccessExpressionSyntax ma)
+				return e;
+			if ((map ?? IsSetOrNull).TryGetValue(ma.Name.Identifier.Text, out var orNull))
 				return inv.WithExpression(ma.WithName(SyntaxFactory.IdentifierName(orNull)));
+			if (throughChain && ma.Name.Identifier.Text == "MultiStatement" && inv.ArgumentList.Arguments.Count > 0)
+			{
+				var args = inv.ArgumentList.Arguments;
+				var result = args[^1];
+				return inv.WithArgumentList(inv.ArgumentList.WithArguments(
+					args.Replace(result, result.WithExpression(RewriteToOrNull(result.Expression, map, true)))));
+			}
 			return e;
 		}
 
@@ -4501,11 +4514,11 @@ namespace Keysharp.Compilation.Syntax
 			// `obj?.M(args)` (null-conditional method) / `obj?.()` (null-conditional call): evaluate the target once;
 			// if unset, short-circuit to null without evaluating the call (or its args). Matches the canonical chain.
 			if (c.Callee is MemberExpr mc && (mc.NullConditional || MayYieldUnset(mc.Target)))
-				return NullCondWrap(mc.Target, tt => Op("Invoke", Cons2(tt, Str(mc.Name), CallArgs())));
+				return NullCondWrap(mc.Target, tt => Op(statement ? "InvokeOrNull" : "Invoke", Cons2(tt, Str(mc.Name), CallArgs())), mc.NullConditional);
 			if (c.Callee is DynMemberExpr dmc && MayYieldUnset(dmc))
-				return DynMemberWrap(dmc, (tt, name) => Op("Invoke", Cons2(tt, name, CallArgs())));
+				return DynMemberWrap(dmc, (tt, name) => Op(statement ? "InvokeOrNull" : "Invoke", Cons2(tt, name, CallArgs())));
 			if (c.NullConditional || MayYieldUnset(c.Callee))
-				return NullCondWrap(c.Callee, tt => Op("Invoke", Cons2(tt, Null, CallArgs())));
+				return NullCondWrap(c.Callee, tt => Op(statement ? "InvokeOrNull" : "Invoke", Cons2(tt, Null, CallArgs())), c.NullConditional);
 
 			// A member callee names the member to resolve; a bare callee is the call form `f(args)`, which the
 			// runtime distinguishes by a null name (see Script.InvokeOrNull).

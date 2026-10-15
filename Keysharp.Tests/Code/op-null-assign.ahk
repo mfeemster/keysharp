@@ -1,3 +1,5 @@
+#ErrorStdOut
+#Warn All, StdOut
 #NoTrayIcon
 #Include <assert>
 
@@ -150,5 +152,104 @@ Assert(!IsSet(optVal), A_LineNumber)
 present := { value: 5 }
 optVal := present?.value + Bump2()
 Assert(optVal = 6 && sideEffects = 1, A_LineNumber)
+
+; The access before ?. may be missing or return no value.
+class OptHolder
+{
+	Stored := 0
+	Prop => unset
+	Present => { Inner: 9 }
+	Items[Index] => unset
+	__Item[Index] => unset
+	NoValue() => unset
+	Counted
+	{
+		get
+		{
+			global sideEffects
+			sideEffects += 1
+			return this
+		}
+	}
+	Writable[Index]
+	{
+		get
+		{
+			global sideEffects
+			sideEffects += 1
+			return this.Stored
+		}
+		set => this.Stored := Value
+	}
+	Failure
+	{
+		get
+		{
+			throw ValueError("getter")
+		}
+	}
+}
+
+OptNoValue() => unset
+
+holder := OptHolder()
+holder?.NoValue()
+optVal := holder.Prop?.Inner
+Assert(!IsSet(optVal), A_LineNumber)
+optVal := holder.Missing?.Inner
+Assert(!IsSet(optVal), A_LineNumber)
+memberName := "Missing"
+optVal := holder.%memberName%?.Inner
+Assert(!IsSet(optVal), A_LineNumber)
+optNumber := 5
+optVal := optNumber.Missing?.Inner
+Assert(!IsSet(optVal), A_LineNumber)
+optVal := holder[1]?.Inner
+Assert(!IsSet(optVal), A_LineNumber)
+optVal := holder.Items[1]?.Inner
+Assert(!IsSet(optVal), A_LineNumber)
+optVal := OptNoValue()?.Inner
+Assert(!IsSet(optVal), A_LineNumber)
+optVal := holder?.NoValue()?.Inner
+Assert(!IsSet(optVal), A_LineNumber)
+Assert(!IsSet(holder?.Prop?), A_LineNumber)
+Assert(!IsSet(holder?.NoValue()?), A_LineNumber)
+AssertEq((holder?.Prop?) ?? 12, 12, A_LineNumber)
+AssertEq(holder.Present?.Inner ?? 0, 9, A_LineNumber)
+AssertEq((holder.Missing?.Inner == 9) ?? "short", "short", A_LineNumber)
+
+before := sideEffects
+AssertEq(holder.Counted?.Present.Inner ?? 0, 9, A_LineNumber)
+AssertEq(sideEffects, before + 1, A_LineNumber)
+
+before := sideEffects
+holder?.Writable[Bump2()] := 7
+AssertEq(holder.Stored, 7, A_LineNumber)
+AssertEq(sideEffects, before + 1, A_LineNumber)
+memberName := "Writable"
+holder.Counted?.%memberName%[Bump2()] += 1
+AssertEq(holder.Stored, 8, A_LineNumber)
+AssertEq(sideEffects, before + 4, A_LineNumber)
+holder.Missing?.Writable[Bump2()] := Bump2()
+holder.Missing?.%memberName%[Bump2()] += Bump2()
+AssertEq(sideEffects, before + 4, A_LineNumber)
+
+; The rest of the chain, its arguments and an assigned value are skipped.
+before := sideEffects
+optVal := holder.Prop?.Inner(Bump2())
+holder.Missing?.Inner := Bump2()
+holder.Prop?.Inner += Bump2()
+Assert(!IsSet(optVal) && sideEffects = before, A_LineNumber)
+
+; Only the access the maybe operator follows is lenient.
+Throws(() => holder.Missing.Inner?.Value, A_LineNumber, PropertyError)
+Throws(() => holder.Missing[1]?.Inner, A_LineNumber, PropertyError)
+Throws(() => (holder?.Prop)?.Inner, A_LineNumber, UnsetError)
+Throws(() => holder?.Missing, A_LineNumber, PropertyError)
+Throws(() => holder?.Prop, A_LineNumber, UnsetError)
+Throws(() => holder?.Items[1], A_LineNumber, UnsetError)
+Throws(() => IsSet(holder?.Prop), A_LineNumber, UnsetError)
+Throws(() => holder?.Prop ?? 12, A_LineNumber, UnsetError)
+Throws(() => holder.Failure?.Inner, A_LineNumber, ValueError)
 
 FileAppend "pass", "*"
