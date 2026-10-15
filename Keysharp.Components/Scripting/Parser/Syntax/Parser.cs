@@ -1022,7 +1022,7 @@ namespace Keysharp.Parsing.Syntax
 					if (_includeDir != null && emit && (nameTok.IsKeyword("include") || nameTok.IsKeyword("includeagain")))
 					{
 						int j = i + 2;
-						var fileToks = new List<Token>();
+						var fileToks = _scratchListTokens.Get();
 						while (j < src.Count && src[j].Kind != TokenKind.Newline && src[j].Kind != TokenKind.EOF) fileToks.Add(src[j++]);
 						if (fileToks.Count == 0)   // continuation form: `#include` <nl> `(` file `)`
 						{
@@ -1040,6 +1040,7 @@ namespace Keysharp.Parsing.Syntax
 						if (path == null) continue;
 						if (System.IO.Directory.Exists(path))
 						{
+							_scratchListTokens.Return(fileToks);
 							curDir = path;
 							continue;
 						}
@@ -1047,24 +1048,29 @@ namespace Keysharp.Parsing.Syntax
 						if (!_included.Add(path) && !nameTok.IsKeyword("includeagain")) continue;
 						if (!System.IO.File.Exists(path))
 						{
+							_scratchListTokens.Return(fileToks);
 							if (!ignoreMissing) throw IncludeNotFound(t, path);
 							continue;
 						}
 						var included = LexIncludedFile(path, out var diagnostics);
 						if (++includeDepth > MaxIncludeDepth)
+						{
+							_scratchListTokens.Return(fileToks);
 							throw new Keysharp.Builtins.ParseException(Diagnostic(t,
 								"Too many nested #include directives (possible circular #includeagain)"));
+						}
 						outp.Add(new Token(TokenKind.Newline, "\n", 0, 0, 0, 0, true, path));
 						MarkInclusion(included, t.Inclusion);
 						PreprocessFile(included, System.IO.Path.GetDirectoryName(path), diagnostics, backCompat, module);
 						includeDepth--;
+						_scratchListTokens.Return(fileToks);
 						continue;
 					}
 					if (nameTok.Kind == TokenKind.Identifier && IsCondDirective(nameTok.Text))
 					{
 						var name = nameTok.Text;
 						int j = i + 2;
-						var cond = new List<Token>();
+						var cond = _scratchListTokens.Get();
 						while (j < src.Count && src[j].Kind != TokenKind.Newline && src[j].Kind != TokenKind.EOF) cond.Add(src[j++]);
 						// Validate conditions even when their branch is inactive.
 						if (nameTok.IsKeyword("if"))
@@ -1101,6 +1107,7 @@ namespace Keysharp.Parsing.Syntax
 							}
 						}
 						i = j;   // leave the trailing newline to be emitted normally, preserving line separation
+						_scratchListTokens.Return(cond);
 						continue;
 					}
 					if (emit)
