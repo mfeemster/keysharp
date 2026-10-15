@@ -4999,7 +4999,7 @@ namespace Keysharp.Compilation.Syntax
 			var switchValue = s.Value == null ? null : "KS_swv" + (++_flowCounter);
 
 			// All labels directly inside any case/default body share the switch's (single) C# label scope.
-			var switchLabels = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+			var switchLabels = _scratchCaseInsensitiveHashStrings.Get();
 			foreach (var c in s.Cases) switchLabels.UnionWith(CollectDirectLabels(c.Body));
 			if (s.Default != null) switchLabels.UnionWith(CollectDirectLabels(s.Default));
 			_labelScopes.Add(switchLabels);
@@ -5018,15 +5018,21 @@ namespace Keysharp.Compilation.Syntax
 				return SyntaxFactory.SwitchSection(SyntaxFactory.List(labels), SyntaxFactory.List(body));
 			}
 
-			var sections = new List<SwitchSectionSyntax>();
+			var sections = _scratchListSwitchSections.Get();
 			foreach (var c in s.Cases)
 				sections.Add(Section(c.Values.Select(CaseLabel), LowerStmtList(c.Body)));
 			if (s.Default != null)
-				sections.Add(Section(new SwitchLabelSyntax[] { SyntaxFactory.DefaultSwitchLabel() }, LowerStmtList(s.Default)));
+			{
+				var def = _scratchListSwitchLabels.Get();
+				def.Add(SyntaxFactory.DefaultSwitchLabel());
+				sections.Add(Section(def, LowerStmtList(s.Default)));
+				_scratchListSwitchLabels.Return(def);
+			}
 
 			_labelScopes.RemoveAt(_labelScopes.Count - 1);
-
+			_scratchCaseInsensitiveHashStrings.Return(switchLabels);
 			var sw = SyntaxFactory.SwitchStatement(SyntaxFactory.LiteralExpression(SyntaxKind.TrueLiteralExpression), SyntaxFactory.List(sections));
+			_scratchListSwitchSections.Return(sections);
 
 			if (switchValue == null)
 				return sw;
