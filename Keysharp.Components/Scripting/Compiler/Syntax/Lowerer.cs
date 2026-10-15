@@ -4875,14 +4875,16 @@ namespace Keysharp.Compilation.Syntax
 		private List<StatementSyntax> LowerStmtList(System.Collections.Generic.IReadOnlyList<Stmt> stmts)
 		{
 			_labelScopes.Add(CollectDirectLabels(stmts));
-			var result = new List<StatementSyntax>();
+			var result = _scratchLowerStmtListStatementsDangerous.Get();
+			result.Clear();
 			for (int i = 0; i < stmts.Count; i++)
 			{
 				if (stmts[i] is LabelStmt ll && i + 1 < stmts.Count && IsLoopStmt(stmts[i + 1])) _pendingLoopLabel = ll.Name;
 				AddStmt(result, stmts[i]);
 			}
 			_labelScopes.RemoveAt(_labelScopes.Count - 1);
-			return result;
+			_scratchLowerStmtListStatementsDangerous.Return(result);//Note this return doesn't clear because it will be used very briefly and modified by the caller.
+			return result;//This is somewhat dangerous, but provides a large reduction in allocations. Revert back to a normal allocation if this ever causes errors.
 		}
 
 		// { [headers] [IEnumerator KS_eN = null;] [var KS_loopN =] Push(type); [backups] try { loop } finally { [Dispose]
