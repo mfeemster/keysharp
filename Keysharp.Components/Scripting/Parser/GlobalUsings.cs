@@ -17,6 +17,7 @@ global using System.Text.RegularExpressions;
 
 //Ours
 global using Keysharp.Builtins;
+global using Keysharp.Internals.Containers;
 global using Keysharp.Internals.ExtensionMethods;
 global using Keysharp.Language;
 global using Keysharp.Runtime;

@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace Keysharp.Parsing.Lexing
 {
 	/// <summary>
@@ -62,6 +60,7 @@ namespace Keysharp.Parsing.Lexing
 		// through a break — which is what lets a section split a name, an operator or a string across its lines.
 		private readonly bool _mergedLine;
 		private int _noSectionBefore;   // where the last probe for a continuation section stopped without finding one
+		private ObjectStackPool<List<Token>> _scratchSkipBlankAndCommentLinesTrivia = new(() => [], item => item.Clear());
 
 		public Lexer(string source, string file = null) : this(source, file, mergedLine: false) { }
 
@@ -628,7 +627,7 @@ namespace Keysharp.Parsing.Lexing
 
 			int sp = _pos, sl = _line, sc = _col;
 			// Held back rather than emitted: this runs at every line break, and rewinds when there is no section here.
-			List<Token> trivia = null;
+			var trivia = _scratchSkipBlankAndCommentLinesTrivia.Get();
 
 			SkipBlankAndCommentLines(ref trivia);
 
@@ -636,10 +635,9 @@ namespace Keysharp.Parsing.Lexing
 			{
 				_noSectionBefore = _pos;
 				_pos = sp; _line = sl; _col = sc;
+				_scratchSkipBlankAndCommentLinesTrivia.Return(trivia);
 				return false;
 			}
-
-			trivia ??= [];
 
 			var text = new System.Text.StringBuilder();
 			var segs = new List<MergeSegment>();
@@ -667,6 +665,7 @@ namespace Keysharp.Parsing.Lexing
 
 			MergeSectionLines(text, segs, trivia);
 			SpliceMerged(tokens, text.ToString(), segs, trivia, firstLeadingWs);
+			_scratchSkipBlankAndCommentLinesTrivia.Return(trivia);
 			leadingWs = false;
 			return true;
 		}
