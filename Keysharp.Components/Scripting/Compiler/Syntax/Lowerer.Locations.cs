@@ -26,11 +26,14 @@ namespace Keysharp.Compilation.Syntax
 			.WithAdditionalAnnotations(LocationAnnotation);
 
 		private static readonly System.StringComparer SourcePathComparer = Parser.SourcePathComparer;
+		private readonly ObjectStackPool<List<Stmt>> _scratchLowerBody = new(() => [], item => item.Clear());
 		// The text each file was parsed from, by path.
 		private readonly Dictionary<string, string> _sourceTexts = new(SourcePathComparer);
 		// The files statements come from, with their text, by file index: the main script first, then the others in the
 		// order the lowering meets them.
 		private readonly OrderedDictionary<string, string> _sourceFiles = new(SourcePathComparer);
+
+
 		private bool _locationOverflowReported;
 		private bool _stamped;
 
@@ -99,8 +102,21 @@ namespace Keysharp.Compilation.Syntax
 		}
 
 		// The body of an if, loop, try or catch, lowered as a statement list so that a single statement records its location too.
-		private BlockSyntax LowerBody(Stmt body) =>
-			SyntaxFactory.Block(LowerStmtList(body is Block block ? block.Body : [body]));
+		private BlockSyntax LowerBody(Stmt body)
+		{
+			if (body is Block block)
+			{
+				return SyntaxFactory.Block(LowerStmtList(block.Body));
+			}
+			else
+			{
+				var bodyList = _scratchLowerBody.Get();
+				bodyList.Add(body);
+				var result = SyntaxFactory.Block(LowerStmtList(bodyList));
+				_scratchLowerBody.Return(bodyList);
+				return result;
+			}
+		}
 
 		// Compiled output can name two files alike, and the later one then gains a number before its extension.
 		private AttributeListSyntax SourceFilesAttribute()
