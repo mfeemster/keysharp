@@ -3,6 +3,9 @@ namespace Keysharp.Parsing.Syntax
 	// Structural children, including scope bodies. Optional children can be null; each pass selects its own scope boundary.
 	internal static class AstChildren
 	{
+		private static readonly List<Stmt> emptyStmts = [];
+		private static readonly List<Expr> emptyExprs = [];
+
 		// Separate iterators keep each state machine from retaining every node shape's nested loops.
 		internal static IEnumerable<Node> Of(Node node) => node switch
 		{
@@ -86,7 +89,7 @@ namespace Keysharp.Parsing.Syntax
 
 		private static IEnumerable<Node> SpecialLoopParts(SpecialLoopStmt loop)
 		{
-			foreach (var argument in loop.Args ?? []) yield return argument;
+			foreach (var argument in loop.Args ?? emptyExprs) yield return argument;
 			yield return loop.Body;
 			yield return loop.Until;
 			yield return loop.Else;
@@ -101,7 +104,7 @@ namespace Keysharp.Parsing.Syntax
 				foreach (var value in branch.Values) yield return value;
 				foreach (var child in branch.Body) yield return child;
 			}
-			foreach (var child in choice.Default ?? []) yield return child;
+			foreach (var child in choice.Default ?? emptyStmts) yield return child;
 		}
 
 		private static IEnumerable<Node> TryParts(TryStmt attempt)
