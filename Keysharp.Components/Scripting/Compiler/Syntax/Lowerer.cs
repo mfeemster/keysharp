@@ -5433,7 +5433,8 @@ namespace Keysharp.Compilation.Syntax
 
 		private List<MemberDeclarationSyntax> LowerProperty(ClassProperty pr)
 		{
-			var result = new List<MemberDeclarationSyntax>();
+			var result = _scratchListMembersDangerous.Get();
+			result.Clear();
 			var (idxLowers, byRefParams) = ParamSets(pr.Params, hasReceiver: true);
 			if (pr.HasSet && idxLowers.Contains("value"))
 				Diag($"This property parameter declaration conflicts with the setter's value parameter: {pr.Name}");
@@ -5468,12 +5469,14 @@ namespace Keysharp.Compilation.Syntax
 				// (C# requires params to be last) — it becomes a plain object[] the runtime fills with the index args.
 				if (idx.Length > 0 && idx[^1].Modifiers.Any(SyntaxKind.ParamsKeyword))
 					idx[^1] = idx[^1].WithModifiers(SyntaxFactory.TokenList());
-				var all = new List<ParameterSyntax> { ThisParam() };
-				all.AddRange(idx);
-				all.Add(SyntaxFactory.Parameter(SyntaxFactory.Identifier(NameMangler.Escape("value"))).WithType(ObjType));
-				result.Add(ObjMethod(setterName, SyntaxFactory.ParameterList(SyntaxFactory.SeparatedList(all)),
+				_scratchPropertyAll.Clear();
+				_scratchPropertyAll.Add(ThisParam());
+				_scratchPropertyAll.AddRange(idx);
+				_scratchPropertyAll.Add(SyntaxFactory.Parameter(SyntaxFactory.Identifier(NameMangler.Escape("value"))).WithType(ObjType));
+				result.Add(ObjMethod(setterName, SyntaxFactory.ParameterList(SyntaxFactory.SeparatedList(_scratchPropertyAll)),
 					body, Attr("Keysharp.Runtime.UserDeclaredName", Str(pr.Name))));
 			}
+			_scratchListMembersDangerous.Return(result);//Dangerous: the caller must immediately use the returned list and not hold it across another LowerProperty call.
 			return result;
 		}
 
