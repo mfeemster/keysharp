@@ -4946,14 +4946,15 @@ namespace Keysharp.Compilation.Syntax
 		{
 			var id = ++_flowCounter;
 			var ev = "KS_e" + id;
-			var header = new List<StatementSyntax>();
-			var meArgs = new List<ExpressionSyntax> { LoopHeader(header, id, LowerExpr(fr.Enumerable)) };
+			var header = _scratchListStatements.Get();
+			var meArgs = _scratchListExpressions.Get();
+			meArgs.Add(LoopHeader(header, id, LowerExpr(fr.Enumerable)));
 			// AHK scopes for-loop variables: they're restored to their pre-loop values after the loop. Back each one
 			// up into a temp before the loop and restore it in the finally (matches the canonical backup/restore).
 			// The backup also clears the variable, as AHK's does, so the loop gets the variable's own reference even
 			// when it held one to another variable.
-			var saves = new List<StatementSyntax>();
-			var restores = new List<StatementSyntax>();
+			var saves = _scratchListStatements.Get();
+			var restores = _scratchListStatements.Get();
 
 			foreach (var v in fr.Vars)
 			{
@@ -4979,7 +4980,12 @@ namespace Keysharp.Compilation.Syntax
 			body = body.WithStatements(body.Statements.Insert(0, CallStmt("Keysharp.Runtime.Loops.Inc")));
 			var cond = Inv(Access("Keysharp.Runtime.Flow.IsTrueAndRunning"), Inv(Member(Id(ev), "MoveNext")));
 			var loop = SyntaxFactory.WhileStatement(cond, WrapLoopBody(body, fr.Until, frame, fr));
-			return LoopBlock(id, frame, "Normal", SyntaxFactory.Block(LocalDeclVar(ev, enumInit), loop), fr.Else, header, null, saves, restores);
+			var block = LoopBlock(id, frame, "Normal", SyntaxFactory.Block(LocalDeclVar(ev, enumInit), loop), fr.Else, header, null, saves, restores);
+			_scratchListStatements.Return(restores);
+			_scratchListStatements.Return(saves);
+			_scratchListExpressions.Return(meArgs);
+			_scratchListStatements.Return(header);
+			return block;
 		}
 
 		// Lowered as a real C# `switch` (not an if-chain) so that all case bodies share one label scope — a `goto`
