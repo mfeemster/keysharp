@@ -90,15 +90,17 @@ namespace Keysharp.Builtins.COM
 			return new ComObjArray(vt, lengths);
 		}
 
-		public KeysharpFunc __Enum(object count)
+		public KeysharpFunc __Enum(object NumberOfVars = null)
 		{
-			_ = count.TryCoerceInt(out var c);
-			return CreateEnumerator(c);
+			if (!NumberOfVars.CoerceInt(out var c, 2))
+				return null;
+
+			return CreateEnumerator(c >= 2 ? 2 : 1);
 		}
 
 		IEnumerator<object> IEnumerable<object>.GetEnumerator() => CreateEnumerator(1);
 
-		IEnumerator IEnumerable.GetEnumerator() => CreateEnumerator(2);
+		IEnumerator IEnumerable.GetEnumerator() => CreateEnumerator(1);
 
 		/// <summary>
 		/// Gets the upper bound (inclusive) of the specified dimension.
@@ -247,7 +249,7 @@ namespace Keysharp.Builtins.COM
 					   this,
 					   count,
 					   MoveNext,
-					   () => current,
+					   () => count == 2 ? index : current,
 					   () => (index, current),
 					   Reset);
 

@@ -3127,13 +3127,13 @@
                  {
                      "category":  "Collections",
                      "feature":  "Array.__Enum()",
-                     "syntax":  "arr.__Enum()",
+                     "syntax":  "arr.__Enum([NumberOfVars])",
                      "windows":  "full",
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "full",
-                     "notes":  "Enumerates array elements.",
-                     "tested-by":  "collections-array.ahk"
+                     "notes":  "Enumerates values or index/value pairs; omitted or zero NumberOfVars adapts to the outputs, while 1 or 2 fixes the mode and argument count.",
+                     "tested-by":  "collections-array.ahk; flow-enum.ahk; external-com-atp.ahk"
                  },
                  {
                      "category":  "Collections",
@@ -5859,12 +5859,12 @@
                  {
                      "category":  "Windowing/GUI",
                      "feature":  "Gui.__Enum()",
-                     "syntax":  "",
+                     "syntax":  "gui.__Enum([NumberOfVars])",
                      "windows":  "full",
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "full",
-                     "notes":  "Returns an enumerator for GUI controls."
+                     "notes":  "Enumerates controls or handle/control pairs; omitted or zero NumberOfVars adapts to the outputs, while 1 or 2 fixes the mode and argument count."
                  },
                  {
                      "category":  "Windowing/GUI",
@@ -7872,13 +7872,13 @@
                  {
                      "category":  "Collections",
                      "feature":  "Map.__Enum()",
-                     "syntax":  "m.__Enum()",
+                     "syntax":  "m.__Enum([NumberOfVars])",
                      "windows":  "full",
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "full",
-                     "notes":  "Enumerates key-value pairs.",
-                     "tested-by":  "collections-map.ahk"
+                     "notes":  "Enumerates keys or key/value pairs; omitted or zero NumberOfVars adapts to the outputs, while 1 or 2 fixes the mode and argument count.",
+                     "tested-by":  "collections-map.ahk; flow-enum.ahk"
                  },
                  {
                      "category":  "Collections",
@@ -9802,8 +9802,8 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "full",
-                     "notes":  "Match object returned by RegExMatch.",
-                     "tested-by":  "string-regexmatch.ahk"
+                     "notes":  "RegExMatch result. __Enum([NumberOfVars]) includes the whole match at 0; omitted or zero adapts to value or name/index-and-value outputs, while 1 or 2 fixes the mode and argument count.",
+                     "tested-by":  "string-regexmatch.ahk; flow-enum.ahk"
                  },
                  {
                      "category":  "Core Language",
@@ -12019,12 +12019,13 @@
                  {
                      "category":  "COM",
                      "feature":  "ComObjArray.__Enum()",
-                     "syntax":  "ComArray.__Enum(NumberOfVars)",
+                     "syntax":  "ComArray.__Enum([NumberOfVars])",
                      "windows":  "full",
                      "linux_x11":  "unsupported",
                      "linux_wayland":  "unsupported",
                      "macos":  "unsupported",
-                     "notes":  "Enumerates a COM SAFEARRAY. COM is available only on Windows."
+                     "notes":  "Windows SAFEARRAY enumerator: NumberOfVars defaults to 2 (index/value); values below 2 select value mode. Calls require the selected argument count.",
+                     "tested-by":  "external-com-invoke.ahk"
                  },
                  {
                      "category":  "COM",

@@ -40,15 +40,16 @@ namespace Keysharp.Builtins
 
 		public object __Get(object name, object args) => name is string s && s.TryParseLong(out long l) && l >= 0 && l <= GroupCount ? this[l] : this[name];
 
-		public KeysharpFunc __Enum(object count)
+		public KeysharpFunc __Enum(object NumberOfVars = null)
 		{
-			_ = count.TryCoerceInt(out var c);
+			// AutoHotkey treats a nonnumeric count as zero.
+			_ = NumberOfVars.TryCoerceInt(out var c);
 			return CreateEnumerator(c);
 		}
 
 		IEnumerator<(object, object)> IEnumerable<(object, object)>.GetEnumerator() => CreateEnumerator(2);
 
-		IEnumerator IEnumerable.GetEnumerator() => CreateEnumerator(2);
+		IEnumerator IEnumerable.GetEnumerator() => CreateEnumerator(1);
 
 		public long get_Len(object obj = null) => Len(obj);
 
@@ -122,13 +123,18 @@ namespace Keysharp.Builtins
 
 		private Enumerator CreateEnumerator(int count)
 		{
+			count = count == 0 || count == 1 ? count : 2;
 			var index = -1;
 
 			return new Enumerator(
 					   this,
 					   count,
 					   () => ++index < GroupCount,
-					   () => At(index).Value,
+					   () =>
+					   {
+						   var g = At(index);
+						   return count == 2 ? g.Name.Length == 0 ? (object)(long)index : g.Name : g.Value;
+					   },
 			() =>
 			{
 				var g = At(index);

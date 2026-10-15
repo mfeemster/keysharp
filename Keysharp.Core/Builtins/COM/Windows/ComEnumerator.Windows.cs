@@ -12,6 +12,10 @@ namespace Keysharp.Builtins.COM
 			if (hr == ComValue.DISP_E_MEMBERNOTFOUND)
 				hr = dispatch.RawInvoke(Com.DISPID_NEWENUM, INVOKEKIND.INVOKE_FUNC | INVOKEKIND.INVOKE_PROPERTYGET, null, out result);
 
+			// Without _NewEnum, AutoHotkey drives the object's default member as the enumerator.
+			if (hr == ComValue.DISP_E_MEMBERNOTFOUND)
+				return CreateCallbackEnumerator(source as ComObject ?? new ComObject(VarEnum.VT_DISPATCH, (long)Marshal.GetIDispatchForObject(source)), count);
+
 			if (hr >= 0 && result is Enumerator enumerator)
 				return enumerator;
 
@@ -35,6 +39,10 @@ namespace Keysharp.Builtins.COM
 
 			return CreateEnumerator(pointer, source, count);
 		}
+
+		// COM packing replaces argument slots, while a loop reuses its reference array.
+		internal static Enumerator CreateCallbackEnumerator(ComObject source, int count) =>
+			new Enumerator(source, count, new KeysharpFunc((params object[] args) => source.RawInvokeMethod(null, (object[])args.Clone())));
 
 		internal static unsafe Enumerator CreateEnumerator(nint pointer, object source = null, int count = 2)
 		{

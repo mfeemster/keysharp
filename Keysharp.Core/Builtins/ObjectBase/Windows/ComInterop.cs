@@ -96,7 +96,12 @@ namespace Keysharp.Builtins
 				}
 
 				if (newEnum)
+				{
+					var member = Functions.FindMethodAndProperty(this, name);
+					if (member.Method == null && !member.Property && !Answers(name, "__Call"))
+						return DISP_E_MEMBERNOTFOUND;
 					result = new ComEnumerator(Invoke(this, name, 1L));
+				}
 				else
 				{
 					var member = name == null ? ((object)this, Functions.HasProp(this, "__Item") != 0L)

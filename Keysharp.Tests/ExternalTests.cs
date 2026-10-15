@@ -46,6 +46,9 @@ public partial class ExternalTests : TestRunner
 	[Test, Category("External")]
 	public void COMInvoke() => Assert.IsTrue(TestScript("external-com-invoke", false));
 
+	[Test, Category("External"), Category("Curated")]
+	public void COMEnumeration() => Assert.IsTrue(TestScript("external-com-atp", false));
+
 	// Native reference counts expose leaks when argument conversion fails before invoking the server.
 	[Test, Category("External"), Category("Internal")]
 	public void ComPackingFailure()

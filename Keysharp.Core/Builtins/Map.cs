@@ -231,15 +231,12 @@ namespace Keysharp.Builtins
 		/// <summary>
 		/// Gets the enumerator object which returns a key,value tuple for each element
 		/// </summary>
-		/// <param name="count">The number of items each element should contain:<br/>
-		///     1: Return the key in the first element, with the second being null.<br/>
-		///     2: Return the key in the first element, and the value in the second.
-		/// </param>
+		/// <param name="NumberOfVars">Output mode: 1 returns keys, 2 returns key/value pairs, and 0 or omitted adapts to the output variables.</param>
 		/// <returns><see cref="Enumerator"/></returns>
-		public KeysharpFunc __Enum(object count)
+		public KeysharpFunc __Enum(object NumberOfVars = null)
 		{
-			_ = count.TryCoerceInt(out var c);
-			return CreateEnumerator(c);
+			_ = NumberOfVars.TryCoerceInt(out var count);
+			return CreateEnumerator(count > 1 ? 2 : count == 0 ? 0 : 1);
 		}
 
 		/// <summary>
@@ -375,7 +372,7 @@ namespace Keysharp.Builtins
 		/// The implementation for <see cref="IEnumerable{(object, object)}.GetEnumerator()"/> which returns an <see cref="Enumerator"/>.
 		/// </summary>
 		/// <returns>An <see cref="IEnumerator{(object, object)}"/> which is an <see cref="Enumerator"/>.</returns>
-		IEnumerator<(object, object)> IEnumerable<(object, object)>.GetEnumerator() => CreateEnumerator(2);
+		IEnumerator<(object, object)> IEnumerable<(object, object)>.GetEnumerator() => CreateEnumerator();
 
 		/// <summary>
 		/// Returns true if the specified key has an associated value within a map, otherwise false.
@@ -480,14 +477,14 @@ namespace Keysharp.Builtins
 		/// The implementation for <see cref="IEnumerable.GetEnumerator"/> which just calls <see cref="__Enum"/>.
 		/// </summary>
 		/// <returns><see cref="Enumerator"/></returns>
-		IEnumerator IEnumerable.GetEnumerator() => CreateEnumerator(2);
+		IEnumerator IEnumerable.GetEnumerator() => CreateEnumerator();
 
 		/// <summary>
 		/// Pattern-based enumerator, so a C# <c>foreach</c> keeps its tuple semantics now that the class
 		/// implements two <c>IEnumerable&lt;T&gt;</c> instantiations.
 		/// </summary>
 		[PublicHiddenFromUser]
-		public IEnumerator<(object, object)> GetEnumerator() => CreateEnumerator(2);
+		public IEnumerator<(object, object)> GetEnumerator() => CreateEnumerator();
 
 		/// <summary>
 		/// Internal helper to insert a key,value pair into the map.
@@ -520,7 +517,7 @@ namespace Keysharp.Builtins
 		/// <returns>True if key was found else false.</returns>
 		internal bool TryGetValue(object key, out object value) => map.TryGetValue(key, out value);
 
-		private Enumerator CreateEnumerator(int count)
+		private Enumerator CreateEnumerator(int count = 0)
 		{
 			var enumerable = EnumerableMap;
 
@@ -533,11 +530,7 @@ namespace Keysharp.Builtins
 						   count,
 						   () => ++position < pairs.Length,
 						   () => pairs[position].Key,
-						   () =>
-						   {
-							   var current = pairs[position];
-							   return count <= 1 ? (current.Key, null) : (current.Key, current.Value);
-						   },
+						   () => (pairs[position].Key, pairs[position].Value),
 						   () => position = -1);
 			}
 
@@ -548,11 +541,7 @@ namespace Keysharp.Builtins
 					   count,
 					   () => iter.MoveNext(),
 					   () => iter.Current.Key,
-					   () =>
-					   {
-						   var current = iter.Current;
-						   return count <= 1 ? (current.Key, null) : (current.Key, current.Value);
-					   },
+					   () => (iter.Current.Key, iter.Current.Value),
 					   () =>
 					   {
 						   iter.Dispose();

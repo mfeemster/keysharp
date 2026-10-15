@@ -187,14 +187,12 @@ public class Array : KeysharpObject, I__Enum, IEnumerable<object>, IEnumerable<(
 	/// <summary>
 	/// Gets the enumerator object which returns a position,value tuple for each element
 	/// </summary>
-	/// <param name="count">The number of items each element should contain:<br/>
-	///     1: Return the value in the first element, with the second being null.<br/>
-	///     2: Return the index in the first element, and the value in the second.
-	/// </param>
+	/// <param name="NumberOfVars">Output mode: 1 returns values, 2 returns index/value pairs, and 0 or omitted adapts to the output variables.</param>
 	/// <returns><see cref="Enumerator"/></returns>
-	public KeysharpFunc __Enum(object count)
+	public KeysharpFunc __Enum(object NumberOfVars = null)
 	{
-		_ = count.TryCoerceInt(out var c);
+		// AutoHotkey treats a nonnumeric count as zero.
+		_ = NumberOfVars.TryCoerceInt(out var c);
 		return CreateEnumerator(c);
 	}
 
@@ -813,7 +811,7 @@ public class Array : KeysharpObject, I__Enum, IEnumerable<object>, IEnumerable<(
 	/// The implementation for <see cref="IEnumerable.GetEnumerator"/> which just calls <see cref="__Enum"/>.
 	/// </summary>
 	/// <returns><see cref="Enumerator"/></returns>
-	IEnumerator IEnumerable.GetEnumerator() => CreateEnumerator(2);
+	IEnumerator IEnumerable.GetEnumerator() => CreateEnumerator(1);
 
 	/// <summary>
 	/// The implementation for <see cref="IList.RemoveAt"/> which just calls <see cref="RemoveAt"/>.<br/>
@@ -851,6 +849,7 @@ public class Array : KeysharpObject, I__Enum, IEnumerable<object>, IEnumerable<(
 
 	private Enumerator CreateEnumerator(int count)
 	{
+		count = count > 1 ? 2 : count == 0 ? 0 : 1;
 		var arr = array;
 		var position = -1;
 
@@ -858,7 +857,7 @@ public class Array : KeysharpObject, I__Enum, IEnumerable<object>, IEnumerable<(
 				   this,
 				   count,
 				   () => ++position < arr.Count,
-				   () => arr[position],
+				   () => count == 2 ? position + 1L : arr[position],
 				   () => (position + 1L, arr[position]),
 				   () => position = -1);
 	}

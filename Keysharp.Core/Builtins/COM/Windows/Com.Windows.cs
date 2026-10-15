@@ -157,7 +157,14 @@ namespace Keysharp.Builtins.COM
 				return false;
 
 			_ = Marshal.Release(marker);
-			obj = Marshal.GetObjectForIUnknown(punk);
+			var candidate = Marshal.GetObjectForIUnknown(punk);
+			if (candidate is not Any)
+			{
+				if (Marshal.IsComObject(candidate))
+					_ = Marshal.ReleaseComObject(candidate);
+				return false;
+			}
+			obj = candidate;
 			return true;
 		}
 

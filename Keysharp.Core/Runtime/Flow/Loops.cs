@@ -527,6 +527,11 @@ namespace Keysharp.Runtime
 			if (obj is KeysharpFunc funcObj)
 				return new Enumerator(source, count, funcObj);
 
+#if WINDOWS
+			if (obj is ComObject com)
+				return Keysharp.Builtins.COM.ComEnumeration.CreateCallbackEnumerator(com, count);
+#endif
+
 			_ = Errors.TypeErrorOccurred(obj, typeof(Enumerator));
 			return default;
 		}

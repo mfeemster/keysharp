@@ -610,9 +610,11 @@ namespace Keysharp.Builtins
 			});
 		}
 
-		public KeysharpFunc __Enum(object count)
+		public KeysharpFunc __Enum(object NumberOfVars = null)
 		{
-			_ = count.TryCoerceInt(out var c);
+			if (!NumberOfVars.CoerceInt(out var c))
+				return null;
+
 			return CreateEnumerator(c);
 		}
 
@@ -3750,10 +3752,11 @@ namespace Keysharp.Builtins
 				container.SetSize(new Size(newW, newH));
 		}
 
-		IEnumerator IEnumerable.GetEnumerator() => CreateEnumerator(2);
+		IEnumerator IEnumerable.GetEnumerator() => CreateEnumerator(1);
 
 		private Enumerator CreateEnumerator(int count)
 		{
+			count = count == 0 || count == 1 ? count : 2;
 			EnsureMainWindowControls();
 			var iter = controls.GetEnumerator();
 
@@ -3761,7 +3764,7 @@ namespace Keysharp.Builtins
 					   this,
 					   count,
 					   () => iter.MoveNext(),
-					   () => iter.Current.Value,
+					   () => count == 2 ? iter.Current.Key : iter.Current.Value,
 					   () => (iter.Current.Key, iter.Current.Value),
 					   () => iter = controls.GetEnumerator());
 		}

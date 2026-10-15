@@ -1,4 +1,6 @@
 #NoTrayIcon
+#ErrorStdOut
+#Warn All, StdOut
 #Include <assert>
 
 ; Return true to continue enumerating, false to stop
@@ -29,6 +31,60 @@ while (e(&i, &j))
     a += j
 
 AssertEq(a, 9, A_LineNumber)
+
+entries := Map("alpha", "A", "bravo", "B")
+RegExMatch("hello", "(?<word>hello)", &match)
+for scenario in [
+    {Source: arr, Single: 2, First: [1, 2], Second: [2, 3]},
+    {Source: entries, Single: "alpha", First: ["alpha", "A"], Second: ["bravo", "B"]},
+    {Source: match, Single: "hello", First: [0, "hello"], Second: ["word", "hello"]}
+] {
+    next := scenario.Source.__Enum()
+    Assert(next(&value), A_LineNumber)
+    AssertEq(value, scenario.Single, A_LineNumber)
+    Assert(next(&key, &value), A_LineNumber)
+    AssertEq(key, scenario.Second[1], A_LineNumber)
+    AssertEq(value, scenario.Second[2], A_LineNumber)
+
+    next := scenario.Source.__Enum(1)
+    Throws(() => next(), A_LineNumber, ArgumentError)
+    Throws(next.Bind(&value, {}), A_LineNumber, ArgumentError)
+    Throws(() => next(123), A_LineNumber, TypeError)
+    Assert(next(&value), A_LineNumber)
+    AssertEq(value, scenario.Single, A_LineNumber)
+
+    next := scenario.Source.__Enum(2)
+    key := "unchanged"
+    Throws(next.Bind(&key), A_LineNumber, ArgumentError)
+    Throws(next.Bind(&key, 123), A_LineNumber, TypeError)
+    AssertEq(key, "unchanged", A_LineNumber)
+    Assert(next(&key, &value), A_LineNumber)
+    AssertEq(key, scenario.First[1], A_LineNumber)
+    AssertEq(value, scenario.First[2], A_LineNumber)
+}
+
+next := arr.__Enum(0)
+Throws(() => next(unset, unset, unset), A_LineNumber, ArgumentError)
+Assert(next(), A_LineNumber)
+Assert(next(&value), A_LineNumber)
+AssertEq(value, 3, A_LineNumber)
+Assert(next(unset), A_LineNumber)
+Assert(!next(&value), A_LineNumber)
+Throws(() => next(123), A_LineNumber, TypeError)
+next := arr.__Enum(2)
+Assert(next(&key, unset), A_LineNumber)
+AssertEq(key, 1, A_LineNumber)
+
+getterCalls := []
+enumerationTarget := {}.DefineProp("Value", {Get: (*) => (getterCalls.Push(1), 7)})
+next := enumerationTarget.OwnProps()
+Assert(next(&key,), A_LineNumber)
+AssertEq(key, "Value", A_LineNumber)
+AssertEq(getterCalls.Length, 0, A_LineNumber)
+next := enumerationTarget.OwnProps()
+Assert(next(, &value), A_LineNumber)
+AssertEq(value, 7, A_LineNumber)
+AssertEq(getterCalls.Length, 1, A_LineNumber)
 
 ; A for loop checks whether the passed object has __Enum, and calls it with the number of requested arguments.
 ; For example `for i, j, k in e` calls `e.__Enum(3)` to get the enumerator function (if __Enum is defined) 

@@ -77,6 +77,14 @@ Assert(wrapped(&value), A_LineNumber)
 AssertEq(key, "k", A_LineNumber)
 AssertEq(value, "v", A_LineNumber)
 
+sequence := ["One", "Two", "Three"].__Enum()
+comSequence := ComObjQuery(ObjPtr(sequence), "{00020400-0000-0000-C000-000000000046}")
+customSequence := {}.DefineProp("__Enum", {Call: (Receiver, NumberOfVars) => comSequence})
+sequenceOutput := ""
+for sequenceValue in customSequence
+    sequenceOutput .= sequenceValue "|"
+AssertEq(sequenceOutput, "One|Two|Three|", A_LineNumber)
+
 ; The caller retains ownership of explicitly supplied by-reference storage.
 storage := Buffer(4, 0)
 NumPut("Int", 41, storage)
@@ -92,6 +100,18 @@ AssertEq(dict.Item("object"), target, A_LineNumber)
 
 array := ComObjArray(12, 2)
 array[0] := "array value", array[1] := 7
+next := array.__Enum()
+Throws(next.Bind(&arrayIndex), A_LineNumber, ArgumentError)
+Assert(next(&arrayIndex, unset), A_LineNumber)
+AssertEq(arrayIndex, 0, A_LineNumber)
+next := array.__Enum()
+Assert(next(&arrayIndex, &value), A_LineNumber)
+AssertEq(arrayIndex, 0, A_LineNumber)
+AssertEq(value, "array value", A_LineNumber)
+next := array.__Enum(0)
+Throws(next.Bind(&value, {}), A_LineNumber, ArgumentError)
+Assert(next(&value), A_LineNumber)
+AssertEq(value, "array value", A_LineNumber)
 returnedArray := probe.Echo(array)
 AssertEq(returnedArray[0], "array value", A_LineNumber)
 AssertEq(returnedArray[1], 7, A_LineNumber)

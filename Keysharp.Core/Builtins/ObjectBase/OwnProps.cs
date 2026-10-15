@@ -34,7 +34,7 @@ namespace Keysharp.Builtins
 
 			return new Enumerator(
 					   obj,
-					   getVal ? 2 : 1,
+					   getVal ? 0 : 1,
 					   () => iter.MoveNext(),
 					   () => iter.Current.Key,
 					   () => evaluated ?? GetCurrent(obj, iter.Current),

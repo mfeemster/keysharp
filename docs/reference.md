@@ -613,7 +613,7 @@ Controlling another application needs **Automation** permission, granted per tar
 		| `AudioCapture` | Permission for audio capture, required by `Audio.Recorder.Start()` before it opens a device. |
 		| `CameraCapture` | Reserve permission for camera capture. No current capture API consumes it. |
 		| `ClipboardMonitoring` | Read or listen to the clipboard. Clipboard writes remain ungated. |
-* For any `__Enum()` class method, it should have a parameter value of 2 when returning `Array` or `Map`, since their enumerators have two fields.
+* `Array`, `Map`, `Gui` and `RegExMatchInfo` enumerators adapt by default; `__Enum(1)` or `__Enum(2)` requires that many argument slots. Omitted slots discard outputs. Windows `ComObjArray.__Enum()` defaults to 2. Unlike AutoHotkey, fixed modes reject mismatched counts.
 * RegEx uses PCRE2 engine powered by the PCRE.NET library. There are a few limitations compared to the AutoHotkey implementation:
 	+ The following options are different:
 		+ `S`: Studies the pattern to try improve its performance.

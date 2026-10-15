@@ -50,6 +50,17 @@ public static object NativeArr() => new Keysharp.Builtins.Array(1L, 2L, 3L);
 
 public static Keysharp.Builtins.Array TypedArr() => new Keysharp.Builtins.Array(4L, 5L);
 
+public static object FirstEnumerableValue(System.Collections.IEnumerable Source)
+{
+    foreach (var value in Source) return value;
+    return null;
+}
+
+public static object FirstPairValue(System.Collections.Generic.IEnumerator<(object, object)> Source)
+{
+    using (Source) return Source.MoveNext() ? Source.Current.Item2 : null;
+}
+
 public static List<string> Words { get; set; } = new List<string> { "x", "y", "z" };
 
 public static List<string> Stash = new List<string> { "q" };
@@ -176,6 +187,17 @@ AssertEq(arr.Length, 3, A_LineNumber)
 tarr := TypedArr()
 AssertEq(Type(tarr), "Array", A_LineNumber)
 AssertEq(tarr[2], 5, A_LineNumber)
+AssertEq(FirstEnumerableValue(tarr), 4, A_LineNumber)
+RegExMatch("hello", "(?<word>hello)", &match)
+AssertEq(FirstEnumerableValue(match), "hello", A_LineNumber)
+properties := {}.DefineProp("Indexed", {Get: (Receiver, Index) => Index})
+properties.DefineProp("Value", {Get: (*) => "managed value"})
+AssertEq(FirstPairValue(properties.OwnProps()), "managed value", A_LineNumber)
+#if WINDOWS
+comArray := ComObjArray(12, 1)
+comArray[0] := "COM value"
+AssertEq(FirstEnumerableValue(comArray), "COM value", A_LineNumber)
+#endif
 
 ; Dynamic module reads preserve CLR wrapping for fields and properties.
 wname := "Words"

@@ -14,26 +14,19 @@ namespace Keysharp.Builtins
 		private readonly Func<bool> hasValue;
 		private readonly KeysharpFunc callback;
 
-		/// <summary>
-		/// The source object being enumerated.
-		/// </summary>
 		internal object Source { get; }
 
-		/// <summary>
-		/// The number of items to return for each iteration. Allowed values are 1 and 2:
-		/// 1: return just the value in the first position
-		/// 2: return the index in the first position and the value in the second.
-		/// </summary>
+		// Zero selects adaptive arity.
 		internal long Count { get; }
 
-		// The single-value form of the current item, shared by both Current implementations below. The
-		// interface members are implemented explicitly so that enumeration plumbing stays off the
-		// script-visible surface; only Call is meant to be reached from a script.
-		internal object CurrentValue => currentValue != null ? currentValue() : currentPair != null ? currentPair().Item1 : null;
+		internal object CurrentValue => currentValue != null ? currentValue() : currentPair?.Invoke().Item1;
 
+		private (object, object) CurrentPair => currentPair?.Invoke() ?? (currentValue?.Invoke(), null);
+
+		// Keep iteration plumbing off the script surface.
 		object IEnumerator<object>.Current => CurrentValue;
 
-		(object, object) IEnumerator<(object, object)>.Current => GetCurrentPair();
+		(object, object) IEnumerator<(object, object)>.Current => CurrentPair;
 
 		object IEnumerator.Current => CurrentValue;
 
@@ -41,18 +34,7 @@ namespace Keysharp.Builtins
 		{
 		}
 
-		protected Enumerator(object source, int count)
-			: base(CallMethod(), null)
-		{
-			if (Base == null)
-				InitializeBase(typeof(Enumerator));
-
-			Source = source;
-			Count = Math.Max(1, count);
-			Inst = this;
-		}
-
-		// Its Dispose serves the loop running it, which calls it; collection has nothing to release.
+		// Loops own disposal.
 		internal override bool DisposesWhenCollected => false;
 
 		internal Enumerator(
@@ -64,8 +46,14 @@ namespace Keysharp.Builtins
 			Action reset,
 			Action dispose = null,
 			Func<bool> hasValue = null)
-			: this(source, count)
+			: base(CallMethod(), null)
 		{
+			if (Base == null)
+				InitializeBase(typeof(Enumerator));
+
+			Source = source;
+			Count = Math.Max(0, count);
+			Inst = this;
 			this.moveNext = moveNext;
 			this.currentValue = currentValue;
 			this.currentPair = currentPair;
@@ -75,42 +63,29 @@ namespace Keysharp.Builtins
 		}
 
 		internal Enumerator(object source, int count, KeysharpFunc callback)
-			: this(source, count)
+			: this(source, count, null, null, null, null)
 		{
 			this.callback = callback;
 		}
 
 		private static MethodPropertyHolder CallMethod() => callMethod ??= Reflections.FindAndCacheMethod(typeof(Enumerator), nameof(Call), 1);
 
-		// Call below advances the enumerator too, so the step lives here rather than inside the explicit
-		// interface implementation, which could not be called without a cast. A source that cannot produce a value
-		// for every item -- OwnProps, whose indexed getters need an argument no loop supplies -- says so through
-		// hasValue, and those items are stepped over once a value is actually being asked for. `requested` is the
-		// caller's variable count, which Count cannot stand in for: an enumerator built to supply a value is still
-		// driven one-variable by `for k in obj`.
+		// OwnProps must not evaluate getters during name-only enumeration.
 		internal bool Advance(long requested)
 		{
-			if (moveNext == null)
-				return false;
-
-			while (moveNext())
+			while (moveNext?.Invoke() == true)
 				if (requested < 2 || hasValue == null || hasValue())
 					return true;
 
 			return false;
 		}
 
-		bool IEnumerator.MoveNext() => Advance(Count);
-
-		protected virtual (object, object) GetCurrentPair() => currentPair != null ? currentPair() : currentValue != null ? (currentValue(), null) : (null, null);
+		bool IEnumerator.MoveNext() => Advance(Count == 0 ? 2 : Count);
 
 		void IEnumerator.Reset() => reset?.Invoke();
 
 		void IDisposable.Dispose() => dispose?.Invoke();
 
-		// Every argument is an out-parameter: each one is stored through __Value below, which is what an
-		// enumerator's `for k, v in obj` variables are. There is no per-element way to say that, so the
-		// marker sits on the variadic array and covers the whole tail.
 		public override object Call([ByRef] params object[] args)
 		{
 			try
@@ -118,36 +93,36 @@ namespace Keysharp.Builtins
 				if (callback != null)
 					return callback.Call(args);
 
-				if (!Advance(args?.Length ?? 0))
+				var argumentCount = args?.Length ?? 0;
+
+				if (argumentCount > 2 || Count != 0 && argumentCount != Count)
+					return Errors.ErrorOccurred(new ArgumentError($"Enumerator.Call expects {(Count == 0 ? "at most 2" : Count.ToString())} output arguments."), False);
+
+				var first = argumentCount > 0 ? args[0] : null;
+				var second = argumentCount > 1 ? args[1] : null;
+				if (first != null && !Refs.IsRef(first))
+					return Errors.ExpectedTypeErrorOccurred("variable reference", first, False);
+				if (second != null && !Refs.IsRef(second))
+					return Errors.ExpectedTypeErrorOccurred("variable reference", second, False);
+
+				if (!Advance(second == null ? 1 : 2))
 				{
 					((IDisposable)this).Dispose();
 					return False;
 				}
 
-				if (args == null || args.Length == 0)
-					return True;
-
-				if (args.Length == 1)
+				if (second != null)
 				{
-					Refs.SetValue(args[0], CurrentValue);
+					var pair = CurrentPair;
+					Refs.SetValue(first, pair.Item1);
+					Refs.SetValue(second, pair.Item2);
 				}
-				else
-				{
-					var pair = GetCurrentPair();
-					Refs.SetValue(args[0], pair.Item1);
-					Refs.SetValue(args[1], pair.Item2);
-				}
+				else if (first != null)
+					Refs.SetValue(first, CurrentValue);
 
 				return True;
 			}
-			catch (KeysharpException)
-			{
-				// A script error from the callback (or a binder error inside it) keeps its type -- a ValueError
-				// caught here and rethrown as plain Error would defeat `catch ValueError` in the script driving
-				// the loop.
-				throw;
-			}
-			catch (Exception e) when (!Keysharp.Internals.Flow.TryGetException<Flow.UserRequestedExitException>(e, out _))
+			catch (Exception e) when (e is not KeysharpException && !Keysharp.Internals.Flow.TryGetException<Flow.UserRequestedExitException>(e, out _))
 			{
 				return Errors.ErrorOccurred(e.Message);
 			}
