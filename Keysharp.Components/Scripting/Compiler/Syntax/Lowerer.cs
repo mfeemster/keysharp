@@ -218,6 +218,35 @@ namespace Keysharp.Compilation.Syntax
 		private List<string> _scopeTemps = new();   // object temps the current scope needs (declared at its top)
 		private List<string> _scopeKeptTemps = new();   // those of them its keep-alive epilogue reads (see KeptStrPtrArgument)
 
+		//Scratch lists are declared here and reused to avoid allocating a new list for every call that uses them.
+		private readonly List<DirectiveStmt> _scratchManifestDirectives = new();
+		private readonly List<DirectiveStmt> _scratchErrorStdOutBeforeDirectives = new();
+		private readonly List<ParameterSyntax> _scratchPropertyAll = new ();
+		private readonly List<Param> _scratchHotParam = new();
+		private readonly List<ParameterSyntax> _scratchParameterList = new();
+		private readonly ObjectStackPool<List<MemberDeclarationSyntax>> _scratchListMembers = new(() => [], item => item.Clear());
+		private readonly ObjectStackPool<List<MemberDeclarationSyntax>> _scratchListMembersDangerous = new(() => []);
+		private readonly HashSet<SyntaxAnnotation> _scratchSettleStale = new();
+		private readonly ObjectStackPool<HashSet<string>> _scratchCaseSensitiveHashStrings = new(() => new(StringComparer.OrdinalIgnoreCase), item => item.Clear());
+		private readonly ObjectStackPool<HashSet<string>> _scratchCaseInsensitiveHashStrings = new(() => new(StringComparer.OrdinalIgnoreCase), item => item.Clear());
+		private readonly ObjectStackPool<List<string>> _scratchListStrings = new(() => [], item => item.Clear());
+		private readonly ObjectStackPool<Settlement> _scratchLowerCallableBodySettlements = new(() => new(), item =>
+		{
+			item.Refs.Clear();
+			item.Sites.Clear();
+		});
+		private readonly ObjectStackPool<List<StatementSyntax>> _scratchLowerStmtListStatementsDangerous = new(() => []);
+		private readonly ObjectStackPool<List<ExpressionSyntax>> _scratchLowerArgsExpressionsDangerous = new(() => []);
+		private readonly ObjectStackPool<List<StatementSyntax>> _scratchListStatements = new(() => [], item => item.Clear());
+		private readonly ObjectStackPool<List<SwitchSectionSyntax>> _scratchListSwitchSections = new(() => [], item => item.Clear());
+		private readonly ObjectStackPool<List<SwitchLabelSyntax>> _scratchListSwitchLabels = new(() => [], item => item.Clear());
+		private readonly ObjectStackPool<List<ScopeVar>> _scratchLowerCallableBodyDeclared = new(() => [], item => item.Clear());
+		private readonly ObjectStackPool<List<ImportDirective>> _scratchListImports = new(() => [], item => item.Clear());
+		private readonly ObjectStackPool<List<ExpressionSyntax>> _scratchListExpressions = new(() => [], item => item.Clear());
+		private readonly ObjectStackPool<List<CatchClauseSyntax>> _scratchListCatchClauses = new(() => [], item => item.Clear());
+		private readonly ObjectStackPool<List<Stmt>> _scratchListStmts = new(() => [], item => item.Clear());
+		private static readonly List<Stmt> emptyStmts = [];
+
 		private string NewTemp(bool hoist = true) { var n = "KS_temp" + (++_tempCounter); if (hoist) _scopeTemps.Add(n); return n; }
 
 		// Null-conditional access `target?.<access>`: evaluate target once into a temp; if it is unset (null),
@@ -4633,7 +4662,8 @@ namespace Keysharp.Compilation.Syntax
 
 		private List<ExpressionSyntax> LowerArgs(List<Argument> args)
 		{
-			var list = new List<ExpressionSyntax>(args.Count + 1);
+			var list = _scratchLowerArgsExpressionsDangerous.Get();
+			list.Clear();//Special case where we clear on Get() instead of Return();
 			var positional = SplitNamed(args, out var named);
 
 			foreach (var a in positional)
@@ -4649,7 +4679,8 @@ namespace Keysharp.Compilation.Syntax
 					&& positional[0].Value is NameExpr un && StringComparer.OrdinalIgnoreCase.Equals(un.Name, "unset"))
 				list[0] = SyntaxFactory.CastExpression(SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.ObjectKeyword)), list[0]);
 
-			return list;
+			_scratchLowerArgsExpressionsDangerous.Return(list);//Note this return doesn't clear because it will be used very briefly and modified by the caller.
+			return list;//This is somewhat dangerous, but provides a large reduction in allocations. Revert back to a normal allocation if this ever causes errors.
 		}
 
 		// Splits an argument list at its first NAMED argument, which the parser has already kept trailing. Returns
