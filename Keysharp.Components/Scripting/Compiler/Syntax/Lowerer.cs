@@ -4749,7 +4749,7 @@ namespace Keysharp.Compilation.Syntax
 			// IsTrueAndRunning runs the per-iteration message check.
 			var id = ++_flowCounter;
 			var ev = "KS_e" + id;
-			var header = new List<StatementSyntax>();
+			var header = _scratchListStatements.Get();
 			var countArgs = lp.Count == null ? [] : new[] { LoopHeader(header, id, LowerExpr(lp.Count)) };
 			var enumInit = Inv(Member(Inv(Access("Keysharp.Runtime.Loops.Loop"), countArgs), "GetEnumerator"));
 			var cond = Inv(Access("Keysharp.Runtime.Flow.IsTrueAndRunning"), Inv(Member(Id(ev), "MoveNext")));
@@ -4757,7 +4757,9 @@ namespace Keysharp.Compilation.Syntax
 			var body = WrapLoopBody(LowerBody(lp.Body), lp.Until, frame, lp);
 			PopLoop();
 			var loop = SyntaxFactory.WhileStatement(cond, body);
-			return LoopBlock(id, frame, "Normal", SyntaxFactory.Block(LocalDeclVar(ev, enumInit), loop), lp.Else, header);
+			var block = LoopBlock(id, frame, "Normal", SyntaxFactory.Block(LocalDeclVar(ev, enumInit), loop), lp.Else, header);
+			_scratchListStatements.Return(header);
+			return block;
 		}
 
 		// AHK expands a loop's arguments before the loop sets A_Index, so a header reads the enclosing loop's A_Index and
