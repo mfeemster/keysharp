@@ -5204,7 +5204,7 @@ namespace Keysharp.Compilation.Syntax
 			// sink so their backing fields are emitted as members of this class (a nested LowerClass redirects again to
 			// its own list and restores to ours). This both scopes them correctly and avoids cross-class name collisions.
 			var savedSink = _staticFieldSink;
-			var classStaticFields = new List<MemberDeclarationSyntax>();
+			var classStaticFields = _scratchListMembers.Get();
 			_staticFieldSink = classStaticFields;
 			var savedPath = _currentClassPath;
 			var savedUserPath = _currentClassUserPath;
@@ -5215,8 +5215,11 @@ namespace Keysharp.Compilation.Syntax
 			// clause is resolved above, so a base-class name is never shadowed by a class import.
 			var classFrame = c.Imports.Count > 0 ? BuildImportScope(c.Imports) : null;
 			if (classFrame != null) _importScopes.Add(classFrame);
-			var members = new List<MemberDeclarationSyntax> { ClassCtor(typeName) };
-			var memberNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+			var members = _scratchListMembers.Get();
+			members.Add(ClassCtor(typeName));
+			var memberNames = _scratchCaseInsensitiveHashStrings.Get();
+
 			foreach (var method in c.Methods.Where(method => !method.IsOperator))
 				if (!memberNames.Add((method.Static ? "static " : "") + method.Name))
 					Diag($"{NodeAnchor(c)}This method declaration conflicts with an existing method: {method.Name}");
@@ -5224,12 +5227,16 @@ namespace Keysharp.Compilation.Syntax
 			foreach (var property in c.Properties)
 				if (!memberNames.Add((property.Static ? "static " : "") + property.Name))
 					Diag($"{NodeAnchor(c)}This property declaration conflicts with an existing property: {property.Name}");
+			_scratchCaseInsensitiveHashStrings.Return(memberNames);
 			// An instance method named like a nested class would collide with that nested C# type, as with the class's own.
-			var memberTypeNames = new HashSet<string>(c.Nested.Select(nc => NameMangler.ClassType(nc.Name))) { typeName };
+			var memberTypeNames = _scratchCaseSensitiveHashStrings.Get();
+			memberTypeNames.AddRange(c.Nested.Select(nc => NameMangler.ClassType(nc.Name)));
+			_ = memberTypeNames.Add(typeName);
 			foreach (var m in c.Methods) members.Add(LowerMethod(m, memberTypeNames));
+			_scratchCaseSensitiveHashStrings.Return(memberTypeNames);
 			var operatorType = "Program." + CurrentTypePath;
-			var instanceOperators = new List<ExpressionSyntax>();
-			var staticOperators = new List<ExpressionSyntax>();
+			var instanceOperators = _scratchListExpressions.Get();
+			var staticOperators = _scratchListExpressions.Get();
 			foreach (var method in c.Methods.Where(m => m.IsOperator))
 			{
 				_hasOperatorDeclarations = true;
@@ -5240,6 +5247,8 @@ namespace Keysharp.Compilation.Syntax
 			}
 			_operatorDeclarations.Add(New("Keysharp.Runtime.OperatorDeclaration", SyntaxFactory.TypeOfExpression(Ty(operatorType)),
 				OperatorDefinitions(instanceOperators), OperatorDefinitions(staticOperators)));
+			_scratchListExpressions.Return(staticOperators);
+			_scratchListExpressions.Return(instanceOperators);
 			foreach (var pr in c.Properties) members.AddRange(LowerProperty(pr));
 			// Nested classes become nested C# types; the runtime registers them as static properties on the parent.
 			foreach (var nc in c.Nested) members.Add(LowerClass(nc));
@@ -5259,6 +5268,7 @@ namespace Keysharp.Compilation.Syntax
 
 			// Emit this class's collected static-local backing fields as its own members, then restore the sink/path/frame.
 			members.AddRange(classStaticFields);
+			_scratchListMembers.Return(classStaticFields);
 			_staticFieldSink = savedSink;
 			_currentClassPath = savedPath;
 			_currentClassUserPath = savedUserPath;
@@ -5276,6 +5286,7 @@ namespace Keysharp.Compilation.Syntax
 				decl = decl.AddAttributeLists(Attr("Keysharp.Runtime.UserDeclaredName", Str(c.Name)));
 			_currentClassBase = savedBase;
 			_currentCompat = savedCompat;
+			_scratchListMembers.Return(members);
 			return decl;
 		}
 
