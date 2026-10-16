@@ -1,3 +1,7 @@
+using System.Reflection.Metadata;
+using System.Reflection.PortableExecutable;
+using KeysharpFingerprint = Keysharp.Main.KeysharpFingerprint;
+
 namespace Keysharp.Tests;
 
 public class RunnerTests : TestRunner
@@ -133,6 +137,57 @@ public class RunnerTests : TestRunner
 		}
 	}
 
+	[Test, Category("Internal")]
+	public void FingerprintMvid()
+	{
+		Assert.That(KeysharpFingerprint.Hash("hello"u8), Is.EqualTo(0xA430D84680AABD0BUL));
+		foreach (var assembly in new[] { typeof(Script).Assembly, typeof(KeysharpFingerprint).Assembly, typeof(RunnerTests).Assembly,
+			typeof(object).Assembly, typeof(Microsoft.CodeAnalysis.CSharp.CSharpCompilation).Assembly })
+			Assert.That(KeysharpFingerprint.ReadMvid(assembly.Location), Is.EqualTo(assembly.ManifestModule.ModuleVersionId), assembly.GetName().Name);
+	}
+
+	[Test, Category("Internal")]
+	public void FingerprintUncompressedMetadata()
+	{
+		var image = File.ReadAllBytes(typeof(KeysharpFingerprint).Assembly.Location);
+		using var pe = new PEReader(new MemoryStream(image));
+		var root = pe.PEHeaders.MetadataStartOffset;
+		var name = image.AsSpan(root, pe.PEHeaders.MetadataSize).IndexOf("#~\0"u8);
+		Assert.That(name, Is.GreaterThanOrEqualTo(0));
+		image[root + name + 1] = (byte)'-';
+		using var uncompressed = new PEReader(new MemoryStream(image));
+		var metadata = uncompressed.GetMetadataReader();
+		var expected = metadata.GetGuid(metadata.GetModuleDefinition().Mvid);
+		var path = Path.GetTempFileName();
+
+		try
+		{
+			File.WriteAllBytes(path, image);
+			Assert.That(KeysharpFingerprint.ReadMvid(path), Is.EqualTo(expected));
+		}
+		finally { File.Delete(path); }
+	}
+
+	[Test, Category("Internal")]
+	public void FingerprintInvalidImage()
+	{
+		var original = File.ReadAllBytes(typeof(KeysharpFingerprint).Assembly.Location);
+		using var pe = new PEReader(new MemoryStream(original));
+		var path = Path.GetTempFileName();
+
+		try
+		{
+			foreach (var offset in new[] { 0, BitConverter.ToInt32(original, 0x3C), pe.PEHeaders.MetadataStartOffset })
+			{
+				var image = (byte[])original.Clone();
+				image[offset] = 0;
+				File.WriteAllBytes(path, image);
+				Assert.Throws<BadImageFormatException>(() => KeysharpFingerprint.ReadMvid(path), $"Signature at {offset}");
+			}
+		}
+		finally { File.Delete(path); }
+	}
+
 #if WINDOWS
 
 	[Test, Category("Internal")]
@@ -164,9 +219,17 @@ public class RunnerTests : TestRunner
 	public void CompileDaemonCommandLine()
 	{
 		using var process = System.Diagnostics.Process.GetCurrentProcess();
-		Assert.That(CompileDaemonSecurity.ReadCommandLine(process), Is.EqualTo(Marshal.PtrToStringUni(GetCommandLineW())));
+		Assert.That(CompileDaemonSecurity.ReadCommandLine(process.Handle), Is.EqualTo(Marshal.PtrToStringUni(GetCommandLineW())));
 		Assert.IsTrue(CompileDaemonSecurity.HasDaemonArguments("dotnet \"C:\\Keysharp.dll\" --daemon", "dotnet.exe", "C:\\Keysharp.dll"));
 		Assert.That(CompileDaemonSecurity.HasDaemonArguments("dotnet \"C:\\Other.dll\" --daemon", "dotnet.exe", "C:\\Keysharp.dll"), Is.False);
+		var image = Processes.GetProcessImage((uint)process.Id, false);
+		Assert.That(image, Is.Not.Empty);
+		Assert.That(CompileDaemonSecurity.HasImage(process.Handle, image), Is.True);
+		Assert.That(CompileDaemonSecurity.HasImage(process.Handle, image.ToUpperInvariant()), Is.True);
+		Assert.That(CompileDaemonSecurity.HasImage(process.Handle, image + ".other"), Is.False);
+		Assert.That(CompileDaemonSecurity.HasImage(process.Handle, "x"), Is.False);
+		Assert.That(CompileDaemonSecurity.HasImage(0, Environment.ProcessPath), Is.False);
+		Assert.That(CompileDaemonSecurity.ReadCommandLine(0), Is.Null);
 	}
 
 	[DllImport("kernel32.dll")]

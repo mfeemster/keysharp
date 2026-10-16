@@ -45,14 +45,17 @@
           SkipUnchangedFiles="true" />
   </Target>
 
+  <!-- IL inputs can be older than published ReadyToRun images, so copies must also compare file sizes. -->
   <Target Name="IncludeBundledScriptingComponentsInPublish"
-          AfterTargets="ComputeFilesToPublish"
+          AfterTargets="ComputeResolvedFilesToPublishList"
           DependsOnTargets="GetBundledScriptingComponentPayload"
           Condition="'$(ShipsScriptingComponents)' == 'true'">
     <ItemGroup>
       <ResolvedFileToPublish Include="@(_BundledScriptingComponentPayload)">
         <RelativePath>%(_BundledScriptingComponentPayload.ComponentRelativePath)</RelativePath>
-        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        <TargetPath>%(_BundledScriptingComponentPayload.ComponentRelativePath)</TargetPath>
+        <PostprocessAssembly Condition="'%(_BundledScriptingComponentPayload.Extension)' == '.dll'">true</PostprocessAssembly>
+        <CopyToPublishDirectory>IfDifferent</CopyToPublishDirectory>
         <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       </ResolvedFileToPublish>
     </ItemGroup>
@@ -68,13 +71,16 @@
   </Target>
 
   <Target Name="IncludeBundledPackageProvidersInPublish"
-          AfterTargets="ComputeFilesToPublish"
+          AfterTargets="ComputeResolvedFilesToPublishList"
           DependsOnTargets="GetBundledPackageProviderPayload"
           Condition="'$(ShipsPackageProviders)' == 'true'">
     <ItemGroup>
       <ResolvedFileToPublish Include="@(_BundledPackageProviderPayload)">
         <RelativePath>%(_BundledPackageProviderPayload.ProviderRelativePath)</RelativePath>
-        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        <TargetPath>%(_BundledPackageProviderPayload.ProviderRelativePath)</TargetPath>
+        <!-- Providers load on demand; leave their assemblies as IL to keep the package small. -->
+        <PostprocessAssembly>false</PostprocessAssembly>
+        <CopyToPublishDirectory>IfDifferent</CopyToPublishDirectory>
         <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       </ResolvedFileToPublish>
     </ItemGroup>

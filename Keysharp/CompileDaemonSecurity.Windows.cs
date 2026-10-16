@@ -39,37 +39,63 @@ internal static class CompileDaemonSecurity
 
 	internal static bool IsExpectedServer(NamedPipeClientStream pipe)
 	{
-		if (!GetNamedPipeServerProcessId(pipe.SafePipeHandle, out var pid)
-			|| !DaemonCoordinator.HasLiveOwner(CompileServer.PipeName, (int)pid))
+		if (!GetNamedPipeServerProcessId(pipe.SafePipeHandle, out var pid))
 			return false;
 
-		using var process = Process.GetProcessById((int)pid);
-		if (!OpenProcessToken(process.Handle, TokenQuery, out var token))
+		// One handle serves every check: Process.GetProcessById snapshots every process on the system to validate an id.
+		var process = WindowsAPI.OpenProcess(ProcessAccessTypes.PROCESS_QUERY_INFORMATION | ProcessAccessTypes.PROCESS_VM_READ, false, pid);
+
+		if (process == 0)
 			return false;
-		using (token)
-		using (var identity = new WindowsIdentity(token.DangerousGetHandle()))
+
+		try
 		{
-			if (identity.User.Value != AccountId || IsElevatedToken(token))
+			if (!GetProcessTimes(process, out var created, out _, out _, out _)
+				|| !DaemonCoordinator.IsOwner(CompileServer.PipeName, (int)pid, DateTime.FromFileTimeUtc(created).Ticks)
+				|| !OpenProcessToken(process, TokenQuery, out var token))
 				return false;
-		}
 
-		var image = Processes.GetProcessImage(pid, false);
-		return string.Equals(image, Environment.ProcessPath, StringComparison.OrdinalIgnoreCase)
-			&& HasDaemonArguments(ReadCommandLine(process), image, Assembly.GetEntryAssembly()?.Location);
+			using (token)
+			using (var identity = new WindowsIdentity(token.DangerousGetHandle()))
+			{
+				if (identity.User.Value != AccountId || IsElevatedToken(token))
+					return false;
+			}
+
+			var image = Environment.ProcessPath;
+			return HasImage(process, image)
+				&& HasDaemonArguments(ReadCommandLine(process), image, Assembly.GetEntryAssembly()?.Location);
+		}
+		finally
+		{
+			_ = WindowsAPI.CloseHandle(process);
+		}
 	}
 
-	internal static unsafe string ReadCommandLine(Process process)
+	internal static unsafe bool HasImage(nint process, string expected)
 	{
-		if (NtQueryInformationProcess(process.Handle, 0, out var basic, Marshal.SizeOf<ProcessBasicInformation>(), out _) != 0
-			|| !ReadStructure(process.Handle, basic.Peb, out Peb peb)
-			|| !ReadStructure(process.Handle, peb.Parameters, out ProcessParameters parameters))
+		if (string.IsNullOrEmpty(expected))
+			return false;
+		var capacity = expected.Length + 1;
+		Span<char> image = capacity <= 1024 ? stackalloc char[capacity] : new char[capacity];
+		var length = (uint)capacity;
+		fixed (char* buffer = image)
+			return WindowsAPI.QueryFullProcessImageName(process, 0, buffer, ref length)
+				&& expected.AsSpan().Equals(image[..(int)length], StringComparison.OrdinalIgnoreCase);
+	}
+
+	internal static unsafe string ReadCommandLine(nint process)
+	{
+		if (NtQueryInformationProcess(process, 0, out var basic, Marshal.SizeOf<ProcessBasicInformation>(), out _) != 0
+			|| !ReadStructure(process, basic.Peb, out Peb peb)
+			|| !ReadStructure(process, peb.Parameters, out ProcessParameters parameters))
 			return null;
 		var commandLine = parameters.CommandLine;
 		if (commandLine.Length == 0 || commandLine.Length % 2 != 0 || commandLine.Buffer == 0)
 			return null;
 		var bytes = new byte[commandLine.Length];
 		fixed (byte* buffer = bytes)
-			return ReadProcessMemory(process.Handle, commandLine.Buffer, (nint)buffer, (nuint)bytes.Length, out var read)
+			return ReadProcessMemory(process, commandLine.Buffer, (nint)buffer, (nuint)bytes.Length, out var read)
 				&& read == (nuint)bytes.Length ? Encoding.Unicode.GetString(bytes) : null;
 	}
 
@@ -116,6 +142,9 @@ internal static class CompileDaemonSecurity
 
 	[DllImport("kernel32.dll", SetLastError = true)]
 	private static extern bool GetNamedPipeServerProcessId(SafePipeHandle pipe, out uint processId);
+
+	[DllImport("kernel32.dll", SetLastError = true)]
+	private static extern bool GetProcessTimes(nint process, out long creation, out long exit, out long kernel, out long user);
 
 	[DllImport("advapi32.dll", SetLastError = true)]
 	private static extern bool GetTokenInformation(SafeAccessTokenHandle token, int informationClass,

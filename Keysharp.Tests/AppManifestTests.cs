@@ -60,7 +60,12 @@ public class AppManifestTests : TestRunner
 	{
 		Assert.IsNull(AppManifest.FromAssembly(typeof(AppManifestTests).Assembly));
 
-		foreach (var json in new[] { "not-json", "[]", "{\"files\":null}", "{\"guiTheme\":\"Neon\",\"files\":[]}" })
+		foreach (var json in new[]
+		{
+			"not-json", "[]", "{\"files\":null}", "{\"guiTheme\":\"Neon\",\"files\":[]}",
+			"{\"name\":1}", "{\"name\":false,\"name\":\"valid\"}", "{\"noTrayIcon\":1}", "{\"consoleApp\":\"true\"}",
+			"{\"files\":{}}", "{\"files\":[1]}", "{\"files\":[null]}",
+		})
 			Assert.That(Assert.Throws<InvalidDataException>(() => AppManifest.Read(json)).Message, Does.Contain("#App manifest"));
 
 		foreach (var version in new[] { "1", "1.2.3.4.5", "1.65535", "1.-2" })
@@ -106,6 +111,46 @@ public class AppManifestTests : TestRunner
 		var named = AppManifest.Read(
 			"{\"trayIcon\":\"icons/library.dll\",\"trayIconResource\":\"ApplicationIcon\",\"files\":[]}");
 		Assert.That(named.TrayIconResource, Is.EqualTo("ApplicationIcon"));
+
+		var repeated = AppManifest.Read("""
+			{"Name":false,"future":{"items":[null,1]},"title":"first","title":"last",
+			 "description":"first","description":null,"noTrayIcon":true,"noTrayIcon":null,
+			 "consoleApp":false,"consoleApp":null,"trayIconNumber":1,"trayIconNumber":null,
+			 "files":["old.txt"],"files":["new.txt"]}
+			""");
+		Assert.That(repeated.Write(), Is.EqualTo("""{"title":"last","files":["new.txt"]}"""));
+		Assert.That(AppManifest.Read("{}").Files, Is.Empty);
+
+		foreach (var number in new[] { long.MinValue, long.MaxValue })
+			Assert.That(AppManifest.Read($"{{\"trayIcon\":\"icons.dll\",\"trayIconNumber\":{number}}}").TrayIconNumber,
+				Is.EqualTo(number));
+
+		foreach (var number in new[] { "1.0", "1e0", "\"1\"", "true", "9223372036854775808", "-9223372036854775809" })
+			Assert.Throws<InvalidDataException>(() =>
+				AppManifest.Read($"{{\"trayIcon\":\"icons.dll\",\"trayIconNumber\":{number}}}"), number);
+	}
+
+	[Test]
+	public void ReadsEveryWrittenKey()
+	{
+		AppManifest[] samples =
+		[
+			new()
+			{
+				Name = "RoundTrip", Title = "Title", Description = "Description", Configuration = "Release", Company = "Company",
+				Product = "Product", Copyright = "Copyright", Trademark = "Trademark", Version = "1.2.3.4", Icon = "assets/app.ico",
+				TrayIcon = "icons/library.dll", NoTrayIcon = false, TrayIconNumber = -12, GuiTheme = "Dark", SingleInstance = "Force",
+				ConsoleApp = true, HookMutexName = "RoundTripMutex", DesktopEntry = "keysharp-roundtrip", Files = ["assets/a.txt"]
+			},
+			new() { TrayIcon = "icons/library.dll", TrayIconResource = "ApplicationIcon" },
+		];
+
+		foreach (var key in typeof(AppManifest).GetProperties()
+			.Where(p => p.IsDefined(typeof(System.Text.Json.Serialization.JsonPropertyNameAttribute))))
+			Assert.That(samples.Any(sample => key.GetValue(sample) != null), $"No sample sets '{key.Name}'.");
+
+		foreach (var sample in samples)
+			Assert.That(AppManifest.Read(sample.Write()).Write(), Is.EqualTo(sample.Write()));
 	}
 
 	[Test]

@@ -142,10 +142,11 @@ namespace Keysharp.Internals.Scripting
 		internal static string FileResourceName(string relative) =>
 			FileResourcePrefix + relative.Replace('\\', '/');
 
-		private static readonly JsonSerializerOptions serializerOptions = new()
-		{ DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull };
+		// Only the compiler writes a manifest, so a launch that reads one does not build these.
+		private static JsonSerializerOptions writeOptions;
 
-		internal string Write() => JsonSerializer.Serialize(this, serializerOptions);
+		internal string Write() =>
+			JsonSerializer.Serialize(this, writeOptions ??= new() { DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull });
 
 		internal static bool IsValidAssemblyVersion(string value)
 		{
@@ -176,8 +177,7 @@ namespace Keysharp.Internals.Scripting
 				if (document.RootElement.ValueKind != JsonValueKind.Object)
 					throw new InvalidDataException("the root value must be an object");
 
-				var manifest = document.RootElement.Deserialize<AppManifest>(serializerOptions)
-					?? throw new InvalidDataException("the root object could not be read");
+				var manifest = FromJson(document.RootElement);
 				manifest.ValidateStructure();
 				return manifest;
 			}
@@ -185,6 +185,60 @@ namespace Keysharp.Internals.Scripting
 			{
 				throw new InvalidDataException($"{context} is invalid: {ex.Message}", ex);
 			}
+		}
+
+		/// <summary>
+		/// Reads the keys <see cref="Write"/> produces, as the serializer would: an unknown key is skipped, a repeated
+		/// one keeps its last value and a value of the wrong kind throws. Every launch of a script with a manifest
+		/// reads it, and the serializer's metadata for these properties is JIT-compiled on first use.
+		/// </summary>
+		private static AppManifest FromJson(JsonElement root)
+		{
+			var manifest = new AppManifest();
+
+			foreach (var property in root.EnumerateObject())
+			{
+				var value = property.Value;
+				var isNull = value.ValueKind == JsonValueKind.Null;
+
+				switch (property.Name)
+				{
+					case "name": manifest.Name = value.GetString(); break;
+					case "title": manifest.Title = value.GetString(); break;
+					case "description": manifest.Description = value.GetString(); break;
+					case "configuration": manifest.Configuration = value.GetString(); break;
+					case "company": manifest.Company = value.GetString(); break;
+					case "product": manifest.Product = value.GetString(); break;
+					case "copyright": manifest.Copyright = value.GetString(); break;
+					case "trademark": manifest.Trademark = value.GetString(); break;
+					case "version": manifest.Version = value.GetString(); break;
+					case "icon": manifest.Icon = value.GetString(); break;
+					case "trayIcon": manifest.TrayIcon = value.GetString(); break;
+					case "noTrayIcon": manifest.NoTrayIcon = isNull ? null : value.GetBoolean(); break;
+					case "trayIconNumber": manifest.TrayIconNumber = isNull ? null : value.GetInt64(); break;
+					case "trayIconResource": manifest.TrayIconResource = value.GetString(); break;
+					case "guiTheme": manifest.GuiTheme = value.GetString(); break;
+					case "singleInstance": manifest.SingleInstance = value.GetString(); break;
+					case "consoleApp": manifest.ConsoleApp = isNull ? null : value.GetBoolean(); break;
+					case "hookMutexName": manifest.HookMutexName = value.GetString(); break;
+					case "desktopEntry": manifest.DesktopEntry = value.GetString(); break;
+					case "files":
+						if (isNull)
+						{
+							manifest.Files = null;
+							break;
+						}
+
+						manifest.Files = new List<string>(value.GetArrayLength());
+
+						foreach (var file in value.EnumerateArray())
+							manifest.Files.Add(file.GetString());
+
+						break;
+				}
+			}
+
+			return manifest;
 		}
 
 		internal static AppManifest FromAssembly(Assembly asm)

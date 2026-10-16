@@ -29,13 +29,13 @@ internal static class CompileServer
 		Environment.GetEnvironmentVariable("XDG_RUNTIME_DIR") is { Length: > 0 } runtimeDirectory && Directory.Exists(runtimeDirectory)
 		? runtimeDirectory : Path.GetTempPath();
 
-	internal static readonly string UserKey = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(
+	internal static readonly string UserKey = unchecked((uint)KeysharpFingerprint.Hash(Encoding.UTF8.GetBytes(
 #if WINDOWS
 		CompileDaemonSecurity.AccountId
 #else
 		Environment.UserName
 #endif
-	)))[..8];
+	))).ToString("X8");
 
 	// Idle shutdown so an abandoned daemon does not linger forever (mirrors VBCSCompiler behavior).
 	private static readonly TimeSpan IdleTimeout = TimeSpan.FromHours(4);
@@ -230,7 +230,6 @@ internal static class CompileServer
 			Log(componentError);
 			return 1;
 		}
-
 		var exeDir = Path.GetFullPath(Path.GetDirectoryName(Environment.ProcessPath));
 		SetDaemonWorkingDirectory(exeDir);
 #if WINDOWS

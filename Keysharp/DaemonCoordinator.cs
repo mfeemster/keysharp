@@ -13,9 +13,13 @@ internal static class DaemonCoordinator
 	/// Whether the lock file names a live daemon serving <paramref name="pipeName"/>. Read without the coordination
 	/// mutex, since it only decides whether a client waits for that daemon's pipe or first spawns a daemon.
 	/// </summary>
-	internal static bool HasLiveOwner(string pipeName, int? expectedPid = null) =>
-		Read() is { } owner && (!expectedPid.HasValue || owner.Pid == expectedPid)
-		&& string.Equals(owner.Pipe, pipeName, StringComparison.Ordinal) && IsLiveDaemon(owner);
+	internal static bool HasLiveOwner(string pipeName) =>
+		Read() is { } owner && string.Equals(owner.Pipe, pipeName, StringComparison.Ordinal) && IsLiveDaemon(owner);
+
+	/// <summary>Whether the record names this process instance as the owner serving <paramref name="pipeName"/>.</summary>
+	internal static bool IsOwner(string pipeName, int pid, long startStamp) =>
+		Read() is { } owner && owner.Pid == pid && owner.StartStamp == startStamp
+		&& string.Equals(owner.Pipe, pipeName, StringComparison.Ordinal);
 
 	/// <param name="timeout">
 	/// Kept short on the shutdown path. This runs inside the WM_ENDSESSION handler, and Windows' default

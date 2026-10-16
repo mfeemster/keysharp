@@ -42,6 +42,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<!-- Keep Roslyn as IL to limit package size; the daemon amortizes its JIT cost. -->
 		<PublishReadyToRunExclude Include="Microsoft.CodeAnalysis.dll" />
 		<PublishReadyToRunExclude Include="Microsoft.CodeAnalysis.CSharp.dll" />
 	</ItemGroup>
