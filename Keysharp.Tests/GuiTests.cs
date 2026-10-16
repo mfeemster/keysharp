@@ -5,6 +5,50 @@ public class GuiTests : TestRunner
 {
 	private const string MsgBoxTitle = "this is a sample title";
 
+#if WINDOWS
+	[TestCase(false), TestCase(true), Category("Gui"), Apartment(ApartmentState.STA)]
+	public void TrayMenuLazyInitialization(bool allowMainWindow)
+	{
+		SkipIfUiInitializationBlocked("Building a tray menu needs a usable UI toolkit.");
+		s.CreateTrayMenu();
+		Assert.IsNull(s.Tray);
+		Assert.IsNull(s.trayMenu);
+		Accessors.A_AllowMainWindow = allowMainWindow;
+		s.FlowData.suspended = s.showsPaused = true;
+		using var icon = new NotifyIcon(); // No image or visibility: no icon is published on the desktop.
+		var window = new TrayMessageWindow(s, icon);
+		s.Tray = icon;
+		s.trayMessageWindow = window;
+
+		try
+		{
+			Assert.IsTrue(s.EnsureTrayIcon());
+			window.DispatchNotification(WindowsAPI.WM_MOUSEMOVE);
+			Assert.IsNull(s.trayMenu);
+			window.DispatchNotification(WindowsAPI.WM_LBUTTONDOWN);
+			var menu = s.trayMenu;
+			Assert.IsNotNull(menu);
+			Assert.AreSame(menu, Accessors.A_TrayMenu);
+			Assert.AreSame(menu, icon.Tag);
+			Assert.AreSame(menu.MenuItem, icon.ContextMenuStrip);
+			Assert.IsTrue(s.suspendMenuItem.Checked);
+			Assert.IsTrue(s.pauseMenuItem.Checked);
+			Assert.That(s.openMenuItem != null, Is.EqualTo(allowMainWindow));
+			var count = menu.MenuItem.Items.Count;
+			window.DispatchNotification(WindowsAPI.WM_LBUTTONDOWN);
+			Assert.AreSame(menu, s.trayMenu);
+			Assert.That(menu.MenuItem.Items.Count, Is.EqualTo(count));
+		}
+		finally
+		{
+			s.Tray = null;
+			s.trayMessageWindow = null;
+			window.ReleaseHandle();
+			s.trayMenu?.MenuItem.Dispose();
+		}
+	}
+#endif
+
 	[TestCase(false), TestCase(true), Category("Gui")]
 #if WINDOWS
 	[Apartment(ApartmentState.STA)]

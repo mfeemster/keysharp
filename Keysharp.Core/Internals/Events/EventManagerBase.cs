@@ -3,6 +3,11 @@ using Keysharp.Internals.Scripting;
 
 namespace Keysharp.Internals.Events
 {
+	/// <summary>
+	/// Empty payload declared in Core so ReadyToRun can compile the corresponding event manager instantiations.
+	/// </summary>
+	internal readonly struct NoPayload;
+
 	/// <summary>Owns one event family's subscriptions, native backend and callback dispatch.</summary>
 	/// <typeparam name="TRegistration">The source's subscription type.</typeparam>
 	/// <typeparam name="TBackend">The source's platform backend.</typeparam>

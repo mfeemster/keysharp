@@ -106,8 +106,11 @@ namespace Keysharp.Builtins
 			internal uint TimeoutMs;
 		}
 
-		private static readonly System.Collections.Concurrent.ConcurrentDictionary<nuint, WindowsMsgBoxRequest> windowsMsgBoxRequests = new();
-		private static readonly System.Collections.Concurrent.ConcurrentDictionary<nint, WindowsMsgBoxRequest> activeWindowsMsgBoxes = new();
+		// Built with the first message box, so that closing the dialogs of a script that showed none walks no registry.
+		private static ConcurrentDictionary<nuint, WindowsMsgBoxRequest> windowsMsgBoxRequests;
+		private static ConcurrentDictionary<nint, WindowsMsgBoxRequest> activeWindowsMsgBoxes;
+		private static ConcurrentDictionary<nuint, WindowsMsgBoxRequest> WindowsMsgBoxRequests => LazyInitializer.EnsureInitialized(ref windowsMsgBoxRequests);
+		private static ConcurrentDictionary<nint, WindowsMsgBoxRequest> ActiveWindowsMsgBoxes => LazyInitializer.EnsureInitialized(ref activeWindowsMsgBoxes);
 		private static readonly WindowsAPI.TimerProc msgBoxTimeoutProc = MsgBoxTimeout;
 		private static int nextMsgBoxRequestId;
 		private static int nextMsgBoxTimerId;
@@ -119,7 +122,7 @@ namespace Keysharp.Builtins
 			if (dialogMessage != (uint)UserMessages.AHK_DIALOG)
 				return 0;
 
-			var request = requestToken != 0 && windowsMsgBoxRequests.TryGetValue(unchecked((nuint)requestToken), out var pendingRequest)
+			var request = requestToken != 0 && WindowsMsgBoxRequests.TryGetValue(unchecked((nuint)requestToken), out var pendingRequest)
 				? pendingRequest
 				: null;
 			var dialogHwnd = FindOurDialog(request);
@@ -133,7 +136,7 @@ namespace Keysharp.Builtins
 			if (request != null)
 			{
 				request.DialogHwnd = dialogHwnd;
-				activeWindowsMsgBoxes[dialogHwnd] = request;
+				ActiveWindowsMsgBoxes[dialogHwnd] = request;
 
 				if (Volatile.Read(ref request.CancelRequested) != 0)
 				{
@@ -216,7 +219,7 @@ namespace Keysharp.Builtins
 
 			_ = WindowsAPI.KillTimer(hWnd, idEvent);
 
-			if (activeWindowsMsgBoxes.TryGetValue(hWnd, out var request))
+			if (ActiveWindowsMsgBoxes.TryGetValue(hWnd, out var request))
 				request.TimedOut = true;
 		}
 
@@ -250,7 +253,7 @@ namespace Keysharp.Builtins
 
 			try
 			{
-				windowsMsgBoxRequests[request.RequestId] = request;
+				WindowsMsgBoxRequests[request.RequestId] = request;
 				_ = Interlocked.Increment(ref script.pendingMsgBoxShows);
 
 				_ = WindowsAPI.PostMessage(script.MainWindowHandle, (uint)WindowsAPI.WM_COMMNOTIFY, (nint)(uint)UserMessages.AHK_DIALOG, (nint)request.RequestId);
@@ -265,10 +268,10 @@ namespace Keysharp.Builtins
 			finally
 			{
 				CompletePendingWindowsMsgBoxShow(request);
-				_ = windowsMsgBoxRequests.TryRemove(request.RequestId, out _);
+				_ = WindowsMsgBoxRequests.TryRemove(request.RequestId, out _);
 
 				if (request.DialogHwnd != 0)
-					_ = activeWindowsMsgBoxes.TryRemove(request.DialogHwnd, out _);
+					_ = ActiveWindowsMsgBoxes.TryRemove(request.DialogHwnd, out _);
 			}
 		}
 #else
@@ -1173,22 +1176,24 @@ namespace Keysharp.Builtins
 		internal static void CloseDialogs(Script script)
 		{
 #if WINDOWS
-			foreach (var request in windowsMsgBoxRequests.Values)
-			{
-				if (!ReferenceEquals(request.Owner, script))
-					continue;
+			if (Volatile.Read(ref windowsMsgBoxRequests) is { } requests)
+				foreach (var request in requests.Values)
+				{
+					if (!ReferenceEquals(request.Owner, script))
+						continue;
 
-				Volatile.Write(ref request.CancelRequested, 1);
+					Volatile.Write(ref request.CancelRequested, 1);
 
-				if (request.DialogHwnd != 0 && WindowsAPI.IsWindow(request.DialogHwnd))
-					_ = WindowsAPI.EndDialog(request.DialogHwnd, 0);
-			}
+					if (request.DialogHwnd != 0 && WindowsAPI.IsWindow(request.DialogHwnd))
+						_ = WindowsAPI.EndDialog(request.DialogHwnd, 0);
+				}
 
-			foreach (var (hwnd, request) in activeWindowsMsgBoxes)
-			{
-				if (ReferenceEquals(request.Owner, script) && WindowsAPI.IsWindow(hwnd))
-					_ = WindowsAPI.EndDialog(hwnd, 0);
-			}
+			if (Volatile.Read(ref activeWindowsMsgBoxes) is { } active)
+				foreach (var (hwnd, request) in active)
+				{
+					if (ReferenceEquals(request.Owner, script) && WindowsAPI.IsWindow(hwnd))
+						_ = WindowsAPI.EndDialog(hwnd, 0);
+				}
 
 			InputDialog.CloseAll(script);
 #else

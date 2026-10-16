@@ -91,10 +91,12 @@ namespace Keysharp.Internals.Window.Windows
 		// NotifyIcon is sealed and exposes no HWND or message hook. Its window stays alive until disposal.
 		private static readonly FieldInfo windowField = typeof(NotifyIcon).GetField("_window", BindingFlags.Instance | BindingFlags.NonPublic);
 		private readonly Script script;
+		private readonly NotifyIcon icon;
 
 		internal TrayMessageWindow(Script script, NotifyIcon icon)
 		{
 			this.script = script;
+			this.icon = icon;
 			if (windowField?.GetValue(icon) is not NativeWindow window)
 				throw new InvalidOperationException("Cannot access the WinForms tray notification window.");
 
@@ -112,7 +114,7 @@ namespace Keysharp.Internals.Window.Windows
 				return;
 
 			var message = Message.Create(Handle, NotifyIconMessage, (nint)UserMessages.AHK_NOTIFYICON, notification);
-			base.WndProc(ref message);
+			Forward(ref message);
 		}
 
 		protected override void WndProc(ref Message message)
@@ -120,6 +122,17 @@ namespace Keysharp.Internals.Window.Windows
 			if (IsTrayMessage(message)
 				&& (script.msgFilter.MessageClaimed(ref message) || Handle == 0 || script.IsDisposed || script.hasExited))
 				return;
+
+			Forward(ref message);
+		}
+
+		private void Forward(ref Message message)
+		{
+			// An icon is created without its menu, which is built ahead of the first click with which WinForms shows it or
+			// runs its default item.
+			if (icon.Tag == null && message.Msg == NotifyIconMessage
+				&& (int)message.LParam is WindowsAPI.WM_RBUTTONUP or WindowsAPI.WM_LBUTTONDOWN or WindowsAPI.WM_LBUTTONDBLCLK)
+				_ = script.EnsureTrayMenu();
 
 			base.WndProc(ref message);
 		}

@@ -34,8 +34,11 @@ namespace Keysharp.Builtins
 		private const ushort ButtonClass = 0x0080;
 		private const ushort EditClass = 0x0081;
 		private const ushort StaticClass = 0x0082;
-		private static readonly ConcurrentDictionary<nint, InputDialog> activeDialogs = new();
-		private static readonly byte[] dialogTemplate = BuildDialogTemplate();
+		// Built with the first InputBox, so that closing the dialogs of a script that showed none builds neither.
+		private static ConcurrentDictionary<nint, InputDialog> activeDialogs;
+		private static ConcurrentDictionary<nint, InputDialog> ActiveDialogs => LazyInitializer.EnsureInitialized(ref activeDialogs);
+		private static byte[] dialogTemplate;
+		private static byte[] DialogTemplate => LazyInitializer.EnsureInitialized(ref dialogTemplate, BuildDialogTemplate);
 		private static readonly WindowsAPI.DialogProc dialogProc = DialogProcedure;
 		private static readonly WindowsAPI.TimerProc timeoutProc = TimeoutProcedure;
 		private static int nextTimerId;
@@ -92,7 +95,7 @@ namespace Keysharp.Builtins
 				Result = "";
 				Volatile.Write(ref closing, 0);
 				instanceHandle = GCHandle.Alloc(this);
-				templateHandle = GCHandle.Alloc(dialogTemplate, GCHandleType.Pinned);
+				templateHandle = GCHandle.Alloc(DialogTemplate, GCHandleType.Pinned);
 				var nativeResult = WindowsAPI.DialogBoxIndirectParam(
 					WindowsAPI.GetModuleHandle(null),
 					templateHandle.AddrOfPinnedObject(),
@@ -115,7 +118,7 @@ namespace Keysharp.Builtins
 				StopTimer();
 
 				if (dialogHandle != 0)
-					activeDialogs.TryRemove(dialogHandle, out _);
+					ActiveDialogs.TryRemove(dialogHandle, out _);
 
 				if (templateHandle.IsAllocated)
 					templateHandle.Free();
@@ -131,14 +134,17 @@ namespace Keysharp.Builtins
 
 		internal static void CloseAll(Script owner)
 		{
-			foreach (var (hwnd, dialog) in activeDialogs)
+			if (Volatile.Read(ref activeDialogs) is not { } dialogs)
+				return;
+
+			foreach (var (hwnd, dialog) in dialogs)
 			{
 				if (ReferenceEquals(dialog.owner, owner) && WindowsAPI.IsWindow(hwnd))
 					_ = WindowsAPI.EndDialog(hwnd, CancelId);
 			}
 		}
 
-		internal static bool IsActive(nint hwnd) => activeDialogs.ContainsKey(hwnd);
+		internal static bool IsActive(nint hwnd) => Volatile.Read(ref activeDialogs)?.ContainsKey(hwnd) == true;
 
 		private static nint DialogProcedure(nint hwnd, uint message, nint wParam, nint lParam)
 		{
@@ -154,11 +160,11 @@ namespace Keysharp.Builtins
 					if (dialog != null)
 					{
 						dialog.dialogHandle = hwnd;
-						activeDialogs[hwnd] = dialog;
+						ActiveDialogs[hwnd] = dialog;
 					}
 				}
 				else
-					activeDialogs.TryGetValue(hwnd, out dialog);
+					ActiveDialogs.TryGetValue(hwnd, out dialog);
 
 				if (dialog == null)
 					return 0;
@@ -182,7 +188,7 @@ namespace Keysharp.Builtins
 			finally
 			{
 				if (message == WindowsAPI.WM_NCDESTROY)
-					activeDialogs.TryRemove(hwnd, out _);
+					ActiveDialogs.TryRemove(hwnd, out _);
 			}
 		}
 
@@ -450,7 +456,7 @@ namespace Keysharp.Builtins
 
 			try
 			{
-				if (!activeDialogs.TryGetValue(hwnd, out dialog) || dialog.timerId != idEvent)
+				if (!ActiveDialogs.TryGetValue(hwnd, out dialog) || dialog.timerId != idEvent)
 					return;
 
 				dialog.Complete(hwnd, "Timeout", TimeoutDialogResult);

@@ -30,7 +30,7 @@ namespace Keysharp.Internals.Events
 	/// </para>
 	/// </summary>
 	internal sealed class ClipboardEventManager(Script script)
-		: EventManagerBase<ClipboardEventRegistration, ClipboardEventManager.NativeSource, ValueTuple>(script, true)
+		: EventManagerBase<ClipboardEventRegistration, ClipboardEventManager.NativeSource, NoPayload>(script, true)
 	{
 		/// <summary>
 		/// The clipboard's native source. Unlike the window and display sources there is nothing per-manager to own:

@@ -4,9 +4,10 @@ namespace Keysharp.Builtins
 	internal class GuiData
 	{
 		internal int windowCount = 0;
+		// Reference-valued dictionaries share native code when their value-type keys match, so use long for these ids.
 		internal ConcurrentDictionary<long, Gui> allGuiHwnds = new ();
-		internal ConcurrentDictionary<int, WeakReference<Menu>> allMenus = new ();
-		internal ConcurrentDictionary<uint, WeakReference<Action<ScriptEventScheduler>>> overlayHandlerCleanups = new ();
+		internal ConcurrentDictionary<long, WeakReference<Menu>> allMenus = new ();
+		internal ConcurrentDictionary<long, WeakReference<Action<ScriptEventScheduler>>> overlayHandlerCleanups = new ();
 		internal ConcurrentDictionary<long, MsgMonitor> onMessageHandlers = new ();
 
 		/// <summary>

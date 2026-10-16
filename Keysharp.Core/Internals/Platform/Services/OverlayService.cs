@@ -285,6 +285,11 @@ namespace Keysharp.Internals
 			// native call, so an operation already holding a slot gate cannot report success after this point.
 			lock (sync)
 			{
+				// Most scripts never create an overlay, and the LINQ below over these uint-keyed tables would be
+				// JIT-compiled at exit for nothing.
+				if (overlays.Count == 0 && pointerSinks.Count == 0)
+					return false;
+
 				all = overlays.Where(kv => owner == null || ReferenceEquals(kv.Value.Owner, owner)).ToArray();
 				sinks = pointerSinks.Where(kv => owner == null || ReferenceEquals(kv.Value.Owner, owner))
 					.Select(kv => kv.Key).ToArray();

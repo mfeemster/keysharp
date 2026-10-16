@@ -46,7 +46,7 @@ namespace Keysharp.Runtime
 		/// </summary>
 		internal bool EnsureTrayIcon()
 		{
-			if (Tray != null && trayMenu != null)
+			if (Tray != null)
 				return true;
 
 			if (NoTrayIcon || IsUiInitializationBlocked || IsHeadless)
@@ -54,32 +54,57 @@ namespace Keysharp.Runtime
 
 			InvokeOnUIThread(() =>
 			{
-				if (Tray == null || trayMenu == null)
+				if (Tray == null)
 					CreateTrayMenu();
 			});
 
-			return Tray != null && trayMenu != null;
+			return Tray != null;
 		}
 
 		/// <summary>
-		/// Guarantees the tray menu, which is the script's own and outlives any icon: AutoHotkey builds it at
-		/// startup, so it stays readable and buildable under #NoTrayIcon and with no tray to show it in.
+		/// Guarantees the tray menu, which is the script's own and outlives any icon, so it stays readable and
+		/// buildable under #NoTrayIcon and with no tray to show it in. Every path that reads the menu comes
+		/// through here, so a script cannot tell it from AutoHotkey's menu built at startup.
 		/// </summary>
 		internal bool EnsureTrayMenu()
 		{
-			if (trayMenu != null)
+			// AddStandard needs the script's menu identity before its items are complete; workers wait for that UI work.
+			if (IsOnMainThread && trayMenu != null)
 				return true;
 
 			if (IsUiInitializationBlocked)
 				return false;
 
-			InvokeOnUIThread(() =>
-			{
-				if (trayMenu == null)
-					CreateTrayMenu();
-			});
-
+			InvokeOnUIThread(() => _ = BuildTrayMenu());
 			return trayMenu != null;
+		}
+
+		private bool BuildTrayMenu()
+		{
+			if (trayMenu != null)
+				return true;
+
+			try
+			{
+				trayMenu = new();
+				_ = trayMenu.AddStandard();
+			}
+			catch (Exception ex)
+			{
+				// A toolkit which cannot build a menu cannot build a tray either, so stop asking for both.
+				trayMenu = null;
+				NoTrayIcon = true;
+				Script.WriteUncaughtErrorToStdErr("Tray menu initialization skipped: " + ex.Message);
+				return false;
+			}
+
+			if (Tray != null)
+			{
+				Tray.ContextMenuStrip = trayMenu.MenuItem;
+				Tray.Tag = trayMenu;
+			}
+
+			return true;
 		}
 
 		public void CreateTrayMenu()
@@ -87,25 +112,12 @@ namespace Keysharp.Runtime
 			if (IsUiInitializationBlocked)
 				return;
 
-			// The menu is created ahead of the icon and independently of it, so #NoTrayIcon and a display-less
-			// session withhold only the icon. The standard items are appended once: a later call that still
-			// wants the icon finds the menu already built.
-			if (trayMenu == null)
-			{
-				try
-				{
-					trayMenu = new();
-					_ = trayMenu.AddStandard();
-				}
-				catch (Exception ex)
-				{
-					// A toolkit which cannot build a menu cannot build a tray either, so stop asking for both.
-					trayMenu = null;
-					NoTrayIcon = true;
-					Script.WriteUncaughtErrorToStdErr("Tray menu initialization skipped: " + ex.Message);
-					return;
-				}
-			}
+#if !WINDOWS
+			// The tray host shows the menu without asking the script, so it has to come with the icon. On Windows
+			// the icon's window sees each click first and builds the menu then, keeping its cost out of startup.
+			if (!BuildTrayMenu())
+				return;
+#endif
 
 			// Tests share a process and need the menu model, but must not publish icons on the user's desktop.
 			if (Tray != null || NoTrayIcon || IsHeadless || IsTestHost)
@@ -115,7 +127,7 @@ namespace Keysharp.Runtime
 
 			try
 			{
-				trayIcon = Tray = new NotifyIcon { ContextMenuStrip = trayMenu.MenuItem, Text = TrayTip };
+				trayIcon = Tray = new NotifyIcon { ContextMenuStrip = trayMenu?.MenuItem, Text = TrayTip };
 #if WINDOWS
 				try
 				{

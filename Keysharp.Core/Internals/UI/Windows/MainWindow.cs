@@ -371,8 +371,9 @@ namespace Keysharp.Internals.UI.Windows
 
 		private void HandleMenuCommand(MenuCommand command)
 		{
+			// A tray command a script or another process sends runs the menu's item, so the menu is built for it.
 			if (command >= MenuCommand.TrayOpen && command <= MenuCommand.TrayAccessibilitySpy
-				&& OwnerScript.trayMenu?.InvokeStandardCommand(command) == true)
+				&& OwnerScript.EnsureTrayMenu() && OwnerScript.trayMenu.InvokeStandardCommand(command))
 				return;
 
 			switch (command)

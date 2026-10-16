@@ -30,7 +30,7 @@ namespace Keysharp.Internals.Audio
 	/// platform emits.
 	/// </summary>
 	internal sealed class AudioEventManager(Script script)
-		: EventManagerBase<AudioEventRegistration, AudioEventManager.Watcher, ValueTuple>(script, false)
+		: EventManagerBase<AudioEventRegistration, AudioEventManager.Watcher, NoPayload>(script, false)
 	{
 		internal const string KindAdded = "Added";
 		internal const string KindRemoved = "Removed";

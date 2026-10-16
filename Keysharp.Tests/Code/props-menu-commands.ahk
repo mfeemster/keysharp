@@ -43,6 +43,11 @@ window := MainWindowForTests()
 #endif
 AssertEq(window.Visible, 0, A_LineNumber)
 #if WINDOWS
+; A command can be the first use of the tray menu.
+SendMessage(0x111, 65305, 0,, A_ScriptHwnd)
+WaitSuspended(1)
+SendMessage(0x111, 65305, 0,, A_ScriptHwnd)
+WaitSuspended(0)
 controlHwnd := window.Controls.Find("txtDebug", true).GetValue(0).Handle
 mainGui := GuiFromHwnd(A_ScriptHwnd)
 debugControl := GuiCtrlFromHwnd(controlHwnd)

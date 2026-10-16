@@ -31,7 +31,7 @@ namespace Keysharp.Internals.Window
 	/// </para>
 	/// </summary>
 	internal sealed class MonitorEventManager(Script script)
-		: EventManagerBase<MonitorEventRegistration, IMonitorEventBackend, ValueTuple>(script, false)
+		: EventManagerBase<MonitorEventRegistration, IMonitorEventBackend, NoPayload>(script, false)
 	{
 		/// <summary>The set of attached monitors changed — one was plugged in, unplugged, or the session docked.</summary>
 		internal const string KindTopology = "Topology";
