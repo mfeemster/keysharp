@@ -2828,7 +2828,10 @@ namespace Keysharp.Internals.Input.Keyboard
 			var changed = false;
 			var script = scheduler.Owner;
 
-			foreach (var hotkey in script.HotkeyData.shk)
+			if (script.hotkeyData is not { } hotkeyData)
+				return false;
+
+			foreach (var hotkey in hotkeyData.shk)
 			{
 				if (hotkey == null)
 					continue;

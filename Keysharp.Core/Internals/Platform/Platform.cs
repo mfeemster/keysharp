@@ -24,6 +24,8 @@ namespace Keysharp.Internals
 		/// <summary>The resolved host. Forcing this on the startup thread is the deterministic resolution point.</summary>
 		internal static PlatformHost Instance => host.Value;
 
+		internal static bool IsResolved => host.IsValueCreated;
+
 		/// <summary>Dispose and re-resolve the service graph. This is a test-only, no-concurrent-use operation; the
 		/// static desktop-environment snapshot is intentionally not refreshed.</summary>
 		internal static void Reset()

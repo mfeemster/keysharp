@@ -367,11 +367,12 @@ namespace Keysharp.Runtime
 #else
 		private ExecutableMemoryPoolManager exeMemoryPoolManager;
 #endif
-		private FlowData flowData;
+		// Cleanup reads these backing fields without initializing unused subsystems.
+		internal FlowData flowData;
 		private FunctionData functionData;
-		private GuiData guiData;
-		private HotkeyData hotkeyData;
-		private HotstringManager hotstringManager;
+		internal GuiData guiData;
+		internal HotkeyData hotkeyData;
+		internal HotstringManager hotstringManager;
 		private ImageListData imageListData;
 		private InputData inputData;
 		private bool isReadyToExecute;
@@ -383,7 +384,7 @@ namespace Keysharp.Runtime
 		private RegExData regExData;
 		private StringsData stringsData;
 		private readonly ConditionalWeakTable<System.Threading.Tasks.Task, Keysharp.Builtins.Ks.KeysharpTask> taskWrappers = new();
-		private ToolTipData toolTipData;
+		internal ToolTipData toolTipData;
 		private Dictionary<string, WindowGroup> windowGroups;
 		private int disposeStarted;
 #if !WINDOWS
@@ -1669,7 +1670,8 @@ namespace Keysharp.Runtime
 
 			// Frees every overlay this script still owns (Highlight/ToolTip/Overlay builtins all register as
 			// image overlays) without disturbing surfaces belonging to another script in the same process.
-			Teardown(() => _ = Platform.Overlay.DisposeAllImageOverlays(this));
+			if (Platform.IsResolved)
+				Teardown(() => _ = Platform.Overlay.DisposeAllImageOverlays(this));
 
 			// Stops anything SoundPlay left playing. On Windows an MCI item left open can hang the process on
 			// exit (AHK closes it from its destructor for the same reason); elsewhere this reaps the player.

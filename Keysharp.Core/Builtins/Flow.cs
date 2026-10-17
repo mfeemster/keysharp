@@ -538,7 +538,7 @@ namespace Keysharp.Builtins
 		internal Timer1 mainTimer;
 		internal int NoSleep = -1;
 		internal bool persistentValueSetByUser;
-		internal readonly ConcurrentDictionary<string, bool> initializedUserStaticVariables = new();
+		internal ConcurrentDictionary<string, bool> initializedUserStaticVariables;
 
 		/// <summary>
 		/// Internal property to track whether the script's hotkeys and hotstrings are suspended.

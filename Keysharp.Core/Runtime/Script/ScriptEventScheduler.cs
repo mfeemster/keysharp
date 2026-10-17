@@ -1185,7 +1185,7 @@ internal bool HasBlockedQueuedWork
 				DisposeOwnedTimers();
 				DisposeOwnedClipboardHandlers();
 				var hotkeysChanged = Keysharp.Internals.Input.Keyboard.HotkeyDefinition.DisableOwnedVariants(this);
-				var hotstringsChanged = script.HotstringManager.DisableOwnedHotstrings(this);
+				var hotstringsChanged = script.hotstringManager?.DisableOwnedHotstrings(this) == true;
 				DisposeOwnedMessageHandlers();
 				DisposeOwnedGuiHandlers();
 				DisposeOwnedMenuHandlers();
@@ -1216,7 +1216,7 @@ internal bool HasBlockedQueuedWork
 
 		private void DisposeOwnedTimers()
 		{
-			if (script.FlowData.timers.RemoveOwned(this) && !script.IsDisposed)
+			if (script.flowData?.timers.RemoveOwned(this) == true && !script.IsDisposed)
 				script.ExitIfNotPersistent();
 		}
 
@@ -1228,13 +1228,16 @@ internal bool HasBlockedQueuedWork
 
 		private void DisposeOwnedMessageHandlers()
 		{
-			foreach (var kv in script.GuiData.onMessageHandlers.ToArray())
+			if (script.guiData is not { } data)
+				return;
+
+			foreach (var kv in data.onMessageHandlers.ToArray())
 			{
 				if (kv.Value == null || !kv.Value.RemoveOwned(this))
 					continue;
 
 				if (kv.Value.IsEmpty)
-					_ = script.GuiData.onMessageHandlers.TryRemove(kv.Key, out _);
+					_ = data.onMessageHandlers.TryRemove(kv.Key, out _);
 			}
 		}
 
@@ -1251,7 +1254,10 @@ internal bool HasBlockedQueuedWork
 
 		private void DisposeOwnedGuiHandlers()
 		{
-			foreach (var gui in new HashSet<Gui>(script.GuiData.allGuiHwnds.Values))
+			if (script.guiData is not { } data)
+				return;
+
+			foreach (var gui in new HashSet<Gui>(data.allGuiHwnds.Values))
 			{
 				_ = gui?.form?.RemoveOwnedHandlers(this);
 
@@ -1259,22 +1265,25 @@ internal bool HasBlockedQueuedWork
 					_ = control?.RemoveOwnedHandlers(this);
 			}
 
-			foreach (var kv in script.GuiData.overlayHandlerCleanups.ToArray())
+			foreach (var kv in data.overlayHandlerCleanups.ToArray())
 			{
 				if (kv.Value.TryGetTarget(out var cleanup))
 					cleanup(this);
 				else
-					_ = script.GuiData.overlayHandlerCleanups.TryRemove(kv.Key, out _);
+					_ = data.overlayHandlerCleanups.TryRemove(kv.Key, out _);
 			}
 		}
 
 		private void DisposeOwnedMenuHandlers()
 		{
-			foreach (var kv in script.GuiData.allMenus.ToArray())
+			if (script.guiData is not { } data)
+				return;
+
+			foreach (var kv in data.allMenus.ToArray())
 			{
 				if (!kv.Value.TryGetTarget(out var menu))
 				{
-					_ = script.GuiData.allMenus.TryRemove(kv.Key, out _);
+					_ = data.allMenus.TryRemove(kv.Key, out _);
 					continue;
 				}
 

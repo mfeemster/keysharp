@@ -21,6 +21,21 @@ public class SchedulerTests : TestRunner
 		void IDisposable.Dispose() => Disposes++;
 	}
 
+	[Test, Category("Threading")]
+	public void CleanupLeavesUnusedSubsystemsUninitialized()
+	{
+		s.Dispose();
+		s = new Script();
+		hsm = null;
+		object[] State() => [s.flowData, s.guiData, s.hotkeyData, s.hotstringManager, s.toolTipData];
+
+		Assert.That(State(), Is.All.Null);
+		s.EventScheduler.ShutdownForScriptDispose();
+		Assert.That(State(), Is.All.Null);
+		s.Dispose();
+		Assert.That(State(), Is.All.Null);
+	}
+
 	/// <summary>
 	/// The one-engine-per-process contract, from the RETIRED script's side: what it registered must be
 	/// revoked by its own Dispose, so nothing of it can still fire once a replacement is running. Asserting

@@ -108,8 +108,10 @@ namespace Keysharp.Builtins
 		/// destruction would take them along, which is also why AHK destroys them itself at exit.</summary>
 		internal static void DestroyAll(Script script)
 		{
+			if (script.toolTipData is not { } data)
+				return;
 #if WINDOWS
-			var windows = script.ToolTipData.windows;
+			var windows = data.windows;
 
 			if (System.Array.Exists(windows, slot => slot.Hwnd != 0))
 				script.InvokeOnUIThread(() =>
@@ -119,7 +121,7 @@ namespace Keysharp.Builtins
 				});
 #else
 			for (var id = 0; id < ToolTipData.MaxToolTips; id++)
-				DestroyOverlayTooltip(script.ToolTipData, id);
+				DestroyOverlayTooltip(data, id);
 #endif
 		}
 

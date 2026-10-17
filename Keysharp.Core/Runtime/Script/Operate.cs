@@ -567,7 +567,7 @@ namespace Keysharp.Runtime
 
 		public static void InitStaticVariable(ref object variable, string name, Func<object> initFunc)
 		{
-			var initialized = Script.TheScript.FlowData.initializedUserStaticVariables;
+			var initialized = LazyInitializer.EnsureInitialized(ref Script.TheScript.FlowData.initializedUserStaticVariables);
 
 			if (initialized.ContainsKey(name))
 				return;

@@ -1,3 +1,6 @@
+#ErrorStdOut
+#Warn All, StdOut
+#Warn LocalSameAsGlobal, Off
 #NoTrayIcon
 #Include <assert>
 
