@@ -5861,10 +5861,6 @@ namespace Keysharp.Compilation.Syntax
 					}
 
 			var remapDestModifiersSend = remapDestIsSided ? destModifiersDown : remapDestModifiers;
-			var remapDestKey = (Keys)remapDestVk;
-
-			if (remapDestKey == Keys.Pause && remapDestModifiers.Length == 0 && string.Compare(remapDest, "Pause", true) == 0)
-				return;   // a hotkey to pause the script, not a remap to the Pause key
 
 			var altTabAction = HotkeyDefinition.ConvertAltTab(targetKey, false);
 			if (altTabAction != 0)

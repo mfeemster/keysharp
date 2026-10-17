@@ -636,6 +636,43 @@ public partial class HotstringTests : TestRunner
 #endif
 
 	[Test, Category("Hotstring"), Category("Internal")]
+	public void RemapTargetParsing()
+	{
+		foreach (var (source, target, whitespace) in new[]
+		{
+			(" \tq:: \tWheelDown", "WheelDown", true), ("x::\t^Pause", "^Pause", true),
+			("x::vk13", "vk13", false), ("x:: AltTab", "AltTab", true), ("x::`;", "`;", false)
+		})
+		{
+			var lexer = new Lexer(source);
+			var token = lexer.Tokenize().Single(t => t.Kind == TokenKind.RemapTargetKey);
+			Assert.IsEmpty(lexer.Diagnostics);
+			var offset = source.IndexOf(target, StringComparison.Ordinal);
+			Assert.That((token.Text, token.Offset, token.Column, token.Length, token.LeadingWhitespace),
+				Is.EqualTo((target, offset, offset + 1, target.Length, whitespace)));
+		}
+
+		foreach (var (source, triggers) in new[]
+		{
+			("x::Pause", "x"), ("x:: \tpAuSe", "x"), ("^!p::\nx::Pause", "^!p,x")
+		})
+		{
+			var (program, diagnostics) = Keysharp.Parsing.Syntax.Parser.ParseWithDiagnostics(source);
+			Assert.IsEmpty(diagnostics);
+			var hotkey = program.Body.OfType<Keysharp.Parsing.Syntax.HotkeyDef>().Single();
+			Assert.That(string.Join(",", hotkey.Triggers), Is.EqualTo(triggers));
+			var generated = new Keysharp.Compilation.Syntax.Lowerer().Build(program, "Test");
+			Assert.That(generated.ToFullString(), Does.Contain("Keysharp.Builtins.Flow.Pause"));
+		}
+
+		foreach (var target in new[] { "x::`t", "x::^`t" })
+		{
+			var (bytes, error, _) = new CompilerHelper().CompileCodeToByteArray("#ErrorStdOut\n#Warn All, StdOut\n" + target, "remap_whitespace");
+			Assert.That(bytes, Is.Not.Null, error);
+		}
+	}
+
+	[Test, Category("Hotstring"), Category("Internal")]
 	public void HotkeyTrailingText()
 	{
 		var callback = new KeysharpFunc((Func<object, object>)(_ => 0L));

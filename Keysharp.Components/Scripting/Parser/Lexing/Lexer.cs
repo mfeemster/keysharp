@@ -1357,9 +1357,12 @@ namespace Keysharp.Parsing.Lexing
 				while (_pos < rk) Advance();
 				SplitRemap(remap, out var src, out var tgt);
 				int sepLocal = remap.Length - tgt.Length - 2;   // index of `::` within `remap`
+				// Whitespace after `::` belongs to neither key, as AutoHotkey skips it before reading the target.
+				int pad = tgt.Length - tgt.AsSpan().TrimStart(" \t").Length;
+				tgt = tgt[pad..];
 				tokens.Add(Tok(TokenKind.RemapSourceKey, src, sl, sc, start, sepLocal, leadingWs));
 				tokens.Add(Tok(TokenKind.DoubleColon, "::", sl, sc + sepLocal, start + sepLocal, 2, false));
-				tokens.Add(Tok(TokenKind.RemapTargetKey, tgt, sl, sc + sepLocal + 2, start + sepLocal + 2, tgt.Length, false));
+				tokens.Add(Tok(TokenKind.RemapTargetKey, tgt, sl, sc + sepLocal + 2 + pad, start + sepLocal + 2 + pad, tgt.Length, pad > 0));
 				return true;
 			}
 
@@ -1377,6 +1380,7 @@ namespace Keysharp.Parsing.Lexing
 		{
 			int i = from;
 			while (i < _n && (_s[i] == ' ' || _s[i] == '\t')) i++;          // leading whitespace
+			int modifiersStart = i;
 			while (i < _n && IsModifierKeyChar(_s[i])) i++;                 // modifier keys (#!^+<>)
 			if (i >= _n || _s[i] == '\n' || _s[i] == '\r') return -1;       // empty target -> not a remap
 			if (_s[i] == '{' || _s[i] == '}') return -1;                    // brace -> OTB block body, not a remap
@@ -1400,6 +1404,9 @@ namespace Keysharp.Parsing.Lexing
 			// not a remap to a non-existent "MsgBox" key — bail out so it lexes as a normal hotkey body.
 			// Single characters are always valid remap targets, matching AutoHotkey.
 			if (identifierRun && keyEnd - keyStart > 1 && !IsRemapTargetKeyName(_s.AsSpan(keyStart, keyEnd - keyStart)))
+				return -1;
+			// Bare Pause is the pause command, as remapping the key is the less common intent.
+			if (keyStart == modifiersStart && _s.AsSpan(keyStart, keyEnd - keyStart).Equals("Pause", StringComparison.OrdinalIgnoreCase))
 				return -1;
 			while (i < _n && (_s[i] == ' ' || _s[i] == '\t')) i++;          // trailing whitespace
 			if (i >= _n || _s[i] == '\n' || _s[i] == '\r') return keyEnd;   // EOL -> remap

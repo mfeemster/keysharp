@@ -1333,7 +1333,7 @@ namespace Keysharp.Internals.Input.Keyboard
 		{
 			var shk = script.HotkeyData.shk;
 			HotkeyProperties propCandidate = new ();
-			_ = TextToModifiers(_name, null, propCandidate);
+			_ = TextToModifiers(_name?.TrimEnd(SpaceTab), null, propCandidate);
 			_noSuppress = (propCandidate.prefixHasTilde ? NO_SUPPRESS_PREFIX : 0)//Set for caller.
 						  | (propCandidate.suffixHasTilde ? AT_LEAST_ONE_VARIANT_HAS_TILDE : 0);
 			_hookIsMandatory = propCandidate.hookIsMandatory; // Set for caller.
@@ -1380,7 +1380,7 @@ namespace Keysharp.Internals.Input.Keyboard
 				if (parsedName == null)
 				{
 					parsedName = new HotkeyProperties();
-					_ = TextToModifiers(Name, null, parsedName);
+					_ = TextToModifiers(Name.TrimEnd(SpaceTab), null, parsedName);
 				}
 
 				return parsedName;
@@ -1746,7 +1746,7 @@ namespace Keysharp.Internals.Input.Keyboard
 		/// it should simply return OK if aName is a valid hotkey and FAIL otherwise.
 		internal static ResultType TextInterpret(string name, HotkeyDefinition thisHotkey, bool syntaxCheckOnly = false)
 		{
-			var splits = name.Split(COMPOSITE_DELIMITER);
+			var splits = name.TrimEnd(SpaceTab).Split(COMPOSITE_DELIMITER);
 
 			if (splits.Length == 1)
 			{
@@ -1967,7 +1967,6 @@ namespace Keysharp.Internals.Input.Keyboard
 		{
 			// Init output parameter for caller if it gave one:
 			properties?.Reset();
-			text = text?.TrimEnd(SpaceTab);
 
 			if (string.IsNullOrEmpty(text))
 				return text; // Below relies on this having ensured that aText isn't blank.
