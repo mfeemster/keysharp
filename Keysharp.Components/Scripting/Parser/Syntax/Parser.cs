@@ -1883,9 +1883,12 @@ namespace Keysharp.Parsing.Syntax
 			RejectReservedName(name, nameTok, "a function name");
 			var ps = ParseParamList();
 			SkipNewlines();
-			if (Match(TokenKind.FatArrow))
-				return new FunctionDecl(name, ps, null, ParseCallable(() => ParseExpression(1)), isStatic);
-			return new FunctionDecl(name, ps, ParseCallable(ParseBlock), null, isStatic);
+			var fn = Match(TokenKind.FatArrow)
+				? new FunctionDecl(name, ps, null, ParseCallable(() => ParseExpression(1)), isStatic)
+				: new FunctionDecl(name, ps, ParseCallable(ParseBlock), null, isStatic);
+			// Named hotkey and hotstring callbacks bypass ParseStatement.
+			(fn.Line, fn.Column, fn.File) = (nameTok.Line, nameTok.Column, nameTok.File);
+			return fn;
 		}
 
 		private List<Param> ParseParamList() => ParseParamList(TokenKind.LParen, TokenKind.RParen);

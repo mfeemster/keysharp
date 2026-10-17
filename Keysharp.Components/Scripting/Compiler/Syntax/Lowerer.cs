@@ -864,10 +864,9 @@ namespace Keysharp.Compilation.Syntax
 			_moduleDhhr.Clear();
 			foreach (var s in body)
 			{
-				// Only TOP-LEVEL functions are module-global. Nested functions (static or not) are scoped to their
-				// enclosing function — bound as local KeysharpFunc/Closure vars when that scope is lowered — so same-named
-				// nested functions in different scopes don't collide.
-				if (s is FunctionDecl fd)
+				// Named hotkey and hotstring callbacks are module functions too.
+				var fd = s as FunctionDecl ?? (s as HotkeyDef)?.Func ?? (s as HotstringDef)?.Func;
+				if (fd != null)
 				{
 					// Inline exports were registered first, so report this collision from the script side.
 					if (_inlineFuncNames?.Contains(fd.Name) == true)
@@ -878,8 +877,6 @@ namespace Keysharp.Compilation.Syntax
 						Diag($"{NodeAnchor(fd)}This function declaration conflicts with an existing declaration: {fd.Name}");
 					else _userFuncDeclByLower[lower] = fd;
 				}
-				else if (s is HotkeyDef { Func: { } hkf }) { _userFuncByLower[hkf.Name] = hkf.Name; }
-				else if (s is HotstringDef { Func: { } hsf }) { _userFuncByLower[hsf.Name] = hsf.Name; }
 				else if (s is ClassDecl cd) { RegisterClass(cd); }
 			}
 			var moduleArrows = NamedArrows(body, null);

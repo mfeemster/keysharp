@@ -292,6 +292,30 @@ public class FunctionTests : TestRunner
 				diagnostic => diagnostic.Contains("declaration conflicts")), source);
 	}
 
+	[Test, Category("Function")]
+	public void HotkeyFunctionConflictsWithDeclaration()
+	{
+		foreach (var (source, line) in new[]
+		{
+			("f(a, b) {\n}\nx::\nF(ThisHotkey) {\n}\n", 4),
+			("x::\nF(ThisHotkey) {\n}\nF(a, b) {\n}\n", 4),
+			("F(a, b) {\n}\n::btw::\nF(ThisHotkey) {\n}\n", 4),
+			("::btw::\nF(ThisHotkey) {\n}\nF(a, b) {\n}\n", 4),
+			("class F {\n}\nx::\nF(ThisHotkey) {\n}\n", 4),
+			("x::\nF(ThisHotkey) {\n}\nclass F {\n}\n", 4),
+			("F() => 1\nx::\nF(ThisHotkey) {\n}\n", 3),
+			("x::\nF(ThisHotkey) {\n}\nF() => 1\n", 4),
+			("x::\nF(ThisHotkey) {\n}\n::btw::\nF(ThisHotkey) {\n}\n", 5),
+		})
+		{
+			var diagnostics = LoweringDiagnostics.Diagnostics(source);
+			Assert.IsTrue(System.Array.Exists(diagnostics, d => d.StartsWith($"{line}:") && d.Contains("declaration conflicts") && d.EndsWith(": F")),
+				source.Replace("\n", "\\n") + ": " + string.Join("; ", diagnostics));
+		}
+
+		Assert.IsEmpty(LoweringDiagnostics.Diagnostics("x::\ny::\nF(ThisHotkey) {\n}\n"));
+	}
+
 	// Thousands of variables must compile without recursively nested lookup syntax.
 	[Test, Category("Function"), Category("Internal")]
 	public void DynamicNameLookupWithManyVariables()
