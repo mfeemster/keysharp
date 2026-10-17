@@ -1544,7 +1544,6 @@ namespace Keysharp.Compilation
 				ForStatementSyntax _
 				or ForEachStatementSyntax _
 				or WhileStatementSyntax _
-				or DoStatementSyntax _
 					=> true,
 
 				// using / fixed / lock / unsafe with body
