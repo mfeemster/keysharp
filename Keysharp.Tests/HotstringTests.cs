@@ -619,21 +619,19 @@ public partial class HotstringTests : TestRunner
 		}
 	}
 
-	/// <summary>
-	/// The down half of a remap is the one piece of generated code which differs by platform: macOS wraps it
-	/// so that only a physical auto-repeat is marked as one, which splits the literal immediately before its
-	/// closing brace (see RemapDownSend in the lowerer). Assertions about a down-send therefore have to
-	/// expect the text the running platform actually emits. The wrapping itself, including the brace this
-	/// drops, is covered by MacRemapPropagatesNativeAutoRepeatMetadata. A wheel remap is never wrapped
-	/// (it has no up event) and so is compared verbatim.
-	/// </summary>
-	private static string RemapDown(string downSend) =>
-#if OSX
-		downSend[..^1];
-#else
-		downSend;
+	private static (string Source, string Target, uint FirmwareModifiersLR) LowerRemapCall(string line)
+	{
+		var (prog, diags) = Keysharp.Parsing.Syntax.Parser.ParseWithDiagnostics(line);
+		Assert.IsEmpty(diags, "unexpected parse diagnostics: " + string.Join("; ", diags));
+		var call = new Keysharp.Compilation.Syntax.Lowerer().Build(prog, "Test").DescendantNodes()
+			.OfType<Microsoft.CodeAnalysis.CSharp.Syntax.InvocationExpressionSyntax>()
+			.Single(i => i.Expression.ToString() == "Keysharp.Runtime.Keyboard.HotkeyDefinition.AddRemap");
+		object Argument(int index) => ((Microsoft.CodeAnalysis.CSharp.Syntax.LiteralExpressionSyntax)call.ArgumentList.Arguments[index].Expression).Token.Value;
+		return ((string)Argument(0), (string)Argument(1), (uint)Argument(2));
+	}
 
-#endif
+	private static RemapDefinition ResolveRemap(string source, string target, uint firmwareSourceModifiersLR = 0) =>
+		RemapDefinition.Resolve(Script.TheScript, source, target, firmwareSourceModifiersLR);
 
 	[Test, Category("Hotstring"), Category("Internal")]
 	public void RemapTargetParsing()
@@ -744,102 +742,108 @@ public partial class HotstringTests : TestRunner
 		(prog, diags) = Keysharp.Parsing.Syntax.Parser.ParseWithDiagnostics("a::Office");
 		Assert.IsEmpty(diags, "unexpected parse diagnostics: " + string.Join("; ", diags));
 		generated = new Keysharp.Compilation.Syntax.Lowerer().Build(prog, "Test").ToFullString();
-		Assert.That(generated.Contains("__Remap_"), Is.False, generated);
+		Assert.That(generated.Contains("AddRemap"), Is.False, generated);
 	}
 
 	[Test, Category("Hotstring"), Category("Internal")]
 	public void CopilotRemapAlias()
 	{
-		var (prog, diags) = Keysharp.Parsing.Syntax.Parser.ParseWithDiagnostics("Copilot::RCtrl");
-		Assert.IsEmpty(diags, "unexpected parse diagnostics: " + string.Join("; ", diags));
-		var generated = new Keysharp.Compilation.Syntax.Lowerer().Build(prog, "Test").ToFullString();
-		Assert.IsTrue(generated.Contains("\"*<#<+F23\""), generated);
-		Assert.IsTrue(generated.Contains(RemapDown("{Blind}{LShift up}{LWin up}{RCtrl DownR}")), generated);
-		Assert.IsTrue(generated.Contains("{Blind}{RCtrl Up}"), generated);
-		Assert.That(generated.Contains("GetKeyState(\"LShift\",\"P\")"), Is.False, generated);
-		Assert.That(generated.Contains("GetKeyState(\"LWin\",\"P\")"), Is.False, generated);
+		// The alias is expanded when the script is compiled, and only the alias tells the running script that the firmware
+		// releases the chord's modifiers itself. Resolving the keys is left to the running script.
+		Assert.That(LowerRemapCall("Copilot::RCtrl"), Is.EqualTo(("<#<+F23", "RCtrl", MOD_LWIN | MOD_LSHIFT)));
+		Assert.That(LowerRemapCall("<#<+F23::RCtrl"), Is.EqualTo(("<#<+F23", "RCtrl", 0u)));
+		Assert.That(LowerRemapCall("a::Copilot"), Is.EqualTo(("a", "<#<+F23", 0u)));
 
-		// The literal chord retains ordinary generic-chord behavior, including restoring physically-held
-		// source modifiers after the remapped modifier is released.
-		(prog, diags) = Keysharp.Parsing.Syntax.Parser.ParseWithDiagnostics("<#<+F23::RCtrl");
-		Assert.IsEmpty(diags, "unexpected parse diagnostics: " + string.Join("; ", diags));
-		generated = new Keysharp.Compilation.Syntax.Lowerer().Build(prog, "Test").ToFullString();
-		Assert.IsTrue(generated.Contains("GetKeyState(\"LShift\",\"P\")"), generated);
-		Assert.IsTrue(generated.Contains("GetKeyState(\"LWin\",\"P\")"), generated);
+		// The firmware releases its synthetic modifiers itself, so they are not pressed again on release.
+		var copilot = ResolveRemap("<#<+F23", "RCtrl", MOD_LWIN | MOD_LSHIFT);
+		Assert.That(copilot.Source, Is.EqualTo("*<#<+F23"));
+		Assert.That(copilot.DownSend, Is.EqualTo("{Blind}{LShift up}{LWin up}{RCtrl DownR}"));
+		Assert.That(copilot.UpSend, Is.EqualTo("{Blind}{RCtrl Up}"));
+		Assert.That(copilot.RestoredModifiers, Is.Empty);
+
+		// The literal chord retains ordinary generic-chord behavior, including restoring physically-held source
+		// modifiers after the remapped modifier is released.
+		Assert.That(ResolveRemap("<#<+F23", "RCtrl").RestoredModifiers, Is.EqualTo(new[] { "LShift", "LWin" }));
 
 		// Sided targets are translated into the explicit events Send requires, in both directions.
-		(prog, diags) = Keysharp.Parsing.Syntax.Parser.ParseWithDiagnostics("Copilot::>^a");
-		Assert.IsEmpty(diags, "unexpected parse diagnostics: " + string.Join("; ", diags));
-		generated = new Keysharp.Compilation.Syntax.Lowerer().Build(prog, "Test").ToFullString();
-		Assert.IsTrue(generated.Contains(RemapDown("{Blind<+<#}{RCtrl down}{a DownR}")), generated);
-		Assert.IsTrue(generated.Contains("{Blind}{RCtrl up}"), generated);
+		var sided = ResolveRemap("<#<+F23", ">^a", MOD_LWIN | MOD_LSHIFT);
+		Assert.That(sided.DownSend, Is.EqualTo("{Blind<+<#}{RCtrl down}{a DownR}"));
+		Assert.That(sided.DownRelease, Is.EqualTo("{Blind}{RCtrl up}"));
 
-		(prog, diags) = Keysharp.Parsing.Syntax.Parser.ParseWithDiagnostics("a::Copilot");
-		Assert.IsEmpty(diags, "unexpected parse diagnostics: " + string.Join("; ", diags));
-		generated = new Keysharp.Compilation.Syntax.Lowerer().Build(prog, "Test").ToFullString();
-		Assert.IsTrue(generated.Contains(RemapDown("{Blind}{LShift down}{LWin down}{F23 DownR}")), generated);
-		Assert.IsTrue(generated.Contains("{Blind}{LWin up}{LShift up}"), generated);
-		Assert.IsTrue(generated.Contains("{Blind}{F23 Up}"), generated);
+		var target = ResolveRemap("a", "<#<+F23");
+		Assert.That(target.DownSend, Is.EqualTo("{Blind}{LShift down}{LWin down}{F23 DownR}"));
+		Assert.That(target.DownRelease, Is.EqualTo("{Blind}{LWin up}{LShift up}"));
+		Assert.That(target.UpSend, Is.EqualTo("{Blind}{F23 Up}"));
 	}
 
 	[Test, Category("Hotstring"), Category("Internal")]
 	public void RemapCallbacks()
 	{
-		var (prog, diags) = Keysharp.Parsing.Syntax.Parser.ParseWithDiagnostics(">!.::RCtrl");
-		Assert.IsEmpty(diags, "unexpected parse diagnostics: " + string.Join("; ", diags));
+		// A source modifier which the destination modifier would otherwise keep held is released for the whole remap,
+		// and pressed again on release while it is still physically down.
+		var held = ResolveRemap(">!F13", "RCtrl");
+		Assert.That(held.DownSend, Is.EqualTo("{Blind}{RAlt up}{RCtrl DownR}"));
+		Assert.That(held.UpSend, Is.EqualTo("{Blind}{RCtrl Up}"));
+		Assert.That(held.RestoredModifiers, Is.EqualTo(new[] { "RAlt" }));
+		Assert.That(ResolveRemap(">!F13", "b").DownSend, Is.EqualTo("{Blind>!}{b DownR}"));
 
-		var lowerer = new Keysharp.Compilation.Syntax.Lowerer();
-		var unit = lowerer.Build(prog, "Test");
-		var generated = unit.ToFullString();
-		Assert.IsTrue(generated.Contains(RemapDown("{Blind}{RAlt up}{RCtrl DownR}")), generated);
-		Assert.That(generated.Contains(RemapDown("{Blind>!}{RCtrl DownR}")), Is.False, generated);
-		Assert.IsTrue(generated.Contains("{Blind}{RCtrl Up}"), generated);
-		Assert.IsTrue(generated.Contains("GetKeyState(\"RAlt\",\"P\")"), generated);
-		Assert.IsTrue(generated.Contains("{RAlt DownR}"), generated);
-		Assert.IsTrue(generated.Contains("System.String.Concat("), generated);
+		// An uppercase source is registered with Shift, which Blind then releases, so A::b types a lowercase b.
+		var upper = ResolveRemap("A", "b");
+		Assert.That(upper.Source, Is.EqualTo("*+A"));
+		Assert.That(upper.DownSend, Is.EqualTo("{Blind<+>+}{b DownR}"));
+		Assert.That(ResolveRemap("^A", "b").DownSend, Is.EqualTo("{Blind<^>^<+>+}{b DownR}"));
+		Assert.That(ResolveRemap("A ", "b").DownSend, Is.EqualTo(upper.DownSend));
 
-		var upCallback = unit.DescendantNodes()
-			.OfType<Microsoft.CodeAnalysis.CSharp.Syntax.MethodDeclarationSyntax>()
-			.Single(method => method.Identifier.ValueText == "__Remap_2");
-		var upSendCount = upCallback.DescendantNodes()
-			.OfType<Microsoft.CodeAnalysis.CSharp.Syntax.InvocationExpressionSyntax>()
-			.Count(invocation => invocation.Expression.ToString() == "Keysharp.Builtins.Keyboard.Send");
-		Assert.That(upSendCount, Is.EqualTo(1), generated);
+		// A source modifier the destination also names stays down on either side for a neutral modifier, as in
+		// AutoHotkey, rather than being released only to be pressed again on the other side.
+		Assert.That(ResolveRemap("^j", "^Left").DownSend, Is.EqualTo("{Blind}^{Left DownR}"));
+		Assert.That(ResolveRemap(">^j", "^Left").DownSend, Is.EqualTo("{Blind}^{Left DownR}"));
+		Assert.That(ResolveRemap("^!a", "^b").DownSend, Is.EqualTo("{Blind<!>!}^{b DownR}"));
 
-		(prog, diags) = Keysharp.Parsing.Syntax.Parser.ParseWithDiagnostics(">!.::b");
-		Assert.IsEmpty(diags, "unexpected parse diagnostics: " + string.Join("; ", diags));
-		generated = new Keysharp.Compilation.Syntax.Lowerer().Build(prog, "Test").ToFullString();
-		Assert.IsTrue(generated.Contains(RemapDown("{Blind>!}{b DownR}")), generated);
+		// A wheel has no up event: holding the destination with DownR would leave the modifier stuck down, and turning
+		// the wheel again on release would scroll twice. Such a remap keeps the plain press-and-release form and gets no
+		// up hotkey, as in AutoHotkey.
+		var wheel = ResolveRemap("^WheelUp", "LShift");
+		Assert.That(wheel.DownSend, Is.EqualTo("{Blind<^>^}{LShift}"));
+		Assert.IsTrue(wheel.IsWheel);
+		Assert.IsTrue(ResolveRemap("a", "WheelDown").IsWheel);
+		Assert.IsTrue(ResolveRemap("WheelDown ", "b").IsWheel);
 
-		// A wheel has no up event, so its up hotkey never fires; holding the destination with DownR would
-		// leave the modifier stuck down. Such a remap must keep the plain press-and-release form.
-		(prog, diags) = Keysharp.Parsing.Syntax.Parser.ParseWithDiagnostics("^WheelUp::LShift");
-		Assert.IsEmpty(diags, "unexpected parse diagnostics: " + string.Join("; ", diags));
-		generated = new Keysharp.Compilation.Syntax.Lowerer().Build(prog, "Test").ToFullString();
-		Assert.IsTrue(generated.Contains("{Blind<^>^}{LShift}"), generated);
-		Assert.That(generated.Contains("{LShift DownR}"), Is.False, generated);
+		RemapDefinition.Add(s, "F14", "WheelDown", 0, false);
+		Assert.That(s.HotkeyData.shk.Select(hotkey => hotkey.Name), Is.EqualTo(new[] { "*F14" }));
+		RemapDefinition.Add(s, "F15", "F16", 0, false);
+		Assert.That(s.HotkeyData.shk.Select(hotkey => hotkey.Name), Is.EqualTo(new[] { "*F14", "*F15", "*F15 up" }));
+		var callbacks = s.HotkeyData.shk.Select(hotkey => (KeysharpFunc)hotkey.firstVariant.FindBinding(s.EventScheduler).Callback).ToArray();
+		Assert.That(callbacks[1].Inst, Is.SameAs(callbacks[2].Inst));
+		Assert.That(callbacks[0].Inst, Is.Not.SameAs(callbacks[1].Inst));
+		Assert.That(callbacks[0].mph, Is.SameAs(callbacks[1].mph));
 	}
 
 	[Test, Category("Hotstring"), Category("Internal")]
 	public void SidedRemapDestination()
 	{
-		// A remap target is hotkey syntax and may use < and >, but Send has no such prefix and would type
-		// them as literal characters (which is how "a::<#<+F23" came to type ">>"). Such a destination is
-		// emitted as explicit modifier events instead, released immediately after the destination key so
-		// that they are scoped to the one keystroke, exactly as Send scopes the neutral ^ ! + # prefixes.
-		var (prog, diags) = Keysharp.Parsing.Syntax.Parser.ParseWithDiagnostics("a::<#<+F23");
-		Assert.IsEmpty(diags, "unexpected parse diagnostics: " + string.Join("; ", diags));
-		var generated = new Keysharp.Compilation.Syntax.Lowerer().Build(prog, "Test").ToFullString();
-		Assert.IsTrue(generated.Contains(RemapDown("{Blind}{LShift down}{LWin down}{F23 DownR}")), generated);
-		Assert.IsTrue(generated.Contains("{Blind}{LWin up}{LShift up}"), generated);
-		Assert.IsTrue(generated.Contains("{Blind}{F23 Up}"), generated);
-		Assert.That(generated.Contains("<#<+"), Is.False, generated);
+		// A remap target is hotkey syntax and may use < and >, but Send has no such prefix and would type them as
+		// literal characters. Such a destination is sent as explicit modifier events instead, released immediately after
+		// the destination key so that they are scoped to the one keystroke, exactly as Send scopes the neutral ^ ! + #
+		// prefixes.
+		var sided = ResolveRemap("a", "<#<+F23");
+		Assert.That(sided.DownSend, Is.EqualTo("{Blind}{LShift down}{LWin down}{F23 DownR}"));
+		Assert.That(sided.DownRelease, Is.EqualTo("{Blind}{LWin up}{LShift up}"));
+		Assert.That(sided.UpSend, Is.EqualTo("{Blind}{F23 Up}"));
 
 		// A neutral destination keeps the prefix form, which Send resolves to the left-hand key.
-		(prog, diags) = Keysharp.Parsing.Syntax.Parser.ParseWithDiagnostics("a::#+F23");
-		Assert.IsEmpty(diags, "unexpected parse diagnostics: " + string.Join("; ", diags));
-		generated = new Keysharp.Compilation.Syntax.Lowerer().Build(prog, "Test").ToFullString();
-		Assert.IsTrue(generated.Contains(RemapDown("{Blind}#+{F23 DownR}")), generated);
+		Assert.That(ResolveRemap("a", "#+F23").DownSend, Is.EqualTo("{Blind}#+{F23 DownR}"));
+	}
+
+	[Test, Category("Hotstring"), Category("Internal")]
+	public void RemapAutoRepeat()
+	{
+		// macOS marks a physical repeat of the source as one, which only means anything on a down event.
+		var remap = ResolveRemap("a", "b");
+		Assert.That(remap.DownSendFor(false), Is.EqualTo("{Blind}{b DownR}"));
+		Assert.That(remap.DownSendFor(true), Is.EqualTo("{Blind}{b DownR AutoRepeat}"));
+		var wheel = ResolveRemap("WheelDown", "b");
+		Assert.That(wheel.DownSendFor(true), Is.EqualTo(wheel.DownSend));
 	}
 
 	[Test, Category("Hotstring"), Category("Internal")]
@@ -944,18 +948,9 @@ public partial class HotstringTests : TestRunner
 	[Test, Category("Hotstring"), Category("Internal")]
 	public void MacRemapRepeat()
 	{
+		// The down hotkey reads this flag to mark a physical repeat (see RemapDefinition.DownSendFor).
 		var eventInfo = new Keysharp.Internals.Input.Hooks.HookEventInfo(1, false, true, 0, null, null).BuildEventInfo();
 		Assert.AreEqual(true, Script.GetPropertyValue(eventInfo, "IsAutoRepeat"));
-
-		var (prog, diags) = Keysharp.Parsing.Syntax.Parser.ParseWithDiagnostics("a::b");
-		Assert.IsEmpty(diags, "unexpected parse diagnostics: " + string.Join("; ", diags));
-
-		var lowerer = new Keysharp.Compilation.Syntax.Lowerer();
-		var generated = lowerer.Build(prog, "Test").ToFullString();
-		Assert.IsTrue(generated.Contains("A_EventInfo"), generated);
-		Assert.IsTrue(generated.Contains("IsAutoRepeat"), generated);
-		Assert.IsTrue(generated.Contains(" AutoRepeat}"), generated);
-		Assert.IsTrue(generated.Contains("{Blind}{b DownR"), generated);
 	}
 #endif
 

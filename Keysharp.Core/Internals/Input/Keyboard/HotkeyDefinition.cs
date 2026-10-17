@@ -835,16 +835,18 @@ namespace Keysharp.Internals.Input.Keyboard
 					if (valid != ResultType.ConditionTrue)
 						return null;// ResultType.Fail; // It already displayed the error.
 
-					// This hotkey uses a single-character key name, which could be valid on some other
-					// keyboard layout.  Allow the script to start, but warn the user about the problem.
-					// Note that this hotkey's label is still valid even though the hotkey wasn't created.
-
-					if (!script.ValidateThenExit) // Current keyboard layout is not relevant in /validate mode.
-						_ = Dialogs.MsgBox($"Note: The hotkey {_name} will not be active because it does not exist in the current keyboard layout.");
+					NoteKeyNotInLayout(script, _name);
 				}
 			}
 
 			return null;
+		}
+
+		internal static void NoteKeyNotInLayout(Script script, string name)
+		{
+			// Validation does not depend on the current keyboard layout.
+			if (!script.ValidateThenExit)
+				_ = Dialogs.MsgBox($"Note: The hotkey {name} will not be active because it does not exist in the current keyboard layout.");
 		}
 
 		internal static void AllDestruct(Script script)
@@ -1795,7 +1797,9 @@ namespace Keysharp.Internals.Input.Keyboard
 				thisHotkey.suffixModifiersLR = suffixProperties.modifiersLR;
 			}
 
-			return TextToKey(ref term2, false, thisHotkey, syntaxCheckOnly);
+			// Preserve a prefix key's missing-layout note unless the suffix reports its own result.
+			var result2 = TextToKey(ref term2, false, thisHotkey, syntaxCheckOnly);
+			return result2 != ResultType.Ok ? result2 : result;
 		}
 
 		/// <summary>

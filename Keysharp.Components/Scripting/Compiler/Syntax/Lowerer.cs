@@ -5786,208 +5786,28 @@ namespace Keysharp.Compilation.Syntax
 			}
 		}
 
-		private static StatementSyntax SetDelay(bool isMouse) =>
-			CallStmt("Keysharp.Builtins." + (isMouse ? "Mouse.SetMouseDelay" : "Keyboard.SetKeyDelay"),
-				SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(-1L)));
-		private static StatementSyntax SendStmt(string text) => CallStmt("Keysharp.Builtins.Keyboard.Send", Str(text));
-		private static StatementSyntax SendStmt(ExpressionSyntax text) => CallStmt("Keysharp.Builtins.Keyboard.Send", text);
-
-		private MemberDeclarationSyntax RemapCallback(string name, List<StatementSyntax> body) =>
-			SyntaxFactory.MethodDeclaration(ObjType, SyntaxFactory.Identifier(name)).AddModifiers(PublicTok, StaticTok)
-				.WithParameterList(SyntaxFactory.ParameterList(SyntaxFactory.SingletonSeparatedList(
-					SyntaxFactory.Parameter(SyntaxFactory.Identifier("args")).WithType(ObjArrayType).AddModifiers(SyntaxFactory.Token(SyntaxKind.ParamsKeyword)))))
-				.WithBody(SyntaxFactory.Block(body));
-
-		// Port of VisitGeneral.VisitRemap: turns `source::target` into a down hotkey and an up hotkey that Send the
-		// target key, computing the Send strings at compile time from the runtime key tables.
+		// Share remap callbacks and resolve keys with the keyboard layout in effect when the script starts.
 		private void LowerRemap(RemapDef rm)
 		{
 			_persistent = true;
 			// The lexer already split the remap into its source/target key text; just decode the backtick escapes.
 			var sourceKey = ExpandCopilotDeclarationAlias(Keysharp.Parsing.Parser.EscapedString(rm.Source), out var sourceUsesCopilotAlias);
 			var targetKey = ExpandCopilotDeclarationAlias(Keysharp.Parsing.Parser.EscapedString(rm.Target), out _);
-			// A physical Copilot key releases its synthetic LWin+LShift before F23 comes up. Keep releasing those
-			// modifiers when a modifier is the remap target, but do not synthesize them back down afterward. The
-			// literal `<#<+F23` spelling retains the generic chord behavior and therefore still restores them.
-			var firmwareSourceModifiersLR = sourceUsesCopilotAlias ? CopilotFirmwareModifiersLR : 0u;
-
-			uint remapDestVk = 0u, remapDestSc = 0u; uint? modLR = null, modifiersLR = null;
-			var remapName = targetKey; var hotName = sourceKey;
-			var script = Script.TheScript;
-			var ht = script.HookThread;
-			var kbLayout = new KeybdLayoutRef(); // Lazy: resolved only if a single-char remap key actually needs the layout.
-
-			remapName = HotkeyDefinition.TextToModifiers(remapName, null);
-			var remapDestSource = KeySource.None;
-			ht.TextToVKandSC(remapName, ref remapDestVk, ref remapDestSc, ref remapDestSource, ref modLR, kbLayout);
-
-			var tempcp1 = HotkeyDefinition.TextToModifiers(hotName, null);
-			var remapSourceVk = ht.TextToVK(tempcp1, ref modifiersLR, kbLayout);
-			var remapSourceIsCombo = tempcp1.Contains(HotkeyDefinition.COMPOSITE_DELIMITER);
-			var remapSourceIsMouse = MouseUtils.IsMouseVK(remapSourceVk);
-			var remapDestIsMouse = MouseUtils.IsMouseVK(remapDestVk);
-			var remapKeybdToMouse = !remapSourceIsMouse && remapDestIsMouse;
-			var remapWheel = MouseUtils.IsWheelVK(remapSourceVk) || MouseUtils.IsWheelVK(remapDestVk);
-			var remapSource = (remapSourceIsCombo ? "" : "*") + (tempcp1.Length == 1 && char.IsUpper(tempcp1[0]) ? "+" : "") + hotName;
-
-			var remapDest = remapName[0] == '"' ? "\"" : remapName;
-			var remapDestModifiers = targetKey.Substring(0, targetKey.IndexOf(remapName));
-			// Remap targets use hotkey syntax, which allows the < and > side qualifiers. Send does not
-			// recognize them and would type them as literal characters, so a destination which uses them is
-			// emitted as explicit modifier key events instead of as a prefix. Neutral modifiers keep the
-			// prefix form, which Send already resolves to the left-hand key.
-			var destProperties = new HotkeyProperties();
-			_ = HotkeyDefinition.TextToModifiers(targetKey, null, destProperties);
-			// A neutral modifier is resolved to its left-hand key, which is what Send does with the ^ ! + #
-			// prefixes. KeyboardUtils.ConvertModifiers must not be used here: it expands a neutral modifier to
-			// BOTH side bits, which would press RAlt as well - that is AltGr on most non-US layouts and would
-			// change the character produced.
-			var neutralAsLeft = 0u;
-
-			if ((destProperties.modifiers & KeyboardUtils.MOD_CONTROL) != 0) neutralAsLeft |= KeyboardUtils.MOD_LCONTROL;
-
-			if ((destProperties.modifiers & KeyboardUtils.MOD_ALT) != 0) neutralAsLeft |= KeyboardUtils.MOD_LALT;
-
-			if ((destProperties.modifiers & KeyboardUtils.MOD_SHIFT) != 0) neutralAsLeft |= KeyboardUtils.MOD_LSHIFT;
-
-			if ((destProperties.modifiers & KeyboardUtils.MOD_WIN) != 0) neutralAsLeft |= KeyboardUtils.MOD_LWIN;
-
-			var remapDestModifiersLR = destProperties.modifiersLR | neutralAsLeft;
-			var remapDestIsSided = destProperties.modifiersLR != 0;
-			string[] modifierKeyNames = ["LCtrl", "RCtrl", "LAlt", "RAlt", "LShift", "RShift", "LWin", "RWin"];
-			var destModifiersDown = "";
-			var destModifiersUp = "";
-
-			if (remapDestIsSided)
-				for (var i = 0; i < 8; ++i)
-					if ((remapDestModifiersLR & (1u << i)) != 0)
-					{
-						destModifiersDown += $"{{{modifierKeyNames[i]} down}}";
-						destModifiersUp = $"{{{modifierKeyNames[i]} up}}" + destModifiersUp;
-					}
-
-			var remapDestModifiersSend = remapDestIsSided ? destModifiersDown : remapDestModifiers;
-
 			var altTabAction = HotkeyDefinition.ConvertAltTab(targetKey, false);
+
 			if (altTabAction != 0)
 			{
 				AddDhhr(rm, ExprStmt(Inv(Access("Keysharp.Runtime.Keyboard.HotkeyDefinition.AddHotkey"),
-					Null, SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(altTabAction)), Str(hotName),
+					Null, SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(altTabAction)), Str(sourceKey),
 					Id(DeclarationSuspendExemptVariable))));
 				return;
 			}
 
-			var blindMods = "";
-			var temphk = new HotkeyDefinition(script, 999, null, (uint)HotkeyTypeEnum.Normal, hotName, 0);
-			var remapSourceModifiersLR = temphk.modifiersConsolidatedLR;
-			bool? remapDestIsNeutral = null;
-			var remapDestModifierLR = ht.KeyToModifiersLR(remapDestVk, remapDestSc, ref remapDestIsNeutral);
-			var releasedSourceModifiers = new List<string>();
-			var restoredSourceModifiers = new List<string>();
-			string[] modifierNames = ["LCtrl", "RCtrl", "LAlt", "RAlt", "LShift", "RShift", "LWin", "RWin"];
-
-			for (var i = 0; i < 8; ++i)
-				if ((remapSourceModifiersLR & (1 << i)) != 0 && (remapDestModifiersLR & (1u << i)) == 0)
-				{
-					blindMods += KeyboardMouseSender.ModLRString[i * 2];
-					blindMods += KeyboardMouseSender.ModLRString[i * 2 + 1];
-
-					// Selective Blind only releases a source modifier for the duration of one Send. If the remap
-					// destination is itself a modifier, its useful lifetime extends through the separate up hotkey,
-					// so explicitly release source-only modifiers there.
-					if ((remapDestModifierLR & (1u << i)) == 0)
-					{
-						releasedSourceModifiers.Add(modifierNames[i]);
-
-						if ((firmwareSourceModifiersLR & (1u << i)) == 0)
-							restoredSourceModifiers.Add(modifierNames[i]);
-					}
-				}
-
-			// A wheel source has no up event, so its up hotkey never fires and must not be relied upon to
-			// release the destination; such a remap keeps the plain press-and-release form below.
-			var explicitlyReleaseSourceModifiers = !remapWheel && remapDestModifierLR != 0 && releasedSourceModifiers.Count != 0;
-			var downExtra = explicitlyReleaseSourceModifiers
-				? string.Concat(releasedSourceModifiers.Select(mod => $"{{{mod} up}}"))
-				: "";
-			// Sided destination modifiers are pressed and released within this one Send, matching the neutral
-			// prefix form which Send scopes the same way. Holding them across the whole remap would leave them
-			// active while the source key is held, and releasing them in the up hotkey would clear a modifier
-			// the user was holding independently.
-			// The destination key's own token stays last: the macOS wrapper below rewrites the final brace to
-			// mark an auto-repeat, and that marker only means anything on a down event. Sided destination
-			// modifiers are therefore released by a following Send rather than being appended here.
-			var p = explicitlyReleaseSourceModifiers
-				? $"{{Blind}}{downExtra}{remapDestModifiersSend}{{{remapDest} DownR}}"
-				: $"{{Blind{blindMods}}}{remapDestModifiersSend}{{{remapDest}{(remapWheel ? "" : " DownR")}}}";
-
-#if OSX
-			StatementSyntax RemapDownSend()
-			{
-				if (remapWheel)
-					return SendStmt(p);
-
-				// Preserve macOS's native press-and-hold behavior by marking only physical repeat
-				// callbacks as repeat events. Send itself never consults A_EventInfo implicitly.
-				var isAutoRepeat = Op("GetPropertyValue", Access("Keysharp.Builtins.Accessors.A_EventInfo"), Str("IsAutoRepeat"));
-				var suffix = SyntaxFactory.ParenthesizedExpression(SyntaxFactory.ConditionalExpression(
-					IfTest(isAutoRepeat), Str(" AutoRepeat}"), Str("}")));
-				return SendStmt(Op("Concat", Str(p[..^1]), suffix));
-			}
-#else
-			StatementSyntax RemapDownSend() => SendStmt(p);
-#endif
-
-			var downName = "__Remap_" + (++_hotCount);
-			var upName = "__Remap_" + (++_hotCount);
-			var downStatements = new List<StatementSyntax> { SetDelay(remapDestIsMouse) };
-			if (remapKeybdToMouse && !remapWheel)
-				downStatements.Add(SyntaxFactory.IfStatement(
-					SyntaxFactory.BinaryExpression(SyntaxKind.EqualsExpression,
-						IfTest(Inv(Access("Keysharp.Builtins.Keyboard.GetKeyState"), Str(remapDest))), False),
-					SyntaxFactory.Block(RemapDownSend())));
-			else
-				downStatements.Add(RemapDownSend());
-
-			// Release sided destination modifiers straight after, so they are scoped to this one keystroke
-			// exactly as Send scopes the neutral ^ ! + # prefixes, rather than staying down for as long as the
-			// source key is held.
-			if (destModifiersUp.Length != 0)
-				downStatements.Add(SendStmt(Str($"{{Blind}}{destModifiersUp}")));
-			downStatements.Add(SyntaxFactory.ReturnStatement(Str("")));
-			_hotMembers.Add(RemapCallback(downName, downStatements));
-
-			ExpressionSyntax[] upSendParts;
-
-			if (explicitlyReleaseSourceModifiers)
-			{
-				upSendParts = new ExpressionSyntax[restoredSourceModifiers.Count + 1];
-				upSendParts[0] = Str($"{{Blind}}{{{remapDest} Up}}");
-				
-				for (int i = 0; i < restoredSourceModifiers.Count; i++)
-				{
-					var mod = restoredSourceModifiers[i];
-					upSendParts[i + 1] = SyntaxFactory.ParenthesizedExpression(SyntaxFactory.ConditionalExpression(
-						IfTest(Inv(Access("Keysharp.Builtins.Keyboard.GetKeyState"), Str(mod), Str("P"))),
-						Str($"{{{mod} DownR}}"), Str("")));
-				}
-			}
-			else
-			{
-				upSendParts = [Str($"{{Blind}}{{{remapDest} Up}}")];
-			}
-
-			var upSendText = upSendParts.Length == 1
-				? upSendParts[0]
-				: Inv(Access("System.String.Concat"), upSendParts);
-
-			_hotMembers.Add(RemapCallback(upName, new List<StatementSyntax>
-				{ SetDelay(remapDestIsMouse), SendStmt(upSendText), SyntaxFactory.ReturnStatement(Str("")) }));
-
-			AddDhhr(rm, ExprStmt(Inv(Access("Keysharp.Runtime.Keyboard.HotkeyDefinition.AddHotkey"),
-				FuncBind(_currentModuleClass + "." + downName), UintZero, Str(remapSource), Id(DeclarationSuspendExemptVariable))));
-			AddDhhr(rm, ExprStmt(Inv(Access("Keysharp.Runtime.Keyboard.HotkeyDefinition.AddHotkey"),
-				FuncBind(_currentModuleClass + "." + upName), UintZero, Str(remapSource + " up"), Id(DeclarationSuspendExemptVariable))));
+			// The Copilot firmware releases its chord modifiers, so its remap must not restore them.
+			var firmwareSourceModifiersLR = sourceUsesCopilotAlias ? CopilotFirmwareModifiersLR : 0u;
+			AddDhhr(rm, ExprStmt(Inv(Access("Keysharp.Runtime.Keyboard.HotkeyDefinition.AddRemap"),
+				Str(sourceKey), Str(targetKey), SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(firmwareSourceModifiersLR)),
+				Id(DeclarationSuspendExemptVariable))));
 		}
 
 		// `#Hotstring` directive: sets default options (`#Hotstring X`), end chars, or mouse-reset for subsequent
