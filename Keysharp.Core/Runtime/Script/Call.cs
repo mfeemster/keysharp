@@ -124,6 +124,9 @@ namespace Keysharp.Runtime
 			return props.Count != 0;
 		}
 
+		/// <summary>Pairs a base prototype or class with its receiver for super dispatch.</summary>
+		public static object Super(object proto, object @this) => (proto, @this);
+
 		public static (object, object) GetMethodOrProperty(
 			object item,
 			string key,

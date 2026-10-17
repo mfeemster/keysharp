@@ -5382,9 +5382,7 @@ namespace Keysharp.Compilation.Syntax
 			{
 				var proto = SyntaxFactory.ElementAccessExpression(Access("MainScript.Vars.Prototypes"))
 					.WithArgumentList(SyntaxFactory.BracketedArgumentList(SyntaxFactory.SingletonSeparatedList(Arg(SyntaxFactory.TypeOfExpression(Ty(baseProtoType))))));
-				var tuple = SyntaxFactory.CastExpression(ObjType,
-					SyntaxFactory.TupleExpression(SyntaxFactory.SeparatedList(new[] { Arg(proto), Arg(Id("@this")) })));
-				stmts.Add(ExprStmt(Op("Invoke", tuple, Str("__Init"))));
+				stmts.Add(ExprStmt(Op("Invoke", Op("Super", proto, Id("@this")), Str("__Init"))));
 			}
 			var declared = new List<ScopeVar>();
 			foreach (var n in assignedOrdered.Where(scope.Locals.Contains).Concat(scope.Closures))
@@ -5434,16 +5432,14 @@ namespace Keysharp.Compilation.Syntax
 			return ObjMethod(name, ParamThis(), block);
 		}
 
-		// `super` lowers to the tuple (object)(MainScript.Vars.{Prototypes|Statics}[typeof(Base)], @this); the runtime
-		// resolves a member/method against the base's prototype while keeping `this` bound to the current instance.
+		// Share tuple construction so Roslyn need not bind a tuple expression at each super access.
 		private ExpressionSyntax SuperTuple()
 		{
 			var baseType = _currentClassBase ?? "Keysharp.Builtins.KeysharpObject";
 			var table = _currentMethodStatic ? "MainScript.Vars.Statics" : "MainScript.Vars.Prototypes";
 			var proto = SyntaxFactory.ElementAccessExpression(Access(table))
 				.WithArgumentList(SyntaxFactory.BracketedArgumentList(SyntaxFactory.SingletonSeparatedList(Arg(SyntaxFactory.TypeOfExpression(Ty(baseType))))));
-			return SyntaxFactory.CastExpression(ObjType,
-				SyntaxFactory.TupleExpression(SyntaxFactory.SeparatedList(new[] { Arg(proto), Arg(NameRef("this")) })));
+			return Op("Super", proto, NameRef("this"));
 		}
 
 		private StatementSyntax FieldSet(ClassField f)

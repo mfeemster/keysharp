@@ -1,4 +1,7 @@
 #NoTrayIcon
+#ErrorStdOut
+#Warn All, StdOut
+#Warn LocalSameAsGlobal, Off
 #Include <assert>
 
 class testclass
