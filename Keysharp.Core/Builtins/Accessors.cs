@@ -127,7 +127,7 @@ namespace Keysharp.Builtins
 		/// An <see cref="Array"/> containing the command line arguments used to run the script. It is an ordinary
 		/// variable, so a script may assign it any value.
 		/// </summary>
-		public static object A_Args { get; set; } = new Array();
+		public static object A_Args { get; set; } = Array.Literal();
 
 
 
@@ -1075,7 +1075,7 @@ namespace Keysharp.Builtins
 			{
 				long val;
 
-				if (value is string s && s.Equals("default", StringComparison.CurrentCultureIgnoreCase))
+				if (value is string s && s.Equals("default", StringComparison.OrdinalIgnoreCase))
 					val = 64L;
 				else
 				{

@@ -16,7 +16,7 @@ namespace Keysharp.Builtins
 		// As AutoHotkey's ProcessWait: listing the processes costs more than a window search, so it runs less often.
 		private const int ProcessPollInterval = 100;
 
-		private static readonly FrozenSet<string> verbs = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase)
+		private static readonly FrozenSet<string> verbs = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
 		{
 			"find",
 			"explore",
@@ -24,7 +24,7 @@ namespace Keysharp.Builtins
 			"edit",
 			"print",
 			"properties"
-		} .ToFrozenSet(StringComparer.InvariantCultureIgnoreCase);
+		} .ToFrozenSet(StringComparer.OrdinalIgnoreCase);
 
 		/// <summary>
 		/// Forces the first matching process to close.
