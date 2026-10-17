@@ -6708,7 +6708,8 @@
                      "linux_x11":  "partial",
                      "linux_wayland":  "partial",
                      "macos":  "partial",
-                     "notes":  "Linux and macOS use a suppression-capable global hook, which requires InputMonitoring and InputControl."
+                     "notes":  "Linux and macOS use a suppression-capable global hook, which requires InputMonitoring and InputControl. Hotkey names accept trailing spaces and tabs before :: and in Hotkey KeyName, including Up hotkeys and custom combinations. Up must be a complete suffix; Upx and Up extra are invalid.",
+                     "tested-by":  "HotstringTests.HotkeyTrailingText"
                  },
                  {
                      "category":  "Input/Automation",

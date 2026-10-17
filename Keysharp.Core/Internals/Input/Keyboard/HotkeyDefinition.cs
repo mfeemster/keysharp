@@ -1825,7 +1825,7 @@ namespace Keysharp.Internals.Input.Keyboard
 
 			var keynameEnd = text.AsSpan(keynameEndIndex);
 
-			if (!isModifier && keynameEnd.IndexOfAny(SpaceTabSv) == 0 && keynameEnd.TrimStart(SpaceTab).StartsWith("Up", StringComparison.OrdinalIgnoreCase))
+			if (!isModifier && keynameEnd.IndexOfAny(SpaceTabSv) == 0 && keynameEnd.TrimStart(SpaceTab).Equals("Up", StringComparison.OrdinalIgnoreCase))
 			{
 				if (syntaxCheckOnly)
 					return ResultType.Ok; // It's a word or single character followed by " up" -- looks valid.
@@ -1838,12 +1838,13 @@ namespace Keysharp.Internals.Input.Keyboard
 			}
 			else
 			{
-				// If there's something after the first word/character, it's not a hotkey.
-				if (syntaxCheckOnly)
-					return keynameEnd.Length > 0 ? ResultType.Fail : ResultType.Ok;
-
+				// Validation leaves trailing text for the caller to parse; construction rejects it.
 				if (keynameEnd.Length > 0)
-					return ResultType.ConditionFalse;
+					return thisHotkey == null ? ResultType.ConditionFalse
+						: (ResultType)Errors.ValueErrorOccurred("Invalid hotkey.", text, ResultType.Fail);
+
+				if (syntaxCheckOnly)
+					return ResultType.Ok;
 			}
 
 			var hotkeyTypeTemp = HotkeyTypeEnum.Normal;
@@ -1966,6 +1967,7 @@ namespace Keysharp.Internals.Input.Keyboard
 		{
 			// Init output parameter for caller if it gave one:
 			properties?.Reset();
+			text = text?.TrimEnd(SpaceTab);
 
 			if (string.IsNullOrEmpty(text))
 				return text; // Below relies on this having ensured that aText isn't blank.
@@ -1999,10 +2001,7 @@ namespace Keysharp.Internals.Input.Keyboard
 			// by the word "Up" so that hotkeys like "< up" and "+ up" are supported by seeing their '<' or '+' as
 			// a key name rather than a modifier symbol.
 			// Fix for v1.1.27.05: Stop at any space, not just " up", so that " & " is also covered.
-			// This fixes "> & v" to not interpret ">" as a modifier.  This also causes "+ ::" to be
-			// seen as invalid, where previously TextToModifiers() saw it as Shift+Space but a later
-			// stage trimmed the space and registered "+::".  This is best since trailing spaces are
-			// not allowed in any other hotkeys, and even "+  ::" (two spaces) was not allowed.
+			// This prevents "> & v" from interpreting ">" as a modifier.
 			for (marker = 0, keyLeft = false, keyRight = false; marker + 1 < text.Length && text[marker + 1] != ' '; ++marker)
 			{
 				switch (text[marker])
@@ -2164,7 +2163,7 @@ namespace Keysharp.Internals.Input.Keyboard
 
 				var tempIndex = properties.suffixText.IndexOf(" Up", StringComparison.OrdinalIgnoreCase);
 
-				if (tempIndex != -1) // Should be reliable detection method because leading spaces have been omitted and it's unlikely a legitimate key name will ever contain a space followed by "Up".
+				if (tempIndex != -1 && tempIndex + 3 == properties.suffixText.Length)
 				{
 					properties.suffixText = properties.suffixText.OmitTrailingWhitespace(tempIndex);//Omit " Up" from suffix_text since caller wants that.
 					properties.isKeyUp = true; // Override the default set earlier.

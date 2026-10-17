@@ -636,6 +636,49 @@ public partial class HotstringTests : TestRunner
 #endif
 
 	[Test, Category("Hotstring"), Category("Internal")]
+	public void HotkeyTrailingText()
+	{
+		var callback = new KeysharpFunc((Func<object, object>)(_ => 0L));
+		// AddHotkey stores the definition without installing native hooks.
+		var existing = HotkeyDefinition.AddHotkey(s, callback, 0, "F13 Up");
+
+		foreach (var name in new[] { "F13 Up", "F13 Up ", "F13 Up\t " })
+		{
+			foreach (var syntaxOnly in new[] { false, true })
+				Assert.That(HotkeyDefinition.TextInterpret(name, null, syntaxOnly), Is.EqualTo(ResultType.Ok));
+			var noSuppress = 0u;
+			var mandatory = false;
+			Assert.That(HotkeyDefinition.FindEquivalentHotkey(s, name, ref noSuppress, ref mandatory), Is.SameAs(existing));
+		}
+
+		foreach (var name in new[] { "F14 \t", "F15 Up\t ", "F16 & F17 \t", "F18 & F19 Up \t" })
+		{
+			var hotkey = HotkeyDefinition.AddHotkey(s, callback, 0, name);
+			var noSuppress = 0u;
+			var mandatory = false;
+			Assert.That(HotkeyDefinition.FindEquivalentHotkey(s, name.TrimEnd(), ref noSuppress, ref mandatory), Is.SameAs(hotkey));
+		}
+
+		var definitions = s.HotkeyData.shk;
+		var original = existing.firstVariant.FindBinding(s.EventScheduler).Callback;
+
+		foreach (var name in new[] { "F13 Upx ", "F13 Up extra\t", "CapsLock extra " })
+		{
+			foreach (var syntaxOnly in new[] { false, true })
+				Assert.That(HotkeyDefinition.TextInterpret(name, null, syntaxOnly), Is.EqualTo(ResultType.ConditionFalse));
+			var noSuppress = 0u;
+			var mandatory = false;
+			Assert.IsNull(HotkeyDefinition.FindEquivalentHotkey(s, name, ref noSuppress, ref mandatory));
+			var error = Assert.Throws<KeysharpException>(() =>
+				HotkeyDefinition.AddHotkey(s, callback, 0, name)).UserError;
+			Assert.IsInstanceOf<ValueError>(error);
+			Assert.That(error.Message, Is.EqualTo("Invalid hotkey."));
+			Assert.That(s.HotkeyData.shk, Is.SameAs(definitions));
+			Assert.That(existing.firstVariant.FindBinding(s.EventScheduler).Callback, Is.SameAs(original));
+		}
+	}
+
+	[Test, Category("Hotstring"), Category("Internal")]
 	public void CopilotHotkeyAlias()
 	{
 		var script = """
