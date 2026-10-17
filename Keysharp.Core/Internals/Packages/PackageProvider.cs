@@ -1,5 +1,4 @@
 using System.Runtime.Loader;
-using System.Text.Json.Serialization;
 
 namespace Keysharp.Internals.Os
 {
@@ -14,11 +13,39 @@ namespace Keysharp.Internals.Os
 
 		internal sealed class Descriptor
 		{
-			[JsonPropertyName("name")] public string Name { get; set; }
-			[JsonPropertyName("version")] public string Version { get; set; }
-			[JsonPropertyName("assembly")] public string Assembly { get; set; }
-			[JsonPropertyName("type")] public string Type { get; set; }
-			[JsonPropertyName("files")] public List<string> Files { get; set; } = [];
+			public string Name { get; set; }
+			public string Version { get; set; }
+			public string Assembly { get; set; }
+			public string Type { get; set; }
+			public List<string> Files { get; set; } = [];
+
+			// Avoid serializer contract initialization for these fixed descriptor keys.
+			internal static Descriptor Read(string path)
+			{
+				using var document = JsonDocument.Parse(File.ReadAllText(path));
+				var root = document.RootElement;
+
+				if (root.ValueKind != JsonValueKind.Object)
+					throw new InvalidDataException($"'{path}' is empty or invalid");
+
+				var descriptor = new Descriptor();
+
+				foreach (var property in root.EnumerateObject())
+				{
+					var value = property.Value;
+
+					switch (property.Name)
+					{
+						case "name": descriptor.Name = value.GetString(); break;
+						case "version": descriptor.Version = value.GetString(); break;
+						case "assembly": descriptor.Assembly = value.GetString(); break;
+						case "type": descriptor.Type = value.GetString(); break;
+						case "files": descriptor.Files = value.GetStringList(); break;
+					}
+				}
+
+				return descriptor;
+			}
 		}
 
 		internal sealed record Payload(string Root, string DescriptorPath, IReadOnlyList<string> Files);
@@ -152,8 +179,7 @@ namespace Keysharp.Internals.Os
 
 		private static Descriptor ReadDescriptor(string path, string expectedName)
 		{
-			var descriptor = JsonSerializer.Deserialize<Descriptor>(File.ReadAllText(path))
-				?? throw new InvalidDataException($"'{path}' is empty or invalid");
+			var descriptor = Descriptor.Read(path);
 
 			if (!expectedName.Equals(descriptor.Name, StringComparison.OrdinalIgnoreCase)
 				|| string.IsNullOrWhiteSpace(descriptor.Version)

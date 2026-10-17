@@ -29,6 +29,23 @@ public class ParserTests : TestRunner
 		}
 	}
 
+	// Equal compilation inputs must produce the same cache identity.
+	[Test, Category("Parser")]
+	public void DeterministicCompile()
+	{
+		const string source = "#ErrorStdOut\n#Warn All, StdOut\nx := (a) => a + 1\nF() {\n\ty := 1\n\tG() => y\n\treturn G\n}\nclass C {\n\tM() => 1\n}\nx := F()() C().M()\n";
+		var (first, firstError, _) = new CompilerHelper().CompileCodeToByteArray(source, "deterministic_compile");
+		var (second, secondError, _) = new CompilerHelper().CompileCodeToByteArray(source, "deterministic_compile");
+		Assert.That(first, Is.Not.Null, firstError);
+		Assert.That(second, Is.Not.Null, secondError);
+		Assert.That(second, Is.EqualTo(first));
+
+		var (changed, changedError, _) = new CompilerHelper().CompileCodeToByteArray(source + "x := 2\n", "deterministic_compile");
+		Assert.That(changed, Is.Not.Null, changedError);
+		Assert.That(Assembly.Load(changed).ManifestModule.ModuleVersionId,
+			Is.Not.EqualTo(Assembly.Load(first).ManifestModule.ModuleVersionId));
+	}
+
 	[Test, Category("Parser")]
 	public void Parser() => Assert.IsTrue(TestScript("parser", false));
 

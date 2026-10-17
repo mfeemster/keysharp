@@ -222,19 +222,7 @@ namespace Keysharp.Internals.Scripting
 					case "consoleApp": manifest.ConsoleApp = isNull ? null : value.GetBoolean(); break;
 					case "hookMutexName": manifest.HookMutexName = value.GetString(); break;
 					case "desktopEntry": manifest.DesktopEntry = value.GetString(); break;
-					case "files":
-						if (isNull)
-						{
-							manifest.Files = null;
-							break;
-						}
-
-						manifest.Files = new List<string>(value.GetArrayLength());
-
-						foreach (var file in value.EnumerateArray())
-							manifest.Files.Add(file.GetString());
-
-						break;
+					case "files": manifest.Files = value.GetStringList(); break;
 				}
 			}
 

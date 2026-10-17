@@ -351,6 +351,12 @@ public class ScriptingComponentTests : TestRunner
 				// incomplete descriptor, and this fixture is meant to fail on its missing assembly instead.
 				"{\"schemaVersion\":1,\"contractVersion\":1,\"id\":\"parser\",\"version\":\"1.0.0\",\"assembly\":\"missing.dll\",\"type\":\"Missing.Parser\",\"capabilities\":[\"SyntaxValidation\",\"Tokenization\"],\"files\":[\"missing.dll\"]}");
 			CopyComponentPayload(validRoot, "parser");
+			var canonical = ComponentDirectory(validRoot, "parser");
+			var ignored = ComponentDirectory(validRoot, "unrelated");
+			Directory.Move(canonical, ignored);
+			ScriptingComponentRegistry.SetSearchRootsForTests(validRoot);
+			Assert.That(ScriptingComponentRegistry.IsAvailable(ScriptingCapability.SyntaxValidation), Is.False);
+			Directory.Move(ignored, canonical);
 			ScriptingComponentRegistry.SetSearchRootsForTests(brokenRoot, validRoot);
 
 			Assert.IsTrue(ScriptingComponentRegistry.IsAvailable(ScriptingCapability.SyntaxValidation));

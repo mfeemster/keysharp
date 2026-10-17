@@ -733,6 +733,8 @@ namespace Keysharp.Compilation
 									.WithPlatform(compiledPlatform)
 									// C#'s unsafe keyword is the opt-in; scripts already expose equivalent pointer operations.
 									.WithAllowUnsafe(hasInlineTrees)
+									// Stable MVIDs let unchanged scripts reuse embedded-payload extraction caches.
+									.WithDeterministic(true)
 									.WithConcurrentBuild(true)
 								)
 								.AddReferences(references)

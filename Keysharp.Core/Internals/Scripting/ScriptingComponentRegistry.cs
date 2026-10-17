@@ -1,11 +1,10 @@
 using System.Runtime.Loader;
-using System.Text.Json.Serialization;
 using Keysharp.Components.Scripting;
 
 namespace Keysharp.Internals.Scripting
 {
 	/// <summary>Discovers fixed optional first-party scripting units without statically referencing their implementations.</summary>
-	internal static partial class ScriptingComponentRegistry
+	internal static class ScriptingComponentRegistry
 	{
 		internal const int SupportedDescriptorSchema = 1;
 		internal const int SupportedContractVersion = 1;
@@ -26,19 +25,46 @@ namespace Keysharp.Internals.Scripting
 
 		internal sealed class Descriptor
 		{
-			[JsonPropertyName("schemaVersion")] public int SchemaVersion { get; set; }
-			[JsonPropertyName("contractVersion")] public int ContractVersion { get; set; }
-			[JsonPropertyName("id")] public string Id { get; set; }
-			[JsonPropertyName("version")] public string Version { get; set; }
-			[JsonPropertyName("assembly")] public string Assembly { get; set; }
-			[JsonPropertyName("type")] public string Type { get; set; }
-			[JsonPropertyName("capabilities")] public List<string> Capabilities { get; set; } = [];
-			[JsonPropertyName("files")] public List<string> Files { get; set; } = [];
-		}
+			public int SchemaVersion { get; set; }
+			public int ContractVersion { get; set; }
+			public string Id { get; set; }
+			public string Version { get; set; }
+			public string Assembly { get; set; }
+			public string Type { get; set; }
+			public List<string> Capabilities { get; set; } = [];
+			public List<string> Files { get; set; } = [];
 
-		// Avoid reflection setup when reading component descriptors.
-		[JsonSerializable(typeof(Descriptor), GenerationMode = JsonSourceGenerationMode.Metadata)]
-		private sealed partial class DescriptorJson : JsonSerializerContext { }
+			// Avoid serializer contract initialization for these fixed descriptor keys.
+			internal static Descriptor Read(string path)
+			{
+				using var document = JsonDocument.Parse(File.ReadAllText(path));
+				var root = document.RootElement;
+
+				if (root.ValueKind != JsonValueKind.Object)
+					throw new InvalidDataException($"'{path}' is empty or invalid");
+
+				var descriptor = new Descriptor();
+
+				foreach (var property in root.EnumerateObject())
+				{
+					var value = property.Value;
+
+					switch (property.Name)
+					{
+						case "schemaVersion": descriptor.SchemaVersion = value.GetInt32(); break;
+						case "contractVersion": descriptor.ContractVersion = value.GetInt32(); break;
+						case "id": descriptor.Id = value.GetString(); break;
+						case "version": descriptor.Version = value.GetString(); break;
+						case "assembly": descriptor.Assembly = value.GetString(); break;
+						case "type": descriptor.Type = value.GetString(); break;
+						case "capabilities": descriptor.Capabilities = value.GetStringList(); break;
+						case "files": descriptor.Files = value.GetStringList(); break;
+					}
+				}
+
+				return descriptor;
+			}
+		}
 
 		internal sealed record Payload(string Id, string Root, string DescriptorPath,
 			ScriptingCapability Capabilities, IReadOnlyList<string> Files);
@@ -224,36 +250,33 @@ namespace Keysharp.Internals.Scripting
 		private static IEnumerable<string> FindDescriptors(ScriptingCapability capability)
 		{
 			var requiredName = ComponentId(capability);
-			return DescriptorPaths().Select(path => (path, descriptor: TryReadDescriptor(path)))
-				.Where(item => item.descriptor != null
-					&& item.descriptor.Id.Equals(requiredName, StringComparison.OrdinalIgnoreCase)
-					&& (ParseCapabilities(item.descriptor.Capabilities) & capability) == capability)
-				.Select(item => item.path);
+
+			foreach (var path in DescriptorPaths(requiredName))
+				if (TryReadDescriptor(path) is { } descriptor
+						&& descriptor.Id.Equals(requiredName, StringComparison.OrdinalIgnoreCase)
+						&& (ParseCapabilities(descriptor.Capabilities) & capability) == capability)
+					yield return path;
 		}
 
 		private static string ComponentId(ScriptingCapability capability) =>
 			capability == ScriptingCapability.Compilation ? ScriptingComponentIds.Compiler : ScriptingComponentIds.Parser;
 
-		private static IEnumerable<string> FindDescriptors(string id) => DescriptorPaths().Where(path =>
+		private static IEnumerable<string> FindDescriptors(string id) => DescriptorPaths(id).Where(path =>
 		{
 			var descriptor = TryReadDescriptor(path);
 			return descriptor != null && descriptor.Id.Equals(id, StringComparison.OrdinalIgnoreCase);
 		});
 
-		private static IEnumerable<string> DescriptorPaths()
+		// Fixed first-party units use canonical directories, so discovery needs no directory scan.
+		private static IEnumerable<string> DescriptorPaths(string id)
 		{
+			var relative = DescriptorRelativePath(id).Replace('/', Path.DirectorySeparatorChar);
+
 			foreach (var root in SearchRoots())
 			{
-				var componentRoot = Path.Combine(root, RelativeRoot.Replace('/', Path.DirectorySeparatorChar));
-				if (!Directory.Exists(componentRoot))
-					continue;
-
-				foreach (var directory in Directory.EnumerateDirectories(componentRoot).OrderBy(path => path, PathComparer))
-				{
-					var descriptor = Path.Combine(directory, DescriptorName);
-					if (File.Exists(descriptor))
-						yield return Path.GetFullPath(descriptor);
-				}
+				var descriptor = Path.Combine(root, relative);
+				if (File.Exists(descriptor))
+					yield return Path.GetFullPath(descriptor);
 			}
 		}
 
@@ -286,8 +309,7 @@ namespace Keysharp.Internals.Scripting
 
 		private static Descriptor ReadDescriptor(string path)
 		{
-			var descriptor = JsonSerializer.Deserialize(File.ReadAllText(path), DescriptorJson.Default.Descriptor)
-				?? throw new InvalidDataException($"'{path}' is empty or invalid");
+			var descriptor = Descriptor.Read(path);
 
 			if (descriptor.SchemaVersion != SupportedDescriptorSchema)
 				throw new InvalidDataException($"'{path}' uses unsupported scripting-component schema version {descriptor.SchemaVersion}.");

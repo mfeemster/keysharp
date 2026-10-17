@@ -1,4 +1,4 @@
-using Keysharp.Builtins;
+using System.Text.Json;
 namespace System
 {
 	/// <summary>
@@ -14,5 +14,19 @@ namespace System
 		/// <param name="maxValue">The maximum value the double can be, exclusive.</param>
 		/// <returns>The next double within the range minValue inclusive to maxValue exclusive.</returns>
 		internal static double NextDouble(this Random random, double minValue, double maxValue) => random.NextDouble()* (maxValue - minValue) + minValue;
+
+		// Preserve serializer handling of null arrays and elements.
+		internal static List<string> GetStringList(this JsonElement value)
+		{
+			if (value.ValueKind == JsonValueKind.Null)
+				return null;
+
+			var list = new List<string>(value.GetArrayLength());
+
+			foreach (var item in value.EnumerateArray())
+				list.Add(item.GetString());
+
+			return list;
+		}
 	}
 }
