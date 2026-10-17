@@ -376,6 +376,23 @@ public partial class FlowTests : TestRunner
 	[Test, Category("Flow")]
 	public void FlowLoopRead() => Assert.IsTrue(TestScript("flow-loop-read", true));
 
+	[Test, Category("Internal")]
+	public void LoopCleanupAfterDisposeFailure()
+	{
+		var outer = Loops.Push();
+		Loops.Push();
+		var enumerator = FailOnDispose().GetEnumerator();
+		Assert.IsTrue(enumerator.MoveNext());
+		Assert.Throws<InvalidOperationException>(() => Loops.Pop(enumerator));
+		Assert.AreSame(outer, Loops.Pop());
+
+		static IEnumerable FailOnDispose()
+		{
+			try { yield return null; }
+			finally { throw new InvalidOperationException(); }
+		}
+	}
+
 #if WINDOWS
 
 	[Test, Category("Flow")]

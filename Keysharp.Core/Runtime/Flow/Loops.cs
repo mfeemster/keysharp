@@ -578,6 +578,13 @@ namespace Keysharp.Runtime
 			return info;
 		}
 
+		/// <summary>Disposes a specialized-loop enumerator and restores the enclosing loop even if disposal fails.</summary>
+		public static void Pop(IEnumerator enumerator)
+		{
+			try { (enumerator as IDisposable)?.Dispose(); }
+			finally { Pop(); }
+		}
+
 		/// <summary>
 		/// Pushes a new loop onto the stack.
 		/// This should never be called directly by the user and instead is used<br/>

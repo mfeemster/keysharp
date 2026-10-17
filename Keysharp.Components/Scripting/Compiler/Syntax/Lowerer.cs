@@ -4924,8 +4924,8 @@ namespace Keysharp.Compilation.Syntax
 			return result;//This is somewhat dangerous, but provides a large reduction in allocations. Revert back to a normal allocation if this ever causes errors.
 		}
 
-		// { [headers] [IEnumerator KS_eN = null;] [var KS_loopN =] Push(type); [backups] try { loop } finally { [Dispose]
-		// [restores] Pop(); } [if (KS_loopN.index == 0) else] [_end:] }
+		// { [headers] [IEnumerator KS_eN = null;] [var KS_loopN =] Push(type); [backups] try { loop } finally { [restores]
+		// Pop([KS_eN]); } [if (KS_loopN.index == 0) else] [_end:] }
 		// The else follows the try, so it runs only when the loop completed without an iteration, never while an
 		// exception unwinds, and it may return or break. Lowered after PopLoop, so its break targets the outer loop.
 		private BlockSyntax LoopBlock(int id, LoopFrame frame, string loopType, BlockSyntax loop, Stmt elseStmt,
@@ -4940,12 +4940,8 @@ namespace Keysharp.Compilation.Syntax
 			block.Add(elseStmt != null ? LocalDeclVar(info, push) : ExprStmt(push));
 			if (backups != null) block.AddRange(backups);
 			var finallyStmts = _scratchListStatements.Get();
-			if (disposedEnumerator != null)
-				finallyStmts.Add(ExprStmt(SyntaxFactory.ConditionalAccessExpression(
-					SyntaxFactory.ParenthesizedExpression(SyntaxFactory.BinaryExpression(SyntaxKind.AsExpression, Id(disposedEnumerator), Ty("System.IDisposable"))),
-					SyntaxFactory.InvocationExpression(SyntaxFactory.MemberBindingExpression(SyntaxFactory.IdentifierName("Dispose"))))));
 			if (restores != null) finallyStmts.AddRange(restores);
-			finallyStmts.Add(CallStmt("Keysharp.Runtime.Loops.Pop"));
+			finallyStmts.Add(disposedEnumerator != null ? CallStmt("Keysharp.Runtime.Loops.Pop", Id(disposedEnumerator)) : CallStmt("Keysharp.Runtime.Loops.Pop"));
 			block.Add(TryFinally(loop, SyntaxFactory.Block(finallyStmts)));
 			if (elseStmt != null)
 				block.Add(SyntaxFactory.IfStatement(
