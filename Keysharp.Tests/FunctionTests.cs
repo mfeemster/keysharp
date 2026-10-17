@@ -292,6 +292,20 @@ public class FunctionTests : TestRunner
 				diagnostic => diagnostic.Contains("declaration conflicts")), source);
 	}
 
+	// Thousands of variables must compile without recursively nested lookup syntax.
+	[Test, Category("Function"), Category("Internal")]
+	public void DynamicNameLookupWithManyVariables()
+	{
+		var source = new StringBuilder("#ErrorStdOut\n#Warn All, StdOut\nF() {\n");
+
+		for (var i = 0; i < 2000; i++)
+			_ = source.Append("\tv").Append(i).Append(" := ").Append(i).Append('\n');
+
+		_ = source.Append("\tlast := %\"v1999\"%\n\t%\"v1999\"% := last\n\treturn &%\"v1999\"%\n}\n");
+		var (bytes, text, _) = new CompilerHelper().CompileCodeToByteArray(source.ToString(), "dyn-many-vars");
+		Assert.That(bytes, Is.Not.Null, text);
+	}
+
 	[Test, Category("Function"), NonParallelizable]
 	public void OptParamsInFunc() => Assert.IsTrue(TestScript("func-opt-params", false));
 

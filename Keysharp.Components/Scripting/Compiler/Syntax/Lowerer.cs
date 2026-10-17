@@ -6285,32 +6285,22 @@ namespace Keysharp.Compilation.Syntax
 		private ExpressionSyntax NewScope(string name, bool withWriter)
 		{
 			var arms = DerefArms();
-			var reader = SyntaxFactory.SimpleLambdaExpression(SyntaxFactory.Parameter(SyntaxFactory.Identifier("KS_name")), BuildScopeSwitch(arms, isWriter: false));
+			var reader = SyntaxFactory.SimpleLambdaExpression(SyntaxFactory.Parameter(SyntaxFactory.Identifier("KS_name")), BuildScopeLookup(arms, isWriter: false));
 			var writer = withWriter
 				? SyntaxFactory.ParenthesizedLambdaExpression(
 					SyntaxFactory.ParameterList(SyntaxFactory.SeparatedList(new[] { SyntaxFactory.Parameter(SyntaxFactory.Identifier("KS_name")), SyntaxFactory.Parameter(SyntaxFactory.Identifier("KS_val")) })),
-					BuildScopeSwitch(arms, isWriter: true))
+					BuildScopeLookup(arms, isWriter: true))
 				: Null;
 			var arguments = new List<ExpressionSyntax> { Str(name), reader, writer, ScopeDeclarationsLambda(arms), BoolLit(_scope.AssumeGlobal) };
 			if (_derefReferences)
-			{
-				var references = arms.Where(arm => arm.Reference != null).Select(arm => ScopeArm(arm.Key, arm.Reference)).ToList();
-				references.Add(SyntaxFactory.SwitchExpressionArm(SyntaxFactory.DiscardPattern(), Access("Keysharp.Runtime.FuncScope.Undeclared")));
 				arguments.Add(SyntaxFactory.SimpleLambdaExpression(SyntaxFactory.Parameter(SyntaxFactory.Identifier("KS_name")),
-					SyntaxFactory.SwitchExpression(Id("KS_name"), SyntaxFactory.SeparatedList(references))));
-			}
+					ScopeLookup(arms.Where(arm => arm.Reference != null).Select(arm => (arm.Key, arm.Reference)), Access("Keysharp.Runtime.FuncScope.Undeclared"))));
 			return New("Keysharp.Runtime.FuncScope", arguments.ToArray());
 		}
 
-		private ExpressionSyntax BuildScopeSwitch(List<DerefArm> arms, bool isWriter)
-		{
-			var swArms = new List<SwitchExpressionArmSyntax>();
-			foreach (var a in arms)
-				if ((isWriter ? a.Write : a.Read) is { } arm)
-					swArms.Add(ScopeArm(a.Key, arm));
-			swArms.Add(SyntaxFactory.SwitchExpressionArm(SyntaxFactory.DiscardPattern(), Access(_scope.AssumeGlobal ? "Keysharp.Runtime.FuncScope.Global" : "Keysharp.Runtime.FuncScope.Undeclared")));
-			return SyntaxFactory.SwitchExpression(Id("KS_name"), SyntaxFactory.SeparatedList(swArms));
-		}
+		private BlockSyntax BuildScopeLookup(List<DerefArm> arms, bool isWriter) =>
+			ScopeLookup(arms.Where(arm => (isWriter ? arm.Write : arm.Read) != null).Select(arm => (arm.Key, isWriter ? arm.Write : arm.Read)),
+				Access(_scope.AssumeGlobal ? "Keysharp.Runtime.FuncScope.Global" : "Keysharp.Runtime.FuncScope.Undeclared"));
 
 		// `%name%` reads and writes, routed through the runtime with this scope's KS_scope, or null outside a function whose
 		// body has one.
@@ -6409,9 +6399,15 @@ namespace Keysharp.Compilation.Syntax
 			}
 			return arms;
 		}
-		private static SwitchExpressionArmSyntax ScopeArm(string name, ExpressionSyntax value) =>
-			SyntaxFactory.SwitchExpressionArm(SyntaxFactory.DiscardPattern(), SyntaxFactory.WhenClause(
-				Inv(Access("System.String.Equals"), Id("KS_name"), Str(name), Access("System.StringComparison.OrdinalIgnoreCase"))), value);
+
+		// Returns the value of the first arm whose name KS_name matches, else `unmatched`. A switch expression would bind
+		// Roslyn's decision DAG, which a script without patterns does not otherwise need, and nested conditionals overflow
+		// Roslyn's stack in a function holding a few thousand variables, so the arms are a flat run of ifs.
+		private static BlockSyntax ScopeLookup(IEnumerable<(string Name, ExpressionSyntax Value)> arms, ExpressionSyntax unmatched) =>
+			SyntaxFactory.Block(arms.Select(arm => (StatementSyntax)SyntaxFactory.IfStatement(
+					Inv(Access("System.String.Equals"), Id("KS_name"), Str(arm.Name), Access("System.StringComparison.OrdinalIgnoreCase")),
+					SyntaxFactory.ReturnStatement(arm.Value)))
+				.Append(SyntaxFactory.ReturnStatement(unmatched)));
 
 		private static ParameterSyntax Param(string name, TypeSyntax type) =>
 			SyntaxFactory.Parameter(SyntaxFactory.Identifier(name)).WithType(type);

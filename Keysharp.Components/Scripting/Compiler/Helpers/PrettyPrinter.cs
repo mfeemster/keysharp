@@ -355,6 +355,8 @@ namespace Keysharp.Compilation
 				_sb.Append(" ");
 
 			Visit(node.Body);
+
+			TrimTrailingNewLine();
 		}
 
 		public override void VisitFieldDeclaration(FieldDeclarationSyntax node)
