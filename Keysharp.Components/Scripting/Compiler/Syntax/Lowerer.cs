@@ -73,6 +73,7 @@ namespace Keysharp.Compilation.Syntax
 		// Stack of label name-sets for the currently-open blocks (a real C# `switch` contributes one set shared by all
 		// its cases). A `goto` emits a real C# goto only when its target is in some active scope (a valid C# jump).
 		private readonly List<HashSet<string>> _labelScopes = new();
+		private int _labelBase;   // first label scope reachable from the current callable or finally body
 		// Null outside a scope whose body uses %name%, else whether its FuncScope (KS_scope) has a writer.
 		private bool? _derefScope;
 		private bool _derefReferences;
@@ -1810,11 +1811,10 @@ namespace Keysharp.Compilation.Syntax
 				case BreakStmt bs: return LowerBreakContinue(bs, bs.Target, isBreak: true);
 				case ContinueStmt cs: return LowerBreakContinue(cs, cs.Target, isBreak: false);
 				case GotoStmt g:
-					// Emit a real C# goto only to a label in an enclosing scope / the same C# switch (a valid C# jump);
-					// an out-of-scope target (which AHK forbids anyway) degrades to a no-op rather than failing to compile.
-					return _labelScopes.Any(sc => sc.Contains(g.Target))
-						? SyntaxFactory.GotoStatement(SyntaxKind.GotoStatement, Id(UserLabelId(g.Target)))
-						: SyntaxFactory.EmptyStatement();
+					if (UserLabelId(g.Target) is { } label)
+						return SyntaxFactory.GotoStatement(SyntaxKind.GotoStatement, Id(label));
+					Diag($"{NodeAnchor(g)}Goto target is missing or cannot be reached: {g.Target}");
+					return null;
 				case LabelStmt l: return SyntaxFactory.LabeledStatement(UserLabelId(l.Name), SyntaxFactory.EmptyStatement());
 				case FunctionDecl fd:
 					// A function nested inside another is a uniquely named local function bound to a local var, so same-named
@@ -4876,9 +4876,15 @@ namespace Keysharp.Compilation.Syntax
 
 		private static StatementSyntax NextLabel(int id) => SyntaxFactory.LabeledStatement("KS_e" + id + "_next", SyntaxFactory.EmptyStatement());
 		private static StatementSyntax EndLabel(int id) => SyntaxFactory.LabeledStatement("KS_e" + id + "_end", SyntaxFactory.EmptyStatement());
-		// A user label `name:` / goto target -> a mangled, collision-free C# label identifier.
-		private string UserLabelId(string name) => "KS_lbl_" + _labelScopes.AsEnumerable().Reverse()
-			.Select(scope => scope.TryGetValue(name, out var declared) ? declared : null).FirstOrDefault(declared => declared != null, name);
+		// A reachable user label's C# identifier, with its declared spelling, or null when no active scope declares it.
+		private string UserLabelId(string name)
+		{
+			for (var i = _labelScopes.Count - 1; i >= _labelBase; i--)
+				if (_labelScopes[i].TryGetValue(name, out var declared))
+					return "KS_lbl_" + declared;
+
+			return null;
+		}
 
 		// Appends the `_next:` label a continue of this loop targets, then the trailing `Until` break, which AHK also
 		// evaluates after a continue. Every iteration then records the loop's own location, as its condition or
@@ -5087,10 +5093,10 @@ namespace Keysharp.Compilation.Syntax
 		private StatementSyntax LowerTry(TryStmt tr)
 		{
 			var body = LowerBody(tr.Body);
-			var savedLoopBase = _loopBase;
-			_loopBase = _loopFrames.Count;
+			var (savedLoopBase, savedLabelBase) = (_loopBase, _labelBase);
+			(_loopBase, _labelBase) = (_loopFrames.Count, _labelScopes.Count);
 			var finallyBlock = tr.Finally != null ? LowerBody(tr.Finally) : null;
-			_loopBase = savedLoopBase;
+			(_loopBase, _labelBase) = (savedLoopBase, savedLabelBase);
 			StatementSyntax stmt;
 
 			// try/catch/else: the else body runs only if the try completed without an exception — guard with a flag.
@@ -6103,8 +6109,8 @@ namespace Keysharp.Compilation.Syntax
 			var savedTemps = _scopeTemps; _scopeTemps = _scratchListStrings.Get();
 			var savedScopeFuncs = _pendingScopeFuncs; _pendingScopeFuncs = _scratchListStatements.Get();   // fat-arrow local funcs for THIS scope
 			var savedClosureInits = _pendingScopeClosureInits; _pendingScopeClosureInits = _scratchListStatements.Get();
-			var (savedLoopBase, savedLoopLabels) = (_loopBase, _pendingLoopLabels);
-			(_loopBase, _pendingLoopLabels) = (_loopFrames.Count, null);
+			var (savedLoopBase, savedLoopLabels, savedLabelBase) = (_loopBase, _pendingLoopLabels, _labelBase);
+			(_loopBase, _pendingLoopLabels, _labelBase) = (_loopFrames.Count, null, _labelScopes.Count);
 			// This callable's own `#import` frame (control-flow-nested imports included) is pushed before its variables are
 			// classified, so a name it explicitly binds is written through rather than made a local.
 			var bodyImports = _scratchListImports.Get();
@@ -6236,7 +6242,7 @@ namespace Keysharp.Compilation.Syntax
 			_scratchListStrings.Return(_scopeKeptTemps);
 			_scratchListStrings.Return(_scopeTemps);
 			_scopeTemps = savedTemps; _pendingScopeFuncs = savedScopeFuncs; _pendingScopeClosureInits = savedClosureInits; _scopeKeptTemps = savedKept;
-			(_loopBase, _pendingLoopLabels) = (savedLoopBase, savedLoopLabels);
+			(_loopBase, _pendingLoopLabels, _labelBase) = (savedLoopBase, savedLoopLabels, savedLabelBase);
 			_currentThisFuncName = savedThisFuncName;
 			_loweringParamDefault = savedLoweringParamDefault;
 			_stamped = savedStamped;

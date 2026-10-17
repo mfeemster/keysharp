@@ -59,6 +59,28 @@ public class ParserTests : TestRunner
 			"outer:\nLoop (() {\nLoop 1 {\nbreak\n}\nreturn 2\n})() {\nLoop 2 {\nbreak outer\n}\n}\n");
 	}
 
+	[Test, Category("Parser")]
+	public void StaticGotoTargets()
+	{
+		const string invalid = "Goto target is missing or cannot be reached: ";
+		AssertCompileError("goto missing\n", invalid + "missing");
+		AssertCompileError("goto inner\nif 1 {\ninner:\nx := 1\n}\n", invalid + "inner");
+		AssertCompileError("if 1 {\ngoto other\n}\nif 1 {\nother:\nx := 1\n}\n", invalid + "other");
+		AssertCompileError("outside:\nLoop (() {\ngoto outside\nreturn 1\n})() {\nbreak\n}\n", invalid + "outside");
+		AssertCompileError("outside:\nF() {\ngoto outside\n}\n", invalid + "outside");
+		AssertCompileError("F() {\nouter:\nG() {\ngoto outer\n}\n}\n", invalid + "outer");
+		AssertCompileError("try {\n} finally {\ngoto after\n}\nafter:\nx := 1\n", invalid + "after");
+		AssertCompileError("try {\n} finally {\ntry {\n} finally {\ngoto outer\n}\nouter:\nx := 1\n}\n", invalid + "outer");
+		AssertCompiles(
+			"goto MIXED\nMixed:\nx := 1\n",
+			"if 1 {\ngoto outside\n}\noutside:\nx := 1\n",
+			"switch 1 {\ncase 1: goto NEXT\ncase 2:\nNext:\nx := 1\n}\n",
+			"try {\ngoto after\n} finally {\n}\nafter:\nx := 1\n",
+			"Loop {\ntry {\nthrow 1\n} catch {\ngoto after\n}\n}\nafter:\nx := 1\n",
+			"F() {\nlocalLabel:\nx := 1\n}\ngoto outside\noutside:\nx := 2\n",
+			"try {\n} finally {\nF() {\ngoto OWN\nOwn:\nreturn 1\n}\ngoto HERE\nHere:\nx := 1\n}\ngoto after\nafter:\nx := 2\n");
+	}
+
 	// Equal compilation inputs must produce the same cache identity.
 	[Test, Category("Parser")]
 	public void DeterministicCompile()
