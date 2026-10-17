@@ -51,6 +51,9 @@ Assert(A_NoTrayIcon, A_LineNumber)
 
 Assert(A_WinActivateForce, A_LineNumber)
 
+; Set by a directive past the end of the auto-execute section, which still applies when the script loads.
+AssertEq(A_HotIfTimeout, 123, A_LineNumber)
+
 #INPUTLEVEL 50
 
 Hotkey("F5", (*) => "")
@@ -73,3 +76,5 @@ FileAppend "pass", "*"
 
 ExitApp()
 #endif
+return
+#HOTIFTIMEOUT 123

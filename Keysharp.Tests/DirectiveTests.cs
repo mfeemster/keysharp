@@ -504,6 +504,8 @@ public class DirectiveTests : TestRunner
 		Assert.That(s.HotkeyData.shk[3].Name, Is.EqualTo("F4"));
 		Assert.That(s.HotkeyData.shk[4].Name, Is.EqualTo("F6"));
 		Assert.That(s.HotkeyData.shk[5].Name, Is.EqualTo("F5"));
+		Assert.That(s.HotkeyData.shk[0].firstVariant.maxThreads, Is.EqualTo(150));
+		Assert.IsTrue(s.HotkeyData.shk[0].firstVariant.maxThreadsBuffer);
 		Assert.IsTrue(s.HotkeyData.shk[0].firstVariant.suspendExempt);
 		Assert.IsTrue(s.HotkeyData.shk[1].firstVariant.suspendExempt);
 		Assert.That(s.HotkeyData.shk[2].firstVariant.suspendExempt, Is.False);

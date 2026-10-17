@@ -924,15 +924,14 @@ namespace Keysharp.Compilation.Syntax
 					AddDhhr(directive, ExprStmt(Assign(Access("MainScript.ErrorStdOut"), BoolLit(true))));
 					continue;
 				}
-				if (directiveName is not ("suspendexempt" or "hotstring" or "hotif" or "inputlevel"))
+				if (!IsLoadTimeDirective(directiveName))
 					continue;
 				_errorStdOutActive = errorStdOutBeforeDirective;
 				switch (directiveName)
 				{
-					case "suspendexempt": AddDhhr(directive, LowerDirective(directive)); break;
-					case "inputlevel": AddDhhr(directive, LowerDirective(directive)); break;
 					case "hotstring": LowerHotstringDirective(directive); break;
 					case "hotif": LowerHotIf(directive); break;
+					default: AddDhhr(directive, LowerDirective(directive)); break;
 				}
 			}
 			_errorStdOutActive = activeErrorStdOut;
@@ -1822,10 +1821,7 @@ namespace Keysharp.Compilation.Syntax
 					if (_scope != null) { _ = LowerNestedFunction(fd); return null; }
 					if (_emittedFuncImpls.Add(NameMangler.FunctionMethod(fd.Name))) _pendingLambdas.Add(LowerFunction(fd));
 					return null;
-				case DirectiveStmt dir when StringComparer.OrdinalIgnoreCase.Equals(dir.Name, "SuspendExempt")
-					|| StringComparer.OrdinalIgnoreCase.Equals(dir.Name, "Hotstring")
-					|| StringComparer.OrdinalIgnoreCase.Equals(dir.Name, "HotIf")
-					|| StringComparer.OrdinalIgnoreCase.Equals(dir.Name, "InputLevel"):
+				case DirectiveStmt dir when IsLoadTimeDirective(System.Text.Ascii.IsValid(dir.Name) ? dir.Name.ToLowerInvariant() : dir.Name):
 					return null;
 				case DirectiveStmt dir: return LowerDirective(dir);   // value-setting directives; rest are no-ops here
 				// A hotkey/hotstring/remap inside a plain block — the `{ … }` commonly used to group a `#HotIf`
@@ -1840,10 +1836,11 @@ namespace Keysharp.Compilation.Syntax
 			}
 		}
 
-		// Value-setting directives lower to an assignment of the matching runtime accessor/field at their position in
-		// the auto-exec (matches the canonical, which assigns the same A_* / Script members). Unknown or purely
-		// load-time directives (#Requires, #MaxThreads, #DllLoad, #Include, #import handled elsewhere…)
-		// are no-ops here.
+		// Apply these directives with registrations so they also take effect beyond the auto-execute section.
+		private static bool IsLoadTimeDirective(string lowerName) => lowerName is "suspendexempt" or "hotstring" or "hotif" or "inputlevel"
+			or "clipboardtimeout" or "hotiftimeout" or "maxthreadsbuffer" or "maxthreadsperhotkey" or "usehook" or "nomainwindow"
+			or "winactivateforce" or "maxthreads" or "menumaskkey" or "dllload";
+
 		private StatementSyntax LowerDirective(DirectiveStmt d)
 		{
 			var args = (d.Args ?? "").Trim();
