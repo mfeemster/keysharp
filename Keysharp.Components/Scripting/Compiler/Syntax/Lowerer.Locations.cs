@@ -10,19 +10,18 @@ namespace Keysharp.Compilation.Syntax
 	// function, as AutoHotkey keeps its current line, so an Error reports the line of every frame without any PDB.
 	internal sealed partial class Lowerer
 	{
-		private const string LocationLocal = "KS_line";
+		private const string FrameLocal = "KS_frame";
 		private const int LineBits = Keysharp.Runtime.CallStack.LineBits;
 
 		// Marks the location stamps, which --transpile leaves out: they instrument the program rather than express it.
 		internal static readonly SyntaxAnnotation LocationAnnotation = new("Keysharp.Location");
 
-		// Declared before a body's location stamps. The dispatcher pushed the function's frame before calling it,
-		// and the frame stays at its depth until the function returns.
-		// Build the ref local directly to avoid initializing Roslyn's C# parser for generated syntax.
+		// The dispatcher keeps this frame until return. Capturing the class avoids Roslyn's ref-local handling.
+		// Build the local directly to avoid initializing Roslyn's parser.
 		private static readonly StatementSyntax LocationDecl = SyntaxFactory.LocalDeclarationStatement(
-				SyntaxFactory.VariableDeclaration(SyntaxFactory.RefType(SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.IntKeyword))))
-					.AddVariables(SyntaxFactory.VariableDeclarator(LocationLocal).WithInitializer(SyntaxFactory.EqualsValueClause(
-						SyntaxFactory.RefExpression(Access("Keysharp.Runtime.CallStack.Top.Location"))))))
+				SyntaxFactory.VariableDeclaration(Ty("Keysharp.Runtime.CallStack.Frame"))
+					.AddVariables(SyntaxFactory.VariableDeclarator(FrameLocal).WithInitializer(SyntaxFactory.EqualsValueClause(
+						Access("Keysharp.Runtime.CallStack.Top")))))
 			.WithAdditionalAnnotations(LocationAnnotation);
 
 		private static readonly System.StringComparer SourcePathComparer = Parser.SourcePathComparer;
@@ -76,13 +75,13 @@ namespace Keysharp.Compilation.Syntax
 		private ExpressionSyntax SetLocation(Node node)
 		{
 			_stamped = true;
-			return Assign(Id(LocationLocal), IntLit(Location(node)));
+			return Assign(Member(Id(FrameLocal), "Location"), IntLit(Location(node)));
 		}
 
 		private StatementSyntax Stamp(Node node) => ExprStmt(SetLocation(node)).WithAdditionalAnnotations(LocationAnnotation);
 
 		// A case value evaluated at run time records its own location, as the switch's is left behind by then.
-		// `(KS_line = location) >= int.MinValue && test` does so without changing the test's result.
+		// `(KS_frame.Location = location) >= int.MinValue && test` does so without changing the test's result.
 		private ExpressionSyntax CaseGuard(Expr value, ExpressionSyntax test) => value is LiteralExpr ? test
 			: SyntaxFactory.BinaryExpression(SyntaxKind.LogicalAndExpression,
 				SyntaxFactory.BinaryExpression(SyntaxKind.GreaterThanOrEqualExpression,

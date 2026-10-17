@@ -216,8 +216,8 @@ public class ScriptingComponentTests : TestRunner
 		});
 
 		Assert.IsTrue(result.Success, result.ErrorText);
-		Assert.That(result.CompiledCode, Does.Contain("KS_line"));
-		Assert.That(result.GeneratedCode, Does.Not.Contain("KS_line"));
+		Assert.That(result.CompiledCode, Does.Contain("KS_frame.Location ="));
+		Assert.That(result.GeneratedCode, Does.Not.Contain("KS_frame"));
 		Assert.That(result.GeneratedCode, Does.Contain(".SwitchCase("));
 		var errors = Microsoft.CodeAnalysis.CSharp.CSharpSyntaxTree.ParseText(result.GeneratedCode).GetDiagnostics()
 			.Where(d => d.Severity == Microsoft.CodeAnalysis.DiagnosticSeverity.Error).ToList();
