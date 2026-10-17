@@ -237,8 +237,8 @@ namespace Keysharp.Internals.Input
 				{
 					for (var i = 0; i < match.Count; ++i)
 					{
-						// v1.0.43.03: Changed to locale-insensitive search.  See similar v1.0.43.03 comment above for more details.
-						if (string.Compare(buffer, match[i], StringComparison.InvariantCultureIgnoreCase) == 0)
+						// AutoHotkey compares with lstrcmpi, which follows the user's locale.
+						if (CaseCompare.Equals(buffer, match[i], StringComparison.CurrentCultureIgnoreCase))
 						{
 							EndByMatch(i);
 							return;
