@@ -62,12 +62,14 @@ namespace Keysharp.Compilation.Syntax
 		private int _flowCounter;
 		private int _staticInitCounter;
 
-		// Enclosing-loop stack for break/continue with a level/label. Each loop gets an id (its KS_e<id> base); the
-		// optional source Label is the `name:` that preceded the loop. NeedsNext/NeedsEnd record whether a targeted
-		// continue/break referenced this loop so we only emit the (otherwise-unused) `_next`/`_end` labels when needed.
-		private sealed class LoopFrame { public int Id; public string Label; public bool NeedsNext; public bool NeedsEnd; }
+		// Enclosing-loop stack for break/continue with a level/label. Each loop gets an id (its KS_e<id> base) and the
+		// labels naming it. NeedsNext/NeedsEnd record whether a targeted continue/break referenced this loop so we only
+		// emit the (otherwise-unused) `_next`/`_end` labels when needed.
+		private sealed class LoopFrame { public int Id; public List<string> Labels; public bool NeedsNext; public bool NeedsEnd; }
 		private readonly List<LoopFrame> _loopFrames = new();
-		private string _pendingLoopLabel;   // a `name:` immediately preceding the next loop (its break/continue target)
+		// Functions and finally bodies can target only loops introduced within them.
+		private int _loopBase;
+		private List<string> _pendingLoopLabels;   // labels naming the next loop (see LoopLabels)
 		// Stack of label name-sets for the currently-open blocks (a real C# `switch` contributes one set shared by all
 		// its cases). A `goto` emits a real C# goto only when its target is in some active scope (a valid C# jump).
 		private readonly List<HashSet<string>> _labelScopes = new();
@@ -953,8 +955,7 @@ namespace Keysharp.Compilation.Syntax
 				else if (s is RemapDef rm) LowerRemap(rm);
 				else
 				{
-					// A `name:` label immediately before a top-level loop becomes that loop's break/continue target.
-					if (s is LabelStmt ll && i + 1 < body.Count && IsLoopStmt(body[i + 1])) _pendingLoopLabel = ll.Name;
+					_pendingLoopLabels = LoopLabels(body, i);
 					AddStmt(auto, s);
 				}
 			}
@@ -1806,8 +1807,8 @@ namespace Keysharp.Compilation.Syntax
 				case SwitchStmt sw: return LowerSwitch(sw);
 				case TryStmt tr: return LowerTry(tr);
 				case ThrowStmt th: return LowerThrow(th);
-				case BreakStmt bs: return LowerBreakContinue(bs.Target, isBreak: true);
-				case ContinueStmt cs: return LowerBreakContinue(cs.Target, isBreak: false);
+				case BreakStmt bs: return LowerBreakContinue(bs, bs.Target, isBreak: true);
+				case ContinueStmt cs: return LowerBreakContinue(cs, cs.Target, isBreak: false);
 				case GotoStmt g:
 					// Emit a real C# goto only to a label in an enclosing scope / the same C# switch (a valid C# jump);
 					// an out-of-scope target (which AHK forbids anyway) degrades to a no-op rather than failing to compile.
@@ -4847,11 +4848,27 @@ namespace Keysharp.Compilation.Syntax
 
 		private static bool IsLoopStmt(Stmt s) => s is WhileStmt or LoopStmt or SpecialLoopStmt or ForStmt;
 
-		// Pushes a loop frame (consuming any `name:` label that preceded this loop) and returns it.
+		// Labels separated from a loop only by non-executing declarations all name that loop.
+		private static List<string> LoopLabels(IReadOnlyList<Stmt> stmts, int index)
+		{
+			List<string> labels = null;
+
+			if (IsLoopStmt(stmts[index]))
+				for (var i = index - 1; i >= 0 && AddsNoLine(stmts[i]); i--)
+					if (stmts[i] is LabelStmt label)
+						(labels ??= []).Add(label.Name);
+
+			return labels;
+
+			static bool AddsNoLine(Stmt s) => s is LabelStmt or FunctionDecl or HotkeyDef or HotstringDef or RemapDef or DirectiveStmt
+				|| s is DeclStmt d && d.Items.All(item => item is NameExpr);
+		}
+
+		// Pushes a loop frame (consuming the labels naming this loop) and returns it.
 		private LoopFrame PushLoop(int id)
 		{
-			var f = new LoopFrame { Id = id, Label = _pendingLoopLabel };
-			_pendingLoopLabel = null;
+			var f = new LoopFrame { Id = id, Labels = _pendingLoopLabels };
+			_pendingLoopLabels = null;
 			_loopFrames.Add(f);
 			return f;
 		}
@@ -4875,24 +4892,38 @@ namespace Keysharp.Compilation.Syntax
 			return body.AddStatements(Stamp(loop));
 		}
 
-		// break/continue always `goto`s the target loop's `_end`/`_next` label (never native C# break/continue): AHK
-		// break/continue refer to the enclosing LOOP, and a switch is lowered as a real C# switch, so a native `break`
-		// in a case would wrongly break the switch. Resolves an optional level-N or source-label target. Matches canonical.
-		private StatementSyntax LowerBreakContinue(string target, bool isBreak)
+		// A script jump targets an enclosing loop, including its Until handling, through the loop's generated label.
+		private StatementSyntax LowerBreakContinue(Stmt statement, string target, bool isBreak)
 		{
-			if (_loopFrames.Count == 0)   // no enclosing loop (malformed) — emit a harmless native break/continue
-				return isBreak ? SyntaxFactory.BreakStatement() : (StatementSyntax)SyntaxFactory.ContinueStatement();
-			LoopFrame frame;
+			var count = _loopFrames.Count - _loopBase;
+			if (count == 0)
+			{
+				Diag($"{NodeAnchor(statement)}Break/Continue must be enclosed by a Loop.");
+				return null;
+			}
+
+			LoopFrame frame = null;
 			if (target == null)
 				frame = _loopFrames[^1];
-			else if (int.TryParse(target, out var n) && n >= 1)
+			else if (int.TryParse(target, out var level))
 			{
-				var idx = _loopFrames.Count - n;
-				frame = _loopFrames[idx < 0 ? 0 : idx];
+				if (level >= 1 && level <= count)
+					frame = _loopFrames[^level];
 			}
 			else
-				frame = _loopFrames.LastOrDefault(f => f.Label != null && StringComparer.OrdinalIgnoreCase.Equals(f.Label, target))
-					?? _loopFrames[^1];
+				for (var i = _loopFrames.Count - 1; i >= _loopBase; i--)
+					if (_loopFrames[i].Labels?.Contains(target, StringComparer.OrdinalIgnoreCase) == true)
+					{
+						frame = _loopFrames[i];
+						break;
+					}
+
+			if (frame == null)
+			{
+				Diag($"{NodeAnchor(statement)}Parameter #1 invalid.");
+				return null;
+			}
+
 			if (isBreak) { frame.NeedsEnd = true; return SyntaxFactory.GotoStatement(SyntaxKind.GotoStatement, Id("KS_e" + frame.Id + "_end")); }
 			frame.NeedsNext = true; return SyntaxFactory.GotoStatement(SyntaxKind.GotoStatement, Id("KS_e" + frame.Id + "_next"));
 		}
@@ -4904,8 +4935,6 @@ namespace Keysharp.Compilation.Syntax
 			return set;
 		}
 
-		// Lowers a statement sequence in its own label scope, associating a `name:` label that immediately precedes a
-		// loop with that loop (so `break name`/`continue name` can target it). Labels also emit a plain C# label.
 		private List<StatementSyntax> LowerStmtList(List<Stmt> stmts)
 		{
 			_labelScopes.Add(CollectDirectLabels(stmts));
@@ -4913,7 +4942,7 @@ namespace Keysharp.Compilation.Syntax
 			result.Clear();
 			for (int i = 0; i < stmts.Count; i++)
 			{
-				if (stmts[i] is LabelStmt ll && i + 1 < stmts.Count && IsLoopStmt(stmts[i + 1])) _pendingLoopLabel = ll.Name;
+				_pendingLoopLabels = LoopLabels(stmts, i);
 				AddStmt(result, stmts[i]);
 			}
 			_labelScopes.RemoveAt(_labelScopes.Count - 1);
@@ -5058,7 +5087,10 @@ namespace Keysharp.Compilation.Syntax
 		private StatementSyntax LowerTry(TryStmt tr)
 		{
 			var body = LowerBody(tr.Body);
+			var savedLoopBase = _loopBase;
+			_loopBase = _loopFrames.Count;
 			var finallyBlock = tr.Finally != null ? LowerBody(tr.Finally) : null;
+			_loopBase = savedLoopBase;
 			StatementSyntax stmt;
 
 			// try/catch/else: the else body runs only if the try completed without an exception — guard with a flag.
@@ -6075,6 +6107,8 @@ namespace Keysharp.Compilation.Syntax
 			var savedTemps = _scopeTemps; _scopeTemps = _scratchListStrings.Get();
 			var savedScopeFuncs = _pendingScopeFuncs; _pendingScopeFuncs = _scratchListStatements.Get();   // fat-arrow local funcs for THIS scope
 			var savedClosureInits = _pendingScopeClosureInits; _pendingScopeClosureInits = _scratchListStatements.Get();
+			var (savedLoopBase, savedLoopLabels) = (_loopBase, _pendingLoopLabels);
+			(_loopBase, _pendingLoopLabels) = (_loopFrames.Count, null);
 			// This callable's own `#import` frame (control-flow-nested imports included) is pushed before its variables are
 			// classified, so a name it explicitly binds is written through rather than made a local.
 			var bodyImports = _scratchListImports.Get();
@@ -6206,6 +6240,7 @@ namespace Keysharp.Compilation.Syntax
 			_scratchListStrings.Return(_scopeKeptTemps);
 			_scratchListStrings.Return(_scopeTemps);
 			_scopeTemps = savedTemps; _pendingScopeFuncs = savedScopeFuncs; _pendingScopeClosureInits = savedClosureInits; _scopeKeptTemps = savedKept;
+			(_loopBase, _pendingLoopLabels) = (savedLoopBase, savedLoopLabels);
 			_currentThisFuncName = savedThisFuncName;
 			_loweringParamDefault = savedLoweringParamDefault;
 			_stamped = savedStamped;

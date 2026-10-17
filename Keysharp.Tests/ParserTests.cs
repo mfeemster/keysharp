@@ -29,6 +29,36 @@ public class ParserTests : TestRunner
 		}
 	}
 
+	[Test, Category("Parser")]
+	public void LoopJumpTargets()
+	{
+		const string noLoop = "Break/Continue must be enclosed by a Loop.", invalid = "Parameter #1 invalid.";
+		AssertCompileError("break\n", noLoop);
+		AssertCompileError("switch 1 {\ncase 1: break\n}\n", noLoop);
+		AssertCompileError("switch 1 {\ncase 1: continue\n}\n", noLoop);
+		AssertCompileError("Loop {\nbreak 0\n}\n", invalid);
+		AssertCompileError("Loop {\ncontinue 2\n}\n", invalid);
+		AssertCompileError("Loop {\nbreak 99999999999\n}\n", invalid);
+		AssertCompileError("Loop {\nbreak missing\n}\n", invalid);
+		AssertCompileError("notLoop:\nx := 1\nLoop {\nbreak notLoop\n}\n", invalid);
+		AssertCompileError("F() {\nLoop {\nG() {\nbreak\n}\n}\n}\n", noLoop);
+		AssertCompileError("F() {\nouter:\nLoop {\nG() {\nLoop {\nbreak outer\n}\n}\n}\n}\n", invalid);
+		AssertCompileError("F() {\nLoop {\nG() {\nLoop {\ncontinue 2\n}\n}\n}\n}\n", invalid);
+		AssertCompileError("Loop {\ntry {\n} finally {\nbreak\n}\n}\n", noLoop);
+		AssertCompileError("outer:\nLoop {\ntry {\n} finally {\nLoop {\nbreak outer\n}\n}\n}\n", invalid);
+		AssertCompiles(
+			"outer:\nLoop 2 {\nLoop 2 {\ncontinue OUTER\n}\n}\n",
+			"Loop 2 {\nLoop 2 {\nbreak 2\n}\n}\n",
+			"Loop {\ntry {\nthrow 1\n} catch {\nbreak\n}\n}\n",
+			"Loop {\ntry {\n} finally {\nLoop {\nbreak\n}\n}\nbreak\n}\n",
+			"F() {\nLoop {\nG() {\nLoop {\nbreak\n}\n}\nbreak\n}\n}\n",
+			"first:\nsecond:\nLoop 2 {\nLoop 2 {\nbreak first\n}\n}\n",
+			"outer:\nF() {\n}\nLoop 2 {\nLoop 2 {\nbreak outer\n}\n}\n",
+			"outer:\n#SingleInstance Force\nLoop 2 {\nLoop 2 {\nbreak outer\n}\n}\n",
+			"outer:\nglobal g\nLoop 2 {\nLoop 2 {\nbreak outer\n}\n}\n",
+			"outer:\nLoop (() {\nLoop 1 {\nbreak\n}\nreturn 2\n})() {\nLoop 2 {\nbreak outer\n}\n}\n");
+	}
+
 	// Equal compilation inputs must produce the same cache identity.
 	[Test, Category("Parser")]
 	public void DeterministicCompile()
@@ -594,7 +624,7 @@ public class ParserTests : TestRunner
 		"Loop Parse \"a,b\", (\"\" \",\") {\n\tbreak\n}\n",                                   // trailing paren is the whole arg
 		"Loop Read \"f.txt\", (\"o.txt\") {\n\tbreak\n}\n",
 		"Loop Files \"*.txt\", (\"D\")\n\tbreak\n",                                           // braceless body still fine
-		"switch 1, (0) {\n\tcase 1:\n\t\tbreak\n}\n",                                         // switch case-sense arg
+		"switch 1, (0) {\n\tcase 1:\n\t\tx := 1\n}\n",                                         // switch case-sense arg
 		"Loop Files \"*.txt\", \"D\" {\n\tbreak\n}\n");                                       // unchanged plain form
 
 	// Code/string-continuation.ahk covers what a merged continuation section produces. A section opening the file

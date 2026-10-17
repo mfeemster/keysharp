@@ -1,3 +1,5 @@
+#ErrorStdOut
+#Warn All, StdOut
 #NoTrayIcon
 #Include <assert>
 
@@ -224,5 +226,20 @@ Loop 10
 AssertEq(x, 1, A_LineNumber)
 
 AssertEq(A_Index, 0, A_LineNumber)
+
+; A loop is named by every label of the run directly before it.
+x := 0
+stackedOuter:
+stackedInner:
+Loop 3
+{
+	Loop 3
+	{
+		x++
+		break stackedOuter
+	}
+}
+
+AssertEq(x, 1, A_LineNumber)
 
 FileAppend "pass", "*"
