@@ -53,10 +53,24 @@ namespace Keysharp.Runtime
 			{
 				var declared = GatherTypeVariables(type);
 				var builtin = type.Assembly == typeof(Module).Assembly;
-				Variables = declared.ToDictionary(kv => kv.Key,
-					kv => builtin && kv.Value.pi != null ? ScriptVar.Builtin(kv.Value.pi) : ScriptVar.Of(kv.Value), StringComparer.OrdinalIgnoreCase);
-				OriginalFields = declared.Where(kv => kv.Value.fi != null)
-					.Select(kv => KeyValuePair.Create(kv.Key, ScriptVar.Of(kv.Value))).ToArray();
+				// Avoid LINQ specializations over ScriptVar during startup.
+				Variables = new Dictionary<string, ScriptVar>(declared.Count, StringComparer.OrdinalIgnoreCase);
+				var fieldCount = 0;
+
+				foreach (var (name, holder) in declared)
+				{
+					Variables[name] = builtin && holder.pi != null ? ScriptVar.Builtin(holder.pi) : ScriptVar.Of(holder);
+
+					if (holder.fi != null)
+						fieldCount++;
+				}
+
+				OriginalFields = fieldCount == 0 ? [] : new KeyValuePair<string, ScriptVar>[fieldCount];
+				fieldCount = 0;
+
+				foreach (var (name, holder) in declared)
+					if (holder.fi != null)
+						OriginalFields[fieldCount++] = KeyValuePair.Create(name, ScriptVar.Of(holder));
 
 				// A script module's functions and classes are among its variables, and its other methods are the compiler's own.
 				if (builtin)

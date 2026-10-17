@@ -2,6 +2,25 @@ namespace Keysharp.Tests;
 
 public partial class OperatorTests : TestRunner
 {
+	[Test, Category("Operator"), Category("Internal")]
+	public void CatalogConsistency()
+	{
+		var all = OperatorCatalog.All;
+		Assert.That(all.Count, Is.EqualTo((int)OperatorKind.Count));
+		_ = Assert.Throws<ArgumentOutOfRangeException>(() => OperatorCatalog.Get((OperatorKind)(-1)));
+		_ = Assert.Throws<ArgumentOutOfRangeException>(() => OperatorCatalog.Get(OperatorKind.Count));
+
+		for (var i = 0; i < all.Count; i++)
+			Assert.That((int)all[i].Kind, Is.EqualTo(i), $"Catalog entry {i} is {all[i].Kind}.");
+
+		var signatures = all.Select(op => (op.Symbol, op.Arity)).ToList();
+		Assert.That(signatures, Is.Unique);
+
+		foreach (var op in all)
+			if (op.RequiredPartner is { } partner)
+				Assert.That(signatures, Does.Contain((partner, op.Arity)), $"Operator '{op.Symbol}' requires missing partner '{partner}'.");
+	}
+
 	//[Test, Category("Operator")]
 	//public void Dereference() => Assert.IsTrue(TestScript("op-dereference", true));//Probably will never implement this.
 

@@ -106,37 +106,28 @@ public static class OperatorCatalog
 		new(OperatorKind.Increment, "++", 1, "increment", (value, _) => Script.Increment(value)),
 		new(OperatorKind.Decrement, "--", 1, "decrement", (value, _) => Script.Decrement(value)),
 	};
-	public static IReadOnlyList<OperatorInfo> All { get; } = System.Array.AsReadOnly(all);
-
-	static OperatorCatalog()
-	{
-		if (all.Length != (int)OperatorKind.Count)
-			throw new InvalidOperationException("Operator catalog count does not match OperatorKind.");
-
-		var signatures = new HashSet<(string Symbol, int Arity)>();
-		for (var i = 0; i < all.Length; i++)
-		{
-			var op = all[i];
-			if ((int)op.Kind != i)
-				throw new InvalidOperationException($"Operator catalog entry {i} is {op.Kind}.");
-			if (!signatures.Add((op.Symbol, op.Arity)))
-				throw new InvalidOperationException($"Duplicate operator catalog signature '{op.Symbol}'/{op.Arity}.");
-		}
-
-		foreach (var op in all)
-			if (op.RequiredPartner is { } partner && !signatures.Contains((partner, op.Arity)))
-				throw new InvalidOperationException($"Operator '{op.Symbol}' requires missing partner '{partner}'.");
-	}
+	// Defer the wrapper for compiled-script startup; OperatorTests.CatalogConsistency validates the fixed catalog.
+	public static IReadOnlyList<OperatorInfo> All => LazyInitializer.EnsureInitialized(ref field, () => System.Array.AsReadOnly(all));
 
 	public static bool Supports(string symbol) => All.Any(op => op.Symbol == symbol);
 	public static bool TryResolve(string symbol, int arity, out OperatorKind kind)
 	{
-		foreach (var op in All)
+		foreach (var op in all)
 			if (op.Symbol == symbol && op.Arity == arity) { kind = op.Kind; return true; }
 		kind = default;
 		return false;
 	}
 	public static OperatorInfo Get(OperatorKind kind) => All[(int)kind];
+
+	internal static OperatorDefinition[] BuiltinDefinitions()
+	{
+		var definitions = new OperatorDefinition[all.Length];
+
+		for (var i = 0; i < all.Length; i++)
+			definitions[i] = new(all[i].Kind, all[i].Builtin);
+
+		return definitions;
+	}
 }
 
 /// <summary>A class's immutable operator slots, including inherited implementations.</summary>
@@ -158,9 +149,9 @@ internal sealed class OperatorTable
 /// <summary>Per-script operator lookup with immutable published tables.</summary>
 public sealed class OperatorRegistry
 {
-	private readonly record struct ClassOperators(OperatorTable Instance, OperatorTable Static);
-	private static readonly OperatorTable builtins = new(null,
-		OperatorCatalog.All.Select(op => new OperatorDefinition(op.Kind, op.Builtin)).ToArray());
+	// Reference values share precompiled dictionary code.
+	private sealed record ClassOperators(OperatorTable Instance, OperatorTable Static);
+	private static readonly OperatorTable builtins = new(null, OperatorCatalog.BuiltinDefinitions());
 	private static readonly Dictionary<Type, ClassOperators> builtinTables = new()
 	{
 		[typeof(long)] = new(builtins, OperatorTable.Empty), [typeof(double)] = new(builtins, OperatorTable.Empty),
