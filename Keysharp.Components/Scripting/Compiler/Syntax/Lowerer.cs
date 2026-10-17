@@ -4886,6 +4886,44 @@ namespace Keysharp.Compilation.Syntax
 			return null;
 		}
 
+		// Unknown shapes retain the fallback return; reporting an endpoint as unreachable must agree with C#.
+		private static bool EndPointUnreachable(StatementSyntax statement)
+		{
+			switch (statement)
+			{
+				case ReturnStatementSyntax or ThrowStatementSyntax or GotoStatementSyntax or BreakStatementSyntax or ContinueStatementSyntax:
+					return true;
+				case BlockSyntax block:
+					return block.Statements.Count > 0 && EndPointUnreachable(block.Statements[^1]);
+				case UsingStatementSyntax resource:
+					return EndPointUnreachable(resource.Statement);
+				case LabeledStatementSyntax labeled:
+					return EndPointUnreachable(labeled.Statement);
+				case IfStatementSyntax { Else: { } otherwise } branch:
+					return EndPointUnreachable(branch.Statement) && EndPointUnreachable(otherwise.Statement);
+				case TryStatementSyntax attempt:
+					if (!EndPointUnreachable(attempt.Block))
+						return false;
+
+					foreach (var handler in attempt.Catches)
+						if (!EndPointUnreachable(handler.Block))
+							return false;
+
+					return true;
+				default:
+					return false;
+			}
+		}
+
+		// A statement list ends where its last statement does; a local function declared after that runs nothing there.
+		private static bool EndPointUnreachable(List<StatementSyntax> statements)
+		{
+			for (var i = statements.Count - 1; i >= 0; i--)
+				if (statements[i] is not LocalFunctionStatementSyntax)
+					return EndPointUnreachable(statements[i]);
+
+			return false;
+		}
 		// Appends the `_next:` label a continue of this loop targets, then the trailing `Until` break, which AHK also
 		// evaluates after a continue. Every iteration then records the loop's own location, as its condition or
 		// enumerator runs next.
@@ -5103,7 +5141,8 @@ namespace Keysharp.Compilation.Syntax
 			if (tr.Else != null)
 			{
 				var ok = "KS_ok" + (++_flowCounter);
-				body = body.WithStatements(body.Statements.Add(ExprStmt(Assign(Id(ok), SyntaxFactory.LiteralExpression(SyntaxKind.TrueLiteralExpression)))));
+				if (!EndPointUnreachable(body))
+					body = body.WithStatements(body.Statements.Add(ExprStmt(Assign(Id(ok), SyntaxFactory.LiteralExpression(SyntaxKind.TrueLiteralExpression)))));
 				var inner = BuildTry(body, tr.Catches, null);
 				var elseBlock = SyntaxFactory.Block(
 					LocalDecl(SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.BoolKeyword)), ok, SyntaxFactory.LiteralExpression(SyntaxKind.FalseLiteralExpression)),
@@ -6019,7 +6058,7 @@ namespace Keysharp.Compilation.Syntax
 			if (arrowBody != null) body.AddRange([Stamp(arrowBody), SyntaxFactory.ReturnStatement(RewriteToOrNull(LowerExpr(arrowBody), ArrowOrNull))]);
 			else if (bodyBlock != null) body.AddRange(LowerStmtList(bodyBlock.Body));
 
-			if (body.Count == 0 || body[^1] is not ReturnStatementSyntax)
+			if (!EndPointUnreachable(body))
 				body.Add(SyntaxFactory.ReturnStatement(DefaultReturnExpr()));
 
 			// A function calling ListVars publishes its scope too, and so does one calling RegExMatch/RegExReplace when it
@@ -6456,7 +6495,8 @@ namespace Keysharp.Compilation.Syntax
 			// The C# class name is the module name, disambiguated if it shadows a framework/structural root; the runtime
 			// resolves the original AHK module name back through [UserDeclaredName] (Reflections keys stringToTypes by it).
 			var csName = module.CodeName;
-			StatementSyntax[] autoBody = [LocationDecl, .. autoStmts, SyntaxFactory.ReturnStatement(Str(""))];
+			StatementSyntax[] autoBody = EndPointUnreachable(autoStmts) ? [LocationDecl, .. autoStmts]
+				: [LocationDecl, .. autoStmts, SyntaxFactory.ReturnStatement(Str(""))];
 			var mm = new List<MemberDeclarationSyntax>();
 			// Initialize the shared object before import fields so circular imports retain its identity.
 			if (!module.IsAhk)

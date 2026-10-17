@@ -81,6 +81,33 @@ public class ParserTests : TestRunner
 			"try {\n} finally {\nF() {\ngoto OWN\nOwn:\nreturn 1\n}\ngoto HERE\nHere:\nx := 1\n}\ngoto after\nafter:\nx := 2\n");
 	}
 
+	[Test, Category("Parser"), Category("Internal")]
+	public void CallableEndpoints()
+	{
+		string[] sources =
+		[
+			"F(n) {\nif n\nreturn 1\nelse\nreturn 2\n}\n",
+			"F() {\nthrow Error()\n}\n",
+			"F() {\ntry {\nreturn 1\n} catch {\nreturn 2\n}\n}\n",
+			"F() {\ntry {\nreturn 1\n} finally {\nx := 1\n}\n}\n",
+			"return\n",
+			"F() {\nx := 0\ntry {\nthrow Error()\n} catch {\nx := 1\n} else {\nx := 2\n}\nreturn x\n}\n",
+			"F(n) {\nif n\nreturn 1\n}\n",
+			"F() {\ntry {\nreturn 1\n} catch {\n}\n}\n"
+		];
+		var helper = new CompilerHelper();
+		foreach (var source in sources)
+		{
+			var name = "endpoints_" + Guid.NewGuid().ToString("N");
+			var compilation = helper.CreateCompilationUnitFromFile("#ErrorStdOut\n#Warn All, StdOut\n" + source, name, sourceIsFile: false);
+			Assert.IsFalse(compilation.Errors.HasErrors, source);
+			var (diagnostics, error) = helper.DiagnoseFromTree(compilation, name, AppContext.BaseDirectory);
+			Assert.IsNull(error, source);
+			var failures = diagnostics.Where(diagnostic => diagnostic.Id == "CS0162" || diagnostic.Severity == DiagnosticSeverity.Error).ToArray();
+			Assert.That(failures, Is.Empty, source + "\n" + string.Join("\n", failures.Select(diagnostic => diagnostic.ToString())));
+		}
+	}
+
 	// Equal compilation inputs must produce the same cache identity.
 	[Test, Category("Parser")]
 	public void DeterministicCompile()
