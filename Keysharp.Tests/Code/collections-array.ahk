@@ -236,6 +236,19 @@ x := arr[1] .= "world"
 
 AssertEq(arr[1], "helloworld", A_LineNumber)
 
+; A compound assignment whose target is itself indexed or called keeps each index list apart.
+grid := [[1, 2], [3, 4]]
+r := 1, c := 2
+grid[r][c] += 10
+AssertEq(grid[1][2], 12, A_LineNumber)
+AssertEq(grid[1][1], 1, A_LineNumber)
+GridRow(i, unused) => grid[i]
+GridRow(2, 0)[1] -= 3
+AssertEq(grid[2][1], 0, A_LineNumber)
+GridFirst() => grid[1]
+GridFirst()[2] *= 2
+AssertEq(grid[1][2], 24, A_LineNumber)
+
 AssertEq(x, "helloworld", A_LineNumber)
 
 arr := [10, 20, 30, 40]

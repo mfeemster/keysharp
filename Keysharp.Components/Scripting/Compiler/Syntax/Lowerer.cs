@@ -4112,10 +4112,12 @@ namespace Keysharp.Compilation.Syntax
 					}, ie.NullConditional);
 				// Compound: capture the target and each index once.
 				var tt = NewTemp();
+				// Lower the target before borrowing the pooled index list; its arguments may reuse that list.
+				var loweredTarget = LowerExpr(ie.Target);
 				var loweredArgs = LowerArgs(ie.Args);
 				var argTemps = loweredArgs.Select(_ => NewTemp()).ToArray();
 				var ops = new ExpressionSyntax[argTemps.Length + 2];
-				ops[0] = Assign(Id(tt), LowerExpr(ie.Target));
+				ops[0] = Assign(Id(tt), loweredTarget);
 				for (int k = 0; k < argTemps.Length; k++) ops[k + 1] = Assign(Id(argTemps[k]), loweredArgs[k]);
 				var idxIds = argTemps.Select(n => (ExpressionSyntax)Id(n)).ToList();
 				var newVal = CompoundValue(a.Op[..^1], Op("GetIndex", Cons(Id(tt), idxIds)), LowerExpr(a.Value));
