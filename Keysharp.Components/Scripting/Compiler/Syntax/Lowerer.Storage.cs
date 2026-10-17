@@ -44,8 +44,7 @@ namespace Keysharp.Compilation.Syntax
 		private static void InitializeParameters(List<StatementSyntax> body, IEnumerable<ScopeVar> parameters)
 		{
 			foreach (var parameter in parameters)
-				if (parameter.Owner.Variables.TryGetValue(parameter.Key, out var storage) && storage.Box != null
-					&& parameter.Owner.Params?.Any(p => p.Variadic && StringComparer.OrdinalIgnoreCase.Equals(p.Name, parameter.Key)) != true)
+				if (parameter.Owner.Variables.TryGetValue(parameter.Key, out var storage) && storage.Box != null)
 					body.Insert(0, LocalDeclVar(storage.Box, NewBox(Id(NameMangler.Escape(parameter.Key)))));
 		}
 

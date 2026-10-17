@@ -1,4 +1,7 @@
 #NoTrayIcon
+#ErrorStdOut
+#Warn All, StdOut
+#Warn LocalSameAsGlobal, Off
 #Include <assert>
 
 ZeroParams() => 0
@@ -117,5 +120,70 @@ try {
 } catch {
     Assert(false, A_LineNumber)
 }
+
+; A variadic parameter may share its name with a local the compiler generates.
+LineCount(line*) => line.Length
+FrameCount(frame*) {
+    return frame.Length
+}
+ScopeCount(scope*) {
+    return %"scope"%.Length
+}
+class VariadicNames {
+    Count(line*) => line.Length
+    Values[items*] {
+        get {
+            KS_params_items := 10, KS_params_items_ := 20
+            return KS_params_items + KS_params_items_ + items.Length
+        }
+        set => this.Last := value + items.Length
+    }
+    static __Item[items*] {
+        set => this.StaticLast := value + items.Length
+    }
+}
+ArrowLineCount() {
+    inner := (line*) => line.Length
+    return inner(1, 2, 3, 4)
+}
+AssertEq(LineCount(1, 2), 2, A_LineNumber)
+AssertEq(FrameCount(1, 2, 3), 3, A_LineNumber)
+AssertEq(ScopeCount(1), 1, A_LineNumber)
+AssertEq(VariadicNames().Count(1, 2), 2, A_LineNumber)
+AssertEq(ArrowLineCount(), 4, A_LineNumber)
+
+PrefixCollision(KS_params_items, items*) => KS_params_items + items.Length
+NestedVariadic(frame*) {
+    KS_params_frame := 10
+    inner(frame*) => KS_params_frame + frame.Length
+    return frame.Length + inner(1, 2)
+}
+KeywordCount(params*) => params.Length
+NamedTail(params_items*) => params_items.Length
+MixedTail(MiXeD*) => MiXeD.Length
+PrefixedTail(KS_items*) => KS_items.Length
+#CSharp
+public static object LegacyTail(params object[] KS_params_items) => (long)KS_params_items.Length;
+#EndCSharp
+AssertEq(PrefixCollision(10, 1, 2), 12, A_LineNumber)
+AssertEq(NestedVariadic(1, 2, 3), 15, A_LineNumber)
+AssertEq(KeywordCount(1, 2), 2, A_LineNumber)
+AssertEq(FrameCount.Params[1].Name, "frame", A_LineNumber)
+AssertEq(NamedTail.Params[1].Name, "params_items", A_LineNumber)
+AssertEq(MixedTail.Params[1].Name, "MiXeD", A_LineNumber)
+AssertEq(PrefixedTail(1, 2), 2, A_LineNumber)
+AssertEq(PrefixedTail.Params[1].Name, "KS_items", A_LineNumber)
+AssertEq(LegacyTail.Params[1].Name, "params_items", A_LineNumber)
+AssertEq(LegacyTail(1, 2), 2, A_LineNumber)
+variadic := VariadicNames()
+AssertEq(variadic.Values[1, 2], 32, A_LineNumber)
+variadic.Values[1, 2] := 7
+AssertEq(variadic.Last, 9, A_LineNumber)
+variadic.Values := 7
+AssertEq(variadic.Last, 7, A_LineNumber)
+VariadicNames[1, 2] := 7
+AssertEq(VariadicNames.StaticLast, 9, A_LineNumber)
+VariadicNames[] := 7
+AssertEq(VariadicNames.StaticLast, 7, A_LineNumber)
 
 FileAppend "pass", "*"

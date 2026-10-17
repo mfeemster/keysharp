@@ -1,3 +1,5 @@
+#ErrorStdOut
+#Warn All, StdOut
 #NoTrayIcon
 #Include <assert>
 
@@ -213,5 +215,26 @@ funca(a:=1)
 val := funca.Call(unset)
 
 AssertEq(val, 1, A_LineNumber)
+
+VariadicLocal(rest*)
+{
+	rest := "scalar"
+	AssertEq(rest, "scalar", A_LineNumber)
+	SetVariadicLocal(&rest)
+	AssertEq(rest, "reference", A_LineNumber)
+	name := "rest"
+	%name% := "dynamic"
+	return rest
+}
+
+SetVariadicLocal(&value) => value := "reference"
+AssertEq(VariadicLocal(1), "dynamic", A_LineNumber)
+
+VariadicCapture(rest*) {
+	read := () => rest
+	SetVariadicLocal(&rest)
+	return read
+}
+AssertEq(VariadicCapture(1)(), "reference", A_LineNumber)
 
 FileAppend "pass", "*"

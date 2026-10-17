@@ -98,7 +98,6 @@ namespace Keysharp.Internals.Invoke
 		internal readonly bool anyOptional;
 		internal readonly bool isGuiType;
 		internal readonly bool isSetter;
-		internal readonly bool isItemSetter;
 		internal readonly int variadicParamIndex = -1;
 		internal readonly int[] requiredIdx;
 		internal readonly bool receiverInCounts;
@@ -352,7 +351,7 @@ namespace Keysharp.Internals.Invoke
 			if (name.StartsWith('@'))
 				name = name.Substring(1);
 
-			if (declared == null && parameter.Position == variadicParamIndex
+			if (declared == null && parameter.Position == variadicParamIndex && parameter.ParameterType == typeof(object[])
 				&& name.StartsWith(Keywords.InternalPrefix, StringComparison.Ordinal))
 				name = name.Substring(Keywords.InternalPrefix.Length);
 
@@ -490,7 +489,8 @@ namespace Keysharp.Internals.Invoke
 
 			// Determine if the method is a set_Item overload.
 			isSetter = mi.Name.StartsWith(setterPrefix, StringComparison.Ordinal) || mi.Name.StartsWith(classSetterPrefix, StringComparison.Ordinal);
-			isItemSetter = isSetter && (mi.Name == "set_Item" || mi.Name.Equals("set___Item", StringComparison.OrdinalIgnoreCase));
+			var isItemSetter = isSetter && (mi.Name == "set_Item" || mi.Name.Equals("set___Item", StringComparison.OrdinalIgnoreCase)
+				|| mi.Name.Equals(classSetterPrefix + "__Item", StringComparison.OrdinalIgnoreCase));
 			var req = new List<int>(ParamLength);
 
 			for (var i = 0; i < parameters.Length; i++)
@@ -902,7 +902,7 @@ namespace Keysharp.Internals.Invoke
 			var mi = holder.mi ?? throw new ArgumentNullException(nameof(holder.mi));
 			var ps = holder.parameters;
 			var variadicParamIndex = holder.variadicParamIndex;
-			var isItemSetter = holder.isItemSetter;
+			var isVariadicSetter = holder.isSetter && variadicParamIndex >= 0 && variadicParamIndex == ps.Length - 2;
 			var pTarget = Expression.Parameter(typeof(object), "target");
 			var pArgs = Expression.Parameter(typeof(object[]), "args");
 			var pStart = Expression.Parameter(typeof(int), "start");
@@ -922,14 +922,18 @@ namespace Keysharp.Internals.Invoke
 			{
 				if (i == variadicParamIndex)
 				{
-					a[i] = Expression.Convert(Expression.Call(typeof(DelegateFactory), nameof(PackVariadic), null,
-						pTarget, pArgs, pStart, Expression.Constant(i), Expression.Constant(ps.Length), Expression.Constant(isItemSetter),
-						Expression.Constant(holder.Id), Expression.Constant(holder.IsScript ? holder.ScriptParameterName(ps[^1]) : "")), ps[i].ParameterType);
+					Expression packed = Expression.Call(typeof(DelegateFactory), nameof(PackVariadic), null,
+						pTarget, pArgs, pStart, Expression.Constant(i), Expression.Constant(ps.Length), Expression.Constant(isVariadicSetter),
+						Expression.Constant(holder.Id), Expression.Constant(holder.IsScript ? holder.ScriptParameterName(ps[^1]) : ""));
+					if (ps[i].IsDefined(typeof(Keysharp.Runtime.VariadicAttribute), false))
+						packed = Expression.Call(typeof(Keysharp.Builtins.Array).GetMethod(nameof(Keysharp.Builtins.Array.Literal),
+							BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly), packed);
+					a[i] = Expression.Convert(packed, ps[i].ParameterType);
 					a[i] = steps?.Hold(a[i]) ?? a[i];
 					continue;
 				}
 
-				var tailValue = isItemSetter && variadicParamIndex >= 0 && i == ps.Length - 1;
+				var tailValue = isVariadicSetter && i == ps.Length - 1;
 				Expression idx = tailValue
 					? Expression.Subtract(argsLen, Expression.Constant(1))
 					: Expression.Add(pStart, Expression.Constant(i));

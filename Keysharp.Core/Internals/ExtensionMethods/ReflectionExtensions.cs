@@ -26,7 +26,8 @@ namespace System.Reflection
 			return ret;
 		}
 
-		internal static bool IsVariadic(this ParameterInfo pi) => pi != null && pi.CustomAttributes.Any(cad => cad.AttributeType == typeof(ParamArrayAttribute));
+		internal static bool IsVariadic(this ParameterInfo pi) => pi != null && pi.CustomAttributes.Any(cad =>
+			cad.AttributeType == typeof(ParamArrayAttribute) || cad.AttributeType == typeof(Keysharp.Runtime.VariadicAttribute));
 
 		/// <summary>
 		/// Reads a property as <see cref="PropertyInfo.GetValue(object)"/> does, except that an exception the getter throws

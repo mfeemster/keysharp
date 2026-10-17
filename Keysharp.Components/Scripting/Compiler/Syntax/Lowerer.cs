@@ -5493,7 +5493,7 @@ namespace Keysharp.Compilation.Syntax
 			// Ordinary methods retain their source spelling; operator implementations are hidden from property lookup.
 			AttributeListSyntax[] attrs = [m.IsOperator ? Attr("Keysharp.Runtime.PublicHiddenFromUser") : Attr("Keysharp.Runtime.UserDeclaredName", Str(m.Name)), .. CompatAttr()];
 			_currentCompat = savedCompat;
-			var parameters = ParamDecls(m.Params, includeThis: true, wrapVariadics: true);
+			var parameters = ParamDecls(m.Params, includeThis: true);
 			if (m.IsOperator && m.Params.Count == 0)
 				parameters = parameters.AddParameters(SyntaxFactory.Parameter(SyntaxFactory.Identifier("KS_operatorRight")).WithType(ObjType));
 			return ObjMethod(implName, parameters, body, attrs);
@@ -5506,9 +5506,7 @@ namespace Keysharp.Compilation.Syntax
 			var (idxLowers, byRefParams) = ParamSets(pr.Params, hasReceiver: true);
 			if (pr.HasSet && idxLowers.Contains("value"))
 				Diag($"This property parameter declaration conflicts with the setter's value parameter: {pr.Name}");
-			// Index params with full variadic (`a*` -> params object[]) / optional handling, like a normal param list.
-			// wrapVariadics so the body sees an Array (`__Item[a*]` uses `a.Length`); LowerCallableBody adds the wrap.
-			ParameterSyntax[] IdxParams() => ParamDecls(pr.Params, includeThis: false, wrapVariadics: true).Parameters.ToArray();
+			ParameterSyntax[] IdxParams() => ParamDecls(pr.Params, includeThis: false).Parameters.ToArray();
 			// A static property's accessors get the ClassStaticPrefix (registered on the class's static object); `this`
 			// inside them is the static class object. Otherwise identical to instance-property accessors.
 			var getterName = pr.Static ? NameMangler.StaticGetter(pr.Name) : NameMangler.Getter(pr.Name);
@@ -5533,10 +5531,6 @@ namespace Keysharp.Compilation.Syntax
 					thisFuncName, out _, byRefParams, pr.Params);
 				_inMethod = savedM; _currentMethodStatic = savedS;
 				var idx = IdxParams();
-				// `value` is always the LAST setter param, so a trailing `params object[]` index param drops `params`
-				// (C# requires params to be last) — it becomes a plain object[] the runtime fills with the index args.
-				if (idx.Length > 0 && idx[^1].Modifiers.Any(SyntaxKind.ParamsKeyword))
-					idx[^1] = idx[^1].WithModifiers(SyntaxFactory.TokenList());
 				_scratchPropertyAll.Clear();
 				_scratchPropertyAll.Add(ThisParam());
 				_scratchPropertyAll.AddRange(idx);
@@ -5584,7 +5578,7 @@ namespace Keysharp.Compilation.Syntax
 				thisFuncName, out var scope, byRefParams, fa.Params, capturing: true);
 			if (aliasInBody) { if (hadAlias) _inlineAliases[selfName] = savedAlias; else _inlineAliases.Remove(selfName); }
 			var localFunction = SyntaxFactory.LocalFunctionStatement(ObjType, SyntaxFactory.Identifier(implName))
-				.WithParameterList(ParamDecls(fa.Params, includeThis: false, wrapVariadics: true))
+				.WithParameterList(ParamDecls(fa.Params, includeThis: false))
 				.WithBody(body);
 			// Always stamped, "" for an anonymous lambda: Roslyn renames a local function to `<Outer>g__name|n_m`,
 			// and the attribute is what spares the runtime having to read that scheme back.
@@ -5638,7 +5632,7 @@ namespace Keysharp.Compilation.Syntax
 				out var scope, byRefParams, fd.Params, capturing: true, staticNested: fd.Static);
 			(_scope.Functions ??= new(StringComparer.OrdinalIgnoreCase))[nameLower] = scope;
 			var fn = SyntaxFactory.LocalFunctionStatement(ObjType, SyntaxFactory.Identifier(implName))
-				.WithParameterList(ParamDecls(fd.Params, includeThis: false, wrapVariadics: true))
+				.WithParameterList(ParamDecls(fd.Params, includeThis: false))
 				.WithBody(body)
 				.AddAttributeLists(Attr("Keysharp.Runtime.UserDeclaredName", Str(fd.Name)),
 					Attr("Keysharp.Runtime.CompatibilityMode", Str(_currentCompat.ToString())));
@@ -6029,18 +6023,14 @@ namespace Keysharp.Compilation.Syntax
 			var implName = NameMangler.FunctionMethod(f.Name);
 			var body = LowerCallableBody(paramLowers, f.Body, f.ArrowBody, implName, f.Name, out _, byRefParams, f.Params);
 			AttributeListSyntax[] attrs = [Attr("Keysharp.Runtime.UserDeclaredName", Str(f.Name)), ..CompatAttr()];
-			var method = ObjMethod(implName, ParamDecls(f.Params, includeThis: false, wrapVariadics: true), body, attrs);
+			var method = ObjMethod(implName, ParamDecls(f.Params, includeThis: false), body, attrs);
 			_currentCompat = savedCompat;
 			return method;
 		}
 
 		// Emits a C# parameter list. name:=literal -> [Optional, DefaultParameterValue]; name? -> [Optional];
-		// name* -> params object[]. By-ref '&name' params get the [ByRef] attribute (a VarRef is passed).
-		// The variadic param is exposed to the body as an AHK Array; the raw `params object[]` is the `KS_`-prefixed
-		// signature param, and LowerCallableBody prepends `<name> = new Array(KS_<name>)` (see VariadicWrap).
-		// The `KS_` prefix already guarantees a non-keyword identifier, so do NOT @-escape (a variadic param named
-		// `params` must become `KS_params`, never the invalid `KS_@params`).
-		private ParameterListSyntax ParamDecls(List<Param> ps, bool includeThis, bool wrapVariadics = false)
+		// name* -> [Variadic] object. The forwarder supplies its Keysharp Array; '&name' receives a VarRef.
+		private ParameterListSyntax ParamDecls(List<Param> ps, bool includeThis)
 		{
 			_scratchParameterList.Clear();
 
@@ -6048,15 +6038,12 @@ namespace Keysharp.Compilation.Syntax
 				_scratchParameterList.Add(ThisParam());
 			foreach (var p in ps)
 			{
-				var lowered = p.Name;
-				var ident = SyntaxFactory.Identifier(NameMangler.Escape(lowered));
-				ParameterSyntax param;
+				var ident = SyntaxFactory.Identifier(NameMangler.Escape(p.Name));
+				var param = SyntaxFactory.Parameter(ident).WithType(ObjType);
 				if (p.Variadic)
-					param = SyntaxFactory.Parameter(wrapVariadics ? SyntaxFactory.Identifier("KS_" + lowered) : ident)
-						.WithType(ObjArrayType).AddModifiers(SyntaxFactory.Token(SyntaxKind.ParamsKeyword));
+					param = param.AddAttributeLists(Attr("Keysharp.Runtime.Variadic"));
 				else
 				{
-					param = SyntaxFactory.Parameter(ident).WithType(ObjType);
 					if (p.ByRef) param = param.AddAttributeLists(Attr("Keysharp.Runtime.ByRef"));   // &name: receives a VarRef
 					// Optionality is independent of by-ref: `&name?` / `&name:=v` are optional by-ref params, so the
 					// [Optional]/[DefaultParameterValue] attributes must still be applied (else the runtime counts them
@@ -6141,18 +6128,6 @@ namespace Keysharp.Compilation.Syntax
 			// Declare this scope's nested-closure vars up front (`object f = null;`) so a self-/mutually-recursive binding
 			// `f = Closure(FN_f)` (where FN_f captures f) satisfies C# definite assignment.
 			foreach (var n in scope.Closures) if (hoisted.Add(n)) { declared.Add(scope.Find(n)); body.Add(DeclareVariable(scope, n, Null)); }
-
-			// Expose a variadic param to the body as an AHK Array: `object <name> = new Array(KS_<name>)` (matches the
-			// canonical). The raw `params object[]` keeps the `KS_`-prefixed signature name (see ParamDecls). Declared
-			// BEFORE the scope switches, which may reference it by name.
-			if (paramDefaults != null)
-				foreach (var p in paramDefaults)
-					if (p.Variadic)
-					{
-						var lower = p.Name;
-						body.Add(DeclareVariable(scope, lower,
-							Inv(Access("Keysharp.Builtins.Array.Literal"), Id("KS_" + lower))));
-					}
 
 			// A body using %name% routes it through this scope's FuncScope (KS_scope), which also backs callouts and ListVars.
 			var savedDeref = _derefScope;

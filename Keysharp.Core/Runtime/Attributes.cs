@@ -181,6 +181,9 @@ namespace Keysharp.Runtime
 	[AttributeUsage(AttributeTargets.Parameter)]
 	public sealed class ByRefAttribute : Attribute { }
 
+	[AttributeUsage(AttributeTargets.Parameter)]
+	public sealed class VariadicAttribute : Attribute { }
+
 	/// <summary>
 	/// Marks a class member (method or property accessor) as belonging to the class's static object
 	/// rather than its prototype, independent of the emitted C# identifier. This is an alternative to the
