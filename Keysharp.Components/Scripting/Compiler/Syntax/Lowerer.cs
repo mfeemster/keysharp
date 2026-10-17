@@ -5104,8 +5104,7 @@ namespace Keysharp.Compilation.Syntax
 				var ex = "KS_ex" + (++_flowCounter);
 				catches.Add(SyntaxFactory.CatchClause()
 					.WithDeclaration(SyntaxFactory.CatchDeclaration(Ty("Keysharp.Builtins.KeysharpException"), SyntaxFactory.Identifier(ex)))
-					.WithFilter(SyntaxFactory.CatchFilterClause(
-						SyntaxFactory.IsPatternExpression(Member(Id(ex), "ThrownValue"), SyntaxFactory.TypePattern(Ty("Keysharp.Builtins.Error")))))
+					.WithFilter(SyntaxFactory.CatchFilterClause(IsError(Member(Id(ex), "ThrownValue"))))
 					.WithBlock(SyntaxFactory.Block()));
 			}
 
@@ -5131,7 +5130,7 @@ namespace Keysharp.Compilation.Syntax
 
 			ExpressionSyntax cond;
 			if (cb.Types.Count == 0)
-				cond = SyntaxFactory.IsPatternExpression(thrownValue, SyntaxFactory.TypePattern(Ty("Keysharp.Builtins.Error")));
+				cond = IsError(thrownValue);
 			else
 			{
 				cond = null;
@@ -5153,6 +5152,10 @@ namespace Keysharp.Compilation.Syntax
 				.WithFilter(SyntaxFactory.CatchFilterClause(cond))
 				.WithBlock(block);
 		}
+
+		// A classic type test avoids Roslyn's pattern binding for the same isinst instruction.
+		private static ExpressionSyntax IsError(ExpressionSyntax value) =>
+			SyntaxFactory.BinaryExpression(SyntaxKind.IsExpression, value, Ty("Keysharp.Builtins.Error"));
 
 		// A value is a new throw site. A bare throw re-raises the active catch value and therefore lets finally blocks
 		// unwind before OnError; outside a catch it is a continuable Error in Return mode.
