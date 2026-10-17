@@ -41,10 +41,7 @@ namespace Keysharp.Compilation.Syntax
 		private readonly List<MemberDeclarationSyntax> _fieldDecls = new();
 		// The references NativeStringArguments makes for naked variables (see VariableRef).
 		private readonly HashSet<Expr> _implicitRefs = new(ReferenceEqualityComparer.Instance);
-		// Where a static-LOCAL variable's backing field is emitted: a function's static-locals live in the C# type that
-		// holds the function's impl, so a method's `static x` goes in its CLASS (not flat in __Main, where two same-named
-		// methods in different classes would collide). Defaults to _fieldDecls (module class); LowerClass redirects it to
-		// the class's own field list while lowering that class's members. `_staticFieldDeclIdx` indexes into THIS list.
+		// Function statics are emitted beside their callable: module fields by default, class fields inside LowerClass.
 		private List<MemberDeclarationSyntax> _staticFieldSink;
 		private readonly Dictionary<string, string> _userFuncByLower = new(StringComparer.OrdinalIgnoreCase);
 		// The same top-level functions, keeping their declarations so #Warn NamedArg can check a named argument
@@ -55,9 +52,7 @@ namespace Keysharp.Compilation.Syntax
 		private readonly Dictionary<string, string> _userClassByLower = new(StringComparer.OrdinalIgnoreCase);
 		private bool _inMethod;
 		private string _currentClassBase;   // base type name of the class being lowered (for `super`)
-		// Dotted C# path of the class currently being lowered (e.g. "Outer.Inner"), or null at module scope. Used to make
-		// a class method's static-local one-time-init guard key unique per declaring type (the C# field can repeat across
-		// classes now that it lives in its own class), so two same-named methods' statics don't share an init guard.
+		// Dotted C# path of the class being lowered, or null at module scope, for static field references.
 		private string _currentClassPath;
 		private string _currentClassUserPath;
 		private string _structTypeName;     // C# type name of the struct being lowered (for typed-field DefineProp)
@@ -65,6 +60,7 @@ namespace Keysharp.Compilation.Syntax
 		private string _currentThisFuncName;
 		private bool _loweringParamDefault;
 		private int _flowCounter;
+		private int _staticInitCounter;
 
 		// Enclosing-loop stack for break/continue with a level/label. Each loop gets an id (its KS_e<id> base); the
 		// optional source Label is the `name:` that preceded the loop. NeedsNext/NeedsEnd record whether a targeted
@@ -85,9 +81,7 @@ namespace Keysharp.Compilation.Syntax
 		// Local KeysharpFunc/Closure var declarations for NAMED nested functions, prepended to the scope body so the name is
 		// bound before any (possibly forward-referenced) call — AHK hoists nested functions.
 		private List<StatementSyntax> _pendingScopeClosureInits = new();
-		// SL_ static-local field name -> its index in _fieldDecls, so a constant-valued `static x := 1+2` can rewrite the
-		// field's initializer to the folded literal (`SL_… = 3L`) instead of a runtime InitStaticVariable.
-		private readonly Dictionary<string, int> _staticFieldDeclIdx = new(System.StringComparer.Ordinal);
+		private readonly HashSet<string> _functionFields = new(StringComparer.Ordinal);
 		// A parameter's default that LowerCallableBody lowered to a literal, which its declaration carries.
 		private readonly Dictionary<Param, LiteralExpressionSyntax> _literalDefaults = new(ReferenceEqualityComparer.Instance);
 		private readonly Dictionary<FatArrowExpr, FunctionDecl> _arrowDecls = new(ReferenceEqualityComparer.Instance);   // see ArrowDecl
@@ -607,7 +601,7 @@ namespace Keysharp.Compilation.Syntax
 		private void ClearPerModuleState()
 		{
 			_experimentalTypes.Clear();
-			_fields.Clear(); _fieldDecls.Clear(); _staticFieldDeclIdx.Clear(); _literalDefaults.Clear(); _userFuncByLower.Clear(); _userFuncDeclByLower.Clear(); _userClassByLower.Clear(); _userClassDeclByLower.Clear();
+			_fields.Clear(); _fieldDecls.Clear(); _functionFields.Clear(); _literalDefaults.Clear(); _userFuncByLower.Clear(); _userFuncDeclByLower.Clear(); _userClassByLower.Clear(); _userClassDeclByLower.Clear();
 			_staticFieldSink = _fieldDecls;   // module scope until a class redirects it
 
 			_inlineAliases.Clear(); _importMembers.Clear(); _classFieldIds.Clear(); _emittedFuncImpls.Clear();
@@ -1695,7 +1689,7 @@ namespace Keysharp.Compilation.Syntax
 
 		private void DeclareFunctionField(FunctionScope scope)
 		{
-			if (_staticFieldDeclIdx.TryAdd(scope.Field, _staticFieldSink.Count))
+			if (_functionFields.Add(scope.Field))
 				_staticFieldSink.Add(ObjField(scope.Field, Null));
 		}
 
@@ -4148,30 +4142,20 @@ namespace Keysharp.Compilation.Syntax
 		private StatementSyntax LowerDecl(DeclStmt d)
 		{
 			var stmts = _scratchListStatements.Get();
+			var keyword = _scope != null ? d.Keyword : "global";
 			foreach (var item in d.Items)
 			{
 				var name = DeclItemName(item);
 				if (name == null) { Diag($"unsupported declaration item: {item.GetType().Name}"); continue; }
 				var lower = name;
-				var keyword = _scope != null ? d.Keyword : "global";
 
 				if (keyword == "static")
 				{
 					if (_scope?.Statics.TryGetValue(lower, out var field) != true) { Diag($"static '{name}' not registered"); continue; }
 					var value = item is AssignExpr sa && sa.Op == ":=" ? sa.Value : null;
-					// A static with no initializer stays unset (the backing field defaults to null) — only emit the
-					// one-time InitStaticVariable when there's an initializer, so `static z` ⇒ `z is unset` holds.
+					// A static without an initializer stays unset.
 					if (value != null)
-					{
-						var lowered = LowerExpr(value);
-						// A constant initializer (e.g. `static a := 1 + 2` → 3L) has no side effects, so initialize the
-						// backing field directly (`SL_… = 3L`) instead of a lazy InitStaticVariable. The field was added to
-						// the current `_staticFieldSink` (same scope as this rewrite), so `fi` indexes into it.
-						if (lowered is LiteralExpressionSyntax && _staticFieldDeclIdx.TryGetValue(field, out var fi))
-							_staticFieldSink[fi] = ObjField(field, lowered);
-						else
-							stmts.Add(ExprStmt(InitStatic(field, lowered)));
-					}
+						stmts.Add(ExprStmt(Assign(Id(field), LowerExpr(value))));
 				}
 				// A declaration item may also be an executable operation (`global x := 1`, `global x += 1`,
 				// `global log .= "x"`, `global x++`): the name is declared and the operation runs.
@@ -4181,9 +4165,21 @@ namespace Keysharp.Compilation.Syntax
 					stmts.Add(LowerStmt(new ExpressionStmt(item)));
 			}
 
-			var result = stmts.Count == 0 ? null : stmts.Count == 1 ? stmts[0] : SyntaxFactory.Block(stmts);
+			var result = stmts.Count == 0 ? null : keyword == "static" ? InitStatics(stmts) : stmts.Count == 1 ? stmts[0] : SyntaxFactory.Block(stmts);
 			_scratchListStatements.Return(stmts);
 			return result;
+		}
+
+		// Complete the declaration before publishing its flag, so a failed initializer retries the whole declaration.
+		private StatementSyntax InitStatics(List<StatementSyntax> assignments)
+		{
+			var flag = NameMangler.StaticInitFlag(_scope.Impl, ++_staticInitCounter);
+			_staticFieldSink.Add(SyntaxFactory.FieldDeclaration(SyntaxFactory.VariableDeclaration(SyntaxFactory.PredefinedType(
+				SyntaxFactory.Token(SyntaxKind.BoolKeyword))).AddVariables(SyntaxFactory.VariableDeclarator(flag)))
+				.AddModifiers(PrivateTok, StaticTok, SyntaxFactory.Token(SyntaxKind.VolatileKeyword)));
+			assignments.Add(ExprStmt(Assign(Id(flag), BoolLit(true))));
+			return SyntaxFactory.IfStatement(SyntaxFactory.PrefixUnaryExpression(SyntaxKind.LogicalNotExpression, Id(flag)),
+				SyntaxFactory.Block(assignments));
 		}
 
 		// The variable name a declaration item refers to (`x`, `x := v`, `x += v`, `x++`).
@@ -6568,7 +6564,6 @@ namespace Keysharp.Compilation.Syntax
 			_ = scope.Kinds.TryAdd(lower, kind);
 			var field = scope.Statics[lower] = funcName == null ? null : NameMangler.StaticLocalField(funcName, lower);
 			if (field == null) return;
-			_staticFieldDeclIdx[field] = _staticFieldSink.Count;
 			_staticFieldSink.Add(ObjField(field, Null));
 		}
 
@@ -6993,22 +6988,6 @@ namespace Keysharp.Compilation.Syntax
 
 		// The C# type being lowered, below Program: the module class, then the nested class path within it.
 		private string CurrentTypePath => _currentClassPath == null ? _currentModuleClass : _currentModuleClass + "." + _currentClassPath;
-
-		// Keysharp.Runtime.Script.InitStaticVariable(ref <field>, "<scope>_<field>", () => <init>) — the second arg is a
-		// GLOBAL one-time-init guard key, so it must be unique per field LOCATION. The field name alone isn't: a class
-		// method's SL_ field now lives in its class and can repeat across classes, so qualify the key with the declaring
-		// type (module class, plus the nested class path for a class member). Module-level statics keep "__Main_<field>".
-		private ExpressionSyntax InitStatic(string field, ExpressionSyntax init)
-		{
-			var scope = CurrentTypePath;
-			return SyntaxFactory.InvocationExpression(Access("Keysharp.Runtime.Script.InitStaticVariable"),
-				SyntaxFactory.ArgumentList(SyntaxFactory.SeparatedList(new[]
-				{
-					SyntaxFactory.Argument(Id(field)).WithRefKindKeyword(SyntaxFactory.Token(SyntaxKind.RefKeyword)),
-					Arg(Str(scope + "_" + field)),
-					Arg(SyntaxFactory.ParenthesizedLambdaExpression().WithExpressionBody(init)),
-				})));
-		}
 
 		private static FieldDeclarationSyntax ObjField(string name, ExpressionSyntax init) =>
 			SyntaxFactory.FieldDeclaration(SyntaxFactory.VariableDeclaration(ObjType).AddVariables(

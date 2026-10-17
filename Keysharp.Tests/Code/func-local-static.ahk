@@ -175,4 +175,135 @@ Initial() {
 try StaticRetry()
 AssertEq(StaticRetry(), "second", A_LineNumber)
 
+; A declaration's initializers run together: when a later one throws, the whole declaration runs again next time, as
+; AutoHotkey removes a declaration only once it has completed.
+lineRuns := 0
+
+StaticLineRetry() {
+	static first := CountLineRun(), second := Initial()
+	return first "," second
+}
+
+CountLineRun() {
+	global lineRuns
+	return ++lineRuns
+}
+
+attempts := 0
+try StaticLineRetry()
+AssertEq(StaticLineRetry(), "2,second", A_LineNumber)
+AssertEq(StaticLineRetry(), "2,second", A_LineNumber)
+
+; Each declaration of a static runs once, as AutoHotkey permits declaring one again.
+StaticRedeclared() {
+	static log := AppendLog("a")
+	static log := AppendLog("b")
+	return log
+}
+
+AppendLog(text) {
+	static all := ""
+	return all .= text
+}
+
+AssertEq(StaticRedeclared(), "ab", A_LineNumber)
+AssertEq(StaticRedeclared(), "ab", A_LineNumber)
+
+; An initializer calling its own function runs again in that call, as its declaration has not completed yet.
+StaticRecursive(depth) {
+	static value := (depth < 2 ? StaticRecursive(depth + 1) : 0) + 1
+	return value
+}
+
+AssertEq(StaticRecursive(0), 3, A_LineNumber)
+AssertEq(StaticRecursive(0), 3, A_LineNumber)
+
+StaticFromParam(n) {
+	static first := n * 10
+	return first
+}
+
+AssertEq(StaticFromParam(1), 10, A_LineNumber)
+AssertEq(StaticFromParam(2), 10, A_LineNumber)
+
+Inner_1() {
+	static first := [1]
+	return first[1]
+}
+FlagScope() {
+	Inner() {
+		static second := [2]
+		return second[1]
+	}
+	return Inner()
+}
+AssertEq(Inner_1(), 1, A_LineNumber)
+AssertEq(FlagScope(), 2, A_LineNumber)
+
+; A method get_x and the getter of a property x keep their own statics.
+class StaticPair {
+	get_x() {
+		static a := [1]
+		return a[1]
+	}
+
+	x {
+		get {
+			static a := [2]
+			return a[1]
+		}
+	}
+}
+
+pair := StaticPair()
+AssertEq(pair.get_x(), 1, A_LineNumber)
+AssertEq(pair.x, 2, A_LineNumber)
+
+; AutoHotkey assigns every initializer of a static declaration, constants included, when execution first reaches it, and
+; again next time until the declaration has run to its end.
+Fresh() => "fresh"
+Redeclared() {
+	static log := Fresh()
+	static log := 5
+	return log
+}
+
+AssertEq(Redeclared(), 5, A_LineNumber)
+AssertEq(Redeclared(), 5, A_LineNumber)
+
+Thrower() {
+	static calls := 0
+	if ++calls = 1
+		throw Error("first")
+	return calls
+}
+
+Retry() {
+	try {
+		static a := 1, b := Thrower()
+	}
+	a += 10
+	return a
+}
+
+AssertEq(Retry(), 11, A_LineNumber)
+AssertEq(Retry(), 11, A_LineNumber)
+AssertEq(Retry(), 21, A_LineNumber)
+
+EarlyRead() {
+	r := IsSet(x)
+	static x := 5
+	return r
+}
+
+AssertEq(EarlyRead(), 0, A_LineNumber)
+AssertEq(EarlyRead(), 1, A_LineNumber)
+
+DefaultSeesStatic(value := IsSet(saved)) {
+	static saved := 5
+	return value
+}
+AssertEq(DefaultSeesStatic(), 0, A_LineNumber)
+AssertEq(DefaultSeesStatic(), 1, A_LineNumber)
+
 FileAppend "pass", "*"

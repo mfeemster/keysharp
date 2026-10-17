@@ -53,6 +53,7 @@ namespace Keysharp.Compilation.Syntax
 			if (!disambiguate && IsTextIdentifier(moduleName)
 				&& !moduleName.StartsWith(pathPrefix, System.StringComparison.Ordinal)
 				&& !moduleName.StartsWith("__KSFile", System.StringComparison.Ordinal)
+				&& !moduleName.StartsWith(Keywords.StaticLocalFieldPrefix, System.StringComparison.Ordinal)
 				&& !ReservedTypeNames.Contains(moduleName))
 				return moduleName;
 
@@ -106,16 +107,15 @@ namespace Keysharp.Compilation.Syntax
 		public static string StaticInit() => Keywords.ClassStaticPrefix + "__Init";
 
 		/// <summary>
-		/// Static-local variable field: <c>SL_&lt;len&gt;_&lt;funcKey&gt;_&lt;var&gt;</c>. The length prefix lets the
-		/// runtime recover the variable name by trimming the function key
-		/// (see Script.ExtractStaticLocalUserName). <paramref name="funcImplName"/> is the emitted
-		/// method name (e.g. "FN_Foo"); its lowercased form is the func key.
+		/// Static-local field, preserving the implementation name's case to separate methods and property accessors.
+		/// The length prefix lets ExtractStaticLocalUserName recover the variable name.
 		/// </summary>
-		public static string StaticLocalField(string funcImplName, string varName)
-		{
-			var funcKey = AsciiLower(funcImplName);
-			return $"{Keywords.StaticLocalFieldPrefix}{funcKey.Length}_{funcKey}_{AsciiLower(varName)}";
-		}
+		public static string StaticLocalField(string funcImplName, string varName) =>
+			$"{Keywords.StaticLocalFieldPrefix}{funcImplName.Length}_{funcImplName}_{AsciiLower(varName)}";
+
+		// The uppercase flag suffix cannot collide with a user's lowercased variable suffix.
+		public static string StaticInitFlag(string funcImplName, int ordinal) =>
+			$"{Keywords.StaticLocalFieldPrefix}{funcImplName.Length}_{funcImplName}_{Keywords.InternalPrefix}init{ordinal}";
 
 		/// <summary>Escapes a C# (contextual) keyword by prefixing '@' (e.g. <c>class</c> -> <c>@class</c>). Only a whole
 		/// identifier needs it: '@' is valid only at the start, and a prefixed name such as <c>FN_class</c> is no keyword. Non-ASCII
