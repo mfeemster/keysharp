@@ -48,10 +48,10 @@
   { "pname": "PangoSharp", "version": "3.24.24.95", "hash": "sha256-YhltIz1jisJqR2ZxvbYy0ybi4oGw6qR2SkjF/2aWiBQ=" },
   { "pname": "PCRE.NET", "version": "1.6.1", "hash": "sha256-by6Bzw/35Hf1M1vkyjG/+JdUzOllEtiEHk1sOBPiiLI=" },
   { "pname": "Semver", "version": "3.0.0", "hash": "sha256-nX5ka27GY6pz9S73H6sLSQCrnAyyI9xDVdzrtlMp4BQ=" },
-  { "pname": "System.CodeDom", "version": "10.0.12", "hash": "sha256-/s+6urTkKH633q56Ivof+Rm7HlDHWmm1B7J4/tyYLtg=" },
+  { "pname": "System.CodeDom", "version": "10.0.13", "hash": "sha256-HCE62pG7Qm7VHYtjgfb4J4XelvPyyj1ZxsN/qLPBEkk=" },
   { "pname": "System.ComponentModel.Annotations", "version": "5.0.0", "hash": "sha256-0pST1UHgpeE6xJrYf5R+U7AwIlH3rVC3SpguilI/MAg=" },
-  { "pname": "System.Management", "version": "10.0.12", "hash": "sha256-VAs9VkvwrunCnOSvBPxUJKZthd4/9Fj+HrEZGd5bsCU=" },
-  { "pname": "System.Security.Cryptography.Pkcs", "version": "8.0.1", "hash": "sha256-KMNIkJ3yQ/5O6WIhPjyAIarsvIMhkp26A6aby5KkneU=" },
+  { "pname": "System.Management", "version": "10.0.13", "hash": "sha256-MwOpvCWAl4qgWO5YFvJUI1SY5sYUblaCOTksbognkh8=" },
+  { "pname": "System.Security.Cryptography.Pkcs", "version": "10.0.13", "hash": "sha256-VO0kV46tNLW1DSWQhCQ0MvEXM+J1S4sZbnmdNBjTBKc=" },
   { "pname": "System.Security.Cryptography.ProtectedData", "version": "8.0.0", "hash": "sha256-fb0pa9sQxN+mr0vnXg1Igbx49CaOqS+GDkTfWNboUvs=" },
   { "pname": "Tmds.DBus.Generator", "version": "0.95.1", "hash": "sha256-2zRXl1JbEBO7hIdLkhSgfgD93O2yMfkmhrMEblshuME=" },
   { "pname": "Tmds.DBus.Protocol", "version": "0.95.1", "hash": "sha256-LUum1jB4RxzgfoqwxKoTRe7UdhTikbBh5Em7g4gvp3U=" }

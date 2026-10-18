@@ -19,6 +19,8 @@
 		<ProjectReference Include="../Contracts/Keysharp.Components.Packages.csproj" Private="false" />
 		<PackageReference Include="NuGet.Commands" Version="7.9.0" />
 		<PackageReference Include="NuGet.Credentials" Version="7.9.0" />
+		<!-- Override NuGet.Packaging's vulnerable transitive dependency. -->
+		<PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.13" GeneratePathProperty="true" />
 		<None Update="provider.json" CopyToOutputDirectory="Always" />
 		<_ProviderPayloadName Include="Keysharp.Components.Packages.NuGet.dll;
 			Keysharp.Components.Packages.NuGet.deps.json;
@@ -35,9 +37,13 @@
 			NuGet.ProjectModel.dll;
 			NuGet.Protocol.dll;
 			NuGet.Versioning.dll;
+			System.Security.Cryptography.Pkcs.dll;
 			provider.json" />
 	</ItemGroup>
 	<Target Name="ValidateProviderPayload" AfterTargets="Build">
+		<!-- Keep the Windows implementation after RID-specific payload directories are removed. -->
+		<Copy SourceFiles="$(PkgSystem_Security_Cryptography_Pkcs)/runtimes/win/lib/net10.0/System.Security.Cryptography.Pkcs.dll"
+		      DestinationFolder="$(TargetDir)" Condition="$([MSBuild]::IsOSPlatform('Windows'))" />
 		<ItemGroup>
 			<_ProviderPayload Include="@(_ProviderPayloadName->'$(TargetDir)%(Identity)')" />
 			<_ProviderActual Include="$(TargetDir)**\*" />

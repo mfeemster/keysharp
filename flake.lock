@@ -3,11 +3,11 @@
     "eto": {
       "flake": false,
       "locked": {
-        "lastModified": 1791490672,
-        "narHash": "sha256-EuUJU0zzs23IMemnb6Q1h4pU8Bhz7ohuwRns8qxLK8o=",
+        "lastModified": 1792226077,
+        "narHash": "sha256-mSY9YY7sj48inYAW07u7sL4ZqTY9+zJMM60mCTzX4j4=",
         "owner": "keysharp-org",
         "repo": "Eto",
-        "rev": "ce9f06b2cd6aeb2c7d42a7abd268c4063fdde358",
+        "rev": "16527ef07659d23ecb1ad7d6e7926d41d244bf42",
         "type": "github"
       },
       "original": {

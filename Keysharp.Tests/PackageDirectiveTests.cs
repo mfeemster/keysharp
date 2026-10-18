@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using KC = Keysharp.Compilation.Syntax;
 using KP = Keysharp.Parsing.Syntax;
 
@@ -764,6 +766,34 @@ public class PackageDirectiveTests : TestRunner
 		Assert.That(loaded.GetName().Version, Is.EqualTo(new Version(13, 0, 0, 0)));
 		// The point of loading is that Clr can reach the types, which goes through TypeResolver's assembly index.
 		Assert.That(loaded.GetType("Newtonsoft.Json.JsonConvert"), Is.Not.Null);
+	}
+
+	[Test, Category("Curated")]
+	public void ProviderCryptography()
+	{
+		const string name = "System.Security.Cryptography.Pkcs";
+		if (OperatingSystem.IsWindows())
+			_ = Assembly.Load(name);
+		Assert.IsTrue(Keysharp.Internals.Os.PackageProviderRegistry.TryGet("nuget", out var provider, out var failure), failure);
+		var providerAssembly = provider.GetType().Assembly;
+		var context = System.Runtime.Loader.AssemblyLoadContext.GetLoadContext(providerAssembly);
+		var packaging = context.LoadFromAssemblyName(new AssemblyName("NuGet.Packaging"));
+		var pkcs = context.LoadFromAssemblyName(packaging.GetReferencedAssemblies().Single(reference => reference.Name == name));
+		Assert.IsTrue(File.Exists(Path.Combine(Path.GetDirectoryName(providerAssembly.Location), name + ".dll")));
+		Assert.That(System.Runtime.Loader.AssemblyLoadContext.GetLoadContext(pkcs), Is.SameAs(context));
+
+		using var key = RSA.Create(2048);
+		var request = new CertificateRequest("CN=Keysharp provider test", key, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+		using var certificate = request.CreateSelfSigned(DateTimeOffset.UtcNow.AddMinutes(-1), DateTimeOffset.UtcNow.AddMinutes(1));
+		byte[] payload = [1, 2, 3];
+		var content = Activator.CreateInstance(pkcs.GetType(name + ".ContentInfo"), [payload]);
+		dynamic signed = Activator.CreateInstance(pkcs.GetType(name + ".SignedCms"), content);
+		dynamic signer = Activator.CreateInstance(pkcs.GetType(name + ".CmsSigner"), certificate);
+		signed.ComputeSignature(signer, true);
+		dynamic decoded = Activator.CreateInstance(pkcs.GetType(name + ".SignedCms"));
+		decoded.Decode(signed.Encode());
+		decoded.CheckSignature(true);
+		Assert.That((byte[])decoded.ContentInfo.Content, Is.EqualTo(payload));
 	}
 
 	[Test, Category("NuGet")]
