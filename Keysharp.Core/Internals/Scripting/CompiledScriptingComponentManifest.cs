@@ -77,33 +77,8 @@ namespace Keysharp.Internals.Scripting
 
 		internal static string AssetResourceName(Asset asset) => AssetResourcePrefix + asset.Deployed;
 
-		internal string CopyTo(string destination)
-		{
-			if (string.IsNullOrWhiteSpace(destination))
-				return null;
-
-			try
-			{
-				foreach (var asset in Assets)
-				{
-					if (!File.Exists(asset.Source) || !MatchesHash(asset.Source, asset.Hash))
-						return $"Scripting component asset changed or disappeared while compiling: {asset.Source}";
-
-					var target = SafePath(destination, asset.Deployed);
-					if (Path.GetFullPath(asset.Source).Equals(target, PathComparison))
-						continue;
-
-					_ = Directory.CreateDirectory(Path.GetDirectoryName(target));
-					File.Copy(asset.Source, target, true);
-				}
-			}
-			catch (Exception e)
-			{
-				return $"Copying scripting components to {destination} failed: {e.Message}";
-			}
-
-			return null;
-		}
+		internal string CopyTo(string destination) => CopyAssets(() => Assets.Select(asset => (asset.Source, asset.Deployed, asset.Hash)),
+			destination, "Scripting component asset", "scripting components");
 
 		internal static bool HasCapability(Assembly assembly, ScriptingCapability capability) =>
 			TryRead(assembly, out var manifest, out _, out _)
@@ -150,19 +125,10 @@ namespace Keysharp.Internals.Scripting
 					var normalized = asset.Deployed?.Replace('\\', '/');
 					var prefix = ScriptingComponentRegistry.RelativeDirectory(entry.Name) + "/";
 					if (normalized == null || !normalized.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
-							|| !IsHash(asset.Hash) || !seen.Add(normalized))
+							|| !IsSha256(asset.Hash) || !seen.Add(normalized))
 						throw new InvalidDataException("The embedded scripting-component manifest contains an invalid payload entry.");
 
-					Keysharp.Internals.Os.ExtractionCache.Use(root);
-					var target = SafePath(root, normalized);
-					if (File.Exists(target) && MatchesHash(target, asset.Hash))
-						continue;
-
-					using var source = assembly.GetManifestResourceStream(AssetResourceName(asset));
-					if (source == null)
-						throw new InvalidDataException($"Embedded scripting-component asset '{normalized}' is missing.");
-
-					Keysharp.Internals.Os.EmbeddedExtraction.Extract(source, root, normalized, asset.Hash);
+					ExtractResource(assembly, AssetResourceName(asset), root, normalized, asset.Hash, "Embedded scripting-component asset");
 				}
 
 				ScriptingComponentRegistry.AddSearchRoot(root);
@@ -224,19 +190,14 @@ namespace Keysharp.Internals.Scripting
 				return false;
 			}
 		}
-
-		private static bool IsHash(string hash) => hash is { Length: 64 } && hash.All(Uri.IsHexDigit);
-
 		private static bool IsSafeRelative(string relative) =>
 			!string.IsNullOrEmpty(relative) && !Path.IsPathRooted(relative) && relative != ".."
 			&& !relative.StartsWith(".." + Path.DirectorySeparatorChar, StringComparison.Ordinal)
 			&& !relative.StartsWith(".." + Path.AltDirectorySeparatorChar, StringComparison.Ordinal);
 
 #if WINDOWS
-		private const StringComparison PathComparison = StringComparison.OrdinalIgnoreCase;
 		private static readonly StringComparer PathComparer = StringComparer.OrdinalIgnoreCase;
 #else
-		private const StringComparison PathComparison = StringComparison.Ordinal;
 		private static readonly StringComparer PathComparer = StringComparer.Ordinal;
 #endif
 	}

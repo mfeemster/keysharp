@@ -2,6 +2,39 @@ namespace Keysharp.Internals.Os
 {
 	internal static class EmbeddedExtraction
 	{
+		// Keep manifest access inside the error boundary, including failures in the collection getter.
+		internal static string CopyAssets(Func<IEnumerable<(string Source, string Deployed, string Hash)>> assets,
+			string destination, string assetDescription, string payloadDescription)
+		{
+			if (string.IsNullOrWhiteSpace(destination)) return null;
+			try
+			{
+				foreach (var asset in assets())
+				{
+					if (!MatchesHash(asset.Source, asset.Hash))
+						return $"{assetDescription} changed or disappeared while compiling: {asset.Source}";
+					var target = SafePath(destination, asset.Deployed);
+					if (Path.GetFullPath(asset.Source).Equals(target, OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal))
+						continue;
+					Directory.CreateDirectory(Path.GetDirectoryName(target));
+					File.Copy(asset.Source, target, true);
+				}
+			}
+			catch (Exception error) { return $"Copying {payloadDescription} to {destination} failed: {error.Message}"; }
+			return null;
+		}
+
+		internal static void ExtractResource(Assembly assembly, string resourceName, string root, string relative,
+			string hash, string description)
+		{
+			ExtractionCache.Use(root);
+			var target = SafePath(root, relative);
+			if (File.Exists(target) && MatchesHash(target, hash)) return;
+			using var source = assembly.GetManifestResourceStream(resourceName)
+				?? throw new InvalidDataException($"{description} '{relative}' is missing.");
+			_ = Extract(source, root, relative, hash);
+		}
+
 		internal static string SafePath(string root, string relative)
 		{
 			if (string.IsNullOrEmpty(relative) || Path.IsPathRooted(relative) || OperatingSystem.IsWindows() && relative.Contains(':'))
@@ -56,5 +89,7 @@ namespace Keysharp.Internals.Os
 			using var stream = File.OpenRead(path);
 			return Convert.ToHexString(SHA256.HashData(stream));
 		}
+
+		internal static bool IsSha256(string hash) => hash is { Length: 64 } && hash.All(Uri.IsHexDigit);
 	}
 }

@@ -92,34 +92,8 @@ namespace Keysharp.Internals.Os
 		}
 
 		/// <summary>Copies the provider hierarchy beside a full standalone executable.</summary>
-		internal string CopyTo(string destination)
-		{
-			if (string.IsNullOrWhiteSpace(destination))
-				return null;
-
-			try
-			{
-				foreach (var asset in Assets)
-				{
-					if (!File.Exists(asset.Source) || !MatchesHash(asset.Source, asset.Hash))
-						return $"Package provider asset changed or disappeared while compiling: {asset.Source}";
-
-					var target = SafePath(destination, asset.Deployed);
-
-					if (Path.GetFullPath(asset.Source).Equals(target, PathComparison))
-						continue;
-
-					_ = Directory.CreateDirectory(Path.GetDirectoryName(target));
-					File.Copy(asset.Source, target, true);
-				}
-			}
-			catch (Exception e)
-			{
-				return $"Copying package providers to {destination} failed: {e.Message}";
-			}
-
-			return null;
-		}
+		internal string CopyTo(string destination) => CopyAssets(() => Assets.Select(asset => (asset.Source, asset.Deployed, asset.Hash)),
+			destination, "Package provider asset", "package providers");
 
 		/// <summary>Extracts and registers an embedded provider before the first imperative package resolution.</summary>
 		internal static bool TryPrepare(Assembly assembly, string providerName, out string failure)
@@ -164,21 +138,10 @@ namespace Keysharp.Internals.Os
 					var prefix = PackageProviderRegistry.RelativeDirectory(entry.Name) + "/";
 
 					if (normalized == null || !normalized.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
-							|| !IsHash(asset.Hash) || !seen.Add(normalized))
+							|| !IsSha256(asset.Hash) || !seen.Add(normalized))
 						throw new InvalidDataException("The embedded package-provider manifest contains an invalid payload entry.");
 
-					Keysharp.Internals.Os.ExtractionCache.Use(root);
-					var target = SafePath(root, normalized);
-
-					if (File.Exists(target) && MatchesHash(target, asset.Hash))
-						continue;
-
-					using var source = assembly.GetManifestResourceStream(AssetResourceName(asset));
-
-					if (source == null)
-						throw new InvalidDataException($"Embedded package-provider asset '{normalized}' is missing.");
-
-					Keysharp.Internals.Os.EmbeddedExtraction.Extract(source, root, normalized, asset.Hash);
+					ExtractResource(assembly, AssetResourceName(asset), root, normalized, asset.Hash, "Embedded package-provider asset");
 				}
 
 				PackageProviderRegistry.AddSearchRoot(root);
@@ -242,19 +205,14 @@ namespace Keysharp.Internals.Os
 				return false;
 			}
 		}
-
-		private static bool IsHash(string hash) => hash is { Length: 64 } && hash.All(Uri.IsHexDigit);
-
 		private static bool IsSafeRelative(string relative) =>
 			!string.IsNullOrEmpty(relative) && !Path.IsPathRooted(relative) && relative != ".."
 			&& !relative.StartsWith(".." + Path.DirectorySeparatorChar, StringComparison.Ordinal)
 			&& !relative.StartsWith(".." + Path.AltDirectorySeparatorChar, StringComparison.Ordinal);
 
 #if WINDOWS
-		private const StringComparison PathComparison = StringComparison.OrdinalIgnoreCase;
 		private static readonly StringComparer PathComparer = StringComparer.OrdinalIgnoreCase;
 #else
-		private const StringComparison PathComparison = StringComparison.Ordinal;
 		private static readonly StringComparer PathComparer = StringComparer.Ordinal;
 #endif
 	}
