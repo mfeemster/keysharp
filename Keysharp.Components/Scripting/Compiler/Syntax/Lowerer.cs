@@ -220,7 +220,6 @@ namespace Keysharp.Compilation.Syntax
 		private readonly List<DirectiveStmt> _scratchManifestDirectives = new();
 		private readonly List<DirectiveStmt> _scratchErrorStdOutBeforeDirectives = new();
 		private readonly List<ParameterSyntax> _scratchPropertyAll = new ();
-		private readonly List<Param> _scratchHotParam = new();
 		private readonly List<ParameterSyntax> _scratchParameterList = new();
 		private readonly ObjectStackPool<List<MemberDeclarationSyntax>> _scratchListMembers = new(() => [], item => item.Clear());
 		private readonly ObjectStackPool<List<MemberDeclarationSyntax>> _scratchListMembersDangerous = new(() => []);
@@ -5764,15 +5763,15 @@ namespace Keysharp.Compilation.Syntax
 			return text;
 		}
 
+		private static readonly List<Param> HotCallbackParams = [new Param("thishotkey", null, false, false, false)];
+
 		// Emits a callback method (`public static object <name>(object thishotkey) { … }`) in the declaring module.
 		private string EmitHotCallback(Block body, string name)
 		{
-			_scratchHotParam.Clear();
-			_scratchHotParam.Add(new Param("thishotkey", null, false, false, false));
 			// AutoHotkey builds every hotkey, hotstring and #HotIf body from one `<Hotkey>(ThisHotkey)` template
 			// (Script::CreateHotFunc), so that is the name A_ThisFunc reports inside all three.
 			var lowered = LowerCallableBody(new HashSet<string> { "thishotkey" }, body, null, name, "<Hotkey>", out _);
-			_hotMembers.Add(ObjMethod(name, ParamDecls(_scratchHotParam, includeThis: false), lowered));
+			_hotMembers.Add(ObjMethod(name, ParamDecls(HotCallbackParams, includeThis: false), lowered));
 			return name;
 		}
 
