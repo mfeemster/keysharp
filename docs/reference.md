@@ -1487,6 +1487,8 @@ Colours are indexed assignments: every successful `Insert`, `Delete`, `InsertCol
 
 Identified native Linux input events expose an `Input` descriptor through `A_EventInfo.Device`, replacing `DeviceId`. Device metadata is resolved only on first access to `.Device`; other event-property reads do not query devices. A descriptor retains the originating script and source, so it cannot query a replacement source after disconnection. Unknown or zero event IDs omit `Device`; native Windows and macOS hooks do not identify devices.
 
+`Input.OnDeviceChange(Callback)` starts an `Input.DeviceHook` and calls `Callback(Hook, Change, Device)` with `"Added"`, `"Removed"` or `"Changed"` and an `Input` snapshot. Existing devices seed the baseline; notifications coalesce inventory changes. `Input.Hooks` lists running subscriptions in start order. The hook uses the `EventHook` lifecycle and does not keep the script running. Linux requires keysharp-input client ABI 1.1 and an existing InputMonitoring grant; subscribing neither prompts nor installs input hooks. Source loss or a failed inventory refresh ends the hook with `"Failed"`; `Start()` retries explicitly. Windows and macOS watch arrivals/removals; property-only metadata changes are discovered only during a subsequent refresh. macOS notifications remain unverified at runtime. `Gui/guitest.ks` provides watch, stop and inventory controls for a manual keyboard/mouse reconnection check.
+
 ## Code acknowledgements
 
 * The initial IronAHK developers 2010 - 2015

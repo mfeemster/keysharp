@@ -258,6 +258,27 @@ namespace Keysharp.Internals.Input.Linux
 			return true;
 		}
 
+		internal IDisposable WatchDevices(Action changed, Action failed)
+		{
+			ObjectDisposedException.ThrowIf(owner?.IsDisposed == true, this);
+			queries.Rearm();
+			var lease = GetAuthorizationLease("input device notifications", rearm: true, out var failure)
+				?? throw new InvalidOperationException(failure.Message);
+			if (!lease.TryAuthorizeDevices())
+				throw new InvalidOperationException("Input device notifications require keysharp-input client ABI 1.1 and an Input Monitoring grant.");
+			KeysharpInputClient observer = null;
+			try
+			{
+				observer = KeysharpInputClient.Connect(KeysharpInputClient.Operations.QueryDevices,
+					requestTimeoutMs: 1000, role: KeysharpInputClient.ConnectionRole.ObserverStream, lease: lease);
+				observer.SubscribeDevices(changed, _ => failed());
+				if (owner?.IsDisposed == true || !IsCurrentLease(lease))
+					throw new ObjectDisposedException("keysharp-input session");
+				return observer;
+			}
+			catch { observer?.Dispose(); throw; }
+		}
+
 		internal InputDeviceInfo[] GetDeviceDescriptors()
 		{
 			if (owner?.IsDisposed == true) return null;

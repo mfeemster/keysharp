@@ -55,6 +55,7 @@ global gClipboardDelayedPayload := ""
 global gHotkeyHitCount := 0
 global gHotstringHitCount := 0
 global gInputHookObj := ""
+global gInputDeviceHook := ""
 global gInputHookLastText := ""
 global gInputHookLastReason := ""
 global gWinEventHooks := []
@@ -4074,6 +4075,9 @@ mouseStatus := MyGui.AddText("xc+16 y+8 w468 h22", "Mouse hook: idle")
 gStatus["input_mouse"] := mouseStatus
 MyGui.AddButton("xc+16 y+8 w180 h26", "Refresh Input Devices").OnEvent("Click", RefreshInputDevices)
 MyGui.AddText("x+8 yp w280 h32", "Device metadata appears in the log. Reconnect a keyboard or mouse, then refresh again.")
+MyGui.AddButton("xc+16 y+8 w144 h26", "Watch Devices").OnEvent("Click", StartInputDeviceChanges)
+MyGui.AddButton("x+8 yp w144 h26", "Stop Watching").OnEvent("Click", StopInputDeviceChanges)
+MyGui.AddText("x+8 yp w164 h44", "Start watching, then reconnect a keyboard or mouse.")
 MyGui.UseGroup()
 
 Tab.UseTab("Send && Hotkey")
@@ -4957,14 +4961,38 @@ RefreshInputDevices(*) {
 		report := "Input.Devices: " devices.Length " interface(s)."
 
 		for device in devices
-			report .= "`r`n" Format("Kind={1} | Name={2} | Id={3} | VendorId=0x{4:04X} | ProductId=0x{5:04X} | HardwareId={6}",
-				device.Kind, device.Name, device.Id, device.VendorId, device.ProductId, device.HardwareId)
+			report .= "`r`n" FormatInputDevice(device)
 
 		AppendLog(report)
 	} catch as err {
 		AppendLog("Input.Devices failed: " err.Message)
 	}
 }
+
+FormatInputDevice(Device) => Format("Kind={1} | Name={2} | Id={3} | VendorId=0x{4:04X} | ProductId=0x{5:04X} | HardwareId={6}",
+	Device.Kind, Device.Name, Device.Id, Device.VendorId, Device.ProductId, Device.HardwareId)
+
+StartInputDeviceChanges(*) {
+	global gInputDeviceHook
+	StopInputDeviceChanges()
+	try {
+		gInputDeviceHook := Input.OnDeviceChange(OnInputDeviceChange)
+		AppendLog("Input.OnDeviceChange: watching. Reconnect a keyboard or mouse.")
+	} catch as err {
+		AppendLog("Input.OnDeviceChange failed: " err.Message)
+	}
+}
+
+StopInputDeviceChanges(*) {
+	global gInputDeviceHook
+	if gInputDeviceHook {
+		gInputDeviceHook.Stop()
+		gInputDeviceHook := ""
+		AppendLog("Input.OnDeviceChange: stopped.")
+	}
+}
+
+OnInputDeviceChange(Hook, Change, Device) => AppendLog("Input.OnDeviceChange: " Change " | " FormatInputDevice(Device))
 
 StartInputHookProbe() {
 	global gInputHookObj, gInputHookLastText, gInputHookLastReason, gInputHookActual

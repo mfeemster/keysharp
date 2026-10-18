@@ -55,7 +55,7 @@ namespace Keysharp.Internals.Audio
 				if (backend == null || !backend.IsAvailable || !backend.Supports(AudioCapability.DeviceChange))
 					return false;
 
-				inner = backend.WatchDevices(owner.OnNativeChange);
+				inner = backend.WatchDevices(owner.QueueRefresh);
 				return inner != null;
 			}
 
@@ -74,8 +74,6 @@ namespace Keysharp.Internals.Audio
 		private readonly Lock classifyGate = new();
 		private AudioDeviceDescriptor[] lastDevices = [];
 		private bool started;
-		private int classifyPending;
-		private int classifyWorker;
 
 		protected override ThreadKind CallbackThreadKind => ThreadKind.Event;
 
@@ -118,46 +116,7 @@ namespace Keysharp.Internals.Audio
 				lastDevices = Snapshot() ?? [];
 		}
 
-		// ---- native intake (arbitrary backend thread) ----------------------------------------
-
-		/// <summary>
-		/// Reached from a backend notification callback: the Pulse mainloop thread, a WASAPI COM thread, a Core
-		/// Audio HAL listener. Classifying enumerates every device, which re-enters the audio API — on Pulse that
-		/// is a documented self-deadlock, and on Windows the notification client may not block. So the work is
-		/// handed to the thread pool and this returns immediately, which is the bounded work the contract allows.
-		/// </summary>
-		private void OnNativeChange()
-		{
-			if (disposed)
-				return;
-
-			Interlocked.Exchange(ref classifyPending, 1);
-
-			if (Interlocked.CompareExchange(ref classifyWorker, 1, 0) == 0)
-				_ = ThreadPool.UnsafeQueueUserWorkItem(static manager => manager.DrainChanges(), this, preferLocal: false);
-		}
-
-		private void DrainChanges()
-		{
-			try
-			{
-				do
-				{
-					Interlocked.Exchange(ref classifyPending, 0);
-					ClassifyAndDispatch();
-				}
-				while (!disposed && Volatile.Read(ref classifyPending) != 0);
-			}
-			finally
-			{
-				Volatile.Write(ref classifyWorker, 0);
-
-				if (!disposed && Volatile.Read(ref classifyPending) != 0)
-					OnNativeChange();
-			}
-		}
-
-		private void ClassifyAndDispatch()
+		protected override void ProcessRefresh()
 		{
 			if (disposed)
 				return;

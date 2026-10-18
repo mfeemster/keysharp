@@ -25,6 +25,7 @@ namespace Keysharp.Internals.Events
 		private TBackend backend;
 		private bool backendInitFailed;
 		private readonly bool keepsScriptRunning;
+		private int refreshState; // 0: idle, 1: running, 2: refresh requested.
 		protected bool disposed;
 		private volatile bool keepingScriptRunning;
 
@@ -95,6 +96,32 @@ namespace Keysharp.Internals.Events
 		/// <summary>Applies the thread state this source's callback expects beyond its arguments, such as
 		/// <c>A_EventInfo</c>. Most sources pass everything as arguments.</summary>
 		protected virtual void ApplyThreadState(ThreadVariables tv, TRegistration reg, in TPayload payload) { }
+
+		// Backend callbacks queue refreshes to avoid re-entering the device API.
+		protected void QueueRefresh()
+		{
+			if (!disposed && Interlocked.Exchange(ref refreshState, 2) == 0)
+				_ = ThreadPool.UnsafeQueueUserWorkItem(static manager => manager.DrainRefreshes(), this, false);
+		}
+
+		protected virtual void ProcessRefresh() { }
+
+		private void DrainRefreshes()
+		{
+			do
+			{
+				Interlocked.Exchange(ref refreshState, 1);
+				try
+				{
+					if (!disposed) ProcessRefresh();
+				}
+				catch (Exception error)
+				{
+					Diagnostics.Debug.WriteLine($"Event refresh failed: {error.Message}");
+				}
+			}
+			while (Interlocked.CompareExchange(ref refreshState, 0, 1) != 1);
+		}
 
 		// ---- registration --------------------------------------------------------------------
 

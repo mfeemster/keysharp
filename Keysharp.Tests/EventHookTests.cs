@@ -1,3 +1,5 @@
+using Keysharp.Internals.Input;
+
 namespace Keysharp.Tests;
 
 /// <summary>
@@ -18,6 +20,7 @@ public class EventHookTests : TestRunner
 		("Ks.MonitorHook", CreateMonitorHook),
 		("Ks.ClipboardHook", CreateClipboardHook),
 		("Ks.Audio.DeviceHook", CreateDeviceHook),
+		("Ks.Input.DeviceHook", CreateInputDeviceHook),
 	];
 
 	/// <summary>
@@ -99,6 +102,36 @@ public class EventHookTests : TestRunner
 		Assert.That(manager.HasSubscriptions, Is.False, "The failed run is not left listed.");
 		Assert.That(manager.IsKeepingScriptRunning, Is.False, "The failed run does not keep the script running.");
 		Assert.That(manager.syncs, Is.EqualTo(2), "The source is synced again once the run is removed.");
+	}
+
+	[TestCase(false), TestCase(true)]
+	public void RefreshRequestsAreCoalesced(bool failFirst)
+	{
+		using var release = new ManualResetEventSlim();
+		var entered = new TaskCompletionSource();
+		var completed = new TaskCompletionSource();
+		var calls = 0;
+		using var manager = new InstallFailingManager(Script.TheScript, () =>
+		{
+			if (Interlocked.Increment(ref calls) == 1)
+			{
+				entered.SetResult();
+				if (!release.Wait(5000)) throw new TimeoutException();
+				if (failFirst) throw new InvalidOperationException("Refresh failed.");
+			}
+			else completed.TrySetResult();
+		});
+		try
+		{
+			manager.RequestRefresh();
+			Assert.That(entered.Task.Wait(5000), Is.True);
+			for (var i = 0; i < 32; i++) manager.RequestRefresh();
+			Assert.That(Volatile.Read(ref calls), Is.EqualTo(1), "Refreshes must not overlap.");
+			release.Set();
+			Assert.That(completed.Task.Wait(5000), Is.True, "Pending work survives a failed refresh.");
+			Assert.That(Volatile.Read(ref calls), Is.EqualTo(2), "Requests during a refresh merge into one follow-up.");
+		}
+		finally { release.Set(); }
 	}
 
 	/// <summary>A deactivation clears the tracked foreground only when it names that window, so focus moving to no
@@ -239,6 +272,7 @@ public class EventHookTests : TestRunner
 		Assert.IsTrue(script.ClipboardEventManager.KeepsScriptRunning);
 		Assert.That(script.MonitorEventManager.KeepsScriptRunning, Is.False);
 		Assert.That(script.AudioEventManager.KeepsScriptRunning, Is.False);
+		Assert.That(script.InputEventManager.KeepsScriptRunning, Is.False);
 
 		// The script's own answer is checked too, where nothing else in this host already keeps it running: that is
 		// what the exit check reads, through the family's manager.
@@ -634,6 +668,16 @@ public class EventHookTests : TestRunner
 		return hook;
 	}
 
+	private static object CreateInputDeviceHook()
+	{
+		var script = Script.TheScript;
+		var callback = SlotCallback();
+		var reg = new InputEventRegistration(callback, script.EventScheduler, script.InputEventManager);
+		var hook = new Ks.Input.DeviceHook(callback) { sub = reg };
+		reg.scriptObject = hook;
+		return hook;
+	}
+
 	private static object CreateMonitorHook()
 	{
 		var script = Script.TheScript;
@@ -700,9 +744,11 @@ public class EventHookTests : TestRunner
 	}
 
 	// A family whose native install throws while any run is listed; its sync afterwards, with none, does not.
-	private sealed class InstallFailingManager(Script script) : EventManagerBase<InstallFailingManager.Run, IDisposable, ValueTuple>(script, true)
+	private sealed class InstallFailingManager(Script script, Action refresh = null) : EventManagerBase<InstallFailingManager.Run, IDisposable, ValueTuple>(script, true)
 	{
 		internal int syncs;
+		internal void RequestRefresh() => QueueRefresh();
+		protected override void ProcessRefresh() => refresh?.Invoke();
 
 		protected override ThreadKind CallbackThreadKind => ThreadKind.Event;
 

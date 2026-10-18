@@ -1246,6 +1246,7 @@ internal bool HasBlockedQueuedWork
 			_ = script.WinEventManager.RemoveOwned(this);
 			_ = script.MonitorEventManager.RemoveOwned(this);
 			_ = script.AudioEventManager.RemoveOwned(this);
+			_ = script.InputEventManager.RemoveOwned(this);
 			_ = script.ClipboardEventManager.RemoveOwned(this);
 		}
 

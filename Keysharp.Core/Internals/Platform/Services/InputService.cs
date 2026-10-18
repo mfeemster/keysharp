@@ -23,6 +23,15 @@ namespace Keysharp.Internals
 #elif OSX
 			MacInputDevices.GetDevices();
 #endif
+
+		internal static IDisposable WatchInputDevices(Script owner, Action changed, Action failed) =>
+#if WINDOWS
+			WindowsInputDevices.Watch(changed);
+#elif LINUX
+			owner.LinuxServices.Input.WatchDevices(changed, failed);
+#elif OSX
+			MacInputDevices.Watch(changed, failed);
+#endif
 	}
 
 #if WINDOWS
@@ -32,6 +41,54 @@ namespace Keysharp.Internals
 		private const uint HardwareIdProperty = 1, FriendlyNameProperty = 12, DescriptionProperty = 0;
 		private const uint ShareReadWrite = 3, OpenExisting = 3;
 		private const int InsufficientBuffer = 122;
+
+		internal static IDisposable Watch(Action changed) => new DeviceWatcher(changed);
+
+		private sealed class DeviceWatcher : IDisposable
+		{
+			private readonly Action changed;
+			private readonly DeviceNotification callback;
+			private nint keyboard, mouse;
+			private int stopped;
+
+			internal DeviceWatcher(Action changed)
+			{
+				this.changed = changed;
+				callback = OnDeviceNotification;
+
+				try
+				{
+					keyboard = Register(new Guid("884b96c3-56ef-11d1-bc8c-00a0c91405dd"));
+					mouse = Register(new Guid("378de44c-56ef-11d1-bc8c-00a0c91405dd"));
+				}
+				catch { Dispose(); throw; }
+			}
+
+			public void Dispose()
+			{
+				if (Interlocked.Exchange(ref stopped, 1) != 0) return;
+				// Unregistration waits for in-flight callbacks, which only queue inventory work.
+				if (keyboard != 0) _ = CM_Unregister_Notification(keyboard);
+				if (mouse != 0) _ = CM_Unregister_Notification(mouse);
+				GC.KeepAlive(callback);
+			}
+
+			private nint Register(Guid classGuid)
+			{
+				var filter = new NotificationFilter { Size = (uint)Marshal.SizeOf<NotificationFilter>(), ClassGuid = classGuid };
+				var result = CM_Register_Notification(in filter, 0, callback, out var notification);
+				return result == 0 ? notification
+					: throw new InvalidOperationException($"Windows input device notifications could not be registered (Configuration Manager error {result}).");
+			}
+
+			private uint OnDeviceNotification(nint notification, nint context, uint action, nint eventData, uint eventDataSize)
+			{
+				if (action is 0 or 1 && Volatile.Read(ref stopped) == 0)
+					try { changed(); }
+					catch (Exception error) { Diagnostics.Debug.WriteLine($"Input device notification failed: {error.Message}"); }
+				return 0;
+			}
+		}
 
 		internal static InputDeviceInfo[] GetDevices()
 		{
@@ -206,6 +263,23 @@ namespace Keysharp.Internals
 			internal nint Reserved;
 		}
 
+		// The union also contains a 200-character UTF-16 device instance ID.
+		[StructLayout(LayoutKind.Explicit, Size = 416)]
+		private struct NotificationFilter
+		{
+			[FieldOffset(0)] internal uint Size;
+			[FieldOffset(16)] internal Guid ClassGuid;
+		}
+
+		[UnmanagedFunctionPointer(CallingConvention.Winapi)]
+		private delegate uint DeviceNotification(nint notification, nint context, uint action, nint eventData, uint eventDataSize);
+
+		[DllImport("cfgmgr32.dll", ExactSpelling = true)]
+		private static extern uint CM_Register_Notification(in NotificationFilter filter, nint context, DeviceNotification callback, out nint notification);
+
+		[DllImport("cfgmgr32.dll", ExactSpelling = true)]
+		private static extern uint CM_Unregister_Notification(nint notification);
+
 		[DllImport("user32.dll", ExactSpelling = true, SetLastError = true)]
 		private static extern uint GetRawInputDeviceList([Out] RawDevice[] devices, ref uint count, uint size);
 
@@ -240,6 +314,89 @@ namespace Keysharp.Internals
 	{
 		private const string IOKit = "/System/Library/Frameworks/IOKit.framework/IOKit";
 		private const string CoreFoundation = "/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation";
+		private const string LibSystem = "/usr/lib/libSystem.B.dylib";
+
+		internal static IDisposable Watch(Action changed, Action failed) => new DeviceWatcher(changed, failed);
+
+		private sealed class DeviceWatcher : IDisposable
+		{
+			private static readonly DispatchFunction drainQueue = _ => { };
+			private readonly Action changed, failed;
+			private readonly MatchingNotification callback;
+			private nint port, queue;
+			private uint arrivals, removals;
+			private int stopped;
+
+			internal DeviceWatcher(Action changed, Action failed)
+			{
+				this.changed = changed;
+				this.failed = failed;
+				callback = OnMatchingNotification;
+
+				try
+				{
+					port = IONotificationPortCreate(0);
+					queue = dispatch_queue_create("Keysharp input device notifications", 0);
+
+					if (port == 0 || queue == 0 || !Register("IOServiceFirstMatch", out arrivals) || !Register("IOServiceTerminate", out removals))
+						throw new InvalidOperationException("macOS input device notifications could not be registered.");
+
+					// Emptying the initial iterators arms notifications without reporting existing devices as arrivals.
+					_ = Drain(arrivals);
+					_ = Drain(removals);
+					IONotificationPortSetDispatchQueue(port, queue);
+				}
+				catch { Dispose(); throw; }
+			}
+
+			public void Dispose()
+			{
+				if (Interlocked.Exchange(ref stopped, 1) != 0) return;
+				if (port != 0) IONotificationPortSetDispatchQueue(port, 0);
+				// Native callbacks only queue work, so draining cannot wait for the event manager's lock.
+				if (queue != 0) dispatch_sync_f(queue, 0, drainQueue);
+				if (arrivals != 0) _ = IOObjectRelease(arrivals);
+				if (removals != 0) _ = IOObjectRelease(removals);
+				if (port != 0) IONotificationPortDestroy(port);
+				if (queue != 0) dispatch_release(queue);
+				GC.KeepAlive(callback);
+			}
+
+			private bool Register(string notification, out uint iterator)
+			{
+				iterator = 0;
+				var matching = IOServiceMatching("IOHIDDevice");
+				return matching != 0 && IOServiceAddMatchingNotification(port, notification, matching, callback, 0, out iterator) == 0;
+			}
+
+			private void OnMatchingNotification(nint context, uint iterator)
+			{
+				try
+				{
+					if (Drain(iterator) && Volatile.Read(ref stopped) == 0) changed();
+				}
+				catch (Exception error)
+				{
+					Diagnostics.Debug.WriteLine($"Input device notification failed: {error.Message}");
+					try { if (Volatile.Read(ref stopped) == 0) failed(); }
+					catch (Exception failure) { Diagnostics.Debug.WriteLine($"Input device failure notification failed: {failure.Message}"); }
+				}
+			}
+
+			private static bool Drain(uint iterator)
+			{
+				var changed = false;
+				uint device;
+
+				while ((device = IOIteratorNext(iterator)) != 0)
+				{
+					changed = true;
+					_ = IOObjectRelease(device);
+				}
+
+				return changed;
+			}
+		}
 
 		internal static InputDeviceInfo[] GetDevices()
 		{
@@ -347,6 +504,27 @@ namespace Keysharp.Internals
 			internal static readonly nint Serial = CreateString("SerialNumber"), PrimaryPage = CreateString("PrimaryUsagePage"), PrimaryUsage = CreateString("PrimaryUsage");
 			internal static readonly nint UsagePairs = CreateString("DeviceUsagePairs"), UsagePage = CreateString("DeviceUsagePage"), Usage = CreateString("DeviceUsage");
 		}
+
+		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+		private delegate void MatchingNotification(nint context, uint iterator);
+		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
+		private delegate void DispatchFunction(nint context);
+
+		[DllImport(IOKit)]
+		private static extern nint IONotificationPortCreate(uint mainPort);
+		[DllImport(IOKit)]
+		private static extern void IONotificationPortDestroy(nint port);
+		[DllImport(IOKit)]
+		private static extern void IONotificationPortSetDispatchQueue(nint port, nint queue);
+		[DllImport(IOKit)]
+		private static extern int IOServiceAddMatchingNotification(nint port, [MarshalAs(UnmanagedType.LPStr)] string notification,
+			nint matching, MatchingNotification callback, nint context, out uint iterator);
+		[DllImport(LibSystem)]
+		private static extern nint dispatch_queue_create([MarshalAs(UnmanagedType.LPUTF8Str)] string label, nint attributes);
+		[DllImport(LibSystem)]
+		private static extern void dispatch_sync_f(nint queue, nint context, DispatchFunction work);
+		[DllImport(LibSystem)]
+		private static extern void dispatch_release(nint queue);
 
 		[DllImport(IOKit)]
 		private static extern nint IOServiceMatching([MarshalAs(UnmanagedType.LPStr)] string name);

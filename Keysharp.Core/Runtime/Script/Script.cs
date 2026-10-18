@@ -526,6 +526,7 @@ namespace Keysharp.Runtime
 		/// <summary>Per-script engine for <c>Audio.OnDeviceChange</c> subscriptions; its backend notification stays
 		/// uninstalled until the first subscription.</summary>
 		internal Keysharp.Internals.Audio.AudioEventManager AudioEventManager { get; }
+		internal Keysharp.Internals.Input.InputEventManager InputEventManager { get; }
 
 #if OSX
 		internal readonly Dictionary<(int Pid, uint WindowNumber), MacAccessibility.WindowElement> MacFullScreenRestoreWindows = new();
@@ -623,6 +624,7 @@ namespace Keysharp.Runtime
 			ClrEventManager = new();
 			AudioService = new(this);
 			AudioEventManager = new(this);
+			InputEventManager = new(this);
 #if WINDOWS
 			ComMethodData = new(this);
 #endif
@@ -1655,6 +1657,7 @@ namespace Keysharp.Runtime
 			// Stops every open output and releases the backend. An output that a script dropped without closing
 			// still owns a native stream by design, so nothing else in teardown would reach it.
 			Teardown(AudioEventManager.Dispose);
+			Teardown(InputEventManager.Dispose);
 			Teardown(AudioService.Dispose);
 			// Before anything else managed goes away: a subscription to a *static* CLR event is a root the runtime
 			// holds indefinitely, so leaving one attached keeps the callback -- and the engine behind it -- alive past

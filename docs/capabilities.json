@@ -8390,7 +8390,7 @@
                      "linux_x11":  "partial",
                      "linux_wayland":  "partial",
                      "macos":  "unknown",
-                     "notes":  "Keysharp extension for native keyboard and mouse discovery. Input.Devices and identified Linux input events return descriptors with read-only Id, Kind, Name, VendorId, ProductId and HardwareId. GetKeyState reads one device's physical state on Linux. Input() raises Error. macOS execution remains unverified.",
+                     "notes":  "Keysharp keyboard and mouse descriptors with device discovery, Linux per-device physical state and native device-change subscriptions. Descriptors have read-only Id, Kind, Name, VendorId, ProductId and HardwareId. Input() raises Error. macOS execution remains unverified.",
                      "tested-by":  "InputDeviceTests.cs; input-devices.ahk; LinuxInputManagerTests.cs"
                  },
                  {
@@ -8414,6 +8414,39 @@
                      "macos":  "unsupported",
                      "notes":  "Physical keyboard key or mouse button state for one Input descriptor. Linux uses an existing InputMonitoring grant without prompting or installing a hook. A disconnected device, retired source, unavailable state or unsupported native platform raises OSError. Invalid key names, controller controls and wheel directions raise ValueError. Global GetKeyState accepts only AHK L/P/T modes; numeric device modes are removed.",
                      "tested-by":  "InputDeviceTests.cs; LinuxInputManagerTests.DeviceBitmapAliases; InputHookTests.RetiredEventDevice"
+                 },
+                 {
+                     "category":  "Keysharp Module (Ks)",
+                     "feature":  "Input.OnDeviceChange()",
+                     "syntax":  "Hook := Input.OnDeviceChange(Callback)",
+                     "windows":  "partial",
+                     "linux_x11":  "partial",
+                     "linux_wayland":  "partial",
+                     "macos":  "unknown",
+                     "notes":  "Calls Callback(Hook, Change, Device) with Added, Removed or Changed and an Input snapshot. Returns a started Input.DeviceHook using the EventHook lifecycle, without keeping the script running. Existing devices form the baseline; coalesced notifications compare inventories. The native watcher runs only while hooks are active. Windows and macOS watch arrivals/removals; property-only metadata changes have no trigger and are discovered only during a subsequent refresh. Linux requires keysharp-input client ABI 1.1 and an existing InputMonitoring grant, without prompting or installing input hooks. Source loss or a failed inventory refresh ends hooks with Failed; Start retries explicitly. macOS runtime remains unverified.",
+                     "tested-by":  "input-device-changes.ahk; InputDeviceTests.InventoryChanges; InputDeviceTests.AnonymousDevicesAreNotMerged; Gui/guitest.ks"
+                 },
+                 {
+                     "category":  "Keysharp Module (Ks)",
+                     "feature":  "Input.Hooks",
+                     "syntax":  "for Hook in Input.Hooks",
+                     "windows":  "full",
+                     "linux_x11":  "partial",
+                     "linux_wayland":  "partial",
+                     "macos":  "unknown",
+                     "notes":  "A read-only property returning a snapshot Array of running Input.DeviceHook subscriptions from all threads, in start order.",
+                     "tested-by":  "input-device-changes.ahk; Gui/guitest.ks"
+                 },
+                 {
+                     "category":  "Keysharp Module (Ks)",
+                     "feature":  "Input.DeviceHook",
+                     "syntax":  "Hook := Input.OnDeviceChange(Callback)",
+                     "windows":  "full",
+                     "linux_x11":  "partial",
+                     "linux_wayland":  "partial",
+                     "macos":  "unknown",
+                     "notes":  "EventHook subclass returned by Input.OnDeviceChange, with Start, Stop, InProgress and EndReason. No additional instance members. It does not keep the script running.",
+                     "tested-by":  "input-device-changes.ahk; Gui/guitest.ks"
                  },
                  {
                      "category":  "Keysharp Module (Ks)",
@@ -9285,7 +9318,7 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "full",
-                     "notes":  "Prevents the script from exiting automatically when its last thread completes. A running WinEvent, Clipboard.OnChange hook or InputHook also keeps it running; Monitor.OnChange, Audio.OnDeviceChange and CLR event hooks do not.",
+                     "notes":  "Prevents the script from exiting automatically when its last thread completes. A running WinEvent, Clipboard.OnChange hook or InputHook also keeps it running; Monitor.OnChange, Audio.OnDeviceChange, Input.OnDeviceChange and CLR event hooks do not.",
                      "tested-by":  "FlowTests.FlowExitRequests; EventHookTests.PersistenceFollowsTheFamily"
                  },
                  {
@@ -9710,7 +9743,7 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "full",
-                     "notes":  "Ks base class of WinEvent, MonitorHook, ClipboardHook, Audio.DeviceHook, Clr.EventSubscription and InputHook. A running hook lasts until Stop(), its thread ending or script exit, and only WinEvent, ClipboardHook and InputHook keep the script running.",
+                     "notes":  "Ks base class of WinEvent, MonitorHook, ClipboardHook, Audio.DeviceHook, Input.DeviceHook, Clr.EventSubscription and InputHook. A running hook lasts until Stop(), its thread ending or script exit, and only WinEvent, ClipboardHook and InputHook keep the script running.",
                      "tested-by":  "EventHookTests.HookSurfaceIsIdenticalAcrossSources; EventHookTests.DeleteDoesNotStopTheSubscription; EventHookTests.PersistenceFollowsTheFamily; EventHookTests.RealThreadRootsFollowTheFamily"
                  },
                  {

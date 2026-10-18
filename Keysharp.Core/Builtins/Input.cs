@@ -1,4 +1,5 @@
 using Keysharp.Internals;
+using Keysharp.Internals.Input;
 
 namespace Keysharp.Builtins
 {
@@ -17,7 +18,7 @@ namespace Keysharp.Builtins
 			}
 
 			public override object __New(params object[] Arguments)
-				=> Errors.ErrorOccurred("Input instances are produced by Input.Devices and A_EventInfo.Device.");
+				=> Errors.ErrorOccurred("Input instances cannot be constructed directly.");
 
 			public long Id => device.Id;
 			public string Kind => device.Kind;
@@ -25,6 +26,25 @@ namespace Keysharp.Builtins
 			public long VendorId => device.VendorId;
 			public long ProductId => device.ProductId;
 			public string HardwareId => device.HardwareId;
+			public static object staticget_Hooks(object @this) => Script.TheScript.InputEventManager.Hooks();
+
+			[Static]
+			public static object OnDeviceChange(object @this, object Callback)
+			{
+				if (Functions.CheckedCallback(Callback, 3) is not { } callback)
+					return DefaultObject;
+
+				var hook = new DeviceHook(callback);
+				_ = hook.Start();
+				return hook.InProgress ? hook : Errors.OSErrorOccurredWithMessage("Input device change notifications are unavailable.");
+			}
+
+			public sealed class DeviceHook : EventHook
+			{
+				internal DeviceHook(object callback) : base(callback) { }
+				private protected override EventSubscriptionBase NewRun(ScriptEventScheduler owner)
+					=> new InputEventRegistration(callback, owner, Script.TheScript.InputEventManager);
+			}
 
 			public object GetKeyState(object KeyName)
 			{

@@ -34,6 +34,7 @@ namespace Keysharp.Internals.Input.Linux
 			Rpc = 0,
 			CallbackStream = 2,
 			Lease = 3,
+			ObserverStream = 4,
 		}
 
 		private enum AuthorizationMode : uint
@@ -272,6 +273,7 @@ namespace Keysharp.Internals.Input.Linux
 		private readonly KeysharpInputClient lease;
 		private readonly KeyboardMirror keyboardState = new();
 		private Action<KeysharpInputClient, HookEvent> hookEventHandler;
+		private Action deviceChanged;
 		private Action<Exception> streamErrorHandler;
 		private Action<KeysharpInputClient> leaseStateHandler;
 		private readonly ConnectionRole connectionRole;
@@ -333,6 +335,7 @@ namespace Keysharp.Internals.Input.Linux
 				: new LinuxConnectionOwner($"keysharp-input {role}",
 				() => client == null || client.connection == 0
 					|| role == ConnectionRole.CallbackStream && client.hookEventHandler == null
+					|| role == ConnectionRole.ObserverStream && client.deviceChanged == null
 					? -1 : Native.ksi_connection_fd(client.connection),
 				() => client?.Drain() ?? false, () => client?.Cleanup());
 			owner.Start();
@@ -692,6 +695,21 @@ namespace Keysharp.Internals.Input.Linux
 			return HasOperations(Operations.QueryDevices);
 		}
 
+		internal void SubscribeDevices(Action changed, Action<Exception> onError)
+			=> owner.Invoke(() =>
+			{
+				if (connectionRole != ConnectionRole.ObserverStream)
+					throw new InvalidOperationException("Device notifications require an observer connection.");
+				RequireOperations(Operations.QueryDevices);
+				ThrowIfDisposed();
+				deviceChanged = changed;
+				streamErrorHandler = onError;
+				Native.ksi_error_init(out var error);
+				ThrowIfFailed((NativeClientStatus)Native.ksi_devices_subscribe(connection, ref error),
+					"subscribe to input devices", error);
+				return true;
+			});
+
 		internal InputDeviceInfo[] ListDevices()
 		{
 			if (!owner.IsOwnerThread) return owner.Invoke(ListDevices);
@@ -858,6 +876,8 @@ namespace Keysharp.Internals.Input.Linux
 			if (disposePending || connection == 0) return false;
 			try
 			{
+				if (connectionRole == ConnectionRole.ObserverStream)
+					return DrainDeviceNotifications();
 				if (connectionRole == ConnectionRole.CallbackStream)
 				{
 					if (hookEventHandler == null || !TryReadHookEvent(out var hook)) return false;
@@ -886,9 +906,33 @@ namespace Keysharp.Internals.Input.Linux
 			}
 			catch (Exception error)
 			{
-				if (!disposePending) streamErrorHandler?.Invoke(error);
+				if (!disposePending)
+				{
+					var notify = connectionRole == ConnectionRole.ObserverStream
+						? Interlocked.Exchange(ref streamErrorHandler, null) : streamErrorHandler;
+					notify?.Invoke(error);
+				}
 				throw;
 			}
+		}
+
+		// Keep the large native union off the ordinary hook and lease drain's stack frame.
+		[MethodImpl(MethodImplOptions.NoInlining)]
+		private bool DrainDeviceNotifications()
+		{
+			if (deviceChanged == null) return false;
+			var observation = new NativeObserverMessage { StructSize = (uint)sizeof(NativeObserverMessage) };
+			Native.ksi_error_init(out var error);
+			var status = (NativeClientStatus)Native.ksi_observer_next(connection, 0, ref observation, ref error);
+			if (status == NativeClientStatus.Timeout) return false;
+			ThrowIfFailed(status, "read input device notification", error);
+			if (observation.Kind is 2 or 3 or 4 or 5)
+				deviceChanged();
+			else if (observation.Kind == 6)
+				throw new NativeClientException("keysharp-input", "read input device notification", NativeClientStatus.Revoked,
+					observation.Data.RevokedScopes, 0, "Input device access was revoked.");
+			else throw new InvalidDataException("keysharp-input returned an unexpected device notification.");
+			return true;
 		}
 
 		private static KeyStateSnapshot ToManaged(NativeKeyState native)
@@ -1236,6 +1280,8 @@ namespace Keysharp.Internals.Input.Linux
 		public void Dispose()
 		{
 			disposePending = true;
+			if (connectionRole == ConnectionRole.ObserverStream)
+				_ = Interlocked.Exchange(ref streamErrorHandler, null);
 			GrantedScopes = LinuxPermissionScope.None;
 			keyboardState.Invalidate();
 			owner.Dispose();
@@ -1243,6 +1289,7 @@ namespace Keysharp.Internals.Input.Linux
 
 		private void Cleanup()
 		{
+			var unexpectedObserverClose = connectionRole == ConnectionRole.ObserverStream && !disposePending;
 			disposePending = true;
 			GrantedScopes = LinuxPermissionScope.None;
 			keyboardState.Invalidate();
@@ -1255,6 +1302,8 @@ namespace Keysharp.Internals.Input.Linux
 			}
 			if (callbackHandle.IsAllocated) callbackHandle.Free();
 			leaseStateHandler?.Invoke(this);
+			if (unexpectedObserverClose)
+				Interlocked.Exchange(ref streamErrorHandler, null)?.Invoke(new IOException("Input device notifications stopped unexpectedly."));
 		}
 
 		[StructLayout(LayoutKind.Sequential)]
@@ -1559,6 +1608,22 @@ namespace Keysharp.Internals.Input.Linux
 			}
 		}
 
+		[StructLayout(LayoutKind.Explicit)]
+		private struct NativeObserverData
+		{
+			[FieldOffset(0)] internal NativeDeviceInfo Device;
+			[FieldOffset(0)] internal uint RevokedScopes;
+		}
+
+		[StructLayout(LayoutKind.Sequential)]
+		private struct NativeObserverMessage
+		{
+			internal uint StructSize, Kind;
+			internal ulong DeviceGeneration, DroppedEvents;
+			internal NativeObserverData Data;
+			private fixed ulong reserved[4];
+		}
+
 		[StructLayout(LayoutKind.Sequential)]
 		private struct NativeGamepadAxisState
 		{
@@ -1630,6 +1695,11 @@ namespace Keysharp.Internals.Input.Linux
 			[DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
 			internal static extern uint ksi_devices_authorize(nint connection, out uint grantedScopes,
 				ref NativeError error);
+			[DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
+			internal static extern uint ksi_devices_subscribe(nint connection, ref NativeError error);
+			[DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
+			internal static extern uint ksi_observer_next(nint connection, uint timeoutMs,
+				ref NativeObserverMessage message, ref NativeError error);
 			[DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
 			internal static extern uint ksi_get_gamepad_state(nint connection, uint deviceId,
 				ulong generation, ref NativeGamepadState state, ref NativeError error);
