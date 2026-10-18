@@ -166,7 +166,6 @@ namespace Keysharp.Builtins
 		/// </param>
 		/// <param name="mode">Ignored for controller controls. Otherwise only the first letter is significant:<br/>
 		/// L or omitted for logical state, P for physical state, T for toggle state.<br/>
-		/// On Linux, a device ID from 1 to 4294967295 reads that one device's physical state.
 		/// </param>
 		public static object GetKeyState(object keyName, object mode = null)
 		{
@@ -192,7 +191,6 @@ namespace Keysharp.Builtins
 			if (!mode.CoerceString(out var modeVal))
 				return DefaultObject;
 
-			var deviceID = 0u;
 			KeyStateTypes keystatetype;
 
 			// As in AutoHotkey, only an omitted Mode means logical; an explicit "" is invalid.
@@ -203,32 +201,10 @@ namespace Keysharp.Builtins
 				case 'T': keystatetype = KeyStateTypes.Toggle; break; // Whether a toggleable key such as CapsLock is currently turned on.
 
 				default:
-#if LINUX
-					if (!mode.TryParseLong(out var parsedDeviceID) || parsedDeviceID <= 0 || parsedDeviceID > uint.MaxValue)
-						return Errors.ValueErrorOccurred($"Unknown key state mode \"{Errors.Describe(mode)}\". Expected L, P, T or a device ID from 1 to 4294967295.", mode);
-
-					deviceID = (uint)parsedDeviceID;
-					keystatetype = KeyStateTypes.Physical;
-					break;
-#else
-					return Errors.ValueErrorOccurred(mode.TryParseLong(out var parsedDeviceID) && parsedDeviceID > 0 && parsedDeviceID <= uint.MaxValue
-						? "Reading one device's key state is supported only on Linux."
-						: $"Unknown key state mode \"{Errors.Describe(mode)}\". Expected L, P or T.", mode);
-#endif
+					return Errors.ValueErrorOccurred($"Unknown key state mode \"{Errors.Describe(mode)}\". Expected L, P or T.", mode);
 			}
 
-#if LINUX
-			try
-			{
-				return ScriptGetKeyState(vk, keystatetype, deviceID); // 1 for down and 0 for up.
-			}
-			catch (Keysharp.Internals.Linux.DeviceKeyStateUnsupportedException)
-			{
-				return Errors.ValueErrorOccurred("Reading one device's key state requires a keysharp-input service from client ABI 0.4 or newer.", mode);
-			}
-#else
-			return ScriptGetKeyState(vk, keystatetype, deviceID); // 1 for down and 0 for up.
-#endif
+			return ScriptGetKeyState(vk, keystatetype); // 1 for down and 0 for up.
 		}
 
 		/// <summary>
@@ -1169,16 +1145,16 @@ break_twice:;
 		/// <remarks>Arbitrary key and button polling acquires InputMonitoring here. Modifier and lock-toggle
 		/// snapshots are ungated, and keeping the check at the script boundary prevents Send's modifier reads
 		/// from requesting monitoring access.</remarks>
-		private static void EnsureKeyStateQueryPermission(uint vk, KeyStateTypes keyStateType, bool perDevice = false)
+		private static void EnsureKeyStateQueryPermission(uint vk, KeyStateTypes keyStateType)
 		{
 			var lockToggle = keyStateType == KeyStateTypes.Toggle
 				&& vk is VirtualKeys.VK_CAPITAL or VirtualKeys.VK_NUMLOCK or VirtualKeys.VK_SCROLL;
 
-			if (!perDevice && (lockToggle || KeyboardUtils.IsModifierVk(vk)))
+			if (lockToggle || KeyboardUtils.IsModifierVk(vk))
 				return;
 
 #if LINUX
-			var required = !perDevice && MouseUtils.IsMouseVK(vk)
+			var required = MouseUtils.IsMouseVK(vk)
 				? Keysharp.Internals.Input.Linux.KeysharpInputClient.Operations.QueryPointerButtons
 				: Keysharp.Internals.Input.Linux.KeysharpInputClient.Operations.QueryKeyState;
 
@@ -1189,7 +1165,7 @@ break_twice:;
 		}
 #endif
 
-		internal static bool ScriptGetKeyState(uint vk, KeyStateTypes keyStateType, uint deviceID = 0)
+		internal static bool ScriptGetKeyState(uint vk, KeyStateTypes keyStateType)
 		{
 			var ht = Script.TheScript.HookThread;
 			var kbdMouseSender = ht.kbdMsSender;
@@ -1198,11 +1174,8 @@ break_twice:;
 				return false;
 
 #if LINUX || OSX
-			EnsureKeyStateQueryPermission(vk, keyStateType, deviceID != 0);
+			EnsureKeyStateQueryPermission(vk, keyStateType);
 #endif
-			if (deviceID != 0)
-				return Platform.Keyboard.TryGetDeviceKeyState(vk, deviceID, out var deviceDown) && deviceDown;
-
 #if LINUX
 			// keysharp-input aggregates independent devices, while the hook's single VK table and modifier
 			// mask cannot represent overlapping holds on two keyboards or mice.

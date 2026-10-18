@@ -6,7 +6,11 @@ using static Keysharp.Internals.AppleEvents.CF;
 
 namespace Keysharp.Internals
 {
-	internal sealed record InputDeviceInfo(long Id, string Kind, string Name = "", uint VendorId = 0, uint ProductId = 0, string HardwareId = "");
+	internal sealed record InputDeviceInfo(long Id, string Kind, string Name = "", uint VendorId = 0, uint ProductId = 0, string HardwareId = "")
+	{
+		// Saved descriptors must not address IDs from a replacement input source.
+		internal object Source { get; set; }
+	}
 
 	internal static partial class Platform
 	{

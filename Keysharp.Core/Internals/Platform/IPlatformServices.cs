@@ -441,13 +441,6 @@ namespace Keysharp.Internals
 	/// <summary>Live OS/session keyboard state query surface.</summary>
 	internal interface IKeyboard
 	{
-		/// <summary>Reads one source's physical state in AHK's unified key namespace, including mouse-button VKs.</summary>
-		bool TryGetDeviceKeyState(uint vk, uint deviceID, out bool isDown)
-		{
-			isDown = false;
-			return false;
-		}
-
 		/// <summary>Current logical modifier state, represented with Keysharp MOD_* left/right bits.</summary>
 		bool TryGetModifierLRStateLogical(out uint mods, byte[] keymapBuffer = null);
 

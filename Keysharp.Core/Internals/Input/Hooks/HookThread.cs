@@ -35,6 +35,19 @@ namespace Keysharp.Internals.Input.Hooks
 		private readonly uint? deviceId;
 		private readonly POINT? screenPosition;
 		private readonly bool? isAbsolute;
+#if LINUX
+		private readonly KeysharpInputClient source = LinuxHookThread.CurrentHookClient?.AuthorizationLease;
+		private object device;
+		internal Script Owner { get; init; }
+		internal bool IsMouse { get; init; }
+
+		private object GetDevice(object _)
+		{
+			lock (this)
+				return device ??= new Ks.Input(Owner.LinuxServices.Input.GetDeviceDescriptor(deviceId.Value,
+					IsMouse ? "Mouse" : "Keyboard", source), Owner);
+		}
+#endif
 
 		internal HookEventInfo(long timestamp, bool isInjected, bool isAutoRepeat, ulong extraInfo, object extra,
 			uint? deviceId, POINT? screenPosition = null, bool? isAbsolute = null)
@@ -65,8 +78,12 @@ namespace Keysharp.Internals.Input.Hooks
 			if (rawExtraInfo >= KeyboardMouseSender.KeyIgnoreMin() && rawExtraInfo <= KeyboardMouseSender.KeyIgnoreLevel(0))
 				obj.DefinePropInternal("SendLevel", new OwnPropsDesc(KeyboardMouseSender.InputLevelFromInfo(rawExtraInfo)));
 
-			if (deviceId.HasValue)
-				obj.DefinePropInternal("DeviceId", new OwnPropsDesc((long)deviceId.Value));
+#if LINUX
+			// Remaps read IsAutoRepeat; resolving the device can require an inventory query.
+			if (deviceId is > 0 && Owner != null)
+				obj.DefinePropInternal("Device", new OwnPropsDesc(set_Get:
+					new KeysharpFunc((Func<object, object>)GetDevice)));
+#endif
 
 			if (isAbsolute.HasValue)
 				obj.DefinePropInternal("IsAbsolute", new OwnPropsDesc(isAbsolute.Value));
@@ -1593,7 +1610,11 @@ namespace Keysharp.Internals.Input.Hooks
 				if (input.scriptObject?.GetCallbackSlot(UserMessages.AHK_INPUT_MOUSEMOVE)?.Callback != null)
 				{
 					eventInfo ??= new HookEventInfo(timestamp, isInjected, false, extraInfo, null,
-												   deviceId, screenPosition, isAbsolute).BuildEventInfo;
+												   deviceId, screenPosition, isAbsolute)
+#if LINUX
+					{ Owner = script, IsMouse = true }
+#endif
+					.BuildEventInfo;
 					_ = PostMessage(new KeysharpMsg()
 					{
 						message = (uint)UserMessages.AHK_INPUT_MOUSEMOVE,
@@ -2195,7 +2216,7 @@ namespace Keysharp.Internals.Input.Hooks
 
 		// Returns a factory that builds the script-visible A_EventInfo object only if the script reads it. The
 		// factory flows untouched through the dispatch path and is resolved by ThreadAccessors.A_EventInfo.
-		private static Func<object> CreateEventInfo(HookEventArgs e, bool isAutoRepeat, ulong extraInfo, uint eventFlags, object extra, uint? deviceId)
+		private Func<object> CreateEventInfo(HookEventArgs e, bool isAutoRepeat, ulong extraInfo, uint eventFlags, object extra, uint? deviceId)
 		{
 			POINT? screenPosition = null;
 
@@ -2208,7 +2229,11 @@ namespace Keysharp.Internals.Input.Hooks
 				screenPosition = new POINT(wheel.Data.X, wheel.Data.Y);
 
 			return new HookEventInfo(EventTimestamp(e), e.IsEventSimulated || (eventFlags & HOOK_EVENT_INJECTED) != 0,
-				isAutoRepeat, extraInfo, extra, deviceId, screenPosition).BuildEventInfo;
+				isAutoRepeat, extraInfo, extra, deviceId, screenPosition)
+#if LINUX
+			{ Owner = script, IsMouse = e is not KeyboardHookEventArgs }
+#endif
+			.BuildEventInfo;
 		}
 
 		private static long EventTimestamp(HookEventArgs e)

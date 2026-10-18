@@ -93,9 +93,6 @@ namespace Keysharp.Internals
 	{
 		private readonly NativeInputKeyboard nativeInput = new();
 
-		public bool TryGetDeviceKeyState(uint vk, uint deviceID, out bool isDown)
-			=> nativeInput.TryGetDeviceKeyState(vk, deviceID, out isDown);
-
 		public bool TryGetModifierLRStateLogical(out uint mods, byte[] keymapBuffer = null)
 		{
 			if (nativeInput.TryGetModifierLRStateLogical(out mods, keymapBuffer))
@@ -158,9 +155,6 @@ namespace Keysharp.Internals
 		private static bool indicatorSnapshotNum;
 		private static bool indicatorSnapshotScroll;
 
-		public bool TryGetDeviceKeyState(uint vk, uint deviceID, out bool isDown)
-			=> TryGetBitmapKeyState(vk, physical: true, deviceID, out isDown);
-
 		public bool TryGetModifierLRStateLogical(out uint mods, byte[] keymapBuffer = null)
 			=> Keysharp.Internals.Input.Linux.KeysharpInputManager.Current.TryGetModifierState(
 				out mods, out _, out _, out _, out _);
@@ -190,17 +184,15 @@ namespace Keysharp.Internals
 				return true;
 			}
 
-			return TryGetBitmapKeyState(vk, physical, 0, out isDown);
+			return TryGetBitmapKeyState(vk, physical, out isDown);
 		}
 
-		// A device reply's bitmaps describe that device alone, but its modifier mask and NumLock describe the
-		// seat, so keypad names fold exactly as the hook names them.
-		private static bool TryGetBitmapKeyState(uint vk, bool physical, uint deviceID, out bool isDown)
+		private static bool TryGetBitmapKeyState(uint vk, bool physical, out bool isDown)
 		{
 			isDown = false;
 
 			if (!Keysharp.Internals.Input.Linux.KeysharpInputManager.Current.TryGetKeyState(
-				out var mods, out _, out var numLock, out _, out var logicalKeys, out var physicalKeys, deviceID))
+				out var mods, out _, out var numLock, out _, out var logicalKeys, out var physicalKeys))
 				return false;
 
 			var shiftDown = (mods & (MOD_LSHIFT | MOD_RSHIFT)) != 0;

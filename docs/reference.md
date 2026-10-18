@@ -634,7 +634,7 @@ Controlling another application needs **Automation** permission, granted per tar
 		+ Targeting an underlying pseudo-thread marks it to exit when it next resumes and reaches a cooperative event/message check (`TryDoEvents`). It does not asynchronously abort managed code.
 		+ A later request made before the target exits replaces its pending exit code.
 	+ `FileGetSize()` supports `G` and `T` for gigabytes and terabytes.
-	+ `GetKeyState()` on Linux also accepts a device ID (`A_EventInfo.DeviceId` from a hook callback) as `Mode`, reading that one device's physical state; this requires keysharp-input client ABI 1.x and InputMonitoring.
+	+ Per-device physical key state on Linux is read through `Device.GetKeyState(KeyName)`, where `Device` comes from `Input.Devices` or `A_EventInfo.Device`. Global `GetKeyState()` follows AHK's `L`/`P`/`T` modes; the numeric device-ID mode is no longer accepted.
 	+ `Log(Number, Base := 10)` is by default base 10, but it can accept a double as the second parameter to specify a custom base.
 		+ In `SetTimer()`:
 			+ In the callback function, `A_EventInfo` is set to the function object used to create the timer.
@@ -1482,6 +1482,10 @@ Colours are indexed assignments: every successful `Insert`, `Delete`, `InsertCol
 `#Import Ks { Input }` exposes the Keysharp extension `Input.Devices`, a fresh Array of keyboard and mouse descriptors with read-only `Id`, `Kind`, `Name`, `VendorId`, `ProductId` and `HardwareId` properties. Missing metadata is blank or zero. Entries describe system interfaces, which need not correspond one-to-one with physical devices; their identity strings are not guaranteed unique or permanent.
 
 `Id` is an opaque Integer scoped to the current input source, not a permanent hardware identity; values can change or be reused and need not be comparable across sources. Windows returns Raw Input handle values and reads SetupAPI metadata, using native HID attributes for numeric vendor/product IDs when available. Linux queries keysharp-input through its existing authorization and query connections without requesting a grant; unavailable device access raises `OSError`. macOS returns an `Id` of zero; its IOKit implementation remains unverified at runtime.
+
+`Device.GetKeyState(KeyName)` reads that device's physical keyboard or mouse-button state on Linux using an existing InputMonitoring grant. It does not request access or install a hook. A removed device, retired source or unavailable state raises `OSError`, as do the unsupported native Windows and macOS implementations. Invalid key names, controller controls and wheel directions raise `ValueError`.
+
+Identified native Linux input events expose an `Input` descriptor through `A_EventInfo.Device`, replacing `DeviceId`. Device metadata is resolved only on first access to `.Device`; other event-property reads do not query devices. A descriptor retains the originating script and source, so it cannot query a replacement source after disconnection. Unknown or zero event IDs omit `Device`; native Windows and macOS hooks do not identify devices.
 
 ## Code acknowledgements
 

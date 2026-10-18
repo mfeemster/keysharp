@@ -370,6 +370,21 @@ public class InputHookTests : TestRunner
 		Assert.That(KeysharpObject.HasOwnProp(visible, "Y"), Is.Zero);
 	}
 
+#if LINUX
+	[Test, Category("InputHook")]
+	public void RetiredEventDevice()
+	{
+		var raw = new HookEventInfo(123, false, true, 0, null, 7) { Owner = s };
+		s.Dispose();
+		s = new Script();
+		var info = raw.BuildEventInfo();
+		Assert.That(Script.GetPropertyValue(info, "IsAutoRepeat").Ab(), Is.True);
+		var device = (Ks.Input)Script.GetPropertyValue(info, "Device");
+		Assert.That((device.Id, device.Kind), Is.EqualTo((7L, "Keyboard")));
+		Assert.That(Assert.Catch<KeysharpException>(() => device.GetKeyState("A")).UserError, Is.TypeOf<OSError>());
+	}
+#endif
+
 	// Mouse-event support: VisibleMouseMove defaults to true (movement passes through), and
 	// InputType.MouseIsNeeded becomes true once movement is being suppressed or a mouse button
 	// carries Input key options (e.g. an end key). MouseIsNeeded is what makes Start() install
@@ -423,12 +438,18 @@ public class InputHookTests : TestRunner
 			Assert.That(calls.Select(c => (c.dx, c.dy)), Is.EqualTo([(0L, 0L), (4L, -2L), (0L, 0L)]));
 			Assert.That(Script.GetPropertyValue(calls[0].info, "X"), Is.EqualTo(20L));
 			Assert.That(Script.GetPropertyValue(calls[0].info, "Y"), Is.EqualTo(30L));
-			Assert.That(KeysharpObject.HasOwnProp(calls[0].info, "DeviceId"), Is.Zero);
+			Assert.That(KeysharpObject.HasOwnProp(calls[1].info, "DeviceId"), Is.Zero);
+			Assert.That(KeysharpObject.HasOwnProp(calls[0].info, "Device"), Is.Zero);
 			Assert.That(KeysharpObject.HasOwnProp(calls[0].info, "IsAbsolute"), Is.Zero);
 			Assert.That(KeysharpObject.HasOwnProp(calls[1].info, "X"), Is.Zero);
-			Assert.That(Script.GetPropertyValue(calls[1].info, "DeviceId"), Is.EqualTo(2L));
+#if LINUX
+			var device = (Ks.Input)Script.GetPropertyValue(calls[1].info, "Device");
+			Assert.That((device.Id, device.Kind), Is.EqualTo((2L, "Mouse")));
+#else
+			Assert.That(KeysharpObject.HasOwnProp(calls[1].info, "Device"), Is.Zero);
+#endif
 			Assert.That(Script.GetPropertyValue(calls[1].info, "IsAbsolute").Ab(), Is.False);
-			Assert.That(Script.GetPropertyValue(calls[2].info, "DeviceId"), Is.Zero);
+			Assert.That(KeysharpObject.HasOwnProp(calls[2].info, "Device"), Is.Zero);
 			Assert.IsTrue(Script.GetPropertyValue(calls[2].info, "IsAbsolute").Ab());
 			Assert.That(Script.GetPropertyValue(calls[2].info, "Timestamp"), Is.EqualTo(12L));
 			Assert.IsTrue(Script.GetPropertyValue(calls[2].info, "IsInjected").Ab());

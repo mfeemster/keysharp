@@ -14,6 +14,8 @@ for Device in Devices {
     AssertEq(Type(Device.Id), "Integer", A_LineNumber)
 #if WINDOWS
     Assert(Device.Id != 0, A_LineNumber)
+    Throws(() => Device.GetKeyState("A"), A_LineNumber, OSError)
+    Throws(() => Device.GetKeyState("Joy1"), A_LineNumber, ValueError)
 #endif
     AssertEq(Type(Device.Name), "String", A_LineNumber)
     AssertEq(Type(Device.VendorId), "Integer", A_LineNumber)

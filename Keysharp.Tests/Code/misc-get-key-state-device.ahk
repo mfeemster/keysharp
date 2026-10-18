@@ -16,9 +16,8 @@ ThrowsMessage(Callback, Prefix, Line)
 	Assert(false, Line)
 }
 
-; As in AutoHotkey, only Mode's first letter is read, and any other first letter throws unless it is a device ID.
-; Only an omitted Mode means logical; an explicit "" throws. Out-of-range IDs are unknown modes, not device reads.
-for InvalidMode in ["", 0, -1, 4294967296, "unknown", 1.0, 1.5]
+; Only Mode's first letter is read. An omitted Mode means logical; an explicit "" throws.
+for InvalidMode in ["", 0, 1, -1, 4294967296, "unknown", 1.0, 1.5]
 	ThrowsMessage(() => GetKeyState("LShift", InvalidMode), "Unknown key state mode", A_LineNumber)
 
 try
@@ -53,9 +52,5 @@ Throws(() => GetKeyState("JoyXtra"), A_LineNumber, ValueError)
 AssertEq(KeyWait("F24", "D L T"), 0, A_LineNumber)
 AssertEq(KeyWait("F24", "L T0.01"), 1, A_LineNumber)
 Throws(() => KeyWait("F24", "D L T-1"), A_LineNumber, ValueError)
-
-#if !LINUX
-ThrowsMessage(() => GetKeyState("LShift", 1), "Reading one device's key state is supported only on Linux", A_LineNumber)
-#endif
 
 FileAppend "pass", "*"

@@ -1748,6 +1748,17 @@
                  },
                  {
                      "category":  "Environment/System",
+                     "feature":  "A_EventInfo.Device",
+                     "syntax":  "A_EventInfo.Device",
+                     "windows":  "unsupported",
+                     "linux_x11":  "partial",
+                     "linux_wayland":  "partial",
+                     "macos":  "unsupported",
+                     "notes":  "Identified native Linux input events expose an Input descriptor instead of a numeric DeviceId. Zero or unavailable event IDs omit Device. Metadata is resolved on first Device access; reading other event properties does not query devices. The descriptor retains its originating source. Native Windows and macOS hooks do not identify devices.",
+                     "tested-by":  "InputHookTests.MouseEventPosition; InputHookTests.MouseMoveQueue; InputHookTests.RetiredEventDevice"
+                 },
+                 {
+                     "category":  "Environment/System",
                      "feature":  "A_FileEncoding",
                      "syntax":  "",
                      "windows":  "full",
@@ -5739,7 +5750,7 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "full",
-                     "notes":  "Returns logical, physical, and toggle state. Polling an arbitrary key or mouse button requires InputMonitoring. Modifier state and CapsLock/NumLock/ScrollLock toggle state are ungated; polling whether a lock key is physically down still requires InputMonitoring. Linux uses keysharp-input without installing a hook and fails closed for arbitrary state if its authority is unavailable or revokes access; The keysharp-desktop X11 fallback is limited to ungated modifier and lock-toggle snapshots. Joystick controls (Joy1, JoyX, JoyPOV, JoyName, ...) read the winmm joystick API on Windows and keysharp-input's ungated gamepad path on Linux, which needs neither a grant nor `input` group membership; buttons are numbered as the kernel's joydev driver numbers them and controllers are ordered by device node. macOS has no joystick backend and reports every joystick control as unavailable. Mode follows AutoHotkey: it is ignored for controller controls, only its first letter (L, P or T) is significant, and anything else raises ValueError, including an explicit empty string; omitting Mode reads logical state, as L does. On Linux, Mode may instead be a device ID from a hook callback's `A_EventInfo.DeviceId`, which reads that one device's physical state through a keysharp-input client library and service of ABI 1.x; it always requires InputMonitoring, including for modifiers and lock keys, and an unknown ID reads 0. Windows and macOS raise ValueError for a device ID.",
+                     "notes":  "Returns logical, physical, and toggle state. Polling an arbitrary key or mouse button requires InputMonitoring. Modifier state and CapsLock/NumLock/ScrollLock toggle state are ungated; polling whether a lock key is physically down still requires InputMonitoring. Linux uses keysharp-input without installing a hook and fails closed for arbitrary state if its authority is unavailable or revokes access; The keysharp-desktop X11 fallback is limited to ungated modifier and lock-toggle snapshots. Joystick controls (Joy1, JoyX, JoyPOV, JoyName, ...) read the winmm joystick API on Windows and keysharp-input's ungated gamepad path on Linux, which needs neither a grant nor `input` group membership; buttons are numbered as the kernel's joydev driver numbers them and controllers are ordered by device node. macOS has no joystick backend and reports every joystick control as unavailable. Mode follows AutoHotkey: it is ignored for controller controls, only its first letter (L, P or T) is significant, and anything else raises ValueError, including an explicit empty string; omitting Mode reads logical state, as L does. Per-device physical state is available through Input.GetKeyState; numeric Mode values raise ValueError on every platform.",
                      "tested-by":  "Gui/guitest.ks; misc-get-key-state-device.ahk; LinuxInputManagerTests.DeviceBitmapAliases"
                  },
                  {
@@ -7108,7 +7119,7 @@
                      "linux_x11":  "partial",
                      "linux_wayland":  "partial",
                      "macos":  "partial",
-                     "notes":  "OnMouseMove(hook, dx, dy) queues every move report, including (0, 0). Windows derives deltas from desktop-clamped hook positions, so outward movement at an edge can be zero; macOS uses Quartz deltas, corrected so that cursor moves made between two physical moves, such as a relative MouseMove from the callback, do not count as physical motion. Linux requires keysharp-input plus InputMonitoring and InputControl for the suppression-capable callback stream. Relative values are raw device-specific evdev counts, while physical absolute values are changes in normalized [0,65535] axes. Linux A_EventInfo includes DeviceId (0 synthetic, positive physical) and IsAbsolute; synthetic absolute deltas are zero because no relative sample exists. Windows and macOS instead provide global-screen X/Y when available and omit DeviceId; X/Y need not equal the prior position plus dx/dy, and macOS reports the held cursor position while movement is suppressed.",
+                     "notes":  "OnMouseMove(hook, dx, dy) queues every move report, including (0, 0). Windows derives deltas from desktop-clamped hook positions, so outward movement at an edge can be zero; macOS uses Quartz deltas, corrected so that cursor moves made between two physical moves, such as a relative MouseMove from the callback, do not count as physical motion. Linux requires keysharp-input plus InputMonitoring and InputControl for the suppression-capable callback stream. Relative values are raw device-specific evdev counts, while physical absolute values are changes in normalized [0,65535] axes. Linux A_EventInfo includes Device for identified physical events and IsAbsolute; zero-ID synthetic events omit Device, and synthetic absolute deltas are zero because no relative sample exists. Windows and macOS instead provide global-screen X/Y when available and omit Device; X/Y need not equal the prior position plus dx/dy, and macOS reports the held cursor position while movement is suppressed.",
                      "tested-by":  "MacInputTests.HeldHardwareMoveAfterSyntheticMove; MacInputTests.FreeHardwareMoveAfterSyntheticMove; MacInputTests.FirstHardwareMove; MacInputTests.HardwareMoveReturnsToPostedPosition"
                  },
                  {
@@ -8379,7 +8390,7 @@
                      "linux_x11":  "partial",
                      "linux_wayland":  "partial",
                      "macos":  "unknown",
-                     "notes":  "Keysharp extension for native keyboard and mouse discovery. Input.Devices returns immutable descriptors with Id, Kind, Name, VendorId, ProductId and HardwareId. Objects are created by enumeration; Input() raises Error. macOS execution remains unverified.",
+                     "notes":  "Keysharp extension for native keyboard and mouse discovery. Input.Devices and identified Linux input events return descriptors with read-only Id, Kind, Name, VendorId, ProductId and HardwareId. GetKeyState reads one device's physical state on Linux. Input() raises Error. macOS execution remains unverified.",
                      "tested-by":  "InputDeviceTests.cs; input-devices.ahk; LinuxInputManagerTests.cs"
                  },
                  {
@@ -8392,6 +8403,17 @@
                      "macos":  "unknown",
                      "notes":  "A fresh Array of keyboard and mouse descriptors. Missing text is blank and missing numbers are zero. Id is an opaque Integer scoped to the input source, not a permanent hardware identity. Windows uses Raw Input handles, SetupAPI metadata and native HID vendor/product attributes when available. Linux uses keysharp-input ABI 1.x and existing device-metadata access without prompting. macOS uses IOKit HID services with Id zero; runtime behavior remains unverified. IDs can change or be reused. An unavailable inventory raises OSError.",
                      "tested-by":  "InputDeviceTests.cs; input-devices.ahk; Gui/guitest.ks; LinuxInputManagerTests.cs; LinuxNativeClientTests.DeviceInventoryChecksAnExistingGrantWithoutPrompting"
+                 },
+                 {
+                     "category":  "Keysharp Module (Ks)",
+                     "feature":  "Input.GetKeyState()",
+                     "syntax":  "Device.GetKeyState(KeyName)",
+                     "windows":  "unsupported",
+                     "linux_x11":  "partial",
+                     "linux_wayland":  "partial",
+                     "macos":  "unsupported",
+                     "notes":  "Physical keyboard key or mouse button state for one Input descriptor. Linux uses an existing InputMonitoring grant without prompting or installing a hook. A disconnected device, retired source, unavailable state or unsupported native platform raises OSError. Invalid key names, controller controls and wheel directions raise ValueError. Global GetKeyState accepts only AHK L/P/T modes; numeric device modes are removed.",
+                     "tested-by":  "InputDeviceTests.cs; LinuxInputManagerTests.DeviceBitmapAliases; InputHookTests.RetiredEventDevice"
                  },
                  {
                      "category":  "Keysharp Module (Ks)",

@@ -309,6 +309,7 @@ namespace Keysharp.Internals.Input.Linux
 		}
 		internal Operations AvailableOperations { get; }
 		internal ulong LeaseId { get; }
+		internal KeysharpInputClient AuthorizationLease => lease ?? this;
 		internal bool ReaderRunning => owner.IsRunning;
 		internal bool IsConnected => !disposePending && owner.IsRunning && Volatile.Read(ref connection) != 0
 			&& (lease == null || lease.IsConnected);

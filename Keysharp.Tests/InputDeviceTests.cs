@@ -19,6 +19,14 @@ public class InputDeviceTests : TestRunner
 		Assert.That(device.Id, Is.EqualTo(id));
 	}
 
+	[TestCase("Joy1")]
+	[TestCase("WheelUp")]
+	public void InvalidDeviceKey(string name)
+	{
+		var device = new Ks.Input(new InputDeviceInfo(17, "Keyboard"));
+		Assert.That(Assert.Throws<KeysharpException>(() => device.GetKeyState(name)).UserError, Is.InstanceOf<ValueError>());
+	}
+
 #if WINDOWS
 	[Test]
 	public void NativeDevices() => Assert.That(TestScript("input-devices", false), Is.True);

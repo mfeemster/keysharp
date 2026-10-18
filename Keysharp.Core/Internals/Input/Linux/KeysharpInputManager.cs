@@ -34,6 +34,7 @@ namespace Keysharp.Internals.Input.Linux
 		private readonly Lazy<BlockingCollection<Action>> mainThreadSends = new(StartSendThread);
 		// Volatile lets reachability checks avoid blocking behind a prompt.
 		private volatile KeysharpInputClient client;
+		private InputDeviceInfo[] deviceDescriptors = [];
 		internal KeysharpInputClient AuthorizationLease => client;
 		internal bool WaitForSynthesisState() => client?.WaitForSynthesisState() == true;
 		private KeysharpInputClient blockClient;
@@ -235,7 +236,7 @@ namespace Keysharp.Internals.Input.Linux
 
 		/// <summary>Queries logical and physical keyboard state. This full bitmap is input-monitoring data.</summary>
 		internal bool TryGetKeyState(out uint modifiersLR, out bool capsLock, out bool numLock, out bool scrollLock,
-			out KeysharpInputClient.KeyStateBitmap logicalKeys, out KeysharpInputClient.KeyStateBitmap physicalKeys, uint deviceID = 0)
+			out KeysharpInputClient.KeyStateBitmap logicalKeys, out KeysharpInputClient.KeyStateBitmap physicalKeys)
 		{
 			modifiersLR = 0;
 			capsLock = false;
@@ -245,15 +246,8 @@ namespace Keysharp.Internals.Input.Linux
 			physicalKeys = default;
 
 			// Full key state is monitoring data. Use an existing grant and never prompt here.
-			KeysharpInputClient.KeyStateSnapshot state;
-			if (deviceID == 0)
-			{
-				if (!TryReadKeyboardSnapshot(out state, out _, requireMonitoring: true))
-					return false;
-			}
-			else if (!TryQuery(KeysharpInputClient.Operations.QueryKeyState,
-				qc => qc.TryQueryKeyState(deviceID, out var value) ? (true, value) : (false, default),
-				out state, "device key state query")) return false;
+			if (!TryReadKeyboardSnapshot(out var state, out _, requireMonitoring: true))
+				return false;
 
 			modifiersLR = state.ModifiersLR;
 			capsLock = state.CapsLock;
@@ -266,18 +260,63 @@ namespace Keysharp.Internals.Input.Linux
 
 		internal InputDeviceInfo[] GetDeviceDescriptors()
 		{
+			if (owner?.IsDisposed == true) return null;
+
 			try
 			{
 				var lease = GetAuthorizationLease("input device information", rearm: false, out _);
 				if (lease == null || !lease.TryAuthorizeDevices()) return null;
 				InputDeviceInfo[] devices = null;
-				return TryUseQueryClient(connected => { devices = connected.ListDevices(); return true; }) ? devices : null;
+				if (!TryUseQueryClient(connected =>
+				{
+					if (!ReferenceEquals(connected.AuthorizationLease, lease) || !IsCurrentLease(lease)) return false;
+					devices = connected.ListDevices();
+					return IsCurrentLease(lease);
+				}) || !IsCurrentLease(lease)) return null;
+
+				foreach (var device in devices)
+					device.Source = lease;
+
+				Volatile.Write(ref deviceDescriptors, devices);
+				return devices;
 			}
 			catch (Exception ex)
 			{
 				Diagnostics.Debug.WriteLine($"keysharp-input: device list failed: {ex.Message}");
 				return null;
 			}
+		}
+
+		internal InputDeviceInfo GetDeviceDescriptor(long id, string kind, object source)
+		{
+			foreach (var device in Volatile.Read(ref deviceDescriptors))
+				if (device.Id == id && device.Kind == kind && ReferenceEquals(device.Source, source)) return device;
+
+			if (source is KeysharpInputClient lease && IsCurrentLease(lease) && GetDeviceDescriptors() is { } devices)
+				foreach (var device in devices)
+					if (device.Id == id && device.Kind == kind && ReferenceEquals(device.Source, source)) return device;
+
+			return new(id, kind) { Source = source };
+		}
+
+		internal bool TryGetDeviceKeyState(InputDeviceInfo device, uint virtualKey, out bool down)
+		{
+			down = false;
+			if (owner?.IsDisposed == true || device.Id <= 0 || device.Id > uint.MaxValue || device.Source is not KeysharpInputClient lease
+				|| !IsCurrentLease(lease)) return false;
+
+			if (!TryQuery(KeysharpInputClient.Operations.QueryKeyState, connected =>
+				{
+					if (!ReferenceEquals(connected.AuthorizationLease, lease) || !IsCurrentLease(lease))
+						return (false, default(KeysharpInputClient.KeyStateSnapshot));
+					return connected.TryQueryKeyState((uint)device.Id, out var snapshot) ? (true, snapshot) : (false, default);
+				}, out KeysharpInputClient.KeyStateSnapshot state, "device key state query")
+				|| owner?.IsDisposed == true || !IsCurrentLease(lease)) return false;
+
+			// Keypad names use the seat's Shift/NumLock, while pressed keys come from this device alone.
+			var keys = state.PhysicalKeys;
+			var shiftDown = (state.ModifiersLR & (KeyboardUtils.MOD_LSHIFT | KeyboardUtils.MOD_RSHIFT)) != 0;
+			return NativeInputKeyboard.TryGetVkFromEvdevBitmap(virtualKey, keys, state.NumLock, shiftDown, out down);
 		}
 
 		/// <summary>Enumerates connected gamepads. Gamepad access is ungated, so this needs no grant
@@ -444,7 +483,7 @@ namespace Keysharp.Internals.Input.Linux
 
 				return false;
 			}
-			catch (Exception ex) when (ex is not DeviceKeyStateUnsupportedException)
+			catch (Exception ex)
 			{
 				if (failureContext != null)
 					Diagnostics.Debug.WriteLine($"keysharp-input: {failureContext} failed: {ex.Message}");
