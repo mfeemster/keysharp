@@ -86,6 +86,8 @@ public class ParserTests : TestRunner
 	{
 		string[] sources =
 		[
+			"return\nclass AfterReturn {\n}\n",
+			"goto done\nclass Skipped {\n}\ndone:\nx := Skipped\n",
 			"F(n) {\nif n\nreturn 1\nelse\nreturn 2\n}\n",
 			"F() {\nthrow Error()\n}\n",
 			"F() {\ntry {\nreturn 1\n} catch {\nreturn 2\n}\n}\n",

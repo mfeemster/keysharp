@@ -948,8 +948,12 @@ namespace Keysharp.Compilation.Syntax
 					members.Add(LowerClass(cd));
 					// AHK initializes a class when execution reaches its declaration — model that by referencing the
 					// class slot at that point in the auto-exec, which triggers the lazy Statics[typeof(Class)] init.
-					auto.Add(Stamp(cd));
-					auto.Add(ExprStmt(Op("MultiStatement", Id(_fields[cd.Name]))));
+					// Where execution cannot reach the declaration, the class initializes on first use, as in AHK.
+					if (!EndPointUnreachable(auto))
+					{
+						auto.Add(Stamp(cd));
+						auto.Add(ExprStmt(Op("MultiStatement", Id(_fields[cd.Name]))));
+					}
 				}
 				else if (s is HotkeyDef hk) LowerHotkey(hk);
 				else if (s is HotstringDef hs) LowerHotstring(hs);

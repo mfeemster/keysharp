@@ -1,4 +1,6 @@
 #NoTrayIcon
+#ErrorStdOut
+#Warn All, StdOut
 #Include <assert>
 
 class myclass
@@ -144,5 +146,23 @@ sc1 := sclass1()
 Assert(!sc1.HasProp("c2"), A_LineNumber)
 
 AssertEq(sclass1.c2.x, 1, A_LineNumber)
+
+classInitCount := 0
+goto afterSkippedInit
+class SkippedInit {
+	static Value := NextClassInit()
+}
+afterSkippedInit:
+AssertEq(classInitCount, 0, A_LineNumber)
+AssertEq(SkippedInit.Value, 1, A_LineNumber)
+AssertEq(classInitCount, 1, A_LineNumber)
+class ReachedInit {
+	static Value := NextClassInit()
+}
+AssertEq(classInitCount, 2, A_LineNumber)
+NextClassInit() {
+	global classInitCount
+	return ++classInitCount
+}
 
 FileAppend "pass", "*"
