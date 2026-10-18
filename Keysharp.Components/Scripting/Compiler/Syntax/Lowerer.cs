@@ -85,6 +85,7 @@ namespace Keysharp.Compilation.Syntax
 		// bound before any (possibly forward-referenced) call — AHK hoists nested functions.
 		private List<StatementSyntax> _pendingScopeClosureInits = new();
 		private readonly HashSet<string> _functionFields = new(StringComparer.Ordinal);
+		private readonly TypeSyntax[] _funcTypes = new TypeSyntax[17];
 		// A parameter's default that LowerCallableBody lowered to a literal, which its declaration carries.
 		private readonly Dictionary<Param, LiteralExpressionSyntax> _literalDefaults = new(ReferenceEqualityComparer.Instance);
 		private readonly Dictionary<FatArrowExpr, FunctionDecl> _arrowDecls = new(ReferenceEqualityComparer.Instance);   // see ArrowDecl
@@ -1418,7 +1419,8 @@ namespace Keysharp.Compilation.Syntax
 			// reads has no declaration to spell it, so a run-time error names it as written.
 			_fieldDecls.Add(ResolveModuleName(lower) switch
 			{
-				{ Function: { } func } => Declared(ConstantField(id, FuncBind(NameMangler.FunctionMethod(func))), func),
+				{ Function: { } func } => Declared(ConstantField(id, FuncBind(NameMangler.FunctionMethod(func),
+					_userFuncDeclByLower.GetValueOrDefault(lower)?.Params)), func),
 				{ Variable: { } declared } => Declared(ObjField(id, Null), declared),
 				{ Global: { } global } => AmbientField(id, BindMember(global)),
 				_ => ObjField(id, Null)
@@ -1681,12 +1683,12 @@ namespace Keysharp.Compilation.Syntax
 		private ExpressionSyntax FunctionObject(FunctionScope scope, bool declare = true)
 		{
 			if (scope.Captures)
-				return ClosureBind(scope.Impl);
+				return ClosureBind(scope.Impl, scope.Params);
 
 			if (declare)
 				DeclareFunctionField(scope);
 
-			return SyntaxFactory.AssignmentExpression(SyntaxKind.CoalesceAssignmentExpression, Id(scope.Field), FuncBind(scope.Impl));
+			return SyntaxFactory.AssignmentExpression(SyntaxKind.CoalesceAssignmentExpression, Id(scope.Field), FuncBind(scope.Impl, scope.Params));
 		}
 
 		private void DeclareFunctionField(FunctionScope scope)
@@ -5792,7 +5794,7 @@ namespace Keysharp.Compilation.Syntax
 			{
 				var text = ExpandCopilotDeclarationAlias(ProcessTriggerText(trig), out _);
 				AddDhhr(hk, ExprStmt(Inv(Access("Keysharp.Runtime.Keyboard.HotkeyDefinition.AddHotkey"),
-					FuncBind(_currentModuleClass + "." + fnName), UintZero, Str(text), Id(DeclarationSuspendExemptVariable))));
+					FuncBind(_currentModuleClass + "." + fnName, hk.Func?.Params), UintZero, Str(text), Id(DeclarationSuspendExemptVariable))));
 			}
 		}
 
@@ -5815,7 +5817,7 @@ namespace Keysharp.Compilation.Syntax
 					var block = hs.Body as Block ?? new Block(new List<Stmt> { hs.Body ?? new Block(new List<Stmt>()) });
 					fnName = EmitHotCallback(block, "__Hotstring_" + (++_hotCount));
 				}
-				funcArg = FuncBind(_currentModuleClass + "." + fnName);
+				funcArg = FuncBind(_currentModuleClass + "." + fnName, hs.Func?.Params);
 			}
 			foreach (var trig in hs.Triggers)
 			{
@@ -6792,14 +6794,22 @@ namespace Keysharp.Compilation.Syntax
 		private static StatementSyntax LocalDeclVar(string name, ExpressionSyntax init) => LocalDecl(SyntaxFactory.IdentifierName("var"), name, init);
 		private static StatementSyntax DeclLocal(TypeSyntax type, string name, ExpressionSyntax init) => LocalDecl(type, name, init);
 
-		// Keysharp.Builtins.Functions.Func((System.Delegate)<methodPath>)
-		private static ExpressionSyntax FuncBind(string methodPath) =>
-			Inv(Access("Keysharp.Builtins.Functions.Func"), SyntaxFactory.CastExpression(Ty("System.Delegate"), Access(methodPath)));
+		// Keysharp.Builtins.Functions.Func((<delegateType>)<methodPath>)
+		private ExpressionSyntax FuncBind(string methodPath, List<Param> parameters = null) =>
+			Inv(Access("Keysharp.Builtins.Functions.Func"), SyntaxFactory.CastExpression(FuncType(parameters), Access(methodPath)));
 
-		// Functions.Closure((System.Delegate)<localFn>) — wraps a capturing C# local function as a Closure-typed KeysharpFunc
+		// Functions.Closure((<delegateType>)<localFn>) — wraps a capturing C# local function as a Closure-typed KeysharpFunc
 		// (the captures live in the delegate; the runtime type is Closure so `x is Closure` holds).
-		private static ExpressionSyntax ClosureBind(string methodPath) =>
-			Inv(Access("Keysharp.Builtins.Functions.Closure"), SyntaxFactory.CastExpression(Ty("System.Delegate"), Access(methodPath)));
+		private ExpressionSyntax ClosureBind(string methodPath, List<Param> parameters) =>
+			Inv(Access("Keysharp.Builtins.Functions.Closure"), SyntaxFactory.CastExpression(FuncType(parameters), Access(methodPath)));
+
+		// Default-bearing method groups make Roslyn synthesize delegates; use Func instead.
+		// The runtime reads parameter metadata from the original method, preserving its defaults.
+		private TypeSyntax FuncType(List<Param> parameters) =>
+			parameters is { Count: <= 16 } && parameters.Exists(static p => !p.Variadic && (p.Optional || p.Default != null))
+				? _funcTypes[parameters.Count] ??= SyntaxFactory.QualifiedName(Id("System"),
+					SyntaxFactory.GenericName(SyntaxFactory.Identifier("Func"), SyntaxFactory.TypeArgumentList(
+						SyntaxFactory.SeparatedList(Enumerable.Repeat(ObjType, parameters.Count + 1))))) : Ty("System.Delegate");
 
 		// MainScript.Vars.Statics[typeof(T)]
 		private static ExpressionSyntax TypeSingleton(string typeFullName) =>

@@ -121,6 +121,17 @@ try {
     Assert(false, A_LineNumber)
 }
 
+; Generic delegate parameter-count boundaries.
+SixteenParams(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16 := 2) => a1 + a16
+f := SixteenParams
+AssertEq(f(1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0), 3, A_LineNumber)
+AssertEq(f.MaxParams, 16, A_LineNumber)
+
+SeventeenParams(a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, a17 := 2) => a1 + a17
+f := SeventeenParams
+AssertEq(f(1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0), 3, A_LineNumber)
+AssertEq(f.MaxParams, 17, A_LineNumber)
+
 ; A variadic parameter may share its name with a local the compiler generates.
 LineCount(line*) => line.Length
 FrameCount(frame*) {
