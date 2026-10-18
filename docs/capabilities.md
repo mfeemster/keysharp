@@ -691,7 +691,7 @@ Status legend:
 | IniRead() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Reads a value, section or list of section names from a standard format.ini file. |
 | IniWrite() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Writes a value or section to a standard format.ini file. |
 | InputBox() | 🟢 Full | 🟡 Partial | 🟡 Partial | 🟡 Partial | The InputBox function displays an input box to ask the user to enter a string. On Linux and macOS the dialog is built with Eto and honours only the Password option; the W, H, X, Y and T (timeout) options are ignored, so Result never returns "Timeout". |
-| InputHook() | 🟢 Full | 🟡 Partial | 🟡 Partial | 🟡 Partial | Creates an object that collects or intercepts keyboard input, which in Keysharp is also an EventHook. A callback property rejects a callback that cannot take its arguments, and "" or unset clears it. |
+| InputHook() | 🟢 Full | 🟡 Partial | 🟡 Partial | 🟡 Partial | Creates an object that collects or intercepts keyboard input, which in Keysharp is also an EventHook. A callback property rejects a callback that cannot take its arguments, and "" or unset clears it. Calling __New again preserves unspecified options and key settings, replaces matches and end characters, and clears collected text. Cloning raises TypeError. |
 | InputHook.BackspaceIsUndo | 🟢 Full | 🟡 Partial | 🟡 Partial | 🟡 Partial | Treats Backspace as undo for collected input. |
 | InputHook.BeforeHotkeys | 🟢 Full | 🟡 Partial | 🟡 Partial | 🟡 Partial | Whether the input receives events before hotkeys; assigning it during an input raises a ValueError. |
 | InputHook.BufferLengthMax | 🟢 Full | 🟡 Partial | 🟡 Partial | 🟡 Partial | Maximum text buffer length before capture ends. |

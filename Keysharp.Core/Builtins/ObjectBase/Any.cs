@@ -115,28 +115,21 @@ namespace Keysharp.Builtins
 			set => Errors.ErrorOccurred($"The base can't be changed for the type {GetType()}");
 		}
 
-		// Constructs the object, sets the base, and does any extra construction logic (eg fills an array)
-		// If args is null then native initialization logic is skipped, and it's assumed that __Init and __New will be called manually elsewhere (eg from a static factory method)
+		// Factories pass null to skip or defer script initialization.
 		public Any(params object[] args)
 		{
 			type = GetType();
 			InitializeBase(type);
+			InitializeInstance(args);
+		}
 
-			// Initialization stays in ONE place, but resolves __New the same way script construction does --
-			// by NAME, most-derived first -- instead of through the virtual slot. That difference mattered: a
-			// type whose __New declares a real signature must declare it `new` rather than `override` (the base
-			// is `params object[]`), so a virtual call silently reached Any's no-op and produced a half-built
-			// object. Resolving by name also means any constructor may keep delegating `: base(args)` and still
-			// be initialized correctly, however many parameters it declares -- so there is no per-constructor
-			// duty to remember, and no silent failure when someone adds an overload.
-			//
-			// __Init runs first, then __New, matching AutoHotkey's construction contract and the order
-			// Class.Call uses for script construction. No BUILT-IN declares an __Init (AutoHotkey gives none of
-			// its prototypes one either), so for those the lookup below caches null and costs nothing.
+		internal void InitializeInstance(object[] args)
+		{
+			// Resolve by name because a typed __New can hide Any's virtual params overload.
 			if (args != null)
 			{
-				InitFor(GetType())?.CallFunc(this, args);
-				NewFor(GetType())?.CallFunc(this, args);
+				InitFor(type)?.CallFunc(this, args);
+				NewFor(type)?.CallFunc(this, args);
 			}
 		}
 

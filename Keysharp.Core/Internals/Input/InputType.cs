@@ -38,7 +38,6 @@ namespace Keysharp.Internals.Input
 		internal bool caseSensitive;
 		internal bool endCharMode;
 		internal string endChars = "";
-		internal uint endCharsMax;
 		internal bool endingBySC;
 		internal char endingChar;
 		internal int endingMatchIndex;
@@ -49,7 +48,7 @@ namespace Keysharp.Internals.Input
 		internal bool findAnywhere;
 		internal uint[] keySC = new uint[HookThread.SC_ARRAY_COUNT];
 		internal uint[] keyVK = new uint[HookThread.VK_ARRAY_COUNT];
-		internal List<string> match = [];
+		internal volatile string[] match = [];
 		internal uint minSendLevel;
 		internal bool notifyNonText;
 		internal InputType prev;
@@ -103,7 +102,7 @@ namespace Keysharp.Internals.Input
 							|| scriptObject.GetCallbackSlot(UserMessages.AHK_INPUT_KEYUP)?.Callback != null))
 					return true;
 
-				if (match.Count > 0 || !visibleText || !visibleNonText)
+				if (match.Length > 0 || !visibleText || !visibleNonText)
 					return true;
 
 				for (var s = 0u; s < keySC.Length; ++s)
@@ -119,27 +118,22 @@ namespace Keysharp.Internals.Input
 			}
 		}
 
-		internal InputType(InputHook io, string options, string endKeys, string matchList)
+		internal InputType(InputHook io)
 		{
 			owner = Script.TheScript;
 			scriptObject = io;
-			ParseOptions(options);
-			SetKeyFlags(endKeys);
-			SetMatchList(matchList);
 		}
 
-		// Faithful port of AHK input_type::SetMatchList: comma-separated phrases, where two
-		// consecutive commas are a single literal comma within a phrase, and empty phrases
-		// (e.g. from a leading/trailing/lone comma) are omitted.  The previous Split(',')
-		// approach broke both rules and, worse, produced a spurious "," phrase for every
-		// InputHook created without a match list.
+		// Publish complete phrases together so hook readers retain a stable snapshot during reconfiguration.
 		internal void SetMatchList(string matchList)
 		{
-			match.Clear();
-
 			if (string.IsNullOrEmpty(matchList))
+			{
+				match = [];
 				return;
+			}
 
+			List<string> matches = [];
 			var sb = new StringBuilder();
 
 			for (var i = 0; i < matchList.Length; i++)
@@ -162,13 +156,15 @@ namespace Keysharp.Internals.Input
 				// Otherwise this is a delimiting comma; omit empty phrases.
 				if (sb.Length > 0)
 				{
-					match.Add(sb.ToString());
+					matches.Add(sb.ToString());
 					_ = sb.Clear();
 				}
 			}
 
 			if (sb.Length > 0) // Terminate the last item.
-				match.Add(sb.ToString());
+				matches.Add(sb.ToString());
+
+			match = matches.ToArray();
 		}
 
 		internal void CollectChar(ReadOnlySpan<char> ch, int charCount)
@@ -195,13 +191,15 @@ namespace Keysharp.Internals.Input
 			}
 
 			// Check if the buffer now matches any of the key phrases, if there are any:
+			var matches = match;
+
 			if (findAnywhere)
 			{
 				if (caseSensitive)
 				{
-					for (var i = 0; i < match.Count; ++i)
+					for (var i = 0; i < matches.Length; ++i)
 					{
-						if (buffer.Contains(match[i], StringComparison.Ordinal))
+						if (buffer.Contains(matches[i], StringComparison.Ordinal))
 						{
 							EndByMatch(i);
 							return;
@@ -210,9 +208,9 @@ namespace Keysharp.Internals.Input
 				}
 				else // Not case sensitive.
 				{
-					for (var i = 0; i < match.Count; ++i)
+					for (var i = 0; i < matches.Length; ++i)
 					{
-						if (buffer.Contains(match[i], StringComparison.OrdinalIgnoreCase))
+						if (buffer.Contains(matches[i], StringComparison.OrdinalIgnoreCase))
 						{
 							EndByMatch(i);
 							return;
@@ -224,9 +222,9 @@ namespace Keysharp.Internals.Input
 			{
 				if (caseSensitive)
 				{
-					for (var i = 0; i < match.Count; ++i)
+					for (var i = 0; i < matches.Length; ++i)
 					{
-						if (string.Equals(buffer, match[i], StringComparison.Ordinal))
+						if (string.Equals(buffer, matches[i], StringComparison.Ordinal))
 						{
 							EndByMatch(i);
 							return;
@@ -235,10 +233,10 @@ namespace Keysharp.Internals.Input
 				}
 				else // Not case sensitive.
 				{
-					for (var i = 0; i < match.Count; ++i)
+					for (var i = 0; i < matches.Length; ++i)
 					{
 						// AutoHotkey compares with lstrcmpi, which follows the user's locale.
-						if (CaseCompare.Equals(buffer, match[i], StringComparison.CurrentCultureIgnoreCase))
+						if (CaseCompare.Equals(buffer, matches[i], StringComparison.CurrentCultureIgnoreCase))
 						{
 							EndByMatch(i);
 							return;
@@ -516,7 +514,14 @@ namespace Keysharp.Internals.Input
 						break;
 
 					case 'H':
-						beforeHotkeys = true;
+						lock (ChainGate)
+						{
+							if (!beforeHotkeys && InProgress())
+								_ = Interlocked.Increment(ref owner.inputBeforeHotkeysCount);
+
+							beforeHotkeys = true;
+						}
+
 						break;
 
 					case 'I':
@@ -732,8 +737,7 @@ namespace Keysharp.Internals.Input
 
 			if (singleCharCount != 0)  // See single_char_count++ above for comments.
 			{
-				if (singleCharCount > endCharsMax)
-					endCharsMax = singleCharCount;
+				endChars = "";
 
 				for (var i = 0; i < keys.Length; ++i)
 				{
@@ -762,7 +766,7 @@ namespace Keysharp.Internals.Input
 					endChars += keys[i];
 				}
 			}
-			else if (endKeyMode && endCharsMax == 0) // single_char_count is false
+			else if (endKeyMode) // single_char_count is false
 			{
 				endChars = "";
 			}

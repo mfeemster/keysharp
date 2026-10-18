@@ -22,7 +22,7 @@ namespace Keysharp.Builtins
 		// The arguments each callback is called with, by index: OnChar (ih, char), OnEnd (ih), OnKeyDown and OnKeyUp
 		// (ih, vk, sc), OnMouseDown and OnMouseUp (ih, button, x, y), OnMouseMove (ih, dx, dy).
 		private static readonly int[] callbackArgCounts = [2, 1, 3, 3, 4, 4, 3];
-		internal InputType input;
+		internal readonly InputType input;
 		private bool callbackPersistenceActive;
 		private readonly CallbackRegistration[] callbackSlots = [new(), new(), new(), new(), new(), new(), new()];
 
@@ -131,9 +131,16 @@ namespace Keysharp.Builtins
 
 		public string Input => input.buffer;
 
-		public string Match => input.status == InputStatusType.TerminatedByMatch && input.endingMatchIndex < input.match.Count
-		? input.match[input.endingMatchIndex]
-		: "";
+		public string Match
+		{
+			get
+			{
+				var status = input.status;
+				var matches = input.match;
+				var index = input.endingMatchIndex;
+				return status == InputStatusType.TerminatedByMatch && index < matches.Length ? matches[index] : "";
+			}
+		}
 
 		public object MinSendLevel
 		{
@@ -277,7 +284,11 @@ namespace Keysharp.Builtins
 			}
 		}
 
-		public InputHook(params object[] args) : base(args) { }
+		public InputHook(params object[] args) : base(null)
+		{
+			input = new InputType(this);
+			InitializeInstance(args);
+		}
 
 		/// <summary>
 		/// Creates an object which can be used to collect or intercept keyboard input.
@@ -312,15 +323,14 @@ namespace Keysharp.Builtins
 		/// <returns>An empty value; the constructed object is the instance being initialized.</returns>
 		public object __New(object options = null, object endKeys = null, object matchList = null)
 		{
-			// The object is returned whatever __New returns, so a continued conversion error still leaves it an input, one
-			// with no options.
 			if (!options.CoerceString(out var optionsText) || !endKeys.CoerceString(out var endKeysText) || !matchList.CoerceString(out var matchListText))
-			{
-				input = new InputType(this, "", "", "");
 				return DefaultObject;
-			}
 
-			input = new InputType(this, optionsText, endKeysText, matchListText);
+			input.ParseOptions(optionsText);
+			input.SetKeyFlags(endKeysText);
+			input.SetMatchList(matchListText);
+			input.buffer = "";
+			RefreshActiveHooks();
 			return DefaultObject;
 		}
 
@@ -422,21 +432,22 @@ namespace Keysharp.Builtins
 
 			// Group names have no VK or SC; the key parser ignores them.
 			input.SetKeyFlags(keysVal, false, removeFlags, addFlags);
+			RefreshActiveHooks();
+			return DefaultObject;
+		}
 
+		private void RefreshActiveHooks()
+		{
 			if (input.InProgress())
 			{
 				Script.TheScript.HookThread.RefreshPlatformKeyGrabs();
 
-				// Flagging a key after Start() may newly require a hook: a keyboard key/end key needs the
-				// keyboard hook, a mouse/wheel button (end key or +S) needs the mouse hook.
 				if (input.KeyboardIsNeeded)
 					HotkeyDefinition.InstallKeybdHook(Script.TheScript);
 
 				if (input.MouseIsNeeded)
 					HotkeyDefinition.InstallMouseHook(Script.TheScript);
 			}
-
-			return DefaultObject;
 		}
 
 		/// <summary>Begins collecting with an empty buffer, whether the input was never started or has ended; does

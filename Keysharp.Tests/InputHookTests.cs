@@ -84,7 +84,6 @@ public class InputHookTests : TestRunner
 		var ends = 0;
 		var io = new InputHook("")
 		{
-			BeforeHotkeys = true,
 			OnEnd = new KeysharpFunc((Func<object, object>)(_ =>
 				{
 					ends++;
@@ -98,6 +97,8 @@ public class InputHookTests : TestRunner
 
 		try
 		{
+			Assert.That(s.inputBeforeHotkeysCount, Is.EqualTo(places));
+			io.input.ParseOptions("HH");
 			Assert.That(s.inputBeforeHotkeysCount, Is.EqualTo(places + 1), "A running before-hotkeys input takes a place.");
 			io.input.EndByTimeout();
 			io.input.Stop();
@@ -279,6 +280,76 @@ public class InputHookTests : TestRunner
 		Assert.That(MatchListOf("single,,item"), Is.EqualTo("single,item"));     // doc example
 		Assert.That(MatchListOf("string1,,,string2"), Is.EqualTo("string1,|string2")); // doc example
 		Assert.That(MatchListOf("btw,otoh,fl"), Is.EqualTo("btw|otoh|fl"));
+	}
+
+	[Test, Category("InputHook")]
+	public void ReinitializationRetainsKeyOptionsAndReplacesText()
+	{
+		var io = new InputHook("E", "x", "unused,old");
+		var previousMatches = io.input.match;
+		_ = io.KeyOpt("{vk41}{sc01E}", "S");
+		io.input.CollectChar("abc", 3);
+		Assert.That(io.Input, Is.EqualTo("abc"));
+		io.input.endingMatchIndex = 1;
+		io.input.status = InputStatusType.TerminatedByMatch;
+		Assert.That(io.Match, Is.EqualTo("old"));
+		_ = io.__New("", "y", "unused,new");
+		Assert.That(io.Input, Is.Empty);
+		Assert.That(io.input.endChars, Is.EqualTo("y"));
+		Assert.That(io.input.match, Is.EqualTo(new[] { "unused", "new" }));
+		Assert.That(previousMatches, Is.EqualTo(new[] { "unused", "old" }), "Hook readers retain their previous phrases.");
+		Assert.That(io.Match, Is.EqualTo("new"), "The ended match index addresses the current list, as in AHK.");
+		Assert.That(io.input.keyVK[0x41] & HookThread.INPUT_KEY_SUPPRESS, Is.EqualTo(HookThread.INPUT_KEY_SUPPRESS));
+		Assert.That(io.input.keySC[0x1E] & HookThread.INPUT_KEY_SUPPRESS, Is.EqualTo(HookThread.INPUT_KEY_SUPPRESS));
+		previousMatches = io.input.match;
+		_ = io.__New("", "", "short");
+		Assert.That(io.Match, Is.Empty, "A shortened list may no longer contain the ended match index.");
+		_ = io.__New();
+		Assert.That(io.input.endChars, Is.Empty);
+		Assert.That(io.input.match, Is.Empty);
+		Assert.That(io.Match, Is.Empty);
+		Assert.That(previousMatches, Is.EqualTo(new[] { "unused", "new" }), "Clearing matches leaves existing readers intact.");
+	}
+
+	[Test, Category("InputHook")]
+	public void ConcurrentCaptureReconfigurationAndMatchReads()
+	{
+		var io = new InputHook("L32 * C", "", "first,hit");
+		// Keep the input ended so exercising collection cannot install hooks or queue callbacks.
+		io.input.status = InputStatusType.TerminatedByMatch;
+		using var start = new Barrier(3);
+		var capturing = System.Threading.Tasks.Task.Run(() =>
+		{
+			Assert.That(start.SignalAndWait(TimeSpan.FromSeconds(10)), Is.True);
+
+			for (var i = 0; i < 10_000; i++)
+				io.input.CollectChar("hit", 3);
+		});
+		var reading = System.Threading.Tasks.Task.Run(() =>
+		{
+			Assert.That(start.SignalAndWait(TimeSpan.FromSeconds(10)), Is.True);
+
+			for (var i = 0; i < 30_000; i++)
+			{
+				if (io.input.match is not ([] or ["hit"] or ["first", "hit"]))
+					throw new InvalidOperationException("Capture must see a complete published phrase list.");
+
+				if (io.Match is not ("" or "first" or "hit"))
+					throw new InvalidOperationException("Match must come from a complete published phrase list.");
+			}
+		});
+
+		try
+		{
+			Assert.That(start.SignalAndWait(TimeSpan.FromSeconds(10)), Is.True);
+
+			for (var i = 0; i < 10_000; i++)
+				_ = io.__New("L32 * C", "", (i % 3) switch { 0 => "first,hit", 1 => "hit", _ => "" });
+		}
+		finally
+		{
+			System.Threading.Tasks.Task.WaitAll(capturing, reading);
+		}
 	}
 
 	[Test, Category("InputHook")]

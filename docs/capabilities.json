@@ -6895,8 +6895,8 @@
                      "linux_x11":  "partial",
                      "linux_wayland":  "partial",
                      "macos":  "partial",
-                     "notes":  "Creates an object that collects or intercepts keyboard input, which in Keysharp is also an EventHook. A callback property rejects a callback that cannot take its arguments, and \"\" or unset clears it.",
-                     "tested-by":  "InputHookTests.CallbackPropertiesValidateAndClear"
+                     "notes":  "Creates an object that collects or intercepts keyboard input, which in Keysharp is also an EventHook. A callback property rejects a callback that cannot take its arguments, and \"\" or unset clears it. Calling __New again preserves unspecified options and key settings, replaces matches and end characters, and clears collected text. Cloning raises TypeError.",
+                     "tested-by":  "InputHookTests.CallbackPropertiesValidateAndClear; InputHookTests.ReinitializationRetainsKeyOptionsAndReplacesText; MiscTests.InputHookOptions"
                  },
                  {
                      "category":  "Input/Automation",

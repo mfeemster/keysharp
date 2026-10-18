@@ -38,15 +38,11 @@ namespace Keysharp.Builtins
 			/// <para>
 			/// Case sensitivity is pinned off, because parameter names are matched case-insensitively and a
 			/// container that matched them any other way would disagree with the binder about which names it even
-			/// carries. Pinned on BOTH construction paths, since a script builds one through <c>__New</c> and the
+			/// carries. Pinned on both construction paths, since a script builds one through <c>__New</c> and the
 			/// lowerer through the constructor.
 			/// </para>
 			/// </summary>
-			public NamedArgs(params object[] nameValuePairs) : base(null)
-			{
-				CaseSense = "Off";
-				Fill(nameValuePairs);
-			}
+			public NamedArgs(params object[] nameValuePairs) : base(eCaseSense.Off) => Fill(nameValuePairs);
 
 			public override object __New(params object[] nameValuePairs)
 			{
@@ -56,11 +52,10 @@ namespace Keysharp.Builtins
 			}
 
 			/// <summary>
-			/// Stores the pairs. A lone <see cref="Map"/> argument is COPIED rather than handed to
+			/// Stores the pairs. A lone <see cref="Map"/> argument is copied rather than handed to
 			/// <c>Map.Set</c>, which would adopt its dictionary by reference and overwrite the case mode pinned
 			/// above with the source's -- leaving a container that shares another object's names and matches them
-			/// case-sensitively. Everything else is Map's own handling; <c>null</c> reaches it too, so the backing
-			/// store is allocated with the right comparer and is never left null.
+			/// case-sensitively. Everything else uses Map's own handling.
 			/// </summary>
 			private void Fill(object[] nameValuePairs)
 			{
@@ -80,12 +75,9 @@ namespace Keysharp.Builtins
 			/// <summary>
 			/// The backing store, for the structural questions -- does this call name anything, does a candidate
 			/// overload declare all of them. Only the keys are read, so nothing here can run script, unlike
-			/// <see cref="Entries"/>. Never null, unlike <c>map</c> itself, which stays unallocated until something
-			/// is stored.
+			/// <see cref="Entries"/>.
 			/// </summary>
-			internal Dictionary<object, object> Store => map ?? noStore;
-
-			private static readonly Dictionary<object, object> noStore = new();
+			internal Dictionary<object, object> Store => map;
 
 			/// <summary>
 			/// The names and the values they supply. Ordinarily walked straight off <see cref="Map.EnumerableMap"/>,

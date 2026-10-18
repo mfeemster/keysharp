@@ -8,6 +8,16 @@ namespace Keysharp.Builtins
 	/// </summary>
 	public class CaseEqualityComp : IEqualityComparer<object>
 	{
+		private static readonly CaseEqualityComp caseSensitive = new(eCaseSense.On);
+		private static readonly CaseEqualityComp caseInsensitive = new(eCaseSense.Off);
+
+		internal static CaseEqualityComp For(eCaseSense caseSense) => caseSense switch
+		{
+			eCaseSense.On => caseSensitive,
+			eCaseSense.Off => caseInsensitive,
+			_ => new(caseSense),
+		};
+
 		/// <summary>
 		/// The comparison type.
 		/// </summary>
@@ -109,13 +119,13 @@ namespace Keysharp.Builtins
 		/// </summary>
 		public long Capacity
 		{
-			get => map != null ? map.Capacity : 0L;
+			get => map.Capacity;
 			set
 			{
 				if (!value.CoerceInt(out var capacity))
 					return;
 
-				map?.EnsureCapacity(capacity);
+				map.EnsureCapacity(capacity);
 			}
 		}
 
@@ -149,12 +159,12 @@ namespace Keysharp.Builtins
 				var oldVal = caseSense;
 				caseSense = parsed;
 
-				if (map != null && caseSense != oldVal)
+				if (caseSense != oldVal)
 				{
 					if (enumerableMap != null)
 						enumerableMap = null;
 
-					map = new Dictionary<object, object>(new CaseEqualityComp(caseSense));
+					map = new Dictionary<object, object>(CaseEqualityComp.For(caseSense));
 				}
 			}
 		}
@@ -162,7 +172,7 @@ namespace Keysharp.Builtins
 		/// <summary>
 		/// Gets the number of elements in the map.
 		/// </summary>
-		public long Count => map != null ? map.Count : 0L;
+		public long Count => map.Count;
 		int ICollection.Count => (int)Count;
 
 		/// <summary>
@@ -208,7 +218,7 @@ namespace Keysharp.Builtins
 		/// Initializes a new instance of the <see cref="Map"/> class.
 		/// See <see cref="__New(object[])"/>.
 		/// </summary>
-		public Map(params object[] args) : base(args) { }
+		public Map(params object[] args) : this(eCaseSense.On) => InitializeInstance(args);
 
 		// A map literal, which AHK builds without __New.
 		[PublicHiddenFromUser]
@@ -225,7 +235,7 @@ namespace Keysharp.Builtins
 		internal Map(eCaseSense caseSense) : base(null)
 		{
 			this.caseSense = caseSense;
-			map = new Dictionary<object, object>(new CaseEqualityComp(caseSense));
+			map = new Dictionary<object, object>(CaseEqualityComp.For(caseSense));
 		}
 
 		/// <summary>
@@ -260,12 +270,11 @@ namespace Keysharp.Builtins
 		{
 			var list = base.GetEnumerableMembersOrEmpty();
 
-			if (map != null)
-				foreach (var kv in map)
-				{
-					if (kv.Key is Any a1) list.Add(a1);
-					if (kv.Value is Any a2) list.Add(a2);
-				}
+			foreach (var kv in map)
+			{
+				if (kv.Key is Any a1) list.Add(a1);
+				if (kv.Value is Any a2) list.Add(a2);
+			}
 
 			return list;
 		}
@@ -397,10 +406,7 @@ namespace Keysharp.Builtins
 
 			if (args == null || args.Length == 0)
 			{
-				if (map == null)
-					map = new Dictionary<object, object>(new CaseEqualityComp(caseSense));
-				else
-					map.Clear();
+				map.Clear();
 			}
 			else
 			{
@@ -419,25 +425,16 @@ namespace Keysharp.Builtins
 					{
 						var count = (temp.Count / 2) * 2;//Do not flatten here because the caller may want a map of maps, or a map of arrays.
 
-						if (map == null)
-							map = new Dictionary<object, object>(new CaseEqualityComp(caseSense));
-
 						for (var i = 0; i < count - 1; i += 2)
 							Insert(temp.array[i], temp.array[i + 1]);//Access the underlying ArrayList directly for performance.
 					}
 					else if (args[0] is Dictionary<string, object> tempm)
 					{
-						if (map == null)
-							map = new Dictionary<object, object>(new CaseEqualityComp(caseSense));
-
 						foreach (var kv in tempm)
 							Insert(kv.Key, kv.Value);
 					}
 					else if (args[0] is IEnumerable ie && ie is not string)
 					{
-						if (map == null)
-							map = new Dictionary<object, object>(new CaseEqualityComp(caseSense));
-
 						bool isKey = true;
 						object key = null;
 
@@ -459,9 +456,6 @@ namespace Keysharp.Builtins
 				else
 				{
 					var count = (args.Length / 2) * 2;
-
-					if (map == null)
-						map = new Dictionary<object, object>(new CaseEqualityComp(caseSense));
 
 					for (var i = 0; i < count; i += 2)
 						Insert(args[i], args[i + 1]);

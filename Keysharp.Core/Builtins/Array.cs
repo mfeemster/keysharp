@@ -13,7 +13,7 @@ public class Array : KeysharpObject, I__Enum, IEnumerable<object>, IEnumerable<(
 	/// <summary>
 	/// The underlying <see cref="List"/> that holds the values.
 	/// </summary>
-	internal List<object> array;
+	internal List<object> array = new();
 
 	/// <summary>
 	/// Gets or sets the current capacity of the array.<br/>
@@ -22,25 +22,17 @@ public class Array : KeysharpObject, I__Enum, IEnumerable<object>, IEnumerable<(
 	/// </summary>
 	public object Capacity
 	{
-		get => array != null ? array.Capacity : 0L;
+		get => (long)array.Capacity;
 
 		set
 		{
 			if (!value.CoerceInt(out var val))
 				return;
 
-			if (array != null)
-			{
-				if (val < array.Count)
-				{
-					Length = val;//Will truncate.
-					array.Capacity = capacity = val;
-				}
-				else
-					array.Capacity = capacity = val;
-			}
-			else
-				capacity = val;//Save for later in case this is set by a derived class before the array is initialized.
+			if (val < array.Count)
+				Length = val;
+
+			array.Capacity = capacity = val;
 		}
 	}
 
@@ -48,7 +40,7 @@ public class Array : KeysharpObject, I__Enum, IEnumerable<object>, IEnumerable<(
 	/// Returns the length of the array.
 	/// </summary>
 	[PublicHiddenFromUser]
-	public int Count => array != null ? array.Count : 0;
+	public int Count => array.Count;
 
 	/// <summary>
 	/// Get or sets the length of an array.<br/>
@@ -59,28 +51,25 @@ public class Array : KeysharpObject, I__Enum, IEnumerable<object>, IEnumerable<(
 	/// </summary>
 	public object Length
 	{
-		get => array != null ? array.Count : 0L;
+		get => (long)array.Count;
 
 		set
 		{
 			if (!value.CoerceInt(out var i))
 				return;
 
-			if (array != null)
+			if (i == 0)
+				array.Clear();
+			else if (i > array.Count)
 			{
-				if (i == 0)
-					array.Clear();
-				else if (i > array.Count)
-				{
-					if (array.Capacity < i)
-						array.Capacity = i;
+				if (array.Capacity < i)
+					array.Capacity = i;
 
-					for (var ii = array.Count; ii < i; ii++)
-						array.Add(null);
-				}
-				else if (i < array.Count)
-					array.RemoveRange(i, array.Count - i);
+				for (var ii = array.Count; ii < i; ii++)
+					array.Add(null);
 			}
+			else if (i < array.Count)
+				array.RemoveRange(i, array.Count - i);
 		}
 	}
 
@@ -120,7 +109,7 @@ public class Array : KeysharpObject, I__Enum, IEnumerable<object>, IEnumerable<(
 	public new static Array Literal(params object[] items)
 	{
 		var arr = new Array(null);
-		arr.array = new(Math.Max(arr.capacity, items?.Length ?? 0));
+		arr.array.Capacity = Math.Max(arr.capacity, items?.Length ?? 0);
 
 		if (items != null)
 			arr.array.AddRange(items);
@@ -216,7 +205,7 @@ public class Array : KeysharpObject, I__Enum, IEnumerable<object>, IEnumerable<(
 	{
 		if (args is null || args.Length == 0)
 		{
-			array ??= new (capacity);
+			array.EnsureCapacity(capacity);
 		}
 		else if (args.Length == 1)
 		{
@@ -230,7 +219,7 @@ public class Array : KeysharpObject, I__Enum, IEnumerable<object>, IEnumerable<(
 					if (array.Count < capacity) array.Capacity = capacity;
 					break;
 				default:
-					array = new (Math.Max(capacity, 1)) { args[0] };
+					Copy(args);
 					break;
 			}
 		}
@@ -243,7 +232,11 @@ public class Array : KeysharpObject, I__Enum, IEnumerable<object>, IEnumerable<(
 
 		void Copy(ICollection<object> values)
 		{
-			array = new (Math.Max(capacity, values.Count));
+			if (array.Count != 0)
+				array = new (Math.Max(capacity, values.Count));
+			else
+				array.Capacity = Math.Max(capacity, values.Count);
+
 			array.AddRange(values);
 		}
 	}
@@ -251,15 +244,12 @@ public class Array : KeysharpObject, I__Enum, IEnumerable<object>, IEnumerable<(
 	internal override List<Any> GetEnumerableMembersOrEmpty()
 	{
 		var list = base.GetEnumerableMembersOrEmpty();
-		
-		if (array != null)
+
+		for (var i = 0; i < array.Count; i++)
 		{
-			for (var i = 0; i < array.Count; i++)
-			{
-				if (array[i] is Any a) list.Add(a);
-			}
+			if (array[i] is Any a) list.Add(a);
 		}
-		
+
 		return list;
 	}
 

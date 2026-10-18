@@ -337,14 +337,6 @@ namespace Keysharp.Builtins
 			instance.SetBaseInternal(proto);
 			Script.TheScript.ExternalDataPointers.Add(instance, new(address));
 
-			// Native container state exists independently of the script's __Init and __New callbacks.
-			if (instance is Array array)
-				array.array ??= new();
-			else if (instance is Map map)
-				map.map ??= new(new CaseEqualityComp(eCaseSense.On));
-			else if (instance is InputHook input)
-				input.input ??= new(input, "", "", "");
-
 			return instance;
 		}
 

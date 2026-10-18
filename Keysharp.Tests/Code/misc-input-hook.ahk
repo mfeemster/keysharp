@@ -68,6 +68,27 @@ Throws(() => ih.OnKeyDown := "not a function", A_LineNumber, TypeError)
 Throws(() => ih.OnChar := "not a function", A_LineNumber, TypeError)
 Throws(() => ih.OnChar := {}, A_LineNumber, MethodError)
 Assert(ih.OnChar is Func, A_LineNumber)
+; Reinitialization applies options to the existing input and preserves callbacks.
+ih.__New("B C V L7")
+ih.__New("I3")
+AssertEq(ih.BackspaceIsUndo, false, A_LineNumber)
+AssertEq(ih.CaseSensitive, true, A_LineNumber)
+AssertEq(ih.VisibleText, true, A_LineNumber)
+AssertEq(ih.BufferLengthMax, 7, A_LineNumber)
+AssertEq(ih.MinSendLevel, 3, A_LineNumber)
+AssertEq(ih.OnChar, CharCallback, A_LineNumber)
+
+; A continued conversion error leaves existing options unchanged.
+continued := {Count: 0}
+handler := (error, mode) => error is TypeError ? (continued.Count++, -1) : 0
+OnError(handler)
+ih.__New("L9", {})
+OnError(handler, 0)
+AssertEq(continued.Count, 1, A_LineNumber)
+AssertEq(ih.BufferLengthMax, 7, A_LineNumber)
+AssertEq(ih.MinSendLevel, 3, A_LineNumber)
+Throws(() => ih.Clone(), A_LineNumber, TypeError)
+
 ih.OnChar := ""
 AssertEq(ih.OnChar, "", A_LineNumber)
 

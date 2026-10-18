@@ -206,6 +206,28 @@ val := classname[100]
 
 AssertEq(val, 321, A_LineNumber)
 
+; Native state is usable during field initialization even when __New does not call its base.
+class ReadyArray extends Array {
+	Prepared := this.Push(11)
+	__New() {
+	}
+}
+AssertEq(ReadyArray()[1], 11, A_LineNumber)
+
+class ReadyMap extends Map {
+	Prepared := this.Set("Seed", 22)
+	__New() {
+	}
+}
+AssertEq(ReadyMap()["Seed"], 22, A_LineNumber)
+
+class ReadyInput extends InputHook {
+	VisibleText := true
+	__New() {
+	}
+}
+AssertEq(ReadyInput().VisibleText, true, A_LineNumber)
+
 class base1
 {
 	__Item[index]

@@ -122,7 +122,7 @@ namespace Keysharp.Builtins
 		/// type holding a native resource or structured data raises a TypeError instead.
 		/// </summary>
 		/// <returns>A cloned copy of the object.</returns>
-		public object Clone() => this is IDisposable || Objects.HasExternalDataPointer(this)
+		public object Clone() => this is IDisposable or InputHook || Objects.HasExternalDataPointer(this)
 			? Errors.TypeErrorOccurred("An object holding native data cannot be cloned.")
 			: MemberwiseClone();
 
