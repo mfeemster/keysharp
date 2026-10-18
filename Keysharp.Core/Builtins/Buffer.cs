@@ -127,6 +127,9 @@ namespace Keysharp.Builtins
 		/// </summary>
 		public new object Clone()
 		{
+			if (Objects.HasExternalDataPointer(this))
+				return Errors.TypeErrorOccurred("An object with structured data cannot be cloned.");
+
 			var copy = (Buffer)MemberwiseClone();
 			copy.ptr = 0;
 			copy.size = 0;

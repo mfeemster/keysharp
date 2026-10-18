@@ -1,3 +1,5 @@
+#ErrorStdOut
+#Warn All, StdOut
 #Module GlobalNames
 #Include <assert>
 
@@ -28,6 +30,33 @@ CallbackFree(callback)
 ; A primitive has only what its prototype gives it, never the members of its .NET type.
 Assert(!HasProp("abc", "Chars"), A_LineNumber)
 Throws(() => "abc".Substring(1), A_LineNumber, MethodError)
+
+; A match's native storage is supplied by the regex engine rather than Object's constructor.
+Throws(() => RegExMatchInfo(), A_LineNumber, ValueError)
+
+class DerivedMatch extends RegExMatchInfo {
+}
+Throws(() => DerivedMatch(), A_LineNumber, ValueError)
+
+DynamicMatch := Class("DynamicMatch", RegExMatchInfo)
+Throws(() => DynamicMatch(), A_LineNumber, ValueError)
+
+class MatchFactory extends RegExMatchInfo {
+	static Call() => 42
+}
+AssertEq(MatchFactory(), 42, A_LineNumber)
+
+continued := {Count: 0}
+handler := (error, mode) => error is ValueError ? (continued.Count++, -1) : 0
+OnError(handler)
+refused := RegExMatchInfo()
+OnError(handler, 0)
+AssertEq(continued.Count, 1, A_LineNumber)
+AssertEq(refused, "", A_LineNumber)
+
+AssertEq(RegExMatch("abc", "b", &match), 2, A_LineNumber)
+Assert(match is RegExMatchInfo, A_LineNumber)
+AssertEq(match[0], "b", A_LineNumber)
 
 ; A module is its own scope, so the shared helpers are not visible below. `#IncludeAgain <assert>` ought to
 ; bring them back but fails at run time here, so these two checks write the tag themselves.

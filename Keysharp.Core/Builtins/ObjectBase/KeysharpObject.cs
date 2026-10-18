@@ -15,8 +15,6 @@ namespace Keysharp.Builtins
 	[UserDeclaredName("Object")]
 	public class KeysharpObject : Any
 	{
-		// Whether this object or its base chain defines __Delete. As in AutoHotkey, only an Object and a Struct with memory
-		// of its own are given a __Delete call, the Struct through the pump that disposes it.
 		private bool hasDeleteInChain;
 
 		public KeysharpObject(params object[] args) : base(args) { }
@@ -62,7 +60,9 @@ namespace Keysharp.Builtins
 			if (@this is not Class cls)
 				return Errors.TypeErrorOccurred(@this, typeof(Class));
 
-			var kso = cls.Call(args) as KeysharpObject;
+			if (cls.Call(args) is not KeysharpObject kso)
+				return DefaultObject;
+
 			if (kso.type != typeof(KeysharpObject))
 				return kso;
 
@@ -119,11 +119,11 @@ namespace Keysharp.Builtins
 
 		/// <summary>
 		/// Returns a copy of the object, with its own copy of each own property. As in AutoHotkey, an object of a built-in
-		/// type holding a native resource raises a TypeError instead, since both copies would release it.
+		/// type holding a native resource or structured data raises a TypeError instead.
 		/// </summary>
 		/// <returns>A cloned copy of the object.</returns>
-		public object Clone() => this is IDisposable
-			? Errors.TypeErrorOccurred("An object holding a native resource cannot be cloned.")
+		public object Clone() => this is IDisposable || Objects.HasExternalDataPointer(this)
+			? Errors.TypeErrorOccurred("An object holding native data cannot be cloned.")
 			: MemberwiseClone();
 
 		public static object DefineProp(object @this, object name, object descriptor) => Objects.DefineProp(@this, name, descriptor, true);

@@ -5,6 +5,10 @@ namespace Keysharp.Builtins
 	/// </summary>
 	public static class Objects
 	{
+		// Borrowed data is kept separately so ordinary objects need no extra storage.
+		internal static bool HasExternalDataPointer(object value) => value is KeysharpObject obj
+			&& Script.TheScript?.ExternalDataPointers.TryGetValue(obj, out _) == true;
+
 		/// <summary>
 		/// Builds the <c>{ X, Y, Width, Height }</c> rectangle object that is Keysharp's one shape for handing a rectangle
 		/// back to a script — <c>WinEvent</c>'s Move/CaretMove <c>A_EventInfo</c>, <c>Monitor.Bounds</c> and
@@ -129,13 +133,9 @@ namespace Keysharp.Builtins
 			var baseObjVal = baseObj as KeysharpObject;
 			var objectProto = script.Vars.Prototypes[typeof(KeysharpObject)];
 
-			// Typed properties fix the object's memory layout, so neither side may carry any: reassigning the base
-			// would change the layout out from under the existing data. Checked before the Object test below,
-			// since a Struct extends Any rather than Object and so would otherwise be rejected as a non-Object.
-			// [v2.1-alpha.27+]
-			// Tested on the ARGUMENT, not on objVal/baseObjVal: a Struct or a Prototype is an Any but not a
-			// KeysharpObject, so the narrowed value is null for exactly the cases this is meant to catch.
-			if (Struct.HasTypedProperties(obj as Any))
+			// A fixed layout or an external data pointer makes the base read-only. Check Any before narrowing to Object,
+			// because Struct extends Any directly.
+			if (obj is Struct { IsPointerView: true } || HasExternalDataPointer(obj) || Struct.HasTypedProperties(obj as Any))
 				return Errors.ValueErrorOccurred("Property is read-only.");
 
 			if (Struct.HasTypedProperties(baseObj as Any))
@@ -314,30 +314,81 @@ namespace Keysharp.Builtins
 			return result ?? Errors.ValueErrorOccurred("Type is only valid for struct fields.");
 		}
 
+		/// <summary>Creates an instance without initialization, using a borrowed structured-data address.</summary>
+		public static object ObjCreateWithDataPtr(object ClassObj, object Address)
+		{
+			if (ClassObj is not Class { InstancePrototype: { } proto }
+					|| !CanCreateWithDataPointer(proto.type))
+				return Errors.ErrorOccurred("Invalid class.");
+
+			if (!Address.CoerceLong(out var address))
+				return DefaultObject;
+
+			if (Struct.IsStructType(proto.type))
+			{
+				if ((nuint)address < 65536 && address != 0 && Struct.GetSize(proto.type) != 0)
+					return Errors.InvalidParameterErrorOccurred(2, nameof(ObjCreateWithDataPtr), Address);
+
+				return Struct.CreatePointerView(proto.type, proto, address, true);
+			}
+
+			var instance = (KeysharpObject)FastCtor.Call(proto.type, null);
+			instance.type = proto.type;
+			instance.SetBaseInternal(proto);
+			Script.TheScript.ExternalDataPointers.Add(instance, new(address));
+
+			// Native container state exists independently of the script's __Init and __New callbacks.
+			if (instance is Array array)
+				array.array ??= new();
+			else if (instance is Map map)
+				map.map ??= new(new CaseEqualityComp(eCaseSense.On));
+			else if (instance is InputHook input)
+				input.input ??= new(input, "", "", "");
+
+			return instance;
+		}
+
+		private static bool CanCreateWithDataPointer(Type type) => Class.CanConstruct(type)
+			&& (typeof(KeysharpObject).IsAssignableFrom(type) || Struct.IsStructType(type))
+			&& type.GetConstructor([typeof(object[])]) != null && !typeof(ScriptProcess).IsAssignableFrom(type)
+			&& !typeof(KeysharpFunc).IsAssignableFrom(type) && !typeof(KeysharpFile).IsAssignableFrom(type)
+			&& !typeof(Gui.Control).IsAssignableFrom(type) && !typeof(Module).IsAssignableFrom(type);
+
 		/// <summary>Returns the address of the object's structured data (typed properties). [v2.1-alpha.3+]</summary>
-		public static object ObjGetDataPtr(object obj) =>
-			obj is Struct st ? st.Ptr : Errors.TypeErrorOccurred(obj, typeof(Struct));
+		public static object ObjGetDataPtr(object obj) => obj switch
+		{
+			Struct st => st.Ptr,
+			KeysharpObject instance when Script.TheScript.ExternalDataPointers.TryGetValue(instance, out var pointer) => pointer.Value,
+			KeysharpObject => Errors.ErrorOccurred("Operation failed."),
+			_ => Errors.TypeErrorOccurred(obj, typeof(KeysharpObject))
+		};
 
 		/// <summary>Returns the size of the object's structure (typed properties), in bytes. [v2.1-alpha.3+]</summary>
-		public static object ObjGetDataSize(object obj) =>
-			obj is Struct st ? Struct.get_Size(st) : Errors.TypeErrorOccurred(obj, typeof(Struct));
+		public static object ObjGetDataSize(object obj) => obj switch
+		{
+			Struct st => Struct.get_Size(st),
+			Any { isPrototype: true } proto when Struct.IsStructType(proto.type) => Struct.GetSize(proto.type),
+			KeysharpObject => 0L,
+			_ => Errors.TypeErrorOccurred(obj, typeof(KeysharpObject))
+		};
 
-		/// <summary>Sets the address of the object's structured data (typed properties). [v2.1-alpha.3+]
-		/// (Slated for removal in AHK; prefer Struct.At.)</summary>
+		/// <summary>Sets the address used by a Struct.At or ObjCreateWithDataPtr instance.</summary>
 		public static object ObjSetDataPtr(object obj, object ptr)
 		{
-			if (obj is not Struct st)
-				return Errors.TypeErrorOccurred(obj, typeof(Struct));
+			if (obj is not (Struct or KeysharpObject))
+				return Errors.TypeErrorOccurred(obj, typeof(KeysharpObject));
 
-			// Since v2.1-alpha.27, only a boxed pointer created by StructClass.At() has a redirectable
-			// data pointer. An ordinary struct instance owns its storage and cannot be rebound.
-			if (!st.IsPointerView)
+			var pointer = obj is KeysharpObject instance && Script.TheScript.ExternalDataPointers.TryGetValue(instance, out var data) ? data : null;
+			if (obj is not Struct { IsPointerView: true } && pointer == null)
 				return Errors.ErrorOccurred("Operation failed.");
 
 			if (!ptr.CoerceLong(out var ptrVal))
 				return DefaultObject;
 
-			st.SetDataPtr(ptrVal);
+			if (obj is Struct st)
+				st.SetDataPtr(ptrVal);
+			else
+				pointer.Value = ptrVal;
 			return Script.DefaultObject;
 		}
 

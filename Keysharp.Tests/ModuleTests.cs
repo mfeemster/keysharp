@@ -234,7 +234,7 @@ public partial class ModuleTests : TestRunner
 				_ = Directory.CreateDirectory(Path.GetDirectoryName(file));
 				File.WriteAllText(file, "#ErrorStdOut\n#Warn All, StdOut\n" + source);
 			}
-			Environment.SetEnvironmentVariable("AhkLibPath", "Libraries;%A_LineFile%\\..\\LineLibraries");
+			Environment.SetEnvironmentVariable("AhkLibPath", "Missing;Libraries;MissingAgain;Libraries;%A_LineFile%\\..\\LineLibraries");
 			var output = RunScript(Path.Combine(root, "main.ahk"), "module_search_paths", true, false);
 			Assert.That(output.Trim(), Is.EqualTo("pass"), output);
 		}
@@ -258,6 +258,14 @@ public partial class ModuleTests : TestRunner
 			"Foo() {\n#Import KS as Shared\n#Import AHK as Shared\n}\n",
 			"Foo() {\nstatic Shared\n#Import KS { Cosh as Shared }\n}\n",
 			"Foo() {\nglobal Shared\n#Import KS { Cosh as Shared }\n}\n",
+			"Foo() {\nlocal Shared\n#Import KS { Cosh as Shared }\n}\n",
+			"Foo() {\n#Import KS { Cosh as Shared }\nlocal sHaReD := 1\n}\n",
+			"Foo() {\n#Import KS as Shared\nif true {\nlocal Shared\n}\n}\n",
+			"Foo(Shared) {\n#Import KS { Cosh as Shared }\n}\n",
+			"Foo(&Shared) {\n#Import KS as Shared\n}\n",
+			"Foo(Shared*) {\n#Import KS { Cosh as Shared }\n}\n",
+			"Foo() {\n#Import KS { Cosh as Shared }\nShared() => 1\n}\n",
+			"Foo() {\n#Import KS { Cosh as Shared }\nHolder := Shared(x) => x\n}\n",
 			"#Import Source { Value as Shared }\nShared() => 1\n#Module Source\nValue := 1\n",
 			"#Import Source { Value as Shared }\nHolder := Shared(x) => x\n#Module Source\nValue := 1\n",
 			"#Import Source { Value as Shared }\nclass Shared {\n}\n#Module Source\nValue := 1\n",

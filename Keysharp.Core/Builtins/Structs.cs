@@ -60,6 +60,7 @@ namespace Keysharp.Builtins
 		private long ownedSize;
 		private long borrowedPtr;
 		private bool isPointerView;
+		private bool callDeleteOnPointerView;
 		private bool disposed;
 		// The structs handed out for nested and pointer fields, by field name, so a field reads back as the same object.
 		private Dictionary<string, Struct> nestedViews;
@@ -97,8 +98,8 @@ namespace Keysharp.Builtins
 		public long Ptr => owned != 0 ? owned : borrowedPtr;
 		internal bool IsPointerView => isPointerView;
 
-		// As in AutoHotkey, a view of other memory is given no __Delete call.
-		internal override bool HasDeleteCall => !isPointerView
+		// Only ObjCreateWithDataPtr enables __Delete on a view of other memory.
+		internal override bool HasDeleteCall => (!isPointerView || callDeleteOnPointerView)
 			&& (HasOwnPropInternal("__Delete") || _base is KeysharpObject { HasDeleteInChain: true });
 
 		// Resolved from the receiver rather than declared as an instance property, so that it also answers on a
@@ -122,16 +123,17 @@ namespace Keysharp.Builtins
 
 		public static object staticAt(object @this, object address)
 		{
-			if (@this is not Class cls)
-				return Errors.TypeErrorOccurred(@this, typeof(Class));
-
-			if (Script.GetPropertyValueOrNull(cls, "Prototype") is not Any proto)
-				return Errors.PropertyErrorOccurred("Struct class does not have a prototype.");
+			if (@this is not Class { InstancePrototype: { } proto }
+					|| GetStructType(proto) is not Type structType)
+				return Errors.ErrorOccurred("Invalid class.");
 
 			if (!address.CoerceLong(out var addr))
 				return DefaultObject;
 
-			return CreatePointerView(proto.type, proto, addr);
+			if ((nuint)addr < 65536 && GetSize(structType) != 0)
+				return Errors.InvalidParameterErrorOccurred(1, "Struct.At", address);
+
+			return CreatePointerView(structType, proto, addr);
 		}
 
 		// Base class for structured arrays (fixed-size, single element type). `Int32[10]` etc. are subclasses of this.
@@ -467,8 +469,15 @@ namespace Keysharp.Builtins
 			return proto;
 		}
 
+		internal bool HasCachedEmbeddedField(StructFieldInfo field) => field.Kind == StructPrimitiveKind.None
+			&& field.PointerTarget == null && nestedViews?.ContainsKey(field.Name) == true;
+
 		internal object GetFieldValue(StructFieldInfo field)
 		{
+			if (field.Kind == StructPrimitiveKind.None && field.PointerTarget == null
+					&& nestedViews?.TryGetValue(field.Name, out var nested) == true)
+				return nested;
+
 			var address = GetDataPointer() + field.Offset;
 
 			if (field.PointerTarget is Type targetType)
@@ -480,9 +489,6 @@ namespace Keysharp.Builtins
 			if (field.Kind != StructPrimitiveKind.None)
 				return ReadPrimitive(field.Kind, address);
 
-			if (nestedViews?.TryGetValue(field.Name, out var nested) == true && nested.Ptr == address)
-				return nested;
-
 			var proto = Script.TheScript.Vars.Prototypes[field.FieldType];
 			nested = CreatePointerView(field.FieldType, proto, address);
 			nestedViews ??= new(StringComparer.OrdinalIgnoreCase);
@@ -492,17 +498,15 @@ namespace Keysharp.Builtins
 
 		internal object SetFieldValue(StructFieldInfo field, object value)
 		{
-			var address = GetDataPointer() + field.Offset;
-
 			if (field.PointerTarget is Type targetType)
-				return SetPointerValue(address, value, targetType, field.FieldType, field.Name);
+				return SetPointerValue(GetDataPointer() + field.Offset, value, targetType, field.FieldType, field.Name);
 
 			if (field.Kind != StructPrimitiveKind.None)
 			{
 				if (IsStructInstance(value) && ((Struct)value).GetCurrentLayoutInfo().IsPrimitive)
 					value = ((Struct)value).GetPrimitiveValue();
 
-				WritePrimitive(field.Kind, address, value);
+				WritePrimitive(field.Kind, GetDataPointer() + field.Offset, value);
 				return value;
 			}
 
@@ -954,16 +958,8 @@ namespace Keysharp.Builtins
 			return ptr;
 		}
 
-		private void BindToPointer(long ptr)
-		{
-			ReleaseOwnedStorage();
-			borrowedPtr = ptr;
-			isPointerView = true;
-			nestedViews?.Clear();
-		}
-
-		// Backs ObjSetDataPtr: rebinds this struct to view an externally-supplied address (like Struct.At, but in place).
-		internal void SetDataPtr(long ptr) => BindToPointer(ptr);
+		// Rebinding does not move embedded objects already obtained from the view.
+		internal void SetDataPtr(long ptr) => borrowedPtr = ptr;
 
 		private static StructInfo GetLayoutInfo(Type type, bool lockFields)
 		{
@@ -1042,16 +1038,17 @@ namespace Keysharp.Builtins
 
 		private StructInfo GetCurrentLayoutInfo(bool lockFields = false) => layout ?? GetLayoutInfo(StructType, lockFields);
 
-		private static Struct CreatePointerView(Type viewType, Any proto, long address)
+		internal static Struct CreatePointerView(Type viewType, Any proto, long address, bool callDelete = false)
 		{
 			var info = GetLayoutInfo(viewType, true);
 			var instance = FastCtor.Call(viewType, null) as Struct;
 			instance.type = viewType;
 			instance.layout = info;
 			instance.SetBaseInternal(proto);
-			instance.BindToPointer(address);
-			//A view owns nothing, and as in AutoHotkey is given no __Delete call.
-			instance.HasFinalizer = false;
+			instance.borrowedPtr = address;
+			instance.isPointerView = true;
+			instance.callDeleteOnPointerView = callDelete;
+			instance.MaybeActivateFinalizer();
 			return instance;
 		}
 

@@ -5,7 +5,7 @@ namespace Keysharp.Builtins
     public class Class(params object[] args) : KeysharpObject(args)
     {
 		// Fixed at construction, independently of the mutable Base and Prototype properties.
-		internal Type OperatorType;
+		internal Any InstancePrototype;
 
 		public new static object staticCall(object @this, params object[] args)
         {
@@ -28,8 +28,7 @@ namespace Keysharp.Builtins
             }
             args = args[skip..^0];
 
-			var baseProto = Script.GetPropertyValueOrNull(baseClass, "Prototype") as Any;
-			if (baseProto == null)
+			if (baseClass is not Class { InstancePrototype: { } baseProto } original)
 				return Errors.ErrorOccurred("The base class must have a prototype");
 
 			var baseType = baseProto.type;
@@ -37,10 +36,7 @@ namespace Keysharp.Builtins
 			var userType = isStruct ? Struct.CreateDynamicStructType(name, baseType) : baseType;
 			if (isStruct)
 				TheScript.Operators.RegisterAlias(userType, baseType);
-			var staticType = baseClass.GetType();
-			Any staticInst = (Any)RuntimeHelpers.GetUninitializedObject(staticType);
-			if (staticInst is Class created && baseClass is Class original)
-				created.OperatorType = original.OperatorType;
+			var staticInst = (Class)RuntimeHelpers.GetUninitializedObject(original.GetType());
 
 			staticInst.SetBaseInternal(baseClass);
             staticInst.type = userType;
@@ -51,6 +47,7 @@ namespace Keysharp.Builtins
             proto.SetBaseInternal(baseProto);
 			proto.DefinePropInternal("__Class", new OwnPropsDesc(name));
 			staticInst.DefinePropInternal("Prototype", new OwnPropsDesc(proto));
+			staticInst.InstancePrototype = proto;
 
 			_ = Script.InvokeMeta(staticInst, "__New", args);
 
@@ -66,6 +63,9 @@ namespace Keysharp.Builtins
 			if ((own ?? Script.GetPropertyValueOrNull(this, "Prototype")) is not Any proto)
 				return Errors.TypeErrorOccurred("This class has no Prototype to create an instance from.");
 
+			if (!CanConstruct(proto.type))
+				return Errors.ValueErrorOccurred("Invalid base.");
+
 			var kso = FastCtor.Call(proto.type, null) as Any;
 			kso.type = proto.type;
 
@@ -78,6 +78,9 @@ namespace Keysharp.Builtins
 			Script.InvokeMeta(kso, "__New", args);
             return kso;
 		}
+
+		internal static bool CanConstruct(Type type) => type != null && typeof(Any).IsAssignableFrom(type)
+			&& !typeof(RegExMatchInfo).IsAssignableFrom(type);
 	}
 
     // Every prototype object is one of these, and Type() reports "Prototype" for it, but as in AutoHotkey no global

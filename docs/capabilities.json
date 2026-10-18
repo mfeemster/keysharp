@@ -261,7 +261,7 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "full",
-                     "notes":  "Imports modules or names with shared variable storage. Function imports are lexical and reject the Export modifier; class and block imports are Keysharp extensions. Lookup searches the directive file directory, module directory and main script directory, then AhkLibPath or the default library directories. Relative AhkLibPath entries and A_LineFile use the module root file.",
+                     "notes":  "Imports modules or names with shared variable storage. Function imports are lexical and reject the Export modifier and conflicting declarations in the same scope, including locals and parameters; class and block imports are Keysharp extensions. Lookup searches the directive file directory, module directory and main script directory, then AhkLibPath or the default library directories. Relative AhkLibPath entries and A_LineFile use the module root file.",
                      "tested-by":  "module-export.ahk; module-basic.ahk; module-import.ahk; module-scoped-import.ahk; module-object-members.ahk; module-extends.ahk; module-wildcard-own-vars.ahk; ModuleTests.FileIdentity; ModuleTests.SearchPaths; ModuleTests.ImportDiagnostics; directive-csharp-modules.ahk; ParserTests.DistinctCaseModuleSearchDirectories"
                  },
                  {
@@ -1312,7 +1312,7 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "full",
-                     "notes":  "AutoHotkey compatibility target: 2.1-alpha.35.",
+                     "notes":  "AutoHotkey compatibility target: 2.1-alpha.36.",
                      "tested-by":  "props-script-properties.ahk"
                  },
                  {
@@ -3176,8 +3176,8 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "full",
-                     "notes":  "Returns a shallow copy of an array.",
-                     "tested-by":  "collections-array.ahk"
+                     "notes":  "Returns a shallow copy of an array. An instance created by ObjCreateWithDataPtr raises TypeError.",
+                     "tested-by":  "collections-array.ahk; struct-pack.ahk"
                  },
                  {
                      "category":  "Collections",
@@ -3517,8 +3517,8 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "full",
-                     "notes":  "Keysharp extension. Returns a buffer of the same class and size holding a copy of the bytes, where AutoHotkey raises a TypeError.",
-                     "tested-by":  "class-special-funcs.ahk"
+                     "notes":  "Keysharp extension. Returns a buffer of the same class and size holding a copy of the bytes, where AutoHotkey raises a TypeError. An instance created by ObjCreateWithDataPtr raises TypeError.",
+                     "tested-by":  "class-special-funcs.ahk; struct-pack.ahk"
                  },
                  {
                      "category":  "Core Language",
@@ -7956,8 +7956,8 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "full",
-                     "notes":  "Returns a shallow copy of all of the values and keys of the map.",
-                     "tested-by":  "collections-map.ahk"
+                     "notes":  "Returns a shallow copy of all of the values and keys of the map. An instance created by ObjCreateWithDataPtr raises TypeError.",
+                     "tested-by":  "collections-map.ahk; struct-pack.ahk"
                  },
                  {
                      "category":  "Collections",
@@ -8951,13 +8951,25 @@
                  },
                  {
                      "category":  "Core Language",
+                     "feature":  "ObjCreateWithDataPtr()",
+                     "syntax":  "ObjCreateWithDataPtr(ClassObj, Address)",
+                     "windows":  "full",
+                     "linux_x11":  "full",
+                     "linux_wayland":  "full",
+                     "macos":  "full",
+                     "notes":  "Creates a directly constructible Object or Struct instance with an external data pointer, without calling __Init, __New or static Call. Enables __Delete without freeing the external memory; ObjSetDataPtr can rebind it. Typed properties remain restricted to struct classes.",
+                     "tested-by":  "struct-pack.ahk; class-special-funcs.ahk"
+                 },
+                 {
+                     "category":  "Core Language",
                      "feature":  "ObjGetDataPtr()",
                      "syntax":  "",
                      "windows":  "full",
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "full",
-                     "notes":  "Returns the address of the object\u0027s structured data (typed properties)."
+                     "notes":  "Returns the address of structured data or the external data pointer attached by ObjCreateWithDataPtr.",
+                     "tested-by":  "struct-pack.ahk"
                  },
                  {
                      "category":  "Core Language",
@@ -8967,7 +8979,8 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "full",
-                     "notes":  "Returns the size of the object\u0027s structure (typed properties), in bytes."
+                     "notes":  "Returns the size of the object's structure (typed properties), in bytes. Accepts struct prototypes and returns zero for ordinary objects.",
+                     "tested-by":  "struct-pack.ahk"
                  },
                  {
                      "category":  "Core Language",
@@ -9043,8 +9056,8 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "full",
-                     "notes":  "Sets an object\u0027s base object. The native type cannot change and the base chain may not become circular. Neither object may have typed properties, since those fix the memory layout; a prototype which has none is writable.",
-                     "tested-by":  "class-prototype.ahk"
+                     "notes":  "Sets an object's base object. The native type cannot change and the base chain may not become circular. Neither object may have typed properties, since those fix the memory layout; a prototype which has none is writable. A Struct.At view or ObjCreateWithDataPtr instance has a read-only base.",
+                     "tested-by":  "class-prototype.ahk; struct-pack.ahk"
                  },
                  {
                      "category":  "Core Language",
@@ -9065,7 +9078,8 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "full",
-                     "notes":  "Sets the address of the object\u0027s structured data. (Slated for removal in AHK; prefer Struct.At.)"
+                     "notes":  "Rebinds the external data pointer of a Struct.At view or an object created by ObjCreateWithDataPtr. Other instances cannot be rebound.",
+                     "tested-by":  "struct-pack.ahk"
                  },
                  {
                      "category":  "Clipboard",
@@ -9804,8 +9818,8 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "full",
-                     "notes":  "RegExMatch result. __Enum([NumberOfVars]) includes the whole match at 0; omitted or zero adapts to value or name/index-and-value outputs, while 1 or 2 fixes the mode and argument count.",
-                     "tested-by":  "string-regexmatch.ahk; flow-enum.ahk"
+                     "notes":  "RegExMatch result. Direct construction, including subclasses using the default Call, raises ValueError. __Enum([NumberOfVars]) includes the whole match at 0; omitted or zero adapts to value or name/index-and-value outputs, while 1 or 2 fixes the mode and argument count.",
+                     "tested-by":  "string-regexmatch.ahk; flow-enum.ahk; class-builtin-visibility.ahk"
                  },
                  {
                      "category":  "Core Language",

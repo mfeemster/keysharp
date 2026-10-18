@@ -772,7 +772,7 @@ namespace Keysharp.Runtime
 				{
 					if (field.StructField != null)
 					{
-						if (item is not Struct setStruct || setStruct.Ptr == 0)
+						if (item is not Struct setStruct || setStruct.Ptr == 0 && !setStruct.HasCachedEmbeddedField(field.StructField))
 							return Errors.ErrorOccurred("Property invalid for object with null data.", null, namestr);
 						return argCount > 1 ? SetPropertyResultIndex(setStruct.GetFieldValue(field.StructField)) : setStruct.SetFieldValue(field.StructField, value);
 					}

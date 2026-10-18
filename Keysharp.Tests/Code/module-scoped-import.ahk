@@ -103,9 +103,9 @@ class Outer {
 }
 AssertEq(Outer.Inner().Compute(), 1, A_LineNumber)
 
-; An explicit local shadows an import.
+; An explicit local shadows a wildcard import.
 FnShadow() {
-    #import KS { Cosh }
+    #import KS { * }
     local Cosh := 5
     return Cosh
 }

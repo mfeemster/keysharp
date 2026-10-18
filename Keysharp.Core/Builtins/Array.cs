@@ -133,6 +133,9 @@ public class Array : KeysharpObject, I__Enum, IEnumerable<object>, IEnumerable<(
 	/// </summary>
 	public new object Clone()
 	{
+		if (Objects.HasExternalDataPointer(this))
+			return Errors.TypeErrorOccurred("An object holding structured data cannot be cloned.");
+
 		var clone = (Array)MemberwiseClone();
 		clone.array = clone.array.ToList();
 		clone.array.Capacity = array.Capacity;

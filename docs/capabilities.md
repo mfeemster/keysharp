@@ -33,7 +33,7 @@ Status legend:
 | #HotIfTimeout | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | The #HotIfTimeout directive sets the maximum time that may be spent evaluating a single #HotIf expression. |
 | #Hotstring | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Changes hotstring options or ending characters. Keysharp adds `I<n>` (0 through 100), setting a hotstring default that overrides #InputLevel. Invalid options raise ValueError. |
 | #If | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Begins a conditional compilation block. |
-| #Import | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Imports modules or names with shared variable storage. Function imports are lexical and reject the Export modifier; class and block imports are Keysharp extensions. Lookup searches the directive file directory, module directory and main script directory, then AhkLibPath or the default library directories. Relative AhkLibPath entries and A_LineFile use the module root file. |
+| #Import | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Imports modules or names with shared variable storage. Function imports are lexical and reject the Export modifier and conflicting declarations in the same scope, including locals and parameters; class and block imports are Keysharp extensions. Lookup searches the directive file directory, module directory and main script directory, then AhkLibPath or the default library directories. Relative AhkLibPath entries and A_LineFile use the module root file. |
 | #Include | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Includes the specified file at this position. Library lookup keeps module-root/Lib and main-script/Lib first, followed by AhkLibPath or the default libraries. v2.1 library includes search the directive file directory first, try exact filenames before suffixes and have no underscore fallback; v2.0 uses suffixes and repeated last-underscore fallback. Backslash path separators work on all platforms. |
 | #IncludeAgain | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Includes the specified file at this position even if already included. Uses the same library search path, compatibility-mode rules and cross-platform path separators as #Include. |
 | #InputLevel | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Sets the default input level (0 through 100, omitted: 0) for subsequent hotkeys and hotstrings without an explicit I default. Invalid values are rejected during parsing. |
@@ -120,7 +120,7 @@ Status legend:
 | >>>= | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Compound assignment operator |
 | 1, 2, 3 | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Comma operator evaluates expressions left-to-right and returns the last value. |
 | A_AhkPath | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | The full path to the executable compiling the script. For compiled scripts, it's the path to the compiled executable. |
-| A_AhkVersion | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | AutoHotkey compatibility target: 2.1-alpha.35. |
+| A_AhkVersion | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | AutoHotkey compatibility target: 2.1-alpha.36. |
 | A_AllowMainWindow | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Built-in variable. |
 | A_AppData | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Built-in variable. %APPDATA% on Windows; $XDG_CONFIG_HOME else ~/.config on Linux; ~/Library/Application Support on macOS. |
 | A_AppDataCommon | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Built-in variable. %ProgramData% on Windows; the first entry of $XDG_CONFIG_DIRS else /etc/xdg on Linux; /Library/Application Support on macOS. Writable only by an administrator, like %ProgramData%. |
@@ -302,7 +302,7 @@ Status legend:
 | Array.__Item | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Indexer property for getting or setting array elements. In v2.1 mode, a non-integer index raises TypeError; an integer outside the bounds raises IndexError. |
 | Array.__New() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Constructs a new Array object. |
 | Array.Capacity | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Gets or sets the reserved element capacity. |
-| Array.Clone() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Returns a shallow copy of an array. |
+| Array.Clone() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Returns a shallow copy of an array. An instance created by ObjCreateWithDataPtr raises TypeError. |
 | Array.Contains() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Keysharp-specific Array method. Omitting the value searches for an element which has no value. |
 | Array.Default | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Default value returned for missing indexes. |
 | Array.Delete() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Unsets an element and returns its previous value. In v2.1 mode, a non-integer index raises TypeError; an integer outside the bounds raises ValueError. |
@@ -349,7 +349,7 @@ Status legend:
 | Buffer() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | The Buffer object encapsulates a block of memory for use with advanced techniques such as DllCall, structures, StrPut and raw file I/O. |
 | Buffer.__Item[] | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Keysharp extension. Indexer for reading/writing bytes in Buffer by offset. |
 | Buffer.__New() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Constructs a new Buffer object. |
-| Buffer.Clone() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Keysharp extension. Returns a buffer of the same class and size holding a copy of the bytes, where AutoHotkey raises a TypeError. |
+| Buffer.Clone() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Keysharp extension. Returns a buffer of the same class and size holding a copy of the bytes, where AutoHotkey raises a TypeError. An instance created by ObjCreateWithDataPtr raises TypeError. |
 | CallbackCreate() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Creates a native callback address which redirects to a script function. Supports both parameter-count callbacks and typed parameter/return signatures on every platform. |
 | CallbackFree() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Releases a live address returned by CallbackCreate; an invalid or already-freed address raises ValueError. |
 | CaretGetPos() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Retrieves the caret position. If no caret position is available, it returns false and sets both output variables to blank. Linux uses native GTK geometry for script-owned controls and AT-SPI for foreign applications, normalizing Wayland-local coordinates through compositor window geometry when needed. macOS uses the Accessibility API and requires Accessibility permission. |
@@ -794,7 +794,7 @@ Status legend:
 | Map.Capacity | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Gets or sets the internal capacity for map entries. |
 | Map.CaseSense | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Retrieves or sets the map's case sensitivity setting. |
 | Map.Clear() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Clears all key/value pairs in a map. |
-| Map.Clone() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Returns a shallow copy of all of the values and keys of the map. |
+| Map.Clone() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Returns a shallow copy of all of the values and keys of the map. An instance created by ObjCreateWithDataPtr raises TypeError. |
 | Map.Count | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Number of key/value pairs in the map. |
 | Map.Default | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Default value returned for missing keys. |
 | Map.Delete() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Deletes a key/value pair and returns its value. A missing key raises UnsetItemError, or returns unset in v2.1 compatibility mode. |
@@ -872,23 +872,24 @@ Status legend:
 | NumPut() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | The NumPut function stores one or more numbers in binary format at the specified address+offset. Each type is a name or a numeric type class such as UInt32; a type or value which does not name a number raises a ValueError. |
 | ObjAddRef() | 🟢 Full | 🔴 Unsupported | 🔴 Unsupported | 🔴 Unsupported | The ObjAddRef and ObjRelease functions increment or decrement an object's reference count. |
 | ObjBindMethod() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | The ObjBindMethod function creates a BoundFunc object which calls a method of a given object. |
+| ObjCreateWithDataPtr() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Creates a directly constructible Object or Struct instance with an external data pointer, without calling __Init, __New or static Call. Enables __Delete without freeing the external memory; ObjSetDataPtr can rebind it. Typed properties remain restricted to struct classes. |
 | Object() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Creates a new Object; optional key/value arguments initialize own properties. |
 | Object.__Ref() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Returns a property-reference (PropRef) object. |
 | ObjFromPtr() | 🟢 Full | 🔴 Unsupported | 🔴 Unsupported | 🔴 Unsupported | Retrieves the managed object for an IUnknown pointer, or creates a native COM wrapper which takes ownership of the supplied native reference. Returning a managed object does not consume a native reference. |
 | ObjFromPtrAddRef() | 🟢 Full | 🔴 Unsupported | 🔴 Unsupported | 🔴 Unsupported | Retrieves the managed object for an IUnknown pointer, or creates a native COM wrapper which owns an additional native reference. Returning a managed object does not add a native reference. The caller retains ownership of any reference it supplied. |
 | ObjGetBase | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Retrieves the value's base object. Differs in that it only returns the name of the base type as a string. |
 | ObjGetCapacity() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Returns own-property storage capacity; structs raise TypeError. |
-| ObjGetDataPtr() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Returns the address of the object's structured data (typed properties). |
-| ObjGetDataSize() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Returns the size of the object's structure (typed properties), in bytes. |
+| ObjGetDataPtr() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Returns the address of structured data or the external data pointer attached by ObjCreateWithDataPtr. |
+| ObjGetDataSize() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Returns the size of the object's structure (typed properties), in bytes. Accepts struct prototypes and returns zero for ordinary objects. |
 | ObjHasOwnProp() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Checks for an own property; structs raise TypeError. |
 | ObjOwnPropCount() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Counts own properties; structs raise TypeError. |
 | ObjOwnProps | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Enumerates own properties; structs raise TypeError. |
 | ObjPtr() | 🟢 Full | 🔴 Unsupported | 🔴 Unsupported | 🔴 Unsupported | Returns an Integer containing the object's IUnknown address without adding a native reference. Keep the object alive while using the pointer. |
 | ObjPtrAddRef() | 🟢 Full | 🔴 Unsupported | 🔴 Unsupported | 🔴 Unsupported | Returns an Integer containing the object's IUnknown address and adds a native reference, released with ObjRelease. This also applies to the COM wrappers of managed objects. |
 | ObjRelease() | 🟢 Full | 🔴 Unsupported | 🔴 Unsupported | 🔴 Unsupported | The ObjAddRef and ObjRelease functions increment or decrement an object's reference count. |
-| ObjSetBase() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Sets an object's base object. The native type cannot change and the base chain may not become circular. Neither object may have typed properties, since those fix the memory layout; a prototype which has none is writable. |
+| ObjSetBase() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Sets an object's base object. The native type cannot change and the base chain may not become circular. Neither object may have typed properties, since those fix the memory layout; a prototype which has none is writable. A Struct.At view or ObjCreateWithDataPtr instance has a read-only base. |
 | ObjSetCapacity() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Ensures capacity instead of setting an exact size; structs raise TypeError. |
-| ObjSetDataPtr() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Sets the address of the object's structured data. (Slated for removal in AHK; prefer Struct.At.) |
+| ObjSetDataPtr() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Rebinds the external data pointer of a Struct.At view or an object created by ObjCreateWithDataPtr. Other instances cannot be rebound. |
 | OnClipboardChange() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Registers callbacks for native platform clipboard content changes. |
 | OnError() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Registers callbacks for errors nothing catches. An error reaches them where it is raised, before the stack unwinds, or, once it passes a try statement with catches, in mode Exit after that statement's finally. |
 | OnExit() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Runs exit callbacks; auto-execute failures report Error. Linux/macOS SIGTERM reports Close, or Reload during a pending reload; a second signal during exit terminates immediately. |
@@ -929,7 +930,7 @@ Status legend:
 | RegDeleteKey() | 🟢 Full | 🔴 Unsupported | 🔴 Unsupported | 🔴 Unsupported | Deletes a key from the registry. |
 | RegExMatch() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Searches a string for a regular expression match. When there is no match the output variable is left unset (blank in v2.0 compatibility mode). |
 | RegExMatchCs() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Runs .NET/C# regex match and returns match details. |
-| RegExMatchInfo | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | RegExMatch result. __Enum([NumberOfVars]) includes the whole match at 0; omitted or zero adapts to value or name/index-and-value outputs, while 1 or 2 fixes the mode and argument count. |
+| RegExMatchInfo | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | RegExMatch result. Direct construction, including subclasses using the default Call, raises ValueError. __Enum([NumberOfVars]) includes the whole match at 0; omitted or zero adapts to value or name/index-and-value outputs, while 1 or 2 fixes the mode and argument count. |
 | RegExReplace() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Replaces text matching a regular expression pattern. |
 | RegExReplaceCs() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Runs .NET/C# regex replace. |
 | Registry APIs | 🟢 Full | 🔴 Unsupported | 🔴 Unsupported | 🔴 Unsupported | Windows Registry APIs are Windows-only. |

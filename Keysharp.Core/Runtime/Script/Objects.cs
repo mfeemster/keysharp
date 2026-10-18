@@ -7,6 +7,8 @@ namespace Keysharp.Runtime
 {
 	public partial class Script
 	{
+		internal readonly ConditionalWeakTable<KeysharpObject, StrongBox<long>> ExternalDataPointers = new();
+
 		public static void InitClass(Type t, Type alias = null)
 		{
 			var script = Script.TheScript;
@@ -17,7 +19,7 @@ namespace Keysharp.Runtime
 				return;
 
 			Prototype proto = new Prototype(t);
-			Class staticInst = new Class { OperatorType = t };
+			Class staticInst = new Class { InstancePrototype = proto };
 			var isModuleType = typeof(Module).IsAssignableFrom(t);
 
 			store.Statics.AddLazy(t, () =>

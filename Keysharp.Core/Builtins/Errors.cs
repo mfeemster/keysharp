@@ -751,7 +751,7 @@ namespace Keysharp.Builtins
 		/// </summary>
 		/// <param name="args">The parameters to pass to the base.</param>
 		public ArgumentError(params object[] args)
-			: base(args.Length != 0 ? args : ["A required parameter was omitted or unset."])
+			: base(args is { Length: 0 } ? ["A required parameter was omitted or unset."] : args)
 		{
 		}
 	}

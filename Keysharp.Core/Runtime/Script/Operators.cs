@@ -239,7 +239,7 @@ public sealed class OperatorRegistry
 
 	public bool TryInvoke(OperatorKind kind, object left, object right, out object result)
 	{
-		var classType = (left as Class)?.OperatorType;
+		var classType = (left as Class)?.InstancePrototype?.type;
 		if (left != null && Volatile.Read(ref tables).TryGetValue(classType ?? left.GetType(), out var entry))
 		{
 			var table = classType != null ? entry.Static : entry.Instance;

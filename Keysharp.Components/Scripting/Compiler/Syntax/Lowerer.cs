@@ -6226,8 +6226,12 @@ namespace Keysharp.Compilation.Syntax
 			{
 				importFrame.Owner = scope;
 				foreach (var (name, binding) in importFrame.Named)
-					if (scope.Statics.ContainsKey(name) || scope.Globals.Contains(name))
-						Diag($"{NodeAnchor(binding.Directive)}This import declaration conflicts with an existing {(scope.Statics.ContainsKey(name) ? "static" : "global")} variable: {name}");
+					if (scope.Own(name).Storage != VarStorage.None)
+					{
+						var kind = scope.Closures.Contains(name) ? "Func"
+							: Keysharp.Builtins.Errors.DeclarationKind(scope.Kinds.GetValueOrDefault(name, VarKind.Global));
+						Diag($"{NodeAnchor(binding.Directive)}This import declaration conflicts with an existing {kind}: {name}");
+					}
 			}
 			scope.Params = paramDefaults;
 			(scope.Inner, scope.Impl) = (capturing, funcName);

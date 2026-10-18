@@ -6,7 +6,9 @@
 #import __Main
 #import KS { Collect, StringBuffer }
 #Include <assert>
-gval := 0, gtext := "", gdefined := 0, gclones := 0, gvarref := 0, gstructs := 0, gheld := 0, gkept := ""
+gval := 0, gtext := "", gdefined := 0, gclones := 0, gvarref := 0, gstructs := 0, gstructdata := 0, gdata := 0, gheld := 0, gkept := ""
+dataBuffer := Buffer(4, 0)
+NumPut("Int", 37, dataBuffer)
 
 class testclass
 {
@@ -36,8 +38,8 @@ AssertEq(gval, 999, A_LineNumber)
 
 ; A built-in type's subclass is collected the same way, and its __Delete, or that of an object holding it, still reads
 ; its memory. A __Delete defined on an object at run time counts too, and so does a clone, as a separate object. Only an
-; Object or a Struct with memory of its own is given a __Delete call, as in AutoHotkey, so neither a VarRef, a view of
-; another Struct's memory nor a prototype is, whatever defines it. An object its __Delete keeps stays usable.
+; Object or a Struct created normally or by ObjCreateWithDataPtr is given a __Delete call, as in AutoHotkey, so neither
+; a VarRef, a Struct.At view nor a prototype is, whatever defines it. An object its __Delete keeps stays usable.
 class DeletedBuffer extends Buffer
 {
 	__Delete() => __Main.gval := NumGet(this, 0, "UChar")
@@ -70,6 +72,17 @@ struct DeletedStruct
 	__Delete() => __Main.gstructs += 1
 }
 
+class DeletedDataObject
+{
+	__Delete() => __Main.gdata := this
+}
+
+struct DeletedDataStruct
+{
+	Number : Int32
+	__Delete() => __Main.gstructdata := this.Number
+}
+
 MakeCollectable()
 {
 	DeletedBuffer(16, 42)
@@ -83,6 +96,9 @@ MakeCollectable()
 	VarRef(1)
 	owner := DeletedStruct()
 	DeletedStruct.At(owner.Ptr)
+	ObjCreateWithDataPtr(DeletedStruct, 0)
+	ObjCreateWithDataPtr(DeletedDataObject, __Main.dataBuffer.Ptr)
+	ObjCreateWithDataPtr(DeletedDataStruct, __Main.dataBuffer.Ptr)
 }
 
 gval := 0
@@ -90,7 +106,7 @@ Object.Prototype.DefineProp.Call(VarRef.Prototype, "__Delete", {Call: (*) => __M
 MakeCollectable()
 timeout := A_TickCount + 2000
 
-while ((gval != 42 || gheld != 7 || !IsObject(gkept) || gtext != "kept" || gdefined != 1 || gclones != 2 || gstructs != 1) && A_TickCount < timeout)
+while ((gval != 42 || gheld != 7 || !IsObject(gkept) || gtext != "kept" || gdefined != 1 || gclones != 2 || gstructs != 2 || gstructdata != 37 || !IsObject(gdata)) && A_TickCount < timeout)
 {
 	Sleep(100)
 	Collect()
@@ -106,7 +122,10 @@ AssertEq(NumGet(gkept, 0, "UChar"), 9, A_LineNumber)
 AssertEq(gtext, "kept", A_LineNumber)
 AssertEq(gdefined, 1, A_LineNumber)
 AssertEq(gclones, 2, A_LineNumber)
-AssertEq(gstructs, 1, A_LineNumber)
+AssertEq(gstructs, 2, A_LineNumber)
+AssertEq(gstructdata, 37, A_LineNumber)
+AssertEq(NumGet(ObjGetDataPtr(gdata), "UChar"), 37, A_LineNumber)
+AssertEq(NumGet(dataBuffer, "UChar"), 37, A_LineNumber)
 AssertEq(gvarref, 0, A_LineNumber)
 Object.Prototype.DeleteProp.Call(VarRef.Prototype, "__Delete")
 
