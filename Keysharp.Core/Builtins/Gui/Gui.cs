@@ -1819,6 +1819,14 @@ namespace Keysharp.Builtins
 				ctrl.BackColor = Color.Transparent;
 			else if (opts.bgcolor.HasValue)
 				ctrl.BackColor = opts.bgcolor.Value;
+#if WINDOWS
+			else if (ctrl is KeysharpButton or KeysharpProgressBar or KeysharpStatusStrip or KeysharpActiveX or IWebViewBackend)
+				// These WinForms controls otherwise inherit a colored parent's background.
+				ctrl.BackColor = Forms.Control.DefaultBackColor;
+
+			if (ctrl is KeysharpButton button)
+				button.UseVisualStyleBackColor = !opts.bgtrans && (!opts.bgcolor.HasValue || opts.bgcolor.Value == Forms.Control.DefaultBackColor);
+#endif
 
 			SetContentAlignment(ctrl, opts);
 

@@ -767,7 +767,12 @@ namespace Keysharp.Builtins
 				if (opts.bgtrans)
 					_control.BackColor = Color.Transparent;
 				else if (opts.bgcolor.HasValue)
+				{
 					_control.BackColor = opts.bgcolor.Value;
+
+					if (_control is KeysharpButton button)
+						button.UseVisualStyleBackColor = opts.bgcolor.Value == Forms.Control.DefaultBackColor;
+				}
 
 				if (opts.altsubmit.HasValue)
 					AltSubmit = opts.altsubmit.Value;
