@@ -2697,7 +2697,7 @@ namespace Keysharp.Internals.Input.Keyboard
 			// WinXP.  I already tried adding delays between the keystrokes and it didn't help.
 
 			// Caller relies upon us to stop upon reaching the first non-digit character:
-			for (var index = 0; ascii[index] >= 48 && ascii[index] <= 57; ++index)//48 and 57 are 0 and 9.
+			for (var index = 0; index < ascii.Length && ascii[index] >= 48 && ascii[index] <= 57; ++index)//48 and 57 are 0 and 9.
 			{
 				// A comment from AutoIt3: ASCII 0 is 48, NUMPAD0 is 96, add on 48 to the ASCII.
 				// Also, don't do WinDelay after each keypress in this case because it would make
