@@ -8,11 +8,12 @@ public class ProviderDeploymentTests : TestRunner
 	{
 		Assert.IsTrue(Keysharp.Internals.Os.PackageProviderRegistry.TryGetPayload("nuget", out var payload),
 			"the test host must ship the NuGet provider under components/packages/nuget");
-		Assert.That(payload.Files.Count, Is.EqualTo(16),
-			"provider.json plus its explicit 15-file payload should be the complete provider directory");
+		Assert.That(payload.Files.Count, Is.EqualTo(17),
+			"provider.json plus its explicit 16-file payload should be the complete provider directory");
 		Assert.IsTrue(payload.Files.Any(path => Path.GetFileName(path).Equals("NuGet.Commands.dll", StringComparison.OrdinalIgnoreCase)));
 		Assert.IsTrue(payload.Files.Any(path => Path.GetFileName(path).Equals("NuGet.Credentials.dll", StringComparison.OrdinalIgnoreCase)));
 		Assert.IsTrue(payload.Files.Any(path => Path.GetFileName(path).Equals("Keysharp.Components.Packages.NuGet.deps.json", StringComparison.OrdinalIgnoreCase)));
+		Assert.IsTrue(payload.Files.Any(path => Path.GetFileName(path).Equals("System.Security.Cryptography.Pkcs.dll", StringComparison.OrdinalIgnoreCase)));
 
 		var forbidden = new[] { "Keysharp.Core", "Microsoft.CodeAnalysis", "PCRE", "BitFaster", "Semver", "System.Management" };
 		Assert.That(payload.Files.Any(path => forbidden.Any(name =>
