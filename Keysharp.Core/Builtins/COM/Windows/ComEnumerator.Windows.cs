@@ -44,7 +44,8 @@ namespace Keysharp.Builtins.COM
 		internal static Enumerator CreateCallbackEnumerator(ComObject source, int count) =>
 			new Enumerator(source, count, new KeysharpFunc((params object[] args) => source.RawInvokeMethod(null, (object[])args.Clone())));
 
-		internal static unsafe Enumerator CreateEnumerator(nint pointer, object source = null, int count = 2)
+		// A native result has no selected output count, so its caller can request the value and optionally its type.
+		internal static unsafe Enumerator CreateEnumerator(nint pointer, object source = null, int count = 0)
 		{
 			var owner = new ComValue(VarEnum.VT_UNKNOWN, (long)pointer);
 			// IEnumVARIANT follows IUnknown's three vtable slots: Next is 3 and Reset is 5.

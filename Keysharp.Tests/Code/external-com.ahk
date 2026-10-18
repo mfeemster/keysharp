@@ -1,10 +1,13 @@
 #NoTrayIcon
+#ErrorStdOut
+#Warn All, StdOut
 
 #import KS { RunScript }
 #Include <assert>
 shell := ComObject("WScript.Shell")
-exec := shell.Exec("Notepad.exe")
-exec := shell.Run("Notepad.exe")
+exec := shell.Exec('"' A_ComSpec '" /D /C echo Keysharp')
+AssertEq(Trim(exec.StdOut.ReadAll(), " `t`r`n"), "Keysharp", A_LineNumber)
+AssertEq(shell.Run('"' A_ComSpec '" /D /C exit 7', 0, true), 7, A_LineNumber)
 
 dict := ComObject("Scripting.Dictionary")
 ; An interface queried from a COM object is a dispatch object, not an empty value.
@@ -60,6 +63,13 @@ for key, type in dict {
 	typedKeys[key] := true
 }
 AssertEq(typedKeys.Count, 4, A_LineNumber)
+
+nativeEnum := dict._NewEnum()
+Assert(nativeEnum(&nativeKey), A_LineNumber)
+Assert(dict.Exists(nativeKey), A_LineNumber)
+Assert(nativeEnum(&nativeKey, &nativeType), A_LineNumber)
+Assert(dict.Exists(nativeKey), A_LineNumber)
+AssertEq(nativeType, 8, A_LineNumber)
 
 dict.Remove("Country")
 
@@ -162,6 +172,9 @@ AssertEq(after, (before + 1), A_LineNumber)
 
 script := "
 (
+	#NoTrayIcon
+	#ErrorStdOut
+	#Warn All, StdOut
 	x := ComObjActive("{6B39CAA1-A320-4CB0-8DB4-352AA81E460E}")
 	x.1 := x.Count == 4
 	x.Delete(3)
