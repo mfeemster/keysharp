@@ -5787,11 +5787,11 @@
                      "category":  "Core Language",
                      "feature":  "Goto",
                      "syntax":  "",
-                     "windows":  "partial",
-                     "linux_x11":  "partial",
-                     "linux_wayland":  "partial",
-                     "macos":  "partial",
-                     "notes":  "Goto doesn\u0027t support expressions in Keysharp.",
+                     "windows":  "full",
+                     "linux_x11":  "full",
+                     "linux_wayland":  "full",
+                     "macos":  "full",
+                     "notes":  "A label in parentheses may be an expression, resolved when the Goto runs.",
                      "tested-by":  "flow-loop-switch-break-goto.ahk"
                  },
                  {
@@ -7327,11 +7327,12 @@
                      "category":  "Core Language",
                      "feature":  "IsLabel()",
                      "syntax":  "",
-                     "windows":  "partial",
-                     "linux_x11":  "partial",
-                     "linux_wayland":  "partial",
-                     "macos":  "partial",
-                     "notes":  "Does not support expressions."
+                     "windows":  "full",
+                     "linux_x11":  "full",
+                     "linux_wayland":  "full",
+                     "macos":  "full",
+                     "notes":  "Looks among the labels of the calling function, or of the auto-execute section outside any function.",
+                     "tested-by":  "flow-loop-switch-break-goto.ahk"
                  },
                  {
                      "category":  "Core Language",

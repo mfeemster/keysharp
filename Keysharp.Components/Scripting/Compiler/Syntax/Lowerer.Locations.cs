@@ -94,7 +94,8 @@ namespace Keysharp.Compilation.Syntax
 			if (LowerStmt(s) is not { } lowered)
 				return;
 
-			if (s is not (Block or LabelStmt or FunctionDecl or DirectiveStmt or BreakStmt or ContinueStmt or GotoStmt or ReturnStmt { Value: null }))
+			if (s is not (Block or LabelStmt or FunctionDecl or DirectiveStmt or BreakStmt or ContinueStmt or GotoStmt { Expression: null or LiteralExpr }
+				or ReturnStmt { Value: null }))
 				body.Add(Stamp(s));
 
 			body.Add(lowered);
@@ -111,7 +112,7 @@ namespace Keysharp.Compilation.Syntax
 			{
 				var bodyList = _scratchLowerBody.Get();
 				bodyList.Add(body);
-				var result = SyntaxFactory.Block(LowerStmtList(bodyList));
+				var result = SyntaxFactory.Block(LowerStmtList(bodyList, body));
 				_scratchLowerBody.Return(bodyList);
 				return result;
 			}

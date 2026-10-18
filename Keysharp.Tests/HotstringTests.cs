@@ -663,6 +663,16 @@ public partial class HotstringTests : TestRunner
 			Assert.That(generated.ToFullString(), Does.Contain("Keysharp.Builtins.Flow.Pause"));
 		}
 
+		Assert.That(LowerRemapCall("x::\t^Pause"), Is.EqualTo(("x", "^Pause", 0u)));
+
+		foreach (var source in new[] { "x::AltTab", "x:: AltTab" })
+		{
+			var (program, diagnostics) = Keysharp.Parsing.Syntax.Parser.ParseWithDiagnostics(source);
+			Assert.IsEmpty(diagnostics);
+			var generated = new Keysharp.Compilation.Syntax.Lowerer().Build(program, "Test").ToFullString();
+			Assert.That(generated, Does.Contain("HotkeyDefinition.AddHotkey").And.Not.Contain("HotkeyDefinition.AddRemap"));
+		}
+
 		foreach (var target in new[] { "x::`t", "x::^`t" })
 		{
 			var (bytes, error, _) = new CompilerHelper().CompileCodeToByteArray("#ErrorStdOut\n#Warn All, StdOut\n" + target, "remap_whitespace");

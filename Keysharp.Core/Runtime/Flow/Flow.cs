@@ -110,5 +110,20 @@ namespace Keysharp.Runtime
 
 			return b;
 		}
+
+		/// <summary>The name of the label a computed Goto jumps to, or null after a TypeError the script continued.</summary>
+		public static string GotoLabel(object target) => target.CoerceString(out var label) ? label : null;
+
+		/// <summary>Raises a non-continuable error for a computed Goto whose target is missing or inaccessible.</summary>
+		public static void GotoFailed(string label, bool inFinally)
+		{
+			if (label == null)
+				return;
+
+			_ = Types.IsLabel(label) != 0L
+				? Errors.ErrorOccurred(inFinally ? "Jumps cannot exit a FINALLY block." : "A Goto must not jump into a block that doesn't enclose it.",
+					null, null, null, ErrorMode.Exit)
+				: Errors.ErrorOccurred("Label not found in current scope.", null, label, null, ErrorMode.Exit);
+		}
 	}
 }

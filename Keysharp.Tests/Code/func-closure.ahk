@@ -335,4 +335,17 @@ loop 100 {
 Sleep(80)
 AssertEq(selfStopped.n, 2, A_LineNumber)
 
+; A variable a nested function reads only in an Until that never runs still makes it a closure, as AutoHotkey finds
+; captured variables in the source, not in the code that runs.
+UntilCaptureOuter() {
+    x := 1
+    Inner() {
+        Loop
+            return 1
+        until x
+    }
+    return Inner
+}
+AssertEq(Type(UntilCaptureOuter()), "Closure", A_LineNumber)
+
 FileAppend "pass", "*"

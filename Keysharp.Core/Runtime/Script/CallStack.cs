@@ -192,7 +192,7 @@ namespace Keysharp.Runtime
 
 		/// <summary>Pushes the frame of a call, returning the depth its return restores.</summary>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
-		internal int Push(int function)
+		internal int Push(MethodPropertyHolder function)
 		{
 			var depth = Depth;
 			var all = frames;
@@ -207,24 +207,20 @@ namespace Keysharp.Runtime
 			return depth;
 		}
 
-		/// <summary>Restores a call depth and releases the scopes held by every discarded frame.</summary>
+		/// <summary>Restores a call depth and releases the function and scope held by every discarded frame.</summary>
 		internal void Pop(int depth)
 		{
 			for (var i = depth; i < Depth; i++)
+			{
+				frames[i].Function = null;
 				frames[i].Scope = null;
+			}
 
 			Depth = depth;
 		}
 
-		/// <summary>
-		/// Pops the frame of a call whose body has not started, when it is on top, so that an error in binding its
-		/// arguments is its caller's.
-		/// </summary>
-		internal void PopUnstarted(int function)
-		{
-			if (Depth > 0 && frames[Depth - 1].Function == function)
-				Pop(Depth - 1);
-		}
+		/// <summary>Pops an unstarted callee so an argument-binding error is attributed to its caller.</summary>
+		internal void PopUnstarted() => Pop(Depth - 1);
 
 		/// <summary>Pushes the boundary a pseudo-thread starts with, returning the depth its end restores.</summary>
 		internal int PushThread(ThreadKind kind) => PushBoundary(kind switch
@@ -248,7 +244,7 @@ namespace Keysharp.Runtime
 		/// <summary>Pushes a named boundary around work outside a pseudo-thread launch.</summary>
 		internal int PushBoundary(string description)
 		{
-			var depth = Push(0);
+			var depth = Push(null);
 			frames[depth].Description = description;
 			return depth;
 		}
@@ -257,7 +253,7 @@ namespace Keysharp.Runtime
 		internal void NameThread(string name)
 		{
 			for (var i = Depth - 1; i >= 0; i--)
-				if (frames[i].Function == 0)
+				if (frames[i].Function == null)
 				{
 					frames[i].Description = name;
 					return;
@@ -301,7 +297,7 @@ namespace Keysharp.Runtime
 		public static object RunModule(Type module, Func<object> section)
 		{
 			var stack = Current;
-			var depth = stack.Push(MethodPropertyHolder.GetOrAdd(section.Method).Id);
+			var depth = stack.Push(MethodPropertyHolder.GetOrAdd(section.Method));
 			var previous = stack.Module;
 			var script = TheScript;
 			var previousCompatibility = script.CurrentCompatibilityVersion;
@@ -339,7 +335,7 @@ namespace Keysharp.Runtime
 			while (errorType != null && start >= 0 && IsConstruction(frames[start].Function, errorType))
 				start--;
 
-			var byScript = errorType != null && start >= 0 && MethodPropertyHolder.FromId(frames[start].Function)?.mi is { } constructor
+			var byScript = errorType != null && start >= 0 && frames[start].Function?.mi is { } constructor
 				&& (constructor == objectCall || constructor == classCall);
 
 			if (byScript)
@@ -350,7 +346,7 @@ namespace Keysharp.Runtime
 
 			if (what == null)
 				resolvedWhat = byScript ? ScriptFrame(Depth - 1) is { } innermost ? Name(innermost.Function) : ""
-					: start >= 0 && MethodPropertyHolder.FromId(frames[start].Function) is { IsScript: false } builtin ? builtin.QualifiedName
+					: start >= 0 && frames[start].Function is { IsScript: false } builtin ? builtin.QualifiedName
 					: "";
 			else
 			{
@@ -360,7 +356,7 @@ namespace Keysharp.Runtime
 				// An emitted artifact has no source-text resource. AutoHotkey leaves an explicit What there as given.
 				for (var i = TheScript?.SourceLines.Length is > 0 ? start : -1; i >= 0; i--)
 				{
-					var name = frames[i].Function == 0 ? frames[i].Description : Name(frames[i].Function);
+					var name = frames[i].Function == null ? frames[i].Description : Name(frames[i].Function);
 
 					if (++offset == 0 || resolvedWhat.Length != 0 && StringComparer.OrdinalIgnoreCase.Equals(name, resolvedWhat))
 					{
@@ -368,7 +364,7 @@ namespace Keysharp.Runtime
 						break;
 					}
 
-					if (frames[i].Function == 0)
+					if (frames[i].Function == null)
 						break;
 				}
 			}
@@ -382,7 +378,7 @@ namespace Keysharp.Runtime
 			{
 				var lineStart = sb.Length;
 
-				if (frames[i].Function == 0)
+				if (frames[i].Function == null)
 					_ = sb.Append("> ").Append(frames[i].Description);
 				else
 				{
@@ -420,10 +416,10 @@ namespace Keysharp.Runtime
 
 		// The innermost script frame at or below an index in its pseudo-thread, or null. With inline, a frame of the
 		// script's inline C# counts as well.
-		private Frame ScriptFrame(int from, bool inline = false)
+		internal Frame ScriptFrame(int from, bool inline = false)
 		{
-			for (var i = from; i >= 0 && frames[i].Function != 0; i--)
-				if (MethodPropertyHolder.FromId(frames[i].Function) is { } function && (inline ? function.InScriptModule : function.IsScript))
+			for (var i = from; i >= 0 && frames[i].Function is { } function; i--)
+				if (inline ? function.InScriptModule : function.IsScript)
 					return frames[i];
 
 			return null;
@@ -440,12 +436,12 @@ namespace Keysharp.Runtime
 			TheScript?.SourceLines is { } files && (uint)index < (uint)files.Length && (ulong)(line - 1) < (ulong)files[index].Length ? files[index] : null;
 
 		// The __New or __Init an error runs as it is constructed: a builtin's, or a script subclass's own.
-		private static bool IsConstruction(int function, Type errorType) =>
-			MethodPropertyHolder.FromId(function)?.mi is { } method
+		private static bool IsConstruction(MethodPropertyHolder function, Type errorType) =>
+			function?.mi is { } method
 			&& (method.Name == "__New" || method.Name == "__Init")
 			&& method.DeclaringType?.IsAssignableFrom(errorType) == true;
 
-		private static string Name(int function) => MethodPropertyHolder.FromId(function)?.QualifiedName ?? "";
+		private static string Name(MethodPropertyHolder function) => function?.QualifiedName ?? "";
 
 		[MethodImpl(MethodImplOptions.NoInlining)]
 		private Frame[] Grow()
@@ -469,8 +465,8 @@ namespace Keysharp.Runtime
 		/// <summary>One frame of a <see cref="CallStack"/>, reused by the calls that follow it at its depth.</summary>
 		public sealed class Frame
 		{
-			// The MethodPropertyHolder id of the called function; 0 marks the boundary a pseudo-thread starts with.
-			internal int Function;
+			// The called function; null marks the boundary a pseudo-thread starts with.
+			internal MethodPropertyHolder Function;
 
 			/// <summary>Where the function is running, which generated code writes before each statement it runs.</summary>
 			public int Location;

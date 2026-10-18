@@ -944,6 +944,32 @@ catch ArgumentError as err
 	AssertEq(err.Line, unsetLine, A_LineNumber)
 }
 
+; Binding a wrong receiver or a missing setter value also reports the caller before the body starts.
+badGet := [].Get
+try {
+	receiverLine := A_LineNumber, badGet({}, 1)
+	Assert(false, A_LineNumber)
+} catch TypeError as err {
+	AssertEq(err.What, "", A_LineNumber)
+	AssertEq(err.Line, receiverLine, A_LineNumber)
+}
+
+class VariadicSetter {
+	__Item[items*] {
+		set => 0
+	}
+}
+setter := VariadicSetter.Prototype.GetOwnPropDesc("__Item").Set
+try {
+	setterLine := A_LineNumber, setter(VariadicSetter())
+	Assert(false, A_LineNumber)
+} catch ArgumentError as err {
+	AssertEq(err.What, "", A_LineNumber)
+	AssertEq(err.Line, setterLine, A_LineNumber)
+}
+restored := Error("restored"), restoredLine := A_LineNumber
+AssertEq(StackLines(restored.Stack)[1], Frame(restoredLine, "", 'restored := Error("restored"), restoredLine := A_LineNumber'), A_LineNumber)
+
 ; Assigning a property which has no setter names it.
 ro := {}
 ro.DefineProp("x", {get: (*) => 1})

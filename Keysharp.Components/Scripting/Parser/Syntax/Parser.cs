@@ -343,8 +343,8 @@ namespace Keysharp.Parsing.Syntax
 			if (AtKeyword("switch")) return ParseSwitch();
 			if (AtKeyword("try")) return ParseTry();
 			if (AtKeyword("throw")) return ParseThrow();
-			if (AtKeyword("break")) { Advance(); return new BreakStmt(ParseLoopJumpTarget()); }
-			if (AtKeyword("continue")) { Advance(); return new ContinueStmt(ParseLoopJumpTarget()); }
+			if (AtKeyword("break")) { Advance(); var (target, expression) = ParseJumpTarget("break"); return new BreakStmt(target, expression); }
+			if (AtKeyword("continue")) { Advance(); var (target, expression) = ParseJumpTarget("continue"); return new ContinueStmt(target, expression); }
 			if (AtKeyword("goto")) return ParseGoto();
 			if (AtKeyword("return")) return ParseReturn();
 			if (AtKeyword("local") || AtKeyword("global") || AtKeyword("static")) return ParseDecl();
@@ -1506,23 +1506,39 @@ namespace Keysharp.Parsing.Syntax
 				Error($"\"{keyword}\" accepts at most 1 parameter.");
 		}
 
-		// Optional `break`/`continue` target on the same line: a loop level (number) or a source label name.
-		private string ParseLoopJumpTarget()
+		// A break, continue or goto target, read as AutoHotkey reads one: a `(` directly after the keyword makes it an
+		// expression, and otherwise the rest of the line is the target as written, so `break "outer"` names a label
+		// `"outer"`, which no script can declare.
+		private (string Target, Expr Expression) ParseJumpTarget(string keyword)
 		{
-			if (At(TokenKind.Number) || At(TokenKind.Identifier)) return Advance().Text;
-			return null;
+			if (At(TokenKind.LParen) && !Current.LeadingWhitespace)
+			{
+				Advance();
+				var expression = ParseExpression(1);
+				Expect(TokenKind.RParen, $"{keyword} target");
+				return (null, expression);
+			}
+
+			var text = new System.Text.StringBuilder();
+
+			while (!At(TokenKind.Newline) && !At(TokenKind.EOF) && !At(TokenKind.RBrace))
+			{
+				if (Current.LeadingWhitespace && text.Length > 0) text.Append(' ');
+				text.Append(Advance().Text);
+			}
+
+			return (text.Length > 0 ? text.ToString() : null, null);
 		}
 
-		// `Goto Label` / `Goto(Label)` / `Goto, Label` — the destination label name.
+		// `Goto Label` / `Goto(Expression)` / `Goto, Label`.
 		private Stmt ParseGoto()
 		{
 			Advance(); // goto
 			RejectAdjacentComma();
 			Match(TokenKind.Comma);
-			bool paren = Match(TokenKind.LParen);
-			var target = ExpectIdentifier("goto target");
-			if (paren) Expect(TokenKind.RParen, "goto target");
-			return new GotoStmt(target);
+			var (target, expression) = ParseJumpTarget("goto");
+			if (target == null && expression == null) _ = ExpectIdentifier("goto target");
+			return new GotoStmt(target, expression);
 		}
 
 		private Stmt ParseDecl()

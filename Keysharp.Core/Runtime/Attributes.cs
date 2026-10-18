@@ -216,6 +216,13 @@ namespace Keysharp.Runtime
 		public UserDeclaredNameAttribute(string name) => Name = name;
 	}
 
+	/// <summary>The labels a script function or a module's auto-execute section declares, which IsLabel looks for.</summary>
+	[AttributeUsage(AttributeTargets.Method, Inherited = false)]
+	public sealed class LabelsAttribute(params string[] names) : Attribute
+	{
+		public string[] Names { get; } = names;
+	}
+
 	/// <summary>
 	/// The source files a script was compiled from, the main script first, as the file index of a call stack location
 	/// numbers them. A script run from source names them by full path, and compiled output never does.

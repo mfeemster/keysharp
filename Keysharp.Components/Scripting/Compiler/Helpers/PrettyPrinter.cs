@@ -63,10 +63,9 @@ namespace Keysharp.Compilation
 		}
 
 		/// <summary>
-		/// Appends text that begins a token. The printer also prints user-authored code (inline C#), not
-		/// just lowered shapes, so a fallback-printed token meeting the next emission (`throw new …`,
-		/// `is not null`, `await x`) or a doubled operator character (`- -x`, `x & &y`) must never fuse
-		/// into one token; the NeedsSpaceAfter allowlist only spaces what the lowerer is known to emit.
+		/// Appends text that begins a token. A fallback-printed token meeting the next emission (`throw new …`,
+		/// `await x`) or a doubled operator character (`- -x`, `x & &y`) must never fuse into one token; the
+		/// NeedsSpaceAfter allowlist only spaces what the lowerer is known to emit.
 		/// </summary>
 		void EmitToken(string text)
 		{

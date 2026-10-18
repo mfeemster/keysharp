@@ -242,4 +242,67 @@ Loop 3
 
 AssertEq(x, 1, A_LineNumber)
 
+; A computed goto resolves its label when it runs, among the labels in blocks enclosing it.
+ComputedGoto(name) {
+	result := ""
+	if (name != "")
+		goto(name)
+	result .= "a"
+	first:
+	result .= "b"
+	Second:
+	result .= "c"
+	return result
+}
+
+AssertEq(ComputedGoto(""), "abc", A_LineNumber)
+AssertEq(ComputedGoto("first"), "bc", A_LineNumber)
+AssertEq(ComputedGoto("SECOND"), "c", A_LineNumber)
+AssertError(() => ComputedGoto("nosuch"), "Error: Label not found in current scope. [nosuch]", A_LineNumber)
+
+ComputedGotoInto(name) {
+	if (name != "")
+		goto(name)
+	if (name = "") {
+		inside:
+		return 1
+	}
+	return 0
+}
+
+AssertEq(ComputedGotoInto(""), 1, A_LineNumber)
+AssertError(() => ComputedGotoInto("inside"), "Error: A Goto must not jump into a block that doesn't enclose it. []", A_LineNumber)
+
+ComputedGotoFinally(name, exitFinally := false) {
+	result := ""
+	try {
+		goto(name)
+	} finally {
+		result .= "finally"
+		if exitFinally
+			Goto(name)
+	}
+	return "missed"
+	done:
+	return result
+}
+
+AssertEq(ComputedGotoFinally("DONE"), "finally", A_LineNumber)
+AssertError(() => ComputedGotoFinally("done", true), "Error: Jumps cannot exit a FINALLY block. []", A_LineNumber)
+
+; IsLabel looks among the labels of the function calling it, or of the auto-execute section outside any function.
+AssertEq(IsLabel("l1") IsLabel("L1") IsLabel("InFunc") IsLabel("nosuch"), "1100", A_LineNumber)
+
+LabelsOf() {
+	InFunc:
+	viaObject := IsLabel
+	Inner() {
+		InNested:
+		return IsLabel("InNested") IsLabel("InFunc")
+	}
+	return IsLabel("InFunc") IsLabel("l1") viaObject("InFunc") Inner()
+}
+
+AssertEq(LabelsOf(), "10110", A_LineNumber)
+
 FileAppend "pass", "*"

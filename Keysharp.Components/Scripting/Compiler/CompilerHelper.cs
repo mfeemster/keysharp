@@ -723,6 +723,12 @@ namespace Keysharp.Compilation
 			// built the same way), and the CLR rejects an assembly whose machine type doesn't match the
 			// process. Stamping an architecture would only create a mismatch to get wrong.
 			const Microsoft.CodeAnalysis.Platform compiledPlatform = Microsoft.CodeAnalysis.Platform.AnyCpu;
+
+			// Script CLR wrappers intentionally hide inherited members; inline C# keeps its own diagnostics.
+			var generated = tree.GetRoot();
+			tree = tree.WithRootAndOptions(generated.WithLeadingTrivia(
+				SyntaxFactory.ParseLeadingTrivia("#pragma warning disable CS0108\n").AddRange(generated.GetLeadingTrivia())), tree.Options);
+
 			var compilation = CSharpCompilation.Create(outputname)
 								.WithOptions(
 									// No .WithUsings(): CSharpCompilationOptions.Usings applies only to

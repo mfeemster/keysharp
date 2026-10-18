@@ -34,15 +34,16 @@ public class ParserTests : TestRunner
 	{
 		const string noLoop = "Break/Continue must be enclosed by a Loop.", invalid = "Parameter #1 invalid.";
 		AssertCompileError("break\n", noLoop);
+		AssertCompileError("F() {\ncontinue\n}\n", noLoop);
 		AssertCompileError("switch 1 {\ncase 1: break\n}\n", noLoop);
 		AssertCompileError("switch 1 {\ncase 1: continue\n}\n", noLoop);
 		AssertCompileError("Loop {\nbreak 0\n}\n", invalid);
 		AssertCompileError("Loop {\ncontinue 2\n}\n", invalid);
 		AssertCompileError("Loop {\nbreak 99999999999\n}\n", invalid);
-		AssertCompileError("Loop {\nbreak missing\n}\n", invalid);
+		AssertCompileError("Loop {\nbreak missing\n}\n", "Label not found in current scope: missing");
 		AssertCompileError("notLoop:\nx := 1\nLoop {\nbreak notLoop\n}\n", invalid);
 		AssertCompileError("F() {\nLoop {\nG() {\nbreak\n}\n}\n}\n", noLoop);
-		AssertCompileError("F() {\nouter:\nLoop {\nG() {\nLoop {\nbreak outer\n}\n}\n}\n}\n", invalid);
+		AssertCompileError("F() {\nouter:\nLoop {\nG() {\nLoop {\nbreak outer\n}\n}\n}\n}\n", "Label not found in current scope: outer");
 		AssertCompileError("F() {\nLoop {\nG() {\nLoop {\ncontinue 2\n}\n}\n}\n}\n", invalid);
 		AssertCompileError("Loop {\ntry {\n} finally {\nbreak\n}\n}\n", noLoop);
 		AssertCompileError("outer:\nLoop {\ntry {\n} finally {\nLoop {\nbreak outer\n}\n}\n}\n", invalid);
@@ -56,21 +57,25 @@ public class ParserTests : TestRunner
 			"outer:\nF() {\n}\nLoop 2 {\nLoop 2 {\nbreak outer\n}\n}\n",
 			"outer:\n#SingleInstance Force\nLoop 2 {\nLoop 2 {\nbreak outer\n}\n}\n",
 			"outer:\nglobal g\nLoop 2 {\nLoop 2 {\nbreak outer\n}\n}\n",
+			"outer:\nF13::x := 1\n#SingleInstance Force\nglobal g\nLoop 2 {\nLoop 2 {\nbreak outer\n}\n}\n",
 			"outer:\nLoop (() {\nLoop 1 {\nbreak\n}\nreturn 2\n})() {\nLoop 2 {\nbreak outer\n}\n}\n");
 	}
 
 	[Test, Category("Parser")]
 	public void StaticGotoTargets()
 	{
-		const string invalid = "Goto target is missing or cannot be reached: ";
-		AssertCompileError("goto missing\n", invalid + "missing");
-		AssertCompileError("goto inner\nif 1 {\ninner:\nx := 1\n}\n", invalid + "inner");
-		AssertCompileError("if 1 {\ngoto other\n}\nif 1 {\nother:\nx := 1\n}\n", invalid + "other");
-		AssertCompileError("outside:\nLoop (() {\ngoto outside\nreturn 1\n})() {\nbreak\n}\n", invalid + "outside");
-		AssertCompileError("outside:\nF() {\ngoto outside\n}\n", invalid + "outside");
-		AssertCompileError("F() {\nouter:\nG() {\ngoto outer\n}\n}\n", invalid + "outer");
-		AssertCompileError("try {\n} finally {\ngoto after\n}\nafter:\nx := 1\n", invalid + "after");
-		AssertCompileError("try {\n} finally {\ntry {\n} finally {\ngoto outer\n}\nouter:\nx := 1\n}\n", invalid + "outer");
+		AssertCompileError("goto(\"\")\n", "Label not found in current scope:");
+		AssertCompileError("goto missing\n", "Label not found in current scope: missing");
+		AssertCompileError("goto inner\nif 1 {\ninner:\nx := 1\n}\n", "A Goto must not jump into a block that doesn't enclose it.");
+		AssertCompileError("if 1 {\ngoto other\n}\nif 1 {\nother:\nx := 1\n}\n", "A Goto must not jump into a block that doesn't enclose it.");
+		AssertCompileError("Loop 2 {\ngoto inner\n}\nLoop 1 {\ninner:\nx := 1\n}\n", "A Goto must not jump into a block that doesn't enclose it.");
+		AssertCompileError("outside:\nLoop (() {\ngoto outside\nreturn 1\n})() {\nbreak\n}\n", "Label not found in current scope: outside");
+		AssertCompileError("outside:\nF() {\ngoto outside\n}\n", "Label not found in current scope: outside");
+		AssertCompileError("F() {\nouter:\nG() {\ngoto outer\n}\n}\n", "Label not found in current scope: outer");
+		AssertCompileError("try {\n} finally {\ngoto after\n}\nafter:\nx := 1\n", "Jumps cannot exit a FINALLY block.");
+		AssertCompileError("try {\n} finally {\ntry {\n} finally {\ngoto outer\n}\nouter:\nx := 1\n}\n", "Jumps cannot exit a FINALLY block.");
+		AssertCompileError("F() {\ntry {\n} finally {\nreturn 1\n}\n}\n", "Jumps cannot exit a FINALLY block.");
+		AssertCompileError("try {\n} finally {\nreturn\n}\n", "Jumps cannot exit a FINALLY block.");
 		AssertCompiles(
 			"goto MIXED\nMixed:\nx := 1\n",
 			"if 1 {\ngoto outside\n}\noutside:\nx := 1\n",
@@ -78,6 +83,7 @@ public class ParserTests : TestRunner
 			"try {\ngoto after\n} finally {\n}\nafter:\nx := 1\n",
 			"Loop {\ntry {\nthrow 1\n} catch {\ngoto after\n}\n}\nafter:\nx := 1\n",
 			"F() {\nlocalLabel:\nx := 1\n}\ngoto outside\noutside:\nx := 2\n",
+			"a:\nF() {\na:\nx := 1\n}\n",
 			"try {\n} finally {\nF() {\ngoto OWN\nOwn:\nreturn 1\n}\ngoto HERE\nHere:\nx := 1\n}\ngoto after\nafter:\nx := 2\n");
 	}
 
@@ -95,6 +101,11 @@ public class ParserTests : TestRunner
 			"return\n",
 			"F() {\nx := 0\ntry {\nthrow Error()\n} catch {\nx := 1\n} else {\nx := 2\n}\nreturn x\n}\n",
 			"F(n) {\nif n\nreturn 1\n}\n",
+			"F(n) {\nswitch n {\ncase 1: return 1\ndefault: return 2\n}\n}\n",
+			"F(n) {\nswitch n {\ncase 1: return 1\n}\n}\n",
+			"F(n) {\nswitch n {\ncase 1: return 1\ndefault: n := 2\n}\n}\n",
+			"F(n, mode) {\nswitch n, mode {\ncase 1: return 1\ndefault: return 2\n}\n}\n",
+			"F(n) {\nswitch n {\ncase 1:\nswitch n {\ncase 1: return 1\ndefault: return 2\n}\ndefault: return 3\n}\n}\n",
 			"F() {\ntry {\nreturn 1\n} catch {\n}\n}\n"
 		];
 		var helper = new CompilerHelper();
@@ -108,6 +119,23 @@ public class ParserTests : TestRunner
 			var failures = diagnostics.Where(diagnostic => diagnostic.Id == "CS0162" || diagnostic.Severity == DiagnosticSeverity.Error).ToArray();
 			Assert.That(failures, Is.Empty, source + "\n" + string.Join("\n", failures.Select(diagnostic => diagnostic.ToString())));
 		}
+	}
+
+	[Test, Category("Parser"), Category("Internal")]
+	public void GeneratedHidingKeepsInlineWarnings()
+	{
+		const string source = "#ErrorStdOut\n#Warn All, StdOut\n"
+			+ "class HidingBase {\nMethod() => 1\n#CSharp\npublic static object Native(object @this) => 1L;\n#EndCSharp\n}\n"
+			+ "class HidingDerived extends HidingBase {\nMethod() => 2\n#CSharp\npublic static object Native(object @this) => 2L;\n#EndCSharp\n}\n";
+		var helper = new CompilerHelper();
+		var compilation = helper.CreateCompilationUnitFromFile(source, "hiding_warnings", sourceIsFile: false);
+		Assert.IsFalse(compilation.Errors.HasErrors);
+		var (diagnostics, error) = helper.DiagnoseFromTree(compilation, "hiding_warnings", AppContext.BaseDirectory);
+		Assert.IsNull(error);
+		Assert.That(diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error), Is.Empty);
+		var hiding = diagnostics.Where(d => d.Id == "CS0108").ToArray();
+		Assert.That(hiding, Has.Length.EqualTo(1));
+		Assert.That(hiding[0].Location.SourceTree?.FilePath, Does.Contain(".inline."));
 	}
 
 	// Equal compilation inputs must produce the same cache identity.
@@ -344,6 +372,47 @@ public class ParserTests : TestRunner
 		AssertCompileError("x := (1 + 2\n", "expected ')'");
 		AssertCompileError("x := [1, 2\n", "expected ']'");
 	}
+
+	// As in AutoHotkey, a jump target is the text after the keyword as written, or a constant in a `(` written directly after
+	// it. A level is an IsNumeric integer read with _ttoi, and break or continue cannot take a computed target.
+	[Test, Category("Parser")]
+	public void JumpTargetsAsWritten()
+	{
+		const string invalid = "Parameter #1 invalid.";
+		AssertCompileError("outer:\nLoop {\n\tbreak \"outer\"\n}\n", "Label not found in current scope: \"outer\"");
+		AssertCompileError("outer:\nLoop {\n\tbreak (outer)\n}\n", "Label not found in current scope: (outer)");
+		AssertCompileError("Loop {\n\tbreak -1\n}\n", "Label not found in current scope: -1");
+		AssertCompileError("Loop {\n\tbreak %x%\n}\n", "Label not found in current scope: %x%");
+		AssertCompileError("outer:\nLoop {\n\tbreak(outer)\n}\n", invalid);
+		AssertCompileError("Loop {\n\tLoop {\n\t\tbreak(1+1)\n\t}\n}\n", invalid);
+		AssertCompileError("Loop {\n\tcontinue(2)\n}\n", invalid);
+		AssertCompileError("Loop {\n\tLoop {\n\t\tbreak 0x2\n\t}\n}\n", invalid);
+		AssertCompileError("Loop {\n\tbreak 99999999999\n}\n", invalid);
+		AssertCompileError("goto \"lbl\"\nlbl:\nx := 1\n", "Label not found in current scope: \"lbl\"");
+		AssertCompiles(
+			"outer:\nLoop {\n\tbreak(\"outer\")\n}\n",
+			"outer:\nLoop {\n\tbreak((\"outer\"))\n}\n",
+			"Loop {\n\tLoop {\n\t\tbreak((2))\n\t}\n}\n",
+			"Loop {\n\tLoop {\n\t\tbreak(0x2)\n\t}\n}\n",
+			"Loop {\n\tLoop {\n\t\tcontinue(2)\n\t}\n}\n",
+			"Loop {\n\tcontinue(1)\n}\n",
+			"Loop {\n\tLoop {\n\t\tbreak +2\n\t}\n}\n",
+			"goto(\"lbl\")\nlbl:\nx := 1\n",
+			"v := \"lbl\"\ngoto(v)\nlbl:\nx := 1\n");
+	}
+
+	// As in AutoHotkey, a label may be declared once per function, whether a goto, a break or nothing names it.
+	[Test, Category("Parser")]
+	public void DuplicateLabel()
+	{
+		AssertCompileError("outer:\nLoop 2 {\n\tbreak outer\n}\nouter:\nLoop 2 {\n\tbreak outer\n}\n", "Duplicate label: outer");
+		AssertCompileError("F() {\n\tif 1 {\n\t\tx:\n\t} else {\n\t\tX:\n\t}\n}\n", "Duplicate label: X");
+	}
+
+	// An Until after a loop body which cannot complete never runs, but its errors are reported all the same.
+	[Test, Category("Parser")]
+	public void UntilAfterUnfinishedBody() =>
+		AssertCompileError("SomeFunc() {\n}\nLoop {\n\treturn\n}\nUntil SomeFunc := 0\n", "This Func cannot be assigned a value");
 
 	[Test, Category("Parser")]
 	public void DiagnosticLocation()
@@ -675,7 +744,7 @@ public class ParserTests : TestRunner
 		"Loop Parse \"a,b\", (\"\" \",\") {\n\tbreak\n}\n",                                   // trailing paren is the whole arg
 		"Loop Read \"f.txt\", (\"o.txt\") {\n\tbreak\n}\n",
 		"Loop Files \"*.txt\", (\"D\")\n\tbreak\n",                                           // braceless body still fine
-		"switch 1, (0) {\n\tcase 1:\n\t\tx := 1\n}\n",                                         // switch case-sense arg
+		"switch 1, (0) {\n\tcase 1:\n\t\tx := 1\n}\n",                                        // switch case-sense arg
 		"Loop Files \"*.txt\", \"D\" {\n\tbreak\n}\n");                                       // unchanged plain form
 
 	// Code/string-continuation.ahk covers what a merged continuation section produces. A section opening the file
@@ -729,5 +798,161 @@ public class ParserTests : TestRunner
 			Assert.IsNull(bytes, source + " should fail compilation.");
 			Assert.IsNotEmpty(error);
 		}
+	}
+
+	// The first warning a compilation reports makes Roslyn compile its diagnostics machinery, a cost paid on every cold
+	// compile, so lowered code compiles without one unless the script's own code is at fault. Each source holds only code
+	// its author means to run.
+	[Test, Category("Parser"), Category("Internal")]
+	public void WarningFreeLowering()
+	{
+		string[] sources =
+		[
+			// #ErrorStdOut and #SuspendExempt with nothing to apply to, then with a hotkey and a hotstring.
+			"""
+			#SuspendExempt
+			x := 1
+			""",
+			"""
+			#SuspendExempt
+			F1::x := 1
+			#SuspendExempt false
+			::btw::by the way
+			""",
+			// Loop bodies which never complete, a try body which throws before its else, and a switch in a loop whose cases
+			// continue and break the loop by its label and go to a label in another case.
+			"""
+			First(list) {
+				for item in list
+					return item
+				until true
+				Loop
+					break
+				while true
+					throw Error()
+			}
+			Fallback() {
+				try
+					throw Error()
+				catch
+					n := 1
+				else
+					n := 2
+				return n
+			}
+			outer:
+			Loop 3 {
+				switch A_Index {
+					case 1: continue outer
+					case 2: goto Later
+					case 3:
+						Later:
+						break outer
+				}
+			}
+			x := First([1]) Fallback()
+			""",
+			// Instance and static initialization alongside inherited wrappers.
+			"""
+			class Base {
+				Method() => 1
+				Prop => 1
+				class Inner {
+				}
+			}
+			class Derived extends Base {
+				value := 1
+				static shared := 2
+				Method() => 2
+				Prop => 2
+				class Inner {
+					value := 3
+				}
+			}
+			x := Derived().Method() Derived.shared
+			""",
+			// Static initializers, one static declared twice, and nested functions which capture nothing, alone, recursive,
+			// mutual or inside a closure, next to closures, in functions, methods, field initializers and the auto-execute
+			// section.
+			"""
+			Statics(n) {
+				static items := [], first := n
+				static items := Map()
+				return first items.Count
+			}
+			Nesting(a) {
+				Twice(x) => x * 2
+				Fact(k) => k <= 1 ? 1 : k * Fact(k - 1)
+				Even(k) => k = 0 ? 1 : Odd(k - 1)
+				Odd(k) => k = 0 ? 0 : Even(k - 1)
+				Late() => Capturing()
+				Capturing() {
+					Counted() {
+						static made := []
+						return made.Length
+					}
+					return a Counted()
+				}
+				return Twice(a) Fact(3) Even(4) Late() ((y) => y)(1)
+			}
+			class Holder {
+				field := () => 1
+				static shared := (*) => 2
+				Method(p) {
+					static cache := Map()
+					Inner(q) => q
+					return Inner(p) cache.Count
+				}
+			}
+			top := (z) => z
+			x := Statics(1) Nesting(2) top(3) Holder().Method(4)
+			""",
+			// Untils which never run, needing a temporary or an anonymous or named fat arrow, then a class and directives after
+			// the auto-execute section's return.
+			"""
+			DeadUntils(a, b) {
+				i := 0
+				Loop
+					return i
+				until i++ > 3
+				Loop
+					return a
+				until a && b
+				Loop
+					return 1
+				until IsObject(() => 1)
+				Loop
+					return 2
+				until (Named() => 3)
+				return Named()
+			}
+			x := DeadUntils(1, 2)
+			Loop
+				break
+			until x || IsObject(() => 1)
+			return
+			#UseHook
+			#MaxThreadsPerHotkey 2
+			class AfterReturn {
+			}
+			"""
+		];
+		var helper = new CompilerHelper();
+		var failures = new List<string>();
+
+		foreach (var source in sources)
+		{
+			var name = "lowering_" + Guid.NewGuid().ToString("N");
+			var compilation = helper.CreateCompilationUnitFromFile("#ErrorStdOut\n#Warn All, StdOut\n" + source, name, sourceIsFile: false);
+			Assert.That(compilation.Errors.HasErrors, Is.False, source);
+			var (diagnostics, error) = helper.DiagnoseFromTree(compilation, name, AppContext.BaseDirectory);
+			Assert.IsNull(error, source);
+			var reported = diagnostics.Where(d => d.Severity >= Microsoft.CodeAnalysis.DiagnosticSeverity.Warning).ToArray();
+
+			if (reported.Length > 0)
+				failures.Add(source + "\n" + string.Join("\n", reported.Select(d => d.ToString())));
+		}
+
+		Assert.That(failures, Is.Empty, string.Join("\n\n", failures));
 	}
 }

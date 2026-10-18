@@ -52,7 +52,8 @@ namespace Keysharp.Compilation.Syntax
 		private readonly Dictionary<string, string> _userClassByLower = new(StringComparer.OrdinalIgnoreCase);
 		private bool _inMethod;
 		private string _currentClassBase;   // base type name of the class being lowered (for `super`)
-		// Dotted C# path of the class being lowered, or null at module scope, for static field references.
+		// Dotted C# path of the class currently being lowered (e.g. "Outer.Inner"), or null at module scope, which names
+		// the type a static-local's field is declared in (see CurrentTypePath), as the field can repeat across classes.
 		private string _currentClassPath;
 		private string _currentClassUserPath;
 		private string _structTypeName;     // C# type name of the struct being lowered (for typed-field DefineProp)
@@ -69,11 +70,29 @@ namespace Keysharp.Compilation.Syntax
 		private readonly List<LoopFrame> _loopFrames = new();
 		// Functions and finally bodies can target only loops introduced within them.
 		private int _loopBase;
-		private List<string> _pendingLoopLabels;   // labels naming the next loop (see LoopLabels)
-		// Stack of label name-sets for the currently-open blocks (a real C# `switch` contributes one set shared by all
-		// its cases). A `goto` emits a real C# goto only when its target is in some active scope (a valid C# jump).
-		private readonly List<HashSet<string>> _labelScopes = new();
-		private int _labelBase;   // first label scope reachable from the current callable or finally body
+		private List<string> _pendingLoopLabels;   // the labels naming the next loop (see LoopLabels)
+		// The statements of the callable being lowered and its labels (see CallableLabels).
+		private IReadOnlyList<Stmt> _callableStmts;
+		private LabelTable _callableLabels;
+		// The blocks open around the statement being lowered: a statement list, or a switch, whose case bodies share their
+		// labels. A jump reaches the labels of the blocks from _blockBase, where the callable being lowered begins, and from
+		// _finallyBlock, where the finally body it is in begins (-1 outside one).
+		private readonly List<object> _openBlocks = new();
+		private int _blockBase, _finallyBlock = -1;
+
+		// A label of a callable, under the spelling it was declared with, and the block holding it.
+		private sealed class ScriptLabel(string name, object block)
+		{
+			public readonly string Name = name;
+			public readonly object Block = block;
+			public bool Jumped;   // a goto names it, so it needs a C# label
+		}
+
+		private sealed class LabelTable
+		{
+			public readonly Dictionary<string, ScriptLabel> ByName = new(StringComparer.OrdinalIgnoreCase);
+			public bool ComputedGoto;   // a goto whose label is computed can reach any label, so every one needs a C# label
+		}
 		// Null outside a scope whose body uses %name%, else whether its FuncScope (KS_scope) has a writer.
 		private bool? _derefScope;
 		private bool _derefReferences;
@@ -151,10 +170,19 @@ namespace Keysharp.Compilation.Syntax
 		private readonly List<(long SourceOrder, StatementSyntax Statement)> _moduleDhhr = new();
 		private readonly List<StatementSyntax> _dhhrPrelude = new();
 		private const string DeclarationSuspendExemptVariable = "__suspendExempt";
+		// The variable is declared only when a registration reads it, and #SuspendExempt assigns it only then, as Roslyn
+		// reports a variable which is assigned but never read.
+		private bool _suspendExemptRead;
 		private void AddDhhr(Stmt source, StatementSyntax statement)
 		{
 			if (statement != null)
 				_moduleDhhr.Add((source.SourceOrder, statement));
+		}
+		// The #SuspendExempt state a hotkey, hotstring or remap registration passes.
+		private ExpressionSyntax SuspendExempt()
+		{
+			_suspendExemptRead = true;
+			return Id(DeclarationSuspendExemptVariable);
 		}
 		private readonly List<ExpressionSyntax> _operatorDeclarations = new();
 		private bool _hasOperatorDeclarations;
@@ -670,8 +698,9 @@ namespace Keysharp.Compilation.Syntax
 					if (export.Value == ExportK.Variable) EnsureGlobalField(export.Key);
 				var (members, auto) = LowerProgramBody(m.Body);
 				if (Diagnostics.Count > 0) return null;
+				// The module's own labels, as LowerProgramBody leaves them.
 				moduleClasses.Add(BuildModuleClass(m, _fieldDecls, members, _pendingLambdas,
-					_hotMembers, auto, importMembers, _moduleCompat));
+					_hotMembers, auto, importMembers, _moduleCompat, LabelsAttribute()));
 			}
 			return AssembleProgram(name, moduleClasses, execOrder);
 		}
@@ -905,11 +934,12 @@ namespace Keysharp.Compilation.Syntax
 
 			var members = new List<MemberDeclarationSyntax>();
 			var auto = new List<StatementSyntax>();
-			// The top-level (auto-exec) scope's fat-arrow local functions/closures must start empty per module, or one
-			// module's top-level lambdas leak into the next module's AutoExecSection (referencing fields it lacks).
+			// Each module needs its own auto-execute local functions and closures.
 			_pendingScopeFuncs = new();
 			_pendingScopeClosureInits = new();
-			_labelScopes.Add(CollectDirectLabels(body));   // top-level labels (goto targets from auto-exec loops)
+			(_blockBase, _finallyBlock) = (_openBlocks.Count, -1);
+			_openBlocks.Add(body);
+			(_callableStmts, _callableLabels) = (body, null);
 			foreach (var fd in moduleArrows)
 				if (_userFuncDeclByLower.GetValueOrDefault(fd.Name) == fd && _emittedFuncImpls.Add(NameMangler.FunctionMethod(fd.Name)))
 					members.Add(LowerFunction(fd));
@@ -965,11 +995,11 @@ namespace Keysharp.Compilation.Syntax
 				}
 			}
 			_currentCompat = _moduleCompat;
-			_labelScopes.RemoveAt(_labelScopes.Count - 1);
+			_openBlocks.RemoveAt(_openBlocks.Count - 1);
 			WrapBodyWithKeepAlive(auto, [], _scopeKeptTemps, 0, auto.Count);
 			// Declare temps introduced by postfix ++/-- in the top-level (auto-execute) scope.
 			for (int i = _scopeTemps.Count - 1; i >= 0; i--) auto.Insert(0, DeclLocal(ObjType, _scopeTemps[i], Null));
-			auto.AddRange(_pendingScopeFuncs);   // top-level fat-arrow local functions (auto-exec scope)
+			auto.AddRange(_pendingScopeFuncs);   // top-level fat-arrow local functions
 			if (_warnExperimental != null)
 				foreach (var type in _experimentalTypes)
 					if (_experimentalWarned.Add(type))
@@ -1145,6 +1175,8 @@ namespace Keysharp.Compilation.Syntax
 			public bool DeclaresGlobal;
 			// The source a variable's declared spelling is read from: the parameters, the nested functions and the body.
 			public List<Param> Params;
+			// The callable's [Labels] attribute, for its declaration (see LabelsAttribute).
+			public AttributeListSyntax[] Labels = [];
 			public readonly List<FunctionDecl> Nested = new();
 			public List<Stmt> Body;
 			public Expr Arrow;
@@ -1799,6 +1831,11 @@ namespace Keysharp.Compilation.Syntax
 					// C# only allows call/assignment/new as a statement; wrap anything else (bare value, ternary, …).
 					return ExprStmt(le is InvocationExpressionSyntax or AssignmentExpressionSyntax ? le : Op("MultiStatement", le));
 				case ReturnStmt r:
+					if (_finallyBlock >= 0)
+					{
+						Diag($"{NodeAnchor(r)}Jumps cannot exit a FINALLY block.");
+						return null;
+					}
 					return SyntaxFactory.ReturnStatement(r.Value != null ? LowerExpr(r.Value) : DefaultReturnExpr());
 				case Block b:
 					return SyntaxFactory.Block(LowerStmtList(b.Body));
@@ -1813,17 +1850,17 @@ namespace Keysharp.Compilation.Syntax
 				case SwitchStmt sw: return LowerSwitch(sw);
 				case TryStmt tr: return LowerTry(tr);
 				case ThrowStmt th: return LowerThrow(th);
-				case BreakStmt bs: return LowerBreakContinue(bs, bs.Target, isBreak: true);
-				case ContinueStmt cs: return LowerBreakContinue(cs, cs.Target, isBreak: false);
-				case GotoStmt g:
-					if (UserLabelId(g.Target) is { } label)
-						return SyntaxFactory.GotoStatement(SyntaxKind.GotoStatement, Id(label));
-					Diag($"{NodeAnchor(g)}Goto target is missing or cannot be reached: {g.Target}");
-					return null;
-				case LabelStmt l: return SyntaxFactory.LabeledStatement(UserLabelId(l.Name), SyntaxFactory.EmptyStatement());
+				case BreakStmt bs: return LowerBreakContinue(bs, isBreak: true);
+				case ContinueStmt cs: return LowerBreakContinue(cs, isBreak: false);
+				case GotoStmt g: return LowerGoto(g);
+				// A label only a break or continue names marks its loop, which needs no C# label, and Roslyn reports one
+				// that no goto references.
+				case LabelStmt l:
+					var labels = CallableLabels();
+					return labels.ByName[l.Name] is var label && (labels.ComputedGoto || label.Jumped) ? Label(LabelId(label)) : null;
 				case FunctionDecl fd:
-					// A function nested inside another is a uniquely named local function bound to a local var, so same-named
-					// nested functions in sibling scopes don't collide. Top-level functions are module-level methods.
+					// A function nested inside another is uniquely named and bound to a local var, so same-named nested functions
+					// in sibling scopes don't collide (see LowerNestedFunction). Top-level functions are module-level methods.
 					if (_scope != null) { _ = LowerNestedFunction(fd); return null; }
 					if (_emittedFuncImpls.Add(NameMangler.FunctionMethod(fd.Name))) _pendingLambdas.Add(LowerFunction(fd));
 					return null;
@@ -1873,8 +1910,7 @@ namespace Keysharp.Compilation.Syntax
 				case "hotiftimeout": return Set("Keysharp.Builtins.Ks.A_HotIfTimeout",
 						NumArg(Keysharp.Builtins.Accessors.DefaultHotIfTimeout));
 				case "inputlevel": return ExprStmt(Inv(Access("Keysharp.Runtime.Keyboard.HotkeyDefinition.SetInputLevel"), NumArg(0)));
-				case "suspendexempt":
-					return Set(DeclarationSuspendExemptVariable, BoolArg() ? True : False);
+				case "suspendexempt": return Set(DeclarationSuspendExemptVariable, BoolArg() ? True : False);
 				case "maxthreadsbuffer":
 					return Set("Keysharp.Builtins.Ks.A_MaxThreadsBuffer", BoolNum());
 				case "maxthreadsperhotkey":
@@ -4879,17 +4915,10 @@ namespace Keysharp.Compilation.Syntax
 		}
 		private void PopLoop() => _loopFrames.RemoveAt(_loopFrames.Count - 1);
 
-		private static StatementSyntax NextLabel(int id) => SyntaxFactory.LabeledStatement("KS_e" + id + "_next", SyntaxFactory.EmptyStatement());
-		private static StatementSyntax EndLabel(int id) => SyntaxFactory.LabeledStatement("KS_e" + id + "_end", SyntaxFactory.EmptyStatement());
-		// A reachable user label's C# identifier, with its declared spelling, or null when no active scope declares it.
-		private string UserLabelId(string name)
-		{
-			for (var i = _labelScopes.Count - 1; i >= _labelBase; i--)
-				if (_labelScopes[i].TryGetValue(name, out var declared))
-					return "KS_lbl_" + declared;
-
-			return null;
-		}
+		private static StatementSyntax NextLabel(int id) => Label("KS_e" + id + "_next");
+		private static StatementSyntax EndLabel(int id) => Label("KS_e" + id + "_end");
+		private static StatementSyntax Label(string name) => SyntaxFactory.LabeledStatement(name, SyntaxFactory.EmptyStatement());
+		private static StatementSyntax Goto(string label) => SyntaxFactory.GotoStatement(SyntaxKind.GotoStatement, Id(label));
 
 		// Unknown shapes retain the fallback return; reporting an endpoint as unreachable must agree with C#.
 		private static bool EndPointUnreachable(StatementSyntax statement)
@@ -4906,6 +4935,10 @@ namespace Keysharp.Compilation.Syntax
 					return EndPointUnreachable(labeled.Statement);
 				case IfStatementSyntax { Else: { } otherwise } branch:
 					return EndPointUnreachable(branch.Statement) && EndPointUnreachable(otherwise.Statement);
+				case SwitchStatementSyntax selection:
+					return selection.Sections.Any(section => section.Labels.Any(label => label is DefaultSwitchLabelSyntax))
+						&& selection.Sections.All(section => section.Statements.LastOrDefault() is { } last
+							&& last is not BreakStatementSyntax && EndPointUnreachable(last));
 				case TryStatementSyntax attempt:
 					if (!EndPointUnreachable(attempt.Block))
 						return false;
@@ -4929,21 +4962,73 @@ namespace Keysharp.Compilation.Syntax
 
 			return false;
 		}
+		// A label's C# identifier. A callable declares each name once, and no generated label starts with KS_lbl_.
+		private static string LabelId(ScriptLabel label) => "KS_lbl_" + label.Name;
+
 		// Appends the `_next:` label a continue of this loop targets, then the trailing `Until` break, which AHK also
 		// evaluates after a continue. Every iteration then records the loop's own location, as its condition or
-		// enumerator runs next.
+		// enumerator runs next. A body which cannot complete gets neither, as neither could run, but its Until is lowered
+		// all the same: that binds the named functions it declares, marks the variables it captures and reports its errors.
 		private BlockSyntax WrapLoopBody(BlockSyntax body, Expr until, LoopFrame frame, Stmt loop)
 		{
 			if (frame.NeedsNext)
 				body = body.WithStatements(body.Statements.Add(NextLabel(frame.Id)));
+
+			if (EndPointUnreachable(body))
+			{
+				if (until != null)
+					LowerUnreachable(until);
+				return body;
+			}
+
 			if (until != null)
 				body = body.AddStatements(Stamp(until), SyntaxFactory.IfStatement(IfTest(LowerExpr(until)), SyntaxFactory.BreakStatement()));
 			return body.AddStatements(Stamp(loop));
 		}
 
-		// A script jump targets an enclosing loop, including its Until handling, through the loop's generated label.
-		private StatementSyntax LowerBreakContinue(Stmt statement, string target, bool isBreak)
+		// Lowers an expression which never runs and drops the result, then the temporaries and anonymous local functions
+		// only it used, as C# reports each as unused. A named fat arrow in it stays, bound by its closure initializer.
+		private void LowerUnreachable(Expr expression)
 		{
+			var (temps, keptTemps, functions, inits) = (_scopeTemps.Count, _scopeKeptTemps.Count, _pendingScopeFuncs.Count, _pendingScopeClosureInits.Count);
+			_ = LowerExpr(expression);
+			_scopeTemps.RemoveRange(temps, _scopeTemps.Count - temps);
+			_scopeKeptTemps.RemoveRange(keptTemps, _scopeKeptTemps.Count - keptTemps);
+
+			if (_pendingScopeFuncs.Count == functions)
+				return;
+
+			var bound = _pendingScopeClosureInits.Skip(inits).SelectMany(init => init.DescendantNodes().OfType<IdentifierNameSyntax>())
+				.Select(name => name.Identifier.Text).ToHashSet();
+
+			for (var i = _pendingScopeFuncs.Count - 1; i >= functions; i--)
+				if (_pendingScopeFuncs[i] is LocalFunctionStatementSyntax function && !bound.Contains(function.Identifier.Text))
+					_pendingScopeFuncs.RemoveAt(i);
+		}
+
+		// break/continue always `goto` the target loop's `_end`/`_next` label: a C# continue would skip the Until test that
+		// `_next` precedes, and neither C# statement reaches past the innermost loop, while AHK names any enclosing one by
+		// level or label. Resolves an optional level-N or source-label target. Matches canonical.
+		private StatementSyntax LowerBreakContinue(JumpStmt statement, bool isBreak)
+		{
+			// As in AutoHotkey, the target is checked when the script loads, so it cannot be computed; a named one must be a
+			// label of this function, there must be a loop to leave (a switch is none, and none outside the function or an
+			// enclosing finally body is reachable), and a level or label must pick one of those loops.
+			if (!ConstantJumpTarget(statement, out var target))
+			{
+				Diag($"{NodeAnchor(statement)}Parameter #1 invalid.");
+				return null;
+			}
+
+			var level = 0;
+			var numeric = target != null && LoopLevel(target, out level);
+
+			if (target != null && !numeric && !CallableLabels().ByName.ContainsKey(target))
+			{
+				Diag($"{NodeAnchor(statement)}Label not found in current scope: {target}");
+				return null;
+			}
+
 			var count = _loopFrames.Count - _loopBase;
 			if (count == 0)
 			{
@@ -4954,7 +5039,7 @@ namespace Keysharp.Compilation.Syntax
 			LoopFrame frame = null;
 			if (target == null)
 				frame = _loopFrames[^1];
-			else if (int.TryParse(target, out var level))
+			else if (numeric)
 			{
 				if (level >= 1 && level <= count)
 					frame = _loopFrames[^level];
@@ -4973,20 +5058,166 @@ namespace Keysharp.Compilation.Syntax
 				return null;
 			}
 
-			if (isBreak) { frame.NeedsEnd = true; return SyntaxFactory.GotoStatement(SyntaxKind.GotoStatement, Id("KS_e" + frame.Id + "_end")); }
-			frame.NeedsNext = true; return SyntaxFactory.GotoStatement(SyntaxKind.GotoStatement, Id("KS_e" + frame.Id + "_next"));
+			if (isBreak) { frame.NeedsEnd = true; return Goto("KS_e" + frame.Id + "_end"); }
+			frame.NeedsNext = true; return Goto("KS_e" + frame.Id + "_next");
 		}
 
-		private static HashSet<string> CollectDirectLabels(List<Stmt> stmts)
+		// A jump's target when the script loads: the text written after the keyword, or the value of a lone literal in the
+		// `keyword(...)` form. False for any other expression, which only a goto takes, and resolves when it runs.
+		private static bool ConstantJumpTarget(JumpStmt jump, out string target)
 		{
-			var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-			foreach (var s in stmts) if (s is LabelStmt l) set.Add(l.Name);
-			return set;
+			var expression = Unparen(jump.Expression);
+			target = expression switch
+			{
+				null => jump.Target,
+				LiteralExpr { Kind: LiteralKind.String } literal => DecodeString(literal.Raw),
+				LiteralExpr literal when TryParseAhkInt(literal.Raw, out var value) => value.ToString(System.Globalization.CultureInfo.InvariantCulture),
+				LiteralExpr literal => literal.Raw,
+				_ => null
+			};
+
+			if (target == "")
+				target = null;
+
+			return expression is null or LiteralExpr;
 		}
 
-		private List<StatementSyntax> LowerStmtList(List<Stmt> stmts)
+		// Whether a break or continue target is a loop level, and which. AutoHotkey asks IsNumeric, which takes an optional
+		// `+` and decimal or 0x hex digits, then reads the level with _ttoi, which stops at the x, so `break 0x2` names level 0.
+		private static bool LoopLevel(string target, out int level)
 		{
-			_labelScopes.Add(CollectDirectLabels(stmts));
+			level = 0;
+			var text = target.AsSpan().Trim(" \t");
+
+			if (text.StartsWith("+"))
+				text = text[1..];
+
+			var hex = text.Length > 2 && text[0] == '0' && (text[1] | 0x20) == 'x' && char.IsAsciiHexDigit(text[2]);
+			var digits = hex ? text[2..] : text;
+
+			if (digits.IsEmpty)
+				return false;
+
+			foreach (var c in digits)
+				if (hex ? !char.IsAsciiHexDigit(c) : !char.IsAsciiDigit(c))
+					return false;
+
+			if (!hex)
+				level = int.TryParse(digits, out var parsed) ? parsed : int.MaxValue;
+
+			return true;
+		}
+
+		// As in AutoHotkey, a goto is checked when the script loads: its label must be one this function declares, and the jump
+		// must reach it (see UnreachableBecause).
+		private StatementSyntax LowerGoto(GotoStmt g)
+		{
+			if (!ConstantJumpTarget(g, out var target))
+				return LowerComputedGoto(g);
+
+			if (target == null || !CallableLabels().ByName.TryGetValue(target, out var label))
+			{
+				Diag($"{NodeAnchor(g)}Label not found in current scope: {target}");
+				return null;
+			}
+
+			if (UnreachableBecause(label) is { } reason)
+			{
+				Diag($"{NodeAnchor(g)}{reason}");
+				return null;
+			}
+
+			return Goto(LabelId(label));
+		}
+
+		// The error AutoHotkey reports for a jump from the statement being lowered to a label of its function, or null when the
+		// jump reaches the label: a jump reaches only a label in a block enclosing it, and never leaves a finally body.
+		private string UnreachableBecause(ScriptLabel label)
+		{
+			var block = _openBlocks.LastIndexOf(label.Block);
+			return _finallyBlock >= 0 && block < _finallyBlock ? "Jumps cannot exit a FINALLY block."
+				: block < _blockBase ? "A Goto must not jump into a block that doesn't enclose it."
+				: null;
+		}
+
+		// Reachable labels emit real C# jumps; GotoFailed distinguishes inaccessible labels from missing ones.
+		private StatementSyntax LowerComputedGoto(GotoStmt g)
+		{
+			var name = "KS_goto" + ++_flowCounter;
+			var statements = new List<StatementSyntax> { LocalDeclVar(name, Inv(Access("Keysharp.Runtime.Flow.GotoLabel"), LowerExpr(g.Expression))) };
+			foreach (var label in CallableLabels().ByName.Values)
+				if (UnreachableBecause(label) == null)
+					statements.Add(SyntaxFactory.IfStatement(Inv(Access("System.String.Equals"), Id(name), Str(label.Name),
+						Access("System.StringComparison.OrdinalIgnoreCase")), Goto(LabelId(label))));
+
+			statements.Add(CallStmt("Keysharp.Runtime.Flow.GotoFailed", Id(name), BoolLit(_finallyBlock >= 0)));
+			return SyntaxFactory.Block(statements);
+		}
+
+		// The labels of the callable being lowered, collected when a label or a jump first needs them, and also read by IsLabel
+		// (see LabelsAttribute). Its nested functions are left out, as no jump leaves a function. The same pass reports a
+		// label declared twice, which AutoHotkey rejects anywhere in one function.
+		private LabelTable CallableLabels()
+		{
+			if (_callableLabels != null)
+				return _callableLabels;
+
+			_callableLabels = new();
+			var targets = new List<string>();
+
+			if (_callableStmts != null)
+				foreach (var statement in _callableStmts)
+					CollectLabels(statement, _callableStmts, targets);
+
+			foreach (var target in targets)
+				if (_callableLabels.ByName.TryGetValue(target, out var label))
+					label.Jumped = true;
+
+			return _callableLabels;
+		}
+
+		// Records the labels in a statement with the blocks holding them, as the lowering opens those blocks: a statement list,
+		// a switch for its case bodies, and a body which is a single statement for itself.
+		private void CollectLabels(Stmt s, object block, List<string> targets)
+		{
+			switch (s)
+			{
+				case LabelStmt l:
+					if (!_callableLabels.ByName.TryAdd(l.Name, new(l.Name, block)))
+						Diag($"{NodeAnchor(l)}Duplicate label: {l.Name}");
+					return;
+				case GotoStmt g:
+					if (!ConstantJumpTarget(g, out var target))
+						_callableLabels.ComputedGoto = true;
+					else if (target != null)
+						targets.Add(target);
+					return;
+				case FunctionDecl or ClassDecl or HotkeyDef or HotstringDef:
+					return;
+				case Block b:
+					foreach (var child in b.Body)
+						CollectLabels(child, b.Body, targets);
+					return;
+				case SwitchStmt sw:
+					foreach (var child in sw.Cases.SelectMany(c => c.Body).Concat(sw.Default ?? []))
+						CollectLabels(child, sw, targets);
+					return;
+			}
+
+			foreach (var child in AstChildren.Of(s))
+				if (child is Stmt body)
+					CollectLabels(body, body, targets);
+		}
+
+		// `[Labels("a", "b")]` naming the labels of the callable being lowered, which IsLabel reads, or nothing when it has none.
+		private AttributeListSyntax[] LabelsAttribute() =>
+			_callableLabels is { ByName.Count: > 0 } table ? [Attr("Keysharp.Runtime.Labels", [.. table.ByName.Values.Select(label => Str(label.Name))])] : [];
+
+		// Lowers a statement sequence as an open block (by default the list itself; see CollectLabels), associating a `name:`
+		// label that immediately precedes a loop with that loop (so `break name`/`continue name` can target it).
+		private List<StatementSyntax> LowerStmtList(List<Stmt> stmts, object block = null)
+		{
+			_openBlocks.Add(block ?? stmts);
 			var result = _scratchLowerStmtListStatementsDangerous.Get();
 			result.Clear();
 			for (int i = 0; i < stmts.Count; i++)
@@ -4994,7 +5225,7 @@ namespace Keysharp.Compilation.Syntax
 				_pendingLoopLabels = LoopLabels(stmts, i);
 				AddStmt(result, stmts[i]);
 			}
-			_labelScopes.RemoveAt(_labelScopes.Count - 1);
+			_openBlocks.RemoveAt(_openBlocks.Count - 1);
 			_scratchLowerStmtListStatementsDangerous.Return(result);//Note this return doesn't clear because it will be used very briefly and modified by the caller.
 			return result;//This is somewhat dangerous, but provides a large reduction in allocations. Revert back to a normal allocation if this ever causes errors.
 		}
@@ -5079,17 +5310,13 @@ namespace Keysharp.Compilation.Syntax
 		// in one case can target a `name:` label in another (mirrors the canonical visitor). Both forms govern on
 		// `true` and test each case in order in a `when` clause, as AHK evaluates a case only until one matches: a
 		// value-less switch with `IfTest(cond)`, a value switch with `Script.SwitchCase`, against the value and CaseSense
-		// that `Script.Switch` evaluates once beforehand. Each section ends with a (switch-)break; AHK user
+		// that `Script.Switch` evaluates once beforehand. A section which can complete ends with a (switch-)break; AHK user
 		// break/continue inside a case go to the enclosing loop via goto (see LowerBreakContinue).
 		private StatementSyntax LowerSwitch(SwitchStmt s)
 		{
 			var switchValue = s.Value == null ? null : "KS_swv" + (++_flowCounter);
 
-			// All labels directly inside any case/default body share the switch's (single) C# label scope.
-			var switchLabels = _scratchCaseInsensitiveHashStrings.Get();
-			foreach (var c in s.Cases) switchLabels.UnionWith(CollectDirectLabels(c.Body));
-			if (s.Default != null) switchLabels.UnionWith(CollectDirectLabels(s.Default));
-			_labelScopes.Add(switchLabels);
+			_openBlocks.Add(s);
 
 			SwitchLabelSyntax CaseLabel(Expr v)
 			{
@@ -5101,23 +5328,23 @@ namespace Keysharp.Compilation.Syntax
 
 			SwitchSectionSyntax Section(IEnumerable<SwitchLabelSyntax> labels, List<StatementSyntax> body)
 			{
-				body.Add(SyntaxFactory.BreakStatement());   // AHK cases don't fall through; terminate the C# section
+				if (!EndPointUnreachable(body))
+					body.Add(SyntaxFactory.BreakStatement());
 				return SyntaxFactory.SwitchSection(SyntaxFactory.List(labels), SyntaxFactory.List(body));
 			}
 
 			var sections = _scratchListSwitchSections.Get();
 			foreach (var c in s.Cases)
-				sections.Add(Section(c.Values.Select(CaseLabel), LowerStmtList(c.Body)));
+				sections.Add(Section(c.Values.Select(CaseLabel), LowerStmtList(c.Body, s)));
 			if (s.Default != null)
 			{
 				var def = _scratchListSwitchLabels.Get();
 				def.Add(SyntaxFactory.DefaultSwitchLabel());
-				sections.Add(Section(def, LowerStmtList(s.Default)));
+				sections.Add(Section(def, LowerStmtList(s.Default, s)));
 				_scratchListSwitchLabels.Return(def);
 			}
 
-			_labelScopes.RemoveAt(_labelScopes.Count - 1);
-			_scratchCaseInsensitiveHashStrings.Return(switchLabels);
+			_openBlocks.RemoveAt(_openBlocks.Count - 1);
 			var sw = SyntaxFactory.SwitchStatement(SyntaxFactory.LiteralExpression(SyntaxKind.TrueLiteralExpression), SyntaxFactory.List(sections));
 			_scratchListSwitchSections.Return(sections);
 
@@ -5136,16 +5363,18 @@ namespace Keysharp.Compilation.Syntax
 		private StatementSyntax LowerTry(TryStmt tr)
 		{
 			var body = LowerBody(tr.Body);
-			var (savedLoopBase, savedLabelBase) = (_loopBase, _labelBase);
-			(_loopBase, _labelBase) = (_loopFrames.Count, _labelScopes.Count);
+			// As in AutoHotkey, no jump leaves a finally body: a break or continue in one reaches no loop outside it.
+			var (savedLoopBase, savedLoopLabels, savedFinallyBlock) = (_loopBase, _pendingLoopLabels, _finallyBlock);
+			(_loopBase, _pendingLoopLabels, _finallyBlock) = (_loopFrames.Count, null, _openBlocks.Count);
 			var finallyBlock = tr.Finally != null ? LowerBody(tr.Finally) : null;
-			(_loopBase, _labelBase) = (savedLoopBase, savedLabelBase);
+			(_loopBase, _pendingLoopLabels, _finallyBlock) = (savedLoopBase, savedLoopLabels, savedFinallyBlock);
 			StatementSyntax stmt;
 
 			// try/catch/else: the else body runs only if the try completed without an exception — guard with a flag.
 			if (tr.Else != null)
 			{
 				var ok = "KS_ok" + (++_flowCounter);
+				// A body which cannot complete leaves the flag unset, as nothing after it could set it.
 				if (!EndPointUnreachable(body))
 					body = body.WithStatements(body.Statements.Add(ExprStmt(Assign(Id(ok), SyntaxFactory.LiteralExpression(SyntaxKind.TrueLiteralExpression)))));
 				var inner = BuildTry(body, tr.Catches, null);
@@ -5291,7 +5520,8 @@ namespace Keysharp.Compilation.Syntax
 			if (c.Base != null)
 			{
 				// A struct extends only a struct class and a class only a class which is not one.
-				if (ResolveBaseClass(c.Base, out var baseIsStruct) is { } resolved && baseIsStruct == c.IsStruct) baseType = resolved;
+				if (ResolveBaseClass(c.Base, out var baseIsStruct) is { } resolved && baseIsStruct == c.IsStruct)
+					baseType = resolved;
 				else Diag($"{NodeAnchor(c)}Invalid base class: {c.Base}");
 			}
 
@@ -5557,10 +5787,10 @@ namespace Keysharp.Compilation.Syntax
 			var savedCompat = _currentCompat;
 			_currentCompat = ScanRequires(m.Body?.Body) ?? _currentCompat;   // a `#Requires` in the method body sets its mode
 			var body = LowerCallableBody(paramLowers, m.Body, m.ArrowBody, implName,
-				thisFuncName, out _, byRefParams, m.Params);
+				thisFuncName, out var scope, byRefParams, m.Params);
 			_inMethod = saved; _currentMethodStatic = savedStatic;
 			// Ordinary methods retain their source spelling; operator implementations are hidden from property lookup.
-			AttributeListSyntax[] attrs = [m.IsOperator ? Attr("Keysharp.Runtime.PublicHiddenFromUser") : Attr("Keysharp.Runtime.UserDeclaredName", Str(m.Name)), .. CompatAttr()];
+			AttributeListSyntax[] attrs = [m.IsOperator ? Attr("Keysharp.Runtime.PublicHiddenFromUser") : Attr("Keysharp.Runtime.UserDeclaredName", Str(m.Name)), .. CompatAttr(), .. scope.Labels];
 			_currentCompat = savedCompat;
 			var parameters = ParamDecls(m.Params, includeThis: true);
 			if (m.IsOperator && m.Params.Count == 0)
@@ -5586,10 +5816,10 @@ namespace Keysharp.Compilation.Syntax
 				var thisFuncName = ClassMemberFuncName(pr.Name, pr.Static) + ".Get";
 				var savedM = _inMethod; var savedS = _currentMethodStatic; _inMethod = true; _currentMethodStatic = pr.Static;
 				var body = LowerCallableBody(new HashSet<string>(idxLowers, StringComparer.OrdinalIgnoreCase), pr.GetBody, pr.GetArrow, getterName,
-					thisFuncName, out _, byRefParams, pr.Params);
+					thisFuncName, out var scope, byRefParams, pr.Params);
 				_inMethod = savedM; _currentMethodStatic = savedS;
 				var ps = SyntaxFactory.ParameterList(SyntaxFactory.SeparatedList(Prepend(ThisParam(), IdxParams())));
-				result.Add(ObjMethod(getterName, ps, body, Attr("Keysharp.Runtime.UserDeclaredName", Str(pr.Name))));
+				result.Add(ObjMethod(getterName, ps, body, [Attr("Keysharp.Runtime.UserDeclaredName", Str(pr.Name)), .. scope.Labels]));
 			}
 			if (pr.HasSet)
 			{
@@ -5597,7 +5827,7 @@ namespace Keysharp.Compilation.Syntax
 				var setParams = new HashSet<string>(idxLowers, StringComparer.OrdinalIgnoreCase) { "value" };
 				var savedM = _inMethod; var savedS = _currentMethodStatic; _inMethod = true; _currentMethodStatic = pr.Static;
 				var body = LowerCallableBody(setParams, pr.SetBody, pr.SetArrow, setterName,
-					thisFuncName, out _, byRefParams, pr.Params);
+					thisFuncName, out var scope, byRefParams, pr.Params);
 				_inMethod = savedM; _currentMethodStatic = savedS;
 				var idx = IdxParams();
 				_scratchPropertyAll.Clear();
@@ -5605,7 +5835,7 @@ namespace Keysharp.Compilation.Syntax
 				_scratchPropertyAll.AddRange(idx);
 				_scratchPropertyAll.Add(SyntaxFactory.Parameter(SyntaxFactory.Identifier(NameMangler.Escape("value"))).WithType(ObjType));
 				result.Add(ObjMethod(setterName, SyntaxFactory.ParameterList(SyntaxFactory.SeparatedList(_scratchPropertyAll)),
-					body, Attr("Keysharp.Runtime.UserDeclaredName", Str(pr.Name))));
+					body, [Attr("Keysharp.Runtime.UserDeclaredName", Str(pr.Name)), .. scope.Labels]));
 			}
 			_scratchListMembersDangerous.Return(result);//Dangerous: the caller must immediately use the returned list and not hold it across another LowerProperty call.
 			return result;
@@ -5651,8 +5881,8 @@ namespace Keysharp.Compilation.Syntax
 				.WithBody(body);
 			// Always stamped, "" for an anonymous lambda: Roslyn renames a local function to `<Outer>g__name|n_m`,
 			// and the attribute is what spares the runtime having to read that scheme back.
-			localFunction = localFunction.AddAttributeLists(Attr("Keysharp.Runtime.UserDeclaredName", Str(fa.Name ?? "")),
-				Attr("Keysharp.Runtime.CompatibilityMode", Str(_currentCompat.ToString())));
+			localFunction = localFunction.AddAttributeLists([Attr("Keysharp.Runtime.UserDeclaredName", Str(fa.Name ?? "")),
+				Attr("Keysharp.Runtime.CompatibilityMode", Str(_currentCompat.ToString())), .. scope.Labels]);
 			_currentCompat = savedCompat;
 			return EmitClosure(scope, localFunction);
 		}
@@ -5703,8 +5933,8 @@ namespace Keysharp.Compilation.Syntax
 			var fn = SyntaxFactory.LocalFunctionStatement(ObjType, SyntaxFactory.Identifier(implName))
 				.WithParameterList(ParamDecls(fd.Params, includeThis: false))
 				.WithBody(body)
-				.AddAttributeLists(Attr("Keysharp.Runtime.UserDeclaredName", Str(fd.Name)),
-					Attr("Keysharp.Runtime.CompatibilityMode", Str(_currentCompat.ToString())));
+				.AddAttributeLists([Attr("Keysharp.Runtime.UserDeclaredName", Str(fd.Name)),
+					Attr("Keysharp.Runtime.CompatibilityMode", Str(_currentCompat.ToString())), .. scope.Labels]);
 			_currentCompat = savedCompat;
 			// Assign (not declare — the var is hoisted) at the scope TOP so forward-referenced calls work and a
 			// self-recursive binding doesn't trip definite assignment; the delegate's captures read lazily.
@@ -5770,8 +6000,8 @@ namespace Keysharp.Compilation.Syntax
 		{
 			// AutoHotkey builds every hotkey, hotstring and #HotIf body from one `<Hotkey>(ThisHotkey)` template
 			// (Script::CreateHotFunc), so that is the name A_ThisFunc reports inside all three.
-			var lowered = LowerCallableBody(new HashSet<string> { "thishotkey" }, body, null, name, "<Hotkey>", out _);
-			_hotMembers.Add(ObjMethod(name, ParamDecls(HotCallbackParams, includeThis: false), lowered));
+			var lowered = LowerCallableBody(new HashSet<string> { "thishotkey" }, body, null, name, "<Hotkey>", out var scope);
+			_hotMembers.Add(ObjMethod(name, ParamDecls(HotCallbackParams, includeThis: false), lowered, scope.Labels));
 			return name;
 		}
 
@@ -5793,7 +6023,7 @@ namespace Keysharp.Compilation.Syntax
 			{
 				var text = ExpandCopilotDeclarationAlias(ProcessTriggerText(trig), out _);
 				AddDhhr(hk, ExprStmt(Inv(Access("Keysharp.Runtime.Keyboard.HotkeyDefinition.AddHotkey"),
-					FuncBind(_currentModuleClass + "." + fnName, hk.Func?.Params), UintZero, Str(text), Id(DeclarationSuspendExemptVariable))));
+					FuncBind(_currentModuleClass + "." + fnName, hk.Func?.Params), UintZero, Str(text), SuspendExempt())));
 			}
 		}
 
@@ -5826,11 +6056,13 @@ namespace Keysharp.Compilation.Syntax
 				var key = colon > 0 ? name.Substring(colon + 1) : name;
 				AddDhhr(hs, ExprStmt(Inv(Access("Keysharp.Runtime.Keyboard.HotstringManager.AddHotstring"),
 					Str(name), funcArg, Str($"{options}:{key}"), Str(key), Str(expansionText), False,
-					Id(DeclarationSuspendExemptVariable))));
+					SuspendExempt())));
 			}
 		}
 
-		// Share remap callbacks and resolve keys with the keyboard layout in effect when the script starts.
+		// Turns `source::target` into a call that adds its hotkeys when the script starts. Resolving the keys
+		// is left to that call: a key named by a single character resolves through the keyboard layout, and AutoHotkey
+		// resolves a remap with the layout in effect when the script loads, not the one it happened to be compiled under.
 		private void LowerRemap(RemapDef rm)
 		{
 			_persistent = true;
@@ -5843,15 +6075,16 @@ namespace Keysharp.Compilation.Syntax
 			{
 				AddDhhr(rm, ExprStmt(Inv(Access("Keysharp.Runtime.Keyboard.HotkeyDefinition.AddHotkey"),
 					Null, SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(altTabAction)), Str(sourceKey),
-					Id(DeclarationSuspendExemptVariable))));
+					SuspendExempt())));
 				return;
 			}
 
-			// The Copilot firmware releases its chord modifiers, so its remap must not restore them.
+			// A physical Copilot key's firmware releases its synthetic LWin+LShift itself, right after F23 comes up, so a remap
+			// from it must not press them again afterward. The literal `<#<+F23` spelling keeps the generic chord behavior, which does.
 			var firmwareSourceModifiersLR = sourceUsesCopilotAlias ? CopilotFirmwareModifiersLR : 0u;
 			AddDhhr(rm, ExprStmt(Inv(Access("Keysharp.Runtime.Keyboard.HotkeyDefinition.AddRemap"),
 				Str(sourceKey), Str(targetKey), SyntaxFactory.LiteralExpression(SyntaxKind.NumericLiteralExpression, SyntaxFactory.Literal(firmwareSourceModifiersLR)),
-				Id(DeclarationSuspendExemptVariable))));
+				SuspendExempt())));
 		}
 
 		// `#Hotstring` directive: sets default options (`#Hotstring X`), end chars, or mouse-reset for subsequent
@@ -5906,8 +6139,8 @@ namespace Keysharp.Compilation.Syntax
 			_currentCompat = ScanRequires(f.Body?.Body) ?? _currentCompat;   // a `#Requires` in the body sets this function's mode
 			var (paramLowers, byRefParams) = ParamSets(f.Params);
 			var implName = NameMangler.FunctionMethod(f.Name);
-			var body = LowerCallableBody(paramLowers, f.Body, f.ArrowBody, implName, f.Name, out _, byRefParams, f.Params);
-			AttributeListSyntax[] attrs = [Attr("Keysharp.Runtime.UserDeclaredName", Str(f.Name)), ..CompatAttr()];
+			var body = LowerCallableBody(paramLowers, f.Body, f.ArrowBody, implName, f.Name, out var scope, byRefParams, f.Params);
+			AttributeListSyntax[] attrs = [Attr("Keysharp.Runtime.UserDeclaredName", Str(f.Name)), .. CompatAttr(), .. scope.Labels];
 			var method = ObjMethod(implName, ParamDecls(f.Params, includeThis: false), body, attrs);
 			_currentCompat = savedCompat;
 			return method;
@@ -5971,10 +6204,15 @@ namespace Keysharp.Compilation.Syntax
 			_loweringParamDefault = false;
 			var savedKept = _scopeKeptTemps; _scopeKeptTemps = _scratchListStrings.Get();
 			var savedTemps = _scopeTemps; _scopeTemps = _scratchListStrings.Get();
-			var savedScopeFuncs = _pendingScopeFuncs; _pendingScopeFuncs = _scratchListStatements.Get();   // fat-arrow local funcs for THIS scope
+			var savedScopeFuncs = _pendingScopeFuncs; _pendingScopeFuncs = _scratchListStatements.Get();   // fat-arrow local funcs for this scope
 			var savedClosureInits = _pendingScopeClosureInits; _pendingScopeClosureInits = _scratchListStatements.Get();
-			var (savedLoopBase, savedLoopLabels, savedLabelBase) = (_loopBase, _pendingLoopLabels, _labelBase);
-			(_loopBase, _pendingLoopLabels, _labelBase) = (_loopFrames.Count, null, _labelScopes.Count);
+			var (savedCallableStmts, savedCallableLabels) = (_callableStmts, _callableLabels);
+			(_callableStmts, _callableLabels) = (bodyBlock?.Body, null);
+			// As in AutoHotkey, no jump leaves its function, so a nested one sees no enclosing loop, label or finally body.
+			var (savedLoopBase, savedLoopLabels) = (_loopBase, _pendingLoopLabels);
+			(_loopBase, _pendingLoopLabels) = (_loopFrames.Count, null);
+			var (savedBlockBase, savedFinallyBlock) = (_blockBase, _finallyBlock);
+			(_blockBase, _finallyBlock) = (_openBlocks.Count, -1);
 			// This callable's own `#import` frame (control-flow-nested imports included) is pushed before its variables are
 			// classified, so a name it explicitly binds is written through rather than made a local.
 			var bodyImports = _scratchListImports.Get();
@@ -6063,6 +6301,7 @@ namespace Keysharp.Compilation.Syntax
 			if (arrowBody != null) body.AddRange([Stamp(arrowBody), SyntaxFactory.ReturnStatement(RewriteToOrNull(LowerExpr(arrowBody), ArrowOrNull))]);
 			else if (bodyBlock != null) body.AddRange(LowerStmtList(bodyBlock.Body));
 
+			// Roslyn reports a default return after a body which cannot complete as unreachable.
 			if (!EndPointUnreachable(body))
 				body.Add(SyntaxFactory.ReturnStatement(DefaultReturnExpr()));
 
@@ -6106,7 +6345,10 @@ namespace Keysharp.Compilation.Syntax
 			_scratchListStrings.Return(_scopeKeptTemps);
 			_scratchListStrings.Return(_scopeTemps);
 			_scopeTemps = savedTemps; _pendingScopeFuncs = savedScopeFuncs; _pendingScopeClosureInits = savedClosureInits; _scopeKeptTemps = savedKept;
-			(_loopBase, _pendingLoopLabels, _labelBase) = (savedLoopBase, savedLoopLabels, savedLabelBase);
+			scope.Labels = LabelsAttribute();
+			(_callableStmts, _callableLabels) = (savedCallableStmts, savedCallableLabels);
+			(_loopBase, _pendingLoopLabels) = (savedLoopBase, savedLoopLabels);
+			(_blockBase, _finallyBlock) = (savedBlockBase, savedFinallyBlock);
 			_currentThisFuncName = savedThisFuncName;
 			_loweringParamDefault = savedLoweringParamDefault;
 			_stamped = savedStamped;
@@ -6495,7 +6737,7 @@ namespace Keysharp.Compilation.Syntax
 		private MemberDeclarationSyntax BuildModuleClass(ModInfo module, List<MemberDeclarationSyntax> fieldDecls,
 			List<MemberDeclarationSyntax> members, List<MemberDeclarationSyntax> lambdas,
 			List<MemberDeclarationSyntax> hotMembers, List<StatementSyntax> autoStmts, List<MemberDeclarationSyntax> importMembers,
-			Semver.SemVersion compat = null)
+			Semver.SemVersion compat = null, AttributeListSyntax[] labels = null)
 		{
 			// The C# class name is the module name, disambiguated if it shadows a framework/structural root; the runtime
 			// resolves the original AHK module name back through [UserDeclaredName] (Reflections keys stringToTypes by it).
@@ -6530,7 +6772,7 @@ namespace Keysharp.Compilation.Syntax
 			mm.AddRange(members);
 			if (lambdas != null) mm.AddRange(lambdas);
 			if (hotMembers != null) mm.AddRange(hotMembers);
-			mm.Add(ObjMethod(NameMangler.AutoExecMethod, EmptyParams(), SyntaxFactory.Block(autoBody)));
+			mm.Add(ObjMethod(NameMangler.AutoExecMethod, EmptyParams(), SyntaxFactory.Block(autoBody), labels ?? []));
 			mm.Add(ClassCtor(csName));
 			var decl = SyntaxFactory.ClassDeclaration(csName)
 				.AddModifiers(PublicTok).WithBaseList(BaseList("Keysharp.Runtime.Module"))
@@ -6670,11 +6912,14 @@ namespace Keysharp.Compilation.Syntax
 			// Resolve operators before any hook registration, class initialization or module auto-execution can use them.
 			if (_hasOperatorDeclarations)
 				stmts.Add(ExprStmt(Inv(Access("MainScript.Operators.Register"), Id(NameMangler.OperatorManifestField))));
-			if (_dhhr.Count > 0)
+			if (_suspendExemptRead)
 				stmts.Add(DeclLocal(SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.BoolKeyword)),
 					DeclarationSuspendExemptVariable, False));
 			stmts.AddRange(_dhhrPrelude);
-			stmts.AddRange(_dhhr);
+			foreach (var registration in _dhhr)
+				if (_suspendExemptRead || registration is not ExpressionStatementSyntax
+					{ Expression: AssignmentExpressionSyntax { Left: IdentifierNameSyntax { Identifier.ValueText: DeclarationSuspendExemptVariable } } })
+					stmts.Add(registration);
 			if (_persistent) stmts.Add(CallStmt("Keysharp.Builtins.Flow.Persistent"));
 			stmts.Add(CallStmt("Keysharp.Runtime.Keyboard.HotkeyDefinition.ManifestAllHotkeysHotstringsHooks"));
 			// Run each module's auto-exec in dependency order, in a call stack frame of its own and under that module.

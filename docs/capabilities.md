@@ -580,7 +580,7 @@ Status legend:
 | GetMethod() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | The GetMethod function retrieves the implementation function of a method. |
 | Global keyboard hooks | 🟢 Full | 🟡 Partial | 🟡 Partial | 🟡 Partial | Linux uses evdev/uinput, macOS uses CGEventTap. |
 | Global mouse hooks | 🟢 Full | 🟡 Partial | 🟡 Partial | 🟡 Partial | Suppression/injection semantics differ by platform. |
-| Goto | 🟡 Partial | 🟡 Partial | 🟡 Partial | 🟡 Partial | Goto doesn't support expressions in Keysharp. |
+| Goto | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | A label in parentheses may be an expression, resolved when the Goto runs. |
 | GroupActivate() | 🟢 Full | 🟡 Partial | 🟡 Partial | 🟡 Partial | The GroupActivate function activates the next window in a window group that was defined with the GroupAdd function. |
 | GroupAdd() | 🟢 Full | 🟡 Partial | 🟡 Partial | 🟡 Partial | The GroupAdd function adds a window specification to a window group, creating the group if necessary. |
 | GroupClose() | 🟢 Full | 🟡 Partial | 🟡 Partial | 🟡 Partial | The GroupClose function closes the active window if it was just activated by the GroupActivate or GroupDeactivate function. |
@@ -739,7 +739,7 @@ Status legend:
 | IsDigit() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Returns true if a string contains only digits. |
 | IsFloat() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Returns true if a value is a floating-point number. |
 | IsInteger() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Returns true if a value is an integer. |
-| IsLabel() | 🟡 Partial | 🟡 Partial | 🟡 Partial | 🟡 Partial | Does not support expressions. |
+| IsLabel() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Looks among the labels of the calling function, or of the auto-execute section outside any function. |
 | IsLower() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Returns true if a string is lowercase. |
 | IsNumber() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Returns true if a value is numeric. |
 | IsObject() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | The IsObject function returns a non-zero number if the specified value is an object. |

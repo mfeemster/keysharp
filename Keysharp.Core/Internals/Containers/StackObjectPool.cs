@@ -11,7 +11,7 @@ public class ObjectStackPool<T> where T : class
 {
 	private readonly int maxSize;
 	private readonly Func<T> objectGenerator;
-	private readonly Action<T>? resetAction;
+	private readonly Action<T> resetAction;
 	private readonly Stack<T> stack = new();
 
 	/// <summary>
@@ -25,7 +25,7 @@ public class ObjectStackPool<T> where T : class
 	/// <param name="objectGenerator">Function to create a new object when pool is empty.</param>
 	/// <param name="resetAction">Optional action to reset object state before reuse.</param>
 	/// <param name="maxSize">Maximum number of objects to keep in the pool. Default: no limit (int.MaxValue).</param>
-	public ObjectStackPool(Func<T> objectGenerator, Action<T>? resetAction = null, int maxSize = int.MaxValue)
+	public ObjectStackPool(Func<T> objectGenerator, Action<T> resetAction = null, int maxSize = int.MaxValue)
 	{
 		this.objectGenerator = objectGenerator ?? throw new ArgumentNullException(nameof(objectGenerator));
 		this.resetAction = resetAction;

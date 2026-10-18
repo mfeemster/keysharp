@@ -138,12 +138,20 @@ namespace Keysharp.Builtins
 		}
 
 		/// <summary>
-		/// Unsupported.
+		/// Returns 1 if the function calling it declares a label of the specified name, or the auto-execute section does when
+		/// it calls it from outside any function; otherwise 0. Case-insensitive, as AutoHotkey's FindLabel.
 		/// </summary>
-		/// <param name="labelName">Unused.</param>
-		/// <returns>Unused.</returns>
-		/// <exception cref="Error">Throws an <see cref="Error"/> exception because Keysharp does not support querying labels at runtime.</exception>
-		public static long IsLabel(object labelName) => (long)Errors.ErrorOccurred("C# does not allow querying labels at runtime.", DefaultErrorLong);
+		/// <param name="labelName">The name of the label to look for.</param>
+		/// <returns>1 if the label exists, otherwise 0.</returns>
+		public static long IsLabel(object labelName)
+		{
+			if (!labelName.CoerceString(out var name))
+				return DefaultErrorLong;
+
+			var stack = CallStack.Current;
+			var labels = stack.ScriptFrame(stack.Depth - 1)?.Function?.mi?.GetCustomAttribute<LabelsAttribute>()?.Names;
+			return labels?.Contains(name, StringComparer.OrdinalIgnoreCase) == true ? 1L : 0L;
+		}
 
 		/// <summary>
 		/// Returns 1 if value is a string and is empty or contains only lowercase characters.<br/>

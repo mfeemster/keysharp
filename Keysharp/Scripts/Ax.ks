@@ -2247,7 +2247,6 @@ class Ax {
             try return this[paths*]
             catch IndexError
                 return 0
-            return 0
         }
 
         WaitElementFromPath(paths*) {

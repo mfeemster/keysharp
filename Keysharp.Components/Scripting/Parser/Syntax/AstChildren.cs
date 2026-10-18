@@ -36,6 +36,7 @@ namespace Keysharp.Parsing.Syntax
 			TryStmt attempt => TryParts(attempt),
 			ReturnStmt ret => One(ret.Value),
 			ThrowStmt thrown => One(thrown.Value),
+			GotoStmt jump => One(jump.Expression),
 			DeclStmt declaration => declaration.Items,
 			HotkeyDef hotkey => Two(hotkey.Body, hotkey.Func),
 			HotstringDef hotstring => Two(hotstring.Body, hotstring.Func),

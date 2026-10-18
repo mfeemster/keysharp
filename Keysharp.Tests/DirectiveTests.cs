@@ -845,9 +845,8 @@ public class DirectiveTests : TestRunner
 	[Test, Category("Directives")]
 	public void RunScriptOptions()
 	{
-		// Ks.RunScript takes a command line, not a bespoke defines list. It compiles in-process and pipes only the
-		// resulting bytes to the launcher, so --define and --include have to be applied HERE and everything else
-		// forwarded there.
+		// Ks.RunScript compiles before launching the child, so --define and --include apply to that compile;
+		// other switches belong to the child process.
 		static (string[] defines, string includeFile, string[] rest, string error) Split(params string[] args)
 		{
 			var err = Keysharp.Internals.Scripting.Runner.SplitCompileSwitches([.. args], out var d, out var include, out var r);

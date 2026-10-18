@@ -2861,7 +2861,6 @@ class AtSpi {
             try return this[paths*]
             catch IndexError
                 return 0
-            return 0
         }
 
         /**

@@ -42,43 +42,11 @@ namespace Keysharp.Internals.Invoke
 				: CallStack.InvokeIn(caller.Copy(), compatibility, static (target, _) => ((Func<object>)target)(), work, null), true);
 		}
 
-		// Frames name their function by this id rather than by reference, so a push needs no GC write barrier.
-		private static MethodPropertyHolder[] registry = new MethodPropertyHolder[256];
-		private static int registered;
-		private static readonly object registryLock = new();
-
-		/// <summary>This function's id in call stack frames; 0 for a holder that is never called through a frame.</summary>
-		internal readonly int Id;
-
 		/// <summary>Whether this is declared in a script's module, whose module and compatibility version it runs under.</summary>
 		internal readonly bool InScriptModule;
 
 		/// <summary>Whether this is a script function, which records its locations in its frame, rather than a builtin.</summary>
 		internal readonly bool IsScript;
-
-		internal static MethodPropertyHolder FromId(int id)
-		{
-			var all = Volatile.Read(ref registry);
-			return (uint)id < (uint)all.Length ? all[id] : null;
-		}
-
-		private static int Register(MethodPropertyHolder holder)
-		{
-			lock (registryLock)
-			{
-				var id = ++registered;
-
-				if (id >= registry.Length)
-				{
-					var grown = new MethodPropertyHolder[registry.Length * 2];
-					System.Array.Copy(registry, grown, registry.Length);
-					Volatile.Write(ref registry, grown);
-				}
-
-				registry[id] = holder;
-				return id;
-			}
-		}
 
 		internal MemberInfo memberInfo => ((MemberInfo)mi ?? pi) ?? fi;
 		internal readonly MethodInfo mi;
@@ -472,7 +440,6 @@ namespace Keysharp.Internals.Invoke
 			var inlineMarked = MethodPropertyHolder.IsInlineBoundary(mi);
 			// A script's inline C# records no locations, so on the call stack it is a builtin.
 			IsScript = InScriptModule && !inlineMarked;
-			Id = Register(this);
 
             IsStatic = mi.IsStatic;
 			IsStaticFunc = mi.Attributes.HasFlag(MethodAttributes.Static);
@@ -793,7 +760,6 @@ namespace Keysharp.Internals.Invoke
 
 			// The core reads fixed arguments directly and constructs only the final variadic tail.
 			var core = CompileCore(mph);
-			var id = mph.Id;
 			// A script function runs under its own module and compatibility version; a builtin keeps its caller's.
 			var module = mph.InScriptModule ? ModuleData.GetOrCreate(mph.moduleType) : null;
 			var compatibility = mph.compatibilityVersion;
@@ -857,7 +823,7 @@ namespace Keysharp.Internals.Invoke
 
 				// The frame goes on once the argument count is accepted, so a count error is the caller's, as in AutoHotkey.
 				var stack = CallStack.Current;
-				var depth = stack.Push(id);
+				var depth = stack.Push(mph);
 				ModuleData previousModule = null;
 				Semver.SemVersion previousCompatibility = null;
 				var switched = false;
@@ -924,7 +890,7 @@ namespace Keysharp.Internals.Invoke
 				{
 					Expression packed = Expression.Call(typeof(DelegateFactory), nameof(PackVariadic), null,
 						pTarget, pArgs, pStart, Expression.Constant(i), Expression.Constant(ps.Length), Expression.Constant(isVariadicSetter),
-						Expression.Constant(holder.Id), Expression.Constant(holder.IsScript ? holder.ScriptParameterName(ps[^1]) : ""));
+						Expression.Constant(holder.IsScript ? holder.ScriptParameterName(ps[^1]) : ""));
 					if (ps[i].IsDefined(typeof(Keysharp.Runtime.VariadicAttribute), false))
 						packed = Expression.Call(typeof(Keysharp.Builtins.Array).GetMethod(nameof(Keysharp.Builtins.Array.Literal),
 							BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly), packed);
@@ -949,8 +915,7 @@ namespace Keysharp.Internals.Invoke
 				Expression chosen = Expression.Condition(
 					Expression.Equal(valOrNull, Expression.Constant(null, typeof(object))),
 					soft ? (Expression)Expression.Constant(MaterializeDefault(ps[i]), typeof(object))
-						: Expression.Call(throwMissingArgumentMethod, Expression.Constant(holder.Id),
-							Expression.Constant(holder.IsScript ? holder.ScriptParameterName(ps[i]) : "")),
+						: Expression.Call(throwMissingArgumentMethod, Expression.Constant(holder.IsScript ? holder.ScriptParameterName(ps[i]) : "")),
 					valOrNull);
 
 				if (ps[i].IsDefined(typeof(Keysharp.Runtime.ByRefAttribute), false))
@@ -1014,7 +979,7 @@ namespace Keysharp.Internals.Invoke
 						   Expression.Assign(receiver, Expression.TypeAs(pTarget, receiver.Type)),
 						   Expression.Condition(
 							   Expression.Equal(receiver, Expression.Constant(null, receiver.Type)),
-							   Expression.Call(throwReceiverTypeMethod, Expression.Constant(holder.Id), pTarget, Expression.Constant(receiver.Type, typeof(Type))),
+							   Expression.Call(throwReceiverTypeMethod, pTarget, Expression.Constant(receiver.Type, typeof(Type))),
 							   Expression.Convert(body, typeof(object))));
 
 			return Expression.Lambda<Func<object, object[], int, object>>(body, pTarget, pArgs, pStart)
@@ -1022,11 +987,11 @@ namespace Keysharp.Internals.Invoke
 		}
 
 		// Preserve explicit packed arrays, but never rewrite the caller's slots while collecting a tail.
-		private static object[] PackVariadic(object target, object[] args, int start, int index, int paramCount, bool setter, int function, string valueName)
+		private static object[] PackVariadic(object target, object[] args, int start, int index, int paramCount, bool setter, string valueName)
 		{
 			var count = args.Length - start;
 			if (setter && count <= index)
-				return (object[])ThrowMissingArgument(function, valueName);
+				return (object[])ThrowMissingArgument(valueName);
 			if (paramCount == 1 && start == 0) return args;
 			var offset = start + index;
 			if ((paramCount != 1 || start > 0) && count == paramCount
@@ -1088,9 +1053,9 @@ namespace Keysharp.Internals.Invoke
 			typeof(DelegateFactory).GetMethod(nameof(ThrowReceiverType), BindingFlags.NonPublic | BindingFlags.Static);
 
 		[StackTraceHidden]
-		private static object ThrowReceiverType(int function, object target, Type declaring)
+		private static object ThrowReceiverType(object target, Type declaring)
 		{
-			CallStack.Current.PopUnstarted(function);
+			CallStack.Current.PopUnstarted();
 			throw Errors.ExpectedTypeError(Types.TypeName(declaring), target);
 		}
 
@@ -1098,9 +1063,9 @@ namespace Keysharp.Internals.Invoke
 		// Expression.Throw) so the Error->Exception operator is applied and the error surfaces normally. The function's
 		// body has not started, so the error is its caller's, as AutoHotkey reports it.
 		[StackTraceHidden]
-		private static object ThrowMissingArgument(int function, string name)
+		private static object ThrowMissingArgument(string name)
 		{
-			CallStack.Current.PopUnstarted(function);
+			CallStack.Current.PopUnstarted();
 			throw new ArgumentError("Missing a required parameter.", null, name);
 		}
 	}

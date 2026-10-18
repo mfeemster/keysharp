@@ -310,10 +310,16 @@ namespace Keysharp.Parsing.Syntax
 		public ThrowStmt(Expr value) => Value = value;
 	}
 
-	// break/continue with an optional target: a loop level (integer N) or a source label name; null => innermost loop.
-	internal sealed class BreakStmt : Stmt { public readonly string Target; public BreakStmt(string target = null) => Target = target; }
-	internal sealed class ContinueStmt : Stmt { public readonly string Target; public ContinueStmt(string target = null) => Target = target; }
-	internal sealed class GotoStmt : Stmt { public readonly string Target; public GotoStmt(string target) => Target = target; }
+	// A jump's target as written: Target is the raw text after the keyword (a label name, or a loop level for break and
+	// continue; null when there is none), and Expression is the expression of the `keyword(...)` form instead.
+	internal abstract class JumpStmt(string target, Expr expression) : Stmt
+	{
+		public readonly string Target = target;
+		public readonly Expr Expression = expression;
+	}
+	internal sealed class BreakStmt(string target = null, Expr expression = null) : JumpStmt(target, expression);
+	internal sealed class ContinueStmt(string target = null, Expr expression = null) : JumpStmt(target, expression);
+	internal sealed class GotoStmt(string target, Expr expression = null) : JumpStmt(target, expression);
 	internal sealed class LabelStmt : Stmt { public readonly string Name; public LabelStmt(string name) => Name = name; }
 
 	// A #directive line. Most are compile-time/no-op for the runtime; Args holds the raw trailing text.
@@ -368,11 +374,11 @@ namespace Keysharp.Parsing.Syntax
 		public DeclStmt(string keyword, List<Expr> items) { Keyword = keyword; Items = items; }
 	}
 
-	// One or more stacked hotkey triggers (each raw text ends with `::`) sharing one body: a block, a single
-	// statement (the action), or a named function declaration.
+	// One or more stacked hotkey triggers sharing one body: a block, a single statement (the action), or a named
+	// function declaration.
 	internal sealed class HotkeyDef : Stmt
 	{
-		public readonly List<string> Triggers;   // raw trigger text including the trailing `::`
+		public readonly List<string> Triggers;   // raw trigger text, without the `::` separator
 		public readonly Stmt Body;               // block/statement action (null if Func)
 		public readonly FunctionDecl Func;       // named-function body form (null otherwise)
 		public HotkeyDef(List<string> triggers, Stmt body, FunctionDecl func) { Triggers = triggers; Body = body; Func = func; }

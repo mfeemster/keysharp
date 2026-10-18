@@ -1,3 +1,5 @@
+#ErrorStdOut
+#Warn All, StdOut
 #NoTrayIcon
 #Include <assert>
 #Import Ks { StringBuffer }
@@ -237,6 +239,7 @@ AssertEq(z, 1, A_LineNumber)
 MyFunc()
 
 myfunc() {
+	local x, y, z
 	x := 1
 	z := ""
 
