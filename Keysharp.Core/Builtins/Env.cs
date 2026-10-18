@@ -699,7 +699,7 @@ namespace Keysharp.Builtins
 		}
 
 		/// <summary>
-		/// Compiles and executes a C# script dynamically in a separate process.
+		/// Compiles a script through an existing compatible daemon or the local compiler, then executes it in a separate process.
 		/// </summary>
 		/// <param name="code">The script source result (as any object with a valid string representation).</param>
 		/// <param name="asyncValue">Whether to return immediately instead of waiting for the process to exit.</param>
@@ -765,23 +765,24 @@ namespace Keysharp.Builtins
 			}
 			else
 			{
-				if (!ScriptingComponentRegistry.TryGetCompiler(out var compiler, out var componentFailure))
-					return Errors.ErrorOccurred(componentFailure);
+				var isFile = File.Exists(script);
 
-				var compilation = compiler.Compile(new Keysharp.Components.Scripting.ScriptCompileRequest
+				if (!TryCompileScript(new Keysharp.Components.Scripting.ScriptCompileRequest
 				{
-					SourceText = File.Exists(script) ? null : script,
-					ScriptPath = File.Exists(script) ? script : null,
+					SourceText = isFile ? null : script,
+					ScriptPath = isFile ? script : null,
 					CompilationName = nameVal,
-					RuntimeDirectory = Path.GetDirectoryName(Ks.A_KsCorePath),
+					RuntimeDirectory = Path.GetDirectoryName(typeof(Script).Assembly.Location),
 					Defines = defineNames ?? [],
 					IncludeFile = includeFile,
 					Output = Keysharp.Components.Scripting.ScriptCompilationOutput.InMemory,
-				});
+				}, out var compilation, out var componentFailure))
+					return Errors.ErrorOccurred(componentFailure);
+
 				compiledBytes = compilation.AssemblyBytes;
 				result = compilation.ErrorText;
 
-				if (!compilation.Success)
+				if (compiledBytes == null)
 					return Errors.ErrorOccurred(result);
 
 				// Non-fatal #Warning text from the nested compile; the caller's console is the only place to show it.
@@ -943,7 +944,7 @@ namespace Keysharp.Builtins
 
 		/// <summary>
 		/// Compiles a script in memory without running or writing it — what the <c>--validate</c> switch does —
-		/// using the compiler component. This catches everything <see cref="ValidateScript"/> does plus lowering and
+		/// using an existing compatible daemon or the local compiler component. This catches everything <see cref="ValidateScript"/> does plus lowering and
 		/// C# compilation errors, and reports warnings a successful compile produced. <paramref name="code"/> is read
 		/// as a file path when a file by that name exists, and as script source otherwise.
 		/// </summary>
@@ -952,27 +953,51 @@ namespace Keysharp.Builtins
 		/// <exception cref="Error">Thrown if the compiler component is not installed.</exception>
 		public static object CompileScript(object code)
 		{
-			if (!ScriptingComponentRegistry.TryGetCompiler(out var compiler, out var failure))
-				return Errors.ErrorOccurred(failure);
-
 			if (!code.CoerceString(out var source))
 				return DefaultObject;
 
 			var isFile = File.Exists(source);
-			var result = compiler.Compile(new Keysharp.Components.Scripting.ScriptCompileRequest
+			if (!TryCompileScript(new Keysharp.Components.Scripting.ScriptCompileRequest
 			{
 				SourceText = isFile ? null : source,
 				ScriptPath = isFile ? source : null,
 				CompilationName = isFile ? Path.GetFileNameWithoutExtension(source) : "CompileScript",
-				RuntimeDirectory = Path.GetDirectoryName(Ks.A_KsCorePath),
+				RuntimeDirectory = Path.GetDirectoryName(typeof(Script).Assembly.Location),
 				Output = Keysharp.Components.Scripting.ScriptCompilationOutput.InMemory,
 				AllowPackageRestore = false,
-			});
+			}, out var result, out var failure))
+				return Errors.ErrorOccurred(failure);
 
 			static IEnumerable<string> Lines(string text)
 				=> (text ?? "").Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
-			return ScriptCheckResult(result.Success, result.Success ? [] : Lines(result.ErrorText), Lines(result.WarningText));
+			var success = result.AssemblyBytes != null;
+			return ScriptCheckResult(success, success ? [] : Lines(result.ErrorText), Lines(result.WarningText));
+		}
+
+		private static bool TryCompileScript(Keysharp.Components.Scripting.ScriptCompileRequest request,
+			out (byte[] AssemblyBytes, string ErrorText, string WarningText) result, out string failure)
+		{
+			result = default;
+			failure = null;
+
+			if (CompileDaemonClient.Enabled)
+			{
+				var reply = CompileDaemonClient.TryCompile(request);
+
+				if (!CompileDaemonClient.ShouldRetryLocally(reply, request.AllowPackageRestore))
+				{
+					result = (reply.AssemblyBytes, reply.ErrorText, reply.WarningText);
+					return true;
+				}
+			}
+
+			if (!ScriptingComponentRegistry.TryGetCompiler(out var compiler, out failure))
+				return false;
+
+			var compilation = compiler.Compile(request);
+			result = (compilation.AssemblyBytes, compilation.ErrorText, compilation.WarningText);
+			return true;
 		}
 
 		private static KeysharpObject ScriptCheckResult(bool isValid, IEnumerable<string> errors, IEnumerable<string> warnings)

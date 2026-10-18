@@ -1,6 +1,5 @@
 using System.Reflection.Metadata;
 using System.Reflection.PortableExecutable;
-using KeysharpFingerprint = Keysharp.Main.KeysharpFingerprint;
 
 namespace Keysharp.Tests;
 
@@ -140,16 +139,16 @@ public class RunnerTests : TestRunner
 	[Test, Category("Internal")]
 	public void FingerprintMvid()
 	{
-		Assert.That(KeysharpFingerprint.Hash("hello"u8), Is.EqualTo(0xA430D84680AABD0BUL));
-		foreach (var assembly in new[] { typeof(Script).Assembly, typeof(KeysharpFingerprint).Assembly, typeof(RunnerTests).Assembly,
+		Assert.That(CompileDaemonFingerprint.Hash("hello"u8), Is.EqualTo(0xA430D84680AABD0BUL));
+		foreach (var assembly in new[] { typeof(Script).Assembly, typeof(Keysharp.Main.Program).Assembly, typeof(RunnerTests).Assembly,
 			typeof(object).Assembly, typeof(Microsoft.CodeAnalysis.CSharp.CSharpCompilation).Assembly })
-			Assert.That(KeysharpFingerprint.ReadMvid(assembly.Location), Is.EqualTo(assembly.ManifestModule.ModuleVersionId), assembly.GetName().Name);
+			Assert.That(CompileDaemonFingerprint.ReadMvid(assembly.Location), Is.EqualTo(assembly.ManifestModule.ModuleVersionId), assembly.GetName().Name);
 	}
 
 	[Test, Category("Internal")]
 	public void FingerprintUncompressedMetadata()
 	{
-		var image = File.ReadAllBytes(typeof(KeysharpFingerprint).Assembly.Location);
+		var image = File.ReadAllBytes(typeof(Keysharp.Main.Program).Assembly.Location);
 		using var pe = new PEReader(new MemoryStream(image));
 		var root = pe.PEHeaders.MetadataStartOffset;
 		var name = image.AsSpan(root, pe.PEHeaders.MetadataSize).IndexOf("#~\0"u8);
@@ -163,7 +162,7 @@ public class RunnerTests : TestRunner
 		try
 		{
 			File.WriteAllBytes(path, image);
-			Assert.That(KeysharpFingerprint.ReadMvid(path), Is.EqualTo(expected));
+			Assert.That(CompileDaemonFingerprint.ReadMvid(path), Is.EqualTo(expected));
 		}
 		finally { File.Delete(path); }
 	}
@@ -171,7 +170,7 @@ public class RunnerTests : TestRunner
 	[Test, Category("Internal")]
 	public void FingerprintInvalidImage()
 	{
-		var original = File.ReadAllBytes(typeof(KeysharpFingerprint).Assembly.Location);
+		var original = File.ReadAllBytes(typeof(Keysharp.Main.Program).Assembly.Location);
 		using var pe = new PEReader(new MemoryStream(original));
 		var path = Path.GetTempFileName();
 
@@ -182,10 +181,25 @@ public class RunnerTests : TestRunner
 				var image = (byte[])original.Clone();
 				image[offset] = 0;
 				File.WriteAllBytes(path, image);
-				Assert.Throws<BadImageFormatException>(() => KeysharpFingerprint.ReadMvid(path), $"Signature at {offset}");
+				Assert.Throws<BadImageFormatException>(() => CompileDaemonFingerprint.ReadMvid(path), $"Signature at {offset}");
 			}
 		}
 		finally { File.Delete(path); }
+	}
+
+	[Test, Category("Internal")]
+	public void DaemonFallback()
+	{
+		var retryFailure = false;
+#if WINDOWS
+		retryFailure = CompileDaemonSecurity.IsElevated;
+#endif
+		Assert.That(CompileDaemonClient.ShouldRetryLocally(null, false), Is.True);
+		Assert.That(CompileDaemonClient.ShouldRetryLocally(DaemonReply.Unavailable, false), Is.True);
+		Assert.That(CompileDaemonClient.ShouldRetryLocally(new(CompileDaemonStatus.Compiled), true), Is.False);
+		Assert.That(CompileDaemonClient.ShouldRetryLocally(new(CompileDaemonStatus.PackageRestoreNeeded), true), Is.True);
+		Assert.That(CompileDaemonClient.ShouldRetryLocally(new(CompileDaemonStatus.PackageRestoreNeeded), false), Is.EqualTo(retryFailure));
+		Assert.That(CompileDaemonClient.ShouldRetryLocally(new(CompileDaemonStatus.CompileFailed), true), Is.EqualTo(retryFailure));
 	}
 
 #if WINDOWS
@@ -201,7 +215,8 @@ public class RunnerTests : TestRunner
 		var waiting = server.WaitForConnectionAsync();
 		client.Connect(2000);
 		Assert.IsTrue(waiting.Wait(2000));
-		Assert.That(CompileDaemonSecurity.IsExpectedServer(client), Is.False);
+		Assert.That(CompileDaemonSecurity.IsExpectedServer(client, name, Environment.ProcessPath,
+			typeof(Keysharp.Main.Program).Assembly.Location), Is.False);
 	}
 
 	[Category("Internal")]
@@ -234,6 +249,24 @@ public class RunnerTests : TestRunner
 
 	[DllImport("kernel32.dll")]
 	private static extern nint GetCommandLineW();
+
+	[Test, Category("Internal")]
+	public void CompileDaemonRejectsPayloadAliases()
+	{
+		var directory = Directory.CreateTempSubdirectory("keysharp-daemon-paths-").FullName;
+		try
+		{
+			var original = Path.Combine(directory, "Keysharp.dll");
+			var alias = Path.Combine(Directory.CreateDirectory(Path.Combine(directory, "Other")).FullName, "Keysharp.dll");
+			File.WriteAllText(original, "payload");
+			Assert.That(CreateHardLinkW(alias, original, 0), Is.True);
+			Assert.That(CompileDaemonSecurity.HasDaemonArguments($"dotnet \"{alias}\" --daemon", "dotnet.exe", original), Is.False);
+		}
+		finally { Directory.Delete(directory, true); }
+	}
+
+	[DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+	private static extern bool CreateHardLinkW(string link, string existing, nint securityAttributes);
 
 #endif
 }

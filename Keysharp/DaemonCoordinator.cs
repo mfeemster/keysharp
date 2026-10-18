@@ -6,20 +6,15 @@ namespace Keysharp.Main;
 /// </summary>
 internal static class DaemonCoordinator
 {
-	private static readonly string LockFile = Path.Combine(CompileServer.RuntimeDirectory, $"keysharp-compile-server-{CompileServer.UserKey}.lock");
-	private static readonly string MutexName = $@"Local\keysharp-compile-coord-{CompileServer.UserKey}";
+	private static readonly string LockFile = CompileDaemonProtocol.LockFile;
+	private static readonly string MutexName = $@"Local\keysharp-compile-coord-{CompileDaemonProtocol.UserKey}";
 
 	/// <summary>
 	/// Whether the lock file names a live daemon serving <paramref name="pipeName"/>. Read without the coordination
 	/// mutex, since it only decides whether a client waits for that daemon's pipe or first spawns a daemon.
 	/// </summary>
 	internal static bool HasLiveOwner(string pipeName) =>
-		Read() is { } owner && string.Equals(owner.Pipe, pipeName, StringComparison.Ordinal) && IsLiveDaemon(owner);
-
-	/// <summary>Whether the record names this process instance as the owner serving <paramref name="pipeName"/>.</summary>
-	internal static bool IsOwner(string pipeName, int pid, long startStamp) =>
-		Read() is { } owner && owner.Pid == pid && owner.StartStamp == startStamp
-		&& string.Equals(owner.Pipe, pipeName, StringComparison.Ordinal);
+		CompileDaemonOwner.Read() is { } owner && string.Equals(owner.Pipe, pipeName, StringComparison.Ordinal) && IsLiveDaemon(owner);
 
 	/// <param name="timeout">
 	/// Kept short on the shutdown path. This runs inside the WM_ENDSESSION handler, and Windows' default
@@ -36,7 +31,7 @@ internal static class DaemonCoordinator
 
 		try
 		{
-			var owner = Read();
+			var owner = CompileDaemonOwner.Read();
 
 			if (owner != null && owner.Pid == Environment.ProcessId && File.Exists(LockFile))
 				File.Delete(LockFile);
@@ -57,7 +52,7 @@ internal static class DaemonCoordinator
 
 		try
 		{
-			var owner = Read();
+			var owner = CompileDaemonOwner.Read();
 			var killed = true;
 
 			if (owner != null && owner.Pid != Environment.ProcessId && IsLiveDaemon(owner))
@@ -94,7 +89,7 @@ internal static class DaemonCoordinator
 
 		try
 		{
-			var owner = Read();
+			var owner = CompileDaemonOwner.Read();
 
 			if (owner != null && owner.Pid != Environment.ProcessId && IsLiveDaemon(owner))
 			{
@@ -127,7 +122,7 @@ internal static class DaemonCoordinator
 	// Manager, a crash - whose PID Windows later hands to one of those scripts would satisfy a name check
 	// and get the user's own running script killed as an "older daemon". Start time is what actually
 	// identifies the instance; a recycled PID cannot match it.
-	private static bool IsLiveDaemon(Owner owner)
+	private static bool IsLiveDaemon(CompileDaemonOwner owner)
 	{
 		try
 		{
@@ -139,29 +134,6 @@ internal static class DaemonCoordinator
 		{
 			return false;
 		}
-	}
-
-	// Lock file is a single line: "pid|procName|startStamp|pipeName".
-	private static Owner Read()
-	{
-		try
-		{
-			if (!File.Exists(LockFile))
-				return null;
-
-			var parts = File.ReadAllText(LockFile).Split('|');
-
-			// Anything shorter is either corrupt or written by a build that recorded no start time. Both
-			// are treated as no owner at all, which is safe: the worst case is that this daemon takes over
-			// a slot that was already free.
-			if (parts.Length >= 4
-					&& int.TryParse(parts[0], out var pid)
-					&& long.TryParse(parts[2], out var startStamp))
-				return new Owner { Pid = pid, ProcName = parts[1], StartStamp = startStamp, Pipe = parts[3] };
-		}
-		catch { }
-
-		return null;
 	}
 
 	private static void Release(Mutex mutex, bool acquired)
@@ -240,11 +212,4 @@ internal static class DaemonCoordinator
 		}
 	}
 
-	private sealed class Owner
-	{
-		internal int Pid;
-		internal string Pipe;
-		internal string ProcName;
-		internal long StartStamp;
-	}
 }

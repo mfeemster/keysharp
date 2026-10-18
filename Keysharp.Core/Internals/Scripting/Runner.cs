@@ -65,6 +65,23 @@ namespace Keysharp.Internals.Scripting
 
 		internal static CliCommand Error(string text) => new() { Kind = CliCommandKind.Error, ErrorText = text };
 		internal static CliCommand Simple(CliCommandKind kind, Assembly asm, string exeDir) => new() { Kind = kind, EntryAssembly = asm, ExeDir = exeDir };
+
+		internal Keysharp.Components.Scripting.ScriptCompileRequest CreateCompileRequest() => new()
+		{
+			SourceText = FromStdin ? ScriptName : null,
+			ScriptPath = FromStdin ? null : ScriptName,
+			CompilationName = FromStdin ? null : (string.IsNullOrEmpty(NameNoExt)
+				? Path.GetFileNameWithoutExtension(ScriptName) : NameNoExt),
+			RuntimeDirectory = ExeDir,
+			Defines = Defines,
+			AdditionalComponents = IncludeComponents,
+			ExcludedComponents = ExcludeComponents,
+			CodePage = CodePage,
+			IncludeFile = IncludeFile,
+			Output = Keysharp.Components.Scripting.ScriptCompilationOutput.InMemory,
+			EmitGeneratedCode = Transpile,
+			AllowPackageRestore = !Validate,
+		};
 	}
 
 	/// <summary>
@@ -714,22 +731,7 @@ namespace Keysharp.Internals.Scripting
 			if (!hasCompiler)
 				return Message(componentFailure, true);
 
-			var compilation = compiler.Compile(new Keysharp.Components.Scripting.ScriptCompileRequest
-			{
-				SourceText = command.FromStdin ? command.ScriptName : null,
-				ScriptPath = command.FromStdin ? null : command.ScriptName,
-				// Stdin compiles with the "*" script name.
-				CompilationName = command.FromStdin ? null : command.NameNoExt,
-				RuntimeDirectory = command.ExeDir,
-				Defines = command.Defines,
-				AdditionalComponents = command.IncludeComponents,
-				ExcludedComponents = command.ExcludeComponents,
-				CodePage = command.CodePage,
-				IncludeFile = command.IncludeFile,
-				Output = Keysharp.Components.Scripting.ScriptCompilationOutput.InMemory,
-				EmitGeneratedCode = command.Transpile,
-				AllowPackageRestore = !command.Validate,
-			});
+			var compilation = compiler.Compile(command.CreateCompileRequest());
 			var arr = compilation.AssemblyBytes;
 			var elapsed = DateTime.UtcNow - start;
 			// Failed-compilation text already includes its warnings.

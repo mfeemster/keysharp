@@ -31,7 +31,7 @@ internal static class CompileClient
 		if (TryCompile(command, 0) is { } reply)
 			return reply;
 
-		if (sw.Elapsed >= CompileServer.RequestDeadline || (!DaemonCoordinator.HasLiveOwner(CompileServer.PipeName) && !TrySpawnServer()))
+		if (sw.Elapsed >= CompileDaemonProtocol.RequestDeadline || (!DaemonCoordinator.HasLiveOwner(CompileServer.PipeName) && !TrySpawnServer()))
 			return DaemonReply.Unavailable;
 
 		// Another attempt follows only when a daemon went away mid-request, such as one replaced by a different build.
@@ -50,85 +50,10 @@ internal static class CompileClient
 	/// answered: none is listening, or it went away mid-request. A build without a pipe, and a daemon which
 	/// itself failed, answer <see cref="CompileDaemonStatus.Unavailable"/>.
 	/// </summary>
-	internal static DaemonReply TryCompile(CliCommand command, int connectTimeoutMs = 1000)
-	{
-		if (CompileServer.PipeName == null)
-			return DaemonReply.Unavailable;
-
-#if WINDOWS
-		// A shared dotnet host does not identify which managed application the server runs.
-		if (CompileDaemonSecurity.IsElevated && Path.GetFileNameWithoutExtension(Environment.ProcessPath).Equals("dotnet", StringComparison.OrdinalIgnoreCase))
-			return DaemonReply.Unavailable;
-		// Client I/O is synchronous, so it does not need an overlapped pipe handle.
-		using var client = new NamedPipeClientStream(".", CompileServer.PipeName, PipeDirection.InOut,
-			PipeOptions.None, TokenImpersonationLevel.Identification);
-#else
-		using var client = new NamedPipeClientStream(".", CompileServer.PipeName, PipeDirection.InOut,
-			PipeOptions.CurrentUserOnly);
-#endif
-
-		try
-		{
-			client.Connect(connectTimeoutMs);
-#if WINDOWS
-			if (!CompileDaemonSecurity.IsExpectedServer(client))
-				return DaemonReply.Unavailable;
-#endif
-		}
-		catch (Exception ex) when (ex is TimeoutException or IOException)
-		{
-			return null;
-		}
-		// An unauthenticated pipe gets no request: the caller compiles at once.
-		catch (Exception ex) when (ex is UnauthorizedAccessException or System.ComponentModel.Win32Exception or ArgumentException or InvalidOperationException or EntryPointNotFoundException or DllNotFoundException)
-		{
-			return DaemonReply.Unavailable;
-		}
-
-		// Serialize first so sending takes one pipe write and disposal only flushes memory.
-		using var request = new MemoryStream();
-		using var writer = new BinaryWriter(request, Encoding.UTF8, leaveOpen: true);
-		using var reader = new BinaryReader(client, Encoding.UTF8, leaveOpen: true);
-
-		try
-		{
-			// A stdin script's ScriptName holds its text, and its ScriptDir the working directory it compiles in.
-			writer.Write(command.FromStdin);
-			writer.Write(command.FromStdin ? command.ScriptName : Path.GetFullPath(command.ScriptName));
-
-			if (command.FromStdin)
-				writer.Write(command.ScriptDir);
-
-			CompileServer.WriteStrings(writer, command.Defines);
-			CompileServer.WriteStrings(writer, command.IncludeComponents);
-			CompileServer.WriteStrings(writer, command.ExcludeComponents);
-			writer.Write(command.CodePage);
-			writer.Write(command.IncludeFile ?? "");
-			CompileServer.WriteStrings(writer, System.Array.ConvertAll(CompileServer.CompileEnvironment, name => Environment.GetEnvironmentVariable(name) ?? ""));
-			writer.Flush();
-			request.WriteTo(client);
-
-			switch ((CompileDaemonStatus)reader.ReadByte())
-			{
-				case CompileDaemonStatus.Compiled:
-					var bytes = reader.ReadBytes(reader.ReadInt32());
-					return new(CompileDaemonStatus.Compiled, bytes, WarningText: reader.ReadString());
-
-				case var status and (CompileDaemonStatus.CompileFailed or CompileDaemonStatus.PackageRestoreNeeded):
-					var error = reader.ReadString();
-					return new(status, ErrorText: error, ErrorStdOut: reader.ReadBoolean());
-
-				default:
-					return new(CompileDaemonStatus.Unavailable, ErrorText: reader.ReadString());
-			}
-		}
-		// The daemon went away mid-request: it was replaced by a different build, idled out between connect and reply,
-		// or was ended by its request deadline.
-		catch (Exception ex) when (ex is IOException or ObjectDisposedException)
-		{
-			return null;
-		}
-	}
+	internal static DaemonReply TryCompile(CliCommand command, int connectTimeoutMs = 1000) =>
+		CompileDaemonClient.TryCompile(command.CreateCompileRequest(),
+			new CompileDaemonEndpoint(CompileServer.PipeName, Assembly.GetEntryAssembly()?.Location, Environment.ProcessPath, CompileDaemonClient.FindDotnetHost()),
+			connectTimeoutMs, command.FromStdin ? command.ScriptDir : null);
 
 	/// <summary>
 	/// Launches "<this host> --daemon" detached so it outlives the current process. The spawned daemon runs

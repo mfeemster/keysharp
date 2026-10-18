@@ -1,15 +1,13 @@
-﻿namespace Keysharp.Main;
+using Keysharp.Components.Scripting;
+
+namespace Keysharp.Internals.Scripting;
 
 /// <summary>
 /// Keys the daemon to launcher/runtime MVIDs and compiler payload. Component assemblies contribute their
 /// MVIDs; other payload files contribute their names and sizes.
 /// </summary>
-internal static class KeysharpFingerprint
+internal static class CompileDaemonFingerprint
 {
-	// Null when the compiler component is missing or could not be read, as while an update replaces it: no daemon is
-	// used then, so a launch reports a missing compiler at once rather than after waiting for a daemon.
-	internal static string Value { get; } = Compute();
-
 	// FNV-1a identifies builds and users without loading the platform's crypto library on every launch.
 	internal static ulong Hash(ReadOnlySpan<byte> data, ulong hash = 14695981039346656037)
 	{
@@ -19,19 +17,23 @@ internal static class KeysharpFingerprint
 		return hash;
 	}
 
-	private static string Compute()
+	internal static string Compute(Guid launcherModuleVersionId, string runtimeDirectory)
 	{
 		Span<byte> buf = stackalloc byte[16];
+		// Compiler symbols and framework references depend on the requesting process.
+		var hash = Hash([(byte)RuntimeInformation.ProcessArchitecture]);
+		_ = typeof(object).Module.ModuleVersionId.TryWriteBytes(buf);
+		hash = Hash(buf, hash);
 
-		// typeof(KeysharpFingerprint) lives in Keysharp.dll/exe; typeof(Script) lives in Keysharp.Core.dll.
-		_ = typeof(KeysharpFingerprint).Module.ModuleVersionId.TryWriteBytes(buf);
-		var hash = Hash(buf);
+		// A compiled host uses the installed launcher's identity, rather than its own entry assembly.
+		_ = launcherModuleVersionId.TryWriteBytes(buf);
+		hash = Hash(buf, hash);
 		_ = typeof(Script).Module.ModuleVersionId.TryWriteBytes(buf);
 		hash = Hash(buf, hash);
 
 		try
 		{
-			var directory = Path.Combine(AppContext.BaseDirectory, ScriptingComponentRegistry.RelativeDirectory(ScriptingComponentIds.Compiler));
+			var directory = Path.Combine(runtimeDirectory, ScriptingComponentRegistry.RelativeDirectory(ScriptingComponentIds.Compiler));
 			var files = Directory.GetFiles(directory, "*", SearchOption.AllDirectories);
 			System.Array.Sort(files, StringComparer.Ordinal);
 

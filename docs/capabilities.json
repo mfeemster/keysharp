@@ -9193,7 +9193,7 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "full",
-                     "notes":  "Checks a script file or script text for syntax errors with the optional parser component, as the --validate-syntax switch does, without compiling it. Returns {IsValid, Errors, Warnings}, the last two Arrays of messages prefixed with file and line. Raises an Error if the parser component is not installed.",
+                     "notes":  "Checks a script file or script text for syntax errors in the calling process with the optional parser component, as the --validate-syntax switch does, without compiling it or using the daemon. Returns {IsValid, Errors, Warnings}, the last two Arrays of messages prefixed with file and line. Raises an Error if the parser component is not installed.",
                      "tested-by":  "DirectiveTests.CompileScriptCSharp; ScriptingComponentTests.cs"
                  },
                  {
@@ -9204,8 +9204,8 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "full",
-                     "notes":  "Compiles a script file or script text in memory with the optional compiler component, as the --validate switch does, without running or writing it; this also catches lowering and C# errors. Returns {IsValid, Errors, Warnings}. Raises an Error if the compiler component is not installed.",
-                     "tested-by":  "DirectiveTests.CompileScriptCSharp; ScriptingComponentTests.cs"
+                     "notes":  "Compiles a script file or script text in memory with the optional compiler component, as the --validate switch does, without running or writing it; this also catches lowering and C# errors. When daemon use is enabled, prefers an existing compatible daemon without starting one, falling back to local compilation when unavailable. Never restores packages. Returns {IsValid, Errors, Warnings}. Local compilation raises an Error if the compiler component is not installed.",
+                     "tested-by":  "DirectiveTests.CompileScriptCSharp; ScriptingComponentTests.cs; DaemonCompilationTests.ExistingDaemonAndLocalFallback"
                  },
                  {
                      "category":  "Environment/System",
@@ -9933,8 +9933,8 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "full",
-                     "notes":  "Executes script source text/file in a child process and returns a ScriptProcess. Async controls waiting independently of the optional exit Callback, which runs on the caller's scheduler. All three standard streams are redirected. Requires the optional compiler component at runtime; compiled artifacts detect this call and include the component unless it is explicitly excluded.",
-                     "tested-by":  "ProcessTests.ProcessRunScript; process-runscript.ahk; external-com.ahk"
+                     "notes":  "Executes script source text/file in a child process and returns a ScriptProcess. Async controls waiting independently of the optional exit Callback, which runs on the caller\u0027s scheduler. All three standard streams are redirected. Source compilation prefers an existing compatible daemon when enabled, without starting one, and falls back to local compilation when unavailable or packages need restoring. Requires the optional compiler component at runtime; compiled artifacts detect this call and include the component unless it is explicitly excluded.",
+                     "tested-by":  "ProcessTests.ProcessRunScript; process-runscript.ahk; external-com.ahk; DaemonCompilationTests.ExistingDaemonAndLocalFallback"
                  },
                  {
                      "category":  "Core Language",

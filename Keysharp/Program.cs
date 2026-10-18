@@ -5,7 +5,7 @@ namespace Keysharp.Main;
 /// <summary>
 /// The Keysharp launcher. Command-line parsing lives in <see cref="Runner.Parse"/> (in Keysharp.Core, so
 /// it is shared with a compiled script's "/script" path). This launcher only adds the
-/// two things that must stay out of Keysharp.Core: the compile daemon, and building an executable
+/// two things that must stay out of Keysharp.Core: hosting the compile daemon, and building an executable
 /// (which needs the Microsoft.NET.HostModel package). Runner returns those as deferred results for us to
 /// carry out here.
 /// </summary>
@@ -36,7 +36,7 @@ public static class Program
 		if (command.Kind == CliCommandKind.RunSource
 				&& !command.Transpile
 				&& !command.SyntaxOnly
-				&& ShouldUseDaemon())
+				&& CompileDaemonClient.Enabled)
 		{
 			var reply = CompileClient.CompileViaServer(command);
 
@@ -64,12 +64,8 @@ public static class Program
 
 				// Elevated Windows callers retry locally because source and package lookup can hide access denial.
 				// Ordinary runs with unrestored packages also retry, allowing restoration.
-				case CompileDaemonStatus.CompileFailed:
-				case CompileDaemonStatus.PackageRestoreNeeded when command.Validate:
-#if WINDOWS
-					if (CompileDaemonSecurity.IsElevated)
-						break;
-#endif
+				case CompileDaemonStatus.CompileFailed or CompileDaemonStatus.PackageRestoreNeeded
+					when !CompileDaemonClient.ShouldRetryLocally(reply, !command.Validate):
 					return Runner.ReportCompileFailure(command, reply.ErrorText, reply.ErrorStdOut);
 
 					// Anything else, a run with unrestored packages or no daemon to answer, compiles in-process below.
@@ -391,18 +387,5 @@ public static class Program
 		}
 
 		return Environment.ExitCode;
-	}
-
-	private static bool ShouldUseDaemon()
-	{
-		// KEYSHARP_DAEMON forces the daemon on/off; if unset (or unrecognized), default on for release
-		// builds and off for debug builds.
-		var value = Environment.GetEnvironmentVariable("KEYSHARP_DAEMON")?.Trim();
-		return Conversions.ParseBoolish(value)
-#if DEBUG
-			   ?? false;
-#else
-			   ?? true;
-#endif
 	}
 }

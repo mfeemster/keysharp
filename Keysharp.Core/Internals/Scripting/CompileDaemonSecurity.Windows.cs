@@ -1,6 +1,8 @@
 #if WINDOWS
 
-namespace Keysharp.Main;
+using System.IO.Pipes;
+
+namespace Keysharp.Internals.Scripting;
 
 internal static class CompileDaemonSecurity
 {
@@ -37,7 +39,7 @@ internal static class CompileDaemonSecurity
 		}
 	}
 
-	internal static bool IsExpectedServer(NamedPipeClientStream pipe)
+	internal static bool IsExpectedServer(NamedPipeClientStream pipe, string pipeName, string image, string launcherAssembly, string alternateImage = null)
 	{
 		if (!GetNamedPipeServerProcessId(pipe.SafePipeHandle, out var pid))
 			return false;
@@ -50,8 +52,9 @@ internal static class CompileDaemonSecurity
 
 		try
 		{
-			if (!GetProcessTimes(process, out var created, out _, out _, out _)
-				|| !DaemonCoordinator.IsOwner(CompileServer.PipeName, (int)pid, DateTime.FromFileTimeUtc(created).Ticks)
+			if (!HasCompatiblePointerSize(process)
+				|| !GetProcessTimes(process, out var created, out _, out _, out _)
+				|| !CompileDaemonOwner.IsOwner(pipeName, (int)pid, DateTime.FromFileTimeUtc(created).Ticks)
 				|| !OpenProcessToken(process, TokenQuery, out var token))
 				return false;
 
@@ -62,15 +65,20 @@ internal static class CompileDaemonSecurity
 					return false;
 			}
 
-			var image = Environment.ProcessPath;
-			return HasImage(process, image)
-				&& HasDaemonArguments(ReadCommandLine(process), image, Assembly.GetEntryAssembly()?.Location);
+			var commandLine = ReadCommandLine(process);
+			return MatchesServerImage(process, image, launcherAssembly, commandLine)
+				|| MatchesServerImage(process, alternateImage, launcherAssembly, commandLine);
 		}
 		finally
 		{
 			_ = WindowsAPI.CloseHandle(process);
 		}
 	}
+
+	private static bool MatchesServerImage(nint process, string image, string launcherAssembly, string commandLine) =>
+		!string.IsNullOrEmpty(image)
+		&& !(IsElevated && Path.GetFileNameWithoutExtension(image).Equals("dotnet", StringComparison.OrdinalIgnoreCase))
+		&& HasImage(process, image) && HasDaemonArguments(commandLine, image, launcherAssembly);
 
 	internal static unsafe bool HasImage(nint process, string expected)
 	{
@@ -79,6 +87,7 @@ internal static class CompileDaemonSecurity
 		var capacity = expected.Length + 1;
 		Span<char> image = capacity <= 1024 ? stackalloc char[capacity] : new char[capacity];
 		var length = (uint)capacity;
+		// Aliases can change which adjacent managed payload the apphost loads.
 		fixed (char* buffer = image)
 			return WindowsAPI.QueryFullProcessImageName(process, 0, buffer, ref length)
 				&& expected.AsSpan().Equals(image[..(int)length], StringComparison.OrdinalIgnoreCase);
@@ -156,6 +165,12 @@ internal static class CompileDaemonSecurity
 
 	private static bool IsElevatedToken(SafeAccessTokenHandle token) =>
 											!GetTokenInformation(token, TokenElevation, out int elevated, sizeof(int), out _) || elevated != 0;
+	private static bool HasCompatiblePointerSize(nint process) =>
+		!Environment.Is64BitOperatingSystem || (IsWow64Process(process, out var wow64) && wow64 == !Environment.Is64BitProcess);
+
+	[DllImport("kernel32.dll", SetLastError = true)]
+	private static extern bool IsWow64Process(nint process, out bool wow64);
+
 	[DllImport("kernel32.dll")]
 	private static extern nint LocalFree(nint allocation);
 
@@ -184,7 +199,7 @@ internal static class CompileDaemonSecurity
 		internal nint Reserved1, Reserved2, Loader, Parameters;
 	}
 
-	// Published winternl layouts; the authenticated image path ensures the server has this process's bitness.
+	// Published winternl layouts require the server and client to have the same pointer size.
 	[StructLayout(LayoutKind.Sequential)]
 	private struct ProcessBasicInformation
 	{

@@ -1,3 +1,5 @@
+using static Keysharp.Internals.Scripting.CompileDaemonProtocol;
+
 namespace Keysharp.Main;
 
 /// <summary>
@@ -11,32 +13,6 @@ namespace Keysharp.Main;
 /// </summary>
 internal static class CompileServer
 {
-	// The environment variables a compile reads: those behind the A_ variables #Include and #Import paths use, and
-	// the library search path. Package settings are not among them: NuGet caches those on first use.
-	internal static readonly string[] CompileEnvironment =
-	[
-		"AhkLibPath", "COMSPEC", "HOME", "TEMP", "TMP", "TMPDIR", "USERPROFILE",
-		"XDG_CONFIG_DIRS", "XDG_CONFIG_HOME", "XDG_DESKTOP_DIR", "XDG_DOCUMENTS_DIR"
-	];
-
-	// A stalled compile or client must release the single daemon slot.
-	internal static readonly TimeSpan RequestDeadline = TimeSpan.FromSeconds(60);
-
-	// The folder for the daemon's lock file and, off Windows, its socket. $XDG_RUNTIME_DIR is the user's own; the temp
-	// folder is too on Windows and macOS, but on Linux it is usually the shared /tmp, where another user could create
-	// them first.
-	internal static readonly string RuntimeDirectory =
-		Environment.GetEnvironmentVariable("XDG_RUNTIME_DIR") is { Length: > 0 } runtimeDirectory && Directory.Exists(runtimeDirectory)
-		? runtimeDirectory : Path.GetTempPath();
-
-	internal static readonly string UserKey = unchecked((uint)KeysharpFingerprint.Hash(Encoding.UTF8.GetBytes(
-#if WINDOWS
-		CompileDaemonSecurity.AccountId
-#else
-		Environment.UserName
-#endif
-	))).ToString("X8");
-
 	// Idle shutdown so an abandoned daemon does not linger forever (mirrors VBCSCompiler behavior).
 	private static readonly TimeSpan IdleTimeout = TimeSpan.FromHours(4);
 
@@ -45,7 +21,8 @@ internal static class CompileServer
 	/// same Keysharp and compiler component, which therefore speaks the same wire format. Null when the build
 	/// has no fingerprint.
 	/// </summary>
-	internal static string PipeName { get; } = CreatePipeName();
+	internal static string PipeName { get; } = CreatePipeName(
+		CompileDaemonFingerprint.Compute(typeof(CompileServer).Module.ModuleVersionId, AppContext.BaseDirectory));
 
 	// All daemon-side diagnostics go to stderr with a common prefix, which reaches a console only when the
 	// daemon was started by hand: a client-spawned one inherits none of its launcher's standard handles (see
@@ -94,33 +71,15 @@ internal static class CompileServer
 		}
 	}
 
-	internal static void WriteStrings(BinaryWriter writer, string[] values)
-	{
-		writer.Write(values.Length);
-
-		foreach (var value in values)
-			writer.Write(value);
-	}
-
-	private static string CreatePipeName()
-	{
-		if (KeysharpFingerprint.Value is not { } fingerprint)
-			return null;
-
-		var name = $"ksc-{fingerprint}-{UserKey}";
-		// Off Windows a pipe is a socket file, which .NET creates in the temp folder unless its name is a full path.
-		return OperatingSystem.IsWindows() ? name : Path.Combine(RuntimeDirectory, name);
-	}
-
 	// Wire format (length-prefixed, BinaryReader/Writer):
-	//   request : bool fromStdin, then string scriptPath, or string sourceText + string the caller's working directory
-	//             when fromStdin, then string[] defines, string[] additionalComponents, string[] excludedComponents,
+	//   request : bool fromStdin, string path/source, string workingDirectory, bool hasCompilationName + optional name,
+	//             string includeDirectory ("" when none), string[] defines, string[] additionalComponents, string[] excludedComponents,
 	//             int32 codePage, string includeFile ("" when none), string[] the caller's value of each
 	//             CompileEnvironment variable ("" when unset); a string[] is an int32 count, then the strings
 	//   response: byte CompileDaemonStatus, then
 	//             Compiled                  -> int32 byteLen, byte[] assemblyBytes, string warnings ("" when none)
 	//             CompileFailed/
-	//             PackageRestoreNeeded      -> string errorMessage, bool errorStdOut
+	//             PackageRestoreNeeded      -> string errorMessage, bool errorStdOut, string warnings
 	//             Unavailable               -> string reason: the daemon itself failed, so the client compiles
 	// `warnings` carries the script's #Warning text to the client: the daemon compiles in a detached process
 	// whose stderr goes nowhere, so a warning printed here would be lost on the path most runs take. A failure
@@ -138,13 +97,16 @@ internal static class CompileServer
 		using var writer = new BinaryWriter(server, Encoding.UTF8, leaveOpen: true);
 		var fromStdin = reader.ReadBoolean();
 		var script = reader.ReadString();
-		var workingDirectory = fromStdin ? reader.ReadString() : null;
+		var workingDirectory = reader.ReadString();
+		var compilationName = reader.ReadBoolean() ? reader.ReadString() : null;
+		var includeDirectory = reader.ReadString();
 		var logName = fromStdin ? "<stdin>" : script;
 		var request = new ScriptCompileRequest
 		{
 			ScriptPath = fromStdin ? null : script,
 			SourceText = fromStdin ? script : null,
-			CompilationName = fromStdin ? null : Path.GetFileNameWithoutExtension(script), // Stdin compiles as "*".
+			CompilationName = compilationName,
+			IncludeDirectory = string.IsNullOrEmpty(includeDirectory) ? null : includeDirectory,
 			Defines = ReadStrings(reader),
 			AdditionalComponents = ReadStrings(reader),
 			ExcludedComponents = ReadStrings(reader),
@@ -209,6 +171,7 @@ internal static class CompileServer
 			writer.Write((byte)(compilation.PackageRestoreNeeded ? CompileDaemonStatus.PackageRestoreNeeded : CompileDaemonStatus.CompileFailed));
 			writer.Write(compilation.ErrorText ?? "Unknown compile error.");
 			writer.Write(compilation.ErrorStdOut);
+			writer.Write(compilation.WarningText ?? "");
 		}
 
 		writer.Flush();
@@ -230,7 +193,7 @@ internal static class CompileServer
 			Log(componentError);
 			return 1;
 		}
-		var exeDir = Path.GetFullPath(Path.GetDirectoryName(Environment.ProcessPath));
+		var exeDir = AppContext.BaseDirectory;
 		SetDaemonWorkingDirectory(exeDir);
 #if WINDOWS
 		ShutdownWindow.StartShutdownListener();
@@ -295,16 +258,6 @@ internal static class CompileServer
 		}
 	}
 
-	private static string[] ReadStrings(BinaryReader reader)
-	{
-		var values = new string[reader.ReadInt32()];
-
-		for (var i = 0; i < values.Length; i++)
-			values[i] = reader.ReadString();
-
-		return values;
-	}
-
 	private static void SetDaemonWorkingDirectory(string exeDir)
 	{
 		try
@@ -354,33 +307,4 @@ internal static class CompileServer
 			Log($"warmup failed (ignored): {ex.Message}");
 		}
 	}
-}
-
-internal enum CompileDaemonStatus
-{
-	/// <summary>The daemon compiled the script; assembly bytes are available.</summary>
-	Compiled,
-
-	/// <summary>The daemon was reached but the script failed to compile; an error message is available.</summary>
-	CompileFailed,
-
-	/// <summary>
-	/// A required #Package failed to resolve, and the daemon never restores packages; a compile allowed to restore
-	/// them may succeed. An error message is available.
-	/// </summary>
-	PackageRestoreNeeded,
-
-	/// <summary>
-	/// No compatible daemon could be reached (and, where applicable, none could be spawned), or the daemon itself
-	/// failed to compile; either way the caller compiles in-process.
-	/// </summary>
-	Unavailable
-}
-
-/// <summary>What a compile request to the daemon produced.</summary>
-/// <param name="ErrorStdOut">The script asks, through #ErrorStdOut, for its compile error to go to stderr.</param>
-internal sealed record DaemonReply(CompileDaemonStatus Status, byte[] AssemblyBytes = null, string ErrorText = null,
-	string WarningText = null, bool ErrorStdOut = false)
-{
-	internal static readonly DaemonReply Unavailable = new(CompileDaemonStatus.Unavailable);
 }
