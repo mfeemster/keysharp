@@ -1,0 +1,148 @@
+<Project>
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Keysharp' OR '$(MSBuildProjectName)' == 'Keyview'">
+    <PublishReadyToRun Condition="'$(PublishReadyToRun)' == ''">true</PublishReadyToRun>
+    <PublishReadyToRunComposite Condition="'$(PublishReadyToRunComposite)' == ''">false</PublishReadyToRunComposite>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <_GenerateScriptingCompilerProfile Condition="'$(ScriptingCompilerProfile)' == ''">true</_GenerateScriptingCompilerProfile>
+    <_CompilerProfileDirectory>$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)', '../../../obj/compile-profile', '$(Configuration)', '$(TargetFramework)', '$(NETCoreSdkRuntimeIdentifier)'))</_CompilerProfileDirectory>
+    <ScriptingCompilerProfile Condition="'$(ScriptingCompilerProfile)' == ''">$(_CompilerProfileDirectory)compile.mibc</ScriptingCompilerProfile>
+    <_RoslynPartialReadyToRunArguments>--partial;--opt-cross-module:*;--non-local-generics-module:Microsoft.CodeAnalysis</_RoslynPartialReadyToRunArguments>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(ShipsScriptingComponents)' == 'true'">
+    <!-- Roslyn uses its compilation profile instead of the SDK's full assembly precompilation. -->
+    <ScriptingCompilerPartialReadyToRun Include="Microsoft.CodeAnalysis.dll;Microsoft.CodeAnalysis.CSharp.dll" />
+    <PublishReadyToRunExclude Include="@(ScriptingCompilerPartialReadyToRun)" />
+  </ItemGroup>
+
+  <!-- IL inputs can be older than the ReadyToRun images already in the publish directory. -->
+  <Target Name="CopyPublishedAssembliesIfDifferent" BeforeTargets="_ComputeResolvedFilesToPublishTypes"
+          Condition="'$(ShipsScriptingComponents)' == 'true'">
+    <ItemGroup>
+      <ResolvedFileToPublish Update="@(ResolvedFileToPublish)"
+                            Condition="'%(ResolvedFileToPublish.Extension)' == '.dll' AND '%(ResolvedFileToPublish.CopyToPublishDirectory)' == 'PreserveNewest'">
+        <CopyToPublishDirectory>IfDifferent</CopyToPublishDirectory>
+      </ResolvedFileToPublish>
+    </ItemGroup>
+  </Target>
+
+  <Target Name="PrepareScriptingCompilerProfile"
+          Condition="'$(ShipsScriptingComponents)' == 'true' AND '$(PublishReadyToRun)' == 'true' AND '$(_GenerateScriptingCompilerProfile)' == 'true'">
+    <!-- A target-RID launcher can carry native dependencies that cannot run on the publishing host. -->
+    <MSBuild Projects="$(MSBuildThisFileDirectory)../../../Keysharp/Keysharp.csproj" Targets="Build"
+             Properties="Configuration=$(Configuration);TargetFramework=$(TargetFramework);RuntimeIdentifier=;SelfContained=false;UseAppHost=false;PublishReadyToRun=false;MacBuildBundle=false;_IsPublishing=false"
+             RemoveProperties="PublishSingleFile;PublishTrimmed;PublishAot;NoBuild;PublishDir">
+      <Output TaskParameter="TargetOutputs" ItemName="_CompilerProfileHost" />
+    </MSBuild>
+    <PropertyGroup>
+      <_CompilerProfileHostDirectory>@(_CompilerProfileHost->'%(RootDir)%(Directory)')</_CompilerProfileHostDirectory>
+      <_CompilerProfileTool>$(NuGetPackageRoot)dotnet-pgo/$(ScriptingCompilerPgoVersion)/tools/net10.0/any/dotnet-pgo.dll</_CompilerProfileTool>
+      <_CompilerProfileDotnet Condition="'$(DOTNET_HOST_PATH)' != ''">$(DOTNET_HOST_PATH)</_CompilerProfileDotnet>
+      <_CompilerProfileDotnet Condition="'$(_CompilerProfileDotnet)' == ''">dotnet</_CompilerProfileDotnet>
+    </PropertyGroup>
+    <ItemGroup>
+      <_CompilerProfileScript Include="$(MSBuildThisFileDirectory)../../../Keysharp.Install/payload/Template.ks;$(MSBuildThisFileDirectory)../../../Keysharp/Scripts/WindowSpy.ks;$(MSBuildThisFileDirectory)../../../Keysharp.Install/payload/Packages.ks;$(MSBuildThisFileDirectory)../../../Keysharp.Install/payload/Dash.ks;$(MSBuildThisFileDirectory)../../../demos/ClipboardHistory.ks;$(MSBuildThisFileDirectory)../../../demos/InputHUD.ks;$(MSBuildThisFileDirectory)../../../demos/WindowGrab.ks;$(MSBuildThisFileDirectory)../../../demos/WindowTiler.ks" />
+      <_CompilerProfileInclude Include="$(MSBuildThisFileDirectory)../../../demos/Shell.ks" />
+      <_CompilerProfileBinary Include="@(_CompilerProfileHost);$(_CompilerProfileHostDirectory)Keysharp.Core.dll;$(_CompilerProfileHostDirectory)Keysharp.Components.Scripting.dll;$(_CompilerProfileHostDirectory)Keysharp.deps.json;$(_CompilerProfileHostDirectory)Keysharp.runtimeconfig.json;@(_BundledScriptingComponentPayload)" />
+      <_CompilerProfileConfiguration Include="$(NETCoreSdkVersion)|$([System.Environment]::Version)|$(NETCoreSdkRuntimeIdentifier)|$(_CompilerProfileTool)" />
+      <_CompilerProfileConfiguration Include="@(_CompilerProfileBinary->'%(FullPath)');@(_CompilerProfileScript->'%(FullPath)');@(_CompilerProfileInclude->'%(FullPath)')" />
+      <FileWrites Include="$(ScriptingCompilerProfile);$(_CompilerProfileDirectory)inputs.txt" />
+    </ItemGroup>
+    <MakeDir Directories="$(_CompilerProfileDirectory)" />
+    <WriteLinesToFile File="$(_CompilerProfileDirectory)inputs.txt" Lines="@(_CompilerProfileConfiguration)"
+                      Overwrite="true" WriteOnlyWhenDifferent="true" />
+  </Target>
+
+  <Target Name="GenerateScriptingCompilerProfile" DependsOnTargets="PrepareScriptingCompilerProfile"
+          Condition="'$(ShipsScriptingComponents)' == 'true' AND '$(PublishReadyToRun)' == 'true' AND '$(_GenerateScriptingCompilerProfile)' == 'true'"
+          Inputs="$(MSBuildThisFileFullPath);$(_CompilerProfileDirectory)inputs.txt;@(_CompilerProfileBinary);@(_CompilerProfileScript);@(_CompilerProfileInclude);$(_CompilerProfileTool)"
+          Outputs="$(ScriptingCompilerProfile)">
+    <Error Condition="!Exists('$(_CompilerProfileTool)')" Text="Restore the project to obtain dotnet-pgo $(ScriptingCompilerPgoVersion)." />
+    <Message Importance="high" Text="Profiling compilation of bundled scripts for Roslyn ReadyToRun." />
+    <MakeDir Directories="$(_CompilerProfileDirectory)corpus" />
+    <Copy SourceFiles="@(_CompilerProfileScript)" DestinationFolder="$(_CompilerProfileDirectory)corpus" />
+    <Copy SourceFiles="@(_CompilerProfileInclude)" DestinationFolder="$(_CompilerProfileDirectory)corpus" />
+    <WriteLinesToFile File="$(_CompilerProfileDirectory)prelude.ahk" Lines="#ErrorStdOut;#Warn All, StdOut" Overwrite="true" />
+    <Delete Files="$(_CompilerProfileDirectory)compile.nettrace;$(_CompilerProfileDirectory)compile.etlx;$(_CompilerProfileDirectory)pending.mibc" />
+    <Exec Command="&quot;$(_CompilerProfileDotnet)&quot; &quot;@(_CompilerProfileHost)&quot; --errorstdout --compile asm --include &quot;$(_CompilerProfileDirectory)prelude.ahk&quot; @(_CompilerProfileScript->'&quot;$(_CompilerProfileDirectory)corpus/%(Filename)%(Extension)&quot;', ' ')"
+          WorkingDirectory="$(_CompilerProfileDirectory)corpus" Timeout="180000"
+          EnvironmentVariables="KEYSHARP_DAEMON=0;KEYSHARP_FORCE_HEADLESS=1;DOTNET_ReadyToRun=1;COMPlus_ReadyToRun=1;DOTNET_EnableEventPipe=1;DOTNET_EventPipeOutputPath=$(_CompilerProfileDirectory)compile.nettrace;DOTNET_EventPipeConfig=Microsoft-Windows-DotNETRuntime:0x1C000080018:5" />
+    <!-- Shared generics can first JIT during runtime startup and then be reused by the compiler. -->
+    <Exec Command="&quot;$(_CompilerProfileDotnet)&quot; &quot;$(_CompilerProfileTool)&quot; create-mibc -t &quot;$(_CompilerProfileDirectory)compile.nettrace&quot; -o &quot;$(_CompilerProfileDirectory)pending.mibc&quot; --compressed"
+          Timeout="180000" />
+    <!-- Keep the completed cache intact if training or conversion fails. -->
+    <Move SourceFiles="$(_CompilerProfileDirectory)pending.mibc" DestinationFiles="$(ScriptingCompilerProfile)" />
+    <Delete Files="$(_CompilerProfileDirectory)compile.nettrace;$(_CompilerProfileDirectory)compile.etlx" />
+    <ItemGroup>
+      <FileWrites Include="$(_CompilerProfileDirectory)**/*" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="PreparePartialRoslynReadyToRun"
+          DependsOnTargets="GenerateScriptingCompilerProfile"
+          Condition="'$(ShipsScriptingComponents)' == 'true' AND '$(PublishReadyToRun)' == 'true'">
+    <Error Condition="!Exists('$(ScriptingCompilerProfile)')"
+           Text="Roslyn compilation profile is missing: $(ScriptingCompilerProfile)." />
+    <Error Condition="'@(Crossgen2Tool)' == '' OR '@(_ReadyToRunAssembliesToReference)' == ''"
+           Text="Partial Roslyn ReadyToRun requires the SDK's crossgen2 tool and implementation references." />
+    <PropertyGroup>
+      <_RoslynPartialReadyToRunDirectory>$([MSBuild]::NormalizeDirectory('$(MSBuildProjectDirectory)', '$(IntermediateOutputPath)', 'R2R-partial'))</_RoslynPartialReadyToRunDirectory>
+      <_RoslynPartialReadyToRunNames>;@(ScriptingCompilerPartialReadyToRun);</_RoslynPartialReadyToRunNames>
+      <_RoslynPartialReadyToRunInputs>$(_RoslynPartialReadyToRunDirectory)inputs.txt</_RoslynPartialReadyToRunInputs>
+      <_PartialRoslynToolDirectory>@(Crossgen2Tool->'%(RootDir)%(Directory)')</_PartialRoslynToolDirectory>
+    </PropertyGroup>
+    <ItemGroup>
+      <_PartialRoslyn Include="@(ResolvedFileToPublish)"
+                      Condition="$(_RoslynPartialReadyToRunNames.Contains(';%(ResolvedFileToPublish.Filename)%(ResolvedFileToPublish.Extension);'))">
+        <PartialReadyToRunImage>$(_RoslynPartialReadyToRunDirectory)%(Filename)%(Extension)</PartialReadyToRunImage>
+        <OutputR2RImage>$(_RoslynPartialReadyToRunDirectory)pending/%(Filename)%(Extension)</OutputR2RImage>
+      </_PartialRoslyn>
+      <_PartialRoslynToolInputs Include="$(_PartialRoslynToolDirectory)*" />
+      <_PartialRoslynToolInputs Include="@(Crossgen2Tool->'%(JitPath)')" Condition="'%(Crossgen2Tool.JitPath)' != ''" />
+      <_PartialRoslynConfiguration Include="$(RuntimeIdentifier);$(SelfContained);$(ScriptingCompilerProfile)" />
+      <_PartialRoslynConfiguration Include="$([MSBuild]::Escape('$(_RoslynPartialReadyToRunArguments)'))" />
+      <_PartialRoslynConfiguration Include="@(Crossgen2Tool->'%(FullPath)|%(TargetOS)|%(TargetArch)|%(JitPath)|%(DotNetHostPath)')" />
+      <_PartialRoslynConfiguration Include="@(_PartialRoslyn->'%(FullPath)');@(_ReadyToRunAssembliesToReference->'%(FullPath)');@(_PartialRoslynToolInputs->'%(FullPath)')" />
+    </ItemGroup>
+    <Error Condition="'@(_PartialRoslyn->Count())' != '@(ScriptingCompilerPartialReadyToRun->Count())'"
+           Text="Partial Roslyn ReadyToRun could not find exactly one compiler payload for each of @(ScriptingCompilerPartialReadyToRun)." />
+    <MakeDir Directories="$(_RoslynPartialReadyToRunDirectory)" />
+    <!-- Track reference membership as well as timestamps, including dependencies restored with older dates. -->
+    <WriteLinesToFile File="$(_RoslynPartialReadyToRunInputs)" Lines="@(_PartialRoslynConfiguration)"
+                      Overwrite="true" WriteOnlyWhenDifferent="true" />
+    <ItemGroup>
+      <FileWrites Include="$(_RoslynPartialReadyToRunInputs);@(_PartialRoslyn->'%(OutputR2RImage)');@(_PartialRoslyn->'%(PartialReadyToRunImage)')" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="CompilePartialRoslynReadyToRun"
+          DependsOnTargets="PreparePartialRoslynReadyToRun"
+          Condition="'$(ShipsScriptingComponents)' == 'true' AND '$(PublishReadyToRun)' == 'true'"
+          Inputs="$(MSBuildAllProjects);$(_RoslynPartialReadyToRunInputs);$(ScriptingCompilerProfile);@(_PartialRoslyn);@(_ReadyToRunAssembliesToReference);@(_PartialRoslynToolInputs)"
+          Outputs="%(_PartialRoslyn.PartialReadyToRunImage)">
+    <Message Importance="high" Text="Partially precompiling %(_PartialRoslyn.Filename) for $(RuntimeIdentifier)." />
+    <RunReadyToRunCompiler Crossgen2Tool="@(Crossgen2Tool)"
+                          UseCrossgen2="true"
+                          CompilationEntry="@(_PartialRoslyn)"
+                          ImplementationAssemblyReferences="@(_ReadyToRunAssembliesToReference)"
+                          Crossgen2PgoFiles="$(ScriptingCompilerProfile)"
+                          Crossgen2ExtraCommandLineArgs="$(_RoslynPartialReadyToRunArguments)"
+                          ShowCompilerWarnings="true" />
+    <!-- Publish only completed images; a failed compiler must not leave a fresh incremental output. -->
+    <Copy SourceFiles="%(_PartialRoslyn.OutputR2RImage)" DestinationFiles="%(_PartialRoslyn.PartialReadyToRunImage)" />
+  </Target>
+
+  <Target Name="PublishPartialRoslynReadyToRun"
+          AfterTargets="CreateReadyToRunImages"
+          DependsOnTargets="CompilePartialRoslynReadyToRun"
+          Condition="'$(ShipsScriptingComponents)' == 'true' AND '$(PublishReadyToRun)' == 'true'">
+    <ItemGroup>
+      <ResolvedFileToPublish Remove="@(_PartialRoslyn)" />
+      <ResolvedFileToPublish Include="@(_PartialRoslyn->'%(PartialReadyToRunImage)')">
+        <CopyToPublishDirectory>IfDifferent</CopyToPublishDirectory>
+      </ResolvedFileToPublish>
+    </ItemGroup>
+  </Target>
+</Project>

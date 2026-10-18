@@ -33,19 +33,9 @@
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<WarningLevel>8</WarningLevel>
 		<SatelliteResourceLanguages>en</SatelliteResourceLanguages>
-		<!-- Roughly halves cold startup (and Reload) by removing first-call JIT, at roughly 2x publish size.
-		     Publish-only; the JIT stays available, so runtime Roslyn compilation still works. -->
-		<PublishReadyToRun>true</PublishReadyToRun>
-		<PublishReadyToRunComposite>false</PublishReadyToRunComposite>
 		<!-- <PublishSingleFile>true</PublishSingleFile>
 		<IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract> -->
 	</PropertyGroup>
-
-	<ItemGroup>
-		<!-- Keep Roslyn as IL to limit package size; the daemon amortizes its JIT cost. -->
-		<PublishReadyToRunExclude Include="Microsoft.CodeAnalysis.dll" />
-		<PublishReadyToRunExclude Include="Microsoft.CodeAnalysis.CSharp.dll" />
-	</ItemGroup>
 
 	<PropertyGroup Condition="'$(Configuration)'=='Debug'">
 		<OutputPath>../bin/Debug/</OutputPath>

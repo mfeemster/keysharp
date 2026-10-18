@@ -16,6 +16,26 @@ Keysharp does not build or install them. Install them using
 Architecture is selected with a runtime identifier, such as `-r linux-arm64` or
 `-r win-arm64`. Keep the managed platform as AnyCPU.
 
+## Compiler precompilation
+
+RID-specific publishes with `PublishReadyToRun=true` partially precompile the two
+Roslyn assemblies using a profile generated from compilation of the bundled
+scripts. Cross-module generic instantiations are also precompiled to reduce cold
+compilation time. Ordinary builds keep the compiler as IL.
+
+Publishing builds a host-compatible IL launcher, compiles the bundled scripts in
+one process without running them, and converts its JIT trace with `dotnet-pgo`.
+The profile is cached under `obj/compile-profile`, shared by Keysharp and Keyview,
+and refreshed when its compiler, runtime, tool, or script inputs change. Training
+outputs are build artifacts; packaged scripts are still compiled for the target.
+The profile and profiling tools are not shipped.
+
+The profiling tool is a pinned build dependency restored from Microsoft's public
+`dotnet10-transport` feed. Publishing with restored dependencies needs no tool
+installation, network access, or PowerShell. Set `-p:PublishReadyToRun=false` to
+publish IL instead, or `-p:ScriptingCompilerProfile=<path>` to supply an existing
+profile and skip training. Delete `obj/compile-profile` to force fresh training.
+
 ## Create release packages
 
 Run the packaging script on the target operating system and architecture:

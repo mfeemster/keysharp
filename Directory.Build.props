@@ -1,6 +1,6 @@
 <Project>
   <PropertyGroup>
-    <KeysharpVersion Condition="'$(KeysharpVersion)' == ''">0.0.0.17</KeysharpVersion>
+    <KeysharpVersion Condition="'$(KeysharpVersion)' == ''">0.0.0.18</KeysharpVersion>
     <Version Condition="'$(Version)' == ''">$(KeysharpVersion)</Version>
     <AssemblyVersion Condition="'$(AssemblyVersion)' == ''">$(KeysharpVersion)</AssemblyVersion>
     <FileVersion Condition="'$(FileVersion)' == ''">$(KeysharpVersion)</FileVersion>
@@ -49,6 +49,14 @@
   <PropertyGroup Condition="'$(MSBuildProjectName)' == 'Keysharp' OR '$(MSBuildProjectName)' == 'Keyview'">
     <IsKeysharpShippingProject>true</IsKeysharpShippingProject>
   </PropertyGroup>
+
+  <PropertyGroup Condition="'$(IsKeysharpShippingProject)' == 'true' AND '$(PublishReadyToRun)' != 'false'">
+    <ScriptingCompilerPgoVersion Condition="'$(ScriptingCompilerPgoVersion)' == ''">10.0.9-servicing.26274.103</ScriptingCompilerPgoVersion>
+    <RestoreAdditionalProjectSources Condition="'$(RestoreSources)' == ''">$(RestoreAdditionalProjectSources);https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet10-transport/nuget/v3/index.json</RestoreAdditionalProjectSources>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(IsKeysharpShippingProject)' == 'true' AND '$(PublishReadyToRun)' != 'false'">
+    <PackageDownload Include="dotnet-pgo" Version="[$(ScriptingCompilerPgoVersion)]" />
+  </ItemGroup>
 
   <!-- Projects whose build output lands in a release package. Deliberately a wider set than
        IsKeysharpShippingProject (which marks the two RID-specific apphosts): the runtime and contract

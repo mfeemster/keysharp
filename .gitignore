@@ -43,3 +43,4 @@ demos/*.gif
 # Nix build outputs stay local.
 /result
 /result-*
+.claude

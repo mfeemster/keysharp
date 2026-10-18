@@ -130,12 +130,12 @@ buildDotnetModule rec {
 
   nativeBuildInputs = [ wrapGAppsHook3 ];
   runtimeDeps = runtimeLibraries;
+  LD_LIBRARY_PATH = lib.makeLibraryPath (lib.unique (runtimeLibraries ++ [ libx11 ]));
   # buildDotnetModule's own wrapper already applies gappsWrapperArgs.
   dontWrapGApps = true;
 
   # Payload staging runs Keysharp and needs GTK and a writable home. Its optional kpm download is offline.
   postInstall = ''
-    export LD_LIBRARY_PATH="${lib.makeLibraryPath runtimeLibraries}:''${LD_LIBRARY_PATH:-}"
     export DOTNET_ROOT="${dotnet-sdk}/share/dotnet"
     HOME=$(mktemp -d) dotnet msbuild Keysharp.Install/payload/Keysharp.Payload.proj \
       -p:PayloadDir="$out/lib/keysharp" --nologo -v:minimal

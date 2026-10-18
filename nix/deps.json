@@ -2,6 +2,7 @@
   { "pname": "AtkSharp", "version": "3.24.24.95", "hash": "sha256-NgdWbXToBHhEVbvPrFcwXeit5iaqbBmNPQiC0jPKlnQ=" },
   { "pname": "BitFaster.Caching", "version": "2.6.1", "hash": "sha256-1dTpRkBrNvJiNsbxQLxp3lWKqFTxfm2tMqKLu2djeiA=" },
   { "pname": "CairoSharp", "version": "3.24.24.95", "hash": "sha256-ycdgmQyQ1uSshI/9uMaqn5OBxRF8RADf4Tn/TptE2BU=" },
+  { "pname": "dotnet-pgo", "version": "10.0.9-servicing.26274.103", "hash": "sha256-17E4M4UDyzC5Jvk0saqhwmzhIAemKSopPcgElNMTdLE=", "url": "https://pkgs.dev.azure.com/dnceng/public/_packaging/dotnet10-transport/nuget/v3/flat2/dotnet-pgo/10.0.9-servicing.26274.103/dotnet-pgo.10.0.9-servicing.26274.103.nupkg" },
   { "pname": "GdkSharp", "version": "3.24.24.95", "hash": "sha256-NYjADgZG9TUQDIZiSSXDAxj5PyX/B7oKRo9f8Oyb4vI=" },
   { "pname": "GioSharp", "version": "3.24.24.95", "hash": "sha256-5THx4af5PghPnQxXdnsC+wtVcoslh+0636WkB1FaPYg=" },
   { "pname": "GLibSharp", "version": "3.24.24.95", "hash": "sha256-1pDRkKoUI9fLJBcTA2DBlpVccJl2GyAdL+VKjsFbttA=" },
