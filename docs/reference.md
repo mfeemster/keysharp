@@ -1477,6 +1477,12 @@ Base32 encodes with the RFC 4648 alphabet and `=` padding. Decode accepts lowerc
 
 Colours are indexed assignments: every successful `Insert`, `Delete`, `InsertCol`, `DeleteCol` and sort clears all row and cell colours. An unsorted `Add` or ordinary `Modify` retains them; adding into a sorted control can invalidate them through sorting. Reapply assignments after changing row or column structure. WinForms uses native row/subitem colours without owner drawing; Eto uses cell formatting. Selected-row rendering follows the platform's selection theme. Windows native colour properties and invalidation are verified without showing a window; Linux/macOS rendering remains unverified.
 
+### Input device discovery
+
+`#Import Ks { Input }` exposes the Keysharp extension `Input.Devices`, a fresh Array of keyboard and mouse descriptors with read-only `Id`, `Kind`, `Name`, `VendorId`, `ProductId` and `HardwareId` properties. Missing metadata is blank or zero. Entries describe system interfaces, which need not correspond one-to-one with physical devices; their identity strings are not guaranteed unique or permanent.
+
+`Id` is an opaque Integer scoped to the current input source, not a permanent hardware identity; values can change or be reused and need not be comparable across sources. Windows returns Raw Input handle values and reads SetupAPI metadata, using native HID attributes for numeric vendor/product IDs when available. Linux queries keysharp-input through its existing authorization and query connections without requesting a grant; unavailable device access raises `OSError`. macOS returns an `Id` of zero; its IOKit implementation remains unverified at runtime.
+
 ## Code acknowledgements
 
 * The initial IronAHK developers 2010 - 2015

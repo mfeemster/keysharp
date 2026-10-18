@@ -8373,6 +8373,28 @@
                  },
                  {
                      "category":  "Keysharp Module (Ks)",
+                     "feature":  "Input",
+                     "syntax":  "#Import Ks { Input }",
+                     "windows":  "full",
+                     "linux_x11":  "partial",
+                     "linux_wayland":  "partial",
+                     "macos":  "unknown",
+                     "notes":  "Keysharp extension for native keyboard and mouse discovery. Input.Devices returns immutable descriptors with Id, Kind, Name, VendorId, ProductId and HardwareId. Objects are created by enumeration; Input() raises Error. macOS execution remains unverified.",
+                     "tested-by":  "InputDeviceTests.cs; input-devices.ahk; LinuxInputManagerTests.cs"
+                 },
+                 {
+                     "category":  "Keysharp Module (Ks)",
+                     "feature":  "Input.Devices",
+                     "syntax":  "for Device in Input.Devices",
+                     "windows":  "full",
+                     "linux_x11":  "partial",
+                     "linux_wayland":  "partial",
+                     "macos":  "unknown",
+                     "notes":  "A fresh Array of keyboard and mouse descriptors. Missing text is blank and missing numbers are zero. Id is an opaque Integer scoped to the input source, not a permanent hardware identity. Windows uses Raw Input handles, SetupAPI metadata and native HID vendor/product attributes when available. Linux uses keysharp-input ABI 1.x and existing device-metadata access without prompting. macOS uses IOKit HID services with Id zero; runtime behavior remains unverified. IDs can change or be reused. An unavailable inventory raises OSError.",
+                     "tested-by":  "InputDeviceTests.cs; input-devices.ahk; Gui/guitest.ks; LinuxInputManagerTests.cs; LinuxNativeClientTests.DeviceInventoryChecksAnExistingGrantWithoutPrompting"
+                 },
+                 {
+                     "category":  "Keysharp Module (Ks)",
                      "feature":  "Audio",
                      "syntax":  "#import KS { Audio }",
                      "windows":  "full",

@@ -674,6 +674,67 @@ namespace Keysharp.Internals.Input.Linux
 			return native.Valid != 0;
 		}
 
+		internal bool TryAuthorizeDevices()
+		{
+			if (!owner.IsOwnerThread) return owner.Invoke(TryAuthorizeDevices);
+			ThrowIfDisposed();
+			if (HasOperations(Operations.QueryDevices)) return true;
+			Native.ksi_error_init(out var error);
+			NativeClientStatus status;
+			uint granted;
+			// ABI 1.1 checks device access without initializing input forwarding.
+			try { status = (NativeClientStatus)Native.ksi_devices_authorize(connection, out granted, ref error); }
+			catch (EntryPointNotFoundException) { return false; }
+			if (status is NativeClientStatus.Unsupported or NativeClientStatus.Denied) return false;
+			ThrowIfFailed(status, "authorize device information", error);
+			GrantedScopes = (LinuxPermissionScope)granted & ManagedScopes;
+			return HasOperations(Operations.QueryDevices);
+		}
+
+		internal InputDeviceInfo[] ListDevices()
+		{
+			if (!owner.IsOwnerThread) return owner.Invoke(ListDevices);
+			RequireOperations(Operations.QueryDevices);
+			ThrowIfDisposed();
+			for (var attempt = 0; attempt < 3; attempt++)
+			{
+				var devices = new List<InputDeviceInfo>();
+				var handle = GCHandle.Alloc(devices);
+				Native.ksi_error_init(out var error);
+				try
+				{
+					var status = (NativeClientStatus)Native.ksi_devices_list(connection,
+						CollectDevice, GCHandle.ToIntPtr(handle), out _, ref error);
+					if (status == NativeClientStatus.Busy && attempt < 2) continue;
+					ThrowIfFailed(status, "list input devices", error);
+					return devices.ToArray();
+				}
+				finally { handle.Free(); }
+			}
+			return [];
+		}
+
+		private static bool CollectDevice(NativeDeviceInfo* device, nint context)
+		{
+			if (GCHandle.FromIntPtr(context).Target is not List<InputDeviceInfo> devices) return false;
+			devices.AddRange(ToManagedDevices(device->DeviceId, device->Capabilities,
+				device->GetName(), device->Vendor, device->Product, device->GetUnique()));
+			return true;
+		}
+
+		internal static InputDeviceInfo[] ToManagedDevices(uint deviceId, uint capabilities, string name,
+			ushort vendor, ushort product, string hardwareId)
+		{
+			InputDeviceInfo Describe(string kind) => new(deviceId, kind, name, vendor, product, hardwareId);
+			return (capabilities & 3) switch
+			{
+				1 => [Describe("Keyboard")],
+				2 => [Describe("Mouse")],
+				3 => [Describe("Keyboard"), Describe("Mouse")],
+				_ => []
+			};
+		}
+
 		/// <summary>Enumerates connected gamepads, ordered so that a device's position is stable
 		/// across restarts. Needs no grant, as with pointer position and idle time.</summary>
 		internal List<GamepadInfo> ListGamepads(out ulong generation)
@@ -1484,6 +1545,17 @@ namespace Keysharp.Internals.Input.Linux
 					catch (DecoderFallbackException) { return string.Empty; }
 				}
 			}
+
+			internal string GetUnique()
+			{
+				fixed (byte* pointer = unique)
+				{
+					var length = new ReadOnlySpan<byte>(pointer, 128).IndexOf((byte)0);
+					if (length < 0) return string.Empty;
+					try { return StrictUtf8.GetString(pointer, length); }
+					catch (DecoderFallbackException) { return string.Empty; }
+				}
+			}
 		}
 
 		[StructLayout(LayoutKind.Sequential)]
@@ -1551,6 +1623,12 @@ namespace Keysharp.Internals.Input.Linux
 			[DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
 			internal static extern uint ksi_gamepads_list(nint connection, DeviceVisitor visitor,
 				nint context, out ulong generation, ref NativeError error);
+			[DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
+			internal static extern uint ksi_devices_list(nint connection, DeviceVisitor visitor,
+				nint context, out ulong generation, ref NativeError error);
+			[DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
+			internal static extern uint ksi_devices_authorize(nint connection, out uint grantedScopes,
+				ref NativeError error);
 			[DllImport(Library, CallingConvention = CallingConvention.Cdecl)]
 			internal static extern uint ksi_get_gamepad_state(nint connection, uint deviceId,
 				ulong generation, ref NativeGamepadState state, ref NativeError error);

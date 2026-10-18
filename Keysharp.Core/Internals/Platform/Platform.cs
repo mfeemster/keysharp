@@ -45,7 +45,6 @@ namespace Keysharp.Internals
 		internal static IOverlay Overlay => Instance.Overlay;
 		internal static IMouse Mouse => Instance.Mouse;
 		internal static IKeyboard Keyboard => Instance.Keyboard;
-		internal static IInput Input => Instance.Input;
 		internal static IHotkeys Hotkeys => Instance.Hotkeys;
 		internal static ISession Session => Instance.Session;
 		internal static IPermissionManager Permissions => Instance.Permissions;

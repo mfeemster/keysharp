@@ -4,6 +4,33 @@ namespace Keysharp.Tests;
 public class LinuxInputManagerTests
 {
 #if LINUX
+	[Test]
+	public void DeviceInventoryIsNotConnectedAtConstruction()
+	{
+		using var manager = new KeysharpInputManager();
+		Assert.That(manager.AuthorizationLease, Is.Null);
+	}
+
+	[TestCase(0u, new string[0])]
+	[TestCase(1u, new[] { "Keyboard" })]
+	[TestCase(2u, new[] { "Mouse" })]
+	[TestCase(3u, new[] { "Keyboard", "Mouse" })]
+	[TestCase(4u, new string[0])]
+	[TestCase(7u, new[] { "Keyboard", "Mouse" })]
+	public void DeviceDescriptorsPreserveIdentityAndCapabilities(uint capabilities, string[] kinds)
+	{
+		var devices = KeysharpInputClient.ToManagedDevices(17, capabilities, "Composite device", 0x1234, 0x5678, "serial-17");
+		Assert.That(devices.Select(device => device.Kind), Is.EqualTo(kinds));
+		foreach (var device in devices)
+		{
+			Assert.That(device.Id, Is.EqualTo(17L));
+			Assert.That(device.Name, Is.EqualTo("Composite device"));
+			Assert.That(device.VendorId, Is.EqualTo(0x1234u));
+			Assert.That(device.ProductId, Is.EqualTo(0x5678u));
+			Assert.That(device.HardwareId, Is.EqualTo("serial-17"));
+		}
+	}
+
 	[Test, Category("Misc")]
 	public void X11KeyStateFallbackIsLimitedToModifiers()
 	{

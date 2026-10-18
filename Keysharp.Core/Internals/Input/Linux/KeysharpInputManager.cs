@@ -264,6 +264,22 @@ namespace Keysharp.Internals.Input.Linux
 			return true;
 		}
 
+		internal InputDeviceInfo[] GetDeviceDescriptors()
+		{
+			try
+			{
+				var lease = GetAuthorizationLease("input device information", rearm: false, out _);
+				if (lease == null || !lease.TryAuthorizeDevices()) return null;
+				InputDeviceInfo[] devices = null;
+				return TryUseQueryClient(connected => { devices = connected.ListDevices(); return true; }) ? devices : null;
+			}
+			catch (Exception ex)
+			{
+				Diagnostics.Debug.WriteLine($"keysharp-input: device list failed: {ex.Message}");
+				return null;
+			}
+		}
+
 		/// <summary>Enumerates connected gamepads. Gamepad access is ungated, so this needs no grant
 		/// and never prompts.</summary>
 		internal bool TryListGamepads(out List<KeysharpInputClient.GamepadInfo> gamepads,

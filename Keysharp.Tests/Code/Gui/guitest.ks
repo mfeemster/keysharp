@@ -4072,6 +4072,8 @@ mouseReadout := MyGui.AddEdit("xc+16 y+10 w468 h22 ReadOnly -Wrap", "Start, then
 gStatus["input_mouse_readout"] := mouseReadout
 mouseStatus := MyGui.AddText("xc+16 y+8 w468 h22", "Mouse hook: idle")
 gStatus["input_mouse"] := mouseStatus
+MyGui.AddButton("xc+16 y+8 w180 h26", "Refresh Input Devices").OnEvent("Click", RefreshInputDevices)
+MyGui.AddText("x+8 yp w280 h32", "Device metadata appears in the log. Reconnect a keyboard or mouse, then refresh again.")
 MyGui.UseGroup()
 
 Tab.UseTab("Send && Hotkey")
@@ -4947,6 +4949,21 @@ JoinProbeNames(items) {
 		text .= (index = 1 ? "" : ", ") item
 
 	return text
+}
+
+RefreshInputDevices(*) {
+	try {
+		devices := Input.Devices
+		report := "Input.Devices: " devices.Length " interface(s)."
+
+		for device in devices
+			report .= "`r`n" Format("Kind={1} | Name={2} | Id={3} | VendorId=0x{4:04X} | ProductId=0x{5:04X} | HardwareId={6}",
+				device.Kind, device.Name, device.Id, device.VendorId, device.ProductId, device.HardwareId)
+
+		AppendLog(report)
+	} catch as err {
+		AppendLog("Input.Devices failed: " err.Message)
+	}
 }
 
 StartInputHookProbe() {

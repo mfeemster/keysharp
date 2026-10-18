@@ -5,10 +5,6 @@ namespace Keysharp.Internals
 
 	internal enum ZOrder { Top, Bottom }
 
-	/// <summary>The currently-live keyboard/mouse injection transport. Kept as a typed value (not a bool)
-	/// so additional transports/state can be added without churning consumers.</summary>
-	internal enum InputTransport { None, Service, Mac, Windows }
-
 	/// <summary>Foreign window READ surface (by handle). The Linux impl internally composes X11 + the active
 	/// Wayland backend; routing re-resolves the backend from the handle on each call.</summary>
 	internal interface IWindowQuery
@@ -440,13 +436,6 @@ namespace Keysharp.Internals
 		bool Register(nint hWnd, uint id, KeyModifiers modifiers, uint vk);
 		bool Unregister(nint hWnd, uint id);
 		bool PostHotkeyMessage(nint hWnd, uint wParam, uint lParam);
-	}
-
-	/// <summary>Platform-neutral view of the keyboard/mouse injection transport.</summary>
-	internal interface IInput
-	{
-		/// <summary>The live injection transport. Fixed on macOS/Windows.</summary>
-		InputTransport ActiveTransport { get; }
 	}
 
 	/// <summary>Live OS/session keyboard state query surface.</summary>

@@ -22,6 +22,20 @@ public class LinuxNativeClientTests
 	}
 
 	[Test]
+	public void DeviceInventoryChecksAnExistingGrantWithoutPrompting()
+	{
+		RequireLibrary("libkeysharp-input.so.1", typeof(KeysharpInputClient).Assembly);
+		using var lease = KeysharpInputClient.Connect();
+		if (!lease.TryAuthorizeDevices())
+		{
+			Assert.That(lease.HasOperations(KeysharpInputClient.Operations.QueryDevices), Is.False);
+			return;
+		}
+		using var query = KeysharpInputClient.Connect(role: KeysharpInputClient.ConnectionRole.Rpc, lease: lease);
+		Assert.That(query.ListDevices(), Is.Not.Null);
+	}
+
+	[Test]
 	public void PermissionCheckDoesNotSubscribeToWindowState()
 	{
 		RequireLibrary("libkeysharp-desktop.so.1", typeof(DesktopClient).Assembly);

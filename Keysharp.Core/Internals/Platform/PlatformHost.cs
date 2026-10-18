@@ -19,7 +19,6 @@ namespace Keysharp.Internals
 		// Input
 		internal abstract IMouse Mouse { get; }
 		internal abstract IKeyboard Keyboard { get; }
-		internal abstract IInput Input { get; }
 		internal abstract IHotkeys Hotkeys { get; }
 
 		// Session
@@ -67,7 +66,6 @@ namespace Keysharp.Internals
 		private readonly IOverlay overlay = new WindowsOverlay();
 		private readonly IMouse mouse = new WindowsMouse();
 		private readonly IKeyboard keyboard = new WindowsKeyboard();
-		private readonly IInput input = new WindowsInput();
 		private readonly IHotkeys hotkeys = new WindowsHotkeys();
 		private readonly ISession session = new WindowsSession();
 		private readonly IPermissionManager permissions = new DefaultPermissionManager();
@@ -79,7 +77,6 @@ namespace Keysharp.Internals
 		internal override IOverlay Overlay => overlay;
 		internal override IMouse Mouse => mouse;
 		internal override IKeyboard Keyboard => keyboard;
-		internal override IInput Input => input;
 		internal override IHotkeys Hotkeys => hotkeys;
 		internal override ISession Session => session;
 		internal override IPermissionManager Permissions => permissions;
@@ -99,7 +96,6 @@ namespace Keysharp.Internals
 		private readonly IOverlay overlay = new LinuxOverlay();
 		private readonly Lazy<IMouse> mouse = new (LinuxMice.Resolve);
 		private readonly IKeyboard keyboard = LinuxKeyboards.Resolve();
-		private readonly IInput input = new LinuxInput();
 		private readonly IHotkeys hotkeys = new LinuxHotkeys();
 		private readonly ISession session = new LinuxSession();
 		// Lazy for the same reason as screen, plus the choice inspects Eto's resolved clipboard handler, which is
@@ -113,7 +109,6 @@ namespace Keysharp.Internals
 		internal override IOverlay Overlay => overlay;
 		internal override IMouse Mouse => mouse.Value;
 		internal override IKeyboard Keyboard => keyboard;
-		internal override IInput Input => input;
 		internal override IHotkeys Hotkeys => hotkeys;
 		internal override ISession Session => session;
 		internal override IPermissionManager Permissions => Script.TheScript.LinuxServices.Permissions;
@@ -134,7 +129,6 @@ namespace Keysharp.Internals
 		private readonly IOverlay overlay = new MacOverlay();
 		private readonly IMouse mouse = new MacMouse();
 		private readonly IKeyboard keyboard = new MacKeyboard();
-		private readonly IInput input = new MacInput();
 		private readonly IHotkeys hotkeys = new MacHotkeys();
 		private readonly ISession session = new MacSession();
 		private readonly IPermissionManager permissions = new MacPermissionManager();
@@ -148,7 +142,6 @@ namespace Keysharp.Internals
 		internal override IOverlay Overlay => overlay;
 		internal override IMouse Mouse => mouse;
 		internal override IKeyboard Keyboard => keyboard;
-		internal override IInput Input => input;
 		internal override IHotkeys Hotkeys => hotkeys;
 		internal override ISession Session => session;
 		internal override IPermissionManager Permissions => permissions;
