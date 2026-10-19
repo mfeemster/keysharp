@@ -17,13 +17,23 @@
     <PublishReadyToRunExclude Include="@(ScriptingCompilerPartialReadyToRun)" />
   </ItemGroup>
 
-  <!-- IL inputs can be older than the ReadyToRun images already in the publish directory. -->
+  <!-- The SDK creates only the R2R root; component images keep their nested publish paths. -->
+  <Target Name="PrepareReadyToRunOutputDirectories"
+          AfterTargets="_PrepareForReadyToRunCompilation"
+          Condition="'$(ShipsScriptingComponents)' == 'true' AND '$(PublishReadyToRun)' == 'true'">
+    <ItemGroup>
+      <_ReadyToRunOutputImage Include="@(_ReadyToRunCompileList->'%(OutputR2RImage)')" />
+    </ItemGroup>
+    <MakeDir Directories="@(_ReadyToRunOutputImage->'%(RootDir)%(Directory)')" />
+  </Target>
+
+  <!-- Always compares size and timestamp on every .NET 10 SDK, including when IL inputs are older than R2R images. -->
   <Target Name="CopyPublishedAssembliesIfDifferent" BeforeTargets="_ComputeResolvedFilesToPublishTypes"
           Condition="'$(ShipsScriptingComponents)' == 'true'">
     <ItemGroup>
       <ResolvedFileToPublish Update="@(ResolvedFileToPublish)"
                             Condition="'%(ResolvedFileToPublish.Extension)' == '.dll' AND '%(ResolvedFileToPublish.CopyToPublishDirectory)' == 'PreserveNewest'">
-        <CopyToPublishDirectory>IfDifferent</CopyToPublishDirectory>
+        <CopyToPublishDirectory>Always</CopyToPublishDirectory>
       </ResolvedFileToPublish>
     </ItemGroup>
   </Target>
@@ -108,7 +118,7 @@
     </ItemGroup>
     <Error Condition="'@(_PartialRoslyn->Count())' != '@(ScriptingCompilerPartialReadyToRun->Count())'"
            Text="Partial Roslyn ReadyToRun could not find exactly one compiler payload for each of @(ScriptingCompilerPartialReadyToRun)." />
-    <MakeDir Directories="$(_RoslynPartialReadyToRunDirectory)" />
+    <MakeDir Directories="$(_RoslynPartialReadyToRunDirectory)pending" />
     <!-- Track reference membership as well as timestamps, including dependencies restored with older dates. -->
     <WriteLinesToFile File="$(_RoslynPartialReadyToRunInputs)" Lines="@(_PartialRoslynConfiguration)"
                       Overwrite="true" WriteOnlyWhenDifferent="true" />
@@ -141,7 +151,7 @@
     <ItemGroup>
       <ResolvedFileToPublish Remove="@(_PartialRoslyn)" />
       <ResolvedFileToPublish Include="@(_PartialRoslyn->'%(PartialReadyToRunImage)')">
-        <CopyToPublishDirectory>IfDifferent</CopyToPublishDirectory>
+        <CopyToPublishDirectory>Always</CopyToPublishDirectory>
       </ResolvedFileToPublish>
     </ItemGroup>
   </Target>

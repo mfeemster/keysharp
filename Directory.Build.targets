@@ -55,7 +55,7 @@
         <RelativePath>%(_BundledScriptingComponentPayload.ComponentRelativePath)</RelativePath>
         <TargetPath>%(_BundledScriptingComponentPayload.ComponentRelativePath)</TargetPath>
         <PostprocessAssembly Condition="'%(_BundledScriptingComponentPayload.Extension)' == '.dll'">true</PostprocessAssembly>
-        <CopyToPublishDirectory>IfDifferent</CopyToPublishDirectory>
+        <CopyToPublishDirectory>Always</CopyToPublishDirectory>
         <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       </ResolvedFileToPublish>
     </ItemGroup>
@@ -80,7 +80,7 @@
         <TargetPath>%(_BundledPackageProviderPayload.ProviderRelativePath)</TargetPath>
         <!-- Providers load on demand; leave their assemblies as IL to keep the package small. -->
         <PostprocessAssembly>false</PostprocessAssembly>
-        <CopyToPublishDirectory>IfDifferent</CopyToPublishDirectory>
+        <CopyToPublishDirectory>Always</CopyToPublishDirectory>
         <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       </ResolvedFileToPublish>
     </ItemGroup>
