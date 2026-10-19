@@ -43,7 +43,7 @@ namespace Keysharp.Internals.Input.MacOS
 				if (TryQuery(VK_CAPITAL, sourceState, out var capsDown))
 					observedCapsDown = capsDown;
 				var flags = MacNativeInput.CGEventSourceFlagsState(sourceState);
-				ObserveNativeCore(observedModifiers,
+				ObserveStateCore(observedModifiers,
 					(flags & MacNativeInput.kCGEventFlagMaskAlphaShift) != 0);
 			}
 		}
@@ -71,7 +71,7 @@ namespace Keysharp.Internals.Input.MacOS
 				else observedModifiers &= ~mask;
 
 				if (origin != Origin.KeysharpSynthetic)
-					ObserveNativeCore(observedModifiers,
+					ObserveStateCore(observedModifiers,
 						(flags & MacNativeInput.kCGEventFlagMaskAlphaShift) != 0,
 						expectedModifierRevision < 0 || modifierSenderRevision == expectedModifierRevision,
 						expectedCapsLockRevision < 0 || capsLockSenderRevision == expectedCapsLockRevision);
@@ -209,6 +209,16 @@ namespace Keysharp.Internals.Input.MacOS
 			}
 		}
 
+		internal void ObserveModifiers(uint modifiers, long expectedSenderRevision = -1)
+		{
+			lock (sync)
+			{
+				observedModifiers = modifiers;
+				ObserveStateCore(modifiers, false,
+					expectedSenderRevision < 0 || modifierSenderRevision == expectedSenderRevision, updateCapsLock: false);
+			}
+		}
+
 		internal void ObserveCapsLock(bool on)
 		{
 			lock (sync)
@@ -223,7 +233,7 @@ namespace Keysharp.Internals.Input.MacOS
 			}
 		}
 
-		private void ObserveNativeCore(uint modifiers, bool capsLock, bool updateModifiers = true,
+		private void ObserveStateCore(uint modifiers, bool capsLock, bool updateModifiers = true,
 			bool updateCapsLock = true)
 		{
 			if (sendDepth == 0)

@@ -34,8 +34,6 @@ namespace Keysharp.Builtins
 
 			if (toggle == ToggleValueType.On)
 				_ = Script.TheScript.Permissions.EnsureInputControl(operation: "BlockInput On");
-			else if (toggle == ToggleValueType.MouseMove)
-				EnsureInputPermissions(monitoring: true, control: true, "BlockInput MouseMove");
 
 			_ = ScriptBlockInput(toggle);
 			return DefaultObject;
@@ -534,7 +532,7 @@ break_twice:;
 					if (isenabled)
 						hm.ClearBuf();
 
-					if (!isenabled || ht.kbdHook == 0) // Hook may not be needed anymore || hook is needed but not present.
+					if (!isenabled || !ht.HasKbdHook()) // Hook may not be needed anymore || hook is needed but not present.
 						_ = HotkeyDefinition.ManifestAllHotkeysHotstringsHooks(script);
 				}
 			}
@@ -999,146 +997,93 @@ break_twice:;
 		}
 
 		/// <summary>
-		/// Internal helper to blocks keyboard and mouse input from reaching the script.
+		/// Blocks keyboard and mouse input from reaching the script.
 		/// </summary>
 		/// <param name="toggle">True to block, else false to unblock.</param>
 		/// <returns>Always returns OK for caller convenience.</returns>
 		internal static ResultType ScriptBlockInput(ToggleValueType toggle)
 		{
 			var script = Script.TheScript;
-		#if LINUX
-			var stateChanged = false;
+			var ht = script.HookThread;
+			var keyboard = script.KeyboardData;
 
 			switch (toggle)
 			{
-				case ToggleValueType.On:
-				case ToggleValueType.Off:
-					script.KeyboardData.blockInput = toggle == ToggleValueType.On;
-					stateChanged = true;
-					break;
-
 				case ToggleValueType.Send:
 				case ToggleValueType.Mouse:
 				case ToggleValueType.SendAndMouse:
 				case ToggleValueType.Default:
-					// These modes only store the policy; they do not block anything immediately.
-					// The send and mouse paths call ScriptBlockInput(On) at the start of each
-					// operation and ScriptBlockInput(Off) at the end, so the actual native
-					// block is applied through the On/Off branch, not here.
-					script.KeyboardData.blockInputMode = toggle;
-					break;
+					keyboard.blockInputMode = toggle;
+#if OSX
+					ht.RefreshPlatformKeyGrabs();
+#endif
+					return ResultType.Ok;
 
 				case ToggleValueType.MouseMove:
-					script.KeyboardData.blockMouseMove = true;
-					stateChanged = true;
-					break;
-
 				case ToggleValueType.MouseMoveOff:
-					script.KeyboardData.blockMouseMove = false;
-					stateChanged = true;
-					break;
-				// default (NEUTRAL or TOGGLE_INVALID): do nothing.
+					keyboard.blockMouseMove = toggle == ToggleValueType.MouseMove;
+					if (keyboard.blockMouseMove)
+						HotkeyDefinition.InstallMouseHook(script);
+#if LINUX
+					if (keyboard.blockMouseMove && !ht.HasMouseHook())
+					{
+						keyboard.blockMouseMove = false;
+						var reason = ht.GetHookActivationFailureReason();
+						throw new InvalidOperationException(reason.IsNullOrEmpty()
+							? "keysharp-input could not apply input blocking." : reason);
+					}
+#endif
+					ht.RefreshPlatformKeyGrabs();
+					return ResultType.Ok;
 			}
 
-			if (!stateChanged)
+		#if LINUX
+			if (toggle is not (ToggleValueType.On or ToggleValueType.Off))
 				return ResultType.Ok;
 
-			// Movement-only blocking is a mouse-hook concern. LinuxHookThread already
-			// suppresses physical move events while passing buttons, wheels and injected moves.
-			if (script.KeyboardData.blockMouseMove)
+			keyboard.blockInput = toggle == ToggleValueType.On;
+			if (keyboard.blockMouseMove)
 			{
 				HotkeyDefinition.InstallMouseHook(script);
-				script.HookThread.RefreshPlatformKeyGrabs();
+				ht.RefreshPlatformKeyGrabs();
 			}
 
 			var blockMask = Keysharp.Internals.Input.Linux.KeysharpInputClient.BlockInputMask.None;
 
-			if (script.KeyboardData.blockInput)
+			if (keyboard.blockInput)
 				blockMask = Keysharp.Internals.Input.Linux.KeysharpInputClient.BlockInputMask.Keyboard
 					| Keysharp.Internals.Input.Linux.KeysharpInputClient.BlockInputMask.Mouse;
 
 			var directBlockApplied = Keysharp.Internals.Input.Linux.KeysharpInputManager.Current.TrySetBlockInput(
 				script, blockMask, out var blockMessage);
-			var mouseMoveApplied = !script.KeyboardData.blockMouseMove || script.HookThread.HasMouseHook();
-			var platformApplied = directBlockApplied && (script.KeyboardData.blockInput || mouseMoveApplied);
 
-			if (!platformApplied && toggle is ToggleValueType.On or ToggleValueType.MouseMove)
+			if (!directBlockApplied && toggle == ToggleValueType.On)
 			{
-				if (toggle == ToggleValueType.On)
-					script.KeyboardData.blockInput = false;
-				else
-					script.KeyboardData.blockMouseMove = false;
-
+				keyboard.blockInput = false;
 				throw new InvalidOperationException(blockMessage.IsNullOrEmpty()
 					? "keysharp-input could not apply input blocking."
 					: blockMessage);
 			}
 		#elif WINDOWS
-			switch (toggle)
+			if (toggle is ToggleValueType.On or ToggleValueType.Off)
 			{
-				// Always turn input ON/OFF even if g_BlockInput says its already in the right state.  This is because
-				// BlockInput can be externally and undetectably disabled, e.g. if the user presses Ctrl-Alt-Del:
-				case ToggleValueType.On:
-				case ToggleValueType.Off:
-					var state = toggle == ToggleValueType.On;
-					_ = WindowsAPI.BlockInput(state);
-					script.KeyboardData.blockInput = state;
-					break;
-
-				case ToggleValueType.Send:
-				case ToggleValueType.Mouse:
-				case ToggleValueType.SendAndMouse:
-				case ToggleValueType.Default:
-					script.KeyboardData.blockInputMode = toggle;
-					break;
-
-				case ToggleValueType.MouseMove:
-					script.KeyboardData.blockMouseMove = true;
-					HotkeyDefinition.InstallMouseHook(script);
-					break;
-
-				case ToggleValueType.MouseMoveOff:
-					script.KeyboardData.blockMouseMove = false;
-					// But the mouse hook is left installed because it might be needed by other things. This approach is similar to that used by the Input command.
-					break;
-					// default (NEUTRAL or TOGGLE_INVALID): do nothing.
+				// Ctrl-Alt-Delete can clear the native block without changing our state.
+				var state = toggle == ToggleValueType.On;
+				_ = WindowsAPI.BlockInput(state);
+				keyboard.blockInput = state;
 			}
 	#else
-			switch (toggle)
+			if (toggle is ToggleValueType.On or ToggleValueType.Off)
 			{
-				case ToggleValueType.On:
-				case ToggleValueType.Off:
-					script.KeyboardData.blockInput = toggle == ToggleValueType.On;
-
-					// There is no OS-level "block all input" API on macOS (unlike Windows' BlockInput()),
-					// so blocking is implemented by suppressing physical events in the keyboard/mouse hook.
-					// Make sure that hook is actually installed and running.
-					if (toggle == ToggleValueType.On)
-					{
-						HotkeyDefinition.InstallKeybdHook(script);
-						HotkeyDefinition.InstallMouseHook(script);
-					}
-
-					break;
-
-				case ToggleValueType.Send:
-				case ToggleValueType.Mouse:
-				case ToggleValueType.SendAndMouse:
-				case ToggleValueType.Default:
-					script.KeyboardData.blockInputMode = toggle;
-					break;
-
-				case ToggleValueType.MouseMove:
-					script.KeyboardData.blockMouseMove = true;
+				keyboard.blockInput = toggle == ToggleValueType.On;
+				if (keyboard.blockInput)
+				{
+					HotkeyDefinition.InstallKeybdHook(script);
 					HotkeyDefinition.InstallMouseHook(script);
-					break;
-
-				case ToggleValueType.MouseMoveOff:
-					script.KeyboardData.blockMouseMove = false;
-					break;
+				}
 			}
 
-			script.HookThread.RefreshPlatformKeyGrabs();
+			ht.RefreshPlatformKeyGrabs();
 	#endif
 
 			return ResultType.Ok;//By design, it never returns FAIL.
@@ -1174,12 +1119,6 @@ break_twice:;
 			var f = force.Ab();
 			var script = Script.TheScript;
 			var ht = script.HookThread;
-
-			if (i)
-			{
-				var op = whichHook == HookType.Keyboard ? "InstallKeybdHook" : "InstallMouseHook";
-				EnsureInputPermissions(monitoring: true, control: true, op);
-			}
 
 			//When the second parameter is true, unconditionally remove the hook. If the first parameter is
 			//also true, the hook will be reinstalled fresh. Otherwise the hook will be left uninstalled,
@@ -1229,7 +1168,9 @@ break_twice:;
 
 				case ToggleValueType.AlwaysOn:
 				case ToggleValueType.AlwaysOff:
-					EnsureForcedLockStatePermissions(vk);
+					_ = script.Permissions.EnsureCapabilities(
+						inputMonitoring: !ht.UsesHookProvider, inputControl: true,
+						operation: $"{LockStateOperation(vk)} AlwaysOn/AlwaysOff");
 					forceLock = (toggle == ToggleValueType.AlwaysOn) ? ToggleValueType.On : ToggleValueType.Off; // Must do this first.
 					_ = kbdMouseSender.ToggleKeyState(vk, forceLock);
 					// The hook is currently needed to support keeping these keys AlwaysOn or AlwaysOff, though
@@ -1248,12 +1189,6 @@ break_twice:;
 			}
 		}
 
-		private static void EnsureForcedLockStatePermissions(uint vk)
-		{
-			EnsureInputPermissions(monitoring: true, control: true,
-				$"{LockStateOperation(vk)} AlwaysOn/AlwaysOff");
-		}
-
 		private static string LockStateOperation(uint vk)
 			=> vk switch
 			{
@@ -1262,12 +1197,6 @@ break_twice:;
 				(uint)Keys.Scroll => "SetScrollLockState",
 				_ => "SetLockState"
 			};
-
-		private static void EnsureInputPermissions(bool monitoring, bool control, string operation)
-			=> _ = Script.TheScript.Permissions.EnsureCapabilities(
-				inputMonitoring: monitoring,
-				inputControl: control,
-				operation: operation);
 	}
 
 	public partial class Ks

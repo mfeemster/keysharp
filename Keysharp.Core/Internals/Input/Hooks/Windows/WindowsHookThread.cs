@@ -198,10 +198,15 @@ namespace Keysharp.Internals.Input.Hooks.Windows
 	/// </summary>
 	internal class WindowsHookThread : HookThread
 	{
+		protected internal nint kbdHook, mouseHook;
+		protected HookType GetNativeHooks() => (kbdHook != 0 ? HookType.Keyboard : HookType.None)
+			| (mouseHook != 0 ? HookType.Mouse : HookType.None);
 		private readonly LowLevelKeyboardProc kbdHandlerDel;
 		private readonly LowLevelMouseProc mouseHandlerDel;
 		private POINT? mouseMovePosition;
 		private StaThreadWithMessageQueue thread;
+		protected bool IsOnHookThread => thread?.IsCurrentThread == true;
+		protected void PostHookCallback(Action callback) => thread.Post(static state => ((Action)state)(), callback);
 		private bool uwpAppFocused;
 		private nint uwpHwndChecked = 0;
 		internal WindowsHookThread(Script script, string mutexName) : base(script, mutexName)
@@ -241,7 +246,7 @@ namespace Keysharp.Internals.Input.Hooks.Windows
 
 		internal override void AddRemoveHooks(HookType hooksToBeActive, bool changeIsTemporary = false)
 		{
-			var hooksActiveOrig = GetActiveHooks();
+			var hooksActiveOrig = GetNativeHooks();
 
 			if (hooksToBeActive == hooksActiveOrig) // It's already in the right state.
 				return;
@@ -358,7 +363,7 @@ namespace Keysharp.Internals.Input.Hooks.Windows
 							// the MsgBox pumping hotkey messages and such, which could result in a script
 							// subroutine launching while we're in here:
 							//problemActivatingHooks = true;
-							if (GetActiveHooks() == HookType.None && !changeIsTemporary) // The failure is such that no hooks are now active, and thus (due to the mode) the hook thread will exit.
+							if (GetNativeHooks() == HookType.None && !changeIsTemporary) // The failure is such that no hooks are now active, and thus (due to the mode) the hook thread will exit.
 							{
 								// Convert this loop into the mode that waits for the hook thread to exit.
 								// This allows the thread handle to be closed and the memory to be freed.
@@ -382,7 +387,7 @@ namespace Keysharp.Internals.Input.Hooks.Windows
 							//if (GetActiveHooks() == HookType.None) // The hooks have been deactivated.
 							//  break; // Don't call FreeHookMem() because caller doesn't want that when aChangeIsTemporary==true.
 						}
-						else if (GetActiveHooks() == HookType.None)
+						else if (GetNativeHooks() == HookType.None)
 						{
 							FreeHookMem();//There should be no hooks now (even if there is, they can't be functional because their thread is nonexistent).
 						}
@@ -850,7 +855,7 @@ namespace Keysharp.Internals.Input.Hooks.Windows
 
 		// An exception escaping into the native hook chain ends the hook thread or the process, so the event
 		// that raised it is passed on unchanged.
-		private nint KeybdHookCallback(int code, nint wParam, ref KBDLLHOOKSTRUCT lParam)
+		protected virtual nint KeybdHookCallback(int code, nint wParam, ref KBDLLHOOKSTRUCT lParam)
 		{
 			try
 			{
@@ -863,7 +868,7 @@ namespace Keysharp.Internals.Input.Hooks.Windows
 			}
 		}
 
-		private nint MouseHookCallback(int code, nint wParam, ref MSDLLHOOKSTRUCT lParam)
+		protected virtual nint MouseHookCallback(int code, nint wParam, ref MSDLLHOOKSTRUCT lParam)
 		{
 			try
 			{
@@ -876,7 +881,8 @@ namespace Keysharp.Internals.Input.Hooks.Windows
 			}
 		}
 
-		private unsafe nint LowLevelMouseHandler(int code, nint param, ref MSDLLHOOKSTRUCT lParam)
+		protected unsafe nint LowLevelMouseHandler(int code, nint param, ref MSDLLHOOKSTRUCT lParam,
+			long? deviceId = null, bool hasPosition = true)
 		{
 			// code != HC_ACTION should be evaluated PRIOR to considering the values
 			// of wParam and lParam, because those values may be invalid or untrustworthy
@@ -988,8 +994,9 @@ namespace Keysharp.Internals.Input.Hooks.Windows
 					sc = (uint)wheelDelta;
 					keyUp = false; // Always consider wheel movements to be "key down" events.
 
-					var hookEvent = new MouseWheelHookEventArgs(structPtr, wheelDelta, lParam.flags, isArtificial, lParam.pt.X, lParam.pt.Y, mouseHook, code, param, (uint)lParam.time);
-					return LowLevelCommon(hookEvent, vk, sc, sc, keyUp, lParam.dwExtraInfo, lParam.flags);
+					var hookEvent = new MouseWheelHookEventArgs(structPtr, wheelDelta, lParam.flags, isArtificial, lParam.pt.X, lParam.pt.Y, mouseHook, code, param, (uint)lParam.time)
+					{ HasPosition = hasPosition };
+					return LowLevelCommon(hookEvent, vk, sc, sc, keyUp, lParam.dwExtraInfo, lParam.flags, deviceId);
 				}
 
 				case WM_LBUTTONUP:
@@ -1019,8 +1026,9 @@ namespace Keysharp.Internals.Input.Hooks.Windows
 					vk = (Conversions.HighWord(lParam.mouseData) == XBUTTON1) ? VK_XBUTTON1 : VK_XBUTTON2; keyUp = false; break;
 			}
 
-			var hookEventDefault = new MouseHookEventArgs(keyUp ? EventType.MouseReleased : EventType.MousePressed, structPtr, lParam.flags, isArtificial, lParam.pt.X, lParam.pt.Y, mouseHook, code, param, (uint)lParam.time);
-			return LowLevelCommon(hookEventDefault, vk, sc, sc, keyUp, lParam.dwExtraInfo, lParam.flags);
+			var hookEventDefault = new MouseHookEventArgs(keyUp ? EventType.MouseReleased : EventType.MousePressed, structPtr, lParam.flags, isArtificial, lParam.pt.X, lParam.pt.Y, mouseHook, code, param, (uint)lParam.time)
+			{ HasPosition = hasPosition };
+			return LowLevelCommon(hookEventDefault, vk, sc, sc, keyUp, lParam.dwExtraInfo, lParam.flags, deviceId);
 		}
 
 		internal override void Unhook()
@@ -1107,7 +1115,7 @@ namespace Keysharp.Internals.Input.Hooks.Windows
 					}
 				}
 				else // Caller specified that the keyboard hook is to be deactivated (if it isn't already).
-					if (HasKbdHook())
+					if (kbdHook != 0)
 						if (UnhookWindowsHookEx(kbdHook) || GetLastError() == ERROR_INVALID_HOOK_HANDLE)// Check last error in case the OS has already removed the hook.
 							kbdHook = 0;
 
@@ -1132,6 +1140,7 @@ namespace Keysharp.Internals.Input.Hooks.Windows
 						if (UnhookWindowsHookEx(mouseHook) || GetLastError() == ERROR_INVALID_HOOK_HANDLE)// Check last error in case the OS has already removed the hook.
 							mouseHook = 0;
 
+				if (!UsesHookProvider) activeHooks = GetNativeHooks();
 				return DefaultObject;
 			};
 
@@ -1144,7 +1153,7 @@ namespace Keysharp.Internals.Input.Hooks.Windows
 			return problem_activating_hooks;
 		}
 
-		private unsafe nint LowLevelKeybdHandler(int code, nint wParam, ref KBDLLHOOKSTRUCT lParam)
+		protected unsafe nint LowLevelKeybdHandler(int code, nint wParam, ref KBDLLHOOKSTRUCT lParam, long? deviceId = null)
 		{
 			if (code != HC_ACTION)  // MSDN docs specify that both LL keybd & mouse hook should return in this case.
 				return CallNextHookEx(kbdHook, code, wParam, ref lParam);
@@ -1233,7 +1242,7 @@ namespace Keysharp.Internals.Input.Hooks.Windows
 
 			var structPtr = (nint)Unsafe.AsPointer(ref lParam);
 			var hookEvent = new KeyboardHookEventArgs(structPtr, vk, sc, lParam.flags, isArtificial, kbdHook, code, wParam, lParam.time);
-			return LowLevelCommon(hookEvent, vk, sc, (uint)lParam.scanCode, keyUp, lParam.dwExtraInfo, lParam.flags);
+			return LowLevelCommon(hookEvent, vk, sc, (uint)lParam.scanCode, keyUp, lParam.dwExtraInfo, lParam.flags, deviceId);
 		}
 
 		//protected internal override void DeregisterMouseHook()

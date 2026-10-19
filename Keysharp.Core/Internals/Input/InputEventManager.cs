@@ -77,7 +77,7 @@ namespace Keysharp.Internals.Input
 
 		private InputDeviceInfo[] Snapshot()
 		{
-			try { return script.IsDisposed ? null : Platform.GetInputDevices(script); }
+			try { return script.IsDisposed ? null : script.HookThread.GetInputDevices(); }
 			catch (Exception error)
 			{
 				Diagnostics.Debug.WriteLine($"Input device inventory failed: {error.Message}");

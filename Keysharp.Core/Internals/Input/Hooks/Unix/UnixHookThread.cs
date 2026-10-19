@@ -22,10 +22,6 @@ namespace Keysharp.Internals.Input.Hooks.Unix
 		protected readonly Lock hookStateLock = new();
 		protected long hookStateGeneration;
 
-		// Cached on/off
-		protected volatile bool keyboardEnabled;
-		protected volatile bool mouseEnabled;
-
 		private int sendDepth;
 		internal bool SendInProgress => sendDepth > 0;
 		internal readonly struct SendScope : IDisposable
@@ -95,11 +91,8 @@ namespace Keysharp.Internals.Input.Hooks.Unix
 			lock (hookStateLock)
 			{
 				hookStateGeneration++;
-				keyboardEnabled = false;
-				mouseEnabled = false;
+				activeHooks = HookType.None;
 				StopPlatformHookCore(dispose: true);
-				kbdHook = 0;
-				mouseHook = 0;
 				OnPlatformHookStateCommitted(HookType.None);
 			}
 
@@ -117,7 +110,7 @@ namespace Keysharp.Internals.Input.Hooks.Unix
 
 			var sc = KeyCodes.MapVkToSc(vk);
 
-			if (!keyboardEnabled)
+			if (!HasKbdHook())
 				return;
 
 			var e = new KeyboardHookEventArgs(EventType.KeyPressed, vk, sc);
@@ -135,9 +128,7 @@ namespace Keysharp.Internals.Input.Hooks.Unix
 
 			ChangePlatformHookState(hooksToBeActive & (HookType.Keyboard | HookType.Mouse), changeIsTemporary, requestGeneration);
 
-			// Advertise the now-current hook state to other Keysharp scripts via the shared named mutexes
-			// (HasKbdHook()/HasMouseHook() read the sentinels ChangePlatformHookState just updated). This is what
-			// lets SendInput fall back correctly and A_KeybdHookInstalled/A_MouseHookInstalled report bit 2.
+			// Advertise active capture to other Keysharp scripts through the shared named mutexes.
 			SyncHookMutexes(changeIsTemporary);
 		}
 
@@ -150,10 +141,7 @@ namespace Keysharp.Internals.Input.Hooks.Unix
 					if (hookStateGeneration != expectedGeneration)
 						return;
 
-					keyboardEnabled = false;
-					mouseEnabled = false;
-					kbdHook = 0;
-					mouseHook = 0;
+					activeHooks = HookType.None;
 					StopPlatformHookCore(dispose: true);
 					OnPlatformHookStateCommitted(HookType.None);
 				}
@@ -171,15 +159,12 @@ namespace Keysharp.Internals.Input.Hooks.Unix
 				if (hookStateGeneration != expectedGeneration)
 					return;
 
-				var hadKeyboard = keyboardEnabled;
-				var hadMouse = mouseEnabled;
+				var hadKeyboard = HasKbdHook();
+				var hadMouse = HasMouseHook();
 
 				if (!wantKeyboard && !wantMouse)
 				{
-					keyboardEnabled = false;
-					mouseEnabled = false;
-					kbdHook = 0;
-					mouseHook = 0;
+					activeHooks = HookType.None;
 					lastHookActivationFailure = null;
 
 					if (!changeIsTemporary)
@@ -192,10 +177,7 @@ namespace Keysharp.Internals.Input.Hooks.Unix
 
 				if (!StartPlatformHookCore(wantKeyboard, wantMouse, out var startFailure))
 				{
-					keyboardEnabled = false;
-					mouseEnabled = false;
-					kbdHook = 0;
-					mouseHook = 0;
+					activeHooks = HookType.None;
 					lastHookActivationFailure = startFailure;
 
 					if (!string.IsNullOrEmpty(lastHookActivationFailure))
@@ -210,23 +192,18 @@ namespace Keysharp.Internals.Input.Hooks.Unix
 				{
 					if (wantKeyboard && !hadKeyboard)
 					{
-						keyboardEnabled = false;
-						kbdHook = 0;
+						activeHooks &= ~HookType.Keyboard;
 						ResetHook(false, HookType.Keyboard, true);
 					}
 
 					if (wantMouse && !hadMouse)
 					{
-						mouseEnabled = false;
-						mouseHook = 0;
+						activeHooks &= ~HookType.Mouse;
 						ResetHook(false, HookType.Mouse, true);
 					}
 				}
 
-				keyboardEnabled = wantKeyboard;
-				mouseEnabled = wantMouse;
-				kbdHook = wantKeyboard ? 1 : 0;
-				mouseHook = wantMouse ? 1 : 0;
+				activeHooks = req;
 				lastHookActivationFailure = null;
 				OnPlatformHookStateCommitted(req);
 			}

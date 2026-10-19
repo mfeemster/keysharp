@@ -25,42 +25,29 @@ namespace Keysharp.Internals.Input.Hooks
 	/// LowLevelCommon runs for every keystroke/click, but the vast majority of events match no hotkey or Input,
 	/// so the (relatively expensive) KeysharpObject is only materialized once something actually consumes it.
 	/// </summary>
-	internal sealed class HookEventInfo
+	internal class HookEventInfo
 	{
 		private readonly long timestamp;
 		private readonly bool isInjected;
 		private readonly bool isAutoRepeat;
 		private readonly ulong extraInfo;
 		private readonly object extra;
-		private readonly uint? deviceId;
 		private readonly POINT? screenPosition;
 		private readonly bool? isAbsolute;
-#if LINUX
-		private readonly KeysharpInputClient source = LinuxHookThread.CurrentHookClient?.AuthorizationLease;
-		private object device;
-		internal Script Owner { get; init; }
-		internal bool IsMouse { get; init; }
-
-		private object GetDevice(object _)
-		{
-			lock (this)
-				return device ??= new Ks.Input(Owner.LinuxServices.Input.GetDeviceDescriptor(deviceId.Value,
-					IsMouse ? "Mouse" : "Keyboard", source), Owner);
-		}
-#endif
 
 		internal HookEventInfo(long timestamp, bool isInjected, bool isAutoRepeat, ulong extraInfo, object extra,
-			uint? deviceId, POINT? screenPosition = null, bool? isAbsolute = null)
+			POINT? screenPosition = null, bool? isAbsolute = null)
 		{
 			this.timestamp = timestamp;
 			this.isInjected = isInjected;
 			this.isAutoRepeat = isAutoRepeat;
 			this.extraInfo = extraInfo;
 			this.extra = extra;
-			this.deviceId = deviceId;
 			this.screenPosition = screenPosition;
 			this.isAbsolute = isAbsolute;
 		}
+
+		protected virtual void AddDevice(KeysharpObject obj) { }
 
 		/// <summary>
 		/// Builds the script-visible A_EventInfo object for this event. A bound factory is parked in A_EventInfo,
@@ -78,13 +65,6 @@ namespace Keysharp.Internals.Input.Hooks
 			if (rawExtraInfo >= KeyboardMouseSender.KeyIgnoreMin() && rawExtraInfo <= KeyboardMouseSender.KeyIgnoreLevel(0))
 				obj.DefinePropInternal("SendLevel", new OwnPropsDesc(KeyboardMouseSender.InputLevelFromInfo(rawExtraInfo)));
 
-#if LINUX
-			// Remaps read IsAutoRepeat; resolving the device can require an inventory query.
-			if (deviceId is > 0 && Owner != null)
-				obj.DefinePropInternal("Device", new OwnPropsDesc(set_Get:
-					new KeysharpFunc((Func<object, object>)GetDevice)));
-#endif
-
 			if (isAbsolute.HasValue)
 				obj.DefinePropInternal("IsAbsolute", new OwnPropsDesc(isAbsolute.Value));
 
@@ -98,14 +78,39 @@ namespace Keysharp.Internals.Input.Hooks
 
 			if (extra != null)
 				obj.DefinePropInternal("Extra", new OwnPropsDesc(extra));
+			AddDevice(obj);
 
 			return obj;
 		}
 	}
 
+	internal sealed class DeviceHookEventInfo(HookThread owner, object source, long id, bool mouse, long timestamp,
+		bool injected, bool repeat, ulong extraInfo, object extra, POINT? position = null, bool? absolute = null)
+		: HookEventInfo(timestamp, injected, repeat, extraInfo, extra, position, absolute)
+	{
+		private object device;
+		private object GetDevice(object _)
+		{
+			lock (this)
+				return device ??= new Ks.Input(owner.ResolveInputDevice(id, mouse, source), owner.script);
+		}
+
+		// Reading other event properties must not query the device inventory.
+		protected override void AddDevice(KeysharpObject obj)
+			=> obj.DefinePropInternal("Device", new OwnPropsDesc(set_Get: new KeysharpFunc((Func<object, object>)GetDevice)));
+	}
+
 	internal abstract class HookThread//Fill in base stuff here later, but this serves as the thread which attaches/detaches the keyboard hooks.
 	{
 		protected internal readonly Script script;
+		internal virtual InputDeviceInfo[] GetInputDevices() => Platform.GetInputDevices(script);
+		internal virtual InputDeviceInfo ResolveInputDevice(long id, bool mouse, object source)
+			=> new(id, mouse ? "Mouse" : "Keyboard") { Source = source };
+		internal virtual bool TryGetDeviceKeyState(InputDeviceInfo device, uint vk, out bool down) { down = false; return false; }
+		internal virtual bool UsesHookProvider => false;
+		protected virtual object EventDeviceSource => null;
+		protected volatile HookType activeHooks;
+		protected virtual bool CaptureBelowOsKeyState => false;
 
 		private const int MaxHotCriterionWorkers = 2;
 		internal const uint END_KEY_ENABLED = END_KEY_WITH_SHIFT | END_KEY_WITHOUT_SHIFT;
@@ -149,6 +154,7 @@ namespace Keysharp.Internals.Input.Hooks
 		internal Dictionary<string, uint> keyToVk = null;
 		internal Dictionary<string, uint>.AlternateLookup<ReadOnlySpan<char>> keyToVkAlt;
 		internal readonly string MouseMutexName;
+		internal string MutexName => KeybdMutexName[..^6];
 		internal Dictionary<uint, string> vkToKey = [];
 		internal bool blockWinKeys = false;
 		internal nint hsHwnd = 0;
@@ -209,13 +215,11 @@ namespace Keysharp.Internals.Input.Hooks
 		// time it's called (currently it can be only called once):
 		protected internal bool disguiseNextMenu = false;
 		protected internal List<uint> hotkeyUp = new (256);
-		protected internal nint kbdHook = 0;
 		protected internal KeyHistory keyHistory = new ();
 		protected internal KeyType[] ksc;
 		protected internal uint[] kscm;
 		protected internal KeyType[] kvk;
 		protected internal uint[] kvkm;
-		protected internal nint mouseHook = 0;
 		protected internal bool undisguisedMenuInEffect = false;
 
 		protected internal virtual nint CallNextHook(HookEventArgs e) => nint.Zero;
@@ -1597,7 +1601,7 @@ namespace Keysharp.Internals.Input.Hooks
 		// OnMouseMove reports signed movement (dx, dy); absolute coordinates, when available,
 		// are carried by A_EventInfo. Each native event is posted separately.
 		internal bool CollectMouseMove(long dx, long dy, ulong extraInfo, bool isInjected, long timestamp,
-			POINT? screenPosition = null, uint? deviceId = null, bool? isAbsolute = null)
+			POINT? screenPosition = null, long? deviceId = null, bool? isAbsolute = null)
 		{
 			var allow = true;
 			Func<object> eventInfo = null;
@@ -1609,12 +1613,9 @@ namespace Keysharp.Internals.Input.Hooks
 
 				if (input.scriptObject?.GetCallbackSlot(UserMessages.AHK_INPUT_MOUSEMOVE)?.Callback != null)
 				{
-					eventInfo ??= new HookEventInfo(timestamp, isInjected, false, extraInfo, null,
-												   deviceId, screenPosition, isAbsolute)
-#if LINUX
-					{ Owner = script, IsMouse = true }
-#endif
-					.BuildEventInfo;
+					eventInfo ??= (deviceId is long id and not 0
+						? new DeviceHookEventInfo(this, EventDeviceSource, id, true, timestamp, isInjected, false, extraInfo, null, screenPosition, isAbsolute)
+						: new HookEventInfo(timestamp, isInjected, false, extraInfo, null, screenPosition, isAbsolute)).BuildEventInfo;
 					_ = PostMessage(new KeysharpMsg()
 					{
 						message = (uint)UserMessages.AHK_INPUT_MOUSEMOVE,
@@ -1759,18 +1760,7 @@ namespace Keysharp.Internals.Input.Hooks
 			return 0;
 		}
 
-		internal HookType GetActiveHooks()
-		{
-			var hookscurrentlyactive = HookType.None;
-
-			if (HasKbdHook())
-				hookscurrentlyactive |= HookType.Keyboard;
-
-			if (HasMouseHook())
-				hookscurrentlyactive |= HookType.Mouse;
-
-			return hookscurrentlyactive;
-		}
+		internal HookType GetActiveHooks() => activeHooks;
 
 		internal string GetHookStatus()
 		{
@@ -1806,9 +1796,9 @@ namespace Keysharp.Internals.Input.Hooks
 
 		internal bool HasEitherHook() => GetActiveHooks() != HookType.None;
 
-		internal bool HasKbdHook() => kbdHook != 0;
+		internal bool HasKbdHook() => (activeHooks & HookType.Keyboard) != 0;
 
-		internal bool HasMouseHook() => mouseHook != 0;
+		internal bool HasMouseHook() => (activeHooks & HookType.Mouse) != 0;
 
 		internal virtual string GetHookActivationFailureReason() => "";
 
@@ -1965,6 +1955,12 @@ namespace Keysharp.Internals.Input.Hooks
 				: Keysharp.Internals.Platform.Keyboard.TryGetKeyStateLogical(vk, out var keyDown) && keyDown;
 
 		internal virtual bool IsKeyDownLogical(uint vk) => QueryKeyDownLogical(vk);
+
+		internal virtual void ClearPhysicalModifiers(uint modifiers)
+		{
+			kbdMsSender.modifiersLRPhysical &= ~modifiers;
+			AdjustKeyState(physicalKeyState, kbdMsSender.modifiersLRPhysical);
+		}
 
 		/// <summary>The modifiers <see cref="IsKeyDownLogical"/> reports down.</summary>
 		internal virtual uint GetModifierLRStateLogical()
@@ -2216,7 +2212,7 @@ namespace Keysharp.Internals.Input.Hooks
 
 		// Returns a factory that builds the script-visible A_EventInfo object only if the script reads it. The
 		// factory flows untouched through the dispatch path and is resolved by ThreadAccessors.A_EventInfo.
-		private Func<object> CreateEventInfo(HookEventArgs e, bool isAutoRepeat, ulong extraInfo, uint eventFlags, object extra, uint? deviceId)
+		private Func<object> CreateEventInfo(HookEventArgs e, bool isAutoRepeat, ulong extraInfo, uint eventFlags, object extra, long? deviceId)
 		{
 			POINT? screenPosition = null;
 
@@ -2228,17 +2224,11 @@ namespace Keysharp.Internals.Input.Hooks
 			else if (e is MouseWheelHookEventArgs wheel && wheel.HasPosition)
 				screenPosition = new POINT(wheel.Data.X, wheel.Data.Y);
 
-			return new HookEventInfo(EventTimestamp(e), e.IsEventSimulated || (eventFlags & HOOK_EVENT_INJECTED) != 0,
-				isAutoRepeat, extraInfo, extra, deviceId, screenPosition)
-#if LINUX
-			{ Owner = script, IsMouse = e is not KeyboardHookEventArgs }
-#endif
-			.BuildEventInfo;
-		}
-
-		private static long EventTimestamp(HookEventArgs e)
-		{
-			return e.Timestamp;
+			var injected = e.IsEventSimulated || (eventFlags & HOOK_EVENT_INJECTED) != 0;
+			return (deviceId is long id and not 0
+				? new DeviceHookEventInfo(this, EventDeviceSource, id, e is not KeyboardHookEventArgs, e.Timestamp, injected,
+					isAutoRepeat, extraInfo, extra, screenPosition)
+				: new HookEventInfo(e.Timestamp, injected, isAutoRepeat, extraInfo, extra, screenPosition)).BuildEventInfo;
 		}
 
 		/// <summary>
@@ -2246,7 +2236,7 @@ namespace Keysharp.Internals.Input.Hooks
 		/// maintainability.  The code size savings as of v1.0.38.06 is 3.5 KB of uncompressed code, but that
 		/// savings will grow larger if more complexity is ever added to the hooks.
 		/// </summary>
-		internal nint LowLevelCommon(HookEventArgs e, uint vk, uint sc, uint rawSc, bool keyUp, ulong extraInfo, uint eventFlags, uint? deviceId = null)
+		internal nint LowLevelCommon(HookEventArgs e, uint vk, uint sc, uint rawSc, bool keyUp, ulong extraInfo, uint eventFlags, long? deviceId = null)
 		{
 			// A native callback can arrive after its owner starts teardown. It must never be redirected into a
 			// replacement script, and the retired owner is no longer allowed to launch script work.
@@ -2572,7 +2562,7 @@ namespace Keysharp.Internals.Input.Hooks
 			{
 				// If the mouse hook is installed without the keyboard hook, update kbdMsSender.modifiersLR_logical
 				// manually so that it can be referred to by the mouse hook after this point:
-				if (kbdHook == 0)
+				if (!HasKbdHook())
 				{
 					kbdMsSender.modifiersLRLogical = kbdMsSender.modifiersLRLogicalNonIgnored = kbdMsSender.GetModifierLRState(true);
 					modifiersWereCorrected = true;
@@ -3736,7 +3726,8 @@ namespace Keysharp.Internals.Input.Hooks
 					// RAlt::Send f  ; Actually triggers !f, which activates the FILE menu if the active window has one.
 					// RAlt::Send {PgDn}  ; Fails to work because ALT-PgDn usually does nothing.
 #if !LINUX
-					kbdMsSender.SendKeyEvent(KeyEventTypes.KeyUp, vk, sc, 0, false, KeyBlockThis);
+					if (!CaptureBelowOsKeyState)
+						kbdMsSender.SendKeyEvent(KeyEventTypes.KeyUp, vk, sc, 0, false, KeyBlockThis);
 
 #endif
 				}
@@ -3782,7 +3773,7 @@ namespace Keysharp.Internals.Input.Hooks
 			{
 				var nl = (uint)Keys.NumLock;
 
-				if (vk == nl && !keyUp && !IsIgnored(extraInfo))
+				if (vk == nl && !keyUp && !IsIgnored(extraInfo) && !CaptureBelowOsKeyState)
 				{
 					// This seems to undo the faulty indicator light problem and toggle
 					// the key back to the state it was in prior to when the user pressed it.
@@ -4191,7 +4182,7 @@ namespace Keysharp.Internals.Input.Hooks
 			}
 		}
 
-		internal bool PostMessage(KeysharpMsg msg)
+		internal virtual bool PostMessage(KeysharpMsg msg)
 		{
 			if (msg == null)
 				return false;
@@ -5022,8 +5013,11 @@ namespace Keysharp.Internals.Input.Hooks
 					}
 
 					// See comments in GetModifierLRState() for details about the following.
-					kbdMsSender.modifiersLRLastPressed = modLR;
-					kbdMsSender.modifiersLRLastPressedTime = DateTime.UtcNow;
+					if (!CaptureBelowOsKeyState)
+					{
+						kbdMsSender.modifiersLRLastPressed = modLR;
+						kbdMsSender.modifiersLRLastPressedTime = DateTime.UtcNow;
+					}
 				}
 			} // vk is a modifier key.
 		}

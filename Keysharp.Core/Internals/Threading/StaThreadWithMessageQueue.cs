@@ -80,6 +80,7 @@ namespace Keysharp.Internals.Threading
 		private const int ShutdownJoinTimeoutMs = 5000;
 
 		public bool IsDisposed() => ctx == null;
+		internal bool IsCurrentThread => ReferenceEquals(Thread.CurrentThread, thread);
 	}
 }
 #endif

@@ -959,7 +959,7 @@ public partial class HotstringTests : TestRunner
 	public void MacRemapRepeat()
 	{
 		// The down hotkey reads this flag to mark a physical repeat (see RemapDefinition.DownSendFor).
-		var eventInfo = new Keysharp.Internals.Input.Hooks.HookEventInfo(1, false, true, 0, null, null).BuildEventInfo();
+		var eventInfo = new Keysharp.Internals.Input.Hooks.HookEventInfo(1, false, true, 0, null).BuildEventInfo();
 		Assert.AreEqual(true, Script.GetPropertyValue(eventInfo, "IsAutoRepeat"));
 	}
 #endif

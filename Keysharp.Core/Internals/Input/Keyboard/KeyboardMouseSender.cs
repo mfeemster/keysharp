@@ -487,15 +487,9 @@ namespace Keysharp.Internals.Input.Keyboard
 
 				if (modifiersWronglyDown != 0)
 				{
-					// Adjust the physical and logical hook state to release the keys that are wrongly down.
-					// If a key is wrongly logically down, it seems best to release it both physically and
-					// logically, since the hook's failure to see the up-event probably makes its physical
-					// state wrong in most such cases.
-					modifiersLRPhysical &= ~modifiersWronglyDown;
+					ht.ClearPhysicalModifiers(modifiersWronglyDown);
 					modifiersLRLogical &= ~modifiersWronglyDown;
 					modifiersLRLogicalNonIgnored &= ~modifiersWronglyDown;
-					// Also adjust physical state so that the GetKeyState command will retrieve the correct values:
-					AdjustKeyState(ht.physicalKeyState, modifiersLRPhysical);
 
 					// Also reset pPrefixKey if it is one of the wrongly-down modifiers.
 					if (prefixKey != null && (prefixKey.asModifiersLR & modifiersWronglyDown) != 0)

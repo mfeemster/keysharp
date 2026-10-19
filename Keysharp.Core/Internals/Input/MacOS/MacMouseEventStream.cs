@@ -592,7 +592,7 @@ namespace Keysharp.Internals.Input.MacOS
 		}
 
 		internal void ObserveButton(MouseButton button, bool down, int eventX, int eventY, int clickCount,
-			long expectedSenderRevision)
+			long expectedSenderRevision, bool hasPosition = true)
 		{
 			if (button == MouseButton.NoButton)
 				return;
@@ -601,7 +601,7 @@ namespace Keysharp.Internals.Input.MacOS
 			{
 				if (down) observedButtons |= ButtonMask(button);
 				else observedButtons &= ~ButtonMask(button);
-				if (senderRevision != expectedSenderRevision)
+				if (!hasPosition || senderRevision != expectedSenderRevision)
 					return;
 				x = eventX;
 				y = eventY;

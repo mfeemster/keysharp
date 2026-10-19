@@ -8,9 +8,16 @@ using static Keysharp.Internals.Input.Keyboard.VirtualKeys;
 namespace Keysharp.Internals.Input.Hooks.Linux
 {
 	// Linux hook extension points backed by keysharp-input.
-	internal sealed class LinuxHookThread : UnixHookThread
+	internal class LinuxHookThread : UnixHookThread
 	{
 		internal LinuxHookThread(Script script, string mutexName) : base(script, mutexName) { }
+
+		protected override object EventDeviceSource => CurrentHookClient?.AuthorizationLease;
+
+		internal override InputDeviceInfo ResolveInputDevice(long id, bool mouse, object source)
+			=> script.LinuxServices.Input.GetDeviceDescriptor(id, mouse ? "Mouse" : "Keyboard", source);
+		internal override bool TryGetDeviceKeyState(InputDeviceInfo device, uint vk, out bool down)
+			=> script.LinuxServices.Input.TryGetDeviceKeyState(device, vk, out down);
 
 		private readonly record struct CallbackContext(
 			KeysharpInputClient Client,
@@ -30,7 +37,6 @@ namespace Keysharp.Internals.Input.Hooks.Linux
 		private bool recoveryRunning;
 		private string pendingRecoveryReason;
 		private HookType inputServiceSubscribedKinds;
-		private bool usingInputServiceHooks;
 		private bool modifiersStale;
 		internal static KeysharpInputClient CurrentHookClient
 			=> callbackContext.Client;
@@ -56,12 +62,9 @@ namespace Keysharp.Internals.Input.Hooks.Linux
 		protected override KeyboardMouseSender CreateKbdMsSender()
 			=> new LinuxKeyboardMouseSender(script);
 
-		// Keyboard hook events keep modifier state current locally, avoiding IPC on the hotkey path.
-		private bool TracksModifiers => usingInputServiceHooks && HasKbdHook();
-
 		internal override bool IsKeyDownLogical(uint vk)
 		{
-			if (TracksModifiers)
+			if (HasKbdHook())
 			{
 				var modMask = ModifierLRMaskFromVK(vk);
 
@@ -313,7 +316,6 @@ namespace Keysharp.Internals.Input.Hooks.Linux
 
 		private void StopInputServiceHookCore()
 		{
-			usingInputServiceHooks = false;
 			inputServiceCommittedKinds = HookType.None;
 			inputServiceSubscribedKinds = HookType.None;
 			var client = inputServiceHookClient;
@@ -321,23 +323,25 @@ namespace Keysharp.Internals.Input.Hooks.Linux
 			try { client?.Dispose(); } catch { }
 		}
 
-		protected override void OnPlatformHookStateCommitted(HookType activeHooks)
+		protected void TrackForegroundWindow(bool enabled)
 		{
 			// WinEvent setup can connect or join; keep hook transitions ordered without holding hookStateLock for it.
 			foregroundTrackingTask = foregroundTrackingTask.ContinueWith(
-				_ => script.WinEventManager.SetForegroundTracking(
-					(activeHooks & HookType.Keyboard) != 0),
+				_ => script.WinEventManager.SetForegroundTracking(enabled),
 				CancellationToken.None, TaskContinuationOptions.None, TaskScheduler.Default);
+		}
+
+		protected override void OnPlatformHookStateCommitted(HookType activeHooks)
+		{
+			TrackForegroundWindow((activeHooks & HookType.Keyboard) != 0);
 
 			if (activeHooks == HookType.None)
 			{
 				inputServiceCommittedKinds = HookType.None;
-				usingInputServiceHooks = false;
 				return;
 			}
 
 			inputServiceCommittedKinds = activeHooks;
-			usingInputServiceHooks = true;
 			inputServiceHookClient?.SetHookEventHandler(
 				(client, hook) => ProcessAndDecideHookEvent(client, hook, inputServiceCommittedKinds),
 				error => HandleInputServiceHookReaderLoss(error.Message));
@@ -449,15 +453,8 @@ namespace Keysharp.Internals.Input.Hooks.Linux
 			lock (hookStateLock)
 			{
 				recoveryGeneration = hookStateGeneration;
-				want = HookType.None;
-
-				if (keyboardEnabled)
-					want |= HookType.Keyboard;
-				if (mouseEnabled)
-					want |= HookType.Mouse;
-
-				keyboardEnabled = false;
-				mouseEnabled = false;
+				want = GetActiveHooks();
+				activeHooks = HookType.None;
 				StopInputServiceHookCore();
 			}
 
@@ -478,8 +475,7 @@ namespace Keysharp.Internals.Input.Hooks.Linux
 
 					lock (hookStateLock)
 					{
-						kbdHook = 0;
-						mouseHook = 0;
+						activeHooks = HookType.None;
 						lastHookActivationFailure = giveUpMessage;
 					}
 
@@ -496,8 +492,9 @@ namespace Keysharp.Internals.Input.Hooks.Linux
 			lastInputServiceRecoveryTicks = now;
 			Diagnostics.Debug.WriteLine($"keysharp-input hook reader lost ({reason}); re-establishing hooks.");
 			ChangePlatformHookState(want, changeIsTemporary: false, expectedGeneration: recoveryGeneration);
+			SyncHookMutexes(changeIsTemporary: false);
 
-			if (CursorClipActive && !usingInputServiceHooks)
+			if (CursorClipActive && !HasMouseHook())
 			{
 				ClearCursorClip();
 				Diagnostics.Debug.WriteLine("ClipCursor released because the keysharp-input mouse hook was lost.");
@@ -694,9 +691,9 @@ namespace Keysharp.Internals.Input.Hooks.Linux
 
 		protected override bool CanClipCursor(out string reason)
 		{
-			if (!usingInputServiceHooks)
+			if (!HasMouseHook())
 			{
-				reason = "the keysharp-input mouse hook is not active";
+				reason = "the mouse hook is not active";
 				return false;
 			}
 

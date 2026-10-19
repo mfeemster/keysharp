@@ -421,9 +421,8 @@ namespace Keysharp.Internals.Input
 					return false;
 
 #if LINUX
-				// A headless Linux host can never install the input hooks, so an input started there would report itself
-				// running while collecting nothing.
-				if (Script.IsHeadless)
+				// Native Linux hooks need a display; a provider can capture input without one.
+				if (Script.IsHeadless && !script.HookThread.UsesHookProvider)
 				{
 					status = InputStatusType.Failed;
 					return false;

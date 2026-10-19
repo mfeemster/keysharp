@@ -96,6 +96,10 @@ namespace Keysharp.Internals.Input.Keyboard
 			if (vk == 0)
 				return false;
 
+#if !WINDOWS
+			if (keyStateType == KeyStateTypes.Physical && ht.UsesHookProvider && (MouseUtils.IsMouseVK(vk) ? ht.HasMouseHook() : ht.HasKbdHook()))
+				return vk < ht.physicalKeyState.Length && (ht.physicalKeyState[vk] & KeyboardMouseSender.StateDown) != 0;
+#endif
 #if LINUX || OSX
 			EnsureKeyStateQueryPermission(vk, keyStateType);
 #endif
@@ -108,7 +112,7 @@ namespace Keysharp.Internals.Input.Keyboard
 				return isDown;
 
 			if (keyStateType != KeyStateTypes.Toggle)
-				return HookThread.QueryKeyDownLogical(vk);
+				return ht.IsKeyDownLogical(vk);
 #endif
 
 			switch (keyStateType)

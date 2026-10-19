@@ -355,7 +355,7 @@ public class InputHookTests : TestRunner
 	[Test, Category("InputHook")]
 	public void MouseEventPosition()
 	{
-		var mouse = new HookEventInfo(123, false, false, 0, null, 7, new POINT(321, 654));
+		var mouse = new HookEventInfo(123, false, false, 0, null, new POINT(321, 654));
 		s.Threads.CurrentThread.eventInfo = (Func<object>)mouse.BuildEventInfo;
 
 		var visible = ThreadAccessors.A_EventInfo;
@@ -363,18 +363,17 @@ public class InputHookTests : TestRunner
 		Assert.That(Script.GetPropertyValue(visible, "Y"), Is.EqualTo(654L));
 		Assert.That(Script.GetPropertyValue(visible, "IsAutoRepeat").Ab(), Is.False);
 
-		var keyboard = new HookEventInfo(456, false, false, 0, null, 8);
+		var keyboard = new HookEventInfo(456, false, false, 0, null);
 		s.Threads.CurrentThread.eventInfo = (Func<object>)keyboard.BuildEventInfo;
 		visible = ThreadAccessors.A_EventInfo;
 		Assert.That(KeysharpObject.HasOwnProp(visible, "X"), Is.Zero);
 		Assert.That(KeysharpObject.HasOwnProp(visible, "Y"), Is.Zero);
 	}
 
-#if LINUX
 	[Test, Category("InputHook")]
 	public void RetiredEventDevice()
 	{
-		var raw = new HookEventInfo(123, false, true, 0, null, 7) { Owner = s };
+		var raw = new DeviceHookEventInfo(s.HookThread, null, 7, false, 123, false, true, 0, null);
 		s.Dispose();
 		s = new Script();
 		var info = raw.BuildEventInfo();
@@ -383,7 +382,6 @@ public class InputHookTests : TestRunner
 		Assert.That((device.Id, device.Kind), Is.EqualTo((7L, "Keyboard")));
 		Assert.That(Assert.Catch<KeysharpException>(() => device.GetKeyState("A")).UserError, Is.TypeOf<OSError>());
 	}
-#endif
 
 	// Mouse-event support: VisibleMouseMove defaults to true (movement passes through), and
 	// InputType.MouseIsNeeded becomes true once movement is being suppressed or a mouse button
@@ -442,12 +440,8 @@ public class InputHookTests : TestRunner
 			Assert.That(KeysharpObject.HasOwnProp(calls[0].info, "Device"), Is.Zero);
 			Assert.That(KeysharpObject.HasOwnProp(calls[0].info, "IsAbsolute"), Is.Zero);
 			Assert.That(KeysharpObject.HasOwnProp(calls[1].info, "X"), Is.Zero);
-#if LINUX
 			var device = (Ks.Input)Script.GetPropertyValue(calls[1].info, "Device");
 			Assert.That((device.Id, device.Kind), Is.EqualTo((2L, "Mouse")));
-#else
-			Assert.That(KeysharpObject.HasOwnProp(calls[1].info, "Device"), Is.Zero);
-#endif
 			Assert.That(Script.GetPropertyValue(calls[1].info, "IsAbsolute").Ab(), Is.False);
 			Assert.That(KeysharpObject.HasOwnProp(calls[2].info, "Device"), Is.Zero);
 			Assert.IsTrue(Script.GetPropertyValue(calls[2].info, "IsAbsolute").Ab());

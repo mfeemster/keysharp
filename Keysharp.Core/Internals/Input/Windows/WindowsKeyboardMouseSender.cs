@@ -731,9 +731,13 @@ namespace Keysharp.Internals.Input.Windows
 						// worth given the rarity of the user changing physical key states during a SendInput
 						// and then wanting to explicitly retrieve that state via GetKeyState(Key, "P").
 						var modsCurrent = GetModifierLRState(true); // This also serves to correct the hook's logical modifiers, since hook was absent during the SendInput.
-						var modsChangedPhysicallyDuringSend = modsDuringSend ^ modsCurrent;
-						modifiersLRPhysical &= ~(modsChangedPhysicallyDuringSend & modsDuringSend); // Remove those that changed from down to up.
-						modifiersLRPhysical |= modsChangedPhysicallyDuringSend & modsCurrent; // Add those that changed from up to down.
+						// Driver capture keeps physical history while the native observers are removed.
+						if (!ht.HasKbdHook())
+						{
+							var modsChangedPhysicallyDuringSend = modsDuringSend ^ modsCurrent;
+							modifiersLRPhysical &= ~(modsChangedPhysicallyDuringSend & modsDuringSend); // Remove those that changed from down to up.
+							modifiersLRPhysical |= modsChangedPhysicallyDuringSend & modsCurrent; // Add those that changed from up to down.
+						}
 						modifiersLRLogical = modifiersLRLogicalNonIgnored = modsCurrent; // Necessary for hotkeys to be recognized correctly if modifiers were sent.
 						ht.hsHwnd = GetForegroundWindow(); // An item done by ResetHook() that seems worthwhile here.
 						// Most other things done by ResetHook() seem like they would do more harm than good to reset here

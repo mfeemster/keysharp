@@ -220,8 +220,8 @@ public class MacInputTests
 		Assert.AreEqual(MOD_RSHIFT, state.ObservedModifiers & (MOD_LSHIFT | MOD_RSHIFT));
 	}
 
-	[Test, Category("Input")]
-	public void SendPrediction()
+	[TestCase(false), TestCase(true), Category("Input")]
+	public void SendPrediction(bool provider)
 	{
 		var state = new MacKeyboardState();
 		state.ApplyFlagsChanged(VK_LSHIFT, MacNativeInput.kCGEventFlagMaskShift,
@@ -229,16 +229,21 @@ public class MacInputTests
 		state.BeginSend(MOD_LSHIFT, nativeCapsLock: false);
 		state.PostModifier(MOD_LCONTROL, true, _ => true);
 		state.SetCapsLock(true);
-		state.ApplyFlagsChanged(VK_LSHIFT, 0, MacKeyboardState.Origin.PhysicalHid, false,
-			MacNativeInput.InjectedEventKind.None);
-		state.ApplyFlagsChanged(VK_RMENU, MacNativeInput.kCGEventFlagMaskAlternate,
-			MacKeyboardState.Origin.PhysicalHid, true, MacNativeInput.InjectedEventKind.None);
+		if (provider)
+			state.ObserveModifiers(MOD_RALT);
+		else
+		{
+			state.ApplyFlagsChanged(VK_LSHIFT, 0, MacKeyboardState.Origin.PhysicalHid, false,
+				MacNativeInput.InjectedEventKind.None);
+			state.ApplyFlagsChanged(VK_RMENU, MacNativeInput.kCGEventFlagMaskAlternate,
+				MacKeyboardState.Origin.PhysicalHid, true, MacNativeInput.InjectedEventKind.None);
+		}
 
 		Assert.AreEqual(MOD_LSHIFT | MOD_LCONTROL, state.GetModifiers(() => 0));
 		Assert.IsTrue(state.GetCapsLock(() => false));
 		state.EndSend();
 		Assert.AreEqual(MOD_RALT, state.GetModifiers(() => 0));
-		Assert.IsFalse(state.GetCapsLock(() => true));
+		Assert.AreEqual(provider, state.GetCapsLock(() => !provider));
 	}
 
 	[Test, Category("Input")]
@@ -271,15 +276,19 @@ public class MacInputTests
 		Assert.AreEqual(MOD_LSHIFT, state.GetModifiers(() => 0));
 	}
 
-	[Test, Category("Input")]
-	public void StaleModifierCallback()
+	[TestCase(false), TestCase(true), Category("Input")]
+	public void StaleModifierCallback(bool provider)
 	{
 		var state = new MacKeyboardState();
+		state.ObserveModifiers(MOD_LSHIFT);
 		state.BeginSend(MOD_LSHIFT, nativeCapsLock: false);
 		var earlierRevision = state.SenderRevisions;
 		state.PostModifier(MOD_LCONTROL, true, _ => true);
-		state.ApplyFlagsChanged(VK_LSHIFT, 0, MacKeyboardState.Origin.PhysicalHid, false,
-			MacNativeInput.InjectedEventKind.None, earlierRevision.Modifiers, earlierRevision.CapsLock);
+		if (provider)
+			state.ObserveModifiers(0, earlierRevision.Modifiers);
+		else
+			state.ApplyFlagsChanged(VK_LSHIFT, 0, MacKeyboardState.Origin.PhysicalHid, false,
+				MacNativeInput.InjectedEventKind.None, earlierRevision.Modifiers, earlierRevision.CapsLock);
 		state.EndSend();
 
 		Assert.AreEqual(MOD_LSHIFT | MOD_LCONTROL, state.GetModifiers(() => 0));

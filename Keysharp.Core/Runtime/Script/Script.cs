@@ -776,6 +776,23 @@ namespace Keysharp.Runtime
 		/// <summary>Registers one key-state provider; disposing the returned handle restores native queries.</summary>
 		public IDisposable RegisterKeyStateProvider(IKeyStateProvider Provider) => KeyState.Register(Provider);
 
+		/// <summary>Registers input capture before hotkeys are initialized; disposing restores native capture.</summary>
+		public IDisposable RegisterHookProvider(IHookProvider Provider)
+		{
+			ArgumentNullException.ThrowIfNull(Provider);
+			ObjectDisposedException.ThrowIf(IsDisposed, this);
+			if (Environment.CurrentManagedThreadId != ManagedMainThreadID)
+				throw new InvalidOperationException("Hook providers must be registered on the script's startup thread.");
+			var previous = HookThread;
+			if (previous is ProviderHookThread || previous.IsHookThreadRunning() || previous.HasEitherHook() || HotkeyData.shk.Length != 0)
+				throw new InvalidOperationException("A hook provider must be registered once, before hotkeys or hooks are initialized.");
+			var hook = new ProviderHookThread(this, previous.MutexName, Provider);
+			previous.Stop();
+			HookThread = hook;
+			if (IsDisposed) hook.Stop();
+			return hook;
+		}
+
 		/// <summary>
 		/// Will be a generated call within Main which calls into this class to add DLLs.
 		/// </summary>
@@ -1644,13 +1661,13 @@ namespace Keysharp.Runtime
 			// dialog registries are process-static -- an abandoned entry there would outlive this engine.
 			Teardown(() => Dialogs.CloseDialogs(this));
 			Teardown(() => ToolTips.DestroyAll(this));
-			Teardown(KeyState.Dispose);
 #if !WINDOWS
 			Teardown(() => sigtermRegistration?.Dispose());
 #endif
 			Teardown(DestructorPump.Stop);
 			Teardown(ShutdownEventSchedulers);
 			Teardown(() => HookThread?.Stop());
+			Teardown(KeyState.Dispose);
 			Teardown(() => InvokeOnUIThread(() => inputData?.Dispose()));
 			inputTimerExists = false;
 			Teardown(WinEventManager.Dispose);

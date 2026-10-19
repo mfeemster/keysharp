@@ -60,10 +60,8 @@ namespace Keysharp.Builtins
 				if (virtualKey == 0 || MouseUtils.IsWheelVK(virtualKey))
 					return Errors.ValueErrorOccurred("Expected a keyboard key or mouse button.", KeyName);
 
-#if LINUX
-				if (owner.LinuxServices.Input.TryGetDeviceKeyState(device, virtualKey, out var down))
+				if (owner.HookThread.TryGetDeviceKeyState(device, virtualKey, out var down))
 					return down;
-#endif
 				return Errors.OSErrorOccurredWithMessage("Physical key state is unavailable for this input source or the device is disconnected.");
 			}
 
@@ -71,12 +69,13 @@ namespace Keysharp.Builtins
 			{
 				try
 				{
-					var devices = Platform.GetInputDevices(Script.TheScript);
+					var owner = Script.TheScript;
+					var devices = owner.HookThread.GetInputDevices();
 					var result = new Array(null);
 					_ = result.array.EnsureCapacity(devices.Length);
 
 					foreach (var device in devices)
-						result.array.Add(new Input(device));
+						result.array.Add(new Input(device, owner));
 
 					return result;
 				}

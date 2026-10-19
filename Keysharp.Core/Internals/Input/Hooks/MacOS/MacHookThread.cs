@@ -10,15 +10,15 @@ namespace Keysharp.Internals.Input.Hooks.MacOS
 {
 	// macOS uses a native CGEvent sender/tap while still reusing UnixHookThread's
 	// higher-level hotkey, hotstring and InputHook decision pipeline.
-	internal sealed class MacHookThread : Keysharp.Internals.Input.Hooks.Unix.UnixHookThread
+	internal class MacHookThread : Keysharp.Internals.Input.Hooks.Unix.UnixHookThread
 	{
 		internal MacHookThread(Script script, string mutexName) : base(script, mutexName) { }
 
 		private const int HookStartTimeoutMs = 3000;
 		private MacNativeEventTap nativeEventTap;
 		private bool nativeTapStopping;
-		private readonly MacKeyboardState keyboardState = new();
-		private readonly MacMouseEventStream mouseStream = new(observePosts: false);
+		protected readonly MacKeyboardState keyboardState = new();
+		protected readonly MacMouseEventStream mouseStream = new(observePosts: false);
 
 		protected override bool CanClipCursor(out string reason)
 		{
@@ -45,7 +45,7 @@ namespace Keysharp.Internals.Input.Hooks.MacOS
 		{
 			lock (moveSuppressionLock)
 			{
-				if (nativeTapStopping || !mouseEnabled || !HasMouseHook() || nativeEventTap is not { IsRunning: true })
+				if (nativeTapStopping || !HasMouseHook() || nativeEventTap is not { IsRunning: true })
 				{
 					SetMoveSuppression(false);
 					return;
@@ -139,7 +139,7 @@ namespace Keysharp.Internals.Input.Hooks.MacOS
 			// layout-derived Unicode string, so inspecting the string itself cannot distinguish text injection.
 			if (hasMetadata && (injectedKind & MacNativeInput.InjectedEventKind.UnicodeText) != 0)
 			{
-				if (!keyboardEnabled)
+				if (!HasKbdHook())
 					return false;
 
 				Span<char> unicodeBuffer = stackalloc char[2];
@@ -172,12 +172,12 @@ namespace Keysharp.Internals.Input.Hooks.MacOS
 					senderRevisions.Modifiers, senderRevisions.CapsLock);
 
 				// A mouse-only tap subscribes to flagsChanged solely to keep exact LR state.
-				if (!keyboardEnabled)
+				if (!HasKbdHook())
 					return false;
 			}
 			else
 			{
-				if (!keyboardEnabled)
+				if (!HasKbdHook())
 					return false;
 
 				keyUp = type == MacNativeInput.kCGEventKeyUp;
@@ -249,7 +249,7 @@ namespace Keysharp.Internals.Input.Hooks.MacOS
 		{
 			if (!MacNativeInput.IsMouseEvent(type))
 				return false;
-			if (!mouseEnabled)
+			if (!HasMouseHook())
 			{
 				mouseStream.ForgetHardwareMoves();
 				return false;
@@ -438,7 +438,7 @@ namespace Keysharp.Internals.Input.Hooks.MacOS
 			mouseStream.ForgetHardwareMoves();
 			lock (moveSuppressionLock)
 			{
-				mouseStream.SetPostObservation(!nativeTapStopping && mouseEnabled && HasMouseHook(), reset: true);
+				mouseStream.SetPostObservation(!nativeTapStopping && HasMouseHook(), reset: true);
 				RefreshPlatformKeyGrabs();
 				if (!mouseStream.RefreshHold(force: true))
 					SetMoveSuppression(false);
@@ -460,12 +460,9 @@ namespace Keysharp.Internals.Input.Hooks.MacOS
 			var message = $"macOS event tap was lost repeatedly; global hooks disabled: {reason}";
 			lock (hookStateLock)
 			{
-				if (!ReferenceEquals(nativeEventTap, failedTap) || (!keyboardEnabled && !mouseEnabled))
+				if (!ReferenceEquals(nativeEventTap, failedTap) || !HasEitherHook())
 					return;
-				keyboardEnabled = false;
-				mouseEnabled = false;
-				kbdHook = 0;
-				mouseHook = 0;
+				activeHooks = HookType.None;
 				lastHookActivationFailure = message;
 				if (CursorClipActive)
 					ClearCursorClip();

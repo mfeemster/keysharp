@@ -113,6 +113,17 @@
                      "tested-by":  "KeyStateProviderTests.StateQueries; KeyStateProviderTests.RegistrationOwnership; KeyStateProviderTests.RegistrationRestoration; KeyStateProviderTests.ActiveQueryRetirement"
                   },
                   {
+                     "category":  "Input/Automation",
+                     "feature":  "Managed hook provider",
+                     "syntax":  "Script.TheScript.RegisterHookProvider(Provider)",
+                     "windows":  "partial",
+                     "linux_x11":  "partial",
+                     "linux_wayland":  "partial",
+                     "macos":  "unknown",
+                     "notes":  "Managed host API registering one IHookProvider once per Script on its startup thread before hooks or hotkeys are installed; #Startup supports early registration through CLR interop. Events enter existing hotkey and InputHook processing. Windows providers report physical input and native hooks observe injections; Linux/macOS providers supply their observed stream with injected flags, without starting native capture. Sending and its permissions remain native. Registration transfers ownership and returns an IDisposable handle restoring native capture. ResetState forgets state and invalidates descriptors after capture/session gaps. Optional IInputDeviceProvider supplies source-scoped metadata; absent it enumeration remains native. Windows/Linux deterministic tests do not verify hardware; macOS execution is unverified. Interception remains Windows x64 only.",
+                     "tested-by":  "HookProviderTests.Registration; HookProviderTests.DeviceState; HookProviderTests.NativeObservation; HookProviderTests.Timeout; HookProviderTests.ActiveRemoval; HookProviderTests.QueuedCaptureChange"
+                  },
+                  {
                      "category":  "Environment/System",
                      "feature":  "#ClipboardTimeout",
                      "syntax":  "",
@@ -1772,11 +1783,11 @@
                      "category":  "Environment/System",
                      "feature":  "A_EventInfo.Device",
                      "syntax":  "A_EventInfo.Device",
-                     "windows":  "unsupported",
+                     "windows":  "partial",
                      "linux_x11":  "partial",
                      "linux_wayland":  "partial",
-                     "macos":  "unsupported",
-                     "notes":  "Identified native Linux input events expose an Input descriptor instead of a numeric DeviceId. Zero or unavailable event IDs omit Device. Metadata is resolved on first Device access; reading other event properties does not query devices. The descriptor retains its originating source. Native Windows and macOS hooks do not identify devices.",
+                     "macos":  "unknown",
+                     "notes":  "Identified native Linux events and managed hook-provider events expose an Input descriptor instead of a numeric DeviceId. Zero or unavailable event IDs omit Device. Metadata is resolved on first Device access; reading other event properties does not query devices. The descriptor retains its originating source. Native Windows and macOS hooks do not identify devices. Driver/hardware delivery and macOS provider execution remain unverified.",
                      "tested-by":  "InputHookTests.MouseEventPosition; InputHookTests.MouseMoveQueue; InputHookTests.RetiredEventDevice"
                  },
                  {
@@ -7141,7 +7152,7 @@
                      "linux_x11":  "partial",
                      "linux_wayland":  "partial",
                      "macos":  "partial",
-                     "notes":  "OnMouseMove(hook, dx, dy) queues every move report, including (0, 0). Windows derives deltas from desktop-clamped hook positions, so outward movement at an edge can be zero; macOS uses Quartz deltas, corrected so that cursor moves made between two physical moves, such as a relative MouseMove from the callback, do not count as physical motion. Linux requires keysharp-input plus InputMonitoring and InputControl for the suppression-capable callback stream. Relative values are raw device-specific evdev counts, while physical absolute values are changes in normalized [0,65535] axes. Linux A_EventInfo includes Device for identified physical events and IsAbsolute; zero-ID synthetic events omit Device, and synthetic absolute deltas are zero because no relative sample exists. Windows and macOS instead provide global-screen X/Y when available and omit Device; X/Y need not equal the prior position plus dx/dy, and macOS reports the held cursor position while movement is suppressed.",
+                     "notes":  "OnMouseMove(hook, dx, dy) queues every move report, including (0, 0). Native Windows derives deltas from desktop-clamped hook positions, so outward movement at an edge can be zero; native macOS uses Quartz deltas, corrected so that cursor moves made between two physical moves, such as a relative MouseMove from the callback, do not count as physical motion. Native Linux requires keysharp-input plus InputMonitoring and InputControl for the suppression-capable callback stream. Relative values are raw device-specific evdev counts, while physical absolute values are changes in normalized [0,65535] axes. Native Linux A_EventInfo includes Device for identified physical events and IsAbsolute; zero-ID synthetic events omit Device, and synthetic absolute deltas are zero because no relative sample exists. Native Windows and macOS provide global-screen X/Y when available and omit Device; X/Y need not equal the prior position plus dx/dy, and macOS reports the held cursor position while movement is suppressed. Managed capture supplies its reported deltas, device and optional event position.",
                      "tested-by":  "MacInputTests.HeldHardwareMoveAfterSyntheticMove; MacInputTests.FreeHardwareMoveAfterSyntheticMove; MacInputTests.FirstHardwareMove; MacInputTests.HardwareMoveReturnsToPostedPosition"
                  },
                  {
@@ -8412,7 +8423,7 @@
                      "linux_x11":  "partial",
                      "linux_wayland":  "partial",
                      "macos":  "unknown",
-                     "notes":  "Keysharp keyboard and mouse descriptors with device discovery, Linux per-device physical state and native device-change subscriptions. Descriptors have read-only Id, Kind, Name, VendorId, ProductId and HardwareId. Input() raises Error. macOS execution remains unverified.",
+                     "notes":  "Keysharp keyboard and mouse descriptors with device discovery, per-device physical state through native Linux keysharp-input or managed capture, and native device-change subscriptions. Descriptors have read-only Id, Kind, Name, VendorId, ProductId and HardwareId. Input() raises Error. Driver/hardware delivery and macOS execution remain unverified.",
                      "tested-by":  "InputDeviceTests.cs; input-devices.ahk; LinuxInputManagerTests.cs"
                  },
                  {
@@ -8423,18 +8434,18 @@
                      "linux_x11":  "partial",
                      "linux_wayland":  "partial",
                      "macos":  "unknown",
-                     "notes":  "A fresh Array of keyboard and mouse descriptors. Missing text is blank and missing numbers are zero. Id is an opaque Integer scoped to the input source, not a permanent hardware identity. Windows uses Raw Input handles, SetupAPI metadata and native HID vendor/product attributes when available. Linux uses keysharp-input ABI 1.x and existing device-metadata access without prompting. macOS uses IOKit HID services with Id zero; runtime behavior remains unverified. IDs can change or be reused. An unavailable inventory raises OSError.",
+                     "notes":  "A fresh Array of keyboard and mouse descriptors. Missing text is blank and missing numbers are zero. Id is an opaque Integer scoped to the input source, not a permanent hardware identity. Native Windows uses Raw Input handles, SetupAPI metadata and native HID vendor/product attributes when available. A managed hook provider can supply its own inventory; without its device interface enumeration remains native, while an implemented empty inventory is authoritative. Native Linux uses keysharp-input ABI 1.x and existing device-metadata access without prompting. Native macOS uses IOKit HID services with Id zero; runtime behavior remains unverified. IDs can change or be reused. An unavailable inventory raises OSError.",
                      "tested-by":  "InputDeviceTests.cs; input-devices.ahk; Gui/guitest.ks; LinuxInputManagerTests.cs; LinuxNativeClientTests.DeviceInventoryChecksAnExistingGrantWithoutPrompting"
                  },
                  {
                      "category":  "Keysharp Module (Ks)",
                      "feature":  "Input.GetKeyState()",
                      "syntax":  "Device.GetKeyState(KeyName)",
-                     "windows":  "unsupported",
+                     "windows":  "partial",
                      "linux_x11":  "partial",
                      "linux_wayland":  "partial",
-                     "macos":  "unsupported",
-                     "notes":  "Physical keyboard key or mouse button state for one Input descriptor. Linux uses an existing InputMonitoring grant without prompting or installing a hook. A disconnected device, retired source, unavailable state or unsupported native platform raises OSError. Invalid key names, controller controls and wheel directions raise ValueError. Global GetKeyState accepts only AHK L/P/T modes; numeric device modes are removed.",
+                     "macos":  "unknown",
+                     "notes":  "Physical keyboard key or mouse button state for one Input descriptor. Native Linux uses an existing InputMonitoring grant without prompting or installing a hook. Managed capture tracks reported physical events; a detected HardwareId change clears tracked state until another transition arrives. Reuse before the first metadata lookup or with the same HardwareId cannot be detected. Capture reset, loss or removal invalidates descriptors. Native Windows and macOS do not supply per-device state. A disconnected device, retired source or unavailable state raises OSError. Invalid key names, controller controls and wheel directions raise ValueError. Global GetKeyState accepts only AHK L/P/T modes; numeric device modes are removed. Driver/hardware delivery and macOS provider execution remain unverified.",
                      "tested-by":  "InputDeviceTests.cs; LinuxInputManagerTests.DeviceBitmapAliases; InputHookTests.RetiredEventDevice"
                  },
                  {
@@ -8445,7 +8456,7 @@
                      "linux_x11":  "partial",
                      "linux_wayland":  "partial",
                      "macos":  "unknown",
-                     "notes":  "Calls Callback(Hook, Change, Device) with Added, Removed or Changed and an Input snapshot. Returns a started Input.DeviceHook using the EventHook lifecycle, without keeping the script running. Existing devices form the baseline; coalesced notifications compare inventories. The native watcher runs only while hooks are active. Windows and macOS watch arrivals/removals; property-only metadata changes have no trigger and are discovered only during a subsequent refresh. Linux requires keysharp-input client ABI 1.1 and an existing InputMonitoring grant, without prompting or installing input hooks. Source loss or a failed inventory refresh ends hooks with Failed; Start retries explicitly. macOS runtime remains unverified.",
+                     "notes":  "Calls Callback(Hook, Change, Device) with Added, Removed or Changed and an Input snapshot. Returns a started Input.DeviceHook using the EventHook lifecycle, without keeping the script running. Existing devices form the baseline; coalesced notifications compare inventories. The native watcher runs only while hooks are active. Windows and macOS watch arrivals/removals; property-only metadata changes have no trigger and are discovered only during a subsequent refresh. Managed capture compares its selected inventory on the native watcher's notifications and retains its access requirements; provider-only changes have no trigger. Linux requires keysharp-input client ABI 1.1 and an existing InputMonitoring grant, without prompting or installing input hooks. Source loss or a failed inventory refresh ends hooks with Failed; Start retries explicitly. macOS runtime remains unverified.",
                      "tested-by":  "input-device-changes.ahk; InputDeviceTests.InventoryChanges; InputDeviceTests.AnonymousDevicesAreNotMerged; Gui/guitest.ks"
                  },
                  {

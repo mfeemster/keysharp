@@ -688,12 +688,8 @@ namespace Keysharp.Internals.Input.Keyboard
 				hkd.whichHookNeeded |= HookType.Mouse;
 
 #if LINUX
-			// Global input hooks require a real session/seat (keysharp-input, or an interactive display). On a
-			// headless Linux host they can never be installed, so don't attempt to manifest them there: the
-			// hotkeys/hotstrings stay registered in memory (the passes above already ran) but no hook is started
-			// and no reader thread / input service connection is opened. Non-headless Linux and the other platforms
-			// manifest as usual below.
-			if (Script.IsHeadless)
+			// Native Linux capture needs a session/seat; a custom provider owns its capture requirements.
+			if (Script.IsHeadless && !ht.UsesHookProvider)
 				return DefaultObject;
 #endif
 
@@ -752,14 +748,18 @@ namespace Keysharp.Internals.Input.Keyboard
 				_ => "keyboard and mouse hooks"
 			};
 			var reason = ht.GetHookActivationFailureReason();
-			var message = $"keysharp-input is required for global Linux hotkeys/hotstrings, but the required {hookText} could not be installed, so they will not fire.";
+			var customProvider = ht.UsesHookProvider;
+			var message = customProvider
+				? $"The hook provider could not install the required {hookText}, so hotkeys/hotstrings will not fire."
+				: $"keysharp-input is required for global Linux hotkeys/hotstrings, but the required {hookText} could not be installed, so they will not fire.";
 
 			if (!string.IsNullOrWhiteSpace(reason))
 				message += $" {reason}";
-			else
+			else if (!customProvider)
 				message += " keysharp-input is unavailable.";
 
-			message += " Install and enable keysharp-input to use hotkeys/hotstrings on Linux.";
+			if (!customProvider)
+				message += " Install and enable keysharp-input to use hotkeys/hotstrings on Linux.";
 			_ = Errors.ShowWarning(message);
 		}
 #endif
@@ -2537,7 +2537,7 @@ namespace Keysharp.Internals.Input.Keyboard
 			if (isRegistered)
 				return ResultType.Ok;  // It's normal for a disabled hotkey to return OK.
 
-			if (type != HotkeyTypeEnum.Normal) // Caller normally checks this for performance, but it's checked again for maintainability.
+			if (type != HotkeyTypeEnum.Normal || owner.HookThread.UsesHookProvider) // Provider hotkeys use capture instead of OS registration.
 				return ResultType.Fail; // Don't attempt to register joystick or hook hotkeys, since their VK/modifiers aren't intended for that.
 
 			// Indicate that the key modifies itself because RegisterHotkey() requires that +SHIFT,
