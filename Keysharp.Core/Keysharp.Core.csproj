@@ -96,6 +96,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\Keysharp.Components\Input\Contracts\Keysharp.Components.Input.csproj" />
 		<ProjectReference Include="..\Keysharp.Components\Scripting\Contracts\Keysharp.Components.Scripting.csproj" />
 		<ProjectReference Include="..\Keysharp.Components\Packages\Contracts\Keysharp.Components.Packages.csproj" />
 		<PackageReference Include="BitFaster.Caching" Version="2.6.1" />

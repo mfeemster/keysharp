@@ -3,6 +3,48 @@ namespace Keysharp.Tests;
 public class DirectiveTests : TestRunner
 {
 	[Test, Category("Directives")]
+	public void Startup() => Assert.IsTrue(TestScript("directive-startup", false));
+
+	[TestCase("#Startup\n", "requires an expression")]
+	[TestCase("F() {\n#Startup F()\n}\n", "top level")]
+	[TestCase("class C {\n#Startup F()\n}\n", "top level")]
+	[TestCase("if true {\n#Startup F()\n}\n", "top level")]
+	[TestCase("#Startup 1\n#CSharp\npublic static object StartupSection() => \"\";\n#EndCSharp\n", "is a name Keysharp generates")]
+	[Category("Directives")]
+	public void StartupErrors(string source, string expected)
+	{
+		var (program, diagnostics) = Keysharp.Parsing.Syntax.Parser.ParseWithDiagnostics(source);
+		var lowerer = new Keysharp.Compilation.Syntax.Lowerer();
+		if (diagnostics.Count == 0) _ = lowerer.Build(program, "StartupError");
+		Assert.That(string.Join("; ", diagnostics.Concat(lowerer.Diagnostics)), Does.Contain(expected).IgnoreCase);
+	}
+
+	[TestCase(false)]
+	[TestCase(true)]
+	[Category("Directives")]
+	public void StartupFailure(bool capabilityFailure)
+	{
+		var source = "#NoTrayIcon\n#ErrorStdOut\n#Warn All, StdOut\n"
+			+ (capabilityFailure ? "#Requires capability StartupOrderingProbe\n" : "")
+			+ "#Startup FileAppend(\"startup\", \"*\")\n"
+			+ (capabilityFailure ? "" : "#Startup Stop()\n#Startup FileAppend(\"unexpected\", \"*\")\n")
+			+ "FileAppend(\"autoexec\", \"*\")\nStop() {\n    throw Error(\"startup-failure\")\n}\n";
+		using var errors = new StringWriter();
+		var previousError = Console.Error;
+
+		try
+		{
+			Console.SetError(errors);
+			Assert.That(RunScript(source, "startup_failure", true, false, 1), Is.EqualTo("startup"));
+		}
+		finally { Console.SetError(previousError); }
+
+		Assert.That(errors.ToString(), Does.Contain(capabilityFailure ? "Unknown capability" : "startup-failure"));
+		if (!capabilityFailure)
+			Assert.That(errors.ToString(), Does.Contain($"({source[..source.IndexOf("throw Error", StringComparison.Ordinal)].Count(c => c == '\n') + 1})"));
+	}
+
+	[Test, Category("Directives")]
 	public void AsmInfo()
 	{
 		var scriptpath = string.Concat(path, "directive-asminfo", ".ahk");

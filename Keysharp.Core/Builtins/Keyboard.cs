@@ -204,7 +204,7 @@ namespace Keysharp.Builtins
 					return Errors.ValueErrorOccurred($"Unknown key state mode \"{Errors.Describe(mode)}\". Expected L, P or T.", mode);
 			}
 
-			return ScriptGetKeyState(vk, keystatetype); // 1 for down and 0 for up.
+			return script.KeyState.GetState(vk, keystatetype) is bool down ? down : DefaultObject;
 		}
 
 		/// <summary>
@@ -662,7 +662,16 @@ break_twice:;
 			}
 
 			if (vk != 0)
-				return Keysharp.Internals.Flow.WaitUntil(() => ScriptGetKeyState(vk, keyStateType) == waitForKeyDown, timeout, Script.SLEEP_INTERVAL);
+			{
+				bool? state = null;
+				var completed = Keysharp.Internals.Flow.WaitUntil(() =>
+				{
+					state = script.KeyState.GetState(vk, keyStateType);
+					return !state.HasValue || state.Value == waitForKeyDown;
+				}, timeout, Script.SLEEP_INTERVAL);
+				// Continuing a provider error ends the wait without claiming the requested state was reached.
+				return completed && state.HasValue;
+			}
 
 			// A joystick which is not connected gives blank, which reads as up.
 			return Keysharp.Internals.Flow.WaitUntil(() => (Joystick.ScriptGetJoyState(joy, joystickId.Value) is true) == waitForKeyDown, timeout, Script.SLEEP_INTERVAL);
@@ -1133,116 +1142,6 @@ break_twice:;
 	#endif
 
 			return ResultType.Ok;//By design, it never returns FAIL.
-		}
-
-		/// <summary>
-		/// Internal helper to get the state of a key.
-		/// </summary>
-		/// <param name="vk">The key to examine.</param>
-		/// <param name="keyStateType">The type of state to examine: toggle or physical.</param>
-		/// <returns>true if down, else false</returns>
-#if LINUX || OSX
-		/// <remarks>Arbitrary key and button polling acquires InputMonitoring here. Modifier and lock-toggle
-		/// snapshots are ungated, and keeping the check at the script boundary prevents Send's modifier reads
-		/// from requesting monitoring access.</remarks>
-		private static void EnsureKeyStateQueryPermission(uint vk, KeyStateTypes keyStateType)
-		{
-			var lockToggle = keyStateType == KeyStateTypes.Toggle
-				&& vk is VirtualKeys.VK_CAPITAL or VirtualKeys.VK_NUMLOCK or VirtualKeys.VK_SCROLL;
-
-			if (lockToggle || KeyboardUtils.IsModifierVk(vk))
-				return;
-
-#if LINUX
-			var required = MouseUtils.IsMouseVK(vk)
-				? Keysharp.Internals.Input.Linux.KeysharpInputClient.Operations.QueryPointerButtons
-				: Keysharp.Internals.Input.Linux.KeysharpInputClient.Operations.QueryKeyState;
-
-			if (Keysharp.Internals.Input.Linux.KeysharpInputManager.Current.HasInputOperation(required))
-				return;
-#endif
-			EnsureInputPermissions(monitoring: true, control: false, "read input state");
-		}
-#endif
-
-		internal static bool ScriptGetKeyState(uint vk, KeyStateTypes keyStateType)
-		{
-			var ht = Script.TheScript.HookThread;
-			var kbdMouseSender = ht.kbdMsSender;
-
-			if (vk == 0) // Assume "up" if indeterminate.
-				return false;
-
-#if LINUX || OSX
-			EnsureKeyStateQueryPermission(vk, keyStateType);
-#endif
-#if LINUX
-			// keysharp-input aggregates independent devices, while the hook's single VK table and modifier
-			// mask cannot represent overlapping holds on two keyboards or mice.
-			if (keyStateType == KeyStateTypes.Physical
-				&& (MouseUtils.IsMouseVK(vk)
-					? Platform.Mouse.TryGetButtonStatePhysical(vk, out var isDown)
-					: Platform.Keyboard.TryGetKeyStatePhysical(vk, out isDown)))
-				return isDown;
-
-			if (keyStateType != KeyStateTypes.Toggle)
-				return HookThread.QueryKeyDownLogical(vk);
-#endif
-
-			switch (keyStateType)
-			{
-				case KeyStateTypes.Toggle: // Whether a toggleable key such as CapsLock is currently turned on.
-					return ht.IsKeyToggledOn(vk); // This also works for non-"lock" keys, but in that case the toggle state can be out of sync with other processes/
-
-				case KeyStateTypes.Physical: // Physical state of key.
-				{
-					// "P" must not install a hook. If the relevant hook is already present, use its tracked
-					// physical state. Otherwise, use an authoritative platform query when available, then
-					// fall back to the logical/live query below. The fallback matches AutoHotkey, where "P"
-					// degrades to an OS query when the hook is absent.
-					var isMouse = MouseUtils.IsMouseVK(vk);
-
-					if (isMouse ? ht.HasMouseHook() : ht.HasKbdHook())
-					{
-						if (!isMouse)
-						{
-							bool? dummy = null;
-
-							// The hook is installed, so use its tracked physical state rather than an OS query.
-							// But first, correct the hook modifier state if it needs it (see GetModifierLRState()).
-							if (ht.KeyToModifiersLR(vk, 0, ref dummy) != 0)    // It's a modifier.
-								_ = kbdMouseSender.GetModifierLRState(true);
-
-							if (vk < ht.physicalKeyState.Length)
-								return (ht.physicalKeyState[vk] & KeyboardMouseSender.StateDown) != 0;
-
-							return false;
-						}
-
-						return (ht.physicalKeyState[vk] & KeyboardMouseSender.StateDown) != 0;
-					}
-
-					// Some platforms expose authoritative physical device state without requiring this
-					// process to install a hook (macOS HID state). If they do not, explicitly
-					// fall through to the logical/live query below, as AutoHotkey does without a hook.
-					if (!isMouse
-						&& Keysharp.Internals.Platform.Keyboard.TryGetKeyStatePhysical(vk, out var physicalDown))
-						return physicalDown;
-
-					break;
-				}
-			} // switch()
-
-			// Otherwise, use the default state-type: KEYSTATE_LOGICAL
-			// On XP/2K at least, a key can be physically down even if it isn't logically down,
-			// which is why this historically used the GetKeyState-based path rather than some more
-			// comprehensive method such as consulting the physical key state as tracked by the hook:
-			// v1.0.42.01 kept this from being changed to the current-state query for backward compatibility.
-			// One example is the journal playback hook: when a window owned by the script receives
-			// such a keystroke, only GetKeyState() can detect the changed state of the key, not GetAsyncKeyState().
-			// Keysharp: Windows 11 has removed journal playback hook, so this now uses IsKeyDownLogical's
-			// current-state semantics instead.
-			return ht.IsKeyDownLogical(vk);
 		}
 
 		/// <summary>

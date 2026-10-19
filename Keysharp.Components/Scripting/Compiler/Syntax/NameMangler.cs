@@ -15,6 +15,7 @@ namespace Keysharp.Compilation.Syntax
 
 		/// <summary>Generated program and module auto-execute method.</summary>
 		public const string AutoExecMethod = Keywords.AutoExecSectionName;
+		public const string StartupMethod = "StartupSection";
 
 		/// <summary>Generated program field containing the compiled script's operator manifest.</summary>
 		public const string OperatorManifestField = "CompiledOperators";
@@ -81,7 +82,7 @@ namespace Keysharp.Compilation.Syntax
 			new(System.StringComparer.Ordinal)
 			{
 				"System", "Keysharp", "Program", "MainScript", "__Main",
-				EntryPointMethod, AutoExecMethod, OperatorManifestField, "KS_module"
+				EntryPointMethod, AutoExecMethod, StartupMethod, OperatorManifestField, "KS_module"
 			};
 		private static string AvoidReserved(string csName) => ReservedTypeNames.Contains(csName) ? csName + "_KS" : csName;
 

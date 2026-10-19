@@ -159,7 +159,7 @@ namespace Keysharp.Internals.Input.Keyboard
 		{
 			SetDelay();
 
-			if (!SkipsWhileDestinationDown || !Keysharp.Builtins.Keyboard.GetKeyState(Destination).Ab())
+			if (!SkipsWhileDestinationDown || !GetNativeKeyState(Destination, KeyStateTypes.Logical))
 #if OSX
 				_ = Keysharp.Builtins.Keyboard.Send(IsWheel ? DownSend : DownSendFor(Script.GetPropertyValue(Accessors.A_EventInfo, "IsAutoRepeat").Ab()));
 #else
@@ -178,11 +178,18 @@ namespace Keysharp.Internals.Input.Keyboard
 			var send = UpSend;
 
 			foreach (var mod in RestoredModifiers)
-				if (Keysharp.Builtins.Keyboard.GetKeyState(mod, "P").Ab())
+				if (GetNativeKeyState(mod, KeyStateTypes.Physical))
 					send = string.Concat(send, "{", mod, " DownR}");
 
 			_ = Keysharp.Builtins.Keyboard.Send(send);
 			return "";
+		}
+
+		private static bool GetNativeKeyState(string name, KeyStateTypes type)
+		{
+			uint? modifiers = null;
+			var script = Script.TheScript;
+			return script.KeyState.GetNativeState(script.HookThread.TextToVK(name, ref modifiers, layout: null), type);
 		}
 
 		// Avoid sleeps between remapped key events.

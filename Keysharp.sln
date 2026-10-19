@@ -37,6 +37,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Keysharp.Components.Scripti
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Keysharp.Components.Scripting.Compiler", "Keysharp.Components\Scripting\Compiler\Keysharp.Components.Scripting.Compiler.csproj", "{A4111111-47A2-43AB-9C2B-10A8BFBED004}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Input", "Input", "{9EFE6D92-8F34-A3D2-2046-8BD7EFFA4D8E}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Keysharp.Components.Input", "Keysharp.Components\Input\Contracts\Keysharp.Components.Input.csproj", "{D8E6C215-9E0F-4E67-9962-53CC17C33B94}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -87,6 +91,10 @@ Global
 		{A4111111-47A2-43AB-9C2B-10A8BFBED004}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A4111111-47A2-43AB-9C2B-10A8BFBED004}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A4111111-47A2-43AB-9C2B-10A8BFBED004}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D8E6C215-9E0F-4E67-9962-53CC17C33B94}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D8E6C215-9E0F-4E67-9962-53CC17C33B94}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D8E6C215-9E0F-4E67-9962-53CC17C33B94}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D8E6C215-9E0F-4E67-9962-53CC17C33B94}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -99,6 +107,8 @@ Global
 		{A2111111-47A2-43AB-9C2B-10A8BFBED002} = {A1111111-47A2-43AB-9C2B-10A8BFBED001}
 		{A3111111-47A2-43AB-9C2B-10A8BFBED003} = {A1111111-47A2-43AB-9C2B-10A8BFBED001}
 		{A4111111-47A2-43AB-9C2B-10A8BFBED004} = {A1111111-47A2-43AB-9C2B-10A8BFBED001}
+		{9EFE6D92-8F34-A3D2-2046-8BD7EFFA4D8E} = {9D8222A2-3C4E-4F3B-9D11-6EFA7F8A24C1}
+		{D8E6C215-9E0F-4E67-9962-53CC17C33B94} = {9EFE6D92-8F34-A3D2-2046-8BD7EFFA4D8E}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {6A61810C-1FD3-4A5F-934A-63BAED841D22}

@@ -1,6 +1,7 @@
 
 
 using Keysharp.Builtins;
+using Keysharp.Components.Input;
 #if WINDOWS
 using Keysharp.Builtins.COM;
 #endif
@@ -461,6 +462,7 @@ namespace Keysharp.Runtime
 		internal bool IsReadyToExecute => isReadyToExecute;
 		internal JoystickData JoystickData => joystickData ?? (joystickData = new ());
 		internal KeyboardData KeyboardData => keyboardData ?? (keyboardData = new ());
+		internal KeyState KeyState { get; }
 		internal KeyboardUtilsData KeyboardUtilsData => keyboardUtilsData ?? (keyboardUtilsData = new ());
 		internal nint MainWindowHandle
 		{
@@ -613,6 +615,7 @@ namespace Keysharp.Runtime
 			// constructing or publishing this Script so a bad artifact leaves the current process-wide engine intact.
 			var programType = program ?? GetCallingType();
 			var manifest = Keysharp.Internals.Scripting.AppManifest.FromAssembly(programType?.Assembly);
+			KeyState = new(this);
 
 #if LINUX
 			LinuxServices = new(this);
@@ -769,6 +772,9 @@ namespace Keysharp.Runtime
 		/// assembly the manifest lives in, whether the script was run from source or precompiled.
 		/// </summary>
 		public void LoadPackages() => NuGetPackageLoader.Load(ProgramType?.Assembly);
+
+		/// <summary>Registers one key-state provider; disposing the returned handle restores native queries.</summary>
+		public IDisposable RegisterKeyStateProvider(IKeyStateProvider Provider) => KeyState.Register(Provider);
 
 		/// <summary>
 		/// Will be a generated call within Main which calls into this class to add DLLs.
@@ -1638,6 +1644,7 @@ namespace Keysharp.Runtime
 			// dialog registries are process-static -- an abandoned entry there would outlive this engine.
 			Teardown(() => Dialogs.CloseDialogs(this));
 			Teardown(() => ToolTips.DestroyAll(this));
+			Teardown(KeyState.Dispose);
 #if !WINDOWS
 			Teardown(() => sigtermRegistration?.Dispose());
 #endif

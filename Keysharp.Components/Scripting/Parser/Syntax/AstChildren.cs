@@ -43,6 +43,7 @@ namespace Keysharp.Parsing.Syntax
 			FunctionDecl function => FunctionParts(function.Params, function.Body, function.ArrowBody),
 			ClassDecl type => ClassParts(type),
 			AppDirective app => One(app.Value),
+			StartupDirective startup => One(startup.Value),
 			_ => System.Array.Empty<Node>()
 		};
 

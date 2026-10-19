@@ -367,6 +367,12 @@ namespace Keysharp.Parsing.Syntax
 		public AppDirective(ObjectExpr value) : base("App", "") => Value = value;
 	}
 
+	internal sealed class StartupDirective : DirectiveStmt
+	{
+		public readonly Expr Value;
+		public StartupDirective(Expr value) : base("Startup", "") => Value = value;
+	}
+
 	internal sealed class DeclStmt : Stmt
 	{
 		public readonly string Keyword;   // local / global / static
@@ -618,6 +624,7 @@ namespace Keysharp.Parsing.Syntax
 					break;
 				case BreakStmt: sb.Append("(break)"); break;
 				case ContinueStmt: sb.Append("(continue)"); break;
+				case StartupDirective startup: sb.Append("(startup "); Write(sb, startup.Value); sb.Append(')'); break;
 				case DirectiveStmt dir: sb.Append("(directive ").Append(dir.Name).Append(')'); break;
 				case HotkeyDef hk:
 					sb.Append("(hotkey ").Append(string.Join(",", hk.Triggers)).Append(' ');

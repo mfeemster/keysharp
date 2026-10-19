@@ -169,6 +169,7 @@ namespace Keysharp.Compilation.Syntax
 		private readonly List<StatementSyntax> _dhhr = new();
 		private readonly List<(long SourceOrder, StatementSyntax Statement)> _moduleDhhr = new();
 		private readonly List<StatementSyntax> _dhhrPrelude = new();
+		private readonly HashSet<string> _startupModules = new(System.StringComparer.Ordinal);
 		private const string DeclarationSuspendExemptVariable = "__suspendExempt";
 		// The variable is declared only when a registration reads it, and #SuspendExempt assigns it only then, as Roslyn
 		// reports a variable which is assigned but never read.
@@ -943,6 +944,18 @@ namespace Keysharp.Compilation.Syntax
 			foreach (var fd in moduleArrows)
 				if (_userFuncDeclByLower.GetValueOrDefault(fd.Name) == fd && _emittedFuncImpls.Add(NameMangler.FunctionMethod(fd.Name)))
 					members.Add(LowerFunction(fd));
+			var startup = new List<StatementSyntax>();
+			foreach (var directive in body.OfType<StartupDirective>())
+				AddStmt(startup, new ExpressionStmt(directive.Value) { Line = directive.Line, Column = directive.Column, File = directive.File });
+			if (startup.Count > 0)
+			{
+				CompleteModuleBody(startup);
+				members.Add(ObjMethod(NameMangler.StartupMethod, EmptyParams(), ModuleBody(startup)));
+				_startupModules.Add(_currentModuleClass);
+				_scopeTemps.Clear();
+				_scopeKeptTemps.Clear();
+				_pendingScopeFuncs.Clear();
+			}
 			var registrationDirectives = new List<DirectiveStmt>();
 			foreach (var statement in body)
 				CollectStatements(statement, registrationDirectives);
@@ -996,10 +1009,7 @@ namespace Keysharp.Compilation.Syntax
 			}
 			_currentCompat = _moduleCompat;
 			_openBlocks.RemoveAt(_openBlocks.Count - 1);
-			WrapBodyWithKeepAlive(auto, [], _scopeKeptTemps, 0, auto.Count);
-			// Declare temps introduced by postfix ++/-- in the top-level (auto-execute) scope.
-			for (int i = _scopeTemps.Count - 1; i >= 0; i--) auto.Insert(0, DeclLocal(ObjType, _scopeTemps[i], Null));
-			auto.AddRange(_pendingScopeFuncs);   // top-level fat-arrow local functions
+			CompleteModuleBody(auto);
 			if (_warnExperimental != null)
 				foreach (var type in _experimentalTypes)
 					if (_experimentalWarned.Add(type))
@@ -1007,6 +1017,16 @@ namespace Keysharp.Compilation.Syntax
 			_dhhr.AddRange(_moduleDhhr.OrderBy(item => item.SourceOrder).Select(item => item.Statement));
 			return (members, auto);
 		}
+
+		private void CompleteModuleBody(List<StatementSyntax> body)
+		{
+			WrapBodyWithKeepAlive(body, [], _scopeKeptTemps, 0, body.Count);
+			for (int i = _scopeTemps.Count - 1; i >= 0; i--) body.Insert(0, DeclLocal(ObjType, _scopeTemps[i], Null));
+			body.AddRange(_pendingScopeFuncs);
+		}
+
+		private static BlockSyntax ModuleBody(List<StatementSyntax> body) => SyntaxFactory.Block(
+			(StatementSyntax[])(EndPointUnreachable(body) ? [LocationDecl, .. body] : [LocationDecl, .. body, SyntaxFactory.ReturnStatement(Str(""))]));
 
 		// ---- symbol resolution ----
 
@@ -1822,6 +1842,7 @@ namespace Keysharp.Compilation.Syntax
 			switch (s)
 			{
 				case ExpressionStmt es:
+					if (es.Expr is GroupExpr group) return LowerStmt(new ExpressionStmt(group.Inner));
 					if (es.Expr is CallExpr call) return ExprStmt(LowerCall(call, statement: true));
 					// A comma list as a statement (`a(), b()`) discards every item's value, the last one included.
 					if (es.Expr is SequenceExpr stmtSeq)
@@ -1864,6 +1885,7 @@ namespace Keysharp.Compilation.Syntax
 					if (_scope != null) { _ = LowerNestedFunction(fd); return null; }
 					if (_emittedFuncImpls.Add(NameMangler.FunctionMethod(fd.Name))) _pendingLambdas.Add(LowerFunction(fd));
 					return null;
+				case StartupDirective:
 				case DirectiveStmt dir when IsLoadTimeDirective(System.Text.Ascii.IsValid(dir.Name) ? dir.Name.ToLowerInvariant() : dir.Name):
 					return null;
 				case DirectiveStmt dir: return LowerDirective(dir);   // value-setting directives; rest are no-ops here
@@ -2937,6 +2959,11 @@ namespace Keysharp.Compilation.Syntax
 		{
 			foreach (var n in DeclaredNames(m))
 			{
+				if (_startupModules.Contains(module) && StringComparer.OrdinalIgnoreCase.Equals(n, NameMangler.StartupMethod))
+				{
+					Diag($"{at}#CSharp: '{n}' is a name Keysharp generates into this class; rename it");
+					continue;
+				}
 				if (isFunction)
 				{
 					// Module functions may use script names, but not their generated binding names.
@@ -4414,7 +4441,9 @@ namespace Keysharp.Compilation.Syntax
 		// propagates an implicit blank-unset return). Lowering a call the way a call-as-statement is lowered yields
 		// null rather than raising. [v2.1-alpha.29+]
 		private ExpressionSyntax LowerAllowingUnset(Expr e) =>
-			e is CallExpr call ? LowerCall(call, statement: true) : LowerExpr(e);
+			e is GroupExpr group ? LowerAllowingUnset(group.Inner)
+			: e is SequenceExpr sequence ? Op("MultiStatement", sequence.Items.Select(LowerAllowingUnset).ToArray())
+			: e is CallExpr call ? LowerCall(call, statement: true) : LowerExpr(e);
 
 		// #Warn NamedArg: check `f(Name: v)` against the callee's signature when the callee is a BARE NAME whose
 		// signature is knowable here -- a function declared in this compilation, or a built-in. Dispatch is by value at
@@ -6530,7 +6559,7 @@ namespace Keysharp.Compilation.Syntax
 						arms.Where(a => a.Name != null).Select(a => New("Keysharp.Runtime.FuncScope.Declaration", Str(a.Name), Access("Keysharp.Runtime.VarKind." + a.Kind)))))));
 		// Scope passes share structural children, but declarations, callbacks, and lambdas own separate bodies.
 		private static IEnumerable<Node> ScopeChildren(Node node) =>
-			node is FunctionDecl or ClassDecl or HotkeyDef or HotstringDef or FatArrowExpr or DirectiveStmt ? [] : AstChildren.Of(node);
+			node is FunctionDecl or ClassDecl or HotkeyDef or HotstringDef or FatArrowExpr || node is DirectiveStmt and not StartupDirective ? [] : AstChildren.Of(node);
 
 		private static bool AnyNode(Node node, Func<Expr, bool> pred)
 		{
@@ -6746,8 +6775,6 @@ namespace Keysharp.Compilation.Syntax
 			// The C# class name is the module name, disambiguated if it shadows a framework/structural root; the runtime
 			// resolves the original AHK module name back through [UserDeclaredName] (Reflections keys stringToTypes by it).
 			var csName = module.CodeName;
-			StatementSyntax[] autoBody = EndPointUnreachable(autoStmts) ? [LocationDecl, .. autoStmts]
-				: [LocationDecl, .. autoStmts, SyntaxFactory.ReturnStatement(Str(""))];
 			var mm = new List<MemberDeclarationSyntax>();
 			// Initialize the shared object before import fields so circular imports retain its identity.
 			if (!module.IsAhk)
@@ -6776,7 +6803,7 @@ namespace Keysharp.Compilation.Syntax
 			mm.AddRange(members);
 			if (lambdas != null) mm.AddRange(lambdas);
 			if (hotMembers != null) mm.AddRange(hotMembers);
-			mm.Add(ObjMethod(NameMangler.AutoExecMethod, EmptyParams(), SyntaxFactory.Block(autoBody), labels ?? []));
+			mm.Add(ObjMethod(NameMangler.AutoExecMethod, EmptyParams(), ModuleBody(autoStmts), labels ?? []));
 			mm.Add(ClassCtor(csName));
 			var decl = SyntaxFactory.ClassDeclaration(csName)
 				.AddModifiers(PublicTok).WithBaseList(BaseList("Keysharp.Runtime.Module"))
@@ -6906,6 +6933,17 @@ namespace Keysharp.Compilation.Syntax
 			var stmts = new List<StatementSyntax>();
 			// #Warn output runs first (at load time, before any script logic), per the configured mode.
 			stmts.AddRange(EmitWarnings());
+			// Bootstrap runs in module context before native input or capability checks can need its providers.
+			if (_startupModules.Count > 0)
+			{
+				if (_errorStdOutActive) stmts.Add(ExprStmt(Assign(Access("MainScript.ErrorStdOut"), BoolLit(true))));
+				if (_hasOperatorDeclarations)
+					stmts.Add(ExprStmt(Inv(Access("MainScript.Operators.Register"), Id(NameMangler.OperatorManifestField))));
+				foreach (var module in execOrder)
+					if (_startupModules.Contains(module))
+						stmts.Add(ExprStmt(Inv(Access("Keysharp.Runtime.CallStack.RunModule"),
+							SyntaxFactory.TypeOfExpression(Ty("Program." + module)), Access("Program." + module + "." + NameMangler.StartupMethod))));
+			}
 			if (_capabilityRequirements.Count > 0)
 			{
 				// The batched check runs before module auto-exec reaches its directives.
@@ -6914,7 +6952,7 @@ namespace Keysharp.Compilation.Syntax
 					_capabilityRequirements.Select(Str).ToArray())));
 			}
 			// Resolve operators before any hook registration, class initialization or module auto-execution can use them.
-			if (_hasOperatorDeclarations)
+			if (_hasOperatorDeclarations && _startupModules.Count == 0)
 				stmts.Add(ExprStmt(Inv(Access("MainScript.Operators.Register"), Id(NameMangler.OperatorManifestField))));
 			if (_suspendExemptRead)
 				stmts.Add(DeclLocal(SyntaxFactory.PredefinedType(SyntaxFactory.Token(SyntaxKind.BoolKeyword)),

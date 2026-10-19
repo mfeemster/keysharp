@@ -358,18 +358,20 @@ namespace Keysharp.Parsing.Syntax
 			if (IsFunctionDefinition()) return ParseFunctionDecl();
 			if (IsCommandStatement()) return ParseCommandCall();
 
-			var e = ParseExpression(1);
-			if (At(TokenKind.Comma))   // comma statement: `x := 1, y := 2`
+			return new ExpressionStmt(ParseSequence());
+		}
+
+		private Expr ParseSequence()
+		{
+			var first = ParseExpression(1);
+			if (!At(TokenKind.Comma)) return first;
+			var items = new List<Expr> { first };
+			while (Match(TokenKind.Comma))
 			{
-				var items = new List<Expr> { e };
-				while (Match(TokenKind.Comma))
-				{
-					SkipNewlines();   // a trailing comma continues onto the next line
-					items.Add(ParseExpression(1));
-				}
-				return new ExpressionStmt(new SequenceExpr(items));
+				SkipNewlines();
+				items.Add(ParseExpression(1));
 			}
-			return new ExpressionStmt(e);
+			return new SequenceExpr(items);
 		}
 
 		private Block ParseBlock()
@@ -651,6 +653,22 @@ namespace Keysharp.Parsing.Syntax
 			var name = At(TokenKind.Identifier) ? Advance().Text : "";
 			if (name.Equals("errorstdout", System.StringComparison.OrdinalIgnoreCase))
 				_errorStdOut = true;
+
+			if (name.Equals("startup", System.StringComparison.OrdinalIgnoreCase))
+			{
+				if (!programScope)
+					ErrorAt(dirToken, "#Startup is only allowed at module top level");
+
+				if (At(TokenKind.Newline) || At(TokenKind.EOF) || Current.Line != dirLine || Current.File != dirFile)
+					ErrorAt(dirToken, "#Startup requires an expression");
+
+				var value = ParseSequence();
+
+				if (!At(TokenKind.Newline) && !At(TokenKind.EOF))
+					Error($"unexpected '{Current.Text}' after #Startup expression");
+
+				return new StartupDirective(value) { Line = dirLine, Column = dirCol, File = dirFile, SourceOrder = sourceOrder };
+			}
 
 			// #App carries one object-literal block. The `{` must open on the directive's own line; the literal
 			// itself may then span as many lines as it likes (ParseObjectLiteral skips newlines inside `{ }`).
@@ -1239,7 +1257,7 @@ namespace Keysharp.Parsing.Syntax
 		/// parses (IsSOLContExpr), so `a` ⏎ `?? b` and `MsgBox` ⏎ `.Call(x)` read as one line in every statement form.
 		/// It runs on the preprocessed stream, so the lines of an #if block which is not taken, and the #if lines
 		/// themselves, are not there to separate a line from its continuation. Lines AutoHotkey never continues keep
-		/// their break: a line and one from another file, a directive other than #HotIf/#Import, a line ending in ':'
+		/// their break: a line and one from another file, a directive other than #HotIf/#Import/#Startup, a line ending in ':'
 		/// (a label or case; a ternary's ':' continues in the parser), and a hotkey, hotstring or remap line.
 		/// </summary>
 		private static void JoinContinuationLines(List<Token> tokens)
@@ -1309,7 +1327,8 @@ namespace Keysharp.Parsing.Syntax
 		private static bool CanContinueLine(List<Token> tokens, int start, int end)
 		{
 			if (tokens[start].Kind == TokenKind.Hash)
-				return start + 1 < end && (tokens[start + 1].IsKeyword("hotif") || tokens[start + 1].IsKeyword("import"));
+				return start + 1 < end && (tokens[start + 1].IsKeyword("hotif") || tokens[start + 1].IsKeyword("import")
+					|| tokens[start + 1].IsKeyword("startup"));
 
 			return tokens[end - 1].Kind is not (TokenKind.Colon or TokenKind.DoubleColon or TokenKind.HotstringExpansion
 				or TokenKind.RemapTargetKey or TokenKind.CSharpBlock);
@@ -2196,13 +2215,7 @@ namespace Keysharp.Parsing.Syntax
 				case TokenKind.LParen:
 					Advance();
 					var inFlowCond = EnterGroup();
-					var inner = ParseExpression(1);
-					if (At(TokenKind.Comma))   // parenthesized sequence `(a, b)`
-					{
-						var items = new List<Expr> { inner };
-						while (Match(TokenKind.Comma)) { SkipNewlines(); items.Add(ParseExpression(1)); }
-						inner = new SequenceExpr(items);
-					}
+					var inner = ParseSequence();
 					LeaveGroup(inFlowCond);
 					Expect(TokenKind.RParen, "parenthesized expression");
 					return inner is SequenceExpr ? inner : new GroupExpr(inner);

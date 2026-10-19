@@ -63,6 +63,7 @@
        libraries must not acquire RuntimeIdentifiers, but their packaged payload still needs release settings. -->
   <PropertyGroup Condition="'$(IsKeysharpShippingProject)' == 'true'
                             OR '$(MSBuildProjectName)' == 'Keysharp.Core'
+                            OR '$(MSBuildProjectName)' == 'Keysharp.Components.Input'
                             OR '$(MSBuildProjectName)' == 'Keysharp.Components.Packages'
                             OR '$(MSBuildProjectName)' == 'Keysharp.Components.Scripting'
                             OR '$(MSBuildProjectName)' == 'Keysharp.Components.Scripting.Parser'

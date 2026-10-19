@@ -103,6 +103,17 @@
                   },
                   {
                      "category":  "Environment/System",
+                     "feature":  "Managed key-state provider",
+                     "syntax":  "Script.TheScript.RegisterKeyStateProvider(Provider)",
+                     "windows":  "full",
+                     "linux_x11":  "unknown",
+                     "linux_wayland":  "unknown",
+                     "macos":  "unknown",
+                     "notes":  "Managed host API registering one active IKeyStateProvider per Script for GetKeyState/KeyWait keyboard and mouse-button queries, including #HotIf. Canonical L/P/T modes; false requests native fallback and unexpected managed exceptions raise OSError. Load through CLR/package interop; #Startup registers before capability checks and hotkey setup. Successful registration transfers ownership and returns an IDisposable handle; disposing it restores native queries and allows a fresh provider to register. Optional provider cleanup runs after active queries finish on removal or script shutdown. Stale handles cannot remove another registration or restore a shut-down script. Null, additional active and disposed-script registrations are rejected. Native capture, sending, controller queries and device enumeration are unchanged. Hardware drivers and macOS execution are unverified.",
+                     "tested-by":  "KeyStateProviderTests.StateQueries; KeyStateProviderTests.RegistrationOwnership; KeyStateProviderTests.RegistrationRestoration; KeyStateProviderTests.ActiveQueryRetirement"
+                  },
+                  {
+                     "category":  "Environment/System",
                      "feature":  "#ClipboardTimeout",
                      "syntax":  "",
                      "windows":  "full",
@@ -434,6 +445,17 @@
                      "linux_wayland":  "full",
                      "macos":  "full",
                      "notes":  "The #SingleInstance directive determines whether a script is allowed to run again when it is already running."
+                 },
+                 {
+                     "category":  "Environment/System",
+                     "feature":  "#Startup",
+                     "syntax":  "#Startup Expression",
+                     "windows":  "full",
+                     "linux_x11":  "unknown",
+                     "linux_wayland":  "unknown",
+                     "macos":  "unknown",
+                     "notes":  "Keysharp-only module-level expression evaluated once after runtime and package setup, before capability checks, hotkey setup and auto-execute. Imported modules run in dependency order, then source order within each module, including included files. Results are ignored; an uncaught error prevents auto-execute. Normal expression continuations and calls to multiline functions are supported; auto-execute assignments have not run.",
+                     "tested-by":  "directive-startup.ahk; DirectiveTests.StartupErrors; DirectiveTests.StartupFailure"
                  },
                  {
                      "category":  "Environment/System",

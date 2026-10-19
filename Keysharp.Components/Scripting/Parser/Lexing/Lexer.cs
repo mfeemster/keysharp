@@ -173,12 +173,15 @@ namespace Keysharp.Parsing.Lexing
 			while (i >= 0 && tokens[i].Kind == TokenKind.Comment)
 				i--;
 
-			if (i < 0 || !ExpressionWords.Contains(tokens[i].Text))
+			if (i < 0)
 				return false;
+
+			var word = tokens[i];
 
 			while (--i >= 0 && tokens[i].Kind == TokenKind.Comment) { }
 
-			return i < 0 || tokens[i].Kind is not (TokenKind.Dot or TokenKind.QuestionDot);
+			return word.IsKeyword("startup") && i >= 0 && tokens[i].Kind == TokenKind.Hash
+				|| ExpressionWords.Contains(word.Text) && (i < 0 || tokens[i].Kind is not (TokenKind.Dot or TokenKind.QuestionDot));
 		}
 		private static bool IsInlineWhitespace(char c) =>
 			c == ' ' || c == '\t' || c == '\r' || c == '\f' || c == '\v' || c == ' ';

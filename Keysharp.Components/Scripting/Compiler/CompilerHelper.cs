@@ -16,6 +16,7 @@ namespace Keysharp.Compilation
 			"Keysharp.Core.dll",
 			"Keysharp.Components.Scripting.dll",
 			"Keysharp.Components.Packages.dll",
+			"Keysharp.Components.Input.dll",
 			"PCRE.NET.dll",
 			"BitFaster.Caching.dll",
 			"Semver.dll",
