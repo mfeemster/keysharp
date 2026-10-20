@@ -6,51 +6,116 @@ namespace Keysharp.Parsing.Syntax
 		private static readonly List<Stmt> emptyStmts = [];
 		private static readonly List<Expr> emptyExprs = [];
 
-		// Separate iterators keep each state machine from retaining every node shape's nested loops.
-		internal static IEnumerable<Node> Of(Node node) => node switch
+		internal static ChildEnumerable Of(Node node) => node switch
 		{
-			ProgramNode program => program.Body,
+			ProgramNode program => new(program.Body),
 			UnaryExpr unary => One(unary.Operand),
 			BinaryExpr binary => Two(binary.Left, binary.Right),
 			AssignExpr assignment => Two(assignment.Target, assignment.Value),
 			TernaryExpr ternary => Three(ternary.Cond, ternary.Then, ternary.Else),
 			GroupExpr group => One(group.Inner),
-			SequenceExpr sequence => sequence.Items,
+			SequenceExpr sequence => new(sequence.Items),
 			DerefExpr dereference => One(dereference.Name),
-			CallExpr call => CallArguments(call.Callee, call.Args),
+			CallExpr call => new(CallArguments(call.Callee, call.Args)),
 			MemberExpr member => One(member.Target),
 			DynMemberExpr member => Two(member.Target, member.NameExpr),
-			IndexExpr indexed => CallArguments(indexed.Target, indexed.Args),
-			ArrayExpr array => Arguments(array.Elements),
-			MapExpr map => MapEntries(map),
-			ObjectExpr obj => ObjectEntries(obj),
-			FatArrowExpr function => FunctionParts(function.Params, function.Body, function.BlockBody),
+			IndexExpr indexed => new(CallArguments(indexed.Target, indexed.Args)),
+			ArrayExpr array => new(Arguments(array.Elements)),
+			MapExpr map => new(MapEntries(map)),
+			ObjectExpr obj => new(ObjectEntries(obj)),
+			FatArrowExpr function => new(FunctionParts(function.Params, function.Body, function.BlockBody)),
 			ExpressionStmt expression => One(expression.Expr),
-			Block block => block.Body,
+			Block block => new(block.Body),
 			IfStmt conditional => Three(conditional.Cond, conditional.Then, conditional.Else),
-			WhileStmt loop => WhileParts(loop),
-			LoopStmt loop => LoopParts(loop),
-			SpecialLoopStmt loop => SpecialLoopParts(loop),
-			ForStmt loop => ForParts(loop),
-			SwitchStmt choice => SwitchParts(choice),
-			TryStmt attempt => TryParts(attempt),
+			WhileStmt loop => new(WhileParts(loop)),
+			LoopStmt loop => new(LoopParts(loop)),
+			SpecialLoopStmt loop => new(SpecialLoopParts(loop)),
+			ForStmt loop => new(ForParts(loop)),
+			SwitchStmt choice => new(SwitchParts(choice)),
+			TryStmt attempt => new(TryParts(attempt)),
 			ReturnStmt ret => One(ret.Value),
 			ThrowStmt thrown => One(thrown.Value),
 			GotoStmt jump => One(jump.Expression),
-			DeclStmt declaration => declaration.Items,
+			DeclStmt declaration => new(declaration.Items),
 			HotkeyDef hotkey => Two(hotkey.Body, hotkey.Func),
 			HotstringDef hotstring => Two(hotstring.Body, hotstring.Func),
-			FunctionDecl function => FunctionParts(function.Params, function.Body, function.ArrowBody),
-			ClassDecl type => ClassParts(type),
+			FunctionDecl function => new(FunctionParts(function.Params, function.Body, function.ArrowBody)),
+			ClassDecl type => new(ClassParts(type)),
 			AppDirective app => One(app.Value),
 			StartupDirective startup => One(startup.Value),
-			_ => System.Array.Empty<Node>()
+			_ => default
 		};
 
-		private static IEnumerable<Node> One(Node first) { yield return first; }
-		private static IEnumerable<Node> Two(Node first, Node second) { yield return first; yield return second; }
-		private static IEnumerable<Node> Three(Node first, Node second, Node third)
-		{ yield return first; yield return second; yield return third; }
+		private static ChildEnumerable One(Node first) => new(first, null, null, 1);
+		private static ChildEnumerable Two(Node first, Node second) => new(first, second, null, 2);
+		private static ChildEnumerable Three(Node first, Node second, Node third) => new(first, second, third, 3);
+
+		// Keep fixed children and list walks as values; complex shapes retain their separate iterator state machines.
+		internal readonly struct ChildEnumerable
+		{
+			private readonly object source;
+			private readonly Node second, third;
+			private readonly int count;
+
+			internal ChildEnumerable(Node first, Node second, Node third, int count)
+			{
+				source = first;
+				this.second = second;
+				this.third = third;
+				this.count = count;
+			}
+
+			internal ChildEnumerable(IReadOnlyList<Node> children)
+			{
+				source = children;
+				second = third = null;
+				count = -1;
+			}
+
+			internal ChildEnumerable(IEnumerable<Node> children)
+			{
+				source = children;
+				second = third = null;
+				count = -2;
+			}
+
+			public Enumerator GetEnumerator() => new(this);
+
+			internal struct Enumerator : IDisposable
+			{
+				private readonly ChildEnumerable children;
+				private IEnumerator<Node> iterator;
+				private int index;
+
+				internal Enumerator(ChildEnumerable children)
+				{
+					this.children = children;
+					iterator = null;
+					index = -1;
+				}
+
+				public Node Current => children.count switch
+				{
+					-2 => iterator.Current,
+					-1 => ((IReadOnlyList<Node>)children.source)[index],
+					_ => index switch { 0 => (Node)children.source, 1 => children.second, 2 => children.third, _ => null }
+				};
+
+				public bool MoveNext()
+				{
+					if (children.count == -2)
+					{
+						iterator ??= ((IEnumerable<Node>)children.source).GetEnumerator();
+						return iterator.MoveNext();
+					}
+
+					var length = children.count == -1 ? ((IReadOnlyList<Node>)children.source).Count : children.count;
+					return ++index < length;
+				}
+
+				public void Dispose() => iterator?.Dispose();
+			}
+		}
 
 		private static IEnumerable<Node> Arguments(List<Argument> arguments)
 		{

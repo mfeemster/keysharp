@@ -300,6 +300,17 @@ LocalBuffer() {
 }
 LocalBuffer()
 
+ImplicitStringReference() {
+	nativeText := "abc"
+	originalText := nativeText
+	readNativeText := () => nativeText
+	DllCall("msvcrt\_wcsupr", "Str", nativeText, "CDecl Ptr")
+	AssertEq(nativeText, "ABC", A_LineNumber)
+	AssertEq(readNativeText(), "ABC", A_LineNumber)
+	AssertEq(originalText, "abc", A_LineNumber)
+}
+ImplicitStringReference()
+
 ; A variable holding a number passes its string form, and one holding a reference what that refers to, as in
 ; AutoHotkey. A built-in variable reached through an import is read rather than passed.
 numeric := 123

@@ -15,9 +15,10 @@ namespace Keysharp.Compilation.Syntax
 		private sealed class LocalStorage
 		{
 			public string Box;
-			private ExpressionSyntax value;
-			public ExpressionSyntax Read(Lowerer lowerer, string name) => value ??= lowerer.Unsettled(Id(NameMangler.Escape(name)),
-				() => Box != null, _ => Member(Id(Box), "__Value"));
+			private ExpressionSyntax value, boxedValue;
+			public ExpressionSyntax Read(Lowerer lowerer, string name) => Box != null
+				? boxedValue ??= Member(Id(Box), "__Value")
+				: value ??= lowerer.Unsettled(Id(NameMangler.Escape(name)), () => Box != null, _ => Member(Id(Box), "__Value"));
 		}
 
 		private LocalStorage Storage(ScopeVar variable) => variable.Owner.Variables.GetOrAdd(variable.Key);
@@ -35,8 +36,10 @@ namespace Keysharp.Compilation.Syntax
 		private StatementSyntax DeclareVariable(FunctionScope scope, string name, ExpressionSyntax value)
 		{
 			var variable = scope.Find(name);
-			var declaration = LocalDecl(ObjType, NameMangler.Escape(variable.Key), value);
 			var storage = Storage(variable);
+			if (storage.Box != null)
+				return LocalDeclVar(storage.Box, NewBox(value));
+			var declaration = LocalDecl(ObjType, NameMangler.Escape(variable.Key), value);
 			return Unsettled(declaration, () => storage.Box != null, node => LocalDeclVar(storage.Box,
 				NewBox(((LocalDeclarationStatementSyntax)node).Declaration.Variables[0].Initializer.Value)));
 		}

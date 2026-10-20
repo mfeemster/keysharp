@@ -151,6 +151,29 @@ firstActivation[1].__Value := 12
 AssertEq(firstActivation[2](), 12, A_LineNumber)
 AssertEq(secondActivation[1].__Value, 21, A_LineNumber)
 
+LoopOutputStorage(&parameter) {
+    index := 5
+    item := 6
+    before := [index, item]
+    read := () => [index, item, parameter]
+    for index, item in [11, 12] {
+        values := read()
+        AssertEq(values[1], index, A_LineNumber)
+        AssertEq(values[2], item, A_LineNumber)
+    }
+    for parameter in [30, 40]
+        AssertEq(read()[3], parameter, A_LineNumber)
+    return [before, read]
+}
+loopParameter := 90
+loopStorage := LoopOutputStorage(&loopParameter)
+AssertEq(loopStorage[1][1], 5, A_LineNumber)
+AssertEq(loopStorage[1][2], 6, A_LineNumber)
+AssertEq(loopStorage[2]()[1], 5, A_LineNumber)
+AssertEq(loopStorage[2]()[2], 6, A_LineNumber)
+AssertEq(loopStorage[2]()[3], 90, A_LineNumber)
+AssertEq(loopParameter, 90, A_LineNumber)
+
 LateBoxing() {
     outer := 40
     before := outer

@@ -102,6 +102,12 @@ namespace Keysharp.Compilation.Syntax
 			foreach (var module in modules)
 			{
 				var declarations = module.Body.Concat(NamedArrows(module.Body, null)).ToList();
+				var namedDeclarations = new Dictionary<string, Stmt>(StringComparer.OrdinalIgnoreCase);
+				foreach (var statement in declarations)
+				{
+					var name = statement switch { FunctionDecl function => function.Name, ClassDecl type => type.Name, _ => null };
+					if (name != null) namedDeclarations.TryAdd(name, statement);
+				}
 				var locals = CollectLocalDeclNames(declarations);
 				var globals = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 				foreach (var statement in module.Body)
@@ -139,8 +145,7 @@ namespace Keysharp.Compilation.Syntax
 				foreach (var (name, kind) in module.Exports)
 				{
 					if (module.NamedBindings.ContainsKey(name)) continue;
-					var declaration = declarations.FirstOrDefault(s => s is FunctionDecl f && StringComparer.OrdinalIgnoreCase.Equals(f.Name, name)
-						|| s is ClassDecl c && StringComparer.OrdinalIgnoreCase.Equals(c.Name, name));
+					namedDeclarations.TryGetValue(name, out var declaration);
 					module.OwnBindings[name] = new(ModuleOwner(module), NameMangler.Global(name),
 						kind == ExportK.Type ? ModuleBindingKind.Property : ModuleBindingKind.Field, kind, name,
 						ConstantOf(kind), module, declaration);

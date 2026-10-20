@@ -4128,7 +4128,7 @@ namespace Keysharp.Compilation.Syntax
 					var updated = CompoundValue(a.Op[..^1], Op("GetPropertyValue", [ target, name, ..ids ]), LowerExpr(a.Value));
 					if (updated == null) { Diag($"compound assignment to a member index ('{a.Op}') not yet lowerable"); return Str(""); }
 					ops.Add(Op("SetPropertyValue", [ target, name, ..ids, updated ]));
-					return Op("MultiStatement", ops.ToArray());
+					return Op("MultiStatement", CollectionsMarshal.AsSpan(ops));
 				}
 				if (maybeOwner || MayYieldUnset(owner))
 					return NullCondWrap(owner, UpdateMember, maybeOwner);
@@ -4907,7 +4907,7 @@ namespace Keysharp.Compilation.Syntax
 					argExprs.Add(Null);
 				argExprs.Add(SyntaxFactory.LiteralExpression(SyntaxKind.TrueLiteralExpression));
 			}
-			var enumInit = Inv(Member(Inv(Access("Keysharp.Runtime.Loops." + method), argExprs.ToArray()), "GetEnumerator"));
+			var enumInit = Inv(Member(Inv(Access("Keysharp.Runtime.Loops." + method), CollectionsMarshal.AsSpan(argExprs)), "GetEnumerator"));
 			var cond = Inv(Access("Keysharp.Runtime.Flow.IsTrueAndRunning"), Inv(Member(Id(ev), "MoveNext")));
 			var frame = PushLoop(id);
 			var body = WrapLoopBody(LowerBody(sl.Body), sl.Until, frame, sl);
@@ -5320,7 +5320,7 @@ namespace Keysharp.Compilation.Syntax
 					meArgs.Add(Str(""));
 			}
 
-			var enumInit = Inv(Member(Inv(Access("Keysharp.Runtime.Loops.MakeEnumerable"), meArgs.ToArray()), "GetEnumerator"));
+			var enumInit = Inv(Member(Inv(Access("Keysharp.Runtime.Loops.MakeEnumerable"), CollectionsMarshal.AsSpan(meArgs)), "GetEnumerator"));
 			var frame = PushLoop(id);
 			var body = LowerBody(fr.Body);
 			PopLoop();
@@ -6250,7 +6250,7 @@ namespace Keysharp.Compilation.Syntax
 			if (importFrame != null) _importScopes.Add(importFrame);
 			var assignedOrdered = _scratchListStrings.Get();
 			// Only a closure (fat arrow or nested function) sees the enclosing callable's variables.
-			var scope = ClassifyScope(capturing ? _scope : null, staticNested, paramLowers, byRefParams, bodyBlock?.Body, arrowBody, funcName, ref assignedOrdered);
+			var scope = ClassifyScope(capturing ? _scope : null, staticNested, paramLowers, byRefParams, bodyBlock?.Body, arrowBody, funcName, ref assignedOrdered, prepareStorage: true);
 			if (importFrame != null)
 			{
 				importFrame.Owner = scope;
@@ -6433,7 +6433,7 @@ namespace Keysharp.Compilation.Syntax
 			if (_derefReferences)
 				arguments.Add(SyntaxFactory.SimpleLambdaExpression(SyntaxFactory.Parameter(SyntaxFactory.Identifier("KS_name")),
 					ScopeLookup(arms.Where(arm => arm.Reference != null).Select(arm => (arm.Key, arm.Reference)), Access("Keysharp.Runtime.FuncScope.Undeclared"))));
-			return New("Keysharp.Runtime.FuncScope", arguments.ToArray());
+			return New("Keysharp.Runtime.FuncScope", CollectionsMarshal.AsSpan(arguments));
 		}
 
 		private BlockSyntax BuildScopeLookup(List<DerefArm> arms, bool isWriter) =>
@@ -6558,8 +6558,8 @@ namespace Keysharp.Compilation.Syntax
 					SyntaxFactory.InitializerExpression(SyntaxKind.ArrayInitializerExpression, SyntaxFactory.SeparatedList(
 						arms.Where(a => a.Name != null).Select(a => New("Keysharp.Runtime.FuncScope.Declaration", Str(a.Name), Access("Keysharp.Runtime.VarKind." + a.Kind)))))));
 		// Scope passes share structural children, but declarations, callbacks, and lambdas own separate bodies.
-		private static IEnumerable<Node> ScopeChildren(Node node) =>
-			node is FunctionDecl or ClassDecl or HotkeyDef or HotstringDef or FatArrowExpr || node is DirectiveStmt and not StartupDirective ? [] : AstChildren.Of(node);
+		private static AstChildren.ChildEnumerable ScopeChildren(Node node) =>
+			node is FunctionDecl or ClassDecl or HotkeyDef or HotstringDef or FatArrowExpr || node is DirectiveStmt and not StartupDirective ? default : AstChildren.Of(node);
 
 		private static bool AnyNode(Node node, Func<Expr, bool> pred)
 		{
@@ -6599,9 +6599,15 @@ namespace Keysharp.Compilation.Syntax
 		// is an implicit static, global or local by its assume mode. `assigned` is every name it assigns, in order, and a null
 		// funcName backs no static with a field.
 		private FunctionScope ClassifyScope(FunctionScope parent, bool isStatic, IEnumerable<string> paramLowers, HashSet<string> byRef,
-			List<Stmt> body, Expr arrow, string funcName, ref List<string> assigned)
+			List<Stmt> body, Expr arrow, string funcName, ref List<string> assigned, bool prepareStorage = false)
 		{
 			var scope = new FunctionScope(parent, isStatic) { Body = body, Arrow = arrow };
+			List<string> references = null;
+			void Reference(string name)
+			{
+				if (prepareStorage && name != null)
+					(references ??= _scratchListStrings.Get()).Add(name);
+			}
 
 			foreach (var p in paramLowers)
 			{
@@ -6618,6 +6624,8 @@ namespace Keysharp.Compilation.Syntax
 			foreach (var st in body)
 				VisitScope(st, statement =>
 				{
+					if (statement is ForStmt loop)
+						foreach (var name in loop.Vars) Reference(name);
 					if (statement is FunctionDecl fd)
 						scope.Nested.Add(fd);
 					else if (statement is DeclStmt d)
@@ -6634,6 +6642,8 @@ namespace Keysharp.Compilation.Syntax
 			// Collect body features during the named-arrow scan; nested callables have their own scopes.
 			Func<Expr, bool> collect = expression =>
 			{
+				if (expression is UnaryExpr { Op: "&" } reference)
+					Reference(NakedVariable(reference.Operand)?.Name);
 				if (expression is FatArrowExpr { Name: not null } fa)
 					scope.Nested.Add(ArrowDecl(fa));
 
@@ -6688,6 +6698,20 @@ namespace Keysharp.Compilation.Syntax
 			{
 				_ = scope.Locals.Remove("this");
 				_ = scope.Globals.Remove("this");
+			}
+			// Known references choose storage before declarations and reads are emitted; nested or implicit references
+			// can still discover a box later and use the settlement fallback.
+			if (prepareStorage)
+			{
+				if (scope.HasDerefReference)
+					foreach (var name in scope.Locals)
+						if (scope.Own(name) is { Storage: VarStorage.Local } variable) _ = LocalBox(variable);
+				if (references != null)
+				{
+					foreach (var name in references)
+						if (scope.Own(name) is { Storage: VarStorage.Local } variable) _ = LocalBox(variable);
+					_scratchListStrings.Return(references);
+				}
 			}
 
 			_scratchCaseInsensitiveHashStrings.Return(seen);
@@ -6833,7 +6857,7 @@ namespace Keysharp.Compilation.Syntax
 				programMembers.Add(SyntaxFactory.FieldDeclaration(
 					SyntaxFactory.VariableDeclaration(Ty("Keysharp.Runtime.OperatorManifest")).AddVariables(
 						SyntaxFactory.VariableDeclarator(NameMangler.OperatorManifestField).WithInitializer(
-							SyntaxFactory.EqualsValueClause(New("Keysharp.Runtime.OperatorManifest", _operatorDeclarations.ToArray())))))
+							SyntaxFactory.EqualsValueClause(New("Keysharp.Runtime.OperatorManifest", CollectionsMarshal.AsSpan(_operatorDeclarations))))))
 					.AddModifiers(PrivateTok, StaticTok, SyntaxFactory.Token(SyntaxKind.ReadOnlyKeyword)));
 			programMembers.AddRange(moduleClasses);
 			programMembers.Add(BuildOuterAuto(execOrder));
@@ -6891,7 +6915,7 @@ namespace Keysharp.Compilation.Syntax
 			if (givenName != null && givenName != fileName) setNameArgs.Add(Str(givenName));
 			var tryStmts = new List<StatementSyntax>
 			{
-				ExprStmt(Inv(Member(Id("MainScript"), "SetName"), setNameArgs.ToArray())),
+				ExprStmt(Inv(Member(Id("MainScript"), "SetName"), CollectionsMarshal.AsSpan(setNameArgs))),
 			};
 			// NoTrayIcon, the tray icon and the theme need no emission here: the Script constructor
 			// applies them from the manifest embedded in this very assembly, before any chrome exists.
@@ -6994,21 +7018,56 @@ namespace Keysharp.Compilation.Syntax
 		// Generated code uses clean, fully-qualified framework names. A user class/module that would shadow a framework
 		// namespace (System/Keysharp) or structural root (Program/…) is instead given a non-colliding C# type name by
 		// the mangler (NameMangler.ClassType / ModuleClass), so these helpers never need alias/global:: qualification.
-		private static ExpressionSyntax Access(string dotted)
+		private static ExpressionSyntax Access(string dotted) =>
+			IsRuntimePath(dotted) ? QualifiedSyntaxCache<ExpressionSyntax>.Get(dotted, BuildAccess) : BuildAccess(dotted);
+
+		private static ExpressionSyntax BuildAccess(string dotted)
 		{
-			var parts = dotted.Split('.');
-			ExpressionSyntax e = Id(parts[0]);
-			for (var i = 1; i < parts.Length; i++)
-				e = SyntaxFactory.MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression, e, Id(parts[i]));
+			ExpressionSyntax e = null;
+			foreach (var part in dotted.AsSpan().Split('.'))
+			{
+				var id = Id(dotted.AsSpan(part).ToString());
+				e = e == null ? id : SyntaxFactory.MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression, e, id);
+			}
 			return e;
 		}
 
-		private static NameSyntax QName(string dotted)
+		private static NameSyntax QName(string dotted) =>
+			IsRuntimePath(dotted) ? QualifiedSyntaxCache<NameSyntax>.Get(dotted, BuildName) : BuildName(dotted);
+
+		private static NameSyntax BuildName(string dotted)
 		{
-			var parts = dotted.Split('.');
-			NameSyntax n = Id(parts[0]);
-			for (var i = 1; i < parts.Length; i++) n = SyntaxFactory.QualifiedName(n, Id(parts[i]));
+			NameSyntax n = null;
+			foreach (var part in dotted.AsSpan().Split('.'))
+			{
+				var id = Id(dotted.AsSpan(part).ToString());
+				n = n == null ? id : SyntaxFactory.QualifiedName(n, id);
+			}
 			return n;
+		}
+
+		private static bool IsRuntimePath(string dotted) =>
+			dotted.StartsWith("Keysharp.Runtime.", StringComparison.Ordinal) || dotted.StartsWith("Keysharp.Builtins.", StringComparison.Ordinal)
+			|| dotted.StartsWith("System.", StringComparison.Ordinal) || dotted.StartsWith("MainScript.", StringComparison.Ordinal);
+
+		// Detached syntax is immutable. Bound the shared caches because inline C# can introduce names under these roots.
+		private static class QualifiedSyntaxCache<T> where T : SyntaxNode
+		{
+			private const int Capacity = 512;
+			private static readonly ConcurrentDictionary<string, T> nodes = new(StringComparer.Ordinal);
+			private static readonly Lock gate = new();
+
+			internal static T Get(string dotted, Func<string, T> build)
+			{
+				if (nodes.TryGetValue(dotted, out var node)) return node;
+				if (nodes.Count >= Capacity) return build(dotted);
+				lock (gate)
+				{
+					if (nodes.TryGetValue(dotted, out node)) return node;
+					if (nodes.Count >= Capacity) return build(dotted);
+					return nodes[dotted] = build(dotted);
+				}
+			}
 		}
 
 		private static TypeSyntax Ty(string dotted) => QName(dotted);
@@ -7016,20 +7075,22 @@ namespace Keysharp.Compilation.Syntax
 			SyntaxFactory.MemberAccessExpression(SyntaxKind.SimpleMemberAccessExpression, e, Id(name));
 		private static ArgumentSyntax Arg(ExpressionSyntax e) => SyntaxFactory.Argument(e);
 
-		private static InvocationExpressionSyntax Inv(ExpressionSyntax callee, params ExpressionSyntax[] args) =>
+		private static InvocationExpressionSyntax Inv(ExpressionSyntax callee, params ReadOnlySpan<ExpressionSyntax> args) =>
 			SyntaxFactory.InvocationExpression(callee, ArgList(args));
 
-		private static ExpressionSyntax New(string dottedType, params ExpressionSyntax[] args) =>
+		private static ExpressionSyntax New(string dottedType, params ReadOnlySpan<ExpressionSyntax> args) =>
 			SyntaxFactory.ObjectCreationExpression(Ty(dottedType)).WithArgumentList(ArgList(args));
 
-		// Roslyn sizes its list builder from a collection but starts a lazy sequence at three and grows, so the
-		// arguments are wrapped into an array first.
-		private static ArgumentListSyntax ArgList(IReadOnlyList<ExpressionSyntax> args)
-		{
-			if (args.Count == 0)
-				return SyntaxFactory.ArgumentList(SyntaxFactory.SeparatedList(Array.Empty<ArgumentSyntax>()));//Explicitly pass an empty array to avoid Roslyn internally creating an empty array on each call.
+		private static readonly ArgumentListSyntax EmptyArgList = SyntaxFactory.ArgumentList();
+		private static ArgumentListSyntax ArgList(List<ExpressionSyntax> args) => ArgList(CollectionsMarshal.AsSpan(args));
 
-			var nodes = new ArgumentSyntax[args.Count];
+		private static ArgumentListSyntax ArgList(ReadOnlySpan<ExpressionSyntax> args)
+		{
+			if (args.Length == 0) return EmptyArgList;
+			if (args.Length == 1) return SyntaxFactory.ArgumentList(SyntaxFactory.SingletonSeparatedList(Arg(args[0])));
+
+			// A sized collection avoids Roslyn growing its list builder for a lazy sequence.
+			var nodes = new ArgumentSyntax[args.Length];
 
 			for (var i = 0; i < nodes.Length; i++)
 				nodes[i] = Arg(args[i]);
@@ -7041,8 +7102,8 @@ namespace Keysharp.Compilation.Syntax
 		// detached syntax node is immutable and may be shared between trees.
 		private static readonly ConcurrentDictionary<string, ExpressionSyntax> scriptAccess = new(StringComparer.Ordinal);
 
-		private static ExpressionSyntax Op(string method, params ExpressionSyntax[] args) =>
-			Inv(scriptAccess.GetOrAdd(method, static m => Access("Keysharp.Runtime.Script." + m)), args);
+		private static ExpressionSyntax Op(string method, params ReadOnlySpan<ExpressionSyntax> args) =>
+			Inv(scriptAccess.GetOrAdd(method, static m => BuildAccess("Keysharp.Runtime.Script." + m)), args);
 
 		private static ExpressionSyntax RefSet(ExpressionSyntax reference, ExpressionSyntax value, string name) =>
 			Inv(Access("Keysharp.Builtins.Refs.SetValue"), reference, value, Str(name));
@@ -7069,7 +7130,7 @@ namespace Keysharp.Compilation.Syntax
 			SyntaxFactory.AssignmentExpression(SyntaxKind.SimpleAssignmentExpression, target, value);
 
 		private static StatementSyntax ExprStmt(ExpressionSyntax e) => SyntaxFactory.ExpressionStatement(e);
-		private static StatementSyntax CallStmt(string dotted, params ExpressionSyntax[] args) => ExprStmt(Inv(Access(dotted), args));
+		private static StatementSyntax CallStmt(string dotted, params ReadOnlySpan<ExpressionSyntax> args) => ExprStmt(Inv(Access(dotted), args));
 
 		private static StatementSyntax TryFinally(BlockSyntax tryBody, BlockSyntax finallyBody) =>
 			SyntaxFactory.TryStatement().WithBlock(tryBody).WithFinally(SyntaxFactory.FinallyClause(finallyBody));
