@@ -50,6 +50,10 @@ Windows packaging restores WiX from NuGet. On Linux, generating the Debian packa
 requires `dpkg-dev`; the Launchpad source uploads are described in
 [Keysharp.Install/ppa/README.md](../Keysharp.Install/ppa/README.md).
 
+Build-only project references restore the bundled components without adding their
+parser, compiler or package-provider dependencies to the application's runtime
+dependency graph. The packagers need no separate component restore step.
+
 macOS packaging uses Apple's `pkgbuild`, `productbuild` and `hdiutil`. The PKG
 installs the apps for all users or only the current user, and its optional
 terminal-command, VS Code and launch choices are payload-free packages whose

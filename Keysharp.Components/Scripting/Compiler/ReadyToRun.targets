@@ -55,7 +55,7 @@
     <ItemGroup>
       <_CompilerProfileScript Include="$(MSBuildThisFileDirectory)../../../Keysharp.Install/payload/Template.ks;$(MSBuildThisFileDirectory)../../../Keysharp/Scripts/WindowSpy.ks;$(MSBuildThisFileDirectory)../../../Keysharp.Install/payload/Packages.ks;$(MSBuildThisFileDirectory)../../../Keysharp.Install/payload/Dash.ks;$(MSBuildThisFileDirectory)../../../demos/ClipboardHistory.ks;$(MSBuildThisFileDirectory)../../../demos/InputHUD.ks;$(MSBuildThisFileDirectory)../../../demos/WindowGrab.ks;$(MSBuildThisFileDirectory)../../../demos/WindowTiler.ks" />
       <_CompilerProfileInclude Include="$(MSBuildThisFileDirectory)../../../demos/Shell.ks" />
-      <_CompilerProfileBinary Include="@(_CompilerProfileHost);$(_CompilerProfileHostDirectory)Keysharp.Core.dll;$(_CompilerProfileHostDirectory)Keysharp.Components.Scripting.dll;$(_CompilerProfileHostDirectory)Keysharp.deps.json;$(_CompilerProfileHostDirectory)Keysharp.runtimeconfig.json;@(_BundledScriptingComponentPayload)" />
+      <_CompilerProfileBinary Include="@(_CompilerProfileHost);$(_CompilerProfileHostDirectory)Keysharp.Core.dll;$(_CompilerProfileHostDirectory)Keysharp.Components.Scripting.dll;$(_CompilerProfileHostDirectory)Keysharp.deps.json;$(_CompilerProfileHostDirectory)Keysharp.runtimeconfig.json;@(_BundledComponentPayload)" />
       <_CompilerProfileConfiguration Include="$(NETCoreSdkVersion)|$([System.Environment]::Version)|$(NETCoreSdkRuntimeIdentifier)|$(_CompilerProfileTool)" />
       <_CompilerProfileConfiguration Include="@(_CompilerProfileBinary->'%(FullPath)');@(_CompilerProfileScript->'%(FullPath)');@(_CompilerProfileInclude->'%(FullPath)')" />
       <FileWrites Include="$(ScriptingCompilerProfile);$(_CompilerProfileDirectory)inputs.txt" />

@@ -116,11 +116,6 @@ buildDotnetModule rec {
     "Keysharp/Keysharp.csproj"
     "Keyview/Keyview.csproj"
   ];
-  # Runtime-loaded components need an explicit restore before the offline publish builds them.
-  testProjectFile = [
-    "Keysharp.Components/Scripting/Compiler/Keysharp.Components.Scripting.Compiler.csproj"
-    "Keysharp.Components/Scripting/Parser/Keysharp.Components.Scripting.Parser.csproj"
-  ];
   nugetDeps = ./deps.json;
   dotnet-sdk = dotnetCorePackages.sdk_10_0;
   dotnet-runtime = dotnet-sdk.runtime;

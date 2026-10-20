@@ -14,6 +14,66 @@
     <true/>
 	<key>LSMinimumSystemVersion</key>
 	<string>15.0</string>
+	<key>CFBundleDocumentTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>Keysharp Script</string>
+			<key>CFBundleTypeRole</key>
+			<string>Shell</string>
+			<key>LSHandlerRank</key>
+			<string>Owner</string>
+			<key>CFBundleTypeExtensions</key>
+			<array><string>ahk</string><string>ks</string></array>
+			<key>LSItemContentTypes</key>
+			<array><string>org.keysharp.script</string></array>
+		</dict>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>Compiled Keysharp Script</string>
+			<key>CFBundleTypeRole</key>
+			<string>Shell</string>
+			<key>LSHandlerRank</key>
+			<string>Owner</string>
+			<key>CFBundleTypeExtensions</key>
+			<array><string>cks</string></array>
+			<key>LSItemContentTypes</key>
+			<array><string>org.keysharp.compiled-script</string></array>
+		</dict>
+	</array>
+	<key>UTExportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeIdentifier</key>
+			<string>org.keysharp.script</string>
+			<key>UTTypeDescription</key>
+			<string>Keysharp Script</string>
+			<key>UTTypeConformsTo</key>
+			<array><string>public.source-code</string></array>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array><string>ahk</string><string>ks</string></array>
+				<key>public.mime-type</key>
+				<string>application/x-keysharp</string>
+			</dict>
+		</dict>
+		<dict>
+			<key>UTTypeIdentifier</key>
+			<string>org.keysharp.compiled-script</string>
+			<key>UTTypeDescription</key>
+			<string>Compiled Keysharp Script</string>
+			<key>UTTypeConformsTo</key>
+			<array><string>public.data</string></array>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array><string>cks</string></array>
+				<key>public.mime-type</key>
+				<string>application/x-keysharp-compiled</string>
+			</dict>
+		</dict>
+	</array>
 	<key>NSAppleEventsUsageDescription</key>
 	<string>Keysharp scripts can use WinHide/WinShow/WinActivate and similar commands to control other applications, which requires sending them Apple Events.</string>
 </dict>

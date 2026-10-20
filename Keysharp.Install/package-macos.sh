@@ -150,9 +150,6 @@ publish_projects() {
   # in ~/.dotnet (install.sh), which the apphost finds four levels above Contents/MacOS.
   local APPHOST_DOTNET=../../../../.dotnet
   [[ "${RID}" == osx-arm64 ]] || APPHOST_DOTNET="${APPHOST_DOTNET}/x64"
-  # Keysharp builds its scripting components through an MSBuild task rather than a project reference,
-  # so its own restore never reaches them.
-  dotnet restore "${ROOT}/Keysharp.Components/Scripting/Compiler/Keysharp.Components.Scripting.Compiler.csproj" --nologo
   for proj in Keysharp Keyview; do
     rm -rf "${PUBLISH_DIR}/${proj}"
     dotnet publish "${ROOT}/${proj}/${proj}.csproj" -c "${CONFIG}" -r "${RID}" \
@@ -218,83 +215,6 @@ set_bundle_metadata() {
   set_plist_value "${plist}" "CFBundleVersion" string "${VERSION}"
   set_plist_value "${plist}" "LSMinimumSystemVersion" string "15.0"
   set_plist_value "${plist}" "NSHumanReadableCopyright" string "Copyright 2020-Present Keysharp contributors"
-  plutil -lint "${plist}" >/dev/null
-}
-
-add_document_types() {
-  local app="$1"
-  local plist="${app}/Contents/Info.plist"
-
-  [[ -f "${plist}" ]] || die "Missing Info.plist: ${plist}"
-
-  plistbuddy -c "Delete :CFBundleDocumentTypes" "${plist}" 2>/dev/null || true
-  plistbuddy -c "Delete :UTExportedTypeDeclarations" "${plist}" 2>/dev/null || true
-
-  plistbuddy -c "Add :CFBundleDocumentTypes array" "${plist}"
-
-  plistbuddy -c "Add :CFBundleDocumentTypes:0 dict" "${plist}"
-  plistbuddy -c "Add :CFBundleDocumentTypes:0:CFBundleTypeName string 'Keysharp Script'" "${plist}"
-  plistbuddy -c "Add :CFBundleDocumentTypes:0:CFBundleTypeRole string Shell" "${plist}"
-  plistbuddy -c "Add :CFBundleDocumentTypes:0:LSHandlerRank string Owner" "${plist}"
-  plistbuddy -c "Add :CFBundleDocumentTypes:0:CFBundleTypeExtensions array" "${plist}"
-  plistbuddy -c "Add :CFBundleDocumentTypes:0:CFBundleTypeExtensions:0 string ahk" "${plist}"
-  plistbuddy -c "Add :CFBundleDocumentTypes:0:CFBundleTypeExtensions:1 string ks" "${plist}"
-  plistbuddy -c "Add :CFBundleDocumentTypes:0:LSItemContentTypes array" "${plist}"
-  plistbuddy -c "Add :CFBundleDocumentTypes:0:LSItemContentTypes:0 string org.keysharp.script" "${plist}"
-
-  plistbuddy -c "Add :CFBundleDocumentTypes:1 dict" "${plist}"
-  plistbuddy -c "Add :CFBundleDocumentTypes:1:CFBundleTypeName string 'Compiled Keysharp Script'" "${plist}"
-  plistbuddy -c "Add :CFBundleDocumentTypes:1:CFBundleTypeRole string Shell" "${plist}"
-  plistbuddy -c "Add :CFBundleDocumentTypes:1:LSHandlerRank string Owner" "${plist}"
-  plistbuddy -c "Add :CFBundleDocumentTypes:1:CFBundleTypeExtensions array" "${plist}"
-  plistbuddy -c "Add :CFBundleDocumentTypes:1:CFBundleTypeExtensions:0 string cks" "${plist}"
-  plistbuddy -c "Add :CFBundleDocumentTypes:1:LSItemContentTypes array" "${plist}"
-  plistbuddy -c "Add :CFBundleDocumentTypes:1:LSItemContentTypes:0 string org.keysharp.compiled-script" "${plist}"
-
-  plistbuddy -c "Add :UTExportedTypeDeclarations array" "${plist}"
-
-  plistbuddy -c "Add :UTExportedTypeDeclarations:0 dict" "${plist}"
-  plistbuddy -c "Add :UTExportedTypeDeclarations:0:UTTypeIdentifier string org.keysharp.script" "${plist}"
-  plistbuddy -c "Add :UTExportedTypeDeclarations:0:UTTypeDescription string 'Keysharp Script'" "${plist}"
-  plistbuddy -c "Add :UTExportedTypeDeclarations:0:UTTypeConformsTo array" "${plist}"
-  plistbuddy -c "Add :UTExportedTypeDeclarations:0:UTTypeConformsTo:0 string public.source-code" "${plist}"
-  plistbuddy -c "Add :UTExportedTypeDeclarations:0:UTTypeTagSpecification dict" "${plist}"
-  plistbuddy -c "Add :UTExportedTypeDeclarations:0:UTTypeTagSpecification:public.filename-extension array" "${plist}"
-  plistbuddy -c "Add :UTExportedTypeDeclarations:0:UTTypeTagSpecification:public.filename-extension:0 string ahk" "${plist}"
-  plistbuddy -c "Add :UTExportedTypeDeclarations:0:UTTypeTagSpecification:public.filename-extension:1 string ks" "${plist}"
-  plistbuddy -c "Add :UTExportedTypeDeclarations:0:UTTypeTagSpecification:public.mime-type string application/x-keysharp" "${plist}"
-
-  plistbuddy -c "Add :UTExportedTypeDeclarations:1 dict" "${plist}"
-  plistbuddy -c "Add :UTExportedTypeDeclarations:1:UTTypeIdentifier string org.keysharp.compiled-script" "${plist}"
-  plistbuddy -c "Add :UTExportedTypeDeclarations:1:UTTypeDescription string 'Compiled Keysharp Script'" "${plist}"
-  plistbuddy -c "Add :UTExportedTypeDeclarations:1:UTTypeConformsTo array" "${plist}"
-  plistbuddy -c "Add :UTExportedTypeDeclarations:1:UTTypeConformsTo:0 string public.data" "${plist}"
-  plistbuddy -c "Add :UTExportedTypeDeclarations:1:UTTypeTagSpecification dict" "${plist}"
-  plistbuddy -c "Add :UTExportedTypeDeclarations:1:UTTypeTagSpecification:public.filename-extension array" "${plist}"
-  plistbuddy -c "Add :UTExportedTypeDeclarations:1:UTTypeTagSpecification:public.filename-extension:0 string cks" "${plist}"
-  plistbuddy -c "Add :UTExportedTypeDeclarations:1:UTTypeTagSpecification:public.mime-type string application/x-keysharp-compiled" "${plist}"
-
-  plutil -lint "${plist}" >/dev/null
-}
-
-add_editor_document_types() {
-  local app="$1"
-  local plist="${app}/Contents/Info.plist"
-
-  [[ -f "${plist}" ]] || die "Missing Info.plist: ${plist}"
-
-  plistbuddy -c "Delete :CFBundleDocumentTypes" "${plist}" 2>/dev/null || true
-  plistbuddy -c "Add :CFBundleDocumentTypes array" "${plist}"
-  plistbuddy -c "Add :CFBundleDocumentTypes:0 dict" "${plist}"
-  plistbuddy -c "Add :CFBundleDocumentTypes:0:CFBundleTypeName string 'Keysharp Script'" "${plist}"
-  plistbuddy -c "Add :CFBundleDocumentTypes:0:CFBundleTypeRole string Editor" "${plist}"
-  plistbuddy -c "Add :CFBundleDocumentTypes:0:LSHandlerRank string Alternate" "${plist}"
-  plistbuddy -c "Add :CFBundleDocumentTypes:0:CFBundleTypeExtensions array" "${plist}"
-  plistbuddy -c "Add :CFBundleDocumentTypes:0:CFBundleTypeExtensions:0 string ahk" "${plist}"
-  plistbuddy -c "Add :CFBundleDocumentTypes:0:CFBundleTypeExtensions:1 string ks" "${plist}"
-  plistbuddy -c "Add :CFBundleDocumentTypes:0:LSItemContentTypes array" "${plist}"
-  plistbuddy -c "Add :CFBundleDocumentTypes:0:LSItemContentTypes:0 string org.keysharp.script" "${plist}"
-
   plutil -lint "${plist}" >/dev/null
 }
 
@@ -386,8 +306,6 @@ stage_payload() {
 
   set_bundle_metadata "${PKG_ROOT}/Applications/Keysharp.app"
   set_bundle_metadata "${PKG_ROOT}/Applications/Keyview.app"
-  add_document_types "${PKG_ROOT}/Applications/Keysharp.app"
-  add_editor_document_types "${PKG_ROOT}/Applications/Keyview.app"
   clean_app_bundle "${PKG_ROOT}/Applications/Keysharp.app"
   clean_app_bundle "${PKG_ROOT}/Applications/Keyview.app"
 

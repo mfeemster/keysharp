@@ -218,11 +218,7 @@ jobs:
           bash Keysharp.Install/linux/tests/application-channel-policy.sh
           bash Keysharp.Install/linux/tests/setup-resolution-policy.sh
 
-      # The whole solution, never a list of projects. Naming projects individually is what let
-      # Keysharp.Components, Keysharp.Tests, Keyview and the rest go uncompiled here: a hand-maintained list
-      # silently stops covering whatever is added next. Keysharp.Components.Scripting.Parser/.Compiler are
-      # the ones this matters most for - nothing references them at compile time (they are loaded as
-      # components at runtime), so no dependency walk from an apphost reaches them either.
+      # Build the whole solution so tests, benchmarks and tools outside the shipping dependency graph compile too.
       #
       # No -r: every project is AnyCPU and the RID only picks an apphost and resolves native assets, neither
       # of which a compile check looks at (again see Directory.Build.props). RID-specific restore is still

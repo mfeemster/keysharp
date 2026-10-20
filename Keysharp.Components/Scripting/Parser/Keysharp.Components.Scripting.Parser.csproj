@@ -39,11 +39,12 @@
 	<Target Name="ValidateComponentPayload" AfterTargets="Build">
 		<Error Condition="!Exists('$(TargetDir)%(_ComponentPayloadName.Identity)')" Text="Parser component payload is missing %(_ComponentPayloadName.Identity)." />
 	</Target>
-	<Target Name="GetScriptingComponentPayload" DependsOnTargets="Build" Returns="@(_ScriptingComponentPayload)">
+	<Target Name="GetComponentPayload" DependsOnTargets="Build" Returns="@(_ComponentPayload)">
 		<ItemGroup>
-			<_ScriptingComponentPayload Include="@(_ComponentPayloadName->'$(TargetDir)%(Identity)')">
+			<_ComponentPayload Include="@(_ComponentPayloadName->'$(TargetDir)%(Identity)')">
 				<ComponentRelativePath>components\scripting\parser\%(Filename)%(Extension)</ComponentRelativePath>
-			</_ScriptingComponentPayload>
+				<PostprocessAssembly Condition="'%(Extension)' == '.dll'">true</PostprocessAssembly>
+			</_ComponentPayload>
 		</ItemGroup>
 	</Target>
 </Project>

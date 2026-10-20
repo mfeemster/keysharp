@@ -54,11 +54,13 @@
 		<Error Condition="!Exists('%(_ProviderPayload.Identity)')" Text="NuGet provider payload is missing %(_ProviderPayload.Filename)%(_ProviderPayload.Extension)." />
 	</Target>
 
-	<Target Name="GetPackageProviderPayload" DependsOnTargets="Build" Returns="@(_PackageProviderPayload)">
+	<Target Name="GetComponentPayload" DependsOnTargets="Build" Returns="@(_ComponentPayload)">
 		<ItemGroup>
-			<_PackageProviderPayload Include="@(_ProviderPayloadName->'$(TargetDir)%(Identity)')">
-				<ProviderRelativePath>components\packages\nuget\%(Filename)%(Extension)</ProviderRelativePath>
-			</_PackageProviderPayload>
+			<_ComponentPayload Include="@(_ProviderPayloadName->'$(TargetDir)%(Identity)')">
+				<ComponentRelativePath>components\packages\nuget\%(Filename)%(Extension)</ComponentRelativePath>
+				<!-- Providers load on demand, so their assemblies remain IL. -->
+				<PostprocessAssembly>false</PostprocessAssembly>
+			</_ComponentPayload>
 		</ItemGroup>
 	</Target>
 </Project>

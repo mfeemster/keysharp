@@ -8,100 +8,54 @@
     <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == ''">$(NETCoreSdkRuntimeIdentifier)</RuntimeIdentifier>
   </PropertyGroup>
 
-  <!-- Each payload target below builds its component, so none of them may inherit NoBuild from an outer
-       publish that sets it: the SDK rejects that combination outright (NETSDK1085). -->
-  <Target Name="GetBundledPackageProviderPayload"
-          Condition="'$(ShipsPackageProviders)' == 'true'">
-    <MSBuild Projects="$(MSBuildThisFileDirectory)Keysharp.Components\Packages\NuGet\Keysharp.Components.Packages.NuGet.csproj"
-             Targets="GetPackageProviderPayload"
+  <ItemGroup Condition="'$(IsKeysharpShippingProject)' == 'true'">
+    <_BundledComponentProject Include="$(MSBuildThisFileDirectory)Keysharp.Components\Scripting\Compiler\Keysharp.Components.Scripting.Compiler.csproj;
+                                       $(MSBuildThisFileDirectory)Keysharp.Components\Scripting\Parser\Keysharp.Components.Scripting.Parser.csproj"
+                              Condition="'$(ShipsScriptingComponents)' == 'true'" />
+    <_BundledComponentProject Include="$(MSBuildThisFileDirectory)Keysharp.Components\Packages\NuGet\Keysharp.Components.Packages.NuGet.csproj"
+                              Condition="'$(ShipsPackageProviders)' == 'true'" />
+    <!-- Build-only references make restore visit the components without adding their dependencies to the host. -->
+    <ProjectReference Include="@(_BundledComponentProject)" ReferenceOutputAssembly="false" Private="false"
+                      GlobalPropertiesToRemove="RuntimeIdentifier;SelfContained;PublishSingleFile;PublishTrimmed;NoBuild" />
+  </ItemGroup>
+
+  <!-- Payload collection also builds components during NoBuild publishing; inheriting NoBuild would fail with NETSDK1085. -->
+  <Target Name="GetBundledComponentPayload" Condition="'@(_BundledComponentProject)' != ''">
+    <MSBuild Projects="@(_BundledComponentProject)"
+             Targets="GetComponentPayload"
              Properties="Configuration=$(Configuration);TargetFramework=$(TargetFramework)"
              RemoveProperties="RuntimeIdentifier;SelfContained;PublishSingleFile;PublishTrimmed;NoBuild">
-      <Output TaskParameter="TargetOutputs" ItemName="_BundledPackageProviderPayload" />
+      <Output TaskParameter="TargetOutputs" ItemName="_BundledComponentPayload" />
     </MSBuild>
   </Target>
 
-  <Target Name="GetBundledScriptingComponentPayload"
-          Condition="'$(ShipsScriptingComponents)' == 'true'">
-    <MSBuild Projects="$(MSBuildThisFileDirectory)Keysharp.Components\Scripting\Compiler\Keysharp.Components.Scripting.Compiler.csproj"
-             Targets="GetScriptingComponentPayload"
-             Properties="Configuration=$(Configuration);TargetFramework=$(TargetFramework)"
-             RemoveProperties="RuntimeIdentifier;SelfContained;PublishSingleFile;PublishTrimmed;NoBuild">
-      <Output TaskParameter="TargetOutputs" ItemName="_BundledScriptingComponentPayload" />
-    </MSBuild>
-    <MSBuild Projects="$(MSBuildThisFileDirectory)Keysharp.Components\Scripting\Parser\Keysharp.Components.Scripting.Parser.csproj"
-             Targets="GetScriptingComponentPayload"
-             Properties="Configuration=$(Configuration);TargetFramework=$(TargetFramework)"
-             RemoveProperties="RuntimeIdentifier;SelfContained;PublishSingleFile;PublishTrimmed;NoBuild">
-      <Output TaskParameter="TargetOutputs" ItemName="_BundledScriptingComponentPayload" />
-    </MSBuild>
-  </Target>
-
-  <Target Name="CopyBundledScriptingComponentsToRidOutput"
+  <Target Name="CopyBundledComponentsToOutput"
           AfterTargets="Build"
-          DependsOnTargets="GetBundledScriptingComponentPayload"
-          Condition="'$(ShipsScriptingComponents)' == 'true' AND '$(RuntimeIdentifier)' != ''">
-    <Copy SourceFiles="@(_BundledScriptingComponentPayload)"
-          DestinationFiles="@(_BundledScriptingComponentPayload->'$(TargetDir)%(ComponentRelativePath)')"
-          SkipUnchangedFiles="true" />
+          DependsOnTargets="GetBundledComponentPayload"
+          Condition="'@(_BundledComponentProject)' != '' AND ('$(RuntimeIdentifier)' != '' OR '$(LauncherPath)' != '')">
+    <Copy SourceFiles="@(_BundledComponentPayload)"
+          DestinationFiles="@(_BundledComponentPayload->'$(TargetDir)%(ComponentRelativePath)')"
+          SkipUnchangedFiles="true" Condition="'$(RuntimeIdentifier)' != ''" />
+    <!-- Eto has already collected the build's recorded files before this payload reaches TargetDir. -->
+    <Copy SourceFiles="@(_BundledComponentPayload)"
+          DestinationFiles="@(_BundledComponentPayload->'$(LauncherPath)%(ComponentRelativePath)')"
+          SkipUnchangedFiles="true" Condition="'$(LauncherPath)' != ''" />
   </Target>
 
   <!-- IL inputs can be older than published ReadyToRun images, so copies must also compare file sizes. -->
-  <Target Name="IncludeBundledScriptingComponentsInPublish"
+  <Target Name="IncludeBundledComponentsInPublish"
           AfterTargets="ComputeResolvedFilesToPublishList"
-          DependsOnTargets="GetBundledScriptingComponentPayload"
-          Condition="'$(ShipsScriptingComponents)' == 'true'">
+          DependsOnTargets="GetBundledComponentPayload"
+          Condition="'@(_BundledComponentProject)' != ''">
     <ItemGroup>
-      <ResolvedFileToPublish Include="@(_BundledScriptingComponentPayload)">
-        <RelativePath>%(_BundledScriptingComponentPayload.ComponentRelativePath)</RelativePath>
-        <TargetPath>%(_BundledScriptingComponentPayload.ComponentRelativePath)</TargetPath>
-        <PostprocessAssembly Condition="'%(_BundledScriptingComponentPayload.Extension)' == '.dll'">true</PostprocessAssembly>
+      <ResolvedFileToPublish Include="@(_BundledComponentPayload)">
+        <RelativePath>%(_BundledComponentPayload.ComponentRelativePath)</RelativePath>
+        <TargetPath>%(_BundledComponentPayload.ComponentRelativePath)</TargetPath>
+        <PostprocessAssembly>%(_BundledComponentPayload.PostprocessAssembly)</PostprocessAssembly>
         <CopyToPublishDirectory>Always</CopyToPublishDirectory>
         <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       </ResolvedFileToPublish>
     </ItemGroup>
-  </Target>
-
-  <Target Name="CopyBundledPackageProvidersToRidOutput"
-          AfterTargets="Build"
-          DependsOnTargets="GetBundledPackageProviderPayload"
-          Condition="'$(ShipsPackageProviders)' == 'true' AND '$(RuntimeIdentifier)' != ''">
-    <Copy SourceFiles="@(_BundledPackageProviderPayload)"
-          DestinationFiles="@(_BundledPackageProviderPayload->'$(TargetDir)%(ProviderRelativePath)')"
-          SkipUnchangedFiles="true" />
-  </Target>
-
-  <Target Name="IncludeBundledPackageProvidersInPublish"
-          AfterTargets="ComputeResolvedFilesToPublishList"
-          DependsOnTargets="GetBundledPackageProviderPayload"
-          Condition="'$(ShipsPackageProviders)' == 'true'">
-    <ItemGroup>
-      <ResolvedFileToPublish Include="@(_BundledPackageProviderPayload)">
-        <RelativePath>%(_BundledPackageProviderPayload.ProviderRelativePath)</RelativePath>
-        <TargetPath>%(_BundledPackageProviderPayload.ProviderRelativePath)</TargetPath>
-        <!-- Providers load on demand; leave their assemblies as IL to keep the package small. -->
-        <PostprocessAssembly>false</PostprocessAssembly>
-        <CopyToPublishDirectory>Always</CopyToPublishDirectory>
-        <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-      </ResolvedFileToPublish>
-    </ItemGroup>
-  </Target>
-
-  <!-- Eto assembles the macOS .app bundle from the files MSBuild recorded while building, which happens before
-       the two targets above drop their payload into $(TargetDir), so the bundle would ship without a compiler and
-       every script it runs would fail to load. Mirror both payloads into the bundle; the publish path needs no
-       equivalent because it copies the publish directory wholesale. -->
-  <Target Name="CopyBundledComponentsToAppBundle"
-          AfterTargets="Build"
-          DependsOnTargets="GetBundledScriptingComponentPayload;GetBundledPackageProviderPayload"
-          Condition="'$(LauncherPath)' != ''">
-    <Copy SourceFiles="@(_BundledScriptingComponentPayload)"
-          DestinationFiles="@(_BundledScriptingComponentPayload->'$(LauncherPath)%(ComponentRelativePath)')"
-          SkipUnchangedFiles="true"
-          Condition="'$(ShipsScriptingComponents)' == 'true'" />
-    <Copy SourceFiles="@(_BundledPackageProviderPayload)"
-          DestinationFiles="@(_BundledPackageProviderPayload->'$(LauncherPath)%(ProviderRelativePath)')"
-          SkipUnchangedFiles="true"
-          Condition="'$(ShipsPackageProviders)' == 'true'" />
   </Target>
 
   <Import Project="Keysharp.Components/Scripting/Compiler/ReadyToRun.targets" />

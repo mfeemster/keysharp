@@ -84,10 +84,6 @@ if [[ -n "${ETO_DIR}" ]]; then
 fi
 
 restore() {
-  # Keysharp builds its scripting components through an MSBuild task rather than a project
-  # reference, so its own restore never reaches them.
-  dotnet restore "${ROOT}/Keysharp.Components/Scripting/Compiler/Keysharp.Components.Scripting.Compiler.csproj" \
-    "${DOTNET_ARGS[@]}"
   for project in Keysharp Keyview; do
     dotnet restore "${ROOT}/${project}/${project}.csproj" -r "${RID}" "${DOTNET_ARGS[@]}"
   done
