@@ -72,6 +72,18 @@ namespace Keysharp.Internals.Invoke
 		internal static IReadOnlyDictionary<string, MethodInfo> BuiltinMethods => builtinMethods.Value;
 		internal static IReadOnlyDictionary<string, PropertyInfo> BuiltinProperties => builtinProperties.Value;
 
+		internal static void PrewarmBuiltinTypes()
+		{
+			try
+			{
+				_ = builtinTypes.Value;
+			}
+			catch (Exception)
+			{
+				// Let script construction report discovery failures on the execution thread.
+			}
+		}
+
 		internal Reflections(Script script)
 		{
 			Initialize(script);

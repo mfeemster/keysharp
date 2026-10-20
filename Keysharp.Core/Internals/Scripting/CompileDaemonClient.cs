@@ -33,7 +33,7 @@ internal static class CompileDaemonClient
 			? TryCompile(request, endpoint, connectTimeoutMs) : DaemonReply.Unavailable;
 
 	internal static DaemonReply TryCompile(ScriptCompileRequest request, CompileDaemonEndpoint endpoint,
-		int connectTimeoutMs = 0, string workingDirectory = null)
+		int connectTimeoutMs = 0, string workingDirectory = null, Action onRequestSent = null)
 	{
 		if (endpoint?.PipeName == null || request.Output != ScriptCompilationOutput.InMemory || request.EmitGeneratedCode)
 			return DaemonReply.Unavailable;
@@ -84,7 +84,16 @@ internal static class CompileDaemonClient
 				name => Environment.GetEnvironmentVariable(name) ?? ""));
 			writer.Flush();
 			serialized.WriteTo(client);
+		}
+		catch (Exception ex) when (ex is IOException or ObjectDisposedException)
+		{
+			return null;
+		}
 
+		onRequestSent?.Invoke();
+
+		try
+		{
 			switch ((CompileDaemonStatus)reader.ReadByte())
 			{
 				case CompileDaemonStatus.Compiled:
