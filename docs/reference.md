@@ -639,7 +639,7 @@ Controlling another application needs **Automation** permission, granted per tar
 		+ In `SetTimer()`:
 			+ In the callback function, `A_EventInfo` is set to the function object used to create the timer.
 			+ This allows the handler to alter the timer by passing the function object back to another call to `SetTimer()`.
-			+ Timers are not disabled when the program menu is shown.
+			+ Timers continue while tray, popup, or menu-bar menus are open.
 	+ `Run/RunWait()` can take an extra string for the argument instead of appending it to the program name string. However, the original functionality still works too.
 		+ The new signature is: `Run/RunWait(Target [, WorkingDir, Options, &OutputVarPID, Args])`.
 	+ `SubStr()` uses a default of 1 for the second parameter, `StartingPos`, to relieve the caller of always having to specify it.
@@ -1072,7 +1072,7 @@ Controlling another application needs **Automation** permission, granted per tar
 			```
 		+ Pseudo-thread state is pooled and reused, so a `Thread` object captures its ID and re-checks it on every access. Once its pseudo-thread ends, `Id`, `Index` and `ExitCode` still answer from captured values and `IsActive` reports false, while everything else throws `TargetError` — a stored object can never silently describe a later pseudo-thread that reused the slot.
 		+ Boolean members follow the library-wide naming rule: `IsActive`/`IsInterruptible` are read-only, `Critical`/`Paused` are settable.
-		+ `Critical`, an exhausted `#MaxThreads` and a visible menu refuse a *thread launch*; they do not stop message dispatch. A posted continuation, and on the main thread a pending `__Delete`, are still served at the uninterruptible thread's pump points, matching AHK, where a Critical thread inside `Sleep` still processes sent messages. Queued timers and hotkeys wait until launches are admitted again, in the order their own queue holds them. `RealThread.Send` is not in this group: its callback runs as a thread of its own on the target, so an uninterruptible target refuses it outright rather than deferring it.
+		+ `Critical` and an exhausted `#MaxThreads` refuse a *thread launch*; they do not stop message dispatch. A posted continuation, and on the main thread a pending `__Delete`, are still served at the uninterruptible thread's pump points, matching AHK, where a Critical thread inside `Sleep` still processes sent messages. Queued timers and hotkeys wait until launches are admitted again, in the order their own queue holds them. `RealThread.Send` is not in this group: its callback runs as a thread of its own on the target, so an uninterruptible target refuses it outright rather than deferring it.
 		+ Outside a loop `A_Index` is a value of the current pseudo-thread, 0 when it starts, which a script may assign.
 		+ There is deliberately no `IsCurrent` property, and likewise no `IsMain` on `RealThread` — identity comparison answers both questions. `RealThread.IsAlive` reports whether the OS thread has not yet terminated.
 		+ `Exit(n)`, or `thr.Exit(n)` on a Thread object, ends that thread with code n, which becomes its `ExitCode` and, as AutoHotkey's pending exit code, the code the script exits with if it exits when that thread ends; a launched thread's code is otherwise dropped, while the auto-execute section's stays pending until the next thread ends.

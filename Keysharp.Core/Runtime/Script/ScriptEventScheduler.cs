@@ -221,7 +221,7 @@ namespace Keysharp.Runtime
 		internal readonly Func<ScriptEventExecutionResult> Execute = execute;
 
 		/// <summary>
-		/// Whether this entry reports launch admission (#MaxThreads, interruptibility, a visible menu) to the pump,
+		/// Whether this entry reports launch admission (#MaxThreads, interruptibility) to the pump,
 		/// i.e. whether <see cref="Execute"/> can return <see cref="ScriptEventExecutionResult.GlobalBlocked"/>.
 		/// Those conditions gate thread launches, not message dispatch — as in AutoHotkey, where a Critical thread
 		/// still processes sent messages — so the pump keeps serving entries labelled false while launches are
@@ -610,8 +610,7 @@ internal bool HasBlockedQueuedWork
 						case ScriptEventExecutionResult.GlobalBlocked:
 							// The entry is parked at the front of its queue. Latch so the rest of this pass skips
 							// launches, keeping that class in order, and keep draining dispatch. A parked launch is
-							// retried by the next pass, not this one, which is the back-pressure that stops the
-							// timer thread refilling into the livelock described at TimerQueuedEvent.Execute.
+							// retried by the next pass, not this one, so blocked launches cannot spin in place.
 							blocked = true;
 							continue;
 						case ScriptEventExecutionResult.LocalBlocked:
@@ -951,15 +950,9 @@ internal bool HasBlockedQueuedWork
 
 				var threads = script.Threads;
 
-				// The thread pool is exhausted, the current thread is uninterruptible, or a menu is displayed: a global
-				// condition that blocks every queued THREAD LAUNCH (the thread-launch path reports the same via
-				// TryStartPseudoThread). It does not block dispatch work, which the pump keeps serving -- matching AHK,
-				// where a Critical thread still processes sent messages and only refuses interrupting threads.
-				// PARK this entry rather than dropping-and-continuing. Returning Dropped here made
-				// TryProcessNextQueuedEvent report Executed, so the pump kept looping while the timer thread refilled the
-				// queue — a livelock that pinned normalQueue, pegged the CPU, and starved the running pseudo-threads so
-				// their slots never freed. Holding timers while a menu is open matches AutoHotkey's g_MenuIsVisible check.
-				if (!threads.AnyThreadsAvailable() || !threads.IsInterruptible() || script.IsMenuVisible)
+				// Thread limits and interruptibility block every queued launch. Park the timer so the pump can
+				// keep serving dispatch work without retrying blocked launches in the same pass.
+				if (!threads.AnyThreadsAvailable() || !threads.IsInterruptible())
 					return ScriptEventExecutionResult.GlobalBlocked;
 
 				// Keep the overdue callback queued while other eligible events continue. Admission changes and

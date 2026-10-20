@@ -984,7 +984,7 @@ Status legend:
 | SetRegView() | 🟢 Full | 🔴 Unsupported | 🔴 Unsupported | 🔴 Unsupported | Sets the registry view used by registry functions, allowing them in a 64-bit script to access the 32-bit registry view. |
 | SetScrollLockState() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | The SetCapsLockState, SetNumLockState and SetScrollLockState functions set the state of the corresponding key. Can also force the key to stay on or off. |
 | SetStoreCapsLockMode() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | The SetStoreCapsLockMode function determines whether to restore the state of the CapsLock key after a Send function. |
-| SetTimer() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Periods are measured from callback start; overdue callbacks coalesce and remain due while blocked by priority or timer permission. Uses ordinary deadline-based waits without requesting higher timer resolution. Callbacks remain serialized on their owning scheduler. |
+| SetTimer() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Periods are measured from callback start; overdue callbacks coalesce and remain due while blocked by priority or timer permission. Timers continue while tray, popup, or menu-bar menus are open. Uses ordinary deadline-based waits without requesting higher timer resolution. Callbacks remain serialized on their owning scheduler. |
 | SetTitleMatchMode() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | The SetTitleMatchMode function sets the matching behavior of the WinTitle parameter in built-in functions such as WinWait. |
 | SetWinDelay() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | The SetWinDelay function sets the delay that will occur after each windowing function, such as WinActivate. |
 | SetWorkingDir() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Changes the script's current working directory. |

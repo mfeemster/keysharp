@@ -365,15 +365,15 @@ namespace Keysharp.Builtins
 			menuId = Interlocked.Increment(ref Script.TheScript.GuiData.menuCount);
 			Script.TheScript.GuiData.allMenus[menuId] = new(this);
 			GetMenu().Name = $"Menu_{menuId}";
-			// Track menu visibility (AutoHotkey's g_MenuIsVisible) so timers are held and the keyboard hook passes
-			// keystrokes through while this menu is open. Visibility is reference-counted per menu id, so overlapping
-			// menus don't clobber each other. Closed fires on every backend; Opened only on WinForms, so the other
+			// Track menu visibility so the keyboard hook passes keystrokes through while this menu is open.
+			// Visibility is reference-counted per menu id, so overlapping menus don't clobber each other.
+			// Closed fires on every backend; Opened only on WinForms, so the other
 			// backends set the flag in Show() instead.
 			MenuItem.Closed += (_, _) => Script.TheScript.SetMenuVisible(menuId, false);
 #if WINDOWS
 			MenuItem.Opened += (_, _) => Script.TheScript.SetMenuVisible(menuId, true);
 			// If the strip is disposed while still marked open (e.g. a non-blocking Show that never raised Closed),
-			// release its contribution so a torn-down menu can't strand the count and hold every timer forever.
+			// release its contribution so input handling doesn't continue to see an open menu.
 			MenuItem.Disposed += (_, _) => Script.TheScript.SetMenuVisible(menuId, false);
 #endif
 		}
@@ -879,9 +879,7 @@ namespace Keysharp.Builtins
 
 		internal void Tsmi_Click(object sender, EventArgs e)
 		{
-			// The menu is closing as this item is chosen; clear visibility up front so the callback (and any timer it
-			// starts) isn't held by the menu-visible guard, regardless of whether Click or Closed fires first. Matches
-			// AutoHotkey clearing g_MenuIsVisible before the menu item's subroutine runs.
+			// Clear visibility before dispatch so input handling sees a dismissed menu even if Click precedes Closed.
 			Script.TheScript.SetMenuVisible(menuId, false);
 
 			if (sender is ToolStripMenuItem tsmi)

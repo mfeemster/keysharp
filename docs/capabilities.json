@@ -10285,8 +10285,8 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "full",
-                     "notes":  "Periods are measured from callback start; overdue callbacks coalesce and remain due while blocked by priority or timer permission. Uses ordinary deadline-based waits without requesting higher timer resolution. Callbacks remain serialized on their owning scheduler.",
-                     "tested-by":  "timer-blocked-admission.ahk; timer-short-callback-keeps-period.ahk; timer-long-callback-coalesces.ahk; timer-during-callback-sleep.ahk"
+                     "notes":  "Periods are measured from callback start; overdue callbacks coalesce and remain due while blocked by priority or timer permission. Timers continue while tray, popup, or menu-bar menus are open. Uses ordinary deadline-based waits without requesting higher timer resolution. Callbacks remain serialized on their owning scheduler.",
+                     "tested-by":  "timer-blocked-admission.ahk; timer-short-callback-keeps-period.ahk; timer-long-callback-coalesces.ahk; timer-during-callback-sleep.ahk; TimerSchedulerTests.MenuVisible"
                  },
                  {
                      "category":  "Environment/System",

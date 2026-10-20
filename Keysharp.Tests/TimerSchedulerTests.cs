@@ -19,6 +19,45 @@ public class TimerSchedulerTests : TestRunner
 	[Test, Category("Threading")]
 	public void LongTimerCoalescing() => Assert.IsTrue(TestScript("timer-long-callback-coalesces", false));
 
+	[TestCase(false), TestCase(true), Category("Threading"), Category("Internal"), Category("Curated")]
+	public void MenuVisible(bool runOnce)
+	{
+		_ = UseQueuedMainContext();
+		var scheduler = s.EventScheduler;
+		var timers = s.FlowData.timers;
+		var calls = 0;
+		var callbackThreadId = 0;
+		var timer = timers.Upsert(new KeysharpFunc((Func<object>)(() =>
+		{
+			calls++;
+			callbackThreadId = Environment.CurrentManagedThreadId;
+			return 0L;
+		})), scheduler, 60_000L, runOnce, 0L);
+		s.SetMenuVisible(1, true);
+
+		try
+		{
+			timer.NextDueTick = 0;
+			scheduler.PumpThreadQueuedEventsCore();
+			Assert.That(calls, Is.EqualTo(1));
+			Assert.That(callbackThreadId, Is.EqualTo(Environment.CurrentManagedThreadId));
+
+			if (!runOnce)
+				timer.NextDueTick = 0;
+
+			scheduler.PumpThreadQueuedEventsCore();
+			Assert.That(calls, Is.EqualTo(runOnce ? 1 : 2));
+			Assert.That(s.IsMenuVisible, Is.True);
+		}
+		finally
+		{
+			s.SetMenuVisible(1, false);
+
+			if (timer.IsActive)
+				timers.DisableOrDelete(timer);
+		}
+	}
+
 	[Test, Category("Threading"), Category("Internal")]
 	public void NotificationDuringPump()
 	{
