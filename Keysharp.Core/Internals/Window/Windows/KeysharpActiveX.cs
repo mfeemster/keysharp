@@ -37,7 +37,8 @@ namespace Keysharp.Internals.Window.Windows
 		{
 			AxText = text;
 			InitializeComponent();
-			//this.Load += KeysharpActiveX_Load;
+			// ATL owns painting, including native background brushes installed by scripts.
+			SetStyle(ControlStyles.UserPaint | ControlStyles.AllPaintingInWmPaint, false);
 
 			if (!loadedDll)
 			{
