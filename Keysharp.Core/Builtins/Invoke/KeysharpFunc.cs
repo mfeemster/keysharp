@@ -90,6 +90,7 @@ namespace Keysharp.Builtins
 
 		}
 
+		public override bool IsBuiltIn => false;
 		public override string Name => "";
 
 		/// <summary>

@@ -563,7 +563,7 @@ Status legend:
 | FormatCs() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Formats text using C#-style format placeholders (1-based indexing adaptation). |
 | FormatTime | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Formats a datetime string according to the parameters. Supports all V2 functionality except for the Dn and Tn options. If you want to specify a specific format, do it in the format parameter. |
 | Func | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Function object type. A callback is passed as a function object, with %"Name"% resolving a name known only at run time to one. |
-| Func.IsBuiltIn | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Whether the function object targets a built-in member. |
+| Func.IsBuiltIn | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Whether the function itself is built-in. BoundFunc objects always return false, even when binding a built-in function with no arguments. |
 | Func.IsByRef() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Returns whether any parameter, or the specified 1-based parameter, is ByRef. |
 | Func.IsClosure | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Keysharp extension. Whether the function object represents a closure over captured locals. |
 | Func.IsMethod | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Keysharp extension. Whether the function object requires a receiver. |

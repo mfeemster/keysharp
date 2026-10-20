@@ -1,3 +1,5 @@
+#ErrorStdOut
+#Warn All, StdOut
 #NoTrayIcon
 #Include <assert>
 
@@ -17,6 +19,11 @@ fo := func_bound
 Assert(fo.Name = "func_bound", A_LineNumber)
 	
 AssertEq(fo.IsBuiltIn, false, A_LineNumber)
+
+AssertEq(InStr.IsBuiltIn, true, A_LineNumber)
+AssertEq(InStr.Bind().IsBuiltIn, false, A_LineNumber)
+AssertEq(InStr.Bind("abc").IsBuiltIn, false, A_LineNumber)
+AssertEq(InStr.Bind().Bind("abc").IsBuiltIn, false, A_LineNumber)
 
 fo.Call(1, 2, 3)
 
@@ -43,6 +50,8 @@ y := 0
 z := 0
 
 bf := fo.Bind(5, 6, 7)
+
+AssertEq(bf.IsBuiltIn, false, A_LineNumber)
 
 bf()
 

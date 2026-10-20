@@ -781,7 +781,8 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "full",
-                     "notes":  "Whether the function object targets a built-in member."
+                     "notes":  "Whether the function itself is built-in. BoundFunc objects always return false, even when binding a built-in function with no arguments.",
+                     "tested-by":  "func-bound.ahk"
                  },
                  {
                      "category":  "Core Language",
