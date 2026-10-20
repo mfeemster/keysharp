@@ -8,9 +8,17 @@ namespace Keysharp.Internals.Invoke
 {
 	internal class ReflectionsData
 	{
-		internal Dictionary<string, MethodInfo> flatPublicStaticMethods = new (500, StringComparer.OrdinalIgnoreCase);
-		internal Dictionary<string, PropertyInfo> flatPublicStaticProperties = new (200, StringComparer.OrdinalIgnoreCase);
-		internal Dictionary<string, Assembly> loadedAssemblies;
+		internal IReadOnlyDictionary<string, MethodInfo> flatPublicStaticMethods => Reflections.BuiltinMethods;
+		internal IReadOnlyDictionary<string, PropertyInfo> flatPublicStaticProperties => Reflections.BuiltinProperties;
+		private Dictionary<string, Assembly> assemblies;
+		internal IReadOnlyDictionary<string, Assembly> loadedAssemblies
+		{
+			get
+			{
+				lock (locker)
+					return assemblies ??= Reflections.GetLoadedAssemblies();
+			}
+		}
 		internal Dictionary<Type, Dictionary<string, FieldInfo>> staticFields = [];
 
 		internal sttd stringToTypeBuiltInMethods = new (StringComparer.OrdinalIgnoreCase);
@@ -30,49 +38,56 @@ namespace Keysharp.Internals.Invoke
 
 	internal class Reflections
 	{
+		private static readonly Lazy<Type[]> builtinTypes = new(static () => typeof(Any).Assembly.GetExportedTypes()
+			.Where(t => t.Namespace != null && t.Namespace.StartsWith("Keysharp.Builtins", StringComparison.Ordinal) && t.IsClass && (t.IsPublic || t.IsNestedPublic)
+				&& !t.IsDefined(typeof(PublicHiddenFromUser), false)).ToArray());
+
+		private static readonly Lazy<IReadOnlyDictionary<string, MethodInfo>> builtinMethods = new(static () =>
+		{
+			var methods = new Dictionary<string, MethodInfo>(500, StringComparer.OrdinalIgnoreCase);
+
+			foreach (var t in builtinTypes.Value)
+				if (t.IsSealed && t.IsAbstract)
+					foreach (var method in t.GetMethods(BindingFlags.Public | BindingFlags.Static))
+						if (!method.IsSpecialName && !method.IsDefined(typeof(PublicHiddenFromUser), false))
+							methods.TryAdd(Script.GetUserDeclaredName(method) ?? method.Name, method);
+
+			return methods;
+		});
+
+		private static readonly Lazy<IReadOnlyDictionary<string, PropertyInfo>> builtinProperties = new(static () =>
+		{
+			var properties = new Dictionary<string, PropertyInfo>(200, StringComparer.OrdinalIgnoreCase);
+
+			foreach (var t in builtinTypes.Value)
+				if (t.IsSealed && t.IsAbstract)
+					foreach (var property in t.GetProperties(BindingFlags.Public | BindingFlags.Static))
+						if (MethodPropertyHolder.HasScriptGetter(property) && !property.IsDefined(typeof(PublicHiddenFromUser), false))
+							properties.TryAdd(Script.GetUserDeclaredName(property) ?? property.Name, property);
+
+			return properties;
+		});
+
+		// Generated calls resolve their built-ins at compile time; dynamic global lookup needs these catalogs.
+		internal static IReadOnlyDictionary<string, MethodInfo> BuiltinMethods => builtinMethods.Value;
+		internal static IReadOnlyDictionary<string, PropertyInfo> BuiltinProperties => builtinProperties.Value;
+
 		internal Reflections(Script script)
 		{
 			Initialize(script);
 		}
 
-		/// <summary>
-		/// This must be manually called before any program is run.
-		/// Normally we'd put this kind of init in the constructor, however it must be able to be manually called
-		/// when running unit tests. Once upon init, then again within the unit test's auto generated program so it can find
-		/// any locally declared methods inside.
-		/// Also note that when running a script from Keysharp.exe, this will get called once when the parser starts in Keysharp, then again
-		/// when the script actually runs. On the second time, there will be an extra assembly loaded, which is the compiled script itself. More system assemblies will also be loaded.
-		/// </summary>
+		/// <summary>Registers cached built-in types in the script's type-name table.</summary>
 		internal static void Initialize(Script script, bool ignoreMainAssembly = false)
 		{
 			var rd = script.ReflectionsData;
-			rd.loadedAssemblies = GetLoadedAssemblies();
 
-			var typesQuery = rd.loadedAssemblies.Values.Where(asm => asm == typeof(Any).Assembly)
-						.SelectMany(t => t.GetExportedTypes())
-						.Where(t => t.Namespace != null && t.Namespace.StartsWith("Keysharp.Builtins", StringComparison.Ordinal) && t.IsClass && (t.IsPublic || t.IsNestedPublic)
-							   && !t.IsDefined(typeof(PublicHiddenFromUser), false));
-
-			var types = typesQuery.ToArray();   // materialize once
-
-			foreach (var t in types)
+			foreach (var t in builtinTypes.Value)
 				rd.stringToTypes[Script.GetUserDeclaredName(t) ?? t.Name] = t;
 
 			// Runtime.Ahk is intentionally outside Keysharp.Builtins, but parser import resolution
 			// still needs it to support `import AHK`.
 			rd.stringToTypes[nameof(Keysharp.Runtime.Ahk)] = typeof(Keysharp.Runtime.Ahk);
-
-			var staticTypes = types.Where(t => t.IsSealed && t.IsAbstract);
-
-			foreach (var property in staticTypes
-					 .SelectMany(t => t.GetProperties(BindingFlags.Public | BindingFlags.Static))
-					 .Where(p => MethodPropertyHolder.HasScriptGetter(p) && !p.IsDefined(typeof(PublicHiddenFromUser), false)))
-				rd.flatPublicStaticProperties.TryAdd(Script.GetUserDeclaredName(property) ?? property.Name, property);
-
-			foreach (var method in staticTypes
-					 .SelectMany(t => t.GetMethods(BindingFlags.Public | BindingFlags.Static))
-					 .Where(m => !m.IsSpecialName && !m.IsDefined(typeof(PublicHiddenFromUser), false)))
-				rd.flatPublicStaticMethods.TryAdd(Script.GetUserDeclaredName(method) ?? method.Name, method);
 
 #if DEBUG
 			//var typelist = tl.ToList();
@@ -471,7 +486,7 @@ namespace Keysharp.Internals.Invoke
 
 		internal static void SafeSetProperty(object item, string name, object value) => item.GetType().GetProperty(name, value.GetType())?.SetValue(item, value, null);
 
-		private static Dictionary<string, Assembly> GetLoadedAssemblies()
+		internal static Dictionary<string, Assembly> GetLoadedAssemblies()
 		{
 			var assemblies = AppDomain.CurrentDomain.GetAssemblies();
 			var dkt = new Dictionary<string, Assembly>(assemblies.Length);
