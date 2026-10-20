@@ -60,242 +60,6 @@ namespace Keysharp.Builtins
 		private static readonly Size NoSizeLimit = new(-1, -1);//Eto: (-1,-1) is the autosize / no-limit sentinel.
 #endif
 
-		private static readonly Dictionary<string, Action<Gui, object>> showOptionsDkt = new (StringComparer.OrdinalIgnoreCase)
-		{
-			{
-				"AlwaysOnTop", (f, o) => {
-					// AlwaysOnTop in Windows is handled with an ExStyle
-#if !WINDOWS
-					if (o is bool b) f.form.TopMost = b;
-#endif
-				}
-			},
-			{
-				// macOS: controls whether the standard application menu bar (App/Edit/Window — the source of
-				// Cmd+C/V/X/A/Z in text controls) is provided automatically. On by default; "-AppMenu" opts
-				// out. No effect on Windows (no app-level menu); on Linux it suppresses Eto's system items.
-				"AppMenu", (f, o) =>
-				{
-#if !WINDOWS
-					if (o is bool b) f.includeAppMenu = b;
-#endif
-				}
-			},
-			{
-				// Makes the window scroll when its contents are larger than its client area (e.g. a Picture
-				// bigger than the window). On Windows this is the form's AutoScroll property; Eto has no
-				// form-level equivalent, so the content layout is placed inside a Scrollable container.
-				// Best applied at construction, before controls are added.
-				"AutoScroll", (f, o) =>
-				{
-					if (o is bool b)
-					{
-						f.EnsureMainWindowControls();
-#if WINDOWS
-						f.form.ContentContainer.AutoScroll = b;
-#else
-						// EnsureLayoutContainer drills through the Scrollable (a Panel) into the inner
-						// PixelLayout, so controls still parent correctly once it is in place.
-						if (b)
-						{
-							if (f.form.Content is not Scrollable)
-								f.form.Content = new Scrollable { Content = f.form.Content ?? new PixelLayout(), Border = BorderType.None };
-						}
-						else if (f.form.Content is Scrollable sc)
-						{
-							f.form.Content = sc.Content;
-						}
-#endif
-					}
-				}
-			},
-			{
-				"Border", (f, o) =>
-				{
-					// FormBorderStyle conflates caption presence with border thickness, and there's no
-					// "border but no caption" value, so once the caption has been turned off via -Caption,
-					// leave the borderless style alone rather than letting this silently bring it back.
-					if (!f.caption)
-						return;
-
-					if (o is bool b && b)
-						f.form.FormBorderStyle = f.resizable ? FormBorderStyle.Sizable : FormBorderStyle.FixedSingle;//No such thing as a resizable single pixel border.
-					else
-						f.form.FormBorderStyle = f.resizable ? FormBorderStyle.Sizable : FormBorderStyle.FixedDialog;
-				}
-			},
-			{
-				"Caption", (f, o) =>
-				{
-					if (o is bool b && b)
-					{
-						f.caption = true;
-						f.form.FormBorderStyle = f.resizable ? FormBorderStyle.Sizable : FormBorderStyle.FixedDialog;
-					}
-					else
-					{
-						f.caption = false;
-						f.form.FormBorderStyle = FormBorderStyle.None;
-					}
-#if WINDOWS
-					f.form.SetSizingBorder(!f.caption && f.resizable);
-#endif
-				}
-			},
-			{
-				// Makes the whole window transparent to mouse input — clicks pass through to whatever is
-				// beneath it. On Windows this adds WS_EX_LAYERED|WS_EX_TRANSPARENT; on Linux it sets an
-				// empty GTK input-shape region; on macOS it sets NSWindow.IgnoresMouseEvents. Pair with a
-				// transparent background (e.g. WinSetTransColor) for a hollow, click-through overlay.
-				"ClickThrough", (f, o) => { if (o is bool b) f.form.SetClickThrough(b); }
-			},
-			{
-				"Disabled", (f, o) => { if (o is bool b) f.form.Enabled = !b; }
-			},
-			{
-				// DPIScale is purely a unit conversion on the numbers the script supplies: +DPIScale multiplies
-				// them by the window's DPI when a control is created and divides again in GetPos/GetClientPos,
-				// while -DPIScale passes them through as raw pixels. It says nothing about what happens when the
-				// DPI changes later — that is DPIResize, which is deliberately independent (as in AHK, where
-				// RescaleForDPI ignores mUsesDPIScaling), so "-DPIScale +DPIResize" is a valid combination.
-				"DPIScale", (f, o) => { if (o is bool b) f.dpiscaling = b; }
-			},
-			{
-				// v2.1: whether controls are re-laid out when the window's DPI changes, e.g. after being dragged
-				// to a monitor at a different scale. This sets the default for controls added afterward; an
-				// individual control can override it with its own "+/-DPIResize" option.
-				"DPIResize", (f, o) => { if (o is bool b) f.defaultDpiResize = b; }
-			},
-			{
-				"LastFound", (f, o) =>
-				{
-					if (o is bool b)
-					{
-						f.lastfound = b;
-						Script.TheScript.HwndLastUsed = f.Hwnd;
-					}
-				}
-			},
-			{
-				"MaximizeBox", (f, o) => { if (o is bool b) f.form.MaximizeBox = b; }
-			},
-			{
-				"MinimizeBox", (f, o) => { if (o is bool b) f.form.MinimizeBox = b; }
-			},
-			{
-				"MinSize", (f, o) =>
-				{
-					if (o is ValueTuple<bool, string> t)
-						f.SetSizeLimit(true, t.Item1, t.Item2);
-				}
-			},
-			{
-				"MaxSize", (f, o) =>
-				{
-					if (o is ValueTuple<bool, string> t)
-						f.SetSizeLimit(false, t.Item1, t.Item2);
-				}
-			},
-			{
-				"OwnDialogs", (f, o) =>
-				{
-					if (o is bool b)
-					{
-						f.owndialogs = b;
-						GuiHelper.DialogOwner = b ? f.form : null;
-					}
-				}
-			},
-			{
-				"Owner", (f, o) =>
-				{
-					// -Owner passes null and leaves the window unowned, as in AHK.
-					nint ownerHandle = 0;
-
-					if (o is string s)
-					{
-						if (s.Length == 0)   // +Owner with no HWND => owned by the script's main window (AHK).
-						{
-							if (Script.TheScript.mainWindow is Form mw)
-								ownerHandle = mw.Handle;
-						}
-						else if (!s.TryParseLong(out var hwnd) || !WindowQuery.IsWindow(ownerHandle = (nint)hwnd)
-								 || f.form.IsHandleCreated && ownerHandle == f.form.Handle)
-						{
-							_ = Errors.ValueErrorOccurred("Invalid or nonexistent owner or parent window.", s);
-							return;
-						}
-					}
-
-					f.form.SetOwnerWindow(ownerHandle);
-				}
-			},
-#if WINDOWS
-			{
-				"Parent", (f, o) =>
-				{
-					if (o is string s)
-					{
-						if (int.TryParse(s, out var hwnd))
-						{
-							if (Forms.Control.FromHandle(new nint(hwnd)) is Form theform)
-								f.form.Parent = theform;
-						}
-					}
-				}
-			},
-#endif
-			{
-				"Resize", (f, o) =>
-				{
-					if (o is bool b)
-					{
-						f.resizable = b;
-						f.form.MaximizeBox = b;
-
-						if (f.caption)
-							f.form.FormBorderStyle = b ? FormBorderStyle.Sizable : FormBorderStyle.FixedDialog;
-#if WINDOWS
-						f.form.SetSizingBorder(!f.caption && f.resizable);
-#endif
-
-						f.form.SizeGripStyle = b ? SizeGripStyle.Show : SizeGripStyle.Hide;
-						if (b)
-							f.form.AutoSize = false;
-					}
-				}
-			},
-			{
-				// Rounds the window's outer corners, for a borderless window drawing its own chrome. Windows
-				// 11 only; an accepted no-op elsewhere, see KeysharpForm.SetRoundedCorners.
-				"Round", (f, o) => { if (o is bool b) f.form.SetRoundedCorners(b); }
-			},
-			{
-				"SysMenu", (f, o) => { if (o is bool b) f.form.ControlBox = b; }
-			},
-			{
-				"Theme", (f, o) => _ = Diagnostics.Debug.WriteLine("Themes are not supported", false)
-			},
-			{
-				"ToolWindow", (f, o) => {
-					if (o is bool b && b)
-					{
-						f.form.SetToolWindow(true);
-
-						if (f.caption)//Only change border if they haven't requested that there be no caption/border.
-							f.form.FormBorderStyle = f.resizable ? FormBorderStyle.SizableToolWindow : FormBorderStyle.FixedToolWindow;
-					}
-					else
-					{
-						f.form.SetToolWindow(false);
-
-						if (f.caption)
-							f.form.FormBorderStyle = f.resizable ? FormBorderStyle.Sizable : FormBorderStyle.FixedDialog;
-					}
-				}
-			}
-		};
-
 		private bool caption = true;
 		private bool lastfound = false;
 		private bool owndialogs = false;
@@ -621,6 +385,10 @@ namespace Keysharp.Builtins
 
 		internal void WrapMainWindowControls()
 		{
+#if WINDOWS
+			if (!form.HasChildren)
+				return;
+#endif
 			var wrappers = form.GetAllControlsRecursive<Forms.Control>()
 				.Select(ctrl => KeyValuePair.Create(ctrl.Handle.ToInt64(), ctrl.GetGuiControl() ?? new Gui.Control(this, ctrl, ctrl.Name, true)))
 				.ToArray();
@@ -2806,40 +2574,32 @@ namespace Keysharp.Builtins
 				if (split.Length == 0)
 					continue;
 
-				// An option with no leading +/- means + (add/enable), per AHK. Separate the sign first; otherwise
-				// Substring(1) strips the first letter of a no-sign option (e.g. "AlwaysOnTop", "Owner") and it is misparsed.
+				// An option without a leading +/- enables it, per AHK.
 				var signed = split[0] == '+' || split[0] == '-';
 				var add = split[0] != '-';
-				var str = signed ? split.Substring(1) : split;
+				var str = split.AsSpan(signed ? 1 : 0);
 
 				if (str.Length > 0)
 				{
 					if (str.StartsWith("MinSize", StringComparison.OrdinalIgnoreCase))
 					{
-						if (showOptionsDkt.TryGetValue("MinSize", out var func))
-							func(this, (add, add ? str.Substring(7) : ""));
+						SetSizeLimit(true, add, add ? str[7..].ToString() : "");
 					}
 					else if (str.StartsWith("MaxSize", StringComparison.OrdinalIgnoreCase))
 					{
-						if (showOptionsDkt.TryGetValue("MaxSize", out var func))
-							func(this, (add, add ? str.Substring(7) : ""));
+						SetSizeLimit(false, add, add ? str[7..].ToString() : "");
 					}
 					else if (str.StartsWith("Owner", StringComparison.OrdinalIgnoreCase))
 					{
 						// +Owner / +OwnerHWND adds an owner (a value of "" means owned by the script's main window); -Owner removes it.
-						if (showOptionsDkt.TryGetValue("Owner", out var func))
-							func(this, add ? str.Substring(5) : null);
+						SetOwner(add, str[5..]);
 					}
 					else if (str.StartsWith("Parent", StringComparison.OrdinalIgnoreCase))
 					{
-						if (add && showOptionsDkt.TryGetValue("Owner", out var func))
-							func(this, str.Substring(6));
+						if (add)
+							SetOwner(true, str[6..]);
 					}
-					else if (showOptionsDkt.TryGetValue(str, out var func))
-					{
-						func(this, add);
-					}
-					else if (!IsStyleNumberOption(str))//Raw style numbers (e.g. +0x40000, +E0x8) are applied at construction by the static Opt overload; reject anything else like AHK instead of silently ignoring it.
+					else if (!IsStyleNumberOption(str) && !ApplyBooleanOption(str, add))//Raw style numbers (e.g. +0x40000, +E0x8) are applied at construction by the static Opt overload; reject anything else like AHK instead of silently ignoring it.
 					{
 						return Errors.ValueErrorOccurred("Invalid option.", split);
 					}
@@ -2849,13 +2609,177 @@ namespace Keysharp.Builtins
 			return DefaultObject;
 		}
 
+		private bool ApplyBooleanOption(ReadOnlySpan<char> option, bool add)
+		{
+			if (option.Equals("AlwaysOnTop", StringComparison.OrdinalIgnoreCase))
+			{
+				// AlwaysOnTop in Windows is handled with an ExStyle.
+#if !WINDOWS
+				form.TopMost = add;
+#endif
+			}
+			else if (option.Equals("AppMenu", StringComparison.OrdinalIgnoreCase))
+			{
+				// macOS: controls whether the standard application menu bar (App/Edit/Window — the source of
+				// Cmd+C/V/X/A/Z in text controls) is provided automatically. On by default; "-AppMenu" opts
+				// out. No effect on Windows (no app-level menu); on Linux it suppresses Eto's system items.
+#if !WINDOWS
+				includeAppMenu = add;
+#endif
+			}
+			else if (option.Equals("AutoScroll", StringComparison.OrdinalIgnoreCase))
+			{
+				// Makes the window scroll when its contents are larger than its client area (e.g. a Picture
+				// bigger than the window). On Windows this is the form's AutoScroll property; Eto has no
+				// form-level equivalent, so the content layout is placed inside a Scrollable container.
+				// Best applied at construction, before controls are added.
+				EnsureMainWindowControls();
+#if WINDOWS
+				form.ContentContainer.AutoScroll = add;
+#else
+				// EnsureLayoutContainer drills through the Scrollable (a Panel) into the inner
+				// PixelLayout, so controls still parent correctly once it is in place.
+				if (add)
+				{
+					if (form.Content is not Scrollable)
+						form.Content = new Scrollable { Content = form.Content ?? new PixelLayout(), Border = BorderType.None };
+				}
+				else if (form.Content is Scrollable sc)
+				{
+					form.Content = sc.Content;
+				}
+#endif
+			}
+			else if (option.Equals("Border", StringComparison.OrdinalIgnoreCase))
+			{
+				// FormBorderStyle conflates caption presence with border thickness, and there's no
+				// "border but no caption" value, so once the caption has been turned off via -Caption,
+				// leave the borderless style alone rather than letting this silently bring it back.
+				if (caption)
+					form.FormBorderStyle = resizable ? FormBorderStyle.Sizable : (add ? FormBorderStyle.FixedSingle : FormBorderStyle.FixedDialog);
+			}
+			else if (option.Equals("Caption", StringComparison.OrdinalIgnoreCase))
+			{
+				caption = add;
+
+				if (add)
+					form.FormBorderStyle = resizable ? FormBorderStyle.Sizable : FormBorderStyle.FixedDialog;
+				else
+					form.FormBorderStyle = FormBorderStyle.None;
+#if WINDOWS
+				form.SetSizingBorder(!caption && resizable);
+#endif
+			}
+			else if (option.Equals("ClickThrough", StringComparison.OrdinalIgnoreCase))
+			{
+				// Makes the whole window transparent to mouse input — clicks pass through to whatever is
+				// beneath it. On Windows this adds WS_EX_LAYERED|WS_EX_TRANSPARENT; on Linux it sets an
+				// empty GTK input-shape region; on macOS it sets NSWindow.IgnoresMouseEvents. Pair with a
+				// transparent background (e.g. WinSetTransColor) for a hollow, click-through overlay.
+				form.SetClickThrough(add);
+			}
+			else if (option.Equals("Disabled", StringComparison.OrdinalIgnoreCase))
+				form.Enabled = !add;
+			else if (option.Equals("DPIScale", StringComparison.OrdinalIgnoreCase))
+			{
+				// DPIScale is purely a unit conversion on the numbers the script supplies: +DPIScale multiplies
+				// them by the window's DPI when a control is created and divides again in GetPos/GetClientPos,
+				// while -DPIScale passes them through as raw pixels. It says nothing about what happens when the
+				// DPI changes later — that is DPIResize, which is deliberately independent (as in AHK, where
+				// RescaleForDPI ignores mUsesDPIScaling), so "-DPIScale +DPIResize" is a valid combination.
+				dpiscaling = add;
+			}
+			else if (option.Equals("DPIResize", StringComparison.OrdinalIgnoreCase))
+			{
+				// v2.1: whether controls are re-laid out when the window's DPI changes, e.g. after being dragged
+				// to a monitor at a different scale. This sets the default for controls added afterward; an
+				// individual control can override it with its own "+/-DPIResize" option.
+				defaultDpiResize = add;
+			}
+			else if (option.Equals("LastFound", StringComparison.OrdinalIgnoreCase))
+			{
+				lastfound = add;
+				Script.TheScript.HwndLastUsed = Hwnd;
+			}
+			else if (option.Equals("MaximizeBox", StringComparison.OrdinalIgnoreCase))
+				form.MaximizeBox = add;
+			else if (option.Equals("MinimizeBox", StringComparison.OrdinalIgnoreCase))
+				form.MinimizeBox = add;
+			else if (option.Equals("OwnDialogs", StringComparison.OrdinalIgnoreCase))
+			{
+				owndialogs = add;
+				GuiHelper.DialogOwner = add ? form : null;
+			}
+			else if (option.Equals("Resize", StringComparison.OrdinalIgnoreCase))
+			{
+				resizable = add;
+				form.MaximizeBox = add;
+
+				if (caption)
+					form.FormBorderStyle = add ? FormBorderStyle.Sizable : FormBorderStyle.FixedDialog;
+#if WINDOWS
+				form.SetSizingBorder(!caption && resizable);
+#endif
+				form.SizeGripStyle = add ? SizeGripStyle.Show : SizeGripStyle.Hide;
+
+				if (add)
+					form.AutoSize = false;
+			}
+			else if (option.Equals("Round", StringComparison.OrdinalIgnoreCase))
+			{
+				// Rounds the window's outer corners, for a borderless window drawing its own chrome. Windows
+				// 11 only; an accepted no-op elsewhere, see KeysharpForm.SetRoundedCorners.
+				form.SetRoundedCorners(add);
+			}
+			else if (option.Equals("SysMenu", StringComparison.OrdinalIgnoreCase))
+				form.ControlBox = add;
+			else if (option.Equals("Theme", StringComparison.OrdinalIgnoreCase))
+				_ = Diagnostics.Debug.WriteLine("Themes are not supported", false);
+			else if (option.Equals("ToolWindow", StringComparison.OrdinalIgnoreCase))
+			{
+				form.SetToolWindow(add);
+
+				if (caption)//Only change border if they haven't requested that there be no caption/border.
+				{
+					if (add)
+						form.FormBorderStyle = resizable ? FormBorderStyle.SizableToolWindow : FormBorderStyle.FixedToolWindow;
+					else
+						form.FormBorderStyle = resizable ? FormBorderStyle.Sizable : FormBorderStyle.FixedDialog;
+				}
+			}
+			else
+				return false;
+
+			return true;
+		}
+
+		private void SetOwner(bool add, ReadOnlySpan<char> owner)
+		{
+			nint ownerHandle = 0;
+
+			if (add)
+			{
+				if (owner.Length == 0)   // +Owner with no HWND => owned by the script's main window (AHK).
+				{
+					if (Script.TheScript.mainWindow is Form mw)
+						ownerHandle = mw.Handle;
+				}
+				else if (!owner.TryParseLong(out var hwnd) || !WindowQuery.IsWindow(ownerHandle = (nint)hwnd)
+						 || form.IsHandleCreated && ownerHandle == form.Handle)
+				{
+					_ = Errors.ValueErrorOccurred("Invalid or nonexistent owner or parent window.", owner.ToString());
+					return;
+				}
+			}
+
+			form.SetOwnerWindow(ownerHandle);
+		}
+
 		// A bare number ("0x40000"/"262144") is a window style and a leading 'E' + number ("E0x8") an extended
 		// style; both are real Win32 style bits, applied at construction by the static Opt(...) overload. AHK
 		// validates these (extended style, then pure number) before rejecting any other token as an invalid option.
-		private static bool IsStyleNumberOption(string str)
+		private static bool IsStyleNumberOption(ReadOnlySpan<char> span)
 		{
-			var span = str.AsSpan();
-
 			if (span.Length > 1 && (span[0] is 'E' or 'e'))
 				span = span[1..];
 

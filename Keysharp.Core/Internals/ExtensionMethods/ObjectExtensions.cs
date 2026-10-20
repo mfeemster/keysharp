@@ -493,8 +493,11 @@ namespace Keysharp.Internals.ExtensionMethods
 				return false;
 			}
 
-			var text = (obj as string ?? obj.ToString()).AsSpan();
+			return (obj as string ?? obj.ToString()).AsSpan().TryParseLong(out outvar, donoprefixhex);
+		}
 
+		internal static bool TryParseLong(this ReadOnlySpan<char> text, out long outvar, bool donoprefixhex = false)
+		{
 			if (ScanNumber(text, out var s, out var isFloat, out var isHex) && !isFloat)
 				return isHex ? TryParseHex(s, out outvar) : long.TryParse(s, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out outvar);
 

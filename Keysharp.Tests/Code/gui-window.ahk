@@ -11,10 +11,30 @@ Style(hwnd) => DllCall("GetWindowLongPtr", "Ptr", hwnd, "Int", -16, "Ptr")
 ExStyle(hwnd) => DllCall("GetWindowLongPtr", "Ptr", hwnd, "Int", -20, "Ptr")
 OwnerOf(hwnd) => DllCall("GetWindow", "Ptr", hwnd, "UInt", 4, "Ptr")   ; GW_OWNER
 
+optionsGui := Gui()
+optionsGui.Opt("+dIsAbLeD")
+AssertEq(Style(optionsGui.Hwnd) & 0x08000000, 0x08000000, A_LineNumber)
+optionsGui.Opt("-DISABLED")
+AssertEq(Style(optionsGui.Hwnd) & 0x08000000, 0, A_LineNumber)
+optionsGui.Opt("Disabled")
+AssertEq(Style(optionsGui.Hwnd) & 0x08000000, 0x08000000, A_LineNumber)
+optionsGui.Opt("-Disabled + -")
+AssertEq(Style(optionsGui.Hwnd) & 0x08000000, 0, A_LineNumber)
+for windowOption in ["AlwaysOnTop", "AppMenu", "AutoScroll", "Border", "Caption", "ClickThrough",
+	"Disabled", "DPIScale", "DPIResize", "LastFound", "MaximizeBox", "MinimizeBox", "OwnDialogs",
+	"Resize", "Round", "SysMenu", "Theme", "ToolWindow"] {
+	optionsGui.Opt("+" StrUpper(windowOption))
+	optionsGui.Opt("-" StrLower(windowOption))
+}
+optionsGui.Opt("+mInSiZe120x80 +MaXsIzE640x480")
+optionsGui.Opt("-MINSIZE -maxsize +0x40000 +E0x8")
+Throws(() => optionsGui.Opt("UnknownWindowOption"), A_LineNumber, ValueError)
+optionsGui.Destroy()
+
 owner := Gui()
 owned := Gui()
 hwnd := owned.Hwnd
-owned.Opt("+Owner" owner.Hwnd)
+owned.Opt("+oWnEr" owner.Hwnd)
 AssertEq(owned.Hwnd, hwnd, A_LineNumber)
 AssertEq(OwnerOf(hwnd), owner.Hwnd, A_LineNumber)
 AssertEq(ExStyle(hwnd) & 0x40000, 0, A_LineNumber)   ; WS_EX_APPWINDOW
@@ -25,6 +45,19 @@ owned.Opt("-Owner")
 AssertEq(owned.Hwnd, hwnd, A_LineNumber)
 AssertEq(OwnerOf(hwnd), 0, A_LineNumber)
 AssertEq(ExStyle(hwnd) & 0x40000, 0x40000, A_LineNumber)
+owned.Opt("+Owner" Format("0x{:X}", owner.Hwnd))
+AssertEq(OwnerOf(hwnd), owner.Hwnd, A_LineNumber)
+owned.Opt("+Owner" Format("+0x{:X}", owner.Hwnd))
+AssertEq(OwnerOf(hwnd), owner.Hwnd, A_LineNumber)
+Throws(() => owned.Opt("+OwnerNotAWindow"), A_LineNumber, ValueError)
+AssertEq(OwnerOf(hwnd), owner.Hwnd, A_LineNumber)
+Throws(() => owned.Opt("+Owner1.5"), A_LineNumber, ValueError)
+AssertEq(OwnerOf(hwnd), owner.Hwnd, A_LineNumber)
+scriptHwnd := A_ScriptHwnd
+owned.Opt("+Owner")
+AssertEq(OwnerOf(hwnd), scriptHwnd, A_LineNumber)
+owned.Opt("-OwnerIgnored")
+AssertEq(OwnerOf(hwnd), 0, A_LineNumber)
 
 ; An owner given at construction survives the window's creation, and an explicit WS_EX_APPWINDOW is kept.
 ctor := Gui("+Owner" owner.Hwnd)
