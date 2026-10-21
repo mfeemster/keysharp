@@ -6,7 +6,8 @@ using static Keysharp.Internals.AppleEvents.CF;
 
 namespace Keysharp.Internals
 {
-	internal sealed record InputDeviceInfo(long Id, string Kind, string Name = "", uint VendorId = 0, uint ProductId = 0, string HardwareId = "")
+	internal sealed record InputDeviceInfo(long Id, string Kind, string Name = "", uint? VendorId = null, uint? ProductId = null,
+		string HardwareId = "", string Manufacturer = "", string Connection = "", string Location = "", bool? IsInternal = null)
 	{
 		// Saved descriptors must not address IDs from a replacement input source.
 		internal object Source { get; set; }
@@ -39,6 +40,7 @@ namespace Keysharp.Internals
 	{
 		private const uint DeviceNameCommand = 0x20000007, StringProperty = 1, StringListProperty = 7;
 		private const uint HardwareIdProperty = 1, FriendlyNameProperty = 12, DescriptionProperty = 0;
+		private const uint ManufacturerProperty = 11, LocationProperty = 13;
 		private const uint ShareReadWrite = 3, OpenExisting = 3;
 		private const int InsufficientBuffer = 122;
 
@@ -106,6 +108,8 @@ namespace Keysharp.Internals
 					var path = GetDevicePath(device.Handle);
 					var name = "";
 					var hardwareId = "";
+					var manufacturer = "";
+					var location = "";
 					var deviceInfo = new DeviceInfoData { Size = (uint)Marshal.SizeOf<DeviceInfoData>() };
 					var deviceInterface = new DeviceInterfaceData { Size = (uint)Marshal.SizeOf<DeviceInterfaceData>() };
 
@@ -119,6 +123,8 @@ namespace Keysharp.Internals
 						{
 							hardwareId = GetDeviceProperty(deviceInfoSet, ref deviceInfo, HardwareIdProperty, StringListProperty);
 							name = GetDeviceProperty(deviceInfoSet, ref deviceInfo, FriendlyNameProperty, StringProperty);
+							manufacturer = GetDeviceProperty(deviceInfoSet, ref deviceInfo, ManufacturerProperty, StringProperty);
+							location = GetDeviceProperty(deviceInfoSet, ref deviceInfo, LocationProperty, StringProperty);
 
 							if (name.Length == 0)
 								name = GetDeviceProperty(deviceInfoSet, ref deviceInfo, DescriptionProperty, StringProperty);
@@ -141,7 +147,8 @@ namespace Keysharp.Internals
 						}
 					}
 
-					devices.Add(new InputDeviceInfo(unchecked((long)(nuint)device.Handle), kind, name, vendorId, productId, hardwareId));
+					devices.Add(new InputDeviceInfo(unchecked((long)(nuint)device.Handle), kind, name, vendorId, productId, hardwareId,
+						Manufacturer: manufacturer, Location: location));
 				}
 			}
 			finally
@@ -213,18 +220,18 @@ namespace Keysharp.Internals
 			return new string(end < 0 ? text : text[..end]);
 		}
 
-		private static uint ParseHardwareIdNumber(ReadOnlySpan<char> hardwareId, ReadOnlySpan<char> token)
+		private static uint? ParseHardwareIdNumber(ReadOnlySpan<char> hardwareId, ReadOnlySpan<char> token)
 		{
 			var start = hardwareId.IndexOf(token, StringComparison.OrdinalIgnoreCase);
 
 			if (start <= 0 || hardwareId[start - 1] is not ('\\' or '&'))
-				return 0;
+				return null;
 
 			var digits = start + token.Length;
 			var end = digits + 4;
 			return end <= hardwareId.Length && (end == hardwareId.Length || hardwareId[end] == '&')
 				&& uint.TryParse(hardwareId.Slice(digits, 4), NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture, out var value)
-				? value : 0;
+				? value : null;
 		}
 
 		[StructLayout(LayoutKind.Sequential)]
@@ -315,6 +322,7 @@ namespace Keysharp.Internals
 		private const string IOKit = "/System/Library/Frameworks/IOKit.framework/IOKit";
 		private const string CoreFoundation = "/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation";
 		private const string LibSystem = "/usr/lib/libSystem.B.dylib";
+		private const uint RegistryIterateRecursively = 1, RegistryIterateParents = 2;
 
 		internal static IDisposable Watch(Action changed, Action failed) => new DeviceWatcher(changed, failed);
 
@@ -431,19 +439,12 @@ namespace Keysharp.Internals
 
 		private static void Describe(uint device, List<InputDeviceInfo> devices)
 		{
-			if (IORegistryEntryCreateCFProperties(device, out var properties, 0, 0) != 0 || properties == 0)
-				return;
-
+			var keyboard = false;
+			var mouse = false;
+			ClassifyUsage(DeviceNumber(device, DeviceKeys.PrimaryPage, false) ?? 0, DeviceNumber(device, DeviceKeys.PrimaryUsage, false) ?? 0, ref keyboard, ref mouse);
+			var pairs = CopyProperty(device, DeviceKeys.UsagePairs, false);
 			try
 			{
-				if (CFGetTypeID(properties) != CFDictionaryGetTypeID())
-					return;
-
-				var keyboard = false;
-				var mouse = false;
-				ClassifyUsage(Number(properties, DeviceKeys.PrimaryPage), Number(properties, DeviceKeys.PrimaryUsage), ref keyboard, ref mouse);
-				var pairs = CFDictionaryGetValue(properties, DeviceKeys.UsagePairs);
-
 				// Usage pairs include every application collection, including both halves of a composite keyboard/mouse.
 				// https://github.com/apple-oss-distributions/IOHIDFamily/blob/main/IOHIDFamily/IOHIDKeys.h
 				if (pairs != 0 && CFGetTypeID(pairs) == CFArrayGetTypeID())
@@ -454,26 +455,31 @@ namespace Keysharp.Internals
 						if (pair != 0 && CFGetTypeID(pair) == CFDictionaryGetTypeID())
 							ClassifyUsage(Number(pair, DeviceKeys.UsagePage), Number(pair, DeviceKeys.Usage), ref keyboard, ref mouse);
 					}
-
-				if (!keyboard && !mouse)
-					return;
-
-				var name = Text(properties, DeviceKeys.Product);
-				var hardwareId = Text(properties, DeviceKeys.Serial);
-				var vendorId = Number(properties, DeviceKeys.Vendor);
-				var productId = Number(properties, DeviceKeys.ProductId);
-
-				// Event taps have no device ID. SerialNumber is copied only when the HID service supplies a string.
-				if (keyboard)
-					devices.Add(new InputDeviceInfo(0, "Keyboard", name, vendorId, productId, hardwareId));
-
-				if (mouse)
-					devices.Add(new InputDeviceInfo(0, "Mouse", name, vendorId, productId, hardwareId));
 			}
 			finally
 			{
-				CFRelease(properties);
+				if (pairs != 0) CFRelease(pairs);
 			}
+
+			if (!keyboard && !mouse)
+				return;
+
+			var id = IORegistryEntryGetRegistryEntryID(device, out var registryId) == 0 ? unchecked((long)registryId) : 0;
+			var name = Text(device, DeviceKeys.Product);
+			var hardwareId = Text(device, DeviceKeys.Serial);
+			var vendorId = DeviceNumber(device, DeviceKeys.Vendor);
+			var productId = DeviceNumber(device, DeviceKeys.ProductId);
+			var manufacturer = Text(device, DeviceKeys.Manufacturer);
+			var transport = Text(device, DeviceKeys.Transport);
+			var connection = transport == "BluetoothLowEnergy" ? "Bluetooth" : transport;
+			var location = DeviceNumber(device, DeviceKeys.Location) is uint locationId ? $"0x{locationId:X8}" : "";
+			var isInternal = Boolean(device, DeviceKeys.BuiltIn);
+
+			if (keyboard)
+				devices.Add(new InputDeviceInfo(id, "Keyboard", name, vendorId, productId, hardwareId, manufacturer, connection, location, isInternal));
+
+			if (mouse)
+				devices.Add(new InputDeviceInfo(id, "Mouse", name, vendorId, productId, hardwareId, manufacturer, connection, location, isInternal));
 		}
 
 		private static void ClassifyUsage(uint usagePage, uint usage, ref bool keyboard, ref bool mouse)
@@ -486,23 +492,58 @@ namespace Keysharp.Internals
 		}
 
 		private static uint Number(nint dictionary, nint key)
+			=> ReadUnsignedNumber(CFDictionaryGetValue(dictionary, key)) ?? 0;
+
+		internal static uint? ReadUnsignedNumber(nint value)
 		{
-			var value = CFDictionaryGetValue(dictionary, key);
-			return value != 0 && CFGetTypeID(value) == CFNumberGetTypeID() && CFNumberGetValue(value, NumberSInt64Type, out long number)
-				&& number is >= 0 and <= uint.MaxValue ? (uint)number : 0;
+			if (value == 0 || CFGetTypeID(value) != CFNumberGetTypeID() || !CFNumberGetValue(value, NumberSInt64Type, out long number))
+				return null;
+			if (number is >= 0 and <= uint.MaxValue)
+				return (uint)number;
+			// IOKit decodes unsigned 32-bit registry values as signed CFNumbers.
+			return number is >= int.MinValue and < 0 && CFNumberGetByteSize(value) <= 4 ? unchecked((uint)number) : null;
 		}
 
-		private static string Text(nint dictionary, nint key)
+		private static uint? DeviceNumber(uint device, nint key, bool inherit = true)
 		{
-			var value = CFDictionaryGetValue(dictionary, key);
-			return value != 0 && CFGetTypeID(value) == CFStringGetTypeID() && CFStringGetLength(value) <= 65536 ? ReadString(value) : "";
+			var value = CopyProperty(device, key, inherit);
+			try { return ReadUnsignedNumber(value); }
+			finally { if (value != 0) CFRelease(value); }
 		}
+
+		private static bool? Boolean(uint device, nint key)
+		{
+			var value = CopyProperty(device, key, false);
+			try
+			{
+				if (value != 0 && CFGetTypeID(value) == CFBooleanGetTypeID())
+					return CFBooleanGetValue(value);
+				return ReadUnsignedNumber(value) is uint number && number <= 1 ? number != 0 : null;
+			}
+			finally { if (value != 0) CFRelease(value); }
+		}
+
+		private static string Text(uint device, nint key)
+		{
+			var value = CopyProperty(device, key, true);
+			try
+			{
+				return value != 0 && CFGetTypeID(value) == CFStringGetTypeID() && CFStringGetLength(value) <= 65536 ? ReadString(value) : "";
+			}
+			finally { if (value != 0) CFRelease(value); }
+		}
+
+		// HID metadata can belong to a parent service; reading the registry does not open the device.
+		private static nint CopyProperty(uint device, nint key, bool inherit)
+			=> IORegistryEntrySearchCFProperty(device, "IOService", key, 0, inherit ? RegistryIterateRecursively | RegistryIterateParents : 0);
 
 		private static class DeviceKeys
 		{
 			internal static readonly nint Product = CreateString("Product"), Vendor = CreateString("VendorID"), ProductId = CreateString("ProductID");
 			internal static readonly nint Serial = CreateString("SerialNumber"), PrimaryPage = CreateString("PrimaryUsagePage"), PrimaryUsage = CreateString("PrimaryUsage");
 			internal static readonly nint UsagePairs = CreateString("DeviceUsagePairs"), UsagePage = CreateString("DeviceUsagePage"), Usage = CreateString("DeviceUsage");
+			internal static readonly nint Manufacturer = CreateString("Manufacturer"), Transport = CreateString("Transport");
+			internal static readonly nint Location = CreateString("LocationID"), BuiltIn = CreateString("Built-In");
 		}
 
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
@@ -535,7 +576,10 @@ namespace Keysharp.Internals
 		[DllImport(IOKit)]
 		private static extern int IOObjectRelease(uint device);
 		[DllImport(IOKit)]
-		private static extern int IORegistryEntryCreateCFProperties(uint device, out nint properties, nint allocator, uint options);
+		private static extern int IORegistryEntryGetRegistryEntryID(uint device, out ulong id);
+		[DllImport(IOKit)]
+		private static extern nint IORegistryEntrySearchCFProperty(uint device, [MarshalAs(UnmanagedType.LPStr)] string plane,
+			nint key, nint allocator, uint options);
 		[DllImport(CoreFoundation)]
 		private static extern nint CFDictionaryGetTypeID();
 		[DllImport(CoreFoundation)]
@@ -543,6 +587,8 @@ namespace Keysharp.Internals
 		[DllImport(CoreFoundation)]
 		[return: MarshalAs(UnmanagedType.I1)]
 		private static extern bool CFNumberGetValue(nint number, nint kind, out long value);
+		[DllImport(CoreFoundation)]
+		private static extern nint CFNumberGetByteSize(nint number);
 		[DllImport(CoreFoundation)]
 		private static extern nint CFArrayGetTypeID();
 		[DllImport(CoreFoundation)]

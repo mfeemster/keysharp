@@ -5,34 +5,10 @@ namespace Keysharp.Tests;
 [TestFixture, NonParallelizable, Category("Internal"), Category("Curated")]
 public class InputDeviceTests : TestRunner
 {
-	[TestCase(17L)]
-	[TestCase(4294967313L)]
-	[TestCase(-17L)]
-	public void Descriptor(long id)
-	{
-		var device = new Ks.Input(new InputDeviceInfo(id, "Keyboard", "Test keyboard", 0x46D, 0xC52B, "test-id"));
-		Assert.That(Script.GetPropertyValue(device, "Id"), Is.EqualTo(id));
-		Assert.That(Script.GetPropertyValue(device, "Kind"), Is.EqualTo("Keyboard"));
-		Assert.That(Script.GetPropertyValue(device, "Name"), Is.EqualTo("Test keyboard"));
-		Assert.That(Script.GetPropertyValue(device, "VendorId"), Is.EqualTo(0x46DL));
-		Assert.That(Script.GetPropertyValue(device, "ProductId"), Is.EqualTo(0xC52BL));
-		Assert.That(Script.GetPropertyValue(device, "HardwareId"), Is.EqualTo("test-id"));
-		_ = Assert.Throws<KeysharpException>(() => Script.SetPropertyValue(device, "Id", 99L));
-		Assert.That(device.Id, Is.EqualTo(id));
-	}
-
-	[TestCase("Joy1")]
-	[TestCase("WheelUp")]
-	public void InvalidDeviceKey(string name)
-	{
-		var device = new Ks.Input(new InputDeviceInfo(17, "Keyboard"));
-		Assert.That(Assert.Throws<KeysharpException>(() => device.GetKeyState(name)).UserError, Is.InstanceOf<ValueError>());
-	}
+	[Test]
+	public void Devices() => Assert.That(TestScript("input-devices", false), Is.True);
 
 #if WINDOWS
-	[Test]
-	public void NativeDevices() => Assert.That(TestScript("input-devices", false), Is.True);
-
 	[Test]
 	public void DeviceNotifications() => Assert.That(TestScript("input-device-changes", false), Is.True);
 #endif
@@ -56,4 +32,30 @@ public class InputDeviceTests : TestRunner
 		var device = new InputDeviceInfo(0, "Keyboard", "Keyboard");
 		Assert.That(InputEventManager.Classify([device, device], [device]), Is.EqualTo(new[] { ("Removed", device) }));
 	}
+
+	[Test]
+	public void MetadataChanges()
+	{
+		var device = new InputDeviceInfo(7, "Keyboard");
+		InputDeviceInfo[] changed = [device with { Manufacturer = "Manufacturer" }, device with { Connection = "USB" },
+			device with { Location = "Port 1" }, device with { IsInternal = false }, device with { VendorId = 0 },
+			device with { ProductId = 0 }];
+		foreach (var updated in changed)
+			Assert.That(InputEventManager.Classify([device], [updated]), Is.EqualTo(new[] { ("Changed", updated) }));
+	}
+
+#if OSX
+	[TestCase(0, 0u)]
+	[TestCase(-100663296, 0xFA000000u)]
+	[TestCase(-1, uint.MaxValue)]
+	public void UnsignedRegistryNumbers(int value, uint expected)
+	{
+		var number = CFNumberCreate(0, 3, ref value);
+		try { Assert.That(MacInputDevices.ReadUnsignedNumber(number), Is.EqualTo(expected)); }
+		finally { Keysharp.Internals.AppleEvents.CF.CFRelease(number); }
+	}
+
+	[System.Runtime.InteropServices.DllImport("/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation")]
+	private static extern nint CFNumberCreate(nint allocator, nint type, ref int value);
+#endif
 }

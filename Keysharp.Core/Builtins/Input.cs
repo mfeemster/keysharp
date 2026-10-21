@@ -20,12 +20,18 @@ namespace Keysharp.Builtins
 			public override object __New(params object[] Arguments)
 				=> Errors.ErrorOccurred("Input instances cannot be constructed directly.");
 
-			public long Id => device.Id;
+			public object Id => device.Id != 0 ? (object)device.Id : DefaultObject;
 			public string Kind => device.Kind;
-			public string Name => device.Name;
-			public long VendorId => device.VendorId;
-			public long ProductId => device.ProductId;
-			public string HardwareId => device.HardwareId;
+			public string Name => Text(device.Name);
+			public object VendorId => device.VendorId is uint value ? (object)(long)value : DefaultObject;
+			public object ProductId => device.ProductId is uint value ? (object)(long)value : DefaultObject;
+			public string HardwareId => Text(device.HardwareId);
+			public string Manufacturer => Text(device.Manufacturer);
+			public string Connection => Text(device.Connection);
+			public string Location => Text(device.Location);
+			public object IsInternal => device.IsInternal is bool value ? (object)value : DefaultObject;
+
+			private static string Text(string value) => string.IsNullOrEmpty(value) ? DefaultObject : value;
 			public static object staticget_Hooks(object @this) => Script.TheScript.InputEventManager.Hooks();
 
 			[Static]

@@ -19,7 +19,8 @@ public class LinuxInputManagerTests
 	[TestCase(7u, new[] { "Keyboard", "Mouse" })]
 	public void DeviceDescriptorsPreserveIdentityAndCapabilities(uint capabilities, string[] kinds)
 	{
-		var devices = KeysharpInputClient.ToManagedDevices(17, capabilities, "Composite device", 0x1234, 0x5678, "serial-17");
+		var devices = KeysharpInputClient.ToManagedDevices(17, capabilities, "Composite device", 0x1234, 0x5678,
+			"serial-17", 0x03, "usb-1/input0");
 		Assert.That(devices.Select(device => device.Kind), Is.EqualTo(kinds));
 		foreach (var device in devices)
 		{
@@ -28,6 +29,9 @@ public class LinuxInputManagerTests
 			Assert.That(device.VendorId, Is.EqualTo(0x1234u));
 			Assert.That(device.ProductId, Is.EqualTo(0x5678u));
 			Assert.That(device.HardwareId, Is.EqualTo("serial-17"));
+			Assert.That(device.Connection, Is.EqualTo("USB"));
+			Assert.That(device.Location, Is.EqualTo("usb-1/input0"));
+			Assert.That(device.IsInternal, Is.Null);
 		}
 	}
 

@@ -113,6 +113,18 @@ public class HookProviderTests : TestRunner
 			"the previous attachment's other holds must be forgotten");
 	}
 
+	[Test]
+	public void MissingMetadataIsUnchanged()
+	{
+		var provider = new Provider();
+		var hook = Install(provider);
+		provider.Devices[0] = new(5, "Keyboard", "First", HardwareId: "First")
+			{ Manufacturer = null, Connection = null, Location = null };
+		var previous = hook.GetInputDevices();
+		provider.Devices[0] = new(5, "Keyboard", "First", HardwareId: "First");
+		Assert.That(Keysharp.Internals.Input.InputEventManager.Classify(previous, hook.GetInputDevices()), Is.Empty);
+	}
+
 	[TestCase(false), TestCase(true)]
 	public void UnavailableDeviceState(bool throws)
 	{

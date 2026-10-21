@@ -4969,8 +4969,12 @@ RefreshInputDevices(*) {
 	}
 }
 
-FormatInputDevice(Device) => Format("Kind={1} | Name={2} | Id={3} | VendorId=0x{4:04X} | ProductId=0x{5:04X} | HardwareId={6}",
-	Device.Kind, Device.Name, Device.Id, Device.VendorId, Device.ProductId, Device.HardwareId)
+FormatInputDevice(Device) => Format("Kind={1} | Name={2} | Id={3} | VendorId={4} | ProductId={5} | HardwareId={6} | Manufacturer={7} | Connection={8} | Location={9} | IsInternal={10}",
+	Device.Kind, InputDeviceField(Device.Name?), InputDeviceField(Device.Id?), InputDeviceField(Device.VendorId?, true),
+	InputDeviceField(Device.ProductId?, true), InputDeviceField(Device.HardwareId?), InputDeviceField(Device.Manufacturer?),
+	InputDeviceField(Device.Connection?), InputDeviceField(Device.Location?), InputDeviceField(Device.IsInternal?))
+
+InputDeviceField(Value?, Hex := false) => !IsSet(Value) || Value == "" ? "(not reported)" : Hex ? Format("0x{:04X}", Value) : Value
 
 StartInputDeviceChanges(*) {
 	global gInputDeviceHook

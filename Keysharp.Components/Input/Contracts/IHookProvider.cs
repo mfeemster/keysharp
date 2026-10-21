@@ -48,6 +48,14 @@ namespace Keysharp.Components.Input
 		public uint VendorId { get; }
 		public uint ProductId { get; }
 		public string HardwareId { get; }
+		/// <summary>Whether VendorId is reported, including a reported zero.</summary>
+		public bool HasVendorId { get; init; }
+		/// <summary>Whether ProductId is reported, including a reported zero.</summary>
+		public bool HasProductId { get; init; }
+		public string Manufacturer { get; init; } = "";
+		public string Connection { get; init; } = "";
+		public string Location { get; init; } = "";
+		public bool? IsInternal { get; init; }
 
 		public InputDeviceInfo(long Id, string Kind, string Name = "", uint VendorId = 0, uint ProductId = 0, string HardwareId = "")
 		{
@@ -59,6 +67,8 @@ namespace Keysharp.Components.Input
 			this.VendorId = VendorId;
 			this.ProductId = ProductId;
 			this.HardwareId = HardwareId ?? "";
+			HasVendorId = VendorId != 0;
+			HasProductId = ProductId != 0;
 		}
 	}
 }

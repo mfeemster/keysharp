@@ -157,6 +157,8 @@ namespace Keysharp.Internals.Input
 
 		private static bool Same(InputDeviceInfo first, InputDeviceInfo second)
 			=> first.Id == second.Id && first.Kind == second.Kind && first.Name == second.Name
-				&& first.VendorId == second.VendorId && first.ProductId == second.ProductId && first.HardwareId == second.HardwareId;
+				&& first.VendorId == second.VendorId && first.ProductId == second.ProductId && first.HardwareId == second.HardwareId
+				&& first.Manufacturer == second.Manufacturer && first.Connection == second.Connection
+				&& first.Location == second.Location && first.IsInternal == second.IsInternal;
 	}
 }

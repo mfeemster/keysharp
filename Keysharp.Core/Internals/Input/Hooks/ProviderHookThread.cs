@@ -777,7 +777,9 @@ namespace Keysharp.Internals.Input.Hooks
 			devices.Remove(key);
 		}
 		private static DeviceInfo ConvertDevice(Keysharp.Components.Input.InputDeviceInfo info, object lease)
-			=> new(info.Id, info.Kind, info.Name, info.VendorId, info.ProductId, info.HardwareId) { Source = lease };
+			=> new(info.Id, info.Kind, info.Name, info.HasVendorId ? info.VendorId : null,
+				info.HasProductId ? info.ProductId : null, info.HardwareId, info.Manufacturer ?? "", info.Connection ?? "",
+				info.Location ?? "", info.IsInternal) { Source = lease };
 
 		internal override bool TryGetDeviceKeyState(DeviceInfo device, uint vk, out bool down)
 		{

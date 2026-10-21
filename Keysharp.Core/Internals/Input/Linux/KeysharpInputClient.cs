@@ -737,14 +737,15 @@ namespace Keysharp.Internals.Input.Linux
 		{
 			if (GCHandle.FromIntPtr(context).Target is not List<InputDeviceInfo> devices) return false;
 			devices.AddRange(ToManagedDevices(device->DeviceId, device->Capabilities,
-				device->GetName(), device->Vendor, device->Product, device->GetUnique()));
+				device->GetName(), device->Vendor, device->Product, device->GetUnique(), device->BusType, device->GetPhysical()));
 			return true;
 		}
 
 		internal static InputDeviceInfo[] ToManagedDevices(uint deviceId, uint capabilities, string name,
-			ushort vendor, ushort product, string hardwareId)
+			ushort vendor, ushort product, string hardwareId, ushort busType, string physical)
 		{
-			InputDeviceInfo Describe(string kind) => new(deviceId, kind, name, vendor, product, hardwareId);
+			InputDeviceInfo Describe(string kind) => new(deviceId, kind, name, vendor, product, hardwareId,
+				Connection: ConnectionOf(busType), Location: physical);
 			return (capabilities & 3) switch
 			{
 				1 => [Describe("Keyboard")],
@@ -753,6 +754,35 @@ namespace Keysharp.Internals.Input.Linux
 				_ => []
 			};
 		}
+
+		private static string ConnectionOf(ushort busType) => busType switch
+		{
+			0x01 => "PCI",
+			0x02 => "ISAPnP",
+			0x03 => "USB",
+			0x04 => "HIL",
+			0x05 => "Bluetooth",
+			0x06 => "Virtual",
+			0x10 => "ISA",
+			0x11 => "PS/2",
+			0x12 => "XT",
+			0x13 => "Serial",
+			0x14 => "Gameport",
+			0x15 => "Parallel",
+			0x16 => "Amiga",
+			0x17 => "ADB",
+			0x18 => "I2C",
+			0x19 => "Host",
+			0x1A => "GSC",
+			0x1B => "Atari",
+			0x1C => "SPI",
+			0x1D => "RMI",
+			0x1E => "CEC",
+			0x1F => "ISHTP",
+			0x20 => "AMD-SFH",
+			0x21 => "SoundWire",
+			_ => ""
+		};
 
 		/// <summary>Enumerates connected gamepads, ordered so that a device's position is stable
 		/// across restarts. Needs no grant, as with pointer position and idle time.</summary>
@@ -1591,6 +1621,17 @@ namespace Keysharp.Internals.Input.Linux
 					while (length < DeviceNameCapacity && pointer[length] != 0)
 						length++;
 
+					try { return StrictUtf8.GetString(pointer, length); }
+					catch (DecoderFallbackException) { return string.Empty; }
+				}
+			}
+
+			internal string GetPhysical()
+			{
+				fixed (byte* pointer = physical)
+				{
+					var length = new ReadOnlySpan<byte>(pointer, 256).IndexOf((byte)0);
+					if (length < 0) return string.Empty;
 					try { return StrictUtf8.GetString(pointer, length); }
 					catch (DecoderFallbackException) { return string.Empty; }
 				}
