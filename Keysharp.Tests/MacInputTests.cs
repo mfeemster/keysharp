@@ -377,7 +377,7 @@ public class MacInputTests
 	[Test, Category("Input")]
 	public void MousePredictionRebase()
 	{
-		var sink = new FakeMouseEventSink { CursorX = 20, CursorY = 30 };
+		var sink = new FakeMouseEventSink { LocationX = 20, LocationY = 30 };
 		var stream = new MacMouseEventStream(sink: sink);
 		sink.Stream = stream;
 		stream.ObserveMove(100, 200, stream.SenderRevision);
@@ -441,7 +441,7 @@ public class MacInputTests
 	{
 		var sink = new FakeMouseEventSink
 		{
-			CursorX = 50, CursorY = 60, LocationX = 50, LocationY = 60,
+			LocationX = 50, LocationY = 60,
 			FailWarpCall = failedStep, FailedWarpCount = failures
 		};
 		var stream = new MacMouseEventStream(sink);
@@ -477,7 +477,7 @@ public class MacInputTests
 	[Test, Category("Input")]
 	public void SuppressedMousePosition()
 	{
-		var sink = new FakeMouseEventSink { LocationX = 100, LocationY = 200, CursorX = 7, CursorY = 8, DeferPostedLocations = true };
+		var sink = new FakeMouseEventSink { LocationX = 100, LocationY = 200, DeferPostedLocations = true };
 		var stream = new MacMouseEventStream(sink, timestamp: () => sink.Timestamp,
 			timestampFrequency: 1000);
 		sink.Stream = stream;
@@ -496,8 +496,8 @@ public class MacInputTests
 	{
 		var sink = new FakeMouseEventSink
 		{
-			CursorX = 90,
-			CursorY = 50,
+			LocationX = 90,
+			LocationY = 50,
 			DisplayBounds = [new Rectangle(-100, 0, 100, 100), new Rectangle(0, 150, 100, 100)]
 		};
 		var stream = new MacMouseEventStream(sink);
@@ -851,8 +851,8 @@ public class MacInputTests
 		Assert.AreEqual((70.0, 80.0), (sink.LocationX, sink.LocationY));
 		Assert.IsTrue(stream.TryGetPosition(out var position));
 		Assert.AreEqual((70, 80), (position.X, position.Y));
-		sink.LocationX = sink.CursorX = 80;
-		sink.LocationY = sink.CursorY = 90;
+		sink.LocationX = 80;
+		sink.LocationY = 90;
 		Assert.IsTrue(stream.TryGetPosition(out position));
 		Assert.AreEqual((80, 90), (position.X, position.Y), "recovery must retire a post whose callback was lost");
 	}
@@ -875,8 +875,6 @@ public class MacInputTests
 
 		sink.LocationX = 70;
 		sink.LocationY = 80;
-		sink.CursorX = 70;
-		sink.CursorY = 80;
 		if (queryPositionFirst)
 		{
 			Assert.IsTrue(stream.TryGetPosition(out var position));
@@ -1064,7 +1062,7 @@ public class MacInputTests
 	[Test, Category("Input")]
 	public void MousePostRollback()
 	{
-		var sink = new FakeMouseEventSink { CursorX = 10, CursorY = 20, FailMoves = 1, FailButtons = 1 };
+		var sink = new FakeMouseEventSink { LocationX = 10, LocationY = 20, FailMoves = 1, FailButtons = 1 };
 		var stream = new MacMouseEventStream(sink);
 		sink.Stream = stream;
 		Assert.IsFalse(stream.MoveRelative(5, 5, KeyIgnore));
@@ -1333,8 +1331,6 @@ public class MacInputTests
 		internal bool DeferPostedLocations;
 		internal bool DropAcknowledgements;
 		internal int PendingPostCount => pendingLocations.Count;
-		internal int CursorX;
-		internal int CursorY;
 		internal double LocationX;
 		internal double LocationY;
 		internal bool FailLocation;
@@ -1358,18 +1354,10 @@ public class MacInputTests
 		}
 		private void ApplyPostedLocation(int x, int y, ulong stamp)
 		{
-			CursorX = x;
-			CursorY = y;
 			LocationX = x;
 			LocationY = y;
 			if (!DropAcknowledgements)
 				Stream?.AcknowledgePost(stamp);
-		}
-		internal override bool TryGetCursorPosition(out int x, out int y)
-		{
-			x = CursorX;
-			y = CursorY;
-			return true;
 		}
 		internal override bool TryGetCursorLocation(out double x, out double y)
 		{
@@ -1388,8 +1376,6 @@ public class MacInputTests
 				x = Math.Clamp(x, DisplayBounds[0].Left, DisplayBounds[0].Right - 1);
 				y = Math.Clamp(y, DisplayBounds[0].Top, DisplayBounds[0].Bottom - 1);
 			}
-			CursorX = x;
-			CursorY = y;
 			LocationX = x;
 			LocationY = y;
 			return true;

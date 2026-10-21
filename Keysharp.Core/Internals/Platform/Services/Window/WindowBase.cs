@@ -151,7 +151,7 @@ namespace Keysharp.Internals
 		{
 #if !WINDOWS
 			if (TryOwnControl(h, out var control))
-				return control.Text ?? DefaultObject;
+				return control.CheckedInvoke(() => control.Text ?? DefaultObject, true);
 #endif
 			return NotYet<string>();
 		}

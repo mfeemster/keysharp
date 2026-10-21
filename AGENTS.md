@@ -120,7 +120,7 @@ NUnit searches parent directories of its test engine for extensions. The wrapper
 > - **One category** (`--filter "Category=Misc"`) for a change confined to that area.
 > - **The full curated subset** only once the change is finished, or before handing work over — not as a progress check.
 >
-> The same applies to builds: prefer `-t:Compile` to check syntax without touching the output tree, and do not rebuild after an edit that only touched comments.
+> The same applies to builds: use a normal `dotnet build` when validation is needed, and do not rebuild after an edit that only touched comments. Avoid `-t:Compile`: it skips resource preparation and can leave a resource-less assembly in `obj` that a later incremental build copies into runnable output.
 
 Test `.ahk` scripts live in `Keysharp.Tests/Code/`. Script-visible behavior is tested through `TestScript("script-name", true/false)`, which compiles and runs the matching `.ahk` file and checks for `PASS` in output. Direct C# tests are reserved for deterministic internal contracts that cannot safely be reached through a script and are marked `Category("Internal")`.
 

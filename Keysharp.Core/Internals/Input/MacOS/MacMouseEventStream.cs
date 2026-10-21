@@ -14,7 +14,6 @@ namespace Keysharp.Internals.Input.MacOS
 		internal class Sink
 		{
 			internal static readonly Sink Native = new();
-			internal virtual bool TryGetCursorPosition(out int x, out int y) => Platform.Mouse.TryGetCursorPos(out x, out y);
 			internal virtual bool TryGetCursorLocation(out double x, out double y) => MacNativeInput.TryGetCursorLocation(out x, out y);
 			internal virtual bool WarpCursor(int x, int y)
 			{
@@ -680,15 +679,15 @@ namespace Keysharp.Internals.Input.MacOS
 					return true;
 			}
 
-			if (!sink.TryGetCursorPosition(out var queriedX, out var queriedY))
+			if (!sink.TryGetCursorLocation(out var queriedX, out var queriedY))
 				return false;
 
 			lock (streamLock)
 			{
 				if (!positionKnown)
 				{
-					x = queriedX;
-					y = queriedY;
+					x = (int)Math.Round(queriedX);
+					y = (int)Math.Round(queriedY);
 					positionKnown = true;
 				}
 			}
