@@ -1367,7 +1367,8 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "full",
-                     "notes":  "The running application as a class: Name, Title, Description, Configuration, Company, Product, Copyright, Trademark and Version report the assembly metadata the matching #App key sets, CommandLine reports the process command line, and ExitReason/ExitCode report an exit in progress to code that is not an OnExit callback. Every member is read-only, and an undeclared key reads as an empty string in both compatibility modes. Replaces the removed A_Assembly*, A_CommandLine and A_HasExited variables."
+                     "notes":  "The running application as a class: Name, Title, Description, Configuration, Company, Product, Copyright, Trademark and Version report the assembly metadata the matching #App key sets, CommandLine reports the process command line, and ExitReason/ExitCode report an exit in progress to code that is not an OnExit callback. Every member is read-only. Undeclared optional attributes and an unavailable ExitReason follow reference.md's compatibility-mode rule. Explicit empty attributes remain empty strings; Name remains required identity and ExitCode retains the armed integer. Replaces the removed A_Assembly*, A_CommandLine and A_HasExited variables.",
+                     "tested-by":  "MiscTests.OptionalMetadata"
                  },
                  {
                      "category":  "Environment/System",
@@ -2094,8 +2095,8 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "full",
-                     "notes":  "Thread is a class rather than a function: calling it runs the AHK sub-functions (NoTimers/Priority/Interrupt) unchanged, and an instance describes one pseudo-thread: Id, Index (1-based), IsActive, Kind, Elapsed, Priority, Critical, Paused, IsInterruptible, Underlying, Exit and ExitCode (the code its Exit ended it with, readable after it ends). An Is prefix marks a read-only predicate; a settable mode is named for the mode. Obtained from A_Thread, Under or RealThread.Threads, never constructed. There is one object per pseudo-thread, so `thr == A_Thread` tests whether it is the running one. It revalidates its identity on every access, so one held past its pseudo-thread's life reports IsActive false rather than describing whichever pseudo-thread reused the pooled slot. Reads work from any real thread; setters and Exit require the owning one.",
-                     "tested-by":  "FlowTests.FlowExit"
+                     "notes":  "Thread is a class rather than a function: calling it runs the AHK sub-functions (NoTimers/Priority/Interrupt) unchanged, and an instance describes one pseudo-thread: Id, Index (1-based), IsActive, Kind, Elapsed, Priority, Critical, Paused, IsInterruptible, Underlying, Exit and ExitCode (the code its Exit ended it with, readable after it ends). An Is prefix marks a read-only predicate; a settable mode is named for the mode. Obtained from A_Thread, Under or RealThread.Threads, never constructed. There is one object per pseudo-thread, so `thr == A_Thread` tests whether it is the running one. It revalidates its identity on every access, so one held past its pseudo-thread's life reports IsActive false rather than describing whichever pseudo-thread reused the pooled slot. Reads work from any real thread; setters and Exit require the owning one. An unarmed ExitCode follows reference.md's compatibility-mode rule.",
+                     "tested-by":  "FlowTests.FlowExit; MiscTests.OptionalMetadata"
                  },
                  {
                      "category":  "Environment/System",
@@ -5720,8 +5721,8 @@
                      "linux_x11":  "partial",
                      "linux_wayland":  "partial",
                      "macos":  "unknown",
-                     "notes":  "Optional font attributes and system font selections. Linux resolves unavailable GTK theme fonts through Pango substitution. GUI/image weights map to normal or bold; Windows RichEdit preserves numeric weights. Windows applies quality to GUI fonts and image text; other platforms reject non-default quality, as does per-range RichEdit formatting.",
-                     "tested-by":  "ks-font.ahk"
+                     "notes":  "Optional font attributes and system font selections. Linux resolves unavailable GTK theme fonts through Pango substitution. GUI/image weights map to normal or bold; Windows RichEdit preserves numeric weights. Windows applies quality to GUI fonts and image text; other platforms reject non-default quality, as does per-range RichEdit formatting. Unspecified attributes follow reference.md's compatibility-mode rule; Options remains a valid empty string.",
+                     "tested-by":  "ks-font.ahk; MiscTests.OptionalMetadata"
                  },
                  {
                      "category":  "Keysharp Module (Ks)",
@@ -6819,8 +6820,8 @@
                      "linux_x11":  "partial",
                      "linux_wayland":  "partial",
                      "macos":  "partial",
-                     "notes":  "Captures, loads, creates, edits and searches images. Search methods return match objects. Grayscale() and GetPixelData(1) share 0.299R + 0.587G + 0.114B luminance rounded half up. A color string that is neither a name nor a number, and an invalid DrawText font option, raise ValueError when the method is called. FromWindow Mode and search Direction use string names instead of numeric codes. Supports saving and CLR bitmap access. Linux capture requires keysharp-desktop, ScreenCapture and backend support for the requested capture. Cinnamon Wayland supports area capture through its stage capture API and window capture through the window actor. Image.FromWindow raises UnsupportedError on Wayland when neither window capture nor global frame geometry is available. macOS is unverified.",
-                     "tested-by":  "Gui/guitest.ks; image.ahk"
+                     "notes":  "Captures, loads, creates, edits and searches images. Search methods return match objects. Grayscale() and GetPixelData(1) share 0.299R + 0.587G + 0.114B luminance rounded half up. A color string that is neither a name nor a number, and an invalid DrawText font option, raise ValueError when the method is called. FromWindow Mode and search Direction use string names instead of numeric codes. Supports saving and CLR bitmap access. Linux capture requires keysharp-desktop, ScreenCapture and backend support for the requested capture. Cinnamon Wayland supports area capture through its stage capture API and window capture through the window actor. Image.FromWindow raises UnsupportedError on Wayland when neither window capture nor global frame geometry is available. Native macOS capture and rendering remain unverified. Invalidated OriginX/OriginY and ScaleX/ScaleY follow reference.md's compatibility-mode rule.",
+                     "tested-by":  "Gui/guitest.ks; image.ahk; MiscTests.OptionalMetadata"
                  },
                  {
                      "category":  "Image",
@@ -8490,8 +8491,8 @@
                      "linux_x11":  "unknown",
                      "linux_wayland":  "unknown",
                      "macos":  "planned",
-                     "notes":  "Keysharp-specific Ks class for cross-platform audio: polyphonic playback from files or memory through a managed mixer, device discovery, endpoint volume and mute, per-application sessions, level meters and recording. Independent of the AHK Sound* functions, which keep their own fuzzy device selector and monophonic file playback. Windows uses WASAPI and is verified on hardware; the Linux libpulse backend compiles and has been exercised against a real PulseAudio server for enumeration, playback and recording; macOS AudioQueue compiles against the contracts but has never been run.",
-                     "tested-by":  "audio-class.ahk; AudioInternalsTests.cs"
+                     "notes":  "Keysharp-specific Ks class for cross-platform audio: polyphonic playback from files or memory through a managed mixer, device discovery, endpoint volume and mute, per-application sessions, level meters and recording. Independent of the AHK Sound* functions, which keep their own fuzzy device selector and monophonic file playback. Windows uses WASAPI and is verified on hardware; the Linux libpulse backend compiles and has been exercised against a real PulseAudio server for enumeration, playback and recording; macOS AudioQueue compiles against the contracts but has never been run. Optional property availability follows reference.md's compatibility-mode rule.",
+                     "tested-by":  "audio-class.ahk; AudioInternalsTests.cs; MiscTests.OptionalMetadata"
                  },
                  {
                      "category":  "Keysharp Module (Ks)",
@@ -8512,8 +8513,8 @@
                      "linux_x11":  "unknown",
                      "linux_wayland":  "unknown",
                      "macos":  "planned",
-                     "notes":  "Many sounds at once through one managed float32 mixer and one native stream, which is what SoundPlay cannot do. After Open() and Prepare() a play performs no decode, resample or blocking call, so it is safe from a frame timer. Each admitted play returns a stable Audio.Playback with Volume, Pan, Loop, Mute, PositionMilliseconds, Pause, Resume and Stop; a bounded refusal returns blank rather than raising. VoicePolicy is \"Oldest\", \"RoundRobin\" or \"Reject\". One script may hold 16 outputs open.",
-                     "tested-by":  "audio-class.ahk; AudioInternalsTests.cs; Gui/guitest.ks"
+                     "notes":  "Many sounds at once through one managed float32 mixer and one native stream, which is what SoundPlay cannot do. After Open() and Prepare() a play performs no decode, resample or blocking call, so it is safe from a frame timer. Each admitted play returns a stable Audio.Playback with Volume, Pan, Loop, Mute, PositionMilliseconds, Pause, Resume and Stop; a bounded refusal returns blank rather than raising. VoicePolicy is \"Oldest\", \"RoundRobin\" or \"Reject\". One script may hold 16 outputs open. Unavailable Device, output SampleRate/Channels/LatencyMilliseconds/Peak/Error and playback DurationMilliseconds/PositionMilliseconds/Peak follow reference.md's compatibility-mode rule.",
+                     "tested-by":  "audio-class.ahk; AudioInternalsTests.cs; Gui/guitest.ks; MiscTests.OptionalMetadata"
                  },
                  {
                      "category":  "Keysharp Module (Ks)",
@@ -8588,8 +8589,8 @@
                      "linux_x11":  "unknown",
                      "linux_wayland":  "unknown",
                      "macos":  "unsupported",
-                     "notes":  "Per-application volume and mute. A session snapshot is generation-bound and expires rather than rebinding, so a handle kept across an application restart never silently controls the newcomer. One process routinely owns several sessions, so every match is returned and the bulk setters report how many they changed. macOS exposes no public per-application audio model and reports IsSessionControlSupported false.",
-                     "tested-by":  "audio-class.ahk; Gui/guitest.ks"
+                     "notes":  "Per-application volume and mute. A session snapshot is generation-bound and expires rather than rebinding, so a handle kept across an application restart never silently controls the newcomer. One process routinely owns several sessions, so every match is returned and the bulk setters report how many they changed. macOS exposes no public per-application audio model and reports IsSessionControlSupported false. Optional Device, ProcessId, ProcessName and DisplayName follow reference.md's compatibility-mode rule.",
+                     "tested-by":  "audio-class.ahk; Gui/guitest.ks; MiscTests.MetadataSnapshots"
                  },
                  {
                      "category":  "Keysharp Module (Ks)",
@@ -8599,7 +8600,7 @@
                      "linux_x11":  "unknown",
                      "linux_wayland":  "unknown",
                      "macos":  "planned",
-                     "notes":  "An explicit lifetime for observing a device or session level, because metering a target whose frames do not pass through Keysharp costs a live native stream on some backends. Peak is 0 through 100, or blank before any observation completed, so no data stays distinct from digital silence. Output, playback and recorder Peak need no meter, since Keysharp already owns those frames.",
+                     "notes":  "An explicit lifetime for observing a device or session level, because metering a target whose frames do not pass through Keysharp costs a live native stream on some backends. Peak is 0 through 100 when observed. Unresolved Target, unobserved Peak and absent Error follow reference.md's compatibility-mode rule, keeping no data distinct from silence. Output, playback and recorder Peak need no meter, since Keysharp already owns those frames.",
                      "tested-by":  "audio-class.ahk"
                  },
                  {
@@ -8610,8 +8611,8 @@
                      "linux_x11":  "unknown",
                      "linux_wayland":  "unknown",
                      "macos":  "planned",
-                     "notes":  "Captures a microphone or what an output device is playing, to a WAV file or to memory. Configured first and started second so handlers can be registered before capture begins and a permission failure is observable. A recorder is single-use once capture is admitted, and every way it can end competes for one terminal transition, so exactly one reason and one result are published. Capture is gated on the AudioCapture permission strictly, rather than the usual log-and-continue. Implemented on all three backends but not yet exercised on hardware; macOS system-output capture is unsupported pending its process-tap spike.",
-                     "tested-by":  "audio-class.ahk"
+                     "notes":  "Captures a microphone or what an output device is playing, to a WAV file or to memory. Configured first and started second so handlers can be registered before capture begins and a permission failure is observable. A recorder is single-use once capture is admitted, and every way it can end competes for one terminal transition, so exactly one reason and one result are published. Capture is gated on the AudioCapture permission strictly, rather than the usual log-and-continue. Implemented on all three backends but not yet exercised on hardware; macOS system-output capture is unsupported pending its process-tap spike. Unavailable recorder Device/Path/Peak/Error/Result and the unused Recording.Clip or Path follow reference.md's compatibility-mode rule.",
+                     "tested-by":  "audio-class.ahk; MiscTests.OptionalMetadata"
                  },
                  {
                      "category":  "Keysharp Module (Ks)",
@@ -8621,8 +8622,8 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "partial",
-                     "notes":  "Display snapshots with identity, metadata, brightness and DDC/CI control. On macOS Model and Adapter are blank; Connection identifies built-in panels only.",
-                     "tested-by":  "MonitorTests.cs"
+                     "notes":  "Display snapshots with identity, metadata, brightness and DDC/CI control. Optional metadata follows reference.md's compatibility-mode rule. On macOS Model and Adapter are unavailable; Connection identifies built-in panels only.",
+                     "tested-by":  "MonitorTests.cs; MiscTests.MetadataSnapshots"
                  },
                  {
                      "category":  "Keysharp Module (Ks)",
@@ -8731,8 +8732,8 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "partial",
-                     "notes":  "Panel identity from EDID. Id survives reboots and re-plugging and is the value to persist (for example to restore a window layout per monitor set); panels that report no serial are disambiguated by connector, making Id stable per port rather than per panel. Windows reads the EDID Windows cached under the monitor's registry key; Linux reads /sys/class/drm/*/edid under both X11 and Wayland. macOS answers from CoreGraphics vendor/model/serial numbers and has no product-name API, so Model is always blank there. Every field is blank when the display reports nothing.",
-                     "tested-by":  "MonitorTests.cs"
+                     "notes":  "Panel identity from EDID. Id survives reboots and re-plugging and is the value to persist (for example to restore a window layout per monitor set); panels that report no serial are disambiguated by connector, making Id stable per port rather than per panel. Windows reads the EDID Windows cached under the monitor's registry key; Linux reads /sys/class/drm/*/edid under both X11 and Wayland. macOS answers from CoreGraphics vendor/model/serial numbers and has no product-name API, so Model is unavailable there. Missing fields follow reference.md's compatibility-mode rule.",
+                     "tested-by":  "MonitorTests.cs; MiscTests.MetadataSnapshots"
                  },
                  {
                      "category":  "Keysharp Module (Ks)",
@@ -8742,8 +8743,8 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "partial",
-                     "notes":  "Vertical refresh in Hz as a float (59.94, not 59), or blank when unknown. Windows uses the DisplayConfig rational rate, X11 computes it from the RandR mode's pixel clock, Wayland uses wl_output's mode refresh. macOS returns 0 for some built-in panels, which is reported as blank.",
-                     "tested-by":  "MonitorTests.cs"
+                     "notes":  "Vertical refresh in Hz as a float (59.94, not 59), or unavailable when unknown. Windows uses the DisplayConfig rational rate, X11 computes it from the RandR mode's pixel clock, Wayland uses wl_output's mode refresh. macOS returns 0 for some built-in panels, which denotes an unavailable rate. Missing values follow reference.md's compatibility-mode rule.",
+                     "tested-by":  "MonitorTests.cs; MiscTests.MetadataSnapshots"
                  },
                  {
                      "category":  "Keysharp Module (Ks)",
@@ -8753,8 +8754,8 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "unknown",
-                     "notes":  "The panel's physical size in millimetres, and the resulting dots per inch. Dpi is expressed in the same units as W and H, so it is a physical pixel density on Windows and X11 but a logical one on Wayland and macOS. Blank when the display reports no physical size.",
-                     "tested-by":  "MonitorTests.cs"
+                     "notes":  "The panel's physical size in millimetres, and the resulting dots per inch. Dpi is expressed in the same units as Width and Height, so it is a physical pixel density on Windows and X11 but a logical one on Wayland and macOS. Unavailable values follow reference.md's compatibility-mode rule.",
+                     "tested-by":  "MonitorTests.cs; MiscTests.MetadataSnapshots"
                  },
                  {
                      "category":  "Keysharp Module (Ks)",
@@ -8797,8 +8798,8 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "partial",
-                     "notes":  "How the monitor is attached (HDMI, DisplayPort, eDP, DVI, VGA, Internal, or blank), whether it is a built-in panel, and the adapter driving it. Windows reports the DisplayConfig output technology and the adapter's marketing name; Linux derives the kind from the DRM connector name and reports the DRM driver as the adapter. macOS distinguishes only built-in from external and exposes no adapter name.",
-                     "tested-by":  "MonitorTests.cs"
+                     "notes":  "How the monitor is attached (HDMI, DisplayPort, eDP, DVI, VGA, Internal), whether it is a built-in panel, and the adapter driving it. Windows reports the DisplayConfig output technology and the adapter's marketing name; Linux derives the kind from the DRM connector name and reports the DRM driver as the adapter. macOS distinguishes only built-in from external and exposes no adapter name. Unknown fields follow reference.md's compatibility-mode rule; a known external panel reports IsInternal false.",
+                     "tested-by":  "MonitorTests.cs; MiscTests.MetadataSnapshots"
                  },
                  {
                      "category":  "Keysharp Module (Ks)",
@@ -9471,8 +9472,8 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "full",
-                     "notes":  "Gets the process exit code after termination, or an empty string while it is running.",
-                     "tested-by":  "ProcessTests.ProcessRunScript; process-runscript.ahk"
+                     "notes":  "Gets the process exit code after termination; while running, its unavailable value follows reference.md's compatibility-mode rule.",
+                     "tested-by":  "ProcessTests.ProcessRunScript; process-runscript.ahk; MiscTests.OptionalMetadata"
                  },
                  {
                      "category":  "Automation",
@@ -9482,8 +9483,8 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "full",
-                     "notes":  "Gets the process exit time after termination, or an empty string while it is running.",
-                     "tested-by":  "ProcessTests.ProcessRunScript; process-runscript.ahk"
+                     "notes":  "Gets the process exit time after termination; while running, its unavailable value follows reference.md's compatibility-mode rule.",
+                     "tested-by":  "ProcessTests.ProcessRunScript; process-runscript.ahk; MiscTests.OptionalMetadata"
                  },
                  {
                      "category":  "Automation",

@@ -11,7 +11,7 @@ public partial class MiscTests : TestRunner
 	[Test, Category("Misc"), NonParallelizable]
 	public void MiscSyntax() => Assert.IsTrue(TestScript("misc-syntax", false));
 
-	// Ks.Font: the option round-trip, the ""-means-unset contract, subclassing, and the Gui/Image
+	// Ks.Font: the option round-trip, optional attributes, subclassing, and the Gui/Image
 	// integration. Creates Guis but shows none, so it needs no interactive desktop. Not run through
 	// the function-wrapped variant, since it declares a class to cover `extends Font`.
 	[Test, Category("Misc"), NonParallelizable]
@@ -19,6 +19,32 @@ public partial class MiscTests : TestRunner
 	{
 		SkipIfUiInitializationBlocked("Creating an AppKit window requires OS thread 1.");
 		Assert.IsTrue(TestScript("ks-font", false));
+	}
+
+	[Test, Category("Misc")]
+	public void OptionalMetadata() => Assert.IsTrue(TestScript("misc-optional-metadata", false));
+
+	[Test, Category("Internal"), Category("Curated")]
+	public void MetadataSnapshots()
+	{
+		var monitor = new Ks.KeysharpMonitor(default, 1, DisplayDetails.Empty);
+		var external = new Ks.KeysharpMonitor(default, 1, new DisplayDetails { IsInternal = false });
+		var session = Ks.Audio.Session.Wrap(null, default);
+		var original = s.CurrentCompatibilityVersion;
+		try
+		{
+			foreach (var unset in new[] { false, true, false })
+			{
+				s.SetCurrentCompatibilityVersion(new Semver.SemVersion(2, unset ? 1 : 0, 0));
+				Assert.That(new object[] { monitor.Name, monitor.Model, monitor.Manufacturer, monitor.Serial,
+					monitor.Id, monitor.Adapter, monitor.Connection, monitor.Dpi, monitor.PhysicalWidth,
+					monitor.PhysicalHeight, monitor.RefreshRate, monitor.IsInternal, session.Device,
+					session.ProcessId, session.ProcessName, session.DisplayName }, Is.All.EqualTo(unset ? null : ""));
+				Assert.That(new object[] { monitor.X, monitor.Orientation }, Is.All.EqualTo(0L));
+				Assert.That(new object[] { monitor.IsPrimary, external.IsInternal, session.IsSystemSounds }, Is.All.EqualTo(false));
+			}
+		}
+		finally { s.SetCurrentCompatibilityVersion(original); }
 	}
 
 #if WINDOWS

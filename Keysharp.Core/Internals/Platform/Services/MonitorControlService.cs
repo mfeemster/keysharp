@@ -65,7 +65,7 @@ namespace Keysharp.Internals
 		{
 			percent = 0;
 
-			if (details.IsInternal && WindowsPanelBrightness.TryGet(out var wmi))
+			if (details.IsInternal == true && WindowsPanelBrightness.TryGet(out var wmi))
 			{
 				percent = wmi;
 				return true;
@@ -89,7 +89,7 @@ namespace Keysharp.Internals
 		{
 			percent = Math.Clamp(percent, 0, 100);
 
-			if (details.IsInternal && WindowsPanelBrightness.TrySet(percent))
+			if (details.IsInternal == true && WindowsPanelBrightness.TrySet(percent))
 				return true;
 
 			var applied = false;
@@ -142,7 +142,7 @@ namespace Keysharp.Internals
 		// Phrased around the TRANSPORT rather than the operation, so it reads correctly appended to both
 		// "could not read the brightness of ..." and "could not read VCP feature 0x.. from ...".
 		public string UnsupportedReason(DisplayInfo display, DisplayDetails details)
-			=> details.IsInternal
+			=> details.IsInternal == true
 				? "this is a built-in panel - it has no DDC/CI connection, and the WMI backlight interface did not answer"
 				: "the monitor did not respond to DDC/CI - check that it is enabled in the monitor's own on-screen menu (often called DDC/CI or MCCS)";
 
@@ -279,7 +279,7 @@ namespace Keysharp.Internals
 			// Windows it is a per-PANEL interface with no notion of WHICH monitor, so reaching it for anything
 			// else would silently read (and, on the setter, change) the laptop screen instead of the monitor
 			// that was asked for.
-			if (details.IsInternal)
+			if (details.IsInternal == true)
 			{
 				var device = FindBacklightDevice();
 
@@ -305,7 +305,7 @@ namespace Keysharp.Internals
 			percent = Math.Clamp(percent, 0, 100);
 
 			// Per-panel interface; see the note in TryGetBrightness.
-			if (details.IsInternal)
+			if (details.IsInternal == true)
 			{
 				var device = FindBacklightDevice();
 
@@ -331,7 +331,7 @@ namespace Keysharp.Internals
 
 		public string UnsupportedReason(DisplayInfo display, DisplayDetails details)
 		{
-			if (details.IsInternal)
+			if (details.IsInternal == true)
 				return $"no writable backlight device was found under {BacklightRoot} and logind refused the write";
 
 			var bus = LinuxDdc.FindBus(display.Name);
@@ -742,7 +742,7 @@ namespace Keysharp.Internals
 
 			// The built-in panel has no DDC channel, so there is nothing to fall back to; going further would only
 			// mean an I2C round-trip that cannot succeed.
-			if (details.IsInternal)
+			if (details.IsInternal == true)
 				return false;
 
 			if (MacDdc.TryGetVcp(display, MacDdc.VcpBrightness, out var current, out var max) && max > 0)
@@ -773,7 +773,7 @@ namespace Keysharp.Internals
 				{
 				}
 
-			if (details.IsInternal)
+			if (details.IsInternal == true)
 				return false;
 
 			// The percentage has to be scaled by the monitor's own maximum, so a set costs a read first; MacDdc
@@ -786,15 +786,15 @@ namespace Keysharp.Internals
 			current = max = 0;
 			// DisplayServices is a brightness-only interface with no notion of VCP, so unlike brightness there is
 			// no non-DDC path here — not even for the built-in panel.
-			return !details.IsInternal && MacDdc.TryGetVcp(display, code, out current, out max);
+			return details.IsInternal != true && MacDdc.TryGetVcp(display, code, out current, out max);
 		}
 
 		public bool TrySetVcp(DisplayInfo display, DisplayDetails details, byte code, int value)
-			=> !details.IsInternal && MacDdc.TrySetVcp(display, code, value);
+			=> details.IsInternal != true && MacDdc.TrySetVcp(display, code, value);
 
 		public string UnsupportedReason(DisplayInfo display, DisplayDetails details)
 		{
-			if (details.IsInternal)
+			if (details.IsInternal == true)
 				return "this is the built-in panel - DisplayServices did not accept the request, and a built-in "
 					+ "panel has no DDC/CI connection to fall back to";
 

@@ -9,10 +9,9 @@ namespace Keysharp.Builtins
 		/// declaration — normally the same string, but not under a host that supplies its own. Several application
 		/// facts are AutoHotkey's and keep their <c>A_</c> names; several <c>#App</c> keys have no script-visible
 		/// runtime reader at all.</para>
-		/// <para>Every member is read-only, and reading one that was never declared returns "" rather than raising.
-		/// Because a declared key can never be an empty string (the compiler rejects it), <c>App.Company != ""</c>
-		/// is the supported has-a-value test; <c>HasOwnProp</c> is not, since it reports every declared C# property
-		/// present and so is always true here.</para>
+		/// <para>Every member is read-only. Undeclared metadata returns an empty string in v2.0 mode and unset in
+		/// v2.1 mode. <c>HasProp</c> reports the schema; use <c>App.Company ?? ""</c> to read optional metadata
+		/// safely in v2.1 mode.</para>
 		/// </summary>
 		// This class must never declare a nested type: a type nested in Ks shadows the ambient toolkit type of the
 		// same simple name in every file that reopens the partial (Font, Color, Icon, Timer, Screen, Size, Point).
@@ -28,17 +27,15 @@ namespace Keysharp.Builtins
 				=> Errors.ErrorOccurred("App has no instances; use its members directly, e.g. App.Title.");
 
 			/// <summary>
-			/// Reads one assembly attribute of the running script assembly, or "" when it carries none.
+			/// Reads one assembly attribute of the running script assembly, or blank when it carries none.
 			/// </summary>
 			/// <remarks>
 			/// Deliberately not cached: <see cref="Accessors.GetAssembly"/> prefers the current Script's
 			/// ProgramType.Assembly, and the test host and embedding hosts create more than one Script per process,
 			/// so a process-static cache would serve a retired assembly's metadata. These are cold reads.
-			/// The "" is a literal rather than <see cref="Script.DefaultObject"/>, which is unset in v2.1
-			/// compatibility mode and would make reading an undeclared key raise.
 			/// </remarks>
 			private static object Attr<T>(Func<T, string> pick) where T : Attribute
-				=> Accessors.GetAssembly().GetCustomAttribute<T>() is T a ? pick(a) ?? "" : "";
+				=> Accessors.GetAssembly().GetCustomAttribute<T>() is T a ? pick(a) ?? DefaultObject : DefaultObject;
 
 			#region Identity
 
@@ -149,16 +146,16 @@ namespace Keysharp.Builtins
 
 			/// <summary>
 			/// Why the application is exiting, using the same strings an <c>OnExit</c> callback receives as its first
-			/// argument — or "" while it is not.
+			/// argument — or blank in v2.0 mode and unset in v2.1 while it is not.
 			/// <para>This is set only once the exit is <b>certain</b>: every <c>OnExit</c> callback has run and none
-			/// cancelled it. Inside a callback it is therefore still "", because at that point the exit is only
+			/// cancelled it. Inside a callback it is therefore still unavailable, because at that point the exit is only
 			/// proposed — the callback is handed the proposed reason as its own argument, and may still return
 			/// non-zero to cancel. From the moment it is set it stays set through the entire teardown.</para>
-			/// <para>So <c>App.ExitReason != ""</c> reads as "the application is going down and nothing can stop it",
+			/// <para>So <c>(App.ExitReason ?? "") != ""</c> reads as "the application is going down and nothing can stop it",
 			/// which is what a <c>__Delete</c>, a timer or a library should guard on.</para>
 			/// </summary>
 			public static object staticget_ExitReason(object @this)
-				=> Script.TheScript?.FlowData?.exitReason is Flow.ExitReasons reason ? Keysharp.Internals.Flow.ExitReasonName(reason) : "";
+				=> Script.TheScript?.FlowData?.exitReason is Flow.ExitReasons reason ? Keysharp.Internals.Flow.ExitReasonName(reason) : DefaultObject;
 
 			/// <summary>
 			/// The exit status this process will return to whoever launched it.

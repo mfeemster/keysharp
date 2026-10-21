@@ -148,11 +148,11 @@ namespace Keysharp.Internals
 
 		/// <summary>One DisplayConfig path resolved down to the facts Keysharp exposes.</summary>
 		private readonly record struct PathFacts(string FriendlyName, string DevicePath, string Connection,
-			bool IsInternal, double RefreshRate, int Orientation)
+			bool? IsInternal, double RefreshRate, int Orientation)
 		{
 			/// <summary>The "DisplayConfig told us nothing" value. Deliberately not <c>default</c>: a default record
 			/// struct leaves every string null, and the callers treat these as ordinary empty strings.</summary>
-			internal static readonly PathFacts None = new("", "", "", false, 0.0, 0);
+			internal static readonly PathFacts None = new("", "", "", null, 0.0, 0);
 		}
 
 		internal static DisplayDetails Get(DisplayInfo display)
@@ -352,8 +352,8 @@ namespace Keysharp.Internals
 			_ => "",
 		};
 
-		private static bool IsInternalTechnology(int technology) => technology
-			is OutputTechnologyInternal or OutputTechnologyLvds
+		private static bool? IsInternalTechnology(int technology) => technology == -1 ? null
+			: technology is OutputTechnologyInternal or OutputTechnologyLvds
 			or OutputTechnologyDisplayPortEmbedded or OutputTechnologyUdiEmbedded;
 
 		// DISPLAYCONFIG_ROTATION: 1 identity, 2 rotate90, 3 rotate180, 4 rotate270.
@@ -416,7 +416,7 @@ namespace Keysharp.Internals
 				PhysicalWidthMm = widthMm,
 				PhysicalHeightMm = heightMm,
 				Orientation = orientation,
-				IsInternal = Edid.IsInternalConnection(connection),
+				IsInternal = connection.Length > 0 ? Edid.IsInternalConnection(connection) : null,
 			};
 		}
 

@@ -754,7 +754,7 @@ namespace Keysharp.Builtins
 			///
 			/// <para>Unlike <see cref="Scale"/> and <see cref="Crop"/>, Rotate does not maintain the image-to-screen
 			/// coordinate mapping: <see cref="OriginX"/>/<see cref="OriginY"/> and
-			/// <see cref="ScaleX"/>/<see cref="ScaleY"/> read "" afterwards (a correct origin/scale for an
+			/// <see cref="ScaleX"/>/<see cref="ScaleY"/> become unavailable (a correct origin/scale for an
 			/// arbitrary rotation is ill-defined). <see cref="SetOrigin"/> can re-establish a mapping.</para></summary>
 			public object Rotate(object angle, object background = null)
 			{
@@ -776,7 +776,7 @@ namespace Keysharp.Builtins
 
 			/// <summary>Queues a mirror: horizontal (left-right) by default, vertical when <paramref name="horizontal"/> is false.
 			/// <para>Unlike <see cref="Scale"/> and <see cref="Crop"/>, Flip does not maintain the image-to-screen
-			/// coordinate mapping: <see cref="OriginX"/>/<see cref="OriginY"/> read "" afterwards (after a mirror
+			/// coordinate mapping: <see cref="OriginX"/>/<see cref="OriginY"/> become unavailable (after a mirror
 			/// the pre-flip top-left is no longer the image's top-left). <see cref="ScaleX"/>/<see cref="ScaleY"/>
 			/// are unchanged — a flip preserves pixel density. <see cref="SetOrigin"/> can re-anchor the image.</para></summary>
 			public object Flip(object horizontal = null)
@@ -1723,22 +1723,22 @@ namespace Keysharp.Builtins
 			/// <summary>Image pixels per native screen unit along X at capture time (1.0 for files and
 			/// one-pixel-per-unit captures; ~2.0 for a Retina point-space capture). Multiply a native screen
 			/// width by this to get image pixels, or divide an image X coordinate by it to get native units.
-			/// Reads "" after <see cref="Rotate"/> (the mapping is no longer defined) until
+			/// Reads blank in v2.0 mode and unset in v2.1 mode after <see cref="Rotate"/> until
 			/// <see cref="SetOrigin"/> re-establishes it.</summary>
-			public object ScaleX { get { ThrowIfDisposed(); return scaleValid ? scaleX : ""; } }
+			public object ScaleX { get { ThrowIfDisposed(); return scaleValid ? scaleX : DefaultObject; } }
 
 			/// <summary>Image pixels per native screen unit along Y. See <see cref="ScaleX"/>.</summary>
-			public object ScaleY { get { ThrowIfDisposed(); return scaleValid ? scaleY : ""; } }
+			public object ScaleY { get { ThrowIfDisposed(); return scaleValid ? scaleY : DefaultObject; } }
 
 			/// <summary>Screen-absolute X coordinate of this image's top-left at capture time (0 for file/bitmap
 			/// images, which have no on-screen origin). OCR uses it as the default x offset so highlights and
-			/// clicks land on the screen position the words actually occupy. Reads "" after
+			/// clicks land on the screen position the words actually occupy. Reads blank in v2.0 mode and unset in v2.1 mode after
 			/// <see cref="Rotate"/>/<see cref="Flip"/> (the origin is no longer defined) until
 			/// <see cref="SetOrigin"/> re-establishes it.</summary>
-			public object OriginX { get { ThrowIfDisposed(); return originValid ? (object)(long)originX : ""; } }
+			public object OriginX { get { ThrowIfDisposed(); return originValid ? (object)(long)originX : DefaultObject; } }
 
 			/// <summary>Screen-absolute Y coordinate of this image's top-left at capture time. See <see cref="OriginX"/>.</summary>
-			public object OriginY { get { ThrowIfDisposed(); return originValid ? (object)(long)originY : ""; } }
+			public object OriginY { get { ThrowIfDisposed(); return originValid ? (object)(long)originY : DefaultObject; } }
 
 			/// <summary>Re-anchors this image's screen mapping: sets the screen-absolute origin of its top-left
 			/// and, optionally, the pixels-per-screen-unit scale (<paramref name="scaleY"/> defaults to

@@ -136,14 +136,14 @@ namespace Keysharp.Builtins
 						var id = core?.DeviceId ?? deviceSelector;
 
 						if (id.IsNullOrEmpty())
-							return "";
+							return DefaultObject;
 
 						var backend = service?.Backend;
-						return backend is { IsAvailable: true } && backend.TryGetDevice(id, out var d) ? Ks.Audio.Wrap(service, d) : "";
+						return backend is { IsAvailable: true } && backend.TryGetDevice(id, out var d) ? Ks.Audio.Wrap(service, d) : DefaultObject;
 					}
 				}
 
-				public object Path => configuredPath.Length > 0 ? configuredPath : "";
+				public object Path => configuredPath.Length > 0 ? configuredPath : DefaultObject;
 
 				/// <summary>"Ready", "Opening", "Recording", "Paused", "Finalizing", "Stopped", "DeviceLost", "Error" or "Disposed".</summary>
 				public string Status => core?.Status ?? Engine.AudioRecorderStatus.Ready;
@@ -165,25 +165,25 @@ namespace Keysharp.Builtins
 				/// means the recording has gaps, which is otherwise invisible.</summary>
 				public object OverrunCount => core?.OverrunCount ?? 0L;
 
-				/// <summary>The loudest captured sample so far, or blank before any frame arrived.</summary>
+				/// <summary>The loudest captured sample so far, unavailable before any frame arrived.</summary>
 				public object Peak
 				{
 					get
 					{
 						var p = core?.Peak ?? -1;
-						return p < 0 ? "" : Level(Math.Clamp(p, 0.0, 1.0));
+						return p < 0 ? DefaultObject : Level(Math.Clamp(p, 0.0, 1.0));
 					}
 				}
 
-				public object Error => core?.Error is string e && e.Length > 0 ? new Error(e) : (object)"";
+				public object Error => core?.Error is string e && e.Length > 0 ? new Error(e) : DefaultObject;
 
-				/// <summary>The finished recording, or blank until one exists and when none could be produced.</summary>
+				/// <summary>The finished recording, unavailable until one exists and when none could be produced.</summary>
 				public object Result
 				{
 					get
 					{
 						EnsureResult();
-						return result ?? (object)"";
+						return result ?? (object)DefaultObject;
 					}
 				}
 
@@ -296,7 +296,7 @@ namespace Keysharp.Builtins
 
 			/// <summary>
 			/// What a finished recording produced: exactly one of an in-memory clip or a file path, never both and
-			/// never neither. A recorder that could not produce an honest result reports blank instead of this.
+			/// never neither. A recorder that could not produce an honest result has no recording object.
 			/// </summary>
 			public class Recording : KeysharpObject
 			{
@@ -324,11 +324,11 @@ namespace Keysharp.Builtins
 					format = core.ResultClip == null ? core.SampleFormat : Engine.AudioFormats.Float32,
 				};
 
-				/// <summary>The captured audio as a clip, or blank when the recording went to a file.</summary>
-				public object Clip => clip == null ? "" : Ks.Audio.Clip.Wrap(clip);
+				/// <summary>The captured audio as a clip, unavailable when the recording went to a file.</summary>
+				public object Clip => clip == null ? DefaultObject : Ks.Audio.Clip.Wrap(clip);
 
-				/// <summary>The file that was written, or blank when the recording was kept in memory.</summary>
-				public object Path => path.Length > 0 ? path : "";
+				/// <summary>The file that was written, unavailable when the recording was kept in memory.</summary>
+				public object Path => path.Length > 0 ? path : DefaultObject;
 
 				public object DurationMilliseconds => duration;
 

@@ -275,16 +275,16 @@ namespace Keysharp.Builtins
 					return core;
 				}
 
-				/// <summary>The device this output is bound to, or blank while it follows the current default.</summary>
+				/// <summary>The device this output is bound to, when resolved.</summary>
 				public object Device
 				{
 					get
 					{
 						if (core == null || core.BoundDeviceId.Length == 0)
-							return "";
+							return DefaultObject;
 
 						var backend = service.Backend;
-						return backend is { IsAvailable: true } && backend.TryGetDevice(core.BoundDeviceId, out var d) ? Ks.Audio.Wrap(service, d) : "";
+						return backend is { IsAvailable: true } && backend.TryGetDevice(core.BoundDeviceId, out var d) ? Ks.Audio.Wrap(service, d) : DefaultObject;
 					}
 				}
 
@@ -304,18 +304,18 @@ namespace Keysharp.Builtins
 
 				public object UnderrunCount => core?.UnderrunCount ?? 0L;
 
-				public object SampleRate => core != null && core.SampleRate > 0 ? (long)core.SampleRate : "";
+				public object SampleRate => core != null && core.SampleRate > 0 ? (long)core.SampleRate : DefaultObject;
 
-				public object Channels => core != null && core.Channels > 0 ? (long)core.Channels : "";
+				public object Channels => core != null && core.Channels > 0 ? (long)core.Channels : DefaultObject;
 
 				public object RequestedLatencyMilliseconds => core?.RequestedLatencyMilliseconds ?? 0.0;
 
-				public object LatencyMilliseconds => core != null && core.MeasuredLatencyMilliseconds > 0 ? core.MeasuredLatencyMilliseconds : "";
+				public object LatencyMilliseconds => core != null && core.MeasuredLatencyMilliseconds > 0 ? core.MeasuredLatencyMilliseconds : DefaultObject;
 
-				/// <summary>The loudest sample of the last completed quantum after output gain, or blank when closed.</summary>
-				public object Peak => core?.PeakLevel is float p ? Level(p) : "";
+				/// <summary>The loudest sample of the last completed quantum after output gain, unavailable when closed.</summary>
+				public object Peak => core?.PeakLevel is float p ? Level(p) : DefaultObject;
 
-				public object Error => core?.Error is string e && e.Length > 0 ? new Error(e) : (object)"";
+				public object Error => core?.Error is string e && e.Length > 0 ? new Error(e) : DefaultObject;
 
 				/// <summary>This output's own gain, applied after every voice is summed. It survives a close.</summary>
 				public object Volume
@@ -545,7 +545,7 @@ namespace Keysharp.Builtins
 						var backend = service.Backend;
 						return owner != null && backend is { IsAvailable: true } && backend.TryGetDevice(owner.BoundDeviceId, out var d)
 							   ? Ks.Audio.Wrap(service, d)
-							   : "";
+							   : DefaultObject;
 					}
 				}
 
@@ -584,7 +584,7 @@ namespace Keysharp.Builtins
 					}
 				}
 
-				public object DurationMilliseconds => source?.DurationMilliseconds ?? (object)"";
+				public object DurationMilliseconds => source?.DurationMilliseconds ?? (object)DefaultObject;
 
 				/// <summary>The play position in milliseconds. Writable while the sound is live.</summary>
 				public object PositionMilliseconds
@@ -592,7 +592,7 @@ namespace Keysharp.Builtins
 					get
 					{
 						if (control == null || owner == null || owner.SampleRate <= 0)
-							return "";
+							return DefaultObject;
 
 						return control.PositionFrames * 1000.0 / owner.SampleRate;
 					}
@@ -656,8 +656,8 @@ namespace Keysharp.Builtins
 					set => control?.SetMute(value.Ab());
 				}
 
-				/// <summary>This voice's own peak after its gain and pan, or blank before any frame was rendered.</summary>
-				public object Peak => control == null || !control.IsAdmitted ? "" : Level(control.Peak);
+				/// <summary>This voice's own peak after its gain and pan, unavailable before any frame was rendered.</summary>
+				public object Peak => control == null || !control.IsAdmitted ? DefaultObject : Level(control.Peak);
 
 				/// <summary>Pauses, holding the position and the voice. Returns the resulting paused state.</summary>
 				public object Pause()

@@ -716,11 +716,11 @@ namespace Keysharp.Builtins
 		}
 
 		public long HasExited => process.HasExited ? 1L : 0L;
-		public object ExitCode => process.HasExited ? (long)process.ExitCode : "";
+		public object ExitCode => process.HasExited ? (long)process.ExitCode : DefaultObject;
 		/// <summary>
-		/// Gets the exit time formatted as "YYYYMMDDHH24MISS", or an empty string while the process is running.
+		/// Gets the exit time formatted as "YYYYMMDDHH24MISS", or blank in v2.0 mode and unset in v2.1 while running.
 		/// </summary>
-		public string ExitTime => process.HasExited ? Conversions.ToYYYYMMDDHH24MISS(process.ExitTime) : "";
+		public string ExitTime => process.HasExited ? Conversions.ToYYYYMMDDHH24MISS(process.ExitTime) : DefaultObject;
 		/// <summary>
 		/// Returns a KeysharpFile wrapping the standard output stream.
 		/// </summary>

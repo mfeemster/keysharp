@@ -16,8 +16,8 @@ namespace Keysharp.Builtins
 		/// are set, so a font carrying nothing but a family changes the family and leaves the rest alone.
 		/// The <c>UiDefault</c>/<c>Emoji</c>/<c>GuiDefault</c> factories read the available native attributes,
 		/// including size and styles when the toolkit is initialized.
-		/// <para>An unset property reads back as "" and never raises; writing "" clears it. Unset and false
-		/// are both falsy, so compare against "" when the difference matters.</para>
+		/// <para>Unspecified properties return an empty string in v2.0 mode and unset in v2.1 mode. Writing
+		/// an empty string or unset clears a property; an explicit false remains a set value.</para>
 		/// <para><c>Gui.Font</c> and <c>GuiCtrl.Font</c> return a detached copy: mutating it does nothing
 		/// until it is assigned back, so one font can be given to any number of controls.</para>
 		/// <para>Use as: <c>#import KS { Font }</c>, then <c>f := Font.UiDefault</c>, <c>MyGui.Font := f</c>.</para>
@@ -27,10 +27,6 @@ namespace Keysharp.Builtins
 		//ctor fails the generated code with CS0509/CS1729.
 		public class Font : KeysharpObject
 		{
-			//Not Script.DefaultObject, which is unset in v2.1 mode: reading f.Size to find out whether a size
-			//was given would then raise. "" is unambiguous since no font property has "" as a real value.
-			private const string Unset = "";
-
 			internal FontOptions fontOptions;
 
 			public Font(params object[] args) : base(args) { }
@@ -99,10 +95,10 @@ namespace Keysharp.Builtins
 
 			// ---- instance properties ---------------------------------------------------------------------
 
-			/// <summary>The font family name, or "" when unset.</summary>
+			/// <summary>The font family name, or blank when unset.</summary>
 			public object Name
 			{
-				get => fontOptions.name ?? Unset;
+				get => fontOptions.name ?? DefaultObject;
 				set
 				{
 					if (value is Any)
@@ -118,20 +114,20 @@ namespace Keysharp.Builtins
 				}
 			}
 
-			/// <summary>Point size in the Windows convention scripts use everywhere, or "" when unset.</summary>
+			/// <summary>Point size in the Windows convention scripts use everywhere, or blank when unset.</summary>
 			public object Size
 			{
-				get => fontOptions.size.HasValue ? (object)fontOptions.size.Value : Unset;
+				get => fontOptions.size.HasValue ? (object)fontOptions.size.Value : DefaultObject;
 				set { if (TryOptionalDouble(value, out var v) && (!v.HasValue || FontOptions.ValidSize(v.Value))) fontOptions.size = v; }
 			}
 
 			/// <summary>
-			/// Text colour as a 6-digit RRGGBB string, like <c>Gui.BackColor</c>, or "" when unset. Accepts a
+			/// Text colour as a 6-digit RRGGBB string, like <c>Gui.BackColor</c>, or blank when unset. Accepts a
 			/// colour name, a hex string, or an integer.
 			/// </summary>
 			public object Color
 			{
-				get => fontOptions.color.HasValue ? (fontOptions.color.Value.ToArgb() & 0x00FFFFFF).ToString("X6") : Unset;
+				get => fontOptions.color.HasValue ? (fontOptions.color.Value.ToArgb() & 0x00FFFFFF).ToString("X6") : DefaultObject;
 
 				set
 				{
@@ -159,12 +155,12 @@ namespace Keysharp.Builtins
 			}
 
 			/// <summary>
-			/// Weight as SetFont's "wN" takes it (400 normal, 700 bold), or "" when unset.
+			/// Weight as SetFont's "wN" takes it (400 normal, 700 bold), or blank when unset.
 			/// <see cref="Bold"/> is a view over the same value.
 			/// </summary>
 			public object Weight
 			{
-				get => fontOptions.weight.HasValue ? (object)(long)fontOptions.weight.Value : Unset;
+				get => fontOptions.weight.HasValue ? (object)(long)fontOptions.weight.Value : DefaultObject;
 				set
 				{
 					if (TryOptionalDouble(value, out var w) && (!w.HasValue || FontOptions.ValidInteger(w.Value, "weight", 1, 1000)))
@@ -173,12 +169,12 @@ namespace Keysharp.Builtins
 			}
 
 			/// <summary>
-			/// Rendering quality as SetFont's "qN" takes it, or "" when unset. Values 0 through 5 control
+			/// Rendering quality as SetFont's "qN" takes it, or blank when unset. Values 0 through 5 control
 			/// GUI and image text rendering on Windows. Other platforms support only the default.
 			/// </summary>
 			public object Quality
 			{
-				get => fontOptions.quality.HasValue ? (object)(long)fontOptions.quality.Value : Unset;
+				get => fontOptions.quality.HasValue ? (object)(long)fontOptions.quality.Value : DefaultObject;
 				set
 				{
 					if (TryOptionalDouble(value, out var q) && (!q.HasValue || FontOptions.ValidInteger(q.Value, "quality", 0, 5)))
@@ -188,11 +184,11 @@ namespace Keysharp.Builtins
 
 			/// <summary>
 			/// <see cref="Weight"/> as a boolean: reading is <c>Weight >= 700</c>, writing sets 700 or 400.
-			/// "" when the weight is unset.
+			/// Blank when the weight is unset.
 			/// </summary>
 			public object Bold
 			{
-				get => fontOptions.weight.HasValue ? (object)(fontOptions.weight.Value >= 700) : Unset;
+				get => fontOptions.weight.HasValue ? (object)(fontOptions.weight.Value >= 700) : DefaultObject;
 				set
 				{
 					if (TryOptionalBool(value, out var b))
@@ -200,31 +196,31 @@ namespace Keysharp.Builtins
 				}
 			}
 
-			/// <summary>Whether the font is italic, or "" when unset.</summary>
+			/// <summary>Whether the font is italic, or blank when unset.</summary>
 			public object Italic
 			{
-				get => fontOptions.italic.HasValue ? (object)fontOptions.italic.Value : Unset;
+				get => fontOptions.italic.HasValue ? (object)fontOptions.italic.Value : DefaultObject;
 				set { if (TryOptionalBool(value, out var v)) fontOptions.italic = v; }
 			}
 
-			/// <summary>Whether the font is underlined, or "" when unset.</summary>
+			/// <summary>Whether the font is underlined, or blank when unset.</summary>
 			public object Underline
 			{
-				get => fontOptions.underline.HasValue ? (object)fontOptions.underline.Value : Unset;
+				get => fontOptions.underline.HasValue ? (object)fontOptions.underline.Value : DefaultObject;
 				set { if (TryOptionalBool(value, out var v)) fontOptions.underline = v; }
 			}
 
-			/// <summary>Whether the font is struck through, or "" when unset.</summary>
+			/// <summary>Whether the font is struck through, or blank when unset.</summary>
 			public object Strike
 			{
-				get => fontOptions.strike.HasValue ? (object)fontOptions.strike.Value : Unset;
+				get => fontOptions.strike.HasValue ? (object)fontOptions.strike.Value : DefaultObject;
 				set { if (TryOptionalBool(value, out var v)) fontOptions.strike = v; }
 			}
 
 			/// <summary>
 			/// The set properties as an option string SetFont accepts, e.g. <c>"s10 w700 cFF0000 italic"</c>.
 			/// The family is not part of it, since SetFont takes the name separately:
-			/// <c>SetFont(f.Options, f.Name)</c>.
+			/// <c>SetFont(f.Options, f.Name?)</c>.
 			/// </summary>
 			public object Options => fontOptions.Options;
 

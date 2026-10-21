@@ -205,7 +205,7 @@ namespace Keysharp.Internals
 		internal int Orientation { get; init; }
 
 		/// <summary>Whether this is a built-in panel (laptop/iMac) rather than an external display.</summary>
-		internal bool IsInternal { get; init; }
+		internal bool? IsInternal { get; init; }
 
 		internal static readonly DisplayDetails Empty = new();
 	}

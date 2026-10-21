@@ -11,6 +11,7 @@ namespace Keysharp.Builtins
 		/// <c>Monitor.Devices</c>.
 		/// <para>Each object contains a completed snapshot of the display's descriptive metadata and geometry.
 		/// <see cref="Refresh"/> updates that snapshot. Brightness and VCP controls query the hardware when called.</para>
+		/// <para>Unavailable metadata is an empty string in v2.0 mode and unset in v2.1 mode.</para>
 		/// <para>The C# type is named <c>KeysharpMonitor</c> to avoid colliding with the AHK-compatible
 		/// <c>Keysharp.Builtins.Monitor</c> function holder; scripts see it as <c>Monitor</c>.</para>
 		/// </summary>
@@ -130,32 +131,32 @@ namespace Keysharp.Builtins
 
 			/// <summary>
 			/// The operating system's name for this monitor: <c>\\.\DISPLAY1</c> on Windows, the connector name
-			/// (<c>DP-1</c>, <c>eDP-1</c>) on Linux, and the localized display name on macOS. Identical to
-			/// <c>MonitorGetName(Index)</c>.
+			/// (<c>DP-1</c>, <c>eDP-1</c>) on Linux, and the localized display name on macOS. Matches
+			/// <c>MonitorGetName(Index)</c> when available.
 			/// </summary>
-			public string Name => display.Name ?? "";
+			public string Name => string.IsNullOrEmpty(display.Name) ? DefaultObject : display.Name;
 
-			/// <summary>The panel's model name from EDID ("U2720Q"), or "" when the display reports none.</summary>
+			/// <summary>The panel's model name from EDID ("U2720Q"), or blank when the display reports none.</summary>
 			public object Model => Text(details.Model);
 
-			/// <summary>The three-letter PNP manufacturer code from EDID ("DEL", "SAM"), or "".</summary>
+			/// <summary>The three-letter PNP manufacturer code from EDID ("DEL", "SAM"), or blank.</summary>
 			public object Manufacturer => Text(details.Manufacturer);
 
-			/// <summary>The panel's serial number, or "" when it reports none.</summary>
+			/// <summary>The panel's serial number, or blank when it reports none.</summary>
 			public object Serial => Text(details.Serial);
 
 			/// <summary>
-			/// Persistent display identifier, or "" when unavailable. Filter <c>Monitor.Devices</c> by this value to
+			/// Persistent display identifier, or blank when unavailable. Filter <c>Monitor.Devices</c> by this value to
 			/// restore a saved selection. EDID identifies the panel when it supplies a unique serial; otherwise
 			/// Windows and Linux distinguish connectors, while macOS uses a model identifier identical panels can share.
 			/// </summary>
 			public object Id => Text(details.StableId);
 
 			/// <summary>The graphics adapter driving this monitor: its marketing name on Windows, the DRM driver
-			/// name ("amdgpu", "i915") on Linux. "" where the platform exposes none.</summary>
+			/// name ("amdgpu", "i915") on Linux. Blank where the platform exposes none.</summary>
 			public object Adapter => Text(details.Adapter);
 
-			/// <summary>How the monitor is attached: "HDMI", "DisplayPort", "eDP", "DVI", "VGA", "Internal", or ""
+			/// <summary>How the monitor is attached: "HDMI", "DisplayPort", "eDP", "DVI", "VGA", "Internal", or blank
 			/// when the platform does not say.</summary>
 			public object Connection => details.Connection switch
 			{
@@ -165,7 +166,7 @@ namespace Keysharp.Builtins
 				"DVI" => "DVI",
 				"VGA" => "VGA",
 				"Internal" => "Internal",
-				_ => ""
+				_ => DefaultObject
 			};
 
 			/// <summary>Whether this is the primary monitor.</summary>
@@ -173,7 +174,7 @@ namespace Keysharp.Builtins
 
 			/// <summary>Whether this is a built-in panel (a laptop or all-in-one screen) rather than an external
 			/// monitor.</summary>
-			public bool IsInternal => details.IsInternal;
+			public object IsInternal => details.IsInternal is bool value ? (object)value : DefaultObject;
 
 			// ---- geometry ----------------------------------------------------------------------------------
 
@@ -203,7 +204,7 @@ namespace Keysharp.Builtins
 			/// <summary>
 			/// Dots per inch, computed from the panel's physical size. Expressed in the same units as <c>Width</c> and
 			/// <c>Height</c> — physical pixels on Windows and X11, logical units on Wayland and macOS — so on the latter
-			/// two it is a logical DPI rather than the panel's true pixel density. "" when the display does not
+			/// two it is a logical DPI rather than the panel's true pixel density. Blank when the display does not
 			/// report a physical size.
 			/// </summary>
 			public object Dpi
@@ -216,18 +217,18 @@ namespace Keysharp.Builtins
 					var mm = rotated ? details.PhysicalHeightMm : details.PhysicalWidthMm;
 
 					return mm > 0 && display.Bounds.Width > 0
-						? (object)Math.Round(display.Bounds.Width / (mm / 25.4), 1) : "";
+						? (object)Math.Round(display.Bounds.Width / (mm / 25.4), 1) : DefaultObject;
 				}
 			}
 
-			/// <summary>The panel's physical width in millimetres, or "" when it reports none.</summary>
-			public object PhysicalWidth => details.PhysicalWidthMm > 0 ? (object)(long)details.PhysicalWidthMm : "";
+			/// <summary>The panel's physical width in millimetres, or blank when it reports none.</summary>
+			public object PhysicalWidth => details.PhysicalWidthMm > 0 ? (object)(long)details.PhysicalWidthMm : DefaultObject;
 
-			/// <summary>The panel's physical height in millimetres, or "" when it reports none.</summary>
-			public object PhysicalHeight => details.PhysicalHeightMm > 0 ? (object)(long)details.PhysicalHeightMm : "";
+			/// <summary>The panel's physical height in millimetres, or blank when it reports none.</summary>
+			public object PhysicalHeight => details.PhysicalHeightMm > 0 ? (object)(long)details.PhysicalHeightMm : DefaultObject;
 
-			/// <summary>Vertical refresh rate in Hz as a float — 59.94, not 59 — or "" when unknown.</summary>
-			public object RefreshRate => details.RefreshRate > 0 ? (object)Math.Round(details.RefreshRate, 3) : "";
+			/// <summary>Vertical refresh rate in Hz as a float — 59.94, not 59 — or blank when unknown.</summary>
+			public object RefreshRate => details.RefreshRate > 0 ? (object)Math.Round(details.RefreshRate, 3) : DefaultObject;
 
 			/// <summary>Clockwise rotation of the desktop content in degrees: 0, 90, 180 or 270.</summary>
 			public long Orientation => details.Orientation;
@@ -404,7 +405,7 @@ namespace Keysharp.Builtins
 			private static DisplayInfo Snapshot(DisplayInfo info)
 				=> info with { WorkArea = Platform.Screen.GetWorkArea(info) };
 
-			private static object Text(string value) => string.IsNullOrEmpty(value) ? "" : value;
+			private static object Text(string value) => string.IsNullOrEmpty(value) ? DefaultObject : value;
 
 			private static KeysharpObject Rect(ScreenRect bounds)
 				=> Objects.RectObject(bounds.X, bounds.Y, bounds.Width, bounds.Height);

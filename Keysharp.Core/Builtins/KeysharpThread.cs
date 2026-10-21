@@ -273,8 +273,8 @@ namespace Keysharp.Builtins
 		}
 
 		/// <summary>The code this thread's <c>Exit</c> ended it with, readable from any thread from the start of its
-		/// unwind; an empty string while it runs or when it ended some other way.</summary>
-		public object ExitCode => exitCode ?? "";
+		/// unwind; blank in v2.0 mode and unset in v2.1 while it runs or when it ended some other way.</summary>
+		public object ExitCode => exitCode ?? DefaultObject;
 
 		internal object RecordedExitCode { get => exitCode; set => exitCode = value; }
 

@@ -251,15 +251,15 @@ namespace Keysharp.Builtins
 						var backend = service?.Backend;
 						return backend is { IsAvailable: true } && backend.TryGetDevice(Snapshot.DeviceId, out var d)
 							   ? Ks.Audio.Wrap(service, d)
-							   : "";
+							   : DefaultObject;
 					}
 				}
 
-				public object ProcessId => Snapshot.ProcessId > 0 ? Snapshot.ProcessId : (object)"";
+				public object ProcessId => Snapshot.ProcessId > 0 ? Snapshot.ProcessId : (object)DefaultObject;
 
-				public object ProcessName => Snapshot.ProcessName.IsNullOrEmpty() ? "" : Snapshot.ProcessName;
+				public object ProcessName => Snapshot.ProcessName.IsNullOrEmpty() ? DefaultObject : Snapshot.ProcessName;
 
-				public object DisplayName => Snapshot.DisplayName.IsNullOrEmpty() ? "" : Snapshot.DisplayName;
+				public object DisplayName => Snapshot.DisplayName.IsNullOrEmpty() ? DefaultObject : Snapshot.DisplayName;
 
 				/// <summary>"Active", "Inactive" or "Expired".</summary>
 				public string Status => expired ? "Expired" : Snapshot.State ?? "Inactive";
@@ -398,7 +398,7 @@ namespace Keysharp.Builtins
 				internal Engine.AudioMeterCore native;
 				internal string targetId = "";
 				internal bool isSession;
-				internal object target = "";
+				internal object target;
 				internal string status = "Stopped";
 				internal string error;
 
@@ -456,7 +456,7 @@ namespace Keysharp.Builtins
 
 				internal long Interval { get; private set; } = 50;
 
-				public object Target => target;
+				public object Target => target ?? DefaultObject;
 
 				/// <summary>"Stopped", "Active", "Error" or "Disposed".</summary>
 				public string Status => status;
@@ -467,7 +467,7 @@ namespace Keysharp.Builtins
 				public object IsSupported
 					=> targetId.Length > 0 && service?.Supports(Engine.AudioCapability.Metering) == true;
 
-				/// <summary>The most recent peak from 0 through 100, or blank before any observation completed.</summary>
+				/// <summary>The most recent peak from 0 through 100, unavailable before any observation completed.</summary>
 				public object Peak
 				{
 					get
@@ -475,14 +475,14 @@ namespace Keysharp.Builtins
 						var m = native;
 
 						if (m == null || status != "Active")
-							return "";
+							return DefaultObject;
 
 						var p = m.Peak;
-						return p < 0 ? "" : Level(Math.Clamp(p, 0.0, 1.0));
+						return p < 0 ? DefaultObject : Level(Math.Clamp(p, 0.0, 1.0));
 					}
 				}
 
-				public object Error => error.IsNullOrEmpty() ? "" : new Error(error);
+				public object Error => error.IsNullOrEmpty() ? DefaultObject : new Error(error);
 
 				/// <summary>Opens the native observation. Raises for an unsupported, missing or expired target.</summary>
 				public object Start()

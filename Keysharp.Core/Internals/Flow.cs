@@ -132,8 +132,7 @@ namespace Keysharp.Internals
 
 				try
 				{
-					// The callbacks are told the PROPOSED reason as an argument. Ks.App.ExitReason stays empty
-					// throughout, because until the veto check below the exit is only proposed, not certain.
+					// App.ExitReason remains unavailable until every callback accepts the proposed exit.
 					result = script.onExitHandlers.InvokeExitHandlers(reasonName, ec);
 				}
 				finally
