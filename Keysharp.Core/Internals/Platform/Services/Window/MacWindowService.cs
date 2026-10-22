@@ -190,9 +190,12 @@ namespace Keysharp.Internals
 			if (!MacNativeWindows.TryGetWindowInfo(h, out var native))
 				return false;
 
-			using var window = MacAccessibility.ResolveWindowElement(native, "unminimize window", waitForWindow: true);
-			if (!MacAccessibility.TryGetWindowState(window, out var current)
-				|| current == FormWindowState.Minimized && !MacAccessibility.TrySetWindowState(window, FormWindowState.Normal))
+			var wait = WaitsForStateChange;
+			using var window = MacAccessibility.ResolveWindowElement(native, "unminimize window", waitForWindow: wait, request: !wait);
+			FormWindowState current;
+			// A request reads what the window last reported instead of waiting on its busy application.
+			if (!(wait ? MacAccessibility.TryGetWindowState(window, out current) : MacAccessibility.TryGetWindowState(native, out current))
+				|| current == FormWindowState.Minimized && !MacAccessibility.TrySetWindowState(window, FormWindowState.Normal, wait))
 				_ = Errors.OSErrorOccurred("Unminimizing the macOS window failed.");
 
 			return true;
@@ -203,9 +206,16 @@ namespace Keysharp.Internals
 			if (TryOwnControl(h, out _) || !MacNativeWindows.TryGetWindowInfo(h, out var native))
 				return base.TrySetState(h, state);
 
-			using var window = MacAccessibility.ResolveWindowElement(native, "set window state", waitForWindow: true);
-			return MacAccessibility.TrySetWindowState(window, state);
+			// Full screen always waits, because each step needs the one before it to finish.
+			var wait = WaitsForStateChange || state is not (FormWindowState.Minimized or FormWindowState.Normal);
+			using var window = MacAccessibility.ResolveWindowElement(native, "set window state", waitForWindow: wait, request: !wait);
+			return MacAccessibility.TrySetWindowState(window, state, wait);
 		}
+
+		// AutoHotkey's WinMinimize and WinRestore return once the window has changed, because the lines after them
+		// may depend on it; on macOS that is once AppKit's animation ends. SetWinDelay(-1) declines the time windows
+		// take to settle, so for a script that sets it an ordinary minimize or restore is only requested.
+		private static bool WaitsForStateChange => ThreadAccessors.A_WinDelay >= 0;
 
 		public override bool TrySetStyle(nint h, long style)
 		{

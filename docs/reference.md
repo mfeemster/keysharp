@@ -216,7 +216,7 @@ Permissions are requested automatically when first needed, or up front with `#Re
 
 On macOS, every top-level window uses its window-server ID (`CGWindowID`) as its Keysharp handle. `Gui.Hwnd`, `WinActive()`, `WinExist()`, `WinGetID()`, `WinGetList()`, point queries, and `WinEvent` callbacks agree on that ID. Own GUI IDs are validated against CoreGraphics at creation and remain unchanged through hiding, showing, minimizing, and restoring. `Gui.Hwnd` is not an `NSWindow` pointer; native AppKit access goes through the backing form returned by `Gui.ToClr()`.
 
-For foreign windows on macOS, `WinHide()`/`WinShow()` hide/unhide the owning application. `WinMaximize()` uses fullscreen; minimizing leaves fullscreen, and the same script's `WinRestore()` or `WinActivate()` restores it. Foreign title changes require writable `AXTitle`. Foreign level, opacity, enabled state, frame style, lowering and redraw are unsupported.
+For foreign windows on macOS, `WinHide()`/`WinShow()` hide/unhide the owning application. `WinMaximize()` uses fullscreen; minimizing leaves fullscreen, and the same script's `WinRestore()` or `WinActivate()` restores it. `WinMinimize()` and `WinRestore()` wait for AppKit's animation. After `SetWinDelay(-1)` minimizing or restoring a window that is not fullscreen is only requested: a further `WinMinimize()` or `WinRestore()` builds on the pending one, and other actions on that application's windows wait for the animation. While an application is animating or does not answer, `WinGetMinMax()` reports the state last seen. Foreign title changes require writable `AXTitle`. Foreign level, opacity, enabled state, frame style, lowering and redraw are unsupported.
 
 ### Installing on macOS
 
@@ -278,7 +278,7 @@ On first use, macOS will ask for several permissions:
 | **Accessibility** | `WindowMonitoring`, `WindowControl`, input synthesis, and suppression-capable global hooks |
 | **Screen Recording** | `ScreenCapture`; also `WindowMonitoring`, because macOS omits foreign window titles from the current window-inventory API without this grant |
 
-Grant each permission in **System Settings → Privacy & Security** when prompted. Keysharp will wait up to 60 seconds for each permission to be granted before continuing, but usually the script will have to be restarted after granting capabilities. You can also request permissions explicitly at the top of a script:
+Grant each permission in **System Settings → Privacy & Security** when prompted. Keysharp will wait up to 60 seconds for each permission to be granted before continuing, but usually the script will have to be restarted after granting or revoking capabilities. You can also request permissions explicitly at the top of a script:
 ```ahk
 #Requires capability InputMonitoring, ScreenCapture
 ```

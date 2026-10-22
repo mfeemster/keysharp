@@ -47,9 +47,10 @@ namespace Keysharp.Internals.Window.MacOS
 				return true;
 			}
 
-			if (MacNativeWindows.TryGetWindowInfo(Handle, out var latest, includeTextMetadata))
+			// Fetching the text with the descriptor saves a window-server round trip for a later title or class read.
+			if (MacNativeWindows.TryGetWindowInfo(Handle, out var latest, includeTextMetadata: true))
 			{
-				CacheNativeInfo(latest, includeTextMetadata);
+				CacheNativeInfo(latest, includesTextMetadata: true);
 				info = latest;
 				return true;
 			}
@@ -210,8 +211,7 @@ namespace Keysharp.Internals.Window.MacOS
 				if (!TryGetNativeInfo(out var native))
 					return FormWindowState.Normal;
 
-				using var window = MacAccessibility.ResolveWindowElement(native, "query window state", prompt: false, waitForWindow: true);
-				return MacAccessibility.TryGetWindowState(window, out var state)
+				return MacAccessibility.TryGetWindowState(native, out var state)
 					? state
 					: FormWindowState.Normal;
 			}

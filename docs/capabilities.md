@@ -986,7 +986,7 @@ Status legend:
 | SetStoreCapsLockMode() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | The SetStoreCapsLockMode function determines whether to restore the state of the CapsLock key after a Send function. |
 | SetTimer() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Periods are measured from callback start; overdue callbacks coalesce and remain due while blocked by priority or timer permission. Timers continue while tray, popup, or menu-bar menus are open. Uses ordinary deadline-based waits without requesting higher timer resolution. Callbacks remain serialized on their owning scheduler. |
 | SetTitleMatchMode() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | The SetTitleMatchMode function sets the matching behavior of the WinTitle parameter in built-in functions such as WinWait. |
-| SetWinDelay() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | The SetWinDelay function sets the delay that will occur after each windowing function, such as WinActivate. |
+| SetWinDelay() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | The SetWinDelay function sets the delay that will occur after each windowing function, such as WinActivate. On macOS, -1 also lets minimizing or restoring a foreign window return before its animation ends. |
 | SetWorkingDir() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Changes the script's current working directory. |
 | ShowDebug() | 🟢 Full | 🟢 Full | 🟢 Full | 🟢 Full | Shows or toggles debug UI/log output. |
 | Shutdown() | 🟢 Full | 🟢 Full | 🟢 Full | 🟡 Partial | Shuts down, restarts, or logs off the system. macOS uses System Events; its normal actions are implemented, but AHK's force flag has no direct equivalent and is ignored with a diagnostic. |

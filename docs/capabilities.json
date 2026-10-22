@@ -10309,7 +10309,7 @@
                      "linux_x11":  "full",
                      "linux_wayland":  "full",
                      "macos":  "full",
-                     "notes":  "The SetWinDelay function sets the delay that will occur after each windowing function, such as WinActivate.",
+                     "notes":  "The SetWinDelay function sets the delay that will occur after each windowing function, such as WinActivate. On macOS, -1 also lets minimizing or restoring a foreign window return before its animation ends.",
                      "tested-by":  "props-script-settings.ahk"
                  },
                  {

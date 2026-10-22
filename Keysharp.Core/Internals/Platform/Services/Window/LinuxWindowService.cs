@@ -23,6 +23,9 @@ namespace Keysharp.Internals
 		public override WindowInfoBase CreateWindow(nint id)
 			=> TryOwnControl(id, out _) ? base.CreateWindow(id) : new WindowInfo(id);
 
+		// Without a display server, only this process's own windows exist.
+		public override bool GetExists(nint h) => TryOwnControl(h, out _);
+
 		public override WindowInfoBase ActiveWindow() => new WindowInfo(0);
 
 		public override IEnumerable<WindowInfoBase> Enumerate(bool includeHidden) => [];

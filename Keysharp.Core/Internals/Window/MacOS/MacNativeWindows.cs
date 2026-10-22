@@ -162,11 +162,13 @@ namespace Keysharp.Internals.Window.MacOS
 		internal static List<MacNativeWindow> Snapshot(bool onScreenOnly = false)
 		{
 			// Only OnScreenOnly guarantees front-to-back order; the full inventory also contains minimized windows.
-			var windows = SnapshotCore(onScreenOnly: true, includeTextMetadata: true);
+			// Each application's hidden state costs a LaunchServices query, so both passes share the answers.
+			var hiddenApplications = new Dictionary<int, bool>();
+			var windows = SnapshotCore(onScreenOnly: true, includeTextMetadata: true, hiddenApplications: hiddenApplications);
 			if (!onScreenOnly)
 			{
 				var seen = new HashSet<uint>(windows.Select(w => w.WindowNumber));
-				foreach (var window in SnapshotCore(onScreenOnly: false, includeTextMetadata: true))
+				foreach (var window in SnapshotCore(onScreenOnly: false, includeTextMetadata: true, hiddenApplications: hiddenApplications))
 					if (seen.Add(window.WindowNumber))
 						windows.Add(window);
 			}
@@ -788,7 +790,7 @@ namespace Keysharp.Internals.Window.MacOS
 		}
 
 		private static List<MacNativeWindow> SnapshotCore(bool onScreenOnly, bool includeTextMetadata,
-			bool includeOwnerName = false, POINT? containingPoint = null)
+			bool includeOwnerName = false, POINT? containingPoint = null, Dictionary<int, bool> hiddenApplications = null)
 		{
 			var options = (onScreenOnly ? kCGWindowListOptionOnScreenOnly : kCGWindowListOptionAll)
 				| kCGWindowListExcludeDesktopElements;
@@ -801,7 +803,7 @@ namespace Keysharp.Internals.Window.MacOS
 				var count = CFArrayGetCount(arrayRef);
 				var capacity = count > int.MaxValue ? int.MaxValue : (int)count;
 				var list = new List<MacNativeWindow>(capacity);
-				var hiddenApplications = new Dictionary<int, bool>();
+				hiddenApplications ??= new Dictionary<int, bool>();
 				for (nint i = 0; i < count; i++)
 					if (TryReadWindowInfo(CFArrayGetValueAtIndex(arrayRef, i), out var info,
 						includeTextMetadata, includeOwnerName, onScreenOnly, containingPoint, hiddenApplications))

@@ -97,10 +97,10 @@ namespace Keysharp.Internals.Window
 
 			if (criteria.ID != 0)
 			{
-				if (!IsWindow(criteria.ID))
-					return null;
-
 				var temp = CreateWindow(criteria.ID);
+				// Reuse a seeded snapshot's existence; IsWindow also accepts platform sentinel targets.
+				if (!temp.Exists && !IsWindow(criteria.ID))
+					return null;
 
 				//Naming a window by id skips the enumeration that applies DetectHiddenWindows. Equals has a gate
 				//of its own, but it lets anything with a parent through, which our own GUI windows report.

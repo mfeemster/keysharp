@@ -183,6 +183,7 @@ namespace Keysharp.Internals.Os
 	}
 
 #if OSX
+	// An explicit prompt (script requests, status reads) re-checks TCC; built-in gates reuse a held grant.
 	internal sealed class MacPermissionManager : DefaultPermissionManager
 	{
 		public override PermissionResult RequestWindowMonitoring(bool? prompt = null, string operation = null)
@@ -193,7 +194,7 @@ namespace Keysharp.Internals.Os
 				return new(PermissionStatus.Denied,
 					$"macOS Accessibility permission is required for '{operation}'. Grant access in System Settings -> Privacy & Security -> Accessibility, then restart the app.");
 
-			if (!MacAccessibility.EnsureScreenCaptureAccess(operation, allowInteraction))
+			if (!MacAccessibility.EnsureScreenCaptureAccess(operation, allowInteraction, refresh: prompt.HasValue))
 				return new(PermissionStatus.Denied,
 					$"macOS Screen Recording permission is required for '{operation}' to enumerate foreign window titles. Grant access in System Settings -> Privacy & Security -> Screen Recording, then restart the app.");
 
@@ -213,7 +214,7 @@ namespace Keysharp.Internals.Os
 		public override PermissionResult RequestInputMonitoring(bool? prompt = null, string operation = null)
 		{
 			operation ??= "keyboard/mouse monitoring";
-			if (MacAccessibility.EnsureInputMonitoringAccess(operation, ResolvePrompt(prompt)))
+			if (MacAccessibility.EnsureInputMonitoringAccess(operation, ResolvePrompt(prompt), refresh: prompt.HasValue))
 				return new(PermissionStatus.Granted);
 
 			return new(PermissionStatus.Denied,
@@ -223,7 +224,7 @@ namespace Keysharp.Internals.Os
 		public override PermissionResult RequestInputControl(bool? prompt = null, string operation = null)
 		{
 			operation ??= "keyboard/mouse sending";
-			if (MacAccessibility.EnsurePostEventAccess(operation, ResolvePrompt(prompt)))
+			if (MacAccessibility.EnsurePostEventAccess(operation, ResolvePrompt(prompt), refresh: prompt.HasValue))
 				return new(PermissionStatus.Granted);
 
 			return new(PermissionStatus.Denied,
@@ -233,7 +234,7 @@ namespace Keysharp.Internals.Os
 		public override PermissionResult RequestScreenCapture(bool? prompt = null, string operation = null)
 		{
 			operation ??= "screen capture";
-			if (MacAccessibility.EnsureScreenCaptureAccess(operation, ResolvePrompt(prompt)))
+			if (MacAccessibility.EnsureScreenCaptureAccess(operation, ResolvePrompt(prompt), refresh: prompt.HasValue))
 				return new(PermissionStatus.Granted);
 
 			return new(PermissionStatus.Denied,

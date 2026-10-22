@@ -477,7 +477,7 @@ namespace Keysharp.Internals.Window.MacOS
 		private const int WindowCreateResolveRetryMs = 60;
 
 		/// <summary>Schedules a bounded, short-delay retry to resolve and track a just-created window whose CGWindowID
-		/// wasn't available at AXWindowCreated time (AXWindowNumber not yet populated / window still offscreen). The
+		/// wasn't available at AXWindowCreated time (the frame-and-title fallback can miss a brand-new window). The
 		/// element is retained across the delay; a managed one-shot timer hops back to the main thread (all AX access
 		/// must happen there) before re-attempting via <see cref="TrackWindow"/>, which emits Create/Show once it
 		/// resolves. Without this the window would be invisible to WinEvent — no Create/Show and no per-window
@@ -592,9 +592,9 @@ namespace Keysharp.Internals.Window.MacOS
 				}
 				else if (CFEqual(notification, nWindowCreated))
 				{
-					// TrackWindow returns 0 when the CGWindowID isn't resolvable yet (AXWindowNumber not populated for a
-					// brand-new/offscreen window). Dropping it here would leave the window invisible to WinEvent for its
-					// whole life, so schedule a bounded short retry (by which time AXWindowNumber is normally set).
+					// TrackWindow returns 0 when the CGWindowID isn't resolvable yet, which the frame-and-title fallback
+					// can hit for a brand-new window. Dropping it here would leave the window invisible to WinEvent for
+					// its whole life, so schedule a bounded short retry.
 					if (appObservers.TryGetValue((int)refcon, out var state) && TrackWindow(state, element) == 0)
 						ScheduleTrackRetry(state, element, WindowCreateResolveRetries);
 				}
