@@ -1,3 +1,8 @@
+#if OSX
+using MonoMac.AppKit;
+using MonoMac.CoreAnimation;
+#endif
+
 namespace Keysharp.Internals
 {
 #if OSX
@@ -34,8 +39,8 @@ namespace Keysharp.Internals
 #if LINUX || OSX
 	// Shared Eto (GTK/Cocoa) overlay window -- the backing for an INTERACTIVE overlay on GNOME/Cinnamon (a shell
 	// actor cannot receive input), the toolkit fallback elsewhere on Linux, and the only backing on macOS. It
-	// borrows the canvas and keeps its own `displayed` bitmap, which a same-size move just repositions. On Linux
-	// that bitmap is retained and updated from the canvas's damaged rows; macOS replaces it with a snapshot.
+	// borrows the canvas. Linux keeps its own `displayed` bitmap, retained and updated from the canvas's damaged
+	// rows; macOS copies each frame into surfaces its layer shows (MacOverlayFrames).
 	internal sealed class EtoImageOverlay : IImageOverlayBacking
 	{
 		private readonly Script owner;
@@ -45,18 +50,16 @@ namespace Keysharp.Internals
 		// lag to brief clipping or a transparent far edge.
 		private Eto.Forms.Drawable imageSurface;
 		private int paintW, paintH;
-#else
-		private ImageView imageView;
-#endif
 		private Bitmap displayed;
+#else
+		private CALayer imageLayer;
+		private readonly MacOverlayFrames frames = new();
+#endif
 		private int shownW, shownH;
 		private byte shownOpacity;
 		private ScreenRect shownBounds;
 		private bool shownClickThrough;
 		private bool presented;
-#if OSX
-		private double shownBackingScale = 1;
-#endif
 
 		// Read per event by the handlers wired in EnsureForm, so a sink registered before or after the form
 		// exists needs no rewiring.
@@ -75,7 +78,7 @@ namespace Keysharp.Internals
 		public bool Present(OverlaySurface canvas, ScreenRect bounds, byte opacity, bool clickThrough, DamageList damage)
 		{
 #if LINUX
-			// GTK keeps the bitmap; Cocoa resizes each snapshot for the screen's current backing scale.
+			// GTK keeps the bitmap.
 			if (form?.IsDisposed == false && form.Loaded && displayed != null
 					&& shownOpacity == opacity && damage?.Kind == DamageKind.None)
 				return Show(null, damage, bounds, clickThrough, opacity);
@@ -83,13 +86,13 @@ namespace Keysharp.Internals
 			return Show(canvas.PrepareForPresent(), damage, bounds, clickThrough, opacity);
 		}
 
+#if LINUX
 		// Internal only for ImageTests.GtkOverlaySnapshotPreservesArgbPixels.
 		internal static Bitmap Snapshot(Bitmap image, byte opacity)
 		{
 			if (image == null)
 				return null;
 
-#if LINUX
 			var snapshot = new Bitmap(image.Width, image.Height, PixelFormat.Format32bppRgba);
 
 			if (CopyRows(image, snapshot, 0, image.Height, opacity))
@@ -99,12 +102,8 @@ namespace Keysharp.Internals
 				graphics.DrawImage(image, 0, 0);
 
 			return ImageHelper.ApplyOpacity(snapshot, opacity);
-#else
-			return ImageHelper.ApplyOpacity(new Bitmap(image), opacity);
-#endif
 		}
 
-#if LINUX
 		// Copies rows [top, bottom) between two same-size Cairo ARGB32 surfaces, scaling by the opacity on the way.
 		// Both are premultiplied, so a constant alpha scales all four channels alike. False when either bitmap has
 		// no such surface, and the caller takes the general path.
@@ -162,18 +161,8 @@ namespace Keysharp.Internals
 
 		private bool Show(Bitmap image, DamageList damage, ScreenRect bounds, bool clickThrough, byte opacity)
 		{
-#if OSX
-			Bitmap snapshot = null;
-			var adopted = false;
-#endif
-
 			try
 			{
-#if OSX
-				snapshot = Snapshot(image, opacity);
-				var snap = snapshot;
-#endif
-
 				owner.InvokeOnUIThread(() =>
 				{
 					EnsureForm();
@@ -191,9 +180,12 @@ namespace Keysharp.Internals
 					UpdateDisplayed(image, damage, opacity);
 					PaintOwned(bounds, windowBounds);
 #else
-					// PaintOwned adopts the snapshot before any operation that can throw.
-					adopted = snap != null;
-					PaintOwned(snap, bounds, windowBounds);
+					// The layer follows the window, and the compositor scales the frame, in device pixels, to it.
+					if (image != null)
+						frames.Present(image, imageLayer, opacity);
+
+					shownW = bounds.Width;
+					shownH = bounds.Height;
 #endif
 					if (geometryChanged)
 						form.Bounds = new Rectangle(windowBounds.X, windowBounds.Y,
@@ -235,20 +227,13 @@ namespace Keysharp.Internals
 			}
 			catch
 			{
-#if OSX
-				// The UI-thread invoke threw before PaintOwned took ownership of the snapshot, so it is still ours.
-				// Once adopted, `displayed` owns it and Dispose frees it.
-				if (!adopted)
-					snapshot?.Dispose();
-#endif
-
 				return false;
 			}
 		}
 
 		public bool Move(ScreenRect bounds)
 		{
-			// Same-size: reposition (the ImageView keeps its bitmap). Resize: re-render via Show.
+			// Same-size: reposition (the window keeps what it shows). Resize: re-render via Show.
 			if (form is not { IsDisposed: false, Loaded: true } || bounds.Width != shownW || bounds.Height != shownH)
 				return false;
 
@@ -258,13 +243,6 @@ namespace Keysharp.Internals
 				if (form != null)
 				{
 					var windowBounds = ToToolkitBounds(bounds);
-#if OSX
-					var screen = Forms.Screen.FromRectangle(new RectangleF(bounds.X, bounds.Y,
-						Math.Max(1, bounds.Width), Math.Max(1, bounds.Height))) ?? Forms.Screen.PrimaryScreen;
-
-					if (Math.Abs(ScaleFactor.Normalize(screen?.LogicalPixelSize ?? 1f) - shownBackingScale) > 0.0001)
-						return;
-#endif
 					form.Location = new Point(windowBounds.X, windowBounds.Y);
 #if LINUX
 					// The setter above is a no-op on Wayland (see Show), so re-assert through the compositor. Moves
@@ -297,63 +275,6 @@ namespace Keysharp.Internals
 			imageSurface.Invalidate();
 			shownW = bounds.Width;
 			shownH = bounds.Height;
-		}
-#else
-		// Adopts `snapshot` (an owned, private copy) as the displayed bitmap, resized to the device pixels of the
-		// screen the overlay sits on. UI thread. windowBounds is in Cocoa's logical points.
-		private void PaintOwned(Bitmap snapshot, ScreenRect bounds, ScreenRect windowBounds)
-		{
-			var size = new Size(Math.Max(1, windowBounds.Width), Math.Max(1, windowBounds.Height));
-			var old = displayed;
-			var next = snapshot;
-
-			try
-			{
-				// Match Cocoa's point-sized window to the selected screen's device-pixel backing store.
-				var screen = Forms.Screen.FromRectangle(new RectangleF(bounds.X, bounds.Y, size.Width, size.Height)) ?? Forms.Screen.PrimaryScreen;
-				var backing = ScaleFactor.Normalize(screen?.LogicalPixelSize ?? 1f);
-				shownBackingScale = backing;
-				var devW = Math.Max(1, (int)Math.Round(size.Width * backing));
-				var devH = Math.Max(1, (int)Math.Round(size.Height * backing));
-
-				if (next != null && (next.Width != devW || next.Height != devH))
-				{
-					var resized = ImageHelper.ResizeBitmap(next, devW, devH, exactPixels: true);
-
-					if (!ReferenceEquals(resized, next))
-					{
-						var unscaled = next;
-						next = resized;
-						try { unscaled.Dispose(); } catch { }
-					}
-				}
-
-				if (next != null)
-				{
-					displayed = next;
-					imageView.Image = next;
-				}
-
-				imageView.Size = size;
-
-				// The view must stop referencing the replaced frame before it is disposed.
-				if (next != null)
-					try { old?.Dispose(); } catch { }
-
-				shownW = bounds.Width;
-				shownH = bounds.Height;
-			}
-			catch
-			{
-				if (next != null)
-				{
-					displayed = old;
-					try { imageView.Image = old; } catch { }
-					try { next.Dispose(); } catch { }
-				}
-
-				throw;
-			}
 		}
 #endif
 
@@ -414,8 +335,11 @@ namespace Keysharp.Internals
 			imageSurface.SizeChanged += (s, e) => imageSurface?.Invalidate();
 			form.Content = imageSurface;
 #else
-			imageView = new ImageView { BackgroundColor = Colors.Transparent };
-			form.Content = imageView;
+			imageLayer = CALayer.Create();
+			imageLayer.ContentsGravity = "resize";
+			// Assigning the layer before turning layers on makes the view host it: AppKit sizes it with the view and
+			// leaves its contents alone.
+			form.Content = new NativeControlHost(new NSView { Layer = imageLayer, WantsLayer = true });
 #endif
 			// Pointer events for OnEvent: only a non-click-through window receives them from the toolkit, so no
 			// extra gating is needed here beyond a registered sink. Coordinates are the toolkit's window-local
@@ -484,8 +408,6 @@ namespace Keysharp.Internals
 #if LINUX
 				imageSurface = null;
 				paintW = paintH = 0;
-#else
-				imageView = null;
 #endif
 				shownOpacity = 0;
 				shownBounds = default;
@@ -504,8 +426,14 @@ namespace Keysharp.Internals
 				}
 				finally
 				{
+#if LINUX
 					displayed?.Dispose();
 					displayed = null;
+#else
+					imageLayer?.Dispose();
+					imageLayer = null;
+					frames.Reset();
+#endif
 				}
 			});
 		}

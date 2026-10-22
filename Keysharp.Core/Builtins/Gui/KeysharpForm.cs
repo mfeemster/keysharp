@@ -294,7 +294,7 @@ namespace Keysharp.Builtins
 					// the map has settled.
 					Eto.Forms.Application.Instance.AsyncInvoke(() =>
 					{
-						if (clickThrough)
+						if (!IsDisposed && clickThrough)
 							ApplyClickThrough(true);
 					});
 				}

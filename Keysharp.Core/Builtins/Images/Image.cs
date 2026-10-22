@@ -107,14 +107,14 @@ namespace Keysharp.Builtins
 
 			#region Reusable draw state
 
-			// Windows keeps a Graphics alive across draw ops on a stable surface. Eto drawing contexts cannot be
+			// Windows and macOS keep a Graphics alive across draw ops on a stable surface. GTK contexts cannot be
 			// retained because reading a GTK bitmap can replace the Cairo surface beneath them.
 			//
-			// Per-operation GDI+ setup dominates simple draws, so stable bitmaps reuse their Graphics, brushes and
+			// Per-operation setup dominates simple draws, so stable bitmaps reuse their Graphics, brushes and
 			// pens. Every lease resets the accumulated transform before applying drawScale.
 			private Graphics liveGraphics;
 			private Bitmap liveGraphicsFor;
-#if WINDOWS
+#if WINDOWS || OSX
 			private bool liveHighQuality;
 #endif
 			private Dictionary<int, SolidBrush> brushCache;
@@ -149,7 +149,7 @@ namespace Keysharp.Builtins
 			// bitmaps (Create, Clear, Scale/Rotate/Flip) use ImageHelper.MakeGraphics directly and are unscaled.
 			private GraphicsLease DrawG(Bitmap b, VectorDrawingState state, bool highQuality = true)
 			{
-#if WINDOWS
+#if WINDOWS || OSX
 				// Every draw targets the base, so its Graphics is kept until the base is replaced.
 				if (liveGraphics == null || !ReferenceEquals(liveGraphicsFor, b))
 				{
@@ -262,12 +262,15 @@ namespace Keysharp.Builtins
 			}
 
 			// Materializes pending work for pixel access that ends before the next draw: a present, or a pixel read or
-			// write inside this class. Flushing is enough, so the retained Graphics survives; Eto retains none.
+			// write inside this class. Windows flushes its retained Graphics; macOS releases it, because AppKit draws
+			// a bitmap from a cached snapshot that drawing through a live context does not refresh.
 			internal Bitmap PrepareForPixelAccess()
 			{
 				var bitmap = Materialize();
 #if WINDOWS
 				liveGraphics?.Flush(System.Drawing.Drawing2D.FlushIntention.Sync);
+#elif OSX
+				ReleaseLiveGraphics();
 #endif
 				return bitmap;
 			}
@@ -1347,7 +1350,7 @@ namespace Keysharp.Builtins
 				=> TryGetImageFont(options, fontName, out var font, out var quality)
 				   ? MeasureWithFont(text, font, quality) : (0.0, 0.0);
 
-#if WINDOWS
+#if WINDOWS || OSX
 			// Measuring needs a Graphics but no surface of its own, so each thread keeps one, on a 1x1 bitmap the
 			// Graphics keeps alive.
 			[ThreadStatic] private static Graphics measureGraphics;
@@ -1358,11 +1361,13 @@ namespace Keysharp.Builtins
 				if (string.IsNullOrEmpty(text))
 					return (0.0, 0.0);
 
-#if WINDOWS
+#if WINDOWS || OSX
 				var g = measureGraphics ??= ImageHelper.MakeGraphics(ImageHelper.NewArgbCanvas(1, 1));
+#if WINDOWS
 				ConfigureFontGraphics(g, quality);
+#endif
 #else
-				// An Eto Graphics on a bitmap holds backend locks, so it is not kept between calls.
+				// A GTK Graphics on a bitmap holds backend locks, so it is not kept between calls.
 				using var bmp = ImageHelper.NewArgbCanvas(1, 1);
 				using var g = ImageHelper.MakeGraphics(bmp);
 #endif
@@ -2253,7 +2258,7 @@ namespace Keysharp.Builtins
 				// Eto's Lock() exposes the bitmap's native storage, which for a loaded 24-bit image is a 3bpp
 				// Pixbuf; writing 4-byte pixels into that would corrupt/overrun it. Since the buffer describes
 				// every pixel anyway, write into a fresh guaranteed-32bpp canvas and swap it in as the new base
-				// rather than writing in place. Eto retains no Graphics, and the queue is already empty.
+				// rather than writing in place. PrepareForPixelAccess released any Graphics; the queue is empty.
 				var canvas = ImageHelper.NewArgbCanvas(w, h);
 
 				unsafe

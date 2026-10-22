@@ -872,10 +872,14 @@ namespace Keysharp.Internals.Images
 				return;
 			}
 
-#elif LINUX
+#elif LINUX || OSX
+#if OSX
+			// Keep Quartz's color rounding for translucent clears.
+			if (((uint)argb >> 24) is 0 or 255)
+#endif
 			using (var data = bmp.Lock())
 			{
-				if (data.BytesPerPixel == 4)
+				if (data?.BytesPerPixel == 4)
 				{
 					unsafe
 					{
