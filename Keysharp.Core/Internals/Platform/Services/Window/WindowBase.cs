@@ -14,6 +14,8 @@ namespace Keysharp.Internals
 		protected static bool Unsupported() => false;
 
 #if !WINDOWS
+		// Handle-based access bypasses the UI-thread dispatch that Gui members get, so callers marshal each
+		// use of the returned control themselves; a RealThread worker can reach these paths.
 		protected static bool TryOwnControl(nint h, out Control control)
 		{
 			control = h != 0 ? Control.FromHandle(h) : null;
@@ -78,8 +80,11 @@ namespace Keysharp.Internals
 #if !WINDOWS
 			if (TryOwnControl(h, out var control))
 			{
-				var form = control as Form ?? control.ParentWindow as Form ?? control.Parent as Form;
-				parent = form != null && form.Handle != h ? form.Handle : default;
+				parent = control.CheckedInvoke(() =>
+				{
+					var form = control as Form ?? control.ParentWindow as Form ?? control.Parent as Form;
+					return form != null && form.Handle != h ? form.Handle : default;
+				}, true);
 				return parent != 0;
 			}
 #endif
@@ -91,8 +96,7 @@ namespace Keysharp.Internals
 #if !WINDOWS
 			if (TryOwnControl(h, out var control))
 			{
-				var form = control as Form ?? control.ParentWindow as Form ?? control.Parent as Form;
-				top = form?.Handle ?? default;
+				top = control.CheckedInvoke(() => (control as Form ?? control.ParentWindow as Form ?? control.Parent as Form)?.Handle ?? default, true);
 				return top != 0;
 			}
 #endif
@@ -104,10 +108,13 @@ namespace Keysharp.Internals
 #if !WINDOWS
 			if (TryOwnControl(h, out var control))
 			{
-				if (control is MainWindow window)
-					window.EnsureDebugUi();
+				children = control.CheckedInvoke(() =>
+				{
+					if (control is MainWindow window)
+						window.EnsureDebugUi();
 
-				children = OwnChildHandles(control);
+					return OwnChildHandles(control);
+				}, true);
 				return true;
 			}
 #endif
@@ -133,7 +140,8 @@ namespace Keysharp.Internals
 #if !WINDOWS
 			if (TryOwnControl(h, out var control))
 			{
-				text = string.IsNullOrEmpty(control.Text) ? [] : [control.Text];
+				var value = control.CheckedInvoke(() => control.Text, true);
+				text = string.IsNullOrEmpty(value) ? [] : [value];
 				return true;
 			}
 #endif
@@ -144,7 +152,7 @@ namespace Keysharp.Internals
 		{
 #if !WINDOWS
 			if (TryOwnControl(h, out var control))
-				_ = ControlInfo.TryFindPoint(control, pah);
+				_ = control.CheckedInvoke(() => ControlInfo.TryFindPoint(control, pah), true);
 #endif
 		}
 		public virtual string GetTitle(nint h)
@@ -177,7 +185,7 @@ namespace Keysharp.Internals
 			// Screen-relative, like GetClientBounds below: own *windows* are resolved by the platform backend
 			// before they reach here, so this branch is an own child control, whose Eto bounds are parent-relative.
 			if (TryOwnControl(h, out var control))
-				return control.GetScreenBounds(true);
+				return control.CheckedInvoke(() => control.GetScreenBounds(true), true);
 #endif
 			return NotYet<Rectangle>();
 		}
@@ -185,7 +193,7 @@ namespace Keysharp.Internals
 		{
 #if !WINDOWS
 			if (TryOwnControl(h, out var control))
-				return control.GetClientScreenRect(true);
+				return control.CheckedInvoke(() => control.GetClientScreenRect(true), true);
 #endif
 			return NotYet<Rectangle>();
 		}
@@ -201,7 +209,7 @@ namespace Keysharp.Internals
 			// (This used to hand back Eto's own WindowStyle enum value, where Default is 0 and None is 1 —
 			// numbers that collide meaninglessly with the WS_* constants.)
 			if (TryOwnControl(h, out var control))
-				return EtoWindowStyles.For(control);
+				return control.CheckedInvoke(() => EtoWindowStyles.For(control), true);
 #endif
 			return NotYet<long>();
 		}
@@ -217,7 +225,7 @@ namespace Keysharp.Internals
 		{
 #if !WINDOWS
 			if (TryOwnControl(h, out var control))
-				return control.HasFocus || control is Form form && form.ActiveControl != null;
+				return control.CheckedInvoke(() => control.HasFocus || control is Form form && form.ActiveControl != null, true);
 #endif
 			return NotYet<bool>();
 		}
@@ -225,7 +233,7 @@ namespace Keysharp.Internals
 		{
 #if !WINDOWS
 			if (TryOwnControl(h, out var control))
-				return control.Visible;
+				return control.CheckedInvoke(() => control.Visible, true);
 #endif
 			return NotYet<bool>();
 		}
@@ -233,7 +241,7 @@ namespace Keysharp.Internals
 		{
 #if !WINDOWS
 			if (TryOwnControl(h, out var control))
-				return control.Enabled;
+				return control.CheckedInvoke(() => control.Enabled, true);
 #endif
 			return NotYet<bool>();
 		}
@@ -257,7 +265,7 @@ namespace Keysharp.Internals
 		{
 #if !WINDOWS
 			if (TryOwnControl(h, out var control))
-				return control is Form form ? form.WindowState : FormWindowState.Normal;
+				return control is Form form ? form.CheckedInvoke(() => form.WindowState, true) : FormWindowState.Normal;
 #endif
 			return NotYet<FormWindowState>();
 		}
@@ -265,7 +273,7 @@ namespace Keysharp.Internals
 		{
 #if !WINDOWS
 			if (TryOwnControl(h, out var control))
-				return control is Form form && form.TopMost;
+				return control is Form form && form.CheckedInvoke(() => form.TopMost, true);
 #endif
 			return NotYet<bool>();
 		}
@@ -293,7 +301,7 @@ namespace Keysharp.Internals
 #if !WINDOWS
 			if (TryOwnControl(h, out var control))
 			{
-				var client = control.GetClientScreenRect(true);
+				var client = control.CheckedInvoke(() => control.GetClientScreenRect(true), true);
 				return new POINT(client.X, client.Y);
 			}
 #endif
@@ -306,7 +314,7 @@ namespace Keysharp.Internals
 #if !WINDOWS
 			if (TryOwnControl(h, out var control) && control is Form form)
 			{
-				form.TopMost = onTop;
+				form.CheckedInvoke(() => form.TopMost = onTop, true);
 				return true;
 			}
 #endif
@@ -317,32 +325,34 @@ namespace Keysharp.Internals
 #if !WINDOWS
 			if (TryOwnControl(h, out var control))
 			{
-				if (setSize)
+				control.CheckedInvoke(() =>
 				{
-					var size = control.Size;
+					if (setSize)
+					{
+						var size = control.Size;
 
-					if (bounds.Width != WindowInfoBase.Unchanged)
-						size.Width = bounds.Width;
+						if (bounds.Width != WindowInfoBase.Unchanged)
+							size.Width = bounds.Width;
 
-					if (bounds.Height != WindowInfoBase.Unchanged)
-						size.Height = bounds.Height;
+						if (bounds.Height != WindowInfoBase.Unchanged)
+							size.Height = bounds.Height;
 
-					control.SetSize(size);
-				}
+						control.SetSize(size);
+					}
 
-				if (setPos)
-				{
-					var location = control.GetLocation();
+					if (setPos)
+					{
+						var location = control.GetLocation();
 
-					if (bounds.X != WindowInfoBase.Unchanged)
-						location.X = bounds.X;
+						if (bounds.X != WindowInfoBase.Unchanged)
+							location.X = bounds.X;
 
-					if (bounds.Y != WindowInfoBase.Unchanged)
-						location.Y = bounds.Y;
+						if (bounds.Y != WindowInfoBase.Unchanged)
+							location.Y = bounds.Y;
 
-					control.SetLocation(location);
-				}
-
+						control.SetLocation(location);
+					}
+				}, true);
 				return true;
 			}
 #endif
@@ -353,7 +363,7 @@ namespace Keysharp.Internals
 #if !WINDOWS
 			if (TryOwnControl(h, out var control) && control is Form form)
 			{
-				form.WindowState = state;
+				form.CheckedInvoke(() => form.WindowState = state, true);
 				return true;
 			}
 #endif
@@ -368,15 +378,17 @@ namespace Keysharp.Internals
 			if (TryOwnControl(h, out var control) && control is Eto.Forms.Window window)
 			{
 				// GTK deiconifies without clearing the maximized state.
-				window.BringToFront();
+				window.CheckedInvoke(window.BringToFront, true);
 				return true;
 			}
 #elif OSX
 			if (TryOwnControl(h, out var control) && control.ControlObject is MonoMac.AppKit.NSWindow window)
 			{
-				if (window.IsMiniaturized)
-					window.Deminiaturize(window);
-
+				control.CheckedInvoke(() =>
+				{
+					if (window.IsMiniaturized)
+						window.Deminiaturize(window);
+				}, true);
 				return true;
 			}
 #endif
@@ -416,10 +428,13 @@ namespace Keysharp.Internals
 #if !WINDOWS
 			if (TryOwnControl(h, out var control))
 			{
-				if (control is Eto.Forms.Window window)
-					window.Visible = true;
+				control.CheckedInvoke(() =>
+				{
+					if (control is Eto.Forms.Window window)
+						window.Visible = true;
 
-				control.Focus();
+					control.Focus();
+				}, true);
 				return true;
 			}
 #endif
@@ -431,7 +446,7 @@ namespace Keysharp.Internals
 #if !WINDOWS
 			if (TryOwnControl(h, out var control) && control is Form form)
 			{
-				form.Close();
+				form.CheckedInvoke(form.Close, true);
 				return true;
 			}
 #endif
@@ -450,7 +465,7 @@ namespace Keysharp.Internals
 #if !WINDOWS
 			if (TryOwnControl(h, out var control))
 			{
-				control.Visible = false;
+				control.CheckedInvoke(() => control.Visible = false, true);
 				return true;
 			}
 #endif
@@ -461,7 +476,7 @@ namespace Keysharp.Internals
 #if !WINDOWS
 			if (TryOwnControl(h, out var control))
 			{
-				control.Visible = true;
+				control.CheckedInvoke(() => control.Visible = true, true);
 				return true;
 			}
 #endif
@@ -472,7 +487,7 @@ namespace Keysharp.Internals
 #if !WINDOWS
 			if (TryOwnControl(h, out var control))
 			{
-				control.Invalidate();
+				control.CheckedInvoke(control.Invalidate, true);
 				return true;
 			}
 #endif
@@ -484,7 +499,7 @@ namespace Keysharp.Internals
 #if !WINDOWS
 			if (TryOwnControl(h, out var control))
 			{
-				control.Text = title;
+				control.CheckedInvoke(() => control.Text = title, true);
 				return true;
 			}
 #endif
@@ -495,7 +510,7 @@ namespace Keysharp.Internals
 #if !WINDOWS
 			if (TryOwnControl(h, out var control))
 			{
-				control.Visible = visible;
+				control.CheckedInvoke(() => control.Visible = visible, true);
 				return true;
 			}
 #endif
@@ -506,7 +521,7 @@ namespace Keysharp.Internals
 #if !WINDOWS
 			if (TryOwnControl(h, out var control))
 			{
-				control.Enabled = enabled;
+				control.CheckedInvoke(() => control.Enabled = enabled, true);
 				return true;
 			}
 #endif
