@@ -1326,7 +1326,7 @@ Controlling another application needs **Automation** permission, granted per tar
 		- `--compile exe-min [--dest <path>] <script>`
 		  Like `exe`, but embeds package files in Scriptname.dll. The script is not run.
 		- `--compile <script>`
-		  Outputs a `.cks` assembly and its package assets. The script is not run.
+		  Outputs a `.cks` assembly and its package assets. The script is not run. On Windows, a `.cks` cannot be overwritten while it runs; close the script before compiling over it.
 		- `--compile asm [--dest <path|*>] <script>`
 		  Like `--compile`, with explicit file, folder or `*` output. `dll` is an alias for `asm`. The script is not run.
 		- `--compile asm <script> <script>...`

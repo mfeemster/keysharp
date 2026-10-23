@@ -800,10 +800,12 @@ namespace Keysharp.Internals.Scripting
 
 		private static MethodInfo LoadAssemblyEntryPoint(CliCommand command)
 		{
-			byte[] asmBytes;
+			Assembly scriptAsm;
 
 			if (command.ScriptName == "*")
 			{
+				byte[] asmBytes;
+
 				var transportedAssembly = Environment.GetEnvironmentVariable(RunScriptAssemblyEnvironmentVariable);
 				Environment.SetEnvironmentVariable(RunScriptAssemblyEnvironmentVariable, null);
 
@@ -827,11 +829,20 @@ namespace Keysharp.Internals.Scripting
 					stdin.CopyTo(ms);
 					asmBytes = ms.ToArray();
 				}
+
+				scriptAsm = Assembly.Load(asmBytes);
 			}
 			else
-				asmBytes = File.ReadAllBytes(command.ScriptName);
+#if WINDOWS
+				// The antimalware scan checks an image loaded from bytes on every start, about 12 ms, and a file only when it
+				// is written. The file stays mapped, so it cannot be overwritten while the script runs.
+				scriptAsm = Assembly.LoadFile(Path.GetFullPath(command.ScriptName));
+#else
+				// Elsewhere there is no scan to skip, and nothing locks a mapped file: compiling to the same .cks truncates
+				// it in place, which would change the code under the running script.
+				scriptAsm = Assembly.Load(File.ReadAllBytes(command.ScriptName));
+#endif
 
-			var scriptAsm = Assembly.Load(asmBytes);
 			var type = scriptAsm.GetType(command.AssemblyType);
 
 			if (type == null)
