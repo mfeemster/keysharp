@@ -386,10 +386,7 @@ namespace Keysharp.Builtins
 				var icon = ImageHelper.LoadIconSet(filename, iconnumber);
 
 				//Deliberately not guarded by NoTrayIcon: as in AHK the directive suppresses only the tray icon, and
-				//the loaded icon still becomes the script's icon. CreateTrayMenu() no-ops under it, leaving Tray null.
-				if (script.Tray == null)
-					script.CreateTrayMenu();
-
+				//the loaded icon still becomes the script's icon.
 				if (icon != null)
 				{
 					A_IconFile = filename;
@@ -416,6 +413,8 @@ namespace Keysharp.Builtins
 				script.PostToUIThread(() => ApplyScriptIcon(script, script.scriptIcon));
 			}
 
+			//A tray which has not appeared yet appears now, as AHK's is there from the start.
+			_ = script.EnsureTrayIcon();
 			return DefaultObject;
 		}
 
@@ -454,8 +453,7 @@ namespace Keysharp.Builtins
 			if ((bool)A_IconHidden)
 				return DefaultObject;
 
-			if (script.Tray == null)
-				script.CreateTrayMenu();
+			_ = script.EnsureTrayIcon();
 
 			//As passing an empty string hides the TrayTip (or does nothing on Windows 10),
 			//pass a space to ensure the TrayTip is shown.  Testing showed that Windows 10
@@ -465,10 +463,14 @@ namespace Keysharp.Builtins
 				_text = " ";
 			}
 
+			// On the UI thread, as ToolTip's window work is: a worker could otherwise find the icon still being built.
 			if (_text.Length == 0 && _title.Length == 0)
 			{
-				script.Tray?.Visible = false;
-				script.Tray?.Visible = true;
+				script.InvokeOnUIThread(() =>
+				{
+					script.Tray?.Visible = false;
+					script.Tray?.Visible = true;
+				});
 				return DefaultObject;
 			}
 
@@ -521,11 +523,14 @@ namespace Keysharp.Builtins
 			else if (opts != null)
 				HandleInt(opts.TryCoerceLong(out long lo) ? (int?)lo : null);
 
+			script.InvokeOnUIThread(() =>
+			{
 #if WINDOWS
-			script.Tray?.Visible = true;
+				script.Tray?.Visible = true;
 #endif
-			// No tray exists while the UI is unavailable, and AHK's TrayTip does not raise.
-			script.Tray?.ShowBalloonTip(1000, _title, _text, icon);//Windows ignores the duration.
+				// No tray exists while the UI is unavailable, and AHK's TrayTip does not raise.
+				script.Tray?.ShowBalloonTip(1000, _title, _text, icon);//Windows ignores the duration.
+			});
 			return DefaultObject;
 		}
 	}

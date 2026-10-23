@@ -15,6 +15,13 @@ Assert(A_TrayMenu.Handle > 0, A_LineNumber)
 A_TrayMenu.Add("Custom", Noop)
 Assert(A_TrayMenu.Handle > 0, A_LineNumber)
 
+; As in AutoHotkey, the tip keeps what fits the tray's 128-character field.
+longTip := ""
+Loop 200
+	longTip .= "x"
+A_IconTip := longTip
+AssertEq(StrLen(A_IconTip), 127, A_LineNumber)
+
 A_IconTip := "custom tip"
 AssertEq(A_IconTip, "custom tip", A_LineNumber)
 

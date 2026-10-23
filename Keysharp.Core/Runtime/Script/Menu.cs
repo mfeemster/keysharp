@@ -24,21 +24,23 @@ namespace Keysharp.Runtime
 
 		/// <summary>
 		/// The tray tooltip, which is the script's and not the icon's: it outlives #NoTrayIcon and a display-less
-		/// session, and an icon created later shows whatever it holds. System tray tooltips cap at 64 characters,
-		/// so the script name it defaults to is truncated to fit.
+		/// session, and an icon created later shows whatever it holds.
 		/// </summary>
 		internal string TrayTip
 		{
-			get => AccessorData.iconTip ??= A_ScriptName.Substring(0, Math.Min(A_ScriptName.Length, 64));
+			get => AccessorData.iconTip ??= FitTrayTip(A_ScriptName);
 
 			set
 			{
-				AccessorData.iconTip = value;
+				AccessorData.iconTip = value = FitTrayTip(value);
 
 				if (Tray != null)
 					Tray.Text = value;
 			}
 		}
+
+		// AHK keeps what fits the 128-character NOTIFYICONDATA field, which is also the most a Windows tray takes.
+		private static string FitTrayTip(string tip) => tip.Length > 127 ? tip[..127] : tip;
 
 		/// <summary>
 		/// Guarantees the tray icon, which needs a tray to sit in. Icon-valued accessors use this; a script
@@ -49,15 +51,20 @@ namespace Keysharp.Runtime
 			if (Tray != null)
 				return true;
 
-			if (NoTrayIcon || IsUiInitializationBlocked || IsHeadless)
+			if (NoTrayIcon || hasExited || IsDisposed)
 				return false;
 
-			InvokeOnUIThread(() =>
+			// A worker queues the tray rather than wait for the UI thread, which may be waiting for that worker.
+			if (!IsOnMainThread)
 			{
-				if (Tray == null)
-					CreateTrayMenu();
-			});
+				PostToUIThread(() => _ = EnsureTrayIcon());
+				return false;
+			}
 
+			if (IsUiInitializationBlocked || IsHeadless)
+				return false;
+
+			CreateTrayMenu();
 			return Tray != null;
 		}
 
@@ -105,6 +112,37 @@ namespace Keysharp.Runtime
 			}
 
 			return true;
+		}
+
+		private UITimer deferredTrayTimer;
+
+		/// <summary>
+		/// Shows the tray 300 ms from now, so a script which ends sooner never adds and removes an icon, which costs
+		/// 10-30 ms and can stall a Windows exit.
+		/// </summary>
+		private void StartDeferredTray()
+		{
+			if (NoTrayIcon)
+				return;
+
+			deferredTrayTimer = new UITimer();
+#if WINDOWS
+			deferredTrayTimer.Interval = 300;
+			deferredTrayTimer.Tick += ShowDeferredTray;
+#else
+			deferredTrayTimer.Interval = 0.3;
+			deferredTrayTimer.Elapsed += ShowDeferredTray;
+#endif
+			deferredTrayTimer.Start();
+		}
+
+		private void ShowDeferredTray(object sender, EventArgs e)
+		{
+			// Stopped before it is disposed: disposing an Eto timer on macOS leaves its NSTimer scheduled.
+			deferredTrayTimer?.Stop();
+			deferredTrayTimer?.Dispose();
+			deferredTrayTimer = null;
+			_ = EnsureTrayIcon();
 		}
 
 		public void CreateTrayMenu()
@@ -169,11 +207,9 @@ namespace Keysharp.Runtime
 			trayIcon.MouseDoubleClick += TrayIcon_MouseDoubleClick;
 #endif
 
-			if (trayDefaultIcon is Icon icon)
-			{
-				trayIcon.Icon = icon;
-				trayIcon.Visible = true;
-			}
+			// A Pause or Suspend can come first, so the icon is the one ApplyTrayIcon picks.
+			ApplyTrayIcon();
+			trayIcon.Visible = trayIcon.Icon != null;
 		}
 
 #if WINDOWS

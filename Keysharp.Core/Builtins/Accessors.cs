@@ -496,7 +496,13 @@ namespace Keysharp.Builtins
 		{
 			get => Script.TheScript.TrayTip;
 
-			set => Script.TheScript.TrayTip = value.ToString();
+			set
+			{
+				var script = Script.TheScript;
+				script.TrayTip = value.ToString();
+				// A tray which has not appeared yet appears now, as AHK's is there from the start.
+				_ = script.EnsureTrayIcon();
+			}
 		}
 
 		/// <summary>

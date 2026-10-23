@@ -1370,9 +1370,9 @@ namespace Keysharp.Runtime
 		}
 
 		/// <summary>
-		/// Attaches the main window's visible chrome -- title, icon, tray menu, and taskbar
-		/// visibility. Assumes <see cref="EnsureMainWindowHandle"/> has already run. This is the
-		/// only place that decides whether the tray icon gets created; actually displaying the
+		/// Attaches the main window's visible chrome -- title, icon, and taskbar visibility.
+		/// Assumes <see cref="EnsureMainWindowHandle"/> has already run. The tray comes shortly
+		/// after, from <see cref="StartDeferredTray"/>; actually displaying the
 		/// window is still left to the caller (e.g. ShowIfNeeded(), or the platform-specific
 		/// startup sequence in <see cref="InitializeUnixMainWindow"/>/<see cref="RunMainWindow"/>).
 		/// </summary>
@@ -1383,9 +1383,6 @@ namespace Keysharp.Runtime
 
 			if (initializeUiChrome && scriptIcon != null)
 				mainWindow.Icon = scriptIcon;
-
-			if (initializeUiChrome && Tray == null)
-				CreateTrayMenu();
 
 			mainWindow.ShowInTaskbar = showInTaskbar;
 		}
@@ -1494,6 +1491,7 @@ namespace Keysharp.Runtime
 			EnsureMainWindowHandle();
 			AttachMainWindowChrome(title, true, true);
 			_ = mainWindow.BeginInvoke(() => RunAutoExecSection(userInit));
+			StartDeferredTray();
 			Application.Run(mainWindow);
 #else
 			var app = EnsureEtoApplication();
@@ -1527,6 +1525,7 @@ namespace Keysharp.Runtime
 			mainWindow.InitializeHidden();
 
 			app.AsyncInvoke(() => RunAutoExecSection(userInit));
+			StartDeferredTray();
 		}
 #endif
 
