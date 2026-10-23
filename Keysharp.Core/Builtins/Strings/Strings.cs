@@ -1346,10 +1346,7 @@ namespace Keysharp.Builtins
 				return input;
 			}
 
-			// Replacing every match without counting is what string.Replace does, in one pass and one allocation.
-			if (lim < 0 && outputVarCount == null)
-				return input.Replace(search, replace, compare);
-
+			// Not string.Replace: its comparison overload opens an ICU collator even for OrdinalIgnoreCase.
 			var ct = 0L;
 			var buf = new StringBuilder(input.Length);
 			var n = 0;
