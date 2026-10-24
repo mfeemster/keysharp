@@ -535,6 +535,9 @@ namespace Keysharp.Runtime
 
 		static Script()
 		{
+			// The Script constructor reads every type Keysharp.Core exports, about 10 ms, so find them meanwhile.
+			_ = ThreadPool.UnsafeQueueUserWorkItem(static _ => Reflections.PrewarmBuiltinTypes(), null);
+
 			// Needed for string and file encodings such as Windows-1252
 			Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 #if WINDOWS

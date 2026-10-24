@@ -53,8 +53,7 @@ internal static class CompileClient
 	internal static DaemonReply TryCompile(CliCommand command, int connectTimeoutMs = 1000) =>
 		CompileDaemonClient.TryCompile(command.CreateCompileRequest(),
 			new CompileDaemonEndpoint(CompileServer.PipeName, Assembly.GetEntryAssembly()?.Location, Environment.ProcessPath, CompileDaemonClient.FindDotnetHost()),
-			connectTimeoutMs, command.FromStdin ? command.ScriptDir : null,
-			command.Kind == CliCommandKind.RunSource && !command.Validate ? Keysharp.Internals.Invoke.Reflections.PrewarmBuiltinTypes : null);
+			connectTimeoutMs, command.FromStdin ? command.ScriptDir : null);
 
 	/// <summary>
 	/// Launches "<this host> --daemon" detached so it outlives the current process. The spawned daemon runs
