@@ -114,8 +114,9 @@ namespace Keysharp.Internals.UI.Unix
 		internal void InitializeHidden()
 		{
 #if LINUX
-			// Realize the GTK window so it has an X11 handle without mapping or activating it.
-			if (this.ToNative() is Gtk.Window native)
+			// Realizing gives the window its X11 handle without mapping or activating it. On a Wayland session the handle
+			// is the widget pointer either way, so realizing is left to the first Show.
+			if (!Keysharp.Internals.Platform.Desktop.IsWaylandSession && this.ToNative() is Gtk.Window native)
 				native.Realize();
 #endif
 			_ = this.Handle;

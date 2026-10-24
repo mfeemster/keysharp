@@ -1252,7 +1252,7 @@ namespace Keysharp.Runtime
 			};
 
 			// Eto/GTK terminates the whole application when the last non-withdrawn top-level window closes.
-			// Our main window is realized-but-hidden (withdrawn), so it isn't counted — which means a transient
+			// Our main window is hidden (withdrawn on X11, unrealized on Wayland), so it isn't counted — which means a transient
 			// overlay/tooltip closing can be "the last window" and quit the app even though the script is still
 			// meant to run (Persistent, registered hotkeys, timers, GUIs, …). Veto that spontaneous termination
 			// whenever the script is persistent, mirroring ExitIfNotPersistent's AnyPersistent() gate. A genuine
@@ -1523,7 +1523,7 @@ namespace Keysharp.Runtime
 			// AllowShowDisplay is false at this point either way (set in EnsureMainWindowHandle), so
 			// a Show()/Hide() round trip here would just self-hide again right away -- but even a
 			// brief Show() registers a real on-screen window with the window server, which makes its
-			// taskbar/Dock icon flash and can steal focus. Realize the native handle without mapping
+			// taskbar/Dock icon flash and can steal focus. Settle the native handle without mapping
 			// the window, and leave the first visible Show() to an explicit user request.
 			mainWindow.InitializeHidden();
 
