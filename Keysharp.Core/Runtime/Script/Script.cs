@@ -176,7 +176,7 @@ namespace Keysharp.Runtime
 		internal static string DefaultObject => currentCompatibilityReturnsUnsetByDefault ? null : "";
 		// True in v2.1+ compatibility mode, where the item/member accessors the Compatibility Mode docs list
 		// (Array.__Item/Get, Map.__Item/Delete/Get, Object.GetMethod/GetOwnPropDesc, Gui.__Item) return unset (null)
-		// for an absent item instead of throwing (UnsetItemError/IndexError/KeyError/etc.). This mirrors the caller's
+		// for an absent item instead of throwing (UnsetItemError/IndexError/etc.). This mirrors the caller's
 		// mode, since built-ins carry no [CompatibilityMode] of their own.
 		internal static bool CompatReturnsUnsetForMissing => currentCompatibilityReturnsUnsetByDefault;
 		internal const string DefaultErrorString = "";

@@ -14,6 +14,8 @@ public static long Div(long a, long b) => a / b;   // DivideByZeroException for 
 
 public static long Bump(long n) => n + 1;
 
+public static object Lookup(string key) => new System.Collections.Generic.Dictionary<string, object>()[key];
+
 public static object Risky => throw new System.InvalidOperationException("risky");
 
 public static object NeedsDate(System.DateTime value) => value.Year;
@@ -45,6 +47,15 @@ catch ZeroDivisionError
 catch Any
 	caught := "other"
 AssertEq(caught, "zero", A_LineNumber)
+
+caught := ""
+try
+	Lookup("missing")
+catch UnsetItemError
+	caught := "unset"
+catch Any
+	caught := "other"
+AssertEq(caught, "unset", A_LineNumber)
 
 caught := false
 try

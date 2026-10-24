@@ -165,19 +165,6 @@ b := false
 
 try
 {
-	throw KeyError("tester")
-}
-catch KeyError as errex
-{
-	b := true
-}
-
-AssertEq(b, true, A_LineNumber)
-
-b := false
-
-try
-{
 	throw MemberError("tester")
 }
 catch MemberError as errex
@@ -318,7 +305,7 @@ catch(propertyerror)
 {
 	b := false
 }
-catch(KeyError)
+catch(UnsetItemError)
 {
 	b := false
 }
@@ -444,7 +431,7 @@ try
 }
 catch (OSError,MethodError,MemoryError as osmmex) {
 }
-catch (KeyError,IndexError,ValueError as kivex)
+catch (IndexError,ValueError as ivex)
 {
 }
 catch (UnsetItemError,Error,ZeroDivisionError) {

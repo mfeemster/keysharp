@@ -4,7 +4,7 @@
 #Include <assert>
 
 ; AutoHotkey has no DelegateHolder or Prototype class, so neither is a global name.
-Assert(IsSet(Array) && IsSet(KeyError) && !IsSet(Dialogs)
+Assert(IsSet(Array) && IsSet(ArgumentError) && !IsSet(Dialogs)
 	&& !IsSet(List) && !IsSet(Highlight) && !IsSet(ManagedType)
 	&& IsSet(InputHook) && !IsSet(DelegateHolder) && !IsSet(Prototype), A_LineNumber)
 

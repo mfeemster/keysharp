@@ -759,28 +759,13 @@ namespace Keysharp.Builtins
     /// <summary>
     /// An exception class for indexing errors.
     /// </summary>
-    public class IndexError : Error
+    public class IndexError : ValueError
 	{
 		/// <summary>
 		/// Initializes a new instance of the <see cref="IndexError"/> class.
 		/// </summary>
 		/// <param name="args">The parameters to pass to the base.</param>
 		public IndexError(params object[] args)
-			: base(args)
-		{
-		}
-	}
-
-	/// <summary>
-	/// An exception class for <see cref="Map"/> key errors.
-	/// </summary>
-	public class KeyError : IndexError
-	{
-		/// <summary>
-		/// Initializes a new instance of the <see cref="KeyError"/> class.
-		/// </summary>
-		/// <param name="args">The parameters to pass to the base.</param>
-		public KeyError(params object[] args)
 			: base(args)
 		{
 		}

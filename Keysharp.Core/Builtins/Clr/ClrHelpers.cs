@@ -1369,7 +1369,7 @@ namespace Keysharp.Builtins
 			return ex switch
 			{
 				ArgumentOutOfRangeException or IndexOutOfRangeException => new IndexError(msg),
-				KeyNotFoundException => new KeyError(msg),
+				KeyNotFoundException => new UnsetItemError(msg),
 				DivideByZeroException => new ZeroDivisionError(msg),
 				InvalidCastException => new TypeError(msg),
 				FormatException or ArgumentException => new ValueError(msg),

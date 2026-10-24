@@ -105,7 +105,7 @@ Assert(A_SendLevel = 5, A_LineNumber)
 A_SendLevel := 0
 
 ; The built-in classes derive as in AutoHotkey.
-for classPair in [[Error, Any], [IndexError, Error], [KeyError, Error], [MemberError, UnsetError], [UnsetItemError, UnsetError],
+for classPair in [[Error, Any], [IndexError, ValueError], [MemberError, UnsetError], [UnsetItemError, UnsetError],
 	[MemoryError, Error], [MethodError, MemberError], [PropertyError, MemberError], [OSError, Error], [TargetError, Error],
 	[TimeoutError, Error], [TypeError, Error], [ValueError, Error], [ZeroDivisionError, Error],
 	[Buffer, Object], [Array, Object], [Map, Object], [File, Object]]
