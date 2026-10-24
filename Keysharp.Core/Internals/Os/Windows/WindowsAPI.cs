@@ -993,6 +993,9 @@ namespace Keysharp.Internals.Os.Windows
 		[LibraryImport(user32, EntryPoint = "GetParent")]
 		internal static partial nint GetParent(nint hWnd);
 
+		[LibraryImport(user32, EntryPoint = "SetParent")]
+		internal static partial nint SetParent(nint hWndChild, nint hWndNewParent);
+
 		[LibraryImport(user32, EntryPoint = "GetForegroundWindow")]
 		internal static partial nint GetForegroundWindow();
 

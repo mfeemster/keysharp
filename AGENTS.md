@@ -158,7 +158,7 @@ Any change to the **script-visible API surface** must be accompanied by a docume
 4. **`../KeysharpDocs`** — the separate user-facing reference site, cloned as a sibling of this repo (it **is** present in the current environment). When it exists, update it in the same change:
    - Pages are hand-written HTML; most function/directive/object/statement pages live in `docs/lib/`.
    - New or renamed pages also need entries in the manually maintained `docs/static/source/data_toc.js` and `data_index.js`. Do **not** hand-edit the generated `data_search.js`.
-   - Read that repo's `AGENTS.md`, `CONTRIBUTING.md`, and `SOURCE_OF_TRUTH.md` first — it enforces a strict evidence order for behavioral and platform claims (reproducible run on the named platform > Keysharp source/tests > `docs/reference.md` > reviewed `capabilities.json` rows).
+   - Read that repo's `AGENTS.md` and `CONTRIBUTING.md` first — they define the evidence order for behavioral and platform claims (reproducible run on the named platform > Keysharp source/tests > `docs/reference.md` > reviewed `capabilities.json` rows) and the source-audit workflow.
    - Validate with `pwsh scripts/Test-Docs.ps1` from the KeysharpDocs root.
    - `pwsh scripts/verify-capabilities-parity.ps1` (run from this repo) cross-checks `docs/capabilities.json` against the KeysharpDocs index and writes `docs/capabilities-parity-report.{json,md}`.
 

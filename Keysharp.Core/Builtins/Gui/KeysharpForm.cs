@@ -126,6 +126,11 @@ namespace Keysharp.Builtins
 					cp.Style |= WindowsAPI.WS_THICKFRAME;
 
 				cp.ExStyle &= ~removeExStyle;
+
+				//A +Parent child window is created in its parent rather than in the WinForms parking window.
+				if (!TopLevel)
+					cp.Parent = ownerHwnd;
+
 				return cp;
 			}
 		}
@@ -140,7 +145,8 @@ namespace Keysharp.Builtins
 
 		protected override void CreateHandle()
 		{
-			if (IsDisposed || IsHandleCreated) return;
+			//A destroyed Gui's window is not made again, whether Destroy closed it or Windows destroyed it.
+			if (IsDisposed || IsHandleCreated || closingFromDestroy) return;
 			base.CreateHandle();
 
 			//Form.CreateHandle resets the owner to its own Owner, which a Gui never sets.
@@ -370,17 +376,35 @@ namespace Keysharp.Builtins
 #endif
 		}
 
-		/// <summary>Makes <paramref name="owner"/> own the window in place, or no window for 0, as AutoHotkey's +/-Owner does.</summary>
-		internal void SetOwnerWindow(nint owner)
+		/// <summary>
+		/// Makes <paramref name="owner"/> own the window in place, or no window for 0, as AutoHotkey's +/-Owner does. With
+		/// <paramref name="asParent"/>, as for +/-Parent, the window becomes a child within that window's client area, or a
+		/// top-level window again for 0. Off Windows the parent owns the window instead.
+		/// </summary>
+		internal void SetOwnerWindow(nint owner, bool asParent = false)
 		{
-			ownerHwnd = owner;
 #if WINDOWS
-			if (IsHandleCreated)
+			//-Parent changes only a child window.
+			if (asParent && owner == 0 && TopLevel)
+				return;
+
+			ownerHwnd = owner;
+			//Either change keeps the handle: WinForms parks a form leaving the top level until SetParent places it, and
+			//moves one returning to it back onto the desktop.
+			TopLevel = !asParent || owner == 0;
+
+			if (!IsHandleCreated)
+				return;
+
+			if (!TopLevel)
+				_ = WindowsAPI.SetParent(Handle, owner);
+			else
 			{
 				UpdateStyles();
 				_ = WindowsAPI.SetWindowLongPtr(Handle, WindowsAPI.GWLP_HWNDPARENT, owner);
 			}
 #else
+			ownerHwnd = owner;
 			Owner = owner != 0 ? Forms.Control.FromHandle(owner) as Form : null;
 			UpdateTaskbarButton();
 #endif
@@ -412,6 +436,21 @@ namespace Keysharp.Builtins
 
 			if (roundedCorners)
 				ApplyRoundedCorners(true);
+		}
+
+		// Windows destroys an owned or child window along with its owner or parent, sending it no WM_CLOSE for Destroy to
+		// act on, so the Gui is let go of here, as AHK's GuiWindowProc lets it go on WM_DESTROY. The form is disposed once
+		// its window is gone, as a destroyed Gui's form is, since disposing it in the middle of its destruction is not safe.
+		protected override void OnHandleDestroyed(EventArgs e)
+		{
+			base.OnHandleDestroyed(e);
+
+			if (closingFromDestroy || RecreatingHandle || Disposing || OwnerScript.IsTearingDown || Tag is not WeakReference<Gui>)
+				return;
+
+			closingFromDestroy = true;
+			ClearThis();
+			OwnerScript.PostToUIThread(Dispose);
 		}
 
 		private void ApplyRoundedCorners(bool enable)

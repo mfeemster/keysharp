@@ -10,6 +10,7 @@
 Style(hwnd) => DllCall("GetWindowLongPtr", "Ptr", hwnd, "Int", -16, "Ptr")
 ExStyle(hwnd) => DllCall("GetWindowLongPtr", "Ptr", hwnd, "Int", -20, "Ptr")
 OwnerOf(hwnd) => DllCall("GetWindow", "Ptr", hwnd, "UInt", 4, "Ptr")   ; GW_OWNER
+ParentOf(hwnd) => DllCall("GetParent", "Ptr", hwnd, "Ptr")
 
 optionsGui := Gui()
 optionsGui.Opt("+dIsAbLeD")
@@ -89,10 +90,64 @@ for opts in ["-Caption +Resize", "+Resize -Caption"] {
 	g.Destroy()
 }
 
+; +Parent makes the window a child within its parent's client area, which the Gui's positions are then relative to,
+; and -Parent makes it a top-level window again, both keeping its Hwnd.
+host := Gui("-DPIScale")
+host.Show("x100 y100 w400 h300 NoActivate")
+child := Gui("-Caption -DPIScale +Parent" host.Hwnd)
+hwnd := child.Hwnd
+AssertEq(ParentOf(hwnd), host.Hwnd, A_LineNumber)
+AssertEq(Style(hwnd) & 0xC0000000, 0x40000000, A_LineNumber)   ; WS_CHILD, no WS_POPUP
+child.Show("x10 y20 w100 h50 NoActivate")
+child.GetPos(&x, &y, &w, &h)
+AssertEq(x "," y "," w "," h, "10,20,100,50", A_LineNumber)
+host.GetClientPos(&hostX, &hostY)
+WinGetPos(&screenX, &screenY, , , hwnd)
+AssertEq((screenX - hostX) "," (screenY - hostY), "10,20", A_LineNumber)
+child.Move(30)
+host.Move(150)
+child.GetPos(&x, &y)
+AssertEq(x "," y, "30,20", A_LineNumber)
+child.Opt("-Parent")
+AssertEq(child.Hwnd, hwnd, A_LineNumber)
+AssertEq(ParentOf(hwnd), 0, A_LineNumber)
+AssertEq(Style(hwnd) & 0x40000000, 0, A_LineNumber)
+child.Opt("+Parent" host.Hwnd)
+AssertEq(ParentOf(hwnd), host.Hwnd, A_LineNumber)
+Throws(() => child.Opt("+Parent"), A_LineNumber, ValueError)
+child.Destroy()
+host.Destroy()
+
+; Windows destroys owned and child windows with their owner, and their Guis are let go of as Destroy lets them go.
+host := Gui()
+owned2 := Gui("+Owner" host.Hwnd)
+child := Gui("+Parent" host.Hwnd)
+ownedHwnd := owned2.Hwnd, childHwnd := child.Hwnd
+host.Destroy()
+Assert(!GuiFromHwnd(ownedHwnd) && !GuiFromHwnd(childHwnd), A_LineNumber)
+Assert(!DllCall("IsWindow", "Ptr", owned2.Hwnd), A_LineNumber)   ; Not made again.
+owned2.Destroy()
+
+; A window shown without a position is centered in the primary monitor's work area.
+centered := Gui()
+centered.Show("w200 h100 NoActivate")
+WinGetPos(&x, &y, &w, &h, centered.Hwnd)
+MonitorGetWorkArea(MonitorGetPrimary(), &left, &top, &right, &bottom)
+AssertEq(x "," y, (left + (right - left - w) // 2) "," (top + (bottom - top - h) // 2), A_LineNumber)
+centered.Destroy()
+
 tool.Destroy()
 owned.Destroy()
 owner.Destroy()
 #endif
+
+; An omitted title is the script's name and an empty one is kept, as in AutoHotkey.
+titled := Gui()
+AssertEq(titled.Title, A_ScriptName, A_LineNumber)
+titled.Destroy()
+titled := Gui(, "")
+AssertEq(titled.Title, "", A_LineNumber)
+titled.Destroy()
 
 ; A control type's own members live on its class, as in AutoHotkey, so another type has none of them.
 lists := Gui()

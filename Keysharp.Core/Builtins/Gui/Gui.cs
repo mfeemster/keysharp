@@ -423,7 +423,7 @@ namespace Keysharp.Builtins
 						MaximizeBox = false,
 						SizeGripStyle = SizeGripStyle.Hide,
 						Tag = new WeakReference<Gui>(this, false),
-						Text = caption != "" ? caption : A_ScriptName
+						Text = caption ?? A_ScriptName
 					};
 					//Note that we don't do any Suspend/Resume layout calls when creating controls on the form as would normally
 					//be done in designer-generated code. It appears to cause layout problems.
@@ -2596,8 +2596,7 @@ namespace Keysharp.Builtins
 					}
 					else if (str.StartsWith("Parent", StringComparison.OrdinalIgnoreCase))
 					{
-						if (add)
-							SetOwner(true, str[6..]);
+						SetOwner(add, str[6..], true);
 					}
 					else if (!IsStyleNumberOption(str) && !ApplyBooleanOption(str, add))//Raw style numbers (e.g. +0x40000, +E0x8) are applied at construction by the static Opt overload; reject anything else like AHK instead of silently ignoring it.
 					{
@@ -2753,13 +2752,13 @@ namespace Keysharp.Builtins
 			return true;
 		}
 
-		private void SetOwner(bool add, ReadOnlySpan<char> owner)
+		private void SetOwner(bool add, ReadOnlySpan<char> owner, bool asParent = false)
 		{
 			nint ownerHandle = 0;
 
 			if (add)
 			{
-				if (owner.Length == 0)   // +Owner with no HWND => owned by the script's main window (AHK).
+				if (owner.Length == 0 && !asParent)   // +Owner with no HWND => owned by the script's main window (AHK); +Parent needs one.
 				{
 					if (Script.TheScript.mainWindow is Form mw)
 						ownerHandle = mw.Handle;
@@ -2772,7 +2771,7 @@ namespace Keysharp.Builtins
 				}
 			}
 
-			form.SetOwnerWindow(ownerHandle);
+			form.SetOwnerWindow(ownerHandle, asParent);
 		}
 
 		// A bare number ("0x40000"/"262144") is a window style and a leading 'E' + number ("E0x8") an extended
@@ -3301,7 +3300,11 @@ namespace Keysharp.Builtins
 			// Single ClientSize assignment for both the autosize and explicit-size branches. The explicit branch used
 			// to set it again above, resizing the form twice (two SetWindowPos round-trips) on every Show.
 			form.GuiClientSize = size;
-			var screen = Forms.Screen.PrimaryScreen.Bounds;
+			//Centered in the primary monitor's work area, as in AHK, and a child window in its parent's client area.
+			var screen = Forms.Screen.PrimaryScreen.WorkingArea;
+
+			if (!form.TopLevel && WindowsAPI.GetClientRect(WindowsAPI.GetParent(form.Handle), out var parentClient))
+				screen = new Rectangle(0, 0, parentClient.Right, parentClient.Bottom);
 #else
 			form.Content.ClientSize = size;
 			form.Properties["AssignedSize"] = size;
@@ -3420,7 +3423,12 @@ namespace Keysharp.Builtins
 			// ensure activation on default show/restore (not NA/NoActivate/Hide/Minimize)
 			if (!hide && !form.showWithoutActivation && form.WindowState != FormWindowState.Minimized)
 			{
-				form.Activate();
+#if WINDOWS
+				//A child window cannot be the foreground window, so AHK does not try.
+				if (form.TopLevel)
+#endif
+					form.Activate();
+
 				form.BringToFront();
 			}
 #if LINUX
