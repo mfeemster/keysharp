@@ -126,14 +126,8 @@ namespace Keysharp.Runtime
 				return;
 
 			deferredTrayTimer = new UITimer();
-#if WINDOWS
-			deferredTrayTimer.Interval = 300;
-			deferredTrayTimer.Tick += ShowDeferredTray;
-#else
-			deferredTrayTimer.Interval = 0.3;
-			deferredTrayTimer.Elapsed += ShowDeferredTray;
-#endif
-			deferredTrayTimer.Start();
+			deferredTrayTimer.OnTick(ShowDeferredTray);
+			deferredTrayTimer.Start(300);
 		}
 
 		private void ShowDeferredTray(object sender, EventArgs e)

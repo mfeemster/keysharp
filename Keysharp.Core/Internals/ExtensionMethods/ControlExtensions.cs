@@ -164,6 +164,33 @@ namespace System.Windows.Forms
 		}
 
 		/// <summary>
+		/// Calls <paramref name="tick"/> each time the timer's interval elapses, an event WinForms names Tick and Eto
+		/// names Elapsed.
+		/// </summary>
+		internal static void OnTick(this UITimer timer, EventHandler tick)
+		{
+#if WINDOWS
+			timer.Tick += tick;
+#else
+			timer.Elapsed += tick.Invoke;
+#endif
+		}
+
+		/// <summary>
+		/// Starts the timer, or restarts it, to fire every <paramref name="milliseconds"/>. WinForms takes the interval
+		/// in milliseconds and Eto in seconds.
+		/// </summary>
+		internal static void Start(this UITimer timer, int milliseconds)
+		{
+#if WINDOWS
+			timer.Interval = milliseconds;
+#else
+			timer.Interval = milliseconds / 1000.0;
+#endif
+			timer.Start();
+		}
+
+		/// <summary>
 		/// Calls an <see cref="Action"/> inside of <see cref="Control.BeginInvoke"/> with various checks/options.<br/>
 		/// Before invoking on the control, ensure it's not null, has been created and is not disposing/disposed.
 		/// </summary>

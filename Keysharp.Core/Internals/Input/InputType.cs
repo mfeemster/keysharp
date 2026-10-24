@@ -785,16 +785,11 @@ namespace Keysharp.Internals.Input
 				if (inputTimer == null)
 				{
 					inputTimer = new UITimer();
-#if WINDOWS
-					inputTimer.Tick += InputTimer_Tick;
-#else
-					inputTimer.Elapsed += InputTimer_Tick;
-#endif
+					inputTimer.OnTick(InputTimer_Tick);
 					script.InputData.inputTimer = inputTimer;
 				}
 
-				inputTimer.Interval = timeout;
-				inputTimer.Start();
+				inputTimer.Start(timeout);
 				script.inputTimerExists = true;
 			}
 		}
@@ -869,9 +864,8 @@ namespace Keysharp.Internals.Input
 
 			if (newTimerPeriod != 0)
 			{
-				inputTimer.Interval = newTimerPeriod;
 				script.inputTimeoutAt = DateTime.UtcNow.AddMilliseconds(newTimerPeriod);
-				inputTimer.Start();
+				inputTimer.Start(newTimerPeriod);
 			}
 			else
 			{
